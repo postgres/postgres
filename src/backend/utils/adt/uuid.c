@@ -13,6 +13,7 @@
 
 #include "postgres.h"
 
+#include <limits.h>
 #include <time.h>				/* for clock_gettime() */
 
 #include "common/hashfn.h"
@@ -21,6 +22,7 @@
 #include "port/pg_bswap.h"
 #include "utils/fmgrprotos.h"
 #include "utils/guc.h"
+#include "utils/skipsupport.h"
 #include "utils/sortsupport.h"
 #include "utils/timestamp.h"
 #include "utils/uuid.h"
@@ -416,6 +418,74 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 	res = DatumBigEndianToNative(res);
 
 	return res;
+}
+
+static Datum
+uuid_decrement(Relation rel, Datum existing, bool *underflow)
+{
+	pg_uuid_t  *uuid;
+
+	uuid = (pg_uuid_t *) palloc(UUID_LEN);
+	memcpy(uuid, DatumGetUUIDP(existing), UUID_LEN);
+	for (int i = UUID_LEN - 1; i >= 0; i--)
+	{
+		if (uuid->data[i] > 0)
+		{
+			uuid->data[i]--;
+			*underflow = false;
+			return UUIDPGetDatum(uuid);
+		}
+		uuid->data[i] = UCHAR_MAX;
+	}
+
+	pfree(uuid);				/* cannot leak memory */
+
+	/* return value is undefined */
+	*underflow = true;
+	return (Datum) 0;
+}
+
+static Datum
+uuid_increment(Relation rel, Datum existing, bool *overflow)
+{
+	pg_uuid_t  *uuid;
+
+	uuid = (pg_uuid_t *) palloc(UUID_LEN);
+	memcpy(uuid, DatumGetUUIDP(existing), UUID_LEN);
+	for (int i = UUID_LEN - 1; i >= 0; i--)
+	{
+		if (uuid->data[i] < UCHAR_MAX)
+		{
+			uuid->data[i]++;
+			*overflow = false;
+			return UUIDPGetDatum(uuid);
+		}
+		uuid->data[i] = 0;
+	}
+
+	pfree(uuid);				/* cannot leak memory */
+
+	/* return value is undefined */
+	*overflow = true;
+	return (Datum) 0;
+}
+
+Datum
+uuid_skipsupport(PG_FUNCTION_ARGS)
+{
+	SkipSupport sksup = (SkipSupport) PG_GETARG_POINTER(0);
+	pg_uuid_t  *uuid_min = palloc(UUID_LEN);
+	pg_uuid_t  *uuid_max = palloc(UUID_LEN);
+
+	memset(uuid_min->data, 0x00, UUID_LEN);
+	memset(uuid_max->data, 0xFF, UUID_LEN);
+
+	sksup->decrement = uuid_decrement;
+	sksup->increment = uuid_increment;
+	sksup->low_elem = UUIDPGetDatum(uuid_min);
+	sksup->high_elem = UUIDPGetDatum(uuid_max);
+
+	PG_RETURN_VOID();
 }
 
 /* hash index support */

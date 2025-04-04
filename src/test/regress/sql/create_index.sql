@@ -650,7 +650,9 @@ DROP TABLE syscol_table;
 --
 
 CREATE TABLE onek_with_null AS SELECT unique1, unique2 FROM onek;
-INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
+INSERT INTO onek_with_null(unique1, unique2)
+VALUES (NULL, -1), (NULL, 2_147_483_647), (NULL, NULL),
+       (100, NULL), (500, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 
 SET enable_seqscan = OFF;
@@ -663,6 +665,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
 
 DROP INDEX onek_nulltest;
 
@@ -675,6 +678,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NUL
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IN (-1, 0, 1);
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
 
 DROP INDEX onek_nulltest;
 
@@ -686,6 +690,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
 
 DROP INDEX onek_nulltest;
 
@@ -697,6 +702,7 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
 
 DROP INDEX onek_nulltest;
 
@@ -716,9 +722,9 @@ SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= 0
   ORDER BY unique2 LIMIT 2;
 
 SELECT unique1, unique2 FROM onek_with_null
-  ORDER BY unique2 DESC LIMIT 2;
+  ORDER BY unique2 DESC LIMIT 5;
 SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
-  ORDER BY unique2 DESC LIMIT 2;
+  ORDER BY unique2 DESC LIMIT 3;
 SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
   ORDER BY unique2 DESC LIMIT 2;
 
@@ -852,7 +858,8 @@ SELECT count(*) FROM dupindexcols
   WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
 
 --
--- Check that index scans with =ANY indexquals return rows in index order
+-- Check that index scans with SAOP array and/or skip array indexquals
+-- return rows in index order
 --
 
 explain (costs off)
@@ -864,7 +871,7 @@ SELECT unique1 FROM tenk1
 WHERE unique1 IN (1,42,7)
 ORDER BY unique1;
 
--- Non-required array scan key on "tenthous":
+-- Skip array on "thousand", SAOP array on "tenthous":
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -874,7 +881,7 @@ SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand;
 
--- Non-required array scan key on "tenthous", backward scan:
+-- Skip array on "thousand", SAOP array on "tenthous", backward scan:
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -883,6 +890,15 @@ ORDER BY thousand DESC, tenthous DESC;
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
 ORDER BY thousand DESC, tenthous DESC;
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > 995 and tenthous in (998, 999)
+ORDER BY thousand desc;
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > 995 and tenthous in (998, 999)
+ORDER BY thousand desc;
 
 --
 -- Check elimination of redundant and contradictory index quals
@@ -898,6 +914,21 @@ SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('
 SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
 
 explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY(NULL);
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY(NULL);
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{NULL,NULL,NULL}');
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{NULL,NULL,NULL}');
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IS NULL AND unique1 IS NULL;
+
+SELECT unique1 FROM tenk1 WHERE unique1 IS NULL AND unique1 IS NULL;
+
+explain (costs off)
 SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
 
 SELECT unique1 FROM tenk1 WHERE unique1 IN (1, 42, 7) and unique1 = 1;
@@ -941,6 +972,26 @@ explain (costs off)
 SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
 
 SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
+
+-- Skip array redundancy (pair of redundant low_compare inequalities)
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 and thousand >= 0 AND tenthous = 3000
+ORDER BY thousand;
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 and thousand >= 0 AND tenthous = 3000
+ORDER BY thousand;
+
+-- Skip array redundancy (pair of redundant high_compare inequalities)
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 3 and thousand <= 2 AND tenthous = 1001
+ORDER BY thousand;
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 3 and thousand <= 2 AND tenthous = 1001
+ORDER BY thousand;
 
 --
 -- Check elimination of constant-NULL subexpressions

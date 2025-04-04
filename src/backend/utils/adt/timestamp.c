@@ -37,6 +37,7 @@
 #include "utils/datetime.h"
 #include "utils/float.h"
 #include "utils/numeric.h"
+#include "utils/skipsupport.h"
 #include "utils/sortsupport.h"
 
 /*
@@ -2301,6 +2302,53 @@ timestamp_sortsupport(PG_FUNCTION_ARGS)
 #else
 	ssup->comparator = timestamp_fastcmp;
 #endif
+	PG_RETURN_VOID();
+}
+
+/* note: this is used for timestamptz also */
+static Datum
+timestamp_decrement(Relation rel, Datum existing, bool *underflow)
+{
+	Timestamp	texisting = DatumGetTimestamp(existing);
+
+	if (texisting == PG_INT64_MIN)
+	{
+		/* return value is undefined */
+		*underflow = true;
+		return (Datum) 0;
+	}
+
+	*underflow = false;
+	return TimestampGetDatum(texisting - 1);
+}
+
+/* note: this is used for timestamptz also */
+static Datum
+timestamp_increment(Relation rel, Datum existing, bool *overflow)
+{
+	Timestamp	texisting = DatumGetTimestamp(existing);
+
+	if (texisting == PG_INT64_MAX)
+	{
+		/* return value is undefined */
+		*overflow = true;
+		return (Datum) 0;
+	}
+
+	*overflow = false;
+	return TimestampGetDatum(texisting + 1);
+}
+
+Datum
+timestamp_skipsupport(PG_FUNCTION_ARGS)
+{
+	SkipSupport sksup = (SkipSupport) PG_GETARG_POINTER(0);
+
+	sksup->decrement = timestamp_decrement;
+	sksup->increment = timestamp_increment;
+	sksup->low_elem = TimestampGetDatum(PG_INT64_MIN);
+	sksup->high_elem = TimestampGetDatum(PG_INT64_MAX);
+
 	PG_RETURN_VOID();
 }
 

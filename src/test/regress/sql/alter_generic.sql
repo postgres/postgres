@@ -310,7 +310,7 @@ ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 6 < (int4, int2); -- ope
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 0 < (int4, int2); -- operator number should be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 1 < ; -- operator without argument types
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- invalid options parsing function
-ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 6 btint42cmp(int4, int2); -- function number should be between 1 and 5
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 7 btint42cmp(int4, int2); -- function number should be between 1 and 6
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD STORAGE invalid_storage; -- Ensure STORAGE is not a part of ALTER OPERATOR FAMILY
 DROP OPERATOR FAMILY alt_opf4 USING btree;
 
@@ -444,6 +444,9 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
 -- Should fail. Not allowed to have cross-type equalimage function.
 ALTER OPERATOR FAMILY alt_opf18 USING btree
   ADD FUNCTION 4 (int4, int2) btequalimage(oid);
+-- Should fail. Not allowed to have cross-type skip support function.
+ALTER OPERATOR FAMILY alt_opf18 USING btree
+  ADD FUNCTION 6 (int4, int2) btint4skipsupport(internal);
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 DROP OPERATOR FAMILY alt_opf18 USING btree;
 

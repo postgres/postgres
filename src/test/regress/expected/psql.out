@@ -5332,9 +5332,10 @@ Function              | in_range(time without time zone,time without time zone,i
  btree | uuid_ops        | uuid                 | uuid                  |      1 | uuid_cmp
  btree | uuid_ops        | uuid                 | uuid                  |      2 | uuid_sortsupport
  btree | uuid_ops        | uuid                 | uuid                  |      4 | btequalimage
+ btree | uuid_ops        | uuid                 | uuid                  |      6 | uuid_skipsupport
  hash  | uuid_ops        | uuid                 | uuid                  |      1 | uuid_hash
  hash  | uuid_ops        | uuid                 | uuid                  |      2 | uuid_hash_extended
-(5 rows)
+(6 rows)
 
 -- check \dconfig
 set work_mem = 10240;

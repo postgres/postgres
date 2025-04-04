@@ -461,6 +461,13 @@
        </entry>
        <entry>5</entry>
       </row>
+      <row>
+       <entry>
+        Return the addresses of C-callable skip support function(s)
+        (optional)
+       </entry>
+       <entry>6</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -1062,7 +1069,8 @@ DEFAULT FOR TYPE int8 USING btree FAMILY integer_ops AS
   FUNCTION 1 btint8cmp(int8, int8) ,
   FUNCTION 2 btint8sortsupport(internal) ,
   FUNCTION 3 in_range(int8, int8, int8, boolean, boolean) ,
-  FUNCTION 4 btequalimage(oid) ;
+  FUNCTION 4 btequalimage(oid) ,
+  FUNCTION 6 btint8skipsupport(internal) ;
 
 CREATE OPERATOR CLASS int4_ops
 DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
@@ -1075,7 +1083,8 @@ DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
   FUNCTION 1 btint4cmp(int4, int4) ,
   FUNCTION 2 btint4sortsupport(internal) ,
   FUNCTION 3 in_range(int4, int4, int4, boolean, boolean) ,
-  FUNCTION 4 btequalimage(oid) ;
+  FUNCTION 4 btequalimage(oid) ,
+  FUNCTION 6 btint4skipsupport(internal) ;
 
 CREATE OPERATOR CLASS int2_ops
 DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
@@ -1088,7 +1097,8 @@ DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
   FUNCTION 1 btint2cmp(int2, int2) ,
   FUNCTION 2 btint2sortsupport(internal) ,
   FUNCTION 3 in_range(int2, int2, int2, boolean, boolean) ,
-  FUNCTION 4 btequalimage(oid) ;
+  FUNCTION 4 btequalimage(oid) ,
+  FUNCTION 6 btint2skipsupport(internal) ;
 
 ALTER OPERATOR FAMILY integer_ops USING btree ADD
   -- cross-type comparisons int8 vs int2

@@ -460,20 +460,56 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    efficient when there are constraints on the leading (leftmost) columns.
    The exact rule is that equality constraints on leading columns, plus
    any inequality constraints on the first column that does not have an
-   equality constraint, will be used to limit the portion of the index
+   equality constraint, will always be used to limit the portion of the index
    that is scanned.  Constraints on columns to the right of these columns
-   are checked in the index, so they save visits to the table proper, but
-   they do not reduce the portion of the index that has to be scanned.
+   are checked in the index, so they'll always save visits to the table
+   proper, but they do not necessarily reduce the portion of the index that
+   has to be scanned.  If a B-tree index scan can apply the skip scan
+   optimization effectively, it will apply every column constraint when
+   navigating through the index via repeated index searches.  This can reduce
+   the portion of the index that has to be read, even though one or more
+   columns (prior to the least significant index column from the query
+   predicate) lacks a conventional equality constraint.  Skip scan works by
+   generating a dynamic equality constraint internally, that matches every
+   possible value in an index column (though only given a column that lacks
+   an equality constraint that comes from the query predicate, and only when
+   the generated constraint can be used in conjunction with a later column
+   constraint from the query predicate).
+  </para>
+
+  <para>
+   For example, given an index on <literal>(x, y)</literal>, and a query
+   condition <literal>WHERE y = 7700</literal>, a B-tree index scan might be
+   able to apply the skip scan optimization.  This generally happens when the
+   query planner expects that repeated <literal>WHERE x = N AND y = 7700</literal>
+   searches for every possible value of <literal>N</literal> (or for every
+   <literal>x</literal> value that is actually stored in the index) is the
+   fastest possible approach, given the available indexes on the table.  This
+   approach is generally only taken when there are so few distinct
+   <literal>x</literal> values that the planner expects the scan to skip over
+   most of the index (because most of its leaf pages cannot possibly contain
+   relevant tuples).  If there are many distinct <literal>x</literal> values,
+   then the entire index will have to be scanned, so in most cases the planner
+   will prefer a sequential table scan over using the index.
+  </para>
+
+  <para>
+   The skip scan optimization can also be applied selectively, during B-tree
+   scans that have at least some useful constraints from the query predicate.
    For example, given an index on <literal>(a, b, c)</literal> and a
    query condition <literal>WHERE a = 5 AND b &gt;= 42 AND c &lt; 77</literal>,
-   the index would have to be scanned from the first entry with
-   <literal>a</literal> = 5 and <literal>b</literal> = 42 up through the last entry with
-   <literal>a</literal> = 5.  Index entries with <literal>c</literal> &gt;= 77 would be
-   skipped, but they'd still have to be scanned through.
-   This index could in principle be used for queries that have constraints
-   on <literal>b</literal> and/or <literal>c</literal> with no constraint on <literal>a</literal>
-   &mdash; but the entire index would have to be scanned, so in most cases
-   the planner would prefer a sequential table scan over using the index.
+   the index might have to be scanned from the first entry with
+   <literal>a</literal> = 5 and <literal>b</literal> = 42 up through the last
+   entry with <literal>a</literal> = 5.  Index entries with
+   <literal>c</literal> &gt;= 77 will never need to be filtered at the table
+   level, but it may or may not be profitable to skip over them within the
+   index.  When skipping takes place, the scan starts a new index search to
+   reposition itself from the end of the current <literal>a</literal> = 5 and
+   <literal>b</literal> = N grouping (i.e. from the position in the index
+   where the first tuple <literal>a = 5 AND b = N AND c &gt;= 77</literal>
+   appears), to the start of the next such grouping (i.e. the position in the
+   index where the first tuple <literal>a = 5 AND b = N + 1</literal>
+   appears).
   </para>
 
   <para>
@@ -669,9 +705,13 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    multicolumn index on <literal>(x, y)</literal>.  This index would typically be
    more efficient than index combination for queries involving both
    columns, but as discussed in <xref linkend="indexes-multicolumn"/>, it
-   would be almost useless for queries involving only <literal>y</literal>, so it
-   should not be the only index.  A combination of the multicolumn index
-   and a separate index on <literal>y</literal> would serve reasonably well.  For
+   would be less useful for queries involving only <literal>y</literal>.  Just
+   how useful will depend on how effective the B-tree index skip scan
+   optimization is; if <literal>x</literal> has no more than several hundred
+   distinct values, skip scan will make searches for specific
+   <literal>y</literal> values execute reasonably efficiently.  A combination
+   of a multicolumn index on <literal>(x, y)</literal> and a separate index on
+   <literal>y</literal> might also serve reasonably well.  For
    queries involving only <literal>x</literal>, the multicolumn index could be
    used, though it would be larger and hence slower than an index on
    <literal>x</literal> alone.  The last alternative is to create all three

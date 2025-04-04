@@ -34,6 +34,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/numeric.h"
+#include "utils/skipsupport.h"
 #include "utils/sortsupport.h"
 
 /*
@@ -459,6 +460,51 @@ date_sortsupport(PG_FUNCTION_ARGS)
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 	ssup->comparator = ssup_datum_int32_cmp;
+	PG_RETURN_VOID();
+}
+
+static Datum
+date_decrement(Relation rel, Datum existing, bool *underflow)
+{
+	DateADT		dexisting = DatumGetDateADT(existing);
+
+	if (dexisting == DATEVAL_NOBEGIN)
+	{
+		/* return value is undefined */
+		*underflow = true;
+		return (Datum) 0;
+	}
+
+	*underflow = false;
+	return DateADTGetDatum(dexisting - 1);
+}
+
+static Datum
+date_increment(Relation rel, Datum existing, bool *overflow)
+{
+	DateADT		dexisting = DatumGetDateADT(existing);
+
+	if (dexisting == DATEVAL_NOEND)
+	{
+		/* return value is undefined */
+		*overflow = true;
+		return (Datum) 0;
+	}
+
+	*overflow = false;
+	return DateADTGetDatum(dexisting + 1);
+}
+
+Datum
+date_skipsupport(PG_FUNCTION_ARGS)
+{
+	SkipSupport sksup = (SkipSupport) PG_GETARG_POINTER(0);
+
+	sksup->decrement = date_decrement;
+	sksup->increment = date_increment;
+	sksup->low_elem = DateADTGetDatum(DATEVAL_NOBEGIN);
+	sksup->high_elem = DateADTGetDatum(DATEVAL_NOEND);
+
 	PG_RETURN_VOID();
 }
 

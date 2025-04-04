@@ -835,7 +835,8 @@ amrestrpos (IndexScanDesc scan);
   <para>
 <programlisting>
 Size
-amestimateparallelscan (int nkeys,
+amestimateparallelscan (Relation indexRelation,
+                        int nkeys,
                         int norderbys);
 </programlisting>
    Estimate and return the number of bytes of dynamic shared memory which

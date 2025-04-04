@@ -4263,7 +4263,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
      <replaceable>column_name</replaceable> =
      <replaceable>value2</replaceable> ...</literal> construct, though only
     when the optimizer transforms the construct into an equivalent
-    multi-valued array representation.
+    multi-valued array representation.  Similarly, when B-tree index scans use
+    the skip scan optimization, an index search is performed each time the
+    scan is repositioned to the next index leaf page that might have matching
+    tuples (see <xref linkend="indexes-multicolumn"/>).
    </para>
   </note>
   <tip>

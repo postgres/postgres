@@ -362,9 +362,9 @@ ERROR:  invalid operator number 0, must be between 1 and 5
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD OPERATOR 1 < ; -- operator without argument types
 ERROR:  operator argument types must be specified in ALTER OPERATOR FAMILY
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 0 btint42cmp(int4, int2); -- invalid options parsing function
-ERROR:  invalid function number 0, must be between 1 and 5
-ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 6 btint42cmp(int4, int2); -- function number should be between 1 and 5
-ERROR:  invalid function number 6, must be between 1 and 5
+ERROR:  invalid function number 0, must be between 1 and 6
+ALTER OPERATOR FAMILY alt_opf4 USING btree ADD FUNCTION 7 btint42cmp(int4, int2); -- function number should be between 1 and 6
+ERROR:  invalid function number 7, must be between 1 and 6
 ALTER OPERATOR FAMILY alt_opf4 USING btree ADD STORAGE invalid_storage; -- Ensure STORAGE is not a part of ALTER OPERATOR FAMILY
 ERROR:  STORAGE cannot be specified in ALTER OPERATOR FAMILY
 DROP OPERATOR FAMILY alt_opf4 USING btree;
@@ -505,6 +505,10 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree ADD
 ALTER OPERATOR FAMILY alt_opf18 USING btree
   ADD FUNCTION 4 (int4, int2) btequalimage(oid);
 ERROR:  ordering equal image functions must not be cross-type
+-- Should fail. Not allowed to have cross-type skip support function.
+ALTER OPERATOR FAMILY alt_opf18 USING btree
+  ADD FUNCTION 6 (int4, int2) btint4skipsupport(internal);
+ERROR:  btree skip support functions must not be cross-type
 ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 ERROR:  function 2(integer,integer) does not exist in operator family "alt_opf18"
 DROP OPERATOR FAMILY alt_opf18 USING btree;

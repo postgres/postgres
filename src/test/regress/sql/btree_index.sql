@@ -327,6 +327,27 @@ alter table btree_tall_tbl alter COLUMN t set storage plain;
 create index btree_tall_idx on btree_tall_tbl (t, id) with (fillfactor = 10);
 insert into btree_tall_tbl select g, repeat('x', 250)
 from generate_series(1, 130) g;
+insert into btree_tall_tbl select g, NULL
+from generate_series(50, 60) g;
+
+--
+-- Test for skip scan with type that lacks skip support (text)
+--
+set enable_seqscan to false;
+set enable_bitmapscan to false;
+
+-- Forwards scan
+SELECT id FROM btree_tall_tbl WHERE id = 55 ORDER BY t, id;
+explain (costs off)
+SELECT id FROM btree_tall_tbl WHERE id = 55 ORDER BY t, id;
+
+-- Backwards scan
+SELECT id FROM btree_tall_tbl WHERE id = 55 ORDER BY t DESC, id DESC;
+explain (costs off)
+SELECT id FROM btree_tall_tbl WHERE id = 55 ORDER BY t DESC, id DESC;
+
+reset enable_seqscan;
+reset enable_bitmapscan;
 
 --
 -- Test for multilevel page deletion

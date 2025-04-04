@@ -24,6 +24,7 @@
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
 #include "storage/shm_toc.h"
+#include "utils/skipsupport.h"
 
 /* There's room for a 16-bit vacuum cycle ID in BTPageOpaqueData */
 typedef uint16 BTCycleId;
@@ -707,6 +708,10 @@ BTreeTupleGetMaxHeapTID(IndexTuple itup)
  *	(BTOPTIONS_PROC).  These procedures define a set of user-visible
  *	parameters that can be used to control operator class behavior.  None of
  *	the built-in B-Tree operator classes currently register an "options" proc.
+ *
+ *	To facilitate more efficient B-Tree skip scans, an operator class may
+ *	choose to offer a sixth amproc procedure (BTSKIPSUPPORT_PROC).  For full
+ *	details, see src/include/utils/skipsupport.h.
  */
 
 #define BTORDER_PROC		1
@@ -714,7 +719,8 @@ BTreeTupleGetMaxHeapTID(IndexTuple itup)
 #define BTINRANGE_PROC		3
 #define BTEQUALIMAGE_PROC	4
 #define BTOPTIONS_PROC		5
-#define BTNProcs			5
+#define BTSKIPSUPPORT_PROC	6
+#define BTNProcs			6
 
 /*
  *	We need to be able to tell the difference between read and write
@@ -1027,10 +1033,21 @@ typedef BTScanPosData *BTScanPos;
 /* We need one of these for each equality-type SK_SEARCHARRAY scan key */
 typedef struct BTArrayKeyInfo
 {
+	/* fields set for both kinds of array (SAOP arrays and skip arrays) */
 	int			scan_key;		/* index of associated key in keyData */
-	int			cur_elem;		/* index of current element in elem_values */
-	int			num_elems;		/* number of elems in current array value */
+	int			num_elems;		/* number of elems (-1 means skip array) */
+
+	/* fields set for ScalarArrayOpExpr arrays only */
 	Datum	   *elem_values;	/* array of num_elems Datums */
+	int			cur_elem;		/* index of current element in elem_values */
+
+	/* fields set for skip arrays only */
+	int16		attlen;			/* attr's length, in bytes */
+	bool		attbyval;		/* attr's FormData_pg_attribute.attbyval */
+	bool		null_elem;		/* NULL is lowest/highest element? */
+	SkipSupport sksup;			/* skip support (NULL if opclass lacks it) */
+	ScanKey		low_compare;	/* array's > or >= lower bound */
+	ScanKey		high_compare;	/* array's < or <= upper bound */
 } BTArrayKeyInfo;
 
 typedef struct BTScanOpaqueData
@@ -1119,6 +1136,15 @@ typedef struct BTReadPageState
  */
 #define SK_BT_REQFWD	0x00010000	/* required to continue forward scan */
 #define SK_BT_REQBKWD	0x00020000	/* required to continue backward scan */
+#define SK_BT_SKIP		0x00040000	/* skip array on column without input = */
+
+/* SK_BT_SKIP-only flags (set and unset by array advancement) */
+#define SK_BT_MINVAL	0x00080000	/* invalid sk_argument, use low_compare */
+#define SK_BT_MAXVAL	0x00100000	/* invalid sk_argument, use high_compare */
+#define SK_BT_NEXT		0x00200000	/* positions the scan > sk_argument */
+#define SK_BT_PRIOR		0x00400000	/* positions the scan < sk_argument */
+
+/* Remaps pg_index flag bits to uppermost SK_BT_* byte */
 #define SK_BT_INDOPTION_SHIFT  24	/* must clear the above bits */
 #define SK_BT_DESC			(INDOPTION_DESC << SK_BT_INDOPTION_SHIFT)
 #define SK_BT_NULLS_FIRST	(INDOPTION_NULLS_FIRST << SK_BT_INDOPTION_SHIFT)
@@ -1165,7 +1191,7 @@ extern bool btinsert(Relation rel, Datum *values, bool *isnull,
 					 bool indexUnchanged,
 					 struct IndexInfo *indexInfo);
 extern IndexScanDesc btbeginscan(Relation rel, int nkeys, int norderbys);
-extern Size btestimateparallelscan(int nkeys, int norderbys);
+extern Size btestimateparallelscan(Relation rel, int nkeys, int norderbys);
 extern void btinitparallelscan(void *target);
 extern bool btgettuple(IndexScanDesc scan, ScanDirection dir);
 extern int64 btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm);

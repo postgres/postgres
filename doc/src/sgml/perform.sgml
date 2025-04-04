@@ -861,6 +861,38 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 WHERE thousand IN (1, 2, 3, 4);
    </para>
 
    <para>
+    The <quote>Index Searches</quote> line is also useful with B-tree index
+    scans that apply the <firstterm>skip scan</firstterm> optimization to
+    more efficiently traverse through an index:
+<screen>
+EXPLAIN ANALYZE SELECT four, unique1 FROM tenk1 WHERE four BETWEEN 1 AND 3 AND unique1 = 42;
+                                                              QUERY PLAN
+-------------------------------------------------------------------&zwsp;---------------------------------------------------------------
+ Index Only Scan using tenk1_four_unique1_idx on tenk1  (cost=0.29..6.90 rows=1 width=8) (actual time=0.006..0.007 rows=1.00 loops=1)
+   Index Cond: ((four &gt;= 1) AND (four &lt;= 3) AND (unique1 = 42))
+   Heap Fetches: 0
+   Index Searches: 3
+   Buffers: shared hit=7
+ Planning Time: 0.029 ms
+ Execution Time: 0.012 ms
+</screen>
+
+    Here we see an Index-Only Scan node using
+    <structname>tenk1_four_unique1_idx</structname>, a multi-column index on the
+    <structname>tenk1</structname> table's <structfield>four</structfield> and
+    <structfield>unique1</structfield> columns.  The scan performs 3 searches
+    that each read a single index leaf page:
+    <quote><literal>four = 1 AND unique1 = 42</literal></quote>,
+    <quote><literal>four = 2 AND unique1 = 42</literal></quote>, and
+    <quote><literal>four = 3 AND unique1 = 42</literal></quote>.  This index
+    is generally a good target for skip scan, since, as discussed in
+    <xref linkend="indexes-multicolumn"/>, its leading column (the
+    <structfield>four</structfield> column) contains only 4 distinct values,
+    while its second/final column (the <structfield>unique1</structfield>
+    column) contains many distinct values.
+   </para>
+
+   <para>
     Another type of extra information is the number of rows removed by a
     filter condition:
 

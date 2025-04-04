@@ -1637,7 +1637,9 @@ DROP TABLE syscol_table;
 -- Tests for IS NULL/IS NOT NULL with b-tree indexes
 --
 CREATE TABLE onek_with_null AS SELECT unique1, unique2 FROM onek;
-INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
+INSERT INTO onek_with_null(unique1, unique2)
+VALUES (NULL, -1), (NULL, 2_147_483_647), (NULL, NULL),
+       (100, NULL), (500, NULL);
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
 SET enable_seqscan = OFF;
 SET enable_indexscan = ON;
@@ -1645,7 +1647,7 @@ SET enable_bitmapscan = ON;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
  count 
 -------
-     2
+     3
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
@@ -1657,13 +1659,13 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
  count 
 -------
-  1000
+  1002
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
-     1
+     2
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
@@ -1678,12 +1680,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
      0
 (1 row)
 
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
+ unique1 | unique2 
+---------+---------
+     500 |        
+(1 row)
+
 DROP INDEX onek_nulltest;
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc,unique1);
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
  count 
 -------
-     2
+     3
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
@@ -1695,13 +1703,13 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
  count 
 -------
-  1000
+  1002
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
-     1
+     2
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
@@ -1722,12 +1730,18 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IN (-1, 0,
      1
 (1 row)
 
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
+ unique1 | unique2 
+---------+---------
+     500 |        
+(1 row)
+
 DROP INDEX onek_nulltest;
 CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc nulls last,unique1);
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
  count 
 -------
-     2
+     3
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
@@ -1739,13 +1753,13 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
  count 
 -------
-  1000
+  1002
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
-     1
+     2
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
@@ -1758,6 +1772,12 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
  count 
 -------
      0
+(1 row)
+
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
+ unique1 | unique2 
+---------+---------
+     500 |        
 (1 row)
 
 DROP INDEX onek_nulltest;
@@ -1765,7 +1785,7 @@ CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2  nulls first,unique
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
  count 
 -------
-     2
+     3
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
@@ -1777,13 +1797,13 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL;
  count 
 -------
-  1000
+  1002
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NOT NULL;
  count 
 -------
-     1
+     2
 (1 row)
 
 SELECT count(*) FROM onek_with_null WHERE unique1 IS NOT NULL AND unique1 > 500;
@@ -1796,6 +1816,12 @@ SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique1 > 500;
  count 
 -------
      0
+(1 row)
+
+SELECT unique1, unique2 FROM onek_with_null WHERE unique1 = 500 ORDER BY unique2 DESC, unique1 DESC LIMIT 1;
+ unique1 | unique2 
+---------+---------
+     500 |        
 (1 row)
 
 DROP INDEX onek_nulltest;
@@ -1829,20 +1855,24 @@ SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= 0
 (2 rows)
 
 SELECT unique1, unique2 FROM onek_with_null
-  ORDER BY unique2 DESC LIMIT 2;
- unique1 | unique2 
----------+---------
-         |        
-     278 |     999
-(2 rows)
+  ORDER BY unique2 DESC LIMIT 5;
+ unique1 |  unique2   
+---------+------------
+     500 |           
+     100 |           
+         |           
+         | 2147483647
+     278 |        999
+(5 rows)
 
 SELECT unique1, unique2 FROM onek_with_null WHERE unique2 >= -1
-  ORDER BY unique2 DESC LIMIT 2;
- unique1 | unique2 
----------+---------
-     278 |     999
-       0 |     998
-(2 rows)
+  ORDER BY unique2 DESC LIMIT 3;
+ unique1 |  unique2   
+---------+------------
+         | 2147483647
+     278 |        999
+       0 |        998
+(3 rows)
 
 SELECT unique1, unique2 FROM onek_with_null WHERE unique2 < 999
   ORDER BY unique2 DESC LIMIT 2;
@@ -2247,7 +2277,8 @@ SELECT count(*) FROM dupindexcols
 (1 row)
 
 --
--- Check that index scans with =ANY indexquals return rows in index order
+-- Check that index scans with SAOP array and/or skip array indexquals
+-- return rows in index order
 --
 explain (costs off)
 SELECT unique1 FROM tenk1
@@ -2269,7 +2300,7 @@ ORDER BY unique1;
       42
 (3 rows)
 
--- Non-required array scan key on "tenthous":
+-- Skip array on "thousand", SAOP array on "tenthous":
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -2289,7 +2320,7 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
--- Non-required array scan key on "tenthous", backward scan:
+-- Skip array on "thousand", SAOP array on "tenthous", backward scan:
 explain (costs off)
 SELECT thousand, tenthous FROM tenk1
 WHERE thousand < 2 AND tenthous IN (1001,3000)
@@ -2307,6 +2338,25 @@ ORDER BY thousand DESC, tenthous DESC;
 ----------+----------
         1 |     1001
         0 |     3000
+(2 rows)
+
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > 995 and tenthous in (998, 999)
+ORDER BY thousand desc;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Index Only Scan Backward using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand > 995) AND (tenthous = ANY ('{998,999}'::integer[])))
+(2 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > 995 and tenthous in (998, 999)
+ORDER BY thousand desc;
+ thousand | tenthous 
+----------+----------
+      999 |      999
+      998 |      998
 (2 rows)
 
 --
@@ -2335,6 +2385,45 @@ SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('
 (2 rows)
 
 SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{7, 14, 22}') and unique1 = ANY('{33, 44}'::bigint[]);
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY(NULL);
+                   QUERY PLAN                    
+-------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: (unique1 = ANY (NULL::integer[]))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY(NULL);
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{NULL,NULL,NULL}');
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: (unique1 = ANY ('{NULL,NULL,NULL}'::integer[]))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 = ANY('{NULL,NULL,NULL}');
+ unique1 
+---------
+(0 rows)
+
+explain (costs off)
+SELECT unique1 FROM tenk1 WHERE unique1 IS NULL AND unique1 IS NULL;
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Index Only Scan using tenk1_unique1 on tenk1
+   Index Cond: ((unique1 IS NULL) AND (unique1 IS NULL))
+(2 rows)
+
+SELECT unique1 FROM tenk1 WHERE unique1 IS NULL AND unique1 IS NULL;
  unique1 
 ---------
 (0 rows)
@@ -2461,6 +2550,44 @@ SELECT unique1 FROM tenk1 WHERE (thousand, tenthous) > (NULL, 5);
  unique1 
 ---------
 (0 rows)
+
+-- Skip array redundancy (pair of redundant low_compare inequalities)
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 and thousand >= 0 AND tenthous = 3000
+ORDER BY thousand;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Index Only Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand > '-1'::integer) AND (thousand >= 0) AND (tenthous = 3000))
+(2 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand > -1 and thousand >= 0 AND tenthous = 3000
+ORDER BY thousand;
+ thousand | tenthous 
+----------+----------
+        0 |     3000
+(1 row)
+
+-- Skip array redundancy (pair of redundant high_compare inequalities)
+explain (costs off)
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 3 and thousand <= 2 AND tenthous = 1001
+ORDER BY thousand;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Index Only Scan using tenk1_thous_tenthous on tenk1
+   Index Cond: ((thousand < 3) AND (thousand <= 2) AND (tenthous = 1001))
+(2 rows)
+
+SELECT thousand, tenthous FROM tenk1
+WHERE thousand < 3 and thousand <= 2 AND tenthous = 1001
+ORDER BY thousand;
+ thousand | tenthous 
+----------+----------
+        1 |     1001
+(1 row)
 
 --
 -- Check elimination of constant-NULL subexpressions

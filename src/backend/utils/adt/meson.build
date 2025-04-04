@@ -86,6 +86,7 @@ backend_sources += files(
   'rowtypes.c',
   'ruleutils.c',
   'selfuncs.c',
+  'skipsupport.c',
   'tid.c',
   'timestamp.c',
   'trigfuncs.c',
