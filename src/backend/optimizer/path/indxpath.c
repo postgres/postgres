@@ -3817,8 +3817,7 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 
 
 		/* Pathkey must request default sort order for the target opfamily */
-		if (pathkey->pk_strategy != BTLessStrategyNumber ||
-			pathkey->pk_nulls_first)
+		if (pathkey->pk_cmptype != COMPARE_LT || pathkey->pk_nulls_first)
 			return;
 
 		/* If eclass is volatile, no hope of using an indexscan */

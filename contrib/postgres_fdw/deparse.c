@@ -3969,17 +3969,17 @@ appendOrderByClause(List *pathkeys, bool has_final_sort,
 			appendStringInfoString(buf, ", ");
 
 		/*
-		 * Lookup the operator corresponding to the strategy in the opclass.
-		 * The datatype used by the opfamily is not necessarily the same as
-		 * the expression type (for array types for example).
+		 * Lookup the operator corresponding to the compare type in the
+		 * opclass. The datatype used by the opfamily is not necessarily the
+		 * same as the expression type (for array types for example).
 		 */
-		oprid = get_opfamily_member(pathkey->pk_opfamily,
-									em->em_datatype,
-									em->em_datatype,
-									pathkey->pk_strategy);
+		oprid = get_opfamily_member_for_cmptype(pathkey->pk_opfamily,
+												em->em_datatype,
+												em->em_datatype,
+												pathkey->pk_cmptype);
 		if (!OidIsValid(oprid))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 pathkey->pk_strategy, em->em_datatype, em->em_datatype,
+				 pathkey->pk_cmptype, em->em_datatype, em->em_datatype,
 				 pathkey->pk_opfamily);
 
 		deparseExpr(em_expr, context);

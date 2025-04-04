@@ -1506,9 +1506,7 @@ typedef struct EquivalenceMember
  * equivalent and closely-related orderings. (See optimizer/README for more
  * information.)
  *
- * Note: pk_strategy is either BTLessStrategyNumber (for ASC) or
- * BTGreaterStrategyNumber (for DESC).  We assume that all ordering-capable
- * index types will use btree-compatible strategy numbers.
+ * Note: pk_strategy is either COMPARE_LT (for ASC) or COMPARE_GT (for DESC).
  */
 typedef struct PathKey
 {
@@ -1518,8 +1516,8 @@ typedef struct PathKey
 
 	/* the value that is ordered */
 	EquivalenceClass *pk_eclass pg_node_attr(copy_as_scalar, equal_as_scalar);
-	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
-	int			pk_strategy;	/* sort direction (ASC or DESC) */
+	Oid			pk_opfamily;	/* index opfamily defining the ordering */
+	CompareType pk_cmptype;		/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
 } PathKey;
 
@@ -2784,9 +2782,9 @@ typedef struct RestrictInfo
 typedef struct MergeScanSelCache
 {
 	/* Ordering details (cache lookup key) */
-	Oid			opfamily;		/* btree opfamily defining the ordering */
+	Oid			opfamily;		/* index opfamily defining the ordering */
 	Oid			collation;		/* collation for the ordering */
-	int			strategy;		/* sort direction (ASC or DESC) */
+	CompareType cmptype;		/* sort direction (ASC or DESC) */
 	bool		nulls_first;	/* do NULLs come before normal values? */
 	/* Results */
 	Selectivity leftstartsel;	/* first-join fraction for clause left side */

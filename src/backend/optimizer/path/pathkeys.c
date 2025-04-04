@@ -55,7 +55,7 @@ static bool right_merge_direction(PlannerInfo *root, PathKey *pathkey);
 PathKey *
 make_canonical_pathkey(PlannerInfo *root,
 					   EquivalenceClass *eclass, Oid opfamily,
-					   int strategy, bool nulls_first)
+					   CompareType cmptype, bool nulls_first)
 {
 	PathKey    *pk;
 	ListCell   *lc;
@@ -74,7 +74,7 @@ make_canonical_pathkey(PlannerInfo *root,
 		pk = (PathKey *) lfirst(lc);
 		if (eclass == pk->pk_eclass &&
 			opfamily == pk->pk_opfamily &&
-			strategy == pk->pk_strategy &&
+			cmptype == pk->pk_cmptype &&
 			nulls_first == pk->pk_nulls_first)
 			return pk;
 	}
@@ -88,7 +88,7 @@ make_canonical_pathkey(PlannerInfo *root,
 	pk = makeNode(PathKey);
 	pk->pk_eclass = eclass;
 	pk->pk_opfamily = opfamily;
-	pk->pk_strategy = strategy;
+	pk->pk_cmptype = cmptype;
 	pk->pk_nulls_first = nulls_first;
 
 	root->canon_pathkeys = lappend(root->canon_pathkeys, pk);
@@ -206,12 +206,12 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 						   Relids rel,
 						   bool create_it)
 {
-	int16		strategy;
+	CompareType cmptype;
 	Oid			equality_op;
 	List	   *opfamilies;
 	EquivalenceClass *eclass;
 
-	strategy = reverse_sort ? BTGreaterStrategyNumber : BTLessStrategyNumber;
+	cmptype = reverse_sort ? COMPARE_GT : COMPARE_LT;
 
 	/*
 	 * EquivalenceClasses need to contain opfamily lists based on the family
@@ -242,7 +242,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 
 	/* And finally we can find or create a PathKey node */
 	return make_canonical_pathkey(root, eclass, opfamily,
-								  strategy, nulls_first);
+								  cmptype, nulls_first);
 }
 
 /*
@@ -1118,7 +1118,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 						make_canonical_pathkey(root,
 											   outer_ec,
 											   sub_pathkey->pk_opfamily,
-											   sub_pathkey->pk_strategy,
+											   sub_pathkey->pk_cmptype,
 											   sub_pathkey->pk_nulls_first);
 			}
 		}
@@ -1200,7 +1200,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					outer_pk = make_canonical_pathkey(root,
 													  outer_ec,
 													  sub_pathkey->pk_opfamily,
-													  sub_pathkey->pk_strategy,
+													  sub_pathkey->pk_cmptype,
 													  sub_pathkey->pk_nulls_first);
 					/* score = # of equivalence peers */
 					score = list_length(outer_ec->ec_members) - 1;
@@ -1816,7 +1816,7 @@ select_outer_pathkeys_for_merge(PlannerInfo *root,
 		pathkey = make_canonical_pathkey(root,
 										 ec,
 										 linitial_oid(ec->ec_opfamilies),
-										 BTLessStrategyNumber,
+										 COMPARE_LT,
 										 false);
 		/* can't be redundant because no duplicate ECs */
 		Assert(!pathkey_is_redundant(pathkey, pathkeys));
@@ -1909,7 +1909,7 @@ make_inner_pathkeys_for_merge(PlannerInfo *root,
 			pathkey = make_canonical_pathkey(root,
 											 ieclass,
 											 opathkey->pk_opfamily,
-											 opathkey->pk_strategy,
+											 opathkey->pk_cmptype,
 											 opathkey->pk_nulls_first);
 
 		/*
@@ -2134,12 +2134,12 @@ right_merge_direction(PlannerInfo *root, PathKey *pathkey)
 			 * want to prefer only one of the two possible directions, and we
 			 * might as well use this one.
 			 */
-			return (pathkey->pk_strategy == query_pathkey->pk_strategy);
+			return (pathkey->pk_cmptype == query_pathkey->pk_cmptype);
 		}
 	}
 
 	/* If no matching ORDER BY request, prefer the ASC direction */
-	return (pathkey->pk_strategy == BTLessStrategyNumber);
+	return (pathkey->pk_cmptype == COMPARE_LT);
 }
 
 /*

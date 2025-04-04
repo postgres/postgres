@@ -999,7 +999,7 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		/* Looks like we can generate a pathkey, so let's do it. */
 		pathkey = make_canonical_pathkey(root, cur_ec,
 										 linitial_oid(cur_ec->ec_opfamilies),
-										 BTLessStrategyNumber,
+										 COMPARE_LT,
 										 false);
 		useful_pathkeys_list = lappend(useful_pathkeys_list,
 									   list_make1(pathkey));

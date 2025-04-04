@@ -3608,7 +3608,7 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 		/* debugging check */
 		if (opathkey->pk_opfamily != ipathkey->pk_opfamily ||
 			opathkey->pk_eclass->ec_collation != ipathkey->pk_eclass->ec_collation ||
-			opathkey->pk_strategy != ipathkey->pk_strategy ||
+			opathkey->pk_cmptype != ipathkey->pk_cmptype ||
 			opathkey->pk_nulls_first != ipathkey->pk_nulls_first)
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
 
@@ -4093,7 +4093,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 		cache = (MergeScanSelCache *) lfirst(lc);
 		if (cache->opfamily == pathkey->pk_opfamily &&
 			cache->collation == pathkey->pk_eclass->ec_collation &&
-			cache->strategy == pathkey->pk_strategy &&
+			cache->cmptype == pathkey->pk_cmptype &&
 			cache->nulls_first == pathkey->pk_nulls_first)
 			return cache;
 	}
@@ -4102,7 +4102,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	mergejoinscansel(root,
 					 (Node *) rinfo->clause,
 					 pathkey->pk_opfamily,
-					 pathkey->pk_strategy,
+					 pathkey->pk_cmptype,
 					 pathkey->pk_nulls_first,
 					 &leftstartsel,
 					 &leftendsel,
@@ -4115,7 +4115,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	cache = (MergeScanSelCache *) palloc(sizeof(MergeScanSelCache));
 	cache->opfamily = pathkey->pk_opfamily;
 	cache->collation = pathkey->pk_eclass->ec_collation;
-	cache->strategy = pathkey->pk_strategy;
+	cache->cmptype = pathkey->pk_cmptype;
 	cache->nulls_first = pathkey->pk_nulls_first;
 	cache->leftstartsel = leftstartsel;
 	cache->leftendsel = leftendsel;

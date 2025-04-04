@@ -3129,13 +3129,13 @@ create_indexscan_plan(PlannerInfo *root,
 			Oid			sortop;
 
 			/* Get sort operator from opfamily */
-			sortop = get_opfamily_member(pathkey->pk_opfamily,
-										 exprtype,
-										 exprtype,
-										 pathkey->pk_strategy);
+			sortop = get_opfamily_member_for_cmptype(pathkey->pk_opfamily,
+													 exprtype,
+													 exprtype,
+													 pathkey->pk_cmptype);
 			if (!OidIsValid(sortop))
 				elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-					 pathkey->pk_strategy, exprtype, exprtype, pathkey->pk_opfamily);
+					 pathkey->pk_cmptype, exprtype, exprtype, pathkey->pk_opfamily);
 			indexorderbyops = lappend_oid(indexorderbyops, sortop);
 		}
 	}
@@ -4739,14 +4739,14 @@ create_mergejoin_plan(PlannerInfo *root,
 			opathkey->pk_eclass->ec_collation != ipathkey->pk_eclass->ec_collation)
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
 		if (first_inner_match &&
-			(opathkey->pk_strategy != ipathkey->pk_strategy ||
+			(opathkey->pk_cmptype != ipathkey->pk_cmptype ||
 			 opathkey->pk_nulls_first != ipathkey->pk_nulls_first))
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
 
 		/* OK, save info for executor */
 		mergefamilies[i] = opathkey->pk_opfamily;
 		mergecollations[i] = opathkey->pk_eclass->ec_collation;
-		mergereversals[i] = (opathkey->pk_strategy == BTGreaterStrategyNumber ? true : false);
+		mergereversals[i] = (opathkey->pk_cmptype == COMPARE_GT ? true : false);
 		mergenullsfirst[i] = opathkey->pk_nulls_first;
 		i++;
 	}
@@ -6374,13 +6374,13 @@ prepare_sort_from_pathkeys(Plan *lefttree, List *pathkeys,
 		 * Look up the correct sort operator from the PathKey's slightly
 		 * abstracted representation.
 		 */
-		sortop = get_opfamily_member(pathkey->pk_opfamily,
-									 pk_datatype,
-									 pk_datatype,
-									 pathkey->pk_strategy);
+		sortop = get_opfamily_member_for_cmptype(pathkey->pk_opfamily,
+												 pk_datatype,
+												 pk_datatype,
+												 pathkey->pk_cmptype);
 		if (!OidIsValid(sortop))	/* should not happen */
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 pathkey->pk_strategy, pk_datatype, pk_datatype,
+				 pathkey->pk_cmptype, pk_datatype, pk_datatype,
 				 pathkey->pk_opfamily);
 
 		/* Add the column to the sort arrays */
