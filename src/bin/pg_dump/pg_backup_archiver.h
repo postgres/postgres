@@ -97,7 +97,10 @@
 #define WORKER_IGNORED_ERRORS		  12
 
 typedef struct _archiveHandle ArchiveHandle;
+#ifndef HAVE_TOCENTRY_TYPEDEF
 typedef struct _tocEntry TocEntry;
+#define HAVE_TOCENTRY_TYPEDEF 1
+#endif
 struct ParallelState;
 
 #define READ_ERROR_EXIT(fd) \
