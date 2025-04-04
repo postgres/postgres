@@ -6327,10 +6327,7 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(lc);
 		ScanDirection indexscandir;
-
-		/* Ignore non-btree indexes */
-		if (index->relam != BTREE_AM_OID)
-			continue;
+		StrategyNumber strategy;
 
 		/*
 		 * Ignore partial indexes --- we only want stats that cover the entire
@@ -6354,15 +6351,16 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;			/* test first 'cause it's cheapest */
 		if (!match_index_to_operand(vardata->var, 0, index))
 			continue;
-		switch (get_op_opfamily_strategy(sortop, index->sortopfamily[0]))
+		strategy = get_op_opfamily_strategy(sortop, index->sortopfamily[0]);
+		switch (IndexAmTranslateStrategy(strategy, index->relam, index->sortopfamily[0], true))
 		{
-			case BTLessStrategyNumber:
+			case COMPARE_LT:
 				if (index->reverse_sort[0])
 					indexscandir = BackwardScanDirection;
 				else
 					indexscandir = ForwardScanDirection;
 				break;
-			case BTGreaterStrategyNumber:
+			case COMPARE_GT:
 				if (index->reverse_sort[0])
 					indexscandir = ForwardScanDirection;
 				else
@@ -6602,13 +6600,17 @@ get_actual_variable_endpoint(Relation heapRel,
 		}
 
 		/*
-		 * We expect that btree will return data in IndexTuple not HeapTuple
-		 * format.  It's not lossy either.
+		 * We expect that the index will return data in IndexTuple not
+		 * HeapTuple format.
 		 */
 		if (!index_scan->xs_itup)
 			elog(ERROR, "no data returned for index-only scan");
+
+		/*
+		 * We do not yet support recheck here.
+		 */
 		if (index_scan->xs_recheck)
-			elog(ERROR, "unexpected recheck indication from btree");
+			break;
 
 		/* OK to deconstruct the index tuple */
 		index_deform_tuple(index_scan->xs_itup,
