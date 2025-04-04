@@ -871,13 +871,19 @@ prepare_next_query(SQLFunctionHashEntry *func)
 
 	/*
 	 * Parse and/or rewrite the query, creating a CachedPlanSource that holds
-	 * a copy of the original parsetree.
+	 * a copy of the original parsetree.  Note fine point: we make a copy of
+	 * each original parsetree to ensure that the source_list in pcontext
+	 * remains unmodified during parse analysis and rewrite.  This is normally
+	 * unnecessary, but we have to do it in case an error is raised during
+	 * parse analysis.  Otherwise, a fresh attempt to execute the function
+	 * will arrive back here and try to work from a corrupted source_list.
 	 */
 	if (!func->raw_source)
 	{
 		/* Source queries are already parse-analyzed */
 		Query	   *parsetree = list_nth_node(Query, func->source_list, qindex);
 
+		parsetree = copyObject(parsetree);
 		plansource = CreateCachedPlanForQuery(parsetree,
 											  func->src,
 											  CreateCommandTag((Node *) parsetree));
@@ -889,6 +895,7 @@ prepare_next_query(SQLFunctionHashEntry *func)
 		/* Source queries are raw parsetrees */
 		RawStmt    *parsetree = list_nth_node(RawStmt, func->source_list, qindex);
 
+		parsetree = copyObject(parsetree);
 		plansource = CreateCachedPlan(parsetree,
 									  func->src,
 									  CreateCommandTag(parsetree->stmt));
