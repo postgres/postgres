@@ -755,9 +755,11 @@ _CloseArchive(ArchiveHandle *AH)
 		 * If possible, re-write the TOC in order to update the data offset
 		 * information.  This is not essential, as pg_restore can cope in most
 		 * cases without it; but it can make pg_restore significantly faster
-		 * in some situations (especially parallel restore).
+		 * in some situations (especially parallel restore).  We can skip this
+		 * step if we're not dumping any data; there are no offsets to update
+		 * in that case.
 		 */
-		if (ctx->hasSeek &&
+		if (ctx->hasSeek && AH->public.dopt->dumpData &&
 			fseeko(AH->FH, tpos, SEEK_SET) == 0)
 			WriteToc(AH);
 	}
