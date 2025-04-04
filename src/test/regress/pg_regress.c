@@ -1997,8 +1997,8 @@ create_database(const char *dbname)
 		sql_file = fopen(exec_sql, "r");
 		if (sql_file == NULL)
 		{
-			bail("could not open \"%s\" to read extra setup file: %s",
-				 exec_sql, strerror(errno));
+			bail("could not open \"%s\" to read extra setup file: %m",
+				 exec_sql);
 		}
 		while (fgets(line_buf, sizeof(line_buf), sql_file) != NULL)
 			psql_command(dbname, "%s", line_buf);
