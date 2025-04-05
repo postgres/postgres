@@ -88,6 +88,7 @@ static void analyzeCTE(ParseState *pstate, CommonTableExpr *cte);
 /* Dependency processing functions */
 static void makeDependencyGraph(CteState *cstate);
 static bool makeDependencyGraphWalker(Node *node, CteState *cstate);
+static void WalkInnerWith(Node *stmt, WithClause *withClause, CteState *cstate);
 static void TopologicalSort(ParseState *pstate, CteItem *items, int numitems);
 
 /* Recursion validity checker functions */
@@ -725,58 +726,69 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 	if (IsA(node, SelectStmt))
 	{
 		SelectStmt *stmt = (SelectStmt *) node;
-		ListCell   *lc;
 
 		if (stmt->withClause)
 		{
-			if (stmt->withClause->recursive)
-			{
-				/*
-				 * In the RECURSIVE case, all query names of the WITH are
-				 * visible to all WITH items as well as the main query. So
-				 * push them all on, process, pop them all off.
-				 */
-				cstate->innerwiths = lcons(stmt->withClause->ctes,
-										   cstate->innerwiths);
-				foreach(lc, stmt->withClause->ctes)
-				{
-					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-
-					(void) makeDependencyGraphWalker(cte->ctequery, cstate);
-				}
-				(void) raw_expression_tree_walker(node,
-												  makeDependencyGraphWalker,
-												  cstate);
-				cstate->innerwiths = list_delete_first(cstate->innerwiths);
-			}
-			else
-			{
-				/*
-				 * In the non-RECURSIVE case, query names are visible to the
-				 * WITH items after them and to the main query.
-				 */
-				cstate->innerwiths = lcons(NIL, cstate->innerwiths);
-				foreach(lc, stmt->withClause->ctes)
-				{
-					CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
-					ListCell   *cell1;
-
-					(void) makeDependencyGraphWalker(cte->ctequery, cstate);
-					/* note that recursion could mutate innerwiths list */
-					cell1 = list_head(cstate->innerwiths);
-					lfirst(cell1) = lappend((List *) lfirst(cell1), cte);
-				}
-				(void) raw_expression_tree_walker(node,
-												  makeDependencyGraphWalker,
-												  cstate);
-				cstate->innerwiths = list_delete_first(cstate->innerwiths);
-			}
+			/* Examine the WITH clause and the SelectStmt */
+			WalkInnerWith(node, stmt->withClause, cstate);
 			/* We're done examining the SelectStmt */
 			return false;
 		}
 		/* if no WITH clause, just fall through for normal processing */
 	}
-	if (IsA(node, WithClause))
+	else if (IsA(node, InsertStmt))
+	{
+		InsertStmt *stmt = (InsertStmt *) node;
+
+		if (stmt->withClause)
+		{
+			/* Examine the WITH clause and the InsertStmt */
+			WalkInnerWith(node, stmt->withClause, cstate);
+			/* We're done examining the InsertStmt */
+			return false;
+		}
+		/* if no WITH clause, just fall through for normal processing */
+	}
+	else if (IsA(node, DeleteStmt))
+	{
+		DeleteStmt *stmt = (DeleteStmt *) node;
+
+		if (stmt->withClause)
+		{
+			/* Examine the WITH clause and the DeleteStmt */
+			WalkInnerWith(node, stmt->withClause, cstate);
+			/* We're done examining the DeleteStmt */
+			return false;
+		}
+		/* if no WITH clause, just fall through for normal processing */
+	}
+	else if (IsA(node, UpdateStmt))
+	{
+		UpdateStmt *stmt = (UpdateStmt *) node;
+
+		if (stmt->withClause)
+		{
+			/* Examine the WITH clause and the UpdateStmt */
+			WalkInnerWith(node, stmt->withClause, cstate);
+			/* We're done examining the UpdateStmt */
+			return false;
+		}
+		/* if no WITH clause, just fall through for normal processing */
+	}
+	else if (IsA(node, MergeStmt))
+	{
+		MergeStmt  *stmt = (MergeStmt *) node;
+
+		if (stmt->withClause)
+		{
+			/* Examine the WITH clause and the MergeStmt */
+			WalkInnerWith(node, stmt->withClause, cstate);
+			/* We're done examining the MergeStmt */
+			return false;
+		}
+		/* if no WITH clause, just fall through for normal processing */
+	}
+	else if (IsA(node, WithClause))
 	{
 		/*
 		 * Prevent raw_expression_tree_walker from recursing directly into a
@@ -788,6 +800,60 @@ makeDependencyGraphWalker(Node *node, CteState *cstate)
 	return raw_expression_tree_walker(node,
 									  makeDependencyGraphWalker,
 									  cstate);
+}
+
+/*
+ * makeDependencyGraphWalker's recursion into a statement having a WITH clause.
+ *
+ * This subroutine is concerned with updating the innerwiths list correctly
+ * based on the visibility rules for CTE names.
+ */
+static void
+WalkInnerWith(Node *stmt, WithClause *withClause, CteState *cstate)
+{
+	ListCell   *lc;
+
+	if (withClause->recursive)
+	{
+		/*
+		 * In the RECURSIVE case, all query names of the WITH are visible to
+		 * all WITH items as well as the main query.  So push them all on,
+		 * process, pop them all off.
+		 */
+		cstate->innerwiths = lcons(withClause->ctes, cstate->innerwiths);
+		foreach(lc, withClause->ctes)
+		{
+			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+
+			(void) makeDependencyGraphWalker(cte->ctequery, cstate);
+		}
+		(void) raw_expression_tree_walker(stmt,
+										  makeDependencyGraphWalker,
+										  cstate);
+		cstate->innerwiths = list_delete_first(cstate->innerwiths);
+	}
+	else
+	{
+		/*
+		 * In the non-RECURSIVE case, query names are visible to the WITH
+		 * items after them and to the main query.
+		 */
+		cstate->innerwiths = lcons(NIL, cstate->innerwiths);
+		foreach(lc, withClause->ctes)
+		{
+			CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
+			ListCell   *cell1;
+
+			(void) makeDependencyGraphWalker(cte->ctequery, cstate);
+			/* note that recursion could mutate innerwiths list */
+			cell1 = list_head(cstate->innerwiths);
+			lfirst(cell1) = lappend((List *) lfirst(cell1), cte);
+		}
+		(void) raw_expression_tree_walker(stmt,
+										  makeDependencyGraphWalker,
+										  cstate);
+		cstate->innerwiths = list_delete_first(cstate->innerwiths);
+	}
 }
 
 /*

@@ -2104,6 +2104,14 @@ WITH RECURSIVE x(n) AS (
 ERROR:  ORDER BY in a recursive query is not implemented
 LINE 3:   ORDER BY (SELECT n FROM x))
                    ^
+-- and this
+WITH RECURSIVE x(n) AS (
+  WITH sub_cte AS (SELECT * FROM x)
+  DELETE FROM graph RETURNING f)
+	SELECT * FROM x;
+ERROR:  recursive query "x" must not contain data-modifying statements
+LINE 1: WITH RECURSIVE x(n) AS (
+                       ^
 CREATE TEMPORARY TABLE y (a INTEGER);
 INSERT INTO y SELECT generate_series(1, 10);
 -- LEFT JOIN

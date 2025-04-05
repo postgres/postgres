@@ -963,6 +963,13 @@ WITH RECURSIVE x(n) AS (
   ORDER BY (SELECT n FROM x))
 	SELECT * FROM x;
 
+-- and this
+WITH RECURSIVE x(n) AS (
+  WITH sub_cte AS (SELECT * FROM x)
+  DELETE FROM graph RETURNING f)
+	SELECT * FROM x;
+
+
 CREATE TEMPORARY TABLE y (a INTEGER);
 INSERT INTO y SELECT generate_series(1, 10);
 
