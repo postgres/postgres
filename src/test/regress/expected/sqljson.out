@@ -751,6 +751,12 @@ SELECT JSON_ARRAY(SELECT i FROM (VALUES (3), (1), (NULL), (2)) foo(i) ORDER BY i
  [1, 2, 3]
 (1 row)
 
+SELECT JSON_ARRAY(WITH x AS (SELECT 1) VALUES (TRUE));
+ json_array 
+------------
+ [true]
+(1 row)
+
 -- Should fail
 SELECT JSON_ARRAY(SELECT FROM (VALUES (1)) foo(i));
 ERROR:  subquery must return only one column

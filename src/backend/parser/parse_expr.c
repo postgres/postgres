@@ -3772,7 +3772,7 @@ transformJsonArrayQueryConstructor(ParseState *pstate,
 	/* Transform query only for counting target list entries. */
 	qpstate = make_parsestate(pstate);
 
-	query = transformStmt(qpstate, ctor->query);
+	query = transformStmt(qpstate, copyObject(ctor->query));
 
 	if (count_nonjunk_tlist_entries(query->targetList) != 1)
 		ereport(ERROR,
