@@ -121,8 +121,9 @@ CreateConstraintEntry(const char *constraintName,
 	if (foreignNKeys > 0)
 	{
 		Datum	   *fkdatums;
+		int			nkeys = Max(foreignNKeys, numFkDeleteSetCols);
 
-		fkdatums = (Datum *) palloc(foreignNKeys * sizeof(Datum));
+		fkdatums = (Datum *) palloc(nkeys * sizeof(Datum));
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = Int16GetDatum(foreignKey[i]);
 		confkeyArray = construct_array(fkdatums, foreignNKeys,
