@@ -71,8 +71,6 @@ static int	get_dbnames_list_to_restore(PGconn *conn,
 										SimpleStringList db_exclude_patterns);
 static int	get_dbname_oid_list_from_mfile(const char *dumpdirpath,
 										   SimpleOidStringList *dbname_oid_list);
-static size_t quote_literal_internal(char *dst, const char *src, size_t len);
-static char *quote_literal_cstr(const char *rawstr);
 
 int
 main(int argc, char **argv)
@@ -947,29 +945,26 @@ get_dbnames_list_to_restore(PGconn *conn,
 		 db_cell; db_cell = db_cell->next)
 	{
 		bool		skip_db_restore = false;
+		PQExpBuffer db_lit = createPQExpBuffer();
+
+		appendStringLiteralConn(db_lit, db_cell->str, conn);
 
 		for (SimpleStringListCell *pat_cell = db_exclude_patterns.head; pat_cell; pat_cell = pat_cell->next)
 		{
 			/*
-			 * the construct pattern matching query: SELECT 1 WHERE XXX
-			 * OPERATOR(pg_catalog.~) '^(PATTERN)$' COLLATE pg_catalog.default
-			 *
-			 * XXX represents the string literal database name derived from
-			 * the dbname_oid_list, which is initially extracted from the
-			 * map.dat file located in the backup directory.  that's why we
-			 * need quote_literal_cstr.
-			 *
-			 * If no db connection, then consider PATTERN as NAME.
+			 * If there is an exact match then we don't need to try a pattern
+			 * match
 			 */
 			if (pg_strcasecmp(db_cell->str, pat_cell->val) == 0)
 				skip_db_restore = true;
+			/* Otherwise, try a pattern match if there is a connection */
 			else if (conn)
 			{
 				int			dotcnt;
 
 				appendPQExpBufferStr(query, "SELECT 1 ");
 				processSQLNamePattern(conn, query, pat_cell->val, false,
-									  false, NULL, quote_literal_cstr(db_cell->str),
+									  false, NULL, db_lit->data,
 									  NULL, NULL, NULL, &dotcnt);
 
 				if (dotcnt > 0)
@@ -996,7 +991,10 @@ get_dbnames_list_to_restore(PGconn *conn,
 				break;
 		}
 
-		/* Increment count if database needs to be restored. */
+		/*
+		 * Mark db to be skipped or increment the counter of dbs to be
+		 * restored
+		 */
 		if (skip_db_restore)
 		{
 			pg_log_info("excluding database \"%s\"", db_cell->str);
@@ -1110,10 +1108,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 
 	num_total_db = get_dbname_oid_list_from_mfile(dumpdirpath, &dbname_oid_list);
 
-	/*
-	 * If map.dat has no entry, return from here after processing global.dat
-	 * file.
-	 */
+	/* If map.dat has no entry, return after processing global.dat */
 	if (dbname_oid_list.head == NULL)
 		return process_global_sql_commands(conn, dumpdirpath, opts->filename);
 
@@ -1121,7 +1116,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 
 	if (!conn)
 	{
-		pg_log_info("trying to connect database \"postgres\"  to dump into out file");
+		pg_log_info("trying to connect database \"postgres\"");
 
 		conn = ConnectDatabase("postgres", NULL, opts->cparams.pghost,
 							   opts->cparams.pgport, opts->cparams.username, TRI_DEFAULT,
@@ -1130,7 +1125,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		/* Try with template1. */
 		if (!conn)
 		{
-			pg_log_info("trying to connect database \"template1\" as failed to connect to database \"postgres\" to dump into out file");
+			pg_log_info("trying to connect database \"template1\"");
 
 			conn = ConnectDatabase("template1", NULL, opts->cparams.pghost,
 								   opts->cparams.pgport, opts->cparams.username, TRI_DEFAULT,
@@ -1139,7 +1134,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	}
 
 	/*
-	 * processing pg_restore --exclude-database=PATTERN/NAME if no connection.
+	 * filter the db list according to the exclude patterns
 	 */
 	num_db_restore = get_dbnames_list_to_restore(conn, &dbname_oid_list,
 												 db_exclude_patterns);
@@ -1158,7 +1153,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		return n_errors_total;
 	}
 
-	pg_log_info("needs to restore %d databases out of %d databases", num_db_restore, num_total_db);
+	pg_log_info("need to restore %d databases out of %d databases", num_db_restore, num_total_db);
 
 	/*
 	 * Till now, we made a list of databases, those needs to be restored after
@@ -1179,7 +1174,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 
 		/*
 		 * We need to reset override_dbname so that objects can be restored
-		 * into already created database. (used with -d/--dbname option)
+		 * into an already created database. (used with -d/--dbname option)
 		 */
 		if (opts->cparams.override_dbname)
 		{
@@ -1241,7 +1236,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		opts->dumpSchema = dumpSchema;
 		opts->dumpStatistics = dumpStatistics;
 
-		/* Restore single database. */
+		/* Restore the single database. */
 		n_errors = restore_one_database(subdirpath, opts, numWorkers, true, count);
 
 		/* Print a summary of ignored errors during single database restore. */
@@ -1266,12 +1261,12 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 /*
  * process_global_sql_commands
  *
- * This will open global.dat file and will execute all global sql commands one
- * by one statement.
- * Semicolon is considered as statement terminator.  If outfile is passed, then
- * this will copy all sql commands into outfile rather then executing them.
+ * Open global.dat and execute or copy the sql commands one by one.
  *
- * returns the number of errors while processing global.dat
+ * If outfile is not NULL, copy all sql commands into outfile rather than
+ * executing them.
+ *
+ * Returns the number of errors while processing global.dat
  */
 static int
 process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *outfile)
@@ -1346,7 +1341,7 @@ process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *o
 /*
  * copy_or_print_global_file
  *
- * This will copy global.dat file into the output file.  If "-" is used as outfile,
+ * Copy global.dat into the output file.  If "-" is used as outfile,
  * then print commands to stdout.
  */
 static void
@@ -1380,58 +1375,4 @@ copy_or_print_global_file(const char *outfile, FILE *pfile)
 	/* Close output file. */
 	if (strcmp(outfile, "-") != 0)
 		fclose(OPF);
-}
-
-/*
- * quote_literal_internal
- */
-static size_t
-quote_literal_internal(char *dst, const char *src, size_t len)
-{
-	const char *s;
-	char	   *savedst = dst;
-
-	for (s = src; s < src + len; s++)
-	{
-		if (*s == '\\')
-		{
-			*dst++ = ESCAPE_STRING_SYNTAX;
-			break;
-		}
-	}
-
-	*dst++ = '\'';
-	while (len-- > 0)
-	{
-		if (SQL_STR_DOUBLE(*src, true))
-			*dst++ = *src;
-		*dst++ = *src++;
-	}
-	*dst++ = '\'';
-
-	return dst - savedst;
-}
-
-/*
- * quote_literal_cstr
- *
- *	  returns a properly quoted literal
- * copied from src/backend/utils/adt/quote.c
- */
-static char *
-quote_literal_cstr(const char *rawstr)
-{
-	char	   *result;
-	int			len;
-	int			newlen;
-
-	len = strlen(rawstr);
-
-	/* We make a worst-case result area; wasting a little space is OK */
-	result = pg_malloc(len * 2 + 3 + 1);
-
-	newlen = quote_literal_internal(result, rawstr, len);
-	result[newlen] = '\0';
-
-	return result;
 }
