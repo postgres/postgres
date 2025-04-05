@@ -1460,7 +1460,7 @@ pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
 	else
 	{
 		tde_wal_key_last_rec->next = wal_rec;
-		tde_wal_key_last_rec->end_lsn = wal_rec->start_lsn - 1;
+		tde_wal_key_last_rec->end_lsn = wal_rec->start_lsn;
 		tde_wal_key_last_rec = wal_rec;
 	}
 

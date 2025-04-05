@@ -320,7 +320,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			 * Check if the key's range overlaps with the buffer's and decypt
 			 * the part that does.
 			 */
-			if (data_start <= curr_key->end_lsn && curr_key->start_lsn <= data_end)
+			if (data_start < curr_key->end_lsn && data_end > curr_key->start_lsn)
 			{
 				char		iv_prefix[16];
 

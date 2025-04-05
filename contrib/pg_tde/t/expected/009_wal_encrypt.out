@@ -3,9 +3,39 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_
 -1
 SELECT pg_tde_set_server_principal_key('global-db-principal-key', 'file-keyring-010');
 
+ALTER SYSTEM SET pg_tde.wal_encrypt = on;
 -- server restart with wal encryption
 SHOW pg_tde.wal_encrypt;
 on
-CREATE TABLE test_wal(id SERIAL,k INTEGER,PRIMARY KEY (id));
-CHECKPOINT;
+SELECT slot_name FROM pg_create_logical_replication_slot('tde_slot', 'test_decoding');
+tde_slot
+CREATE TABLE test_wal (id SERIAL, k INTEGER, PRIMARY KEY (id));
+INSERT INTO test_wal (k) VALUES (1), (2);
+ALTER SYSTEM SET pg_tde.wal_encrypt = off;
+-- server restart without wal encryption
+SHOW pg_tde.wal_encrypt;
+off
+INSERT INTO test_wal (k) VALUES (3), (4);
+ALTER SYSTEM SET pg_tde.wal_encrypt = on;
+-- server restart with wal encryption
+SHOW pg_tde.wal_encrypt;
+on
+INSERT INTO test_wal (k) VALUES (5), (6);
+SELECT data FROM pg_logical_slot_get_changes('tde_slot', NULL, NULL);
+BEGIN 739
+COMMIT 739
+BEGIN 740
+table public.test_wal: INSERT: id[integer]:1 k[integer]:1
+table public.test_wal: INSERT: id[integer]:2 k[integer]:2
+COMMIT 740
+BEGIN 741
+table public.test_wal: INSERT: id[integer]:3 k[integer]:3
+table public.test_wal: INSERT: id[integer]:4 k[integer]:4
+COMMIT 741
+BEGIN 742
+table public.test_wal: INSERT: id[integer]:5 k[integer]:5
+table public.test_wal: INSERT: id[integer]:6 k[integer]:6
+COMMIT 742
+SELECT pg_drop_replication_slot('tde_slot');
+
 DROP EXTENSION pg_tde;
