@@ -10571,6 +10571,16 @@ fetchAttributeStats(Archive *fout)
 	PGresult   *res = NULL;
 	static TocEntry *te;
 	static bool restarted;
+	int			max_rels = MAX_ATTR_STATS_RELS;
+
+	/*
+	 * Our query for retrieving statistics for multiple relations uses WITH
+	 * ORDINALITY and multi-argument UNNEST(), both of which were introduced
+	 * in v9.4.  For older versions, we resort to gathering statistics for a
+	 * single relation at a time.
+	 */
+	if (fout->remoteVersion < 90400)
+		max_rels = 1;
 
 	/* If we're just starting, set our TOC pointer. */
 	if (!te)
@@ -10596,7 +10606,7 @@ fetchAttributeStats(Archive *fout)
 	 * This is perhaps not the sturdiest assumption, so we verify it matches
 	 * reality in dumpRelationStats_dumper().
 	 */
-	for (; te != AH->toc && count < MAX_ATTR_STATS_RELS; te = te->next)
+	for (; te != AH->toc && count < max_rels; te = te->next)
 	{
 		if ((te->reqs & REQ_STATS) != 0 &&
 			strcmp(te->desc, "STATISTICS DATA") == 0)
@@ -10709,14 +10719,26 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 		 * sufficient to convince the planner to use
 		 * pg_class_relname_nsp_index, which avoids a full scan of pg_stats.
 		 * This may not work for all versions.
+		 *
+		 * Our query for retrieving statistics for multiple relations uses
+		 * WITH ORDINALITY and multi-argument UNNEST(), both of which were
+		 * introduced in v9.4.  For older versions, we resort to gathering
+		 * statistics for a single relation at a time.
 		 */
-		appendPQExpBufferStr(query,
-							 "FROM pg_catalog.pg_stats s "
-							 "JOIN unnest($1, $2) WITH ORDINALITY AS u (schemaname, tablename, ord) "
-							 "ON s.schemaname = u.schemaname "
-							 "AND s.tablename = u.tablename "
-							 "WHERE s.tablename = ANY($2) "
-							 "ORDER BY u.ord, s.attname, s.inherited");
+		if (fout->remoteVersion >= 90400)
+			appendPQExpBufferStr(query,
+								 "FROM pg_catalog.pg_stats s "
+								 "JOIN unnest($1, $2) WITH ORDINALITY AS u (schemaname, tablename, ord) "
+								 "ON s.schemaname = u.schemaname "
+								 "AND s.tablename = u.tablename "
+								 "WHERE s.tablename = ANY($2) "
+								 "ORDER BY u.ord, s.attname, s.inherited");
+		else
+			appendPQExpBufferStr(query,
+								 "FROM pg_catalog.pg_stats s "
+								 "WHERE s.schemaname = $1[1] "
+								 "AND s.tablename = $2[1] "
+								 "ORDER BY s.attname, s.inherited");
 
 		ExecuteSqlStatement(fout, query->data);
 
