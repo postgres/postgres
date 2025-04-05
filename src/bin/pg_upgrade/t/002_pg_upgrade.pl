@@ -221,6 +221,9 @@ push @old_initdb_params, '-k' if $oldnode->pg_version < 18;
 
 $old_node_params{extra} = \@old_initdb_params;
 $oldnode->init(%old_node_params);
+# Override log_statement=all set by Cluster.pm.  This avoids large amounts
+# of log traffic that slow this test down even more when run under valgrind.
+$oldnode->append_conf('postgresql.conf', 'log_statement = none');
 $oldnode->start;
 
 my $result;
@@ -312,6 +315,8 @@ push @new_initdb_params, ('--encoding', 'SQL_ASCII');
 push @new_initdb_params, ('--locale-provider', 'libc');
 $new_node_params{extra} = \@new_initdb_params;
 $newnode->init(%new_node_params);
+# Avoid unnecessary log noise
+$newnode->append_conf('postgresql.conf', 'log_statement = none');
 
 # Stabilize stats for comparison.
 $newnode->append_conf('postgresql.conf', 'autovacuum = off');
@@ -379,6 +384,8 @@ SKIP:
 	# source cluster to avoid any differences between dumps taken from both the
 	# clusters caused by differences in their configurations.
 	$dstnode->init(%old_node_params);
+	# Avoid unnecessary log noise
+	$dstnode->append_conf('postgresql.conf', 'log_statement = none');
 	# Stabilize stats for comparison.
 	$dstnode->append_conf('postgresql.conf', 'autovacuum = off');
 	$dstnode->start;
