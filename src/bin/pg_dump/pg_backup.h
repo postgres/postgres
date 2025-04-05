@@ -284,16 +284,6 @@ typedef int DumpId;
 /*
  * Function pointer prototypes for assorted callback methods.
  */
-
-/* forward declaration to avoid including pg_backup_archiver.h here */
-#ifndef HAVE_TOCENTRY_TYPEDEF
-typedef struct _tocEntry TocEntry;
-#define HAVE_TOCENTRY_TYPEDEF 1
-#endif
-
-typedef char *(*DefnDumperPtr) (Archive *AH, const void *userArg, const TocEntry *te);
-typedef int (*DataDumperPtr) (Archive *AH, const void *userArg);
-
 typedef void (*SetupWorkerPtrType) (Archive *AH);
 
 /*

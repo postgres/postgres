@@ -97,10 +97,7 @@
 #define WORKER_IGNORED_ERRORS		  12
 
 typedef struct _archiveHandle ArchiveHandle;
-#ifndef HAVE_TOCENTRY_TYPEDEF
 typedef struct _tocEntry TocEntry;
-#define HAVE_TOCENTRY_TYPEDEF 1
-#endif
 struct ParallelState;
 
 #define READ_ERROR_EXIT(fd) \
@@ -343,6 +340,10 @@ struct _archiveHandle
 	struct _tocEntry *currentTE;
 	struct _tocEntry *lastErrorTE;
 };
+
+
+typedef char *(*DefnDumperPtr) (Archive *AH, const void *userArg, const TocEntry *te);
+typedef int (*DataDumperPtr) (Archive *AH, const void *userArg);
 
 struct _tocEntry
 {
