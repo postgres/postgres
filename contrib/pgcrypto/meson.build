@@ -9,6 +9,7 @@ pgcrypto_sources = files(
   'crypt-des.c',
   'crypt-gensalt.c',
   'crypt-md5.c',
+  'crypt-sha.c',
   'mbuf.c',
   'pgcrypto.c',
   'pgp-armor.c',
@@ -52,6 +53,7 @@ pgcrypto_regress = [
   'pgp-pubkey-decrypt',
   'pgp-pubkey-encrypt',
   'pgp-info',
+  'crypt-shacrypt'
 ]
 
 pgcrypto_openssl_sources = files(

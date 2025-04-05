@@ -67,6 +67,16 @@ run_crypt_bf(const char *psw, const char *salt,
 	return res;
 }
 
+static char *
+run_crypt_sha(const char *psw, const char *salt,
+			  char *buf, unsigned len)
+{
+	char	   *res;
+
+	res = px_crypt_shacrypt(psw, salt, buf, len);
+	return res;
+}
+
 struct px_crypt_algo
 {
 	char	   *id;
@@ -81,6 +91,8 @@ static const struct px_crypt_algo
 	{"$2x$", 4, run_crypt_bf},
 	{"$2$", 3, NULL},			/* N/A */
 	{"$1$", 3, run_crypt_md5},
+	{"$5$", 3, run_crypt_sha},
+	{"$6$", 3, run_crypt_sha},
 	{"_", 1, run_crypt_des},
 	{"", 0, run_crypt_des},
 	{NULL, 0, NULL}
@@ -127,6 +139,16 @@ static struct generator gen_list[] = {
 	{"md5", _crypt_gensalt_md5_rn, 6, 0, 0, 0},
 	{"xdes", _crypt_gensalt_extended_rn, 3, PX_XDES_ROUNDS, 1, 0xFFFFFF},
 	{"bf", _crypt_gensalt_blowfish_rn, 16, PX_BF_ROUNDS, 4, 31},
+	{
+		"sha256crypt", _crypt_gensalt_sha256_rn,
+		PX_SHACRYPT_SALT_MAX_LEN, PX_SHACRYPT_ROUNDS_DEFAULT,
+		PX_SHACRYPT_ROUNDS_MIN, PX_SHACRYPT_ROUNDS_MAX
+	},
+	{
+		"sha512crypt", _crypt_gensalt_sha512_rn,
+		PX_SHACRYPT_SALT_MAX_LEN, PX_SHACRYPT_ROUNDS_DEFAULT,
+		PX_SHACRYPT_ROUNDS_MIN, PX_SHACRYPT_ROUNDS_MAX
+	},
 	{NULL, NULL, 0, 0, 0, 0}
 };
 

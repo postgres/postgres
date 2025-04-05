@@ -45,6 +45,30 @@
 /* default for blowfish salt */
 #define PX_BF_ROUNDS		6
 
+/* Maximum salt string length of shacrypt.  */
+#define PX_SHACRYPT_SALT_MAX_LEN 16
+
+/* SHA buffer length */
+#define PX_SHACRYPT_DIGEST_MAX_LEN 64
+
+/* calculated buffer size of a buffer to store a shacrypt salt string */
+#define PX_SHACRYPT_SALT_BUF_LEN (3 + 7 + 10 + PX_SHACRYPT_SALT_MAX_LEN + 1)
+
+/*
+ * calculated buffer size of a buffer to store complete result of a shacrypt
+ * digest including salt
+ */
+#define PX_SHACRYPT_BUF_LEN (PX_SHACRYPT_SALT_BUF_LEN + 86 + 1)
+
+/* Default number of rounds of shacrypt if not explicitly specified.  */
+#define PX_SHACRYPT_ROUNDS_DEFAULT 5000
+
+/* Minimum number of rounds of shacrypt.  */
+#define PX_SHACRYPT_ROUNDS_MIN 1000
+
+/* Maximum number of rounds of shacrypt.  */
+#define PX_SHACRYPT_ROUNDS_MAX 999999999
+
 /*
  * main interface
  */
@@ -64,6 +88,10 @@ char	   *_crypt_gensalt_md5_rn(unsigned long count,
 								  const char *input, int size, char *output, int output_size);
 char	   *_crypt_gensalt_blowfish_rn(unsigned long count,
 									   const char *input, int size, char *output, int output_size);
+char	   *_crypt_gensalt_sha256_rn(unsigned long count,
+									 const char *input, int size, char *output, int output_size);
+char	   *_crypt_gensalt_sha512_rn(unsigned long count,
+									 const char *input, int size, char *output, int output_size);
 
 /* disable 'extended DES crypt' */
 /* #define DISABLE_XDES */
@@ -78,5 +106,8 @@ char	   *px_crypt_des(const char *key, const char *setting);
 /* crypt-md5.c */
 char	   *px_crypt_md5(const char *pw, const char *salt,
 						 char *passwd, unsigned dstlen);
+
+/* crypt-sha.c */
+char	   *px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstlen);
 
 #endif							/* _PX_CRYPT_H */
