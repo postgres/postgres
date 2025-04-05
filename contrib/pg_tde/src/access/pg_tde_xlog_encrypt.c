@@ -252,11 +252,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 {
 	ssize_t		readsz;
 	WALKeyCacheRec *keys = pg_tde_get_wal_cache_keys();
-	XLogRecPtr	write_key_lsn = 0;
-	WALKeyCacheRec *curr_key = NULL;
-	off_t		dec_off = 0;
-	off_t		dec_end = 0;
-	size_t		dec_sz = 0;
+	XLogRecPtr	write_key_lsn;
 	XLogRecPtr	data_start;
 	XLogRecPtr	data_end;
 
@@ -278,7 +274,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 
 #ifndef FRONTEND
 	write_key_lsn = pg_atomic_read_u64(&EncryptionState->enc_key_lsn);
-#endif
 
 	if (write_key_lsn != 0)
 	{
@@ -295,6 +290,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			keys = pg_tde_get_wal_cache_keys();
 		}
 	}
+#endif
 
 	XLogSegNoOffsetToRecPtr(segno, offset, segSize, data_start);
 	XLogSegNoOffsetToRecPtr(segno, offset + count, segSize, data_end);
@@ -303,8 +299,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	 * TODO: this is higly ineffective. We should get rid of linked list and
 	 * search from the last key as this is what the walsender is useing.
 	 */
-	curr_key = keys;
-	while (curr_key)
+	for (WALKeyCacheRec *curr_key = keys; curr_key != NULL; curr_key = curr_key->next)
 	{
 #ifdef TDE_XLOG_DEBUG
 		elog(DEBUG1, "WAL key %X/%X-%X/%X, encrypted: %s",
@@ -323,11 +318,11 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			if (data_start < curr_key->end_lsn && data_end > curr_key->start_lsn)
 			{
 				char		iv_prefix[16];
+				off_t		dec_off = XLogSegmentOffset(Max(data_start, curr_key->start_lsn), segSize);
+				off_t		dec_end = XLogSegmentOffset(Min(data_end, curr_key->end_lsn), segSize);
+				size_t		dec_sz;
 
 				CalcXLogPageIVPrefix(tli, segno, curr_key->key->base_iv, iv_prefix);
-
-				dec_off = XLogSegmentOffset(Max(data_start, curr_key->start_lsn), segSize);
-				dec_end = XLogSegmentOffset(Min(data_end, curr_key->end_lsn), segSize);
 
 				/* We have reached the end of the segment */
 				if (dec_end == 0)
@@ -352,8 +347,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 				}
 			}
 		}
-
-		curr_key = curr_key->next;
 	}
 
 	return readsz;
