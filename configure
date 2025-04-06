@@ -17864,17 +17864,21 @@ fi
 
 # Select CRC-32C implementation.
 #
-# If we are targeting a processor that has Intel SSE 4.2 instructions, we can
-# use the special CRC instructions for calculating CRC-32C. If we're not
-# targeting such a processor, but we can nevertheless produce code that uses
-# the SSE intrinsics, compile both implementations and select which one to use
-# at runtime, depending on whether SSE 4.2 is supported by the processor we're
-# running on.
+# There are three methods of calculating CRC, in order of increasing
+# performance:
 #
-# Similarly, if we are targeting an ARM processor that has the CRC
-# instructions that are part of the ARMv8 CRC Extension, use them. And if
-# we're not targeting such a processor, but can nevertheless produce code that
-# uses the CRC instructions, compile both, and select at runtime.
+# 1. The fallback using a lookup table, called slicing-by-8
+# 2. CRC-32C instructions (found in e.g. Intel SSE 4.2 and ARMv8 CRC Extension)
+# 3. Algorithms using carryless multiplication instructions
+#    (e.g. Intel PCLMUL and Arm PMULL)
+#
+# If we can produce code (via function attributes or additional compiler
+# flags) that uses #2 (and possibly #3), we compile all implementations
+# and select which one to use at runtime, depending on what is supported
+# by the processor we're running on.
+#
+# If we are targeting a processor that has #2, we can use that without
+# runtime selection.
 #
 # Note that we do not use __attribute__((target("..."))) for the ARM CRC
 # instructions because until clang 16, using the ARM intrinsics still requires
@@ -17925,7 +17929,7 @@ if test x"$USE_SSE42_CRC32C" = x"1"; then
 
 $as_echo "#define USE_SSE42_CRC32C 1" >>confdefs.h
 
-  PG_CRC32C_OBJS="pg_crc32c_sse42.o"
+  PG_CRC32C_OBJS="pg_crc32c_sse42.o pg_crc32c_sse42_choose.o"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: SSE 4.2" >&5
 $as_echo "SSE 4.2" >&6; }
 else
@@ -17974,6 +17978,71 @@ $as_echo "slicing-by-8" >&6; }
 fi
 
 
+# Check for carryless multiplication intrinsics to do vectorized CRC calculations.
+#
+if test x"$host_cpu" = x"x86_64"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm512_clmulepi64_epi128" >&5
+$as_echo_n "checking for _mm512_clmulepi64_epi128... " >&6; }
+if ${pgac_cv_avx512_pclmul_intrinsics+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <immintrin.h>
+    __m512i x;
+    __m512i y;
+
+    #if defined(__has_attribute) && __has_attribute (target)
+    __attribute__((target("vpclmulqdq,avx512vl")))
+    #endif
+    static int avx512_pclmul_test(void)
+    {
+      __m128i z;
+
+      y = _mm512_clmulepi64_epi128(x, y, 0);
+      z = _mm_ternarylogic_epi64(
+                _mm512_castsi512_si128(y),
+                _mm512_extracti32x4_epi32(y, 1),
+                _mm512_extracti32x4_epi32(y, 2),
+                0x96);
+      return _mm_crc32_u64(0, _mm_extract_epi64(z, 0));
+    }
+int
+main ()
+{
+return avx512_pclmul_test();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv_avx512_pclmul_intrinsics=yes
+else
+  pgac_cv_avx512_pclmul_intrinsics=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_avx512_pclmul_intrinsics" >&5
+$as_echo "$pgac_cv_avx512_pclmul_intrinsics" >&6; }
+if test x"$pgac_cv_avx512_pclmul_intrinsics" = x"yes"; then
+  pgac_avx512_pclmul_intrinsics=yes
+fi
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for vectorized CRC-32C" >&5
+$as_echo_n "checking for vectorized CRC-32C... " >&6; }
+if test x"$pgac_avx512_pclmul_intrinsics" = x"yes"; then
+
+$as_echo "#define USE_AVX512_CRC32C_WITH_RUNTIME_CHECK 1" >>confdefs.h
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: AVX-512 with runtime check" >&5
+$as_echo "AVX-512 with runtime check" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: none" >&5
+$as_echo "none" >&6; }
+fi
 
 # Select semaphore implementation type.
 if test "$PORTNAME" != "win32"; then

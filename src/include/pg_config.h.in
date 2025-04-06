@@ -665,6 +665,9 @@
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
 #undef USE_ASSERT_CHECKING
 
+/* Define to 1 to use AVX-512 CRC algorithms with a runtime check. */
+#undef USE_AVX512_CRC32C_WITH_RUNTIME_CHECK
+
 /* Define to 1 to use AVX-512 popcount instructions with a runtime check. */
 #undef USE_AVX512_POPCNT_WITH_RUNTIME_CHECK
 

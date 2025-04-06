@@ -2330,6 +2330,30 @@ SELECT crc32c('The quick brown fox jumps over the lazy dog.');
  419469235
 (1 row)
 
+SELECT crc32c(repeat('A', 127)::bytea);
+  crc32c   
+-----------
+ 291820082
+(1 row)
+
+SELECT crc32c(repeat('A', 128)::bytea);
+  crc32c   
+-----------
+ 816091258
+(1 row)
+
+SELECT crc32c(repeat('A', 129)::bytea);
+   crc32c   
+------------
+ 4213642571
+(1 row)
+
+SELECT crc32c(repeat('A', 800)::bytea);
+   crc32c   
+------------
+ 3134039419
+(1 row)
+
 --
 -- encode/decode
 --

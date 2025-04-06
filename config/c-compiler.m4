@@ -581,6 +581,43 @@ fi
 undefine([Ac_cachevar])dnl
 ])# PGAC_SSE42_CRC32_INTRINSICS
 
+# PGAC_AVX512_PCLMUL_INTRINSICS
+# ---------------------------
+# Check if the compiler supports AVX-512 carryless multiplication
+# and three-way exclusive-or instructions used for computing CRC.
+# AVX-512F is assumed to be supported if the above are.
+#
+# If the intrinsics are supported, sets pgac_avx512_pclmul_intrinsics.
+AC_DEFUN([PGAC_AVX512_PCLMUL_INTRINSICS],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_avx512_pclmul_intrinsics])])dnl
+AC_CACHE_CHECK([for _mm512_clmulepi64_epi128], [Ac_cachevar],
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <immintrin.h>
+    __m512i x;
+    __m512i y;
+
+    #if defined(__has_attribute) && __has_attribute (target)
+    __attribute__((target("vpclmulqdq,avx512vl")))
+    #endif
+    static int avx512_pclmul_test(void)
+    {
+      __m128i z;
+
+      y = _mm512_clmulepi64_epi128(x, y, 0);
+      z = _mm_ternarylogic_epi64(
+                _mm512_castsi512_si128(y),
+                _mm512_extracti32x4_epi32(y, 1),
+                _mm512_extracti32x4_epi32(y, 2),
+                0x96);
+      return _mm_crc32_u64(0, _mm_extract_epi64(z, 0));
+    }],
+  [return avx512_pclmul_test();])],
+  [Ac_cachevar=yes],
+  [Ac_cachevar=no])])
+if test x"$Ac_cachevar" = x"yes"; then
+  pgac_avx512_pclmul_intrinsics=yes
+fi
+undefine([Ac_cachevar])dnl
+])# PGAC_AVX512_PCLMUL_INTRINSICS
 
 # PGAC_ARMV8_CRC32C_INTRINSICS
 # ----------------------------
