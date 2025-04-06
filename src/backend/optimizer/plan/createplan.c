@@ -6893,13 +6893,13 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols)
 		 * Look up the correct equality operator from the PathKey's slightly
 		 * abstracted representation.
 		 */
-		eqop = get_opfamily_member(pathkey->pk_opfamily,
-								   pk_datatype,
-								   pk_datatype,
-								   BTEqualStrategyNumber);
+		eqop = get_opfamily_member_for_cmptype(pathkey->pk_opfamily,
+											   pk_datatype,
+											   pk_datatype,
+											   COMPARE_EQ);
 		if (!OidIsValid(eqop))	/* should not happen */
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 BTEqualStrategyNumber, pk_datatype, pk_datatype,
+				 COMPARE_EQ, pk_datatype, pk_datatype,
 				 pathkey->pk_opfamily);
 
 		uniqColIdx[keyno] = tle->resno;

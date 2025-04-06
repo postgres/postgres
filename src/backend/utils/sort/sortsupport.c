@@ -135,16 +135,16 @@ PrepareSortSupportFromOrderingOp(Oid orderingOp, SortSupport ssup)
 {
 	Oid			opfamily;
 	Oid			opcintype;
-	int16		strategy;
+	CompareType cmptype;
 
 	Assert(ssup->comparator == NULL);
 
 	/* Find the operator in pg_amop */
 	if (!get_ordering_op_properties(orderingOp, &opfamily, &opcintype,
-									&strategy))
+									&cmptype))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 orderingOp);
-	ssup->ssup_reverse = (strategy == BTGreaterStrategyNumber);
+	ssup->ssup_reverse = (cmptype == COMPARE_GT);
 
 	FinishSortSupportFunction(opfamily, opcintype, ssup);
 }

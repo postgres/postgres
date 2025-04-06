@@ -365,14 +365,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 					 * Since "<" uniquely defines the behavior of a sort
 					 * order, this is a sufficient test.
 					 *
-					 * XXX This method is rather slow and also requires the
-					 * undesirable assumption that the other index AM numbers
-					 * its strategies the same as btree.  It'd be better to
-					 * have a way to explicitly declare the corresponding
-					 * btree opfamily for each opfamily of the other index
-					 * type.  But given the lack of current or foreseeable
-					 * amcanorder index types, it's not worth expending more
-					 * effort on now.
+					 * XXX This method is rather slow and complicated.  It'd
+					 * be better to have a way to explicitly declare the
+					 * corresponding btree opfamily for each opfamily of the
+					 * other index type.
 					 */
 					info->sortopfamily = (Oid *) palloc(sizeof(Oid) * nkeycolumns);
 					info->reverse_sort = (bool *) palloc(sizeof(bool) * nkeycolumns);
@@ -382,27 +378,27 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 					{
 						int16		opt = indexRelation->rd_indoption[i];
 						Oid			ltopr;
-						Oid			btopfamily;
-						Oid			btopcintype;
-						int16		btstrategy;
+						Oid			opfamily;
+						Oid			opcintype;
+						CompareType cmptype;
 
 						info->reverse_sort[i] = (opt & INDOPTION_DESC) != 0;
 						info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
 
-						ltopr = get_opfamily_member(info->opfamily[i],
-													info->opcintype[i],
-													info->opcintype[i],
-													BTLessStrategyNumber);
+						ltopr = get_opfamily_member_for_cmptype(info->opfamily[i],
+																info->opcintype[i],
+																info->opcintype[i],
+																COMPARE_LT);
 						if (OidIsValid(ltopr) &&
 							get_ordering_op_properties(ltopr,
-													   &btopfamily,
-													   &btopcintype,
-													   &btstrategy) &&
-							btopcintype == info->opcintype[i] &&
-							btstrategy == BTLessStrategyNumber)
+													   &opfamily,
+													   &opcintype,
+													   &cmptype) &&
+							opcintype == info->opcintype[i] &&
+							cmptype == COMPARE_LT)
 						{
 							/* Successful mapping */
-							info->sortopfamily[i] = btopfamily;
+							info->sortopfamily[i] = opfamily;
 						}
 						else
 						{

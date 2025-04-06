@@ -120,6 +120,11 @@ IndexAmTranslateStrategy(StrategyNumber strategy, Oid amoid, Oid opfamily, bool 
 	CompareType result;
 	IndexAmRoutine *amroutine;
 
+	/* shortcut for common case */
+	if (amoid == BTREE_AM_OID &&
+		(strategy > InvalidStrategy && strategy <= BTMaxStrategyNumber))
+		return (CompareType) strategy;
+
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	if (amroutine->amtranslatestrategy)
 		result = amroutine->amtranslatestrategy(strategy, opfamily);
@@ -144,6 +149,11 @@ IndexAmTranslateCompareType(CompareType cmptype, Oid amoid, Oid opfamily, bool m
 {
 	StrategyNumber result;
 	IndexAmRoutine *amroutine;
+
+	/* shortcut for common case */
+	if (amoid == BTREE_AM_OID &&
+		(cmptype > COMPARE_INVALID && cmptype <= COMPARE_GT))
+		return (StrategyNumber) cmptype;
 
 	amroutine = GetIndexAmRoutineByAmId(amoid, false);
 	if (amroutine->amtranslatecmptype)

@@ -1605,36 +1605,36 @@ clause_is_strict_for(Node *clause, Node *subexpr, bool allow_false)
 
 
 /*
- * Define "operator implication tables" for btree operators ("strategies"),
+ * Define "operator implication tables" for index operators ("cmptypes"),
  * and similar tables for refutation.
  *
- * The strategy numbers defined by btree indexes (see access/stratnum.h) are:
- *		1 <		2 <=	3 =		4 >=	5 >
+ * The row compare numbers defined by indexes (see access/cmptype.h) are:
+ *		1 <		2 <=	3 =		4 >=	5 >		6 <>
  * and in addition we use 6 to represent <>.  <> is not a btree-indexable
  * operator, but we assume here that if an equality operator of a btree
  * opfamily has a negator operator, the negator behaves as <> for the opfamily.
- * (This convention is also known to get_op_btree_interpretation().)
+ * (This convention is also known to get_op_index_interpretation().)
  *
- * BT_implies_table[] and BT_refutes_table[] are used for cases where we have
+ * RC_implies_table[] and RC_refutes_table[] are used for cases where we have
  * two identical subexpressions and we want to know whether one operator
  * expression implies or refutes the other.  That is, if the "clause" is
  * EXPR1 clause_op EXPR2 and the "predicate" is EXPR1 pred_op EXPR2 for the
  * same two (immutable) subexpressions:
- *		BT_implies_table[clause_op-1][pred_op-1]
+ *		RC_implies_table[clause_op-1][pred_op-1]
  *			is true if the clause implies the predicate
- *		BT_refutes_table[clause_op-1][pred_op-1]
+ *		RC_refutes_table[clause_op-1][pred_op-1]
  *			is true if the clause refutes the predicate
- * where clause_op and pred_op are strategy numbers (from 1 to 6) in the
- * same btree opfamily.  For example, "x < y" implies "x <= y" and refutes
+ * where clause_op and pred_op are cmptype numbers (from 1 to 6) in the
+ * same opfamily.  For example, "x < y" implies "x <= y" and refutes
  * "x > y".
  *
- * BT_implic_table[] and BT_refute_table[] are used where we have two
+ * RC_implic_table[] and RC_refute_table[] are used where we have two
  * constants that we need to compare.  The interpretation of:
  *
- *		test_op = BT_implic_table[clause_op-1][pred_op-1]
+ *		test_op = RC_implic_table[clause_op-1][pred_op-1]
  *
- * where test_op, clause_op and pred_op are strategy numbers (from 1 to 6)
- * of btree operators, is as follows:
+ * where test_op, clause_op and pred_op are cmptypes (from 1 to 6)
+ * of index operators, is as follows:
  *
  *	 If you know, for some EXPR, that "EXPR clause_op CONST1" is true, and you
  *	 want to determine whether "EXPR pred_op CONST2" must also be true, then
@@ -1645,7 +1645,7 @@ clause_is_strict_for(Node *clause, Node *subexpr, bool allow_false)
  * For example, if clause is "Quantity > 10" and pred is "Quantity > 5"
  * then we test "5 <= 10" which evals to true, so clause implies pred.
  *
- * Similarly, the interpretation of a BT_refute_table entry is:
+ * Similarly, the interpretation of a RC_refute_table entry is:
  *
  *	 If you know, for some EXPR, that "EXPR clause_op CONST1" is true, and you
  *	 want to determine whether "EXPR pred_op CONST2" must be false, then
@@ -1659,17 +1659,17 @@ clause_is_strict_for(Node *clause, Node *subexpr, bool allow_false)
  * An entry where test_op == 0 means the implication cannot be determined.
  */
 
-#define BTLT BTLessStrategyNumber
-#define BTLE BTLessEqualStrategyNumber
-#define BTEQ BTEqualStrategyNumber
-#define BTGE BTGreaterEqualStrategyNumber
-#define BTGT BTGreaterStrategyNumber
-#define BTNE COMPARE_NE
+#define RCLT COMPARE_LT
+#define RCLE COMPARE_LE
+#define RCEQ COMPARE_EQ
+#define RCGE COMPARE_GE
+#define RCGT COMPARE_GT
+#define RCNE COMPARE_NE
 
 /* We use "none" for 0/false to make the tables align nicely */
 #define none 0
 
-static const bool BT_implies_table[6][6] = {
+static const bool RC_implies_table[6][6] = {
 /*
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
@@ -1682,7 +1682,7 @@ static const bool BT_implies_table[6][6] = {
 	{none, none, none, none, none, true}	/* NE */
 };
 
-static const bool BT_refutes_table[6][6] = {
+static const bool RC_refutes_table[6][6] = {
 /*
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
@@ -1695,30 +1695,30 @@ static const bool BT_refutes_table[6][6] = {
 	{none, none, true, none, none, none}	/* NE */
 };
 
-static const StrategyNumber BT_implic_table[6][6] = {
+static const CompareType RC_implic_table[6][6] = {
 /*
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{BTGE, BTGE, none, none, none, BTGE},	/* LT */
-	{BTGT, BTGE, none, none, none, BTGT},	/* LE */
-	{BTGT, BTGE, BTEQ, BTLE, BTLT, BTNE},	/* EQ */
-	{none, none, none, BTLE, BTLT, BTLT},	/* GE */
-	{none, none, none, BTLE, BTLE, BTLE},	/* GT */
-	{none, none, none, none, none, BTEQ}	/* NE */
+	{RCGE, RCGE, none, none, none, RCGE},	/* LT */
+	{RCGT, RCGE, none, none, none, RCGT},	/* LE */
+	{RCGT, RCGE, RCEQ, RCLE, RCLT, RCNE},	/* EQ */
+	{none, none, none, RCLE, RCLT, RCLT},	/* GE */
+	{none, none, none, RCLE, RCLE, RCLE},	/* GT */
+	{none, none, none, none, none, RCEQ}	/* NE */
 };
 
-static const StrategyNumber BT_refute_table[6][6] = {
+static const CompareType RC_refute_table[6][6] = {
 /*
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{none, none, BTGE, BTGE, BTGE, none},	/* LT */
-	{none, none, BTGT, BTGT, BTGE, none},	/* LE */
-	{BTLE, BTLT, BTNE, BTGT, BTGE, BTEQ},	/* EQ */
-	{BTLE, BTLT, BTLT, none, none, none},	/* GE */
-	{BTLE, BTLE, BTLE, none, none, none},	/* GT */
-	{none, none, BTEQ, none, none, none}	/* NE */
+	{none, none, RCGE, RCGE, RCGE, none},	/* LT */
+	{none, none, RCGT, RCGT, RCGE, none},	/* LE */
+	{RCLE, RCLT, RCNE, RCGT, RCGE, RCEQ},	/* EQ */
+	{RCLE, RCLT, RCLT, none, none, none},	/* GE */
+	{RCLE, RCLE, RCLE, none, none, none},	/* GT */
+	{none, none, RCEQ, none, none, none}	/* NE */
 };
 
 
@@ -2165,23 +2165,23 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 	 * operator.  This can happen in cases with incomplete sets of cross-type
 	 * comparison operators.
 	 */
-	clause_op_infos = get_op_btree_interpretation(clause_op);
+	clause_op_infos = get_op_index_interpretation(clause_op);
 	if (clause_op_infos)
-		pred_op_infos = get_op_btree_interpretation(pred_op);
+		pred_op_infos = get_op_index_interpretation(pred_op);
 	else						/* no point in looking */
 		pred_op_infos = NIL;
 
 	foreach(lcp, pred_op_infos)
 	{
-		OpBtreeInterpretation *pred_op_info = lfirst(lcp);
+		OpIndexInterpretation *pred_op_info = lfirst(lcp);
 		Oid			opfamily_id = pred_op_info->opfamily_id;
 
 		foreach(lcc, clause_op_infos)
 		{
-			OpBtreeInterpretation *clause_op_info = lfirst(lcc);
-			StrategyNumber pred_strategy,
-						clause_strategy,
-						test_strategy;
+			OpIndexInterpretation *clause_op_info = lfirst(lcc);
+			CompareType pred_cmptype,
+						clause_cmptype,
+						test_cmptype;
 
 			/* Must find them in same opfamily */
 			if (opfamily_id != clause_op_info->opfamily_id)
@@ -2189,51 +2189,51 @@ lookup_proof_cache(Oid pred_op, Oid clause_op, bool refute_it)
 			/* Lefttypes should match */
 			Assert(clause_op_info->oplefttype == pred_op_info->oplefttype);
 
-			pred_strategy = pred_op_info->strategy;
-			clause_strategy = clause_op_info->strategy;
+			pred_cmptype = pred_op_info->cmptype;
+			clause_cmptype = clause_op_info->cmptype;
 
 			/*
 			 * Check to see if we can make a proof for same-subexpressions
 			 * cases based on the operators' relationship in this opfamily.
 			 */
 			if (refute_it)
-				same_subexprs |= BT_refutes_table[clause_strategy - 1][pred_strategy - 1];
+				same_subexprs |= RC_refutes_table[clause_cmptype - 1][pred_cmptype - 1];
 			else
-				same_subexprs |= BT_implies_table[clause_strategy - 1][pred_strategy - 1];
+				same_subexprs |= RC_implies_table[clause_cmptype - 1][pred_cmptype - 1];
 
 			/*
-			 * Look up the "test" strategy number in the implication table
+			 * Look up the "test" cmptype number in the implication table
 			 */
 			if (refute_it)
-				test_strategy = BT_refute_table[clause_strategy - 1][pred_strategy - 1];
+				test_cmptype = RC_refute_table[clause_cmptype - 1][pred_cmptype - 1];
 			else
-				test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+				test_cmptype = RC_implic_table[clause_cmptype - 1][pred_cmptype - 1];
 
-			if (test_strategy == 0)
+			if (test_cmptype == 0)
 			{
 				/* Can't determine implication using this interpretation */
 				continue;
 			}
 
 			/*
-			 * See if opfamily has an operator for the test strategy and the
+			 * See if opfamily has an operator for the test cmptype and the
 			 * datatypes.
 			 */
-			if (test_strategy == BTNE)
+			if (test_cmptype == RCNE)
 			{
-				test_op = get_opfamily_member(opfamily_id,
-											  pred_op_info->oprighttype,
-											  clause_op_info->oprighttype,
-											  BTEqualStrategyNumber);
+				test_op = get_opfamily_member_for_cmptype(opfamily_id,
+														  pred_op_info->oprighttype,
+														  clause_op_info->oprighttype,
+														  COMPARE_EQ);
 				if (OidIsValid(test_op))
 					test_op = get_negator(test_op);
 			}
 			else
 			{
-				test_op = get_opfamily_member(opfamily_id,
-											  pred_op_info->oprighttype,
-											  clause_op_info->oprighttype,
-											  test_strategy);
+				test_op = get_opfamily_member_for_cmptype(opfamily_id,
+														  pred_op_info->oprighttype,
+														  clause_op_info->oprighttype,
+														  test_cmptype);
 			}
 
 			if (!OidIsValid(test_op))

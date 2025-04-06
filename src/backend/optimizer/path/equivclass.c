@@ -1845,8 +1845,7 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 		Oid			opfamily = lfirst_oid(lc);
 		Oid			opno;
 
-		opno = get_opfamily_member(opfamily, lefttype, righttype,
-								   BTEqualStrategyNumber);
+		opno = get_opfamily_member_for_cmptype(opfamily, lefttype, righttype, COMPARE_EQ);
 		if (!OidIsValid(opno))
 			continue;
 		/* If no barrier quals in query, don't worry about leaky operators */

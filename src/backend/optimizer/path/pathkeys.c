@@ -219,13 +219,13 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	 * more than one opfamily.  So we have to look up the opfamily's equality
 	 * operator and get its membership.
 	 */
-	equality_op = get_opfamily_member(opfamily,
-									  opcintype,
-									  opcintype,
-									  BTEqualStrategyNumber);
+	equality_op = get_opfamily_member_for_cmptype(opfamily,
+												  opcintype,
+												  opcintype,
+												  COMPARE_EQ);
 	if (!OidIsValid(equality_op))	/* shouldn't happen */
 		elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-			 BTEqualStrategyNumber, opcintype, opcintype, opfamily);
+			 COMPARE_EQ, opcintype, opcintype, opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
 		elog(ERROR, "could not find opfamilies for equality operator %u",
@@ -264,11 +264,11 @@ make_pathkey_from_sortop(PlannerInfo *root,
 	Oid			opfamily,
 				opcintype,
 				collation;
-	int16		strategy;
+	CompareType cmptype;
 
 	/* Find the operator in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(ordering_op,
-									&opfamily, &opcintype, &strategy))
+									&opfamily, &opcintype, &cmptype))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 ordering_op);
 
@@ -1006,12 +1006,12 @@ build_expression_pathkey(PlannerInfo *root,
 	List	   *pathkeys;
 	Oid			opfamily,
 				opcintype;
-	int16		strategy;
+	CompareType cmptype;
 	PathKey    *cpathkey;
 
 	/* Find the operator in pg_amop --- failure shouldn't happen */
 	if (!get_ordering_op_properties(opno,
-									&opfamily, &opcintype, &strategy))
+									&opfamily, &opcintype, &cmptype))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 opno);
 
@@ -1020,8 +1020,8 @@ build_expression_pathkey(PlannerInfo *root,
 										  opfamily,
 										  opcintype,
 										  exprCollation((Node *) expr),
-										  (strategy == BTGreaterStrategyNumber),
-										  (strategy == BTGreaterStrategyNumber),
+										  (cmptype == COMPARE_GT),
+										  (cmptype == COMPARE_GT),
 										  0,
 										  rel,
 										  create_it);

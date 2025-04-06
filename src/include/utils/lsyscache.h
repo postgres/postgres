@@ -21,14 +21,14 @@
 /* avoid including subscripting.h here */
 struct SubscriptRoutines;
 
-/* Result list element for get_op_btree_interpretation */
-typedef struct OpBtreeInterpretation
+/* Result list element for get_op_index_interpretation */
+typedef struct OpIndexInterpretation
 {
-	Oid			opfamily_id;	/* btree opfamily containing operator */
-	int			strategy;		/* its strategy number */
+	Oid			opfamily_id;	/* opfamily containing operator */
+	CompareType cmptype;		/* its generic comparison type */
 	Oid			oplefttype;		/* declared left input datatype */
 	Oid			oprighttype;	/* declared right input datatype */
-} OpBtreeInterpretation;
+} OpIndexInterpretation;
 
 /* I/O function selector for get_type_io_data */
 typedef enum IOFuncSelector
@@ -78,7 +78,7 @@ extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 extern Oid	get_opfamily_member_for_cmptype(Oid opfamily, Oid lefttype, Oid righttype,
 											CompareType cmptype);
 extern bool get_ordering_op_properties(Oid opno,
-									   Oid *opfamily, Oid *opcintype, int16 *strategy);
+									   Oid *opfamily, Oid *opcintype, CompareType *cmptype);
 extern Oid	get_equality_op_for_ordering_op(Oid opno, bool *reverse);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
@@ -86,7 +86,7 @@ extern bool get_compatible_hash_operators(Oid opno,
 										  Oid *lhs_opno, Oid *rhs_opno);
 extern bool get_op_hash_functions(Oid opno,
 								  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
-extern List *get_op_btree_interpretation(Oid opno);
+extern List *get_op_index_interpretation(Oid opno);
 extern bool equality_ops_are_compatible(Oid opno1, Oid opno2);
 extern bool comparison_ops_are_compatible(Oid opno1, Oid opno2);
 extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,

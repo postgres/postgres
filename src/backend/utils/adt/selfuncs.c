@@ -2947,7 +2947,7 @@ scalargejoinsel(PG_FUNCTION_ARGS)
  * first join pair is found, which will affect the join's startup time.
  *
  * clause should be a clause already known to be mergejoinable.  opfamily,
- * strategy, and nulls_first specify the sort ordering being used.
+ * cmptype, and nulls_first specify the sort ordering being used.
  *
  * The outputs are:
  *		*leftstart is set to the fraction of the left-hand variable expected
@@ -2958,7 +2958,7 @@ scalargejoinsel(PG_FUNCTION_ARGS)
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, int strategy, bool nulls_first,
+				 Oid opfamily, CompareType cmptype, bool nulls_first,
 				 Selectivity *leftstart, Selectivity *leftend,
 				 Selectivity *rightstart, Selectivity *rightend)
 {
@@ -2966,6 +2966,7 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 			   *right;
 	VariableStatData leftvar,
 				rightvar;
+	Oid			opmethod;
 	int			op_strategy;
 	Oid			op_lefttype;
 	Oid			op_righttype;
@@ -2979,6 +2980,10 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 				leop,
 				revltop,
 				revleop;
+	StrategyNumber ltstrat,
+				lestrat,
+				gtstrat,
+				gestrat;
 	bool		isgt;
 	Datum		leftmin,
 				leftmax,
@@ -3005,12 +3010,14 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	examine_variable(root, left, 0, &leftvar);
 	examine_variable(root, right, 0, &rightvar);
 
+	opmethod = get_opfamily_method(opfamily);
+
 	/* Extract the operator's declared left/right datatypes */
 	get_op_opfamily_properties(opno, opfamily, false,
 							   &op_strategy,
 							   &op_lefttype,
 							   &op_righttype);
-	Assert(op_strategy == BTEqualStrategyNumber);
+	Assert(IndexAmTranslateStrategy(op_strategy, opmethod, opfamily, true) == COMPARE_EQ);
 
 	/*
 	 * Look up the various operators we need.  If we don't find them all, it
@@ -3019,19 +3026,21 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * Note: we expect that pg_statistic histograms will be sorted by the '<'
 	 * operator, regardless of which sort direction we are considering.
 	 */
-	switch (strategy)
+	switch (cmptype)
 	{
-		case BTLessStrategyNumber:
+		case COMPARE_LT:
 			isgt = false;
+			ltstrat = IndexAmTranslateCompareType(COMPARE_LT, opmethod, opfamily, true);
+			lestrat = IndexAmTranslateCompareType(COMPARE_LE, opmethod, opfamily, true);
 			if (op_lefttype == op_righttype)
 			{
 				/* easy case */
 				ltop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTLessStrategyNumber);
+										   ltstrat);
 				leop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTLessEqualStrategyNumber);
+										   lestrat);
 				lsortop = ltop;
 				rsortop = ltop;
 				lstatop = lsortop;
@@ -3043,43 +3052,46 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 			{
 				ltop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTLessStrategyNumber);
+										   ltstrat);
 				leop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTLessEqualStrategyNumber);
+										   lestrat);
 				lsortop = get_opfamily_member(opfamily,
 											  op_lefttype, op_lefttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				rsortop = get_opfamily_member(opfamily,
 											  op_righttype, op_righttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				lstatop = lsortop;
 				rstatop = rsortop;
 				revltop = get_opfamily_member(opfamily,
 											  op_righttype, op_lefttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				revleop = get_opfamily_member(opfamily,
 											  op_righttype, op_lefttype,
-											  BTLessEqualStrategyNumber);
+											  lestrat);
 			}
 			break;
-		case BTGreaterStrategyNumber:
+		case COMPARE_GT:
 			/* descending-order case */
 			isgt = true;
+			ltstrat = IndexAmTranslateCompareType(COMPARE_LT, opmethod, opfamily, true);
+			gtstrat = IndexAmTranslateCompareType(COMPARE_GT, opmethod, opfamily, true);
+			gestrat = IndexAmTranslateCompareType(COMPARE_GE, opmethod, opfamily, true);
 			if (op_lefttype == op_righttype)
 			{
 				/* easy case */
 				ltop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTGreaterStrategyNumber);
+										   gtstrat);
 				leop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTGreaterEqualStrategyNumber);
+										   gestrat);
 				lsortop = ltop;
 				rsortop = ltop;
 				lstatop = get_opfamily_member(opfamily,
 											  op_lefttype, op_lefttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				rstatop = lstatop;
 				revltop = ltop;
 				revleop = leop;
@@ -3088,28 +3100,28 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 			{
 				ltop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTGreaterStrategyNumber);
+										   gtstrat);
 				leop = get_opfamily_member(opfamily,
 										   op_lefttype, op_righttype,
-										   BTGreaterEqualStrategyNumber);
+										   gestrat);
 				lsortop = get_opfamily_member(opfamily,
 											  op_lefttype, op_lefttype,
-											  BTGreaterStrategyNumber);
+											  gtstrat);
 				rsortop = get_opfamily_member(opfamily,
 											  op_righttype, op_righttype,
-											  BTGreaterStrategyNumber);
+											  gtstrat);
 				lstatop = get_opfamily_member(opfamily,
 											  op_lefttype, op_lefttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				rstatop = get_opfamily_member(opfamily,
 											  op_righttype, op_righttype,
-											  BTLessStrategyNumber);
+											  ltstrat);
 				revltop = get_opfamily_member(opfamily,
 											  op_righttype, op_lefttype,
-											  BTGreaterStrategyNumber);
+											  gtstrat);
 				revleop = get_opfamily_member(opfamily,
 											  op_righttype, op_lefttype,
-											  BTGreaterEqualStrategyNumber);
+											  gestrat);
 			}
 			break;
 		default:

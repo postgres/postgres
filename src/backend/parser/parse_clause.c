@@ -2915,7 +2915,7 @@ transformWindowDefinitions(ParseState *pstate,
 		{
 			SortGroupClause *sortcl;
 			Node	   *sortkey;
-			int16		rangestrategy;
+			CompareType rangecmptype;
 
 			if (list_length(wc->orderClause) != 1)
 				ereport(ERROR,
@@ -2928,7 +2928,7 @@ transformWindowDefinitions(ParseState *pstate,
 			if (!get_ordering_op_properties(sortcl->sortop,
 											&rangeopfamily,
 											&rangeopcintype,
-											&rangestrategy))
+											&rangecmptype))
 				elog(ERROR, "operator %u is not a valid ordering operator",
 					 sortcl->sortop);
 			/* Record properties of sort ordering */

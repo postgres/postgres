@@ -220,7 +220,7 @@ MJExamineQuals(List *mergeclauses,
 								   &op_strategy,
 								   &op_lefttype,
 								   &op_righttype);
-		if (op_strategy != BTEqualStrategyNumber)	/* should not happen */
+		if (IndexAmTranslateStrategy(op_strategy, get_opfamily_method(opfamily), opfamily, true) != COMPARE_EQ) /* should not happen */
 			elog(ERROR, "cannot merge using non-equality operator %u",
 				 qual->opno);
 
