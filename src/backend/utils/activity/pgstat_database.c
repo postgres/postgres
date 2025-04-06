@@ -195,7 +195,7 @@ pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
 		return;
 	}
 
-	pgstat_lock_entry(entry_ref, false);
+	(void) pgstat_lock_entry(entry_ref, false);
 
 	sharedent = (PgStatShared_Database *) entry_ref->shared_stats;
 	sharedent->stats.checksum_failures += failurecount;

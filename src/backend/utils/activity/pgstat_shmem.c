@@ -643,6 +643,13 @@ pgstat_release_entry_ref(PgStat_HashKey key, PgStat_EntryRef *entry_ref,
 		pfree(entry_ref);
 }
 
+/*
+ * Acquire exclusive lock on the entry.
+ *
+ * If nowait is true, it's just a conditional acquire, and the result
+ * *must* be checked to verify success.
+ * If nowait is false, waits as necessary, always returning true.
+ */
 bool
 pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait)
 {
@@ -656,8 +663,10 @@ pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait)
 }
 
 /*
+ * Acquire shared lock on the entry.
+ *
  * Separate from pgstat_lock_entry() as most callers will need to lock
- * exclusively.
+ * exclusively.  The wait semantics are identical.
  */
 bool
 pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait)

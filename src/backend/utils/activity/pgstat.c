@@ -1019,7 +1019,7 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 		stats_data = MemoryContextAlloc(pgStatLocal.snapshot.context,
 										kind_info->shared_data_len);
 
-	pgstat_lock_entry_shared(entry_ref, false);
+	(void) pgstat_lock_entry_shared(entry_ref, false);
 	memcpy(stats_data,
 		   pgstat_get_entry_data(kind, entry_ref->shared_stats),
 		   kind_info->shared_data_len);
