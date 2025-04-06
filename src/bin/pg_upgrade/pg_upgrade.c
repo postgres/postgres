@@ -383,7 +383,6 @@ set_locale_and_encoding(void)
 	char	   *datcollate_literal;
 	char	   *datctype_literal;
 	char	   *daticulocale_literal = NULL;
-	char	   *daticulocale_src;
 	DbLocaleInfo *locale = old_cluster.template0;
 
 	prep_status("Setting locale and encoding for new cluster");
@@ -397,10 +396,13 @@ set_locale_and_encoding(void)
 	datctype_literal = PQescapeLiteral(conn_new_template1,
 									   locale->db_ctype,
 									   strlen(locale->db_ctype));
-	daticulocale_src = locale->db_iculocale ? locale->db_iculocale : "NULL";
-	daticulocale_literal = PQescapeLiteral(conn_new_template1,
-										   daticulocale_src,
-										   strlen(daticulocale_src));
+
+	if (locale->db_iculocale)
+		daticulocale_literal = PQescapeLiteral(conn_new_template1,
+											   locale->db_iculocale,
+											   strlen(locale->db_iculocale));
+	else
+		daticulocale_literal = "NULL";
 
 	/* update template0 in new cluster */
 	if (GET_MAJOR_VERSION(new_cluster.major_version) >= 1500)
@@ -430,7 +432,8 @@ set_locale_and_encoding(void)
 
 	PQfreemem(datcollate_literal);
 	PQfreemem(datctype_literal);
-	PQfreemem(daticulocale_literal);
+	if (locale->db_iculocale)
+		PQfreemem(daticulocale_literal);
 
 	PQfinish(conn_new_template1);
 
