@@ -427,7 +427,6 @@
 #enable_tidscan = on
 #enable_group_by_reordering = on
 #enable_distinct_reordering = on
-#enable_self_join_elimination = on
 
 # - Planner Cost Constants -
 
