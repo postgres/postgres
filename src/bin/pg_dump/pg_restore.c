@@ -991,6 +991,8 @@ get_dbnames_list_to_restore(PGconn *conn,
 				break;
 		}
 
+		destroyPQExpBuffer(db_lit);
+
 		/*
 		 * Mark db to be skipped or increment the counter of dbs to be
 		 * restored
@@ -1005,6 +1007,8 @@ get_dbnames_list_to_restore(PGconn *conn,
 			count_db++;
 		}
 	}
+
+	destroyPQExpBuffer(query);
 
 	return count_db;
 }
