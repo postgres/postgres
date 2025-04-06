@@ -3468,10 +3468,7 @@ XLogFileInit(XLogSegNo logsegno, bool *added)
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m", path),
-				 (AmCheckpointerProcess() ?
-				  errhint("This is known to fail occasionally during archive recovery, where it is harmless.") :
-				  0)));
+				 errmsg("could not open file \"%s\": %m", path)));
 
 	elog(DEBUG2, "done creating and filling new WAL file");
 
