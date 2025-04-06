@@ -146,6 +146,12 @@ hmac(data bytea, key bytea, type text) returns bytea
   <table id="pgcrypto-crypt-algorithms">
    <title>Supported Algorithms for <function>crypt()</function></title>
    <tgroup cols="6">
+    <colspec colname="col1" colwidth="1.5*"/>
+    <colspec colname="col2" colwidth="1.25*"/>
+    <colspec colname="col3" colwidth="1*"/>
+    <colspec colname="col4" colwidth="1*"/>
+    <colspec colname="col5" colwidth="1*"/>
+    <colspec colname="col6" colwidth="2.5*"/>
     <thead>
      <row>
       <entry>Algorithm</entry>
