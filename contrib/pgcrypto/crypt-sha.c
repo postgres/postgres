@@ -56,7 +56,7 @@ typedef enum
 	PGCRYPTO_SHA256CRYPT = 0,
 	PGCRYPTO_SHA512CRYPT = 1,
 	PGCRYPTO_SHA_UNKOWN
-}			PGCRYPTO_SHA_t;
+} PGCRYPTO_SHA_t;
 
 static unsigned char _crypt_itoa64[64 + 1] =
 "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -68,7 +68,7 @@ char *
 px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstlen)
 {
 	static const char rounds_prefix[] = "rounds=";
-	static char *magic_bytes[2] = {"$5$", "$6$"};
+	static const char *magic_bytes[2] = {"$5$", "$6$"};
 
 	/* Used to create the password hash string */
 	StringInfo	out_buf = NULL;
@@ -96,10 +96,6 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	unsigned int len,
 				salt_len = 0;
 
-	/* Init result buffer */
-	out_buf = makeStringInfoExt(PX_SHACRYPT_BUF_LEN);
-	decoded_salt = makeStringInfoExt(PX_SHACRYPT_SALT_MAX_LEN);
-
 	/* Sanity checks */
 	if (!passwd)
 		return NULL;
@@ -115,6 +111,10 @@ px_crypt_shacrypt(const char *pw, const char *salt, char *passwd, unsigned dstle
 	 */
 	if (dstlen < PX_SHACRYPT_BUF_LEN)
 		elog(ERROR, "insufficient result buffer size to encrypt password");
+
+	/* Init result buffer */
+	out_buf = makeStringInfoExt(PX_SHACRYPT_BUF_LEN);
+	decoded_salt = makeStringInfoExt(PX_SHACRYPT_SALT_MAX_LEN);
 
 	/* Init contents of buffers properly */
 	memset(&sha_buf, '\0', sizeof(sha_buf));
@@ -630,8 +630,8 @@ error:
 	if (digestB != NULL)
 		px_md_free(digestB);
 
-	if (out_buf != NULL)
-		destroyStringInfo(out_buf);
+	destroyStringInfo(out_buf);
+	destroyStringInfo(decoded_salt);
 
 	ereport(ERROR,
 			errcode(ERRCODE_INTERNAL_ERROR),
