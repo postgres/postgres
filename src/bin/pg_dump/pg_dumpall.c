@@ -21,6 +21,7 @@
 
 #include "catalog/pg_authid_d.h"
 #include "common/connect.h"
+#include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/hashfn_unstable.h"
 #include "common/logging.h"
@@ -1954,49 +1955,30 @@ read_dumpall_filters(const char *filename, SimpleStringList *pattern)
 static void
 create_or_open_dir(const char *dirname)
 {
-	struct stat st;
-	bool		is_empty = false;
+	int			ret;
 
-	/* we accept an empty existing directory */
-	if (stat(dirname, &st) == 0 && S_ISDIR(st.st_mode))
+	switch ((ret = pg_check_dir(dirname)))
 	{
-		DIR		   *dir = opendir(dirname);
-
-		if (dir)
-		{
-			struct dirent *d;
-
-			is_empty = true;
-
-			while (errno = 0, (d = readdir(dir)))
-			{
-				if (strcmp(d->d_name, ".") != 0 && strcmp(d->d_name, "..") != 0)
-				{
-					is_empty = false;
-					break;
-				}
-			}
-
-			if (errno)
-				pg_fatal("could not read directory \"%s\": %m",
+		case -1:
+			/* opendir failed but not with ENOENT */
+			pg_fatal("could not open directory \"%s\": %m", dirname);
+			break;
+		case 0:
+			/* directory does not exist */
+			if (mkdir(dirname, pg_dir_create_mode) < 0)
+				pg_fatal("could not create directory \"%s\": %m", dirname);
+			break;
+		case 1:
+			/* exists and is empty, fix perms */
+			if (chmod(dirname, pg_dir_create_mode) != 0)
+				pg_fatal("could not change permissions of directory \"%s\": %m",
 						 dirname);
 
-			if (closedir(dir))
-				pg_fatal("could not close directory \"%s\": %m",
-						 dirname);
-		}
-
-		if (!is_empty)
-		{
-			pg_log_error("directory \"%s\" exists but is not empty", dirname);
-			pg_log_error_hint("Either remove the directory "
-							  "\"%s\" or its contents.",
-							  dirname);
-			exit_nicely(1);
-		}
+			break;
+		default:
+			/* exists and is not empty */
+			pg_fatal("directory \"%s\" is not empty", dirname);
 	}
-	else if (mkdir(dirname, 0700) < 0)
-		pg_fatal("could not create directory \"%s\": %m", dirname);
 }
 
 /*
