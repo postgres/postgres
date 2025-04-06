@@ -800,10 +800,7 @@ durable_rename_excl(const char *oldfile, const char *newfile, int elevel)
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not link file \"%s\" to \"%s\": %m",
-						oldfile, newfile),
-				 (AmCheckpointerProcess() ?
-				  errhint("This is known to fail occasionally during archive recovery, where it is harmless.") :
-				  0)));
+						oldfile, newfile)));
 		return -1;
 	}
 	unlink(oldfile);
@@ -813,10 +810,7 @@ durable_rename_excl(const char *oldfile, const char *newfile, int elevel)
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						oldfile, newfile),
-				 (AmCheckpointerProcess() ?
-				  errhint("This is known to fail occasionally during archive recovery, where it is harmless.") :
-				  0)));
+						oldfile, newfile)));
 		return -1;
 	}
 #endif
