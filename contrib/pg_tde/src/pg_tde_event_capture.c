@@ -16,6 +16,7 @@
 #include "utils/builtins.h"
 #include "catalog/pg_class.h"
 #include "commands/defrem.h"
+#include "commands/sequence.h"
 #include "access/table.h"
 #include "access/relation.h"
 #include "catalog/pg_event_trigger.h"
@@ -28,7 +29,6 @@
 #include "miscadmin.h"
 #include "access/tableam.h"
 #include "catalog/tde_global_space.h"
-#include "executor/spi.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 static TdeCreateEvent tdeCurrentCreateEvent = {.tid = {.value = 0},.relation = NULL};
@@ -273,35 +273,24 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 	if (IsA(parsetree, AlterTableStmt) && tdeCurrentCreateEvent.alterAccessMethodMode)
 	{
 		/*
-		 * sequences are not updated automatically call a helper function that
-		 * automatically alters all of them, forcing an update on the
-		 * encryption status int ret;
+		 * sequences are not updated automatically so force rewrite by
+		 * updating their persistence to be the same as before.
 		 */
-		char	   *sql = "SELECT pg_tde_internal_refresh_sequences($1);";
-		Oid			argtypes[1];
-		SPIPlanPtr	plan;
-		Datum		args[1];
-		char		nulls[1];
-		int			ret;
+		List	   *seqlist = getOwnedSequences(tdeCurrentCreateEvent.baseTableOid);
+		ListCell   *lc;
+		Relation	rel = relation_open(tdeCurrentCreateEvent.baseTableOid, NoLock);
+		char		persistence = rel->rd_rel->relpersistence;
 
-		SPI_connect();
+		relation_close(rel, NoLock);
 
-		argtypes[0] = OIDOID;
-		plan = SPI_prepare(sql, 1, argtypes);
+		foreach(lc, seqlist)
+		{
+			Oid			seq_relid = lfirst_oid(lc);
 
-		args[0] = ObjectIdGetDatum(tdeCurrentCreateEvent.baseTableOid);
-		nulls[0] = ' ';
-
-		ret = SPI_execute_plan(plan, args, nulls, false, 0);
+			SequenceChangePersistence(seq_relid, persistence);
+		}
 
 		tdeCurrentCreateEvent.alterAccessMethodMode = false;
-
-		SPI_finish();
-
-		if (ret != SPI_OK_SELECT)
-		{
-			elog(ERROR, "Failed to update encryption status of sequences.");
-		}
 	}
 
 	/*
