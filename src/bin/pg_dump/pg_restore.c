@@ -1035,7 +1035,7 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimpleOidStringList *dbn
 	 */
 	if (!file_exists_in_directory(dumpdirpath, "map.dat"))
 	{
-		pg_log_info("databases restoring is skipped as map.dat file is not present in \"%s\"", dumpdirpath);
+		pg_log_info("database restoring is skipped as \"map.dat\" is not present in \"%s\"", dumpdirpath);
 		return 0;
 	}
 
@@ -1045,7 +1045,7 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimpleOidStringList *dbn
 	pfile = fopen(map_file_path, PG_BINARY_R);
 
 	if (pfile == NULL)
-		pg_fatal("could not open map.dat file: \"%s\"", map_file_path);
+		pg_fatal("could not open \"%s\": %m", map_file_path);
 
 	/* Append all the dbname/db_oid combinations to the list. */
 	while ((fgets(line, MAXPGPATH, pfile)) != NULL)
@@ -1064,11 +1064,13 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimpleOidStringList *dbn
 		/* Remove \n from dbname. */
 		dbname[strlen(dbname) - 1] = '\0';
 
-		pg_log_info("found database \"%s\" (OID: %u) in map.dat file while restoring.", dbname, db_oid);
+		pg_log_info("found database \"%s\" (OID: %u) in \"%s\"",
+					dbname, db_oid, map_file_path);
 
 		/* Report error and exit if the file has any corrupted data. */
 		if (!OidIsValid(db_oid) || strlen(dbname) == 0)
-			pg_fatal("invalid entry in map.dat file at line : %d", count + 1);
+			pg_fatal("invalid entry in \"%s\" at line : %d", map_file_path,
+					 count + 1);
 
 		simple_oid_string_list_append(dbname_oid_list, db_oid, dbname);
 		count++;
@@ -1116,7 +1118,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	if (dbname_oid_list.head == NULL)
 		return process_global_sql_commands(conn, dumpdirpath, opts->filename);
 
-	pg_log_info("found total %d database names in map.dat file", num_total_db);
+	pg_log_info("found %d database names in \"map.dat\"", num_total_db);
 
 	if (!conn)
 	{
@@ -1288,7 +1290,7 @@ process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *o
 	pfile = fopen(global_file_path, PG_BINARY_R);
 
 	if (pfile == NULL)
-		pg_fatal("could not open global.dat file: \"%s\"", global_file_path);
+		pg_fatal("could not open \"%s\": %m", global_file_path);
 
 	/*
 	 * If outfile is given, then just copy all global.dat file data into
@@ -1335,7 +1337,7 @@ process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *o
 
 	/* Print a summary of ignored errors during global.dat. */
 	if (n_errors)
-		pg_log_warning("errors ignored on global.dat file restore: %d", n_errors);
+		pg_log_warning("ignored %d errors in \"%s\"", n_errors, global_file_path);
 
 	fclose(pfile);
 

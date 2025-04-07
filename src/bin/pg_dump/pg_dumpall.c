@@ -523,7 +523,7 @@ main(int argc, char *argv[])
 
 		OPF = fopen(global_path, PG_BINARY_W);
 		if (!OPF)
-			pg_fatal("could not open global.dat file: %s", strerror(errno));
+			pg_fatal("could not open \"%s\": %m", global_path);
 	}
 	else if (filename)
 	{
