@@ -79,7 +79,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--two-phase</option> and <option>--falover</option> options
+        The <option>--two-phase</option> and <option>--failover</option> options
         can be specified with <option>--create-slot</option>.
        </para>
       </listitem>
