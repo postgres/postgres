@@ -1156,6 +1156,17 @@ build-postgresql:
        </listitem>
       </varlistentry>
 
+      <varlistentry id="configure-option-with-libnuma">
+       <term><option>--with-libnuma</option></term>
+       <listitem>
+        <para>
+         Build with libnuma support for basic NUMA support.
+         Only supported on platforms for which the <productname>libnuma</productname>
+         library is implemented.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="configure-option-with-liburing">
        <term><option>--with-liburing</option></term>
        <listitem>
@@ -2641,6 +2652,17 @@ ninja install
         To use a liburing installation that is in an unusual location, you
         can set <command>pkg-config</command>-related environment
         variables (see its documentation).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="configure-with-libnuma-meson">
+      <term><option>-Dlibnuma={ auto | enabled | disabled }</option></term>
+      <listitem>
+       <para>
+        Build with libnuma support for basic NUMA support.
+        Only supported on platforms for which the <productname>libnuma</productname>
+        library is implemented. The default for this option is auto.
        </para>
       </listitem>
      </varlistentry>

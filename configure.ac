@@ -1054,6 +1054,20 @@ fi
 
 
 #
+# libnuma
+#
+AC_MSG_CHECKING([whether to build with libnuma support])
+PGAC_ARG_BOOL(with, libnuma, no, [build with libnuma support],
+              [AC_DEFINE([USE_LIBNUMA], 1, [Define to build with NUMA support. (--with-libnuma)])])
+AC_MSG_RESULT([$with_libnuma])
+AC_SUBST(with_libnuma)
+
+if test "$with_libnuma" = yes ; then
+  AC_CHECK_LIB(numa,    numa_available, [], [AC_MSG_ERROR([library 'libnuma' is required for NUMA support])])
+  PKG_CHECK_MODULES(LIBNUMA, numa)
+fi
+
+#
 # XML
 #
 AC_MSG_CHECKING([whether to build with XML support])

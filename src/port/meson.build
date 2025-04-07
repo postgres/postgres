@@ -8,6 +8,7 @@ pgport_sources = [
   'path.c',
   'pg_bitutils.c',
   'pg_localeconv_r.c',
+  'pg_numa.c',
   'pg_popcount_aarch64.c',
   'pg_popcount_avx512.c',
   'pg_strong_random.c',

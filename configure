@@ -708,6 +708,9 @@ XML2_LIBS
 XML2_CFLAGS
 XML2_CONFIG
 with_libxml
+LIBNUMA_LIBS
+LIBNUMA_CFLAGS
+with_libnuma
 LIBCURL_LIBS
 LIBCURL_CFLAGS
 with_libcurl
@@ -872,6 +875,7 @@ with_liburing
 with_uuid
 with_ossp_uuid
 with_libcurl
+with_libnuma
 with_libxml
 with_libxslt
 with_system_tzdata
@@ -906,6 +910,8 @@ LIBURING_CFLAGS
 LIBURING_LIBS
 LIBCURL_CFLAGS
 LIBCURL_LIBS
+LIBNUMA_CFLAGS
+LIBNUMA_LIBS
 XML2_CONFIG
 XML2_CFLAGS
 XML2_LIBS
@@ -1588,6 +1594,7 @@ Optional Packages:
   --with-uuid=LIB         build contrib/uuid-ossp using LIB (bsd,e2fs,ossp)
   --with-ossp-uuid        obsolete spelling of --with-uuid=ossp
   --with-libcurl          build with libcurl support
+  --with-libnuma          build with libnuma support
   --with-libxml           build with XML support
   --with-libxslt          use XSLT support when building contrib/xml2
   --with-system-tzdata=DIR
@@ -1629,6 +1636,10 @@ Some influential environment variables:
               C compiler flags for LIBCURL, overriding pkg-config
   LIBCURL_LIBS
               linker flags for LIBCURL, overriding pkg-config
+  LIBNUMA_CFLAGS
+              C compiler flags for LIBNUMA, overriding pkg-config
+  LIBNUMA_LIBS
+              linker flags for LIBNUMA, overriding pkg-config
   XML2_CONFIG path to xml2-config utility
   XML2_CFLAGS C compiler flags for XML2, overriding pkg-config
   XML2_LIBS   linker flags for XML2, overriding pkg-config
@@ -9062,6 +9073,182 @@ $as_echo "$as_me: WARNING: *** OAuth support tests require --with-python to run"
   fi
 fi
 
+
+#
+# libnuma
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with libnuma support" >&5
+$as_echo_n "checking whether to build with libnuma support... " >&6; }
+
+
+
+# Check whether --with-libnuma was given.
+if test "${with_libnuma+set}" = set; then :
+  withval=$with_libnuma;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_LIBNUMA 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-libnuma option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_libnuma=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_libnuma" >&5
+$as_echo "$with_libnuma" >&6; }
+
+
+if test "$with_libnuma" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for numa_available in -lnuma" >&5
+$as_echo_n "checking for numa_available in -lnuma... " >&6; }
+if ${ac_cv_lib_numa_numa_available+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lnuma  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char numa_available ();
+int
+main ()
+{
+return numa_available ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_numa_numa_available=yes
+else
+  ac_cv_lib_numa_numa_available=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_numa_numa_available" >&5
+$as_echo "$ac_cv_lib_numa_numa_available" >&6; }
+if test "x$ac_cv_lib_numa_numa_available" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBNUMA 1
+_ACEOF
+
+  LIBS="-lnuma $LIBS"
+
+else
+  as_fn_error $? "library 'libnuma' is required for NUMA support" "$LINENO" 5
+fi
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for numa" >&5
+$as_echo_n "checking for numa... " >&6; }
+
+if test -n "$LIBNUMA_CFLAGS"; then
+    pkg_cv_LIBNUMA_CFLAGS="$LIBNUMA_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"numa\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "numa") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBNUMA_CFLAGS=`$PKG_CONFIG --cflags "numa" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBNUMA_LIBS"; then
+    pkg_cv_LIBNUMA_LIBS="$LIBNUMA_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"numa\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "numa") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBNUMA_LIBS=`$PKG_CONFIG --libs "numa" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBNUMA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "numa" 2>&1`
+        else
+	        LIBNUMA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "numa" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBNUMA_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (numa) were not met:
+
+$LIBNUMA_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables LIBNUMA_CFLAGS
+and LIBNUMA_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables LIBNUMA_CFLAGS
+and LIBNUMA_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	LIBNUMA_CFLAGS=$pkg_cv_LIBNUMA_CFLAGS
+	LIBNUMA_LIBS=$pkg_cv_LIBNUMA_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+fi
 
 #
 # XML

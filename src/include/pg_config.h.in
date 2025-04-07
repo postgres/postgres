@@ -689,6 +689,9 @@
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_LIBCURL
 
+/* Define to 1 to build with NUMA support. (--with-libnuma) */
+#undef USE_LIBNUMA
+
 /* Define to build with io_uring support. (--with-liburing) */
 #undef USE_LIBURING
 

@@ -471,6 +471,7 @@ task:
             --enable-cassert --enable-injection-points --enable-debug \
             --enable-tap-tests --enable-nls \
             --with-segsize-blocks=6 \
+            --with-libnuma \
             --with-liburing \
             \
             ${LINUX_CONFIGURE_FEATURES} \
@@ -523,6 +524,7 @@ task:
             -Dllvm=disabled \
             --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
             -DPERL=perl5.36-i386-linux-gnu \
+            -Dlibnuma=disabled \
             build-32
         EOF
 
