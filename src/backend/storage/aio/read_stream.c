@@ -237,7 +237,7 @@ read_stream_start_pending_read(ReadStream *stream)
 	int16		io_index;
 	int16		overflow;
 	int16		buffer_index;
-	int16		buffer_limit;
+	int			buffer_limit;
 
 	/* This should only be called with a pending read. */
 	Assert(stream->pending_read_nblocks > 0);
@@ -294,7 +294,10 @@ read_stream_start_pending_read(ReadStream *stream)
 	else
 		buffer_limit = Min(GetAdditionalPinLimit(), PG_INT16_MAX);
 	Assert(stream->forwarded_buffers <= stream->pending_read_nblocks);
+
 	buffer_limit += stream->forwarded_buffers;
+	buffer_limit = Min(buffer_limit, PG_INT16_MAX);
+
 	if (buffer_limit == 0 && stream->pinned_buffers == 0)
 		buffer_limit = 1;		/* guarantee progress */
 
