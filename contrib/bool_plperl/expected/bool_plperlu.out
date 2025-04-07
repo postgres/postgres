@@ -104,9 +104,9 @@ SELECT spi_test();
 
 DROP EXTENSION plperlu CASCADE;
 NOTICE:  drop cascades to 6 other objects
-DETAIL:  drop cascades to function spi_test()
-drop cascades to extension bool_plperlu
+DETAIL:  drop cascades to extension bool_plperlu
 drop cascades to function perl2int(integer)
 drop cascades to function perl2text(text)
 drop cascades to function perl2undef()
 drop cascades to function bool2perl(boolean,boolean,boolean)
+drop cascades to function spi_test()

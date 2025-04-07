@@ -637,6 +637,7 @@ AggregateCreate(const char *aggName,
 							 parameterNames,	/* parameterNames */
 							 parameterDefaults, /* parameterDefaults */
 							 PointerGetDatum(NULL), /* trftypes */
+							 NIL,	/* trfoids */
 							 PointerGetDatum(NULL), /* proconfig */
 							 InvalidOid,	/* no prosupport */
 							 1, /* procost */

@@ -26,7 +26,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_transform.h"
 #include "catalog/pg_type.h"
-#include "commands/defrem.h"
 #include "executor/functions.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -61,6 +60,35 @@ static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
 /* ----------------------------------------------------------------
  *		ProcedureCreate
  *
+ *	procedureName: string name of routine (proname)
+ *	procNamespace: OID of namespace (pronamespace)
+ *	replace: true to allow replacement of an existing pg_proc entry
+ *	returnsSet: returns set? (proretset)
+ *	returnType: OID of result type (prorettype)
+ *	proowner: OID of owner role (proowner)
+ *	languageObjectId: OID of function language (prolang)
+ *	languageValidator: OID of validator function to apply, if any
+ *	prosrc: string form of function definition (prosrc)
+ *	probin: string form of binary reference, or NULL (probin)
+ *	prosqlbody: Node tree of pre-parsed SQL body, or NULL (prosqlbody)
+ *	prokind: function/aggregate/procedure/etc code (prokind)
+ *	security_definer: security definer? (prosecdef)
+ *	isLeakProof: leak proof? (proleakproof)
+ *	isStrict: strict? (proisstrict)
+ *	volatility: volatility code (provolatile)
+ *	parallel: parallel safety code (proparallel)
+ *	parameterTypes: input parameter types, as an oidvector (proargtypes)
+ *	allParameterTypes: all parameter types, as an OID array (proallargtypes)
+ *	parameterModes: parameter modes, as a "char" array (proargmodes)
+ *	parameterNames: parameter names, as a text array (proargnames)
+ *	parameterDefaults: defaults, as a List of Node trees (proargdefaults)
+ *	trftypes: transformable type OIDs, as an OID array (protrftypes)
+ *	trfoids: List of transform OIDs that routine should depend on
+ *	proconfig: GUC set clauses, as a text array (proconfig)
+ *	prosupport: OID of support function, if any (prosupport)
+ *	procost: cost factor (procost)
+ *	prorows: estimated output rows for a SRF (prorows)
+ *
  * Note: allParameterTypes, parameterModes, parameterNames, trftypes, and proconfig
  * are either arrays of the proper types or NULL.  We declare them Datum,
  * not "ArrayType *", to avoid importing array.h into pg_proc.h.
@@ -90,6 +118,7 @@ ProcedureCreate(const char *procedureName,
 				Datum parameterNames,
 				List *parameterDefaults,
 				Datum trftypes,
+				List *trfoids,
 				Datum proconfig,
 				Oid prosupport,
 				float4 procost,
@@ -115,7 +144,6 @@ ProcedureCreate(const char *procedureName,
 				referenced;
 	char	   *detailmsg;
 	int			i;
-	Oid			trfid;
 	ObjectAddresses *addrs;
 
 	/*
@@ -609,25 +637,18 @@ ProcedureCreate(const char *procedureName,
 	ObjectAddressSet(referenced, TypeRelationId, returnType);
 	add_exact_object_address(&referenced, addrs);
 
-	/* dependency on transform used by return type, if any */
-	if ((trfid = get_transform_oid(returnType, languageObjectId, true)))
-	{
-		ObjectAddressSet(referenced, TransformRelationId, trfid);
-		add_exact_object_address(&referenced, addrs);
-	}
-
 	/* dependency on parameter types */
 	for (i = 0; i < allParamCount; i++)
 	{
 		ObjectAddressSet(referenced, TypeRelationId, allParams[i]);
 		add_exact_object_address(&referenced, addrs);
+	}
 
-		/* dependency on transform used by parameter type, if any */
-		if ((trfid = get_transform_oid(allParams[i], languageObjectId, true)))
-		{
-			ObjectAddressSet(referenced, TransformRelationId, trfid);
-			add_exact_object_address(&referenced, addrs);
-		}
+	/* dependency on transforms, if any */
+	foreach_oid(transformid, trfoids)
+	{
+		ObjectAddressSet(referenced, TransformRelationId, transformid);
+		add_exact_object_address(&referenced, addrs);
 	}
 
 	/* dependency on support function, if any */
