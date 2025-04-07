@@ -86,9 +86,8 @@ validateCurrentEventTriggerState(bool mightStartTransaction)
 	if (RecoveryInProgress())
 	{
 		reset_current_tde_create_event();
-		return;
 	}
-	if (tdeCurrentCreateEvent.tid.value != InvalidFullTransactionId.value && tid.value != tdeCurrentCreateEvent.tid.value)
+	else if (tdeCurrentCreateEvent.tid.value != InvalidFullTransactionId.value && tid.value != tdeCurrentCreateEvent.tid.value)
 	{
 		/* There was a failed query, end event trigger didn't execute */
 		reset_current_tde_create_event();
