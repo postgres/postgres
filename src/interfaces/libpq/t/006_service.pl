@@ -13,6 +13,13 @@ my $node = PostgreSQL::Test::Cluster->new('node');
 $node->init;
 $node->start;
 
+# Set up a dummy node used for the connection tests, but do not start it.
+# This ensures that the environment variables used for the connection do
+# not interfere with the connection attempts, and that the service file's
+# contents are used.
+my $dummy_node = PostgreSQL::Test::Cluster->new('dummy_node');
+$dummy_node->init;
+
 my $td = PostgreSQL::Test::Utils::tempdir;
 
 # Windows vs non-Windows: CRLF vs LF for the file's newline, relying on
@@ -20,11 +27,14 @@ my $td = PostgreSQL::Test::Utils::tempdir;
 my $newline = $windows_os ? "\r\n" : "\n";
 
 # Create the set of service files used in the tests.
-# File that includes a valid service name, that uses a decomposed connection
+# File that includes a valid service name, and uses a decomposed connection
 # string for its contents, split on spaces.
 my $srvfile_valid = "$td/pg_service_valid.conf";
-append_to_file($srvfile_valid, "[my_srv]", $newline);
-append_to_file($srvfile_valid, split(/\s+/, $node->connstr) . $newline);
+append_to_file($srvfile_valid, "[my_srv]" . $newline);
+foreach my $param (split(/\s+/, $node->connstr))
+{
+	append_to_file($srvfile_valid, $param . $newline);
+}
 
 # File defined with no contents, used as default value for PGSERVICEFILE,
 # so as no lookup is attempted in the user's home directory.
@@ -51,33 +61,33 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 # Checks combinations of service name and a valid service file.
 {
 	local $ENV{PGSERVICEFILE} = $srvfile_valid;
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'service=my_srv',
 		'connection with correct "service" string and PGSERVICEFILE',
 		sql => "SELECT 'connect1_1'",
 		expected_stdout => qr/connect1_1/);
 
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'postgres://?service=my_srv',
 		'connection with correct "service" URI and PGSERVICEFILE',
 		sql => "SELECT 'connect1_2'",
 		expected_stdout => qr/connect1_2/);
 
-	$node->connect_fails(
+	$dummy_node->connect_fails(
 		'service=undefined-service',
 		'connection with incorrect "service" string and PGSERVICEFILE',
 		expected_stderr =>
 		  qr/definition of service "undefined-service" not found/);
 
 	local $ENV{PGSERVICE} = 'my_srv';
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'',
 		'connection with correct PGSERVICE and PGSERVICEFILE',
 		sql => "SELECT 'connect1_3'",
 		expected_stdout => qr/connect1_3/);
 
 	local $ENV{PGSERVICE} = 'undefined-service';
-	$node->connect_fails(
+	$dummy_node->connect_fails(
 		'',
 		'connection with incorrect PGSERVICE and PGSERVICEFILE',
 		expected_stdout =>
@@ -87,7 +97,7 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 # Checks case of incorrect service file.
 {
 	local $ENV{PGSERVICEFILE} = $srvfile_missing;
-	$node->connect_fails(
+	$dummy_node->connect_fails(
 		'service=my_srv',
 		'connection with correct "service" string and incorrect PGSERVICEFILE',
 		expected_stderr =>
@@ -100,33 +110,33 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 	my $srvfile_default = "$td/pg_service.conf";
 	copy($srvfile_valid, $srvfile_default);
 
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'service=my_srv',
 		'connection with correct "service" string and pg_service.conf',
 		sql => "SELECT 'connect2_1'",
 		expected_stdout => qr/connect2_1/);
 
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'postgres://?service=my_srv',
 		'connection with correct "service" URI and default pg_service.conf',
 		sql => "SELECT 'connect2_2'",
 		expected_stdout => qr/connect2_2/);
 
-	$node->connect_fails(
+	$dummy_node->connect_fails(
 		'service=undefined-service',
 		'connection with incorrect "service" string and default pg_service.conf',
 		expected_stderr =>
 		  qr/definition of service "undefined-service" not found/);
 
 	local $ENV{PGSERVICE} = 'my_srv';
-	$node->connect_ok(
+	$dummy_node->connect_ok(
 		'',
 		'connection with correct PGSERVICE and default pg_service.conf',
 		sql => "SELECT 'connect2_3'",
 		expected_stdout => qr/connect2_3/);
 
 	local $ENV{PGSERVICE} = 'undefined-service';
-	$node->connect_fails(
+	$dummy_node->connect_fails(
 		'',
 		'connection with incorrect PGSERVICE and default pg_service.conf',
 		expected_stdout =>
