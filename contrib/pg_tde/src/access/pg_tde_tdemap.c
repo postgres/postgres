@@ -693,7 +693,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 				new_fd;
 	char		old_path[MAXPGPATH],
 				new_path[MAXPGPATH];
-	off_t		map_size;
 	XLogPrincipalKeyRotate *xlrec;
 	off_t		xlrec_size;
 
@@ -743,15 +742,12 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	close(old_fd);
 
-	/* Let's calculate sizes */
-	map_size = lseek(new_fd, 0, SEEK_END);
-	xlrec_size = map_size + SizeoOfXLogPrincipalKeyRotate;
+	/* Build WAL record containing the new file */
+	xlrec_size = SizeoOfXLogPrincipalKeyRotate + new_curr_pos;
 
-	/* palloc and fill in the structure */
 	xlrec = (XLogPrincipalKeyRotate *) palloc(xlrec_size);
-
 	xlrec->databaseId = principal_key->keyInfo.databaseId;
-	xlrec->file_size = map_size;
+	xlrec->file_size = new_curr_pos;
 
 	if (pg_pread(new_fd, xlrec->buff, xlrec->file_size, 0) == -1)
 		ereport(ERROR,
@@ -765,11 +761,10 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	XLogRegisterData((char *) xlrec, xlrec_size);
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_KEY);
 
+	pfree(xlrec);
+
 	/* Do the final steps */
 	finalize_key_rotation(old_path, new_path);
-
-	/* Free up the palloc'ed data */
-	pfree(xlrec);
 }
 
 /*
