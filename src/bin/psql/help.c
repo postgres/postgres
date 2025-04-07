@@ -461,7 +461,7 @@ helpVariables(unsigned short int pager)
 		  "  VERSION_NUM\n"
 		  "    psql's version (in verbose string, short string, or numeric format)\n");
 	HELP0("  WATCH_INTERVAL\n"
-		  "    number of seconds \\watch by default waits between executing the query buffer\n");
+		  "    if set to a number, overrides the default two second \\watch interval\n");
 
 	HELP0("\nDisplay settings:\n");
 	HELP0("Usage:\n");
