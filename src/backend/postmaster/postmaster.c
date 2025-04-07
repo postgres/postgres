@@ -90,6 +90,7 @@
 #endif
 
 #include "access/xlog.h"
+#include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "common/file_perm.h"
 #include "common/pg_prng.h"
@@ -1516,7 +1517,7 @@ checkControlFile(void)
 	char		path[MAXPGPATH];
 	FILE	   *fp;
 
-	snprintf(path, sizeof(path), "%s/global/pg_control", DataDir);
+	snprintf(path, sizeof(path), "%s/%s", DataDir, XLOG_CONTROL_FILE);
 
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)

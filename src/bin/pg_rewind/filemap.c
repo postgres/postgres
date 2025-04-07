@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/xlog_internal.h"
 #include "catalog/pg_tablespace_d.h"
 #include "common/file_utils.h"
 #include "common/hashfn_unstable.h"
@@ -704,7 +705,7 @@ decide_file_action(file_entry_t *entry)
 	 * Don't touch the control file. It is handled specially, after copying
 	 * all the other files.
 	 */
-	if (strcmp(path, "global/pg_control") == 0)
+	if (strcmp(path, XLOG_CONTROL_FILE) == 0)
 		return FILE_ACTION_NONE;
 
 	/* Skip macOS system files */

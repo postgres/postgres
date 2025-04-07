@@ -14,6 +14,7 @@
 
 #include "postgres_fe.h"
 
+#include "access/xlog_internal.h"
 #include "catalog/pg_control.h"
 #include "pg_verifybackup.h"
 
@@ -225,7 +226,7 @@ member_verify_header(astreamer *streamer, astreamer_member *member)
 		(!mystreamer->context->skip_checksums && should_verify_checksum(m));
 	mystreamer->verify_control_data =
 		mystreamer->context->manifest->version != 1 &&
-		!m->bad && strcmp(m->pathname, "global/pg_control") == 0;
+		!m->bad && strcmp(m->pathname, XLOG_CONTROL_FILE) == 0;
 
 	/* If we're going to verify the checksum, initial a checksum context. */
 	if (mystreamer->verify_checksum &&
@@ -370,7 +371,7 @@ member_verify_control_data(astreamer *streamer)
 	pg_crc32c	crc;
 
 	/* Should be here only for control file */
-	Assert(strcmp(mystreamer->mfile->pathname, "global/pg_control") == 0);
+	Assert(strcmp(mystreamer->mfile->pathname, XLOG_CONTROL_FILE) == 0);
 	Assert(mystreamer->verify_control_data);
 
 	/*

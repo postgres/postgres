@@ -1349,7 +1349,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 		snprintf(pathbuf, sizeof(pathbuf), "%s/%s", path, de->d_name);
 
 		/* Skip pg_control here to back up it last */
-		if (strcmp(pathbuf, "./global/pg_control") == 0)
+		if (strcmp(pathbuf, "./" XLOG_CONTROL_FILE) == 0)
 			continue;
 
 		if (lstat(pathbuf, &statbuf) != 0)

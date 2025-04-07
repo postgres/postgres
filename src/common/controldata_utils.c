@@ -53,7 +53,7 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 {
 	char		ControlFilePath[MAXPGPATH];
 
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/%s", DataDir, XLOG_CONTROL_FILE);
 
 	return get_controlfile_by_exact_path(ControlFilePath, crc_ok_p);
 }
