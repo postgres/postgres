@@ -47,28 +47,31 @@ GetCurrentTdeCreateEvent(void)
 }
 
 static void
+checkPrincipalKeyConfigured(void)
+{
+	if (!pg_tde_principal_key_configured(MyDatabaseId))
+		ereport(ERROR,
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_key before using encrypted tables"));
+}
+
+static void
 checkEncryptionClause(const char *accessMethod)
 {
 	if (accessMethod && strcmp(accessMethod, "tde_heap") == 0)
 	{
 		tdeCurrentCreateEvent.encryptMode = true;
 	}
-	else if ((accessMethod == NULL || accessMethod[0] == 0) && strcmp(default_table_access_method, "tde_heap") == 0)
+	else if (accessMethod == NULL && strcmp(default_table_access_method, "tde_heap") == 0)
 	{
 		tdeCurrentCreateEvent.encryptMode = true;
 	}
 
 	if (tdeCurrentCreateEvent.encryptMode)
 	{
-		if (!pg_tde_principal_key_configured(MyDatabaseId))
-		{
-			ereport(ERROR,
-					errmsg("principal key not configured"),
-					errhint("create one using pg_tde_set_key before using encrypted tables"));
-		}
+		checkPrincipalKeyConfigured();
 	}
-
-	if (EnforceEncryption && !tdeCurrentCreateEvent.encryptMode)
+	else if (EnforceEncryption)
 	{
 		ereport(ERROR,
 				errmsg("pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed."));
@@ -143,9 +146,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			table_close(rel, NoLock);
 
 			if (tdeCurrentCreateEvent.encryptMode)
-			{
-				checkEncryptionClause("");
-			}
+				checkPrincipalKeyConfigured();
 		}
 		else
 			ereport(DEBUG1, errmsg("Failed to get relation Oid for relation:%s", stmt->relation->relname));
@@ -229,9 +230,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				relation_close(rel, NoLock);
 
 				if (tdeCurrentCreateEvent.encryptMode)
-				{
-					checkEncryptionClause("");
-				}
+					checkPrincipalKeyConfigured();
 			}
 		}
 	}
