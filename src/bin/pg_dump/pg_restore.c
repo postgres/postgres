@@ -1254,7 +1254,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	}
 
 	/* Log number of processed databases. */
-	pg_log_info("number of restored databases are %d", num_db_restore);
+	pg_log_info("number of restored databases is %d", num_db_restore);
 
 	/* Free dbname and dboid list. */
 	simple_oid_string_list_destroy(&dbname_oid_list);
