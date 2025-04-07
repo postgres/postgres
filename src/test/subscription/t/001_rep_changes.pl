@@ -113,6 +113,9 @@ $node_subscriber->safe_psql('postgres',
 # Wait for initial table sync to finish
 $node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
+# Reset IO statistics, for the WAL sender check with pg_stat_io.
+$node_publisher->safe_psql('postgres', "SELECT pg_stat_reset_shared('io')");
+
 my $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_notrep");
 is($result, qq(0), 'check non-replicated table is empty on subscriber');
@@ -183,6 +186,19 @@ is( $node_subscriber->safe_psql(
 $result =
   $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_no_col");
 is($result, qq(2), 'check replicated changes for table having no columns');
+
+# Wait for the logical WAL sender to update its IO statistics.  This is
+# done before the next restart, which would force a flush of its stats, and
+# far enough from the reset done above to not impact the run time.
+$node_publisher->poll_query_until(
+	'postgres',
+	qq[SELECT sum(reads) > 0
+       FROM pg_catalog.pg_stat_io
+       WHERE backend_type = 'walsender'
+       AND object = 'wal']
+  )
+  or die
+  "Timed out while waiting for the walsender to update its IO statistics";
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',
