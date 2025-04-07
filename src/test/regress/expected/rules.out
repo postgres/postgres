@@ -1757,6 +1757,10 @@ pg_shmem_allocations| SELECT name,
     size,
     allocated_size
    FROM pg_get_shmem_allocations() pg_get_shmem_allocations(name, off, size, allocated_size);
+pg_shmem_allocations_numa| SELECT name,
+    numa_node,
+    size
+   FROM pg_get_shmem_allocations_numa() pg_get_shmem_allocations_numa(name, numa_node, size);
 pg_stat_activity| SELECT s.datid,
     d.datname,
     s.pid,

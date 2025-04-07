@@ -1,0 +1,5 @@
+SELECT NOT(pg_numa_available()) AS skip_test \gset
+\if :skip_test
+SELECT COUNT(*) = 0 AS ok FROM pg_shmem_allocations_numa;
+ERROR:  libnuma initialization failed or NUMA is not supported on this platform
+\quit

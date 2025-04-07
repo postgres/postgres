@@ -8546,6 +8546,14 @@
   proname => 'pg_numa_available', provolatile => 's', prorettype => 'bool',
   proargtypes => '', prosrc => 'pg_numa_available' },
 
+# shared memory usage with NUMA info
+{ oid => '4100', descr => 'NUMA mappings for the main shared memory segment',
+  proname => 'pg_get_shmem_allocations_numa', prorows => '50', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{text,int4,int8}', proargmodes => '{o,o,o}',
+  proargnames => '{name,numa_node,size}',
+  prosrc => 'pg_get_shmem_allocations_numa' },
+
 # memory context of local backend
 { oid => '2282',
   descr => 'information about all memory contexts of local backend',

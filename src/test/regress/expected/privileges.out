@@ -3219,8 +3219,8 @@ REVOKE MAINTAIN ON lock_table FROM regress_locktable_user;
 -- clean up
 DROP TABLE lock_table;
 DROP USER regress_locktable_user;
--- test to check privileges of system views pg_shmem_allocations and
--- pg_backend_memory_contexts.
+-- test to check privileges of system views pg_shmem_allocations,
+-- pg_shmem_allocations_numa and pg_backend_memory_contexts.
 -- switch to superuser
 \c -
 CREATE ROLE regress_readallstats;
@@ -3242,6 +3242,12 @@ SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT
  f
 (1 row)
 
+SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','SELECT'); -- no
+ has_table_privilege 
+---------------------
+ f
+(1 row)
+
 GRANT pg_read_all_stats TO regress_readallstats;
 SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- yes
  has_table_privilege 
@@ -3256,6 +3262,12 @@ SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','
 (1 row)
 
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT'); -- yes
+ has_table_privilege 
+---------------------
+ t
+(1 row)
+
+SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','SELECT'); -- yes
  has_table_privilege 
 ---------------------
  t

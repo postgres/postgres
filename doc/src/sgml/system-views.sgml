@@ -182,6 +182,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-shmem-allocations-numa"><structname>pg_shmem_allocations_numa</structname></link></entry>
+      <entry>NUMA node mappings for shared memory allocations</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-stats"><structname>pg_stats</structname></link></entry>
       <entry>planner statistics</entry>
      </row>
@@ -4046,6 +4051,96 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    By default, the <structname>pg_shmem_allocations</structname> view can be
+   read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-shmem-allocations-numa">
+  <title><structname>pg_shmem_allocations_numa</structname></title>
+
+  <indexterm zone="view-pg-shmem-allocations-numa">
+   <primary>pg_shmem_allocations_numa</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_shmem_allocations_numa</structname> shows how shared
+   memory allocations in the server's main shared memory segment are distributed
+   across NUMA nodes. This includes both memory allocated by
+   <productname>PostgreSQL</productname> itself and memory allocated
+   by extensions using the mechanisms detailed in
+   <xref linkend="xfunc-shared-addin" />. This view will output multiple rows
+   for each of the shared memory segments provided that they are spread accross
+   multiple NUMA nodes. This view should not be queried by monitoring systems
+   as it is very slow and may end up allocating shared memory in case it was not
+   used earlier.
+   Current limitation for this view is that won't show anonymous shared memory
+   allocations.
+  </para>
+
+  <para>
+   Note that this view does not include memory allocated using the dynamic
+   shared memory infrastructure.
+  </para>
+
+  <warning>
+    <para>
+      When determining the <acronym>NUMA</acronym> node, the view touches
+      all memory pages for the shared memory segment. This will force
+      allocation of the shared memory, if it wasn't allocated already,
+      and the memory may get allocated in a single <acronym>NUMA</acronym>
+      node (depending on system configuration).
+    </para>
+  </warning>
+
+  <table>
+   <title><structname>pg_shmem_allocations_numa</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the shared memory allocation.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>numa_node</structfield> <type>int4</type>
+      </para>
+      <para>
+      ID of <acronym>NUMA</acronym> node
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>size</structfield> <type>int4</type>
+      </para>
+      <para>
+       Size of the allocation on this particular NUMA memory node in bytes
+      </para></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   By default, the <structname>pg_shmem_allocations_numa</structname> view can be
    read only by superusers or roles with privileges of the
    <literal>pg_read_all_stats</literal> role.
   </para>

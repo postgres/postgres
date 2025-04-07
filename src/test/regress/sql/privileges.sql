@@ -1947,8 +1947,8 @@ REVOKE MAINTAIN ON lock_table FROM regress_locktable_user;
 DROP TABLE lock_table;
 DROP USER regress_locktable_user;
 
--- test to check privileges of system views pg_shmem_allocations and
--- pg_backend_memory_contexts.
+-- test to check privileges of system views pg_shmem_allocations,
+-- pg_shmem_allocations_numa and pg_backend_memory_contexts.
 
 -- switch to superuser
 \c -
@@ -1958,12 +1958,14 @@ CREATE ROLE regress_readallstats;
 SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- no
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- no
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT'); -- no
+SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','SELECT'); -- no
 
 GRANT pg_read_all_stats TO regress_readallstats;
 
 SELECT has_table_privilege('regress_readallstats','pg_aios','SELECT'); -- yes
 SELECT has_table_privilege('regress_readallstats','pg_backend_memory_contexts','SELECT'); -- yes
 SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations','SELECT'); -- yes
+SELECT has_table_privilege('regress_readallstats','pg_shmem_allocations_numa','SELECT'); -- yes
 
 -- run query to ensure that functions within views can be executed
 SET ROLE regress_readallstats;
