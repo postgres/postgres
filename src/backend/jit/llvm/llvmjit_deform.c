@@ -123,7 +123,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		 * combination of attisdropped && attnotnull combination shouldn't
 		 * exist.
 		 */
-		if (att->attnotnull &&
+		if (att->attnullability == ATTNULLABLE_VALID &&
 			!att->atthasmissing &&
 			!att->attisdropped)
 			guaranteed_column_number = attnum;
@@ -438,7 +438,7 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		 * into account, because if they're present the heaptuple's natts
 		 * would have indicated that a slot_getmissingattrs() is needed.
 		 */
-		if (!att->attnotnull)
+		if (att->attnullability != ATTNULLABLE_VALID)
 		{
 			LLVMBasicBlockRef b_ifnotnull;
 			LLVMBasicBlockRef b_ifnull;
@@ -604,7 +604,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			known_alignment = -1;
 			attguaranteedalign = false;
 		}
-		else if (att->attnotnull && attguaranteedalign && known_alignment >= 0)
+		else if (att->attnullability == ATTNULLABLE_VALID &&
+				 attguaranteedalign && known_alignment >= 0)
 		{
 			/*
 			 * If the offset to the column was previously known, a NOT NULL &
@@ -614,7 +615,8 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 			Assert(att->attlen > 0);
 			known_alignment += att->attlen;
 		}
-		else if (att->attnotnull && (att->attlen % alignto) == 0)
+		else if (att->attnullability == ATTNULLABLE_VALID &&
+				 (att->attlen % alignto) == 0)
 		{
 			/*
 			 * After a NOT NULL fixed-width column with a length that is a

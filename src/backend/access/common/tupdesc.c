@@ -22,6 +22,7 @@
 #include "access/htup_details.h"
 #include "access/toast_compression.h"
 #include "access/tupdesc_details.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -74,7 +75,16 @@ populate_compact_attribute_internal(Form_pg_attribute src,
 	dst->atthasmissing = src->atthasmissing;
 	dst->attisdropped = src->attisdropped;
 	dst->attgenerated = (src->attgenerated != '\0');
-	dst->attnotnull = src->attnotnull;
+
+	/*
+	 * Assign nullability status for this column.  Assuming that a constraint
+	 * exists, at this point we don't know if a not-null constraint is valid,
+	 * so we assign UNKNOWN unless the table is a catalog, in which case we
+	 * know it's valid.
+	 */
+	dst->attnullability = !src->attnotnull ? ATTNULLABLE_UNRESTRICTED :
+		IsCatalogRelationOid(src->attrelid) ? ATTNULLABLE_VALID :
+		ATTNULLABLE_UNKNOWN;
 
 	switch (src->attalign)
 	{
@@ -144,9 +154,10 @@ verify_compact_attribute(TupleDesc tupdesc, int attnum)
 
 	/*
 	 * Make the attcacheoff match since it's been reset to -1 by
-	 * populate_compact_attribute_internal.
+	 * populate_compact_attribute_internal.  Same with attnullability.
 	 */
 	tmp.attcacheoff = cattr->attcacheoff;
+	tmp.attnullability = cattr->attnullability;
 
 	/* Check the freshly populated CompactAttribute matches the TupleDesc's */
 	Assert(memcmp(&tmp, cattr, sizeof(CompactAttribute)) == 0);
@@ -333,7 +344,12 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 		   desc->natts * sizeof(FormData_pg_attribute));
 
 	for (i = 0; i < desc->natts; i++)
+	{
 		populate_compact_attribute(desc, i);
+
+		TupleDescCompactAttr(desc, i)->attnullability =
+			TupleDescCompactAttr(tupdesc, i)->attnullability;
+	}
 
 	/* Copy the TupleConstr data structure, if any */
 	if (constr)
@@ -613,6 +629,24 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attnotnull != attr2->attnotnull)
 			return false;
+
+		/*
+		 * When the column has a not-null constraint, we also need to consider
+		 * its validity aspect, which only manifests in CompactAttribute->
+		 * attnullability, so verify that.
+		 */
+		if (attr1->attnotnull)
+		{
+			CompactAttribute *cattr1 = TupleDescCompactAttr(tupdesc1, i);
+			CompactAttribute *cattr2 = TupleDescCompactAttr(tupdesc2, i);
+
+			Assert(cattr1->attnullability != ATTNULLABLE_UNKNOWN);
+			Assert((cattr1->attnullability == ATTNULLABLE_UNKNOWN) ==
+				   (cattr2->attnullability == ATTNULLABLE_UNKNOWN));
+
+			if (cattr1->attnullability != cattr2->attnullability)
+				return false;
+		}
 		if (attr1->atthasdef != attr2->atthasdef)
 			return false;
 		if (attr1->attidentity != attr2->attidentity)

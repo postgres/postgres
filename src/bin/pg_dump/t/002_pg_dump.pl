@@ -744,8 +744,8 @@ my %pgdump_runs = (
 	schema_only_with_statistics => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
-			"--file=$tempdir/schema_only_with_statistics.sql", '--schema-only',
-			'--with-statistics', 'postgres',
+			"--file=$tempdir/schema_only_with_statistics.sql",
+			'--schema-only', '--with-statistics', 'postgres',
 		],
 	},
 	no_schema => {
@@ -1114,6 +1114,23 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'CONSTRAINT NOT NULL / INVALID' => {
+		create_sql => 'CREATE TABLE dump_test.test_table_nn (
+							col1 int);
+			ALTER TABLE dump_test.test_table_nn ADD CONSTRAINT nn NOT NULL col1 NOT VALID;',
+		regexp => qr/^
+			\QALTER TABLE dump_test.test_table_nn\E \n^\s+
+			\QADD CONSTRAINT nn NOT NULL col1 NOT VALID;\E
+			/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
 			only_dump_measurement => 1,
 		},
 	},

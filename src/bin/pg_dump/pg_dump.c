@@ -350,8 +350,10 @@ static void buildMatViewRefreshDependencies(Archive *fout);
 static void getTableDataFKConstraints(void);
 static void determineNotNullFlags(Archive *fout, PGresult *res, int r,
 								  TableInfo *tbinfo, int j,
-								  int i_notnull_name, int i_notnull_noinherit,
-								  int i_notnull_islocal);
+								  int i_notnull_name, int i_notnull_invalidoid,
+								  int i_notnull_noinherit,
+								  int i_notnull_islocal,
+								  PQExpBuffer *invalidnotnulloids);
 static char *format_function_arguments(const FuncInfo *finfo, const char *funcargs,
 									   bool is_agg);
 static char *format_function_signature(Archive *fout,
@@ -8984,6 +8986,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer tbloids = createPQExpBuffer();
 	PQExpBuffer checkoids = createPQExpBuffer();
+	PQExpBuffer invalidnotnulloids = NULL;
 	PGresult   *res;
 	int			ntups;
 	int			curtblindx;
@@ -9003,6 +9006,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	int			i_notnull_name;
 	int			i_notnull_noinherit;
 	int			i_notnull_islocal;
+	int			i_notnull_invalidoid;
 	int			i_attoptions;
 	int			i_attcollation;
 	int			i_attcompression;
@@ -9089,6 +9093,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 * attnotnull (this cues dumpTableSchema to print the NOT NULL clause
 	 * without a name); also, such cases are never NO INHERIT.
 	 *
+	 * For invalid constraints, we need to store their OIDs for processing
+	 * elsewhere, so we bring the pg_constraint.oid value when the constraint
+	 * is invalid, and NULL otherwise.
+	 *
 	 * We track in notnull_islocal whether the constraint was defined directly
 	 * in this table or via an ancestor, for binary upgrade.  flagInhAttrs
 	 * might modify this later for servers older than 18; it's also in charge
@@ -9097,11 +9105,14 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	if (fout->remoteVersion >= 180000)
 		appendPQExpBufferStr(q,
 							 "co.conname AS notnull_name,\n"
+							 "CASE WHEN NOT co.convalidated THEN co.oid "
+							 "ELSE NULL END AS notnull_invalidoid,\n"
 							 "co.connoinherit AS notnull_noinherit,\n"
 							 "co.conislocal AS notnull_islocal,\n");
 	else
 		appendPQExpBufferStr(q,
 							 "CASE WHEN a.attnotnull THEN '' ELSE NULL END AS notnull_name,\n"
+							 "NULL AS notnull_invalidoid,\n"
 							 "false AS notnull_noinherit,\n"
 							 "a.attislocal AS notnull_islocal,\n");
 
@@ -9176,6 +9187,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	i_attalign = PQfnumber(res, "attalign");
 	i_attislocal = PQfnumber(res, "attislocal");
 	i_notnull_name = PQfnumber(res, "notnull_name");
+	i_notnull_invalidoid = PQfnumber(res, "notnull_invalidoid");
 	i_notnull_noinherit = PQfnumber(res, "notnull_noinherit");
 	i_notnull_islocal = PQfnumber(res, "notnull_islocal");
 	i_attoptions = PQfnumber(res, "attoptions");
@@ -9272,8 +9284,11 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			/* Handle not-null constraint name and flags */
 			determineNotNullFlags(fout, res, r,
 								  tbinfo, j,
-								  i_notnull_name, i_notnull_noinherit,
-								  i_notnull_islocal);
+								  i_notnull_name,
+								  i_notnull_invalidoid,
+								  i_notnull_noinherit,
+								  i_notnull_islocal,
+								  &invalidnotnulloids);
 
 			tbinfo->attoptions[j] = pg_strdup(PQgetvalue(res, r, i_attoptions));
 			tbinfo->attcollation[j] = atooid(PQgetvalue(res, r, i_attcollation));
@@ -9293,6 +9308,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			appendPQExpBuffer(tbloids, "%u", tbinfo->dobj.catId.oid);
 		}
 	}
+
+	/* If invalidnotnulloids has any data, finalize it */
+	if (invalidnotnulloids != NULL)
+		appendPQExpBufferChar(invalidnotnulloids, '}');
 
 	PQclear(res);
 
@@ -9423,6 +9442,103 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			tbinfo->attrdefs[adnum - 1] = &attrdefs[j];
 		}
 
+		PQclear(res);
+	}
+
+	/*
+	 * Get info about NOT NULL NOT VALID constraints.  This is skipped for a
+	 * data-only dump, as it is only needed for table schemas.
+	 */
+	if (dopt->dumpSchema && invalidnotnulloids)
+	{
+		ConstraintInfo *constrs;
+		int			numConstrs;
+		int			i_tableoid;
+		int			i_oid;
+		int			i_conrelid;
+		int			i_conname;
+		int			i_consrc;
+		int			i_conislocal;
+
+		pg_log_info("finding invalid not null constraints");
+
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q,
+						  "SELECT c.tableoid, c.oid, conrelid, conname, "
+						  "pg_catalog.pg_get_constraintdef(c.oid) AS consrc, "
+						  "conislocal, convalidated "
+						  "FROM unnest('%s'::pg_catalog.oid[]) AS src(conoid)\n"
+						  "JOIN pg_catalog.pg_constraint c ON (src.conoid = c.oid)\n"
+						  "ORDER BY c.conrelid, c.conname",
+						  invalidnotnulloids->data);
+
+		res = ExecuteSqlQuery(fout, q->data, PGRES_TUPLES_OK);
+
+		numConstrs = PQntuples(res);
+		constrs = (ConstraintInfo *) pg_malloc(numConstrs * sizeof(ConstraintInfo));
+
+		i_tableoid = PQfnumber(res, "tableoid");
+		i_oid = PQfnumber(res, "oid");
+		i_conrelid = PQfnumber(res, "conrelid");
+		i_conname = PQfnumber(res, "conname");
+		i_consrc = PQfnumber(res, "consrc");
+		i_conislocal = PQfnumber(res, "conislocal");
+
+		/* As above, this loop iterates once per table, not once per row */
+		curtblindx = -1;
+		for (int j = 0; j < numConstrs;)
+		{
+			Oid			conrelid = atooid(PQgetvalue(res, j, i_conrelid));
+			TableInfo  *tbinfo = NULL;
+			int			numcons;
+
+			/* Count rows for this table */
+			for (numcons = 1; numcons < numConstrs - j; numcons++)
+				if (atooid(PQgetvalue(res, j + numcons, i_conrelid)) != conrelid)
+					break;
+
+			/*
+			 * Locate the associated TableInfo; we rely on tblinfo[] being in
+			 * OID order.
+			 */
+			while (++curtblindx < numTables)
+			{
+				tbinfo = &tblinfo[curtblindx];
+				if (tbinfo->dobj.catId.oid == conrelid)
+					break;
+			}
+			if (curtblindx >= numTables)
+				pg_fatal("unrecognized table OID %u", conrelid);
+
+			for (int c = 0; c < numcons; c++, j++)
+			{
+				constrs[j].dobj.objType = DO_CONSTRAINT;
+				constrs[j].dobj.catId.tableoid = atooid(PQgetvalue(res, j, i_tableoid));
+				constrs[j].dobj.catId.oid = atooid(PQgetvalue(res, j, i_oid));
+				AssignDumpId(&constrs[j].dobj);
+				constrs[j].dobj.name = pg_strdup(PQgetvalue(res, j, i_conname));
+				constrs[j].dobj.namespace = tbinfo->dobj.namespace;
+				constrs[j].contable = tbinfo;
+				constrs[j].condomain = NULL;
+				constrs[j].contype = 'n';
+				constrs[j].condef = pg_strdup(PQgetvalue(res, j, i_consrc));
+				constrs[j].confrelid = InvalidOid;
+				constrs[j].conindex = 0;
+				constrs[j].condeferrable = false;
+				constrs[j].condeferred = false;
+				constrs[j].conislocal = (PQgetvalue(res, j, i_conislocal)[0] == 't');
+
+				/*
+				 * All invalid not-null constraints must be dumped separately,
+				 * because CREATE TABLE would not create them as invalid, and
+				 * also because they must be created after potentially
+				 * violating data has been loaded.
+				 */
+				constrs[j].separate = true;
+
+				constrs[j].dobj.dump = tbinfo->dobj.dump;
+			}
+		}
 		PQclear(res);
 	}
 
@@ -9570,18 +9686,23 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
  *
  * Result row 'r' is for tbinfo's attribute 'j'.
  *
- * There are three possibilities:
+ * There are four possibilities:
  * 1) the column has no not-null constraints. In that case, ->notnull_constrs
  *    (the constraint name) remains NULL.
  * 2) The column has a constraint with no name (this is the case when
  *    constraints come from pre-18 servers).  In this case, ->notnull_constrs
  *    is set to the empty string; dumpTableSchema will print just "NOT NULL".
- * 3) The column has a constraint with a known name; in that case
+ * 3) The column has an invalid not-null constraint.  This must be treated
+ *    as a separate object (because it must be created after the table data
+ *    is loaded).  So we add its OID to invalidnotnulloids for processing
+ *    elsewhere and do nothing further with it here.  We distinguish this
+ *    case because the "notnull_invalidoid" column has been set to a non-NULL
+ *    value, which is the constraint OID.  Valid constraints have a null OID.
+ * 4) The column has a constraint with a known name; in that case
  *    notnull_constrs carries that name and dumpTableSchema will print
  *    "CONSTRAINT the_name NOT NULL".  However, if the name is the default
  *    (table_column_not_null), there's no need to print that name in the dump,
- *    so notnull_constrs is set to the empty string and it behaves as the case
- *    above.
+ *    so notnull_constrs is set to the empty string and it behaves as case 2.
  *
  * In a child table that inherits from a parent already containing NOT NULL
  * constraints and the columns in the child don't have their own NOT NULL
@@ -9593,18 +9714,52 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
  * Any of these constraints might have the NO INHERIT bit.  If so we set
  * ->notnull_noinh and NO INHERIT will be printed by dumpTableSchema.
  *
- * In case 3 above, the name comparison is a bit of a hack; it actually fails
+ * In case 4 above, the name comparison is a bit of a hack; it actually fails
  * to do the right thing in all but the trivial case.  However, the downside
  * of getting it wrong is simply that the name is printed rather than
  * suppressed, so it's not a big deal.
+ *
+ * invalidnotnulloids is expected to be given as NULL; if any invalid not-null
+ * constraints are found, it is initialized and filled with the array of
+ * OIDs of such constraints, for later processing.
  */
 static void
 determineNotNullFlags(Archive *fout, PGresult *res, int r,
 					  TableInfo *tbinfo, int j,
-					  int i_notnull_name, int i_notnull_noinherit,
-					  int i_notnull_islocal)
+					  int i_notnull_name,
+					  int i_notnull_invalidoid,
+					  int i_notnull_noinherit,
+					  int i_notnull_islocal,
+					  PQExpBuffer *invalidnotnulloids)
 {
 	DumpOptions *dopt = fout->dopt;
+
+	/*
+	 * If this not-null constraint is not valid, list its OID in
+	 * invalidnotnulloids and do nothing further.  It'll be processed
+	 * elsewhere later.
+	 *
+	 * Because invalid not-null constraints are rare, we don't want to malloc
+	 * invalidnotnulloids until we're sure we're going it need it, which
+	 * happens here.
+	 */
+	if (!PQgetisnull(res, r, i_notnull_invalidoid))
+	{
+		char	   *constroid = PQgetvalue(res, r, i_notnull_invalidoid);
+
+		if (*invalidnotnulloids == NULL)
+		{
+			*invalidnotnulloids = createPQExpBuffer();
+			appendPQExpBufferChar(*invalidnotnulloids, '{');
+			appendPQExpBuffer(*invalidnotnulloids, "%s", constroid);
+		}
+		else
+			appendPQExpBuffer(*invalidnotnulloids, ",%s", constroid);
+
+		/* nothing else to do */
+		tbinfo->notnull_constrs[j] = NULL;
+		return;
+	}
 
 	/*
 	 * notnull_noinh is straight from the query result. notnull_islocal also,
@@ -18152,13 +18307,20 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 									  .createStmt = q->data,
 									  .dropStmt = delq->data));
 	}
-	else if (coninfo->contype == 'c' && tbinfo)
+	else if ((coninfo->contype == 'c' || coninfo->contype == 'n') && tbinfo)
 	{
-		/* CHECK constraint on a table */
+		/* CHECK or invalid not-null constraint on a table */
 
 		/* Ignore if not to be dumped separately, or if it was inherited */
 		if (coninfo->separate && coninfo->conislocal)
 		{
+			const char *keyword;
+
+			if (coninfo->contype == 'c')
+				keyword = "CHECK CONSTRAINT";
+			else
+				keyword = "CONSTRAINT";
+
 			/* not ONLY since we want it to propagate to children */
 			appendPQExpBuffer(q, "ALTER %sTABLE %s\n", foreign,
 							  fmtQualifiedDumpable(tbinfo));
@@ -18178,7 +18340,7 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 							 ARCHIVE_OPTS(.tag = tag,
 										  .namespace = tbinfo->dobj.namespace->dobj.name,
 										  .owner = tbinfo->rolname,
-										  .description = "CHECK CONSTRAINT",
+										  .description = keyword,
 										  .section = SECTION_POST_DATA,
 										  .createStmt = q->data,
 										  .dropStmt = delq->data));

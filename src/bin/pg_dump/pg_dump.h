@@ -498,6 +498,8 @@ typedef struct _evttriggerInfo
  * use a different objType for foreign key constraints, to make it easier
  * to sort them the way we want.
  *
+ * Not-null constraints don't need this, unless they are NOT VALID.
+ *
  * Note: condeferrable and condeferred are currently only valid for
  * unique/primary-key constraints.  Otherwise that info is in condef.
  */

@@ -42,7 +42,7 @@ typedef struct TupleConstr
 	struct AttrMissing *missing;	/* missing attributes values, NULL if none */
 	uint16		num_defval;
 	uint16		num_check;
-	bool		has_not_null;
+	bool		has_not_null;	/* any not-null, including not valid ones */
 	bool		has_generated_stored;
 	bool		has_generated_virtual;
 } TupleConstr;
@@ -76,9 +76,15 @@ typedef struct CompactAttribute
 	bool		atthasmissing;	/* as FormData_pg_attribute.atthasmissing */
 	bool		attisdropped;	/* as FormData_pg_attribute.attisdropped */
 	bool		attgenerated;	/* FormData_pg_attribute.attgenerated != '\0' */
-	bool		attnotnull;		/* as FormData_pg_attribute.attnotnull */
+	char		attnullability; /* status of not-null constraint, see below */
 	uint8		attalignby;		/* alignment requirement in bytes */
 } CompactAttribute;
+
+/* Valid values for CompactAttribute->attnullability */
+#define	ATTNULLABLE_UNRESTRICTED 'f'	/* No constraint exists */
+#define	ATTNULLABLE_UNKNOWN		'u' /* constraint exists, validity unknown */
+#define	ATTNULLABLE_VALID		'v' /* valid constraint exists */
+#define	ATTNULLABLE_INVALID		'i' /* constraint exists, marked invalid */
 
 /*
  * This struct is passed around within the backend to describe the structure

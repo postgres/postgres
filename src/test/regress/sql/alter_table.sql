@@ -910,6 +910,20 @@ alter table atacc1 add constraint atacc1_constr_b_valid check(test_b is not null
 alter table atacc1 alter test_b set not null, alter test_a set not null;
 drop table atacc1;
 
+-- not null not valid with partitions
+CREATE TABLE atnnparted (id int, col1 int) PARTITION BY LIST (id);
+ALTER TABLE atnnparted ADD CONSTRAINT dummy_constr NOT NULL id NOT VALID;
+CREATE TABLE atnnpart1 (col1 int, id int);
+ALTER TABLE atnnpart1 ADD CONSTRAINT another_constr NOT NULL id;
+ALTER TABLE atnnpart1 ADD PRIMARY KEY (id);
+ALTER TABLE atnnparted ATTACH PARTITION atnnpart1 FOR VALUES IN ('1');
+\d+ atnnpart*
+BEGIN;
+ALTER TABLE atnnparted VALIDATE CONSTRAINT dummy_constr;
+\d+ atnnpart*
+ROLLBACK;
+-- leave a table in this state for the pg_upgrade test
+
 -- test inheritance
 create table parent (a int);
 create table child (b varchar(255)) inherits (parent);

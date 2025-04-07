@@ -1202,6 +1202,75 @@ alter table atacc1 alter test_a drop not null, alter test_b drop not null;
 alter table atacc1 add constraint atacc1_constr_b_valid check(test_b is not null);
 alter table atacc1 alter test_b set not null, alter test_a set not null;
 drop table atacc1;
+-- not null not valid with partitions
+CREATE TABLE atnnparted (id int, col1 int) PARTITION BY LIST (id);
+ALTER TABLE atnnparted ADD CONSTRAINT dummy_constr NOT NULL id NOT VALID;
+CREATE TABLE atnnpart1 (col1 int, id int);
+ALTER TABLE atnnpart1 ADD CONSTRAINT another_constr NOT NULL id;
+ALTER TABLE atnnpart1 ADD PRIMARY KEY (id);
+ALTER TABLE atnnparted ATTACH PARTITION atnnpart1 FOR VALUES IN ('1');
+\d+ atnnpart*
+                                 Table "public.atnnpart1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ col1   | integer |           |          |         | plain   |              | 
+ id     | integer |           | not null |         | plain   |              | 
+Partition of: atnnparted FOR VALUES IN (1)
+Partition constraint: ((id IS NOT NULL) AND (id = 1))
+Indexes:
+    "atnnpart1_pkey" PRIMARY KEY, btree (id)
+Not-null constraints:
+    "another_constr" NOT NULL "id" (inherited)
+
+                 Index "public.atnnpart1_pkey"
+ Column |  Type   | Key? | Definition | Storage | Stats target 
+--------+---------+------+------------+---------+--------------
+ id     | integer | yes  | id         | plain   | 
+primary key, btree, for table "public.atnnpart1"
+
+                          Partitioned table "public.atnnparted"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id     | integer |           | not null |         | plain   |              | 
+ col1   | integer |           |          |         | plain   |              | 
+Partition key: LIST (id)
+Not-null constraints:
+    "dummy_constr" NOT NULL "id" NOT VALID
+Partitions: atnnpart1 FOR VALUES IN (1)
+
+BEGIN;
+ALTER TABLE atnnparted VALIDATE CONSTRAINT dummy_constr;
+\d+ atnnpart*
+                                 Table "public.atnnpart1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ col1   | integer |           |          |         | plain   |              | 
+ id     | integer |           | not null |         | plain   |              | 
+Partition of: atnnparted FOR VALUES IN (1)
+Partition constraint: ((id IS NOT NULL) AND (id = 1))
+Indexes:
+    "atnnpart1_pkey" PRIMARY KEY, btree (id)
+Not-null constraints:
+    "another_constr" NOT NULL "id" (inherited)
+
+                 Index "public.atnnpart1_pkey"
+ Column |  Type   | Key? | Definition | Storage | Stats target 
+--------+---------+------+------------+---------+--------------
+ id     | integer | yes  | id         | plain   | 
+primary key, btree, for table "public.atnnpart1"
+
+                          Partitioned table "public.atnnparted"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ id     | integer |           | not null |         | plain   |              | 
+ col1   | integer |           |          |         | plain   |              | 
+Partition key: LIST (id)
+Not-null constraints:
+    "dummy_constr" NOT NULL "id"
+Partitions: atnnpart1 FOR VALUES IN (1)
+
+ROLLBACK;
+-- leave a table in this state for the pg_upgrade test
 -- test inheritance
 create table parent (a int);
 create table child (b varchar(255)) inherits (parent);

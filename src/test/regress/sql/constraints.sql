@@ -761,6 +761,11 @@ create unique index cnn_uq_idx on cnn_uq (a);
 alter table cnn_uq add unique using index cnn_uq_idx;
 \d+ cnn_uq
 
+-- can't create a primary key on a noinherit not-null
+create table cnn_pk (a int not null no inherit);
+alter table cnn_pk add primary key (a);
+drop table cnn_pk;
+
 -- Ensure partitions are scanned for null values when adding a PK
 create table cnn2_parted(a int) partition by list (a);
 create table cnn_part1 partition of cnn2_parted for values in (1, null);
@@ -800,6 +805,170 @@ CREATE TABLE notnull_tbl6_1 PARTITION OF notnull_tbl6 FOR VALUES IN (1);
 ALTER TABLE ONLY notnull_tbl6 DROP CONSTRAINT ann;
 ALTER TABLE ONLY notnull_tbl6 ALTER b DROP NOT NULL;
 \d+ notnull_tbl6_1
+
+
+-- NOT NULL NOT VALID
+PREPARE get_nnconstraint_info(regclass[]) AS
+SELECT conrelid::regclass as tabname, conname, convalidated, conislocal, coninhcount
+FROM  pg_constraint
+WHERE conrelid = ANY($1)
+ORDER BY conrelid::regclass::text, conname;
+
+CREATE TABLE notnull_tbl1 (a int, b int);
+INSERT INTO notnull_tbl1 VALUES (NULL, 1), (300, 3);
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a; -- error
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a NOT VALID; -- ok
+-- even an invalid not-null forbids new nulls
+INSERT INTO notnull_tbl1 VALUES (NULL, 4);
+\d+ notnull_tbl1
+
+-- If we have an invalid constraint, we can't have another
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn1 NOT NULL a NOT VALID NO INHERIT;
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
+
+-- cannot add primary key on a column with an invalid not-null
+ALTER TABLE notnull_tbl1 ADD PRIMARY KEY (a);
+
+-- ALTER column SET NOT NULL validates an invalid constraint (but this fails
+-- because of rows with null values)
+ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
+\d+ notnull_tbl1
+
+-- Creating a derived table using LIKE gets the constraint, but it's valid
+CREATE TABLE notnull_tbl1_copy (LIKE notnull_tbl1);
+EXECUTE get_nnconstraint_info('{notnull_tbl1_copy}');
+
+-- An inheritance child table gets the constraint, but it's valid
+CREATE TABLE notnull_tbl1_child (a int, b int) INHERITS (notnull_tbl1);
+EXECUTE get_nnconstraint_info('{notnull_tbl1_child, notnull_tbl1}');
+
+-- Also try inheritance added after table creation
+CREATE TABLE notnull_tbl1_child2 (c int, b int, a int);
+ALTER TABLE notnull_tbl1_child2 INHERIT notnull_tbl1;	-- nope
+ALTER TABLE notnull_tbl1_child2 ADD NOT NULL a NOT VALID;
+ALTER TABLE notnull_tbl1_child2 INHERIT notnull_tbl1;
+EXECUTE get_nnconstraint_info('{notnull_tbl1_child2}');
+
+--table rewrite won't validate invalid constraint
+ALTER TABLE notnull_tbl1 ADD column d float8 default random();
+
+-- VALIDATE CONSTRAINT scans the table
+ALTER TABLE notnull_tbl1 VALIDATE CONSTRAINT nn; -- error, nulls exist
+UPDATE notnull_tbl1 SET a = 100 WHERE b = 1;
+ALTER TABLE notnull_tbl1 VALIDATE CONSTRAINT nn; -- now ok
+EXECUTE get_nnconstraint_info('{notnull_tbl1}');
+
+--- now we can add primary key
+ALTER TABLE notnull_tbl1 ADD PRIMARY KEY (a);
+DROP TABLE notnull_tbl1, notnull_tbl1_child, notnull_tbl1_child2;
+
+-- dropping an invalid constraint is possible
+CREATE TABLE notnull_tbl1 (a int, b int);
+ALTER TABLE notnull_tbl1 ADD NOT NULL a NOT VALID,
+	ADD NOT NULL b NOT VALID;
+ALTER TABLE notnull_tbl1 ALTER a DROP NOT NULL;
+ALTER TABLE notnull_tbl1 DROP CONSTRAINT notnull_tbl1_b_not_null;
+DROP TABLE notnull_tbl1;
+
+-- ALTER .. NO INHERIT works for invalid constraints
+CREATE TABLE notnull_tbl1 (a int);
+CREATE TABLE notnull_tbl1_chld () INHERITS (notnull_tbl1);
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nntbl1_a NOT NULL a NOT VALID;
+ALTER TABLE notnull_tbl1 ALTER CONSTRAINT nntbl1_a NO INHERIT;
+
+-- DROP CONSTRAINT recurses correctly on invalid constraints
+ALTER TABLE notnull_tbl1 ALTER CONSTRAINT nntbl1_a INHERIT;
+ALTER TABLE notnull_tbl1 DROP CONSTRAINT nntbl1_a;
+DROP TABLE notnull_tbl1, notnull_tbl1_chld;
+
+-- if a parent has a valid not null constraint then a child table cannot
+-- have an invalid one
+CREATE TABLE notnull_tbl1 (a int);
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn_parent NOT NULL a not valid;
+CREATE TABLE notnull_chld0 (a int, CONSTRAINT nn_chld0 NOT NULL a);
+ALTER TABLE notnull_tbl1 INHERIT notnull_chld0; --error
+
+ALTER TABLE notnull_chld0 DROP CONSTRAINT nn_chld0;
+ALTER TABLE notnull_chld0 ADD CONSTRAINT nn_chld0 NOT NULL a not valid;
+ALTER TABLE notnull_tbl1 INHERIT notnull_chld0; --now ok
+
+-- parents and child not-null will all be validated.
+ALTER TABLE notnull_tbl1 VALIDATE CONSTRAINT nn_parent;
+EXECUTE get_nnconstraint_info('{notnull_tbl1, notnull_chld0}');
+DROP TABLE notnull_tbl1, notnull_chld0;
+
+-- Test invalid not null on inheritance table.
+CREATE TABLE notnull_inhparent (i int);
+CREATE TABLE notnull_inhchild (i int) INHERITS (notnull_inhparent);
+CREATE TABLE notnull_inhgrand () INHERITS (notnull_inhparent, notnull_inhchild);
+ALTER TABLE notnull_inhparent ADD CONSTRAINT nn NOT NULL i NOT VALID;
+ALTER TABLE notnull_inhchild ADD CONSTRAINT nn1 NOT NULL i; -- error
+EXECUTE get_nnconstraint_info('{notnull_inhparent, notnull_inhchild, notnull_inhgrand}');
+ALTER TABLE notnull_inhparent ALTER i SET NOT NULL; -- ok
+EXECUTE get_nnconstraint_info('{notnull_inhparent, notnull_inhchild, notnull_inhgrand}');
+DROP TABLE notnull_inhparent, notnull_inhchild, notnull_inhgrand;
+
+-- Verify NOT NULL VALID/NOT VALID with partition table.
+DROP TABLE notnull_tbl1;
+CREATE TABLE notnull_tbl1 (a int, b int) PARTITION BY LIST (a);
+ALTER TABLE notnull_tbl1 ADD CONSTRAINT notnull_con NOT NULL a NOT VALID; --ok
+CREATE TABLE notnull_tbl1_1 PARTITION OF notnull_tbl1 FOR VALUES IN (1,2);
+CREATE TABLE notnull_tbl1_2(a int, CONSTRAINT nn2 NOT NULL a, b int);
+ALTER TABLE notnull_tbl1 ATTACH PARTITION notnull_tbl1_2 FOR VALUES IN (3,4);
+
+CREATE TABLE notnull_tbl1_3(a int, b int);
+INSERT INTO notnull_tbl1_3 values(NULL,1);
+ALTER TABLE notnull_tbl1_3 add CONSTRAINT nn3 NOT NULL a NOT VALID;
+ALTER TABLE notnull_tbl1 ATTACH PARTITION notnull_tbl1_3 FOR VALUES IN (NULL,5);
+
+EXECUTE get_nnconstraint_info('{notnull_tbl1, notnull_tbl1_1, notnull_tbl1_2, notnull_tbl1_3}');
+ALTER TABLE notnull_tbl1 ALTER COLUMN a SET NOT NULL; --error, notnull_tbl1_3 have null values
+ALTER TABLE notnull_tbl1_3 VALIDATE CONSTRAINT nn3; --error
+
+TRUNCATE notnull_tbl1;
+ALTER TABLE notnull_tbl1 ALTER COLUMN a SET NOT NULL; --OK
+
+EXECUTE get_nnconstraint_info('{notnull_tbl1, notnull_tbl1_1, notnull_tbl1_2, notnull_tbl1_3}');
+DROP TABLE notnull_tbl1;
+
+-- partitioned table have not-null, then the partitions can not be NOT NULL NOT VALID.
+CREATE TABLE pp_nn (a int, b int, NOT NULL a) PARTITION BY LIST (a);
+CREATE TABLE pp_nn_1(a int, b int);
+ALTER TABLE pp_nn_1 ADD CONSTRAINT nn1 NOT NULL a NOT VALID;
+ALTER TABLE pp_nn ATTACH PARTITION pp_nn_1 FOR VALUES IN (NULL,5); --error
+ALTER TABLE pp_nn_1 VALIDATE CONSTRAINT nn1;
+ALTER TABLE pp_nn ATTACH PARTITION pp_nn_1 FOR VALUES IN (NULL,5); --ok
+DROP TABLE pp_nn;
+
+-- Create table with NOT NULL INVALID constraint, for pg_upgrade.
+CREATE TABLE notnull_tbl1_upg (a int, b int);
+INSERT INTO notnull_tbl1_upg VALUES (NULL, 1), (NULL, 2), (300, 3);
+ALTER TABLE notnull_tbl1_upg ADD CONSTRAINT nn NOT NULL a NOT VALID;
+-- Inherit test for pg_upgrade
+CREATE TABLE notnull_parent_upg (a int);
+CREATE TABLE notnull_child_upg () INHERITS (notnull_parent_upg);
+ALTER TABLE notnull_child_upg ADD CONSTRAINT nn NOT NULL a;
+ALTER TABLE notnull_parent_upg ADD CONSTRAINT nn NOT NULL a NOT VALID;
+SELECT conrelid::regclass, contype, convalidated, conislocal
+FROM pg_catalog.pg_constraint
+WHERE conrelid in ('notnull_parent_upg'::regclass, 'notnull_child_upg'::regclass)
+ORDER BY 1;
+
+-- Partition table test, for pg_upgrade
+CREATE TABLE notnull_part1_upg (a int, b int) PARTITION BY LIST (a);
+ALTER TABLE notnull_part1_upg ADD CONSTRAINT notnull_con NOT NULL a NOT VALID; --ok
+CREATE TABLE notnull_part1_1_upg PARTITION OF notnull_part1_upg FOR VALUES IN (1,2);
+CREATE TABLE notnull_part1_2_upg (a int, CONSTRAINT nn2 NOT NULL a, b int);
+ALTER TABLE notnull_part1_upg ATTACH PARTITION notnull_part1_2_upg FOR VALUES IN (3,4);
+CREATE TABLE notnull_part1_3_upg (a int, b int);
+INSERT INTO notnull_part1_3_upg values(NULL,1);
+ALTER TABLE notnull_part1_3_upg add CONSTRAINT nn3 NOT NULL a NOT VALID;
+ALTER TABLE notnull_part1_upg ATTACH PARTITION notnull_part1_3_upg FOR VALUES IN (NULL,5);
+EXECUTE get_nnconstraint_info('{notnull_part1_upg, notnull_part1_1_upg, notnull_part1_2_upg, notnull_part1_3_upg}');
+DEALLOCATE get_nnconstraint_info;
+
+-- end NOT NULL NOT VALID
+
 
 -- Comments
 -- Setup a low-level role to enforce non-superuser checks.

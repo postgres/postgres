@@ -4217,11 +4217,10 @@ ConstraintElem:
 					n->contype = CONSTR_NOTNULL;
 					n->location = @1;
 					n->keys = list_make1(makeString($3));
-					/* no NOT VALID support yet */
 					processCASbits($4, @4, "NOT NULL",
-								   NULL, NULL, NULL, NULL,
+								   NULL, NULL, NULL, &n->skip_validation,
 								   &n->is_no_inherit, yyscanner);
-					n->initially_valid = true;
+					n->initially_valid = !n->skip_validation;
 					$$ = (Node *) n;
 				}
 			| UNIQUE opt_unique_null_treatment '(' columnList opt_without_overlaps ')' opt_c_include opt_definition OptConsTableSpace

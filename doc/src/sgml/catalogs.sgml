@@ -1260,7 +1260,7 @@
        <structfield>attnotnull</structfield> <type>bool</type>
       </para>
       <para>
-       This column has a not-null constraint.
+       This column has a (possibly invalid) not-null constraint.
       </para></entry>
      </row>
 

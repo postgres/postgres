@@ -177,7 +177,9 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 		{
 			CompactAttribute *attr = TupleDescCompactAttr(relation->rd_att, i);
 
-			if (attr->attnotnull)
+			Assert(attr->attnullability != ATTNULLABLE_UNKNOWN);
+
+			if (attr->attnullability == ATTNULLABLE_VALID)
 			{
 				rel->notnullattnums = bms_add_member(rel->notnullattnums,
 													 i + 1);
@@ -1251,6 +1253,7 @@ get_relation_data_width(Oid relid, int32 *attr_widths)
  * get_relation_constraints
  *
  * Retrieve the applicable constraint expressions of the given relation.
+ * Only constraints that have been validated are considered.
  *
  * Returns a List (possibly empty) of constraint expressions.  Each one
  * has been canonicalized, and its Vars are changed to have the varno
@@ -1351,17 +1354,18 @@ get_relation_constraints(PlannerInfo *root,
 
 			for (i = 1; i <= natts; i++)
 			{
-				Form_pg_attribute att = TupleDescAttr(relation->rd_att, i - 1);
+				CompactAttribute *att = TupleDescCompactAttr(relation->rd_att, i - 1);
 
-				if (att->attnotnull && !att->attisdropped)
+				if (att->attnullability == ATTNULLABLE_VALID && !att->attisdropped)
 				{
+					Form_pg_attribute wholeatt = TupleDescAttr(relation->rd_att, i - 1);
 					NullTest   *ntest = makeNode(NullTest);
 
 					ntest->arg = (Expr *) makeVar(varno,
 												  i,
-												  att->atttypid,
-												  att->atttypmod,
-												  att->attcollation,
+												  wholeatt->atttypid,
+												  wholeatt->atttypmod,
+												  wholeatt->attcollation,
 												  0);
 					ntest->nulltesttype = IS_NOT_NULL;
 
