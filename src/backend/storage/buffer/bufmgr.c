@@ -4895,7 +4895,20 @@ FlushRelationBuffers(Relation rel)
 				errcallback.previous = error_context_stack;
 				error_context_stack = &errcallback;
 
+				/* Make sure we can handle the pin */
+				ReservePrivateRefCountEntry();
+				ResourceOwnerEnlarge(CurrentResourceOwner);
+
+				/*
+				 * Pin/upin mostly to make valgrind work, but it also seems
+				 * like the right thing to do.
+				 */
+				PinLocalBuffer(bufHdr, false);
+
+
 				FlushLocalBuffer(bufHdr, srel);
+
+				UnpinLocalBuffer(BufferDescriptorGetBuffer(bufHdr));
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;

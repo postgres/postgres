@@ -23,6 +23,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "utils/guc_hooks.h"
+#include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
 
@@ -182,6 +183,8 @@ FlushLocalBuffer(BufferDesc *bufHdr, SMgrRelation reln)
 {
 	instr_time	io_start;
 	Page		localpage = (char *) LocalBufHdrGetBlock(bufHdr);
+
+	Assert(LocalRefCount[-BufferDescriptorGetBuffer(bufHdr) - 1] > 0);
 
 	/*
 	 * Try to start an I/O operation.  There currently are no reasons for
@@ -808,6 +811,15 @@ PinLocalBuffer(BufferDesc *buf_hdr, bool adjust_usagecount)
 			buf_state += BUF_USAGECOUNT_ONE;
 		}
 		pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+
+		/*
+		 * See comment in PinBuffer().
+		 *
+		 * If the buffer isn't allocated yet, it'll be marked as defined in
+		 * GetLocalBufferStorage().
+		 */
+		if (LocalBufHdrGetBlock(buf_hdr) != NULL)
+			VALGRIND_MAKE_MEM_DEFINED(LocalBufHdrGetBlock(buf_hdr), BLCKSZ);
 	}
 	LocalRefCount[bufid]++;
 	ResourceOwnerRememberBuffer(CurrentResourceOwner,
@@ -843,6 +855,9 @@ UnpinLocalBufferNoOwner(Buffer buffer)
 		Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
 		buf_state -= BUF_REFCOUNT_ONE;
 		pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+
+		/* see comment in UnpinBufferNoOwner */
+		VALGRIND_MAKE_MEM_NOACCESS(LocalBufHdrGetBlock(buf_hdr), BLCKSZ);
 	}
 }
 
@@ -922,6 +937,16 @@ GetLocalBufferStorage(void)
 	this_buf = cur_block + next_buf_in_block * BLCKSZ;
 	next_buf_in_block++;
 	total_bufs_allocated++;
+
+	/*
+	 * Caller's PinLocalBuffer() was too early for Valgrind updates, so do it
+	 * here.  The block is actually undefined, but we want consistency with
+	 * the regular case of not needing to allocate memory.  This is
+	 * specifically needed when method_io_uring.c fills the block, because
+	 * Valgrind doesn't recognize io_uring reads causing undefined memory to
+	 * become defined.
+	 */
+	VALGRIND_MAKE_MEM_DEFINED(this_buf, BLCKSZ);
 
 	return (Block) this_buf;
 }
