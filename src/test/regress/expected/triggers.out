@@ -46,12 +46,12 @@ create unique index pkeys_i on pkeys (pkey1, pkey2);
 -- 	(fkey3)		--> fkeys2 (pkey23)
 --
 create trigger check_fkeys_pkey_exist
-	before insert or update on fkeys
+	after insert or update on fkeys
 	for each row
 	execute function
 	check_primary_key ('fkey1', 'fkey2', 'pkeys', 'pkey1', 'pkey2');
 create trigger check_fkeys_pkey2_exist
-	before insert or update on fkeys
+	after insert or update on fkeys
 	for each row
 	execute function check_primary_key ('fkey3', 'fkeys2', 'pkey23');
 --
@@ -59,7 +59,7 @@ create trigger check_fkeys_pkey2_exist
 -- 	(fkey21, fkey22)	--> pkeys (pkey1, pkey2)
 --
 create trigger check_fkeys2_pkey_exist
-	before insert or update on fkeys2
+	after insert or update on fkeys2
 	for each row
 	execute procedure
 	check_primary_key ('fkey21', 'fkey22', 'pkeys', 'pkey1', 'pkey2');
@@ -74,7 +74,7 @@ COMMENT ON TRIGGER check_fkeys2_pkey_exist ON fkeys2 IS NULL;
 -- 		fkeys (fkey1, fkey2) and fkeys2 (fkey21, fkey22)
 --
 create trigger check_pkeys_fkey_cascade
-	before delete or update on pkeys
+	after delete or update on pkeys
 	for each row
 	execute procedure
 	check_foreign_key (2, 'cascade', 'pkey1', 'pkey2',
@@ -85,7 +85,7 @@ create trigger check_pkeys_fkey_cascade
 -- 		fkeys (fkey3)
 --
 create trigger check_fkeys2_fkey_restrict
-	before delete or update on fkeys2
+	after delete or update on fkeys2
 	for each row
 	execute procedure check_foreign_key (1, 'restrict', 'pkey23', 'fkeys', 'fkey3');
 insert into fkeys2 values (10, '1', 1);
@@ -116,12 +116,11 @@ delete from pkeys where pkey1 = 40 and pkey2 = '4';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 50 and pkey2 = '5';
-NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-ERROR:  "check_fkeys2_fkey_restrict": tuple is referenced in "fkeys"
-CONTEXT:  SQL statement "delete from fkeys2 where fkey21 = $1 and fkey22 = $2 "
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are updated
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are updated
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
-NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
+ERROR:  duplicate key value violates unique constraint "pkeys_i"
+DETAIL:  Key (pkey1, pkey2)=(7, 70) already exists.
 SELECT trigger_name, event_manipulation, event_object_schema, event_object_table,
        action_order, action_condition, action_orientation, action_timing,
        action_reference_old_table, action_reference_new_table
@@ -130,16 +129,16 @@ SELECT trigger_name, event_manipulation, event_object_schema, event_object_table
   ORDER BY trigger_name COLLATE "C", 2;
         trigger_name        | event_manipulation | event_object_schema | event_object_table | action_order | action_condition | action_orientation | action_timing | action_reference_old_table | action_reference_new_table 
 ----------------------------+--------------------+---------------------+--------------------+--------------+------------------+--------------------+---------------+----------------------------+----------------------------
- check_fkeys2_fkey_restrict | DELETE             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
- check_fkeys2_fkey_restrict | UPDATE             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
- check_fkeys2_pkey_exist    | INSERT             | public              | fkeys2             |            1 |                  | ROW                | BEFORE        |                            | 
- check_fkeys2_pkey_exist    | UPDATE             | public              | fkeys2             |            2 |                  | ROW                | BEFORE        |                            | 
- check_fkeys_pkey2_exist    | INSERT             | public              | fkeys              |            1 |                  | ROW                | BEFORE        |                            | 
- check_fkeys_pkey2_exist    | UPDATE             | public              | fkeys              |            1 |                  | ROW                | BEFORE        |                            | 
- check_fkeys_pkey_exist     | INSERT             | public              | fkeys              |            2 |                  | ROW                | BEFORE        |                            | 
- check_fkeys_pkey_exist     | UPDATE             | public              | fkeys              |            2 |                  | ROW                | BEFORE        |                            | 
- check_pkeys_fkey_cascade   | DELETE             | public              | pkeys              |            1 |                  | ROW                | BEFORE        |                            | 
- check_pkeys_fkey_cascade   | UPDATE             | public              | pkeys              |            1 |                  | ROW                | BEFORE        |                            | 
+ check_fkeys2_fkey_restrict | DELETE             | public              | fkeys2             |            1 |                  | ROW                | AFTER         |                            | 
+ check_fkeys2_fkey_restrict | UPDATE             | public              | fkeys2             |            1 |                  | ROW                | AFTER         |                            | 
+ check_fkeys2_pkey_exist    | INSERT             | public              | fkeys2             |            1 |                  | ROW                | AFTER         |                            | 
+ check_fkeys2_pkey_exist    | UPDATE             | public              | fkeys2             |            2 |                  | ROW                | AFTER         |                            | 
+ check_fkeys_pkey2_exist    | INSERT             | public              | fkeys              |            1 |                  | ROW                | AFTER         |                            | 
+ check_fkeys_pkey2_exist    | UPDATE             | public              | fkeys              |            1 |                  | ROW                | AFTER         |                            | 
+ check_fkeys_pkey_exist     | INSERT             | public              | fkeys              |            2 |                  | ROW                | AFTER         |                            | 
+ check_fkeys_pkey_exist     | UPDATE             | public              | fkeys              |            2 |                  | ROW                | AFTER         |                            | 
+ check_pkeys_fkey_cascade   | DELETE             | public              | pkeys              |            1 |                  | ROW                | AFTER         |                            | 
+ check_pkeys_fkey_cascade   | UPDATE             | public              | pkeys              |            1 |                  | ROW                | AFTER         |                            | 
 (10 rows)
 
 DROP TABLE pkeys;

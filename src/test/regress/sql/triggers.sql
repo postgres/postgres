@@ -57,13 +57,13 @@ create unique index pkeys_i on pkeys (pkey1, pkey2);
 -- 	(fkey3)		--> fkeys2 (pkey23)
 --
 create trigger check_fkeys_pkey_exist
-	before insert or update on fkeys
+	after insert or update on fkeys
 	for each row
 	execute function
 	check_primary_key ('fkey1', 'fkey2', 'pkeys', 'pkey1', 'pkey2');
 
 create trigger check_fkeys_pkey2_exist
-	before insert or update on fkeys
+	after insert or update on fkeys
 	for each row
 	execute function check_primary_key ('fkey3', 'fkeys2', 'pkey23');
 
@@ -72,7 +72,7 @@ create trigger check_fkeys_pkey2_exist
 -- 	(fkey21, fkey22)	--> pkeys (pkey1, pkey2)
 --
 create trigger check_fkeys2_pkey_exist
-	before insert or update on fkeys2
+	after insert or update on fkeys2
 	for each row
 	execute procedure
 	check_primary_key ('fkey21', 'fkey22', 'pkeys', 'pkey1', 'pkey2');
@@ -88,7 +88,7 @@ COMMENT ON TRIGGER check_fkeys2_pkey_exist ON fkeys2 IS NULL;
 -- 		fkeys (fkey1, fkey2) and fkeys2 (fkey21, fkey22)
 --
 create trigger check_pkeys_fkey_cascade
-	before delete or update on pkeys
+	after delete or update on pkeys
 	for each row
 	execute procedure
 	check_foreign_key (2, 'cascade', 'pkey1', 'pkey2',
@@ -100,7 +100,7 @@ create trigger check_pkeys_fkey_cascade
 -- 		fkeys (fkey3)
 --
 create trigger check_fkeys2_fkey_restrict
-	before delete or update on fkeys2
+	after delete or update on fkeys2
 	for each row
 	execute procedure check_foreign_key (1, 'restrict', 'pkey23', 'fkeys', 'fkey3');
 

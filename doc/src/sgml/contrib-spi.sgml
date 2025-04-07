@@ -36,7 +36,7 @@
 
   <para>
    <function>check_primary_key()</function> checks the referencing table.
-   To use, create a <literal>BEFORE INSERT OR UPDATE</literal> trigger using this
+   To use, create an <literal>AFTER INSERT OR UPDATE</literal> trigger using this
    function on a table referencing another table. Specify as the trigger
    arguments: the referencing table's column name(s) which form the foreign
    key, the referenced table name, and the column names in the referenced table
@@ -46,7 +46,7 @@
 
   <para>
    <function>check_foreign_key()</function> checks the referenced table.
-   To use, create a <literal>BEFORE DELETE OR UPDATE</literal> trigger using this
+   To use, create an <literal>AFTER DELETE OR UPDATE</literal> trigger using this
    function on a table referenced by other table(s).  Specify as the trigger
    arguments: the number of referencing tables for which the function has to
    perform checking, the action if a referencing key is found
@@ -58,6 +58,16 @@
    referencing tables as were specified by first argument).  Note that the
    primary/unique key columns should be marked NOT NULL and should have a
    unique index.
+  </para>
+
+  <para>
+   Note that if these triggers are executed from
+   another <literal>BEFORE</literal> trigger, they can fail unexpectedly. For
+   example, if a user inserts row1 and then the <literal>BEFORE</literal>
+   trigger inserts row2 and calls a trigger with the
+   <function>check_foreign_key()</function>,
+   the <function>check_foreign_key()</function>
+   function will not see row1 and will fail.
   </para>
 
   <para>
