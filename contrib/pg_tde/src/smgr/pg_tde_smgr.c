@@ -164,24 +164,19 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		BlockNumber bn = blocknum + i;
 		unsigned char iv[16];
 
+		/*
+		 * Detect unencrypted all-zero pages written by smgrzeroextend() by
+		 * looking at the first 32 bytes of the page.
+		 *
+		 * Not encrypting all-zero pages is safe because they are only written
+		 * at the end of the file when extending a table on disk so they tend
+		 * to be short lived plus they only leak a slightly more accurate
+		 * table size than one can glean from just the file size.
+		 */
 		for (int j = 0; j < 32; ++j)
 		{
 			if (((char **) buffers)[i][j] != 0)
 			{
-				/*
-				 * Postgres creates all zero blocks in an optimized route,
-				 * which we do not try
-				 */
-				/* to encrypt. */
-				/*
-				 * Instead we detect if a block is all zero at decryption
-				 * time, and
-				 */
-				/* leave it as is. */
-				/*
-				 * This could be a security issue later, but it is a good
-				 * first prototype
-				 */
 				allZero = false;
 				break;
 			}
