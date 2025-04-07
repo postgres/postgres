@@ -42,6 +42,7 @@
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/memdebug.h"
 #include "utils/ps_status.h"
 #include "utils/wait_event.h"
 
@@ -528,6 +529,24 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 
 			error_errno = 0;
 			error_ioh = NULL;
+
+			/*
+			 * As part of IO completion the buffer will be marked as NOACCESS,
+			 * until the buffer is pinned again - which never happens in io
+			 * workers. Therefore the next time there is IO for the same
+			 * buffer, the memory will be considered inaccessible. To avoid
+			 * that, explicitly allow access to the memory before reading data
+			 * into it.
+			 */
+#ifdef USE_VALGRIND
+			{
+				struct iovec *iov;
+				uint16		iov_length = pgaio_io_get_iovec_length(ioh, &iov);
+
+				for (int i = 0; i < iov_length; i++)
+					VALGRIND_MAKE_MEM_UNDEFINED(iov[i].iov_base, iov[i].iov_len);
+			}
+#endif
 
 			/*
 			 * We don't expect this to ever fail with ERROR or FATAL, no need

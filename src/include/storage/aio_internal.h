@@ -344,6 +344,7 @@ extern PgAioResult pgaio_io_call_complete_local(PgAioHandle *ioh);
 extern void pgaio_io_perform_synchronously(PgAioHandle *ioh);
 extern const char *pgaio_io_get_op_name(PgAioHandle *ioh);
 extern bool pgaio_io_uses_fd(PgAioHandle *ioh, int fd);
+extern int	pgaio_io_get_iovec_length(PgAioHandle *ioh, struct iovec **iov);
 
 /* aio_target.c */
 extern bool pgaio_io_can_reopen(PgAioHandle *ioh);

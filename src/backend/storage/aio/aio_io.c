@@ -210,3 +210,26 @@ pgaio_io_uses_fd(PgAioHandle *ioh, int fd)
 
 	return false;				/* silence compiler */
 }
+
+/*
+ * Return the iovec and its length. Currently only expected to be used by
+ * debugging infrastructure
+ */
+int
+pgaio_io_get_iovec_length(PgAioHandle *ioh, struct iovec **iov)
+{
+	Assert(ioh->state >= PGAIO_HS_DEFINED);
+
+	*iov = &pgaio_ctl->iovecs[ioh->iovec_off];
+
+	switch (ioh->op)
+	{
+		case PGAIO_OP_READV:
+			return ioh->op_data.read.iov_length;
+		case PGAIO_OP_WRITEV:
+			return ioh->op_data.write.iov_length;
+		default:
+			pg_unreachable();
+			return 0;
+	}
+}

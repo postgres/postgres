@@ -746,6 +746,8 @@ smgrreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
  *   responsible for pgaio_result_report() to mirror that news to the user (if
  *   the IO results in PGAIO_RS_WARNING) or abort the (sub)transaction (if
  *   PGAIO_RS_ERROR).
+ * - Under Valgrind, the "buffers" memory may or may not change status to
+ *   DEFINED, depending on io_method and concurrent activity.
  */
 void
 smgrstartreadv(PgAioHandle *ioh,

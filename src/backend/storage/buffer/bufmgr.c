@@ -6881,6 +6881,19 @@ buffer_readv_complete_one(PgAioTargetData *td, uint8 buf_off, Buffer buffer,
 	/* Check for garbage data. */
 	if (!failed)
 	{
+		/*
+		 * If the buffer is not currently pinned by this backend, e.g. because
+		 * we're completing this IO after an error, the buffer data will have
+		 * been marked as inaccessible when the buffer was unpinned. The AIO
+		 * subsystem holds a pin, but that doesn't prevent the buffer from
+		 * having been marked as inaccessible. The completion might also be
+		 * executed in a different process.
+		 */
+#ifdef USE_VALGRIND
+		if (!BufferIsPinned(buffer))
+			VALGRIND_MAKE_MEM_DEFINED(bufdata, BLCKSZ);
+#endif
+
 		if (!PageIsVerified((Page) bufdata, tag.blockNum, piv_flags,
 							failed_checksum))
 		{
@@ -6898,6 +6911,12 @@ buffer_readv_complete_one(PgAioTargetData *td, uint8 buf_off, Buffer buffer,
 		}
 		else if (*failed_checksum)
 			*ignored_checksum = true;
+
+		/* undo what we did above */
+#ifdef USE_VALGRIND
+		if (!BufferIsPinned(buffer))
+			VALGRIND_MAKE_MEM_NOACCESS(bufdata, BLCKSZ);
+#endif
 
 		/*
 		 * Immediately log a message about the invalid page, but only to the
