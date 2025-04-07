@@ -1367,7 +1367,7 @@ PREPARE get_nnconstraint_info(regclass[]) AS
 SELECT conrelid::regclass as tabname, conname, convalidated, conislocal, coninhcount
 FROM  pg_constraint
 WHERE conrelid = ANY($1)
-ORDER BY conrelid::regclass::text, conname;
+ORDER BY conrelid::regclass::text COLLATE "C", conname;
 CREATE TABLE notnull_tbl1 (a int, b int);
 INSERT INTO notnull_tbl1 VALUES (NULL, 1), (300, 3);
 ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a; -- error
