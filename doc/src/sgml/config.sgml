@@ -7690,6 +7690,12 @@ local0.*    /var/log/postgresql
              <entry>yes</entry>
             </row>
             <row>
+             <entry><literal>%L</literal></entry>
+             <entry>Local address (the IP address on the server that the
+             client connected to)</entry>
+             <entry>yes</entry>
+            </row>
+            <row>
              <entry><literal>%b</literal></entry>
              <entry>Backend type</entry>
              <entry>no</entry>

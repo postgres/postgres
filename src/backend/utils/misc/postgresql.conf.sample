@@ -604,6 +604,7 @@
 					#   %d = database name
 					#   %r = remote host and port
 					#   %h = remote host
+					#   %L = local address
 					#   %b = backend type
 					#   %p = process ID
 					#   %P = process ID of parallel group leader

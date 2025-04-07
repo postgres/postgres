@@ -67,6 +67,7 @@
 #endif
 
 #include "access/xact.h"
+#include "common/ip.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -3083,6 +3084,38 @@ log_status_format(StringInfo buf, const char *format, ErrorData *edata)
 				else if (padding != 0)
 					appendStringInfoSpaces(buf,
 										   padding > 0 ? padding : -padding);
+				break;
+			case 'L':
+				{
+					const char *local_host;
+
+					if (MyProcPort)
+					{
+						if (MyProcPort->local_host[0] == '\0')
+						{
+							/*
+							 * First time through: cache the lookup, since it
+							 * might not have trivial cost.
+							 */
+							(void) pg_getnameinfo_all(&MyProcPort->laddr.addr,
+													  MyProcPort->laddr.salen,
+													  MyProcPort->local_host,
+													  sizeof(MyProcPort->local_host),
+													  NULL, 0,
+													  NI_NUMERICHOST | NI_NUMERICSERV);
+						}
+						local_host = MyProcPort->local_host;
+					}
+					else
+					{
+						/* Background process, or connection not yet made */
+						local_host = "[none]";
+					}
+					if (padding != 0)
+						appendStringInfo(buf, "%*s", padding, local_host);
+					else
+						appendStringInfoString(buf, local_host);
+				}
 				break;
 			case 'r':
 				if (MyProcPort && MyProcPort->remote_host)

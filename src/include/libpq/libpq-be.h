@@ -139,6 +139,9 @@ typedef struct Port
 	int			remote_hostname_errcode;	/* see above */
 	char	   *remote_port;	/* text rep of remote port */
 
+	/* local_host is filled only if needed (see log_status_format) */
+	char		local_host[64]; /* ip addr of local socket for client conn */
+
 	/*
 	 * Information that needs to be saved from the startup packet and passed
 	 * into backend execution.  "char *" fields are NULL if not set.
