@@ -998,7 +998,7 @@ struct config_bool ConfigureNamesBool[] =
 		{"enable_self_join_elimination", PGC_USERSET, QUERY_TUNING_METHOD,
 			gettext_noop("Enables removal of unique self-joins."),
 			NULL,
-			GUC_EXPLAIN | GUC_NOT_IN_SAMPLE
+			GUC_EXPLAIN
 		},
 		&enable_self_join_elimination,
 		true,
