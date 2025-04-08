@@ -714,6 +714,7 @@ EphemeralNamedRelationMetadata
 EphemeralNamedRelationMetadataData
 EquivalenceClass
 EquivalenceMember
+EquivalenceMemberIterator
 ErrorContextCallback
 ErrorData
 ErrorSaveContext

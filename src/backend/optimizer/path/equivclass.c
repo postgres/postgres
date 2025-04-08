@@ -34,11 +34,23 @@
 #include "utils/lsyscache.h"
 
 
+static EquivalenceMember *make_eq_member(EquivalenceClass *ec,
+										 Expr *expr, Relids relids,
+										 JoinDomain *jdomain,
+										 EquivalenceMember *parent,
+										 Oid datatype);
 static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
 										Expr *expr, Relids relids,
 										JoinDomain *jdomain,
-										EquivalenceMember *parent,
 										Oid datatype);
+static EquivalenceMember *add_child_eq_member(PlannerInfo *root,
+											  EquivalenceClass *ec,
+											  int ec_index, Expr *expr,
+											  Relids relids,
+											  JoinDomain *jdomain,
+											  EquivalenceMember *parent_em,
+											  Oid datatype,
+											  Index child_relid);
 static void generate_base_implied_equalities_const(PlannerInfo *root,
 												   EquivalenceClass *ec);
 static void generate_base_implied_equalities_no_const(PlannerInfo *root,
@@ -314,11 +326,15 @@ process_equivalence(PlannerInfo *root,
 		if (!equal(opfamilies, cur_ec->ec_opfamilies))
 			continue;
 
+		/* We don't expect any children yet */
+		Assert(cur_ec->ec_childmembers == NULL);
+
 		foreach(lc2, cur_ec->ec_members)
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			Assert(!cur_em->em_is_child);	/* no children yet */
+			/* Child members should not exist in ec_members */
+			Assert(!cur_em->em_is_child);
 
 			/*
 			 * Match constants only within the same JoinDomain (see
@@ -428,7 +444,7 @@ process_equivalence(PlannerInfo *root,
 	{
 		/* Case 3: add item2 to ec1 */
 		em2 = add_eq_member(ec1, item2, item2_relids,
-							jdomain, NULL, item2_type);
+							jdomain, item2_type);
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_min_security = Min(ec1->ec_min_security,
 								   restrictinfo->security_level);
@@ -445,7 +461,7 @@ process_equivalence(PlannerInfo *root,
 	{
 		/* Case 3: add item1 to ec2 */
 		em1 = add_eq_member(ec2, item1, item1_relids,
-							jdomain, NULL, item1_type);
+							jdomain, item1_type);
 		ec2->ec_sources = lappend(ec2->ec_sources, restrictinfo);
 		ec2->ec_min_security = Min(ec2->ec_min_security,
 								   restrictinfo->security_level);
@@ -465,7 +481,9 @@ process_equivalence(PlannerInfo *root,
 
 		ec->ec_opfamilies = opfamilies;
 		ec->ec_collation = collation;
+		ec->ec_childmembers_size = 0;
 		ec->ec_members = NIL;
+		ec->ec_childmembers = NULL;
 		ec->ec_sources = list_make1(restrictinfo);
 		ec->ec_derives_list = NIL;
 		ec->ec_derives_hash = NULL;
@@ -478,9 +496,9 @@ process_equivalence(PlannerInfo *root,
 		ec->ec_max_security = restrictinfo->security_level;
 		ec->ec_merged = NULL;
 		em1 = add_eq_member(ec, item1, item1_relids,
-							jdomain, NULL, item1_type);
+							jdomain, item1_type);
 		em2 = add_eq_member(ec, item2, item2_relids,
-							jdomain, NULL, item2_type);
+							jdomain, item2_type);
 
 		root->eq_classes = lappend(root->eq_classes, ec);
 
@@ -566,11 +584,13 @@ canonicalize_ec_expression(Expr *expr, Oid req_type, Oid req_collation)
 }
 
 /*
- * add_eq_member - build a new EquivalenceMember and add it to an EC
+ * make_eq_member
+ *		Build a new EquivalenceMember without adding it to an EC.  If 'parent'
+ *		is NULL, the result will be a parent member, otherwise a child member.
  */
 static EquivalenceMember *
-add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
-			  JoinDomain *jdomain, EquivalenceMember *parent, Oid datatype)
+make_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
+			   JoinDomain *jdomain, EquivalenceMember *parent, Oid datatype)
 {
 	EquivalenceMember *em = makeNode(EquivalenceMember);
 
@@ -597,11 +617,85 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 		ec->ec_has_const = true;
 		/* it can't affect ec_relids */
 	}
-	else if (!parent)			/* child members don't add to ec_relids */
-	{
-		ec->ec_relids = bms_add_members(ec->ec_relids, relids);
-	}
+
+	return em;
+}
+
+/*
+ * add_eq_member - build a new non-child EquivalenceMember and add it to 'ec'.
+ */
+static EquivalenceMember *
+add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
+			  JoinDomain *jdomain, Oid datatype)
+{
+	EquivalenceMember *em = make_eq_member(ec, expr, relids, jdomain,
+										   NULL, datatype);
+
+	/* add to the members list */
 	ec->ec_members = lappend(ec->ec_members, em);
+
+	/* record the relids for parent members */
+	ec->ec_relids = bms_add_members(ec->ec_relids, relids);
+
+	return em;
+}
+
+/*
+ * add_child_eq_member
+ *		Create an em_is_child=true EquivalenceMember and add it to 'ec'.
+ *
+ * 'root' is the PlannerInfo that 'ec' belongs to.
+ * 'ec' is the EquivalenceClass to add the child member to.
+ * 'ec_index' the index of 'ec' within root->eq_classes, or -1 if maintaining
+ * the RelOptInfo.eclass_indexes isn't needed.
+ * 'expr' is the em_expr for the new member.
+ * 'relids' is the 'em_relids' for the new member.
+ * 'jdomain' is the 'em_jdomain' for the new member.
+ * 'parent_em' is the parent member of the child to create.
+ * 'datatype' is the em_datatype of the new member.
+ * 'child_relid' defines which element of ec_childmembers to add this member
+ * to.  This is generally a RELOPT_OTHER_MEMBER_REL, but for set operations
+ * can be a RELOPT_BASEREL representing the set-op children.
+ */
+static EquivalenceMember *
+add_child_eq_member(PlannerInfo *root, EquivalenceClass *ec, int ec_index,
+					Expr *expr, Relids relids, JoinDomain *jdomain,
+					EquivalenceMember *parent_em, Oid datatype,
+					Index child_relid)
+{
+	EquivalenceMember *em;
+
+	Assert(parent_em != NULL);
+
+	/*
+	 * Allocate the array to store child members; an array of Lists indexed by
+	 * relid, or expand the existing one, if necessary.
+	 */
+	if (unlikely(ec->ec_childmembers_size < root->simple_rel_array_size))
+	{
+		if (ec->ec_childmembers == NULL)
+			ec->ec_childmembers = palloc0_array(List *, root->simple_rel_array_size);
+		else
+			ec->ec_childmembers = repalloc0_array(ec->ec_childmembers, List *,
+												  ec->ec_childmembers_size,
+												  root->simple_rel_array_size);
+
+		ec->ec_childmembers_size = root->simple_rel_array_size;
+	}
+
+	em = make_eq_member(ec, expr, relids, jdomain, parent_em, datatype);
+
+	/* add member to the ec_childmembers List for the given child_relid */
+	ec->ec_childmembers[child_relid] = lappend(ec->ec_childmembers[child_relid], em);
+
+	/* Record this EC index for the child rel */
+	if (ec_index >= 0)
+	{
+		RelOptInfo *child_rel = root->simple_rel_array[child_relid];
+
+		child_rel->eclass_indexes =
+			bms_add_member(child_rel->eclass_indexes, ec_index);
+	}
 
 	return em;
 }
@@ -672,7 +766,8 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
-		ListCell   *lc2;
+		EquivalenceMemberIterator it;
+		EquivalenceMember *cur_em;
 
 		/*
 		 * Never match to a volatile EC, except when we are looking at another
@@ -687,10 +782,9 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		if (!equal(opfamilies, cur_ec->ec_opfamilies))
 			continue;
 
-		foreach(lc2, cur_ec->ec_members)
+		setup_eclass_member_iterator(&it, cur_ec, rel);
+		while ((cur_em = eclass_member_iterator_next(&it)) != NULL)
 		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
-
 			/*
 			 * Ignore child members unless they match the request.
 			 */
@@ -725,7 +819,9 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	newec = makeNode(EquivalenceClass);
 	newec->ec_opfamilies = list_copy(opfamilies);
 	newec->ec_collation = collation;
+	newec->ec_childmembers_size = 0;
 	newec->ec_members = NIL;
+	newec->ec_childmembers = NULL;
 	newec->ec_sources = NIL;
 	newec->ec_derives_list = NIL;
 	newec->ec_derives_hash = NULL;
@@ -747,7 +843,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	expr_relids = pull_varnos(root, (Node *) expr);
 
 	newem = add_eq_member(newec, copyObject(expr), expr_relids,
-						  jdomain, NULL, opcintype);
+						  jdomain, opcintype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions, set-returning
@@ -821,15 +917,16 @@ find_ec_member_matching_expr(EquivalenceClass *ec,
 							 Expr *expr,
 							 Relids relids)
 {
-	ListCell   *lc;
+	EquivalenceMemberIterator it;
+	EquivalenceMember *em;
 
 	/* We ignore binary-compatible relabeling on both ends */
 	while (expr && IsA(expr, RelabelType))
 		expr = ((RelabelType *) expr)->arg;
 
-	foreach(lc, ec->ec_members)
+	setup_eclass_member_iterator(&it, ec, relids);
+	while ((em = eclass_member_iterator_next(&it)) != NULL)
 	{
-		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
 		Expr	   *emexpr;
 
 		/*
@@ -898,7 +995,8 @@ find_computable_ec_member(PlannerInfo *root,
 						  bool require_parallel_safe)
 {
 	List	   *exprvars;
-	ListCell   *lc;
+	EquivalenceMemberIterator it;
+	EquivalenceMember *em;
 
 	/*
 	 * Pull out the Vars and quasi-Vars present in "exprs".  In the typical
@@ -912,9 +1010,9 @@ find_computable_ec_member(PlannerInfo *root,
 							   PVC_INCLUDE_PLACEHOLDERS |
 							   PVC_INCLUDE_CONVERTROWTYPES);
 
-	foreach(lc, ec->ec_members)
+	setup_eclass_member_iterator(&it, ec, relids);
+	while ((em = eclass_member_iterator_next(&it)) != NULL)
 	{
-		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
 		List	   *emvars;
 		ListCell   *lc2;
 
@@ -1193,6 +1291,9 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		return;
 	}
 
+	/* We don't expect any children yet */
+	Assert(ec->ec_childmembers == NULL);
+
 	/*
 	 * Find the constant member to use.  We prefer an actual constant to
 	 * pseudo-constants (such as Params), because the constraint exclusion
@@ -1219,7 +1320,8 @@ generate_base_implied_equalities_const(PlannerInfo *root,
 		Oid			eq_op;
 		RestrictInfo *rinfo;
 
-		Assert(!cur_em->em_is_child);	/* no children yet */
+		/* Child members should not exist in ec_members */
+		Assert(!cur_em->em_is_child);
 		if (cur_em == const_em)
 			continue;
 		eq_op = select_equality_operator(ec,
@@ -1283,12 +1385,17 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 	prev_ems = (EquivalenceMember **)
 		palloc0(root->simple_rel_array_size * sizeof(EquivalenceMember *));
 
+	/* We don't expect any children yet */
+	Assert(ec->ec_childmembers == NULL);
+
 	foreach(lc, ec->ec_members)
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
 		int			relid;
 
-		Assert(!cur_em->em_is_child);	/* no children yet */
+		/* Child members should not exist in ec_members */
+		Assert(!cur_em->em_is_child);
+
 		if (!bms_get_singleton_member(cur_em->em_relids, &relid))
 			continue;
 		Assert(relid < root->simple_rel_array_size);
@@ -1621,7 +1728,8 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	List	   *new_members = NIL;
 	List	   *outer_members = NIL;
 	List	   *inner_members = NIL;
-	ListCell   *lc1;
+	EquivalenceMemberIterator it;
+	EquivalenceMember *cur_em;
 
 	/*
 	 * First, scan the EC to identify member values that are computable at the
@@ -1632,10 +1740,9 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 	 * as well as to at least one input member, plus enforce at least one
 	 * outer-rel member equal to at least one inner-rel member.
 	 */
-	foreach(lc1, ec->ec_members)
+	setup_eclass_member_iterator(&it, ec, join_relids);
+	while ((cur_em = eclass_member_iterator_next(&it)) != NULL)
 	{
-		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc1);
-
 		/*
 		 * We don't need to check explicitly for child EC members.  This test
 		 * against join_relids will cause them to be ignored except when
@@ -1668,6 +1775,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 		Oid			best_eq_op = InvalidOid;
 		int			best_score = -1;
 		RestrictInfo *rinfo;
+		ListCell   *lc1;
 
 		foreach(lc1, outer_members)
 		{
@@ -1742,6 +1850,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 		List	   *old_members = list_concat(outer_members, inner_members);
 		EquivalenceMember *prev_em = NULL;
 		RestrictInfo *rinfo;
+		ListCell   *lc1;
 
 		/* For now, arbitrarily take the first old_member as the one to use */
 		if (old_members)
@@ -1749,7 +1858,7 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 
 		foreach(lc1, new_members)
 		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc1);
+			cur_em = (EquivalenceMember *) lfirst(lc1);
 
 			if (prev_em != NULL)
 			{
@@ -2188,6 +2297,9 @@ reconsider_outer_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo,
 		bool		match;
 		ListCell   *lc2;
 
+		/* We don't expect any children yet */
+		Assert(cur_ec->ec_childmembers == NULL);
+
 		/* Ignore EC unless it contains pseudoconstants */
 		if (!cur_ec->ec_has_const)
 			continue;
@@ -2205,7 +2317,8 @@ reconsider_outer_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo,
 		{
 			EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc2);
 
-			Assert(!cur_em->em_is_child);	/* no children yet */
+			/* Child members should not exist in ec_members */
+			Assert(!cur_em->em_is_child);
 			if (equal(outervar, cur_em->em_expr))
 			{
 				match = true;
@@ -2303,6 +2416,9 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 		ListCell   *lc2;
 		int			coal_idx = -1;
 
+		/* We don't expect any children yet */
+		Assert(cur_ec->ec_childmembers == NULL);
+
 		/* Ignore EC unless it contains pseudoconstants */
 		if (!cur_ec->ec_has_const)
 			continue;
@@ -2332,7 +2448,9 @@ reconsider_full_join_clause(PlannerInfo *root, OuterJoinClauseInfo *ojcinfo)
 		foreach(lc2, cur_ec->ec_members)
 		{
 			coal_em = (EquivalenceMember *) lfirst(lc2);
-			Assert(!coal_em->em_is_child);	/* no children yet */
+
+			/* Child members should not exist in ec_members */
+			Assert(!coal_em->em_is_child);
 			if (IsA(coal_em->em_expr, CoalesceExpr))
 			{
 				CoalesceExpr *cexpr = (CoalesceExpr *) coal_em->em_expr;
@@ -2461,6 +2579,13 @@ rebuild_eclass_attr_needed(PlannerInfo *root)
 	{
 		EquivalenceClass *ec = (EquivalenceClass *) lfirst(lc);
 
+		/*
+		 * We don't expect any EC child members to exist at this point. Ensure
+		 * that's the case, otherwise, we might be getting asked to do
+		 * something this function hasn't been coded for.
+		 */
+		Assert(ec->ec_childmembers == NULL);
+
 		/* Need do anything only for a multi-member, no-const EC. */
 		if (list_length(ec->ec_members) > 1 && !ec->ec_has_const)
 		{
@@ -2546,12 +2671,13 @@ exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2, Oid opfamily)
 			!list_member_oid(ec->ec_opfamilies, opfamily))
 			continue;
 
+		/* Ignore children here */
 		foreach(lc2, ec->ec_members)
 		{
 			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
 
-			if (em->em_is_child)
-				continue;		/* ignore children here */
+			/* Child members should not exist in ec_members */
+			Assert(!em->em_is_child);
 			if (equal(item1, em->em_expr))
 				item1member = true;
 			else if (equal(item2, em->em_expr))
@@ -2615,15 +2741,18 @@ match_eclasses_to_foreign_key_col(PlannerInfo *root,
 		/* Never match to a volatile EC */
 		if (ec->ec_has_volatile)
 			continue;
-		/* It's okay to consider "broken" ECs here, see exprs_known_equal */
 
+		/*
+		 * It's okay to consider "broken" ECs here, see exprs_known_equal.
+		 * Ignore children here.
+		 */
 		foreach(lc2, ec->ec_members)
 		{
 			EquivalenceMember *em = (EquivalenceMember *) lfirst(lc2);
 			Var		   *var;
 
-			if (em->em_is_child)
-				continue;		/* ignore children here */
+			/* Child members should not exist in ec_members */
+			Assert(!em->em_is_child);
 
 			/* EM must be a Var, possibly with RelabelType */
 			var = (Var *) em->em_expr;
@@ -2721,7 +2850,6 @@ add_child_rel_equivalences(PlannerInfo *root,
 	while ((i = bms_next_member(parent_rel->eclass_indexes, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
-		int			num_members;
 
 		/*
 		 * If this EC contains a volatile expression, then generating child
@@ -2734,29 +2862,13 @@ add_child_rel_equivalences(PlannerInfo *root,
 		/* Sanity check eclass_indexes only contain ECs for parent_rel */
 		Assert(bms_is_subset(top_parent_relids, cur_ec->ec_relids));
 
-		/*
-		 * We don't use foreach() here because there's no point in scanning
-		 * newly-added child members, so we can stop after the last
-		 * pre-existing EC member.
-		 */
-		num_members = list_length(cur_ec->ec_members);
-		for (int pos = 0; pos < num_members; pos++)
+		foreach_node(EquivalenceMember, cur_em, cur_ec->ec_members)
 		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) list_nth(cur_ec->ec_members, pos);
-
 			if (cur_em->em_is_const)
 				continue;		/* ignore consts here */
 
-			/*
-			 * We consider only original EC members here, not
-			 * already-transformed child members.  Otherwise, if some original
-			 * member expression references more than one appendrel, we'd get
-			 * an O(N^2) explosion of useless derived expressions for
-			 * combinations of children.  (But add_child_join_rel_equivalences
-			 * may add targeted combinations for partitionwise-join purposes.)
-			 */
-			if (cur_em->em_is_child)
-				continue;		/* ignore children here */
+			/* Child members should not exist in ec_members */
+			Assert(!cur_em->em_is_child);
 
 			/*
 			 * Consider only members that reference and can be computed at
@@ -2801,12 +2913,15 @@ add_child_rel_equivalences(PlannerInfo *root,
 											top_parent_relids);
 				new_relids = bms_add_members(new_relids, child_relids);
 
-				(void) add_eq_member(cur_ec, child_expr, new_relids,
-									 cur_em->em_jdomain,
-									 cur_em, cur_em->em_datatype);
-
-				/* Record this EC index for the child rel */
-				child_rel->eclass_indexes = bms_add_member(child_rel->eclass_indexes, i);
+				add_child_eq_member(root,
+									cur_ec,
+									i,
+									child_expr,
+									new_relids,
+									cur_em->em_jdomain,
+									cur_em,
+									cur_em->em_datatype,
+									child_rel->relid);
 			}
 		}
 	}
@@ -2853,7 +2968,6 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 	while ((i = bms_next_member(matching_ecs, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
-		int			num_members;
 
 		/*
 		 * If this EC contains a volatile expression, then generating child
@@ -2866,25 +2980,13 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 		/* Sanity check on get_eclass_indexes_for_relids result */
 		Assert(bms_overlap(top_parent_relids, cur_ec->ec_relids));
 
-		/*
-		 * We don't use foreach() here because there's no point in scanning
-		 * newly-added child members, so we can stop after the last
-		 * pre-existing EC member.
-		 */
-		num_members = list_length(cur_ec->ec_members);
-		for (int pos = 0; pos < num_members; pos++)
+		foreach_node(EquivalenceMember, cur_em, cur_ec->ec_members)
 		{
-			EquivalenceMember *cur_em = (EquivalenceMember *) list_nth(cur_ec->ec_members, pos);
-
 			if (cur_em->em_is_const)
 				continue;		/* ignore consts here */
 
-			/*
-			 * We consider only original EC members here, not
-			 * already-transformed child members.
-			 */
-			if (cur_em->em_is_child)
-				continue;		/* ignore children here */
+			/* Child members should not exist in ec_members */
+			Assert(!cur_em->em_is_child);
 
 			/*
 			 * We may ignore expressions that reference a single baserel,
@@ -2929,9 +3031,35 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 											top_parent_relids);
 				new_relids = bms_add_members(new_relids, child_relids);
 
-				(void) add_eq_member(cur_ec, child_expr, new_relids,
-									 cur_em->em_jdomain,
-									 cur_em, cur_em->em_datatype);
+				/*
+				 * Add new child member to the EquivalenceClass.  Because this
+				 * is a RELOPT_OTHER_JOINREL which has multiple component
+				 * relids, there is no ideal place to store these members in
+				 * the class.  Ordinarily, child members are stored in the
+				 * ec_childmembers[] array element corresponding to their
+				 * relid, however, here we have multiple component relids, so
+				 * there's no single ec_childmembers[] array element to store
+				 * this member.  So that we still correctly find this member
+				 * in loops iterating over an EquivalenceMemberIterator, we
+				 * opt to store the member in the ec_childmembers array in
+				 * only the first component relid slot of the array.  This
+				 * allows the member to be found, providing callers of
+				 * setup_eclass_member_iterator() specify all the component
+				 * relids for the RELOPT_OTHER_JOINREL, which they do.  If we
+				 * opted to store the member in each ec_childmembers[] element
+				 * for all the component relids, then that would just result
+				 * in eclass_member_iterator_next() finding the member
+				 * multiple times, which is a waste of effort.
+				 */
+				add_child_eq_member(root,
+									cur_ec,
+									-1,
+									child_expr,
+									new_relids,
+									cur_em->em_jdomain,
+									cur_em,
+									cur_em->em_datatype,
+									bms_next_member(child_joinrel->relids, -1));
 			}
 		}
 	}
@@ -2978,14 +3106,18 @@ add_setop_child_rel_equivalences(PlannerInfo *root, RelOptInfo *child_rel,
 		 * We can safely pass the parent member as the first member in the
 		 * ec_members list as this is added first in generate_union_paths,
 		 * likewise, the JoinDomain can be that of the initial member of the
-		 * Pathkey's EquivalenceClass.
+		 * Pathkey's EquivalenceClass.  We pass -1 for ec_index since we
+		 * maintain the eclass_indexes for the child_rel after the loop.
 		 */
-		add_eq_member(pk->pk_eclass,
-					  tle->expr,
-					  child_rel->relids,
-					  parent_em->em_jdomain,
-					  parent_em,
-					  exprType((Node *) tle->expr));
+		add_child_eq_member(root,
+							pk->pk_eclass,
+							-1,
+							tle->expr,
+							child_rel->relids,
+							parent_em->em_jdomain,
+							parent_em,
+							exprType((Node *) tle->expr),
+							child_rel->relid);
 
 		lc2 = lnext(setop_pathkeys, lc2);
 	}
@@ -3000,6 +3132,85 @@ add_setop_child_rel_equivalences(PlannerInfo *root, RelOptInfo *child_rel,
 											  list_length(root->eq_classes) - 1);
 }
 
+/*
+ * setup_eclass_member_iterator
+ *	  Setup an EquivalenceMemberIterator 'it' to iterate over all parent
+ *	  EquivalenceMembers and child members belonging to the given 'ec'.
+ *
+ * This iterator returns:
+ *	- All parent members stored directly in ec_members for 'ec', and;
+ *	- Any child member added to the given ec by add_child_eq_member() where
+ *	  the child_relid specified in the add_child_eq_member() call is a member
+ *	  of the 'child_relids' parameter.
+ *
+ * Note:
+ * The given 'child_relids' must remain allocated and not be changed for the
+ * lifetime of the iterator.
+ *
+ * Parameters:
+ *	'it' is a pointer to the iterator to set up.  Normally stack allocated.
+ *	'ec' is the EquivalenceClass from which to iterate members for.
+ *	'child_relids' is the relids to return child members for.
+ */
+void
+setup_eclass_member_iterator(EquivalenceMemberIterator *it,
+							 EquivalenceClass *ec, Relids child_relids)
+{
+	it->ec = ec;
+	/* no need to set this if the class has no child members array set */
+	it->child_relids = ec->ec_childmembers != NULL ? child_relids : NULL;
+	it->current_relid = -1;
+	it->current_list = ec->ec_members;
+	it->current_cell = list_head(it->current_list);
+}
+
+/*
+ * eclass_member_iterator_next
+ *	  Get the next EquivalenceMember from the EquivalenceMemberIterator 'it',
+ *	  as setup by setup_eclass_member_iterator().  NULL is returned if there
+ *	  are no members left, after which callers must not call
+ *	  eclass_member_iterator_next() again for the given iterator.
+ */
+EquivalenceMember *
+eclass_member_iterator_next(EquivalenceMemberIterator *it)
+{
+	while (it->current_list != NULL)
+	{
+		while (it->current_cell != NULL)
+		{
+			EquivalenceMember *em;
+
+	nextcell:
+			em = lfirst_node(EquivalenceMember, it->current_cell);
+			it->current_cell = lnext(it->current_list, it->current_cell);
+			return em;
+		}
+
+		/* Search for the next list to return members from */
+		while ((it->current_relid = bms_next_member(it->child_relids, it->current_relid)) > 0)
+		{
+			/*
+			 * Be paranoid in case we're given relids above what we've sized
+			 * the ec_childmembers array to.
+			 */
+			if (it->current_relid >= it->ec->ec_childmembers_size)
+				return NULL;
+
+			it->current_list = it->ec->ec_childmembers[it->current_relid];
+
+			/* If there are members in this list, use it. */
+			if (it->current_list != NIL)
+			{
+				/* point current_cell to the head of this list */
+				it->current_cell = list_head(it->current_list);
+				goto nextcell;
+			}
+		}
+		return NULL;
+	}
+
+	return NULL;
+}
 
 /*
  * generate_implied_equalities_for_column
@@ -3052,6 +3263,7 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 	while ((i = bms_next_member(rel->eclass_indexes, i)) >= 0)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) list_nth(root->eq_classes, i);
+		EquivalenceMemberIterator it;
 		EquivalenceMember *cur_em;
 		ListCell   *lc2;
 
@@ -3075,14 +3287,12 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 		 * corner cases, so for now we live with just reporting the first
 		 * match.  See also get_eclass_for_sort_expr.)
 		 */
-		cur_em = NULL;
-		foreach(lc2, cur_ec->ec_members)
+		setup_eclass_member_iterator(&it, cur_ec, rel->relids);
+		while ((cur_em = eclass_member_iterator_next(&it)) != NULL)
 		{
-			cur_em = (EquivalenceMember *) lfirst(lc2);
 			if (bms_equal(cur_em->em_relids, rel->relids) &&
 				callback(root, rel, cur_ec, cur_em, callback_arg))
 				break;
-			cur_em = NULL;
 		}
 
 		if (!cur_em)
@@ -3090,7 +3300,7 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 
 		/*
 		 * Found our match.  Scan the other EC members and attempt to generate
-		 * joinclauses.
+		 * joinclauses.  Ignore children here.
 		 */
 		foreach(lc2, cur_ec->ec_members)
 		{
@@ -3098,8 +3308,8 @@ generate_implied_equalities_for_column(PlannerInfo *root,
 			Oid			eq_op;
 			RestrictInfo *rinfo;
 
-			if (other_em->em_is_child)
-				continue;		/* ignore children here */
+			/* Child members should not exist in ec_members */
+			Assert(!other_em->em_is_child);
 
 			/* Make sure it'll be a join to a different rel */
 			if (other_em == cur_em ||
@@ -3312,13 +3522,15 @@ eclass_useful_for_merging(PlannerInfo *root,
 	if (bms_is_subset(eclass->ec_relids, relids))
 		return false;
 
-	/* To join, we need a member not in the given rel */
+	/*
+	 * To join, we need a member not in the given rel.  Ignore children here.
+	 */
 	foreach(lc, eclass->ec_members)
 	{
 		EquivalenceMember *cur_em = (EquivalenceMember *) lfirst(lc);
 
-		if (cur_em->em_is_child)
-			continue;			/* ignore children here */
+		/* Child members should not exist in ec_members */
+		Assert(!cur_em->em_is_child);
 
 		if (!bms_overlap(cur_em->em_relids, relids))
 			return true;

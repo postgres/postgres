@@ -465,7 +465,9 @@ _outEquivalenceClass(StringInfo str, const EquivalenceClass *node)
 
 	WRITE_NODE_FIELD(ec_opfamilies);
 	WRITE_OID_FIELD(ec_collation);
+	WRITE_INT_FIELD(ec_childmembers_size);
 	WRITE_NODE_FIELD(ec_members);
+	WRITE_NODE_ARRAY(ec_childmembers, node->ec_childmembers_size);
 	WRITE_NODE_FIELD(ec_sources);
 	/* Only ec_derives_list is written; hash is not serialized. */
 	WRITE_NODE_FIELD(ec_derives_list);

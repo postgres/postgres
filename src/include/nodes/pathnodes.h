@@ -1414,6 +1414,24 @@ typedef struct JoinDomain
  * In contrast, ec_sources holds equality clauses that appear directly in the
  * query. These are typically few and do not require a hash table for lookup.
  *
+ * 'ec_members' is a List of all !em_is_child EquivalenceMembers in the class.
+ * EquivalenceMembers for any RELOPT_OTHER_MEMBER_REL and RELOPT_OTHER_JOINREL
+ * relations are stored in the 'ec_childmembers' array in the index
+ * corresponding to the relid, or first component relid in the case of
+ * RELOPT_OTHER_JOINRELs.  'ec_childmembers' is NULL if the class has no child
+ * EquivalenceMembers.
+ *
+ * For code wishing to look at EquivalenceMembers, if only parent-level
+ * members are needed, then a simple foreach loop over ec_members is
+ * sufficient.  When child members are also required, it is best to use the
+ * functionality provided by EquivalenceMemberIterator.  This visits all
+ * parent members and only the relevant child members.  The reason for this
+ * is that large numbers of child EquivalenceMembers can exist in queries to
+ * partitioned tables with many partitions.  The functionality provided by
+ * EquivalenceMemberIterator allows efficient access to EquivalenceMembers
+ * which belong to specific child relids.  See the header comments for
+ * EquivalenceMemberIterator below for further details.
+ *
  * NB: if ec_merged isn't NULL, this class has been merged into another, and
  * should be ignored in favor of using the pointed-to class.
  *
@@ -1431,7 +1449,9 @@ typedef struct EquivalenceClass
 
 	List	   *ec_opfamilies;	/* btree operator family OIDs */
 	Oid			ec_collation;	/* collation, if datatypes are collatable */
+	int			ec_childmembers_size;	/* # elements in ec_childmembers */
 	List	   *ec_members;		/* list of EquivalenceMembers */
+	List	  **ec_childmembers;	/* array of Lists of child members */
 	List	   *ec_sources;		/* list of generating RestrictInfos */
 	List	   *ec_derives_list;	/* list of derived RestrictInfos */
 	struct derives_hash *ec_derives_hash;	/* optional hash table for fast
@@ -1465,12 +1485,17 @@ typedef struct EquivalenceClass
  * child when necessary to build a MergeAppend path for the whole appendrel
  * tree.  An em_is_child member has no impact on the properties of the EC as a
  * whole; in particular the EC's ec_relids field does NOT include the child
- * relation.  An em_is_child member should never be marked em_is_const nor
- * cause ec_has_const or ec_has_volatile to be set, either.  Thus, em_is_child
- * members are not really full-fledged members of the EC, but just reflections
- * or doppelgangers of real members.  Most operations on EquivalenceClasses
- * should ignore em_is_child members, and those that don't should test
- * em_relids to make sure they only consider relevant members.
+ * relation.  em_is_child members aren't stored in the ec_members List of the
+ * EC and instead they're stored and indexed by the relids of the child
+ * relation they represent in ec_childmembers.  An em_is_child member
+ * should never be marked em_is_const nor cause ec_has_const or
+ * ec_has_volatile to be set, either.  Thus, em_is_child members are not
+ * really full-fledged members of the EC, but just reflections or
+ * doppelgangers of real members.  Most operations on EquivalenceClasses
+ * should ignore em_is_child members by only inspecting members in the
+ * ec_members list.  Callers that require inspecting child members should do
+ * so using an EquivalenceMemberIterator and should test em_relids to make
+ * sure they only consider relevant members.
  *
  * em_datatype is usually the same as exprType(em_expr), but can be
  * different when dealing with a binary-compatible opfamily; in particular
@@ -1492,6 +1517,67 @@ typedef struct EquivalenceMember
 	/* if em_is_child is true, this links to corresponding EM for top parent */
 	struct EquivalenceMember *em_parent pg_node_attr(read_write_ignore);
 } EquivalenceMember;
+
+/*
+ * EquivalenceMemberIterator
+ *
+ * EquivalenceMemberIterator allows efficient access to sets of
+ * EquivalenceMembers for callers which require access to child members.
+ * Because partitioning workloads can result in large numbers of child
+ * members, the child members are not stored in the EquivalenceClass's
+ * ec_members List.  Instead, these are stored in the EquivalenceClass's
+ * ec_childmembers array of Lists.  The functionality provided by
+ * EquivalenceMemberIterator aims to provide efficient access to parent
+ * members and child members belonging to specific child relids.
+ *
+ * Currently, there is only one way to initialize and iterate over an
+ * EquivalenceMemberIterator and that is via the setup_eclass_member_iterator
+ * and eclass_member_iterator_next functions.  The iterator object is
+ * generally a local variable which is passed by address to
+ * setup_eclass_member_iterator.  The calling function defines which
+ * EquivalenceClass the iterator should be looking at and which child
+ * relids to also return members for.  child_relids can be passed as NULL, but
+ * the caller may as well just perform a foreach loop over ec_members as only
+ * parent-level members will be returned in that case.
+ *
+ * When calling the next function on an EquivalenceMemberIterator, all
+ * parent-level EquivalenceMembers are returned first, followed by all child
+ * members for the specified 'child_relids' for all child members which were
+ * indexed by any of the specified 'child_relids' in add_child_eq_member().
+ *
+ * Code using the iterator method of finding EquivalenceMembers will generally
+ * always want to ensure the returned member matches their search criteria
+ * rather than relying on the filtering to be done for them as all parent
+ * members are returned and for members belonging to RELOPT_OTHER_JOINREL
+ * rels, the member's em_relids may be a superset of the specified
+ * 'child_relids', which might not be what the caller wants.
+ *
+ * The most common way to use this iterator is as follows:
+ * -----
+ * EquivalenceMemberIterator		it;
+ * EquivalenceMember			   *em;
+ *
+ * setup_eclass_member_iterator(&it, ec, child_relids);
+ * while ((em = eclass_member_iterator_next(&it)) != NULL)
+ * {
+ *		...
+ * }
+ * -----
+ * It is not valid to call eclass_member_iterator_next() after it has returned
+ * NULL for any given EquivalenceMemberIterator.  Individual fields within
+ * the EquivalenceMemberIterator struct must not be accessed by callers.
+ */
+typedef struct
+{
+	EquivalenceClass *ec;		/* The EquivalenceClass to iterate over */
+	int			current_relid;	/* Current relid position within 'relids'. -1
+								 * when still looping over ec_members and -2
+								 * at the end of iteration */
+	Relids		child_relids;	/* Relids of child relations of interest.
+								 * Non-child rels are ignored */
+	ListCell   *current_cell;	/* Next cell to return within current_list */
+	List	   *current_list;	/* Current list of members being returned */
+} EquivalenceMemberIterator;
 
 /*
  * PathKeys

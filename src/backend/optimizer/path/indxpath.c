@@ -3755,7 +3755,8 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 	{
 		PathKey    *pathkey = (PathKey *) lfirst(lc1);
 		bool		found = false;
-		ListCell   *lc2;
+		EquivalenceMemberIterator it;
+		EquivalenceMember *member;
 
 
 		/* Pathkey must request default sort order for the target opfamily */
@@ -3774,9 +3775,10 @@ match_pathkeys_to_index(IndexOptInfo *index, List *pathkeys,
 		 * be considered to match more than one pathkey list, which is OK
 		 * here.  See also get_eclass_for_sort_expr.)
 		 */
-		foreach(lc2, pathkey->pk_eclass->ec_members)
+		setup_eclass_member_iterator(&it, pathkey->pk_eclass,
+									 index->rel->relids);
+		while ((member = eclass_member_iterator_next(&it)) != NULL)
 		{
-			EquivalenceMember *member = (EquivalenceMember *) lfirst(lc2);
 			int			indexcol;
 
 			/* No possibility of match if it references other relations */
