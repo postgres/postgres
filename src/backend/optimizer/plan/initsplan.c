@@ -2758,6 +2758,13 @@ restriction_is_always_true(PlannerInfo *root,
 		if (nulltest->nulltesttype != IS_NOT_NULL)
 			return false;
 
+		/*
+		 * Empty rows can appear NULL in some contexts and NOT NULL in others,
+		 * so avoid this optimization for row expressions.
+		 */
+		if (nulltest->argisrow)
+			return false;
+
 		return expr_is_nonnullable(root, nulltest->arg);
 	}
 
@@ -2814,6 +2821,13 @@ restriction_is_always_false(PlannerInfo *root,
 
 		/* is this NullTest an IS_NULL qual? */
 		if (nulltest->nulltesttype != IS_NULL)
+			return false;
+
+		/*
+		 * Empty rows can appear NULL in some contexts and NOT NULL in others,
+		 * so avoid this optimization for row expressions.
+		 */
+		if (nulltest->argisrow)
 			return false;
 
 		return expr_is_nonnullable(root, nulltest->arg);
