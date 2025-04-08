@@ -183,6 +183,10 @@
 #max_notify_queue_pages = 1048576	# limits the number of SLRU pages allocated
 					# for NOTIFY / LISTEN queue
 
+#file_copy_method = copy	# the default is the first option
+					# 	copy
+					# 	clone (if system support is available)
+
 # - Kernel Resources -
 
 #max_files_per_process = 1000		# min 64

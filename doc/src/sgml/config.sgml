@@ -2347,6 +2347,44 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc_file_copy_method" xreflabel="file_copy_method">
+      <term><varname>file_copy_method</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>file_copy_method</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the method used to copy files.
+        Possible values are <literal>COPY</literal> (default) and
+        <literal>CLONE</literal> (if operating support is available).
+       </para>
+
+       <para>
+       This parameter affects:
+       </para>
+       <itemizedlist>
+        <listitem>
+        <para>
+         <literal><command>CREATE DATABASE ... STRATEGY=FILE_COPY</command></literal>
+        </para>
+        </listitem>
+        <listitem>
+        <para>
+         <command>ALTER DATABASE ... SET TABLESPACE ...</command>
+        </para>
+        </listitem>
+       </itemizedlist>
+
+       <para>
+        <literal>CLONE</literal> uses the <function>copy_file_range()</function>
+        (Linux, FreeBSD) or <function>copyfile</function>
+        (macOS) system calls, giving the kernel the opportunity to share disk
+        blocks or push work down to lower layers on some file systems.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-max-notify-queue-pages" xreflabel="max_notify_queue_pages">
       <term><varname>max_notify_queue_pages</varname> (<type>integer</type>)
       <indexterm>

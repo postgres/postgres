@@ -208,6 +208,7 @@ CONTROL_FILE_SYNC	"Waiting for the <filename>pg_control</filename> file to reach
 CONTROL_FILE_SYNC_UPDATE	"Waiting for an update to the <filename>pg_control</filename> file to reach durable storage."
 CONTROL_FILE_WRITE	"Waiting for a write to the <filename>pg_control</filename> file."
 CONTROL_FILE_WRITE_UPDATE	"Waiting for a write to update the <filename>pg_control</filename> file."
+COPY_FILE_COPY	"Waiting for a file copy operation."
 COPY_FILE_READ	"Waiting for a read during a file copy operation."
 COPY_FILE_WRITE	"Waiting for a write during a file copy operation."
 DATA_FILE_EXTEND	"Waiting for a relation data file to be extended."
