@@ -304,7 +304,14 @@ extern uint32 GetAdditionalLocalPinLimit(void);
 extern void LimitAdditionalPins(uint32 *additional_pins);
 extern void LimitAdditionalLocalPins(uint32 *additional_pins);
 
-extern bool EvictUnpinnedBuffer(Buffer buf);
+extern bool EvictUnpinnedBuffer(Buffer buf, bool *buffer_flushed);
+extern void EvictAllUnpinnedBuffers(int32 *buffers_evicted,
+									int32 *buffers_flushed,
+									int32 *buffers_skipped);
+extern void EvictRelUnpinnedBuffers(Relation rel,
+									int32 *buffers_evicted,
+									int32 *buffers_flushed,
+									int32 *buffers_skipped);
 
 /* in buf_init.c */
 extern void BufferManagerShmemInit(void);

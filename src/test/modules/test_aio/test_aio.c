@@ -203,6 +203,7 @@ modify_rel_block(PG_FUNCTION_ARGS)
 	bool		corrupt_header = PG_GETARG_BOOL(3);
 	bool		corrupt_checksum = PG_GETARG_BOOL(4);
 	Page		page = palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
+	bool		flushed;
 	Relation	rel;
 	Buffer		buf;
 	PageHeader	ph;
@@ -237,7 +238,7 @@ modify_rel_block(PG_FUNCTION_ARGS)
 	if (BufferIsLocal(buf))
 		InvalidateLocalBuffer(GetLocalBufferDescriptor(-buf - 1), true);
 	else
-		EvictUnpinnedBuffer(buf);
+		EvictUnpinnedBuffer(buf, &flushed);
 
 	/*
 	 * Now modify the page as asked for by the caller.
@@ -478,6 +479,7 @@ invalidate_rel_block(PG_FUNCTION_ARGS)
 			BufferDesc *buf_hdr = BufferIsLocal(buf) ?
 				GetLocalBufferDescriptor(-buf - 1)
 				: GetBufferDescriptor(buf - 1);
+			bool		flushed;
 
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
@@ -493,7 +495,7 @@ invalidate_rel_block(PG_FUNCTION_ARGS)
 
 			if (BufferIsLocal(buf))
 				InvalidateLocalBuffer(GetLocalBufferDescriptor(-buf - 1), true);
-			else if (!EvictUnpinnedBuffer(buf))
+			else if (!EvictUnpinnedBuffer(buf, &flushed))
 				elog(ERROR, "couldn't evict");
 		}
 	}

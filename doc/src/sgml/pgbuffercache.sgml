@@ -27,14 +27,24 @@
   <primary>pg_buffercache_evict</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>pg_buffercache_evict_relation</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_evict_all</primary>
+ </indexterm>
+
  <para>
   This module provides the <function>pg_buffercache_pages()</function>
   function (wrapped in the <structname>pg_buffercache</structname> view),
   <function>pg_buffercache_numa_pages()</function> function (wrapped in the
   <structname>pg_buffercache_numa</structname> view), the
   <function>pg_buffercache_summary()</function> function, the
-  <function>pg_buffercache_usage_counts()</function> function and
-  the <function>pg_buffercache_evict()</function> function.
+  <function>pg_buffercache_usage_counts()</function> function, the
+  <function>pg_buffercache_evict()</function>, the
+  <function>pg_buffercache_evict_relation()</function> function and the
+  <function>pg_buffercache_evict_all()</function> function.
  </para>
 
  <para>
@@ -73,6 +83,19 @@
  <para>
   The <function>pg_buffercache_evict()</function> function allows a block to
   be evicted from the buffer pool given a buffer identifier.  Use of this
+  function is restricted to superusers only.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_evict_relation()</function> function allows all
+  unpinned shared buffers in the relation to be evicted from the buffer pool
+  given a relation identifier.  Use of this function is restricted to
+  superusers only.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_evict_all()</function> function allows all
+  unpinned shared buffers to be evicted in the buffer pool.  Use of this
   function is restricted to superusers only.
  </para>
 
@@ -452,11 +475,49 @@
   <para>
    The <function>pg_buffercache_evict()</function> function takes a buffer
    identifier, as shown in the <structfield>bufferid</structfield> column of
-   the <structname>pg_buffercache</structname> view.  It returns true on success,
-   and false if the buffer wasn't valid, if it couldn't be evicted because it
-   was pinned, or if it became dirty again after an attempt to write it out.
-   The result is immediately out of date upon return, as the buffer might
-   become valid again at any time due to concurrent activity.  The function is
+   the <structname>pg_buffercache</structname> view.  It returns information
+   about whether the buffer was evicted and flushed.  The buffer_evicted
+   column is true on success, and false if the buffer wasn't valid, if it
+   couldn't be evicted because it was pinned, or if it became dirty again
+   after an attempt to write it out.  The buffer_flushed column is true if the
+   buffer was flushed.  This does not necessarily mean that buffer was flushed
+   by us, it might be flushed by someone else.  The result is immediately out
+   of date upon return, as the buffer might become valid again at any time due
+   to concurrent activity. The function is intended for developer testing
+   only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-evict-relation">
+  <title>The <structname>pg_buffercache_evict_relation</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_evict_relation()</function> function is very
+   similar to the <function>pg_buffercache_evict()</function> function.  The
+   difference is that the <function>pg_buffercache_evict_relation()</function>
+   takes a relation identifier instead of buffer identifier.  It tries to
+   evict all buffers for all forks in that relation.
+
+   It returns the number of evicted buffers, flushed buffers and the number of
+   buffers that could not be evicted.  Flushed buffers haven't necessarily
+   been flushed by us, they might have been flushed by someone else.  The
+   result is immediately out of date upon return, as buffers might immediately
+   be read back in due to concurrent activity.  The function is intended for
+   developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-evict-all">
+  <title>The <structname>pg_buffercache_evict_all</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_evict_all()</function> function is very
+   similar to the <function>pg_buffercache_evict()</function> function.  The
+   difference is, the <function>pg_buffercache_evict_all()</function> function
+   does not take an argument; instead it tries to evict all buffers in the
+   buffer pool.  It returns the number of evicted buffers, flushed buffers and
+   the number of buffers that could not be evicted.  Flushed buffers haven't
+   necessarily been flushed by us, they might have been flushed by someone
+   else.  The result is immediately out of date upon return, as buffers might
+   immediately be read back in due to concurrent activity.  The function is
    intended for developer testing only.
   </para>
  </sect2>

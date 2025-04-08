@@ -55,3 +55,67 @@ SELECT count(*) > 0 FROM pg_buffercache_usage_counts();
  t
 (1 row)
 
+RESET role;
+------
+---- Test pg_buffercache_evict* functions
+------
+CREATE ROLE regress_buffercache_normal;
+SET ROLE regress_buffercache_normal;
+-- These should fail because they need to be called as SUPERUSER
+SELECT * FROM pg_buffercache_evict(1);
+ERROR:  must be superuser to use pg_buffercache_evict()
+SELECT * FROM pg_buffercache_evict_relation(1);
+ERROR:  must be superuser to use pg_buffercache_evict_relation()
+SELECT * FROM pg_buffercache_evict_all();
+ERROR:  must be superuser to use pg_buffercache_evict_all()
+RESET ROLE;
+-- These should return nothing, because these are STRICT functions
+SELECT * FROM pg_buffercache_evict(NULL);
+ buffer_evicted | buffer_flushed 
+----------------+----------------
+                | 
+(1 row)
+
+SELECT * FROM pg_buffercache_evict_relation(NULL);
+ buffers_evicted | buffers_flushed | buffers_skipped 
+-----------------+-----------------+-----------------
+                 |                 |                
+(1 row)
+
+-- These should fail because they are not called by valid range of buffers
+-- Number of the shared buffers are limited by max integer
+SELECT 2147483647 max_buffers \gset
+SELECT * FROM pg_buffercache_evict(-1);
+ERROR:  bad buffer ID: -1
+SELECT * FROM pg_buffercache_evict(0);
+ERROR:  bad buffer ID: 0
+SELECT * FROM pg_buffercache_evict(:max_buffers);
+ERROR:  bad buffer ID: 2147483647
+-- This should fail because pg_buffercache_evict_relation() doesn't accept
+-- local relations
+CREATE TEMP TABLE temp_pg_buffercache();
+SELECT * FROM pg_buffercache_evict_relation('temp_pg_buffercache');
+ERROR:  relation uses local buffers, pg_buffercache_evict_relation() is intended to be used for shared buffers only
+DROP TABLE temp_pg_buffercache;
+-- These shouldn't fail
+SELECT buffer_evicted IS NOT NULL FROM pg_buffercache_evict(1);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT buffers_evicted IS NOT NULL FROM pg_buffercache_evict_all();
+ ?column? 
+----------
+ t
+(1 row)
+
+CREATE TABLE shared_pg_buffercache();
+SELECT buffers_evicted IS NOT NULL FROM pg_buffercache_evict_relation('shared_pg_buffercache');
+ ?column? 
+----------
+ t
+(1 row)
+
+DROP TABLE shared_pg_buffercache;
+DROP ROLE regress_buffercache_normal;

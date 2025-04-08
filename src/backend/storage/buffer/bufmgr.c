@@ -6510,37 +6510,20 @@ ResOwnerPrintBufferPin(Datum res)
 }
 
 /*
- * Try to evict the current block in a shared buffer.
- *
- * This function is intended for testing/development use only!
- *
- * To succeed, the buffer must not be pinned on entry, so if the caller had a
- * particular block in mind, it might already have been replaced by some other
- * block by the time this function runs.  It's also unpinned on return, so the
- * buffer might be occupied again by the time control is returned, potentially
- * even by the same block.  This inherent raciness without other interlocking
- * makes the function unsuitable for non-testing usage.
- *
- * Returns true if the buffer was valid and it has now been made invalid.
- * Returns false if it wasn't valid, if it couldn't be evicted due to a pin,
- * or if the buffer becomes dirty again while we're trying to write it out.
+ * Helper function to evict unpinned buffer whose buffer header lock is
+ * already acquired.
  */
-bool
-EvictUnpinnedBuffer(Buffer buf)
+static bool
+EvictUnpinnedBufferInternal(BufferDesc *desc, bool *buffer_flushed)
 {
-	BufferDesc *desc;
 	uint32		buf_state;
 	bool		result;
 
-	/* Make sure we can pin the buffer. */
-	ResourceOwnerEnlarge(CurrentResourceOwner);
-	ReservePrivateRefCountEntry();
+	*buffer_flushed = false;
 
-	Assert(!BufferIsLocal(buf));
-	desc = GetBufferDescriptor(buf - 1);
+	buf_state = pg_atomic_read_u32(&(desc->state));
+	Assert(buf_state & BM_LOCKED);
 
-	/* Lock the header and check if it's valid. */
-	buf_state = LockBufHdr(desc);
 	if ((buf_state & BM_VALID) == 0)
 	{
 		UnlockBufHdr(desc, buf_state);
@@ -6561,6 +6544,7 @@ EvictUnpinnedBuffer(Buffer buf)
 	{
 		LWLockAcquire(BufferDescriptorGetContentLock(desc), LW_SHARED);
 		FlushBuffer(desc, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
+		*buffer_flushed = true;
 		LWLockRelease(BufferDescriptorGetContentLock(desc));
 	}
 
@@ -6570,6 +6554,149 @@ EvictUnpinnedBuffer(Buffer buf)
 	UnpinBuffer(desc);
 
 	return result;
+}
+
+/*
+ * Try to evict the current block in a shared buffer.
+ *
+ * This function is intended for testing/development use only!
+ *
+ * To succeed, the buffer must not be pinned on entry, so if the caller had a
+ * particular block in mind, it might already have been replaced by some other
+ * block by the time this function runs.  It's also unpinned on return, so the
+ * buffer might be occupied again by the time control is returned, potentially
+ * even by the same block.  This inherent raciness without other interlocking
+ * makes the function unsuitable for non-testing usage.
+ *
+ * *buffer_flushed is set to true if the buffer was dirty and has been
+ * flushed, false otherwise.  However, *buffer_flushed=true does not
+ * necessarily mean that we flushed the buffer, it could have been flushed by
+ * someone else.
+ *
+ * Returns true if the buffer was valid and it has now been made invalid.
+ * Returns false if it wasn't valid, if it couldn't be evicted due to a pin,
+ * or if the buffer becomes dirty again while we're trying to write it out.
+ */
+bool
+EvictUnpinnedBuffer(Buffer buf, bool *buffer_flushed)
+{
+	BufferDesc *desc;
+
+	Assert(BufferIsValid(buf) && !BufferIsLocal(buf));
+
+	/* Make sure we can pin the buffer. */
+	ResourceOwnerEnlarge(CurrentResourceOwner);
+	ReservePrivateRefCountEntry();
+
+	desc = GetBufferDescriptor(buf - 1);
+	LockBufHdr(desc);
+
+	return EvictUnpinnedBufferInternal(desc, buffer_flushed);
+}
+
+/*
+ * Try to evict all the shared buffers.
+ *
+ * This function is intended for testing/development use only! See
+ * EvictUnpinnedBuffer().
+ *
+ * The buffers_* parameters are mandatory and indicate the total count of
+ * buffers that:
+ * - buffers_evicted - were evicted
+ * - buffers_flushed - were flushed
+ * - buffers_skipped - could not be evicted
+ */
+void
+EvictAllUnpinnedBuffers(int32 *buffers_evicted, int32 *buffers_flushed,
+						int32 *buffers_skipped)
+{
+	*buffers_evicted = 0;
+	*buffers_skipped = 0;
+	*buffers_flushed = 0;
+
+	for (int buf = 1; buf <= NBuffers; buf++)
+	{
+		BufferDesc *desc = GetBufferDescriptor(buf - 1);
+		uint32		buf_state;
+		bool		buffer_flushed;
+
+		buf_state = pg_atomic_read_u32(&desc->state);
+		if (!(buf_state & BM_VALID))
+			continue;
+
+		ResourceOwnerEnlarge(CurrentResourceOwner);
+		ReservePrivateRefCountEntry();
+
+		LockBufHdr(desc);
+
+		if (EvictUnpinnedBufferInternal(desc, &buffer_flushed))
+			(*buffers_evicted)++;
+		else
+			(*buffers_skipped)++;
+
+		if (buffer_flushed)
+			(*buffers_flushed)++;
+	}
+}
+
+/*
+ * Try to evict all the shared buffers containing provided relation's pages.
+ *
+ * This function is intended for testing/development use only! See
+ * EvictUnpinnedBuffer().
+ *
+ * The caller must hold at least AccessShareLock on the relation to prevent
+ * the relation from being dropped.
+ *
+ * The buffers_* parameters are mandatory and indicate the total count of
+ * buffers that:
+ * - buffers_evicted - were evicted
+ * - buffers_flushed - were flushed
+ * - buffers_skipped - could not be evicted
+ */
+void
+EvictRelUnpinnedBuffers(Relation rel, int32 *buffers_evicted,
+						int32 *buffers_flushed, int32 *buffers_skipped)
+{
+	Assert(!RelationUsesLocalBuffers(rel));
+
+	*buffers_skipped = 0;
+	*buffers_evicted = 0;
+	*buffers_flushed = 0;
+
+	for (int buf = 1; buf <= NBuffers; buf++)
+	{
+		BufferDesc *desc = GetBufferDescriptor(buf - 1);
+		uint32		buf_state = pg_atomic_read_u32(&(desc->state));
+		bool		buffer_flushed;
+
+		/* An unlocked precheck should be safe and saves some cycles. */
+		if ((buf_state & BM_VALID) == 0 ||
+			!BufTagMatchesRelFileLocator(&desc->tag, &rel->rd_locator))
+			continue;
+
+		/* Make sure we can pin the buffer. */
+		ResourceOwnerEnlarge(CurrentResourceOwner);
+		ReservePrivateRefCountEntry();
+
+		buf_state = LockBufHdr(desc);
+
+		/* recheck, could have changed without the lock */
+		if ((buf_state & BM_VALID) == 0 ||
+			!BufTagMatchesRelFileLocator(&desc->tag, &rel->rd_locator))
+		{
+			UnlockBufHdr(desc, buf_state);
+			continue;
+		}
+
+		if (EvictUnpinnedBufferInternal(desc, &buffer_flushed))
+			(*buffers_evicted)++;
+		else
+			(*buffers_skipped)++;
+
+		if (buffer_flushed)
+			(*buffers_flushed)++;
+	}
 }
 
 /*

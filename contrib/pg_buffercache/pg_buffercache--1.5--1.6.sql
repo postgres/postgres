@@ -20,3 +20,27 @@ REVOKE ALL ON pg_buffercache_numa FROM PUBLIC;
 
 GRANT EXECUTE ON FUNCTION pg_buffercache_numa_pages() TO pg_monitor;
 GRANT SELECT ON pg_buffercache_numa TO pg_monitor;
+
+
+DROP FUNCTION pg_buffercache_evict(integer);
+CREATE FUNCTION pg_buffercache_evict(
+    IN int,
+    OUT buffer_evicted boolean,
+    OUT buffer_flushed boolean)
+AS 'MODULE_PATHNAME', 'pg_buffercache_evict'
+LANGUAGE C PARALLEL SAFE VOLATILE STRICT;
+
+CREATE FUNCTION pg_buffercache_evict_relation(
+    IN regclass,
+    OUT buffers_evicted int4,
+    OUT buffers_flushed int4,
+    OUT buffers_skipped int4)
+AS 'MODULE_PATHNAME', 'pg_buffercache_evict_relation'
+LANGUAGE C PARALLEL SAFE VOLATILE STRICT;
+
+CREATE FUNCTION pg_buffercache_evict_all(
+    OUT buffers_evicted int4,
+    OUT buffers_flushed int4,
+    OUT buffers_skipped int4)
+AS 'MODULE_PATHNAME', 'pg_buffercache_evict_all'
+LANGUAGE C PARALLEL SAFE VOLATILE;
