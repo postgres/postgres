@@ -267,7 +267,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>os_page_num</structfield> <type>int</type>
+       <structfield>os_page_num</structfield> <type>bigint</type>
       </para>
       <para>
        number of OS memory page for this buffer

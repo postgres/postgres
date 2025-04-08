@@ -12,7 +12,7 @@ LANGUAGE C PARALLEL SAFE;
 -- Create a view for convenient access.
 CREATE VIEW pg_buffercache_numa AS
 	SELECT P.* FROM pg_buffercache_numa_pages() AS P
-	(bufferid integer, os_page_num int4, numa_node int4);
+	(bufferid integer, os_page_num bigint, numa_node integer);
 
 -- Don't want these to be available to public.
 REVOKE ALL ON FUNCTION pg_buffercache_numa_pages() FROM PUBLIC;

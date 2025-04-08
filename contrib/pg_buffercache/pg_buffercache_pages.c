@@ -72,7 +72,7 @@ typedef struct
 typedef struct
 {
 	uint32		bufferid;
-	int32		page_num;
+	int64		page_num;
 	int32		numa_node;
 } BufferCacheNumaRec;
 
@@ -414,7 +414,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		TupleDescInitEntry(tupledesc, (AttrNumber) 1, "bufferid",
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 2, "os_page_num",
-						   INT4OID, -1, 0);
+						   INT8OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 3, "numa_node",
 						   INT4OID, -1, 0);
 
@@ -522,7 +522,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		values[0] = Int32GetDatum(fctx->record[i].bufferid);
 		nulls[0] = false;
 
-		values[1] = Int32GetDatum(fctx->record[i].page_num);
+		values[1] = Int64GetDatum(fctx->record[i].page_num);
 		nulls[1] = false;
 
 		values[2] = Int32GetDatum(fctx->record[i].numa_node);
