@@ -4128,7 +4128,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>size</structfield> <type>int4</type>
+       <structfield>size</structfield> <type>int8</type>
       </para>
       <para>
        Size of the allocation on this particular NUMA memory node in bytes
