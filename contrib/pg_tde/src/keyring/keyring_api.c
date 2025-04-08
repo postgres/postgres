@@ -11,31 +11,31 @@
 #include <assert.h>
 #include <openssl/rand.h>
 
-typedef struct KeyProviders
+typedef struct RegisteredKeyProviderType
 {
 	TDEKeyringRoutine *routine;
 	ProviderType type;
-} KeyProviders;
+} RegisteredKeyProviderType;
 
 #ifndef FRONTEND
-static List *registeredKeyProviders = NIL;
+static List *registeredKeyProviderTypes = NIL;
 #else
-static SimplePtrList registeredKeyProviders = {NULL, NULL};
+static SimplePtrList registeredKeyProviderTypes = {NULL, NULL};
 #endif
 
-static KeyProviders *find_key_provider(ProviderType type);
+static RegisteredKeyProviderType *find_key_provider_type(ProviderType type);
 static void KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *KeyringGenerateNewKey(const char *key_name, unsigned key_len);
 
 #ifndef FRONTEND
-static KeyProviders *
-find_key_provider(ProviderType type)
+static RegisteredKeyProviderType *
+find_key_provider_type(ProviderType type)
 {
 	ListCell   *lc;
 
-	foreach(lc, registeredKeyProviders)
+	foreach(lc, registeredKeyProviderTypes)
 	{
-		KeyProviders *kp = (KeyProviders *) lfirst(lc);
+		RegisteredKeyProviderType *kp = (RegisteredKeyProviderType *) lfirst(lc);
 
 		if (kp->type == type)
 		{
@@ -45,14 +45,14 @@ find_key_provider(ProviderType type)
 	return NULL;
 }
 #else
-static KeyProviders *
-find_key_provider(ProviderType type)
+static RegisteredKeyProviderType *
+find_key_provider_type(ProviderType type)
 {
 	SimplePtrListCell *lc;
 
-	for (lc = registeredKeyProviders.head; lc; lc = lc->next)
+	for (lc = registeredKeyProviderTypes.head; lc; lc = lc->next)
 	{
-		KeyProviders *kp = (KeyProviders *) lc->ptr;
+		RegisteredKeyProviderType *kp = (RegisteredKeyProviderType *) lc->ptr;
 
 		if (kp->type == type)
 		{
@@ -64,9 +64,9 @@ find_key_provider(ProviderType type)
 #endif							/* !FRONTEND */
 
 void
-RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
+RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type)
 {
-	KeyProviders *kp;
+	RegisteredKeyProviderType *kp;
 #ifndef FRONTEND
 	MemoryContext oldcontext;
 #endif
@@ -75,7 +75,7 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 	Assert(routine->keyring_get_key != NULL);
 	Assert(routine->keyring_store_key != NULL);
 
-	kp = find_key_provider(type);
+	kp = find_key_provider_type(type);
 	if (kp)
 		ereport(ERROR,
 				(errmsg("Key provider of type %d already registered", type)));
@@ -83,21 +83,21 @@ RegisterKeyProvider(const TDEKeyringRoutine *routine, ProviderType type)
 #ifndef FRONTEND
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 #endif
-	kp = palloc_object(KeyProviders);
+	kp = palloc_object(RegisteredKeyProviderType);
 	kp->routine = (TDEKeyringRoutine *) routine;
 	kp->type = type;
 #ifndef FRONTEND
-	registeredKeyProviders = lappend(registeredKeyProviders, kp);
+	registeredKeyProviderTypes = lappend(registeredKeyProviderTypes, kp);
 	MemoryContextSwitchTo(oldcontext);
 #else
-	simple_ptr_list_append(&registeredKeyProviders, kp);
+	simple_ptr_list_append(&registeredKeyProviderTypes, kp);
 #endif
 }
 
 KeyInfo *
 KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode)
 {
-	KeyProviders *kp = find_key_provider(keyring->type);
+	RegisteredKeyProviderType *kp = find_key_provider_type(keyring->type);
 
 	if (kp == NULL)
 	{
@@ -112,7 +112,7 @@ KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes 
 static void
 KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key)
 {
-	KeyProviders *kp = find_key_provider(keyring->type);
+	RegisteredKeyProviderType *kp = find_key_provider_type(keyring->type);
 
 	if (kp == NULL)
 		ereport(ERROR,

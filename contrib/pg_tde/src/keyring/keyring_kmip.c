@@ -35,7 +35,7 @@ const TDEKeyringRoutine keyringKmipRoutine = {
 void
 InstallKmipKeyring(void)
 {
-	RegisterKeyProvider(&keyringKmipRoutine, KMIP_KEY_PROVIDER);
+	RegisterKeyProviderType(&keyringKmipRoutine, KMIP_KEY_PROVIDER);
 }
 
 typedef struct KmipCtx

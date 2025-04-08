@@ -37,7 +37,7 @@ const TDEKeyringRoutine keyringFileRoutine = {
 void
 InstallFileKeyring(void)
 {
-	RegisterKeyProvider(&keyringFileRoutine, FILE_KEY_PROVIDER);
+	RegisterKeyProviderType(&keyringFileRoutine, FILE_KEY_PROVIDER);
 }
 
 static KeyInfo *

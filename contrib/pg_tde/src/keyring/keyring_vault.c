@@ -79,7 +79,7 @@ const TDEKeyringRoutine keyringVaultV2Routine = {
 void
 InstallVaultV2Keyring(void)
 {
-	RegisterKeyProvider(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
+	RegisterKeyProviderType(&keyringVaultV2Routine, VAULT_V2_KEY_PROVIDER);
 }
 
 static bool
