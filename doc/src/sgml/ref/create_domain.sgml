@@ -283,7 +283,8 @@ CREATE TABLE us_snail_addy (
   <para>
    The syntax <literal>NOT NULL</literal> in this command is a
    <productname>PostgreSQL</productname> extension.  (A standard-conforming
-   way to write the same would be <literal>CHECK (VALUE IS NOT
+   way to write the same for non-composite data types would be
+   <literal>CHECK (VALUE IS NOT
    NULL)</literal>.  However, per <xref linkend="sql-createdomain-notes"/>,
    such constraints are best avoided in practice anyway.)  The
    <literal>NULL</literal> <quote>constraint</quote> is a
