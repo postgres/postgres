@@ -214,7 +214,7 @@ _crypt_gensalt_sha(unsigned long count,
 
 	/* Skip magic bytes, set by callers */
 	s_ptr += 3;
-	if ((rc = pg_snprintf(s_ptr, 18, "rounds=%ld$", count)) <= 0)
+	if ((rc = pg_snprintf(s_ptr, 18, "rounds=%lu$", count)) <= 0)
 		ereport(ERROR,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("cannot format salt string"));
