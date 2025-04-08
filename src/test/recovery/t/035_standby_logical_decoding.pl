@@ -10,6 +10,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+if ($ENV{enable_injection_points} ne 'yes')
+{
+	plan skip_all => 'Injection points not supported by this build';
+}
+
 my ($stdout, $stderr, $cascading_stdout, $cascading_stderr, $handle);
 
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -241,15 +246,18 @@ sub check_for_invalidation
 # VACUUM command, $sql the sql to launch before triggering the vacuum and
 # $to_vac the relation to vacuum.
 #
-# Note that pg_current_snapshot() is used to get the horizon.  It does
-# not generate a Transaction/COMMIT WAL record, decreasing the risk of
-# seeing a xl_running_xacts that would advance an active replication slot's
-# catalog_xmin.  Advancing the active replication slot's catalog_xmin
-# would break some tests that expect the active slot to conflict with
-# the catalog xmin horizon.
+# Note that the injection_point avoids seeing a xl_running_xacts that could
+# advance an active replication slot's catalog_xmin. Advancing the active
+# replication slot's catalog_xmin would break some tests that expect the
+# active slot to conflict with the catalog xmin horizon.
 sub wait_until_vacuum_can_remove
 {
 	my ($vac_option, $sql, $to_vac) = @_;
+
+	# Note that from this point the checkpointer and bgwriter will skip writing
+	# xl_running_xacts record.
+	$node_primary->safe_psql('testdb',
+		"SELECT injection_points_attach('skip-log-running-xacts', 'error');");
 
 	# Get the current xid horizon,
 	my $xid_horizon = $node_primary->safe_psql('testdb',
@@ -268,6 +276,12 @@ sub wait_until_vacuum_can_remove
 	$node_primary->safe_psql(
 		'testdb', qq[VACUUM $vac_option verbose $to_vac;
 										  INSERT INTO flush_wal DEFAULT VALUES;]);
+
+	$node_primary->wait_for_replay_catchup($node_standby);
+
+	# Resume generating the xl_running_xacts record
+	$node_primary->safe_psql('testdb',
+		"SELECT injection_points_detach('skip-log-running-xacts');");
 }
 
 ########################
@@ -284,6 +298,14 @@ autovacuum = off
 });
 $node_primary->dump_info;
 $node_primary->start;
+
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+if (!$node_primary->check_extension('injection_points'))
+{
+	plan skip_all => 'Extension injection_points not installed';
+}
 
 $node_primary->psql('postgres', q[CREATE DATABASE testdb]);
 
@@ -528,6 +550,9 @@ is($result, qq(10), 'check replicated inserts after subscription on standby');
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
 $node_subscriber->stop;
 
+# Create the injection_points extension
+$node_primary->safe_psql('testdb', 'CREATE EXTENSION injection_points;');
+
 ##################################################
 # Recovery conflict: Invalidate conflicting slots, including in-use slots
 # Scenario 1: hot_standby_feedback off and vacuum FULL
@@ -556,8 +581,6 @@ $node_standby->poll_query_until('testdb',
 wait_until_vacuum_can_remove(
 	'full', 'CREATE TABLE conflict_test(x integer, y text);
 								 DROP TABLE conflict_test;', 'pg_class');
-
-$node_primary->wait_for_replay_catchup($node_standby);
 
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('vacuum_full_', 1, 'with vacuum FULL on pg_class');
@@ -665,8 +688,6 @@ wait_until_vacuum_can_remove(
 	'', 'CREATE TABLE conflict_test(x integer, y text);
 							 DROP TABLE conflict_test;', 'pg_class');
 
-$node_primary->wait_for_replay_catchup($node_standby);
-
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('row_removal_', $logstart, 'with vacuum on pg_class');
 
@@ -699,8 +720,6 @@ wait_until_vacuum_can_remove(
 	'', 'CREATE ROLE create_trash;
 							 DROP ROLE create_trash;', 'pg_authid');
 
-$node_primary->wait_for_replay_catchup($node_standby);
-
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('shared_row_removal_', $logstart,
 	'with vacuum on pg_authid');
@@ -732,8 +751,6 @@ wait_until_vacuum_can_remove(
 	'', 'CREATE TABLE conflict_test(x integer, y text);
 							 INSERT INTO conflict_test(x,y) SELECT s, s::text FROM generate_series(1,4) s;
 							 UPDATE conflict_test set x=1, y=1;', 'conflict_test');
-
-$node_primary->wait_for_replay_catchup($node_standby);
 
 # message should not be issued
 ok( !$node_standby->log_contains(
@@ -782,6 +799,13 @@ $logstart = -s $node_standby->logfile;
 reactive_slots_change_hfs_and_wait_for_xmins('no_conflict_', 'pruning_', 0,
 	0);
 
+# Injection_point avoids seeing a xl_running_xacts. This is required because if
+# it is generated between the last two updates, then the catalog_xmin of the
+# active slot could be updated, and hence, the conflict won't occur. See
+# comments atop wait_until_vacuum_can_remove.
+$node_primary->safe_psql('testdb',
+	"SELECT injection_points_attach('skip-log-running-xacts', 'error');");
+
 # This should trigger the conflict
 $node_primary->safe_psql('testdb',
 	qq[CREATE TABLE prun(id integer, s char(2000)) WITH (fillfactor = 75, user_catalog_table = true);]
@@ -793,6 +817,10 @@ $node_primary->safe_psql('testdb', qq[UPDATE prun SET s = 'D';]);
 $node_primary->safe_psql('testdb', qq[UPDATE prun SET s = 'E';]);
 
 $node_primary->wait_for_replay_catchup($node_standby);
+
+# Resume generating the xl_running_xacts record
+$node_primary->safe_psql('testdb',
+	"SELECT injection_points_detach('skip-log-running-xacts');");
 
 # Check invalidation in the logfile and in pg_stat_database_conflicts
 check_for_invalidation('pruning_', $logstart, 'with on-access pruning');
