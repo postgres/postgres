@@ -205,10 +205,6 @@ CREATE FUNCTION binary_coercible(oid, oid)
     RETURNS bool
     AS :'regresslib', 'binary_coercible'
     LANGUAGE C STRICT STABLE PARALLEL SAFE;
-CREATE FUNCTION ttdummy ()
-    RETURNS trigger
-    AS :'regresslib'
-    LANGUAGE C;
 -- Use hand-rolled hash functions and operator classes to get predictable
 -- result on different machines.  The hash function for int4 simply returns
 -- the sum of the values passed to it and the one for text returns the length

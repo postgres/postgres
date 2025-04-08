@@ -10,6 +10,8 @@ DATA = autoinc--1.0.sql \
        refint--1.0.sql
 PGFILEDESC = "spi - examples of using SPI and triggers"
 
+REGRESS = autoinc refint
+
 DOCS = $(addsuffix .example, $(MODULES))
 
 # this is needed for the regression tests;

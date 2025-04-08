@@ -81,10 +81,12 @@
   <para>
    <function>autoinc()</function> is a trigger that stores the next value of
    a sequence into an integer field.  This has some overlap with the
-   built-in <quote>serial column</quote> feature, but it is not the same:
-   <function>autoinc()</function> will override attempts to substitute a
-   different field value during inserts, and optionally it can be
-   used to increment the field during updates, too.
+   built-in <quote>serial column</quote> feature, but it is not the same.
+   The trigger will replace the field's value only if that value is
+   initially zero or null (after the action of the SQL statement that
+   inserted or updated the row).  Also, if the sequence's next value is
+   zero, <function>nextval()</function> will be called a second time in
+   order to obtain a non-zero value.
   </para>
 
   <para>
