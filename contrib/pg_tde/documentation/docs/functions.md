@@ -14,8 +14,8 @@ The following functions are also provided for easier management of functionality
 
 Use these functions to grant or revoke permissions to manage permissions for the current database. They enable or disable all functions related to the providers and keys on the current database:
 
-* `pg_tde_grant_local_key_management_to_role(role)`
-* `pg_tde_revoke_local_key_management_from_role(role)`
+* `pg_tde_grant_database_key_management_to_role(role)`
+* `pg_tde_revoke_database_key_management_from_role(role)`
 
 ### Global scope key management
 
@@ -72,7 +72,7 @@ You can change an existing key provider using the provided functions, which are 
 
 There are two functions to change existing providers: one to change a provider in the current database, and another one to change a provider in the global scope.
 
-* `pg_tde_change_key_provider_<type>('provider-name', <provider specific parameters>)`
+* `pg_tde_change_database_key_provider_<type>('provider-name', <provider specific parameters>)`
 * `pg_tde_change_global_key_provider_<type>('provider-name', <provider specific parameters>)`
 
 When you change a provider, the referred name must exist in the database local or a global scope.
@@ -90,14 +90,14 @@ The Vault provider connects to a HashiCorp Vault or an OpenBao server, and store
 Use the following functions to add the Vault provider:
 
 ```
-SELECT pg_tde_add_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
+SELECT pg_tde_add_database_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
 SELECT pg_tde_add_global_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
 ```
 
 These functions change the Vault provider:
 
 ```
-SELECT pg_tde_change_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
+SELECT pg_tde_change_database_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
 SELECT pg_tde_change_global_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
 ```
 
@@ -121,14 +121,14 @@ The KMIP provider uses a remote KMIP server.
 Use these functions to add a KMIP provider: 
 
 ```
-SELECT pg_tde_add_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+SELECT pg_tde_add_database_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
 SELECT pg_tde_add_global_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
 ```
 
 These functions change the KMIP provider:
 
 ```
-SELECT pg_tde_change_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
+SELECT pg_tde_change_database_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
 SELECT pg_tde_change_global_key_provider_kmip('provider-name','kmip-addr', `port`, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
 ```
 
@@ -156,14 +156,14 @@ This function is intended for development or quick testing, and stores the keys 
 Add a local keyfile provider:
 
 ```
-SELECT pg_tde_add_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
+SELECT pg_tde_add_database_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
 SELECT pg_tde_add_global_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
 ```
 
 Change a local keyfile provider:
 
 ```
-SELECT pg_tde_change_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
+SELECT pg_tde_change_database_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
 SELECT pg_tde_change_global_key_provider_file('provider-name','/path/to/the/key/provider/data.file');
 ```
 
@@ -178,7 +178,7 @@ All parameters can be either strings, or JSON objects [referencing remote parame
 
 These functions delete an existing provider in the current database or in the global scope:
 
-* `pg_tde_delete_key_provider('provider-name)`
+* `pg_tde_delete_database_key_provider('provider-name)`
 * `pg_tde_delete_global_key_provider('provider-name)`
 
 You can only delete key providers that are not currently in use. An error is returned if the current principal key is using the provider you are trying to delete.
@@ -189,7 +189,7 @@ If the use of global key providers is enabled via the `pg_tde.inherit_global` GU
 
 These functions list the details of all key providers for the current database or for the global scope, including all configuration values:
 
-* `pg_tde_list_all_key_providers()`
+* `pg_tde_list_all_database_key_providers()`
 * `pg_tde_list_all_global_key_providers()`
 
 **All configuration values include possibly sensitive values, such as passwords. Never specify these directly, use the remote configuration option instead.**
@@ -201,12 +201,12 @@ Use these functions to create a new principal key for a specific scope such as a
 
 Princial keys are stored on key providers by the name specified in this function - for example, when using the Vault provider, after creating a key named "foo", a key named "foo" will be visible on the Vault server at the specified mount point.
 
-### pg_tde_set_principal_key
+### pg_tde_set_principal_key_using_database_key_provider
 
 Creates or rotates the principal key for the current database using the specified database key provider and key name.
 
 ```
-SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+SELECT pg_tde_set_principal_key_using_database_key_provider('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
  The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
@@ -215,12 +215,12 @@ SELECT pg_tde_set_principal_key('name-of-the-principal-key','provider-name','ens
   If the provider already stores a key by that name, the function returns an error.
 * If set to `false`, an existing principal key may be reused.
 
-### pg_tde_set_global_principal_key
+### pg_tde_set_principal_key_using_global_key_provider
 
 Creates or rotates the global principal key using the specified global key provider and the key name. This key is used for global settings like WAL encryption.
 
 ```
-SELECT pg_tde_set_global_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+SELECT pg_tde_set_principal_key_using_global_key_provider('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
  The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
@@ -229,12 +229,12 @@ SELECT pg_tde_set_global_principal_key('name-of-the-principal-key','provider-nam
   If the provider already stores a key by that name, the function returns an error.
 * If set to `false`, an existing principal key may be reused.
 
-### pg_tde_set_server_principal_key
+### pg_tde_set_server_principal_key_using_global_key_provider
 
-Creates or rotates the global principal key using the specified key provider. Use this function to set a principal key for WAL encryption.
+Creates or rotates the server principal key using the specified global key provider. Use this function to set a principal key for WAL encryption.
 
 ```
-SELECT pg_tde_set_server_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+SELECT pg_tde_set_server_principal_key_using_global_key_provider('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
 The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
@@ -244,14 +244,14 @@ The `ensure_new_key` parameter instructs the function how to handle a principal 
 * If set to `false`, an existing principal key may be reused.
 
 
-### pg_tde_set_default_principal_key
+### pg_tde_set_default_principal_key_using_global_key_provider
 
-Creates or rotates the default principal key for the server using the specified key provider.
+Creates or rotates the default principal key for the server using the specified global key provider.
 
 The default key is automatically used as a principal key  by any database that doesn't have an individual key provider and key configuration.
 
 ```
-SELECT pg_tde_set_default_principal_key('name-of-the-principal-key','provider-name','ensure_new_key');
+SELECT pg_tde_set_default_principal_key_using_global_key_provider('name-of-the-principal-key','provider-name','ensure_new_key');
 ```
 
 The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
@@ -290,12 +290,12 @@ Displays information about the principal key for the current database, if it exi
 SELECT pg_tde_principal_key_info()
 ```
 
-### pg_tde_global_principal_key_info
+### pg_tde_server_principal_key_info
 
-Displays information about the principal key for the global scope, if exists.
+Displays information about the principal key for the server scope, if exists.
 
 ```
-SELECT pg_tde_global_principal_key_info()
+SELECT pg_tde_server_principal_key_info()
 ```
 
 ### pg_tde_verify_principal_key
@@ -314,9 +314,9 @@ If any of the above checks fail, the function reports an error.
 SELECT pg_tde_verify_principal_key()
 ```
 
-### pg_tde_verify_global_principal_key
+### pg_tde_verify_server_principal_key
 
-This function checks that the global scope has a properly functional encryption setup, which means:
+This function checks that the server scope has a properly functional encryption setup, which means:
 
 * A key provider is configured
 * The key provider is accessible using the specified configuration
@@ -327,5 +327,5 @@ This function checks that the global scope has a properly functional encryption 
 If any of the above checks fail, the function reports an error.
 
 ```
-SELECT pg_tde_verify_principal_key()
+SELECT pg_tde_verify_server_principal_key()
 ```

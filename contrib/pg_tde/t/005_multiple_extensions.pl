@@ -86,8 +86,8 @@ PGTDE::append_to_debug_file($stdout);
 ok($cmdret == 0, "CREATE postgis_tiger_geocoder EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 
-$rt_value = $node->psql('postgres', "SELECT pg_tde_add_key_provider_file('file-provider', json_object( 'type' VALUE 'file', 'path' VALUE '/tmp/datafile-location' ));", extra_params => ['-a']);
-$rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-provider');", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_add_database_key_provider_file('file-provider', json_object( 'type' VALUE 'file', 'path' VALUE '/tmp/datafile-location' ));", extra_params => ['-a']);
+$rt_value = $node->psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-provider');", extra_params => ['-a']);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

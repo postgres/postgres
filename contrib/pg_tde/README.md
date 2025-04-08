@@ -112,16 +112,16 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
 
         ```sql
         -- For Vault-V2 key provider
-        -- pg_tde_add_key_provider_vault_v2(provider_name, vault_token, vault_url, vault_mount_path, vault_ca_path)
-        SELECT pg_tde_add_key_provider_vault_v2(
+        -- pg_tde_add_database_key_provider_vault_v2(provider_name, vault_token, vault_url, vault_mount_path, vault_ca_path)
+        SELECT pg_tde_add_database_key_provider_vault_v2(
             'vault-provider',
             json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/token' ),
             json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/url' ),
             to_json('secret'::text), NULL);
 
         -- For File key provider
-        -- pg_tde_add_key_provider_file(provider_name, file_path);
-        SELECT pg_tde_add_key_provider_file('file','/tmp/pgkeyring');
+        -- pg_tde_add_database_key_provider_file(provider_name, file_path);
+        SELECT pg_tde_add_database_key_provider_file('file','/tmp/pgkeyring');
         ```
 
         **Note: The `File` provided is intended for development and stores the keys unencrypted in the specified data file.**
@@ -129,8 +129,8 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
    5. Set the principal key for the database using the `pg_tde_set_principal_key` function.
 
         ```sql
-        -- pg_tde_set_principal_key(principal_key_name, provider_name);
-        SELECT pg_tde_set_principal_key('my-principal-key','file');
+        -- pg_tde_set_principal_key_using_database_key_provider(principal_key_name, provider_name);
+        SELECT pg_tde_set_principal_key_using_database_key_provider('my-principal-key','file');
         ```
    
    6. Specify `tde_heap` access method during table creation

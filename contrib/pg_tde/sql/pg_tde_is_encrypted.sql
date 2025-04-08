@@ -2,8 +2,8 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 
 SELECT * FROM pg_tde_principal_key_info();
 
-SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');
+SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-vault');
 
 CREATE TABLE test_enc(
 	  id SERIAL,

@@ -42,19 +42,19 @@ $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_database_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2g.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-3','/tmp/pg_tde_test_keyring_3.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_list_all_key_providers();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_list_all_database_key_providers();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key('test-db-principal-key','file-vault');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-vault');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
@@ -67,7 +67,7 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 #rotate key
-$stdout = $node->psql('postgres', "SELECT pg_tde_set_principal_key('rotated-principal-key1');", extra_params => ['-a']);
+$stdout = $node->psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('rotated-principal-key1');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -79,7 +79,7 @@ $rt_value = $node->start();
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
@@ -87,7 +87,7 @@ PGTDE::append_to_file($stdout);
 
 
 #Again rotate key
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('rotated-principal-key2','file-2');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -99,14 +99,14 @@ $rt_value = $node->start();
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 #Again rotate key
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_global_principal_key('rotated-principal-key', 'file-3', false);", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_global_key_provider('rotated-principal-key', 'file-3', false);", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -118,7 +118,7 @@ $rt_value = $node->start();
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
@@ -128,7 +128,7 @@ PGTDE::append_to_file($stdout);
 # And maybe debug tools to show what's in a file keyring?
 
 #Again rotate key
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_global_principal_key('rotated-principal-keyX', 'file-2', false);", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_global_key_provider('rotated-principal-keyX', 'file-2', false);", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -140,7 +140,7 @@ $rt_value = $node->start();
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
@@ -156,19 +156,19 @@ $rt_value = $node->stop();
 $rt_value = $node->start();
 
 # But now can't be changed to another global provider
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_set_global_principal_key('rotated-principal-keyX2', 'file-2', false);", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_set_principal_key_using_global_key_provider('rotated-principal-keyX2', 'file-2', false);", extra_params => ['-a']);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key('rotated-principal-key2','file-2');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('rotated-principal-key2','file-2');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_global_principal_key_info();", extra_params => ['-a']);
+($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT key_provider_id, key_provider_name, principal_key_name FROM pg_tde_server_principal_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 

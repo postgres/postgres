@@ -86,8 +86,8 @@ static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	[JK_FIELD_PATH] = "path",
 
 	/*
-	 * These values should match pg_tde_add_key_provider_vault_v2 and
-	 * pg_tde_add_key_provider_file SQL interfaces
+	 * These values should match pg_tde_add_database_key_provider_vault_v2 and
+	 * pg_tde_add_database_key_provider_file SQL interfaces
 	 */
 	[JF_FILE_PATH] = "path",
 	[JK_VAULT_TOKEN] = "token",

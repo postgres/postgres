@@ -1,13 +1,13 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 \getenv root_token ROOT_TOKEN
-SELECT pg_tde_add_key_provider_vault_v2('vault-incorrect',:'root_token','http://127.0.0.1:8200','DUMMY-TOKEN',NULL);
- pg_tde_add_key_provider_vault_v2 
-----------------------------------
-                                1
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect',:'root_token','http://127.0.0.1:8200','DUMMY-TOKEN',NULL);
+ pg_tde_add_database_key_provider_vault_v2 
+-------------------------------------------
+                                         1
 (1 row)
 
 -- FAILS
-SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-incorrect');
+SELECT pg_tde_set_principal_key_using_database_key_provider('vault-v2-principal-key','vault-incorrect');
 ERROR:  Invalid HTTP response from keyring provider "vault-incorrect": 404
 CREATE TABLE test_enc(
 	  id SERIAL,
@@ -16,15 +16,15 @@ CREATE TABLE test_enc(
 	) USING tde_heap;
 ERROR:  principal key not configured
 HINT:  create one using pg_tde_set_principal_key before using encrypted tables
-SELECT pg_tde_add_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
- pg_tde_add_key_provider_vault_v2 
-----------------------------------
-                                2
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
+ pg_tde_add_database_key_provider_vault_v2 
+-------------------------------------------
+                                         2
 (1 row)
 
-SELECT pg_tde_set_principal_key('vault-v2-principal-key','vault-v2');
- pg_tde_set_principal_key 
---------------------------
+SELECT pg_tde_set_principal_key_using_database_key_provider('vault-v2-principal-key','vault-v2');
+ pg_tde_set_principal_key_using_database_key_provider 
+------------------------------------------------------
  
 (1 row)
 

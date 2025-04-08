@@ -1,13 +1,13 @@
 CREATE EXTENSION pg_tde;
-SELECT pg_tde_add_key_provider_kmip('kmip-prov','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
- pg_tde_add_key_provider_kmip 
-------------------------------
-                            1
+SELECT pg_tde_add_database_key_provider_kmip('kmip-prov','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
+ pg_tde_add_database_key_provider_kmip 
+---------------------------------------
+                                     1
 (1 row)
 
-SELECT pg_tde_set_principal_key('kmip-principal-key','kmip-prov');
- pg_tde_set_principal_key 
---------------------------
+SELECT pg_tde_set_principal_key_using_database_key_provider('kmip-principal-key','kmip-prov');
+ pg_tde_set_principal_key_using_database_key_provider 
+------------------------------------------------------
  
 (1 row)
 
