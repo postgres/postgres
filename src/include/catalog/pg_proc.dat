@@ -8578,7 +8578,7 @@
   prorettype => 'record', proargtypes => 'int4 bool float8',
   proallargtypes => '{int4,bool,float8,text,text,text,_int4,int4,int8,int8,int8,int8,int8,int4,timestamptz}',
   proargmodes => '{i,i,i,o,o,o,o,o,o,o,o,o,o,o,o}',
-  proargnames => '{pid, summary, retries, name, ident, type, path, level, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes, num_agg_contexts, stats_timestamp}',
+  proargnames => '{pid, summary, timeout, name, ident, type, path, level, total_bytes, total_nblocks, free_bytes, free_chunks, used_bytes, num_agg_contexts, stats_timestamp}',
   prosrc => 'pg_get_process_memory_contexts' },
 
 # non-persistent series generator
