@@ -232,3 +232,22 @@ select * from pg_timezone_abbrevs where abbrev = 'LMT';
  LMT    | @ 7 hours 52 mins 58 secs ago | f
 (1 row)
 
+DO $$
+DECLARE
+    bg_writer_pid int;
+    r RECORD;
+BEGIN
+        SELECT pid from pg_stat_activity where backend_type='background writer'
+	 INTO bg_writer_pid;
+
+        select type, name, ident
+        from pg_get_process_memory_contexts(bg_writer_pid, false, 20)
+	 where path = '{1}' into r;
+	RAISE NOTICE '%', r;
+        select type, name, ident
+        from pg_get_process_memory_contexts(pg_backend_pid(), false, 20)
+	 where path = '{1}' into r;
+	RAISE NOTICE '%', r;
+END $$;
+NOTICE:  (AllocSet,TopMemoryContext,)
+NOTICE:  (AllocSet,TopMemoryContext,)

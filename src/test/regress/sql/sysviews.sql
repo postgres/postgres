@@ -101,3 +101,21 @@ select count(distinct utc_offset) >= 24 as ok from pg_timezone_abbrevs;
 -- One specific case we can check without much fear of breakage
 -- is the historical local-mean-time value used for America/Los_Angeles.
 select * from pg_timezone_abbrevs where abbrev = 'LMT';
+
+DO $$
+DECLARE
+    bg_writer_pid int;
+    r RECORD;
+BEGIN
+        SELECT pid from pg_stat_activity where backend_type='background writer'
+	 INTO bg_writer_pid;
+
+        select type, name, ident
+        from pg_get_process_memory_contexts(bg_writer_pid, false, 20)
+	 where path = '{1}' into r;
+	RAISE NOTICE '%', r;
+        select type, name, ident
+        from pg_get_process_memory_contexts(pg_backend_pid(), false, 20)
+	 where path = '{1}' into r;
+	RAISE NOTICE '%', r;
+END $$;
