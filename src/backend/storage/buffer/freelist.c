@@ -555,8 +555,50 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 			return NULL;
 
 		case BAS_BULKREAD:
-			ring_size_kb = 256;
-			break;
+			{
+				int			ring_max_kb;
+
+				/*
+				 * The ring always needs to be large enough to allow some
+				 * separation in time between providing a buffer to the user
+				 * of the strategy and that buffer being reused. Otherwise the
+				 * user's pin will prevent reuse of the buffer, even without
+				 * concurrent activity.
+				 *
+				 * We also need to ensure the ring always is large enough for
+				 * SYNC_SCAN_REPORT_INTERVAL, as noted above.
+				 *
+				 * Thus we start out a minimal size and increase the size
+				 * further if appropriate.
+				 */
+				ring_size_kb = 256;
+
+				/*
+				 * There's no point in a larger ring if we won't be allowed to
+				 * pin sufficiently many buffers.  But we never limit to less
+				 * than the minimal size above.
+				 */
+				ring_max_kb = GetPinLimit() * (BLCKSZ / 1024);
+				ring_max_kb = Max(ring_size_kb, ring_max_kb);
+
+				/*
+				 * We would like the ring to additionally have space for the
+				 * the configured degree of IO concurrency. While being read
+				 * in, buffers can obviously not yet be reused.
+				 *
+				 * Each IO can be up to io_combine_limit blocks large, and we
+				 * want to start up to effective_io_concurrency IOs.
+				 *
+				 * Note that effective_io_concurrency may be 0, which disables
+				 * AIO.
+				 */
+				ring_size_kb += (BLCKSZ / 1024) *
+					io_combine_limit * effective_io_concurrency;
+
+				if (ring_size_kb > ring_max_kb)
+					ring_size_kb = ring_max_kb;
+				break;
+			}
 		case BAS_BULKWRITE:
 			ring_size_kb = 16 * 1024;
 			break;
