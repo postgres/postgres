@@ -102,6 +102,11 @@ sub test_mode
 	$new->clean_node();
 }
 
+# Run pg_upgrade in tmp_check to avoid leaving files like
+# delete_old_cluster.{sh,bat} in the source directory for VPATH and meson
+# builds.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
 test_mode('--clone');
 test_mode('--copy');
 test_mode('--copy-file-range');
