@@ -322,7 +322,7 @@ task:
         build
     EOF
 
-  build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
+  build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}'
   upload_caches: ccache
 
   test_world_script: |
