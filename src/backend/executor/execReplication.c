@@ -432,6 +432,30 @@ retry:
 }
 
 /*
+ * Build additional index information necessary for conflict detection.
+ */
+static void
+BuildConflictIndexInfo(ResultRelInfo *resultRelInfo, Oid conflictindex)
+{
+	for (int i = 0; i < resultRelInfo->ri_NumIndices; i++)
+	{
+		Relation	indexRelation = resultRelInfo->ri_IndexRelationDescs[i];
+		IndexInfo  *indexRelationInfo = resultRelInfo->ri_IndexRelationInfo[i];
+
+		if (conflictindex != RelationGetRelid(indexRelation))
+			continue;
+
+		/*
+		 * This Assert will fail if BuildSpeculativeIndexInfo() is called
+		 * twice for the given index.
+		 */
+		Assert(indexRelationInfo->ii_UniqueOps == NULL);
+
+		BuildSpeculativeIndexInfo(indexRelation, indexRelationInfo);
+	}
+}
+
+/*
  * Find the tuple that violates the passed unique index (conflictindex).
  *
  * If the conflicting tuple is found return true, otherwise false.
@@ -451,6 +475,12 @@ FindConflictTuple(ResultRelInfo *resultRelInfo, EState *estate,
 	TM_Result	res;
 
 	*conflictslot = NULL;
+
+	/*
+	 * Build additional information required to check constraints violations.
+	 * See check_exclusion_or_unique_constraint().
+	 */
+	BuildConflictIndexInfo(resultRelInfo, conflictindex);
 
 retry:
 	if (ExecCheckIndexConstraints(resultRelInfo, slot, estate,

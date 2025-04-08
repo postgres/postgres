@@ -25,14 +25,23 @@ $node_subscriber->start;
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE conf_tab (a int PRIMARY KEY, b int UNIQUE, c int UNIQUE);");
 
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE conf_tab_2 (a int PRIMARY KEY, b int UNIQUE, c int UNIQUE);");
+
 # Create same table on subscriber
 $node_subscriber->safe_psql('postgres',
 	"CREATE TABLE conf_tab (a int PRIMARY key, b int UNIQUE, c int UNIQUE);");
 
+$node_subscriber->safe_psql(
+	'postgres', qq[
+	 CREATE TABLE conf_tab_2 (a int PRIMARY KEY, b int, c int, unique(a,b)) PARTITION BY RANGE (a);
+	 CREATE TABLE conf_tab_2_p1 PARTITION OF conf_tab_2 FOR VALUES FROM (MINVALUE) TO (100);
+]);
+
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION pub_tab FOR TABLE conf_tab");
+	"CREATE PUBLICATION pub_tab FOR TABLE conf_tab, conf_tab_2");
 
 # Create the subscription
 my $appname = 'sub_tab';
@@ -109,5 +118,31 @@ $node_subscriber->wait_for_log(
 	$log_offset);
 
 pass('multiple_unique_conflicts detected during update');
+
+# Truncate table to get rid of the error
+$node_subscriber->safe_psql('postgres', "TRUNCATE conf_tab;");
+
+
+##################################################
+# Test multiple_unique_conflicts due to INSERT on a leaf partition
+##################################################
+
+# Insert data in the subscriber table
+$node_subscriber->safe_psql('postgres',
+	"INSERT INTO conf_tab_2 VALUES (55,2,3);");
+
+# Insert data in the publisher table
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO conf_tab_2 VALUES (55,2,3);");
+
+$node_subscriber->wait_for_log(
+	qr/conflict detected on relation \"public.conf_tab_2_p1\": conflict=multiple_unique_conflicts.*
+.*Key already exists in unique index \"conf_tab_2_p1_pkey\".*
+.*Key \(a\)=\(55\); existing local tuple \(55, 2, 3\); remote tuple \(55, 2, 3\).*
+.*Key already exists in unique index \"conf_tab_2_p1_a_b_key\".*
+.*Key \(a, b\)=\(55, 2\); existing local tuple \(55, 2, 3\); remote tuple \(55, 2, 3\)./,
+	$log_offset);
+
+pass('multiple_unique_conflicts detected on a leaf partition during insert');
 
 done_testing();

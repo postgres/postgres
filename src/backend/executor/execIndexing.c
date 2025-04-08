@@ -214,9 +214,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 		ii = BuildIndexInfo(indexDesc);
 
 		/*
-		 * If the indexes are to be used for speculative insertion or conflict
-		 * detection in logical replication, add extra information required by
-		 * unique index entries.
+		 * If the indexes are to be used for speculative insertion, add extra
+		 * information required by unique index entries.
 		 */
 		if (speculative && ii->ii_Unique && !indexDesc->rd_index->indisexclusion)
 			BuildSpeculativeIndexInfo(indexDesc, ii);
