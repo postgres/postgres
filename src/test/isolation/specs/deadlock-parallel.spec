@@ -2,8 +2,9 @@
 
 # It's fairly hard to get parallel worker processes to block on locks,
 # since generally they don't want any locks their leader didn't already
-# take.  We cheat like mad here by making a function that takes a lock,
-# and is incorrectly marked parallel-safe so that it can execute in a worker.
+# take.  We cheat like mad here by creating aliases for advisory-lock
+# functions that are incorrectly marked parallel-safe so that they can
+# execute in a worker.
 
 # Note that we explicitly override any global settings of isolation level
 # or debug_parallel_query, to ensure we're testing what we intend to.
@@ -36,11 +37,21 @@
 
 setup
 {
+-- The alias functions themselves.  Really these return "void", but
+-- the implementation is such that we can declare them to return "int",
+-- and we will get a zero result.
+  create function lock_share(bigint) returns int language internal as
+  'pg_advisory_xact_lock_shared_int8' strict parallel safe;
+
+  create function lock_excl(bigint) returns int language internal as
+  'pg_advisory_xact_lock_int8' strict parallel safe;
+
+-- Inline-able wrappers that will produce an integer "1" result:
   create function lock_share(int,int) returns int language sql as
-  'select pg_advisory_xact_lock_shared($1); select 1;' parallel safe;
+  'select 1 - lock_share($1)' parallel safe;
 
   create function lock_excl(int,int) returns int language sql as
-  'select pg_advisory_xact_lock($1); select 1;' parallel safe;
+  'select 1 - lock_excl($1)' parallel safe;
 
   create table bigt as select x from generate_series(1, 10000) x;
   analyze bigt;
