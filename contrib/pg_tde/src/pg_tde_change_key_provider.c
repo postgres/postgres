@@ -116,7 +116,7 @@ main(int argc, char *argv[])
 	char	   *cptr = tdedir;
 	bool		provider_found = false;
 	GenericKeyring *keyring = NULL;
-	KeyringProvideRecord provider;
+	KeyringProviderRecord provider;
 
 	Oid			db_oid;
 

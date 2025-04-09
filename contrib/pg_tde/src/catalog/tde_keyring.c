@@ -59,11 +59,11 @@ static GenericKeyring *load_keyring_provider_options(ProviderType provider_type,
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
 static KmipKeyring *load_kmip_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
-static GenericKeyring *load_keyring_provider_from_record(KeyringProvideRecord *provider);
+static GenericKeyring *load_keyring_provider_from_record(KeyringProviderRecord *provider);
 static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
-static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider);
+static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider);
 
-static uint32 write_key_provider_info(KeyringProvideRecord *provider,
+static uint32 write_key_provider_info(KeyringProviderRecord *provider,
 									  Oid database_id, off_t position,
 									  bool error_if_exists, bool write_xlog);
 
@@ -225,7 +225,7 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	int			nlen,
 				olen;
-	KeyringProvideRecord provider;
+	KeyringProviderRecord provider;
 
 	/* reports error if not found */
 	GenericKeyring *keyring = GetKeyProviderByName(provider_name, dbOid);
@@ -275,7 +275,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
 	int			nlen,
 				olen;
-	KeyringProvideRecord provider;
+	KeyringProviderRecord provider;
 
 	nlen = strlen(provider_name);
 	if (nlen >= sizeof(provider.provider_name) - 1)
@@ -386,7 +386,7 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 #endif							/* !FRONTEND */
 
 static uint32
-write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
+write_key_provider_info(KeyringProviderRecord *provider, Oid database_id,
 						off_t position, bool error_if_exists, bool write_xlog)
 {
 	off_t		bytes_written = 0;
@@ -397,7 +397,7 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	/* Named max, but global key provider oids are stored as negative numbers! */
 	int			max_provider_id = 0;
 	char		kp_info_path[MAXPGPATH] = {0};
-	KeyringProvideRecord existing_provider;
+	KeyringProviderRecord existing_provider;
 	GenericKeyring *record;
 
 	Assert(provider != NULL);
@@ -521,8 +521,8 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
 	/*
 	 * All good, Just add a new provider
 	 */
-	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProvideRecord), curr_pos);
-	if (bytes_written != sizeof(KeyringProvideRecord))
+	bytes_written = pg_pwrite(fd, provider, sizeof(KeyringProviderRecord), curr_pos);
+	if (bytes_written != sizeof(KeyringProviderRecord))
 	{
 		close(fd);
 		ereport(ERROR,
@@ -548,13 +548,13 @@ write_key_provider_info(KeyringProvideRecord *provider, Oid database_id,
  * Save the key provider info to the file
  */
 uint32
-save_new_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
+save_new_key_provider_info(KeyringProviderRecord *provider, Oid databaseId, bool write_xlog)
 {
 	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
 }
 
 uint32
-modify_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool write_xlog)
+modify_key_provider_info(KeyringProviderRecord *provider, Oid databaseId, bool write_xlog)
 {
 	return write_key_provider_info(provider, databaseId, -1, false, write_xlog);
 }
@@ -562,9 +562,9 @@ modify_key_provider_info(KeyringProvideRecord *provider, Oid databaseId, bool wr
 uint32
 delete_key_provider_info(int provider_id, Oid databaseId, bool write_xlog)
 {
-	KeyringProvideRecord kpr;
+	KeyringProviderRecord kpr;
 
-	memset(&kpr, 0, sizeof(KeyringProvideRecord));
+	memset(&kpr, 0, sizeof(KeyringProviderRecord));
 	kpr.provider_id = provider_id;
 
 	return modify_key_provider_info(&kpr, databaseId, write_xlog);
@@ -616,7 +616,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 	off_t		curr_pos = 0;
 	int			fd;
 	char		kp_info_path[MAXPGPATH] = {0};
-	KeyringProvideRecord provider;
+	KeyringProviderRecord provider;
 #ifndef FRONTEND
 	List	   *providers_list = NIL;
 #else
@@ -692,7 +692,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 }
 
 static GenericKeyring *
-load_keyring_provider_from_record(KeyringProvideRecord *provider)
+load_keyring_provider_from_record(KeyringProviderRecord *provider)
 {
 	GenericKeyring *keyring = NULL;
 
@@ -854,26 +854,26 @@ get_keyring_infofile_path(char *resPath, Oid dbOid)
  * Fetch the next key provider from the file and update the curr_pos
 */
 static bool
-fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProvideRecord *provider)
+fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider)
 {
 	off_t		bytes_read = 0;
 
 	Assert(provider != NULL);
 	Assert(fd >= 0);
 
-	bytes_read = pg_pread(fd, provider, sizeof(KeyringProvideRecord), *curr_pos);
+	bytes_read = pg_pread(fd, provider, sizeof(KeyringProviderRecord), *curr_pos);
 	*curr_pos += bytes_read;
 
 	if (bytes_read == 0)
 		return false;
-	if (bytes_read != sizeof(KeyringProvideRecord))
+	if (bytes_read != sizeof(KeyringProviderRecord))
 	{
 		close(fd);
 		/* Corrupt file */
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("key provider info file is corrupted: %m"),
-				 errdetail("invalid key provider record size %ld expected %lu", bytes_read, sizeof(KeyringProvideRecord))));
+				 errdetail("invalid key provider record size %ld expected %lu", bytes_read, sizeof(KeyringProviderRecord))));
 	}
 	return true;
 }
