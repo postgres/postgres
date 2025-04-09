@@ -143,7 +143,6 @@ For example:
     {1 2},{2 3},{3 4}
     {1 2 3},{2 3 4}
     {1 2 3 4}
-    (other possibilities will be excluded for lack of join clauses)
 
     SELECT  *
     FROM    tab1, tab2, tab3, tab4
@@ -155,6 +154,11 @@ For example:
     {1 2},{1 3},{1 4}
     {1 2 3},{1 3 4},{1 2 4}
     {1 2 3 4}
+
+In each of these examples, other join-order possibilities will be excluded
+for lack of join clauses.  (In reality, use of EquivalenceClasses would
+allow us to deduce additional join clauses that allow more join orders,
+but here we ignore that to preserve the simplicity of the examples.)
 
 We consider left-handed plans (the outer rel of an upper join is a joinrel,
 but the inner is always a single list item); right-handed plans (outer rel
