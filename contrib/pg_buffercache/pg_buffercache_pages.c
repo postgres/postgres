@@ -343,7 +343,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 * This information is needed before calling move_pages() for NUMA
 		 * node id inquiry.
 		 */
-		os_page_size = pg_numa_get_pagesize();
+		os_page_size = pg_get_shmem_pagesize();
 
 		/*
 		 * The pages and block size is expected to be 2^k, so one divides the

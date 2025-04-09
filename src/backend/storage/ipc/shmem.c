@@ -93,6 +93,8 @@ static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 /* To get reliable results for NUMA inquiry we need to "touch pages" once */
 static bool firstNumaTouch = true;
 
+Datum		pg_numa_available(PG_FUNCTION_ARGS);
+
 /*
  *	InitShmemAccess() --- set up basic pointers to shared memory.
  */
@@ -615,7 +617,7 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	 * This information is needed before calling move_pages() for NUMA memory
 	 * node inquiry.
 	 */
-	os_page_size = pg_numa_get_pagesize();
+	os_page_size = pg_get_shmem_pagesize();
 
 	/*
 	 * Allocate memory for page pointers and status based on total shared
@@ -726,4 +728,40 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	firstNumaTouch = false;
 
 	return (Datum) 0;
+}
+
+/*
+ * Determine the memory page size used for the shared memory segment.
+ *
+ * If the shared segment was allocated using huge pages, returns the size of
+ * a huge page. Otherwise returns the size of regular memory page.
+ *
+ * This should be used only after the server is started.
+ */
+Size
+pg_get_shmem_pagesize(void)
+{
+	Size		os_page_size;
+#ifdef WIN32
+	SYSTEM_INFO sysinfo;
+
+	GetSystemInfo(&sysinfo);
+	os_page_size = sysinfo.dwPageSize;
+#else
+	os_page_size = sysconf(_SC_PAGESIZE);
+#endif
+
+	Assert(IsUnderPostmaster);
+	Assert(huge_pages_status != HUGE_PAGES_UNKNOWN);
+
+	if (huge_pages_status == HUGE_PAGES_ON)
+		GetHugePageSize(&os_page_size, NULL);
+
+	return os_page_size;
+}
+
+Datum
+pg_numa_available(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_BOOL(pg_numa_init() != -1);
 }

@@ -13,17 +13,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include "c.h"
 #include <unistd.h>
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include "fmgr.h"
-#include "miscadmin.h"
 #include "port/pg_numa.h"
-#include "storage/pg_shmem.h"
 
 /*
  * At this point we provide support only for Linux thanks to libnuma, but in
@@ -35,8 +28,6 @@
 
 #include <numa.h>
 #include <numaif.h>
-
-Datum		pg_numa_available(PG_FUNCTION_ARGS);
 
 /* libnuma requires initialization as per numa(3) on Linux */
 int
@@ -66,8 +57,6 @@ pg_numa_get_max_node(void)
 
 #else
 
-Datum		pg_numa_available(PG_FUNCTION_ARGS);
-
 /* Empty wrappers */
 int
 pg_numa_init(void)
@@ -89,32 +78,3 @@ pg_numa_get_max_node(void)
 }
 
 #endif
-
-Datum
-pg_numa_available(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_BOOL(pg_numa_init() != -1);
-}
-
-/* This should be used only after the server is started */
-Size
-pg_numa_get_pagesize(void)
-{
-	Size		os_page_size;
-#ifdef WIN32
-	SYSTEM_INFO sysinfo;
-
-	GetSystemInfo(&sysinfo);
-	os_page_size = sysinfo.dwPageSize;
-#else
-	os_page_size = sysconf(_SC_PAGESIZE);
-#endif
-
-	Assert(IsUnderPostmaster);
-	Assert(huge_pages_status != HUGE_PAGES_UNKNOWN);
-
-	if (huge_pages_status == HUGE_PAGES_ON)
-		GetHugePageSize(&os_page_size, NULL);
-
-	return os_page_size;
-}

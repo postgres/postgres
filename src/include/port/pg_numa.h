@@ -14,12 +14,9 @@
 #ifndef PG_NUMA_H
 #define PG_NUMA_H
 
-#include "fmgr.h"
-
 extern PGDLLIMPORT int pg_numa_init(void);
 extern PGDLLIMPORT int pg_numa_query_pages(int pid, unsigned long count, void **pages, int *status);
 extern PGDLLIMPORT int pg_numa_get_max_node(void);
-extern PGDLLIMPORT Size pg_numa_get_pagesize(void);
 
 #ifdef USE_LIBNUMA
 
