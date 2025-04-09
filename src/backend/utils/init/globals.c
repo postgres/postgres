@@ -51,7 +51,7 @@ TimestampTz MyStartTimestamp;
 struct ClientSocket *MyClientSocket;
 struct Port *MyProcPort;
 char		MyCancelKey[MAX_CANCEL_KEY_LENGTH];
-uint8		MyCancelKeyLength = 0;
+int			MyCancelKeyLength = 0;
 int			MyPMChildSlot;
 
 /*
