@@ -528,8 +528,17 @@ task:
             build-32
         EOF
 
-      build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}'
-      build_32_script: su postgres -c 'ninja -C build-32 -j${BUILD_JOBS} ${MBUILD_TARGET}'
+      build_script: |
+        su postgres <<-EOF
+          ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
+          ninja -C build -t missingdeps
+        EOF
+
+      build_32_script: |
+        su postgres <<-EOF
+          ninja -C build-32 -j${BUILD_JOBS} ${MBUILD_TARGET}
+          ninja -C build -t missingdeps
+        EOF
 
       upload_caches: ccache
 
@@ -729,6 +738,7 @@ task:
   build_script: |
     vcvarsall x64
     ninja -C build %MBUILD_TARGET%
+    ninja -C build -t missingdeps
 
   check_world_script: |
     vcvarsall x64
