@@ -53,10 +53,12 @@ setup
 		barrier := pg_current_xact_id();
 		-- autovacuum worker RelationCacheInitializePhase3() or the
 		-- isolationtester control connection might hold a snapshot that
-		-- limits pruning.  Sleep until that clears.
+		-- limits pruning.  Sleep until that clears.  See comments at
+		-- removable_cutoff() for why we pass a shared catalog rather than
+		-- pg_class, the table we'll prune.
 		LOOP
 			ROLLBACK;  -- release MyProc->xmin, which could be the oldest
-			cutoff := removable_cutoff('pg_class');
+			cutoff := removable_cutoff('pg_database');
 			EXIT WHEN cutoff >= barrier;
 			RAISE LOG 'removable cutoff %; waiting for %', cutoff, barrier;
 			PERFORM pg_sleep(.1);
@@ -64,9 +66,24 @@ setup
 	END
 	$$;
 }
-setup	{ CALL vactest.wait_prunable();  -- maximize next two VACUUMs }
+# Eliminate HEAPTUPLE_DEAD and HEAPTUPLE_RECENTLY_DEAD from pg_class.
+# Minimize free space.
+#
+# If we kept HEAPTUPLE_RECENTLY_DEAD, step vac4 could prune what we missed,
+# breaking some permutation assumptions.  Specifically, the next pg_class
+# tuple could end up in free space we failed to liberate here, instead of
+# going in the specific free space vac4 intended to liberate for it.
+setup	{ CALL vactest.wait_prunable();  -- maximize VACUUM FULL }
 setup	{ VACUUM FULL pg_class;  -- reduce free space }
-setup	{ VACUUM FREEZE pg_class;  -- populate fsm etc. }
+# Remove the one tuple that VACUUM FULL makes dead, a tuple pertaining to
+# pg_class itself.  Populate the FSM for pg_class.
+#
+# wait_prunable waits for snapshots that would thwart pruning, while FREEZE
+# waits for buffer pins that would thwart pruning.  DISABLE_PAGE_SKIPPING
+# isn't actually needed, but other pruning-dependent tests use it.  If those
+# tests remove it, remove it here.
+setup	{ CALL vactest.wait_prunable();  -- maximize lazy VACUUM }
+setup	{ VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) pg_class;  -- fill fsm etc. }
 setup
 {
 	SELECT FROM vactest.mkrels('orig', 1, 49);
@@ -115,7 +132,8 @@ step r3		{ ROLLBACK; }
 # Non-blocking actions.
 session s4
 step waitprunable4	{ CALL vactest.wait_prunable(); }
-step vac4		{ VACUUM pg_class; }
+# Eliminate HEAPTUPLE_DEAD.  See above discussion of FREEZE.
+step vac4		{ VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) pg_class; }
 # Reuse the lp that s1 is waiting to change.  I've observed reuse at the 1st
 # or 18th CREATE, so create excess.
 step mkrels4	{
