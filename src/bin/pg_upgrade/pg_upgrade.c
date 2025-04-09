@@ -32,6 +32,9 @@
  *	We control all assignments of pg_authid.oid for historical reasons (the
  *	oids used to be stored in pg_largeobject_metadata, which is now copied via
  *	SQL commands), that might change at some point in the future.
+ *
+ *	We control all assignments of pg_database.oid because we want the directory
+ *	names to match between the old and new cluster.
  */
 
 
