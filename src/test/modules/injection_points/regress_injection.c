@@ -17,7 +17,9 @@
 #include "access/table.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "postmaster/autovacuum.h"
 #include "storage/procarray.h"
+#include "utils/rel.h"
 #include "utils/xid8.h"
 
 /*
@@ -28,11 +30,12 @@
  * that.  For the causes of backward movement, see
  * postgr.es/m/CAEze2Wj%2BV0kTx86xB_YbyaqTr5hnE_igdWAwuhSyjXBYscf5-Q%40mail.gmail.com
  * and the header comment for ComputeXidHorizons().  One can assume this
- * doesn't move backward if one arranges for concurrent activity not to reach
- * AbortTransaction() and not to allocate an XID while connected to another
- * database.  Non-runningcheck tests can control most concurrent activity,
- * except autovacuum and the isolationtester control connection.  Neither
- * allocates XIDs, and AbortTransaction() in those would justify test failure.
+ * doesn't move backward if one (a) passes a shared catalog as the argument
+ * and (b) arranges for concurrent activity not to reach AbortTransaction().
+ * Non-runningcheck tests can control most concurrent activity, except
+ * autovacuum and the isolationtester control connection.  AbortTransaction()
+ * in those would justify test failure.  Seeing autoanalyze can allocate an
+ * XID in any database, (a) ensures we'll consistently not ignore those XIDs.
  */
 PG_FUNCTION_INFO_V1(removable_cutoff);
 Datum
@@ -46,6 +49,10 @@ removable_cutoff(PG_FUNCTION_ARGS)
 	/* could take other relkinds callee takes, but we've not yet needed it */
 	if (!PG_ARGISNULL(0))
 		rel = table_open(PG_GETARG_OID(0), AccessShareLock);
+
+	if (!rel->rd_rel->relisshared && autovacuum_start_daemon)
+		elog(WARNING,
+			 "removable_cutoff(non-shared-rel) can move backward under autovacuum=on");
 
 	/*
 	 * No lock or snapshot necessarily prevents oldestXid from advancing past
