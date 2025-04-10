@@ -33,13 +33,13 @@ extern GenericKeyring *GetKeyProviderByName(const char *provider_name, Oid dbOid
 extern GenericKeyring *GetKeyProviderByID(int provider_id, Oid dbOid);
 extern ProviderType get_keyring_provider_from_typename(char *provider_type);
 extern void InitializeKeyProviderInfo(void);
-extern uint32 save_new_key_provider_info(KeyringProviderRecord *provider,
-										 Oid databaseId, bool write_xlog);
-extern uint32 modify_key_provider_info(KeyringProviderRecord *provider,
+extern void save_new_key_provider_info(KeyringProviderRecord *provider,
 									   Oid databaseId, bool write_xlog);
-extern uint32 delete_key_provider_info(int provider_id,
-									   Oid databaseId, bool write_xlog);
-extern uint32 redo_key_provider_info(KeyringProviderXLRecord *xlrec);
+extern void modify_key_provider_info(KeyringProviderRecord *provider,
+									 Oid databaseId, bool write_xlog);
+extern void delete_key_provider_info(int provider_id,
+									 Oid databaseId, bool write_xlog);
+extern void redo_key_provider_info(KeyringProviderXLRecord *xlrec);
 
 extern bool ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts,
 									char *in_buf, int buf_len);
