@@ -902,7 +902,7 @@ contain the equivalent child-relation variables or expressions.  These
 members are *not* full-fledged members of the EquivalenceClass and do not
 affect the class's overall properties at all.  They are kept only to
 simplify matching of child-relation expressions to EquivalenceClasses.
-Most operations on EquivalenceClasses should ignore child members.
+Most operations on EquivalenceClasses needn't look at child members.
 
 
 PathKeys
