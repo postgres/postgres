@@ -94,8 +94,11 @@ PostgreSQL documentation
       <para>
        Create one subscription per database on the target server. Exceptions
        are template databases and databases that don't allow connections.
-       If the database name is not specified in publisher-server, the postgres
-       database will be used, or if that does not exist, template1 will be used.
+       To discover the list of all databases, connect to the source server
+       using the database name specified in the <option>--publisher-server</option>
+       connection string, or if not specified, the <literal>postgres</literal>
+       database will be used, or if that does not exist, <literal>template1</literal>
+       will be used.
        Automatically generated names for subscriptions, publications, and
        replication slots are used when this option is specified.
        This option cannot be used along with <option>--database</option>,

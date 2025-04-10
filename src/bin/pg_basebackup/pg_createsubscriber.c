@@ -1963,8 +1963,8 @@ enable_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 }
 
 /*
- * Fetch a list of all not-template databases from the source server and form
- * a list such that they appear as if the user has specified multiple
+ * Fetch a list of all connectable non-template databases from the source server
+ * and form a list such that they appear as if the user has specified multiple
  * --database options, one for each source database.
  */
 static void
