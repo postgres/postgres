@@ -1,7 +1,7 @@
 CREATE EXTENSION pg_tde;
 
 SELECT pg_tde_add_database_key_provider_kmip('kmip-prov','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_key_jane_doe.pem');
-SELECT pg_tde_set_principal_key_using_database_key_provider('kmip-principal-key','kmip-prov');
+SELECT pg_tde_set_key_using_database_key_provider('kmip-key','kmip-prov');
 
 CREATE TABLE test_enc(
 	  id SERIAL,

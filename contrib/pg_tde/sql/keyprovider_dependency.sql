@@ -6,6 +6,6 @@ SELECT pg_tde_add_database_key_provider_vault_v2('V2-vault','vault-token','perco
 
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','mk-file');
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','mk-file');
 
 DROP EXTENSION pg_tde;

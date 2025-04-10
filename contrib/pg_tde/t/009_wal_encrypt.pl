@@ -33,7 +33,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_keyring010.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_server_principal_key_using_global_key_provider('server-principal-key', 'file-keyring-010');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-010');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;', extra_params => ['-a']);

@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 
-SELECT  * FROM pg_tde_principal_key_info();
+SELECT  * FROM pg_tde_key_info();
 
 SELECT pg_tde_add_database_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 SELECT * FROM pg_tde_list_all_database_key_providers();
@@ -11,17 +11,17 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-provider');
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_change_database_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
 SELECT pg_tde_change_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_other.per');
 SELECT * FROM pg_tde_list_all_database_key_providers();
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_change_database_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 SELECT * FROM pg_tde_list_all_database_key_providers();
@@ -44,7 +44,7 @@ SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
 
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 
-SELECT pg_tde_set_principal_key_using_global_key_provider('test-db-principal-key', 'file-keyring', false);
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'file-keyring', false);
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-keyring');

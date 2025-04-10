@@ -25,9 +25,9 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
   3 | V2-vault      | vault-v2      | {"type" : "vault-v2", "url" : "percona.com/vault-v2/percona", "token" : "vault-token", "mountPath" : "/mount/dev", "caPath" : "ca-cert-auth"}
 (3 rows)
 
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','mk-file');
- pg_tde_set_principal_key_using_database_key_provider 
-------------------------------------------------------
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','mk-file');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
  
 (1 row)
 

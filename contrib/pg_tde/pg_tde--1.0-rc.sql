@@ -420,22 +420,22 @@ STRICT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_principal_key_using_database_key_provider(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_key_using_database_key_provider(key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_principal_key_using_global_key_provider(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_key_using_global_key_provider(key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_server_principal_key_using_global_key_provider(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_server_key_using_global_key_provider(key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_set_default_principal_key_using_global_key_provider(principal_key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
+CREATE FUNCTION pg_tde_set_default_key_using_global_key_provider(key_name TEXT, provider_name TEXT DEFAULT NULL, ensure_new_key BOOLEAN DEFAULT FALSE)
 RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
@@ -445,26 +445,26 @@ RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_verify_principal_key()
+CREATE FUNCTION pg_tde_verify_key()
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_verify_server_principal_key()
+CREATE FUNCTION pg_tde_verify_server_key()
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_principal_key_info()
-RETURNS TABLE ( principal_key_name text,
+CREATE FUNCTION pg_tde_key_info()
+RETURNS TABLE ( key_name text,
                 key_provider_name text,
                 key_provider_id integer,
                 key_createion_time timestamp with time zone)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE FUNCTION pg_tde_server_principal_key_info()
-RETURNS TABLE ( principal_key_name text,
+CREATE FUNCTION pg_tde_server_key_info()
+RETURNS TABLE ( key_name text,
                 key_provider_name text,     
                 key_provider_id integer,
                 key_createion_time timestamp with time zone)
@@ -542,9 +542,9 @@ BEGIN
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_principal_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_principal_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_principal_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
 END;
 $$;
 
@@ -575,7 +575,7 @@ BEGIN
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_database_key_provider(text) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_principal_key_using_database_key_provider(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) TO %I', target_role);
 END;
 $$;
 
@@ -589,10 +589,10 @@ BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_database_key_providers() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_principal_key_info() TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_server_principal_key_info() TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_principal_key() TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_server_principal_key() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_key_info() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_server_key_info() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_key() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_server_key() TO %I', target_role);
 END;
 $$;
 
@@ -623,9 +623,9 @@ BEGIN
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_principal_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_principal_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_principal_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -656,7 +656,7 @@ BEGIN
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_database_key_provider(text) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_principal_key_using_database_key_provider(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -670,10 +670,10 @@ BEGIN
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_database_key_providers() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_list_all_global_key_providers() FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_principal_key_info() FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_server_principal_key_info() FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_principal_key() FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_server_principal_key() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_key_info() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_server_key_info() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_key() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_server_key() FROM %I', target_role);
 END;
 $$;
 

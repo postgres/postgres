@@ -105,7 +105,7 @@ setup_tde_heap(){
     sudo -u "$PG_USER" psql -p $PG_PORT -c "CREATE DATABASE $DB_NAME;"
     sudo -u "$PG_USER" psql -d "$DB_NAME" -p "$PG_PORT" -c "CREATE EXTENSION IF NOT EXISTS pg_tde;"
     sudo -u "$PG_USER" psql -d "$DB_NAME" -p "$PG_PORT" -c "SELECT pg_tde_add_database_key_provider_file('file-vault','$KEYLOCATION');"
-    sudo -u "$PG_USER" psql -d "$DB_NAME" -p "$PG_PORT" -c "SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-master-key','file-vault');"
+    sudo -u "$PG_USER" psql -d "$DB_NAME" -p "$PG_PORT" -c "SELECT pg_tde_set_key_using_database_key_provider('test-db-master-key','file-vault');"
     sudo -u "$PG_USER" psql -p $PG_PORT -c "ALTER DATABASE $DB_NAME SET default_table_access_method='tde_heap';"
     sudo -u "$PG_USER" psql -p $PG_PORT -c "SELECT pg_reload_conf();"
 }

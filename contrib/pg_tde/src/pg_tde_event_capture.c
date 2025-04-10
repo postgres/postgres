@@ -64,8 +64,7 @@ checkEncryptionClause(const char *accessMethod)
 		{
 			ereport(ERROR,
 					(errmsg("principal key not configured"),
-					 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
-
+					 errhint("create one using pg_tde_set_key before using encrypted tables")));
 		}
 	}
 

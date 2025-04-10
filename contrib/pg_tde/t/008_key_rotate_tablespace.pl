@@ -38,7 +38,7 @@ $stdout = $node->safe_psql('tbc',
 	q{
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-vault');
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
 
 CREATE TABLE country_table (
      country_id        serial primary key,
@@ -57,7 +57,7 @@ SELECT * FROM country_table;
 PGTDE::append_to_file($stdout);
 
 
-$cmdret = $node->psql('tbc', "SELECT pg_tde_set_principal_key_using_database_key_provider('new-k', 'file-vault');", extra_params => ['-a']);
+$cmdret = $node->psql('tbc', "SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');", extra_params => ['-a']);
 ok($cmdret == 0, "ROTATE KEY");
 PGTDE::append_to_file($stdout);
 

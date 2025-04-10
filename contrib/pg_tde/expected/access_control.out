@@ -4,8 +4,8 @@ SET ROLE regress_pg_tde_access_control;
 -- should throw access denied
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
 ERROR:  permission denied for function pg_tde_add_database_key_provider_file
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key', 'file-vault');
-ERROR:  permission denied for function pg_tde_set_principal_key_using_database_key_provider
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
+ERROR:  permission denied for function pg_tde_set_key_using_database_key_provider
 RESET ROLE;
 SELECT pg_tde_grant_database_key_management_to_role('regress_pg_tde_access_control');
  pg_tde_grant_database_key_management_to_role 
@@ -33,9 +33,9 @@ SELECT pg_tde_add_database_key_provider_file('file-2', '/tmp/pg_tde_test_keyring
                                      2
 (1 row)
 
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key', 'file-vault');
- pg_tde_set_principal_key_using_database_key_provider 
-------------------------------------------------------
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
  
 (1 row)
 
@@ -46,10 +46,10 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
   2 | file-2        | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring_2.per"}
 (2 rows)
 
-SELECT principal_key_name, key_provider_name, key_provider_id FROM pg_tde_principal_key_info();
-  principal_key_name   | key_provider_name | key_provider_id 
------------------------+-------------------+-----------------
- test-db-principal-key | file-vault        |               1
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
+  key_name   | key_provider_name | key_provider_id 
+-------------+-------------------+-----------------
+ test-db-key | file-vault        |               1
 (1 row)
 
 RESET ROLE;
@@ -63,7 +63,7 @@ SET ROLE regress_pg_tde_access_control;
 -- verify the view access is revoked
 SELECT * FROM pg_tde_list_all_database_key_providers();
 ERROR:  permission denied for function pg_tde_list_all_database_key_providers
-SELECT principal_key_name, key_provider_name, key_provider_id FROM pg_tde_principal_key_info();
-ERROR:  permission denied for function pg_tde_principal_key_info
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
+ERROR:  permission denied for function pg_tde_key_info
 RESET ROLE;
 DROP EXTENSION pg_tde CASCADE;

@@ -126,11 +126,11 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
 
         **Note: The `File` provided is intended for development and stores the keys unencrypted in the specified data file.**
 
-   5. Set the principal key for the database using the `pg_tde_set_principal_key` function.
+   5. Set the principal key for the database using the `pg_tde_set_key` function.
 
         ```sql
-        -- pg_tde_set_principal_key_using_database_key_provider(principal_key_name, provider_name);
-        SELECT pg_tde_set_principal_key_using_database_key_provider('my-principal-key','file');
+        -- pg_tde_set_key_using_database_key_provider(key_name, provider_name);
+        SELECT pg_tde_set_key_using_database_key_provider('my-key','file');
         ```
    
    6. Specify `tde_heap` access method during table creation

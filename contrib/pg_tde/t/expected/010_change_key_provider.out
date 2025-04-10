@@ -3,11 +3,11 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_prov
 1
 SELECT pg_tde_list_all_database_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_1.per""}")
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-key', 'file-vault');
+SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
 
 CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5), (6);
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -19,7 +19,7 @@ SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_p
 1
 SELECT pg_tde_list_all_database_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_2.per""}")
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -27,7 +27,7 @@ SELECT * FROM test_enc ORDER BY id;
 1|5
 2|6
 -- server restart
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -38,7 +38,7 @@ SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_p
 1
 SELECT pg_tde_list_all_database_key_providers();
 (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_3.per""}")
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -46,7 +46,7 @@ SELECT * FROM test_enc ORDER BY id;
 1|5
 2|6
 -- server restart
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
 SELECT pg_tde_is_encrypted('test_enc');
 psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
@@ -54,7 +54,7 @@ SELECT * FROM test_enc ORDER BY id;
 psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
 -- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_3.per
 -- server restart
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -69,7 +69,7 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_prov
 0
 CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5), (6);
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t
@@ -79,7 +79,7 @@ SELECT * FROM test_enc ORDER BY id;
 SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_3.per');
 1
 -- server restart
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 psql:<stdin>:1: ERROR:  Failed to verify principal key header for key test-key, incorrect principal key or corrupted key file
 SELECT pg_tde_is_encrypted('test_enc');
 psql:<stdin>:1: ERROR:  Failed to verify principal key header for key test-key, incorrect principal key or corrupted key file
@@ -89,7 +89,7 @@ CREATE TABLE test_enc2 (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
 psql:<stdin>:1: ERROR:  Failed to verify principal key header for key test-key, incorrect principal key or corrupted key file
 SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');
 1
-SELECT pg_tde_verify_principal_key();
+SELECT pg_tde_verify_key();
 
 SELECT pg_tde_is_encrypted('test_enc');
 t

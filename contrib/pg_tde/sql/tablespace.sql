@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key','file-vault');
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
 
 CREATE TABLE test(num1 bigint, num2 double precision, t text) USING tde_heap;
 INSERT INTO test(num1, num2, t)

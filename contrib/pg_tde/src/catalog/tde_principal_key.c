@@ -52,8 +52,8 @@
 PG_FUNCTION_INFO_V1(pg_tde_delete_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_delete_global_key_provider);
 
-PG_FUNCTION_INFO_V1(pg_tde_verify_principal_key);
-PG_FUNCTION_INFO_V1(pg_tde_verify_server_principal_key);
+PG_FUNCTION_INFO_V1(pg_tde_verify_key);
+PG_FUNCTION_INFO_V1(pg_tde_verify_server_key);
 
 typedef struct TdePrincipalKeySharedState
 {
@@ -110,17 +110,17 @@ static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
 
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global);
 
-PG_FUNCTION_INFO_V1(pg_tde_set_default_principal_key_using_global_key_provider);
-Datum		pg_tde_set_default_principal_key_using_global_key_provider(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
+Datum		pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_using_database_key_provider);
-Datum		pg_tde_set_principal_key_using_database_key_provider(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
+Datum		pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(pg_tde_set_principal_key_using_global_key_provider);
-Datum		pg_tde_set_principal_key_using_global_key_provider(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_set_key_using_global_key_provider);
+Datum		pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS);
 
-PG_FUNCTION_INFO_V1(pg_tde_set_server_principal_key_using_global_key_provider);
-Datum		pg_tde_set_server_principal_key_using_global_key_provider(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
+Datum		pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS);
 
 enum global_status
 {
@@ -485,7 +485,7 @@ clear_principal_key_cache(Oid databaseId)
  */
 
 Datum
-pg_tde_set_default_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
+pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
@@ -497,7 +497,7 @@ pg_tde_set_default_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_tde_set_principal_key_using_database_key_provider(PG_FUNCTION_ARGS)
+pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
@@ -509,7 +509,7 @@ pg_tde_set_principal_key_using_database_key_provider(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_tde_set_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
+pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
@@ -521,7 +521,7 @@ pg_tde_set_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
 }
 
 Datum
-pg_tde_set_server_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
+pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
@@ -533,14 +533,14 @@ pg_tde_set_server_principal_key_using_global_key_provider(PG_FUNCTION_ARGS)
 }
 
 static void
-pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status global, char *provider_name, bool ensure_new_key)
+pg_tde_set_principal_key_internal(char *key_name, enum global_status global, char *provider_name, bool ensure_new_key)
 {
 	Oid			providerOid = MyDatabaseId;
 	Oid			dbOid = MyDatabaseId;
 	TDEPrincipalKey *existingDefaultKey = NULL;
 	TDEPrincipalKey existingKeyCopy;
 
-	ereport(LOG, (errmsg("Setting principal key [%s : %s] for the database", principal_key_name, provider_name)));
+	ereport(LOG, (errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name)));
 
 	if (global == GS_GLOBAL)	/* using a global provider for the current
 								 * database */
@@ -570,7 +570,7 @@ pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status g
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
 
-	set_principal_key_with_keyring(principal_key_name,
+	set_principal_key_with_keyring(key_name,
 								   provider_name,
 								   providerOid,
 								   dbOid,
@@ -600,28 +600,28 @@ pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status g
 	}
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_principal_key_info);
+PG_FUNCTION_INFO_V1(pg_tde_key_info);
 Datum
-pg_tde_principal_key_info(PG_FUNCTION_ARGS)
+pg_tde_key_info(PG_FUNCTION_ARGS)
 {
 	return pg_tde_get_key_info(fcinfo, MyDatabaseId);
 }
 
-PG_FUNCTION_INFO_V1(pg_tde_server_principal_key_info);
+PG_FUNCTION_INFO_V1(pg_tde_server_key_info);
 Datum
-pg_tde_server_principal_key_info(PG_FUNCTION_ARGS)
+pg_tde_server_key_info(PG_FUNCTION_ARGS)
 {
 	return pg_tde_get_key_info(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
 Datum
-pg_tde_verify_principal_key(PG_FUNCTION_ARGS)
+pg_tde_verify_key(PG_FUNCTION_ARGS)
 {
 	return pg_tde_verify_principal_key_internal(MyDatabaseId);
 }
 
 Datum
-pg_tde_verify_server_principal_key(PG_FUNCTION_ARGS)
+pg_tde_verify_server_key(PG_FUNCTION_ARGS)
 {
 	return pg_tde_verify_principal_key_internal(GLOBAL_DATA_TDE_OID);
 }
@@ -650,7 +650,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	{
 		ereport(ERROR,
 				(errmsg("Principal key does not exists for the database"),
-				 errhint("Use set_principal_key interface to set the principal key")));
+				 errhint("Use set_key interface to set the principal key")));
 	}
 
 	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);

@@ -39,7 +39,7 @@ $stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_database_key_provider_
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_list_all_database_key_providers();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('test-key', 'file-vault');", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
@@ -47,7 +47,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (5), (6);', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -62,7 +62,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_list_all_database_key_providers();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -75,7 +75,7 @@ $rt_value = $node->stop();
 $rt_value = $node->start();
 
 # Verify
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -88,7 +88,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_list_all_database_key_providers();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
@@ -102,7 +102,7 @@ $rt_value = $node->stop();
 $rt_value = $node->start();
 
 # Verify
-(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 (undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
@@ -121,7 +121,7 @@ $rt_value = $node->stop();
 $rt_value = $node->start();
 
 # Verify
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -141,7 +141,7 @@ PGTDE::append_to_file($stdout);
 # Change provider and generate a new principal key
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
-$stdout = $node->psql('postgres', "SELECT pg_tde_set_principal_key_using_database_key_provider('test-key', 'file-vault');", extra_params => ['-a']);
+$stdout = $node->psql('postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
@@ -149,7 +149,7 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc (k) VALUES (5), (6);', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -165,7 +165,7 @@ $rt_value = $node->stop();
 $rt_value = $node->start();
 
 # Verify
-(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+(undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 PGTDE::append_to_file($stderr);
 (undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
@@ -182,7 +182,7 @@ $stdout = $node->safe_psql('postgres', "SELECT pg_tde_change_database_key_provid
 PGTDE::append_to_file($stdout);
 
 # Verify
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_principal_key();", extra_params => ['-a']);
+$stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_is_encrypted('test_enc');", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

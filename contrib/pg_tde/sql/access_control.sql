@@ -6,7 +6,7 @@ SET ROLE regress_pg_tde_access_control;
 
 -- should throw access denied
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key', 'file-vault');
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
 
 RESET ROLE;
 
@@ -18,9 +18,9 @@ SET ROLE regress_pg_tde_access_control;
 -- should now be allowed
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_add_database_key_provider_file('file-2', '/tmp/pg_tde_test_keyring_2.per');
-SELECT pg_tde_set_principal_key_using_database_key_provider('test-db-principal-key', 'file-vault');
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
 SELECT * FROM pg_tde_list_all_database_key_providers();
-SELECT principal_key_name, key_provider_name, key_provider_id FROM pg_tde_principal_key_info();
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
 
 RESET ROLE;
 
@@ -30,7 +30,7 @@ SET ROLE regress_pg_tde_access_control;
 
 -- verify the view access is revoked
 SELECT * FROM pg_tde_list_all_database_key_providers();
-SELECT principal_key_name, key_provider_name, key_provider_id FROM pg_tde_principal_key_info();
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
 
 RESET ROLE;
 

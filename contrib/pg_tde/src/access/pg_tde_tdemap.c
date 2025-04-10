@@ -162,7 +162,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	{
 		ereport(ERROR,
 				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
+				 errhint("create one using pg_tde_set_key before using encrypted tables")));
 	}
 
 	/*
@@ -235,7 +235,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	{
 		ereport(ERROR,
 				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_server_principal_key before using encrypted WAL")));
+				 errhint("create one using pg_tde_set_server_key before using encrypted WAL")));
 	}
 
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
@@ -960,7 +960,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	if (principal_key == NULL)
 		ereport(ERROR,
 				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_principal_key before using encrypted tables")));
+				 errhint("create one using pg_tde_set_key before using encrypted tables")));
 
 	rel_key = tde_decrypt_rel_key(principal_key, map_entry);
 
