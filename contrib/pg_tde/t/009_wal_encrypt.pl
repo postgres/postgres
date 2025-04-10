@@ -86,6 +86,17 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_wal (k) VALUES (5), (6);', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
+PGTDE::append_to_file("-- server restart with still wal encryption");
+$node->stop();
+$rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
+
+$stdout = $node->safe_psql('postgres', "SHOW pg_tde.wal_encrypt;", extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
+$stdout = $node->safe_psql('postgres', 'INSERT INTO test_wal (k) VALUES (7), (8);', extra_params => ['-a']);
+PGTDE::append_to_file($stdout);
+
 $stdout = $node->safe_psql('postgres', "SELECT data FROM pg_logical_slot_get_changes('tde_slot', NULL, NULL);", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 

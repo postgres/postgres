@@ -21,6 +21,10 @@ ALTER SYSTEM SET pg_tde.wal_encrypt = on;
 SHOW pg_tde.wal_encrypt;
 on
 INSERT INTO test_wal (k) VALUES (5), (6);
+-- server restart with still wal encryption
+SHOW pg_tde.wal_encrypt;
+on
+INSERT INTO test_wal (k) VALUES (7), (8);
 SELECT data FROM pg_logical_slot_get_changes('tde_slot', NULL, NULL);
 BEGIN 739
 COMMIT 739
@@ -36,6 +40,10 @@ BEGIN 742
 table public.test_wal: INSERT: id[integer]:5 k[integer]:5
 table public.test_wal: INSERT: id[integer]:6 k[integer]:6
 COMMIT 742
+BEGIN 743
+table public.test_wal: INSERT: id[integer]:7 k[integer]:7
+table public.test_wal: INSERT: id[integer]:8 k[integer]:8
+COMMIT 743
 SELECT pg_drop_replication_slot('tde_slot');
 
 DROP EXTENSION pg_tde;
