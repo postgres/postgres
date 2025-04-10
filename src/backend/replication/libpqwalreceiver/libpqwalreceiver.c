@@ -1012,7 +1012,7 @@ libpqrcv_alter_slot(WalReceiverConn *conn, const char *slotname,
 						 *failover ? "true" : "false");
 
 	if (failover && two_phase)
-		appendStringInfo(&cmd, ", ");
+		appendStringInfoString(&cmd, ", ");
 
 	if (two_phase)
 		appendStringInfo(&cmd, "TWO_PHASE %s",

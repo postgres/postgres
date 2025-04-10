@@ -3228,7 +3228,7 @@ appendSCRAMKeysInfo(StringInfo buf)
 
 	appendStringInfo(buf, "scram_client_key='%s' ", client_key);
 	appendStringInfo(buf, "scram_server_key='%s' ", server_key);
-	appendStringInfo(buf, "require_auth='scram-sha-256' ");
+	appendStringInfoString(buf, "require_auth='scram-sha-256' ");
 
 	pfree(client_key);
 	pfree(server_key);

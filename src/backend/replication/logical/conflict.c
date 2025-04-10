@@ -262,7 +262,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			break;
 
 		case CT_UPDATE_MISSING:
-			appendStringInfo(&err_detail, _("Could not find the row to be updated."));
+			appendStringInfoString(&err_detail, _("Could not find the row to be updated."));
 			break;
 
 		case CT_DELETE_ORIGIN_DIFFERS:
@@ -281,7 +281,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			break;
 
 		case CT_DELETE_MISSING:
-			appendStringInfo(&err_detail, _("Could not find the row to be deleted."));
+			appendStringInfoString(&err_detail, _("Could not find the row to be deleted."));
 			break;
 	}
 
@@ -304,7 +304,7 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 	if (err_msg->len > 0)
 		appendStringInfoChar(err_msg, '\n');
 
-	appendStringInfo(err_msg, "%s", err_detail.data);
+	appendStringInfoString(err_msg, err_detail.data);
 }
 
 /*

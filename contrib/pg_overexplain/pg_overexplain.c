@@ -292,7 +292,7 @@ overexplain_debug(PlannedStmt *plannedstmt, ExplainState *es)
 	if (es->format == EXPLAIN_FORMAT_TEXT)
 	{
 		ExplainIndentText(es);
-		appendStringInfo(es->str, "PlannedStmt:\n");
+		appendStringInfoString(es->str, "PlannedStmt:\n");
 		es->indent++;
 	}
 
@@ -329,19 +329,19 @@ overexplain_debug(PlannedStmt *plannedstmt, ExplainState *es)
 	/* Print various properties as a comma-separated list of flags. */
 	initStringInfo(&flags);
 	if (plannedstmt->hasReturning)
-		appendStringInfo(&flags, ", hasReturning");
+		appendStringInfoString(&flags, ", hasReturning");
 	if (plannedstmt->hasModifyingCTE)
-		appendStringInfo(&flags, ", hasModifyingCTE");
+		appendStringInfoString(&flags, ", hasModifyingCTE");
 	if (plannedstmt->canSetTag)
-		appendStringInfo(&flags, ", canSetTag");
+		appendStringInfoString(&flags, ", canSetTag");
 	if (plannedstmt->transientPlan)
-		appendStringInfo(&flags, ", transientPlan");
+		appendStringInfoString(&flags, ", transientPlan");
 	if (plannedstmt->dependsOnRole)
-		appendStringInfo(&flags, ", dependsOnRole");
+		appendStringInfoString(&flags, ", dependsOnRole");
 	if (plannedstmt->parallelModeNeeded)
-		appendStringInfo(&flags, ", parallelModeNeeded");
+		appendStringInfoString(&flags, ", parallelModeNeeded");
 	if (flags.len == 0)
-		appendStringInfo(&flags, ", none");
+		appendStringInfoString(&flags, ", none");
 	ExplainPropertyText("Flags", flags.data + 2, es);
 
 	/* Various lists of integers. */
@@ -763,7 +763,7 @@ overexplain_intlist(const char *qlabel, List *list, ExplainState *es)
 	}
 	else
 	{
-		appendStringInfo(&buf, " not an integer list");
+		appendStringInfoString(&buf, " not an integer list");
 		Assert(false);
 	}
 
