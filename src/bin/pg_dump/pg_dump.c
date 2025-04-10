@@ -10905,7 +10905,7 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 
 	/* restore relation stats */
 	appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_relation_stats(\n");
-	appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
+	appendPQExpBuffer(out, "\t'version', '%d'::integer,\n",
 					  fout->remoteVersion);
 	appendPQExpBufferStr(out, "\t'schemaname', ");
 	appendStringLiteralAH(out, rsinfo->dobj.namespace->dobj.name, fout);
@@ -10960,7 +10960,7 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 			break;
 
 		appendPQExpBufferStr(out, "SELECT * FROM pg_catalog.pg_restore_attribute_stats(\n");
-		appendPQExpBuffer(out, "\t'version', '%u'::integer,\n",
+		appendPQExpBuffer(out, "\t'version', '%d'::integer,\n",
 						  fout->remoteVersion);
 		appendPQExpBufferStr(out, "\t'schemaname', ");
 		appendStringLiteralAH(out, rsinfo->dobj.namespace->dobj.name, fout);
