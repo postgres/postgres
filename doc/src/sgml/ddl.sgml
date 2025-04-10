@@ -1764,9 +1764,6 @@ ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
 <programlisting>
 ALTER TABLE products DROP CONSTRAINT some_name;
 </programlisting>
-    (If you are dealing with a generated constraint name like <literal>$2</literal>,
-    don't forget that you'll need to double-quote it to make it a valid
-    identifier.)
    </para>
 
    <para>
