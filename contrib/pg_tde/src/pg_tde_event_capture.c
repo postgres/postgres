@@ -63,15 +63,15 @@ checkEncryptionClause(const char *accessMethod)
 		if (!pg_tde_principal_key_configured(MyDatabaseId))
 		{
 			ereport(ERROR,
-					(errmsg("principal key not configured"),
-					 errhint("create one using pg_tde_set_key before using encrypted tables")));
+					errmsg("principal key not configured"),
+					errhint("create one using pg_tde_set_key before using encrypted tables"));
 		}
 	}
 
 	if (EnforceEncryption && !tdeCurrentCreateEvent.encryptMode)
 	{
 		ereport(ERROR,
-				(errmsg("pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed.")));
+				errmsg("pg_tde.enforce_encryption is ON, only the tde_heap access method is allowed."));
 	}
 }
 
@@ -113,7 +113,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
-				(errmsg("Function can only be fired by event trigger manager")));
+				errmsg("Function can only be fired by event trigger manager"));
 
 	trigdata = (EventTriggerData *) fcinfo->context;
 	parsetree = trigdata->parsetree;
@@ -148,7 +148,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			}
 		}
 		else
-			ereport(DEBUG1, (errmsg("Failed to get relation Oid for relation:%s", stmt->relation->relname)));
+			ereport(DEBUG1, errmsg("Failed to get relation Oid for relation:%s", stmt->relation->relname));
 
 	}
 	else if (IsA(parsetree, CreateStmt))
@@ -267,7 +267,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
-				(errmsg("Function can only be fired by event trigger manager")));
+				errmsg("Function can only be fired by event trigger manager"));
 
 	if (IsA(parsetree, AlterTableStmt) && tdeCurrentCreateEvent.alterAccessMethodMode)
 	{

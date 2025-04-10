@@ -197,8 +197,8 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	if (!curl_perform(vault_keyring, url, &str, &httpCode, jsonText))
 	{
 		ereport(ERROR,
-				(errmsg("HTTP(S) request to keyring provider \"%s\" failed",
-						vault_keyring->keyring.provider_name)));
+				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
+					   vault_keyring->keyring.provider_name));
 	}
 
 	if (str.ptr != NULL)
@@ -206,8 +206,8 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 
 	if (httpCode / 100 != 2)
 		ereport(ERROR,
-				(errmsg("Invalid HTTP response from keyring provider \"%s\": %ld",
-						vault_keyring->keyring.provider_name, httpCode)));
+				errmsg("Invalid HTTP response from keyring provider \"%s\": %ld",
+					   vault_keyring->keyring.provider_name, httpCode));
 }
 
 static KeyInfo *
@@ -232,8 +232,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	{
 		*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
 		ereport(WARNING,
-				(errmsg("HTTP(S) request to keyring provider \"%s\" failed",
-						vault_keyring->keyring.provider_name)));
+				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
+					   vault_keyring->keyring.provider_name));
 		goto cleanup;
 	}
 
@@ -247,8 +247,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	{
 		*return_code = KEYRING_CODE_INVALID_RESPONSE;
 		ereport(WARNING,
-				(errmsg("HTTP(S) request to keyring provider \"%s\" returned invalid response %li",
-						vault_keyring->keyring.provider_name, httpCode)));
+				errmsg("HTTP(S) request to keyring provider \"%s\" returned invalid response %li",
+					   vault_keyring->keyring.provider_name, httpCode));
 		goto cleanup;
 	}
 
@@ -263,8 +263,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	{
 		*return_code = KEYRING_CODE_INVALID_RESPONSE;
 		ereport(WARNING,
-				(errmsg("HTTP(S) request to keyring provider \"%s\" returned incorrect JSON: %s",
-						vault_keyring->keyring.provider_name, json_errdetail(json_error, jlex))));
+				errmsg("HTTP(S) request to keyring provider \"%s\" returned incorrect JSON: %s",
+					   vault_keyring->keyring.provider_name, json_errdetail(json_error, jlex)));
 		goto cleanup;
 	}
 
@@ -283,8 +283,8 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	{
 		*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
 		ereport(WARNING,
-				(errmsg("keyring provider \"%s\" returned invalid key size: %d",
-						vault_keyring->keyring.provider_name, key->data.len)));
+				errmsg("keyring provider \"%s\" returned invalid key size: %d",
+					   vault_keyring->keyring.provider_name, key->data.len));
 		pfree(key);
 		key = NULL;
 		goto cleanup;

@@ -189,8 +189,8 @@ ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts, char *in_buf
 	if (jerr != JSON_SUCCESS)
 	{
 		ereport(ERROR,
-				(errmsg("parsing of keyring options failed: %s",
-						json_errdetail(jerr, jlex))));
+				errmsg("parsing of keyring options failed: %s",
+					   json_errdetail(jerr, jlex)));
 
 	}
 #if PG_VERSION_NUM >= 170000

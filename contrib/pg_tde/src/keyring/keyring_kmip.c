@@ -55,21 +55,21 @@ kmipSslConnect(KmipCtx *ctx, KmipKeyring *kmip_keyring, bool throw_error)
 	if (SSL_CTX_use_certificate_file(ctx->ssl, kmip_keyring->kmip_cert_path, SSL_FILETYPE_PEM) != 1)
 	{
 		SSL_CTX_free(ctx->ssl);
-		ereport(level, (errmsg("SSL error: Loading the client certificate failed")));
+		ereport(level, errmsg("SSL error: Loading the client certificate failed"));
 		return false;
 	}
 
 	if (SSL_CTX_use_PrivateKey_file(ctx->ssl, kmip_keyring->kmip_cert_path, SSL_FILETYPE_PEM) != 1)
 	{
 		SSL_CTX_free(ctx->ssl);
-		ereport(level, (errmsg("SSL error: Loading the client key failed")));
+		ereport(level, errmsg("SSL error: Loading the client key failed"));
 		return false;
 	}
 
 	if (SSL_CTX_load_verify_locations(ctx->ssl, kmip_keyring->kmip_ca_path, NULL) != 1)
 	{
 		SSL_CTX_free(ctx->ssl);
-		ereport(level, (errmsg("SSL error: Loading the CA certificate failed")));
+		ereport(level, errmsg("SSL error: Loading the CA certificate failed"));
 		return false;
 	}
 
@@ -77,7 +77,7 @@ kmipSslConnect(KmipCtx *ctx, KmipKeyring *kmip_keyring, bool throw_error)
 	if (ctx->bio == NULL)
 	{
 		SSL_CTX_free(ctx->ssl);
-		ereport(level, (errmsg("SSL error: BIO_new_ssl_connect failed")));
+		ereport(level, errmsg("SSL error: BIO_new_ssl_connect failed"));
 		return false;
 	}
 
@@ -89,7 +89,7 @@ kmipSslConnect(KmipCtx *ctx, KmipKeyring *kmip_keyring, bool throw_error)
 	{
 		BIO_free_all(ctx->bio);
 		SSL_CTX_free(ctx->ssl);
-		ereport(level, (errmsg("SSL error: BIO_do_connect failed")));
+		ereport(level, errmsg("SSL error: BIO_do_connect failed"));
 		return false;
 	}
 
@@ -113,7 +113,7 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	SSL_CTX_free(ctx.ssl);
 
 	if (result != 0)
-		ereport(ERROR, (errmsg("KMIP server reported error on register symmetric key: %i", result)));
+		ereport(ERROR, errmsg("KMIP server reported error on register symmetric key: %i", result));
 }
 
 static KeyInfo *
@@ -156,7 +156,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 		if (ids_found > 1)
 		{
-			ereport(WARNING, (errmsg("KMIP server contains multiple results for key, ignoring")));
+			ereport(WARNING, errmsg("KMIP server contains multiple results for key, ignoring"));
 			*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 			BIO_free_all(ctx.bio);
 			SSL_CTX_free(ctx.ssl);
@@ -174,7 +174,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 		if (result != 0)
 		{
-			ereport(WARNING, (errmsg("KMIP server LOCATEd key, but GET failed with %i", result)));
+			ereport(WARNING, errmsg("KMIP server LOCATEd key, but GET failed with %i", result));
 			*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 			pfree(key);
 			BIO_free_all(ctx.bio);
@@ -184,7 +184,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 		if (key->data.len > sizeof(key->data.data))
 		{
-			ereport(WARNING, (errmsg("keyring provider returned invalid key size: %d", key->data.len)));
+			ereport(WARNING, errmsg("keyring provider returned invalid key size: %d", key->data.len));
 			*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
 			pfree(key);
 			BIO_free_all(ctx.bio);

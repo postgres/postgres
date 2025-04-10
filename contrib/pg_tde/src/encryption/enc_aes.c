@@ -75,14 +75,14 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 
 		if (EVP_CipherInit_ex(*ctxPtr, cipher_ctr_ecb, NULL, key, iv, enc) == 0)
 			ereport(ERROR,
-					(errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+					errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 		EVP_CIPHER_CTX_set_padding(*ctxPtr, 0);
 	}
 
 	if (EVP_CipherUpdate(*ctxPtr, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	Assert(out_len == in_len);
 }
@@ -101,17 +101,17 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 
 	if (EVP_CipherInit_ex(ctx, cipher_cbc, NULL, key, iv, enc) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 	if (EVP_CipherUpdate(ctx, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CipherFinal_ex(ctx, out + out_len, &out_len_final) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	/*
 	 * We encrypt one block (16 bytes) Our expectation is that the result

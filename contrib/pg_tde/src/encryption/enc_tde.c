@@ -53,8 +53,8 @@ pg_tde_crypt_simple(const char *iv_prefix, uint32 start_offset, const char *data
 
 		iv_prefix_debug(iv_prefix, ivp_debug);
 		ereport(LOG,
-				(errmsg("%s: Start offset: %lu Data_Len: %u, aes_start_block: %lu, aes_end_block: %lu, IV prefix: %s",
-						context ? context : "", start_offset, data_len, aes_start_block, aes_end_block, ivp_debug)));
+				errmsg("%s: Start offset: %lu Data_Len: %u, aes_start_block: %lu, aes_end_block: %lu, IV prefix: %s",
+					   context ? context : "", start_offset, data_len, aes_start_block, aes_end_block, ivp_debug));
 	}
 #endif
 
@@ -94,8 +94,8 @@ pg_tde_crypt_complex(const char *iv_prefix, uint32 start_offset, const char *dat
 
 			iv_prefix_debug(iv_prefix, ivp_debug);
 			ereport(LOG,
-					(errmsg("%s: Batch-No:%d Start offset: %lu Data_Len: %u, batch_start_block: %lu, batch_end_block: %lu, IV prefix: %s",
-							context ? context : "", batch_no, start_offset, data_len, batch_start_block, batch_end_block, ivp_debug)));
+					errmsg("%s: Batch-No:%d Start offset: %lu Data_Len: %u, batch_start_block: %lu, batch_end_block: %lu, IV prefix: %s",
+						   context ? context : "", batch_no, start_offset, data_len, batch_start_block, batch_end_block, ivp_debug));
 		}
 #endif
 

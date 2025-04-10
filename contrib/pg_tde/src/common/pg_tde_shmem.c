@@ -77,7 +77,7 @@ TdeShmemInit(void)
 
 	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
 	/* Create or attach to the shared memory state */
-	ereport(NOTICE, (errmsg("TdeShmemInit: requested %ld bytes", required_shmem_size)));
+	ereport(NOTICE, errmsg("TdeShmemInit: requested %ld bytes", required_shmem_size));
 	tdeState = ShmemInitStruct("pg_tde", required_shmem_size, &found);
 
 	if (!found)
@@ -110,7 +110,7 @@ TdeShmemInit(void)
 		Assert(dsa_area_size > 0);
 		tdeState->rawDsaArea = p;
 
-		ereport(LOG, (errmsg("creating DSA area of size %lu", dsa_area_size)));
+		ereport(LOG, errmsg("creating DSA area of size %lu", dsa_area_size));
 		dsa = dsa_create_in_place(tdeState->rawDsaArea,
 								  dsa_area_size,
 								  LWLockNewTrancheId(), 0);
@@ -125,7 +125,7 @@ TdeShmemInit(void)
 			if (routine->init_dsa_area_objects)
 				routine->init_dsa_area_objects(dsa, tdeState->rawDsaArea);
 		}
-		ereport(LOG, (errmsg("setting no limit to DSA area of size %lu", dsa_area_size)));
+		ereport(LOG, errmsg("setting no limit to DSA area of size %lu", dsa_area_size));
 
 		dsa_set_size_limit(dsa, -1);	/* Let it grow outside the shared
 										 * memory */

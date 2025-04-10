@@ -161,8 +161,8 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_key before using encrypted tables")));
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
 	/*
@@ -192,14 +192,14 @@ pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
 
 	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate internal key: %s",
-						ERR_error_string(ERR_get_error(), NULL))));
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate internal key: %s",
+					   ERR_error_string(ERR_get_error(), NULL)));
 	if (!RAND_bytes(int_key->base_iv, INTERNAL_KEY_IV_LEN))
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate IV: %s",
-						ERR_error_string(ERR_get_error(), NULL))));
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate IV: %s",
+					   ERR_error_string(ERR_get_error(), NULL)));
 }
 
 const char *
@@ -234,8 +234,8 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
-				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_server_key before using encrypted WAL")));
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_server_key before using encrypted WAL"));
 	}
 
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
@@ -300,7 +300,7 @@ pg_tde_save_principal_key(const TDEPrincipalKey *principal_key)
 	/* Set the file paths */
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
 
-	ereport(DEBUG2, (errmsg("pg_tde_save_principal_key")));
+	ereport(DEBUG2, errmsg("pg_tde_save_principal_key"));
 
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
@@ -329,19 +329,18 @@ pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrinci
 	if (*bytes_written != TDE_FILE_HEADER_SIZE)
 	{
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write tde file \"%s\": %m",
-						tde_filename)));
+				errcode_for_file_access(),
+				errmsg("could not write tde file \"%s\": %m", tde_filename));
 	}
 
 	if (pg_fsync(fd) != 0)
 	{
 		ereport(data_sync_elevel(ERROR),
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", tde_filename)));
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m", tde_filename));
 	}
-	ereport(DEBUG2,
-			(errmsg("Wrote the header to %s", tde_filename)));
+
+	ereport(DEBUG2, errmsg("Wrote the header to %s", tde_filename));
 
 	return fd;
 }
@@ -353,8 +352,8 @@ pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const
 
 	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_EMPTY_IV_SIZE))
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	AesGcmEncrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
 }
@@ -369,8 +368,8 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 
 	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_EMPTY_IV_SIZE))
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	AesGcmEncrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), rel_key_data->key, INTERNAL_KEY_LEN, map_entry->enc_key.key, map_entry->aead_tag);
 }
@@ -389,15 +388,14 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 	if (bytes_written != MAP_ENTRY_SIZE)
 	{
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write tde map file \"%s\": %m",
-						db_map_path)));
+				errcode_for_file_access(),
+				errmsg("could not write tde map file \"%s\": %m", db_map_path));
 	}
 	if (pg_fsync(fd) != 0)
 	{
 		ereport(data_sync_elevel(ERROR),
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", db_map_path)));
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m", db_map_path));
 	}
 
 	return (*offset + bytes_written);
@@ -565,9 +563,9 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t
 		if (curr_pos == -1)
 		{
 			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not seek in tde map file \"%s\": %m",
-							db_map_path)));
+					errcode_for_file_access(),
+					errmsg("could not seek in tde map file \"%s\": %m",
+						   db_map_path));
 		}
 	}
 
@@ -641,11 +639,11 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
 	if (!found)
 	{
 		ereport(WARNING,
-				(errcode(ERRCODE_NO_DATA_FOUND),
-				 errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
-						rlocator->relNumber,
-						rlocator->spcOid,
-						db_map_path)));
+				errcode(ERRCODE_NO_DATA_FOUND),
+				errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
+					   rlocator->relNumber,
+					   rlocator->spcOid,
+					   db_map_path));
 
 	}
 }
@@ -751,8 +749,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	if (pg_pread(new_fd, xlrec->buff, xlrec->file_size, 0) == -1)
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write WAL for key rotation: %m")));
+				errcode_for_file_access(),
+				errmsg("could not write WAL for key rotation: %m"));
 
 	close(new_fd);
 
@@ -792,16 +790,16 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	if (pg_pwrite(fd_new, file_data, file_size, 0) != file_size)
 	{
 		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not write tde file \"%s\": %m", path_new)));
+				errcode_for_file_access(),
+				errmsg("could not write tde file \"%s\": %m", path_new));
 		is_err = true;
 		goto FINALIZE;
 	}
 	if (pg_fsync(fd_new) != 0)
 	{
 		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m", path_new)));
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m", path_new));
 		is_err = true;
 		goto FINALIZE;
 	}
@@ -835,8 +833,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	if (pg_pwrite(fd, &lsn, sizeof(XLogRecPtr), write_pos) != sizeof(XLogRecPtr))
 	{
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write tde key data file: %m")));
+				errcode_for_file_access(),
+				errmsg("could not write tde key data file: %m"));
 	}
 
 	/*
@@ -852,8 +850,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 		if (pg_pread(fd, &prev_map_entry, MAP_ENTRY_SIZE, prev_key_pos) != MAP_ENTRY_SIZE)
 		{
 			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not read previous WAL key: %m")));
+					errcode_for_file_access(),
+					errmsg("could not read previous WAL key: %m"));
 		}
 
 		if (prev_map_entry.enc_key.start_lsn >= lsn)
@@ -863,8 +861,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 			if (pg_pwrite(fd, &prev_map_entry, MAP_ENTRY_SIZE, prev_key_pos) != MAP_ENTRY_SIZE)
 			{
 				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not write invalidated key: %m")));
+						errcode_for_file_access(),
+						errmsg("could not write invalidated key: %m"));
 			}
 		}
 	}
@@ -872,8 +870,8 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	if (pg_fsync(fd) != 0)
 	{
 		ereport(data_sync_elevel(ERROR),
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file: %m")));
+				errcode_for_file_access(),
+				errmsg("could not fsync file: %m"));
 	}
 
 	LWLockRelease(lock_pk);
@@ -959,8 +957,8 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
 	if (principal_key == NULL)
 		ereport(ERROR,
-				(errmsg("principal key not configured"),
-				 errhint("create one using pg_tde_set_key before using encrypted tables")));
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_key before using encrypted tables"));
 
 	rel_key = tde_decrypt_rel_key(principal_key, map_entry);
 
@@ -1033,7 +1031,7 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 
 	if (!AesGcmDecrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), map_entry->enc_key.key, INTERNAL_KEY_LEN, rel_key_data->key, map_entry->aead_tag))
 		ereport(ERROR,
-				(errmsg("Failed to decrypt key, incorrect principal key or corrupted key file")));
+				errmsg("Failed to decrypt key, incorrect principal key or corrupted key file"));
 
 
 	return rel_key_data;
@@ -1078,9 +1076,8 @@ pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_miss
 	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
 	{
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tde file \"%s\": %m",
-						tde_filename)));
+				errcode_for_file_access(),
+				errmsg("could not open tde file \"%s\": %m", tde_filename));
 	}
 
 	return fd;
@@ -1107,9 +1104,8 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 		/* Corrupt file */
 		close(fd);
 		ereport(FATAL,
-				(errcode_for_file_access(),
-				 errmsg("TDE map file \"%s\" is corrupted: %m",
-						tde_filename)));
+				errcode_for_file_access(),
+				errmsg("TDE map file \"%s\" is corrupted: %m", tde_filename));
 	}
 }
 
@@ -1171,9 +1167,9 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
 
 		pg_tde_set_db_file_path(databaseId, db_map_path);
 		ereport(FATAL,
-				(errcode_for_file_access(),
-				 errmsg("could not find the required key at index %d in tde data file \"%s\": %m",
-						key_index, db_map_path)));
+				errcode_for_file_access(),
+				errmsg("could not find the required key at index %d in tde data file \"%s\": %m",
+					   key_index, db_map_path));
 	}
 }
 

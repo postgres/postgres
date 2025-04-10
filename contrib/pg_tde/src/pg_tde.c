@@ -79,7 +79,7 @@ tde_shmem_request(void)
 		prev_shmem_request_hook();
 	RequestAddinShmemSpace(sz);
 	RequestNamedLWLockTranche(TDE_TRANCHE_NAME, required_locks);
-	ereport(LOG, (errmsg("tde_shmem_request: requested %ld bytes", sz)));
+	ereport(LOG, errmsg("tde_shmem_request: requested %ld bytes", sz));
 }
 
 static void
@@ -171,8 +171,8 @@ on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
 {
 	if (on_ext_install_index >= MAX_ON_INSTALLS)
 		ereport(FATAL,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg_internal("out of on extension install slots")));
+				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				errmsg_internal("out of on extension install slots"));
 
 	on_ext_install_list[on_ext_install_index].function = function;
 	on_ext_install_list[on_ext_install_index].arg = arg;
@@ -190,9 +190,9 @@ pg_tde_init_data_dir(void)
 	{
 		if (MakePGDirectory(PG_TDE_DATA_DIR) < 0)
 			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not create tde directory \"%s\": %m",
-							PG_TDE_DATA_DIR)));
+					errcode_for_file_access(),
+					errmsg("could not create tde directory \"%s\": %m",
+						   PG_TDE_DATA_DIR));
 	}
 }
 

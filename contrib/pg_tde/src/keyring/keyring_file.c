@@ -78,10 +78,10 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 			/* Corrupt file */
 			*return_code = KEYRING_CODE_DATA_CORRUPTED;
 			ereport(WARNING,
-					(errcode_for_file_access(),
-					 errmsg("keyring file \"%s\" is corrupted: %m",
-							file_keyring->file_name),
-					 errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(KeyInfo))));
+					errcode_for_file_access(),
+					errmsg("keyring file \"%s\" is corrupted: %m",
+						   file_keyring->file_name),
+					errdetail("invalid key size %lu expected %lu", bytes_read, sizeof(KeyInfo)));
 			return NULL;
 		}
 		if (strncasecmp(key->name, key_name, sizeof(key->name)) == 0)
@@ -111,15 +111,15 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	if (existing_key)
 	{
 		ereport(ERROR,
-				(errmsg("Key with name %s already exists in keyring", key->name)));
+				errmsg("Key with name %s already exists in keyring", key->name));
 	}
 
 	fd = BasicOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("Failed to open keyring file %s :%m", file_keyring->file_name)));
+				errcode_for_file_access(),
+				errmsg("Failed to open keyring file %s :%m", file_keyring->file_name));
 	}
 	/* Write key to the end of file */
 	curr_pos = lseek(fd, 0, SEEK_END);
@@ -128,18 +128,18 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	{
 		close(fd);
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("keyring file \"%s\" can't be written: %m",
-						file_keyring->file_name)));
+				errcode_for_file_access(),
+				errmsg("keyring file \"%s\" can't be written: %m",
+					   file_keyring->file_name));
 	}
 
 	if (pg_fsync(fd) != 0)
 	{
 		close(fd);
 		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m",
-						file_keyring->file_name)));
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m",
+					   file_keyring->file_name));
 	}
 	close(fd);
 }

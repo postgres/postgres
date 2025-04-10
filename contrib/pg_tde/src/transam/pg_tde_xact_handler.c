@@ -41,8 +41,7 @@ pg_tde_xact_callback(XactEvent event, void *arg)
 	if (event == XACT_EVENT_PARALLEL_ABORT ||
 		event == XACT_EVENT_ABORT)
 	{
-		ereport(DEBUG2,
-				(errmsg("pg_tde_xact_callback: aborting transaction")));
+		ereport(DEBUG2, errmsg("pg_tde_xact_callback: aborting transaction"));
 		do_pending_deletes(false);
 	}
 	else if (event == XACT_EVENT_COMMIT)
@@ -64,13 +63,13 @@ pg_tde_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 	if (event == SUBXACT_EVENT_ABORT_SUB)
 	{
 		ereport(DEBUG2,
-				(errmsg("pg_tde_subxact_callback: aborting subtransaction")));
+				errmsg("pg_tde_subxact_callback: aborting subtransaction"));
 		do_pending_deletes(false);
 	}
 	else if (event == SUBXACT_EVENT_COMMIT_SUB)
 	{
 		ereport(DEBUG2,
-				(errmsg("pg_tde_subxact_callback: committing subtransaction")));
+				errmsg("pg_tde_subxact_callback: committing subtransaction"));
 		reassign_pending_deletes_to_parent_xact();
 	}
 }
@@ -131,8 +130,8 @@ do_pending_deletes(bool isCommit)
 		if (pending->atCommit == isCommit)
 		{
 			ereport(LOG,
-					(errmsg("pg_tde_xact_callback: deleting entry at offset %d",
-							(int) (pending->map_entry_offset))));
+					errmsg("pg_tde_xact_callback: deleting entry at offset %d",
+						   (int) (pending->map_entry_offset)));
 			pg_tde_free_key_map_entry(&pending->rlocator, pending->map_entry_offset);
 		}
 		pfree(pending);

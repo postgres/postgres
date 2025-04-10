@@ -47,8 +47,8 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 
 	if (RelFileLocatorBackendIsTemp(rlocator) && !rel->rd_islocaltemp)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("we cannot check if temporary relations from other backends are encrypted")));
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("we cannot check if temporary relations from other backends are encrypted"));
 
 	key = GetSMGRRelationKey(rlocator);
 
