@@ -5460,3 +5460,26 @@ restart:
 		*cmax = ent->cmax;
 	return true;
 }
+
+/*
+ * Count invalidation messages of specified transaction.
+ *
+ * Returns number of messages, and msgs is set to the pointer of the linked
+ * list for the messages.
+ */
+uint32
+ReorderBufferGetInvalidations(ReorderBuffer *rb, TransactionId xid,
+							  SharedInvalidationMessage **msgs)
+{
+	ReorderBufferTXN *txn;
+
+	txn = ReorderBufferTXNByXid(rb, xid, false, NULL, InvalidXLogRecPtr,
+								false);
+
+	if (txn == NULL)
+		return 0;
+
+	*msgs = txn->invalidations;
+
+	return txn->ninvalidations;
+}

@@ -758,6 +758,10 @@ extern TransactionId *ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb);
 
 extern void ReorderBufferSetRestartPoint(ReorderBuffer *rb, XLogRecPtr ptr);
 
+extern uint32 ReorderBufferGetInvalidations(ReorderBuffer *rb,
+											TransactionId xid,
+											SharedInvalidationMessage **msgs);
+
 extern void StartupReorderBuffer(void);
 
 #endif
