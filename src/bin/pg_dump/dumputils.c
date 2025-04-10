@@ -16,6 +16,8 @@
 
 #include <ctype.h>
 
+#include "common/file_perm.h"
+#include "common/logging.h"
 #include "dumputils.h"
 #include "fe_utils/string_utils.h"
 
@@ -883,4 +885,38 @@ makeAlterConfigCommand(PGconn *conn, const char *configitem,
 	appendPQExpBufferStr(buf, ";\n");
 
 	pg_free(mine);
+}
+
+/*
+ * create_or_open_dir
+ *
+ * This will create a new directory with the given dirname. If there is
+ * already an empty directory with that name, then use it.
+ */
+void
+create_or_open_dir(const char *dirname)
+{
+	int			ret;
+
+	switch ((ret = pg_check_dir(dirname)))
+	{
+		case -1:
+			/* opendir failed but not with ENOENT */
+			pg_fatal("could not open directory \"%s\": %m", dirname);
+			break;
+		case 0:
+			/* directory does not exist */
+			if (mkdir(dirname, pg_dir_create_mode) < 0)
+				pg_fatal("could not create directory \"%s\": %m", dirname);
+			break;
+		case 1:
+			/* exists and is empty, fix perms */
+			if (chmod(dirname, pg_dir_create_mode) != 0)
+				pg_fatal("could not change permissions of directory \"%s\": %m",
+						 dirname);
+			break;
+		default:
+			/* exists and is not empty */
+			pg_fatal("directory \"%s\" is not empty", dirname);
+	}
 }

@@ -15,7 +15,6 @@
 
 #include "postgres_fe.h"
 
-#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -78,7 +77,6 @@ static void executeCommand(PGconn *conn, const char *query);
 static void expand_dbname_patterns(PGconn *conn, SimpleStringList *patterns,
 								   SimpleStringList *names);
 static void read_dumpall_filters(const char *filename, SimpleStringList *pattern);
-static void create_or_open_dir(const char *dirname);
 static ArchiveFormat parseDumpFormat(const char *format);
 
 static char pg_dump_bin[MAXPGPATH];
@@ -1655,7 +1653,7 @@ dumpDatabases(PGconn *conn, ArchiveFormat archDumpFormat)
 		snprintf(db_subdir, MAXPGPATH, "%s/databases", filename);
 
 		/* Create a subdirectory with 'databases' name under main directory. */
-		if (mkdir(db_subdir, 0755) != 0)
+		if (mkdir(db_subdir, pg_dir_create_mode) != 0)
 			pg_fatal("could not create subdirectory \"%s\": %m", db_subdir);
 
 		snprintf(map_file_path, MAXPGPATH, "%s/map.dat", filename);
@@ -1944,41 +1942,6 @@ read_dumpall_filters(const char *filename, SimpleStringList *pattern)
 	}
 
 	filter_free(&fstate);
-}
-
-/*
- * create_or_open_dir
- *
- * This will create a new directory with the given dirname. If there is
- * already an empty directory with that name, then use it.
- */
-static void
-create_or_open_dir(const char *dirname)
-{
-	int			ret;
-
-	switch ((ret = pg_check_dir(dirname)))
-	{
-		case -1:
-			/* opendir failed but not with ENOENT */
-			pg_fatal("could not open directory \"%s\": %m", dirname);
-			break;
-		case 0:
-			/* directory does not exist */
-			if (mkdir(dirname, pg_dir_create_mode) < 0)
-				pg_fatal("could not create directory \"%s\": %m", dirname);
-			break;
-		case 1:
-			/* exists and is empty, fix perms */
-			if (chmod(dirname, pg_dir_create_mode) != 0)
-				pg_fatal("could not change permissions of directory \"%s\": %m",
-						 dirname);
-
-			break;
-		default:
-			/* exists and is not empty */
-			pg_fatal("directory \"%s\" is not empty", dirname);
-	}
 }
 
 /*
