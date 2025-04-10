@@ -195,7 +195,10 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *key;
-	TdeCreateEvent *event = GetCurrentTdeCreateEvent();
+
+	/* Copied from mdcreate() in md.c */
+	if (isRedo && tdereln->md_num_open_segs[forknum] > 0)
+		return;
 
 	/*
 	 * Make sure that even if a statement failed, and an event trigger end
@@ -215,6 +218,8 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 	if (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM)
 	{
+		TdeCreateEvent *event = GetCurrentTdeCreateEvent();
+
 		/*
 		 * Only create keys when creating the main/init fork. Other forks can
 		 * be created later, even during tde creation events. We definitely do
