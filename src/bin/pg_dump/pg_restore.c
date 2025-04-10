@@ -902,11 +902,11 @@ read_one_statement(StringInfo inBuf, FILE *pfile)
 			break;
 		}
 
-		destroyStringInfo(&q);
-
 		if (c == '\n')
 			appendStringInfoChar(inBuf, (char) '\n');
 	}
+
+	destroyStringInfo(&q);
 
 	/* No input before EOF signal means time to quit. */
 	if (c == EOF && inBuf->len == 0)
