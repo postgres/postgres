@@ -279,8 +279,6 @@ network_send(inet *addr, bool is_cidr)
 	pq_sendbyte(&buf, ip_bits(addr));
 	pq_sendbyte(&buf, is_cidr);
 	nb = ip_addrsize(addr);
-	if (nb < 0)
-		nb = 0;
 	pq_sendbyte(&buf, nb);
 	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
