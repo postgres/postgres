@@ -62,9 +62,9 @@ static GenericKeyring *load_keyring_provider_from_record(KeyringProviderRecord *
 static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
 static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider);
 
-static uint32 write_key_provider_info(KeyringProviderRecord *provider,
-									  Oid database_id, off_t position,
-									  bool error_if_exists, bool write_xlog);
+static void write_key_provider_info(KeyringProviderRecord *provider,
+									Oid database_id, off_t position,
+									bool error_if_exists, bool write_xlog);
 
 #ifdef FRONTEND
 
@@ -188,10 +188,10 @@ GetAllKeyringProviders(Oid dbOid)
 	return scan_key_provider_file(PROVIDER_SCAN_ALL, NULL, dbOid);
 }
 
-uint32
+void
 redo_key_provider_info(KeyringProviderXLRecord *xlrec)
 {
-	return write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, false, false);
+	write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, false, false);
 }
 
 static void
@@ -394,7 +394,7 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 
 #endif							/* !FRONTEND */
 
-static uint32
+static void
 write_key_provider_info(KeyringProviderRecord *provider, Oid database_id,
 						off_t position, bool error_if_exists, bool write_xlog)
 {
@@ -548,26 +548,25 @@ write_key_provider_info(KeyringProviderRecord *provider, Oid database_id,
 	}
 	close(fd);
 	LWLockRelease(tde_provider_info_lock());
-	return provider->provider_id;
 }
 
 
 /*
  * Save the key provider info to the file
  */
-uint32
+void
 save_new_key_provider_info(KeyringProviderRecord *provider, Oid databaseId, bool write_xlog)
 {
-	return write_key_provider_info(provider, databaseId, -1, true, write_xlog);
+	write_key_provider_info(provider, databaseId, -1, true, write_xlog);
 }
 
-uint32
+void
 modify_key_provider_info(KeyringProviderRecord *provider, Oid databaseId, bool write_xlog)
 {
-	return write_key_provider_info(provider, databaseId, -1, false, write_xlog);
+	write_key_provider_info(provider, databaseId, -1, false, write_xlog);
 }
 
-uint32
+void
 delete_key_provider_info(int provider_id, Oid databaseId, bool write_xlog)
 {
 	KeyringProviderRecord kpr;
@@ -575,7 +574,7 @@ delete_key_provider_info(int provider_id, Oid databaseId, bool write_xlog)
 	memset(&kpr, 0, sizeof(KeyringProviderRecord));
 	kpr.provider_id = provider_id;
 
-	return modify_key_provider_info(&kpr, databaseId, write_xlog);
+	modify_key_provider_info(&kpr, databaseId, write_xlog);
 }
 
 #ifdef FRONTEND
