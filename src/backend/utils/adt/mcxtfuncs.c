@@ -533,21 +533,21 @@ pg_get_process_memory_contexts(PG_FUNCTION_ARGS)
 	 */
 	Assert(memCxtArea->memstats_dsa_handle != DSA_HANDLE_INVALID);
 	/* Attach to the dsa area if we have not already done so */
-	if (area == NULL)
+	if (MemoryStatsDsaArea == NULL)
 	{
 		MemoryContext oldcontext = CurrentMemoryContext;
 
 		MemoryContextSwitchTo(TopMemoryContext);
-		area = dsa_attach(memCxtArea->memstats_dsa_handle);
+		MemoryStatsDsaArea = dsa_attach(memCxtArea->memstats_dsa_handle);
 		MemoryContextSwitchTo(oldcontext);
-		dsa_pin_mapping(area);
+		dsa_pin_mapping(MemoryStatsDsaArea);
 	}
 
 	/*
 	 * Backend has finished publishing the stats, project them.
 	 */
 	memcxt_info = (MemoryStatsEntry *)
-		dsa_get_address(area, memCxtState[procNumber].memstats_dsa_pointer);
+		dsa_get_address(MemoryStatsDsaArea, memCxtState[procNumber].memstats_dsa_pointer);
 
 #define PG_GET_PROCESS_MEMORY_CONTEXTS_COLS	12
 	for (int i = 0; i < memCxtState[procNumber].total_stats; i++)
@@ -566,7 +566,7 @@ pg_get_process_memory_contexts(PG_FUNCTION_ARGS)
 
 		if (DsaPointerIsValid(memcxt_info[i].name))
 		{
-			name = (char *) dsa_get_address(area, memcxt_info[i].name);
+			name = (char *) dsa_get_address(MemoryStatsDsaArea, memcxt_info[i].name);
 			values[0] = CStringGetTextDatum(name);
 		}
 		else
@@ -574,7 +574,7 @@ pg_get_process_memory_contexts(PG_FUNCTION_ARGS)
 
 		if (DsaPointerIsValid(memcxt_info[i].ident))
 		{
-			ident = (char *) dsa_get_address(area, memcxt_info[i].ident);
+			ident = (char *) dsa_get_address(MemoryStatsDsaArea, memcxt_info[i].ident);
 			values[1] = CStringGetTextDatum(ident);
 		}
 		else
@@ -586,7 +586,7 @@ pg_get_process_memory_contexts(PG_FUNCTION_ARGS)
 		path_datum = (Datum *) palloc(path_length * sizeof(Datum));
 		if (DsaPointerIsValid(memcxt_info[i].path))
 		{
-			path_int = (int *) dsa_get_address(area, memcxt_info[i].path);
+			path_int = (int *) dsa_get_address(MemoryStatsDsaArea, memcxt_info[i].path);
 			for (int j = 0; j < path_length; j++)
 				path_datum[j] = Int32GetDatum(path_int[j]);
 			path_array = construct_array_builtin(path_datum, path_length, INT4OID);

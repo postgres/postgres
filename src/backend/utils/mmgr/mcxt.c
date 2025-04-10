@@ -172,7 +172,7 @@ MemoryContext CurTransactionContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
-dsa_area   *area = NULL;
+dsa_area   *MemoryStatsDsaArea = NULL;
 
 static void MemoryContextDeleteOnly(MemoryContext context);
 static void MemoryContextCallResetCallbacks(MemoryContext context);
@@ -1499,19 +1499,19 @@ ProcessGetMemoryContextInterrupt(void)
 
 		MemoryContextSwitchTo(TopMemoryContext);
 
-		area = dsa_create(memCxtArea->lw_lock.tranche);
+		MemoryStatsDsaArea = dsa_create(memCxtArea->lw_lock.tranche);
 
-		handle = dsa_get_handle(area);
+		handle = dsa_get_handle(MemoryStatsDsaArea);
 		MemoryContextSwitchTo(oldcontext);
 
-		dsa_pin_mapping(area);
+		dsa_pin_mapping(MemoryStatsDsaArea);
 
 		/*
 		 * Pin the DSA area, this is to make sure the area remains attachable
 		 * even if current backend exits. This is done so that the statistics
 		 * are published even if the process exits while a client is waiting.
 		 */
-		dsa_pin(area);
+		dsa_pin(MemoryStatsDsaArea);
 
 		/* Set the handle in shared memory */
 		memCxtArea->memstats_dsa_handle = handle;
@@ -1521,14 +1521,14 @@ ProcessGetMemoryContextInterrupt(void)
 	 * If DSA exists, created by another process publishing statistics, attach
 	 * to it.
 	 */
-	else if (area == NULL)
+	else if (MemoryStatsDsaArea == NULL)
 	{
 		MemoryContext oldcontext = CurrentMemoryContext;
 
 		MemoryContextSwitchTo(TopMemoryContext);
-		area = dsa_attach(memCxtArea->memstats_dsa_handle);
+		MemoryStatsDsaArea = dsa_attach(memCxtArea->memstats_dsa_handle);
 		MemoryContextSwitchTo(oldcontext);
-		dsa_pin_mapping(area);
+		dsa_pin_mapping(MemoryStatsDsaArea);
 	}
 	LWLockRelease(&memCxtArea->lw_lock);
 
@@ -1545,7 +1545,7 @@ ProcessGetMemoryContextInterrupt(void)
 		 * Free any previous allocations, free the name, ident and path
 		 * pointers before freeing the pointer that contains them.
 		 */
-		free_memorycontextstate_dsa(area, memCxtState[idx].total_stats,
+		free_memorycontextstate_dsa(MemoryStatsDsaArea, memCxtState[idx].total_stats,
 									memCxtState[idx].memstats_dsa_pointer);
 	}
 
@@ -1556,10 +1556,10 @@ ProcessGetMemoryContextInterrupt(void)
 	 */
 	memCxtState[idx].total_stats = stats_num;
 	memCxtState[idx].memstats_dsa_pointer =
-		dsa_allocate0(area, stats_num * sizeof(MemoryStatsEntry));
+		dsa_allocate0(MemoryStatsDsaArea, stats_num * sizeof(MemoryStatsEntry));
 
 	meminfo = (MemoryStatsEntry *)
-		dsa_get_address(area, memCxtState[idx].memstats_dsa_pointer);
+		dsa_get_address(MemoryStatsDsaArea, memCxtState[idx].memstats_dsa_pointer);
 
 	if (summary)
 	{
@@ -1572,7 +1572,7 @@ ProcessGetMemoryContextInterrupt(void)
 											 &stat, true);
 		path = lcons_int(1, path);
 		PublishMemoryContext(meminfo, cxt_id, TopMemoryContext, path, stat,
-							 1, area, 100);
+							 1, MemoryStatsDsaArea, 100);
 		cxt_id = cxt_id + 1;
 
 		/*
@@ -1602,7 +1602,7 @@ ProcessGetMemoryContextInterrupt(void)
 			 */
 			memCxtState[idx].total_stats = cxt_id++;
 			PublishMemoryContext(meminfo, cxt_id, c, path,
-								 grand_totals, num_contexts, area, 100);
+								 grand_totals, num_contexts, MemoryStatsDsaArea, 100);
 		}
 		memCxtState[idx].total_stats = cxt_id;
 
@@ -1632,7 +1632,7 @@ ProcessGetMemoryContextInterrupt(void)
 		if (context_id < (max_stats - 1) || stats_count <= max_stats)
 		{
 			/* Copy statistics to DSA memory */
-			PublishMemoryContext(meminfo, context_id, cur, path, stat, 1, area, 100);
+			PublishMemoryContext(meminfo, context_id, cur, path, stat, 1, MemoryStatsDsaArea, 100);
 		}
 		else
 		{
@@ -1657,8 +1657,8 @@ ProcessGetMemoryContextInterrupt(void)
 			int			namelen = strlen("Remaining Totals");
 
 			num_individual_stats = context_id + 1;
-			meminfo[max_stats - 1].name = dsa_allocate(area, namelen + 1);
-			nameptr = dsa_get_address(area, meminfo[max_stats - 1].name);
+			meminfo[max_stats - 1].name = dsa_allocate(MemoryStatsDsaArea, namelen + 1);
+			nameptr = dsa_get_address(MemoryStatsDsaArea, meminfo[max_stats - 1].name);
 			strncpy(nameptr, "Remaining Totals", namelen);
 			meminfo[max_stats - 1].ident = InvalidDsaPointer;
 			meminfo[max_stats - 1].path = InvalidDsaPointer;
@@ -1921,18 +1921,18 @@ AtProcExit_memstats_cleanup(int code, Datum arg)
 	}
 
 	/* If the dsa mapping could not be found, attach to the area */
-	if (area == NULL)
-		area = dsa_attach(memCxtArea->memstats_dsa_handle);
+	if (MemoryStatsDsaArea == NULL)
+		MemoryStatsDsaArea = dsa_attach(memCxtArea->memstats_dsa_handle);
 
 	/*
 	 * Free the memory context statistics, free the name, ident and path
 	 * pointers before freeing the pointer that contains these pointers and
 	 * integer statistics.
 	 */
-	free_memorycontextstate_dsa(area, memCxtState[idx].total_stats,
+	free_memorycontextstate_dsa(MemoryStatsDsaArea, memCxtState[idx].total_stats,
 								memCxtState[idx].memstats_dsa_pointer);
 
-	dsa_detach(area);
+	dsa_detach(MemoryStatsDsaArea);
 	LWLockRelease(&memCxtState[idx].lw_lock);
 }
 
