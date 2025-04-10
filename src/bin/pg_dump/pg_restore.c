@@ -902,6 +902,8 @@ read_one_statement(StringInfo inBuf, FILE *pfile)
 			break;
 		}
 
+		destroyStringInfo(&q);
+
 		if (c == '\n')
 			appendStringInfoChar(inBuf, (char) '\n');
 	}
