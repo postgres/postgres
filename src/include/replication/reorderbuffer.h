@@ -676,6 +676,10 @@ TransactionId ReorderBufferGetOldestXmin(ReorderBuffer *rb);
 
 void		ReorderBufferSetRestartPoint(ReorderBuffer *, XLogRecPtr ptr);
 
+uint32		ReorderBufferGetInvalidations(ReorderBuffer *rb,
+										  TransactionId xid,
+										  SharedInvalidationMessage **msgs);
+
 void		StartupReorderBuffer(void);
 
 #endif
