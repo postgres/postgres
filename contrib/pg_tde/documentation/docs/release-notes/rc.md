@@ -39,17 +39,16 @@ This release provides the following features and improvements:
 
 ## Known issues
 
-* The default `mlock` limit on Rocky Linux 8 for ARM64-based architectures is 64 Kb. The internal `pg_tde` key size is 40 bytes, which results in about 1600 keys that fall into the limit. When the `mlock` limit is reached, `pg_tde` cannot lock memory for more keys and can fail with the error.    
+* The default `mlock` limit on Rocky Linux 8 for ARM64-based architectures equals the memory page size and is 64 Kb. This results in the child process with `pg_tde` failing to allocate another memory page because the max memory limit is reached by the parent process.   
 
-   To prevent this, you can change the `mlock` limit:   
+    To prevent this, you can change the `mlock` limit to be at least twice bigger than the memory page size:    
 
-   * temporarily for the current session using the `ulimit -l <value>` command. 
-   * set a new hard limit in the `/etc/security/limits.conf` file. To do so, you require the superuser privileges.       
+    * temporarily for the current session using the `ulimit -l <value>` command. 
+    * set a new hard limit in the `/etc/security/limits.conf` file. To do so, you require the superuser privileges.        
 
-   Adjust the limits with caution since it affects other processes running in your system.
+    Adjust the limits with caution since it affects other processes running in your system.
 
 * You can now delete global key providers even when their associated principal key is still in use. This known issue will be fixed in the next release. For now, avoid deleting global key providers. 
-
 
 
 

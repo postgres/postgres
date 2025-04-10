@@ -27,11 +27,11 @@ Transparent Data Encryption offers encryption at the file level and solves the p
 
 ## Documentation
 
-Full and comprehensive documentation about `pg_tde` is available at https://percona.github.io/pg_tde/.
+Full and comprehensive documentation about `pg_tde` is available at https://docs.percona.com/pg-tde/index.html.
 
 ## Percona Server for PostgreSQL
 
-Percona provides binary packages of `pg_tde` extension only for Percona Server for PostgreSQL. Learn how to install them or build `pg_tde` from sources for PSPG in the [documentation](https://percona.github.io/pg_tde/main/install.html).
+Percona provides binary packages of `pg_tde` extension only for Percona Server for PostgreSQL. Learn how to install them or build `pg_tde` from sources for PSPG in the [documentation](https://docs.percona.com/pg-tde/install.html).
 
 ## Building from sources for community PostgreSQL
   1. Install required dependencies (replace XX with 16 or 17)
