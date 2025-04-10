@@ -868,7 +868,16 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	tabentry->live_tuples += lstats->counts.delta_live_tuples;
 	tabentry->dead_tuples += lstats->counts.delta_dead_tuples;
 	tabentry->mod_since_analyze += lstats->counts.changed_tuples;
+
+	/*
+	 * Using tuples_inserted to update ins_since_vacuum does mean that we'll
+	 * track aborted inserts too.  This isn't ideal, but otherwise probably
+	 * not worth adding an extra field for.  It may just amount to autovacuums
+	 * triggering for inserts more often than they maybe should, which is
+	 * probably not going to be common enough to be too concerned about here.
+	 */
 	tabentry->ins_since_vacuum += lstats->counts.tuples_inserted;
+
 	tabentry->blocks_fetched += lstats->counts.blocks_fetched;
 	tabentry->blocks_hit += lstats->counts.blocks_hit;
 
