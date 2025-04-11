@@ -13,6 +13,7 @@ GETTEXT_FILES    = check.c \
                    relfilenumber.c \
                    server.c \
                    tablespace.c \
+                   task.c \
                    util.c \
                    version.c \
                    ../../common/fe_memutils.c \
