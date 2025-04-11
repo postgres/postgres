@@ -55,7 +55,7 @@ PostgreSQL documentation
    If a database name is specified, <application>pg_restore</application>
    connects to that database and restores archive contents directly into
    the database.
-   When restoring from a dump made by<application>pg_dumpall</application>,
+   When restoring from a dump made by <application>pg_dumpall</application>,
    each database will be created and then the restoration will be run in that
    database.
 
