@@ -43,7 +43,7 @@ env_dict = {**os.environ,
             'TESTLOGDIR': os.path.join(testdir, 'log')}
 
 
-# The configuration time value of PG_TEST_EXTRA is supplied via arguement
+# The configuration time value of PG_TEST_EXTRA is supplied via argument
 # --pg-test-extra. But it can be overridden by environment variable
 # PG_TEST_EXTRA at the time of running a test. Hence use value from arguments
 # only if PG_TEST_EXTRA is not set in the test environment, which already

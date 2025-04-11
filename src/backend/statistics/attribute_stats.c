@@ -547,7 +547,7 @@ get_attr_expr(Relation rel, int attnum)
 		return NULL;
 
 	/*
-	 * The index attnum points directly to a relation attnum, then it's no an
+	 * The index attnum points directly to a relation attnum, then it's not an
 	 * expression attribute.
 	 */
 	if (rel->rd_index->indkey.values[attnum - 1] != 0)

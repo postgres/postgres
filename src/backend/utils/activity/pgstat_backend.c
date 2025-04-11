@@ -100,7 +100,7 @@ pgstat_fetch_stat_backend(ProcNumber procNumber)
 /*
  * Returns statistics of a backend by pid.
  *
- * This routine includes sanity checks to ensire that the backend exists and
+ * This routine includes sanity checks to ensure that the backend exists and
  * is running.  "bktype" can be optionally defined to return the BackendType
  * of the backend whose statistics are returned.
  */

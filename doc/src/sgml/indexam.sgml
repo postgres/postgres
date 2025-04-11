@@ -895,7 +895,7 @@ amtranslatestrategy (StrategyNumber strategy, Oid opfamily, Oid opcintype);
 StrategyNumber
 amtranslatecmptype (CompareType cmptype, Oid opfamily, Oid opcintype);
 </programlisting>
-   These functions, if implemented, will be called by the planer and executor
+   These functions, if implemented, will be called by the planner and executor
    to convert between fixed <type>CompareType</type> values and the specific
    strategy numbers used by the access method.  These functions can be
    implemented by access methods that implement functionality similar to the

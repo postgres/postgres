@@ -1832,7 +1832,7 @@ LWLockDisownInternal(LWLock *lock)
 
 /*
  * Helper function to release lock, shared between LWLockRelease() and
- * LWLockeleaseDisowned().
+ * LWLockReleaseDisowned().
  */
 static void
 LWLockReleaseInternal(LWLock *lock, LWLockMode mode)
