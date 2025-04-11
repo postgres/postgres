@@ -455,6 +455,11 @@ RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
+CREATE FUNCTION pg_tde_verify_default_key()
+RETURNS VOID
+LANGUAGE C
+AS 'MODULE_PATHNAME';
+
 CREATE FUNCTION pg_tde_key_info()
 RETURNS TABLE ( key_name text,
                 key_provider_name text,
@@ -464,6 +469,14 @@ LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_server_key_info()
+RETURNS TABLE ( key_name text,
+                key_provider_name text,
+                key_provider_id integer,
+                key_createion_time timestamp with time zone)
+LANGUAGE C
+AS 'MODULE_PATHNAME';
+
+CREATE FUNCTION pg_tde_default_key_info()
 RETURNS TABLE ( key_name text,
                 key_provider_name text,     
                 key_provider_id integer,
@@ -591,8 +604,11 @@ BEGIN
 
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_key_info() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_server_key_info() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_default_key_info() TO %I', target_role);
+
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_key() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_server_key() TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_default_key() TO %I', target_role);
 END;
 $$;
 
@@ -672,8 +688,11 @@ BEGIN
 
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_key_info() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_server_key_info() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_default_key_info() FROM %I', target_role);
+
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_key() FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_server_key() FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_verify_default_key() FROM %I', target_role);
 END;
 $$;
 

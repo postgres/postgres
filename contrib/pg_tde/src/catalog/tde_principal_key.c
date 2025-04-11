@@ -54,6 +54,7 @@ PG_FUNCTION_INFO_V1(pg_tde_delete_global_key_provider);
 
 PG_FUNCTION_INFO_V1(pg_tde_verify_key);
 PG_FUNCTION_INFO_V1(pg_tde_verify_server_key);
+PG_FUNCTION_INFO_V1(pg_tde_verify_default_key);
 
 typedef struct TdePrincipalKeySharedState
 {
@@ -607,6 +608,13 @@ pg_tde_server_key_info(PG_FUNCTION_ARGS)
 	return pg_tde_get_key_info(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
+PG_FUNCTION_INFO_V1(pg_tde_default_key_info);
+Datum
+pg_tde_default_key_info(PG_FUNCTION_ARGS)
+{
+	return pg_tde_get_key_info(fcinfo, DEFAULT_DATA_TDE_OID);
+}
+
 Datum
 pg_tde_verify_key(PG_FUNCTION_ARGS)
 {
@@ -617,6 +625,12 @@ Datum
 pg_tde_verify_server_key(PG_FUNCTION_ARGS)
 {
 	return pg_tde_verify_principal_key_internal(GLOBAL_DATA_TDE_OID);
+}
+
+Datum
+pg_tde_verify_default_key(PG_FUNCTION_ARGS)
+{
+	return pg_tde_verify_principal_key_internal(DEFAULT_DATA_TDE_OID);
 }
 
 static Datum

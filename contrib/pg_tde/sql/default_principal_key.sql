@@ -3,7 +3,18 @@ CREATE EXTENSION IF NOT EXISTS pg_buffercache;
 
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_key.per');
 
+-- Should fail: no default principal key for the server yet
+SELECT pg_tde_verify_default_key();
+
+-- Should fail: no default principal key for the server yet
+SELECT key_provider_id, key_provider_name, key_name 
+		FROM pg_tde_default_key_info();
+
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider', false);
+SELECT pg_tde_verify_default_key();
+
+SELECT key_provider_id, key_provider_name, key_name 
+		FROM pg_tde_default_key_info();
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-provider');

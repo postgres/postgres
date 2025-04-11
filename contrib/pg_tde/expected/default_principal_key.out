@@ -6,10 +6,31 @@ SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regressi
                                   -3
 (1 row)
 
+-- Should fail: no default principal key for the server yet
+SELECT pg_tde_verify_default_key();
+ERROR:  principal key not configured for current database
+-- Should fail: no default principal key for the server yet
+SELECT key_provider_id, key_provider_name, key_name 
+		FROM pg_tde_default_key_info();
+ERROR:  Principal key does not exists for the database
+HINT:  Use set_key interface to set the principal key
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider', false);
  pg_tde_set_default_key_using_global_key_provider 
 --------------------------------------------------
  
+(1 row)
+
+SELECT pg_tde_verify_default_key();
+ pg_tde_verify_default_key 
+---------------------------
+ 
+(1 row)
+
+SELECT key_provider_id, key_provider_name, key_name 
+		FROM pg_tde_default_key_info();
+ key_provider_id | key_provider_name |  key_name   
+-----------------+-------------------+-------------
+              -3 | file-provider     | default-key
 (1 row)
 
 -- fails

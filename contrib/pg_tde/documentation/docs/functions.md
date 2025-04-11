@@ -298,6 +298,14 @@ Displays information about the principal key for the server scope, if exists.
 SELECT pg_tde_server_key_info()
 ```
 
+### pg_tde_default_key_info
+
+Displays the information about the default principal key, if it exists.
+
+```
+SELECT pg_tde_default_key_info()
+```
+
 ### pg_tde_verify_key
 
 This function checks that the current database has a properly functional encryption setup, which means:
@@ -328,4 +336,20 @@ If any of the above checks fail, the function reports an error.
 
 ```
 SELECT pg_tde_verify_server_key()
+```
+
+### pg_tde_verify_default_key
+
+This function checks that the default key is properly configured, which means:
+
+* A key provider is configured
+* The key provider is accessible using the specified configuration
+* There is a principal key that can be used for any scope
+* The principal key can be retrieved from the remote key provider
+* The principal key returned from the key provider is the same as cached in the server memory
+
+If any of the above checks fail, the function reports an error.
+
+```
+SELECT pg_tde_verify_default_key()
 ```
