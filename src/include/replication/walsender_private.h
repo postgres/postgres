@@ -98,14 +98,29 @@ typedef struct
 	XLogRecPtr	lsn[NUM_SYNC_REP_WAIT_MODE];
 
 	/*
-	 * Are any sync standbys defined?  Waiting backends can't reload the
-	 * config file safely, so checkpointer updates this value as needed.
-	 * Protected by SyncRepLock.
+	 * Status of data related to the synchronous standbys.  Waiting backends
+	 * can't reload the config file safely, so checkpointer updates this value
+	 * as needed. Protected by SyncRepLock.
 	 */
-	bool		sync_standbys_defined;
+	bits8		sync_standbys_status;
 
 	WalSnd		walsnds[FLEXIBLE_ARRAY_MEMBER];
 } WalSndCtlData;
+
+/* Flags for WalSndCtlData->sync_standbys_status */
+
+/*
+ * Is the synchronous standby data initialized from the GUC?  This is set the
+ * first time synchronous_standby_names is processed by the checkpointer.
+ */
+#define SYNC_STANDBY_INIT			(1 << 0)
+
+/*
+ * Is the synchronous standby data defined?  This is set when
+ * synchronous_standby_names has some data, after being processed by the
+ * checkpointer.
+ */
+#define SYNC_STANDBY_DEFINED		(1 << 1)
 
 extern WalSndCtlData *WalSndCtl;
 
