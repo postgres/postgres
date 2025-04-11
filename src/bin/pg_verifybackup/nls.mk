@@ -1,6 +1,7 @@
 # src/bin/pg_verifybackup/nls.mk
 CATALOG_NAME     = pg_verifybackup
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
+                   astreamer_verify.c \
                    pg_verifybackup.c \
                    ../../common/controldata_utils.c \
                    ../../common/cryptohash.c \
