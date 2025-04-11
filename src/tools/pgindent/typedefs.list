@@ -1607,6 +1607,7 @@ ManyTestResourceKind
 Material
 MaterialPath
 MaterialState
+MdSMgrRelationData
 MdfdVec
 Memoize
 MemoizeEntry
@@ -3206,6 +3207,7 @@ XLogRecordBuffer
 XLogRecoveryCtlData
 XLogRedoAction
 XLogSegNo
+XLogSmgr
 XLogSource
 XLogStats
 XLogwrtResult
