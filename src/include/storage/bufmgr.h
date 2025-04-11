@@ -173,8 +173,8 @@ extern PGDLLIMPORT int checkpoint_flush_after;
 extern PGDLLIMPORT int backend_flush_after;
 extern PGDLLIMPORT int bgwriter_flush_after;
 
-extern const PgAioHandleCallbacks aio_shared_buffer_readv_cb;
-extern const PgAioHandleCallbacks aio_local_buffer_readv_cb;
+extern PGDLLIMPORT const PgAioHandleCallbacks aio_shared_buffer_readv_cb;
+extern PGDLLIMPORT const PgAioHandleCallbacks aio_local_buffer_readv_cb;
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;

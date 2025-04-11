@@ -48,7 +48,7 @@ typedef struct
 } PMChild;
 
 #ifdef EXEC_BACKEND
-extern int	num_pmchild_slots;
+extern PGDLLIMPORT int num_pmchild_slots;
 #endif
 
 /* GUC options */
@@ -117,7 +117,7 @@ pg_noreturn extern void SubPostmasterMain(int argc, char *argv[]);
 #endif
 
 /* defined in pmchild.c */
-extern dlist_head ActiveChildList;
+extern PGDLLIMPORT dlist_head ActiveChildList;
 
 extern void InitPostmasterChildSlots(void);
 extern PMChild *AssignPostmasterChildSlot(BackendType btype);

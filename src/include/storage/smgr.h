@@ -74,7 +74,7 @@ typedef SMgrRelationData *SMgrRelation;
 #define SmgrIsTemp(smgr) \
 	RelFileLocatorBackendIsTemp((smgr)->smgr_rlocator)
 
-extern const PgAioTargetInfo aio_smgr_target_info;
+extern PGDLLIMPORT const PgAioTargetInfo aio_smgr_target_info;
 
 extern void smgrinit(void);
 extern SMgrRelation smgropen(RelFileLocator rlocator, ProcNumber backend);

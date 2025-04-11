@@ -20,7 +20,7 @@
 #include "storage/smgr.h"
 #include "storage/sync.h"
 
-extern const PgAioHandleCallbacks aio_md_readv_cb;
+extern PGDLLIMPORT const PgAioHandleCallbacks aio_md_readv_cb;
 
 /* md storage manager functionality */
 extern void mdinit(void);
