@@ -13,6 +13,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    compress_lz4.c \
                    compress_none.c \
                    compress_zstd.c \
+                   connectdb.c \
                    pg_dump.c \
                    common.c \
                    pg_dump_sort.c \
