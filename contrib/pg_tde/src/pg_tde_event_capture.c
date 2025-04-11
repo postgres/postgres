@@ -31,7 +31,7 @@
 #include "catalog/tde_global_space.h"
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
-static TdeCreateEvent tdeCurrentCreateEvent = {.tid = {.value = 0},.relation = NULL};
+static TdeCreateEvent tdeCurrentCreateEvent = {.tid = {.value = 0}};
 static bool alterSetAccessMethod = false;
 
 static void reset_current_tde_create_event(void);
@@ -129,7 +129,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
 
 		tdeCurrentCreateEvent.baseTableOid = relationId;
-		tdeCurrentCreateEvent.relation = stmt->relation;
 
 		if (relationId != InvalidOid)
 		{
@@ -158,8 +157,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
 
-		tdeCurrentCreateEvent.relation = stmt->relation;
-
 		if (shouldEncryptTable(stmt->accessMethod))
 			tdeCurrentCreateEvent.encryptMode = true;
 
@@ -171,8 +168,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
-
-		tdeCurrentCreateEvent.relation = stmt->into->rel;
 
 		if (shouldEncryptTable(stmt->into->accessMethod))
 			tdeCurrentCreateEvent.encryptMode = true;
@@ -194,7 +189,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 			if (cmd->subtype == AT_SetAccessMethod)
 			{
-				tdeCurrentCreateEvent.relation = stmt->relation;
 				tdeCurrentCreateEvent.baseTableOid = relationId;
 				tdeCurrentCreateEvent.alterAccessMethodMode = true;
 
@@ -216,7 +210,6 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			 */
 
 			tdeCurrentCreateEvent.baseTableOid = relationId;
-			tdeCurrentCreateEvent.relation = stmt->relation;
 
 			if (relationId != InvalidOid)
 			{
@@ -314,10 +307,9 @@ reset_current_tde_create_event(void)
 {
 	tdeCurrentCreateEvent.encryptMode = false;
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
-	tdeCurrentCreateEvent.relation = NULL;
 	tdeCurrentCreateEvent.tid = InvalidFullTransactionId;
-	alterSetAccessMethod = false;
 	tdeCurrentCreateEvent.alterAccessMethodMode = false;
+	alterSetAccessMethod = false;
 }
 
 static Oid
