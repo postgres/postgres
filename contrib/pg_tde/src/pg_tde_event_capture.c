@@ -117,12 +117,12 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				errmsg("Function can only be fired by event trigger manager"));
 
-	trigdata = (EventTriggerData *) fcinfo->context;
+	trigdata = castNode(EventTriggerData, fcinfo->context);
 	parsetree = trigdata->parsetree;
 
 	if (IsA(parsetree, IndexStmt))
 	{
-		IndexStmt  *stmt = (IndexStmt *) parsetree;
+		IndexStmt  *stmt = castNode(IndexStmt, parsetree);
 		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
 		validateCurrentEventTriggerState(true);
@@ -152,7 +152,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	}
 	else if (IsA(parsetree, CreateStmt))
 	{
-		CreateStmt *stmt = (CreateStmt *) parsetree;
+		CreateStmt *stmt = castNode(CreateStmt, parsetree);
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
@@ -164,7 +164,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	}
 	else if (IsA(parsetree, CreateTableAsStmt))
 	{
-		CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+		CreateTableAsStmt *stmt = castNode(CreateTableAsStmt, parsetree);
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
@@ -176,7 +176,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	}
 	else if (IsA(parsetree, AlterTableStmt))
 	{
-		AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
+		AlterTableStmt *stmt = castNode(AlterTableStmt, parsetree);
 		ListCell   *lcmd;
 		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
@@ -185,7 +185,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		foreach(lcmd, stmt->cmds)
 		{
-			AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+			AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
 
 			if (cmd->subtype == AT_SetAccessMethod)
 			{
@@ -257,13 +257,13 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
 
-	trigdata = (EventTriggerData *) fcinfo->context;
-	parsetree = trigdata->parsetree;
-
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
 		ereport(ERROR,
 				errmsg("Function can only be fired by event trigger manager"));
+
+	trigdata = castNode(EventTriggerData, fcinfo->context);
+	parsetree = trigdata->parsetree;
 
 	if (IsA(parsetree, AlterTableStmt) && tdeCurrentCreateEvent.alterAccessMethodMode)
 	{
