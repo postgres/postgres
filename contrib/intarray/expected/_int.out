@@ -492,6 +492,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6344
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
+(1 row)
+
 SET enable_seqscan = off;  -- not all of these would use index by default
 CREATE INDEX text_idx on test__int using gist ( a gist__int_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
@@ -564,6 +570,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
  count 
 -------
   6344
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
 (1 row)
 
 INSERT INTO test__int SELECT array(SELECT x FROM generate_series(1, 1001) x); -- should fail
@@ -648,6 +660,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6344
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
+(1 row)
+
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist (a gist__intbig_ops(siglen = 0));
 ERROR:  value 0 out of bounds for option "siglen"
@@ -728,6 +746,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6344
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
+(1 row)
+
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gist ( a gist__intbig_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
@@ -802,6 +826,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
   6344
 (1 row)
 
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
+(1 row)
+
 DROP INDEX text_idx;
 CREATE INDEX text_idx on test__int using gin ( a gin__int_ops );
 SELECT count(*) from test__int WHERE a && '{23,50}';
@@ -874,6 +904,12 @@ SELECT count(*) from test__int WHERE a @@ '!20 & !21';
  count 
 -------
   6344
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
 (1 row)
 
 DROP INDEX text_idx;
@@ -966,6 +1002,12 @@ SELECT count(*) from more__int WHERE a @@ '!20 & !21';
  count 
 -------
   6344
+(1 row)
+
+SELECT count(*) from test__int WHERE a @@ '!2733 & (2738 | 254)';
+ count 
+-------
+    12
 (1 row)
 
 RESET enable_seqscan;
