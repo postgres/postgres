@@ -387,9 +387,13 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <para>
     The optional <literal>WITH</literal> clause specifies <firstterm>storage
-    parameters</firstterm> for the index.  Each index method has its own set of allowed
-    storage parameters.  The B-tree, hash, GiST and SP-GiST index methods all
-    accept this parameter:
+    parameters</firstterm> for the index.  Each index method has its own set
+    of allowed storage parameters.
+   </para>
+
+   <para>
+    The B-tree, hash, GiST and SP-GiST index methods all accept this
+    parameter:
    </para>
 
    <variablelist>
@@ -401,7 +405,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
      <para>
-      The fillfactor for an index is a percentage that determines how full
+      Controls how full
       the index method will try to pack index pages.  For B-trees, leaf pages
       are filled to this percentage during initial index builds, and also
       when extending the index at the right (adding new largest key values).
@@ -488,7 +492,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     Determines whether the buffered build technique described in
+     Controls whether the buffered build technique described in
      <xref linkend="gist-buffering-build"/> is used to build the index. With
      <literal>OFF</literal> buffering is disabled, with <literal>ON</literal>
      it is enabled, and with <literal>AUTO</literal> it is initially disabled,
@@ -503,7 +507,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    GIN indexes accept different parameters:
+    GIN indexes accept these parameters:
    </para>
 
    <variablelist>
@@ -515,8 +519,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     This setting controls usage of the fast update technique described in
-     <xref linkend="gin-fast-update"/>.  It is a Boolean parameter:
+     Controls usage of the fast update technique described in
+     <xref linkend="gin-fast-update"/>.
      <literal>ON</literal> enables fast update, <literal>OFF</literal> disables it.
      The default is <literal>ON</literal>.
     </para>
@@ -525,8 +529,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      <para>
       Turning <literal>fastupdate</literal> off via <command>ALTER INDEX</command> prevents
       future insertions from going into the list of pending index entries,
-      but does not in itself flush previous entries.  You might want to
-      <command>VACUUM</command> the table or call <function>gin_clean_pending_list</function>
+      but does not in itself flush existing entries.  You might want to
+      <command>VACUUM</command> the table or call
+      the <function>gin_clean_pending_list</function>
       function afterward to ensure the pending list is emptied.
      </para>
     </note>
@@ -544,7 +549,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     Custom <xref linkend="guc-gin-pending-list-limit"/> parameter.
+     Overrides the global setting of
+     <xref linkend="guc-gin-pending-list-limit"/> for this index.
      This value is specified in kilobytes.
     </para>
     </listitem>
@@ -552,7 +558,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    <acronym>BRIN</acronym> indexes accept different parameters:
+    <acronym>BRIN</acronym> indexes accept these parameters:
    </para>
 
    <variablelist>
@@ -580,8 +586,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     <listitem>
     <para>
      Defines whether a summarization run is queued for the previous page
-     range whenever an insertion is detected on the next one.
-     See <xref linkend="brin-operation"/> for more details.
+     range whenever an insertion is detected on the next one
+     (see <xref linkend="brin-operation"/> for more details).
      The default is <literal>off</literal>.
     </para>
     </listitem>
