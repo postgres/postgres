@@ -397,7 +397,7 @@ static bool ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdc
 										  bool recurse, LOCKMODE lockmode);
 static bool ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 											Relation conrel, Relation tgrel,
-											const Oid fkrelid, const Oid pkrelid,
+											Oid fkrelid, Oid pkrelid,
 											HeapTuple contuple, LOCKMODE lockmode,
 											Oid ReferencedParentDelTrigger,
 											Oid ReferencedParentUpdTrigger,
@@ -415,7 +415,7 @@ static void AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation
 											List **otherrelids);
 static void AlterConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
 											 Relation conrel, Relation tgrel,
-											 const Oid fkrelid, const Oid pkrelid,
+											 Oid fkrelid, Oid pkrelid,
 											 HeapTuple contuple, LOCKMODE lockmode,
 											 Oid ReferencedParentDelTrigger,
 											 Oid ReferencedParentUpdTrigger,
@@ -503,7 +503,7 @@ static ObjectAddress ATExecDropNotNull(Relation rel, const char *colName, bool r
 static void set_attnotnull(List **wqueue, Relation rel, AttrNumber attnum,
 						   bool is_valid, bool queue_validation);
 static ObjectAddress ATExecSetNotNull(List **wqueue, Relation rel,
-									  char *constrname, char *colName,
+									  char *conName, char *colName,
 									  bool recurse, bool recursing,
 									  LOCKMODE lockmode);
 static bool NotNullImpliedByRelConstraints(Relation rel, Form_pg_attribute attr);
@@ -733,7 +733,7 @@ static ObjectAddress ATExecAttachPartitionIdx(List **wqueue, Relation parentIdx,
 static void validatePartitionedIndex(Relation partedIdx, Relation partedTbl);
 static void refuseDupeIndexAttach(Relation parentIdx, Relation partIdx,
 								  Relation partitionTbl);
-static void verifyPartitionIndexNotNull(IndexInfo *iinfo, Relation partIdx);
+static void verifyPartitionIndexNotNull(IndexInfo *iinfo, Relation partition);
 static List *GetParentedForeignKeyRefs(Relation partition);
 static void ATDetachCheckNoForeignKeyRefs(Relation partition);
 static char GetAttributeCompression(Oid atttypid, const char *compression);

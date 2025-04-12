@@ -125,16 +125,16 @@ extern void init_database_collation(void);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
-extern size_t pg_strlower(char *dest, size_t destsize,
+extern size_t pg_strlower(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
-extern size_t pg_strtitle(char *dest, size_t destsize,
+extern size_t pg_strtitle(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
-extern size_t pg_strupper(char *dest, size_t destsize,
+extern size_t pg_strupper(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
-extern size_t pg_strfold(char *dest, size_t destsize,
+extern size_t pg_strfold(char *dst, size_t dstsize,
 						 const char *src, ssize_t srclen,
 						 pg_locale_t locale);
 extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);

@@ -527,7 +527,7 @@ static inline BufferDesc *BufferAlloc(SMgrRelation smgr,
 									  BlockNumber blockNum,
 									  BufferAccessStrategy strategy,
 									  bool *foundPtr, IOContext io_context);
-static bool AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks);
+static bool AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress);
 static void CheckReadBuffersOperation(ReadBuffersOperation *operation, bool is_complete);
 static Buffer GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln,

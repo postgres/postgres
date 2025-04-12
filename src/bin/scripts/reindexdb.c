@@ -60,7 +60,7 @@ static void gen_reindex_command(PGconn *conn, ReindexType type,
 								PQExpBufferData *sql);
 static void run_reindex_command(PGconn *conn, ReindexType type,
 								const char *name, bool echo,
-								PQExpBufferData *sq);
+								PQExpBufferData *sql);
 
 static void help(const char *progname);
 

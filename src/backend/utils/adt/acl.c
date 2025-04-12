@@ -127,7 +127,7 @@ static AclMode convert_tablespace_priv_string(text *priv_type_text);
 static Oid	convert_type_name(text *typename);
 static AclMode convert_type_priv_string(text *priv_type_text);
 static AclMode convert_parameter_priv_string(text *priv_text);
-static AclMode convert_largeobject_priv_string(text *priv_text);
+static AclMode convert_largeobject_priv_string(text *priv_type_text);
 static AclMode convert_role_priv_string(text *priv_type_text);
 static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
 

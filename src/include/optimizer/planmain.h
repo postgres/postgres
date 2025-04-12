@@ -117,8 +117,8 @@ extern bool innerrel_is_unique(PlannerInfo *root,
 extern bool innerrel_is_unique_ext(PlannerInfo *root, Relids joinrelids,
 								   Relids outerrelids, RelOptInfo *innerrel,
 								   JoinType jointype, List *restrictlist,
-								   bool force_cache, List **uclauses);
-extern List *remove_useless_self_joins(PlannerInfo *root, List *jointree);
+								   bool force_cache, List **extra_clauses);
+extern List *remove_useless_self_joins(PlannerInfo *root, List *joinlist);
 
 /*
  * prototypes for plan/setrefs.c

@@ -96,6 +96,6 @@ extern PGDLLIMPORT const pg_be_sasl_mech pg_be_oauth_mech;
 /*
  * Ensure a validator named in the HBA is permitted by the configuration.
  */
-extern bool check_oauth_validator(HbaLine *hba, int elevel, char **err_msg);
+extern bool check_oauth_validator(HbaLine *hbaline, int elevel, char **err_msg);
 
 #endif							/* PG_OAUTH_H */

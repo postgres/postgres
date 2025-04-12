@@ -191,7 +191,7 @@ static void InitPartitionPruneContext(PartitionPruneContext *context,
 									  PartitionKey partkey,
 									  PlanState *planstate,
 									  ExprContext *econtext);
-static void InitExecPartitionPruneContexts(PartitionPruneState *prunstate,
+static void InitExecPartitionPruneContexts(PartitionPruneState *prunestate,
 										   PlanState *parent_plan,
 										   Bitmapset *initially_valid_subplans,
 										   int n_total_subplans);

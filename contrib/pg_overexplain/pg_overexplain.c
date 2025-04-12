@@ -54,7 +54,7 @@ static void overexplain_alias(const char *qlabel, Alias *alias,
 							  ExplainState *es);
 static void overexplain_bitmapset(const char *qlabel, Bitmapset *bms,
 								  ExplainState *es);
-static void overexplain_intlist(const char *qlabel, List *intlist,
+static void overexplain_intlist(const char *qlabel, List *list,
 								ExplainState *es);
 
 static int	es_extension_id;

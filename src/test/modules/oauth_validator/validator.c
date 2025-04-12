@@ -26,7 +26,7 @@ static void validator_shutdown(ValidatorModuleState *state);
 static bool validate_token(const ValidatorModuleState *state,
 						   const char *token,
 						   const char *role,
-						   ValidatorModuleResult *result);
+						   ValidatorModuleResult *res);
 
 /* Callback implementations (exercise all three) */
 static const OAuthValidatorCallbacks validator_callbacks = {

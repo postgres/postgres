@@ -154,7 +154,7 @@ static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 							  MdfdVec *seg);
 
 static PgAioResult md_readv_complete(PgAioHandle *ioh, PgAioResult prior_result, uint8 cb_data);
-static void md_readv_report(PgAioResult result, const PgAioTargetData *target_data, int elevel);
+static void md_readv_report(PgAioResult result, const PgAioTargetData *td, int elevel);
 
 const PgAioHandleCallbacks aio_md_readv_cb = {
 	.complete_shared = md_readv_complete,

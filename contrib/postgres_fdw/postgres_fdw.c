@@ -444,7 +444,7 @@ static void adjust_foreign_grouping_path_cost(PlannerInfo *root,
 											  double retrieved_rows,
 											  double width,
 											  double limit_tuples,
-											  int *disabled_nodes,
+											  int *p_disabled_nodes,
 											  Cost *p_startup_cost,
 											  Cost *p_run_cost);
 static bool ec_member_matches_foreign(PlannerInfo *root, RelOptInfo *rel,

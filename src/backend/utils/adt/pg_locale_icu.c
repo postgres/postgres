@@ -48,28 +48,22 @@
 #define		TEXTBUFLEN			1024
 
 extern pg_locale_t create_pg_locale_icu(Oid collid, MemoryContext context);
-extern size_t strlower_icu(char *dst, size_t dstsize, const char *src,
+extern size_t strlower_icu(char *dest, size_t destsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
-extern size_t strtitle_icu(char *dst, size_t dstsize, const char *src,
+extern size_t strtitle_icu(char *dest, size_t destsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
-extern size_t strupper_icu(char *dst, size_t dstsize, const char *src,
+extern size_t strupper_icu(char *dest, size_t destsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
-extern size_t strfold_icu(char *dst, size_t dstsize, const char *src,
+extern size_t strfold_icu(char *dest, size_t destsize, const char *src,
 						  ssize_t srclen, pg_locale_t locale);
 
 #ifdef USE_ICU
 
 extern UCollator *pg_ucol_open(const char *loc_str);
 
-static int	strncoll_icu(const char *arg1, ssize_t len1,
-						 const char *arg2, ssize_t len2,
-						 pg_locale_t locale);
 static size_t strnxfrm_icu(char *dest, size_t destsize,
 						   const char *src, ssize_t srclen,
 						   pg_locale_t locale);
-static size_t strnxfrm_prefix_icu(char *dest, size_t destsize,
-								  const char *src, ssize_t srclen,
-								  pg_locale_t locale);
 extern char *get_collation_actual_version_icu(const char *collcollate);
 
 typedef int32_t (*ICU_Convert_Func) (UChar *dest, int32_t destCapacity,

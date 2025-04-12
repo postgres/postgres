@@ -44,7 +44,7 @@ static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t s
 						   void *wbstate);
 static enum CaseMapResult casemap(pg_wchar u1, CaseKind casekind, bool full,
 								  const char *src, size_t srclen, size_t srcoff,
-								  pg_wchar *u2, const pg_wchar **special);
+								  pg_wchar *simple, const pg_wchar **special);
 
 pg_wchar
 unicode_lowercase_simple(pg_wchar code)

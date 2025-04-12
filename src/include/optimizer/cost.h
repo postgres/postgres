@@ -108,7 +108,7 @@ extern void cost_resultscan(Path *path, PlannerInfo *root,
 							RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_recursive_union(Path *runion, Path *nrterm, Path *rterm);
 extern void cost_sort(Path *path, PlannerInfo *root,
-					  List *pathkeys, int disabled_nodes,
+					  List *pathkeys, int input_disabled_nodes,
 					  Cost input_cost, double tuples, int width,
 					  Cost comparison_cost, int sort_mem,
 					  double limit_tuples);
@@ -132,7 +132,7 @@ extern void cost_agg(Path *path, PlannerInfo *root,
 					 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 					 int numGroupCols, double numGroups,
 					 List *quals,
-					 int input_disabled_nodes,
+					 int disabled_nodes,
 					 Cost input_startup_cost, Cost input_total_cost,
 					 double input_tuples, double input_width);
 extern void cost_windowagg(Path *path, PlannerInfo *root,

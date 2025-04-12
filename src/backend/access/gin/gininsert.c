@@ -180,11 +180,11 @@ static void _gin_begin_parallel(GinBuildState *buildstate, Relation heap, Relati
 								bool isconcurrent, int request);
 static void _gin_end_parallel(GinLeader *ginleader, GinBuildState *state);
 static Size _gin_parallel_estimate_shared(Relation heap, Snapshot snapshot);
-static double _gin_parallel_heapscan(GinBuildState *buildstate);
-static double _gin_parallel_merge(GinBuildState *buildstate);
+static double _gin_parallel_heapscan(GinBuildState *state);
+static double _gin_parallel_merge(GinBuildState *state);
 static void _gin_leader_participate_as_worker(GinBuildState *buildstate,
 											  Relation heap, Relation index);
-static void _gin_parallel_scan_and_build(GinBuildState *buildstate,
+static void _gin_parallel_scan_and_build(GinBuildState *state,
 										 GinBuildShared *ginshared,
 										 Sharedsort *sharedsort,
 										 Relation heap, Relation index,

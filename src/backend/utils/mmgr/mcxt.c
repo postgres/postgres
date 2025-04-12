@@ -184,7 +184,7 @@ static void MemoryContextStatsInternal(MemoryContext context, int level,
 static void MemoryContextStatsPrint(MemoryContext context, void *passthru,
 									const char *stats_string,
 									bool print_to_stderr);
-static void PublishMemoryContext(MemoryStatsEntry *memcxt_infos,
+static void PublishMemoryContext(MemoryStatsEntry *memcxt_info,
 								 int curr_id, MemoryContext context,
 								 List *path,
 								 MemoryContextCounters stat,

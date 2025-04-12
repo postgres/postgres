@@ -307,7 +307,7 @@ extern void CheckPointReplicationSlots(bool is_shutdown);
 extern void CheckSlotRequirements(void);
 extern void CheckSlotPermissions(void);
 extern ReplicationSlotInvalidationCause
-			GetSlotInvalidationCause(const char *invalidation_reason);
+			GetSlotInvalidationCause(const char *cause_name);
 extern const char *GetSlotInvalidationCauseName(ReplicationSlotInvalidationCause cause);
 
 extern bool SlotExistsInSyncStandbySlots(const char *slot_name);

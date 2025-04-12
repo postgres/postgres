@@ -23,7 +23,7 @@ PG_MODULE_MAGIC;
 static bool validate_token(const ValidatorModuleState *state,
 						   const char *token,
 						   const char *role,
-						   ValidatorModuleResult *result);
+						   ValidatorModuleResult *res);
 
 /* Callback implementations (we only need the main one) */
 static const OAuthValidatorCallbacks validator_callbacks = {
