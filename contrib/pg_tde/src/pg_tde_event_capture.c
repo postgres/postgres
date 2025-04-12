@@ -244,7 +244,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			reset_current_tde_create_event();
 		}
 	}
-	PG_RETURN_NULL();
+
+	PG_RETURN_VOID();
 }
 
 /*
@@ -299,7 +300,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 		reset_current_tde_create_event();
 	}
 
-	PG_RETURN_NULL();
+	PG_RETURN_VOID();
 }
 
 static void
