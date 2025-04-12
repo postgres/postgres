@@ -672,6 +672,7 @@ SELECT sum(writes) AS writes, sum(fsyncs) AS fsyncs
 SELECT current_setting('synchronous_commit') = 'on';
 SELECT :io_sum_wal_normal_after_writes > :io_sum_wal_normal_before_writes;
 SELECT current_setting('fsync') = 'off'
+  OR current_setting('wal_sync_method') IN ('open_sync', 'open_datasync')
   OR :io_sum_wal_normal_after_fsyncs > :io_sum_wal_normal_before_fsyncs;
 
 -- Change the tablespace so that the table is rewritten directly, then SELECT
