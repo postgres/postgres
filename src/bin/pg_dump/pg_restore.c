@@ -906,7 +906,7 @@ read_one_statement(StringInfo inBuf, FILE *pfile)
 			appendStringInfoChar(inBuf, (char) '\n');
 	}
 
-	destroyStringInfo(&q);
+	pg_free(q.data);
 
 	/* No input before EOF signal means time to quit. */
 	if (c == EOF && inBuf->len == 0)
