@@ -140,7 +140,9 @@ shimBoolConsistentFn(GinScanKey key)
  * every combination is O(n^2), so this is only feasible for a small number of
  * MAYBE inputs.
  *
- * NB: This function modifies the key->entryRes array!
+ * NB: This function modifies the key->entryRes array.  For now that's okay
+ * so long as we restore the entry-time contents before returning.  This may
+ * need revisiting if we ever invent multithreaded GIN scans, though.
  */
 static GinTernaryValue
 shimTriConsistentFn(GinScanKey key)
@@ -149,7 +151,7 @@ shimTriConsistentFn(GinScanKey key)
 	int			maybeEntries[MAX_MAYBE_ENTRIES];
 	int			i;
 	bool		boolResult;
-	bool		recheck = false;
+	bool		recheck;
 	GinTernaryValue curResult;
 
 	/*
@@ -169,8 +171,8 @@ shimTriConsistentFn(GinScanKey key)
 	}
 
 	/*
-	 * If none of the inputs were MAYBE, so we can just call consistent
-	 * function as is.
+	 * If none of the inputs were MAYBE, we can just call the consistent
+	 * function as-is.
 	 */
 	if (nmaybe == 0)
 		return directBoolConsistentFn(key);
@@ -179,6 +181,7 @@ shimTriConsistentFn(GinScanKey key)
 	for (i = 0; i < nmaybe; i++)
 		key->entryRes[maybeEntries[i]] = GIN_FALSE;
 	curResult = directBoolConsistentFn(key);
+	recheck = key->recheckCurItem;
 
 	for (;;)
 	{
@@ -200,12 +203,19 @@ shimTriConsistentFn(GinScanKey key)
 		recheck |= key->recheckCurItem;
 
 		if (curResult != boolResult)
-			return GIN_MAYBE;
+		{
+			curResult = GIN_MAYBE;
+			break;
+		}
 	}
 
 	/* TRUE with recheck is taken to mean MAYBE */
 	if (curResult == GIN_TRUE && recheck)
 		curResult = GIN_MAYBE;
+
+	/* We must restore the original state of the entryRes array */
+	for (i = 0; i < nmaybe; i++)
+		key->entryRes[maybeEntries[i]] = GIN_MAYBE;
 
 	return curResult;
 }
