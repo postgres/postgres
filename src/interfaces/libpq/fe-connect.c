@@ -402,7 +402,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, oauth_scope)},
 
 	{"sslkeylogfile", NULL, NULL, NULL,
-		"SSL-Key-Log-File", "", 0,	/* sizeof("") = 0 */
+		"SSL-Key-Log-File", "D", 64,
 	offsetof(struct pg_conn, sslkeylogfile)},
 
 	/* Terminating entry --- MUST BE LAST */
