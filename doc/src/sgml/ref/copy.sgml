@@ -677,7 +677,7 @@ COPY <replaceable class="parameter">count</replaceable>
     backward compatibility.  However, <application>psql</application>
     uses <literal>\.</literal> to terminate a <literal>COPY FROM
     STDIN</literal> operation (that is, reading
-    in-line <command>COPY</command> data in a SQL script).  In that
+    in-line <command>COPY</command> data in an SQL script).  In that
     context the rule is needed to be able to end the operation before the
     end of the script.
    </para>
@@ -844,7 +844,7 @@ COPY <replaceable class="parameter">count</replaceable>
     is not normally treated as special when reading <literal>CSV</literal>
     data.  An exception is that <application>psql</application> will terminate
     a <literal>COPY FROM STDIN</literal> operation (that is, reading
-    in-line <command>COPY</command> data in a SQL script) at a line containing
+    in-line <command>COPY</command> data in an SQL script) at a line containing
     only <literal>\.</literal>, whether it is text or <literal>CSV</literal>
     mode.
    </para>
