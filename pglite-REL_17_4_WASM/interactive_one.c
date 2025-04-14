@@ -265,15 +265,27 @@ clear_error() {
         send_ready_for_query = true;
 }
 
+void discard_input(){
+    if (!cma_rsize)
+        return;
+    pq_startmsgread();
+    for (int i = 0; i < cma_rsize; i++) {
+        pq_getbyte();
+    }
+    pq_endmsgread();
+}
+
 void
 startup_auth() {
     /* code is in handshake/auth domain so read whole msg now */
 
     if (ProcessStartupPacket(MyProcPort, true, true) != STATUS_OK) {
-        PDEBUG("# 246: ProcessStartupPacket !OK");
+        PDEBUG("# 283: ProcessStartupPacket !OK");
     } else {
-        PDEBUG("# 248: sending auth request");
+        PDEBUG("# 285: sending auth request");
         //ClientAuthentication(MyProcPort);
+    	discard_input();
+	    
 ClientAuthInProgress = true;
         md5Salt[0]=0x01;
         md5Salt[1]=0x23;
@@ -297,7 +309,7 @@ startup_pass(bool check) {
     // auth 'p'
     if (check) {
         char *passwd = recv_password_packet(MyProcPort);
-        printf("# 223: auth recv password: %s\n", "md5***" );
+        printf("# 312: auth recv password: %s\n", "md5***" );
         /*
         // TODO: CheckMD5Auth
             if (passwd == NULL)
@@ -309,7 +321,8 @@ startup_pass(bool check) {
         */
         pfree(passwd);
     } else {
-        PDEBUG("# 285: auth skip");
+        PDEBUG("# 324: auth skip");
+    	discard_input();
     }
     ClientAuthInProgress = false;
 
