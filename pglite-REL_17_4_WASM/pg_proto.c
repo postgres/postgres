@@ -248,7 +248,7 @@
 		     * it will fail to be called during other backend-shutdown
 		     * scenarios.
 		     */
-PGDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
+PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
             break;
 
