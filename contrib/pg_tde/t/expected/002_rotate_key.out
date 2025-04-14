@@ -4,92 +4,196 @@ psql:<stdin>:1: ERROR:  principal key not configured
 HINT:  create one using pg_tde_set_key before using encrypted tables
 -- server restart
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-1
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+                                     1
+(1 row)
+
 SELECT pg_tde_add_database_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2.per');
-2
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+                                     2
+(1 row)
+
 SELECT pg_tde_add_global_key_provider_file('file-2','/tmp/pg_tde_test_keyring_2g.per');
--1
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -1
+(1 row)
+
 SELECT pg_tde_add_global_key_provider_file('file-3','/tmp/pg_tde_test_keyring_3.per');
--2
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -2
+(1 row)
+
 SELECT pg_tde_list_all_database_key_providers();
-(1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
-(2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
+                          pg_tde_list_all_database_key_providers                          
+------------------------------------------------------------------------------------------
+ (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
+ (2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
+(2 rows)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5),(6);
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 SELECT pg_tde_set_key_using_database_key_provider('rotated-key1');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 -- server restart
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
-1|file-vault|rotated-key1
+ key_provider_id | key_provider_name |   key_name   
+-----------------+-------------------+--------------
+               1 | file-vault        | rotated-key1
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 SELECT pg_tde_set_key_using_database_key_provider('rotated-key2','file-2');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 -- server restart
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
-2|file-2|rotated-key2
+ key_provider_id | key_provider_name |   key_name   
+-----------------+-------------------+--------------
+               2 | file-2            | rotated-key2
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 SELECT pg_tde_set_key_using_global_key_provider('rotated-key', 'file-3', false);
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
 
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 -- server restart
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
--2|file-3|rotated-key
+ key_provider_id | key_provider_name |  key_name   
+-----------------+-------------------+-------------
+              -2 | file-3            | rotated-key
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX', 'file-2', false);
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
 
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 -- server restart
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
--1|file-2|rotated-keyX
+ key_provider_id | key_provider_name |   key_name   
+-----------------+-------------------+--------------
+              -1 | file-2            | rotated-keyX
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT * FROM test_enc ORDER BY id ASC;
-1|5
-2|6
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
 ALTER SYSTEM SET pg_tde.inherit_global_providers = OFF;
 -- server restart
 SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);
 psql:<stdin>:1: ERROR:  Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
--1|file-2|rotated-keyX
+ key_provider_id | key_provider_name |   key_name   
+-----------------+-------------------+--------------
+              -1 | file-2            | rotated-keyX
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT pg_tde_set_key_using_database_key_provider('rotated-key2','file-2');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
-2|file-2|rotated-key2
+ key_provider_id | key_provider_name |   key_name   
+-----------------+-------------------+--------------
+               2 | file-2            | rotated-key2
+(1 row)
+
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
 psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key

@@ -2,8 +2,16 @@ SET allow_in_place_tablespaces = true; CREATE TABLESPACE test_tblspace LOCATION 
 CREATE DATABASE tbc TABLESPACE = test_tblspace;
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-1
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+                                     1
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 CREATE TABLE country_table (
      country_id        serial primary key,
@@ -15,16 +23,28 @@ INSERT INTO country_table (country_name, continent)
             ('UK', 'Europe'),
             ('USA', 'North America');
 SELECT * FROM country_table;
-1|Japan|Asia
-2|UK|Europe
-3|USA|North America
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+(3 rows)
+
 SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 -- server restart
 SELECT * FROM country_table;
-1|Japan|Asia
-2|UK|Europe
-3|USA|North America
+ country_id | country_name |   continent   
+------------+--------------+---------------
+          1 | Japan        | Asia
+          2 | UK           | Europe
+          3 | USA          | North America
+(3 rows)
+
 DROP EXTENSION pg_tde CASCADE;
 psql:<stdin>:1: NOTICE:  drop cascades to table country_table
 DROP DATABASE tbc;

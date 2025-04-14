@@ -4,68 +4,116 @@ psql:<stdin>:1: ERROR:  principal key not configured
 HINT:  create one using pg_tde_set_key before using encrypted tables
 -- server restart
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-1
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+                                     1
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
 
 CREATE TABLE test_enc1(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc1 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc1 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 CREATE TABLE test_enc2(id SERIAL,k VARCHAR(32),PRIMARY KEY (id));
 INSERT INTO test_enc2 (k) VALUES ('foobar'),('barfoo');
 ALTER TABLE test_enc2 SET ACCESS METHOD tde_heap;
 SELECT * FROM test_enc2 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 SET default_table_access_method = "tde_heap"; CREATE TABLE test_enc3(id SERIAL,k VARCHAR(32),PRIMARY KEY (id));
 INSERT INTO test_enc3 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc3 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 CREATE TABLE test_enc4(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING heap;
 INSERT INTO test_enc4 (k) VALUES ('foobar'),('barfoo');
 SET default_table_access_method = "tde_heap"; ALTER TABLE test_enc4 SET ACCESS METHOD DEFAULT;
 SELECT * FROM test_enc4 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 CREATE TABLE test_enc5(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc5 (k) VALUES ('foobar'),('barfoo');
 CHECKPOINT;
 TRUNCATE test_enc5;
 INSERT INTO test_enc5 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc5 ORDER BY id ASC;
-3|foobar
-4|barfoo
+ id |   k    
+----+--------
+  3 | foobar
+  4 | barfoo
+(2 rows)
+
 -- server restart
 ###########################
 SELECT * FROM test_enc1 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 TABLEFILE FOR test_enc1 FOUND: yes
 CONTAINS FOO (should be empty): 
 ###########################
 SELECT * FROM test_enc2 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 TABLEFILE FOR test_enc2 FOUND: yes
 CONTAINS FOO (should be empty): 
 ###########################
 SELECT * FROM test_enc3 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 TABLEFILE FOR test_enc3 FOUND: yes
 CONTAINS FOO (should be empty): 
 ###########################
 SELECT * FROM test_enc4 ORDER BY id ASC;
-1|foobar
-2|barfoo
+ id |   k    
+----+--------
+  1 | foobar
+  2 | barfoo
+(2 rows)
+
 TABLEFILE FOR test_enc4 FOUND: yes
 CONTAINS FOO (should be empty): 
 ###########################
 SELECT * FROM test_enc5 ORDER BY id ASC;
-3|foobar
-4|barfoo
+ id |   k    
+----+--------
+  3 | foobar
+  4 | barfoo
+(2 rows)
+
 TABLEFILE FOR test_enc5 FOUND: yes
 CONTAINS FOO (should be empty): 
 TABLEFILE2 FOUND: yes

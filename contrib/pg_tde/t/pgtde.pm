@@ -61,7 +61,7 @@ sub psql
 {
     my ($node, $dbname, $sql) = @_;
 
-    my (undef, $stdout, $stderr) = $node->psql($dbname, $sql, extra_params => ['-a']);
+    my (undef, $stdout, $stderr) = $node->psql($dbname, $sql, extra_params => ['-a', '-Pformat=aligned', '-Ptuples_only=off']);
 
     if ($stdout ne '') {
         append_to_result_file($stdout);
