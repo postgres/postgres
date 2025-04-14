@@ -248,9 +248,9 @@
 		     * it will fail to be called during other backend-shutdown
 		     * scenarios.
 		     */
-// puts("# 697:proc_exit/repl/skip"); //proc_exit(0);
+PGDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
-            return;
+            break;
 
 	    case 'd':			/* copy data */
 	    case 'c':			/* copy done */
