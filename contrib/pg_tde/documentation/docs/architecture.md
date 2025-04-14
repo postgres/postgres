@@ -9,7 +9,7 @@ Let's break down what it means.
 * Encrypting either every table in every database or only some tables in some databases
 * Encryption keys can be stored on various external key storage servers including Hashicorp Vault, KMIP servers.
 * Using one key for everything or different keys for different databases
-* Storing every key at the same key storage, or using different storages for different databases
+* Storing every key on the same key storage, or using different storages for different databases
 * Handling permissions: who can manage database specific or global permissions, who can create encrypted or not encrypted tables
 
 **Complete** means that `pg_tde` aims to encrypt data at rest. 
@@ -18,6 +18,7 @@ Let's break down what it means.
 
 * Table data files
 * Indexes
+* Seqeunces
 * Temporary tables
 * Write Ahead Log (WAL)
 * System tables (not yet implemented)
@@ -44,35 +45,30 @@ In the future these could be extracted into separate shared libraries with an op
 
 ### Two-key hierarchy
 
-`pg_tde` uses two keys for encryption: 
+`pg_tde` uses two kinds of keys for encryption:
 
-* Internal keys to encrypt the data. They are stored internally near the data that they encrypt. 
-* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in the Key Management System (KMS) using the key provider API. 
+* Internal keys to encrypt the data. They are stored in PostgreSQL's data directory under `$PGDATA/pg_tde``.
+* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in a Key Management System (KMS) using the key provider API. 
 
 `pg_tde` uses one principal key per database. Every internal key for the given database is encrypted using this principal key.
 
-Internal keys are used for specific database files: each file with a different [Object Identifier (OID)](https://www.postgresql.org/docs/current/datatype-oid.html) and has a different internal key.
+Internal keys are used for specific database files: each file with a different [Object Identifier (OID)](https://www.postgresql.org/docs/current/datatype-oid.html) has a different internal key.
 
 This means that, for example, a table with 4 indexes will have at least 5 internal keys - one for the table, and one for each index.
 
-If a table has additional files, such as sequence(s) or a TOAST table, those files will also have separate keys.
+If a table has additional associated relations, such as sequences or a TOAST table, those relations will also have separate keys.
 
 ### Encryption algorithm
 
 `pg_tde` currently uses the following encryption algorithms:
 
-* `AES-CBC-128` algorithm for encrypting most database files.
+* `AES-128-CBC` for encrypting database files; encrypted with internal keys.
 
-    Here's how it works:
+* `AES-128-CTR` for WAL encryption; encrypted with internal keys.
 
-    First the internal keys for data files are encrypted using the principal key with the `AES-CBC-128` algorithm. Then the data file itself is again encrypted using `AES-CBC-128` with the internal key.
+* `AES-128-GCM` for encrypting internal keys; encrypted with the principal key.
 
-* `AES-CTR-128` algorithm for WAL encryption. 
-
-    The workflow is similar: WAL pages are first encrypted with the internal key. Then the internal key is encrypted with the global principal key.
-
-
-The support for other cipher lengths / algorithms is planned in the future.
+Support for other cipher lengths / algorithms is planned in the future.
 
 ### Encryption workflow
 
@@ -84,18 +80,19 @@ The `tde_heap` access method is the same as the `heap` one. It uses the same fun
 
 The initial decision what to encrypt is made using the `postgres` event trigger mechanism: if a `CREATE TABLE` or `ALTER TABLE` statement uses the `tde_heap` clause, the newly created data files are marked as encrypted. Then file operations encrypt or decrypt the data.
 
-Later decisions are made using a slightly modified Storage Manager (SMGR) API:
-when a database file is re-created with a different ID as a result of a `TRUNCATE` or a `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not. 
+Later decisions are made using a slightly modified Storage Manager (SMGR) API: when a database file is re-created with a different ID as a result of a `TRUNCATE` or a `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not.
 
 ### WAL encryption
 
-WAL encryption is controlled globally via a global GUC variable that requires a server restart.
+WAL encryption is controlled globally via a global GUC variable, `pg_tde.wal_encrypt`, that requires a server restart.
 
-The variable only controls writes so that only WAL writes are encrypted when WAL encryption is enabled. This means that WAL files can contain both encrypted and unencrpyted data, depending on what the status of this variable was when writing the data.
+WAL keys also contain the [LSN](https://www.postgresql.org/docs/17/wal-internals.html) of the first WAL write after key creation. This allows `pg_tde` to know which WAL ranges are encrypted or not and with which key.
 
-`pg_tde` keeps track of the encryption status of WAL records using internal keys. Every time the encryption status of WAL changes, it writes a new internal key for WAL. When the encryption is enabled, this internal key contains a valid encryption key. When the encrpytion is disabled, it only contains a flag signaling that WAL encryption ended.
+The setting only controls writes so that only WAL writes are encrypted when WAL encryption is enabled. This means that WAL files can contain both encrypted and unencrpyted data, depending on what the status of this variable was when writing the data.
 
-With this information, the WAL reader code can decide if a specific WAL record has to be decrypted or not.
+`pg_tde` keeps track of the encryption status of WAL records using internal keys. When the server is restarted it writes a new internal key if WAL encryption is enabled, or if it is disabled and was previously enabled it writes a dummy key signalling that WAL encryption ended.
+
+With this information the WAL reader code can decide if a specific WAL record has to be decrypted or not and which key it should use to decrypt it.
 
 ### Encrypting other access methods
 
@@ -107,31 +104,28 @@ In theory, it is also possible to encrypt any other table access method that goe
 
 ### Storage Manager (SMGR) API
 
-`pg_tde` relies on a slightly modified version of the SMGR API.
-These modifications include:
+`pg_tde` relies on a slightly modified version of the SMGR API. These modifications include:
 
 * Making the API generally extensible, where extensions can inject custom code into the storage manager
 * Adding tracking information for files. When a new file is created for an existing relation, references to the existing file are also passed to the SMGR functions
 
 With these modifications, the `pg_tde` extension can implement an additional layer on top of the normal Magnetic Disk SMGR API: if the related table is encrypted, `pg_tde` encrypts a file before writing it to the disk and, similarly, decrypts it after reading when needed.
 
-## Key and key providers management
+## Key and key provider management
 
 ### Principal key rotation
 
 You can rotate principal keys to comply with common policies and to handle situations with potentially exposed principal keys.
 
-Rotation means that `pg_tde` generates a new version of the principal key, and re-encrypts the associated internal keys with the new key. The old key is kept as is at the same location, because it may still be needed to decrypt backups or other databases.
+Rotation means that `pg_tde` generates a new version of the principal key, and re-encrypts the associated internal keys with the new key. The old principal key is kept as is at the same location, because it may still be needed to decrypt backups or other databases.
 
 ### Internal key regeneration
 
 Internal keys for tables, indexes and other data files are fixed once a file is created. There's no way to re-encrypt a file.
 
-WAL internal keys are also fixed to the respective ranges. And there is no easy way to generate a new internal WAL key without turning off and on WAL encryption.
+There are workarounds for this, because operations that move the table data to a new file, such as `VACUUM FULL` or an `ALTER TABLE` that rewrites the file will create a new key for the new file, essentially rotating the internal key. This however means taking an exclusive lock on the table for the duration of the operation, which might not be desirable for huge tables.
 
-There are workarounds for this, because operations that move the table data to a new file, such as `VACUUM FULL` or an `ALTER TABLE` that rewrites the file will create a new key for the new file, essentially rotating the internal key.
-This however means taking an exclusive lock on the table for the duration of the operation, which might not be desirable for huge tables.
-WAL internal key are also fixed to the respective ranges. And there is no easy way to generate a new WAL key without turning off and on WAL encryption.
+WAL internal keys are also fixed to the respective ranges. To generate a new WAL key you need to restart the database.
 
 ### Internal key storage
 
@@ -140,13 +134,15 @@ Internal keys and `pg_tde` metadata in general are kept in a single `$PGDATA/pg_
 * Encrypted internal keys and internal key mapping to tables
 * Information about the key providers
 
-Also, the `$PGDATA/pg_tde` directory has a special global section marked with the OID `607`, which includes the global key providers and global internal keys. 
+Also, the `$PGDATA/pg_tde` directory has a special global section marked with the OID `1664`, which includes the global key providers and global internal keys.
 
-The global section is used for WAL encryption. Specific databases can use the global section too, for scenarios where users configure individual principal keys for databases but use the same global key provider. For this purpose, you must enable the global provider inheritance. 
+The global section is used for WAL encryption. Specific databases can use the global section too, for scenarios where users configure individual principal keys for databases but use the same global key provider. For this purpose, you must enable the global provider inheritance.
+
+The global default principal key uses the special OID `1663`.
 
 ### Key providers (principal key storage)
 
-Principal keys are stored externally in Key Management Stores (KMS). In `pg_tde`a KMS is defined as an external key provider.
+Principal keys are stored externally in a Key Management Services (KMS). In `pg_tde`a KMS is defined as an external key provider.
 
 The following key providers are supported:
 
@@ -155,12 +151,14 @@ The following key providers are supported:
 * KMIP compatible servers
 * A local file storage. This storage is intended only for development and testing and is not recommended for production use.
 
-For each key provider, `pg_tde` requires a detailed configuration, including the address of the service and the authentication information.
+For each key provider `pg_tde` requires a detailed configuration including the address of the service and the authentication information.
 
-With these details, `pg_tde` does the following based on user operations:
+With these details `pg_tde` does the following based on user operations:
 
-* Communicates with the service and uploads a new principal key to it after this key is created
-* Retrieves the principal key from the service when it is required for decryption 
+* Uploads a new principal key to it after this key is created
+* Retrieves the principal key from the service when it is required for decryption
+
+Retreival of the principal key is cached so it only happens when necessary.
 
 ### Key provider management
 
@@ -176,25 +174,25 @@ Key provider information authentication details is a sensitive information. It i
 
 To safeguard key providers' sensitive information, `pg_tde` supports references to external services. Instead of specifying authentication details directly, users specify the reference to the external service where it is stored. `pg_tde` then downloads the provider's authentication details when needed.
 
-The supported external services are HTTP and external file references. Upon request, other services such as Kubernetes secrets can be added. 
+The currently supported external services are HTTP and external file references.
 
 ## User interface
 
-### Setting up pg_tde
+### Setting up `pg_tde`
 
 To use `pg_tde`, users are required to:
 
-* Add pg_tde to the `shared_preload_libraries` in `postgresql.conf`, as this is required for the SMGR extensions
+* Add `pg_tde` to the `shared_preload_libraries` in `postgresql.conf` as this is required for the SMGR extensions
 * Execute `CREATE EXTENSION pg_tde` in the databases where they want to use encryption
 * Optionally, enable `pg_tde.wal_encrypt` in `postgresql.conf`
 * Optionally, disable `pg_tde.inherit_global_providers` in `postgresql.conf` (enabled by default)
 
 ### Adding providers
 
-Keyring providers can be added to either the GLOBAL or to the database specific scope.
+Keyring providers can be added to either the global or to the database specific scope.
 
-If `pg_tde.inherit_global_providers` is `ON`, global providers are visible for all databases, and can be used.
-If `pg_tde.inherit_global_providers` is `OFF`, global providers are only used for WAL encryption.
+If `pg_tde.inherit_global_providers` is `on`, global providers are visible for all databases, and can be used.
+If `pg_tde.inherit_global_providers` is `off`, global providers are only used for WAL encryption.
 
 To add a global provider:
 
@@ -208,8 +206,7 @@ To add a database specific provider:
 pg_tde_add_database_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
-Note that in these functions do not verify the parameters.
-For that, see `pg_tde_verify_key`.
+Note that in these functions do not verify the parameters. For that, see `pg_tde_verify_key`.
 
 ### Changing providers
 
@@ -227,11 +224,9 @@ pg_tde_change_database_key_provider_<TYPE>('provider_name', ... details ...)
 
 These functions also allow changing the type of a provider.
 
-The functions however do not migrate any data.
-They are expected to be used during infrastructure migration, for example when the address of a server changes.
+The functions however do not migrate any data. They are expected to be used during infrastructure migration, for example when the address of a server changes.
 
-Note that in these functions do not verify the parameters.
-For that, see `pg_tde_verify_key`.
+Note that in these functions do not verify the parameters. For that, see `pg_tde_verify_key`.
 
 ### Changing providers from the command line
 
@@ -262,41 +257,28 @@ For database specific providers, the function first checks if the provider is us
 
 For global providers, the function checks if the provider is used anywhere, WAL or any specific database, and returns an error if it is.
 
-This somewhat goes against the principle that `pg_tde` shouldn't interact with other databases than the one the user is connected to, but on the other hand, it only does this lookup in the internal `pg_tde` metadata, not in postgres catalogs, so it is a gray zone.
-Making this check makes more sense than potentially making some databases inaccessible.
+This somewhat goes against the principle that `pg_tde` shouldn't interact with other databases than the one the user is connected to, but on the other hand, it only does this lookup in the internal `pg_tde` metadata, not in postgres catalogs, so it is a gray zone. Making this check makes more sense than potentially making some databases inaccessible.
 
 ### Listing/querying providers
 
-`Pg_tde` provides 2 functions to show providers:
+`pg_tde` provides 2 functions to show providers:
 
 * `pg_tde_list_all_database_key_providers()`
 * `pg_tde_list_all_global_key_providers()`
 
-These functions only return a list of provider names, without any details about the type/configuration.
-
-There's also two function to query the details of providers:
-
-```sql
-pg_tde_show_key_provider_configuration('provider-name')
-pg_tde_show_global_key_provider_configuration('provider-name')
-```
-
-These functions display the provider type and configuration details, but won't show the sensitive parameters, such as passwords or authentication keys.
+These functions return a list of provider names, type and configuration.
 
 ### Provider permissions
 
-`Pg_tde` implements access control based on execution rights on the administration functions.
+`pg_tde` implements access control based on execution rights on the administration functions.
 
 For keys and providers administration, it provides two pair of functions:
 
 ```sql
 pg_tde_(grant/revoke)_database_key_management_to_role
-pg_tde_(grant/revoke)_global_key_management_to_role
 ```
 
-There's one special behavior:
-When `pg_tde.inherit_global_providers` is ON, users with database local permissions can list global providers, but can't use the show function to query configuration details.
-When `pg_tde.inherit_global_providers` is OFF, they can't execute the function at all, it will return an error.
+There's one special behavior: When `pg_tde.inherit_global_providers` is `on`, users with database local permissions can list global providers, but can't use the show function to query configuration details. When `pg_tde.inherit_global_providers` is `off`, they can't execute the function at all, it will return an error.
 
 ### Creating and rotating keys
 
@@ -308,8 +290,7 @@ pg_tde_set_server_key_using_(global/database)_key_provider('key-name', 'provider
 pg_tde_set_default_key_using_(global/database)_key_provider('key-name', 'provider-name', ensure_new_key)
 ```
 
-`ensure_new_key` is a boolean parameter defaulting to false.
-If it is true, the function might return an error instead of setting the key, if it already exists on the provider.
+`ensure_new_key` is a boolean parameter defaulting to false. If it is `true` the function might return an error instead of setting the key if it already exists on the provider.
 
 ### Default principal key
 
@@ -330,9 +311,7 @@ Changing the default principal key will rotate the encryption of internal keys f
 
 ### Removing key (not yet implemented)
 
-`pg_tde_drop_key` removes the principal key for the current database.
-If the current database has any encrypted tables, and there isn't a default principal key configured, it reports an error instead.
-If there are encrypted tables, but there's also a global default principal key, internal keys will be encrypted with the default key.
+`pg_tde_drop_key` removes the principal key for the current database. If the current database has any encrypted tables, and there isn't a default principal key configured, it reports an error instead. If there are encrypted tables, but there's also a global default principal key, internal keys will be encrypted with the default key.
 
 It isn't possible to remove the WAL (server) principal key.
 
@@ -352,30 +331,23 @@ SUPERusers are able to use the following function:
 
 `pg_tde_list_active_keys()`
 
-Which reports all the actively used keys by all databases on the current server.
-Similarly to `pg_tde_key_info()`, it only shows names and associated providers, it doesn't reveal any sensitive information about the providers.
+Which reports all the actively used keys by all databases on the current server. Similarly to `pg_tde_key_info()`, it only shows names and associated providers, it doesn't reveal any sensitive information about the providers.
 
 ### Key permissions
 
 Users with management permissions to a specific database `(pg_tde_(grant/revoke)_(global/databse)_key_management_to_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
 
-// TODO: We don't have such permissions subset
-Also, the `pg_tde_(grant/revoke)_(global/database)_key_management_to_role` function deals with only the specific permission for the above function:
-it allows a user to change the key for the database, but not to modify the provider configuration.
+Also the `pg_tde_(grant/revoke)_database_key_management_to_role` function deals with only the specific permission for the above function: it allows a user to change the key for the database, but not to modify the provider configuration.
 
 ### Creating encrypted tables
 
-To create an encrypted table or modify an existing table to be encrypted, simply use `USING tde_heap` in the `CREATE` / `ALTER TABLE` statement.
+To create an encrypted table or modify an existing table to be encrypted, simply use `USING tde_heap` in the `CREATE` statement.
 
-### Changing the pg_tde.inherit_global_keys setting
+### Changing the `pg_tde.inherit_global_keys` setting
 
-It is possible for users to use pg_tde with `inherit_global_keys=ON`, refer to global keys / keyrings in databases, and then change this setting to OFF.
+It is possible for users to use `pg_tde` with `inherit_global_keys = on`, refer to global keys / keyrings in databases, and then change this setting to `off`.
 
-In this case, existing references to global providers, or the global default principal key will remain working as before, but new references to the global scope can't be made.
-
-### Using command line tools with encrypted WAL
-
-TODO
+In this case existing references to global providers, or the global default principal key will remain working as before, but new references to the global scope can't be made.
 
 ## Typical setup scenarios
 
@@ -402,16 +374,15 @@ encryption is managed by the admins, normal users only have to create tables wit
 
 Note: setting the `default_table_access_method` to `tde_heap` is possible, but instead of `ALTER SYSTEM` only per database using `ALTER DATABASE`, after a principal key is configured for that specific database.
 
-Alternatively, `ALTER SYSTEM` is possible, but table creation in the database will fail if there's no principal key for the database, that has to be created first.
+Alternatively `ALTER SYSTEM` is possible, but table creation in the database will fail if there's no principal key for the database, that has to be created first.
 
 ### Complete multi tenancy
 
-1. Installing the extension: `shared_preload_libraries` +  `pg_tde.wal_encrypt` (that's not multi tenant currently)
+1. Installing the extension: `shared_preload_libraries` + `pg_tde.wal_encrypt` (that's not multi tenant currently)
 2. `CREATE EXTENSION pg_tde;` in any database
 2. Adding a global key provider for WAL
 3. Changing the WAL encryption to use the proper global key provider
 
-No default configuration:
-key providers / principal keys are configured as a per database level, permissions are managed per database
+No default configuration: key providers / principal keys are configured as a per database level, permissions are managed per database
 
 Same note about `default_table_access_method` as above - but in a multi tenant setup, `ALTER SYSTEM` doesn't make much sense.
