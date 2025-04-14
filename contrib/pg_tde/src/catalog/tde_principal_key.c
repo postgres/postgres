@@ -1141,7 +1141,7 @@ pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global)
 				errmsg("Can't delete a provider which is currently in use"));
 	}
 
-	delete_key_provider_info(provider_id, db_oid, true);
+	delete_key_provider_info(provider_name, db_oid, true);
 
 	PG_RETURN_VOID();
 }
