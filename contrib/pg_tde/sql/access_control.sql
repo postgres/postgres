@@ -17,7 +17,6 @@ SET ROLE regress_pg_tde_access_control;
 
 -- should now be allowed
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_add_database_key_provider_file('file-2', '/tmp/pg_tde_test_keyring_2.per');
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
