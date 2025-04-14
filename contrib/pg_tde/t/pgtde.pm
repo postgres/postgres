@@ -4,10 +4,10 @@ use File::Basename;
 use File::Compare;
 use Test::More;
 
-our @ISA= qw( Exporter );
+our @ISA = qw(Exporter);
 
 # These CAN be exported.
-our @EXPORT = qw( pgtde_init_pg pgtde_start_pg pgtde_stop_pg pgtde_psql_cmd pgtde_setup_pg_tde pgtde_create_extension pgtde_drop_extension );
+our @EXPORT = qw(pgtde_init_pg pgtde_start_pg pgtde_stop_pg pgtde_psql_cmd pgtde_setup_pg_tde pgtde_create_extension pgtde_drop_extension);
 
 # Instance of pg server that would be spanwed by TAP testing. A new server will be created for each TAP test.
 our $pg_node;
@@ -29,13 +29,11 @@ BEGIN {
     $PG_MAJOR_VERSION = `pg_config --version | awk {'print \$2'} | cut -f1 -d"." | sed -e 's/[^0-9].*\$//g'`;
     $PG_MAJOR_VERSION =~ s/^\s+|\s+$//g;
 
-    # Depending upon PG server version load the required module at runtime when pgtde.pm is loaded.
-    my $node_module = $PG_MAJOR_VERSION > 14 ? "PostgreSQL::Test::Cluster" : "PostgresNode";
-    my $node_module_file = $node_module;
-    $node_module_file =~ s[::][/]g;
-    $node_module_file .= '.pm';
-    require $node_module_file;
-    $node_module->import;
+    if ($PG_MAJOR_VERSION >= 15) {
+        eval { require PostgreSQL::Test::Cluster; };
+    } else {
+        eval { require PostgresNode; };
+    }
 }
 
 sub pgtde_init_pg
@@ -43,11 +41,9 @@ sub pgtde_init_pg
     print "Postgres major version: $PG_MAJOR_VERSION \n";
 
     # For Server version 15 & above, spawn the server using PostgreSQL::Test::Cluster
-    if ($PG_MAJOR_VERSION > 14) {
+    if ($PG_MAJOR_VERSION >= 15) {
         $pg_node = PostgreSQL::Test::Cluster->new('pgtde_regression');
-    }
-    # For Server version 14 & below, spawn the server using PostgresNode
-    elsif ($PG_MAJOR_VERSION < 15) {
+    } else {
         $pg_node = PostgresNode->get_new_node('pgtde_regression');
     }
 
@@ -60,36 +56,22 @@ sub append_to_file
 {
     my ($str) = @_;
 
-    # For Server version 15 & above, use PostgreSQL::Test::Utils to write to files
-    if ($PG_MAJOR_VERSION > 14) {
+    if ($PG_MAJOR_VERSION >= 15) {
         PostgreSQL::Test::Utils::append_to_file($out_filename_with_path, $str . "\n");
-    }
-    # For Server version 14 & below, use PostgresNode to write to files
-    elsif ($PG_MAJOR_VERSION < 15) {
+    } else {
         TestLib::append_to_file($out_filename_with_path, $str . "\n");
     }
-    chmod(0640 , $out_filename_with_path)
-    or die("unable to set permissions for $out_filename_with_path");
-
-    return;
 }
 
 sub append_to_debug_file
 {
     my ($str) = @_;
 
-    # For Server version 15 & above, use PostgreSQL::Test::Utils to write to files
-    if ($PG_MAJOR_VERSION > 14) {
+    if ($PG_MAJOR_VERSION >= 15) {
         PostgreSQL::Test::Utils::append_to_file($debug_out_filename_with_path, $str . "\n");
-    }
-    # For Server version 14 & below, use PostgresNode to write to files
-    elsif ($PG_MAJOR_VERSION < 15) {
+    } else {
         TestLib::append_to_file($debug_out_filename_with_path, $str . "\n");
     }
-    chmod(0640 , $debug_out_filename_with_path)
-    or die("unable to set permissions for $debug_out_filename_with_path");
-
-    return;
 }
 
 sub setup_files_dir
