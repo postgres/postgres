@@ -123,32 +123,29 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	if (IsA(parsetree, IndexStmt))
 	{
 		IndexStmt  *stmt = castNode(IndexStmt, parsetree);
-		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
+		Relation	rel;
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
 
-		tdeCurrentCreateEvent.baseTableOid = relationId;
+		rel = table_openrv(stmt->relation, AccessShareLock);
 
-		if (relationId != InvalidOid)
+		tdeCurrentCreateEvent.baseTableOid = rel->rd_id;
+
+		if (rel->rd_rel->relam == get_tde_table_am_oid())
 		{
-			Relation	rel = table_open(relationId, NoLock);
-
-			if (rel->rd_rel->relam == get_tde_table_am_oid())
-			{
-				/* We are creating the index on encrypted table */
-				/* set the global state */
-				tdeCurrentCreateEvent.encryptMode = true;
-			}
-
-			table_close(rel, NoLock);
-
-			if (tdeCurrentCreateEvent.encryptMode)
-				checkPrincipalKeyConfigured();
+			/*
+			 * We are creating an index on an encrypted table so set the
+			 * global state.
+			 */
+			tdeCurrentCreateEvent.encryptMode = true;
 		}
-		else
-			ereport(DEBUG1, errmsg("Failed to get relation Oid for relation:%s", stmt->relation->relname));
 
+		/* Hold on to lock until end of transaction */
+		table_close(rel, NoLock);
+
+		if (tdeCurrentCreateEvent.encryptMode)
+			checkPrincipalKeyConfigured();
 	}
 	else if (IsA(parsetree, CreateStmt))
 	{
