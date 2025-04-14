@@ -1,0 +1,12 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');
+1
+SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
+
+CREATE UNLOGGED TABLE t (x int PRIMARY KEY) USING tde_heap;
+INSERT INTO t SELECT generate_series(1, 4);
+CHECKPOINT;
+-- kill -9
+-- server start
+TABLE t;
+INSERT INTO t SELECT generate_series(1, 4);

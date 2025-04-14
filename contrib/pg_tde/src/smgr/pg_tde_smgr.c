@@ -26,7 +26,7 @@ typedef struct TDESMgrRelationData
 
 typedef TDESMgrRelationData *TDESMgrRelation;
 
-static void CalcBlockIv(BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
+static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
 static InternalKey *
 tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
@@ -102,7 +102,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
 
-			CalcBlockIv(bn, int_key->base_iv, iv);
+			CalcBlockIv(forknum, bn, int_key->base_iv, iv);
 
 			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i]);
 		}
@@ -134,7 +134,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		AesInit();
 
-		CalcBlockIv(blocknum, int_key->base_iv, iv);
+		CalcBlockIv(forknum, blocknum, int_key->base_iv, iv);
 
 		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
 
@@ -184,7 +184,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if (allZero)
 			continue;
 
-		CalcBlockIv(bn, int_key->base_iv, iv);
+		CalcBlockIv(forknum, bn, int_key->base_iv, iv);
 
 		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i]);
 	}
@@ -297,12 +297,16 @@ RegisterStorageMgr(void)
 
 /*
  * The intialization vector of a block is its block number conmverted to a
- * 128 bit big endian number XOR the base IV of the relation file.
+ * 128 bit big endian number plus the forknumber XOR the base IV of the
+ * relation file.
  */
 static void
-CalcBlockIv(BlockNumber bn, const unsigned char *base_iv, unsigned char *iv)
+CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv)
 {
 	memset(iv, 0, 16);
+
+	/* The init fork is copied to the main fork so we must use the same IV */
+	iv[7] = forknum == INIT_FORKNUM ? MAIN_FORKNUM : forknum;
 
 	iv[12] = bn >> 24;
 	iv[13] = bn >> 16;

@@ -114,6 +114,7 @@ tap_tests = [
   't/008_key_rotate_tablespace.pl',
   't/009_wal_encrypt.pl',
   't/010_change_key_provider.pl',
+  't/011_unlogged_tables.pl',
 ]
 
 tests += {
