@@ -74,7 +74,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
+		KeyringProviderFileRecord *xlrec = (KeyringProviderFileRecord *) XLogRecGetData(record);
 
 		redo_key_provider_info(xlrec);
 	}
@@ -129,7 +129,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	}
 	if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
+		KeyringProviderFileRecord *xlrec = (KeyringProviderFileRecord *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "add key provider %s for %u", xlrec->provider.provider_name, xlrec->database_id);
 	}
