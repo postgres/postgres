@@ -700,18 +700,18 @@ check_index_page(Relation rel, Buffer buffer, BlockNumber blockNo)
 		if (!GinPageIsLeaf(page))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" has deleted internal page %d",
+					 errmsg("index \"%s\" has deleted internal page %u",
 							RelationGetRelationName(rel), blockNo)));
 		if (PageGetMaxOffsetNumber(page) > InvalidOffsetNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" has deleted page %d with tuples",
+					 errmsg("index \"%s\" has deleted page %u with tuples",
 							RelationGetRelationName(rel), blockNo)));
 	}
 	else if (PageGetMaxOffsetNumber(page) > MaxIndexTuplesPerPage)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("index \"%s\" has page %d with exceeding count of tuples",
+				 errmsg("index \"%s\" has page %u with exceeding count of tuples",
 						RelationGetRelationName(rel), blockNo)));
 }
 
