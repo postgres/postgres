@@ -52,6 +52,19 @@ SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
  test-db-key | file-vault        |               1
 (1 row)
 
+-- only superuser
+SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
+ERROR:  must be superuser to modify global key providers
+SELECT pg_tde_change_global_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
+ERROR:  must be superuser to modify global key providers
+SELECT pg_tde_delete_global_key_provider('file-vault');
+ERROR:  must be superuser to modify global key providers
+SELECT pg_tde_set_key_using_global_key_provider('key1', 'file-vault');
+ERROR:  must be superuser to access global key providers
+SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'file-vault');
+ERROR:  must be superuser to access global key providers
+SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'file-vault');
+ERROR:  must be superuser to access global key providers
 RESET ROLE;
 SELECT pg_tde_revoke_key_viewer_from_role('regress_pg_tde_access_control');
  pg_tde_revoke_key_viewer_from_role 

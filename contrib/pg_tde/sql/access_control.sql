@@ -22,6 +22,14 @@ SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
 
+-- only superuser
+SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_change_global_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_delete_global_key_provider('file-vault');
+SELECT pg_tde_set_key_using_global_key_provider('key1', 'file-vault');
+SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'file-vault');
+SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'file-vault');
+
 RESET ROLE;
 
 SELECT pg_tde_revoke_key_viewer_from_role('regress_pg_tde_access_control');

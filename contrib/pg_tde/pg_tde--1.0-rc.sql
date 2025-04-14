@@ -528,39 +528,6 @@ ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();
 
-CREATE FUNCTION pg_tde_grant_global_key_management_to_role(
-    target_role TEXT)
-RETURNS VOID
-LANGUAGE plpgsql
-SET search_path = @extschema@
-AS $$
-BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider(text, text, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider(text, text, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(text, text, BOOLEAN) TO %I', target_role);
-END;
-$$;
-
 CREATE FUNCTION pg_tde_grant_database_key_management_to_role(
     target_role TEXT)
 RETURNS VOID
@@ -609,39 +576,6 @@ BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_key() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_server_key() TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_verify_default_key() TO %I', target_role);
-END;
-$$;
-
-CREATE FUNCTION pg_tde_revoke_global_key_management_from_role(
-    target_role TEXT)
-RETURNS VOID
-LANGUAGE plpgsql
-SET search_path = @extschema@
-AS $$
-BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider(text, text, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_file(text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider(text, text, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_file(text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_global_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(text) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
@@ -703,7 +637,6 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_global_key_management_to_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_database_key_management_to_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_grant_management_to_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_key_viewer_to_role(TEXT) TO %I', target_role);
@@ -722,12 +655,10 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_global_key_management_to_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_database_key_management_to_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_grant_management_to_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_key_viewer_to_role(TEXT) FROM %I', target_role);
 
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_global_key_management_from_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_database_key_management_from_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_grant_management_from_role(TEXT) FROM %I', target_role);
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_key_viewer_from_role(TEXT) FROM %I', target_role);
@@ -736,6 +667,5 @@ $$;
 
 -- Revoking all the privileges from the public role
 SELECT pg_tde_revoke_database_key_management_from_role('public');
-SELECT pg_tde_revoke_global_key_management_from_role('public');
 SELECT pg_tde_revoke_grant_management_from_role('public');
 SELECT pg_tde_revoke_key_viewer_from_role('public');

@@ -4,7 +4,7 @@ The `pg_tde` extension provides functions for managing different aspects of its 
 
 ## Permission management
 
-By default, `pg_tde` is restrictive. It doesn't allow any operations until permissions are granted to the user. Only superusers can run permission management functions to manage user permissions.
+By default, `pg_tde` is restrictive. It doesn't allow any operations until permissions are granted to the user. Only superusers can run permission management functions to manage user permissions. Operations on the global scope are limited to superusers only.
 
 Permissions are based on the normal `EXECUTE` permission on the functions provided by `pg_tde`. Superusers manage them using the `GRANT EXECUTE` and `REVOKE EXECUTE` commands.
 
@@ -19,10 +19,7 @@ Use these functions to grant or revoke permissions to manage permissions for the
 
 ### Global scope key management
 
-Use these functions to grant or revoke permissions to manage permissions for the global scope - the entire PostgreSQL instance. They enable or disable all functions related to the providers and keys for the global scope:
-
-* `pg_tde_grant_global_key_management_to_role(role)`
-* `pg_tde_revoke_global_key_management_from_role(role)`
+Managment of the global scope is restricted to superusers only.
 
 ### Permission management
 

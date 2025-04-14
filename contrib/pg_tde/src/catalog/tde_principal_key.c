@@ -485,6 +485,11 @@ pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to access global key providers")));
+
 	pg_tde_set_principal_key_internal(principal_key_name, GS_DEFAULT, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
@@ -509,6 +514,11 @@ pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to access global key providers")));
+
 	pg_tde_set_principal_key_internal(principal_key_name, GS_GLOBAL, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
@@ -520,6 +530,11 @@ pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to access global key providers")));
 
 	pg_tde_set_principal_key_internal(principal_key_name, GS_SERVER, provider_name, ensure_new_key);
 
@@ -1045,6 +1060,11 @@ pg_tde_delete_database_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
 {
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to modify global key providers")));
+
 	return pg_tde_delete_key_provider_internal(fcinfo, 1);
 }
 
