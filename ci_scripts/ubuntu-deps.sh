@@ -42,6 +42,7 @@ DEPS=(
     # Test pg_tde
     python3-pykmip
     libhttp-server-simple-perl
+    lcov
 )
 
 sudo apt-get update

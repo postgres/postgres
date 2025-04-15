@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/percona/postgres/graph/badge.svg?token=Wow78BMYdP)](https://codecov.io/github/percona/postgres)
+
 Percona Server for PostgreSQL
 =============================
 

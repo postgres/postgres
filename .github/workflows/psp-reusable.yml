@@ -14,6 +14,7 @@ on:
 
 env:
   artifact_name: build-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+  coverage_artifact_name: coverage-build-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
 
 jobs:
   build:
@@ -33,7 +34,7 @@ jobs:
       - name: Build postgres
         run: src/ci_scripts/${{ inputs.build_script }}-build.sh ${{ inputs.build_type }}
 
-      - name: 'Tar files'
+      - name: Archive pginst to artifact tar file
         run: tar -czf artifacts.tar src pginst
 
       - name: Upload build artifacts
@@ -43,6 +44,36 @@ jobs:
           overwrite: true
           path: |
             artifacts.tar
+          retention-days: 1
+
+  build-coverage:
+    name: Build PSP for Coverage
+    runs-on: ${{ inputs.os }}
+    if: inputs.build_script == 'make' && inputs.build_type == 'debug'
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          path: 'src'
+          submodules: recursive
+          ref: ${{ github.ref }}
+
+      - name: Install dependencies
+        run: src/ci_scripts/ubuntu-deps.sh
+
+      - name: Build postgres
+        run: src/ci_scripts/${{ inputs.build_script }}-build.sh ${{ inputs.build_type }} --enable-coverage
+
+      - name: Archive pginst to artifact tar file
+        run: tar -czf coverage-artifacts.tar src pginst
+
+      - name: Upload build coverage-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.coverage_artifact_name }}
+          overwrite: true
+          path: |
+            coverage-artifacts.tar
           retention-days: 1
 
   test:
@@ -57,7 +88,7 @@ jobs:
           name: ${{ env.artifact_name }}
           path: .
 
-      - name: 'Untar files'
+      - name: Extract artifact file
         run: tar -xzf artifacts.tar
 
       - name: Install dependencies
@@ -95,15 +126,15 @@ jobs:
           name: ${{ env.artifact_name }}
           path: .
 
-      - name: 'Untar files'
+      - name: Extract artifact file
         run: tar -xzf artifacts.tar
 
       - name: Install dependencies
-        run: src/ci_scripts/ubuntu-deps.sh 
-  
+        run: src/ci_scripts/ubuntu-deps.sh
+
       - name: Setup kmip and vault
         run: src/ci_scripts/setup-keyring-servers.sh
-  
+
       - name: Test postgres with TDE
         run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh --continue
 
@@ -118,4 +149,55 @@ jobs:
             src/contrib/*/results
             src/contrib/*/regression.diffs
             src/contrib/*/regression.out
+          retention-days: 3
+
+  test_tde_coverage:
+    name: Generate Codecov Code Coverage
+    runs-on: ${{ inputs.os }}
+    if: inputs.build_script == 'make' && inputs.build_type == 'debug'
+    needs: build
+
+    steps:
+      - name: Download build coverage-artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.coverage_artifact_name }}
+          path: .
+
+      - name: Extract artifact file
+        run: tar -xzf coverage-artifacts.tar
+
+      - name: Install dependencies
+        run: src/ci_scripts/ubuntu-deps.sh
+
+      - name: Setup kmip and vault
+        run: src/ci_scripts/setup-keyring-servers.sh
+
+      - name: Test postgres with TDE to generate coverage
+        run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh --continue --tde-only
+
+      - name: Run code coverage
+        run: find src/ -type f -name "*.c" ! -path '*libkmip*' | xargs -t gcov -abcfu
+        working-directory: src/contrib/pg_tde
+
+      - name: Upload coverage data to codecov.io
+        uses: codecov/codecov-action@v5
+        with:
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: src/contrib/pg_tde
+          files: "*.c.gcov"
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: coverage-testlog-tde-${{ inputs.os }}-${{  inputs.build_script }}-${{ inputs.build_type }}
+          path: |
+            src/build/testrun/
+            src/contrib/pg_tde/t/
+            src/contrib/pg_tde/results
+            src/contrib/pg_tde/regression.diffs
+            src/contrib/pg_tde/regression.out
+            src/contrib/pg_tde/*.gcov
           retention-days: 3

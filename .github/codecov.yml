@@ -1,0 +1,45 @@
+codecov:
+  strict_yaml_branch: TDE_REL_17_STABLE
+fixes:
+  - "src/::contrib/pg_tde/src/"  # move path for codecov file mappings e.g., "src/" => "contrib/pg_tde/src/"
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+        base: auto
+comment:
+  layout: "header, diff, components"
+component_management:
+  default_rules:
+    statuses:
+      - type: project
+        target: auto
+        branches:
+          - "TDE_REL_17_STABLE"
+  individual_components:
+    - component_id: access
+      paths:
+        - contrib/pg_tde/src/access/**
+    - component_id: catalog
+      paths:
+        - contrib/pg_tde/src/catalog/**
+    - component_id: common
+      paths:
+        - contrib/pg_tde/src/common/**
+    - component_id: encryption
+      paths:
+        - contrib/pg_tde/src/encryption/**
+    - component_id: keyring
+      paths:
+        - contrib/pg_tde/src/keyring/**
+    - component_id: src
+      paths:
+        - contrib/pg_tde/src/*.c
+    - component_id: smgr
+      paths:
+        - contrib/pg_tde/src/smgr/**
+    - component_id: transam
+      paths:
+        - contrib/pg_tde/src/transam/**
