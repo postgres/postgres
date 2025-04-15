@@ -419,6 +419,11 @@ CREATE TABLE gtest24r (a int PRIMARY KEY, b gtestdomain1range GENERATED ALWAYS A
 INSERT INTO gtest24r (a) VALUES (4);  -- ok
 INSERT INTO gtest24r (a) VALUES (6);  -- error
 
+CREATE DOMAIN gtestdomainnn AS int CHECK (VALUE IS NOT NULL);
+CREATE TABLE gtest24nn (a int, b gtestdomainnn GENERATED ALWAYS AS (a * 2) STORED);
+INSERT INTO gtest24nn (a) VALUES (4);  -- ok
+INSERT INTO gtest24nn (a) VALUES (NULL);  -- error
+
 -- typed tables (currently not supported)
 CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);
 CREATE TABLE gtest28 OF gtest_type (f1 WITH OPTIONS GENERATED ALWAYS AS (f2 *2) STORED);
