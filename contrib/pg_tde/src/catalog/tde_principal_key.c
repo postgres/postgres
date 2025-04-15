@@ -342,13 +342,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	if (!already_has_key)
 	{
 		/* First key created for the database */
-		pg_tde_save_principal_key(new_principal_key);
-
-		/* XLog the new key */
-		XLogBeginInsert();
-		XLogRegisterData((char *) &new_principal_key->keyInfo, sizeof(TDEPrincipalKeyInfo));
-		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
-
+		pg_tde_save_principal_key(new_principal_key, true);
 		push_principal_key_to_cache(new_principal_key);
 	}
 	else
@@ -838,7 +832,7 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 	*newPrincipalKey = *principalKey;
 	newPrincipalKey->keyInfo.databaseId = dbOid;
 
-	pg_tde_save_principal_key(newPrincipalKey);
+	pg_tde_save_principal_key(newPrincipalKey, false);
 
 	push_principal_key_to_cache(newPrincipalKey);
 
