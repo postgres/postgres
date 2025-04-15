@@ -7,7 +7,6 @@ use Test::More;
 use lib 't';
 use pgtde;
 
-# Get file name and CREATE out file name and dirs WHERE requried
 PGTDE::setup_files_dir(basename($0));
 
 my $PG_VERSION_STRING = `pg_config --version`;
@@ -17,7 +16,6 @@ if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
     plan skip_all => "pg_tde test case only for PPG server package install with extensions.";
 }
 
-# CREATE new PostgreSQL node and do initdb
 my $node = PGTDE->pgtde_init_pg();
 my $pgdata = $node->data_dir;
 
@@ -32,7 +30,6 @@ open my $conf2, '>>', "/tmp/datafile-location";
 print $conf2 "/tmp/keyring_data_file\n";
 close $conf2;
 
-# Start server
 my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
@@ -94,7 +91,6 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-# Restart the server
 PGTDE::append_to_file("-- server restart");
 $rt_value = $node->stop();
 $rt_value = $node->start();
@@ -131,24 +127,19 @@ ok($cmdret == 0, "Run pgbench");
 ok($cmdret == 0, "SELECT XXX FROM pg_stat_monitor");
 PGTDE::append_to_debug_file($stdout);
 
-# DROP EXTENSION
 $stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "DROP PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
 
-# DROP EXTENSION
 $stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_stat_monitor;', extra_params => ['-a']);
 ok($cmdret == 0, "DROP PGTDE EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 
-# Stop the server
 $node->stop();
 
-# compare the expected and out file
+# Compare the expected and out file
 my $compare = PGTDE->compare_results();
 
-# Test/check if expected and result/out file match. If Yes, test passes.
 is($compare,0,"Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files.");
 
-# Done testing for this testcase file.
 done_testing();

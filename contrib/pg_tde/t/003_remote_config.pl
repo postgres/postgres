@@ -7,10 +7,8 @@ use Test::More;
 use lib 't';
 use pgtde;
 
-# Get file name and CREATE out file name and dirs WHERE requried
 PGTDE::setup_files_dir(basename($0));
 
-# CREATE new PostgreSQL node and do initdb
 my $node = PGTDE->pgtde_init_pg();
 my $pgdata = $node->data_dir;
 
@@ -22,7 +20,6 @@ use base qw(HTTP::Server::Simple::CGI);
  
 my %dispatch = (
     '/hello' => \&resp_hello,
-    # ...
 );
  
 sub handle_request {
@@ -52,10 +49,9 @@ sub resp_hello {
 }
  
 }
+
 my $pid = MyWebServer->new(8888)->background();
 
-
-# UPDATE postgresql.conf to include/load pg_tde library
 open my $conf, '>>', "$pgdata/postgresql.conf";
 print $conf "shared_preload_libraries = 'pg_tde'\n";
 close $conf;
@@ -80,7 +76,6 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-# Restart the server
 PGTDE::append_to_file("-- server restart");
 $rt_value = $node->stop();
 $rt_value = $node->start();
@@ -91,20 +86,17 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc2;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-# DROP EXTENSION
 $stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "DROP PGTDE EXTENSION");
 PGTDE::append_to_file($stdout);
-# Stop the server
+
 $node->stop();
 
 system("kill $pid");
 
-# compare the expected and out file
+# Compare the expected and out file
 my $compare = PGTDE->compare_results();
 
-# Test/check if expected and result/out file match. If Yes, test passes.
 is($compare,0,"Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files.");
 
-# Done testing for this testcase file.
 done_testing();
