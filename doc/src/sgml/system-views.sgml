@@ -4070,7 +4070,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    <productname>PostgreSQL</productname> itself and memory allocated
    by extensions using the mechanisms detailed in
    <xref linkend="xfunc-shared-addin" />. This view will output multiple rows
-   for each of the shared memory segments provided that they are spread accross
+   for each of the shared memory segments provided that they are spread across
    multiple NUMA nodes. This view should not be queried by monitoring systems
    as it is very slow and may end up allocating shared memory in case it was not
    used earlier.

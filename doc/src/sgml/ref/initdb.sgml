@@ -543,7 +543,7 @@ PostgreSQL documentation
        </para>
        <para>
         Note that if <option>--no-sync-data-files</option> is used in
-        conjuction with <option>--sync-method=syncfs</option>, some or all of
+        conjunction with <option>--sync-method=syncfs</option>, some or all of
         the aforementioned files and directories will be synchronized because
         <literal>syncfs</literal> processes entire file systems.
        </para>

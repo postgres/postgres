@@ -201,7 +201,7 @@ ORDER BY c.relpages DESC LIMIT 10;
      <para>
       <function>gin_index_check</function> tests that its target GIN index
       has consistent parent-child tuples relations (no parent tuples
-      require tuple adjustement) and page graph respects balanced-tree
+      require tuple adjustment) and page graph respects balanced-tree
       invariants (internal pages reference only leaf page or only internal
       pages).
      </para>

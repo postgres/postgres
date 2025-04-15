@@ -238,7 +238,7 @@
       <entry>PostgreSQL 18 and later</entry>
       <entry>Current latest version. The secret key used in query
         cancellation was enlarged from 4 bytes to a variable length field. The
-        BackendKeyData message was changed to accomodate that, and the CancelRequest
+        BackendKeyData message was changed to accommodate that, and the CancelRequest
         message was redefined to have a variable length payload.
       </entry>
       </row>
