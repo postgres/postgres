@@ -48,8 +48,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

@@ -64,8 +64,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', ex
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 # Verify
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
@@ -90,8 +91,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id;', ex
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 # Verify
 (undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
@@ -108,8 +110,9 @@ PGTDE::append_to_file("-- mv /tmp/change_key_provider_2.per /tmp/change_key_prov
 move('/tmp/change_key_provider_2.per', '/tmp/change_key_provider_3.per');
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 # Verify
 $stdout = $node->safe_psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);
@@ -149,8 +152,9 @@ $stdout = $node->safe_psql('postgres', "SELECT pg_tde_change_database_key_provid
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 # Verify
 (undef, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_verify_key();", extra_params => ['-a']);

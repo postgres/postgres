@@ -62,8 +62,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -80,8 +81,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -98,8 +100,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -119,8 +122,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc ORDER BY id ASC;'
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', "SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();", extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
@@ -135,8 +139,9 @@ PGTDE::append_to_file($stdout);
 
 # Things still work after a restart
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 # But now can't be changed to another global provider
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);", extra_params => ['-a']);
@@ -161,8 +166,10 @@ PGTDE::append_to_file($stdout);
 $stdout = $node->safe_psql('postgres', 'ALTER SYSTEM RESET pg_tde.inherit_global_providers;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
 
-$rt_value = $node->stop();
+PGTDE::append_to_file("-- server restart");
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'DROP EXTENSION pg_tde CASCADE;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);

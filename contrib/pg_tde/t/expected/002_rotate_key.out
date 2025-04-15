@@ -90,5 +90,5 @@ psql:<stdin>:1: ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 DROP TABLE test_enc;
 ALTER SYSTEM RESET pg_tde.inherit_global_providers;
+-- server restart
 DROP EXTENSION pg_tde CASCADE;
-

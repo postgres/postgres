@@ -64,9 +64,8 @@ open my $conf, '>>', "$pgdata/postgresql.conf";
 print $conf "shared_preload_libraries = 'pg_tde'\n";
 close $conf;
 
-my $rt_value = $node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+my $rt_value = $node->start();
+ok($rt_value == 1, "Start Server");
 
 my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
@@ -85,8 +84,9 @@ $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;
 PGTDE::append_to_file($stdout);
 
 PGTDE::append_to_file("-- server restart");
-$rt_value = $node->stop();
+$node->stop();
 $rt_value = $node->start();
+ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;', extra_params => ['-a']);
 PGTDE::append_to_file($stdout);
