@@ -309,7 +309,7 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, true, &curr_pos);
+	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, false, &curr_pos);
 	close(map_fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
