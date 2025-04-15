@@ -2,13 +2,11 @@
 
 use strict;
 use warnings;
+use Env;
 use File::Basename;
-use File::Compare;
-use File::Copy;
 use Test::More;
 use lib 't';
 use pgtde;
-use Env;
 
 # Get file name and CREATE out file name and dirs WHERE requried
 PGTDE::setup_files_dir(basename($0));

@@ -3,8 +3,6 @@
 use strict;
 use warnings;
 use File::Basename;
-use File::Compare;
-use File::Copy;
 use Test::More;
 use lib 't';
 use pgtde;
@@ -22,8 +20,6 @@ if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
 # CREATE new PostgreSQL node and do initdb
 my $node = PGTDE->pgtde_init_pg();
 my $pgdata = $node->data_dir;
-
-copy("$pgdata/postgresql.conf", "$pgdata/postgresql.conf.bak");
 
 # UPDATE postgresql.conf to include/load pg_stat_monitor library
 open my $conf, '>>', "$pgdata/postgresql.conf";

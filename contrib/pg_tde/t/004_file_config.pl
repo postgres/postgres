@@ -3,8 +3,6 @@
 use strict;
 use warnings;
 use File::Basename;
-use File::Compare;
-use File::Copy;
 use Test::More;
 use lib 't';
 use pgtde;
@@ -15,8 +13,6 @@ PGTDE::setup_files_dir(basename($0));
 # CREATE new PostgreSQL node and do initdb
 my $node = PGTDE->pgtde_init_pg();
 my $pgdata = $node->data_dir;
-
-copy("$pgdata/postgresql.conf", "$pgdata/postgresql.conf.bak");
 
 # UPDATE postgresql.conf to include/load pg_tde library
 open my $conf, '>>', "$pgdata/postgresql.conf";
