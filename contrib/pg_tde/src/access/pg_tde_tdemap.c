@@ -618,7 +618,7 @@ finalize_key_rotation(const char *path_old, const char *path_new)
  * Rotate keys and generates the WAL record for it.
  */
 void
-pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key)
+pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key, bool write_xlog)
 {
 	TDESignedPrincipalKeyInfo new_signed_key_info;
 	off_t		old_curr_pos,
@@ -627,8 +627,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 				new_fd;
 	char		old_path[MAXPGPATH],
 				new_path[MAXPGPATH];
-	XLogPrincipalKeyRotate *xlrec;
-	off_t		xlrec_size;
 
 	pg_tde_sign_principal_key_info(&new_signed_key_info, new_principal_key);
 
@@ -668,30 +666,38 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	}
 
 	close(old_fd);
-
-	/* Build WAL record containing the new file */
-	xlrec_size = SizeoOfXLogPrincipalKeyRotate + new_curr_pos;
-
-	xlrec = (XLogPrincipalKeyRotate *) palloc(xlrec_size);
-	xlrec->databaseId = principal_key->keyInfo.databaseId;
-	xlrec->file_size = new_curr_pos;
-
-	if (pg_pread(new_fd, xlrec->buff, xlrec->file_size, 0) == -1)
-		ereport(ERROR,
-				errcode_for_file_access(),
-				errmsg("could not write WAL for key rotation: %m"));
-
 	close(new_fd);
 
-	/* Insert the XLog record */
-	XLogBeginInsert();
-	XLogRegisterData((char *) xlrec, xlrec_size);
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_PRINCIPAL_KEY);
-
-	pfree(xlrec);
-
-	/* Do the final steps */
+	/*
+	 * Do the final steps - replace the current _map with the file with new
+	 * data
+	 */
 	finalize_key_rotation(old_path, new_path);
+
+	/*
+	 * We do WAL writes past the event ("the write behind logging") rather
+	 * than before ("the write ahead") because we need logging here only for
+	 * replication purposes. The rotation results in data written and fsynced
+	 * to disk. Which in most cases would happen way before it's written to
+	 * the WAL disk file. As WAL will be flushed at the end of the
+	 * transaction, on its commit, hence after this function returns (there is
+	 * also a bg writer, but the commit is what is guaranteed). And it makes
+	 * sense to replicate the event only after its effect has been
+	 * successfully applied to the source.
+	 */
+	if (write_xlog)
+	{
+		XLogPrincipalKeyRotate xlrec;
+
+		xlrec.databaseId = principal_key->keyInfo.databaseId;
+		xlrec.keyringId = principal_key->keyInfo.keyringId;
+		memcpy(xlrec.keyName, new_principal_key->keyInfo.name, sizeof(new_principal_key->keyInfo.name));
+
+		/* Insert the XLog record */
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, sizeof(XLogPrincipalKeyRotate));
+		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_PRINCIPAL_KEY);
+	}
 }
 
 /*

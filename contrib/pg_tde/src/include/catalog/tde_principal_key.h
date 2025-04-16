@@ -37,8 +37,8 @@ typedef struct TDEPrincipalKey
 typedef struct XLogPrincipalKeyRotate
 {
 	Oid			databaseId;
-	off_t		file_size;
-	char		buff[FLEXIBLE_ARRAY_MEMBER];
+	Oid			keyringId;
+	char		keyName[PRINCIPAL_KEY_NAME_LEN];
 } XLogPrincipalKeyRotate;
 
 #define SizeoOfXLogPrincipalKeyRotate	offsetof(XLogPrincipalKeyRotate, buff)

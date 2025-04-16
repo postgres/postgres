@@ -349,7 +349,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	else
 	{
 		/* key rotation */
-		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key);
+		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, true);
 
 		if (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
 		{
@@ -370,12 +370,59 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 void
 xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 {
+	TDEPrincipalKey *curr_principal_key;
+	TDEPrincipalKey *new_principal_key;
+	GenericKeyring *new_keyring;
+	KeyInfo    *keyInfo;
+	KeyringReturnCodes kr_ret;
+
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	pg_tde_write_map_keydata_file(xlrec->file_size, xlrec->buff);
-	clear_principal_key_cache(xlrec->databaseId);
+	curr_principal_key = GetPrincipalKeyNoDefault(xlrec->databaseId, LW_EXCLUSIVE);
+
+	/* Should not happen */
+	if (curr_principal_key == NULL)
+	{
+		ereport(ERROR, errmsg("failed to retrieve current principal key for database %u.", xlrec->databaseId));
+	}
+
+	new_keyring = GetKeyProviderByID(xlrec->keyringId, xlrec->databaseId);
+	keyInfo = KeyringGetKey(new_keyring, xlrec->keyName, &kr_ret);
+
+	if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
+	{
+		ereport(ERROR,
+				errmsg("failed to retrieve principal key from keyring provider: \"%s\"", new_keyring->provider_name),
+				errdetail("Error code: %d", kr_ret));
+	}
+
+	/* The new key should be on keyring by this time */
+	if (keyInfo == NULL)
+	{
+		ereport(ERROR, errmsg("failed to retrieve principal key from keyring for database %u.", xlrec->databaseId));
+	}
+
+	new_principal_key = palloc_object(TDEPrincipalKey);
+	new_principal_key->keyInfo.databaseId = xlrec->databaseId;
+	new_principal_key->keyInfo.keyringId = new_keyring->keyring_id;
+	memcpy(new_principal_key->keyInfo.name, keyInfo->name, TDE_KEY_NAME_LEN);
+	gettimeofday(&new_principal_key->keyInfo.creationTime, NULL);
+	new_principal_key->keyLength = keyInfo->data.len;
+
+	memcpy(new_principal_key->keyData, keyInfo->data.data, keyInfo->data.len);
+
+	pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, false);
+
+	if (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
+	{
+		clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
+		push_principal_key_to_cache(new_principal_key);
+	}
 
 	LWLockRelease(tde_lwlock_enc_keys());
+
+	pfree(new_keyring);
+	pfree(new_principal_key);
 }
 
 /*
@@ -997,7 +1044,7 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
 	/* key rotation */
-	pg_tde_perform_rotate_key(oldKey, newKey);
+	pg_tde_perform_rotate_key(oldKey, newKey, true);
 
 	if (!TDEisInGlobalSpace(newKey->keyInfo.databaseId))
 	{
