@@ -4146,14 +4146,18 @@ estimate_hashagg_tablesize(PlannerInfo *root, Path *path,
  */
 
 /*
- * Find applicable ndistinct statistics for the given list of VarInfos (which
- * must all belong to the given rel), and update *ndistinct to the estimate of
- * the MVNDistinctItem that best matches.  If a match it found, *varinfos is
- * updated to remove the list of matched varinfos.
+ * Find the best matching ndistinct extended statistics for the given list of
+ * GroupVarInfos.
  *
- * Varinfos that aren't for simple Vars are ignored.
+ * Callers must ensure that the given GroupVarInfos all belong to 'rel' and
+ * the GroupVarInfos list does not contain any duplicate Vars or expressions.
  *
- * Return true if we're able to find a match, false otherwise.
+ * When statistics are found that match > 1 of the given GroupVarInfo, the
+ * *ndistinct parameter is set according to the ndistinct estimate and a new
+ * list is built with the matching GroupVarInfos removed, which is output via
+ * the *varinfos parameter before returning true.  When no matching stats are
+ * found, false is returned and the *varinfos and *ndistinct parameters are
+ * left untouched.
  */
 static bool
 estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
@@ -4234,15 +4238,22 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 			}
 		}
 
+		/*
+		 * The ndistinct extended statistics contain estimates for a minimum
+		 * of pairs of columns which the statistics are defined on and
+		 * certainly not single columns.  Here we skip unless we managed to
+		 * match to at least two columns.
+		 */
 		if (nshared_vars + nshared_exprs < 2)
 			continue;
 
 		/*
-		 * Does this statistics object match more columns than the currently
-		 * best object?  If so, use this one instead.
+		 * Check if these statistics are a better match than the previous best
+		 * match and if so, take note of the StatisticExtInfo.
 		 *
-		 * XXX This should break ties using name of the object, or something
-		 * like that, to make the outcome stable.
+		 * The statslist is sorted by statOid, so the StatisticExtInfo we
+		 * select as the best match is deterministic even when multiple sets
+		 * of statistics match equally as well.
 		 */
 		if ((nshared_exprs > nmatches_exprs) ||
 			(((nshared_exprs == nmatches_exprs)) && (nshared_vars > nmatches_vars)))
