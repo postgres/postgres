@@ -90,7 +90,6 @@ sql_tests = [
   'change_access_method',
   'insert_update_delete',
   'key_provider',
-  'keyprovider_dependency',
   'kmip_test',
   'partition_table',
   'pg_tde_is_encrypted',
