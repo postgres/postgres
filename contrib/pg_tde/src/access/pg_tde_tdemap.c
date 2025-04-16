@@ -764,7 +764,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	/* Insert the XLog record */
 	XLogBeginInsert();
 	XLogRegisterData((char *) xlrec, xlrec_size);
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_KEY);
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_PRINCIPAL_KEY);
 
 	pfree(xlrec);
 

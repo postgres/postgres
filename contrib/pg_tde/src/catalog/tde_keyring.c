@@ -512,7 +512,7 @@ write_key_provider_info(KeyringProviderRecord *provider, Oid database_id,
 
 			XLogBeginInsert();
 			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderXLRecord));
-			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_KEY_PROVIDER_KEY);
+			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_WRITE_KEY_PROVIDER);
 #else
 			Assert(0);
 #endif
