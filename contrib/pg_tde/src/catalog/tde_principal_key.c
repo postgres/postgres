@@ -361,6 +361,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	LWLockRelease(lock_files);
 
 	pfree(new_keyring);
+	pfree(new_principal_key);
 }
 
 /*
