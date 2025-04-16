@@ -125,6 +125,12 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "db: %u, provider id: %d", xlrec->database_id, xlrec->provider.provider_id);
 	}
+	else if (info == XLOG_TDE_FREE_MAP_ENTRY)
+	{
+		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
+
+		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->spcOid, xlrec->dbOid, xlrec->relNumber);
+	}
 }
 
 static const char *
@@ -138,6 +144,12 @@ tdeheap_rmgr_identify(uint8 info)
 			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_EXTENSION_INSTALL_KEY:
 			return "EXTENSION_INSTALL_KEY";
+		case XLOG_TDE_ROTATE_KEY:
+			return "ROTATE_KEY";
+		case XLOG_TDE_ADD_KEY_PROVIDER_KEY:
+			return "ADD_KEY_PROVIDER_KEY";
+		case XLOG_TDE_FREE_MAP_ENTRY:
+			return "FREE_MAP_ENTRY";
 		default:
 			return NULL;
 	}
