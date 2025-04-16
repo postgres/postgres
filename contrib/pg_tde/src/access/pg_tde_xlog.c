@@ -30,10 +30,8 @@ static void tdeheap_rmgr_redo(XLogReaderState *record);
 static void tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record);
 static const char *tdeheap_rmgr_identify(uint8 info);
 
-#define RM_TDERMGR_NAME	"test_tdeheap_custom_rmgr"
-
 static const RmgrData tdeheap_rmgr = {
-	.rm_name = RM_TDERMGR_NAME,
+	.rm_name = "pg_tde",
 	.rm_redo = tdeheap_rmgr_redo,
 	.rm_desc = tdeheap_rmgr_desc,
 	.rm_identify = tdeheap_rmgr_identify,
