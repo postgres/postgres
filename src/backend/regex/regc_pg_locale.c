@@ -559,10 +559,16 @@ pg_wc_toupper(pg_wchar c)
 		case PG_REGEX_STRATEGY_BUILTIN:
 			return unicode_uppercase_simple(c);
 		case PG_REGEX_STRATEGY_LIBC_WIDE:
+			/* force C behavior for ASCII characters, per comments above */
+			if (pg_regex_locale->is_default && c <= (pg_wchar) 127)
+				return pg_ascii_toupper((unsigned char) c);
 			if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
 				return towupper_l((wint_t) c, pg_regex_locale->info.lt);
 			/* FALL THRU */
 		case PG_REGEX_STRATEGY_LIBC_1BYTE:
+			/* force C behavior for ASCII characters, per comments above */
+			if (pg_regex_locale->is_default && c <= (pg_wchar) 127)
+				return pg_ascii_toupper((unsigned char) c);
 			if (c <= (pg_wchar) UCHAR_MAX)
 				return toupper_l((unsigned char) c, pg_regex_locale->info.lt);
 			return c;
@@ -587,10 +593,16 @@ pg_wc_tolower(pg_wchar c)
 		case PG_REGEX_STRATEGY_BUILTIN:
 			return unicode_lowercase_simple(c);
 		case PG_REGEX_STRATEGY_LIBC_WIDE:
+			/* force C behavior for ASCII characters, per comments above */
+			if (pg_regex_locale->is_default && c <= (pg_wchar) 127)
+				return pg_ascii_tolower((unsigned char) c);
 			if (sizeof(wchar_t) >= 4 || c <= (pg_wchar) 0xFFFF)
 				return towlower_l((wint_t) c, pg_regex_locale->info.lt);
 			/* FALL THRU */
 		case PG_REGEX_STRATEGY_LIBC_1BYTE:
+			/* force C behavior for ASCII characters, per comments above */
+			if (pg_regex_locale->is_default && c <= (pg_wchar) 127)
+				return pg_ascii_tolower((unsigned char) c);
 			if (c <= (pg_wchar) UCHAR_MAX)
 				return tolower_l((unsigned char) c, pg_regex_locale->info.lt);
 			return c;
