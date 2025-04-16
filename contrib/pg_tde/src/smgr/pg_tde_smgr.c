@@ -243,10 +243,13 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 		 *
 		 * Later calls then decide to encrypt or not based on the existence of
 		 * the key.
+		 *
+		 * Since event triggers do not fire on the standby or in recovery we
+		 * do not try to generate any new keys and instead trust the xlog.
 		 */
 		InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
 
-		if (!key && tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
+		if (!isRedo && !key && tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
 			key = pg_tde_create_smgr_key(&reln->smgr_rlocator);
 
 		if (key)
