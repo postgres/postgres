@@ -206,14 +206,15 @@ TDEXLogSmgrInit(void)
 	{
 		pg_tde_create_wal_key(&EncryptionKey, &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
 							  TDE_KEY_TYPE_WAL_UNENCRYPTED);
-		pfree(key);
 	}
 	else if (key)
 	{
 		EncryptionKey = *key;
 		pg_atomic_write_u64(&EncryptionState->enc_key_lsn, EncryptionKey.start_lsn);
-		pfree(key);
 	}
+
+	if (key)
+		pfree(key);
 
 	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
 
