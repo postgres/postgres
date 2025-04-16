@@ -216,8 +216,8 @@ pg_tde_change_global_key_provider(PG_FUNCTION_ARGS)
 {
 	if (!superuser())
 		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to modify global key providers")));
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify global key providers"));
 
 	return pg_tde_change_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
@@ -271,8 +271,8 @@ pg_tde_add_global_key_provider(PG_FUNCTION_ARGS)
 {
 	if (!superuser())
 		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to modify global key providers")));
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify global key providers"));
 
 	return pg_tde_add_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }

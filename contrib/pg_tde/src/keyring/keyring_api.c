@@ -78,7 +78,7 @@ RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type)
 	kp = find_key_provider_type(type);
 	if (kp)
 		ereport(ERROR,
-				(errmsg("Key provider of type %d already registered", type)));
+				errmsg("Key provider of type %d already registered", type));
 
 #ifndef FRONTEND
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
@@ -102,7 +102,7 @@ KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes 
 	if (kp == NULL)
 	{
 		ereport(WARNING,
-				(errmsg("Key provider of type %d not registered", keyring->type)));
+				errmsg("Key provider of type %d not registered", keyring->type));
 		*returnCode = KEYRING_CODE_INVALID_PROVIDER;
 		return NULL;
 	}
@@ -116,7 +116,7 @@ KeyringStoreKey(GenericKeyring *keyring, KeyInfo *key)
 
 	if (kp == NULL)
 		ereport(ERROR,
-				(errmsg("Key provider of type %d not registered", keyring->type)));
+				errmsg("Key provider of type %d not registered", keyring->type));
 
 	kp->routine->keyring_store_key(keyring, key);
 }

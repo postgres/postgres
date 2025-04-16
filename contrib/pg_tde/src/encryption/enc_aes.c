@@ -150,35 +150,35 @@ AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 
 	if (EVP_EncryptInit_ex(ctx, cipher_gcm, NULL, NULL, NULL) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_set_padding(ctx, 0) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_EncryptUpdate(ctx, NULL, &out_len, (unsigned char *) aad, aad_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_EncryptUpdate(ctx, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_EncryptFinal_ex(ctx, out + out_len, &out_len_final) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CTRL_GCM_GET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CTRL_GCM_GET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	/*
 	 * We encrypt one block (16 bytes) Our expectation is that the result
@@ -205,31 +205,31 @@ AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 
 	if (EVP_DecryptInit_ex(ctx, cipher_gcm, NULL, NULL, NULL) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_set_padding(ctx, 0) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CTRL_GCM_SET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CTRL_GCM_SET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_DecryptUpdate(ctx, NULL, &out_len, aad, aad_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_DecryptUpdate(ctx, out, &out_len, in, in_len) == 0)
 		ereport(ERROR,
-				(errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL))));
+				errmsg("EVP_CipherUpdate failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
 	if (EVP_DecryptFinal_ex(ctx, out + out_len, &out_len_final) == 0)
 	{
