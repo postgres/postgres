@@ -55,19 +55,6 @@ typedef struct SimplePtrList
 	SimplePtrListCell *tail;
 } SimplePtrList;
 
-typedef struct SimpleOidStringListCell
-{
-	struct SimpleOidStringListCell *next;
-	Oid			oid;
-	char		str[FLEXIBLE_ARRAY_MEMBER]; /* null-terminated string here */
-}			SimpleOidStringListCell;
-
-typedef struct SimpleOidStringList
-{
-	SimpleOidStringListCell *head;
-	SimpleOidStringListCell *tail;
-} SimpleOidStringList;
-
 extern void simple_oid_list_append(SimpleOidList *list, Oid val);
 extern bool simple_oid_list_member(SimpleOidList *list, Oid val);
 extern void simple_oid_list_destroy(SimpleOidList *list);
@@ -80,8 +67,5 @@ extern const char *simple_string_list_not_touched(SimpleStringList *list);
 
 extern void simple_ptr_list_append(SimplePtrList *list, void *ptr);
 extern void simple_ptr_list_destroy(SimplePtrList *list);
-
-extern void simple_oid_string_list_append(SimpleOidStringList *list, Oid oid, const char *str);
-extern void simple_oid_string_list_destroy(SimpleOidStringList *list);
 
 #endif							/* SIMPLE_LIST_H */
