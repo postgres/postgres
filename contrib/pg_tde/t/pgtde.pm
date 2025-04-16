@@ -9,9 +9,6 @@ our @ISA = qw(Exporter);
 # These CAN be exported.
 our @EXPORT = qw(pgtde_init_pg pgtde_start_pg pgtde_stop_pg pgtde_psql_cmd pgtde_setup_pg_tde pgtde_create_extension pgtde_drop_extension);
 
-# Instance of pg server that would be spanwed by TAP testing. A new server will be created for each TAP test.
-our $pg_node;
-
 # Expected .out filename of TAP testcase being executed. These are already part of repo under t/expected/*.
 our $expected_filename_with_path;
 
@@ -38,18 +35,20 @@ BEGIN {
 
 sub pgtde_init_pg
 {
+    my $node;
+
     print "Postgres major version: $PG_MAJOR_VERSION \n";
 
     # For Server version 15 & above, spawn the server using PostgreSQL::Test::Cluster
     if ($PG_MAJOR_VERSION >= 15) {
-        $pg_node = PostgreSQL::Test::Cluster->new('pgtde_regression');
+        $node = PostgreSQL::Test::Cluster->new('pgtde_regression');
     } else {
-        $pg_node = PostgresNode->get_new_node('pgtde_regression');
+        $node = PostgresNode->get_new_node('pgtde_regression');
     }
 
-    $pg_node->dump_info;
-    $pg_node->init;
-    return $pg_node;
+    $node->dump_info;
+    $node->init;
+    return $node;
 }
 
 sub append_to_file
