@@ -19,22 +19,15 @@ close $conf;
 my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
-my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
-ok($cmdret == 0, "CREATE PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
-$stdout = $node->safe_psql('postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');");
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');");
 
-$stdout = $node->safe_psql('postgres', "CREATE UNLOGGED TABLE t (x int PRIMARY KEY) USING tde_heap;", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', "CREATE UNLOGGED TABLE t (x int PRIMARY KEY) USING tde_heap;");
 
-$stdout = $node->safe_psql('postgres', "INSERT INTO t SELECT generate_series(1, 4);", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 
-$stdout = $node->safe_psql('postgres', "CHECKPOINT;", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', "CHECKPOINT;");
 
 PGTDE::append_to_file("-- kill -9");
 $node->kill9();
@@ -43,11 +36,9 @@ PGTDE::append_to_file("-- server start");
 $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
-$stdout = $node->safe_psql('postgres', "TABLE t;", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', "TABLE t;");
 
-$stdout = $node->safe_psql('postgres', "INSERT INTO t SELECT generate_series(1, 4);", extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 
 $node->stop();
 

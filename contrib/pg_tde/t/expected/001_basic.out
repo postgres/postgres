@@ -1,7 +1,14 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';
 pg_tde|1.0-rc
+CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
+psql:<stdin>:1: ERROR:  principal key not configured
+HINT:  create one using pg_tde_set_key before using encrypted tables
 -- server restart
+SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+1
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+
 CREATE TABLE test_enc(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc ORDER BY id ASC;

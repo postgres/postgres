@@ -51,6 +51,21 @@ sub pgtde_init_pg
     return $node;
 }
 
+sub psql
+{
+    my ($node, $dbname, $sql) = @_;
+
+    my (undef, $stdout, $stderr) = $node->psql($dbname, $sql, extra_params => ['-a']);
+
+    if ($stdout ne '') {
+        append_to_file($stdout);
+    }
+
+    if ($stderr ne '') {
+        append_to_file($stderr);
+    }
+}
+
 sub append_to_file
 {
     my ($str) = @_;

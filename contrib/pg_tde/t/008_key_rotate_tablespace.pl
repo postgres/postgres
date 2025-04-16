@@ -9,8 +9,6 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
-my ($cmdret, $stdout);
-
 my $node = PGTDE->pgtde_init_pg();
 my $pgdata = $node->data_dir;
 
@@ -21,57 +19,43 @@ close $conf;
 my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
-$node->safe_psql('postgres',
-	q{
-SET allow_in_place_tablespaces = true;
-CREATE TABLESPACE test_tblspace LOCATION '';
-CREATE DATABASE tbc TABLESPACE = test_tblspace;
-});
+PGTDE::psql($node, 'postgres', "SET allow_in_place_tablespaces = true; CREATE TABLESPACE test_tblspace LOCATION '';");
+PGTDE::psql($node, 'postgres', 'CREATE DATABASE tbc TABLESPACE = test_tblspace;');
 
-$stdout = $node->safe_psql('tbc',
-	q{
-CREATE EXTENSION IF NOT EXISTS pg_tde;
-SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+PGTDE::psql($node, 'tbc', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'tbc', "SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');");
+PGTDE::psql($node, 'tbc', "SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');");
 
+PGTDE::psql($node, 'tbc', "
 CREATE TABLE country_table (
      country_id        serial primary key,
      country_name    text unique not null,
      continent        text not null
 ) USING tde_heap;
+");
 
+PGTDE::psql($node, 'tbc', "
 INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
             ('UK', 'Europe'),
             ('USA', 'North America');
+");
 
-SELECT * FROM country_table;
+PGTDE::psql($node, 'tbc', 'SELECT * FROM country_table;');
 
-}, extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
-
-$cmdret = $node->psql('tbc', "SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');", extra_params => ['-a']);
-ok($cmdret == 0, "ROTATE KEY");
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'tbc', "SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');");
 
 PGTDE::append_to_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
-$stdout = $node->safe_psql('tbc', 'SELECT * FROM country_table;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'tbc', 'SELECT * FROM country_table;');
 
-$stdout = $node->safe_psql('tbc', 'DROP EXTENSION pg_tde CASCADE;', extra_params => ['-a']);
-ok($cmdret == 0, "DROP PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'tbc', 'DROP EXTENSION pg_tde CASCADE;');
 
-$stdout = $node->safe_psql('postgres', q{
-DROP DATABASE tbc;
-DROP TABLESPACE test_tblspace;
-}, extra_params => ['-a']);
-ok($cmdret == 0, "DROP DATABSE");
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'DROP DATABASE tbc;');
+PGTDE::psql($node, 'postgres', 'DROP TABLESPACE test_tblspace;');
 
 $node->stop();
 

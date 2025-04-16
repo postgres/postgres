@@ -66,7 +66,8 @@ psql:<stdin>:1: NOTICE:  drop cascades to table test_enc
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_provider_4.per');
 1
-0
+SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
+
 CREATE TABLE test_enc (id serial, k integer, PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc (k) VALUES (5), (6);
 SELECT pg_tde_verify_key();

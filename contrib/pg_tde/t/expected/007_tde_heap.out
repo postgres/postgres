@@ -1,5 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
+psql:<stdin>:1: ERROR:  principal key not configured
+HINT:  create one using pg_tde_set_key before using encrypted tables
 -- server restart
+SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
+1
+SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');
+
 CREATE TABLE test_enc1(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;
 INSERT INTO test_enc1 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc1 ORDER BY id ASC;
@@ -16,7 +23,9 @@ INSERT INTO test_enc3 (k) VALUES ('foobar'),('barfoo');
 SELECT * FROM test_enc3 ORDER BY id ASC;
 1|foobar
 2|barfoo
+CREATE TABLE test_enc4(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING heap;
 INSERT INTO test_enc4 (k) VALUES ('foobar'),('barfoo');
+SET default_table_access_method = "tde_heap"; ALTER TABLE test_enc4 SET ACCESS METHOD DEFAULT;
 SELECT * FROM test_enc4 ORDER BY id ASC;
 1|foobar
 2|barfoo

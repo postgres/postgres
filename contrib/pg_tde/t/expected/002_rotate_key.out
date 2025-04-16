@@ -1,4 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
+psql:<stdin>:1: ERROR:  principal key not configured
+HINT:  create one using pg_tde_set_key before using encrypted tables
 -- server restart
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
 1
@@ -18,7 +21,8 @@ INSERT INTO test_enc (k) VALUES (5),(6);
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
-0
+SELECT pg_tde_set_key_using_database_key_provider('rotated-key1');
+
 SELECT * FROM test_enc ORDER BY id ASC;
 1|5
 2|6
@@ -75,6 +79,7 @@ SELECT * FROM test_enc ORDER BY id ASC;
 2|6
 ALTER SYSTEM SET pg_tde.inherit_global_providers = OFF;
 -- server restart
+SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);
 psql:<stdin>:1: ERROR:  Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 -1|file-2|rotated-keyX

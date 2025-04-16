@@ -67,36 +67,27 @@ close $conf;
 my $rt_value = $node->start();
 ok($rt_value == 1, "Start Server");
 
-my ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
-ok($cmdret == 0, "CREATE PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
-$rt_value = $node->psql('postgres', "SELECT pg_tde_add_database_key_provider_vault_v2('vault-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/token' ), json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/url' ), to_json('secret'::text), NULL);", extra_params => ['-a']);
-$rt_value = $node->psql('postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-db-key','vault-provider');", extra_params => ['-a']);
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_add_database_key_provider_vault_v2('vault-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/token' ), json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/url' ), to_json('secret'::text), NULL);");
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-db-key','vault-provider');");
 
-$stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;');
 
-$stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);');
 
-$stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
 
 PGTDE::append_to_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
-$stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
 
-$stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc2;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc2;');
 
-$stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_tde;', extra_params => ['-a']);
-ok($cmdret == 0, "DROP PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
+PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
 $node->stop();
 
