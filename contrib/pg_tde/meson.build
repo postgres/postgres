@@ -18,7 +18,6 @@ pg_tde_sources = files(
   'src/keyring/keyring_kmip_impl.c',
   'src/keyring/keyring_vault.c',
   'src/pg_tde.c',
-  'src/pg_tde_defs.c',
   'src/pg_tde_event_capture.c',
   'src/pg_tde_guc.c',
   'src/smgr/pg_tde_smgr.c',

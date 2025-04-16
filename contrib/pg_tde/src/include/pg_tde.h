@@ -8,6 +8,10 @@
 #ifndef PG_TDE_H
 #define PG_TDE_H
 
+#define PG_TDE_NAME "pg_tde"
+#define PG_TDE_VERSION "1.0.0-rc"
+#define PG_TDE_VERSION_STRING PG_TDE_NAME " " PG_TDE_VERSION
+
 #define PG_TDE_DATA_DIR	"pg_tde"
 
 typedef struct XLogExtensionInstall
