@@ -23,14 +23,3 @@ pg_tde_package_string(void)
 {
 	return PACKAGE_STRING;
 }
-
-const char *
-pg_tde_package_name(void)
-{
-	return PACKAGE_NAME;
-}
-const char *
-pg_tde_package_version(void)
-{
-	return PACKAGE_VERSION;
-}
