@@ -30,7 +30,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_server_key_using_global_key_pr
 
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;');
 
-PGTDE::append_to_file("-- server restart with wal encryption");
+PGTDE::append_to_result_file("-- server restart with wal encryption");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -45,7 +45,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (1), (2);');
 
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = off;');
 
-PGTDE::append_to_file("-- server restart without wal encryption");
+PGTDE::append_to_result_file("-- server restart without wal encryption");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -56,7 +56,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (3), (4);');
 
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;');
 
-PGTDE::append_to_file("-- server restart with wal encryption");
+PGTDE::append_to_result_file("-- server restart with wal encryption");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -65,7 +65,7 @@ PGTDE::psql($node, 'postgres', "SHOW pg_tde.wal_encrypt;");
 
 PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (5), (6);');
 
-PGTDE::append_to_file("-- server restart with still wal encryption");
+PGTDE::append_to_result_file("-- server restart with still wal encryption");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");

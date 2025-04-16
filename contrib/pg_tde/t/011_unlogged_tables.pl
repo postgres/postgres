@@ -29,10 +29,10 @@ PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 
 PGTDE::psql($node, 'postgres', "CHECKPOINT;");
 
-PGTDE::append_to_file("-- kill -9");
+PGTDE::append_to_result_file("-- kill -9");
 $node->kill9();
 
-PGTDE::append_to_file("-- server start");
+PGTDE::append_to_result_file("-- server start");
 $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 

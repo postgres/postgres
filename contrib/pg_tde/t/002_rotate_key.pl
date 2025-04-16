@@ -23,7 +23,7 @@ PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
 PGTDE::psql($node, 'postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -47,7 +47,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('rotated-key1');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -60,7 +60,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('rotated-key2','file-2');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -73,7 +73,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_global_key_provider('rotated-key', 'file-3', false);");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -89,7 +89,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX', 'file-2', false);");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -101,7 +101,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.inherit_global_providers = OFF;');
 
 # Things still work after a restart
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -119,7 +119,7 @@ PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc;');
 
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM RESET pg_tde.inherit_global_providers;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");

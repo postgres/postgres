@@ -30,7 +30,7 @@ PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
 PGTDE::psql($node, 'postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -88,14 +88,14 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc5 (k) VALUES (\'foobar\'),(\
 
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc5 ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
 sub verify_table
 {
-    PGTDE::append_to_file('###########################');
+    PGTDE::append_to_result_file('###########################');
 
     my ($table) = @_;
 
@@ -107,11 +107,11 @@ sub verify_table
 
     my $strings = 'TABLEFILE FOR ' . $table . ' FOUND: ';
     $strings .= `(ls  $tablefile >/dev/null && echo -n yes) || echo -n no`;
-    PGTDE::append_to_file($strings);
+    PGTDE::append_to_result_file($strings);
 
     $strings = 'CONTAINS FOO (should be empty): ';
     $strings .= `strings $tablefile | grep foo`;
-    PGTDE::append_to_file($strings);
+    PGTDE::append_to_result_file($strings);
 }
 
 verify_table('test_enc1');
@@ -127,11 +127,11 @@ $tablefile2 .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_
 
 my  $strings = 'TABLEFILE2 FOUND: ';
 $strings .= `(ls  $tablefile2 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 $strings = 'CONTAINS FOO (should be empty): ';
 $strings .= `strings $tablefile2 | grep foo`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 # Verify that we can't see the data in the file
 my $tablefile3 = $node->safe_psql('postgres', 'SHOW data_directory;');
@@ -140,11 +140,11 @@ $tablefile3 .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_
 
 $strings = 'TABLEFILE3 FOUND: ';
 $strings .= `(ls  $tablefile3 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 $strings = 'CONTAINS FOO (should be empty): ';
 $strings .= `strings $tablefile3 | grep foo`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 # Verify that we can't see the data in the file
 my $tablefile4 = $node->safe_psql('postgres', 'SHOW data_directory;');
@@ -153,11 +153,11 @@ $tablefile4 .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_
 
 $strings = 'TABLEFILE4 FOUND: ';
 $strings .= `(ls  $tablefile4 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 $strings = 'CONTAINS FOO (should be empty): ';
 $strings .= `strings $tablefile4 | grep foo`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc1;');
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc2;');

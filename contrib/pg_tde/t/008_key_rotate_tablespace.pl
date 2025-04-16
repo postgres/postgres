@@ -45,7 +45,7 @@ PGTDE::psql($node, 'tbc', 'SELECT * FROM country_table;');
 
 PGTDE::psql($node, 'tbc', "SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');");
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");

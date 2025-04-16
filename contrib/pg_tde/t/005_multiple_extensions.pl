@@ -44,7 +44,7 @@ PGTDE::append_to_debug_file($stdout);
 # Create pg_tde extension
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 # Create Other extensions
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', 'CREATE EXTENSION IF NOT EXISTS IF NOT EXISTS pgaudit;', extra_params => ['-a']);
@@ -82,24 +82,24 @@ $rt_value = $node->psql('postgres', "SELECT pg_tde_add_database_key_provider_fil
 $rt_value = $node->psql('postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');", extra_params => ['-a']);
 
 $stdout = $node->safe_psql('postgres', 'CREATE TABLE test_enc1(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'INSERT INTO test_enc1 (k) VALUES (5),(6);', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
 
 $stdout = $node->safe_psql('postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'DROP TABLE test_enc1;', extra_params => ['-a']);
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 # Print PGSM settings 
 ($cmdret, $stdout, $stderr) = $node->psql('postgres', "SELECT name, setting, unit, context, vartype, source, min_val, max_val, enumvals, boot_val, reset_val, pending_restart FROM pg_settings WHERE name='pg_stat_monitor.pgsm_query_shared_buffer';", extra_params => ['-a', '-Pformat=aligned','-Ptuples_only=off']);
@@ -129,7 +129,7 @@ PGTDE::append_to_debug_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "DROP PGTDE EXTENSION");
-PGTDE::append_to_file($stdout);
+PGTDE::append_to_result_file($stdout);
 
 $stdout = $node->safe_psql('postgres', 'DROP EXTENSION pg_stat_monitor;', extra_params => ['-a']);
 ok($cmdret == 0, "DROP PGTDE EXTENSION");

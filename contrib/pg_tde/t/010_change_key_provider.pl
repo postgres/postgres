@@ -39,7 +39,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Change provider and move file
-PGTDE::append_to_file("-- mv /tmp/change_key_provider_1.per /tmp/change_key_provider_2.per");
+PGTDE::append_to_result_file("-- mv /tmp/change_key_provider_1.per /tmp/change_key_provider_2.per");
 move('/tmp/change_key_provider_1.per', '/tmp/change_key_provider_2.per');
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_2.per');");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_list_all_database_key_providers();");
@@ -48,7 +48,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -66,7 +66,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -76,10 +76,10 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
-PGTDE::append_to_file("-- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_3.per");
+PGTDE::append_to_result_file("-- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_3.per");
 move('/tmp/change_key_provider_2.per', '/tmp/change_key_provider_3.per');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -106,7 +106,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_3.per');");
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");

@@ -27,9 +27,15 @@ BEGIN {
     $PG_MAJOR_VERSION =~ s/^\s+|\s+$//g;
 
     if ($PG_MAJOR_VERSION >= 15) {
-        eval { require PostgreSQL::Test::Cluster; };
+        eval {
+            require PostgreSQL::Test::Cluster;
+            import PostgreSQL::Test::Utils;
+        }
     } else {
-        eval { require PostgresNode; };
+        eval {
+            require PostgresNode;
+            import TestLib;
+        }
     }
 }
 
@@ -58,34 +64,26 @@ sub psql
     my (undef, $stdout, $stderr) = $node->psql($dbname, $sql, extra_params => ['-a']);
 
     if ($stdout ne '') {
-        append_to_file($stdout);
+        append_to_result_file($stdout);
     }
 
     if ($stderr ne '') {
-        append_to_file($stderr);
+        append_to_result_file($stderr);
     }
 }
 
-sub append_to_file
+sub append_to_result_file
 {
     my ($str) = @_;
 
-    if ($PG_MAJOR_VERSION >= 15) {
-        PostgreSQL::Test::Utils::append_to_file($out_filename_with_path, $str . "\n");
-    } else {
-        TestLib::append_to_file($out_filename_with_path, $str . "\n");
-    }
+    append_to_file($out_filename_with_path, $str . "\n");
 }
 
 sub append_to_debug_file
 {
     my ($str) = @_;
 
-    if ($PG_MAJOR_VERSION >= 15) {
-        PostgreSQL::Test::Utils::append_to_file($debug_out_filename_with_path, $str . "\n");
-    } else {
-        TestLib::append_to_file($debug_out_filename_with_path, $str . "\n");
-    }
+    append_to_file($debug_out_filename_with_path, $str . "\n");
 }
 
 sub setup_files_dir

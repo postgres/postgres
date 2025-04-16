@@ -78,7 +78,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);');
 
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");

@@ -25,7 +25,7 @@ PGTDE::psql($node, 'postgres', 'SELECT extname, extversion FROM pg_extension WHE
 
 PGTDE::psql($node, 'postgres', 'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -40,7 +40,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc (k) VALUES (\'foobar\'),(\'
 
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
-PGTDE::append_to_file("-- server restart");
+PGTDE::append_to_result_file("-- server restart");
 $node->stop();
 $rt_value = $node->start();
 ok($rt_value == 1, "Restart Server");
@@ -54,11 +54,11 @@ $tablefile .= $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_e
 
 my $strings = 'TABLEFILE FOUND: ';
 $strings .= `(ls  $tablefile >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 $strings = 'CONTAINS FOO (should be empty): ';
 $strings .= `strings $tablefile | grep foo`;
-PGTDE::append_to_file($strings);
+PGTDE::append_to_result_file($strings);
 
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc;');
 
