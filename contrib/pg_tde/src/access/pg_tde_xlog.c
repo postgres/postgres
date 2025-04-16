@@ -99,31 +99,31 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
+		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->mapEntry.spcOid, xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDEPrincipalKeyInfo *xlrec = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add tde principal key for db %u", xlrec->databaseId);
+		appendStringInfo(buf, "db: %u", xlrec->databaseId);
 	}
 	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
 		XLogExtensionInstall *xlrec = (XLogExtensionInstall *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "tde extension install for db %u", xlrec->database_id);
+		appendStringInfo(buf, "db: %u", xlrec->database_id);
 	}
 	else if (info == XLOG_TDE_ROTATE_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "rotate principal key for %u", xlrec->databaseId);
+		appendStringInfo(buf, "db: %u", xlrec->databaseId);
 	}
 	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
 		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "add key provider %s for %u", xlrec->provider.provider_name, xlrec->database_id);
+		appendStringInfo(buf, "db: %u, provider id: %d", xlrec->database_id, xlrec->provider.provider_id);
 	}
 }
 
@@ -133,11 +133,11 @@ tdeheap_rmgr_identify(uint8 info)
 	switch (info & ~XLR_INFO_MASK)
 	{
 		case XLOG_TDE_ADD_RELATION_KEY:
-			return "XLOG_TDE_ADD_RELATION_KEY";
+			return "ADD_RELATION_KEY";
 		case XLOG_TDE_ADD_PRINCIPAL_KEY:
-			return "XLOG_TDE_ADD_PRINCIPAL_KEY";
+			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_EXTENSION_INSTALL_KEY:
-			return "XLOG_TDE_EXTENSION_INSTALL_KEY";
+			return "EXTENSION_INSTALL_KEY";
 		default:
 			return NULL;
 	}
