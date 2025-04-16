@@ -27,6 +27,8 @@ INSERT INTO test_enc (k) VALUES (3);
 
 SELECT * from test_enc;
 
+SELECT pg_tde_verify_key();
+
 DROP TABLE test_enc;
 
 DROP EXTENSION pg_tde;

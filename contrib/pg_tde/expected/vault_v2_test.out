@@ -44,5 +44,11 @@ SELECT * from test_enc;
   3 | 3
 (3 rows)
 
+SELECT pg_tde_verify_key();
+ pg_tde_verify_key 
+-------------------
+ 
+(1 row)
+
 DROP TABLE test_enc;
 DROP EXTENSION pg_tde;
