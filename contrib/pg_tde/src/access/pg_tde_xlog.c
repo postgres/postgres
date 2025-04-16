@@ -45,9 +45,6 @@ RegisterTdeRmgr(void)
 	RegisterCustomRmgr(RM_TDERMGR_ID, &tdeheap_rmgr);
 }
 
-/*
- * TDE fork XLog
- */
 static void
 tdeheap_rmgr_redo(XLogReaderState *record)
 {
@@ -71,21 +68,18 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		extension_install_redo(xlrec);
 	}
-
 	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
 		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
 
 		redo_key_provider_info(xlrec);
 	}
-
 	else if (info == XLOG_TDE_ROTATE_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
 		xl_tde_perform_rotate_key(xlrec);
 	}
-
 	else if (info == XLOG_TDE_FREE_MAP_ENTRY)
 	{
 		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
@@ -109,25 +103,25 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "add tde internal key for relation %u/%u", xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
 	}
-	if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
+	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDEPrincipalKeyInfo *xlrec = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "add tde principal key for db %u", xlrec->databaseId);
 	}
-	if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
+	else if (info == XLOG_TDE_EXTENSION_INSTALL_KEY)
 	{
 		XLogExtensionInstall *xlrec = (XLogExtensionInstall *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "tde extension install for db %u", xlrec->database_id);
 	}
-	if (info == XLOG_TDE_ROTATE_KEY)
+	else if (info == XLOG_TDE_ROTATE_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "rotate principal key for %u", xlrec->databaseId);
 	}
-	if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
+	else if (info == XLOG_TDE_ADD_KEY_PROVIDER_KEY)
 	{
 		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
 
@@ -138,14 +132,15 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 static const char *
 tdeheap_rmgr_identify(uint8 info)
 {
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_RELATION_KEY)
-		return "XLOG_TDE_ADD_RELATION_KEY";
-
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_ADD_PRINCIPAL_KEY)
-		return "XLOG_TDE_ADD_PRINCIPAL_KEY";
-
-	if ((info & ~XLR_INFO_MASK) == XLOG_TDE_EXTENSION_INSTALL_KEY)
-		return "XLOG_TDE_EXTENSION_INSTALL_KEY";
-
-	return NULL;
+	switch (info & ~XLR_INFO_MASK)
+	{
+		case XLOG_TDE_ADD_RELATION_KEY:
+			return "XLOG_TDE_ADD_RELATION_KEY";
+		case XLOG_TDE_ADD_PRINCIPAL_KEY:
+			return "XLOG_TDE_ADD_PRINCIPAL_KEY";
+		case XLOG_TDE_EXTENSION_INSTALL_KEY:
+			return "XLOG_TDE_EXTENSION_INSTALL_KEY";
+		default:
+			return NULL;
+	}
 }
