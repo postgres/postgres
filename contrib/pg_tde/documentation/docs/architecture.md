@@ -206,8 +206,6 @@ To add a database specific provider:
 pg_tde_add_database_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
-Note that in these functions do not verify the parameters. For that, see `pg_tde_verify_key`.
-
 ### Changing providers
 
 To change a value of a global provider:

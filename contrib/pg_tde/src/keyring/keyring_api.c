@@ -74,6 +74,7 @@ RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type)
 	Assert(routine != NULL);
 	Assert(routine->keyring_get_key != NULL);
 	Assert(routine->keyring_store_key != NULL);
+	Assert(routine->keyring_validate != NULL);
 
 	kp = find_key_provider_type(type);
 	if (kp)
@@ -147,4 +148,16 @@ KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, uns
 	KeyringStoreKey(keyring, key);
 
 	return key;
+}
+
+void
+KeyringValidate(GenericKeyring *keyring)
+{
+	RegisteredKeyProviderType *kp = find_key_provider_type(keyring->type);
+
+	if (kp == NULL)
+		ereport(ERROR,
+				errmsg("Key provider of type %d not registered", keyring->type));
+
+	kp->routine->keyring_validate(keyring);
 }

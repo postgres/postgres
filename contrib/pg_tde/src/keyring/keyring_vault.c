@@ -70,10 +70,12 @@ static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *o
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
+static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_get_key = get_key_by_name,
-	.keyring_store_key = set_key_by_name
+	.keyring_store_key = set_key_by_name,
+	.keyring_validate = validate,
 };
 
 void
@@ -298,6 +300,41 @@ cleanup:
 		freeJsonLexContext(jlex);
 #endif
 	return key;
+}
+
+static void
+validate(GenericKeyring *keyring)
+{
+	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
+	char		url[VAULT_URL_MAX_LEN];
+	CurlString	str;
+	long		httpCode = 0;
+
+	/*
+	 * Validate connection by listing available keys at the root level of the
+	 * mount point
+	 */
+	snprintf(url, VAULT_URL_MAX_LEN, "%s/v1/%s/metadata/?list=true",
+			 vault_keyring->vault_url, vault_keyring->vault_mount_path);
+
+	if (!curl_perform(vault_keyring, url, &str, &httpCode, NULL))
+	{
+		ereport(ERROR,
+				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
+					   vault_keyring->keyring.provider_name));
+	}
+
+	/* If the mount point doesn't have any secrets yet, we'll get a 404. */
+	if (httpCode != 200 && httpCode != 404)
+	{
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Listing secrets of \"%s\" at mountpoint \"%s\" failed",
+					   vault_keyring->vault_url, vault_keyring->vault_mount_path));
+	}
+
+	if (str.ptr != NULL)
+		pfree(str.ptr);
 }
 
 /*

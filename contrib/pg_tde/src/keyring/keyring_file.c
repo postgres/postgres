@@ -28,10 +28,12 @@
 
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
+static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringFileRoutine = {
 	.keyring_get_key = get_key_by_name,
-	.keyring_store_key = set_key_by_name
+	.keyring_store_key = set_key_by_name,
+	.keyring_validate = validate,
 };
 
 void
@@ -141,5 +143,21 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 				errmsg("could not fsync file \"%s\": %m",
 					   file_keyring->file_name));
 	}
+	close(fd);
+}
+
+static void
+validate(GenericKeyring *keyring)
+{
+	FileKeyring *file_keyring = (FileKeyring *) keyring;
+	int			fd = BasicOpenFile(file_keyring->file_name, O_CREAT | O_RDWR | PG_BINARY);
+
+	if (fd < 0)
+	{
+		ereport(ERROR,
+				errcode_for_file_access(),
+				errmsg("Failed to open keyring file %s: %m", file_keyring->file_name));
+	}
+
 	close(fd);
 }

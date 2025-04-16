@@ -160,4 +160,7 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  -1 | file-keyring
 (1 row)
 
+-- Creating a file key provider fails if we can't open or create the file
+SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');
+ERROR:  Failed to open keyring file /cant-create-file-in-root.per: Permission denied
 DROP EXTENSION pg_tde;

@@ -61,6 +61,7 @@ typedef struct TDEKeyringRoutine
 {
 	KeyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode);
 	void		(*keyring_store_key) (GenericKeyring *keyring, KeyInfo *key);
+	void		(*keyring_validate) (GenericKeyring *keyring);
 } TDEKeyringRoutine;
 
 typedef struct FileKeyring
@@ -91,5 +92,6 @@ extern void RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderTy
 
 extern KeyInfo *KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode);
 extern KeyInfo *KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len);
+extern void KeyringValidate(GenericKeyring *keyring);
 
 #endif							/* KEYRING_API_H */

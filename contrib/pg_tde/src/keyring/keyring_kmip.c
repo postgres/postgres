@@ -26,10 +26,12 @@
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
+static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringKmipRoutine = {
 	.keyring_get_key = get_key_by_name,
-	.keyring_store_key = set_key_by_name
+	.keyring_store_key = set_key_by_name,
+	.keyring_validate = validate,
 };
 
 void
@@ -203,4 +205,16 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 	SSL_CTX_free(ctx.ssl);
 
 	return key;
+}
+
+static void
+validate(GenericKeyring *keyring)
+{
+	KmipKeyring *kmip_keyring = (KmipKeyring *) keyring;
+	KmipCtx		ctx;
+
+	kmipSslConnect(&ctx, kmip_keyring, true);
+
+	BIO_free_all(ctx.bio);
+	SSL_CTX_free(ctx.ssl);
 }

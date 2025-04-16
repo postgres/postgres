@@ -472,6 +472,8 @@ check_provider_record(KeyringProviderRecord *provider_record)
 				errmsg("Invalid provider options."));
 	}
 
+	KeyringValidate(provider);
+
 	pfree(provider);
 }
 
