@@ -70,10 +70,12 @@ static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *o
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
+static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
 	.keyring_get_key = get_key_by_name,
-	.keyring_store_key = set_key_by_name
+	.keyring_store_key = set_key_by_name,
+	.keyring_validate = validate,
 };
 
 void
@@ -298,6 +300,32 @@ cleanup:
 		freeJsonLexContext(jlex);
 #endif
 	return key;
+}
+
+static void
+validate(GenericKeyring *keyring)
+{
+	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
+	char		url[VAULT_URL_MAX_LEN];
+	CurlString	str;
+	long		httpCode = 0;
+
+	/*
+	 * Just try to connect to the mount URL with an empty key name to see if we
+	 * get any response. There might be better ways to validate vault
+	 * connectivity we want to look into in the future.
+	 */
+	get_keyring_vault_url(vault_keyring, "", url, sizeof(url));
+
+	if (!curl_perform(vault_keyring, url, &str, &httpCode, NULL))
+	{
+		ereport(ERROR,
+				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
+					   vault_keyring->keyring.provider_name));
+	}
+
+	if (str.ptr != NULL)
+		pfree(str.ptr);
 }
 
 /*

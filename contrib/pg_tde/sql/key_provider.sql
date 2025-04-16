@@ -52,4 +52,7 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 SELECT pg_tde_delete_global_key_provider('file-keyring2');
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 
+-- Creating a file key provider fails if we can't open or create the file
+SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');
+
 DROP EXTENSION pg_tde;

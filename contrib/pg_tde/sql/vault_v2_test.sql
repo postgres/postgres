@@ -31,4 +31,7 @@ SELECT pg_tde_verify_key();
 
 DROP TABLE test_enc;
 
+-- Creating provider fails if we can't connect to vault
+SELECT pg_tde_add_database_key_provider_vault_v2('will-not-work', :'root_token', 'http://127.0.0.1:61', 'secret', NULL);
+
 DROP EXTENSION pg_tde;
