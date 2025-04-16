@@ -66,8 +66,7 @@ typedef struct TDEMapEntry
 
 typedef struct XLogRelKey
 {
-	TDEMapEntry mapEntry;
-	TDESignedPrincipalKeyInfo pkInfo;
+	RelFileLocator rlocator;
 } XLogRelKey;
 
 /*
@@ -99,9 +98,9 @@ extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
 extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path);
 
 extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
+extern void pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator);
-extern void pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPrincipalKeyInfo *signed_key_info);
 
 #define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
 

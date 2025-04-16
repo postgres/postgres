@@ -121,13 +121,13 @@ static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLog
 static InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, InternalKey *key);
 
 #ifndef FRONTEND
-static InternalKey *pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type);
-static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type);
+static InternalKey *pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator);
+static InternalKey *pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator);
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
 static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
+static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
@@ -137,22 +137,32 @@ InternalKey *
 pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
 {
 	if (RelFileLocatorBackendIsTemp(*newrlocator))
-		return pg_tde_create_local_key(&newrlocator->locator, TDE_KEY_TYPE_SMGR);
+		return pg_tde_create_smgr_key_temp(&newrlocator->locator);
 	else
-		return pg_tde_create_key_map_entry(&newrlocator->locator, TDE_KEY_TYPE_SMGR);
+		return pg_tde_create_smgr_key_perm(&newrlocator->locator);
 }
 
-/*
- * Generate an encrypted key for the relation and store it in the keymap file.
- */
 static InternalKey *
-pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type)
+pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator)
+{
+	InternalKey int_key;
+
+	pg_tde_generate_internal_key(&int_key, TDE_KEY_TYPE_SMGR);
+
+	return pg_tde_put_key_into_cache(newrlocator, &int_key);
+}
+
+static InternalKey *
+pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 {
 	InternalKey rel_key_data;
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
+	XLogRelKey	xlrec = {
+		.rlocator = *newrlocator,
+	};
 
-	pg_tde_generate_internal_key(&rel_key_data, entry_type);
+	pg_tde_generate_internal_key(&rel_key_data, TDE_KEY_TYPE_SMGR);
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
@@ -164,20 +174,49 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 	}
 
 	/* Add the encrypted key to the key map data file structure. */
-	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key, true);
+	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
+
+	/*
+	 * It is fine to write the to WAL after writing to the file since we have
+	 * not WAL logged the SMGR CREATE event either.
+	 */
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 
 	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data);
 }
 
-static InternalKey *
-pg_tde_create_local_key(const RelFileLocator *newrlocator, uint32 entry_type)
+void
+pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator)
 {
-	InternalKey int_key;
+	InternalKey rel_key_data;
+	InternalKey *old_key;
+	TDEPrincipalKey *principal_key;
+	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 
-	pg_tde_generate_internal_key(&int_key, entry_type);
+	if ((old_key = pg_tde_get_key_from_file(newrlocator, TDE_KEY_TYPE_SMGR)))
+	{
+		pfree(old_key);
+		LWLockRelease(lock_pk);
+		return;
+	}
 
-	return pg_tde_put_key_into_cache(newrlocator, &int_key);
+	pg_tde_generate_internal_key(&rel_key_data, TDE_KEY_TYPE_SMGR);
+
+	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
+	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
+	if (principal_key == NULL)
+	{
+		ereport(ERROR,
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_key before using encrypted tables"));
+	}
+
+	/* Add the encrypted key to the key map data file structure. */
+	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
+	LWLockRelease(lock_pk);
 }
 
 static void
@@ -240,7 +279,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	/*
 	 * Add the encrypted key to the key map data file structure.
 	 */
-	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key, false);
+	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 }
@@ -415,7 +454,7 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
  * concurrent in place updates leading to data conflicts.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog)
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
 {
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
@@ -458,73 +497,10 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	/* Initialize map entry and encrypt key */
 	pg_tde_initialize_map_entry(&write_map_entry, principal_key, rlocator, rel_key_data);
 
-	if (write_xlog)
-	{
-		XLogRelKey	xlrec;
-
-		xlrec.mapEntry = write_map_entry;
-		xlrec.pkInfo = signed_key_Info;
-
-		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
-	}
-
 	/* Write the given entry at curr_pos; i.e. the free entry. */
 	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
 
 	close(map_fd);
-}
-
-/*
- * Write and already encrypted entry to the key map.
- *
- * The caller must hold an exclusive lock on the map file to avoid
- * concurrent in place updates leading to data conflicts.
- */
-void
-pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPrincipalKeyInfo *signed_key_info)
-{
-	char		db_map_path[MAXPGPATH];
-	int			map_fd;
-	off_t		curr_pos = 0;
-
-	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-
-	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, false, &curr_pos);
-
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
-	while (1)
-	{
-		TDEMapEntry read_map_entry;
-		off_t		prev_pos = curr_pos;
-
-		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-
-		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-	}
-
-	/* Write the given entry at curr_pos; i.e. the free entry. */
-	pg_tde_write_one_map_entry(map_fd, write_map_entry, &curr_pos, db_map_path);
-
-	close(map_fd);
-
-	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 /*

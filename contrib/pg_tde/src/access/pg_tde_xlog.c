@@ -52,7 +52,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		pg_tde_write_key_map_entry_redo(&xlrec->mapEntry, &xlrec->pkInfo);
+		pg_tde_create_smgr_key_perm_redo(&xlrec->rlocator);
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
@@ -93,7 +93,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->mapEntry.spcOid, xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
+		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->rlocator.spcOid, xlrec->rlocator.dbOid, xlrec->rlocator.relNumber);
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
