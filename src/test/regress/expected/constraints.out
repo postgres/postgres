@@ -1042,6 +1042,7 @@ ALTER TABLE ATACC2 INHERIT ATACC1;
 -- can't override
 ALTER TABLE ATACC1 ADD CONSTRAINT ditto NOT NULL a;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "a_is_not_null" on relation "atacc2"
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 -- dropping the NO INHERIT constraint allows this to work
 ALTER TABLE ATACC2 DROP CONSTRAINT a_is_not_null;
 ALTER TABLE ATACC1 ADD CONSTRAINT ditto NOT NULL a;
@@ -1233,8 +1234,8 @@ Indexes:
 create table cnn_pk (a int not null no inherit);
 alter table cnn_pk add primary key (a);
 ERROR:  cannot create primary key on column "a"
-DETAIL:  The constraint "cnn_pk_a_not_null" on column "a", marked NO INHERIT, is incompatible with a primary key.
-HINT:  You will need to make it inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
+DETAIL:  The constraint "cnn_pk_a_not_null" on column "a" of table "cnn_pk", marked NO INHERIT, is incompatible with a primary key.
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 drop table cnn_pk;
 -- Ensure partitions are scanned for null values when adding a PK
 create table cnn2_parted(a int) partition by list (a);
@@ -1389,14 +1390,15 @@ Not-null constraints:
 -- If we have an invalid constraint, we can't have another
 ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn1 NOT NULL a NOT VALID NO INHERIT;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "nn" on relation "notnull_tbl1"
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
 ERROR:  incompatible NOT VALID constraint "nn" on relation "notnull_tbl1"
-HINT:  You will need to use ALTER TABLE ... VALIDATE CONSTRAINT to validate it.
+HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
 -- cannot add primary key on a column with an invalid not-null
 ALTER TABLE notnull_tbl1 ADD PRIMARY KEY (a);
 ERROR:  cannot create primary key on column "a"
-DETAIL:  The constraint "nn" on column "a", marked NOT VALID, is incompatible with a primary key.
-HINT:  You will need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
+DETAIL:  The constraint "nn" on column "a" of table "notnull_tbl1", marked NOT VALID, is incompatible with a primary key.
+HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
 -- ALTER column SET NOT NULL validates an invalid constraint (but this fails
 -- because of rows with null values)
 ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
@@ -1502,7 +1504,7 @@ NOTICE:  merging multiple inherited definitions of column "i"
 ALTER TABLE notnull_inhparent ADD CONSTRAINT nn NOT NULL i NOT VALID;
 ALTER TABLE notnull_inhchild ADD CONSTRAINT nn1 NOT NULL i; -- error
 ERROR:  incompatible NOT VALID constraint "nn" on relation "notnull_inhchild"
-HINT:  You will need to use ALTER TABLE ... VALIDATE CONSTRAINT to validate it.
+HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
 EXECUTE get_nnconstraint_info('{notnull_inhparent, notnull_inhchild, notnull_inhgrand}');
       tabname      | conname | convalidated | conislocal | coninhcount 
 -------------------+---------+--------------+------------+-------------
@@ -1566,6 +1568,24 @@ ALTER TABLE pp_nn ATTACH PARTITION pp_nn_1 FOR VALUES IN (NULL,5); --error
 ERROR:  constraint "nn1" conflicts with NOT VALID constraint on child table "pp_nn_1"
 ALTER TABLE pp_nn_1 VALIDATE CONSTRAINT nn1;
 ALTER TABLE pp_nn ATTACH PARTITION pp_nn_1 FOR VALUES IN (NULL,5); --ok
+DROP TABLE pp_nn;
+-- Try a partition with an invalid constraint and create a PK on the parent.
+CREATE TABLE pp_nn (a int) PARTITION BY HASH (a);
+CREATE TABLE pp_nn_1 PARTITION OF pp_nn FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+ALTER TABLE pp_nn_1 ADD CONSTRAINT nn NOT NULL a NOT VALID;
+ALTER TABLE ONLY pp_nn ADD PRIMARY KEY (a);
+ERROR:  cannot create primary key on column "a"
+DETAIL:  The constraint "nn" on column "a" of table "pp_nn_1", marked NOT VALID, is incompatible with a primary key.
+HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
+DROP TABLE pp_nn;
+-- same as above, but the constraint is NO INHERIT
+CREATE TABLE pp_nn (a int) PARTITION BY HASH (a);
+CREATE TABLE pp_nn_1 PARTITION OF pp_nn FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+ALTER TABLE pp_nn_1 ADD CONSTRAINT nn NOT NULL a NO INHERIT;
+ALTER TABLE ONLY pp_nn ADD PRIMARY KEY (a);
+ERROR:  cannot create primary key on column "a"
+DETAIL:  The constraint "nn" on column "a" of table "pp_nn_1", marked NO INHERIT, is incompatible with a primary key.
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 DROP TABLE pp_nn;
 -- Create table with NOT NULL INVALID constraint, for pg_upgrade.
 CREATE TABLE notnull_tbl1_upg (a int, b int);

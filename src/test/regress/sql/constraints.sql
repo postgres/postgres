@@ -940,6 +940,20 @@ ALTER TABLE pp_nn_1 VALIDATE CONSTRAINT nn1;
 ALTER TABLE pp_nn ATTACH PARTITION pp_nn_1 FOR VALUES IN (NULL,5); --ok
 DROP TABLE pp_nn;
 
+-- Try a partition with an invalid constraint and create a PK on the parent.
+CREATE TABLE pp_nn (a int) PARTITION BY HASH (a);
+CREATE TABLE pp_nn_1 PARTITION OF pp_nn FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+ALTER TABLE pp_nn_1 ADD CONSTRAINT nn NOT NULL a NOT VALID;
+ALTER TABLE ONLY pp_nn ADD PRIMARY KEY (a);
+DROP TABLE pp_nn;
+
+-- same as above, but the constraint is NO INHERIT
+CREATE TABLE pp_nn (a int) PARTITION BY HASH (a);
+CREATE TABLE pp_nn_1 PARTITION OF pp_nn FOR VALUES WITH (MODULUS 2, REMAINDER 0);
+ALTER TABLE pp_nn_1 ADD CONSTRAINT nn NOT NULL a NO INHERIT;
+ALTER TABLE ONLY pp_nn ADD PRIMARY KEY (a);
+DROP TABLE pp_nn;
+
 -- Create table with NOT NULL INVALID constraint, for pg_upgrade.
 CREATE TABLE notnull_tbl1_upg (a int, b int);
 INSERT INTO notnull_tbl1_upg VALUES (NULL, 1), (NULL, 2), (300, 3);

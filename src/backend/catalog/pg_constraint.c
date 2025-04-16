@@ -756,7 +756,9 @@ AdjustNotNullInheritance(Oid relid, AttrNumber attnum,
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					errmsg("cannot change NO INHERIT status of NOT NULL constraint \"%s\" on relation \"%s\"",
-						   NameStr(conform->conname), get_rel_name(relid)));
+						   NameStr(conform->conname), get_rel_name(relid)),
+					errhint("You might need to make the existing constraint inheritable using %s.",
+							"ALTER TABLE ... ALTER CONSTRAINT ... INHERIT"));
 
 		/*
 		 * Throw an error if the existing constraint is NOT VALID and caller
@@ -767,7 +769,8 @@ AdjustNotNullInheritance(Oid relid, AttrNumber attnum,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					errmsg("incompatible NOT VALID constraint \"%s\" on relation \"%s\"",
 						   NameStr(conform->conname), get_rel_name(relid)),
-					errhint("You will need to use ALTER TABLE ... VALIDATE CONSTRAINT to validate it."));
+					errhint("You might need to validate it using %s.",
+							"ALTER TABLE ... VALIDATE CONSTRAINT"));
 
 		if (!is_local)
 		{
