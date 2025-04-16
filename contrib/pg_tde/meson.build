@@ -100,6 +100,7 @@ sql_tests = [
   'subtransaction',
   'tablespace',
   'vault_v2_test',
+  'version',
   'default_principal_key',
 ]
 

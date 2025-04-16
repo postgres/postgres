@@ -23,6 +23,7 @@ relocate \
 subtransaction \
 tablespace \
 vault_v2_test \
+version \
 default_principal_key
 TAP_TESTS = 1
 
