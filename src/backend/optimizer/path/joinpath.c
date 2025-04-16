@@ -748,16 +748,22 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	 *
 	 * Lateral vars needn't be considered here as they're not considered when
 	 * determining if the join is unique.
-	 *
-	 * XXX this could be enabled if the remaining join quals were made part of
-	 * the inner scan's filter instead of the join filter.  Maybe it's worth
-	 * considering doing that?
 	 */
-	if (extra->inner_unique &&
-		(inner_path->param_info == NULL ||
-		 bms_num_members(inner_path->param_info->ppi_serials) <
-		 list_length(extra->restrictlist)))
-		return NULL;
+	if (extra->inner_unique)
+	{
+		Bitmapset  *ppi_serials;
+
+		if (inner_path->param_info == NULL)
+			return NULL;
+
+		ppi_serials = inner_path->param_info->ppi_serials;
+
+		foreach_node(RestrictInfo, rinfo, extra->restrictlist)
+		{
+			if (!bms_is_member(rinfo->rinfo_serial, ppi_serials))
+				return NULL;
+		}
+	}
 
 	/*
 	 * We can't use a memoize node if there are volatile functions in the
