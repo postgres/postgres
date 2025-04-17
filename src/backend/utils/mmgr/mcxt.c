@@ -873,7 +873,7 @@ MemoryContextStatsDetail(MemoryContext context,
 		print_location = PRINT_STATS_TO_LOGS;
 
 	/* num_contexts report number of contexts aggregated in the output */
-	MemoryContextStatsInternal(context, 0, max_level, max_children,
+	MemoryContextStatsInternal(context, 1, max_level, max_children,
 							   &grand_totals, print_location, &num_contexts);
 
 	if (print_to_stderr)
@@ -968,7 +968,7 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	 */
 	child = context->firstchild;
 	ichild = 0;
-	if (level < max_level && !stack_is_too_deep())
+	if (level <= max_level && !stack_is_too_deep())
 	{
 		for (; child != NULL && ichild < max_children;
 			 child = child->nextchild, ichild++)
@@ -1003,7 +1003,7 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 
 		if (print_location == PRINT_STATS_TO_STDERR)
 		{
-			for (int i = 0; i <= level; i++)
+			for (int i = 0; i < level; i++)
 				fprintf(stderr, "  ");
 			fprintf(stderr,
 					"%d more child contexts containing %zu total in %zu blocks; %zu free (%zu chunks); %zu used\n",
@@ -1104,7 +1104,7 @@ MemoryContextStatsPrint(MemoryContext context, void *passthru,
 
 	if (print_to_stderr)
 	{
-		for (i = 0; i < level; i++)
+		for (i = 1; i < level; i++)
 			fprintf(stderr, "  ");
 		fprintf(stderr, "%s: %s%s\n", name, stats_string, truncated_ident);
 	}
@@ -1585,12 +1585,11 @@ ProcessGetMemoryContextInterrupt(void)
 		{
 			MemoryContextCounters grand_totals;
 			int			num_contexts = 0;
-			int			level = 0;
 
 			path = NIL;
 			memset(&grand_totals, 0, sizeof(grand_totals));
 
-			MemoryContextStatsInternal(c, level, 100, 100, &grand_totals,
+			MemoryContextStatsInternal(c, 1, 100, 100, &grand_totals,
 									   PRINT_STATS_NONE, &num_contexts);
 
 			path = compute_context_path(c, context_id_lookup);
