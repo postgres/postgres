@@ -19,14 +19,6 @@ our $debug_out_filename_with_path;
 my $expected_folder = "t/expected";
 my $results_folder = "t/results";
 
-sub pgtde_init_pg
-{
-    my $node = PostgreSQL::Test::Cluster->new('pgtde_regression');
-    $node->dump_info;
-    $node->init;
-    return $node;
-}
-
 sub psql
 {
     my ($node, $dbname, $sql) = @_;

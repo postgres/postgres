@@ -9,7 +9,8 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
-my $node = PGTDE->pgtde_init_pg();
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 $node->append_conf('postgresql.conf', "wal_level = 'logical'");
 # NOT testing that it can't start: the test framework doesn't have an easy way to do this

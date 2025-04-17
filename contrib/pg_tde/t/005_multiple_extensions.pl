@@ -16,7 +16,8 @@ if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
     plan skip_all => "pg_tde test case only for PPG server package install with extensions.";
 }
 
-my $node = PGTDE->pgtde_init_pg();
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde, pg_stat_monitor, pgaudit, set_user, pg_repack'");
 $node->append_conf('postgresql.conf', "pg_stat_monitor.pgsm_bucket_time = 360000");
 $node->append_conf('postgresql.conf', "pg_stat_monitor.pgsm_normalized_query = 'yes'");

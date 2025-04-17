@@ -57,7 +57,8 @@ my $pid = MyWebServer->new(8889)->background();
 
 PGTDE::setup_files_dir(basename($0));
 
-my $node = PGTDE->pgtde_init_pg();
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 
 my $rt_value = $node->start();
