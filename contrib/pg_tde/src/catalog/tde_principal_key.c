@@ -953,7 +953,7 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 				continue;
 			}
 
-			if (providerId == principal_key->keyInfo.keyringId && principal_key->keyInfo.databaseId == GLOBAL_DATA_TDE_OID)
+			if (providerId == principal_key->keyInfo.keyringId)
 			{
 				systable_endscan(scan);
 				table_close(rel, AccessShareLock);

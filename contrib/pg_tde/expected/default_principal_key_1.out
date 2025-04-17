@@ -40,8 +40,9 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
  id |  provider_name  
 ----+-----------------
  -1 | reg_file-global
+ -2 | file-keyring
  -4 | file-provider
-(2 rows)
+(3 rows)
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
