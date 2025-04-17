@@ -16,6 +16,9 @@ our $out_filename_with_path;
 # Runtime output file that is used only for debugging purposes for comparison to PGSS, blocks and timings.
 our $debug_out_filename_with_path;
 
+my $expected_folder = "t/expected";
+my $results_folder = "t/results";
+
 sub pgtde_init_pg
 {
     my $node = PostgreSQL::Test::Cluster->new('pgtde_regression');
@@ -55,37 +58,23 @@ sub append_to_debug_file
 
 sub setup_files_dir
 {
-    my ($perlfilename) = @_;
-
-    my $expected_folder = "t/expected";
-    my $results_folder = "t/results";
+    my ($test_filename) = @_;
 
     unless (-d $results_folder)
     {
         mkdir $results_folder or die "Can't create folder $results_folder: $!\n";
     }
 
-    unless (-d $expected_folder)
-    {
-        BAIL_OUT "Expected files folder $expected_folder doesn't exist: \n";
-    }
+    my ($test_name) = $test_filename =~ /([^.]*)/;
 
-    my @split_arr = split /\./, $perlfilename;
-
-    my $filename_without_extension = $split_arr[0];
-
-    my $expected_filename = "${filename_without_extension}.out";
-    $expected_filename_with_path = "${expected_folder}/${expected_filename}";
-
-    my $out_filename = "${filename_without_extension}.out";
-    $out_filename_with_path = "${results_folder}/${out_filename}";
+    $expected_filename_with_path = "${expected_folder}/${test_name}.out";
+    $out_filename_with_path = "${results_folder}/${test_name}.out";
+    $debug_out_filename_with_path = "${results_folder}/${test_name}.out.debug";
 
     if (-f $out_filename_with_path)
     {
         unlink($out_filename_with_path) or die "Can't delete already existing $out_filename_with_path: $!\n";
     }
-
-    $debug_out_filename_with_path = "${results_folder}/${out_filename}.debug";
 }
 
 sub compare_results
