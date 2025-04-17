@@ -76,7 +76,7 @@ typedef struct execution_state
 
 
 /*
- * Data associated with a SQL-language function is kept in three main
+ * Data associated with a SQL-language function is kept in two main
  * data structures:
  *
  * 1. SQLFunctionHashEntry is a long-lived (potentially session-lifespan)
@@ -85,7 +85,7 @@ typedef struct execution_state
  * of plans for the query(s) within the function.  A SQLFunctionHashEntry is
  * potentially shared across multiple concurrent executions of the function,
  * so it must contain no execution-specific state; but its use_count must
- * reflect the number of SQLFunctionLink structs pointing at it.
+ * reflect the number of SQLFunctionCache structs pointing at it.
  * If the function's pg_proc row is updated, we throw away and regenerate
  * the SQLFunctionHashEntry and subsidiary data.  (Also note that if the
  * function is polymorphic or used as a trigger, there is a separate
@@ -99,22 +99,13 @@ typedef struct execution_state
  *	* hcontext ("hash context") holds everything else belonging to the
  *	  SQLFunctionHashEntry.
  *
- * 2. SQLFunctionCache lasts for the duration of a single execution of
- * the SQL function.  (In "lazyEval" mode, this might span multiple calls of
- * fmgr_sql.)  It holds a reference to the CachedPlan for the current query,
- * and other data that is execution-specific.  The SQLFunctionCache itself
- * as well as its subsidiary data are kept in fcontext ("function context"),
- * which we free at completion.  In non-returnsSet mode, this is just a child
- * of the call-time context.  In returnsSet mode, it is made a child of the
- * FmgrInfo's fn_mcxt so that it will survive between fmgr_sql calls.
- * The fcontext may have subsidiary contexts jfcontext and/or subcontext,
- * which have somewhat shorter lifespans.
- *
- * 3. SQLFunctionLink is a tiny struct that just holds pointers to
- * the SQLFunctionHashEntry and the current SQLFunctionCache (if any).
+ * 2. SQLFunctionCache is subsidiary data for a single FmgrInfo struct.
  * It is pointed to by the fn_extra field of the FmgrInfo struct, and is
- * always allocated in the FmgrInfo's fn_mcxt.  Its purpose is to reduce
- * the cost of repeat lookups of the SQLFunctionHashEntry.
+ * always allocated in the FmgrInfo's fn_mcxt.  It holds a reference to
+ * the CachedPlan for the current query, and other execution-specific data.
+ * A few subsidiary items such as the ParamListInfo object are also kept
+ * directly in fn_mcxt (which is also called fcontext here).  But most
+ * subsidiary data is in jfcontext or subcontext.
  */
 
 typedef struct SQLFunctionHashEntry
@@ -160,11 +151,15 @@ typedef struct SQLFunctionCache
 	Tuplestorestate *tstore;	/* where we accumulate result tuples */
 
 	JunkFilter *junkFilter;		/* will be NULL if function returns VOID */
+	int			jf_generation;	/* tracks whether junkFilter is up-to-date */
 
 	/*
 	 * While executing a particular query within the function, cplan is the
 	 * CachedPlan we've obtained for that query, and eslist is a chain of
 	 * execution_state records for the individual plans within the CachedPlan.
+	 * If eslist is not NULL at entry to fmgr_sql, then we are resuming
+	 * execution of a lazyEval-mode set-returning function.
+	 *
 	 * next_query_index is the 0-based index of the next CachedPlanSource to
 	 * get a CachedPlan from.
 	 */
@@ -184,22 +179,12 @@ typedef struct SQLFunctionCache
 	MemoryContext jfcontext;	/* subsidiary memory context holding
 								 * junkFilter, result slot, and related data */
 	MemoryContext subcontext;	/* subsidiary memory context for sub-executor */
-} SQLFunctionCache;
-
-typedef SQLFunctionCache *SQLFunctionCachePtr;
-
-/* Struct pointed to by FmgrInfo.fn_extra for a SQL function */
-typedef struct SQLFunctionLink
-{
-	/* Permanent pointer to associated SQLFunctionHashEntry */
-	SQLFunctionHashEntry *func;
-
-	/* Transient pointer to SQLFunctionCache, used only if returnsSet */
-	SQLFunctionCache *fcache;
 
 	/* Callback to release our use-count on the SQLFunctionHashEntry */
 	MemoryContextCallback mcb;
-} SQLFunctionLink;
+} SQLFunctionCache;
+
+typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 
 /* non-export function prototypes */
@@ -232,7 +217,7 @@ static Datum postquel_get_single_result(TupleTableSlot *slot,
 static void sql_compile_error_callback(void *arg);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
-static void RemoveSQLFunctionLink(void *arg);
+static void RemoveSQLFunctionCache(void *arg);
 static void check_sql_fn_statement(List *queryTreeList);
 static bool check_sql_stmt_retval(List *queryTreeList,
 								  Oid rettype, TupleDesc rettupdesc,
@@ -548,26 +533,23 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 	FmgrInfo   *finfo = fcinfo->flinfo;
 	SQLFunctionHashEntry *func;
 	SQLFunctionCache *fcache;
-	SQLFunctionLink *flink;
-	MemoryContext pcontext;
-	MemoryContext fcontext;
-	MemoryContext oldcontext;
 
 	/*
-	 * If this is the first execution for this FmgrInfo, set up a link struct
-	 * (initially containing null pointers).  The link must live as long as
+	 * If this is the first execution for this FmgrInfo, set up a cache struct
+	 * (initially containing null pointers).  The cache must live as long as
 	 * the FmgrInfo, so it goes in fn_mcxt.  Also set up a memory context
 	 * callback that will be invoked when fn_mcxt is deleted.
 	 */
-	flink = finfo->fn_extra;
-	if (flink == NULL)
+	fcache = finfo->fn_extra;
+	if (fcache == NULL)
 	{
-		flink = (SQLFunctionLink *)
-			MemoryContextAllocZero(finfo->fn_mcxt, sizeof(SQLFunctionLink));
-		flink->mcb.func = RemoveSQLFunctionLink;
-		flink->mcb.arg = flink;
-		MemoryContextRegisterResetCallback(finfo->fn_mcxt, &flink->mcb);
-		finfo->fn_extra = flink;
+		fcache = (SQLFunctionCache *)
+			MemoryContextAllocZero(finfo->fn_mcxt, sizeof(SQLFunctionCache));
+		fcache->fcontext = finfo->fn_mcxt;
+		fcache->mcb.func = RemoveSQLFunctionCache;
+		fcache->mcb.arg = fcache;
+		MemoryContextRegisterResetCallback(finfo->fn_mcxt, &fcache->mcb);
+		finfo->fn_extra = fcache;
 	}
 
 	/*
@@ -576,10 +558,10 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 	 * SQLFunctionHashEntry: we want to run to completion using the function's
 	 * initial definition.
 	 */
-	if (flink->fcache != NULL)
+	if (fcache->eslist != NULL)
 	{
-		Assert(flink->fcache->func == flink->func);
-		return flink->fcache;
+		Assert(fcache->func != NULL);
+		return fcache;
 	}
 
 	/*
@@ -590,7 +572,7 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 	 */
 	func = (SQLFunctionHashEntry *)
 		cached_function_compile(fcinfo,
-								(CachedFunction *) flink->func,
+								(CachedFunction *) fcache->func,
 								sql_compile_callback,
 								sql_delete_callback,
 								sizeof(SQLFunctionHashEntry),
@@ -598,52 +580,23 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 								false);
 
 	/*
-	 * Install the hash pointer in the SQLFunctionLink, and increment its use
+	 * Install the hash pointer in the SQLFunctionCache, and increment its use
 	 * count to reflect that.  If cached_function_compile gave us back a
 	 * different hash entry than we were using before, we must decrement that
 	 * one's use count.
 	 */
-	if (func != flink->func)
+	if (func != fcache->func)
 	{
-		if (flink->func != NULL)
+		if (fcache->func != NULL)
 		{
-			Assert(flink->func->cfunc.use_count > 0);
-			flink->func->cfunc.use_count--;
+			Assert(fcache->func->cfunc.use_count > 0);
+			fcache->func->cfunc.use_count--;
 		}
-		flink->func = func;
+		fcache->func = func;
 		func->cfunc.use_count++;
+		/* Assume we need to rebuild the junkFilter */
+		fcache->junkFilter = NULL;
 	}
-
-	/*
-	 * Create memory context that holds all the SQLFunctionCache data.  If we
-	 * return a set, we must keep this in whatever context holds the FmgrInfo
-	 * (anything shorter-lived risks leaving a dangling pointer in flink). But
-	 * in a non-SRF we'll delete it before returning, and there's no need for
-	 * it to outlive the caller's context.
-	 */
-	pcontext = func->returnsSet ? finfo->fn_mcxt : CurrentMemoryContext;
-	fcontext = AllocSetContextCreate(pcontext,
-									 "SQL function cache",
-									 ALLOCSET_SMALL_SIZES);
-
-	oldcontext = MemoryContextSwitchTo(fcontext);
-
-	/*
-	 * Create the struct proper, link it to func and fcontext.
-	 */
-	fcache = (SQLFunctionCache *) palloc0(sizeof(SQLFunctionCache));
-	fcache->func = func;
-	fcache->fcontext = fcontext;
-	fcache->lazyEvalOK = lazyEvalOK;
-
-	/*
-	 * If we return a set, we must link the fcache into fn_extra so that we
-	 * can find it again during future calls.  But in a non-SRF there is no
-	 * need to link it into fn_extra at all.  Not doing so removes the risk of
-	 * having a dangling pointer in a long-lived FmgrInfo.
-	 */
-	if (func->returnsSet)
-		flink->fcache = fcache;
 
 	/*
 	 * We're beginning a new execution of the function, so convert params to
@@ -651,7 +604,14 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 	 */
 	postquel_sub_params(fcache, fcinfo);
 
-	MemoryContextSwitchTo(oldcontext);
+	/* Also reset lazyEval state for the new execution. */
+	fcache->lazyEvalOK = lazyEvalOK;
+	fcache->lazyEval = false;
+
+	/* Also reset data about where we are in the function. */
+	fcache->eslist = NULL;
+	fcache->next_query_index = 0;
+	fcache->error_query_index = 0;
 
 	return fcache;
 }
@@ -798,10 +758,15 @@ init_execution_state(SQLFunctionCachePtr fcache)
 	 * anything very interesting, but much of this module expects it to be
 	 * there anyway.)
 	 *
+	 * Normally we can re-use the JunkFilter across executions, but if the
+	 * plan for the last CachedPlanSource changed, we'd better rebuild it.
+	 *
 	 * The JunkFilter, its result slot, and its tupledesc are kept in a
 	 * subsidiary memory context so that we can free them easily when needed.
 	 */
-	if (fcache->func->rettype != VOIDOID)
+	if (fcache->func->rettype != VOIDOID &&
+		(fcache->junkFilter == NULL ||
+		 fcache->jf_generation != fcache->cplan->generation))
 	{
 		TupleTableSlot *slot;
 		List	   *resulttlist;
@@ -854,6 +819,9 @@ init_execution_state(SQLFunctionCachePtr fcache)
 		/* Make sure output rowtype is properly blessed */
 		if (fcache->func->returnsTuple)
 			BlessTupleDesc(fcache->junkFilter->jf_resultSlot->tts_tupleDescriptor);
+
+		/* Mark the JunkFilter as up-to-date */
+		fcache->jf_generation = fcache->cplan->generation;
 
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1448,12 +1416,7 @@ postquel_end(execution_state *es, SQLFunctionCachePtr fcache)
 	fcache->subcontext = NULL;
 }
 
-/*
- * Build ParamListInfo array representing current arguments.
- *
- * This must be called in the fcontext so that the results have adequate
- * lifespan.
- */
+/* Build ParamListInfo array representing current arguments */
 static void
 postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo)
@@ -1467,8 +1430,13 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 
 		if (fcache->paramLI == NULL)
 		{
+			/* First time through: build a persistent ParamListInfo struct */
+			MemoryContext oldcontext;
+
+			oldcontext = MemoryContextSwitchTo(fcache->fcontext);
 			paramLI = makeParamList(nargs);
 			fcache->paramLI = paramLI;
+			MemoryContextSwitchTo(oldcontext);
 		}
 		else
 		{
@@ -1552,9 +1520,7 @@ Datum
 fmgr_sql(PG_FUNCTION_ARGS)
 {
 	SQLFunctionCachePtr fcache;
-	SQLFunctionLink *flink;
 	ErrorContextCallback sqlerrcontext;
-	MemoryContext tscontext;
 	bool		randomAccess;
 	bool		lazyEvalOK;
 	bool		pushed_snapshot;
@@ -1581,23 +1547,17 @@ fmgr_sql(PG_FUNCTION_ARGS)
 					 errmsg("set-valued function called in context that cannot accept a set")));
 		randomAccess = rsi->allowedModes & SFRM_Materialize_Random;
 		lazyEvalOK = !(rsi->allowedModes & SFRM_Materialize_Preferred);
-		/* tuplestore must have query lifespan */
-		tscontext = rsi->econtext->ecxt_per_query_memory;
 	}
 	else
 	{
 		randomAccess = false;
 		lazyEvalOK = true;
-		/* tuplestore needn't outlive caller context */
-		tscontext = CurrentMemoryContext;
 	}
 
 	/*
 	 * Initialize fcache if starting a fresh execution.
 	 */
 	fcache = init_sql_fcache(fcinfo, lazyEvalOK);
-	/* init_sql_fcache also ensures we have a SQLFunctionLink */
-	flink = fcinfo->flinfo->fn_extra;
 
 	/*
 	 * Now we can set up error traceback support for ereport()
@@ -1608,14 +1568,15 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	error_context_stack = &sqlerrcontext;
 
 	/*
-	 * Build tuplestore to hold results, if we don't have one already.  Make
-	 * sure it's in a suitable context.
+	 * Build tuplestore to hold results, if we don't have one already.  We
+	 * want to re-use the tuplestore across calls, so it needs to live in
+	 * fcontext.
 	 */
 	if (!fcache->tstore)
 	{
 		MemoryContext oldcontext;
 
-		oldcontext = MemoryContextSwitchTo(tscontext);
+		oldcontext = MemoryContextSwitchTo(fcache->fcontext);
 		fcache->tstore = tuplestore_begin_heap(randomAccess, false, work_mem);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -1773,7 +1734,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			{
 				RegisterExprContextCallback(rsi->econtext,
 											ShutdownSQLFunction,
-											PointerGetDatum(flink));
+											PointerGetDatum(fcache));
 				fcache->shutdown_reg = true;
 			}
 		}
@@ -1797,7 +1758,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			{
 				UnregisterExprContextCallback(rsi->econtext,
 											  ShutdownSQLFunction,
-											  PointerGetDatum(flink));
+											  PointerGetDatum(fcache));
 				fcache->shutdown_reg = false;
 			}
 		}
@@ -1823,7 +1784,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			{
 				UnregisterExprContextCallback(rsi->econtext,
 											  ShutdownSQLFunction,
-											  PointerGetDatum(flink));
+											  PointerGetDatum(fcache));
 				fcache->shutdown_reg = false;
 			}
 		}
@@ -1862,17 +1823,11 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		PopActiveSnapshot();
 
 	/*
-	 * If we've gone through every command in the function, we are done.
-	 * Release the cache to start over again on next call.
+	 * If we've gone through every command in the function, we are done. Reset
+	 * state to start over again on next call.
 	 */
 	if (es == NULL)
-	{
-		if (fcache->tstore)
-			tuplestore_end(fcache->tstore);
-		Assert(fcache->cplan == NULL);
-		flink->fcache = NULL;
-		MemoryContextDelete(fcache->fcontext);
-	}
+		fcache->eslist = NULL;
 
 	error_context_stack = sqlerrcontext.previous;
 
@@ -1958,67 +1913,62 @@ sql_exec_error_callback(void *arg)
 static void
 ShutdownSQLFunction(Datum arg)
 {
-	SQLFunctionLink *flink = (SQLFunctionLink *) DatumGetPointer(arg);
-	SQLFunctionCachePtr fcache = flink->fcache;
+	SQLFunctionCachePtr fcache = (SQLFunctionCachePtr) DatumGetPointer(arg);
+	execution_state *es;
 
-	if (fcache != NULL)
+	es = fcache->eslist;
+	while (es)
 	{
-		execution_state *es;
-
-		/* Make sure we don't somehow try to do this twice */
-		flink->fcache = NULL;
-
-		es = fcache->eslist;
-		while (es)
+		/* Shut down anything still running */
+		if (es->status == F_EXEC_RUN)
 		{
-			/* Shut down anything still running */
-			if (es->status == F_EXEC_RUN)
-			{
-				/* Re-establish active snapshot for any called functions */
-				if (!fcache->func->readonly_func)
-					PushActiveSnapshot(es->qd->snapshot);
+			/* Re-establish active snapshot for any called functions */
+			if (!fcache->func->readonly_func)
+				PushActiveSnapshot(es->qd->snapshot);
 
-				postquel_end(es, fcache);
+			postquel_end(es, fcache);
 
-				if (!fcache->func->readonly_func)
-					PopActiveSnapshot();
-			}
-			es = es->next;
+			if (!fcache->func->readonly_func)
+				PopActiveSnapshot();
 		}
-
-		/* Release tuplestore if we have one */
-		if (fcache->tstore)
-			tuplestore_end(fcache->tstore);
-
-		/* Release CachedPlan if we have one */
-		if (fcache->cplan)
-			ReleaseCachedPlan(fcache->cplan, fcache->cowner);
-
-		/* Release the cache */
-		MemoryContextDelete(fcache->fcontext);
+		es = es->next;
 	}
+	fcache->eslist = NULL;
+
+	/* Release tuplestore if we have one */
+	if (fcache->tstore)
+		tuplestore_end(fcache->tstore);
+	fcache->tstore = NULL;
+
+	/* Release CachedPlan if we have one */
+	if (fcache->cplan)
+		ReleaseCachedPlan(fcache->cplan, fcache->cowner);
+	fcache->cplan = NULL;
+
 	/* execUtils will deregister the callback... */
+	fcache->shutdown_reg = false;
 }
 
 /*
  * MemoryContext callback function
  *
- * We register this in the memory context that contains a SQLFunctionLink
+ * We register this in the memory context that contains a SQLFunctionCache
  * struct.  When the memory context is reset or deleted, we release the
- * reference count (if any) that the link holds on the long-lived hash entry.
+ * reference count (if any) that the cache holds on the long-lived hash entry.
  * Note that this will happen even during error aborts.
  */
 static void
-RemoveSQLFunctionLink(void *arg)
+RemoveSQLFunctionCache(void *arg)
 {
-	SQLFunctionLink *flink = (SQLFunctionLink *) arg;
+	SQLFunctionCache *fcache = (SQLFunctionCache *) arg;
 
-	if (flink->func != NULL)
+	/* Release reference count on SQLFunctionHashEntry */
+	if (fcache->func != NULL)
 	{
-		Assert(flink->func->cfunc.use_count > 0);
-		flink->func->cfunc.use_count--;
+		Assert(fcache->func->cfunc.use_count > 0);
+		fcache->func->cfunc.use_count--;
 		/* This should be unnecessary, but let's just be sure: */
-		flink->func = NULL;
+		fcache->func = NULL;
 	}
 }
 
