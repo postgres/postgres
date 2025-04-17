@@ -142,6 +142,7 @@ EndCompressorZstd(ArchiveHandle *AH, CompressorState *cs)
 	/* output buffer may be allocated in either mode */
 	pg_free(zstdcs->output.dst);
 	pg_free(zstdcs);
+	cs->private_data = NULL;
 }
 
 static void
