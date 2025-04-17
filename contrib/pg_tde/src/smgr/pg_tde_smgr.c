@@ -29,23 +29,30 @@ typedef TDESMgrRelationData *TDESMgrRelation;
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
 static InternalKey *
-tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create)
+tde_smgr_get_key(const RelFileLocatorBackend *smgr_rlocator)
+{
+	/* Do not try to encrypt/decrypt catalog tables */
+	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
+		return NULL;
+
+	return GetSMGRRelationKey(*smgr_rlocator);
+}
+
+static bool
+tde_smgr_should_encrypt(const RelFileLocatorBackend *smgr_rlocator, RelFileLocator *old_locator)
 {
 	TdeCreateEvent *event;
-	InternalKey *key;
 
-	if (IsCatalogRelationOid(reln->smgr_rlocator.locator.relNumber))
-	{
-		/* do not try to encrypt/decrypt catalog tables */
-		return NULL;
-	}
+	/* Do not try to encrypt/decrypt catalog tables */
+	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
+		return false;
 
-	/* see if we have a key for the relation, and return if yes */
-	key = GetSMGRRelationKey(reln->smgr_rlocator);
-	if (key != NULL)
-	{
-		return key;
-	}
+	/*
+	 * Make sure that even if a statement failed, and an event trigger end
+	 * trigger didn't fire, we don't accidentaly create encrypted files when
+	 * we don't have to.
+	 */
+	validateCurrentEventTriggerState(false);
 
 	event = GetCurrentTdeCreateEvent();
 
@@ -55,25 +62,22 @@ tde_smgr_get_key(SMgrRelation reln, RelFileLocator *old_locator, bool can_create
 	 *
 	 * Every file has its own key, that makes logistics easier.
 	 */
-	if (event->encryptMode == true && can_create)
-	{
-		return pg_tde_create_smgr_key(&reln->smgr_rlocator);
-	}
+	if (event->encryptMode)
+		return true;
 
 	/* check if we had a key for the old locator, if there's one */
-	if (old_locator != NULL && can_create)
+	if (!event->alterAccessMethodMode && old_locator)
 	{
-		RelFileLocatorBackend rlocator = {.locator = *old_locator,.backend = reln->smgr_rlocator.backend};
-		InternalKey *oldkey = GetSMGRRelationKey(rlocator);
+		RelFileLocatorBackend old_smgr_locator = {
+			.locator = *old_locator,
+			.backend = smgr_rlocator->backend,
+		};
 
-		if (oldkey != NULL)
-		{
-			/* create a new key for the new file */
-			return pg_tde_create_smgr_key(&reln->smgr_rlocator);
-		}
+		if (GetSMGRRelationKey(old_smgr_locator))
+			return true;
 	}
 
-	return NULL;
+	return false;
 }
 
 static void
@@ -216,19 +220,10 @@ static void
 tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *key;
 
 	/* Copied from mdcreate() in md.c */
 	if (isRedo && tdereln->md_num_open_segs[forknum] > 0)
 		return;
-
-	/*
-	 * Make sure that even if a statement failed, and an event trigger end
-	 * trigger didn't fire, we don't accidentaly create encrypted files when
-	 * we don't have to. event above is a pointer, so it will reflect the
-	 * correct state even if this changes it.
-	 */
-	validateCurrentEventTriggerState(false);
 
 	/*
 	 * This is the only function that gets called during actual CREATE
@@ -240,20 +235,19 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 	if (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM)
 	{
-		TdeCreateEvent *event = GetCurrentTdeCreateEvent();
-
 		/*
 		 * Only create keys when creating the main/init fork. Other forks can
 		 * be created later, even during tde creation events. We definitely do
 		 * not want to create keys then, even later, when we encrypt all
 		 * forks!
-		 */
-
-		/*
+		 *
 		 * Later calls then decide to encrypt or not based on the existence of
-		 * the key
+		 * the key.
 		 */
-		key = tde_smgr_get_key(reln, event->alterAccessMethodMode ? NULL : &relold, true);
+		InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
+
+		if (!key && tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
+			key = pg_tde_create_smgr_key(&reln->smgr_rlocator);
 
 		if (key)
 		{
@@ -274,7 +268,7 @@ static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *key = tde_smgr_get_key(reln, NULL, false);
+	InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
 
 	if (key)
 	{
