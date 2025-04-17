@@ -1073,7 +1073,7 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimplePtrList *dbname_oi
 		char	   *p = linebuf.data;
 
 		/* Extract dboid. */
-		while (isdigit(*p))
+		while (isdigit((unsigned char) *p))
 			p++;
 		if (p > linebuf.data && *p == ' ')
 		{
