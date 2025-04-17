@@ -11,11 +11,7 @@ use pgtde;
 PGTDE::setup_files_dir(basename($0));
 
 my $node = PGTDE->pgtde_init_pg();
-my $pgdata = $node->data_dir;
-
-open my $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "shared_preload_libraries = 'pg_tde'\n";
-close $conf;
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 
 unlink('/tmp/change_key_provider_1.per');
 unlink('/tmp/change_key_provider_2.per');

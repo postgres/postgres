@@ -10,11 +10,7 @@ use pgtde;
 PGTDE::setup_files_dir(basename($0));
 
 my $node = PGTDE->pgtde_init_pg();
-my $pgdata = $node->data_dir;
-
-open my $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "shared_preload_libraries = 'pg_tde'\n";
-close $conf;
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 
 open my $conf2, '>>', "/tmp/datafile-location";
 print $conf2 "/tmp/keyring_data_file\n";

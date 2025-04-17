@@ -10,14 +10,10 @@ use pgtde;
 PGTDE::setup_files_dir(basename($0));
 
 my $node = PGTDE->pgtde_init_pg();
-my $pgdata = $node->data_dir;
-
-open my $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "shared_preload_libraries = 'pg_tde'\n";
-print $conf "wal_level = 'logical'\n";
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
+$node->append_conf('postgresql.conf', "wal_level = 'logical'");
 # NOT testing that it can't start: the test framework doesn't have an easy way to do this
-# print $conf "pg_tde.wal_encrypt = 1\n";
-close $conf;
+#$node->append_conf('postgresql.conf', "pg_tde.wal_encrypt = 1"});
 
 my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");

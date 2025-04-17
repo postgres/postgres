@@ -17,13 +17,9 @@ if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
 }
 
 my $node = PGTDE->pgtde_init_pg();
-my $pgdata = $node->data_dir;
-
-open my $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "shared_preload_libraries = 'pg_tde, pg_stat_monitor, pgaudit, set_user, pg_repack'\n";
-print $conf "pg_stat_monitor.pgsm_bucket_time = 360000\n";
-print $conf "pg_stat_monitor.pgsm_normalized_query = 'yes'\n";
-close $conf;
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde, pg_stat_monitor, pgaudit, set_user, pg_repack'");
+$node->append_conf('postgresql.conf', "pg_stat_monitor.pgsm_bucket_time = 360000");
+$node->append_conf('postgresql.conf', "pg_stat_monitor.pgsm_normalized_query = 'yes'");
 
 open my $conf2, '>>', "/tmp/datafile-location";
 print $conf2 "/tmp/keyring_data_file\n";

@@ -8,11 +8,6 @@ use Test::More;
 use lib 't';
 use pgtde;
 
-PGTDE::setup_files_dir(basename($0));
-
-my $node = PGTDE->pgtde_init_pg();
-my $pgdata = $node->data_dir;
-
 {
 package MyWebServer;
  
@@ -60,9 +55,10 @@ sub resp_url {
 
 my $pid = MyWebServer->new(8889)->background();
 
-open my $conf, '>>', "$pgdata/postgresql.conf";
-print $conf "shared_preload_libraries = 'pg_tde'\n";
-close $conf;
+PGTDE::setup_files_dir(basename($0));
+
+my $node = PGTDE->pgtde_init_pg();
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 
 my $rt_value = $node->start();
 ok($rt_value == 1, "Start Server");
