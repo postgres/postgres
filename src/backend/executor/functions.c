@@ -55,7 +55,9 @@ typedef struct
  *
  * The "next" fields chain together all the execution_state records generated
  * from a single original parsetree.  (There will only be more than one in
- * case of rule expansion of the original parsetree.)
+ * case of rule expansion of the original parsetree.)  The chain structure is
+ * quite vestigial at this point, because we allocate the records in an array
+ * for ease of memory management.  But we'll get rid of it some other day.
  */
 typedef enum
 {
@@ -158,17 +160,20 @@ typedef struct SQLFunctionCache
 
 	/*
 	 * While executing a particular query within the function, cplan is the
-	 * CachedPlan we've obtained for that query, and eslist is a list of
+	 * CachedPlan we've obtained for that query, and eslist is a chain of
 	 * execution_state records for the individual plans within the CachedPlan.
 	 * next_query_index is the 0-based index of the next CachedPlanSource to
 	 * get a CachedPlan from.
 	 */
 	CachedPlan *cplan;			/* Plan for current query, if any */
 	ResourceOwner cowner;		/* CachedPlan is registered with this owner */
-	execution_state *eslist;	/* execution_state records */
 	int			next_query_index;	/* index of next CachedPlanSource to run */
 
-	/* if positive, this is the index of the query we're processing */
+	execution_state *eslist;	/* chain of execution_state records */
+	execution_state *esarray;	/* storage for eslist */
+	int			esarray_len;	/* allocated length of esarray[] */
+
+	/* if positive, this is the 1-based index of the query we're processing */
 	int			error_query_index;
 
 	MemoryContext fcontext;		/* memory context holding this struct and all
@@ -212,13 +217,12 @@ static void sql_delete_callback(CachedFunction *cfunc);
 static void sql_postrewrite_callback(List *querytree_list, void *arg);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static bool postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache);
-static void postquel_end(execution_state *es);
+static void postquel_end(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 								FunctionCallInfo fcinfo);
 static Datum postquel_get_single_result(TupleTableSlot *slot,
 										FunctionCallInfo fcinfo,
-										SQLFunctionCachePtr fcache,
-										MemoryContext resultcontext);
+										SQLFunctionCachePtr fcache);
 static void sql_compile_error_callback(void *arg);
 static void sql_exec_error_callback(void *arg);
 static void ShutdownSQLFunction(Datum arg);
@@ -658,12 +662,11 @@ init_execution_state(SQLFunctionCachePtr fcache)
 	CachedPlanSource *plansource;
 	execution_state *preves = NULL;
 	execution_state *lasttages = NULL;
+	int			nstmts;
 	ListCell   *lc;
 
 	/*
-	 * Clean up after previous query, if there was one.  Note that we just
-	 * leak the old execution_state records until end of function execution;
-	 * there aren't likely to be enough of them to matter.
+	 * Clean up after previous query, if there was one.
 	 */
 	if (fcache->cplan)
 	{
@@ -705,6 +708,22 @@ init_execution_state(SQLFunctionCachePtr fcache)
 								  NULL);
 
 	/*
+	 * If necessary, make esarray[] bigger to hold the needed state.
+	 */
+	nstmts = list_length(fcache->cplan->stmt_list);
+	if (nstmts > fcache->esarray_len)
+	{
+		if (fcache->esarray == NULL)
+			fcache->esarray = (execution_state *)
+				MemoryContextAlloc(fcache->fcontext,
+								   sizeof(execution_state) * nstmts);
+		else
+			fcache->esarray = repalloc_array(fcache->esarray,
+											 execution_state, nstmts);
+		fcache->esarray_len = nstmts;
+	}
+
+	/*
 	 * Build execution_state list to match the number of contained plans.
 	 */
 	foreach(lc, fcache->cplan->stmt_list)
@@ -740,7 +759,7 @@ init_execution_state(SQLFunctionCachePtr fcache)
 							CreateCommandName((Node *) stmt))));
 
 		/* OK, build the execution_state for this query */
-		newes = (execution_state *) palloc(sizeof(execution_state));
+		newes = &fcache->esarray[foreach_current_index(lc)];
 		if (preves)
 			preves->next = newes;
 		else
@@ -775,9 +794,14 @@ init_execution_state(SQLFunctionCachePtr fcache)
 	 */
 	if (fcache->func->rettype != VOIDOID)
 	{
-		TupleTableSlot *slot = MakeSingleTupleTableSlot(NULL,
-														&TTSOpsMinimalTuple);
+		TupleTableSlot *slot;
 		List	   *resulttlist;
+		MemoryContext oldcontext;
+
+		/* The result slot and JunkFilter must be in the fcontext */
+		oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+
+		slot = MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
 
 		/*
 		 * Re-fetch the (possibly modified) output tlist of the final
@@ -811,14 +835,17 @@ init_execution_state(SQLFunctionCachePtr fcache)
 		 * pointer.
 		 */
 		fcache->junkFilter->jf_targetList = NIL;
+
+		/* Make sure output rowtype is properly blessed */
+		if (fcache->func->returnsTuple)
+			BlessTupleDesc(fcache->junkFilter->jf_resultSlot->tts_tupleDescriptor);
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 
-	if (fcache->func->returnsTuple)
-	{
-		/* Make sure output rowtype is properly blessed */
-		BlessTupleDesc(fcache->junkFilter->jf_resultSlot->tts_tupleDescriptor);
-	}
-	else if (fcache->func->returnsSet && type_is_rowtype(fcache->func->rettype))
+	if (fcache->func->returnsSet &&
+		!fcache->func->returnsTuple &&
+		type_is_rowtype(fcache->func->rettype))
 	{
 		/*
 		 * Returning rowtype as if it were scalar --- materialize won't work.
@@ -1230,11 +1257,22 @@ static void
 postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	DestReceiver *dest;
+	MemoryContext oldcontext;
 
 	Assert(es->qd == NULL);
 
 	/* Caller should have ensured a suitable snapshot is active */
 	Assert(ActiveSnapshotSet());
+
+	/*
+	 * Run the sub-executor in a child of fcontext.  The sub-executor is
+	 * responsible for deleting per-tuple information.  (XXX in the case of a
+	 * long-lived FmgrInfo, this policy potentially causes memory leakage, but
+	 * it's not very clear where we could keep stuff instead.  Fortunately,
+	 * there are few if any cases where set-returning functions are invoked
+	 * via FmgrInfos that would outlive the calling query.)
+	 */
+	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
 
 	/*
 	 * If this query produces the function result, send its output to the
@@ -1285,6 +1323,8 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	}
 
 	es->status = F_EXEC_RUN;
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /* Run one execution_state; either to completion or to first result row */
@@ -1293,6 +1333,10 @@ static bool
 postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	bool		result;
+	MemoryContext oldcontext;
+
+	/* Run the sub-executor in a child of fcontext */
+	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
@@ -1320,13 +1364,20 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 		result = (count == 0 || es->qd->estate->es_processed == 0);
 	}
 
+	MemoryContextSwitchTo(oldcontext);
+
 	return result;
 }
 
 /* Shut down execution of one execution_state node */
 static void
-postquel_end(execution_state *es)
+postquel_end(execution_state *es, SQLFunctionCachePtr fcache)
 {
+	MemoryContext oldcontext;
+
+	/* Run the sub-executor in a child of fcontext */
+	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+
 	/* mark status done to ensure we don't do ExecutorEnd twice */
 	es->status = F_EXEC_DONE;
 
@@ -1341,9 +1392,16 @@ postquel_end(execution_state *es)
 
 	FreeQueryDesc(es->qd);
 	es->qd = NULL;
+
+	MemoryContextSwitchTo(oldcontext);
 }
 
-/* Build ParamListInfo array representing current arguments */
+/*
+ * Build ParamListInfo array representing current arguments.
+ *
+ * This must be called in the fcontext so that the results have adequate
+ * lifespan.
+ */
 static void
 postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo)
@@ -1398,25 +1456,22 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 /*
  * Extract the SQL function's value from a single result row.  This is used
  * both for scalar (non-set) functions and for each row of a lazy-eval set
- * result.
+ * result.  We expect the current memory context to be that of the caller
+ * of fmgr_sql.
  */
 static Datum
 postquel_get_single_result(TupleTableSlot *slot,
 						   FunctionCallInfo fcinfo,
-						   SQLFunctionCachePtr fcache,
-						   MemoryContext resultcontext)
+						   SQLFunctionCachePtr fcache)
 {
 	Datum		value;
-	MemoryContext oldcontext;
 
 	/*
 	 * Set up to return the function value.  For pass-by-reference datatypes,
-	 * be sure to allocate the result in resultcontext, not the current memory
-	 * context (which has query lifespan).  We can't leave the data in the
-	 * TupleTableSlot because we intend to clear the slot before returning.
+	 * be sure to copy the result into the current context.  We can't leave
+	 * the data in the TupleTableSlot because we intend to clear the slot
+	 * before returning.
 	 */
-	oldcontext = MemoryContextSwitchTo(resultcontext);
-
 	if (fcache->func->returnsTuple)
 	{
 		/* We must return the whole tuple as a Datum. */
@@ -1427,15 +1482,13 @@ postquel_get_single_result(TupleTableSlot *slot,
 	{
 		/*
 		 * Returning a scalar, which we have to extract from the first column
-		 * of the SELECT result, and then copy into result context if needed.
+		 * of the SELECT result, and then copy into current context if needed.
 		 */
 		value = slot_getattr(slot, 1, &(fcinfo->isnull));
 
 		if (!fcinfo->isnull)
 			value = datumCopy(value, fcache->func->typbyval, fcache->func->typlen);
 	}
-
-	MemoryContextSwitchTo(oldcontext);
 
 	return value;
 }
@@ -1450,7 +1503,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	SQLFunctionLink *flink;
 	ErrorContextCallback sqlerrcontext;
 	MemoryContext tscontext;
-	MemoryContext oldcontext;
 	bool		randomAccess;
 	bool		lazyEvalOK;
 	bool		pushed_snapshot;
@@ -1507,20 +1559,14 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 * Build tuplestore to hold results, if we don't have one already.  Make
 	 * sure it's in a suitable context.
 	 */
-	oldcontext = MemoryContextSwitchTo(tscontext);
-
 	if (!fcache->tstore)
-		fcache->tstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+	{
+		MemoryContext oldcontext;
 
-	/*
-	 * Switch to context in which the fcache lives.  The sub-executor is
-	 * responsible for deleting per-tuple information.  (XXX in the case of a
-	 * long-lived FmgrInfo, this policy potentially causes memory leakage, but
-	 * it's not very clear where we could keep stuff instead.  Fortunately,
-	 * there are few if any cases where set-returning functions are invoked
-	 * via FmgrInfos that would outlive the calling query.)
-	 */
-	MemoryContextSwitchTo(fcache->fcontext);
+		oldcontext = MemoryContextSwitchTo(tscontext);
+		fcache->tstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+		MemoryContextSwitchTo(oldcontext);
+	}
 
 	/*
 	 * Find first unfinished execution_state.  If none, advance to the next
@@ -1598,7 +1644,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		 * don't care about fetching any more result rows.
 		 */
 		if (completed || !fcache->func->returnsSet)
-			postquel_end(es);
+			postquel_end(es, fcache);
 
 		/*
 		 * Break from loop if we didn't shut down (implying we got a
@@ -1657,8 +1703,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			if (!tuplestore_gettupleslot(fcache->tstore, true, false, slot))
 				elog(ERROR, "failed to fetch lazy-eval tuple");
 			/* Extract the result as a datum, and copy out from the slot */
-			result = postquel_get_single_result(slot, fcinfo,
-												fcache, oldcontext);
+			result = postquel_get_single_result(slot, fcinfo, fcache);
 			/* Clear the tuplestore, but keep it for next time */
 			/* NB: this might delete the slot's content, but we don't care */
 			tuplestore_clear(fcache->tstore);
@@ -1716,12 +1761,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			fcache->tstore = NULL;
 			/* must copy desc because execSRF.c will free it */
 			if (fcache->junkFilter)
-			{
-				/* setDesc must be allocated in suitable context */
-				MemoryContextSwitchTo(tscontext);
 				rsi->setDesc = CreateTupleDescCopy(fcache->junkFilter->jf_cleanTupType);
-				MemoryContextSwitchTo(fcache->fcontext);
-			}
 
 			fcinfo->isnull = true;
 			result = (Datum) 0;
@@ -1746,8 +1786,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			/* Re-use the junkfilter's output slot to fetch back the tuple */
 			slot = fcache->junkFilter->jf_resultSlot;
 			if (tuplestore_gettupleslot(fcache->tstore, true, false, slot))
-				result = postquel_get_single_result(slot, fcinfo,
-													fcache, oldcontext);
+				result = postquel_get_single_result(slot, fcinfo, fcache);
 			else
 			{
 				fcinfo->isnull = true;
@@ -1769,8 +1808,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	/* Pop snapshot if we have pushed one */
 	if (pushed_snapshot)
 		PopActiveSnapshot();
-
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * If we've gone through every command in the function, we are done.
@@ -1889,7 +1926,7 @@ ShutdownSQLFunction(Datum arg)
 				if (!fcache->func->readonly_func)
 					PushActiveSnapshot(es->qd->snapshot);
 
-				postquel_end(es);
+				postquel_end(es, fcache);
 
 				if (!fcache->func->readonly_func)
 					PopActiveSnapshot();
