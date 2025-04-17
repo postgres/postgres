@@ -45,7 +45,6 @@ typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
 	Tuplestorestate *tstore;	/* where to put result tuples */
-	MemoryContext cxt;			/* context containing tstore */
 	JunkFilter *filter;			/* filter to convert tuple type */
 } DR_sqlfunction;
 
@@ -788,12 +787,6 @@ init_execution_state(SQLFunctionCachePtr fcache)
 		resulttlist = get_sql_fn_result_tlist(plansource->query_list);
 
 		/*
-		 * We need to make a copy to ensure that it doesn't disappear
-		 * underneath us due to plancache invalidation.
-		 */
-		resulttlist = copyObject(resulttlist);
-
-		/*
 		 * If the result is composite, *and* we are returning the whole tuple
 		 * result, we need to insert nulls for any dropped columns.  In the
 		 * single-column-result case, there might be dropped columns within
@@ -807,6 +800,17 @@ init_execution_state(SQLFunctionCachePtr fcache)
 															  slot);
 		else
 			fcache->junkFilter = ExecInitJunkFilter(resulttlist, slot);
+
+		/*
+		 * The resulttlist tree belongs to the plancache and might disappear
+		 * underneath us due to plancache invalidation.  While we could
+		 * forestall that by copying it, that'd just be a waste of cycles,
+		 * because the junkfilter doesn't need it anymore.  (It'd only be used
+		 * by ExecFindJunkAttribute(), which we don't use here.)  To ensure
+		 * there's not a dangling pointer laying about, clear the junkFilter's
+		 * pointer.
+		 */
+		fcache->junkFilter->jf_targetList = NIL;
 	}
 
 	if (fcache->func->returnsTuple)
@@ -1245,7 +1249,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		myState = (DR_sqlfunction *) dest;
 		Assert(myState->pub.mydest == DestSQLFunction);
 		myState->tstore = fcache->tstore;
-		myState->cxt = CurrentMemoryContext;
 		myState->filter = fcache->junkFilter;
 	}
 	else
