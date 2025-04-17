@@ -113,6 +113,7 @@ tap_tests = [
   't/009_wal_encrypt.pl',
   't/010_change_key_provider.pl',
   't/011_unlogged_tables.pl',
+  't/012_replication.pl',
 ]
 
 tests += {
@@ -125,7 +126,8 @@ tests += {
     'runningcheck': false,
   },
   'tap': {
-    'tests': tap_tests  },
+    'tests': tap_tests
+  },
 }
 
 pg_tde_inc = incdir

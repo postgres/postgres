@@ -1,0 +1,57 @@
+-- At primary
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+                                     1
+(1 row)
+
+SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
+ pg_tde_set_key_using_database_key_provider 
+--------------------------------------------
+ 
+(1 row)
+
+CREATE TABLE test_enc (x int PRIMARY KEY) USING tde_heap;
+INSERT INTO test_enc (x) VALUES (1), (2);
+CREATE TABLE test_plain (x int PRIMARY KEY) USING heap;
+INSERT INTO test_plain (x) VALUES (3), (4);
+-- At replica
+SELECT pg_tde_is_encrypted('test_enc');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_enc_pkey');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT * FROM test_enc ORDER BY x;
+ x 
+---
+ 1
+ 2
+(2 rows)
+
+SELECT pg_tde_is_encrypted('test_plain');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_plain_pkey');
+ pg_tde_is_encrypted 
+---------------------
+ f
+(1 row)
+
+SELECT * FROM test_plain ORDER BY x;
+ x 
+---
+ 3
+ 4
+(2 rows)
+
