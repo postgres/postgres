@@ -12,9 +12,7 @@ PGTDE::setup_files_dir(basename($0));
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
-
-my $rt_value = $node->start;
-ok($rt_value == 1, "Start Server");
+$node->start;
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 PGTDE::psql($node, 'postgres',
@@ -35,14 +33,13 @@ PGTDE::append_to_result_file("-- kill -9");
 $node->kill9();
 
 PGTDE::append_to_result_file("-- server start");
-$rt_value = $node->start;
-ok($rt_value == 1, "Start Server");
+$node->start;
 
 PGTDE::psql($node, 'postgres', "TABLE t;");
 
 PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 
-$node->stop();
+$node->stop;
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();

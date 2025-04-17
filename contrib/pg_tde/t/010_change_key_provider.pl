@@ -10,17 +10,15 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
-my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
-$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
-
 unlink('/tmp/change_key_provider_1.per');
 unlink('/tmp/change_key_provider_2.per');
 unlink('/tmp/change_key_provider_3.per');
 unlink('/tmp/change_key_provider_4.per');
 
-my $rt_value = $node->start;
-ok($rt_value == 1, "Start Server");
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
+$node->start;
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
@@ -57,9 +55,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 # Verify
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
@@ -78,9 +74,7 @@ PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 # Verify
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
@@ -92,9 +86,7 @@ PGTDE::append_to_result_file(
 move('/tmp/change_key_provider_2.per', '/tmp/change_key_provider_3.per');
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 # Verify
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
@@ -127,9 +119,7 @@ PGTDE::psql($node, 'postgres',
 );
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 # Verify
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
@@ -150,7 +140,7 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde CASCADE;');
 
-$node->stop();
+$node->stop;
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();

@@ -64,9 +64,7 @@ PGTDE::setup_files_dir(basename($0));
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
-
-my $rt_value = $node->start();
-ok($rt_value == 1, "Start Server");
+$node->start;
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
@@ -86,9 +84,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);');
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
 
@@ -96,7 +92,7 @@ PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc2;');
 
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
-$node->stop();
+$node->stop;
 
 system("kill -9 $pid");
 

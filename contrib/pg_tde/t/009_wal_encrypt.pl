@@ -15,9 +15,7 @@ $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 $node->append_conf('postgresql.conf', "wal_level = 'logical'");
 # NOT testing that it can't start: the test framework doesn't have an easy way to do this
 #$node->append_conf('postgresql.conf', "pg_tde.wal_encrypt = 1"});
-
-my $rt_value = $node->start;
-ok($rt_value == 1, "Start Server");
+$node->start;
 
 PGTDE::psql($node, 'postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
 
@@ -32,9 +30,7 @@ PGTDE::psql($node, 'postgres',
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;');
 
 PGTDE::append_to_result_file("-- server restart with wal encryption");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', "SHOW pg_tde.wal_encrypt;");
 
@@ -50,9 +46,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (1), (2);');
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = off;');
 
 PGTDE::append_to_result_file("-- server restart without wal encryption");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', "SHOW pg_tde.wal_encrypt;");
 
@@ -61,18 +55,14 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (3), (4);');
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;');
 
 PGTDE::append_to_result_file("-- server restart with wal encryption");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', "SHOW pg_tde.wal_encrypt;");
 
 PGTDE::psql($node, 'postgres', 'INSERT INTO test_wal (k) VALUES (5), (6);');
 
 PGTDE::append_to_result_file("-- server restart with still wal encryption");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', "SHOW pg_tde.wal_encrypt;");
 
@@ -86,7 +76,7 @@ PGTDE::psql($node, 'postgres',
 
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
-$node->stop();
+$node->stop;
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();

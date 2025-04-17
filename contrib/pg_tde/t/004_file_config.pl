@@ -9,16 +9,14 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
-my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
-$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
-
 open my $conf2, '>>', "/tmp/datafile-location";
 print $conf2 "/tmp/keyring_data_file\n";
 close $conf2;
 
-my $rt_value = $node->start();
-ok($rt_value == 1, "Start Server");
+my $node = PostgreSQL::Test::Cluster->new('main');
+$node->init;
+$node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
+$node->start;
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
@@ -38,9 +36,7 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc1 (k) VALUES (5),(6);');
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;');
 
 PGTDE::append_to_result_file("-- server restart");
-$node->stop();
-$rt_value = $node->start();
-ok($rt_value == 1, "Restart Server");
+$node->restart;
 
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;');
 
@@ -48,7 +44,7 @@ PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc1;');
 
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
-$node->stop();
+$node->stop;
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();
