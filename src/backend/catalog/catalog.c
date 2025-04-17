@@ -34,6 +34,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_replication_origin.h"
+#include "catalog/pg_seclabel.h"
 #include "catalog/pg_shdepend.h"
 #include "catalog/pg_shdescription.h"
 #include "catalog/pg_shseclabel.h"
@@ -133,6 +134,36 @@ IsCatalogRelationOid(Oid relid)
 	 * OIDs; see GetNewObjectId().
 	 */
 	return (relid < (Oid) FirstUnpinnedObjectId);
+}
+
+/*
+ * IsCatalogTextUniqueIndexOid
+ *		True iff the relation identified by this OID is a catalog UNIQUE index
+ *		having a column of type "text".
+ *
+ *		The relcache must not use these indexes.  Inserting into any UNIQUE
+ *		index compares index keys while holding BUFFER_LOCK_EXCLUSIVE.
+ *		bttextcmp() can search the COLLID catcache.  Depending on concurrent
+ *		invalidation traffic, catcache can reach relcache builds.  A backend
+ *		would self-deadlock on LWLocks if the relcache build read the
+ *		exclusive-locked buffer.
+ *
+ *		To avoid being itself the cause of self-deadlock, this doesn't read
+ *		catalogs.  Instead, it uses a hard-coded list with a supporting
+ *		regression test.
+ */
+bool
+IsCatalogTextUniqueIndexOid(Oid relid)
+{
+	switch (relid)
+	{
+		case ParameterAclParnameIndexId:
+		case ReplicationOriginNameIndex:
+		case SecLabelObjectIndexId:
+		case SharedSecLabelObjectIndexId:
+			return true;
+	}
+	return false;
 }
 
 /*

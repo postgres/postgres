@@ -37,6 +37,14 @@ typedef Relation *RelationPtr;
 /*
  * Routines to open (lookup) and close a relcache entry
  */
+#ifdef USE_ASSERT_CHECKING
+extern void AssertCouldGetRelation(void);
+#else
+static inline void
+AssertCouldGetRelation(void)
+{
+}
+#endif
 extern Relation RelationIdGetRelation(Oid relationId);
 extern void RelationClose(Relation relation);
 

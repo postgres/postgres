@@ -258,6 +258,9 @@ extern Buffer ExtendBufferedRelTo(BufferManagerRelation bmr,
 
 extern void InitBufferManagerAccess(void);
 extern void AtEOXact_Buffers(bool isCommit);
+#ifdef USE_ASSERT_CHECKING
+extern void AssertBufferLocksPermitCatalogRead(void);
+#endif
 extern char *DebugPrintBufferRefcount(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);

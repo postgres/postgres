@@ -27,6 +27,7 @@ extern bool IsSystemClass(Oid relid, Form_pg_class reltuple);
 extern bool IsToastClass(Form_pg_class reltuple);
 
 extern bool IsCatalogRelationOid(Oid relid);
+extern bool IsCatalogTextUniqueIndexOid(Oid relid);
 extern bool IsInplaceUpdateOid(Oid relid);
 
 extern bool IsCatalogNamespace(Oid namespaceId);

@@ -21,6 +21,7 @@
 
 #include "access/detoast.h"
 #include "access/htup_details.h"
+#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -720,6 +721,13 @@ test_fdw_handler(PG_FUNCTION_ARGS)
 {
 	elog(ERROR, "test_fdw_handler is not implemented");
 	PG_RETURN_NULL();
+}
+
+PG_FUNCTION_INFO_V1(is_catalog_text_unique_index_oid);
+Datum
+is_catalog_text_unique_index_oid(PG_FUNCTION_ARGS)
+{
+	return IsCatalogTextUniqueIndexOid(PG_GETARG_OID(0));
 }
 
 PG_FUNCTION_INFO_V1(test_support_func);

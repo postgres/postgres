@@ -310,7 +310,7 @@ InitializeClientEncoding(void)
 	{
 		Oid			utf8_to_server_proc;
 
-		Assert(IsTransactionState());
+		AssertCouldGetRelation();
 		utf8_to_server_proc =
 			FindDefaultConversionProc(PG_UTF8,
 									  current_server_encoding);

@@ -12,6 +12,12 @@
 -- row in the linked-to table.  However, if we want to enforce that a link
 -- field can't be 0, we have to check it here.
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
 -- **************** pg_type ****************
 
 -- Look for illegal values in pg_type fields.
@@ -424,6 +430,20 @@ WHERE a1.atttypid = t1.oid AND
      a1.attalign != t1.typalign OR
      a1.attbyval != t1.typbyval OR
      (a1.attstorage != t1.typstorage AND a1.attstorage != 'p'));
+
+-- Look for IsCatalogTextUniqueIndexOid() omissions.
+
+CREATE FUNCTION is_catalog_text_unique_index_oid(oid) RETURNS bool
+    AS :'regresslib', 'is_catalog_text_unique_index_oid'
+    LANGUAGE C STRICT;
+
+SELECT indexrelid::regclass
+FROM pg_index
+WHERE (is_catalog_text_unique_index_oid(indexrelid) <>
+       (indisunique AND
+        indexrelid < 16384 AND
+        EXISTS (SELECT 1 FROM pg_attribute
+                WHERE attrelid = indexrelid AND atttypid = 'text'::regtype)));
 
 -- **************** pg_range ****************
 
