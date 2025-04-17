@@ -107,6 +107,8 @@ typedef struct execution_state
  * which we free at completion.  In non-returnsSet mode, this is just a child
  * of the call-time context.  In returnsSet mode, it is made a child of the
  * FmgrInfo's fn_mcxt so that it will survive between fmgr_sql calls.
+ * The fcontext may have subsidiary contexts jfcontext and/or subcontext,
+ * which have somewhat shorter lifespans.
  *
  * 3. SQLFunctionLink is a tiny struct that just holds pointers to
  * the SQLFunctionHashEntry and the current SQLFunctionCache (if any).
@@ -151,6 +153,7 @@ typedef struct SQLFunctionCache
 	bool		lazyEvalOK;		/* true if lazyEval is safe */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
 	bool		lazyEval;		/* true if using lazyEval for result query */
+	bool		ownSubcontext;	/* is subcontext really a separate context? */
 
 	ParamListInfo paramLI;		/* Param list representing current args */
 
@@ -178,6 +181,9 @@ typedef struct SQLFunctionCache
 
 	MemoryContext fcontext;		/* memory context holding this struct and all
 								 * subsidiary data */
+	MemoryContext jfcontext;	/* subsidiary memory context holding
+								 * junkFilter, result slot, and related data */
+	MemoryContext subcontext;	/* subsidiary memory context for sub-executor */
 } SQLFunctionCache;
 
 typedef SQLFunctionCache *SQLFunctionCachePtr;
@@ -617,8 +623,8 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 	 */
 	pcontext = func->returnsSet ? finfo->fn_mcxt : CurrentMemoryContext;
 	fcontext = AllocSetContextCreate(pcontext,
-									 "SQL function execution",
-									 ALLOCSET_DEFAULT_SIZES);
+									 "SQL function cache",
+									 ALLOCSET_SMALL_SIZES);
 
 	oldcontext = MemoryContextSwitchTo(fcontext);
 
@@ -791,6 +797,9 @@ init_execution_state(SQLFunctionCachePtr fcache)
 	 * nothing to coerce to.  (XXX Frequently, the JunkFilter isn't doing
 	 * anything very interesting, but much of this module expects it to be
 	 * there anyway.)
+	 *
+	 * The JunkFilter, its result slot, and its tupledesc are kept in a
+	 * subsidiary memory context so that we can free them easily when needed.
 	 */
 	if (fcache->func->rettype != VOIDOID)
 	{
@@ -798,8 +807,14 @@ init_execution_state(SQLFunctionCachePtr fcache)
 		List	   *resulttlist;
 		MemoryContext oldcontext;
 
-		/* The result slot and JunkFilter must be in the fcontext */
-		oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+		/* Create or reset the jfcontext */
+		if (fcache->jfcontext == NULL)
+			fcache->jfcontext = AllocSetContextCreate(fcache->fcontext,
+													  "SQL function junkfilter",
+													  ALLOCSET_SMALL_SIZES);
+		else
+			MemoryContextReset(fcache->jfcontext);
+		oldcontext = MemoryContextSwitchTo(fcache->jfcontext);
 
 		slot = MakeSingleTupleTableSlot(NULL, &TTSOpsMinimalTuple);
 
@@ -1265,14 +1280,46 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	Assert(ActiveSnapshotSet());
 
 	/*
-	 * Run the sub-executor in a child of fcontext.  The sub-executor is
-	 * responsible for deleting per-tuple information.  (XXX in the case of a
-	 * long-lived FmgrInfo, this policy potentially causes memory leakage, but
-	 * it's not very clear where we could keep stuff instead.  Fortunately,
-	 * there are few if any cases where set-returning functions are invoked
-	 * via FmgrInfos that would outlive the calling query.)
+	 * In lazyEval mode for a SRF, we must run the sub-executor in a child of
+	 * fcontext, so that it can survive across multiple calls to fmgr_sql.
+	 * (XXX in the case of a long-lived FmgrInfo, this policy potentially
+	 * causes memory leakage, but it's not very clear where we could keep
+	 * stuff instead.  Fortunately, there are few if any cases where
+	 * set-returning functions are invoked via FmgrInfos that would outlive
+	 * the calling query.)  Otherwise, we're going to run it to completion
+	 * before exiting fmgr_sql, so it can perfectly well run in the caller's
+	 * context.
 	 */
-	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+	if (es->lazyEval && fcache->func->returnsSet)
+	{
+		fcache->subcontext = AllocSetContextCreate(fcache->fcontext,
+												   "SQL function execution",
+												   ALLOCSET_DEFAULT_SIZES);
+		fcache->ownSubcontext = true;
+	}
+	else if (es->stmt->commandType == CMD_UTILITY)
+	{
+		/*
+		 * The code path using a sub-executor is pretty good about cleaning up
+		 * cruft, since the executor will make its own sub-context.  We don't
+		 * really need an additional layer of sub-context in that case.
+		 * However, if this is a utility statement, it won't make its own
+		 * sub-context, so it seems advisable to make one that we can free on
+		 * completion.
+		 */
+		fcache->subcontext = AllocSetContextCreate(CurrentMemoryContext,
+												   "SQL function execution",
+												   ALLOCSET_DEFAULT_SIZES);
+		fcache->ownSubcontext = true;
+	}
+	else
+	{
+		fcache->subcontext = CurrentMemoryContext;
+		fcache->ownSubcontext = false;
+	}
+
+	/* Switch into the selected subcontext (might be a no-op) */
+	oldcontext = MemoryContextSwitchTo(fcache->subcontext);
 
 	/*
 	 * If this query produces the function result, send its output to the
@@ -1335,8 +1382,8 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 	bool		result;
 	MemoryContext oldcontext;
 
-	/* Run the sub-executor in a child of fcontext */
-	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+	/* Run the sub-executor in subcontext */
+	oldcontext = MemoryContextSwitchTo(fcache->subcontext);
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
@@ -1375,8 +1422,8 @@ postquel_end(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	MemoryContext oldcontext;
 
-	/* Run the sub-executor in a child of fcontext */
-	oldcontext = MemoryContextSwitchTo(fcache->fcontext);
+	/* Run the sub-executor in subcontext */
+	oldcontext = MemoryContextSwitchTo(fcache->subcontext);
 
 	/* mark status done to ensure we don't do ExecutorEnd twice */
 	es->status = F_EXEC_DONE;
@@ -1394,6 +1441,11 @@ postquel_end(execution_state *es, SQLFunctionCachePtr fcache)
 	es->qd = NULL;
 
 	MemoryContextSwitchTo(oldcontext);
+
+	/* Delete the subcontext, if it's actually a separate context */
+	if (fcache->ownSubcontext)
+		MemoryContextDelete(fcache->subcontext);
+	fcache->subcontext = NULL;
 }
 
 /*
