@@ -199,30 +199,30 @@ If `pg_tde.inherit_global_providers` is `OFF`, global providers are only used fo
 To add a global provider:
 
 ```sql
-pg_tde_add_global_key_provider_<TYPE>(‘provider_name', ... details ...)
+pg_tde_add_global_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
 To add a database specific provider:
 
 ```sql
-pg_tde_add_key_provider_<TYPE>(‘provider_name', ... details ...)
+pg_tde_add_database_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
 Note that in these functions do not verify the parameters.
-For that, see `pg_tde_verify_principal_key`.
+For that, see `pg_tde_verify_key`.
 
 ### Changing providers
 
 To change a value of a global provider:
 
 ```sql
-pg_tde_modify_global_key_provider_<TYPE>(‘provider_name', ... details ...)
+pg_tde_change_global_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
 To change a value of a database specific provider:
 
 ```sql
-pg_tde_modify_key_provider_<TYPE>(‘provider_name', ... details ...)
+pg_tde_change_database_key_provider_<TYPE>('provider_name', ... details ...)
 ```
 
 These functions also allow changing the type of a provider.
@@ -231,16 +231,16 @@ The functions however do not migrate any data.
 They are expected to be used during infrastructure migration, for example when the address of a server changes.
 
 Note that in these functions do not verify the parameters.
-For that, see `pg_tde_verify_principal_key`.
+For that, see `pg_tde_verify_key`.
 
 ### Changing providers from the command line
 
-To change a provider from a command line, `pg_tde` provides the `pg_tde_modify_key_provider` command line tool.
+To change a provider from a command line, `pg_tde` provides the `pg_tde_change_key_provider` command line tool.
 
 This tool work similarly to the above functions, with the following syntax:
 
 ```bash
-pg_tde_modify_key_provider <dbOid> <providerType> ... details ...
+pg_tde_change_key_provider <dbOid> <providerType> ... details ...
 ```
 
 Note that since this tool is expected to be offline, it bypasses all permission checks!
@@ -252,8 +252,8 @@ This is also the reason why it requires a `dbOid` instead of a name, as it has n
 Providers can be deleted by the 
 
 ```sql
-pg_tde_delete_key_provider(provider_name) 
-pg_tde_delete_global_key_provider(provider_name) 
+pg_tde_delete_database_key_provider(provider_name)
+pg_tde_delete_global_key_provider(provider_name)
 ```
 
 functions.
@@ -269,7 +269,7 @@ Making this check makes more sense than potentially making some databases inacce
 
 `Pg_tde` provides 2 functions to show providers:
 
-* `pg_tde_list_all_key_providers()`
+* `pg_tde_list_all_database_key_providers()`
 * `pg_tde_list_all_global_key_providers()`
 
 These functions only return a list of provider names, without any details about the type/configuration.
@@ -277,8 +277,8 @@ These functions only return a list of provider names, without any details about 
 There's also two function to query the details of providers:
 
 ```sql
-pg_tde_show_key_provider_configuration(‘provider-name')
-pg_tde_show_global_key_provider_configuration(‘provider-name')
+pg_tde_show_key_provider_configuration('provider-name')
+pg_tde_show_global_key_provider_configuration('provider-name')
 ```
 
 These functions display the provider type and configuration details, but won't show the sensitive parameters, such as passwords or authentication keys.
@@ -287,11 +287,11 @@ These functions display the provider type and configuration details, but won't s
 
 `Pg_tde` implements access control based on execution rights on the administration functions.
 
-For provider administration, it provides two pair of functions:
+For keys and providers administration, it provides two pair of functions:
 
 ```sql
-pg_tde_(grant/revoke)_local_provider_management_to_role
-pg_tde_(grant/revoke)_global_provider_management_to_role
+pg_tde_(grant/revoke)_database_key_management_to_role
+pg_tde_(grant/revoke)_global_key_management_to_role
 ```
 
 There's one special behavior:
@@ -303,9 +303,9 @@ When `pg_tde.inherit_global_providers` is OFF, they can't execute the function a
 Principal keys can be created or rotated using the following functions:
 
 ```sql
-pg_tde_set_principal_key(‘key-name', ‘provider-name', ensure_new_key)
-pg_tde_set_global_principal_key(‘key-name', ‘provider-name', ensure_new_key)
-pg_tde_set_server_principal_key(‘key-name', ‘provider-name', ensure_new_key)
+pg_tde_set_key_using_(global/database)_key_provider('key-name', 'provider-name', ensure_new_key)
+pg_tde_set_server_key_using_(global/database)_key_provider('key-name', 'provider-name', ensure_new_key)
+pg_tde_set_default_key_using_(global/database)_key_provider('key-name', 'provider-name', ensure_new_key)
 ```
 
 `ensure_new_key` is a boolean parameter defaulting to false.
@@ -313,15 +313,15 @@ If it is true, the function might return an error instead of setting the key, if
 
 ### Default principal key
 
-With `pg_tde.inherit_global_key_providers`, it is also possible to set up a default global principal key, which will be used by any database which has the `pg_tde` extension enabled, but doesn't have a database specific principal key configured using `pg_tde_set_(global_)principal_key`.
+With `pg_tde.inherit_global_key_providers`, it is also possible to set up a default global principal key, which will be used by any database which has the `pg_tde` extension enabled, but doesn't have a database specific principal key configured using `pg_tde_set_key_using_(global/database)_key_provider`.
 
 With this feature, it is possible for the entire database server to easily use the same principal key for all databases, completely disabling multi-tenency.
 
 A default key can be managed with the following functions:
 
 ```sql
-pg_tde_set_default_principal_key(‘key-name', ‘provider-name', ensure_new_key)
-pg_tde_drop_default_principal_key() -- not yet implemented
+pg_tde_set_default_key('key-name', 'provider-name', ensure_new_key)
+pg_tde_drop_default_key() -- not yet implemented
 ```
 
 `DROP` is only possible if there's no table currently using the default principal key.
@@ -330,7 +330,7 @@ Changing the default principal key will rotate the encryption of internal keys f
 
 ### Removing key (not yet implemented)
 
-`pg_tde_drop_principal_key` removes the principal key for the current database.
+`pg_tde_drop_key` removes the principal key for the current database.
 If the current database has any encrypted tables, and there isn't a default principal key configured, it reports an error instead.
 If there are encrypted tables, but there's also a global default principal key, internal keys will be encrypted with the default key.
 
@@ -338,11 +338,13 @@ It isn't possible to remove the WAL (server) principal key.
 
 ### Current key details
 
-`pg_tde_principal_key_info()` returns the name of the current principal key, and the provider it uses.
+`pg_tde_key_info()` returns the name of the current principal key, and the provider it uses.
 
-`pg_tde_global_principal_key_info(‘PG_TDE_GLOBAL')` does the same for the server key.
+`pg_tde_server_key_info()` does the same for the server key.
 
-`pg_tde_verify_principal_key()` checks that the key provider is accessible, that the current principal key can be downloaded from it, and that it is the same as the current key stored in memory - if any of these fail, it reports an appropriate error.
+`pg_tde_default_key_info()` does the same for the default key.
+
+`pg_tde_verify_key()` checks that the key provider is accessible, that the current principal key can be downloaded from it, and that it is the same as the current key stored in memory - if any of these fail, it reports an appropriate error.
 
 ### Listing all active keys (not yet implemented)
 
@@ -351,13 +353,14 @@ SUPERusers are able to use the following function:
 `pg_tde_list_active_keys()`
 
 Which reports all the actively used keys by all databases on the current server.
-Similarly to `pg_tde_show_current_principal_key`, it only shows names and associated providers, it doesn't reveal any sensitive information about the providers.
+Similarly to `pg_tde_key_info()`, it only shows names and associated providers, it doesn't reveal any sensitive information about the providers.
 
 ### Key permissions
 
-Users with management permissions to a specific database `(pg_tde_(grant/revoke)_provider_management_to_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
+Users with management permissions to a specific database `(pg_tde_(grant/revoke)_(global/databse)_key_management_to_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
 
-Also, the `pg_tde_(grant/revoke)_key_management_to_role` function deals with only the specific permission for the above function:
+// TODO: We don't have such permissions subset
+Also, the `pg_tde_(grant/revoke)_(global/database)_key_management_to_role` function deals with only the specific permission for the above function:
 it allows a user to change the key for the database, but not to modify the provider configuration.
 
 ### Creating encrypted tables

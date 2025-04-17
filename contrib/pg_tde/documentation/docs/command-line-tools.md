@@ -12,11 +12,11 @@ Its only intended use is to fix servers that can't start up because of inaccessi
 
 For example, you restore from an old backup and the address of the key provider changed in the meantime. You can use this tool to correct the configuration, allowing the server to start up.
 
-Use this tool **only when the server is offline.** To modify the key provider configuration when the server is up and running, use the [`pg_tde_change_key_provider_<type>`](functions.md#change-an-existing-provider) SQL functions.
+Use this tool **only when the server is offline.** To modify the key provider configuration when the server is up and running, use the [`pg_tde_change_(global/database)_key_provider_<type>`](functions.md#change-an-existing-provider) SQL functions.
 
 ### Usage
 
-To modify the key provider configuration, specify all parameters depending on the provider type in the same way as you do when using the [`pg_tde_change_key_provider_<type>`](functions.md#change-an-existing-provider) SQL functions.
+To modify the key provider configuration, specify all parameters depending on the provider type in the same way as you do when using the [`pg_tde_change_(global/database)_key_provider_<type>`](functions.md#change-an-existing-provider) SQL functions.
  
 The general syntax is as follows:
 
