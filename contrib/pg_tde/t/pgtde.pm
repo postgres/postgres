@@ -1,5 +1,8 @@
 package PGTDE;
 
+use PostgreSQL::Test::Cluster;
+use PostgreSQL::Test::Utils;
+
 use File::Basename;
 use File::Compare;
 use Test::More;
@@ -7,45 +10,15 @@ use Test::More;
 # Expected .out filename of TAP testcase being executed. These are already part of repo under t/expected/*.
 our $expected_filename_with_path;
 
-# Major version of PG Server that we are using.
-our $PG_MAJOR_VERSION;
-
 # Result .out filename of TAP testcase being executed. Where needed, a new *.out will be created for each TAP test.
 our $out_filename_with_path;
 
 # Runtime output file that is used only for debugging purposes for comparison to PGSS, blocks and timings.
 our $debug_out_filename_with_path;
 
-BEGIN {
-    $PG_MAJOR_VERSION = `pg_config --version | awk {'print \$2'} | cut -f1 -d"." | sed -e 's/[^0-9].*\$//g'`;
-    $PG_MAJOR_VERSION =~ s/^\s+|\s+$//g;
-
-    if ($PG_MAJOR_VERSION >= 15) {
-        eval {
-            require PostgreSQL::Test::Cluster;
-            import PostgreSQL::Test::Utils;
-        }
-    } else {
-        eval {
-            require PostgresNode;
-            import TestLib;
-        }
-    }
-}
-
 sub pgtde_init_pg
 {
-    my $node;
-
-    print "Postgres major version: $PG_MAJOR_VERSION\n";
-
-    # For Server version 15 & above, spawn the server using PostgreSQL::Test::Cluster
-    if ($PG_MAJOR_VERSION >= 15) {
-        $node = PostgreSQL::Test::Cluster->new('pgtde_regression');
-    } else {
-        $node = PostgresNode->get_new_node('pgtde_regression');
-    }
-
+    my $node = PostgreSQL::Test::Cluster->new('pgtde_regression');
     $node->dump_info;
     $node->init;
     return $node;
