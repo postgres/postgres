@@ -5,6 +5,9 @@ on:
       os:
         type: string
         required: true
+      compiler:
+        type: string
+        required: true
       build_type:
         type: string
         required: true
@@ -13,7 +16,8 @@ on:
         required: true
 
 env:
-  artifact_name: build-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+  artifact_name: build-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+  CC: ${{ inputs.compiler }}
 
 jobs:
   build:
