@@ -116,6 +116,7 @@ typedef struct SQLFunctionHashEntry
 	char	   *src;			/* function body text (for error msgs) */
 
 	SQLFunctionParseInfoPtr pinfo;	/* data for parser callback hooks */
+	int16	   *argtyplen;		/* lengths of the input argument types */
 
 	Oid			rettype;		/* actual return type */
 	int16		typlen;			/* length of the return type */
@@ -1101,6 +1102,15 @@ sql_compile_callback(FunctionCallInfo fcinfo,
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
+	 * Now that we have the resolved argument types, collect their typlens for
+	 * use in postquel_sub_params.
+	 */
+	func->argtyplen = (int16 *)
+		MemoryContextAlloc(hcontext, func->pinfo->nargs * sizeof(int16));
+	for (int i = 0; i < func->pinfo->nargs; i++)
+		func->argtyplen[i] = get_typlen(func->pinfo->argtypes[i]);
+
+	/*
 	 * And of course we need the function body text.
 	 */
 	tmp = SysCacheGetAttrNotNull(PROCOID, procedureTuple, Anum_pg_proc_prosrc);
@@ -1427,6 +1437,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 	{
 		ParamListInfo paramLI;
 		Oid		   *argtypes = fcache->func->pinfo->argtypes;
+		int16	   *argtyplen = fcache->func->argtyplen;
 
 		if (fcache->paramLI == NULL)
 		{
@@ -1463,7 +1474,7 @@ postquel_sub_params(SQLFunctionCachePtr fcache,
 			prm->isnull = fcinfo->args[i].isnull;
 			prm->value = MakeExpandedObjectReadOnly(fcinfo->args[i].value,
 													prm->isnull,
-													get_typlen(argtypes[i]));
+													argtyplen[i]);
 			/* Allow the value to be substituted into custom plans */
 			prm->pflags = PARAM_FLAG_CONST;
 			prm->ptype = argtypes[i];
