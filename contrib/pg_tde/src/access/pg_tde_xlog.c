@@ -68,7 +68,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	}
 	else if (info == XLOG_TDE_WRITE_KEY_PROVIDER)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
+		KeyringProviderRecordInFile *xlrec = (KeyringProviderRecordInFile *) XLogRecGetData(record);
 
 		redo_key_provider_info(xlrec);
 	}
@@ -109,7 +109,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 	}
 	else if (info == XLOG_TDE_WRITE_KEY_PROVIDER)
 	{
-		KeyringProviderXLRecord *xlrec = (KeyringProviderXLRecord *) XLogRecGetData(record);
+		KeyringProviderRecordInFile *xlrec = (KeyringProviderRecordInFile *) XLogRecGetData(record);
 
 		appendStringInfo(buf, "db: %u, provider id: %d", xlrec->database_id, xlrec->provider.provider_id);
 	}

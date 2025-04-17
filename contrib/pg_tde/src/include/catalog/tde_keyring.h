@@ -22,12 +22,13 @@ typedef struct KeyringProviderRecord
 	ProviderType provider_type;
 } KeyringProviderRecord;
 
-typedef struct KeyringProviderXLRecord
+/* This struct also keeps some context of where the record belongs */
+typedef struct KeyringProviderRecordInFile
 {
 	Oid			database_id;
 	off_t		offset_in_file;
 	KeyringProviderRecord provider;
-} KeyringProviderXLRecord;
+} KeyringProviderRecordInFile;
 
 extern GenericKeyring *GetKeyProviderByName(const char *provider_name, Oid dbOid);
 extern GenericKeyring *GetKeyProviderByID(int provider_id, Oid dbOid);
@@ -39,7 +40,7 @@ extern void modify_key_provider_info(KeyringProviderRecord *provider,
 									 Oid databaseId, bool write_xlog);
 extern void delete_key_provider_info(int provider_id,
 									 Oid databaseId, bool write_xlog);
-extern void redo_key_provider_info(KeyringProviderXLRecord *xlrec);
+extern void redo_key_provider_info(KeyringProviderRecordInFile *xlrec);
 
 extern bool ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts,
 									char *in_buf, int buf_len);

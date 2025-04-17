@@ -189,7 +189,7 @@ GetAllKeyringProviders(Oid dbOid)
 }
 
 void
-redo_key_provider_info(KeyringProviderXLRecord *xlrec)
+redo_key_provider_info(KeyringProviderRecordInFile *xlrec)
 {
 	write_key_provider_info(&xlrec->provider, xlrec->database_id, xlrec->offset_in_file, false, false);
 }
@@ -503,14 +503,14 @@ write_key_provider_info(KeyringProviderRecord *provider, Oid database_id,
 		if (write_xlog)
 		{
 #ifndef FRONTEND
-			KeyringProviderXLRecord xlrec;
+			KeyringProviderRecordInFile xlrec;
 
 			xlrec.database_id = database_id;
 			xlrec.offset_in_file = curr_pos;
 			xlrec.provider = *provider;
 
 			XLogBeginInsert();
-			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderXLRecord));
+			XLogRegisterData((char *) &xlrec, sizeof(KeyringProviderRecordInFile));
 			XLogInsert(RM_TDERMGR_ID, XLOG_TDE_WRITE_KEY_PROVIDER);
 #else
 			Assert(0);
