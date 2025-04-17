@@ -2286,6 +2286,7 @@ DETAIL:  The column has an inherited not-null constraint.
 -- change NO INHERIT status of inherited constraint: no dice, it's inherited
 alter table cc2 add not null a2 no inherit;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "nn" on relation "cc2"
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 -- remove constraint from cc2: no dice, it's inherited
 alter table cc2 alter column a2 drop not null;
 ERROR:  cannot drop inherited constraint "nn" of relation "cc2"
@@ -2509,6 +2510,7 @@ CREATE TABLE inh_nn_parent (a int, NOT NULL a NO INHERIT);
 CREATE TABLE inh_nn_child() INHERITS (inh_nn_parent);
 ALTER TABLE inh_nn_parent ADD CONSTRAINT nna NOT NULL a;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 ALTER TABLE inh_nn_parent ALTER a SET NOT NULL;
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "inh_nn_parent_a_not_null" on relation "inh_nn_parent"
 DROP TABLE inh_nn_parent cascade;
@@ -2520,6 +2522,7 @@ CREATE TABLE inh_nn_lvl2 () INHERITS (inh_nn_lvl1);
 CREATE TABLE inh_nn_lvl3 (CONSTRAINT foo NOT NULL a NO INHERIT) INHERITS (inh_nn_lvl2);
 ALTER TABLE inh_nn_lvl1 ADD PRIMARY KEY (a);
 ERROR:  cannot change NO INHERIT status of NOT NULL constraint "foo" on relation "inh_nn_lvl3"
+HINT:  You might need to make the existing constraint inheritable using ALTER TABLE ... ALTER CONSTRAINT ... INHERIT.
 DROP TABLE inh_nn_lvl1, inh_nn_lvl2, inh_nn_lvl3;
 -- Disallow specifying conflicting NO INHERIT flags for the same constraint
 CREATE TABLE inh_nn1 (a int primary key, b int, not null a no inherit);

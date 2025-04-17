@@ -2859,7 +2859,7 @@ error_return:
 		}
 	}
 
-	appendPQExpBufferStr(&conn->errorMessage, "\n");
+	appendPQExpBufferChar(&conn->errorMessage, '\n');
 
 	return PGRES_POLLING_FAILED;
 }

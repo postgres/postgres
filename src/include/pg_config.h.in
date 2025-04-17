@@ -249,6 +249,9 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
+/* Define to 1 if you have the `numa' library (-lnuma). */
+#undef HAVE_LIBNUMA
+
 /* Define to 1 if you have the `pam' library (-lpam). */
 #undef HAVE_LIBPAM
 
@@ -689,7 +692,7 @@
 /* Define to 1 to build with libcurl support. (--with-libcurl) */
 #undef USE_LIBCURL
 
-/* Define to 1 to build with NUMA support. (--with-libnuma) */
+/* Define to build with NUMA support. (--with-libnuma) */
 #undef USE_LIBNUMA
 
 /* Define to build with io_uring support. (--with-liburing) */

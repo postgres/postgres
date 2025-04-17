@@ -540,6 +540,7 @@ static ObjectAddress ATExecDropColumn(List **wqueue, Relation rel, const char *c
 static void ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 								bool recurse, LOCKMODE lockmode,
 								AlterTableUtilityContext *context);
+static void verifyNotNullPKCompatible(HeapTuple tuple, const char *colname);
 static ObjectAddress ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 									IndexStmt *stmt, bool is_rebuild, LOCKMODE lockmode);
 static ObjectAddress ATExecAddStatistics(AlteredTableInfo *tab, Relation rel,
@@ -9438,8 +9439,26 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
 }
 
 /*
- * Prepare to add a primary key on table, by adding not-null constraints
+ * Prepare to add a primary key on a table, by adding not-null constraints
  * on all columns.
+ *
+ * The not-null constraints for a primary key must cover the whole inheritance
+ * hierarchy (failing to ensure that leads to funny corner cases).  For the
+ * normal case where we're asked to recurse, this routine ensures that the
+ * not-null constraints either exist already, or queues a requirement for them
+ * to be created by phase 2.
+ *
+ * For the case where we're asked not to recurse, we verify that a not-null
+ * constraint exists on each column of each (direct) child table, throwing an
+ * error if not.  Not throwing an error would also work, because a not-null
+ * constraint would be created anyway, but it'd cause a silent scan of the
+ * child table to verify absence of nulls.  We prefer to let the user know so
+ * that they can add the constraint manually without having to hold
+ * AccessExclusiveLock while at it.
+ *
+ * However, it's also important that we do not acquire locks on children if
+ * the not-null constraints already exist on the parent, to avoid risking
+ * deadlocks during parallel pg_restore of PKs on partitioned tables.
  */
 static void
 ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
@@ -9447,41 +9466,12 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					AlterTableUtilityContext *context)
 {
 	Constraint *pkconstr;
+	List	   *children;
+	bool		got_children = false;
 
 	pkconstr = castNode(Constraint, cmd->def);
 	if (pkconstr->contype != CONSTR_PRIMARY)
 		return;
-
-	/*
-	 * If not recursing, we must ensure that all children have a NOT NULL
-	 * constraint on the columns, and error out if not.
-	 */
-	if (!recurse)
-	{
-		List	   *children;
-
-		children = find_inheritance_children(RelationGetRelid(rel),
-											 lockmode);
-		foreach_oid(childrelid, children)
-		{
-			foreach_node(String, attname, pkconstr->keys)
-			{
-				HeapTuple	tup;
-				Form_pg_attribute attrForm;
-
-				tup = SearchSysCacheAttName(childrelid, strVal(attname));
-				if (!tup)
-					elog(ERROR, "cache lookup failed for attribute %s of relation %u",
-						 strVal(attname), childrelid);
-				attrForm = (Form_pg_attribute) GETSTRUCT(tup);
-				if (!attrForm->attnotnull)
-					ereport(ERROR,
-							errmsg("column \"%s\" of table \"%s\" is not marked NOT NULL",
-								   strVal(attname), get_rel_name(childrelid)));
-				ReleaseSysCache(tup);
-			}
-		}
-	}
 
 	/* Verify that columns are not-null, or request that they be made so */
 	foreach_node(String, column, pkconstr->keys)
@@ -9498,35 +9488,38 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		tuple = findNotNullConstraint(RelationGetRelid(rel), strVal(column));
 		if (tuple != NULL)
 		{
-			Form_pg_constraint conForm = (Form_pg_constraint) GETSTRUCT(tuple);
-
-			/* a NO INHERIT constraint is no good */
-			if (conForm->connoinherit)
-				ereport(ERROR,
-						errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						errmsg("cannot create primary key on column \"%s\"",
-							   strVal(column)),
-				/*- translator: third %s is a constraint characteristic such as NOT VALID */
-						errdetail("The constraint \"%s\" on column \"%s\", marked %s, is incompatible with a primary key.",
-								  NameStr(conForm->conname), strVal(column), "NO INHERIT"),
-						errhint("You will need to make it inheritable using %s.",
-								"ALTER TABLE ... ALTER CONSTRAINT ... INHERIT"));
-
-			/* an unvalidated constraint is no good */
-			if (!conForm->convalidated)
-				ereport(ERROR,
-						errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						errmsg("cannot create primary key on column \"%s\"",
-							   strVal(column)),
-				/*- translator: third %s is a constraint characteristic such as NOT VALID */
-						errdetail("The constraint \"%s\" on column \"%s\", marked %s, is incompatible with a primary key.",
-								  NameStr(conForm->conname), strVal(column), "NOT VALID"),
-						errhint("You will need to validate it using %s.",
-								"ALTER TABLE ... VALIDATE CONSTRAINT"));
+			verifyNotNullPKCompatible(tuple, strVal(column));
 
 			/* All good with this one; don't request another */
 			heap_freetuple(tuple);
 			continue;
+		}
+		else if (!recurse)
+		{
+			/*
+			 * No constraint on this column.  Asked not to recurse, we won't
+			 * create one here, but verify that all children have one.
+			 */
+			if (!got_children)
+			{
+				children = find_inheritance_children(RelationGetRelid(rel),
+													 lockmode);
+				/* only search for children on the first time through */
+				got_children = true;
+			}
+
+			foreach_oid(childrelid, children)
+			{
+				HeapTuple	tup;
+
+				tup = findNotNullConstraint(childrelid, strVal(column));
+				if (!tup)
+					ereport(ERROR,
+							errmsg("column \"%s\" of table \"%s\" is not marked NOT NULL",
+								   strVal(column), get_rel_name(childrelid)));
+				/* verify it's good enough */
+				verifyNotNullPKCompatible(tup, strVal(column));
+			}
 		}
 
 		/* This column is not already not-null, so add it to the queue */
@@ -9534,11 +9527,49 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 
 		newcmd = makeNode(AlterTableCmd);
 		newcmd->subtype = AT_AddConstraint;
+		/* note we force recurse=true here; see above */
 		newcmd->recurse = true;
 		newcmd->def = (Node *) nnconstr;
 
 		ATPrepCmd(wqueue, rel, newcmd, true, false, lockmode, context);
 	}
+}
+
+/*
+ * Verify whether the given not-null constraint is compatible with a
+ * primary key.  If not, an error is thrown.
+ */
+static void
+verifyNotNullPKCompatible(HeapTuple tuple, const char *colname)
+{
+	Form_pg_constraint conForm = (Form_pg_constraint) GETSTRUCT(tuple);
+
+	if (conForm->contype != CONSTRAINT_NOTNULL)
+		elog(ERROR, "constraint %u is not a not-null constraint", conForm->oid);
+
+	/* a NO INHERIT constraint is no good */
+	if (conForm->connoinherit)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot create primary key on column \"%s\"", colname),
+		/*- translator: fourth %s is a constraint characteristic such as NOT VALID */
+				errdetail("The constraint \"%s\" on column \"%s\" of table \"%s\", marked %s, is incompatible with a primary key.",
+						  NameStr(conForm->conname), colname,
+						  get_rel_name(conForm->conrelid), "NO INHERIT"),
+				errhint("You might need to make the existing constraint inheritable using %s.",
+						"ALTER TABLE ... ALTER CONSTRAINT ... INHERIT"));
+
+	/* an unvalidated constraint is no good */
+	if (!conForm->convalidated)
+		ereport(ERROR,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("cannot create primary key on column \"%s\"", colname),
+		/*- translator: fourth %s is a constraint characteristic such as NOT VALID */
+				errdetail("The constraint \"%s\" on column \"%s\" of table \"%s\", marked %s, is incompatible with a primary key.",
+						  NameStr(conForm->conname), colname,
+						  get_rel_name(conForm->conrelid), "NOT VALID"),
+				errhint("You might need to validate it using %s.",
+						"ALTER TABLE ... VALIDATE CONSTRAINT"));
 }
 
 /*
@@ -12353,7 +12384,7 @@ ATExecAlterConstraintInternal(List **wqueue, ATAlterConstraint *cmdcon,
 static bool
 ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 								Relation conrel, Relation tgrel,
-								const Oid fkrelid, const Oid pkrelid,
+								Oid fkrelid, Oid pkrelid,
 								HeapTuple contuple, LOCKMODE lockmode,
 								Oid ReferencedParentDelTrigger,
 								Oid ReferencedParentUpdTrigger,
@@ -12701,7 +12732,7 @@ AlterConstrTriggerDeferrability(Oid conoid, Relation tgrel, Relation rel,
 static void
 AlterConstrEnforceabilityRecurse(List **wqueue, ATAlterConstraint *cmdcon,
 								 Relation conrel, Relation tgrel,
-								 const Oid fkrelid, const Oid pkrelid,
+								 Oid fkrelid, Oid pkrelid,
 								 HeapTuple contuple, LOCKMODE lockmode,
 								 Oid ReferencedParentDelTrigger,
 								 Oid ReferencedParentUpdTrigger,

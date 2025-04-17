@@ -9751,7 +9751,7 @@ determineNotNullFlags(Archive *fout, PGresult *res, int r,
 		{
 			*invalidnotnulloids = createPQExpBuffer();
 			appendPQExpBufferChar(*invalidnotnulloids, '{');
-			appendPQExpBuffer(*invalidnotnulloids, "%s", constroid);
+			appendPQExpBufferStr(*invalidnotnulloids, constroid);
 		}
 		else
 			appendPQExpBuffer(*invalidnotnulloids, ",%s", constroid);
@@ -10978,7 +10978,7 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 		 */
 		if (rsinfo->nindAttNames == 0)
 		{
-			appendPQExpBuffer(out, ",\n\t'attname', ");
+			appendPQExpBufferStr(out, ",\n\t'attname', ");
 			appendStringLiteralAH(out, attname, fout);
 		}
 		else
@@ -17953,7 +17953,17 @@ dumpIndex(Archive *fout, const IndxInfo *indxinfo)
 							  qindxname);
 		}
 
-		appendPQExpBuffer(delq, "DROP INDEX %s;\n", qqindxname);
+		/*
+		 * If this index is a member of a partitioned index, the backend will
+		 * not allow us to drop it separately, so don't try.  It will go away
+		 * automatically when we drop either the index's table or the
+		 * partitioned index.  (If, in a selective restore with --clean, we
+		 * drop neither of those, then this index will not be dropped either.
+		 * But that's fine, and even if you think it's not, the backend won't
+		 * let us do differently.)
+		 */
+		if (indxinfo->parentidx == 0)
+			appendPQExpBuffer(delq, "DROP INDEX %s;\n", qqindxname);
 
 		if (indxinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
 			ArchiveEntry(fout, indxinfo->dobj.catId, indxinfo->dobj.dumpId,
@@ -18006,11 +18016,15 @@ dumpIndexAttach(Archive *fout, const IndexAttachInfo *attachinfo)
 						  fmtQualifiedDumpable(attachinfo->partitionIdx));
 
 		/*
-		 * There is no point in creating a drop query as the drop is done by
-		 * index drop.  (If you think to change this, see also
-		 * _printTocEntry().)  Although this object doesn't really have
-		 * ownership as such, set the owner field anyway to ensure that the
-		 * command is run by the correct role at restore time.
+		 * There is no need for a dropStmt since the drop is done implicitly
+		 * when we drop either the index's table or the partitioned index.
+		 * Moreover, since there's no ALTER INDEX DETACH PARTITION command,
+		 * there's no way to do it anyway.  (If you think to change this,
+		 * consider also what to do with --if-exists.)
+		 *
+		 * Although this object doesn't really have ownership as such, set the
+		 * owner field anyway to ensure that the command is run by the correct
+		 * role at restore time.
 		 */
 		ArchiveEntry(fout, attachinfo->dobj.catId, attachinfo->dobj.dumpId,
 					 ARCHIVE_OPTS(.tag = attachinfo->dobj.name,

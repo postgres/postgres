@@ -2469,7 +2469,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 			break;
 
 		default:
-			pg_fatal("unrecognized file format \"%d\"", fmt);
+			pg_fatal("unrecognized file format \"%d\"", AH->format);
 	}
 
 	return AH;

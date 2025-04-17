@@ -96,8 +96,7 @@ escape_literal(PGconn *conn, PQExpBuffer target,
 	escaped = PQescapeLiteral(conn, unescaped, unescaped_len);
 	if (!escaped)
 	{
-		appendPQExpBuffer(escape_err, "%s",
-						  PQerrorMessage(conn));
+		appendPQExpBufferStr(escape_err, PQerrorMessage(conn));
 		escape_err->data[escape_err->len - 1] = 0;
 		escape_err->len--;
 		return false;
@@ -120,8 +119,7 @@ escape_identifier(PGconn *conn, PQExpBuffer target,
 	escaped = PQescapeIdentifier(conn, unescaped, unescaped_len);
 	if (!escaped)
 	{
-		appendPQExpBuffer(escape_err, "%s",
-						  PQerrorMessage(conn));
+		appendPQExpBufferStr(escape_err, PQerrorMessage(conn));
 		escape_err->data[escape_err->len - 1] = 0;
 		escape_err->len--;
 		return false;
@@ -153,8 +151,7 @@ escape_string_conn(PGconn *conn, PQExpBuffer target,
 
 	if (error)
 	{
-		appendPQExpBuffer(escape_err, "%s",
-						  PQerrorMessage(conn));
+		appendPQExpBufferStr(escape_err, PQerrorMessage(conn));
 		escape_err->data[escape_err->len - 1] = 0;
 		escape_err->len--;
 		return false;
@@ -514,7 +511,7 @@ test_psql_parse(pe_test_config *tc, PQExpBuffer testname,
 						  "#\t\t %d: scan_result: %s prompt: %u, query_buf: ",
 						  matches, scan_res_s(scan_result), prompt_status);
 		escapify(details, query_buf->data, query_buf->len);
-		appendPQExpBuffer(details, "\n");
+		appendPQExpBufferChar(details, '\n');
 
 		matches++;
 	}
@@ -566,7 +563,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 	}
 
 	/* name to describe the test */
-	appendPQExpBuffer(testname, ">");
+	appendPQExpBufferChar(testname, '>');
 	escapify(testname, tv->escape, tv->escape_len);
 	appendPQExpBuffer(testname, "< - %s - %s",
 					  tv->client_encoding, ef->name);
@@ -575,7 +572,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 	appendPQExpBuffer(details, "#\t input: %zd bytes: ",
 					  tv->escape_len);
 	escapify(details, tv->escape, tv->escape_len);
-	appendPQExpBufferStr(details, "\n");
+	appendPQExpBufferChar(details, '\n');
 	appendPQExpBuffer(details, "#\t encoding: %s\n",
 					  tv->client_encoding);
 

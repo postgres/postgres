@@ -67,10 +67,20 @@ static int	process_global_sql_commands(PGconn *conn, const char *dumpdirpath,
 										const char *outfile);
 static void copy_or_print_global_file(const char *outfile, FILE *pfile);
 static int	get_dbnames_list_to_restore(PGconn *conn,
-										SimpleOidStringList *dbname_oid_list,
+										SimplePtrList *dbname_oid_list,
 										SimpleStringList db_exclude_patterns);
 static int	get_dbname_oid_list_from_mfile(const char *dumpdirpath,
-										   SimpleOidStringList *dbname_oid_list);
+										   SimplePtrList *dbname_oid_list);
+
+/*
+ * Stores a database OID and the corresponding name.
+ */
+typedef struct DbOidName
+{
+	Oid			oid;
+	char		str[FLEXIBLE_ARRAY_MEMBER]; /* null-terminated string here */
+} DbOidName;
+
 
 int
 main(int argc, char **argv)
@@ -927,7 +937,7 @@ read_one_statement(StringInfo inBuf, FILE *pfile)
  */
 static int
 get_dbnames_list_to_restore(PGconn *conn,
-							SimpleOidStringList *dbname_oid_list,
+							SimplePtrList *dbname_oid_list,
 							SimpleStringList db_exclude_patterns)
 {
 	int			count_db = 0;
@@ -943,13 +953,14 @@ get_dbnames_list_to_restore(PGconn *conn,
 	 * Process one by one all dbnames and if specified to skip restoring, then
 	 * remove dbname from list.
 	 */
-	for (SimpleOidStringListCell * db_cell = dbname_oid_list->head;
+	for (SimplePtrListCell *db_cell = dbname_oid_list->head;
 		 db_cell; db_cell = db_cell->next)
 	{
+		DbOidName  *dbidname = (DbOidName *) db_cell->ptr;
 		bool		skip_db_restore = false;
 		PQExpBuffer db_lit = createPQExpBuffer();
 
-		appendStringLiteralConn(db_lit, db_cell->str, conn);
+		appendStringLiteralConn(db_lit, dbidname->str, conn);
 
 		for (SimpleStringListCell *pat_cell = db_exclude_patterns.head; pat_cell; pat_cell = pat_cell->next)
 		{
@@ -957,7 +968,7 @@ get_dbnames_list_to_restore(PGconn *conn,
 			 * If there is an exact match then we don't need to try a pattern
 			 * match
 			 */
-			if (pg_strcasecmp(db_cell->str, pat_cell->val) == 0)
+			if (pg_strcasecmp(dbidname->str, pat_cell->val) == 0)
 				skip_db_restore = true;
 			/* Otherwise, try a pattern match if there is a connection */
 			else if (conn)
@@ -972,7 +983,7 @@ get_dbnames_list_to_restore(PGconn *conn,
 				if (dotcnt > 0)
 				{
 					pg_log_error("improper qualified name (too many dotted names): %s",
-								 db_cell->str);
+								 dbidname->str);
 					PQfinish(conn);
 					exit_nicely(1);
 				}
@@ -982,7 +993,7 @@ get_dbnames_list_to_restore(PGconn *conn,
 				if ((PQresultStatus(res) == PGRES_TUPLES_OK) && PQntuples(res))
 				{
 					skip_db_restore = true;
-					pg_log_info("database \"%s\" matches exclude pattern: \"%s\"", db_cell->str, pat_cell->val);
+					pg_log_info("database \"%s\" matches exclude pattern: \"%s\"", dbidname->str, pat_cell->val);
 				}
 
 				PQclear(res);
@@ -1001,8 +1012,8 @@ get_dbnames_list_to_restore(PGconn *conn,
 		 */
 		if (skip_db_restore)
 		{
-			pg_log_info("excluding database \"%s\"", db_cell->str);
-			db_cell->oid = InvalidOid;
+			pg_log_info("excluding database \"%s\"", dbidname->str);
+			dbidname->oid = InvalidOid;
 		}
 		else
 		{
@@ -1024,12 +1035,13 @@ get_dbnames_list_to_restore(PGconn *conn,
  * Returns, total number of database names in map.dat file.
  */
 static int
-get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimpleOidStringList *dbname_oid_list)
+get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimplePtrList *dbname_oid_list)
 {
+	StringInfoData linebuf;
 	FILE	   *pfile;
 	char		map_file_path[MAXPGPATH];
-	char		line[MAXPGPATH];
 	int			count = 0;
+
 
 	/*
 	 * If there is only global.dat file in dump, then return from here as
@@ -1049,32 +1061,43 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimpleOidStringList *dbn
 	if (pfile == NULL)
 		pg_fatal("could not open \"%s\": %m", map_file_path);
 
+	initStringInfo(&linebuf);
+
 	/* Append all the dbname/db_oid combinations to the list. */
-	while ((fgets(line, MAXPGPATH, pfile)) != NULL)
+	while (pg_get_line_buf(pfile, &linebuf))
 	{
 		Oid			db_oid = InvalidOid;
-		char		db_oid_str[MAXPGPATH + 1] = "";
 		char	   *dbname;
+		DbOidName  *dbidname;
+		int			namelen;
+		char	   *p = linebuf.data;
 
 		/* Extract dboid. */
-		sscanf(line, "%u", &db_oid);
-		sscanf(line, "%20s", db_oid_str);
+		while (isdigit(*p))
+			p++;
+		if (p > linebuf.data && *p == ' ')
+		{
+			sscanf(linebuf.data, "%u", &db_oid);
+			p++;
+		}
 
 		/* dbname is the rest of the line */
-		dbname = line + strlen(db_oid_str) + 1;
+		dbname = p;
+		namelen = strlen(dbname);
 
-		/* Remove \n from dbname. */
-		dbname[strlen(dbname) - 1] = '\0';
+		/* Report error and exit if the file has any corrupted data. */
+		if (!OidIsValid(db_oid) || namelen <= 1)
+			pg_fatal("invalid entry in \"%s\" at line: %d", map_file_path,
+					 count + 1);
 
 		pg_log_info("found database \"%s\" (OID: %u) in \"%s\"",
 					dbname, db_oid, map_file_path);
 
-		/* Report error and exit if the file has any corrupted data. */
-		if (!OidIsValid(db_oid) || strlen(dbname) == 0)
-			pg_fatal("invalid entry in \"%s\" at line : %d", map_file_path,
-					 count + 1);
+		dbidname = pg_malloc(offsetof(DbOidName, str) + namelen + 1);
+		dbidname->oid = db_oid;
+		strlcpy(dbidname->str, dbname, namelen);
 
-		simple_oid_string_list_append(dbname_oid_list, db_oid, dbname);
+		simple_ptr_list_append(dbname_oid_list, dbidname);
 		count++;
 	}
 
@@ -1100,7 +1123,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 					  SimpleStringList db_exclude_patterns, RestoreOptions *opts,
 					  int numWorkers)
 {
-	SimpleOidStringList dbname_oid_list = {NULL, NULL};
+	SimplePtrList dbname_oid_list = {NULL, NULL};
 	int			num_db_restore = 0;
 	int			num_total_db;
 	int			n_errors_total;
@@ -1116,7 +1139,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 
 	num_total_db = get_dbname_oid_list_from_mfile(dumpdirpath, &dbname_oid_list);
 
-	/* If map.dat has no entry, return after processing global.dat */
+	/* If map.dat has no entries, return after processing global.dat */
 	if (dbname_oid_list.head == NULL)
 		return process_global_sql_commands(conn, dumpdirpath, opts->filename);
 
@@ -1164,20 +1187,20 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	pg_log_info("need to restore %d databases out of %d databases", num_db_restore, num_total_db);
 
 	/*
-	 * Till now, we made a list of databases, those needs to be restored after
-	 * skipping names of exclude-database.  Now we can launch parallel workers
-	 * to restore these databases.
+	 * We have a list of databases to restore after processing the
+	 * exclude-database switch(es).  Now we can restore them one by one.
 	 */
-	for (SimpleOidStringListCell * db_cell = dbname_oid_list.head;
+	for (SimplePtrListCell *db_cell = dbname_oid_list.head;
 		 db_cell; db_cell = db_cell->next)
 	{
+		DbOidName  *dbidname = (DbOidName *) db_cell->ptr;
 		char		subdirpath[MAXPGPATH];
 		char		subdirdbpath[MAXPGPATH];
 		char		dbfilename[MAXPGPATH];
 		int			n_errors;
 
 		/* ignore dbs marked for skipping */
-		if (db_cell->oid == InvalidOid)
+		if (dbidname->oid == InvalidOid)
 			continue;
 
 		/*
@@ -1197,27 +1220,27 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		 * {oid}.dmp file, use it. Otherwise try to use a directory called
 		 * {oid}
 		 */
-		snprintf(dbfilename, MAXPGPATH, "%u.tar", db_cell->oid);
+		snprintf(dbfilename, MAXPGPATH, "%u.tar", dbidname->oid);
 		if (file_exists_in_directory(subdirdbpath, dbfilename))
-			snprintf(subdirpath, MAXPGPATH, "%s/databases/%u.tar", dumpdirpath, db_cell->oid);
+			snprintf(subdirpath, MAXPGPATH, "%s/databases/%u.tar", dumpdirpath, dbidname->oid);
 		else
 		{
-			snprintf(dbfilename, MAXPGPATH, "%u.dmp", db_cell->oid);
+			snprintf(dbfilename, MAXPGPATH, "%u.dmp", dbidname->oid);
 
 			if (file_exists_in_directory(subdirdbpath, dbfilename))
-				snprintf(subdirpath, MAXPGPATH, "%s/databases/%u.dmp", dumpdirpath, db_cell->oid);
+				snprintf(subdirpath, MAXPGPATH, "%s/databases/%u.dmp", dumpdirpath, dbidname->oid);
 			else
-				snprintf(subdirpath, MAXPGPATH, "%s/databases/%u", dumpdirpath, db_cell->oid);
+				snprintf(subdirpath, MAXPGPATH, "%s/databases/%u", dumpdirpath, dbidname->oid);
 		}
 
-		pg_log_info("restoring database \"%s\"", db_cell->str);
+		pg_log_info("restoring database \"%s\"", dbidname->str);
 
 		/* If database is already created, then don't set createDB flag. */
 		if (opts->cparams.dbname)
 		{
 			PGconn	   *test_conn;
 
-			test_conn = ConnectDatabase(db_cell->str, NULL, opts->cparams.pghost,
+			test_conn = ConnectDatabase(dbidname->str, NULL, opts->cparams.pghost,
 										opts->cparams.pgport, opts->cparams.username, TRI_DEFAULT,
 										false, progname, NULL, NULL, NULL, NULL);
 			if (test_conn)
@@ -1226,7 +1249,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 
 				/* Use already created database for connection. */
 				opts->createDB = 0;
-				opts->cparams.dbname = db_cell->str;
+				opts->cparams.dbname = dbidname->str;
 			}
 			else
 			{
@@ -1251,7 +1274,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		if (n_errors)
 		{
 			n_errors_total += n_errors;
-			pg_log_warning("errors ignored on database \"%s\" restore: %d", db_cell->str, n_errors);
+			pg_log_warning("errors ignored on database \"%s\" restore: %d", dbidname->str, n_errors);
 		}
 
 		count++;
@@ -1261,7 +1284,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	pg_log_info("number of restored databases is %d", num_db_restore);
 
 	/* Free dbname and dboid list. */
-	simple_oid_string_list_destroy(&dbname_oid_list);
+	simple_ptr_list_destroy(&dbname_oid_list);
 
 	return n_errors_total;
 }
