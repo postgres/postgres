@@ -119,7 +119,7 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 	{
 		ereport(ERROR,
 				errcode_for_file_access(),
-				errmsg("Failed to open keyring file %s :%m", file_keyring->file_name));
+				errmsg("Failed to open keyring file %s: %m", file_keyring->file_name));
 	}
 	/* Write key to the end of file */
 	curr_pos = lseek(fd, 0, SEEK_END);
