@@ -641,7 +641,6 @@ BEGIN
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_grant_management_to_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_key_viewer_to_role(TEXT) TO %I', target_role);
 
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_global_key_management_from_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_database_key_management_from_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_grant_management_from_role(TEXT) TO %I', target_role);
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_key_viewer_from_role(TEXT) TO %I', target_role);
