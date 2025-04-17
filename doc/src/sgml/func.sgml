@@ -25013,6 +25013,39 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_blocked_pids</primary>
+        </indexterm>
+        <function>pg_blocked_pids</function> ( <type>integer</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Returns an array of the process ID(s) of the sessions that are
+        blocked by the server process with the specified process ID from
+        acquiring a lock, or an empty array if there is no such server process
+        or it is not blocking.
+       </para>
+       <para>
+        One server process blocks another if it either holds a lock that
+        conflicts with the blocked process's lock request (hard block), or is
+        waiting for a lock that would conflict with the blocked process's lock
+        request and is ahead of it in the wait queue (soft block).  When using
+        parallel queries the result always lists client-visible process IDs
+        (that is, <function>pg_backend_pid</function> results) even if the
+        actual lock is held or awaited by a child worker process.  As a result
+        of that, there may be duplicated PIDs in the result.  Also note that
+        when a prepared transaction requests a conflicting lock, it will be
+        represented by a zero process ID.
+       </para>
+       <para>
+        Frequent calls to this function could have some impact on database
+        performance, because it needs exclusive access to the lock manager's
+        shared state for a short time.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_conf_load_time</primary>
         </indexterm>
         <function>pg_conf_load_time</function> ()

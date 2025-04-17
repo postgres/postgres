@@ -424,6 +424,14 @@ static void LockRefindAndRelease(LockMethod lockMethodTable, PGPROC *proc,
 								 bool decrement_strong_lock_count);
 static void GetSingleProcBlockerStatusData(PGPROC *blocked_proc,
 										   BlockedProcsData *data);
+static void GetSingleProcBlockedStatusData(PGPROC *blocker_proc,
+											BlockedProcsData *data);
+static void GetBlockedStatusData( int target_pid, LOCK *the_lock,
+	BlockedProcsData *data, bool collect_waiting_processes);
+static void CollectProcLocksAssociatedWithLock(LOCK *theLock,
+	BlockedProcsData *data);
+static void CollectProcessDataWaitingOnWaitQueue(
+	LOCK *theLock, BlockedProcsData *data);
 
 
 /*
@@ -4038,6 +4046,92 @@ GetBlockerStatusData(int blocked_pid)
 	return data;
 }
 
+/*
+ * GetBlockedStatusData - Return a summary of the lock manager's state
+ * concerning locks that are blocked by the specified PID or any member of
+ * the PID's lock group, for use in a user-level reporting function.
+ *
+ * This function is similar to GetBlockerStatusData().
+ */
+ BlockedProcsData *
+ GetBlockedStatusData(int blocked_pid)
+ {
+	 BlockedProcsData *data;
+	 PGPROC	   *proc;
+	 int			i;
+ 
+	 data = (BlockedProcsData *) palloc(sizeof(BlockedProcsData));
+ 
+	 /*
+	  * Guess how much space we'll need, and preallocate.  Most of the time
+	  * this will avoid needing to do repalloc while holding the LWLocks.  (We
+	  * assume, but check with an Assert, that MaxBackends is enough entries
+	  * for the procs[] array; the other two could need enlargement, though.)
+	  */
+	 data->nprocs = data->nlocks = data->npids = 0;
+	 data->maxprocs = data->maxlocks = data->maxpids = MaxBackends;
+	 data->procs = (BlockedProcData *) palloc(sizeof(BlockedProcData) * data->maxprocs);
+	 data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * data->maxlocks);
+	 data->waiter_pids = (int *) palloc(sizeof(int) * data->maxpids);
+ 
+	 /*
+	  * In order to search the ProcArray for blocked_pid and assume that that
+	  * entry won't immediately disappear under us, we must hold ProcArrayLock.
+	  * In addition, to examine the lock grouping fields of any other backend,
+	  * we must hold all the hash partition locks.  (Only one of those locks is
+	  * actually relevant for any one lock group, but we can't know which one
+	  * ahead of time.)	It's fairly annoying to hold all those locks
+	  * throughout this, but it's no worse than GetLockStatusData(), and it
+	  * does have the advantage that we're guaranteed to return a
+	  * self-consistent instantaneous state.
+	  */
+	 LWLockAcquire(ProcArrayLock, LW_SHARED);
+ 
+	 proc = BackendPidGetProcWithLock(blocked_pid);
+ 
+	 /* Nothing to do if it's gone */
+	 if (proc != NULL)
+	 {
+		 /*
+		  * Acquire lock on the entire shared lock data structure.  See notes
+		  * in GetLockStatusData().
+		  */
+		 for (i = 0; i < NUM_LOCK_PARTITIONS; i++)
+			 LWLockAcquire(LockHashPartitionLockByIndex(i), LW_SHARED);
+ 
+		 if (proc->lockGroupLeader == NULL)
+		 {
+			 /* Easy case, proc is not a lock group member */
+			 GetSingleProcBlockedStatusData(proc, data);
+		 }
+		 else
+		 {
+			 /* Examine all procs in proc's lock group */
+			 dlist_iter	iter;
+ 
+			 dlist_foreach(iter, &proc->lockGroupLeader->lockGroupMembers)
+			 {
+				 PGPROC	   *memberProc;
+ 
+				 memberProc = dlist_container(PGPROC, lockGroupLink, iter.cur);
+				 GetSingleProcBlockedStatusData(memberProc, data);
+			 }
+		 }
+ 
+		 /*
+		  * And release locks.  See notes in GetLockStatusData().
+		  */
+		 for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
+			 LWLockRelease(LockHashPartitionLockByIndex(i));
+ 
+		 Assert(data->nprocs <= data->maxprocs);
+	 }
+ 
+	 LWLockRelease(ProcArrayLock);
+ 
+	 return data;
+}
+
 /* Accumulate data about one possibly-blocked proc for GetBlockerStatusData */
 static void
 GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
@@ -4120,6 +4214,178 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 
 	bproc->num_locks = data->nlocks - bproc->first_lock;
 	bproc->num_waiters = data->npids - bproc->first_waiter;
+}
+
+// GetSingleProcessBlockingStatusData takes all the involved lockable objects
+// for a single process and collects the data related to all the processes
+// blocked by the input process.
+void GetSingleProcBlockedStatusData(
+	PGPROC *blockerProc, BlockedProcsData *data) {
+	// iterate over the myPROCLOCKs of the PGPROC,
+	// to get all the involved lockable objects.
+	for (int partition = 0; partition < NUM_LOCK_PARTITIONS; partition++) {
+		LWLock *partitionLock;
+		dlist_head *procLocks = &blockerProc->myProcLocks[partition];
+		dlist_iter proclock_iter;
+
+		partitionLock = LockHashPartitionLockByIndex(partition);
+		// If the proclock list for this partition is empty, we can skip
+		// acquiring the partition lock.
+		if (dlist_is_empty(procLocks)) {
+			continue;    /* needn't examine this partition */
+		}
+		LWLockAcquire(partitionLock, LW_SHARED);
+
+		PROCLOCK   *proclock;
+		dlist_foreach(proclock_iter, procLocks) {
+			proclock =
+					dlist_container(PROCLOCK, procLink, proclock_iter.cur);
+			// Fetch the lock object associated with the PROCLOCK.
+			LOCK *theLock = proclock->tag.myLock;
+			if (theLock == NULL) {
+				continue;
+			}
+			bool isWaitingOnTheLockObject = false;
+			// blockerProc is the each child process of the input blocker process.
+			if (blockerProc->waitLock != NULL) {
+				isWaitingOnTheLockObject = blockerProc->waitLock == theLock;
+					// zxcv CheckSameLock(blockerProc->waitLock->tag, theLock->tag);
+			}
+			// Get all the processes data involved with the current lock object.
+			GetBlockedStatusData(
+					blockerProc->pid, theLock, data,
+					/* collect_waiting_processes= */ isWaitingOnTheLockObject);
+		}
+		LWLockRelease(partitionLock);
+	}
+}
+
+// The function optimizes lock handling by caching lock objects in a hash table.
+// It retrieves the lock object for a process and checks if it's already cached.
+// If found, it reuses the existing entry, otherwise, it adds the lock to the
+// cache. It then efficiently creates two lists: one with processes involving
+// the lock and another with all waiting processes. This ensures complete
+// information without redundancy.
+void GetBlockedStatusData(
+	int target_pid, LOCK *the_lock, BlockedProcsData *data,
+	bool collect_waiting_processes) {
+	// bproc represent the blocked process or blocking process.
+	BlockedProcData *bproc;
+	// Nothing to do if the lock object is not present.
+	if (the_lock == NULL)
+		return;
+
+	// check and resize the data list if needed.
+	if (data->nprocs >= data->maxprocs) {
+		data->maxprocs += MaxBackends;
+		data->procs = (BlockedProcData *)
+				repalloc(data->procs, sizeof(BlockedProcData) * data->maxprocs);
+	}
+	// Take the next available slot in the procs[] array for populating the data
+	// for current blocked process.
+	// We are also incrementing the total process count, which also refers to the
+	// total lock objects considered.
+	bproc = &data->procs[data->nprocs++];
+	bproc->pid = target_pid;
+
+	// Set up a procs[] element
+	bproc->first_lock = data->nlocks;
+	bproc->first_waiter = data->npids;
+
+	// We may ignore the proc's fast-path arrays, since nothing in those could
+	// be related to a contended lock.
+
+	// Collect all PROCLOCKs associated with theLock
+	CollectProcLocksAssociatedWithLock(the_lock, data);
+	bproc->num_locks = data->nlocks - bproc->first_lock;
+
+	// Collect all processes waiting on theLock in the wait queue.
+	if (collect_waiting_processes) {
+		CollectProcessDataWaitingOnWaitQueue(
+			the_lock, data);
+	}
+	bproc->num_waiters = data->npids - bproc->first_waiter;
+}
+
+
+// CollectProcLocksAssociatedWithLock is used to collect all PROCLOCKs
+// associated with theLock. The PROCLOCKs contain the holder/waiter information
+// on the lockable object (theLock).
+void CollectProcLocksAssociatedWithLock(
+	LOCK *theLock, BlockedProcsData *data) {
+	// Iterate over all PROCLOCKs associated with theLock to populate the lock
+	// instance datas.
+	dlist_iter proclock_iter;
+	dlist_foreach(proclock_iter, &theLock->procLocks)
+	{
+		PROCLOCK   *proclock =
+			dlist_container(PROCLOCK, lockLink, proclock_iter.cur);
+		PGPROC *proc = proclock->tag.myProc;
+		LOCK *lock = proclock->tag.myLock;
+		LockInstanceData *instance;
+
+		if (data->nlocks >= data->maxlocks) {
+			data->maxlocks += MaxBackends;
+			data->locks = (LockInstanceData *)
+				repalloc(data->locks, sizeof(LockInstanceData) * data->maxlocks);
+		}
+		// Take the next available slot in the locks[] array for populating the data
+		// for current lock instance.
+		instance = &data->locks[data->nlocks];
+		// Currently, we are just copying the lock and process information, but
+		// later the lock instance datas would be used to identify processes which
+		// are holding locks on the same lockable object, and conflict with the
+		// requested one by the current process.
+		memcpy(&instance->locktag, &lock->tag, sizeof(LOCKTAG));
+		instance->holdMask = proclock->holdMask;
+		if (proc->waitLock == lock)
+			instance->waitLockMode = proc->waitLockMode;
+		else
+			instance->waitLockMode = NoLock;
+		instance->vxid.procNumber = proc->vxid.procNumber;
+		instance->vxid.localTransactionId = proc->vxid.lxid;
+		instance->pid = proc->pid;
+		instance->leaderPid = proclock->groupLeader->pid;
+		instance->fastpath = false;
+		data->nlocks++;
+	}
+}
+
+// CollectProcessDataWaitingOnWaitQueue is used to collect all processes
+// waiting for a lock on theLock in the wait queue.
+void CollectProcessDataWaitingOnWaitQueue(LOCK *theLock,
+											BlockedProcsData *data) {
+
+	int queue_size;
+	PGPROC * proc;
+	int target_pid = data->procs[data->nprocs - 1].pid;
+	dclist_head *waitQueue = &(theLock->waitProcs);
+	queue_size = dclist_count(waitQueue);
+	// Enlarge waiter_pids[] if it's too small to hold all wait queue PIDs
+	if (queue_size > data->maxpids - data->npids)
+	{
+		data->maxpids = Max(data->maxpids + MaxBackends,
+			data->npids + queue_size);
+		data->waiter_pids = (int *) repalloc(data->waiter_pids,
+			sizeof(int) * data->maxpids);
+	}
+	// Collect the PIDs of all processes waiting to acquire a lock on this
+	// lockable object, regardless of whether they are ahead or not in the wait
+	// queue.
+	bool blocker_pid_found = false;
+	dlist_iter proc_iter;
+	dclist_foreach(proc_iter, waitQueue)
+	{
+		proc = dlist_container(PGPROC, links, proc_iter.cur);
+		// Collect onlu the blocked pids
+		if (blocker_pid_found) {
+			data->waiter_pids[data->npids++] = proc->pid;
+		}
+		if (proc->pid == target_pid) {
+			blocker_pid_found = true;
+		}
+		proc = (PGPROC *) proc->links.next;
+	}
 }
 
 /*

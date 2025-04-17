@@ -561,6 +561,109 @@ pg_blocking_pids(PG_FUNCTION_ARGS)
 	PG_RETURN_ARRAYTYPE_P(construct_array_builtin(arrayelems, narrayelems, INT4OID));
 }
 
+/*
+ * pg_blocked_pids - produce an array of the PIDs blocked by the given PID
+ *
+ * The reported PIDs are those that request a lock conflicting with blocker_pid's
+ * held lock (hard block), or are requesting such a lock and are behind
+ * of blocker_pid in the lock's wait queue (soft block).
+ *
+ * In parallel-query cases, we report all PIDs blocked by any member of the
+ * given PID's lock group, and the reported PIDs are those of the blocked
+ * PIDs' lock group leaders.  This allows callers to compare the result to
+ * lists of clients' pg_backend_pid() results even during a parallel query.
+ *
+ * Parallel query makes it possible for there to be duplicate PIDs in the
+ * result (because multiple waiters of a single process are blocked by same
+ * PID). We do not bother to eliminate such duplicates from the result.
+ *
+ * We need not consider predicate locks here, since those don't block anything.
+ */
+ Datum
+ pg_blocked_pids(PG_FUNCTION_ARGS)
+ {
+	 int			blocker_pid = PG_GETARG_INT32(0);
+	 Datum	   *arrayelems;
+	 int			narrayelems;
+	 BlockedProcsData *lock_data; /* state data from lmgr */
+ 
+	 /* Collect a snapshot of lock manager state */
+	 lock_data = GetBlockedStatusData(blocker_pid);
+ 
+	 /* We can't need more output entries than there are reported PROCLOCKs */
+	 arrayelems = (Datum *) palloc(lock_data->nlocks * sizeof(Datum));
+	 narrayelems = 0;
+	// for each involved lockable object...
+	for (int i = 0; i < lock_data->nprocs; i++) {
+	 // the pid of the lockObjectData is the pid of the child processes
+	 // of the input processes.
+	 BlockedProcData *lockObjectData = &lock_data->procs[i];
+	 if (lockObjectData == NULL) {
+		 continue;
+	 }
+	 LockInstanceData *instances =
+			 &lock_data->locks[lockObjectData->first_lock];
+	 int *preceding_waiters =
+			 &lock_data->waiter_pids[lockObjectData->first_waiter];
+	 // Locate the blocked proc's own entry in the LockInstanceData array.
+	 // There should be exactly one matching entry.
+	 LockInstanceData *blocking_instance = NULL;
+	 for (int k = 0; k < lockObjectData->num_locks; k++) {
+		 LockInstanceData *instance = &(instances[k]);
+		 if (instance->pid == lockObjectData->pid) {
+			 blocking_instance = instance;
+			 break;
+		 }
+	 }
+	 if (blocking_instance == NULL) {
+		 // blocked process is not found in the lock instance data array, so
+		 // we can skip this process.
+		 continue;
+	 }
+ 
+	 for (int j = 0; j < lockObjectData->num_locks; j++) {
+	 LockInstanceData *instance = &(instances[j]);
+	 LockMethod lockMethodTable =
+	 GetLockTagsMethodTable(&(instance->locktag));
+	 int conflictMask =
+	   lockMethodTable->conflictTab[instance->waitLockMode];
+	 /* A proc never blocks itself, so ignore that entry */
+	 if (instance == blocking_instance)
+	   continue;
+	 /* Members of same lock group never block each other, either */
+	 if (instance->leaderPid == blocking_instance->leaderPid)
+	   continue;
+	 if (conflictMask & blocking_instance->holdMask) {
+	   /* hard block: blocked by lock already held by this entry */
+	 } else if (blocking_instance->waitLockMode != NoLock
+		 && (conflictMask & LOCKBIT_ON(blocking_instance->waitLockMode))) {
+		 /* conflict in lock requests; who's in front in wait queue? */
+		 bool blocking = false;
+		 for (int k = 0; k < lockObjectData->num_waiters; k++) {
+		   if (preceding_waiters[k] == instance->pid) {
+			 // soft block: this entry is behind blocking proc
+			 blocking = true;
+			 break;
+		   }
+		 }
+		 if (!blocking) {
+		   continue; /* not blocking this entry */
+		 }
+	 } else {
+		 /* not blocking this entry */
+		 continue;
+	 }
+ 
+			 /* blocked by this entry, so emit a record */
+			 arrayelems[narrayelems++] = Int32GetDatum(instance->leaderPid);
+		 }
+	 }
+ 
+	 /* Assert we didn't overrun arrayelems[] */
+	 Assert(narrayelems <= lockData->nlocks);
+ 
+	 PG_RETURN_ARRAYTYPE_P(construct_array_builtin(arrayelems, narrayelems, INT4OID));
+ }
 
 /*
  * pg_safe_snapshot_blocking_pids - produce an array of the PIDs blocking
