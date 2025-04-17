@@ -9444,9 +9444,9 @@ ATExecDropColumn(List **wqueue, Relation rel, const char *colName,
  *
  * The not-null constraints for a primary key must cover the whole inheritance
  * hierarchy (failing to ensure that leads to funny corner cases).  For the
- * normal case where we're asked to recurse, this routine ensures that the
- * not-null constraints either exist already, or queues a requirement for them
- * to be created by phase 2.
+ * normal case where we're asked to recurse, this routine checks if the
+ * not-null constraints exist already, and if not queues a requirement for
+ * them to be created by phase 2.
  *
  * For the case where we're asked not to recurse, we verify that a not-null
  * constraint exists on each column of each (direct) child table, throwing an
@@ -9466,7 +9466,7 @@ ATPrepAddPrimaryKey(List **wqueue, Relation rel, AlterTableCmd *cmd,
 					AlterTableUtilityContext *context)
 {
 	Constraint *pkconstr;
-	List	   *children;
+	List	   *children = NIL;
 	bool		got_children = false;
 
 	pkconstr = castNode(Constraint, cmd->def);
