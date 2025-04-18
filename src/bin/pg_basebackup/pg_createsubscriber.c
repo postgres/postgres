@@ -1247,20 +1247,20 @@ setup_recovery(const struct LogicalRepInfo *dbinfo, const char *datadir, const c
 	 * targets (name, time, xid, LSN).
 	 */
 	recoveryconfcontents = GenerateRecoveryConfig(conn, NULL, NULL);
-	appendPQExpBuffer(recoveryconfcontents, "recovery_target = ''\n");
-	appendPQExpBuffer(recoveryconfcontents,
-					  "recovery_target_timeline = 'latest'\n");
-	appendPQExpBuffer(recoveryconfcontents,
-					  "recovery_target_inclusive = true\n");
-	appendPQExpBuffer(recoveryconfcontents,
-					  "recovery_target_action = promote\n");
-	appendPQExpBuffer(recoveryconfcontents, "recovery_target_name = ''\n");
-	appendPQExpBuffer(recoveryconfcontents, "recovery_target_time = ''\n");
-	appendPQExpBuffer(recoveryconfcontents, "recovery_target_xid = ''\n");
+	appendPQExpBufferStr(recoveryconfcontents, "recovery_target = ''\n");
+	appendPQExpBufferStr(recoveryconfcontents,
+						 "recovery_target_timeline = 'latest'\n");
+	appendPQExpBufferStr(recoveryconfcontents,
+						 "recovery_target_inclusive = true\n");
+	appendPQExpBufferStr(recoveryconfcontents,
+						 "recovery_target_action = promote\n");
+	appendPQExpBufferStr(recoveryconfcontents, "recovery_target_name = ''\n");
+	appendPQExpBufferStr(recoveryconfcontents, "recovery_target_time = ''\n");
+	appendPQExpBufferStr(recoveryconfcontents, "recovery_target_xid = ''\n");
 
 	if (dry_run)
 	{
-		appendPQExpBuffer(recoveryconfcontents, "# dry run mode");
+		appendPQExpBufferStr(recoveryconfcontents, "# dry run mode");
 		appendPQExpBuffer(recoveryconfcontents,
 						  "recovery_target_lsn = '%X/%X'\n",
 						  LSN_FORMAT_ARGS((XLogRecPtr) InvalidXLogRecPtr));
@@ -1484,7 +1484,7 @@ start_standby_server(const struct CreateSubscriberOptions *opt, bool restricted_
 
 	appendPQExpBuffer(pg_ctl_cmd, "\"%s\" start -D ", pg_ctl_path);
 	appendShellString(pg_ctl_cmd, subscriber_dir);
-	appendPQExpBuffer(pg_ctl_cmd, " -s -o \"-c sync_replication_slots=off\"");
+	appendPQExpBufferStr(pg_ctl_cmd, " -s -o \"-c sync_replication_slots=off\"");
 
 	/* Prevent unintended slot invalidation */
 	appendPQExpBufferStr(pg_ctl_cmd, " -o \"-c idle_replication_slot_timeout=0\"");

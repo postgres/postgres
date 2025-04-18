@@ -1777,7 +1777,7 @@ expand_table_name_patterns(Archive *fout,
 		 */
 		if (with_child_tables)
 		{
-			appendPQExpBuffer(query, "WITH RECURSIVE partition_tree (relid) AS (\n");
+			appendPQExpBufferStr(query, "WITH RECURSIVE partition_tree (relid) AS (\n");
 		}
 
 		appendPQExpBuffer(query,
@@ -1804,13 +1804,13 @@ expand_table_name_patterns(Archive *fout,
 
 		if (with_child_tables)
 		{
-			appendPQExpBuffer(query, "UNION"
-							  "\nSELECT i.inhrelid"
-							  "\nFROM partition_tree p"
-							  "\n     JOIN pg_catalog.pg_inherits i"
-							  "\n     ON p.relid OPERATOR(pg_catalog.=) i.inhparent"
-							  "\n)"
-							  "\nSELECT relid FROM partition_tree");
+			appendPQExpBufferStr(query, "UNION"
+								 "\nSELECT i.inhrelid"
+								 "\nFROM partition_tree p"
+								 "\n     JOIN pg_catalog.pg_inherits i"
+								 "\n     ON p.relid OPERATOR(pg_catalog.=) i.inhparent"
+								 "\n)"
+								 "\nSELECT relid FROM partition_tree");
 		}
 
 		ExecuteSqlStatement(fout, "RESET search_path");
@@ -5034,8 +5034,8 @@ getSubscriptions(Archive *fout)
 		appendPQExpBufferStr(query,
 							 " s.subfailover\n");
 	else
-		appendPQExpBuffer(query,
-						  " false AS subfailover\n");
+		appendPQExpBufferStr(query,
+							 " false AS subfailover\n");
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n");
@@ -5257,7 +5257,7 @@ dumpSubscriptionTable(Archive *fout, const SubRelInfo *subrinfo)
 		if (subrinfo->srsublsn && subrinfo->srsublsn[0] != '\0')
 			appendPQExpBuffer(query, ", '%s'", subrinfo->srsublsn);
 		else
-			appendPQExpBuffer(query, ", NULL");
+			appendPQExpBufferStr(query, ", NULL");
 
 		appendPQExpBufferStr(query, ");\n");
 	}
@@ -5352,7 +5352,7 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 		appendPQExpBufferStr(query, ", disable_on_error = true");
 
 	if (!subinfo->subpasswordrequired)
-		appendPQExpBuffer(query, ", password_required = false");
+		appendPQExpBufferStr(query, ", password_required = false");
 
 	if (subinfo->subrunasowner)
 		appendPQExpBufferStr(query, ", run_as_owner = true");

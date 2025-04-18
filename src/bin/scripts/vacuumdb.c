@@ -896,11 +896,11 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	if (objects_listed)
 	{
 		if (objfilter & OBJFILTER_SCHEMA_EXCLUDE)
-			appendPQExpBuffer(&catalog_query,
-							  " AND listed_objects.object_oid IS NULL\n");
+			appendPQExpBufferStr(&catalog_query,
+								 " AND listed_objects.object_oid IS NULL\n");
 		else
-			appendPQExpBuffer(&catalog_query,
-							  " AND listed_objects.object_oid IS NOT NULL\n");
+			appendPQExpBufferStr(&catalog_query,
+								 " AND listed_objects.object_oid IS NOT NULL\n");
 	}
 
 	/*
@@ -911,10 +911,10 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	 */
 	if ((objfilter & OBJFILTER_TABLE) == 0)
 	{
-		appendPQExpBuffer(&catalog_query,
-						  " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
-						  CppAsString2(RELKIND_RELATION) ", "
-						  CppAsString2(RELKIND_MATVIEW) "])\n");
+		appendPQExpBufferStr(&catalog_query,
+							 " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
+							 CppAsString2(RELKIND_RELATION) ", "
+							 CppAsString2(RELKIND_MATVIEW) "])\n");
 	}
 
 	/*

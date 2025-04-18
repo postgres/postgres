@@ -1246,7 +1246,7 @@ dumpRoleMembership(PGconn *conn)
 				{
 					if (optbuf->data[0] != '\0')
 						appendPQExpBufferStr(optbuf, ", ");
-					appendPQExpBuffer(optbuf, "SET FALSE");
+					appendPQExpBufferStr(optbuf, "SET FALSE");
 				}
 				if (optbuf->data[0] != '\0')
 					fprintf(OPF, " WITH %s", optbuf->data);

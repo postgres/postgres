@@ -1620,9 +1620,9 @@ bootstrap_template1(void)
 	printfPQExpBuffer(&cmd, "\"%s\" --boot %s %s", backend_exec, boot_options, extra_options);
 	appendPQExpBuffer(&cmd, " -X %d", wal_segment_size_mb * (1024 * 1024));
 	if (data_checksums)
-		appendPQExpBuffer(&cmd, " -k");
+		appendPQExpBufferStr(&cmd, " -k");
 	if (debug)
-		appendPQExpBuffer(&cmd, " -d 5");
+		appendPQExpBufferStr(&cmd, " -d 5");
 
 
 	PG_CMD_OPEN(cmd.data);

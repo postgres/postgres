@@ -999,11 +999,11 @@ create_logical_replication_slots(void)
 			LogicalSlotInfo *slot_info = &slot_arr->slots[slotnum];
 
 			/* Constructs a query for creating logical replication slots */
-			appendPQExpBuffer(query,
-							  "SELECT * FROM "
-							  "pg_catalog.pg_create_logical_replication_slot(");
+			appendPQExpBufferStr(query,
+								 "SELECT * FROM "
+								 "pg_catalog.pg_create_logical_replication_slot(");
 			appendStringLiteralConn(query, slot_info->slotname, conn);
-			appendPQExpBuffer(query, ", ");
+			appendPQExpBufferStr(query, ", ");
 			appendStringLiteralConn(query, slot_info->plugin, conn);
 
 			appendPQExpBuffer(query, ", false, %s, %s);",

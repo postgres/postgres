@@ -1404,7 +1404,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
 				char	   *escname;
 
 				if (i > 0)
-					appendPQExpBufferStr(&buf, ",");
+					appendPQExpBufferChar(&buf, ',');
 
 				name = PQfname(result, i);
 				escname = PQescapeLiteral(pset.db, name, strlen(name));
