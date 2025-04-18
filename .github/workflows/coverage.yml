@@ -1,0 +1,56 @@
+name: Code coverage
+on:
+  pull_request:
+  push:
+    branches:
+      - TDE_REL_17_STABLE
+
+jobs:
+  collect:
+    name: Collect and upload
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: ci_scripts/ubuntu-deps.sh
+
+      - name: Build postgres
+        run: ci_scripts/make-build.sh debug --enable-coverage
+
+      - name: Setup kmip and vault
+        run: ci_scripts/setup-keyring-servers.sh
+
+      - name: Test postgres with TDE to generate coverage
+        run: ci_scripts/make-test-tde.sh --continue --tde-only
+
+      - name: Collect coverage data
+        run: find . -type f -name "*.c" ! -path '*libkmip*' | xargs -t gcov -abcfu
+        working-directory: contrib/pg_tde
+
+      - name: Upload coverage data to codecov.io
+        uses: codecov/codecov-action@v5
+        with:
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          working-directory: contrib/pg_tde
+          files: "*.c.gcov"
+
+      - name: Report on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: coverage-testlog-tde
+          path: |
+            build/testrun/
+            contrib/pg_tde/t/
+            contrib/pg_tde/results
+            contrib/pg_tde/regression.diffs
+            contrib/pg_tde/regression.out
+            contrib/pg_tde/*.gcov
+          retention-days: 3
+
+
