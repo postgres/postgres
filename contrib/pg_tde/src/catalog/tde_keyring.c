@@ -44,7 +44,6 @@ typedef enum ProviderScanType
 {
 	PROVIDER_SCAN_BY_NAME,
 	PROVIDER_SCAN_BY_ID,
-	PROVIDER_SCAN_BY_TYPE,
 	PROVIDER_SCAN_ALL
 } ProviderScanType;
 
@@ -669,11 +668,6 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 		else if (scanType == PROVIDER_SCAN_BY_ID)
 		{
 			if (provider.provider_id == *(int *) scanKey)
-				match = true;
-		}
-		else if (scanType == PROVIDER_SCAN_BY_TYPE)
-		{
-			if (provider.provider_type == *(ProviderType *) scanKey)
 				match = true;
 		}
 		else if (scanType == PROVIDER_SCAN_ALL)
