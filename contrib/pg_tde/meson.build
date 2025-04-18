@@ -93,6 +93,7 @@ sql_tests = [
   'key_provider',
   'keyprovider_dependency',
   'kmip_test',
+  'partition_table',
   'pg_tde_is_encrypted',
   'relocate',
   'recreate_storage',
