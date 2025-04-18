@@ -758,7 +758,8 @@ disable_old_cluster(transferMode transfer_mode)
 				new_path[MAXPGPATH];
 
 	/* rename pg_control so old server cannot be accidentally started */
-	prep_status("Adding \".old\" suffix to old " XLOG_CONTROL_FILE);
+	/* translator: %s is the file path of the control file */
+	prep_status("Adding \".old\" suffix to old \"%s\"", XLOG_CONTROL_FILE);
 
 	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, XLOG_CONTROL_FILE);
 	snprintf(new_path, sizeof(new_path), "%s/%s.old", old_cluster.pgdata, XLOG_CONTROL_FILE);
@@ -768,9 +769,10 @@ disable_old_cluster(transferMode transfer_mode)
 	check_ok();
 
 	if (transfer_mode == TRANSFER_MODE_LINK)
+		/* translator: %s/%s is the file path of the control file */
 		pg_log(PG_REPORT, "\n"
 			   "If you want to start the old cluster, you will need to remove\n"
-			   "the \".old\" suffix from %s/%s.old.\n"
+			   "the \".old\" suffix from \"%s/%s.old\".\n"
 			   "Because \"link\" mode was used, the old cluster cannot be safely\n"
 			   "started once the new cluster has been started.",
 			   old_cluster.pgdata, XLOG_CONTROL_FILE);
