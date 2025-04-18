@@ -1,4 +1,5 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/percona/pg_tde/badge)](https://scorecard.dev/viewer/?uri=github.com/percona/pg_tde)
+[![codecov](https://codecov.io/github/percona/postgres/graph/badge.svg?token=Wow78BMYdP)](https://codecov.io/github/percona/postgres)
 [![Forum](https://img.shields.io/badge/Forum-join-brightgreen)](https://forums.percona.com/)
 
 # pg_tde: Transparent Database Encryption for PostgreSQL

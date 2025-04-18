@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/github/percona/postgres/graph/badge.svg?token=Wow78BMYdP)](https://codecov.io/github/percona/postgres)
+### Code coverage for [pg_tde](https://github.com/percona/postgres/tree/TDE_REL_17_STABLE/contrib/pg_tde): [![codecov](https://codecov.io/github/percona/postgres/graph/badge.svg?token=Wow78BMYdP)](https://codecov.io/github/percona/postgres)
 
 Percona Server for PostgreSQL
 =============================
