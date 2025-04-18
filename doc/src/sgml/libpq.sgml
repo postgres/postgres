@@ -5334,7 +5334,7 @@ unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);
    <xref linkend="libpq-PQprepare"/>,
    <xref linkend="libpq-PQexecPrepared"/>,
    <xref linkend="libpq-PQdescribePrepared"/>,
-   <xref linkend="libpq-PQdescribePortal"/>
+   <xref linkend="libpq-PQdescribePortal"/>,
    <xref linkend="libpq-PQclosePrepared"/>, and
    <xref linkend="libpq-PQclosePortal"/>
    respectively.
