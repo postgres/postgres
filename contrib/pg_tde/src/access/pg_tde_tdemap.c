@@ -113,7 +113,7 @@ static TDEMapEntry *pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
-static bool pg_tde_read_one_map_entry(int fd, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset);
+static bool pg_tde_read_one_map_entry(int fd, TDEMapEntry *map_entry, off_t *offset);
 static void pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId);
 static int	pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos);
 static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
@@ -447,16 +447,12 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	while (1)
 	{
 		TDEMapEntry read_map_entry;
-		bool		found;
 
 		prev_pos = curr_pos;
-		found = pg_tde_read_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, &read_map_entry, &curr_pos);
+		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
+			break;
 
-		/*
-		 * We either reach EOF or found an empty slot in the middle of the
-		 * file
-		 */
-		if (prev_pos == curr_pos || found)
+		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
 			break;
 	}
 
@@ -517,16 +513,12 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	while (1)
 	{
 		TDEMapEntry read_map_entry;
-		bool		found;
 
 		prev_pos = curr_pos;
-		found = pg_tde_read_one_map_entry(map_fd, NULL, MAP_ENTRY_EMPTY, &read_map_entry, &curr_pos);
+		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
+			break;
 
-		/*
-		 * We either reach EOF or found an empty slot in the middle of the
-		 * file
-		 */
-		if (prev_pos == curr_pos || found)
+		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
 			break;
 	}
 
@@ -567,17 +559,13 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator)
 
 	while (1)
 	{
-		TDEMapEntry read_map_entry;
+		TDEMapEntry map_entry;
 		off_t		prev_pos = curr_pos;
-		bool		found;
 
-		found = pg_tde_read_one_map_entry(map_fd, rlocator, MAP_ENTRY_VALID, &read_map_entry, &curr_pos);
-
-		/* We've reached EOF */
-		if (curr_pos == prev_pos)
+		if (!pg_tde_read_one_map_entry(map_fd, &map_entry, &curr_pos))
 			break;
 
-		if (found)
+		if (map_entry.flags != MAP_ENTRY_EMPTY && map_entry.spcOid == rlocator->spcOid && map_entry.relNumber == rlocator->relNumber)
 		{
 			TDEMapEntry empty_map_entry = {
 				.flags = MAP_ENTRY_EMPTY,
@@ -653,22 +641,15 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	while (1)
 	{
 		InternalKey *rel_key_data;
-		off_t		old_prev_pos,
-					new_prev_pos;
+		off_t		new_prev_pos;
 		TDEMapEntry read_map_entry,
 					write_map_entry;
 		RelFileLocator rloc;
-		bool		found;
 
-		old_prev_pos = old_curr_pos;
-		found = pg_tde_read_one_map_entry(old_fd, NULL, MAP_ENTRY_VALID, &read_map_entry, &old_curr_pos);
-
-		/* We either reach EOF */
-		if (old_prev_pos == old_curr_pos)
+		if (!pg_tde_read_one_map_entry(old_fd, &read_map_entry, &old_curr_pos))
 			break;
 
-		/* We didn't find a valid entry */
-		if (found == false)
+		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
 			continue;
 
 		rloc.spcOid = read_map_entry.spcOid;
@@ -916,8 +897,9 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 }
 
 /*
- * Returns the index of the read map if we find a valid match; e.g. flags is set to
- * MAP_ENTRY_VALID and the relNumber and spcOid matches the one provided in rlocator.
+ * Returns the entry of the map if we find a valid match; e.g. flags is not
+ * set to MAP_ENTRY_EMPTY and the relNumber and spcOid matches the one
+ * provided in rlocator.
  */
 static TDEMapEntry *
 pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path)
@@ -926,30 +908,20 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_
 	TDEMapEntry *map_entry = palloc_object(TDEMapEntry);
 	off_t		curr_pos = 0;
 
+	Assert(rlocator != NULL);
+
 	map_fd = pg_tde_open_file_read(db_map_path, &curr_pos);
 
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
 	while (1)
 	{
-		bool		found;
-		off_t		prev_pos = curr_pos;
-
-		found = pg_tde_read_one_map_entry(map_fd, rlocator, key_type, map_entry, &curr_pos);
-
-		/* We've reached EOF */
-		if (curr_pos == prev_pos)
+		if (!pg_tde_read_one_map_entry(map_fd, map_entry, &curr_pos))
 		{
 			close(map_fd);
 			pfree(map_entry);
 			return NULL;
 		}
 
-		/* We found a valid entry for the relation */
-		if (found)
+		if ((map_entry->flags & key_type) && map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber)
 		{
 			close(map_fd);
 			return map_entry;
@@ -1059,26 +1031,17 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 
 
 /*
- * Returns true if a valid map entry if found. Otherwise, it only increments
- * the offset and returns false. If the same offset value is set, it indicates
- * to the caller that nothing was read.
- *
- * If a non-NULL rlocator is provided, the function compares the read value
- * against the relNumber of rlocator. It sets found accordingly.
- *
- * The caller is reponsible for identifying that we have reached EOF by
- * comparing old and new value of the offset.
+ * Returns true if a map entry if found or false if we have reached the end of
+ * the file.
  */
 static bool
-pg_tde_read_one_map_entry(int map_file, const RelFileLocator *rlocator, int flags, TDEMapEntry *map_entry, off_t *offset)
+pg_tde_read_one_map_entry(int map_file, TDEMapEntry *map_entry, off_t *offset)
 {
-	bool		found;
 	off_t		bytes_read = 0;
 
 	Assert(map_entry);
 	Assert(offset);
 
-	/* Read the entry at the given offset */
 	bytes_read = pg_pread(map_file, map_entry, MAP_ENTRY_SIZE, *offset);
 
 	/* We've reached the end of the file. */
@@ -1087,14 +1050,7 @@ pg_tde_read_one_map_entry(int map_file, const RelFileLocator *rlocator, int flag
 
 	*offset += bytes_read;
 
-	/* We found a valid entry */
-	found = map_entry->flags & flags;
-
-	/* If a valid rlocator is provided, let's compare and set found value */
-	if (rlocator != NULL)
-		found &= map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber;
-
-	return found;
+	return true;
 }
 
 /*
