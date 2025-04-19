@@ -86,19 +86,19 @@ test_aio_shmem_startup(void)
 		inj_io_error_state->enabled_reopen = false;
 
 #ifdef USE_INJECTION_POINTS
-		InjectionPointAttach("AIO_PROCESS_COMPLETION_BEFORE_SHARED",
+		InjectionPointAttach("aio-process-completion-before-shared",
 							 "test_aio",
 							 "inj_io_short_read",
 							 NULL,
 							 0);
-		InjectionPointLoad("AIO_PROCESS_COMPLETION_BEFORE_SHARED");
+		InjectionPointLoad("aio-process-completion-before-shared");
 
-		InjectionPointAttach("AIO_WORKER_AFTER_REOPEN",
+		InjectionPointAttach("aio-worker-after-reopen",
 							 "test_aio",
 							 "inj_io_reopen",
 							 NULL,
 							 0);
-		InjectionPointLoad("AIO_WORKER_AFTER_REOPEN");
+		InjectionPointLoad("aio-worker-after-reopen");
 
 #endif
 	}
@@ -109,8 +109,8 @@ test_aio_shmem_startup(void)
 		 * critical section.
 		 */
 #ifdef USE_INJECTION_POINTS
-		InjectionPointLoad("AIO_PROCESS_COMPLETION_BEFORE_SHARED");
-		InjectionPointLoad("AIO_WORKER_AFTER_REOPEN");
+		InjectionPointLoad("aio-process-completion-before-shared");
+		InjectionPointLoad("aio-worker-after-reopen");
 		elog(LOG, "injection point loaded");
 #endif
 	}

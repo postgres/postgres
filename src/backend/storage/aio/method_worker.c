@@ -525,7 +525,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			 * To be able to exercise the reopen-fails path, allow injection
 			 * points to trigger a failure at this point.
 			 */
-			pgaio_io_call_inj(ioh, "AIO_WORKER_AFTER_REOPEN");
+			pgaio_io_call_inj(ioh, "aio-worker-after-reopen");
 
 			error_errno = 0;
 			error_ioh = NULL;
