@@ -13,7 +13,6 @@
 #include "postgres.h"
 #include "funcapi.h"
 #include "pg_tde.h"
-#include "transam/pg_tde_xact_handler.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -121,7 +120,6 @@ _PG_init(void)
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = tde_shmem_startup;
 
-	RegisterTdeXactCallbacks();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	InstallKmipKeyring();

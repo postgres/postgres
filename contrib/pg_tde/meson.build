@@ -21,7 +21,6 @@ pg_tde_sources = files(
   'src/pg_tde_event_capture.c',
   'src/pg_tde_guc.c',
   'src/smgr/pg_tde_smgr.c',
-  'src/transam/pg_tde_xact_handler.c',
 )
 
 tde_frontend_sources = files(
@@ -97,7 +96,6 @@ sql_tests = [
   'pg_tde_is_encrypted',
   'relocate',
   'recreate_storage',
-  'subtransaction',
   'tablespace',
   'vault_v2_test',
   'version',

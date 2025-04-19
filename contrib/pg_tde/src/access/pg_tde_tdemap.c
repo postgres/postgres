@@ -13,7 +13,6 @@
 #include "postgres.h"
 #include "access/pg_tde_tdemap.h"
 #include "common/file_perm.h"
-#include "transam/pg_tde_xact_handler.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
 #include "utils/memutils.h"
@@ -129,7 +128,6 @@ static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDES
 static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
 static off_t pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
-static bool pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t offset);
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
@@ -486,9 +484,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 
 	/* Let's close the file. */
 	close(map_fd);
-
-	/* Register the entry to be freed in case the transaction aborts */
-	RegisterEntryForDeletion(rlocator, curr_pos, false);
 }
 
 /*
@@ -548,43 +543,33 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	LWLockRelease(tde_lwlock_enc_keys());
 }
 
-static bool
-pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t offset)
+/*
+ * Mark relation map entry as free and overwrite the key
+ *
+ * This fucntion is called by the pg_tde SMGR when storage is unlinked on
+ * transaction commit/abort.
+ */
+void
+pg_tde_free_key_map_entry(const RelFileLocator *rlocator)
 {
+	char		db_map_path[MAXPGPATH];
 	File		map_fd;
-	bool		found = false;
 	off_t		curr_pos = 0;
+
+	Assert(rlocator);
+
+	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Open and validate file for basic correctness. */
 	map_fd = pg_tde_open_file_write(db_map_path, NULL, false, &curr_pos);
 
-	/*
-	 * If we need to delete an entry, we expect an offset value to the start
-	 * of the entry to speed up the operation. Otherwise, we'd be sequentially
-	 * scanning the entire map file.
-	 */
-	if (offset > 0)
-	{
-		curr_pos = lseek(map_fd, offset, SEEK_SET);
-
-		if (curr_pos == -1)
-		{
-			ereport(ERROR,
-					errcode_for_file_access(),
-					errmsg("could not seek in tde map file \"%s\": %m",
-						   db_map_path));
-		}
-	}
-
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
 	while (1)
 	{
 		TDEMapEntry read_map_entry;
 		off_t		prev_pos = curr_pos;
+		bool		found;
 
 		found = pg_tde_read_one_map_entry(map_fd, rlocator, MAP_ENTRY_VALID, &read_map_entry, &curr_pos);
 
@@ -592,7 +577,6 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t
 		if (curr_pos == prev_pos)
 			break;
 
-		/* We found a valid entry for the relation */
 		if (found)
 		{
 			TDEMapEntry empty_map_entry = {
@@ -607,52 +591,9 @@ pg_tde_delete_map_entry(const RelFileLocator *rlocator, char *db_map_path, off_t
 		}
 	}
 
-	/* Let's close the file. */
 	close(map_fd);
 
-	/* Return -1 indicating that no entry was removed */
-	return found;
-}
-
-/*
- * Called when transaction is being completed; either committed or aborted.
- * By default, when a transaction creates an entry, we mark it as MAP_ENTRY_VALID.
- * Only during the abort phase of the transaction that we are proceed on with
- * marking the entry as MAP_ENTRY_FREE. This optimistic strategy that assumes
- * that transaction will commit more often then getting aborted avoids
- * unnecessary locking.
- *
- * The offset allows us to simply seek to the desired location and mark the entry
- * as MAP_ENTRY_FREE without needing any further processing.
- */
-void
-pg_tde_free_key_map_entry(const RelFileLocator *rlocator, off_t offset)
-{
-	bool		found;
-	char		db_map_path[MAXPGPATH] = {0};
-
-	Assert(rlocator);
-
-	/* Get the file paths */
-	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-
-	/* Remove the map entry if found */
-	found = pg_tde_delete_map_entry(rlocator, db_map_path, offset);
-
 	LWLockRelease(tde_lwlock_enc_keys());
-
-	if (!found)
-	{
-		ereport(WARNING,
-				errcode(ERRCODE_NO_DATA_FOUND),
-				errmsg("could not find the required map entry for deletion of relation %d in tablespace %d in tde map file \"%s\": %m",
-					   rlocator->relNumber,
-					   rlocator->spcOid,
-					   db_map_path));
-
-	}
 }
 
 /*

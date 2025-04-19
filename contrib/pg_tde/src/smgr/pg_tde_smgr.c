@@ -116,6 +116,28 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 }
 
 static void
+tde_mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
+{
+	mdunlink(rlocator, forknum, isRedo);
+
+	/*
+	 * As of PostgreSQL 17 we are called once per forks, no matter if they
+	 * exist or not, from smgrdounlinkall() so deleting the relation key on
+	 * attempting to delete the main fork is safe. Additionally since we
+	 * unlink the files after commit/abort we do not need to care about
+	 * concurrent accesses.
+	 *
+	 * We support InvalidForkNumber to be similar to mdunlink() but it can
+	 * actually never happen.
+	 */
+	if (forknum == MAIN_FORKNUM || forknum == InvalidForkNumber)
+	{
+		if (!RelFileLocatorBackendIsTemp(rlocator) && GetSMGRRelationKey(rlocator))
+			pg_tde_free_key_map_entry(&rlocator.locator);
+	}
+}
+
+static void
 tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void *buffer, bool skipFsync)
 {
@@ -274,7 +296,7 @@ static const struct f_smgr tde_smgr = {
 	.smgr_close = mdclose,
 	.smgr_create = tde_mdcreate,
 	.smgr_exists = mdexists,
-	.smgr_unlink = mdunlink,
+	.smgr_unlink = tde_mdunlink,
 	.smgr_extend = tde_mdextend,
 	.smgr_zeroextend = mdzeroextend,
 	.smgr_prefetch = mdprefetch,

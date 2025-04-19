@@ -21,7 +21,6 @@ partition_table \
 pg_tde_is_encrypted \
 recreate_storage \
 relocate \
-subtransaction \
 tablespace \
 vault_v2_test \
 version \
@@ -33,7 +32,6 @@ src/encryption/enc_aes.o \
 src/access/pg_tde_tdemap.o \
 src/access/pg_tde_xlog.o \
 src/access/pg_tde_xlog_encrypt.o \
-src/transam/pg_tde_xact_handler.o \
 src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \
