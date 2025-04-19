@@ -109,7 +109,7 @@ static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
 static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type);
-static TDEMapEntry *pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path);
+static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, TDEMapEntry *map_entry);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
@@ -846,7 +846,7 @@ pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo
 static InternalKey *
 pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 {
-	TDEMapEntry *map_entry;
+	TDEMapEntry map_entry;
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	char		db_map_path[MAXPGPATH] = {0};
@@ -862,10 +862,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 
 	LWLockAcquire(lock_pk, LW_SHARED);
 
-	/* Read the map entry and get the index of the relation key */
-	map_entry = pg_tde_find_map_entry(rlocator, key_type, db_map_path);
-
-	if (map_entry == NULL)
+	if (!pg_tde_find_map_entry(rlocator, key_type, db_map_path, &map_entry))
 	{
 		LWLockRelease(lock_pk);
 		return NULL;
@@ -889,7 +886,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 				errmsg("principal key not configured"),
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 
-	rel_key = tde_decrypt_rel_key(principal_key, map_entry);
+	rel_key = tde_decrypt_rel_key(principal_key, &map_entry);
 
 	LWLockRelease(lock_pk);
 
@@ -897,36 +894,33 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 }
 
 /*
- * Returns the entry of the map if we find a valid match; e.g. flags is not
- * set to MAP_ENTRY_EMPTY and the relNumber and spcOid matches the one
- * provided in rlocator.
+ * Returns true if we find a valid match; e.g. flags is not set to
+ * MAP_ENTRY_EMPTY and the relNumber and spcOid matches the one provided in
+ * rlocator.
  */
-static TDEMapEntry *
-pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path)
+static bool
+pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_map_path, TDEMapEntry *map_entry)
 {
 	File		map_fd;
-	TDEMapEntry *map_entry = palloc_object(TDEMapEntry);
 	off_t		curr_pos = 0;
+	bool		found = false;
 
 	Assert(rlocator != NULL);
 
 	map_fd = pg_tde_open_file_read(db_map_path, &curr_pos);
 
-	while (1)
+	while (pg_tde_read_one_map_entry(map_fd, map_entry, &curr_pos))
 	{
-		if (!pg_tde_read_one_map_entry(map_fd, map_entry, &curr_pos))
-		{
-			close(map_fd);
-			pfree(map_entry);
-			return NULL;
-		}
-
 		if ((map_entry->flags & key_type) && map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber)
 		{
-			close(map_fd);
-			return map_entry;
+			found = true;
+			break;
 		}
 	}
+
+	close(map_fd);
+
+	return found;
 }
 
 bool
