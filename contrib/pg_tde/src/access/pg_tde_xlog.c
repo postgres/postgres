@@ -54,12 +54,6 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		pg_tde_write_key_map_entry_redo(&xlrec->mapEntry, &xlrec->pkInfo);
 	}
-	else if (info == XLOG_TDE_REMOVE_RELATION_KEY)
-	{
-		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
-
-		pg_tde_free_key_map_entry(xlrec, 0);
-	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDESignedPrincipalKeyInfo *mkey = (TDESignedPrincipalKeyInfo *) XLogRecGetData(record);
@@ -101,12 +95,6 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->mapEntry.spcOid, xlrec->pkInfo.data.databaseId, xlrec->mapEntry.relNumber);
 	}
-	else if (info == XLOG_TDE_REMOVE_RELATION_KEY)
-	{
-		RelFileLocator *xlrec = (RelFileLocator *) XLogRecGetData(record);
-
-		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->spcOid, xlrec->dbOid, xlrec->relNumber);
-	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
 		TDEPrincipalKeyInfo *xlrec = (TDEPrincipalKeyInfo *) XLogRecGetData(record);
@@ -140,8 +128,6 @@ tdeheap_rmgr_identify(uint8 info)
 	{
 		case XLOG_TDE_ADD_RELATION_KEY:
 			return "ADD_RELATION_KEY";
-		case XLOG_TDE_REMOVE_RELATION_KEY:
-			return "REMOVE_RELATION_KEY";
 		case XLOG_TDE_ADD_PRINCIPAL_KEY:
 			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_ROTATE_PRINCIPAL_KEY:
