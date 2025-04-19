@@ -169,8 +169,8 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n");
 	HELP0("  \\endpipeline           exit pipeline mode\n");
 	HELP0("  \\errverbose            show most recent error message at maximum verbosity\n");
-	HELP0("  \\flush                 push unsent data to the server\n");
-	HELP0("  \\flushrequest          send a flushrequest command\n");
+	HELP0("  \\flush                 flush output data to the server\n");
+	HELP0("  \\flushrequest          send request to the server to flush its output buffer\n");
 	HELP0("  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
 		  "                         \\g with no arguments is equivalent to a semicolon\n");
 	HELP0("  \\gdesc                 describe result of query, without executing it\n");
