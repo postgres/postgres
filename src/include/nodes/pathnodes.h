@@ -1592,7 +1592,7 @@ typedef struct
  * equivalent and closely-related orderings. (See optimizer/README for more
  * information.)
  *
- * Note: pk_strategy is either COMPARE_LT (for ASC) or COMPARE_GT (for DESC).
+ * Note: pk_cmptype is either COMPARE_LT (for ASC) or COMPARE_GT (for DESC).
  */
 typedef struct PathKey
 {

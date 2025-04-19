@@ -1861,7 +1861,7 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 	MemoryContext oldContext;
 
 	/*
-	 * CheckConstraintFetch let this pass with only a warning, but now we
+	 * CheckNNConstraintFetch let this pass with only a warning, but now we
 	 * should fail rather than possibly failing to enforce an important
 	 * constraint.
 	 */

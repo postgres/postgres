@@ -1311,7 +1311,7 @@ ExecInsert(ModifyTableContext *context,
 
 			/*
 			 * Convert the OLD tuple to the new partition's format/slot, if
-			 * needed.  Note that ExceDelete() already converted it to the
+			 * needed.  Note that ExecDelete() already converted it to the
 			 * root's partition's format/slot.
 			 */
 			oldSlot = context->cpDeletedSlot;

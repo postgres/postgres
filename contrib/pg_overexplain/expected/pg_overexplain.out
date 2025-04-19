@@ -123,7 +123,7 @@ $$);
  RTI 1 (relation, inherited, in-from-clause):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
-   Relation Kind: parititioned_table
+   Relation Kind: partitioned_table
    Relation Lock Mode: AccessShareLock
    Permission Info Index: 1
  RTI 2 (group):
@@ -250,7 +250,7 @@ $$);
          <In-From-Clause>true</In-From-Clause>                      +
          <Eref>vegetables (id, name, genus)</Eref>                  +
          <Relation>vegetables</Relation>                            +
-         <Relation-Kind>parititioned_table</Relation-Kind>          +
+         <Relation-Kind>partitioned_table</Relation-Kind>           +
          <Relation-Lock-Mode>AccessShareLock</Relation-Lock-Mode>   +
          <Permission-Info-Index>1</Permission-Info-Index>           +
          <Security-Barrier>false</Security-Barrier>                 +
@@ -454,7 +454,7 @@ SELECT * FROM vegetables WHERE genus = 'daucus';
  RTI 1 (relation, inherited, in-from-clause):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
-   Relation Kind: parititioned_table
+   Relation Kind: partitioned_table
    Relation Lock Mode: AccessShareLock
    Permission Info Index: 1
  RTI 2 (relation, in-from-clause):
@@ -478,7 +478,7 @@ INSERT INTO vegetables (name, genus) VALUES ('broccoflower', 'brassica');
  RTI 1 (relation):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
-   Relation Kind: parititioned_table
+   Relation Kind: partitioned_table
    Relation Lock Mode: RowExclusiveLock
    Permission Info Index: 1
  RTI 2 (result):

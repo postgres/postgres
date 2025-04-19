@@ -473,7 +473,7 @@ typedef struct XLogCtlData
 	XLogRecPtr	InitializedFrom;
 
 	/*
-	 * Latest reserved for inititalization page in the cache (last byte
+	 * Latest reserved for initialization page in the cache (last byte
 	 * position + 1).
 	 *
 	 * To change the identity of a buffer, you need to advance
@@ -2221,7 +2221,7 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, TimeLineID tli, bool opportunistic)
 		 *	  m must observe f[k] == false.  Otherwise, it will later attempt
 		 *	  CAS(v, k, k + 1) with success.
 		 * 4. Therefore, corresponding read_barrier() (while j == k) on
-		 *	  process m happend before write_barrier() of process k.  But then
+		 *	  process m reached before write_barrier() of process k.  But then
 		 *	  process k attempts CAS(v, k, k + 1) after process m successfully
 		 *	  incremented v to k, and that CAS operation must succeed.
 		 *	  That leads to a contradiction.  So, there is no such k (k < n)
@@ -2253,7 +2253,7 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, TimeLineID tli, bool opportunistic)
 			if (pg_atomic_read_u64(&XLogCtl->xlblocks[nextidx]) != NewPageEndPtr)
 			{
 				/*
-				 * Page at nextidx wasn't initialized yet, so we cann't move
+				 * Page at nextidx wasn't initialized yet, so we can't move
 				 * InitializedUpto further. It will be moved by backend which
 				 * will initialize nextidx.
 				 */

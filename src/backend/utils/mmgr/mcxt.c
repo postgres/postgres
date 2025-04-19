@@ -910,7 +910,7 @@ MemoryContextStatsDetail(MemoryContext context,
  *
  * Print stats for this context if possible, but in any case accumulate counts
  * into *totals (if not NULL). The callers should make sure that print_location
- * is set to PRINT_STATS_STDERR or PRINT_STATS_TO_LOGS or PRINT_STATS_NONE.
+ * is set to PRINT_STATS_TO_STDERR or PRINT_STATS_TO_LOGS or PRINT_STATS_NONE.
  */
 static void
 MemoryContextStatsInternal(MemoryContext context, int level,

@@ -167,7 +167,7 @@ typedef struct
 
 	/*
 	 * The sortstate used only within a single worker for the first merge pass
-	 * happenning there. In principle it doesn't need to be part of the build
+	 * happening there. In principle it doesn't need to be part of the build
 	 * state and we could pass it around directly, but it's more convenient
 	 * this way. And it's part of the build state, after all.
 	 */
@@ -1306,7 +1306,7 @@ GinBufferIsEmpty(GinBuffer *buffer)
  * Compare if the tuple matches the already accumulated data in the GIN
  * buffer. Compare scalar fields first, before the actual key.
  *
- * Returns true if the key matches, and the TID belonds to the buffer, or
+ * Returns true if the key matches, and the TID belongs to the buffer, or
  * false if the key does not match.
  */
 static bool
@@ -1497,7 +1497,7 @@ GinBufferStoreTuple(GinBuffer *buffer, GinTuple *tup)
 			buffer->items = repalloc(buffer->items,
 									 (buffer->nitems + tup->nitems) * sizeof(ItemPointerData));
 
-		new = ginMergeItemPointers(&buffer->items[buffer->nfrozen], /* first unfronzen */
+		new = ginMergeItemPointers(&buffer->items[buffer->nfrozen], /* first unfrozen */
 								   (buffer->nitems - buffer->nfrozen),	/* num of unfrozen */
 								   items, tup->nitems, &nnew);
 
@@ -1531,7 +1531,7 @@ GinBufferReset(GinBuffer *buffer)
 		pfree(DatumGetPointer(buffer->key));
 
 	/*
-	 * Not required, but makes it more likely to trigger NULL derefefence if
+	 * Not required, but makes it more likely to trigger NULL dereference if
 	 * using the value incorrectly, etc.
 	 */
 	buffer->key = (Datum) 0;
@@ -1603,7 +1603,7 @@ GinBufferCanAddKey(GinBuffer *buffer, GinTuple *tup)
  *
  * After waiting for all workers to finish, merge the per-worker results into
  * the complete index. The results from each worker are sorted by block number
- * (start of the page range). While combinig the per-worker results we merge
+ * (start of the page range). While combining the per-worker results we merge
  * summaries for the same page range, and also fill-in empty summaries for
  * ranges without any tuples.
  *

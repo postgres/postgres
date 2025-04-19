@@ -36,7 +36,7 @@ static void transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_
  *
  *     // be sure to sync any remaining files in the queue
  *     sync_queue_sync_all();
- *     synq_queue_destroy();
+ *     sync_queue_destroy();
  */
 
 #define SYNC_QUEUE_MAX_LEN	(1024)

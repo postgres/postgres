@@ -693,7 +693,7 @@ pqDropServerData(PGconn *conn)
 	conn->oauth_want_retry = false;
 
 	/*
-	 * Cancel connections need to retain their be_pid and be_key across
+	 * Cancel connections need to retain their be_pid and be_cancel_key across
 	 * PQcancelReset invocations, otherwise they would not have access to the
 	 * secret token of the connection they are supposed to cancel.
 	 */

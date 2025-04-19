@@ -72,7 +72,7 @@ sub filter_dump
 # adjust_child_columns is passed to adjust_regress_dumpfile() which actually
 # adjusts the dump output.
 #
-# The name of the file containting adjusted dump is returned.
+# The name of the file containing adjusted dump is returned.
 sub get_dump_for_comparison
 {
 	my ($node, $db, $file_prefix, $adjust_child_columns) = @_;

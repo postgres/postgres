@@ -321,7 +321,7 @@ pgaio_worker_die(int code, Datum arg)
 }
 
 /*
- * Register the worker in shared memory, assign MyWorkerId and register a
+ * Register the worker in shared memory, assign MyIoWorkerId and register a
  * shutdown callback to release registration.
  */
 static void

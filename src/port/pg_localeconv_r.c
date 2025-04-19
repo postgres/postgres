@@ -216,7 +216,7 @@ pg_localeconv_copy_members(struct lconv *dst,
  * implied by the LC_MONETARY or LC_NUMERIC locale name.  On Windows, LC_CTYPE
  * has to match to get sane results.
  *
- * To get predicable results on all platforms, we'll call the underlying
+ * To get predictable results on all platforms, we'll call the underlying
  * routines with LC_ALL set to the appropriate locale for each set of members,
  * and merge the results.  Three members of the resulting object are therefore
  * guaranteed to be encoded with LC_NUMERIC's codeset: "decimal_point",
@@ -224,7 +224,7 @@ pg_localeconv_copy_members(struct lconv *dst,
  * LC_MONETARY's codeset.
  *
  * Returns 0 on success.  Returns non-zero on failure, and sets errno.  On
- * success, the caller is responsible for calling pg_localeconf_free() on the
+ * success, the caller is responsible for calling pg_localeconv_free() on the
  * output struct to free the string members it contains.
  */
 int

@@ -1271,7 +1271,7 @@ UpdateCachedPlan(CachedPlanSource *plansource, int query_index,
 	/*
 	 * XXX Should this also (re)set the properties of the CachedPlan that are
 	 * set in BuildCachedPlan() after creating the fresh plans such as
-	 * planRoleId, dependsOnRole, and save_xmin?
+	 * planRoleId, dependsOnRole, and saved_xmin?
 	 */
 
 	/*

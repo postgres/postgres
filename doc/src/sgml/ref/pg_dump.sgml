@@ -1315,7 +1315,7 @@ PostgreSQL documentation
          </para>
          <para>
           The data section contains actual table data, large-object
-          contents, statitistics for tables and materialized views and
+          contents, statistics for tables and materialized views and
           sequence values.
           Post-data items include definitions of indexes, triggers, rules,
           statistics for indexes, and constraints other than validated check

@@ -11999,7 +11999,7 @@ DropForeignKeyConstraintTriggers(Relation trigrel, Oid conoid, Oid confrelid,
 		if (OidIsValid(confrelid) && trgform->tgrelid != confrelid)
 			continue;
 
-		/* We should be droping trigger related to foreign key constraint */
+		/* We should be dropping trigger related to foreign key constraint */
 		Assert(trgform->tgfoid == F_RI_FKEY_CHECK_INS ||
 			   trgform->tgfoid == F_RI_FKEY_CHECK_UPD ||
 			   trgform->tgfoid == F_RI_FKEY_CASCADE_DEL ||

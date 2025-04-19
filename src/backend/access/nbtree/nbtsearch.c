@@ -1792,7 +1792,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 			truncatt = BTreeTupleGetNAtts(itup, rel);
 			pstate.forcenonrequired = false;
-			pstate.startikey = 0;	/* _bt_set_startikey ignores HIKEY */
+			pstate.startikey = 0;	/* _bt_set_startikey ignores P_HIKEY */
 			_bt_checkkeys(scan, &pstate, arrayKeys, itup, truncatt);
 		}
 

@@ -457,7 +457,7 @@ pg_popcount_masked_neon(const char *buf, int bytes, bits8 mask)
 	popcnt += vaddvq_u64(vaddq_u64(accum3, accum4));
 
 	/*
-	 * Process remining 8-byte blocks.
+	 * Process remaining 8-byte blocks.
 	 */
 	for (; bytes >= sizeof(uint64); bytes -= sizeof(uint64))
 	{

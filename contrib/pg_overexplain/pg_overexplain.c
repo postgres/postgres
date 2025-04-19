@@ -277,7 +277,7 @@ overexplain_per_plan_hook(PlannedStmt *plannedstmt,
  * Print out various details from the PlannedStmt that wouldn't otherwise
  * be displayed.
  *
- * We don't try to print everything here. Information that would be displyed
+ * We don't try to print everything here. Information that would be displayed
  * anyway doesn't need to be printed again here, and things with lots of
  * substructure probably should be printed via separate options, or not at all.
  */
@@ -517,10 +517,10 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 				relkind = "foreign_table";
 				break;
 			case RELKIND_PARTITIONED_TABLE:
-				relkind = "parititioned_table";
+				relkind = "partitioned_table";
 				break;
 			case RELKIND_PARTITIONED_INDEX:
-				relkind = "parititioned_index";
+				relkind = "partitioned_index";
 				break;
 			case '\0':
 				relkind = NULL;
@@ -632,7 +632,7 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 		}
 
 		/*
-		 * add_rte_to_flat_rtable will clear coltypes, coltypemods, and
+		 * add_rte_to_flat_rtable will clear coltypes, coltypmods, and
 		 * colcollations, so skip those fields.
 		 *
 		 * If this is an ephemeral named relation, print out ENR-related
@@ -675,7 +675,7 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
  * Emit a text property describing the contents of an Alias.
  *
  * Column lists can be quite long here, so perhaps we should have an option
- * to limit the display length by # of columsn or # of characters, but for
+ * to limit the display length by # of column or # of characters, but for
  * now, just display everything.
  */
 static void

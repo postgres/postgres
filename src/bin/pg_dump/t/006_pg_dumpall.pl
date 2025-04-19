@@ -384,7 +384,7 @@ $node->command_fails_like(
 		'--format' => 'custom',
 		'-d' => 'dbpq', ],
 	qr/\Qpg_restore: error: could not connect to database "dbpq"\E/,
-	'When non-exist datbase is given with -d option in pg_restore with dump of pg_dumpall');
+	'When non-existent database is given with -d option in pg_restore with dump of pg_dumpall');
 
 $node->stop('fast');
 

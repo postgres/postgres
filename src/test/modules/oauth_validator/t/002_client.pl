@@ -47,8 +47,7 @@ local all test oauth issuer="$issuer" scope="$scope"
 });
 $node->reload;
 
-my ($log_start, $log_end);
-$log_start = $node->wait_for_log(qr/reloading configuration files/);
+my $log_start = $node->wait_for_log(qr/reloading configuration files/);
 
 $ENV{PGOAUTHDEBUG} = "UNSAFE";
 

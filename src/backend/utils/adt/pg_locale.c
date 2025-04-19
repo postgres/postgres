@@ -19,7 +19,7 @@
  * immediately.
  *
  * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are
- * permanentaly set to "C", and then we use temporary locale_t
+ * permanently set to "C", and then we use temporary locale_t
  * objects when we need to look up locale data based on the GUCs
  * of the same name.  Information is cached when the GUCs change.
  * The cached information is only used by the formatting functions

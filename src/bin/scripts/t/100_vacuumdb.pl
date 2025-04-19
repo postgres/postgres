@@ -197,7 +197,7 @@ $node->command_fails_like(
 		'postgres',
 	],
 	qr/cannot vacuum specific table\(s\) and exclude schema\(s\) at the same time/,
-	'cannot use options --excludes-chema and ---table at the same time');
+	'cannot use options --exclude-schema and ---table at the same time');
 $node->command_fails_like(
 	[
 		'vacuumdb',

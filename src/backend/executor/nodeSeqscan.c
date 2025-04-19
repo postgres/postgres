@@ -100,7 +100,7 @@ SeqRecheck(SeqScanState *node, TupleTableSlot *slot)
  *		ExecSeqScan(node)
  *
  *		Scans the relation sequentially and returns the next qualifying
- *		tuple. This variant is used when there is no es_eqp_active, no qual
+ *		tuple. This variant is used when there is no es_epq_active, no qual
  *		and no projection.  Passing const-NULLs for these to ExecScanExtended
  *		allows the compiler to eliminate the additional code that would
  *		ordinarily be required for the evaluation of these.

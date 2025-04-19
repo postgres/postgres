@@ -143,7 +143,7 @@ IsCatalogRelationOid(Oid relid)
  *
  *		The relcache must not use these indexes.  Inserting into any UNIQUE
  *		index compares index keys while holding BUFFER_LOCK_EXCLUSIVE.
- *		bttextcmp() can search the COLLID catcache.  Depending on concurrent
+ *		bttextcmp() can search the COLLOID catcache.  Depending on concurrent
  *		invalidation traffic, catcache can reach relcache builds.  A backend
  *		would self-deadlock on LWLocks if the relcache build read the
  *		exclusive-locked buffer.

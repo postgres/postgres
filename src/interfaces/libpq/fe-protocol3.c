@@ -1486,7 +1486,7 @@ pqGetNegotiateProtocolVersion3(PGconn *conn)
 	return 0;
 
 eof:
-	libpq_append_conn_error(conn, "received invalid protocol negotation message: message too short");
+	libpq_append_conn_error(conn, "received invalid protocol negotiation message: message too short");
 failure:
 	conn->asyncStatus = PGASYNC_READY;
 	pqSaveErrorResult(conn);

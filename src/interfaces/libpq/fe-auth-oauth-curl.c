@@ -1205,7 +1205,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 	res = epoll_ctl(actx->mux, op, socket, &ev);
 	if (res < 0 && errno == EEXIST)
 	{
-		/* We already had this socket in the pollset. */
+		/* We already had this socket in the poll set. */
 		op = EPOLL_CTL_MOD;
 		res = epoll_ctl(actx->mux, op, socket, &ev);
 	}

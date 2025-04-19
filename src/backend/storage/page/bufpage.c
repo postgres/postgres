@@ -88,7 +88,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
  * To allow the caller to report statistics about checksum failures,
  * *checksum_failure_p can be passed in. Note that there may be checksum
  * failures even if this function returns true, due to
- * IGNORE_CHECKSUM_FAILURE.
+ * PIV_IGNORE_CHECKSUM_FAILURE.
  */
 bool
 PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_failure_p)

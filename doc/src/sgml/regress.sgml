@@ -353,7 +353,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
      <listitem>
       <para>
        Runs the test suite under <filename>src/test/modules/oauth_validator</filename>.
-       This opens TCP/IP listen sockets for a test-server running HTTPS.
+       This opens TCP/IP listen sockets for a test server running HTTPS.
       </para>
      </listitem>
     </varlistentry>

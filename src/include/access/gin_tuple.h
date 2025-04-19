@@ -7,8 +7,8 @@
  *	src/include/access/gin.h
  *--------------------------------------------------------------------------
  */
-#ifndef GIN_TUPLE_
-#define GIN_TUPLE_
+#ifndef GIN_TUPLE_H
+#define GIN_TUPLE_H
 
 #include "access/ginblock.h"
 #include "storage/itemptr.h"

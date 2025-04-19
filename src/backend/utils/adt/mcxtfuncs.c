@@ -323,8 +323,8 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
  *		Signal a backend or an auxiliary process to send its memory contexts,
  *		wait for the results and display them.
  *
- * By default, only superusers or users with PG_READ_ALL_STATS are allowed to
- * signal a process to return the memory contexts. This is because allowing
+ * By default, only superusers or users with ROLE_PG_READ_ALL_STATS are allowed
+ * to signal a process to return the memory contexts. This is because allowing
  * any users to issue this request at an unbounded rate would cause lots of
  * requests to be sent, which can lead to denial of service. Additional roles
  * can be permitted with GRANT.
@@ -495,7 +495,7 @@ pg_get_process_memory_contexts(PG_FUNCTION_ARGS)
 			 * statistics are available within the allowed time then display
 			 * previously published statistics if there are any. If no
 			 * previous statistics are available then return NULL.  The timer
-			 * is defined in milliseconds since thats what the condition
+			 * is defined in milliseconds since that's what the condition
 			 * variable sleep uses.
 			 */
 			if (ConditionVariableTimedSleep(&memCxtState[procNumber].memcxt_cv,

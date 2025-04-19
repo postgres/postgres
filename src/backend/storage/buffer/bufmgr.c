@@ -4970,7 +4970,7 @@ FlushRelationBuffers(Relation rel)
 				ResourceOwnerEnlarge(CurrentResourceOwner);
 
 				/*
-				 * Pin/upin mostly to make valgrind work, but it also seems
+				 * Pin/unpin mostly to make valgrind work, but it also seems
 				 * like the right thing to do.
 				 */
 				PinLocalBuffer(bufHdr, false);

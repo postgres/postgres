@@ -289,7 +289,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
  *
  * Returns NUMA node ID for each memory page used by the buffer. Buffers may
  * be smaller or larger than OS memory pages. For each buffer we return one
- * entry for each memory page used by the buffer (it fhe buffer is smaller,
+ * entry for each memory page used by the buffer (if the buffer is smaller,
  * it only uses a part of one memory page).
  *
  * We expect both sizes (for buffers and memory pages) to be a power-of-2, so
@@ -335,7 +335,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 * how the pages and buffers "align" in memory - the buffers may be
 		 * shifted in some way, using more memory pages than necessary.
 		 *
-		 * So we need to be careful about mappping buffers to memory pages. We
+		 * So we need to be careful about mapping buffers to memory pages. We
 		 * calculate the maximum number of pages a buffer might use, so that
 		 * we allocate enough space for the entries. And then we count the
 		 * actual number of entries as we scan the buffers.

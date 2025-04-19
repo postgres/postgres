@@ -50,7 +50,7 @@ struct pg_cancel
 									 * retransmits */
 
 	/* Pre-constructed cancel request packet starts here */
-	int32		cancel_pkt_len; /* in network-byte-order */
+	int32		cancel_pkt_len; /* in network byte order */
 	char		cancel_req[FLEXIBLE_ARRAY_MEMBER];	/* CancelRequestPacket */
 };
 

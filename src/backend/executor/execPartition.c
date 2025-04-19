@@ -1778,7 +1778,7 @@ adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)
  *		Updates the PartitionPruneState found at given part_prune_index in
  *		EState.es_part_prune_states for use during "exec" pruning if required.
  *		Also returns the set of subplans to initialize that would be stored at
- *		part_prune_index in EState.es_part_prune_result by
+ *		part_prune_index in EState.es_part_prune_results by
  *		ExecDoInitialPruning().  Maps in PartitionPruneState are updated to
  *		account for initial pruning possibly having eliminated some of the
  *		subplans.
@@ -2109,7 +2109,7 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 			 */
 			partrel = ExecGetRangeTableRelation(estate, pinfo->rtindex, false);
 
-			/* Remember for InitExecPartitionPruneContext(). */
+			/* Remember for InitExecPartitionPruneContexts(). */
 			pprune->partrel = partrel;
 
 			partkey = RelationGetPartitionKey(partrel);

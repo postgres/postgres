@@ -560,7 +560,7 @@ INSERT INTO tmp_ok SELECT generate_series(1, 10000);
 		qr/^t$/,
 		qr/^$/);
 
-	# Because local buffers don't use IO_IN_PROGRESS, a second StartLocalBufer
+	# Because local buffers don't use IO_IN_PROGRESS, a second StartLocalBufferIO
 	# succeeds as well. This test mostly serves as a documentation of that
 	# fact. If we had actually started IO, it'd be different.
 	psql_like(

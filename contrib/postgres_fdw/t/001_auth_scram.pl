@@ -3,7 +3,7 @@
 # Test SCRAM authentication when opening a new connection with a foreign
 # server.
 #
-# The test is executed by testing the SCRAM authentifcation on a looplback
+# The test is executed by testing the SCRAM authentifcation on a loopback
 # connection on the same server and with different servers.
 
 use strict;

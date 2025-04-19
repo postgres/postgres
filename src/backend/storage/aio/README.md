@@ -103,7 +103,7 @@ pgaio_io_set_handle_data_32(ioh, (uint32 *) buffer, 1);
  *
  * E.g. md.c needs to translate block numbers into offsets in segments.
  *
- * Once the IO handle has been handed off to smgstartreadv(), it may not
+ * Once the IO handle has been handed off to smgrstartreadv(), it may not
  * further be used, as the IO may immediately get executed below
  * smgrstartreadv() and the handle reused for another IO.
  *

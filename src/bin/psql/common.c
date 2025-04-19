@@ -1459,7 +1459,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
  *
  * If a synchronisation point is found, we can stop discarding results as
  * the pipeline will switch back to a clean state.  If no synchronisation
- * point is available, we need to stop when ther are no more pending
+ * point is available, we need to stop when there are no more pending
  * results, otherwise, calling PQgetResult() would block.
  */
 static PGresult *

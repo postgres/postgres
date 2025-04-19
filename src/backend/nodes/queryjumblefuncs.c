@@ -357,7 +357,7 @@ AppendJumble64(JumbleState *jstate, const unsigned char *value)
 
 /*
  * FlushPendingNulls
- *		Incorporate the pending_null value into the jumble buffer.
+ *		Incorporate the pending_nulls value into the jumble buffer.
  *
  * Note: Callers must ensure that there's at least 1 pending NULL.
  */

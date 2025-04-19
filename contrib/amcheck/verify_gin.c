@@ -359,8 +359,8 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 				ptr->depth = stack->depth + 1;
 
 				/*
-				 * Set rightmost parent key to invalid iterm pointer. Its
-				 * value is 'Infinity' and not explicitly stored.
+				 * Set rightmost parent key to invalid item pointer. Its value
+				 * is 'Infinity' and not explicitly stored.
 				 */
 				if (rightlink == InvalidBlockNumber)
 					ItemPointerSetInvalid(&ptr->parentkey);
@@ -587,7 +587,7 @@ gin_check_parent_keys_consistency(Relation rel,
 
 						/*
 						 * Check if it is properly adjusted. If succeed,
-						 * procced to the next key.
+						 * proceed to the next key.
 						 */
 						if (ginCompareEntries(&state, attnum, current_key,
 											  current_key_category, parent_key,

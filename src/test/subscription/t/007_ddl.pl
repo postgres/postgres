@@ -80,7 +80,7 @@ $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION mysub1");
 # Test ALTER PUBLICATION RENAME command during the replication
 #
 
-# Test function for swaping name of publications
+# Test function for swapping name of publications
 sub test_swap
 {
 	my ($table_name, $pubname, $appname) = @_;
