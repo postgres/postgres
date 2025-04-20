@@ -53,6 +53,7 @@ tests += {
       't/042_low_level_backup.pl',
       't/043_no_contrecord_switch.pl',
       't/044_invalidate_inactive_slots.pl',
+      't/045_archive_restartpoint.pl',
     ],
   },
 }
