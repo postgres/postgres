@@ -1983,8 +1983,8 @@ ExecInitPartitionExecPruning(PlanState *planstate,
 	 * account for any that were removed due to initial pruning; refer to the
 	 * condition in InitExecPartitionPruneContexts() that is used to determine
 	 * whether to do this.  If no exec pruning needs to be done, we would thus
-	 * leave the maps to be in an invalid invalid state, but that's ok since
-	 * that data won't be consulted again (cf initial Assert in
+	 * leave the maps to be in an invalid state, but that's ok since that data
+	 * won't be consulted again (cf initial Assert in
 	 * ExecFindMatchingSubPlans).
 	 */
 	if (prunestate->do_exec_prune)

@@ -159,7 +159,7 @@ struct PgAioTargetInfo
 {
 	/*
 	 * To support executing using worker processes, the file descriptor for an
-	 * IO may need to be be reopened in a different process.
+	 * IO may need to be reopened in a different process.
 	 */
 	void		(*reopen) (PgAioHandle *ioh);
 

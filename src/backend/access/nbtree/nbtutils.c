@@ -2597,7 +2597,7 @@ _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate)
 			continue;
 		}
 
-		/* Some = key (could be a a scalar = key, could be an array = key) */
+		/* Some = key (could be a scalar = key, could be an array = key) */
 		Assert(key->sk_strategy == BTEqualStrategyNumber);
 
 		if (!(key->sk_flags & SK_SEARCHARRAY))

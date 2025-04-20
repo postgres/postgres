@@ -450,8 +450,8 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 * locks, so the information of each buffer is self-consistent.
 		 *
 		 * This loop touches and stores addresses into os_page_ptrs[] as input
-		 * to one big big move_pages(2) inquiry system call. Basically we ask
-		 * for all memory pages for NBuffers.
+		 * to one big move_pages(2) inquiry system call. Basically we ask for
+		 * all memory pages for NBuffers.
 		 */
 		startptr = (char *) TYPEALIGN_DOWN(os_page_size, (char *) BufferGetBlock(1));
 		idx = 0;

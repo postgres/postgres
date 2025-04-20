@@ -551,7 +551,7 @@ PGLC_localeconv(void)
 			 "could not get lconv for LC_MONETARY = \"%s\", LC_NUMERIC = \"%s\": %m",
 			 locale_monetary, locale_numeric);
 
-	/* Must copy data now now so we can re-encode it. */
+	/* Must copy data now so we can re-encode it. */
 	extlconv = &tmp;
 	worklconv.decimal_point = strdup(extlconv->decimal_point);
 	worklconv.thousands_sep = strdup(extlconv->thousands_sep);

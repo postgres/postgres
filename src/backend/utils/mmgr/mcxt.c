@@ -1478,7 +1478,7 @@ ProcessGetMemoryContextInterrupt(void)
 								   summary);
 
 	/*
-	 * Allocate memory in this process's DSA for storing statistics of the the
+	 * Allocate memory in this process's DSA for storing statistics of the
 	 * memory contexts upto max_stats, for contexts that don't fit within a
 	 * limit, a cumulative total is written as the last record in the DSA
 	 * segment.
@@ -1488,8 +1488,8 @@ ProcessGetMemoryContextInterrupt(void)
 	LWLockAcquire(&memCxtArea->lw_lock, LW_EXCLUSIVE);
 
 	/*
-	 * Create a DSA and send handle to the the client process after storing
-	 * the context statistics. If number of contexts exceed a predefined
+	 * Create a DSA and send handle to the client process after storing the
+	 * context statistics. If number of contexts exceed a predefined
 	 * limit(8MB), a cumulative total is stored for such contexts.
 	 */
 	if (memCxtArea->memstats_dsa_handle == DSA_HANDLE_INVALID)
