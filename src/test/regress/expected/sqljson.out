@@ -839,22 +839,22 @@ SELECT
 FROM
 	(VALUES (NULL), (3), (1), (NULL), (NULL), (5), (2), (4), (NULL)) foo(bar);
 -[ RECORD 1 ]--------------------+-------------------------------------------------------------------------------------------------------------------------
-no_options                       | [1, 2, 3, 4, 5]
-returning_jsonb                  | [1, 2, 3, 4, 5]
-absent_on_null                   | [1, 2, 3, 4, 5]
-absentonnull_returning_jsonb     | [1, 2, 3, 4, 5]
-null_on_null                     | [1, 2, 3, 4, 5, null, null, null, null]
-nullonnull_returning_jsonb       | [1, 2, 3, 4, 5, null, null, null, null]
-row_no_options                   | [{"bar":1},                                                                                                             +
-                                 |  {"bar":2},                                                                                                             +
+no_options                       | [3, 1, 5, 2, 4]
+returning_jsonb                  | [3, 1, 5, 2, 4]
+absent_on_null                   | [3, 1, 5, 2, 4]
+absentonnull_returning_jsonb     | [3, 1, 5, 2, 4]
+null_on_null                     | [null, 3, 1, null, null, 5, 2, 4, null]
+nullonnull_returning_jsonb       | [null, 3, 1, null, null, 5, 2, 4, null]
+row_no_options                   | [{"bar":null},                                                                                                          +
                                  |  {"bar":3},                                                                                                             +
-                                 |  {"bar":4},                                                                                                             +
+                                 |  {"bar":1},                                                                                                             +
+                                 |  {"bar":null},                                                                                                          +
+                                 |  {"bar":null},                                                                                                          +
                                  |  {"bar":5},                                                                                                             +
-                                 |  {"bar":null},                                                                                                          +
-                                 |  {"bar":null},                                                                                                          +
-                                 |  {"bar":null},                                                                                                          +
+                                 |  {"bar":2},                                                                                                             +
+                                 |  {"bar":4},                                                                                                             +
                                  |  {"bar":null}]
-row_returning_jsonb              | [{"bar": 1}, {"bar": 2}, {"bar": 3}, {"bar": 4}, {"bar": 5}, {"bar": null}, {"bar": null}, {"bar": null}, {"bar": null}]
+row_returning_jsonb              | [{"bar": null}, {"bar": 3}, {"bar": 1}, {"bar": null}, {"bar": null}, {"bar": 5}, {"bar": 2}, {"bar": 4}, {"bar": null}]
 row_filtered_agg                 | [{"bar":3},                                                                                                             +
                                  |  {"bar":4},                                                                                                             +
                                  |  {"bar":5}]

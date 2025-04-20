@@ -634,6 +634,25 @@ select sum(two order by two) from tenk1;
 reset enable_presorted_aggregate;
 
 --
+-- Test cases with FILTER clause
+--
+
+-- Ensure we presort when the aggregate contains plain Vars
+explain (costs off)
+select sum(two order by two) filter (where two > 1) from tenk1;
+
+-- Ensure we presort for RelabelType'd Vars
+explain (costs off)
+select string_agg(distinct f1, ',') filter (where length(f1) > 1)
+from varchar_tbl;
+
+-- Ensure we don't presort when the aggregate's argument contains an
+-- explicit cast.
+explain (costs off)
+select string_agg(distinct f1::varchar(2), ',') filter (where length(f1) > 1)
+from varchar_tbl;
+
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 
