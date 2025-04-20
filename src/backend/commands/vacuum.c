@@ -657,6 +657,8 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 				if (use_own_xacts)
 				{
 					PopActiveSnapshot();
+					/* standard_ProcessUtility() does CCI if !use_own_xacts */
+					CommandCounterIncrement();
 					CommitTransactionCommand();
 				}
 				else
