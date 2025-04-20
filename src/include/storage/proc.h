@@ -110,10 +110,10 @@ extern PGDLLIMPORT int FastPathLockGroupsPerBackend;
  * is inserted prior to the new redo point, the corresponding data changes will
  * also be flushed to disk before the checkpoint can complete. (In the
  * extremely common case where the data being modified is in shared buffers
- * and we acquire an exclusive content lock on the relevant buffers before
- * writing WAL, this mechanism is not needed, because phase 2 will block
- * until we release the content lock and then flush the modified data to
- * disk.)
+ * and we acquire an exclusive content lock and MarkBufferDirty() on the
+ * relevant buffers before writing WAL, this mechanism is not needed, because
+ * phase 2 will block until we release the content lock and then flush the
+ * modified data to disk.  See transam/README and SyncOneBuffer().)
  *
  * Setting DELAY_CHKPT_COMPLETE prevents the system from moving from phase 2
  * to phase 3. This is useful if we are performing a WAL-logged operation that

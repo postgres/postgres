@@ -6507,9 +6507,17 @@ heap_inplace_update_and_unlock(Relation relation,
 	 * [crash]
 	 * [recovery restores datfrozenxid w/o relfrozenxid]
 	 *
-	 * Like in MarkBufferDirtyHint() subroutine XLogSaveBufferForHint(), copy
-	 * the buffer to the stack before logging.  Here, that facilitates a FPI
-	 * of the post-mutation block before we accept other sessions seeing it.
+	 * Mimic MarkBufferDirtyHint() subroutine XLogSaveBufferForHint().
+	 * Specifically, use DELAY_CHKPT_START, and copy the buffer to the stack.
+	 * The stack copy facilitates a FPI of the post-mutation block before we
+	 * accept other sessions seeing it.  DELAY_CHKPT_START allows us to
+	 * XLogInsert() before MarkBufferDirty().  Since XLogSaveBufferForHint()
+	 * can operate under BUFFER_LOCK_SHARED, it can't avoid DELAY_CHKPT_START.
+	 * This function, however, likely could avoid it with the following order
+	 * of operations: MarkBufferDirty(), XLogInsert(), memcpy().  Opt to use
+	 * DELAY_CHKPT_START here, too, as a way to have fewer distinct code
+	 * patterns to analyze.  Inplace update isn't so frequent that it should
+	 * pursue the small optimization of skipping DELAY_CHKPT_START.
 	 */
 	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
 	START_CRIT_SECTION();
