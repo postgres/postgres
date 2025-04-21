@@ -104,8 +104,8 @@ jobs:
       - name: Setup kmip and vault
         run: src/ci_scripts/setup-keyring-servers.sh
 
-      - name: Test postgres with TDE
-        run: src/ci_scripts/${{ inputs.build_script }}-test-tde.sh --continue
+      - name: Test postgres with TDE as default access method
+        run: src/ci_scripts/${{ inputs.build_script }}-test-global-tde.sh --continue
 
       - name: Report on test fail
         uses: actions/upload-artifact@v4
