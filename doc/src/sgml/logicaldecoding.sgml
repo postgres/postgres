@@ -898,7 +898,6 @@ typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
       callback might also error out due to simultaneous rollback of
       this very same transaction. In that case, the logical decoding of this
       aborted transaction is stopped gracefully.
-
       The <parameter>prefix</parameter> is arbitrary null-terminated prefix
       which can be used for identifying interesting messages for the current
       plugin. And finally the <parameter>message</parameter> parameter holds

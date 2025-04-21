@@ -378,7 +378,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
       <para>
        At any time during connection, the status of the connection can be
        checked by calling <xref linkend="libpq-PQstatus"/>. If this call returns <symbol>CONNECTION_BAD</symbol>, then the
-       connection procedure has failed; if the call returns <function>CONNECTION_OK</function>, then the
+       connection procedure has failed; if the call returns <symbol>CONNECTION_OK</symbol>, then the
        connection is ready.  Both of these states are equally detectable
        from the return value of <function>PQconnectPoll</function>, described above. Other states might also occur
        during (and only during) an asynchronous connection procedure. These
@@ -1922,7 +1922,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>sslkeylogfile</literal></term>
       <listitem>
        <para>
-        This parameter specifies the location where <literal>libpq</literal>
+        This parameter specifies the location where <application>libpq</application>
         will log keys used in this SSL context.  This is useful for debugging
         <productname>PostgreSQL</productname> protocol interactions or client
         connections using network inspection tools like
@@ -1956,7 +1956,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         <literal>Enter PEM pass phrase:</literal>
         prompt that <productname>OpenSSL</productname> will emit by default
         when an encrypted client certificate key is provided to
-        <literal>libpq</literal>.
+        <application>libpq</application>.
        </para>
        <para>
         If the key is not encrypted this parameter is ignored. The parameter
@@ -2811,14 +2811,14 @@ ConnStatusType PQstatus(const PGconn *conn);
       <para>
        The status can be one of a number of values.  However, only two of
        these are seen outside of an asynchronous connection procedure:
-       <literal>CONNECTION_OK</literal> and
-       <literal>CONNECTION_BAD</literal>. A good connection to the database
-       has the status <literal>CONNECTION_OK</literal>.  A failed
+       <symbol>CONNECTION_OK</symbol> and
+       <symbol>CONNECTION_BAD</symbol>. A good connection to the database
+       has the status <symbol>CONNECTION_OK</symbol>.  A failed
        connection attempt is signaled by status
-       <literal>CONNECTION_BAD</literal>.  Ordinarily, an OK status will
+       <symbol>CONNECTION_BAD</symbol>.  Ordinarily, an OK status will
        remain so until <xref linkend="libpq-PQfinish"/>, but a communications
        failure might result in the status changing to
-       <literal>CONNECTION_BAD</literal> prematurely.  In that case the
+       <symbol>CONNECTION_BAD</symbol> prematurely.  In that case the
        application could try to recover by calling
        <xref linkend="libpq-PQreset"/>.
       </para>
@@ -6628,7 +6628,7 @@ PostgresPollingStatusType PQcancelPoll(PGcancelConn *cancelConn);
        checked by calling <xref linkend="libpq-PQcancelStatus"/>.
        If this call returns <symbol>CONNECTION_BAD</symbol>, then
        the cancel procedure has failed; if the call returns
-       <function>CONNECTION_OK</function>, then cancel request was
+       <symbol>CONNECTION_OK</symbol>, then cancel request was
        successfully dispatched.
        Both of these states are equally detectable from the return value of
        <function>PQcancelPoll</function>, described above.
@@ -6750,15 +6750,15 @@ ConnStatusType PQcancelStatus(const PGcancelConn *cancelConn);
       <para>
        The status can be one of a number of values.  However, only three of
        these are seen outside of an asynchronous cancel procedure:
-       <literal>CONNECTION_ALLOCATED</literal>,
-       <literal>CONNECTION_OK</literal> and
-       <literal>CONNECTION_BAD</literal>. The initial state of a
+       <symbol>CONNECTION_ALLOCATED</symbol>,
+       <symbol>CONNECTION_OK</symbol> and
+       <symbol>CONNECTION_BAD</symbol>. The initial state of a
        <function>PGcancelConn</function> that's successfully created using
-       <xref linkend="libpq-PQcancelCreate"/> is <literal>CONNECTION_ALLOCATED</literal>.
+       <xref linkend="libpq-PQcancelCreate"/> is <symbol>CONNECTION_ALLOCATED</symbol>.
        A cancel request that was successfully dispatched
-       has the status <literal>CONNECTION_OK</literal>.  A failed
+       has the status <symbol>CONNECTION_OK</symbol>.  A failed
        cancel attempt is signaled by status
-       <literal>CONNECTION_BAD</literal>.  An OK status will
+       <symbol>CONNECTION_BAD</symbol>.  An OK status will
        remain so until <xref linkend="libpq-PQcancelFinish"/> or
        <xref linkend="libpq-PQcancelReset"/> is called.
       </para>
@@ -8283,7 +8283,7 @@ size_t PQresultMemorySize(const PGresult *res);
 
     <listitem>
      <para>
-      Return the version of <productname>libpq</productname> that is being used.
+      Return the version of <application>libpq</application> that is being used.
 <synopsis>
 int PQlibVersion(void);
 </synopsis>
@@ -8534,7 +8534,7 @@ typedef struct
        <parameter>evtInfo</parameter> pointer should be cast to a
        <structname>PGEventRegister *</structname>.  This structure contains a
        <structname>PGconn</structname> that should be in the
-       <literal>CONNECTION_OK</literal> status; guaranteed if one calls
+       <symbol>CONNECTION_OK</symbol> status; guaranteed if one calls
        <xref linkend="libpq-PQregisterEventProc"/> right after obtaining a good
        <structname>PGconn</structname>.  When returning a failure code, all
        cleanup must be performed as no <literal>PGEVT_CONNDESTROY</literal>
