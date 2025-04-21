@@ -52,6 +52,7 @@ INSERT INTO test_pg_c_utf8 VALUES
   ('abc DEF 123abc'),
   ('ábc sßs ßss DÉF'),
   ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  (U&'Λλ 1a \FF11a'),
   ('ȺȺȺ'),
   ('ⱥⱥⱥ'),
   ('ⱥȺ');
@@ -67,10 +68,11 @@ SELECT
  abc DEF 123abc  | abc def 123abc  | Abc Def 123abc  | ABC DEF 123ABC  |      14 |            14 |              14 |            14
  ábc sßs ßss DÉF | ábc sßs ßss déf | Ábc Sßs ßss Déf | ÁBC SßS ßSS DÉF |      19 |            19 |              19 |            19
  ǄxxǄ ǆxxǅ ǅxxǆ  | ǆxxǆ ǆxxǆ ǆxxǆ  | Ǆxxǆ Ǆxxǆ Ǆxxǆ  | ǄXXǄ ǄXXǄ ǄXXǄ  |      20 |            20 |              20 |            20
+ Λλ 1a １a       | λλ 1a １a       | Λλ 1a １A       | ΛΛ 1A １A       |      12 |            12 |              12 |            12
  ȺȺȺ             | ⱥⱥⱥ             | Ⱥⱥⱥ             | ȺȺȺ             |       6 |             9 |               8 |             6
  ⱥⱥⱥ             | ⱥⱥⱥ             | Ⱥⱥⱥ             | ȺȺȺ             |       9 |             9 |               8 |             6
  ⱥȺ              | ⱥⱥ              | Ⱥⱥ              | ȺȺ              |       5 |             6 |               5 |             4
-(6 rows)
+(7 rows)
 
 DROP TABLE test_pg_c_utf8;
 -- negative test: Final_Sigma not used for builtin locale C.UTF-8
@@ -182,6 +184,7 @@ INSERT INTO test_pg_unicode_fast VALUES
   ('abc DEF 123abc'),
   ('ábc sßs ßss DÉF'),
   ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  (U&'Λλ 1a \FF11a'),
   ('ȺȺȺ'),
   ('ⱥⱥⱥ'),
   ('ⱥȺ');
@@ -197,10 +200,11 @@ SELECT
  abc DEF 123abc  | abc def 123abc  | Abc Def 123abc   | ABC DEF 123ABC    |      14 |            14 |              14 |            14
  ábc sßs ßss DÉF | ábc sßs ßss déf | Ábc Sßs Ssss Déf | ÁBC SSSS SSSS DÉF |      19 |            19 |              19 |            19
  ǄxxǄ ǆxxǅ ǅxxǆ  | ǆxxǆ ǆxxǆ ǆxxǆ  | ǅxxǆ ǅxxǆ ǅxxǆ   | ǄXXǄ ǄXXǄ ǄXXǄ    |      20 |            20 |              20 |            20
+ Λλ 1a １a       | λλ 1a １a       | Λλ 1a １a        | ΛΛ 1A １A         |      12 |            12 |              12 |            12
  ȺȺȺ             | ⱥⱥⱥ             | Ⱥⱥⱥ              | ȺȺȺ               |       6 |             9 |               8 |             6
  ⱥⱥⱥ             | ⱥⱥⱥ             | Ⱥⱥⱥ              | ȺȺȺ               |       9 |             9 |               8 |             6
  ⱥȺ              | ⱥⱥ              | Ⱥⱥ               | ȺȺ                |       5 |             6 |               5 |             4
-(6 rows)
+(7 rows)
 
 DROP TABLE test_pg_unicode_fast;
 -- test Final_Sigma

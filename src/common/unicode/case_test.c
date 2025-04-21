@@ -41,6 +41,7 @@ struct WordBoundaryState
 	const char *str;
 	size_t		len;
 	size_t		offset;
+	bool		posix;
 	bool		init;
 	bool		prev_alnum;
 };
@@ -55,7 +56,7 @@ initcap_wbnext(void *state)
 	{
 		pg_wchar	u = utf8_to_unicode((unsigned char *) wbstate->str +
 										wbstate->offset);
-		bool		curr_alnum = pg_u_isalnum(u, true);
+		bool		curr_alnum = pg_u_isalnum(u, wbstate->posix);
 
 		if (!wbstate->init || curr_alnum != wbstate->prev_alnum)
 		{
@@ -112,10 +113,13 @@ icu_test_full(char *str)
 	char		icu_upper[BUFSZ];
 	char		icu_fold[BUFSZ];
 	UErrorCode	status;
+
+	/* full case mapping doesn't use posix semantics */
 	struct WordBoundaryState wbstate = {
 		.str = str,
 		.len = strlen(str),
 		.offset = 0,
+		.posix = false,
 		.init = false,
 		.prev_alnum = false,
 	};
@@ -344,6 +348,12 @@ test_convert_case()
 	test_convert(tfunc_lower, "σς'Σ' ΣΣ'Σ'", "σς'ς' σσ'ς'");
 	test_convert(tfunc_title, "σςΣ ΣΣΣ", "Σςς Σσς");
 	test_convert(tfunc_fold, "σςΣ ΣΣΣ", "σσσ σσσ");
+	/* test that alphanumerics are word characters */
+	test_convert(tfunc_title, "λλ", "Λλ");
+	test_convert(tfunc_title, "1a", "1a");
+	/* U+FF11 FULLWIDTH ONE is alphanumeric for full case mapping */
+	test_convert(tfunc_title, "\uFF11a", "\uFF11a");
+
 
 #ifdef USE_ICU
 	icu_test_full("");
@@ -354,6 +364,7 @@ test_convert_case()
 	icu_test_full("abc 123xyz");
 	icu_test_full("σςΣ ΣΣΣ");
 	icu_test_full("ıiIİ");
+	icu_test_full("\uFF11a");
 	/* test <alpha><iota_subscript><acute> */
 	icu_test_full("\u0391\u0345\u0301");
 #endif

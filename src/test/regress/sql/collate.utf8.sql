@@ -45,6 +45,7 @@ INSERT INTO test_pg_c_utf8 VALUES
   ('abc DEF 123abc'),
   ('ábc sßs ßss DÉF'),
   ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  (U&'Λλ 1a \FF11a'),
   ('ȺȺȺ'),
   ('ⱥⱥⱥ'),
   ('ⱥȺ');
@@ -100,6 +101,7 @@ INSERT INTO test_pg_unicode_fast VALUES
   ('abc DEF 123abc'),
   ('ábc sßs ßss DÉF'),
   ('ǄxxǄ ǆxxǅ ǅxxǆ'),
+  (U&'Λλ 1a \FF11a'),
   ('ȺȺȺ'),
   ('ⱥⱥⱥ'),
   ('ⱥȺ');

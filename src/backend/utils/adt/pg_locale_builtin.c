@@ -40,6 +40,7 @@ struct WordBoundaryState
 	const char *str;
 	size_t		len;
 	size_t		offset;
+	bool		posix;
 	bool		init;
 	bool		prev_alnum;
 };
@@ -58,7 +59,7 @@ initcap_wbnext(void *state)
 	{
 		pg_wchar	u = utf8_to_unicode((unsigned char *) wbstate->str +
 										wbstate->offset);
-		bool		curr_alnum = pg_u_isalnum(u, true);
+		bool		curr_alnum = pg_u_isalnum(u, wbstate->posix);
 
 		if (!wbstate->init || curr_alnum != wbstate->prev_alnum)
 		{
@@ -92,6 +93,7 @@ strtitle_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 		.str = src,
 		.len = srclen,
 		.offset = 0,
+		.posix = !locale->info.builtin.casemap_full,
 		.init = false,
 		.prev_alnum = false,
 	};
