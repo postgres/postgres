@@ -1181,6 +1181,10 @@ MemoryContextCreate(MemoryContext node,
 	/* Creating new memory contexts is not allowed in a critical section */
 	Assert(CritSectionCount == 0);
 
+	/* Validate parent, to help prevent crazy context linkages */
+	Assert(parent == NULL || MemoryContextIsValid(parent));
+	Assert(node != parent);
+
 	/* Initialize all standard fields of memory context header */
 	node->type = tag;
 	node->isReset = true;
