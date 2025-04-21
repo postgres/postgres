@@ -12122,7 +12122,7 @@ get_json_table_columns(TableFunc *tf, JsonTablePathScan *scan,
 
 		/*
 		 * Set default_behavior to guide get_json_expr_options() on whether to
-		 * to emit the ON ERROR / EMPTY clauses.
+		 * emit the ON ERROR / EMPTY clauses.
 		 */
 		if (colexpr->op == JSON_EXISTS_OP)
 		{

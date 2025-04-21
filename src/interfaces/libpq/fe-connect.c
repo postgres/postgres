@@ -1833,7 +1833,7 @@ pqConnectOptions2(PGconn *conn)
 		 * sslmode='allow' or sslmode='disable' either. If a user goes through
 		 * the trouble of setting sslnegotiation='direct', they probably
 		 * intend to use SSL, and sslmode=disable or allow is probably a user
-		 * user mistake anyway.
+		 * mistake anyway.
 		 */
 		if (conn->sslnegotiation[0] == 'd' &&
 			conn->sslmode[0] != 'r' && conn->sslmode[0] != 'v')

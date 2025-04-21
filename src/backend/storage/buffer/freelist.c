@@ -583,8 +583,8 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 
 				/*
 				 * We would like the ring to additionally have space for the
-				 * the configured degree of IO concurrency. While being read
-				 * in, buffers can obviously not yet be reused.
+				 * configured degree of IO concurrency. While being read in,
+				 * buffers can obviously not yet be reused.
 				 *
 				 * Each IO can be up to io_combine_limit blocks large, and we
 				 * want to start up to effective_io_concurrency IOs.
