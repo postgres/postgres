@@ -477,6 +477,24 @@ $result =
 is( $result, qq(2|f
 3|t), 'check replicated update on subscriber');
 
+# Test create and immediate drop of replication slot via replication commands
+# (this exposed a memory-management bug in v18)
+my $publisher_host = $node_publisher->host;
+my $publisher_port = $node_publisher->port;
+my $connstr_db =
+  "host=$publisher_host port=$publisher_port replication=database dbname=postgres";
+
+is( $node_publisher->psql(
+		'postgres',
+		qq[
+		CREATE_REPLICATION_SLOT test_slot LOGICAL pgoutput (SNAPSHOT export);
+		DROP_REPLICATION_SLOT test_slot;
+	],
+		timeout => $PostgreSQL::Test::Utils::timeout_default,
+		extra_params => [ '-d', $connstr_db ]),
+	0,
+	'create and immediate drop of replication slot');
+
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
 

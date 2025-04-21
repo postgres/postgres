@@ -1973,8 +1973,10 @@ exec_replication_command(const char *cmd_string)
 	int			parse_rc;
 	Node	   *cmd_node;
 	const char *cmdtag;
-	MemoryContext cmd_context;
-	MemoryContext old_context;
+	MemoryContext old_context = CurrentMemoryContext;
+
+	/* We save and re-use the cmd_context across calls */
+	static MemoryContext cmd_context = NULL;
 
 	/*
 	 * If WAL sender has been told that shutdown is getting close, switch its
@@ -2003,11 +2005,30 @@ exec_replication_command(const char *cmd_string)
 
 	/*
 	 * Prepare to parse and execute the command.
+	 *
+	 * Because replication command execution can involve beginning or ending
+	 * transactions, we need a working context that will survive that, so we
+	 * make it a child of TopMemoryContext.  That in turn creates a hazard of
+	 * long-lived memory leaks if we lose track of the working context.  We
+	 * deal with that by creating it only once per walsender, and resetting it
+	 * for each new command.  (Normally this reset is a no-op, but if the
+	 * prior exec_replication_command call failed with an error, it won't be.)
+	 *
+	 * This is subtler than it looks.  The transactions we manage can extend
+	 * across replication commands, indeed SnapBuildClearExportedSnapshot
+	 * might have just ended one.  Because transaction exit will revert to the
+	 * memory context that was current at transaction start, we need to be
+	 * sure that that context is still valid.  That motivates re-using the
+	 * same cmd_context rather than making a new one each time.
 	 */
-	cmd_context = AllocSetContextCreate(CurrentMemoryContext,
-										"Replication command context",
-										ALLOCSET_DEFAULT_SIZES);
-	old_context = MemoryContextSwitchTo(cmd_context);
+	if (cmd_context == NULL)
+		cmd_context = AllocSetContextCreate(TopMemoryContext,
+											"Replication command context",
+											ALLOCSET_DEFAULT_SIZES);
+	else
+		MemoryContextReset(cmd_context);
+
+	MemoryContextSwitchTo(cmd_context);
 
 	replication_scanner_init(cmd_string, &scanner);
 
@@ -2020,7 +2041,7 @@ exec_replication_command(const char *cmd_string)
 		replication_scanner_finish(scanner);
 
 		MemoryContextSwitchTo(old_context);
-		MemoryContextDelete(cmd_context);
+		MemoryContextReset(cmd_context);
 
 		/* XXX this is a pretty random place to make this check */
 		if (MyDatabaseId == InvalidOid)
@@ -2180,9 +2201,12 @@ exec_replication_command(const char *cmd_string)
 				 cmd_node->type);
 	}
 
-	/* done */
+	/*
+	 * Done.  Revert to caller's memory context, and clean out the cmd_context
+	 * to recover memory right away.
+	 */
 	MemoryContextSwitchTo(old_context);
-	MemoryContextDelete(cmd_context);
+	MemoryContextReset(cmd_context);
 
 	/*
 	 * We need not update ps display or pg_stat_activity, because PostgresMain
