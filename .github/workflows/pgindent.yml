@@ -10,7 +10,7 @@ defaults:
 jobs:
   check:
     name: Check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
@@ -26,6 +26,9 @@ jobs:
 
       - name: Update typedefs
         run: ci_scripts/dump-typedefs.sh
-    
+
       - name: Run pgindent
         run: ci_scripts/run-pgindent.sh --check --diff
+
+      - name: Run pgperltidy
+        run: ci_scripts/run-pgperltidy.sh --assert-tidy --standard-error-output

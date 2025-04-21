@@ -43,6 +43,8 @@ DEPS=(
     python3-pykmip
     libhttp-server-simple-perl
     lcov
+    # Run pgperltidy
+    perltidy
 )
 
 sudo apt-get update
