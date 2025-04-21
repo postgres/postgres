@@ -53,6 +53,7 @@ src/libkmip/libkmip/src/kmip_memset.o
 
 SCRIPTS_built = src/pg_tde_change_key_provider
 
+EXTRA_INSTALL+=contrib/pg_buffercache contrib/test_decoding
 EXTRA_CLEAN += src/pg_tde_change_key_provider.o
 
 ifdef USE_PGXS
