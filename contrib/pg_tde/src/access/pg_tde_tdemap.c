@@ -702,7 +702,6 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	char		path_new[MAXPGPATH];
 	int			fd_new;
 	off_t		curr_pos = 0;
-	bool		is_err = false;
 
 	/* Let's get the header. Buff should start with the map file header. */
 	fheader = (TDEFileHeader *) file_data;
@@ -717,23 +716,22 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 		ereport(WARNING,
 				errcode_for_file_access(),
 				errmsg("could not write tde file \"%s\": %m", path_new));
-		is_err = true;
-		goto FINALIZE;
+		close(fd_new);
+		return;
 	}
+
 	if (pg_fsync(fd_new) != 0)
 	{
 		ereport(WARNING,
 				errcode_for_file_access(),
 				errmsg("could not fsync file \"%s\": %m", path_new));
-		is_err = true;
-		goto FINALIZE;
+		close(fd_new);
+		return;
 	}
 
-FINALIZE:
 	close(fd_new);
 
-	if (!is_err)
-		finalize_key_rotation(db_map_path, path_new);
+	finalize_key_rotation(db_map_path, path_new);
 }
 
 /* It's called by seg_write inside crit section so no pallocs, hence
