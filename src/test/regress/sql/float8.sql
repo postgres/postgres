@@ -197,7 +197,7 @@ SELECT exp(f.f1) from FLOAT8_TBL f;
 
 SELECT f.f1 / '0.0' from FLOAT8_TBL f;
 
-SELECT * FROM FLOAT8_TBL;
+SELECT * FROM FLOAT8_TBL ORDER BY 1;
 
 -- hyperbolic functions
 -- we run these with extra_float_digits = 0 too, since different platforms

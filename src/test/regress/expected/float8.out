@@ -648,14 +648,14 @@ SELECT exp(f.f1) from FLOAT8_TBL f;
 ERROR:  value out of range: underflow
 SELECT f.f1 / '0.0' from FLOAT8_TBL f;
 ERROR:  division by zero
-SELECT * FROM FLOAT8_TBL;
+SELECT * FROM FLOAT8_TBL ORDER BY 1;
           f1           
 -----------------------
-                     0
-                -34.84
-               -1004.3
  -1.2345678901234e+200
+               -1004.3
+                -34.84
  -1.2345678901234e-200
+                     0
 (5 rows)
 
 -- hyperbolic functions

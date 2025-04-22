@@ -98,7 +98,7 @@ UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
 
-SELECT * FROM FLOAT4_TBL;
+SELECT * FROM FLOAT4_TBL ORDER BY 1;
 
 -- test edge-case coercions to integer
 SELECT '32767.4'::float4::int2;

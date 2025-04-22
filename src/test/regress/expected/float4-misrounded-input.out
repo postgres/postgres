@@ -308,14 +308,14 @@ SELECT f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
-SELECT * FROM FLOAT4_TBL;
+SELECT * FROM FLOAT4_TBL ORDER BY 1;
        f1       
 ----------------
-              0
-         -34.84
-        -1004.3
  -1.2345679e+20
+        -1004.3
+         -34.84
  -1.2345679e-20
+              0
 (5 rows)
 
 -- test edge-case coercions to integer
