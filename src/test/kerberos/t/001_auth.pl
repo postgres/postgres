@@ -66,6 +66,7 @@ $node->append_conf(
 listen_addresses = '$hostaddr'
 krb_server_keyfile = '$krb->{keytab}'
 log_connections = on
+log_min_messages = debug2
 lc_messages = 'C'
 });
 $node->start;

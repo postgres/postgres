@@ -66,6 +66,8 @@ sub test_conn
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 $node->append_conf('postgresql.conf', "log_connections = on\n");
+# Needed to allow connect_fails to inspect postmaster log:
+$node->append_conf('postgresql.conf', "log_min_messages = debug2");
 $node->start;
 
 # Test behavior of log_connections GUC

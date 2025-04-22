@@ -2618,13 +2618,19 @@ to fail.
 
 =item expected_stderr => B<value>
 
-If this regular expression is set, matches it with the output generated.
+If this regular expression is set, matches it to the output generated
+by B<psql>.
 
 =item log_like => [ qr/required message/ ]
 
 =item log_unlike => [ qr/prohibited message/ ]
 
-See C<log_check(...)>.
+See C<log_check(...)>.  CAUTION: use of either option requires that
+the server's log_min_messages be at least DEBUG2, and that no other
+client backend is launched concurrently.  These requirements allow
+C<connect_fails> to wait to see the postmaster-log report of backend
+exit, without which there is a race condition as to whether we will
+see the expected backend log output.
 
 =back
 
@@ -2652,7 +2658,14 @@ sub connect_fails
 		like($stderr, $params{expected_stderr}, "$test_name: matches");
 	}
 
-	$self->log_check($test_name, $log_location, %params);
+	if (defined($params{log_like}) or defined($params{log_unlike}))
+	{
+		$self->wait_for_log(
+			qr/DEBUG:  (?:00000: )?forked new client backend, pid=(\d+) socket.*DEBUG:  (?:00000: )?client backend \(PID \1\) exited with exit code \d/s,
+			$log_location);
+
+		$self->log_check($test_name, $log_location, %params);
+	}
 }
 
 =pod
