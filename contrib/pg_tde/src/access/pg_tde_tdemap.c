@@ -255,7 +255,6 @@ pg_tde_delete_tde_files(Oid dbOid)
 {
 	char		db_map_path[MAXPGPATH] = {0};
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(dbOid, db_map_path);
 
 	/* Remove file without emitting any error */
@@ -295,7 +294,6 @@ pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 	char		db_map_path[MAXPGPATH] = {0};
 	TDESignedPrincipalKeyInfo signed_key_Info;
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
 
 	ereport(DEBUG2, errmsg("pg_tde_save_principal_key"));
@@ -430,7 +428,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 
 	Assert(rlocator);
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
@@ -478,7 +475,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	curr_pos = prev_pos;
 	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &prev_pos, db_map_path);
 
-	/* Let's close the file. */
 	close(map_fd);
 }
 
@@ -496,7 +492,6 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	off_t		curr_pos = 0;
 	off_t		prev_pos = 0;
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
@@ -529,7 +524,6 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	curr_pos = prev_pos;
 	pg_tde_write_one_map_entry(map_fd, write_map_entry, &prev_pos, db_map_path);
 
-	/* Let's close the file. */
 	close(map_fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
@@ -716,7 +710,6 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	/* Let's get the header. Buff should start with the map file header. */
 	fheader = (TDEFileHeader *) file_data;
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(fheader->signed_key_info.data.databaseId, db_map_path);
 
 	/* Initialize the new file and set the name */
@@ -860,7 +853,6 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 
 	Assert(rlocator);
 
-	/* Get the file paths */
 	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
 
 	if (access(db_map_path, F_OK) == -1)
@@ -1090,7 +1082,6 @@ pg_tde_get_principal_key_info(Oid dbOid)
 	off_t		bytes_read = 0;
 	char		db_map_path[MAXPGPATH] = {0};
 
-	/* Set the file paths */
 	pg_tde_set_db_file_path(dbOid, db_map_path);
 
 	/*
