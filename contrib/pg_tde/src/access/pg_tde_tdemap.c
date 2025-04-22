@@ -253,7 +253,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 void
 pg_tde_delete_tde_files(Oid dbOid)
 {
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 
 	pg_tde_set_db_file_path(dbOid, db_map_path);
 
@@ -266,7 +266,7 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 {
 	int			map_fd;
 	off_t		curr_pos;
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 
 	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
 
@@ -289,9 +289,9 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 void
 pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 {
-	int			map_fd = -1;
+	int			map_fd;
 	off_t		curr_pos = 0;
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 	TDESignedPrincipalKeyInfo signed_key_Info;
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
@@ -419,8 +419,8 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 void
 pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog)
 {
-	char		db_map_path[MAXPGPATH] = {0};
-	int			map_fd = -1;
+	char		db_map_path[MAXPGPATH];
+	int			map_fd;
 	off_t		curr_pos = 0;
 	off_t		prev_pos = 0;
 	TDEMapEntry write_map_entry;
@@ -487,8 +487,8 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 void
 pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPrincipalKeyInfo *signed_key_info)
 {
-	char		db_map_path[MAXPGPATH] = {0};
-	int			map_fd = -1;
+	char		db_map_path[MAXPGPATH];
+	int			map_fd;
 	off_t		curr_pos = 0;
 	off_t		prev_pos = 0;
 
@@ -701,10 +701,10 @@ void
 pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 {
 	TDEFileHeader *fheader;
+	char		db_map_path[MAXPGPATH];
 	char		path_new[MAXPGPATH];
 	int			fd_new;
 	off_t		curr_pos = 0;
-	char		db_map_path[MAXPGPATH] = {0};
 	bool		is_err = false;
 
 	/* Let's get the header. Buff should start with the map file header. */
@@ -746,7 +746,7 @@ void
 pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 {
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
-	int			fd = -1;
+	int			fd;
 	off_t		read_pos,
 				write_pos,
 				last_key_idx;
@@ -848,7 +848,7 @@ pg_tde_get_key_from_file(const RelFileLocator *rlocator, uint32 key_type)
 	TDEMapEntry map_entry;
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 	InternalKey *rel_key;
 
 	Assert(rlocator);
@@ -1059,7 +1059,7 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
 	/* Read the encrypted key */
 	if (pg_pread(fd, map_entry, MAP_ENTRY_SIZE, read_pos) != MAP_ENTRY_SIZE)
 	{
-		char		db_map_path[MAXPGPATH] = {0};
+		char		db_map_path[MAXPGPATH];
 
 		pg_tde_set_db_file_path(databaseId, db_map_path);
 		ereport(FATAL,
@@ -1076,11 +1076,11 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
 TDESignedPrincipalKeyInfo *
 pg_tde_get_principal_key_info(Oid dbOid)
 {
-	int			fd = -1;
+	char		db_map_path[MAXPGPATH];
+	int			fd;
 	TDEFileHeader fheader;
 	TDESignedPrincipalKeyInfo *signed_key_info = NULL;
 	off_t		bytes_read = 0;
-	char		db_map_path[MAXPGPATH] = {0};
 
 	pg_tde_set_db_file_path(dbOid, db_map_path);
 
@@ -1198,12 +1198,12 @@ InternalKey *
 pg_tde_read_last_wal_key(void)
 {
 	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
-	int			fd = -1;
-	int			file_idx = 0;
+	int			fd;
+	int			file_idx;
 	TDEMapEntry map_entry;
 	InternalKey *rel_key_data;
 	off_t		fsize;
@@ -1242,11 +1242,11 @@ WALKeyCacheRec *
 pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 {
 	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-	char		db_map_path[MAXPGPATH] = {0};
+	char		db_map_path[MAXPGPATH];
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
-	int			fd = -1;
+	int			fd;
 	int			keys_count;
 	WALKeyCacheRec *return_wal_rec = NULL;
 
