@@ -352,9 +352,8 @@ PostgreSQL documentation
       <term><option>--maintenance-db=<replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
-        Specifies the name of the database to connect to to discover which
-        databases should be reindexed,
-        when <option>-a</option>/<option>--all</option> is used.
+        When the <option>-a</option>/<option>--all</option> is used, connect
+        to this database to gather the list of databases to reindex.
         If not specified, the <literal>postgres</literal> database will be used,
         or if that does not exist, <literal>template1</literal> will be used.
         This can be a <link linkend="libpq-connstring">connection
