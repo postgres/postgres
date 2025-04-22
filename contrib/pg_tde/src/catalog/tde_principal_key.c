@@ -518,11 +518,6 @@ pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to access global key providers"));
-
 	/* Using a global provider for the default encryption setting */
 	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, DEFAULT_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
 
@@ -549,11 +544,6 @@ pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to access global key providers"));
-
 	/* Using a global provider for the current database */
 	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, MyDatabaseId, principal_key_name, provider_name, ensure_new_key);
 
@@ -567,11 +557,6 @@ pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to access global key providers"));
-
 	/* Using a global provider for the global (wal) database */
 	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, GLOBAL_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
 
@@ -583,6 +568,11 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 {
 	TDEPrincipalKey *existingDefaultKey = NULL;
 	TDEPrincipalKey existingKeyCopy;
+
+	if (providerOid == GLOBAL_DATA_TDE_OID && !superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to access global key providers"));
 
 	ereport(LOG, errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name));
 
