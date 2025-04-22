@@ -10,8 +10,8 @@ step waitprunable4: CALL vactest.wait_prunable();
 step vac4: VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) pg_class;
 step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
 step wakeinval4: 
-	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
-	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_detach('transaction-end-process-inval');
+	SELECT FROM injection_points_wakeup('transaction-end-process-inval');
  <waiting ...>
 step at2: <... completed>
 step wakeinval4: <... completed>
@@ -33,8 +33,8 @@ step waitprunable4: CALL vactest.wait_prunable();
 step vac4: VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) pg_class;
 step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
 step wakeinval4: 
-	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
-	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_detach('transaction-end-process-inval');
+	SELECT FROM injection_points_wakeup('transaction-end-process-inval');
  <waiting ...>
 step at2: <... completed>
 step wakeinval4: <... completed>
@@ -64,8 +64,8 @@ step waitprunable4: CALL vactest.wait_prunable();
 step vac4: VACUUM (FREEZE, DISABLE_PAGE_SKIPPING) pg_class;
 step grant1: GRANT SELECT ON vactest.orig50 TO PUBLIC; <waiting ...>
 step wakeinval4: 
-	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
-	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_detach('transaction-end-process-inval');
+	SELECT FROM injection_points_wakeup('transaction-end-process-inval');
  <waiting ...>
 step at2: <... completed>
 step wakeinval4: <... completed>
