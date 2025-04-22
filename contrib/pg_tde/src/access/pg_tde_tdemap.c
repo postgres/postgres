@@ -163,9 +163,7 @@ pg_tde_create_key_map_entry(const RelFileLocator *newrlocator, uint32 entry_type
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
-	/*
-	 * Add the encrypted key to the key map data file structure.
-	 */
+	/* Add the encrypted key to the key map data file structure. */
 	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key, true);
 	LWLockRelease(lock_pk);
 
@@ -734,7 +732,8 @@ pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
 	finalize_key_rotation(db_map_path, path_new);
 }
 
-/* It's called by seg_write inside crit section so no pallocs, hence
+/*
+ * It's called by seg_write inside crit section so no pallocs, hence
  * needs keyfile_path
  */
 void
