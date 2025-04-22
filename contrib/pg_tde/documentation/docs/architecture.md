@@ -278,8 +278,6 @@ For keys and providers administration, it provides two pair of functions:
 pg_tde_(grant/revoke)_database_key_management_to_role
 ```
 
-There's one special behavior: When `pg_tde.inherit_global_providers` is `on`, users with database local permissions can list global providers, but can't use the show function to query configuration details. When `pg_tde.inherit_global_providers` is `off`, they can't execute the function at all, it will return an error.
-
 ### Creating and rotating keys
 
 Principal keys can be created or rotated using the following functions:
