@@ -17,10 +17,15 @@ my $rt_value = $node->start;
 ok($rt_value == 1, "Start Server");
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
-PGTDE::psql($node, 'postgres', "SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');");
-PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');");
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');"
+);
 
-PGTDE::psql($node, 'postgres', "CREATE UNLOGGED TABLE t (x int PRIMARY KEY) USING tde_heap;");
+PGTDE::psql($node, 'postgres',
+	"CREATE UNLOGGED TABLE t (x int PRIMARY KEY) USING tde_heap;");
 
 PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 
@@ -42,6 +47,8 @@ $node->stop();
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();
 
-is($compare, 0, "Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files.");
+is($compare, 0,
+	"Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files."
+);
 
 done_testing();

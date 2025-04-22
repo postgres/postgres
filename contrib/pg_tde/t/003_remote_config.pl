@@ -8,41 +8,44 @@ use lib 't';
 use pgtde;
 
 {
-package MyWebServer;
- 
-use HTTP::Server::Simple::CGI;
-use base qw(HTTP::Server::Simple::CGI);
- 
-my %dispatch = (
-    '/hello' => \&resp_hello,
-);
- 
-sub handle_request {
-    my $self = shift;
-    my $cgi  = shift;
-   
-    my $path = $cgi->path_info();
-    my $handler = $dispatch{$path};
- 
-    if (ref($handler) eq "CODE") {
-        print "HTTP/1.0 200 OK\r\n";
-        $handler->($cgi);
-         
-    } else {
-        print "HTTP/1.0 404 Not found\r\n";
-        print $cgi->header,
-              $cgi->start_html('Not found'),
-              $cgi->h1('Not found'),
-              $cgi->end_html;
-    }
-}
 
-sub resp_hello {
-    my $cgi  = shift;
-    print $cgi->header,
-		  "/tmp/http_datafile\r\n";
-}
- 
+	package MyWebServer;
+
+	use HTTP::Server::Simple::CGI;
+	use base qw(HTTP::Server::Simple::CGI);
+
+	my %dispatch = ('/hello' => \&resp_hello,);
+
+	sub handle_request
+	{
+		my $self = shift;
+		my $cgi = shift;
+
+		my $path = $cgi->path_info();
+		my $handler = $dispatch{$path};
+
+		if (ref($handler) eq "CODE")
+		{
+			print "HTTP/1.0 200 OK\r\n";
+			$handler->($cgi);
+
+		}
+		else
+		{
+			print "HTTP/1.0 404 Not found\r\n";
+			print $cgi->header,
+			  $cgi->start_html('Not found'),
+			  $cgi->h1('Not found'),
+			  $cgi->end_html;
+		}
+	}
+
+	sub resp_hello
+	{
+		my $cgi = shift;
+		print $cgi->header, "/tmp/http_datafile\r\n";
+	}
+
 }
 
 my $pid = MyWebServer->new(8888)->background();
@@ -58,10 +61,16 @@ ok($rt_value == 1, "Start Server");
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
-PGTDE::psql($node, 'postgres', "SELECT pg_tde_add_database_key_provider_file('file-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/hello' ));");
-PGTDE::psql($node, 'postgres', "SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');");
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_add_database_key_provider_file('file-provider', json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/hello' ));"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');"
+);
 
-PGTDE::psql($node, 'postgres', 'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;');
+PGTDE::psql($node, 'postgres',
+	'CREATE TABLE test_enc2(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;'
+);
 
 PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc2 (k) VALUES (5),(6);');
 
@@ -85,6 +94,8 @@ system("kill $pid");
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();
 
-is($compare,0,"Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files.");
+is($compare, 0,
+	"Compare Files: $PGTDE::expected_filename_with_path and $PGTDE::out_filename_with_path files."
+);
 
 done_testing();

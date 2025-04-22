@@ -21,57 +21,64 @@ my $results_folder = "t/results";
 
 sub psql
 {
-    my ($node, $dbname, $sql) = @_;
+	my ($node, $dbname, $sql) = @_;
 
-    my (undef, $stdout, $stderr) = $node->psql($dbname, $sql, extra_params => ['-a', '-Pformat=aligned', '-Ptuples_only=off']);
+	my (undef, $stdout, $stderr) = $node->psql($dbname, $sql,
+		extra_params => [ '-a', '-Pformat=aligned', '-Ptuples_only=off' ]);
 
-    if ($stdout ne '') {
-        append_to_result_file($stdout);
-    }
+	if ($stdout ne '')
+	{
+		append_to_result_file($stdout);
+	}
 
-    if ($stderr ne '') {
-        append_to_result_file($stderr);
-    }
+	if ($stderr ne '')
+	{
+		append_to_result_file($stderr);
+	}
 }
 
 sub append_to_result_file
 {
-    my ($str) = @_;
+	my ($str) = @_;
 
-    append_to_file($out_filename_with_path, $str . "\n");
+	append_to_file($out_filename_with_path, $str . "\n");
 }
 
 sub append_to_debug_file
 {
-    my ($str) = @_;
+	my ($str) = @_;
 
-    append_to_file($debug_out_filename_with_path, $str . "\n");
+	append_to_file($debug_out_filename_with_path, $str . "\n");
 }
 
 sub setup_files_dir
 {
-    my ($test_filename) = @_;
+	my ($test_filename) = @_;
 
-    unless (-d $results_folder)
-    {
-        mkdir $results_folder or die "Can't create folder $results_folder: $!\n";
-    }
+	unless (-d $results_folder)
+	{
+		mkdir $results_folder
+		  or die "Can't create folder $results_folder: $!\n";
+	}
 
-    my ($test_name) = $test_filename =~ /([^.]*)/;
+	my ($test_name) = $test_filename =~ /([^.]*)/;
 
-    $expected_filename_with_path = "${expected_folder}/${test_name}.out";
-    $out_filename_with_path = "${results_folder}/${test_name}.out";
-    $debug_out_filename_with_path = "${results_folder}/${test_name}.out.debug";
+	$expected_filename_with_path = "${expected_folder}/${test_name}.out";
+	$out_filename_with_path = "${results_folder}/${test_name}.out";
+	$debug_out_filename_with_path =
+	  "${results_folder}/${test_name}.out.debug";
 
-    if (-f $out_filename_with_path)
-    {
-        unlink($out_filename_with_path) or die "Can't delete already existing $out_filename_with_path: $!\n";
-    }
+	if (-f $out_filename_with_path)
+	{
+		unlink($out_filename_with_path)
+		  or die
+		  "Can't delete already existing $out_filename_with_path: $!\n";
+	}
 }
 
 sub compare_results
 {
-    return compare($expected_filename_with_path, $out_filename_with_path);
+	return compare($expected_filename_with_path, $out_filename_with_path);
 }
 
 1;
