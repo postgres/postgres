@@ -18,7 +18,7 @@ Let's break down what it means.
 
 * Table data files
 * Indexes
-* Seqeunces
+* Sequences
 * Temporary tables
 * Write Ahead Log (WAL)
 * System tables (not yet implemented)
