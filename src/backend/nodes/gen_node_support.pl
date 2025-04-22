@@ -195,6 +195,7 @@ my $next_input_file = 0;
 foreach my $infile (@ARGV)
 {
 	my $in_struct;
+	my $in_struct_lineno;
 	my $subline;
 	my $is_node_struct;
 	my $supertype;
@@ -543,6 +544,7 @@ foreach my $infile (@ARGV)
 			if ($line =~ /^(?:typedef )?struct (\w+)$/ && $1 ne 'Node')
 			{
 				$in_struct = $1;
+				$in_struct_lineno = $lineno;
 				$subline = 0;
 			}
 			# one node type typedef'ed directly from another
@@ -570,7 +572,8 @@ foreach my $infile (@ARGV)
 
 	if ($in_struct)
 	{
-		die "runaway \"$in_struct\" in file \"$infile\"\n";
+		die
+		  "$infile:$in_struct_lineno: could not find closing brace for struct \"$in_struct\"\n";
 	}
 
 	close $ifh;
