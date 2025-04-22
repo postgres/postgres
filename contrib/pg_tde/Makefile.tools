@@ -1,25 +1,24 @@
 TDE_XLOG_OBJS = \
- 	src/access/pg_tde_xlog_encrypt.frontend
+	src/access/pg_tde_xlog_encrypt.frontend
 
 TDE_OBJS = \
- 	src/access/pg_tde_tdemap.frontend \
- 	src/catalog/tde_keyring.frontend \
- 	src/catalog/tde_keyring_parse_opts.frontend \
- 	src/catalog/tde_principal_key.frontend \
- 	src/common/pg_tde_utils.frontend \
- 	src/encryption/enc_aes.frontend \
- 	src/encryption/enc_tde.frontend \
- 	src/keyring/keyring_api.frontend \
- 	src/keyring/keyring_curl.frontend \
- 	src/keyring/keyring_file.frontend \
- 	src/keyring/keyring_vault.frontend \
+	src/access/pg_tde_tdemap.frontend \
+	src/catalog/tde_keyring.frontend \
+	src/catalog/tde_keyring_parse_opts.frontend \
+	src/catalog/tde_principal_key.frontend \
+	src/common/pg_tde_utils.frontend \
+	src/encryption/enc_aes.frontend \
+	src/encryption/enc_tde.frontend \
+	src/keyring/keyring_api.frontend \
+	src/keyring/keyring_curl.frontend \
+	src/keyring/keyring_file.frontend \
+	src/keyring/keyring_vault.frontend \
 	src/libkmip/libkmip/src/kmip.frontend \
 	src/libkmip/libkmip/src/kmip_bio.frontend \
 	src/libkmip/libkmip/src/kmip_locate.frontend \
 	src/libkmip/libkmip/src/kmip_memset.frontend \
 	src/keyring/keyring_kmip.frontend \
 	src/keyring/keyring_kmip_impl.frontend
-
 
 TDE_OBJS2 = $(TDE_OBJS:%=$(top_srcdir)/contrib/pg_tde/%)
 TDE_XLOG_OBJS2 = $(TDE_XLOG_OBJS:%=$(top_srcdir)/contrib/pg_tde/%)
@@ -35,5 +34,4 @@ libtdexlog.a: $(TDE_XLOG_OBJS2)
 	rm -f $@
 	$(AR) $(AROPT) $@ $^
 
-
-tdelibs: libtde.a libtdexlog.a	
+tdelibs: libtde.a libtdexlog.a
