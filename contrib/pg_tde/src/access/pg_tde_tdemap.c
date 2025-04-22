@@ -422,7 +422,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
 	off_t		curr_pos = 0;
-	off_t		prev_pos = 0;
 	TDEMapEntry write_map_entry;
 	TDESignedPrincipalKeyInfo signed_key_Info;
 
@@ -434,7 +433,6 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 
 	/* Open and validate file for basic correctness. */
 	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, false, &curr_pos);
-	prev_pos = curr_pos;
 
 	/*
 	 * Read until we find an empty slot. Otherwise, read until end. This seems
@@ -444,13 +442,19 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 	while (1)
 	{
 		TDEMapEntry read_map_entry;
+		off_t		prev_pos = curr_pos;
 
-		prev_pos = curr_pos;
 		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
+		{
+			curr_pos = prev_pos;
 			break;
+		}
 
 		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
+		{
+			curr_pos = prev_pos;
 			break;
+		}
 	}
 
 	/* Initialize map entry and encrypt key */
@@ -468,12 +472,8 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 	}
 
-	/*
-	 * Write the given entry at the location pointed by prev_pos; i.e. the
-	 * free entry
-	 */
-	curr_pos = prev_pos;
-	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &prev_pos, db_map_path);
+	/* Write the given entry at curr_pos; i.e. the free entry. */
+	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
 
 	close(map_fd);
 }
@@ -490,7 +490,6 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
 	off_t		curr_pos = 0;
-	off_t		prev_pos = 0;
 
 	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
 
@@ -498,7 +497,6 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 
 	/* Open and validate file for basic correctness. */
 	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, false, &curr_pos);
-	prev_pos = curr_pos;
 
 	/*
 	 * Read until we find an empty slot. Otherwise, read until end. This seems
@@ -508,21 +506,23 @@ pg_tde_write_key_map_entry_redo(const TDEMapEntry *write_map_entry, TDESignedPri
 	while (1)
 	{
 		TDEMapEntry read_map_entry;
+		off_t		prev_pos = curr_pos;
 
-		prev_pos = curr_pos;
 		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
+		{
+			curr_pos = prev_pos;
 			break;
+		}
 
 		if (read_map_entry.flags == MAP_ENTRY_EMPTY)
+		{
+			curr_pos = prev_pos;
 			break;
+		}
 	}
 
-	/*
-	 * Write the given entry at the location pointed by prev_pos; i.e. the
-	 * free entry
-	 */
-	curr_pos = prev_pos;
-	pg_tde_write_one_map_entry(map_fd, write_map_entry, &prev_pos, db_map_path);
+	/* Write the given entry at curr_pos; i.e. the free entry. */
+	pg_tde_write_one_map_entry(map_fd, write_map_entry, &curr_pos, db_map_path);
 
 	close(map_fd);
 
