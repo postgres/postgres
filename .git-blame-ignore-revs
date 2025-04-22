@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+71da1f03f2f0ff18ed11e4ba6b07b6bd56705a5d # 2025-04-22 11:40:24 +0200
+# Run pgperltidy
+
 c739ae9e288c095cfe1b91ce27a2f2c075ed5da4 # 2024-08-26 16:16:09 -0700
 # Fix identation.
 
