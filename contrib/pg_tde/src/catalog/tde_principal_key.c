@@ -109,7 +109,7 @@ static void set_principal_key_with_keyring(const char *key_name,
 static bool pg_tde_is_provider_used(Oid databaseOid, Oid providerId);
 static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
 
-static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global);
+static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid);
 
 PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
@@ -585,28 +585,28 @@ pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 static void
 pg_tde_set_principal_key_internal(char *key_name, enum global_status global, char *provider_name, bool ensure_new_key)
 {
-	Oid			providerOid = MyDatabaseId;
-	Oid			dbOid = MyDatabaseId;
+	Oid			providerOid;
+	Oid			dbOid;
 	TDEPrincipalKey *existingDefaultKey = NULL;
 	TDEPrincipalKey existingKeyCopy;
 
 	ereport(LOG, errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name));
 
-	if (global == GS_GLOBAL)	/* using a global provider for the current
-								 * database */
+	if (global == GS_GLOBAL)
 	{
+		/* Using a global provider for the current database */
 		providerOid = GLOBAL_DATA_TDE_OID;
+		dbOid = MyDatabaseId;
 	}
-	if (global == GS_SERVER)	/* using a globla provider for the global
-								 * (wal) database */
+	else if (global == GS_SERVER)
 	{
+		/* Using a global provider for the global (wal) database */
 		providerOid = GLOBAL_DATA_TDE_OID;
 		dbOid = GLOBAL_DATA_TDE_OID;
 	}
-
-	if (global == GS_DEFAULT)	/* using a globla provider for the default
-								 * encryption setting */
+	else if (global == GS_DEFAULT)
 	{
+		/* Using a global provider for the default encryption setting */
 		providerOid = GLOBAL_DATA_TDE_OID;
 		dbOid = DEFAULT_DATA_TDE_OID;
 
@@ -618,6 +618,12 @@ pg_tde_set_principal_key_internal(char *key_name, enum global_status global, cha
 			existingKeyCopy = *existingDefaultKey;
 		}
 		LWLockRelease(tde_lwlock_enc_keys());
+	}
+	else
+	{
+		/* Using a local provider for the current database */
+		providerOid = MyDatabaseId;
+		dbOid = MyDatabaseId;
 	}
 
 	set_principal_key_with_keyring(key_name,
@@ -1086,7 +1092,7 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 Datum
 pg_tde_delete_database_key_provider(PG_FUNCTION_ARGS)
 {
-	return pg_tde_delete_key_provider_internal(fcinfo, 0);
+	return pg_tde_delete_key_provider_internal(fcinfo, MyDatabaseId);
 }
 
 Datum
@@ -1097,14 +1103,13 @@ pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to modify global key providers"));
 
-	return pg_tde_delete_key_provider_internal(fcinfo, 1);
+	return pg_tde_delete_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
 Datum
-pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global)
+pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
 {
 	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Oid			db_oid = (is_global == 1) ? GLOBAL_DATA_TDE_OID : MyDatabaseId;
 	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
 	int			provider_id;
 	bool		provider_used;
