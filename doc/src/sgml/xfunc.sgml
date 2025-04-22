@@ -3836,7 +3836,8 @@ INJECTION_POINT(name);
      within the server code. After adding a new injection point the code needs
      to be compiled in order for that injection point to be available in the
      binary. Add-ins written in C-language can declare injection points in
-     their own code using the same macro.
+     their own code using the same macro. The injection point names should
+     use lower-case characters, with terms separated by dashes.
     </para>
 
     <para>
