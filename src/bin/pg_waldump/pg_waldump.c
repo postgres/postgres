@@ -34,7 +34,7 @@
 
 #ifdef PERCONA_EXT
 #include "access/pg_tde_fe_init.h"
-#include "access/pg_tde_xlog_encrypt.h"
+#include "access/pg_tde_xlog_smgr.h"
 #include "access/xlog_smgr.h"
 #include "catalog/tde_global_space.h"
 #endif

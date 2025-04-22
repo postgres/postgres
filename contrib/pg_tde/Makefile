@@ -31,7 +31,7 @@ OBJS = src/encryption/enc_tde.o \
 src/encryption/enc_aes.o \
 src/access/pg_tde_tdemap.o \
 src/access/pg_tde_xlog.o \
-src/access/pg_tde_xlog_encrypt.o \
+src/access/pg_tde_xlog_smgr.o \
 src/keyring/keyring_curl.o \
 src/keyring/keyring_file.o \
 src/keyring/keyring_vault.o \

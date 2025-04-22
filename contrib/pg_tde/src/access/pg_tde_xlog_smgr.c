@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
- * pg_tde_xlog_encrypt.c
+ * pg_tde_xlog_smgr.c
  *	  Encrypted XLog storage manager
  *
  *
  * IDENTIFICATION
- *	  src/access/pg_tde_xlog_encrypt.c
+ *	  src/access/pg_tde_xlog_smgr.c
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/memutils.h"
 
 #include "access/pg_tde_tdemap.h"
-#include "access/pg_tde_xlog_encrypt.h"
+#include "access/pg_tde_xlog_smgr.h"
 #include "catalog/tde_global_space.h"
 #include "encryption/enc_tde.h"
 

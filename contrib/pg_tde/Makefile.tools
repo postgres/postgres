@@ -1,5 +1,5 @@
 TDE_XLOG_OBJS = \
-	src/access/pg_tde_xlog_encrypt.frontend
+	src/access/pg_tde_xlog_smgr.frontend
 
 TDE_OBJS = \
 	src/access/pg_tde_tdemap.frontend \
