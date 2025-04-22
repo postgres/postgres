@@ -116,15 +116,7 @@ PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
 
-enum global_status
-{
-	GS_LOCAL,
-	GS_GLOBAL,
-	GS_SERVER,
-	GS_DEFAULT
-};
-
-static void pg_tde_set_principal_key_internal(char *principal_key_name, enum global_status global, char *provider_name, bool ensure_new_key);
+static void pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *principal_key_name, const char *provider_name, bool ensure_new_key);
 
 static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
 	.init_shared_state = initialize_shared_state,
@@ -531,7 +523,8 @@ pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to access global key providers"));
 
-	pg_tde_set_principal_key_internal(principal_key_name, GS_DEFAULT, provider_name, ensure_new_key);
+	/* Using a global provider for the default encryption setting */
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, DEFAULT_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
 }
@@ -543,7 +536,8 @@ pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS)
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
-	pg_tde_set_principal_key_internal(principal_key_name, GS_LOCAL, provider_name, ensure_new_key);
+	/* Using a local provider for the current database */
+	pg_tde_set_principal_key_internal(MyDatabaseId, MyDatabaseId, principal_key_name, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
 }
@@ -560,7 +554,8 @@ pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to access global key providers"));
 
-	pg_tde_set_principal_key_internal(principal_key_name, GS_GLOBAL, provider_name, ensure_new_key);
+	/* Using a global provider for the current database */
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, MyDatabaseId, principal_key_name, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
 }
@@ -577,39 +572,22 @@ pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to access global key providers"));
 
-	pg_tde_set_principal_key_internal(principal_key_name, GS_SERVER, provider_name, ensure_new_key);
+	/* Using a global provider for the global (wal) database */
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, GLOBAL_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
 
 	PG_RETURN_VOID();
 }
 
 static void
-pg_tde_set_principal_key_internal(char *key_name, enum global_status global, char *provider_name, bool ensure_new_key)
+pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_name, const char *provider_name, bool ensure_new_key)
 {
-	Oid			providerOid;
-	Oid			dbOid;
 	TDEPrincipalKey *existingDefaultKey = NULL;
 	TDEPrincipalKey existingKeyCopy;
 
 	ereport(LOG, errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name));
 
-	if (global == GS_GLOBAL)
+	if (dbOid == DEFAULT_DATA_TDE_OID)
 	{
-		/* Using a global provider for the current database */
-		providerOid = GLOBAL_DATA_TDE_OID;
-		dbOid = MyDatabaseId;
-	}
-	else if (global == GS_SERVER)
-	{
-		/* Using a global provider for the global (wal) database */
-		providerOid = GLOBAL_DATA_TDE_OID;
-		dbOid = GLOBAL_DATA_TDE_OID;
-	}
-	else if (global == GS_DEFAULT)
-	{
-		/* Using a global provider for the default encryption setting */
-		providerOid = GLOBAL_DATA_TDE_OID;
-		dbOid = DEFAULT_DATA_TDE_OID;
-
 		/* Do we already have a default key? If yes, look up the name of it */
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
 		existingDefaultKey = GetPrincipalKeyNoDefault(dbOid, LW_SHARED);
@@ -619,12 +597,6 @@ pg_tde_set_principal_key_internal(char *key_name, enum global_status global, cha
 		}
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
-	else
-	{
-		/* Using a local provider for the current database */
-		providerOid = MyDatabaseId;
-		dbOid = MyDatabaseId;
-	}
 
 	set_principal_key_with_keyring(key_name,
 								   provider_name,
@@ -632,7 +604,7 @@ pg_tde_set_principal_key_internal(char *key_name, enum global_status global, cha
 								   dbOid,
 								   ensure_new_key);
 
-	if (global == GS_DEFAULT && existingDefaultKey != NULL)
+	if (dbOid == DEFAULT_DATA_TDE_OID && existingDefaultKey != NULL)
 	{
 		/*
 		 * In the previous step, we marked a new default provider Now we have
