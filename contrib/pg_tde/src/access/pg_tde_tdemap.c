@@ -126,7 +126,7 @@ static InternalKey *pg_tde_create_local_key(const RelFileLocator *newrlocator, u
 static void pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type);
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
-static off_t pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
+static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key, bool write_xlog);
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
@@ -380,7 +380,7 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 /*
  * Based on the given arguments,write the entry into the key map file.
  */
-static off_t
+static void
 pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path)
 {
 	int			bytes_written = 0;
@@ -401,7 +401,7 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 				errmsg("could not fsync file \"%s\": %m", db_map_path));
 	}
 
-	return (*offset + bytes_written);
+	*offset += bytes_written;
 }
 
 /*
@@ -633,7 +633,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	while (1)
 	{
 		InternalKey *rel_key_data;
-		off_t		new_prev_pos;
 		TDEMapEntry read_map_entry,
 					write_map_entry;
 		RelFileLocator rloc;
@@ -652,9 +651,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		rel_key_data = tde_decrypt_rel_key(principal_key, &read_map_entry);
 		pg_tde_initialize_map_entry(&write_map_entry, new_principal_key, &rloc, rel_key_data);
 
-		/* Write the given entry at the location pointed by prev_pos */
-		new_prev_pos = new_curr_pos;
-		new_curr_pos = pg_tde_write_one_map_entry(new_fd, &write_map_entry, &new_prev_pos, new_path);
+		pg_tde_write_one_map_entry(new_fd, &write_map_entry, &new_curr_pos, new_path);
 
 		pfree(rel_key_data);
 	}
