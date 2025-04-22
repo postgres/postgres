@@ -117,7 +117,7 @@ session s2
 setup	{
 	SELECT FROM injection_points_set_local();
 	SELECT FROM
-		injection_points_attach('AtEOXact_Inval-with-transInvalInfo', 'wait');
+		injection_points_attach('transaction-end-process-inval', 'wait');
 }
 step at2	{
 	CREATE TRIGGER to_set_relhastriggers BEFORE UPDATE ON vactest.orig50
@@ -145,8 +145,8 @@ step wakegrant4	{
 }
 step at4	{ ALTER TABLE vactest.child50 INHERIT vactest.orig50; }
 step wakeinval4	{
-	SELECT FROM injection_points_detach('AtEOXact_Inval-with-transInvalInfo');
-	SELECT FROM injection_points_wakeup('AtEOXact_Inval-with-transInvalInfo');
+	SELECT FROM injection_points_detach('transaction-end-process-inval');
+	SELECT FROM injection_points_wakeup('transaction-end-process-inval');
 }
 # Witness effects of steps at2 and/or at4.
 step inspect4	{
