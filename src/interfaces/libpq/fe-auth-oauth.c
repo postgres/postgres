@@ -476,7 +476,7 @@ issuer_from_well_known_uri(PGconn *conn, const char *wkuri)
 static bool
 handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 {
-	JsonLexContext lex = {0};
+	JsonLexContext *lex;
 	JsonSemAction sem = {0};
 	JsonParseErrorType err;
 	struct json_ctx ctx = {0};
@@ -504,8 +504,8 @@ handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 		return false;
 	}
 
-	makeJsonLexContextCstringLen(&lex, msg, msglen, PG_UTF8, true);
-	setJsonLexContextOwnsTokens(&lex, true);	/* must not leak on error */
+	lex = makeJsonLexContextCstringLen(NULL, msg, msglen, PG_UTF8, true);
+	setJsonLexContextOwnsTokens(lex, true); /* must not leak on error */
 
 	initPQExpBuffer(&ctx.errbuf);
 	sem.semstate = &ctx;
@@ -516,7 +516,7 @@ handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 	sem.array_start = oauth_json_array_start;
 	sem.scalar = oauth_json_scalar;
 
-	err = pg_parse_json(&lex, &sem);
+	err = pg_parse_json(lex, &sem);
 
 	if (err == JSON_SEM_ACTION_FAILED)
 	{
@@ -535,7 +535,7 @@ handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 		}
 	}
 	else if (err != JSON_SUCCESS)
-		errmsg = json_errdetail(err, &lex);
+		errmsg = json_errdetail(err, lex);
 
 	if (errmsg)
 		libpq_append_conn_error(conn,
@@ -544,7 +544,7 @@ handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 
 	/* Don't need the error buffer or the JSON lexer anymore. */
 	termPQExpBuffer(&ctx.errbuf);
-	freeJsonLexContext(&lex);
+	freeJsonLexContext(lex);
 
 	if (errmsg)
 		goto cleanup;

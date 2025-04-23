@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	char		buff[BUFSIZE];
 	FILE	   *json_file;
 	JsonParseErrorType result;
-	JsonLexContext lex;
+	JsonLexContext *lex;
 	StringInfoData json;
 	int			n_read;
 	size_t		chunk_size = DEFAULT_CHUNK_SIZE;
@@ -97,6 +97,10 @@ main(int argc, char **argv)
 	int			ret = 0;
 
 	pg_logging_init(argv[0]);
+
+	lex = calloc(1, sizeof(JsonLexContext));
+	if (!lex)
+		pg_fatal("out of memory");
 
 	while ((c = getopt(argc, argv, "c:os")) != -1)
 	{
@@ -113,7 +117,7 @@ main(int argc, char **argv)
 			case 's':			/* do semantic processing */
 				testsem = &sem;
 				sem.semstate = palloc(sizeof(struct DoState));
-				((struct DoState *) sem.semstate)->lex = &lex;
+				((struct DoState *) sem.semstate)->lex = lex;
 				((struct DoState *) sem.semstate)->buf = makeStringInfo();
 				need_strings = true;
 				break;
@@ -131,8 +135,8 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	makeJsonLexContextIncremental(&lex, PG_UTF8, need_strings);
-	setJsonLexContextOwnsTokens(&lex, lex_owns_tokens);
+	makeJsonLexContextIncremental(lex, PG_UTF8, need_strings);
+	setJsonLexContextOwnsTokens(lex, lex_owns_tokens);
 	initStringInfo(&json);
 
 	if ((json_file = fopen(testfile, PG_BINARY_R)) == NULL)
@@ -165,12 +169,12 @@ main(int argc, char **argv)
 		bytes_left -= n_read;
 		if (bytes_left > 0)
 		{
-			result = pg_parse_json_incremental(&lex, testsem,
+			result = pg_parse_json_incremental(lex, testsem,
 											   json.data, n_read,
 											   false);
 			if (result != JSON_INCOMPLETE)
 			{
-				fprintf(stderr, "%s\n", json_errdetail(result, &lex));
+				fprintf(stderr, "%s\n", json_errdetail(result, lex));
 				ret = 1;
 				goto cleanup;
 			}
@@ -178,12 +182,12 @@ main(int argc, char **argv)
 		}
 		else
 		{
-			result = pg_parse_json_incremental(&lex, testsem,
+			result = pg_parse_json_incremental(lex, testsem,
 											   json.data, n_read,
 											   true);
 			if (result != JSON_SUCCESS)
 			{
-				fprintf(stderr, "%s\n", json_errdetail(result, &lex));
+				fprintf(stderr, "%s\n", json_errdetail(result, lex));
 				ret = 1;
 				goto cleanup;
 			}
@@ -195,8 +199,9 @@ main(int argc, char **argv)
 
 cleanup:
 	fclose(json_file);
-	freeJsonLexContext(&lex);
+	freeJsonLexContext(lex);
 	free(json.data);
+	free(lex);
 
 	return ret;
 }
