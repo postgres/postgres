@@ -34,11 +34,13 @@ sub psql_fails_like
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	my ($node, $sql, $expected_stderr, $test_name) = @_;
+	my ($node, $sql, $expected_stderr, $test_name, $replication) = @_;
 
-	# Use the context of a WAL sender, some of the tests rely on that.
+	# Use the context of a WAL sender, if requested by the caller.
+	$replication = '' unless defined($replication);
+
 	my ($ret, $stdout, $stderr) =
-	  $node->psql('postgres', $sql, replication => 'database');
+	  $node->psql('postgres', $sql, replication => $replication);
 
 	isnt($ret, 0, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
@@ -79,7 +81,7 @@ psql_fails_like(
 	$node,
 	'START_REPLICATION 0/0',
 	qr/unexpected PQresultStatus: 8$/,
-	'handling of unexpected PQresultStatus');
+	'handling of unexpected PQresultStatus', 'database');
 
 # test \timing
 psql_like(
