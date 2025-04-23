@@ -114,6 +114,7 @@ tap_tests = [
   't/010_change_key_provider.pl',
   't/011_unlogged_tables.pl',
   't/012_replication.pl',
+  't/013_crash_recovery.pl',
 ]
 
 tests += {
