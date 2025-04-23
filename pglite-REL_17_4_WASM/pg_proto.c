@@ -250,6 +250,8 @@
 		     */
 PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
+            send_ready_for_query = false;
+            ignore_till_sync = false;
             break;
 
 	    case 'd':			/* copy data */

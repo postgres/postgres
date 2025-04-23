@@ -285,7 +285,7 @@ startup_auth() {
         PDEBUG("# 285: sending auth request");
         //ClientAuthentication(MyProcPort);
     	discard_input();
-	    
+
 ClientAuthInProgress = true;
         md5Salt[0]=0x01;
         md5Salt[1]=0x23;
@@ -592,14 +592,17 @@ incoming:
         }
         #endif
 
-        if (!ignore_till_sync)
+        if (!ignore_till_sync) {
+            /* initially, or after error */
             send_ready_for_query = true;
-
-        if (ignore_till_sync && firstchar != EOF) {
-            puts("@@@@@@@@@@@@@ 562 TODO: postgres.c 	4684 :	continue");
-        } else { /* process notifications (ASYNC) */
-            if (notifyInterruptPending) {               PDEBUG("# 565: @@@ has notification @@@@\n");
+            if (notifyInterruptPending)
                ProcessClientReadInterrupt(true);
+        } else {
+            /* ignoring till sync will skip all pipeline */
+            if (firstchar != EOF) {
+                if (firstchar != 'S') {
+                    continue;
+                }
             }
         }
 
