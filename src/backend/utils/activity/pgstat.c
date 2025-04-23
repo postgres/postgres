@@ -730,10 +730,7 @@ pgstat_report_stat(bool force)
 		}
 
 		if (!do_flush)
-		{
-			Assert(pending_since == 0);
 			return 0;
-		}
 	}
 
 	/*
