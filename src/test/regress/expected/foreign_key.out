@@ -1903,20 +1903,20 @@ ALTER TABLE fk_notpartitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_partitione
 -- Constraint will be invalid.
 SELECT conname, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
-            conname             | convalidated 
---------------------------------+--------------
- fk_notpartitioned_fk_a_b_fkey  | f
- fk_notpartitioned_fk_a_b_fkey1 | f
+             conname             | convalidated 
+---------------------------------+--------------
+ fk_notpartitioned_fk_a_b_fkey   | f
+ fk_notpartitioned_fk_a_b_fkey_1 | f
 (2 rows)
 
 ALTER TABLE fk_notpartitioned_fk VALIDATE CONSTRAINT fk_notpartitioned_fk_a_b_fkey;
 -- All constraints are now valid.
 SELECT conname, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
-            conname             | convalidated 
---------------------------------+--------------
- fk_notpartitioned_fk_a_b_fkey  | t
- fk_notpartitioned_fk_a_b_fkey1 | t
+             conname             | convalidated 
+---------------------------------+--------------
+ fk_notpartitioned_fk_a_b_fkey   | t
+ fk_notpartitioned_fk_a_b_fkey_1 | t
 (2 rows)
 
 DROP TABLE fk_notpartitioned_fk, fk_partitioned_pk;
@@ -2589,40 +2589,40 @@ INSERT into pk VALUES (1), (1000), (2000), (3000), (4000), (4500);
 INSERT into fk VALUES (1), (1000), (2000), (3000), (4000), (4500);
 -- should fail: referencing value present
 DELETE FROM pk WHERE a = 1;
-ERROR:  update or delete on table "pk1" violates foreign key constraint "fk_a_fkey1" on table "fk"
+ERROR:  update or delete on table "pk1" violates foreign key constraint "fk_a_fkey_1" on table "fk"
 DETAIL:  Key (a)=(1) is still referenced from table "fk".
 DELETE FROM pk WHERE a = 1000;
-ERROR:  update or delete on table "pk2" violates foreign key constraint "fk_a_fkey2" on table "fk"
+ERROR:  update or delete on table "pk2" violates foreign key constraint "fk_a_fkey_2" on table "fk"
 DETAIL:  Key (a)=(1000) is still referenced from table "fk".
 DELETE FROM pk WHERE a = 2000;
-ERROR:  update or delete on table "pk3" violates foreign key constraint "fk_a_fkey3" on table "fk"
+ERROR:  update or delete on table "pk3" violates foreign key constraint "fk_a_fkey_3" on table "fk"
 DETAIL:  Key (a)=(2000) is still referenced from table "fk".
 DELETE FROM pk WHERE a = 3000;
-ERROR:  update or delete on table "pk4" violates foreign key constraint "fk_a_fkey4" on table "fk"
+ERROR:  update or delete on table "pk4" violates foreign key constraint "fk_a_fkey_4" on table "fk"
 DETAIL:  Key (a)=(3000) is still referenced from table "fk".
 DELETE FROM pk WHERE a = 4000;
-ERROR:  update or delete on table "pk51" violates foreign key constraint "fk_a_fkey6" on table "fk"
+ERROR:  update or delete on table "pk51" violates foreign key constraint "fk_a_fkey_6" on table "fk"
 DETAIL:  Key (a)=(4000) is still referenced from table "fk".
 DELETE FROM pk WHERE a = 4500;
-ERROR:  update or delete on table "pk52" violates foreign key constraint "fk_a_fkey7" on table "fk"
+ERROR:  update or delete on table "pk52" violates foreign key constraint "fk_a_fkey_7" on table "fk"
 DETAIL:  Key (a)=(4500) is still referenced from table "fk".
 UPDATE pk SET a = 2 WHERE a = 1;
-ERROR:  update or delete on table "pk1" violates foreign key constraint "fk_a_fkey1" on table "fk"
+ERROR:  update or delete on table "pk1" violates foreign key constraint "fk_a_fkey_1" on table "fk"
 DETAIL:  Key (a)=(1) is still referenced from table "fk".
 UPDATE pk SET a = 1002 WHERE a = 1000;
-ERROR:  update or delete on table "pk2" violates foreign key constraint "fk_a_fkey2" on table "fk"
+ERROR:  update or delete on table "pk2" violates foreign key constraint "fk_a_fkey_2" on table "fk"
 DETAIL:  Key (a)=(1000) is still referenced from table "fk".
 UPDATE pk SET a = 2002 WHERE a = 2000;
-ERROR:  update or delete on table "pk3" violates foreign key constraint "fk_a_fkey3" on table "fk"
+ERROR:  update or delete on table "pk3" violates foreign key constraint "fk_a_fkey_3" on table "fk"
 DETAIL:  Key (a)=(2000) is still referenced from table "fk".
 UPDATE pk SET a = 3002 WHERE a = 3000;
-ERROR:  update or delete on table "pk4" violates foreign key constraint "fk_a_fkey4" on table "fk"
+ERROR:  update or delete on table "pk4" violates foreign key constraint "fk_a_fkey_4" on table "fk"
 DETAIL:  Key (a)=(3000) is still referenced from table "fk".
 UPDATE pk SET a = 4002 WHERE a = 4000;
-ERROR:  update or delete on table "pk51" violates foreign key constraint "fk_a_fkey6" on table "fk"
+ERROR:  update or delete on table "pk51" violates foreign key constraint "fk_a_fkey_6" on table "fk"
 DETAIL:  Key (a)=(4000) is still referenced from table "fk".
 UPDATE pk SET a = 4502 WHERE a = 4500;
-ERROR:  update or delete on table "pk52" violates foreign key constraint "fk_a_fkey7" on table "fk"
+ERROR:  update or delete on table "pk52" violates foreign key constraint "fk_a_fkey_7" on table "fk"
 DETAIL:  Key (a)=(4500) is still referenced from table "fk".
 -- now they should work
 DELETE FROM fk;
@@ -2661,19 +2661,19 @@ CREATE TABLE dropfk (a int REFERENCES droppk);
 INSERT into dropfk VALUES (1), (1000), (1500), (2000);
 -- these should all fail
 ALTER TABLE droppk DETACH PARTITION droppk_d;
-ERROR:  removing partition "droppk_d" violates foreign key constraint "dropfk_a_fkey5"
+ERROR:  removing partition "droppk_d" violates foreign key constraint "dropfk_a_fkey_5"
 DETAIL:  Key (a)=(2000) is still referenced from table "dropfk".
 ALTER TABLE droppk2 DETACH PARTITION droppk2_d;
-ERROR:  removing partition "droppk2_d" violates foreign key constraint "dropfk_a_fkey4"
+ERROR:  removing partition "droppk2_d" violates foreign key constraint "dropfk_a_fkey_4"
 DETAIL:  Key (a)=(1500) is still referenced from table "dropfk".
 ALTER TABLE droppk DETACH PARTITION droppk1;
-ERROR:  removing partition "droppk1" violates foreign key constraint "dropfk_a_fkey1"
+ERROR:  removing partition "droppk1" violates foreign key constraint "dropfk_a_fkey_1"
 DETAIL:  Key (a)=(1) is still referenced from table "dropfk".
 ALTER TABLE droppk DETACH PARTITION droppk2;
-ERROR:  removing partition "droppk2" violates foreign key constraint "dropfk_a_fkey2"
+ERROR:  removing partition "droppk2" violates foreign key constraint "dropfk_a_fkey_2"
 DETAIL:  Key (a)=(1000) is still referenced from table "dropfk".
 ALTER TABLE droppk2 DETACH PARTITION droppk21;
-ERROR:  removing partition "droppk21" violates foreign key constraint "dropfk_a_fkey3"
+ERROR:  removing partition "droppk21" violates foreign key constraint "dropfk_a_fkey_3"
 DETAIL:  Key (a)=(1000) is still referenced from table "dropfk".
 -- dropping partitions is disallowed
 DROP TABLE droppk_d;
@@ -2742,15 +2742,15 @@ SELECT pg_describe_object('pg_constraint'::regclass, oid, 0), confrelid::regclas
 FROM pg_catalog.pg_constraint
 WHERE conrelid IN (SELECT relid FROM pg_partition_tree('fk'))
 ORDER BY conrelid::regclass::text, conname;
-         pg_describe_object         | confrelid |               case                
-------------------------------------+-----------+-----------------------------------
+         pg_describe_object         | confrelid |                case                
+------------------------------------+-----------+------------------------------------
  constraint fk_a_fkey on table fk   | pk        | TOP
- constraint fk_a_fkey1 on table fk  | pk1       | constraint fk_a_fkey on table fk
- constraint fk_a_fkey2 on table fk  | pk11      | constraint fk_a_fkey1 on table fk
- constraint fk_a_fkey3 on table fk  | pk2       | constraint fk_a_fkey on table fk
- constraint fk_a_fkey4 on table fk  | pk3       | constraint fk_a_fkey on table fk
- constraint fk_a_fkey5 on table fk  | pk31      | constraint fk_a_fkey4 on table fk
- constraint fk_a_fkey6 on table fk  | pk32      | constraint fk_a_fkey4 on table fk
+ constraint fk_a_fkey_1 on table fk | pk1       | constraint fk_a_fkey on table fk
+ constraint fk_a_fkey_2 on table fk | pk11      | constraint fk_a_fkey_1 on table fk
+ constraint fk_a_fkey_3 on table fk | pk2       | constraint fk_a_fkey on table fk
+ constraint fk_a_fkey_4 on table fk | pk3       | constraint fk_a_fkey on table fk
+ constraint fk_a_fkey_5 on table fk | pk31      | constraint fk_a_fkey_4 on table fk
+ constraint fk_a_fkey_6 on table fk | pk32      | constraint fk_a_fkey_4 on table fk
  constraint fk_a_fkey on table fk1  | pk        | constraint fk_a_fkey on table fk
  constraint fk_a_fkey on table fk11 | pk        | constraint fk_a_fkey on table fk1
  constraint fk_a_fkey on table fk2  | pk        | constraint fk_a_fkey on table fk
@@ -2853,10 +2853,10 @@ CREATE TABLE pt1 PARTITION OF pt1_2 FOR VALUES IN (1);
 CREATE TABLE pt2 PARTITION OF pt1_2 FOR VALUES IN (2);
 CREATE TABLE ref(f1 int, f2 int, f3 int);
 ALTER TABLE ref ADD FOREIGN KEY(f1,f2) REFERENCES pt;
-ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey1
+ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey_1
   DEFERRABLE INITIALLY DEFERRED;	-- fails
-ERROR:  cannot alter constraint "ref_f1_f2_fkey1" on relation "ref"
-DETAIL:  Constraint "ref_f1_f2_fkey1" is derived from constraint "ref_f1_f2_fkey" of relation "ref".
+ERROR:  cannot alter constraint "ref_f1_f2_fkey_1" on relation "ref"
+DETAIL:  Constraint "ref_f1_f2_fkey_1" is derived from constraint "ref_f1_f2_fkey" of relation "ref".
 HINT:  You may alter the constraint it derives from instead.
 ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey
   DEFERRABLE INITIALLY DEFERRED;
@@ -2958,7 +2958,7 @@ ALTER TABLE fk ADD FOREIGN KEY (a) REFERENCES pk ON UPDATE RESTRICT ON DELETE RE
 CREATE TABLE fk_d PARTITION OF fk DEFAULT;
 INSERT INTO fk VALUES (20), (30);
 DELETE FROM pk WHERE a = 20;
-ERROR:  update or delete on table "pk11" violates RESTRICT setting of foreign key constraint "fk_a_fkey2" on table "fk"
+ERROR:  update or delete on table "pk11" violates RESTRICT setting of foreign key constraint "fk_a_fkey_2" on table "fk"
 DETAIL:  Key (a)=(20) is referenced from table "fk".
 UPDATE pk SET a = 90 WHERE a = 30;
 ERROR:  update or delete on table "pk" violates RESTRICT setting of foreign key constraint "fk_a_fkey" on table "fk"
@@ -3306,7 +3306,7 @@ INSERT INTO fk_r_1 (id, p_id, p_jd) VALUES (2, 1, 2); -- should fail
 ERROR:  insert or update on table "fk_r_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey"
 DETAIL:  Key (p_id, p_jd)=(1, 2) is not present in table "fk_p".
 DELETE FROM fk_p; -- should fail
-ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_1_p_id_p_jd_fkey1" on table "fk_r_1"
+ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey_7" on table "fk_r_1"
 DETAIL:  Key (id, jd)=(1, 1) is still referenced from table "fk_r_1".
 ALTER TABLE fk_r ATTACH PARTITION fk_r_1 FOR VALUES IN (1);
 ALTER TABLE fk_r ATTACH PARTITION fk_r_2 FOR VALUES IN (2);
@@ -3326,13 +3326,13 @@ Foreign-key constraints:
 Number of partitions: 1 (Use \d+ to list them.)
 
 DELETE FROM fk_p; -- should fail
-ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey2" on table "fk_r"
+ERROR:  update or delete on table "fk_p_1_1" violates foreign key constraint "fk_r_p_id_p_jd_fkey_2" on table "fk_r"
 DETAIL:  Key (id, jd)=(1, 1) is still referenced from table "fk_r".
 -- these should all fail
 ALTER TABLE fk_r_1 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
 ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey" of relation "fk_r_1"
-ALTER TABLE fk_r DROP CONSTRAINT fk_r_p_id_p_jd_fkey1;
-ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey1" of relation "fk_r"
+ALTER TABLE fk_r DROP CONSTRAINT fk_r_p_id_p_jd_fkey_1;
+ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey_1" of relation "fk_r"
 ALTER TABLE fk_r_2 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
 ERROR:  cannot drop inherited constraint "fk_r_p_id_p_jd_fkey" of relation "fk_r_2"
 SET client_min_messages TO warning;

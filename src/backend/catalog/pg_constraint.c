@@ -495,6 +495,8 @@ ConstraintNameExists(const char *conname, Oid namespaceid)
  * name1, name2, and label are used the same way as for makeObjectName(),
  * except that the label can't be NULL; digits will be appended to the label
  * if needed to create a name that is unique within the specified namespace.
+ * If the given label is empty, we only consider names that include at least
+ * one added digit.
  *
  * 'others' can be a list of string names already chosen within the current
  * command (but not yet reflected into the catalogs); we will not choose
@@ -523,8 +525,11 @@ ChooseConstraintName(const char *name1, const char *name2,
 
 	conDesc = table_open(ConstraintRelationId, AccessShareLock);
 
-	/* try the unmodified label first */
-	strlcpy(modlabel, label, sizeof(modlabel));
+	/* try the unmodified label first, unless it's empty */
+	if (label[0] != '\0')
+		strlcpy(modlabel, label, sizeof(modlabel));
+	else
+		snprintf(modlabel, sizeof(modlabel), "%s%d", label, ++pass);
 
 	for (;;)
 	{

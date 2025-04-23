@@ -57,7 +57,7 @@ step s2i: insert into pfk values (1);
 step s1d: delete from ppk where a = 1; <waiting ...>
 step s2c: commit;
 step s1d: <... completed>
-ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey1" on table "pfk"
+ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey_1" on table "pfk"
 step s1c: commit;
 
 starting permutation: s1b s2bs s2i s1d s2c s1c
@@ -72,5 +72,5 @@ step s2i: insert into pfk values (1);
 step s1d: delete from ppk where a = 1; <waiting ...>
 step s2c: commit;
 step s1d: <... completed>
-ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey1" on table "pfk"
+ERROR:  update or delete on table "ppk1" violates foreign key constraint "pfk_a_fkey_1" on table "pfk"
 step s1c: commit;

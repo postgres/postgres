@@ -2017,7 +2017,7 @@ CREATE TABLE pt1 PARTITION OF pt1_2 FOR VALUES IN (1);
 CREATE TABLE pt2 PARTITION OF pt1_2 FOR VALUES IN (2);
 CREATE TABLE ref(f1 int, f2 int, f3 int);
 ALTER TABLE ref ADD FOREIGN KEY(f1,f2) REFERENCES pt;
-ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey1
+ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey_1
   DEFERRABLE INITIALLY DEFERRED;	-- fails
 ALTER TABLE ref ALTER CONSTRAINT ref_f1_f2_fkey
   DEFERRABLE INITIALLY DEFERRED;
@@ -2334,7 +2334,7 @@ DELETE FROM fk_p; -- should fail
 
 -- these should all fail
 ALTER TABLE fk_r_1 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
-ALTER TABLE fk_r DROP CONSTRAINT fk_r_p_id_p_jd_fkey1;
+ALTER TABLE fk_r DROP CONSTRAINT fk_r_p_id_p_jd_fkey_1;
 ALTER TABLE fk_r_2 DROP CONSTRAINT fk_r_p_id_p_jd_fkey;
 
 SET client_min_messages TO warning;

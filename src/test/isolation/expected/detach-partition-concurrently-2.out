@@ -41,7 +41,7 @@ a
 
 step s3i1: INSERT INTO d_lp_fk_r VALUES (1);
 step s2d: ALTER TABLE d_lp_fk DETACH PARTITION d_lp_fk_1 CONCURRENTLY;
-ERROR:  removing partition "d_lp_fk_1" violates foreign key constraint "d_lp_fk_r_a_fkey1"
+ERROR:  removing partition "d_lp_fk_1" violates foreign key constraint "d_lp_fk_r_a_fkey_1"
 step s1c: COMMIT;
 
 starting permutation: s1b s1s s3i2 s2d s1c

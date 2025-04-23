@@ -10712,14 +10712,16 @@ addFkConstraint(addFkConstraintSides fkside,
 
 	/*
 	 * Caller supplies us with a constraint name; however, it may be used in
-	 * this partition, so come up with a different one in that case.
+	 * this partition, so come up with a different one in that case.  Unless
+	 * truncation to NAMEDATALEN dictates otherwise, the new name will be the
+	 * supplied name with an underscore and digit(s) appended.
 	 */
 	if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
 							 RelationGetRelid(rel),
 							 constraintname))
-		conname = ChooseConstraintName(RelationGetRelationName(rel),
-									   ChooseForeignKeyConstraintNameAddition(fkconstraint->fk_attrs),
-									   "fkey",
+		conname = ChooseConstraintName(constraintname,
+									   NULL,
+									   "",
 									   RelationGetNamespace(rel), NIL);
 	else
 		conname = constraintname;

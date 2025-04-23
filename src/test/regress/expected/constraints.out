@@ -641,9 +641,9 @@ CREATE TABLE parted_fk_naming_1 (
 );
 ALTER TABLE parted_fk_naming ATTACH PARTITION parted_fk_naming_1 FOR VALUES IN ('1');
 SELECT conname FROM pg_constraint WHERE conrelid = 'parted_fk_naming_1'::regclass AND contype = 'f';
-            conname             
---------------------------------
- parted_fk_naming_1_id_abc_fkey
+    conname     
+----------------
+ dummy_constr_1
 (1 row)
 
 DROP TABLE parted_fk_naming;

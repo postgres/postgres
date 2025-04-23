@@ -2319,7 +2319,7 @@ UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-02-01', '2016-03-
 -- should fail:
 UPDATE temporal_partitioned_rng SET valid_at = daterange('2016-01-01', '2016-02-01')
   WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
-ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_fk_1" on table "temporal_partitioned_fk_rng2rng"
 DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
 --
 -- partitioned FK referenced deletes NO ACTION
@@ -2331,7 +2331,7 @@ INSERT INTO temporal_partitioned_fk_rng2rng (id, valid_at, parent_id) VALUES ('[
 DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-02-01', '2018-03-01');
 -- should fail:
 DELETE FROM temporal_partitioned_rng WHERE id = '[5,6)' AND valid_at = daterange('2018-01-01', '2018-02-01');
-ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_parent_id_valid_at_fkey" on table "temporal_partitioned_fk_rng2rng"
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_rng2rng_fk_1" on table "temporal_partitioned_fk_rng2rng"
 DETAIL:  Key (id, valid_at)=([5,6), [2018-01-01,2018-02-01)) is still referenced from table "temporal_partitioned_fk_rng2rng".
 --
 -- partitioned FK referenced updates CASCADE
@@ -2441,7 +2441,7 @@ UPDATE temporal_partitioned_mltrng SET valid_at = datemultirange(daterange('2016
 -- should fail:
 UPDATE temporal_partitioned_mltrng SET valid_at = datemultirange(daterange('2016-01-01', '2016-02-01'))
   WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
-ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_mltrng2mltrng_parent_id_valid_at_fkey1" on table "temporal_partitioned_fk_mltrng2mltrng"
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_mltrng2mltrng_fk_2" on table "temporal_partitioned_fk_mltrng2mltrng"
 DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_partitioned_fk_mltrng2mltrng".
 --
 -- partitioned FK referenced deletes NO ACTION
@@ -2453,7 +2453,7 @@ INSERT INTO temporal_partitioned_fk_mltrng2mltrng (id, valid_at, parent_id) VALU
 DELETE FROM temporal_partitioned_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-02-01', '2018-03-01'));
 -- should fail:
 DELETE FROM temporal_partitioned_mltrng WHERE id = '[5,6)' AND valid_at = datemultirange(daterange('2018-01-01', '2018-02-01'));
-ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_mltrng2mltrng_parent_id_valid_at_fkey1" on table "temporal_partitioned_fk_mltrng2mltrng"
+ERROR:  update or delete on table "tp1" violates foreign key constraint "temporal_partitioned_fk_mltrng2mltrng_fk_2" on table "temporal_partitioned_fk_mltrng2mltrng"
 DETAIL:  Key (id, valid_at)=([5,6), {[2018-01-01,2018-02-01)}) is still referenced from table "temporal_partitioned_fk_mltrng2mltrng".
 --
 -- partitioned FK referenced updates CASCADE
