@@ -190,7 +190,9 @@ GetAllKeyringProviders(Oid dbOid)
 void
 redo_key_provider_info(KeyringProviderRecordInFile *xlrec)
 {
+	LWLockAcquire(tde_provider_info_lock(), LW_EXCLUSIVE);
 	write_key_provider_info(xlrec, false);
+	LWLockRelease(tde_provider_info_lock());
 }
 
 static void
