@@ -25,10 +25,13 @@ DEPS=(
     libzstd-dev
     lz4
     mawk
-    meson
     perl
     pkgconf
     python3-dev
+    python3
+    python3-pip
+    python3-setuptools
+    python3-wheel
     systemtap-sdt-dev
     tcl-dev
     uuid-dev
@@ -51,6 +54,7 @@ sudo apt-get update
 sudo apt-get install -y ${DEPS[@]}
 
 bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+pip3 install meson
 
 # Vault
 wget -O - https://apt.releases.hashicorp.com/gpg | sudo tee /etc/apt/keyrings/hashicorp-archive-keyring.asc
