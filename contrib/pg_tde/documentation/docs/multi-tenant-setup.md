@@ -83,14 +83,14 @@ You must do these steps for every database where you have created the extension.
         The Vault server setup is out of scope of this document.
 
         ```sql
-        SELECT pg_tde_add_database_key_provider_vault_v2('provider-name','root_token','url','mount','ca_path');
+        SELECT pg_tde_add_database_key_provider_vault_v2('provider-name','secret_token','url','mount','ca_path');
         ``` 
 
         where: 
 
         * `url` is the URL of the Vault server
         * `mount` is the mount point where the keyring should store the keys
-        * `root_token` is an access token with read and write access to the above mount point
+        * `secret_token` is an access token with read and write access to the above mount point
         * [optional] `ca_path` is the path of the CA file used for SSL verification
 
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
