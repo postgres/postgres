@@ -14,6 +14,7 @@ import sys
 import time
 import urllib.parse
 from collections import defaultdict
+from typing import Dict
 
 
 class OAuthHandler(http.server.BaseHTTPRequestHandler):
@@ -23,7 +24,7 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     documentation for BaseHTTPRequestHandler.
     """
 
-    JsonObject = dict[str, object]  # TypeAlias is not available until 3.10
+    JsonObject = Dict[str, object]  # TypeAlias is not available until 3.10
 
     def _check_issuer(self):
         """
@@ -35,14 +36,16 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
         )
         self._parameterized = self.path.startswith("/param/")
 
+        # Strip off the magic path segment. (The more readable
+        # str.removeprefix()/removesuffix() aren't available until Py3.9.)
         if self._alt_issuer:
             # The /alternate issuer uses IETF-style .well-known URIs.
             if self.path.startswith("/.well-known/"):
-                self.path = self.path.removesuffix("/alternate")
+                self.path = self.path[: -len("/alternate")]
             else:
-                self.path = self.path.removeprefix("/alternate")
+                self.path = self.path[len("/alternate") :]
         elif self._parameterized:
-            self.path = self.path.removeprefix("/param")
+            self.path = self.path[len("/param") :]
 
     def _check_authn(self):
         """
@@ -58,8 +61,10 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
         if method != "Basic":
             raise RuntimeError(f"client used {method} auth; expected Basic")
 
-        username = urllib.parse.quote_plus(self.client_id)
-        password = urllib.parse.quote_plus(secret)
+        # TODO: Remove "~" from the safe list after Py3.6 support is removed.
+        # 3.7 does this by default.
+        username = urllib.parse.quote_plus(self.client_id, safe="~")
+        password = urllib.parse.quote_plus(secret, safe="~")
         expected_creds = f"{username}:{password}"
 
         if creds.encode() != base64.b64encode(expected_creds.encode()):
@@ -83,7 +88,7 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
 
         self._send_json(resp)
 
-    def _parse_params(self) -> dict[str, str]:
+    def _parse_params(self) -> Dict[str, str]:
         """
         Parses apart the form-urlencoded request body and returns the resulting
         dict. For use by do_POST().
@@ -316,11 +321,14 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
         return resp
 
     def token(self) -> JsonObject:
-        if err := self._get_param("error_code", None):
+        err = self._get_param("error_code", None)
+        if err:
             self._response_code = self._get_param("error_status", 400)
 
             resp = {"error": err}
-            if desc := self._get_param("error_desc", ""):
+
+            desc = self._get_param("error_desc", "")
+            if desc:
                 resp["error_description"] = desc
 
             return resp
