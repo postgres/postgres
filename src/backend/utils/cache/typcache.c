@@ -2395,7 +2395,10 @@ InvalidateCompositeTypeCacheEntry(TypeCacheEntry *typentry)
 	/* Reset equality/comparison/hashing validity information */
 	typentry->flags &= ~TCFLAGS_OPERATOR_FLAGS;
 
-	/* Call delete_rel_type_cache() if we actually cleared something */
+	/*
+	 * Call delete_rel_type_cache_if_needed() if we actually cleared
+	 * something.
+	 */
 	if (hadTupDescOrOpclass)
 		delete_rel_type_cache_if_needed(typentry);
 }
@@ -2542,7 +2545,7 @@ TypeCacheTypCallback(Datum arg, int cacheid, uint32 hashvalue)
 							 TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS);
 
 		/*
-		 * Call delete_rel_type_cache() if we cleaned
+		 * Call delete_rel_type_cache_if_needed() if we cleaned
 		 * TCFLAGS_HAVE_PG_TYPE_DATA flag previously.
 		 */
 		if (hadPgTypeData)
@@ -2576,8 +2579,17 @@ TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue)
 	hash_seq_init(&status, TypeCacheHash);
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
+		bool		hadOpclass = (typentry->flags & TCFLAGS_OPERATOR_FLAGS);
+
 		/* Reset equality/comparison/hashing validity information */
 		typentry->flags &= ~TCFLAGS_OPERATOR_FLAGS;
+
+		/*
+		 * Call delete_rel_type_cache_if_needed() if we actually cleared some
+		 * of TCFLAGS_OPERATOR_FLAGS.
+		 */
+		if (hadOpclass)
+			delete_rel_type_cache_if_needed(typentry);
 	}
 }
 
