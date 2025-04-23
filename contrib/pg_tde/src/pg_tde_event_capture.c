@@ -14,6 +14,7 @@
 #include "fmgr.h"
 #include "utils/rel.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "catalog/pg_class.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
@@ -149,12 +150,53 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	else if (IsA(parsetree, CreateStmt))
 	{
 		CreateStmt *stmt = castNode(CreateStmt, parsetree);
+		bool		foundAccessMethod = false;
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
 
-		if (shouldEncryptTable(stmt->accessMethod))
+
+		if (stmt->accessMethod)
+		{
+			foundAccessMethod = true;
+			if (strcmp(stmt->accessMethod, "tde_heap") == 0)
+			{
+				tdeCurrentCreateEvent.encryptMode = true;
+			}
+		}
+		else if (stmt->partbound)
+		{
+			/*
+			 * If no access method is specified, and this is a partition of a
+			 * parent table, access method can be inherited from the parent
+			 * table if it has one set.
+			 *
+			 * AccessExclusiveLock might seem excessive, but it's what
+			 * DefineRelation() will take on any partitioned parent relation
+			 * in this transaction anyway.
+			 */
+			Oid			parentOid;
+			Oid			parentAmOid;
+
+			Assert(list_length(stmt->inhRelations) == 1);
+
+			parentOid = RangeVarGetRelid(linitial(stmt->inhRelations),
+										 AccessExclusiveLock,
+										 false);
+			parentAmOid = get_rel_relam(parentOid);
+			foundAccessMethod = parentAmOid != InvalidOid;
+
+			if (foundAccessMethod && parentAmOid == get_tde_table_am_oid())
+			{
+				tdeCurrentCreateEvent.encryptMode = true;
+			}
+		}
+
+		if (!foundAccessMethod
+			&& strcmp(default_table_access_method, "tde_heap") == 0)
+		{
 			tdeCurrentCreateEvent.encryptMode = true;
+		}
 
 		checkEncryptionStatus();
 	}
