@@ -1747,4 +1747,15 @@ ANALYZE sb_2;
 EXPLAIN (COSTS OFF) -- Choose hash join
 SELECT * FROM sb_1 a, sb_2 b WHERE a.x = b.x AND a.y = b.y AND a.z = b.z;
 
+-- Check that the Hash Join bucket size estimator detects equal clauses correctly.
+SET enable_nestloop = 'off';
+SET enable_mergejoin = 'off';
+EXPLAIN (COSTS OFF)
+SELECT FROM sb_1 LEFT JOIN sb_2 ON (sb_2.x=sb_1.x) AND (sb_1.x=sb_2.x);
+EXPLAIN (COSTS OFF)
+SELECT FROM sb_1 LEFT JOIN sb_2
+   ON (sb_2.x=sb_1.x) AND (sb_1.x=sb_2.x) AND (sb_1.y=sb_2.y);
+RESET enable_nestloop;
+RESET enable_mergejoin;
+
 DROP TABLE sb_1, sb_2 CASCADE;

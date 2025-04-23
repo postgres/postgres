@@ -3850,6 +3850,8 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 			if (bms_get_singleton_member(relids, &relid) &&
 				root->simple_rel_array[relid]->statlist != NIL)
 			{
+				bool		is_duplicate = false;
+
 				/*
 				 * This inner-side expression references only one relation.
 				 * Extended statistics on this clause can exist.
@@ -3880,11 +3882,61 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 					 */
 					continue;
 
-				varinfo = (GroupVarInfo *) palloc(sizeof(GroupVarInfo));
+				/*
+				 * We're going to add the new clause to the varinfos list.  We
+				 * might re-use add_unique_group_var(), but we don't do so for
+				 * two reasons.
+				 *
+				 * 1) We must keep the origin_rinfos list ordered exactly the
+				 * same way as varinfos.
+				 *
+				 * 2) add_unique_group_var() is designed for
+				 * estimate_num_groups(), where a larger number of groups is
+				 * worse.   While estimating the number of hash buckets, we
+				 * have the opposite: a lesser number of groups is worse.
+				 * Therefore, we don't have to remove "known equal" vars: the
+				 * removed var may valuably contribute to the multivariate
+				 * statistics to grow the number of groups.
+				 */
+
+				/*
+				 * Clear nullingrels to correctly match hash keys.  See
+				 * add_unique_group_var()'s comment for details.
+				 */
+				expr = remove_nulling_relids(expr, root->outer_join_rels, NULL);
+
+				/*
+				 * Detect and exclude exact duplicates from the list of hash
+				 * keys (like add_unique_group_var does).
+				 */
+				foreach(lc1, varinfos)
+				{
+					varinfo = (GroupVarInfo *) lfirst(lc1);
+
+					if (!equal(expr, varinfo->var))
+						continue;
+
+					is_duplicate = true;
+					break;
+				}
+
+				if (is_duplicate)
+				{
+					/*
+					 * Skip exact duplicates. Adding them to the otherclauses
+					 * list also doesn't make sense.
+					 */
+					continue;
+				}
+
+				/*
+				 * Initialize GroupVarInfo.  We only use it to call
+				 * estimate_multivariate_ndistinct(), which doesn't care about
+				 * ndistinct and isdefault fields.  Thus, skip these fields.
+				 */
+				varinfo = (GroupVarInfo *) palloc0(sizeof(GroupVarInfo));
 				varinfo->var = expr;
 				varinfo->rel = root->simple_rel_array[relid];
-				varinfo->ndistinct = 0.0;
-				varinfo->isdefault = false;
 				varinfos = lappend(varinfos, varinfo);
 
 				/*
@@ -3894,8 +3946,10 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 				origin_rinfos = lappend(origin_rinfos, rinfo);
 			}
 			else
+			{
 				/* This clause can't be estimated with extended statistics */
 				otherclauses = lappend(otherclauses, rinfo);
+			}
 
 			clauses = foreach_delete_current(clauses, lc);
 		}

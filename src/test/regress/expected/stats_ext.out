@@ -3427,4 +3427,32 @@ SELECT * FROM sb_1 a, sb_2 b WHERE a.x = b.x AND a.y = b.y AND a.z = b.z;
          ->  Seq Scan on sb_2 b
 (5 rows)
 
+-- Check that the Hash Join bucket size estimator detects equal clauses correctly.
+SET enable_nestloop = 'off';
+SET enable_mergejoin = 'off';
+EXPLAIN (COSTS OFF)
+SELECT FROM sb_1 LEFT JOIN sb_2 ON (sb_2.x=sb_1.x) AND (sb_1.x=sb_2.x);
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Hash Left Join
+   Hash Cond: ((sb_1.x = sb_2.x) AND (sb_1.x = sb_2.x))
+   ->  Seq Scan on sb_1
+   ->  Hash
+         ->  Seq Scan on sb_2
+(5 rows)
+
+EXPLAIN (COSTS OFF)
+SELECT FROM sb_1 LEFT JOIN sb_2
+   ON (sb_2.x=sb_1.x) AND (sb_1.x=sb_2.x) AND (sb_1.y=sb_2.y);
+                                  QUERY PLAN                                  
+------------------------------------------------------------------------------
+ Hash Left Join
+   Hash Cond: ((sb_1.x = sb_2.x) AND (sb_1.y = sb_2.y) AND (sb_1.x = sb_2.x))
+   ->  Seq Scan on sb_1
+   ->  Hash
+         ->  Seq Scan on sb_2
+(5 rows)
+
+RESET enable_nestloop;
+RESET enable_mergejoin;
 DROP TABLE sb_1, sb_2 CASCADE;
