@@ -603,7 +603,6 @@ pgstat_report_stat(bool force)
 		!have_slrustats &&
 		!pgstat_have_pending_wal())
 	{
-		Assert(pending_since == 0);
 		return 0;
 	}
 
