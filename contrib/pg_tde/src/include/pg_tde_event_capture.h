@@ -11,23 +11,14 @@
 #include "nodes/parsenodes.h"
 #include "access/transam.h"
 
-typedef struct TdeCreateEvent
+typedef enum
 {
-	FullTransactionId tid;		/* transaction id of the last event trigger,
-								 * or 0 */
-	bool		encryptMode;	/* true when the table uses encryption */
-	Oid			baseTableOid;	/* Oid of table on which index is being
-								 * created on. For create table statement this
-								 * contains InvalidOid */
-	RangeVar   *relation;		/* Reference to the parsed relation from
-								 * create statement */
-	bool		alterAccessMethodMode;	/* during ALTER ... SET ACCESS METHOD,
-										 * new file permissions shouldn't be
-										 * based on earlier encryption status. */
-} TdeCreateEvent;
+	TDE_ENCRYPT_MODE_RETAIN = 0,
+	TDE_ENCRYPT_MODE_ENCRYPT,
+	TDE_ENCRYPT_MODE_PLAIN,
+} TDEEncryptMode;
 
 extern void TdeEventCaptureInit(void);
-extern TdeCreateEvent *GetCurrentTdeCreateEvent(void);
-extern void validateCurrentEventTriggerState(bool mightStartTransaction);
+extern TDEEncryptMode currentTdeEncryptModeValidated(void);
 
 #endif

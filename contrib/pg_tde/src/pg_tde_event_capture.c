@@ -37,20 +37,43 @@
 #include "access/tableam.h"
 #include "catalog/tde_global_space.h"
 
-/* Global variable that gets set at ddl start and cleard out at ddl end*/
-static TdeCreateEvent tdeCurrentCreateEvent = {.tid = {.value = 0}};
+typedef struct
+{
+	Node	   *parsetree;
+	TDEEncryptMode encryptMode;
+	Oid			rebuildSequencesFor;
+} TdeDdlEvent;
+
+static FullTransactionId ddlEventStackTid = {};
+static List *ddlEventStack = NIL;
 
 static Oid	get_db_oid(const char *name);
-static void reset_current_tde_create_event(void);
 static Oid	get_tde_table_am_oid(void);
 
 PG_FUNCTION_INFO_V1(pg_tde_ddl_command_start_capture);
 PG_FUNCTION_INFO_V1(pg_tde_ddl_command_end_capture);
 
-TdeCreateEvent *
-GetCurrentTdeCreateEvent(void)
+static TDEEncryptMode
+currentTdeEncryptMode(void)
 {
-	return &tdeCurrentCreateEvent;
+	if (ddlEventStack == NIL)
+		return TDE_ENCRYPT_MODE_RETAIN;
+	else
+		return ((TdeDdlEvent *) llast(ddlEventStack))->encryptMode;
+}
+
+/*
+ * Make sure that even if a statement failed, and an event trigger end
+ * trigger didn't fire, we don't accidentaly create encrypted files when
+ * we don't have to.
+ */
+TDEEncryptMode
+currentTdeEncryptModeValidated(void)
+{
+	if (!FullTransactionIdEquals(ddlEventStackTid, GetCurrentFullTransactionIdIfAny()))
+		return TDE_ENCRYPT_MODE_RETAIN;
+
+	return currentTdeEncryptMode();
 }
 
 static bool
@@ -74,7 +97,7 @@ checkPrincipalKeyConfigured(void)
 static void
 checkEncryptionStatus(void)
 {
-	if (tdeCurrentCreateEvent.encryptMode)
+	if (currentTdeEncryptMode() == TDE_ENCRYPT_MODE_ENCRYPT)
 	{
 		checkPrincipalKeyConfigured();
 	}
@@ -85,20 +108,36 @@ checkEncryptionStatus(void)
 	}
 }
 
-void
-validateCurrentEventTriggerState(bool mightStartTransaction)
+static void
+verify_event_stack(void)
 {
-	FullTransactionId tid = mightStartTransaction ? GetCurrentFullTransactionId() : GetCurrentFullTransactionIdIfAny();
+	FullTransactionId tid = GetCurrentFullTransactionId();
 
-	if (RecoveryInProgress())
+	if (!FullTransactionIdEquals(ddlEventStackTid, tid))
 	{
-		reset_current_tde_create_event();
+		ListCell   *lc;
+
+		foreach(lc, ddlEventStack)
+			pfree(lfirst(lc));
+
+		ddlEventStack = NIL;
+		ddlEventStackTid = tid;
 	}
-	else if (tdeCurrentCreateEvent.tid.value != InvalidFullTransactionId.value && tid.value != tdeCurrentCreateEvent.tid.value)
-	{
-		/* There was a failed query, end event trigger didn't execute */
-		reset_current_tde_create_event();
-	}
+}
+
+static void
+push_event_stack(const TdeDdlEvent *event)
+{
+	MemoryContext oldCtx;
+	TdeDdlEvent *e;
+
+	verify_event_stack();
+
+	oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+	e = palloc_object(TdeDdlEvent);
+	*e = *event;
+	ddlEventStack = lappend(ddlEventStack, e);
+	MemoryContextSwitchTo(oldCtx);
 }
 
 /*
@@ -131,45 +170,36 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	{
 		IndexStmt  *stmt = castNode(IndexStmt, parsetree);
 		Relation	rel;
-
-		validateCurrentEventTriggerState(true);
-		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
+		TdeDdlEvent event = {.parsetree = parsetree};
 
 		rel = table_openrv(stmt->relation, AccessShareLock);
 
-		tdeCurrentCreateEvent.baseTableOid = rel->rd_id;
-
 		if (rel->rd_rel->relam == get_tde_table_am_oid())
 		{
-			/*
-			 * We are creating an index on an encrypted table so set the
-			 * global state.
-			 */
-			tdeCurrentCreateEvent.encryptMode = true;
+			event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+			checkPrincipalKeyConfigured();
 		}
+		else
+			event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 
 		/* Hold on to lock until end of transaction */
 		table_close(rel, NoLock);
 
-		if (tdeCurrentCreateEvent.encryptMode)
-			checkPrincipalKeyConfigured();
+		push_event_stack(&event);
 	}
 	else if (IsA(parsetree, CreateStmt))
 	{
 		CreateStmt *stmt = castNode(CreateStmt, parsetree);
 		bool		foundAccessMethod = false;
-
-		validateCurrentEventTriggerState(true);
-		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
-
+		TdeDdlEvent event = {.parsetree = parsetree};
 
 		if (stmt->accessMethod)
 		{
 			foundAccessMethod = true;
 			if (strcmp(stmt->accessMethod, "tde_heap") == 0)
-			{
-				tdeCurrentCreateEvent.encryptMode = true;
-			}
+				event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+			else
+				event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 		}
 		else if (stmt->partbound)
 		{
@@ -193,99 +223,90 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			parentAmOid = get_rel_relam(parentOid);
 			foundAccessMethod = parentAmOid != InvalidOid;
 
-			if (foundAccessMethod && parentAmOid == get_tde_table_am_oid())
+			if (foundAccessMethod)
 			{
-				tdeCurrentCreateEvent.encryptMode = true;
+				if (parentAmOid == get_tde_table_am_oid())
+					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+				else
+					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 			}
 		}
 
-		if (!foundAccessMethod
-			&& strcmp(default_table_access_method, "tde_heap") == 0)
+		if (!foundAccessMethod)
 		{
-			tdeCurrentCreateEvent.encryptMode = true;
+			if (strcmp(default_table_access_method, "tde_heap") == 0)
+				event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+			else
+				event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 		}
 
+		push_event_stack(&event);
 		checkEncryptionStatus();
 	}
 	else if (IsA(parsetree, CreateTableAsStmt))
 	{
 		CreateTableAsStmt *stmt = castNode(CreateTableAsStmt, parsetree);
-
-		validateCurrentEventTriggerState(true);
-		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
+		TdeDdlEvent event = {.parsetree = parsetree};
 
 		if (shouldEncryptTable(stmt->into->accessMethod))
-			tdeCurrentCreateEvent.encryptMode = true;
+			event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+		else
+			event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 
+		push_event_stack(&event);
 		checkEncryptionStatus();
 	}
 	else if (IsA(parsetree, AlterTableStmt))
 	{
 		AlterTableStmt *stmt = castNode(AlterTableStmt, parsetree);
 		ListCell   *lcmd;
-		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 		AlterTableCmd *setAccessMethod = NULL;
+		TdeDdlEvent event = {.parsetree = parsetree};
+		Oid			relid = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
-		validateCurrentEventTriggerState(true);
-		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
-
-		foreach(lcmd, stmt->cmds)
+		if (relid != InvalidOid)
 		{
-			AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
-
-			if (cmd->subtype == AT_SetAccessMethod)
-				setAccessMethod = cmd;
-		}
-
-		tdeCurrentCreateEvent.baseTableOid = relationId;
-
-		/*
-		 * With a SET ACCESS METHOD clause, use that as the basis for
-		 * decisions. But if it's not present, look up encryption status of
-		 * the table.
-		 */
-		if (setAccessMethod)
-		{
-			if (shouldEncryptTable(setAccessMethod->name))
-				tdeCurrentCreateEvent.encryptMode = true;
-
-			checkEncryptionStatus();
-
-			tdeCurrentCreateEvent.alterAccessMethodMode = true;
-		}
-		else
-		{
-			if (relationId != InvalidOid)
+			foreach(lcmd, stmt->cmds)
 			{
-				Relation	rel = relation_open(relationId, NoLock);
+				AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
+
+				if (cmd->subtype == AT_SetAccessMethod)
+					setAccessMethod = cmd;
+			}
+
+			/*
+			 * With a SET ACCESS METHOD clause, use that as the basis for
+			 * decisions. But if it's not present, look up encryption status
+			 * of the table.
+			 */
+			if (setAccessMethod)
+			{
+				event.rebuildSequencesFor = relid;
+
+				if (shouldEncryptTable(setAccessMethod->name))
+					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+				else
+					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
+			}
+			else
+			{
+				Relation	rel = relation_open(relid, AccessShareLock);
 
 				if (rel->rd_rel->relam == get_tde_table_am_oid())
 				{
 					/*
 					 * We are altering an encrypted table ALTER TABLE can
-					 * create possibly new files set the global state
+					 * create possibly new files set the global state.
 					 */
-					tdeCurrentCreateEvent.encryptMode = true;
+					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+					checkPrincipalKeyConfigured();
 				}
 
 				relation_close(rel, NoLock);
-
-				if (tdeCurrentCreateEvent.encryptMode)
-					checkPrincipalKeyConfigured();
 			}
-		}
-	}
-	else
-	{
-		if (!tdeCurrentCreateEvent.alterAccessMethodMode)
-		{
-			/*
-			 * Any other type of statement doesn't need TDE mode, except
-			 * during alter access method. To make sure that we have no
-			 * leftover setting from a previous error or something, we just
-			 * reset the status here.
-			 */
-			reset_current_tde_create_event();
+
+			push_event_stack(&event);
+			checkEncryptionStatus();
 		}
 	}
 
@@ -301,6 +322,7 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 {
 	EventTriggerData *trigdata;
 	Node	   *parsetree;
+	TdeDdlEvent *event;
 
 	/* Ensure this function is being called as an event trigger */
 	if (!CALLED_AS_EVENT_TRIGGER(fcinfo))	/* internal error */
@@ -310,15 +332,20 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 	trigdata = castNode(EventTriggerData, fcinfo->context);
 	parsetree = trigdata->parsetree;
 
-	if (IsA(parsetree, AlterTableStmt) && tdeCurrentCreateEvent.alterAccessMethodMode)
+	if (ddlEventStack == NIL || ((TdeDdlEvent *) llast(ddlEventStack))->parsetree != parsetree)
+		PG_RETURN_VOID();
+
+	event = (TdeDdlEvent *) llast(ddlEventStack);
+
+	if (event->rebuildSequencesFor != InvalidOid)
 	{
 		/*
 		 * sequences are not updated automatically so force rewrite by
 		 * updating their persistence to be the same as before.
 		 */
-		List	   *seqlist = getOwnedSequences(tdeCurrentCreateEvent.baseTableOid);
+		List	   *seqlist = getOwnedSequences(event->rebuildSequencesFor);
 		ListCell   *lc;
-		Relation	rel = relation_open(tdeCurrentCreateEvent.baseTableOid, NoLock);
+		Relation	rel = relation_open(event->rebuildSequencesFor, NoLock);
 		char		persistence = rel->rd_rel->relpersistence;
 
 		relation_close(rel, NoLock);
@@ -329,31 +356,12 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 
 			SequenceChangePersistence(seq_relid, persistence);
 		}
-
-		tdeCurrentCreateEvent.alterAccessMethodMode = false;
 	}
 
-	/*
-	 * All we need to do is to clear the event state. Except when we are in
-	 * alter access method mode, because during that, we have multiple nested
-	 * event trigger running. Reset should only be called in the end, when it
-	 * is set to false.
-	 */
-	if (!tdeCurrentCreateEvent.alterAccessMethodMode)
-	{
-		reset_current_tde_create_event();
-	}
+	ddlEventStack = list_delete_last(ddlEventStack);
+	pfree(event);
 
 	PG_RETURN_VOID();
-}
-
-static void
-reset_current_tde_create_event(void)
-{
-	tdeCurrentCreateEvent.encryptMode = false;
-	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
-	tdeCurrentCreateEvent.tid = InvalidFullTransactionId;
-	tdeCurrentCreateEvent.alterAccessMethodMode = false;
 }
 
 static Oid

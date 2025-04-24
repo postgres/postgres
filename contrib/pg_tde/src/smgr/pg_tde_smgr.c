@@ -41,40 +41,26 @@ tde_smgr_get_key(const RelFileLocatorBackend *smgr_rlocator)
 static bool
 tde_smgr_should_encrypt(const RelFileLocatorBackend *smgr_rlocator, RelFileLocator *old_locator)
 {
-	TdeCreateEvent *event;
-
 	/* Do not try to encrypt/decrypt catalog tables */
 	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
 		return false;
 
-	/*
-	 * Make sure that even if a statement failed, and an event trigger end
-	 * trigger didn't fire, we don't accidentaly create encrypted files when
-	 * we don't have to.
-	 */
-	validateCurrentEventTriggerState(false);
-
-	event = GetCurrentTdeCreateEvent();
-
-	/*
-	 * Can be many things, such as: CREATE TABLE ALTER TABLE SET ACCESS METHOD
-	 * ALTER TABLE something else on an encrypted table CREATE INDEX ...
-	 *
-	 * Every file has its own key, that makes logistics easier.
-	 */
-	if (event->encryptMode)
-		return true;
-
-	/* check if we had a key for the old locator, if there's one */
-	if (!event->alterAccessMethodMode && old_locator)
+	switch (currentTdeEncryptModeValidated())
 	{
-		RelFileLocatorBackend old_smgr_locator = {
-			.locator = *old_locator,
-			.backend = smgr_rlocator->backend,
-		};
-
-		if (GetSMGRRelationKey(old_smgr_locator))
+		case TDE_ENCRYPT_MODE_PLAIN:
+			return false;
+		case TDE_ENCRYPT_MODE_ENCRYPT:
 			return true;
+		case TDE_ENCRYPT_MODE_RETAIN:
+			if (old_locator)
+			{
+				RelFileLocatorBackend old_smgr_locator = {
+					.locator = *old_locator,
+					.backend = smgr_rlocator->backend,
+				};
+
+				return GetSMGRRelationKey(old_smgr_locator) != 0;
+			}
 	}
 
 	return false;
