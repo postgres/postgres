@@ -199,7 +199,6 @@ pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator)
 	if ((old_key = pg_tde_get_key_from_file(newrlocator, TDE_KEY_TYPE_SMGR)))
 	{
 		pfree(old_key);
-		LWLockRelease(lock_pk);
 		return;
 	}
 

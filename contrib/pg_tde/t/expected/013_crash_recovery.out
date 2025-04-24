@@ -31,7 +31,7 @@ ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';
 -- kill -9
 -- server start
 -- rotate wal key
-SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring', true);
+SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
  
@@ -48,7 +48,7 @@ INSERT INTO test_enc (x) VALUES (3), (4);
 -- server start
 -- check that pg_tde_save_principal_key_redo hasn't destroyed a WAL key created during the server start
 -- rotate wal key
-SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring', true);
+SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
  
@@ -75,3 +75,7 @@ TABLE test_enc;
  6
 (6 rows)
 
+CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;
+-- kill -9
+-- server start
+-- check redo of the smgr internal key creation when the key is on disk

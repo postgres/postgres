@@ -53,7 +53,7 @@ $node->start;
 
 PGTDE::append_to_result_file("-- rotate wal key");
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring', true);"
+	"SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring');"
 );
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('db_key_1', 'db_keyring');"
@@ -69,7 +69,7 @@ $node->start;
 
 PGTDE::append_to_result_file("-- rotate wal key");
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring', true);"
+	"SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring');"
 );
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('db_key_2', 'db_keyring');"
@@ -84,6 +84,16 @@ PGTDE::append_to_result_file(
 $node->start;
 
 PGTDE::psql($node, 'postgres', "TABLE test_enc;");
+
+PGTDE::psql($node, 'postgres',
+	"CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;");
+PGTDE::append_to_result_file("-- kill -9");
+$node->kill9;
+PGTDE::append_to_result_file("-- server start");
+PGTDE::append_to_result_file(
+	"-- check redo of the smgr internal key creation when the key is on disk"
+);
+$node->start;
 
 $node->stop;
 
