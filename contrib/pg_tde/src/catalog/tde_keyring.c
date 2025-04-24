@@ -190,6 +190,17 @@ cleanup_key_provider_info(Oid databaseId)
 	PathNameDeleteTemporaryFile(kp_info_path, false);
 }
 
+static char *
+required_text_argument(NullableDatum arg, const char *name)
+{
+	if (arg.isnull)
+		ereport(ERROR,
+				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("%s cannot be null", name));
+
+	return text_to_cstring(DatumGetTextPP(arg.value));
+}
+
 Datum
 pg_tde_change_database_key_provider(PG_FUNCTION_ARGS)
 {
@@ -210,14 +221,19 @@ pg_tde_change_global_key_provider(PG_FUNCTION_ARGS)
 static Datum
 pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 {
-	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *provider_type;
+	char	   *provider_name;
+	char	   *options;
 	int			olen;
 	KeyringProviderRecord provider;
+	GenericKeyring *keyring;
+
+	provider_type = required_text_argument(fcinfo->args[0], "provider type");
+	provider_name = required_text_argument(fcinfo->args[1], "provider name");
+	options = required_text_argument(fcinfo->args[2], "provider options");
 
 	/* reports error if not found */
-	GenericKeyring *keyring = GetKeyProviderByName(provider_name, dbOid);
+	keyring = GetKeyProviderByName(provider_name, dbOid);
 
 	olen = strlen(options);
 	if (olen >= sizeof(provider.options))
@@ -259,12 +275,16 @@ pg_tde_add_global_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 {
-	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
+	char	   *provider_type;
+	char	   *provider_name;
+	char	   *options;
 	int			nlen,
 				olen;
 	KeyringProviderRecord provider;
+
+	provider_type = required_text_argument(fcinfo->args[0], "provider type");
+	provider_name = required_text_argument(fcinfo->args[1], "provider name");
+	options = required_text_argument(fcinfo->args[2], "provider options");
 
 	nlen = strlen(provider_name);
 	if (nlen >= sizeof(provider.provider_name) - 1)
@@ -310,11 +330,14 @@ pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
 {
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
+	char	   *provider_name;
+	GenericKeyring *provider;
 	int			provider_id;
 	bool		provider_used;
 
+	provider_name = required_text_argument(fcinfo->args[0], "provider_name");
+
+	provider = GetKeyProviderByName(provider_name, db_oid);
 	if (provider == NULL)
 	{
 		ereport(ERROR, errmsg("Keyring provider not found"));

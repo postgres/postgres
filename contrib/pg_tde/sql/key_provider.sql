@@ -55,6 +55,26 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- Creating a file key provider fails if we can't open or create the file
 SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');
 
+-- Creating key providers fails if any required parameter is NULL
+SELECT pg_tde_add_database_key_provider(NULL, 'name', '{}');
+SELECT pg_tde_add_database_key_provider('file', NULL, '{}');
+SELECT pg_tde_add_database_key_provider('file', 'name', NULL);
+SELECT pg_tde_add_global_key_provider(NULL, 'name', '{}');
+SELECT pg_tde_add_global_key_provider('file', NULL, '{}');
+SELECT pg_tde_add_global_key_provider('file', 'name', NULL);
+
+-- Modifying key providers fails if any required parameter is NULL
+SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
+SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
+SELECT pg_tde_change_database_key_provider('file', 'file-keyring', NULL);
+SELECT pg_tde_change_global_key_provider(NULL, 'file-keyring', '{}');
+SELECT pg_tde_change_global_key_provider('file', NULL, '{}');
+SELECT pg_tde_change_global_key_provider('file', 'file-keyring', NULL);
+
+-- Deleting key providers fails if key name is NULL
+SELECT pg_tde_delete_database_key_provider(NULL);
+SELECT pg_tde_delete_global_key_provider(NULL);
+
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
 SELECT pg_tde_set_key_using_database_key_provider(NULL, 'file-keyring');

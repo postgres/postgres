@@ -163,6 +163,37 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- Creating a file key provider fails if we can't open or create the file
 SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');
 ERROR:  Failed to open keyring file /cant-create-file-in-root.per: Permission denied
+-- Creating key providers fails if any required parameter is NULL
+SELECT pg_tde_add_database_key_provider(NULL, 'name', '{}');
+ERROR:  provider type cannot be null
+SELECT pg_tde_add_database_key_provider('file', NULL, '{}');
+ERROR:  provider name cannot be null
+SELECT pg_tde_add_database_key_provider('file', 'name', NULL);
+ERROR:  provider options cannot be null
+SELECT pg_tde_add_global_key_provider(NULL, 'name', '{}');
+ERROR:  provider type cannot be null
+SELECT pg_tde_add_global_key_provider('file', NULL, '{}');
+ERROR:  provider name cannot be null
+SELECT pg_tde_add_global_key_provider('file', 'name', NULL);
+ERROR:  provider options cannot be null
+-- Modifying key providers fails if any required parameter is NULL
+SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
+ERROR:  provider type cannot be null
+SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
+ERROR:  provider name cannot be null
+SELECT pg_tde_change_database_key_provider('file', 'file-keyring', NULL);
+ERROR:  provider options cannot be null
+SELECT pg_tde_change_global_key_provider(NULL, 'file-keyring', '{}');
+ERROR:  provider type cannot be null
+SELECT pg_tde_change_global_key_provider('file', NULL, '{}');
+ERROR:  provider name cannot be null
+SELECT pg_tde_change_global_key_provider('file', 'file-keyring', NULL);
+ERROR:  provider options cannot be null
+-- Deleting key providers fails if key name is NULL
+SELECT pg_tde_delete_database_key_provider(NULL);
+ERROR:  provider_name cannot be null
+SELECT pg_tde_delete_global_key_provider(NULL);
+ERROR:  provider_name cannot be null
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
 ERROR:  key name cannot be null
