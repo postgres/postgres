@@ -1905,6 +1905,14 @@ pgstat_read_statsfile(void)
 								 key.objid, t);
 							goto error;
 						}
+
+						if (!pgstat_get_kind_info(key.kind))
+						{
+							elog(WARNING, "could not find information of kind for entry %u/%u/%" PRIu64 " of type %c",
+								 key.kind, key.dboid,
+								 key.objid, t);
+							goto error;
+						}
 					}
 					else
 					{
