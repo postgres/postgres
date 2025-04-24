@@ -75,6 +75,8 @@ PG_FUNCTION_INFO_V1(pg_tde_add_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_add_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_change_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_change_global_key_provider);
+PG_FUNCTION_INFO_V1(pg_tde_delete_database_key_provider);
+PG_FUNCTION_INFO_V1(pg_tde_delete_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_list_all_database_key_providers);
 PG_FUNCTION_INFO_V1(pg_tde_list_all_global_key_providers);
 
@@ -85,6 +87,7 @@ static Size initialize_shared_state(void *start_address);
 static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
 static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
+static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS);
 static Size required_shared_mem_size(void);
 static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
@@ -291,6 +294,53 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	save_new_key_provider_info(&provider, dbOid, true);
 
 	PG_RETURN_INT32(provider.provider_id);
+}
+
+Datum
+pg_tde_delete_database_key_provider(PG_FUNCTION_ARGS)
+{
+	return pg_tde_delete_key_provider_internal(fcinfo, MyDatabaseId);
+}
+
+Datum
+pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
+{
+	if (!superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify global key providers"));
+
+	return pg_tde_delete_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
+
+}
+
+Datum
+pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
+{
+	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
+	int			provider_id;
+	bool		provider_used;
+
+	if (provider == NULL)
+	{
+		ereport(ERROR, errmsg("Keyring provider not found"));
+	}
+
+	provider_id = provider->keyring_id;
+	provider_used = pg_tde_is_provider_used(db_oid, provider_id);
+
+	pfree(provider);
+
+	if (provider_used)
+	{
+		ereport(ERROR,
+				errmsg("Can't delete a provider which is currently in use"));
+	}
+
+	delete_key_provider_info(provider_name, db_oid, true);
+
+	PG_RETURN_VOID();
 }
 
 Datum

@@ -49,9 +49,6 @@
 
 #ifndef FRONTEND
 
-PG_FUNCTION_INFO_V1(pg_tde_delete_database_key_provider);
-PG_FUNCTION_INFO_V1(pg_tde_delete_global_key_provider);
-
 PG_FUNCTION_INFO_V1(pg_tde_verify_key);
 PG_FUNCTION_INFO_V1(pg_tde_verify_server_key);
 PG_FUNCTION_INFO_V1(pg_tde_verify_default_key);
@@ -106,10 +103,7 @@ static void set_principal_key_with_keyring(const char *key_name,
 										   Oid providerOid,
 										   Oid dbOid,
 										   bool ensure_new_key);
-static bool pg_tde_is_provider_used(Oid databaseOid, Oid providerId);
 static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
-
-static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid);
 
 PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
@@ -902,7 +896,7 @@ pg_tde_principal_key_configured(Oid databaseId)
 	return principalKey != NULL;
 }
 
-static bool
+bool
 pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 {
 	bool		is_global = (databaseOid == GLOBAL_DATA_TDE_OID);
@@ -1049,52 +1043,6 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 
 	systable_endscan(scan);
 	table_close(rel, RowExclusiveLock);
-}
-
-Datum
-pg_tde_delete_database_key_provider(PG_FUNCTION_ARGS)
-{
-	return pg_tde_delete_key_provider_internal(fcinfo, MyDatabaseId);
-}
-
-Datum
-pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
-{
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to modify global key providers"));
-
-	return pg_tde_delete_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
-}
-
-Datum
-pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
-{
-	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	GenericKeyring *provider = GetKeyProviderByName(provider_name, db_oid);
-	int			provider_id;
-	bool		provider_used;
-
-	if (provider == NULL)
-	{
-		ereport(ERROR, errmsg("Keyring provider not found"));
-	}
-
-	provider_id = provider->keyring_id;
-	provider_used = pg_tde_is_provider_used(db_oid, provider_id);
-
-	pfree(provider);
-
-	if (provider_used)
-	{
-		ereport(ERROR,
-				errmsg("Can't delete a provider which is currently in use"));
-	}
-
-	delete_key_provider_info(provider_name, db_oid, true);
-
-	PG_RETURN_VOID();
 }
 
 static bool
