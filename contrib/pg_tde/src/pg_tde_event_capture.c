@@ -32,7 +32,6 @@
 
 /* Global variable that gets set at ddl start and cleard out at ddl end*/
 static TdeCreateEvent tdeCurrentCreateEvent = {.tid = {.value = 0}};
-static bool alterSetAccessMethod = false;
 
 static void reset_current_tde_create_event(void);
 static Oid	get_tde_table_am_oid(void);
@@ -176,6 +175,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		AlterTableStmt *stmt = castNode(AlterTableStmt, parsetree);
 		ListCell   *lcmd;
 		Oid			relationId = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
+		AlterTableCmd *setAccessMethod = NULL;
 
 		validateCurrentEventTriggerState(true);
 		tdeCurrentCreateEvent.tid = GetCurrentFullTransactionId();
@@ -185,29 +185,27 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
 
 			if (cmd->subtype == AT_SetAccessMethod)
-			{
-				tdeCurrentCreateEvent.baseTableOid = relationId;
-				tdeCurrentCreateEvent.alterAccessMethodMode = true;
-
-				if (shouldEncryptTable(cmd->name))
-					tdeCurrentCreateEvent.encryptMode = true;
-
-				checkEncryptionStatus();
-
-				alterSetAccessMethod = true;
-			}
+				setAccessMethod = cmd;
 		}
 
-		if (!alterSetAccessMethod)
+		tdeCurrentCreateEvent.baseTableOid = relationId;
+
+		/*
+		 * With a SET ACCESS METHOD clause, use that as the basis for
+		 * decisions. But if it's not present, look up encryption status of
+		 * the table.
+		 */
+		if (setAccessMethod)
 		{
-			/*
-			 * With a SET ACCESS METHOD clause, use that as the basis for
-			 * decisions. But if it's not present, look up encryption status
-			 * of the table.
-			 */
+			if (shouldEncryptTable(setAccessMethod->name))
+				tdeCurrentCreateEvent.encryptMode = true;
 
-			tdeCurrentCreateEvent.baseTableOid = relationId;
+			checkEncryptionStatus();
 
+			tdeCurrentCreateEvent.alterAccessMethodMode = true;
+		}
+		else
+		{
 			if (relationId != InvalidOid)
 			{
 				Relation	rel = relation_open(relationId, NoLock);
@@ -307,7 +305,6 @@ reset_current_tde_create_event(void)
 	tdeCurrentCreateEvent.baseTableOid = InvalidOid;
 	tdeCurrentCreateEvent.tid = InvalidFullTransactionId;
 	tdeCurrentCreateEvent.alterAccessMethodMode = false;
-	alterSetAccessMethod = false;
 }
 
 static Oid

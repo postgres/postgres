@@ -46,6 +46,21 @@ SELECT pg_tde_is_encrypted('country_table');
 SELECT pg_tde_is_encrypted('country_table_country_id_seq');
 SELECT pg_tde_is_encrypted('country_table_pkey');
 
+-- Test that we honor the default value
+SET default_table_access_method = 'heap';
+
+ALTER TABLE country_table SET ACCESS METHOD DEFAULT;
+
+SELECT pg_tde_is_encrypted('country_table');
+
+SET default_table_access_method = 'tde_heap';
+
+ALTER TABLE country_table SET ACCESS METHOD DEFAULT;
+
+SELECT pg_tde_is_encrypted('country_table');
+
+RESET default_table_access_method;
+
 ALTER TABLE country_table ADD y text;
 
 SELECT pg_tde_is_encrypted('pg_toast.pg_toast_' || 'country_table'::regclass::oid);
