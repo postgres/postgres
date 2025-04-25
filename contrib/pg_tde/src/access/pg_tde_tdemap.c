@@ -115,7 +115,7 @@ static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool 
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
 static bool pg_tde_read_one_map_entry(int fd, TDEMapEntry *map_entry, off_t *offset);
 static void pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId);
-static int	pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos);
+static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
 static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
 static InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, InternalKey *key);
@@ -599,7 +599,7 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, old_path);
 
-	old_fd = pg_tde_open_file_read(old_path, &old_curr_pos);
+	old_fd = pg_tde_open_file_read(old_path, false, &old_curr_pos);
 	new_fd = keyrotation_init_file(&new_signed_key_info, new_path, old_path, &new_curr_pos);
 
 	/* Read all entries until EOF */
@@ -831,7 +831,7 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_
 
 	Assert(rlocator != NULL);
 
-	map_fd = pg_tde_open_file_read(db_map_path, &curr_pos);
+	map_fd = pg_tde_open_file_read(db_map_path, false, &curr_pos);
 
 	while (pg_tde_read_one_map_entry(map_fd, map_entry, &curr_pos))
 	{
@@ -845,6 +845,47 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, uint32 key_type, char *db_
 	close(map_fd);
 
 	return found;
+}
+
+/*
+ * Counts number of encrypted objects in a database.
+ *
+ * Does not check if objects actually exist but just that they have keys in
+ * the map file. For the only current caller, checking if we can use
+ * FILE_COPY, this is good enough but for other workloads where a false
+ * positive is more harmful this might not be.
+ *
+ * Works even if the database has no map file.
+ */
+int
+pg_tde_count_relations(Oid dbOid)
+{
+	char		db_map_path[MAXPGPATH];
+	LWLock	   *lock_pk = tde_lwlock_enc_keys();
+	File		map_fd;
+	off_t		curr_pos = 0;
+	TDEMapEntry map_entry;
+	int			count = 0;
+
+	pg_tde_set_db_file_path(dbOid, db_map_path);
+
+	LWLockAcquire(lock_pk, LW_SHARED);
+
+	map_fd = pg_tde_open_file_read(db_map_path, true, &curr_pos);
+	if (map_fd < 0)
+		return count;
+
+	while (pg_tde_read_one_map_entry(map_fd, &map_entry, &curr_pos))
+	{
+		if (map_entry.flags & TDE_KEY_TYPE_SMGR)
+			count++;
+	}
+
+	close(map_fd);
+
+	LWLockRelease(lock_pk);
+
+	return count;
 }
 
 bool
@@ -883,7 +924,7 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
  * is raised.
  */
 static int
-pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos)
+pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos)
 {
 	int			fd;
 	TDEFileHeader fheader;
@@ -891,7 +932,9 @@ pg_tde_open_file_read(const char *tde_filename, off_t *curr_pos)
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_SHARED) || LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
-	fd = pg_tde_open_file_basic(tde_filename, O_RDONLY | PG_BINARY, false);
+	fd = pg_tde_open_file_basic(tde_filename, O_RDONLY | PG_BINARY, ignore_missing);
+	if (ignore_missing && fd < 0)
+		return fd;
 
 	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
 	*curr_pos = bytes_read;
@@ -1144,7 +1187,7 @@ pg_tde_read_last_wal_key(void)
 	}
 	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
-	fd = pg_tde_open_file_read(db_map_path, &read_pos);
+	fd = pg_tde_open_file_read(db_map_path, false, &read_pos);
 	fsize = lseek(fd, 0, SEEK_END);
 	/* No keys */
 	if (fsize == TDE_FILE_HEADER_SIZE)
@@ -1187,7 +1230,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 
 	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
-	fd = pg_tde_open_file_read(db_map_path, &read_pos);
+	fd = pg_tde_open_file_read(db_map_path, false, &read_pos);
 
 	keys_count = (lseek(fd, 0, SEEK_END) - TDE_FILE_HEADER_SIZE) / MAP_ENTRY_SIZE;
 

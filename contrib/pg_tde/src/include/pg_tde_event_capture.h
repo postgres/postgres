@@ -26,8 +26,8 @@ typedef struct TdeCreateEvent
 										 * based on earlier encryption status. */
 } TdeCreateEvent;
 
+extern void TdeEventCaptureInit(void);
 extern TdeCreateEvent *GetCurrentTdeCreateEvent(void);
-
 extern void validateCurrentEventTriggerState(bool mightStartTransaction);
 
 #endif

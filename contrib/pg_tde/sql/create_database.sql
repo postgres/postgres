@@ -45,6 +45,17 @@ SELECT pg_tde_is_encrypted('test_plain_id_seq');
 
 \c :regress_database
 
+CREATE DATABASE new_db_file_copy TEMPLATE template_db STRATEGY FILE_COPY;
+
+\c template_db
+
+DROP TABLE test_enc;
+
+\c :regress_database
+
+CREATE DATABASE new_db_file_copy TEMPLATE template_db STRATEGY FILE_COPY;
+
+DROP DATABASE new_db_file_copy;
 DROP DATABASE new_db;
 DROP DATABASE template_db;
 

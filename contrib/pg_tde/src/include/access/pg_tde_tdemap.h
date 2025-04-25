@@ -111,6 +111,7 @@ pg_tde_set_db_file_path(Oid dbOid, char *path)
 }
 
 extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);
+extern int	pg_tde_count_relations(Oid dbOid);
 
 extern void pg_tde_delete_tde_files(Oid dbOid);
 

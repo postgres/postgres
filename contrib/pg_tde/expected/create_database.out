@@ -92,6 +92,14 @@ SELECT pg_tde_is_encrypted('test_plain_id_seq');
 (1 row)
 
 \c :regress_database
+CREATE DATABASE new_db_file_copy TEMPLATE template_db STRATEGY FILE_COPY;
+ERROR:  The FILE_COPY strategy cannot be used when there are encrypted objects in the template database: 3 objects found
+HINT:  Use the WAL_LOG strategy instead.
+\c template_db
+DROP TABLE test_enc;
+\c :regress_database
+CREATE DATABASE new_db_file_copy TEMPLATE template_db STRATEGY FILE_COPY;
+DROP DATABASE new_db_file_copy;
 DROP DATABASE new_db;
 DROP DATABASE template_db;
 DROP EXTENSION pg_tde;

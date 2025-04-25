@@ -33,6 +33,7 @@
 #include "utils/builtins.h"
 #include "smgr/pg_tde_smgr.h"
 #include "catalog/tde_global_space.h"
+#include "pg_tde_event_capture.h"
 #include "utils/percona.h"
 #include "pg_tde_guc.h"
 #include "access/tableam.h"
@@ -111,6 +112,7 @@ _PG_init(void)
 	check_percona_api_version();
 
 	TdeGucInit();
+	TdeEventCaptureInit();
 
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
