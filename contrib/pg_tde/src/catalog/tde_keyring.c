@@ -53,16 +53,15 @@ typedef enum ProviderScanType
 #define VAULTV2_KEYRING_TYPE "vault-v2"
 #define KMIP_KEYRING_TYPE "kmip"
 
-static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
-static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
-static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
-static KmipKeyring *load_kmip_keyring_provider_options(char *keyring_options);
 static void debug_print_kerying(GenericKeyring *keyring);
-static GenericKeyring *load_keyring_provider_from_record(KeyringProviderRecord *provider);
-static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
-static int	open_keyring_infofile(Oid dbOid, int flags);
 static bool fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider);
-
+static inline void get_keyring_infofile_path(char *resPath, Oid dbOid);
+static FileKeyring *load_file_keyring_provider_options(char *keyring_options);
+static GenericKeyring *load_keyring_provider_from_record(KeyringProviderRecord *provider);
+static GenericKeyring *load_keyring_provider_options(ProviderType provider_type, char *keyring_options);
+static KmipKeyring *load_kmip_keyring_provider_options(char *keyring_options);
+static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
+static int	open_keyring_infofile(Oid dbOid, int flags);
 static void write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog);
 
 #ifdef FRONTEND
@@ -72,30 +71,25 @@ static void simple_list_free(SimplePtrList *list);
 
 #else
 
-static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
-
 PG_FUNCTION_INFO_V1(pg_tde_add_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_add_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_change_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_change_global_key_provider);
-static Datum pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_tde_list_all_database_key_providers);
 PG_FUNCTION_INFO_V1(pg_tde_list_all_global_key_providers);
 
-static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
-
-static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
-
-#define PG_TDE_LIST_PROVIDERS_COLS 4
-
-static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
+static void cleanup_key_provider_info(Oid databaseId);
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static List *GetAllKeyringProviders(Oid dbOid);
-static void cleanup_key_provider_info(Oid databaseId);
-
 static Size initialize_shared_state(void *start_address);
+static void key_provider_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
+static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
+static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
+static Datum pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS);
 static Size required_shared_mem_size(void);
+static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
+
+#define PG_TDE_LIST_PROVIDERS_COLS 4
 
 typedef struct TdeKeyProviderInfoSharedState
 {
