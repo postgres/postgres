@@ -979,11 +979,10 @@ GenericKeyring *
 GetKeyProviderByName(const char *provider_name, Oid dbOid)
 {
 	GenericKeyring *keyring = NULL;
-
 #ifndef FRONTEND
-	static List *providers;
+	List	   *providers;
 #else
-	static SimplePtrList *providers;
+	SimplePtrList *providers;
 #endif
 
 	providers = scan_key_provider_file(PROVIDER_SCAN_BY_NAME, (void *) provider_name, dbOid);
