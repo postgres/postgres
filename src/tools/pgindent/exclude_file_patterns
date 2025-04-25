@@ -65,4 +65,3 @@ src/tools/pg_bsd_indent/.*
 /\.git/
 # Percona excludes
 contrib/pg_tde/src/libkmip/.*
-src/backend/nodes/nodetags.h
