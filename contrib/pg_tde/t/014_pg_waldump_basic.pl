@@ -27,8 +27,12 @@ shared_preload_libraries = 'pg_tde'
 $node->start;
 
 $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
-$node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');");;
-$node->safe_psql('postgres', "SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');");
+$node->safe_psql('postgres',
+	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');"
+);
+$node->safe_psql('postgres',
+	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');"
+);
 
 $node->append_conf(
 	'postgresql.conf', q{
@@ -128,48 +132,74 @@ command_fails_like(
 	[ 'pg_waldump', 'foo', 'bar' ],
 	qr/error: could not locate WAL file "foo"/,
 	'start file not found');
-command_like([ 'pg_waldump', '-k', $node->data_dir. '/pg_tde', $node->data_dir . '/pg_wal/' . $start_walfile ],
-	qr/./, 'runs with start segment specified');
+command_like(
+	[
+		'pg_waldump', '-k',
+		$node->data_dir . '/pg_tde',
+		$node->data_dir . '/pg_wal/' . $start_walfile
+	],
+	qr/./,
+	'runs with start segment specified');
 command_fails_like(
-	[ 'pg_waldump', '-k', $node->data_dir. '/pg_tde', $node->data_dir . '/pg_wal/' . $start_walfile, 'bar' ],
+	[
+		'pg_waldump', '-k',
+		$node->data_dir . '/pg_tde',
+		$node->data_dir . '/pg_wal/' . $start_walfile, 'bar'
+	],
 	qr/error: could not open file "bar"/,
 	'end file not found');
 command_like(
 	[
 		'pg_waldump',
-		'-k', $node->data_dir. '/pg_tde',
+		'-k',
+		$node->data_dir . '/pg_tde',
 		$node->data_dir . '/pg_wal/' . $start_walfile,
 		$node->data_dir . '/pg_wal/' . $end_walfile
 	],
 	qr/./,
 	'runs with start and end segment specified');
 command_fails_like(
-	[ 'pg_waldump', '-p', $node->data_dir, '-k', $node->data_dir. '/pg_tde' ],
+	[
+		'pg_waldump', '-p', $node->data_dir, '-k',
+		$node->data_dir . '/pg_tde'
+	],
 	qr/error: no start WAL location given/,
 	'path option requires start location');
 command_like(
 	[
-		'pg_waldump', '-p', $node->data_dir, '--start',
-		$start_lsn, '--end', $end_lsn,
-		'-k', $node->data_dir. '/pg_tde'
+		'pg_waldump', '-p',
+		$node->data_dir, '--start',
+		$start_lsn, '--end',
+		$end_lsn, '-k',
+		$node->data_dir . '/pg_tde'
 	],
 	qr/./,
 	'runs with path option and start and end locations');
 command_fails_like(
-	[ 'pg_waldump', '-k', $node->data_dir. '/pg_tde', '-p', $node->data_dir, '--start', $start_lsn ],
+	[
+		'pg_waldump', '-k',
+		$node->data_dir . '/pg_tde', '-p',
+		$node->data_dir, '--start',
+		$start_lsn
+	],
 	qr/error: error in WAL record at/,
 	'falling off the end of the WAL results in an error');
 
 command_like(
 	[
-		'pg_waldump', '--quiet',
-		'-k', $node->data_dir. '/pg_tde',
+		'pg_waldump', '--quiet', '-k',
+		$node->data_dir . '/pg_tde',
 		$node->data_dir . '/pg_wal/' . $start_walfile
 	],
 	qr/^$/,
 	'no output with --quiet option');
 command_fails_like(
-	[ 'pg_waldump', '--quiet', '-k', $node->data_dir. '/pg_tde', '-p', $node->data_dir, '--start', $start_lsn ],
+	[
+		'pg_waldump', '--quiet',
+		'-k', $node->data_dir . '/pg_tde',
+		'-p', $node->data_dir,
+		'--start', $start_lsn
+	],
 	qr/error: error in WAL record at/,
 	'errors are shown with --quiet');
 
@@ -187,9 +217,8 @@ command_fails_like(
 	my (@cmd, $stdout, $stderr, $result);
 
 	@cmd = (
-		'pg_waldump', '-k', $node->data_dir. '/pg_tde',
-		'--start', $new_start,
-		$node->data_dir . '/pg_wal/' . $start_walfile);
+		'pg_waldump', '-k', $node->data_dir . '/pg_tde',
+		'--start', $new_start, $node->data_dir . '/pg_wal/' . $start_walfile);
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "runs with start segment and start LSN specified");
 	like($stderr, qr/first record is after/, 'info message printed');
@@ -206,8 +235,11 @@ sub test_pg_waldump
 	my (@cmd, $stdout, $stderr, $result, @lines);
 
 	@cmd = (
-		'pg_waldump', '-k', $node->data_dir. '/pg_tde', '-p', $node->data_dir,
-		'--start', $start_lsn, '--end', $end_lsn);
+		'pg_waldump', '-k',
+		$node->data_dir . '/pg_tde', '-p',
+		$node->data_dir, '--start',
+		$start_lsn, '--end',
+		$end_lsn);
 	push @cmd, @opts;
 	$result = IPC::Run::run \@cmd, '>', \$stdout, '2>', \$stderr;
 	ok($result, "pg_waldump @opts: runs ok");

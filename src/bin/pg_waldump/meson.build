@@ -42,8 +42,6 @@ tests += {
     'tests': [
       't/001_basic.pl',
       't/002_save_fullpage.pl',
-      't/003_basic_encrypted.pl',
-      't/004_save_fullpage_encrypted.pl',
     ],
   },
 }

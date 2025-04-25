@@ -41,8 +41,12 @@ shared_preload_libraries = 'pg_tde'
 $node->start;
 
 $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
-$node->safe_psql('postgres', "SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');");;
-$node->safe_psql('postgres', "SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');");
+$node->safe_psql('postgres',
+	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','/tmp/pg_tde_test_keyring-wal.per');"
+);
+$node->safe_psql('postgres',
+	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');"
+);
 
 $node->append_conf(
 	'postgresql.conf', q{
@@ -84,7 +88,7 @@ ok(-f $walfile, "Got a WAL file");
 $node->command_ok(
 	[
 		'pg_waldump', '--quiet',
-		'-k', $node->data_dir. '/pg_tde',
+		'-k', $node->data_dir . '/pg_tde',
 		'--save-fullpage', "$tmp_folder/raw",
 		'--relation', $relation,
 		$walfile

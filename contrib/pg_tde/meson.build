@@ -114,6 +114,8 @@ tap_tests = [
   't/011_unlogged_tables.pl',
   't/012_replication.pl',
   't/013_crash_recovery.pl',
+  't/014_pg_waldump_basic.pl',
+  't/015_pg_waldump_fullpage.pl',
 ]
 
 tests += {
