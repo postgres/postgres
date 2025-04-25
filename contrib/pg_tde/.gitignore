@@ -4,16 +4,16 @@
 __pycache__
 .vscode
 
+/autom4te.cache
 /config.cache
 /config.log
 /config.status
-/autom4te.cache
 /configure~
+/log
+/results
 /src/pg_tde_change_key_provider
 /t/results
-/results
 /tmp_check
-/log
 
-# tools files
-typedefs-full.list
+# Tool files
+/typedefs-full.list
