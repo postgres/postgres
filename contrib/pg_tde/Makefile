@@ -8,10 +8,8 @@ DATA = pg_tde--1.0-rc.sql
 # Since meson supports skipping test suites this is a make only feature
 ifndef TDE_MODE
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
-# toast_decrypt needs to be the first test when running with pg_tde
-# preinstalled and default_principal_key needs to run after key_provider.
-REGRESS = toast_decrypt \
-access_control \
+# default_principal_key needs to run after key_provider.
+REGRESS = access_control \
 alter_index \
 cache_alloc \
 change_access_method \
@@ -23,6 +21,7 @@ pg_tde_is_encrypted \
 recreate_storage \
 relocate \
 tablespace \
+toast_decrypt \
 vault_v2_test \
 version \
 default_principal_key
@@ -56,7 +55,7 @@ src/libkmip/libkmip/src/kmip_memset.o
 
 SCRIPTS_built = src/pg_tde_change_key_provider
 
-EXTRA_INSTALL+=contrib/pg_buffercache contrib/test_decoding
+EXTRA_INSTALL += contrib/pg_buffercache contrib/test_decoding
 EXTRA_CLEAN += src/pg_tde_change_key_provider.o
 
 ifdef USE_PGXS
