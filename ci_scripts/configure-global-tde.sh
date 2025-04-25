@@ -8,6 +8,7 @@ source $SCRIPT_DIR/env.sh
 cd "$SCRIPT_DIR/.."
 
 source "$SCRIPT_DIR/env.sh"
+export TDE_MODE=1
 export PATH=$INSTALL_DIR/bin:$PATH
 export DATA_DIR=$INSTALL_DIR/data
 export PGDATA="${1:-$DATA_DIR}"
