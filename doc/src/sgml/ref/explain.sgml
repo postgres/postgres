@@ -202,9 +202,7 @@ ROLLBACK;
       The number of blocks shown for an
       upper-level node includes those used by all its child nodes.  In text
       format, only non-zero values are printed.  Buffers information is
-      included by default when <literal>ANALYZE</literal> is used but
-      otherwise is not included by default, but can be enabled using this
-      option.
+      automatically included when <literal>ANALYZE</literal> is used.
      </para>
     </listitem>
    </varlistentry>
