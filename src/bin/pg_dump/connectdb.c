@@ -142,7 +142,8 @@ ConnectDatabase(const char *dbname, const char *connection_string,
 		if (override_dbname)
 		{
 			keywords[i] = "dbname";
-			values[i++] = override_dbname;
+			values[i] = override_dbname;
+			i++;
 		}
 
 		keywords[i] = "fallback_application_name";
