@@ -60,7 +60,7 @@ find_struct_member(const char *name, char *str, struct ECPGstruct_member *member
 					int			count;
 
 					/*
-					 * We don't care about what's inside the array braces so
+					 * We don't care about what's inside the array brackets so
 					 * just eat up the character
 					 */
 					for (count = 1, end = next + 1; count; end++)
@@ -203,8 +203,8 @@ find_variable(const char *name)
 		if (*next == '[')
 		{
 			/*
-			 * We don't care about what's inside the array braces so just eat
-			 * up the characters
+			 * We don't care about what's inside the array brackets so just
+			 * eat up the characters
 			 */
 			for (count = 1, end = next + 1; count; end++)
 			{
@@ -217,7 +217,7 @@ find_variable(const char *name)
 						count--;
 						break;
 					case '\0':
-						mmfatal(PARSE_ERROR, "unmatched brace in variable \"%s\"", name);
+						mmfatal(PARSE_ERROR, "unmatched bracket in variable \"%s\"", name);
 						break;
 					default:
 						break;
