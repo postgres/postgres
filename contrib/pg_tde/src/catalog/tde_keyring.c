@@ -47,7 +47,7 @@ typedef enum ProviderScanType
 	PROVIDER_SCAN_ALL
 } ProviderScanType;
 
-#define PG_TDE_KEYRING_FILENAME "pg_tde_%d_keyring"
+#define PG_TDE_KEYRING_FILENAME "%d_providers"
 
 #define FILE_KEYRING_TYPE "file"
 #define VAULTV2_KEYRING_TYPE "vault-v2"

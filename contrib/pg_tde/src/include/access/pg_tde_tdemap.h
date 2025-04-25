@@ -102,7 +102,7 @@ extern void pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
 extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator);
 
-#define PG_TDE_MAP_FILENAME			"pg_tde_%d_map"
+#define PG_TDE_MAP_FILENAME			"%d_keys"
 
 static inline void
 pg_tde_set_db_file_path(Oid dbOid, char *path)
