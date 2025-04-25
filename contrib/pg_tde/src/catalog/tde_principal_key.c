@@ -112,16 +112,9 @@ static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, int is_global);
 
 PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
-Datum		pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
-Datum		pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_global_key_provider);
-Datum		pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS);
-
 PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
-Datum		pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS);
 
 enum global_status
 {
