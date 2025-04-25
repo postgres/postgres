@@ -3185,7 +3185,7 @@ printTableInit(printTableContent *const content, const printTableOpt *opt,
 	/* Catch possible overflow.  Using >= here allows adding 1 below */
 	if (total_cells >= SIZE_MAX / sizeof(*content->cells))
 	{
-		fprintf(stderr, _("Cannot print table contents: number of cells %" PRId64 " is equal to or exceeds maximum %zu.\n"),
+		fprintf(stderr, _("Cannot print table contents: number of cells %" PRIu64 " is equal to or exceeds maximum %zu.\n"),
 				total_cells,
 				SIZE_MAX / sizeof(*content->cells));
 		exit(EXIT_FAILURE);
@@ -3269,7 +3269,7 @@ printTableAddCell(printTableContent *const content, char *cell,
 	total_cells = (uint64) content->ncolumns * content->nrows;
 	if (content->cellsadded >= total_cells)
 	{
-		fprintf(stderr, _("Cannot add cell to table content: total cell count of %" PRId64 " exceeded.\n"),
+		fprintf(stderr, _("Cannot add cell to table content: total cell count of %" PRIu64 " exceeded.\n"),
 				total_cells);
 		exit(EXIT_FAILURE);
 	}
