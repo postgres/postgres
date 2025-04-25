@@ -8,7 +8,8 @@ DATA = pg_tde--1.0-rc.sql
 # Since meson supports skipping test suites this is a make only feature
 ifndef TDE_MODE
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
-# default_principal_key needs to run after key_provider.
+# create_database must run after default_principal_key which must run after
+# key_provider.
 REGRESS = access_control \
 alter_index \
 cache_alloc \
@@ -24,7 +25,8 @@ tablespace \
 toast_decrypt \
 vault_v2_test \
 version \
-default_principal_key
+default_principal_key \
+create_database
 TAP_TESTS = 1
 endif
 

@@ -80,7 +80,8 @@ install_data(
   kwargs: contrib_data_args,
 )
 
-# default_principal_key needs to run after key_provider.
+# create_database must run after default_principal_key which must run after
+# key_provider.
 sql_tests = [
   'access_control',
   'alter_index',
@@ -98,6 +99,7 @@ sql_tests = [
   'vault_v2_test',
   'version',
   'default_principal_key',
+  'create_database',
 ]
 
 tap_tests = [
