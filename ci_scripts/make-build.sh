@@ -13,7 +13,7 @@ done
 
 SCRIPT_DIR="$(cd -- "$(dirname "$0")" >/dev/null 2>&1; pwd -P)"
 INSTALL_DIR="$SCRIPT_DIR/../../pginst"
-source $SCRIPT_DIR/env.sh
+source "$SCRIPT_DIR/env.sh"
 
 cd "$SCRIPT_DIR/.."
 
@@ -22,5 +22,5 @@ if [ "$1" = "debugoptimized" ]; then
     export CXXFLAGS="-O2"
 fi
 
-./configure --enable-debug --enable-cassert --enable-tap-tests --prefix=$INSTALL_DIR $ENABLE_COVERAGE
+./configure --prefix="$INSTALL_DIR" --enable-debug --enable-cassert --enable-tap-tests $ENABLE_COVERAGE
 make install-world -j
