@@ -508,7 +508,7 @@ clear_principal_key_cache(Oid databaseId)
 Datum
 pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
-	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
@@ -521,7 +521,7 @@ pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS)
 {
-	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
@@ -534,7 +534,7 @@ pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
-	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
@@ -547,7 +547,7 @@ pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
-	char	   *principal_key_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
@@ -567,6 +567,15 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 		ereport(ERROR,
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to access global key providers"));
+
+	if (key_name == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("key name cannot be null"));
+	if (strlen(key_name) == 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("key name \"\" is too short"));
 
 	ereport(LOG, errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name));
 

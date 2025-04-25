@@ -55,4 +55,16 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- Creating a file key provider fails if we can't open or create the file
 SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');
 
+-- Setting principal key fails if key name is NULL
+SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
+SELECT pg_tde_set_key_using_database_key_provider(NULL, 'file-keyring');
+SELECT pg_tde_set_key_using_global_key_provider(NULL, 'file-keyring');
+SELECT pg_tde_set_server_key_using_global_key_provider(NULL, 'file-keyring');
+
+-- Empty string is not allowed for a principal key name
+SELECT pg_tde_set_default_key_using_global_key_provider('', 'file-keyring');
+SELECT pg_tde_set_key_using_database_key_provider('', 'file-keyring');
+SELECT pg_tde_set_key_using_global_key_provider('', 'file-keyring');
+SELECT pg_tde_set_server_key_using_global_key_provider('', 'file-keyring');
+
 DROP EXTENSION pg_tde;
