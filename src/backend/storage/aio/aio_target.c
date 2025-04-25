@@ -49,7 +49,8 @@ pgaio_io_has_target(PgAioHandle *ioh)
 const char *
 pgaio_io_get_target_name(PgAioHandle *ioh)
 {
-	Assert(ioh->target >= 0 && ioh->target < PGAIO_TID_COUNT);
+	/* explicitly allow INVALID here, function used by debug messages */
+	Assert(ioh->target >= PGAIO_TID_INVALID && ioh->target < PGAIO_TID_COUNT);
 
 	return pgaio_target_info[ioh->target]->name;
 }
@@ -82,6 +83,9 @@ pgaio_io_get_target_data(PgAioHandle *ioh)
 char *
 pgaio_io_get_target_description(PgAioHandle *ioh)
 {
+	/* disallow INVALID, there wouldn't be a description */
+	Assert(ioh->target > PGAIO_TID_INVALID && ioh->target < PGAIO_TID_COUNT);
+
 	return pgaio_target_info[ioh->target]->describe_identity(&ioh->target_data);
 }
 
@@ -98,6 +102,8 @@ pgaio_io_get_target_description(PgAioHandle *ioh)
 bool
 pgaio_io_can_reopen(PgAioHandle *ioh)
 {
+	Assert(ioh->target > PGAIO_TID_INVALID && ioh->target < PGAIO_TID_COUNT);
+
 	return pgaio_target_info[ioh->target]->reopen != NULL;
 }
 
@@ -109,8 +115,8 @@ pgaio_io_can_reopen(PgAioHandle *ioh)
 void
 pgaio_io_reopen(PgAioHandle *ioh)
 {
-	Assert(ioh->target >= 0 && ioh->target < PGAIO_TID_COUNT);
-	Assert(ioh->op >= 0 && ioh->op < PGAIO_OP_COUNT);
+	Assert(ioh->target > PGAIO_TID_INVALID && ioh->target < PGAIO_TID_COUNT);
+	Assert(ioh->op > PGAIO_OP_INVALID && ioh->op < PGAIO_OP_COUNT);
 
 	pgaio_target_info[ioh->target]->reopen(ioh);
 }

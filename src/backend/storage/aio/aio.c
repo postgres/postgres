@@ -670,6 +670,21 @@ pgaio_io_reclaim(PgAioHandle *ioh)
 
 	Assert(!ioh->resowner);
 
+	/*
+	 * Update generation & state first, before resetting the IO's fields,
+	 * otherwise a concurrent "viewer" could think the fields are valid, even
+	 * though they are being reset.  Increment the generation first, so that
+	 * we can assert elsewhere that we never wait for an IDLE IO.  While it's
+	 * a bit weird for the state to go backwards for a generation, it's OK
+	 * here, as there cannot be references to the "reborn" IO yet.  Can't
+	 * update both at once, so something has to give.
+	 */
+	ioh->generation++;
+	pgaio_io_update_state(ioh, PGAIO_HS_IDLE);
+
+	/* ensure the state update is visible before we reset fields */
+	pg_write_barrier();
+
 	ioh->op = PGAIO_OP_INVALID;
 	ioh->target = PGAIO_TID_INVALID;
 	ioh->flags = 0;
@@ -678,12 +693,6 @@ pgaio_io_reclaim(PgAioHandle *ioh)
 	ioh->report_return = NULL;
 	ioh->result = 0;
 	ioh->distilled_result.status = PGAIO_RS_UNKNOWN;
-
-	/* XXX: the barrier is probably superfluous */
-	pg_write_barrier();
-	ioh->generation++;
-
-	pgaio_io_update_state(ioh, PGAIO_HS_IDLE);
 
 	/*
 	 * We push the IO to the head of the idle IO list, that seems more cache
