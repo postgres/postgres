@@ -9,6 +9,7 @@ __pycache__
 /config.status
 /autom4te.cache
 /configure~
+/src/pg_tde_change_key_provider
 /t/results
 /results
 /tmp_check
