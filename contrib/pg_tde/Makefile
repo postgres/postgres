@@ -5,6 +5,8 @@ MODULE_big = pg_tde
 EXTENSION = pg_tde
 DATA = pg_tde--1.0-rc.sql
 
+# Since meson supports skipping test suites this is a make only feature
+ifndef TDE_MODE
 REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_tde/pg_tde.conf
 # toast_decrypt needs to be the first test when running with pg_tde
 # preinstalled and default_principal_key needs to run after key_provider.
@@ -25,6 +27,7 @@ vault_v2_test \
 version \
 default_principal_key
 TAP_TESTS = 1
+endif
 
 OBJS = src/encryption/enc_tde.o \
 src/encryption/enc_aes.o \
