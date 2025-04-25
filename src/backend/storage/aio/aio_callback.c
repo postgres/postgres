@@ -124,6 +124,7 @@ pgaio_io_set_handle_data_64(PgAioHandle *ioh, uint64 *data, uint8 len)
 	Assert(ioh->state == PGAIO_HS_HANDED_OUT);
 	Assert(ioh->handle_data_len == 0);
 	Assert(len <= PG_IOV_MAX);
+	Assert(len <= io_max_combine_limit);
 
 	for (int i = 0; i < len; i++)
 		pgaio_ctl->handle_data[ioh->iovec_off + i] = data[i];
@@ -141,6 +142,7 @@ pgaio_io_set_handle_data_32(PgAioHandle *ioh, uint32 *data, uint8 len)
 	Assert(ioh->state == PGAIO_HS_HANDED_OUT);
 	Assert(ioh->handle_data_len == 0);
 	Assert(len <= PG_IOV_MAX);
+	Assert(len <= io_max_combine_limit);
 
 	for (int i = 0; i < len; i++)
 		pgaio_ctl->handle_data[ioh->iovec_off + i] = data[i];

@@ -3287,7 +3287,7 @@ struct config_int ConfigureNamesInt[] =
 			NULL,
 			GUC_UNIT_BLOCKS
 		},
-		&io_combine_limit,
+		&io_combine_limit_guc,
 		DEFAULT_IO_COMBINE_LIMIT,
 		1, MAX_IO_COMBINE_LIMIT,
 		NULL, assign_io_combine_limit, NULL

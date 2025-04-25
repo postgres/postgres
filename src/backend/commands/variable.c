@@ -1163,14 +1163,12 @@ assign_maintenance_io_concurrency(int newval, void *extra)
 void
 assign_io_max_combine_limit(int newval, void *extra)
 {
-	io_max_combine_limit = newval;
-	io_combine_limit = Min(io_max_combine_limit, io_combine_limit_guc);
+	io_combine_limit = Min(newval, io_combine_limit_guc);
 }
 void
 assign_io_combine_limit(int newval, void *extra)
 {
-	io_combine_limit_guc = newval;
-	io_combine_limit = Min(io_max_combine_limit, io_combine_limit_guc);
+	io_combine_limit = Min(io_max_combine_limit, newval);
 }
 
 /*
