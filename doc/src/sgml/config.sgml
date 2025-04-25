@@ -4511,7 +4511,6 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <term><varname>max_replication_slots</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_replication_slots</varname> configuration parameter</primary>
-        <secondary>in a sending server</secondary>
        </indexterm>
        </term>
        <listitem>
@@ -5282,7 +5281,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <term><varname>max_active_replication_origins</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>max_active_replication_origins</varname> configuration parameter</primary>
-        <secondary>in a subscriber</secondary>
        </indexterm>
       </term>
       <listitem>
