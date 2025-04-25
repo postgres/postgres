@@ -711,8 +711,10 @@ pgaio_io_wait_for_free(void)
 {
 	int			reclaimed = 0;
 
-	pgaio_debug(DEBUG2, "waiting for self with %d pending",
-				pgaio_my_backend->num_staged_ios);
+	pgaio_debug(DEBUG2, "waiting for free IO with %d pending, %d in-flight, %d idle IOs",
+				pgaio_my_backend->num_staged_ios,
+				dclist_count(&pgaio_my_backend->in_flight_ios),
+				dclist_is_empty(&pgaio_my_backend->idle_ios));
 
 	/*
 	 * First check if any of our IOs actually have completed - when using
@@ -743,7 +745,12 @@ pgaio_io_wait_for_free(void)
 		pgaio_submit_staged();
 
 	if (dclist_count(&pgaio_my_backend->in_flight_ios) == 0)
-		elog(ERROR, "no free IOs despite no in-flight IOs");
+		ereport(ERROR,
+				errmsg_internal("no free IOs despite no in-flight IOs"),
+				errdetail_internal("%d pending, %d in-flight, %d idle IOs",
+								   pgaio_my_backend->num_staged_ios,
+								   dclist_count(&pgaio_my_backend->in_flight_ios),
+								   dclist_is_empty(&pgaio_my_backend->idle_ios)));
 
 	/*
 	 * Wait for the oldest in-flight IO to complete.
@@ -1136,7 +1143,13 @@ pgaio_closing_fd(int fd)
 	 * For now just submit all staged IOs - we could be more selective, but
 	 * it's probably not worth it.
 	 */
-	pgaio_submit_staged();
+	if (pgaio_my_backend->num_staged_ios > 0)
+	{
+		pgaio_debug(DEBUG2,
+					"submitting %d IOs before FD %d gets closed",
+					pgaio_my_backend->num_staged_ios, fd);
+		pgaio_submit_staged();
+	}
 
 	/*
 	 * If requested by the IO method, wait for all IOs that use the
@@ -1168,6 +1181,10 @@ pgaio_closing_fd(int fd)
 			if (!ioh)
 				break;
 
+			pgaio_debug_io(DEBUG2, ioh,
+						   "waiting for IO before FD %d gets closed, %d in-flight IOs",
+						   fd, dclist_count(&pgaio_my_backend->in_flight_ios));
+
 			/* see comment in pgaio_io_wait_for_free() about raciness */
 			pgaio_io_wait(ioh, ioh->generation);
 		}
@@ -1198,6 +1215,10 @@ pgaio_shutdown(int code, Datum arg)
 	while (!dclist_is_empty(&pgaio_my_backend->in_flight_ios))
 	{
 		PgAioHandle *ioh = dclist_head_element(PgAioHandle, node, &pgaio_my_backend->in_flight_ios);
+
+		pgaio_debug_io(DEBUG2, ioh,
+					   "waiting for IO to complete during shutdown, %d in-flight IOs",
+					   dclist_count(&pgaio_my_backend->in_flight_ios));
 
 		/* see comment in pgaio_io_wait_for_free() about raciness */
 		pgaio_io_wait(ioh, ioh->generation);
