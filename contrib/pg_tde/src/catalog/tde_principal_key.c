@@ -979,18 +979,12 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 
 		/* We have to verify that it isn't currently used by any database */
 
-
 		rel = table_open(DatabaseRelationId, AccessShareLock);
 
 		scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
 
-		while ((tuple = systable_getnext(scan)) != NULL)
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			if (!HeapTupleIsValid(tuple))
-			{
-				break;
-			}
-
 			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
 
 			principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
@@ -1072,7 +1066,6 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 		pg_tde_rotate_default_key_for_database(principal_key, newKey);
 	}
 
-
 	/*
 	 * Take row exclusive lock, as we do not want anybody to create/drop a
 	 * database in parallel. If it happens, its not the end of the world, but
@@ -1082,17 +1075,15 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 
 	scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
 
-	while ((tuple = systable_getnext(scan)) != NULL)
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
 		dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
-
 		principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 
 		if (pg_tde_is_same_principal_key(oldKey, principal_key))
 		{
 			pg_tde_rotate_default_key_for_database(principal_key, newKey);
 		}
-
 	}
 
 	systable_endscan(scan);
