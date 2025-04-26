@@ -165,9 +165,8 @@ get_keyring_provider_typename(ProviderType p_type)
 		case KMIP_KEY_PROVIDER:
 			return KMIP_KEYRING_TYPE;
 		default:
-			break;
+			return NULL;
 	}
-	return NULL;
 }
 
 static List *
@@ -770,17 +769,13 @@ load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 	{
 		case FILE_KEY_PROVIDER:
 			return (GenericKeyring *) load_file_keyring_provider_options(keyring_options);
-			break;
 		case VAULT_V2_KEY_PROVIDER:
 			return (GenericKeyring *) load_vaultV2_keyring_provider_options(keyring_options);
-			break;
 		case KMIP_KEY_PROVIDER:
 			return (GenericKeyring *) load_kmip_keyring_provider_options(keyring_options);
-			break;
 		default:
-			break;
+			return NULL;
 	}
-	return NULL;
 }
 
 static FileKeyring *
@@ -952,16 +947,14 @@ fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider
 ProviderType
 get_keyring_provider_from_typename(char *provider_type)
 {
-	if (provider_type == NULL)
-		return UNKNOWN_KEY_PROVIDER;
-
 	if (strcmp(FILE_KEYRING_TYPE, provider_type) == 0)
 		return FILE_KEY_PROVIDER;
-	if (strcmp(VAULTV2_KEYRING_TYPE, provider_type) == 0)
+	else if (strcmp(VAULTV2_KEYRING_TYPE, provider_type) == 0)
 		return VAULT_V2_KEY_PROVIDER;
-	if (strcmp(KMIP_KEYRING_TYPE, provider_type) == 0)
+	else if (strcmp(KMIP_KEYRING_TYPE, provider_type) == 0)
 		return KMIP_KEY_PROVIDER;
-	return UNKNOWN_KEY_PROVIDER;
+	else
+		return UNKNOWN_KEY_PROVIDER;
 }
 
 GenericKeyring *
