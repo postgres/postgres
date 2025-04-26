@@ -9555,8 +9555,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        </para>
 
        <para>
-        Note that when eager scanning is enabled, successful page freezes do
-        not count against the cap on eager freeze failures. Successful page
+        Note that when eager scanning is enabled, only freeze failures
+        count against the cap, not successful freezing. Successful page
         freezes are capped internally at 20% of the all-visible but not
         all-frozen pages in the relation. Capping successful page freezes helps
         amortize the overhead across multiple normal vacuums and limits the
