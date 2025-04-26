@@ -515,15 +515,15 @@ RETURNS event_trigger
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
-CREATE EVENT TRIGGER pg_tde_trigger_create_index
+CREATE EVENT TRIGGER pg_tde_ddl_start
 ON ddl_command_start
 EXECUTE FUNCTION pg_tde_ddl_command_start_capture();
-ALTER EVENT TRIGGER pg_tde_trigger_create_index ENABLE ALWAYS;
+ALTER EVENT TRIGGER pg_tde_ddl_start ENABLE ALWAYS;
 
-CREATE EVENT TRIGGER pg_tde_trigger_create_index_2
+CREATE EVENT TRIGGER pg_tde_ddl_end
 ON ddl_command_end
 EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
-ALTER EVENT TRIGGER pg_tde_trigger_create_index_2 ENABLE ALWAYS;
+ALTER EVENT TRIGGER pg_tde_ddl_end ENABLE ALWAYS;
 
 -- Per database extension initialization
 SELECT pg_tde_extension_initialize();

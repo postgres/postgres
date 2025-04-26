@@ -708,13 +708,13 @@ SELECT
     LATERAL pg_identify_object_as_address('pg_event_trigger'::regclass, e.oid, 0) as b,
     LATERAL pg_get_object_address(b.type, b.object_names, b.object_args) as a
   ORDER BY e.evtname;
-            evtname            |                    descr                    |     type      |          object_names           | object_args |                                     ident                                      
--------------------------------+---------------------------------------------+---------------+---------------------------------+-------------+--------------------------------------------------------------------------------
- end_rls_command               | event trigger end_rls_command               | event trigger | {end_rls_command}               | {}          | ("event trigger",,end_rls_command,end_rls_command)
- pg_tde_trigger_create_index   | event trigger pg_tde_trigger_create_index   | event trigger | {pg_tde_trigger_create_index}   | {}          | ("event trigger",,pg_tde_trigger_create_index,pg_tde_trigger_create_index)
- pg_tde_trigger_create_index_2 | event trigger pg_tde_trigger_create_index_2 | event trigger | {pg_tde_trigger_create_index_2} | {}          | ("event trigger",,pg_tde_trigger_create_index_2,pg_tde_trigger_create_index_2)
- sql_drop_command              | event trigger sql_drop_command              | event trigger | {sql_drop_command}              | {}          | ("event trigger",,sql_drop_command,sql_drop_command)
- start_rls_command             | event trigger start_rls_command             | event trigger | {start_rls_command}             | {}          | ("event trigger",,start_rls_command,start_rls_command)
+      evtname      |              descr              |     type      |    object_names     | object_args |                         ident                          
+-------------------+---------------------------------+---------------+---------------------+-------------+--------------------------------------------------------
+ end_rls_command   | event trigger end_rls_command   | event trigger | {end_rls_command}   | {}          | ("event trigger",,end_rls_command,end_rls_command)
+ pg_tde_ddl_end    | event trigger pg_tde_ddl_end    | event trigger | {pg_tde_ddl_end}    | {}          | ("event trigger",,pg_tde_ddl_end,pg_tde_ddl_end)
+ pg_tde_ddl_start  | event trigger pg_tde_ddl_start  | event trigger | {pg_tde_ddl_start}  | {}          | ("event trigger",,pg_tde_ddl_start,pg_tde_ddl_start)
+ sql_drop_command  | event trigger sql_drop_command  | event trigger | {sql_drop_command}  | {}          | ("event trigger",,sql_drop_command,sql_drop_command)
+ start_rls_command | event trigger start_rls_command | event trigger | {start_rls_command} | {}          | ("event trigger",,start_rls_command,start_rls_command)
 (5 rows)
 
 DROP EVENT TRIGGER start_rls_command;
