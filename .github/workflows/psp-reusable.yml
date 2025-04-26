@@ -76,10 +76,17 @@ jobs:
           name: log-test-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun/
-            src/contrib/*/t/
-            src/contrib/*/results
+            src/contrib/*/log
             src/contrib/*/regression.diffs
             src/contrib/*/regression.out
+            src/contrib/*/results
+            src/contrib/*/tmp_check
+            src/contrib/*/t/results
+            src/src/test/*/log
+            src/src/test/*/regression.diffs
+            src/src/test/*/regression.out
+            src/src/test/*/results
+            src/src/test/*/tmp_check
           retention-days: 3
 
   test_tde:
@@ -114,8 +121,15 @@ jobs:
           name: log-test-global-tde-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun/
-            src/contrib/*/t/
-            src/contrib/*/results
+            src/contrib/*/log
             src/contrib/*/regression.diffs
             src/contrib/*/regression.out
+            src/contrib/*/results
+            src/contrib/*/tmp_check
+            src/contrib/*/t/results
+            src/src/test/*/log
+            src/src/test/*/regression.diffs
+            src/src/test/*/regression.out
+            src/src/test/*/results
+            src/src/test/*/tmp_check
           retention-days: 3
