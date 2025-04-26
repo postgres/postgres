@@ -92,11 +92,10 @@ pg_comp_crc32c_sse42(pg_crc32c crc, const void *data, size_t len)
 
 pg_attribute_target("vpclmulqdq,avx512vl")
 pg_crc32c
-pg_comp_crc32c_avx512(pg_crc32c crc, const void *data, size_t length)
+pg_comp_crc32c_avx512(pg_crc32c crc, const void *data, size_t len)
 {
 	/* adjust names to match generated code */
 	pg_crc32c	crc0 = crc;
-	size_t		len = length;
 	const char *buf = data;
 
 	/* Align on cacheline boundary. The threshold is somewhat arbitrary. */
