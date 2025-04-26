@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
-          name: testlog-ubuntu-${{ inputs.ubuntu_version }}.04-meson-${{ inputs.build_type }}
+          name: log-test-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun/
             src/contrib/*/t/
@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
-          name: testlog-tde-${{ inputs.os }}-${{  inputs.build_script }}-${{ inputs.build_type }}
+          name: log-test-global-tde-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun/
             src/contrib/*/t/
