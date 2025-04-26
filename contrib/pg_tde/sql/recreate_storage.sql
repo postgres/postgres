@@ -41,10 +41,12 @@ SELECT pg_tde_is_encrypted('rewritemetoo2');
 
 CREATE TABLE encrypted_table (
     id SERIAL,
+    id2 INT,
     data TEXT,
     created_at DATE NOT NULL,
     PRIMARY KEY (id, created_at)
 ) USING tde_heap;
+
 CREATE INDEX idx_date ON encrypted_table (created_at);
 SELECT pg_tde_is_encrypted('encrypted_table');
 CLUSTER encrypted_table USING idx_date;
@@ -54,5 +56,46 @@ SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
 ALTER SEQUENCE encrypted_table_id_seq RESTART;
 SELECT pg_tde_is_encrypted('encrypted_table_id_seq');
 
+CREATE TABLE plain_table (
+    id2 INT
+) USING heap;
+
+-- Starts independent and becomes encrypted
+CREATE SEQUENCE independent_seq;
+SELECT pg_tde_is_encrypted('independent_seq');
+ALTER SEQUENCE independent_seq OWNED BY encrypted_table.id2;
+SELECT pg_tde_is_encrypted('independent_seq');
+
+-- Starts independent and stays plain
+CREATE SEQUENCE independent_seq2 OWNED BY NONE;
+SELECT pg_tde_is_encrypted('independent_seq2');
+ALTER SEQUENCE independent_seq2 OWNED BY plain_table.id2;
+SELECT pg_tde_is_encrypted('independent_seq2');
+
+-- Starts owned by an encrypted table and becomes owned by a plain table
+CREATE SEQUENCE encrypted_table_id2_seq OWNED BY encrypted_table.id2;
+SELECT pg_tde_is_encrypted('encrypted_table_id2_seq');
+ALTER SEQUENCE encrypted_table_id2_seq OWNED BY plain_table.id2;
+SELECT pg_tde_is_encrypted('encrypted_table_id2_seq');
+
+-- Starts owned by an encrypted table and becomes independent
+CREATE SEQUENCE encrypted_table_id2_seq2 OWNED BY encrypted_table.id2;
+SELECT pg_tde_is_encrypted('encrypted_table_id2_seq2');
+ALTER SEQUENCE encrypted_table_id2_seq2 OWNED BY NONE;
+SELECT pg_tde_is_encrypted('encrypted_table_id2_seq2');
+
+-- Starts owned by a plain table and becomes owned by an encrypted table
+CREATE SEQUENCE plain_table_id2_seq OWNED BY plain_table.id2;
+SELECT pg_tde_is_encrypted('plain_table_id2_seq');
+ALTER SEQUENCE plain_table_id2_seq OWNED BY encrypted_table.id2;
+SELECT pg_tde_is_encrypted('plain_table_id2_seq');
+
+-- Starts owned by a plain table and becomes independent
+CREATE SEQUENCE plain_table_id2_seq2 OWNED BY plain_table.id2;
+SELECT pg_tde_is_encrypted('plain_table_id2_seq2');
+ALTER SEQUENCE plain_table_id2_seq2 OWNED BY NONE;
+SELECT pg_tde_is_encrypted('plain_table_id2_seq2');
+
+DROP TABLE plain_table;
 DROP EXTENSION pg_tde CASCADE;
 RESET default_table_access_method;

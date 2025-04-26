@@ -42,6 +42,7 @@ typedef struct
 	Node	   *parsetree;
 	TDEEncryptMode encryptMode;
 	Oid			rebuildSequencesFor;
+	Oid			rebuildSequence;
 } TdeDdlEvent;
 
 static FullTransactionId ddlEventStackTid = {};
@@ -295,8 +296,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				if (rel->rd_rel->relam == get_tde_table_am_oid())
 				{
 					/*
-					 * We are altering an encrypted table ALTER TABLE can
-					 * create possibly new files set the global state.
+					 * We are altering an encrypted table and ALTER TABLE can
+					 * possibly create new files so set the global state.
 					 */
 					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
 					checkPrincipalKeyConfigured();
@@ -307,6 +308,108 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 			push_event_stack(&event);
 			checkEncryptionStatus();
+		}
+	}
+	else if (IsA(parsetree, CreateSeqStmt))
+	{
+		CreateSeqStmt *stmt = (CreateSeqStmt *) parsetree;
+		ListCell   *option;
+		List	   *owned_by = NIL;
+		TdeDdlEvent event = {.parsetree = parsetree};
+
+		foreach(option, stmt->options)
+		{
+			DefElem    *defel = (DefElem *) lfirst(option);
+
+			if (strcmp(defel->defname, "owned_by") == 0)
+			{
+				owned_by = defGetQualifiedName(defel);
+				break;
+			}
+		}
+
+		if (list_length(owned_by) > 1)
+		{
+			List	   *relname;
+			RangeVar   *rel;
+			Relation	tablerel;
+
+			relname = list_copy_head(owned_by, list_length(owned_by) - 1);
+
+			/* Open and lock rel to ensure it won't go away meanwhile */
+			rel = makeRangeVarFromNameList(relname);
+			tablerel = relation_openrv(rel, AccessShareLock);
+
+			if (tablerel->rd_rel->relam == get_tde_table_am_oid())
+			{
+				event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+				checkPrincipalKeyConfigured();
+			}
+			else
+				event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
+
+			/* Hold lock until end of transaction */
+			relation_close(tablerel, NoLock);
+		}
+		else
+			event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
+
+		push_event_stack(&event);
+	}
+	else if (IsA(parsetree, AlterSeqStmt))
+	{
+		AlterSeqStmt *stmt = (AlterSeqStmt *) parsetree;
+		ListCell   *option;
+		List	   *owned_by = NIL;
+		TdeDdlEvent event = {.parsetree = parsetree};
+		Oid			relid = RangeVarGetRelid(stmt->sequence, AccessShareLock, true);
+
+		if (relid != InvalidOid)
+		{
+			foreach(option, stmt->options)
+			{
+				DefElem    *defel = (DefElem *) lfirst(option);
+
+				if (strcmp(defel->defname, "owned_by") == 0)
+				{
+					owned_by = defGetQualifiedName(defel);
+					break;
+				}
+			}
+
+			if (list_length(owned_by) > 1)
+			{
+				List	   *relname;
+				RangeVar   *rel;
+				Relation	tablerel;
+
+				event.rebuildSequence = relid;
+
+				relname = list_copy_head(owned_by, list_length(owned_by) - 1);
+
+				/* Open and lock rel to ensure it won't go away meanwhile */
+				rel = makeRangeVarFromNameList(relname);
+				tablerel = relation_openrv(rel, AccessShareLock);
+
+				if (tablerel->rd_rel->relam == get_tde_table_am_oid())
+				{
+					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+					checkPrincipalKeyConfigured();
+				}
+				else
+					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
+
+				/* Hold lock until end of transaction */
+				relation_close(tablerel, NoLock);
+			}
+			else if (list_length(owned_by) == 1)
+			{
+				event.rebuildSequence = relid;
+
+				event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
+			}
+
+			push_event_stack(&event);
 		}
 	}
 
@@ -356,6 +459,21 @@ pg_tde_ddl_command_end_capture(PG_FUNCTION_ARGS)
 
 			SequenceChangePersistence(seq_relid, persistence);
 		}
+	}
+
+	if (event->rebuildSequence != InvalidOid)
+	{
+		/*
+		 * Seqeunces are not rewritten when just changing owner so force a
+		 * rewrite. There is a small risk of extra overhead if someone changes
+		 * sequence owner and something else at the same time.
+		 */
+		Relation	rel = relation_open(event->rebuildSequence, NoLock);
+		char		persistence = rel->rd_rel->relpersistence;
+
+		relation_close(rel, NoLock);
+
+		SequenceChangePersistence(event->rebuildSequence, persistence);
 	}
 
 	ddlEventStack = list_delete_last(ddlEventStack);
