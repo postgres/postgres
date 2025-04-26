@@ -575,13 +575,6 @@ InitializeMaxBackends(void)
  *
  * This must be called after modules have had the chance to alter GUCs in
  * shared_preload_libraries and before shared memory size is determined.
- *
- * The default max_locks_per_xact=64 means 4 groups by default.
- *
- * We allow anything between 1 and 1024 groups, with the usual power-of-2
- * logic. The 1 is the "old" size with only 16 slots, 1024 is an arbitrary
- * limit (matching max_locks_per_xact = 16k). Values over 1024 are unlikely
- * to be beneficial - there are bottlenecks we'll hit way before that.
  */
 void
 InitializeFastPathLocks(void)
@@ -589,19 +582,22 @@ InitializeFastPathLocks(void)
 	/* Should be initialized only once. */
 	Assert(FastPathLockGroupsPerBackend == 0);
 
-	/* we need at least one group */
-	FastPathLockGroupsPerBackend = 1;
+	/*
+	 * Based on the max_locks_per_transaction GUC, as that's a good indicator
+	 * of the expected number of locks, figure out the value for
+	 * FastPathLockGroupsPerBackend.  This must be a power-of-two.  We cap the
+	 * value at FP_LOCK_GROUPS_PER_BACKEND_MAX and insist the value is at
+	 * least 1.
+	 *
+	 * The default max_locks_per_transaction = 64 means 4 groups by default.
+	 */
+	FastPathLockGroupsPerBackend =
+		Max(Min(pg_nextpower2_32(max_locks_per_xact) / FP_LOCK_SLOTS_PER_GROUP,
+				FP_LOCK_GROUPS_PER_BACKEND_MAX), 1);
 
-	while (FastPathLockGroupsPerBackend < FP_LOCK_GROUPS_PER_BACKEND_MAX)
-	{
-		/* stop once we exceed max_locks_per_xact */
-		if (FastPathLockSlotsPerBackend() >= max_locks_per_xact)
-			break;
-
-		FastPathLockGroupsPerBackend *= 2;
-	}
-
-	Assert(FastPathLockGroupsPerBackend <= FP_LOCK_GROUPS_PER_BACKEND_MAX);
+	/* Validate we did get a power-of-two */
+	Assert(FastPathLockGroupsPerBackend ==
+		   pg_nextpower2_32(FastPathLockGroupsPerBackend));
 }
 
 /*

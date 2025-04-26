@@ -210,9 +210,12 @@ int			FastPathLockGroupsPerBackend = 0;
  *
  * The selected constant (49157) is a prime not too close to 2^k, and it's
  * small enough to not cause overflows (in 64-bit).
+ *
+ * We can assume that FastPathLockGroupsPerBackend is a power-of-two per
+ * InitializeFastPathLocks().
  */
 #define FAST_PATH_REL_GROUP(rel) \
-	(((uint64) (rel) * 49157) % FastPathLockGroupsPerBackend)
+	(((uint64) (rel) * 49157) & (FastPathLockGroupsPerBackend - 1))
 
 /*
  * Given the group/slot indexes, calculate the slot index in the whole array
