@@ -12,8 +12,6 @@
 #ifndef QUERY_UTILS_H
 #define QUERY_UTILS_H
 
-#include "postgres_fe.h"
-
 #include "libpq-fe.h"
 
 extern PGresult *executeQuery(PGconn *conn, const char *query, bool echo);

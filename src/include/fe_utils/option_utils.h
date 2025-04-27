@@ -12,8 +12,6 @@
 #ifndef OPTION_UTILS_H
 #define OPTION_UTILS_H
 
-#include "postgres_fe.h"
-
 #include "common/file_utils.h"
 
 typedef void (*help_handler) (const char *progname);
