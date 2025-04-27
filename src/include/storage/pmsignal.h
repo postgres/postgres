@@ -17,11 +17,11 @@
 #include <signal.h>
 
 #ifdef HAVE_SYS_PRCTL_H
-#include "sys/prctl.h"
+#include <sys/prctl.h>
 #endif
 
 #ifdef HAVE_SYS_PROCCTL_H
-#include "sys/procctl.h"
+#include <sys/procctl.h>
 #endif
 
 /*
