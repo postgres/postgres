@@ -18,7 +18,7 @@
 #include "pg_backup_utils.h"
 
 #ifdef HAVE_LIBZ
-#include "zlib.h"
+#include <zlib.h>
 
 /*----------------------
  * Compressor API

@@ -82,8 +82,8 @@
  * can compile against MULTIPLICITY Perl builds without including XSUB.h.
  */
 #define PERL_NO_GET_CONTEXT
-#include "EXTERN.h"
-#include "perl.h"
+#include <EXTERN.h>
+#include <perl.h>
 
 /*
  * We want to include XSUB.h only within .xs files, because on some platforms
@@ -117,7 +117,7 @@
 #undef unlink
 #endif
 
-#include "XSUB.h"
+#include <XSUB.h>
 #endif
 
 /* put back our *printf macros ... this must match src/include/port.h */

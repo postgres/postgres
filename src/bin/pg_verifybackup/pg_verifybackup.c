@@ -15,6 +15,7 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <time.h>
 
@@ -23,7 +24,6 @@
 #include "common/parse_manifest.h"
 #include "fe_utils/simple_list.h"
 #include "getopt_long.h"
-#include "limits.h"
 #include "pg_verifybackup.h"
 #include "pgtime.h"
 

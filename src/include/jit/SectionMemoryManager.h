@@ -19,10 +19,10 @@
 #ifndef LLVM_EXECUTIONENGINE_BACKPORT_SECTIONMEMORYMANAGER_H
 #define LLVM_EXECUTIONENGINE_BACKPORT_SECTIONMEMORYMANAGER_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ExecutionEngine/RTDyldMemoryManager.h"
-#include "llvm/Support/Alignment.h"
-#include "llvm/Support/Memory.h"
+#include <llvm/ADT/SmallVector.h>
+#include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
+#include <llvm/Support/Alignment.h>
+#include <llvm/Support/Memory.h>
 #include <cstdint>
 #include <string>
 #include <system_error>

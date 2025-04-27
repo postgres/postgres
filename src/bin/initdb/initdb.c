@@ -61,7 +61,7 @@
 #include <time.h>
 
 #ifdef HAVE_SHM_OPEN
-#include "sys/mman.h"
+#include <sys/mman.h>
 #endif
 
 #include "access/xlog_internal.h"

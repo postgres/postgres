@@ -3333,7 +3333,7 @@ UnpinBufferNoOwner(BufferDesc *buf)
 #define ST_COMPARE(a, b) ckpt_buforder_comparator(a, b)
 #define ST_SCOPE static
 #define ST_DEFINE
-#include <lib/sort_template.h>
+#include "lib/sort_template.h"
 
 /*
  * BufferSync -- Write out all dirty buffers in the pool.
@@ -6450,7 +6450,7 @@ ScheduleBufferTagForWriteback(WritebackContext *wb_context, IOContext io_context
 #define ST_COMPARE(a, b) buffertag_comparator(&a->tag, &b->tag)
 #define ST_SCOPE static
 #define ST_DEFINE
-#include <lib/sort_template.h>
+#include "lib/sort_template.h"
 
 /*
  * Issue all pending writeback requests, previously scheduled with
