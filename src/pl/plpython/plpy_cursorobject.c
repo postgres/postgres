@@ -16,7 +16,7 @@
 #include "plpy_planobject.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/memutils.h"
 
 static PyObject *PLy_cursor_query(const char *query);

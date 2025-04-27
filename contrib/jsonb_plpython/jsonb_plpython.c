@@ -2,7 +2,7 @@
 
 #include "plpy_elog.h"
 #include "plpy_typeio.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/fmgrprotos.h"
 #include "utils/jsonb.h"
 #include "utils/numeric.h"

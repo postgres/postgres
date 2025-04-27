@@ -14,7 +14,7 @@
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
 #include "plpy_subxactobject.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/builtins.h"
 
 HTAB	   *PLy_spi_exceptions = NULL;

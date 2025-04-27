@@ -13,7 +13,7 @@
 #include "plpy_elog.h"
 #include "plpy_main.h"
 #include "plpy_procedure.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"

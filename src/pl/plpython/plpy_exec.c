@@ -17,7 +17,7 @@
 #include "plpy_main.h"
 #include "plpy_procedure.h"
 #include "plpy_subxactobject.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/fmgrprotos.h"
 #include "utils/rel.h"
 

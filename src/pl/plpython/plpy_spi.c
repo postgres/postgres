@@ -19,7 +19,7 @@
 #include "plpy_plpymodule.h"
 #include "plpy_resultobject.h"
 #include "plpy_spi.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/memutils.h"
 
 static PyObject *PLy_spi_execute_query(char *query, long limit);

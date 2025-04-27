@@ -8,7 +8,7 @@
 
 #include "plpy_elog.h"
 #include "plpy_resultobject.h"
-#include "plpython.h"
+#include "plpy_util.h"
 
 static void PLy_result_dealloc(PLyResultObject *self);
 static PyObject *PLy_result_colnames(PyObject *self, PyObject *unused);

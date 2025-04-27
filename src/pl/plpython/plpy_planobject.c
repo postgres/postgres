@@ -9,7 +9,7 @@
 #include "plpy_cursorobject.h"
 #include "plpy_planobject.h"
 #include "plpy_spi.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/memutils.h"
 
 static void PLy_plan_dealloc(PLyPlanObject *self);

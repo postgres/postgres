@@ -14,7 +14,7 @@
 #include "plpy_elog.h"
 #include "plpy_main.h"
 #include "plpy_typeio.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

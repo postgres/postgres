@@ -18,7 +18,7 @@
 #include "plpy_plpymodule.h"
 #include "plpy_procedure.h"
 #include "plpy_subxactobject.h"
-#include "plpython.h"
+#include "plpy_util.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"

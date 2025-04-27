@@ -10,7 +10,7 @@
 #include "plpy_elog.h"
 #include "plpy_main.h"
 #include "plpy_procedure.h"
-#include "plpython.h"
+#include "plpy_util.h"
 
 PyObject   *PLy_exc_error = NULL;
 PyObject   *PLy_exc_fatal = NULL;
