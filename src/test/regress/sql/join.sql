@@ -2756,7 +2756,8 @@ select * from emp1 t1 left join
         on true)
 on true;
 
--- Check that SJE removes the whole PHVs correctly
+-- Try PHV, which could potentially be removed completely by SJE, but that's
+-- not implemented yet.
 explain (verbose, costs off)
 select 1 from emp1 t1 left join
     ((select 1 as x, * from emp1 t2) s1 inner join
@@ -2773,6 +2774,26 @@ explain (verbose, costs off)
 select * from generate_series(1,10) t1(id) left join
     lateral (select t1.id as t1id, t2.id from emp1 t2 join emp1 t3 on t2.id = t3.id)
 on true;
+
+-- This is a degenerate case of PHV usage: it is evaluated and needed inside
+-- a baserel scan operation that the SJE removes.  The PHV in this test should
+-- be in the filter of parameterized Index Scan: the replace_nestloop_params()
+-- code will detect if the placeholder list doesn't have a reference to this
+-- parameter.
+--
+-- NOTE:  enable_hashjoin and enable_mergejoin must be disabled.
+CREATE TABLE tbl_phv(x int, y int PRIMARY KEY);
+CREATE INDEX tbl_phv_idx ON tbl_phv(x);
+INSERT INTO tbl_phv (x, y)
+  SELECT gs, gs FROM generate_series(1,100) AS gs;
+VACUUM ANALYZE tbl_phv;
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT 1 FROM tbl_phv t1 LEFT JOIN
+  (SELECT 1 extra, x, y FROM tbl_phv tl) t3 JOIN
+    (SELECT y FROM tbl_phv tr) t4
+  ON t4.y = t3.y
+ON true WHERE t3.extra IS NOT NULL AND t3.x = t1.x % 2;
+DROP TABLE IF EXISTS tbl_phv;
 
 -- Check that SJE replaces join clauses involving the removed rel correctly
 explain (costs off)

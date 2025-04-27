@@ -403,7 +403,12 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * Likewise remove references from PlaceHolderVar data structures,
-	 * removing any no-longer-needed placeholders entirely.
+	 * removing any no-longer-needed placeholders entirely.  We remove PHV
+	 * only for left-join removal.  With self-join elimination, PHVs already
+	 * get moved to the remaining relation, where they might still be needed.
+	 * It might also happen that we skip the removal of some PHVs that could
+	 * be removed.  However, the overhead of extra PHVs is small compared to
+	 * the complexity of analysis needed to remove them.
 	 *
 	 * Removal is a bit trickier than it might seem: we can remove PHVs that
 	 * are used at the target rel and/or in the join qual, but not those that
@@ -420,10 +425,16 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(l);
 
 		Assert(sjinfo == NULL || !bms_is_member(relid, phinfo->ph_lateral));
-		if (bms_is_subset(phinfo->ph_needed, joinrelids) &&
+		if (sjinfo != NULL &&
+			bms_is_subset(phinfo->ph_needed, joinrelids) &&
 			bms_is_member(relid, phinfo->ph_eval_at) &&
-			(sjinfo == NULL || !bms_is_member(sjinfo->ojrelid, phinfo->ph_eval_at)))
+			!bms_is_member(sjinfo->ojrelid, phinfo->ph_eval_at))
 		{
+			/*
+			 * This code shouldn't be executed if one relation is substituted
+			 * with another: in this case, the placeholder may be employed in
+			 * a filter inside the scan node the SJE removes.
+			 */
 			root->placeholder_list = foreach_delete_current(root->placeholder_list,
 															l);
 			root->placeholder_array[phinfo->phid] = NULL;
