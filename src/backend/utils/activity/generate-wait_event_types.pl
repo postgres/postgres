@@ -168,7 +168,7 @@ if ($gen_code)
 	printf $h $header_comment, 'wait_event_types.h';
 	printf $h "#ifndef WAIT_EVENT_TYPES_H\n";
 	printf $h "#define WAIT_EVENT_TYPES_H\n\n";
-	printf $h "#include \"utils/wait_event.h\"\n\n";
+	printf $h "#include \"utils/wait_classes.h\"\n\n";
 
 	printf $c $header_comment, 'pgstat_wait_event.c';
 

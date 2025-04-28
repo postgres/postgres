@@ -10,22 +10,6 @@
 #ifndef WAIT_EVENT_H
 #define WAIT_EVENT_H
 
-
-/* ----------
- * Wait Classes
- * ----------
- */
-#define PG_WAIT_LWLOCK				0x01000000U
-#define PG_WAIT_LOCK				0x03000000U
-#define PG_WAIT_BUFFERPIN			0x04000000U
-#define PG_WAIT_ACTIVITY			0x05000000U
-#define PG_WAIT_CLIENT				0x06000000U
-#define PG_WAIT_EXTENSION			0x07000000U
-#define PG_WAIT_IPC					0x08000000U
-#define PG_WAIT_TIMEOUT				0x09000000U
-#define PG_WAIT_IO					0x0A000000U
-#define PG_WAIT_INJECTIONPOINT		0x0B000000U
-
 /* enums for wait events */
 #include "utils/wait_event_types.h"
 
