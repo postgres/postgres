@@ -621,7 +621,8 @@ autoprewarm_database_main(Datum main_arg)
 					.nblocks = nblocks,
 			};
 
-			stream = read_stream_begin_relation(READ_STREAM_DEFAULT |
+			stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+												READ_STREAM_DEFAULT |
 												READ_STREAM_USE_BATCHING,
 												NULL,
 												rel,

@@ -202,7 +202,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		 * It is safe to use batchmode as block_range_read_stream_cb takes no
 		 * locks.
 		 */
-		stream = read_stream_begin_relation(READ_STREAM_FULL |
+		stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+											READ_STREAM_FULL |
 											READ_STREAM_USE_BATCHING,
 											NULL,
 											rel,
