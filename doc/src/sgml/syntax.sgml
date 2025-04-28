@@ -18,7 +18,7 @@
  We also encourage users who are already familiar with SQL to read this
  chapter carefully, as it contains several rules and concepts that
  are implemented inconsistently among SQL databases or are
- specific to <productname>PostgreSQL</productname>.
+ specific to the <productname>PostgreSQL</productname>.
 </para>
 
  <sect1 id="sql-syntax-lexical">
