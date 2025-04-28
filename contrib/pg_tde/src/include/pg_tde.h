@@ -19,10 +19,9 @@ typedef struct XLogExtensionInstall
 	Oid			database_id;
 } XLogExtensionInstall;
 
-typedef void (*pg_tde_on_ext_install_callback) (XLogExtensionInstall *ext_info, bool redo, void *arg);
+typedef void (*pg_tde_on_ext_install_callback) (XLogExtensionInstall *ext_info, bool redo);
 
-extern void on_ext_install(pg_tde_on_ext_install_callback function, void *arg);
-
+extern void on_ext_install(pg_tde_on_ext_install_callback function);
 extern void extension_install_redo(XLogExtensionInstall *xlrec);
 
 #endif							/* PG_TDE_H */

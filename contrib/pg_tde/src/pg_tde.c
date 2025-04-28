@@ -43,13 +43,7 @@
 
 PG_MODULE_MAGIC;
 
-struct OnExtInstall
-{
-	pg_tde_on_ext_install_callback function;
-	void	   *arg;
-};
-
-static struct OnExtInstall on_ext_install_list[MAX_ON_INSTALLS];
+static pg_tde_on_ext_install_callback on_ext_install_list[MAX_ON_INSTALLS];
 static int	on_ext_install_index = 0;
 static void pg_tde_init_data_dir(void);
 static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
@@ -165,17 +159,14 @@ extension_install_redo(XLogExtensionInstall *xlrec)
  * ----------------------------------------------------------------
  */
 void
-on_ext_install(pg_tde_on_ext_install_callback function, void *arg)
+on_ext_install(pg_tde_on_ext_install_callback function)
 {
 	if (on_ext_install_index >= MAX_ON_INSTALLS)
 		ereport(FATAL,
 				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				errmsg_internal("out of on extension install slots"));
 
-	on_ext_install_list[on_ext_install_index].function = function;
-	on_ext_install_list[on_ext_install_index].arg = arg;
-
-	++on_ext_install_index;
+	on_ext_install_list[on_ext_install_index++] = function;
 }
 
 /* Creates a tde directory for internal files if not exists */
@@ -202,8 +193,7 @@ static void
 run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo)
 {
 	for (int i = 0; i < on_ext_install_index; i++)
-		on_ext_install_list[i]
-			.function(xlrec, redo, on_ext_install_list[i].arg);
+		on_ext_install_list[i] (xlrec, redo);
 }
 
 /* Returns package version */

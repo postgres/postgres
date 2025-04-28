@@ -84,7 +84,7 @@ static void cleanup_key_provider_info(Oid databaseId);
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static List *GetAllKeyringProviders(Oid dbOid);
 static Size initialize_shared_state(void *start_address);
-static void key_provider_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg);
+static void key_provider_startup_cleanup(XLogExtensionInstall *ext_info, bool redo);
 static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
@@ -135,11 +135,11 @@ InitializeKeyProviderInfo(void)
 {
 	ereport(LOG, errmsg("initializing TDE key provider info"));
 	RegisterShmemRequest(&key_provider_info_shmem_routine);
-	on_ext_install(key_provider_startup_cleanup, NULL);
+	on_ext_install(key_provider_startup_cleanup);
 }
 
 static void
-key_provider_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg)
+key_provider_startup_cleanup(XLogExtensionInstall *ext_info, bool redo)
 {
 
 	cleanup_key_provider_info(ext_info->database_id);

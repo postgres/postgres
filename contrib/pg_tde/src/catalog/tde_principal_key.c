@@ -88,7 +88,7 @@ static Size initialize_shared_state(void *start_address);
 static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
 static Size required_shared_mem_size(void);
 static void shared_memory_shutdown(int code, Datum arg);
-static void principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg);
+static void principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_Hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
@@ -124,7 +124,7 @@ InitializePrincipalKeyInfo(void)
 {
 	ereport(LOG, errmsg("Initializing TDE principal key info"));
 	RegisterShmemRequest(&principal_key_info_shmem_routine);
-	on_ext_install(principal_key_startup_cleanup, NULL);
+	on_ext_install(principal_key_startup_cleanup);
 }
 
 /*
@@ -472,7 +472,7 @@ push_principal_key_to_cache(TDEPrincipalKey *principalKey)
  * but unfortunately we do not have any such mechanism in PG.
 */
 static void
-principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg)
+principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo)
 {
 	clear_principal_key_cache(ext_info->database_id);
 
