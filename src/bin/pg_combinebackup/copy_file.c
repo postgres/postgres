@@ -330,7 +330,7 @@ copy_file_link(const char *src, const char *dest,
 			   pg_checksum_context *checksum_ctx)
 {
 	if (link(src, dest) < 0)
-		pg_fatal("error while linking file from \"%s\" to \"%s\": %m",
+		pg_fatal("could not create link from \"%s\" to \"%s\": %m",
 				 src, dest);
 
 	/* if needed, calculate checksum of the file */

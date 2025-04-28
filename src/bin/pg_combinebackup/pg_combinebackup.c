@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	/* Warn about the possibility of compromising the backups, when link mode */
 	if (opt.copy_method == COPY_METHOD_LINK)
 		pg_log_warning("--link mode was used; any modifications to the output "
-					   "directory may destructively modify input directories");
+					   "directory might destructively modify input directories");
 
 	/* It's a success, so don't remove the output directories. */
 	reset_directory_cleanup_list();
