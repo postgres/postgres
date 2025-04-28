@@ -25,6 +25,7 @@ step "s0_commit" { COMMIT; }
 step "s0_checkpoint" { CHECKPOINT; }
 step "s0_vacuum" { VACUUM pg_attribute; }
 step "s0_get_changes" { SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1'); }
+step "s0_advance_slot" { SELECT slot_name FROM pg_replication_slot_advance('isolation_slot', pg_current_wal_lsn()); }
 
 session "s1"
 setup { SET synchronous_commit=on; }
@@ -40,3 +41,7 @@ step "s1_commit" { COMMIT; }
 # will be removed (xmax set) before T1 commits. That is, interlocking doesn't
 # forbid modifying catalog after someone read it (and didn't commit yet).
 permutation "s0_begin" "s0_getxid" "s1_begin" "s1_insert" "s0_alter" "s0_commit" "s0_checkpoint" "s0_get_changes" "s0_get_changes" "s1_commit" "s0_vacuum" "s0_get_changes"
+
+# Perform the same testing process as described above, but use advance_slot to
+# forces xmin advancement during fast forward decoding.
+permutation "s0_begin" "s0_getxid" "s1_begin" "s1_insert" "s0_alter" "s0_commit" "s0_checkpoint" "s0_advance_slot" "s0_advance_slot" "s1_commit" "s0_vacuum" "s0_get_changes"

@@ -38,3 +38,44 @@ COMMIT
 stop    
 (1 row)
 
+
+starting permutation: s0_begin s0_getxid s1_begin s1_insert s0_alter s0_commit s0_checkpoint s0_advance_slot s0_advance_slot s1_commit s0_vacuum s0_get_changes
+step s0_begin: BEGIN;
+step s0_getxid: SELECT pg_current_xact_id() IS NULL;
+?column?
+--------
+f       
+(1 row)
+
+step s1_begin: BEGIN;
+step s1_insert: INSERT INTO harvest VALUES ((1, 2, 3));
+step s0_alter: ALTER TYPE basket DROP ATTRIBUTE mangos;
+step s0_commit: COMMIT;
+step s0_checkpoint: CHECKPOINT;
+step s0_advance_slot: SELECT slot_name FROM pg_replication_slot_advance('isolation_slot', pg_current_wal_lsn());
+slot_name     
+--------------
+isolation_slot
+(1 row)
+
+step s0_advance_slot: SELECT slot_name FROM pg_replication_slot_advance('isolation_slot', pg_current_wal_lsn());
+slot_name     
+--------------
+isolation_slot
+(1 row)
+
+step s1_commit: COMMIT;
+step s0_vacuum: VACUUM pg_attribute;
+step s0_get_changes: SELECT data FROM pg_logical_slot_get_changes('isolation_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+data                                                  
+------------------------------------------------------
+BEGIN                                                 
+table public.harvest: INSERT: fruits[basket]:'(1,2,3)'
+COMMIT                                                
+(3 rows)
+
+?column?
+--------
+stop    
+(1 row)
+
