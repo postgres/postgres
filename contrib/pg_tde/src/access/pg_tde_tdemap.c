@@ -665,49 +665,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 }
 
 /*
- * Rotate keys on a standby.
- */
-void
-pg_tde_write_map_keydata_file(off_t file_size, char *file_data)
-{
-	TDEFileHeader *fheader;
-	char		db_map_path[MAXPGPATH];
-	char		path_new[MAXPGPATH];
-	int			fd_new;
-	off_t		curr_pos = 0;
-
-	/* Let's get the header. Buff should start with the map file header. */
-	fheader = (TDEFileHeader *) file_data;
-
-	pg_tde_set_db_file_path(fheader->signed_key_info.data.databaseId, db_map_path);
-
-	/* Initialize the new file and set the name */
-	fd_new = keyrotation_init_file(&fheader->signed_key_info, path_new, db_map_path, &curr_pos);
-
-	if (pg_pwrite(fd_new, file_data, file_size, 0) != file_size)
-	{
-		ereport(WARNING,
-				errcode_for_file_access(),
-				errmsg("could not write tde file \"%s\": %m", path_new));
-		close(fd_new);
-		return;
-	}
-
-	if (pg_fsync(fd_new) != 0)
-	{
-		ereport(WARNING,
-				errcode_for_file_access(),
-				errmsg("could not fsync file \"%s\": %m", path_new));
-		close(fd_new);
-		return;
-	}
-
-	close(fd_new);
-
-	finalize_key_rotation(db_map_path, path_new);
-}
-
-/*
  * It's called by seg_write inside crit section so no pallocs, hence
  * needs keyfile_path
  */
