@@ -88,7 +88,7 @@ static Size initialize_shared_state(void *start_address);
 static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
 static Size required_shared_mem_size(void);
 static void shared_memory_shutdown(int code, Datum arg);
-static void principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg);
+static void principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_Hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
@@ -472,15 +472,8 @@ push_principal_key_to_cache(TDEPrincipalKey *principalKey)
  * but unfortunately we do not have any such mechanism in PG.
 */
 static void
-principal_key_startup_cleanup(int tde_tbl_count, XLogExtensionInstall *ext_info, bool redo, void *arg)
+principal_key_startup_cleanup(XLogExtensionInstall *ext_info, bool redo, void *arg)
 {
-	if (tde_tbl_count > 0)
-	{
-		ereport(WARNING,
-				errmsg("Failed to perform initialization. database already has %d TDE tables", tde_tbl_count));
-		return;
-	}
-
 	clear_principal_key_cache(ext_info->database_id);
 
 	/* Remove the tde files */

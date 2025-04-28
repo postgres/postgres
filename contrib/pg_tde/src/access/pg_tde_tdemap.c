@@ -28,7 +28,6 @@
 #include "catalog/tde_principal_key.h"
 #include "encryption/enc_aes.h"
 #include "keyring/keyring_api.h"
-#include "common/pg_tde_utils.h"
 
 #include <openssl/rand.h>
 #include <openssl/err.h>

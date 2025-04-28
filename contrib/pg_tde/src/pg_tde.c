@@ -25,7 +25,6 @@
 #include "access/xloginsert.h"
 #include "keyring/keyring_api.h"
 #include "common/pg_tde_shmem.h"
-#include "common/pg_tde_utils.h"
 #include "catalog/tde_principal_key.h"
 #include "keyring/keyring_file.h"
 #include "keyring/keyring_vault.h"
@@ -202,19 +201,9 @@ pg_tde_init_data_dir(void)
 static void
 run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo)
 {
-	int			i;
-	int			tde_table_count = 0;
-
-	/*
-	 * Get the number of tde tables in this database should always be zero.
-	 * But still, it prevents the cleanup if someone explicitly calls this
-	 * function.
-	 */
-	if (!redo)
-		tde_table_count = get_tde_tables_count();
-	for (i = 0; i < on_ext_install_index; i++)
+	for (int i = 0; i < on_ext_install_index; i++)
 		on_ext_install_list[i]
-			.function(tde_table_count, xlrec, redo, on_ext_install_list[i].arg);
+			.function(xlrec, redo, on_ext_install_list[i].arg);
 }
 
 /* Returns package version */
