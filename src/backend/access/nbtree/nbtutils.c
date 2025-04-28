@@ -2920,6 +2920,17 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 
 		if (isNull)
 		{
+			/*
+			 * Scalar scan key isn't satisfied by NULL tuple value.
+			 *
+			 * If we're treating scan keys as nonrequired, and key is for a
+			 * skip array, then we must attempt to advance the array to NULL
+			 * (if we're successful then the tuple might match the qual).
+			 */
+			if (unlikely(forcenonrequired && key->sk_flags & SK_BT_SKIP))
+				return _bt_advance_array_keys(scan, NULL, tuple, tupnatts,
+											  tupdesc, *ikey, false);
+
 			if (key->sk_flags & SK_BT_NULLS_FIRST)
 			{
 				/*
@@ -2958,7 +2969,7 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 			}
 
 			/*
-			 * In any case, this indextuple doesn't match the qual.
+			 * This indextuple doesn't match the qual.
 			 */
 			return false;
 		}
