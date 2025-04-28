@@ -55,3 +55,27 @@ SELECT * FROM test_plain ORDER BY x;
  4
 (2 rows)
 
+-- check primary crash with WAL encryption
+SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/unlogged_tables.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+                                  -1
+(1 row)
+
+SELECT pg_tde_set_server_key_using_global_key_provider('test-global-key', 'file-vault');
+ pg_tde_set_server_key_using_global_key_provider 
+-------------------------------------------------
+ 
+(1 row)
+
+CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;
+INSERT INTO test_enc2 (x) VALUES (1), (2);
+ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';
+-- primary start
+SELECT * FROM test_enc2 ORDER BY x;
+ x 
+---
+ 1
+ 2
+(2 rows)
+

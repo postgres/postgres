@@ -11,8 +11,11 @@ PGTDE::setup_files_dir(basename($0));
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
-$primary->append_conf('postgresql.conf',
-	"shared_preload_libraries = 'pg_tde'");
+$primary->append_conf(
+	'postgresql.conf', q{
+checkpoint_timeout = 1h
+shared_preload_libraries = 'pg_tde'
+});
 $primary->start;
 
 $primary->backup('backup');
@@ -55,6 +58,29 @@ PGTDE::psql($replica, 'postgres',
 PGTDE::psql($replica, 'postgres',
 	"SELECT pg_tde_is_encrypted('test_plain_pkey');");
 PGTDE::psql($replica, 'postgres', "SELECT * FROM test_plain ORDER BY x;");
+
+PGTDE::append_to_result_file("-- check primary crash with WAL encryption");
+PGTDE::psql($primary, 'postgres',
+	"SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/unlogged_tables.per');"
+);
+PGTDE::psql($primary, 'postgres',
+	"SELECT pg_tde_set_server_key_using_global_key_provider('test-global-key', 'file-vault');"
+);
+
+PGTDE::psql($primary, 'postgres',
+	"CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;");
+PGTDE::psql($primary, 'postgres',
+	"INSERT INTO test_enc2 (x) VALUES (1), (2);");
+
+PGTDE::psql($primary, 'postgres',
+	"ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';");
+$primary->kill9;
+
+PGTDE::append_to_result_file("-- primary start");
+$primary->start;
+$primary->wait_for_catchup('replica');
+
+PGTDE::psql($replica, 'postgres', "SELECT * FROM test_enc2 ORDER BY x;");
 
 $replica->stop;
 $primary->stop;
