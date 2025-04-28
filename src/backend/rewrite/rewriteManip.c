@@ -758,10 +758,23 @@ ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
 	context.sublevels_up = sublevels_up;
 	context.change_RangeTblRef = change_RangeTblRef;
 
+	/*
+	 * Must be prepared to start with a Query or a bare expression tree; if
+	 * it's a Query, go straight to query_tree_walker to make sure that
+	 * sublevels_up doesn't get incremented prematurely.
+	 */
 	if (node && IsA(node, Query))
 	{
 		Query	   *qry = (Query *) node;
 
+		/*
+		 * If we are starting at a Query, and sublevels_up is zero, then we
+		 * must also fix rangetable indexes in the Query itself --- namely
+		 * resultRelation, mergeTargetRelation, exclRelIndex  and rowMarks
+		 * entries.  sublevels_up cannot be zero when recursing into a
+		 * subquery, so there's no need to have the same logic inside
+		 * ChangeVarNodes_walker.
+		 */
 		if (sublevels_up == 0)
 		{
 			ListCell   *l;
@@ -772,6 +785,7 @@ ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
 			if (qry->mergeTargetRelation == rt_index)
 				qry->mergeTargetRelation = new_index;
 
+			/* this is unlikely to ever be used, but ... */
 			if (qry->onConflict && qry->onConflict->exclRelIndex == rt_index)
 				qry->onConflict->exclRelIndex = new_index;
 
