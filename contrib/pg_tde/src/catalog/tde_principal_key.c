@@ -306,7 +306,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	if (strlen(key_name) >= sizeof(keyInfo->name))
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long principal key name, maximum lenght is %ld bytes", sizeof(keyInfo->name) - 1));
+				errmsg("too long principal key name, maximum length is %ld bytes", sizeof(keyInfo->name) - 1));
 
 	if (keyInfo == NULL)
 		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, PRINCIPAL_KEY_LEN);

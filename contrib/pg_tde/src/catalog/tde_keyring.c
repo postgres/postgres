@@ -227,7 +227,7 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	if (nlen >= sizeof(provider.provider_name))
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long provider name, maximum lenght is %ld bytes", sizeof(provider.provider_name) - 1));
+				errmsg("too long provider name, maximum length is %ld bytes", sizeof(provider.provider_name) - 1));
 
 	olen = strlen(options);
 	if (olen >= sizeof(provider.options))
@@ -280,7 +280,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	if (nlen >= sizeof(provider.provider_name) - 1)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long provider name, maximum lenght is %ld bytes", sizeof(provider.provider_name) - 1));
+				errmsg("too long provider name, maximum length is %ld bytes", sizeof(provider.provider_name) - 1));
 
 	olen = strlen(options);
 	if (olen >= sizeof(provider.options))
