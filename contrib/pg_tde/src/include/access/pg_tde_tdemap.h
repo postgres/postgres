@@ -107,7 +107,7 @@ extern void pg_tde_free_key_map_entry(const RelFileLocator *rlocator);
 static inline void
 pg_tde_set_db_file_path(Oid dbOid, char *path)
 {
-	join_path_components(path, pg_tde_get_tde_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
+	join_path_components(path, pg_tde_get_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
 }
 
 extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);

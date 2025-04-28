@@ -106,8 +106,8 @@ pg_tde_set_data_dir(const char *dir)
 }
 
 /* returns the palloc'd string */
-char *
-pg_tde_get_tde_data_dir(void)
+const char *
+pg_tde_get_data_dir(void)
 {
 	return tde_data_dir;
 }
