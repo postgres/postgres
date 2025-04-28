@@ -1110,7 +1110,7 @@ _bt_rewind_nonrequired_arrays(IndexScanDesc scan, ScanDirection dir)
  *
  * readpagetup callers must only call here when _bt_check_compare already set
  * continuescan=false.  We help these callers deal with _bt_check_compare's
- * inability to distinguishing between the < and > cases (it uses equality
+ * inability to distinguish between the < and > cases (it uses equality
  * operator scan keys, whereas we use 3-way ORDER procs).  These callers pass
  * a _bt_check_compare-set sktrig value that indicates which scan key
  * triggered the call (!readpagetup callers just pass us sktrig=0 instead).
@@ -1950,7 +1950,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	 * keys for one or more truncated attribute values (scan keys required in
 	 * _either_ scan direction).
 	 *
-	 * There is a chance that _bt_checkkeys (which checks so->scanBehind) will
+	 * There is a chance that _bt_readpage (which checks so->scanBehind) will
 	 * find that even the sibling leaf page's finaltup is < the new array
 	 * keys.  When that happens, our optimistic policy will have incurred a
 	 * single extra leaf page access that could have been avoided.
