@@ -453,8 +453,8 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
  * What we need to do here is:
  *
  * - Detect child columns that inherit NOT NULL bits from their parents, so
- *   that we needn't specify that again for the child. (Versions >= 18 no
- *   longer need this.)
+ *   that we needn't specify that again for the child.  For versions 18 and
+ *   up, this is needed when the parent is NOT VALID and the child isn't.
  *
  * - Detect child columns that have DEFAULT NULL when their parents had some
  *   non-null default.  In this case, we make up a dummy AttrDefInfo object so
@@ -516,6 +516,8 @@ flagInhAttrs(Archive *fout, DumpOptions *dopt, TableInfo *tblinfo, int numTables
 			bool		foundDefault;	/* Found a default in a parent */
 			bool		foundSameGenerated; /* Found matching GENERATED */
 			bool		foundDiffGenerated; /* Found non-matching GENERATED */
+			bool		allNotNullsInvalid = true;	/* is NOT NULL NOT VALID
+													 * on all parents? */
 
 			/* no point in examining dropped columns */
 			if (tbinfo->attisdropped[j])
@@ -546,6 +548,18 @@ flagInhAttrs(Archive *fout, DumpOptions *dopt, TableInfo *tblinfo, int numTables
 						parent->notnull_constrs[inhAttrInd] != NULL)
 						foundNotNull = true;
 
+					/*
+					 * Keep track of whether all the parents that have a
+					 * not-null constraint on this column have it as NOT
+					 * VALID; if they all are, arrange to have it printed for
+					 * this column.  If at least one parent has it as valid,
+					 * there's no need.
+					 */
+					if (fout->remoteVersion >= 180000 &&
+						parent->notnull_constrs[inhAttrInd] &&
+						!parent->notnull_invalid[inhAttrInd])
+						allNotNullsInvalid = false;
+
 					foundDefault |= (parentDef != NULL &&
 									 strcmp(parentDef->adef_expr, "NULL") != 0 &&
 									 !parent->attgenerated[inhAttrInd]);
@@ -570,6 +584,14 @@ flagInhAttrs(Archive *fout, DumpOptions *dopt, TableInfo *tblinfo, int numTables
 			 */
 			if (fout->remoteVersion < 180000 && foundNotNull)
 				tbinfo->notnull_islocal[j] = false;
+
+			/*
+			 * For versions >18, we must print the not-null constraint locally
+			 * for this table even if it isn't really locally defined, but is
+			 * valid for the child and no parent has it as valid.
+			 */
+			if (fout->remoteVersion >= 180000 && allNotNullsInvalid)
+				tbinfo->notnull_islocal[j] = true;
 
 			/*
 			 * Manufacture a DEFAULT NULL clause if necessary.  This breaks

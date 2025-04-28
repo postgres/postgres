@@ -9099,8 +9099,8 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 *
 	 * We track in notnull_islocal whether the constraint was defined directly
 	 * in this table or via an ancestor, for binary upgrade.  flagInhAttrs
-	 * might modify this later for servers older than 18; it's also in charge
-	 * of determining the correct inhcount.
+	 * might modify this later; that routine is also in charge of determining
+	 * the correct inhcount.
 	 */
 	if (fout->remoteVersion >= 180000)
 		appendPQExpBufferStr(q,
@@ -9255,6 +9255,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		tbinfo->attfdwoptions = (char **) pg_malloc(numatts * sizeof(char *));
 		tbinfo->attmissingval = (char **) pg_malloc(numatts * sizeof(char *));
 		tbinfo->notnull_constrs = (char **) pg_malloc(numatts * sizeof(char *));
+		tbinfo->notnull_invalid = (bool *) pg_malloc(numatts * sizeof(bool));
 		tbinfo->notnull_noinh = (bool *) pg_malloc(numatts * sizeof(bool));
 		tbinfo->notnull_islocal = (bool *) pg_malloc(numatts * sizeof(bool));
 		tbinfo->attrdefs = (AttrDefInfo **) pg_malloc(numatts * sizeof(AttrDefInfo *));
@@ -9708,8 +9709,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
  * constraints and the columns in the child don't have their own NOT NULL
  * declarations, we suppress printing constraints in the child: the
  * constraints are acquired at the point where the child is attached to the
- * parent.  This is tracked in ->notnull_islocal (which is set in flagInhAttrs
- * for servers pre-18).
+ * parent.  This is tracked in ->notnull_islocal; for servers pre-18 this is
+ * set not here but in flagInhAttrs.  That flag is also used when the
+ * constraint was validated in a child but all its parent have it as NOT
+ * VALID.
  *
  * Any of these constraints might have the NO INHERIT bit.  If so we set
  * ->notnull_noinh and NO INHERIT will be printed by dumpTableSchema.
@@ -9756,6 +9759,12 @@ determineNotNullFlags(Archive *fout, PGresult *res, int r,
 		else
 			appendPQExpBuffer(*invalidnotnulloids, ",%s", constroid);
 
+		/*
+		 * Track when a parent constraint is invalid for the cases where a
+		 * child constraint has been validated independenly.
+		 */
+		tbinfo->notnull_invalid[j] = true;
+
 		/* nothing else to do */
 		tbinfo->notnull_constrs[j] = NULL;
 		return;
@@ -9763,10 +9772,11 @@ determineNotNullFlags(Archive *fout, PGresult *res, int r,
 
 	/*
 	 * notnull_noinh is straight from the query result. notnull_islocal also,
-	 * though flagInhAttrs may change that one later in versions < 18.
+	 * though flagInhAttrs may change that one later.
 	 */
 	tbinfo->notnull_noinh[j] = PQgetvalue(res, r, i_notnull_noinherit)[0] == 't';
 	tbinfo->notnull_islocal[j] = PQgetvalue(res, r, i_notnull_islocal)[0] == 't';
+	tbinfo->notnull_invalid[j] = false;
 
 	/*
 	 * Determine a constraint name to use.  If the column is not marked not-

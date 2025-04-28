@@ -1625,6 +1625,40 @@ EXECUTE get_nnconstraint_info('{notnull_part1_upg, notnull_part1_1_upg, notnull_
  notnull_part1_upg   | notnull_con | f            | t          |           0
 (4 rows)
 
+-- Inheritance test tables for pg_upgrade
+create table constr_parent (a int);
+create table constr_child (a int) inherits (constr_parent);
+NOTICE:  merging column "a" with inherited definition
+alter table constr_parent add not null a not valid;
+alter table constr_child validate constraint constr_parent_a_not_null;
+EXECUTE get_nnconstraint_info('{constr_parent, constr_child}');
+    tabname    |         conname          | convalidated | conislocal | coninhcount 
+---------------+--------------------------+--------------+------------+-------------
+ constr_child  | constr_parent_a_not_null | t            | f          |           1
+ constr_parent | constr_parent_a_not_null | f            | t          |           0
+(2 rows)
+
+create table constr_parent2 (a int);
+create table constr_child2 () inherits (constr_parent2);
+alter table constr_parent2 add not null a not valid;
+alter table constr_child2 validate constraint constr_parent2_a_not_null;
+EXECUTE get_nnconstraint_info('{constr_parent2, constr_child2}');
+    tabname     |          conname          | convalidated | conislocal | coninhcount 
+----------------+---------------------------+--------------+------------+-------------
+ constr_child2  | constr_parent2_a_not_null | t            | f          |           1
+ constr_parent2 | constr_parent2_a_not_null | f            | t          |           0
+(2 rows)
+
+create table constr_parent3 (a int not null);
+create table constr_child3 () inherits (constr_parent2, constr_parent3);
+NOTICE:  merging multiple inherited definitions of column "a"
+EXECUTE get_nnconstraint_info('{constr_parent3, constr_child3}');
+    tabname     |          conname          | convalidated | conislocal | coninhcount 
+----------------+---------------------------+--------------+------------+-------------
+ constr_child3  | constr_parent2_a_not_null | t            | f          |           2
+ constr_parent3 | constr_parent3_a_not_null | t            | t          |           0
+(2 rows)
+
 DEALLOCATE get_nnconstraint_info;
 -- end NOT NULL NOT VALID
 -- Comments

@@ -365,6 +365,7 @@ typedef struct _tableInfo
 									 * there isn't one on this column. If
 									 * empty string, unnamed constraint
 									 * (pre-v17) */
+	bool	   *notnull_invalid;	/* true for NOT NULL NOT VALID */
 	bool	   *notnull_noinh;	/* NOT NULL is NO INHERIT */
 	bool	   *notnull_islocal;	/* true if NOT NULL has local definition */
 	struct _attrDefInfo **attrdefs; /* DEFAULT expressions */

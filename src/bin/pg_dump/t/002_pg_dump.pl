@@ -1118,10 +1118,21 @@ my %tests = (
 		},
 	},
 
-	'CONSTRAINT NOT NULL / INVALID' => {
+	'CONSTRAINT NOT NULL / NOT VALID' => {
 		create_sql => 'CREATE TABLE dump_test.test_table_nn (
 							col1 int);
-			ALTER TABLE dump_test.test_table_nn ADD CONSTRAINT nn NOT NULL col1 NOT VALID;',
+							CREATE TABLE dump_test.test_table_nn_2 (
+							col1 int NOT NULL);
+							CREATE TABLE dump_test.test_table_nn_chld1 (
+							) INHERITS (dump_test.test_table_nn);
+							CREATE TABLE dump_test.test_table_nn_chld2 (
+								col1 int
+							) INHERITS (dump_test.test_table_nn);
+							CREATE TABLE dump_test.test_table_nn_chld3 (
+							) INHERITS (dump_test.test_table_nn, dump_test.test_table_nn_2);
+			ALTER TABLE dump_test.test_table_nn ADD CONSTRAINT nn NOT NULL col1 NOT VALID;
+			ALTER TABLE dump_test.test_table_nn_chld1 VALIDATE CONSTRAINT nn;
+			ALTER TABLE dump_test.test_table_nn_chld2 VALIDATE CONSTRAINT nn;',
 		regexp => qr/^
 			\QALTER TABLE dump_test.test_table_nn\E \n^\s+
 			\QADD CONSTRAINT nn NOT NULL col1 NOT VALID;\E
@@ -1132,6 +1143,50 @@ my %tests = (
 		unlike => {
 			exclude_dump_test_schema => 1,
 			only_dump_measurement => 1,
+		},
+	},
+
+	'CONSTRAINT NOT NULL / NOT VALID (child1)' => {
+		regexp => qr/^
+		\QCREATE TABLE dump_test.test_table_nn_chld1 (\E\n
+		^\s+\QCONSTRAINT nn NOT NULL col1\E$
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+			binary_upgrade => 1,
+		},
+	},
+
+	'CONSTRAINT NOT NULL / NOT VALID (child2)' => {
+		regexp => qr/^
+		\QCREATE TABLE dump_test.test_table_nn_chld2 (\E\n
+		^\s+\Qcol1 integer CONSTRAINT nn NOT NULL\E$
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'CONSTRAINT NOT NULL / NOT VALID (child3)' => {
+		regexp => qr/^
+		\QCREATE TABLE dump_test.test_table_nn_chld3 (\E\n
+		^\Q)\E$
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+			binary_upgrade => 1,
 		},
 	},
 

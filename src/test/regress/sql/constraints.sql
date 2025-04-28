@@ -979,6 +979,24 @@ INSERT INTO notnull_part1_3_upg values(NULL,1);
 ALTER TABLE notnull_part1_3_upg add CONSTRAINT nn3 NOT NULL a NOT VALID;
 ALTER TABLE notnull_part1_upg ATTACH PARTITION notnull_part1_3_upg FOR VALUES IN (NULL,5);
 EXECUTE get_nnconstraint_info('{notnull_part1_upg, notnull_part1_1_upg, notnull_part1_2_upg, notnull_part1_3_upg}');
+
+-- Inheritance test tables for pg_upgrade
+create table constr_parent (a int);
+create table constr_child (a int) inherits (constr_parent);
+alter table constr_parent add not null a not valid;
+alter table constr_child validate constraint constr_parent_a_not_null;
+EXECUTE get_nnconstraint_info('{constr_parent, constr_child}');
+
+create table constr_parent2 (a int);
+create table constr_child2 () inherits (constr_parent2);
+alter table constr_parent2 add not null a not valid;
+alter table constr_child2 validate constraint constr_parent2_a_not_null;
+EXECUTE get_nnconstraint_info('{constr_parent2, constr_child2}');
+
+create table constr_parent3 (a int not null);
+create table constr_child3 () inherits (constr_parent2, constr_parent3);
+EXECUTE get_nnconstraint_info('{constr_parent3, constr_child3}');
+
 DEALLOCATE get_nnconstraint_info;
 
 -- end NOT NULL NOT VALID
