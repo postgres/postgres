@@ -1128,15 +1128,14 @@ test_config_settings(void)
 	 * for a given max_connections value.  Note that it has been carefully
 	 * crafted to provide specific values for the associated values in
 	 * trial_conns.  We want it to return autovacuum_worker_slots's initial
-	 * default value (16) for the maximum value in trial_conns (100), and we
-	 * want it to return close to the minimum value we'd consider (3, which is
-	 * the default of autovacuum_max_workers) for the minimum value in
-	 * trial_conns (25).
+	 * default value (16) for the maximum value in trial_conns[] (100), while
+	 * it mustn't return less than the default value of autovacuum_max_workers
+	 * (3) for the minimum value in trial_conns[].
 	 */
 #define AV_SLOTS_FOR_CONNS(nconns)	((nconns) / 6)
 
 	static const int trial_conns[] = {
-		100, 50, 40, 30, 25
+		100, 50, 40, 30, 20
 	};
 	static const int trial_bufs[] = {
 		16384, 8192, 4096, 3584, 3072, 2560, 2048, 1536,

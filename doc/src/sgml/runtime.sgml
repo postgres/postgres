@@ -782,19 +782,19 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
        <row>
         <entry><varname>SEMMNI</varname></entry>
         <entry>Maximum number of semaphore identifiers (i.e., sets)</entry>
-        <entry>at least <literal>ceil(num_os_semaphores / 19)</literal> plus room for other applications</entry>
+        <entry>at least <literal>ceil(num_os_semaphores / 16)</literal> plus room for other applications</entry>
        </row>
 
        <row>
         <entry><varname>SEMMNS</varname></entry>
         <entry>Maximum number of semaphores system-wide</entry>
-        <entry><literal>ceil(num_os_semaphores / 19) * 20</literal> plus room for other applications</entry>
+        <entry><literal>ceil(num_os_semaphores / 16) * 17</literal> plus room for other applications</entry>
        </row>
 
        <row>
         <entry><varname>SEMMSL</varname></entry>
         <entry>Maximum number of semaphores per set</entry>
-        <entry>at least 20</entry>
+        <entry>at least 17</entry>
        </row>
 
        <row>
@@ -841,7 +841,7 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
     (<xref linkend="guc-max-connections"/>), allowed autovacuum worker process
     (<xref linkend="guc-autovacuum-worker-slots"/>), allowed WAL sender process
     (<xref linkend="guc-max-wal-senders"/>), allowed background
-    process (<xref linkend="guc-max-worker-processes"/>), etc., in sets of 19.
+    process (<xref linkend="guc-max-worker-processes"/>), etc., in sets of 16.
     The runtime-computed parameter <xref linkend="guc-num-os-semaphores"/>
     reports the number of semaphores required.  This parameter can be viewed
     before starting the server with a <command>postgres</command> command like:
@@ -851,17 +851,17 @@ $ <userinput>postgres -D $PGDATA -C num_os_semaphores</userinput>
    </para>
 
    <para>
-    Each set of 19 semaphores will
-    also contain a 20th semaphore which contains a <quote>magic
+    Each set of 16 semaphores will
+    also contain a 17th semaphore which contains a <quote>magic
     number</quote>, to detect collision with semaphore sets used by
     other applications. The maximum number of semaphores in the system
     is set by <varname>SEMMNS</varname>, which consequently must be at least
     as high as <literal>num_os_semaphores</literal> plus one extra for
-    each set of 19 required semaphores (see the formula in <xref
+    each set of 16 required semaphores (see the formula in <xref
     linkend="sysvipc-parameters"/>).  The parameter <varname>SEMMNI</varname>
     determines the limit on the number of semaphore sets that can
     exist on the system at one time.  Hence this parameter must be at
-    least <literal>ceil(num_os_semaphores / 19)</literal>.
+    least <literal>ceil(num_os_semaphores / 16)</literal>.
     Lowering the number
     of allowed connections is a temporary workaround for failures,
     which are usually confusingly worded <quote>No space
@@ -953,10 +953,10 @@ $ <userinput>postgres -D $PGDATA -C num_os_semaphores</userinput>
        <para>
         The default shared memory settings are usually good enough, unless
         you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
-        You will usually want to increase <literal>kern.ipc.semmni</literal>
+        However, you will need to increase <literal>kern.ipc.semmni</literal>
         and <literal>kern.ipc.semmns</literal>,
         as <systemitem class="osname">NetBSD</systemitem>'s default settings
-        for these are uncomfortably small.
+        for these are unworkably small.
        </para>
 
        <para>
@@ -987,11 +987,11 @@ $ <userinput>postgres -D $PGDATA -C num_os_semaphores</userinput>
        <para>
         The default shared memory settings are usually good enough, unless
         you have set <literal>shared_memory_type</literal> to <literal>sysv</literal>.
-        You will usually want to
+        However, you will need to
         increase <literal>kern.seminfo.semmni</literal>
         and <literal>kern.seminfo.semmns</literal>,
         as <systemitem class="osname">OpenBSD</systemitem>'s default settings
-        for these are uncomfortably small.
+        for these are unworkably small.
        </para>
 
        <para>
