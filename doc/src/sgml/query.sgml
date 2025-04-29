@@ -671,7 +671,7 @@ SELECT max(temp_lo) FROM weather;
     we might try:
 
 <programlisting>
-SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>WRONG</lineannotation>
+SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>-- WRONG</lineannotation>
 </programlisting>
 
     but this will not work since the aggregate
