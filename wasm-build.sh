@@ -535,7 +535,7 @@ then
         then
             echo "TODO: wasi pack/tests"
         else
-cat > pglite-link.sh <<END
+            cat > pglite-link.sh <<END
 . ${PGROOT}/pgopts.sh
 . ${SDKROOT}/wasm32-bi-emscripten-shell.sh
 ./pglite-wasm/build.sh
@@ -561,7 +561,7 @@ then
         pnpm run ts:build
     popd
 
-    if [ -f /alpine ]
+    if [ -f /skiptest ]
     then
         echo skipping tests
     else
@@ -573,38 +573,7 @@ then
 fi
 END
             chmod +x pglite-link.sh
-            if [ -d pglite ]
-            then
-                mkdir -p pglite/packages/pglite/release
-
-                for archive in ${PG_DIST_EXT}/*.tar
-                do
-                    echo "    packing extension $archive"
-                    gzip -k -9 $archive
-                    mv $archive.gz pglite/packages/pglite/release/
-                done
-
-                cp ${PGL_DIST_WEB}/pglite.* pglite/packages/pglite/release/
-                pushd pglite
-                    export HOME=$PG_BUILD
-                    [ -f $HOME/.local/share/pnpm/pnpm ] || wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.bashrc" SHELL="$(which bash)" bash -
-                    . $HOME/.bashrc
-                    pnpm install -g npm vitest
-                    pnpm install
-                    pnpm run ts:build
-                popd
-
-                if [ -f /alpine ]
-                then
-                    echo skipping tests
-                else
-                    if $CI
-                    then
-                        ./runtests.sh || exit 566
-                    fi
-                fi
-            fi
-
+            ./pglite-link.sh
         fi
     else
         echo "linking libpglite wasm failed"

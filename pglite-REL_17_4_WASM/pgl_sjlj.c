@@ -53,9 +53,10 @@
         if (is_repl)
             pg_prompt();
 #endif
-        if (pipelining)
+       if (pq_buffer_remaining_data()>0)
             goto incoming;
-        goto wire_flush;
+       else
+            goto wire_flush;
 #endif
     }
 
