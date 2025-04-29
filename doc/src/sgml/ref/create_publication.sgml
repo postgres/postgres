@@ -89,10 +89,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
      <para>
       When a column list is specified, only the named columns are replicated.
-      The column list can contain stored generated columns as well. If no
-      column list is specified, all table columns (except generated columns)
-      are replicated through this publication, including any columns added
-      later. It has no effect on <literal>TRUNCATE</literal> commands. See
+      The column list can contain stored generated columns as well. If the
+      column list is omitted, the publication will replicate all non-generated
+      columns (including any added in the future) by default. Stored generated
+      columns can also be replicated if <literal>publish_generated_columns</literal>
+      is set to <literal>stored</literal>. Specifying a column list has no
+      effect on <literal>TRUNCATE</literal> commands. See
       <xref linkend="logical-replication-col-lists"/> for details about column
       lists.
      </para>
