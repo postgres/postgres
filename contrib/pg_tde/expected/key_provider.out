@@ -181,6 +181,18 @@ SELECT pg_tde_add_database_key_provider('file', '', '{}');
 ERROR:  provider name "" is too short
 SELECT pg_tde_add_global_key_provider('file', '', '{}');
 ERROR:  provider name "" is too short
+-- Creating key providers fails if the name is too long
+SELECT pg_tde_add_database_key_provider('file', repeat('K', 128), '{}');
+ERROR:  provider name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
+HINT:  Maximum length is 127 bytes.
+SELECT pg_tde_add_global_key_provider('file', repeat('K', 128), '{}');
+ERROR:  provider name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
+HINT:  Maximum length is 127 bytes.
+-- Creating key providers fails if options is too long
+SELECT pg_tde_add_database_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
+ERROR:  too large provider options, maximum size is 1023 bytes
+SELECT pg_tde_add_global_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
+ERROR:  too large provider options, maximum size is 1023 bytes
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 ERROR:  provider type cannot be null
@@ -194,6 +206,11 @@ SELECT pg_tde_change_global_key_provider('file', NULL, '{}');
 ERROR:  provider name cannot be null
 SELECT pg_tde_change_global_key_provider('file', 'file-keyring', NULL);
 ERROR:  provider options cannot be null
+-- Modifying key providers fails if options is too long
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', json_build_object('key', repeat('V', 1024)));
+ERROR:  too large provider options, maximum size is 1023 bytes
+SELECT pg_tde_change_global_key_provider('file', 'file-keyring', json_build_object('key', repeat('V', 1024)));
+ERROR:  too large provider options, maximum size is 1023 bytes
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null
@@ -217,4 +234,13 @@ SELECT pg_tde_set_key_using_global_key_provider('', 'file-keyring');
 ERROR:  key name "" is too short
 SELECT pg_tde_set_server_key_using_global_key_provider('', 'file-keyring');
 ERROR:  key name "" is too short
+-- Setting principal key fails if the key name is too long
+SELECT pg_tde_set_default_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+ERROR:  too long principal key name, maximum length is 255 bytes
+SELECT pg_tde_set_key_using_database_key_provider(repeat('K', 256), 'file-provider');
+ERROR:  too long principal key name, maximum length is 255 bytes
+SELECT pg_tde_set_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+ERROR:  too long principal key name, maximum length is 255 bytes
+SELECT pg_tde_set_server_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+ERROR:  too long principal key name, maximum length is 255 bytes
 DROP EXTENSION pg_tde;

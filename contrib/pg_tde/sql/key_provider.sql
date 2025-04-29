@@ -67,6 +67,14 @@ SELECT pg_tde_add_global_key_provider('file', 'name', NULL);
 SELECT pg_tde_add_database_key_provider('file', '', '{}');
 SELECT pg_tde_add_global_key_provider('file', '', '{}');
 
+-- Creating key providers fails if the name is too long
+SELECT pg_tde_add_database_key_provider('file', repeat('K', 128), '{}');
+SELECT pg_tde_add_global_key_provider('file', repeat('K', 128), '{}');
+
+-- Creating key providers fails if options is too long
+SELECT pg_tde_add_database_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
+SELECT pg_tde_add_global_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
+
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
@@ -74,6 +82,10 @@ SELECT pg_tde_change_database_key_provider('file', 'file-keyring', NULL);
 SELECT pg_tde_change_global_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_global_key_provider('file', NULL, '{}');
 SELECT pg_tde_change_global_key_provider('file', 'file-keyring', NULL);
+
+-- Modifying key providers fails if options is too long
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', json_build_object('key', repeat('V', 1024)));
+SELECT pg_tde_change_global_key_provider('file', 'file-keyring', json_build_object('key', repeat('V', 1024)));
 
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
@@ -90,5 +102,11 @@ SELECT pg_tde_set_default_key_using_global_key_provider('', 'file-keyring');
 SELECT pg_tde_set_key_using_database_key_provider('', 'file-keyring');
 SELECT pg_tde_set_key_using_global_key_provider('', 'file-keyring');
 SELECT pg_tde_set_server_key_using_global_key_provider('', 'file-keyring');
+
+-- Setting principal key fails if the key name is too long
+SELECT pg_tde_set_default_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+SELECT pg_tde_set_key_using_database_key_provider(repeat('K', 256), 'file-provider');
+SELECT pg_tde_set_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+SELECT pg_tde_set_server_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
 
 DROP EXTENSION pg_tde;
