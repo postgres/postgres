@@ -1212,7 +1212,7 @@ usage(void)
 	printf(_("  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"));
 	printf(_("  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"));
 	printf(_("  -x, --next-transaction-id=XID    set next transaction ID\n"));
-	printf(_("      --char-signedness=OPTION     set char signedness to \"signed\"  or \"unsigned\"\n"));
+	printf(_("      --char-signedness=OPTION     set char signedness to \"signed\" or \"unsigned\"\n"));
 	printf(_("      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"));
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
