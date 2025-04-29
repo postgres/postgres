@@ -2,7 +2,7 @@
 
 # TODO: use this file for merging symbols too.
 
-# use recorded file list in ${PGROOT}/pg.installed
+# use recorded file list in ${PGROOT}/pg.${BUILD}.installed
 # get other files into a tarball, find a .so and named everything after it
 
 
@@ -101,7 +101,7 @@ SYMBOLS = []
 
 PREINST = "/plpgsql"
 IS_PREINST = PREINST in sys.argv
-for line in open(PGROOT / "pg.installed").readlines():
+for line in open(PGROOT / f"pg.{os.environ.get('BUILD','emscripten')}.installed" ).readlines():
     asp = Path(line[1:].strip()).as_posix()
     if IS_PREINST:
         if asp.find(PREINST) > 0:

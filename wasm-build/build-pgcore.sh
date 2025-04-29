@@ -1,16 +1,16 @@
-if [ -f postgresql/postgresql-${PG_VERSION}.patched ]
+if [ -f postgresql-${PG_BRANCH}/postgresql-${PG_BRANCH}.patched ]
 then
-    echo version already selected and patch stage already done
+    echo version ${PG_BRANCH} already selected and patch stage already done
 else
     if [ -f configure ]
     then
         echo "building in tree ( docker or proot )"
-        ln -s $(pwd) postgresql-${PG_VERSION}
+        ln -s . postgresql-${PG_BRANCH}
     else
-        git clone --no-tags --depth 1 --single-branch --branch ${PG_VERSION} https://github.com/electric-sql/postgres-pglite postgresql-${PG_VERSION}
+        git clone --no-tags --depth 1 --single-branch --branch ${PG_BRANCH} https://github.com/electric-sql/postgres-pglite postgresql-${PG_BRANCH}
     fi
 
-    if pushd postgresql-${PG_VERSION}
+    if pushd postgresql-${PG_BRANCH}
     then
             echo
         touch ./src/template/emscripten
@@ -34,12 +34,12 @@ else
 
 Fatal: failed to apply patch : $one
 "
-                        exit 30
+                        exit 37
                     fi
                 done
             fi
         done
-        touch postgresql-${PG_VERSION}.patched
+        touch postgresql-${PG_BRANCH}.patched
         popd
     fi
 
@@ -48,18 +48,18 @@ Fatal: failed to apply patch : $one
     [ -f postgresql/configure ] && rm postgresql 2>/dev/null
 
     # do nothing if it is a submodule
-    [ -d postgresql ] || ln -s $(realpath postgresql-${PG_VERSION}) postgresql
+    [ -d postgresql ] || ln -s postgresql-${PG_BRANCH} postgresql
 
 fi
 
-export PGSRC=$(realpath postgresql)
+export PGSRC=$(realpath postgresql-${PG_BRANCH})
 
 echo "
 
 Building $ARCHIVE (patched) from $PGSRC WASI=$WASI
 
 
-build-pgcore:begin
+build-pgcore: begin($BUILD)
 ___________________________________________________
 
 CC_PGLITE=$CC_PGLITE
@@ -67,29 +67,27 @@ CC_PGLITE=$CC_PGLITE
 
 "
 
-if [ -f ${PGROOT}/pg.installed ]
+if [ -f ${PGROOT}/pg.${BUILD}.installed ]
 then
-    echo "  *  skipping pg build, using previous install from ${PGROOT}"
+    echo "
+    * skipping pg build, using previous install from ${PGROOT}
+"
 else
 
-    mkdir -p build/postgres
-    pushd build/postgres
+    mkdir -p ${BUILD_PATH}
+    pushd ${BUILD_PATH}
 
     # create empty package.json to avoid emsdk node conflicts
     # with root package.json of project
     echo "{}" > package.json
 
 
-    if $CI
+    if [ -f Makefile ]
     then
-        echo "CI : using build cache"
-    else
-        if [ -f Makefile ]
-        then
-            echo "Cleaning up previous build ..."
-            make distclean 2>&1 > /dev/null
-        fi
+        echo "Cleaning up previous build ..."
+        make distclean 2>&1 > /dev/null
     fi
+
 
 # TODO: --with-libxml    xml2 >= 2.6.23
 # TODO: --with-libxslt   add to sdk
@@ -98,21 +96,27 @@ else
 
     COMMON_CFLAGS="${CC_PGLITE} -fpic -Wno-declaration-after-statement -Wno-macro-redefined -Wno-unused-function -Wno-missing-prototypes -Wno-incompatible-pointer-types"
 
+    # common to all wasm flavour
+    cp ${PGSRC}/src/include/port/wasm_common.h ${PGROOT}/include/wasm_common.h
+
+    # wasm os implementation router
+    cp ${PORTABLE}/sdk_port.h ${PGROOT}/include/sdk_port.h
+
+    # specific implementation for wasm os flavour
+    [ -d  ${PORTABLE}/sdk_port-${BUILD} ] && cp ${PORTABLE}/sdk_port-${BUILD}/* ${PGROOT}/include/
+
     if ${WASI}
     then
-        BUILD=wasi
-        echo "WASI BUILD: turning off xml/xslt support"
+         echo "WASI BUILD: turning off xml/xslt support"
         XML2=""
         UUID=""
 
-        cp ${PORTABLE}/wasi/wasi_port.c /tmp/pglite/include/sdk_port.c
-        WASM_LDFLAGS="-lwasi-emulated-getpid -lwasi-emulated-mman -lwasi-emulated-signal -lwasi-emulated-process-clocks"
-        WASM_CFLAGS="-DSDK_PORT=/tmp/pglite/include/sdk_port.c ${COMMON_CFLAGS} -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_SIGNAL -D_WASI_EMULATED_PROCESS_CLOCKS -D_WASI_EMULATED_GETPID"
+ # -lwasi-emulated-signal -D_WASI_EMULATED_SIGNAL -lwasi-emulated-getpid -D_WASI_EMULATED_GETPID
+        WASM_LDFLAGS="-lwasi-emulated-mman -lwasi-emulated-pthread -lwasi-emulated-process-clocks"
+        WASM_CFLAGS="-I${WASISDK}/hotfix -DSDK_PORT=${PREFIX}/include/sdk_port-wasi.c ${COMMON_CFLAGS} -D_WASI_EMULATED_PTHREAD -D_WASI_EMULATED_MMAN -D_WASI_EMULATED_PROCESS_CLOCKS"
         export MAIN_MODULE=""
 
     else
-        BUILD=emscripten
-
         # --with-libxml does not fit with --without-zlib
         if $CI
         then
@@ -137,8 +141,6 @@ else
     fi
 
 
-    cp ${PGSRC}/src/include/port/wasm_common.h /tmp/pglite/include/wasm_common.h
-
     [ -f ${PREFIX}/devices/emsdk/usr/lib/libossp-uuid.a ] && rm ${PREFIX}/devices/emsdk/usr/lib/libossp-uuid.a
     [ -f ${PREFIX}/devices/emsdk/usr/lib/libouuid.a ] && rm ${PREFIX}/devices/emsdk/usr/lib/libuuid.a
 
@@ -153,6 +155,7 @@ else
     mkdir -p bin
 
     GETZIC=${GETZIC:-true}
+
 
     EMCC_NODE="-sEXIT_RUNTIME=1 -DEXIT_RUNTIME -sNODERAWFS -sENVIRONMENT=node"
 
@@ -171,13 +174,12 @@ END
 #. ${SDKROOT}/wasm32-wasi-shell.sh
 TZ=UTC PGTZ=UTC $(command -v wasi-run) $(pwd)/src/timezone/zic.wasi \$@
 END
-	else
- 		echo "
+        else
+     		echo "
    * Using system ZIC from ${ZIC:-/usr/sbin/zic}
    "
- 		cp ${ZIC:-/usr/sbin/zic} bin/
+     		cp ${ZIC:-/usr/sbin/zic} bin/
         fi
-
     else
         export EXT=wasm
         cat > ${PGROOT}/config.site <<END
@@ -191,15 +193,17 @@ END
 #. ${SDKROOT}/wasm32-bi-emscripten-shell.sh
 TZ=UTC PGTZ=UTC $(command -v node) $(pwd)/src/timezone/zic.cjs \$@
 END
-	else
- 		echo "
+        else
+     		echo "
    * Using system ZIC from ${ZIC:-/usr/sbin/zic}
    "
- 		cp ${ZIC:-/usr/sbin/zic} bin/
+     		cp ${ZIC:-/usr/sbin/zic} bin/
+
         fi
     fi
 
     export ZIC=$(realpath bin/zic)
+
 
     if \
      EM_PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig" \
@@ -211,7 +215,7 @@ END
         echo configure ok
     else
         echo configure failed
-        exit 194
+        exit 218
     fi
 
     echo "
@@ -220,19 +224,17 @@ END
 
     =============================================================
 
-    building $BUILD wasm MVP:$MVP Debug=${PGDEBUG} with :
+    building $BUILD wasm MVP:$MVP Debug=${DEBUG} with :
 
     opts : $@
 
     COPTS=$COPTS
     LOPTS=$LOPTS
 
-
     PYDK_CFLAGS=$PYDK_CFLAGS
 
-    EMCC_CFLAGS=$EMCC_NODE
-
     CFLAGS=$WASM_CFLAGS
+        js build flags (emsdk only) : $EMCC_NODE
 
     LDFLAGS=$WASM_LDFLAGS
 
@@ -253,14 +255,8 @@ END
         echo "dyld server patch ok"
     else
         echo "missing server dyld patch"
-        exit 236
+        exit 260
     fi
-
-    if $WASI
-    then
-        sed -i 's|-pthread||g' ./src/Makefile.global
-    fi
-
 
     # --disable-shared not supported so be able to use a fake linker
 
@@ -313,15 +309,23 @@ END
 
     # Keep a shell script for fast rebuild with env -i from cmdline
 
+    # same script handle emcc and wasi
+
     cat > pg-make.sh <<END
 #!/bin/bash
-. ${SDKROOT}/wasm32-bi-emscripten-shell.sh
+if $WASI
+then
+    . ${SDKROOT}/wasm32-wasi-shell.sh
+else
+    . ${SDKROOT}/wasm32-bi-emscripten-shell.sh
+fi
 export PATH=$PGROOT/bin:\$PATH
 
 # ZIC=$ZIC
 # ${PGROOT}/pgopts.sh
 
 END
+
     cat ${PGROOT}/pgopts.sh >> pg-make.sh
 
     cat >> pg-make.sh <<END
@@ -332,9 +336,16 @@ echo '
 Linking ...
 
 '
-cat $SDKROOT/VERSION
+
 rm -vf libp*.a src/backend/postgres*
-EMCC_CFLAGS="${CC_PGLITE} ${EMCC_NODE}" emmake make AR=\${EMSDK}/upstream/bin/llvm-ar PORTNAME=emscripten $BUILD=1 -j \${NCPU:-$NCPU} \$@
+
+if $WASI
+then
+    WASI_CFLAGS="${CC_PGLITE}" emmake make AR=\${WASISDK}/upstream/bin/llvm-ar PORTNAME=$BUILD $BUILD=1 -j \${NCPU:-$NCPU} \$@
+else
+    cat $SDKROOT/VERSION
+    EMCC_CFLAGS="${CC_PGLITE} ${EMCC_NODE}" emmake make AR=\${EMSDK}/upstream/bin/llvm-ar PORTNAME=emscripten $BUILD=1 -j \${NCPU:-$NCPU} \$@
+fi
 
 echo '____________________________________________________________'
 du -hs src/port/libpgport_srv.a src/common/libpgcommon_srv.a libp*.a src/backend/postgres*
@@ -344,29 +355,17 @@ END
 
     chmod +x pg-make.sh
 
-    if env -i ./pg-make.sh install
+    if env -i ./pg-make.sh install 2>&1 > /tmp/install.log
     then
         echo install ok
         if $WASI
         then
-            # remove unlinked server
-            for todel in src/backend/postgres src/backend/postgres.wasi $PGROOT/bin/postgres $PGROOT/bin/postgres.wasi
-            do
-                [ -f $todel ] && rm $todel
-            done
-
-            pushd ../..
-                chmod +x ./wasm-build/linkwasi.sh
-                # WASI_CFLAGS="$WASI_CFLAGS"
-                ./wasm-build/linkwasi.sh || exit 251
-            popd
-            cp src/backend/postgres.wasi $PGROOT/bin/ || exit 253
+            cp src/backend/postgres.wasi $PGROOT/bin/ || exit 365
         else
             if $DEBUG
             then
                 # built with EMCC_CFLAGS="-sEXIT_RUNTIME=1 -DEXIT_RUNTIME -sNODERAWFS -sENVIRONMENT=node" emmake make -C
                 cp src/bin/initdb/initdb.wasm $PGROOT/bin/
-
                 cp src/backend/postgres.wasm $PGROOT/bin/
 
             fi
@@ -381,7 +380,7 @@ END
 
         pushd ${PGROOT}
 
-        find . -type f | grep -v plpgsql > ${PGROOT}/pg.installed
+        find . -type f | grep -v plpgsql > ${PGROOT}/pg.${BUILD}.installed
         popd
 
         goback=$(pwd)
@@ -390,13 +389,13 @@ END
         pushd $goback
 
         pushd ${PGROOT}
-        find . -type f  > ${PGROOT}/pg.installed
+        find . -type f  > ${PGROOT}/pg.${BUILD}.installed
         popd
 
     else
         cat /tmp/install.log
         echo "install failed"
-        exit 384
+        exit 400
     fi
 
     python3 > ${PGROOT}/PGPASSFILE <<END
@@ -425,7 +424,7 @@ END
 
 fi
 
-echo "build-pgcore: end
+echo "build-pgcore: end($BUILD)
 
 
 

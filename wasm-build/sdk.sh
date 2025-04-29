@@ -9,11 +9,11 @@ fi
 # https://github.com/emscripten-core/emscripten/blob/ac676d5e437525d15df5fd46bc2c208ec6d376a3/tools/link.py#L1652-L1658
 
 
-if python3 -V
+if python3 -V 2>/dev/null
 then
     echo using installed python3
 else
-    echo wil use python for build as system python.
+    echo will use python for build as system python.
     ln -sf $SDKROOT/devices/$(arch)/usr/bin/python3 /usr/bin/python3
 fi
 
