@@ -46,21 +46,21 @@
       }
 
     </style>
+    <link rel="prefetch" href="https://pmp-p.ddns.net/pglite-web/vt/xterm.js">
+    <link rel="prefetch" href="https://pmp-p.ddns.net/pglite-web/vt/xterm-addon-image.js">
+    <link rel="prefetch" href="https://pmp-p.ddns.net/pglite-web/vtx.js">
+    <link rel="prefetch" href="https://pmp-p.ddns.net/pglite-web/tinytar.min.js">
+    <link rel="prefetch" href="https://pmp-p.ddns.net/wasi/dinovm/defs.js">
+    <link rel="prefetch" href="https://pmp-p.ddns.net/wasi/dinovm/easywasi.js">
 
-    <link rel="prefetch" href="./vtx.js">
-    <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/vt/xterm.js">
-    <link rel="prefetch" href="https://pygame-web.github.io/archives/0.9/vt/xterm-addon-image.js">
-    <link rel="prefetch" href="./easywasi.js">
-
-    <script src="tinytar.min.js"></script>
+    <script src="https://pmp-p.ddns.net/pglite-web/tinytar.min.js"></script>
 
 
 <script type="importmap">
 {
   "imports": {
     "pglite" : "./pglite.js",
-    "browser_wasi_shim" : "./browser_wasi_shim/dist/index.js",
-    "easywasi": "./easywasi.js"
+    "easywasi": "https://pmp-p.ddns.net/wasi/dinovm/easywasi.js"
   }
 }
 </script>
@@ -165,6 +165,12 @@ globalThis.pgl_conf = pgl_conf
                                                                                 document.getElementById('resize').checked)">
     </div>
 
+<hr><pre>
+pglite.wasi: <a href=pglite.wasi download>Download file</a>
+
+pglite.wasi + filesystem: <a href=pglite-wasi.tar.xz download>Download file</a>
+</pre><hr>
+
     <div id="repl"></div>
 
     <hr/>
@@ -179,10 +185,34 @@ globalThis.pgl_conf = pgl_conf
     window.buffer_stdout = ""
     window.flushed_stdout = false
 
+    const PGUSER = "postgres"
+
+    // unsure
+    try {
+        globalThis.window.is_es6 = true
+    } catch (x) {
+        globalThis.window.is_es6 = false
+
+    }
+    console.warn("ES6 ?", globalThis.window.is_es6)
+
+    function jsimport(url, sync) {
+        const jsloader=document.createElement('script')
+        jsloader.setAttribute("type","text/javascript")
+        jsloader.setAttribute("src", url)
+        if (!sync)
+            jsloader.setAttribute('async', true);
+        document.head.appendChild(jsloader)
+    }
+
     async function boot() {
 
 
         function fnc_stdout(code) {
+            if (stderr_on) {
+                stderr_on = false
+                buffer_stdout += '\x1B[0m'
+            }
 
             var flush = (code == 4)
 
@@ -194,7 +224,6 @@ globalThis.pgl_conf = pgl_conf
                         flushed_stdout = false
                         return
                     }
-
                     buffer_stdout += "\r\n";
                     flush = true
                 }
@@ -232,8 +261,9 @@ globalThis.pgl_conf = pgl_conf
                     vm.vt.xterm.write('\x1B[0m')
                 }
                 vm.vt.xterm.write("\r\n")
-            } else
+            } else {
                 vm.vt.xterm.write( String.fromCharCode(c) )
+            }
         }
 
        function fnc_stdin() {
@@ -279,7 +309,7 @@ globalThis.pgl_conf = pgl_conf
                 case 1:
                     data = "SELECT now(), current_database(), session_user, current_user;"
                     break
-
+/*
                 case 2:
                     data = `
 CREATE EXTENSION IF NOT EXISTS plpgsql;
@@ -312,8 +342,8 @@ CREATE TABLE IF NOT EXISTS test2 (
 
                 case 5:
                     data = `
-CREATE USER test_user WITH PASSWORD 'md5abdbecd56d5fbd2cdaee3d0fa9e4f434';
-ALTER TABLE test2 OWNER TO test_user;
+CREATE USER ${PGUSER} WITH PASSWORD 'md5abdbecd56d5fbd2cdaee3d0fa9e4f434';
+ALTER TABLE test2 OWNER TO ${PGUSER};
 `
                     break
 
@@ -321,7 +351,7 @@ ALTER TABLE test2 OWNER TO test_user;
                     data = "NOTIFY template1, 'hello';"
                     break
 
-
+*/
 
 /*
                 case 3:
@@ -330,33 +360,17 @@ ALTER TABLE test2 OWNER TO test_user;
                     data = "SELECT * FROM pg_extension;"
                     data = "SELECT dictname FROM pg_catalog.pg_ts_dict;"
                     data = "CHECKPOINT;SELECT pg_terminate_backend(42);";
-                case 3:
-                    data = "CREATE DATABASE test_user WITH OWNER = test_user;"
-                    break
-
-                case 4:
-                    data = "CREATE SCHEMA test_user;"
-                    break
-
-                case 5:
-                    data = `CREATE TABLE IF NOT EXISTS test_user.test (
+                    data = "CREATE DATABASE ${PGUSER} WITH OWNER = ${PGUSER};"
+                    data = "CREATE SCHEMA ${PGUSER};"
+                    data = `CREATE TABLE IF NOT EXISTS ${PGUSER}.test (
       id SERIAL PRIMARY KEY,
       number INT
     );
-    INSERT INTO test_user.test (number) VALUES (42);
-    ALTER TABLE test_user.test OWNER TO test_user;
+    INSERT INTO ${PGUSER}.test (number) VALUES (42);
+    ALTER TABLE ${PGUSER}.test OWNER TO ${PGUSER};
 `;
-                case 6:
                     data = "SELECT now(), current_database(), session_user, current_user;"
-                    break
-*/
-/*
-                case 4:
-                    break
-
-                case 6:
                     data = "CREATE EXTENSION pg_stat_statements;"
-                    break
 */
 
             }
@@ -392,6 +406,7 @@ ALTER TABLE test2 OWNER TO test_user;
 
         async function delayed_init() {
             await Module.load_package("vector", "vector.tar.gz")
+            await Module.load_package("uuid-ossp", "uuid-ossp.tar.gz")
 
             // await Module.load_package("pg_stat_statements", "pg_stat_statements.tar.gz")
             // await Module.load_package("postgis", "postgis-3.tar.gz")
@@ -425,7 +440,7 @@ ALTER TABLE test2 OWNER TO test_user;
                     if (idb & (0b0100|0b1000)) {
                         console.log(" #3 found db+user : switch user")
                         // switch role
-                        // vm.readline("SET ROLE test_user;");
+                        // vm.readline("SET ROLE ${PGUSER};");
                     }
                     console.error("Invalid user ?");
                     editconf = false;
@@ -433,17 +448,40 @@ ALTER TABLE test2 OWNER TO test_user;
                     console.warn(" TODO:  create db+user here / callback / throw ")
 /*
                     vm.readline(`
+`
+CREATE OR REPLACE FUNCTION adduser(rolename NAME) RETURNS TEXT AS
+$$
+BEGIN
+    IF NOT EXISTS (SELECT * FROM pg_roles WHERE rolname = rolename) THEN
+        EXECUTE format('CREATE ROLE %I', rolename);
+        RETURN 'CREATE ROLE';
+    ELSE
+        RETURN format('ROLE ''%I'' ALREADY EXISTS', rolename);
+    END IF;
+END;
+$$
+LANGUAGE plpgsql;
+`;
+
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE USER test_user WITH PASSWORD 'md5abdbecd56d5fbd2cdaee3d0fa9e4f434';
+CREATE USER ${PGUSER} WITH PASSWORD 'md5abdbecd56d5fbd2cdaee3d0fa9e4f434';
 CREATE TABLE IF NOT EXISTS test (
       id SERIAL PRIMARY KEY,
       number INT
     );
     INSERT INTO test (number) VALUES (42);
-    ALTER TABLE test OWNER TO test_user;
-SET ROLE test_user;
+    ALTER TABLE test OWNER TO ${PGUSER};
+SET ROLE ${PGUSER};
 `);
 */
+
+/*
+                    vm.readline(`
+CREATE USER ${PGUSER} WITH PASSWORD 'md5abdbecd56d5fbd2cdaee3d0fa9e4f434';
+SET ROLE ${PGUSER};
+`);
+*/
+
                 }
 
                 vm.PGDATA = PGDATA
@@ -549,8 +587,8 @@ SET ROLE test_user;
             load_pg_extension: load_pg_extension,
 
             load_package: load_package,
-// "PGDATABASE=test_user",
-            arguments : ["--single", "postgres", "--", "PGDATA=/tmp/pglite/base", "PREFIX=/tmp/pglite", "PGUSER=test_user", "REPL=N"],
+// "PGDATABASE=${PGUSER}",
+            arguments : ["--single", "postgres", "--", "PGDATA=/tmp/pglite/base", "PREFIX=/tmp/pglite", `PGUSER=${PGUSER}`, "REPL=N"],
 
             config : {
                 cdn : "https://pygame-web.github.io/archives/0.9/",
@@ -656,15 +694,10 @@ SET ROLE test_user;
                         Module.bc.onmessage(event)
                     }
 
-/*                    vm._use_wire(0)
-                    vm._interactive_one()
-                    send_to_pglite(ud, Module.FS)
-*/
                 }
 
             }
           };
-
 
 
           Module.setStatus('Downloading...');
@@ -676,28 +709,12 @@ SET ROLE test_user;
             };
           };
 
-        try {
-            globalThis.window.is_es6 = true
-        } catch (x) {
-            globalThis.window.is_es6 = false
-
-        }
-        console.warn("ES6 ?", globalThis.window.is_es6)
-
-        function jsimport(url, sync) {
-            const jsloader=document.createElement('script')
-            jsloader.setAttribute("type","text/javascript")
-            jsloader.setAttribute("src", url)
-            if (!sync)
-                jsloader.setAttribute('async', true);
-            document.head.appendChild(jsloader)
-        }
 
         //jsimport("tinytar.min.js")
 
         window.vm = Module
 
-        const { WasmTerminal } = await /**/ import("./vtx.js")
+        const { WasmTerminal } = await /**/ import("https://pmp-p.ddns.net/pglite-web/vtx.js")
 
         Module.vt = new WasmTerminal("repl", 200, 60, 10)
 
@@ -708,22 +725,38 @@ SET ROLE test_user;
         const pg_in = "/tmp/pglite/base/.s.PGSQL.5432.in"
         const pg_out = "/tmp/pglite/base/.s.PGSQL.5432.out"
 
-        function send_to_pglite(ev, FS) {
-            if (0) { // as socket file
-                FS.writeFile(pg_lck, ev.data)
+        function send_to_pglite(encoded, FS, port) {
+            const count = encoded.byteLength
+            var buf
+            if (port<0) {
+                /* as socket file */
+                Module._interactive_write(0)
+                FS.writeFile(pg_lck, encoded)
                 FS.rename(pg_lck, pg_in)
+                console.log("send_to_pglite(sf):", count)
                 Module._interactive_one()
-                const fstat = FS.stat(pg_out)
-                console.log("pgreply", fstat.size)
-                var stream = FS.open(pg_out, 'r');
-                var buf = new Uint8Array(fstat.size);
-                FS.read(stream, buf, 0, fstat.size, 0);
-                FS.close(stream);
-                FS.unlink(pg_out)
-                Module.bc.postMessage(buf)
-
-            } else {   /* CMA */
+                try {
+                    const fstat = FS.stat(pg_out)
+                    console.log("pgreply", fstat.size)
+                    var stream = FS.open(pg_out, 'r');
+                    buf = new Uint8Array(fstat.size);
+                    FS.read(stream, buf, 0, fstat.size, 0);
+                    FS.close(stream);
+                    FS.unlink(pg_out)
+                } catch (x) {
+                    console.log("REPL: no reply, see stdout", x)
+                }
+            } else {
+                /* CMA */
+                Module._interactive_write(count)
+                Module.HEAPU8.set(encoded, port)
+                console.log("send_to_pglite(cma):", count, "sent to", port)
+                Module._interactive_one()
+                const msg_start = count + 2
+                const msg_end = msg_start + Module._interactive_read()
+                buf = Module.HEAPU8.subarray(msg_start, msg_end)
             }
+            //Module.bc.postMessage(buf)
         }
 
         Module.bc.onmessage = (ev) => {
@@ -731,32 +764,21 @@ SET ROLE test_user;
             //console.warn("bc.onmessage:", event)
             if (ev.userData) {
                 var data = ev.userData["data"]
-                var resultArray;
+                var encodedArray;
                 if (data.byteLength) {
                     console.log("binary data, using wire")
                     Module._use_wire(1)
-                    resultArray.set(data)
+                    encodedArray.set(data)
                 } else {
                     console.log("string data, using repl/no wire")
                     Module._use_wire(0)
                     const encoder = new TextEncoder();
-                    resultArray = encoder.encode(data);
-
-                    // const utf8Array = encoder.encode(data+"\n");
-                    //resultArray = new Uint8Array(utf8Array.byteLength + 1);
-                    //resultArray.set(utf8Array);
-                    //resultArray[utf8Array.byteLength] = 0; // Append a null byte
+                    encodedArray = encoder.encode(data);
                 }
-                const count = resultArray.byteLength
-
-                var port = Module.cma_port || 1
-                // Module._ping()
-
-                Module._interactive_write(count)
-                console.log("send_to_pglite(cma):", count, "sent to", port)
-                Module.HEAPU8.set(resultArray, port)
-                Module._interactive_one()
-
+// sf
+                send_to_pglite(encodedArray, FS, -1)
+// cma
+//                send_to_pglite(encodedArray, FS, Module.cma_port || 1)
             } else {
                 console.warn("BC(srv):", ev);
             }
@@ -772,7 +794,7 @@ SET ROLE test_user;
 #endif
         {
             window.Module = Module
-            jsimport("postgres.js")
+            jsimport("pglite.js")
             console.log("main:", Module )
         }
 

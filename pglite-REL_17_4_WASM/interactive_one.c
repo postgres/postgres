@@ -1,9 +1,9 @@
 #include <unistd.h>  // access, unlink
 
-#if !defined(__wasi__)
-volatile sigjmp_buf local_sigjmp_buf;
+#if defined(__wasi__)
+// volatile sigjmp_buf void*;
 #else
-volatile sigjmp_buf void*;
+volatile sigjmp_buf local_sigjmp_buf;
 #endif
 
 /* TODO : prevent multiple write and write while reading ? */
@@ -152,7 +152,7 @@ static void io_init(bool in_auth, bool out_auth) {
 	whereToSendOutput = DestRemote; /* now safe to ereport to client */
 
     if (!MyProcPort) {
-        PDEBUG("# 137: io_init   --------- NO CLIENT (oom) ---------");
+        PDEBUG("# 155: io_init   --------- NO CLIENT (oom) ---------");
         abort();
     }
 #ifdef PG16
@@ -162,30 +162,22 @@ static void io_init(bool in_auth, bool out_auth) {
 
     SOCKET_FILE = NULL;
     SOCKET_DATA = 0;
-    PDEBUG("\n\n\n\n# 147: io_init  --------- Ready for CLIENT ---------");
+    PDEBUG("\n\n\n# 165: io_init  --------- Ready for CLIENT ---------");
 }
 
 
 
-volatile int sf_connected = 0;
+
 volatile bool sockfiles = false;
 volatile bool is_wire = true;
 extern char * cma_port;
+extern void pq_startmsgread(void);
 
-
-__attribute__((export_name("interactive_write"))) // EMSCRIPTEN_KEEPALIVE
+__attribute__((export_name("interactive_write")))
 void
 interactive_write(int size) {
     cma_rsize = size;
     cma_wsize = 0;
-}
-
-__attribute__((export_name("ping")))
-void
-ping(void) {
-#if PGDEBUG
-    puts("pong");
-#endif
 }
 
 __attribute__((export_name("use_wire")))
@@ -193,18 +185,16 @@ void
 use_wire(int state) {
 #if PGDEBUG
     force_echo=true;
-#else
-    force_echo=false;
 #endif
     if (state>0) {
 #if PGDEBUG
-        printf("176: wire mode, repl off, echo %d\n", force_echo);
+        printf("# 199: wire mode, repl off, echo %d\n", force_echo);
 #endif
         is_wire = true;
         is_repl = false;
     } else {
 #if PGDEBUG
-        printf("181: repl mode, no wire, echo %d\n", force_echo);
+        printf("# 205: repl mode, no wire, echo %d\n", force_echo);
 #endif
         is_wire = false;
         is_repl = true;
@@ -278,13 +268,16 @@ void discard_input(){
 void
 startup_auth() {
     /* code is in handshake/auth domain so read whole msg now */
+    send_ready_for_query = false;
 
     if (ProcessStartupPacket(MyProcPort, true, true) != STATUS_OK) {
-        PDEBUG("# 283: ProcessStartupPacket !OK");
+        PDEBUG("# 271: ProcessStartupPacket !OK");
     } else {
-        PDEBUG("# 285: sending auth request");
+
+        sf_connected++;
+        PDEBUG("# 273: sending auth request");
         //ClientAuthentication(MyProcPort);
-    	discard_input();
+        discard_input();
 
 ClientAuthInProgress = true;
         md5Salt[0]=0x01;
@@ -309,7 +302,7 @@ startup_pass(bool check) {
     // auth 'p'
     if (check) {
         char *passwd = recv_password_packet(MyProcPort);
-        printf("# 312: auth recv password: %s\n", "md5***" );
+        PDEBUG("# 223: auth recv password: md5***");
         /*
         // TODO: CheckMD5Auth
             if (passwd == NULL)
@@ -321,8 +314,8 @@ startup_pass(bool check) {
         */
         pfree(passwd);
     } else {
-        PDEBUG("# 324: auth skip");
-    	discard_input();
+        PDEBUG("# 310: auth skip");
+        discard_input();
     }
     ClientAuthInProgress = false;
 
@@ -342,15 +335,15 @@ startup_pass(bool check) {
         pq_sendint32(&buf, (int32) MyCancelKey);
         pq_endmessage(&buf);
     }
-PDEBUG("# 305: TODO: set a pg_main started flag");
-    sf_connected++;
+PDEBUG("# 330: TODO: set a pgl started flag");
     send_ready_for_query = true;
-
+    ignore_till_sync = false;
+    volatile int sf_connected = 0;
 }
 
 extern void pg_startcma();
 
-EMSCRIPTEN_KEEPALIVE void
+__attribute__((export_name("interactive_one"))) void
 interactive_one() {
     int	peek = -1;  /* preview of firstchar with no pos change */
 	int firstchar = 0;  /* character read from getc() */
@@ -358,34 +351,40 @@ interactive_one() {
 	StringInfoData input_message;
 	StringInfoData *inBuf;
     FILE *stream ;
-    FILE *fp;
+    FILE *fp = NULL;
     int packetlen;
 
     bool had_notification = notifyInterruptPending;
     bool notified = false;
-if (notifyInterruptPending)
-    PDEBUG("# 327: has notification !");
+    send_ready_for_query = false;
 
     if (!MyProcPort) {
+        PDEBUG("# 353: client created");
         io_init(is_wire, false);
     }
+
+#if PGDEBUG
+    puts("\n\n# 377: interactive_one");
+    if (notifyInterruptPending)
+        PDEBUG("# 359: has notification !");
+#endif
 
     // this could be pg_flush in sync mode.
     // but in fact we are writing socket data that was piled up previous frame async.
     if (SOCKET_DATA>0) {
-        puts("331: ERROR flush after frame");
+        puts("# 361: ERROR flush after frame");
         goto wire_flush;
     }
 
     if (!cma_rsize) {
-        // prepare reply queue
+        puts("# 388: socketfiles"); // prepare reply queue
         if (!SOCKET_FILE) {
             SOCKET_FILE =  fopen(PGS_OLOCK, "w") ;
             MyProcPort->sock = fileno(SOCKET_FILE);
         }
     }
 
-    doing_extended_query_message = false;
+
     MemoryContextSwitchTo(MessageContext);
     MemoryContextResetAndDeleteChildren(MessageContext);
 
@@ -398,31 +397,27 @@ if (notifyInterruptPending)
 	if (send_ready_for_query) {
 
 		if (IsAbortedTransactionBlockState()) {
-			puts("@@@@ TODO 356: idle in transaction (aborted)");
+			puts("@@@@ TODO 390: idle in transaction (aborted)");
 		}
 		else if (IsTransactionOrTransactionBlock()) {
-			puts("@@@@ TODO 359: idle in transaction");
+			puts("@@@@ TODO 393: idle in transaction");
 		} else {
 			if (notifyInterruptPending) {
 				ProcessNotifyInterrupt(false);
-PDEBUG("# 367: notified ?");
                 notified = true;
             }
         }
         send_ready_for_query = false;
     }
-
-
 // postgres.c 4627
     DoingCommandRead = true;
 
 #if defined(EMUL_CMA)
-    #define IO ((char *)(1+(int)cma_port))  //  temp fix for -O0 but less efficient than literal
-    #error "inefficient"
+    //  temp fix for -O0 but less efficient than literal
+    #define IO ((char *)(1+(int)cma_port))
 #else
     #define IO ((char *)(1))
 #endif
-
 
 /*
  * in cma mode (cma_rsize>0), client call the wire loop itself waiting synchronously for the results
@@ -438,30 +433,40 @@ PDEBUG("# 367: notified ?");
         if (!is_repl) {
             whereToSendOutput = DestRemote;
             if (!is_wire)
-                PDEBUG("repl message in cma buffer !");
+                PDEBUG("# 426: repl message in cma buffer !");
         } else {
             if (is_wire)
-                PDEBUG("wire message in cma buffer for REPL !");
+                PDEBUG("# 429: wire message in cma buffer for REPL !");
             whereToSendOutput = DestDebug;
         }
     } else {
         fp = fopen(PGS_IN, "r");
-
-        // read as a socket.
+PDEBUG("# 451:" PGS_IN);
+        // read file in socket buffer for SocketBackend to consumme.
         if (fp) {
             fseek(fp, 0L, SEEK_END);
             packetlen = ftell(fp);
             if (packetlen) {
-                // always.
-                is_wire = true;
-                sockfiles = true;
-                whereToSendOutput = DestRemote;
+                // set to always true if no REPL.
+//                is_wire = true;
                 resetStringInfo(inBuf);
                 rewind(fp);
                 /* peek on first char */
                 peek = getc(fp);
                 rewind(fp);
-                pq_recvbuf_fill(fp, packetlen);
+                if (is_repl && !is_wire) {
+                    // sql in buffer
+                    for (int i=0; i<packetlen; i++) {
+                        appendStringInfoChar(inBuf, fgetc(fp));
+                    }
+                    sockfiles = false;
+                } else {
+                    // auth won't go to REPL, ever.
+                    whereToSendOutput = DestRemote;
+                    // wire in socket reader
+                    pq_recvbuf_fill(fp, packetlen);
+                    sockfiles = true;
+                }
 #if PGDEBUG
                 rewind(fp);
 #endif
@@ -483,19 +488,22 @@ PDEBUG("# 367: notified ?");
             if (packetlen) {
                 // it was startup/auth , write and return fast.
                 if (peek<0) {
-                    PDEBUG("# 438: handshake/auth/pass skip");
+                    PDEBUG("# 471: handshake/auth/pass skip");
                     goto wire_flush;
                 }
 
-                /* else it was wire msg */
+                /* else it was wire msg or sql */
 #if PGDEBUG
-                printf("# 444: node+repl is_wire -> true : %c\n", peek);
-                force_echo = true;
+                if (is_wire) {
+                    printf("# 499: is_wire -> true : %c\n", peek);
+                    force_echo = true;
+                }
+
 #endif
                 firstchar = peek;
                 goto incoming;
             } // wire msg
-
+PDEBUG("# 500: NO DATA:" PGS_IN );
         } // fp data read
 
         // is it REPL in cma ?
@@ -511,8 +519,8 @@ PDEBUG("# 367: notified ?");
 
 #if PGDEBUG
     if (packetlen)
-        IO[packetlen]=0;
-    printf("# 479: fd=%d is_embed=%d is_repl=%d is_wire=%d fd %s,len=%d   peek=%d [%s]\n", MyProcPort->sock, is_embed, is_repl, is_wire, PGS_OLOCK, packetlen, peek, IO);
+        IO[packetlen]=0; // wire blocks are not zero terminated
+    printf("\n# 500: fd=%d is_embed=%d is_repl=%d is_wire=%d fd %s,len=%d cma=%d peek=%d [%s]\n", MyProcPort->sock, is_embed, is_repl, is_wire, PGS_OLOCK, packetlen,cma_rsize, peek, IO);
 #endif
 
     // buffer query TODO: direct access ?
@@ -524,7 +532,7 @@ PDEBUG("# 367: notified ?");
     }
 
     if (packetlen<2) {
-        puts("# 491: WARNING: empty packet");
+        puts("# 512: WARNING: empty packet");
         cma_rsize= 0;
         if (is_repl)
             pg_prompt();
@@ -540,26 +548,32 @@ incoming:
     #error "sigsetjmp unsupported"
 #endif // wasi
 
+
     while (pipelining) {
+
         if (is_repl) {
-            // TODO: are we sure repl could not pipeline ?
+            // are we sure repl could not pipeline ?
             pipelining = false;
             /* stdio node repl */
-            printf("# 512: enforcing REPL mode, wire off, echo %d\n", force_echo);
+#if PGDEBUG
+            printf("\n# 533: enforcing REPL mode, wire off, echo %d\n", force_echo);
+#endif
             whereToSendOutput = DestDebug;
         }
 
+        DoingCommandRead = true;
         if (is_wire) {
-            /* wire on a socket or cma may auth, not handled by pg_proto block */
+            /* wire on a socket or cma may auth */
+            /* would be handled as error by pg_proto block */
             if (peek==0) {
-                PDEBUG("# 519: handshake/auth");
+                PDEBUG("# 540: handshake/auth");
                 startup_auth();
-                PDEBUG("# 521: auth request");
+                PDEBUG("# 542: auth request");
                 break;
             }
 
             if (peek==112) {
-                PDEBUG("# 525: password");
+                PDEBUG("# 547: password");
                 startup_pass(true);
                 break;
             }
@@ -567,14 +581,16 @@ incoming:
             firstchar = SocketBackend(inBuf);
 
             pipelining = pq_buffer_remaining_data()>0;
+#if PGDEBUG
             if (!pipelining) {
-                printf("# 535: end of wire, rfq=%d\n", send_ready_for_query);
+                printf("# 556: end of wire, rfq=%d\n", send_ready_for_query);
             } else {
-                printf("# 537: no end of wire -> pipelining, rfq=%d\n", send_ready_for_query);
+                printf("# 558: no end of wire -> pipelining, rfq=%d\n", send_ready_for_query);
             }
+#endif
         } else {
             /* nowire */
-            pipelining = false;
+            // pipelining = false;
             if (firstchar == EOF && inBuf->len == 0) {
                 firstchar = EOF;
             } else {
@@ -582,15 +598,16 @@ incoming:
             	firstchar = 'Q';
             }
         }
+        DoingCommandRead = false;
 
-        #if PGDEBUG
+#if PGDEBUG
         if (!pipelining) {
-            printf("# 552: wire=%d 1stchar=%c Q: %s\n", is_wire,  firstchar, inBuf->data);
+            printf("# 573: wire=%d 1stchar=%c Q: %s\n", is_wire,  firstchar, inBuf->data);
             force_echo = false;
         } else {
-            printf("# 555: PIPELINING [%c]!\n", firstchar);
+            printf("# 576: PIPELINING [%c]!\n", firstchar);
         }
-        #endif
+#endif
 
         if (!ignore_till_sync) {
             /* initially, or after error */
@@ -607,6 +624,11 @@ incoming:
         }
 
         #include "pg_proto.c"
+
+        if (send_ready_for_query) {
+            ReadyForQuery(whereToSendOutput);
+            send_ready_for_query = false;
+        }
     }
 
     if (!is_repl) {
@@ -617,14 +639,14 @@ wire_flush:
                ProcessNotifyInterrupt(false);
 
             if (send_ready_for_query) {
-                PDEBUG("# 581: end packet - sending rfq");
+                PDEBUG("# 602: end packet - sending rfq\n");
                 ReadyForQuery(DestRemote);
                 //done at postgres.c 4623 send_ready_for_query = false;
             } else {
-                PDEBUG("# 585: end packet - with no rfq");
+                PDEBUG("# 606: end packet - with no rfq\n");
             }
         } else {
-            PDEBUG("# 588: end packet (ClientAuthInProgress - no rfq) ");
+            PDEBUG("# 609: end packet (ClientAuthInProgress - no rfq)\n");
         }
 
         if (SOCKET_DATA>0) {
@@ -641,27 +663,36 @@ wire_flush:
                 SOCKET_FILE = NULL;
                 SOCKET_DATA = 0;
                 if (cma_wsize)
-                    PDEBUG("# 605: cma and sockfile ???");
+                    PDEBUG("# 626: cma and sockfile ???\n");
                 if (sockfiles) {
 #if PGDEBUG
-                    printf("# 608: client:ready -> read(%d) " PGS_OLOCK "->" PGS_OUT"\n", outb);
+                    printf("# 629: client:ready -> read(%d) " PGS_OLOCK "->" PGS_OUT"\n", outb);
 #endif
                     rename(PGS_OLOCK, PGS_OUT);
                 }
             } else {
 #if PGDEBUG
-                printf("# 614: out queue : %d flushed\n", cma_wsize);
+                printf("\n# 635: in[%d] out[%d] flushed\n", cma_rsize, cma_wsize);
 #endif
                 SOCKET_DATA = 0;
             }
 
         } else {
-            cma_wsize = 0;
+            cma_wsize = 0;  PDEBUG("# 680: no socket data");
         }
     } else {
         pg_prompt();
+#if PGDEBUG
+        puts("# 683: repl output");
+        if (SOCKET_DATA>0) {
+                puts("# 686: socket has data");
+            if (sockfiles)
+                printf("# 688: socket file not flushed -> read(%d) " PGS_OLOCK "->" PGS_OUT"\n", SOCKET_DATA);
+        }
+        if (cma_wsize)
+            puts("ERROR: cma was not flushed before socketfile interface");
+#endif
     }
-
 
 
     // always free kernel buffer !!!

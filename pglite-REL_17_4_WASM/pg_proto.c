@@ -248,6 +248,10 @@
 		     * it will fail to be called during other backend-shutdown
 		     * scenarios.
 		     */
+if (sf_connected)
+    sf_connected--;
+else
+    puts("ERROR: more exits than connections");
 PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
             send_ready_for_query = false;

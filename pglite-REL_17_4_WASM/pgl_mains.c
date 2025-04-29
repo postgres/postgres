@@ -1,5 +1,6 @@
 #include <setjmp.h>
 
+volatile int sf_connected = 0;
 FILE * single_mode_feed = NULL;
 volatile bool inloop = false;
 volatile sigjmp_buf local_sigjmp_buf;
@@ -12,6 +13,17 @@ pg_shutdown() {
     proc_exit(66);
 }
 
+__attribute__((export_name("pgl_closed")))
+int
+pgl_closed() {
+    if (sf_connected>0)
+        return 1;
+    return 0;
+}
+
+#if FIXME
+extern bool startswith(const char *str, const char *prefix);
+#endif
 
 void
 interactive_file() {
@@ -20,7 +32,8 @@ interactive_file() {
 	StringInfoData input_message;
 	StringInfoData *inBuf;
     FILE *stream ;
-
+    int sql_line=1;
+    bool sql_skip = false;
 	/*
 	 * At top of loop, reset extended-query-message flag, so that any
 	 * errors encountered in "idle" state don't provoke skip.
@@ -45,6 +58,7 @@ interactive_file() {
 	    while ((c = getc(stream)) != EOF) {
 		    if (c == '\n')
 		    {
+                sql_line++;
 			    if (UseSemiNewlineNewline)
 			    {
 				    /*
@@ -93,14 +107,26 @@ interactive_file() {
         /* Add '\0' to make it look the same as message case. */
         appendStringInfoChar(inBuf, (char) '\0');
         firstchar = 'Q';
-PDEBUG(inBuf->data);
-
+#if FIXME
+#warning "FIXME: REVOKE ALL ON pg_largeobject FROM PUBLIC;"
+#warning "FIXME: REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;"
+    sql_skip |= startswith(inBuf->data , "REVOKE ALL ON pg_largeobject FROM PUBLIC;");
+    sql_skip |= startswith(inBuf->data , "REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;");
+    if (sql_skip) {
+        fprintf(stdout, "# 106: SKIPPED: %d: %s\n", sql_line, inBuf->data);
+        sql_skip = false;
+        continue;
+    } else {
+        // fprintf(stderr, "%d: %s\n", sql_line, inBuf->data);
+    }
+#endif
 // ???
         if (ignore_till_sync && firstchar != EOF)
             continue;
 
         #include "pg_proto.c"
     }
+    PDEBUG("# 115: interactive_file: end");
 }
 
 void
@@ -220,7 +246,7 @@ PDEBUG("# 164:" __FILE__);
 
 /*
     while (repl) { interactive_file(); }
-    PDEBUG("# 232: REPL:End Raising a 'RuntimeError Exception' to halt program NOW");
+    PDEBUG("# 240: REPL:End Raising a 'RuntimeError Exception' to halt program NOW");
     {
         void (*npe)() = NULL;
         npe();
@@ -228,7 +254,7 @@ PDEBUG("# 164:" __FILE__);
     // unreachable.
 */
 
-    PDEBUG("# 240: no line-repl requested, exiting and keeping runtime alive");
+    PDEBUG("# 248: no line-repl requested, exiting and keeping runtime alive");
 }
 
 
@@ -240,13 +266,13 @@ AsyncPostgresSingleUserMain(int argc, char *argv[], const char *username, int as
 	const char *dbname = NULL;
 PDEBUG("# 254:"__FILE__);
 
-	/* Initialize startup process environment. */
+// if (!async_restart)	/* Initialize startup process environment. */
 	InitStandaloneProcess(argv[0]);
 PDEBUG("# 254:"__FILE__);
-	/* Set default values for command-line options.	 */
+// if (!async_restart) /* Set default values for command-line options.	 */
 	InitializeGUCOptions();
 PDEBUG("# 257:"__FILE__);
-	/* Parse command-line options. */
+// if (!async_restart)	/* Parse command-line options. */
 	process_postgres_switches(argc, argv, PGC_POSTMASTER, &dbname);
 PDEBUG("# 260:"__FILE__);
 	/* Must have gotten a database name, or have a default (the username) */

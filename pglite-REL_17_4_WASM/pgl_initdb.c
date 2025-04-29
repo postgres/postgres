@@ -36,18 +36,18 @@ pg_chmod(const char * path, int mode_t) {
 #endif
 
 #define FRONTEND
-#   include "../postgresql/src/common/logging.c"
+#   include "common/logging.c"
 #undef FRONTEND
 
 
-#include "../postgresql/src/interfaces/libpq/pqexpbuffer.c"
+#include "interfaces/libpq/pqexpbuffer.c"
 
 #define sync_pgdata(...)
 #define icu_language_tag(loc_str) icu_language_tag_idb(loc_str)
 #define icu_validate_locale(loc_str) icu_validate_locale_idb(loc_str)
 
 
-#include "../postgresql/src/bin/initdb/initdb.c"
+#include "bin/initdb/initdb.c"
 
 void use_socketfile(void) {
     is_repl = true;

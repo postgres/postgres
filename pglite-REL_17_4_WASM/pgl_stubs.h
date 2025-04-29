@@ -1,12 +1,26 @@
 #pragma once
 
+
+// wasi only stubs
+#if defined(__wasi__)
+#   undef PQEXPBUFFER_H
+#   include "../src/interfaces/libpq/pqexpbuffer.h"
+
+#else
+#   include "../src/interfaces/libpq/pqexpbuffer.h"
+#endif
+
+
+// option_parse_int parse_sync_method
+#include "../src/fe_utils/option_utils.c"
+
+
+
 static void
-init_locale(const char *categoryname, int category, const char *locale)
-{
+init_locale(const char *categoryname, int category, const char *locale) {
 	if (pg_perm_setlocale(category, locale) == NULL &&
 		pg_perm_setlocale(category, "C") == NULL)
-		elog(FATAL, "could not adopt \"%s\" locale nor C locale for %s",
-			 locale, categoryname);
+		elog(FATAL, "could not adopt \"%s\" locale nor C locale for %s", locale, categoryname);
 }
 
 
@@ -22,12 +36,6 @@ startup_hacks(const char *progname) {
     SpinLockInit(&dummy_spinlock);
 #endif
 }
-
-
-void pg_repl_raf() {
-    puts("pg_repl_raf: STUB");
-}
-
 
 
 // embedded initdb requirements
@@ -56,15 +64,12 @@ char *
 pg_strdup(const char *in) {
 	char	   *tmp;
 
-	if (!in)
-	{
-		fprintf(stderr,
-				_("cannot duplicate null pointer (internal error)\n"));
+	if (!in) {
+    	fprintf(stderr, _("cannot duplicate null pointer (internal error)\n"));
 		exit(EXIT_FAILURE);
 	}
 	tmp = strdup(in);
-	if (!tmp)
-	{
+	if (!tmp) {
 		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
@@ -81,7 +86,7 @@ simple_prompt(const char *prompt, bool echo) {
 #ifndef PG16
 int
 ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done) {
-    puts("# 89:"__FILE__" ProcessStartupPacket: STUB");
+    PDEBUG("# 89:" __FILE__ " ProcessStartupPacket: STUB");
     return STATUS_OK;
 }
 
@@ -91,12 +96,10 @@ select_default_timezone(const char *share_path) {
 	return getenv("TZ");
 }
 
-#include "../src/interfaces/libpq/pqexpbuffer.h"
-#include "../src/fe_utils/option_utils.c"
+
 
 bool
-appendShellStringNoError(PQExpBuffer buf, const char *str)
-{
+appendShellStringNoError(PQExpBuffer buf, const char *str) {
 	bool		ok = true;
 
 	const char *p;
@@ -126,13 +129,10 @@ appendShellStringNoError(PQExpBuffer buf, const char *str)
 }
 
 void
-appendShellString(PQExpBuffer buf, const char *str)
-{
+appendShellString(PQExpBuffer buf, const char *str) {
 	if (!appendShellStringNoError(buf, str))
 	{
-		fprintf(stderr,
-				_("shell command argument contains a newline or carriage return: \"%s\"\n"),
-				str);
+		fprintf(stderr, _("shell command argument contains a newline or carriage return: \"%s\"\n"), str);
 		exit(EXIT_FAILURE);
 	}
 }

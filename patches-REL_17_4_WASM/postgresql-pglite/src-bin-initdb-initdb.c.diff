@@ -20,17 +20,18 @@
  	const char *username;
  
  #ifndef WIN32
-@@ -825,6 +830,9 @@
+@@ -825,6 +830,10 @@
  	username = get_user_name_or_exit(progname);
  
  	return pg_strdup(username);
 +#else
++    setenv("PGUSER", WASM_USERNAME, 0);
 +    return pg_strdup(getenv("PGUSER"));
 +#endif /* wasm */
  }
  
  static char *
-@@ -1070,6 +1078,9 @@
+@@ -1070,6 +1079,9 @@
  static const char *
  choose_dsm_implementation(void)
  {
@@ -40,7 +41,7 @@
  #if defined(HAVE_SHM_OPEN) && !defined(__sun__)
  	int			ntries = 10;
  	pg_prng_state prng_state;
-@@ -1608,10 +1619,9 @@
+@@ -1608,10 +1620,9 @@
  	}
  
  	PG_CMD_CLOSE();
@@ -53,7 +54,7 @@
  	check_ok();
  }
  
-@@ -1711,16 +1721,16 @@
+@@ -1711,16 +1722,16 @@
  setup_run_file(FILE *cmdfd, const char *filename)
  {
  	char	  **lines;
@@ -73,7 +74,7 @@
  
  	free(lines);
  }
-@@ -2636,8 +2646,13 @@
+@@ -2636,8 +2647,13 @@
  			strlcpy(full_path, progname, sizeof(full_path));
  
  		if (ret == -1)
@@ -87,7 +88,7 @@
  		else
  			pg_fatal("program \"%s\" was found by \"%s\" but was not the same version as %s",
  					 "postgres", full_path, progname);
-@@ -3096,7 +3111,7 @@
+@@ -3096,7 +3112,7 @@
  	initPQExpBuffer(&cmd);
  	printfPQExpBuffer(&cmd, "\"%s\" %s %s template1 >%s",
  					  backend_exec, backend_options, extra_options, DEVNULL);
@@ -96,7 +97,7 @@
  	PG_CMD_OPEN(cmd.data);
  
  	setup_auth(cmdfd);
-@@ -3134,14 +3149,53 @@
+@@ -3134,14 +3150,53 @@
  
  	PG_CMD_CLOSE();
  	termPQExpBuffer(&cmd);
@@ -133,11 +134,11 @@
 +        strcat_alloc(PREFIX,"/bin/initdb"),
 +    //    "--no-clean",
 +        "--wal-segsize=1",
-+        "-g",
-+    "-E", "UTF8", "--locale=C.UTF-8", "--locale-provider=libc",
-+//    "-E", "UTF8", "--locale", "C.UTF-8", "--locale-provider=builtin",
-+//    "--locale", "en_US.UTF-8",
-+//    "--icu-locale=en-US", "--locale-provider=icu",
++        "--allow-group-access", "--no-sync",
++        "-E", "UTF8",
++    "--locale=C.UTF-8", "--locale-provider=libc",
++//    "--builtin-locale=en_US.UTF-8", "--locale-provider=builtin",
++//    "--locale-provider=icu", "--icu-locale=en-US", "--locale-provider=icu",
 +        "-U", WASM_USERNAME, pwfile,  //"--pwfile=" WASM_PREFIX "/password",
 +        pgdata, // "--pgdata=" WASM_PREFIX "/base",
 +        NULL
@@ -153,7 +154,7 @@
  	static struct option long_options[] = {
  		{"pgdata", required_argument, NULL, 'D'},
  		{"encoding", required_argument, NULL, 'E'},
-@@ -3201,9 +3255,15 @@
+@@ -3201,9 +3256,15 @@
  	 * POSIX says we must do this before any other usage of these files.
  	 */
  	setvbuf(stdout, NULL, PG_IOLBF, 0);
@@ -170,28 +171,33 @@
  	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("initdb"));
  
  	if (argc > 1)
-@@ -3409,7 +3469,7 @@
+@@ -3409,7 +3470,7 @@
  	if (icu_rules && locale_provider != COLLPROVIDER_ICU)
  		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
  				 "--icu-rules", "icu");
 -
-+PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit");
++PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit)");
  	atexit(cleanup_directories_atexit);
  
  	/* If we only need to sync, just do it and exit */
-@@ -3445,9 +3505,9 @@
+@@ -3445,13 +3506,13 @@
  	get_restricted_token();
  
  	setup_pgdata();
 -
-+puts("# 3493:pgl_initdb_main " __FILE__);
++PDEBUG("# 3493:pgl_initdb_main " __FILE__);
  	setup_bin_paths(argv[0]);
 -
-+puts("# 3495:pgl_initdb_main " __FILE__);
++PDEBUG("# 3495:pgl_initdb_main " __FILE__);
  	effective_user = get_id();
  	if (!username)
  		username = effective_user;
-@@ -3479,7 +3539,7 @@
+-
++PDEBUG("# 3514:pgl_initdb_main " __FILE__);
+ 	if (strncmp(username, "pg_", 3) == 0)
+ 		pg_fatal("superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"", username);
+ 
+@@ -3479,7 +3540,7 @@
  		get_su_pwd();
  
  	printf("\n");
@@ -200,7 +206,7 @@
  	initialize_data_directory();
  
  	if (do_sync)
-@@ -3535,7 +3595,7 @@
+@@ -3535,7 +3596,7 @@
  		destroyPQExpBuffer(start_db_cmd);
  	}
  

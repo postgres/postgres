@@ -12,6 +12,17 @@ void mkdirp(const char *p) {
 	}
 }
 
+#if FIXME
+#warning "some FIXME are used"
+bool startswith(const char *str, const char *prefix) {
+    // Check if the length of prefix is greater than the string
+    if (strlen(prefix) > strlen(str)) {
+        return false;
+    }
+    // Compare the beginning of the string with the prefix
+    return strncmp(str, prefix, strlen(prefix)) == 0;
+}
+#endif
 
 void
 strconcat(char*p, const char *head, const char *tail) {
