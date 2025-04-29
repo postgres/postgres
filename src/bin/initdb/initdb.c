@@ -1186,13 +1186,6 @@ test_config_settings(void)
 
 	printf("%d\n", n_connections);
 
-	/*
-	 * We chose the default for autovacuum_worker_slots during the
-	 * max_connections tests above, but we print a progress message anyway.
-	 */
-	printf(_("selecting default \"autovacuum_worker_slots\" ... %d\n"),
-		   n_av_slots);
-
 	printf(_("selecting default \"shared_buffers\" ... "));
 	fflush(stdout);
 
