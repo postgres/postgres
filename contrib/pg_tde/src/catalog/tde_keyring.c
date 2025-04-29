@@ -287,10 +287,15 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	options = required_text_argument(fcinfo->args[2], "provider options");
 
 	nlen = strlen(provider_name);
+	if (nlen == 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("provider name \"\" is too short"));
 	if (nlen >= sizeof(provider.provider_name) - 1)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long provider name, maximum length is %ld bytes", sizeof(provider.provider_name) - 1));
+				errmsg("provider name \"%s\" is too long", provider_name),
+				errhint("Maximum length is %ld bytes.", sizeof(provider.provider_name) - 1));
 
 	olen = strlen(options);
 	if (olen >= sizeof(provider.options))

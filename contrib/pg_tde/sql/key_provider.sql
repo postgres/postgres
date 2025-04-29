@@ -63,6 +63,10 @@ SELECT pg_tde_add_global_key_provider(NULL, 'name', '{}');
 SELECT pg_tde_add_global_key_provider('file', NULL, '{}');
 SELECT pg_tde_add_global_key_provider('file', 'name', NULL);
 
+-- Empty string is not allowed for a key provider name
+SELECT pg_tde_add_database_key_provider('file', '', '{}');
+SELECT pg_tde_add_global_key_provider('file', '', '{}');
+
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_database_key_provider('file', NULL, '{}');

@@ -176,6 +176,11 @@ SELECT pg_tde_add_global_key_provider('file', NULL, '{}');
 ERROR:  provider name cannot be null
 SELECT pg_tde_add_global_key_provider('file', 'name', NULL);
 ERROR:  provider options cannot be null
+-- Empty string is not allowed for a key provider name
+SELECT pg_tde_add_database_key_provider('file', '', '{}');
+ERROR:  provider name "" is too short
+SELECT pg_tde_add_global_key_provider('file', '', '{}');
+ERROR:  provider name "" is too short
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 ERROR:  provider type cannot be null
