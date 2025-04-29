@@ -158,6 +158,12 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
  *		"*"		Password field - hide value
  *		"D"		Debug option - don't show by default
  *
+ * NB: Server-side clients -- dblink, postgres_fdw, libpqrcv -- use dispchar to
+ * determine which options to expose to end users, and how. Changing dispchar
+ * has compatibility and security implications for those clients. For example,
+ * postgres_fdw will attach a "*" option to USER MAPPING instead of the default
+ * SERVER, and it disallows setting "D" options entirely.
+ *
  * PQconninfoOptions[] is a constant static array that we use to initialize
  * a dynamically allocated working copy.  All the "val" fields in
  * PQconninfoOptions[] *must* be NULL.  In a working copy, non-null "val"
@@ -394,7 +400,7 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 	offsetof(struct pg_conn, oauth_client_id)},
 
 	{"oauth_client_secret", NULL, NULL, NULL,
-		"OAuth-Client-Secret", "", 40,
+		"OAuth-Client-Secret", "*", 40,
 	offsetof(struct pg_conn, oauth_client_secret)},
 
 	{"oauth_scope", NULL, NULL, NULL,
