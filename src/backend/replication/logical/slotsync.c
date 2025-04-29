@@ -196,14 +196,14 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		 * restart_lsn or the initial xmin_horizon computed for the local slot
 		 * is ahead of the remote slot.
 		 *
-		 * If the slot is persistent, restart_lsn of the synced slot could
-		 * still be ahead of the remote slot. Since we use slot advance
-		 * functionality to keep snapbuild/slot updated, it is possible that
-		 * the restart_lsn is advanced to a later position than it has on the
-		 * primary. This can happen when slot advancing machinery finds
-		 * running xacts record after reaching the consistent state at a later
-		 * point than the primary where it serializes the snapshot and updates
-		 * the restart_lsn.
+		 * If the slot is persistent, both restart_lsn and catalog_xmin of the
+		 * synced slot could still be ahead of the remote slot. Since we use
+		 * slot advance functionality to keep snapbuild/slot updated, it is
+		 * possible that the restart_lsn and catalog_xmin are advanced to a
+		 * later position than it has on the primary. This can happen when
+		 * slot advancing machinery finds running xacts record after reaching
+		 * the consistent state at a later point than the primary where it
+		 * serializes the snapshot and updates the restart_lsn.
 		 *
 		 * We LOG the message if the slot is temporary as it can help the user
 		 * to understand why the slot is not sync-ready. In the case of a
@@ -221,16 +221,25 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 
 		if (remote_slot_precedes)
 			*remote_slot_precedes = true;
+
+		/*
+		 * Skip updating the configuration. This is required to avoid syncing
+		 * two_phase_at without syncing confirmed_lsn. Otherwise, the prepared
+		 * transaction between old confirmed_lsn and two_phase_at will
+		 * unexpectedly get decoded and sent to the downstream after
+		 * promotion. See comments in ReorderBufferFinishPrepared.
+		 */
+		return false;
 	}
 
 	/*
 	 * Attempt to sync LSNs and xmins only if remote slot is ahead of local
 	 * slot.
 	 */
-	else if (remote_slot->confirmed_lsn > slot->data.confirmed_flush ||
-			 remote_slot->restart_lsn > slot->data.restart_lsn ||
-			 TransactionIdFollows(remote_slot->catalog_xmin,
-								  slot->data.catalog_xmin))
+	if (remote_slot->confirmed_lsn > slot->data.confirmed_flush ||
+		remote_slot->restart_lsn > slot->data.restart_lsn ||
+		TransactionIdFollows(remote_slot->catalog_xmin,
+							 slot->data.catalog_xmin))
 	{
 		/*
 		 * We can't directly copy the remote slot's LSN or xmin unless there
@@ -294,6 +303,12 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		SpinLockRelease(&slot->mutex);
 
 		updated_config = true;
+
+		/*
+		 * Ensure that there is no risk of sending prepared transactions
+		 * unexpectedly after the promotion.
+		 */
+		Assert(slot->data.two_phase_at <= slot->data.confirmed_flush);
 	}
 
 	/*
