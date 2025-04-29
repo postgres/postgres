@@ -37,37 +37,37 @@ my @scenario = (
 		'name' => 'extra_file',
 		'mutilate' => \&mutilate_extra_file,
 		'fails_like' =>
-		  qr/extra_file.*present (on disk|in "[^"]+") but not in the manifest/
+		  qr/extra_file.*present (on disk|in archive "[^"]+") but not in the manifest/
 	},
 	{
 		'name' => 'extra_tablespace_file',
 		'mutilate' => \&mutilate_extra_tablespace_file,
 		'fails_like' =>
-		  qr/extra_ts_file.*present (on disk|in "[^"]+") but not in the manifest/
+		  qr/extra_ts_file.*present (on disk|in archive "[^"]+") but not in the manifest/
 	},
 	{
 		'name' => 'missing_file',
 		'mutilate' => \&mutilate_missing_file,
 		'fails_like' =>
-		  qr/pg_xact\/0000.*present in the manifest but not (on disk|in "[^"]+")/
+		  qr/pg_xact\/0000.*present in the manifest but not (on disk|in archive "[^"]+")/
 	},
 	{
 		'name' => 'missing_tablespace',
 		'mutilate' => \&mutilate_missing_tablespace,
 		'fails_like' =>
-		  qr/pg_tblspc.*present in the manifest but not (on disk|in "[^"]+")/
+		  qr/pg_tblspc.*present in the manifest but not (on disk|in archive "[^"]+")/
 	},
 	{
 		'name' => 'append_to_file',
 		'mutilate' => \&mutilate_append_to_file,
 		'fails_like' =>
-		  qr/has size \d+ (on disk|in "[^"]+") but size \d+ in the manifest/
+		  qr/has size \d+ (on disk|in archive "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'truncate_file',
 		'mutilate' => \&mutilate_truncate_file,
 		'fails_like' =>
-		  qr/has size 0 (on disk|in "[^"]+") but size \d+ in the manifest/
+		  qr/has size 0 (on disk|in archive "[^"]+") but size \d+ in the manifest/
 	},
 	{
 		'name' => 'replace_file',

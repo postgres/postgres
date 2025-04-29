@@ -53,7 +53,7 @@ $primary->command_fails_like(
 		'--no-parse-wal',
 		$backup_path
 	],
-	qr("pg_multixact" is not a plain file),
+	qr("pg_multixact" is not a regular file),
 	"does not verify with --format=tar --no-parse-wal");
 
 # Test invalid options

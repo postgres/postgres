@@ -338,7 +338,7 @@ main(int argc, char **argv)
 	if (!no_parse_wal && context.format == 't')
 	{
 		pg_log_error("pg_waldump cannot read tar files");
-		pg_log_error_hint("You must use -n or --no-parse-wal when verifying a tar-format backup.");
+		pg_log_error_hint("You must use -n/--no-parse-wal when verifying a tar-format backup.");
 		exit(1);
 	}
 
@@ -694,11 +694,11 @@ verify_plain_backup_file(verifier_context *context, char *relpath,
 		return;
 	}
 
-	/* If it's not a directory, it should be a plain file. */
+	/* If it's not a directory, it should be a regular file. */
 	if (!S_ISREG(sb.st_mode))
 	{
 		report_backup_error(context,
-							"\"%s\" is not a file or directory",
+							"\"%s\" is not a regular file or directory",
 							relpath);
 		return;
 	}
@@ -899,11 +899,11 @@ precheck_tar_backup_file(verifier_context *context, char *relpath,
 		return;
 	}
 
-	/* In a tar format backup, we expect only plain files. */
+	/* In a tar format backup, we expect only regular files. */
 	if (!S_ISREG(sb.st_mode))
 	{
 		report_backup_error(context,
-							"\"%s\" is not a plain file",
+							"file \"%s\" is not a regular file",
 							relpath);
 		return;
 	}

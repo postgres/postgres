@@ -127,7 +127,7 @@ astreamer_verify_content(astreamer *streamer, astreamer_member *member,
 
 		default:
 			/* Shouldn't happen. */
-			pg_fatal("unexpected state while parsing tar file");
+			pg_fatal("unexpected state while parsing tar archive");
 	}
 }
 
@@ -195,7 +195,7 @@ member_verify_header(astreamer *streamer, astreamer_member *member)
 	if (m == NULL)
 	{
 		report_backup_error(mystreamer->context,
-							"\"%s\" is present in \"%s\" but not in the manifest",
+							"file \"%s\" is present in archive \"%s\" but not in the manifest",
 							member->pathname, mystreamer->archive_name);
 		return;
 	}
@@ -208,7 +208,7 @@ member_verify_header(astreamer *streamer, astreamer_member *member)
 	if (m->size != member->size)
 	{
 		report_backup_error(mystreamer->context,
-							"\"%s\" has size %llu in \"%s\" but size %" PRIu64 " in the manifest",
+							"file \"%s\" has size %llu in archive \"%s\" but size %" PRIu64 " in the manifest",
 							member->pathname,
 							(unsigned long long) member->size,
 							mystreamer->archive_name,
@@ -297,7 +297,7 @@ member_verify_checksum(astreamer *streamer)
 	if (mystreamer->checksum_bytes != m->size)
 	{
 		report_backup_error(mystreamer->context,
-							"file \"%s\" in \"%s\" should contain %" PRIu64 " bytes, but read %" PRIu64 " bytes",
+							"file \"%s\" in archive \"%s\" should contain %" PRIu64 " bytes, but %" PRIu64 " bytes were read",
 							m->pathname, mystreamer->archive_name,
 							m->size,
 							mystreamer->checksum_bytes);
@@ -317,12 +317,12 @@ member_verify_checksum(astreamer *streamer)
 	/* And check it against the manifest. */
 	if (checksumlen != m->checksum_length)
 		report_backup_error(mystreamer->context,
-							"file \"%s\" in \"%s\" has checksum of length %d, but expected %d",
+							"file \"%s\" in archive \"%s\" has checksum of length %d, but expected %d",
 							m->pathname, mystreamer->archive_name,
 							m->checksum_length, checksumlen);
 	else if (memcmp(checksumbuf, m->checksum_payload, checksumlen) != 0)
 		report_backup_error(mystreamer->context,
-							"checksum mismatch for file \"%s\" in \"%s\"",
+							"checksum mismatch for file \"%s\" in archive \"%s\"",
 							m->pathname, mystreamer->archive_name);
 }
 
