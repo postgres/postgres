@@ -1,0 +1,15 @@
+leak:save_ps_display_args
+leak:initdb.c
+leak:fe_memutils.c
+leak:fe-exec.c
+leak:fe-connect.c
+leak:pqexpbuffer.c
+leak:strdup
+leak:preproc.y
+leak:pgtypeslib/common.c
+leak:ecpglib/memory.c
+leak:kmip.c
+
+#pg_dump
+leak:getSchemaData
+leak:dumpDumpableObject

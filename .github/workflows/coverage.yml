@@ -28,7 +28,7 @@ jobs:
         run: ci_scripts/setup-keyring-servers.sh
 
       - name: Test postgres with TDE to generate coverage
-        run: ci_scripts/make-test.sh --tde-only
+        run: ci_scripts/make-test.sh tde
 
       - name: Collect coverage data
         run: find . -type f -name "*.c" ! -path '*libkmip*' | xargs -t gcov -abcfu

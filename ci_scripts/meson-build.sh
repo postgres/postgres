@@ -17,5 +17,31 @@ source "$SCRIPT_DIR/env.sh"
 
 cd "$SCRIPT_DIR/.."
 
-meson setup build --prefix "$INSTALL_DIR" --buildtype="$1" -Dcassert=true -Dtap_tests=enabled $ENABLE_COVERAGE
+BUILD_TYPE=
+
+case "$1" in
+    debug)
+        echo "Building with debug option"
+        BUILD_TYPE=$1
+        ;;
+
+    debugoptimized)
+        echo "Building with debugoptimized option"
+        BUILD_TYPE=$1
+        ;;
+
+    sanitize)
+        echo "Building with sanitize option"
+        export CFLAGS="-fsanitize=address -fsanitize=undefined -fno-omit-frame-pointer -fno-inline-functions"
+        BUILD_TYPE=debug
+        ;;
+
+    *)
+        echo "Unknown build type: $1"
+        echo "Please use one of the following: debug, debugoptimized, sanitize"
+        exit 1
+        ;;
+esac
+
+meson setup build --prefix "$INSTALL_DIR" --buildtype="$BUILD_TYPE" -Dcassert=true -Dtap_tests=enabled $ENABLE_COVERAGE
 cd build && ninja && ninja install

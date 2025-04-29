@@ -16,6 +16,10 @@ $node_primary->append_conf(
 	'postgresql.conf', qq(
 	max_prepared_transactions = 10
 	log_checkpoints = true
+
+	## Workaround to make tests pass with enabled UBSAN
+	## https://www.postgresql.org/message-id/flat/1775221.1658699459%40sss.pgh.pa.us#18ac2074d2383f232a20bf8b7b32c526
+	max_stack_depth = 8MB
 ));
 $node_primary->start;
 $node_primary->backup('primary_backup');

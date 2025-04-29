@@ -56,7 +56,7 @@ To run the tests, use the following command:
 
 ```
 source ci_scripts/setup-keyring-servers.sh
-ci_scripts/make-test.sh
+ci_scripts/make-test.sh all
 ```
 
 You can run tests on your local machine with whatever operating system you have. After you submit the pull request, we will check your patch on multiple operating systems.

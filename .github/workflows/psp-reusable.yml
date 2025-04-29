@@ -71,7 +71,7 @@ jobs:
         run: src/ci_scripts/setup-keyring-servers.sh
 
       - name: Test postgres
-        run: src/ci_scripts/${{ inputs.build_script }}-test.sh
+        run: src/ci_scripts/${{ inputs.build_script }}-test.sh all
 
       - name: Report on test fail
         uses: actions/upload-artifact@v4
