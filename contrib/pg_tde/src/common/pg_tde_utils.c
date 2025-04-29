@@ -105,7 +105,6 @@ pg_tde_set_data_dir(const char *dir)
 	strlcpy(tde_data_dir, dir, sizeof(tde_data_dir));
 }
 
-/* returns the palloc'd string */
 const char *
 pg_tde_get_data_dir(void)
 {
