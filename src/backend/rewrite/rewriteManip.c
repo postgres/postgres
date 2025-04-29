@@ -644,14 +644,34 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		bool		clause_relids_is_multiple =
 			(bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
 
-		if (bms_is_member(context->rt_index, rinfo->clause_relids))
+		/*
+		 * Recurse down into clauses if the target relation is present in
+		 * clause_relids or required_relids.  We must check required_relids
+		 * because the relation not present in clause_relids might still be
+		 * present somewhere in orclause.
+		 */
+		if (bms_is_member(context->rt_index, rinfo->clause_relids) ||
+			bms_is_member(context->rt_index, rinfo->required_relids))
 		{
+			Relids		new_clause_relids;
+
 			expression_tree_walker((Node *) rinfo->clause, ChangeVarNodes_walker, (void *) context);
 			expression_tree_walker((Node *) rinfo->orclause, ChangeVarNodes_walker, (void *) context);
 
-			rinfo->clause_relids =
-				adjust_relid_set(rinfo->clause_relids, context->rt_index, context->new_index);
-			rinfo->num_base_rels = bms_num_members(rinfo->clause_relids);
+			new_clause_relids = adjust_relid_set(rinfo->clause_relids,
+												 context->rt_index,
+												 context->new_index);
+
+			/*
+			 * Incrementally adjust num_base_rels based on the change of
+			 * clause_relids, which could contain both base relids and
+			 * outer-join relids.  This operation is legal until we remove
+			 * only baserels.
+			 */
+			rinfo->num_base_rels -= bms_num_members(rinfo->clause_relids) -
+				bms_num_members(new_clause_relids);
+
+			rinfo->clause_relids = new_clause_relids;
 			rinfo->left_relids =
 				adjust_relid_set(rinfo->left_relids, context->rt_index, context->new_index);
 			rinfo->right_relids =

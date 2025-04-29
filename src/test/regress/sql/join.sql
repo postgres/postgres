@@ -2807,7 +2807,13 @@ WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
 WHERE t1.id = emp1.id RETURNING emp1.id, emp1.code, t1.code;
 
-INSERT INTO emp1 VALUES (1, 1), (2, 1);
+-- Check that SJE correctly replaces relations in OR-clauses
+EXPLAIN (COSTS OFF)
+SELECT * FROM emp1 t1
+   INNER JOIN emp1 t2 ON t1.id = t2.id
+    LEFT JOIN emp1 t3 ON t1.code = 1 AND (t2.code = t3.code OR t2.code = 1);
+
+    INSERT INTO emp1 VALUES (1, 1), (2, 1);
 
 WITH t1 AS (SELECT * FROM emp1)
 UPDATE emp1 SET code = t1.code + 1 FROM t1
