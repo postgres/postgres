@@ -49,10 +49,12 @@
 
         if (!ignore_till_sync)
             send_ready_for_query = true;
-
-        if (!is_wire)
+#if PGDEBUG
+        if (is_repl)
             pg_prompt();
-
+#endif
+        if (pipelining)
+            goto incoming;
         goto wire_flush;
 #endif
     }
