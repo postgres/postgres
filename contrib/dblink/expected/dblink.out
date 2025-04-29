@@ -898,6 +898,17 @@ CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 ERROR:  invalid option "server"
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
+-- OAuth options are not allowed in either context
+ALTER SERVER fdtest OPTIONS (ADD oauth_issuer 'https://example.com');
+ERROR:  invalid option "oauth_issuer"
+ALTER SERVER fdtest OPTIONS (ADD oauth_client_id 'myID');
+ERROR:  invalid option "oauth_client_id"
+ALTER USER MAPPING FOR public SERVER fdtest
+	OPTIONS (ADD oauth_issuer 'https://example.com');
+ERROR:  invalid option "oauth_issuer"
+ALTER USER MAPPING FOR public SERVER fdtest
+	OPTIONS (ADD oauth_client_id 'myID');
+ERROR:  invalid option "oauth_client_id"
 GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO regress_dblink_user;
 SET SESSION AUTHORIZATION regress_dblink_user;

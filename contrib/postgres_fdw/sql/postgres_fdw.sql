@@ -213,6 +213,14 @@ ALTER USER MAPPING FOR public SERVER testserver1
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (ADD sslkey 'value', ADD sslcert 'value');
 
+-- OAuth options are not allowed in either context
+ALTER SERVER testserver1 OPTIONS (ADD oauth_issuer 'https://example.com');
+ALTER SERVER testserver1 OPTIONS (ADD oauth_client_id 'myID');
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD oauth_issuer 'https://example.com');
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD oauth_client_id 'myID');
+
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');

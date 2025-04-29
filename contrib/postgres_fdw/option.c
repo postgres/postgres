@@ -348,6 +348,13 @@ InitPgFdwOptions(void)
 			strcmp(lopt->keyword, "client_encoding") == 0)
 			continue;
 
+		/*
+		 * Disallow OAuth options for now, since the builtin flow communicates
+		 * on stderr by default and can't cache tokens yet.
+		 */
+		if (strncmp(lopt->keyword, "oauth_", strlen("oauth_")) == 0)
+			continue;
+
 		/* We don't have to copy keyword string, as described above. */
 		popt->keyword = lopt->keyword;
 

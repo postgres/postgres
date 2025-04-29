@@ -3095,6 +3095,13 @@ is_valid_dblink_option(const PQconninfoOption *options, const char *option,
 		return false;
 
 	/*
+	 * Disallow OAuth options for now, since the builtin flow communicates on
+	 * stderr by default and can't cache tokens yet.
+	 */
+	if (strncmp(opt->keyword, "oauth_", strlen("oauth_")) == 0)
+		return false;
+
+	/*
 	 * If the option is "user" or marked secure, it should be specified only
 	 * in USER MAPPING.  Others should be specified only in SERVER.
 	 */

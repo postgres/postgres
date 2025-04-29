@@ -469,6 +469,14 @@ CREATE USER MAPPING FOR public SERVER fdtest
   OPTIONS (server 'localhost');  -- fail, can't specify server here
 CREATE USER MAPPING FOR public SERVER fdtest OPTIONS (user :'USER');
 
+-- OAuth options are not allowed in either context
+ALTER SERVER fdtest OPTIONS (ADD oauth_issuer 'https://example.com');
+ALTER SERVER fdtest OPTIONS (ADD oauth_client_id 'myID');
+ALTER USER MAPPING FOR public SERVER fdtest
+	OPTIONS (ADD oauth_issuer 'https://example.com');
+ALTER USER MAPPING FOR public SERVER fdtest
+	OPTIONS (ADD oauth_client_id 'myID');
+
 GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
 GRANT EXECUTE ON FUNCTION dblink_connect_u(text, text) TO regress_dblink_user;
 

@@ -196,6 +196,17 @@ ALTER USER MAPPING FOR public SERVER testserver1
 -- permitted to check validation.
 ALTER USER MAPPING FOR public SERVER testserver1
 	OPTIONS (ADD sslkey 'value', ADD sslcert 'value');
+-- OAuth options are not allowed in either context
+ALTER SERVER testserver1 OPTIONS (ADD oauth_issuer 'https://example.com');
+ERROR:  invalid option "oauth_issuer"
+ALTER SERVER testserver1 OPTIONS (ADD oauth_client_id 'myID');
+ERROR:  invalid option "oauth_client_id"
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD oauth_issuer 'https://example.com');
+ERROR:  invalid option "oauth_issuer"
+ALTER USER MAPPING FOR public SERVER testserver1
+	OPTIONS (ADD oauth_client_id 'myID');
+ERROR:  invalid option "oauth_client_id"
 ALTER FOREIGN TABLE ft1 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft2 OPTIONS (schema_name 'S 1', table_name 'T 1');
 ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
