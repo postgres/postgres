@@ -241,7 +241,7 @@
       language, you need a <productname>Python</productname>
       installation with the header files and
       the <application>sysconfig</application> module.  The minimum
-      required version is <productname>Python</productname> 3.2.
+      supported version is <productname>Python</productname> 3.6.8.
      </para>
 
      <para>
