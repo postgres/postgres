@@ -19,11 +19,9 @@ source .buildconfig
 
 cat .buildconfig
 
-[ -f postgres-pglite/configure ] || ln -s $(pwd) postgres-pglite
+[ -f postgres-pglite/configure ] || ln -s . postgres-pglite
 
-mkdir -p \
- postgres-pglite/dist/pglite \
- postgres-pglite/dist/extensions-emsdk
+mkdir -p dist/pglite dist/extensions-emsdk
 
 docker run \
   --rm \
@@ -32,3 +30,4 @@ docker run \
   -v ./dist:/tmp/sdk/dist:rw \
   $IMG_NAME:$IMG_TAG \
   bash -c "source ${SDKROOT}/wasm32-bi-emscripten-shell.sh && ./wasm-build.sh ${WHAT:-\"contrib extra\"}"
+
