@@ -213,18 +213,11 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	char	   *provider_type = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	char	   *options = text_to_cstring(PG_GETARG_TEXT_PP(2));
-	int			nlen,
-				olen;
+	int			olen;
 	KeyringProviderRecord provider;
 
 	/* reports error if not found */
 	GenericKeyring *keyring = GetKeyProviderByName(provider_name, dbOid);
-
-	nlen = strlen(provider_name);
-	if (nlen >= sizeof(provider.provider_name))
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long provider name, maximum length is %ld bytes", sizeof(provider.provider_name) - 1));
 
 	olen = strlen(options);
 	if (olen >= sizeof(provider.options))
@@ -235,7 +228,7 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	/* Struct will be saved to disk so keep clean */
 	memset(&provider, 0, sizeof(provider));
 	provider.provider_id = keyring->keyring_id;
-	memcpy(provider.provider_name, provider_name, nlen);
+	memcpy(provider.provider_name, provider_name, strlen(provider_name));
 	memcpy(provider.options, options, olen);
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
 
