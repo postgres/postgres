@@ -2417,8 +2417,8 @@ include_dir 'conf.d'
       <listitem>
        <para>
         Sets the maximum number of open files each server subprocess is
-        allowed to open simultaneously, in addition to the files already open
-        in postmaster. The default is one thousand files.
+        allowed to open simultaneously;  files opened by the postmaster are
+        not counted toward this limit. The default is one thousand files.
        </para>
        <para>
         If the kernel is enforcing
