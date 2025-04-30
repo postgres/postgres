@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+918e7287ed20eb1fe280ab6c4056ccf94dcd53a8 # 2025-04-30 19:18:30 +1200
+# Fix broken indentation
+
 e1a8b1ad587112e67fdc5aa7b388631dde4dbdda # 2025-04-04 09:38:22 -0500
 # Re-pgindent pg_largeobject.c after commit 0d6c477664.
 
