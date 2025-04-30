@@ -440,11 +440,6 @@ RETURNS VOID
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
-CREATE FUNCTION pg_tde_extension_initialize()
-RETURNS VOID
-LANGUAGE C
-AS 'MODULE_PATHNAME';
-
 CREATE FUNCTION pg_tde_verify_key()
 RETURNS VOID
 LANGUAGE C
@@ -526,7 +521,12 @@ EXECUTE FUNCTION pg_tde_ddl_command_end_capture();
 ALTER EVENT TRIGGER pg_tde_ddl_end ENABLE ALWAYS;
 
 -- Per database extension initialization
+CREATE FUNCTION pg_tde_extension_initialize()
+RETURNS VOID
+LANGUAGE C
+AS 'MODULE_PATHNAME';
 SELECT pg_tde_extension_initialize();
+DROP FUNCTION pg_tde_extension_initialize();
 
 CREATE FUNCTION pg_tde_grant_database_key_management_to_role(
     target_role TEXT)
