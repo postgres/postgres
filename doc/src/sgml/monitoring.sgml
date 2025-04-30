@@ -4066,7 +4066,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>total_vacuum_time</structfield> <type>double precision</type>
       </para>
       <para>
-       Total time this table has been manually vacuumed, in milliseconds
+       Total time this table has been manually vacuumed, in milliseconds.
+       (This includes the time spent sleeping due to cost-based delays.)
       </para></entry>
      </row>
 
@@ -4076,7 +4077,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Total time this table has been vacuumed by the autovacuum daemon,
-       in milliseconds
+       in milliseconds. (This includes the time spent sleeping due to
+       cost-based delays.)
       </para></entry>
      </row>
 
@@ -4085,7 +4087,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>total_analyze_time</structfield> <type>double precision</type>
       </para>
       <para>
-       Total time this table has been manually analyzed, in milliseconds
+       Total time this table has been manually analyzed, in milliseconds.
+       (This includes the time spent sleeping due to cost-based delays.)
       </para></entry>
      </row>
 
@@ -4095,7 +4098,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Total time this table has been analyzed by the autovacuum daemon,
-       in milliseconds
+       in milliseconds. (This includes the time spent sleeping due to
+       cost-based delays.)
       </para></entry>
      </row>
     </tbody>
