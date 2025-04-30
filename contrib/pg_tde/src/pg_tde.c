@@ -145,7 +145,7 @@ pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 	XLogRegisterData((char *) &xlrec, sizeof(XLogExtensionInstall));
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_INSTALL_EXTENSION);
 
-	PG_RETURN_NULL();
+	PG_RETURN_VOID();
 }
 
 void
