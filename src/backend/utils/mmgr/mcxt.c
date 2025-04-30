@@ -1493,8 +1493,8 @@ ProcessGetMemoryContextInterrupt(void)
 
 	/*
 	 * Create a DSA and send handle to the client process after storing the
-	 * context statistics. If number of contexts exceed a predefined
-	 * limit(8MB), a cumulative total is stored for such contexts.
+	 * context statistics. If number of contexts exceed a predefined limit
+	 * (1MB), a cumulative total is stored for such contexts.
 	 */
 	if (memCxtArea->memstats_dsa_handle == DSA_HANDLE_INVALID)
 	{
@@ -1512,8 +1512,10 @@ ProcessGetMemoryContextInterrupt(void)
 
 		/*
 		 * Pin the DSA area, this is to make sure the area remains attachable
-		 * even if current backend exits. This is done so that the statistics
-		 * are published even if the process exits while a client is waiting.
+		 * even if the backend that created it exits. This is done so that the
+		 * statistics are published even if the process exits while a client
+		 * is waiting. Also, other processes that publish statistics will use
+		 * the same area.
 		 */
 		dsa_pin(MemoryStatsDsaArea);
 
@@ -1580,7 +1582,7 @@ ProcessGetMemoryContextInterrupt(void)
 		cxt_id = cxt_id + 1;
 
 		/*
-		 * Copy statistics for each of TopMemoryContexts children.	This
+		 * Copy statistics for each of TopMemoryContexts children.  This
 		 * includes statistics of at most 100 children per node, with each
 		 * child node limited to a depth of 100 in its subtree.
 		 */
@@ -1609,9 +1611,9 @@ ProcessGetMemoryContextInterrupt(void)
 		}
 		memCxtState[idx].total_stats = cxt_id;
 
+		/* Notify waiting backends and return */
 		end_memorycontext_reporting();
 
-		/* Notify waiting backends and return */
 		hash_destroy(context_id_lookup);
 
 		return;

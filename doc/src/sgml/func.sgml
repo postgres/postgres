@@ -28780,8 +28780,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         indicate the number aggregated child contexts.  When
         <parameter>summary</parameter> is <literal>false</literal>,
         <literal>the num_agg_contexts</literal> value is <literal>1</literal>,
-        indicating that individual statistics are being displayed. The levels
-        are limited to the first 100 contexts.
+        indicating that individual statistics are being displayed.
        </para>
        <para>
         Busy processes can delay reporting memory context statistics,
@@ -28796,7 +28795,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         statistics are aggregated and a cumulative total is displayed.  The
         <literal>num_agg_contexts</literal> column indicates the number of
         contexts aggregated in the displayed statistics.  When
-        <literal>num_agg_contexts</literal> is <literal>1</literal> is means
+        <literal>num_agg_contexts</literal> is <literal>1</literal> it means
         that the context statistics are displayed separately.
        </para></entry>
       </row>
