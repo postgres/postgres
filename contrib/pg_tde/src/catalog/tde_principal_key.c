@@ -911,6 +911,7 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		HeapTuple	tuple;
 		SysScanDesc scan;
 		Relation	rel;
+		bool		used = false;
 
 		/* First verify that the global/default oid doesn't use it */
 
@@ -943,21 +944,12 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
 			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
-
 			principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 
-			if (principal_key == NULL)
+			if (principal_key && principal_key->keyInfo.keyringId == providerId)
 			{
-				continue;
-			}
-
-			if (providerId == principal_key->keyInfo.keyringId)
-			{
-				systable_endscan(scan);
-				table_close(rel, AccessShareLock);
-				LWLockRelease(tde_lwlock_enc_keys());
-
-				return true;
+				used = true;
+				break;
 			}
 		}
 
@@ -965,7 +957,7 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		table_close(rel, AccessShareLock);
 		LWLockRelease(tde_lwlock_enc_keys());
 
-		return false;
+		return used;
 	}
 	else
 	{
