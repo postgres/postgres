@@ -1,18 +1,13 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 
+SELECT pg_tde_add_database_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
+
 CREATE USER regress_pg_tde_access_control;
 
 SET ROLE regress_pg_tde_access_control;
 
 -- should throw access denied
-SELECT pg_tde_add_database_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'local-file-provider');
-SELECT pg_tde_add_global_key_provider_file('global-file-provider', '/tmp/pg_tde_test_keyring.per');
-SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'global-file-provider');
-SELECT pg_tde_set_server_key_using_global_key_provider('wal-key','global-file-provider');
-SELECT pg_tde_set_default_key_using_global_key_provider('def-key', 'global-file-provider');
-SELECT pg_tde_delete_database_key_provider('local-file-provider');
-SELECT pg_tde_delete_global_key_provider('global-file-provider');
 SELECT pg_tde_list_all_database_key_providers();
 SELECT pg_tde_list_all_global_key_providers();
 SELECT pg_tde_key_info();
@@ -30,13 +25,19 @@ SELECT pg_tde_grant_key_viewer_to_role('regress_pg_tde_access_control');
 SET ROLE regress_pg_tde_access_control;
 
 -- should now be allowed
-SELECT pg_tde_add_database_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'local-file-provider');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_server_key_info();
+SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_default_key_info();
 SELECT pg_tde_verify_key();
+SELECT pg_tde_verify_server_key();
+SELECT pg_tde_verify_default_key();
 
 -- only superuser
+SELECT pg_tde_add_database_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_change_global_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
+SELECT pg_tde_delete_database_key_provider('local-file-provider');
 SELECT pg_tde_add_global_key_provider_file('global-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_change_global_key_provider_file('global-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_delete_global_key_provider('global-file-provider');
@@ -51,11 +52,12 @@ SELECT pg_tde_revoke_key_viewer_from_role('regress_pg_tde_access_control');
 SET ROLE regress_pg_tde_access_control;
 
 -- verify the view access is revoked
-SELECT * FROM pg_tde_list_all_database_key_providers();
-SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
-SELECT pg_tde_verify_key();
+SELECT pg_tde_list_all_database_key_providers();
+SELECT pg_tde_list_all_global_key_providers();
+SELECT pg_tde_key_info();
 SELECT pg_tde_server_key_info();
 SELECT pg_tde_default_key_info();
+SELECT pg_tde_verify_key();
 SELECT pg_tde_verify_server_key();
 SELECT pg_tde_verify_default_key();
 

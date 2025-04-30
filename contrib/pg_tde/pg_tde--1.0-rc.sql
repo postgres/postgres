@@ -535,26 +535,6 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider(text, text, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_file(text, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_file(text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_vault_v2(text, text, text, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider(text, text, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_file(text, json) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_file(text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_vault_v2(text, text, text,text,text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_vault_v2(text, JSON, JSON,JSON,JSON) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_kmip(text, text, int, text, text) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider_kmip(text, JSON, JSON, JSON, JSON) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_delete_database_key_provider(text) TO %I', target_role);
-
     EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) TO %I', target_role);
 END;
 $$;
@@ -586,26 +566,6 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider(text, text, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_file(text, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_file(text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_add_database_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider(text, text, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_file(text, json) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_file(text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_vault_v2(text, text, text, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_vault_v2(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_kmip(text, text, int, text, text) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_change_database_key_provider_kmip(text, JSON, JSON, JSON, JSON) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_delete_database_key_provider(text) FROM %I', target_role);
-
     EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) FROM %I', target_role);
 END;
 $$;

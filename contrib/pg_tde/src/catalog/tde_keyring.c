@@ -205,11 +205,6 @@ pg_tde_change_database_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_change_global_key_provider(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to modify global key providers"));
-
 	return pg_tde_change_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
@@ -222,6 +217,11 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	int			olen;
 	KeyringProviderRecord provider;
 	GenericKeyring *keyring;
+
+	if (!superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify key providers"));
 
 	provider_type = required_text_argument(fcinfo->args[0], "provider type");
 	provider_name = required_text_argument(fcinfo->args[1], "provider name");
@@ -259,11 +259,6 @@ pg_tde_add_database_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_add_global_key_provider(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to modify global key providers"));
-
 	return pg_tde_add_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
 }
 
@@ -276,6 +271,11 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	int			nlen,
 				olen;
 	KeyringProviderRecord provider;
+
+	if (!superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify key providers"));
 
 	provider_type = required_text_argument(fcinfo->args[0], "provider type");
 	provider_name = required_text_argument(fcinfo->args[1], "provider name");
@@ -318,13 +318,7 @@ pg_tde_delete_database_key_provider(PG_FUNCTION_ARGS)
 Datum
 pg_tde_delete_global_key_provider(PG_FUNCTION_ARGS)
 {
-	if (!superuser())
-		ereport(ERROR,
-				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("must be superuser to modify global key providers"));
-
 	return pg_tde_delete_key_provider_internal(fcinfo, GLOBAL_DATA_TDE_OID);
-
 }
 
 Datum
@@ -334,6 +328,11 @@ pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
 	GenericKeyring *provider;
 	int			provider_id;
 	bool		provider_used;
+
+	if (!superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to modify key providers"));
 
 	provider_name = required_text_argument(fcinfo->args[0], "provider_name");
 

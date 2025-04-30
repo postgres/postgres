@@ -4,15 +4,13 @@ The `pg_tde` extension provides functions for managing different aspects of its 
 
 ## Permission management
 
-By default, `pg_tde` is restrictive. It doesn't allow any operations until permissions are granted to the user. Only superusers can run permission management functions to manage user permissions. Operations on the global scope are limited to superusers only.
-
-Permissions are based on the normal `EXECUTE` permission on the functions provided by `pg_tde`. Superusers manage them using the `GRANT EXECUTE` and `REVOKE EXECUTE` commands.
+By default, `pg_tde` is restrictive. It doesn't allow any operations until permissions are granted to the user. Only superusers can create or modify to key providers or modify objects in the global scope. Functions for viewing keys and for setting the principal key in a database local key provider can on the other hand be run by the database owner and be delegated to normal users using the `GRANT EXECUTE` and `REVOKE EXECUTE` commands.
 
 The following functions are also provided for easier management of functionality groups:
 
 ### Database local key management
 
-Use these functions to grant or revoke permissions to manage permissions for the current database. They enable or disable all functions related to the providers and keys on the current database:
+Use these functions to grant or revoke permissions to manage the key of the current database. They enable or disable all functions related to the key of the current database:
 
 * `pg_tde_grant_database_key_management_to_role(role)`
 * `pg_tde_revoke_database_key_management_from_role(role)`
@@ -28,14 +26,12 @@ These functions allow or revoke the use of the permissions management functions:
 * `pg_tde_grant_grant_management_to_role(role)`
 * `pg_tde_revoke_grant_management_from_role(role)`
 
-
 ### Inspections
 
 Use these functions to grant or revoke the use of query functions, which do not modify the encryption settings:
 
 * `pg_tde_grant_key_viewer_to_role(role)`
 * `pg_tde_revoke_key_viewer_from_role(role)`
-
 
 ## Key provider management
 
