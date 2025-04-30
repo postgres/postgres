@@ -260,13 +260,14 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	else if (IsA(parsetree, AlterTableStmt))
 	{
 		AlterTableStmt *stmt = castNode(AlterTableStmt, parsetree);
-		ListCell   *lcmd;
-		AlterTableCmd *setAccessMethod = NULL;
-		TdeDdlEvent event = {.parsetree = parsetree};
 		Oid			relid = RangeVarGetRelid(stmt->relation, AccessShareLock, true);
 
 		if (relid != InvalidOid)
 		{
+			AlterTableCmd *setAccessMethod = NULL;
+			ListCell   *lcmd;
+			TdeDdlEvent event = {.parsetree = parsetree};
+
 			foreach(lcmd, stmt->cmds)
 			{
 				AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lcmd);
