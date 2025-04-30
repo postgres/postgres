@@ -656,17 +656,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--statistics-only</option></term>
-      <listitem>
-       <para>
-        Dump only the statistics, not the schema (data definitions) or data.
-        Statistics for tables, materialized views, and indexes are dumped.
-       </para>
-
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
       <term><option>-Z <replaceable class="parameter">method</replaceable></option>[:<replaceable>detail</replaceable>]</term>
       <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
@@ -1124,19 +1113,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-security-labels</option></term>
+      <term><option>--no-schema</option></term>
       <listitem>
        <para>
-        Do not dump security labels.
+        Do not dump schema (data definitions).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-schema</option></term>
+      <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
-        Do not dump schema (data definitions).
+        Do not dump security labels.
        </para>
       </listitem>
      </varlistentry>
@@ -1228,33 +1217,6 @@ PostgreSQL documentation
         definitions (schema) are dumped; it only suppresses dumping the table
         and sequence data. Data in unlogged tables and sequences
         is always excluded when dumping from a standby server.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Dump data. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Dump schema (data definitions). This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -1393,6 +1355,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics-only</option></term>
+      <listitem>
+       <para>
+        Dump only the statistics, not the schema (data definitions) or data.
+        Statistics for tables, materialized views, and indexes are dumped.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--strict-names</option></term>
       <listitem>
        <para>
@@ -1463,6 +1435,33 @@ PostgreSQL documentation
         properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</command>
         will certainly require superuser privileges to restore correctly,
         whereas <command>ALTER OWNER</command> requires lesser privileges.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-data</option></term>
+      <listitem>
+       <para>
+        Dump data. This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-schema</option></term>
+      <listitem>
+       <para>
+        Dump schema (data definitions). This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-statistics</option></term>
+      <listitem>
+       <para>
+        Dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
