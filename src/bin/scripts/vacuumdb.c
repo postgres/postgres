@@ -954,7 +954,6 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 		appendPQExpBufferStr(&catalog_query,
 							 " EXISTS (SELECT NULL FROM pg_catalog.pg_attribute a\n"
 							 " WHERE a.attrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
 							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
 							 " AND NOT a.attisdropped\n"
 							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
@@ -967,7 +966,6 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 		appendPQExpBufferStr(&catalog_query,
 							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext e\n"
 							 " WHERE e.stxrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
 							 " AND e.stxstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
 							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext_data d\n"
 							 " WHERE d.stxoid OPERATOR(pg_catalog.=) e.oid\n"
@@ -979,7 +977,6 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 							 " JOIN pg_catalog.pg_index i"
 							 " ON i.indexrelid OPERATOR(pg_catalog.=) a.attrelid\n"
 							 " WHERE i.indrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
 							 " AND i.indkey[a.attnum OPERATOR(pg_catalog.-) 1::pg_catalog.int2]"
 							 " OPERATOR(pg_catalog.=) 0::pg_catalog.int2\n"
 							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
@@ -994,7 +991,6 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 		appendPQExpBufferStr(&catalog_query,
 							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_attribute a\n"
 							 " WHERE a.attrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
 							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
 							 " AND NOT a.attisdropped\n"
 							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
@@ -1011,7 +1007,6 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 		appendPQExpBufferStr(&catalog_query,
 							 " OR EXISTS (SELECT NULL FROM pg_catalog.pg_statistic_ext e\n"
 							 " WHERE e.stxrelid OPERATOR(pg_catalog.=) c.oid\n"
-							 " AND c.reltuples OPERATOR(pg_catalog.!=) 0::pg_catalog.float4\n"
 							 " AND e.stxstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
 							 " AND c.relhassubclass\n"
 							 " AND NOT p.inherited\n"
