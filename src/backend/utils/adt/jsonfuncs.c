@@ -1723,7 +1723,7 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 {
 	/*
 	 * tpath contains expected type of an empty jsonb created at each level
-	 * higher or equal than the current one, either jbvObject or jbvArray.
+	 * higher or equal to the current one, either jbvObject or jbvArray.
 	 * Since it contains only information about path slice from level to the
 	 * end, the access index must be normalized by level.
 	 */

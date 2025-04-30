@@ -1287,7 +1287,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * range, in which case an error would be raised.
  *
  * In all other cases, the passed multixact must be within the known valid
- * range, that is, greater to or equal than oldestMultiXactId, and less than
+ * range, that is, greater than or equal to oldestMultiXactId, and less than
  * nextMXact.  Otherwise, an error is raised.
  *
  * isLockOnly must be set to true if caller is certain that the given multi
