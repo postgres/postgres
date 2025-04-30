@@ -833,17 +833,19 @@ psql --username=postgres --file=script.sql postgres
 
     <para>
      Because not all statistics are not transferred by
-     <command>pg_upgrade</command>, you will be instructed to run a command to
+     <command>pg_upgrade</command>, you will be instructed to run commands to
      regenerate that information at the end of the upgrade.  You might need to
      set connection parameters to match your new cluster.
     </para>
 
     <para>
-     Using <command>vacuumdb --all --analyze-only --missing-stats-only</command>
-     can efficiently generate such statistics.  Alternatively,
+     First, use
      <command>vacuumdb --all --analyze-in-stages --missing-stats-only</command>
-     can be used to generate minimal statistics quickly.  For either command,
-     the use of <option>--jobs</option> can speed it up.
+     to quickly generate minimal optimizer statistics for relations without
+     any.  Then, use <command>vacuumdb --all --analyze-only</command> to ensure
+     all relations have updated cumulative statistics for triggering vacuum and
+     analyze.  For both commands, the use of <option>--jobs</option> can speed
+     it up.
      If <varname>vacuum_cost_delay</varname> is set to a non-zero
      value, this can be overridden to speed up statistics generation
      using <envar>PGOPTIONS</envar>, e.g., <literal>PGOPTIONS='-c
