@@ -45,12 +45,18 @@ jobs:
         with:
           name: coverage-testlog-tde
           path: |
-            build/testrun/
-            contrib/pg_tde/t/
-            contrib/pg_tde/results
-            contrib/pg_tde/regression.diffs
-            contrib/pg_tde/regression.out
-            contrib/pg_tde/*.gcov
+            build/testrun
+            contrib/*/log
+            contrib/*/regression.diffs
+            contrib/*/regression.out
+            contrib/*/results
+            contrib/*/tmp_check
+            contrib/*/t/results
+            src/test/*/log
+            src/test/*/regression.diffs
+            src/test/*/regression.out
+            src/test/*/results
+            src/test/*/tmp_check
           retention-days: 3
 
 

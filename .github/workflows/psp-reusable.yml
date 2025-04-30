@@ -79,7 +79,7 @@ jobs:
         with:
           name: log-test-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
-            src/build/testrun/
+            src/build/testrun
             src/contrib/*/log
             src/contrib/*/regression.diffs
             src/contrib/*/regression.out
@@ -124,7 +124,7 @@ jobs:
         with:
           name: log-test-global-tde-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
-            src/build/testrun/
+            src/build/testrun
             src/contrib/*/log
             src/contrib/*/regression.diffs
             src/contrib/*/regression.out
