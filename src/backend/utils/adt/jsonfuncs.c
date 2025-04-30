@@ -1723,9 +1723,9 @@ push_path(JsonbParseState **st, int level, Datum *path_elems,
 {
 	/*
 	 * tpath contains expected type of an empty jsonb created at each level
-	 * higher or equal to the current one, either jbvObject or jbvArray.
-	 * Since it contains only information about path slice from level to the
-	 * end, the access index must be normalized by level.
+	 * higher or equal to the current one, either jbvObject or jbvArray. Since
+	 * it contains only information about path slice from level to the end,
+	 * the access index must be normalized by level.
 	 */
 	enum jbvType *tpath = palloc0((path_len - level) * sizeof(enum jbvType));
 	JsonbValue	newkey;
