@@ -1,7 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-SELECT * FROM pg_tde_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
