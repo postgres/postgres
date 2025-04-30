@@ -1663,6 +1663,7 @@ ProcessGetMemoryContextInterrupt(void)
 			meminfo[max_stats - 1].name = dsa_allocate(MemoryStatsDsaArea, namelen + 1);
 			nameptr = dsa_get_address(MemoryStatsDsaArea, meminfo[max_stats - 1].name);
 			strncpy(nameptr, "Remaining Totals", namelen);
+			nameptr[namelen] = '\0';
 			meminfo[max_stats - 1].ident = InvalidDsaPointer;
 			meminfo[max_stats - 1].path = InvalidDsaPointer;
 			meminfo[max_stats - 1].type = 0;
