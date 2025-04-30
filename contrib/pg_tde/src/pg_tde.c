@@ -39,14 +39,11 @@
 
 #include <sys/stat.h>
 
-#define MAX_ON_INSTALLS 5
 
 PG_MODULE_MAGIC;
 
-static pg_tde_on_ext_install_callback on_ext_install_list[MAX_ON_INSTALLS];
-static int	on_ext_install_index = 0;
 static void pg_tde_init_data_dir(void);
-static void run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo);
+
 void		_PG_init(void);
 Datum		pg_tde_extension_initialize(PG_FUNCTION_ARGS);
 Datum		pg_tde_version(PG_FUNCTION_ARGS);
@@ -123,16 +120,22 @@ _PG_init(void)
 	RegisterStorageMgr();
 }
 
+static void
+extension_install(Oid databaseId)
+{
+	/* Initialize the TDE dir */
+	pg_tde_init_data_dir();
+	key_provider_startup_cleanup(databaseId);
+	principal_key_startup_cleanup(databaseId);
+}
+
 Datum
 pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 {
-	/* Initialize the TDE map */
 	XLogExtensionInstall xlrec;
 
-	pg_tde_init_data_dir();
-
 	xlrec.database_id = MyDatabaseId;
-	run_extension_install_callbacks(&xlrec, false);
+	extension_install(xlrec.database_id);
 
 	/*
 	 * Also put this info in xlog, so we can replicate the same on the other
@@ -144,29 +147,11 @@ pg_tde_extension_initialize(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NULL();
 }
+
 void
 extension_install_redo(XLogExtensionInstall *xlrec)
 {
-	pg_tde_init_data_dir();
-	run_extension_install_callbacks(xlrec, true);
-}
-
-/* ----------------------------------------------------------------
- *		on_ext_install
- *
- *		Register ordinary callback to perform initializations
- *		run at the time of pg_tde extension installs.
- * ----------------------------------------------------------------
- */
-void
-on_ext_install(pg_tde_on_ext_install_callback function)
-{
-	if (on_ext_install_index >= MAX_ON_INSTALLS)
-		ereport(FATAL,
-				errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				errmsg_internal("out of on extension install slots"));
-
-	on_ext_install_list[on_ext_install_index++] = function;
+	extension_install(xlrec->database_id);
 }
 
 /* Creates a tde directory for internal files if not exists */
@@ -183,17 +168,6 @@ pg_tde_init_data_dir(void)
 					errmsg("could not create tde directory \"%s\": %m",
 						   PG_TDE_DATA_DIR));
 	}
-}
-
-/* ------------------
- * Run all of the on_ext_install routines and execute those one by one
- * ------------------
- */
-static void
-run_extension_install_callbacks(XLogExtensionInstall *xlrec, bool redo)
-{
-	for (int i = 0; i < on_ext_install_index; i++)
-		on_ext_install_list[i] (xlrec, redo);
 }
 
 /* Returns package version */
