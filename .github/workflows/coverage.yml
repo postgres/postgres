@@ -5,6 +5,9 @@ on:
     branches:
       - TDE_REL_17_STABLE
 
+env:
+  PGCTLTIMEOUT: 120 # Avoid failures on slow recovery
+
 jobs:
   collect:
     name: Collect and upload
