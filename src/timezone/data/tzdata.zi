@@ -1,4 +1,4 @@
-# version 2025a
+# version 2025b
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -2432,6 +2432,20 @@ Z America/Ciudad_Juarez -7:5:56 - LMT 1922 Ja 1 7u
 Z America/Costa_Rica -5:36:13 - LMT 1890
 -5:36:13 - SJMT 1921 Ja 15
 -6 CR C%sT
+Z America/Coyhaique -4:48:16 - LMT 1890
+-4:42:45 - SMT 1910 Ja 10
+-5 - %z 1916 Jul
+-4:42:45 - SMT 1918 S 10
+-4 - %z 1919 Jul
+-4:42:45 - SMT 1927 S
+-5 x %z 1932 S
+-4 - %z 1942 Jun
+-5 - %z 1942 Au
+-4 - %z 1946 Au 28 24
+-5 1 %z 1947 Mar 31 24
+-5 - %z 1947 May 21 23
+-4 x %z 2025 Mar 20
+-3 - %z
 Z America/Cuiaba -3:44:20 - LMT 1914
 -4 B %z 2003 S 24
 -4 - %z 2004 O
@@ -3420,7 +3434,7 @@ Z Asia/Tbilisi 2:59:11 - LMT 1880
 Z Asia/Tehran 3:25:44 - LMT 1916
 3:25:44 - TMT 1935 Jun 13
 3:30 i %z 1977 O 20 24
-4 i %z 1979
+4 i %z 1978 N 10 24
 3:30 i %z
 Z Asia/Thimphu 5:58:36 - LMT 1947 Au 15
 5:30 - %z 1987 O
