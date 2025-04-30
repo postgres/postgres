@@ -96,6 +96,39 @@ SELECT pg_tde_is_encrypted('plain_table_id2_seq2');
 ALTER SEQUENCE plain_table_id2_seq2 OWNED BY NONE;
 SELECT pg_tde_is_encrypted('plain_table_id2_seq2');
 
+-- Enforce that we do not mess up encryption status for toast table
+CREATE TABLE cities (
+  name       varchar(8),
+  population real,
+  elevation  int
+) USING tde_heap;
+
+CREATE TABLE state_capitals (
+  state      char(2) UNIQUE NOT NULL
+) INHERITS (cities) USING heap;
+
+CREATE TABLE capitals (
+  country      char(2) UNIQUE NOT NULL
+) INHERITS (cities) USING tde_heap;
+
+ALTER TABLE cities ALTER COLUMN name TYPE TEXT;
+
+-- Enforce the same for typed tables
+CREATE TYPE people_type AS (age int, name varchar(8), dob date);
+CREATE TABLE sales_staff OF people_type USING tde_heap;
+CREATE TABLE other_staff OF people_type USING heap;
+
+ALTER TYPE people_type ALTER ATTRIBUTE name TYPE text CASCADE;
+
+-- If all tpyed tables are encrypted everything should work as usual
+ALTER TABLE other_staff SET ACCESS METHOD tde_heap;
+ALTER TYPE people_type ALTER ATTRIBUTE name TYPE text CASCADE;
+
+SELECT pg_tde_is_encrypted('pg_toast.pg_toast_' || 'sales_staff'::regclass::oid);
+SELECT pg_tde_is_encrypted('pg_toast.pg_toast_' || 'other_staff'::regclass::oid);
+
+DROP TYPE people_type CASCADE;
+DROP TABLE cities CASCADE;
 DROP TABLE plain_table;
 DROP EXTENSION pg_tde CASCADE;
 RESET default_table_access_method;

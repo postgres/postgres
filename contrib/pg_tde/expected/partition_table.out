@@ -52,6 +52,7 @@ SELECT pg_tde_is_encrypted('partition_q4_2024');
 (1 row)
 
 ALTER TABLE partitioned_table SET ACCESS METHOD heap;
+ERROR:  Recursive ALTER TABLE on a mix of encrypted and unencrypted relations is not supported
 ALTER TABLE partition_q1_2024 SET ACCESS METHOD heap;
 ALTER TABLE partition_q2_2024 SET ACCESS METHOD tde_heap;
 ALTER TABLE partition_q3_2024 SET ACCESS METHOD heap;
@@ -86,6 +87,12 @@ SELECT pg_tde_is_encrypted('partition_q4_2024');
  t
 (1 row)
 
+-- Does not care about parent AM as long as all children with storage use the same
+ALTER TABLE partition_q1_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q2_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q3_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q4_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partitioned_table SET ACCESS METHOD heap;
 DROP TABLE partitioned_table;
 -- Partition inherits encryption status from parent table if default is heap and parent is tde_heap
 SET default_table_access_method = "heap";

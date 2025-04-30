@@ -17,8 +17,10 @@
 #include "utils/lsyscache.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_inherits.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
+#include "access/heapam.h"
 #include "access/table.h"
 #include "access/relation.h"
 #include "catalog/pg_event_trigger.h"
@@ -139,6 +141,97 @@ push_event_stack(const TdeDdlEvent *event)
 	*e = *event;
 	ddlEventStack = lappend(ddlEventStack, e);
 	MemoryContextSwitchTo(oldCtx);
+}
+
+static List *
+find_typed_table_dependencies(Oid typeOid)
+{
+	Relation	classRel;
+	ScanKeyData key[1];
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	List	   *result = NIL;
+
+	classRel = table_open(RelationRelationId, AccessShareLock);
+
+	ScanKeyInit(&key[0],
+				Anum_pg_class_reloftype,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(typeOid));
+
+	scan = table_beginscan_catalog(classRel, 1, key);
+
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+	{
+		Form_pg_class classform = (Form_pg_class) GETSTRUCT(tuple);
+
+		LockRelationOid(classform->oid, AccessShareLock);
+		result = lappend_oid(result, classform->oid);
+	}
+
+	table_endscan(scan);
+	table_close(classRel, AccessShareLock);
+
+	return result;
+}
+
+typedef enum
+{
+	ENC_MIX_UNKNOWN,
+	ENC_MIX_PLAIN,
+	ENC_MIX_ENCRYPTED,
+	ENC_MIX_MIXED,
+} EncryptionMix;
+
+/*
+ * Since ALTER TABLE can modify multiple tables due to inheritance or typed
+ * tables which can for example result in TOAST tables being created for some
+ * or all of the modified tables while the event trigger is only fired once we
+ * cannot rely on the event stack to make sure we get the correct encryption
+ * status.
+ *
+ * Our solution is to be cautious and only modify tables when all tables with
+ * storage are either encrypted or not encrypted. If there is a mix we will
+ * throw and error. The result of this is also used to properly inform the
+ * SMGR of the current encryption status.
+ */
+static EncryptionMix
+alter_table_encryption_mix(Oid relid)
+{
+	EncryptionMix enc = ENC_MIX_UNKNOWN;
+	Relation	rel;
+	List	   *children;
+	ListCell   *lc;
+
+	rel = relation_open(relid, NoLock);
+
+	if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
+		enc = rel->rd_rel->relam == get_tde_table_am_oid() ? ENC_MIX_ENCRYPTED : ENC_MIX_PLAIN;
+
+	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+		children = find_typed_table_dependencies(rel->rd_rel->reltype);
+	else
+		children = find_inheritance_children(relid, AccessShareLock);
+
+	relation_close(rel, NoLock);
+
+	foreach(lc, children)
+	{
+		Oid			childid = lfirst_oid(lc);
+		EncryptionMix childenc;
+
+		childenc = alter_table_encryption_mix(childid);
+
+		if (childenc != ENC_MIX_UNKNOWN)
+		{
+			if (enc == ENC_MIX_UNKNOWN)
+				enc = childenc;
+			else if (enc != childenc)
+				return ENC_MIX_MIXED;
+		}
+	}
+
+	return enc;
 }
 
 /*
@@ -267,6 +360,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			AlterTableCmd *setAccessMethod = NULL;
 			ListCell   *lcmd;
 			TdeDdlEvent event = {.parsetree = parsetree};
+			EncryptionMix encmix;
 
 			foreach(lcmd, stmt->cmds)
 			{
@@ -274,6 +368,20 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 				if (cmd->subtype == AT_SetAccessMethod)
 					setAccessMethod = cmd;
+			}
+
+			encmix = alter_table_encryption_mix(relid);
+
+			/*
+			 * This check is very braod and could be limited only to commands
+			 * which recurse to child tables or to those which may create new
+			 * relfilenodes, but this restrictive code is good enough for now.
+			 */
+			if (encmix == ENC_MIX_MIXED)
+			{
+				ereport(ERROR,
+						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Recursive ALTER TABLE on a mix of encrypted and unencrypted relations is not supported"));
 			}
 
 			/*
@@ -292,19 +400,13 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				Relation	rel = relation_open(relid, AccessShareLock);
-
-				if (rel->rd_rel->relam == get_tde_table_am_oid())
+				if (encmix == ENC_MIX_ENCRYPTED)
 				{
-					/*
-					 * We are altering an encrypted table and ALTER TABLE can
-					 * possibly create new files so set the global state.
-					 */
 					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
 					checkPrincipalKeyConfigured();
 				}
-
-				relation_close(rel, NoLock);
+				else if (encmix == ENC_MIX_PLAIN)
+					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 			}
 
 			push_event_stack(&event);

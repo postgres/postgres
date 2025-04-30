@@ -31,6 +31,13 @@ SELECT pg_tde_is_encrypted('partition_q2_2024');
 SELECT pg_tde_is_encrypted('partition_q3_2024');
 SELECT pg_tde_is_encrypted('partition_q4_2024');
 
+-- Does not care about parent AM as long as all children with storage use the same
+ALTER TABLE partition_q1_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q2_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q3_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partition_q4_2024 SET ACCESS METHOD tde_heap;
+ALTER TABLE partitioned_table SET ACCESS METHOD heap;
+
 DROP TABLE partitioned_table;
 
 -- Partition inherits encryption status from parent table if default is heap and parent is tde_heap

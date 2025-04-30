@@ -229,6 +229,49 @@ SELECT pg_tde_is_encrypted('plain_table_id2_seq2');
  f
 (1 row)
 
+-- Enforce that we do not mess up encryption status for toast table
+CREATE TABLE cities (
+  name       varchar(8),
+  population real,
+  elevation  int
+) USING tde_heap;
+CREATE TABLE state_capitals (
+  state      char(2) UNIQUE NOT NULL
+) INHERITS (cities) USING heap;
+CREATE TABLE capitals (
+  country      char(2) UNIQUE NOT NULL
+) INHERITS (cities) USING tde_heap;
+ALTER TABLE cities ALTER COLUMN name TYPE TEXT;
+ERROR:  Recursive ALTER TABLE on a mix of encrypted and unencrypted relations is not supported
+-- Enforce the same for typed tables
+CREATE TYPE people_type AS (age int, name varchar(8), dob date);
+CREATE TABLE sales_staff OF people_type USING tde_heap;
+CREATE TABLE other_staff OF people_type USING heap;
+ALTER TYPE people_type ALTER ATTRIBUTE name TYPE text CASCADE;
+ERROR:  Recursive ALTER TABLE on a mix of encrypted and unencrypted relations is not supported
+-- If all tpyed tables are encrypted everything should work as usual
+ALTER TABLE other_staff SET ACCESS METHOD tde_heap;
+ALTER TYPE people_type ALTER ATTRIBUTE name TYPE text CASCADE;
+SELECT pg_tde_is_encrypted('pg_toast.pg_toast_' || 'sales_staff'::regclass::oid);
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT pg_tde_is_encrypted('pg_toast.pg_toast_' || 'other_staff'::regclass::oid);
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+DROP TYPE people_type CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table sales_staff
+drop cascades to table other_staff
+DROP TABLE cities CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to table state_capitals
+drop cascades to table capitals
 DROP TABLE plain_table;
 DROP EXTENSION pg_tde CASCADE;
 NOTICE:  drop cascades to 7 other objects
