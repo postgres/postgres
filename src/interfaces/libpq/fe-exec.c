@@ -3410,10 +3410,10 @@ PQescapeStringInternal(PGconn *conn,
 			{
 				if (remaining < charlen)
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("incomplete multibyte character"));
+									  libpq_gettext("incomplete multibyte character\n"));
 				else
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("invalid multibyte character"));
+									  libpq_gettext("invalid multibyte character\n"));
 				/* Issue a complaint only once per string */
 				already_complained = true;
 			}
