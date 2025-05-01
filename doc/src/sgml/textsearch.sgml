@@ -1342,7 +1342,7 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
        document, to distinguish them from other excerpted words.  The
        default values are <quote><literal>&lt;b&gt;</literal></quote> and
        <quote><literal>&lt;/b&gt;</literal></quote>, which can be suitable
-       for HTML output.
+       for HTML output (but see the warning below).
       </para>
      </listitem>
      <listitem>
@@ -1353,6 +1353,21 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
       </para>
      </listitem>
     </itemizedlist>
+
+    <warning>
+     <title>Warning: Cross-site scripting (XSS) safety</title>
+     <para>
+      The output from <function>ts_headline</function> is not guaranteed to
+      be safe for direct inclusion in web pages. When
+      <literal>HighlightAll</literal> is <literal>false</literal> (the
+      default), some simple XML tags are removed from the document, but this
+      is not guaranteed to remove all HTML markup. Therefore, this does not
+      provide an effective defense against attacks such as cross-site
+      scripting (XSS) attacks, when working with untrusted input. To guard
+      against such attacks, all HTML markup should be removed from the input
+      document, or an HTML sanitizer should be used on the output.
+     </para>
+    </warning>
 
     These option names are recognized case-insensitively.
     You must double-quote string values if they contain spaces or commas.
@@ -2224,6 +2239,18 @@ LIMIT 10;
     defined by <ulink url="https://datatracker.ietf.org/doc/html/rfc5322">RFC 5322</ulink>.
     Specifically, the only non-alphanumeric characters supported for
     email user names are period, dash, and underscore.
+   </para>
+
+   <para>
+    <literal>tag</literal> does not support all valid tag names as defined by
+    <ulink url="https://www.w3.org/TR/xml/">W3C Recommendation, XML</ulink>.
+    Specifically, the only tag names supported are those starting with an
+    ASCII letter, underscore, or colon, and containing only letters, digits,
+    hyphens, underscores, periods, and colons. <literal>tag</literal> also
+    includes XML comments starting with <literal>&lt;!--</literal> and ending
+    with <literal>--&gt;</literal>, and XML declarations (but note that this
+    includes anything starting with <literal>&lt;?x</literal> and ending with
+    <literal>&gt;</literal>).
    </para>
   </note>
 
