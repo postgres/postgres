@@ -832,7 +832,7 @@ psql --username=postgres --file=script.sql postgres
     </para>
 
     <para>
-     Because not all statistics are not transferred by
+     Because not all statistics are transferred by
      <command>pg_upgrade</command>, you will be instructed to run commands to
      regenerate that information at the end of the upgrade.  You might need to
      set connection parameters to match your new cluster.
