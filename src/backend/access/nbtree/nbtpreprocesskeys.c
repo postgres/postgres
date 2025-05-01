@@ -1856,7 +1856,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 		numArrayKeyData++;		/* keep this scan key/array */
 	}
 
-	Assert(numSkipArrayKeys == 0);
+	Assert(numSkipArrayKeys == 0 || !so->qual_ok);
 
 	/* Set final number of equality-type array keys */
 	so->numArrayKeys = numArrayKeys;
