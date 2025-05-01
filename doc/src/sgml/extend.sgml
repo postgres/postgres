@@ -1809,10 +1809,36 @@ include $(PGXS)
     setting <varname>PG_CONFIG</varname> to point to its
     <command>pg_config</command> program, either within the makefile
     or on the <literal>make</literal> command line.
-    You can also select a separate installation directory for your extension
-    by setting the <literal>make</literal> variable <varname>prefix</varname>
-    on the <literal>make</literal> command line.  (But this will then require
-    additional setup to get the server to find the extension there.)
+   </para>
+
+   <para>
+    You can select a separate directory prefix in which to install your
+    extension's files, by setting the <command>make</command> variable
+    <varname>prefix</varname> when executing <literal>make install</literal>
+    like so:
+<programlisting>
+make install prefix=/usr/local/postgresql
+</programlisting>
+    This will install the extension control and SQL files into
+    <filename>/usr/local/postgresql/share</filename> and the shared modules into
+    <filename>/usr/local/postgresql/lib</filename>.  If the prefix does not
+    include the strings <literal>postgres</literal> or
+    <literal>pgsql</literal>, such as
+<programlisting>
+make install prefix=/usr/local/extras
+</programlisting>
+    then <literal>postgresql</literal> will be appended to the directory
+    names, installing the control and SQL files into
+    <filename>/usr/local/extras/share/postgresql/extension</filename> and the
+    shared modules into <filename>/usr/local/extras/lib/postgresql</filename>.
+    Either way, you'll need to set <xref
+    linkend="guc-extension-control-path"/> and <xref
+    linkend="guc-dynamic-library-path"/> to enable the
+    <productname>PostgreSQL</productname> server to find the files:
+<programlisting>
+extension_control_path = '/usr/local/extras/share/postgresql/extension:$system'
+dynamic_library_path = '/usr/local/extras/lib/postgresql:$libdir'
+</programlisting>
    </para>
 
    <para>
