@@ -315,6 +315,14 @@
 
     <listitem>
      <para>
+      You need <productname>Curl</productname> to build an optional module
+      which implements the <link linkend="libpq-oauth">OAuth Device
+      Authorization flow</link> for client applications.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       You need <productname>LZ4</productname>, if you want to support
       compression of data with that method; see
       <xref linkend="guc-default-toast-compression"/> and

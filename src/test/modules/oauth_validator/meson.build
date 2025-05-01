@@ -78,7 +78,7 @@ tests += {
     ],
     'env': {
       'PYTHON': python.path(),
-      'with_libcurl': libcurl.found() ? 'yes' : 'no',
+      'with_libcurl': oauth_flow_supported ? 'yes' : 'no',
       'with_python': 'yes',
     },
   },

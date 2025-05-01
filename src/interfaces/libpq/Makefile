@@ -31,7 +31,6 @@ endif
 
 OBJS = \
 	$(WIN32RES) \
-	fe-auth-oauth.o \
 	fe-auth-scram.o \
 	fe-cancel.o \
 	fe-connect.o \
@@ -64,9 +63,11 @@ OBJS += \
 	fe-secure-gssapi.o
 endif
 
-ifeq ($(with_libcurl),yes)
-OBJS += fe-auth-oauth-curl.o
-endif
+# The OAuth implementation differs depending on the type of library being built.
+OBJS_STATIC = fe-auth-oauth.o
+
+fe-auth-oauth_shlib.o: override CPPFLAGS_SHLIB += -DUSE_DYNAMIC_OAUTH
+OBJS_SHLIB = fe-auth-oauth_shlib.o
 
 ifeq ($(PORTNAME), cygwin)
 override shlib = cyg$(NAME)$(DLSUFFIX)
@@ -86,7 +87,7 @@ endif
 # that are built correctly for use in a shlib.
 SHLIB_LINK_INTERNAL = -lpgcommon_shlib -lpgport_shlib
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lcurl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
+SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi_krb5 -lgss -lgssapi -lssl -lsocket -lnsl -lresolv -lintl -lm, $(LIBS)) $(LDAP_LIBS_FE) $(PTHREAD_LIBS)
 else
 SHLIB_LINK += $(filter -lcrypt -ldes -lcom_err -lcrypto -lk5crypto -lkrb5 -lgssapi32 -lssl -lsocket -lnsl -lresolv -lintl -lm $(PTHREAD_LIBS), $(LIBS)) $(LDAP_LIBS_FE)
 endif
@@ -101,11 +102,25 @@ ifeq ($(with_ssl),openssl)
 PKG_CONFIG_REQUIRES_PRIVATE = libssl, libcrypto
 endif
 
+ifeq ($(with_libcurl),yes)
+# libpq.so doesn't link against libcurl, but libpq.a needs libpq-oauth, and
+# libpq-oauth needs libcurl. Put both into *.private.
+PKG_CONFIG_REQUIRES_PRIVATE += libcurl
+%.pc: override SHLIB_LINK_INTERNAL += -lpq-oauth
+endif
+
 all: all-lib libpq-refs-stamp
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 backend_src = $(top_srcdir)/src/backend
+
+# Add shlib-/stlib-specific objects.
+$(shlib): override OBJS += $(OBJS_SHLIB)
+$(shlib): $(OBJS_SHLIB)
+
+$(stlib): override OBJS += $(OBJS_STATIC)
+$(stlib): $(OBJS_STATIC)
 
 # Check for functions that libpq must not call, currently just exit().
 # (Ideally we'd reject abort() too, but there are various scenarios where
@@ -115,8 +130,6 @@ backend_src = $(top_srcdir)/src/backend
 # which seems to insert references to that even in pure C code. Excluding
 # __tsan_func_exit is necessary when using ThreadSanitizer data race detector
 # which use this function for instrumentation of function exit.
-# libcurl registers an exit handler in the memory debugging code when running
-# with LeakSanitizer.
 # Skip the test when profiling, as gcc may insert exit() calls for that.
 # Also skip the test on platforms where libpq infrastructure may be provided
 # by statically-linked libraries, as we can't expect them to honor this
@@ -124,7 +137,7 @@ backend_src = $(top_srcdir)/src/backend
 libpq-refs-stamp: $(shlib)
 ifneq ($(enable_coverage), yes)
 ifeq (,$(filter solaris,$(PORTNAME)))
-	@if nm -A -u $< 2>/dev/null | grep -v -e __cxa_atexit -e __tsan_func_exit -e _atexit | grep exit; then \
+	@if nm -A -u $< 2>/dev/null | grep -v -e __cxa_atexit -e __tsan_func_exit | grep exit; then \
 		echo 'libpq must not be calling any function which invokes exit'; exit 1; \
 	fi
 endif
@@ -137,6 +150,11 @@ fe-misc.o: fe-misc.c $(top_builddir)/src/port/pg_config_paths.h
 
 $(top_builddir)/src/port/pg_config_paths.h:
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
+
+# Use src/common/Makefile's trick for tracking dependencies of shlib-specific
+# objects.
+%_shlib.o: %.c %.o
+	$(CC) $(CFLAGS) $(CFLAGS_SL) $(CPPFLAGS) $(CPPFLAGS_SHLIB) -c $< -o $@
 
 install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h '$(DESTDIR)$(includedir)'
@@ -171,6 +189,6 @@ uninstall: uninstall-lib
 clean distclean: clean-lib
 	$(MAKE) -C test $@
 	rm -rf tmp_check
-	rm -f $(OBJS) pthread.h libpq-refs-stamp
+	rm -f $(OBJS) $(OBJS_SHLIB) $(OBJS_STATIC) pthread.h libpq-refs-stamp
 # Might be left over from a Win32 client-only build
 	rm -f pg_config_paths.h

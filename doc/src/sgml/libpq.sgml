@@ -10226,15 +10226,20 @@ void PQinitSSL(int do_ssl);
   <title>OAuth Support</title>
 
   <para>
-   libpq implements support for the OAuth v2 Device Authorization client flow,
+   <application>libpq</application> implements support for the OAuth v2 Device Authorization client flow,
    documented in
    <ulink url="https://datatracker.ietf.org/doc/html/rfc8628">RFC 8628</ulink>,
-   which it will attempt to use by default if the server
+   as an optional module. See the <link linkend="configure-option-with-libcurl">
+   installation documentation</link> for information on how to enable support
+   for Device Authorization as a builtin flow.
+  </para>
+  <para>
+   When support is enabled and the optional module installed, <application>libpq</application>
+   will use the builtin flow by default if the server
    <link linkend="auth-oauth">requests a bearer token</link> during
    authentication. This flow can be utilized even if the system running the
    client application does not have a usable web browser, for example when
-   running a client via <application>SSH</application>. Client applications may implement their own flows
-   instead; see <xref linkend="libpq-oauth-authdata-hooks"/>.
+   running a client via <acronym>SSH</acronym>.
   </para>
   <para>
    The builtin flow will, by default, print a URL to visit and a user code to
@@ -10250,6 +10255,11 @@ Visit https://example.com/device and enter the code: ABCD-EFGH
    a good idea to carefully review the URL and permissions displayed, to ensure
    they match expectations, before continuing. Permissions should not be given
    to untrusted third parties.
+  </para>
+  <para>
+   Client applications may implement their own flows to customize interaction
+   and integration with applications. See <xref linkend="libpq-oauth-authdata-hooks"/>
+   for more information on how add a custom flow to <application>libpq</application>.
   </para>
   <para>
    For an OAuth client flow to be usable, the connection string must at minimum
@@ -10366,7 +10376,9 @@ typedef struct _PGpromptOAuthDevice
 </synopsis>
         </para>
         <para>
-         The OAuth Device Authorization flow included in <application>libpq</application>
+         The OAuth Device Authorization flow which
+         <link linkend="configure-option-with-libcurl">can be included</link>
+         in <application>libpq</application>
          requires the end user to visit a URL with a browser, then enter a code
          which permits <application>libpq</application> to connect to the server
          on their behalf. The default prompt simply prints the
@@ -10378,7 +10390,8 @@ typedef struct _PGpromptOAuthDevice
          This callback is only invoked during the builtin device
          authorization flow. If the application installs a
          <link linkend="libpq-oauth-authdata-oauth-bearer-token">custom OAuth
-         flow</link>, this authdata type will not be used.
+         flow</link>, or <application>libpq</application> was not built with
+         support for the builtin flow, this authdata type will not be used.
         </para>
         <para>
          If a non-NULL <structfield>verification_uri_complete</structfield> is
@@ -10400,8 +10413,9 @@ typedef struct _PGpromptOAuthDevice
        </term>
        <listitem>
         <para>
-         Replaces the entire OAuth flow with a custom implementation. The hook
-         should either directly return a Bearer token for the current
+         Adds a custom implementation of a flow, replacing the builtin flow if
+         it is <link linkend="configure-option-with-libcurl">installed</link>.
+         The hook should either directly return a Bearer token for the current
          user/issuer/scope combination, if one is available without blocking, or
          else set up an asynchronous callback to retrieve one.
         </para>

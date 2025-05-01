@@ -110,7 +110,7 @@ if ($ENV{with_libcurl} ne 'yes')
 		"fails without custom hook installed",
 		flags => ["--no-hook"],
 		expected_stderr =>
-		  qr/no custom OAuth flows are available, and libpq was not built with libcurl support/
+		  qr/no OAuth flows are available \(try installing the libpq-oauth package\)/
 	);
 }
 

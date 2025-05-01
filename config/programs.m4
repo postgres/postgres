@@ -286,8 +286,19 @@ AC_DEFUN([PGAC_CHECK_LIBCURL],
 [
   AC_CHECK_HEADER(curl/curl.h, [],
 				  [AC_MSG_ERROR([header file <curl/curl.h> is required for --with-libcurl])])
-  AC_CHECK_LIB(curl, curl_multi_init, [],
+  AC_CHECK_LIB(curl, curl_multi_init, [
+				 AC_DEFINE([HAVE_LIBCURL], [1], [Define to 1 if you have the `curl' library (-lcurl).])
+				 AC_SUBST(LIBCURL_LDLIBS, -lcurl)
+			   ],
 			   [AC_MSG_ERROR([library 'curl' does not provide curl_multi_init])])
+
+  pgac_save_CPPFLAGS=$CPPFLAGS
+  pgac_save_LDFLAGS=$LDFLAGS
+  pgac_save_LIBS=$LIBS
+
+  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
+  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+  LIBS="$LIBCURL_LDLIBS $LIBS"
 
   # Check to see whether the current platform supports threadsafe Curl
   # initialization.
@@ -338,4 +349,8 @@ AC_DEFUN([PGAC_CHECK_LIBCURL],
 *** lookups. Rebuild libcurl with the AsynchDNS feature enabled in order
 *** to use it with libpq.])
   fi
+
+  CPPFLAGS=$pgac_save_CPPFLAGS
+  LDFLAGS=$pgac_save_LDFLAGS
+  LIBS=$pgac_save_LIBS
 ])# PGAC_CHECK_LIBCURL

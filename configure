@@ -655,6 +655,7 @@ UUID_LIBS
 LDAP_LIBS_BE
 LDAP_LIBS_FE
 with_ssl
+LIBCURL_LDLIBS
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -711,6 +712,8 @@ with_libxml
 LIBNUMA_LIBS
 LIBNUMA_CFLAGS
 with_libnuma
+LIBCURL_LDFLAGS
+LIBCURL_CPPFLAGS
 LIBCURL_LIBS
 LIBCURL_CFLAGS
 with_libcurl
@@ -9053,18 +9056,26 @@ $as_echo "yes" >&6; }
 
 fi
 
-  # We only care about -I, -D, and -L switches;
-  # note that -lcurl will be added by PGAC_CHECK_LIBCURL below.
+  # Curl's flags are kept separate from the standard CPPFLAGS/LDFLAGS. We use
+  # them only for libpq-oauth.
+  LIBCURL_CPPFLAGS=
+  LIBCURL_LDFLAGS=
+
+  # We only care about -I, -D, and -L switches. Note that -lcurl will be added
+  # to LIBCURL_LDLIBS by PGAC_CHECK_LIBCURL, below.
   for pgac_option in $LIBCURL_CFLAGS; do
     case $pgac_option in
-      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      -I*|-D*) LIBCURL_CPPFLAGS="$LIBCURL_CPPFLAGS $pgac_option";;
     esac
   done
   for pgac_option in $LIBCURL_LIBS; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LIBCURL_LDFLAGS="$LIBCURL_LDFLAGS $pgac_option";;
     esac
   done
+
+
+
 
   # OAuth requires python for testing
   if test "$with_python" != yes; then
@@ -12704,9 +12715,6 @@ fi
 
 fi
 
-# XXX libcurl must link after libgssapi_krb5 on FreeBSD to avoid segfaults
-# during gss_acquire_cred(). This is possibly related to Curl's Heimdal
-# dependency on that platform?
 if test "$with_libcurl" = yes ; then
 
   ac_fn_c_check_header_mongrel "$LINENO" "curl/curl.h" "ac_cv_header_curl_curl_h" "$ac_includes_default"
@@ -12754,16 +12762,25 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_curl_curl_multi_init" >&5
 $as_echo "$ac_cv_lib_curl_curl_multi_init" >&6; }
 if test "x$ac_cv_lib_curl_curl_multi_init" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBCURL 1
-_ACEOF
 
-  LIBS="-lcurl $LIBS"
+
+$as_echo "#define HAVE_LIBCURL 1" >>confdefs.h
+
+				 LIBCURL_LDLIBS=-lcurl
+
 
 else
   as_fn_error $? "library 'curl' does not provide curl_multi_init" "$LINENO" 5
 fi
 
+
+  pgac_save_CPPFLAGS=$CPPFLAGS
+  pgac_save_LDFLAGS=$LDFLAGS
+  pgac_save_LIBS=$LIBS
+
+  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
+  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+  LIBS="$LIBCURL_LDLIBS $LIBS"
 
   # Check to see whether the current platform supports threadsafe Curl
   # initialization.
@@ -12867,6 +12884,10 @@ $as_echo "$pgac_cv__libcurl_async_dns" >&6; }
 *** lookups. Rebuild libcurl with the AsynchDNS feature enabled in order
 *** to use it with libpq." "$LINENO" 5
   fi
+
+  CPPFLAGS=$pgac_save_CPPFLAGS
+  LDFLAGS=$pgac_save_LDFLAGS
+  LIBS=$pgac_save_LIBS
 
 fi
 
@@ -14514,6 +14535,13 @@ fi
 
 done
 
+fi
+
+if test "$with_libcurl" = yes ; then
+  # Error out early if this platform can't support libpq-oauth.
+  if test "$ac_cv_header_sys_event_h" != yes -a "$ac_cv_header_sys_epoll_h" != yes; then
+    as_fn_error $? "client OAuth is not supported on this platform" "$LINENO" 5
+  fi
 fi
 
 ##

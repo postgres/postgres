@@ -1033,18 +1033,26 @@ if test "$with_libcurl" = yes ; then
   # to explicitly set TLS 1.3 ciphersuites).
   PKG_CHECK_MODULES(LIBCURL, [libcurl >= 7.61.0])
 
-  # We only care about -I, -D, and -L switches;
-  # note that -lcurl will be added by PGAC_CHECK_LIBCURL below.
+  # Curl's flags are kept separate from the standard CPPFLAGS/LDFLAGS. We use
+  # them only for libpq-oauth.
+  LIBCURL_CPPFLAGS=
+  LIBCURL_LDFLAGS=
+
+  # We only care about -I, -D, and -L switches. Note that -lcurl will be added
+  # to LIBCURL_LDLIBS by PGAC_CHECK_LIBCURL, below.
   for pgac_option in $LIBCURL_CFLAGS; do
     case $pgac_option in
-      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      -I*|-D*) LIBCURL_CPPFLAGS="$LIBCURL_CPPFLAGS $pgac_option";;
     esac
   done
   for pgac_option in $LIBCURL_LIBS; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LIBCURL_LDFLAGS="$LIBCURL_LDFLAGS $pgac_option";;
     esac
   done
+
+  AC_SUBST(LIBCURL_CPPFLAGS)
+  AC_SUBST(LIBCURL_LDFLAGS)
 
   # OAuth requires python for testing
   if test "$with_python" != yes; then
@@ -1354,9 +1362,6 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
 fi
 
-# XXX libcurl must link after libgssapi_krb5 on FreeBSD to avoid segfaults
-# during gss_acquire_cred(). This is possibly related to Curl's Heimdal
-# dependency on that platform?
 if test "$with_libcurl" = yes ; then
   PGAC_CHECK_LIBCURL
 fi
@@ -1652,6 +1657,13 @@ fi
 
 if test "$PORTNAME" = "win32" ; then
    AC_CHECK_HEADERS(crtdefs.h)
+fi
+
+if test "$with_libcurl" = yes ; then
+  # Error out early if this platform can't support libpq-oauth.
+  if test "$ac_cv_header_sys_event_h" != yes -a "$ac_cv_header_sys_epoll_h" != yes; then
+    AC_MSG_ERROR([client-side OAuth is not supported on this platform])
+  fi
 fi
 
 ##
