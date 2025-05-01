@@ -1300,8 +1300,8 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
       secure <varname>search_path</varname>; do <emphasis>not</emphasis>
       trust the path provided by <command>CREATE/ALTER EXTENSION</command>
       to be secure.  Best practice is to temporarily
-      set <varname>search_path</varname> to <literal>'pg_catalog,
-      pg_temp'</literal> and insert references to the extension's
+      set <varname>search_path</varname> to <literal>pg_catalog,
+      pg_temp</literal> and insert references to the extension's
       installation schema explicitly where needed.  (This practice might
       also be helpful for creating views.)  Examples can be found in
       the <filename>contrib</filename> modules in
