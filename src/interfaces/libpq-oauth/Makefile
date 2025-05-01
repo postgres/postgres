@@ -47,7 +47,7 @@ $(stlib): override OBJS += $(OBJS_STATIC)
 $(stlib): $(OBJS_STATIC)
 
 SHLIB_LINK_INTERNAL = $(libpq_pgport_shlib)
-SHLIB_LINK = $(LIBCURL_LDFLAGS) $(LIBCURL_LDLIBS)
+SHLIB_LINK = $(LIBCURL_LDFLAGS) $(LIBCURL_LDLIBS) $(filter -lintl, $(LIBS))
 SHLIB_PREREQS = submake-libpq
 SHLIB_EXPORTS = exports.txt
 
