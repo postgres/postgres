@@ -2769,7 +2769,7 @@ ninja install
 
     <variablelist>
      <varlistentry id="configure-auto-features-meson">
-      <term><option>--auto_features={ auto | enabled | disabled }</option></term>
+      <term><option>--auto-features={ auto | enabled | disabled }</option></term>
       <listitem>
        <para>
         Setting this option allows you to override the value of all
