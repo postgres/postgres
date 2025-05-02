@@ -24,9 +24,6 @@ PGTDE::psql($node, 'postgres',
 	'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;'
 );
 
-PGTDE::append_to_result_file("-- server restart");
-$node->restart;
-
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
 );

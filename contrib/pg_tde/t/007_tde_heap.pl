@@ -17,13 +17,6 @@ $node->start;
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
 PGTDE::psql($node, 'postgres',
-	'CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;'
-);
-
-PGTDE::append_to_result_file("-- server restart");
-$node->restart;
-
-PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
 );
 PGTDE::psql($node, 'postgres',
@@ -129,48 +122,6 @@ verify_table('test_enc2');
 verify_table('test_enc3');
 verify_table('test_enc4');
 verify_table('test_enc5');
-
-# Verify that we can't see the data in the file
-my $tablefile2 = $node->safe_psql('postgres', 'SHOW data_directory;');
-$tablefile2 .= '/';
-$tablefile2 .=
-  $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc2\');');
-
-my $strings = 'TABLEFILE2 FOUND: ';
-$strings .= `(ls  $tablefile2 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_result_file($strings);
-
-$strings = 'CONTAINS FOO (should be empty): ';
-$strings .= `strings $tablefile2 | grep foo`;
-PGTDE::append_to_result_file($strings);
-
-# Verify that we can't see the data in the file
-my $tablefile3 = $node->safe_psql('postgres', 'SHOW data_directory;');
-$tablefile3 .= '/';
-$tablefile3 .=
-  $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc3\');');
-
-$strings = 'TABLEFILE3 FOUND: ';
-$strings .= `(ls  $tablefile3 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_result_file($strings);
-
-$strings = 'CONTAINS FOO (should be empty): ';
-$strings .= `strings $tablefile3 | grep foo`;
-PGTDE::append_to_result_file($strings);
-
-# Verify that we can't see the data in the file
-my $tablefile4 = $node->safe_psql('postgres', 'SHOW data_directory;');
-$tablefile4 .= '/';
-$tablefile4 .=
-  $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc4\');');
-
-$strings = 'TABLEFILE4 FOUND: ';
-$strings .= `(ls  $tablefile4 >/dev/null && echo yes) || echo no`;
-PGTDE::append_to_result_file($strings);
-
-$strings = 'CONTAINS FOO (should be empty): ';
-$strings .= `strings $tablefile4 | grep foo`;
-PGTDE::append_to_result_file($strings);
 
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc1;');
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc2;');

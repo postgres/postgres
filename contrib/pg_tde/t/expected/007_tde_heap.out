@@ -1,8 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-CREATE TABLE test_enc(id SERIAL,k INTEGER,PRIMARY KEY (id)) USING tde_heap;
-psql:<stdin>:1: ERROR:  principal key not configured
-HINT:  create one using pg_tde_set_key before using encrypted tables
--- server restart
 SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
@@ -115,15 +111,6 @@ SELECT * FROM test_enc5 ORDER BY id ASC;
 (2 rows)
 
 TABLEFILE FOR test_enc5 FOUND: yes
-CONTAINS FOO (should be empty): 
-TABLEFILE2 FOUND: yes
-
-CONTAINS FOO (should be empty): 
-TABLEFILE3 FOUND: yes
-
-CONTAINS FOO (should be empty): 
-TABLEFILE4 FOUND: yes
-
 CONTAINS FOO (should be empty): 
 DROP TABLE test_enc1;
 DROP TABLE test_enc2;
