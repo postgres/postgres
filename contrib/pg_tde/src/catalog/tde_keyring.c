@@ -427,6 +427,7 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 		keyring = (GenericKeyring *) linitial(providers);
 		list_free(providers);
 	}
+
 	return keyring;
 }
 
@@ -435,9 +436,9 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 static void
 write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 {
-	off_t		bytes_written = 0;
+	off_t		bytes_written;
 	int			fd;
-	char		kp_info_path[MAXPGPATH] = {0};
+	char		kp_info_path[MAXPGPATH];
 
 	Assert(record != NULL);
 	Assert(record->offset_in_file >= 0);
@@ -689,15 +690,15 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 		keyring = (GenericKeyring *) providers->head->ptr;
 		simple_list_free(providers);
 	}
+
 	return keyring;
 }
 
 static void
 simple_list_free(SimplePtrList *list)
 {
-	SimplePtrListCell *cell;
+	SimplePtrListCell *cell = list->head;
 
-	cell = list->head;
 	while (cell != NULL)
 	{
 		SimplePtrListCell *next;
@@ -721,7 +722,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 {
 	off_t		curr_pos = 0;
 	int			fd;
-	char		kp_info_path[MAXPGPATH] = {0};
+	char		kp_info_path[MAXPGPATH];
 	KeyringProviderRecord provider;
 #ifndef FRONTEND
 	List	   *providers_list = NIL;
@@ -795,9 +796,10 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 static GenericKeyring *
 load_keyring_provider_from_record(KeyringProviderRecord *provider)
 {
-	GenericKeyring *keyring = NULL;
+	GenericKeyring *keyring;
 
 	keyring = load_keyring_provider_options(provider->provider_type, provider->options);
+
 	if (keyring)
 	{
 		keyring->keyring_id = provider->provider_id;
@@ -806,6 +808,7 @@ load_keyring_provider_from_record(KeyringProviderRecord *provider)
 		memcpy(keyring->options, provider->options, sizeof(keyring->options));
 		debug_print_kerying(keyring);
 	}
+
 	return keyring;
 }
 
@@ -951,7 +954,7 @@ static int
 open_keyring_infofile(Oid database_id, int flags)
 {
 	int			fd;
-	char		kp_info_path[MAXPGPATH] = {0};
+	char		kp_info_path[MAXPGPATH];
 
 	get_keyring_infofile_path(kp_info_path, database_id);
 	fd = BasicOpenFile(kp_info_path, flags | PG_BINARY);
@@ -970,7 +973,7 @@ open_keyring_infofile(Oid database_id, int flags)
 static bool
 fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider)
 {
-	off_t		bytes_read = 0;
+	off_t		bytes_read;
 
 	Assert(provider != NULL);
 	Assert(fd >= 0);
