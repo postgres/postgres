@@ -108,15 +108,17 @@ sub verify_table
 	PGTDE::psql($node, 'postgres',
 		'SELECT * FROM ' . $table . ' ORDER BY id ASC;');
 
-	my $strings = 'TABLEFILE FOR ' . $table . ' FOUND: ';
-	$strings .= `(ls  $tablefile >/dev/null && echo -n yes) || echo -n no`;
-	PGTDE::append_to_result_file($strings);
+	PGTDE::append_to_result_file('TABLEFILE FOR '
+		  . $table
+		  . ' FOUND: '
+		  . (-f $tablefile ? 'yes' : 'no'));
 
-	$strings = 'CONTAINS FOO (should be empty): ';
+	my $strings = 'CONTAINS FOO (should be empty): ';
 	$strings .= `strings $tablefile | grep foo`;
 	PGTDE::append_to_result_file($strings);
 }
 
+# Verify that we can't see the data in the files
 verify_table('test_enc1');
 verify_table('test_enc2');
 verify_table('test_enc3');

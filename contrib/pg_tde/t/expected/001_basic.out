@@ -38,7 +38,6 @@ SELECT * FROM test_enc ORDER BY id ASC;
 (2 rows)
 
 TABLEFILE FOUND: yes
-
 CONTAINS FOO (should be empty): 
 DROP TABLE test_enc;
 DROP EXTENSION pg_tde;
