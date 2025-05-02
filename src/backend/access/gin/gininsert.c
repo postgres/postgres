@@ -1669,6 +1669,8 @@ _gin_parallel_merge(GinBuildState *state)
 	 */
 	while ((tup = tuplesort_getgintuple(state->bs_sortstate, &tuplen, true)) != NULL)
 	{
+		MemoryContext oldCtx;
+
 		CHECK_FOR_INTERRUPTS();
 
 		/*
@@ -1685,9 +1687,14 @@ _gin_parallel_merge(GinBuildState *state)
 			 */
 			AssertCheckItemPointers(buffer);
 
+			oldCtx = MemoryContextSwitchTo(state->tmpCtx);
+
 			ginEntryInsert(&state->ginstate,
 						   buffer->attnum, buffer->key, buffer->category,
 						   buffer->items, buffer->nitems, &state->buildStats);
+
+			MemoryContextSwitchTo(oldCtx);
+			MemoryContextReset(state->tmpCtx);
 
 			/* discard the existing data */
 			GinBufferReset(buffer);
@@ -1711,9 +1718,14 @@ _gin_parallel_merge(GinBuildState *state)
 			 */
 			AssertCheckItemPointers(buffer);
 
+			oldCtx = MemoryContextSwitchTo(state->tmpCtx);
+
 			ginEntryInsert(&state->ginstate,
 						   buffer->attnum, buffer->key, buffer->category,
 						   buffer->items, buffer->nfrozen, &state->buildStats);
+
+			MemoryContextSwitchTo(oldCtx);
+			MemoryContextReset(state->tmpCtx);
 
 			/* truncate the data we've just discarded */
 			GinBufferTrim(buffer);
