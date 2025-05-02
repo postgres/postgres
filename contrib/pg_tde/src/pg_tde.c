@@ -44,11 +44,6 @@ PG_MODULE_MAGIC;
 
 static void pg_tde_init_data_dir(void);
 
-void		_PG_init(void);
-Datum		pg_tde_extension_initialize(PG_FUNCTION_ARGS);
-Datum		pg_tde_version(PG_FUNCTION_ARGS);
-Datum		pg_tdeam_handler(PG_FUNCTION_ARGS);
-
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static shmem_request_hook_type prev_shmem_request_hook = NULL;
 
