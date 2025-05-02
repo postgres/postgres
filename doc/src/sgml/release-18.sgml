@@ -65,8 +65,8 @@ Change time zone abbreviation handling (Tom Lane)
 </para>
 
 <para>
-The system will now favor time zone abbreviation for the current session time zone before checking the server variable timezone_abbreviations.  Previously timezone_abbreviations were
-consulted first for matches.
+The system will now favor the current session's time zone abbreviations before checking the server variable timezone_abbreviations. Previously timezone_abbreviations was
+checked first.
 </para>
 </listitem>
 
@@ -145,24 +145,12 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Remove non-functioning support for RULE privileges in GRANT/REVOKE (Fujii Masao)
+Remove non-functional support for RULE privileges in GRANT/REVOKE (Fujii Masao)
 <ulink url="&commit_baseurl;fefa76f70">&sect;</ulink>
 </para>
 
 <para>
-These have been non-functioning since Postgres 8.2.
-</para>
-</listitem>
-
-<!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-2024-10-24 [3d1ef3a15] Support configuring multiple ECDH curves
--->
-
-<listitem>
-<para>
-Rename server variable ssl_ecdh_curve to ssl_groups and allow multiple colon-separated ECDH curves to be specified (Erica Zhang, Daniel Gustafsson)
-<ulink url="&commit_baseurl;3d1ef3a15">&sect;</ulink>
+These have been non-functional since Postgres 8.2.
 </para>
 </listitem>
 
@@ -231,7 +219,7 @@ Remove some unnecessary table self-joins (Andrey Lepikhov, Alexander Kuzmenkov, 
 </para>
 
 <para>
-This optimization can be disabled with server variable enable_self_join_elimination.
+This optimization can be disabled using server variable enable_self_join_elimination.
 </para>
 </listitem>
 
@@ -292,7 +280,7 @@ Allow the keys of SELECT DISTINCT to be internally reordered to avoid sorting (R
 </para>
 
 <para>
-The optimizer feature can be disabled via enable_distinct_reordering.
+This optimization can be disabled using enable_distinct_reordering.
 </para>
 </listitem>
 
@@ -350,7 +338,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow merge join to use incremental sorts (Richard Guo)
+Allow merge joins to use incremental sorts (Richard Guo)
 <ulink url="&commit_baseurl;828e94c9d">&sect;</ulink>
 </para>
 </listitem>
@@ -383,7 +371,7 @@ Author: David Rowley <drowley@postgresql.org>
 -->
 <listitem>
 <para>
-Allow partitions to be pruned earlier and quicker, and skipped in more places (Amit Langote, Ashutosh Bapat, Yuya Watari, David Rowley)
+Allow partitions to be pruned earlier, quicker, and skipped in more places (Amit Langote, Ashutosh Bapat, Yuya Watari, David Rowley)
 <ulink url="&commit_baseurl;bb3ec16e1">&sect;</ulink>
 <ulink url="&commit_baseurl;d47cbf474">&sect;</ulink>
 <ulink url="&commit_baseurl;cbc127917">&sect;</ulink>
@@ -402,7 +390,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow partitionwise join in more cases, and reduce its memory usage (Richard Guo, Tom Lane, Ashutosh Bapat)
+Allow partitionwise joins in more cases, and reduce its memory usage (Richard Guo, Tom Lane, Ashutosh Bapat)
 <ulink url="&commit_baseurl;9b282a935">&sect;</ulink>
 <ulink url="&commit_baseurl;513f4472a">&sect;</ulink>
 </para>
@@ -474,7 +462,7 @@ Allow skip scans of btree indexes (Peter Geoghegan)
 </para>
 
 <para>
-This is most useful if the earlier non-referenced columns contain few unique values.
+This is effective if the earlier non-referenced columns contain few unique values.
 </para>
 </listitem>
 
@@ -572,7 +560,7 @@ Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavu
 </para>
 
 <para>
-This is enabled by default and controlled by server variable io_method with server variables io_combine_limit and io_max_combine_limit added to control it.  This also enables
+This is enabled by server variable io_method, with server variables io_combine_limit and io_max_combine_limit added to control it.  This also enables
 effective_io_concurrency and maintenance_io_concurrency values greater than zero for systems without fadvise() support.  The new system view pg_aios shows the file handles being used
 for asynchronous I/O.
 </para>
@@ -605,8 +593,8 @@ Allow normal vacuums to freeze some pages, even though they are all-visible (Mel
 </para>
 
 <para>
-This reduces the overhead of later full-relation freezing.  The aggressiveness of this can be controlled by server variable vacuum_max_eager_freeze_failure_rate, and per-table setting
-vacuum_max_eager_freeze_failure_rate.  Previously vacuum never processed all-visible pages until freezing was required.
+This reduces the overhead of later full-relation freezing.  The aggressiveness of this can be controlled by server variable and per-table setting vacuum_max_eager_freeze_failure_rate.
+Previously vacuum never processed all-visible pages until freezing was required.
 </para>
 </listitem>
 
@@ -622,7 +610,7 @@ Add server variable vacuum_truncate to control file truncation during VACUUM (Na
 </para>
 
 <para>
-A storage-level parameter with this name and behavior already existed.
+A storage-level parameter with the same name and behavior already existed.
 </para>
 </listitem>
 
@@ -663,7 +651,7 @@ Author: Melanie Plageman <melanieplageman@gmail.com>
 
 <listitem>
 <para>
-Change server variable log_connections to log connections more granularly (Melanie Plageman)
+Increase the logging granularity of server variable log_connections (Melanie Plageman)
 <ulink url="&commit_baseurl;9219093ca">&sect;</ulink>
 <ulink url="&commit_baseurl;18cd15e70">&sect;</ulink>
 </para>
@@ -713,7 +701,7 @@ Modify pg_stat_all_tables and its variants to report the time spent in vacuum, a
 </para>
 
 <para>
-The new fields are total_vacuum_time, total_autovacuum_time, total_analyze_time, and total_autoanalyze_time.
+The new columns are total_vacuum_time, total_autovacuum_time, total_analyze_time, and total_autoanalyze_time.
 </para>
 </listitem>
 
@@ -726,62 +714,14 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add VACUUM and ANALYZE delay time reporting (Bertrand Drouvot, Nathan Bossart)
+Add delay time reporting to VACUUM and ANALYZE (Bertrand Drouvot, Nathan Bossart)
 <ulink url="&commit_baseurl;bb8dff999">&sect;</ulink>
 <ulink url="&commit_baseurl;7720082ae">&sect;</ulink>
 </para>
 
 <para>
-This information appears in the autovacuum logs, the system views pg_stat_progress_vacuum and pg_stat_progress_analyze, and the output of VACUUM and ANALYZE when in VERBOSE mode.  This
-tracking must be enabled with the server variable track_cost_delay_timing.
-</para>
-</listitem>
-
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2024-09-30 [559efce1d] Add num_done counter to the pg_stat_checkpointer view.
--->
-
-<listitem>
-<para>
-Add column pg_stat_checkpointer.num_done to report the number of completed checkpoints (Anton A. Melnikov)
-<ulink url="&commit_baseurl;559efce1d">&sect;</ulink>
-</para>
-
-<para>
-Columns num_timed and num_requested count both completed and skipped checkpoints.
-</para>
-</listitem>
-
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
-2024-10-02 [17cc5f666] Fix inconsistent reporting of checkpointer stats.
--->
-
-<listitem>
-<para>
-Add column pg_stat_checkpointer.slru_written to report SLRU buffers written (Nitin Jadhav)
-<ulink url="&commit_baseurl;17cc5f666">&sect;</ulink>
-</para>
-
-<para>
-Also, modify the checkpoint server log message to use separate shared buffer and SLRU buffer values.
-</para>
-</listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2024-11-11 [e7a9496de] Add two attributes to pg_stat_database for parallel work
--->
-
-<listitem>
-<para>
-Add columns to pg_stat_database to report parallel workers activity (Benoit Lobréau)
-<ulink url="&commit_baseurl;e7a9496de">&sect;</ulink>
-</para>
-
-<para>
-The new columns are parallel_workers_to_launch and parallel_workers_launched.
+This information appears in the autovacuum logs, the system views pg_stat_progress_vacuum and pg_stat_progress_analyze, and the output of VACUUM and ANALYZE when in VERBOSE
+mode; tracking must be enabled with the server variable track_cost_delay_timing.
 </para>
 </listitem>
 
@@ -831,7 +771,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add wal I/O activity rows to pg_stat_io (Nazir Bilal Yavuz, Bertrand Drouvot, Michael Paquier)
+Add WAL I/O activity rows to pg_stat_io (Nazir Bilal Yavuz, Bertrand Drouvot, Michael Paquier)
 <ulink url="&commit_baseurl;a051e71e2">&sect;</ulink>
 <ulink url="&commit_baseurl;4538bd3f1">&sect;</ulink>
 <ulink url="&commit_baseurl;7f7f324eb">&sect;</ulink>
@@ -852,6 +792,25 @@ Author: Michael Paquier <michael@paquier.xyz>
 <para>
 Change server variable track_wal_io_timing to control tracking WAL timing in pg_stat_io instead of pg_stat_wal (Bertrand Drouvot)
 <ulink url="&commit_baseurl;6c349d83b">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-02-24 [2421e9a51] Remove read/sync fields from pg_stat_wal and GUC track_w
+Author: Michael Paquier <michael@paquier.xyz>
+2025-02-26 [6c349d83b] Re-add GUC track_wal_io_timing
+-->
+
+<listitem>
+<para>
+Remove read/sync columns from pg_stat_wal (Bertrand Drouvot)
+<ulink url="&commit_baseurl;2421e9a51">&sect;</ulink>
+<ulink url="&commit_baseurl;6c349d83b">&sect;</ulink>
+</para>
+
+<para>
+This removes columns wal_write, wal_sync, wal_write_time, and wal_sync_time.
 </para>
 </listitem>
 
@@ -880,21 +839,50 @@ Add function pg_ls_summariesdir() to specifically list the contents of PGDATA/pg
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2025-02-24 [2421e9a51] Remove read/sync fields from pg_stat_wal and GUC track_w
-Author: Michael Paquier <michael@paquier.xyz>
-2025-02-26 [6c349d83b] Re-add GUC track_wal_io_timing
+Author: Fujii Masao <fujii@postgresql.org>
+2024-09-30 [559efce1d] Add num_done counter to the pg_stat_checkpointer view.
 -->
 
 <listitem>
 <para>
-Remove read/sync fields from pg_stat_wal (Bertrand Drouvot)
-<ulink url="&commit_baseurl;2421e9a51">&sect;</ulink>
-<ulink url="&commit_baseurl;6c349d83b">&sect;</ulink>
+Add column pg_stat_checkpointer.num_done to report the number of completed checkpoints (Anton A. Melnikov)
+<ulink url="&commit_baseurl;559efce1d">&sect;</ulink>
 </para>
 
 <para>
-This removes columns wal_write, wal_sync, wal_write_time, and wal_sync_time.
+Columns num_timed and num_requested count both completed and skipped checkpoints.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2024-10-02 [17cc5f666] Fix inconsistent reporting of checkpointer stats.
+-->
+
+<listitem>
+<para>
+Add column pg_stat_checkpointer.slru_written to report SLRU buffers written (Nitin Jadhav)
+<ulink url="&commit_baseurl;17cc5f666">&sect;</ulink>
+</para>
+
+<para>
+Also, modify the checkpoint server log message to report separate shared buffer and SLRU buffer values.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2024-11-11 [e7a9496de] Add two attributes to pg_stat_database for parallel work
+-->
+
+<listitem>
+<para>
+Add columns to pg_stat_database to report parallel workers activity (Benoit Lobréau)
+<ulink url="&commit_baseurl;e7a9496de">&sect;</ulink>
+</para>
+
+<para>
+The new columns are parallel_workers_to_launch and parallel_workers_launched.
 </para>
 </listitem>
 
@@ -1088,6 +1076,21 @@ Change server variable ssl_groups's default to include elliptic curve X25519 (Da
 
 <!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
+2024-10-24 [3d1ef3a15] Support configuring multiple ECDH curves
+-->
+
+<listitem>
+<para>
+Rename server variable ssl_ecdh_curve to ssl_groups and allow multiple colon-separated ECDH curves to be specified (Erica Zhang, Daniel Gustafsson)
+<ulink url="&commit_baseurl;3d1ef3a15">&sect;</ulink>
+</para>
+
+<para>The previous name still works.
+</para>
+</listitem>
+
+<!--
+Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2025-01-24 [924d89a35] pgcrypto: Add function to check FIPS mode
 -->
 
@@ -1169,7 +1172,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add server variable num_os_semaphores to report the required number of needed semaphores (Nathan Bossart)
+Add server variable num_os_semaphores to report the required number of semaphores (Nathan Bossart)
 <ulink url="&commit_baseurl;0dcaea569">&sect;</ulink>
 </para>
 
@@ -1257,7 +1260,7 @@ Allow the values of generated columns to be logically replicated (Shubham Khanna
 </para>
 
 <para>
-If the publication specifies a column list, all columns, generated and non-generated, are published.  Without a published column list, publication option publish_generated_columns
+If the publication specifies a column list, all specified columns, generated and non-generated, are published.  Without a specified column list, publication option publish_generated_columns
 controls whether generated columns are published. Previously generated columns were not replicated and the subscriber had to compute the values if possible;  this is particularly
 useful for non-Postgres subscribers which lack such a capability.
 </para>
@@ -1714,7 +1717,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add WAL, CPU, and average read statistics output EXPLAIN ANALYZE VERBOSE (Anthonin Bonnefoy)
+Add WAL, CPU, and average read statistics output to EXPLAIN ANALYZE VERBOSE (Anthonin Bonnefoy)
 <ulink url="&commit_baseurl;4c1b4cdb8">&sect;</ulink>
 <ulink url="&commit_baseurl;bb7775234">&sect;</ulink>
 </para>
@@ -1840,16 +1843,6 @@ Indicate disabled nodes in EXPLAIN ANALYZE output (Robert Haas, David Rowley, La
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2025-01-23 [4e7f62bc3] Add support for Unicode case folding.
--->
-
-<listitem>
-<para>
-Add support for Unicode case folding (Jeff Davis)
-<ulink url="&commit_baseurl;4e7f62bc3">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2025-01-17 [286a365b9] Support Unicode full case mapping and conversion.
 -->
@@ -1857,6 +1850,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
 <listitem>
 <para>
 Improve Unicode full case mapping and conversion (Jeff Davis)
+<ulink url="&commit_baseurl;4e7f62bc3">&sect;</ulink>
 <ulink url="&commit_baseurl;286a365b9">&sect;</ulink>
 </para>
 
@@ -2019,7 +2013,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow MIN/MAX aggregates on arrays and composite types (Aleksander Alekseev, Marat Buharov)
+Allow MIN()/MAX() aggregates on arrays and composite types (Aleksander Alekseev, Marat Buharov)
 <ulink url="&commit_baseurl;a0f1fce80">&sect;</ulink>
 <ulink url="&commit_baseurl;2d24fd942">&sect;</ulink>
 </para>
@@ -2032,7 +2026,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add a WEEK option to EXTRACT (Tom Lane)
+Add a WEEK option to EXTRACT() (Tom Lane)
 <ulink url="&commit_baseurl;6be39d77a">&sect;</ulink>
 </para>
 </listitem>
@@ -2077,7 +2071,7 @@ Add UUID version 7 generation function uuidv7() (Andrey Borodin)
 </para>
 
 <para>
-This UUID value is temporally sortable.  Function uuidv4() has been added to explicitly generate version 4 UUIDs.
+This UUID value is temporally sortable.  Function alias uuidv4() has been added to explicitly generate version 4 UUIDs.
 </para>
 </listitem>
 
@@ -2300,7 +2294,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add psql pipeline status to the prompt and add related state variables (Anthonin Bonnefoy)
+Allow adding pipeline status to the psql prompt and add related state variables (Anthonin Bonnefoy)
 <ulink url="&commit_baseurl;3ce357584">&sect;</ulink>
 </para>
 
@@ -2316,20 +2310,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow psql to display the connection service name in the psql prompt or access it via psql variable (Michael Banck)
+Allow adding the connection service name to the psql prompt or access it via psql variable (Michael Banck)
 <ulink url="&commit_baseurl;477728b5d">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
-Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
-2025-02-22 [bba2fbc62] Change \conninfo to use tabular format
--->
-
-<listitem>
-<para>
-Change psql's \conninfo to use tabular format and include more information (Álvaro Herrera, Maiquel Grassi, Hunaid Sohail)
-<ulink url="&commit_baseurl;bba2fbc62">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2350,13 +2332,25 @@ Adding 'x' enables this.
 </listitem>
 
 <!--
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+2025-02-22 [bba2fbc62] Change \conninfo to use tabular format
+-->
+
+<listitem>
+<para>
+Change psql's \conninfo to use tabular format and include more information (Álvaro Herrera, Maiquel Grassi, Hunaid Sohail)
+<ulink url="&commit_baseurl;bba2fbc62">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2025-01-14 [2355e5111] psql: Add leakproof indicator to \df+, \do+, \dAo+, and
 -->
 
 <listitem>
 <para>
-Add function leakproof indicator psql's \df+, \do+, \dAo+, and \dC+ outputs (Yugo Nagata)
+Add function's leakproof indicator to psql's \df+, \do+, \dAo+, and \dC+ outputs (Yugo Nagata)
 <ulink url="&commit_baseurl;2355e5111">&sect;</ulink>
 </para>
 </listitem>
@@ -2472,7 +2466,7 @@ Add pg_combinebackup option -k/--link to enable hard linking (Israel Barth Rubio
 </para>
 
 <para>
-Only some files can be hard linked, and should not be used if the backups will be used independently.
+Only some files can be hard linked.  This should not be used if the backups will be used independently.
 </para>
 </listitem>
 
@@ -2495,7 +2489,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-If pg_rewind's --source-server specifies a database name, use it for --write-recovery-conf output (Masahiko Sawada)
+If pg_rewind's --source-server specifies a database name, use it in --write-recovery-conf output (Masahiko Sawada)
 <ulink url="&commit_baseurl;4ecdd4110">&sect;</ulink>
 </para>
 </listitem>
@@ -2516,7 +2510,10 @@ Add pg_resetwal option --char-signedness to change the default char signedness (
 
 
     <sect4 id="release-18-pgdump">
-     <title><link linkend="app-pgdump"><application>pg_dump</application>, etc.</link></title>
+     <title><link
+     linkend="app-pgdump"><application>pg_dump</application></link>/<link
+     linkend="app-pg-dumpall"><application>pg_dumpall</application></link>/<link
+     linkend="app-pgrestore"><application>pg_restore</application></link></title>
 
      <itemizedlist>
 
@@ -2537,18 +2534,6 @@ Also modify pg_restore to handle such dumps.  Previously pg_dumpall only support
 </listitem>
 
 <!--
-Author: Nathan Bossart <nathan@postgresql.org>
-2025-03-25 [9c49f0e8c] pg_dump: Add - -sequence-data.
--->
-
-<listitem>
-<para>
-Add pg_dump option --sequence-data to dump sequence data that would normally be excluded (Nathan Bossart)
-<ulink url="&commit_baseurl;9c49f0e8c">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2025-03-25 [bde2fb797] Add pg_dump - -with-{schema|data|statistics} options.
 -->
@@ -2561,6 +2546,18 @@ Add pg_dump options --with-schema, --with-data, and --with_statistics (Jeff Davi
 
 <para>
 The negative versions of these options already existed.
+</para>
+</listitem>
+
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-03-25 [9c49f0e8c] pg_dump: Add - -sequence-data.
+-->
+
+<listitem>
+<para>
+Add pg_dump option --sequence-data to dump sequence data that would normally be excluded (Nathan Bossart)
+<ulink url="&commit_baseurl;9c49f0e8c">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2608,6 +2605,8 @@ Author: Nathan Bossart <nathan@postgresql.org>
 2025-03-18 [c9d502eb6] Update guidance for running vacuumdb after pg_upgrade.
 Author: Nathan Bossart <nathan@postgresql.org>
 2025-04-30 [d5f1b6a75] Further adjust guidance for running vacuumdb after pg_up
+Author: Jeff Davis <jdavis@postgresql.org>
+2025-02-20 [1fd1bd871] Transfer statistics during pg_upgrade.
 -->
 
 <listitem>
@@ -2616,22 +2615,11 @@ Allow pg_upgrade to preserve optimizer statistics (Corey Huinker, Jeff Davis, Na
 <ulink url="&commit_baseurl;1fd1bd871">&sect;</ulink>
 <ulink url="&commit_baseurl;c9d502eb6">&sect;</ulink>
 <ulink url="&commit_baseurl;d5f1b6a75">&sect;</ulink>
-</para>
-
-<para>
-Extended statistics are not preserved.
-</para>
-</listitem>
-
-<!--
-Author: Jeff Davis <jdavis@postgresql.org>
-2025-02-20 [1fd1bd871] Transfer statistics during pg_upgrade.
--->
-
-<listitem>
-<para>
-Add pg_upgrade option --no-statistics (Corey Huinker, Jeff Davis)
 <ulink url="&commit_baseurl;1fd1bd871">&sect;</ulink>
+</para>
+
+<para>
+Extended statistics are not preserved.  Also add pg_upgrade option --no-statistics to disable statistics preservation.
 </para>
 </listitem>
 
@@ -2744,7 +2732,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add pg_createsubscriber option -R/--remove to remove publications (Shubham Khanna)
+Add pg_createsubscriber option --remove to remove publications (Shubham Khanna)
 <ulink url="&commit_baseurl;e5aeed4b8">&sect;</ulink>
 </para>
 </listitem>
@@ -3093,23 +3081,14 @@ Add documentation section about API and ABI compatibility (David Wheeler, Peter 
 <!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2024-07-30 [e25626677] Remove - -disable-spinlocks.
--->
-
-<listitem>
-<para>
-Remove configure option --disable-spinlocks (Thomas Munro)
-<ulink url="&commit_baseurl;e25626677">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2024-07-30 [813852613] Remove - -disable-atomics, require 32 bit atomics.
 -->
 
 <listitem>
 <para>
-Remove configure option --disable-atomics (Thomas Munro)
+Remove configure options --disable-spinlocks and --disable-atomics (Thomas Munro)
+<ulink url="&commit_baseurl;e25626677">&sect;</ulink>
 <ulink url="&commit_baseurl;813852613">&sect;</ulink>
 </para>
 
@@ -3125,7 +3104,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Remove support for HPPA/PA-RISC architecture (Tom Lane)
+Remove support for the HPPA/PA-RISC architecture (Tom Lane)
 <ulink url="&commit_baseurl;edadeb071">&sect;</ulink>
 </para>
 </listitem>
@@ -3158,7 +3137,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add extension pg_overexplain which allows for additional EXPLAIN output useful for debugging (Robert Haas)
+Add extension pg_overexplain which adds debug details to EXPLAIN output (Robert Haas)
 <ulink url="&commit_baseurl;8d5ceb113">&sect;</ulink>
 </para>
 </listitem>
@@ -3184,7 +3163,7 @@ Add output columns to postgres_fdw_get_connections() (Hayato Kuroda, Sagar Dilip
 </para>
 
 <para>
-New output column "used_in_xact" indicates if the foreign data wrapper is being used by a current transaction, and "closed" indicates if it is closed, "user_name" indicates the
+New output column "used_in_xact" indicates if the foreign data wrapper is being used by a current transaction, "closed" indicates if it is closed, "user_name" indicates the
 user name, and "remote_backend_pid" indicates the remote backend process identifier.
 </para>
 </listitem>
@@ -3220,22 +3199,6 @@ Allow SCRAM authentication from the client to be passed to dblink servers (Mathe
 
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
-2024-11-20 [6c8f67032] file_fdw: Add REJECT_LIMIT option to file_fdw.
--->
-
-<listitem>
-<para>
-Add REJECT_LIMIT to control the number of invalid rows file_fdw can ignore (Atsushi Torikoshi)
-<ulink url="&commit_baseurl;6c8f67032">&sect;</ulink>
-</para>
-
-<para>
-This is active when ON_ERROR = 'ignore'.
-</para>
-</listitem>
-
-<!--
-Author: Fujii Masao <fujii@postgresql.org>
 2024-10-03 [a1c4c8a9e] file_fdw: Add on_error and log_verbosity options to file
 -->
 
@@ -3247,6 +3210,22 @@ Add on_error and log_verbosity options to file_fdw (Atsushi Torikoshi)
 
 <para>
 These control how file_fdw handles and reports invalid file rows.
+</para>
+</listitem>
+
+<!--
+Author: Fujii Masao <fujii@postgresql.org>
+2024-11-20 [6c8f67032] file_fdw: Add REJECT_LIMIT option to file_fdw.
+-->
+
+<listitem>
+<para>
+Add REJECT_LIMIT to control the number of invalid rows file_fdw can ignore (Atsushi Torikoshi)
+<ulink url="&commit_baseurl;6c8f67032">&sect;</ulink>
+</para>
+
+<para>
+This is active when ON_ERROR = 'ignore'.
 </para>
 </listitem>
 
@@ -3335,21 +3314,6 @@ The existing function pg_buffercache_evict() now returns the buffer flush status
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2024-08-04 [7949d9594] Introduce pluggable APIs for Cumulative Statistics
-Author: Michael Paquier <michael@paquier.xyz>
-2024-08-05 [2eff9e678] Add helper routines to retrieve data for custom fixed-nu
--->
-
-<listitem>
-<para>
-Allow extensions to use the server's cumulative statistics API (Michael Paquier)
-<ulink url="&commit_baseurl;7949d9594">&sect;</ulink>
-<ulink url="&commit_baseurl;2eff9e678">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Robert Haas <rhaas@postgresql.org>
 2025-03-18 [c65bc2e1d] Make it possible for loadable modules to add EXPLAIN opt
 Author: Robert Haas <rhaas@postgresql.org>
@@ -3364,6 +3328,21 @@ Allow extensions to install custom EXPLAIN options (Robert Haas, Sami Imseih)
 <ulink url="&commit_baseurl;c65bc2e1d">&sect;</ulink>
 <ulink url="&commit_baseurl;4fd02bf7c">&sect;</ulink>
 <ulink url="&commit_baseurl;50ba65e73">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2024-08-04 [7949d9594] Introduce pluggable APIs for Cumulative Statistics
+Author: Michael Paquier <michael@paquier.xyz>
+2024-08-05 [2eff9e678] Add helper routines to retrieve data for custom fixed-nu
+-->
+
+<listitem>
+<para>
+Allow extensions to use the server's cumulative statistics API (Michael Paquier)
+<ulink url="&commit_baseurl;7949d9594">&sect;</ulink>
+<ulink url="&commit_baseurl;2eff9e678">&sect;</ulink>
 </para>
 </listitem>
 
