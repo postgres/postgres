@@ -590,41 +590,6 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION pg_tde_grant_grant_management_to_role(
-    target_role TEXT)
-RETURNS VOID
-LANGUAGE plpgsql
-SET search_path = @extschema@
-AS $$
-BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_database_key_management_to_role(TEXT) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_grant_management_to_role(TEXT) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_grant_key_viewer_to_role(TEXT) TO %I', target_role);
-
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_database_key_management_from_role(TEXT) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_grant_management_from_role(TEXT) TO %I', target_role);
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_revoke_key_viewer_from_role(TEXT) TO %I', target_role);
-END;
-$$;
-
-CREATE FUNCTION pg_tde_revoke_grant_management_from_role(
-    target_role TEXT)
-RETURNS VOID
-LANGUAGE plpgsql
-SET search_path = @extschema@
-AS $$
-BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_database_key_management_to_role(TEXT) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_grant_management_to_role(TEXT) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_grant_key_viewer_to_role(TEXT) FROM %I', target_role);
-
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_database_key_management_from_role(TEXT) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_grant_management_from_role(TEXT) FROM %I', target_role);
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_revoke_key_viewer_from_role(TEXT) FROM %I', target_role);
-END;
-$$;
-
 -- Revoking all the privileges from the public role
 SELECT pg_tde_revoke_database_key_management_from_role('public');
-SELECT pg_tde_revoke_grant_management_from_role('public');
 SELECT pg_tde_revoke_key_viewer_from_role('public');

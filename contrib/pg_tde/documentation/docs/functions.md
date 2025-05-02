@@ -19,13 +19,6 @@ Use these functions to grant or revoke permissions to manage the key of the curr
 
 Managment of the global scope is restricted to superusers only.
 
-### Permission management
-
-These functions allow or revoke the use of the permissions management functions:
-
-* `pg_tde_grant_grant_management_to_role(role)`
-* `pg_tde_revoke_grant_management_from_role(role)`
-
 ### Inspections
 
 Use these functions to grant or revoke the use of query functions, which do not modify the encryption settings:
