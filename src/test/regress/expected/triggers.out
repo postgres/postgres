@@ -2713,11 +2713,13 @@ select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
   tgfoid::regproc, tgenabled
   from pg_trigger where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text, tgfoid;
- tgrelid |         tgname          |       tgfoid        | tgenabled 
----------+-------------------------+---------------------+-----------
- child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins" | O
- child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd" | O
-(2 rows)
+ tgrelid |         tgname          |         tgfoid         | tgenabled 
+---------+-------------------------+------------------------+-----------
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | O
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | O
+(4 rows)
 
 -- Before v15, this has no effect because parent has no triggers:
 alter table parent disable trigger all;
@@ -2725,11 +2727,13 @@ select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
   tgfoid::regproc, tgenabled
   from pg_trigger where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text, tgfoid;
- tgrelid |         tgname          |       tgfoid        | tgenabled 
----------+-------------------------+---------------------+-----------
- child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins" | O
- child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd" | O
-(2 rows)
+ tgrelid |         tgname          |         tgfoid         | tgenabled 
+---------+-------------------------+------------------------+-----------
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | O
+ child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | O
+(4 rows)
 
 drop table parent, child1;
 -- Verify that firing state propagates correctly on creation, too
