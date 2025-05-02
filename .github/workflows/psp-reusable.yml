@@ -77,7 +77,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
-          name: log-test-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+          name: log-test-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun
             src/contrib/*/log
@@ -122,7 +122,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
-          name: log-test-global-tde-${{ inputs.os }}-${{ inputs.build_script }}-${{ inputs.build_type }}
+          name: log-test-global-tde-${{ inputs.os }}-${{ inputs.compiler }}-${{ inputs.build_script }}-${{ inputs.build_type }}
           path: |
             src/build/testrun
             src/contrib/*/log
