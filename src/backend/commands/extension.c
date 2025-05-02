@@ -83,6 +83,8 @@ Oid			CurrentExtensionObject = InvalidOid;
 typedef struct ExtensionControlFile
 {
 	char	   *name;			/* name of the extension */
+	char	   *basedir;		/* base directory where control and script
+								 * files are located */
 	char	   *control_dir;	/* directory where control file was found */
 	char	   *directory;		/* directory for script files */
 	char	   *default_version;	/* default install target version, if any */
@@ -153,6 +155,7 @@ static void ExecAlterExtensionContentsRecurse(AlterExtensionContentsStmt *stmt,
 static char *read_whole_file(const char *filename, int *length);
 static ExtensionControlFile *new_ExtensionControlFile(const char *extname);
 
+char	   *find_in_paths(const char *basename, List *paths);
 
 /*
  * get_extension_oid - given an extension name, look up the OID
@@ -374,8 +377,15 @@ get_extension_control_directories(void)
 			piece = palloc(len + 1);
 			strlcpy(piece, ecp, len + 1);
 
-			/* Substitute the path macro if needed */
-			mangled = substitute_path_macro(piece, "$system", system_dir);
+			/*
+			 * Substitute the path macro if needed or append "extension"
+			 * suffix if it is a custom extension control path.
+			 */
+			if (strcmp(piece, "$system") == 0)
+				mangled = substitute_path_macro(piece, "$system", system_dir);
+			else
+				mangled = psprintf("%s/extension", piece);
+
 			pfree(piece);
 
 			/* Canonicalize the path based on the OS and add to the list */
@@ -401,28 +411,16 @@ get_extension_control_directories(void)
 static char *
 find_extension_control_filename(ExtensionControlFile *control)
 {
-	char		sharepath[MAXPGPATH];
-	char	   *system_dir;
 	char	   *basename;
-	char	   *ecp;
 	char	   *result;
+	List	   *paths;
 
 	Assert(control->name);
 
-	get_share_path(my_exec_path, sharepath);
-	system_dir = psprintf("%s/extension", sharepath);
-
 	basename = psprintf("%s.control", control->name);
 
-	/*
-	 * find_in_path() does nothing if the path value is empty.  This is the
-	 * historical behavior for dynamic_library_path, but it makes no sense for
-	 * extensions.  So in that case, substitute a default value.
-	 */
-	ecp = Extension_control_path;
-	if (strlen(ecp) == 0)
-		ecp = "$system";
-	result = find_in_path(basename, ecp, "extension_control_path", "$system", system_dir);
+	paths = get_extension_control_directories();
+	result = find_in_paths(basename, paths);
 
 	if (result)
 	{
@@ -439,12 +437,11 @@ find_extension_control_filename(ExtensionControlFile *control)
 static char *
 get_extension_script_directory(ExtensionControlFile *control)
 {
-	char		sharepath[MAXPGPATH];
-	char	   *result;
-
 	/*
 	 * The directory parameter can be omitted, absolute, or relative to the
-	 * installation's share directory.
+	 * installation's base directory, which can be the sharedir or a custom
+	 * path that it was set extension_control_path. It depends where the
+	 * .control file was found.
 	 */
 	if (!control->directory)
 		return pstrdup(control->control_dir);
@@ -452,11 +449,8 @@ get_extension_script_directory(ExtensionControlFile *control)
 	if (is_absolute_path(control->directory))
 		return pstrdup(control->directory);
 
-	get_share_path(my_exec_path, sharepath);
-	result = (char *) palloc(MAXPGPATH);
-	snprintf(result, MAXPGPATH, "%s/%s", sharepath, control->directory);
-
-	return result;
+	Assert(control->basedir != NULL);
+	return psprintf("%s/%s", control->basedir, control->directory);
 }
 
 static char *
@@ -549,6 +543,14 @@ parse_extension_control_file(ExtensionControlFile *control,
 				 errmsg("extension \"%s\" is not available", control->name),
 				 errhint("The extension must first be installed on the system where PostgreSQL is running.")));
 	}
+
+	/* Assert that the control_dir ends with /extension */
+	Assert(control->control_dir != NULL);
+	Assert(strcmp(control->control_dir + strlen(control->control_dir) - strlen("/extension"), "/extension") == 0);
+
+	control->basedir = pnstrdup(
+								control->control_dir,
+								strlen(control->control_dir) - strlen("/extension"));
 
 	if ((file = AllocateFile(filename, "r")) == NULL)
 	{
@@ -3862,4 +3864,45 @@ new_ExtensionControlFile(const char *extname)
 	control->encoding = -1;
 
 	return control;
+}
+
+/*
+ * Work in a very similar way with find_in_path but it receives an already
+ * parsed List of paths to search the basename and it do not support macro
+ * replacement or custom error messages (for simplicity).
+ *
+ * By "already parsed List of paths" this function expected that paths already
+ * have all macros replaced.
+ */
+char *
+find_in_paths(const char *basename, List *paths)
+{
+	ListCell   *cell;
+
+	foreach(cell, paths)
+	{
+		char	   *path = lfirst(cell);
+		char	   *full;
+
+		Assert(path != NULL);
+
+		path = pstrdup(path);
+		canonicalize_path(path);
+
+		/* only absolute paths */
+		if (!is_absolute_path(path))
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_NAME),
+					errmsg("component in parameter \"%s\" is not an absolute path", "extension_control_path"));
+
+		full = psprintf("%s/%s", path, basename);
+
+		if (pg_file_exists(full))
+			return full;
+
+		pfree(path);
+		pfree(full);
+	}
+
+	return NULL;
 }

@@ -11030,16 +11030,17 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         (Use <literal>pg_config --sharedir</literal> to find out the name of
         this directory.) For example:
 <programlisting>
-extension_control_path = '/usr/local/share/postgresql/extension:/home/my_project/share/extension:$system'
+extension_control_path = '/usr/local/share/postgresql:/home/my_project/share:$system'
 </programlisting>
         or, in a Windows environment:
 <programlisting>
-extension_control_path = 'C:\tools\postgresql\extension;H:\my_project\share\extension;$system'
+extension_control_path = 'C:\tools\postgresql;H:\my_project\share;$system'
 </programlisting>
-        Note that the path elements should typically end in
-        <literal>extension</literal> if the normal installation layouts are
-        followed.  (The value for <literal>$system</literal> already includes
-        the <literal>extension</literal> suffix.)
+        Note that the specified paths elements are expected to have a
+        subdirectory <filename>extension</filename> which will contain the
+        <filename>.control</filename> and <filename>.sql</filename> files; the
+        <filename>extension</filename> suffix is automatically appended to
+        each path element.
        </para>
 
        <para>
@@ -11064,7 +11065,7 @@ extension_control_path = 'C:\tools\postgresql\extension;H:\my_project\share\exte
         linkend="guc-dynamic-library-path"/> to a correspondent location, for
         example,
 <programlisting>
-extension_control_path = '/usr/local/share/postgresql/extension:$system'
+extension_control_path = '/usr/local/share/postgresql:$system'
 dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
 </programlisting>
        </para>

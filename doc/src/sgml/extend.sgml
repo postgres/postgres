@@ -674,7 +674,7 @@ RETURNS anycompatible AS ...
        <para>
         The directory containing the extension's <acronym>SQL</acronym> script
         file(s).  Unless an absolute path is given, the name is relative to
-        the installation's <literal>SHAREDIR</literal> directory.  By default,
+        the directory where the control file was found.  By default,
         the script files are looked for in the same directory where the
         control file was found.
        </para>
@@ -1836,7 +1836,7 @@ make install prefix=/usr/local/extras
     linkend="guc-dynamic-library-path"/> to enable the
     <productname>PostgreSQL</productname> server to find the files:
 <programlisting>
-extension_control_path = '/usr/local/extras/share/postgresql/extension:$system'
+extension_control_path = '/usr/local/extras/share/postgresql:$system'
 dynamic_library_path = '/usr/local/extras/lib/postgresql:$libdir'
 </programlisting>
    </para>
