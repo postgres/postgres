@@ -269,7 +269,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		{
 			foreach(lcmd, stmt->cmds)
 			{
-				AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
+				AlterTableCmd *cmd = lfirst_node(AlterTableCmd, lcmd);
 
 				if (cmd->subtype == AT_SetAccessMethod)
 					setAccessMethod = cmd;
@@ -319,7 +319,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 
 		foreach(option, stmt->options)
 		{
-			DefElem    *defel = (DefElem *) lfirst(option);
+			DefElem    *defel = lfirst_node(DefElem, option);
 
 			if (strcmp(defel->defname, "owned_by") == 0)
 			{
@@ -368,7 +368,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 		{
 			foreach(option, stmt->options)
 			{
-				DefElem    *defel = (DefElem *) lfirst(option);
+				DefElem    *defel = lfirst_node(DefElem, option);
 
 				if (strcmp(defel->defname, "owned_by") == 0)
 				{
@@ -516,7 +516,7 @@ pg_tde_proccess_utility(PlannedStmt *pstmt,
 
 				foreach(option, stmt->options)
 				{
-					DefElem    *defel = (DefElem *) lfirst(option);
+					DefElem    *defel = lfirst_node(DefElem, option);
 
 					if (strcmp(defel->defname, "template") == 0)
 						dbtemplate = defGetString(defel);
