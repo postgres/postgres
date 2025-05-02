@@ -94,7 +94,7 @@ PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
 $node->stop;
 
-system("kill -9 $pid");
+kill('TERM', $pid);
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();
