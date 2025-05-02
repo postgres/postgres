@@ -29,7 +29,7 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
  * start_offset: is the absolute location of start of data in the file.
  */
 void
-pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr, const char *context)
+pg_tde_stream_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -44,15 +44,16 @@ pg_tde_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint3
 		uint32		current_batch_bytes;
 		uint64		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		Aes128EncryptedZeroBlocks(ctxPtr, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+		AesCtrEncryptedZeroBlocks(ctxPtr, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+
 #ifdef ENCRYPTION_DEBUG
 		{
 			char		ivp_debug[33];
 
 			iv_prefix_debug(iv_prefix, ivp_debug);
 			ereport(LOG,
-					errmsg("%s: Batch-No:%d Start offset: %lu Data_Len: %u, batch_start_block: %lu, batch_end_block: %lu, IV prefix: %s",
-						   context ? context : "", batch_no, start_offset, data_len, batch_start_block, batch_end_block, ivp_debug));
+					errmsg("pg_tde_stream_crypt batch_no: %d start_offset: %lu data_len: %u, batch_start_block: %lu, batch_end_block: %lu, iv_prefix: %s",
+						   batch_no, start_offset, data_len, batch_start_block, batch_end_block, ivp_debug));
 		}
 #endif
 

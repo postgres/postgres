@@ -63,7 +63,7 @@ AesInit(void)
 }
 
 static void
-AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsigned char *iv, const unsigned char *in, int in_len, unsigned char *out)
+AesEcbEncrypt(EVP_CIPHER_CTX **ctxPtr, const unsigned char *key, const unsigned char *in, int in_len, unsigned char *out)
 {
 	int			out_len;
 
@@ -74,7 +74,7 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 		*ctxPtr = EVP_CIPHER_CTX_new();
 		EVP_CIPHER_CTX_init(*ctxPtr);
 
-		if (EVP_CipherInit_ex(*ctxPtr, cipher_ctr_ecb, NULL, key, iv, enc) == 0)
+		if (EVP_CipherInit_ex(*ctxPtr, cipher_ctr_ecb, NULL, key, NULL, 1) == 0)
 			ereport(ERROR,
 					errmsg("EVP_CipherInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
@@ -254,12 +254,12 @@ AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 	return true;
 }
 
-/* This function assumes that the out buffer is big enough: at least (blockNumber2 - blockNumber1) * 16 bytes
+/*
+ * This function assumes that the out buffer is big enough: at least (blockNumber2 - blockNumber1) * 16 bytes
  */
 void
-Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv_prefix, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char *out)
+AesCtrEncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv_prefix, uint64_t blockNumber1, uint64_t blockNumber2, unsigned char *out)
 {
-	const unsigned char iv[16] = {0,};
 	unsigned char *p;
 
 	Assert(blockNumber2 >= blockNumber1);
@@ -280,5 +280,5 @@ Aes128EncryptedZeroBlocks(void *ctxPtr, const unsigned char *key, const char *iv
 		p += sizeof(j);
 	}
 
-	AesRunCtr(ctxPtr, 1, key, iv, out, p - out, out);
+	AesEcbEncrypt(ctxPtr, key, out, p - out, out);
 }

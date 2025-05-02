@@ -176,7 +176,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 #endif
 
 	CalcXLogPageIVPrefix(tli, segno, key->base_iv, iv_prefix);
-	PG_TDE_ENCRYPT_DATA(iv_prefix, offset,
+	pg_tde_stream_crypt(iv_prefix, offset,
 						(char *) buf, count,
 						enc_buff, key, &EncryptionCryptCtx);
 
@@ -348,7 +348,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 				elog(DEBUG1, "decrypt WAL, dec_off: %lu [buff_off %lu], sz: %lu | key %X/%X",
 					 dec_off, dec_off - offset, dec_sz, LSN_FORMAT_ARGS(curr_key->key->start_lsn));
 #endif
-				PG_TDE_DECRYPT_DATA(iv_prefix, dec_off, dec_buf, dec_sz, dec_buf,
+				pg_tde_stream_crypt(iv_prefix, dec_off, dec_buf, dec_sz, dec_buf,
 									curr_key->key, &curr_key->crypt_ctx);
 
 				if (dec_off + dec_sz == offset)
