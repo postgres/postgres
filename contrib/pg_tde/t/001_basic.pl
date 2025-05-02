@@ -47,10 +47,8 @@ $node->restart;
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id ASC;');
 
 # Verify that we can't see the data in the file
-my $tablefile = $node->safe_psql('postgres', 'SHOW data_directory;');
-$tablefile .= '/';
-$tablefile .=
-  $node->safe_psql('postgres', 'SELECT pg_relation_filepath(\'test_enc\');');
+my $tablefile = $node->data_dir . '/'
+  . $node->safe_psql('postgres', "SELECT pg_relation_filepath('test_enc');");
 
 my $strings = 'TABLEFILE FOUND: ';
 $strings .= `(ls  $tablefile >/dev/null && echo yes) || echo no`;

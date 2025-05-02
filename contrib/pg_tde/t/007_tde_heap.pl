@@ -100,9 +100,9 @@ sub verify_table
 
 	my ($table) = @_;
 
-	my $tablefile = $node->safe_psql('postgres', 'SHOW data_directory;');
-	$tablefile .= '/';
-	$tablefile .= $node->safe_psql('postgres',
+	my $tablefile =
+	  $node->data_dir . '/'
+	  . $node->safe_psql('postgres',
 		'SELECT pg_relation_filepath(\'' . $table . '\');');
 
 	PGTDE::psql($node, 'postgres',
