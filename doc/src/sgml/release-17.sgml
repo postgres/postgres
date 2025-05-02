@@ -50,6 +50,7 @@ Branch: REL_14_STABLE [6be02bbc8] 2025-03-26 17:03:06 +0100
      <para>
       Avoid data loss when merging compressed BRIN summaries
       in <function>brin_bloom_union()</function> (Tomas Vondra)
+      <ulink url="&commit_baseurl;cb0ad70b8">&sect;</ulink>
      </para>
 
      <para>
@@ -89,6 +90,7 @@ Branch: REL_13_STABLE [b200180de] 2025-03-13 12:13:07 -0400
       and <command>MERGE</command> queries that use whole-row table
       references to views or functions in <literal>FROM</literal>
       (Tom Lane)
+      <ulink url="&commit_baseurl;ca0830e5a">&sect;</ulink>
      </para>
     </listitem>
 
@@ -103,6 +105,7 @@ Branch: REL_15_STABLE [14a33d3f0] 2025-03-29 09:52:18 +0000
      <para>
       Fix <command>MERGE</command> into a partitioned table
       with <literal>DO NOTHING</literal> actions (Tender Wang)
+      <ulink url="&commit_baseurl;25303678a">&sect;</ulink>
      </para>
 
      <para>
@@ -124,6 +127,7 @@ Branch: REL_14_STABLE [4604928ed] 2025-04-15 12:08:34 -0400
       Prevent failure in <command>INSERT</command> commands when the table
       has a <literal>GENERATED</literal> column of a domain data type and
       the domain's constraints disallow null values (Jian He)
+      <ulink url="&commit_baseurl;3c39c000c">&sect;</ulink>
      </para>
 
      <para>
@@ -147,6 +151,7 @@ Branch: REL_13_STABLE [e276b5829] 2025-04-05 15:01:33 -0400
       a <literal>WITH</literal> clause attached to
       an <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command>
       command that's inside <literal>WITH</literal> (Tom Lane)
+      <ulink url="&commit_baseurl;5e7be43f4">&sect;</ulink>
      </para>
 
      <para>
@@ -164,6 +169,7 @@ Branch: REL_17_STABLE [8b2392ae3] 2025-03-13 09:56:49 +0900
      <para>
       Fix misprocessing of casts within the keys of JSON constructor
       expressions (Amit Langote)
+      <ulink url="&commit_baseurl;8b2392ae3">&sect;</ulink>
      </para>
     </listitem>
 
@@ -177,6 +183,7 @@ Branch: REL_16_STABLE [a7aa9f21f] 2025-03-09 13:11:20 -0400
      <para>
       Don't try to parallelize <function>array_agg()</function> when the
       argument is of an anonymous record type (Richard Guo, Tom Lane)
+      <ulink url="&commit_baseurl;43847dd5e">&sect;</ulink>
      </para>
 
      <para>
@@ -200,6 +207,7 @@ Branch: REL_13_STABLE [474aee3df] 2025-03-13 16:07:55 -0400
       and <literal>ARRAY[<replaceable>expression, ...</replaceable>]</literal>
       constructs to produce sane results when the input is of
       type <type>int2vector</type> or <type>oidvector</type> (Tom Lane)
+      <ulink url="&commit_baseurl;c826cd1b1">&sect;</ulink>
      </para>
 
      <para>
@@ -222,6 +230,7 @@ Branch: REL_13_STABLE [f1c1bafcd] 2025-03-08 11:25:01 -0500
      <para>
       Fix possible erroneous reports of invalid affixes while parsing
       <application>Ispell</application> dictionaries (Jacob Brazeal)
+      <ulink url="&commit_baseurl;99c01aadf">&sect;</ulink>
      </para>
     </listitem>
 
@@ -244,6 +253,8 @@ Branch: REL_13_STABLE [dd34cbfce] 2025-04-02 11:13:01 -0400
      <para>
       Fix <literal>ALTER TABLE ADD COLUMN</literal> to correctly handle
       the case of a domain type that has a default (Tom Lane, Tender Wang)
+      <ulink url="&commit_baseurl;d6dd2a02b">&sect;</ulink>
+      <ulink url="&commit_baseurl;0941aadcd">&sect;</ulink>
      </para>
 
      <para>
@@ -266,6 +277,7 @@ Branch: REL_15_STABLE [f5069f026] 2025-04-04 20:11:48 -0400
       Repair misbehavior when there are duplicate column names in a
       foreign key constraint's <literal>ON DELETE SET DEFAULT</literal>
       or <literal>SET NULL</literal> action (Tom Lane)
+      <ulink url="&commit_baseurl;5e6e97fbf">&sect;</ulink>
      </para>
     </listitem>
 
@@ -282,6 +294,7 @@ Branch: REL_13_STABLE [0f354e080] 2025-03-04 20:07:30 +0100
      <para>
       Improve the error message for disallowed attempts to alter the
       properties of a foreign key constraint (Álvaro Herrera)
+      <ulink url="&commit_baseurl;4e026be5f">&sect;</ulink>
      </para>
     </listitem>
 
@@ -300,6 +313,7 @@ Branch: REL_13_STABLE [d34b671a6] 2025-04-20 08:28:53 -0700
       the <structfield>relhassubclass</structfield> flag of a temporary
       table that's marked <literal>ON COMMIT DELETE ROWS</literal>
       (Noah Misch)
+      <ulink url="&commit_baseurl;d0a049987">&sect;</ulink>
      </para>
     </listitem>
 
@@ -316,6 +330,8 @@ Branch: REL_16_STABLE [514d47dfb] 2025-02-21 20:37:38 +0900
      <para>
       Add missing deparsing of the <literal>INDENT</literal> option
       of <function>XMLSERIALIZE()</function> (Jim Jones)
+      <ulink url="&commit_baseurl;2e0f93d7c">&sect;</ulink>
+      <ulink url="&commit_baseurl;310907aaf">&sect;</ulink>
      </para>
 
      <para>
@@ -337,6 +353,7 @@ Branch: REL_16_STABLE [887a23237] 2025-04-20 22:12:59 +1200
       Avoid premature evaluation of the arguments of an aggregate function
       that has both <literal>FILTER</literal> and <literal>ORDER
       BY</literal> (or <literal>DISTINCT</literal>) options (David Rowley)
+      <ulink url="&commit_baseurl;065ce49a1">&sect;</ulink>
      </para>
 
      <para>
@@ -364,6 +381,7 @@ Branch: REL_17_STABLE [bc5a08af3] 2025-03-04 16:17:19 +0900
      <para>
       Fix erroneous deductions from column <literal>NOT NULL</literal>
       constraints in the presence of outer joins (Richard Guo)
+      <ulink url="&commit_baseurl;bc5a08af3">&sect;</ulink>
      </para>
 
      <para>
@@ -383,6 +401,7 @@ Branch: REL_17_STABLE [b8b1e87b7] 2025-04-07 21:33:41 -0400
       Avoid incorrect optimizations based on <literal>IS [NOT]
       NULL</literal> tests that are applied to composite values
       (Bruce Momjian)
+      <ulink url="&commit_baseurl;b8b1e87b7">&sect;</ulink>
      </para>
     </listitem>
 
@@ -399,6 +418,7 @@ Branch: REL_14_STABLE [b68f664bb] 2025-04-02 11:58:37 +1300
       Fix planner's failure to identify more than one hashable
       ScalarArrayOpExpr subexpression within a top-level expression
       (David Geier)
+      <ulink url="&commit_baseurl;5672a8399">&sect;</ulink>
      </para>
 
      <para>
@@ -418,6 +438,7 @@ Branch: REL_17_STABLE [587b6aa3f] 2025-02-19 23:54:18 +0100
 -->
      <para>
       Fix incorrect table size estimate with low fill factor (Tomas Vondra)
+      <ulink url="&commit_baseurl;587b6aa3f">&sect;</ulink>
      </para>
 
      <para>
@@ -442,6 +463,7 @@ Branch: REL_13_STABLE [b9ec8125d] 2025-04-02 14:50:49 -0400
      <para>
       Disable <quote>skip fetch</quote> optimization in bitmap heap scan
       (Matthias van de Meent)
+      <ulink url="&commit_baseurl;78cb2466f">&sect;</ulink>
      </para>
 
      <para>
@@ -469,6 +491,8 @@ Branch: REL_13_STABLE [c7597a1d3] 2025-04-12 12:27:46 -0400
      <para>
       Fix performance issues in GIN index search startup when there are
       many search keys (Tom Lane, Vinod Sridharan)
+      <ulink url="&commit_baseurl;9094eb25b">&sect;</ulink>
+      <ulink url="&commit_baseurl;8c153fcfa">&sect;</ulink>
      </para>
 
      <para>
@@ -492,6 +516,7 @@ Branch: REL_13_STABLE [f5b4a0b49] 2025-03-11 12:50:35 +0100
      <para>
       Detect missing support procedures in a BRIN index operator class,
       and report an error instead of crashing (Álvaro Herrera)
+      <ulink url="&commit_baseurl;ade976f8b">&sect;</ulink>
      </para>
     </listitem>
 
@@ -507,6 +532,7 @@ Branch: REL_14_STABLE [d2fb076be] 2025-03-12 20:53:25 +0200
      <para>
       Respond to interrupts (such as query cancel) while waiting for
       asynchronous subplans of an Append plan node (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;e731e9d5e">&sect;</ulink>
      </para>
 
      <para>
@@ -525,6 +551,7 @@ Branch: REL_16_STABLE [e2a82cd23] 2025-04-08 07:58:50 +0900
      <para>
       Report the I/O statistics of active WAL senders more frequently
       (Bertrand Drouvot)
+      <ulink url="&commit_baseurl;5cbbe70a9">&sect;</ulink>
      </para>
 
      <para>
@@ -548,6 +575,7 @@ Branch: REL_13_STABLE [e2f42f812] 2025-04-11 10:02:21 +0900
       Fix race condition in handling
       of <varname>synchronous_standby_names</varname> immediately after
       startup (Melnikov Maksim, Michael Paquier)
+      <ulink url="&commit_baseurl;3339847cc">&sect;</ulink>
      </para>
 
      <para>
@@ -566,6 +594,7 @@ Branch: REL_17_STABLE [e27346807] 2025-03-13 15:48:02 +1300
      <para>
       Cope with possible intra-query changes
       of <varname>io_combine_limit</varname> (Thomas Munro)
+      <ulink url="&commit_baseurl;e27346807">&sect;</ulink>
      </para>
     </listitem>
 
@@ -579,6 +608,7 @@ Branch: REL_16_STABLE [de1484736] 2025-03-26 17:51:44 +0900
      <para>
       Avoid infinite loop if <varname>scram_iterations</varname> is set to
       <systemitem>INT_MAX</systemitem> (Kevin K Biju)
+      <ulink url="&commit_baseurl;34fbfe1f5">&sect;</ulink>
      </para>
     </listitem>
 
@@ -592,6 +622,7 @@ Branch: REL_16_STABLE [ca54f9b70] 2025-04-05 12:13:35 -0400
      <para>
       Avoid possible crashes due to double transformation
       of <function>json_array()</function>'s subquery (Tom Lane)
+      <ulink url="&commit_baseurl;717e8a1e5">&sect;</ulink>
      </para>
     </listitem>
 
@@ -608,6 +639,7 @@ Branch: REL_13_STABLE [ebe919e95] 2025-03-01 14:22:56 -0500
      <para>
       Fix <function>pg_strtof()</function> to not crash with null endptr
       (Alexander Lakhin, Tom Lane)
+      <ulink url="&commit_baseurl;d69c78108">&sect;</ulink>
      </para>
     </listitem>
 
@@ -621,6 +653,7 @@ Branch: REL_16_STABLE [8d48e84c5] 2025-03-27 22:57:34 +0100
      <para>
       Fix crash after out-of-memory in certain GUC assignments (Daniel
       Gustafsson)
+      <ulink url="&commit_baseurl;8afec4ef6">&sect;</ulink>
      </para>
     </listitem>
 
@@ -637,6 +670,7 @@ Branch: REL_13_STABLE [197427fb3] 2025-02-18 21:24:12 -0500
      <para>
       Avoid crash when a Snowball stemmer encounters an out-of-memory
       condition (Maksim Korotkov)
+      <ulink url="&commit_baseurl;7edd2cbc5">&sect;</ulink>
      </para>
     </listitem>
 
@@ -649,6 +683,7 @@ Branch: REL_17_STABLE [727bc6ac3] 2025-02-19 10:04:44 +0900
      <para>
       Fix over-enthusiastic freeing of SpecialJoinInfo structs during
       planning (Richard Guo)
+      <ulink url="&commit_baseurl;727bc6ac3">&sect;</ulink>
      </para>
 
      <para>
@@ -698,6 +733,7 @@ Branch: REL_16_STABLE [87e8599e0] 2025-04-03 10:30:05 -0700
 -->
      <para>
       Disallow copying of invalidated replication slots (Shlok Kyal)
+      <ulink url="&commit_baseurl;a4309e85f">&sect;</ulink>
      </para>
 
      <para>
@@ -716,6 +752,7 @@ Branch: REL_16_STABLE [cc628f661] 2025-02-24 14:03:10 -0800
      <para>
       Disallow restoring logical replication slots on standby servers that
       are not in hot-standby mode (Masahiko Sawada)
+      <ulink url="&commit_baseurl;174952ece">&sect;</ulink>
      </para>
 
      <para>
@@ -737,6 +774,7 @@ Branch: REL_13_STABLE [d65485b02] 2025-04-28 11:55:00 +0530
      <para>
       Prevent over-advancement of catalog xmin in <quote>fast
       forward</quote> mode of logical decoding (Zhijie Hou)
+      <ulink url="&commit_baseurl;36148b22e">&sect;</ulink>
      </para>
 
      <para>
@@ -766,6 +804,8 @@ Branch: REL_13_STABLE [4164d6976] 2025-04-25 11:45:40 +0530
       Avoid data loss when DDL operations that don't take a strong lock
       affect tables that are being logically replicated (Shlok Kyal,
       Hayato Kuroda)
+      <ulink url="&commit_baseurl;cadaf0ac4">&sect;</ulink>
+      <ulink url="&commit_baseurl;d96206f25">&sect;</ulink>
      </para>
 
      <para>
@@ -787,6 +827,7 @@ Branch: REL_16_STABLE [0de091a4b] 2025-04-23 10:35:54 +0530
       Prevent incorrect reset of replication origin when an apply worker
       encounters an error but the error is caught and does not result in
       worker exit (Hayato Kuroda)
+      <ulink url="&commit_baseurl;05676d87e">&sect;</ulink>
      </para>
 
      <para>
@@ -803,6 +844,7 @@ Branch: REL_17_STABLE [788baa9a2] 2025-02-19 16:35:15 -0500
      <para>
       Fix crash in logical replication if the subscriber's partitioned
       table has a BRIN index (Tom Lane)
+      <ulink url="&commit_baseurl;788baa9a2">&sect;</ulink>
      </para>
     </listitem>
 
@@ -825,6 +867,8 @@ Branch: REL_13_STABLE [6c1e79589] 2025-03-10 19:02:08 +0200
      <para>
       Avoid duplicate snapshot creation in logical replication index
       lookups (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;c1dd3a944">&sect;</ulink>
+      <ulink url="&commit_baseurl;f1ef111a0">&sect;</ulink>
      </para>
     </listitem>
 
@@ -838,6 +882,7 @@ Branch: REL_16_STABLE [1c2a2354c] 2025-02-21 14:08:27 +0530
      <para>
       Improve detection of mixed-origin subscriptions
       (Hou Zhijie, Shlok Kyal)
+      <ulink url="&commit_baseurl;0ae1245e0">&sect;</ulink>
      </para>
 
      <para>
@@ -860,6 +905,7 @@ Branch: REL_15_STABLE [62bed7bb0] 2025-02-20 10:43:40 +0900
      <para>
       Fix wrong checkpoint details in error message about incorrect
       recovery timeline choice (David Steele)
+      <ulink url="&commit_baseurl;29cce279b">&sect;</ulink>
      </para>
 
      <para>
@@ -881,6 +927,7 @@ Branch: REL_17_STABLE [ee578921b] 2025-03-18 13:44:10 -0400
      <para>
       Fix order of operations in <function>smgropen()</function>
       (Andres Freund)
+      <ulink url="&commit_baseurl;ee578921b">&sect;</ulink>
      </para>
 
      <para>
@@ -912,6 +959,7 @@ Branch: REL_15_STABLE [c1201ffcf] 2025-04-23 13:54:57 +0900
      <para>
       Remove incorrect assertion
       in <function>pgstat_report_stat()</function> (Michael Paquier)
+      <ulink url="&commit_baseurl;4b6331e0f">&sect;</ulink>
      </para>
     </listitem>
 
@@ -928,6 +976,7 @@ Branch: REL_13_STABLE [b92482dc3] 2025-04-04 13:50:52 +0300
      <para>
       Fix overly-strict assertion
       in <function>gistFindCorrectParent()</function> (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;6526d0794">&sect;</ulink>
      </para>
     </listitem>
 
@@ -941,6 +990,7 @@ Branch: REL_17_STABLE [a38dce3c4] 2025-03-18 16:36:59 -0700
       Avoid assertion failure in parallel vacuum
       when <varname>maintenance_work_mem</varname> has a very small value
       (Masahiko Sawada)
+      <ulink url="&commit_baseurl;a38dce3c4">&sect;</ulink>
      </para>
     </listitem>
 
@@ -956,6 +1006,7 @@ Branch: REL_14_STABLE [66235baab] 2025-03-23 20:41:59 +0200
      <para>
       Fix rare assertion failure in standby servers when the primary is
       restarted (Heikki Linnakangas)
+      <ulink url="&commit_baseurl;302ce5bd9">&sect;</ulink>
      </para>
     </listitem>
 
@@ -974,6 +1025,7 @@ Branch: REL_13_STABLE [0f60e1fba] 2025-03-21 11:30:42 -0400
       when a scrollable cursor is defined on a
       simple <literal>SELECT <replaceable>expression</replaceable></literal>
       query (Andrei Lepikhov)
+      <ulink url="&commit_baseurl;1353b1161">&sect;</ulink>
      </para>
     </listitem>
 
@@ -991,6 +1043,7 @@ Branch: REL_13_STABLE [6a3e57865] 2025-04-16 13:31:44 -0400
       Don't try to drop individual index partitions
       in <application>pg_dump</application>'s <option>--clean</option>
       mode (Jian He)
+      <ulink url="&commit_baseurl;3424c1075">&sect;</ulink>
      </para>
 
      <para>
@@ -1018,6 +1071,7 @@ Branch: REL_13_STABLE [5302ff95c] 2025-02-21 13:37:12 -0500
       role <command>GRANT</command> commands
       if <structname>pg_auth_members</structname> contains invalid role
       OIDs (Tom Lane)
+      <ulink url="&commit_baseurl;16eff4261">&sect;</ulink>
      </para>
 
      <para>
@@ -1050,6 +1104,9 @@ Branch: REL_14_STABLE [35a591a04] 2025-02-27 14:06:00 +0900
       and <application>pg_upgrade</application>, use the correct function
       to free allocations made by <application>libpq</application>
       (Michael Paquier, Ranier Vilela)
+      <ulink url="&commit_baseurl;ee78823ff">&sect;</ulink>
+      <ulink url="&commit_baseurl;0851b6573">&sect;</ulink>
+      <ulink url="&commit_baseurl;f903d4da9">&sect;</ulink>
      </para>
 
      <para>
@@ -1069,6 +1126,7 @@ Branch: REL_17_STABLE [09ef2f8df] 2025-03-16 13:29:20 +0200
      <para>
       Fix <application>reindexdb</application>'s scheduling of parallel
       reindex operations (Alexander Korotkov)
+      <ulink url="&commit_baseurl;09ef2f8df">&sect;</ulink>
      </para>
 
      <para>
@@ -1115,6 +1173,7 @@ Branch: REL_13_STABLE [3f9132ed2] 2025-04-19 16:37:43 -0400
       Avoid crashing with corrupt input data
       in <filename>contrib/pageinspect</filename>'s
       <function>heap_page_items()</function> (Dmitry Kovalenko)
+      <ulink url="&commit_baseurl;ecb8e5641">&sect;</ulink>
      </para>
     </listitem>
 
@@ -1132,6 +1191,7 @@ Branch: REL_13_STABLE [db8238da4] 2025-03-27 13:20:23 -0400
       Prevent assertion failure
       in <filename>contrib/pg_freespacemap</filename>'s
       <function>pg_freespacemap()</function> (Tender Wang)
+      <ulink url="&commit_baseurl;51d038da8">&sect;</ulink>
      </para>
 
      <para>
@@ -1151,6 +1211,7 @@ Branch: REL_17_STABLE [729fe699e] 2025-03-25 05:50:39 +0200
      <para>
       In <filename>contrib/postgres_fdw</filename>, avoid pulling up
       restriction conditions from subqueries (Alexander Pyhalov)
+      <ulink url="&commit_baseurl;729fe699e">&sect;</ulink>
      </para>
 
      <para>
@@ -1169,6 +1230,7 @@ Branch: REL_17_STABLE [f186f90e5] 2025-03-25 20:03:56 -0400
       Fix build failure when an old version
       of <filename>libpq_fe.h</filename> is present in system include
       directories (Tom Lane)
+      <ulink url="&commit_baseurl;f186f90e5">&sect;</ulink>
      </para>
     </listitem>
 
@@ -1184,6 +1246,7 @@ Branch: REL_13_STABLE [e4440a73c] 2025-04-01 16:49:51 -0400
 -->
      <para>
       Fix build failure on macOS 15.4 (Tom Lane, Peter Eisentraut)
+      <ulink url="&commit_baseurl;915e88968">&sect;</ulink>
      </para>
 
      <para>
@@ -1202,6 +1265,7 @@ Branch: REL_17_STABLE [57dca6faa] 2025-02-21 15:16:37 +1300
      <para>
       Fix valgrind labeling of per-buffer data of read streams
       (Thomas Munro)
+      <ulink url="&commit_baseurl;57dca6faa">&sect;</ulink>
      </para>
 
      <para>
@@ -1220,6 +1284,7 @@ Branch: REL_17_STABLE [fde7c0164] 2025-02-24 18:03:48 +0700
 -->
      <para>
       Avoid valgrind complaints about string hashing code (John Naylor)
+      <ulink url="&commit_baseurl;fde7c0164">&sect;</ulink>
      </para>
     </listitem>
 
@@ -1237,6 +1302,7 @@ Branch: REL_13_STABLE [9da548df3] 2025-04-30 11:14:19 -0400
       Update time zone data files to <application>tzdata</application>
       release 2025b for DST law changes in Chile, plus historical
       corrections for Iran (Tom Lane)
+      <ulink url="&commit_baseurl;5d5970b9f">&sect;</ulink>
      </para>
 
      <para>
