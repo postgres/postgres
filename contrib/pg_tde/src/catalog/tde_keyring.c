@@ -87,12 +87,10 @@ PG_FUNCTION_INFO_V1(pg_tde_list_all_global_key_providers);
 
 static const char *get_keyring_provider_typename(ProviderType p_type);
 static List *GetAllKeyringProviders(Oid dbOid);
-static Size initialize_shared_state(void *start_address);
 static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_list_all_key_providers_internal(PG_FUNCTION_ARGS, const char *fname, Oid dbOid);
-static Size required_shared_mem_size(void);
 static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
 static void save_new_key_provider_info(KeyringProviderRecord *provider, Oid databaseId);
 static void modify_key_provider_info(KeyringProviderRecord *provider, Oid databaseId);
@@ -101,47 +99,19 @@ static void check_provider_record(KeyringProviderRecord *provider_record);
 
 #define PG_TDE_LIST_PROVIDERS_COLS 4
 
-typedef struct TdeKeyProviderInfoSharedState
-{
-	LWLockPadded *Locks;
-} TdeKeyProviderInfoSharedState;
-
-TdeKeyProviderInfoSharedState *sharedPrincipalKeyState = NULL;	/* Lives in shared state */
-
-static const TDEShmemSetupRoutine key_provider_info_shmem_routine = {
-	.init_shared_state = initialize_shared_state,
-	.init_dsa_area_objects = NULL,
-	.required_shared_mem_size = required_shared_mem_size,
-	.shmem_kill = NULL
-};
-
-static Size
-required_shared_mem_size(void)
-{
-	return MAXALIGN(sizeof(TdeKeyProviderInfoSharedState));
-}
-
-static Size
-initialize_shared_state(void *start_address)
-{
-	sharedPrincipalKeyState = (TdeKeyProviderInfoSharedState *) start_address;
-	sharedPrincipalKeyState->Locks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
-
-	return sizeof(TdeKeyProviderInfoSharedState);
-}
+static LWLockPadded *tdeLocks = NULL;	/* Lives in shared state */
 
 static inline LWLock *
 tde_provider_info_lock(void)
 {
-	Assert(sharedPrincipalKeyState);
-	return &sharedPrincipalKeyState->Locks[TDE_LWLOCK_PI_FILES].lock;
+	Assert(tdeLocks);
+	return &tdeLocks[TDE_LWLOCK_PI_FILES].lock;
 }
 
 void
-InitializeKeyProviderInfo(void)
+KeyProviderShmemInit(void)
 {
-	ereport(LOG, errmsg("initializing TDE key provider info"));
-	RegisterShmemRequest(&key_provider_info_shmem_routine);
+	tdeLocks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
 }
 
 void

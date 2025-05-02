@@ -74,6 +74,7 @@ tde_shmem_startup(void)
 		prev_shmem_startup_hook();
 
 	TdeShmemInit();
+	InitializeKeyProviderInfo();
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
 }
@@ -100,7 +101,6 @@ _PG_init(void)
 	TdeGucInit();
 	TdeEventCaptureInit();
 	InitializePrincipalKeyInfo();
-	InitializeKeyProviderInfo();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	InstallKmipKeyring();
