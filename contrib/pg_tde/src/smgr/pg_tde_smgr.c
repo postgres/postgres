@@ -83,8 +83,6 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		void	  **local_buffers = palloc_array(void *, nblocks);
 
-		AesInit();
-
 		for (int i = 0; i < nblocks; ++i)
 		{
 			BlockNumber bn = blocknum + i;
@@ -144,8 +142,6 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		unsigned char iv[16];
 
-		AesInit();
-
 		CalcBlockIv(forknum, blocknum, int_key->base_iv, iv);
 
 		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
@@ -167,8 +163,6 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	if (!tdereln->encrypted_relation)
 		return;
-
-	AesInit();
 
 	for (int i = 0; i < nblocks; ++i)
 	{
