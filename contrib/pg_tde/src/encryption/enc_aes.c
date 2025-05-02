@@ -48,7 +48,7 @@ static const EVP_CIPHER *cipher_ctr_ecb;
 void
 AesInit(void)
 {
-	static int	initialized = 0;
+	static bool initialized = false;
 
 	if (!initialized)
 	{
@@ -59,7 +59,7 @@ AesInit(void)
 		cipher_gcm = EVP_aes_128_gcm();
 		cipher_ctr_ecb = EVP_aes_128_ecb();
 
-		initialized = 1;
+		initialized = true;
 	}
 }
 
