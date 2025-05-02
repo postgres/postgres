@@ -2796,11 +2796,13 @@ select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
 ---------+-------------------------+------------------------+-----------
  child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | O
  child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | O
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | O
  parent  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | O
  parent  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | O
  parent  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | O
  parent  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | O
-(6 rows)
+(8 rows)
 
 alter table parent disable trigger all;
 select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
@@ -2811,11 +2813,13 @@ select tgrelid::regclass, rtrim(tgname, '0123456789') as tgname,
 ---------+-------------------------+------------------------+-----------
  child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | D
  child1  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | D
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | D
+ child1  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | D
  parent  | RI_ConstraintTrigger_c_ | "RI_FKey_check_ins"    | D
  parent  | RI_ConstraintTrigger_c_ | "RI_FKey_check_upd"    | D
  parent  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_del" | D
  parent  | RI_ConstraintTrigger_a_ | "RI_FKey_noaction_upd" | D
-(6 rows)
+(8 rows)
 
 drop table parent, child1;
 -- Verify that firing state propagates correctly on creation, too
