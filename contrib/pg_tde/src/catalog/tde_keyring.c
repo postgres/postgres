@@ -915,30 +915,27 @@ load_kmip_keyring_provider_options(char *keyring_options)
 static void
 debug_print_kerying(GenericKeyring *keyring)
 {
-	int			debug_level = DEBUG2;
-
-	elog(debug_level, "Keyring type: %d", keyring->type);
-	elog(debug_level, "Keyring name: %s", keyring->provider_name);
-	elog(debug_level, "Keyring id: %d", keyring->keyring_id);
+	elog(DEBUG2, "Keyring type: %d", keyring->type);
+	elog(DEBUG2, "Keyring name: %s", keyring->provider_name);
+	elog(DEBUG2, "Keyring id: %d", keyring->keyring_id);
 	switch (keyring->type)
 	{
 		case FILE_KEY_PROVIDER:
-			elog(debug_level, "File Keyring Path: %s", ((FileKeyring *) keyring)->file_name);
+			elog(DEBUG2, "File Keyring Path: %s", ((FileKeyring *) keyring)->file_name);
 			break;
 		case VAULT_V2_KEY_PROVIDER:
-			elog(debug_level, "Vault Keyring Token: %s", ((VaultV2Keyring *) keyring)->vault_token);
-			elog(debug_level, "Vault Keyring URL: %s", ((VaultV2Keyring *) keyring)->vault_url);
-			elog(debug_level, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *) keyring)->vault_mount_path);
-			elog(debug_level, "Vault Keyring CA Path: %s", ((VaultV2Keyring *) keyring)->vault_ca_path);
+			elog(DEBUG2, "Vault Keyring Token: %s", ((VaultV2Keyring *) keyring)->vault_token);
+			elog(DEBUG2, "Vault Keyring URL: %s", ((VaultV2Keyring *) keyring)->vault_url);
+			elog(DEBUG2, "Vault Keyring Mount Path: %s", ((VaultV2Keyring *) keyring)->vault_mount_path);
+			elog(DEBUG2, "Vault Keyring CA Path: %s", ((VaultV2Keyring *) keyring)->vault_ca_path);
 			break;
 		case KMIP_KEY_PROVIDER:
-			elog(debug_level, "KMIP Keyring Host: %s", ((KmipKeyring *) keyring)->kmip_host);
-			elog(debug_level, "KMIP Keyring Port: %s", ((KmipKeyring *) keyring)->kmip_port);
-			elog(debug_level, "KMIP Keyring CA Path: %s", ((KmipKeyring *) keyring)->kmip_ca_path);
-			elog(debug_level, "KMIP Keyring Cert Path: %s", ((KmipKeyring *) keyring)->kmip_cert_path);
+			elog(DEBUG2, "KMIP Keyring Host: %s", ((KmipKeyring *) keyring)->kmip_host);
+			elog(DEBUG2, "KMIP Keyring Port: %s", ((KmipKeyring *) keyring)->kmip_port);
+			elog(DEBUG2, "KMIP Keyring CA Path: %s", ((KmipKeyring *) keyring)->kmip_ca_path);
+			elog(DEBUG2, "KMIP Keyring Cert Path: %s", ((KmipKeyring *) keyring)->kmip_cert_path);
 			break;
 		case UNKNOWN_KEY_PROVIDER:
-			elog(debug_level, "Unknown Keyring ");
 			break;
 	}
 }
