@@ -86,7 +86,7 @@ static Size initialize_shared_state(void *start_address);
 static Datum pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
 static Datum pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid);
-static Datum pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS);
+static Datum pg_tde_list_all_key_providers_internal(PG_FUNCTION_ARGS, const char *fname, Oid dbOid);
 static Size required_shared_mem_size(void);
 static List *scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid);
 
@@ -350,20 +350,19 @@ pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
 Datum
 pg_tde_list_all_database_key_providers(PG_FUNCTION_ARGS)
 {
-	return pg_tde_list_all_key_providers_internal("pg_tde_list_all_database_key_providers_database", false, fcinfo);
+	return pg_tde_list_all_key_providers_internal(fcinfo, "pg_tde_list_all_database_key_providers_database", MyDatabaseId);
 }
 
 Datum
 pg_tde_list_all_global_key_providers(PG_FUNCTION_ARGS)
 {
-	return pg_tde_list_all_key_providers_internal("pg_tde_list_all_database_key_providers_global", true, fcinfo);
+	return pg_tde_list_all_key_providers_internal(fcinfo, "pg_tde_list_all_database_key_providers_global", GLOBAL_DATA_TDE_OID);
 }
 
 static Datum
-pg_tde_list_all_key_providers_internal(const char *fname, bool global, PG_FUNCTION_ARGS)
+pg_tde_list_all_key_providers_internal(PG_FUNCTION_ARGS, const char *fname, Oid dbOid)
 {
-	Oid			database = (global ? GLOBAL_DATA_TDE_OID : MyDatabaseId);
-	List	   *all_providers = GetAllKeyringProviders(database);
+	List	   *all_providers = GetAllKeyringProviders(dbOid);
 	ListCell   *lc;
 	Tuplestorestate *tupstore;
 	TupleDesc	tupdesc;
