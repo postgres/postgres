@@ -25,7 +25,11 @@ libpq_oauth_st = static_library('libpq-oauth',
   libpq_oauth_sources,
   include_directories: [libpq_oauth_inc, postgres_inc],
   c_pch: pch_postgres_fe_h,
-  dependencies: [frontend_stlib_code, libpq_oauth_deps],
+  dependencies: [
+    frontend_stlib_code,
+    libpq_oauth_deps,
+    ssl, # libpq-int.h includes OpenSSL headers
+  ],
   kwargs: default_lib_args,
 )
 
