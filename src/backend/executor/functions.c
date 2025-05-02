@@ -44,7 +44,7 @@
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
-	Tuplestorestate *tstore;	/* where to put result tuples */
+	Tuplestorestate *tstore;	/* where to put result tuples, or NULL */
 	JunkFilter *filter;			/* filter to convert tuple type */
 } DR_sqlfunction;
 
@@ -145,11 +145,13 @@ typedef struct SQLFunctionCache
 	bool		lazyEvalOK;		/* true if lazyEval is safe */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
 	bool		lazyEval;		/* true if using lazyEval for result query */
+	bool		randomAccess;	/* true if tstore needs random access */
 	bool		ownSubcontext;	/* is subcontext really a separate context? */
 
 	ParamListInfo paramLI;		/* Param list representing current args */
 
-	Tuplestorestate *tstore;	/* where we accumulate result tuples */
+	Tuplestorestate *tstore;	/* where we accumulate result for a SRF */
+	MemoryContext tscontext;	/* memory context that tstore should be in */
 
 	JunkFilter *junkFilter;		/* will be NULL if function returns VOID */
 	int			jf_generation;	/* tracks whether junkFilter is up-to-date */
@@ -1250,7 +1252,7 @@ static void
 postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	DestReceiver *dest;
-	MemoryContext oldcontext;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	Assert(es->qd == NULL);
 
@@ -1296,12 +1298,27 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		fcache->ownSubcontext = false;
 	}
 
+	/*
+	 * Build a tuplestore if needed, that is if it's a set-returning function
+	 * and we're producing the function result without using lazyEval mode.
+	 */
+	if (es->setsResult)
+	{
+		Assert(fcache->tstore == NULL);
+		if (fcache->func->returnsSet && !es->lazyEval)
+		{
+			MemoryContextSwitchTo(fcache->tscontext);
+			fcache->tstore = tuplestore_begin_heap(fcache->randomAccess,
+												   false, work_mem);
+		}
+	}
+
 	/* Switch into the selected subcontext (might be a no-op) */
-	oldcontext = MemoryContextSwitchTo(fcache->subcontext);
+	MemoryContextSwitchTo(fcache->subcontext);
 
 	/*
-	 * If this query produces the function result, send its output to the
-	 * tuplestore; else discard any output.
+	 * If this query produces the function result, collect its output using
+	 * our custom DestReceiver; else discard any output.
 	 */
 	if (es->setsResult)
 	{
@@ -1311,8 +1328,11 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		/* pass down the needed info to the dest receiver routines */
 		myState = (DR_sqlfunction *) dest;
 		Assert(myState->pub.mydest == DestSQLFunction);
-		myState->tstore = fcache->tstore;
+		myState->tstore = fcache->tstore;	/* might be NULL */
 		myState->filter = fcache->junkFilter;
+
+		/* Make very sure the junkfilter's result slot is empty */
+		ExecClearTuple(fcache->junkFilter->jf_resultSlot);
 	}
 	else
 		dest = None_Receiver;
@@ -1500,8 +1520,8 @@ postquel_get_single_result(TupleTableSlot *slot,
 	/*
 	 * Set up to return the function value.  For pass-by-reference datatypes,
 	 * be sure to copy the result into the current context.  We can't leave
-	 * the data in the TupleTableSlot because we intend to clear the slot
-	 * before returning.
+	 * the data in the TupleTableSlot because we must clear the slot before
+	 * returning.
 	 */
 	if (fcache->func->returnsTuple)
 	{
@@ -1521,6 +1541,9 @@ postquel_get_single_result(TupleTableSlot *slot,
 			value = datumCopy(value, fcache->func->typbyval, fcache->func->typlen);
 	}
 
+	/* Clear the slot for next time */
+	ExecClearTuple(slot);
+
 	return value;
 }
 
@@ -1532,6 +1555,7 @@ fmgr_sql(PG_FUNCTION_ARGS)
 {
 	SQLFunctionCachePtr fcache;
 	ErrorContextCallback sqlerrcontext;
+	MemoryContext tscontext;
 	bool		randomAccess;
 	bool		lazyEvalOK;
 	bool		pushed_snapshot;
@@ -1558,17 +1582,25 @@ fmgr_sql(PG_FUNCTION_ARGS)
 					 errmsg("set-valued function called in context that cannot accept a set")));
 		randomAccess = rsi->allowedModes & SFRM_Materialize_Random;
 		lazyEvalOK = !(rsi->allowedModes & SFRM_Materialize_Preferred);
+		/* tuplestore, if used, must have query lifespan */
+		tscontext = rsi->econtext->ecxt_per_query_memory;
 	}
 	else
 	{
 		randomAccess = false;
 		lazyEvalOK = true;
+		/* we won't need a tuplestore */
+		tscontext = NULL;
 	}
 
 	/*
 	 * Initialize fcache if starting a fresh execution.
 	 */
 	fcache = init_sql_fcache(fcinfo, lazyEvalOK);
+
+	/* Remember info that we might need later to construct tuplestore */
+	fcache->tscontext = tscontext;
+	fcache->randomAccess = randomAccess;
 
 	/*
 	 * Now we can set up error traceback support for ereport()
@@ -1577,20 +1609,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	sqlerrcontext.arg = fcache;
 	sqlerrcontext.previous = error_context_stack;
 	error_context_stack = &sqlerrcontext;
-
-	/*
-	 * Build tuplestore to hold results, if we don't have one already.  We
-	 * want to re-use the tuplestore across calls, so it needs to live in
-	 * fcontext.
-	 */
-	if (!fcache->tstore)
-	{
-		MemoryContext oldcontext;
-
-		oldcontext = MemoryContextSwitchTo(fcache->fcontext);
-		fcache->tstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-		MemoryContextSwitchTo(oldcontext);
-	}
 
 	/*
 	 * Find first unfinished execution_state.  If none, advance to the next
@@ -1661,11 +1679,12 @@ fmgr_sql(PG_FUNCTION_ARGS)
 
 		/*
 		 * If we ran the command to completion, we can shut it down now. Any
-		 * row(s) we need to return are safely stashed in the tuplestore, and
-		 * we want to be sure that, for example, AFTER triggers get fired
-		 * before we return anything.  Also, if the function doesn't return
-		 * set, we can shut it down anyway because it must be a SELECT and we
-		 * don't care about fetching any more result rows.
+		 * row(s) we need to return are safely stashed in the result slot or
+		 * tuplestore, and we want to be sure that, for example, AFTER
+		 * triggers get fired before we return anything.  Also, if the
+		 * function doesn't return set, we can shut it down anyway because it
+		 * must be a SELECT and we don't care about fetching any more result
+		 * rows.
 		 */
 		if (completed || !fcache->func->returnsSet)
 			postquel_end(es, fcache);
@@ -1708,7 +1727,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * The tuplestore now contains whatever row(s) we are supposed to return.
+	 * The result slot or tuplestore now contains whatever row(s) we are
+	 * supposed to return.
 	 */
 	if (fcache->func->returnsSet)
 	{
@@ -1721,16 +1741,12 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			 * row.
 			 */
 			Assert(es->lazyEval);
-			/* Re-use the junkfilter's output slot to fetch back the tuple */
+			/* The junkfilter's result slot contains the query result tuple */
 			Assert(fcache->junkFilter);
 			slot = fcache->junkFilter->jf_resultSlot;
-			if (!tuplestore_gettupleslot(fcache->tstore, true, false, slot))
-				elog(ERROR, "failed to fetch lazy-eval tuple");
+			Assert(!TTS_EMPTY(slot));
 			/* Extract the result as a datum, and copy out from the slot */
 			result = postquel_get_single_result(slot, fcinfo, fcache);
-			/* Clear the tuplestore, but keep it for next time */
-			/* NB: this might delete the slot's content, but we don't care */
-			tuplestore_clear(fcache->tstore);
 
 			/*
 			 * Let caller know we're not finished.
@@ -1752,12 +1768,8 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		else if (fcache->lazyEval)
 		{
 			/*
-			 * We are done with a lazy evaluation.  Clean up.
-			 */
-			tuplestore_clear(fcache->tstore);
-
-			/*
-			 * Let caller know we're finished.
+			 * We are done with a lazy evaluation.  Let caller know we're
+			 * finished.
 			 */
 			rsi->isDone = ExprEndResult;
 
@@ -1779,7 +1791,12 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			 * We are done with a non-lazy evaluation.  Return whatever is in
 			 * the tuplestore.  (It is now caller's responsibility to free the
 			 * tuplestore when done.)
+			 *
+			 * Note an edge case: we could get here without having made a
+			 * tuplestore if the function is declared to return SETOF VOID.
+			 * ExecMakeTableFunctionResult will cope with null setResult.
 			 */
+			Assert(fcache->tstore || fcache->func->rettype == VOIDOID);
 			rsi->returnMode = SFRM_Materialize;
 			rsi->setResult = fcache->tstore;
 			fcache->tstore = NULL;
@@ -1807,9 +1824,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 		 */
 		if (fcache->junkFilter)
 		{
-			/* Re-use the junkfilter's output slot to fetch back the tuple */
+			/* The junkfilter's result slot contains the query result tuple */
 			slot = fcache->junkFilter->jf_resultSlot;
-			if (tuplestore_gettupleslot(fcache->tstore, true, false, slot))
+			if (!TTS_EMPTY(slot))
 				result = postquel_get_single_result(slot, fcinfo, fcache);
 			else
 			{
@@ -1824,9 +1841,6 @@ fmgr_sql(PG_FUNCTION_ARGS)
 			fcinfo->isnull = true;
 			result = (Datum) 0;
 		}
-
-		/* Clear the tuplestore, but keep it for next time */
-		tuplestore_clear(fcache->tstore);
 	}
 
 	/* Pop snapshot if we have pushed one */
@@ -2604,11 +2618,32 @@ sqlfunction_receive(TupleTableSlot *slot, DestReceiver *self)
 {
 	DR_sqlfunction *myState = (DR_sqlfunction *) self;
 
-	/* Filter tuple as needed */
-	slot = ExecFilterJunk(myState->filter, slot);
+	if (myState->tstore)
+	{
+		/* We are collecting all of a set result into the tuplestore */
 
-	/* Store the filtered tuple into the tuplestore */
-	tuplestore_puttupleslot(myState->tstore, slot);
+		/* Filter tuple as needed */
+		slot = ExecFilterJunk(myState->filter, slot);
+
+		/* Store the filtered tuple into the tuplestore */
+		tuplestore_puttupleslot(myState->tstore, slot);
+	}
+	else
+	{
+		/*
+		 * We only want the first tuple, which we'll save in the junkfilter's
+		 * result slot.  Ignore any additional tuples passed.
+		 */
+		if (TTS_EMPTY(myState->filter->jf_resultSlot))
+		{
+			/* Filter tuple as needed */
+			slot = ExecFilterJunk(myState->filter, slot);
+			Assert(slot == myState->filter->jf_resultSlot);
+
+			/* Materialize the slot so it preserves pass-by-ref values */
+			ExecMaterializeSlot(slot);
+		}
+	}
 
 	return true;
 }
