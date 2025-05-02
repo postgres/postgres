@@ -831,7 +831,7 @@ load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 static FileKeyring *
 load_file_keyring_provider_options(char *keyring_options)
 {
-	FileKeyring *file_keyring = palloc0(sizeof(FileKeyring));
+	FileKeyring *file_keyring = palloc0_object(FileKeyring);
 
 	file_keyring->keyring.type = FILE_KEY_PROVIDER;
 
@@ -855,7 +855,7 @@ load_file_keyring_provider_options(char *keyring_options)
 static VaultV2Keyring *
 load_vaultV2_keyring_provider_options(char *keyring_options)
 {
-	VaultV2Keyring *vaultV2_keyring = palloc0(sizeof(VaultV2Keyring));
+	VaultV2Keyring *vaultV2_keyring = palloc0_object(VaultV2Keyring);
 
 	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
 
@@ -884,7 +884,7 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 static KmipKeyring *
 load_kmip_keyring_provider_options(char *keyring_options)
 {
-	KmipKeyring *kmip_keyring = palloc0(sizeof(KmipKeyring));
+	KmipKeyring *kmip_keyring = palloc0_object(KmipKeyring);
 
 	kmip_keyring->keyring.type = KMIP_KEY_PROVIDER;
 

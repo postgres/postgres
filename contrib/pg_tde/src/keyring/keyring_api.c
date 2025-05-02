@@ -129,7 +129,7 @@ KeyringGenerateNewKey(const char *key_name, unsigned key_len)
 
 	Assert(key_len <= 32);
 	/* Struct will be saved to disk so keep clean */
-	key = palloc0(sizeof(KeyInfo));
+	key = palloc0_object(KeyInfo);
 	key->data.len = key_len;
 	if (!RAND_bytes(key->data.data, key_len))
 	{
