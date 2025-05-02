@@ -1826,7 +1826,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 
 		/* Recheck _bt_check_compare on behalf of caller */
 		if (_bt_check_compare(scan, dir, tuple, tupnatts, tupdesc, false,
-							  false, &continuescan,
+							  !sktrig_required, &continuescan,
 							  &nsktrig) &&
 			!so->scanBehind)
 		{
@@ -2798,8 +2798,6 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 				  bool *continuescan, int *ikey)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-
-	Assert(!forcenonrequired || advancenonrequired);
 
 	*continuescan = true;		/* default assumption */
 
