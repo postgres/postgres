@@ -1130,7 +1130,7 @@ Make cancel request keys 256 bits (Heikki Linnakangas)
 </para>
 
 <para>
-This is only possible when the server and cliient support wire protocol version 3.2, introduced in this release.
+This is only possible when the server and client support wire protocol version 3.2, introduced in this release.
 </para>
 </listitem>
 
@@ -1511,7 +1511,7 @@ This controls whether CREATE DATABASE ... STRATEGY=FILE_COPY and ALTER DATABASE 
 
       <itemizedlist>
 
- <!--
+<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2024-09-17 [fc0438b4e] Add temporal PRIMARY KEY and UNIQUE constraints
 -->
@@ -1519,6 +1519,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <listitem>
 <para>
 Allow the specification of non-overlapping PRIMARY KEY and UNIQUE constraints (Paul A. Jungwirth)
+<ulink url="&commit_baseurl;fc0438b4e">&sect;</ulink>
 </para>
 
 <para>
@@ -2172,7 +2173,7 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 
 <listitem>
 <para>
-Add libpq functions and environment variables to specify the minimum and maximum acceptable protocol version for connections (Jelte Fennema-Nio)
+Add libpq connection parameters and environment variables to specify the minimum and maximum acceptable protocol version for connections (Jelte Fennema-Nio)
 <ulink url="&commit_baseurl;285613c60">&sect;</ulink>
 </para>
 </listitem>
