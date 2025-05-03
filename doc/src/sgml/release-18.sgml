@@ -285,6 +285,23 @@ This optimization can be disabled using enable_distinct_reordering.
 </listitem>
 
 <!--
+Author: David Rowley <drowley@postgresql.org>
+2024-12-12 [bd10ec529] Detect redundant GROUP BY columns using UNIQUE indexes
+-->
+
+<listitem>
+<para>
+Ignore GROUP BY columns that are functionally dependent on other columns (Zhang Mingli, Jian He, David Rowley)
+<ulink url="&commit_baseurl;bd10ec529">&sect;</ulink>
+</para>
+
+<para>
+If a GROUP BY clause includes all columns of a unique index, as well as other columns of the same table, those other columns are redundant and can be dropped
+from the grouping.  This was already true for non-deferred primary keys.
+</para>
+</listitem>
+
+<!--
 Author: Richard Guo <rguo@postgresql.org>
 2024-10-09 [67a54b9e8] Allow pushdown of HAVING clauses with grouping sets
 -->
