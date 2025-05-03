@@ -806,8 +806,8 @@ pgstat_twophase_postabort(TransactionId xid, uint16 info,
 /*
  * Flush out pending stats for the entry
  *
- * If nowait is true, this function returns false if lock could not
- * immediately acquired, otherwise true is returned.
+ * If nowait is true and the lock could not be immediately acquired, returns
+ * false without flushing the entry.  Otherwise returns true.
  *
  * Some of the stats are copied to the corresponding pending database stats
  * entry when successfully flushing.

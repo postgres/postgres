@@ -186,8 +186,8 @@ pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu, bool finalize)
 /*
  * Flush out pending stats for the entry
  *
- * If nowait is true, this function returns false if lock could not
- * immediately acquired, otherwise true is returned.
+ * If nowait is true and the lock could not be immediately acquired, returns
+ * false without flushing the entry.  Otherwise returns true.
  */
 bool
 pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
