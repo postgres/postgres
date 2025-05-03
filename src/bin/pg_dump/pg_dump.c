@@ -183,6 +183,9 @@ static SimpleOidList extension_include_oids = {NULL, NULL};
 static SimpleStringList extension_exclude_patterns = {NULL, NULL};
 static SimpleOidList extension_exclude_oids = {NULL, NULL};
 
+static const char *on_conflict_target_columns = NULL;
+static const char *on_conflict_update_clause = NULL;
+
 static const CatalogId nilCatalogId = {0, 0};
 
 /* override for standard extra_float_digits setting */
@@ -521,15 +524,17 @@ main(int argc, char **argv)
 		{"with-schema", no_argument, NULL, 23},
 		{"with-statistics", no_argument, NULL, 24},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
+		{"on-conflict-target-columns", required_argument, NULL, 25},
+		{"on-conflict-update-clause", required_argument, NULL, 26},
 		{"rows-per-insert", required_argument, NULL, 10},
 		{"include-foreign-data", required_argument, NULL, 11},
 		{"table-and-children", required_argument, NULL, 12},
 		{"exclude-table-and-children", required_argument, NULL, 13},
-		{"exclude-table-data-and-children", required_argument, NULL, 14},
 		{"sync-method", required_argument, NULL, 15},
 		{"filter", required_argument, NULL, 16},
 		{"exclude-extension", required_argument, NULL, 17},
 		{"sequence-data", no_argument, &dopt.sequence_data, 1},
+		{"exclude-table-data-and-children", required_argument, NULL, 14},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -798,6 +803,14 @@ main(int argc, char **argv)
 				with_statistics = true;
 				break;
 
+			case 25:
+				on_conflict_target_columns = pg_strdup(optarg);
+				break;
+
+			case 26:
+				on_conflict_update_clause = pg_strdup(optarg);
+				break;
+
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -882,6 +895,12 @@ main(int argc, char **argv)
 	 */
 	if (dopt.do_nothing && dopt.dump_inserts == 0)
 		pg_fatal("option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts");
+
+	if (dopt.do_nothing && (on_conflict_target_columns != NULL || on_conflict_update_clause != NULL))
+		pg_fatal("option --on-conflict-do-nothing cannot be used with --on-conflict-target-columns and --on-conflict-do-update-clause");
+
+	if ((on_conflict_target_columns != NULL) ^ (on_conflict_update_clause != NULL))
+		pg_fatal("option --on-conflict-target-columns and --on-conflict-update-clause must be provided together.");
 
 	/* Identify archive format to emit */
 	archiveFormat = parseArchiveFormat(format, &archiveMode);
@@ -1308,6 +1327,8 @@ help(const char *progname)
 	printf(_("  --no-toast-compression       do not dump TOAST compression methods\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
+	printf(_("  --on-conflict-target-columns add ON CONFLICT (target-columns) DO UPDATE ... to INSERT commands. A comma-separated list of columns\n"));
+	printf(_("  --on-conflict-update-clause  add the clause ON CONFLICT ... DO UPDATE (clause) to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"));
 	printf(_("  --section=SECTION            dump named section (pre-data, data, or post-data)\n"));
@@ -2681,6 +2702,8 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 			{
 				if (dopt->do_nothing)
 					archputs(" ON CONFLICT DO NOTHING;\n", fout);
+				else if (on_conflict_target_columns != NULL && on_conflict_update_clause != NULL)
+					archprintf(fout, " ON CONFLICT (%s) DO UPDATE SET %s;\n", on_conflict_target_columns, on_conflict_update_clause);
 				else
 					archputs(";\n", fout);
 				/* Reset the row counter */
@@ -2701,6 +2724,8 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 	{
 		if (dopt->do_nothing)
 			archputs(" ON CONFLICT DO NOTHING;\n", fout);
+		else if (on_conflict_target_columns != NULL && on_conflict_update_clause != NULL)
+			archprintf(fout, " ON CONFLICT (%s) DO UPDATE SET %s;\n", on_conflict_target_columns, on_conflict_update_clause);
 		else
 			archputs(";\n", fout);
 	}
