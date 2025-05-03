@@ -410,7 +410,6 @@ CatCacheHeader
 CatalogId
 CatalogIdMapEntry
 CatalogIndexState
-ChangeVarNodes_callback
 ChangeVarNodes_context
 CheckPoint
 CheckPointStmt
