@@ -1187,7 +1187,7 @@ pgstat_build_snapshot(void)
 		Assert(!found);
 
 		entry->data = MemoryContextAlloc(pgStatLocal.snapshot.context,
-										 kind_info->shared_size);
+										 pgstat_get_entry_len(kind));
 
 		/*
 		 * Acquire the LWLock directly instead of using
@@ -1196,7 +1196,7 @@ pgstat_build_snapshot(void)
 		LWLockAcquire(&stats_data->lock, LW_SHARED);
 		memcpy(entry->data,
 			   pgstat_get_entry_data(kind, stats_data),
-			   kind_info->shared_size);
+			   pgstat_get_entry_len(kind));
 		LWLockRelease(&stats_data->lock);
 	}
 	dshash_seq_term(&hstat);
