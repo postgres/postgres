@@ -22,18 +22,18 @@ PGTDE::psql($node, 'postgres',
 
 PGTDE::psql($node, 'tbc', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 PGTDE::psql($node, 'tbc',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');"
 );
 PGTDE::psql($node, 'tbc',
-	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');"
+	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');"
 );
 
 PGTDE::psql(
 	$node, 'tbc', "
 CREATE TABLE country_table (
-     country_id        serial primary key,
-     country_name    text unique not null,
-     continent        text not null
+     country_id   serial primary key,
+     country_name text unique not null,
+     continent    text not null
 ) USING tde_heap;
 ");
 

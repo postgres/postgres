@@ -20,7 +20,7 @@ $node->start;
 PGTDE::psql($node, 'postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
 
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_global_key_provider_file('file-keyring-010','/tmp/pg_tde_test_keyring010.per');"
+	"SELECT pg_tde_add_global_key_provider_file('file-keyring-010', '/tmp/pg_tde_test_keyring010.per');"
 );
 
 PGTDE::psql($node, 'postgres',

@@ -17,79 +17,79 @@ $node->start;
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault','/tmp/pg_tde_test_keyring.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-vault');"
+	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');"
 );
 
 ######################### test_enc1 (simple create table w tde_heap)
 
 PGTDE::psql($node, 'postgres',
-	'CREATE TABLE test_enc1(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;'
+	'CREATE TABLE test_enc1 (id SERIAL, k VARCHAR(32), PRIMARY KEY (id)) USING tde_heap;'
 );
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc1 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc1 (k) VALUES ('foobar'), ('barfoo');");
 
-PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc1 ORDER BY id ASC;');
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc1 ORDER BY id;');
 
 ######################### test_enc2 (create heap + alter to tde_heap)
 
 PGTDE::psql($node, 'postgres',
-	'CREATE TABLE test_enc2(id SERIAL,k VARCHAR(32),PRIMARY KEY (id));');
+	'CREATE TABLE test_enc2 (id SERIAL, k VARCHAR(32), PRIMARY KEY (id));');
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc2 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc2 (k) VALUES ('foobar'), ('barfoo');");
 
 PGTDE::psql($node, 'postgres',
 	'ALTER TABLE test_enc2 SET ACCESS METHOD tde_heap;');
 
-PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id ASC;');
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc2 ORDER BY id;');
 
 ######################### test_enc3 (default_table_access_method)
 
 PGTDE::psql($node, 'postgres',
-	'SET default_table_access_method = "tde_heap"; CREATE TABLE test_enc3(id SERIAL,k VARCHAR(32),PRIMARY KEY (id));'
+	'SET default_table_access_method = "tde_heap"; CREATE TABLE test_enc3 (id SERIAL, k VARCHAR(32), PRIMARY KEY (id));'
 );
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc3 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc3 (k) VALUES ('foobar'), ('barfoo');");
 
-PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc3 ORDER BY id ASC;');
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc3 ORDER BY id;');
 
 ######################### test_enc4 (create heap + alter default)
 
 PGTDE::psql($node, 'postgres',
-	'CREATE TABLE test_enc4(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING heap;'
+	'CREATE TABLE test_enc4 (id SERIAL, k VARCHAR(32), PRIMARY KEY (id)) USING heap;'
 );
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc4 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc4 (k) VALUES ('foobar'), ('barfoo');");
 
 PGTDE::psql($node, 'postgres',
 	'SET default_table_access_method = "tde_heap"; ALTER TABLE test_enc4 SET ACCESS METHOD DEFAULT;'
 );
 
-PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc4 ORDER BY id ASC;');
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc4 ORDER BY id;');
 
 ######################### test_enc5 (create tde_heap + truncate)
 
 PGTDE::psql($node, 'postgres',
-	'CREATE TABLE test_enc5(id SERIAL,k VARCHAR(32),PRIMARY KEY (id)) USING tde_heap;'
+	'CREATE TABLE test_enc5 (id SERIAL, k VARCHAR(32), PRIMARY KEY (id)) USING tde_heap;'
 );
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc5 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc5 (k) VALUES ('foobar'), ('barfoo');");
 
 PGTDE::psql($node, 'postgres', 'CHECKPOINT;');
 
 PGTDE::psql($node, 'postgres', 'TRUNCATE test_enc5;');
 
 PGTDE::psql($node, 'postgres',
-	'INSERT INTO test_enc5 (k) VALUES (\'foobar\'),(\'barfoo\');');
+	"INSERT INTO test_enc5 (k) VALUES ('foobar'), ('barfoo');");
 
-PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc5 ORDER BY id ASC;');
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc5 ORDER BY id;');
 
 PGTDE::append_to_result_file("-- server restart");
 $node->restart;
@@ -103,10 +103,10 @@ sub verify_table
 	my $tablefile =
 	  $node->data_dir . '/'
 	  . $node->safe_psql('postgres',
-		'SELECT pg_relation_filepath(\'' . $table . '\');');
+		"SELECT pg_relation_filepath('" . $table . "');");
 
 	PGTDE::psql($node, 'postgres',
-		'SELECT * FROM ' . $table . ' ORDER BY id ASC;');
+		'SELECT * FROM ' . $table . ' ORDER BY id;');
 
 	PGTDE::append_to_result_file('TABLEFILE FOR '
 		  . $table
