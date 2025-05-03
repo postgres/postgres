@@ -2211,6 +2211,7 @@ Add PQtrace() output for all message types, including authentication (Jelte Fenn
 <ulink url="&commit_baseurl;a5c6b8f22">&sect;</ulink>
 <ulink url="&commit_baseurl;b8b3f861f">&sect;</ulink>
 <ulink url="&commit_baseurl;e87c14b19">&sect;</ulink>
+<ulink url="&commit_baseurl;7adec2d5f">&sect;</ulink>
 </para>
 </listitem>
 
