@@ -22,12 +22,13 @@ others only support Latin-1 characters.  Specifically, the PDF rendering
 engine can only display Latin-1 characters;  non-Latin-1 Unicode
 characters are displayed as "###".
 
-Therefore, in the SGML files, we only use Latin-1 characters.  We
-typically encode these characters as HTML entities, e.g., &Aacute;lvaro.
-It is also possible to safely represent Latin-1 characters in UTF8
-encoding for all output formats.
+Therefore, in the SGML files, we can only use Latin-1 characters.  We
+can use UTF8 representations of Latin-1 characters, or HTML entities of
+Latin-1 characters, e.g., &Aacute;lvaro.
 
 Do not use UTF numeric character escapes (&#nnn;).
+
+When building the PDF docs, problem characters will appear as warnings.
 
 HTML entities
         official:      http://www.w3.org/TR/html4/sgml/entities.html
