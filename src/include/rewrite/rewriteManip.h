@@ -41,6 +41,18 @@ typedef enum ReplaceVarsNoMatchOption
 	REPLACEVARS_SUBSTITUTE_NULL,	/* replace with a NULL Const */
 } ReplaceVarsNoMatchOption;
 
+typedef struct ChangeVarNodes_context ChangeVarNodes_context;
+
+typedef bool (*ChangeVarNodes_callback) (Node *node,
+										 ChangeVarNodes_context *arg);
+
+struct ChangeVarNodes_context
+{
+	int			rt_index;
+	int			new_index;
+	int			sublevels_up;
+	ChangeVarNodes_callback callback;
+};
 
 extern Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 extern void CombineRangeTables(List **dst_rtable, List **dst_perminfos,
@@ -49,7 +61,10 @@ extern void OffsetVarNodes(Node *node, int offset, int sublevels_up);
 extern void ChangeVarNodes(Node *node, int rt_index, int new_index,
 						   int sublevels_up);
 extern void ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
-								   int sublevels_up, bool change_RangeTblRef);
+								   int sublevels_up,
+								   ChangeVarNodes_callback callback);
+extern bool ChangeVarNodesWalkExpression(Node *node,
+										 ChangeVarNodes_context *context);
 extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
 									int min_sublevels_up);
 extern void IncrementVarSublevelsUp_rtable(List *rtable,
