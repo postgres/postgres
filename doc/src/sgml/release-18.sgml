@@ -2146,6 +2146,10 @@ Author: Robert Haas <rhaas@postgresql.org>
 Add function PQfullProtocolVersion() to report the full, including minor, protocol version number (Jacob Champion, Jelte Fennema-Nio)
 <ulink url="&commit_baseurl;cdb6b0fdb">&sect;</ulink>
 </para>
+
+<para>
+This release introduces wire protocol version 3.2.
+</para>
 </listitem>
 
 <!--
@@ -2196,6 +2200,8 @@ Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
 2024-08-16 [b8b3f861f] libpq: Trace all messages received from the server
 Author: Robert Haas <rhaas@postgresql.org>
 2025-02-24 [e87c14b19] libpq: Trace all NegotiateProtocolVersion fields
+Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
+2024-08-09 [7adec2d5f] libpq: Trace StartupMessage/SSLRequest/GSSENCRequest cor
 -->
 
 <listitem>
