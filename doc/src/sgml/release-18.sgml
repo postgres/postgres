@@ -1113,7 +1113,7 @@ Make cancel request keys 256 bits (Heikki Linnakangas)
 </para>
 
 <para>
-This is enabled when the libpq client and server are Postgres 18 or later.
+This is only possible when the server and cliient support wire protocol version 3.2, introduced in this release.
 </para>
 </listitem>
 
@@ -2145,10 +2145,6 @@ Author: Robert Haas <rhaas@postgresql.org>
 <para>
 Add function PQfullProtocolVersion() to report the full, including minor, protocol version number (Jacob Champion, Jelte Fennema-Nio)
 <ulink url="&commit_baseurl;cdb6b0fdb">&sect;</ulink>
-</para>
-
-<para>
-This release introduces wire protocol version 3.2.
 </para>
 </listitem>
 
