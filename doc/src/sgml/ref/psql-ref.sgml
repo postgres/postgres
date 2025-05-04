@@ -1067,16 +1067,6 @@ INSERT INTO tbls1 VALUES ($1, $2) \parse stmt1
        </listitem>
       </varlistentry>
 
-      <varlistentry id="app-psql-meta-command-conninfo">
-        <term><literal>\conninfo</literal></term>
-        <listitem>
-         <para>
-          Outputs information about the current database connection,
-          including TLS-related information if TLS is in use.
-         </para>
-        </listitem>
-      </varlistentry>
-
       <varlistentry id="app-psql-meta-command-close">
        <term><literal>\close</literal> <replaceable class="parameter">prepared_statement_name</replaceable></term>
 
@@ -1104,6 +1094,16 @@ SELECT $1 \parse stmt1
         </para>
 
        </listitem>
+      </varlistentry>
+
+      <varlistentry id="app-psql-meta-command-conninfo">
+        <term><literal>\conninfo</literal></term>
+        <listitem>
+         <para>
+          Outputs information about the current database connection,
+          including TLS-related information if TLS is in use.
+         </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry id="app-psql-meta-commands-copy">
