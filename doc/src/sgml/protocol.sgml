@@ -220,7 +220,12 @@
     was not supported by the server.
    </para>
 
-   <table>
+   <para>
+    <xref linkend="protocol-versions-table"/> shows the currently supported
+    protocol versions.
+   </para>
+
+   <table id="protocol-versions-table">
     <title>Protocol versions</title>
 
     <tgroup cols="3">
