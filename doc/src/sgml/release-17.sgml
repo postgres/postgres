@@ -23,8 +23,15 @@
    </para>
 
    <para>
-    However, if you have any BRIN bloom indexes, it may be advisable to
-    reindex them after updating.  See the first changelog entry below.
+    However, if you have any self-referential foreign key constraints on
+    partitioned tables, it may be necessary to recreate those constraints
+    to ensure that they are being enforced correctly.  See the first
+    changelog entry below.
+   </para>
+
+   <para>
+    Also, if you have any BRIN bloom indexes, it may be advisable to
+    reindex them after updating.  See the second changelog entry below.
    </para>
 
    <para>
@@ -37,6 +44,39 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+Branch: master [c83a38758] 2025-05-02 21:25:50 +0200
+Branch: REL_17_STABLE [f51ae3187] 2025-05-02 21:25:50 +0200
+Branch: REL_16_STABLE [1817d62ec] 2025-05-02 21:25:50 +0200
+Branch: REL_15_STABLE [6ba979cf5] 2025-05-02 21:25:50 +0200
+Branch: REL_14_STABLE [1649d153a] 2025-05-02 21:25:50 +0200
+Branch: REL_13_STABLE [b3a9c536d] 2025-05-02 21:25:50 +0200
+-->
+     <para>
+      Handle self-referential foreign keys on partitioned tables correctly
+      (Álvaro Herrera)
+      <ulink url="&commit_baseurl;f51ae3187">&sect;</ulink>
+     </para>
+
+     <para>
+      Creating or attaching partitions failed to make the required catalog
+      entries for a foreign-key constraint, if the table referenced by the
+      constraint was the same partitioned table.  This resulted in failure
+      to enforce the constraint fully.
+     </para>
+
+     <para>
+      To fix this, you should drop and recreate any self-referential
+      foreign keys on partitioned tables, if partitions have been created
+      or attached since the constraint was created.  Bear in mind that
+      violating rows might already be present, in which case recreating
+      the constraint will fail, and you'll need to fix up those rows
+      before trying again.
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -252,7 +292,8 @@ Branch: REL_13_STABLE [dd34cbfce] 2025-04-02 11:13:01 -0400
 -->
      <para>
       Fix <literal>ALTER TABLE ADD COLUMN</literal> to correctly handle
-      the case of a domain type that has a default (Tom Lane, Tender Wang)
+      the case of a domain type that has a default
+      (Jian He, Tom Lane, Tender Wang)
       <ulink url="&commit_baseurl;d6dd2a02b">&sect;</ulink>
       <ulink url="&commit_baseurl;0941aadcd">&sect;</ulink>
      </para>
@@ -694,38 +735,6 @@ Branch: REL_17_STABLE [727bc6ac3] 2025-02-19 10:04:44 +0900
 
     <listitem>
 <!--
-Author: Noah Misch <noah@leadboat.com>
-Branch: REL_14_STABLE [3635a0a35] 2025-04-06 15:40:44 +0900
-Branch: REL_13_STABLE [69a498eb6] 2025-04-06 15:42:30 +0900
-Branch: REL_14_STABLE [014a50800] 2025-04-06 15:37:53 +0900
-Branch: REL_13_STABLE [a5b0c06da] 2025-04-06 15:40:15 +0900
-Branch: REL_14_STABLE [675b771ca] 2025-04-06 15:26:23 +0900
-Branch: REL_13_STABLE [cbed472a9] 2025-04-06 15:27:34 +0900
-Branch: REL_14_STABLE [b494640e8] 2025-04-06 14:46:31 +0900
-Branch: REL_13_STABLE [d0b6acaf0] 2025-04-06 14:48:01 +0900
-Branch: REL_14_STABLE [8967dddf0] 2025-04-06 14:36:08 +0900
-Branch: REL_13_STABLE [20e5ef3ca] 2025-04-06 14:38:34 +0900
-Branch: REL_14_STABLE [6b168c129] 2025-04-06 14:12:12 +0900
-Branch: REL_13_STABLE [df8ec9634] 2025-04-06 14:22:46 +0900
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: REL_14_STABLE [47d2d2982] 2025-04-06 15:14:52 +0900
-Branch: REL_13_STABLE [e77d9cd4f] 2025-04-06 15:15:13 +0900
--->
-     <para>
-      Skip WAL recycling and preallocation during archive recovery, to
-      avoid corruption of WAL files that were restored from the archive
-      (Noah Misch, Arun Thirupathi)
-     </para>
-
-     <para>
-      This change back-patches v15-era fixes that were considered largely
-      cosmetic at the time, but turn out to prevent data corruption in the
-      wake of subsequent fixes.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Masahiko Sawada <msawada@postgresql.org>
 Branch: master [fd09c1316] 2025-04-03 10:30:00 -0700
 Branch: REL_17_STABLE [a4309e85f] 2025-04-03 10:30:02 -0700
@@ -939,17 +948,6 @@ Branch: REL_17_STABLE [ee578921b] 2025-03-18 13:44:10 -0400
 
     <listitem>
 <!--
-Author: Daniel Gustafsson <dgustafsson@postgresql.org>
-Branch: REL_15_STABLE [0f404c581] 2025-04-30 20:36:24 +0200
-Branch: REL_14_STABLE [7be51eb4e] 2025-04-30 20:36:23 +0200
--->
-     <para>
-      Fix assertion failure in snapshot building (Masahiko Sawada)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 Branch: master [1f7878c33] 2025-04-23 13:53:29 +0900
 Branch: REL_17_STABLE [4b6331e0f] 2025-04-23 13:54:53 +0900
@@ -1132,30 +1130,6 @@ Branch: REL_17_STABLE [09ef2f8df] 2025-03-16 13:29:20 +0200
      <para>
       The original coding failed to achieve the expected amount of
       parallelism.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Noah Misch <noah@leadboat.com>
-Branch: REL_16_STABLE [82a8f0f46] 2025-04-03 09:33:58 -0700
-Branch: REL_15_STABLE [63f6ecb6b] 2025-04-03 09:34:01 -0700
-Branch: REL_14_STABLE [a8a918937] 2025-04-03 09:34:01 -0700
-Branch: REL_13_STABLE [186c586c3] 2025-04-03 09:34:02 -0700
-Author: Andres Freund <andres@anarazel.de>
-Branch: REL_15_STABLE [9e129a224] 2025-04-03 09:34:01 -0700
-Branch: REL_14_STABLE [aa435d7c4] 2025-04-03 09:34:01 -0700
-Branch: REL_13_STABLE [5a3d5c083] 2025-04-03 09:34:02 -0700
--->
-     <para>
-      Allow <filename>contrib/dblink</filename> queries to be interrupted
-      by query cancel (Noah Misch)
-     </para>
-
-     <para>
-      This change back-patches a v17-era fix.  It prevents possible hangs
-      in <command>CREATE DATABASE</command> and <command>DROP
-      DATABASE</command> due to failure to detect deadlocks.
      </para>
     </listitem>
 
