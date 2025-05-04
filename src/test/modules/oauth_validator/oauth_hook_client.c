@@ -35,15 +35,15 @@ usage(char *argv[])
 	printf("usage: %s [flags] CONNINFO\n\n", argv[0]);
 
 	printf("recognized flags:\n");
-	printf(" -h, --help				show this message\n");
-	printf(" --expected-scope SCOPE	fail if received scopes do not match SCOPE\n");
-	printf(" --expected-uri URI		fail if received configuration link does not match URI\n");
-	printf(" --misbehave=MODE		have the hook fail required postconditions\n"
-		   "						(MODEs: no-hook, fail-async, no-token, no-socket)\n");
-	printf(" --no-hook				don't install OAuth hooks\n");
-	printf(" --hang-forever			don't ever return a token (combine with connect_timeout)\n");
-	printf(" --token TOKEN			use the provided TOKEN value\n");
-	printf(" --stress-async			busy-loop on PQconnectPoll rather than polling\n");
+	printf("  -h, --help              show this message\n");
+	printf("  --expected-scope SCOPE  fail if received scopes do not match SCOPE\n");
+	printf("  --expected-uri URI      fail if received configuration link does not match URI\n");
+	printf("  --misbehave=MODE        have the hook fail required postconditions\n"
+		   "                          (MODEs: no-hook, fail-async, no-token, no-socket)\n");
+	printf("  --no-hook               don't install OAuth hooks\n");
+	printf("  --hang-forever          don't ever return a token (combine with connect_timeout)\n");
+	printf("  --token TOKEN           use the provided TOKEN value\n");
+	printf("  --stress-async          busy-loop on PQconnectPoll rather than polling\n");
 }
 
 /* --options */
