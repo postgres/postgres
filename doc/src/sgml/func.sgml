@@ -30639,7 +30639,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          arguments are passed as pairs of <replaceable>argname</replaceable>
          and <replaceable>argvalue</replaceable> in the form:
 <programlisting>
- SELECT pg_restore_relation_stats(
+SELECT pg_restore_relation_stats(
     '<replaceable>arg1name</replaceable>', '<replaceable>arg1value</replaceable>'::<replaceable>arg1type</replaceable>,
     '<replaceable>arg2name</replaceable>', '<replaceable>arg2value</replaceable>'::<replaceable>arg2type</replaceable>,
     '<replaceable>arg3name</replaceable>', '<replaceable>arg3value</replaceable>'::<replaceable>arg3type</replaceable>);
@@ -30650,7 +30650,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          <structfield>reltuples</structfield> values for the table
          <structname>mytable</structname>:
 <programlisting>
- SELECT pg_restore_relation_stats(
+SELECT pg_restore_relation_stats(
     'schemaname', 'myschema',
     'relname',    'mytable',
     'relpages',   173::integer,
@@ -30732,7 +30732,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          arguments are passed as pairs of <replaceable>argname</replaceable>
          and <replaceable>argvalue</replaceable> in the form:
 <programlisting>
- SELECT pg_restore_attribute_stats(
+SELECT pg_restore_attribute_stats(
     '<replaceable>arg1name</replaceable>', '<replaceable>arg1value</replaceable>'::<replaceable>arg1type</replaceable>,
     '<replaceable>arg2name</replaceable>', '<replaceable>arg2value</replaceable>'::<replaceable>arg2type</replaceable>,
     '<replaceable>arg3name</replaceable>', '<replaceable>arg3value</replaceable>'::<replaceable>arg3type</replaceable>);
@@ -30744,7 +30744,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
          <structfield>col1</structfield> of the table
          <structname>mytable</structname>:
 <programlisting>
- SELECT pg_restore_attribute_stats(
+SELECT pg_restore_attribute_stats(
     'schemaname', 'myschema',
     'relname',    'mytable',
     'attname',    'col1',
