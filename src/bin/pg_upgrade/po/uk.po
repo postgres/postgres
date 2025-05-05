@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:20+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2025-03-29 10:38+0000\n"
+"PO-Revision-Date: 2025-04-01 15:40\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -47,12 +47,12 @@ msgstr "користувача не існує"
 msgid "user name lookup failure: error code %lu"
 msgstr "невдала підстановка імені користувача: код помилки %lu"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "аргумент командної оболонки містить символ нового рядка або повернення каретки: \"%s\"\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "назва бази даних містить символ нового рядка або повернення каретки: \"%s\"\n"
@@ -208,8 +208,8 @@ msgstr "Перевірка використання типів даних"
 
 #: check.c:480
 #, c-format
-msgid "    failed check: %s"
-msgstr "    помилка перевірки: %s"
+msgid "failed check: %s"
+msgstr "помилка перевірки: %s"
 
 #: check.c:483
 msgid "A list of the problem columns is in the file:"
@@ -657,8 +657,8 @@ msgstr "В початковому кластері відсутня інформ
 msgid "The target cluster lacks cluster state information:"
 msgstr "В цільовому кластері відсутня інформація про стан кластера:"
 
-#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:556 pg_upgrade.c:596
-#: pg_upgrade.c:945 relfilenumber.c:233 server.c:34 util.c:337
+#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:555 pg_upgrade.c:595
+#: pg_upgrade.c:944 relfilenumber.c:233 server.c:34 util.c:337
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1573,82 +1573,82 @@ msgid "There seems to be a postmaster servicing the new cluster.\n"
 msgstr "Мабуть, запущений процес postmaster, який обслуговує новий кластер.\n"
 "Будь ласка, завершіть роботу процесу і спробуйте знову."
 
-#: pg_upgrade.c:413
+#: pg_upgrade.c:414
 #, c-format
 msgid "Setting locale and encoding for new cluster"
 msgstr "Установка локалі та кодування для нового кластеру"
 
-#: pg_upgrade.c:489
+#: pg_upgrade.c:488
 #, c-format
 msgid "Analyzing all rows in the new cluster"
 msgstr "Аналіз всіх рядків у новому кластері"
 
-#: pg_upgrade.c:502
+#: pg_upgrade.c:501
 #, c-format
 msgid "Freezing all rows in the new cluster"
 msgstr "Закріплення всіх рядків у новому кластері"
 
-#: pg_upgrade.c:522
+#: pg_upgrade.c:521
 #, c-format
 msgid "Restoring global objects in the new cluster"
 msgstr "Відновлення глобальних об'єктів у новому кластері"
 
-#: pg_upgrade.c:538
+#: pg_upgrade.c:537
 #, c-format
 msgid "Restoring database schemas in the new cluster"
 msgstr "Відновлення схем баз даних у новому кластері"
 
-#: pg_upgrade.c:662
+#: pg_upgrade.c:661
 #, c-format
 msgid "Deleting files from new %s"
 msgstr "Видалення файлів з нового %s"
 
-#: pg_upgrade.c:666
+#: pg_upgrade.c:665
 #, c-format
 msgid "could not delete directory \"%s\""
 msgstr "не вдалося видалити каталог \"%s\""
 
-#: pg_upgrade.c:685
+#: pg_upgrade.c:684
 #, c-format
 msgid "Copying old %s to new server"
 msgstr "Копіювання старого %s до нового серверу"
 
-#: pg_upgrade.c:711
+#: pg_upgrade.c:710
 #, c-format
 msgid "Setting oldest XID for new cluster"
 msgstr "Встановлення найстарішого XID для нового кластеру"
 
-#: pg_upgrade.c:719
+#: pg_upgrade.c:718
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "Установка наступного ID транзакції й епохи для нового кластера"
 
-#: pg_upgrade.c:749
+#: pg_upgrade.c:748
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "Установка наступного ID і зсуву мультитранзакції для нового кластера"
 
-#: pg_upgrade.c:773
+#: pg_upgrade.c:772
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "Установка найстаршого ID мультитранзакції в новому кластері"
 
-#: pg_upgrade.c:793
+#: pg_upgrade.c:792
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "Скидання архівів WAL"
 
-#: pg_upgrade.c:836
+#: pg_upgrade.c:835
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "Установка лічильників frozenxid і minmxid у новому кластері"
 
-#: pg_upgrade.c:838
+#: pg_upgrade.c:837
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "Установка лічильника minmxid у новому кластері"
 
-#: pg_upgrade.c:929
+#: pg_upgrade.c:928
 #, c-format
 msgid "Restoring logical replication slots in the new cluster"
 msgstr "Відновлення слотів логічної реплікації в новому кластері"
@@ -1701,7 +1701,7 @@ msgstr "копіювання \"%s\" в \"%s\""
 #: relfilenumber.c:256
 #, c-format
 msgid "copying \"%s\" to \"%s\" with copy_file_range"
-msgstr ""
+msgstr "копіювання \"%s\" в \"%s\" з copy_file_range"
 
 #: relfilenumber.c:261
 #, c-format
@@ -1793,7 +1793,7 @@ msgstr "каталог табличного простору \"%s\" не існ�
 #: tablespace.c:87
 #, c-format
 msgid "could not stat tablespace directory \"%s\": %m"
-msgstr ""
+msgstr "не вдалося отримати стан каталогу табличного простору \"%s\": %m"
 
 #: tablespace.c:92
 #, c-format
