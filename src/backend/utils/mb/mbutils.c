@@ -1030,7 +1030,7 @@ pg_mbcliplen(const char *mbstr, int len, int limit)
 }
 
 /*
- * pg_mbcliplen with specified encoding
+ * pg_mbcliplen with specified encoding; string must be valid in encoding
  */
 int
 pg_encoding_mbcliplen(int encoding, const char *mbstr,
@@ -1641,12 +1641,12 @@ check_encoding_conversion_args(int src_encoding,
  * report_invalid_encoding: complain about invalid multibyte character
  *
  * note: len is remaining length of string, not length of character;
- * len must be greater than zero, as we always examine the first byte.
+ * len must be greater than zero (or we'd neglect initializing "buf").
  */
 void
 report_invalid_encoding(int encoding, const char *mbstr, int len)
 {
-	int			l = pg_encoding_mblen(encoding, mbstr);
+	int			l = pg_encoding_mblen_or_incomplete(encoding, mbstr, len);
 	char		buf[8 * 5 + 1];
 	char	   *p = buf;
 	int			j,
@@ -1673,18 +1673,26 @@ report_invalid_encoding(int encoding, const char *mbstr, int len)
  * report_untranslatable_char: complain about untranslatable character
  *
  * note: len is remaining length of string, not length of character;
- * len must be greater than zero, as we always examine the first byte.
+ * len must be greater than zero (or we'd neglect initializing "buf").
  */
 void
 report_untranslatable_char(int src_encoding, int dest_encoding,
 						   const char *mbstr, int len)
 {
-	int			l = pg_encoding_mblen(src_encoding, mbstr);
+	int			l;
 	char		buf[8 * 5 + 1];
 	char	   *p = buf;
 	int			j,
 				jlimit;
 
+	/*
+	 * We probably could use plain pg_encoding_mblen(), because
+	 * gb18030_to_utf8() verifies before it converts.  All conversions should.
+	 * For src_encoding!=GB18030, len>0 meets pg_encoding_mblen() needs.  Even
+	 * so, be defensive, since a buggy conversion might pass invalid data.
+	 * This is not a performance-critical path.
+	 */
+	l = pg_encoding_mblen_or_incomplete(src_encoding, mbstr, len);
 	jlimit = Min(l, len);
 	jlimit = Min(jlimit, 8);	/* prevent buffer overrun */
 

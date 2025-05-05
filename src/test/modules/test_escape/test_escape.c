@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "common/jsonapi.h"
 #include "fe_utils/psqlscan.h"
 #include "fe_utils/string_utils.h"
 #include "getopt_long.h"
@@ -161,6 +162,91 @@ encoding_conflicts_ascii(int encoding)
 	if (encoding > PG_ENCODING_BE_LAST)
 		return true;
 	return false;
+}
+
+
+/*
+ * Confirm escaping doesn't read past the end of an allocation.  Consider the
+ * result of malloc(4096), in the absence of freelist entries satisfying the
+ * allocation.  On OpenBSD, reading one byte past the end of that object
+ * yields SIGSEGV.
+ *
+ * Run this test before the program's other tests, so freelists are minimal.
+ * len=4096 didn't SIGSEGV, likely due to free() calls in libpq.  len=8192
+ * did.  Use 128 KiB, to somewhat insulate the outcome from distant new free()
+ * calls and libc changes.
+ */
+static void
+test_gb18030_page_multiple(pe_test_config *tc)
+{
+	PQExpBuffer testname;
+	size_t		input_len = 0x20000;
+	char	   *input;
+
+	/* prepare input */
+	input = pg_malloc(input_len);
+	memset(input, '-', input_len - 1);
+	input[input_len - 1] = 0xfe;
+
+	/* name to describe the test */
+	testname = createPQExpBuffer();
+	appendPQExpBuffer(testname, ">repeat(%c, %zu)", input[0], input_len - 1);
+	escapify(testname, input + input_len - 1, 1);
+	appendPQExpBuffer(testname, "< - GB18030 - PQescapeLiteral");
+
+	/* test itself */
+	PQsetClientEncoding(tc->conn, "GB18030");
+	report_result(tc, PQescapeLiteral(tc->conn, input, input_len) == NULL,
+				  testname->data, "",
+				  "input validity vs escape success", "ok");
+
+	destroyPQExpBuffer(testname);
+	pg_free(input);
+}
+
+/*
+ * Confirm json parsing doesn't read past the end of an allocation.  This
+ * exercises wchar.c infrastructure like the true "escape" tests do, but this
+ * isn't an "escape" test.
+ */
+static void
+test_gb18030_json(pe_test_config *tc)
+{
+	PQExpBuffer raw_buf;
+	PQExpBuffer testname;
+	const char	input[] = "{\"\\u\xFE";
+	size_t		input_len = sizeof(input) - 1;
+	JsonLexContext *lex;
+	JsonSemAction sem = {0};	/* no callbacks */
+	JsonParseErrorType json_error;
+	char	   *error_str;
+
+	/* prepare input like test_one_vector_escape() does */
+	raw_buf = createPQExpBuffer();
+	appendBinaryPQExpBuffer(raw_buf, input, input_len);
+	appendPQExpBufferStr(raw_buf, NEVER_ACCESS_STR);
+	VALGRIND_MAKE_MEM_NOACCESS(&raw_buf->data[input_len],
+							   raw_buf->len - input_len);
+
+	/* name to describe the test */
+	testname = createPQExpBuffer();
+	appendPQExpBuffer(testname, ">");
+	escapify(testname, input, input_len);
+	appendPQExpBuffer(testname, "< - GB18030 - pg_parse_json");
+
+	/* test itself */
+	lex = makeJsonLexContextCstringLen(raw_buf->data, input_len,
+									   PG_GB18030, false);
+	json_error = pg_parse_json(lex, &sem);
+	error_str = psprintf("JsonParseErrorType %d", json_error);
+	report_result(tc, json_error == JSON_UNICODE_ESCAPE_FORMAT,
+				  testname->data, "",
+				  "diagnosed", error_str);
+
+	pfree(error_str);
+	pfree(lex);
+	destroyPQExpBuffer(testname);
+	destroyPQExpBuffer(raw_buf);
 }
 
 
@@ -454,8 +540,18 @@ static pe_test_vector pe_test_vectors[] =
 	 * Testcases that are not null terminated for the specified input length.
 	 * That's interesting to verify that escape functions don't read beyond
 	 * the intended input length.
+	 *
+	 * One interesting special case is GB18030, which has the odd behaviour
+	 * needing to read beyond the first byte to determine the length of a
+	 * multi-byte character.
 	 */
 	TV_LEN("gbk", "\x80", 1),
+	TV_LEN("GB18030", "\x80", 1),
+	TV_LEN("GB18030", "\x80\0", 2),
+	TV_LEN("GB18030", "\x80\x30", 2),
+	TV_LEN("GB18030", "\x80\x30\0", 3),
+	TV_LEN("GB18030", "\x80\x30\x30", 3),
+	TV_LEN("GB18030", "\x80\x30\x30\0", 4),
 	TV_LEN("UTF-8", "\xC3\xb6  ", 1),
 	TV_LEN("UTF-8", "\xC3\xb6  ", 2),
 };
@@ -863,6 +959,9 @@ main(int argc, char *argv[])
 				PQerrorMessage(tc.conn));
 		exit(1);
 	}
+
+	test_gb18030_page_multiple(&tc);
+	test_gb18030_json(&tc);
 
 	for (int i = 0; i < lengthof(pe_test_vectors); i++)
 	{
