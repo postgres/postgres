@@ -1121,12 +1121,15 @@ Add function pg_check_fipsmode() to report the server's FIPS mode (Daniel Gustaf
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2025-04-02 [a460251f0] Make cancel request keys longer
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2024-07-29 [9d9b9d46f] Move cancel key generation to after forking the backend
 -->
 
 <listitem>
 <para>
-Make cancel request keys 256 bits (Heikki Linnakangas)
+Make cancel request keys 256 bits (Heikki Linnakangas, Jelte Fennema-Nio)
 <ulink url="&commit_baseurl;a460251f0">&sect;</ulink>
+<ulink url="&commit_baseurl;9d9b9d46f">&sect;</ulink>
 </para>
 
 <para>
@@ -2169,12 +2172,15 @@ Add function PQfullProtocolVersion() to report the full, including minor, protoc
 <!--
 Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
 2025-04-02 [285613c60] libpq: Add min/max_protocol_version connection options
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2025-04-02 [507034910] libpq: Handle NegotiateProtocolVersion message different
 -->
 
 <listitem>
 <para>
 Add libpq connection parameters and environment variables to specify the minimum and maximum acceptable protocol version for connections (Jelte Fennema-Nio)
 <ulink url="&commit_baseurl;285613c60">&sect;</ulink>
+<ulink url="&commit_baseurl;507034910">&sect;</ulink>
 </para>
 </listitem>
 
