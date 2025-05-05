@@ -780,7 +780,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 				providers_list = lappend(providers_list, keyring);
 #else
 				if (providers_list == NULL)
-					providers_list = palloc_object(SimplePtrList);
+					providers_list = palloc0_object(SimplePtrList);
 				simple_ptr_list_append(providers_list, keyring);
 #endif
 			}
