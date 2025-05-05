@@ -102,11 +102,8 @@ typedef struct JsonKeyringState
 {
 	ProviderType provider_type;
 
-	/*
-	 * Caller's options to be set from JSON values. Expected either
-	 * `VaultV2Keyring` or `FileKeyring`
-	 */
-	void	   *provider_opts;
+	/* Caller's options to be set from JSON values. */
+	GenericKeyring *provider_opts;
 
 	/*
 	 * A field hierarchy of the current branch, field[level] is the current
@@ -138,12 +135,11 @@ static char *get_file_kring_value(const char *path, const char *field_name);
 
 
 /*
- * Parses json input for the given provider type and sets the provided options
- * out_opts should be a palloc'd `VaultV2Keyring` or `FileKeyring` struct as the
- * respective option values will be mem copied into it.
+ * Parses json input for the given provider type and sets the provided options.
+ * out_opts should be a palloc'd keyring object matching the provider_type.
  */
 void
-ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts, char *in_buf, int buf_len)
+ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, char *in_buf, int buf_len)
 {
 	JsonLexContext *jlex;
 	JsonKeyringState parse = {0};
@@ -390,9 +386,9 @@ json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 static JsonParseErrorType
 json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value)
 {
-	VaultV2Keyring *vault = parse->provider_opts;
-	FileKeyring *file = parse->provider_opts;
-	KmipKeyring *kmip = parse->provider_opts;
+	VaultV2Keyring *vault = (VaultV2Keyring *) parse->provider_opts;
+	FileKeyring *file = (FileKeyring *) parse->provider_opts;
+	KmipKeyring *kmip = (KmipKeyring *) parse->provider_opts;
 
 	switch (field)
 	{

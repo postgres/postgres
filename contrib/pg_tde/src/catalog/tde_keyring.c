@@ -835,7 +835,8 @@ load_file_keyring_provider_options(char *keyring_options)
 
 	file_keyring->keyring.type = FILE_KEY_PROVIDER;
 
-	ParseKeyringJSONOptions(FILE_KEY_PROVIDER, file_keyring, keyring_options, strlen(keyring_options));
+	ParseKeyringJSONOptions(FILE_KEY_PROVIDER, (GenericKeyring *) file_keyring,
+							keyring_options, strlen(keyring_options));
 
 	if (file_keyring->file_name == NULL || file_keyring->file_name[0] == '\0')
 	{
@@ -855,7 +856,9 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 
 	vaultV2_keyring->keyring.type = VAULT_V2_KEY_PROVIDER;
 
-	ParseKeyringJSONOptions(VAULT_V2_KEY_PROVIDER, vaultV2_keyring, keyring_options, strlen(keyring_options));
+	ParseKeyringJSONOptions(VAULT_V2_KEY_PROVIDER,
+							(GenericKeyring *) vaultV2_keyring,
+							keyring_options, strlen(keyring_options));
 
 	if (vaultV2_keyring->vault_token == NULL || vaultV2_keyring->vault_token[0] == '\0' ||
 		vaultV2_keyring->vault_url == NULL || vaultV2_keyring->vault_url[0] == '\0' ||
@@ -880,7 +883,8 @@ load_kmip_keyring_provider_options(char *keyring_options)
 
 	kmip_keyring->keyring.type = KMIP_KEY_PROVIDER;
 
-	ParseKeyringJSONOptions(KMIP_KEY_PROVIDER, kmip_keyring, keyring_options, strlen(keyring_options));
+	ParseKeyringJSONOptions(KMIP_KEY_PROVIDER, (GenericKeyring *) kmip_keyring,
+							keyring_options, strlen(keyring_options));
 
 	if (strlen(kmip_keyring->kmip_host) == 0 ||
 		strlen(kmip_keyring->kmip_port) == 0 ||
