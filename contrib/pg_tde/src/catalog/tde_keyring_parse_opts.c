@@ -43,11 +43,11 @@
  * JSON parser state
  */
 
-typedef enum JsonKeringSemState
+typedef enum JsonKeyringSemState
 {
 	JK_EXPECT_TOP_FIELD,
 	JK_EXPECT_EXTERN_VAL,
-} JsonKeringSemState;
+} JsonKeyringSemState;
 
 #define KEYRING_REMOTE_FIELD_TYPE "remote"
 #define KEYRING_FILE_FIELD_TYPE "file"
@@ -118,7 +118,7 @@ typedef struct JsonKeyringState
 	 * fields because of the external values
 	 */
 	JsonKeyringField field[MAX_JSON_DEPTH];
-	JsonKeringSemState state;
+	JsonKeyringSemState state;
 	int			level;
 
 	/*
