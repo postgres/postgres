@@ -300,11 +300,14 @@ insert into gb18030_inputs  values
   ('\x666f6f84309c38',	'valid, translates to UTF-8 by mapping function'),
   ('\x666f6f84309c',	'incomplete char '),
   ('\x666f6f84309c0a',	'incomplete char, followed by newline '),
+  ('\x666f6f84',		'incomplete char at end'),
   ('\x666f6f84309c3800', 'invalid, NUL byte'),
   ('\x666f6f84309c0038', 'invalid, NUL byte');
 
--- Test GB18030 verification
-select description, inbytes, (test_conv(inbytes, 'gb18030', 'gb18030')).* from gb18030_inputs;
+-- Test GB18030 verification.  Round-trip through text so the backing of the
+-- bytea values is palloc, not shared_buffers.  This lets Valgrind detect
+-- reads past the end.
+select description, inbytes, (test_conv(inbytes::text::bytea, 'gb18030', 'gb18030')).* from gb18030_inputs;
 -- Test conversions from GB18030
 select description, inbytes, (test_conv(inbytes, 'gb18030', 'utf8')).* from gb18030_inputs;
 
