@@ -179,6 +179,8 @@
 #define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20	/* ms */
 #define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50	/* ms */
 #define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000	/* ms */
+/* Max retries for the truncation attempt if the backward scan is interrupted */
+#define VACUUM_TRUNCATE_INTERRUPTION_MAX_RETRIES	3
 
 /*
  * Threshold that controls whether we bypass index vacuuming and heap
@@ -3213,6 +3215,7 @@ lazy_truncate_heap(LVRelState *vacrel)
 	BlockNumber new_rel_pages;
 	bool		lock_waiter_detected;
 	int			lock_retry;
+	int			truncate_interruption_retry_count = 0;
 
 	/* Report that we are now truncating */
 	pgstat_progress_update_param(PROGRESS_VACUUM_PHASE,
@@ -3227,6 +3230,19 @@ lazy_truncate_heap(LVRelState *vacrel)
 	 */
 	do
 	{
+		/*
+		 * Check if we've retried too many times due to interruptions. We
+		 * check here to allow at least one full attempt even if
+		 * max_truncate_retries is set low.
+		 */
+		if (truncate_interruption_retry_count >= VACUUM_TRUNCATE_INTERRUPTION_MAX_RETRIES)
+		{
+			ereport(vacrel->verbose ? INFO : DEBUG2,
+					(errmsg("table \"%s\": stopping truncate after %d retries due to repeated conflicting lock requests",
+							vacrel->relname, truncate_interruption_retry_count)));
+			break;
+		}
+
 		/*
 		 * We need full exclusive lock on the relation in order to do
 		 * truncation. If we can't get it, give up rather than waiting --- we
@@ -3329,6 +3345,14 @@ lazy_truncate_heap(LVRelState *vacrel)
 						vacrel->relname,
 						orig_rel_pages, new_rel_pages)));
 		orig_rel_pages = new_rel_pages;
+
+		/*
+		 * Increment retry count only if we were interrupted and will loop
+		 * again
+		 */
+		if (lock_waiter_detected && new_rel_pages > vacrel->nonempty_pages)
+			truncate_interruption_retry_count++;
+
 	} while (new_rel_pages > vacrel->nonempty_pages && lock_waiter_detected);
 }
 
