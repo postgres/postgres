@@ -111,7 +111,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Prevent COPY IN from treating \. as an end-of-file marker when reading CSV files (Daniel Vérité, Tom Lane)
+Prevent COPY FROM from treating \. as an end-of-file marker when reading CSV files (Daniel Vérité, Tom Lane)
 <ulink url="&commit_baseurl;770233748">&sect;</ulink>
 <ulink url="&commit_baseurl;da8a4c166">&sect;</ulink>
 </para>
@@ -1655,12 +1655,12 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add REJECT_LIMIT to control the number of invalid rows COPY IN can ignore (Atsushi Torikoshi)
+Add REJECT_LIMIT to control the number of invalid rows COPY FROM can ignore (Atsushi Torikoshi)
 <ulink url="&commit_baseurl;4ac2a9bec">&sect;</ulink>
 </para>
 
 <para>
-This is active when ON_ERROR = 'ignore'.
+This is available when ON_ERROR = 'ignore'.
 </para>
 </listitem>
 
@@ -1678,12 +1678,12 @@ Allow COPY TO to copy rows from populated materialized view (Jian He)
 
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
-2024-10-03 [e7834a1a2] Add log_verbosity = 'silent' support to COPY command.
+2024-10-03 [e7834a1a2] Add LOG_VERBOSITY = 'silent' support to COPY command.
 -->
 
 <listitem>
 <para>
-Add COPY log_verbosity level "silent" to suppress all log output (Atsushi Torikoshi)
+Add COPY LOG_VERBOSITY level "silent" to suppress log output of ignored rows (Atsushi Torikoshi)
 <ulink url="&commit_baseurl;e7834a1a2">&sect;</ulink>
 </para>
 
@@ -3246,7 +3246,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add REJECT_LIMIT to control the number of invalid rows file_fdw can ignore (Atsushi Torikoshi)
+Add "reject_limit" to control the number of invalid rows file_fdw can ignore (Atsushi Torikoshi)
 <ulink url="&commit_baseurl;6c8f67032">&sect;</ulink>
 </para>
 
