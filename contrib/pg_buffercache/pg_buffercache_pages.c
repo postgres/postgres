@@ -192,11 +192,37 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		for (i = 0; i < NBuffers; i++)
 		{
 			BufferDesc *bufHdr;
-			uint32		buf_state;
+			uint32      buf_state;
+			int         attempts = 0;
+			const int   MAX_SPIN_ATTEMPTS = 1000;  // Set max number of max spin attempts to 1000
+
+			/* Allow interrupts and yield every 1000 buffers */
+			if (i % 1000 == 0)
+			{
+				CHECK_FOR_INTERRUPTS();
+				pg_usleep(0);  // Yield to other processes
+			}
 
 			bufHdr = GetBufferDescriptor(i);
-			/* Lock each buffer header before inspecting. */
-			buf_state = LockBufHdr(bufHdr);
+			
+			/* Try to lock buffer header with timeout */
+			while (true)
+			{
+				if (TryLockBufHdr(bufHdr, &buf_state))
+					break;
+
+				if (++attempts > MAX_SPIN_ATTEMPTS)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+							errmsg("could not acquire buffer header lock after %d attempts",
+									MAX_SPIN_ATTEMPTS),
+							errdetail("Failed to lock buffer %d", i)));
+				}
+
+				/* Brief sleep before retry, increasing with number of attempts (exponential backoff) */
+				pg_usleep(Min(attempts * 10, 1000));  // Cap at 1ms
+			}
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
 			fctx->record[i].relfilenumber = BufTagGetRelNumber(&bufHdr->tag);
