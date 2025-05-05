@@ -25,13 +25,13 @@
    <para>
     However, if you have any self-referential foreign key constraints on
     partitioned tables, it may be necessary to recreate those constraints
-    to ensure that they are being enforced correctly.  See the first
+    to ensure that they are being enforced correctly.  See the second
     changelog entry below.
    </para>
 
    <para>
     Also, if you have any BRIN bloom indexes, it may be advisable to
-    reindex them after updating.  See the second changelog entry below.
+    reindex them after updating.  See the third changelog entry below.
    </para>
 
    <para>
@@ -44,6 +44,39 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [627acc3ca] 2025-05-05 04:52:04 -0700
+Branch: REL_17_STABLE [ec5f89e8a] 2025-05-05 04:52:07 -0700
+Branch: REL_16_STABLE [d1264948f] 2025-05-05 04:52:07 -0700
+Branch: REL_15_STABLE [44ba3f55f] 2025-05-05 04:52:08 -0700
+Branch: REL_14_STABLE [3f2ab7393] 2025-05-05 04:52:08 -0700
+Branch: REL_13_STABLE [cbadeaca9] 2025-05-05 04:52:08 -0700
+Branch: master [5be213caa] 2025-05-05 04:52:04 -0700
+Branch: REL_17_STABLE [617d34908] 2025-05-05 04:52:07 -0700
+Branch: REL_16_STABLE [f3bb0b2c4] 2025-05-05 04:52:07 -0700
+Branch: REL_15_STABLE [45fe7e08f] 2025-05-05 04:52:08 -0700
+Branch: REL_14_STABLE [258cde839] 2025-05-05 04:52:08 -0700
+Branch: REL_13_STABLE [7279e5820] 2025-05-05 04:52:08 -0700
+-->
+     <para>
+      Avoid one-byte buffer overread when examining invalidly-encoded
+      strings that are claimed to be in GB18030 encoding
+      (Noah Misch, Andres Freund)
+      <ulink url="&commit_baseurl;d1264948f">&sect;</ulink>
+      <ulink url="&commit_baseurl;f3bb0b2c4">&sect;</ulink>
+     </para>
+
+     <para>
+      While unlikely, a SIGSEGV crash could occur if an incomplete
+      multibyte character appeared at the end of memory.  This was
+      possible both in the server and
+      in <application>libpq</application>-using applications.
+      (CVE-2025-4207)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
