@@ -1227,8 +1227,9 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
  */
 
 /*
- * returns the byte length of the character beginning at s, using the
- * specified encoding.
+ * Like pg_encoding_mblen().  Use this in callers that want the
+ * dynamically-linked libpq's stance on encodings, even if that means
+ * different behavior in different startups of the executable.
  */
 int
 PQmblen(const char *s, int encoding)
