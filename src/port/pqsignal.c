@@ -170,7 +170,12 @@ pqsignal(int signo, pqsigfunc func)
 #endif
 }
 
-/* sneak stubs into libpgport */
-#if defined(__wasi__)
-#   include "../../../patches/wasi_port.c"
+/* sneak emsdk or wasi wasm port support into libpgport */
+#if defined(SDK_PORT)
+#   if defined(__wasi__)
+#       include "sdk_port-wasi.c"
+#   endif
+#   if defined(__EMSCRIPTEN__)
+// #       include "sdk_port-emscripten.c"
+#   endif
 #endif

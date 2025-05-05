@@ -1652,7 +1652,7 @@ SignalBackends(void)
 		 * just log a low-level debug message if it happens.
 		 */
 #if defined(__EMSCRIPTEN__) || defined(__wasi__)
-            HandleNotifyInterrupt();
+        HandleNotifyInterrupt();
 #else
 		if (SendProcSignal(pid, PROCSIG_NOTIFY_INTERRUPT, procnos[i]) < 0)
 			elog(DEBUG3, "could not signal backend with PID %d: %m", pid);

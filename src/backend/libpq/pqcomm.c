@@ -320,8 +320,8 @@ PDEBUG("# 285:" __FILE__);
 	AddWaitEventToSet(FeBeWaitSet, WL_POSTMASTER_DEATH, PGINVALID_SOCKET,
 					  NULL, NULL);
 #else /* WASM */
-    PDEBUG("# 220: FIXME: socketfile");
-    #pragma message "FIXME: socketfile"
+    PDEBUG("# 323: FIXME: socketfile");
+    #pragma message "FIXME: use socketfile when overflowing PqRecvBuffer_static"
     /* because we fill before starting reading message */
     PqRecvBuffer = &PqRecvBuffer_static[0];
 #endif /* WASM */
@@ -1150,14 +1150,14 @@ pq_buffer_remaining_data(void)
  *		This must be called before any of the pq_get* functions.
  * --------------------------------
  */
-#if defined(I_EMSCRIPTEN) || defined(I_WASI)
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
 EMSCRIPTEN_KEEPALIVE void
 pq_recvbuf_fill(FILE* fp, int packetlen) {
     fread( PqRecvBuffer, packetlen, 1, fp);
     PqRecvPointer = 0;
     PqRecvLength = packetlen;
 #if PDEBUG
-        printf("# 1199: pq_recvbuf_fill cma_rsize=%d PqRecvLength=%d buf=%p reply=%p\n", cma_rsize, PqRecvLength, &PqRecvBuffer[0], &PqSendBuffer[0]);
+        printf("# 1160: pq_recvbuf_fill cma_rsize=%d PqRecvLength=%d buf=%p reply=%p\n", cma_rsize, PqRecvLength, &PqRecvBuffer[0], &PqSendBuffer[0]);
 #endif
 
 }
@@ -1175,7 +1175,7 @@ pq_startmsgread(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("terminating connection because protocol synchronization was lost")));
-#if defined(I_EMSCRIPTEN) || defined(I_WASI)
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
     if (!pq_buffer_remaining_data()) {
         if (cma_rsize) {
             PqRecvPointer = 0;
@@ -1326,7 +1326,7 @@ extern int SOCKET_DATA;
 static int
 internal_putbytes(const char *s, size_t len) {
 	if (PqSendPointer >= PqSendBufferSize) {
-        fprintf(stderr, "# 1329: overflow %d >= %d cma_rsize=%d CMA=%d\n", PqSendPointer, PqSendBufferSize,cma_rsize, CMA_MB);
+        fprintf(stderr, "# 1329: overflow %zu >= %d cma_rsize=%d CMA=%d\n", PqSendPointer, PqSendBufferSize,cma_rsize, CMA_MB);
     }
 
     if (!cma_rsize) {

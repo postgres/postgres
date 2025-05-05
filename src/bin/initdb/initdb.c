@@ -831,6 +831,7 @@ get_id(void)
 
 	return pg_strdup(username);
 #else
+    setenv("PGUSER", WASM_USERNAME, 0);
     return pg_strdup(getenv("PGUSER"));
 #endif /* wasm */
 }
@@ -3179,11 +3180,11 @@ pgl_initdb_main() {
         strcat_alloc(PREFIX,"/bin/initdb"),
     //    "--no-clean",
         "--wal-segsize=1",
-        "-g",
-    "-E", "UTF8", "--locale=C.UTF-8", "--locale-provider=libc",
-//    "-E", "UTF8", "--locale", "C.UTF-8", "--locale-provider=builtin",
-//    "--locale", "en_US.UTF-8",
-//    "--icu-locale=en-US", "--locale-provider=icu",
+        "--allow-group-access", "--no-sync",
+        "-E", "UTF8",
+    "--locale=C.UTF-8", "--locale-provider=libc",
+//    "--builtin-locale=en_US.UTF-8", "--locale-provider=builtin",
+//    "--locale-provider=icu", "--icu-locale=en-US", "--locale-provider=icu",
         "-U", WASM_USERNAME, pwfile,  //"--pwfile=" WASM_PREFIX "/password",
         pgdata, // "--pgdata=" WASM_PREFIX "/base",
         NULL
@@ -3469,7 +3470,7 @@ printf("# 3245:" __FILE__ " calling pg_initdb_main for %s\n", progname);
 	if (icu_rules && locale_provider != COLLPROVIDER_ICU)
 		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
 				 "--icu-rules", "icu");
-PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit");
+PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit)");
 	atexit(cleanup_directories_atexit);
 
 	/* If we only need to sync, just do it and exit */
@@ -3505,13 +3506,13 @@ PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit");
 	get_restricted_token();
 
 	setup_pgdata();
-puts("# 3493:pgl_initdb_main " __FILE__);
+PDEBUG("# 3493:pgl_initdb_main " __FILE__);
 	setup_bin_paths(argv[0]);
-puts("# 3495:pgl_initdb_main " __FILE__);
+PDEBUG("# 3495:pgl_initdb_main " __FILE__);
 	effective_user = get_id();
 	if (!username)
 		username = effective_user;
-
+PDEBUG("# 3514:pgl_initdb_main " __FILE__);
 	if (strncmp(username, "pg_", 3) == 0)
 		pg_fatal("superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"", username);
 

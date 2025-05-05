@@ -543,9 +543,14 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 */
 
 		recursion_depth--;
-#if 0 //defined(__EMSCRIPTEN__) || defined(__wasi__)
-        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) ignored\n", recursion_depth);
-        trap();
+#if defined(__wasi__)
+        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) custom handling\n", recursion_depth);
+    	EmitErrorReport();
+	    FreeErrorDataContents(edata);
+	    errordata_stack_depth--;
+    	MemoryContextSwitchTo(oldcontext);
+    	recursion_depth--;
+        abort();
 #else
         fprintf(stderr, "# 549: PG_RE_THROW(ERROR : %d)\n", recursion_depth);
 		PG_RE_THROW();
@@ -598,7 +603,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * worthy of panic, depending on which subprocess returns it.
 		 */
 #if defined(__EMSCRIPTEN__) || defined(__wasi__)
-        puts("# 599: proc_exit(FATAL) ignored");
+        PDEBUG("# 601: proc_exit(FATAL) ignored");
 #else
 		proc_exit(1);
 #endif
@@ -2015,6 +2020,13 @@ ReThrowError(ErrorData *edata)
 void
 pg_re_throw(void)
 {
+#if defined(__wasi__)
+	if (PG_exception_stack != NULL)
+        PDEBUG("# 2020: pg_re_throw(void) [ ex stack ! ]");
+    else
+        PDEBUG("# 2022: pg_re_throw(void) [ NO STACK ]");
+    return;
+#endif
 	/* If possible, throw the error to the next outer setjmp handler */
 	if (PG_exception_stack != NULL)
 		siglongjmp(*PG_exception_stack, 1);

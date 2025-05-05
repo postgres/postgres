@@ -1,10 +1,10 @@
-/* src/include/port/emscripten.h */
+/* src/include/port/{wasi/emscripten}.h */
 
-#ifndef I_EMSCRIPTEN
-#define I_EMSCRIPTEN
+#ifndef I_WASM
+#define I_WASM
 
 #if !defined(__cplusplus)
-#include <emscripten.h>
+#include <sdk_port.h>
 #endif
 
 #include "/tmp/pglite/include/wasm_common.h"
@@ -14,4 +14,4 @@
 #define FD_BUFFER_MAX 16384
 
 
-#endif // I_EMSCRIPTEN
+#endif // I_WASM
