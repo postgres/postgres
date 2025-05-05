@@ -487,7 +487,7 @@ echo "
 
 # only build extra when targeting pglite-wasm .
 
-if [ -f  ${WORKSPACE}/pglite-wasm/build.sh ]
+if [ -f  ${WORKSPACE}/pglite-${PG_BRANCH}/build.sh ]
 then
     if $WASI
     then
@@ -539,7 +539,7 @@ then
     echo "
     * building + linking pglite-wasm (initdb/loop/transport/repl/backend)
 "
-    if ${WORKSPACE}/pglite-wasm/build.sh
+    if ${WORKSPACE}/pglite-${PG_BRANCH}/build.sh
     then
         if $WASI
         then
@@ -584,26 +584,23 @@ fi
 END
             chmod +x pglite-link.sh
             ./pglite-link.sh
+
+            if [ -d pglite ]
+            then
+               echo -n
+            else
+                for archive in ${PG_DIST_EXT}/*.tar
+                do
+                    echo "    packing extension $archive (docker build)"
+                    gzip -k -9 $archive
+                done
+            fi
+
         fi
     else
         echo "linking libpglite wasm failed"
         exit 536
     fi
-else
-    echo "
-    * linking pglite-wasm (initdb/loop/transport/repl/backend) (docker build)
-"
 
-    if ./pglite-${PG_BRANCH}/build.sh
-    then
-        for archive in ${PG_DIST_EXT}/*.tar
-        do
-            echo "    packing extension $archive (docker build)"
-            gzip -k -9 $archive
-        done
-    else
-        echo "failed to link libpglite $BUILD"
-        exit 602
-    fi
 fi
 
