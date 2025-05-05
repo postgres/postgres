@@ -1,14 +1,14 @@
 # German message translation file for initdb.
-# Peter Eisentraut <peter@eisentraut.org>, 2003 - 2024.
+# Peter Eisentraut <peter@eisentraut.org>, 2003 - 2025.
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-19 21:51+0000\n"
-"PO-Revision-Date: 2024-06-20 10:36+0200\n"
+"POT-Creation-Date: 2025-04-03 12:22+0000\n"
+"PO-Revision-Date: 2025-04-03 16:13+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -16,22 +16,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "Fehler: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "Warnung: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "Detail: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "Tipp: "
@@ -56,28 +56,28 @@ msgstr "konnte kein »%s« zum Ausführen finden"
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "konnte Pfad »%s« nicht in absolute Form auflösen: %m"
 
-#: ../../common/exec.c:382 initdb.c:695
+#: ../../common/exec.c:363 initdb.c:753
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "konnte Befehl »%s« nicht ausführen: %m"
 
-#: ../../common/exec.c:394
+#: ../../common/exec.c:375
 #, c-format
 msgid "could not read from command \"%s\": %m"
 msgstr "konnte nicht von Befehl »%s« lesen: %m"
 
-#: ../../common/exec.c:397
+#: ../../common/exec.c:378
 #, c-format
 msgid "no data was returned by command \"%s\""
 msgstr "Befehl »%s« gab keine Daten zurück"
 
-#: ../../common/exec.c:424
+#: ../../common/exec.c:405
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() fehlgeschlagen: %m"
 
-#: ../../common/exec.c:562 ../../common/exec.c:607 ../../common/exec.c:699
-#: initdb.c:353
+#: ../../common/exec.c:543 ../../common/exec.c:588 ../../common/exec.c:680
+#: initdb.c:375 initdb.c:411
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
@@ -93,46 +93,46 @@ msgstr "Speicher aufgebraucht\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kann NULL-Zeiger nicht kopieren (interner Fehler)\n"
 
-#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
-#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "konnte Dateisystem für Datei »%s« nicht synchronisieren: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "konnte »stat« für Datei »%s« nicht ausführen: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "diese Installation unterstützt Sync-Methode »%s« nicht"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
 #: ../../common/pgfnames.c:48 ../../common/rmtree.c:63
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
 #: ../../common/pgfnames.c:69 ../../common/rmtree.c:106
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht lesen: %m"
 
-#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht fsyncen: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "konnte Datei »%s« nicht in »%s« umbenennen: %m"
@@ -241,12 +241,12 @@ msgstr "%s muss im Bereich %d..%d sein"
 msgid "unrecognized sync method: %s"
 msgstr "unbekannte Sync-Methode: %s"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "Argument des Shell-Befehls enthält Newline oder Carriage Return: »%s«\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "Datenbankname enthält Newline oder Carriage Return: »%s«\n"
@@ -261,274 +261,294 @@ msgstr "konnte Junction für »%s« nicht erzeugen: %s\n"
 msgid "could not get junction for \"%s\": %s\n"
 msgstr "konnte Junction für »%s« nicht ermitteln: %s\n"
 
-#: initdb.c:627 initdb.c:1619
+#: initdb.c:372
 #, c-format
-msgid "could not open file \"%s\" for reading: %m"
-msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+msgid "_wsetlocale() failed"
+msgstr "_wsetlocale() fehlgeschlagen"
 
-#: initdb.c:671 initdb.c:975 initdb.c:995
-#, c-format
-msgid "could not open file \"%s\" for writing: %m"
-msgstr "konnte Datei »%s« nicht zum Schreiben öffnen: %m"
-
-#: initdb.c:675 initdb.c:978 initdb.c:997
-#, c-format
-msgid "could not write file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schreiben: %m"
-
-#: initdb.c:679
-#, c-format
-msgid "could not close file \"%s\": %m"
-msgstr "konnte Datei »%s« nicht schließen: %m"
-
-#: initdb.c:713
-#, c-format
-msgid "removing data directory \"%s\""
-msgstr "entferne Datenverzeichnis »%s«"
-
-#: initdb.c:715
-#, c-format
-msgid "failed to remove data directory"
-msgstr "konnte Datenverzeichnis nicht entfernen"
-
-#: initdb.c:719
-#, c-format
-msgid "removing contents of data directory \"%s\""
-msgstr "entferne Inhalt des Datenverzeichnisses »%s«"
-
-#: initdb.c:722
-#, c-format
-msgid "failed to remove contents of data directory"
-msgstr "konnte Inhalt des Datenverzeichnisses nicht entfernen"
-
-#: initdb.c:727
-#, c-format
-msgid "removing WAL directory \"%s\""
-msgstr "entferne WAL-Verzeichnis »%s«"
-
-#: initdb.c:729
-#, c-format
-msgid "failed to remove WAL directory"
-msgstr "konnte WAL-Verzeichnis nicht entfernen"
-
-#: initdb.c:733
-#, c-format
-msgid "removing contents of WAL directory \"%s\""
-msgstr "entferne Inhalt des WAL-Verzeichnisses »%s«"
-
-#: initdb.c:735
-#, c-format
-msgid "failed to remove contents of WAL directory"
-msgstr "konnte Inhalt des WAL-Verzeichnisses nicht entfernen"
-
-#: initdb.c:742
-#, c-format
-msgid "data directory \"%s\" not removed at user's request"
-msgstr "Datenverzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt"
-
-#: initdb.c:746
-#, c-format
-msgid "WAL directory \"%s\" not removed at user's request"
-msgstr "WAL-Verzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt"
-
-#: initdb.c:764
-#, c-format
-msgid "cannot be run as root"
-msgstr "kann nicht als root ausgeführt werden"
-
-#: initdb.c:765
-#, c-format
-msgid "Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process."
-msgstr "Bitte loggen Sie sich (z.B. mit »su«) als der (unprivilegierte) Benutzer ein, der Eigentümer des Serverprozesses sein soll."
-
-#: initdb.c:797
-#, c-format
-msgid "\"%s\" is not a valid server encoding name"
-msgstr "»%s« ist keine gültige Serverkodierung"
-
-#: initdb.c:941
-#, c-format
-msgid "file \"%s\" does not exist"
-msgstr "Datei »%s« existiert nicht"
-
-#: initdb.c:942 initdb.c:947 initdb.c:954
-#, c-format
-msgid "This might mean you have a corrupted installation or identified the wrong directory with the invocation option -L."
-msgstr "Das könnte bedeuten, dass Ihre Installation fehlerhaft ist oder dass Sie das falsche Verzeichnis mit der Kommandozeilenoption -L angegeben haben."
-
-#: initdb.c:946
-#, c-format
-msgid "could not access file \"%s\": %m"
-msgstr "konnte nicht auf Datei »%s« zugreifen: %m"
-
-#: initdb.c:953
-#, c-format
-msgid "file \"%s\" is not a regular file"
-msgstr "Datei »%s« ist keine normale Datei"
-
-#: initdb.c:1086
-#, c-format
-msgid "selecting dynamic shared memory implementation ... "
-msgstr "wähle Implementierung von dynamischem Shared Memory ... "
-
-#: initdb.c:1095
-#, c-format
-msgid "selecting default \"max_connections\" ... "
-msgstr "wähle Vorgabewert für »max_connections« ... "
-
-#: initdb.c:1115
-#, c-format
-msgid "selecting default \"shared_buffers\" ... "
-msgstr "wähle Vorgabewert für »shared_buffers« ... "
-
-#: initdb.c:1138
-#, c-format
-msgid "selecting default time zone ... "
-msgstr "wähle Vorgabewert für Zeitzone ... "
-
-#: initdb.c:1217
-msgid "creating configuration files ... "
-msgstr "erzeuge Konfigurationsdateien ... "
-
-#: initdb.c:1370 initdb.c:1384 initdb.c:1451 initdb.c:1462
-#, c-format
-msgid "could not change permissions of \"%s\": %m"
-msgstr "konnte Zugriffsrechte von »%s« nicht ändern: %m"
-
-#: initdb.c:1481
-#, c-format
-msgid "running bootstrap script ... "
-msgstr "führe Bootstrap-Skript aus ... "
-
-#: initdb.c:1493
-#, c-format
-msgid "input file \"%s\" does not belong to PostgreSQL %s"
-msgstr "Eingabedatei »%s« gehört nicht zu PostgreSQL %s"
-
-#: initdb.c:1495
-#, c-format
-msgid "Specify the correct path using the option -L."
-msgstr "Geben Sie den korrekten Pfad mit der Option -L an."
-
-#: initdb.c:1597
-msgid "Enter new superuser password: "
-msgstr "Geben Sie das neue Superuser-Passwort ein: "
-
-#: initdb.c:1598
-msgid "Enter it again: "
-msgstr "Geben Sie es noch einmal ein: "
-
-#: initdb.c:1601
-#, c-format
-msgid "Passwords didn't match.\n"
-msgstr "Passwörter stimmten nicht überein.\n"
-
-#: initdb.c:1625
-#, c-format
-msgid "could not read password from file \"%s\": %m"
-msgstr "konnte Passwort nicht aus Datei »%s« lesen: %m"
-
-#: initdb.c:1628
-#, c-format
-msgid "password file \"%s\" is empty"
-msgstr "Passwortdatei »%s« ist leer"
-
-#: initdb.c:2040
-#, c-format
-msgid "caught signal\n"
-msgstr "Signal abgefangen\n"
-
-#: initdb.c:2046
-#, c-format
-msgid "could not write to child process: %s\n"
-msgstr "konnte nicht an Kindprozess schreiben: %s\n"
-
-#: initdb.c:2054
-#, c-format
-msgid "ok\n"
-msgstr "ok\n"
-
-#: initdb.c:2143
+#: initdb.c:379
 #, c-format
 msgid "setlocale() failed"
 msgstr "setlocale() fehlgeschlagen"
 
-#: initdb.c:2161
+#: initdb.c:393
+#, c-format
+msgid "failed to restore old locale"
+msgstr "konnte alte Locale nicht wiederherstellen"
+
+#: initdb.c:396
 #, c-format
 msgid "failed to restore old locale \"%s\""
 msgstr "konnte alte Locale »%s« nicht wiederherstellen"
 
-#: initdb.c:2169
+#: initdb.c:685 initdb.c:1700
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "konnte Datei »%s« nicht zum Lesen öffnen: %m"
+
+#: initdb.c:729 initdb.c:1035 initdb.c:1055
+#, c-format
+msgid "could not open file \"%s\" for writing: %m"
+msgstr "konnte Datei »%s« nicht zum Schreiben öffnen: %m"
+
+#: initdb.c:733 initdb.c:1038 initdb.c:1057
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schreiben: %m"
+
+#: initdb.c:737
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "konnte Datei »%s« nicht schließen: %m"
+
+#: initdb.c:771
+#, c-format
+msgid "removing data directory \"%s\""
+msgstr "entferne Datenverzeichnis »%s«"
+
+#: initdb.c:773
+#, c-format
+msgid "failed to remove data directory"
+msgstr "konnte Datenverzeichnis nicht entfernen"
+
+#: initdb.c:777
+#, c-format
+msgid "removing contents of data directory \"%s\""
+msgstr "entferne Inhalt des Datenverzeichnisses »%s«"
+
+#: initdb.c:780
+#, c-format
+msgid "failed to remove contents of data directory"
+msgstr "konnte Inhalt des Datenverzeichnisses nicht entfernen"
+
+#: initdb.c:785
+#, c-format
+msgid "removing WAL directory \"%s\""
+msgstr "entferne WAL-Verzeichnis »%s«"
+
+#: initdb.c:787
+#, c-format
+msgid "failed to remove WAL directory"
+msgstr "konnte WAL-Verzeichnis nicht entfernen"
+
+#: initdb.c:791
+#, c-format
+msgid "removing contents of WAL directory \"%s\""
+msgstr "entferne Inhalt des WAL-Verzeichnisses »%s«"
+
+#: initdb.c:793
+#, c-format
+msgid "failed to remove contents of WAL directory"
+msgstr "konnte Inhalt des WAL-Verzeichnisses nicht entfernen"
+
+#: initdb.c:800
+#, c-format
+msgid "data directory \"%s\" not removed at user's request"
+msgstr "Datenverzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt"
+
+#: initdb.c:804
+#, c-format
+msgid "WAL directory \"%s\" not removed at user's request"
+msgstr "WAL-Verzeichnis »%s« wurde auf Anwenderwunsch nicht entfernt"
+
+#: initdb.c:822
+#, c-format
+msgid "cannot be run as root"
+msgstr "kann nicht als root ausgeführt werden"
+
+#: initdb.c:823
+#, c-format
+msgid "Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process."
+msgstr "Bitte loggen Sie sich (z.B. mit »su«) als der (unprivilegierte) Benutzer ein, der Eigentümer des Serverprozesses sein soll."
+
+#: initdb.c:855
+#, c-format
+msgid "\"%s\" is not a valid server encoding name"
+msgstr "»%s« ist keine gültige Serverkodierung"
+
+#: initdb.c:1001
+#, c-format
+msgid "file \"%s\" does not exist"
+msgstr "Datei »%s« existiert nicht"
+
+#: initdb.c:1002 initdb.c:1007 initdb.c:1014
+#, c-format
+msgid "This might mean you have a corrupted installation or identified the wrong directory with the invocation option -L."
+msgstr "Das könnte bedeuten, dass Ihre Installation fehlerhaft ist oder dass Sie das falsche Verzeichnis mit der Kommandozeilenoption -L angegeben haben."
+
+#: initdb.c:1006
+#, c-format
+msgid "could not access file \"%s\": %m"
+msgstr "konnte nicht auf Datei »%s« zugreifen: %m"
+
+#: initdb.c:1013
+#, c-format
+msgid "file \"%s\" is not a regular file"
+msgstr "Datei »%s« ist keine normale Datei"
+
+#: initdb.c:1158
+#, c-format
+msgid "selecting dynamic shared memory implementation ... "
+msgstr "wähle Implementierung von dynamischem Shared Memory ... "
+
+#: initdb.c:1168
+#, c-format
+msgid "selecting default \"max_connections\" ... "
+msgstr "wähle Vorgabewert für »max_connections« ... "
+
+#: initdb.c:1193
+#, c-format
+msgid "selecting default \"autovacuum_worker_slots\" ... %d\n"
+msgstr "wähle Vorgabewert für »autovacuum_worker_slots« ... %d\n"
+
+#: initdb.c:1196
+#, c-format
+msgid "selecting default \"shared_buffers\" ... "
+msgstr "wähle Vorgabewert für »shared_buffers« ... "
+
+#: initdb.c:1219
+#, c-format
+msgid "selecting default time zone ... "
+msgstr "wähle Vorgabewert für Zeitzone ... "
+
+#: initdb.c:1299
+msgid "creating configuration files ... "
+msgstr "erzeuge Konfigurationsdateien ... "
+
+#: initdb.c:1451 initdb.c:1465 initdb.c:1532 initdb.c:1543
+#, c-format
+msgid "could not change permissions of \"%s\": %m"
+msgstr "konnte Zugriffsrechte von »%s« nicht ändern: %m"
+
+#: initdb.c:1562
+#, c-format
+msgid "running bootstrap script ... "
+msgstr "führe Bootstrap-Skript aus ... "
+
+#: initdb.c:1574
+#, c-format
+msgid "input file \"%s\" does not belong to PostgreSQL %s"
+msgstr "Eingabedatei »%s« gehört nicht zu PostgreSQL %s"
+
+#: initdb.c:1576
+#, c-format
+msgid "Specify the correct path using the option -L."
+msgstr "Geben Sie den korrekten Pfad mit der Option -L an."
+
+#: initdb.c:1678
+msgid "Enter new superuser password: "
+msgstr "Geben Sie das neue Superuser-Passwort ein: "
+
+#: initdb.c:1679
+msgid "Enter it again: "
+msgstr "Geben Sie es noch einmal ein: "
+
+#: initdb.c:1682
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "Passwörter stimmten nicht überein.\n"
+
+#: initdb.c:1706
+#, c-format
+msgid "could not read password from file \"%s\": %m"
+msgstr "konnte Passwort nicht aus Datei »%s« lesen: %m"
+
+#: initdb.c:1709
+#, c-format
+msgid "password file \"%s\" is empty"
+msgstr "Passwortdatei »%s« ist leer"
+
+#: initdb.c:2121
+#, c-format
+msgid "caught signal\n"
+msgstr "Signal abgefangen\n"
+
+#: initdb.c:2127
+#, c-format
+msgid "could not write to child process: %s\n"
+msgstr "konnte nicht an Kindprozess schreiben: %s\n"
+
+#: initdb.c:2135
+#, c-format
+msgid "ok\n"
+msgstr "ok\n"
+
+#: initdb.c:2217 initdb.c:2263
+#, c-format
+msgid "locale name \"%s\" contains non-ASCII characters"
+msgstr "Locale-Name »%s« enthält Nicht-ASCII-Zeichen"
+
+#: initdb.c:2243
 #, c-format
 msgid "invalid locale name \"%s\""
 msgstr "ungültiger Locale-Name: »%s«"
 
-#: initdb.c:2170
+#: initdb.c:2244
 #, c-format
 msgid "If the locale name is specific to ICU, use --icu-locale."
 msgstr "Wenn der Locale-Name nur für ICU gültig ist, verwenden Sie --icu-locale."
 
-#: initdb.c:2183
+#: initdb.c:2257
 #, c-format
 msgid "invalid locale settings; check LANG and LC_* environment variables"
 msgstr "ungültige Locale-Einstellungen; prüfen Sie die Umgebungsvariablen LANG und LC_*"
 
-#: initdb.c:2209 initdb.c:2233
+#: initdb.c:2288 initdb.c:2312
 #, c-format
 msgid "encoding mismatch"
 msgstr "unpassende Kodierungen"
 
-#: initdb.c:2210
+#: initdb.c:2289
 #, c-format
 msgid "The encoding you selected (%s) and the encoding that the selected locale uses (%s) do not match. This would lead to misbehavior in various character string processing functions."
 msgstr "Die von Ihnen gewählte Kodierung (%s) und die von der gewählten Locale verwendete Kodierung (%s) passen nicht zu einander. Das würde in verschiedenen Zeichenkettenfunktionen zu Fehlverhalten führen."
 
-#: initdb.c:2215 initdb.c:2236
+#: initdb.c:2294 initdb.c:2315
 #, c-format
 msgid "Rerun %s and either do not specify an encoding explicitly, or choose a matching combination."
 msgstr "Starten Sie %s erneut und geben Sie entweder keine Kodierung explizit an oder wählen Sie eine passende Kombination."
 
-#: initdb.c:2234
+#: initdb.c:2313
 #, c-format
 msgid "The encoding you selected (%s) is not supported with the ICU provider."
 msgstr "Die von Ihnen gewählte Kodierung (%s) wird vom ICU-Provider nicht unterstützt."
 
-#: initdb.c:2285
+#: initdb.c:2364
 #, c-format
 msgid "could not convert locale name \"%s\" to language tag: %s"
 msgstr "konnte Locale-Namen »%s« nicht in Sprach-Tag umwandeln: %s"
 
-#: initdb.c:2291 initdb.c:2343 initdb.c:2435
+#: initdb.c:2370 initdb.c:2422 initdb.c:2516
 #, c-format
 msgid "ICU is not supported in this build"
 msgstr "ICU wird in dieser Installation nicht unterstützt"
 
-#: initdb.c:2314
+#: initdb.c:2393
 #, c-format
 msgid "could not get language from locale \"%s\": %s"
 msgstr "konnte Sprache nicht aus Locale »%s« ermitteln: %s"
 
-#: initdb.c:2340
+#: initdb.c:2419
 #, c-format
 msgid "locale \"%s\" has unknown language \"%s\""
 msgstr "Locale »%s« hat unbekannte Sprache »%s«"
 
-#: initdb.c:2401
+#: initdb.c:2480
 #, c-format
 msgid "locale must be specified if provider is %s"
 msgstr "Locale muss angegeben werden, wenn der Provider %s ist"
 
-#: initdb.c:2412
+#: initdb.c:2493
 #, c-format
 msgid "invalid locale name \"%s\" for builtin provider"
 msgstr "ungültiger Locale-Name »%s« für Provider »builtin«"
 
-#: initdb.c:2423
+#: initdb.c:2504
 #, c-format
 msgid "Using language tag \"%s\" for ICU locale \"%s\".\n"
 msgstr "Verwende Sprach-Tag »%s« für ICU-Locale »%s«.\n"
 
-#: initdb.c:2446
+#: initdb.c:2527
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -537,17 +557,17 @@ msgstr ""
 "%s initialisiert einen PostgreSQL-Datenbankcluster.\n"
 "\n"
 
-#: initdb.c:2447
+#: initdb.c:2528
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: initdb.c:2448
+#: initdb.c:2529
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPTION]... [DATENVERZEICHNIS]\n"
 
-#: initdb.c:2449
+#: initdb.c:2530
 #, c-format
 msgid ""
 "\n"
@@ -556,65 +576,65 @@ msgstr ""
 "\n"
 "Optionen:\n"
 
-#: initdb.c:2450
+#: initdb.c:2531
 #, c-format
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=METHODE        vorgegebene Authentifizierungsmethode für lokale Verbindungen\n"
 
-#: initdb.c:2451
+#: initdb.c:2532
 #, c-format
 msgid "      --auth-host=METHOD    default authentication method for local TCP/IP connections\n"
 msgstr ""
 "      --auth-host=METHODE   vorgegebene Authentifizierungsmethode für lokale\n"
 "                            TCP/IP-Verbindungen\n"
 
-#: initdb.c:2452
+#: initdb.c:2533
 #, c-format
 msgid "      --auth-local=METHOD   default authentication method for local-socket connections\n"
 msgstr ""
 "      --auth-local=METHODE  vorgegebene Authentifizierungsmethode für Verbindungen\n"
 "                            auf lokalen Sockets\n"
 
-#: initdb.c:2453
+#: initdb.c:2534
 #, c-format
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]DATENVERZ   Datenverzeichnis für diesen Datenbankcluster\n"
 
-#: initdb.c:2454
+#: initdb.c:2535
 #, c-format
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=KODIERUNG  setze Standardkodierung für neue Datenbanken\n"
 
-#: initdb.c:2455
+#: initdb.c:2536
 #, c-format
 msgid "  -g, --allow-group-access  allow group read/execute on data directory\n"
 msgstr ""
 "  -g, --allow-group-access  Lese- und Ausführungsrechte am Datenverzeichnis\n"
 "                            für Gruppe setzen\n"
 
-#: initdb.c:2456
+#: initdb.c:2537
 #, c-format
 msgid "      --icu-locale=LOCALE   set ICU locale ID for new databases\n"
 msgstr "      --icu-locale=LOCALE   setze ICU-Locale-ID für neue Datenbanken\n"
 
-#: initdb.c:2457
+#: initdb.c:2538
 #, c-format
 msgid "      --icu-rules=RULES     set additional ICU collation rules for new databases\n"
 msgstr ""
 "      --icu-rules=REGELN    setze zusätzliche ICU-Sortierfolgenregeln für neue\n"
 "                            Datenbanken\n"
 
-#: initdb.c:2458
+#: initdb.c:2539
 #, c-format
 msgid "  -k, --data-checksums      use data page checksums\n"
 msgstr "  -k, --data-checksums      Datenseitenprüfsummen verwenden\n"
 
-#: initdb.c:2459
+#: initdb.c:2540
 #, c-format
 msgid "      --locale=LOCALE       set default locale for new databases\n"
 msgstr "      --locale=LOCALE       setze Standardlocale für neue Datenbanken\n"
 
-#: initdb.c:2460
+#: initdb.c:2541
 #, c-format
 msgid ""
 "      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
@@ -628,12 +648,12 @@ msgstr ""
 "                            für neue Datenbanken (Voreinstellung aus der\n"
 "                            Umgebung entnommen)\n"
 
-#: initdb.c:2464
+#: initdb.c:2545
 #, c-format
 msgid "      --no-locale           equivalent to --locale=C\n"
 msgstr "      --no-locale           entspricht --locale=C\n"
 
-#: initdb.c:2465
+#: initdb.c:2546
 #, c-format
 msgid ""
 "      --builtin-locale=LOCALE\n"
@@ -642,7 +662,7 @@ msgstr ""
 "      --builtin-locale=LOCALE\n"
 "                            setze Locale für Provider »builtin« für neue Datenbanken\n"
 
-#: initdb.c:2467
+#: initdb.c:2548
 #, c-format
 msgid ""
 "      --locale-provider={builtin|libc|icu}\n"
@@ -651,12 +671,17 @@ msgstr ""
 "      --locale-provider={builtin|libc|icu}\n"
 "                            setze Standard-Locale-Provider für neue Datenbanken\n"
 
-#: initdb.c:2469
+#: initdb.c:2550
+#, c-format
+msgid "      --no-data-checksums   do not use data page checksums\n"
+msgstr "      --no-data-checksums   Datenseitenprüfsummen nicht verwenden\n"
+
+#: initdb.c:2551
 #, c-format
 msgid "      --pwfile=FILE         read password for the new superuser from file\n"
 msgstr "      --pwfile=DATEI        lese Passwort des neuen Superusers aus Datei\n"
 
-#: initdb.c:2470
+#: initdb.c:2552
 #, c-format
 msgid ""
 "  -T, --text-search-config=CFG\n"
@@ -665,27 +690,27 @@ msgstr ""
 "  -T, --text-search-config=KFG\n"
 "                            Standardtextsuchekonfiguration\n"
 
-#: initdb.c:2472
+#: initdb.c:2554
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       Datenbank-Superusername\n"
 
-#: initdb.c:2473
+#: initdb.c:2555
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            frage nach Passwort für neuen Superuser\n"
 
-#: initdb.c:2474
+#: initdb.c:2556
 #, c-format
 msgid "  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
 msgstr "  -X, --waldir=WALVERZ      Verzeichnis für das Write-Ahead-Log\n"
 
-#: initdb.c:2475
+#: initdb.c:2557
 #, c-format
 msgid "      --wal-segsize=SIZE    size of WAL segments, in megabytes\n"
 msgstr "      --wal-segsize=ZAHL    Größe eines WAL-Segments, in Megabyte\n"
 
-#: initdb.c:2476
+#: initdb.c:2558
 #, c-format
 msgid ""
 "\n"
@@ -694,63 +719,68 @@ msgstr ""
 "\n"
 "Weniger häufig verwendete Optionen:\n"
 
-#: initdb.c:2477
+#: initdb.c:2559
 #, c-format
 msgid "  -c, --set NAME=VALUE      override default setting for server parameter\n"
 msgstr "  -c, --set NAME=WERT       Voreinstellung für Serverparameter setzen\n"
 
-#: initdb.c:2478
+#: initdb.c:2560
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               erzeuge eine Menge Debug-Ausgaben\n"
 
-#: initdb.c:2479
+#: initdb.c:2561
 #, c-format
 msgid "      --discard-caches      set debug_discard_caches=1\n"
 msgstr "      --discard-caches      debug_discard_caches=1 setzen\n"
 
-#: initdb.c:2480
+#: initdb.c:2562
 #, c-format
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L VERZEICHNIS            wo sind die Eingabedateien zu finden\n"
 
-#: initdb.c:2481
+#: initdb.c:2563
 #, c-format
 msgid "  -n, --no-clean            do not clean up after errors\n"
 msgstr "  -n, --no-clean            nach Fehlern nicht aufräumen\n"
 
-#: initdb.c:2482
+#: initdb.c:2564
 #, c-format
 msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
 msgstr ""
 "  -N, --no-sync             nicht warten, bis Änderungen sicher auf Festplatte\n"
 "                            geschrieben sind\n"
 
-#: initdb.c:2483
+#: initdb.c:2565
+#, c-format
+msgid "      --no-sync-data-files  do not sync files within database directories\n"
+msgstr "      --no-sync-data-files  Dateien in Datenbankverzeichnissen nicht synchronisieren\n"
+
+#: initdb.c:2566
 #, c-format
 msgid "      --no-instructions     do not print instructions for next steps\n"
 msgstr "      --no-instructions     Anleitung für nächste Schritte nicht ausgeben\n"
 
-#: initdb.c:2484
+#: initdb.c:2567
 #, c-format
 msgid "  -s, --show                show internal settings, then exit\n"
 msgstr "  -s, --show                interne Einstellungen zeigen, dann beenden\n"
 
-#: initdb.c:2485
+#: initdb.c:2568
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr ""
 "      --sync-method=METHODE Methode zum Synchronisieren vond Dateien auf\n"
 "                            Festplatte setzen\n"
 
-#: initdb.c:2486
+#: initdb.c:2569
 #, c-format
 msgid "  -S, --sync-only           only sync database files to disk, then exit\n"
 msgstr ""
 "  -S, --sync-only           nur Datenbankdateien auf Festplatte synchronisieren,\n"
 "                            dann beenden\n"
 
-#: initdb.c:2487
+#: initdb.c:2570
 #, c-format
 msgid ""
 "\n"
@@ -759,17 +789,17 @@ msgstr ""
 "\n"
 "Weitere Optionen:\n"
 
-#: initdb.c:2488
+#: initdb.c:2571
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             Versionsinformationen anzeigen, dann beenden\n"
 
-#: initdb.c:2489
+#: initdb.c:2572
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                diese Hilfe anzeigen, dann beenden\n"
 
-#: initdb.c:2490
+#: initdb.c:2573
 #, c-format
 msgid ""
 "\n"
@@ -780,7 +810,7 @@ msgstr ""
 "Wenn kein Datenverzeichnis angegeben ist, dann wird die Umgebungsvariable\n"
 "PGDATA verwendet.\n"
 
-#: initdb.c:2492
+#: initdb.c:2575
 #, c-format
 msgid ""
 "\n"
@@ -789,72 +819,72 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <%s>.\n"
 
-#: initdb.c:2493
+#: initdb.c:2576
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
 
-#: initdb.c:2517
+#: initdb.c:2600
 #, c-format
 msgid "invalid authentication method \"%s\" for \"%s\" connections"
 msgstr "ungültige Authentifizierungsmethode »%s« für »%s«-Verbindungen"
 
-#: initdb.c:2531
+#: initdb.c:2614
 #, c-format
 msgid "must specify a password for the superuser to enable password authentication"
 msgstr "Superuser-Passwort muss angegeben werden um Passwortauthentifizierung einzuschalten"
 
-#: initdb.c:2550
+#: initdb.c:2633
 #, c-format
 msgid "no data directory specified"
 msgstr "kein Datenverzeichnis angegeben"
 
-#: initdb.c:2551
+#: initdb.c:2634
 #, c-format
 msgid "You must identify the directory where the data for this database system will reside.  Do this with either the invocation option -D or the environment variable PGDATA."
 msgstr "Sie müssen das Verzeichnis angeben, wo dieses Datenbanksystem abgelegt werden soll. Machen Sie dies entweder mit der Kommandozeilenoption -D oder mit der Umgebungsvariable PGDATA."
 
-#: initdb.c:2568
+#: initdb.c:2651
 #, c-format
 msgid "could not set environment"
 msgstr "konnte Umgebung nicht setzen"
 
-#: initdb.c:2586
+#: initdb.c:2669
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "Programm »%s« wird von %s benötigt, aber wurde nicht im selben Verzeichnis wie »%s« gefunden"
 
-#: initdb.c:2589
+#: initdb.c:2672
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "Programm »%s« wurde von »%s« gefunden, aber es hatte nicht die gleiche Version wie %s"
 
-#: initdb.c:2604
+#: initdb.c:2687
 #, c-format
 msgid "input file location must be an absolute path"
 msgstr "Eingabedatei muss absoluten Pfad haben"
 
-#: initdb.c:2621
+#: initdb.c:2704
 #, c-format
 msgid "The database cluster will be initialized with locale \"%s\".\n"
 msgstr "Der Datenbankcluster wird mit der Locale »%s« initialisiert werden.\n"
 
-#: initdb.c:2624
+#: initdb.c:2707
 #, c-format
 msgid "The database cluster will be initialized with this locale configuration:\n"
 msgstr "Der Datenbankcluster wird mit dieser Locale-Konfiguration initialisiert werden:\n"
 
-#: initdb.c:2625
+#: initdb.c:2708
 #, c-format
 msgid "  locale provider:   %s\n"
 msgstr "  Locale-Provider:      %s\n"
 
-#: initdb.c:2627
+#: initdb.c:2710
 #, c-format
 msgid "  default collation: %s\n"
 msgstr "  Standardsortierfolge: %s\n"
 
-#: initdb.c:2628
+#: initdb.c:2711
 #, c-format
 msgid ""
 "  LC_COLLATE:  %s\n"
@@ -871,22 +901,22 @@ msgstr ""
 "  LC_NUMERIC:  %s\n"
 "  LC_TIME:     %s\n"
 
-#: initdb.c:2658
+#: initdb.c:2741
 #, c-format
 msgid "could not find suitable encoding for locale \"%s\""
 msgstr "konnte keine passende Kodierung für Locale »%s« finden"
 
-#: initdb.c:2660
+#: initdb.c:2743
 #, c-format
 msgid "Rerun %s with the -E option."
 msgstr "Führen Sie %s erneut mit der Option -E aus."
 
-#: initdb.c:2661 initdb.c:3204 initdb.c:3324 initdb.c:3344
+#: initdb.c:2744 initdb.c:3282 initdb.c:3408 initdb.c:3428
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Versuchen Sie »%s --help« für weitere Informationen."
 
-#: initdb.c:2673
+#: initdb.c:2756
 #, c-format
 msgid ""
 "Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
@@ -895,112 +925,112 @@ msgstr ""
 "Die von der Locale gesetzte Kodierung »%s« ist nicht als serverseitige Kodierung erlaubt.\n"
 "Die Standarddatenbankkodierung wird stattdessen auf »%s« gesetzt.\n"
 
-#: initdb.c:2678
+#: initdb.c:2761
 #, c-format
 msgid "locale \"%s\" requires unsupported encoding \"%s\""
 msgstr "Locale »%s« benötigt nicht unterstützte Kodierung »%s«"
 
-#: initdb.c:2680
+#: initdb.c:2763
 #, c-format
 msgid "Encoding \"%s\" is not allowed as a server-side encoding."
 msgstr "Kodierung »%s« ist nicht als serverseitige Kodierung erlaubt."
 
-#: initdb.c:2682
+#: initdb.c:2765
 #, c-format
 msgid "Rerun %s with a different locale selection."
 msgstr "Starten Sie %s erneut mit einer anderen Locale-Wahl."
 
-#: initdb.c:2690
+#: initdb.c:2773
 #, c-format
 msgid "The default database encoding has accordingly been set to \"%s\".\n"
 msgstr "Die Standarddatenbankkodierung wurde entsprechend auf »%s« gesetzt.\n"
 
-#: initdb.c:2704
+#: initdb.c:2789
 #, c-format
 msgid "builtin provider locale \"%s\" requires encoding \"%s\""
 msgstr "Locale »%s« vom Provider »builtin« benötigt Kodierung »%s«"
 
-#: initdb.c:2766
+#: initdb.c:2851
 #, c-format
 msgid "could not find suitable text search configuration for locale \"%s\""
 msgstr "konnte keine passende Textsuchekonfiguration für Locale »%s« finden"
 
-#: initdb.c:2777
+#: initdb.c:2862
 #, c-format
 msgid "suitable text search configuration for locale \"%s\" is unknown"
 msgstr "passende Textsuchekonfiguration für Locale »%s« ist unbekannt"
 
-#: initdb.c:2782
+#: initdb.c:2867
 #, c-format
 msgid "specified text search configuration \"%s\" might not match locale \"%s\""
 msgstr "angegebene Textsuchekonfiguration »%s« passt möglicherweise nicht zur Locale »%s«"
 
-#: initdb.c:2787
+#: initdb.c:2872
 #, c-format
 msgid "The default text search configuration will be set to \"%s\".\n"
 msgstr "Die Standardtextsuchekonfiguration wird auf »%s« gesetzt.\n"
 
-#: initdb.c:2830 initdb.c:2901
+#: initdb.c:2906 initdb.c:2977
 #, c-format
 msgid "creating directory %s ... "
 msgstr "erzeuge Verzeichnis %s ... "
 
-#: initdb.c:2835 initdb.c:2906 initdb.c:2954 initdb.c:3011
+#: initdb.c:2911 initdb.c:2982 initdb.c:3030 initdb.c:3087
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht erzeugen: %m"
 
-#: initdb.c:2844 initdb.c:2916
+#: initdb.c:2920 initdb.c:2992
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "berichtige Zugriffsrechte des bestehenden Verzeichnisses %s ... "
 
-#: initdb.c:2849 initdb.c:2921
+#: initdb.c:2925 initdb.c:2997
 #, c-format
 msgid "could not change permissions of directory \"%s\": %m"
 msgstr "konnte Rechte des Verzeichnisses »%s« nicht ändern: %m"
 
-#: initdb.c:2861 initdb.c:2933
+#: initdb.c:2937 initdb.c:3009
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "Verzeichnis »%s« existiert aber ist nicht leer"
 
-#: initdb.c:2865
+#: initdb.c:2941
 #, c-format
 msgid "If you want to create a new database system, either remove or empty the directory \"%s\" or run %s with an argument other than \"%s\"."
 msgstr "Wenn Sie ein neues Datenbanksystem erzeugen wollen, entfernen oder leeren Sie das Verzeichnis »%s« or führen Sie %s mit einem anderen Argument als »%s« aus."
 
-#: initdb.c:2873 initdb.c:2943 initdb.c:3369
+#: initdb.c:2949 initdb.c:3019 initdb.c:3453
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "konnte nicht auf Verzeichnis »%s« zugreifen: %m"
 
-#: initdb.c:2894
+#: initdb.c:2970
 #, c-format
 msgid "WAL directory location must be an absolute path"
 msgstr "WAL-Verzeichnis muss absoluten Pfad haben"
 
-#: initdb.c:2937
+#: initdb.c:3013
 #, c-format
 msgid "If you want to store the WAL there, either remove or empty the directory \"%s\"."
 msgstr "Wenn Sie dort den WAL ablegen wollen, entfernen oder leeren Sie das Verzeichnis »%s«."
 
-#: initdb.c:2947
+#: initdb.c:3023
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "konnte symbolische Verknüpfung »%s« nicht erstellen: %m"
 
-#: initdb.c:2966
+#: initdb.c:3042
 #, c-format
 msgid "It contains a dot-prefixed/invisible file, perhaps due to it being a mount point."
 msgstr "Es enthält eine unsichtbare Datei (beginnt mit Punkt), vielleicht weil es ein Einhängepunkt ist."
 
-#: initdb.c:2968
+#: initdb.c:3044
 #, c-format
 msgid "It contains a lost+found directory, perhaps due to it being a mount point."
 msgstr "Es enthält ein Verzeichnis »lost+found«, vielleicht weil es ein Einhängepunkt ist."
 
-#: initdb.c:2970
+#: initdb.c:3046
 #, c-format
 msgid ""
 "Using a mount point directly as the data directory is not recommended.\n"
@@ -1009,65 +1039,65 @@ msgstr ""
 "Einen Einhängepunkt direkt als Datenverzeichnis zu verwenden wird nicht empfohlen.\n"
 "Erzeugen Sie ein Unterverzeichnis unter dem Einhängepunkt."
 
-#: initdb.c:2997
+#: initdb.c:3073
 #, c-format
 msgid "creating subdirectories ... "
 msgstr "erzeuge Unterverzeichnisse ... "
 
-#: initdb.c:3040
+#: initdb.c:3116
 msgid "performing post-bootstrap initialization ... "
 msgstr "führe Post-Bootstrap-Initialisierung durch ... "
 
-#: initdb.c:3203
+#: initdb.c:3281
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s benötigt einen Wert"
 
-#: initdb.c:3228
+#: initdb.c:3306
 #, c-format
 msgid "Running in debug mode.\n"
 msgstr "Debug-Modus ist an.\n"
 
-#: initdb.c:3232
+#: initdb.c:3310
 #, c-format
 msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
 msgstr "No-Clean-Modus ist an. Bei Fehlern wird nicht aufgeräumt.\n"
 
-#: initdb.c:3305
+#: initdb.c:3383
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "unbekannter Locale-Provider: %s"
 
-#: initdb.c:3342
+#: initdb.c:3426
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
 
-#: initdb.c:3349 initdb.c:3353 initdb.c:3357
+#: initdb.c:3433 initdb.c:3437 initdb.c:3441
 #, c-format
 msgid "%s cannot be specified unless locale provider \"%s\" is chosen"
 msgstr "%s kann nur angegeben werden, wenn Locale-Provider »%s« gewählt ist"
 
-#: initdb.c:3371 initdb.c:3434
+#: initdb.c:3455 initdb.c:3518
 msgid "syncing data to disk ... "
 msgstr "synchronisiere Daten auf Festplatte ... "
 
-#: initdb.c:3379
+#: initdb.c:3463
 #, c-format
 msgid "password prompt and password file cannot be specified together"
 msgstr "Passwortprompt und Passwortdatei können nicht zusammen angegeben werden"
 
-#: initdb.c:3390
+#: initdb.c:3474
 #, c-format
 msgid "argument of %s must be a power of two between 1 and 1024"
 msgstr "Argument von %s muss eine Zweierpotenz zwischen 1 und 1024 sein"
 
-#: initdb.c:3403
+#: initdb.c:3487
 #, c-format
 msgid "superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\""
 msgstr "Superuser-Name »%s« nicht erlaubt; Rollennamen können nicht mit »pg_« anfangen"
 
-#: initdb.c:3405
+#: initdb.c:3489
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -1078,17 +1108,17 @@ msgstr ""
 "»%s« gehören. Diesem Benutzer muss auch der Serverprozess gehören.\n"
 "\n"
 
-#: initdb.c:3421
+#: initdb.c:3505
 #, c-format
 msgid "Data page checksums are enabled.\n"
 msgstr "Datenseitenprüfsummen sind eingeschaltet.\n"
 
-#: initdb.c:3423
+#: initdb.c:3507
 #, c-format
 msgid "Data page checksums are disabled.\n"
 msgstr "Datenseitenprüfsummen sind ausgeschaltet.\n"
 
-#: initdb.c:3440
+#: initdb.c:3524
 #, c-format
 msgid ""
 "\n"
@@ -1099,22 +1129,22 @@ msgstr ""
 "Synchronisation auf Festplatte übersprungen.\n"
 "Das Datenverzeichnis könnte verfälscht werden, falls das Betriebssystem abstürzt.\n"
 
-#: initdb.c:3445
+#: initdb.c:3529
 #, c-format
 msgid "enabling \"trust\" authentication for local connections"
 msgstr "Authentifizierung für lokale Verbindungen auf »trust« gesetzt"
 
-#: initdb.c:3446
+#: initdb.c:3530
 #, c-format
 msgid "You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb."
 msgstr "Sie können dies ändern, indem Sie pg_hba.conf bearbeiten oder beim nächsten Aufruf von initdb die Option -A, oder --auth-local und --auth-host, verwenden."
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3476
+#: initdb.c:3560
 msgid "logfile"
 msgstr "logdatei"
 
-#: initdb.c:3478
+#: initdb.c:3562
 #, c-format
 msgid ""
 "\n"

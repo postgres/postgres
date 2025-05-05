@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: psql-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:14+0000\n"
-"PO-Revision-Date: 2023-09-05 09:51+0200\n"
+"PO-Revision-Date: 2024-06-26 09:15+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -2421,7 +2421,6 @@ msgstr ""
 "  -v, --set=, --variable=JMÉNO=HODNOTA\n"
 "                           nastaví psql proměnnou JMÉNO na HODNOTA\n"
 "                           (e.g., -v ON_ERROR_STOP=1)\n"
-"\n"
 
 #: help.c:89
 #, c-format
@@ -2799,7 +2798,7 @@ msgstr "  \\copy ...              provede SQL COPY s tokem dat na klienta\n"
 #, c-format
 msgid "  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"
 msgstr ""
-"  \\echo [-n] [ŘETĚZEC]    vypsání textu na standardní výstup (-n pro potlačení\n"
+"  \\echo [-n] [ŘETĚZEC]   vypsání textu na standardní výstup (-n pro potlačení\n"
 "                         nového řádku)\n"
 
 #: help.c:211

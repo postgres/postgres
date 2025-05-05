@@ -1,0 +1,896 @@
+# Swedish message translation file for pg_combinebackup
+# Copyright (C) 2024 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
+# Dennis Björklund <db@zigo.dhs.org>, 2024, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2025-02-12 13:52+0000\n"
+"PO-Revision-Date: 2025-02-12 20:37+0100\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "fel: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "varning: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "detalj: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "tips: "
+
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
+
+#: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "kunde inte läsa fil \"%s\": %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "kunde inte stänga fil \"%s\": %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "byte-ordning stämmer inte"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"möjligt fel i byteordning\n"
+"Den byteordning som filen från pg_control lagrats med passar kanske\n"
+"inte detta program. I så fall kan nedanstående resultat vara felaktiga\n"
+"och PostgreSQL-installationen vara inkompatibel med databaskatalogen."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
+#: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
+#: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "kunde inte öppna fil \"%s\": %m"
+
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "kunde inte skriva fil \"%s\": %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "kunde inte fsync:a fil \"%s\": %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
+#, c-format
+msgid "out of memory"
+msgstr "slut på minne"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "lyckades"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "destinationsbuffer för liten"
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL-fel"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "slut på minne\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "kunde inte göra stat() på fil \"%s\": %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "detta bygge stöder inte synkmetod \"%s\""
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_combinebackup.c:933 pg_combinebackup.c:1256
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "kunde inte öppna katalog \"%s\": %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "kunde inte läsa katalog \"%s\": %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
+
+#: ../../common/jsonapi.c:2121
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "Recursive-descent-parser kan inte använda inkrementell lexer."
+
+#: ../../common/jsonapi.c:2123
+msgid "Incremental parser requires incremental lexer."
+msgstr "Inkrementell parser kräver en inkrementell lexer."
+
+#: ../../common/jsonapi.c:2125
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON nästlad för djupt, maximal tillåtet djup är 6400."
+
+#: ../../common/jsonapi.c:2127
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "Escape-sekvens \"\\%.*s\" är ogiltig."
+
+#: ../../common/jsonapi.c:2131
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "Tecken med värde 0x%02x måste escape:as."
+
+#: ../../common/jsonapi.c:2135
+#, c-format
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "Förväntade slut på indata, men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2138
+#, c-format
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "Färväntade array-element eller \"]\", men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2141
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "Förväntade \",\" eller \"]\", men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2144
+#, c-format
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "Förväntade sig \":\" men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2147
+#, c-format
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "Förväntade JSON-värde, men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2150
+msgid "The input string ended unexpectedly."
+msgstr "Indatasträngen avslutades oväntat."
+
+#: ../../common/jsonapi.c:2152
+#, c-format
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "Färväntade sträng eller \"}\", men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2155
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2158
+#, c-format
+msgid "Expected string, but found \"%.*s\"."
+msgstr "Förväntade sträng, men hittade \"%.*s\"."
+
+#: ../../common/jsonapi.c:2161
+#, c-format
+msgid "Token \"%.*s\" is invalid."
+msgstr "Token \"%.*s\" är ogiltig."
+
+#: ../../common/jsonapi.c:2164
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 kan inte konverteras till text."
+
+#: ../../common/jsonapi.c:2166
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
+
+#: ../../common/jsonapi.c:2169
+msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
+msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
+
+#: ../../common/jsonapi.c:2178
+#, c-format
+msgid "Unicode escape value could not be translated to the server's encoding %s."
+msgstr "Escape-värde för unicode kan inte översättas till serverns kodning %s."
+
+#: ../../common/jsonapi.c:2185
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
+
+#: ../../common/jsonapi.c:2187
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
+
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "kunde inte initiera kontrollsumma för backup-manifest"
+
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
+msgid "manifest ended unexpectedly"
+msgstr "manifestet avslutades oväntat"
+
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "kunde inte uppdatera kontrollsumma för backup-manifest"
+
+#: ../../common/parse_manifest.c:301
+msgid "unexpected object start"
+msgstr "oväntad objektstart"
+
+#: ../../common/parse_manifest.c:336
+msgid "unexpected object end"
+msgstr "oväntat objektslut"
+
+#: ../../common/parse_manifest.c:365
+msgid "unexpected array start"
+msgstr "oväntad array-start"
+
+#: ../../common/parse_manifest.c:390
+msgid "unexpected array end"
+msgstr "oväntat array-slut"
+
+#: ../../common/parse_manifest.c:417
+msgid "expected version indicator"
+msgstr "förväntade en versionsindikator"
+
+#: ../../common/parse_manifest.c:453
+msgid "unrecognized top-level field"
+msgstr "okänt toppnivåfält"
+
+#: ../../common/parse_manifest.c:472
+msgid "unexpected file field"
+msgstr "oväntat filfält"
+
+#: ../../common/parse_manifest.c:486
+msgid "unexpected WAL range field"
+msgstr "oväntat WAL-intervall-fält"
+
+#: ../../common/parse_manifest.c:492
+msgid "unexpected object field"
+msgstr "oväntat objektfält"
+
+#: ../../common/parse_manifest.c:582
+msgid "unexpected scalar"
+msgstr "oväntad skalar"
+
+#: ../../common/parse_manifest.c:608
+msgid "manifest version not an integer"
+msgstr "manifestversion är inte ett heltal"
+
+#: ../../common/parse_manifest.c:612
+msgid "unexpected manifest version"
+msgstr "oväntad manifestversion"
+
+#: ../../common/parse_manifest.c:636
+msgid "system identifier in manifest not an integer"
+msgstr "manifestets systemidentifierare är inte ett heltal"
+
+#: ../../common/parse_manifest.c:661
+msgid "missing path name"
+msgstr "saknas sökväg"
+
+#: ../../common/parse_manifest.c:664
+msgid "both path name and encoded path name"
+msgstr "både sökväg och kodad sökväg"
+
+#: ../../common/parse_manifest.c:666
+msgid "missing size"
+msgstr "saknar storlek"
+
+#: ../../common/parse_manifest.c:669
+msgid "checksum without algorithm"
+msgstr "kontrollsumma utan algoritm"
+
+#: ../../common/parse_manifest.c:683
+msgid "could not decode file name"
+msgstr "kunde inte avkoda filnamn"
+
+#: ../../common/parse_manifest.c:693
+msgid "file size is not an integer"
+msgstr "filstorlek är inte ett haltal"
+
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "okänd algoritm för kontrollsumma: \"%s\""
+
+#: ../../common/parse_manifest.c:718
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "ogiltig kontrollsumma för fil \"%s\": \"%s\""
+
+#: ../../common/parse_manifest.c:761
+msgid "missing timeline"
+msgstr "saknar tidslinje"
+
+#: ../../common/parse_manifest.c:763
+msgid "missing start LSN"
+msgstr "saknar start-LSN"
+
+#: ../../common/parse_manifest.c:765
+msgid "missing end LSN"
+msgstr "saknar slut-LSN"
+
+#: ../../common/parse_manifest.c:771
+msgid "timeline is not an integer"
+msgstr "tidslinje är inte ett heltal"
+
+#: ../../common/parse_manifest.c:774
+msgid "could not parse start LSN"
+msgstr "kunde inte parsa start-LSN"
+
+#: ../../common/parse_manifest.c:777
+msgid "could not parse end LSN"
+msgstr "kunde inte parsa slut-LSN"
+
+#: ../../common/parse_manifest.c:842
+msgid "expected at least 2 lines"
+msgstr "förväntade minst två rader"
+
+#: ../../common/parse_manifest.c:845
+msgid "last line not newline-terminated"
+msgstr "sista raden är inte nyradsterminerad"
+
+#: ../../common/parse_manifest.c:864
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "kunde inte göra klart kontrollsumma för backup-manifest"
+
+#: ../../common/parse_manifest.c:868
+#, c-format
+msgid "manifest has no checksum"
+msgstr "manifestet har ingen kontrollsumma"
+
+#: ../../common/parse_manifest.c:872
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "ogiltig kontrollsumma för manifest: \"%s\""
+
+#: ../../common/parse_manifest.c:876
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "kontrollsumma för manifest matchar inte"
+
+#: ../../common/parse_manifest.c:891
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "kunde inte parsa backup-manifest: %s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "ogiltigt värde \"%s\" för flaggan \"%s\""
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s måste vara i intervallet %d..%d"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "okänd synkmetod: %s"
+
+#: backup_label.c:66 backup_label.c:85 backup_label.c:95
+#, c-format
+msgid "%s: could not parse %s"
+msgstr "%s: kunde inte parsa %s"
+
+#: backup_label.c:69 backup_label.c:88
+#, c-format
+msgid "%s: improper terminator for %s"
+msgstr "%s: felaktig avslutare för %s"
+
+#: backup_label.c:76
+#, c-format
+msgid "%s: could not parse TLI for %s"
+msgstr "%s: kunde inte parsa TLI för %s"
+
+#: backup_label.c:79 backup_label.c:98
+#, c-format
+msgid "%s: invalid TLI"
+msgstr "%s: ogitlig TLI"
+
+#: backup_label.c:106 backup_label.c:108
+#, c-format
+msgid "%s: could not find %s"
+msgstr "%s: kunde inte hitta %s"
+
+#: backup_label.c:110 backup_label.c:113
+#, c-format
+msgid "%s: %s requires %s"
+msgstr "%s: %s kräver %s"
+
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#, c-format
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "kunde inte skriva fil \"%s\": skrev %d av %d"
+
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
+
+#: copy_file.c:186
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "kunde inte skriva till fil \"%s\": %m"
+
+#: copy_file.c:188
+#, c-format
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "kunde inte skriva till fil \"%s\", offset %u: skrev %d av %d"
+
+#: copy_file.c:199 reconstruct.c:784
+#, c-format
+msgid "could not read from file \"%s\": %m"
+msgstr "kunde inte läsa från fil \"%s\": %m"
+
+#: copy_file.c:218
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %m"
+msgstr "fel vid kloning av fil \"%s\" till \"%s\": %m"
+
+#: copy_file.c:229 copy_file.c:272
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "kunde inte skapa fil \"%s\": %m"
+
+#: copy_file.c:237
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %s"
+msgstr "fel vid kloning av fil \"%s\" till \"%s\": %s"
+
+#: copy_file.c:245 pg_combinebackup.c:251
+#, c-format
+msgid "file cloning not supported on this platform"
+msgstr "filkloning stöds inte på denna plattform"
+
+#: copy_file.c:278 reconstruct.c:704
+#, c-format
+msgid "error while copying file range from \"%s\" to \"%s\": %m"
+msgstr "fel vid kopiering av filintervall från \"%s\" till \"%s\": %m"
+
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "copy_file_range stöds inte på denna plattform"
+
+#: copy_file.c:300
+#, c-format
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "kunde inte kopiera fil \"%s\" till \"%s\": %m"
+
+#: load_manifest.c:125
+#, c-format
+msgid "file \"%s\" does not exist"
+msgstr "filen \"%s\" finns inte"
+
+#: load_manifest.c:163
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "kunde inte läsa fil \"%s\": läste %d av %lld"
+
+#: load_manifest.c:201
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "kunde inte läsa fil \"%s\": läste %lld av %lld"
+
+#: load_manifest.c:248
+#, c-format
+msgid "backup manifest version 1 does not support incremental backup"
+msgstr "version 1 av backup-manifest stöder inte inkrementell backup"
+
+#: load_manifest.c:280
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "duplicerad sökväg i backup-manifest: \"%s\""
+
+#: pg_combinebackup.c:220 pg_combinebackup.c:228
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Försök med \"%s --help\" för mer information."
+
+#: pg_combinebackup.c:227
+#, c-format
+msgid "no input directories specified"
+msgstr "inga indatakataloger har angivits"
+
+#: pg_combinebackup.c:233
+#, c-format
+msgid "no output directory specified"
+msgstr "ingen utdatakatalog angiven"
+
+#: pg_combinebackup.c:301
+#, c-format
+msgid "%s: manifest system identifier is %llu, but control file has %llu"
+msgstr "%s: manifestets systemidentifierare är %llu men kontrollfilern har %llu"
+
+#: pg_combinebackup.c:340
+#, c-format
+msgid "cannot generate a manifest because no manifest is available for the final input backup"
+msgstr "kan inte skapa manifest då inget manifest är tillgängligt för den avslutande indatabackup:en"
+
+#: pg_combinebackup.c:387
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "kunde inte skapa symbolisk länk från \"%s\" till \"%s\": %m"
+
+#: pg_combinebackup.c:399 pg_combinebackup.c:730 pg_combinebackup.c:927
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "kunde inte skapa katalog \"%s\": %m"
+
+#: pg_combinebackup.c:454
+#, c-format
+msgid "directory name too long"
+msgstr "katalognamn för långt"
+
+#: pg_combinebackup.c:461
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "multipla \"=\"-tecken i tablespace-mappning"
+
+#: pg_combinebackup.c:469
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr "ogiltigt tablespace-mappningsformat \"%s\", måste vara \"OLDDIR=NEWDIR\""
+
+#: pg_combinebackup.c:480 pg_combinebackup.c:484
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr "gammal katalog är inte en absolut sökväg i tablespace-mappning: %s"
+
+#: pg_combinebackup.c:553
+#, c-format
+msgid "backup at \"%s\" is a full backup, but only the first backup should be a full backup"
+msgstr "backup:en vid \"%s\" är en full backup men det är bara den första backup:en som skall vara en full backup"
+
+#: pg_combinebackup.c:556
+#, c-format
+msgid "backup at \"%s\" is an incremental backup, but the first backup should be a full backup"
+msgstr "backup:en vid \"%s\" är en inkrementell backup men den första backupen skall vara en full backup"
+
+#: pg_combinebackup.c:559
+#, c-format
+msgid "backup at \"%s\" starts on timeline %u, but expected %u"
+msgstr "backup:en vid \"%s\" startar på tidslinjen %u men det förväntades vara %u"
+
+#: pg_combinebackup.c:562
+#, c-format
+msgid "backup at \"%s\" starts at LSN %X/%X, but expected %X/%X"
+msgstr "backup:eb vid \"%s\" startar vid LSN %X/%X men förväntades vare %X/%X"
+
+#: pg_combinebackup.c:614
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr "%s: CRC är inkorrekt"
+
+#: pg_combinebackup.c:618
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr "%s: oväntad version på kontrollfil"
+
+#: pg_combinebackup.c:625
+#, c-format
+msgid "%s: expected system identifier %llu, but found %llu"
+msgstr "%s: förväntade systemidentifierare %llu men hittade %llu"
+
+#: pg_combinebackup.c:657
+#, c-format
+msgid "only some backups have checksums enabled"
+msgstr "bara några backup:er har checksummor aktiverade"
+
+#: pg_combinebackup.c:658
+#, c-format
+msgid "Disable, and optionally reenable, checksums on the output directory to avoid failures."
+msgstr "Avaktivera och möjligen återaktivera checksummor på utdatakatalogen för att undvika fel"
+
+#: pg_combinebackup.c:693
+#, c-format
+msgid "removing output directory \"%s\""
+msgstr "tar bort katalog för utdata \"%s\""
+
+#: pg_combinebackup.c:695
+#, c-format
+msgid "failed to remove output directory"
+msgstr "misslyckades att ta bort katalog för utdata"
+
+#: pg_combinebackup.c:699
+#, c-format
+msgid "removing contents of output directory \"%s\""
+msgstr "tar bort innehåll i katalog för utdata \"%s\""
+
+#: pg_combinebackup.c:702
+#, c-format
+msgid "failed to remove contents of output directory"
+msgstr "misslyckades att ta bort innehåll i katalog för utdata"
+
+#: pg_combinebackup.c:742
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "katalogen \"%s\" existerar men är inte tom"
+
+#: pg_combinebackup.c:745
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "kunde inte komma åt katalog \"%s\": %m"
+
+#: pg_combinebackup.c:759
+#, c-format
+msgid ""
+"%s reconstructs full backups from incrementals.\n"
+"\n"
+msgstr ""
+"%s återskapar fulla backup:er från inkrementella.\n"
+"\n"
+
+#: pg_combinebackup.c:760
+#, c-format
+msgid "Usage:\n"
+msgstr "Användning:\n"
+
+#: pg_combinebackup.c:761
+#, c-format
+msgid "  %s [OPTION]... DIRECTORY...\n"
+msgstr "  %s [FLAGGA]... KATALOG...\n"
+
+#: pg_combinebackup.c:762
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Flaggor:\n"
+
+#: pg_combinebackup.c:763
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               generera massor med debug-utskrifter\n"
+
+#: pg_combinebackup.c:764
+#, c-format
+msgid "  -n, --dry-run             do not actually do anything\n"
+msgstr "  -n, --dry-run             gör inga operationer\n"
+
+#: pg_combinebackup.c:765
+#, c-format
+msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
+msgstr "  -N, --no-sync             vänta inte på att ändingar säkert skrivits till disk\n"
+
+#: pg_combinebackup.c:766
+#, c-format
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=KATALOG      katalog för utdata\n"
+
+#: pg_combinebackup.c:767
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=FRÅNKAT=NYKAT\n"
+"                            flytta tabellutrymme i FRÅNKAT till NYKAT\n"
+
+#: pg_combinebackup.c:769
+#, c-format
+msgid "      --clone               clone (reflink) files instead of copying\n"
+msgstr "      --clone               klona (reflink) filer istället för att kopiera\n"
+
+#: pg_combinebackup.c:770
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                kopiera filer (standard)\n"
+
+#: pg_combinebackup.c:771
+#, c-format
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
+msgstr "      --copy-file-range     kopiera med systemaropet copy_file_range()\n"
+
+#: pg_combinebackup.c:772
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            algoritm att anvvända för checksummor i manifest\n"
+
+#: pg_combinebackup.c:774
+#, c-format
+msgid "      --no-manifest         suppress generation of backup manifest\n"
+msgstr "      --no-manifest         skapa inget backup-manifest\n"
+
+#: pg_combinebackup.c:775
+#, c-format
+msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
+msgstr "      --sync-method=METOD   sätt synkmetod för att synka filer till disk\n"
+
+#: pg_combinebackup.c:776
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
+
+#: pg_combinebackup.c:777
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
+
+#: pg_combinebackup.c:779
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <%s>.\n"
+
+#: pg_combinebackup.c:780
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "hemsida för %s: <%s>\n"
+
+#: pg_combinebackup.c:995
+#, c-format
+msgid "skipping symbolic link \"%s\""
+msgstr "hoppar över symbolisk länk \"%s\""
+
+#: pg_combinebackup.c:997
+#, c-format
+msgid "skipping special file \"%s\""
+msgstr "hoppar över specialfil \"%s\""
+
+#: pg_combinebackup.c:1073 reconstruct.c:305
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "manifestfil \"%s\" innehåller ingen post för fil \"%s\""
+
+#: pg_combinebackup.c:1189
+#, c-format
+msgid "%s: server version too old"
+msgstr "%s: serverns version är för gammal"
+
+#: pg_combinebackup.c:1190
+#, c-format
+msgid "%s: could not parse version number"
+msgstr "%s: kunde inte parsa versionnummer"
+
+#: pg_combinebackup.c:1309
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "kan inte läsa symbolisk länk \"%s\": %m"
+
+#: pg_combinebackup.c:1312
+#, c-format
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "destinationen för symbolisk länk \"%s\" är för lång"
+
+#: pg_combinebackup.c:1315
+#, c-format
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "destination för symbolisk länk \"%s\" är relativ"
+
+#: pg_combinebackup.c:1337
+#, c-format
+msgid "tablespace at \"%s\" has no tablespace mapping"
+msgstr "tabellutrymme vid \"%s\" har ingen mapping"
+
+#: pg_combinebackup.c:1355
+#, c-format
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "tabellutrymme med OID:er %u och %u pekar på samma katalog \"%s\""
+
+#: pg_combinebackup.c:1364
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "kunde inte stänga katalog \"%s\": %m"
+
+#: pg_combinebackup.c:1385
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "filen \"%s\" är för stor"
+
+#: pg_combinebackup.c:1402
+#, c-format
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "kunde inte läsa fil \"%s\": läste %zd av %lld"
+
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "full backup innehåller in oväntad inkrementell fil \"%s\""
+
+#: reconstruct.c:423
+#, c-format
+msgid "file \"%s\" is too short: expected %llu, found %llu"
+msgstr "filen \"%s\" är för kort: förväntade %llu, hittade %llu"
+
+#: reconstruct.c:465
+#, c-format
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "filen \"%s\" har ett felaktigt inkrementellt magiskt nummer (0x%x, förväntade 0x%x)"
+
+#: reconstruct.c:471
+#, c-format
+msgid "file \"%s\" has block count %u in excess of segment size %u"
+msgstr "filen \"%s\" har ett blockantal %u som är större än segmentstorleken %u"
+
+#: reconstruct.c:478
+#, c-format
+msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
+msgstr "filen \"%s\" trunkeringsblocklängd %u som är större än segmentstorleken %u"
+
+#: reconstruct.c:542
+#, c-format
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "kunde inte läsa filen \"%s\": läste %d av %u"
+
+#: reconstruct.c:786
+#, c-format
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr "kunde inte läsa från filen \"%s\", offset %llu: läste %d av %d"

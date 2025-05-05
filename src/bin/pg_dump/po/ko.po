@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_dump (PostgreSQL) 16\n"
+"Project-Id-Version: pg_dump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:51+0000\n"
-"PO-Revision-Date: 2023-09-08 16:10+0900\n"
+"POT-Creation-Date: 2025-01-17 04:51+0000\n"
+"PO-Revision-Date: 2025-01-16 14:55+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -90,32 +90,47 @@ msgstr "\"%s\" 압축 알고리즘을 사용할 때는 작업자 수를 지정�
 msgid "compression algorithm \"%s\" does not support long-distance mode"
 msgstr "\"%s\" 압축 알고리즘은 원거리 모드를 지원하지 않습니다"
 
-#: ../../common/exec.c:172
+#: ../../common/exec.c:174
 #, c-format
 msgid "invalid binary \"%s\": %m"
 msgstr "\"%s\" 파일은 잘못된 바이너리 파일임: %m"
 
-#: ../../common/exec.c:215
+#: ../../common/exec.c:217
 #, c-format
 msgid "could not read binary \"%s\": %m"
 msgstr "\"%s\" 바이너리 파일을 읽을 수 없음: %m"
 
-#: ../../common/exec.c:223
+#: ../../common/exec.c:225
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "실행 할 \"%s\" 파일을 찾을 수 없음"
 
-#: ../../common/exec.c:250
+#: ../../common/exec.c:252
 #, c-format
 msgid "could not resolve path \"%s\" to absolute form: %m"
 msgstr "\"%s\" 경로를 절대경로로 바꿀 수 없음: %m"
 
-#: ../../common/exec.c:412 parallel.c:1609
+#: ../../common/exec.c:382
+#, c-format
+msgid "could not execute command \"%s\": %m"
+msgstr "\"%s\" 명령을 실행할 수 없음: %m"
+
+#: ../../common/exec.c:394
+#, c-format
+msgid "could not read from command \"%s\": %m"
+msgstr "\"%s\" 명령에서 읽을 수 없음: %m"
+
+#: ../../common/exec.c:397
+#, c-format
+msgid "no data was returned by command \"%s\""
+msgstr "\"%s\" 명령이 아무런 데이터도 반환하지 않음"
+
+#: ../../common/exec.c:424 parallel.c:1609
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() 실패: %m"
 
-#: ../../common/exec.c:550 ../../common/exec.c:595 ../../common/exec.c:687
+#: ../../common/exec.c:562 ../../common/exec.c:607 ../../common/exec.c:699
 msgid "out of memory"
 msgstr "메모리 부족"
 
@@ -129,6 +144,49 @@ msgstr "메모리 부족\n"
 #, c-format
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "\"%s\" 파일을 위해 파일 시스템 동기화를 할 수 없음: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일 상태 정보를 알 수 없음: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "이 빌드는 \"%s\" 동기화 방법을 지원하지 않음"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 일 수 없음: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: pg_backup_directory.c:182
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "\"%s\" 파일을 fsync 할 수 없음: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
 
 #: ../../common/wait_error.c:55
 #, c-format
@@ -170,227 +228,247 @@ msgstr "\"%s\" 값은 %s 옵션 값으로 유효하지 않음"
 msgid "%s must be in range %d..%d"
 msgstr "%s 값은 %d부터 %d까지 지정할 수 있습니다."
 
-#: common.c:132
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "알 수 없는 동기화 방법: %s"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "쉘 명령 인자에 줄바꿈 문자가 있습니다: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "데이터베이스 이름에 줄바꿈 문자가 있습니다: \"%s\"\n"
+
+#: common.c:135
 #, c-format
 msgid "reading extensions"
 msgstr "확장 기능 읽는 중"
 
-#: common.c:135
+#: common.c:138
 #, c-format
 msgid "identifying extension members"
 msgstr "확장 멤버를 식별 중"
 
-#: common.c:138
+#: common.c:141
 #, c-format
 msgid "reading schemas"
 msgstr "스키마들을 읽는 중"
 
-#: common.c:147
+#: common.c:150
 #, c-format
 msgid "reading user-defined tables"
 msgstr "사용자 정의 테이블들을 읽는 중"
 
-#: common.c:152
+#: common.c:155
 #, c-format
 msgid "reading user-defined functions"
 msgstr "사용자 정의 함수들 읽는 중"
 
-#: common.c:156
+#: common.c:159
 #, c-format
 msgid "reading user-defined types"
 msgstr "사용자 정의 자료형을 읽는 중"
 
-#: common.c:160
+#: common.c:163
 #, c-format
 msgid "reading procedural languages"
 msgstr "프로시쥬얼 언어를 읽는 중"
 
-#: common.c:163
+#: common.c:166
 #, c-format
 msgid "reading user-defined aggregate functions"
 msgstr "사용자 정의 집계 함수를 읽는 중"
 
-#: common.c:166
+#: common.c:169
 #, c-format
 msgid "reading user-defined operators"
 msgstr "사용자 정의 연산자를 읽는 중"
 
-#: common.c:169
+#: common.c:172
 #, c-format
 msgid "reading user-defined access methods"
 msgstr "사용자 정의 접근 방법을 읽는 중"
 
-#: common.c:172
+#: common.c:175
 #, c-format
 msgid "reading user-defined operator classes"
 msgstr "사용자 정의 연산자 클래스를 읽는 중"
 
-#: common.c:175
+#: common.c:178
 #, c-format
 msgid "reading user-defined operator families"
 msgstr "사용자 정의 연산자 부류들 읽는 중"
 
-#: common.c:178
+#: common.c:181
 #, c-format
 msgid "reading user-defined text search parsers"
 msgstr "사용자 정의 텍스트 검색 파서를 읽는 중"
 
-#: common.c:181
+#: common.c:184
 #, c-format
 msgid "reading user-defined text search templates"
 msgstr "사용자 정의 텍스트 검색 템플릿을 읽는 중"
 
-#: common.c:184
+#: common.c:187
 #, c-format
 msgid "reading user-defined text search dictionaries"
 msgstr "사용자 정의 텍스트 검색 사전을 읽는 중"
 
-#: common.c:187
+#: common.c:190
 #, c-format
 msgid "reading user-defined text search configurations"
 msgstr "사용자 정의 텍스트 검색 구성을 읽는 중"
 
-#: common.c:190
+#: common.c:193
 #, c-format
 msgid "reading user-defined foreign-data wrappers"
 msgstr "사용자 정의 외부 데이터 래퍼를 읽는 중"
 
-#: common.c:193
+#: common.c:196
 #, c-format
 msgid "reading user-defined foreign servers"
 msgstr "사용자 정의 외부 서버를 읽는 중"
 
-#: common.c:196
+#: common.c:199
 #, c-format
 msgid "reading default privileges"
 msgstr "기본 접근 권한 읽는 중"
 
-#: common.c:199
+#: common.c:202
 #, c-format
 msgid "reading user-defined collations"
 msgstr "사용자 정의 글자 정렬(collation) 읽는 중"
 
-#: common.c:202
+#: common.c:205
 #, c-format
 msgid "reading user-defined conversions"
 msgstr "사용자 정의 인코딩 변환규칙을 읽는 중"
 
-#: common.c:205
+#: common.c:208
 #, c-format
 msgid "reading type casts"
 msgstr "형변환자(type cast)들을 읽는 중"
 
-#: common.c:208
+#: common.c:211
 #, c-format
 msgid "reading transforms"
 msgstr "변환자(transform) 읽는 중"
 
-#: common.c:211
+#: common.c:214
 #, c-format
 msgid "reading table inheritance information"
 msgstr "테이블 상속 정보를 읽는 중"
 
-#: common.c:214
+#: common.c:217
 #, c-format
 msgid "reading event triggers"
 msgstr "이벤트 트리거들을 읽는 중"
 
-#: common.c:218
+#: common.c:221
 #, c-format
 msgid "finding extension tables"
 msgstr "확장 테이블을 찾는 중"
 
-#: common.c:222
+#: common.c:225
 #, c-format
 msgid "finding inheritance relationships"
 msgstr "상속 관계를 조사중"
 
-#: common.c:225
+#: common.c:228
 #, c-format
 msgid "reading column info for interesting tables"
 msgstr "재미난 테이블들(interesting tables)을 위해 열 정보를 읽는 중"
 
-#: common.c:228
+#: common.c:231
 #, c-format
 msgid "flagging inherited columns in subtables"
 msgstr "하위 테이블에서 상속된 열 구분중"
 
-#: common.c:231
+#: common.c:234
 #, c-format
 msgid "reading partitioning data"
 msgstr "파티션 자료 읽는 중"
 
-#: common.c:234
+#: common.c:237
 #, c-format
 msgid "reading indexes"
 msgstr "인덱스들을 읽는 중"
 
-#: common.c:237
+#: common.c:240
 #, c-format
 msgid "flagging indexes in partitioned tables"
 msgstr "하위 파티션 테이블에서 인덱스를 플래그 처리하는 중"
 
-#: common.c:240
+#: common.c:243
 #, c-format
 msgid "reading extended statistics"
 msgstr "확장 통계들을 읽는 중"
 
-#: common.c:243
+#: common.c:246
 #, c-format
 msgid "reading constraints"
 msgstr "제약 조건들을 읽는 중"
 
-#: common.c:246
+#: common.c:249
 #, c-format
 msgid "reading triggers"
 msgstr "트리거들을 읽는 중"
 
-#: common.c:249
+#: common.c:252
 #, c-format
 msgid "reading rewrite rules"
 msgstr "룰(rule) 읽는 중"
 
-#: common.c:252
+#: common.c:255
 #, c-format
 msgid "reading policies"
 msgstr "정책 읽는 중"
 
-#: common.c:255
+#: common.c:258
 #, c-format
 msgid "reading publications"
 msgstr "발행 정보를 읽는 중"
 
-#: common.c:258
+#: common.c:261
 #, c-format
 msgid "reading publication membership of tables"
 msgstr "테이블의 발행 맵버쉽을 읽는 중"
 
-#: common.c:261
+#: common.c:264
 #, c-format
 msgid "reading publication membership of schemas"
 msgstr "스키마의 발행 맵버쉽을 읽을 중"
 
-#: common.c:264
+#: common.c:267
 #, c-format
 msgid "reading subscriptions"
 msgstr "구독정보를 읽는 중"
 
-#: common.c:327
+#: common.c:270
+#, c-format
+msgid "reading subscription membership of tables"
+msgstr "테이블의 구독 맵버쉽을 읽는 중"
+
+#: common.c:333
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
 msgstr "안전 검사 실패, OID %u인 부모 개체가 없음. 해당 테이블 \"%s\" (OID %u)"
 
-#: common.c:369
+#: common.c:375
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "잘못된 부모 수: %d, 해당 테이블 \"%s\""
 
-#: common.c:1049
+#: common.c:1098
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
 msgstr "\"%s\" 숫자 배열을 분석할 수 없음: 너무 많은 숫자들이 있음"
 
-#: common.c:1061
+#: common.c:1110
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "\"%s\" 숫자 배열을 분석할 수 없음: 숫자안에 이상한 글자가 있음"
@@ -420,15 +498,20 @@ msgstr "자료 압축을 풀 수 없습니다: %s"
 msgid "could not close compression library: %s"
 msgstr "압축 라이브러리를 닫을 수 없음: %s"
 
-#: compress_gzip.c:266 compress_gzip.c:295 compress_lz4.c:608
-#: compress_lz4.c:628 compress_lz4.c:647 compress_none.c:97 compress_none.c:140
+#: compress_gzip.c:266 compress_lz4.c:608 compress_lz4.c:628 compress_lz4.c:647
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "입력 파일을 읽을 수 없음: %s"
 
-#: compress_gzip.c:297 compress_lz4.c:630 compress_none.c:142
-#: compress_zstd.c:371 pg_backup_custom.c:653 pg_backup_directory.c:558
-#: pg_backup_tar.c:725 pg_backup_tar.c:748
+#: compress_gzip.c:295 compress_none.c:97 compress_none.c:139
+#: compress_zstd.c:374 pg_backup_custom.c:651
+#, c-format
+msgid "could not read from input file: %m"
+msgstr "입력 파일을 읽을 수 없음: %m"
+
+#: compress_gzip.c:297 compress_lz4.c:630 compress_none.c:141
+#: compress_zstd.c:372 pg_backup_custom.c:649 pg_backup_directory.c:565
+#: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "입력 파일을 읽을 수 없음: 파일 끝"
@@ -468,26 +551,71 @@ msgstr "압축 풀기 작업 끝내기 실패: %s"
 msgid "could not set compression parameter \"%s\": %s"
 msgstr "\"%s\" 압축 매개 변수를 지정할 수 없음: %s"
 
-#: compress_zstd.c:78 compress_zstd.c:231 compress_zstd.c:490
-#: compress_zstd.c:498
+#: compress_zstd.c:78 compress_zstd.c:232 compress_zstd.c:491
+#: compress_zstd.c:499
 #, c-format
 msgid "could not initialize compression library"
 msgstr "압축 라이브러리를 초기화 할 수 없음"
 
-#: compress_zstd.c:194 compress_zstd.c:308
+#: compress_zstd.c:195 compress_zstd.c:309
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "자료를 압축 해제 할 수 없음: %s"
 
-#: compress_zstd.c:373 pg_backup_custom.c:655
-#, c-format
-msgid "could not read from input file: %m"
-msgstr "입력 파일을 읽을 수 없음: %m"
-
-#: compress_zstd.c:501
+#: compress_zstd.c:502
 #, c-format
 msgid "unhandled mode \"%s\""
 msgstr "\"%s\" 모드는 처리할 수 없음"
+
+#: filter.c:49
+#, c-format
+msgid "could not open filter file \"%s\": %m"
+msgstr "\"%s\" 필터 파일을 열 수 없음: %m"
+
+#: filter.c:72
+#, c-format
+msgid "could not close filter file \"%s\": %m"
+msgstr "\"%s\" 필터 파일을 닫을 수 없음: %m"
+
+#: filter.c:165
+#, c-format
+msgid "invalid format in filter read from standard input on line %d: %s"
+msgstr "표준 입력의 %d 번째 줄을 읽는데 잘못된 필터 포멧: %s"
+
+#: filter.c:168
+#, c-format
+msgid "invalid format in filter read from file \"%s\" on line %d: %s"
+msgstr "\"%s\" 파일의 %d 번째 줄에 잘못된 필터 포멧: %s"
+
+#: filter.c:241 filter.c:468
+#, c-format
+msgid "could not read from filter file \"%s\": %m"
+msgstr "\"%s\" 필터 파일을 읽을 수 없음: %m"
+
+#: filter.c:244
+msgid "unexpected end of file"
+msgstr "예상치 못한 파일 끝"
+
+#: filter.c:311
+msgid "missing object name pattern"
+msgstr "객체 이름 패턴이 빠졌음"
+
+#: filter.c:422
+msgid "no filter command found (expected \"include\" or \"exclude\")"
+msgstr "필터 명령이 없음 (\"include\" 또는 \"exclude\" 사용할 수 있음)"
+
+#: filter.c:433
+msgid "invalid filter command (expected \"include\" or \"exclude\")"
+msgstr "잘못된 필터 명령 (\"include\" 또는 \"exclude\" 사용할 수 있음)"
+
+#: filter.c:440
+msgid "missing filter object type"
+msgstr "필터 객체형이 빠졌음"
+
+#: filter.c:447
+#, c-format
+msgid "unsupported filter object type: \"%.*s\""
+msgstr "지원하지 않는 필터 객체형: \"%.*s\""
 
 #: parallel.c:251
 #, c-format
@@ -571,387 +699,392 @@ msgstr "pgpipe: 소켓 접속 실패: 오류 코드 %d"
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: 접속을 승인할 수 없음: 오류 코드 %d"
 
-#: pg_backup_archiver.c:276 pg_backup_archiver.c:1603
+#: pg_backup_archiver.c:261 pg_backup_archiver.c:1706
 #, c-format
 msgid "could not close output file: %m"
 msgstr "출력 파일을 닫을 수 없음: %m"
 
-#: pg_backup_archiver.c:320 pg_backup_archiver.c:324
+#: pg_backup_archiver.c:305 pg_backup_archiver.c:309
 #, c-format
 msgid "archive items not in correct section order"
 msgstr "아카이브 아이템의 순서가 섹션에서 비정상적임"
 
-#: pg_backup_archiver.c:330
+#: pg_backup_archiver.c:315
 #, c-format
 msgid "unexpected section code %d"
 msgstr "예상치 못한 섹션 코드 %d"
 
-#: pg_backup_archiver.c:367
+#: pg_backup_archiver.c:352
 #, c-format
 msgid "parallel restore is not supported with this archive file format"
 msgstr "이 아카이브 파일 형식에서는 병렬 복원이 지원되지 않음"
 
-#: pg_backup_archiver.c:371
+#: pg_backup_archiver.c:356
 #, c-format
 msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump"
 msgstr "8.0 이전 pg_dump로 만든 아카이브에서는 병렬 복원이 지원되지 않음"
 
-#: pg_backup_archiver.c:392
+#: pg_backup_archiver.c:377
 #, c-format
 msgid "cannot restore from compressed archive (%s)"
 msgstr "압축된 아카이브 (%s) 에서 복원할 수 없음"
 
-#: pg_backup_archiver.c:412
+#: pg_backup_archiver.c:397
 #, c-format
 msgid "connecting to database for restore"
 msgstr "복원 작업을 위해 데이터베이스에 접속 중"
 
-#: pg_backup_archiver.c:414
+#: pg_backup_archiver.c:399
 #, c-format
 msgid "direct database connections are not supported in pre-1.3 archives"
 msgstr "pre-1.3 archive에서 직통 데이터베이스 접속은 지원되지 않음"
 
-#: pg_backup_archiver.c:457
+#: pg_backup_archiver.c:442
 #, c-format
 msgid "implied data-only restore"
 msgstr "암묵적으로 자료만 복원"
 
-#: pg_backup_archiver.c:523
+#: pg_backup_archiver.c:510
 #, c-format
 msgid "dropping %s %s"
 msgstr "%s %s 삭제 중"
 
-#: pg_backup_archiver.c:623
+#: pg_backup_archiver.c:642
 #, c-format
 msgid "could not find where to insert IF EXISTS in statement \"%s\""
 msgstr "\"%s\" 구문에서 insert IF EXISTS 부분을 찾을 수 없음"
 
-#: pg_backup_archiver.c:778 pg_backup_archiver.c:780
+#: pg_backup_archiver.c:828 pg_backup_archiver.c:830
 #, c-format
 msgid "warning from original dump file: %s"
 msgstr "원본 덤프 파일에서 발생한 경고: %s"
 
-#: pg_backup_archiver.c:795
+#: pg_backup_archiver.c:864
 #, c-format
 msgid "creating %s \"%s.%s\""
 msgstr "%s \"%s.%s\" 만드는 중"
 
-#: pg_backup_archiver.c:798
+#: pg_backup_archiver.c:867
 #, c-format
 msgid "creating %s \"%s\""
 msgstr "%s \"%s\" 만드는 중"
 
-#: pg_backup_archiver.c:848
+#: pg_backup_archiver.c:917
 #, c-format
 msgid "connecting to new database \"%s\""
 msgstr "\"%s\" 새 데이터베이스에 접속중"
 
-#: pg_backup_archiver.c:875
+#: pg_backup_archiver.c:944
 #, c-format
 msgid "processing %s"
 msgstr "%s 처리 중"
 
-#: pg_backup_archiver.c:897
+#: pg_backup_archiver.c:966
 #, c-format
 msgid "processing data for table \"%s.%s\""
 msgstr "\"%s.%s\" 테이블의 자료를 처리 중"
 
-#: pg_backup_archiver.c:967
+#: pg_backup_archiver.c:1036
 #, c-format
 msgid "executing %s %s"
 msgstr "실행중: %s %s"
 
-#: pg_backup_archiver.c:1008
+#: pg_backup_archiver.c:1096
 #, c-format
 msgid "disabling triggers for %s"
 msgstr "%s 트리거 작동을 비활성화 하는 중"
 
-#: pg_backup_archiver.c:1034
+#: pg_backup_archiver.c:1122
 #, c-format
 msgid "enabling triggers for %s"
 msgstr "%s 트리거 작동을 활성화 하는 중"
 
-#: pg_backup_archiver.c:1099
+#: pg_backup_archiver.c:1187
 #, c-format
 msgid ""
 "internal error -- WriteData cannot be called outside the context of a "
 "DataDumper routine"
 msgstr "내부 오류 -- WriteData는 DataDumper 루틴 영역 밖에서 호출 될 수 없음"
 
-#: pg_backup_archiver.c:1287
+#: pg_backup_archiver.c:1379
 #, c-format
 msgid "large-object output not supported in chosen format"
 msgstr "선택한 파일 양식으로는 large-object를 덤프할 수 없음"
 
-#: pg_backup_archiver.c:1345
+#: pg_backup_archiver.c:1442
 #, c-format
 msgid "restored %d large object"
 msgid_plural "restored %d large objects"
 msgstr[0] "%d개의 큰 개체가 복원됨"
 
-#: pg_backup_archiver.c:1366 pg_backup_tar.c:668
+#: pg_backup_archiver.c:1469 pg_backup_tar.c:683
 #, c-format
 msgid "restoring large object with OID %u"
 msgstr "%u OID large object를 복원중"
 
-#: pg_backup_archiver.c:1378
+#: pg_backup_archiver.c:1481
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "%u large object를 만들 수 없음: %s"
 
-#: pg_backup_archiver.c:1383 pg_dump.c:3718
+#: pg_backup_archiver.c:1486 pg_dump.c:3888
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "%u large object를 열 수 없음: %s"
 
-#: pg_backup_archiver.c:1439
+#: pg_backup_archiver.c:1542
 #, c-format
 msgid "could not open TOC file \"%s\": %m"
 msgstr "TOC 파일 \"%s\"을(를) 열 수 없음: %m"
 
-#: pg_backup_archiver.c:1467
+#: pg_backup_archiver.c:1570
 #, c-format
 msgid "line ignored: %s"
 msgstr "줄 무시됨: %s"
 
-#: pg_backup_archiver.c:1474
+#: pg_backup_archiver.c:1577 pg_backup_db.c:609
 #, c-format
 msgid "could not find entry for ID %d"
 msgstr "%d ID에 대한 항목을 찾지 못했음"
 
-#: pg_backup_archiver.c:1497 pg_backup_directory.c:221
-#: pg_backup_directory.c:606
+#: pg_backup_archiver.c:1600 pg_backup_directory.c:219
+#: pg_backup_directory.c:613
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "TOC 파일을 닫을 수 없음: %m"
 
-#: pg_backup_archiver.c:1584 pg_backup_custom.c:156 pg_backup_directory.c:332
-#: pg_backup_directory.c:593 pg_backup_directory.c:658
-#: pg_backup_directory.c:676 pg_dumpall.c:501
+#: pg_backup_archiver.c:1687 pg_backup_custom.c:152 pg_backup_directory.c:333
+#: pg_backup_directory.c:600 pg_backup_directory.c:666
+#: pg_backup_directory.c:684 pg_dumpall.c:506
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "\"%s\" 출력 파일을 열 수 없음: %m"
 
-#: pg_backup_archiver.c:1586 pg_backup_custom.c:162
+#: pg_backup_archiver.c:1689 pg_backup_custom.c:158
 #, c-format
 msgid "could not open output file: %m"
 msgstr "출력 파일을 열 수 없음: %m"
 
-#: pg_backup_archiver.c:1669
+#: pg_backup_archiver.c:1772
 #, c-format
 msgid "wrote %zu byte of large object data (result = %d)"
 msgid_plural "wrote %zu bytes of large object data (result = %d)"
 msgstr[0] "%zu 바이트의 큰 객체 데이터를 씀(결과 = %d)"
 
-#: pg_backup_archiver.c:1675
+#: pg_backup_archiver.c:1778
 #, c-format
 msgid "could not write to large object: %s"
 msgstr "큰 객체를 쓸 수 없음: %s"
 
-#: pg_backup_archiver.c:1765
+#: pg_backup_archiver.c:1868
 #, c-format
 msgid "while INITIALIZING:"
 msgstr "초기화 작업 중:"
 
-#: pg_backup_archiver.c:1770
+#: pg_backup_archiver.c:1873
 #, c-format
 msgid "while PROCESSING TOC:"
 msgstr "TOC 처리하는 중:"
 
-#: pg_backup_archiver.c:1775
+#: pg_backup_archiver.c:1878
 #, c-format
 msgid "while FINALIZING:"
 msgstr "뒷 마무리 작업 중:"
 
-#: pg_backup_archiver.c:1780
+#: pg_backup_archiver.c:1883
 #, c-format
 msgid "from TOC entry %d; %u %u %s %s %s"
 msgstr "%d TOC 항목에서; %u %u %s %s %s"
 
-#: pg_backup_archiver.c:1856
+#: pg_backup_archiver.c:1959
 #, c-format
 msgid "bad dumpId"
 msgstr "잘못된 dumpID"
 
-#: pg_backup_archiver.c:1877
+#: pg_backup_archiver.c:1980
 #, c-format
 msgid "bad table dumpId for TABLE DATA item"
 msgstr "TABLE DATA 아이템에 대한 잘못된 테이블 dumpId"
 
-#: pg_backup_archiver.c:1969
+#: pg_backup_archiver.c:2072
 #, c-format
 msgid "unexpected data offset flag %d"
 msgstr "예상치 못한 자료 옵셋 플래그 %d"
 
-#: pg_backup_archiver.c:1982
+#: pg_backup_archiver.c:2085
 #, c-format
 msgid "file offset in dump file is too large"
 msgstr "덤프 파일에서 파일 옵셋 값이 너무 큽니다"
 
-#: pg_backup_archiver.c:2093
+#: pg_backup_archiver.c:2196
 #, c-format
 msgid "directory name too long: \"%s\""
 msgstr "디렉터리 이름이 너무 긺: \"%s\""
 
-#: pg_backup_archiver.c:2143
+#: pg_backup_archiver.c:2246
 #, c-format
 msgid ""
 "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not "
 "exist)"
 msgstr "\"%s\" 디렉터리가 알맞은 아카이브용이 아님 (\"toc.dat\" 파일이 없음)"
 
-#: pg_backup_archiver.c:2151 pg_backup_custom.c:173 pg_backup_custom.c:816
-#: pg_backup_directory.c:206 pg_backup_directory.c:395
+#: pg_backup_archiver.c:2254 pg_backup_custom.c:169 pg_backup_custom.c:812
+#: pg_backup_directory.c:204 pg_backup_directory.c:396
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "\"%s\" 입력 파일을 열 수 없음: %m"
 
-#: pg_backup_archiver.c:2158 pg_backup_custom.c:179
+#: pg_backup_archiver.c:2261 pg_backup_custom.c:175
 #, c-format
 msgid "could not open input file: %m"
 msgstr "입력 파일을 열 수 없음: %m"
 
-#: pg_backup_archiver.c:2164
+#: pg_backup_archiver.c:2267
 #, c-format
 msgid "could not read input file: %m"
 msgstr "입력 파일을 읽을 수 없음: %m"
 
-#: pg_backup_archiver.c:2166
+#: pg_backup_archiver.c:2269
 #, c-format
 msgid "input file is too short (read %lu, expected 5)"
 msgstr "입력 파일이 너무 짧습니다 (%lu 읽었음, 예상치 5)"
 
-#: pg_backup_archiver.c:2198
+#: pg_backup_archiver.c:2301
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql."
 msgstr "입력 파일은 일반 텍스트 덤프 파일입니다. psql 명령을 사용하세요."
 
-#: pg_backup_archiver.c:2204
+#: pg_backup_archiver.c:2307
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)"
 msgstr "입력 파일에서 타당한 아카이브를 찾을 수 없습니다(너무 짧은지?)"
 
-#: pg_backup_archiver.c:2210
+#: pg_backup_archiver.c:2313
 #, c-format
 msgid "input file does not appear to be a valid archive"
 msgstr "입력 파일에서 타당한 아카이브를 찾을 수 없음"
 
-#: pg_backup_archiver.c:2219
+#: pg_backup_archiver.c:2322
 #, c-format
 msgid "could not close input file: %m"
 msgstr "입력 파일을 닫을 수 없음: %m"
 
-#: pg_backup_archiver.c:2297
+#: pg_backup_archiver.c:2401
 #, c-format
 msgid "could not open stdout for appending: %m"
 msgstr "추가용 표준출력 파일을 열 수 없음: %m"
 
-#: pg_backup_archiver.c:2342
+#: pg_backup_archiver.c:2446
 #, c-format
 msgid "unrecognized file format \"%d\""
 msgstr "알 수 없는 파일 포멧: \"%d\""
 
-#: pg_backup_archiver.c:2423 pg_backup_archiver.c:4448
+#: pg_backup_archiver.c:2527 pg_backup_archiver.c:4647
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "%d %s %s 항목 마침"
 
-#: pg_backup_archiver.c:2427 pg_backup_archiver.c:4461
+#: pg_backup_archiver.c:2531 pg_backup_archiver.c:4660
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "작업자 프로세스 실패: 종료 코드 %d"
 
-#: pg_backup_archiver.c:2548
+#: pg_backup_archiver.c:2653
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC"
 msgstr "%d ID 항목은 범위를 벗어났음 -- TOC 정보가 손상된 듯 합니다"
 
-#: pg_backup_archiver.c:2628
+#: pg_backup_archiver.c:2736
 #, c-format
 msgid "restoring tables WITH OIDS is not supported anymore"
 msgstr "WITH OIDS 옵션이 있는 테이블의 복원은 이제 지원하지 않습니다"
 
-#: pg_backup_archiver.c:2710
+#: pg_backup_archiver.c:2818
 #, c-format
 msgid "unrecognized encoding \"%s\""
 msgstr "알 수 없는 인코딩: \"%s\""
 
-#: pg_backup_archiver.c:2715
+#: pg_backup_archiver.c:2823
 #, c-format
 msgid "invalid ENCODING item: %s"
 msgstr "잘못된 ENCODING 항목: %s"
 
-#: pg_backup_archiver.c:2733
+#: pg_backup_archiver.c:2841
 #, c-format
 msgid "invalid STDSTRINGS item: %s"
 msgstr "잘못된 STDSTRINGS 항목: %s"
 
-#: pg_backup_archiver.c:2758
+#: pg_backup_archiver.c:2866
 #, c-format
 msgid "schema \"%s\" not found"
 msgstr "\"%s\" 스키마를 찾을 수 없음"
 
-#: pg_backup_archiver.c:2765
+#: pg_backup_archiver.c:2873
 #, c-format
 msgid "table \"%s\" not found"
 msgstr "\"%s\" 테이블을 찾을 수 없음"
 
-#: pg_backup_archiver.c:2772
+#: pg_backup_archiver.c:2880
 #, c-format
 msgid "index \"%s\" not found"
 msgstr "\"%s\" 인덱스를 찾을 수 없음"
 
-#: pg_backup_archiver.c:2779
+#: pg_backup_archiver.c:2887
 #, c-format
 msgid "function \"%s\" not found"
 msgstr "\"%s\" 함수를 찾을 수 없음"
 
-#: pg_backup_archiver.c:2786
+#: pg_backup_archiver.c:2894
 #, c-format
 msgid "trigger \"%s\" not found"
 msgstr "\"%s\" 트리거를 찾을 수 없음"
 
-#: pg_backup_archiver.c:3183
+#: pg_backup_archiver.c:3325
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "\"%s\" 사용자로 세션 사용자를 지정할 수 없음: %s"
 
-#: pg_backup_archiver.c:3315
+#: pg_backup_archiver.c:3457
 #, c-format
-msgid "could not set search_path to \"%s\": %s"
-msgstr "search_path를 \"%s\"(으)로 지정할 수 없음: %s"
+msgid "could not set \"search_path\" to \"%s\": %s"
+msgstr "\"search_path\"를 \"%s\"(으)로 지정할 수 없음: %s"
 
-#: pg_backup_archiver.c:3376
+#: pg_backup_archiver.c:3518
 #, c-format
-msgid "could not set default_tablespace to %s: %s"
-msgstr "default_tablespace로 %s(으)로 지정할 수 없음: %s"
+msgid "could not set \"default_tablespace\" to %s: %s"
+msgstr "\"default_tablespace\"로 %s(으)로 지정할 수 없음: %s"
 
-#: pg_backup_archiver.c:3425
+#: pg_backup_archiver.c:3567
 #, c-format
-msgid "could not set default_table_access_method: %s"
-msgstr "default_table_access_method를 지정할 수 없음: %s"
+msgid "could not set \"default_table_access_method\": %s"
+msgstr "\"default_table_access_method\"를 지정할 수 없음: %s"
 
-#: pg_backup_archiver.c:3530
+#: pg_backup_archiver.c:3616
+#, c-format
+msgid "could not alter table access method: %s"
+msgstr "alter table access method 실행 할 수 없음: %s"
+
+#: pg_backup_archiver.c:3717
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
 msgstr "\"%s\" 개체의 소유주를 지정할 수 없습니다"
 
-#: pg_backup_archiver.c:3752
+#: pg_backup_archiver.c:4004
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "파일 헤더에서 매직 문자열을 찾지 못했습니다"
 
-#: pg_backup_archiver.c:3766
+#: pg_backup_archiver.c:4018
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "파일 헤더에 있는 %d.%d 버전은 지원되지 않습니다"
 
-#: pg_backup_archiver.c:3771
+#: pg_backup_archiver.c:4023
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "정수 크기 (%lu) 안전성 검사 실패"
 
-#: pg_backup_archiver.c:3775
+#: pg_backup_archiver.c:4027
 #, c-format
 msgid ""
 "archive was made on a machine with larger integers, some operations might "
@@ -960,12 +1093,12 @@ msgstr ""
 "이 아카이브는 큰 정수를 지원하는 시스템에서 만들어졌습니다. 그래서 몇 동작이 "
 "실패할 수도 있습니다."
 
-#: pg_backup_archiver.c:3785
+#: pg_backup_archiver.c:4037
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "예상되는 포멧 (%d)와 발견된 파일 포멧 (%d)이 서로 다름"
 
-#: pg_backup_archiver.c:3807
+#: pg_backup_archiver.c:4059
 #, c-format
 msgid ""
 "archive is compressed, but this installation does not support compression "
@@ -974,68 +1107,68 @@ msgstr ""
 "아카이브는 압축되어있지만, 이 프로그램에서는 (%s) 압축기능을 지원하지 못합니"
 "다 -- 이 안에 있는 자료를 모두 사용할 수 없습니다."
 
-#: pg_backup_archiver.c:3843
+#: pg_backup_archiver.c:4095
 #, c-format
 msgid "invalid creation date in header"
 msgstr "헤더에 잘못된 생성 날짜가 있음"
 
-#: pg_backup_archiver.c:3977
+#: pg_backup_archiver.c:4229
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "%d %s %s 항목을 처리하는 중"
 
-#: pg_backup_archiver.c:4052
+#: pg_backup_archiver.c:4314
 #, c-format
 msgid "entering main parallel loop"
 msgstr "기본 병렬 루프로 시작 중"
 
-#: pg_backup_archiver.c:4063
+#: pg_backup_archiver.c:4325
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "%d %s %s 항목을 건너뛰는 중"
 
-#: pg_backup_archiver.c:4072
+#: pg_backup_archiver.c:4334
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "%d %s %s 항목을 시작하는 중"
 
-#: pg_backup_archiver.c:4126
+#: pg_backup_archiver.c:4388
 #, c-format
 msgid "finished main parallel loop"
 msgstr "기본 병렬 루프 마침"
 
-#: pg_backup_archiver.c:4162
+#: pg_backup_archiver.c:4424
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "누락된 %d %s %s 항목 처리 중"
 
-#: pg_backup_archiver.c:4767
+#: pg_backup_archiver.c:4966
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
 msgstr "\"%s\" 테이블을 만들 수 없어, 해당 자료는 복원되지 않을 것입니다."
 
-#: pg_backup_custom.c:380 pg_backup_null.c:147
+#: pg_backup_custom.c:376 pg_backup_null.c:143
 #, c-format
 msgid "invalid OID for large object"
 msgstr "잘못된 large object용 OID"
 
-#: pg_backup_custom.c:445 pg_backup_custom.c:511 pg_backup_custom.c:640
-#: pg_backup_custom.c:874 pg_backup_tar.c:1014 pg_backup_tar.c:1019
+#: pg_backup_custom.c:441 pg_backup_custom.c:507 pg_backup_custom.c:636
+#: pg_backup_custom.c:870 pg_backup_tar.c:1029 pg_backup_tar.c:1034
 #, c-format
 msgid "error during file seek: %m"
 msgstr "파일 seek 작업하는 도중 오류가 발생했습니다: %m"
 
-#: pg_backup_custom.c:484
+#: pg_backup_custom.c:480
 #, c-format
 msgid "data block %d has wrong seek position"
 msgstr "%d 자료 블록에 잘못된 접근 위치가 있음"
 
-#: pg_backup_custom.c:501
+#: pg_backup_custom.c:497
 #, c-format
 msgid "unrecognized data block type (%d) while searching archive"
 msgstr "아카이브 검색하는 동안 알 수 없는 자료 블럭 형태(%d)를 발견함"
 
-#: pg_backup_custom.c:523
+#: pg_backup_custom.c:519
 #, c-format
 msgid ""
 "could not find block ID %d in archive -- possibly due to out-of-order "
@@ -1044,56 +1177,56 @@ msgstr ""
 "아카이브에서 블록 ID %d을(를) 찾지 못했습니다. 복원 요청이 잘못된 것 같습니"
 "다. 입력 파일을 검색할 수 없으므로 요청을 처리할 수 없습니다."
 
-#: pg_backup_custom.c:528
+#: pg_backup_custom.c:524
 #, c-format
 msgid "could not find block ID %d in archive -- possibly corrupt archive"
 msgstr ""
 "아카이브에서 블록 ID %d을(를) 찾을 수 없습니다. 아카이브가 손상된 것 같습니"
 "다."
 
-#: pg_backup_custom.c:535
+#: pg_backup_custom.c:531
 #, c-format
 msgid "found unexpected block ID (%d) when reading data -- expected %d"
 msgstr "자료를 읽는 동안 예상치 못한 ID (%d) 발견됨 -- 예상값 %d"
 
-#: pg_backup_custom.c:549
+#: pg_backup_custom.c:545
 #, c-format
 msgid "unrecognized data block type %d while restoring archive"
 msgstr "아카이브 복원하는 중에, 알 수 없는 자료 블럭 형태 %d 를 발견함"
 
-#: pg_backup_custom.c:755 pg_backup_custom.c:807 pg_backup_custom.c:952
-#: pg_backup_tar.c:1017
+#: pg_backup_custom.c:751 pg_backup_custom.c:803 pg_backup_custom.c:945
+#: pg_backup_tar.c:1032
 #, c-format
 msgid "could not determine seek position in archive file: %m"
 msgstr "아카이브 파일에서 검색 위치를 확인할 수 없음: %m"
 
-#: pg_backup_custom.c:771 pg_backup_custom.c:811
+#: pg_backup_custom.c:767 pg_backup_custom.c:807
 #, c-format
 msgid "could not close archive file: %m"
 msgstr "자료 파일을 닫을 수 없음: %m"
 
-#: pg_backup_custom.c:794
+#: pg_backup_custom.c:790
 #, c-format
 msgid "can only reopen input archives"
 msgstr "입력 아카이브만 다시 열 수 있음"
 
-#: pg_backup_custom.c:801
+#: pg_backup_custom.c:797
 #, c-format
 msgid "parallel restore from standard input is not supported"
 msgstr "표준 입력을 이용한 병렬 복원 작업은 지원하지 않습니다"
 
-#: pg_backup_custom.c:803
+#: pg_backup_custom.c:799
 #, c-format
 msgid "parallel restore from non-seekable file is not supported"
 msgstr ""
 "시작 위치를 임의로 지정할 수 없는 파일로는 병렬 복원 작업을 할 수 없습니다."
 
-#: pg_backup_custom.c:819
+#: pg_backup_custom.c:815
 #, c-format
 msgid "could not set seek position in archive file: %m"
 msgstr "아카이브 파일에서 검색 위치를 설정할 수 없음: %m"
 
-#: pg_backup_custom.c:898
+#: pg_backup_custom.c:894
 #, c-format
 msgid "compressor active"
 msgstr "압축기 사용"
@@ -1103,12 +1236,12 @@ msgstr "압축기 사용"
 msgid "could not get server_version from libpq"
 msgstr "libpq에서 server_verion 값을 구할 수 없음"
 
-#: pg_backup_db.c:53 pg_dumpall.c:1809
+#: pg_backup_db.c:53 pg_dumpall.c:1830
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "서버 버전이 일치하지 않아 중단하는 중"
 
-#: pg_backup_db.c:54 pg_dumpall.c:1810
+#: pg_backup_db.c:54 pg_dumpall.c:1831
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "서버 버전: %s; %s 버전: %s"
@@ -1118,7 +1251,7 @@ msgstr "서버 버전: %s; %s 버전: %s"
 msgid "already connected to a database"
 msgstr "데이터베이스에 이미 접속해 있음"
 
-#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1656 pg_dumpall.c:1758
+#: pg_backup_db.c:128 pg_backup_db.c:178 pg_dumpall.c:1677 pg_dumpall.c:1779
 msgid "Password: "
 msgstr "암호: "
 
@@ -1132,18 +1265,18 @@ msgstr "데이터베이스 접속을 할 수 없음"
 msgid "reconnection failed: %s"
 msgstr "재연결 실패: %s"
 
-#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:756 pg_dump_sort.c:1280
-#: pg_dump_sort.c:1300 pg_dumpall.c:1683 pg_dumpall.c:1767
+#: pg_backup_db.c:190 pg_backup_db.c:264 pg_dump.c:788 pg_dump_sort.c:1213
+#: pg_dump_sort.c:1233 pg_dumpall.c:1704 pg_dumpall.c:1788
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:271 pg_dumpall.c:1872 pg_dumpall.c:1895
+#: pg_backup_db.c:271 pg_dumpall.c:1893 pg_dumpall.c:1916
 #, c-format
 msgid "query failed: %s"
 msgstr "쿼리 실패: %s"
 
-#: pg_backup_db.c:273 pg_dumpall.c:1873 pg_dumpall.c:1896
+#: pg_backup_db.c:273 pg_dumpall.c:1894 pg_dumpall.c:1917
 #, c-format
 msgid "Query was: %s"
 msgstr "사용한 쿼리: %s"
@@ -1178,7 +1311,7 @@ msgstr "PQputCopyEnd에 의해서 오류가 반환되었음: %s"
 msgid "COPY failed for table \"%s\": %s"
 msgstr "\"%s\" 테이블을 위한 COPY 실패: %s"
 
-#: pg_backup_db.c:521 pg_dump.c:2202
+#: pg_backup_db.c:521 pg_dump.c:2283
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
 msgstr "\"%s\" 테이블 COPY 작업 중 잘못된 부가 결과가 있음"
@@ -1191,149 +1324,144 @@ msgstr "데이터베이스 트랜잭션을 시작할 수 없음"
 msgid "could not commit database transaction"
 msgstr "데이터베이스 트랜잭션을 commit 할 수 없음"
 
-#: pg_backup_directory.c:155
+#: pg_backup_directory.c:153
 #, c-format
 msgid "no output directory specified"
 msgstr "자료가 저장될 디렉터리를 지정하지 않았음"
 
-#: pg_backup_directory.c:184
-#, c-format
-msgid "could not read directory \"%s\": %m"
-msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
-
-#: pg_backup_directory.c:188
+#: pg_backup_directory.c:186
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:194
+#: pg_backup_directory.c:192
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "\"%s\" 디렉터리를 만들 수 없음: %m"
 
-#: pg_backup_directory.c:356 pg_backup_directory.c:499
-#: pg_backup_directory.c:537
+#: pg_backup_directory.c:357 pg_backup_directory.c:506
+#: pg_backup_directory.c:544
 #, c-format
 msgid "could not write to output file: %s"
 msgstr "출력 파일을 쓸 수 없음: %s"
 
-#: pg_backup_directory.c:374
+#: pg_backup_directory.c:375
 #, c-format
 msgid "could not close data file: %m"
 msgstr "자료 파일을 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:407
+#: pg_backup_directory.c:408
 #, c-format
 msgid "could not close data file \"%s\": %m"
 msgstr "\"%s\" 자료 파일을 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:448
+#: pg_backup_directory.c:455
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "입력용 large object TOC 파일(\"%s\")을 열 수 없음: %m"
 
-#: pg_backup_directory.c:459
+#: pg_backup_directory.c:466
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "large object TOC 파일(\"%s\")을 닫을 수 없음: \"%s\""
 
-#: pg_backup_directory.c:468
+#: pg_backup_directory.c:475
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "large object TOC 파일(\"%s\")을 닫을 수 없음"
 
-#: pg_backup_directory.c:472
+#: pg_backup_directory.c:479
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "large object TOC 파일(\"%s\")을 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:694
+#: pg_backup_directory.c:702
 #, c-format
 msgid "could not close LO data file: %m"
 msgstr "LO 자료 파일을 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:704
+#: pg_backup_directory.c:712
 #, c-format
 msgid "could not write to LOs TOC file: %s"
 msgstr "LO TOC 파일에 쓸 수 없음: %s"
 
-#: pg_backup_directory.c:720
+#: pg_backup_directory.c:728
 #, c-format
 msgid "could not close LOs TOC file: %m"
 msgstr "LO TOC 파일을 닫을 수 없음: %m"
 
-#: pg_backup_directory.c:739
+#: pg_backup_directory.c:747
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "파일 이름이 너무 긺: \"%s\""
 
-#: pg_backup_null.c:74
+#: pg_backup_null.c:70
 #, c-format
 msgid "this format cannot be read"
 msgstr "이 파일 형태는 읽을 수 없음"
 
-#: pg_backup_tar.c:172
+#: pg_backup_tar.c:168
 #, c-format
 msgid "could not open TOC file \"%s\" for output: %m"
 msgstr "출력용 TOC 파일 \"%s\"을(를) 열 수 없음: %m"
 
-#: pg_backup_tar.c:179
+#: pg_backup_tar.c:175
 #, c-format
 msgid "could not open TOC file for output: %m"
 msgstr "출력용 TOC 파일을 열 수 없음: %m"
 
-#: pg_backup_tar.c:198 pg_backup_tar.c:334 pg_backup_tar.c:389
-#: pg_backup_tar.c:405 pg_backup_tar.c:891
+#: pg_backup_tar.c:194 pg_backup_tar.c:330 pg_backup_tar.c:385
+#: pg_backup_tar.c:401 pg_backup_tar.c:906
 #, c-format
 msgid "compression is not supported by tar archive format"
 msgstr "tar 출력 포멧에서 압축 기능을 지원하지 않음"
 
-#: pg_backup_tar.c:206
+#: pg_backup_tar.c:202
 #, c-format
 msgid "could not open TOC file \"%s\" for input: %m"
 msgstr "입력용 TOC 파일(\"%s\")을 열 수 없음: %m"
 
-#: pg_backup_tar.c:213
+#: pg_backup_tar.c:209
 #, c-format
 msgid "could not open TOC file for input: %m"
 msgstr "입력용 TOC 파일을 열 수 없음: %m"
 
-#: pg_backup_tar.c:322
+#: pg_backup_tar.c:318
 #, c-format
 msgid "could not find file \"%s\" in archive"
 msgstr "아카이브에서 \"%s\" 파일을 찾을 수 없음"
 
-#: pg_backup_tar.c:382
+#: pg_backup_tar.c:378
 #, c-format
 msgid "could not generate temporary file name: %m"
 msgstr "임시 파일 이름을 짓지 못했습니다: %m"
 
-#: pg_backup_tar.c:623
+#: pg_backup_tar.c:619
 #, c-format
 msgid "unexpected COPY statement syntax: \"%s\""
 msgstr "COPY 구문 오류: \"%s\""
 
-#: pg_backup_tar.c:888
+#: pg_backup_tar.c:903
 #, c-format
 msgid "invalid OID for large object (%u)"
 msgstr "잘못된 large object OID: %u"
 
-#: pg_backup_tar.c:1033
+#: pg_backup_tar.c:1048
 #, c-format
 msgid "could not close temporary file: %m"
 msgstr "임시 파일을 열 수 없음: %m"
 
-#: pg_backup_tar.c:1036
+#: pg_backup_tar.c:1051
 #, c-format
 msgid "actual file length (%lld) does not match expected (%lld)"
 msgstr "실재 파일 길이(%lld)와 예상되는 값(%lld)이 다릅니다"
 
-#: pg_backup_tar.c:1082 pg_backup_tar.c:1113
+#: pg_backup_tar.c:1097 pg_backup_tar.c:1128
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive"
 msgstr "tar 아카이브에서 \"%s\" 파일을 위한 헤더를 찾을 수 없음"
 
-#: pg_backup_tar.c:1100
+#: pg_backup_tar.c:1115
 #, c-format
 msgid ""
 "restoring data out of order is not supported in this archive format: \"%s\" "
@@ -1342,13 +1470,13 @@ msgstr ""
 "순서를 넘어서는 자료 덤프 작업은 이 아카이브 포멧에서는 지원하지 않습니다: "
 "\"%s\" 요구되었지만, 이 아카이브 파일에서는 \"%s\" 전에 옵니다."
 
-#: pg_backup_tar.c:1147
+#: pg_backup_tar.c:1162
 #, c-format
 msgid "incomplete tar header found (%lu byte)"
 msgid_plural "incomplete tar header found (%lu bytes)"
 msgstr[0] "불완전한 tar 헤더가 있음(%lu 바이트)"
 
-#: pg_backup_tar.c:1186
+#: pg_backup_tar.c:1201
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %llu"
@@ -1359,10 +1487,10 @@ msgstr "%s 안에 손상된 tar 헤더 발견 (예상치 %d, 계산된 값 %d), 
 msgid "unrecognized section name: \"%s\""
 msgstr "알 수 없는 섹션 이름: \"%s\""
 
-#: pg_backup_utils.c:55 pg_dump.c:662 pg_dump.c:679 pg_dumpall.c:365
-#: pg_dumpall.c:375 pg_dumpall.c:383 pg_dumpall.c:391 pg_dumpall.c:398
-#: pg_dumpall.c:408 pg_dumpall.c:483 pg_restore.c:291 pg_restore.c:307
-#: pg_restore.c:321
+#: pg_backup_utils.c:55 pg_dump.c:694 pg_dump.c:711 pg_dumpall.c:370
+#: pg_dumpall.c:380 pg_dumpall.c:388 pg_dumpall.c:396 pg_dumpall.c:403
+#: pg_dumpall.c:413 pg_dumpall.c:488 pg_restore.c:307 pg_restore.c:323
+#: pg_restore.c:337
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
@@ -1372,39 +1500,39 @@ msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 msgid "out of on_exit_nicely slots"
 msgstr "on_exit_nicely 슬롯 범위 벗어남"
 
-#: pg_dump.c:677 pg_dumpall.c:373 pg_restore.c:305
+#: pg_dump.c:709 pg_dumpall.c:378 pg_restore.c:321
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "너무 많은 명령행 인자를 지정했음 (시작: \"%s\")"
 
-#: pg_dump.c:696 pg_restore.c:328
+#: pg_dump.c:728 pg_restore.c:344
 #, c-format
 msgid "options -s/--schema-only and -a/--data-only cannot be used together"
 msgstr "-s/--schema-only 옵션과 -a/--data-only 옵션은 함께 사용할 수 없음"
 
-#: pg_dump.c:699
+#: pg_dump.c:731
 #, c-format
 msgid ""
 "options -s/--schema-only and --include-foreign-data cannot be used together"
 msgstr ""
 "-s/--schema-only 옵션과 --include-foreign-data 옵션은 함께 사용할 수 없음"
 
-#: pg_dump.c:702
+#: pg_dump.c:734
 #, c-format
 msgid "option --include-foreign-data is not supported with parallel backup"
 msgstr "--include-foreign-data 옵션은 병렬 백업 작업에서 지원하지 않음"
 
-#: pg_dump.c:705 pg_restore.c:331
+#: pg_dump.c:737 pg_restore.c:347
 #, c-format
 msgid "options -c/--clean and -a/--data-only cannot be used together"
 msgstr "-c/--clean 옵션과 -a/--data-only 옵션은 함께 사용할 수 없음"
 
-#: pg_dump.c:708 pg_dumpall.c:403 pg_restore.c:356
+#: pg_dump.c:740 pg_dumpall.c:408 pg_restore.c:375
 #, c-format
 msgid "option --if-exists requires option -c/--clean"
 msgstr "--if-exists 옵션은 -c/--clean 옵션과 함께 사용해야 함"
 
-#: pg_dump.c:715
+#: pg_dump.c:747
 #, c-format
 msgid ""
 "option --on-conflict-do-nothing requires option --inserts, --rows-per-"
@@ -1413,47 +1541,47 @@ msgstr ""
 "--on-conflict-do-nothing 옵션은 --inserts, --rows-per-insert 또는 --column-"
 "inserts 옵션과 함께 사용해야 함"
 
-#: pg_dump.c:744
+#: pg_dump.c:776
 #, c-format
 msgid "unrecognized compression algorithm: \"%s\""
 msgstr "알 수 없는 압축 알고리즘: \"%s\""
 
-#: pg_dump.c:751
+#: pg_dump.c:783
 #, c-format
 msgid "invalid compression specification: %s"
 msgstr "잘못된 압축 명세: %s"
 
-#: pg_dump.c:764
+#: pg_dump.c:796
 #, c-format
 msgid "compression option \"%s\" is not currently supported by pg_dump"
 msgstr "\"%s\" 압축 옵션은 pg_dump에서 현재 지원하지 않음"
 
-#: pg_dump.c:776
+#: pg_dump.c:808
 #, c-format
 msgid "parallel backup only supported by the directory format"
 msgstr "병렬 백업은 디렉터리 기반 출력일 때만 사용할 수 있습니다."
 
-#: pg_dump.c:822
+#: pg_dump.c:854
 #, c-format
 msgid "last built-in OID is %u"
 msgstr "마지막 내장 OID는 %u"
 
-#: pg_dump.c:831
+#: pg_dump.c:863
 #, c-format
 msgid "no matching schemas were found"
 msgstr "조건에 맞는 스키마가 없습니다"
 
-#: pg_dump.c:848
+#: pg_dump.c:880
 #, c-format
 msgid "no matching tables were found"
 msgstr "조건에 맞는 테이블이 없습니다"
 
-#: pg_dump.c:876
+#: pg_dump.c:908
 #, c-format
 msgid "no matching extensions were found"
 msgstr "조건에 맞는 확장 모듈이 없습니다"
 
-#: pg_dump.c:1056
+#: pg_dump.c:1092
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -1463,17 +1591,17 @@ msgstr ""
 "다른 형태의 파일로 덤프합니다.\n"
 "\n"
 
-#: pg_dump.c:1057 pg_dumpall.c:630 pg_restore.c:433
+#: pg_dump.c:1093 pg_dumpall.c:635 pg_restore.c:452
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_dump.c:1058
+#: pg_dump.c:1094
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [옵션]... [DB이름]\n"
 
-#: pg_dump.c:1060 pg_dumpall.c:633 pg_restore.c:436
+#: pg_dump.c:1096 pg_dumpall.c:638 pg_restore.c:455
 #, c-format
 msgid ""
 "\n"
@@ -1482,12 +1610,12 @@ msgstr ""
 "\n"
 "일반 옵션들:\n"
 
-#: pg_dump.c:1061
+#: pg_dump.c:1097
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=파일이름          출력 파일 또는 디렉터리 이름\n"
 
-#: pg_dump.c:1062
+#: pg_dump.c:1098
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1496,22 +1624,22 @@ msgstr ""
 "  -F, --format=c|d|t|p         출력 파일 형식(사용자 지정, 디렉터리, tar,\n"
 "                               일반 텍스트(초기값))\n"
 
-#: pg_dump.c:1064
+#: pg_dump.c:1100
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=개수              덤프 작업을 병렬 처리 함\n"
 
-#: pg_dump.c:1065 pg_dumpall.c:635
+#: pg_dump.c:1101 pg_dumpall.c:640
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                작업 내역을 자세히 봄\n"
 
-#: pg_dump.c:1066 pg_dumpall.c:636
+#: pg_dump.c:1102 pg_dumpall.c:641
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                버전 정보를 보여주고 마침\n"
 
-#: pg_dump.c:1067
+#: pg_dump.c:1103
 #, c-format
 msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
@@ -1520,26 +1648,31 @@ msgstr ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
 "                               압축 지정\n"
 
-#: pg_dump.c:1069 pg_dumpall.c:637
+#: pg_dump.c:1105 pg_dumpall.c:642
 #, c-format
 msgid ""
 "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr ""
 "  --lock-wait-timeout=초       테이블 잠금 시 지정한 초만큼 기다린 후 실패\n"
 
-#: pg_dump.c:1070 pg_dumpall.c:664
+#: pg_dump.c:1106 pg_dumpall.c:670
 #, c-format
 msgid ""
 "  --no-sync                    do not wait for changes to be written safely "
 "to disk\n"
 msgstr "  --no-sync                    fsync 작업 생략\n"
 
-#: pg_dump.c:1071 pg_dumpall.c:638
+#: pg_dump.c:1107
+#, c-format
+msgid "  --sync-method=METHOD         set method for syncing files to disk\n"
+msgstr "  --sync-method=METHOD         파일을 디스크에 동기화할 방법 지정\n"
+
+#: pg_dump.c:1108 pg_dumpall.c:643
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   이 도움말을 보여주고 마침\n"
 
-#: pg_dump.c:1073 pg_dumpall.c:639
+#: pg_dump.c:1110 pg_dumpall.c:644
 #, c-format
 msgid ""
 "\n"
@@ -1548,34 +1681,34 @@ msgstr ""
 "\n"
 "출력 내용을 다루는 옵션들:\n"
 
-#: pg_dump.c:1074 pg_dumpall.c:640
+#: pg_dump.c:1111 pg_dumpall.c:645
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr "  -a, --data-only              스키마 빼고 자료만 덤프\n"
 
-#: pg_dump.c:1075
+#: pg_dump.c:1112
 #, c-format
 msgid "  -b, --large-objects          include large objects in dump\n"
 msgstr "  -b, --large-objects          큰 객체를 덤프에 포함\n"
 
-#: pg_dump.c:1076
+#: pg_dump.c:1113
 #, c-format
 msgid "  --blobs                      (same as --large-objects, deprecated)\n"
 msgstr "  --blobs                      (--large-objects 와 같음, 옛날 옵션)\n"
 
-#: pg_dump.c:1077
+#: pg_dump.c:1114
 #, c-format
 msgid "  -B, --no-large-objects       exclude large objects in dump\n"
 msgstr "  -B, --no-large-objects       큰 객체 빼고 덤프\n"
 
-#: pg_dump.c:1078
+#: pg_dump.c:1115
 #, c-format
 msgid ""
 "  --no-blobs                   (same as --no-large-objects, deprecated)\n"
 msgstr ""
 "  --no-blobs                   (--no-large-objects와 같음, 옛날 옵션)\n"
 
-#: pg_dump.c:1079 pg_restore.c:447
+#: pg_dump.c:1116 pg_restore.c:466
 #, c-format
 msgid ""
 "  -c, --clean                  clean (drop) database objects before "
@@ -1584,34 +1717,34 @@ msgstr ""
 "  -c, --clean                  다시 만들기 전에 데이터베이스 개체 지우기(삭"
 "제)\n"
 
-#: pg_dump.c:1080
+#: pg_dump.c:1117
 #, c-format
 msgid ""
 "  -C, --create                 include commands to create database in dump\n"
 msgstr ""
 "  -C, --create                 데이터베이스 만드는 명령구문도 포함시킴\n"
 
-#: pg_dump.c:1081
+#: pg_dump.c:1118
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
 msgstr "  -e, --extension=PATTERN      지정한 확장 모듈들만 덤프 함\n"
 
-#: pg_dump.c:1082 pg_dumpall.c:642
+#: pg_dump.c:1119 pg_dumpall.c:647
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=인코딩        지정한 인코딩으로 자료를 덤프 함\n"
 
-#: pg_dump.c:1083
+#: pg_dump.c:1120
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
 msgstr "  -n, --schema=PATTERN         지정한 SCHEMA들 자료만 덤프\n"
 
-#: pg_dump.c:1084
+#: pg_dump.c:1121
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
 msgstr "  -N, --exclude-schema=PATTERN 지정한 SCHEMA들만 빼고 모두 덤프\n"
 
-#: pg_dump.c:1085
+#: pg_dump.c:1122
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1620,12 +1753,12 @@ msgstr ""
 "  -O, --no-owner               일반 텍스트 형식에서\n"
 "                               개체 소유권 복원 건너뛰기\n"
 
-#: pg_dump.c:1087 pg_dumpall.c:646
+#: pg_dump.c:1124 pg_dumpall.c:651
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
 msgstr "  -s, --schema-only            자료구조(스키마)만 덤프\n"
 
-#: pg_dump.c:1088
+#: pg_dump.c:1125
 #, c-format
 msgid ""
 "  -S, --superuser=NAME         superuser user name to use in plain-text "
@@ -1634,28 +1767,28 @@ msgstr ""
 "  -S, --superuser=NAME         일반 텍스트 형식에서 사용할 슈퍼유저 사용자 이"
 "름\n"
 
-#: pg_dump.c:1089
+#: pg_dump.c:1126
 #, c-format
 msgid "  -t, --table=PATTERN          dump only the specified table(s)\n"
 msgstr "  -t, --table=PATTERN          지정한 이름의 테이블들만 덤프\n"
 
-#: pg_dump.c:1090
+#: pg_dump.c:1127
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN  지정한 테이블들만 빼고 덤프\n"
 
-#: pg_dump.c:1091 pg_dumpall.c:649
+#: pg_dump.c:1128 pg_dumpall.c:654
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr ""
 "  -x, --no-privileges          접근 권한 (grant/revoke) 정보는 덤프 안 함\n"
 
-#: pg_dump.c:1092 pg_dumpall.c:650
+#: pg_dump.c:1129 pg_dumpall.c:655
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             업그레이드 유틸리티 전용\n"
 
-#: pg_dump.c:1093 pg_dumpall.c:651
+#: pg_dump.c:1130 pg_dumpall.c:656
 #, c-format
 msgid ""
 "  --column-inserts             dump data as INSERT commands with column "
@@ -1663,7 +1796,7 @@ msgid ""
 msgstr ""
 "  --column-inserts             칼럼 이름과 함께 INSERT 명령으로 자료 덤프\n"
 
-#: pg_dump.c:1094 pg_dumpall.c:652
+#: pg_dump.c:1131 pg_dumpall.c:657
 #, c-format
 msgid ""
 "  --disable-dollar-quoting     disable dollar quoting, use SQL standard "
@@ -1671,13 +1804,13 @@ msgid ""
 msgstr ""
 "  --disable-dollar-quoting     $ 인용 구문 사용안함, SQL 표준 따옴표 사용\n"
 
-#: pg_dump.c:1095 pg_dumpall.c:653 pg_restore.c:464
+#: pg_dump.c:1132 pg_dumpall.c:658 pg_restore.c:483
 #, c-format
 msgid ""
 "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           자료만 복원할 때 트리거 사용을 안함\n"
 
-#: pg_dump.c:1096
+#: pg_dump.c:1133
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user "
@@ -1687,7 +1820,12 @@ msgstr ""
 "  --enable-row-security        로우 보안 활성화 (현재 작업자가 접근할 수\n"
 "                               있는 자료만 덤프 함)\n"
 
-#: pg_dump.c:1098
+#: pg_dump.c:1135
+#, c-format
+msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
+msgstr "  --exclude-extension=PATTERN  지정한 확장 모듈은 덤프하지 않음\n"
+
+#: pg_dump.c:1136
 #, c-format
 msgid ""
 "  --exclude-table-and-children=PATTERN\n"
@@ -1699,13 +1837,13 @@ msgstr ""
 "                               상속 하위, 파티션 하위 테이블을 포함하는\n"
 "                               패턴의 테이블들은 빼고 덤프\n"
 
-#: pg_dump.c:1101
+#: pg_dump.c:1139
 #, c-format
 msgid ""
 "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
 msgstr "  --exclude-table-data=PATTERN 해당 테이블 자료는 덤프 안함\n"
 
-#: pg_dump.c:1102
+#: pg_dump.c:1140
 #, c-format
 msgid ""
 "  --exclude-table-data-and-children=PATTERN\n"
@@ -1716,19 +1854,29 @@ msgstr ""
 "                               상속 하위, 파티션 하위 테이블을 포함하는\n"
 "                               패턴의 테이블들의 자료는 빼고 덤프\n"
 
-#: pg_dump.c:1105 pg_dumpall.c:655
+#: pg_dump.c:1143 pg_dumpall.c:660
 #, c-format
 msgid ""
 "  --extra-float-digits=NUM     override default setting for "
 "extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     기본 extra_float_digits 값 바꿈\n"
 
-#: pg_dump.c:1106 pg_dumpall.c:656 pg_restore.c:466
+#: pg_dump.c:1144
+#, c-format
+msgid ""
+"  --filter=FILENAME            include or exclude objects and data from "
+"dump\n"
+"                               based on expressions in FILENAME\n"
+msgstr ""
+"  --filter=FILENAME            지정한 파일의 규칙대로 포함하거나 제외할\n"
+"                               객체를 반영하여 덤프\n"
+
+#: pg_dump.c:1146 pg_dumpall.c:662 pg_restore.c:487
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  객체 삭제 시 IF EXISTS 구문 사용\n"
 
-#: pg_dump.c:1107
+#: pg_dump.c:1147
 #, c-format
 msgid ""
 "  --include-foreign-data=PATTERN\n"
@@ -1739,60 +1887,60 @@ msgstr ""
 "                               지정한 패턴과 일치하는 외부 서버의 외부\n"
 "                               테이블 자료를 포함\n"
 
-#: pg_dump.c:1110 pg_dumpall.c:657
+#: pg_dump.c:1150 pg_dumpall.c:663
 #, c-format
 msgid ""
 "  --inserts                    dump data as INSERT commands, rather than "
 "COPY\n"
 msgstr "  --inserts                    COPY 대신 INSERT 명령으로 자료 덤프\n"
 
-#: pg_dump.c:1111 pg_dumpall.c:658
+#: pg_dump.c:1151 pg_dumpall.c:664
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
 msgstr ""
 "  --load-via-partition-root    상위 테이블을 통해 하위 테이블을 로드함\n"
 
-#: pg_dump.c:1112 pg_dumpall.c:659
+#: pg_dump.c:1152 pg_dumpall.c:665
 #, c-format
 msgid "  --no-comments                do not dump comments\n"
 msgstr "  --no-comments                코멘트는 덤프 안함\n"
 
-#: pg_dump.c:1113 pg_dumpall.c:660
+#: pg_dump.c:1153 pg_dumpall.c:666
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            발행 정보는 덤프하지 않음\n"
 
-#: pg_dump.c:1114 pg_dumpall.c:662
+#: pg_dump.c:1154 pg_dumpall.c:668
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         보안 라벨 할당을 덤프 하지 않음\n"
 
-#: pg_dump.c:1115 pg_dumpall.c:663
+#: pg_dump.c:1155 pg_dumpall.c:669
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           구독 정보는 덤프하지 않음\n"
 
-#: pg_dump.c:1116 pg_dumpall.c:665
+#: pg_dump.c:1156 pg_dumpall.c:671
 #, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
 msgstr "  --no-table-access-method     테이블 접근 방법은 덤프하지 않음\n"
 
-#: pg_dump.c:1117 pg_dumpall.c:666
+#: pg_dump.c:1157 pg_dumpall.c:672
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             테이블스페이스 할당을 덤프하지 않음\n"
 
-#: pg_dump.c:1118 pg_dumpall.c:667
+#: pg_dump.c:1158 pg_dumpall.c:673
 #, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
 msgstr "  --no-toast-compression       TOAST 압축 방법은 덤프하지 않음\n"
 
-#: pg_dump.c:1119 pg_dumpall.c:668
+#: pg_dump.c:1159 pg_dumpall.c:674
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     언로그드 테이블 자료는 덤프하지 않음\n"
 
-#: pg_dump.c:1120 pg_dumpall.c:669
+#: pg_dump.c:1160 pg_dumpall.c:675
 #, c-format
 msgid ""
 "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT "
@@ -1801,14 +1949,14 @@ msgstr ""
 "  --on-conflict-do-nothing     INSERT 구문에 ON CONFLICT DO NOTHING 옵션 추"
 "가\n"
 
-#: pg_dump.c:1121 pg_dumpall.c:670
+#: pg_dump.c:1161 pg_dumpall.c:676
 #, c-format
 msgid ""
 "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr ""
 "  --quote-all-identifiers      예약어가 아니여도 모든 식별자는 따옴표를 씀\n"
 
-#: pg_dump.c:1122 pg_dumpall.c:671
+#: pg_dump.c:1162 pg_dumpall.c:677
 #, c-format
 msgid ""
 "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
@@ -1816,7 +1964,7 @@ msgstr ""
 "  --rows-per-insert=NROWS      한 INSERT 명령으로 입력할 로우 수; --inserts\n"
 "                               옵션을 사용한 것으로 가정 함\n"
 
-#: pg_dump.c:1123
+#: pg_dump.c:1163
 #, c-format
 msgid ""
 "  --section=SECTION            dump named section (pre-data, data, or post-"
@@ -1824,7 +1972,7 @@ msgid ""
 msgstr ""
 "  --section=SECTION            해당 섹션(pre-data, data, post-data)만 덤프\n"
 
-#: pg_dump.c:1124
+#: pg_dump.c:1164
 #, c-format
 msgid ""
 "  --serializable-deferrable    wait until the dump can run without "
@@ -1833,12 +1981,12 @@ msgstr ""
 "  --serializable-deferrable    자료 정합성을 보장하기 위해 덤프 작업을\n"
 "                               직렬화 가능한 트랜잭션으로 처리 함\n"
 
-#: pg_dump.c:1125
+#: pg_dump.c:1165
 #, c-format
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          지정한 스냅샷을 덤프 함\n"
 
-#: pg_dump.c:1126 pg_restore.c:476
+#: pg_dump.c:1166 pg_restore.c:497
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns "
@@ -1849,7 +1997,7 @@ msgstr ""
 "는\n"
 "                               객체가 적어도 하나 이상 있어야 함\n"
 
-#: pg_dump.c:1128
+#: pg_dump.c:1168
 #, c-format
 msgid ""
 "  --table-and-children=PATTERN dump only the specified table(s), including\n"
@@ -1858,7 +2006,7 @@ msgstr ""
 "  --table-and-children=PATTERN 해당 패턴의 상속 하위, 파티션 하위 테이블만\n"
 "                               덤프\n"
 
-#: pg_dump.c:1130 pg_dumpall.c:672 pg_restore.c:478
+#: pg_dump.c:1170 pg_dumpall.c:678 pg_restore.c:500
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -1871,7 +2019,7 @@ msgstr ""
 "명령\n"
 "                               대신 사용하여 소유권 설정\n"
 
-#: pg_dump.c:1134 pg_dumpall.c:676 pg_restore.c:482
+#: pg_dump.c:1174 pg_dumpall.c:682 pg_restore.c:504
 #, c-format
 msgid ""
 "\n"
@@ -1880,45 +2028,45 @@ msgstr ""
 "\n"
 "연결 옵션들:\n"
 
-#: pg_dump.c:1135
+#: pg_dump.c:1175
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=DBNAME      덤프할 데이터베이스\n"
 
-#: pg_dump.c:1136 pg_dumpall.c:678 pg_restore.c:483
+#: pg_dump.c:1176 pg_dumpall.c:684 pg_restore.c:505
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME      접속할 데이터베이스 서버 또는 소켓 디렉터리\n"
 
-#: pg_dump.c:1137 pg_dumpall.c:680 pg_restore.c:484
+#: pg_dump.c:1177 pg_dumpall.c:686 pg_restore.c:506
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORT          데이터베이스 서버의 포트 번호\n"
 
-#: pg_dump.c:1138 pg_dumpall.c:681 pg_restore.c:485
+#: pg_dump.c:1178 pg_dumpall.c:687 pg_restore.c:507
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=NAME      연결할 데이터베이스 사용자\n"
 
-#: pg_dump.c:1139 pg_dumpall.c:682 pg_restore.c:486
+#: pg_dump.c:1179 pg_dumpall.c:688 pg_restore.c:508
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        암호 프롬프트 표시 안 함\n"
 
-#: pg_dump.c:1140 pg_dumpall.c:683 pg_restore.c:487
+#: pg_dump.c:1180 pg_dumpall.c:689 pg_restore.c:509
 #, c-format
 msgid ""
 "  -W, --password           force password prompt (should happen "
 "automatically)\n"
 msgstr "  -W, --password           암호 입력 프롬프트 보임(자동으로 처리함)\n"
 
-#: pg_dump.c:1141 pg_dumpall.c:684
+#: pg_dump.c:1181 pg_dumpall.c:690
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=ROLENAME          덤프 전에 SET ROLE 수행\n"
 
-#: pg_dump.c:1143
+#: pg_dump.c:1183
 #, c-format
 msgid ""
 "\n"
@@ -1931,423 +2079,430 @@ msgstr ""
 "사용합니다.\n"
 "\n"
 
-#: pg_dump.c:1145 pg_dumpall.c:688 pg_restore.c:494
+#: pg_dump.c:1185 pg_dumpall.c:694 pg_restore.c:516
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "문제점 보고 주소 <%s>\n"
 
-#: pg_dump.c:1146 pg_dumpall.c:689 pg_restore.c:495
+#: pg_dump.c:1186 pg_dumpall.c:695 pg_restore.c:517
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
 
-#: pg_dump.c:1165 pg_dumpall.c:513
+#: pg_dump.c:1205 pg_dumpall.c:518
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
 msgstr "클라이언트 인코딩 값이 잘못되었습니다: \"%s\""
 
-#: pg_dump.c:1303
+#: pg_dump.c:1352
 #, c-format
 msgid ""
 "parallel dumps from standby servers are not supported by this server version"
 msgstr "대기 서버에서 병렬 덤프는 이 서버 버전에서 지원하지 않음"
 
-#: pg_dump.c:1368
+#: pg_dump.c:1417
 #, c-format
 msgid "invalid output format \"%s\" specified"
 msgstr "\"%s\" 값은 잘못된 출력 파일 형태입니다."
 
-#: pg_dump.c:1409 pg_dump.c:1465 pg_dump.c:1518 pg_dumpall.c:1449
+#: pg_dump.c:1458 pg_dump.c:1514 pg_dump.c:1567 pg_dumpall.c:1467
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "적당하지 않은 qualified 이름 입니다 (너무 많은 점이 있네요): %s"
 
-#: pg_dump.c:1417
+#: pg_dump.c:1466
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
 msgstr "\"%s\" 검색 조건에 만족하는 스키마가 없습니다"
 
-#: pg_dump.c:1470
+#: pg_dump.c:1519
 #, c-format
 msgid "no matching extensions were found for pattern \"%s\""
 msgstr "\"%s\" 검색 조건에 만족하는 확장 모듈이 없습니다"
 
-#: pg_dump.c:1523
+#: pg_dump.c:1572
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
 msgstr "\"%s\" 검색 조건에 만족하는 외부 서버가 없습니다"
 
-#: pg_dump.c:1594
+#: pg_dump.c:1643
 #, c-format
 msgid "improper relation name (too many dotted names): %s"
 msgstr ""
 "적당하지 않은 릴레이션(relation) 이름 입니다 (너무 많은 점이 있네요): %s"
 
-#: pg_dump.c:1616
+#: pg_dump.c:1665
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
 msgstr "\"%s\" 검색 조건에 만족하는 테이블이 없습니다"
 
-#: pg_dump.c:1643
+#: pg_dump.c:1692
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "현재 데이터베이스에 연결되어있지 않습니다."
 
-#: pg_dump.c:1646
+#: pg_dump.c:1695
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "서로 다른 데이터베이스간의 참조는 구현되어있지 않습니다: %s"
 
-#: pg_dump.c:2077
+#: pg_dump.c:2154
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
 msgstr "\"%s.%s\" 테이블의 내용 덤프 중"
 
-#: pg_dump.c:2183
+#: pg_dump.c:2264
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
 msgstr "\"%s\" 테이블 내용을 덤프하면서 오류 발생: PQgetCopyData() 실패."
 
-#: pg_dump.c:2184 pg_dump.c:2194
+#: pg_dump.c:2265 pg_dump.c:2275
 #, c-format
 msgid "Error message from server: %s"
 msgstr "서버에서 보낸 오류 메시지: %s"
 
-#: pg_dump.c:2185 pg_dump.c:2195
+#: pg_dump.c:2266 pg_dump.c:2276
 #, c-format
 msgid "Command was: %s"
 msgstr "사용된 명령: %s"
 
-#: pg_dump.c:2193
+#: pg_dump.c:2274
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
 msgstr "\"%s\" 테이블 내용을 덤프하면서 오류 발생: PQgetResult() 실패."
 
-#: pg_dump.c:2275
+#: pg_dump.c:2365
 #, c-format
 msgid "wrong number of fields retrieved from table \"%s\""
 msgstr "\"%s\" 테이블에서 잘못된 필드 수"
 
-#: pg_dump.c:2973
+#: pg_dump.c:3067
 #, c-format
 msgid "saving database definition"
 msgstr "데이터베이스 구성정보를 저장 중"
 
-#: pg_dump.c:3078
+#: pg_dump.c:3176
 #, c-format
 msgid "unrecognized locale provider: %s"
 msgstr "알 수 없는 로케일 제공자 이름: %s"
 
-#: pg_dump.c:3429
+#: pg_dump.c:3537
 #, c-format
 msgid "saving encoding = %s"
 msgstr "인코딩 = %s 저장 중"
 
-#: pg_dump.c:3454
+#: pg_dump.c:3562
 #, c-format
-msgid "saving standard_conforming_strings = %s"
-msgstr "standard_conforming_strings = %s 저장 중"
+msgid "saving \"standard_conforming_strings = %s\""
+msgstr "\"standard_conforming_strings = %s\" 저장 중"
 
-#: pg_dump.c:3493
+#: pg_dump.c:3601
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "current_schemas() 결과를 분석할 수 없음"
 
-#: pg_dump.c:3512
+#: pg_dump.c:3620
 #, c-format
-msgid "saving search_path = %s"
-msgstr "search_path = %s 저장 중"
+msgid "saving \"search_path = %s\""
+msgstr "\"search_path = %s\" 저장 중"
 
-#: pg_dump.c:3549
+#: pg_dump.c:3656
 #, c-format
 msgid "reading large objects"
 msgstr "large object 읽는 중"
 
-#: pg_dump.c:3687
+#: pg_dump.c:3877
 #, c-format
-msgid "saving large objects"
-msgstr "large object들을 저장 중"
+msgid "saving large objects \"%s\""
+msgstr "\"%s\" large object들을 저장 중"
 
-#: pg_dump.c:3728
+#: pg_dump.c:3898
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "%u large object 읽는 중 오류: %s"
 
-#: pg_dump.c:3834
+#: pg_dump.c:4001
 #, c-format
 msgid "reading row-level security policies"
 msgstr "로우 단위 보안 정책 읽는 중"
 
-#: pg_dump.c:3975
+#: pg_dump.c:4142
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "예상치 못한 정책 명령 형태: %c"
 
-#: pg_dump.c:4425 pg_dump.c:4760 pg_dump.c:11984 pg_dump.c:17894
-#: pg_dump.c:17896 pg_dump.c:18517
+#: pg_dump.c:4592 pg_dump.c:5150 pg_dump.c:12364 pg_dump.c:18249
+#: pg_dump.c:18251 pg_dump.c:18873
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s 배열을 분석할 수 없음"
 
-#: pg_dump.c:4613
+#: pg_dump.c:4806
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr ""
 "현재 사용자가 슈퍼유저가 아니기 때문에 서브스크립션들은 덤프하지 못했음"
 
-#: pg_dump.c:5149
+#: pg_dump.c:5012
+#, c-format
+msgid "subscription with OID %u does not exist"
+msgstr "%u OID 구독이 없음"
+
+#: pg_dump.c:5019
+#, c-format
+msgid "failed sanity check, table with OID %u not found"
+msgstr "안전 검사 실패, OID %u인 테이블 없음"
+
+#: pg_dump.c:5582
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "%s %s 객체와 관련된 상위 확장 기능을 찾을 수 없음"
 
-#: pg_dump.c:5294
+#: pg_dump.c:5727
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "OID %u 스키마 없음"
 
-#: pg_dump.c:6776 pg_dump.c:17158
+#: pg_dump.c:7209 pg_dump.c:17620
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of sequence with OID %u not "
 "found"
 msgstr "의존성 검사 실패, 부모 테이블 OID %u 없음. 해당 시퀀스 개체 OID %u"
 
-#: pg_dump.c:6919
+#: pg_dump.c:7354
 #, c-format
 msgid ""
 "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "완전성 검사 실패, OID %u인 객체가 pg_partitioned_table에 없음"
 
-#: pg_dump.c:7150 pg_dump.c:7417 pg_dump.c:7888 pg_dump.c:8552 pg_dump.c:8671
-#: pg_dump.c:8819
+#: pg_dump.c:7585 pg_dump.c:7859 pg_dump.c:8306 pg_dump.c:8920 pg_dump.c:9042
+#: pg_dump.c:9190
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "알 수 없는 테이블 OID %u"
 
-#: pg_dump.c:7154
+#: pg_dump.c:7589
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "\"%s\" 테이블의 인덱스 자료를 알 수 없음"
 
-#: pg_dump.c:7649
+#: pg_dump.c:8091
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of pg_rewrite entry with OID "
 "%u not found"
 msgstr "의존성 검사 실패, 부모 테이블 OID %u 없음. 해당 pg_rewrite 개체 OID %u"
 
-#: pg_dump.c:7940
-#, c-format
-msgid ""
-"query produced null referenced table name for foreign key trigger \"%s\" on "
-"table \"%s\" (OID of table: %u)"
-msgstr ""
-"쿼리가 참조테이블 정보가 없는 \"%s\" 참조키 트리거를 \"%s\" (해당 OID: %u) 테"
-"이블에서 만들었습니다."
-
-#: pg_dump.c:8556
+#: pg_dump.c:8924
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "\"%s\" 테이블의 알 수 없는 칼럼 자료"
 
-#: pg_dump.c:8585
+#: pg_dump.c:8953
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "\"%s\" 테이블에 매겨져 있는 열 번호가 잘못되었습니다"
 
-#: pg_dump.c:8633
+#: pg_dump.c:9004
 #, c-format
 msgid "finding table default expressions"
 msgstr "default 표현식 찾는 중"
 
-#: pg_dump.c:8675
+#: pg_dump.c:9046
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "적당하지 않는 adnum 값: %d, 해당 테이블 \"%s\""
 
-#: pg_dump.c:8769
+#: pg_dump.c:9140
 #, c-format
 msgid "finding table check constraints"
 msgstr "테이블 체크 제약조건 찾는 중"
 
-#: pg_dump.c:8823
+#: pg_dump.c:9194
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] ""
 "%d개의 제약 조건이 \"%s\" 테이블에 있을 것으로 예상했으나 %d개를 찾음"
 
-#: pg_dump.c:8827
+#: pg_dump.c:9198
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "시스템 카탈로그가 손상되었는 것 같습니다."
 
-#: pg_dump.c:9517
+#: pg_dump.c:9888
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "%u OID 롤이 없음"
 
-#: pg_dump.c:9629 pg_dump.c:9658
+#: pg_dump.c:10000 pg_dump.c:10029
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "지원하지 않는 pg_init_privs 항목: %u %u %d"
 
-#: pg_dump.c:10479
+#: pg_dump.c:10576
+#, c-format
+msgid "missing metadata for large objects \"%s\""
+msgstr "\"%s\"large object의 메타정보가 없음"
+
+#: pg_dump.c:10859
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "\"%s\" 자료형의 typtype가 잘못 되어 있음"
 
-#: pg_dump.c:12053
+#: pg_dump.c:12433
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "\"%s\" 함수의 provolatile 값이 잘못 되었습니다"
 
-#: pg_dump.c:12103 pg_dump.c:13985
+#: pg_dump.c:12483 pg_dump.c:14379
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "\"%s\" 함수의 proparallel 값이 잘못 되었습니다"
 
-#: pg_dump.c:12233 pg_dump.c:12339 pg_dump.c:12346
+#: pg_dump.c:12613 pg_dump.c:12719 pg_dump.c:12726
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "%u OID 함수에 대한 함수 정의를 찾을 수 없음"
 
-#: pg_dump.c:12272
+#: pg_dump.c:12652
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfunc 또는 pg_cast.castmethod 필드에 잘못된 값이 있음"
 
-#: pg_dump.c:12275
+#: pg_dump.c:12655
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod 필드에 잘못된 값이 있음"
 
-#: pg_dump.c:12365
+#: pg_dump.c:12745
 #, c-format
 msgid ""
 "bogus transform definition, at least one of trffromsql and trftosql should "
 "be nonzero"
 msgstr "잘못된 전송 정의, trffromsql 또는 trftosql 중 하나는 비어 있으면 안됨"
 
-#: pg_dump.c:12382
+#: pg_dump.c:12762
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_transform.trffromsql 필드에 잘못된 값이 있음"
 
-#: pg_dump.c:12403
+#: pg_dump.c:12783
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_transform.trftosql 필드에 잘못된 값이 있음"
 
-#: pg_dump.c:12548
+#: pg_dump.c:12928
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "postfix 연산자는 더이상 지원하지 않습니다.(\"%s\" 연산자)"
 
-#: pg_dump.c:12718
+#: pg_dump.c:13098
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "%s OID의 연산자를 찾을 수 없음"
 
-#: pg_dump.c:12786
+#: pg_dump.c:13166
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "\"%c\" 잘못된 자료형, 해당 접근 방법: \"%s\""
 
-#: pg_dump.c:13455 pg_dump.c:13514
+#: pg_dump.c:13840 pg_dump.c:13908
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "알 수 없는 정렬규칙 제공자 이름: %s"
 
-#: pg_dump.c:13464 pg_dump.c:13473 pg_dump.c:13483 pg_dump.c:13498
+#: pg_dump.c:13849 pg_dump.c:13856 pg_dump.c:13867 pg_dump.c:13877
+#: pg_dump.c:13892
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "잘못된 문자정렬규칙 \"%s\""
 
-#: pg_dump.c:13904
+#: pg_dump.c:14298
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "\"%s\" 집계 함수용 aggfinalmodify 값이 이상함"
 
-#: pg_dump.c:13960
+#: pg_dump.c:14354
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "\"%s\" 집계 함수용 aggmfinalmodify 값이 이상함"
 
-#: pg_dump.c:14677
+#: pg_dump.c:15071
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "기본 접근 권한에서 알 수 없는 객체형이 있음: %d"
 
-#: pg_dump.c:14693
+#: pg_dump.c:15087
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "기본 ACL 목록 (%s)을 분석할 수 없음"
 
-#: pg_dump.c:14775
+#: pg_dump.c:15171
 #, c-format
 msgid ""
 "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr ""
 "초기 ACL 목록 (%s) 또는 default (%s) 분석할 수 없음, 해당 객체: \"%s\" (%s)"
 
-#: pg_dump.c:14800
+#: pg_dump.c:15196
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "ACL 목록 (%s) 또는 default (%s) 분석할 수 없음, 해당 객체: \"%s\" (%s)"
 
-#: pg_dump.c:15341
+#: pg_dump.c:15739
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "\"%s\" 뷰 정의 정보가 없습니다."
 
-#: pg_dump.c:15344
+#: pg_dump.c:15742
 #, c-format
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "\"%s\" 뷰 정의 정보가 하나 이상 있습니다."
 
-#: pg_dump.c:15351
+#: pg_dump.c:15749
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "\"%s\" 뷰의 정의 내용이 비어있습니다."
 
-#: pg_dump.c:15435
+#: pg_dump.c:15834
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDS 옵션은 더이상 지원하지 않음 (\"%s\" 테이블)"
 
-#: pg_dump.c:16359
+#: pg_dump.c:16821
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "잘못된 열 번호 %d, 해당 테이블 \"%s\""
 
-#: pg_dump.c:16437
+#: pg_dump.c:16899
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "인덱스 통계정보 칼럼 분석 실패"
 
-#: pg_dump.c:16439
+#: pg_dump.c:16901
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "인덱스 통계정보 값 분석 실패"
 
-#: pg_dump.c:16441
+#: pg_dump.c:16903
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "인덱스 통계정보용 칼럼수와 값수가 일치하지 않음"
 
-#: pg_dump.c:16657
+#: pg_dump.c:17118
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "\"%s\" 제약 조건을 위한 인덱스가 빠졌습니다"
 
-#: pg_dump.c:16892
+#: pg_dump.c:17353
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "알 수 없는 제약 조건 종류: %c"
 
-#: pg_dump.c:16993 pg_dump.c:17222
+#: pg_dump.c:17454 pg_dump.c:17684
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural ""
@@ -2355,22 +2510,12 @@ msgid_plural ""
 msgstr[0] ""
 "\"%s\" 시퀀스의 데이터를 가져오기 위한 쿼리에서 %d개의 행 반환(1개 필요)"
 
-#: pg_dump.c:17025
+#: pg_dump.c:17486
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "알 수 없는 시퀀스 형태: %s"
 
-#: pg_dump.c:17314
-#, c-format
-msgid "unexpected tgtype value: %d"
-msgstr "기대되지 않은 tgtype 값: %d"
-
-#: pg_dump.c:17386
-#, c-format
-msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
-msgstr "잘못된 인수 문자열 (%s), 해당 트리거 \"%s\", 사용되는 테이블 \"%s\""
-
-#: pg_dump.c:17655
+#: pg_dump.c:18001
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
@@ -2378,53 +2523,59 @@ msgid ""
 msgstr ""
 "\"%s\" 규칙(\"%s\" 테이블)을 가져오기 위한 쿼리 실패: 잘못된 행 수 반환"
 
-#: pg_dump.c:17808
+#: pg_dump.c:18154
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "%u 확장기능과 관련된 상위 확장 기능을 찾을 수 없음"
 
-#: pg_dump.c:17898
+#: pg_dump.c:18253
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "확장 모듈용 환경설정 매개변수 수와 조건 수가 일치 하지 않음"
 
-#: pg_dump.c:18030
+#: pg_dump.c:18385
 #, c-format
 msgid "reading dependency data"
 msgstr "의존 관계 자료 읽는 중"
 
-#: pg_dump.c:18116
+#: pg_dump.c:18471
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "%u %u 개체의 하위 관련 개체가 없음"
 
-#: pg_dump.c:18127
+#: pg_dump.c:18482
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "%u %u 개체의 상위 관련 개체가 없음"
 
-#: pg_dump_sort.c:422
+#: pg_dump.c:18907 pg_dump.c:18945 pg_dumpall.c:1962 pg_restore.c:551
+#: pg_restore.c:597
+#, c-format
+msgid "%s filter for \"%s\" is not allowed"
+msgstr "%s 필터(대상 \"%s\")는 허용하지 않음"
+
+#: pg_dump_sort.c:424
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "잘못된 dumpId %d"
 
-#: pg_dump_sort.c:428
+#: pg_dump_sort.c:430
 #, c-format
 msgid "invalid dependency %d"
 msgstr "잘못된 의존성 %d"
 
-#: pg_dump_sort.c:661
+#: pg_dump_sort.c:594
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "의존 관계를 식별 할 수 없음"
 
-#: pg_dump_sort.c:1276
+#: pg_dump_sort.c:1209
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "다음 데이블 간 참조키가 서로 교차하고 있음:"
 
-#: pg_dump_sort.c:1281
+#: pg_dump_sort.c:1214
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2433,7 +2584,7 @@ msgstr ""
 "--disable-triggers 옵션으로 복원할 수 있습니다. 또는 임시로 제약 조건을 삭제"
 "하고 복원하세요."
 
-#: pg_dump_sort.c:1282
+#: pg_dump_sort.c:1215
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2441,12 +2592,12 @@ msgid ""
 msgstr ""
 "이 문제를 피하려면, --data-only 덤프 대신에 모든 덤프를 사용하길 권합니다."
 
-#: pg_dump_sort.c:1294
+#: pg_dump_sort.c:1227
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "다음 항목 간 의존 관계를 분석할 수 없음:"
 
-#: pg_dumpall.c:230
+#: pg_dumpall.c:231
 #, c-format
 msgid ""
 "program \"%s\" is needed by %s but was not found in the same directory as "
@@ -2455,46 +2606,46 @@ msgstr ""
 "\"%s\" 프로그램이 %s 작업에서 필요로 하지만, \"%s\" 디렉터리 안에 함께 있지 "
 "않습니다"
 
-#: pg_dumpall.c:233
+#: pg_dumpall.c:234
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr ""
 "\"%s\" 프로그램을 \"%s\" 작업 때문에 찾았지만, %s 버전과 같지 않습니다."
 
-#: pg_dumpall.c:382
+#: pg_dumpall.c:387
 #, c-format
 msgid ""
-"option --exclude-database cannot be used together with -g/--globals-only, -"
-"r/--roles-only, or -t/--tablespaces-only"
+"option --exclude-database cannot be used together with -g/--globals-only, "
+"-r/--roles-only, or -t/--tablespaces-only"
 msgstr ""
 "--exclude-database 옵션은 -g/--globals-only, -r/--roles-only, 또는 -t/--"
 "tablespaces-only 옵션과 함께 쓸 수 없음"
 
-#: pg_dumpall.c:390
+#: pg_dumpall.c:395
 #, c-format
 msgid "options -g/--globals-only and -r/--roles-only cannot be used together"
 msgstr "-g/--globals-only 옵션과 -r/--roles-only 옵션은 함께 사용할 수 없음"
 
-#: pg_dumpall.c:397
+#: pg_dumpall.c:402
 #, c-format
 msgid ""
 "options -g/--globals-only and -t/--tablespaces-only cannot be used together"
 msgstr ""
 "-g/--globals-only 옵션과 -t/--tablespaces-only 옵션은 함께 사용할 수 없음"
 
-#: pg_dumpall.c:407
+#: pg_dumpall.c:412
 #, c-format
 msgid ""
 "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
 msgstr ""
 "-r/--roles-only 옵션과 -t/--tablespaces-only 옵션은 함께 사용할 수 없음"
 
-#: pg_dumpall.c:469 pg_dumpall.c:1750
+#: pg_dumpall.c:474 pg_dumpall.c:1771
 #, c-format
 msgid "could not connect to database \"%s\""
 msgstr "\"%s\" 데이터베이스에 접속할 수 없음"
 
-#: pg_dumpall.c:481
+#: pg_dumpall.c:486
 #, c-format
 msgid ""
 "could not connect to databases \"postgres\" or \"template1\"\n"
@@ -2503,7 +2654,7 @@ msgstr ""
 "\"postgres\" 또는 \"template1\" 데이터베이스에 연결할 수 없습니다.\n"
 "다른 데이터베이스를 지정하십시오."
 
-#: pg_dumpall.c:629
+#: pg_dumpall.c:634
 #, c-format
 msgid ""
 "%s extracts a PostgreSQL database cluster into an SQL script file.\n"
@@ -2513,35 +2664,35 @@ msgstr ""
 "추출하는 프로그램입니다.\n"
 "\n"
 
-#: pg_dumpall.c:631
+#: pg_dumpall.c:636
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [옵션]...\n"
 
-#: pg_dumpall.c:634
+#: pg_dumpall.c:639
 #, c-format
 msgid "  -f, --file=FILENAME          output file name\n"
 msgstr "  -f, --file=파일이름          출력 파일 이름\n"
 
-#: pg_dumpall.c:641
+#: pg_dumpall.c:646
 #, c-format
 msgid ""
 "  -c, --clean                  clean (drop) databases before recreating\n"
 msgstr ""
 "  -c, --clean                  다시 만들기 전에 데이터베이스 지우기(삭제)\n"
 
-#: pg_dumpall.c:643
+#: pg_dumpall.c:648
 #, c-format
 msgid "  -g, --globals-only           dump only global objects, no databases\n"
 msgstr ""
 "  -g, --globals-only           데이터베이스는 제외하고 글로벌 개체만 덤프\n"
 
-#: pg_dumpall.c:644 pg_restore.c:456
+#: pg_dumpall.c:649 pg_restore.c:475
 #, c-format
 msgid "  -O, --no-owner               skip restoration of object ownership\n"
 msgstr "  -O, --no-owner               개체 소유권 복원 건너뛰기\n"
 
-#: pg_dumpall.c:645
+#: pg_dumpall.c:650
 #, c-format
 msgid ""
 "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
@@ -2549,12 +2700,12 @@ msgstr ""
 "  -r, --roles-only             데이터베이스나 테이블스페이스는 제외하고 역할"
 "만 덤프\n"
 
-#: pg_dumpall.c:647
+#: pg_dumpall.c:652
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
 msgstr "  -S, --superuser=NAME         덤프에 사용할 슈퍼유저 사용자 이름\n"
 
-#: pg_dumpall.c:648
+#: pg_dumpall.c:653
 #, c-format
 msgid ""
 "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
@@ -2562,7 +2713,7 @@ msgstr ""
 "  -t, --tablespaces-only       데이터베이스나 역할은 제외하고 테이블스페이스"
 "만 덤프\n"
 
-#: pg_dumpall.c:654
+#: pg_dumpall.c:659
 #, c-format
 msgid ""
 "  --exclude-database=PATTERN   exclude databases whose name matches PATTERN\n"
@@ -2571,20 +2722,27 @@ msgstr ""
 
 #: pg_dumpall.c:661
 #, c-format
+msgid ""
+"  --filter=FILENAME            exclude databases based on expressions in "
+"FILENAME\n"
+msgstr "  --filter=FILENAME            필터 조건이 정의 파일을 사용하여 덤프\n"
+
+#: pg_dumpall.c:667
+#, c-format
 msgid "  --no-role-passwords          do not dump passwords for roles\n"
 msgstr "  --no-role-passwords          롤용 비밀번호를 덤프하지 않음\n"
 
-#: pg_dumpall.c:677
+#: pg_dumpall.c:683
 #, c-format
 msgid "  -d, --dbname=CONNSTR     connect using connection string\n"
 msgstr "  -d, --dbname=접속문자열  서버 접속 문자열\n"
 
-#: pg_dumpall.c:679
+#: pg_dumpall.c:685
 #, c-format
 msgid "  -l, --database=DBNAME    alternative default database\n"
 msgstr "  -l, --database=DBNAME    대체용 기본 데이터베이스\n"
 
-#: pg_dumpall.c:686
+#: pg_dumpall.c:692
 #, c-format
 msgid ""
 "\n"
@@ -2598,99 +2756,111 @@ msgstr ""
 "출력에 쓰여집니다.\n"
 "\n"
 
-#: pg_dumpall.c:828
+#: pg_dumpall.c:837
 #, c-format
 msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "롤 이름이 \"pg_\"로 시작함, 무시함: (%s)"
 
-#: pg_dumpall.c:1050
+#: pg_dumpall.c:1059
 #, c-format
 msgid "could not find a legal dump ordering for memberships in role \"%s\""
 msgstr "\"%s\" 롤은 덤프할 수 있는 롤을 포함하고 있지 않습니다"
 
-#: pg_dumpall.c:1185
+#: pg_dumpall.c:1194
 #, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
 msgstr "ACL 목록 (%s)을 분석할 수 없음, 해당 매개변수 \"%s\""
 
-#: pg_dumpall.c:1303
+#: pg_dumpall.c:1321
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
 msgstr "테이블스페이스 용 ACL 목록 (%s)을 분석할 수 없음, 해당개체 \"%s\""
 
-#: pg_dumpall.c:1510
+#: pg_dumpall.c:1528
 #, c-format
 msgid "excluding database \"%s\""
 msgstr "\"%s\" 데이터베이스를 제외하는 중"
 
-#: pg_dumpall.c:1514
+#: pg_dumpall.c:1532
 #, c-format
 msgid "dumping database \"%s\""
 msgstr "\"%s\" 데이터베이스 덤프 중"
 
-#: pg_dumpall.c:1545
+#: pg_dumpall.c:1563
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
 msgstr "\"%s\" 데이터베이스에서 pg_dump 작업 중에 오류가 발생, 끝냅니다."
 
-#: pg_dumpall.c:1551
+#: pg_dumpall.c:1569
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
 msgstr "\"%s\" 출력 파일을 다시 열 수 없음: %m"
 
-#: pg_dumpall.c:1592
+#: pg_dumpall.c:1613
 #, c-format
 msgid "running \"%s\""
 msgstr "\"%s\" 가동중"
 
-#: pg_dumpall.c:1793
+#: pg_dumpall.c:1814
 #, c-format
 msgid "could not get server version"
 msgstr "서버 버전을 알 수 없음"
 
-#: pg_dumpall.c:1796
+#: pg_dumpall.c:1817
 #, c-format
 msgid "could not parse server version \"%s\""
 msgstr "\"%s\" 서버 버전을 분석할 수 없음"
 
-#: pg_dumpall.c:1866 pg_dumpall.c:1889
+#: pg_dumpall.c:1887 pg_dumpall.c:1910
 #, c-format
 msgid "executing %s"
 msgstr "실행중: %s"
 
-#: pg_restore.c:313
+#: pg_dumpall.c:1982
+msgid "unsupported filter object"
+msgstr "지원하지 않는 필터 객체"
+
+#: pg_restore.c:329
 #, c-format
 msgid "one of -d/--dbname and -f/--file must be specified"
 msgstr "-d/--dbname 옵션 또는 -f/--file 옵션 중 하나를 지정해야 함"
 
-#: pg_restore.c:320
+#: pg_restore.c:336
 #, c-format
 msgid "options -d/--dbname and -f/--file cannot be used together"
 msgstr "-d/--dbname 옵션과 -f/--file 옵션은 함께 사용할 수 없음"
 
-#: pg_restore.c:338
+#: pg_restore.c:350
+#, c-format
+msgid ""
+"options -1/--single-transaction and --transaction-size cannot be used "
+"together"
+msgstr ""
+"-1/--single-transaction 옵션과 --transaction-size 옵션은 함께 사용할 수 없음"
+
+#: pg_restore.c:357
 #, c-format
 msgid "options -C/--create and -1/--single-transaction cannot be used together"
 msgstr "-C/--clean 옵션과 -1/--single-transaction 옵션은 함께 사용할 수 없음"
 
-#: pg_restore.c:342
+#: pg_restore.c:361
 #, c-format
 msgid "cannot specify both --single-transaction and multiple jobs"
 msgstr "--single-transaction 및 병렬 작업을 함께 지정할 수는 없음"
 
-#: pg_restore.c:380
+#: pg_restore.c:399
 #, c-format
 msgid ""
 "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\""
 msgstr ""
 "알 수 없는 아카이브 형식: \"%s\"; 사용할 수 있는 값: \"c\", \"d\", \"t\""
 
-#: pg_restore.c:419
+#: pg_restore.c:438
 #, c-format
 msgid "errors ignored on restore: %d"
 msgstr "복원작업에서의 오류들이 무시되었음: %d"
 
-#: pg_restore.c:432
+#: pg_restore.c:451
 #, c-format
 msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
@@ -2700,47 +2870,47 @@ msgstr ""
 "그 자료를 일괄 입력합니다.\n"
 "\n"
 
-#: pg_restore.c:434
+#: pg_restore.c:453
 #, c-format
 msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [옵션]... [파일]\n"
 
-#: pg_restore.c:437
+#: pg_restore.c:456
 #, c-format
 msgid "  -d, --dbname=NAME        connect to database name\n"
 msgstr "  -d, --dbname=NAME        접속할 데이터베이스 이름\n"
 
-#: pg_restore.c:438
+#: pg_restore.c:457
 #, c-format
 msgid "  -f, --file=FILENAME      output file name (- for stdout)\n"
 msgstr "  -f, --file=FILENAME      출력 파일 이름 (표준 출력: -)\n"
 
-#: pg_restore.c:439
+#: pg_restore.c:458
 #, c-format
 msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
 msgstr "  -F, --format=c|d|t       백업 파일 형식 (지정하지 않으면 자동분석)\n"
 
-#: pg_restore.c:440
+#: pg_restore.c:459
 #, c-format
 msgid "  -l, --list               print summarized TOC of the archive\n"
 msgstr "  -l, --list               자료의 요약된 목차를 보여줌\n"
 
-#: pg_restore.c:441
+#: pg_restore.c:460
 #, c-format
 msgid "  -v, --verbose            verbose mode\n"
 msgstr "  -v, --verbose            자세한 정보 보여줌\n"
 
-#: pg_restore.c:442
+#: pg_restore.c:461
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version            버전 정보를 보여주고 마침\n"
 
-#: pg_restore.c:443
+#: pg_restore.c:462
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help               이 도움말을 보여주고 마침\n"
 
-#: pg_restore.c:445
+#: pg_restore.c:464
 #, c-format
 msgid ""
 "\n"
@@ -2749,33 +2919,33 @@ msgstr ""
 "\n"
 "리스토어 처리를 위한 옵션들:\n"
 
-#: pg_restore.c:446
+#: pg_restore.c:465
 #, c-format
 msgid "  -a, --data-only              restore only the data, no schema\n"
 msgstr "  -a, --data-only              스키마는 빼고 자료만 입력함\n"
 
-#: pg_restore.c:448
+#: pg_restore.c:467
 #, c-format
 msgid "  -C, --create                 create the target database\n"
 msgstr "  -C, --create                 작업 대상 데이터베이스를 만듦\n"
 
-#: pg_restore.c:449
+#: pg_restore.c:468
 #, c-format
 msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
 msgstr ""
 "  -e, --exit-on-error          오류가 생기면 끝냄, 기본은 계속 진행함\n"
 
-#: pg_restore.c:450
+#: pg_restore.c:469
 #, c-format
 msgid "  -I, --index=NAME             restore named index\n"
 msgstr "  -I, --index=NAME             지정한 인덱스 만듦\n"
 
-#: pg_restore.c:451
+#: pg_restore.c:470
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgstr "  -j, --jobs=NUM               여러 병렬 작업을 사용하여 복원\n"
 
-#: pg_restore.c:452
+#: pg_restore.c:471
 #, c-format
 msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
@@ -2784,27 +2954,27 @@ msgstr ""
 "  -L, --use-list=FILENAME      출력을 선택하고 해당 순서를 지정하기 위해\n"
 "                               이 파일의 목차 사용\n"
 
-#: pg_restore.c:454
+#: pg_restore.c:473
 #, c-format
 msgid "  -n, --schema=NAME            restore only objects in this schema\n"
 msgstr "  -n, --schema=NAME            해당 스키마의 개체들만 복원함\n"
 
-#: pg_restore.c:455
+#: pg_restore.c:474
 #, c-format
 msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
 msgstr "  -N, --exclude-schema=NAME    해당 스키마의 개체들은 복원 안함\n"
 
-#: pg_restore.c:457
+#: pg_restore.c:476
 #, c-format
 msgid "  -P, --function=NAME(args)    restore named function\n"
 msgstr "  -P, --function=NAME(args)    지정한 함수 만듦\n"
 
-#: pg_restore.c:458
+#: pg_restore.c:477
 #, c-format
 msgid "  -s, --schema-only            restore only the schema, no data\n"
 msgstr "  -s, --schema-only            자료구조(스키마)만 만듦\n"
 
-#: pg_restore.c:459
+#: pg_restore.c:478
 #, c-format
 msgid ""
 "  -S, --superuser=NAME         superuser user name to use for disabling "
@@ -2813,40 +2983,48 @@ msgstr ""
 "  -S, --superuser=NAME         트리거를 사용하지 않기 위해 사용할 슈퍼유저\n"
 "                               사용자 이름\n"
 
-#: pg_restore.c:460
+#: pg_restore.c:479
 #, c-format
 msgid ""
 "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
 msgstr "  -t, --table=NAME             복원할 객체 이름 (테이블, 뷰, 기타)\n"
 
-#: pg_restore.c:461
+#: pg_restore.c:480
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
 msgstr "  -T, --trigger=NAME           지정한 트리거 만듦\n"
 
-#: pg_restore.c:462
+#: pg_restore.c:481
 #, c-format
 msgid ""
 "  -x, --no-privileges          skip restoration of access privileges (grant/"
 "revoke)\n"
 msgstr "  -x, --no-privileges          접근 권한(grant/revoke) 지정 안함\n"
 
-#: pg_restore.c:463
+#: pg_restore.c:482
 #, c-format
 msgid "  -1, --single-transaction     restore as a single transaction\n"
 msgstr "  -1, --single-transaction     하나의 트랜잭션 작업으로 복원함\n"
 
-#: pg_restore.c:465
+#: pg_restore.c:484
 #, c-format
 msgid "  --enable-row-security        enable row security\n"
 msgstr "  --enable-row-security        로우 보안 활성화\n"
 
-#: pg_restore.c:467
+#: pg_restore.c:485
+#, c-format
+msgid ""
+"  --filter=FILENAME            restore or skip objects based on expressions\n"
+"                               in FILENAME\n"
+msgstr ""
+"  --filter=FILENAME            지정한 파일의 필터 조건으로 객체를 복원함\n"
+
+#: pg_restore.c:488
 #, c-format
 msgid "  --no-comments                do not restore comments\n"
 msgstr "  --no-comments                코멘트는 복원하지 않음\n"
 
-#: pg_restore.c:468
+#: pg_restore.c:489
 #, c-format
 msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not "
@@ -2856,32 +3034,32 @@ msgstr ""
 "  --no-data-for-failed-tables  만들 수 없는 테이블에 대해서는 자료를 덤프하"
 "지 않음\n"
 
-#: pg_restore.c:470
+#: pg_restore.c:491
 #, c-format
 msgid "  --no-publications            do not restore publications\n"
 msgstr "  --no-publications            발행 정보는 복원 안함\n"
 
-#: pg_restore.c:471
+#: pg_restore.c:492
 #, c-format
 msgid "  --no-security-labels         do not restore security labels\n"
 msgstr "  --no-security-labels         보안 라벨을 복원하지 않음\n"
 
-#: pg_restore.c:472
+#: pg_restore.c:493
 #, c-format
 msgid "  --no-subscriptions           do not restore subscriptions\n"
 msgstr "  --no-subscriptions           구독 정보는 복원 안함\n"
 
-#: pg_restore.c:473
+#: pg_restore.c:494
 #, c-format
 msgid "  --no-table-access-method     do not restore table access methods\n"
 msgstr "  --no-table-access-method     테이블 접근 방법 복원 안함\n"
 
-#: pg_restore.c:474
+#: pg_restore.c:495
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
 msgstr "  --no-tablespaces             테이블스페이스 할당을 복원하지 않음\n"
 
-#: pg_restore.c:475
+#: pg_restore.c:496
 #, c-format
 msgid ""
 "  --section=SECTION            restore named section (pre-data, data, or "
@@ -2890,12 +3068,17 @@ msgstr ""
 "  --section=SECTION            지정한 섹션만 복원함\n"
 "                               섹션 종류: pre-data, data, post-data\n"
 
-#: pg_restore.c:488
+#: pg_restore.c:499
+#, c-format
+msgid "  --transaction-size=N         commit after every N objects\n"
+msgstr "  --transaction-size=N         N 개의 객체 다음에는 항상 commit\n"
+
+#: pg_restore.c:510
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before restore\n"
 msgstr "  --role=ROLENAME          복원 전에 SET ROLE 수행\n"
 
-#: pg_restore.c:490
+#: pg_restore.c:512
 #, c-format
 msgid ""
 "\n"
@@ -2908,7 +3091,7 @@ msgstr ""
 "기\n"
 "위해서 여러번 사용할 수 있습니다.\n"
 
-#: pg_restore.c:493
+#: pg_restore.c:515
 #, c-format
 msgid ""
 "\n"
@@ -2918,6 +3101,22 @@ msgstr ""
 "\n"
 "사용할 입력 파일을 지정하지 않았다면, 표준 입력(stdin)을 사용합니다.\n"
 "\n"
+
+#, c-format
+#~ msgid ""
+#~ "query produced null referenced table name for foreign key trigger \"%s\" "
+#~ "on table \"%s\" (OID of table: %u)"
+#~ msgstr ""
+#~ "쿼리가 참조테이블 정보가 없는 \"%s\" 참조키 트리거를 \"%s\" (해당 OID: "
+#~ "%u) 테이블에서 만들었습니다."
+
+#, c-format
+#~ msgid "unexpected tgtype value: %d"
+#~ msgstr "기대되지 않은 tgtype 값: %d"
+
+#, c-format
+#~ msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
+#~ msgstr "잘못된 인수 문자열 (%s), 해당 트리거 \"%s\", 사용되는 테이블 \"%s\""
 
 #, c-format
 #~ msgid "  %s"

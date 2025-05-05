@@ -1,0 +1,918 @@
+# Korean message translation file for pg_combinebackup
+# Copyright (C) 2025 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_combinebackup (PostgreSQL) package.
+# Ioseph Kim <ioseph@uri.sarang.net>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2025-01-17 04:52+0000\n"
+"PO-Revision-Date: 2025-01-18 00:54+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean team <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "오류: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "경고: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "상세정보: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "힌트: "
+
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "\"%s\" 파일 일기 모드로 열기 실패: %m"
+
+#: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "\"%s\" 파일을 읽을 수 없음: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\" 파일을 읽을 수 없음: %d 읽음, 전체 %zu"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: write_manifest.c:187
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "\"%s\" 파일을 닫을 수 없음: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "바이트 순서 불일치"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, "
+"and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"바이트 순서가 일치하지 않습니다.\n"
+"pg_control 파일을 저장하는 데 사용된 바이트 순서는 \n"
+"이 프로그램에서 사용하는 순서와 일치해야 합니다.  이 경우 아래 결과는 올바르"
+"지 않으며\n"
+"현재 PostgreSQL 설치본과 이 데이터 디렉터리가 호환하지 않습니다."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
+#: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
+#: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: write_manifest.c:250
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: write_manifest.c:260
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "\"%s\" 파일 쓰기 실패: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "\"%s\" 파일 fsync 실패: %m"
+
+#: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
+#, c-format
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: ../../common/cryptohash.c:266 ../../common/cryptohash.c:272
+#: ../../common/cryptohash_openssl.c:368 ../../common/cryptohash_openssl.c:376
+msgid "success"
+msgstr "성공"
+
+#: ../../common/cryptohash.c:268 ../../common/cryptohash_openssl.c:370
+msgid "destination buffer too small"
+msgstr "대상 버퍼가 너무 작습니다."
+
+#: ../../common/cryptohash_openssl.c:372
+msgid "OpenSSL failure"
+msgstr "OpenSSL 실패"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "null 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "\"%s\" 파일 대상으로 파일 시스템 동기화를 할 수 없습니다: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일의 상태값을 알 수 없음: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "이 빌드는 \"%s\" 동기화 방법을 지원하지 않음"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_combinebackup.c:933 pg_combinebackup.c:1256
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 열 수 없음: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
+
+#: ../../common/jsonapi.c:2121
+msgid "Recursive descent parser cannot use incremental lexer."
+msgstr "재귀적 하향 구문분석기는 증분 토큰분석기을 사용할 수 없습니다."
+
+#: ../../common/jsonapi.c:2123
+msgid "Incremental parser requires incremental lexer."
+msgstr "증분 구문분석기는 증분 토큰분석기를 필요로 합니다."
+
+#: ../../common/jsonapi.c:2125
+msgid "JSON nested too deep, maximum permitted depth is 6400."
+msgstr "JSON 계층이 너무 깊음, 허용하는 최대 깊이는 6400입니다."
+
+#: ../../common/jsonapi.c:2127
+#, c-format
+msgid "Escape sequence \"\\%.*s\" is invalid."
+msgstr "\"\\%.*s\" 이스케이프 표기가 바르지 않습니다."
+
+#: ../../common/jsonapi.c:2131
+#, c-format
+msgid "Character with value 0x%02x must be escaped."
+msgstr "0x%02x 값의 문자는 이스케이프 처리를 해야함."
+
+#: ../../common/jsonapi.c:2135
+#, c-format
+msgid "Expected end of input, but found \"%.*s\"."
+msgstr "입력이 끝나야하는데, \"%.*s\" 발견했습니다."
+
+#: ../../common/jsonapi.c:2138
+#, c-format
+msgid "Expected array element or \"]\", but found \"%.*s\"."
+msgstr "배열 요소나 \"]\" 문자를 기대했는데, \"%.*s\" 발견했습니다."
+
+#: ../../common/jsonapi.c:2141
+#, c-format
+msgid "Expected \",\" or \"]\", but found \"%.*s\"."
+msgstr "\",\" 또는 \"]\" 문자를 기대했는데, \"%.*s\" 발견했습니다."
+
+#: ../../common/jsonapi.c:2144
+#, c-format
+msgid "Expected \":\", but found \"%.*s\"."
+msgstr "\":\" 문자를 기대했는데, \"%.*s\" 발견했습니다."
+
+#: ../../common/jsonapi.c:2147
+#, c-format
+msgid "Expected JSON value, but found \"%.*s\"."
+msgstr "JSON 값을 기대했는데, \"%.*s\" 값임"
+
+#: ../../common/jsonapi.c:2150
+msgid "The input string ended unexpectedly."
+msgstr "입력 문자열이 예상치 않게 끝났음."
+
+#: ../../common/jsonapi.c:2152
+#, c-format
+msgid "Expected string or \"}\", but found \"%.*s\"."
+msgstr "문자열이나, \"}\"가 필요한데 \"%.*s\"이(가) 있음"
+
+#: ../../common/jsonapi.c:2155
+#, c-format
+msgid "Expected \",\" or \"}\", but found \"%.*s\"."
+msgstr "\",\" 또는 \"}\"가 필요한데 \"%.*s\"이(가) 있음"
+
+#: ../../common/jsonapi.c:2158
+#, c-format
+msgid "Expected string, but found \"%.*s\"."
+msgstr "문자열 값을 기대했는데, \"%.*s\" 값임"
+
+#: ../../common/jsonapi.c:2161
+#, c-format
+msgid "Token \"%.*s\" is invalid."
+msgstr "잘못된 토큰: \"%.*s\""
+
+#: ../../common/jsonapi.c:2164
+msgid "\\u0000 cannot be converted to text."
+msgstr "\\u0000 값은 text 형으로 변환할 수 없음."
+
+#: ../../common/jsonapi.c:2166
+msgid "\"\\u\" must be followed by four hexadecimal digits."
+msgstr "\"\\u\" 표기법은 뒤에 4개의 16진수가 와야 합니다."
+
+#: ../../common/jsonapi.c:2169
+msgid ""
+"Unicode escape values cannot be used for code point values above 007F when "
+"the encoding is not UTF8."
+msgstr ""
+"서버 인코딩이 UTF8이 아닌 경우 007F보다 큰 코드 지점 값에는 유니코드 이스케이"
+"프 값을 사용할 수 없음"
+
+#: ../../common/jsonapi.c:2178
+#, c-format
+msgid ""
+"Unicode escape value could not be translated to the server's encoding %s."
+msgstr "유니코드 이스케이프 값을 %s 서버 인코딩으로 변환할 수 없음."
+
+#: ../../common/jsonapi.c:2185
+msgid "Unicode high surrogate must not follow a high surrogate."
+msgstr "유니코드 상위 surrogate(딸림 코드)는 상위 딸림 코드 뒤에 오면 안됨."
+
+#: ../../common/jsonapi.c:2187
+msgid "Unicode low surrogate must follow a high surrogate."
+msgstr "유니코드 상위 surrogate(딸림 코드) 뒤에는 하위 딸림 코드가 있어야 함."
+
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "메니페스트 체크섬 초기화를 할 수 없음"
+
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
+msgid "manifest ended unexpectedly"
+msgstr "메니페스트가 비정상적으로 끝났음"
+
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
+#, c-format
+msgid "could not update checksum of manifest"
+msgstr "메니페스트 체크섬 갱신 할 수 없음"
+
+#: ../../common/parse_manifest.c:301
+msgid "unexpected object start"
+msgstr "비정상적인 개체 시작"
+
+#: ../../common/parse_manifest.c:336
+msgid "unexpected object end"
+msgstr "비정상적인 개체 끝"
+
+#: ../../common/parse_manifest.c:365
+msgid "unexpected array start"
+msgstr "비정상적인 배열 시작"
+
+#: ../../common/parse_manifest.c:390
+msgid "unexpected array end"
+msgstr "비정상적인 배열 끝"
+
+#: ../../common/parse_manifest.c:417
+msgid "expected version indicator"
+msgstr "버전 지시자가 있어야 함"
+
+#: ../../common/parse_manifest.c:453
+msgid "unrecognized top-level field"
+msgstr "최상위 필드를 알 수 없음"
+
+#: ../../common/parse_manifest.c:472
+msgid "unexpected file field"
+msgstr "예상치 못한 파일 필드"
+
+#: ../../common/parse_manifest.c:486
+msgid "unexpected WAL range field"
+msgstr "예상치 못한 WAL 범위 필드"
+
+#: ../../common/parse_manifest.c:492
+msgid "unexpected object field"
+msgstr "예상치 못한 개체 필드"
+
+#: ../../common/parse_manifest.c:582
+msgid "unexpected scalar"
+msgstr "예상치 못한 스칼라"
+
+#: ../../common/parse_manifest.c:608
+msgid "manifest version not an integer"
+msgstr "매니페이스 버전이 정수가 아님"
+
+#: ../../common/parse_manifest.c:612
+msgid "unexpected manifest version"
+msgstr "예상치 못한 메니페스트 버전"
+
+#: ../../common/parse_manifest.c:636
+msgid "system identifier in manifest not an integer"
+msgstr "매니페이스 안 system identifier가 정수가 아님"
+
+#: ../../common/parse_manifest.c:661
+msgid "missing path name"
+msgstr "패스 이름 빠짐"
+
+#: ../../common/parse_manifest.c:664
+msgid "both path name and encoded path name"
+msgstr "패스 이름과 인코딩 된 패스 이름이 함께 있음"
+
+#: ../../common/parse_manifest.c:666
+msgid "missing size"
+msgstr "크기 빠짐"
+
+#: ../../common/parse_manifest.c:669
+msgid "checksum without algorithm"
+msgstr "알고리즘 없는 체크섬"
+
+#: ../../common/parse_manifest.c:683
+msgid "could not decode file name"
+msgstr "파일 이름을 디코딩할 수 없음"
+
+#: ../../common/parse_manifest.c:693
+msgid "file size is not an integer"
+msgstr "파일 크기가 정수가 아님"
+
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
+#, c-format
+msgid "unrecognized checksum algorithm: \"%s\""
+msgstr "알 수 없는 체크섬 알고리즘: \"%s\""
+
+#: ../../common/parse_manifest.c:718
+#, c-format
+msgid "invalid checksum for file \"%s\": \"%s\""
+msgstr "\"%s\" 파일의 체크섬이 잘못됨: \"%s\""
+
+#: ../../common/parse_manifest.c:761
+msgid "missing timeline"
+msgstr "타임라인 빠짐"
+
+#: ../../common/parse_manifest.c:763
+msgid "missing start LSN"
+msgstr "시작 LSN 빠짐"
+
+#: ../../common/parse_manifest.c:765
+msgid "missing end LSN"
+msgstr "끝 LSN 빠짐"
+
+#: ../../common/parse_manifest.c:771
+msgid "timeline is not an integer"
+msgstr "타임라인이 정수가 아님"
+
+#: ../../common/parse_manifest.c:774
+msgid "could not parse start LSN"
+msgstr "시작 LSN 값을 분석할 수 없음"
+
+#: ../../common/parse_manifest.c:777
+msgid "could not parse end LSN"
+msgstr "끝 LSN 값을 분석할 수 없음"
+
+#: ../../common/parse_manifest.c:842
+msgid "expected at least 2 lines"
+msgstr "적어도 2줄이 더 있어야 함"
+
+#: ../../common/parse_manifest.c:845
+msgid "last line not newline-terminated"
+msgstr "마지막 줄에 줄바꿈 문자가 없음"
+
+#: ../../common/parse_manifest.c:864
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "메니페스트 체크섬 마무리 작업 할 수 없음"
+
+#: ../../common/parse_manifest.c:868
+#, c-format
+msgid "manifest has no checksum"
+msgstr "메니페스트에 체크섬 없음"
+
+#: ../../common/parse_manifest.c:872
+#, c-format
+msgid "invalid manifest checksum: \"%s\""
+msgstr "잘못된 메니페스트 체크섬: \"%s\""
+
+#: ../../common/parse_manifest.c:876
+#, c-format
+msgid "manifest checksum mismatch"
+msgstr "메니페스트 체크섬 불일치"
+
+#: ../../common/parse_manifest.c:891
+#, c-format
+msgid "could not parse backup manifest: %s"
+msgstr "백업 메니페스트 구문 분석 실패: %s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "\"%s\" 값은 %s 옵션의 값으로 적당하지 않음"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s 값은 %d부터 %d까지만 허용합니다"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "알 수 없는 동기화 방법: %s"
+
+#: backup_label.c:66 backup_label.c:85 backup_label.c:95
+#, c-format
+msgid "%s: could not parse %s"
+msgstr "%s: %s 구문분석 실패"
+
+#: backup_label.c:69 backup_label.c:88
+#, c-format
+msgid "%s: improper terminator for %s"
+msgstr "%s: %s 값의 끝이 이상함"
+
+#: backup_label.c:76
+#, c-format
+msgid "%s: could not parse TLI for %s"
+msgstr "%s: %s 값의 TLI 구문분석 실패"
+
+#: backup_label.c:79 backup_label.c:98
+#, c-format
+msgid "%s: invalid TLI"
+msgstr "%s: 바르지 않은 TLI"
+
+#: backup_label.c:106 backup_label.c:108
+#, c-format
+msgid "%s: could not find %s"
+msgstr "%s: %s 찾지 못함"
+
+#: backup_label.c:110 backup_label.c:113
+#, c-format
+msgid "%s: %s requires %s"
+msgstr "%s: %s은(는) %s을(를) 필요로 함"
+
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#, c-format
+msgid "could not write file \"%s\": wrote %d of %d"
+msgstr "\"%s\" 파일 쓰기 실패: %d/%d 만큼 씀"
+
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "\"%s\" 파일 체크섬을 갱신할 수 없음"
+
+#: copy_file.c:186
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "\"%s\" 파일 쓰기 실패: %m"
+
+#: copy_file.c:188
+#, c-format
+msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
+msgstr "\"%s\"파일 쓰기 실패: 시작위치=%u, %d/%d 만큼 씀"
+
+#: copy_file.c:199 reconstruct.c:784
+#, c-format
+msgid "could not read from file \"%s\": %m"
+msgstr "\"%s\" 파일을 읽을 수 없음: %m"
+
+#: copy_file.c:218
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 클론하는 동안 오류 발생: %m"
+
+#: copy_file.c:229 copy_file.c:272
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "\"%s\" 파일을 만들 수 없음: %m"
+
+#: copy_file.c:237
+#, c-format
+msgid "error while cloning file \"%s\" to \"%s\": %s"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 클론하는 동안 오류 발생: %s"
+
+#: copy_file.c:245 pg_combinebackup.c:251
+#, c-format
+msgid "file cloning not supported on this platform"
+msgstr "이 운영체제는 파일 클론 기능을 제공하지 않습니다."
+
+#: copy_file.c:278 reconstruct.c:704
+#, c-format
+msgid "error while copying file range from \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 copy_file_range 기능으로 복사 중 오류: %m"
+
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "이 운영체제는 copy_file_range 기능을 지원하지 않습니다."
+
+#: copy_file.c:300
+#, c-format
+msgid "could not copy file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 복사할 수 없음: %m"
+
+#: load_manifest.c:125
+#, c-format
+msgid "file \"%s\" does not exist"
+msgstr "\"%s\" 파일 없음"
+
+#: load_manifest.c:163
+#, c-format
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "\"%s\" 파일 읽기 실패: %d/%lld 읽음"
+
+#: load_manifest.c:201
+#, c-format
+msgid "could not read file \"%s\": read %lld of %lld"
+msgstr "\"%s\" 파일 읽기 실패: %lld/%lld 읽음"
+
+#: load_manifest.c:248
+#, c-format
+msgid "backup manifest version 1 does not support incremental backup"
+msgstr "백업 매니페이스 파일 버전이 1인 경우는 증분 백업을 지원하지 않음"
+
+#: load_manifest.c:280
+#, c-format
+msgid "duplicate path name in backup manifest: \"%s\""
+msgstr "백업 메니페스트 안에 경로 이름이 중복됨: \"%s\""
+
+#: pg_combinebackup.c:220 pg_combinebackup.c:228
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
+
+#: pg_combinebackup.c:227
+#, c-format
+msgid "no input directories specified"
+msgstr "입력 디렉터리를 지정하지 않았음"
+
+#: pg_combinebackup.c:233
+#, c-format
+msgid "no output directory specified"
+msgstr "자료가 저장될 디렉터리를 지정하지 않았음"
+
+#: pg_combinebackup.c:301
+#, c-format
+msgid "%s: manifest system identifier is %llu, but control file has %llu"
+msgstr "%s: 매니페이스 시스템 식별번호는 %llu인데, 컨트롤 파일은 %llu임"
+
+#: pg_combinebackup.c:340
+#, c-format
+msgid ""
+"cannot generate a manifest because no manifest is available for the final "
+"input backup"
+msgstr "마지막 입력 백업용 매니페이스가 없어 매니페이스를 만들 수 없음"
+
+#: pg_combinebackup.c:387
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 심볼릭 링크로 만들 수 없음: %m"
+
+#: pg_combinebackup.c:399 pg_combinebackup.c:730 pg_combinebackup.c:927
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 만들 수 없음: %m"
+
+#: pg_combinebackup.c:454
+#, c-format
+msgid "directory name too long"
+msgstr "디렉터리 이름이 너무 김"
+
+#: pg_combinebackup.c:461
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "테이블스페이스 맵핑 하는 곳에서 \"=\" 문자가 중복 되어 있음"
+
+#: pg_combinebackup.c:469
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr ""
+"\"%s\" 형식의 테이블스페이스 맵핑이 잘못 되었음, \"OLDDIR=NEWDIR\" 형식이어"
+"야 함"
+
+#: pg_combinebackup.c:480 pg_combinebackup.c:484
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr "테이블스페이스 맵핑용 옛 디렉터리가 절대 경로가 아님: %s"
+
+#: pg_combinebackup.c:553
+#, c-format
+msgid ""
+"backup at \"%s\" is a full backup, but only the first backup should be a "
+"full backup"
+msgstr "\"%s\"의 백업은 전체 백업이지만, 첫 백업 단 하나만 전체 백업이어야 함"
+
+#: pg_combinebackup.c:556
+#, c-format
+msgid ""
+"backup at \"%s\" is an incremental backup, but the first backup should be a "
+"full backup"
+msgstr "\"%s\"의 백업은 증분 백업이지만, 첫 백업은 전체 백업이어야 함"
+
+#: pg_combinebackup.c:559
+#, c-format
+msgid "backup at \"%s\" starts on timeline %u, but expected %u"
+msgstr "\"%s\"의 백업은 타임라인 %u번으로 시작하지만, 기대번호는 %u임"
+
+#: pg_combinebackup.c:562
+#, c-format
+msgid "backup at \"%s\" starts at LSN %X/%X, but expected %X/%X"
+msgstr "\"%s\"의 백업은 시작 LSN이 %X/%X이지만, 기대 LSN은 %X/%X임"
+
+#: pg_combinebackup.c:614
+#, c-format
+msgid "%s: CRC is incorrect"
+msgstr "%s: CRC 잘못됨"
+
+#: pg_combinebackup.c:618
+#, c-format
+msgid "%s: unexpected control file version"
+msgstr "%s: 예상치 못한 컨트롤 파일 버전"
+
+#: pg_combinebackup.c:625
+#, c-format
+msgid "%s: expected system identifier %llu, but found %llu"
+msgstr "%s: 예상 시스템 식별번호는 %llu이지만, %llu임"
+
+#: pg_combinebackup.c:657
+#, c-format
+msgid "only some backups have checksums enabled"
+msgstr "일부 백업만 체크섬 기능이 활성화 되었음"
+
+#: pg_combinebackup.c:658
+#, c-format
+msgid ""
+"Disable, and optionally reenable, checksums on the output directory to avoid "
+"failures."
+msgstr ""
+"실패를 피하기 위해 출력 디렉터리의 체크섬 기능을 비활성하고, 다 합치고 나서 "
+"활성화하는 방법이 있음."
+
+#: pg_combinebackup.c:693
+#, c-format
+msgid "removing output directory \"%s\""
+msgstr "\"%s\" 출력 디렉터리 삭제 중"
+
+#: pg_combinebackup.c:695
+#, c-format
+msgid "failed to remove output directory"
+msgstr "출력 디렉터리 삭제 실패"
+
+#: pg_combinebackup.c:699
+#, c-format
+msgid "removing contents of output directory \"%s\""
+msgstr "\"%s\" 출력 디렉터리 안 파일들을 삭제 중"
+
+#: pg_combinebackup.c:702
+#, c-format
+msgid "failed to remove contents of output directory"
+msgstr "출력 디렉터리 안 파일 삭제 실패"
+
+#: pg_combinebackup.c:742
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "\"%s\" 디렉터리가 비어있지 않습니다."
+
+#: pg_combinebackup.c:745
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 액세스할 수 없습니다: %m"
+
+#: pg_combinebackup.c:759
+#, c-format
+msgid ""
+"%s reconstructs full backups from incrementals.\n"
+"\n"
+msgstr ""
+"%s은 증분 백업들을 합쳐 전체 백업을 재생성 합니다.\n"
+"\n"
+
+#: pg_combinebackup.c:760
+#, c-format
+msgid "Usage:\n"
+msgstr "사용법:\n"
+
+#: pg_combinebackup.c:761
+#, c-format
+msgid "  %s [OPTION]... DIRECTORY...\n"
+msgstr "  %s [옵션]... 디렉터리...\n"
+
+#: pg_combinebackup.c:762
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"옵션들:\n"
+
+#: pg_combinebackup.c:763
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr "  -d, --debug               디버깅에 필요한 정보들도 함께 출력함\n"
+
+#: pg_combinebackup.c:764
+#, c-format
+msgid "  -n, --dry-run             do not actually do anything\n"
+msgstr "  -n, --dry-run             실 작업은 진행하지 않음\n"
+
+#: pg_combinebackup.c:765
+#, c-format
+msgid ""
+"  -N, --no-sync             do not wait for changes to be written safely to "
+"disk\n"
+msgstr ""
+"  -N, --no-sync             작업 완료 뒤 디스크 동기화 작업을 하지 않음\n"
+
+#: pg_combinebackup.c:766
+#, c-format
+msgid "  -o, --output=DIRECTORY    output directory\n"
+msgstr "  -o, --output=DIRECTORY    출력 디렉터리\n"
+
+#: pg_combinebackup.c:767
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                            OLDDIR을 NEWDIR로 테이블스페이스 재조정\n"
+
+#: pg_combinebackup.c:769
+#, c-format
+msgid "      --clone               clone (reflink) files instead of copying\n"
+msgstr "      --clone               파일을 복사 대신에 클론 (reflink)\n"
+
+#: pg_combinebackup.c:770
+#, c-format
+msgid "      --copy                copy files (default)\n"
+msgstr "      --copy                파일 복사 (기본값)\n"
+
+#: pg_combinebackup.c:771
+#, c-format
+msgid "      --copy-file-range     copy using copy_file_range() system call\n"
+msgstr ""
+"      --copy-file-range     복사 할 때 copy using copy_file_range() 사용\n"
+
+#: pg_combinebackup.c:772
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                            매니페스트 체크섬 알고리즘 지정\n"
+
+#: pg_combinebackup.c:774
+#, c-format
+msgid "      --no-manifest         suppress generation of backup manifest\n"
+msgstr "      --no-manifest         백업 매니페이스 파일 만들지 않음\n"
+
+#: pg_combinebackup.c:775
+#, c-format
+msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
+msgstr "      --sync-method=METHOD  파일을 디스크에 동기화 하는 방법 지정\n"
+
+#: pg_combinebackup.c:776
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             버전 정보를 보여주고 마침\n"
+
+#: pg_combinebackup.c:777
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                이 도움말을 보여주고 마침\n"
+
+#: pg_combinebackup.c:779
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"문제점 보고 주소: <%s>\n"
+
+#: pg_combinebackup.c:780
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s 홈페이지: <%s>\n"
+
+#: pg_combinebackup.c:995
+#, c-format
+msgid "skipping symbolic link \"%s\""
+msgstr "\"%s\" 심볼릭 링크 건너뜀"
+
+#: pg_combinebackup.c:997
+#, c-format
+msgid "skipping special file \"%s\""
+msgstr "\"%s\" 특수 파일을 건너뜀"
+
+#: pg_combinebackup.c:1073 reconstruct.c:305
+#, c-format
+msgid "manifest file \"%s\" contains no entry for file \"%s\""
+msgstr "\"%s\" 매니페스트 파일에 \"%s\" 파일에 대한 정보가 없음"
+
+#: pg_combinebackup.c:1189
+#, c-format
+msgid "%s: server version too old"
+msgstr "%s: 서버 버전이 너무 낮음"
+
+#: pg_combinebackup.c:1190
+#, c-format
+msgid "%s: could not parse version number"
+msgstr "%s: 버전 번호를 해석할 수 없음"
+
+#: pg_combinebackup.c:1309
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "\"%s\" 심볼릭 링크 파일을 읽을 수 없음: %m"
+
+#: pg_combinebackup.c:1312
+#, c-format
+msgid "target of symbolic link \"%s\" is too long"
+msgstr "\"%s\" 심볼릭 링크의 대상이 너무 긺"
+
+#: pg_combinebackup.c:1315
+#, c-format
+msgid "target of symbolic link \"%s\" is relative"
+msgstr "\"%s\" 심볼릭 링크 대상이 상대 경로임"
+
+#: pg_combinebackup.c:1337
+#, c-format
+msgid "tablespace at \"%s\" has no tablespace mapping"
+msgstr "\"%s\"의 테이블스페이스는 테이블스페이스 맵핑 정보가 없음"
+
+#: pg_combinebackup.c:1355
+#, c-format
+msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
+msgstr "OIDs %u, %u 두 테이블스페이스는 같은 \"%s\" 디렉터리를 사용함"
+
+#: pg_combinebackup.c:1364
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 닫을 수 없음: %m"
+
+#: pg_combinebackup.c:1385
+#, c-format
+msgid "file \"%s\" is too large"
+msgstr "\"%s\" 파일이 너무 큽니다."
+
+#: pg_combinebackup.c:1402
+#, c-format
+msgid "could not read file \"%s\": read %zd of %lld"
+msgstr "\"%s\" 파일을 읽을 수 없음: %zd/%lld 만 읽었음"
+
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "전체 백업에 예상치 못한 증분 파일이 있음: \"%s\""
+
+#: reconstruct.c:423
+#, c-format
+msgid "file \"%s\" is too short: expected %llu, found %llu"
+msgstr "\"%s\" 파일 크기가 너무 적음: 기대값=%llu, 실재값=%llu"
+
+#: reconstruct.c:465
+#, c-format
+msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
+msgstr "\"%s\" 파일에 잘못된 증분 매직 번호(0x%x)가 있음 (기대값 0x%x)"
+
+#: reconstruct.c:471
+#, c-format
+msgid "file \"%s\" has block count %u in excess of segment size %u"
+msgstr "\"%s\" 파일의 블록 수(%u)가 조각 크기(%u)보다 큼"
+
+#: reconstruct.c:478
+#, c-format
+msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
+msgstr "\"%s\" 파일의 삭제 블럭 길이(%u)가 조각 크기(%u)보다 큼"
+
+#: reconstruct.c:542
+#, c-format
+msgid "could not read file \"%s\": read %d of %u"
+msgstr "\"%s\" 파일 읽을 수 없음: %d/%u만 읽음"
+
+#: reconstruct.c:786
+#, c-format
+msgid "could not read from file \"%s\", offset %llu: read %d of %d"
+msgstr "\"%s\" 파일 읽을 수 없음: 시작위치 %llu, %d/%d만 읽음"

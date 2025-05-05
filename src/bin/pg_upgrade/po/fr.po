@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 15\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-07-29 09:19+0000\n"
-"PO-Revision-Date: 2023-07-30 10:37+0200\n"
+"POT-Creation-Date: 2024-10-29 18:20+0000\n"
+"PO-Revision-Date: 2024-10-30 07:41+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,9 +19,244 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
-#: check.c:69
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "mémoire épuisée\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ne peut pas dupliquer un pointeur nul (erreur interne)\n"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "n'a pas pu récupérer le code de statut du sous-processus : code d'erreur %lu"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "n'a pas pu trouver l'identifiant réel %ld de l'utilisateur : %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "l'utilisateur n'existe pas"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "échec de la recherche du nom d'utilisateur : code d'erreur %lu"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "l'argument de la commande shell contient un retour à la ligne ou un retour chariot : « %s »\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "le nom de la base contient un retour à la ligne ou un retour chariot : « %s »\n"
+
+#: check.c:111
+msgid "Checking for system-defined composite types in user tables"
+msgstr "Vérification des types composites définis par le système dans les tables utilisateurs"
+
+#: check.c:118
+msgid ""
+"Your installation contains system-defined composite types in user tables.\n"
+"These type OIDs are not stable across PostgreSQL versions,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient des types composites définis par le système dans vos tables\n"
+"utilisateurs. Les OID de ces types ne sont pas stables entre différentes versions\n"
+"de PostgreSQL, donc cette instance ne peut pas être mise à jour actuellement. Vous pouvez\n"
+"supprimer les colonnes problématiques, puis relancer la mise à jour.\n"
+
+#: check.c:132
+msgid "Checking for incompatible \"line\" data type"
+msgstr "Vérification des types de données line incompatibles"
+
+#: check.c:137
+msgid ""
+"Your installation contains the \"line\" data type in user tables.\n"
+"This data type changed its internal and input/output format\n"
+"between your old and new versions so this\n"
+"cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « line » dans vos tables utilisateurs.\n"
+"Ce type de données a changé de format interne et en entrée/sortie entre vos ancienne\n"
+"et nouvelle versions, donc cette instance ne peut pas être mise à jour\n"
+"actuellement. Vous pouvez supprimer les colonnes problématiques et relancer la mise à jour.\n"
+
+#: check.c:154
+msgid "Checking for reg* data types in user tables"
+msgstr "Vérification des types de données reg* dans les tables utilisateurs"
+
+#: check.c:181
+msgid ""
+"Your installation contains one of the reg* data types in user tables.\n"
+"These data types reference system OIDs that are not preserved by\n"
+"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient un des types de données reg* dans vos tables\n"
+"utilisateurs. Ces types de données référencent des OID système qui ne sont\n"
+"pas préservés par pg_upgrade, donc cette instance ne peut pas être mise à\n"
+"jour actuellement. Vous pouvez supprimer les colonnes problématiques et relancer\n"
+"la mise à jour.\n"
+
+#: check.c:193
+msgid "Checking for incompatible \"aclitem\" data type"
+msgstr "Vérification des types de données « aclitem » incompatibles"
+
+#: check.c:198
+msgid ""
+"Your installation contains the \"aclitem\" data type in user tables.\n"
+"The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient un type de données « aclitem » dans vos tables utilisateurs.\n"
+"Le format interne de « aclitem » a changé lors du développement de la version 16, donc\n"
+"cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer les\n"
+"colonnes problématiques et relancer la mise à jour.\n"
+
+#: check.c:217
+msgid "Checking for invalid \"unknown\" user columns"
+msgstr "Vérification des colonnes utilisateurs « unknown » invalides"
+
+#: check.c:222
+msgid ""
+"Your installation contains the \"unknown\" data type in user tables.\n"
+"This data type is no longer allowed in tables, so this cluster\n"
+"cannot currently be upgraded.  You can drop the problem columns\n"
+"and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « unknown » dans vos tables\n"
+"utilisateurs. Ce type de données n'est plus autorisé dans les tables, donc\n"
+"cette instance ne peut pas être mise à jour pour l'instant. Vous pouvez\n"
+"supprimer les colonnes problématiques, puis relancer la mise à jour.\n"
+
+#: check.c:239
+msgid "Checking for invalid \"sql_identifier\" user columns"
+msgstr "Vérification des colonnes utilisateurs « sql_identifier » invalides"
+
+#: check.c:244
+msgid ""
+"Your installation contains the \"sql_identifier\" data type in user tables.\n"
+"The on-disk format for this data type has changed, so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem\n"
+"columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « sql_identifier » dans les tables\n"
+"utilisateurs. Le format sur disque pour ce type de données a changé,\n"
+"donc cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer\n"
+"les colonnes problématiques, puis relancer la mise à jour.\n"
+
+#: check.c:255
+msgid "Checking for incompatible \"jsonb\" data type in user tables"
+msgstr "Vérification du type de données « json » incompatible dans les tables utilisateurs"
+
+#: check.c:260
+msgid ""
+"Your installation contains the \"jsonb\" data type in user tables.\n"
+"The internal format of \"jsonb\" changed during 9.4 beta so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem \n"
+"columns and restart the upgrade.\n"
+msgstr ""
+"Votre installation contient un type de données « jsonb » dans vos tables utilisateurs.\n"
+"Le format interne de « jsonb » a changé lors du développement de la version 9.4 beta, donc\n"
+"cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer les\n"
+"colonnes problématiques et relancer la mise à jour.\n"
+
+#: check.c:272
+msgid "Checking for removed \"abstime\" data type in user tables"
+msgstr "Vérification du type de données « abstime » supprimé dans les tables utilisateurs"
+
+#: check.c:277
+msgid ""
+"Your installation contains the \"abstime\" data type in user tables.\n"
+"The \"abstime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « abstime » dans les tables utilisateurs.\n"
+"Le type «abstime » a été supprimé dans PostgreSQL version 12,\n"
+"donc cette instance ne peut pas être mise à jour pour l'instant. Vous pouvez\n"
+"supprimer les colonnes problématiques ou les convertir en un autre type de données,\n"
+"et relancer la mise à jour.\n"
+
+#: check.c:285
+msgid "Checking for removed \"reltime\" data type in user tables"
+msgstr "Vérification du type de données « reltime » supprimé dans les tables utilisateurs"
+
+#: check.c:290
+msgid ""
+"Your installation contains the \"reltime\" data type in user tables.\n"
+"The \"reltime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « reltime » dans les tables utilisateurs.\n"
+"Le type «reltime » a été supprimé dans PostgreSQL version 12,\n"
+"donc cette instance ne peut pas être mise à jour pour l'instant. Vous pouvez\n"
+"supprimer les colonnes problématiques ou les convertir en un autre type de données,\n"
+"et relancer la mise à jour.\n"
+
+#: check.c:298
+msgid "Checking for removed \"tinterval\" data type in user tables"
+msgstr "Vérification du type de données « tinterval » supprimé dans les tables utilisateurs"
+
+#: check.c:303
+msgid ""
+"Your installation contains the \"tinterval\" data type in user tables.\n"
+"The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"Votre installation contient le type de données « tinterval » dans les tables utilisateurs.\n"
+"Le type « tinterval » a été supprimé dans PostgreSQL version 12,\n"
+"donc cette instance ne peut pas être mise à jour pour l'instant. Vous pouvez\n"
+"supprimer les colonnes problématiques ou les convertir en un autre type de données,\n"
+"et relancer la mise à jour.\n"
+
+#: check.c:345
+#, c-format
+msgid "Checking data type usage"
+msgstr "Vérification de l'utilisation du type de données"
+
+#: check.c:480
+#, c-format
+msgid "failed check: %s"
+msgstr "vérification échouée : %s"
+
+#: check.c:483
+msgid "A list of the problem columns is in the file:"
+msgstr "Une liste des colonnes problématiques se trouve dans le fichier :"
+
+#: check.c:495 check.c:963 check.c:1136 check.c:1251 check.c:1345 check.c:1473
+#: check.c:1549 check.c:1613 check.c:1686 check.c:1865 check.c:1884
+#: check.c:1953 check.c:2005 file.c:378 file.c:415 function.c:189 option.c:493
+#: version.c:79 version.c:177
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
+
+#: check.c:522
+#, c-format
+msgid "Data type checks failed: %s"
+msgstr "Échec de la vérification des types de données : %s"
+
+#: check.c:563
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -30,7 +265,7 @@ msgstr ""
 "Exécution de tests de cohérence sur l'ancien serveur\n"
 "----------------------------------------------------"
 
-#: check.c:75
+#: check.c:569
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -39,7 +274,7 @@ msgstr ""
 "Exécution de tests de cohérence\n"
 "-------------------------------"
 
-#: check.c:221
+#: check.c:718
 #, c-format
 msgid ""
 "\n"
@@ -48,7 +283,7 @@ msgstr ""
 "\n"
 "*Les instances sont compatibles*"
 
-#: check.c:229
+#: check.c:726
 #, c-format
 msgid ""
 "\n"
@@ -59,7 +294,7 @@ msgstr ""
 "Si pg_upgrade échoue après cela, vous devez ré-exécuter initdb\n"
 "sur la nouvelle instance avant de continuer."
 
-#: check.c:270
+#: check.c:767
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade.\n"
@@ -70,7 +305,7 @@ msgstr ""
 "Une fois le nouveau serveur démarré, pensez à exécuter :\n"
 "    %s/vacuumdb %s--all --analyze-in-stages"
 
-#: check.c:276
+#: check.c:773
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -79,7 +314,7 @@ msgstr ""
 "Exécuter ce script supprimera les fichiers de données de l'ancienne instance :\n"
 "    %s"
 
-#: check.c:281
+#: check.c:778
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -93,57 +328,57 @@ msgstr ""
 "de l'ancienne instance. Le contenu de l'ancienne instance doit être supprimé\n"
 "manuellement."
 
-#: check.c:293
+#: check.c:790
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Vérification des versions des instances"
 
-#: check.c:305
+#: check.c:802
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr "Cet outil peut seulement mettre à jour les versions %s et ultérieures de PostgreSQL."
 
-#: check.c:310
+#: check.c:807
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "Cet outil peut seulement mettre à jour vers la version %s de PostgreSQL."
 
-#: check.c:319
+#: check.c:816
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr "Cet outil ne peut pas être utilisé pour mettre à jour vers des versions majeures plus anciennes de PostgreSQL."
 
-#: check.c:324
+#: check.c:821
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions."
 msgstr "Les répertoires des données de l'ancienne instance et des binaires sont de versions majeures différentes."
 
-#: check.c:327
+#: check.c:824
 #, c-format
 msgid "New cluster data and binary directories are from different major versions."
 msgstr "Les répertoires des données de la nouvelle instance et des binaires sont de versions majeures différentes."
 
-#: check.c:342
+#: check.c:839
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different."
 msgstr "Lors de la vérification d'un serveur en production, l'ancien numéro de port doit être différent du nouveau."
 
-#: check.c:362
+#: check.c:859
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr "La nouvelle instance « %s » n'est pas vide : relation « %s.%s » trouvée"
 
-#: check.c:385
+#: check.c:882
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Vérification des répertoires de tablespace de la nouvelle instance"
 
-#: check.c:396
+#: check.c:893
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr "le répertoire du tablespace de la nouvelle instance existe déjà : « %s »"
 
-#: check.c:429
+#: check.c:926
 #, c-format
 msgid ""
 "\n"
@@ -152,7 +387,7 @@ msgstr ""
 "\n"
 "AVERTISSEMENT : le nouveau répertoire de données ne doit pas être à l'intérieur de l'ancien répertoire de données, %s"
 
-#: check.c:453
+#: check.c:950
 #, c-format
 msgid ""
 "\n"
@@ -161,61 +396,53 @@ msgstr ""
 "\n"
 "AVERTISSEMENT : les emplacements des tablespaces utilisateurs ne doivent pas être à l'intérieur du répertoire de données, %s"
 
-#: check.c:463
+#: check.c:960
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Création du script pour supprimer l'ancienne instance"
 
-#: check.c:466 check.c:639 check.c:755 check.c:850 check.c:979 check.c:1056
-#: check.c:1299 check.c:1373 file.c:339 function.c:163 option.c:476
-#: version.c:116 version.c:292 version.c:426
+#: check.c:1014
 #, c-format
-msgid "could not open file \"%s\": %s"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %s"
+msgid "could not add execute permission to file \"%s\": %m"
+msgstr "n'a pas pu ajouter les droits d'exécution pour le fichier « %s » : %m"
 
-#: check.c:517
-#, c-format
-msgid "could not add execute permission to file \"%s\": %s"
-msgstr "n'a pas pu ajouter les droits d'exécution pour le fichier « %s » : %s"
-
-#: check.c:537
+#: check.c:1034
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Vérification que l'utilisateur de la base de données est l'utilisateur d'installation"
 
-#: check.c:553
+#: check.c:1050
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "l'utilisateur de la base de données « %s » n'est pas l'utilisateur d'installation"
 
-#: check.c:564
+#: check.c:1061
 #, c-format
 msgid "could not determine the number of users"
 msgstr "n'a pas pu déterminer le nombre d'utilisateurs"
 
-#: check.c:572
+#: check.c:1069
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "Seul l'utilisateur d'installation peut être défini dans la nouvelle instance."
 
-#: check.c:601
+#: check.c:1098
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Vérification des paramètres de connexion de la base de données"
 
-#: check.c:627
+#: check.c:1124
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false"
 msgstr "template0 ne doit pas autoriser les connexions, ie pg_database.datallowconn doit valoir false"
 
-#: check.c:654 check.c:775 check.c:873 check.c:999 check.c:1076 check.c:1135
-#: check.c:1196 check.c:1224 check.c:1254 check.c:1313 check.c:1394
-#: function.c:185 version.c:192 version.c:232 version.c:378
+#: check.c:1150 check.c:1270 check.c:1367 check.c:1492 check.c:1568
+#: check.c:1626 check.c:1706 check.c:1897 check.c:2022 function.c:210
 #, c-format
 msgid "fatal"
 msgstr "fatal"
 
-#: check.c:655
+#: check.c:1151
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
@@ -234,27 +461,27 @@ msgstr ""
 "le fichier :\n"
 "    %s"
 
-#: check.c:680
+#: check.c:1176
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Vérification des transactions préparées"
 
-#: check.c:689
+#: check.c:1185
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "L'instance source contient des transactions préparées"
 
-#: check.c:691
+#: check.c:1187
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "L'instance cible contient des transactions préparées"
 
-#: check.c:716
+#: check.c:1212
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Vérification de contrib/isn avec une différence sur le passage des bigint"
 
-#: check.c:776
+#: check.c:1271
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -275,12 +502,12 @@ msgstr ""
 "dans le fichier :\n"
 "    %s"
 
-#: check.c:798
+#: check.c:1293
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "Vérification des opérateurs postfixes définis par les utilisateurs"
 
-#: check.c:874
+#: check.c:1368
 #, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
@@ -295,12 +522,12 @@ msgstr ""
 "Une liste des opérateurs postfixes définis par les utilisateurs se trouve dans le fichier :\n"
 "    %s"
 
-#: check.c:898
+#: check.c:1392
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "Vérification des fonctions polymorphiques incompatibles"
 
-#: check.c:1000
+#: check.c:1493
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
@@ -320,12 +547,12 @@ msgstr ""
 "des objets problématiques se trouve dans le fichier\n"
 "    %s"
 
-#: check.c:1024
+#: check.c:1517
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Vérification des tables WITH OIDS"
 
-#: check.c:1077
+#: check.c:1569
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -340,101 +567,12 @@ msgstr ""
 "Une liste des tables ayant ce problème se trouve dans le fichier :\n"
 "    %s"
 
-#: check.c:1105
-#, c-format
-msgid "Checking for system-defined composite types in user tables"
-msgstr "Vérification des types composites définis par le système dans les tables utilisateurs"
-
-#: check.c:1136
-#, c-format
-msgid ""
-"Your installation contains system-defined composite type(s) in user tables.\n"
-"These type OIDs are not stable across PostgreSQL versions,\n"
-"so this cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient des types composites définis par le système dans vos tables\n"
-"utilisateurs. Les OID de ces types ne sont pas stables entre différentes versions majeures\n"
-"de PostgreSQL, donc cette instance ne peut pas être mise à jour actuellement. Vous pouvez\n"
-"supprimer les colonnes problématiques, puis relancer la mise à jour. Vous trouverez\n"
-"une liste des colonnes problématiques dans le fichier :\n"
-"    %s"
-
-#: check.c:1164
-#, c-format
-msgid "Checking for reg* data types in user tables"
-msgstr "Vérification des types de données reg* dans les tables utilisateurs"
-
-#: check.c:1197
-#, c-format
-msgid ""
-"Your installation contains one of the reg* data types in user tables.\n"
-"These data types reference system OIDs that are not preserved by\n"
-"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient un des types de données reg* dans vos tables\n"
-"utilisateurs. Ces types de données référencent des OID système qui ne sont\n"
-"pas préservés par pg_upgrade, donc cette instance ne peut pas être mise à\n"
-"jour actuellement. Vous pouvez supprimer les colonnes problématiques et relancer\n"
-"la mise à jour. Une liste des colonnes problématiques est disponible dans le\n"
-"fichier :\n"
-"    %s"
-
-#: check.c:1218
-#, c-format
-msgid "Checking for incompatible \"aclitem\" data type in user tables"
-msgstr "Vérification du type de données aclitem incompatible dans les tables utilisateurs"
-
-#: check.c:1225
-#, c-format
-msgid ""
-"Your installation contains the \"aclitem\" data type in user tables.\n"
-"The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
-"so this cluster cannot currently be upgraded.  You can drop the\n"
-"problem columns and restart the upgrade.  A list of the problem\n"
-"columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient un type de données « aclitem » dans vos tables utilisateurs.\n"
-"Le format interne de « aclitem » a changé lors du développement de la version 16, donc\n"
-"cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer les\n"
-"colonnes problématiques et relancer la mise à jour. Une liste des colonnes problématiques\n"
-"est disponible dans le fichier :\n"
-"    %s"
-
-#: check.c:1246
-#, c-format
-msgid "Checking for incompatible \"jsonb\" data type"
-msgstr "Vérification des types de données « jsonb » incompatibles"
-
-#: check.c:1255
-#, c-format
-msgid ""
-"Your installation contains the \"jsonb\" data type in user tables.\n"
-"The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-"cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient un type de données « jsonb » dans vos tables utilisateurs.\n"
-"Le format interne de « jsonb » a changé lors du développement de la version 9.4 beta, donc\n"
-"cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer les\n"
-"colonnes problématiques et relancer la mise à jour. Une liste des colonnes problématiques\n"
-"est disponible dans le fichier :\n"
-"    %s"
-
-#: check.c:1282
+#: check.c:1596
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Vérification des rôles commençant avec « pg_ »"
 
-#: check.c:1314
+#: check.c:1627
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
@@ -449,12 +587,12 @@ msgstr ""
 "Une liste des rôles commençant par « pg_ » se trouve dans le fichier :\n"
 "    %s"
 
-#: check.c:1334
+#: check.c:1647
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Vérification des conversions d'encodage définies par les utilisateurs"
 
-#: check.c:1395
+#: check.c:1707
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"
@@ -471,12 +609,91 @@ msgstr ""
 "Une liste des conversions d'encodage définies par l'utilisateur se trouve dans le fichier :\n"
 "    %s"
 
-#: controldata.c:129 controldata.c:175 controldata.c:199 controldata.c:508
+#: check.c:1746
 #, c-format
-msgid "could not get control data using %s: %s"
-msgstr "n'a pas pu obtenir les données de contrôle en utilisant %s : %s"
+msgid "Checking for new cluster logical replication slots"
+msgstr "Vérification des slots de réplication logique de la nouvelle instance"
 
-#: controldata.c:140
+#: check.c:1754
+#, c-format
+msgid "could not count the number of logical replication slots"
+msgstr "n'a pas pu compter le nombre de slots de réplication logique"
+
+#: check.c:1759
+#, c-format
+msgid "expected 0 logical replication slots but found %d"
+msgstr "attendait 0 slot de réplication logique mais en a trouvé %d"
+
+#: check.c:1769 check.c:1820
+#, c-format
+msgid "could not determine parameter settings on new cluster"
+msgstr "n'a pas pu déterminer la configuration sur la nouvelle instance"
+
+#: check.c:1774
+#, c-format
+msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
+msgstr "« wal_level » doit être configuré à « logical » mais est configuré à « %s »"
+
+#: check.c:1780
+#, c-format
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
+msgstr "« max_replication_slots » (%d) doit être supérieur ou égal au nombre de slots de réplication logique (%d) sur l'ancienne instance"
+
+#: check.c:1812
+#, c-format
+msgid "Checking for new cluster configuration for subscriptions"
+msgstr "Vérification de la configuration de la nouvelle instance pour les souscriptions"
+
+#: check.c:1824
+#, c-format
+msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
+msgstr "« max_replication_slots » (%d) doit être supérieur ou égal au nombre de souscriptions (%d) sur l'ancienne instance"
+
+#: check.c:1846
+#, c-format
+msgid "Checking for valid logical replication slots"
+msgstr "Vérification des slots de réplication logique valides"
+
+#: check.c:1898
+#, c-format
+msgid ""
+"Your installation contains logical replication slots that cannot be upgraded.\n"
+"You can remove invalid slots and/or consume the pending WAL for other slots,\n"
+"and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"Votre installation contient des slots de réplication logique qui ne peuvent pas\n"
+"être mis à jour. Vous pouvez supprimer les slots invalides et/ou consommer le\n"
+"WAL en attente pour les autres slots, puis relancer la mise à jour. Vous trouverez\n"
+"une liste des slots problématiques dans le fichier :\n"
+"    %s"
+
+#: check.c:1922
+#, c-format
+msgid "Checking for subscription state"
+msgstr "Vérification de l'état de souscription"
+
+#: check.c:2023
+#, c-format
+msgid ""
+"Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
+"You can allow the initial sync to finish for all relations and then restart the upgrade.\n"
+"A list of the problematic subscriptions is in the file:\n"
+"    %s"
+msgstr ""
+"Votre installation contient des souscriptions sans origine ou ont des relations qui\n"
+"ne sont ni dans l'état « initialize » ni dans l'état « ready ». Vous pouvez permettre la\n"
+"réalisation de la synchronisation initiale pour toutes les relations, puis relancer la\n"
+"mise à jour. Vous trouverez une liste des souscriptions problématiques dans le fichier :\n"
+"    %s"
+
+#: controldata.c:129 controldata.c:199
+#, c-format
+msgid "could not get control data using %s: %m"
+msgstr "n'a pas pu obtenir les données de contrôle en utilisant %s : %m"
+
+#: controldata.c:139
 #, c-format
 msgid "%d: database cluster state problem"
 msgstr "%d : problème sur l'état de l'instance de la base de données"
@@ -493,13 +710,18 @@ msgstr "L'instance cible a été arrêté alors qu'elle était en mode restaurat
 
 #: controldata.c:165
 #, c-format
-msgid "The source cluster was not shut down cleanly."
-msgstr "L'instance source n'a pas été arrêtée proprement."
+msgid "The source cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "L'instance source n'a pas été arrêtée proprement, état reporté comme : « %s »"
 
 #: controldata.c:167
 #, c-format
-msgid "The target cluster was not shut down cleanly."
-msgstr "L'instance cible n'a pas été arrêtée proprement."
+msgid "The target cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "L'instance cible n'a pas été arrêtée proprement, état reporté comme : « %s »"
+
+#: controldata.c:175 controldata.c:507
+#, c-format
+msgid "could not get control data using %s: %s"
+msgstr "n'a pas pu obtenir les données de contrôle en utilisant %s : %s"
 
 #: controldata.c:181
 #, c-format
@@ -511,139 +733,139 @@ msgstr "Il manque certaines informations d'état requises sur l'instance source 
 msgid "The target cluster lacks cluster state information:"
 msgstr "Il manque certaines informations d'état requises sur l'instance cible :"
 
-#: controldata.c:214 dump.c:50 exec.c:119 pg_upgrade.c:517 pg_upgrade.c:554
-#: relfilenumber.c:231 server.c:34 util.c:337
+#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:556 pg_upgrade.c:596
+#: pg_upgrade.c:945 relfilenumber.c:233 server.c:34 util.c:337
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: controldata.c:221
+#: controldata.c:220
 #, c-format
 msgid "%d: pg_resetwal problem"
 msgstr "%d : problème avec pg_resetwal"
 
-#: controldata.c:231 controldata.c:241 controldata.c:252 controldata.c:263
-#: controldata.c:274 controldata.c:293 controldata.c:304 controldata.c:315
-#: controldata.c:326 controldata.c:337 controldata.c:348 controldata.c:359
-#: controldata.c:362 controldata.c:366 controldata.c:376 controldata.c:388
-#: controldata.c:399 controldata.c:410 controldata.c:421 controldata.c:432
-#: controldata.c:443 controldata.c:454 controldata.c:465 controldata.c:476
-#: controldata.c:487 controldata.c:498
+#: controldata.c:230 controldata.c:240 controldata.c:251 controldata.c:262
+#: controldata.c:273 controldata.c:292 controldata.c:303 controldata.c:314
+#: controldata.c:325 controldata.c:336 controldata.c:347 controldata.c:358
+#: controldata.c:361 controldata.c:365 controldata.c:375 controldata.c:387
+#: controldata.c:398 controldata.c:409 controldata.c:420 controldata.c:431
+#: controldata.c:442 controldata.c:453 controldata.c:464 controldata.c:475
+#: controldata.c:486 controldata.c:497
 #, c-format
 msgid "%d: controldata retrieval problem"
 msgstr "%d : problème de récupération des controldata"
 
-#: controldata.c:579
+#: controldata.c:578
 #, c-format
 msgid "The source cluster lacks some required control information:"
 msgstr "Il manque certaines informations de contrôle requises sur l'instance source :"
 
-#: controldata.c:582
+#: controldata.c:581
 #, c-format
 msgid "The target cluster lacks some required control information:"
 msgstr "Il manque certaines informations de contrôle requises sur l'instance cible :"
 
-#: controldata.c:585
+#: controldata.c:584
 #, c-format
 msgid "  checkpoint next XID"
 msgstr "  XID du prochain checkpoint"
 
-#: controldata.c:588
+#: controldata.c:587
 #, c-format
 msgid "  latest checkpoint next OID"
 msgstr "  prochain OID du dernier checkpoint"
 
-#: controldata.c:591
+#: controldata.c:590
 #, c-format
 msgid "  latest checkpoint next MultiXactId"
 msgstr "  prochain MultiXactId du dernier checkpoint"
 
-#: controldata.c:595
+#: controldata.c:594
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId"
 msgstr "  plus ancien MultiXactId du dernier checkpoint"
 
-#: controldata.c:598
+#: controldata.c:597
 #, c-format
 msgid "  latest checkpoint oldestXID"
 msgstr "  oldestXID du dernier checkpoint"
 
-#: controldata.c:601
+#: controldata.c:600
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset"
 msgstr "  prochain MultiXactOffset du dernier checkpoint"
 
-#: controldata.c:604
+#: controldata.c:603
 #, c-format
 msgid "  first WAL segment after reset"
 msgstr "  premier segment WAL après réinitialisation"
 
-#: controldata.c:607
+#: controldata.c:606
 #, c-format
 msgid "  float8 argument passing method"
 msgstr "  méthode de passage de arguments float8"
 
-#: controldata.c:610
+#: controldata.c:609
 #, c-format
 msgid "  maximum alignment"
 msgstr "  alignement maximale"
 
-#: controldata.c:613
+#: controldata.c:612
 #, c-format
 msgid "  block size"
 msgstr "  taille de bloc"
 
-#: controldata.c:616
+#: controldata.c:615
 #, c-format
 msgid "  large relation segment size"
 msgstr "  taille de segment des relations"
 
-#: controldata.c:619
+#: controldata.c:618
 #, c-format
 msgid "  WAL block size"
 msgstr "  taille de bloc d'un WAL"
 
-#: controldata.c:622
+#: controldata.c:621
 #, c-format
 msgid "  WAL segment size"
 msgstr "  taille d'un segment WAL"
 
-#: controldata.c:625
+#: controldata.c:624
 #, c-format
 msgid "  maximum identifier length"
 msgstr "  longueur maximum d'un identifiant"
 
-#: controldata.c:628
+#: controldata.c:627
 #, c-format
 msgid "  maximum number of indexed columns"
 msgstr "  nombre maximum de colonnes indexées"
 
-#: controldata.c:631
+#: controldata.c:630
 #, c-format
 msgid "  maximum TOAST chunk size"
 msgstr "  taille maximale d'un morceau de TOAST"
 
-#: controldata.c:635
+#: controldata.c:634
 #, c-format
 msgid "  large-object chunk size"
 msgstr "  taille d'un morceau Large-Object"
 
-#: controldata.c:638
+#: controldata.c:637
 #, c-format
 msgid "  dates/times are integers?"
 msgstr "  les dates/heures sont-ils des integers?"
 
-#: controldata.c:642
+#: controldata.c:641
 #, c-format
 msgid "  data checksum version"
 msgstr "  version des sommes de contrôle des données"
 
-#: controldata.c:644
+#: controldata.c:643
 #, c-format
 msgid "Cannot continue without required control information, terminating"
 msgstr "Ne peut pas continuer sans les informations de contrôle requises, en arrêt"
 
-#: controldata.c:659
+#: controldata.c:658
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match.\n"
@@ -652,77 +874,77 @@ msgstr ""
 "les alignements sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata.\n"
 "Il est probable qu'une installation soit en 32 bits et l'autre en 64 bits."
 
-#: controldata.c:663
+#: controldata.c:662
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match"
 msgstr "les tailles de bloc sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:666
+#: controldata.c:665
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match"
 msgstr "les tailles maximales de segment de relation sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:669
+#: controldata.c:668
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match"
 msgstr "les tailles de bloc des WAL sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:672
+#: controldata.c:671
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match"
 msgstr "les tailles de segment de WAL sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:675
+#: controldata.c:674
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match"
 msgstr "les longueurs maximales des identifiants sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:678
+#: controldata.c:677
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match"
 msgstr "les nombres maximums de colonnes indexées sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:681
+#: controldata.c:680
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match"
 msgstr "les tailles maximales de morceaux des TOAST sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:686
+#: controldata.c:685
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match"
 msgstr "les tailles des morceaux de Large Objects sont invalides ou ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:689
+#: controldata.c:688
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match"
 msgstr "les types de stockage date/heure ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:702
+#: controldata.c:701
 #, c-format
 msgid "old cluster does not use data checksums but the new one does"
 msgstr "l'ancienne instance n'utilise pas les sommes de contrôle alors que la nouvelle les utilise"
 
-#: controldata.c:705
+#: controldata.c:704
 #, c-format
 msgid "old cluster uses data checksums but the new one does not"
 msgstr "l'ancienne instance utilise les sommes de contrôle alors que la nouvelle ne les utilise pas"
 
-#: controldata.c:707
+#: controldata.c:706
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match"
 msgstr "les versions des sommes de contrôle ne correspondent pas entre l'ancien et le nouveau pg_controldata."
 
-#: controldata.c:718
+#: controldata.c:717
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Ajout du suffixe « .old » à l'ancien global/pg_control"
 
-#: controldata.c:723
+#: controldata.c:722
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu renommer le fichier « %s » en « %s » : %m"
 
-#: controldata.c:727
+#: controldata.c:726
 #, c-format
 msgid ""
 "\n"
@@ -748,27 +970,32 @@ msgstr "Création de la sauvegarde des objets globaux"
 msgid "Creating dump of database schemas"
 msgstr "Création de la sauvegarde des schémas des bases"
 
-#: exec.c:47 exec.c:52
+#: exec.c:47
+#, c-format
+msgid "could not get pg_ctl version data using %s: %m"
+msgstr "n'a pas pu obtenir la version de pg_ctl en utilisant %s : %m"
+
+#: exec.c:51
 #, c-format
 msgid "could not get pg_ctl version data using %s: %s"
 msgstr "n'a pas pu obtenir la version de pg_ctl en utilisant %s : %s"
 
-#: exec.c:56
+#: exec.c:55
 #, c-format
 msgid "could not get pg_ctl version output from %s"
 msgstr "n'a pas pu obtenir la version de pg_ctl à partir de %s"
 
-#: exec.c:113 exec.c:117
+#: exec.c:112 exec.c:116
 #, c-format
 msgid "command too long"
 msgstr "commande trop longue"
 
-#: exec.c:161 pg_upgrade.c:286
+#: exec.c:160 pg_upgrade.c:311
 #, c-format
 msgid "could not open log file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le journal applicatif « %s » : %m"
 
-#: exec.c:193
+#: exec.c:192
 #, c-format
 msgid ""
 "\n"
@@ -777,12 +1004,12 @@ msgstr ""
 "\n"
 "*échec*"
 
-#: exec.c:196
+#: exec.c:195
 #, c-format
 msgid "There were problems executing \"%s\""
 msgstr "Il y a eu des problèmes lors de l'exécution de « %s »"
 
-#: exec.c:199
+#: exec.c:198
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" or \"%s\" for\n"
@@ -791,7 +1018,7 @@ msgstr ""
 "Consultez les dernières lignes de « %s » ou « %s » pour\n"
 "trouver la cause probable de l'échec."
 
-#: exec.c:204
+#: exec.c:203
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" for\n"
@@ -800,141 +1027,156 @@ msgstr ""
 "Consultez les dernières lignes de « %s » pour\n"
 "trouver la cause probable de l'échec."
 
-#: exec.c:219 pg_upgrade.c:296
+#: exec.c:218 pg_upgrade.c:321
 #, c-format
 msgid "could not write to log file \"%s\": %m"
 msgstr "n'a pas pu écrire dans le fichier de traces « %s »"
 
-#: exec.c:245
+#: exec.c:244
 #, c-format
-msgid "could not open file \"%s\" for reading: %s"
-msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %s"
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "n'a pas pu ouvrir le fichier « %s » pour une lecture : %m"
 
-#: exec.c:272
+#: exec.c:270
 #, c-format
 msgid "You must have read and write access in the current directory."
 msgstr "Vous devez avoir les droits de lecture et d'écriture dans le répertoire actuel."
 
-#: exec.c:325 exec.c:391
-#, c-format
-msgid "check for \"%s\" failed: %s"
-msgstr "échec de la vérification de « %s » : %s"
-
-#: exec.c:328 exec.c:394
-#, c-format
-msgid "\"%s\" is not a directory"
-msgstr "« %s » n'est pas un répertoire"
-
-#: exec.c:441
+#: exec.c:323 exec.c:389 exec.c:439
 #, c-format
 msgid "check for \"%s\" failed: %m"
 msgstr "échec de la vérification de « %s » : %m"
 
-#: exec.c:446
+#: exec.c:326 exec.c:392
+#, c-format
+msgid "\"%s\" is not a directory"
+msgstr "« %s » n'est pas un répertoire"
+
+#: exec.c:444
 #, c-format
 msgid "check for \"%s\" failed: cannot execute"
 msgstr "échec de la vérification de « %s » : ne peut pas exécuter"
 
-#: exec.c:456
+#: exec.c:454
 #, c-format
 msgid "check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\""
 msgstr "échec de la vérification de « %s » : version incorrecte : « %s » trouvée, « %s » attendue"
 
-#: file.c:43 file.c:64
+#: file.c:44
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "erreur lors du clonage de la relation « %s.%s » (« %s » à « %s ») : %m"
+
+#: file.c:51
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "erreur lors du clonage de la relation « %s.%s » : n'a pas pu ouvrir le fichier « %s » : %m"
+
+#: file.c:56
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "erreur lors du clonage de la relation « %s.%s » : n'a pas pu créer le fichier « %s » : %m"
+
+#: file.c:65
 #, c-format
 msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s"
 msgstr "erreur lors du clonage de la relation « %s.%s » (« %s » à « %s ») : %s"
 
-#: file.c:50
+#: file.c:91 file.c:160 file.c:233
 #, c-format
-msgid "error while cloning relation \"%s.%s\": could not open file \"%s\": %s"
-msgstr "erreur lors du clonage de la relation « %s.%s » : n'a pas pu ouvrir le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu ouvrir le fichier « %s » : %m"
 
-#: file.c:55
+#: file.c:96 file.c:165 file.c:242
 #, c-format
-msgid "error while cloning relation \"%s.%s\": could not create file \"%s\": %s"
-msgstr "erreur lors du clonage de la relation « %s.%s » : n'a pas pu créer le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu créer le fichier « %s » : %m"
 
-#: file.c:90 file.c:193
+#: file.c:110 file.c:266
 #, c-format
-msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu ouvrir le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu lire le fichier « %s » : %m"
 
-#: file.c:95 file.c:202
+#: file.c:122 file.c:344
 #, c-format
-msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu créer le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu écrire le fichier « %s » : %m"
 
-#: file.c:109 file.c:226
+#: file.c:136
 #, c-format
-msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu lire le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » (« %s » à « %s ») : %m"
 
-#: file.c:121 file.c:304
+#: file.c:172
 #, c-format
-msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu écrire le fichier « %s » : %s"
+msgid "error while copying relation \"%s.%s\": could not copy file range from \"%s\" to \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu exécuter copy_file_range du fichier « %s » au fichier « %s » : %m"
 
-#: file.c:135
+#: file.c:194
 #, c-format
-msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » (« %s » à « %s ») : %s"
+msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "erreur lors de la création du lien pour la relation « %s.%s » (« %s » à « %s ») : %m"
 
-#: file.c:154
+#: file.c:237
 #, c-format
-msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s"
-msgstr "erreur lors de la création du lien pour la relation « %s.%s » (« %s » à « %s ») : %s"
+msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %m"
+msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu tester le fichier « %s » : %m"
 
-#: file.c:197
-#, c-format
-msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %s"
-msgstr "erreur lors de la copie de la relation « %s.%s » : n'a pas pu tester le fichier « %s » : %s"
-
-#: file.c:229
+#: file.c:269
 #, c-format
 msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\""
 msgstr "erreur lors de la copie de la relation « %s.%s » : page partielle trouvée dans le fichier « %s »"
 
-#: file.c:331 file.c:348
+#: file.c:371 file.c:387
 #, c-format
-msgid "could not clone file between old and new data directories: %s"
-msgstr "n'a pas pu cloner le fichier entre l'ancien et le nouveau répertoires : %s"
+msgid "could not clone file between old and new data directories: %m"
+msgstr "n'a pas pu cloner le fichier entre l'ancien et le nouveau répertoires de données : %m"
 
-#: file.c:344
+#: file.c:383 file.c:420
 #, c-format
-msgid "could not create file \"%s\": %s"
-msgstr "n'a pas pu créer le fichier « %s » : %s"
+msgid "could not create file \"%s\": %m"
+msgstr "n'a pas pu créer le fichier « %s » : %m"
 
-#: file.c:355
+#: file.c:393
 #, c-format
 msgid "file cloning not supported on this platform"
 msgstr "clonage de fichiers non supporté sur cette plateforme"
 
-#: file.c:372
+#: file.c:424
+#, c-format
+msgid "could not copy file range between old and new data directories: %m"
+msgstr "n'a pas pu exécuter copy_file_range entre l'ancien et le nouveau répertoires de données : %m"
+
+#: file.c:430
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "copy_file_range non supporté sur cette plateforme"
+
+#: file.c:447
 #, c-format
 msgid ""
-"could not create hard link between old and new data directories: %s\n"
+"could not create hard link between old and new data directories: %m\n"
 "In link mode the old and new data directories must be on the same file system."
 msgstr ""
-"n'a pas pu créer le lien physique entre l'ancien et le nouveau répertoires de données : %s\n"
+"n'a pas pu créer le lien physique entre l'ancien et le nouveau répertoires de données : %m\n"
 "Dans le mode lien, les ancien et nouveau répertoires de données doivent être sur le même système de fichiers."
 
-#: function.c:128
+#: function.c:154
 #, c-format
 msgid "Checking for presence of required libraries"
 msgstr "Vérification de la présence des bibliothèques requises"
 
-#: function.c:165
+#: function.c:190
 #, c-format
 msgid "could not load library \"%s\": %s"
 msgstr "n'a pas pu charger la bibliothèque « %s » : %s"
 
-#: function.c:176
+#: function.c:201
 #, c-format
 msgid "In database: %s\n"
 msgstr "Dans la base de données : %s\n"
 
-#: function.c:186
+#: function.c:211
 #, c-format
 msgid ""
 "Your installation references loadable libraries that are missing from the\n"
@@ -949,47 +1191,47 @@ msgstr ""
 "Une liste des bibliothèques problématiques est disponible dans le fichier :\n"
 "    %s"
 
-#: info.c:126
+#: info.c:128
 #, c-format
 msgid "Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s\", new name \"%s.%s\""
 msgstr "Les noms de relation pour l'OID %u dans la base de données « %s » ne correspondent pas : ancien nom « %s.%s », nouveau nom « %s.%s »"
 
-#: info.c:146
+#: info.c:148
 #, c-format
 msgid "Failed to match up old and new tables in database \"%s\""
 msgstr "Échec de correspondance des anciennes et nouvelles tables dans la base de données « %s »"
 
-#: info.c:227
+#: info.c:229
 #, c-format
 msgid " which is an index on \"%s.%s\""
 msgstr " qui est un index sur \"%s.%s\""
 
-#: info.c:237
+#: info.c:239
 #, c-format
 msgid " which is an index on OID %u"
 msgstr " qui est un index sur l'OID %u"
 
-#: info.c:249
+#: info.c:251
 #, c-format
 msgid " which is the TOAST table for \"%s.%s\""
 msgstr " qui est la table TOAST pour « %s.%s »"
 
-#: info.c:257
+#: info.c:259
 #, c-format
 msgid " which is the TOAST table for OID %u"
 msgstr " qui est la table TOAST pour l'OID %u"
 
-#: info.c:261
+#: info.c:263
 #, c-format
 msgid "No match found in old cluster for new relation with OID %u in database \"%s\": %s"
 msgstr "Aucune correspondance trouvée dans l'ancienne instance pour la nouvelle relation d'OID %u dans la base de données « %s » : %s"
 
-#: info.c:264
+#: info.c:266
 #, c-format
 msgid "No match found in new cluster for old relation with OID %u in database \"%s\": %s"
 msgstr "Aucune correspondance trouvée dans la nouvelle instance pour la nouvelle relation d'OID %u dans la base de données « %s » : %s"
 
-#: info.c:289
+#: info.c:300
 #, c-format
 msgid ""
 "\n"
@@ -998,7 +1240,7 @@ msgstr ""
 "\n"
 "bases de données sources :"
 
-#: info.c:291
+#: info.c:302
 #, c-format
 msgid ""
 "\n"
@@ -1013,82 +1255,92 @@ msgstr ""
 #                 (errcode(ERRCODE_CASE_NOT_FOUND),
 #                  errmsg("case not found"),
 #                  errhint("CASE statement is missing ELSE part.")));
-#: info.c:329
+#: info.c:346
 #, c-format
 msgid "template0 not found"
 msgstr "template0 introuvable"
 
-#: info.c:645
+#: info.c:805
 #, c-format
-msgid "Database: %s"
-msgstr "Base de données : %s"
+msgid "Database: \"%s\""
+msgstr "Base de données : « %s »"
 
-#: info.c:657
+#: info.c:818
 #, c-format
-msgid "relname: %s.%s: reloid: %u reltblspace: %s"
-msgstr "relname : %s.%s : reloid : %u reltblspace : %s"
+msgid "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\""
+msgstr "relname : « %s.%s », reloid : %u, reltblspace : « %s »"
 
-#: option.c:101
+#: info.c:832
+#, c-format
+msgid "Logical replication slots in the database:"
+msgstr "Les slots de réplication logique dans la base de données :"
+
+#: info.c:838
+#, c-format
+msgid "slot name: \"%s\", output plugin: \"%s\", two_phase: %s"
+msgstr "nom du slot « %s », plugin de sortie « %s », two_phase %s"
+
+#: option.c:105
 #, c-format
 msgid "%s: cannot be run as root"
 msgstr "%s : ne peut pas être exécuté en tant que root"
 
-#: option.c:168
+#: option.c:172
 #, c-format
 msgid "invalid old port number"
 msgstr "ancien numéro de port invalide"
 
-#: option.c:173
+#: option.c:177
 #, c-format
 msgid "invalid new port number"
 msgstr "nouveau numéro de port invalide"
 
-#: option.c:203
+#: option.c:216
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
-#: option.c:210
+#: option.c:223
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "trop d'arguments en ligne de commande (le premier étant « %s »)"
 
-#: option.c:213
+#: option.c:229
 #, c-format
 msgid "Running in verbose mode"
 msgstr "Exécution en mode verbeux"
 
-#: option.c:231
+#: option.c:247
 msgid "old cluster binaries reside"
 msgstr "les binaires de l'ancienne instance résident"
 
-#: option.c:233
+#: option.c:249
 msgid "new cluster binaries reside"
 msgstr "les binaires de la nouvelle instance résident"
 
-#: option.c:235
+#: option.c:251
 msgid "old cluster data resides"
 msgstr "les données de l'ancienne instance résident"
 
-#: option.c:237
+#: option.c:253
 msgid "new cluster data resides"
 msgstr "les données de la nouvelle instance résident"
 
-#: option.c:239
+#: option.c:255
 msgid "sockets will be created"
 msgstr "les sockets seront créés"
 
-#: option.c:256 option.c:356
+#: option.c:272 option.c:374
 #, c-format
 msgid "could not determine current directory"
 msgstr "n'a pas pu déterminer le répertoire courant"
 
-#: option.c:259
+#: option.c:275
 #, c-format
 msgid "cannot run pg_upgrade from inside the new cluster data directory on Windows"
 msgstr "ne peut pas exécuter pg_upgrade depuis le répertoire de données de la nouvelle instance sur Windows"
 
-#: option.c:268
+#: option.c:284
 #, c-format
 msgid ""
 "pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
@@ -1097,12 +1349,12 @@ msgstr ""
 "pg_upgrade met à jour une instance PostgreSQL vers une version majeure\n"
 "différente.\n"
 
-#: option.c:269
+#: option.c:285
 #, c-format
 msgid "Usage:\n"
 msgstr "Usage :\n"
 
-#: option.c:270
+#: option.c:286
 #, c-format
 msgid ""
 "  pg_upgrade [OPTION]...\n"
@@ -1111,19 +1363,19 @@ msgstr ""
 "  pg_upgrade [OPTION]...\n"
 "\n"
 
-#: option.c:271
+#: option.c:287
 #, c-format
 msgid "Options:\n"
 msgstr "Options :\n"
 
-#: option.c:272
+#: option.c:288
 #, c-format
 msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
 msgstr ""
 "  -b, --old-bindir=RÉP_BIN       répertoire des exécutables de l'ancienne\n"
 "                                 instance\n"
 
-#: option.c:273
+#: option.c:289
 #, c-format
 msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
@@ -1133,121 +1385,131 @@ msgstr ""
 "                                 instance (par défaut, le même répertoire que\n"
 "                                 pg_upgrade)\n"
 
-#: option.c:275
+#: option.c:291
 #, c-format
 msgid "  -c, --check                   check clusters only, don't change any data\n"
 msgstr ""
 "  -c, --check                    vérifie seulement les instances, pas de\n"
 "                                 modifications\n"
 
-#: option.c:276
+#: option.c:292
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
 msgstr "  -d, --old-datadir=RÉP_DONNÉES  répertoire des données de l'ancienne instance\n"
 
-#: option.c:277
+#: option.c:293
 #, c-format
 msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
 msgstr "  -D, --new-datadir=RÉP_DONNÉES  répertoire des données de la nouvelle instance\n"
 
-#: option.c:278
+#: option.c:294
 #, c-format
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
 msgstr ""
 "  -j, --jobs=NUM                 nombre de processus ou threads simultanés à\n"
 "                                 utiliser\n"
 
-#: option.c:279
+#: option.c:295
 #, c-format
 msgid "  -k, --link                    link instead of copying files to new cluster\n"
 msgstr ""
 "  -k, --link                     lie les fichiers au lieu de les copier vers la\n"
 "                                 nouvelle instance\n"
 
-#: option.c:280
+#: option.c:296
 #, c-format
 msgid "  -N, --no-sync                 do not wait for changes to be written safely to disk\n"
 msgstr ""
 "  -N, --nosync                   n'attend pas que les modifications soient proprement\n"
 "                                 écrites sur disque\n"
 
-#: option.c:281
+#: option.c:297
 #, c-format
 msgid "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
 msgstr ""
 "  -o, --old-options=OPTIONS      options à passer au serveur de l'ancienne\n"
 "                                 instance\n"
 
-#: option.c:282
+#: option.c:298
 #, c-format
 msgid "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
 msgstr ""
 "  -O, --new-options=OPTIONS      options à passer au serveur de la nouvelle\n"
 "                                 instance\n"
 
-#: option.c:283
+#: option.c:299
 #, c-format
 msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
 msgstr ""
 "  -p, --old-port=PORT            numéro de port de l'ancienne instance (par\n"
 "                                 défaut %d)\n"
 
-#: option.c:284
+#: option.c:300
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
 msgstr ""
 "  -P, --new-port=PORT            numéro de port de la nouvelle instance (par\n"
 "                                 défaut %d)\n"
 
-#: option.c:285
+#: option.c:301
 #, c-format
 msgid "  -r, --retain                  retain SQL and log files after success\n"
 msgstr ""
 "  -r, --retain                   conserve les fichiers SQL et de traces en cas\n"
 "                                 de succès\n"
 
-#: option.c:286
+#: option.c:302
 #, c-format
 msgid "  -s, --socketdir=DIR           socket directory to use (default current dir.)\n"
 msgstr ""
 "  -s, --socketdir=RÉP_SOCKET     répertoire de la socket à utiliser (par défaut\n"
 "                                 le répertoire courant)\n"
 
-#: option.c:287
+#: option.c:303
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
 msgstr ""
 "  -U, --username=NOM             super-utilisateur de l'instance (par défaut\n"
 "                                 « %s »)\n"
 
-#: option.c:288
+#: option.c:304
 #, c-format
 msgid "  -v, --verbose                 enable verbose internal logging\n"
 msgstr "  -v, --verbose                  active des traces internes verbeuses\n"
 
-#: option.c:289
+#: option.c:305
 #, c-format
 msgid "  -V, --version                 display version information, then exit\n"
 msgstr "  -V, --version                  affiche la version, puis quitte\n"
 
-#: option.c:290
+#: option.c:306
 #, c-format
 msgid "  --clone                       clone instead of copying files to new cluster\n"
 msgstr ""
 "  --clone                        clone au lieu de copier les fichiers vers la\n"
 "                                 nouvelle instance\n"
 
-#: option.c:291
+#: option.c:307
 #, c-format
 msgid "  --copy                        copy files to new cluster (default)\n"
-msgstr "  --copy                        copie les fichiers vers la nouvelle instance (par défaut)\n"
+msgstr "  --copy                         copie les fichiers vers la nouvelle instance (par défaut)\n"
 
-#: option.c:292
+#: option.c:308
+#, c-format
+msgid "  --copy-file-range             copy files to new cluster with copy_file_range\n"
+msgstr "  --copy-file-range              copie les fichiers vers la nouvelle instance avec copy_file_range\n"
+
+#: option.c:309
+#, c-format
+msgid "  --sync-method=METHOD          set method for syncing files to disk\n"
+msgstr "  --sync-method=METHODE          configure la méthode pour synchroniser les fichiers sur disque\n"
+
+#: option.c:310
 #, c-format
 msgid "  -?, --help                    show this help, then exit\n"
 msgstr "  -?, --help                     affiche cette aide, puis quitte\n"
 
-#: option.c:293
+#: option.c:311
 #, c-format
 msgid ""
 "\n"
@@ -1263,7 +1525,7 @@ msgstr ""
 "  arrêter le postmaster de la nouvelle instance\n"
 "\n"
 
-#: option.c:298
+#: option.c:316
 #, c-format
 msgid ""
 "\n"
@@ -1280,7 +1542,7 @@ msgstr ""
 "  le répertoire « bin » pour l'ancienne version (-b RÉP_BIN)\n"
 "  le répertoire « bin » pour la nouvelle version (-B RÉP_BIN)\n"
 
-#: option.c:304
+#: option.c:322
 #, c-format
 msgid ""
 "\n"
@@ -1293,7 +1555,7 @@ msgstr ""
 "  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B newCluster/bin\n"
 "ou\n"
 
-#: option.c:309
+#: option.c:327
 #, c-format
 msgid ""
 "  $ export PGDATAOLD=oldCluster/data\n"
@@ -1308,7 +1570,7 @@ msgstr ""
 "  $ export PGBINNEW=newCluster/bin\n"
 "  $ pg_upgrade\n"
 
-#: option.c:315
+#: option.c:333
 #, c-format
 msgid ""
 "  C:\\> set PGDATAOLD=oldCluster/data\n"
@@ -1323,7 +1585,7 @@ msgstr ""
 "  C:\\> set PGBINNEW=newCluster/bin\n"
 "  C:\\> pg_upgrade\n"
 
-#: option.c:321
+#: option.c:339
 #, c-format
 msgid ""
 "\n"
@@ -1332,12 +1594,12 @@ msgstr ""
 "\n"
 "Rapporter les bogues à <%s>.\n"
 
-#: option.c:322
+#: option.c:340
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Page d'accueil de %s : <%s>\n"
 
-#: option.c:362
+#: option.c:380
 #, c-format
 msgid ""
 "You must identify the directory where the %s.\n"
@@ -1346,45 +1608,50 @@ msgstr ""
 "Vous devez identifier le répertoire où le %s.\n"
 "Merci d'utiliser l'option en ligne de commande %s ou la variable d'environnement %s."
 
-#: option.c:415
+#: option.c:433
 #, c-format
 msgid "Finding the real data directory for the source cluster"
 msgstr "Recherche du vrai répertoire des données pour l'instance source"
 
-#: option.c:417
+#: option.c:435
 #, c-format
 msgid "Finding the real data directory for the target cluster"
 msgstr "Recherche du vrai répertoire des données pour l'instance cible"
 
-#: option.c:430 option.c:435
+#: option.c:448
+#, c-format
+msgid "could not get data directory using %s: %m"
+msgstr "n'a pas pu obtenir le répertoire des données en utilisant %s : %m"
+
+#: option.c:452
 #, c-format
 msgid "could not get data directory using %s: %s"
 msgstr "n'a pas pu obtenir le répertoire des données en utilisant %s : %s"
 
-#: option.c:484
+#: option.c:500
 #, c-format
-msgid "could not read line %d from file \"%s\": %s"
-msgstr "n'a pas pu lire la ligne %d du fichier « %s » : %s"
+msgid "could not read line %d from file \"%s\": %m"
+msgstr "n'a pas pu lire la ligne %d du fichier « %s » : %m"
 
-#: option.c:501
+#: option.c:517
 #, c-format
 msgid "user-supplied old port number %hu corrected to %hu"
 msgstr "ancien numéro de port %hu fourni par l'utilisateur corrigé en %hu"
 
 #: parallel.c:127 parallel.c:235
 #, c-format
-msgid "could not create worker process: %s"
-msgstr "n'a pas pu créer le processus de travail : %s"
+msgid "could not create worker process: %m"
+msgstr "n'a pas pu créer le processus worker : %m"
 
 #: parallel.c:143 parallel.c:253
 #, c-format
-msgid "could not create worker thread: %s"
-msgstr "n'a pas pu créer le fil de travail: %s"
+msgid "could not create worker thread: %m"
+msgstr "n'a pas pu créer le fil de travail: %m"
 
 #: parallel.c:294
 #, c-format
-msgid "%s() failed: %s"
-msgstr "échec de %s() : %s"
+msgid "%s() failed: %m"
+msgstr "échec de %s() : %m"
 
 #: parallel.c:298
 #, c-format
@@ -1393,15 +1660,15 @@ msgstr "le processus fils a quitté anormalement : statut %d"
 
 #: parallel.c:313
 #, c-format
-msgid "child worker exited abnormally: %s"
-msgstr "le processus fils a quitté anormalement : %s"
+msgid "child worker exited abnormally: %m"
+msgstr "le processus fils a quitté anormalement : %m"
 
-#: pg_upgrade.c:107
+#: pg_upgrade.c:115
 #, c-format
-msgid "could not read permissions of directory \"%s\": %s"
-msgstr "n'a pas pu lire les droits du répertoire « %s » : %s"
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "n'a pas pu lire les droits du répertoire « %s » : %m"
 
-#: pg_upgrade.c:139
+#: pg_upgrade.c:147
 #, c-format
 msgid ""
 "\n"
@@ -1412,17 +1679,17 @@ msgstr ""
 "Réalisation de la mise à jour\n"
 "-----------------------------"
 
-#: pg_upgrade.c:184
+#: pg_upgrade.c:192
 #, c-format
 msgid "Setting next OID for new cluster"
 msgstr "Configuration du prochain OID sur la nouvelle instance"
 
-#: pg_upgrade.c:193
+#: pg_upgrade.c:216
 #, c-format
 msgid "Sync data directory to disk"
 msgstr "Synchronisation du répertoire des données sur disque"
 
-#: pg_upgrade.c:205
+#: pg_upgrade.c:230
 #, c-format
 msgid ""
 "\n"
@@ -1433,23 +1700,23 @@ msgstr ""
 "Mise à jour terminée\n"
 "--------------------"
 
-#: pg_upgrade.c:238 pg_upgrade.c:251 pg_upgrade.c:258 pg_upgrade.c:265
-#: pg_upgrade.c:283 pg_upgrade.c:294
+#: pg_upgrade.c:263 pg_upgrade.c:276 pg_upgrade.c:283 pg_upgrade.c:290
+#: pg_upgrade.c:308 pg_upgrade.c:319
 #, c-format
 msgid "directory path for new cluster is too long"
 msgstr "le chemin du répertoire pour la nouvelle instance est trop long"
 
-#: pg_upgrade.c:272 pg_upgrade.c:274 pg_upgrade.c:276 pg_upgrade.c:278
+#: pg_upgrade.c:297 pg_upgrade.c:299 pg_upgrade.c:301 pg_upgrade.c:303
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "n'a pas pu créer le répertoire « %s » : %m"
 
-#: pg_upgrade.c:327
+#: pg_upgrade.c:352
 #, c-format
 msgid "%s: could not find own program executable"
 msgstr "%s : n'a pas pu trouver l'exécutable du programme"
 
-#: pg_upgrade.c:353
+#: pg_upgrade.c:378
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the old cluster.\n"
@@ -1458,7 +1725,7 @@ msgstr ""
 "Il semble qu'un postmaster est démarré sur l'ancienne instance.\n"
 "Merci d'arrêter ce postmaster et d'essayer de nouveau."
 
-#: pg_upgrade.c:366
+#: pg_upgrade.c:391
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the new cluster.\n"
@@ -1467,80 +1734,85 @@ msgstr ""
 "Il semble qu'un postmaster est démarré sur la nouvelle instance.\n"
 "Merci d'arrêter ce postmaster et d'essayer de nouveau."
 
-#: pg_upgrade.c:388
+#: pg_upgrade.c:413
 #, c-format
 msgid "Setting locale and encoding for new cluster"
 msgstr "Configuration de la locale et de l'encodage pour la nouvelle instance"
 
-#: pg_upgrade.c:450
+#: pg_upgrade.c:489
 #, c-format
 msgid "Analyzing all rows in the new cluster"
 msgstr "Analyse de toutes les lignes dans la nouvelle instance"
 
-#: pg_upgrade.c:463
+#: pg_upgrade.c:502
 #, c-format
 msgid "Freezing all rows in the new cluster"
 msgstr "Gel de toutes les lignes dans la nouvelle instance"
 
-#: pg_upgrade.c:483
+#: pg_upgrade.c:522
 #, c-format
 msgid "Restoring global objects in the new cluster"
 msgstr "Restauration des objets globaux dans la nouvelle instance"
 
-#: pg_upgrade.c:499
+#: pg_upgrade.c:538
 #, c-format
 msgid "Restoring database schemas in the new cluster"
 msgstr "Restauration des schémas des bases de données dans la nouvelle instance"
 
-#: pg_upgrade.c:605
+#: pg_upgrade.c:662
 #, c-format
 msgid "Deleting files from new %s"
 msgstr "Suppression des fichiers à partir du nouveau %s"
 
-#: pg_upgrade.c:609
+#: pg_upgrade.c:666
 #, c-format
 msgid "could not delete directory \"%s\""
 msgstr "n'a pas pu supprimer le répertoire « %s »"
 
-#: pg_upgrade.c:628
+#: pg_upgrade.c:685
 #, c-format
 msgid "Copying old %s to new server"
 msgstr "Copie de l'ancien %s vers le nouveau serveur"
 
-#: pg_upgrade.c:654
+#: pg_upgrade.c:711
 #, c-format
 msgid "Setting oldest XID for new cluster"
 msgstr "Configuration du plus ancien XID sur la nouvelle instance"
 
-#: pg_upgrade.c:662
+#: pg_upgrade.c:719
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "Configuration du prochain identifiant de transaction et de l'epoch pour la nouvelle instance"
 
-#: pg_upgrade.c:692
+#: pg_upgrade.c:749
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "Configuration du prochain MultiXactId et décalage pour la nouvelle instance"
 
-#: pg_upgrade.c:716
+#: pg_upgrade.c:773
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "Configuration du plus ancien identifiant multixact sur la nouvelle instance"
 
-#: pg_upgrade.c:736
+#: pg_upgrade.c:793
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "Réinitialisation des archives WAL"
 
-#: pg_upgrade.c:779
+#: pg_upgrade.c:836
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "Configuration des compteurs frozenxid et minmxid  dans la nouvelle instance"
 
-#: pg_upgrade.c:781
+#: pg_upgrade.c:838
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "Configuration du compteur minmxid dans la nouvelle instance"
+
+#: pg_upgrade.c:929
+#, c-format
+msgid "Restoring logical replication slots in the new cluster"
+msgstr "Restauration des slots de réplication logique dans la nouvelle instance"
 
 #: relfilenumber.c:35
 #, c-format
@@ -1554,35 +1826,45 @@ msgstr "Copie des fichiers des relations utilisateurs"
 
 #: relfilenumber.c:41
 #, c-format
+msgid "Copying user relation files with copy_file_range"
+msgstr "Copie des fichiers des relations utilisateurs avec copy_file_range"
+
+#: relfilenumber.c:44
+#, c-format
 msgid "Linking user relation files"
 msgstr "Création des liens pour les fichiers des relations utilisateurs"
 
-#: relfilenumber.c:115
+#: relfilenumber.c:118
 #, c-format
 msgid "old database \"%s\" not found in the new cluster"
 msgstr "ancienne base de données « %s » introuvable dans la nouvelle instance"
 
-#: relfilenumber.c:218
+#: relfilenumber.c:221
 #, c-format
-msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s"
-msgstr "erreur lors de la vérification de l'existence du fichier « %s.%s » (« %s » vers « %s ») : %s"
+msgid "error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "erreur lors de la vérification de l'existence du fichier « %s.%s » (« %s » vers « %s ») : %m"
 
-#: relfilenumber.c:236
+#: relfilenumber.c:238
 #, c-format
 msgid "rewriting \"%s\" to \"%s\""
 msgstr "réécriture de « %s » en « %s »"
 
-#: relfilenumber.c:244
+#: relfilenumber.c:246
 #, c-format
 msgid "cloning \"%s\" to \"%s\""
 msgstr "clonage de « %s » en « %s »"
 
-#: relfilenumber.c:249
+#: relfilenumber.c:251
 #, c-format
 msgid "copying \"%s\" to \"%s\""
 msgstr "copie de « %s » en « %s »"
 
-#: relfilenumber.c:254
+#: relfilenumber.c:256
+#, c-format
+msgid "copying \"%s\" to \"%s\" with copy_file_range"
+msgstr "copie de « %s » en « %s » avec copy_file_range"
+
+#: relfilenumber.c:261
 #, c-format
 msgid "linking \"%s\" to \"%s\""
 msgstr "lien de « %s » vers « %s »"
@@ -1618,7 +1900,7 @@ msgstr "n'a pas pu ouvrir le fichier de version « %s » : %m"
 msgid "could not parse version file \"%s\""
 msgstr "n'a pas pu analyser le fichier de version « %s »"
 
-#: server.c:288
+#: server.c:310
 #, c-format
 msgid ""
 "\n"
@@ -1627,7 +1909,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:292
+#: server.c:314
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1636,7 +1918,7 @@ msgstr ""
 "n'a pas pu se connecter au postmaster source lancé avec la commande :\n"
 "%s"
 
-#: server.c:296
+#: server.c:318
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1645,22 +1927,22 @@ msgstr ""
 "n'a pas pu se connecter au postmaster cible lancé avec la commande :\n"
 "%s"
 
-#: server.c:310
+#: server.c:332
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl a échoué à démarrer le serveur source ou connexion échouée"
 
-#: server.c:312
+#: server.c:334
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl a échoué à démarrer le serveur cible ou connexion échouée"
 
-#: server.c:357
+#: server.c:379
 #, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: server.c:370
+#: server.c:392
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "la variable d'environnement libpq %s a une valeur serveur non locale : %s"
@@ -1681,8 +1963,8 @@ msgstr "le répertoire « %s » du tablespace n'existe pas"
 
 #: tablespace.c:87
 #, c-format
-msgid "could not stat tablespace directory \"%s\": %s"
-msgstr "n'a pas pu tester le répertoire « %s » du tablespace : %s"
+msgid "could not stat tablespace directory \"%s\": %m"
+msgstr "n'a pas pu tester le répertoire « %s » du tablespace : %m"
 
 #: tablespace.c:92
 #, c-format
@@ -1704,62 +1986,17 @@ msgstr "n'a pas pu accéder au répertoire « %s » : %m"
 msgid "ok"
 msgstr "ok"
 
-#: version.c:184
-#, c-format
-msgid "Checking for incompatible \"line\" data type"
-msgstr "Vérification des types de données line incompatibles"
-
-#: version.c:193
-#, c-format
-msgid ""
-"Your installation contains the \"line\" data type in user tables.\n"
-"This data type changed its internal and input/output format\n"
-"between your old and new versions so this\n"
-"cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient le type de données « line » dans vos tables utilisateurs.\n"
-"Ce type de données a changé de format interne et en entrée/sortie entre vos ancienne\n"
-"et nouvelle versions, donc cette instance ne peut pas être mise à jour\n"
-"actuellement. Vous pouvez supprimer les colonnes problématiques et relancer la mise à jour.\n"
-"Une liste des colonnes problématiques se trouve dans le fichier :\n"
-"    %s"
-
-#: version.c:224
-#, c-format
-msgid "Checking for invalid \"unknown\" user columns"
-msgstr "Vérification des colonnes utilisateurs « unknown » invalides"
-
-#: version.c:233
-#, c-format
-msgid ""
-"Your installation contains the \"unknown\" data type in user tables.\n"
-"This data type is no longer allowed in tables, so this\n"
-"cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient le type de données « unknown » dans vos tables\n"
-"utilisateurs. Ce type de données n'est plus autorisé dans les tables, donc\n"
-"cette instance ne peut pas être mise à jour pour l'instant. Vous pouvez\n"
-"supprimer les colonnes problématiques, puis relancer la mise à jour. Vous trouverez\n"
-"une liste des colonnes problématiques dans le fichier :\n"
-"    %s"
-
-#: version.c:257
+#: version.c:44
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Vérification des index hash"
 
-#: version.c:335
+#: version.c:121
 #, c-format
 msgid "warning"
 msgstr "attention"
 
-#: version.c:337
+#: version.c:123
 #, c-format
 msgid ""
 "\n"
@@ -1774,7 +2011,7 @@ msgstr ""
 "être recréés avec la commande REINDEX. Après la mise à jour, les instructions\n"
 "REINDEX vous seront données."
 
-#: version.c:343
+#: version.c:129
 #, c-format
 msgid ""
 "\n"
@@ -1793,39 +2030,17 @@ msgstr ""
 "une fois exécuté par psql en tant que superutilisateur va recréer tous les\n"
 "index invalides. Avant cela, aucun de ces index ne sera utilisé."
 
-#: version.c:369
-#, c-format
-msgid "Checking for invalid \"sql_identifier\" user columns"
-msgstr "Vérification des colonnes utilisateurs « sql_identifier » invalides"
-
-#: version.c:379
-#, c-format
-msgid ""
-"Your installation contains the \"sql_identifier\" data type in user tables.\n"
-"The on-disk format for this data type has changed, so this\n"
-"cluster cannot currently be upgraded.  You can\n"
-"drop the problem columns and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s"
-msgstr ""
-"Votre installation contient le type de données « sql_identifier » dans les tables\n"
-"utilisateurs. Le format sur disque pour ce type de données a changé,\n"
-"donc cette instance ne peut pas être mise à jour actuellement. Vous pouvez supprimer\n"
-"les colonnes problématiques, puis relancer la mise à jour.\n"
-"Une liste des colonnes problématiques se trouve dans le fichier :\n"
-"    %s"
-
-#: version.c:402
+#: version.c:153
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Vérification des mises à jour d'extension"
 
-#: version.c:450
+#: version.c:200
 #, c-format
 msgid "notice"
 msgstr "notice"
 
-#: version.c:451
+#: version.c:201
 #, c-format
 msgid ""
 "\n"
@@ -1841,295 +2056,3 @@ msgstr ""
 "    %s\n"
 "une fois exécuté par psql par le superutilisateur mettre à jour\n"
 "ces extensions."
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Rapporter les bogues à <pgsql-bugs@lists.postgresql.org>.\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "The old cluster has a \"plpython_call_handler\" function defined\n"
-#~ "in the \"public\" schema which is a duplicate of the one defined\n"
-#~ "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
-#~ "in psql:\n"
-#~ "\n"
-#~ "    \\df *.plpython_call_handler\n"
-#~ "\n"
-#~ "The \"public\" schema version of this function was created by a\n"
-#~ "pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
-#~ "to complete because it references a now-obsolete \"plpython\"\n"
-#~ "shared object file.  You can remove the \"public\" schema version\n"
-#~ "of this function by running the following command:\n"
-#~ "\n"
-#~ "    DROP FUNCTION public.plpython_call_handler()\n"
-#~ "\n"
-#~ "in each affected database:\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "L'ancienne instance comprend une fonction « plpython_call_handler »\n"
-#~ "définie dans le schéma « public » qui est un duplicat de celle définie\n"
-#~ "dans le schéma « pg_catalog ». Vous pouvez confirmer cela en\n"
-#~ "exécutant dans psql :\n"
-#~ "\n"
-#~ "    \\df *.plpython_call_handler\n"
-#~ "\n"
-#~ "La version de cette fonction dans le schéma « public » a été créée\n"
-#~ "par une installation de plpython antérieure à la version 8.1 et doit\n"
-#~ "être supprimée pour que pg_upgrade puisse termine parce qu'elle\n"
-#~ "référence un fichier objet partagé « plpython » maintenant obsolète.\n"
-#~ "Vous pouvez supprimer la version de cette fonction dans le schéma\n"
-#~ "« public » en exécutant la commande suivante :\n"
-#~ "\n"
-#~ "    DROP FUNCTION public.plpython_call_handler()\n"
-#~ "\n"
-#~ "dans chaque base de données affectée :\n"
-#~ "\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "Your installation contains large objects.  The new database has an\n"
-#~ "additional large object permission table, so default permissions must be\n"
-#~ "defined for all large objects.  The file\n"
-#~ "    %s\n"
-#~ "when executed by psql by the database superuser will set the default\n"
-#~ "permissions.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Votre installation contient des Large Objects. La nouvelle base de données\n"
-#~ "a une table de droit supplémentaire pour les Large Objects, donc les droits\n"
-#~ "par défaut doivent être définies pour tous les Large Objects. Le fichier\n"
-#~ "    %s\n"
-#~ "une fois exécuté par psql avec un superutilisateur définira les droits par\n"
-#~ "défaut.\n"
-#~ "\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "Your installation contains large objects.  The new database has an\n"
-#~ "additional large object permission table.  After upgrading, you will be\n"
-#~ "given a command to populate the pg_largeobject_metadata table with\n"
-#~ "default permissions.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Votre installation contient des Large Objects. La nouvelle base de données a une table de droit supplémentaire sur les Large Objects.\n"
-#~ "Après la mise à jour, vous disposerez d'une commande pour peupler la table pg_largeobject_metadata avec les droits par défaut.\n"
-#~ "\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "connection to database failed: %s"
-#~ msgstr ""
-#~ "\n"
-#~ "échec de la connexion à la base de données : %s"
-
-#, c-format
-#~ msgid " "
-#~ msgstr " "
-
-#, c-format
-#~ msgid "    %s\n"
-#~ msgstr "    %s\n"
-
-#~ msgid ""
-#~ "  --index-collation-versions-unknown\n"
-#~ "                                mark text indexes as needing to be rebuilt\n"
-#~ msgstr ""
-#~ "  --index-collation-versions-unknown\n"
-#~ "                                marque les index de colonnes de type text comme nécessitant une reconstruction\n"
-
-#, c-format
-#~ msgid "\"%s\" is not a directory\n"
-#~ msgstr "« %s » n'est pas un répertoire\n"
-
-#, c-format
-#~ msgid "%-*s\n"
-#~ msgstr "%-*s\n"
-
-#, c-format
-#~ msgid "%s\n"
-#~ msgstr "%s\n"
-
-#~ msgid "%s is not a directory\n"
-#~ msgstr "%s n'est pas un répertoire\n"
-
-#, c-format
-#~ msgid "%s.%s: %u to %u\n"
-#~ msgstr "%s.%s : %u vers %u\n"
-
-#~ msgid "----------------\n"
-#~ msgstr "----------------\n"
-
-#~ msgid "------------------\n"
-#~ msgstr "------------------\n"
-
-#~ msgid "-----------------------------\n"
-#~ msgstr "-----------------------------\n"
-
-#~ msgid "------------------------------------------------\n"
-#~ msgstr "------------------------------------------------\n"
-
-#, c-format
-#~ msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
-#~ msgstr "Toutes les bases de données, autre que template0, doivent autoriser les connexions, ie pg_database.datallowconn doit valoir true\n"
-
-#~ msgid "Cannot open file %s: %m\n"
-#~ msgstr "Ne peut pas ouvrir le fichier %s : %m\n"
-
-#~ msgid "Cannot read line %d from %s: %m\n"
-#~ msgstr "Ne peut pas lire la ligne %d à partir de %s : %m\n"
-
-#, c-format
-#~ msgid "Checking for large objects"
-#~ msgstr "Vérification des Large Objects"
-
-#~ msgid "Creating script to analyze new cluster"
-#~ msgstr "Création d'un script pour analyser la nouvelle instance"
-
-#, c-format
-#~ msgid "ICU locale values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-#~ msgstr "les valeurs de la locale ICU de la base de données « %s » ne correspondent pas : ancien « %s », nouveau « %s »\n"
-
-#~ msgid ""
-#~ "Optimizer statistics and free space information are not transferred\n"
-#~ "by pg_upgrade so, once you start the new server, consider running:\n"
-#~ "    %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Les statistiques de l'optimiseur et les informations sur l'espace libre\n"
-#~ "ne sont pas transférées par pg_upgrade, donc une fois le nouveau\n"
-#~ "serveur démarré, pensez à exécuter :\n"
-#~ "    %s\n"
-#~ "\n"
-
-#, c-format
-#~ msgid "Remove the problem functions from the old cluster to continue.\n"
-#~ msgstr "Supprimez les fonctions problématiques de l'ancienne instance pour continuer.\n"
-
-#, c-format
-#~ msgid "The source cluster contains roles starting with \"pg_\"\n"
-#~ msgstr "L'instance source contient des rôles commençant avec « pg_ »\n"
-
-#, c-format
-#~ msgid "The target cluster contains roles starting with \"pg_\"\n"
-#~ msgstr "L'instance cible contient des rôles commençant avec « pg_ »\n"
-
-#~ msgid ""
-#~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
-#~ "because of backend API changes made during development.\n"
-#~ msgstr ""
-#~ "Cet outil peut seulement mettre à jour à partir de la version 9.0 de PostgreSQL (après le 11 janvier 2010)\n"
-#~ "à cause de changements dans l'API du moteur fait lors du développement.\n"
-
-#, c-format
-#~ msgid "Unable to rename %s to %s.\n"
-#~ msgstr "Incapable de renommer %s à %s.\n"
-
-#, c-format
-#~ msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
-#~ msgstr "Lors de la vérification d'un serveur antérieur à la 9.1, vous devez spécifier le numéro de port de l'ancien serveur.\n"
-
-#~ msgid "cannot find current directory\n"
-#~ msgstr "ne peut pas trouver le répertoire courant\n"
-
-#~ msgid "cannot write to log file %s\n"
-#~ msgstr "ne peut pas écrire dans le fichier de traces %s\n"
-
-#, c-format
-#~ msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
-#~ msgstr "échec de la vérification de « %s » : ne peut pas exécuter (droit refusé)\n"
-
-#~ msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
-#~ msgstr "échec de la vérification de « %s » : ne peut pas lire le fichier (droit refusé)\n"
-
-#, c-format
-#~ msgid "check for \"%s\" failed: not a regular file\n"
-#~ msgstr "échec de la vérification de « %s » : pas un fichier régulier\n"
-
-#~ msgid "connection to database failed: %s"
-#~ msgstr "échec de la connexion à la base de données : %s"
-
-#, c-format
-#~ msgid "could not access directory \"%s\": %m\n"
-#~ msgstr "n'a pas pu accéder au répertoire « %s » : %m\n"
-
-#, c-format
-#~ msgid "could not create directory \"%s\": %m\n"
-#~ msgstr "n'a pas pu créer le répertoire « %s » : %m\n"
-
-#~ msgid ""
-#~ "could not load library \"%s\":\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "n'a pas pu charger la biblothèque « %s »:\n"
-#~ "%s\n"
-
-#, c-format
-#~ msgid "could not open file \"%s\": %s\n"
-#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
-
-#, c-format
-#~ msgid "could not open log file \"%s\": %m\n"
-#~ msgstr "n'a pas pu ouvrir le journal applicatif « %s » : %m\n"
-
-#~ msgid "could not parse PG_VERSION file from %s\n"
-#~ msgstr "n'a pas pu analyser le fichier PG_VERSION à partir de %s\n"
-
-#, c-format
-#~ msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-#~ msgstr "les encodages de la base de données « %s » ne correspondent pas : ancien « %s », nouveau « %s »\n"
-
-#, c-format
-#~ msgid "failed to get system locale name for \"%s\"\n"
-#~ msgstr "a échoué pour obtenir le nom de la locale système « %s »\n"
-
-#, c-format
-#~ msgid "failed to get the current locale\n"
-#~ msgstr "a échoué pour obtenir la locale courante\n"
-
-#, c-format
-#~ msgid "failed to restore old locale \"%s\"\n"
-#~ msgstr "a échoué pour restaurer l'ancienne locale « %s »\n"
-
-#, c-format
-#~ msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-#~ msgstr "les valeurs de lc_collate de la base de données « %s » ne correspondent pas : ancien « %s », nouveau « %s »\n"
-
-#, c-format
-#~ msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-#~ msgstr "les valeurs de lc_ctype de la base de données « %s » ne correspondent pas : ancien « %s », nouveau « %s »\n"
-
-#, c-format
-#~ msgid "locale providers for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-#~ msgstr "les fournisseurs de locale pour la base de données « %s » ne correspondent pas : ancien « %s », nouveau « %s »\n"
-
-#, c-format
-#~ msgid "mappings for database \"%s\":\n"
-#~ msgstr "correspondances pour la base de données « %s » :\n"
-
-#, c-format
-#~ msgid "out of memory\n"
-#~ msgstr "mémoire épuisée\n"
-
-#, c-format
-#~ msgid "too many command-line arguments (first is \"%s\")\n"
-#~ msgstr "trop d'arguments en ligne de commande (le premier étant « %s »)\n"
-
-#~ msgid "waitpid() failed: %s\n"
-#~ msgstr "échec de waitpid() : %s\n"

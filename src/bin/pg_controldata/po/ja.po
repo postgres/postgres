@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 17)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-20 14:21+0900\n"
-"PO-Revision-Date: 2024-05-20 16:33+0900\n"
+"POT-Creation-Date: 2025-03-31 09:53+0900\n"
+"PO-Revision-Date: 2025-03-31 16:28+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -69,6 +69,17 @@ msgstr "ファイル\"%s\"を書き出せませんでした: %m"
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ファイル\"%s\"をfsyncできませんでした: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "メモリ不足です\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "nullポインタは複製できません(内部エラー)\n"
 
 #: pg_controldata.c:35
 #, c-format
@@ -171,325 +182,339 @@ msgstr "未知のステータスコード"
 msgid "unrecognized \"wal_level\""
 msgstr "\"wal_level\"を認識できません"
 
-#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
+#: pg_controldata.c:139 pg_controldata.c:157 pg_controldata.c:164
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:155
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:163
 #, c-format
 msgid "no data directory specified"
 msgstr "データディレクトリが指定されていません"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:172
 #, c-format
 msgid "calculated CRC checksum does not match value stored in control file"
 msgstr "算出されたCRCチェックサムが制御ファイルに格納されている値と一致しません"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:173
 #, c-format
 msgid "Either the control file is corrupt, or it has a different layout than this program is expecting.  The results below are untrustworthy."
 msgstr "制御ファイルが破損しているか、このプログラムが期待していない配置になっています。以下の結果は信頼できません。"
 
-#: pg_controldata.c:181
+#: pg_controldata.c:182
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "制御ファイル中の不正なWALセグメントサイズ (%dバイト)"
 
-#: pg_controldata.c:185
+#: pg_controldata.c:186
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WALセグメントサイズは1MBから1GBまでの間の2の累乗でなければなりません。"
 
-#: pg_controldata.c:186
+#: pg_controldata.c:187
 #, c-format
 msgid "The file is corrupt and the results below are untrustworthy."
 msgstr "このファイルは破損しており、以下の結果は信頼できません。"
 
-#: pg_controldata.c:221
+#: pg_controldata.c:205 pg_controldata.c:213 pg_controldata.c:232
+#, c-format
 msgid "???"
 msgstr "???"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:238
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_controlバージョン番号:                    %u\n"
 
-#: pg_controldata.c:229
+#: pg_controldata.c:240
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "カタログバージョン番号:                      %u\n"
 
-#: pg_controldata.c:231
+#: pg_controldata.c:242
 #, c-format
-msgid "Database system identifier:           %llu\n"
-msgstr "データベースシステム識別子:                  %llu\n"
+msgid "Database system identifier:           %<PRIu64>\n"
+msgstr "データベースシステム識別子:                  %<PRIu64>\n"
 
-#: pg_controldata.c:233
+#: pg_controldata.c:244
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "データベースクラスタの状態:                  %s\n"
 
-#: pg_controldata.c:235
+#: pg_controldata.c:246
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control最終更新:                          %s\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "最終チェックポイント位置:                    %X/%X\n"
 
-#: pg_controldata.c:239
+#: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "最終チェックポイントのREDO位置:              %X/%X\n"
 
-#: pg_controldata.c:241
+#: pg_controldata.c:252
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "最終チェックポイントのREDO WALファイル:      %s\n"
 
-#: pg_controldata.c:243
+#: pg_controldata.c:254
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最終チェックポイントの時系列ID:              %u\n"
 
-#: pg_controldata.c:245
+#: pg_controldata.c:256
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "最終チェックポイントのPrevTimeLineID:        %u\n"
 
-#: pg_controldata.c:247
+#: pg_controldata.c:258
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "最終チェックポイントのfull_page_writes:      %s\n"
 
-#: pg_controldata.c:248 pg_controldata.c:289 pg_controldata.c:301
+#: pg_controldata.c:259 pg_controldata.c:300 pg_controldata.c:312
 msgid "off"
 msgstr "オフ"
 
-#: pg_controldata.c:248 pg_controldata.c:289 pg_controldata.c:301
+#: pg_controldata.c:259 pg_controldata.c:300 pg_controldata.c:312
 msgid "on"
 msgstr "オン"
 
-#: pg_controldata.c:249
+#: pg_controldata.c:260
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "最終チェックポイントのNextXID:               %u:%u\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最終チェックポイントのNextOID:               %u\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "最終チェックポイントのNextMultiXactId:       %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "最終チェックポイントのNextMultiOffset:       %u\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "最終チェックポイントのoldestXID:             %u\n"
 
-#: pg_controldata.c:260
+#: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "最終チェックポイントのoldestXIDのDB:         %u\n"
 
-#: pg_controldata.c:262
+#: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "最終チェックポイントのoldestActiveXID:       %u\n"
 
-#: pg_controldata.c:264
+#: pg_controldata.c:275
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "最終チェックポイントのoldestMultiXid:        %u\n"
 
-#: pg_controldata.c:266
+#: pg_controldata.c:277
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "最終チェックポイントのoldestMultiのDB:       %u\n"
 
-#: pg_controldata.c:268
+#: pg_controldata.c:279
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "最終チェックポイントのoldestCommitTsXid:     %u\n"
 
-#: pg_controldata.c:270
+#: pg_controldata.c:281
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "最終チェックポイントのnewestCommitTsXid:     %u\n"
 
-#: pg_controldata.c:272
+#: pg_controldata.c:283
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "最終チェックポイント時刻:                    %s\n"
 
-#: pg_controldata.c:274
+#: pg_controldata.c:285
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
 msgstr "UNLOGGEDリレーションの偽のLSNカウンタ:       %X/%X\n"
 
-#: pg_controldata.c:276
+#: pg_controldata.c:287
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "最小リカバリ終了位置:                        %X/%X\n"
 
-#: pg_controldata.c:278
+#: pg_controldata.c:289
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "最小リカバリ終了位置のタイムライン:          %u\n"
 
-#: pg_controldata.c:280
+#: pg_controldata.c:291
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "バックアップ開始位置:                        %X/%X\n"
 
-#: pg_controldata.c:282
+#: pg_controldata.c:293
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
 msgstr "バックアップ終了位置:                        %X/%X\n"
 
-#: pg_controldata.c:284
+#: pg_controldata.c:295
 #, c-format
 msgid "End-of-backup record required:        %s\n"
 msgstr "必要なバックアップ最終レコード:              %s\n"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:296
 msgid "no"
 msgstr "いいえ"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:296
 msgid "yes"
 msgstr "はい"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:297
 #, c-format
 msgid "wal_level setting:                    %s\n"
 msgstr "wal_levelの設定:                             %s\n"
 
-#: pg_controldata.c:288
+#: pg_controldata.c:299
 #, c-format
 msgid "wal_log_hints setting:                %s\n"
 msgstr "wal_log_hintsの設定:                         %s\n"
 
-#: pg_controldata.c:290
+#: pg_controldata.c:301
 #, c-format
 msgid "max_connections setting:              %d\n"
 msgstr "max_connectionsの設定:                       %d\n"
 
-#: pg_controldata.c:292
+#: pg_controldata.c:303
 #, c-format
 msgid "max_worker_processes setting:         %d\n"
 msgstr "max_worker_processesの設定:                  %d\n"
 
-#: pg_controldata.c:294
+#: pg_controldata.c:305
 #, c-format
 msgid "max_wal_senders setting:              %d\n"
 msgstr "max_wal_sendersの設定:                       %d\n"
 
-#: pg_controldata.c:296
+#: pg_controldata.c:307
 #, c-format
 msgid "max_prepared_xacts setting:           %d\n"
 msgstr "max_prepared_xactsの設定:                    %d\n"
 
-#: pg_controldata.c:298
+#: pg_controldata.c:309
 #, c-format
 msgid "max_locks_per_xact setting:           %d\n"
 msgstr "max_locks_per_xactの設定:                    %d\n"
 
-#: pg_controldata.c:300
+#: pg_controldata.c:311
 #, c-format
 msgid "track_commit_timestamp setting:       %s\n"
 msgstr "track_commit_timestampの設定:                %s\n"
 
-#: pg_controldata.c:302
+#: pg_controldata.c:313
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "最大データアラインメント:                    %u\n"
 
-#: pg_controldata.c:305
+#: pg_controldata.c:316
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "データベースのブロックサイズ:                %u\n"
 
-#: pg_controldata.c:307
+#: pg_controldata.c:318
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "大きなリレーションのセグメント毎のブロック数:%u\n"
 
-#: pg_controldata.c:309
+#: pg_controldata.c:320
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WALのブロックサイズ:                         %u\n"
 
-#: pg_controldata.c:311
+#: pg_controldata.c:322
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "WALセグメント当たりのバイト数:               %u\n"
 
-#: pg_controldata.c:313
+#: pg_controldata.c:324
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "識別子の最大長:                              %u\n"
 
-#: pg_controldata.c:315
+#: pg_controldata.c:326
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "インデックス内の最大列数:                    %u\n"
 
-#: pg_controldata.c:317
+#: pg_controldata.c:328
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOASTチャンクの最大サイズ:                   %u\n"
 
-#: pg_controldata.c:319
+#: pg_controldata.c:330
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "ラージオブジェクトチャンクのサイズ:          %u\n"
 
-#: pg_controldata.c:322
+#: pg_controldata.c:333
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日付/時刻型の格納方式:                       %s\n"
 
-#: pg_controldata.c:323
+#: pg_controldata.c:334
 msgid "64-bit integers"
 msgstr "64ビット整数"
 
-#: pg_controldata.c:324
+#: pg_controldata.c:335
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8引数の渡し方:                          %s\n"
 
-#: pg_controldata.c:325
+#: pg_controldata.c:336
 msgid "by reference"
 msgstr "参照渡し"
 
-#: pg_controldata.c:325
+#: pg_controldata.c:336
 msgid "by value"
 msgstr "値渡し"
 
-#: pg_controldata.c:326
+#: pg_controldata.c:337
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "データベージチェックサムのバージョン:        %u\n"
 
-#: pg_controldata.c:328
+#: pg_controldata.c:339
+#, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "デフォルトのchar型の符号あり/なし:    %s\n"
+
+#: pg_controldata.c:340
+msgid "signed"
+msgstr "signed"
+
+#: pg_controldata.c:340
+msgid "unsigned"
+msgstr "unsigned"
+
+#: pg_controldata.c:341
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "認証用の疑似nonce:                           %s\n"

@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 16\n"
+"Project-Id-Version: pltcl (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:08+0000\n"
-"PO-Revision-Date: 2023-05-22 12:06+0200\n"
+"POT-Creation-Date: 2025-02-16 19:38+0000\n"
+"PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20,56 +20,61 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.0.2\n"
 
-#: pltcl.c:462
+#: pltcl.c:466
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "función PL/Tcl a ejecutar cuando se use pltcl por primera vez."
 
-#: pltcl.c:469
+#: pltcl.c:473
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "función PL/TclU a ejecutar cuando se use pltclu por primera vez."
 
-#: pltcl.c:636
+#: pltcl.c:640
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "la función «%s» está en el lenguaje equivocado"
 
-#: pltcl.c:647
+#: pltcl.c:651
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "la función «%s» no debe ser SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:685
 #, c-format
 msgid "processing %s parameter"
 msgstr "procesando el parámetro %s"
 
-#: pltcl.c:834
+#: pltcl.c:838
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "se llamó una función que retorna un conjunto en un contexto que no puede aceptarlo"
 
-#: pltcl.c:839
+#: pltcl.c:843
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "se requiere un nodo «materialize», pero no está permitido en este contexto"
 
-#: pltcl.c:1012
+#: pltcl.c:1016
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "se llamó una función que retorna un registro en un contexto que no puede aceptarlo"
 
-#: pltcl.c:1295
+#: pltcl.c:1035
 #, c-format
-msgid "could not split return value from trigger: %s"
-msgstr "no se pudo separar el valor de retorno del disparador: %s"
+msgid "could not parse function return value: %s"
+msgstr "no se pudo interpretar el valor de retorno de la función: %s"
 
-#: pltcl.c:1376 pltcl.c:1803
+#: pltcl.c:1302
+#, c-format
+msgid "could not parse trigger return value: %s"
+msgstr "no se pudo interpretar el valor de retorno del trigger: «%s»"
+
+#: pltcl.c:1387 pltcl.c:1814
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1377
+#: pltcl.c:1388
 #, c-format
 msgid ""
 "%s\n"
@@ -78,42 +83,42 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1540
+#: pltcl.c:1551
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1544
+#: pltcl.c:1555
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1583
+#: pltcl.c:1594
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
 
-#: pltcl.c:1695
+#: pltcl.c:1706
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "no se pudo crear procedimiento interno «%s»: %s"
 
-#: pltcl.c:3199
+#: pltcl.c:3211
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "la lista de nombres de columnas y valores debe tener un número par de elementos"
 
-#: pltcl.c:3217
+#: pltcl.c:3229
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "la lista de nombres de columnas y valores contiene el nombre de columna no existente «%s»"
 
-#: pltcl.c:3224
+#: pltcl.c:3236
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: pltcl.c:3230
+#: pltcl.c:3242
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "no se puede definir el atributo generado «%s»"

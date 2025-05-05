@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 23:52+0000\n"
-"PO-Revision-Date: 2024-02-12 04:18+0100\n"
+"POT-Creation-Date: 2024-06-24 21:54+0000\n"
+"PO-Revision-Date: 2024-06-25 05:47+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: \n"
 "Language: ka\n"
@@ -37,27 +37,91 @@ msgstr "დეტალები: "
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: pg_walsummary.c:85 pg_walsummary.c:93
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
-msgid "Try \"%s --help\" for more information."
-msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
 
-#: pg_walsummary.c:92
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
-msgid "%s: no input files specified"
-msgstr "%s: შეყვანის ფაილები მითითებული არაა"
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
-#: pg_walsummary.c:107
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#: pg_walsummary.c:109
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
 
-#: pg_walsummary.c:255
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "შეუძლებელია ფაილური სისტემის სინქრონიზაცია ფაილისთვის \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "უცნობი სინქრონიზაციის მეთოდი: \"%s\""
+
+#: pg_walsummary.c:87 pg_walsummary.c:95
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: pg_walsummary.c:94
+#, c-format
+msgid "no input files specified"
+msgstr "შეყვანის ფაილები მითითებული არაა"
+
+#: pg_walsummary.c:252
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
 
-#: pg_walsummary.c:270
+#: pg_walsummary.c:267
 #, c-format
 msgid ""
 "%s prints the contents of a WAL summary file.\n"
@@ -66,17 +130,17 @@ msgstr ""
 "%s WAL შეჯამების ფაილის შემცველობას გამოიტანს.\n"
 "\n"
 
-#: pg_walsummary.c:271
+#: pg_walsummary.c:268
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_walsummary.c:272
+#: pg_walsummary.c:269
 #, c-format
 msgid "  %s [OPTION]... FILE...\n"
 msgstr "  %s [პარამეტრი]... ფაილი...\n"
 
-#: pg_walsummary.c:273
+#: pg_walsummary.c:270
 #, c-format
 msgid ""
 "\n"
@@ -85,22 +149,27 @@ msgstr ""
 "\n"
 "პარამეტრები:\n"
 
-#: pg_walsummary.c:274
+#: pg_walsummary.c:271
 #, c-format
 msgid "  -i, --individual          list block numbers individually, not as ranges\n"
 msgstr "  -i, --individual          ბლოკის ნომრების ცალ-ცალკე გამოტანა, შუალედების მაგიერ\n"
 
-#: pg_walsummary.c:275
+#: pg_walsummary.c:272
 #, c-format
 msgid "  -q, --quiet               don't print anything, just parse the files\n"
 msgstr "  -q, --quiet               ეკრანზე არაფერი გამოიტანო. უბრალოდ, ფაილები დაამუშავე\n"
 
-#: pg_walsummary.c:276
+#: pg_walsummary.c:273
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
+
+#: pg_walsummary.c:274
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_walsummary.c:278
+#: pg_walsummary.c:276
 #, c-format
 msgid ""
 "\n"
@@ -109,7 +178,7 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_walsummary.c:279
+#: pg_walsummary.c:277
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"

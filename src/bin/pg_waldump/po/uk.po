@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-09 18:17+0000\n"
-"PO-Revision-Date: 2024-02-11 16:35\n"
+"POT-Creation-Date: 2024-08-31 06:19+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_16_STABLE/pg_waldump.pot\n"
-"X-Crowdin-File-ID: 979\n"
+"X-Crowdin-File: /REL_17_STABLE/pg_waldump.pot\n"
+"X-Crowdin-File-ID: 984\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -37,6 +37,60 @@ msgstr "деталі: "
 msgid "hint: "
 msgstr "підказка: "
 
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480 pg_waldump.c:199
+#: pg_waldump.c:532
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "не можливо відкрити файл \"%s\": %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "не вдалося синхронізувати файлову систему для файлу \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ця збірка не підтримує метод синхронізації \"%s\""
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_waldump.c:1104 pg_waldump.c:1127
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "не вдалося відкрити каталог \"%s\": %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "не вдалося прочитати каталог \"%s\": %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "не вдалося fsync файл \"%s\": %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "не вдалося перейменувати файл \"%s\" на \"%s\": %m"
+
 #: pg_waldump.c:137
 #, c-format
 msgid "could not create directory \"%s\": %m"
@@ -52,130 +106,130 @@ msgstr "каталог \"%s\" існує, але він не порожній"
 msgid "could not access directory \"%s\": %m"
 msgstr "немає доступу до каталогу \"%s\": %m"
 
-#: pg_waldump.c:199 pg_waldump.c:528
+#: pg_waldump.c:256
 #, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "не можливо відкрити файл \"%s\": %m"
+msgid "invalid WAL segment size in WAL file \"%s\" (%d byte)"
+msgid_plural "invalid WAL segment size in WAL file \"%s\" (%d bytes)"
+msgstr[0] "невірний розмір сегмента WAL у файлі WAL \"%s\" (%d байт)"
+msgstr[1] "невірний розмір сегмента WAL у файлі WAL \"%s\" (%d байт)"
+msgstr[2] "невірний розмір сегмента WAL у файлі WAL \"%s\" (%d байт)"
+msgstr[3] "невірний розмір сегмента WAL у файлі WAL \"%s\" (%d байт)"
 
-#: pg_waldump.c:255
+#: pg_waldump.c:260
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "Розмір сегмента WAL повинен задаватись ступенем двійки в інтервалі між 1 MB і 1 GB, але у заголовку файлу WAL \"%s\" вказано %d байт"
-msgstr[1] "Розмір сегмента WAL повинен задаватись ступенем двійки в інтервалі між 1 MB і 1 GB, але у заголовку файлу WAL \"%s\" вказано %d байти"
-msgstr[2] "Розмір сегмента WAL повинен задаватись ступенем двійки в інтервалі між 1 MB і 1 GB, але у заголовку файлу WAL \"%s\" вказано %d байтів"
-msgstr[3] "Розмір сегмента WAL повинен задаватись ступенем двійки в інтервалі між 1 MB і 1 GB, але у заголовку файлу WAL \"%s\" вказано %d байтів"
+msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
+msgstr "Розмір сегмента WAL повинен бути степенем двійки від 1 МБ до 1 ГБ."
 
-#: pg_waldump.c:261
+#: pg_waldump.c:265
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
 
-#: pg_waldump.c:264
+#: pg_waldump.c:268
 #, c-format
 msgid "could not read file \"%s\": read %d of %d"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %d"
 
-#: pg_waldump.c:325
+#: pg_waldump.c:329
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "не вдалося знайти WAL файл \"%s\""
 
-#: pg_waldump.c:327
+#: pg_waldump.c:331
 #, c-format
 msgid "could not find any WAL file"
 msgstr "не вдалося знайти жодного WAL файлу"
 
-#: pg_waldump.c:368
+#: pg_waldump.c:372
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "не вдалося знайти файл \"%s\": %m"
 
-#: pg_waldump.c:417
-#, c-format
-msgid "could not read from file %s, offset %d: %m"
-msgstr "не вдалося прочитати файл %s, зсув %d: %m"
-
 #: pg_waldump.c:421
 #, c-format
-msgid "could not read from file %s, offset %d: read %d of %d"
-msgstr "не вдалося прочитати з файлу %s, зсув %d: прочитано %d з %d"
+msgid "could not read from file \"%s\", offset %d: %m"
+msgstr "не вдалося прочитати з файлу \"%s\", зсув %d: %m"
 
-#: pg_waldump.c:511
+#: pg_waldump.c:425
+#, c-format
+msgid "could not read from file \"%s\", offset %d: read %d of %d"
+msgstr "не вдалося прочитати з файлу \"%s\", зсув %d: прочитано %d з %d"
+
+#: pg_waldump.c:515
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_waldump.c:519
+#: pg_waldump.c:523
 #, c-format
 msgid "invalid fork number: %u"
 msgstr "неприпустимий номер форку: %u"
 
-#: pg_waldump.c:531
+#: pg_waldump.c:535
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "не вдалося записати файл \"%s\": %m"
 
-#: pg_waldump.c:534
+#: pg_waldump.c:538
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "неможливо закрити файл \"%s\": %m"
 
-#: pg_waldump.c:754
+#: pg_waldump.c:758
 #, c-format
 msgid "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n\n"
 msgstr "%s декодує і відображає журнали попереднього запису PostgreSQL для налагодження.\n\n"
 
-#: pg_waldump.c:756
+#: pg_waldump.c:760
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: pg_waldump.c:757
+#: pg_waldump.c:761
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [OPTION]...[STARTSEG [ENDSEG]]\n"
 
-#: pg_waldump.c:758
+#: pg_waldump.c:762
 #, c-format
 msgid "\n"
 "Options:\n"
 msgstr "\n"
 "Параметри:\n"
 
-#: pg_waldump.c:759
+#: pg_waldump.c:763
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      виводити детальну інформацію про блоки резервних копій\n"
 
-#: pg_waldump.c:760
+#: pg_waldump.c:764
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
 msgstr "  -B, --block=N з --relation, лише показати записи, які змінюють блок N\n"
 
-#: pg_waldump.c:761
+#: pg_waldump.c:765
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       зупинити читання WAL з місця RECPTR\n"
 
-#: pg_waldump.c:762
+#: pg_waldump.c:766
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow          повторювати спроби після досягнення кінця  WAL\n"
 
-#: pg_waldump.c:763
+#: pg_waldump.c:767
 #, c-format
 msgid "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 "                         valid names are main, fsm, vm, init\n"
 msgstr "  -F, --fork=FORK показати лише записи, які змінюють блоки в форці FORK;\n"
 "                         дійсні імена: main, fsm, vm, init\n"
 
-#: pg_waldump.c:765
+#: pg_waldump.c:769
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N         число записів для відображення\n"
 
-#: pg_waldump.c:766
+#: pg_waldump.c:770
 #, c-format
 msgid "  -p, --path=PATH        directory in which to find WAL segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
@@ -184,358 +238,353 @@ msgstr "  -p, --path=PATH       каталог, у якому шукати фа�
 "                         або каталог з ./pg_wal, що містить такі файли\n"
 "                         (за замовчуванням: чинний каталог, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:769
+#: pg_waldump.c:773
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            не друкувати жодного виводу, окрім помилок\n"
 
-#: pg_waldump.c:770
+#: pg_waldump.c:774
 #, c-format
 msgid "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
 "                         use --rmgr=list to list valid resource manager names\n"
 msgstr "  -r, --rmgr=RMGR       відображати записи, згенеровані лише ресурсним менеджером RMGR;\n"
 "                         використовувати --rmgr=list для перегляду списку припустимих імен ресурсного менеджера\n"
 
-#: pg_waldump.c:772
+#: pg_waldump.c:776
 #, c-format
 msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
 msgstr "  -R, --relation=T/D/R відобразити тільки записи, які змінюють блоки у відношенні T/D/R\n"
 
-#: pg_waldump.c:773
+#: pg_waldump.c:777
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     почати читання WAL з місця RECPTR\n"
 
-#: pg_waldump.c:774
+#: pg_waldump.c:778
 #, c-format
 msgid "  -t, --timeline=TLI     timeline from which to read WAL records\n"
 "                         (default: 1 or the value used in STARTSEG)\n"
 msgstr "  -t, --timeline=TLI     часова шкала, WAL-записи якої будуть прочитані\n"
 "                          (за замовчуванням: 1 або значення, що використовується у STARTSEG)\n"
 
-#: pg_waldump.c:776
+#: pg_waldump.c:780
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version            вивести інформацію про версію і вийти\n"
 
-#: pg_waldump.c:777
+#: pg_waldump.c:781
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
 msgstr "  -w, --fullpage показувати записи лише з повним записом на сторінці\n"
 
-#: pg_waldump.c:778
+#: pg_waldump.c:782
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          показати записи лише з ідентифікатором транзакцій XID\n"
 
-#: pg_waldump.c:779
+#: pg_waldump.c:783
 #, c-format
 msgid "  -z, --stats[=record]   show statistics instead of records\n"
 "                         (optionally, show per-record statistics)\n"
 msgstr "  -z, --stats[=record]    показати статистику замість записів                         (необов'язково, відобразити щорядкову статистику)\n"
 
-#: pg_waldump.c:781
+#: pg_waldump.c:785
 #, c-format
 msgid "  --save-fullpage=DIR    save full page images to DIR\n"
 msgstr "  --save-fullpage=DIR    зберігати повні зображення сторінок в DIR\n"
 
-#: pg_waldump.c:782
+#: pg_waldump.c:786
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help              показати цю довідку потім вийти\n"
 
-#: pg_waldump.c:783
+#: pg_waldump.c:787
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_waldump.c:784
+#: pg_waldump.c:788
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
 
-#: pg_waldump.c:880
+#: pg_waldump.c:884
 #, c-format
 msgid "no arguments specified"
 msgstr "не вказано аргументів"
 
-#: pg_waldump.c:896
+#: pg_waldump.c:900
 #, c-format
 msgid "invalid block number: \"%s\""
 msgstr "неприпустимий номер блоку: \"%s\""
 
-#: pg_waldump.c:905 pg_waldump.c:1003
+#: pg_waldump.c:909 pg_waldump.c:1007
 #, c-format
 msgid "invalid WAL location: \"%s\""
 msgstr "неприпустиме розташування WAL: \"%s\""
 
-#: pg_waldump.c:918
+#: pg_waldump.c:922
 #, c-format
 msgid "invalid fork name: \"%s\""
 msgstr "неприпустиме ім'я форку: \"%s\""
 
-#: pg_waldump.c:926 pg_waldump.c:1029
+#: pg_waldump.c:930 pg_waldump.c:1033
 #, c-format
 msgid "invalid value \"%s\" for option %s"
 msgstr "неприпустиме значення \"%s\" для параметра %s"
 
-#: pg_waldump.c:957
+#: pg_waldump.c:961
 #, c-format
 msgid "custom resource manager \"%s\" does not exist"
 msgstr "користувацький менеджер ресурсів \"%s\" не існує"
 
-#: pg_waldump.c:978
+#: pg_waldump.c:982
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "менеджер ресурсів \"%s\" не існує"
 
-#: pg_waldump.c:993
+#: pg_waldump.c:997
 #, c-format
 msgid "invalid relation specification: \"%s\""
 msgstr "неприпустима специфікація відношення: \"%s\""
 
-#: pg_waldump.c:994
+#: pg_waldump.c:998
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
 msgstr "Очікуємо \"tablespace OID/database OID/relation filenode\"."
 
-#: pg_waldump.c:1036
+#: pg_waldump.c:1040
 #, c-format
 msgid "%s must be in range %u..%u"
 msgstr "%s має бути в діапазоні %u..%u"
 
-#: pg_waldump.c:1051
+#: pg_waldump.c:1055
 #, c-format
 msgid "invalid transaction ID specification: \"%s\""
 msgstr "неприпустима специфікація ідентифікатора транзакції: \"%s\""
 
-#: pg_waldump.c:1066
+#: pg_waldump.c:1070
 #, c-format
 msgid "unrecognized value for option %s: %s"
 msgstr "нерозпізнане значення параметра %s: %s"
 
-#: pg_waldump.c:1083
+#: pg_waldump.c:1087
 #, c-format
 msgid "option %s requires option %s to be specified"
 msgstr "параметр %s вимагає використання параметру %s"
 
-#: pg_waldump.c:1090
+#: pg_waldump.c:1094
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_waldump.c:1100 pg_waldump.c:1123
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "не вдалося відкрити каталог \"%s\": %m"
-
-#: pg_waldump.c:1129 pg_waldump.c:1159
+#: pg_waldump.c:1133 pg_waldump.c:1163
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "не вдалося відкрити файл \"%s\""
 
-#: pg_waldump.c:1139
+#: pg_waldump.c:1143
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "початкове розташування WAL %X/%X не всередині файлу \"%s\""
 
-#: pg_waldump.c:1166
+#: pg_waldump.c:1170
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s перед STARTSEG %s"
 
-#: pg_waldump.c:1181
+#: pg_waldump.c:1185
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "кінцеве розташування WAL %X/%X не всередині файлу \"%s\""
 
-#: pg_waldump.c:1193
+#: pg_waldump.c:1197
 #, c-format
 msgid "no start WAL location given"
 msgstr "не задано початкове розташування WAL"
 
-#: pg_waldump.c:1207
+#: pg_waldump.c:1211
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "недостатньо пам'яті під час виділення обробника читання WAL"
 
-#: pg_waldump.c:1213
+#: pg_waldump.c:1217
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "не вдалося знайти припустимий запис після %X/%X"
 
-#: pg_waldump.c:1223
+#: pg_waldump.c:1227
 #, c-format
-msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
-msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "перший запис після %X/%X, у %X/%X, пропускається %u байт\n"
-msgstr[1] "перший запис після %X/%X, у %X/%X, пропускається %u байти\n"
-msgstr[2] "перший запис після %X/%X, у %X/%X, пропускається %u байтів\n"
-msgstr[3] "перший запис після %X/%X, у %X/%X, пропускається %u байти\n"
+msgid "first record is after %X/%X, at %X/%X, skipping over %u byte"
+msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes"
+msgstr[0] "перший запис після %X/%X, за адресою %X/%X, пропускаючи байт %u"
+msgstr[1] "перший запис після %X/%X, за адресою %X/%X, пропускаючи %u байти"
+msgstr[2] "перший запис після %X/%X, за адресою %X/%X, пропускаючи %u байти"
+msgstr[3] "перший запис після %X/%X, за адресою %X/%X, пропускаючи %u байти"
 
-#: pg_waldump.c:1308
+#: pg_waldump.c:1312
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "помилка у записі WAL у %X/%X: %s"
 
-#: pg_waldump.c:1317
+#: pg_waldump.c:1321
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: xlogreader.c:621
+#: xlogreader.c:619
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "неприпустиме зміщення запису в %X/%X: очікувалось хоча б %u, отримано %u"
 
-#: xlogreader.c:630
+#: xlogreader.c:628
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "по зсуву %X/%X запитано продовження запису"
 
-#: xlogreader.c:671 xlogreader.c:1136
+#: xlogreader.c:669 xlogreader.c:1134
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "неприпустима довжина запису %X/%X: очікувалась мінімум %u, отримано %u"
 
-#: xlogreader.c:760
+#: xlogreader.c:758
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "немає прапорця contrecord в позиції %X/%X"
 
-#: xlogreader.c:773
+#: xlogreader.c:771
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "неприпустима довжина contrecord %u (очікувалось %lld) на %X/%X"
 
-#: xlogreader.c:1144
+#: xlogreader.c:1142
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "невірний ID менеджера ресурсів %u в %X/%X"
 
-#: xlogreader.c:1157 xlogreader.c:1173
+#: xlogreader.c:1155 xlogreader.c:1171
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "запис з неправильним попереднім посиланням %X/%X на %X/%X"
 
-#: xlogreader.c:1211
+#: xlogreader.c:1209
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "некоректна контрольна сума даних менеджера ресурсів у запису по зсуву %X/%X"
 
-#: xlogreader.c:1245
+#: xlogreader.c:1243
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "невірне магічне число %04X в сегменті WAL %s, LSN %X/%X, зсув %u"
 
-#: xlogreader.c:1260 xlogreader.c:1302
+#: xlogreader.c:1258 xlogreader.c:1300
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "невірні інформаційні біти %04X в сегменті WAL %s, LSN %X/%X, зсув %u"
 
-#: xlogreader.c:1276
+#: xlogreader.c:1274
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL файл належить іншій системі баз даних: ідентифікатор системи баз даних де міститься WAL файл - %llu, а ідентифікатор системи баз даних pg_control - %llu"
 
-#: xlogreader.c:1284
+#: xlogreader.c:1282
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний розмір сегменту в заголовку сторінки"
 
-#: xlogreader.c:1290
+#: xlogreader.c:1288
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний XLOG_BLCKSZ в заголовку сторінки"
 
-#: xlogreader.c:1322
+#: xlogreader.c:1320
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "неочікуваний pageaddr %X/%X у сегменті WAL %s, LSN %X/%X, зміщення %u"
 
-#: xlogreader.c:1348
+#: xlogreader.c:1346
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "порушення послідовності ID лінії часу %u (після %u) у сегменті WAL %s, LSN %X/%X, зсув %u"
 
-#: xlogreader.c:1754
+#: xlogreader.c:1749
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ідентифікатор блока %u out-of-order в позиції %X/%X"
 
-#: xlogreader.c:1778
+#: xlogreader.c:1773
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але немає даних в позиції %X/%X"
 
-#: xlogreader.c:1785
+#: xlogreader.c:1780
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але довжина даних дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1821
+#: xlogreader.c:1816
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE встановлений, але для пропуску задані: зсув %u, довжина %u, при довжині образу блока %u в позиції %X/%X"
 
-#: xlogreader.c:1837
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE не встановлений, але для пропуску задані: зсув %u, довжина %u в позиції %X/%X"
 
-#: xlogreader.c:1851
+#: xlogreader.c:1846
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED встановлений, але довжина образу блока дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1866
+#: xlogreader.c:1861
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ні BKPIMAGE_HAS_HOLE, ні BKPIMAGE_COMPRESSED не встановлені, але довжина образу блока дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1882
+#: xlogreader.c:1877
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL встановлений, але попереднє значення не задано в позиції %X/%X"
 
-#: xlogreader.c:1894
+#: xlogreader.c:1889
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "невірний ідентифікатор блоку %u в позиції %X/%X"
 
-#: xlogreader.c:1961
+#: xlogreader.c:1956
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "запис з невірною довжиною на %X/%X"
 
-#: xlogreader.c:1987
+#: xlogreader.c:1982
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "не вдалося знайти блок резервної копії з ID %d у записі WAL"
 
-#: xlogreader.c:2071
+#: xlogreader.c:2066
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "не вдалося відновити зображення %X/%X з недійсним вказаним блоком %d"
 
-#: xlogreader.c:2078
+#: xlogreader.c:2073
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "не вдалося відновити зображення %X/%X з недійсним станом, блок %d"
 
-#: xlogreader.c:2105 xlogreader.c:2122
+#: xlogreader.c:2100 xlogreader.c:2117
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "не вдалося відновити зображення в %X/%X, стиснуте %s, не підтримується збіркою, блок %d"
 
-#: xlogreader.c:2131
+#: xlogreader.c:2126
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "не вдалося відновити зображення %X/%X стиснуте з невідомим методом, блок %d"
 
-#: xlogreader.c:2139
+#: xlogreader.c:2134
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "не вдалося розпакувати зображення на %X/%X, блок %d"

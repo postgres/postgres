@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 16\n"
+"Project-Id-Version: pg_checksums (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:23+0000\n"
-"PO-Revision-Date: 2023-05-22 12:05+0200\n"
+"POT-Creation-Date: 2025-02-16 19:53+0000\n"
+"PO-Revision-Date: 2024-11-16 14:23+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -40,6 +40,106 @@ msgstr "detalle: "
 msgid "hint: "
 msgstr "consejo: "
 
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "no se pudo abrir archivo «%s» para lectura: %m"
+
+#: ../../common/controldata_utils.c:110
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "no se pudo leer el archivo «%s»: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "no se pudo cerrar el archivo «%s»: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "discordancia en orden de bytes"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"posible discordancia en orden de bytes\n"
+"El ordenamiento de bytes usado para almacenar el archivo pg_control puede no\n"
+"coincidir con el usado por este programa.  En tal caso los resultados de abajo\n"
+"serían erróneos, y la instalación de PostgreSQL sería incompatible con este\n"
+"directorio de datos."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
+#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
+#: ../../common/file_utils.c:480 pg_checksums.c:192
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "no se pudo abrir el archivo «%s»: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "no se pudo escribir el archivo «%s»: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
+#: ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria agotada\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: pg_checksums.c:338 pg_checksums.c:407
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "no se pudo hacer stat al archivo «%s»: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "esta instalación no soporta el método de sync «%s»"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: pg_checksums.c:310
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "no se pudo abrir el directorio «%s»: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "no se pudo leer el directorio «%s»: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
+
 #: ../../fe_utils/option_utils.c:69
 #, c-format
 msgid "invalid value \"%s\" for option %s"
@@ -50,26 +150,32 @@ msgstr "el valor «%s» no es válido para la opción %s"
 msgid "%s must be in range %d..%d"
 msgstr "%s debe estar en el rango %d..%d"
 
-#: pg_checksums.c:79
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "método sync no reconocido: %s"
+
+#: pg_checksums.c:70
 #, c-format
 msgid ""
 "%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s activa, desactiva o verifica checksums de datos en un clúster PostgreSQL.\n"
+"%s activa, desactiva o verifica checksums de datos en un\n"
+"clúster PostgreSQL.\n"
 "\n"
 
-#: pg_checksums.c:80
+#: pg_checksums.c:71
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
 
-#: pg_checksums.c:81
+#: pg_checksums.c:72
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [OPCIÓN]... [DATADIR]\n"
 
-#: pg_checksums.c:82
+#: pg_checksums.c:73
 #, c-format
 msgid ""
 "\n"
@@ -78,57 +184,62 @@ msgstr ""
 "\n"
 "Opciones:\n"
 
-#: pg_checksums.c:83
+#: pg_checksums.c:74
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
 msgstr " [-D, --pgdata=]DATADIR    directorio de datos\n"
 
-#: pg_checksums.c:84
+#: pg_checksums.c:75
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr "  -c, --check              verificar checksums (por omisión)\n"
 
-#: pg_checksums.c:85
+#: pg_checksums.c:76
 #, c-format
 msgid "  -d, --disable            disable data checksums\n"
 msgstr "  -d, --disable            desactivar checksums\n"
 
-#: pg_checksums.c:86
+#: pg_checksums.c:77
 #, c-format
 msgid "  -e, --enable             enable data checksums\n"
 msgstr "  -e, --enable             activar checksums\n"
 
-#: pg_checksums.c:87
+#: pg_checksums.c:78
 #, c-format
 msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
 msgstr "  -f, --filenode=FILENODE  verificar sólo la relación con el filenode dado\n"
 
-#: pg_checksums.c:88
+#: pg_checksums.c:79
 #, c-format
 msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync            no esperar que los cambios se sincronicen a disco\n"
 
-#: pg_checksums.c:89
+#: pg_checksums.c:80
 #, c-format
 msgid "  -P, --progress           show progress information\n"
 msgstr "  -P, --progress           mostrar información de progreso\n"
 
-#: pg_checksums.c:90
+#: pg_checksums.c:81
+#, c-format
+msgid "      --sync-method=METHOD set method for syncing files to disk\n"
+msgstr "      --sync-method=MÉTODO definir método para sincr. archivos a disco\n"
+
+#: pg_checksums.c:82
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
 msgstr "  -v, --verbose            desplegar mensajes verbosos\n"
 
-#: pg_checksums.c:91
+#: pg_checksums.c:83
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version            mostrar información de versión y salir\n"
 
-#: pg_checksums.c:92
+#: pg_checksums.c:84
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help               mostrar esta ayuda y salir\n"
 
-#: pg_checksums.c:93
+#: pg_checksums.c:85
 #, c-format
 msgid ""
 "\n"
@@ -141,192 +252,177 @@ msgstr ""
 "la variable de entorno PGDATA.\n"
 "\n"
 
-#: pg_checksums.c:95
+#: pg_checksums.c:87
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "Reporte errores a <%s>.\n"
 
-#: pg_checksums.c:96
+#: pg_checksums.c:88
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
 
-#: pg_checksums.c:153
+#: pg_checksums.c:145
 #, c-format
 msgid "%lld/%lld MB (%d%%) computed"
 msgstr "%lld/%lld MB (%d%%) calculado"
 
-#: pg_checksums.c:200
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "no se pudo abrir el archivo «%s»: %m"
-
-#: pg_checksums.c:214
+#: pg_checksums.c:206
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "no se pudo leer el bloque %u del archivo «%s»: %m"
 
-#: pg_checksums.c:217
+#: pg_checksums.c:209
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "no se pudo leer bloque %u en archivo «%s»: leídos %d de %d"
 
-#: pg_checksums.c:240
+#: pg_checksums.c:232
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "verificación de checksums falló en archivo «%s», bloque %u: checksum calculado %X pero bloque contiene %X"
 
-#: pg_checksums.c:263
+#: pg_checksums.c:255
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "posicionamiento (seek) falló para el bloque %u en archivo «%s»: %m"
 
-#: pg_checksums.c:270
+#: pg_checksums.c:262
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "no se pudo escribir el bloque %u en el archivo «%s»: %m"
 
-#: pg_checksums.c:273
+#: pg_checksums.c:265
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
 msgstr "no se pudo escribir el bloque %u en el archivo «%s»: se escribieron %d de %d"
 
-#: pg_checksums.c:285
+#: pg_checksums.c:277
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "checksums verificados en archivo «%s»"
 
-#: pg_checksums.c:287
+#: pg_checksums.c:279
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "checksums activados en archivo «%s»"
 
-#: pg_checksums.c:318
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "no se pudo abrir el directorio «%s»: %m"
-
-#: pg_checksums.c:342 pg_checksums.c:411
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "no se pudo hacer stat al archivo «%s»: %m"
-
-#: pg_checksums.c:366
+#: pg_checksums.c:362
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "número de segmento %d no válido en nombre de archivo «%s»"
 
-#: pg_checksums.c:508 pg_checksums.c:524 pg_checksums.c:534 pg_checksums.c:542
+#: pg_checksums.c:509 pg_checksums.c:525 pg_checksums.c:535 pg_checksums.c:543
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_checksums.c:523
+#: pg_checksums.c:524
 #, c-format
 msgid "no data directory specified"
 msgstr "no se especificó el directorio de datos"
 
-#: pg_checksums.c:532
+#: pg_checksums.c:533
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 
-#: pg_checksums.c:541
+#: pg_checksums.c:542
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "la opción -f/--filenode sólo puede usarse con --check"
 
-#: pg_checksums.c:549
+#: pg_checksums.c:550
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "el valor de CRC de pg_control es incorrecto"
 
-#: pg_checksums.c:552
+#: pg_checksums.c:553
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "el clúster no es compatible con esta versión de pg_checksums"
 
-#: pg_checksums.c:556
+#: pg_checksums.c:557
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "el clúster de bases de datos no es compatible"
 
-#: pg_checksums.c:557
+#: pg_checksums.c:558
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u."
 msgstr "El clúster fue inicializado con tamaño de bloque %u, pero pg_checksums fue compilado con tamaño de bloques %u."
 
-#: pg_checksums.c:569
+#: pg_checksums.c:570
 #, c-format
 msgid "cluster must be shut down"
 msgstr "el clúster debe estar apagado"
 
-#: pg_checksums.c:573
+#: pg_checksums.c:574
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "los checksums de datos no están activados en el clúster"
 
-#: pg_checksums.c:577
+#: pg_checksums.c:578
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "los checksums de datos ya están desactivados en el clúster"
 
-#: pg_checksums.c:581
+#: pg_checksums.c:582
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "los checksums de datos ya están activados en el clúster"
 
-#: pg_checksums.c:605
+#: pg_checksums.c:606
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "Operación de checksums completa\n"
 
-#: pg_checksums.c:606
+#: pg_checksums.c:607
 #, c-format
 msgid "Files scanned:   %lld\n"
 msgstr "Archivos recorridos:   %lld\n"
 
-#: pg_checksums.c:607
+#: pg_checksums.c:608
 #, c-format
 msgid "Blocks scanned:  %lld\n"
 msgstr "Bloques recorridos:    %lld\n"
 
-#: pg_checksums.c:610
+#: pg_checksums.c:611
 #, c-format
 msgid "Bad checksums:  %lld\n"
 msgstr "Checksums incorrectos: %lld\n"
 
-#: pg_checksums.c:611 pg_checksums.c:643
+#: pg_checksums.c:612 pg_checksums.c:644
 #, c-format
 msgid "Data checksum version: %u\n"
 msgstr "Versión de checksums de datos: %u\n"
 
-#: pg_checksums.c:618
+#: pg_checksums.c:619
 #, c-format
 msgid "Files written:  %lld\n"
 msgstr "Archivos escritos:   %lld\n"
 
-#: pg_checksums.c:619
+#: pg_checksums.c:620
 #, c-format
 msgid "Blocks written: %lld\n"
 msgstr "Bloques escritos:    %lld\n"
 
-#: pg_checksums.c:635
+#: pg_checksums.c:636
 #, c-format
 msgid "syncing data directory"
 msgstr "sincronizando directorio de datos"
 
-#: pg_checksums.c:639
+#: pg_checksums.c:640
 #, c-format
 msgid "updating control file"
 msgstr "actualizando archivo de control"
 
-#: pg_checksums.c:645
+#: pg_checksums.c:646
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "Checksums activos en el clúster\n"
 
-#: pg_checksums.c:647
+#: pg_checksums.c:648
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "Checksums inactivos en el clúster\n"

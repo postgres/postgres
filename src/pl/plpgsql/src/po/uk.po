@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:39+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2024-08-31 06:09+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,162 +14,177 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/plpgsql.pot\n"
-"X-Crowdin-File-ID: 894\n"
+"X-Crowdin-File: /REL_17_STABLE/plpgsql.pot\n"
+"X-Crowdin-File-ID: 998\n"
 
-#: pl_comp.c:438 pl_handler.c:496
+#: pl_comp.c:434 pl_handler.c:496
 #, c-format
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "Функції PL/pgSQL не можуть приймати тип %s"
 
-#: pl_comp.c:530
+#: pl_comp.c:526
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr "не вдалося визначити фактичний тип результату поліморфної функції \"%s\""
 
-#: pl_comp.c:560
+#: pl_comp.c:556
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "тригер-функція може викликатися лише як тригер"
 
-#: pl_comp.c:564 pl_handler.c:480
+#: pl_comp.c:560 pl_handler.c:480
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "Функції PL/pgSQL не можуть повертати тип %s"
 
-#: pl_comp.c:604
+#: pl_comp.c:600
 #, c-format
 msgid "trigger functions cannot have declared arguments"
 msgstr "тригер-функції не можуть мати задекларованих аргументи"
 
-#: pl_comp.c:605
+#: pl_comp.c:601
 #, c-format
 msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
 msgstr "Аргументи тригеру доступні через TG_NARGS та TG_ARGV замість цього."
 
-#: pl_comp.c:738
+#: pl_comp.c:734
 #, c-format
 msgid "event trigger functions cannot have declared arguments"
 msgstr "функції тригерів подій не можуть мати задекларовані аргументи"
 
-#: pl_comp.c:1002
+#: pl_comp.c:998
 #, c-format
 msgid "compilation of PL/pgSQL function \"%s\" near line %d"
 msgstr "компіляція функції PL/pgSQL \"%s\" біля рядка %d"
 
-#: pl_comp.c:1025
+#: pl_comp.c:1021
 #, c-format
 msgid "parameter name \"%s\" used more than once"
 msgstr "ім'я параметру «%s» використано декілька разів"
 
-#: pl_comp.c:1139
+#: pl_comp.c:1135
 #, c-format
 msgid "column reference \"%s\" is ambiguous"
 msgstr "посилання на стовпець \"%s\" є неоднозначним"
 
-#: pl_comp.c:1141
+#: pl_comp.c:1137
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Це може відноситися до змінної PL/pgSQL або стовпця таблиці."
 
-#: pl_comp.c:1324 pl_exec.c:5234 pl_exec.c:5407 pl_exec.c:5494 pl_exec.c:5585
-#: pl_exec.c:6606
+#: pl_comp.c:1314 pl_exec.c:5260 pl_exec.c:5433 pl_exec.c:5520 pl_exec.c:5611
+#: pl_exec.c:6636
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "запис \"%s\" не має поля \"%s\""
 
-#: pl_comp.c:1818
+#: pl_comp.c:1633 pl_gram.y:645 pl_gram.y:660 pl_gram.y:686
+#, c-format
+msgid "variable \"%s\" does not exist"
+msgstr "змінної \"%s\" не існує"
+
+#: pl_comp.c:1722
+#, c-format
+msgid "column \"%s\" of relation \"%s\" does not exist"
+msgstr "стовпець \"%s\" зв'язку \"%s\" не існує"
+
+#: pl_comp.c:1775
 #, c-format
 msgid "relation \"%s\" does not exist"
 msgstr "відношення \"%s\" не існує"
 
-#: pl_comp.c:1825 pl_comp.c:1867
+#: pl_comp.c:1782 pl_comp.c:1820
 #, c-format
 msgid "relation \"%s\" does not have a composite type"
 msgstr "відношення \"%s\" не має складеного типу"
 
-#: pl_comp.c:1933
+#: pl_comp.c:1886
 #, c-format
 msgid "variable \"%s\" has pseudo-type %s"
 msgstr "змінна \"%s\" має псевдотип %s"
 
-#: pl_comp.c:2122
+#: pl_comp.c:2075
 #, c-format
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" є лише оболонкою"
 
-#: pl_comp.c:2204 pl_exec.c:6907
+#: pl_comp.c:2157 pl_exec.c:6937
 #, c-format
 msgid "type %s is not composite"
 msgstr "тип %s не є складеним"
 
-#: pl_comp.c:2252 pl_comp.c:2305
+#: pl_comp.c:2193
+#, c-format
+msgid "could not find array type for data type %s"
+msgstr "не вдалося знайти тип масиву для типу даних %s"
+
+#: pl_comp.c:2232 pl_comp.c:2285
 #, c-format
 msgid "unrecognized exception condition \"%s\""
 msgstr "нерозпізнана умова виключення \"%s\""
 
-#: pl_comp.c:2526
+#: pl_comp.c:2514
 #, c-format
 msgid "could not determine actual argument type for polymorphic function \"%s\""
 msgstr "не вдалося визначити фактичний тип аргумента поліморфної функції \"%s\""
 
-#: pl_exec.c:501 pl_exec.c:940 pl_exec.c:1175
+#: pl_exec.c:512 pl_exec.c:951 pl_exec.c:1186
 msgid "during initialization of execution state"
 msgstr "під час ініціалізації стану виконання"
 
-#: pl_exec.c:507
+#: pl_exec.c:518
 msgid "while storing call arguments into local variables"
 msgstr "під час зберігання аргументів виклику до локальних змінних"
 
-#: pl_exec.c:595 pl_exec.c:1013
+#: pl_exec.c:606 pl_exec.c:1024
 msgid "during function entry"
 msgstr "під час входу до функції"
 
-#: pl_exec.c:618
+#: pl_exec.c:629
 #, c-format
 msgid "control reached end of function without RETURN"
 msgstr "досягнуто кінця функції без RETURN"
 
-#: pl_exec.c:624
+#: pl_exec.c:635
 msgid "while casting return value to function's return type"
 msgstr "під час приведення значення, що повертається, до типу результата функції"
 
-#: pl_exec.c:636 pl_exec.c:3665
+#: pl_exec.c:647 pl_exec.c:3683
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "функція \"set-valued\" викликана в контексті, де йому немає місця"
 
-#: pl_exec.c:641 pl_exec.c:3671
+#: pl_exec.c:652 pl_exec.c:3689
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "необхідний режим матеріалізації (materialize mode), але він неприпустимий у цьому контексті"
 
-#: pl_exec.c:768 pl_exec.c:1039 pl_exec.c:1197
+#: pl_exec.c:779 pl_exec.c:1050 pl_exec.c:1208
 msgid "during function exit"
 msgstr "під час виходу з функції"
 
-#: pl_exec.c:823 pl_exec.c:887 pl_exec.c:3464
+#: pl_exec.c:834 pl_exec.c:898 pl_exec.c:3482
 msgid "returned record type does not match expected record type"
 msgstr "тип запису, що повертається, не відповідає очікуваному типу"
 
-#: pl_exec.c:1036 pl_exec.c:1194
+#: pl_exec.c:1047 pl_exec.c:1205
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
 msgstr "досягнуто кінця тригерної процедури без RETURN"
 
-#: pl_exec.c:1044
+#: pl_exec.c:1055
 #, c-format
 msgid "trigger procedure cannot return a set"
 msgstr "тригерна процедура не може повернути набір"
 
-#: pl_exec.c:1083 pl_exec.c:1111
+#: pl_exec.c:1094 pl_exec.c:1122
 msgid "returned row structure does not match the structure of the triggering table"
 msgstr "структура рядка, що повертається, не відповідає структурі таблиці, яка викликала тригер"
 
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"
 #.
-#: pl_exec.c:1252
+#: pl_exec.c:1263
 #, c-format
 msgid "PL/pgSQL function %s line %d %s"
 msgstr "Функція PL/pgSQL %s рядок %d %s"
@@ -177,288 +192,288 @@ msgstr "Функція PL/pgSQL %s рядок %d %s"
 #. translator: last %s is a phrase such as "while storing call
 #. arguments into local variables"
 #.
-#: pl_exec.c:1263
+#: pl_exec.c:1274
 #, c-format
 msgid "PL/pgSQL function %s %s"
 msgstr "Функція PL/pgSQL %s %s"
 
 #. translator: last %s is a plpgsql statement type name
-#: pl_exec.c:1271
+#: pl_exec.c:1282
 #, c-format
 msgid "PL/pgSQL function %s line %d at %s"
 msgstr "Функція PL/pgSQL %s рядок %d в %s"
 
-#: pl_exec.c:1277
+#: pl_exec.c:1288
 #, c-format
 msgid "PL/pgSQL function %s"
 msgstr "Функція PL/pgSQL %s"
 
-#: pl_exec.c:1648
+#: pl_exec.c:1659
 msgid "during statement block local variable initialization"
 msgstr "під час ініціалізації локальної змінної в блоці операторів"
 
-#: pl_exec.c:1753
+#: pl_exec.c:1764
 msgid "during statement block entry"
 msgstr "під час входу в блок операторів"
 
-#: pl_exec.c:1785
+#: pl_exec.c:1796
 msgid "during statement block exit"
 msgstr "під час виходу з блоку операторів"
 
-#: pl_exec.c:1823
+#: pl_exec.c:1834
 msgid "during exception cleanup"
 msgstr "під час очищення винятку"
 
-#: pl_exec.c:2360
+#: pl_exec.c:2370
 #, c-format
 msgid "procedure parameter \"%s\" is an output parameter but corresponding argument is not writable"
 msgstr "параметр процедури \"%s\" є вихідним, але відповідний аргумент не допускає запис"
 
-#: pl_exec.c:2365
+#: pl_exec.c:2375
 #, c-format
 msgid "procedure parameter %d is an output parameter but corresponding argument is not writable"
 msgstr "параметр процедури %d є вихідним, але відповідний аргумент не допускає запис"
 
-#: pl_exec.c:2399
+#: pl_exec.c:2411
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr "GET STACKED DIAGNOSTICS не може використовуватись поза блоком обробника винятків"
 
-#: pl_exec.c:2599
+#: pl_exec.c:2617
 #, c-format
 msgid "case not found"
 msgstr "гілку не знайдено"
 
-#: pl_exec.c:2600
+#: pl_exec.c:2618
 #, c-format
 msgid "CASE statement is missing ELSE part."
 msgstr "В операторі CASE пропущено частину ELSE."
 
-#: pl_exec.c:2693
+#: pl_exec.c:2711
 #, c-format
 msgid "lower bound of FOR loop cannot be null"
 msgstr "нижня границя циклу FOR не може бути null"
 
-#: pl_exec.c:2709
+#: pl_exec.c:2727
 #, c-format
 msgid "upper bound of FOR loop cannot be null"
 msgstr "верхня границя циклу FOR не може бути null"
 
-#: pl_exec.c:2727
+#: pl_exec.c:2745
 #, c-format
 msgid "BY value of FOR loop cannot be null"
 msgstr "Значення BY циклу FOR не може бути null"
 
-#: pl_exec.c:2733
+#: pl_exec.c:2751
 #, c-format
 msgid "BY value of FOR loop must be greater than zero"
 msgstr "Значення BY циклу FOR повинно бути більше нуля"
 
-#: pl_exec.c:2867 pl_exec.c:4667
+#: pl_exec.c:2885 pl_exec.c:4693
 #, c-format
 msgid "cursor \"%s\" already in use"
 msgstr "курсор \"%s\" вже використовується"
 
-#: pl_exec.c:2890 pl_exec.c:4737
+#: pl_exec.c:2908 pl_exec.c:4763
 #, c-format
 msgid "arguments given for cursor without arguments"
 msgstr "аргументи, надані курсору без аргументів"
 
-#: pl_exec.c:2909 pl_exec.c:4756
+#: pl_exec.c:2927 pl_exec.c:4782
 #, c-format
 msgid "arguments required for cursor"
 msgstr "аргументи, необхідні для курсора"
 
-#: pl_exec.c:3000
+#: pl_exec.c:3018
 #, c-format
 msgid "FOREACH expression must not be null"
 msgstr "Вираз FOREACH не може бути null"
 
-#: pl_exec.c:3015
+#: pl_exec.c:3033
 #, c-format
 msgid "FOREACH expression must yield an array, not type %s"
 msgstr "Вираз в FOREACH повинен бути масивом, не типом %s"
 
-#: pl_exec.c:3032
+#: pl_exec.c:3050
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
 msgstr "розмір зрізу (%d) поза припустимим діапазоном 0..%d"
 
-#: pl_exec.c:3059
+#: pl_exec.c:3077
 #, c-format
 msgid "FOREACH ... SLICE loop variable must be of an array type"
 msgstr "Змінна циклу FOREACH ... SLICE повинна бути масивом"
 
-#: pl_exec.c:3063
+#: pl_exec.c:3081
 #, c-format
 msgid "FOREACH loop variable must not be of an array type"
 msgstr "Змінна циклу FOREACH не повинна бути масивом"
 
-#: pl_exec.c:3225 pl_exec.c:3282 pl_exec.c:3457
+#: pl_exec.c:3243 pl_exec.c:3300 pl_exec.c:3475
 #, c-format
 msgid "cannot return non-composite value from function returning composite type"
 msgstr "функція, що повертає складений тип, не може повернути не складене значення"
 
-#: pl_exec.c:3321 pl_gram.y:3319
+#: pl_exec.c:3339 pl_gram.y:3375
 #, c-format
 msgid "cannot use RETURN NEXT in a non-SETOF function"
 msgstr "не можна використовувати RETURN NEXT в функціях, що не повертають набори даних"
 
-#: pl_exec.c:3362 pl_exec.c:3494
+#: pl_exec.c:3380 pl_exec.c:3512
 #, c-format
 msgid "wrong result type supplied in RETURN NEXT"
 msgstr "в RETURN NEXT вказано неправильний тип результату"
 
-#: pl_exec.c:3400 pl_exec.c:3421
+#: pl_exec.c:3418 pl_exec.c:3439
 #, c-format
 msgid "wrong record type supplied in RETURN NEXT"
 msgstr "в RETURN NEXT вказано неправильний тип запису"
 
-#: pl_exec.c:3513
+#: pl_exec.c:3531
 #, c-format
 msgid "RETURN NEXT must have a parameter"
 msgstr "RETURN NEXT повинен мати параметр"
 
-#: pl_exec.c:3541 pl_gram.y:3383
+#: pl_exec.c:3559 pl_gram.y:3439
 #, c-format
 msgid "cannot use RETURN QUERY in a non-SETOF function"
 msgstr "не можна використовувати RETURN QUERY в функціях, що не повертають набір"
 
-#: pl_exec.c:3559
+#: pl_exec.c:3577
 msgid "structure of query does not match function result type"
 msgstr "структура запиту не відповідає типу результата функції"
 
-#: pl_exec.c:3614 pl_exec.c:4444 pl_exec.c:8685
+#: pl_exec.c:3632 pl_exec.c:4469 pl_exec.c:8759
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "текстовий аргумент запиту EXECUTE є null"
 
-#: pl_exec.c:3699 pl_exec.c:3837
+#: pl_exec.c:3717 pl_exec.c:3855
 #, c-format
 msgid "RAISE option already specified: %s"
 msgstr "Параметр RAISE вже вказано: %s"
 
-#: pl_exec.c:3733
+#: pl_exec.c:3751
 #, c-format
 msgid "RAISE without parameters cannot be used outside an exception handler"
 msgstr "RAISE без параметрів не можна використовувати поза блоком обробника винятків"
 
-#: pl_exec.c:3827
+#: pl_exec.c:3845
 #, c-format
 msgid "RAISE statement option cannot be null"
 msgstr "Параметром оператора RAISE не може бути null"
 
-#: pl_exec.c:3897
+#: pl_exec.c:3915
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pl_exec.c:3952
+#: pl_exec.c:3970
 #, c-format
 msgid "assertion failed"
 msgstr "порушення істинності"
 
-#: pl_exec.c:4317 pl_exec.c:4506
+#: pl_exec.c:4342 pl_exec.c:4532
 #, c-format
 msgid "cannot COPY to/from client in PL/pgSQL"
 msgstr "в PL/pgSQL не можна виконати COPY за участю клієнта"
 
-#: pl_exec.c:4323
+#: pl_exec.c:4348
 #, c-format
 msgid "unsupported transaction command in PL/pgSQL"
 msgstr "непідтримувана транзакційна команда в PL/pgSQL"
 
-#: pl_exec.c:4346 pl_exec.c:4535
+#: pl_exec.c:4371 pl_exec.c:4561
 #, c-format
 msgid "INTO used with a command that cannot return data"
 msgstr "INTO використаний з командою, що не може повертати дані"
 
-#: pl_exec.c:4369 pl_exec.c:4558
+#: pl_exec.c:4394 pl_exec.c:4584
 #, c-format
 msgid "query returned no rows"
 msgstr "запит не повернув рядки"
 
-#: pl_exec.c:4391 pl_exec.c:4577 pl_exec.c:5729
+#: pl_exec.c:4416 pl_exec.c:4603 pl_exec.c:5755
 #, c-format
 msgid "query returned more than one row"
 msgstr "запит повернув декілька рядків"
 
-#: pl_exec.c:4393
+#: pl_exec.c:4418
 #, c-format
 msgid "Make sure the query returns a single row, or use LIMIT 1."
 msgstr "Переконайтеся, що запит повертає один рядок, або використовуйте LIMIT 1."
 
-#: pl_exec.c:4409
+#: pl_exec.c:4434
 #, c-format
 msgid "query has no destination for result data"
 msgstr "запит не має призначення для даних результату"
 
-#: pl_exec.c:4410
+#: pl_exec.c:4435
 #, c-format
 msgid "If you want to discard the results of a SELECT, use PERFORM instead."
 msgstr "Якщо ви хочете відкинути результати SELECT, використайте PERFORM."
 
-#: pl_exec.c:4498
+#: pl_exec.c:4524
 #, c-format
 msgid "EXECUTE of SELECT ... INTO is not implemented"
 msgstr "EXECUTE виразу SELECT ... INTO не реалізовано"
 
-#: pl_exec.c:4499
+#: pl_exec.c:4525
 #, c-format
 msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
 msgstr "Альтернативою може стати EXECUTE ... INTO або EXECUTE CREATE TABLE ... AS."
 
-#: pl_exec.c:4512
+#: pl_exec.c:4538
 #, c-format
 msgid "EXECUTE of transaction commands is not implemented"
 msgstr "EXECUTE з транзакційними командами не реалізовано"
 
-#: pl_exec.c:4822 pl_exec.c:4910
+#: pl_exec.c:4848 pl_exec.c:4936
 #, c-format
 msgid "cursor variable \"%s\" is null"
 msgstr "змінна курсора \"%s\" дорівнює null"
 
-#: pl_exec.c:4833 pl_exec.c:4921
+#: pl_exec.c:4859 pl_exec.c:4947
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "курсор \"%s\" не існує"
 
-#: pl_exec.c:4846
+#: pl_exec.c:4872
 #, c-format
 msgid "relative or absolute cursor position is null"
 msgstr "відносна або абсолютна позиція курсора дорівнює null"
 
-#: pl_exec.c:5084 pl_exec.c:5179
+#: pl_exec.c:5110 pl_exec.c:5205
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "значення null не можна призначити змінній \"%s\", оголошеній NOT NULL"
 
-#: pl_exec.c:5160
+#: pl_exec.c:5186
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "змінній типу кортеж можна призначити лише складене значення"
 
-#: pl_exec.c:5192
+#: pl_exec.c:5218
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "змінній типу запис можна призначити лише складене значення"
 
-#: pl_exec.c:5243
+#: pl_exec.c:5269
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "призначити значення системному стовпцю \"%s\" не можна"
 
-#: pl_exec.c:5692
+#: pl_exec.c:5718
 #, c-format
 msgid "query did not return data"
 msgstr "запит не повернув даних"
 
-#: pl_exec.c:5693 pl_exec.c:5705 pl_exec.c:5730 pl_exec.c:5806 pl_exec.c:5811
+#: pl_exec.c:5719 pl_exec.c:5731 pl_exec.c:5756 pl_exec.c:5832 pl_exec.c:5837
 #, c-format
 msgid "query: %s"
 msgstr "запит: %s"
 
-#: pl_exec.c:5701
+#: pl_exec.c:5727
 #, c-format
 msgid "query returned %d column"
 msgid_plural "query returned %d columns"
@@ -467,48 +482,48 @@ msgstr[1] "запит повернув %d колонки"
 msgstr[2] "запит повернув %d колонок"
 msgstr[3] "запит повернув %d колонок"
 
-#: pl_exec.c:5805
+#: pl_exec.c:5831
 #, c-format
 msgid "query is SELECT INTO, but it should be plain SELECT"
 msgstr "запит є SELECT INTO, але має бути звичайним SELECT"
 
-#: pl_exec.c:5810
+#: pl_exec.c:5836
 #, c-format
 msgid "query is not a SELECT"
 msgstr "запит не є SELECT"
 
-#: pl_exec.c:6620 pl_exec.c:6660 pl_exec.c:6700
+#: pl_exec.c:6650 pl_exec.c:6690 pl_exec.c:6730
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "тип параметру %d (%s) не відповідає тому, з котрим тривала підготовка плану (%s)"
 
-#: pl_exec.c:7111 pl_exec.c:7145 pl_exec.c:7219 pl_exec.c:7245
+#: pl_exec.c:7141 pl_exec.c:7175 pl_exec.c:7249 pl_exec.c:7275
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "кількість вихідних і цільових полів у присвоюванні не збігається"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7113 pl_exec.c:7147 pl_exec.c:7221 pl_exec.c:7247
+#: pl_exec.c:7143 pl_exec.c:7177 pl_exec.c:7251 pl_exec.c:7277
 #, c-format
 msgid "%s check of %s is active."
 msgstr "%s перевірка %s активна."
 
-#: pl_exec.c:7117 pl_exec.c:7151 pl_exec.c:7225 pl_exec.c:7251
+#: pl_exec.c:7147 pl_exec.c:7181 pl_exec.c:7255 pl_exec.c:7281
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr "Переконайтеся, що запит повертає точний список стовпців."
 
-#: pl_exec.c:7638
+#: pl_exec.c:7668
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "запис \"%s\" ще не призначено"
 
-#: pl_exec.c:7639
+#: pl_exec.c:7669
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "Для запису, котрому не призначене значення, структура кортежа не визначена."
 
-#: pl_exec.c:8283 pl_gram.y:3442
+#: pl_exec.c:8357 pl_gram.y:3498
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "змінна \"%s\" оголошена як CONSTANT"
@@ -545,275 +560,274 @@ msgstr "SQL-оператор"
 msgid "FOR over EXECUTE statement"
 msgstr "FOR за результатами EXECUTE"
 
-#: pl_gram.y:487
+#: pl_gram.y:485
 #, c-format
 msgid "block label must be placed before DECLARE, not after"
 msgstr "мітка блоку повинна бути розміщена до DECLARE, а не після"
 
-#: pl_gram.y:507
+#: pl_gram.y:505
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "тип %s не підтримує правила сортування"
 
-#: pl_gram.y:526
+#: pl_gram.y:524
 #, c-format
 msgid "variable \"%s\" must have a default value, since it's declared NOT NULL"
 msgstr "змінна \"%s\" повинна мати значення за замовчуванням після того, як вона оголошена як NOT NULL"
 
-#: pl_gram.y:674 pl_gram.y:689 pl_gram.y:715
-#, c-format
-msgid "variable \"%s\" does not exist"
-msgstr "змінної \"%s\" не існує"
-
-#: pl_gram.y:733 pl_gram.y:761
+#: pl_gram.y:704 pl_gram.y:732
 msgid "duplicate declaration"
 msgstr "дублікат оголошення"
 
-#: pl_gram.y:744 pl_gram.y:772
+#: pl_gram.y:715 pl_gram.y:743
 #, c-format
 msgid "variable \"%s\" shadows a previously defined variable"
 msgstr "змінна \"%s\" приховує раніше оголошену змінну"
 
-#: pl_gram.y:1044
+#: pl_gram.y:1017
 #, c-format
 msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
 msgstr "команда GET STACKED DIAGNOSTICS не дозволяє елемент діагностування %s"
 
-#: pl_gram.y:1062
+#: pl_gram.y:1035
 #, c-format
 msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
 msgstr "команда GET CURRENT DIAGNOSTICS не дозволяє елемент діагностування %s"
 
-#: pl_gram.y:1157
+#: pl_gram.y:1133
 msgid "unrecognized GET DIAGNOSTICS item"
 msgstr "нерозпізнаний елемент GET DIAGNOSTICS"
 
-#: pl_gram.y:1173 pl_gram.y:3558
+#: pl_gram.y:1149 pl_gram.y:3614
 #, c-format
 msgid "\"%s\" is not a scalar variable"
 msgstr "\"%s\" не є скалярною змінною"
 
-#: pl_gram.y:1403 pl_gram.y:1597
+#: pl_gram.y:1379 pl_gram.y:1572
 #, c-format
 msgid "loop variable of loop over rows must be a record variable or list of scalar variables"
 msgstr "змінна циклу по кортежах повинна бути змінною типу запис або списком скалярних змінних"
 
-#: pl_gram.y:1438
+#: pl_gram.y:1414
 #, c-format
 msgid "cursor FOR loop must have only one target variable"
 msgstr "курсор в циклі FOR повинен мати лише одну цільову змінну"
 
-#: pl_gram.y:1445
+#: pl_gram.y:1421
 #, c-format
 msgid "cursor FOR loop must use a bound cursor variable"
 msgstr "цикл курсора FOR повинен використовувати обмежуючу змінну курсора"
 
-#: pl_gram.y:1536
+#: pl_gram.y:1511
 #, c-format
 msgid "integer FOR loop must have only one target variable"
 msgstr "цілочисельний цикл FOR повинен мати лише одну цільову змінну"
 
-#: pl_gram.y:1570
+#: pl_gram.y:1545
 #, c-format
 msgid "cannot specify REVERSE in query FOR loop"
 msgstr "в циклі FOR з запитом не можна вказати REVERSE"
 
-#: pl_gram.y:1700
+#: pl_gram.y:1675
 #, c-format
 msgid "loop variable of FOREACH must be a known variable or list of variables"
 msgstr "змінній циклу FOREACH повинна бути відома змінна або список змінних"
 
-#: pl_gram.y:1742
+#: pl_gram.y:1717
 #, c-format
 msgid "there is no label \"%s\" attached to any block or loop enclosing this statement"
 msgstr "в блоку або циклу, розділеному цим оператором, немає мітки \"%s\""
 
-#: pl_gram.y:1750
+#: pl_gram.y:1725
 #, c-format
 msgid "block label \"%s\" cannot be used in CONTINUE"
 msgstr "мітку блока \"%s\" не можна використовувати в CONTINUE"
 
-#: pl_gram.y:1765
+#: pl_gram.y:1740
 #, c-format
 msgid "EXIT cannot be used outside a loop, unless it has a label"
 msgstr "EXIT можна використовувати поза циклом, тільки з зазначенням мітки"
 
-#: pl_gram.y:1766
+#: pl_gram.y:1741
 #, c-format
 msgid "CONTINUE cannot be used outside a loop"
 msgstr "CONTINUE не можна використовувати поза циклом"
 
-#: pl_gram.y:1790 pl_gram.y:1828 pl_gram.y:1876 pl_gram.y:3005 pl_gram.y:3093
-#: pl_gram.y:3204 pl_gram.y:3957
+#: pl_gram.y:1765 pl_gram.y:1803 pl_gram.y:1851 pl_gram.y:3061 pl_gram.y:3149
+#: pl_gram.y:3260 pl_gram.y:4009
 msgid "unexpected end of function definition"
 msgstr "неочікуваний кінец визначення функції"
 
-#: pl_gram.y:1896 pl_gram.y:1920 pl_gram.y:1936 pl_gram.y:1942 pl_gram.y:2067
-#: pl_gram.y:2075 pl_gram.y:2089 pl_gram.y:2184 pl_gram.y:2408 pl_gram.y:2498
-#: pl_gram.y:2656 pl_gram.y:3800 pl_gram.y:3861 pl_gram.y:3938
+#: pl_gram.y:1871 pl_gram.y:1895 pl_gram.y:1911 pl_gram.y:1917 pl_gram.y:2042
+#: pl_gram.y:2050 pl_gram.y:2064 pl_gram.y:2159 pl_gram.y:2383 pl_gram.y:2473
+#: pl_gram.y:2632 pl_gram.y:3856 pl_gram.y:3917 pl_gram.y:3990
 msgid "syntax error"
 msgstr "синтаксична помилка"
 
-#: pl_gram.y:1924 pl_gram.y:1926 pl_gram.y:2412 pl_gram.y:2414
+#: pl_gram.y:1899 pl_gram.y:1901 pl_gram.y:2387 pl_gram.y:2389
 msgid "invalid SQLSTATE code"
 msgstr "неприпустимий код SQLSTATE"
 
-#: pl_gram.y:2132
+#: pl_gram.y:2107
 msgid "syntax error, expected \"FOR\""
 msgstr "помилка синтаксису, очікувався \"FOR\""
 
-#: pl_gram.y:2193
+#: pl_gram.y:2168
 #, c-format
 msgid "FETCH statement cannot return multiple rows"
 msgstr "Оператор FETCH не може повернути декілька рядків"
 
-#: pl_gram.y:2290
+#: pl_gram.y:2265
 #, c-format
 msgid "cursor variable must be a simple variable"
 msgstr "змінна-курсор повинна бути простою змінною"
 
-#: pl_gram.y:2296
+#: pl_gram.y:2271
 #, c-format
 msgid "variable \"%s\" must be of type cursor or refcursor"
 msgstr "змінна \"%s\" повинна бути типу cursor або refcursor"
 
-#: pl_gram.y:2627 pl_gram.y:2638
+#: pl_gram.y:2603 pl_gram.y:2614
 #, c-format
 msgid "\"%s\" is not a known variable"
 msgstr "\"%s\" - невідома змінна"
 
-#: pl_gram.y:2744 pl_gram.y:2754 pl_gram.y:2910
+#: pl_gram.y:2719 pl_gram.y:2729 pl_gram.y:2911
 msgid "mismatched parentheses"
 msgstr "неузгоджені дужки"
 
-#: pl_gram.y:2758
+#: pl_gram.y:2733
 #, c-format
 msgid "missing \"%s\" at end of SQL expression"
 msgstr "пропущено \"%s\" в кінці виразу SQL"
 
-#: pl_gram.y:2764
+#: pl_gram.y:2739
 #, c-format
 msgid "missing \"%s\" at end of SQL statement"
 msgstr "пропущено \"%s\" в кінці оператора SQL"
 
-#: pl_gram.y:2781
+#: pl_gram.y:2758
 msgid "missing expression"
 msgstr "пропущено вираз"
 
-#: pl_gram.y:2783
+#: pl_gram.y:2760
 msgid "missing SQL statement"
 msgstr "пропущений оператор SQL"
 
-#: pl_gram.y:2912
+#: pl_gram.y:2889
+msgid "syntax error, expected \"]\""
+msgstr "помилка синтаксису, очікувалось \"]\""
+
+#: pl_gram.y:2913
 msgid "incomplete data type declaration"
 msgstr "неповне оголошення типу даних"
 
-#: pl_gram.y:2935
+#: pl_gram.y:2936
 msgid "missing data type declaration"
 msgstr "пропущено оголошення типу даних"
 
-#: pl_gram.y:3015
+#: pl_gram.y:3071
 msgid "INTO specified more than once"
 msgstr "INTO вказано неодноразово"
 
-#: pl_gram.y:3185
+#: pl_gram.y:3241
 msgid "expected FROM or IN"
 msgstr "очікувалось FROM або IN"
 
-#: pl_gram.y:3246
+#: pl_gram.y:3302
 #, c-format
 msgid "RETURN cannot have a parameter in function returning set"
 msgstr "В функції, яка повертає набір, RETURN не може мати параметр"
 
-#: pl_gram.y:3247
+#: pl_gram.y:3303
 #, c-format
 msgid "Use RETURN NEXT or RETURN QUERY."
 msgstr "Використайте RETURN NEXT або RETURN QUERY."
 
-#: pl_gram.y:3257
+#: pl_gram.y:3313
 #, c-format
 msgid "RETURN cannot have a parameter in a procedure"
 msgstr "В процедурі RETURN не може мати параметр"
 
-#: pl_gram.y:3262
+#: pl_gram.y:3318
 #, c-format
 msgid "RETURN cannot have a parameter in function returning void"
 msgstr "В функції, яка не повертає нічого, RETURN не може мати параметр"
 
-#: pl_gram.y:3271
+#: pl_gram.y:3327
 #, c-format
 msgid "RETURN cannot have a parameter in function with OUT parameters"
 msgstr "В функції з параметрами OUT, RETURN не може мати параметр"
 
-#: pl_gram.y:3334
+#: pl_gram.y:3390
 #, c-format
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr "В функції з параметрами OUT, RETURN NEXT не може мати параметр"
 
-#: pl_gram.y:3500
+#: pl_gram.y:3556
 #, c-format
 msgid "record variable cannot be part of multiple-item INTO list"
 msgstr "змінна типу запис не може бути частиною списка INTO з декількома елементами"
 
-#: pl_gram.y:3546
+#: pl_gram.y:3602
 #, c-format
 msgid "too many INTO variables specified"
 msgstr "вказано занадто багато змінних INTO"
 
-#: pl_gram.y:3754
+#: pl_gram.y:3810
 #, c-format
 msgid "end label \"%s\" specified for unlabeled block"
 msgstr "кінцева мітка \"%s\" вказана для невідміченого блоку"
 
-#: pl_gram.y:3761
+#: pl_gram.y:3817
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
 msgstr "кінцева мітка \"%s\" відрізняється від мітки блоку \"%s\""
 
-#: pl_gram.y:3795
+#: pl_gram.y:3851
 #, c-format
 msgid "cursor \"%s\" has no arguments"
 msgstr "курсор \"%s\" не має аргументів"
 
-#: pl_gram.y:3809
+#: pl_gram.y:3865
 #, c-format
 msgid "cursor \"%s\" has arguments"
 msgstr "курсор \"%s\" має аргументи"
 
-#: pl_gram.y:3851
+#: pl_gram.y:3907
 #, c-format
 msgid "cursor \"%s\" has no argument named \"%s\""
 msgstr "курсор \"%s\" не має аргументу \"%s\""
 
-#: pl_gram.y:3871
+#: pl_gram.y:3927
 #, c-format
 msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
 msgstr "значення параметра \"%s\" курсора \"%s\" вказано неодноразово"
 
-#: pl_gram.y:3896
+#: pl_gram.y:3948
 #, c-format
 msgid "not enough arguments for cursor \"%s\""
 msgstr "недостатньо аргументів для курсора \"%s\""
 
-#: pl_gram.y:3903
+#: pl_gram.y:3955
 #, c-format
 msgid "too many arguments for cursor \"%s\""
 msgstr "занадто багато аргументів для курсора \"%s\""
 
-#: pl_gram.y:3989
+#: pl_gram.y:4041
 msgid "unrecognized RAISE statement option"
 msgstr "нерозпізнаний параметр оператора RAISE"
 
-#: pl_gram.y:3993
+#: pl_gram.y:4045
 msgid "syntax error, expected \"=\""
 msgstr "помилка синтаксису, очікувалось \"=\""
 
-#: pl_gram.y:4034
+#: pl_gram.y:4086
 #, c-format
 msgid "too many parameters specified for RAISE"
 msgstr "занадто багато параметрів вказано для RAISE"
 
-#: pl_gram.y:4038
+#: pl_gram.y:4090
 #, c-format
 msgid "too few parameters specified for RAISE"
 msgstr "занадто мало параметрів вказано для RAISE"
@@ -839,13 +853,13 @@ msgid "List of programming constructs that should produce an error."
 msgstr "Список програмних конструкцій, які повинні видавати помилку."
 
 #. translator: %s is typically the translation of "syntax error"
-#: pl_scanner.c:508
+#: pl_scanner.c:525
 #, c-format
 msgid "%s at end of input"
 msgstr "%s в кінці введення"
 
 #. translator: first %s is typically the translation of "syntax error"
-#: pl_scanner.c:524
+#: pl_scanner.c:541
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s в або поблизу \"%s\""

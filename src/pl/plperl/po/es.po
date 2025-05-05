@@ -8,10 +8,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 15\n"
+"Project-Id-Version: plperl (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-05-22 07:09+0000\n"
-"PO-Revision-Date: 2022-10-20 09:06+0200\n"
+"POT-Creation-Date: 2025-02-16 19:39+0000\n"
+"PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -100,8 +100,8 @@ msgstr "los arrays multidimensionales deben tener expresiones de arrays con dime
 
 #: plperl.c:1204
 #, c-format
-msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr "el número de dimensiones del array (%d) excede el máximo permitido (%d)"
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "el número de dimensiones del array excede el máximo permitido (%d)"
 
 #: plperl.c:1274
 #, c-format

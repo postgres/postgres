@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-14 02:22+0000\n"
-"PO-Revision-Date: 2024-06-14 06:13+0200\n"
+"POT-Creation-Date: 2024-08-27 16:52+0000\n"
+"PO-Revision-Date: 2024-08-28 05:43+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -252,8 +252,8 @@ msgstr "ბაზაში \"%s\": გამოიყენება amcheck-ი
 
 #: pg_amcheck.c:624
 #, c-format
-msgid "--checkunique option is not supported by amcheck version \"%s\""
-msgstr "--checkunique პარამეტრის მხარდაჭერა amcheck-ის ვერსიას \"%s\" არ გააჩნია"
+msgid "option %s is not supported by amcheck version %s"
+msgstr "პარამეტრის '%s' მხარდაჭერა amcheck-ის ვერსიას \"%s\" არ გააჩნია"
 
 #: pg_amcheck.c:650
 #, c-format

@@ -1,13 +1,13 @@
 # Russian message translation file for plperl
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2022.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2022, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-08-28 07:59+0300\n"
-"PO-Revision-Date: 2022-09-05 13:38+0300\n"
+"POT-Creation-Date: 2024-09-02 09:29+0300\n"
+"PO-Revision-Date: 2024-09-04 20:00+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -110,8 +110,8 @@ msgstr ""
 
 #: plperl.c:1204
 #, c-format
-msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr "число размерностей массива (%d) превышает предел (%d)"
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "число размерностей массива превышает предел (%d)"
 
 #: plperl.c:1274
 #, c-format

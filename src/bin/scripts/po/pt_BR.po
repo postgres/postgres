@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-27 13:15-0300\n"
-"PO-Revision-Date: 2023-08-17 16:32+0200\n"
+"PO-Revision-Date: 2024-06-26 10:46+0200\n"
 "Last-Translator: Euler Taveira <euler@eulerto.com>\n"
 "Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
@@ -245,12 +245,12 @@ msgstr "  -v, --verbose             mostra muitas mensagens\n"
 #: clusterdb.c:272 createuser.c:364 dropdb.c:178 dropuser.c:176
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version                mostra informação sobre a versão e termina\n"
+msgstr "  -V, --version             mostra informação sobre a versão e termina\n"
 
 #: clusterdb.c:273 createuser.c:369 dropdb.c:180 dropuser.c:178
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                   mostra essa ajuda e termina\n"
+msgstr "  -?, --help                mostra essa ajuda e termina\n"
 
 #: clusterdb.c:274 createdb.c:298 createuser.c:370 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:235 reindexdb.c:777 vacuumdb.c:991

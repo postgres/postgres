@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-12 10:51+0000\n"
-"PO-Revision-Date: 2022-09-13 11:52\n"
+"POT-Creation-Date: 2024-08-31 06:23+0000\n"
+"PO-Revision-Date: 2024-09-23 19:38\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_15_STABLE/pg_archivecleanup.pot\n"
-"X-Crowdin-File-ID: 898\n"
+"X-Crowdin-File: /REL_17_STABLE/pg_archivecleanup.pot\n"
+"X-Crowdin-File-ID: 1032\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -37,90 +37,110 @@ msgstr "деталі: "
 msgid "hint: "
 msgstr "підказка: "
 
-#: pg_archivecleanup.c:66
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "недостатньо пам'яті\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "неможливо дублювати нульовий покажчик (внутрішня помилка)\n"
+
+#: pg_archivecleanup.c:68
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "архівного розташування \"%s\" не існує"
 
-#: pg_archivecleanup.c:151
-#, c-format
-msgid "could not remove file \"%s\": %m"
-msgstr "не можливо видалити файл \"%s\": %m"
-
-#: pg_archivecleanup.c:157
-#, c-format
-msgid "could not read archive location \"%s\": %m"
-msgstr "не вдалося прочитати архівне розташування \"%s\":%m"
-
-#: pg_archivecleanup.c:160
-#, c-format
-msgid "could not close archive location \"%s\": %m"
-msgstr "не вдалося закрити архівне розташування \"%s\":%m"
-
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:100
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "не вдалося відкрити архівне розташування \"%s\":%m"
 
-#: pg_archivecleanup.c:237
+#: pg_archivecleanup.c:164
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "не можливо видалити файл \"%s\": %m"
+
+#: pg_archivecleanup.c:169
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "не вдалося прочитати архівне розташування \"%s\":%m"
+
+#: pg_archivecleanup.c:172
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "не вдалося закрити архівне розташування \"%s\":%m"
+
+#: pg_archivecleanup.c:245
 #, c-format
 msgid "invalid file name argument"
 msgstr "недійсна назва файла з аргументом"
 
-#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
-#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#: pg_archivecleanup.c:246 pg_archivecleanup.c:334 pg_archivecleanup.c:354
+#: pg_archivecleanup.c:366 pg_archivecleanup.c:373
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Спробуйте \"%s --help\" для додаткової інформації."
 
-#: pg_archivecleanup.c:251
+#: pg_archivecleanup.c:259
 #, c-format
 msgid "%s removes older WAL files from PostgreSQL archives.\n\n"
 msgstr "%s видаляє старі WAL-файли з архівів PostgreSQL.\n\n"
 
-#: pg_archivecleanup.c:252
+#: pg_archivecleanup.c:260
 #, c-format
 msgid "Usage:\n"
 msgstr "Використання:\n"
 
-#: pg_archivecleanup.c:253
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [OPTION]... РОЗТАШУВАННЯ_АРХІВА НАЙДАВНІШИЙ_ЗБЕРЕЖЕНИЙ_WAL_ФАЙЛ\n"
 
-#: pg_archivecleanup.c:254
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "\n"
 "Options:\n"
 msgstr "\n"
 "Параметри:\n"
 
-#: pg_archivecleanup.c:255
+#: pg_archivecleanup.c:263
 #, c-format
-msgid "  -d             generate debug output (verbose mode)\n"
-msgstr "  -d генерує налагоджувальні повідомлення (детальний режим)\n"
+msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
+msgstr "  -b, --clean-backup-history  очистити файли, включаючи файли історії резервного копіювання\n"
 
-#: pg_archivecleanup.c:256
+#: pg_archivecleanup.c:264
 #, c-format
-msgid "  -n             dry run, show the names of the files that would be removed\n"
-msgstr "  -n             сухий запуск, показує тільки ті файли, які будуть видалені\n"
+msgid "  -d, --debug                 generate debug output (verbose mode)\n"
+msgstr "  -d, --debug                 генерувати налагоджувальний вивід (розгорнутий режим)\n"
 
-#: pg_archivecleanup.c:257
+#: pg_archivecleanup.c:265
 #, c-format
-msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version  показати версію, потім вийти\n"
+msgid "  -n, --dry-run               dry run, show the names of the files that would be\n"
+"                              removed\n"
+msgstr "  -n, --dry-run               сухий запуск, показати назви файлів, які будуть\n"
+"                              вилучені\n"
 
-#: pg_archivecleanup.c:258
+#: pg_archivecleanup.c:267
 #, c-format
-msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x EXT         прибрати файли з цим розширенням\n"
+msgid "  -V, --version               output version information, then exit\n"
+msgstr "  -V, --version                вивести інформацію про версію, потім вийти\n"
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:268
 #, c-format
-msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     показати цю довідку, потім вийти\n"
+msgid "  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
+"                              clean up\n"
+msgstr "  -x, --strip-extension=EXT   вилучати це розширення перед ідентифікацією файлів для\n"
+"                              очищення\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "  -?, --help                  show this help, then exit\n"
+msgstr "  -?, --help                   показати цю довідку, потім вийти\n"
+
+#: pg_archivecleanup.c:271
 #, c-format
 msgid "\n"
 "For use as archive_cleanup_command in postgresql.conf:\n"
@@ -133,7 +153,7 @@ msgstr "\n"
 "напр.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:265
+#: pg_archivecleanup.c:276
 #, c-format
 msgid "\n"
 "Or for use as a standalone archive cleaner:\n"
@@ -144,29 +164,29 @@ msgstr "\n"
 "наприклад:\n"
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:269
+#: pg_archivecleanup.c:280
 #, c-format
 msgid "\n"
 "Report bugs to <%s>.\n"
 msgstr "\n"
 "Повідомляти про помилки на <%s>.\n"
 
-#: pg_archivecleanup.c:270
+#: pg_archivecleanup.c:281
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашня сторінка %s: <%s>\n"
 
-#: pg_archivecleanup.c:332
+#: pg_archivecleanup.c:353
 #, c-format
 msgid "must specify archive location"
 msgstr "необхідно вказати розташування архіва"
 
-#: pg_archivecleanup.c:344
+#: pg_archivecleanup.c:365
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "необхідно вказати найдавніший збережений WAL-файл"
 
-#: pg_archivecleanup.c:351
+#: pg_archivecleanup.c:372
 #, c-format
 msgid "too many command-line arguments"
 msgstr "занадто багато аргументів командного рядка"

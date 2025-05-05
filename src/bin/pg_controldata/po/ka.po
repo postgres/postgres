@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL) 17\n"
+"Project-Id-Version: pg_controldata (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-05-18 22:23+0000\n"
-"PO-Revision-Date: 2024-05-19 07:11+0200\n"
+"POT-Creation-Date: 2025-03-29 21:24+0000\n"
+"PO-Revision-Date: 2025-03-30 01:29+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../common/controldata_utils.c:97
 #, c-format
@@ -68,6 +68,17 @@ msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
 
 #: pg_controldata.c:35
 #, c-format
@@ -170,326 +181,340 @@ msgstr "სტატუსის უცნობი კოდი"
 msgid "unrecognized \"wal_level\""
 msgstr "უცნობი \"wal_level\""
 
-#: pg_controldata.c:138 pg_controldata.c:156 pg_controldata.c:163
+#: pg_controldata.c:139 pg_controldata.c:157 pg_controldata.c:164
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_controldata.c:154
+#: pg_controldata.c:155
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
 
-#: pg_controldata.c:162
+#: pg_controldata.c:163
 #, c-format
 msgid "no data directory specified"
 msgstr "მონაცემების საქაღალდე მითითებული არაა"
 
-#: pg_controldata.c:171
+#: pg_controldata.c:172
 #, c-format
 msgid "calculated CRC checksum does not match value stored in control file"
 msgstr "გამოთვლილი CRC საკონტროლო ჯამი კონტროლის ფაილში დამახსოვრებულ მნიშვნელობას არ ემთხვევა"
 
-#: pg_controldata.c:172
+#: pg_controldata.c:173
 #, c-format
 msgid "Either the control file is corrupt, or it has a different layout than this program is expecting.  The results below are untrustworthy."
 msgstr "ან კონტროლი ფაილი დაზიანებულია, ან გააჩნია იმისგან განსხვავებული განლაგება, ვიდრე ამას პროგრამა მოელოდა.  ქვემო შედეგები სანდო არაა."
 
-#: pg_controldata.c:181
+#: pg_controldata.c:182
 #, c-format
 msgid "invalid WAL segment size in control file (%d byte)"
 msgid_plural "invalid WAL segment size in control file (%d bytes)"
 msgstr[0] "არასწორი WAL სეგმენტის ზომა კონტროლის ფაილში (%d ბაიტი)"
 msgstr[1] "არასწორი WAL სეგმენტის ზომა კონტროლის ფაილში (%d ბაიტი)"
 
-#: pg_controldata.c:185
+#: pg_controldata.c:186
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "WAL სეგმენტის ზომა ორის ხარისხი უნდა იყოს, შუალედიდან 1მბ-1გბ."
 
-#: pg_controldata.c:186
+#: pg_controldata.c:187
 #, c-format
 msgid "The file is corrupt and the results below are untrustworthy."
 msgstr "ფაილი დაზიანებულია და ქვემო შედეგები სანდო არაა."
 
-#: pg_controldata.c:221
+#: pg_controldata.c:205 pg_controldata.c:213 pg_controldata.c:232
+#, c-format
 msgid "???"
 msgstr "???"
 
-#: pg_controldata.c:227
+#: pg_controldata.c:238
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control ვერსიის ნომერი:            %u\n"
 
-#: pg_controldata.c:229
+#: pg_controldata.c:240
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "კატალოგის ვერსიის ნომერი:               %u\n"
 
-#: pg_controldata.c:231
+#: pg_controldata.c:242
 #, c-format
-msgid "Database system identifier:           %llu\n"
-msgstr "ბაზის სისტემური იდენტიფიკატორი:           %llu\n"
+msgid "Database system identifier:           %<PRIu64>\n"
+msgstr "ბაზის სისტემური იდენტიფიკატორი:           %<PRIu64>\n"
 
-#: pg_controldata.c:233
+#: pg_controldata.c:244
 #, c-format
 msgid "Database cluster state:               %s\n"
 msgstr "ბაზის კლასტერის მდგომარეობა:               %s\n"
 
-#: pg_controldata.c:235
+#: pg_controldata.c:246
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "pg_control-ის ბოლო ცვლილების დრო:             %s\n"
 
-#: pg_controldata.c:237
+#: pg_controldata.c:248
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
 msgstr "საკონტროლო წერტილის უკანასკნელი მდებარეობა:           %X/%X\n"
 
-#: pg_controldata.c:239
+#: pg_controldata.c:250
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
 msgstr "საკონტროლო წერტილის REDO-ის უკანასკნელი მდებარეობა:    %X/%X\n"
 
-#: pg_controldata.c:241
+#: pg_controldata.c:252
 #, c-format
 msgid "Latest checkpoint's REDO WAL file:    %s\n"
 msgstr "უკანასკნელი საკონტროლო წერტილის REDO WAL ფაილი:    %s\n"
 
-#: pg_controldata.c:243
+#: pg_controldata.c:254
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "უახლესი საკონტროლო წერტილისTimeLineID:       %u\n"
 
-#: pg_controldata.c:245
+#: pg_controldata.c:256
 #, c-format
 msgid "Latest checkpoint's PrevTimeLineID:   %u\n"
 msgstr "უახლესი საკონტროლო წერტილის PrevTimeLineID:   %u\n"
 
-#: pg_controldata.c:247
+#: pg_controldata.c:258
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "უახლესი უკანასკნელი საკონტროლო წერტილის full_page_writes: %s\n"
 
-#: pg_controldata.c:248 pg_controldata.c:289 pg_controldata.c:301
+#: pg_controldata.c:259 pg_controldata.c:300 pg_controldata.c:312
 msgid "off"
 msgstr "გამორთული"
 
-#: pg_controldata.c:248 pg_controldata.c:289 pg_controldata.c:301
+#: pg_controldata.c:259 pg_controldata.c:300 pg_controldata.c:312
 msgid "on"
 msgstr "ჩართ"
 
-#: pg_controldata.c:249
+#: pg_controldata.c:260
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "უახლესი საკონტროლო წერტილის NextXID:          %u:%u\n"
 
-#: pg_controldata.c:252
+#: pg_controldata.c:263
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "უახლესი საკონტროლო წერტილის NextOID:          %u\n"
 
-#: pg_controldata.c:254
+#: pg_controldata.c:265
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "უახლესი საკონტროლო წერტილის NextMultiXactId:  %u\n"
 
-#: pg_controldata.c:256
+#: pg_controldata.c:267
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "უახლესი საკონტროლო წერტილის NextMultiOffset:  %u\n"
 
-#: pg_controldata.c:258
+#: pg_controldata.c:269
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestXID:        %u\n"
 
-#: pg_controldata.c:260
+#: pg_controldata.c:271
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestXID's DB:   %u\n"
 
-#: pg_controldata.c:262
+#: pg_controldata.c:273
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestActiveXID:  %u\n"
 
-#: pg_controldata.c:264
+#: pg_controldata.c:275
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestMultiXid:   %u\n"
 
-#: pg_controldata.c:266
+#: pg_controldata.c:277
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestMulti's DB: %u\n"
 
-#: pg_controldata.c:268
+#: pg_controldata.c:279
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "უახლესი საკონტროლო წერტილის oldestCommitTsXid:%u\n"
 
-#: pg_controldata.c:270
+#: pg_controldata.c:281
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "უახლესი საკონტროლო წერტილის newestCommitTsXid:%u\n"
 
-#: pg_controldata.c:272
+#: pg_controldata.c:283
 #, c-format
 msgid "Time of latest checkpoint:            %s\n"
 msgstr "უახლესი საკონტოლო წერტილის დრო:            %s\n"
 
-#: pg_controldata.c:274
+#: pg_controldata.c:285
 #, c-format
 msgid "Fake LSN counter for unlogged rels:   %X/%X\n"
 msgstr "LSN-ის ყალბი მთვლელი არაჟურნალიზებადი ურთ-თვის:   %X/%X\n"
 
-#: pg_controldata.c:276
+#: pg_controldata.c:287
 #, c-format
 msgid "Minimum recovery ending location:     %X/%X\n"
 msgstr "მინიმალური აღდგენის დასასრულის მდებარეობა     %X/%X\n"
 
-#: pg_controldata.c:278
+#: pg_controldata.c:289
 #, c-format
 msgid "Min recovery ending loc's timeline:   %u\n"
 msgstr "მინ. აღდგ დასასრ მდებარ დროის ხაზი:    %u\n"
 
-#: pg_controldata.c:280
+#: pg_controldata.c:291
 #, c-format
 msgid "Backup start location:                %X/%X\n"
 msgstr "მარქაფის დაწყების მდებარეობა:                %X/%X\n"
 
-#: pg_controldata.c:282
+#: pg_controldata.c:293
 #, c-format
 msgid "Backup end location:                  %X/%X\n"
 msgstr "მარქაფს დასასრულის მდებარეობა:                  %X/%X\n"
 
-#: pg_controldata.c:284
+#: pg_controldata.c:295
 #, c-format
 msgid "End-of-backup record required:        %s\n"
 msgstr "მარქაფის-ბოლო ჩანაწერი აუცილებელია:       %s\n"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:296
 msgid "no"
 msgstr "არა"
 
-#: pg_controldata.c:285
+#: pg_controldata.c:296
 msgid "yes"
 msgstr "დიახ"
 
-#: pg_controldata.c:286
+#: pg_controldata.c:297
 #, c-format
 msgid "wal_level setting:                    %s\n"
 msgstr "wal_level პარამეტრი:                    %s\n"
 
-#: pg_controldata.c:288
+#: pg_controldata.c:299
 #, c-format
 msgid "wal_log_hints setting:                %s\n"
 msgstr "wal_log_hints პარამეტრი:                %s\n"
 
-#: pg_controldata.c:290
+#: pg_controldata.c:301
 #, c-format
 msgid "max_connections setting:              %d\n"
 msgstr "max_connections პარამეტრი:              %d\n"
 
-#: pg_controldata.c:292
+#: pg_controldata.c:303
 #, c-format
 msgid "max_worker_processes setting:         %d\n"
 msgstr "max_worker_processes პარამეტრი:         %d\n"
 
-#: pg_controldata.c:294
+#: pg_controldata.c:305
 #, c-format
 msgid "max_wal_senders setting:              %d\n"
 msgstr "max_wal_senders პარამეტრი:              %d\n"
 
-#: pg_controldata.c:296
+#: pg_controldata.c:307
 #, c-format
 msgid "max_prepared_xacts setting:           %d\n"
 msgstr "max_prepared_xacts პარამეტრი:           %d\n"
 
-#: pg_controldata.c:298
+#: pg_controldata.c:309
 #, c-format
 msgid "max_locks_per_xact setting:           %d\n"
 msgstr "max_locks_per_xact პარამეტრი:           %d\n"
 
-#: pg_controldata.c:300
+#: pg_controldata.c:311
 #, c-format
 msgid "track_commit_timestamp setting:       %s\n"
 msgstr "track_commit_timestamp პარამეტრი:       %s\n"
 
-#: pg_controldata.c:302
+#: pg_controldata.c:313
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "მონაცემების სწორების მაქსიმუმი:            %u\n"
 
-#: pg_controldata.c:305
+#: pg_controldata.c:316
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "ბაზის ბლოკის ზომა:                  %u\n"
 
-#: pg_controldata.c:307
+#: pg_controldata.c:318
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "დიდი ურთიერთობის სეგმენტები თითოეულ ბლოკში: %u\n"
 
-#: pg_controldata.c:309
+#: pg_controldata.c:320
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "WAL ბლოკის ზომა:                       %u\n"
 
-#: pg_controldata.c:311
+#: pg_controldata.c:322
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "ბაიტები თითოეულ WAL სეგმენტში:         %u\n"
 
-#: pg_controldata.c:313
+#: pg_controldata.c:324
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "იდენტიფიკატორების მაქსიმალური სიგრძე:     %u\n"
 
-#: pg_controldata.c:315
+#: pg_controldata.c:326
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "ინდექსში სვეტების მაქსიმალური რაოდენობა:          %u\n"
 
-#: pg_controldata.c:317
+#: pg_controldata.c:328
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "TOAST ნაგლეჯის მაქსიმალური ზომა:        %u\n"
 
-#: pg_controldata.c:319
+#: pg_controldata.c:330
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "დიდი ობიექტის ნაგლეჯის ზომა:        %u\n"
 
-#: pg_controldata.c:322
+#: pg_controldata.c:333
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "თარიღის ტიპის საცავი:               %s\n"
 
-#: pg_controldata.c:323
+#: pg_controldata.c:334
 msgid "64-bit integers"
 msgstr "64-ბიტიანი მთელ რიცხვები"
 
-#: pg_controldata.c:324
+#: pg_controldata.c:335
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Float8 არგუმენტის გადაცემა:              %s\n"
 
-#: pg_controldata.c:325
+#: pg_controldata.c:336
 msgid "by reference"
 msgstr "ბმით"
 
-#: pg_controldata.c:325
+#: pg_controldata.c:336
 msgid "by value"
 msgstr "მნიშვნელობით"
 
-#: pg_controldata.c:326
+#: pg_controldata.c:337
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "მონაცემების გვერდის საკონტროლო ჯამის ვერსია:           %u\n"
 
-#: pg_controldata.c:328
+#: pg_controldata.c:339
+#, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "ნაგულისხმევი სტრიქონის მონაცემების ნიშნიანობა:         %s\n"
+
+#: pg_controldata.c:340
+msgid "signed"
+msgstr "ნიშნიანი"
+
+#: pg_controldata.c:340
+msgid "unsigned"
+msgstr "უნიშნო"
+
+#: pg_controldata.c:341
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "ფსევდოავთენტიკაციის შემთხვევითი რიცხვი:           %s\n"

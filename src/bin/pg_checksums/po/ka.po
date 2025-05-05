@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_checksums (PostgreSQL) 17\n"
+"Project-Id-Version: pg_checksums (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 09:53+0000\n"
-"PO-Revision-Date: 2024-02-11 14:43+0100\n"
+"POT-Creation-Date: 2025-03-02 16:24+0000\n"
+"PO-Revision-Date: 2025-03-02 18:36+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,27 +16,125 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "შეცდომა: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "გაფრთხილება: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "დეტალები: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
+
+#: ../../common/controldata_utils.c:97
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:110
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:119
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "\"%s\"-ის წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:168
+msgid "byte ordering mismatch"
+msgstr "ბაიტების მიმდევრობა არ ემთხვევა"
+
+#: ../../common/controldata_utils.c:170
+#, c-format
+msgid ""
+"possible byte ordering mismatch\n"
+"The byte ordering used to store the pg_control file might not match the one\n"
+"used by this program.  In that case the results below would be incorrect, and\n"
+"the PostgreSQL installation would be incompatible with this data directory."
+msgstr ""
+"ბაიტების მიმდევრობის შესაძლო შეუსაბამობა pg_control ფაილის შესანახად გამოყენებული \n"
+"ბაიტების მიმდევრობა შესაძლოა არ ემთხვეოდეს ამ პროგრამის მიერ გამოყენებულს. ამ შემთხვევაში  ქვემოთ \n"
+"მოცემული შედეგები არასწორი იქნება და PostgreSQL ეს აგება ამ მონაცემთა საქაღალდესთან შეუთავსებელი იქნება."
+
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:71
+#: ../../common/file_utils.c:348 ../../common/file_utils.c:407
+#: ../../common/file_utils.c:481 pg_checksums.c:191
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:249
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:419
+#: ../../common/file_utils.c:489
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/file_utils.c:77
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "შეუძლებელია ფაილური სისტემის სინქრონიზაცია ფაილისთვის \"%s\": %m"
+
+#: ../../common/file_utils.c:121 ../../common/file_utils.c:567
+#: pg_checksums.c:337 pg_checksums.c:406
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:131 ../../common/file_utils.c:228
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
+
+#: ../../common/file_utils.c:152 ../../common/file_utils.c:282
+#: pg_checksums.c:309
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:170 ../../common/file_utils.c:316
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:499
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
 
 #: ../../fe_utils/option_utils.c:69
 #, c-format
@@ -48,17 +146,12 @@ msgstr "არასწორი მნიშვნელობა \"%s\" პა
 msgid "%s must be in range %d..%d"
 msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
 
-#: ../../fe_utils/option_utils.c:99
-#, c-format
-msgid "this build does not support sync method \"%s\""
-msgstr "ამ აგებას სინქრონიზაციის მეთოდის \"%s\" მხარდაჭერა არ გააჩნია"
-
 #: ../../fe_utils/option_utils.c:106
 #, c-format
 msgid "unrecognized sync method: %s"
 msgstr "უცნობი სინქრონიზაციის მეთოდი: %s"
 
-#: pg_checksums.c:70
+#: pg_checksums.c:69
 #, c-format
 msgid ""
 "%s enables, disables, or verifies data checksums in a PostgreSQL database cluster.\n"
@@ -67,17 +160,17 @@ msgstr ""
 "%s ჩართავს, გამორთავს და შეამოწმებს მონაცემების საკონტროლო ჯამებს PostgreSQL მონაცემთა ბაზის კლასტერში.\n"
 "\n"
 
-#: pg_checksums.c:71
+#: pg_checksums.c:70
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_checksums.c:72
+#: pg_checksums.c:71
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [პარამეტრი]... [მონაცემებისსაქაღალდე]\n"
 
-#: pg_checksums.c:73
+#: pg_checksums.c:72
 #, c-format
 msgid ""
 "\n"
@@ -86,62 +179,62 @@ msgstr ""
 "\n"
 "პარამეტრები:\n"
 
-#: pg_checksums.c:74
+#: pg_checksums.c:73
 #, c-format
 msgid " [-D, --pgdata=]DATADIR    data directory\n"
 msgstr " [-D, --pgdata=]DATADIR     მონაცემების საქაღალდე\n"
 
-#: pg_checksums.c:75
+#: pg_checksums.c:74
 #, c-format
 msgid "  -c, --check              check data checksums (default)\n"
 msgstr "  -c, --check              მონაცემების საკნტროლო ჯამის შემოწმება(ნაგულისხმები)\n"
 
-#: pg_checksums.c:76
+#: pg_checksums.c:75
 #, c-format
 msgid "  -d, --disable            disable data checksums\n"
 msgstr "  -d, --disable            მონაცემების საკონტროლო ჯამების გამორთვა\n"
 
-#: pg_checksums.c:77
+#: pg_checksums.c:76
 #, c-format
 msgid "  -e, --enable             enable data checksums\n"
 msgstr "  -e, --enable             მონაცემების საკონტროლო ჯამების ჩართვა\n"
 
-#: pg_checksums.c:78
+#: pg_checksums.c:77
 #, c-format
 msgid "  -f, --filenode=FILENODE  check only relation with specified filenode\n"
 msgstr "  -f, --filenode=ფაილისკვანძი  მხოლოდ მითითებულ ფაილის კვანძთან ურთიერთობის შემოწმება\n"
 
-#: pg_checksums.c:79
+#: pg_checksums.c:78
 #, c-format
 msgid "  -N, --no-sync            do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ ჩაწერას\n"
 
-#: pg_checksums.c:80
+#: pg_checksums.c:79
 #, c-format
 msgid "  -P, --progress           show progress information\n"
 msgstr "  -P, --progress                  მიმდინარეობის ინფორმაციის ჩვენება\n"
 
-#: pg_checksums.c:81
+#: pg_checksums.c:80
 #, c-format
 msgid "      --sync-method=METHOD set method for syncing files to disk\n"
 msgstr "      --sync-method=მეთოდი ფაილების დისკზე სინქრონიზაციის მეთოდის დაყენება\n"
 
-#: pg_checksums.c:82
+#: pg_checksums.c:81
 #, c-format
 msgid "  -v, --verbose            output verbose messages\n"
 msgstr "  -v, --verbose                   დამატებითი ინფორმაციის გამოტანა\n"
 
-#: pg_checksums.c:83
+#: pg_checksums.c:82
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_checksums.c:84
+#: pg_checksums.c:83
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_checksums.c:85
+#: pg_checksums.c:84
 #, c-format
 msgid ""
 "\n"
@@ -153,192 +246,179 @@ msgstr ""
 "თუ მონაცემების საქაღალდე მითითებული არაა, გამოყენებული იქნება \n"
 "გარემოს ცვლადი PGDATA.\n"
 
-#: pg_checksums.c:87
+#: pg_checksums.c:86
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "შეცდომების შესახებ მიწერეთ: <%s>\n"
 
-#: pg_checksums.c:88
+#: pg_checksums.c:87
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_checksums.c:145
+#: pg_checksums.c:144
 #, c-format
-msgid "%lld/%lld MB (%d%%) computed"
-msgstr "%lld/%lld მბ (%d%%) გამოთვლილია"
+#| msgid "%lld/%lld MB (%d%%) computed"
+msgid "%<PRId64>/%<PRId64> MB (%d%%) computed"
+msgstr "%<PRId64>/%<PRId64> მბ (%d%%) გამოთვლილია"
 
-#: pg_checksums.c:192
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
-
-#: pg_checksums.c:206
+#: pg_checksums.c:205
 #, c-format
 msgid "could not read block %u in file \"%s\": %m"
 msgstr "ბლოკის %u წაკითხვის შეცდომა ფაილში \"%s\": %m"
 
-#: pg_checksums.c:209
+#: pg_checksums.c:208
 #, c-format
 msgid "could not read block %u in file \"%s\": read %d of %d"
 msgstr "ბლოკის %u წაკითხვის შეცდომა ფაილში \"%s\": წაკითხულია %d %d-დან"
 
-#: pg_checksums.c:232
+#: pg_checksums.c:231
 #, c-format
 msgid "checksum verification failed in file \"%s\", block %u: calculated checksum %X but block contains %X"
 msgstr "საკონტროლო ჯამის გამოთვლის შეცდომა ფაილში \"%s\", ბლოკი \"%u\": გამოთვლილი საკონტროლო კამია %X, მაგრამ ბლოკი შეიცავს: %X"
 
-#: pg_checksums.c:255
+#: pg_checksums.c:254
 #, c-format
 msgid "seek failed for block %u in file \"%s\": %m"
 msgstr "გადახვევის შეცდომა ბლოკისთვის %u ფაილში \"%s\": %m"
 
-#: pg_checksums.c:262
+#: pg_checksums.c:261
 #, c-format
 msgid "could not write block %u in file \"%s\": %m"
 msgstr "ბლოკის %u ჩაწერის შეცდომა ფაილში \"%s\": %m"
 
-#: pg_checksums.c:265
+#: pg_checksums.c:264
 #, c-format
 msgid "could not write block %u in file \"%s\": wrote %d of %d"
 msgstr "ბლოკის %u ჩაწერის შეცდომა ფაილში \"%s\": ჩაწერილია %d %d-დან"
 
-#: pg_checksums.c:277
+#: pg_checksums.c:276
 #, c-format
 msgid "checksums verified in file \"%s\""
 msgstr "ფაილის საკონტროლო ჯამები შემოწმებულია ფაილში: \"%s\""
 
-#: pg_checksums.c:279
+#: pg_checksums.c:278
 #, c-format
 msgid "checksums enabled in file \"%s\""
 msgstr "ფაილის საკონტროლო ჯამები ჩართულია ფაილიდან: \"%s\""
 
-#: pg_checksums.c:310
-#, c-format
-msgid "could not open directory \"%s\": %m"
-msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
-
-#: pg_checksums.c:334 pg_checksums.c:403
-#, c-format
-msgid "could not stat file \"%s\": %m"
-msgstr "ფაილი \"%s\" არ არსებობს: %m"
-
-#: pg_checksums.c:358
+#: pg_checksums.c:361
 #, c-format
 msgid "invalid segment number %d in file name \"%s\""
 msgstr "სეგმენტის არასწორი ნომერი %d ფაილის სახელში \"%s\""
 
-#: pg_checksums.c:505 pg_checksums.c:521 pg_checksums.c:531 pg_checksums.c:539
+#: pg_checksums.c:508 pg_checksums.c:524 pg_checksums.c:534 pg_checksums.c:542
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_checksums.c:520
+#: pg_checksums.c:523
 #, c-format
 msgid "no data directory specified"
 msgstr "მონაცემების საქაღალდე მითითებული არაა"
 
-#: pg_checksums.c:529
+#: pg_checksums.c:532
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
 
-#: pg_checksums.c:538
+#: pg_checksums.c:541
 #, c-format
 msgid "option -f/--filenode can only be used with --check"
 msgstr "პარამეტრი -f/--filenode მხოლოდ --check -თან ერთად შეიძლება იქნას გამოყენებული"
 
-#: pg_checksums.c:546
+#: pg_checksums.c:549
 #, c-format
 msgid "pg_control CRC value is incorrect"
 msgstr "pg_control CRC მნიშვნელობა არასწორია"
 
-#: pg_checksums.c:549
+#: pg_checksums.c:552
 #, c-format
 msgid "cluster is not compatible with this version of pg_checksums"
 msgstr "კლასტერი შეუთავსებელია pg_checksums-ის ამ ვერსიასთან"
 
-#: pg_checksums.c:553
+#: pg_checksums.c:556
 #, c-format
 msgid "database cluster is not compatible"
 msgstr "ბაზის კლასტერი შეუთავსებელია"
 
-#: pg_checksums.c:554
+#: pg_checksums.c:557
 #, c-format
 msgid "The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u."
 msgstr "ბაზის კლასტერის ინიციალიზაცია მოხდა ბლოკის ზომით %u მაშინ, როცა pg_checksums აგებულია ბლოკის ზომით: %u."
 
-#: pg_checksums.c:566
+#: pg_checksums.c:569
 #, c-format
 msgid "cluster must be shut down"
 msgstr "კლასტერი უნდა გამოირთოს"
 
-#: pg_checksums.c:570
+#: pg_checksums.c:573
 #, c-format
 msgid "data checksums are not enabled in cluster"
 msgstr "კლასტერში მონაცემების საკონტროლო ჯამები ჩართული არაა"
 
-#: pg_checksums.c:574
+#: pg_checksums.c:577
 #, c-format
 msgid "data checksums are already disabled in cluster"
 msgstr "კლასტერში მონაცემების საკონტროლო ჯამები უკვე გამორთულია"
 
-#: pg_checksums.c:578
+#: pg_checksums.c:581
 #, c-format
 msgid "data checksums are already enabled in cluster"
 msgstr "კლასტერში მონაცემების საკონტროლო ჯამები უკვე ჩართულია"
 
-#: pg_checksums.c:602
+#: pg_checksums.c:605
 #, c-format
 msgid "Checksum operation completed\n"
 msgstr "საკონტროლო ჯამების ოპერაცია დასრულდა\n"
 
-#: pg_checksums.c:603
+#: pg_checksums.c:606
 #, c-format
-msgid "Files scanned:   %lld\n"
-msgstr "დასკანერებულია ფაილები:   %lld\n"
-
-#: pg_checksums.c:604
-#, c-format
-msgid "Blocks scanned:  %lld\n"
-msgstr "დასკარერებული ბლოკები:  %lld\n"
+#| msgid "Files scanned:   %lld\n"
+msgid "Files scanned:   %<PRId64>\n"
+msgstr "დასკანირებულია ფაილები:   %<PRId64>\n"
 
 #: pg_checksums.c:607
 #, c-format
-msgid "Bad checksums:  %lld\n"
-msgstr "ცუდი საკონტროლო ჯამები:  %lld\n"
+msgid "Blocks scanned:  %<PRId64>\n"
+msgstr "დასკანირებულია ბლოკები:  %<PRId64>\n"
 
-#: pg_checksums.c:608 pg_checksums.c:640
+#: pg_checksums.c:610
+#, c-format
+msgid "Bad checksums:  %<PRId64>\n"
+msgstr "ცუდი საკონტროლო ჯამები:  %<PRId64>\n"
+
+#: pg_checksums.c:611 pg_checksums.c:643
 #, c-format
 msgid "Data checksum version: %u\n"
 msgstr "მონაცემების საკონტროლო ჯამის ვერსია: %u\n"
 
-#: pg_checksums.c:615
+#: pg_checksums.c:618
 #, c-format
-msgid "Files written:  %lld\n"
-msgstr "ჩაწერილი ფაილები:  %lld\n"
+msgid "Files written:  %<PRId64>\n"
+msgstr "ჩაწერილი ფაილები:  %<PRId64>\n"
 
-#: pg_checksums.c:616
+#: pg_checksums.c:619
 #, c-format
-msgid "Blocks written: %lld\n"
-msgstr "ჩაწერილი ბლოკები: %lld\n"
+msgid "Blocks written: %<PRId64>\n"
+msgstr "ჩაწერილი ბლოკები: %<PRId64>\n"
 
-#: pg_checksums.c:632
+#: pg_checksums.c:635
 #, c-format
 msgid "syncing data directory"
 msgstr "მონაცემების საქაღალდის სინქრონიზაცია"
 
-#: pg_checksums.c:636
+#: pg_checksums.c:639
 #, c-format
 msgid "updating control file"
 msgstr "საკონტროლო ფაილის ატვირთვა"
 
-#: pg_checksums.c:642
+#: pg_checksums.c:645
 #, c-format
 msgid "Checksums enabled in cluster\n"
 msgstr "კლასტერში მონაცემების საკონტროლო ჯამები ჩართულია\n"
 
-#: pg_checksums.c:644
+#: pg_checksums.c:647
 #, c-format
 msgid "Checksums disabled in cluster\n"
 msgstr "კლასტერში საკონტროლო ჯამები გამორთულია\n"

@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 17\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-02-11 09:52+0000\n"
-"PO-Revision-Date: 2024-02-11 14:42+0100\n"
+"POT-Creation-Date: 2025-02-27 09:54+0000\n"
+"PO-Revision-Date: 2025-02-27 12:57+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,65 +16,76 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "შეცდომა: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "warning: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "დეტალები: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "მინიშნება: "
 
-#: pg_archivecleanup.c:68
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: pg_archivecleanup.c:69
 #, c-format
 msgid "archive location \"%s\" does not exist"
 msgstr "არქივის მდებარეობა არ არსებობს: %s"
 
-#: pg_archivecleanup.c:100
+#: pg_archivecleanup.c:101
 #, c-format
 msgid "could not open archive location \"%s\": %m"
 msgstr "არქივის მდებარეობის გახსნის შეცდომა\"%s\": %m"
 
-#: pg_archivecleanup.c:164
+#: pg_archivecleanup.c:165
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "ფაილის წაშლის შეცდომა \"%s\": %m"
 
-#: pg_archivecleanup.c:169
+#: pg_archivecleanup.c:170
 #, c-format
 msgid "could not read archive location \"%s\": %m"
 msgstr "არქივის მდებარეობის წაკითხვის შეცდომა\"%s\": %m"
 
-#: pg_archivecleanup.c:172
+#: pg_archivecleanup.c:173
 #, c-format
 msgid "could not close archive location \"%s\": %m"
 msgstr "არქივის მდებარეობის დაყენების შეცდომა\"%s\": %m"
 
-#: pg_archivecleanup.c:245
+#: pg_archivecleanup.c:246
 #, c-format
 msgid "invalid file name argument"
 msgstr "ფაილის სახელის არასწორი არგუმენტი"
 
-#: pg_archivecleanup.c:246 pg_archivecleanup.c:334 pg_archivecleanup.c:354
-#: pg_archivecleanup.c:366 pg_archivecleanup.c:373
+#: pg_archivecleanup.c:247 pg_archivecleanup.c:335 pg_archivecleanup.c:355
+#: pg_archivecleanup.c:367 pg_archivecleanup.c:374
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
 
-#: pg_archivecleanup.c:259
+#: pg_archivecleanup.c:260
 #, c-format
 msgid ""
 "%s removes older WAL files from PostgreSQL archives.\n"
@@ -83,17 +94,17 @@ msgstr ""
 "%s PostgreSQL-ის არქივებიდან ძველი WAL ფაილების წაშლა.\n"
 "\n"
 
-#: pg_archivecleanup.c:260
+#: pg_archivecleanup.c:261
 #, c-format
 msgid "Usage:\n"
 msgstr "გამოყენება:\n"
 
-#: pg_archivecleanup.c:261
+#: pg_archivecleanup.c:262
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
 msgstr "  %s [პარამეტრი]... არქივისმდგომარეობა უძველესიშენახულიWALფაილი\n"
 
-#: pg_archivecleanup.c:262
+#: pg_archivecleanup.c:263
 #, c-format
 msgid ""
 "\n"
@@ -102,17 +113,17 @@ msgstr ""
 "\n"
 "პარამეტრები\n"
 
-#: pg_archivecleanup.c:263
+#: pg_archivecleanup.c:264
 #, c-format
 msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
 msgstr "  -b, --clean-backup-history  ფაილების მოსუფთავება მარქაფი ისტორიის ფაილების ჩათვლით\n"
 
-#: pg_archivecleanup.c:264
+#: pg_archivecleanup.c:265
 #, c-format
 msgid "  -d, --debug                 generate debug output (verbose mode)\n"
 msgstr "  -d, --debug               გასამართი ინფორმაციის გამოტანა(დამატებითი შეტყობინებების რეჟიმი)\n"
 
-#: pg_archivecleanup.c:265
+#: pg_archivecleanup.c:266
 #, c-format
 msgid ""
 "  -n, --dry-run               dry run, show the names of the files that would be\n"
@@ -121,16 +132,13 @@ msgstr ""
 "  -n, --dry-run             მშრალი გაშვება. ფაილების წაშლის მაგიერ მხოლოდ მათი \n"
 "                                    სახელების ჩვენება\n"
 
-#: pg_archivecleanup.c:267
+#: pg_archivecleanup.c:268
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
 
-#: pg_archivecleanup.c:268
+#: pg_archivecleanup.c:269
 #, c-format
-#| msgid ""
-#| "  -L, --use-list=FILENAME      use table of contents from this file for\n"
-#| "                               selecting/ordering output\n"
 msgid ""
 "  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
 "                              clean up\n"
@@ -138,27 +146,27 @@ msgstr ""
 "  -x, --strip-extension=გაფ   ამ გაფართოების მოცილებაფაილის მოსასუფთავებლების\n"
 "                              სიაში ჩასმამდე\n"
 
-#: pg_archivecleanup.c:270
+#: pg_archivecleanup.c:271
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: pg_archivecleanup.c:271
+#: pg_archivecleanup.c:272
 #, c-format
 msgid ""
 "\n"
-"For use as archive_cleanup_command in postgresql.conf:\n"
+"For use as \"archive_cleanup_command\" in postgresql.conf:\n"
 "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
 "e.g.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgstr ""
 "\n"
-"გამოსაყენებლად, როგორც archive_cleanup_command postgresql.conf-ში: \n"
+"გამოსაყენებლად, როგორც \"archive_cleanup_command\" postgresql.conf-ში: \n"
 "  archive_cleanup_command = 'pg_archivecleanup [პარამეტრი]... არქივისმდებარეობა %%r'\n"
 "მაგ: \n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 
-#: pg_archivecleanup.c:276
+#: pg_archivecleanup.c:277
 #, c-format
 msgid ""
 "\n"
@@ -171,7 +179,7 @@ msgstr ""
 "მაგ:\n"
 "  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
 
-#: pg_archivecleanup.c:280
+#: pg_archivecleanup.c:281
 #, c-format
 msgid ""
 "\n"
@@ -180,22 +188,22 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: pg_archivecleanup.c:281
+#: pg_archivecleanup.c:282
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: pg_archivecleanup.c:353
+#: pg_archivecleanup.c:354
 #, c-format
 msgid "must specify archive location"
 msgstr "არქივის მდებარეობის მითითება აუცილებელია"
 
-#: pg_archivecleanup.c:365
+#: pg_archivecleanup.c:366
 #, c-format
 msgid "must specify oldest kept WAL file"
 msgstr "დატოვებული უძველესი WAL ფაილის მითითება აუცილებელია"
 
-#: pg_archivecleanup.c:372
+#: pg_archivecleanup.c:373
 #, c-format
 msgid "too many command-line arguments"
 msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი"

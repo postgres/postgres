@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpg (PostgreSQL) 17\n"
+"Project-Id-Version: ecpg (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-03-13 00:40+0000\n"
-"PO-Revision-Date: 2024-03-13 02:00+0100\n"
+"POT-Creation-Date: 2025-04-25 17:40+0000\n"
+"PO-Revision-Date: 2025-04-26 05:04+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,49 +16,49 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
-#: descriptor.c:64
+#: descriptor.c:63
 #, c-format
 msgid "variable \"%s\" must have a numeric type"
 msgstr "ცვლად \"%s\"-ს რიცხვობრივი ტიპი უნდა გააჩნდეს"
 
-#: descriptor.c:124 descriptor.c:155
+#: descriptor.c:119 descriptor.c:149
 #, c-format
 msgid "descriptor %s bound to connection %s does not exist"
 msgstr "დესკრიპტორი %s მიბმულია შეერთებაზე %s, არ არსებობს"
 
-#: descriptor.c:126 descriptor.c:157
+#: descriptor.c:121 descriptor.c:151
 #, c-format
 msgid "descriptor %s bound to the default connection does not exist"
 msgstr "ნაგულისხმებ შეერთებაზე მიბმული დესკრიპტორი (\"%s\") არ არსებობს"
 
-#: descriptor.c:172 descriptor.c:224
+#: descriptor.c:166 descriptor.c:218
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "დესკრიპტორის თავსართის ჩანაწერი \"%d\" არ არსებობს"
 
-#: descriptor.c:194
+#: descriptor.c:188
 #, c-format
 msgid "nullable is always 1"
 msgstr "განულებადი ყოველთვის 1-ს უდრის"
 
-#: descriptor.c:197
+#: descriptor.c:191
 #, c-format
 msgid "key_member is always 0"
 msgstr "key_member ყოველთვის 0-ს უდრის"
 
-#: descriptor.c:291
+#: descriptor.c:285
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "დესკრიპტორის ჩანაწერი \"%s\" განხორციელებული არაა"
 
-#: descriptor.c:301
+#: descriptor.c:295
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "დესკრიპტორის ჩანაწერის (\"%s\") დაყენების შეცდომა"
 
-#: ecpg.c:36
+#: ecpg.c:37
 #, c-format
 msgid ""
 "%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
@@ -67,7 +67,7 @@ msgstr ""
 "%s PostgreSQL-ში ჩაშენებული SQL პრეპროცესორია C-ზე დაწერილი პროგრამებისთვის.\n"
 "\n"
 
-#: ecpg.c:38
+#: ecpg.c:39
 #, c-format
 msgid ""
 "Usage:\n"
@@ -78,12 +78,12 @@ msgstr ""
 "  %s [პარამეტრი]... ფაილი...\n"
 "\n"
 
-#: ecpg.c:41
+#: ecpg.c:42
 #, c-format
 msgid "Options:\n"
 msgstr "პარამეტრები:\n"
 
-#: ecpg.c:42
+#: ecpg.c:43
 #, c-format
 msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
@@ -92,7 +92,7 @@ msgstr ""
 "  -c             ჩადგმული SQL კოდიდან C-ის კოდის ავტომატური გენერაცია;\n"
 "                 ეს გავლენას ახდენს EXEC SQL TYPE-ზე\n"
 
-#: ecpg.c:44
+#: ecpg.c:45
 #, c-format
 msgid ""
 "  -C MODE        set compatibility mode; MODE can be one of\n"
@@ -101,37 +101,37 @@ msgstr ""
 "  -C რეჟიმი        თავსებადობის დაყენება. რეჟიმი შეიძლება იყოს:\n"
 "                 \"INFORMIX\", \"INFORMIX_SE\", \"ORACLE\"\n"
 
-#: ecpg.c:47
+#: ecpg.c:48
 #, c-format
 msgid "  -d             generate parser debug output\n"
 msgstr "  -d             დამმუშავებლის გასამართი ინფორმაციის გენერაცია\n"
 
-#: ecpg.c:49
+#: ecpg.c:50
 #, c-format
 msgid "  -D SYMBOL      define SYMBOL\n"
 msgstr "  -D ფუნქცია      ფუნქციის აღწერა\n"
 
-#: ecpg.c:50
+#: ecpg.c:51
 #, c-format
 msgid "  -h             parse a header file, this option includes option \"-c\"\n"
 msgstr "  -h             თავსართის ფაილის დამუშავება. ეს პარამეტრი ასევე შეიცავს პარამეტრს \"-c\"\n"
 
-#: ecpg.c:51
+#: ecpg.c:52
 #, c-format
 msgid "  -i             parse system include files as well\n"
 msgstr "  -i             დამუშავებისას სისტემური ფაილების ჩართვა\n"
 
-#: ecpg.c:52
+#: ecpg.c:53
 #, c-format
 msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
 msgstr "  -I საქაღალდე   თავსართის ფაილების ძებნისას მათი ალტერნატიული მდებარეობა\n"
 
-#: ecpg.c:53
+#: ecpg.c:54
 #, c-format
 msgid "  -o OUTFILE     write result to OUTFILE\n"
 msgstr "  -o გამოსატანიფაილი     გამოტანილი ინფორმაციის მითითებულ ფაილში ჩაწერა\n"
 
-#: ecpg.c:54
+#: ecpg.c:55
 #, c-format
 msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
@@ -140,27 +140,27 @@ msgstr ""
 "  -r პარამეტრი      გაშვების ქცევა; პარამეტრი შეიძლება იყოს:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 
-#: ecpg.c:56
+#: ecpg.c:57
 #, c-format
 msgid "  --regression   run in regression testing mode\n"
 msgstr "  --regression   რეგრესიის ტესტირების რეჟიმში გაშვება\n"
 
-#: ecpg.c:57
+#: ecpg.c:58
 #, c-format
 msgid "  -t             turn on autocommit of transactions\n"
 msgstr "  -t             ტრანზაქციების ავტომატური გადაცემის ჩართვა\n"
 
-#: ecpg.c:58
+#: ecpg.c:59
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
 msgstr "  -V, --version              ვერსიის ჩვენება და გასვლა\n"
 
-#: ecpg.c:59
+#: ecpg.c:60
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
 msgstr "  -?, --help     ამ დახმარების ჩვენება და გასვლა\n"
 
-#: ecpg.c:60
+#: ecpg.c:61
 #, c-format
 msgid ""
 "\n"
@@ -171,7 +171,7 @@ msgstr ""
 "თუ გამოსატანი ფაილი მითითებული არაა, სახელი იქმნება \n"
 "შეყვანის ფაილის სახელისთვის .c- ს დამატებით, წარდგენის შემთხვევაში .pgc- ის მოშლის შემდეგ.\n"
 
-#: ecpg.c:62
+#: ecpg.c:63
 #, c-format
 msgid ""
 "\n"
@@ -180,474 +180,478 @@ msgstr ""
 "\n"
 "შეცდომების შესახებ მიწერეთ: %s\n"
 
-#: ecpg.c:63
+#: ecpg.c:64
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s-ის საწყისი გვერდია: <%s>\n"
 
-#: ecpg.c:141
+#: ecpg.c:152
 #, c-format
 msgid "%s: could not locate my own executable path\n"
 msgstr "%s: ჩემი საკუთარი გამშვები ფაილის ბილიკის მოძებნა შეუძლებელია\n"
 
-#: ecpg.c:184 ecpg.c:235 ecpg.c:249 ecpg.c:275
+#: ecpg.c:195 ecpg.c:246 ecpg.c:260 ecpg.c:286
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'.\n"
 
-#: ecpg.c:192
+#: ecpg.c:203
 #, c-format
 msgid "%s: parser debug support (-d) not available\n"
 msgstr "%s: დამმუშავებლის გამართვის მხარდაჭერა (-d) არ არსებობს\n"
 
-#: ecpg.c:219 ecpg.c:334 ecpg.c:345
+#: ecpg.c:230 ecpg.c:345 ecpg.c:356
 #, c-format
 msgid "%s: could not open file \"%s\": %m\n"
 msgstr "%s: ფაილის გახსნის შეცდომა \"%s\": %m\n"
 
-#: ecpg.c:263
+#: ecpg.c:274
 #, c-format
 msgid "%s, the PostgreSQL embedded C preprocessor, version %s\n"
 msgstr "%s, PostgreSQL-ის ჩაშენებული C პრეპროცესორი, ვერსია %s\n"
 
-#: ecpg.c:265
+#: ecpg.c:276
 #, c-format
 msgid "EXEC SQL INCLUDE ... search starts here:\n"
 msgstr "EXEC SQL INCLUDE ... ძებნა იწყება აქ:\n"
 
-#: ecpg.c:268
+#: ecpg.c:279
 #, c-format
 msgid "end of search list\n"
 msgstr "ძებნის სიის დასასრული\n"
 
-#: ecpg.c:274
+#: ecpg.c:285
 #, c-format
 msgid "%s: no input files specified\n"
 msgstr "%s: შეყვანის ფაილები მითითებული არაა\n"
 
-#: ecpg.c:478
+#: ecpg.c:491
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "კურსორი \"%s\" აღწერილია, მაგრამ არა გახსნილი"
 
-#: ecpg.c:491 preproc.y:130
+#: ecpg.c:504 util.c:75
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "გამოტანის ფაილის წაშლის შეცდომა: \"%s\"\n"
 
-#: pgc.l:520
+#: pgc.l:542
 #, c-format
 msgid "unterminated /* comment"
 msgstr "დაუსრულებელი /* კომენტარი"
 
-#: pgc.l:537
+#: pgc.l:560
 #, c-format
 msgid "unterminated bit string literal"
 msgstr "გაწყვეტილი ბიტური სტრიქონი"
 
-#: pgc.l:545
+#: pgc.l:570
 #, c-format
 msgid "unterminated hexadecimal string literal"
 msgstr "გაწყვეტილი თექვსმეტობითი სტრიქონი"
 
-#: pgc.l:620
+#: pgc.l:644
 #, c-format
 msgid "invalid bit string literal"
 msgstr "არასწორი ბიტური სტრიქონი"
 
-#: pgc.l:625
+#: pgc.l:649
 #, c-format
 msgid "invalid hexadecimal string literal"
 msgstr "არასწორი თექვსმეტობითი სტრიქონი"
 
-#: pgc.l:643
+#: pgc.l:667
 #, c-format
 msgid "unhandled previous state in xqs\n"
 msgstr "დაუმუშავებელი წინა მდგომარეობა დაუხურავი ბრჭყალის აღმოჩენისას\n"
 
-#: pgc.l:669 pgc.l:778
+#: pgc.l:700 pgc.l:820
 #, c-format
 msgid "unterminated quoted string"
 msgstr "ბრჭყალებში ჩასმული ციტატის დაუსრულებელი სტრიქონი"
 
-#: pgc.l:720
+#: pgc.l:753
 #, c-format
 msgid "unterminated dollar-quoted string"
 msgstr "$-ით დაწყებული სტრიქონ დაუმთავრებელია"
 
-#: pgc.l:738 pgc.l:758
+#: pgc.l:772 pgc.l:793
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "გამყოფის ნულოვანი სიგრძის იდენტიფიკატორი"
 
-#: pgc.l:769
+#: pgc.l:809
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "დაუსრულებელი იდენტიფიკატორი ბრჭყალებში"
 
-#: pgc.l:938
+#: pgc.l:985
+#, c-format
+msgid "parameter number too large"
+msgstr "პარამეტრების რაოდენობა მეტისმეტად დიდია"
+
+#: pgc.l:990
 #, c-format
 msgid "trailing junk after parameter"
 msgstr "პარამეტრის შემდეგ მოყოლილი მონაცემები ნაგავია"
 
-#: pgc.l:990 pgc.l:993 pgc.l:996 pgc.l:999 pgc.l:1002 pgc.l:1005
+#: pgc.l:1042 pgc.l:1045 pgc.l:1048
 #, c-format
 msgid "trailing junk after numeric literal"
 msgstr "რიცხვითი მნიშვნელობის შემდეგ მონაცემები ნაგავია"
 
-#: pgc.l:1127
+#: pgc.l:1177
 #, c-format
 msgid "nested /* ... */ comments"
 msgstr "ჩადგმული /* ... */ კომენტარები"
 
-#: pgc.l:1220
+#: pgc.l:1279
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "ბრძანებაში EXEC SQL UNDEF იდენტიფიკატორი აკლია"
 
-#: pgc.l:1238 pgc.l:1251 pgc.l:1267 pgc.l:1280
+#: pgc.l:1299 pgc.l:1312 pgc.l:1328 pgc.l:1341
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "\"EXEC SQL IFDEF\"-ის მეტისმეტად ბევრი ჩადგმული პირობა"
 
-#: pgc.l:1296 pgc.l:1307 pgc.l:1322 pgc.l:1344
+#: pgc.l:1357 pgc.l:1368 pgc.l:1384 pgc.l:1406
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "შესატყვისი \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\" არ არსებობს"
 
-#: pgc.l:1298 pgc.l:1309 pgc.l:1490
+#: pgc.l:1359 pgc.l:1370 pgc.l:1565
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "აკლია \"EXEC SQL ENDIF;\""
 
-#: pgc.l:1324 pgc.l:1346
+#: pgc.l:1386 pgc.l:1408
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "ერთზე მეტი EXEC SQL ELSE"
 
-#: pgc.l:1369 pgc.l:1383
+#: pgc.l:1431 pgc.l:1445
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "უწყვილო EXEC SQL ENDIF"
 
-#: pgc.l:1438
+#: pgc.l:1507
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "ბრძანებას: EXEC SQL IFDEFიდენტიფიკატორი აკლია"
 
-#: pgc.l:1447
+#: pgc.l:1516
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "ბრძანებას: EXEC SQL DEFINE იდენტიფიკატორი აკლია"
 
-#: pgc.l:1480
+#: pgc.l:1554
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "სინტაქსური შეცდომა ბრძანებაში: EXEC SQL INCLUDE"
 
-#: pgc.l:1530
+#: pgc.l:1609
 #, c-format
 msgid "internal error: unreachable state; please report this to <%s>"
 msgstr "შიდა შეცდომა: მდგომარეობა მიუწვდომელია; მისწერეთ ეს <%s>-ს"
 
-#: pgc.l:1682
+#: pgc.l:1766
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "შეცდომა: ჩასართავი ბილიკი \"%s/%s\" ძალიან გრძელია, ხაზზე %d. გამოტოვება\n"
 
-#: pgc.l:1705
+#: pgc.l:1793
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "ჩასასმელი ფაილის (\"%s\") გახსნის შეცდომა. ხაზზე %d"
 
-#: preproc.y:31
+#: preproc.y:28
 msgid "syntax error"
 msgstr "სინტაქსური შეცდომა"
 
-#: preproc.y:84
-#, c-format
-msgid "WARNING: "
-msgstr "გაფრთხილება: "
-
-#: preproc.y:87
-#, c-format
-msgid "ERROR: "
-msgstr "შეცდომა: "
-
-#: preproc.y:514
+#: preproc.y:467
 #, c-format
 msgid "cursor \"%s\" does not exist"
 msgstr "კურსორი \"%s\" არ არსებობს"
 
-#: preproc.y:543
+#: preproc.y:503
 #, c-format
 msgid "initializer not allowed in type definition"
 msgstr "ტიპის აღწერისას ინიციალიზატორი დაუშვებელია"
 
-#: preproc.y:545
+#: preproc.y:505
 #, c-format
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "informix-ის რეჟიმში ტიპის სახელი \"string\" დაცულია"
 
-#: preproc.y:552 preproc.y:18523
+#: preproc.y:512 preproc.y:8822
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "ტიპი უკვე აღწერილია: %s"
 
-#: preproc.y:577 preproc.y:19158 preproc.y:19480 variable.c:625
+#: preproc.y:539 preproc.y:9536 preproc.y:9881 variable.c:652
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "მრავალგანზომილებიანი მასივები მონაცემების მარტივი ტიპებისთვის მხარდაჭერილი არაა"
 
-#: preproc.y:599
+#: preproc.y:562
 #, c-format
 msgid "connection %s is overwritten with %s by DECLARE statement %s"
 msgstr "კავშირი %s გადაწერილია %s-სთან ერთად DECLARE ბრძანების მიერ %s"
 
-#: preproc.y:1810
+#: preproc.y:932
 #, c-format
 msgid "AT option not allowed in CLOSE DATABASE statement"
 msgstr "ოპერატორში \"CLOSE DATABASE\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2060
+#: preproc.y:1184
 #, c-format
 msgid "AT option not allowed in CONNECT statement"
 msgstr "ოპერატორში \"CONNECT\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2100
+#: preproc.y:1221
 #, c-format
 msgid "AT option not allowed in DISCONNECT statement"
 msgstr "ოპერატორში \"DISCONNECT\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2155
+#: preproc.y:1274
 #, c-format
 msgid "AT option not allowed in SET CONNECTION statement"
 msgstr "ოპერატორში \"SET CONNECTION\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2177
+#: preproc.y:1292
 #, c-format
 msgid "AT option not allowed in TYPE statement"
 msgstr "ოპერატორში \"TYPE\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2186
+#: preproc.y:1300
 #, c-format
 msgid "AT option not allowed in VAR statement"
 msgstr "ოპერატორში \"VAR\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2193
+#: preproc.y:1307
 #, c-format
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "ოპერატორში \"WHENEVER\" პარამეტრი \"AT\" დაუშვებელია"
 
-#: preproc.y:2318 preproc.y:2490 preproc.y:2495 preproc.y:2607 preproc.y:4317
-#: preproc.y:4391 preproc.y:4982 preproc.y:5515 preproc.y:5853 preproc.y:6057
-#: preproc.y:6158 preproc.y:7722 preproc.y:9330 preproc.y:9335 preproc.y:12308
+#: preproc.y:1375 preproc.y:1498 preproc.y:2259 preproc.y:2585 preproc.y:3016
+#: preproc.y:3103 preproc.y:6086
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "მხარდაუჭერელი ფუნქცია სერვერს გადაეცემა"
 
-#: preproc.y:2865
+#: preproc.y:1610
 #, c-format
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALL განხორციელებული არაა"
 
-#: preproc.y:3577
+#: preproc.y:1895
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDIN განხორციელებული არაა"
 
-#: preproc.y:10385 preproc.y:18020
+#: preproc.y:5146 preproc.y:8273
 #, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
 msgstr "\"database\" არ შეიძლება გამოყენებულ იქნას როგორც კურსორის სახელი INFORMIX რეჟიმში"
 
-#: preproc.y:10392 preproc.y:18030
+#: preproc.y:5153 preproc.y:8283
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "\"%s\"ცვლადის სხვადასხვა პირობებში აღწერა მხარდაუჭერელია"
 
-#: preproc.y:10394 preproc.y:18032
+#: preproc.y:5155 preproc.y:8285
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "კურსორი უკვე აღწერილია: \"%s\""
 
-#: preproc.y:10868
+#: preproc.y:5402
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "სერვერზე გადაცემული LIMIT #.# სინტაქსი მხარდაჭერილი აღარაა"
 
-#: preproc.y:17712 preproc.y:17719
+#: preproc.y:7921 preproc.y:7929
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE AS არ შეიძლება INTO მიეთითოს"
 
-#: preproc.y:17755
+#: preproc.y:7974
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "მოველოდი \"@\", მივიღე \"%s\""
 
-#: preproc.y:17767
+#: preproc.y:7986
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "მხარდაჭერილია მხოლოდ პროტოკოლები \"tcp\" და \"unix\" და მონაცემთა ბაზის ტიპი \"postgresql\""
 
-#: preproc.y:17770
+#: preproc.y:7989
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "მოველოდი \"://\", მივიღე \"%s\""
 
-#: preproc.y:17775
+#: preproc.y:7994
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "Unix-დომენის სოკეტები მხოლოდ \"localhost\"-ზე მუშაობს. მაგრამ არა \"%s\"-ზე"
 
-#: preproc.y:17801
+#: preproc.y:8021
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "მოველოდი \"postgresql\", მივიღე \"%s\""
 
-#: preproc.y:17804
+#: preproc.y:8024
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "შეერთების არასწორი ტიპი: %s"
 
-#: preproc.y:17813
+#: preproc.y:8033
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "მოველოდი \"@\"-ს ან \"://\"-ს, მივიღე \"%s\""
 
-#: preproc.y:17888 preproc.y:17906
+#: preproc.y:8131 preproc.y:8149
 #, c-format
 msgid "invalid data type"
 msgstr "მონაცემების არასწორი ტიპი"
 
-#: preproc.y:17917 preproc.y:17934
+#: preproc.y:8160 preproc.y:8177
 #, c-format
 msgid "incomplete statement"
 msgstr "არასწორი პირობა"
 
-#: preproc.y:17920 preproc.y:17937
+#: preproc.y:8163 preproc.y:8180
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "უცნობი კოდი \"%s\""
 
-#: preproc.y:17982
+#: preproc.y:8235
 #, c-format
 msgid "name \"%s\" is already declared"
 msgstr "სახელი \"%s\" უკვე აღწერილია"
 
-#: preproc.y:18271
+#: preproc.y:8538
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "სიზუსტის / მასშტაბის არგუმენტი მხოლოდ მონაცემთა ტიპებს numeric და decimal აქვთ"
 
-#: preproc.y:18342
+#: preproc.y:8637
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "აქ ინტერვალის სპეციფიკაცია დაუშვებელია"
 
-#: preproc.y:18498 preproc.y:18550
+#: preproc.y:8793 preproc.y:8851
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "ჩადგმული სტრუქტურის/გაერთიანების მეტისმეტად ბევრი დონე"
 
-#: preproc.y:18673
+#: preproc.y:8986
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "varchar-ზე მაჩვენებლები მხარდაუჭერელია"
 
-#: preproc.y:19124
+#: preproc.y:9501
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "ინიციალიზატორი დაუშვებელია EXEC SQL VAR ბრძანებაში"
 
-#: preproc.y:19438
+#: preproc.y:9824
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "შესაყვანად ინდიკატორების მასივები დაუშვებელია"
 
-#: preproc.y:19625
+#: preproc.y:10058
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "ცვლადის აღწერისას ოპერატორს ვერ გამოიყენებთ"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:19666
+#: preproc.y:10103
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s \"%s\"-სთან ან ახლოს"
 
-#: type.c:18 type.c:30
-#, c-format
-msgid "out of memory"
-msgstr "არასაკმარისი მეხსიერება"
-
-#: type.c:214 type.c:685
+#: type.c:191 type.c:661
 #, c-format
 msgid "unrecognized variable type code %d"
 msgstr "ცვლადის ტიპის უცნობი კოდი: %d"
 
-#: type.c:263
+#: type.c:240
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable of a different type"
 msgstr "ცვლადი \"%s\" დამალულია სხვა ტიპის ლოკალური ცხვლადის მიერ"
 
-#: type.c:265
+#: type.c:242
 #, c-format
 msgid "variable \"%s\" is hidden by a local variable"
 msgstr "ცვლადი \"%s\" დამალულია ლოკალური ცვლადის მიერ"
 
-#: type.c:277
+#: type.c:254
 #, c-format
 msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
 msgstr "ინდიკატორის ცვლადი \"%s\" იმალება სხვა ტიპის ლოკალური ცვლადის მიერ"
 
-#: type.c:279
+#: type.c:256
 #, c-format
 msgid "indicator variable \"%s\" is hidden by a local variable"
 msgstr "ინდიკატორის ცვლადი \"%s\" სხვა ტიპის ლოკალური ცვლადის მიერ იმალება"
 
-#: type.c:287
+#: type.c:264
 #, c-format
 msgid "indicator for array/pointer has to be array/pointer"
 msgstr "მასივის/მაჩვენებლის ინდიკატორი მასივი/მაჩვენებელი უნდა იყოს"
 
-#: type.c:291
+#: type.c:268
 #, c-format
 msgid "nested arrays are not supported (except strings)"
 msgstr "ჩადგმული მასივები მხარდაუჭერელია (სტრიქონების გარდა)"
 
-#: type.c:333
+#: type.c:310
 #, c-format
 msgid "indicator for struct has to be a struct"
 msgstr "სტრუქტურის ინდიკატორი სტრუქტურა უნდა იყოს"
 
-#: type.c:353 type.c:374 type.c:394
+#: type.c:330 type.c:351 type.c:371
 #, c-format
 msgid "indicator for simple data type has to be simple"
 msgstr "მარტივი მონაცემების ინდიკატორი მარტივი უნდა იყოს"
 
-#: type.c:625
+#: type.c:602
 #, c-format
 msgid "indicator struct \"%s\" has too few members"
 msgstr "ინდიკატორის სტრუქტურას ძალიან ცოტა წევრი ჰყავს: %s"
 
-#: type.c:633
+#: type.c:610
 #, c-format
 msgid "indicator struct \"%s\" has too many members"
 msgstr "ინდიკატორის სტრუქტურას ძალიან ბევრი წევრი ჰყავს: %s"
 
-#: type.c:744
+#: type.c:723
 #, c-format
 msgid "unrecognized descriptor item code %d"
 msgstr "დესკრიპტორის ჩანაწერის უცნობი კოდი: %d"
+
+#: util.c:26
+#, c-format
+msgid "WARNING: "
+msgstr "გაფრთხილება: "
+
+#: util.c:29
+#, c-format
+msgid "ERROR: "
+msgstr "შეცდომა: "
+
+#: util.c:90 util.c:102
+#, c-format
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
 
 #: variable.c:89 variable.c:115
 #, c-format
 msgid "incorrectly formed variable \"%s\""
 msgstr "არასწორად ჩამოყალიბებული ცვლადი \"%s\""
 
-#: variable.c:138
+#: variable.c:138 variable.c:237
 #, c-format
 msgid "variable \"%s\" is not a pointer"
 msgstr "ცვლადი %s მაჩვენებელი არაა"
@@ -667,39 +671,44 @@ msgstr "ცვლადი \"%s\" არც სტრუქტურაა, ა�
 msgid "variable \"%s\" is not an array"
 msgstr "ცვლადი %s მასივი არაა"
 
-#: variable.c:232 variable.c:254
+#: variable.c:220
+#, c-format
+msgid "unmatched bracket in variable \"%s\""
+msgstr "ფრჩხილი წყვილის გარეშე ცვლადში \"%s\""
+
+#: variable.c:235 variable.c:258
 #, c-format
 msgid "variable \"%s\" is not declared"
 msgstr "ცვლადი %s აღწერილი არაა"
 
-#: variable.c:493
+#: variable.c:517
 #, c-format
 msgid "indicator variable must have an integer type"
 msgstr "ინდიკატორ ცვლადს მთელი რიცხვის ტიპი უნდა ჰქონდეს"
 
-#: variable.c:510
+#: variable.c:534
 #, c-format
 msgid "unrecognized data type name \"%s\""
 msgstr "მონაცემების ტიპის უცნობი სახელი \"%s\""
 
-#: variable.c:521 variable.c:529 variable.c:546 variable.c:549
+#: variable.c:548 variable.c:556 variable.c:573 variable.c:576
 #, c-format
 msgid "multidimensional arrays are not supported"
 msgstr "მრავალგანზომილებიანი მასივები მხარდაჭერილი არაა"
 
-#: variable.c:538
+#: variable.c:565
 #, c-format
 msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
 msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
 msgstr[0] "მრავალდონიანი მაჩვენებლები (2-ზე მეტი დონე) მხარდაუჭერელია; ნაპოვნია %d დონე"
 msgstr[1] "მრავალდონიანი მაჩვენებლები (2-ზე მეტი დონე) მხარდაუჭერელია; ნაპოვნია %d დონე"
 
-#: variable.c:543
+#: variable.c:570
 #, c-format
 msgid "pointer to pointer is not supported for this data type"
 msgstr "მონაცემების ამ ტიპისთვის მაჩვენებელი მაჩვენებელზე მხარდაჭერილი არაა"
 
-#: variable.c:563
+#: variable.c:590
 #, c-format
 msgid "multidimensional arrays for structures are not supported"
 msgstr "სტრუქტურების მრავალგანზომილებიანი მასივები მხარდაუჭერელია"

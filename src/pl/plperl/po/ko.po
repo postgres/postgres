@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL) 16\n"
+"Project-Id-Version: plperl (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:39+0000\n"
-"PO-Revision-Date: 2023-05-30 12:40+0900\n"
+"POT-Creation-Date: 2025-01-17 04:39+0000\n"
+"PO-Revision-Date: 2025-01-16 10:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -99,8 +99,8 @@ msgstr "다차원 배열에는 일치하는 차원이 포함된 배열 식이 �
 
 #: plperl.c:1204
 #, c-format
-msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
-msgstr "지정한 배열 크기(%d)가 최대치(%d)를 초과했습니다"
+msgid "number of array dimensions exceeds the maximum allowed (%d)"
+msgstr "배열은 %d 차원 배열까지만 허용함"
 
 #: plperl.c:1274
 #, c-format

@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_upgrade (PostgreSQL) 13\n"
+"Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-10-05 20:45+0000\n"
-"PO-Revision-Date: 2020-10-06 14:02+0900\n"
+"POT-Creation-Date: 2025-01-17 04:50+0000\n"
+"PO-Revision-Date: 2025-01-17 15:47+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -17,286 +17,477 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: check.c:66
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "널 포인터를 중복할 수 없음 (내부 오류)\n"
+
+#: ../../common/restricted_token.c:168
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "하위 프로세스의 종료 코드를 못 받았음: 오류 코드 %lu"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "%ld 사용자 ID에 대한 사용자를 찾지 못함: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "사용자 없음"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "사용자 이름 찾기 실패: 오류 코드 %lu"
+
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "쉘 명령 인자에 줄바꿈 문자가 있음: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "데이터베이스 이름에 줄바꿈 문자가 있음: \"%s\"\n"
+
+#: check.c:111
+msgid "Checking for system-defined composite types in user tables"
+msgstr "사용자가 만든 테이블에 내장 복합 자료형을 쓰는지 확인 중"
+
+#: check.c:118
+msgid ""
+"Your installation contains system-defined composite types in user tables.\n"
+"These type OIDs are not stable across PostgreSQL versions,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr ""
+"해당 데이터베이스 사용자가 만든 테이블에서 내장 복합 자료형을 사용하고 있습니"
+"다.\n"
+"이 자료형의 OID 값이 PostgreSQL 버전별로 다를 수 있어,\n"
+"업그레이드 할 수 없습니다. 해당 칼럼을 삭제한 뒤 다시 업그레이드하세요.\n"
+
+#: check.c:132
+msgid "Checking for incompatible \"line\" data type"
+msgstr "\"line\" 자료형 호환성 확인 중"
+
+#: check.c:137
+msgid ""
+"Your installation contains the \"line\" data type in user tables.\n"
+"This data type changed its internal and input/output format\n"
+"between your old and new versions so this\n"
+"cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr ""
+"해당 데이터베이스에서 \"line\" 자료형을 사용하는 테이블이 있습니다.\n"
+"이 자료형의 입출력 방식이 옛 버전과 새 버전에서 서로 호환하지 않습니다.\n"
+"먼저 이 자료형을 사용하는 테이블을 삭제 후 업그레이드 작업을 하세요.\n"
+
+#: check.c:154
+msgid "Checking for reg* data types in user tables"
+msgstr "사용자가 만든 테이블에 reg* 자료형을 쓰는지 확인 중"
+
+#: check.c:181
+msgid ""
+"Your installation contains one of the reg* data types in user tables.\n"
+"These data types reference system OIDs that are not preserved by\n"
+"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
+"drop the problem columns and restart the upgrade.\n"
+msgstr ""
+"옛 서버에서 사용자가 만든 테이블에서 reg* 자료형을 사용하고 있습니다.\n"
+"이 자료형들은 pg_upgrade 명령으로 내정된 시스템 OID를 사용하지 못할 수\n"
+"있습니다.  그래서 업그레이드 작업을 진행할 수 없습니다.\n"
+"사용하고 있는 칼럼을 지우고 업그레이드 작업을 다시 시도하세요.\n"
+
+#: check.c:193
+msgid "Checking for incompatible \"aclitem\" data type"
+msgstr "\"aclitem\" 자료형 호환성 확인 중"
+
+#: check.c:198
+msgid ""
+"Your installation contains the \"aclitem\" data type in user tables.\n"
+"The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns and restart the upgrade.\n"
+msgstr ""
+"사용자 테이블에서 \"jsonb\" 자료형을 사용하고 있습니다.\n"
+"9.4 베타 비전 이후 \"jsonb\" 내부 자료 구조가 바뀌었습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"해당 칼럼들을 지우고 업그레이드 작업을 진행하세요.\n"
+
+#: check.c:217
+msgid "Checking for invalid \"unknown\" user columns"
+msgstr "잘못된 \"unknown\" 사용자 칼럼을 확인 중"
+
+#: check.c:222
+msgid ""
+"Your installation contains the \"unknown\" data type in user tables.\n"
+"This data type is no longer allowed in tables, so this cluster\n"
+"cannot currently be upgraded.  You can drop the problem columns\n"
+"and restart the upgrade.\n"
+msgstr ""
+"해당 데이터베이스에서 사용자 테이블에서 \"unknown\" 자료형을 사용하고 있습니"
+"다.\n"
+"이 자료형은 더 이상 사용할 수 없습니다. 이 문제를 옛 버전에서 먼저 정리하고\n"
+"업그레이드 작업을 진행하세요.\n"
+
+#: check.c:239
+msgid "Checking for invalid \"sql_identifier\" user columns"
+msgstr "잘못된 \"sql_identifier\" 사용자 칼럼을 확인 중"
+
+#: check.c:244
+msgid ""
+"Your installation contains the \"sql_identifier\" data type in user tables.\n"
+"The on-disk format for this data type has changed, so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem\n"
+"columns and restart the upgrade.\n"
+msgstr ""
+"사용자 테이블 또는 인덱스에 \"sql_identifier\" 자료형을 사용하고\n"
+"있습니다.  이 자료형의 저장 양식이 바뀌었기에, 업그레이드 할 수\n"
+"없습니다. 해당 테이블의 칼럼을 지우고 다시 업그레이드 하십시오.\n"
+
+#: check.c:255
+msgid "Checking for incompatible \"jsonb\" data type in user tables"
+msgstr "사용자 테이블에서 \"jsonb\" 자료형 호환성 검사 중"
+
+#: check.c:260
+msgid ""
+"Your installation contains the \"jsonb\" data type in user tables.\n"
+"The internal format of \"jsonb\" changed during 9.4 beta so this\n"
+"cluster cannot currently be upgraded.  You can drop the problem \n"
+"columns and restart the upgrade.\n"
+msgstr ""
+"사용자 테이블에서 \"jsonb\" 자료형을 사용하고 있습니다.\n"
+"9.4 베타 비전 이후 \"jsonb\" 내부 자료 구조가 바뀌었습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"해당 칼럼들을 지우고 업그레이드 작업을 진행하세요.\n"
+
+#: check.c:272
+msgid "Checking for removed \"abstime\" data type in user tables"
+msgstr "사용자가 만든 테이블에 \"abstime\" 자료형을 쓰는지 확인 중"
+
+#: check.c:277
+msgid ""
+"Your installation contains the \"abstime\" data type in user tables.\n"
+"The \"abstime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"사용자 테이블에서 \"abstime\" 자료형을 사용하고 있습니다.\n"
+"12 비전 이후 \"abstime\" 자료형을 지원하지 않습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"해당 칼럼들을 지우거나, 다른 자료형으로 바꾼 뒤,\n"
+"업그레이드 작업을 진행하세요.\n"
+
+#: check.c:285
+msgid "Checking for removed \"reltime\" data type in user tables"
+msgstr "사용자가 만든 테이블에 \"reltime\" 자료형을 쓰는지 확인 중"
+
+#: check.c:290
+msgid ""
+"Your installation contains the \"reltime\" data type in user tables.\n"
+"The \"reltime\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"사용자 테이블에서 \"reltime\" 자료형을 사용하고 있습니다.\n"
+"12 비전 이후 \"reltime\" 자료형을 지원하지 않습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"해당 칼럼들을 지우거나, 다른 자료형으로 바꾼 뒤,\n"
+"업그레이드 작업을 진행하세요.\n"
+
+#: check.c:298
+msgid "Checking for removed \"tinterval\" data type in user tables"
+msgstr "사용자가 만든 테이블에 \"tinterval\" 자료형을 쓰는지 확인 중"
+
+#: check.c:303
+msgid ""
+"Your installation contains the \"tinterval\" data type in user tables.\n"
+"The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
+"so this cluster cannot currently be upgraded.  You can drop the\n"
+"problem columns, or change them to another data type, and restart\n"
+"the upgrade.\n"
+msgstr ""
+"사용자 테이블에서 \"tinterval\" 자료형을 사용하고 있습니다.\n"
+"12 비전 이후 \"tinterval\" 자료형을 지원하지 않습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"해당 칼럼들을 지우거나, 다른 자료형으로 바꾼 뒤,\n"
+"업그레이드 작업을 진행하세요.\n"
+
+#: check.c:345
+#, c-format
+msgid "Checking data type usage"
+msgstr "자료형 사용 현황 검사 중"
+
+#: check.c:480
+#, c-format
+msgid "failed check: %s"
+msgstr "검사 실패: %s"
+
+#: check.c:483
+msgid "A list of the problem columns is in the file:"
+msgstr "문제 칼럼 목록을 다음 파일 안에 있습니다:"
+
+#: check.c:495 check.c:963 check.c:1136 check.c:1251 check.c:1345 check.c:1473
+#: check.c:1549 check.c:1613 check.c:1686 check.c:1865 check.c:1884
+#: check.c:1953 check.c:2005 file.c:378 file.c:415 function.c:189 option.c:493
+#: version.c:79 version.c:177
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: check.c:522
+#, c-format
+msgid "Data type checks failed: %s"
+msgstr "자료형 검사 실패: %s"
+
+#: check.c:563
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
-"------------------------------------------------\n"
+"------------------------------------------------"
 msgstr ""
 "옛 운영 서버에서 일관성 검사를 진행합니다.\n"
-"------------------------------------------\n"
+"------------------------------------------"
 
-#: check.c:72
+#: check.c:569
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
-"-----------------------------\n"
+"-----------------------------"
 msgstr ""
 "일관성 검사 수행중\n"
-"------------------\n"
+"------------------"
 
-#: check.c:190
+#: check.c:718
 #, c-format
 msgid ""
 "\n"
-"*Clusters are compatible*\n"
+"*Clusters are compatible*"
 msgstr ""
 "\n"
-"*클러스터 호환성*\n"
+"*클러스터 호환성*"
 
-#: check.c:196
+#: check.c:726
 #, c-format
 msgid ""
 "\n"
 "If pg_upgrade fails after this point, you must re-initdb the\n"
-"new cluster before continuing.\n"
+"new cluster before continuing."
 msgstr ""
 "\n"
 "여기서 pg_upgrade 작업을 실패한다면, 재시도 하기 전에 먼저\n"
-"새 클러스터를 처음부터 다시 만들어 진행해야 합니다.\n"
+"새 클러스터를 처음부터 다시 만들어 진행해야 합니다."
 
-#: check.c:232
+#: check.c:767
 #, c-format
 msgid ""
-"Optimizer statistics are not transferred by pg_upgrade so,\n"
-"once you start the new server, consider running:\n"
-"    %s\n"
-"\n"
+"Optimizer statistics are not transferred by pg_upgrade.\n"
+"Once you start the new server, consider running:\n"
+"    %s/vacuumdb %s--all --analyze-in-stages"
 msgstr ""
 "pg_upgrade 작업에서는 최적화기를 위한 통계 정보까지 업그레이드\n"
 "하지는 않습니다. 새 서버가 실행 될 때, 다음 명령을 수행하길 권합니다:\n"
-"    %s\n"
-"\n"
+"    %s/vacuumdb %s--all --analyze-in-stages"
 
-#: check.c:237
-#, c-format
-msgid ""
-"Optimizer statistics and free space information are not transferred\n"
-"by pg_upgrade so, once you start the new server, consider running:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"pg_upgrade 작업으로는 통계 정보와 빈 공간 정보는 업그레이드 되지\n"
-"않습니다. 새 서버가 실행 될 때, 다음 명령을 수행하길 권합니다:\n"
-"    %s\n"
-"\n"
-
-#: check.c:244
+#: check.c:773
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
-"    %s\n"
+"    %s"
 msgstr ""
 "아래 스크립트를 실행하면, 옛 클러스터 자료를 지울 것입니다:\n"
-"    %s\n"
+"    %s"
 
-#: check.c:249
+#: check.c:778
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
 "because user-defined tablespaces or the new cluster's data directory\n"
 "exist in the old cluster directory.  The old cluster's contents must\n"
-"be deleted manually.\n"
+"be deleted manually."
 msgstr ""
 "옛 클러스터 자료 파일을 지우는 스크립트를 만들지 못했습니다.\n"
 "사용자 정의 테이블스페이스나, 새 클러스터가 옛 클러스터 안에\n"
-"있기 때문입니다.  옛 클러스터 자료는 직접 찾아서 지우세요.\n"
+"있기 때문입니다.  옛 클러스터 자료는 직접 찾아서 지우세요."
 
-#: check.c:259
+#: check.c:790
 #, c-format
 msgid "Checking cluster versions"
 msgstr "클러스터 버전 검사 중"
 
-#: check.c:271
+#: check.c:802
 #, c-format
-msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
-msgstr "이 도구는 PostgreSQL 8.4 이상 버전에서 사용할 수 있습니다.\n"
+msgid "This utility can only upgrade from PostgreSQL version %s and later."
+msgstr "이 도구는 PostgreSQL %s 과 그 이상 버전에서 사용할 수 있습니다."
 
-#: check.c:275
+#: check.c:807
 #, c-format
-msgid "This utility can only upgrade to PostgreSQL version %s.\n"
-msgstr "이 도구는 PostgreSQL %s 버전으로만 업그레이드 할 수 있습니다.\n"
+msgid "This utility can only upgrade to PostgreSQL version %s."
+msgstr "이 도구는 PostgreSQL %s 버전으로만 업그레이드 할 수 있습니다."
 
-#: check.c:284
+#: check.c:816
 #, c-format
 msgid ""
-"This utility cannot be used to downgrade to older major PostgreSQL "
-"versions.\n"
+"This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr ""
 "이 도구는 더 낮은 메이져 PostgreSQL 버전으로 다운그레이드하는데 사용할 수 없"
-"습니다.\n"
+"습니다."
 
-#: check.c:289
+#: check.c:821
 #, c-format
 msgid ""
-"Old cluster data and binary directories are from different major versions.\n"
-msgstr "옛 클러스터 자료와 실행파일 디렉터리가 서로 메이져 버전이 다릅니다.\n"
+"Old cluster data and binary directories are from different major versions."
+msgstr "옛 클러스터 자료와 실행파일 디렉터리가 서로 메이져 버전이 다릅니다."
 
-#: check.c:292
+#: check.c:824
 #, c-format
 msgid ""
-"New cluster data and binary directories are from different major versions.\n"
-msgstr "새 클러스터 자료와 실행파일 디렉터리가 서로 메이져 버전이 다릅니다.\n"
+"New cluster data and binary directories are from different major versions."
+msgstr "새 클러스터 자료와 실행파일 디렉터리가 서로 메이져 버전이 다릅니다."
 
-#: check.c:309
+#: check.c:839
 #, c-format
 msgid ""
-"When checking a pre-PG 9.1 live old server, you must specify the old "
-"server's port number.\n"
+"When checking a live server, the old and new port numbers must be different."
 msgstr ""
-"옛 서버가 9.1 버전 이전 이라면 옛 서버의 포트를 반드시 지정해야 합니다.\n"
+"운영 서버 검사를 할 때는, 옛 서버, 새 서버의 포트를 다르게 지정해야 합니다."
 
-#: check.c:313
+#: check.c:859
 #, c-format
-msgid ""
-"When checking a live server, the old and new port numbers must be "
-"different.\n"
+msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr ""
-"운영 서버 검사를 할 때는, 옛 서버, 새 서버의 포트를 다르게 지정해야 합니다.\n"
+"\"%s\" 새 데이터베이스 클러스터가 비어있지 않음: \"%s.%s\" 릴레이션을 찾았음"
 
-#: check.c:328
+#: check.c:882
 #, c-format
-msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-msgstr ""
-"\"%s\" 데이터베이스의 인코딩이 서로 다릅니다: 옛 서버 \"%s\", 새 서버 \"%s"
-"\"\n"
+msgid "Checking for new cluster tablespace directories"
+msgstr "새 클러스터 테이블스페이스 디렉터리 검사 중"
 
-#: check.c:333
+#: check.c:893
 #, c-format
-msgid ""
-"lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-msgstr ""
-"\"%s\" 데이터베이스의 lc_collate 값이 서로 다릅니다: 옛 서버 \"%s\", 새 서버 "
-"\"%s\"\n"
+msgid "new cluster tablespace directory already exists: \"%s\""
+msgstr "새 클러스터 테이블스페이스 디렉터리가 이미 있음: \"%s\""
 
-#: check.c:336
-#, c-format
-msgid ""
-"lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-msgstr ""
-"\"%s\" 데이터베이스의 lc_ctype 값이 서로 다릅니다: 옛 서버 \"%s\", 새 서버 "
-"\"%s\"\n"
-
-#: check.c:409
-#, c-format
-msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
-msgstr ""
-"\"%s\" 새 데이터베이스 클러스터가 비어있지 않습니다.\n"
-"   -- \"%s.%s\" 릴레이션을 찾았음\n"
-
-#: check.c:458
-#, c-format
-msgid "Creating script to analyze new cluster"
-msgstr "새 클러스터 통계정보 수집 스크립트를 만듭니다"
-
-#: check.c:472 check.c:600 check.c:864 check.c:943 check.c:1053 check.c:1144
-#: file.c:336 function.c:240 option.c:497 version.c:54 version.c:199
-#: version.c:341
-#, c-format
-msgid "could not open file \"%s\": %s\n"
-msgstr "\"%s\" 파일을 열 수 없음: %s\n"
-
-#: check.c:527 check.c:656
-#, c-format
-msgid "could not add execute permission to file \"%s\": %s\n"
-msgstr "\"%s\" 파일에 실행 권한을 추가 할 수 없음: %s\n"
-
-#: check.c:563
+#: check.c:926
 #, c-format
 msgid ""
 "\n"
-"WARNING:  new data directory should not be inside the old data directory, e."
-"g. %s\n"
+"WARNING:  new data directory should not be inside the old data directory, "
+"i.e. %s"
 msgstr ""
 "\n"
-"경고: 새 데이터 디렉터리는 옛 데이터 디렉터리 안에 둘 수 없습니다, 예: %s\n"
+"경고: 새 데이터 디렉터리는 옛 데이터 디렉터리 안에 둘 수 없습니다, 예: %s"
 
-#: check.c:587
+#: check.c:950
 #, c-format
 msgid ""
 "\n"
 "WARNING:  user-defined tablespace locations should not be inside the data "
-"directory, e.g. %s\n"
+"directory, i.e. %s"
 msgstr ""
 "\n"
 "경고: 사용자 정의 테이블스페이스 위치를 데이터 디렉터리 안에 둘 수 없습니다, "
-"예: %s\n"
+"예: %s"
 
-#: check.c:597
+#: check.c:960
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "옛 클러스터를 지우는 스크립트를 만듭니다"
 
-#: check.c:676
+#: check.c:1014
+#, c-format
+msgid "could not add execute permission to file \"%s\": %m"
+msgstr "\"%s\" 파일에 실행 권한을 추가 할 수 없음: %m"
+
+#: check.c:1034
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "데이터베이스 사용자가 설치 작업을 한 사용자인지 확인합니다"
 
-#: check.c:692
+#: check.c:1050
 #, c-format
-msgid "database user \"%s\" is not the install user\n"
-msgstr "\"%s\" 데이터베이스 사용자는 설치 작업을 한 사용자가 아닙니다\n"
+msgid "database user \"%s\" is not the install user"
+msgstr "\"%s\" 데이터베이스 사용자는 설치 작업을 한 사용자가 아닙니다"
 
-#: check.c:703
+#: check.c:1061
 #, c-format
-msgid "could not determine the number of users\n"
-msgstr "사용자 수를 확인할 수 없음\n"
+msgid "could not determine the number of users"
+msgstr "사용자 수를 확인할 수 없음"
 
-#: check.c:711
+#: check.c:1069
 #, c-format
-msgid "Only the install user can be defined in the new cluster.\n"
-msgstr "새 클러스터에서만 설치 사용 사용자가 정의될 수 있음\n"
+msgid "Only the install user can be defined in the new cluster."
+msgstr "새 클러스터에서만 설치 사용 사용자가 정의될 수 있음"
 
-#: check.c:731
+#: check.c:1098
 #, c-format
 msgid "Checking database connection settings"
 msgstr "데이터베이스 연결 설정을 확인 중"
 
-#: check.c:753
+#: check.c:1124
 #, c-format
 msgid ""
 "template0 must not allow connections, i.e. its pg_database.datallowconn must "
-"be false\n"
+"be false"
 msgstr ""
 "template0 데이터베이스 접속을 금지해야 합니다. 예: 해당 데이터베이스의 "
-"pg_database.datallowconn 값이 false여야 합니다.\n"
+"pg_database.datallowconn 값이 false여야 합니다."
 
-#: check.c:763
+#: check.c:1150 check.c:1270 check.c:1367 check.c:1492 check.c:1568
+#: check.c:1626 check.c:1706 check.c:1897 check.c:2022 function.c:210
+#, c-format
+msgid "fatal"
+msgstr "치명적 오류"
+
+#: check.c:1151
 #, c-format
 msgid ""
-"All non-template0 databases must allow connections, i.e. their pg_database."
-"datallowconn must be true\n"
+"All non-template0 databases must allow connections, i.e. their\n"
+"pg_database.datallowconn must be true.  Your installation contains\n"
+"non-template0 databases with their pg_database.datallowconn set to\n"
+"false.  Consider allowing connection for all non-template0 databases\n"
+"or drop the databases which do not allow connections.  A list of\n"
+"databases with the problem is in the file:\n"
+"    %s"
 msgstr ""
-"template0 데이터베이스를 제외한 다른 모든 데이터베이스는 접속이 가능해야합니"
-"다. 예: 그들의 pg_database.datallowconn 값은 true여야 합니다.\n"
+"template0이 아닌 모든 데이터베이스는 연결을 허용해야하며, 즉 \n"
+"pg_database.datallowconn 값이 true여야합니다. 설치된 데이터베이스\n"
+"중 pg_database.datallowconn 값이 false로 설정된 template0이 아닌\n"
+"데이터베이스가 있습니다. template0이 아닌 데이터베이스의 모든 연결을\n"
+"허용하거나 연결을 허용하지 않는 데이터베이스를 삭제하는 것이 좋습니다.\n"
+"문제가 있는 데이터베이스 목록은 다음 파일에 기록해 두었습니다:\n"
+"    %s"
 
-#: check.c:788
+#: check.c:1176
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "미리 준비된 트랜잭션을 확인 중"
 
-#: check.c:797
+#: check.c:1185
 #, c-format
-msgid "The source cluster contains prepared transactions\n"
-msgstr "옛 클러스터에 미리 준비된 트랜잭션이 있음\n"
+msgid "The source cluster contains prepared transactions"
+msgstr "옛 클러스터에 미리 준비된 트랜잭션이 있음"
 
-#: check.c:799
+#: check.c:1187
 #, c-format
-msgid "The target cluster contains prepared transactions\n"
-msgstr "새 클러스터에 미리 준비된 트랜잭션이 있음\n"
+msgid "The target cluster contains prepared transactions"
+msgstr "새 클러스터에 미리 준비된 트랜잭션이 있음"
 
-#: check.c:825
+#: check.c:1212
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "contrib/isn 모듈의 bigint 처리가 서로 같은지 확인 중"
 
-#: check.c:886 check.c:965 check.c:1076 check.c:1167 function.c:262
-#: version.c:245 version.c:282 version.c:425
-#, c-format
-msgid "fatal\n"
-msgstr "치명적 오류\n"
-
-#: check.c:887
+#: check.c:1271
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -305,444 +496,547 @@ msgid ""
 "manually dump databases in the old cluster that use \"contrib/isn\"\n"
 "facilities, drop them, perform the upgrade, and then restore them.  A\n"
 "list of the problem functions is in the file:\n"
-"    %s\n"
-"\n"
+"    %s"
 msgstr ""
 "설치되어 있는 \"contrib/isn\" 모듈은 bigint 자료형을 사용합니다.\n"
 "이 bigint 자료형의 처리 방식이 새 버전과 옛 버전 사이 호환성이 없어,\n"
 "이 클러스터 업그레이드를 할 수 없습니다.  먼저 수동으로 데이터베이스를 \n"
 "덤프하고, 해당 모듈을 삭제하고, 업그레이드 한 뒤 다시 덤프 파일을 이용해\n"
 "복원할 수 있습니다.  문제가 있는 함수는 아래 파일 안에 있습니다:\n"
-"    %s\n"
-"\n"
+"    %s"
 
-#: check.c:911
+#: check.c:1293
+#, c-format
+msgid "Checking for user-defined postfix operators"
+msgstr "사용자 정의 postfix 연산자를 검사 중"
+
+#: check.c:1368
+#, c-format
+msgid ""
+"Your installation contains user-defined postfix operators, which are not\n"
+"supported anymore.  Consider dropping the postfix operators and replacing\n"
+"them with prefix operators or function calls.\n"
+"A list of user-defined postfix operators is in the file:\n"
+"    %s"
+msgstr ""
+"더 이상 사용자 정의 postfix 연산자를 지원하지 않습니다.\n"
+"해당 연산자를 지우고, prefix 연산자로 바꾸거나, 함수 호출\n"
+"방식으로 바꾸는 것을 고려해 보십시오.\n"
+"관련 사용자 정의 postfix 연산자 목록은 아래 파일 안에 있습니다:\n"
+"    %s"
+
+#: check.c:1392
+#, c-format
+msgid "Checking for incompatible polymorphic functions"
+msgstr "불완전한 다형 함수를 확인합니다"
+
+#: check.c:1493
+#, c-format
+msgid ""
+"Your installation contains user-defined objects that refer to internal\n"
+"polymorphic functions with arguments of type \"anyarray\" or "
+"\"anyelement\".\n"
+"These user-defined objects must be dropped before upgrading and restored\n"
+"afterwards, changing them to refer to the new corresponding functions with\n"
+"arguments of type \"anycompatiblearray\" and \"anycompatible\".\n"
+"A list of the problematic objects is in the file:\n"
+"    %s"
+msgstr ""
+"이 서버에는 \"anyarray\" 또는 \"anyelement\" 유형의 인수를 사용하는 \n"
+"내부 다형 함수를 참조하는 사용자 정의 객체가 있습니다. \n"
+"이러한 사용자 정의 객체는 업그레이드하기 전에 삭제하고, \n"
+"\"anycompatiblearray\" 또는 \"anycompatible\" 유형의 새로운 대응 함수를\n"
+"참조하도록 변경한 후 다시 복원해야합니다. 문제가 있는 객체 목록은\n"
+"다음 파일 안에 있습니다:\n"
+"    %s"
+
+#: check.c:1517
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "WITH OIDS 옵션 있는 테이블 확인 중"
 
-#: check.c:966
+#: check.c:1569
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
 "supported anymore.  Consider removing the oid column using\n"
 "    ALTER TABLE ... SET WITHOUT OIDS;\n"
 "A list of tables with the problem is in the file:\n"
-"    %s\n"
-"\n"
+"    %s"
 msgstr ""
 "더 이상 WITH OIDS 옵션을 사용하는 테이블을 지원하지 않습니다.\n"
 "먼저 oid 칼럼이 있는 기존 테이블을 대상으로 다음 명령을 실행해서\n"
 "이 옵션을 뺄 것을 고려해 보십시오.\n"
 "    ALTER TABLE ... SET WITHOUT OIDS;\n"
 "관련 테이블 목록은 아래 파일 안에 있습니다:\n"
-"    %s\n"
-"\n"
+"    %s"
 
-#: check.c:996
-#, c-format
-msgid "Checking for reg* data types in user tables"
-msgstr "사용자가 만든 테이블에 reg* 자료형을 쓰는지 확인 중"
-
-#: check.c:1077
-#, c-format
-msgid ""
-"Your installation contains one of the reg* data types in user tables.\n"
-"These data types reference system OIDs that are not preserved by\n"
-"pg_upgrade, so this cluster cannot currently be upgraded.  You can\n"
-"remove the problem tables and restart the upgrade.  A list of the\n"
-"problem columns is in the file:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"옛 서버에서 사용자가 만든 테이블에서 reg* 자료형을 사용하고 있습니다.\n"
-"이 자료형들은 pg_upgrade 명령으로 내정된 시스템 OID를 사용하지 못할 수\n"
-"있습니다.  그래서 업그레이드 작업을 진행할 수 없습니다.\n"
-"사용하고 있는 테이블들을 지우고 업그레이드 작업을 다시 시도하세요.\n"
-"이런 자료형을 사용하는 칼럼들은 아래 파일 안에 있습니다:\n"
-"    %s\n"
-"\n"
-
-#: check.c:1102
-#, c-format
-msgid "Checking for incompatible \"jsonb\" data type"
-msgstr "\"jsonb\" 자료형 호환성 확인 중"
-
-#: check.c:1168
-#, c-format
-msgid ""
-"Your installation contains the \"jsonb\" data type in user tables.\n"
-"The internal format of \"jsonb\" changed during 9.4 beta so this\n"
-"cluster cannot currently be upgraded.  You can remove the problem\n"
-"tables and restart the upgrade.  A list of the problem columns is\n"
-"in the file:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"사용자 테이블에서 \"jsonb\" 자료형을 사용하고 있습니다.\n"
-"9.4 베타 비전 이후 JSONB 내부 자료 구조가 바뀌었습니다.\n"
-"그래서, 업그레이드 작업이 불가능합니다.\n"
-"해당 테이블들을 지우고 업그레이드 작업을 진행하세요\n"
-"해당 자료형을 칼럼들은 아래 파일 안에 있습니다:\n"
-"    %s\n"
-"\n"
-
-#: check.c:1190
+#: check.c:1596
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "\"pg_\"로 시작하는 롤 확인 중"
 
-#: check.c:1200
-#, c-format
-msgid "The source cluster contains roles starting with \"pg_\"\n"
-msgstr "옛 클러스터에 \"pg_\" 시작하는 롤이 있습니다.\n"
-
-#: check.c:1202
-#, c-format
-msgid "The target cluster contains roles starting with \"pg_\"\n"
-msgstr "새 클러스터에 \"pg_\"로 시작하는 롤이 있습니다.\n"
-
-#: check.c:1228
-#, c-format
-msgid "failed to get the current locale\n"
-msgstr "현재 로케일을 확인 할 수 없음\n"
-
-#: check.c:1237
-#, c-format
-msgid "failed to get system locale name for \"%s\"\n"
-msgstr "\"%s\"용 시스템 로케일 이름을 알 수 없음\n"
-
-#: check.c:1243
-#, c-format
-msgid "failed to restore old locale \"%s\"\n"
-msgstr "\"%s\" 옛 로케일을 복원할 수 없음\n"
-
-#: controldata.c:127 controldata.c:195
-#, c-format
-msgid "could not get control data using %s: %s\n"
-msgstr "%s 사용하는 컨트롤 자료를 구할 수 없음: %s\n"
-
-#: controldata.c:138
-#, c-format
-msgid "%d: database cluster state problem\n"
-msgstr "%d: 데이터베이스 클러스터 상태 문제\n"
-
-#: controldata.c:156
+#: check.c:1627
 #, c-format
 msgid ""
-"The source cluster was shut down while in recovery mode.  To upgrade, use "
-"\"rsync\" as documented or shut it down as a primary.\n"
+"Your installation contains roles starting with \"pg_\".\n"
+"\"pg_\" is a reserved prefix for system roles.  The cluster\n"
+"cannot be upgraded until these roles are renamed.\n"
+"A list of roles starting with \"pg_\" is in the file:\n"
+"    %s"
 msgstr ""
-"원본 클러스터는 복구 모드(대기 서버 모드나, 복구 중) 상태에서 중지 되었습니"
-"다.  업그레이드 하려면, 문서에 언급한 것 처럼 \"rsync\"를 사용하든가, 그 서버"
-"를 운영 서버 모드로 바꾼 뒤 중지하고 작업하십시오.\n"
+"기존 데이터베이스에 사용자가 만든 \"pg_\"로 시작하는 롤이\n"
+"있습니다. \"pg_\"는 시스템 롤로 예약된 접두어입니다.\n"
+"이 롤들을 다른 이름으로 바꿔야 업그레이드가 가능합니다.\n"
+"\"pg_\"로 시작하는 롤 이름 목록은 다음 파일에 있습니다:\n"
+"    %s"
+
+#: check.c:1647
+#, c-format
+msgid "Checking for user-defined encoding conversions"
+msgstr "사용자 정의 인코딩 변환규칙을 검사 중"
+
+#: check.c:1707
+#, c-format
+msgid ""
+"Your installation contains user-defined encoding conversions.\n"
+"The conversion function parameters changed in PostgreSQL version 14\n"
+"so this cluster cannot currently be upgraded.  You can remove the\n"
+"encoding conversions in the old cluster and restart the upgrade.\n"
+"A list of user-defined encoding conversions is in the file:\n"
+"    %s"
+msgstr ""
+"사용자 정의 인코딩 변환 규칙용 변환 함수 매개 변수가\n"
+"PostgreSQL 14 비전 이후 바뀌었습니다.\n"
+"그래서, 업그레이드 작업이 불가능합니다.\n"
+"먼저 이런 변환 규칙을 옛 서버에서 지우고 다시 시도하세요.\n"
+"해당 변환 규칙 목록은 아래 파일 안에 있습니다:\n"
+"    %s"
+
+#: check.c:1746
+#, c-format
+msgid "Checking for new cluster logical replication slots"
+msgstr "새 클러스터 논리 복제 슬롯 검사 중"
+
+#: check.c:1754
+#, c-format
+msgid "could not count the number of logical replication slots"
+msgstr "논리 복제 슬롯 개수를 파악할 수 없음"
+
+#: check.c:1759
+#, c-format
+msgid "expected 0 logical replication slots but found %d"
+msgstr "논리 복제 슬롯이 없다고 판단했는데, %d개 발견 됨"
+
+#: check.c:1769 check.c:1820
+#, c-format
+msgid "could not determine parameter settings on new cluster"
+msgstr "새 클러스터용 매개변수 설정을 조사 할 수 없음"
+
+#: check.c:1774
+#, c-format
+msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
+msgstr "\"wal_level\" 설정값은 \"logical\"이어야 하는데, \"%s\"임"
+
+#: check.c:1780
+#, c-format
+msgid ""
+"\"max_replication_slots\" (%d) must be greater than or equal to the number "
+"of logical replication slots (%d) on the old cluster"
+msgstr ""
+"\"max_replication_slots\" 설정값(%d)이 옛 클러스터 논리 복제 슬롯 수(%d)와 같"
+"거나 커야 함"
+
+#: check.c:1812
+#, c-format
+msgid "Checking for new cluster configuration for subscriptions"
+msgstr "구독을 위한 새 클러스터 환경 설정을 검사 중"
+
+#: check.c:1824
+#, c-format
+msgid ""
+"\"max_replication_slots\" (%d) must be greater than or equal to the number "
+"of subscriptions (%d) on the old cluster"
+msgstr ""
+"\"max_replication_slots\" 설정값(%d)이 옛 클러스터 구독 수(%d)와 같거나 커야 "
+"함"
+
+#: check.c:1846
+#, c-format
+msgid "Checking for valid logical replication slots"
+msgstr "논리 복제 슬롯 유효성 검사 중"
+
+#: check.c:1898
+#, c-format
+msgid ""
+"Your installation contains logical replication slots that cannot be "
+"upgraded.\n"
+"You can remove invalid slots and/or consume the pending WAL for other "
+"slots,\n"
+"and then restart the upgrade.\n"
+"A list of the problematic slots is in the file:\n"
+"    %s"
+msgstr ""
+"옛 클러스터에 업그레이드 할 수 없는 논리 복제 슬롯이 있습니다.\n"
+"필요 없는 슬롯을 지우거나 지연된 WAL 소비를 한 뒤에,\n"
+"업그레이드 작업을 진행하세요.\n"
+"해당 문제의 슬롯 목록은 다음 파일 안에 있습니다:\n"
+"    %s"
+
+#: check.c:1922
+#, c-format
+msgid "Checking for subscription state"
+msgstr "구독 상태 검사 중"
+
+#: check.c:2023
+#, c-format
+msgid ""
+"Your installation contains subscriptions without origin or having relations "
+"not in i (initialize) or r (ready) state.\n"
+"You can allow the initial sync to finish for all relations and then restart "
+"the upgrade.\n"
+"A list of the problematic subscriptions is in the file:\n"
+"    %s"
+msgstr ""
+"오리진 없는 구독이 있거나, i(초기화), r(준비) 상태가 아닌 릴레이션을 포함하"
+"는 구독이 있습니다.\n"
+"구독의 자료 일관성을 모두 맞춘 다음 업그레이드 작업을 진행하세요.\n"
+"해당 문제의 구독 목록은 다음 파일 안에 있습니다:\n"
+"    %s"
+
+#: controldata.c:129 controldata.c:199
+#, c-format
+msgid "could not get control data using %s: %m"
+msgstr "%s 사용하는 컨트롤 자료를 구할 수 없음: %m"
+
+#: controldata.c:139
+#, c-format
+msgid "%d: database cluster state problem"
+msgstr "%d: 데이터베이스 클러스터 상태 문제"
 
 #: controldata.c:158
 #, c-format
 msgid ""
+"The source cluster was shut down while in recovery mode.  To upgrade, use "
+"\"rsync\" as documented or shut it down as a primary."
+msgstr ""
+"원본 클러스터는 복구 모드(대기 서버 모드나, 복구 중) 상태에서 중지 되었습니"
+"다.  업그레이드 하려면, 문서에 언급한 것 처럼 \"rsync\"를 사용하든가, 그 서버"
+"를 운영 서버 모드로 바꾼 뒤 중지하고 작업하십시오."
+
+#: controldata.c:160
+#, c-format
+msgid ""
 "The target cluster was shut down while in recovery mode.  To upgrade, use "
-"\"rsync\" as documented or shut it down as a primary.\n"
+"\"rsync\" as documented or shut it down as a primary."
 msgstr ""
 "대상 클러스터는 복구 모드(대기 서버 모드나, 복구 중) 상태에서 중지 되었습니"
 "다.  업그레이드 하려면, 문서에 언급한 것 처럼 \"rsync\"를 사용하든가, 그 서버"
-"를 운영 서버 모드로 바꾼 뒤 중지하고 작업하십시오.\n"
-
-#: controldata.c:163
-#, c-format
-msgid "The source cluster was not shut down cleanly.\n"
-msgstr "원본 클러스터는 정상적으로 종료되어야 함\n"
+"를 운영 서버 모드로 바꾼 뒤 중지하고 작업하십시오."
 
 #: controldata.c:165
 #, c-format
-msgid "The target cluster was not shut down cleanly.\n"
-msgstr "대상 클러스터는 정상 종료되어야 함\n"
+msgid "The source cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "원본 클러스터는 정상적으로 종료되어야 함, 종료 상태값: \"%s\""
 
-#: controldata.c:176
+#: controldata.c:167
 #, c-format
-msgid "The source cluster lacks cluster state information:\n"
-msgstr "원본 클러스터에 클러스터 상태 정보가 없음:\n"
+msgid "The target cluster was not shut down cleanly, state reported as: \"%s\""
+msgstr "대상 클러스터는 정상 종료되어야 함, 종료 상태값: \"%s\""
 
-#: controldata.c:178
+#: controldata.c:175 controldata.c:507
 #, c-format
-msgid "The target cluster lacks cluster state information:\n"
-msgstr "대상 클러스터에 클러스터 상태 정보가 없음:\n"
+msgid "could not get control data using %s: %s"
+msgstr "%s 사용하는 컨트롤 자료를 구할 수 없음: %s"
 
-#: controldata.c:208 dump.c:49 pg_upgrade.c:339 pg_upgrade.c:375
-#: relfilenode.c:247 util.c:79
+#: controldata.c:181
+#, c-format
+msgid "The source cluster lacks cluster state information:"
+msgstr "원본 클러스터에 클러스터 상태 정보가 없음:"
+
+#: controldata.c:183
+#, c-format
+msgid "The target cluster lacks cluster state information:"
+msgstr "대상 클러스터에 클러스터 상태 정보가 없음:"
+
+#: controldata.c:213 dump.c:50 exec.c:118 pg_upgrade.c:556 pg_upgrade.c:596
+#: pg_upgrade.c:945 relfilenumber.c:233 server.c:34 util.c:337
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: controldata.c:215
+#: controldata.c:220
 #, c-format
-msgid "%d: pg_resetwal problem\n"
-msgstr "%d: pg_resetwal 문제\n"
+msgid "%d: pg_resetwal problem"
+msgstr "%d: pg_resetwal 문제"
 
-#: controldata.c:225 controldata.c:235 controldata.c:246 controldata.c:257
-#: controldata.c:268 controldata.c:287 controldata.c:298 controldata.c:309
-#: controldata.c:320 controldata.c:331 controldata.c:342 controldata.c:345
-#: controldata.c:349 controldata.c:359 controldata.c:371 controldata.c:382
-#: controldata.c:393 controldata.c:404 controldata.c:415 controldata.c:426
-#: controldata.c:437 controldata.c:448 controldata.c:459 controldata.c:470
-#: controldata.c:481
+#: controldata.c:230 controldata.c:240 controldata.c:251 controldata.c:262
+#: controldata.c:273 controldata.c:292 controldata.c:303 controldata.c:314
+#: controldata.c:325 controldata.c:336 controldata.c:347 controldata.c:358
+#: controldata.c:361 controldata.c:365 controldata.c:375 controldata.c:387
+#: controldata.c:398 controldata.c:409 controldata.c:420 controldata.c:431
+#: controldata.c:442 controldata.c:453 controldata.c:464 controldata.c:475
+#: controldata.c:486 controldata.c:497
 #, c-format
-msgid "%d: controldata retrieval problem\n"
-msgstr "%d: controldata 복원 문제\n"
+msgid "%d: controldata retrieval problem"
+msgstr "%d: controldata 복원 문제"
 
-#: controldata.c:546
+#: controldata.c:578
 #, c-format
-msgid "The source cluster lacks some required control information:\n"
-msgstr "옛 클러스터에 필요한 컨트롤 정보가 몇몇 빠져있음:\n"
+msgid "The source cluster lacks some required control information:"
+msgstr "옛 클러스터에 필요한 컨트롤 정보가 몇몇 빠져있음:"
 
-#: controldata.c:549
+#: controldata.c:581
 #, c-format
-msgid "The target cluster lacks some required control information:\n"
-msgstr "새 클러스터에 필요한 컨트롤 정보가 몇몇 빠져있음:\n"
+msgid "The target cluster lacks some required control information:"
+msgstr "새 클러스터에 필요한 컨트롤 정보가 몇몇 빠져있음:"
 
-#: controldata.c:552
+#: controldata.c:584
 #, c-format
-msgid "  checkpoint next XID\n"
-msgstr "  체크포인트 다음 XID\n"
+msgid "  checkpoint next XID"
+msgstr "  체크포인트 다음 XID"
 
-#: controldata.c:555
+#: controldata.c:587
 #, c-format
-msgid "  latest checkpoint next OID\n"
-msgstr "  마지막 체크포인트 다음 OID\n"
+msgid "  latest checkpoint next OID"
+msgstr "  마지막 체크포인트 다음 OID"
 
-#: controldata.c:558
+#: controldata.c:590
 #, c-format
-msgid "  latest checkpoint next MultiXactId\n"
-msgstr "  마지막 체크포인트 다음 MultiXactId\n"
+msgid "  latest checkpoint next MultiXactId"
+msgstr "  마지막 체크포인트 다음 MultiXactId"
 
-#: controldata.c:562
+#: controldata.c:594
 #, c-format
-msgid "  latest checkpoint oldest MultiXactId\n"
-msgstr "  마지막 체크포인트 제일 오래된 MultiXactId\n"
+msgid "  latest checkpoint oldest MultiXactId"
+msgstr "  마지막 체크포인트 제일 오래된 MultiXactId"
 
-#: controldata.c:565
+#: controldata.c:597
 #, c-format
-msgid "  latest checkpoint next MultiXactOffset\n"
-msgstr "  마지막 체크포인트 다음 MultiXactOffset\n"
+msgid "  latest checkpoint oldestXID"
+msgstr "  마지막 체크포인트 제일 오래된 XID"
 
-#: controldata.c:568
+#: controldata.c:600
 #, c-format
-msgid "  first WAL segment after reset\n"
-msgstr "  리셋 뒤 첫 WAL 조각\n"
+msgid "  latest checkpoint next MultiXactOffset"
+msgstr "  마지막 체크포인트 다음 MultiXactOffset"
 
-#: controldata.c:571
+#: controldata.c:603
 #, c-format
-msgid "  float8 argument passing method\n"
-msgstr "  float8 인자 처리 방식\n"
-
-#: controldata.c:574
-#, c-format
-msgid "  maximum alignment\n"
-msgstr "  최대 정렬\n"
-
-#: controldata.c:577
-#, c-format
-msgid "  block size\n"
-msgstr "  블록 크기\n"
-
-#: controldata.c:580
-#, c-format
-msgid "  large relation segment size\n"
-msgstr "  대형 릴레이션 조각 크기\n"
-
-#: controldata.c:583
-#, c-format
-msgid "  WAL block size\n"
-msgstr "  WAL 블록 크기\n"
-
-#: controldata.c:586
-#, c-format
-msgid "  WAL segment size\n"
-msgstr "  WAL 조각 크기\n"
-
-#: controldata.c:589
-#, c-format
-msgid "  maximum identifier length\n"
-msgstr "  최대 식별자 길이\n"
-
-#: controldata.c:592
-#, c-format
-msgid "  maximum number of indexed columns\n"
-msgstr "  최대 인덱스 칼럼 수\n"
-
-#: controldata.c:595
-#, c-format
-msgid "  maximum TOAST chunk size\n"
-msgstr "  최대 토스트 조각 크기\n"
-
-#: controldata.c:599
-#, c-format
-msgid "  large-object chunk size\n"
-msgstr "  대형 객체 조각 크기\n"
-
-#: controldata.c:602
-#, c-format
-msgid "  dates/times are integers?\n"
-msgstr "  date/time 자료형을 정수로?\n"
+msgid "  first WAL segment after reset"
+msgstr "  리셋 뒤 첫 WAL 조각"
 
 #: controldata.c:606
 #, c-format
-msgid "  data checksum version\n"
-msgstr "  자료 체크섬 버전\n"
+msgid "  float8 argument passing method"
+msgstr "  float8 인자 처리 방식"
 
-#: controldata.c:608
+#: controldata.c:609
 #, c-format
-msgid "Cannot continue without required control information, terminating\n"
-msgstr "필요한 컨트롤 정보 없이는 진행할 수 없음, 중지 함\n"
+msgid "  maximum alignment"
+msgstr "  최대 정렬"
 
-#: controldata.c:623
+#: controldata.c:612
 #, c-format
-msgid ""
-"old and new pg_controldata alignments are invalid or do not match\n"
-"Likely one cluster is a 32-bit install, the other 64-bit\n"
-msgstr ""
-"클러스터간 pg_controldata 정렬이 서로 다릅니다.\n"
-"하나는 32비트고, 하나는 64비트인 경우 같습니다\n"
+msgid "  block size"
+msgstr "  블록 크기"
+
+#: controldata.c:615
+#, c-format
+msgid "  large relation segment size"
+msgstr "  대형 릴레이션 조각 크기"
+
+#: controldata.c:618
+#, c-format
+msgid "  WAL block size"
+msgstr "  WAL 블록 크기"
+
+#: controldata.c:621
+#, c-format
+msgid "  WAL segment size"
+msgstr "  WAL 조각 크기"
+
+#: controldata.c:624
+#, c-format
+msgid "  maximum identifier length"
+msgstr "  최대 식별자 길이"
 
 #: controldata.c:627
 #, c-format
-msgid "old and new pg_controldata block sizes are invalid or do not match\n"
-msgstr "클러스터간 pg_controldata 블록 크기가 서로 다릅니다.\n"
+msgid "  maximum number of indexed columns"
+msgstr "  최대 인덱스 칼럼 수"
 
 #: controldata.c:630
 #, c-format
+msgid "  maximum TOAST chunk size"
+msgstr "  최대 토스트 조각 크기"
+
+#: controldata.c:634
+#, c-format
+msgid "  large-object chunk size"
+msgstr "  대형 객체 조각 크기"
+
+#: controldata.c:637
+#, c-format
+msgid "  dates/times are integers?"
+msgstr "  date/time 자료형을 정수로?"
+
+#: controldata.c:641
+#, c-format
+msgid "  data checksum version"
+msgstr "  자료 체크섬 버전"
+
+#: controldata.c:643
+#, c-format
+msgid "Cannot continue without required control information, terminating"
+msgstr "필요한 컨트롤 정보 없이는 진행할 수 없음, 중지 함"
+
+#: controldata.c:658
+#, c-format
+msgid ""
+"old and new pg_controldata alignments are invalid or do not match.\n"
+"Likely one cluster is a 32-bit install, the other 64-bit"
+msgstr ""
+"클러스터간 pg_controldata 정렬이 서로 다릅니다.\n"
+"하나는 32비트고, 하나는 64비트인 경우 같습니다."
+
+#: controldata.c:662
+#, c-format
+msgid "old and new pg_controldata block sizes are invalid or do not match"
+msgstr "클러스터간 pg_controldata 블록 크기가 서로 다릅니다."
+
+#: controldata.c:665
+#, c-format
 msgid ""
 "old and new pg_controldata maximum relation segment sizes are invalid or do "
-"not match\n"
-msgstr "클러스터간 pg_controldata 최대 릴레이션 조각 크가가 서로 다릅니다.\n"
+"not match"
+msgstr "클러스터간 pg_controldata 최대 릴레이션 조각 크가가 서로 다릅니다."
 
-#: controldata.c:633
+#: controldata.c:668
 #, c-format
-msgid ""
-"old and new pg_controldata WAL block sizes are invalid or do not match\n"
-msgstr "클러스터간 pg_controldata WAL 블록 크기가 서로 다릅니다.\n"
-
-#: controldata.c:636
-#, c-format
-msgid ""
-"old and new pg_controldata WAL segment sizes are invalid or do not match\n"
-msgstr "클러스터간 pg_controldata WAL 조각 크기가 서로 다릅니다.\n"
-
-#: controldata.c:639
-#, c-format
-msgid ""
-"old and new pg_controldata maximum identifier lengths are invalid or do not "
-"match\n"
-msgstr "클러스터간 pg_controldata 최대 식별자 길이가 서로 다릅니다.\n"
-
-#: controldata.c:642
-#, c-format
-msgid ""
-"old and new pg_controldata maximum indexed columns are invalid or do not "
-"match\n"
-msgstr "클러스터간 pg_controldata 최대 인덱스 칼럼수가 서로 다릅니다.\n"
-
-#: controldata.c:645
-#, c-format
-msgid ""
-"old and new pg_controldata maximum TOAST chunk sizes are invalid or do not "
-"match\n"
-msgstr "클러스터간 pg_controldata 최대 토스트 조각 크기가 서로 다릅니다.\n"
-
-#: controldata.c:650
-#, c-format
-msgid ""
-"old and new pg_controldata large-object chunk sizes are invalid or do not "
-"match\n"
-msgstr "클러스터간 pg_controldata 대형 객체 조각 크기가 서로 다릅니다.\n"
-
-#: controldata.c:653
-#, c-format
-msgid "old and new pg_controldata date/time storage types do not match\n"
-msgstr "클러스터간 pg_controldata date/time 저장 크기가 서로 다릅니다.\n"
-
-#: controldata.c:666
-#, c-format
-msgid "old cluster does not use data checksums but the new one does\n"
-msgstr ""
-"옛 클러스터는 데이터 체크섬 기능을 사용하지 않고, 새 클러스터는 사용하고 있습"
-"니다.\n"
-
-#: controldata.c:669
-#, c-format
-msgid "old cluster uses data checksums but the new one does not\n"
-msgstr ""
-"옛 클러스터는 데이터 체크섬 기능을 사용하고, 새 클러스터는 사용하고 있지 않습"
-"니다.\n"
+msgid "old and new pg_controldata WAL block sizes are invalid or do not match"
+msgstr "클러스터간 pg_controldata WAL 블록 크기가 서로 다릅니다."
 
 #: controldata.c:671
 #, c-format
-msgid "old and new cluster pg_controldata checksum versions do not match\n"
-msgstr "클러스터간 pg_controldata 체크섬 버전이 서로 다릅니다.\n"
+msgid ""
+"old and new pg_controldata WAL segment sizes are invalid or do not match"
+msgstr "클러스터간 pg_controldata WAL 조각 크기가 서로 다릅니다."
 
-#: controldata.c:682
+#: controldata.c:674
+#, c-format
+msgid ""
+"old and new pg_controldata maximum identifier lengths are invalid or do not "
+"match"
+msgstr "클러스터간 pg_controldata 최대 식별자 길이가 서로 다릅니다."
+
+#: controldata.c:677
+#, c-format
+msgid ""
+"old and new pg_controldata maximum indexed columns are invalid or do not "
+"match"
+msgstr "클러스터간 pg_controldata 최대 인덱스 칼럼수가 서로 다릅니다."
+
+#: controldata.c:680
+#, c-format
+msgid ""
+"old and new pg_controldata maximum TOAST chunk sizes are invalid or do not "
+"match"
+msgstr "클러스터간 pg_controldata 최대 토스트 조각 크기가 서로 다릅니다."
+
+#: controldata.c:685
+#, c-format
+msgid ""
+"old and new pg_controldata large-object chunk sizes are invalid or do not "
+"match"
+msgstr "클러스터간 pg_controldata 대형 객체 조각 크기가 서로 다릅니다."
+
+#: controldata.c:688
+#, c-format
+msgid "old and new pg_controldata date/time storage types do not match"
+msgstr "클러스터간 pg_controldata date/time 저장 크기가 서로 다릅니다."
+
+#: controldata.c:701
+#, c-format
+msgid "old cluster does not use data checksums but the new one does"
+msgstr ""
+"옛 클러스터는 데이터 체크섬 기능을 사용하지 않고, 새 클러스터는 사용하고 있습"
+"니다."
+
+#: controldata.c:704
+#, c-format
+msgid "old cluster uses data checksums but the new one does not"
+msgstr ""
+"옛 클러스터는 데이터 체크섬 기능을 사용하고, 새 클러스터는 사용하고 있지 않습"
+"니다."
+
+#: controldata.c:706
+#, c-format
+msgid "old and new cluster pg_controldata checksum versions do not match"
+msgstr "클러스터간 pg_controldata 체크섬 버전이 서로 다릅니다."
+
+#: controldata.c:717
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "옛 global/pg_control 파일에 \".old\" 이름을 덧붙입니다."
 
-#: controldata.c:687
+#: controldata.c:722
 #, c-format
-msgid "Unable to rename %s to %s.\n"
-msgstr "%s 이름을 %s 이름으로 바꿀 수 없음.\n"
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
 
-#: controldata.c:690
+#: controldata.c:726
 #, c-format
 msgid ""
 "\n"
 "If you want to start the old cluster, you will need to remove\n"
 "the \".old\" suffix from %s/global/pg_control.old.\n"
 "Because \"link\" mode was used, the old cluster cannot be safely\n"
-"started once the new cluster has been started.\n"
-"\n"
+"started once the new cluster has been started."
 msgstr ""
 "\n"
 "옛 버전으로 옛 클러스터를 사용해서 서버를 실행하려면,\n"
 "%s/global/pg_control.old 파일의 이름을 \".old\" 빼고 바꾸어\n"
 "사용해야합니다. 업그레이드를 \"link\" 모드로 했기 때문에,\n"
 "한번이라도 새 버전의 서버가 이 클러스터를 이용해서 실행되었다면,\n"
-"이 파일이 더 이상 안전하지 않기 때문입니다.\n"
-"\n"
+"이 파일이 더 이상 안전하지 않기 때문입니다."
 
 #: dump.c:20
 #, c-format
 msgid "Creating dump of global objects"
 msgstr "전역 객체 덤프를 만듭니다"
 
-#: dump.c:31
+#: dump.c:32
 #, c-format
-msgid "Creating dump of database schemas\n"
-msgstr "데이터베이스 스키마 덤프를 만듭니다\n"
+msgid "Creating dump of database schemas"
+msgstr "데이터베이스 스키마 덤프를 만듭니다"
 
-#: exec.c:44
+#: exec.c:47
 #, c-format
-msgid "could not get pg_ctl version data using %s: %s\n"
-msgstr "%s 명령을 사용해서 pg_ctl 버전 자료를 구할 수 없음: %s\n"
+msgid "could not get pg_ctl version data using %s: %m"
+msgstr "%s 명령을 사용해서 pg_ctl 버전 자료를 구할 수 없음: %m"
 
-#: exec.c:50
+#: exec.c:51
 #, c-format
-msgid "could not get pg_ctl version output from %s\n"
-msgstr "%s에서 pg_ctl 버전을 알 수 없음\n"
+msgid "could not get pg_ctl version data using %s: %s"
+msgstr "%s 명령을 사용해서 pg_ctl 버전 자료를 구할 수 없음: %s"
 
-#: exec.c:104 exec.c:108
+#: exec.c:55
 #, c-format
-msgid "command too long\n"
-msgstr "명령이 너무 긺\n"
+msgid "could not get pg_ctl version output from %s"
+msgstr "%s에서 pg_ctl 버전을 알 수 없음"
 
-#: exec.c:110 util.c:37 util.c:225
+#: exec.c:112 exec.c:116
 #, c-format
-msgid "%s\n"
-msgstr "%s\n"
+msgid "command too long"
+msgstr "명령이 너무 긺"
 
-#: exec.c:149 option.c:217
+#: exec.c:160 pg_upgrade.c:311
 #, c-format
-msgid "could not open log file \"%s\": %m\n"
-msgstr "\"%s\" 로그 파일을 열 수 없음: %m\n"
+msgid "could not open log file \"%s\": %m"
+msgstr "\"%s\" 로그 파일을 열 수 없음: %m"
 
-#: exec.c:178
+#: exec.c:192
 #, c-format
 msgid ""
 "\n"
@@ -751,414 +1045,371 @@ msgstr ""
 "\n"
 "*실패*"
 
-#: exec.c:181
+#: exec.c:195
 #, c-format
-msgid "There were problems executing \"%s\"\n"
-msgstr "\"%s\" 실행에서 문제 발생\n"
+msgid "There were problems executing \"%s\""
+msgstr "\"%s\" 실행에서 문제 발생"
 
-#: exec.c:184
+#: exec.c:198
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" or \"%s\" for\n"
-"the probable cause of the failure.\n"
+"the probable cause of the failure."
 msgstr ""
 "\"%s\" 또는 \"%s\" 파일의 마지막 부분을 살펴보면\n"
-"이 문제를 풀 실마리가 보일 것입니다.\n"
+"이 문제를 풀 실마리가 보일 것입니다."
 
-#: exec.c:189
+#: exec.c:203
 #, c-format
 msgid ""
 "Consult the last few lines of \"%s\" for\n"
-"the probable cause of the failure.\n"
+"the probable cause of the failure."
 msgstr ""
 "\"%s\" 파일의 마지막 부분을 살펴보면\n"
-"이 문제를 풀 실마리가 보일 것입니다.\n"
+"이 문제를 풀 실마리가 보일 것입니다."
 
-#: exec.c:204 option.c:226
+#: exec.c:218 pg_upgrade.c:321
 #, c-format
-msgid "could not write to log file \"%s\": %m\n"
-msgstr "\"%s\" 로그 파일을 쓸 수 없음: %m\n"
+msgid "could not write to log file \"%s\": %m"
+msgstr "\"%s\" 로그 파일을 쓸 수 없음: %m"
 
-#: exec.c:230
+#: exec.c:244
 #, c-format
-msgid "could not open file \"%s\" for reading: %s\n"
-msgstr "\"%s\" 파일을 읽기 위해 열 수 없습니다: %s\n"
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "\"%s\" 파일을 읽기 위해 열 수 없습니다: %m"
 
-#: exec.c:257
+#: exec.c:270
 #, c-format
-msgid "You must have read and write access in the current directory.\n"
-msgstr "현재 디렉터리의 읽기 쓰기 권한을 부여하세요.\n"
+msgid "You must have read and write access in the current directory."
+msgstr "현재 디렉터리의 읽기 쓰기 권한을 부여하세요."
 
-#: exec.c:310 exec.c:372 exec.c:436
+#: exec.c:323 exec.c:389 exec.c:439
 #, c-format
-msgid "check for \"%s\" failed: %s\n"
-msgstr "\"%s\" 검사 실패: %s\n"
+msgid "check for \"%s\" failed: %m"
+msgstr "\"%s\" 검사 실패: %m"
 
-#: exec.c:313 exec.c:375
+#: exec.c:326 exec.c:392
 #, c-format
-msgid "\"%s\" is not a directory\n"
-msgstr "\"%s\" 파일은 디렉터리가 아닙니다.\n"
+msgid "\"%s\" is not a directory"
+msgstr "\"%s\" 파일은 디렉터리가 아닙니다."
 
-#: exec.c:439
+#: exec.c:444
 #, c-format
-msgid "check for \"%s\" failed: not a regular file\n"
-msgstr "\"%s\" 검사 실패: 일반 파일이 아닙니다\n"
+msgid "check for \"%s\" failed: cannot execute"
+msgstr "\"%s\" 검사 실패: 실행할 수 없음"
 
-#: exec.c:451
-#, c-format
-msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
-msgstr "\"%s\" 검사 실패: 해당 파일을 읽을 수 없음 (접근 권한 없음)\n"
-
-#: exec.c:459
-#, c-format
-msgid "check for \"%s\" failed: cannot execute (permission denied)\n"
-msgstr "\"%s\" 검사 실패: 실행할 수 없음 (접근 권한 없음)\n"
-
-#: file.c:43 file.c:61
-#, c-format
-msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
-msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 클론 중 오류: %s\n"
-
-#: file.c:50
+#: exec.c:454
 #, c-format
 msgid ""
-"error while cloning relation \"%s.%s\": could not open file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 클론 중 오류: \"%s\" 파일을 열 수 없음: %s\n"
+"check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\""
+msgstr "\"%s\" 검사 실패: 잘못된 버전: 현재 \"%s\", 기대값 \"%s\""
 
-#: file.c:55
+#: file.c:44
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 클론 중 오류: %m"
+
+#: file.c:51
+#, c-format
+msgid "error while cloning relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 클론 중 오류: \"%s\" 파일을 열 수 없음: %m"
+
+#: file.c:56
 #, c-format
 msgid ""
-"error while cloning relation \"%s.%s\": could not create file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 클론 중 오류: \"%s\" 파일을 만들 수 없음: %s\n"
+"error while cloning relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 클론 중 오류: \"%s\" 파일을 만들 수 없음: %m"
 
-#: file.c:87 file.c:190
+#: file.c:65
+#, c-format
+msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s"
+msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 클론 중 오류: %s"
+
+#: file.c:91 file.c:160 file.c:233
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 열 수 없음: %m"
+
+#: file.c:96 file.c:165 file.c:242
 #, c-format
 msgid ""
-"error while copying relation \"%s.%s\": could not open file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 열 수 없음: %s\n"
+"error while copying relation \"%s.%s\": could not create file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 만들 수 없음: %m"
 
-#: file.c:92 file.c:199
+#: file.c:110 file.c:266
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 읽을 수 없음: %m"
+
+#: file.c:122 file.c:344
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 쓸 수 없음: %m"
+
+#: file.c:136
+#, c-format
+msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 복사 중 오류: %m"
+
+#: file.c:172
 #, c-format
 msgid ""
-"error while copying relation \"%s.%s\": could not create file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 만들 수 없음: %s\n"
-
-#: file.c:106 file.c:223
-#, c-format
-msgid ""
-"error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 읽을 수 없음: %s\n"
-
-#: file.c:118 file.c:301
-#, c-format
-msgid ""
-"error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
-msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일을 쓸 수 없음: %s\n"
-
-#: file.c:132
-#, c-format
-msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
-msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 복사 중 오류: %s\n"
-
-#: file.c:151
-#, c-format
-msgid ""
-"error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
-msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 링크 만드는 중 오류: %s\n"
+"error while copying relation \"%s.%s\": could not copy file range from "
+"\"%s\" to \"%s\": %m"
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: 실패 복사 범위: \"%s\" - \"%s\": %m"
 
 #: file.c:194
 #, c-format
-msgid ""
-"error while copying relation \"%s.%s\": could not stat file \"%s\": %s\n"
+msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "\"%s.%s\" (\"%s\" / \"%s\") 릴레이션 링크 만드는 중 오류: %m"
+
+#: file.c:237
+#, c-format
+msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %m"
 msgstr ""
-"\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일 상태 정보를 알 수 없음: %s\n"
+"\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일 상태 정보를 알 수 없음: %m"
 
-#: file.c:226
+#: file.c:269
 #, c-format
 msgid ""
-"error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
-msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일에 페이지가 손상되었음\n"
+"error while copying relation \"%s.%s\": partial page found in file \"%s\""
+msgstr "\"%s.%s\" 릴레이션 복사 중 오류: \"%s\" 파일에 페이지가 손상되었음"
 
-#: file.c:328 file.c:345
+#: file.c:371 file.c:387
 #, c-format
-msgid "could not clone file between old and new data directories: %s\n"
-msgstr "옛 데이터 디렉터리와 새 데이터 디렉터리 사이 파일 클론 실패: %s\n"
+msgid "could not clone file between old and new data directories: %m"
+msgstr "옛 데이터 디렉터리와 새 데이터 디렉터리 사이 파일 클론 실패: %m"
 
-#: file.c:341
+#: file.c:383 file.c:420
 #, c-format
-msgid "could not create file \"%s\": %s\n"
-msgstr "\"%s\" 파일을 만들 수 없음: %s\n"
+msgid "could not create file \"%s\": %m"
+msgstr "\"%s\" 파일을 만들 수 없음: %m"
 
-#: file.c:352
+#: file.c:393
 #, c-format
-msgid "file cloning not supported on this platform\n"
-msgstr "이 운영체제는 파일 클론 기능을 제공하지 않습니다.\n"
+msgid "file cloning not supported on this platform"
+msgstr "이 운영체제는 파일 클론 기능을 제공하지 않습니다."
 
-#: file.c:369
+#: file.c:424
+#, c-format
+msgid "could not copy file range between old and new data directories: %m"
+msgstr "옛 데이터 디렉터리와 새 데이터 디렉터리 사이 파일 클론 실패: %m"
+
+#: file.c:430
+#, c-format
+msgid "copy_file_range not supported on this platform"
+msgstr "이 운영체제는 copy_file_range 기능을 제공하지 않습니다."
+
+#: file.c:447
 #, c-format
 msgid ""
-"could not create hard link between old and new data directories: %s\n"
+"could not create hard link between old and new data directories: %m\n"
 "In link mode the old and new data directories must be on the same file "
-"system.\n"
+"system."
 msgstr ""
-"데이터 디렉터리간 하드 링크를 만들 수 없음: %s\n"
-"하드 링크를 사용하려면, 두 디렉터리가 같은 시스템 볼륨 안에 있어야 합니다.\n"
+"데이터 디렉터리간 하드 링크를 만들 수 없음: %m\n"
+"하드 링크를 사용하려면, 두 디렉터리가 같은 시스템 볼륨 안에 있어야 합니다."
 
-#: function.c:114
-#, c-format
-msgid ""
-"\n"
-"The old cluster has a \"plpython_call_handler\" function defined\n"
-"in the \"public\" schema which is a duplicate of the one defined\n"
-"in the \"pg_catalog\" schema.  You can confirm this by executing\n"
-"in psql:\n"
-"\n"
-"    \\df *.plpython_call_handler\n"
-"\n"
-"The \"public\" schema version of this function was created by a\n"
-"pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
-"to complete because it references a now-obsolete \"plpython\"\n"
-"shared object file.  You can remove the \"public\" schema version\n"
-"of this function by running the following command:\n"
-"\n"
-"    DROP FUNCTION public.plpython_call_handler()\n"
-"\n"
-"in each affected database:\n"
-"\n"
-msgstr ""
-"\n"
-"옛 클러스터는 \"plpython_call_handler\" 함수가 \"public\" 스키마 안에\n"
-"정의 되어있습니다.  이 함수는 \"pg_catalog\" 스키마 안에 있어야합니다.\n"
-"psql에서 다음 명령으로 이 함수의 위치를 살펴 볼 수 있습니다:\n"
-"\n"
-"    \\df *.plpython_call_handler\n"
-"\n"
-"\"public\" 스키마 안에 이 함수가 있는 경우는 8.1 버전 이전 버전이었습니다.\n"
-"업그레이드 작업을 정상적으로 마치려면, 먼저 \"plpython\" 관련 객체들을 먼저\n"
-"모두 지우고, 새 버전용 모듈을 설치해서 사용해야 합니다.\n"
-"이 삭제 작업은 다음과 같이 진행합니다:\n"
-"\n"
-"    DROP FUNCTION public.plpython_call_handler()\n"
-"\n"
-"이 작업은 관련 모든 데이터베이스 단위로 진행되어야 합니다.\n"
-"\n"
-
-#: function.c:132
-#, c-format
-msgid "    %s\n"
-msgstr "    %s\n"
-
-#: function.c:142
-#, c-format
-msgid "Remove the problem functions from the old cluster to continue.\n"
-msgstr "옛 클러스터에서 문제가 있는 함수들을 삭제하고 진행하세요.\n"
-
-#: function.c:189
+#: function.c:154
 #, c-format
 msgid "Checking for presence of required libraries"
 msgstr "필요한 라이브러리 확인 중"
 
-#: function.c:242
+#: function.c:190
 #, c-format
 msgid "could not load library \"%s\": %s"
 msgstr "\"%s\" 라이브러리 로드 실패: %s"
 
-#: function.c:253
+#: function.c:201
 #, c-format
 msgid "In database: %s\n"
 msgstr "데이터베이스: %s\n"
 
-#: function.c:263
+#: function.c:211
 #, c-format
 msgid ""
 "Your installation references loadable libraries that are missing from the\n"
 "new installation.  You can add these libraries to the new installation,\n"
 "or remove the functions using them from the old installation.  A list of\n"
 "problem libraries is in the file:\n"
-"    %s\n"
-"\n"
+"    %s"
 msgstr ""
 "옛 버전에는 있고, 새 버전에는 없는 라이브러리들이 있습니다.  새 버전에\n"
 "해당 라이브러리들을 설치하거나, 옛 버전에서 해당 라이브러리를 삭제하고,\n"
 "업그레이드 작업을 해야합니다.  문제가 있는 라이브러리들은 다음과 같습니다:\n"
-"    %s\n"
-"\n"
+"    %s"
 
-#: info.c:131
+#: info.c:128
 #, c-format
 msgid ""
-"Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s"
-"\", new name \"%s.%s\"\n"
+"Relation names for OID %u in database \"%s\" do not match: old name \"%s."
+"%s\", new name \"%s.%s\""
 msgstr ""
 "%u OID에 대한 \"%s\" 데이터베이스 이름이 서로 다릅니다: 옛 이름: \"%s.%s\", "
-"새 이름: \"%s.%s\"\n"
+"새 이름: \"%s.%s\""
 
-#: info.c:151
+#: info.c:148
 #, c-format
-msgid "Failed to match up old and new tables in database \"%s\"\n"
-msgstr "\"%s\" 데이터베이스 내 테이블 이름이 서로 다릅니다:\n"
+msgid "Failed to match up old and new tables in database \"%s\""
+msgstr "\"%s\" 데이터베이스 내 테이블 이름이 서로 다릅니다"
 
-#: info.c:240
+#: info.c:229
 #, c-format
 msgid " which is an index on \"%s.%s\""
 msgstr " 해당 인덱스: \"%s.%s\""
 
-#: info.c:250
+#: info.c:239
 #, c-format
 msgid " which is an index on OID %u"
 msgstr " 해당 인덱스의 OID: %u"
 
-#: info.c:262
+#: info.c:251
 #, c-format
 msgid " which is the TOAST table for \"%s.%s\""
 msgstr " \"%s.%s\" 객체의 토스트 테이블"
 
-#: info.c:270
+#: info.c:259
 #, c-format
 msgid " which is the TOAST table for OID %u"
 msgstr " 해당 토스트 베이블의 OID: %u"
 
-#: info.c:274
+#: info.c:263
 #, c-format
 msgid ""
-"No match found in old cluster for new relation with OID %u in database \"%s"
-"\": %s\n"
+"No match found in old cluster for new relation with OID %u in database "
+"\"%s\": %s"
 msgstr ""
-"새 클러스터의 %u OID (해당 데이터베이스: \"%s\")가 옛 클러스터에 없음: %s\n"
+"새 클러스터의 %u OID (해당 데이터베이스: \"%s\")가 옛 클러스터에 없음: %s"
 
-#: info.c:277
+#: info.c:266
 #, c-format
 msgid ""
-"No match found in new cluster for old relation with OID %u in database \"%s"
-"\": %s\n"
+"No match found in new cluster for old relation with OID %u in database "
+"\"%s\": %s"
 msgstr ""
-"옛 클러스터의 %u OID (해당 데이터베이스: \"%s\")가 새 클러스터에 없음: %s\n"
+"옛 클러스터의 %u OID (해당 데이터베이스: \"%s\")가 새 클러스터에 없음: %s"
 
-#: info.c:289
-#, c-format
-msgid "mappings for database \"%s\":\n"
-msgstr "\"%s\" 데이터베이스 맵핑 중:\n"
-
-#: info.c:292
-#, c-format
-msgid "%s.%s: %u to %u\n"
-msgstr "%s.%s: %u / %u\n"
-
-#: info.c:297 info.c:633
+#: info.c:300
 #, c-format
 msgid ""
 "\n"
-"\n"
+"source databases:"
 msgstr ""
 "\n"
-"\n"
+"원본 데이터베이스:"
 
-#: info.c:322
+#: info.c:302
 #, c-format
 msgid ""
 "\n"
-"source databases:\n"
+"target databases:"
 msgstr ""
 "\n"
-"원본 데이터베이스:\n"
+"대상 데이터베이스:"
 
-#: info.c:324
+#: info.c:346
 #, c-format
-msgid ""
-"\n"
-"target databases:\n"
-msgstr ""
-"\n"
-"대상 데이터베이스:\n"
+msgid "template0 not found"
+msgstr "template0 찾을 수 없음"
 
-#: info.c:631
+#: info.c:805
 #, c-format
-msgid "Database: %s\n"
-msgstr "데이터베이스: %s\n"
+msgid "Database: \"%s\""
+msgstr "데이터베이스: \"%s\""
 
-#: info.c:644
+#: info.c:818
 #, c-format
-msgid "relname: %s.%s: reloid: %u reltblspace: %s\n"
-msgstr "relname: %s.%s: reloid: %u reltblspace: %s\n"
+msgid "relname: \"%s.%s\", reloid: %u, reltblspace: \"%s\""
+msgstr "relname: \"%s.%s\": reloid: %u reltblspace: \"%s\""
 
-#: option.c:102
+#: info.c:832
 #, c-format
-msgid "%s: cannot be run as root\n"
-msgstr "%s: root 권한으로 실행할 수 없음\n"
+msgid "Logical replication slots in the database:"
+msgstr "해당 데이터베이스 안에 있는 논리 복제 슬롯들:"
 
-#: option.c:170
+#: info.c:838
 #, c-format
-msgid "invalid old port number\n"
-msgstr "잘못된 옛 포트 번호\n"
+msgid "slot name: \"%s\", output plugin: \"%s\", two_phase: %s"
+msgstr "슬롯 이름: \"%s\", 출력 플러그인: \"%s\", two_phase: %s"
 
-#: option.c:175
+#: option.c:105
 #, c-format
-msgid "invalid new port number\n"
-msgstr "잘못된 새 포트 번호\n"
+msgid "%s: cannot be run as root"
+msgstr "%s: root 권한으로 실행할 수 없음"
 
-#: option.c:207
+#: option.c:172
+#, c-format
+msgid "invalid old port number"
+msgstr "잘못된 옛 포트 번호"
+
+#: option.c:177
+#, c-format
+msgid "invalid new port number"
+msgstr "잘못된 새 포트 번호"
+
+#: option.c:216
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "보다 자세한 사용법은 \"%s --help\" 명령을 이용하세요.\n"
 
-#: option.c:214
+#: option.c:223
 #, c-format
-msgid "too many command-line arguments (first is \"%s\")\n"
-msgstr "너무 많은 명령행 인자를 지정 했음 (시작: \"%s\")\n"
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "너무 많은 명령행 인자를 지정 했음 (시작: \"%s\")"
 
-#: option.c:220
+#: option.c:229
 #, c-format
-msgid "Running in verbose mode\n"
-msgstr "작업 내역을 자세히 봄\n"
+msgid "Running in verbose mode"
+msgstr "작업 내역을 자세히 봄"
 
-#: option.c:251
+#: option.c:247
 msgid "old cluster binaries reside"
 msgstr "옛 클러스터 실행파일 위치"
 
-#: option.c:253
+#: option.c:249
 msgid "new cluster binaries reside"
 msgstr "새 클러스터 실팽파일 위치"
 
-#: option.c:255
+#: option.c:251
 msgid "old cluster data resides"
 msgstr "옛 클러스터 자료 위치"
 
-#: option.c:257
+#: option.c:253
 msgid "new cluster data resides"
 msgstr "새 클러스터 자료 위치"
 
-#: option.c:259
+#: option.c:255
 msgid "sockets will be created"
 msgstr "소켓 파일 만들 위치"
 
-#: option.c:276 option.c:374
+#: option.c:272 option.c:374
 #, c-format
-msgid "could not determine current directory\n"
-msgstr "현재 디렉터리 위치를 알 수 없음\n"
+msgid "could not determine current directory"
+msgstr "현재 디렉터리 위치를 알 수 없음"
 
-#: option.c:279
+#: option.c:275
 #, c-format
 msgid ""
-"cannot run pg_upgrade from inside the new cluster data directory on Windows\n"
+"cannot run pg_upgrade from inside the new cluster data directory on Windows"
 msgstr ""
 "윈도우즈 환경에서는 pg_upgrade 명령은 새 클러스터 데이터 디렉터리 안에서는 실"
-"행할 수 없음\n"
+"행할 수 없음"
 
-#: option.c:288
+#: option.c:284
 #, c-format
 msgid ""
 "pg_upgrade upgrades a PostgreSQL cluster to a different major version.\n"
 "\n"
 msgstr ""
-"새 데이터 클러스터 버전과 pg_upgrade 버전의 메이저 버전이 서로 다릅니다.\n"
+"pg_upgrade는 다른 메이저 버전으로 PostgreSQL 클러스터를 업그레이드합니다.\n"
 "\n"
 
-#: option.c:289
+#: option.c:285
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: option.c:290
+#: option.c:286
 #, c-format
 msgid ""
 "  pg_upgrade [OPTION]...\n"
@@ -1167,17 +1418,17 @@ msgstr ""
 "  pg_upgrade [옵션]...\n"
 "\n"
 
-#: option.c:291
+#: option.c:287
 #, c-format
 msgid "Options:\n"
 msgstr "옵션:\n"
 
-#: option.c:292
+#: option.c:288
 #, c-format
 msgid "  -b, --old-bindir=BINDIR       old cluster executable directory\n"
 msgstr "  -b, --old-bindir=BINDIR       옛 클러스터 실행 파일의 디렉터리\n"
 
-#: option.c:293
+#: option.c:289
 #, c-format
 msgid ""
 "  -B, --new-bindir=BINDIR       new cluster executable directory (default\n"
@@ -1186,23 +1437,23 @@ msgstr ""
 "  -B, --new-bindir=BINDIR       새 클러스터 실행 파일의 디렉터리 (기본값:\n"
 "                                pg_upgrade가 있는 디렉터리)\n"
 
-#: option.c:295
+#: option.c:291
 #, c-format
 msgid ""
 "  -c, --check                   check clusters only, don't change any data\n"
 msgstr "  -c, --check                   실 작업 없이, 그냥 검사만\n"
 
-#: option.c:296
+#: option.c:292
 #, c-format
 msgid "  -d, --old-datadir=DATADIR     old cluster data directory\n"
 msgstr "  -d, --old-datadir=DATADIR     옛 클러스터 데이터 디렉터리\n"
 
-#: option.c:297
+#: option.c:293
 #, c-format
 msgid "  -D, --new-datadir=DATADIR     new cluster data directory\n"
 msgstr "  -D, --new-datadir=DATADIR     새 클러스터 데이터 디렉터리\n"
 
-#: option.c:298
+#: option.c:294
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                number of simultaneous processes or threads "
@@ -1210,7 +1461,7 @@ msgid ""
 msgstr ""
 "  -j, --jobs=NUM                동시에 작업할 프로세스 또는 쓰레드 수\n"
 
-#: option.c:299
+#: option.c:295
 #, c-format
 msgid ""
 "  -k, --link                    link instead of copying files to new "
@@ -1218,36 +1469,44 @@ msgid ""
 msgstr ""
 "  -k, --link                    새 클러스터 구축을 복사 대신 링크 사용\n"
 
-#: option.c:300
+#: option.c:296
+#, c-format
+msgid ""
+"  -N, --no-sync                 do not wait for changes to be written safely "
+"to disk\n"
+msgstr ""
+"  -N, --no-sync                 작업 완료 뒤 디스크 동기화 작업을 하지 않음\n"
+
+#: option.c:297
 #, c-format
 msgid ""
 "  -o, --old-options=OPTIONS     old cluster options to pass to the server\n"
 msgstr "  -o, --old-options=옵션        옛 서버에서 사용할 서버 옵션들\n"
 
-#: option.c:301
+#: option.c:298
 #, c-format
 msgid ""
 "  -O, --new-options=OPTIONS     new cluster options to pass to the server\n"
 msgstr "  -O, --new-options=옵션        새 서버에서 사용할 서버 옵션들\n"
 
-#: option.c:302
+#: option.c:299
 #, c-format
 msgid "  -p, --old-port=PORT           old cluster port number (default %d)\n"
 msgstr "  -p, --old-port=PORT           옛 클러스터 포트 번호 (기본값 %d)\n"
 
-#: option.c:303
+#: option.c:300
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
 msgstr "  -P, --new-port=PORT           새 클러스터 포트 번호 (기본값 %d)\n"
 
-#: option.c:304
+#: option.c:301
 #, c-format
 msgid ""
 "  -r, --retain                  retain SQL and log files after success\n"
 msgstr ""
 "  -r, --retain                  작업 완료 후 사용했던 SQL과 로그 파일 남김\n"
 
-#: option.c:305
+#: option.c:302
 #, c-format
 msgid ""
 "  -s, --socketdir=DIR           socket directory to use (default current "
@@ -1256,29 +1515,47 @@ msgstr ""
 "  -s, --socketdir=DIR           사용할 소켓 디렉터리 (기본값: 현재 디렉터"
 "리)\n"
 
-#: option.c:306
+#: option.c:303
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
 msgstr "  -U, --username=이름           클러스터 슈퍼유저 (기본값 \"%s\")\n"
 
-#: option.c:307
+#: option.c:304
 #, c-format
 msgid "  -v, --verbose                 enable verbose internal logging\n"
 msgstr "  -v, --verbose                 작업 내역을 자세히 남김\n"
 
-#: option.c:308
+#: option.c:305
 #, c-format
 msgid ""
 "  -V, --version                 display version information, then exit\n"
 msgstr "  -V, --version                 버전 정보를 보여주고 마침\n"
 
-#: option.c:309
+#: option.c:306
 #, c-format
 msgid ""
 "  --clone                       clone instead of copying files to new "
 "cluster\n"
 msgstr ""
 "  --clone                       새 클러스터 구축을 복사 대신 클론 사용\n"
+
+#: option.c:307
+#, c-format
+msgid "  --copy                        copy files to new cluster (default)\n"
+msgstr "  --copy                        새 클러스터로 파일 복사 (기본값)\n"
+
+#: option.c:308
+#, c-format
+msgid ""
+"  --copy-file-range             copy files to new cluster with "
+"copy_file_range\n"
+msgstr "  --copy-file-range             copy_file_range 기능을 이용해서 복사\n"
+
+#: option.c:309
+#, c-format
+msgid "  --sync-method=METHOD          set method for syncing files to disk\n"
+msgstr ""
+"  --sync-method=METHOD          파일을 디스크에 동기화 하는 방법 지정\n"
 
 #: option.c:310
 #, c-format
@@ -1330,7 +1607,7 @@ msgstr ""
 "사용예:\n"
 "  pg_upgrade -d oldCluster/data -D newCluster/data -b oldCluster/bin -B "
 "newCluster/bin\n"
-"or\n"
+"또는\n"
 
 #: option.c:327
 #, c-format
@@ -1380,248 +1657,284 @@ msgstr "%s 홈페이지: <%s>\n"
 #, c-format
 msgid ""
 "You must identify the directory where the %s.\n"
-"Please use the %s command-line option or the %s environment variable.\n"
+"Please use the %s command-line option or the %s environment variable."
 msgstr ""
 "%s 위치의 디렉터리를 알고 있어야 함.\n"
-"%s 명령행 옵션이나, %s 환경 변수를 사용하세요.\n"
+"%s 명령행 옵션이나, %s 환경 변수를 사용하세요."
 
-#: option.c:432
+#: option.c:433
 #, c-format
 msgid "Finding the real data directory for the source cluster"
 msgstr "원본 클러스터용 실 데이터 디렉터리를 찾는 중"
 
-#: option.c:434
+#: option.c:435
 #, c-format
 msgid "Finding the real data directory for the target cluster"
 msgstr "대상 클러스터용 실 데이터 디렉터리를 찾는 중"
 
-#: option.c:446
+#: option.c:448
 #, c-format
-msgid "could not get data directory using %s: %s\n"
-msgstr "%s 지정한 데이터 디렉터리를 찾을 수 없음: %s\n"
+msgid "could not get data directory using %s: %m"
+msgstr "%s 지정한 데이터 디렉터리를 찾을 수 없음: %m"
 
-#: option.c:505
+#: option.c:452
 #, c-format
-msgid "could not read line %d from file \"%s\": %s\n"
-msgstr "%d 번째 줄을 \"%s\" 파일에서 읽을 수 없음: %s\n"
+msgid "could not get data directory using %s: %s"
+msgstr "%s 지정한 데이터 디렉터리를 찾을 수 없음: %s"
 
-#: option.c:522
+#: option.c:500
 #, c-format
-msgid "user-supplied old port number %hu corrected to %hu\n"
-msgstr "지정한 %hu 옛 포트 번호를 %hu 번호로 바꿈\n"
+msgid "could not read line %d from file \"%s\": %m"
+msgstr "%d 번째 줄을 \"%s\" 파일에서 읽을 수 없음: %m"
 
-#: parallel.c:127 parallel.c:238
+#: option.c:517
 #, c-format
-msgid "could not create worker process: %s\n"
-msgstr "작업용 프로세스를 만들 수 없음: %s\n"
+msgid "user-supplied old port number %hu corrected to %hu"
+msgstr "지정한 %hu 옛 포트 번호를 %hu 번호로 바꿈"
 
-#: parallel.c:146 parallel.c:259
+#: parallel.c:127 parallel.c:235
 #, c-format
-msgid "could not create worker thread: %s\n"
-msgstr "작업용 쓰레드를 만들 수 없음: %s\n"
+msgid "could not create worker process: %m"
+msgstr "작업용 프로세스를 만들 수 없음: %m"
 
-#: parallel.c:300
+#: parallel.c:143 parallel.c:253
 #, c-format
-msgid "waitpid() failed: %s\n"
-msgstr "waitpid() 실패: %s\n"
+msgid "could not create worker thread: %m"
+msgstr "작업용 쓰레드를 만들 수 없음: %m"
 
-#: parallel.c:304
+#: parallel.c:294
 #, c-format
-msgid "child process exited abnormally: status %d\n"
-msgstr "하위 작업자가 비정상 종료됨: 상태값 %d\n"
+msgid "%s() failed: %m"
+msgstr "%s() 실패: %m"
 
-#: parallel.c:319
+#: parallel.c:298
 #, c-format
-msgid "child worker exited abnormally: %s\n"
-msgstr "하위 작업자가 비정상 종료됨: %s\n"
+msgid "child process exited abnormally: status %d"
+msgstr "하위 작업자가 비정상 종료됨: 상태값 %d"
 
-#: pg_upgrade.c:108
+#: parallel.c:313
 #, c-format
-msgid "could not read permissions of directory \"%s\": %s\n"
-msgstr "\"%s\" 디렉터리 읽기 권한 없음: %s\n"
+msgid "child worker exited abnormally: %m"
+msgstr "하위 작업자가 비정상 종료됨: %m"
 
-#: pg_upgrade.c:123
+#: pg_upgrade.c:115
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리 접근권한을 읽을 수 없음: %m"
+
+#: pg_upgrade.c:147
 #, c-format
 msgid ""
 "\n"
 "Performing Upgrade\n"
-"------------------\n"
+"------------------"
 msgstr ""
 "\n"
 "업그레이드 진행 중\n"
-"------------------\n"
+"------------------"
 
-#: pg_upgrade.c:166
+#: pg_upgrade.c:192
 #, c-format
 msgid "Setting next OID for new cluster"
 msgstr "새 클러스터용 다음 OID 설정 중"
 
-#: pg_upgrade.c:173
+#: pg_upgrade.c:216
 #, c-format
 msgid "Sync data directory to disk"
 msgstr "데이터 디렉터리 fsync 작업 중"
 
-#: pg_upgrade.c:185
+#: pg_upgrade.c:230
 #, c-format
 msgid ""
 "\n"
 "Upgrade Complete\n"
-"----------------\n"
+"----------------"
 msgstr ""
 "\n"
-"업그레이드 완료\n"
-"---------------\n"
+"업그레이드 마침\n"
+"---------------"
 
-#: pg_upgrade.c:220
+#: pg_upgrade.c:263 pg_upgrade.c:276 pg_upgrade.c:283 pg_upgrade.c:290
+#: pg_upgrade.c:308 pg_upgrade.c:319
 #, c-format
-msgid "%s: could not find own program executable\n"
-msgstr "%s: 실행할 프로그램을 찾을 수 없습니다.\n"
+msgid "directory path for new cluster is too long"
+msgstr "새 클러스터용 디렉터리 이름이 너무 김"
 
-#: pg_upgrade.c:246
+#: pg_upgrade.c:297 pg_upgrade.c:299 pg_upgrade.c:301 pg_upgrade.c:303
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 만들 수 없음: %m"
+
+#: pg_upgrade.c:352
+#, c-format
+msgid "%s: could not find own program executable"
+msgstr "%s: 실행할 프로그램을 찾을 수 없습니다."
+
+#: pg_upgrade.c:378
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the old cluster.\n"
-"Please shutdown that postmaster and try again.\n"
+"Please shutdown that postmaster and try again."
 msgstr ""
 "옛 서버가 현재 운영 되고 있습니다.\n"
-"먼저 서버를 중지하고 진행하세요.\n"
+"먼저 서버를 중지하고 진행하세요."
 
-#: pg_upgrade.c:259
+#: pg_upgrade.c:391
 #, c-format
 msgid ""
 "There seems to be a postmaster servicing the new cluster.\n"
-"Please shutdown that postmaster and try again.\n"
+"Please shutdown that postmaster and try again."
 msgstr ""
 "새 서버가 현재 운영 되고 있습니다.\n"
-"먼저 서버를 중지하고 진행하세요.\n"
+"먼저 서버를 중지하고 진행하세요."
 
-#: pg_upgrade.c:273
+#: pg_upgrade.c:413
+#, c-format
+msgid "Setting locale and encoding for new cluster"
+msgstr "새 클러스터용 로케일과 인코딩 설정 중"
+
+#: pg_upgrade.c:489
 #, c-format
 msgid "Analyzing all rows in the new cluster"
 msgstr "새 클러스터의 모든 로우에 대해서 통계 정보 수집 중"
 
-#: pg_upgrade.c:286
+#: pg_upgrade.c:502
 #, c-format
 msgid "Freezing all rows in the new cluster"
 msgstr "새 클러스터의 모든 로우에 대해서 영구 격리(freeze) 중"
 
-#: pg_upgrade.c:306
+#: pg_upgrade.c:522
 #, c-format
 msgid "Restoring global objects in the new cluster"
 msgstr "새 클러스터에 전역 객체를 복원 중"
 
-#: pg_upgrade.c:321
+#: pg_upgrade.c:538
 #, c-format
-msgid "Restoring database schemas in the new cluster\n"
-msgstr "새 클러스터에 데이터베이스 스키마 복원 중\n"
+msgid "Restoring database schemas in the new cluster"
+msgstr "새 클러스터에 데이터베이스 스키마 복원 중"
 
-#: pg_upgrade.c:425
+#: pg_upgrade.c:662
 #, c-format
 msgid "Deleting files from new %s"
 msgstr "새 %s에서 파일 지우는 중"
 
-#: pg_upgrade.c:429
+#: pg_upgrade.c:666
 #, c-format
-msgid "could not delete directory \"%s\"\n"
-msgstr "\"%s\" 디렉터리를 삭제 할 수 없음\n"
+msgid "could not delete directory \"%s\""
+msgstr "\"%s\" 디렉터리를 삭제 할 수 없음"
 
-#: pg_upgrade.c:448
+#: pg_upgrade.c:685
 #, c-format
 msgid "Copying old %s to new server"
 msgstr "옛 %s 객체를 새 서버로 복사 중"
 
-#: pg_upgrade.c:475
+#: pg_upgrade.c:711
+#, c-format
+msgid "Setting oldest XID for new cluster"
+msgstr "새 클러스터용 제일 오래된 XID 설정 중"
+
+#: pg_upgrade.c:719
 #, c-format
 msgid "Setting next transaction ID and epoch for new cluster"
 msgstr "새 클러스터용 다음 트랜잭션 ID와 epoch 값 설정 중"
 
-#: pg_upgrade.c:505
+#: pg_upgrade.c:749
 #, c-format
 msgid "Setting next multixact ID and offset for new cluster"
 msgstr "새 클러스터용 다음 멀티 트랜잭션 ID와 위치 값 설정 중"
 
-#: pg_upgrade.c:529
+#: pg_upgrade.c:773
 #, c-format
 msgid "Setting oldest multixact ID in new cluster"
 msgstr "새 클러스터용 제일 오래된 멀티 트랜잭션 ID 설정 중"
 
-#: pg_upgrade.c:549
+#: pg_upgrade.c:793
 #, c-format
 msgid "Resetting WAL archives"
 msgstr "WAL 아카이브 재설정 중"
 
-#: pg_upgrade.c:592
+#: pg_upgrade.c:836
 #, c-format
 msgid "Setting frozenxid and minmxid counters in new cluster"
 msgstr "새 클러스터에서 frozenxid, minmxid 값 설정 중"
 
-#: pg_upgrade.c:594
+#: pg_upgrade.c:838
 #, c-format
 msgid "Setting minmxid counter in new cluster"
 msgstr "새 클러스터에서 minmxid 값 설정 중"
 
-#: relfilenode.c:35
+#: pg_upgrade.c:929
 #, c-format
-msgid "Cloning user relation files\n"
-msgstr "사용자 릴레이션 파일 클론 중\n"
+msgid "Restoring logical replication slots in the new cluster"
+msgstr "새 클러스터에 논리 복제 슬롯을 복원 중"
 
-#: relfilenode.c:38
+#: relfilenumber.c:35
 #, c-format
-msgid "Copying user relation files\n"
-msgstr "사용자 릴레이션 파일 복사 중\n"
+msgid "Cloning user relation files"
+msgstr "사용자 릴레이션 파일 클론 중"
 
-#: relfilenode.c:41
+#: relfilenumber.c:38
 #, c-format
-msgid "Linking user relation files\n"
-msgstr "사용자 릴레이션 파일 링크 중\n"
+msgid "Copying user relation files"
+msgstr "사용자 릴레이션 파일 복사 중"
 
-#: relfilenode.c:115
+#: relfilenumber.c:41
 #, c-format
-msgid "old database \"%s\" not found in the new cluster\n"
-msgstr "\"%s\" 이름의 옛 데이터베이스를 새 클러스터에서 찾을 수 없음\n"
+msgid "Copying user relation files with copy_file_range"
+msgstr "사용자 릴레이션 파일을 copy_file_range 기능으로 복사 중"
 
-#: relfilenode.c:234
+#: relfilenumber.c:44
+#, c-format
+msgid "Linking user relation files"
+msgstr "사용자 릴레이션 파일 링크 중"
+
+#: relfilenumber.c:118
+#, c-format
+msgid "old database \"%s\" not found in the new cluster"
+msgstr "\"%s\" 이름의 옛 데이터베이스를 새 클러스터에서 찾을 수 없음"
+
+#: relfilenumber.c:221
 #, c-format
 msgid ""
-"error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
-msgstr "\"%s.%s\" (\"%s\" / \"%s\") 파일이 있는지 확인 도중 오류 발생: %s\n"
+"error while checking for file existence \"%s.%s\" (\"%s\" to \"%s\"): %m"
+msgstr "\"%s.%s\" (\"%s\" / \"%s\") 파일이 있는지 확인 도중 오류 발생: %m"
 
-#: relfilenode.c:252
+#: relfilenumber.c:238
 #, c-format
-msgid "rewriting \"%s\" to \"%s\"\n"
-msgstr "\"%s\" 객체를 \"%s\" 객체로 다시 쓰는 중\n"
+msgid "rewriting \"%s\" to \"%s\""
+msgstr "\"%s\" 객체를 \"%s\" 객체로 다시 쓰는 중"
 
-#: relfilenode.c:260
+#: relfilenumber.c:246
 #, c-format
-msgid "cloning \"%s\" to \"%s\"\n"
-msgstr "\"%s\" 객체를 \"%s\" 객체로 클론 중\n"
+msgid "cloning \"%s\" to \"%s\""
+msgstr "\"%s\" 객체를 \"%s\" 객체로 클론 중"
 
-#: relfilenode.c:265
+#: relfilenumber.c:251
 #, c-format
-msgid "copying \"%s\" to \"%s\"\n"
-msgstr "\"%s\" 객체를 \"%s\" 객체로 복사 중\n"
+msgid "copying \"%s\" to \"%s\""
+msgstr "\"%s\" 객체를 \"%s\" 객체로 복사 중"
 
-#: relfilenode.c:270
+#: relfilenumber.c:256
 #, c-format
-msgid "linking \"%s\" to \"%s\"\n"
-msgstr "\"%s\" 객체를 \"%s\" 객체로 링크 중\n"
+msgid "copying \"%s\" to \"%s\" with copy_file_range"
+msgstr "\"%s\" 객체를 \"%s\" 객체로 copy_file_range 기능으로 복사 중"
 
-#: server.c:33
+#: relfilenumber.c:261
 #, c-format
-msgid "connection to database failed: %s"
-msgstr "데이터베이스 연결 실패: %s"
+msgid "linking \"%s\" to \"%s\""
+msgstr "\"%s\" 객체를 \"%s\" 객체로 링크 중"
 
-#: server.c:39 server.c:141 util.c:135 util.c:165
+#: server.c:39 server.c:143 util.c:248 util.c:278
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "실패, 종료함\n"
 
-#: server.c:131
+#: server.c:133
 #, c-format
-msgid "executing: %s\n"
-msgstr "실행중: %s\n"
+msgid "executing: %s"
+msgstr "실행중: %s"
 
-#: server.c:137
+#: server.c:139
 #, c-format
 msgid ""
 "SQL command failed\n"
@@ -1632,218 +1945,128 @@ msgstr ""
 "%s\n"
 "%s"
 
-#: server.c:167
+#: server.c:169
 #, c-format
-msgid "could not open version file \"%s\": %m\n"
-msgstr "\"%s\" 버전 파일 열기 실패: %m\n"
+msgid "could not open version file \"%s\": %m"
+msgstr "\"%s\" 버전 파일 열기 실패: %m"
 
-#: server.c:171
+#: server.c:173
 #, c-format
-msgid "could not parse version file \"%s\"\n"
-msgstr "\"%s\" 버전 파일 구문 분석 실패\n"
+msgid "could not parse version file \"%s\""
+msgstr "\"%s\" 버전 파일 구문 분석 실패"
 
-#: server.c:297
+#: server.c:310
 #, c-format
 msgid ""
 "\n"
-"connection to database failed: %s"
+"%s"
 msgstr ""
 "\n"
-"데이터베이스 연결 실패: %s"
+"%s"
 
-#: server.c:302
+#: server.c:314
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
-"%s\n"
+"%s"
 msgstr ""
 "다음 명령으로 실행된 원본 서버로 접속할 수 없음:\n"
-"%s\n"
+"%s"
 
-#: server.c:306
+#: server.c:318
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
-"%s\n"
+"%s"
 msgstr ""
 "다음 명령으로 실행된 대상 서버로 접속할 수 없음:\n"
-"%s\n"
+"%s"
 
-#: server.c:320
+#: server.c:332
 #, c-format
-msgid "pg_ctl failed to start the source server, or connection failed\n"
-msgstr "원본 서버를 실행하는 pg_ctl 작업 실패, 또는 연결 실패\n"
+msgid "pg_ctl failed to start the source server, or connection failed"
+msgstr "원본 서버를 실행하는 pg_ctl 작업 실패, 또는 연결 실패"
 
-#: server.c:322
+#: server.c:334
 #, c-format
-msgid "pg_ctl failed to start the target server, or connection failed\n"
-msgstr "대상 서버를 실행하는 pg_ctl 작업 실패, 또는 연결 실패\n"
+msgid "pg_ctl failed to start the target server, or connection failed"
+msgstr "대상 서버를 실행하는 pg_ctl 작업 실패, 또는 연결 실패"
 
-#: server.c:367
+#: server.c:379
 #, c-format
-msgid "out of memory\n"
-msgstr "메모리 부족\n"
+msgid "out of memory"
+msgstr "메모리 부족"
 
-#: server.c:380
+#: server.c:392
 #, c-format
-msgid "libpq environment variable %s has a non-local server value: %s\n"
-msgstr "%s libpq 환경 변수가 로컬 서버 값이 아님: %s\n"
+msgid "libpq environment variable %s has a non-local server value: %s"
+msgstr "%s libpq 환경 변수가 로컬 서버 값이 아님: %s"
 
 #: tablespace.c:28
 #, c-format
 msgid ""
 "Cannot upgrade to/from the same system catalog version when\n"
-"using tablespaces.\n"
+"using tablespaces."
 msgstr ""
 "사용자 정의 테이블스페이스를 사용하는 경우 같은 시스템 카탈로그 버전으로\n"
-"업그레이드 작업을 진행할 수 없습니다.\n"
+"업그레이드 작업을 진행할 수 없습니다."
 
-#: tablespace.c:86
+#: tablespace.c:83
 #, c-format
-msgid "tablespace directory \"%s\" does not exist\n"
-msgstr "\"%s\" 이름의 테이블스페이스 디렉터리가 없음\n"
+msgid "tablespace directory \"%s\" does not exist"
+msgstr "\"%s\" 이름의 테이블스페이스 디렉터리가 없음"
 
-#: tablespace.c:90
+#: tablespace.c:87
 #, c-format
-msgid "could not stat tablespace directory \"%s\": %s\n"
-msgstr "\"%s\" 테이블스페이스 디렉터리의 상태 정보를 구할 수 없음: %s\n"
+msgid "could not stat tablespace directory \"%s\": %m"
+msgstr "\"%s\" 테이블스페이스 디렉터리의 상태 정보를 구할 수 없음: %m"
 
-#: tablespace.c:95
+#: tablespace.c:92
 #, c-format
-msgid "tablespace path \"%s\" is not a directory\n"
-msgstr "\"%s\" 테이블스페이스 경로는 디렉터리가 아님\n"
+msgid "tablespace path \"%s\" is not a directory"
+msgstr "\"%s\" 테이블스페이스 경로는 디렉터리가 아님"
 
-#: util.c:49
-#, c-format
-msgid " "
-msgstr " "
-
-#: util.c:82
+#: util.c:53 util.c:56 util.c:139 util.c:170 util.c:172
 #, c-format
 msgid "%-*s"
 msgstr "%-*s"
 
-#: util.c:174
+#: util.c:107
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 액세스할 수 없습니다: %m"
+
+#: util.c:287
 #, c-format
 msgid "ok"
 msgstr "ok"
 
-#: version.c:29
-#, c-format
-msgid "Checking for large objects"
-msgstr "대형 객체 확인 중"
-
-#: version.c:77 version.c:384
-#, c-format
-msgid "warning"
-msgstr "경고"
-
-#: version.c:79
-#, c-format
-msgid ""
-"\n"
-"Your installation contains large objects.  The new database has an\n"
-"additional large object permission table.  After upgrading, you will be\n"
-"given a command to populate the pg_largeobject_metadata table with\n"
-"default permissions.\n"
-"\n"
-msgstr ""
-"\n"
-"이 데이터베이스는 대형 객체를 사용하고 있습니다.  새 데이터베이스에서는\n"
-"이들의 접근 권한 제어를 위해 추가적인 테이블을 사용합니다.  업그레이드 후\n"
-"이 객체들의 접근 권한은 pg_largeobject_metadata 테이블에 기본값으로 지정됩니"
-"다.\n"
-"\n"
-
-#: version.c:85
-#, c-format
-msgid ""
-"\n"
-"Your installation contains large objects.  The new database has an\n"
-"additional large object permission table, so default permissions must be\n"
-"defined for all large objects.  The file\n"
-"    %s\n"
-"when executed by psql by the database superuser will set the default\n"
-"permissions.\n"
-"\n"
-msgstr ""
-"\n"
-"이 데이터베이스는 대형 객체를 사용하고 있습니다.  새 데이터베이스에서는\n"
-"이들의 접근 권한 제어를 위해 추가적인 테이블을 사용합니다.  그래서\n"
-"이들의 접근 권한을 기본값으로 설정하려면,\n"
-"    %s\n"
-"파일을 새 서버가 실행 되었을 때 슈퍼유저 권한으로 psql 명령으로\n"
-"실행 하세요.\n"
-"\n"
-
-#: version.c:239
-#, c-format
-msgid "Checking for incompatible \"line\" data type"
-msgstr "\"line\" 자료형 호환성 확인 중"
-
-#: version.c:246
-#, c-format
-msgid ""
-"Your installation contains the \"line\" data type in user tables.  This\n"
-"data type changed its internal and input/output format between your old\n"
-"and new clusters so this cluster cannot currently be upgraded.  You can\n"
-"remove the problem tables and restart the upgrade.  A list of the problem\n"
-"columns is in the file:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"해당 데이터베이스에서 \"line\" 자료형을 사용하는 칼럼이 있습니다.\n"
-"이 자료형의 입출력 방식이 옛 버전과 새 버전에서 서로 호환하지 않습니다.\n"
-"먼저 이 자료형을 사용하는 테이블을 삭제 후 업그레이드 작업을 하고,\n"
-"수동으로 복원 작업을 해야 합니다. 해당 파일들은 다음과 같습니다:\n"
-"    %s\n"
-"\n"
-
-#: version.c:276
-#, c-format
-msgid "Checking for invalid \"unknown\" user columns"
-msgstr "잘못된 \"unknown\" 사용자 칼럼을 확인 중"
-
-#: version.c:283
-#, c-format
-msgid ""
-"Your installation contains the \"unknown\" data type in user tables.  This\n"
-"data type is no longer allowed in tables, so this cluster cannot currently\n"
-"be upgraded.  You can remove the problem tables and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s\n"
-"\n"
-msgstr ""
-"해당 데이터베이스에서 사용자 테이블에서 \"unknown\" 자료형을 사용하고 있습니"
-"다.\n"
-"이 자료형은 더 이상 사용할 수 없습니다. 이 문제를 옛 버전에서 먼저 정리하고\n"
-"업그레이드 작업을 진행하세요. 해당 파일은 다음과 같습니다:\n"
-"    %s\n"
-"\n"
-
-#: version.c:306
+#: version.c:44
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "해쉬 인덱스 확인 중"
 
-#: version.c:386
+#: version.c:121
+#, c-format
+msgid "warning"
+msgstr "경고"
+
+#: version.c:123
 #, c-format
 msgid ""
 "\n"
 "Your installation contains hash indexes.  These indexes have different\n"
 "internal formats between your old and new clusters, so they must be\n"
 "reindexed with the REINDEX command.  After upgrading, you will be given\n"
-"REINDEX instructions.\n"
-"\n"
+"REINDEX instructions."
 msgstr ""
 "\n"
 "해당 데이터베이스에서 해쉬 인덱스를 사용하고 있습니다.  해쉬 인덱스 자료구조"
 "가\n"
 "새 버전에서 호환되지 않습니다.  업그레이드 후에 해당 인덱스들을\n"
-"REINDEX 명령으로 다시 만들어야 합니다.\n"
-"\n"
+"REINDEX 명령으로 다시 만들어야 합니다."
 
-#: version.c:392
+#: version.c:129
 #, c-format
 msgid ""
 "\n"
@@ -1852,8 +2075,7 @@ msgid ""
 "reindexed with the REINDEX command.  The file\n"
 "    %s\n"
 "when executed by psql by the database superuser will recreate all invalid\n"
-"indexes; until then, none of these indexes will be used.\n"
-"\n"
+"indexes; until then, none of these indexes will be used."
 msgstr ""
 "\n"
 "해당 데이터베이스에서 해쉬 인덱스를 사용하고 있습니다.  해쉬 인덱스 자료구조"
@@ -1861,29 +2083,35 @@ msgstr ""
 "새 버전에서 호환되지 않습니다.  업그레이드 후 다음 파일을\n"
 "슈퍼유저 권한으로 실행한 psql에서 실행해서, REINDEX 작업을 진행하세요:\n"
 "    %s\n"
-"이 작업이 있기 전까지는 해당 인덱스는 invalid 상태로 사용할 수 없게 됩니다.\n"
-"\n"
+"이 작업이 있기 전까지는 해당 인덱스는 invalid 상태로 사용할 수 없게 됩니다."
 
-#: version.c:418
+#: version.c:153
 #, c-format
-msgid "Checking for invalid \"sql_identifier\" user columns"
-msgstr "잘못된 \"sql_identifier\" 사용자 칼럼을 확인 중"
+msgid "Checking for extension updates"
+msgstr "확장 모듈 업데이트 확인 중"
 
-#: version.c:426
+#: version.c:200
+#, c-format
+msgid "notice"
+msgstr "알림"
+
+#: version.c:201
 #, c-format
 msgid ""
-"Your installation contains the \"sql_identifier\" data type in user tables\n"
-"and/or indexes.  The on-disk format for this data type has changed, so this\n"
-"cluster cannot currently be upgraded.  You can remove the problem tables or\n"
-"change the data type to \"name\" and restart the upgrade.\n"
-"A list of the problem columns is in the file:\n"
-"    %s\n"
 "\n"
+"Your installation contains extensions that should be updated\n"
+"with the ALTER EXTENSION command.  The file\n"
+"    %s\n"
+"when executed by psql by the database superuser will update\n"
+"these extensions."
 msgstr ""
-"사용자 테이블 또는/이나 인덱스에 \"sql_identifier\" 자료형을 사용하고\n"
-"있습니다.  이 자료형의 저장 양식이 바뀌었기에, 이 클러스터는 업그레이드\n"
-"되어야합니다. 해당 테이블을 지우거나, 해당 칼럼의 자료형을 \"name\" 형으로\n"
-"바꾸고, 서버를 재실행 한 뒤 업그레이드 하십시오.\n"
-"문제의 칼럼이 있는 파일들은 다음과 같습니다:\n"
-"    %s\n"
 "\n"
+"해당 서버에는 업데이트 해야하는 확장 모듈이 있습니다.\n"
+"이 작업은 ALTER EXTENSION 명령으로 할 수 있으며, 작업 명령은\n"
+"    %s\n"
+"파일 안에 있습니다. 데이터베이스 슈퍼유저로 psql로 접속해서\n"
+"이 파일 안에 있는 명령을 수행하면 확장 모듈을 업데이트 할 수 있습니다."
+
+#, c-format
+#~ msgid "Checking for incompatible \"jsonb\" data type"
+#~ msgstr "\"jsonb\" 자료형 호환성 확인 중"

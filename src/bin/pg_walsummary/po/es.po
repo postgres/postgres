@@ -1,0 +1,187 @@
+# Spanish translation file for pg_walsummary
+#
+# Copyright (c) 2024, PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+#
+# Alvaro Herrera <alvherre@alvh.no-ip.org>, 2024
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2024-11-16 05:23+0000\n"
+"PO-Revision-Date: 2024-08-01 12:41-0400\n"
+"Last-Translator: Álvaor Herrera <alvherre@alvh.no-ip.org>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Vim\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "error: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "precaución: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "detalle: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "consejo: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "memoria agotada\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "no se puede duplicar un puntero nulo (error interno)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#: pg_walsummary.c:109
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "no se pudo abrir el archivo «%s»: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "no se pudo hacer stat al archivo «%s»: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "esta instalación no soporta el método de sync «%s»"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "no se pudo abrir el directorio «%s»: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "no se pudo leer el directorio «%s»: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "el valor «%s» no es válido para la opción %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s debe estar en el rango %d..%d"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "método sync no reconocido: %s"
+
+#: pg_walsummary.c:87 pg_walsummary.c:95
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Pruebe «%s --help» para mayor información."
+
+#: pg_walsummary.c:94
+#, c-format
+msgid "no input files specified"
+msgstr "no se especificaron archivos de entrada"
+
+#: pg_walsummary.c:252
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "no se pudo leer el archivo «%s»: %m"
+
+#: pg_walsummary.c:267
+#, c-format
+msgid ""
+"%s prints the contents of a WAL summary file.\n"
+"\n"
+msgstr ""
+"%s imprime el contenido de un archivo de resumen de WAL.\n"
+"\n"
+
+#: pg_walsummary.c:268
+#, c-format
+msgid "Usage:\n"
+msgstr "Empleo:\n"
+
+#: pg_walsummary.c:269
+#, c-format
+msgid "  %s [OPTION]... FILE...\n"
+msgstr "  %s [OPCIÓN]... ARCHIVO...\n"
+
+#: pg_walsummary.c:270
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Opciones:\n"
+
+#: pg_walsummary.c:271
+#, c-format
+msgid "  -i, --individual          list block numbers individually, not as ranges\n"
+msgstr "  -i, --individual          listar números de bloque individualmente, no como rangos\n"
+
+#: pg_walsummary.c:272
+#, c-format
+msgid "  -q, --quiet               don't print anything, just parse the files\n"
+msgstr "  -q, --quiet               no escribir nada, sólo procesar los archivos\n"
+
+#: pg_walsummary.c:273
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             mostrar información de version y salir\n"
+
+#: pg_walsummary.c:274
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                mostrar esta ayuda y salir\n"
+
+#: pg_walsummary.c:276
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Reporte errores a <%s>.\n"
+
+#: pg_walsummary.c:277
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Sitio web de %s: <%s>\n"

@@ -1,0 +1,181 @@
+# Swedish message translation file for pg_walsummary
+# Copyright (C) 2024 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_walsummary (PostgreSQL) package.
+# Dennis Björklund <db@zigo.dhs.org>, 2024.
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 17\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2024-07-12 17:54+0000\n"
+"PO-Revision-Date: 2024-07-12 23:39+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "fel: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "varning: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "detalj: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "tips: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
+#, c-format
+msgid "out of memory\n"
+msgstr "slut på minne\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "kan inte duplicera null-pekare (internt fel)\n"
+
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#: pg_walsummary.c:109
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "kunde inte öppna fil \"%s\": %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "kan inte synkronisera filsystemet för fil \"%s\": %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "kunde inte göra stat() på fil \"%s\": %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "detta bygge stöder inte synkmetod \"%s\""
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "kunde inte öppna katalog \"%s\": %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "kunde inte läsa katalog \"%s\": %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "kunde inte fsync:a fil \"%s\": %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "ogiltigt värde \"%s\" för flaggan \"%s\""
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s måste vara i intervallet %d..%d"
+
+#: ../../fe_utils/option_utils.c:106
+#, c-format
+msgid "unrecognized sync method: %s"
+msgstr "okänd synkmetod: %s"
+
+#: pg_walsummary.c:87 pg_walsummary.c:95
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Försök med \"%s --help\" för mer information."
+
+#: pg_walsummary.c:94
+#, c-format
+msgid "no input files specified"
+msgstr "inga inputfiler angivna"
+
+#: pg_walsummary.c:252
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "kunde inte läsa fil \"%s\": %m"
+
+#: pg_walsummary.c:267
+#, c-format
+msgid ""
+"%s prints the contents of a WAL summary file.\n"
+"\n"
+msgstr "%s skriver ut innehållet av WAL-summeringsfilen.\n\n"
+
+#: pg_walsummary.c:268
+#, c-format
+msgid "Usage:\n"
+msgstr "Användning:\n"
+
+#: pg_walsummary.c:269
+#, c-format
+msgid "  %s [OPTION]... FILE...\n"
+msgstr "  %s [FLAGGA]... FIL...\n"
+
+#: pg_walsummary.c:270
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Flaggor:\n"
+
+#: pg_walsummary.c:271
+#, c-format
+msgid "  -i, --individual          list block numbers individually, not as ranges\n"
+msgstr "  -i, --individual          lista blocknummer individuellt, inte som intervall\n"
+
+#: pg_walsummary.c:272
+#, c-format
+msgid "  -q, --quiet               don't print anything, just parse the files\n"
+msgstr "  -q, --quiet               skriv ingenting, bara parsa filerna\n"
+
+#: pg_walsummary.c:273
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             visa versionsinformation, avsluta sedan\n"
+
+#: pg_walsummary.c:274
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                visa denna hjälp, avsluta sedan\n"
+
+#: pg_walsummary.c:276
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <%s>.\n"
+
+#: pg_walsummary.c:277
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "hemsida för %s: <%s>\n"

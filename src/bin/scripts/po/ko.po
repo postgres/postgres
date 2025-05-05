@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pgscripts (PostgreSQL) 16\n"
+"Project-Id-Version: pgscripts (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2023-09-07 05:51+0000\n"
-"PO-Revision-Date: 2023-05-26 13:22+0900\n"
+"POT-Creation-Date: 2025-01-17 04:51+0000\n"
+"PO-Revision-Date: 2025-01-16 14:23+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -46,6 +46,48 @@ msgstr "메모리 부족\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null 포인터를 복제할 수 없음(내부 오류)\n"
 
+#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
+#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "\"%s\" 파일을 열 수 없음: %m"
+
+#: ../../common/file_utils.c:76
+#, c-format
+msgid "could not synchronize file system for file \"%s\": %m"
+msgstr "\"%s\" 파일을 위한 파일 시스템 동기화를 할 수 없음: %m"
+
+#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "\"%s\" 파일 상태 정보를 구할 수 없음: %m"
+
+#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../fe_utils/option_utils.c:99
+#, c-format
+msgid "this build does not support sync method \"%s\""
+msgstr "이 빌드는 \"%s\" 동기화 방법을 지원하지 않음"
+
+#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 열 수 없음: %m"
+
+#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "\"%s\" 디렉터리를 읽을 수 없음: %m"
+
+#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "\"%s\" 파일을 fsync 할 수 없음: %m"
+
+#: ../../common/file_utils.c:498
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "\"%s\" 파일을 \"%s\" 파일로 이름을 바꿀 수 없음: %m"
+
 #: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
@@ -60,11 +102,11 @@ msgstr "사용자 없음"
 msgid "user name lookup failure: error code %lu"
 msgstr "사용자 이름 찾기 실패: 오류번호 %lu"
 
-#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+#: ../../fe_utils/cancel.c:186 ../../fe_utils/cancel.c:235
 msgid "Cancel request sent\n"
 msgstr "취소 요청을 전송함\n"
 
-#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+#: ../../fe_utils/cancel.c:187 ../../fe_utils/cancel.c:236
 msgid "Could not send cancel request: "
 msgstr "취소 요청을 전송할 수 없음: "
 
@@ -92,12 +134,27 @@ msgstr "\"%s\" 값은 \"%s\" 옵션 값으로 유효하지 않음"
 msgid "%s must be in range %d..%d"
 msgstr "%s 값은 %d부터 %d까지 지정할 수 있습니다."
 
-#: ../../fe_utils/parallel_slot.c:299
+#: ../../fe_utils/option_utils.c:106
 #, c-format
-msgid "too many jobs for this platform"
-msgstr "이 운영체제에서는 너무 많은 동시 작업임"
+msgid "unrecognized sync method: %s"
+msgstr "알 수 없는 동기화 방법: %s"
 
-#: ../../fe_utils/parallel_slot.c:520
+#: ../../fe_utils/parallel_slot.c:317
+#, c-format
+msgid "too many jobs for this platform: %d"
+msgstr "이 운영체제에서는 너무 많은 동시 작업임: %d"
+
+#: ../../fe_utils/parallel_slot.c:326
+#, c-format
+msgid "socket file descriptor out of range for select(): %d"
+msgstr "select() 작업을 위한 소켓 파일 기술자 범위를 벗어남: %d"
+
+#: ../../fe_utils/parallel_slot.c:328
+#, c-format
+msgid "Try fewer jobs."
+msgstr "job 수를 줄이세요."
+
+#: ../../fe_utils/parallel_slot.c:553
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "\"%s\" 데이터베이스 작업 실패: %s"
@@ -113,17 +170,25 @@ msgstr[0] "(%lu개 행)"
 msgid "Interrupted\n"
 msgstr "인트럽트발생\n"
 
-#: ../../fe_utils/print.c:3218
+#: ../../fe_utils/print.c:3188
+#, c-format
+msgid ""
+"Cannot print table contents: number of cells %lld is equal to or exceeds "
+"maximum %lld.\n"
+msgstr ""
+"테이블 내용을 출력할 수 없음: %lld 셀 수가 최대값 %lld 개와 같거나 초과함.\n"
+
+#: ../../fe_utils/print.c:3229
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "테이블 내용에 헤더를 추가할 수 없음: 열 수가 %d개를 초과했습니다.\n"
 
-#: ../../fe_utils/print.c:3258
+#: ../../fe_utils/print.c:3272
 #, c-format
-msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
-msgstr "테이블 내용에 셀을 추가할 수 없음: 총 셀 수가 %d개를 초과했습니다.\n"
+msgid "Cannot add cell to table content: total cell count of %lld exceeded.\n"
+msgstr "테이블 내용에 셀을 추가할 수 없음: 총 셀 수가 %lld개를 초과했습니다.\n"
 
-#: ../../fe_utils/print.c:3516
+#: ../../fe_utils/print.c:3530
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "잘못된 출력 형식 (내부 오류): %d"
@@ -138,36 +203,41 @@ msgstr "쿼리 실패: %s"
 msgid "Query was: %s"
 msgstr "사용한 쿼리: %s"
 
-#: clusterdb.c:113 clusterdb.c:132 createdb.c:144 createdb.c:163
+#: ../../fe_utils/string_utils.c:434
+#, c-format
+msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
+msgstr "쉘 명령 인자에 줄바꿈 문자가 포함되었음: \"%s\"\n"
+
+#: ../../fe_utils/string_utils.c:607
+#, c-format
+msgid "database name contains a newline or carriage return: \"%s\"\n"
+msgstr "데이터베이스 이름에 줄바꿈 문자가 포함되었음: \"%s\"\n"
+
+#: clusterdb.c:114 clusterdb.c:133 createdb.c:149 createdb.c:168
 #: createuser.c:195 createuser.c:210 dropdb.c:104 dropdb.c:113 dropdb.c:121
 #: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
-#: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:277 vacuumdb.c:297
+#: reindexdb.c:177 reindexdb.c:196 vacuumdb.c:280 vacuumdb.c:300
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "자세한 사항은 \"%s --help\" 명령으로 살펴보세요."
 
-#: clusterdb.c:130 createdb.c:161 createuser.c:208 dropdb.c:119 dropuser.c:108
-#: pg_isready.c:109 reindexdb.c:191 vacuumdb.c:295
+#: clusterdb.c:131 createdb.c:166 createuser.c:208 dropdb.c:119 dropuser.c:108
+#: pg_isready.c:109 reindexdb.c:194 vacuumdb.c:298
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "명령행 인자를 너무 많이 지정했습니다 (시작: \"%s\")"
 
-#: clusterdb.c:148
+#: clusterdb.c:149
 #, c-format
 msgid "cannot cluster all databases and a specific one at the same time"
 msgstr "모든 DB 작업과 특정 DB 작업은 동시에 할 수 없습니다."
 
-#: clusterdb.c:151
-#, c-format
-msgid "cannot cluster specific table(s) in all databases"
-msgstr "모든 DB를 대상으로 특정 테이블들을 클러스터할 수 없음"
-
-#: clusterdb.c:215
+#: clusterdb.c:214
 #, c-format
 msgid "clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr "\"%s\" 테이블(해당DB: \"%s\") 클러스터 작업 실패: %s"
 
-#: clusterdb.c:218
+#: clusterdb.c:217
 #, c-format
 msgid "clustering of database \"%s\" failed: %s"
 msgstr "\"%s\" 데이터베이스 클러스터 실패: %s"
@@ -177,7 +247,7 @@ msgstr "\"%s\" 데이터베이스 클러스터 실패: %s"
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: \"%s\" 데이터베이스 클러스터 작업 중\n"
 
-#: clusterdb.c:264
+#: clusterdb.c:274
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -187,19 +257,19 @@ msgstr ""
 "다시 클러스터 작업을 합니다.\n"
 "\n"
 
-#: clusterdb.c:265 createdb.c:288 createuser.c:415 dropdb.c:172 dropuser.c:170
-#: pg_isready.c:226 reindexdb.c:750 vacuumdb.c:1127
+#: clusterdb.c:275 createdb.c:298 createuser.c:415 dropdb.c:172 dropuser.c:170
+#: pg_isready.c:226 reindexdb.c:872 vacuumdb.c:1158
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: clusterdb.c:266 reindexdb.c:751 vacuumdb.c:1128
+#: clusterdb.c:276 reindexdb.c:873 vacuumdb.c:1159
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [옵션]... [DB이름]\n"
 
-#: clusterdb.c:267 createdb.c:290 createuser.c:417 dropdb.c:174 dropuser.c:172
-#: pg_isready.c:229 reindexdb.c:752 vacuumdb.c:1129
+#: clusterdb.c:277 createdb.c:300 createuser.c:417 dropdb.c:174 dropuser.c:172
+#: pg_isready.c:229 reindexdb.c:874 vacuumdb.c:1160
 #, c-format
 msgid ""
 "\n"
@@ -208,49 +278,49 @@ msgstr ""
 "\n"
 "옵션들:\n"
 
-#: clusterdb.c:268
+#: clusterdb.c:278
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 모든 데이터베이스를 대상으로\n"
 
-#: clusterdb.c:269
+#: clusterdb.c:279
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=DBNAME       클러스터 작업할 DB\n"
 
-#: clusterdb.c:270 createuser.c:423 dropdb.c:175 dropuser.c:173
+#: clusterdb.c:280 createuser.c:423 dropdb.c:175 dropuser.c:173
 #, c-format
 msgid ""
 "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                서버로 보내는 작업 명령을 보여줌\n"
 
-#: clusterdb.c:271
+#: clusterdb.c:281
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               어떠한 메시지도 보여주지 않음\n"
 
-#: clusterdb.c:272
+#: clusterdb.c:282
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
 msgstr "  -t, --table=TABLE         지정한 테이블들만 클러스터\n"
 
-#: clusterdb.c:273
+#: clusterdb.c:283
 #, c-format
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             많은 출력 작성\n"
 
-#: clusterdb.c:274 createuser.c:439 dropdb.c:178 dropuser.c:176
+#: clusterdb.c:284 createuser.c:439 dropdb.c:178 dropuser.c:176
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             버전 정보를 보여주고 마침\n"
 
-#: clusterdb.c:275 createuser.c:447 dropdb.c:180 dropuser.c:178
+#: clusterdb.c:285 createuser.c:447 dropdb.c:180 dropuser.c:178
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                이 도움말을 보여주고 마침\n"
 
-#: clusterdb.c:276 createdb.c:306 createuser.c:448 dropdb.c:181 dropuser.c:179
-#: pg_isready.c:235 reindexdb.c:767 vacuumdb.c:1158
+#: clusterdb.c:286 createdb.c:317 createuser.c:448 dropdb.c:181 dropuser.c:179
+#: pg_isready.c:235 reindexdb.c:889 vacuumdb.c:1189
 #, c-format
 msgid ""
 "\n"
@@ -259,38 +329,38 @@ msgstr ""
 "\n"
 "연결 옵션들:\n"
 
-#: clusterdb.c:277 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1159
+#: clusterdb.c:287 createuser.c:449 dropdb.c:182 dropuser.c:180 vacuumdb.c:1190
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME       데이터베이스 서버 호스트 또는 소켓 디렉터리\n"
 
-#: clusterdb.c:278 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1160
+#: clusterdb.c:288 createuser.c:450 dropdb.c:183 dropuser.c:181 vacuumdb.c:1191
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           데이터베이스 서버 포트\n"
 
-#: clusterdb.c:279 dropdb.c:184 vacuumdb.c:1161
+#: clusterdb.c:289 dropdb.c:184 vacuumdb.c:1192
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USERNAME   접속할 사용자이름\n"
 
-#: clusterdb.c:280 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1162
+#: clusterdb.c:290 createuser.c:452 dropdb.c:185 dropuser.c:183 vacuumdb.c:1193
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         암호 프롬프트 표시 안 함\n"
 
-#: clusterdb.c:281 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1163
+#: clusterdb.c:291 createuser.c:453 dropdb.c:186 dropuser.c:184 vacuumdb.c:1194
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            암호 프롬프트 표시함\n"
 
-#: clusterdb.c:282 dropdb.c:187 vacuumdb.c:1164
+#: clusterdb.c:292 dropdb.c:187 vacuumdb.c:1195
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME   대체용 관리 대상 데이터베이스\n"
 
-#: clusterdb.c:283
+#: clusterdb.c:293
 #, c-format
 msgid ""
 "\n"
@@ -299,8 +369,8 @@ msgstr ""
 "\n"
 "보다 자세한 내용은 CLUSTER SQL 명령어 설명서를 참조하십시오.\n"
 
-#: clusterdb.c:284 createdb.c:314 createuser.c:454 dropdb.c:188 dropuser.c:185
-#: pg_isready.c:240 reindexdb.c:775 vacuumdb.c:1166
+#: clusterdb.c:294 createdb.c:325 createuser.c:454 dropdb.c:188 dropuser.c:185
+#: pg_isready.c:240 reindexdb.c:897 vacuumdb.c:1197
 #, c-format
 msgid ""
 "\n"
@@ -309,8 +379,8 @@ msgstr ""
 "\n"
 "문제점 보고 주소: <%s>\n"
 
-#: clusterdb.c:285 createdb.c:315 createuser.c:455 dropdb.c:189 dropuser.c:186
-#: pg_isready.c:241 reindexdb.c:776 vacuumdb.c:1167
+#: clusterdb.c:295 createdb.c:326 createuser.c:455 dropdb.c:189 dropuser.c:186
+#: pg_isready.c:241 reindexdb.c:898 vacuumdb.c:1198
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 홈페이지: <%s>\n"
@@ -343,22 +413,22 @@ msgstr "%s (%s/%s) "
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "\"%s\" 또는 \"%s\" 만 허용합니다.\n"
 
-#: createdb.c:170
+#: createdb.c:175
 #, c-format
 msgid "\"%s\" is not a valid encoding name"
 msgstr "\"%s\" 이름은 잘못된 인코딩 이름임"
 
-#: createdb.c:250
+#: createdb.c:260
 #, c-format
 msgid "database creation failed: %s"
 msgstr "데이터베이스 만들기 실패: %s"
 
-#: createdb.c:269
+#: createdb.c:279
 #, c-format
 msgid "comment creation failed (database was created): %s"
 msgstr "코멘트 추가하기 실패 (데이터베이스는 만들어졌음): %s"
 
-#: createdb.c:287
+#: createdb.c:297
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -367,70 +437,75 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 데이터베이스를 만듭니다.\n"
 "\n"
 
-#: createdb.c:289
+#: createdb.c:299
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [옵션]... [DB이름] [설명]\n"
 
-#: createdb.c:291
+#: createdb.c:301
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
 "  -D, --tablespace=TABLESPACE  데이터베이스를 위한 기본 테이블스페이스\n"
 
-#: createdb.c:292 reindexdb.c:756
+#: createdb.c:302 reindexdb.c:878
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                   서버로 보내는 작업 명령들을 보여줌\n"
 
-#: createdb.c:293
+#: createdb.c:303
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=ENCODING      데이터베이스 인코딩\n"
 
-#: createdb.c:294
+#: createdb.c:304
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=LOCALE          데이터베이스의 로캘 설정\n"
 
-#: createdb.c:295
+#: createdb.c:305
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOCALE      데이터베이스의 LC_COLLATE 설정\n"
 
-#: createdb.c:296
+#: createdb.c:306
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOCALE        데이터베이스의 LC_CTYPE 설정\n"
 
-#: createdb.c:297
+#: createdb.c:307
+#, c-format
+msgid ""
+"      --builtin-locale=LOCALE  builtin locale setting for the database\n"
+msgstr "      --builtin-locale=LOCALE  데이터베이스 내장 로케일 설정\n"
+
+#: createdb.c:308
 #, c-format
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
 msgstr "      --icu-locale=LOCALE      데이터베이스 ICU 로캘 설정\n"
 
-#: createdb.c:298
+#: createdb.c:309
 #, c-format
 msgid "      --icu-rules=RULES        ICU rules setting for the database\n"
 msgstr "      --icu-rules=RULES        데이터베이스 ICU 룰 설정\n"
 
-#: createdb.c:299
+#: createdb.c:310
 #, c-format
 msgid ""
-"      --locale-provider={libc|icu}\n"
+"      --locale-provider={builtin|libc|icu}\n"
 "                               locale provider for the database's default "
 "collation\n"
 msgstr ""
-"      --locale-provider={libc|icu}\n"
-"                               데이터베이스 기본 문자 정렬을 위한 로케일 제공"
-"자\n"
+"      --locale-provider={builtin|libc|icu}\n"
+"                               데이터베이스 기본 문자 정렬 제공자 설정\n"
 
-#: createdb.c:301
+#: createdb.c:312
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=OWNER            데이터베이스 소유주\n"
 
-#: createdb.c:302
+#: createdb.c:313
 #, c-format
 msgid ""
 "  -S, --strategy=STRATEGY      database creation strategy wal_log or "
@@ -439,54 +514,54 @@ msgstr ""
 "  -S, --strategy=STRATEGY      데이터베이스 만드는 전략(wal_log 또는 "
 "file_copy)\n"
 
-#: createdb.c:303
+#: createdb.c:314
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=TEMPLATE      복사할 템플릿 데이터베이스\n"
 
-#: createdb.c:304 reindexdb.c:765
+#: createdb.c:315 reindexdb.c:887
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                버전 정보를 보여주고 마침\n"
 
-#: createdb.c:305 reindexdb.c:766
+#: createdb.c:316 reindexdb.c:888
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   이 도움말을 보여주고 마침\n"
 
-#: createdb.c:307 reindexdb.c:768
+#: createdb.c:318 reindexdb.c:890
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME          데이터베이스 서버 호스트나 소켓 디렉터리\n"
 
-#: createdb.c:308 reindexdb.c:769
+#: createdb.c:319 reindexdb.c:891
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PORT              데이터베이스 서버 포트\n"
 
-#: createdb.c:309 reindexdb.c:770
+#: createdb.c:320 reindexdb.c:892
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USERNAME      접속할 사용자\n"
 
-#: createdb.c:310 reindexdb.c:771
+#: createdb.c:321 reindexdb.c:893
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            암호 프롬프트 표시 안 함\n"
 
-#: createdb.c:311 reindexdb.c:772
+#: createdb.c:322 reindexdb.c:894
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               암호 프롬프트 표시함\n"
 
-#: createdb.c:312 reindexdb.c:773
+#: createdb.c:323 reindexdb.c:895
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=DBNAME      대체용 관리 대상 데이터베이스\n"
 
-#: createdb.c:313
+#: createdb.c:324
 #, c-format
 msgid ""
 "\n"
@@ -880,105 +955,57 @@ msgstr "  -t, --timeout=초         연결 제한 시간, 0 무제한 (초기값
 msgid "  -U, --username=USERNAME  user name to connect as\n"
 msgstr "  -U, --username=USERNAME  접속할 사용자이름\n"
 
-#: reindexdb.c:209
+#: reindexdb.c:210
+#, c-format
+msgid "cannot use multiple jobs to reindex system catalogs"
+msgstr "시스템 카탈로그 재색인 작업은 병렬로 처리할 수 없음"
+
+#: reindexdb.c:215
 #, c-format
 msgid "cannot reindex all databases and a specific one at the same time"
 msgstr ""
 "모든 데이터베이스 재색인 작업과 특정 데이터베이스 재색인 작업은 동시에 진행"
 "할 수 없습니다"
 
-#: reindexdb.c:211
-#, c-format
-msgid "cannot reindex all databases and system catalogs at the same time"
-msgstr ""
-"모든 데이터베이스 재색인 작업과 시스템 카탈로그 재색인 작업은 동시에 진행할 "
-"수 없습니다"
-
-#: reindexdb.c:213
-#, c-format
-msgid "cannot reindex specific schema(s) in all databases"
-msgstr ""
-"모든 데이터베이스 재색인 작업에서 특정 스키마들의 재색인 작업을 지정할 수 없"
-"습니다"
-
-#: reindexdb.c:215
-#, c-format
-msgid "cannot reindex specific table(s) in all databases"
-msgstr ""
-"모든 데이터베이스 재색인 작업에서 특정 테이블의 재색인 작업을 지정할 수 없습"
-"니다"
-
-#: reindexdb.c:217
-#, c-format
-msgid "cannot reindex specific index(es) in all databases"
-msgstr ""
-"모든 데이터베이스 재색인 작업에서 특정 인덱스 재색인 작업을 지정할 수 없습니"
-"다"
-
-#: reindexdb.c:227
-#, c-format
-msgid "cannot reindex specific schema(s) and system catalogs at the same time"
-msgstr "특정 스키마와 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
-
-#: reindexdb.c:229
-#, c-format
-msgid "cannot reindex specific table(s) and system catalogs at the same time"
-msgstr "특정 테이블과 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
-
-#: reindexdb.c:231
-#, c-format
-msgid "cannot reindex specific index(es) and system catalogs at the same time"
-msgstr "특정 인덱스와 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
-
-#: reindexdb.c:234
-#, c-format
-msgid "cannot use multiple jobs to reindex system catalogs"
-msgstr "시스템 카탈로그 재색인 작업은 병렬로 처리할 수 없음"
-
-#: reindexdb.c:260
-#, c-format
-msgid "cannot use multiple jobs to reindex indexes"
-msgstr "인덱스 다시 만들기에서는 다중 작업을 사용할 수 없음"
-
-#: reindexdb.c:323 reindexdb.c:330 vacuumdb.c:509 vacuumdb.c:516 vacuumdb.c:523
-#: vacuumdb.c:530 vacuumdb.c:537 vacuumdb.c:544 vacuumdb.c:551 vacuumdb.c:556
-#: vacuumdb.c:560 vacuumdb.c:564 vacuumdb.c:568
+#: reindexdb.c:296 reindexdb.c:303 vacuumdb.c:514 vacuumdb.c:521 vacuumdb.c:528
+#: vacuumdb.c:535 vacuumdb.c:542 vacuumdb.c:549 vacuumdb.c:556 vacuumdb.c:561
+#: vacuumdb.c:565 vacuumdb.c:569 vacuumdb.c:573
 #, c-format
 msgid ""
 "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
 msgstr "\"%s\" 옵션은 PostgreSQL %s 버전보다 오래된 서버에서는 사용할 수 없음"
 
-#: reindexdb.c:561
+#: reindexdb.c:584
 #, c-format
 msgid "reindexing of database \"%s\" failed: %s"
 msgstr "\"%s\" 데이터베이스 재색인 작업 실패: %s"
 
-#: reindexdb.c:565
+#: reindexdb.c:588
 #, c-format
 msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "\"%s\" 인덱스(해당DB: \"%s\") 재색인 작업 실패: %s"
 
-#: reindexdb.c:569
+#: reindexdb.c:592
 #, c-format
 msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
 msgstr "\"%s\" 스키마(해당DB: \"%s\") 재색인 작업 실패: %s"
 
-#: reindexdb.c:573
+#: reindexdb.c:596
 #, c-format
 msgid "reindexing of system catalogs in database \"%s\" failed: %s"
 msgstr "\"%s\" 데이터베이스 시스템 카탈로그 재색인 작업 실패: %s"
 
-#: reindexdb.c:577
+#: reindexdb.c:600
 #, c-format
 msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "\"%s\" 테이블(해당DB: \"%s\") 재색인 작업 실패: %s"
 
-#: reindexdb.c:732
+#: reindexdb.c:828
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: \"%s\" 데이터베이스 재색인 작업 중\n"
 
-#: reindexdb.c:749
+#: reindexdb.c:871
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -987,27 +1014,27 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 데이터베이스 재색인 작업을 합니다.\n"
 "\n"
 
-#: reindexdb.c:753
+#: reindexdb.c:875
 #, c-format
 msgid "  -a, --all                    reindex all databases\n"
 msgstr "  -a, --all                    모든 데이터베이스 재색인\n"
 
-#: reindexdb.c:754
+#: reindexdb.c:876
 #, c-format
 msgid "      --concurrently           reindex concurrently\n"
 msgstr "      --concurrently           테이블 잠그지 않는 재색인\n"
 
-#: reindexdb.c:755
+#: reindexdb.c:877
 #, c-format
 msgid "  -d, --dbname=DBNAME          database to reindex\n"
 msgstr "  -d, --dbname=DBNAME          지정한 데이터베이스의 재색인 작업\n"
 
-#: reindexdb.c:757
+#: reindexdb.c:879
 #, c-format
 msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
 msgstr "  -i, --index=INDEX            지정한 인덱스들만 다시 만듬\n"
 
-#: reindexdb.c:758
+#: reindexdb.c:880
 #, c-format
 msgid ""
 "  -j, --jobs=NUM               use this many concurrent connections to "
@@ -1015,38 +1042,38 @@ msgid ""
 msgstr ""
 "  -j, --jobs=NUM                재색인 작업을 여러개의 연결로 동시에 작업함\n"
 
-#: reindexdb.c:759
+#: reindexdb.c:881
 #, c-format
 msgid "  -q, --quiet                  don't write any messages\n"
 msgstr "  -q, --quiet                  어떠한 메시지도 보여주지 않음\n"
 
-#: reindexdb.c:760
+#: reindexdb.c:882
 #, c-format
 msgid "  -s, --system                 reindex system catalogs only\n"
 msgstr "  -s, --system                 시스템 카탈로그 재색인\n"
 
-#: reindexdb.c:761
+#: reindexdb.c:883
 #, c-format
 msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
 msgstr "  -S, --schema=SCHEMA          지정한 스키마들 자료만 덤프\n"
 
-#: reindexdb.c:762
+#: reindexdb.c:884
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr "  -t, --table=TABLE            지정한 테이블들만 재색인 작업\n"
 
-#: reindexdb.c:763
+#: reindexdb.c:885
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
 msgstr ""
 "      --tablespace=TABLESPACE  데이터베이스를 위한 기본 테이블스페이스\n"
 
-#: reindexdb.c:764
+#: reindexdb.c:886
 #, c-format
 msgid "  -v, --verbose                write a lot of output\n"
 msgstr "  -v, --verbose                작업내역의 자세한 출력\n"
 
-#: reindexdb.c:774
+#: reindexdb.c:896
 #, c-format
 msgid ""
 "\n"
@@ -1055,44 +1082,29 @@ msgstr ""
 "\n"
 "보다 자세한 내용은 REINDEX SQL 명령어 설명서를 참조하십시오.\n"
 
-#: vacuumdb.c:310 vacuumdb.c:313 vacuumdb.c:316 vacuumdb.c:319 vacuumdb.c:322
-#: vacuumdb.c:325 vacuumdb.c:328 vacuumdb.c:331 vacuumdb.c:340
+#: vacuumdb.c:313 vacuumdb.c:316 vacuumdb.c:319 vacuumdb.c:322 vacuumdb.c:325
+#: vacuumdb.c:328 vacuumdb.c:331 vacuumdb.c:334 vacuumdb.c:343
 #, c-format
 msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "통계 수집 전용 작업에서는 \"%s\" 옵션을 사용할 수 없음"
 
-#: vacuumdb.c:343
+#: vacuumdb.c:346
 #, c-format
 msgid "cannot use the \"%s\" option when performing full vacuum"
 msgstr "full vacuum 작업에서는 \"%s\" 옵션을 사용할 수 없음"
 
-#: vacuumdb.c:349 vacuumdb.c:357
+#: vacuumdb.c:352 vacuumdb.c:360
 #, c-format
 msgid "cannot use the \"%s\" option with the \"%s\" option"
 msgstr "\"%s\" 옵션과 \"%s\" 옵션을 함께 사용할 수 없음"
 
-#: vacuumdb.c:428
+#: vacuumdb.c:432
 #, c-format
 msgid "cannot vacuum all databases and a specific one at the same time"
 msgstr ""
 "-a 옵션이 있을 경우는 한 데이터베이스를 대상으로 작업을 진행할 수 없습니다."
 
-#: vacuumdb.c:432
-#, c-format
-msgid "cannot vacuum specific table(s) in all databases"
-msgstr "모든 데이터베이스를 대상으로는 특정 테이블들을 청소할 수는 없음"
-
 #: vacuumdb.c:436
-#, c-format
-msgid "cannot vacuum specific schema(s) in all databases"
-msgstr "모든 데이터베이스를 대상으로는 특정 스키마들을 청소할 수는 없음"
-
-#: vacuumdb.c:440
-#, c-format
-msgid "cannot exclude specific schema(s) in all databases"
-msgstr "모든 데이터베이스를 대상으로는 특정 스키마를 제외할 수 없음"
-
-#: vacuumdb.c:444
 #, c-format
 msgid ""
 "cannot vacuum all tables in schema(s) and specific table(s) at the same time"
@@ -1100,12 +1112,12 @@ msgstr ""
 "스키마 안에 있는 모든 테이블을 청소하는 것과 특정 테이블만 청소하는 것을 동시"
 "에 할 수 없음"
 
-#: vacuumdb.c:448
+#: vacuumdb.c:440
 #, c-format
 msgid "cannot vacuum specific table(s) and exclude schema(s) at the same time"
 msgstr "특정 테이블만 청소하는 것과 스키마를 제외하는 것은 동시에 할 수 없음"
 
-#: vacuumdb.c:452
+#: vacuumdb.c:444
 #, c-format
 msgid ""
 "cannot vacuum all tables in schema(s) and exclude schema(s) at the same time"
@@ -1113,39 +1125,44 @@ msgstr ""
 "스키마 안 모든 테이블만 청소하는 것과 스키마를 제외하는 것은 동시에 할 수 없"
 "음"
 
-#: vacuumdb.c:496
+#: vacuumdb.c:457
+#, c-format
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: vacuumdb.c:501
 msgid "Generating minimal optimizer statistics (1 target)"
 msgstr "최소 최적화 통계 수집 수행 중 (1% 대상)"
 
-#: vacuumdb.c:497
+#: vacuumdb.c:502
 msgid "Generating medium optimizer statistics (10 targets)"
 msgstr "일반 최적화 통계 수집 수행 중 (10% 대상)"
 
-#: vacuumdb.c:498
+#: vacuumdb.c:503
 msgid "Generating default (full) optimizer statistics"
 msgstr "최대 최적화 통계 수집 수행중 (모든 자료 대상)"
 
-#: vacuumdb.c:577
+#: vacuumdb.c:582
 #, c-format
 msgid "%s: processing database \"%s\": %s\n"
 msgstr "%s: \"%s\" 데이터베이스 작업 중: %s\n"
 
-#: vacuumdb.c:580
+#: vacuumdb.c:585
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: \"%s\" 데이터베이스를 청소 중\n"
 
-#: vacuumdb.c:1115
+#: vacuumdb.c:1146
 #, c-format
 msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "\"%s\" 테이블 (해당 DB: \"%s\") 청소하기 실패: %s"
 
-#: vacuumdb.c:1118
+#: vacuumdb.c:1149
 #, c-format
 msgid "vacuuming of database \"%s\" failed: %s"
 msgstr "\"%s\" 데이터베이스 청소하기 실패: %s"
 
-#: vacuumdb.c:1126
+#: vacuumdb.c:1157
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -1155,44 +1172,44 @@ msgstr ""
 "퀴리 최적화기의 참고 자료를 갱신합니다.\n"
 "\n"
 
-#: vacuumdb.c:1130
+#: vacuumdb.c:1161
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       모든 데이터베이스 청소\n"
 
-#: vacuumdb.c:1131
+#: vacuumdb.c:1162
 #, c-format
 msgid "      --buffer-usage-limit=SIZE   size of ring buffer used for vacuum\n"
 msgstr "      --buffer-usage-limit=SIZE   청소를 위한 링 버커 크기\n"
 
-#: vacuumdb.c:1132
+#: vacuumdb.c:1163
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=DBNAME             DBNAME 데이터베이스 청소\n"
 
-#: vacuumdb.c:1133
+#: vacuumdb.c:1164
 #, c-format
 msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
 msgstr "      --disable-page-skipping     모든 page-skipping 기능 비활성화\n"
 
-#: vacuumdb.c:1134
+#: vacuumdb.c:1165
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
 "server\n"
 msgstr "  -e, --echo                      서버로 보내는 명령들을 보여줌\n"
 
-#: vacuumdb.c:1135
+#: vacuumdb.c:1166
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      대청소\n"
 
-#: vacuumdb.c:1136
+#: vacuumdb.c:1167
 #, c-format
 msgid "  -F, --freeze                    freeze row transaction information\n"
 msgstr "  -F, --freeze                    행 트랜잭션 정보 동결\n"
 
-#: vacuumdb.c:1137
+#: vacuumdb.c:1168
 #, c-format
 msgid ""
 "      --force-index-cleanup       always remove index entries that point to "
@@ -1200,7 +1217,7 @@ msgid ""
 msgstr ""
 "      --force-index-cleanup       삭제된 튜플 대상 인덱스 항목 항상 삭제\n"
 
-#: vacuumdb.c:1138
+#: vacuumdb.c:1169
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
@@ -1208,7 +1225,7 @@ msgid ""
 msgstr ""
 "  -j, --jobs=NUM                  청소 작업을 여러개의 연결로 동시에 작업함\n"
 
-#: vacuumdb.c:1139
+#: vacuumdb.c:1170
 #, c-format
 msgid ""
 "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to "
@@ -1216,7 +1233,7 @@ msgid ""
 msgstr ""
 "      --min-mxid-age=MXID_AGE     청소할 테이블의 최소 multixact ID 나이\n"
 
-#: vacuumdb.c:1140
+#: vacuumdb.c:1171
 #, c-format
 msgid ""
 "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to "
@@ -1224,7 +1241,7 @@ msgid ""
 msgstr ""
 "      --min-xid-age=XID_AGE       청소할 테이블의 최소 트랜잭션 ID 나이\n"
 
-#: vacuumdb.c:1141
+#: vacuumdb.c:1172
 #, c-format
 msgid ""
 "      --no-index-cleanup          don't remove index entries that point to "
@@ -1232,12 +1249,12 @@ msgid ""
 msgstr ""
 "      --no-index-cleanup          삭제된 튜플 대상 인덱스 항목 지우지 않음\n"
 
-#: vacuumdb.c:1142
+#: vacuumdb.c:1173
 #, c-format
 msgid "      --no-process-main           skip the main relation\n"
 msgstr "      --no-process-main           메인 릴레이션 건너뜀\n"
 
-#: vacuumdb.c:1143
+#: vacuumdb.c:1174
 #, c-format
 msgid ""
 "      --no-process-toast          skip the TOAST table associated with the "
@@ -1246,7 +1263,7 @@ msgstr ""
 "      --no-process-toast          vacuum 대상 테이블과 관련된 TOAST 테이블 건"
 "너뜀\n"
 
-#: vacuumdb.c:1144
+#: vacuumdb.c:1175
 #, c-format
 msgid ""
 "      --no-truncate               don't truncate empty pages at the end of "
@@ -1254,23 +1271,23 @@ msgid ""
 msgstr ""
 "      --no-truncate               테이블 끝에 있는 빈 페이지를 지우지 않음\n"
 
-#: vacuumdb.c:1145
+#: vacuumdb.c:1176
 #, c-format
 msgid ""
-"  -n, --schema=PATTERN            vacuum tables in the specified schema(s) "
+"  -n, --schema=SCHEMA             vacuum tables in the specified schema(s) "
 "only\n"
 msgstr ""
-"  -n, --schema=PATTERN            지정한 스키마 안에 있는 테이블만 청소함\n"
+"  -n, --schema=SCHEMA             지정한 스키마 안에 있는 테이블만 청소함\n"
 
-#: vacuumdb.c:1146
+#: vacuumdb.c:1177
 #, c-format
 msgid ""
-"  -N, --exclude-schema=PATTERN    do not vacuum tables in the specified "
+"  -N, --exclude-schema=SCHEMA     do not vacuum tables in the specified "
 "schema(s)\n"
 msgstr ""
-"  -N, --exclude-schema=PATTERN    지정한 스키마 안에 있는 테이블만 청소안함\n"
+"  -N, --exclude-schema=SCHEMA     지정한 스키마 안에 있는 테이블만 청소안함\n"
 
-#: vacuumdb.c:1147
+#: vacuumdb.c:1178
 #, c-format
 msgid ""
 "  -P, --parallel=PARALLEL_WORKERS use this many background workers for "
@@ -1279,12 +1296,12 @@ msgstr ""
 "  -P, --parallel=병렬작업수       vacuum 작업을 병렬로 처리 할 수 있는 경우\n"
 "                                  백그라운드 작업 프로세스 수\n"
 
-#: vacuumdb.c:1148
+#: vacuumdb.c:1179
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     어떠한 메시지도 보여주지 않음\n"
 
-#: vacuumdb.c:1149
+#: vacuumdb.c:1180
 #, c-format
 msgid ""
 "      --skip-locked               skip relations that cannot be immediately "
@@ -1292,28 +1309,28 @@ msgid ""
 msgstr ""
 "      --skip-locked               즉시 잠글 수 없는 릴레이션은 건너 뜀\n"
 
-#: vacuumdb.c:1150
+#: vacuumdb.c:1181
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
 msgstr "  -t, --table='TABLE[(COLUMNS)]'  지정한 특정 테이블들만 청소\n"
 
-#: vacuumdb.c:1151
+#: vacuumdb.c:1182
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   작업내역의 자세한 출력\n"
 
-#: vacuumdb.c:1152
+#: vacuumdb.c:1183
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   버전 정보를 보여주고 마침\n"
 
-#: vacuumdb.c:1153
+#: vacuumdb.c:1184
 #, c-format
 msgid "  -z, --analyze                   update optimizer statistics\n"
 msgstr "  -z, --analyze                   쿼리최적화 통계 정보를 갱신함\n"
 
-#: vacuumdb.c:1154
+#: vacuumdb.c:1185
 #, c-format
 msgid ""
 "  -Z, --analyze-only              only update optimizer statistics; no "
@@ -1322,7 +1339,7 @@ msgstr ""
 "  -Z, --analyze-only              청소 작업 없이 쿼리최적화 통계 정보만 갱신"
 "함\n"
 
-#: vacuumdb.c:1155
+#: vacuumdb.c:1186
 #, c-format
 msgid ""
 "      --analyze-in-stages         only update optimizer statistics, in "
@@ -1332,12 +1349,12 @@ msgstr ""
 "      --analyze-in-stages         보다 빠른 결과를 위해 다중 스테이지에서\n"
 "                                  최적화 통계치만 갱신함;청소 안함\n"
 
-#: vacuumdb.c:1157
+#: vacuumdb.c:1188
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      이 도움말을 표시하고 종료\n"
 
-#: vacuumdb.c:1165
+#: vacuumdb.c:1196
 #, c-format
 msgid ""
 "\n"
@@ -1345,3 +1362,65 @@ msgid ""
 msgstr ""
 "\n"
 "보다 자세한 내용은 VACUUM SQL 명령어 설명서를 참조하십시오.\n"
+
+#, c-format
+#~ msgid "cannot cluster specific table(s) in all databases"
+#~ msgstr "모든 DB를 대상으로 특정 테이블들을 클러스터할 수 없음"
+
+#, c-format
+#~ msgid "cannot reindex all databases and system catalogs at the same time"
+#~ msgstr ""
+#~ "모든 데이터베이스 재색인 작업과 시스템 카탈로그 재색인 작업은 동시에 진행"
+#~ "할 수 없습니다"
+
+#, c-format
+#~ msgid "cannot reindex specific schema(s) in all databases"
+#~ msgstr ""
+#~ "모든 데이터베이스 재색인 작업에서 특정 스키마들의 재색인 작업을 지정할 수 "
+#~ "없습니다"
+
+#, c-format
+#~ msgid "cannot reindex specific table(s) in all databases"
+#~ msgstr ""
+#~ "모든 데이터베이스 재색인 작업에서 특정 테이블의 재색인 작업을 지정할 수 없"
+#~ "습니다"
+
+#, c-format
+#~ msgid "cannot reindex specific index(es) in all databases"
+#~ msgstr ""
+#~ "모든 데이터베이스 재색인 작업에서 특정 인덱스 재색인 작업을 지정할 수 없습"
+#~ "니다"
+
+#, c-format
+#~ msgid ""
+#~ "cannot reindex specific schema(s) and system catalogs at the same time"
+#~ msgstr ""
+#~ "특정 스키마와 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
+
+#, c-format
+#~ msgid ""
+#~ "cannot reindex specific table(s) and system catalogs at the same time"
+#~ msgstr ""
+#~ "특정 테이블과 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
+
+#, c-format
+#~ msgid ""
+#~ "cannot reindex specific index(es) and system catalogs at the same time"
+#~ msgstr ""
+#~ "특정 인덱스와 시스템 카탈로그 재색인 작업은 동시에 진행할 수 없습니다"
+
+#, c-format
+#~ msgid "cannot use multiple jobs to reindex indexes"
+#~ msgstr "인덱스 다시 만들기에서는 다중 작업을 사용할 수 없음"
+
+#, c-format
+#~ msgid "cannot vacuum specific table(s) in all databases"
+#~ msgstr "모든 데이터베이스를 대상으로는 특정 테이블들을 청소할 수는 없음"
+
+#, c-format
+#~ msgid "cannot vacuum specific schema(s) in all databases"
+#~ msgstr "모든 데이터베이스를 대상으로는 특정 스키마들을 청소할 수는 없음"
+
+#, c-format
+#~ msgid "cannot exclude specific schema(s) in all databases"
+#~ msgstr "모든 데이터베이스를 대상으로는 특정 스키마를 제외할 수 없음"

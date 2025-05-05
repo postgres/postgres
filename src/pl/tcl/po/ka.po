@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pltcl (PostgreSQL) 15\n"
+"Project-Id-Version: pltcl (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-06-04 22:08+0000\n"
-"PO-Revision-Date: 2024-06-05 01:38+0200\n"
+"POT-Creation-Date: 2025-02-27 09:39+0000\n"
+"PO-Revision-Date: 2025-02-27 12:14+0100\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,107 +16,107 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.3.2\n"
+"X-Generator: Poedit 3.5\n"
 
-#: pltcl.c:462
+#: pltcl.c:467
 msgid "PL/Tcl function to call once when pltcl is first used."
 msgstr "PL/Tcl ფუნქცია, როლის გამოძახებაც ერთხელ, pltcl-ის პირველი გამოყენებისას ხდება."
 
-#: pltcl.c:469
+#: pltcl.c:474
 msgid "PL/TclU function to call once when pltclu is first used."
 msgstr "PL/TclU ფუნქცია, როლის გამოძახებაც ერთხელ, pltclu -ის პირველი გამოყენებისას ხდება."
 
-#: pltcl.c:636
+#: pltcl.c:641
 #, c-format
 msgid "function \"%s\" is in the wrong language"
 msgstr "ფუნქცია \"%s\" არასწორ ენაზეა"
 
-#: pltcl.c:647
+#: pltcl.c:652
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
 msgstr "ფუნქცია \"%s\" არ უნდა იყოს SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
-#: pltcl.c:681
+#: pltcl.c:686
 #, c-format
 msgid "processing %s parameter"
 msgstr "პარამეტრის დამუშავება: %s"
 
-#: pltcl.c:834
+#: pltcl.c:838
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "სეტ-ღირებული ფუნქცია, რომელსაც ეწოდება კონტექსტში, რომელსაც არ შეუძლია მიიღოს ნაკრები"
 
-#: pltcl.c:839
+#: pltcl.c:843
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
 msgstr "საჭიროა მატერიალიზებული რეჟიმი, მაგრამ ამ კონტექსტში ეს დაუშვებელია"
 
-#: pltcl.c:1012
+#: pltcl.c:1016
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "ფუნქცია, რომელიც ჩანაწერს აბრუნებს, გამოძახებულია კონტექსტში, რომელსაც ჩანაწერის მიღება არ შეუძლია"
 
-#: pltcl.c:1031
+#: pltcl.c:1035
 #, c-format
 msgid "could not parse function return value: %s"
 msgstr "ფუნქციიდან დაბრუნებული მნიშვნელობის დამუშავება შეუძლებელია: %s"
 
-#: pltcl.c:1298
+#: pltcl.c:1301
 #, c-format
 msgid "could not parse trigger return value: %s"
 msgstr "ტრიგერიდან დაბრუნებული მნიშვნელობის დამუშავება შეუძლებელია: %s"
 
-#: pltcl.c:1383 pltcl.c:1810
+#: pltcl.c:1401 pltcl.c:1895
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1384
+#: pltcl.c:1402
 #, c-format
 msgid ""
 "%s\n"
-"in PL/Tcl function \"%s\""
+"in PL/Tcl function %s"
 msgstr ""
 "%s\n"
-"PL/Tcl-ის ფუნქციაში\"%s\""
+"PL/Tcl-ის ფუნქციაში %s"
 
-#: pltcl.c:1547
+#: pltcl.c:1630
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "ტრიგერის ფუნქციების გამოძახება მხოლოდ ტრიგერებად შეიძლება"
 
-#: pltcl.c:1551
+#: pltcl.c:1634
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "PL/Tcl ფუნქციას %s ტიპის დაბრუნება არ შეუძლია"
 
-#: pltcl.c:1590
+#: pltcl.c:1673
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "PL/Tcl ფუნქციას %s ტიპის მიღება არ შეუძლია"
 
-#: pltcl.c:1702
+#: pltcl.c:1785
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "შიდა პროცედურის (\"%s\") შექმნის შეცდომა: %s"
 
-#: pltcl.c:3207
+#: pltcl.c:3295
 #, c-format
 msgid "column name/value list must have even number of elements"
 msgstr "სვეტის სახელი/მნიშვნელობების სიას ელემენტების ლუწი რაოდენობა უნდა ჰქონდეს"
 
-#: pltcl.c:3225
+#: pltcl.c:3313
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
 msgstr "სვეტის სახელი/მნიშვნელობების სია შეიცავს სვეტის არარსებულ სახელს „%s“"
 
-#: pltcl.c:3232
+#: pltcl.c:3320
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "სისტემური ატრიბუტის დაყენების შეცდომა: \"%s\""
 
-#: pltcl.c:3238
+#: pltcl.c:3326
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "გენერირებული სვეტის დაყენება შეუძლებელია: %s"
