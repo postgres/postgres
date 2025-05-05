@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-09-07 17:27+0300\n"
+"POT-Creation-Date: 2025-05-03 16:01+0300\n"
 "PO-Revision-Date: 2021-09-04 12:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -349,7 +349,7 @@ msgstr ""
 msgid "structure of query does not match function result type"
 msgstr "структура запроса не соответствует типу результата функции"
 
-#: pl_exec.c:3596 pl_exec.c:4422 pl_exec.c:8667
+#: pl_exec.c:3596 pl_exec.c:4422 pl_exec.c:8669
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"

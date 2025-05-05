@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-11 14:38+0900\n"
-"PO-Revision-Date: 2024-11-11 14:49+0900\n"
+"POT-Creation-Date: 2025-02-17 11:09+0900\n"
+"PO-Revision-Date: 2025-02-17 15:30+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -64,7 +64,7 @@ msgstr "nonce を生成できませんでした\n"
 #: fe-connect.c:5883 fe-connect.c:5907 fe-connect.c:5925 fe-connect.c:6026
 #: fe-connect.c:6035 fe-connect.c:6393 fe-connect.c:6543 fe-connect.c:6809
 #: fe-exec.c:686 fe-exec.c:876 fe-exec.c:1223 fe-exec.c:3145 fe-exec.c:3337
-#: fe-exec.c:4114 fe-exec.c:4279 fe-gssapi-common.c:111 fe-lobj.c:881
+#: fe-exec.c:4172 fe-exec.c:4339 fe-gssapi-common.c:111 fe-lobj.c:881
 #: fe-protocol3.c:975 fe-protocol3.c:990 fe-protocol3.c:1023
 #: fe-protocol3.c:1731 fe-secure-common.c:110 fe-secure-gssapi.c:500
 #: fe-secure-openssl.c:446 fe-secure-openssl.c:1124
@@ -766,9 +766,21 @@ msgstr "パラメータ%dは0..%dの範囲を超えています"
 msgid "could not interpret result from server: %s"
 msgstr "サーバーからの結果を解釈できませんでした: %s"
 
-#: fe-exec.c:4007 fe-exec.c:4096
+#: fe-exec.c:4020
+msgid "incomplete multibyte character"
+msgstr "不完全なマルチバイト文字"
+
+#: fe-exec.c:4023
+msgid "invalid multibyte character"
+msgstr "不正なマルチバイト文字"
+
+#: fe-exec.c:4132
 msgid "incomplete multibyte character\n"
 msgstr "不完全なマルチバイト文字\n"
+
+#: fe-exec.c:4152
+msgid "invalid multibyte character\n"
+msgstr "不正なマルチバイト文字\n"
 
 #: fe-gssapi-common.c:124
 msgid "GSSAPI name import error"

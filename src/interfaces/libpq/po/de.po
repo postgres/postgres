@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-05 14:30+0000\n"
+"POT-Creation-Date: 2025-05-02 01:15+0000\n"
 "PO-Revision-Date: 2022-04-01 11:08+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -60,7 +60,7 @@ msgstr "konnte Nonce nicht erzeugen\n"
 #: fe-connect.c:5883 fe-connect.c:5907 fe-connect.c:5925 fe-connect.c:6026
 #: fe-connect.c:6035 fe-connect.c:6393 fe-connect.c:6543 fe-connect.c:6809
 #: fe-exec.c:686 fe-exec.c:876 fe-exec.c:1223 fe-exec.c:3145 fe-exec.c:3337
-#: fe-exec.c:4114 fe-exec.c:4279 fe-gssapi-common.c:111 fe-lobj.c:881
+#: fe-exec.c:4172 fe-exec.c:4339 fe-gssapi-common.c:111 fe-lobj.c:881
 #: fe-protocol3.c:975 fe-protocol3.c:990 fe-protocol3.c:1023
 #: fe-protocol3.c:1731 fe-secure-common.c:110 fe-secure-gssapi.c:500
 #: fe-secure-openssl.c:446 fe-secure-openssl.c:1124
@@ -762,9 +762,13 @@ msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:4007 fe-exec.c:4096
+#: fe-exec.c:4020 fe-exec.c:4132
 msgid "incomplete multibyte character\n"
 msgstr "unvollständiges Mehrbyte-Zeichen\n"
+
+#: fe-exec.c:4023 fe-exec.c:4152
+msgid "invalid multibyte character\n"
+msgstr "ungültiges Mehrbytezeichen\n"
 
 #: fe-gssapi-common.c:124
 msgid "GSSAPI name import error"
