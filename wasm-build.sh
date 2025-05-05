@@ -590,10 +590,16 @@ END
         exit 536
     fi
 else
-    for archive in ${PG_DIST_EXT}/*.tar
-    do
-        echo "    packing extension $archive (docker build)"
-        gzip -k -9 $archive
-    done
+    if ./pglite-${PG_BRANCH}/build.sh
+    then
+        for archive in ${PG_DIST_EXT}/*.tar
+        do
+            echo "    packing extension $archive (docker build)"
+            gzip -k -9 $archive
+        done
+    else
+        echo "failed to link libpglite $BUILD"
+        exit 602
+    fi
 fi
 
