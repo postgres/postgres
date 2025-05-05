@@ -1030,8 +1030,7 @@ GetKeyProviderByName(const char *provider_name, Oid dbOid)
 	{
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("key provider \"%s\" does not exists", provider_name),
-				errhint("Create the key provider"));
+				errmsg("key provider \"%s\" does not exists", provider_name));
 	}
 	return keyring;
 }
