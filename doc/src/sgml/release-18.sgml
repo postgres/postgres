@@ -783,7 +783,7 @@ Add per-backend I/O statistics reporting (Bertrand Drouvot)
 </para>
 
 <para>
-The statistics are accessed via pg_stat_get_backend_io().  Per-backend statistics can be cleared via pg_stat_reset_backend_stats().
+The statistics are accessed via pg_stat_get_backend_io().  Per-backend I/O statistics can be cleared via pg_stat_reset_backend_stats().
 </para>
 </listitem>
 
@@ -866,6 +866,10 @@ Author: Michael Paquier <michael@paquier.xyz>
 <para>
 Add function pg_stat_get_backend_wal() to return per-backend WAL statistics (Bertrand Drouvot)
 <ulink url="&commit_baseurl;76def4cdd">&sect;</ulink>
+</para>
+
+<para>
+Per-backend WAL statistics can be cleared via pg_stat_reset_backend_stats().
 </para>
 </listitem>
 
