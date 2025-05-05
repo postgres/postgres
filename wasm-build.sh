@@ -475,8 +475,18 @@ then
 
 fi
 
+
+echo "
+
+        Extensions distribution folder : ${PG_DIST_EXT}
+
+
+"
+
+
+
 # only build extra when targeting pglite-wasm .
-pwd
+
 if [ -f  ${WORKSPACE}/pglite-wasm/build.sh ]
 then
     if $WASI
@@ -579,5 +589,11 @@ END
         echo "linking libpglite wasm failed"
         exit 536
     fi
+else
+    for archive in ${PG_DIST_EXT}/*.tar
+    do
+        echo "    packing extension \$archive (docker build)"
+        gzip -k -9 \$archive
+    done
 fi
 
