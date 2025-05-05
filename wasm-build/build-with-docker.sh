@@ -20,11 +20,17 @@ cat .buildconfig
 
 mkdir -p dist/pglite dist/extensions-emsdk
 
-docker run \
+if echo -n $@|grep -q it$
+then
+    PROMPT="|| bash"
+fi
+
+docker run $@ \
   --rm \
   --env-file .buildconfig \
   --workdir=/workspace \
   -v ${WORKSPACE}/postgres-pglite:/workspace:rw \
   -v ${WORKSPACE}/postgres-pglite/dist:/tmp/sdk/dist:rw \
   $IMG_NAME:$IMG_TAG \
-  bash -c "source ${SDKROOT}/wasm32-bi-emscripten-shell.sh && ./wasm-build.sh ${WHAT:-\"contrib extra\"}"
+  bash --noprofile --rcfile ${SDKROOT}/wasm32-bi-emscripten-shell.sh -ci "./wasm-build.sh ${WHAT:-\"contrib extra\"} $PROMPT"
+

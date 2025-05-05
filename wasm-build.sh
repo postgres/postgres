@@ -592,7 +592,7 @@ END
                 for archive in ${PG_DIST_EXT}/*.tar
                 do
                     echo "    packing extension $archive (docker build)"
-                    gzip -k -9 $archive
+                    gzip -fk -9 $archive
                 done
             fi
 
