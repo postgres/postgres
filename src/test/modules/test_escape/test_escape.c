@@ -31,6 +31,8 @@ typedef struct pe_test_config
 	int			failure_count;
 } pe_test_config;
 
+#define NEVER_ACCESS_STR "\xff never-to-be-touched"
+
 
 /*
  * An escape function to be tested by this test.
@@ -84,6 +86,82 @@ typedef struct pe_test_vector
 static const PsqlScanCallbacks test_scan_callbacks = {
 	NULL
 };
+
+
+/*
+ * Print the string into buf, making characters outside of plain ascii
+ * somewhat easier to recognize.
+ *
+ * The output format could stand to be improved significantly, it's not at all
+ * unambiguous.
+ */
+static void
+escapify(PQExpBuffer buf, const char *str, size_t len)
+{
+	for (size_t i = 0; i < len; i++)
+	{
+		char		c = *str;
+
+		if (c == '\n')
+			appendPQExpBufferStr(buf, "\\n");
+		else if (c == '\0')
+			appendPQExpBufferStr(buf, "\\0");
+		else if (c < ' ' || c > '~')
+			appendPQExpBuffer(buf, "\\x%2x", (uint8_t) c);
+		else
+			appendPQExpBufferChar(buf, c);
+		str++;
+	}
+}
+
+static void
+report_result(pe_test_config *tc,
+			  bool success,
+			  const char *testname,
+			  const char *details,
+			  const char *subname,
+			  const char *resultdesc)
+{
+	int			test_id = ++tc->test_count;
+	bool		print_details = true;
+	bool		print_result = true;
+
+	if (success)
+	{
+		if (tc->verbosity <= 0)
+			print_details = false;
+		if (tc->verbosity < 0)
+			print_result = false;
+	}
+	else
+		tc->failure_count++;
+
+	if (print_details)
+		printf("%s", details);
+
+	if (print_result)
+		printf("%s %d - %s: %s: %s\n",
+			   success ? "ok" : "not ok",
+			   test_id, testname,
+			   subname,
+			   resultdesc);
+}
+
+/*
+ * Return true for encodings in which bytes in a multi-byte character look
+ * like valid ascii characters.
+ */
+static bool
+encoding_conflicts_ascii(int encoding)
+{
+	/*
+	 * We don't store this property directly anywhere, but whether an encoding
+	 * is a client-only encoding is a good proxy.
+	 */
+	if (encoding > PG_ENCODING_BE_LAST)
+		return true;
+	return false;
+}
 
 
 static bool
@@ -383,81 +461,6 @@ static pe_test_vector pe_test_vectors[] =
 };
 
 
-/*
- * Print the string into buf, making characters outside of plain ascii
- * somewhat easier to recognize.
- *
- * The output format could stand to be improved significantly, it's not at all
- * unambiguous.
- */
-static void
-escapify(PQExpBuffer buf, const char *str, size_t len)
-{
-	for (size_t i = 0; i < len; i++)
-	{
-		char		c = *str;
-
-		if (c == '\n')
-			appendPQExpBufferStr(buf, "\\n");
-		else if (c == '\0')
-			appendPQExpBufferStr(buf, "\\0");
-		else if (c < ' ' || c > '~')
-			appendPQExpBuffer(buf, "\\x%2x", (uint8_t) c);
-		else
-			appendPQExpBufferChar(buf, c);
-		str++;
-	}
-}
-
-static void
-report_result(pe_test_config *tc,
-			  bool success,
-			  PQExpBuffer testname,
-			  PQExpBuffer details,
-			  const char *subname,
-			  const char *resultdesc)
-{
-	int			test_id = ++tc->test_count;
-	bool		print_details = true;
-	bool		print_result = true;
-
-	if (success)
-	{
-		if (tc->verbosity <= 0)
-			print_details = false;
-		if (tc->verbosity < 0)
-			print_result = false;
-	}
-	else
-		tc->failure_count++;
-
-	if (print_details)
-		printf("%s", details->data);
-
-	if (print_result)
-		printf("%s %d - %s: %s: %s\n",
-			   success ? "ok" : "not ok",
-			   test_id, testname->data,
-			   subname,
-			   resultdesc);
-}
-
-/*
- * Return true for encodings in which bytes in a multi-byte character look
- * like valid ascii characters.
- */
-static bool
-encoding_conflicts_ascii(int encoding)
-{
-	/*
-	 * We don't store this property directly anywhere, but whether an encoding
-	 * is a client-only encoding is a good proxy.
-	 */
-	if (encoding > PG_ENCODING_BE_LAST)
-		return true;
-	return false;
-}
-
 static const char *
 scan_res_s(PsqlScanResult res)
 {
@@ -532,7 +535,7 @@ test_psql_parse(pe_test_config *tc, PQExpBuffer testname,
 	else
 		resdesc = "ok";
 
-	report_result(tc, !test_fails, testname, details,
+	report_result(tc, !test_fails, testname->data, details->data,
 				  "psql parse",
 				  resdesc);
 }
@@ -617,7 +620,6 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 	 */
 	appendBinaryPQExpBuffer(raw_buf, tv->escape, tv->escape_len);
 
-#define NEVER_ACCESS_STR "\xff never-to-be-touched"
 	if (ef->supports_input_length)
 	{
 		/*
@@ -671,7 +673,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 		 * here, but that's not available everywhere.
 		 */
 		contains_never = strstr(escape_buf->data, NEVER_ACCESS_STR) == NULL;
-		report_result(tc, contains_never, testname, details,
+		report_result(tc, contains_never, testname->data, details->data,
 					  "escaped data beyond end of input",
 					  contains_never ? "no" : "all secrets revealed");
 	}
@@ -714,7 +716,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 				resdesc = "valid input failed to escape, due to zero byte";
 		}
 
-		report_result(tc, ok, testname, details,
+		report_result(tc, ok, testname->data, details->data,
 					  "input validity vs escape success",
 					  resdesc);
 	}
@@ -744,7 +746,7 @@ test_one_vector_escape(pe_test_config *tc, const pe_test_vector *tv, const pe_te
 			resdesc = "invalid input produced valid output";
 		}
 
-		report_result(tc, ok, testname, details,
+		report_result(tc, ok, testname->data, details->data,
 					  "input and escaped encoding validity",
 					  resdesc);
 	}
