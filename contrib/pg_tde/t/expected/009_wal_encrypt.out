@@ -5,9 +5,17 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring-010', '/tmp/pg_tde_test
                                   -1
 (1 row)
 
+SELECT pg_tde_verify_server_key();
+psql:<stdin>:1: ERROR:  principal key not configured for current database
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-010');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_verify_server_key();
+ pg_tde_verify_server_key 
+--------------------------
  
 (1 row)
 

@@ -33,6 +33,4 @@
 	_obj_oid \
 }
 
-#define TDEisInGlobalSpace(dbOid) 	(dbOid == GLOBAL_DATA_TDE_OID)
-
 #endif							/* TDE_GLOBAL_CATALOG_H */

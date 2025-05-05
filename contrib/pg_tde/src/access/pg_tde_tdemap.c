@@ -261,9 +261,9 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 {
 	TDEPrincipalKey *principal_key;
 
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_SHARED);
+	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,

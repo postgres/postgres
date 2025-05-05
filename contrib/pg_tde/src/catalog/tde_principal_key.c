@@ -328,11 +328,8 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 		/* key rotation */
 		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, true);
 
-		if (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
-		{
-			clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
-			push_principal_key_to_cache(new_principal_key);
-		}
+		clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
+		push_principal_key_to_cache(new_principal_key);
 	}
 
 	LWLockRelease(lock_files);
@@ -390,11 +387,8 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 
 	pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, false);
 
-	if (!TDEisInGlobalSpace(curr_principal_key->keyInfo.databaseId))
-	{
-		clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
-		push_principal_key_to_cache(new_principal_key);
-	}
+	clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
+	push_principal_key_to_cache(new_principal_key);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 
@@ -800,14 +794,11 @@ GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode)
 
 #ifndef FRONTEND
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), lockMode));
-	/* We don't store global space key in cache */
-	if (!TDEisInGlobalSpace(dbOid))
-	{
-		principalKey = get_principal_key_from_cache(dbOid);
 
-		if (likely(principalKey))
-			return principalKey;
-	}
+	principalKey = get_principal_key_from_cache(dbOid);
+
+	if (likely(principalKey))
+		return principalKey;
 
 	if (lockMode != LW_EXCLUSIVE)
 	{
@@ -819,8 +810,7 @@ GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode)
 	principalKey = get_principal_key_from_keyring(dbOid);
 
 #ifndef FRONTEND
-	/* We don't store global space key in cache */
-	if (principalKey && !TDEisInGlobalSpace(dbOid))
+	if (principalKey)
 	{
 		push_principal_key_to_cache(principalKey);
 
@@ -986,11 +976,8 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	/* key rotation */
 	pg_tde_perform_rotate_key(oldKey, newKey, true);
 
-	if (!TDEisInGlobalSpace(newKey->keyInfo.databaseId))
-	{
-		clear_principal_key_cache(oldKey->keyInfo.databaseId);
-		push_principal_key_to_cache(newKey);
-	}
+	clear_principal_key_cache(oldKey->keyInfo.databaseId);
+	push_principal_key_to_cache(newKey);
 
 	pfree(newKey);
 }
