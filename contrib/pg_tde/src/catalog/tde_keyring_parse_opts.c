@@ -141,9 +141,8 @@ static char *get_file_kring_value(const char *path, const char *field_name);
  * Parses json input for the given provider type and sets the provided options
  * out_opts should be a palloc'd `VaultV2Keyring` or `FileKeyring` struct as the
  * respective option values will be mem copied into it.
- * Returns `true` if parsing succeded and `false` otherwise.
-*/
-bool
+ */
+void
 ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts, char *in_buf, int buf_len)
 {
 	JsonLexContext *jlex;
@@ -191,8 +190,6 @@ ParseKeyringJSONOptions(ProviderType provider_type, void *out_opts, char *in_buf
 #if PG_VERSION_NUM >= 170000
 	freeJsonLexContext(jlex);
 #endif
-
-	return jerr == JSON_SUCCESS;
 }
 
 /*
