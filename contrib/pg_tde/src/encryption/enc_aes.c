@@ -41,9 +41,9 @@
  * 16 byte blocks.
  */
 
-static const EVP_CIPHER *cipher_cbc;
-static const EVP_CIPHER *cipher_gcm;
-static const EVP_CIPHER *cipher_ctr_ecb;
+static const EVP_CIPHER *cipher_cbc = NULL;
+static const EVP_CIPHER *cipher_gcm = NULL;
+static const EVP_CIPHER *cipher_ctr_ecb = NULL;
 
 void
 AesInit(void)
@@ -69,6 +69,8 @@ AesRunCtr(EVP_CIPHER_CTX **ctxPtr, int enc, const unsigned char *key, const unsi
 
 	if (*ctxPtr == NULL)
 	{
+		Assert(cipher_ctr_ecb != NULL);
+
 		*ctxPtr = EVP_CIPHER_CTX_new();
 		EVP_CIPHER_CTX_init(*ctxPtr);
 
@@ -93,6 +95,7 @@ AesRunCbc(int enc, const unsigned char *key, const unsigned char *iv, const unsi
 	int			out_len_final;
 	EVP_CIPHER_CTX *ctx = NULL;
 
+	Assert(cipher_cbc != NULL);
 	Assert(in_len % EVP_CIPHER_block_size(cipher_cbc) == 0);
 
 	ctx = EVP_CIPHER_CTX_new();
@@ -142,6 +145,7 @@ AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 	int			out_len_final;
 	EVP_CIPHER_CTX *ctx;
 
+	Assert(cipher_gcm != NULL);
 	Assert(in_len % EVP_CIPHER_block_size(cipher_gcm) == 0);
 
 	ctx = EVP_CIPHER_CTX_new();
