@@ -55,11 +55,13 @@ typedef enum JsonKeyringField
 {
 	JK_FIELD_UNKNOWN,
 
+	/* These are for the objects that can point to a file or a remote url. */
 	JK_FIELD_TYPE,
-	JK_REMOTE_URL,
+	JK_FIELD_URL,
 	JK_FIELD_PATH,
 
-	JF_FILE_PATH,
+	/* Settings specific for the individual key provider types. */
+	JK_FILE_PATH,
 
 	JK_VAULT_TOKEN,
 	JK_VAULT_URL,
@@ -77,15 +79,18 @@ typedef enum JsonKeyringField
 
 static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	[JK_FIELD_UNKNOWN] = "unknownField",
+
 	[JK_FIELD_TYPE] = "type",
-	[JK_REMOTE_URL] = "url",
+	[JK_FIELD_URL] = "url",
 	[JK_FIELD_PATH] = "path",
 
 	/*
-	 * These values should match pg_tde_add_database_key_provider_vault_v2 and
-	 * pg_tde_add_database_key_provider_file SQL interfaces
+	 * These values should match pg_tde_add_database_key_provider_vault_v2,
+	 * pg_tde_add_database_key_provider_file and
+	 * pg_tde_add_database_key_provider_kmip SQL interfaces
 	 */
-	[JF_FILE_PATH] = "path",
+	[JK_FILE_PATH] = "path",
+
 	[JK_VAULT_TOKEN] = "token",
 	[JK_VAULT_URL] = "url",
 	[JK_VAULT_MOUNT_PATH] = "mountPath",
@@ -305,8 +310,8 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 			switch (parse->provider_type)
 			{
 				case FILE_KEY_PROVIDER:
-					if (strcmp(fname, JK_FIELD_NAMES[JF_FILE_PATH]) == 0)
-						*field = JF_FILE_PATH;
+					if (strcmp(fname, JK_FIELD_NAMES[JK_FILE_PATH]) == 0)
+						*field = JK_FILE_PATH;
 					else
 					{
 						*field = JK_FIELD_UNKNOWN;
@@ -354,8 +359,8 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 		case JK_EXPECT_EXTERN_VAL:
 			if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_TYPE]) == 0)
 				*field = JK_FIELD_TYPE;
-			else if (strcmp(fname, JK_FIELD_NAMES[JK_REMOTE_URL]) == 0)
-				*field = JK_REMOTE_URL;
+			else if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_URL]) == 0)
+				*field = JK_FIELD_URL;
 			else if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_PATH]) == 0)
 				*field = JK_FIELD_PATH;
 			else
@@ -395,14 +400,14 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 		case JK_FIELD_TYPE:
 			parse->field_type = value;
 			break;
-		case JK_REMOTE_URL:
+		case JK_FIELD_URL:
 			parse->extern_url = value;
 			break;
 		case JK_FIELD_PATH:
 			parse->extern_path = value;
 			break;
 
-		case JF_FILE_PATH:
+		case JK_FILE_PATH:
 			file->file_name = value;
 			break;
 
