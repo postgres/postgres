@@ -238,9 +238,10 @@
 		     * Reset whereToSendOutput to prevent ereport from attempting
 		     * to send any more messages to client.
 		     */
+#if 0
 		    if (whereToSendOutput == DestRemote)
 			    whereToSendOutput = DestNone;
-
+#endif
 		    /*
 		     * NOTE: if you are tempted to add more code here, DON'T!
 		     * Whatever you had in mind to do should be set up as an
