@@ -1087,13 +1087,13 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Add support for the "oauth" authentication (Jacob Champion, Daniel Gustafsson, Thomas Munro)
+Add support for the OAuth authentication method (Jacob Champion, Daniel Gustafsson, Thomas Munro)
 <ulink url="&commit_baseurl;b3f0be788">&sect;</ulink>
 </para>
 
 <para>
-This adds an "oauth" authentication method to pg_hba.conf, a server variable oauth_validator_libraries to specify OAUTH libraries, a configure flag --with-libcurl to add the required
-compile-time libraries, and libpq OAUTH options.
+This adds an "oauth" authentication method to pg_hba.conf, libpq OAuth options, a server variable oauth_validator_libraries to load token validation libraries, and
+a configure flag --with-libcurl to add the required compile-time libraries.
 </para>
 </listitem>
 
