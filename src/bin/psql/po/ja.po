@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-11-05 09:18+0900\n"
-"PO-Revision-Date: 2024-11-05 09:29+0900\n"
+"PO-Revision-Date: 2025-02-21 23:40+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2696,7 +2696,7 @@ msgstr ""
 
 #: help.c:197
 msgid "  \\gdesc                 describe result of query, without executing it\n"
-msgstr "  \\gdesc                 問い合わせを実行せずに結果の説明を行う\n"
+msgstr "  \\gdesc                 問い合わせを実行せずに結果の形式を出力する\n"
 
 #: help.c:198
 msgid "  \\gexec                 execute query, then execute each value in its result\n"
