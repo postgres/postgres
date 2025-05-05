@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-31 06:22+0000\n"
-"PO-Revision-Date: 2024-09-23 19:38\n"
+"POT-Creation-Date: 2025-03-29 10:40+0000\n"
+"PO-Revision-Date: 2025-04-01 15:40\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -43,7 +43,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:527
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
@@ -55,7 +55,7 @@ msgstr "не вдалося прочитати файл \"%s\": прочитан
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:356 reconstruct.c:727
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -79,13 +79,13 @@ msgstr "можлива помилка у послідовності байтів
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:510 reconstruct.c:625
+#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:746
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -98,7 +98,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "не вдалося fsync файл \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
@@ -134,8 +134,8 @@ msgstr "не вдалося синхронізувати файлову сист
 
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:199
-#: reconstruct.c:408
+#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
@@ -258,159 +258,159 @@ msgstr "Старший сурогат Unicode не повинен прямува
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Молодший сурогат Unicode не повинен прямувати за іншим молодшим сурогатом."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "не вдалося ініціалізувати контрольну суму маніфесту"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "маніфест закінчився несподівано"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "не вдалося оновити контрольну суму маніфесту"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "неочікуваний початок об'єкта"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "неочікуваний кінець об'єкта"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "неочікуваний початок масиву"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "неочікуваний кінець масиву"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "індикатор очікуваної версії"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "нерозпізнане поле верхнього рівня"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "неочікуване поле файлу"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "неочікуване поле діапазону WAL"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "неочікуване поле об'єкта"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "неочікуваний скаляр"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "версія маніфесту не ціле число"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "неочікувана версія маніфесту"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "системний ідентифікатор в маніфесті не ціле число"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "пропущено шлях"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "і ім'я шляху, і закодований шлях"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "відсутній розмір"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "контрольна сума без алгоритму"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "не вдалося декодувати ім'я файлу"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "розмір файлу не є цілим числом"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "нерозпізнаний алгоритм контрольної суми: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "неприпустима контрольна сума для файлу \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "відсутня часова шкала"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "відсутній LSN початку"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "відсутній LSN кінця"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "часова лінія не є цілим числом"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "не вдалося проаналізувати початковий LSN"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "не вдалося проаналізувати кінцевий LSN"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "очікувалося принаймні 2 рядки"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "останній рядок не завершений новим рядком"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "не вдалося остаточно завершити контрольну суму маніфесту"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "у маніфесті немає контрольної суми"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "неприпустима контрольна сума маніфесту: \"%s\""
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "невідповідність контрольної суми маніфесту"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "не вдалося проаналізувати маніфест резервної копії: %s"
@@ -460,13 +460,13 @@ msgstr "%s: не вдалося знайти %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s вимагає %s"
 
-#: backup_label.c:162 reconstruct.c:748 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "не вдалося записати файл \"%s\": записано %d з %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:708
-#: reconstruct.c:754 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не вдалося оновити контрольну суму файлу \"%s\""
@@ -481,7 +481,7 @@ msgstr "неможливо записати до файлу \"%s\": %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "не вдалося записати до файлу \"%s\", зсув %u: записано %d з %d"
 
-#: copy_file.c:199 reconstruct.c:771
+#: copy_file.c:199 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не вдалося прочитати з файлу \"%s\": %m"
@@ -506,12 +506,12 @@ msgstr "помилка при клонуванні файлу \"%s\" в \"%s\": 
 msgid "file cloning not supported on this platform"
 msgstr "клонування файлів не підтримується на цій платформі"
 
-#: copy_file.c:278 reconstruct.c:691
+#: copy_file.c:278 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "помилка при копіюванні діапазону файлу від \"%s\" до \"%s\": %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:711
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range не підтримується на цій платформі"
@@ -536,12 +536,12 @@ msgstr "не вдалося прочитати файл \"%s\": прочитан
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %lld з %lld"
 
-#: load_manifest.c:249
+#: load_manifest.c:248
 #, c-format
 msgid "backup manifest version 1 does not support incremental backup"
 msgstr "маніфест резервного копіювання версії 1 не підтримує інкреметного резервного копіювання"
 
-#: load_manifest.c:281
+#: load_manifest.c:280
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дубльований шлях у маніфесті резервного копіювання: \"%s\""
@@ -789,7 +789,7 @@ msgstr "пропускання символічного посилання \"%s\
 msgid "skipping special file \"%s\""
 msgstr "спеціальний файл \"%s\" пропускається"
 
-#: pg_combinebackup.c:1073 reconstruct.c:300
+#: pg_combinebackup.c:1073 reconstruct.c:305
 #, c-format
 msgid "manifest file \"%s\" contains no entry for file \"%s\""
 msgstr "файл маніфеста \"%s\" не містить запису для файлу \"%s\""
@@ -844,32 +844,37 @@ msgstr "файл \"%s\" занадто великий"
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %zd з %lld"
 
-#: reconstruct.c:410
+#: reconstruct.c:339
+#, c-format
+msgid "full backup contains unexpected incremental file \"%s\""
+msgstr "повна резервна копія містить неочікуваний інкрементний файл \"%s\""
+
+#: reconstruct.c:423
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "файл \"%s\" занадто короткий: очікується %llu, знайдено %llu"
 
-#: reconstruct.c:452
+#: reconstruct.c:465
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "файл \"%s\" має неправильне інкрементне магічне число (0x%x, очікувалось 0x%x)"
 
-#: reconstruct.c:458
+#: reconstruct.c:471
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "файл \"%s\" має кількість блоків %u, що перевищує розмір сегмента %u"
 
-#: reconstruct.c:465
+#: reconstruct.c:478
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "файл \"%s\" має довжину блоку усікання %u, що перевищує розмір сегмента %u"
 
-#: reconstruct.c:529
+#: reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %u"
 
-#: reconstruct.c:773
+#: reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "не вдалося прочитати з файлу \"%s\", зміщення %llu: прочитано %d з %d"

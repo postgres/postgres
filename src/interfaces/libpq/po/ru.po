@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2005.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-14 04:45+0300\n"
-"PO-Revision-Date: 2024-11-14 05:02+0300\n"
+"POT-Creation-Date: 2025-05-03 16:06+0300\n"
+"PO-Revision-Date: 2025-05-03 16:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -82,7 +82,7 @@ msgstr "не удалось сгенерировать разовый код"
 #: fe-connect.c:5773 fe-connect.c:5871 fe-connect.c:6122 fe-connect.c:6149
 #: fe-connect.c:6225 fe-connect.c:6248 fe-connect.c:6272 fe-connect.c:6307
 #: fe-connect.c:6393 fe-connect.c:6401 fe-connect.c:6758 fe-connect.c:6908
-#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4234 fe-exec.c:4398
+#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4291 fe-exec.c:4457
 #: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:209 fe-protocol3.c:232
 #: fe-protocol3.c:255 fe-protocol3.c:272 fe-protocol3.c:293 fe-protocol3.c:369
 #: fe-protocol3.c:737 fe-protocol3.c:976 fe-protocol3.c:1787
@@ -1036,10 +1036,15 @@ msgstr "номер параметра %d вне диапазона 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:4127 fe-exec.c:4217
+#: fe-exec.c:4140 fe-exec.c:4253
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "неполный многобайтный символ"
+
+#: fe-exec.c:4142 fe-exec.c:4272
+#, c-format
+msgid "invalid multibyte character"
+msgstr "неверный многобайтный символ"
 
 #: fe-gssapi-common.c:122
 msgid "GSSAPI name import error"
