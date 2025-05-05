@@ -5,17 +5,18 @@
 IMG_NAME="electricsql/pglite-builder"
 IMG_TAG="17.4_3.1.61.7bi"
 
+[ -f postgres-pglite/configure ] || ln -s . postgres-pglite
+
+export WORKSPACE=${GITHUB_WORKSPACE:-$(pwd)}
+
+cd $(realpath ${WORKSPACE}/postgres-pglite)
+
 [ -f ./pglite/.buildconfig ] && cp ./pglite/.buildconfig .buildconfig
 
 source .buildconfig
 
 cat .buildconfig
 
-[ -f postgres-pglite/configure ] || ln -s . postgres-pglite
-
-cd $(realpath ${WORKSPACE}/postgres-pglite)
-
-export WORKSPACE=${GITHUB_WORKSPACE:-$(pwd)}
 
 mkdir -p dist/pglite dist/extensions-emsdk
 
@@ -27,4 +28,3 @@ docker run \
   -v ${WORKSPACE}/postgres-pglite/dist:/tmp/sdk/dist:rw \
   $IMG_NAME:$IMG_TAG \
   bash -c "source ${SDKROOT}/wasm32-bi-emscripten-shell.sh && ./wasm-build.sh ${WHAT:-\"contrib extra\"}"
-
