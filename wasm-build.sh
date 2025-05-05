@@ -590,6 +590,10 @@ END
         exit 536
     fi
 else
+    echo "
+    * linking pglite-wasm (initdb/loop/transport/repl/backend) (docker build)
+"
+
     if ./pglite-${PG_BRANCH}/build.sh
     then
         for archive in ${PG_DIST_EXT}/*.tar
