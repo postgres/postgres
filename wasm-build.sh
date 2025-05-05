@@ -519,7 +519,7 @@ then
                 fi
                 echo "======================= ${extra_ext} : $(pwd) ==================="
 
-                ./extra/${extra_ext}.sh || exit 480
+                ./extra/${extra_ext}.sh || exit 522
 
                 python3 ${PORTABLE}/pack_extension.py
             done
@@ -548,7 +548,7 @@ then
             cat > pglite-link.sh <<END
 . ${PGROOT}/pgopts.sh
 . ${SDKROOT}/wasm32-bi-emscripten-shell.sh
-./pglite-wasm/build.sh
+./pglite-${PG_BRANCH}/build.sh
 
 if [ -d pglite ]
 then
@@ -557,7 +557,7 @@ then
     for archive in ${PG_DIST_EXT}/*.tar
     do
         echo "    packing extension \$archive"
-        gzip -k -9 \$archive
+        gzip -f -k -9 \$archive
         mv \$archive.gz pglite/packages/pglite/release/
     done
 
@@ -577,7 +577,7 @@ then
     else
         if $CI
         then
-            ./runtests.sh || exit 566
+            ./runtests.sh || exit 580
         fi
     fi
 fi
@@ -592,14 +592,14 @@ END
                 for archive in ${PG_DIST_EXT}/*.tar
                 do
                     echo "    packing extension $archive (docker build)"
-                    gzip -fk -9 $archive
+                    gzip -f -k -9 $archive
                 done
             fi
 
         fi
     else
         echo "linking libpglite wasm failed"
-        exit 536
+        exit 602
     fi
 
 fi
