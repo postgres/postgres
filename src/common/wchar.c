@@ -12,6 +12,8 @@
  */
 #include "c.h"
 
+#include <limits.h>
+
 #include "mb/pg_wchar.h"
 #include "utils/ascii.h"
 
@@ -2107,10 +2109,27 @@ const pg_wchar_tbl pg_wchar_table[] = {
 /*
  * Returns the byte length of a multibyte character.
  *
- * Caution: when dealing with text that is not certainly valid in the
- * specified encoding, the result may exceed the actual remaining
- * string length.  Callers that are not prepared to deal with that
- * should use pg_encoding_mblen_bounded() instead.
+ * Choose "mblen" functions based on the input string characteristics.
+ * pg_encoding_mblen() can be used when ANY of these conditions are met:
+ *
+ * - The input string is zero-terminated
+ *
+ * - The input string is known to be valid in the encoding (e.g., string
+ *   converted from database encoding)
+ *
+ * - The encoding is not GB18030 (e.g., when only database encodings are
+ *   passed to 'encoding' parameter)
+ *
+ * encoding==GB18030 requires examining up to two bytes to determine character
+ * length.  Therefore, callers satisfying none of those conditions must use
+ * pg_encoding_mblen_or_incomplete() instead, as access to mbstr[1] cannot be
+ * guaranteed to be within allocation bounds.
+ *
+ * When dealing with text that is not certainly valid in the specified
+ * encoding, the result may exceed the actual remaining string length.
+ * Callers that are not prepared to deal with that should use Min(remaining,
+ * pg_encoding_mblen_or_incomplete()).  For zero-terminated strings, that and
+ * pg_encoding_mblen_bounded() are interchangeable.
  */
 int
 pg_encoding_mblen(int encoding, const char *mbstr)
@@ -2121,8 +2140,28 @@ pg_encoding_mblen(int encoding, const char *mbstr)
 }
 
 /*
- * Returns the byte length of a multibyte character; but not more than
- * the distance to end of string.
+ * Returns the byte length of a multibyte character (possibly not
+ * zero-terminated), or INT_MAX if too few bytes remain to determine a length.
+ */
+int
+pg_encoding_mblen_or_incomplete(int encoding, const char *mbstr,
+								size_t remaining)
+{
+	/*
+	 * Define zero remaining as too few, even for single-byte encodings.
+	 * pg_gb18030_mblen() reads one or two bytes; single-byte encodings read
+	 * zero; others read one.
+	 */
+	if (remaining < 1 ||
+		(encoding == PG_GB18030 && IS_HIGHBIT_SET(*mbstr) && remaining < 2))
+		return INT_MAX;
+	return pg_encoding_mblen(encoding, mbstr);
+}
+
+/*
+ * Returns the byte length of a multibyte character; but not more than the
+ * distance to the terminating zero byte.  For input that might lack a
+ * terminating zero, use Min(remaining, pg_encoding_mblen_or_incomplete()).
  */
 int
 pg_encoding_mblen_bounded(int encoding, const char *mbstr)
