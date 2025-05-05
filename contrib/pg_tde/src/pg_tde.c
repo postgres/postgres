@@ -73,8 +73,6 @@ tde_shmem_startup(void)
 		prev_shmem_startup_hook();
 
 	TdeShmemInit();
-	AesInit();
-
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
 }
@@ -96,23 +94,21 @@ _PG_init(void)
 
 	check_percona_api_version();
 
+	AesInit();
 	TdeGucInit();
 	TdeEventCaptureInit();
-
 	InitializePrincipalKeyInfo();
 	InitializeKeyProviderInfo();
+	InstallFileKeyring();
+	InstallVaultV2Keyring();
+	InstallKmipKeyring();
+	RegisterTdeRmgr();
+	RegisterStorageMgr();
 
 	prev_shmem_request_hook = shmem_request_hook;
 	shmem_request_hook = tde_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = tde_shmem_startup;
-
-	InstallFileKeyring();
-	InstallVaultV2Keyring();
-	InstallKmipKeyring();
-	RegisterTdeRmgr();
-
-	RegisterStorageMgr();
 }
 
 static void
