@@ -200,9 +200,6 @@ principal_key_info_attach_shmem(void)
 	MemoryContext oldcontext;
 	dsa_area   *dsa;
 
-	if (principalKeyLocalState.sharedHash)
-		return;
-
 	/*
 	 * We want the dsa to remain valid throughout the lifecycle of this
 	 * process. so switch to TopMemoryContext before attaching
@@ -374,7 +371,8 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 static inline dshash_table *
 get_principal_key_Hash(void)
 {
-	principal_key_info_attach_shmem();
+	if (!principalKeyLocalState.sharedHash)
+		principal_key_info_attach_shmem();
 	return principalKeyLocalState.sharedHash;
 }
 
