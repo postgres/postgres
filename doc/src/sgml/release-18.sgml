@@ -397,7 +397,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Allow partitions to be pruned more efficienty (Ashutosh Bapat, Yuya Watari, David Rowley)
+Improve the efficiency of joins involving partitions (Ashutosh Bapat, Yuya Watari, David Rowley)
 <ulink url="&commit_baseurl;88f55bc97">&sect;</ulink>
 <ulink url="&commit_baseurl;d69d45a5a">&sect;</ulink>
 </para>
@@ -416,7 +416,7 @@ Author: Amit Langote <amitlan@postgresql.org>
 
 <listitem>
 <para>
-Avoid the locking of pruned partitions during planning (Amit Langote)
+Avoid the locking of pruned partitions during execution (Amit Langote)
 <ulink url="&commit_baseurl;bb3ec16e1">&sect;</ulink>
 <ulink url="&commit_baseurl;d47cbf474">&sect;</ulink>
 <ulink url="&commit_baseurl;cbc127917">&sect;</ulink>
