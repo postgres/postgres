@@ -1916,7 +1916,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow jsonb NULL values to be cast to scalar types as NULL (Tom Lane)
+Allow jsonb "null" values to be cast to scalar types as NULL (Tom Lane)
 <ulink url="&commit_baseurl;a5579a90a">&sect;</ulink>
 </para>
 
@@ -2596,12 +2596,8 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Add pg_dump options --with-schema, --with-data, and --with_statistics (Jeff Davis)
+Add pg_dump options --with-schema, --with-data, and --with-statistics (Jeff Davis)
 <ulink url="&commit_baseurl;bde2fb797">&sect;</ulink>
-</para>
-
-<para>
-The negative versions of these options already existed.
 </para>
 </listitem>
 
@@ -2636,7 +2632,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add option --no-policies to pg_dump, pg_dumpall, pg_restore to avoid policy specification (Nikolay Samokhvalov)
+Add option --no-policies to disable row level security policy processing in pg_dump, pg_dumpall, pg_restore (Nikolay Samokhvalov)
 <ulink url="&commit_baseurl;cd3c45125">&sect;</ulink>
 </para>
 
