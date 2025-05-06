@@ -6,9 +6,9 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_prov
 (1 row)
 
 SELECT pg_tde_list_all_database_key_providers();
-                           pg_tde_list_all_database_key_providers                           
---------------------------------------------------------------------------------------------
- (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_1.per""}")
+                pg_tde_list_all_database_key_providers                 
+-----------------------------------------------------------------------
+ (1,file-vault,file,"{""path"" : ""/tmp/change_key_provider_1.per""}")
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
@@ -46,9 +46,9 @@ SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_p
 (1 row)
 
 SELECT pg_tde_list_all_database_key_providers();
-                           pg_tde_list_all_database_key_providers                           
---------------------------------------------------------------------------------------------
- (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_2.per""}")
+                pg_tde_list_all_database_key_providers                 
+-----------------------------------------------------------------------
+ (1,file-vault,file,"{""path"" : ""/tmp/change_key_provider_2.per""}")
 (1 row)
 
 SELECT pg_tde_verify_key();
@@ -97,9 +97,9 @@ SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_p
 (1 row)
 
 SELECT pg_tde_list_all_database_key_providers();
-                           pg_tde_list_all_database_key_providers                           
---------------------------------------------------------------------------------------------
- (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/change_key_provider_3.per""}")
+                pg_tde_list_all_database_key_providers                 
+-----------------------------------------------------------------------
+ (1,file-vault,file,"{""path"" : ""/tmp/change_key_provider_3.per""}")
 (1 row)
 
 SELECT pg_tde_verify_key();

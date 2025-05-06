@@ -48,9 +48,9 @@ SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'local-file-pro
 (1 row)
 
 SELECT * FROM pg_tde_list_all_database_key_providers();
- id |    provider_name    | provider_type |                          options                           
-----+---------------------+---------------+------------------------------------------------------------
-  1 | local-file-provider | file          | {"type" : "file", "path" : "/tmp/pg_tde_test_keyring.per"}
+ id |    provider_name    | provider_type |                  options                  
+----+---------------------+---------------+-------------------------------------------
+  1 | local-file-provider | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
 (1 row)
 
 SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();

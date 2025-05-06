@@ -16,7 +16,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
+                json_object('path' VALUE COALESCE(file_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_add_database_key_provider_file(provider_name TEXT, file_path JSON)
@@ -26,7 +26,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE file_path));
+                json_object('path' VALUE file_path));
 END;
 
 CREATE FUNCTION pg_tde_add_database_key_provider_vault_v2(provider_name TEXT,
@@ -40,8 +40,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url, ''),
+                            json_object('url' VALUE COALESCE(vault_url, ''),
                             'token' VALUE COALESCE(vault_token, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
@@ -58,8 +57,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE vault_url,
+                            json_object('url' VALUE vault_url,
                             'token' VALUE vault_token,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
@@ -76,8 +74,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host, ''),
+                            json_object('host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path, ''),
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
@@ -94,8 +91,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE kmip_host,
+                            json_object('host' VALUE kmip_host,
                             'port' VALUE kmip_port,
                             'caPath' VALUE kmip_ca_path,
                             'certPath' VALUE kmip_cert_path));
@@ -133,7 +129,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
+                json_object('path' VALUE COALESCE(file_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_add_global_key_provider_file(provider_name TEXT, file_path JSON)
@@ -143,7 +139,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE file_path));
+                json_object('path' VALUE file_path));
 END;
 
 CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
@@ -157,8 +153,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url, ''),
+                            json_object('url' VALUE COALESCE(vault_url, ''),
                             'token' VALUE COALESCE(vault_token, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
@@ -175,8 +170,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE vault_url,
+                            json_object('url' VALUE vault_url,
                             'token' VALUE vault_token,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
@@ -193,8 +187,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host, ''),
+                            json_object('host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path, ''),
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
@@ -211,8 +204,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'host' VALUE kmip_host,
+                            json_object('host' VALUE kmip_host,
                             'port' VALUE kmip_port,
                             'caPath' VALUE kmip_ca_path,
                             'certPath' VALUE kmip_cert_path));
@@ -231,7 +223,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
+                json_object('path' VALUE COALESCE(file_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_change_database_key_provider_file(provider_name TEXT, file_path JSON)
@@ -241,7 +233,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE file_path));
+                json_object('path' VALUE file_path));
 END;
 
 CREATE FUNCTION pg_tde_change_database_key_provider_vault_v2(provider_name TEXT,
@@ -255,8 +247,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url, ''),
+                            json_object('url' VALUE COALESCE(vault_url, ''),
                             'token' VALUE COALESCE(vault_token, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
@@ -273,8 +264,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE vault_url,
+                            json_object('url' VALUE vault_url,
                             'token' VALUE vault_token,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
@@ -291,8 +281,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host, ''),
+                            json_object('host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path, ''),
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
@@ -309,8 +298,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE kmip_host,
+                            json_object('host' VALUE kmip_host,
                             'port' VALUE kmip_port,
                             'caPath' VALUE kmip_ca_path,
                             'certPath' VALUE kmip_cert_path));
@@ -329,7 +317,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE COALESCE(file_path, '')));
+                json_object('path' VALUE COALESCE(file_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_change_global_key_provider_file(provider_name TEXT, file_path JSON)
@@ -339,7 +327,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_file_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('file', provider_name,
-                json_object('type' VALUE 'file', 'path' VALUE file_path));
+                json_object('path' VALUE file_path));
 END;
 
 CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
@@ -353,8 +341,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE COALESCE(vault_url, ''),
+                            json_object('url' VALUE COALESCE(vault_url, ''),
                             'token' VALUE COALESCE(vault_token, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
@@ -371,8 +358,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'url' VALUE vault_url,
+                            json_object('url' VALUE vault_url,
                             'token' VALUE vault_token,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
@@ -389,8 +375,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('kmip', provider_name,
-                            json_object('type' VALUE 'kmip',
-                            'host' VALUE COALESCE(kmip_host, ''),
+                            json_object('host' VALUE COALESCE(kmip_host, ''),
                             'port' VALUE kmip_port,
                             'caPath' VALUE COALESCE(kmip_ca_path, ''),
                             'certPath' VALUE COALESCE(kmip_cert_path, '')));
@@ -407,8 +392,7 @@ BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
-                            json_object('type' VALUE 'vault-v2',
-                            'host' VALUE kmip_host,
+                            json_object('host' VALUE kmip_host,
                             'port' VALUE kmip_port,
                             'caPath' VALUE kmip_ca_path,
                             'certPath' VALUE kmip_cert_path));
@@ -473,7 +457,7 @@ AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_default_key_info()
 RETURNS TABLE ( key_name text,
-                key_provider_name text,     
+                key_provider_name text,
                 key_provider_id integer,
                 key_creation_time timestamp with time zone)
 LANGUAGE C

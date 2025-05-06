@@ -24,10 +24,10 @@ SELECT pg_tde_add_global_key_provider_file('file-3', '/tmp/pg_tde_test_keyring_3
 (1 row)
 
 SELECT pg_tde_list_all_database_key_providers();
-                          pg_tde_list_all_database_key_providers                          
-------------------------------------------------------------------------------------------
- (1,file-vault,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring.per""}")
- (2,file-2,file,"{""type"" : ""file"", ""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
+               pg_tde_list_all_database_key_providers                
+---------------------------------------------------------------------
+ (1,file-vault,file,"{""path"" : ""/tmp/pg_tde_test_keyring.per""}")
+ (2,file-2,file,"{""path"" : ""/tmp/pg_tde_test_keyring_2.per""}")
 (2 rows)
 
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');

@@ -4,12 +4,11 @@
  *      Parser routines for the keyring JSON options
  *
  * Each value in the JSON document can be either scalar (string) - a value itself
- * or a reference to the external object that contains the value. Though the top
- * level field "type" can be only scalar.
+ * or a reference to the external object that contains the value.
  *
  * Examples:
- * 	{"type" : "file", "path" : "/tmp/keyring_data_file"}
- * 	{"type" : "file", "path" : {"type" : "file", "path" : "/tmp/datafile-location"}}
+ * 	{"path" : "/tmp/keyring_data_file"}
+ * 	{"path" : {"type" : "file", "path" : "/tmp/datafile-location"}}
  * in the latter one, /tmp/datafile-location contains not keyring data but the
  * location of such.
  *
@@ -56,8 +55,6 @@ typedef enum JsonKeyringField
 {
 	JK_FIELD_UNKNOWN,
 
-	JK_KRING_TYPE,
-
 	JK_FIELD_TYPE,
 	JK_REMOTE_URL,
 	JK_FIELD_PATH,
@@ -80,7 +77,6 @@ typedef enum JsonKeyringField
 
 static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	[JK_FIELD_UNKNOWN] = "unknownField",
-	[JK_KRING_TYPE] = "type",
 	[JK_FIELD_TYPE] = "type",
 	[JK_REMOTE_URL] = "url",
 	[JK_FIELD_PATH] = "path",
@@ -126,7 +122,6 @@ typedef struct JsonKeyringState
 	 * direct value for the caller. Although we need them for the values
 	 * extraction or state tracking.
 	 */
-	char	   *kring_type;
 	char	   *field_type;
 	char	   *extern_url;
 	char	   *extern_path;
@@ -314,17 +309,6 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 	switch (parse->state)
 	{
 		case JK_EXPECT_TOP_FIELD:
-
-			/*
-			 * On the top level, "type" stores a keyring type and this field
-			 * is common for all keyrings. The rest of the fields depend on
-			 * the keyring type.
-			 */
-			if (strcmp(fname, JK_FIELD_NAMES[JK_KRING_TYPE]) == 0)
-			{
-				*field = JK_KRING_TYPE;
-				break;
-			}
 			switch (parse->provider_type)
 			{
 				case FILE_KEY_PROVIDER:
@@ -415,10 +399,6 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 
 	switch (field)
 	{
-		case JK_KRING_TYPE:
-			parse->kring_type = value;
-			break;
-
 		case JK_FIELD_TYPE:
 			parse->field_type = value;
 			break;
