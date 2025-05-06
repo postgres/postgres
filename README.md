@@ -35,4 +35,3 @@ Specific - include as much detail as possible, such as which version, which envi
 Unique - do not duplicate existing tickets
 
 Scoped to a single issue - only one issue per report
-

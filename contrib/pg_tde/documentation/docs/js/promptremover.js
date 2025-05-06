@@ -38,7 +38,3 @@ document.addEventListener("DOMContentLoaded", function(){
         commandButtonElement.item(0).setAttribute("data-clipboard-text", trueCommand);
     }
 });
-
-
-
-

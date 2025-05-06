@@ -61,5 +61,3 @@ jobs:
             src/test/*/results
             src/test/*/tmp_check
           retention-days: 3
-
-
