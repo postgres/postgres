@@ -81,6 +81,11 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', '["array"]');
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
 
+-- Creating key providers fails if an external value object doesn't have all required keys
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {}}');
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote"}}');
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
+
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
@@ -99,6 +104,10 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', '["array"]')
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 
+-- Modifying key providers fails if an external value object doesn't have all required keys
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 SELECT pg_tde_delete_global_key_provider(NULL);

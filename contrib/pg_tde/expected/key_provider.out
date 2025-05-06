@@ -201,6 +201,13 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
 ERROR:  key provider options must be an object
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
 ERROR:  key provider options must be an object
+-- Creating key providers fails if an external value object doesn't have all required keys
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {}}');
+ERROR:  external value must contain "type" in field "path"
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote"}}');
+ERROR:  external remote value must contain "url" in field "path"
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
+ERROR:  external file value must contain "path" in field "path"
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 ERROR:  provider type cannot be null
@@ -228,6 +235,13 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
 ERROR:  key provider options must be an object
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 ERROR:  key provider options must be an object
+-- Modifying key providers fails if an external value object doesn't have all required keys
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
+ERROR:  external value must contain "type" in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
+ERROR:  external remote value must contain "url" in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
+ERROR:  external file value must contain "path" in field "path"
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null
