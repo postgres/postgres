@@ -76,7 +76,7 @@
 		    {
 			    const char *portal_name;
 			    int			max_rows;
-
+puts("# 79: exec_execute_message");
 			    forbidden_in_wal_sender(firstchar);
 
 			    /* Set statement_timestamp() */
@@ -238,7 +238,7 @@
 		     * Reset whereToSendOutput to prevent ereport from attempting
 		     * to send any more messages to client.
 		     */
-#if 0
+#if 1 // !defined(PGL_LOOP)
 		    if (whereToSendOutput == DestRemote)
 			    whereToSendOutput = DestNone;
 #endif
@@ -255,8 +255,14 @@ else
     puts("ERROR: more exits than connections");
 PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
-            send_ready_for_query = false;
             ignore_till_sync = false;
+#if defined(PGL_LOOP)
+    send_ready_for_query = true;
+    pipelining = false ;
+    goto wire_flush;
+#else
+    send_ready_for_query = false;
+#endif
             break;
 
 	    case 'd':			/* copy data */

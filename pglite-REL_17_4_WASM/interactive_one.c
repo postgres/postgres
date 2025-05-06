@@ -1,5 +1,5 @@
 #include <unistd.h>  // access, unlink
-
+#define PGL_LOOP
 #if defined(__wasi__)
 // volatile sigjmp_buf void*;
 #else
@@ -625,9 +625,13 @@ incoming:
 
         #include "pg_proto.c"
 
-        if (send_ready_for_query) {
-            ReadyForQuery(whereToSendOutput);
-            send_ready_for_query = false;
+        if (pipelining) {
+            pipelining = pq_buffer_remaining_data()>0;
+            if (pipelining && send_ready_for_query) {
+puts("# 631:  PIPELINING + rfq");
+                ReadyForQuery(whereToSendOutput);
+                send_ready_for_query = false;
+            }
         }
     }
 
@@ -641,7 +645,8 @@ wire_flush:
             if (send_ready_for_query) {
                 PDEBUG("# 602: end packet - sending rfq\n");
                 ReadyForQuery(DestRemote);
-                //done at postgres.c 4623 send_ready_for_query = false;
+                //done at postgres.c 4623
+                send_ready_for_query = false;
             } else {
                 PDEBUG("# 606: end packet - with no rfq\n");
             }
@@ -702,4 +707,4 @@ wire_flush:
     #undef IO
 }
 
-
+#undef PGL_LOOP
