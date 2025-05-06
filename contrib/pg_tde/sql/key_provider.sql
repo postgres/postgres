@@ -86,6 +86,11 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {}}');
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote"}}');
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
 
+-- Creating key providers fails if values are array instead of scalar
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": ["array"]}');
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": ["array"]}}');
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": ["array"]}}');
+
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
@@ -108,6 +113,12 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
+
+-- Modifying key providers fails if values are array instead of scalar
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": ["array"]}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
+
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 SELECT pg_tde_delete_global_key_provider(NULL);

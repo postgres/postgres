@@ -208,6 +208,13 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "
 ERROR:  external remote value must contain "url" in field "path"
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
 ERROR:  external file value must contain "path" in field "path"
+-- Creating key providers fails if values are array instead of scalar
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": ["array"]}');
+ERROR:  unexpected array in field "path"
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": ["array"]}}');
+ERROR:  unexpected array in field "path"
+SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": ["array"]}}');
+ERROR:  unexpected array in field "path"
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 ERROR:  provider type cannot be null
@@ -242,6 +249,13 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"
 ERROR:  external remote value must contain "url" in field "path"
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
 ERROR:  external file value must contain "path" in field "path"
+-- Modifying key providers fails if values are array instead of scalar
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
+ERROR:  unexpected array in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": ["array"]}}');
+ERROR:  unexpected array in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
+ERROR:  unexpected array in field "path"
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null

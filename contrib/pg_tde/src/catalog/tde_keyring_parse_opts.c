@@ -209,9 +209,15 @@ json_kring_array_start(void *state)
 			break;
 		case JK_EXPECT_TOP_FIELD:
 		case JK_EXPECT_EXTERN_VAL:
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("unexpected array in field \"%s\"", JK_FIELD_NAMES[parse->top_level_field]));
+			break;
 	}
 
-	return JSON_SUCCESS;
+	/* Never reached */
+	Assert(0);
+	return JSON_SEM_ACTION_FAILED;
 }
 
 /*
