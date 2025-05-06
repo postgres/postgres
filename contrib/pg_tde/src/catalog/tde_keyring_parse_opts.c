@@ -44,6 +44,7 @@
 
 typedef enum JsonKeyringSemState
 {
+	JK_EXPECT_TOP_LEVEL_OBJECT,
 	JK_EXPECT_TOP_FIELD,
 	JK_EXPECT_EXTERN_VAL,
 } JsonKeyringSemState;
@@ -102,7 +103,6 @@ static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	[JK_KMIP_CERT_PATH] = "certPath",
 };
 
-#define MAX_JSON_DEPTH 64
 typedef struct JsonKeyringState
 {
 	ProviderType provider_type;
@@ -110,14 +110,13 @@ typedef struct JsonKeyringState
 	/* Caller's options to be set from JSON values. */
 	GenericKeyring *provider_opts;
 
-	/*
-	 * A field hierarchy of the current branch, field[level] is the current
-	 * one, field[level-1] is the parent and so on. We need to track parent
-	 * fields because of the external values
-	 */
-	JsonKeyringField field[MAX_JSON_DEPTH];
+	/* The current field in the top level object */
+	JsonKeyringField top_level_field;
+
+	/* Current field in any external field object, if any. */
+	JsonKeyringField extern_field;
+
 	JsonKeyringSemState state;
-	int			level;
 
 	/*
 	 * The rest of the scalar fields might be in the JSON document but has no
@@ -154,9 +153,7 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 	/* Set up parsing context and initial semantic state */
 	parse.provider_type = provider_type;
 	parse.provider_opts = out_opts;
-	parse.level = -1;
-	parse.state = JK_EXPECT_TOP_FIELD;
-	memset(parse.field, 0, MAX_JSON_DEPTH * sizeof(JsonKeyringField));
+	parse.state = JK_EXPECT_TOP_LEVEL_OBJECT;
 
 #if PG_VERSION_NUM >= 170000
 	jlex = makeJsonLexContextCstringLen(NULL, in_buf, buf_len, PG_UTF8, true);
@@ -200,31 +197,27 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 /*
  * Invoked at the start of each object in the JSON document.
  *
- * Every new object increases the level of nesting as the whole document is the
- * object itself (level 0) and every next one means going deeper into nesting.
- *
- * On the top level, we expect either scalar (string) values or objects referencing
- * the external value of the field. Hence, if we are on level 1, we expect an
- * "external field object" e.g. ({"type" : "remote", "url" : "http://localhost:8888/hello"})
+ * In the top level object, we expect either scalar (string) values or objects
+ * referencing the external value of the field. If we are already parsing top
+ * level fields, we expect an "external field object" e.g. ({"type" : "remote",
+ * "url" : "http://localhost:8888/hello"})
  */
 static JsonParseErrorType
 json_kring_object_start(void *state)
 {
 	JsonKeyringState *parse = state;
 
-	if (MAX_JSON_DEPTH == ++parse->level)
+	switch (parse->state)
 	{
-		elog(WARNING, "reached max depth of JSON nesting");
-		return JSON_SEM_ACTION_FAILED;
-	}
-
-	switch (parse->level)
-	{
-		case 0:
+		case JK_EXPECT_TOP_LEVEL_OBJECT:
 			parse->state = JK_EXPECT_TOP_FIELD;
 			break;
-		case 1:
+		case JK_EXPECT_TOP_FIELD:
 			parse->state = JK_EXPECT_EXTERN_VAL;
+			break;
+		case JK_EXPECT_EXTERN_VAL:
+			ereport(ERROR,
+					errmsg("invalid semantic state"));
 			break;
 	}
 
@@ -234,10 +227,8 @@ json_kring_object_start(void *state)
 /*
  * Invoked at the end of each object in the JSON document.
  *
- * First, it means we are going back to the higher level. Plus, if it was the
- * level 1, we expect only external objects there, which means we have all
- * the necessary info to extract the value and assign the result to the
- * appropriate (parent) field.
+ * If we're done parsing an external field object we fetch the value from the
+ * source and assign it to the top level object field.
  */
 static JsonParseErrorType
 json_kring_object_end(void *state)
@@ -252,37 +243,41 @@ json_kring_object_end(void *state)
 	 * "/tmp/datafile-location"} the "field"'s value should be the content of
 	 * "path" or "url" respectively
 	 */
-	if (parse->level == 1)
+	switch (parse->state)
 	{
-		if (parse->state == JK_EXPECT_EXTERN_VAL)
-		{
-			JsonKeyringField parent_field = parse->field[0];
-			JsonParseErrorType ret;
-
-			char	   *value = NULL;
-
-			if (strcmp(parse->field_type, KEYRING_REMOTE_FIELD_TYPE) == 0)
-				value = get_remote_kring_value(parse->extern_url, JK_FIELD_NAMES[parent_field]);
-			if (strcmp(parse->field_type, KEYRING_FILE_FIELD_TYPE) == 0)
-				value = get_file_kring_value(parse->extern_path, JK_FIELD_NAMES[parent_field]);
-
-			if (value == NULL)
+		case JK_EXPECT_TOP_LEVEL_OBJECT:
+			ereport(ERROR,
+					errmsg("invalid semantic state"));
+			break;
+		case JK_EXPECT_TOP_FIELD:
+			/* We're done parsing the top level object */
+			break;
+		case JK_EXPECT_EXTERN_VAL:
 			{
-				return JSON_INCOMPLETE;
+				JsonParseErrorType ret;
+				char	   *value = NULL;
+
+				if (strcmp(parse->field_type, KEYRING_REMOTE_FIELD_TYPE) == 0)
+					value = get_remote_kring_value(parse->extern_url, JK_FIELD_NAMES[parse->top_level_field]);
+				if (strcmp(parse->field_type, KEYRING_FILE_FIELD_TYPE) == 0)
+					value = get_file_kring_value(parse->extern_path, JK_FIELD_NAMES[parse->top_level_field]);
+
+				if (value == NULL)
+				{
+					return JSON_INCOMPLETE;
+				}
+
+				ret = json_kring_assign_scalar(parse, parse->top_level_field, value);
+
+				if (ret != JSON_SUCCESS)
+				{
+					return ret;
+				}
+
+				parse->state = JK_EXPECT_TOP_FIELD;
+				break;
 			}
-
-			ret = json_kring_assign_scalar(parse, parent_field, value);
-
-			if (ret != JSON_SUCCESS)
-			{
-				return ret;
-			}
-		}
-
-		parse->state = JK_EXPECT_TOP_FIELD;
 	}
-
-	parse->level--;
 
 	return JSON_SUCCESS;
 }
@@ -298,55 +293,54 @@ static JsonParseErrorType
 json_kring_object_field_start(void *state, char *fname, bool isnull)
 {
 	JsonKeyringState *parse = state;
-	JsonKeyringField *field;
-
-	Assert(parse->level >= 0);
-
-	field = &parse->field[parse->level];
 
 	switch (parse->state)
 	{
+		case JK_EXPECT_TOP_LEVEL_OBJECT:
+			ereport(ERROR,
+					errmsg("invalid semantic state"));
+			break;
 		case JK_EXPECT_TOP_FIELD:
 			switch (parse->provider_type)
 			{
 				case FILE_KEY_PROVIDER:
 					if (strcmp(fname, JK_FIELD_NAMES[JK_FILE_PATH]) == 0)
-						*field = JK_FILE_PATH;
+						parse->top_level_field = JK_FILE_PATH;
 					else
 					{
-						*field = JK_FIELD_UNKNOWN;
+						parse->top_level_field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse file keyring config: unexpected field %s", fname);
 					}
 					break;
 
 				case VAULT_V2_KEY_PROVIDER:
 					if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_TOKEN]) == 0)
-						*field = JK_VAULT_TOKEN;
+						parse->top_level_field = JK_VAULT_TOKEN;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_URL]) == 0)
-						*field = JK_VAULT_URL;
+						parse->top_level_field = JK_VAULT_URL;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_MOUNT_PATH]) == 0)
-						*field = JK_VAULT_MOUNT_PATH;
+						parse->top_level_field = JK_VAULT_MOUNT_PATH;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_CA_PATH]) == 0)
-						*field = JK_VAULT_CA_PATH;
+						parse->top_level_field = JK_VAULT_CA_PATH;
 					else
 					{
-						*field = JK_FIELD_UNKNOWN;
+						parse->top_level_field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
 					}
 					break;
 
 				case KMIP_KEY_PROVIDER:
 					if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_HOST]) == 0)
-						*field = JK_KMIP_HOST;
+						parse->top_level_field = JK_KMIP_HOST;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_PORT]) == 0)
-						*field = JK_KMIP_PORT;
+						parse->top_level_field = JK_KMIP_PORT;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_CA_PATH]) == 0)
-						*field = JK_KMIP_CA_PATH;
+						parse->top_level_field = JK_KMIP_CA_PATH;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_KMIP_CERT_PATH]) == 0)
-						*field = JK_KMIP_CERT_PATH;
+						parse->top_level_field = JK_KMIP_CERT_PATH;
 					else
 					{
-						*field = JK_FIELD_UNKNOWN;
+						parse->top_level_field = JK_FIELD_UNKNOWN;
 						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
 					}
 					break;
@@ -358,14 +352,14 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 
 		case JK_EXPECT_EXTERN_VAL:
 			if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_TYPE]) == 0)
-				*field = JK_FIELD_TYPE;
+				parse->extern_field = JK_FIELD_TYPE;
 			else if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_URL]) == 0)
-				*field = JK_FIELD_URL;
+				parse->extern_field = JK_FIELD_URL;
 			else if (strcmp(fname, JK_FIELD_NAMES[JK_FIELD_PATH]) == 0)
-				*field = JK_FIELD_PATH;
+				parse->extern_field = JK_FIELD_PATH;
 			else
 			{
-				*field = JK_FIELD_UNKNOWN;
+				parse->extern_field = JK_FIELD_UNKNOWN;
 				elog(ERROR, "parse json keyring config: unexpected field %s", fname);
 			}
 			break;
@@ -384,8 +378,23 @@ static JsonParseErrorType
 json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 {
 	JsonKeyringState *parse = state;
+	JsonKeyringField *field = NULL;
 
-	return json_kring_assign_scalar(parse, parse->field[parse->level], token);
+	switch (parse->state)
+	{
+		case JK_EXPECT_TOP_LEVEL_OBJECT:
+			ereport(ERROR,
+					errmsg("invalid semantic state"));
+			break;
+		case JK_EXPECT_TOP_FIELD:
+			field = &parse->top_level_field;
+			break;
+		case JK_EXPECT_EXTERN_VAL:
+			field = &parse->extern_field;
+			break;
+	}
+
+	return json_kring_assign_scalar(parse, *field, token);
 }
 
 static JsonParseErrorType
