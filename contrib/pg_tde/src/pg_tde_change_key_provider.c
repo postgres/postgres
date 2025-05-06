@@ -63,7 +63,6 @@ build_json(char *buffer, int count,...)
 			ptr = strcat(ptr, ",");
 		}
 
-
 		ptr = strcat(ptr, "\"");
 		ptr = strcat(ptr, key);
 		ptr = strcat(ptr, "\":");
@@ -145,7 +144,6 @@ main(int argc, char *argv[])
 		}
 		argstart += 2;
 	}
-
 
 	if (datadir == NULL || strlen(datadir) == 0)
 	{

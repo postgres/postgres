@@ -39,7 +39,6 @@
 
 #include <sys/stat.h>
 
-
 PG_MODULE_MAGIC;
 
 static void pg_tde_init_data_dir(void);

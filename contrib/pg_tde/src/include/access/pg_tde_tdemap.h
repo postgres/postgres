@@ -89,7 +89,6 @@ typedef struct WALKeyCacheRec
 	struct WALKeyCacheRec *next;
 } WALKeyCacheRec;
 
-
 extern InternalKey *pg_tde_read_last_wal_key(void);
 
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);

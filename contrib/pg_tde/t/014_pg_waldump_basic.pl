@@ -40,7 +40,6 @@ pg_tde.wal_encrypt = on
 });
 $node->restart;
 
-
 my ($start_lsn, $start_walfile) = split /\|/,
   $node->safe_psql('postgres',
 	q{SELECT pg_current_wal_insert_lsn(), pg_walfile_name(pg_current_wal_insert_lsn())}

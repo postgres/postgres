@@ -10,7 +10,6 @@
 #ifndef PG_TDE_PRINCIPAL_KEY_H
 #define PG_TDE_PRINCIPAL_KEY_H
 
-
 #include "postgres.h"
 #include "catalog/tde_keyring.h"
 #ifndef FRONTEND

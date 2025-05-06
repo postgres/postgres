@@ -55,7 +55,6 @@
 
 #define PG_TDE_FILEMAGIC			0x02454454	/* version ID value = TDE 02 */
 
-
 #define MAP_ENTRY_SIZE			sizeof(TDEMapEntry)
 #define TDE_FILE_HEADER_SIZE	sizeof(TDEFileHeader)
 
@@ -99,7 +98,6 @@ RelKeyCache tde_rel_key_cache = {
 	.len = 0,
 	.cap = 0,
 };
-
 
 /*
  * TODO: WAL should have its own RelKeyCache
@@ -911,7 +909,6 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 		ereport(ERROR,
 				errmsg("Failed to decrypt key, incorrect principal key or corrupted key file"));
 
-
 	return rel_key_data;
 }
 
@@ -963,7 +960,6 @@ pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_miss
 	return fd;
 }
 
-
 /*
  * Read TDE file header from a TDE file and fill in the fheader data structure.
  */
@@ -988,7 +984,6 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 				errmsg("TDE map file \"%s\" is corrupted: %m", tde_filename));
 	}
 }
-
 
 /*
  * Returns true if a map entry if found or false if we have reached the end of

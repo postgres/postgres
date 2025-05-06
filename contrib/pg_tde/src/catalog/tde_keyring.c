@@ -811,7 +811,6 @@ load_keyring_provider_from_record(KeyringProviderRecord *provider)
 	return keyring;
 }
 
-
 static GenericKeyring *
 load_keyring_provider_options(ProviderType provider_type, char *keyring_options)
 {

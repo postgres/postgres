@@ -97,7 +97,6 @@ BEGIN ATOMIC
                             'certPath' VALUE kmip_cert_path));
 END;
 
-
 CREATE FUNCTION pg_tde_list_all_database_key_providers
     (OUT id INT,
     OUT provider_name TEXT,

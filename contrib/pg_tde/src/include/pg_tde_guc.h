@@ -11,7 +11,6 @@
 #ifndef TDE_GUC_H
 #define TDE_GUC_H
 
-
 #include "postgres.h"
 
 #ifndef FRONTEND

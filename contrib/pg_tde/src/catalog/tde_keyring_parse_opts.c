@@ -41,7 +41,6 @@
 /*
  * JSON parser state
  */
-
 typedef enum JsonKeyringSemState
 {
 	JK_EXPECT_TOP_LEVEL_OBJECT,
@@ -138,7 +137,6 @@ static JsonParseErrorType json_kring_assign_scalar(JsonKeyringState *parse, Json
 static char *get_remote_kring_value(const char *url, const char *field_name);
 static char *get_file_kring_value(const char *path, const char *field_name);
 
-
 /*
  * Parses json input for the given provider type and sets the provided options.
  * out_opts should be a palloc'd keyring object matching the provider_type.
@@ -184,7 +182,6 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 		ereport(ERROR,
 				errmsg("parsing of keyring options failed: %s",
 					   json_errdetail(jerr, jlex)));
-
 	}
 #if PG_VERSION_NUM >= 170000
 	freeJsonLexContext(jlex);
