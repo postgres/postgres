@@ -87,7 +87,7 @@ static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
 static Size required_shared_mem_size(void);
 static void shared_memory_shutdown(int code, Datum arg);
 static void clear_principal_key_cache(Oid databaseId);
-static inline dshash_table *get_principal_key_Hash(void);
+static inline dshash_table *get_principal_key_hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b);
 static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
@@ -369,7 +369,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
  */
 
 static inline dshash_table *
-get_principal_key_Hash(void)
+get_principal_key_hash(void)
 {
 	if (!principalKeyLocalState.sharedHash)
 		principal_key_info_attach_shmem();
@@ -384,10 +384,10 @@ get_principal_key_from_cache(Oid dbOid)
 {
 	TDEPrincipalKey *cacheEntry = NULL;
 
-	cacheEntry = (TDEPrincipalKey *) dshash_find(get_principal_key_Hash(),
+	cacheEntry = (TDEPrincipalKey *) dshash_find(get_principal_key_hash(),
 												 &dbOid, false);
 	if (cacheEntry)
-		dshash_release_lock(get_principal_key_Hash(), cacheEntry);
+		dshash_release_lock(get_principal_key_hash(), cacheEntry);
 
 	return cacheEntry;
 }
@@ -409,12 +409,12 @@ push_principal_key_to_cache(TDEPrincipalKey *principalKey)
 	Oid			databaseId = principalKey->keyInfo.databaseId;
 	bool		found = false;
 
-	cacheEntry = dshash_find_or_insert(get_principal_key_Hash(),
+	cacheEntry = dshash_find_or_insert(get_principal_key_hash(),
 									   &databaseId, &found);
 
 	if (!found)
 		*cacheEntry = *principalKey;
-	dshash_release_lock(get_principal_key_Hash(), cacheEntry);
+	dshash_release_lock(get_principal_key_hash(), cacheEntry);
 
 	/* we don't want principal keys to end up paged to the swap */
 	if (mlock(cacheEntry, sizeof(TDEPrincipalKey)) == -1)
@@ -445,11 +445,11 @@ clear_principal_key_cache(Oid databaseId)
 	TDEPrincipalKey *cache_entry;
 
 	/* Start with deleting the cache entry for the database */
-	cache_entry = (TDEPrincipalKey *) dshash_find(get_principal_key_Hash(),
+	cache_entry = (TDEPrincipalKey *) dshash_find(get_principal_key_hash(),
 												  &databaseId, true);
 	if (cache_entry)
 	{
-		dshash_delete_entry(get_principal_key_Hash(), cache_entry);
+		dshash_delete_entry(get_principal_key_hash(), cache_entry);
 	}
 }
 
