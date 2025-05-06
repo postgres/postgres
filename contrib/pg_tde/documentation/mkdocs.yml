@@ -125,7 +125,7 @@ plugins:
           debug_html: false
 #          two_columns_level: 3
           custom_template_path: _resource/templates
-          enabled_if_env: ENABLE_PDF_EXPORT   
+          enabled_if_env: ENABLE_PDF_EXPORT
 
 extra:
   version:
@@ -144,8 +144,8 @@ extra:
         - icon: material/emoticon-sad-outline
           name: This page could be improved
           data: 0
-          note: >- 
-            Thank you for your feedback! Help us improve by using our 
+          note: >-
+            Thank you for your feedback! Help us improve by using our
             <a href="https://docs.google.com/forms/d/1bkWACehjqlwA0AKf-qTJcXvYbOSYgze8iTPXjntqmNo/edit" target="_blank" rel="noopener">
             feedback form</a>.
 
@@ -156,7 +156,7 @@ nav:
   - Get started:
     - "1. Install": "install.md"
     - "Via apt": apt.md
-    - "Via yum": yum.md   
+    - "Via yum": yum.md
     - "2. Set up": "setup.md"
     - "3. Configure WAL encryption (tech preview)": wal-encryption.md
     - "4. Test TDE": "test.md"

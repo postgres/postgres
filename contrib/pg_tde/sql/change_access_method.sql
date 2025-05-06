@@ -8,7 +8,7 @@ CREATE TABLE country_table (
      country_name varchar(32) unique not null,
      continent    varchar(32) not null
 ) USING tde_heap;
- 
+
 INSERT INTO country_table (country_name, continent)
      VALUES ('Japan', 'Asia'),
             ('UK', 'Europe'),
@@ -22,7 +22,7 @@ SELECT pg_tde_is_encrypted('country_table_pkey');
 -- Try changing the encrypted table to an unencrypted table
 ALTER TABLE country_table SET ACCESS METHOD heap;
 
--- Insert some more data 
+-- Insert some more data
 INSERT INTO country_table (country_name, continent)
      VALUES ('France', 'Europe'),
             ('Germany', 'Europe'),
@@ -78,7 +78,7 @@ CREATE TABLE country_table3 (
      country_name text unique not null,
      continent    text not null
 ) USING heap;
- 
+
 ALTER TABLE country_table SET ACCESS METHOD heap;
 ALTER TABLE country_table2 SET ACCESS METHOD tde_heap;
 

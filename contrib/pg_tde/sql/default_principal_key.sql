@@ -7,13 +7,13 @@ SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regressi
 SELECT pg_tde_verify_default_key();
 
 -- Should fail: no default principal key for the server yet
-SELECT key_provider_id, key_provider_name, key_name 
+SELECT key_provider_id, key_provider_name, key_name
 		FROM pg_tde_default_key_info();
 
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider', false);
 SELECT pg_tde_verify_default_key();
 
-SELECT key_provider_id, key_provider_name, key_name 
+SELECT key_provider_id, key_provider_name, key_name
 		FROM pg_tde_default_key_info();
 
 -- fails
@@ -23,7 +23,7 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
- 
+
 -- Should succeed: "localizes" the default principal key for the database
 CREATE TABLE test_enc(
 	id SERIAL,

@@ -4,7 +4,7 @@
 {% extends "base.html" %}
 
 {% block announce %}
-  This is a Release Candidate of Percona Transparent Data Encryption extension and it is 
+  This is a Release Candidate of Percona Transparent Data Encryption extension and it is
   <strong>not recommended for production environments</strong> yet. We encourage you to test it and <a href= "https://forums.percona.com/c/postgresql/pg-tde-transparent-data-encryption-tde/82">give your feedback</a>.
   This will help us improve the product and make it production-ready faster.
 {% endblock %}
@@ -13,7 +13,7 @@
 <script src="https://cmp.osano.com/Azqe5vTyLOSbN3OuT/49ad85b5-0418-4794-ab81-7599dddd534c/osano.js"></script>
 {{ super() }}
 {% endblock %}
-              
+
                  {% block extrahead %}
                  {{ super() }}
                  {% set title = config.site_name %}
@@ -27,7 +27,7 @@
                  <meta property="og:image" content="https://docs.percona.com/pg-tde/_images/pg_tde.png">
                  <meta property="og:url" content="https://docs.percona.com/pg-tde/">
      {% endblock %}
- 
+
 {% block site_nav %}
                  {% if nav %}
                    {% if page.meta and page.meta.hide %}
@@ -39,7 +39,7 @@
                          {% include "partials/nav.html" %}
                          <br>
                          <label class="md-nav__title" for="__drawer">
-       </label> 
+                         </label>
                        </div>
                      </div>
                    </div>

@@ -14,7 +14,7 @@
 .osano-cm-dialog {
     font-size: 0.75em;
     padding: 2em 1em;
-    color: var(--md-typeset-color);	
+    color: var(--md-typeset-color);
     background: var(--md-footer-bg-color--dark);
 }
 .osano-cm-header,
