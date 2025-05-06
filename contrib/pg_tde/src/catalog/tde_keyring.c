@@ -886,10 +886,10 @@ load_kmip_keyring_provider_options(char *keyring_options)
 	ParseKeyringJSONOptions(KMIP_KEY_PROVIDER, (GenericKeyring *) kmip_keyring,
 							keyring_options, strlen(keyring_options));
 
-	if (strlen(kmip_keyring->kmip_host) == 0 ||
-		strlen(kmip_keyring->kmip_port) == 0 ||
-		strlen(kmip_keyring->kmip_ca_path) == 0 ||
-		strlen(kmip_keyring->kmip_cert_path) == 0)
+	if (kmip_keyring->kmip_host == NULL || kmip_keyring->kmip_host[0] == '\0' ||
+		kmip_keyring->kmip_port == NULL || kmip_keyring->kmip_port[0] == '\0' ||
+		kmip_keyring->kmip_ca_path == NULL || kmip_keyring->kmip_ca_path[0] == '\0' ||
+		kmip_keyring->kmip_cert_path == NULL || kmip_keyring->kmip_cert_path[0] == '\0')
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
