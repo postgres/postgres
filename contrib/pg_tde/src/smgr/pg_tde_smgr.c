@@ -1,4 +1,3 @@
-
 #include "smgr/pg_tde_smgr.h"
 #include "postgres.h"
 #include "storage/smgr.h"

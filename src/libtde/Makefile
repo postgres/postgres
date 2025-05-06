@@ -1,4 +1,3 @@
-
 subdir = src/libtde
 top_builddir = ../..
 

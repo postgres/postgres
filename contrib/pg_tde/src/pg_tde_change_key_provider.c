@@ -1,4 +1,3 @@
-
 #include "postgres_fe.h"
 
 #include "pg_tde.h"
