@@ -55,13 +55,15 @@ PG_FUNCTION_INFO_V1(pg_tdeam_handler);
 static void
 tde_shmem_request(void)
 {
-	Size		sz = TdeRequiredSharedMemorySize();
+	Size		sz = 0;
 	int			required_locks = TdeRequiredLocksCount();
 
+	sz = add_size(sz, PrincipalKeyShmemSize());
 	sz = add_size(sz, TDEXLogEncryptStateSize());
 
 	if (prev_shmem_request_hook)
 		prev_shmem_request_hook();
+
 	RequestAddinShmemSpace(sz);
 	RequestNamedLWLockTranche(TDE_TRANCHE_NAME, required_locks);
 	ereport(LOG, errmsg("tde_shmem_request: requested %ld bytes", sz));
@@ -73,8 +75,8 @@ tde_shmem_startup(void)
 	if (prev_shmem_startup_hook)
 		prev_shmem_startup_hook();
 
-	TdeShmemInit();
-	InitializeKeyProviderInfo();
+	KeyProviderShmemInit();
+	PrincipalKeyShmemInit();
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
 }
@@ -100,7 +102,6 @@ _PG_init(void)
 	AesInit();
 	TdeGucInit();
 	TdeEventCaptureInit();
-	InitializePrincipalKeyInfo();
 	InstallFileKeyring();
 	InstallVaultV2Keyring();
 	InstallKmipKeyring();

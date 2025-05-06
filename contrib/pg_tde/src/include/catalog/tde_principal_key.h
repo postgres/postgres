@@ -42,7 +42,8 @@ typedef struct XLogPrincipalKeyRotate
 
 #define SizeoOfXLogPrincipalKeyRotate	offsetof(XLogPrincipalKeyRotate, buff)
 
-extern void InitializePrincipalKeyInfo(void);
+extern void PrincipalKeyShmemInit(void);
+extern Size PrincipalKeyShmemSize(void);
 
 #ifndef FRONTEND
 extern void principal_key_startup_cleanup(Oid databaseId);

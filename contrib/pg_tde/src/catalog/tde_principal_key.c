@@ -60,7 +60,6 @@ typedef struct TdePrincipalKeySharedState
 	LWLockPadded *Locks;
 	dshash_table_handle hashHandle;
 	void	   *rawDsaArea;		/* DSA area pointer */
-
 } TdePrincipalKeySharedState;
 
 typedef struct TdePrincipalKeylocalState
@@ -84,10 +83,6 @@ static dshash_parameters principal_key_dsh_params = {
 static TdePrincipalKeylocalState principalKeyLocalState;
 
 static void principal_key_info_attach_shmem(void);
-static Size initialize_shared_state(void *start_address);
-static void initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area);
-static Size required_shared_mem_size(void);
-static void shared_memory_shutdown(int code, Datum arg);
 static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
@@ -111,18 +106,82 @@ PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
 
 static void pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *principal_key_name, const char *provider_name, bool ensure_new_key);
 
-static const TDEShmemSetupRoutine principal_key_info_shmem_routine = {
-	.init_shared_state = initialize_shared_state,
-	.init_dsa_area_objects = initialize_objects_in_dsa_area,
-	.required_shared_mem_size = required_shared_mem_size,
-	.shmem_kill = shared_memory_shutdown
-};
+/*
+ * Request some pages so we can fit the DSA header, empty hash table plus some
+ * extra. Additional memory to grow the hash map will be allocated as needed
+ * from the dynamic shared memory.
+ *
+ * The only reason we need this at all is because we create the DSA in the
+ * postmaster before any DSM allocations can be done.
+ */
+#define CACHE_DSA_INITIAL_SIZE (4096 * 64)
+
+Size
+PrincipalKeyShmemSize(void)
+{
+	Size		sz = CACHE_DSA_INITIAL_SIZE;
+
+	sz = add_size(sz, sizeof(TdePrincipalKeySharedState));
+	return MAXALIGN(sz);
+}
 
 void
-InitializePrincipalKeyInfo(void)
+PrincipalKeyShmemInit(void)
 {
-	ereport(LOG, errmsg("Initializing TDE principal key info"));
-	RegisterShmemRequest(&principal_key_info_shmem_routine);
+	bool		found;
+	char	   *free_start;
+	Size		required_shmem_size = PrincipalKeyShmemSize();
+
+	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+
+	/* Create or attach to the shared memory state */
+	ereport(NOTICE, errmsg("PrincipalKeyShmemInit: requested %ld bytes", required_shmem_size));
+	free_start = ShmemInitStruct("pg_tde", required_shmem_size, &found);
+
+	if (!found)
+	{
+		TdePrincipalKeySharedState *sharedState;
+		Size		sz;
+		Size		dsa_area_size;
+		dsa_area   *dsa;
+		dshash_table *dsh;
+
+		/* Now place shared state structure */
+		sharedState = (TdePrincipalKeySharedState *) free_start;
+		sz = MAXALIGN(sizeof(TdePrincipalKeySharedState));
+		free_start += sz;
+		Assert(sz <= required_shmem_size);
+
+		/* Create DSA area */
+		dsa_area_size = required_shmem_size - sz;
+		Assert(dsa_area_size > 0);
+
+		ereport(LOG, errmsg("creating DSA area of size %lu", dsa_area_size));
+
+		dsa = dsa_create_in_place(free_start,
+								  dsa_area_size,
+								  LWLockNewTrancheId(), 0);
+		dsa_pin(dsa);
+
+		/* Limit area size during population to get a nice error */
+		dsa_set_size_limit(dsa, dsa_area_size);
+
+		principal_key_dsh_params.tranche_id = LWLockNewTrancheId();
+		dsh = dshash_create(dsa, &principal_key_dsh_params, NULL);
+
+		dsa_set_size_limit(dsa, -1);
+
+		sharedState->Locks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
+		sharedState->hashHandle = dshash_get_hash_table_handle(dsh);
+		sharedState->rawDsaArea = free_start;
+
+		principalKeyLocalState.sharedPrincipalKeyState = sharedState;
+		principalKeyLocalState.sharedHash = NULL;
+
+		dshash_detach(dsh);
+	}
+
+	LWLockRelease(AddinShmemInitLock);
 }
 
 /*
@@ -135,62 +194,6 @@ tde_lwlock_enc_keys(void)
 	Assert(principalKeyLocalState.sharedPrincipalKeyState);
 
 	return &principalKeyLocalState.sharedPrincipalKeyState->Locks[TDE_LWLOCK_ENC_KEY].lock;
-}
-
-/*
- * Request some pages so we can fit the DSA header, empty hash table plus some
- * extra. Additional memory to grow the hash map will be allocated as needed
- * from the dynamic shared memory.
- *
- * The only reason we need this at all is because we create the DSA in the
- * postmaster before any DSM allocations can be done.
- */
-#define CACHE_DSA_INITIAL_SIZE (4096 * 64)
-
-static Size
-required_shared_mem_size(void)
-{
-	Size		sz = CACHE_DSA_INITIAL_SIZE;
-
-	sz = add_size(sz, sizeof(TdePrincipalKeySharedState));
-	return MAXALIGN(sz);
-}
-
-/*
- * Initialize the shared area for Principal key info.
- * This includes locks and cache area for principal key info
- */
-
-static Size
-initialize_shared_state(void *start_address)
-{
-	TdePrincipalKeySharedState *sharedState = (TdePrincipalKeySharedState *) start_address;
-
-	ereport(LOG, errmsg("initializing shared state for principal key"));
-
-	sharedState->Locks = GetNamedLWLockTranche(TDE_TRANCHE_NAME);
-
-	principalKeyLocalState.sharedPrincipalKeyState = sharedState;
-	principalKeyLocalState.sharedHash = NULL;
-
-	return sizeof(TdePrincipalKeySharedState);
-}
-
-static void
-initialize_objects_in_dsa_area(dsa_area *dsa, void *raw_dsa_area)
-{
-	dshash_table *dsh;
-	TdePrincipalKeySharedState *sharedState = principalKeyLocalState.sharedPrincipalKeyState;
-
-	ereport(LOG, errmsg("initializing dsa area objects for principal key"));
-
-	Assert(sharedState != NULL);
-
-	sharedState->rawDsaArea = raw_dsa_area;
-	principal_key_dsh_params.tranche_id = LWLockNewTrancheId();
-	dsh = dshash_create(dsa, &principal_key_dsh_params, NULL);
-	sharedState->hashHandle = dshash_get_hash_table_handle(dsh);
-	dshash_detach(dsh);
 }
 
 /*
@@ -215,12 +218,6 @@ principal_key_info_attach_shmem(void)
 													  principalKeyLocalState.sharedPrincipalKeyState->hashHandle, 0);
 
 	MemoryContextSwitchTo(oldcontext);
-}
-
-static void
-shared_memory_shutdown(int code, Datum arg)
-{
-	principalKeyLocalState.sharedPrincipalKeyState = NULL;
 }
 
 void
