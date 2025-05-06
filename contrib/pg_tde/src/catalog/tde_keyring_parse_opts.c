@@ -129,6 +129,7 @@ typedef struct JsonKeyringState
 } JsonKeyringState;
 
 static JsonParseErrorType json_kring_scalar(void *state, char *token, JsonTokenType tokentype);
+static JsonParseErrorType json_kring_array_start(void *state);
 static JsonParseErrorType json_kring_object_field_start(void *state, char *fname, bool isnull);
 static JsonParseErrorType json_kring_object_start(void *state);
 static JsonParseErrorType json_kring_object_end(void *state);
@@ -168,7 +169,7 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 	sem.semstate = &parse;
 	sem.object_start = json_kring_object_start;
 	sem.object_end = json_kring_object_end;
-	sem.array_start = NULL;
+	sem.array_start = json_kring_array_start;
 	sem.array_end = NULL;
 	sem.object_field_start = json_kring_object_field_start;
 	sem.object_field_end = NULL;
@@ -193,6 +194,25 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 /*
  * JSON parser semantic actions
 */
+
+static JsonParseErrorType
+json_kring_array_start(void *state)
+{
+	JsonKeyringState *parse = state;
+
+	switch (parse->state)
+	{
+		case JK_EXPECT_TOP_LEVEL_OBJECT:
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("key provider options must be an object"));
+			break;
+		case JK_EXPECT_TOP_FIELD:
+		case JK_EXPECT_EXTERN_VAL:
+	}
+
+	return JSON_SUCCESS;
+}
 
 /*
  * Invoked at the start of each object in the JSON document.
@@ -384,7 +404,8 @@ json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 	{
 		case JK_EXPECT_TOP_LEVEL_OBJECT:
 			ereport(ERROR,
-					errmsg("invalid semantic state"));
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("key provider options must be an object"));
 			break;
 		case JK_EXPECT_TOP_FIELD:
 			field = &parse->top_level_field;

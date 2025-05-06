@@ -75,6 +75,12 @@ SELECT pg_tde_add_global_key_provider('file', repeat('K', 128), '{}');
 SELECT pg_tde_add_database_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
 SELECT pg_tde_add_global_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
 
+-- Creating key providers fails if configuration is not a JSON object
+SELECT pg_tde_add_database_key_provider('file', 'provider', '"bare string"');
+SELECT pg_tde_add_database_key_provider('file', 'provider', '["array"]');
+SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
+SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
+
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 SELECT pg_tde_change_database_key_provider('file', NULL, '{}');
@@ -86,6 +92,12 @@ SELECT pg_tde_change_global_key_provider('file', 'file-keyring', NULL);
 -- Modifying key providers fails if options is too long
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', json_build_object('key', repeat('V', 1024)));
 SELECT pg_tde_change_global_key_provider('file', 'file-keyring', json_build_object('key', repeat('V', 1024)));
+
+-- Modifying key providers fails if configuration is not a JSON object
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '"bare string"');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '["array"]');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);

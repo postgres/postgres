@@ -192,6 +192,15 @@ SELECT pg_tde_add_database_key_provider('file', 'name', json_build_object('key',
 ERROR:  too large provider options, maximum size is 1023 bytes
 SELECT pg_tde_add_global_key_provider('file', 'name', json_build_object('key', repeat('K', 1024)));
 ERROR:  too large provider options, maximum size is 1023 bytes
+-- Creating key providers fails if configuration is not a JSON object
+SELECT pg_tde_add_database_key_provider('file', 'provider', '"bare string"');
+ERROR:  key provider options must be an object
+SELECT pg_tde_add_database_key_provider('file', 'provider', '["array"]');
+ERROR:  key provider options must be an object
+SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
+ERROR:  key provider options must be an object
+SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
+ERROR:  key provider options must be an object
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
 ERROR:  provider type cannot be null
@@ -210,6 +219,15 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', json_build_o
 ERROR:  too large provider options, maximum size is 1023 bytes
 SELECT pg_tde_change_global_key_provider('file', 'file-keyring', json_build_object('key', repeat('V', 1024)));
 ERROR:  too large provider options, maximum size is 1023 bytes
+-- Modifying key providers fails if configuration is not a JSON object
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '"bare string"');
+ERROR:  key provider options must be an object
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '["array"]');
+ERROR:  key provider options must be an object
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
+ERROR:  key provider options must be an object
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
+ERROR:  key provider options must be an object
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null
