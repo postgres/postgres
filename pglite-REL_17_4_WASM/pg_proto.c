@@ -76,7 +76,7 @@
 		    {
 			    const char *portal_name;
 			    int			max_rows;
-puts("# 79: exec_execute_message");
+PDEBUG("# 79: exec_execute_message");
 			    forbidden_in_wal_sender(firstchar);
 
 			    /* Set statement_timestamp() */
@@ -177,7 +177,7 @@ puts("# 79: exec_execute_message");
 		    {
 			    int			describe_type;
 			    const char *describe_target;
-
+PDEBUG("# 180: exec_describe_ statement/portal");
 			    forbidden_in_wal_sender(firstchar);
 
 			    /* Set statement_timestamp() (needed for xact) */
@@ -215,9 +215,15 @@ puts("# 79: exec_execute_message");
 
 	    case 'S':			/* sync */
 		    pq_getmsgend(&input_message);
+            EndImplicitTransactionBlock();
 		    finish_xact_command();
 		    //valgrind_report_error_query("SYNC message");
-		    send_ready_for_query = true;
+#if defined(PGL_LOOP)
+            if (!pipelining)
+    		    send_ready_for_query = true;
+            else
+    		    send_ready_for_query = false;
+#endif
 		    break;
 
 		    /*
@@ -238,10 +244,10 @@ puts("# 79: exec_execute_message");
 		     * Reset whereToSendOutput to prevent ereport from attempting
 		     * to send any more messages to client.
 		     */
-#if 1 // !defined(PGL_LOOP)
+
 		    if (whereToSendOutput == DestRemote)
 			    whereToSendOutput = DestNone;
-#endif
+
 		    /*
 		     * NOTE: if you are tempted to add more code here, DON'T!
 		     * Whatever you had in mind to do should be set up as an
@@ -252,16 +258,15 @@ puts("# 79: exec_execute_message");
 if (sf_connected)
     sf_connected--;
 else
-    puts("ERROR: more exits than connections");
+    PDEBUG("ERROR: more exits than connections");
 PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
             is_repl = false;
             ignore_till_sync = false;
+            send_ready_for_query = false;
+
 #if defined(PGL_LOOP)
-    send_ready_for_query = true;
-    pipelining = false ;
-    goto wire_flush;
-#else
-    send_ready_for_query = false;
+            pipelining = false ;
+    goto wire_flush; // take shortcut
 #endif
             break;
 
