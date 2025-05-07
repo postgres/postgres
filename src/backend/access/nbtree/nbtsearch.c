@@ -1790,9 +1790,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			IndexTuple	itup = (IndexTuple) PageGetItem(page, iid);
 			int			truncatt;
 
-			truncatt = BTreeTupleGetNAtts(itup, rel);
+			/* Reset arrays, per _bt_set_startikey contract */
+			if (pstate.forcenonrequired)
+				_bt_start_array_keys(scan, dir);
 			pstate.forcenonrequired = false;
 			pstate.startikey = 0;	/* _bt_set_startikey ignores P_HIKEY */
+
+			truncatt = BTreeTupleGetNAtts(itup, rel);
 			_bt_checkkeys(scan, &pstate, arrayKeys, itup, truncatt);
 		}
 
@@ -1879,8 +1883,10 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			pstate.offnum = offnum;
 			if (arrayKeys && offnum == minoff && pstate.forcenonrequired)
 			{
+				/* Reset arrays, per _bt_set_startikey contract */
 				pstate.forcenonrequired = false;
 				pstate.startikey = 0;
+				_bt_start_array_keys(scan, dir);
 			}
 			passes_quals = _bt_checkkeys(scan, &pstate, arrayKeys,
 										 itup, indnatts);

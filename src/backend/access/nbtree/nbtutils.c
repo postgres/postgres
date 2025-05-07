@@ -2489,13 +2489,14 @@ _bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
  * primscan's first page would mislead _bt_advance_array_keys, which expects
  * pstate.nskipadvances to be representative of every first page's key space.)
  *
- * Caller must reset startikey and forcenonrequired ahead of the _bt_checkkeys
- * call for pstate.finaltup iff we set forcenonrequired=true.  This will give
- * _bt_checkkeys the opportunity to call _bt_advance_array_keys once more,
- * with sktrig_required=true, to advance the arrays that were ignored during
- * checks of all of the page's prior tuples.  Caller doesn't need to do this
- * on the rightmost/leftmost page in the index (where pstate.finaltup isn't
- * set), since forcenonrequired won't be set here by us in the first place.
+ * Caller must call _bt_start_array_keys and reset startikey/forcenonrequired
+ * ahead of the finaltup _bt_checkkeys call when we set forcenonrequired=true.
+ * This will give _bt_checkkeys the opportunity to call _bt_advance_array_keys
+ * with sktrig_required=true, restoring the invariant that the scan's required
+ * arrays always track the scan's progress through the index's key space.
+ * Caller won't need to do this on the rightmost/leftmost page in the index
+ * (where pstate.finaltup isn't ever set), since forcenonrequired will never
+ * be set here in the first place.
  */
 void
 _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate)
@@ -2556,10 +2557,31 @@ _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate)
 		if (key->sk_flags & SK_ROW_HEADER)
 		{
 			/*
-			 * Can't let pstate.startikey get set to an ikey beyond a
-			 * RowCompare inequality
+			 * RowCompare inequality.
+			 *
+			 * Only the first subkey from a RowCompare can ever be marked
+			 * required (that happens when the row header is marked required).
+			 * There is no simple, general way for us to transitively deduce
+			 * whether or not every tuple on the page satisfies a RowCompare
+			 * key based only on firsttup and lasttup -- so we just give up.
 			 */
-			break;				/* unsafe */
+			if (!start_past_saop_eq && !so->skipScan)
+				break;			/* unsafe to go further */
+
+			/*
+			 * We have to be even more careful with RowCompares that come
+			 * after an array: we assume it's unsafe to even bypass the array.
+			 * Calling _bt_start_array_keys to recover the scan's arrays
+			 * following use of forcenonrequired mode isn't compatible with
+			 * _bt_check_rowcompare's continuescan=false behavior with NULL
+			 * row compare members.  _bt_advance_array_keys must not make a
+			 * decision on the basis of a key not being satisfied in the
+			 * opposite-to-scan direction until the scan reaches a leaf page
+			 * where the same key begins to be satisfied in scan direction.
+			 * The _bt_first !used_all_subkeys behavior makes this limitation
+			 * hard to work around some other way.
+			 */
+			return;				/* completely unsafe to set pstate.startikey */
 		}
 		if (key->sk_strategy != BTEqualStrategyNumber)
 		{
