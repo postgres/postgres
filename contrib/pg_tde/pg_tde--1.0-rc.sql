@@ -102,7 +102,7 @@ CREATE FUNCTION pg_tde_list_all_database_key_providers
     OUT provider_name TEXT,
     OUT provider_type TEXT,
     OUT options JSON)
-RETURNS SETOF record
+RETURNS SETOF RECORD
 LANGUAGE C STRICT
 AS 'MODULE_PATHNAME';
 
@@ -111,7 +111,7 @@ CREATE FUNCTION pg_tde_list_all_global_key_providers
     OUT provider_name TEXT,
     OUT provider_type TEXT,
     OUT options JSON)
-RETURNS SETOF record
+RETURNS SETOF RECORD
 LANGUAGE C STRICT
 AS 'MODULE_PATHNAME';
 
@@ -397,8 +397,8 @@ BEGIN ATOMIC
                             'certPath' VALUE kmip_cert_path));
 END;
 
-CREATE FUNCTION pg_tde_is_encrypted(relation regclass)
-RETURNS boolean
+CREATE FUNCTION pg_tde_is_encrypted(relation REGCLASS)
+RETURNS BOOLEAN
 STRICT
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -439,26 +439,26 @@ LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_key_info()
-RETURNS TABLE ( key_name text,
-                key_provider_name text,
-                key_provider_id integer,
-                key_creation_time timestamp with time zone)
+RETURNS TABLE ( key_name TEXT,
+                key_provider_name TEXT,
+                key_provider_id INT,
+                key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_server_key_info()
-RETURNS TABLE ( key_name text,
-                key_provider_name text,
-                key_provider_id integer,
-                key_creation_time timestamp with time zone)
+RETURNS TABLE ( key_name TEXT,
+                key_provider_name TEXT,
+                key_provider_id INT,
+                key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_default_key_info()
-RETURNS TABLE ( key_name text,
-                key_provider_name text,
-                key_provider_id integer,
-                key_creation_time timestamp with time zone)
+RETURNS TABLE ( key_name TEXT,
+                key_provider_name TEXT,
+                key_provider_id INT,
+                key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
@@ -476,7 +476,7 @@ CREATE FUNCTION pg_tde_version() RETURNS TEXT LANGUAGE C AS 'MODULE_PATHNAME';
 
 -- Table access method
 CREATE FUNCTION pg_tdeam_handler(internal)
-RETURNS table_am_handler
+RETURNS TABLE_AM_HANDLER
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
@@ -484,12 +484,12 @@ CREATE ACCESS METHOD tde_heap TYPE TABLE HANDLER pg_tdeam_handler;
 COMMENT ON ACCESS METHOD tde_heap IS 'tde_heap table access method';
 
 CREATE FUNCTION pg_tde_ddl_command_start_capture()
-RETURNS event_trigger
+RETURNS EVENT_TRIGGER
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_ddl_command_end_capture()
-RETURNS event_trigger
+RETURNS EVENT_TRIGGER
 LANGUAGE C
 AS 'MODULE_PATHNAME';
 
@@ -518,7 +518,7 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) TO %I', target_role);
+    EXECUTE format('GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(TEXT, TEXT, BOOLEAN) TO %I', target_role);
 END;
 $$;
 
@@ -549,7 +549,7 @@ LANGUAGE plpgsql
 SET search_path = @extschema@
 AS $$
 BEGIN
-    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(text, text, BOOLEAN) FROM %I', target_role);
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION pg_tde_set_key_using_database_key_provider(TEXT, TEXT, BOOLEAN) FROM %I', target_role);
 END;
 $$;
 
