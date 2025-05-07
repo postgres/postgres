@@ -1,4 +1,4 @@
-black
+black~=25.0
 # cryptography 35.x and later add many platform/toolchain restrictions, beware
 cryptography~=3.4.8
 # TODO: figure out why 2.10.70 broke things

@@ -1539,6 +1539,16 @@ def alt_patterns(*patterns):
             id="gigantic authz response",
         ),
         pytest.param(
+            (200, RawResponse('{"":' + "[" * 16)),
+            r"failed to parse device authorization: JSON is too deeply nested",
+            id="overly nested authz response array",
+        ),
+        pytest.param(
+            (200, RawResponse('{"":' * 17)),
+            r"failed to parse device authorization: JSON is too deeply nested",
+            id="overly nested authz response object",
+        ),
+        pytest.param(
             (400, {}),
             r'failed to parse token error response: field "error" is missing',
             id="broken error response",
@@ -1708,6 +1718,16 @@ def test_oauth_device_authorization_bad_json_schema(
             (400, {"error": "access_denied", "padding": "x" * 256 * 1024}),
             r"failed to obtain access token: response is too large",
             id="gigantic token response",
+        ),
+        pytest.param(
+            (200, RawResponse('{"":' + "[" * 16)),
+            r"failed to parse access token response: JSON is too deeply nested",
+            id="overly nested token response array",
+        ),
+        pytest.param(
+            (200, RawResponse('{"":' * 17)),
+            r"failed to parse access token response: JSON is too deeply nested",
+            id="overly nested token response object",
         ),
         pytest.param(
             (400, {}),
@@ -2004,7 +2024,7 @@ def test_oauth_discovery(accept, openid_provider, base_response, scope, success)
             id="bad JSON: invalid syntax",
         ),
         pytest.param(
-            b"\xFF\xFF\xFF\xFF",
+            b"\xff\xff\xff\xff",
             "server's error response is not valid UTF-8",
             id="bad JSON: invalid encoding",
         ),
@@ -2146,7 +2166,7 @@ def test_oauth_discovery_server_error(accept, response, expected_error):
             id="NULL bytes in document",
         ),
         pytest.param(
-            (200, RawBytes(b"blah\xFFblah")),
+            (200, RawBytes(b"blah\xffblah")),
             r"failed to parse OpenID discovery document: response is not valid UTF-8",
             id="document is not UTF-8",
         ),
@@ -2291,6 +2311,22 @@ def test_oauth_discovery_server_error(accept, response, expected_error):
         pytest.param(
             (
                 200,
+                RawResponse('{"":' + "[" * 16),
+            ),
+            r"failed to parse OpenID discovery document: JSON is too deeply nested",
+            id="overly nested discovery response array",
+        ),
+        pytest.param(
+            (
+                200,
+                RawResponse('{"":' * 17),
+            ),
+            r"failed to parse OpenID discovery document: JSON is too deeply nested",
+            id="overly nested discovery response object",
+        ),
+        pytest.param(
+            (
+                200,
                 {
                     "issuer": "{issuer}/path",
                     "token_endpoint": "https://256.256.256.256/token",
@@ -2383,6 +2419,15 @@ def test_oauth_discovery_provider_failure(
             id="standard server error: invalid_request",
         ),
         pytest.param(
+            {"": [[[[[[[]]]]]]], "status": "invalid_request"},
+            pq3.types.ErrorResponse,
+            dict(
+                fields=[b"SFATAL", b"C28000", b"Mexpected error message", b""],
+            ),
+            "server rejected OAuth bearer token: invalid_request",
+            id="standard server error: invalid_request with ignored array",
+        ),
+        pytest.param(
             {"status": "invalid_token"},
             pq3.types.ErrorResponse,
             dict(
@@ -2412,6 +2457,20 @@ def test_oauth_discovery_provider_failure(
             "duplicate SASL authentication request",
             id="broken server: SASL reinitialization after error",
         ),
+        pytest.param(
+            RawResponse('{"":' + "[" * 8),
+            pq3.types.AuthnRequest,
+            dict(type=pq3.authn.SASL, body=[b"OAUTHBEARER", b""]),
+            "JSON is too deeply nested",
+            id="broken server: overly nested JSON response array",
+        ),
+        pytest.param(
+            RawResponse('{"":' * 9),
+            pq3.types.AuthnRequest,
+            dict(type=pq3.authn.SASL, body=[b"OAUTHBEARER", b""]),
+            "JSON is too deeply nested",
+            id="broken server: overly nested JSON response object",
+        ),
     ],
 )
 def test_oauth_server_error(
@@ -2439,12 +2498,15 @@ def test_oauth_server_error(
             start_oauth_handshake(conn)
 
             # Ignore the client data. Return an error "challenge".
-            if "openid-configuration" in sasl_err:
-                sasl_err["openid-configuration"] = wkuri
+            if isinstance(sasl_err, RawResponse):
+                resp = sasl_err
+            else:
+                if "openid-configuration" in sasl_err:
+                    sasl_err["openid-configuration"] = wkuri
 
-            resp = json.dumps(sasl_err)
+                resp = json.dumps(sasl_err)
+
             resp = resp.encode("utf-8")
-
             pq3.send(
                 conn, pq3.types.AuthnRequest, type=pq3.authn.SASLContinue, body=resp
             )
