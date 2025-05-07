@@ -258,16 +258,16 @@ ERROR:  key provider options must be an object
 -- Modifying key providers fails if an external value object doesn't have all required keys
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
 ERROR:  external value must contain "type" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": null}}');
-ERROR:  key provider "provider" does not exists
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": null}}');
+ERROR:  external value must contain "type" in field "path"
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
 ERROR:  external remote value must contain "url" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "remote", "url": null}}');
-ERROR:  key provider "provider" does not exists
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote", "url": null}}');
+ERROR:  external remote value must contain "url" in field "path"
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
 ERROR:  external file value must contain "path" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": null}}');
-ERROR:  key provider "provider" does not exists
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": null}}');
+ERROR:  external file value must contain "path" in field "path"
 -- Modifying key providers fails if values are array instead of scalar
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
 ERROR:  unexpected array in field "path"
@@ -276,12 +276,12 @@ ERROR:  unexpected array in field "path"
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
 ERROR:  unexpected array in field "path"
 -- Modifying key providers fails if values are boolean
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": true}');
-ERROR:  key provider "provider" does not exists
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": true}}');
-ERROR:  key provider "provider" does not exists
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": true}}');
-ERROR:  key provider "provider" does not exists
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": true}');
+ERROR:  unexpected boolean in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": true}}');
+ERROR:  unexpected boolean in field "path"
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": true}}');
+ERROR:  unexpected boolean in field "path"
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null

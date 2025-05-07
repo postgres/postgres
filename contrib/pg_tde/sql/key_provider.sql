@@ -119,11 +119,11 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 
 -- Modifying key providers fails if an external value object doesn't have all required keys
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": null}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": null}}');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "remote", "url": null}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote", "url": null}}');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": null}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": null}}');
 
 -- Modifying key providers fails if values are array instead of scalar
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
@@ -131,9 +131,9 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
 
 -- Modifying key providers fails if values are boolean
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": true}');
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": true}}');
-SELECT pg_tde_change_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": true}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": true}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": true}}');
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": true}}');
 
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
