@@ -167,4 +167,3 @@ FROM cte;
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
-

@@ -251,4 +251,3 @@ sub setup_table
 }
 
 done_testing();
-
