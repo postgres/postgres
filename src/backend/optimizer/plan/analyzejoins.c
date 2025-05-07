@@ -74,6 +74,8 @@ static bool is_innerrel_unique_for(PlannerInfo *root,
 								   List *restrictlist,
 								   List **extra_clauses);
 static int	self_join_candidates_cmp(const void *a, const void *b);
+static bool replace_relid_callback(Node *node,
+								   ChangeVarNodes_context *context);
 
 
 /*
@@ -397,7 +399,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		{
 			Assert(subst > 0);
 
-			ChangeVarNodes((Node *) sjinf->semi_rhs_exprs, relid, subst, 0);
+			ChangeVarNodesExtended((Node *) sjinf->semi_rhs_exprs, relid, subst,
+								   0, replace_relid_callback);
 		}
 	}
 
@@ -469,7 +472,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 											   sjinfo->ojrelid, subst);
 			Assert(!bms_is_empty(phv->phrels));
 
-			ChangeVarNodes((Node *) phv->phexpr, relid, subst, 0);
+			ChangeVarNodesExtended((Node *) phv->phexpr, relid, subst, 0,
+								   replace_relid_callback);
 
 			Assert(phv->phnullingrels == NULL); /* no need to adjust */
 		}
@@ -523,7 +527,8 @@ remove_rel_from_query(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		if (subst > 0)
-			ChangeVarNodes((Node *) otherrel->lateral_vars, relid, subst, 0);
+			ChangeVarNodesExtended((Node *) otherrel->lateral_vars, relid,
+								   subst, 0, replace_relid_callback);
 	}
 }
 
@@ -757,7 +762,8 @@ remove_rel_from_eclass(EquivalenceClass *ec, SpecialJoinInfo *sjinfo,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
 
 		if (sjinfo == NULL)
-			ChangeVarNodes((Node *) rinfo, relid, subst, 0);
+			ChangeVarNodesExtended((Node *) rinfo, relid, subst, 0,
+								   replace_relid_callback);
 		else
 			remove_rel_from_restrictinfo(rinfo, relid, sjinfo->ojrelid);
 	}
@@ -1548,7 +1554,8 @@ update_eclasses(EquivalenceClass *ec, int from, int to)
 		em->em_jdomain->jd_relids = adjust_relid_set(em->em_jdomain->jd_relids, from, to);
 
 		/* We only process inner joins */
-		ChangeVarNodes((Node *) em->em_expr, from, to, 0);
+		ChangeVarNodesExtended((Node *) em->em_expr, from, to, 0,
+							   replace_relid_callback);
 
 		foreach_node(EquivalenceMember, other, new_members)
 		{
@@ -1582,7 +1589,8 @@ update_eclasses(EquivalenceClass *ec, int from, int to)
 			continue;
 		}
 
-		ChangeVarNodes((Node *) rinfo, from, to, 0);
+		ChangeVarNodesExtended((Node *) rinfo, from, to, 0,
+							   replace_relid_callback);
 
 		/*
 		 * After switching the clause to the remaining relation, check it for
@@ -1678,6 +1686,118 @@ add_non_redundant_clauses(PlannerInfo *root,
 }
 
 /*
+ * A custom callback for ChangeVarNodesExtended() providing
+ * Self-join elimination (SJE) related functionality
+ *
+ * SJE needs to skip the RangeTblRef node
+ * type.  During SJE's last step, remove_rel_from_joinlist() removes
+ * remaining RangeTblRefs with target relid.  If ChangeVarNodes() replaces
+ * the target relid before, remove_rel_from_joinlist() fails to identify
+ * the nodes to delete.
+ *
+ * SJE also needs to change the relids within RestrictInfo's.
+ */
+static bool
+replace_relid_callback(Node *node, ChangeVarNodes_context *context)
+{
+	if (IsA(node, RangeTblRef))
+	{
+		return true;
+	}
+	else if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) node;
+		int			relid = -1;
+		bool		is_req_equal =
+			(rinfo->required_relids == rinfo->clause_relids);
+		bool		clause_relids_is_multiple =
+			(bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
+
+		/*
+		 * Recurse down into clauses if the target relation is present in
+		 * clause_relids or required_relids.  We must check required_relids
+		 * because the relation not present in clause_relids might still be
+		 * present somewhere in orclause.
+		 */
+		if (bms_is_member(context->rt_index, rinfo->clause_relids) ||
+			bms_is_member(context->rt_index, rinfo->required_relids))
+		{
+			Relids		new_clause_relids;
+
+			ChangeVarNodesWalkExpression((Node *) rinfo->clause, context);
+			ChangeVarNodesWalkExpression((Node *) rinfo->orclause, context);
+
+			new_clause_relids = adjust_relid_set(rinfo->clause_relids,
+												 context->rt_index,
+												 context->new_index);
+
+			/*
+			 * Incrementally adjust num_base_rels based on the change of
+			 * clause_relids, which could contain both base relids and
+			 * outer-join relids.  This operation is legal until we remove
+			 * only baserels.
+			 */
+			rinfo->num_base_rels -= bms_num_members(rinfo->clause_relids) -
+				bms_num_members(new_clause_relids);
+
+			rinfo->clause_relids = new_clause_relids;
+			rinfo->left_relids =
+				adjust_relid_set(rinfo->left_relids, context->rt_index, context->new_index);
+			rinfo->right_relids =
+				adjust_relid_set(rinfo->right_relids, context->rt_index, context->new_index);
+		}
+
+		if (is_req_equal)
+			rinfo->required_relids = rinfo->clause_relids;
+		else
+			rinfo->required_relids =
+				adjust_relid_set(rinfo->required_relids, context->rt_index, context->new_index);
+
+		rinfo->outer_relids =
+			adjust_relid_set(rinfo->outer_relids, context->rt_index, context->new_index);
+		rinfo->incompatible_relids =
+			adjust_relid_set(rinfo->incompatible_relids, context->rt_index, context->new_index);
+
+		if (rinfo->mergeopfamilies &&
+			bms_get_singleton_member(rinfo->clause_relids, &relid) &&
+			clause_relids_is_multiple &&
+			relid == context->new_index && IsA(rinfo->clause, OpExpr))
+		{
+			Expr	   *leftOp;
+			Expr	   *rightOp;
+
+			leftOp = (Expr *) get_leftop(rinfo->clause);
+			rightOp = (Expr *) get_rightop(rinfo->clause);
+
+			/*
+			 * For self-join elimination, changing varnos could transform
+			 * "t1.a = t2.a" into "t1.a = t1.a".  That is always true as long
+			 * as "t1.a" is not null.  We use qual() to check for such a case,
+			 * and then we replace the qual for a check for not null
+			 * (NullTest).
+			 */
+			if (leftOp != NULL && equal(leftOp, rightOp))
+			{
+				NullTest   *ntest = makeNode(NullTest);
+
+				ntest->arg = leftOp;
+				ntest->nulltesttype = IS_NOT_NULL;
+				ntest->argisrow = false;
+				ntest->location = -1;
+				rinfo->clause = (Expr *) ntest;
+				rinfo->mergeopfamilies = NIL;
+				rinfo->left_em = NULL;
+				rinfo->right_em = NULL;
+			}
+			Assert(rinfo->orclause == NULL);
+		}
+		return true;
+	}
+
+	return false;
+}
+
+/*
  * Remove a relation after we have proven that it participates only in an
  * unneeded unique self-join.
  *
@@ -1725,7 +1845,8 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	foreach_node(RestrictInfo, rinfo, joininfos)
 	{
 		remove_join_clause_from_rels(root, rinfo, rinfo->required_relids);
-		ChangeVarNodes((Node *) rinfo, toRemove->relid, toKeep->relid, 0);
+		ChangeVarNodesExtended((Node *) rinfo, toRemove->relid, toKeep->relid,
+							   0, replace_relid_callback);
 
 		if (bms_membership(rinfo->required_relids) == BMS_MULTIPLE)
 			jinfo_candidates = lappend(jinfo_candidates, rinfo);
@@ -1743,7 +1864,8 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 											 restrictlist);
 	foreach_node(RestrictInfo, rinfo, toRemove->baserestrictinfo)
 	{
-		ChangeVarNodes((Node *) rinfo, toRemove->relid, toKeep->relid, 0);
+		ChangeVarNodesExtended((Node *) rinfo, toRemove->relid, toKeep->relid,
+							   0, replace_relid_callback);
 
 		if (bms_membership(rinfo->required_relids) == BMS_MULTIPLE)
 			jinfo_candidates = lappend(jinfo_candidates, rinfo);
@@ -1785,7 +1907,8 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	{
 		Node	   *node = lfirst(lc);
 
-		ChangeVarNodes(node, toRemove->relid, toKeep->relid, 0);
+		ChangeVarNodesExtended(node, toRemove->relid, toKeep->relid, 0,
+							   replace_relid_callback);
 		if (!list_member(toKeep->reltarget->exprs, node))
 			toKeep->reltarget->exprs = lappend(toKeep->reltarget->exprs, node);
 	}
@@ -1829,14 +1952,18 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	 * Replace varno in all the query structures, except nodes RangeTblRef
 	 * otherwise later remove_rel_from_joinlist will yield errors.
 	 */
-	ChangeVarNodesExtended((Node *) root->parse, toRemove->relid, toKeep->relid, 0, false);
+	ChangeVarNodesExtended((Node *) root->parse, toRemove->relid, toKeep->relid,
+						   0, replace_relid_callback);
 
 	/* Replace links in the planner info */
 	remove_rel_from_query(root, toRemove, toKeep->relid, NULL, NULL);
 
 	/* At last, replace varno in root targetlist and HAVING clause */
-	ChangeVarNodes((Node *) root->processed_tlist, toRemove->relid, toKeep->relid, 0);
-	ChangeVarNodes((Node *) root->processed_groupClause, toRemove->relid, toKeep->relid, 0);
+	ChangeVarNodesExtended((Node *) root->processed_tlist, toRemove->relid,
+						   toKeep->relid, 0, replace_relid_callback);
+	ChangeVarNodesExtended((Node *) root->processed_groupClause,
+						   toRemove->relid, toKeep->relid, 0,
+						   replace_relid_callback);
 
 	adjust_relid_set(root->all_result_relids, toRemove->relid, toKeep->relid);
 	adjust_relid_set(root->leaf_result_relids, toRemove->relid, toKeep->relid);
@@ -1919,8 +2046,10 @@ split_selfjoin_quals(PlannerInfo *root, List *joinquals, List **selfjoinquals,
 		 * when we have cast of the same var to different (but compatible)
 		 * types.
 		 */
-		ChangeVarNodes(rightexpr, bms_singleton_member(rinfo->right_relids),
-					   bms_singleton_member(rinfo->left_relids), 0);
+		ChangeVarNodesExtended(rightexpr,
+							   bms_singleton_member(rinfo->right_relids),
+							   bms_singleton_member(rinfo->left_relids), 0,
+							   replace_relid_callback);
 
 		if (equal(leftexpr, rightexpr))
 			sjoinquals = lappend(sjoinquals, rinfo);
@@ -1956,7 +2085,8 @@ match_unique_clauses(PlannerInfo *root, RelOptInfo *outer, List *uclauses,
 			   bms_is_empty(rinfo->right_relids));
 
 		clause = (Expr *) copyObject(rinfo->clause);
-		ChangeVarNodes((Node *) clause, relid, outer->relid, 0);
+		ChangeVarNodesExtended((Node *) clause, relid, outer->relid, 0,
+							   replace_relid_callback);
 
 		iclause = bms_is_empty(rinfo->left_relids) ? get_rightop(clause) :
 			get_leftop(clause);

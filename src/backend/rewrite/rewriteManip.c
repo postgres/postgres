@@ -550,19 +550,15 @@ offset_relid_set(Relids relids, int offset)
  * earlier to ensure that no unwanted side-effects occur!
  */
 
-typedef struct
-{
-	int			rt_index;
-	int			new_index;
-	int			sublevels_up;
-	bool		change_RangeTblRef;
-} ChangeVarNodes_context;
-
 static bool
 ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 {
 	if (node == NULL)
 		return false;
+
+	if (context->callback && context->callback(node, context))
+		return false;
+
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
@@ -588,7 +584,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			cexpr->cvarno = context->new_index;
 		return false;
 	}
-	if (IsA(node, RangeTblRef) && context->change_RangeTblRef)
+	if (IsA(node, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) node;
 
@@ -635,95 +631,6 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		}
 		return false;
 	}
-	if (IsA(node, RestrictInfo))
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) node;
-		int			relid = -1;
-		bool		is_req_equal =
-			(rinfo->required_relids == rinfo->clause_relids);
-		bool		clause_relids_is_multiple =
-			(bms_membership(rinfo->clause_relids) == BMS_MULTIPLE);
-
-		/*
-		 * Recurse down into clauses if the target relation is present in
-		 * clause_relids or required_relids.  We must check required_relids
-		 * because the relation not present in clause_relids might still be
-		 * present somewhere in orclause.
-		 */
-		if (bms_is_member(context->rt_index, rinfo->clause_relids) ||
-			bms_is_member(context->rt_index, rinfo->required_relids))
-		{
-			Relids		new_clause_relids;
-
-			expression_tree_walker((Node *) rinfo->clause, ChangeVarNodes_walker, (void *) context);
-			expression_tree_walker((Node *) rinfo->orclause, ChangeVarNodes_walker, (void *) context);
-
-			new_clause_relids = adjust_relid_set(rinfo->clause_relids,
-												 context->rt_index,
-												 context->new_index);
-
-			/*
-			 * Incrementally adjust num_base_rels based on the change of
-			 * clause_relids, which could contain both base relids and
-			 * outer-join relids.  This operation is legal until we remove
-			 * only baserels.
-			 */
-			rinfo->num_base_rels -= bms_num_members(rinfo->clause_relids) -
-				bms_num_members(new_clause_relids);
-
-			rinfo->clause_relids = new_clause_relids;
-			rinfo->left_relids =
-				adjust_relid_set(rinfo->left_relids, context->rt_index, context->new_index);
-			rinfo->right_relids =
-				adjust_relid_set(rinfo->right_relids, context->rt_index, context->new_index);
-		}
-
-		if (is_req_equal)
-			rinfo->required_relids = rinfo->clause_relids;
-		else
-			rinfo->required_relids =
-				adjust_relid_set(rinfo->required_relids, context->rt_index, context->new_index);
-
-		rinfo->outer_relids =
-			adjust_relid_set(rinfo->outer_relids, context->rt_index, context->new_index);
-		rinfo->incompatible_relids =
-			adjust_relid_set(rinfo->incompatible_relids, context->rt_index, context->new_index);
-
-		if (rinfo->mergeopfamilies &&
-			bms_get_singleton_member(rinfo->clause_relids, &relid) &&
-			clause_relids_is_multiple &&
-			relid == context->new_index && IsA(rinfo->clause, OpExpr))
-		{
-			Expr	   *leftOp;
-			Expr	   *rightOp;
-
-			leftOp = (Expr *) get_leftop(rinfo->clause);
-			rightOp = (Expr *) get_rightop(rinfo->clause);
-
-			/*
-			 * For self-join elimination, changing varnos could transform
-			 * "t1.a = t2.a" into "t1.a = t1.a".  That is always true as long
-			 * as "t1.a" is not null.  We use qual() to check for such a case,
-			 * and then we replace the qual for a check for not null
-			 * (NullTest).
-			 */
-			if (leftOp != NULL && equal(leftOp, rightOp))
-			{
-				NullTest   *ntest = makeNode(NullTest);
-
-				ntest->arg = leftOp;
-				ntest->nulltesttype = IS_NOT_NULL;
-				ntest->argisrow = false;
-				ntest->location = -1;
-				rinfo->clause = (Expr *) ntest;
-				rinfo->mergeopfamilies = NIL;
-				rinfo->left_em = NULL;
-				rinfo->right_em = NULL;
-			}
-			Assert(rinfo->orclause == NULL);
-		}
-		return false;
-	}
 	if (IsA(node, AppendRelInfo))
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) node;
@@ -757,26 +664,28 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 }
 
 /*
- * ChangeVarNodesExtended - similar to ChangeVarNodes, but has additional
- *							'change_RangeTblRef' param
+ * ChangeVarNodesExtended - similar to ChangeVarNodes, but with an  additional
+ *							'callback' param
  *
  * ChangeVarNodes changes a given node and all of its underlying nodes.
- * However, self-join elimination (SJE) needs to skip the RangeTblRef node
- * type.  During SJE's last step, remove_rel_from_joinlist() removes
- * remaining RangeTblRefs with target relid.  If ChangeVarNodes() replaces
- * the target relid before, remove_rel_from_joinlist() fails to identify
- * the nodes to delete.
+ * This version of function additionally takes a callback, which has a
+ * chance to process a node before ChangeVarNodes_walker.  A callback
+ * returns a boolean value indicating if given node should be skipped from
+ * further processing by ChangeVarNodes_walker.  The callback is called
+ * only for expressions and other children nodes of a Query processed by
+ * a walker.  Initial processing of the root Query doesn't involve the
+ * callback.
  */
 void
 ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
-					   int sublevels_up, bool change_RangeTblRef)
+					   int sublevels_up, ChangeVarNodes_callback callback)
 {
 	ChangeVarNodes_context context;
 
 	context.rt_index = rt_index;
 	context.new_index = new_index;
 	context.sublevels_up = sublevels_up;
-	context.change_RangeTblRef = change_RangeTblRef;
+	context.callback = callback;
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree; if
@@ -826,7 +735,20 @@ ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
 void
 ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 {
-	ChangeVarNodesExtended(node, rt_index, new_index, sublevels_up, true);
+	ChangeVarNodesExtended(node, rt_index, new_index, sublevels_up, NULL);
+}
+
+/*
+ * ChangeVarNodesWalkExpression - process expression within the custom
+ *								  callback provided to the
+ *								  ChangeVarNodesExtended.
+ */
+bool
+ChangeVarNodesWalkExpression(Node *node, ChangeVarNodes_context *context)
+{
+	return expression_tree_walker(node,
+								  ChangeVarNodes_walker,
+								  (void *) context);
 }
 
 /*
