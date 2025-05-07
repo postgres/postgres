@@ -1,4 +1,4 @@
-#define FIXME 1
+#define FIXME 0
 
 #define PGL_MAIN
 #define PGL_INITDB_MAIN

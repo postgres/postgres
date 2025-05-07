@@ -6,6 +6,9 @@
 volatile sigjmp_buf local_sigjmp_buf;
 #endif
 
+// track back how many ex raised in steps of the loop until sucessfull clear_error
+volatile int canary_ex = 0;
+
 /* TODO : prevent multiple write and write while reading ? */
 volatile int cma_wsize = 0;
 volatile int cma_rsize = 0;  // defined in postgres.c
@@ -467,9 +470,7 @@ PDEBUG("# 451:" PGS_IN);
                     pq_recvbuf_fill(fp, packetlen);
                     sockfiles = true;
                 }
-#if PGDEBUG
-                rewind(fp);
-#endif
+
                 /* is it startup/auth packet ? */
                 if (!peek) {
                     startup_auth();
@@ -481,9 +482,9 @@ PDEBUG("# 451:" PGS_IN);
                 }
             }
 
-            /* FD CLEANUP, all cases */
-            fclose(fp);
-            unlink(PGS_IN);
+            /* do not forget FD CLEANUP in all cases */
+//            fclose(fp);
+//            unlink(PGS_IN);
 
             if (packetlen) {
                 // it was startup/auth , write and return fast.
@@ -508,7 +509,7 @@ PDEBUG("# 500: NO DATA:" PGS_IN );
 
         // is it REPL in cma ?
         if (!peek)
-            return;
+            goto return_early;
 
         firstchar = peek ;
 
@@ -533,12 +534,12 @@ PDEBUG("# 500: NO DATA:" PGS_IN );
 
     if (packetlen<2) {
         puts("# 512: WARNING: empty packet");
-        cma_rsize= 0;
+        //cma_rsize= 0;
         if (is_repl)
             pg_prompt();
         // always free cma buffer !!!
-        IO[0] = 0;
-        return;
+        // IO[0] = 0;
+        goto return_early;
     }
 
 incoming:
@@ -698,6 +699,12 @@ wire_flush:
             puts("ERROR: cma was not flushed before socketfile interface");
 #endif
     }
+return_early:;
+    /* always FD CLEANUP */
+    if (fp) {
+        fclose(fp);
+        unlink(PGS_IN);
+    }
 
 
     // always free kernel buffer !!!
@@ -705,6 +712,9 @@ wire_flush:
     IO[0] = 0;
 
     #undef IO
+
+    // reset EX counter
+    canary_ex = 0;
 }
 
 #undef PGL_LOOP

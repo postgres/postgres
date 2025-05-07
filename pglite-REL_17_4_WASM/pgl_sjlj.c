@@ -53,9 +53,12 @@
         if (is_repl)
             pg_prompt();
 #endif
-       if (pq_buffer_remaining_data()>0)
+
+       if (pq_buffer_remaining_data()>0) {
+            if (canary_ex++ > 8)
+                abort;
             goto incoming;
-       else
+       } else
             goto wire_flush;
 #endif
     }
