@@ -353,7 +353,7 @@ typedef enum BackendType
 	 * Auxiliary processes. These have PGPROC entries, but they are not
 	 * attached to any particular database, and cannot run transactions or
 	 * even take heavyweight locks. There can be only one of each of these
-	 * running at a time.
+	 * running at a time, except for IO workers.
 	 *
 	 * If you modify these, make sure to update NUM_AUXILIARY_PROCS and the
 	 * glossary in the docs.

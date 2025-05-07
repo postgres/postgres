@@ -89,7 +89,8 @@ struct ProcSignalHeader
 /*
  * We reserve a slot for each possible ProcNumber, plus one for each
  * possible auxiliary process type.  (This scheme assumes there is not
- * more than one of any auxiliary process type at a time.)
+ * more than one of any auxiliary process type at a time, except for
+ * IO workers.)
  */
 #define NumProcSignalSlots	(MaxBackends + NUM_AUXILIARY_PROCS)
 
