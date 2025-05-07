@@ -2393,11 +2393,27 @@ _bt_scanbehind_checkkeys(IndexScanDesc scan, ScanDirection dir,
 	TupleDesc	tupdesc = RelationGetDescr(rel);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			nfinaltupatts = BTreeTupleGetNAtts(finaltup, rel);
+	bool		scanBehind;
 
 	Assert(so->numArrayKeys);
 
 	if (_bt_tuple_before_array_skeys(scan, dir, finaltup, tupdesc,
-									 nfinaltupatts, false, 0, NULL))
+									 nfinaltupatts, false, 0, &scanBehind))
+		return false;
+
+	/*
+	 * If scanBehind was set, all of the untruncated attribute values from
+	 * finaltup that correspond to an array match the array's current element,
+	 * but there are other keys associated with truncated suffix attributes.
+	 * Array advancement must have incremented the scan's arrays on the
+	 * previous page, resulting in a set of array keys that happen to be an
+	 * exact match for the current page high key's untruncated prefix values.
+	 *
+	 * This page definitely doesn't contain tuples that the scan will need to
+	 * return.  The next page may or may not contain relevant tuples.  Handle
+	 * this by cutting our losses and starting a new primscan.
+	 */
+	if (scanBehind)
 		return false;
 
 	if (!so->oppositeDirCheck)
