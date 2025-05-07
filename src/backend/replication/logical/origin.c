@@ -264,6 +264,18 @@ replorigin_create(const char *roname)
 	SysScanDesc scan;
 	ScanKeyData key;
 
+	/*
+	 * To avoid needing a TOAST table for pg_replication_origin, we limit
+	 * replication origin names to 512 bytes.  This should be more than enough
+	 * for all practical use.
+	 */
+	if (strlen(roname) > MAX_RONAME_LEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("replication origin name is too long"),
+				 errdetail("Replication origin names must be no longer than %d bytes.",
+						   MAX_RONAME_LEN)));
+
 	roname_d = CStringGetTextDatum(roname);
 
 	Assert(IsTransactionState());
@@ -286,6 +298,17 @@ replorigin_create(const char *roname)
 	InitDirtySnapshot(SnapshotDirty);
 
 	rel = table_open(ReplicationOriginRelationId, ExclusiveLock);
+
+	/*
+	 * We want to be able to access pg_replication_origin without setting up a
+	 * snapshot.  To make that safe, it needs to not have a TOAST table, since
+	 * TOASTed data cannot be fetched without a snapshot.  As of this writing,
+	 * its only varlena column is roname, which we limit to 512 bytes to avoid
+	 * needing out-of-line storage.  If you add a TOAST table to this catalog,
+	 * be sure to set up a snapshot everywhere it might be needed.  For more
+	 * information, see https://postgr.es/m/ZvMSUPOqUU-VNADN%40nathan.
+	 */
+	Assert(!OidIsValid(rel->rd_rel->reltoastrelid));
 
 	for (roident = InvalidOid + 1; roident < PG_UINT16_MAX; roident++)
 	{

@@ -45,6 +45,11 @@ WHERE refclassid = 0 OR refobjid = 0 OR
 -- as user data by pg_upgrade, which would cause failures.
 -- 3. pg_authid, since its toast table cannot be accessed when it would be
 -- needed, i.e., during authentication before we've selected a database.
+-- 4. pg_replication_origin, since we want to be able to access that catalog
+-- without setting up a snapshot.  To make that safe, it needs to not have a
+-- toast table, since toasted data cannot be fetched without a snapshot.  As of
+-- this writing, its only varlena column is roname, which we limit to 512 bytes
+-- to avoid needing out-of-line storage.
 
 SELECT relname, attname, atttypid::regtype
 FROM pg_class c JOIN pg_attribute a ON c.oid = attrelid

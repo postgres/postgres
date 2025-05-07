@@ -346,8 +346,6 @@ IsSharedRelation(Oid relationId)
 		relationId == PgDbRoleSettingToastIndex ||
 		relationId == PgParameterAclToastTable ||
 		relationId == PgParameterAclToastIndex ||
-		relationId == PgReplicationOriginToastTable ||
-		relationId == PgReplicationOriginToastIndex ||
 		relationId == PgShdescriptionToastTable ||
 		relationId == PgShdescriptionToastIndex ||
 		relationId == PgShseclabelToastTable ||

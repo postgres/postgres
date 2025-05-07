@@ -914,3 +914,7 @@ SELECT test_relpath();
  
 (1 row)
 
+-- pg_replication_origin.roname limit
+SELECT pg_replication_origin_create('regress_' || repeat('a', 505));
+ERROR:  replication origin name is too long
+DETAIL:  Replication origin names must be no longer than 512 bytes.
