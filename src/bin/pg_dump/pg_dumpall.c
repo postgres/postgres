@@ -114,6 +114,7 @@ static int	server_version;
 static int	load_via_partition_root = 0;
 static int	on_conflict_do_nothing = 0;
 static int	statistics_only = 0;
+static int	sequence_data = 0;
 
 static char role_catalog[10];
 #define PG_AUTHID "pg_authid"
@@ -189,6 +190,7 @@ main(int argc, char *argv[])
 		{"rows-per-insert", required_argument, NULL, 7},
 		{"statistics-only", no_argument, &statistics_only, 1},
 		{"filter", required_argument, NULL, 8},
+		{"sequence-data", no_argument, &sequence_data, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -505,6 +507,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --on-conflict-do-nothing");
 	if (statistics_only)
 		appendPQExpBufferStr(pgdumpopts, " --statistics-only");
+	if (sequence_data)
+		appendPQExpBufferStr(pgdumpopts, " --sequence-data");
 
 	/*
 	 * Open the output file if required, otherwise use stdout.  If required,
@@ -745,6 +749,7 @@ help(void)
 	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"));
+	printf(_("  --sequence-data              include sequence data in dump\n"));
 	printf(_("  --statistics-only            dump only the statistics, not schema or data\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
