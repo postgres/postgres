@@ -304,6 +304,12 @@ from the grouping.  This was already true for non-deferred primary keys.
 <!--
 Author: Richard Guo <rguo@postgresql.org>
 2024-10-09 [67a54b9e8] Allow pushdown of HAVING clauses with grouping sets
+Author: Richard Guo <rguo@postgresql.org>
+2024-09-10 [247dea89f] Introduce an RTE for the grouping step
+Author: Richard Guo <rguo@postgresql.org>
+2024-09-10 [f5050f795] Mark expressions nullable by grouping sets
+Author: Richard Guo <rguo@postgresql.org>
+2025-03-13 [cc5d98525] Fix incorrect handling of subquery pullup
 -->
 
 <listitem>
@@ -313,7 +319,7 @@ Allow some HAVING clauses on GROUPING SETS to be pushed to WHERE clauses (Richar
 </para>
 
 <para>
-This allows earlier row filtering.
+This allows earlier row filtering.  This release also fixes some GROUPING SETS queries that used to return incorrect results.
 </para>
 </listitem>
 
