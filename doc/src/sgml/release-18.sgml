@@ -397,7 +397,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Improve the efficiency of joins involving partitions (Ashutosh Bapat, Yuya Watari, David Rowley)
+Improve the efficiency of planning queries accessing many partitions (Ashutosh Bapat, Yuya Watari, David Rowley)
 <ulink url="&commit_baseurl;88f55bc97">&sect;</ulink>
 <ulink url="&commit_baseurl;d69d45a5a">&sect;</ulink>
 </para>
