@@ -528,9 +528,6 @@ PDEBUG("# 500: NO DATA:" PGS_IN );
     // CMA wire mode. -> packetlen was set to cma_rsize
     resetStringInfo(inBuf);
 
-    for (int i=0; i<packetlen; i++) {
-        appendStringInfoChar(inBuf, IO[i]);
-    }
 
     if (packetlen<2) {
         puts("# 512: WARNING: empty packet");
