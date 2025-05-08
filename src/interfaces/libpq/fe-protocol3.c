@@ -1532,7 +1532,7 @@ getParameterStatus(PGconn *conn)
 static int
 getBackendKeyData(PGconn *conn, int msgLength)
 {
-	uint8		cancel_key_len;
+	int			cancel_key_len;
 
 	if (conn->be_cancel_key)
 	{

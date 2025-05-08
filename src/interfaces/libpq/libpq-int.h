@@ -547,8 +547,8 @@ struct pg_conn
 
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
+	int			be_cancel_key_len;
 	char	   *be_cancel_key;	/* query cancellation key and its length */
-	uint16		be_cancel_key_len;
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
