@@ -1,9 +1,16 @@
-Percona server for PostgreSQL
+Percona Server for PostgreSQL - License
 (formerly known as Postgres, then as Postgres95)
 
-Portions Copyright (c) 2024-2025, Percona LLC and/or its affiliates
+This software includes portions copyrighted or made available by:
+•	Percona, LLC and/or its affiliates (collectively, "Percona")
+•	PostgreSQL Global Development Group ("PostgreSQL")
+•	The Regents of the University of California
 
-Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
+A.	PostgreSQL and University of California Portions.  Those portions of this Software 
+copyrighted or made available by PostgreSQL or The Regents of the University of 
+California are subject to the following:
+
+Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
 
 Portions Copyright (c) 1994, The Regents of the University of California
 
@@ -12,14 +19,34 @@ documentation for any purpose, without fee, and without a written agreement
 is hereby granted, provided that the above copyright notice and this
 paragraph and the following two paragraphs appear in all copies.
 
-IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR
-DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
-LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
-DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR 
+DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING 
+LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, 
+EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF 
+SUCH DAMAGE.
 
-THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
-ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
-PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, 
+AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, 
+SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS. 
+
+B.	Percona Portions.  Those portions of this Software copyrighted or made available 
+by Percona are subject both to the disclaimers in part A of this license and the following:
+
+Copyright (c) 2024-2025, Percona LLC and/or its affiliates
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written agreement
+is hereby granted, provided that the above copyright notice and this
+paragraph and the following two paragraphs appear in all copies.
+
+IN NO EVENT SHALL PERCONA BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, 
+INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE 
+USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF PERCONA HAS BEEN ADVISED 
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+PERCONA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  
+THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND PERCONA HAS NO 
+OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
