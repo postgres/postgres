@@ -1432,9 +1432,9 @@ Add OLD/NEW support to RETURNING in DML queries (Dean Rasheed)
 </para>
 
 <para>
-Previously RETURNING only returned new values for INSERT and UPDATE, old values for DELETE;  MERGE would return the appropriate value for the internal query executed.  This new syntax
-allows INSERT with an ON CONFLICT action to return old values, UPDATE to return old values, and DELETE to return new values if the query assigned to an ON DELETE row would return new
-values.  New syntax allows changeable relation aliases "old" and "new" to specify which values should be returned.
+Previously RETURNING only returned new values for INSERT and UPDATE, and old values for DELETE; MERGE would return the appropriate value for the internal query executed.  This new syntax
+allows the RETURNING list of INSERT/UPDATE/DELETE/MERGE to explicitly return old and new values by using the special aliases "old" and "new".  These aliases can be renamed to
+avoid identifier conflicts.
 </para>
 </listitem>
 
