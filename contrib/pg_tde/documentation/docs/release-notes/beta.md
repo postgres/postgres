@@ -1,6 +1,6 @@
 # pg_tde Beta (2024-06-30)
 
-`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../tde.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
+`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../index/index.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
 [Get started](../install.md){.md-button}
 
@@ -22,4 +22,3 @@ Starting with `pg_tde` Beta, the access method for `pg_tde` extension is renamed
 * Fixed the issue with adjusting a current position in a file by using raw file descriptor for the `lseek` function. (Thanks to user _rainhard_ for providing the fix)
 
 * Enhanced the init script to consider a custom superuser for the POSTGRES_USER parameter when `pg_tde` is running via Docker (Thanks to _Alejandro Paredero_ for reporting the issue)
-

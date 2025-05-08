@@ -1,39 +1,39 @@
-# Test Transparent Data Encryption
+# Validate Encryption with pg_tde
 
-Enabling `pg_tde` extension for a database creates the table access method `tde_heap` . This access method enables you to encrypt the data.
-
-Here's how to do it:
+After enabling the `pg_tde` extension for a database, you can begin encrypting data using the `tde_heap` table access method.
 
 ## Encrypt data in a new table
 
 1. Create a table in the database for which you have [enabled `pg_tde`](setup.md) using the `tde_heap` access method as follows:
 
-    ```
-    CREATE TABLE <table_name> (<field> <datatype>) USING tde_heap;
+    ```sql
+        CREATE TABLE <table_name> (<field> <datatype>) USING tde_heap;
     ```
 
     <i warning>:material-information: Warning:</i> Example for testing purposes only:
 
+    ```sql
+        CREATE TABLE albums (
+            album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            artist_id INTEGER,
+            title TEXT NOT NULL,
+            released DATE NOT NULL
+        ) USING tde_heap;
     ```
-    CREATE TABLE albums (
-    album_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    artist_id INTEGER,
-    title TEXT NOT NULL,
-    released DATE NOT NULL
-    ) USING tde_heap;
-    ```
-    
-    Learn more about table access methods and how you can enable data encryption by default in the [Table access methods](table-access-method.md) section.
+
+    Learn more about table access methods and how you can enable data encryption by default in the [Table access methods](index/table-access-method.md) section.
 
 2. To check if the data is encrypted, run the following function:
 
-    ```
-    SELECT pg_tde_is_encrypted('table_name');
+    ```sql
+        SELECT pg_tde_is_encrypted('table_name');
     ```
 
     The function returns `t` if the table is encrypted and `f` - if not.
 
-3. Rotate the principal key when needed, see [Principal key management](functions.md#principal-key-management))
+3. (Optional) Rotate the principal key.
+
+To re-encrypt the data using a new key, see [Principal key management](functions.md#principal-key-management).
 
 ## Encrypt existing table
 
@@ -41,16 +41,24 @@ You can encrypt an existing table. It requires rewriting the table, so for large
 
 Run the following command:
 
-```
-ALTER TABLE table_name SET ACCESS METHOD tde_heap;
+```sql
+    ALTER TABLE table_name SET ACCESS METHOD tde_heap;
 ```
 
-Note that the `SET ACCESS METHOD` command drops hint bits and this may affect the performance. Running a plain `SELECT count(*)` or `VACUUM` commands on the entire table will check every tuple for visibility and set its hint bits. Therefore, after executing the `ALTER TABLE` command, run a simple `count(*)` on your tables:
+!!! important
 
-```
-SELECT count(*) FROM table_name;
-```
+    Using `SET ACCESS METHOD` drops hint bits which can impact query performance. To restore performance, run:
+
+    ```sql
+        SELECT count(*) FROM table_name;
+    ```
+
+    This forces PostgreSQL to check every tuple for visibility and reset the hint bits.
 
 !!! hint
 
-    If you no longer wish to use `pg_tde` or wish to switch to using the `tde_heap_basic` access method, see how you can [decrypt your data](decrypt.md).
+    Want to remove encryption later? See how to [decrypt your data](how-to/decrypt.md).
+
+## Next steps
+
+[Configure WAL encryption (tech preview) :material-arrow-right:](wal-encryption.md){.md-button}

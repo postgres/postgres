@@ -1,21 +1,22 @@
-# WAL encryption configuration (tech preview)
+# Configure WAL Encryption (tech preview)
 
-Before turning WAL encryption on, you must first create a principal key for WAL.
+Before turning WAL encryption on, you must follow the steps below to create your first principal key.
 
-Here's what to do:
+## Create the principal key
 
-1. Create pg_tde extesion if it is not exists:
+1. Create the `pg_tde` extension if it does not exist:
 
     ```sql
     CREATE EXTENSION IF NOT EXISTS pg_tde;
     ```
+
 2. Set up the key provider for WAL encryption
 
     === "With KMIP server"
 
         Make sure you have obtained the root certificate for the KMIP server and the keypair for the client. The client key needs permissions to create / read keys on the server. Find the [configuration guidelines for the HashiCorp Vault Enterprise KMIP Secrets Engine](https://developer.hashicorp.com/vault/tutorials/enterprise/kmip-engine).
-        
-        For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
+
+        For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance.
 
         ```sql
         SELECT pg_tde_add_global_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
@@ -36,12 +37,12 @@ Here's what to do:
         ```
 
     === "With HashiCorp Vault"
-    
+
         ```sql
         SELECT pg_tde_add_global_key_provider_vault_v2('provider-name', 'secret_token', 'url', 'mount', 'ca_path');
-        ``` 
+        ```
 
-        where: 
+        where:
 
         * `provider-name` is the name you define for the key provider
         * `url` is the URL of the Vault server
@@ -49,43 +50,40 @@ Here's what to do:
         * `secret_token` is an access token with read and write access to the above mount point
         * [optional] `ca_path` is the path of the CA file used for SSL verification
 
-
     === "With keyring file"
 
-        This setup is intended for development and stores the keys unencrypted in the specified data file.    
+        This setup is **not recommended**, as it is intended for development. The keys are stored **unencrypted** in the specified data file.
 
         ```sql
         SELECT pg_tde_add_global_key_provider_file('provider-name','/path/to/the/keyring/data.file');
         ```
 
 3. Create principal key
-    
+
     ```sql
-    SELECT pg_tde_set_server_key_using_global_key_provider('key', 'provider-name');
+        SELECT pg_tde_set_server_key_using_global_key_provider('key', 'provider-name');
     ```
 
 4. Enable WAL level encryption using the `ALTER SYSTEM` command. You need the privileges of the superuser to run this command:
 
     ```sql
-    ALTER SYSTEM SET pg_tde.wal_encrypt = on;
+        ALTER SYSTEM SET pg_tde.wal_encrypt = on;
     ```
 
 5. Restart the server to apply the changes.
 
-    * On Debian and Ubuntu:    
+    * On Debian and Ubuntu:
 
-       ```sh
+    ```sh
        sudo systemctl restart postgresql
-       ```
-    
+    ```
+
     * On RHEL and derivatives
 
-       ```sh
+    ```sh
        sudo systemctl restart postgresql-17
-       ```
+    ```
 
 Now WAL files start to be encrypted for both encrypted and unencrypted tables.
 
-## Next steps
-
-[Test TDE](test.md){.md-button}
+For more technical references related to architecture, variables or functions, see [Technical Reference](advanced-topics/index.md).

@@ -1,8 +1,8 @@
-# Installation
+# Install pg_tde
 
-Install `pg_tde` using one of the available installation methods:
+To install `pg_tde`, use one of the following methods:
 
-=== ":octicons-terminal-16: Package manager" 
+=== ":octicons-terminal-16: Package manager"
 
     The packages are available for the following operating systems:
     
@@ -23,13 +23,16 @@ Install `pg_tde` using one of the available installation methods:
 
     [Run in Docker :material-arrow-right:](https://docs.percona.com/postgresql/latest/docker.html){.md-button}
 
-=== ":octicons-download-16: Manual download"
+=== ":octicons-download-16: Tar download"
 
-    `pg_tde` is included in the Percona Distribution for PostgreSQL tarball. Check below to get access to a detailed step-by-step guide. 
+    `pg_tde` is included in the Percona Distribution for PostgreSQL tarball. Select the below link to access the step-by-step guide. 
 
     [Install from tarballs :material-arrow-right:](https://docs.percona.com/postgresql/17/tarball.html){.md-button}
 
+Follow the configuration steps below to continue:
 
-## Next steps
+[Configure pg_tde :material-arrow-right:](setup.md){.md-button}
 
-[Setup :material-arrow-right:](setup.md){.md-button}
+If you’ve already completed these steps, feel free to skip ahead to a later section:
+
+ [Configure Key Management (KMS)](global-key-provider-configuration/index.md){.md-button} [Validate Encryption with pg_tde](test.md){.md-button} [Configure WAL encryption](wal-encryption.md){.md-button}

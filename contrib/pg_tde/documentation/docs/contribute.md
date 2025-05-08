@@ -1,4 +1,4 @@
-# Contributing guide
+# Contributing Guide
 
 Welcome to `pg_tde` - the Transparent Data Encryption extension for PostgreSQL!
 

@@ -1,4 +1,4 @@
-# pg_tde Release Candidate ({{date.RC}})
+# pg_tde Release Candidate ({{date.RC2}})
 
 `pg_tde` extension brings in [Transparent Data Encryption (TDE)](../index/index.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
@@ -10,7 +10,7 @@ This release provides the following features and improvements:
 
 * **Improved performance with redesigned WAL encryption**.
 
-    The approach to WAL encryption has been redesigned. Now, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on. The information about what is encrypted is stored in the internal key metadata. This change improves WAL encryption flow with native replication and increases performance for large scale databases. 
+    The approach to WAL encryption has been redesigned. Now, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on. The information about what is encrypted is stored in the internal key metadata. This change improves WAL encryption flow with native replication and increases performance for large scale databases.
 
 * **Default encryption key for single-tenancy**.
 

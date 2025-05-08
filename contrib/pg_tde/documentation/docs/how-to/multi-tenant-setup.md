@@ -1,10 +1,10 @@
-# Set up multi-tenancy
+# Configure Multi-tenancy
 
 The steps below describe how to set up multi-tenancy with `pg_tde`. Multi-tenancy allows you to encrypt different databases with different keys. This provides granular control over data and enables you to introduce different security policies and access controls for each database so that only authorized users of specific databases have access to the data.
 
-If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Setup](setup.md) section.
+If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Setup](../setup.md) section.
 
-For how to enable WAL encryption, refer to the [WAL encryption](wal-encryption.md) section.
+For how to enable WAL encryption, refer to the [WAL encryption](../wal-encryption.md) section.
 
 --8<-- "kms-considerations.md"
 
@@ -12,7 +12,7 @@ For how to enable WAL encryption, refer to the [WAL encryption](wal-encryption.m
 
 Load the `pg_tde` at startup time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` cluster.
 
-1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges. 
+1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges.
 
     ```
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
@@ -20,12 +20,12 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
 2. Start or restart the `postgresql` cluster to apply the changes.
 
-    * On Debian and Ubuntu:    
+    * On Debian and Ubuntu:
 
        ```sh
        sudo systemctl restart postgresql-17
        ```
-    
+
     * On RHEL and derivatives
 
        ```sh
@@ -37,8 +37,8 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
     ```
     CREATE EXTENSION pg_tde;
     ```
-    
-    The `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them. 
+
+    The `pg_tde` extension is created for the currently used database. To enable data encryption in other databases, you must explicitly run the `CREATE EXTENSION` command against them.
 
     !!! tip
 
@@ -60,7 +60,7 @@ You must do these steps for every database where you have created the extension.
         
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
-        ```
+        ```sql
         SELECT pg_tde_add_database_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/server_certificate.pem', '/path_to/client_key.pem');
         ```
 
@@ -99,9 +99,9 @@ You must do these steps for every database where you have created the extension.
 	    SELECT pg_tde_add_database_key_provider_file_vault_v2('my-vault','http://vault.vault.svc.cluster.local:8200,'secret/data','hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', NULL);
 	    ```
 
-    === "With a keyring file"
+    === "With a keyring file (not recommended)"
 
-        This setup is intended for development and stores the keys unencrypted in the specified data file.    
+        This setup is intended for development and stores the keys unencrypted in the specified data file.
 
         ```sql
         SELECT pg_tde_add_database_key_provider_file('provider-name','/path/to/the/keyring/data.file');
@@ -112,8 +112,7 @@ You must do these steps for every database where you have created the extension.
 	    ```sql
 	    SELECT pg_tde_add_database_key_provider_file('file-keyring','/tmp/pg_tde_test_local_keyring.per');
 	    ```
-       
-       
+  
 2. Add a principal key
 
     ```sql
@@ -133,6 +132,5 @@ You must do these steps for every database where you have created the extension.
     ```
 
     The key is auto-generated.
-
 
    <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.

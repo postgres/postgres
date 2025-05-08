@@ -1,9 +1,8 @@
 # pg_tde Alpha 1 (2024-03-28)
 
-`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../tde.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
+`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../index/index.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
 [Get started](../install.md){.md-button}
-
 
 !!! important
 
@@ -11,7 +10,6 @@
     not recommended for production environments yet**. We encourage you to test it and [give your feedback](https://forums.percona.com/c/postgresql/pg-tde-transparent-data-encryption-tde/82).
   
     This will help us improve the product and make it production-ready faster.
-
 
 ## Release Highlights
 
@@ -28,7 +26,7 @@ The Alpha1 version of the extension introduces the following key features:
     * The keyring configuration is now stored in a catalog separately for each database, instead of a configuration file
     * Avoid storing secrets in the unencrypted catalog by configuring keyring parameters to be read from external sources (file, http(s) request)
 
-## Improvements 
+## Improvements
 
 * Renamed the repository and Docker image from `postgres-tde-ext` to `pg_tde`. The extension name remains unchanged
 * Changed the Initialization Vector (IV) calculation of both the data and internal keys
@@ -36,9 +34,8 @@ The Alpha1 version of the extension introduces the following key features:
 ## Bugs fixed
 
 * Fixed toast related crashes
-* Fixed a crash with the DELETE statement 
+* Fixed a crash with the DELETE statement
 * Fixed performance-related issues
 * Fixed a bug where `pg_tde` sent many 404 requests to the Vault server
 * Fixed сompatibility issues with old OpenSSL versions
-* Fixed сompatibility with old Curl versions 
-
+* Fixed сompatibility with old Curl versions

@@ -12,7 +12,7 @@ Let's break down what it means.
 * Storing every key on the same key storage, or using different storages for different databases
 * Handling permissions: who can manage database specific or global permissions, who can create encrypted or not encrypted tables
 
-**Complete** means that `pg_tde` aims to encrypt data at rest. 
+**Complete** means that `pg_tde` aims to encrypt data at rest.
 
 **Data at rest** means everything written to the disk. This includes the following:
 
@@ -35,10 +35,10 @@ The main components of `pg_tde` are the following:
     [Percona Server for PostgreSQL location](https://github.com/percona/postgres/tree/{{tdebranch}})
 
 * The **`pg_tde` extension itself** implements the encryption code by hooking into the extension points introduced in the core changes, and the already existing extension points in the PostgreSQL server.
-   
+
     Everything is controllable with GUC variables and SQL statements, similar to other extensions.
 
-* The **keyring API / libraries** implement the key storage logic with different key providers. The API is internal only, the keyring libraries are part of the main library for simplicity. 
+* The **keyring API / libraries** implement the key storage logic with different key providers. The API is internal only, the keyring libraries are part of the main library for simplicity.
 In the future these could be extracted into separate shared libraries with an open API, allowing the use of third-party providers.
 
 ## Encryption architecture
@@ -48,7 +48,7 @@ In the future these could be extracted into separate shared libraries with an op
 `pg_tde` uses two kinds of keys for encryption:
 
 * Internal keys to encrypt the data. They are stored in PostgreSQL's data directory under `$PGDATA/pg_tde``.
-* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in a Key Management System (KMS) using the key provider API. 
+* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in a Key Management System (KMS) using the key provider API.
 
 `pg_tde` uses one principal key per database. Every internal key for the given database is encrypted using this principal key.
 
@@ -74,7 +74,7 @@ Support for other cipher lengths / algorithms is planned in the future.
 
 `pg_tde` makes it possible to encrypt everything or only some tables in some databases.
 
-To support this without metadata changes, encrypted tables are labeled with a `tde_heap` access method marker. 
+To support this without metadata changes, encrypted tables are labeled with a `tde_heap` access method marker.
 
 The `tde_heap` access method is the same as the `heap` one. It uses the same functions internally without any changes, but with the different name and ID. In such a way `pg_tde` knows that `tde_heap` tables are encrypted and `heap` tables are not.
 
@@ -162,11 +162,11 @@ Retreival of the principal key is cached so it only happens when necessary.
 
 ### Key provider management
 
-Key provider configuration or location may change. For example, a service is moved to a new address or the principal key must be moved to a different key provider type. `pg_tde` supports both these scenarios enabling you to manage principal keys using simple [SQL functions](functions.md#key-provider-management).
+Key provider configuration or location may change. For example, a service is moved to a new address or the principal key must be moved to a different key provider type. `pg_tde` supports both these scenarios enabling you to manage principal keys using simple [SQL functions](../functions.md#key-provider-management).
 
-In certain cases you can't use SQL functions to manage key providers. For example, if the key provider changed while the server wasn't running and is therefore unaware of these changes. The startup can fail if it needs to access the encryption keys. 
+In certain cases you can't use SQL functions to manage key providers. For example, if the key provider changed while the server wasn't running and is therefore unaware of these changes. The startup can fail if it needs to access the encryption keys.
 
-For such situations, `pg_tde` also provides [command line tools](command-line-tools.md) to recover the database.
+For such situations, `pg_tde` also provides [command line tools](../command-line-tools/index.md) to recover the database.
 
 ### Sensitive key provider information
 
@@ -242,7 +242,7 @@ This is also the reason why it requires a `dbOid` instead of a name, as it has n
 
 ### Deleting providers
 
-Providers can be deleted by the 
+Providers can be deleted by using the
 
 ```sql
 pg_tde_delete_database_key_provider(provider_name)
@@ -255,7 +255,7 @@ For database specific providers, the function first checks if the provider is us
 
 For global providers, the function checks if the provider is used anywhere, WAL or any specific database, and returns an error if it is.
 
-This somewhat goes against the principle that `pg_tde` shouldn't interact with other databases than the one the user is connected to, but on the other hand, it only does this lookup in the internal `pg_tde` metadata, not in postgres catalogs, so it is a gray zone. Making this check makes more sense than potentially making some databases inaccessible.
+This somewhat goes against the principle that `pg_tde` should not interact with other databases than the one the user is connected to, but on the other hand, it only does this lookup in the internal `pg_tde` metadata, not in postgres catalogs, so it is a gray zone. Making this check makes more sense than potentially making some databases inaccessible.
 
 ### Listing/querying providers
 
@@ -365,7 +365,7 @@ encryption is managed by the admins, normal users only have to create tables wit
 2. `CREATE EXTENSION pg_tde;` in `template1`
 3. Adding a global key provider
 4. Changing the WAL encryption to use the proper global key provider
-5. Giving users that are expected to manage database keys permissions for database specific key management, but not database specific key provider management: 
+5. Giving users that are expected to manage database keys permissions for database specific key management, but not database specific key provider management:
    specific databases HAVE to use the global key provider
 
 Note: setting the `default_table_access_method` to `tde_heap` is possible, but instead of `ALTER SYSTEM` only per database using `ALTER DATABASE`, after a principal key is configured for that specific database.
@@ -376,8 +376,8 @@ Alternatively `ALTER SYSTEM` is possible, but table creation in the database wil
 
 1. Installing the extension: `shared_preload_libraries` + `pg_tde.wal_encrypt` (that's not multi tenant currently)
 2. `CREATE EXTENSION pg_tde;` in any database
-2. Adding a global key provider for WAL
-3. Changing the WAL encryption to use the proper global key provider
+3. Adding a global key provider for WAL
+4. Changing the WAL encryption to use the proper global key provider
 
 No default configuration: key providers / principal keys are configured as a per database level, permissions are managed per database
 

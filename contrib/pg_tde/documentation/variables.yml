@@ -5,4 +5,5 @@ pgversion17: '17.4'
 tdebranch: TDE_REL_17_STABLE
 
 date:
+  RC2:
   RC: '2025-03-27'
