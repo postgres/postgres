@@ -37,7 +37,7 @@ extern PGDLLIMPORT bool pg_krb_caseins_users;
 extern PGDLLIMPORT bool pg_gss_accept_delegation;
 
 extern void ClientAuthentication(Port *port);
-extern void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
+extern void sendAuthRequest(Port *port, AuthRequest areq, const void *extradata,
 							int extralen);
 extern void set_authn_id(Port *port, const char *id);
 

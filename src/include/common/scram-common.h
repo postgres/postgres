@@ -51,7 +51,7 @@
 
 extern int	scram_SaltedPassword(const char *password,
 								 pg_cryptohash_type hash_type, int key_length,
-								 const char *salt, int saltlen, int iterations,
+								 const uint8 *salt, int saltlen, int iterations,
 								 uint8 *result, const char **errstr);
 extern int	scram_H(const uint8 *input, pg_cryptohash_type hash_type,
 					int key_length, uint8 *result,
@@ -64,7 +64,7 @@ extern int	scram_ServerKey(const uint8 *salted_password,
 							uint8 *result, const char **errstr);
 
 extern char *scram_build_secret(pg_cryptohash_type hash_type, int key_length,
-								const char *salt, int saltlen, int iterations,
+								const uint8 *salt, int saltlen, int iterations,
 								const char *password, const char **errstr);
 
 #endif							/* SCRAM_COMMON_H */

@@ -577,7 +577,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 			len = pg_b64_enc_len(sizeof(MyProcPort->scram_ClientKey));
 			/* don't forget the zero-terminator */
 			values[n] = palloc0(len + 1);
-			encoded_len = pg_b64_encode((const char *) MyProcPort->scram_ClientKey,
+			encoded_len = pg_b64_encode(MyProcPort->scram_ClientKey,
 										sizeof(MyProcPort->scram_ClientKey),
 										(char *) values[n], len);
 			if (encoded_len < 0)
@@ -588,7 +588,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 			len = pg_b64_enc_len(sizeof(MyProcPort->scram_ServerKey));
 			/* don't forget the zero-terminator */
 			values[n] = palloc0(len + 1);
-			encoded_len = pg_b64_encode((const char *) MyProcPort->scram_ServerKey,
+			encoded_len = pg_b64_encode(MyProcPort->scram_ServerKey,
 										sizeof(MyProcPort->scram_ServerKey),
 										(char *) values[n], len);
 			if (encoded_len < 0)

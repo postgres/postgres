@@ -105,7 +105,7 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
  * (of size MD5_DIGEST_LENGTH) rather than being converted to ASCII hex.
  */
 bool
-pg_md5_binary(const void *buff, size_t len, void *outbuf, const char **errstr)
+pg_md5_binary(const void *buff, size_t len, uint8 *outbuf, const char **errstr)
 {
 	pg_cryptohash_ctx *ctx;
 
@@ -142,7 +142,7 @@ pg_md5_binary(const void *buff, size_t len, void *outbuf, const char **errstr)
  * error context.
  */
 bool
-pg_md5_encrypt(const char *passwd, const char *salt, size_t salt_len,
+pg_md5_encrypt(const char *passwd, const uint8 *salt, size_t salt_len,
 			   char *buf, const char **errstr)
 {
 	size_t		passwd_len = strlen(passwd);

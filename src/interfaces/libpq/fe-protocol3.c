@@ -2121,7 +2121,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 		}
 		else
 		{
-			if (pqPutnchar((char *) args[i].u.ptr, args[i].len, conn))
+			if (pqPutnchar(args[i].u.ptr, args[i].len, conn))
 				return NULL;
 		}
 	}
@@ -2215,7 +2215,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 					}
 					else
 					{
-						if (pqGetnchar((char *) result_buf,
+						if (pqGetnchar(result_buf,
 									   *actual_result_len,
 									   conn))
 							continue;

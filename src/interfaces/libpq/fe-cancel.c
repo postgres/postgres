@@ -463,7 +463,7 @@ PQsendCancelRequest(PGconn *cancelConn)
 	memset(&req, 0, offsetof(CancelRequestPacket, cancelAuthCode));
 	req.cancelRequestCode = (MsgType) pg_hton32(CANCEL_REQUEST_CODE);
 	req.backendPID = pg_hton32(cancelConn->be_pid);
-	if (pqPutnchar((char *) &req, offsetof(CancelRequestPacket, cancelAuthCode), cancelConn))
+	if (pqPutnchar(&req, offsetof(CancelRequestPacket, cancelAuthCode), cancelConn))
 		return STATUS_ERROR;
 	if (pqPutnchar(cancelConn->be_cancel_key, cancelConn->be_cancel_key_len, cancelConn))
 		return STATUS_ERROR;

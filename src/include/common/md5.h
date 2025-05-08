@@ -28,9 +28,9 @@
 /* Utilities common to all the MD5 implementations, as of md5_common.c */
 extern bool pg_md5_hash(const void *buff, size_t len, char *hexsum,
 						const char **errstr);
-extern bool pg_md5_binary(const void *buff, size_t len, void *outbuf,
+extern bool pg_md5_binary(const void *buff, size_t len, uint8 *outbuf,
 						  const char **errstr);
-extern bool pg_md5_encrypt(const char *passwd, const char *salt,
+extern bool pg_md5_encrypt(const char *passwd, const uint8 *salt,
 						   size_t salt_len, char *buf,
 						   const char **errstr);
 

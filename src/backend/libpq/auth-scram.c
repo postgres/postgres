@@ -158,7 +158,7 @@ typedef struct
 	/* Fields from the last message from client */
 	char	   *client_final_message_without_proof;
 	char	   *client_final_nonce;
-	char		ClientProof[SCRAM_MAX_KEY_LEN];
+	uint8		ClientProof[SCRAM_MAX_KEY_LEN];
 
 	/* Fields generated in the server */
 	char	   *server_first_message;
@@ -186,9 +186,9 @@ static void mock_scram_secret(const char *username, pg_cryptohash_type *hash_typ
 static bool is_scram_printable(char *p);
 static char *sanitize_char(char c);
 static char *sanitize_str(const char *s);
-static char *scram_mock_salt(const char *username,
-							 pg_cryptohash_type hash_type,
-							 int key_length);
+static uint8 *scram_mock_salt(const char *username,
+							  pg_cryptohash_type hash_type,
+							  int key_length);
 
 /*
  * The number of iterations to use when generating new secrets.
@@ -484,7 +484,7 @@ pg_be_scram_build_secret(const char *password)
 {
 	char	   *prep_password;
 	pg_saslprep_rc rc;
-	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
+	uint8		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
 	const char *errstr = NULL;
 
@@ -524,7 +524,7 @@ scram_verify_plain_password(const char *username, const char *password,
 							const char *secret)
 {
 	char	   *encoded_salt;
-	char	   *salt;
+	uint8	   *salt;
 	int			saltlen;
 	int			iterations;
 	int			key_length = 0;
@@ -609,9 +609,9 @@ parse_scram_secret(const char *secret, int *iterations,
 	char	   *storedkey_str;
 	char	   *serverkey_str;
 	int			decoded_len;
-	char	   *decoded_salt_buf;
-	char	   *decoded_stored_buf;
-	char	   *decoded_server_buf;
+	uint8	   *decoded_salt_buf;
+	uint8	   *decoded_stored_buf;
+	uint8	   *decoded_server_buf;
 
 	/*
 	 * The secret is of form:
@@ -698,7 +698,7 @@ mock_scram_secret(const char *username, pg_cryptohash_type *hash_type,
 				  int *iterations, int *key_length, char **salt,
 				  uint8 *stored_key, uint8 *server_key)
 {
-	char	   *raw_salt;
+	uint8	   *raw_salt;
 	char	   *encoded_salt;
 	int			encoded_len;
 
@@ -1231,7 +1231,7 @@ build_server_first_message(scram_state *state)
 	 * For convenience, however, we don't use the whole range available,
 	 * rather, we generate some random bytes, and base64 encode them.
 	 */
-	char		raw_nonce[SCRAM_RAW_NONCE_LEN];
+	uint8		raw_nonce[SCRAM_RAW_NONCE_LEN];
 	int			encoded_len;
 
 	if (!pg_strong_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
@@ -1271,7 +1271,7 @@ read_client_final_message(scram_state *state, const char *input)
 	char	   *begin,
 			   *proof;
 	char	   *p;
-	char	   *client_proof;
+	uint8	   *client_proof;
 	int			client_proof_len;
 
 	begin = p = pstrdup(input);
@@ -1340,7 +1340,7 @@ read_client_final_message(scram_state *state, const char *input)
 		b64_message_len = pg_b64_enc_len(cbind_input_len);
 		/* don't forget the zero-terminator */
 		b64_message = palloc(b64_message_len + 1);
-		b64_message_len = pg_b64_encode(cbind_input, cbind_input_len,
+		b64_message_len = pg_b64_encode((uint8 *) cbind_input, cbind_input_len,
 										b64_message, b64_message_len);
 		if (b64_message_len < 0)
 			elog(ERROR, "could not encode channel binding data");
@@ -1440,7 +1440,7 @@ build_server_final_message(scram_state *state)
 	siglen = pg_b64_enc_len(state->key_length);
 	/* don't forget the zero-terminator */
 	server_signature_base64 = palloc(siglen + 1);
-	siglen = pg_b64_encode((const char *) ServerSignature,
+	siglen = pg_b64_encode(ServerSignature,
 						   state->key_length, server_signature_base64,
 						   siglen);
 	if (siglen < 0)
@@ -1467,7 +1467,7 @@ build_server_final_message(scram_state *state)
  * hash based on the username and a cluster-level secret key.  Returns a
  * pointer to a static buffer of size SCRAM_DEFAULT_SALT_LEN, or NULL.
  */
-static char *
+static uint8 *
 scram_mock_salt(const char *username, pg_cryptohash_type hash_type,
 				int key_length)
 {
@@ -1501,5 +1501,5 @@ scram_mock_salt(const char *username, pg_cryptohash_type hash_type,
 	}
 	pg_cryptohash_free(ctx);
 
-	return (char *) sha_digest;
+	return sha_digest;
 }

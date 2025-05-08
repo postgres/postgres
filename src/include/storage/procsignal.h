@@ -73,10 +73,10 @@ typedef enum
 extern Size ProcSignalShmemSize(void);
 extern void ProcSignalShmemInit(void);
 
-extern void ProcSignalInit(char *cancel_key, int cancel_key_len);
+extern void ProcSignalInit(const uint8 *cancel_key, int cancel_key_len);
 extern int	SendProcSignal(pid_t pid, ProcSignalReason reason,
 						   ProcNumber procNumber);
-extern void SendCancelRequest(int backendPID, char *cancel_key, int cancel_key_len);
+extern void SendCancelRequest(int backendPID, const uint8 *cancel_key, int cancel_key_len);
 
 extern uint64 EmitProcSignalBarrier(ProcSignalBarrierType type);
 extern void WaitForProcSignalBarrier(uint64 generation);

@@ -70,14 +70,14 @@ typedef struct
 
 	/* These come from the server-first message */
 	char	   *server_first_message;
-	char	   *salt;
+	uint8	   *salt;
 	int			saltlen;
 	int			iterations;
 	char	   *nonce;
 
 	/* These come from the server-final message */
 	char	   *server_final_message;
-	char		ServerSignature[SCRAM_MAX_KEY_LEN];
+	uint8		ServerSignature[SCRAM_MAX_KEY_LEN];
 } fe_scram_state;
 
 static bool read_server_first_message(fe_scram_state *state, char *input);
@@ -350,7 +350,7 @@ static char *
 build_client_first_message(fe_scram_state *state)
 {
 	PGconn	   *conn = state->conn;
-	char		raw_nonce[SCRAM_RAW_NONCE_LEN + 1];
+	uint8		raw_nonce[SCRAM_RAW_NONCE_LEN + 1];
 	char	   *result;
 	int			channel_info_len;
 	int			encoded_len;
@@ -513,7 +513,7 @@ build_client_final_message(fe_scram_state *state)
 			free(cbind_input);
 			goto oom_error;
 		}
-		encoded_cbind_len = pg_b64_encode(cbind_input, cbind_input_len,
+		encoded_cbind_len = pg_b64_encode((uint8 *) cbind_input, cbind_input_len,
 										  buf.data + buf.len,
 										  encoded_cbind_len);
 		if (encoded_cbind_len < 0)
@@ -574,7 +574,7 @@ build_client_final_message(fe_scram_state *state)
 	encoded_len = pg_b64_enc_len(state->key_length);
 	if (!enlargePQExpBuffer(&buf, encoded_len))
 		goto oom_error;
-	encoded_len = pg_b64_encode((char *) client_proof,
+	encoded_len = pg_b64_encode(client_proof,
 								state->key_length,
 								buf.data + buf.len,
 								encoded_len);
@@ -694,7 +694,7 @@ read_server_final_message(fe_scram_state *state, char *input)
 {
 	PGconn	   *conn = state->conn;
 	char	   *encoded_server_signature;
-	char	   *decoded_server_signature;
+	uint8	   *decoded_server_signature;
 	int			server_signature_len;
 
 	state->server_final_message = strdup(input);
@@ -916,7 +916,7 @@ pg_fe_scram_build_secret(const char *password, int iterations, const char **errs
 {
 	char	   *prep_password;
 	pg_saslprep_rc rc;
-	char		saltbuf[SCRAM_DEFAULT_SALT_LEN];
+	uint8		saltbuf[SCRAM_DEFAULT_SALT_LEN];
 	char	   *result;
 
 	/*

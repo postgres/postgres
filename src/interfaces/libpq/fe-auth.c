@@ -798,7 +798,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 	int			ret;
 	char	   *crypt_pwd = NULL;
 	const char *pwd_to_send;
-	char		md5Salt[4];
+	uint8		md5Salt[4];
 
 	/* Read the salt from the AuthenticationMD5Password message. */
 	if (areq == AUTH_REQ_MD5)
@@ -829,7 +829,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 				}
 
 				crypt_pwd2 = crypt_pwd + MD5_PASSWD_LEN + 1;
-				if (!pg_md5_encrypt(password, conn->pguser,
+				if (!pg_md5_encrypt(password, (uint8 *) conn->pguser,
 									strlen(conn->pguser), crypt_pwd2,
 									&errstr))
 				{
@@ -1369,7 +1369,7 @@ PQencryptPassword(const char *passwd, const char *user)
 	if (!crypt_pwd)
 		return NULL;
 
-	if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
+	if (!pg_md5_encrypt(passwd, (uint8 *) user, strlen(user), crypt_pwd, &errstr))
 	{
 		free(crypt_pwd);
 		return NULL;
@@ -1482,7 +1482,7 @@ PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user,
 		{
 			const char *errstr = NULL;
 
-			if (!pg_md5_encrypt(passwd, user, strlen(user), crypt_pwd, &errstr))
+			if (!pg_md5_encrypt(passwd, (uint8 *) user, strlen(user), crypt_pwd, &errstr))
 			{
 				libpq_append_conn_error(conn, "could not encrypt password: %s", errstr);
 				free(crypt_pwd);

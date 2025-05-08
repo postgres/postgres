@@ -37,7 +37,7 @@
 int
 scram_SaltedPassword(const char *password,
 					 pg_cryptohash_type hash_type, int key_length,
-					 const char *salt, int saltlen, int iterations,
+					 const uint8 *salt, int saltlen, int iterations,
 					 uint8 *result, const char **errstr)
 {
 	int			password_len = strlen(password);
@@ -62,7 +62,7 @@ scram_SaltedPassword(const char *password,
 
 	/* First iteration */
 	if (pg_hmac_init(hmac_ctx, (uint8 *) password, password_len) < 0 ||
-		pg_hmac_update(hmac_ctx, (uint8 *) salt, saltlen) < 0 ||
+		pg_hmac_update(hmac_ctx, salt, saltlen) < 0 ||
 		pg_hmac_update(hmac_ctx, (uint8 *) &one, sizeof(uint32)) < 0 ||
 		pg_hmac_final(hmac_ctx, Ui_prev, key_length) < 0)
 	{
@@ -207,7 +207,7 @@ scram_ServerKey(const uint8 *salted_password,
  */
 char *
 scram_build_secret(pg_cryptohash_type hash_type, int key_length,
-				   const char *salt, int saltlen, int iterations,
+				   const uint8 *salt, int saltlen, int iterations,
 				   const char *password, const char **errstr)
 {
 	uint8		salted_password[SCRAM_MAX_KEY_LEN];
@@ -290,7 +290,7 @@ scram_build_secret(pg_cryptohash_type hash_type, int key_length,
 	*(p++) = '$';
 
 	/* stored key */
-	encoded_result = pg_b64_encode((char *) stored_key, key_length, p,
+	encoded_result = pg_b64_encode(stored_key, key_length, p,
 								   encoded_stored_len);
 	if (encoded_result < 0)
 	{
@@ -307,7 +307,7 @@ scram_build_secret(pg_cryptohash_type hash_type, int key_length,
 	*(p++) = ':';
 
 	/* server key */
-	encoded_result = pg_b64_encode((char *) server_key, key_length, p,
+	encoded_result = pg_b64_encode(server_key, key_length, p,
 								   encoded_server_len);
 	if (encoded_result < 0)
 	{

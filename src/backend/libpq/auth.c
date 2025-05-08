@@ -666,7 +666,7 @@ ClientAuthentication(Port *port)
  * Send an authentication request packet to the frontend.
  */
 void
-sendAuthRequest(Port *port, AuthRequest areq, const char *extradata, int extralen)
+sendAuthRequest(Port *port, AuthRequest areq, const void *extradata, int extralen)
 {
 	StringInfoData buf;
 
@@ -874,7 +874,7 @@ CheckPWChallengeAuth(Port *port, const char **logdetail)
 static int
 CheckMD5Auth(Port *port, char *shadow_pass, const char **logdetail)
 {
-	char		md5Salt[4];		/* Password salt */
+	uint8		md5Salt[4];		/* Password salt */
 	char	   *passwd;
 	int			result;
 

@@ -67,7 +67,7 @@ PQlibVersion(void)
 
 
 /*
- * pqGetc: get 1 character from the connection
+ * pqGetc: read 1 character from the connection
  *
  *	All these routines return 0 on success, EOF on error.
  *	Note that for the Get routines, EOF only means there is not enough
@@ -100,7 +100,7 @@ pqPutc(char c, PGconn *conn)
 
 /*
  * pqGets[_append]:
- * get a null-terminated string from the connection,
+ * read a null-terminated string from the connection,
  * and store it in an expansible PQExpBuffer.
  * If we run out of memory, all of the string is still read,
  * but the excess characters are silently discarded.
@@ -159,10 +159,10 @@ pqPuts(const char *s, PGconn *conn)
 
 /*
  * pqGetnchar:
- *	get a string of exactly len bytes in buffer s, no null termination
+ *	read exactly len bytes in buffer s, no null termination
  */
 int
-pqGetnchar(char *s, size_t len, PGconn *conn)
+pqGetnchar(void *s, size_t len, PGconn *conn)
 {
 	if (len > (size_t) (conn->inEnd - conn->inCursor))
 		return EOF;
@@ -199,7 +199,7 @@ pqSkipnchar(size_t len, PGconn *conn)
  *	write exactly len bytes to the current message
  */
 int
-pqPutnchar(const char *s, size_t len, PGconn *conn)
+pqPutnchar(const void *s, size_t len, PGconn *conn)
 {
 	if (pqPutMsgBytes(s, len, conn))
 		return EOF;

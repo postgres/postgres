@@ -141,7 +141,7 @@ typedef struct CancelRequestPacket
 	/* Note that each field is stored in network byte order! */
 	MsgType		cancelRequestCode;	/* code to identify a cancel request */
 	uint32		backendPID;		/* PID of client's backend */
-	char		cancelAuthCode[FLEXIBLE_ARRAY_MEMBER];	/* secret key to
+	uint8		cancelAuthCode[FLEXIBLE_ARRAY_MEMBER];	/* secret key to
 														 * authorize cancel */
 } CancelRequestPacket;
 

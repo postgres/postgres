@@ -64,7 +64,7 @@ typedef struct
 {
 	pg_atomic_uint32 pss_pid;
 	int			pss_cancel_key_len; /* 0 means no cancellation is possible */
-	char		pss_cancel_key[MAX_CANCEL_KEY_LENGTH];
+	uint8		pss_cancel_key[MAX_CANCEL_KEY_LENGTH];
 	volatile sig_atomic_t pss_signalFlags[NUM_PROCSIGNALS];
 	slock_t		pss_mutex;		/* protects the above fields */
 
@@ -163,7 +163,7 @@ ProcSignalShmemInit(void)
  *		Register the current process in the ProcSignal array
  */
 void
-ProcSignalInit(char *cancel_key, int cancel_key_len)
+ProcSignalInit(const uint8 *cancel_key, int cancel_key_len)
 {
 	ProcSignalSlot *slot;
 	uint64		barrier_generation;
@@ -729,7 +729,7 @@ procsignal_sigusr1_handler(SIGNAL_ARGS)
  * fields in the ProcSignal slots.
  */
 void
-SendCancelRequest(int backendPID, char *cancel_key, int cancel_key_len)
+SendCancelRequest(int backendPID, const uint8 *cancel_key, int cancel_key_len)
 {
 	Assert(backendPID != 0);
 

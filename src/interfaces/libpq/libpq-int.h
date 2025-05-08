@@ -539,16 +539,16 @@ struct pg_conn
 								 * tried host */
 	bool		send_appname;	/* okay to send application_name? */
 	size_t		scram_client_key_len;
-	void	   *scram_client_key_binary;	/* binary SCRAM client key */
+	uint8	   *scram_client_key_binary;	/* binary SCRAM client key */
 	size_t		scram_server_key_len;
-	void	   *scram_server_key_binary;	/* binary SCRAM server key */
+	uint8	   *scram_server_key_binary;	/* binary SCRAM server key */
 	ProtocolVersion min_pversion;	/* protocol version to request */
 	ProtocolVersion max_pversion;	/* protocol version to request */
 
 	/* Miscellaneous stuff */
 	int			be_pid;			/* PID of backend --- needed for cancels */
 	int			be_cancel_key_len;
-	char	   *be_cancel_key;	/* query cancellation key and its length */
+	uint8	   *be_cancel_key;	/* query cancellation key */
 	pgParameterStatus *pstatus; /* ParameterStatus data */
 	int			client_encoding;	/* encoding id */
 	bool		std_strings;	/* standard_conforming_strings */
@@ -787,9 +787,9 @@ extern int	pqPutc(char c, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);
 extern int	pqGets_append(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
-extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
+extern int	pqGetnchar(void *s, size_t len, PGconn *conn);
 extern int	pqSkipnchar(size_t len, PGconn *conn);
-extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
+extern int	pqPutnchar(const void *s, size_t len, PGconn *conn);
 extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
 extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
 extern int	pqPutMsgStart(char msg_type, PGconn *conn);
