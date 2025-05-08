@@ -3542,6 +3542,7 @@ final_cost_nestloop(PlannerInfo *root, NestPath *path,
  * 'inner_path' is the inner input to the join
  * 'outersortkeys' is the list of sort keys for the outer path
  * 'innersortkeys' is the list of sort keys for the inner path
+ * 'outer_presorted_keys' is the number of presorted keys of the outer path
  * 'extra' contains miscellaneous information about the join
  *
  * Note: outersortkeys and innersortkeys should be NIL if no explicit
@@ -3553,6 +3554,7 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 					   List *mergeclauses,
 					   Path *outer_path, Path *inner_path,
 					   List *outersortkeys, List *innersortkeys,
+					   int outer_presorted_keys,
 					   JoinPathExtraData *extra)
 {
 	int			disabled_nodes;
@@ -3683,27 +3685,33 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 
 	if (outersortkeys)			/* do we need to sort outer? */
 	{
-		bool		use_incremental_sort = false;
-		int			presorted_keys;
+		/*
+		 * We can assert that the outer path is not already ordered
+		 * appropriately for the mergejoin; otherwise, outersortkeys would
+		 * have been set to NIL.
+		 */
+		Assert(!pathkeys_contained_in(outersortkeys, outer_path->pathkeys));
 
 		/*
 		 * We choose to use incremental sort if it is enabled and there are
 		 * presorted keys; otherwise we use full sort.
 		 */
-		if (enable_incremental_sort)
+		if (enable_incremental_sort && outer_presorted_keys > 0)
 		{
-			bool		is_sorted PG_USED_FOR_ASSERTS_ONLY;
-
-			is_sorted = pathkeys_count_contained_in(outersortkeys,
-													outer_path->pathkeys,
-													&presorted_keys);
-			Assert(!is_sorted);
-
-			if (presorted_keys > 0)
-				use_incremental_sort = true;
+			cost_incremental_sort(&sort_path,
+								  root,
+								  outersortkeys,
+								  outer_presorted_keys,
+								  outer_path->disabled_nodes,
+								  outer_path->startup_cost,
+								  outer_path->total_cost,
+								  outer_path_rows,
+								  outer_path->pathtarget->width,
+								  0.0,
+								  work_mem,
+								  -1.0);
 		}
-
-		if (!use_incremental_sort)
+		else
 		{
 			cost_sort(&sort_path,
 					  root,
@@ -3716,21 +3724,7 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 					  work_mem,
 					  -1.0);
 		}
-		else
-		{
-			cost_incremental_sort(&sort_path,
-								  root,
-								  outersortkeys,
-								  presorted_keys,
-								  outer_path->disabled_nodes,
-								  outer_path->startup_cost,
-								  outer_path->total_cost,
-								  outer_path_rows,
-								  outer_path->pathtarget->width,
-								  0.0,
-								  work_mem,
-								  -1.0);
-		}
+
 		disabled_nodes += sort_path.disabled_nodes;
 		startup_cost += sort_path.startup_cost;
 		startup_cost += (sort_path.total_cost - sort_path.startup_cost)
@@ -3750,6 +3744,13 @@ initial_cost_mergejoin(PlannerInfo *root, JoinCostWorkspace *workspace,
 
 	if (innersortkeys)			/* do we need to sort inner? */
 	{
+		/*
+		 * We can assert that the inner path is not already ordered
+		 * appropriately for the mergejoin; otherwise, innersortkeys would
+		 * have been set to NIL.
+		 */
+		Assert(!pathkeys_contained_in(innersortkeys, inner_path->pathkeys));
+
 		/*
 		 * We do not consider incremental sort for inner path, because
 		 * incremental sort does not support mark/restore.

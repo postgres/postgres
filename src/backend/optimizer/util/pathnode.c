@@ -2626,6 +2626,7 @@ create_nestloop_path(PlannerInfo *root,
  *		(this should be a subset of the restrict_clauses list)
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
+ * 'outer_presorted_keys' is the number of presorted keys of the outer path
  */
 MergePath *
 create_mergejoin_path(PlannerInfo *root,
@@ -2640,7 +2641,8 @@ create_mergejoin_path(PlannerInfo *root,
 					  Relids required_outer,
 					  List *mergeclauses,
 					  List *outersortkeys,
-					  List *innersortkeys)
+					  List *innersortkeys,
+					  int outer_presorted_keys)
 {
 	MergePath  *pathnode = makeNode(MergePath);
 
@@ -2669,6 +2671,7 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
+	pathnode->outer_presorted_keys = outer_presorted_keys;
 	/* pathnode->skip_mark_restore will be set by final_cost_mergejoin */
 	/* pathnode->materialize_inner will be set by final_cost_mergejoin */
 

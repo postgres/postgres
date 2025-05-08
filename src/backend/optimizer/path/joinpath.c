@@ -1042,6 +1042,7 @@ try_mergejoin_path(PlannerInfo *root,
 				   bool is_partial)
 {
 	Relids		required_outer;
+	int			outer_presorted_keys = 0;
 	JoinCostWorkspace workspace;
 
 	if (is_partial)
@@ -1087,9 +1088,16 @@ try_mergejoin_path(PlannerInfo *root,
 	/*
 	 * If the given paths are already well enough ordered, we can skip doing
 	 * an explicit sort.
+	 *
+	 * We need to determine the number of presorted keys of the outer path to
+	 * decide whether explicit incremental sort can be applied when
+	 * outersortkeys is not NIL.  We do not need to do the same for the inner
+	 * path though, as incremental sort currently does not support
+	 * mark/restore.
 	 */
 	if (outersortkeys &&
-		pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
+		pathkeys_count_contained_in(outersortkeys, outer_path->pathkeys,
+									&outer_presorted_keys))
 		outersortkeys = NIL;
 	if (innersortkeys &&
 		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
@@ -1101,6 +1109,7 @@ try_mergejoin_path(PlannerInfo *root,
 	initial_cost_mergejoin(root, &workspace, jointype, mergeclauses,
 						   outer_path, inner_path,
 						   outersortkeys, innersortkeys,
+						   outer_presorted_keys,
 						   extra);
 
 	if (add_path_precheck(joinrel, workspace.disabled_nodes,
@@ -1120,7 +1129,8 @@ try_mergejoin_path(PlannerInfo *root,
 									   required_outer,
 									   mergeclauses,
 									   outersortkeys,
-									   innersortkeys));
+									   innersortkeys,
+									   outer_presorted_keys));
 	}
 	else
 	{
@@ -1146,6 +1156,7 @@ try_partial_mergejoin_path(PlannerInfo *root,
 						   JoinType jointype,
 						   JoinPathExtraData *extra)
 {
+	int			outer_presorted_keys = 0;
 	JoinCostWorkspace workspace;
 
 	/*
@@ -1159,9 +1170,16 @@ try_partial_mergejoin_path(PlannerInfo *root,
 	/*
 	 * If the given paths are already well enough ordered, we can skip doing
 	 * an explicit sort.
+	 *
+	 * We need to determine the number of presorted keys of the outer path to
+	 * decide whether explicit incremental sort can be applied when
+	 * outersortkeys is not NIL.  We do not need to do the same for the inner
+	 * path though, as incremental sort currently does not support
+	 * mark/restore.
 	 */
 	if (outersortkeys &&
-		pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
+		pathkeys_count_contained_in(outersortkeys, outer_path->pathkeys,
+									&outer_presorted_keys))
 		outersortkeys = NIL;
 	if (innersortkeys &&
 		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
@@ -1173,6 +1191,7 @@ try_partial_mergejoin_path(PlannerInfo *root,
 	initial_cost_mergejoin(root, &workspace, jointype, mergeclauses,
 						   outer_path, inner_path,
 						   outersortkeys, innersortkeys,
+						   outer_presorted_keys,
 						   extra);
 
 	if (!add_partial_path_precheck(joinrel, workspace.disabled_nodes,
@@ -1193,7 +1212,8 @@ try_partial_mergejoin_path(PlannerInfo *root,
 										   NULL,
 										   mergeclauses,
 										   outersortkeys,
-										   innersortkeys));
+										   innersortkeys,
+										   outer_presorted_keys));
 }
 
 /*

@@ -2253,6 +2253,12 @@ typedef struct NestPath
  * mergejoin.  If it is not NIL then it is a PathKeys list describing
  * the ordering that must be created by an explicit Sort node.
  *
+ * outer_presorted_keys is the number of presorted keys of the outer
+ * path that match outersortkeys.  It is used to determine whether
+ * explicit incremental sort can be applied when outersortkeys is not
+ * NIL.  We do not track the number of presorted keys of the inner
+ * path, as incremental sort currently does not support mark/restore.
+ *
  * skip_mark_restore is true if the executor need not do mark/restore calls.
  * Mark/restore overhead is usually required, but can be skipped if we know
  * that the executor need find only one match per outer tuple, and that the
@@ -2270,6 +2276,8 @@ typedef struct MergePath
 	List	   *path_mergeclauses;	/* join clauses to be used for merge */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
+	int			outer_presorted_keys;	/* number of presorted keys of the
+										 * outer path */
 	bool		skip_mark_restore;	/* can executor skip mark/restore? */
 	bool		materialize_inner;	/* add Materialize to inner? */
 } MergePath;

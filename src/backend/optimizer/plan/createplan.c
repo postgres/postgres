@@ -4521,27 +4521,33 @@ create_mergejoin_plan(PlannerInfo *root,
 	{
 		Relids		outer_relids = outer_path->parent->relids;
 		Plan	   *sort_plan;
-		bool		use_incremental_sort = false;
-		int			presorted_keys;
+
+		/*
+		 * We can assert that the outer path is not already ordered
+		 * appropriately for the mergejoin; otherwise, outersortkeys would
+		 * have been set to NIL.
+		 */
+		Assert(!pathkeys_contained_in(best_path->outersortkeys,
+									  outer_path->pathkeys));
 
 		/*
 		 * We choose to use incremental sort if it is enabled and there are
 		 * presorted keys; otherwise we use full sort.
 		 */
-		if (enable_incremental_sort)
+		if (enable_incremental_sort && best_path->outer_presorted_keys > 0)
 		{
-			bool		is_sorted PG_USED_FOR_ASSERTS_ONLY;
+			sort_plan = (Plan *)
+				make_incrementalsort_from_pathkeys(outer_plan,
+												   best_path->outersortkeys,
+												   outer_relids,
+												   best_path->outer_presorted_keys);
 
-			is_sorted = pathkeys_count_contained_in(best_path->outersortkeys,
-													outer_path->pathkeys,
-													&presorted_keys);
-			Assert(!is_sorted);
-
-			if (presorted_keys > 0)
-				use_incremental_sort = true;
+			label_incrementalsort_with_costsize(root,
+												(IncrementalSort *) sort_plan,
+												best_path->outersortkeys,
+												-1.0);
 		}
-
-		if (!use_incremental_sort)
+		else
 		{
 			sort_plan = (Plan *)
 				make_sort_from_pathkeys(outer_plan,
@@ -4549,19 +4555,6 @@ create_mergejoin_plan(PlannerInfo *root,
 										outer_relids);
 
 			label_sort_with_costsize(root, (Sort *) sort_plan, -1.0);
-		}
-		else
-		{
-			sort_plan = (Plan *)
-				make_incrementalsort_from_pathkeys(outer_plan,
-												   best_path->outersortkeys,
-												   outer_relids,
-												   presorted_keys);
-
-			label_incrementalsort_with_costsize(root,
-												(IncrementalSort *) sort_plan,
-												best_path->outersortkeys,
-												-1.0);
 		}
 
 		outer_plan = sort_plan;
@@ -4578,9 +4571,19 @@ create_mergejoin_plan(PlannerInfo *root,
 		 */
 
 		Relids		inner_relids = inner_path->parent->relids;
-		Sort	   *sort = make_sort_from_pathkeys(inner_plan,
-												   best_path->innersortkeys,
-												   inner_relids);
+		Sort	   *sort;
+
+		/*
+		 * We can assert that the inner path is not already ordered
+		 * appropriately for the mergejoin; otherwise, innersortkeys would
+		 * have been set to NIL.
+		 */
+		Assert(!pathkeys_contained_in(best_path->innersortkeys,
+									  inner_path->pathkeys));
+
+		sort = make_sort_from_pathkeys(inner_plan,
+									   best_path->innersortkeys,
+									   inner_relids);
 
 		label_sort_with_costsize(root, sort, -1.0);
 		inner_plan = (Plan *) sort;

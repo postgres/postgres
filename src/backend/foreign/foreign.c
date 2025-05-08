@@ -821,8 +821,9 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 					 * for the mergejoin, we can skip doing an explicit sort.
 					 */
 					if (merge_path->outersortkeys &&
-						pathkeys_contained_in(merge_path->outersortkeys,
-											  joinpath->outerjoinpath->pathkeys))
+						pathkeys_count_contained_in(merge_path->outersortkeys,
+													joinpath->outerjoinpath->pathkeys,
+													&merge_path->outer_presorted_keys))
 						merge_path->outersortkeys = NIL;
 				}
 			}
