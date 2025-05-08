@@ -10905,7 +10905,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
   </sect2>
 
   <sect2 id="functions-datetime-zoneconvert">
-   <title><literal>AT TIME ZONE and AT LOCAL</literal></title>
+   <title><literal>AT TIME ZONE</literal> and <literal>AT LOCAL</literal></title>
 
    <indexterm>
     <primary>time zone</primary>
