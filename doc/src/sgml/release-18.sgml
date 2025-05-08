@@ -174,14 +174,18 @@ This is now longer needed since pg_backend_memory_contexts.path was added.
 Author: David Rowley <drowley@postgresql.org>
 2024-07-25 [32d3ed816] Add path column to pg_backend_memory_contexts view
 Author: David Rowley <drowley@postgresql.org>
-2025-04-18 [d9e03864b] Make levels 1-based in pg_log_backend_memory_contexts()
+2025-04-18 [d9e03864b] Make levels 1-based in
+pg_log_backend_memory_contexts()
+Author: Fujii Masao <fujii@postgresql.org>
+2025-04-21 [706cbed35] doc: Fix memory context level in pg_log_backend_memory_c
 -->
 
 <listitem>
 <para>
-Change pg_backend_memory_contexts.level and pg_log_backend_memory_contexts()() to be one-based (Melih Mutlu, Fujii Masao)
+Change pg_backend_memory_contexts.level and pg_log_backend_memory_contexts() to be one-based (Melih Mutlu, Atsushi Torikoshi, David Rowley, Fujii Masao)
 <ulink url="&commit_baseurl;32d3ed816">&sect;</ulink>
 <ulink url="&commit_baseurl;d9e03864b">&sect;</ulink>
+<ulink url="&commit_baseurl;706cbed35">&sect;</ulink>
 </para>
 
 <para>
