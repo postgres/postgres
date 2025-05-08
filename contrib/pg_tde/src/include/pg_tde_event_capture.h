@@ -7,10 +7,6 @@
 #ifndef PG_TDE_EVENT_CAPTURE_H
 #define PG_TDE_EVENT_CAPTURE_H
 
-#include "postgres.h"
-#include "nodes/parsenodes.h"
-#include "access/transam.h"
-
 typedef enum
 {
 	TDE_ENCRYPT_MODE_RETAIN = 0,

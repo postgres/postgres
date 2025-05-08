@@ -11,8 +11,6 @@
 
 #ifndef FRONTEND
 
-#include "postgres.h"
-
 /* TDE XLOG record types */
 #define XLOG_TDE_ADD_RELATION_KEY		0x00
 #define XLOG_TDE_ADD_PRINCIPAL_KEY		0x10

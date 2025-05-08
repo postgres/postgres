@@ -29,6 +29,8 @@
 #include "pg_tde_fe.h"
 #endif
 
+#define VAULT_URL_MAX_LEN 512
+
 /*
  * JSON parser state
 */

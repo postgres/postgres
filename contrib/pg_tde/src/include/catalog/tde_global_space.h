@@ -11,7 +11,6 @@
 #ifndef TDE_GLOBAL_CATALOG_H
 #define TDE_GLOBAL_CATALOG_H
 
-#include "postgres.h"
 #include "catalog/pg_tablespace_d.h"
 
 /*
