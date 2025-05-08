@@ -250,7 +250,11 @@ static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
+	InternalKey *key;
+
+	mdopen(reln);
+
+	key = tde_smgr_get_key(&reln->smgr_rlocator);
 
 	if (key)
 	{
@@ -261,7 +265,6 @@ tde_mdopen(SMgrRelation reln)
 	{
 		tdereln->encrypted_relation = false;
 	}
-	mdopen(reln);
 }
 
 static const struct f_smgr tde_smgr = {
