@@ -715,6 +715,11 @@ SELECT * FROM ft1, ft2, ft4, ft5, local_tbl WHERE ft1.c1 = ft2.c1 AND ft1.c2 = f
     AND ft1.c2 = ft5.c1 AND ft1.c2 = local_tbl.c1 AND ft1.c1 < 100 AND ft2.c1 < 100 FOR UPDATE;
 SELECT * FROM ft1, ft2, ft4, ft5, local_tbl WHERE ft1.c1 = ft2.c1 AND ft1.c2 = ft4.c1
     AND ft1.c2 = ft5.c1 AND ft1.c2 = local_tbl.c1 AND ft1.c1 < 100 AND ft2.c1 < 100 FOR UPDATE;
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ft1, ft4, ft5, local_tbl WHERE ft1.c1 = ft4.c1 AND ft1.c1 = ft5.c1
+    AND ft1.c2 = local_tbl.c1 AND ft1.c1 < 100 AND ft5.c1 < 100 FOR UPDATE;
+SELECT * FROM ft1, ft4, ft5, local_tbl WHERE ft1.c1 = ft4.c1 AND ft1.c1 = ft5.c1
+    AND ft1.c2 = local_tbl.c1 AND ft1.c1 < 100 AND ft5.c1 < 100 FOR UPDATE;
 RESET enable_nestloop;
 RESET enable_hashjoin;
 

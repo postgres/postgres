@@ -22,6 +22,7 @@
 #include "foreign/foreign.h"
 #include "funcapi.h"
 #include "miscadmin.h"
+#include "optimizer/paths.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -808,7 +809,23 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 
 			foreign_path = (ForeignPath *) joinpath->outerjoinpath;
 			if (IS_JOIN_REL(foreign_path->path.parent))
+			{
 				joinpath->outerjoinpath = foreign_path->fdw_outerpath;
+
+				if (joinpath->path.pathtype == T_MergeJoin)
+				{
+					MergePath  *merge_path = (MergePath *) joinpath;
+
+					/*
+					 * If the new outer path is already well enough ordered
+					 * for the mergejoin, we can skip doing an explicit sort.
+					 */
+					if (merge_path->outersortkeys &&
+						pathkeys_contained_in(merge_path->outersortkeys,
+											  joinpath->outerjoinpath->pathkeys))
+						merge_path->outersortkeys = NIL;
+				}
+			}
 		}
 
 		if (IsA(joinpath->innerjoinpath, ForeignPath))
@@ -817,7 +834,23 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 
 			foreign_path = (ForeignPath *) joinpath->innerjoinpath;
 			if (IS_JOIN_REL(foreign_path->path.parent))
+			{
 				joinpath->innerjoinpath = foreign_path->fdw_outerpath;
+
+				if (joinpath->path.pathtype == T_MergeJoin)
+				{
+					MergePath  *merge_path = (MergePath *) joinpath;
+
+					/*
+					 * If the new inner path is already well enough ordered
+					 * for the mergejoin, we can skip doing an explicit sort.
+					 */
+					if (merge_path->innersortkeys &&
+						pathkeys_contained_in(merge_path->innersortkeys,
+											  joinpath->innerjoinpath->pathkeys))
+						merge_path->innersortkeys = NIL;
+				}
+			}
 		}
 
 		return (Path *) joinpath;
