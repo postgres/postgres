@@ -1,4 +1,22 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
+		SELECT
+			pg_proc.oid::regprocedure
+		FROM
+			pg_catalog.pg_proc
+			JOIN pg_catalog.pg_language ON prolang = pg_language.oid
+			LEFT JOIN LATERAL aclexplode(proacl) ON TRUE
+		WHERE
+			proname LIKE 'pg_tde%' AND
+			(lanname = 'c' OR prosecdef) AND
+			(grantee IS NULL OR grantee = 0)
+		ORDER BY pg_proc.oid::regprocedure::text;
+              oid              
+-------------------------------
+ pg_tde_is_encrypted(regclass)
+ pg_tde_version()
+(2 rows)
+
+	
 SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';
  extname | extversion 
 ---------+------------

@@ -16,6 +16,23 @@ $node->start;
 
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
+# Only whitelisted C or security definer functions are granted to public by default
+PGTDE::psql(
+	$node, 'postgres',
+	q{
+		SELECT
+			pg_proc.oid::regprocedure
+		FROM
+			pg_catalog.pg_proc
+			JOIN pg_catalog.pg_language ON prolang = pg_language.oid
+			LEFT JOIN LATERAL aclexplode(proacl) ON TRUE
+		WHERE
+			proname LIKE 'pg_tde%' AND
+			(lanname = 'c' OR prosecdef) AND
+			(grantee IS NULL OR grantee = 0)
+		ORDER BY pg_proc.oid::regprocedure::text;
+	});
+
 PGTDE::psql($node, 'postgres',
 	"SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';");
 

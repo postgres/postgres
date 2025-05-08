@@ -34,7 +34,19 @@ SELECT pg_tde_verify_key();
 SELECT pg_tde_verify_server_key();
 SELECT pg_tde_verify_default_key();
 
--- only superuser
+-- Only superusers can execute key management functions, regardless of role grants
+RESET ROLE;
+GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_change_global_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_delete_database_key_provider(TEXT) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(TEXT) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
+
+SET ROLE regress_pg_tde_access_control;
 SELECT pg_tde_add_database_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_change_global_key_provider_file('local-file-provider', '/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_delete_database_key_provider('local-file-provider');
@@ -44,7 +56,6 @@ SELECT pg_tde_delete_global_key_provider('global-file-provider');
 SELECT pg_tde_set_key_using_global_key_provider('key1', 'global-file-provider');
 SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'global-file-provider');
 SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'global-file-provider');
-
 RESET ROLE;
 
 SELECT pg_tde_revoke_key_viewer_from_role('regress_pg_tde_access_control');
