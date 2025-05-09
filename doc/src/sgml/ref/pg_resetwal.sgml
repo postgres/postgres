@@ -172,25 +172,6 @@ PostgreSQL documentation
 
   <variablelist>
    <varlistentry>
-    <term><option>--char-signedness=<replaceable class="parameter">option</replaceable></option></term>
-    <listitem>
-     <para>
-      Manually set the default char signedness. Possible values are
-      <literal>signed</literal> and <literal>unsigned</literal>.
-     </para>
-     <para>
-      For a database cluster that <command>pg_upgrade</command> upgraded from
-      a <productname>PostgreSQL</productname> version before 18, the safe
-      value would be the default <type>char</type> signedness of the platform
-      that ran the cluster before that upgrade. For all other
-      clusters, <literal>signed</literal> would be the safe value. However,
-      this option is exclusively for use with <command>pg_upgrade</command>
-      and should not normally be used manually.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><option>-c <replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
     <term><option>--commit-timestamp-ids=<replaceable class="parameter">xid</replaceable>,<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>
@@ -333,34 +314,6 @@ PostgreSQL documentation
    </varlistentry>
 
    <varlistentry>
-    <term><option>--wal-segsize=<replaceable class="parameter">wal_segment_size</replaceable></option></term>
-    <listitem>
-     <para>
-      Set the new WAL segment size, in megabytes.  The value must be set to a
-      power of 2 between 1 and 1024 (megabytes).  See the same option of <xref
-      linkend="app-initdb"/> for more information.
-     </para>
-
-     <para>
-      This option can also be used to change the WAL segment size of an
-      existing database cluster, avoiding the need to
-      re-<command>initdb</command>.
-     </para>
-
-     <note>
-      <para>
-       While <command>pg_resetwal</command> will set the WAL starting address
-       beyond the latest existing WAL segment file, some segment size changes
-       can cause previous WAL file names to be reused.  It is recommended to
-       use <option>-l</option> together with this option to manually set the
-       WAL starting address if WAL file name overlap will cause problems with
-       your archiving strategy.
-      </para>
-     </note>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><option>-u <replaceable class="parameter">xid</replaceable></option></term>
     <term><option>--oldest-transaction-id=<replaceable class="parameter">xid</replaceable></option></term>
     <listitem>
@@ -400,6 +353,53 @@ PostgreSQL documentation
       trailing zeroes provide the proper multiplier).
      </para>
      <!-- 1048576 = SLRU_PAGES_PER_SEGMENT * BLCKSZ * CLOG_XACTS_PER_BYTE -->
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>--char-signedness=<replaceable class="parameter">option</replaceable></option></term>
+    <listitem>
+     <para>
+      Manually set the default char signedness. Possible values are
+      <literal>signed</literal> and <literal>unsigned</literal>.
+     </para>
+     <para>
+      For a database cluster that <command>pg_upgrade</command> upgraded from
+      a <productname>PostgreSQL</productname> version before 18, the safe
+      value would be the default <type>char</type> signedness of the platform
+      that ran the cluster before that upgrade. For all other
+      clusters, <literal>signed</literal> would be the safe value. However,
+      this option is exclusively for use with <command>pg_upgrade</command>
+      and should not normally be used manually.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>--wal-segsize=<replaceable class="parameter">wal_segment_size</replaceable></option></term>
+    <listitem>
+     <para>
+      Set the new WAL segment size, in megabytes.  The value must be set to a
+      power of 2 between 1 and 1024 (megabytes).  See the same option of <xref
+      linkend="app-initdb"/> for more information.
+     </para>
+
+     <para>
+      This option can also be used to change the WAL segment size of an
+      existing database cluster, avoiding the need to
+      re-<command>initdb</command>.
+     </para>
+
+     <note>
+      <para>
+       While <command>pg_resetwal</command> will set the WAL starting address
+       beyond the latest existing WAL segment file, some segment size changes
+       can cause previous WAL file names to be reused.  It is recommended to
+       use <option>-l</option> together with this option to manually set the
+       WAL starting address if WAL file name overlap will cause problems with
+       your archiving strategy.
+      </para>
+     </note>
     </listitem>
    </varlistentry>
   </variablelist>

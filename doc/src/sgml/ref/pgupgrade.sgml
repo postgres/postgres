@@ -146,15 +146,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--no-statistics</option></term>
-      <listitem>
-       <para>
-        Do not restore statistics from the old cluster into the new cluster.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-o</option> <replaceable class="parameter">options</replaceable></term>
       <term><option>--old-options</option> <replaceable class="parameter">options</replaceable></term>
       <listitem><para>options to be passed directly to the
@@ -264,50 +255,10 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--swap</option></term>
+      <term><option>--no-statistics</option></term>
       <listitem>
        <para>
-        Move the data directories from the old cluster to the new cluster.
-        Then, replace the catalog files with those generated for the new
-        cluster.  This mode can outperform <option>--link</option>,
-        <option>--clone</option>, <option>--copy</option>, and
-        <option>--copy-file-range</option>, especially on clusters with many
-        relations.
-       </para>
-       <para>
-        However, this mode creates many garbage files in the old cluster, which
-        can prolong the file synchronization step if
-        <option>--sync-method=syncfs</option> is used.  Therefore, it is
-        recommended to use <option>--sync-method=fsync</option> with
-        <option>--swap</option>.
-       </para>
-       <para>
-        Additionally, once the file transfer step begins, the old cluster will
-        be destructively modified and therefore will no longer be safe to
-        start.  See <xref linkend="pgupgrade-step-revert"/> for details.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--sync-method=</option><replaceable>method</replaceable></term>
-      <listitem>
-       <para>
-        When set to <literal>fsync</literal>, which is the default,
-        <command>pg_upgrade</command> will recursively open and synchronize all
-        files in the upgraded cluster's data directory.  The search for files
-        will follow symbolic links for the WAL directory and each configured
-        tablespace.
-       </para>
-       <para>
-        On Linux, <literal>syncfs</literal> may be used instead to ask the
-        operating system to synchronize the whole file systems that contain the
-        upgraded cluster's data directory, its WAL files, and each tablespace.
-        See <xref linkend="guc-recovery-init-sync-method"/> for information
-        about the caveats to be aware of when using <literal>syncfs</literal>.
-       </para>
-       <para>
-        This option has no effect when <option>--no-sync</option> is used.
+        Do not restore statistics from the old cluster into the new cluster.
        </para>
       </listitem>
      </varlistentry>
@@ -361,6 +312,55 @@ PostgreSQL documentation
           </para>
          </listitem>
         </itemizedlist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--swap</option></term>
+      <listitem>
+       <para>
+        Move the data directories from the old cluster to the new cluster.
+        Then, replace the catalog files with those generated for the new
+        cluster.  This mode can outperform <option>--link</option>,
+        <option>--clone</option>, <option>--copy</option>, and
+        <option>--copy-file-range</option>, especially on clusters with many
+        relations.
+       </para>
+       <para>
+        However, this mode creates many garbage files in the old cluster, which
+        can prolong the file synchronization step if
+        <option>--sync-method=syncfs</option> is used.  Therefore, it is
+        recommended to use <option>--sync-method=fsync</option> with
+        <option>--swap</option>.
+       </para>
+       <para>
+        Additionally, once the file transfer step begins, the old cluster will
+        be destructively modified and therefore will no longer be safe to
+        start.  See <xref linkend="pgupgrade-step-revert"/> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--sync-method=</option><replaceable>method</replaceable></term>
+      <listitem>
+       <para>
+        When set to <literal>fsync</literal>, which is the default,
+        <command>pg_upgrade</command> will recursively open and synchronize all
+        files in the upgraded cluster's data directory.  The search for files
+        will follow symbolic links for the WAL directory and each configured
+        tablespace.
+       </para>
+       <para>
+        On Linux, <literal>syncfs</literal> may be used instead to ask the
+        operating system to synchronize the whole file systems that contain the
+        upgraded cluster's data directory, its WAL files, and each tablespace.
+        See <xref linkend="guc-recovery-init-sync-method"/> for information
+        about the caveats to be aware of when using <literal>syncfs</literal>.
+       </para>
+       <para>
+        This option has no effect when <option>--no-sync</option> is used.
        </para>
       </listitem>
      </varlistentry>

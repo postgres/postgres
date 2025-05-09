@@ -144,35 +144,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i <replaceable class="parameter">path</replaceable></option></term>
-      <term><option>--ignore=<replaceable class="parameter">path</replaceable></option></term>
-      <listitem>
-       <para>
-        Ignore the specified file or directory, which should be expressed
-        as a relative path name, when comparing the list of data files
-        actually present in the backup to those listed in the
-        <literal>backup_manifest</literal> file.  If a directory is
-        specified, this option affects the entire subtree rooted at that
-        location. Complaints about extra files, missing files, file size
-        differences, or checksum mismatches will be suppressed if the
-        relative path name matches the specified path name. This option
-        can be specified multiple times.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-m <replaceable class="parameter">path</replaceable></option></term>
-      <term><option>--manifest-path=<replaceable class="parameter">path</replaceable></option></term>
-      <listitem>
-       <para>
-        Use the manifest file at the specified path, rather than one located
-        in the root of the backup directory.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-F <replaceable class="parameter">format</replaceable></option></term>
       <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
       <listitem>
@@ -208,6 +179,35 @@ PostgreSQL documentation
            </listitem>
          </varlistentry>
         </variablelist></para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-i <replaceable class="parameter">path</replaceable></option></term>
+      <term><option>--ignore=<replaceable class="parameter">path</replaceable></option></term>
+      <listitem>
+       <para>
+        Ignore the specified file or directory, which should be expressed
+        as a relative path name, when comparing the list of data files
+        actually present in the backup to those listed in the
+        <literal>backup_manifest</literal> file.  If a directory is
+        specified, this option affects the entire subtree rooted at that
+        location. Complaints about extra files, missing files, file size
+        differences, or checksum mismatches will be suppressed if the
+        relative path name matches the specified path name. This option
+        can be specified multiple times.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-m <replaceable class="parameter">path</replaceable></option></term>
+      <term><option>--manifest-path=<replaceable class="parameter">path</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the manifest file at the specified path, rather than one located
+        in the root of the backup directory.
+       </para>
       </listitem>
      </varlistentry>
 

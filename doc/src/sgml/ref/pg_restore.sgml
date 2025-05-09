@@ -178,28 +178,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
-      <listitem>
-       <para>
-        Do not restore databases whose name matches
-        <replaceable class="parameter">pattern</replaceable>.
-        Multiple patterns can be excluded by writing multiple
-        <option>--exclude-database</option> switches.  The
-        <replaceable class="parameter">pattern</replaceable> parameter is
-        interpreted as a pattern according to the same rules used by
-        <application>psql</application>'s <literal>\d</literal>
-        commands (see <xref linkend="app-psql-patterns"/>),
-        so multiple databases can also be excluded by writing wildcard
-        characters in the pattern.  When using wildcards, be careful to
-        quote the pattern if needed to prevent shell wildcard expansion.
-       </para>
-       <para>
-        This option is only relevant when restoring from an archive made using <application>pg_dumpall</application>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-e</option></term>
       <term><option>--exit-on-error</option></term>
       <listitem>
@@ -220,86 +198,6 @@ PostgreSQL documentation
         when used with <option>-l</option>. Use <literal>-</literal>
         for <systemitem>stdout</systemitem>.
        </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--filter=<replaceable class="parameter">filename</replaceable></option></term>
-      <listitem>
-       <para>
-        Specify a filename from which to read patterns for objects excluded
-        or included from restore. The patterns are interpreted according to the
-        same rules as
-        <option>-n</option>/<option>--schema</option> for including objects in schemas,
-        <option>-N</option>/<option>--exclude-schema</option> for excluding objects in schemas,
-        <option>-P</option>/<option>--function</option> for restoring named functions,
-        <option>-I</option>/<option>--index</option> for restoring named indexes,
-        <option>-t</option>/<option>--table</option> for restoring named tables
-        or <option>-T</option>/<option>--trigger</option> for restoring triggers.
-        To read from <literal>STDIN</literal>, use <filename>-</filename> as the
-        filename.  The <option>--filter</option> option can be specified in
-        conjunction with the above listed options for including or excluding
-        objects, and can also be specified more than once for multiple filter
-        files.
-       </para>
-
-       <para>
-        The file lists one database pattern per row, with the following format:
-<synopsis>
-{ include | exclude } { function | index | schema | table | trigger } <replaceable class="parameter">PATTERN</replaceable>
-</synopsis>
-       </para>
-
-       <para>
-        The first keyword specifies whether the objects matched by the pattern
-        are to be included or excluded. The second keyword specifies the type
-        of object to be filtered using the pattern:
-        <itemizedlist>
-         <listitem>
-          <para>
-           <literal>function</literal>: functions, works like the
-           <option>-P</option>/<option>--function</option> option. This keyword
-           can only be used with the <literal>include</literal> keyword.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>index</literal>: indexes, works like the
-           <option>-I</option>/<option>--indexes</option> option. This keyword
-           can only be used with the <literal>include</literal> keyword.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>schema</literal>: schemas, works like the
-           <option>-n</option>/<option>--schema</option> and
-           <option>-N</option>/<option>--exclude-schema</option> options.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>table</literal>: tables, works like the
-           <option>-t</option>/<option>--table</option> option. This keyword
-           can only be used with the <literal>include</literal> keyword.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           <literal>trigger</literal>: triggers, works like the
-           <option>-T</option>/<option>--trigger</option> option. This keyword
-           can only be used with the <literal>include</literal> keyword.
-          </para>
-         </listitem>
-        </itemizedlist>
-       </para>
-
-       <para>
-        Lines starting with <literal>#</literal> are considered comments and
-        ignored. Comments can be placed after an object pattern row as well.
-        Blank lines are also ignored. See <xref linkend="app-psql-patterns"/>
-        for how to perform quoting in patterns.
-       </para>
-
       </listitem>
      </varlistentry>
 
@@ -647,15 +545,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--statistics-only</option></term>
-      <listitem>
-       <para>
-        Restore only the statistics, not schema (data definitions) or data.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-1</option></term>
       <term><option>--single-transaction</option></term>
       <listitem>
@@ -711,6 +600,108 @@ PostgreSQL documentation
         Note that this option currently also requires the dump be in <command>INSERT</command>
         format, as <command>COPY FROM</command> does not support row security.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--exclude-database=<replaceable class="parameter">pattern</replaceable></option></term>
+      <listitem>
+       <para>
+        Do not restore databases whose name matches
+        <replaceable class="parameter">pattern</replaceable>.
+        Multiple patterns can be excluded by writing multiple
+        <option>--exclude-database</option> switches.  The
+        <replaceable class="parameter">pattern</replaceable> parameter is
+        interpreted as a pattern according to the same rules used by
+        <application>psql</application>'s <literal>\d</literal>
+        commands (see <xref linkend="app-psql-patterns"/>),
+        so multiple databases can also be excluded by writing wildcard
+        characters in the pattern.  When using wildcards, be careful to
+        quote the pattern if needed to prevent shell wildcard expansion.
+       </para>
+       <para>
+        This option is only relevant when restoring from an archive made using <application>pg_dumpall</application>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--filter=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify a filename from which to read patterns for objects excluded
+        or included from restore. The patterns are interpreted according to the
+        same rules as
+        <option>-n</option>/<option>--schema</option> for including objects in schemas,
+        <option>-N</option>/<option>--exclude-schema</option> for excluding objects in schemas,
+        <option>-P</option>/<option>--function</option> for restoring named functions,
+        <option>-I</option>/<option>--index</option> for restoring named indexes,
+        <option>-t</option>/<option>--table</option> for restoring named tables
+        or <option>-T</option>/<option>--trigger</option> for restoring triggers.
+        To read from <literal>STDIN</literal>, use <filename>-</filename> as the
+        filename.  The <option>--filter</option> option can be specified in
+        conjunction with the above listed options for including or excluding
+        objects, and can also be specified more than once for multiple filter
+        files.
+       </para>
+
+       <para>
+        The file lists one database pattern per row, with the following format:
+<synopsis>
+{ include | exclude } { function | index | schema | table | trigger } <replaceable class="parameter">PATTERN</replaceable>
+</synopsis>
+       </para>
+
+       <para>
+        The first keyword specifies whether the objects matched by the pattern
+        are to be included or excluded. The second keyword specifies the type
+        of object to be filtered using the pattern:
+        <itemizedlist>
+         <listitem>
+          <para>
+           <literal>function</literal>: functions, works like the
+           <option>-P</option>/<option>--function</option> option. This keyword
+           can only be used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>index</literal>: indexes, works like the
+           <option>-I</option>/<option>--indexes</option> option. This keyword
+           can only be used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>schema</literal>: schemas, works like the
+           <option>-n</option>/<option>--schema</option> and
+           <option>-N</option>/<option>--exclude-schema</option> options.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>table</literal>: tables, works like the
+           <option>-t</option>/<option>--table</option> option. This keyword
+           can only be used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>trigger</literal>: triggers, works like the
+           <option>-T</option>/<option>--trigger</option> option. This keyword
+           can only be used with the <literal>include</literal> keyword.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+
+       <para>
+        Lines starting with <literal>#</literal> are considered comments and
+        ignored. Comments can be placed after an object pattern row as well.
+        Blank lines are also ignored. See <xref linkend="app-psql-patterns"/>
+        for how to perform quoting in patterns.
+       </para>
+
       </listitem>
      </varlistentry>
 
@@ -852,33 +843,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Dump data. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Dump schema (data definitions). This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Dump statistics. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
        <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
        <listitem>
          <para>
@@ -895,6 +859,15 @@ PostgreSQL documentation
           Pre-data items consist of all other data definition items.
          </para>
        </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--statistics-only</option></term>
+      <listitem>
+       <para>
+        Restore only the statistics, not schema (data definitions) or data.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>
@@ -942,6 +915,33 @@ PostgreSQL documentation
         ownership.  This makes the dump more standards-compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-data</option></term>
+      <listitem>
+       <para>
+        Dump data. This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-schema</option></term>
+      <listitem>
+       <para>
+        Dump schema (data definitions). This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--with-statistics</option></term>
+      <listitem>
+       <para>
+        Dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
