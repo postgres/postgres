@@ -900,7 +900,11 @@ $node->connect_fails(
 	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/,
 	log_like => [
 		qr{Client certificate verification failed at depth 1: unable to get local issuer certificate},
-		qr{Failed certificate data \(unverified\): subject "/CN=Test CA for PostgreSQL SSL regression test client certs", serial number \d+, issuer "/CN=Test root CA for PostgreSQL SSL regression test suite"},
+		# As of 5/2025, LibreSSL reports a different cert as being at fault;
+		# it's wrong, but seems to be their bug not ours
+		!$libressl
+		? qr{Failed certificate data \(unverified\): subject "/CN=Test CA for PostgreSQL SSL regression test client certs", serial number \d+, issuer "/CN=Test root CA for PostgreSQL SSL regression test suite"}
+		: qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number \d+, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
 	]);
 
 # test server-side CRL directory
