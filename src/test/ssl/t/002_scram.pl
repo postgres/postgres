@@ -44,10 +44,16 @@ my $SERVERHOSTADDR = '127.0.0.1';
 # This is the pattern to use in pg_hba.conf to match incoming connections.
 my $SERVERHOSTCIDR = '127.0.0.1/32';
 
+# Determine whether this build uses OpenSSL or LibreSSL.
+my $libressl = $ssl_server->is_libressl;
+
 # Determine whether build supports detection of hash algorithms for
 # RSA-PSS certificates.
 my $supports_rsapss_certs =
   check_pg_config("#define HAVE_X509_GET_SIGNATURE_INFO 1");
+
+# As of 5/2025, LibreSSL doesn't actually work for RSA-PSS certificates.
+$supports_rsapss_certs = 0 if $libressl;
 
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
