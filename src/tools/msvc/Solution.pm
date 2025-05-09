@@ -364,6 +364,7 @@ sub GenerateFiles
 		HAVE_SHM_OPEN                            => undef,
 		HAVE_SOCKLEN_T                           => 1,
 		HAVE_SPINLOCKS                           => 1,
+		HAVE_SSL_CTX_SET_CERT_CB                 => 1,
 		HAVE_SSL_CTX_SET_NUM_TICKETS             => undef,
 		HAVE_STDINT_H                            => 1,
 		HAVE_STDLIB_H                            => 1,
