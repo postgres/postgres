@@ -243,6 +243,23 @@ sub ssl_library
 
 =pod
 
+=item $server->is_libressl()
+
+Detect whether the currently used SSL backend is LibreSSL.
+(Ideally we'd not need this hack, but presently we do.)
+
+=cut
+
+sub is_libressl
+{
+	my $self = shift;
+	my $backend = $self->{backend};
+
+	return $backend->library_is_libressl();
+}
+
+=pod
+
 =item switch_server_cert(params)
 
 Change the configuration to use the given set of certificate, key, ca and
