@@ -245,26 +245,36 @@ void
 injection_error(const char *name, const void *private_data, void *arg)
 {
 	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
+	char	   *argstr = (char *) arg;
 
 	if (!injection_point_allowed(condition))
 		return;
 
 	pgstat_report_inj(name);
 
-	elog(ERROR, "error triggered for injection point %s", name);
+	if (argstr)
+		elog(ERROR, "error triggered for injection point %s (%s)",
+			 name, argstr);
+	else
+		elog(ERROR, "error triggered for injection point %s", name);
 }
 
 void
 injection_notice(const char *name, const void *private_data, void *arg)
 {
 	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
+	char	   *argstr = (char *) arg;
 
 	if (!injection_point_allowed(condition))
 		return;
 
 	pgstat_report_inj(name);
 
-	elog(NOTICE, "notice triggered for injection point %s", name);
+	if (argstr)
+		elog(NOTICE, "notice triggered for injection point %s (%s)",
+			 name, argstr);
+	else
+		elog(NOTICE, "notice triggered for injection point %s", name);
 }
 
 /* Wait on a condition variable, awaken by injection_points_wakeup() */
@@ -405,10 +415,18 @@ PG_FUNCTION_INFO_V1(injection_points_run);
 Datum
 injection_points_run(PG_FUNCTION_ARGS)
 {
-	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *name;
+	char	   *arg = NULL;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_VOID();
+	name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (!PG_ARGISNULL(1))
+		arg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 	pgstat_report_inj_fixed(0, 0, 1, 0, 0);
-	INJECTION_POINT(name, NULL);
+	INJECTION_POINT(name, arg);
 
 	PG_RETURN_VOID();
 }
@@ -420,10 +438,18 @@ PG_FUNCTION_INFO_V1(injection_points_cached);
 Datum
 injection_points_cached(PG_FUNCTION_ARGS)
 {
-	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *name;
+	char	   *arg = NULL;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_VOID();
+	name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (!PG_ARGISNULL(1))
+		arg = text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 	pgstat_report_inj_fixed(0, 0, 0, 1, 0);
-	INJECTION_POINT_CACHED(name, NULL);
+	INJECTION_POINT_CACHED(name, arg);
 
 	PG_RETURN_VOID();
 }

@@ -6,6 +6,19 @@ CREATE FUNCTION wait_pid(int)
   RETURNS void
   AS :'regresslib'
   LANGUAGE C STRICT;
+-- Non-strict checks
+SELECT injection_points_run(NULL);
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_cached(NULL);
+ injection_points_cached 
+-------------------------
+ 
+(1 row)
+
 SELECT injection_points_attach('TestInjectionBooh', 'booh');
 ERROR:  incorrect action "booh" for injection point creation
 SELECT injection_points_attach('TestInjectionError', 'error');
@@ -39,6 +52,20 @@ NOTICE:  notice triggered for injection point TestInjectionLog2
  
 (1 row)
 
+SELECT injection_points_run('TestInjectionLog2', NULL); -- notice
+NOTICE:  notice triggered for injection point TestInjectionLog2
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_run('TestInjectionLog2', 'foobar'); -- notice + arg
+NOTICE:  notice triggered for injection point TestInjectionLog2 (foobar)
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
 SELECT injection_points_run('TestInjectionLog'); -- notice
 NOTICE:  notice triggered for injection point TestInjectionLog
  injection_points_run 
@@ -48,6 +75,10 @@ NOTICE:  notice triggered for injection point TestInjectionLog
 
 SELECT injection_points_run('TestInjectionError'); -- error
 ERROR:  error triggered for injection point TestInjectionError
+SELECT injection_points_run('TestInjectionError', NULL); -- error
+ERROR:  error triggered for injection point TestInjectionError
+SELECT injection_points_run('TestInjectionError', 'foobar2'); -- error + arg
+ERROR:  error triggered for injection point TestInjectionError (foobar2)
 -- Re-load cache and run again.
 \c
 SELECT injection_points_run('TestInjectionLog2'); -- notice
@@ -155,6 +186,20 @@ SELECT injection_points_load('TestInjectionLogLoad'); -- nothing happens
 
 SELECT injection_points_cached('TestInjectionLogLoad'); -- runs from cache
 NOTICE:  notice triggered for injection point TestInjectionLogLoad
+ injection_points_cached 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_cached('TestInjectionLogLoad', NULL); -- runs from cache
+NOTICE:  notice triggered for injection point TestInjectionLogLoad
+ injection_points_cached 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_cached('TestInjectionLogLoad', 'foobar'); -- runs from cache
+NOTICE:  notice triggered for injection point TestInjectionLogLoad (foobar)
  injection_points_cached 
 -------------------------
  

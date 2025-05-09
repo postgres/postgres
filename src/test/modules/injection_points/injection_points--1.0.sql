@@ -29,20 +29,22 @@ LANGUAGE C STRICT PARALLEL UNSAFE;
 --
 -- Executes the action attached to the injection point.
 --
-CREATE FUNCTION injection_points_run(IN point_name TEXT)
+CREATE FUNCTION injection_points_run(IN point_name TEXT,
+    IN arg TEXT DEFAULT NULL)
 RETURNS void
 AS 'MODULE_PATHNAME', 'injection_points_run'
-LANGUAGE C STRICT PARALLEL UNSAFE;
+LANGUAGE C PARALLEL UNSAFE;
 
 --
 -- injection_points_cached()
 --
 -- Executes the action attached to the injection point, from local cache.
 --
-CREATE FUNCTION injection_points_cached(IN point_name TEXT)
+CREATE FUNCTION injection_points_cached(IN point_name TEXT,
+    IN arg TEXT DEFAULT NULL)
 RETURNS void
 AS 'MODULE_PATHNAME', 'injection_points_cached'
-LANGUAGE C STRICT PARALLEL UNSAFE;
+LANGUAGE C PARALLEL UNSAFE;
 
 --
 -- injection_points_wakeup()

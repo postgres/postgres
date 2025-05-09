@@ -9,6 +9,10 @@ CREATE FUNCTION wait_pid(int)
   AS :'regresslib'
   LANGUAGE C STRICT;
 
+-- Non-strict checks
+SELECT injection_points_run(NULL);
+SELECT injection_points_cached(NULL);
+
 SELECT injection_points_attach('TestInjectionBooh', 'booh');
 SELECT injection_points_attach('TestInjectionError', 'error');
 SELECT injection_points_attach('TestInjectionLog', 'notice');
@@ -16,8 +20,12 @@ SELECT injection_points_attach('TestInjectionLog2', 'notice');
 
 SELECT injection_points_run('TestInjectionBooh'); -- nothing
 SELECT injection_points_run('TestInjectionLog2'); -- notice
+SELECT injection_points_run('TestInjectionLog2', NULL); -- notice
+SELECT injection_points_run('TestInjectionLog2', 'foobar'); -- notice + arg
 SELECT injection_points_run('TestInjectionLog'); -- notice
 SELECT injection_points_run('TestInjectionError'); -- error
+SELECT injection_points_run('TestInjectionError', NULL); -- error
+SELECT injection_points_run('TestInjectionError', 'foobar2'); -- error + arg
 
 -- Re-load cache and run again.
 \c
@@ -47,6 +55,8 @@ SELECT injection_points_load('TestInjectionLogLoad'); -- nothing
 SELECT injection_points_attach('TestInjectionLogLoad', 'notice');
 SELECT injection_points_load('TestInjectionLogLoad'); -- nothing happens
 SELECT injection_points_cached('TestInjectionLogLoad'); -- runs from cache
+SELECT injection_points_cached('TestInjectionLogLoad', NULL); -- runs from cache
+SELECT injection_points_cached('TestInjectionLogLoad', 'foobar'); -- runs from cache
 SELECT injection_points_run('TestInjectionLogLoad'); -- runs from cache
 SELECT injection_points_detach('TestInjectionLogLoad');
 
