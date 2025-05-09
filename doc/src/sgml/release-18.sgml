@@ -2148,7 +2148,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add functions crc32() and crc32c to compute CRC values (Aleksander Alekseev)
+Add functions crc32() and crc32c() to compute CRC values (Aleksander Alekseev)
 <ulink url="&commit_baseurl;760162fed">&sect;</ulink>
 </para>
 </listitem>
