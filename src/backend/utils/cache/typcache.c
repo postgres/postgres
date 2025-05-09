@@ -952,7 +952,7 @@ lookup_type_cache(Oid type_id, int flags)
 		load_domaintype_info(typentry);
 	}
 
-	INJECTION_POINT("typecache-before-rel-type-cache-insert");
+	INJECTION_POINT("typecache-before-rel-type-cache-insert", NULL);
 
 	Assert(in_progress_offset + 1 == in_progress_list_len);
 	in_progress_list_len--;

@@ -94,11 +94,14 @@ typedef struct InjectionPointSharedState
 static InjectionPointSharedState *inj_state = NULL;
 
 extern PGDLLEXPORT void injection_error(const char *name,
-										const void *private_data);
+										const void *private_data,
+										void *arg);
 extern PGDLLEXPORT void injection_notice(const char *name,
-										 const void *private_data);
+										 const void *private_data,
+										 void *arg);
 extern PGDLLEXPORT void injection_wait(const char *name,
-									   const void *private_data);
+									   const void *private_data,
+									   void *arg);
 
 /* track if injection points attached in this process are linked to it */
 static bool injection_point_local = false;
@@ -239,7 +242,7 @@ injection_points_cleanup(int code, Datum arg)
 
 /* Set of callbacks available to be attached to an injection point. */
 void
-injection_error(const char *name, const void *private_data)
+injection_error(const char *name, const void *private_data, void *arg)
 {
 	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
 
@@ -252,7 +255,7 @@ injection_error(const char *name, const void *private_data)
 }
 
 void
-injection_notice(const char *name, const void *private_data)
+injection_notice(const char *name, const void *private_data, void *arg)
 {
 	InjectionPointCondition *condition = (InjectionPointCondition *) private_data;
 
@@ -266,7 +269,7 @@ injection_notice(const char *name, const void *private_data)
 
 /* Wait on a condition variable, awaken by injection_points_wakeup() */
 void
-injection_wait(const char *name, const void *private_data)
+injection_wait(const char *name, const void *private_data, void *arg)
 {
 	uint32		old_wait_counts = 0;
 	int			index = -1;
@@ -405,7 +408,7 @@ injection_points_run(PG_FUNCTION_ARGS)
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	pgstat_report_inj_fixed(0, 0, 1, 0, 0);
-	INJECTION_POINT(name);
+	INJECTION_POINT(name, NULL);
 
 	PG_RETURN_VOID();
 }
@@ -420,7 +423,7 @@ injection_points_cached(PG_FUNCTION_ARGS)
 	char	   *name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	pgstat_report_inj_fixed(0, 0, 0, 1, 0);
-	INJECTION_POINT_CACHED(name);
+	INJECTION_POINT_CACHED(name, NULL);
 
 	PG_RETURN_VOID();
 }

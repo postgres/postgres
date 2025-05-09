@@ -3482,7 +3482,7 @@ ProcessInterrupts(void)
 		IdleInTransactionSessionTimeoutPending = false;
 		if (IdleInTransactionSessionTimeout > 0)
 		{
-			INJECTION_POINT("idle-in-transaction-session-timeout");
+			INJECTION_POINT("idle-in-transaction-session-timeout", NULL);
 			ereport(FATAL,
 					(errcode(ERRCODE_IDLE_IN_TRANSACTION_SESSION_TIMEOUT),
 					 errmsg("terminating connection due to idle-in-transaction timeout")));
@@ -3495,7 +3495,7 @@ ProcessInterrupts(void)
 		TransactionTimeoutPending = false;
 		if (TransactionTimeout > 0)
 		{
-			INJECTION_POINT("transaction-timeout");
+			INJECTION_POINT("transaction-timeout", NULL);
 			ereport(FATAL,
 					(errcode(ERRCODE_TRANSACTION_TIMEOUT),
 					 errmsg("terminating connection due to transaction timeout")));
@@ -3508,7 +3508,7 @@ ProcessInterrupts(void)
 		IdleSessionTimeoutPending = false;
 		if (IdleSessionTimeout > 0)
 		{
-			INJECTION_POINT("idle-session-timeout");
+			INJECTION_POINT("idle-session-timeout", NULL);
 			ereport(FATAL,
 					(errcode(ERRCODE_IDLE_SESSION_TIMEOUT),
 					 errmsg("terminating connection due to idle-session timeout")));

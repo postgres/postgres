@@ -234,7 +234,7 @@ BackendInitialize(ClientSocket *client_sock, CAC_state cac)
 
 	/* For testing client error handling */
 #ifdef USE_INJECTION_POINTS
-	INJECTION_POINT("backend-initialize");
+	INJECTION_POINT("backend-initialize", NULL);
 	if (IS_INJECTION_POINT_ATTACHED("backend-initialize-v2-error"))
 	{
 		/*

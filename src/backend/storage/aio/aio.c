@@ -1275,7 +1275,7 @@ pgaio_io_call_inj(PgAioHandle *ioh, const char *injection_point)
 
 	PG_TRY();
 	{
-		InjectionPointCached(injection_point);
+		InjectionPointCached(injection_point, NULL);
 	}
 	PG_FINALLY();
 	{

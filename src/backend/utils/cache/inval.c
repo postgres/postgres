@@ -1207,7 +1207,7 @@ AtEOXact_Inval(bool isCommit)
 	/* Must be at top of stack */
 	Assert(transInvalInfo->my_level == 1 && transInvalInfo->parent == NULL);
 
-	INJECTION_POINT("transaction-end-process-inval");
+	INJECTION_POINT("transaction-end-process-inval", NULL);
 
 	if (isCommit)
 	{

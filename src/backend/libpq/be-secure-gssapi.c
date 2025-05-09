@@ -500,7 +500,7 @@ secure_open_gssapi(Port *port)
 				minor;
 	gss_cred_id_t delegated_creds;
 
-	INJECTION_POINT("backend-gssapi-startup");
+	INJECTION_POINT("backend-gssapi-startup", NULL);
 
 	/*
 	 * Allocate subsidiary Port data for GSSAPI operations.

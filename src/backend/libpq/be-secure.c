@@ -131,7 +131,7 @@ secure_open_server(Port *port)
 	}
 	Assert(pq_buffer_remaining_data() == 0);
 
-	INJECTION_POINT("backend-ssl-startup");
+	INJECTION_POINT("backend-ssl-startup", NULL);
 
 	r = be_tls_open_server(port);
 

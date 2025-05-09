@@ -674,11 +674,15 @@ batch_end(PG_FUNCTION_ARGS)
 }
 
 #ifdef USE_INJECTION_POINTS
-extern PGDLLEXPORT void inj_io_short_read(const char *name, const void *private_data);
-extern PGDLLEXPORT void inj_io_reopen(const char *name, const void *private_data);
+extern PGDLLEXPORT void inj_io_short_read(const char *name,
+										  const void *private_data,
+										  void *arg);
+extern PGDLLEXPORT void inj_io_reopen(const char *name,
+									  const void *private_data,
+									  void *arg);
 
 void
-inj_io_short_read(const char *name, const void *private_data)
+inj_io_short_read(const char *name, const void *private_data, void *arg)
 {
 	PgAioHandle *ioh;
 
@@ -742,7 +746,7 @@ inj_io_short_read(const char *name, const void *private_data)
 }
 
 void
-inj_io_reopen(const char *name, const void *private_data)
+inj_io_reopen(const char *name, const void *private_data, void *arg)
 {
 	ereport(LOG,
 			errmsg("reopen injection point called, is enabled: %d",

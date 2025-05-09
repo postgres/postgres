@@ -7882,7 +7882,7 @@ CreateRestartPoint(int flags)
 	 * This location needs to be after CheckPointGuts() to ensure that some
 	 * work has already happened during this checkpoint.
 	 */
-	INJECTION_POINT("create-restart-point");
+	INJECTION_POINT("create-restart-point", NULL);
 
 	/*
 	 * Remember the prior checkpoint's redo ptr for

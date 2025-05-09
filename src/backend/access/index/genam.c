@@ -851,7 +851,7 @@ systable_inplace_update_begin(Relation relation,
 		if (retries++ > 10000)
 			elog(ERROR, "giving up after too many tries to overwrite row");
 
-		INJECTION_POINT("inplace-before-pin");
+		INJECTION_POINT("inplace-before-pin", NULL);
 		scan = systable_beginscan(relation, indexId, indexOK, snapshot,
 								  nkeys, unconstify(ScanKeyData *, key));
 		oldtup = systable_getnext(scan);

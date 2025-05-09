@@ -685,9 +685,9 @@ ginFinishSplit(GinBtree btree, GinBtreeStack *stack, bool freestack,
 
 #ifdef USE_INJECTION_POINTS
 		if (GinPageIsLeaf(BufferGetPage(stack->buffer)))
-			INJECTION_POINT("gin-leave-leaf-split-incomplete");
+			INJECTION_POINT("gin-leave-leaf-split-incomplete", NULL);
 		else
-			INJECTION_POINT("gin-leave-internal-split-incomplete");
+			INJECTION_POINT("gin-leave-internal-split-incomplete", NULL);
 #endif
 
 		/* search parent to lock */
@@ -778,7 +778,7 @@ ginFinishSplit(GinBtree btree, GinBtreeStack *stack, bool freestack,
 static void
 ginFinishOldSplit(GinBtree btree, GinBtreeStack *stack, GinStatsData *buildStats, int access)
 {
-	INJECTION_POINT("gin-finish-incomplete-split");
+	INJECTION_POINT("gin-finish-incomplete-split", NULL);
 	elog(DEBUG1, "finishing incomplete split of block %u in gin index \"%s\"",
 		 stack->blkno, RelationGetRelationName(btree->index));
 

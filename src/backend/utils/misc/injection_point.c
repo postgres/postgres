@@ -541,14 +541,14 @@ InjectionPointLoad(const char *name)
  * Execute an injection point, if defined.
  */
 void
-InjectionPointRun(const char *name)
+InjectionPointRun(const char *name, void *arg)
 {
 #ifdef USE_INJECTION_POINTS
 	InjectionPointCacheEntry *cache_entry;
 
 	cache_entry = InjectionPointCacheRefresh(name);
 	if (cache_entry)
-		cache_entry->callback(name, cache_entry->private_data);
+		cache_entry->callback(name, cache_entry->private_data, arg);
 #else
 	elog(ERROR, "Injection points are not supported by this build");
 #endif
@@ -558,14 +558,14 @@ InjectionPointRun(const char *name)
  * Execute an injection point directly from the cache, if defined.
  */
 void
-InjectionPointCached(const char *name)
+InjectionPointCached(const char *name, void *arg)
 {
 #ifdef USE_INJECTION_POINTS
 	InjectionPointCacheEntry *cache_entry;
 
 	cache_entry = injection_point_cache_get(name);
 	if (cache_entry)
-		cache_entry->callback(name, cache_entry->private_data);
+		cache_entry->callback(name, cache_entry->private_data, arg);
 #else
 	elog(ERROR, "Injection points are not supported by this build");
 #endif

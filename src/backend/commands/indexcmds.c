@@ -3892,9 +3892,9 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 
 #ifdef USE_INJECTION_POINTS
 		if (idx->safe)
-			INJECTION_POINT("reindex-conc-index-safe");
+			INJECTION_POINT("reindex-conc-index-safe", NULL);
 		else
-			INJECTION_POINT("reindex-conc-index-not-safe");
+			INJECTION_POINT("reindex-conc-index-not-safe", NULL);
 #endif
 
 		idx->tableId = RelationGetRelid(heapRel);

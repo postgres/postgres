@@ -46,7 +46,7 @@ test_read_multixact(PG_FUNCTION_ARGS)
 	MultiXactId id = PG_GETARG_TRANSACTIONID(0);
 	MultiXactMember *members;
 
-	INJECTION_POINT("test-multixact-read");
+	INJECTION_POINT("test-multixact-read", NULL);
 	/* discard caches */
 	AtEOXact_MultiXact();
 

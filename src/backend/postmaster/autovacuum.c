@@ -1922,7 +1922,7 @@ do_autovacuum(void)
 	 * This injection point is put in a transaction block to work with a wait
 	 * that uses a condition variable.
 	 */
-	INJECTION_POINT("autovacuum-worker-start");
+	INJECTION_POINT("autovacuum-worker-start", NULL);
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is

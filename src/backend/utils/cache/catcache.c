@@ -1926,7 +1926,7 @@ SearchCatCacheList(CatCache *cache,
 			/* Injection point to help testing the recursive invalidation case */
 			if (first_iter)
 			{
-				INJECTION_POINT("catcache-list-miss-systable-scan-started");
+				INJECTION_POINT("catcache-list-miss-systable-scan-started", NULL);
 				first_iter = false;
 			}
 
