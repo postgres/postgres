@@ -684,7 +684,7 @@ extern PGDLLEXPORT void inj_io_reopen(const char *name,
 void
 inj_io_short_read(const char *name, const void *private_data, void *arg)
 {
-	PgAioHandle *ioh;
+	PgAioHandle *ioh = (PgAioHandle *) arg;
 
 	ereport(LOG,
 			errmsg("short read injection point called, is enabled: %d",
@@ -693,8 +693,6 @@ inj_io_short_read(const char *name, const void *private_data, void *arg)
 
 	if (inj_io_error_state->enabled_short_read)
 	{
-		ioh = pgaio_inj_io_get();
-
 		/*
 		 * Only shorten reads that are actually longer than the target size,
 		 * otherwise we can trigger over-reads.

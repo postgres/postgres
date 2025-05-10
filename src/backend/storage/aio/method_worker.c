@@ -42,6 +42,7 @@
 #include "storage/latch.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
+#include "utils/injection_point.h"
 #include "utils/memdebug.h"
 #include "utils/ps_status.h"
 #include "utils/wait_event.h"
@@ -525,7 +526,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 			 * To be able to exercise the reopen-fails path, allow injection
 			 * points to trigger a failure at this point.
 			 */
-			pgaio_io_call_inj(ioh, "aio-worker-after-reopen");
+			INJECTION_POINT("aio-worker-after-reopen", ioh);
 
 			error_errno = 0;
 			error_ioh = NULL;

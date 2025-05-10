@@ -394,26 +394,6 @@ extern const char *pgaio_io_get_target_name(PgAioHandle *ioh);
 				pgaio_io_get_state_name(ioh), \
 				__VA_ARGS__)
 
-
-#ifdef USE_INJECTION_POINTS
-
-extern void pgaio_io_call_inj(PgAioHandle *ioh, const char *injection_point);
-
-/* just for use in tests, from within injection points */
-extern PgAioHandle *pgaio_inj_io_get(void);
-
-#else
-
-#define pgaio_io_call_inj(ioh, injection_point) (void) 0
-
-/*
- * no fallback for pgaio_inj_io_get, all code using injection points better be
- * guarded by USE_INJECTION_POINTS.
- */
-
-#endif
-
-
 /* Declarations for the tables of function pointers exposed by each IO method. */
 extern PGDLLIMPORT const IoMethodOps pgaio_sync_ops;
 extern PGDLLIMPORT const IoMethodOps pgaio_worker_ops;
