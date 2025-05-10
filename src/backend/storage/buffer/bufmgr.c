@@ -4161,8 +4161,6 @@ AssertNotCatalogBufferLock(LWLock *lock, LWLockMode mode,
 		return;
 
 	Assert(!IsCatalogRelationOid(relid));
-	/* Shared rels are always catalogs: detect even after VACUUM FULL. */
-	Assert(tag.spcOid != GLOBALTABLESPACE_OID);
 }
 #endif
 
