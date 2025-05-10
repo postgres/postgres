@@ -377,34 +377,6 @@ Allow merge joins to use incremental sorts (Richard Guo)
 </listitem>
 
 <!--
-Author: David Rowley <drowley@postgresql.org>
-2024-08-20 [adf97c156] Speed up Hash Join by making ExprStates support hashing
-Author: David Rowley <drowley@postgresql.org>
-2024-12-11 [0f5738202] Use ExprStates for hashing in GROUP BY and SubPlans
-Author: Jeff Davis <jdavis@postgresql.org>
-2025-03-24 [4d143509c] Create accessor functions for TupleHashEntry.
-Author: Jeff Davis <jdavis@postgresql.org>
-2025-03-24 [a0942f441] Add ExecCopySlotMinimalTupleExtra().
-Author: Jeff Davis <jdavis@postgresql.org>
-2025-03-24 [626df47ad] Remove 'additional' pointer from TupleHashEntryData.
--->
-
-<listitem>
-<para>
-Improve the performance and reduce memory usage of hash joins and GROUP BY (David Rowley, Jeff Davis)
-<ulink url="&commit_baseurl;adf97c156">&sect;</ulink>
-<ulink url="&commit_baseurl;0f5738202">&sect;</ulink>
-<ulink url="&commit_baseurl;4d143509c">&sect;</ulink>
-<ulink url="&commit_baseurl;a0942f441">&sect;</ulink>
-<ulink url="&commit_baseurl;626df47ad">&sect;</ulink>
-</para>
-
-<para>
-This also improves hash set operations used by EXCEPT, and hash lookups of subplan values.
-</para>
-</listitem>
-
-<!--
 Author: Amit Langote <amitlan@postgresql.org>
 2025-04-04 [88f55bc97] Make derived clause lookup in EquivalenceClass more effi
 Author: David Rowley <drowley@postgresql.org>
@@ -634,6 +606,34 @@ Avoid the locking of pruned partitions during execution (Amit Langote)
 <ulink url="&commit_baseurl;d47cbf474">&sect;</ulink>
 <ulink url="&commit_baseurl;cbc127917">&sect;</ulink>
 <ulink url="&commit_baseurl;525392d57">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2024-08-20 [adf97c156] Speed up Hash Join by making ExprStates support hashing
+Author: David Rowley <drowley@postgresql.org>
+2024-12-11 [0f5738202] Use ExprStates for hashing in GROUP BY and SubPlans
+Author: Jeff Davis <jdavis@postgresql.org>
+2025-03-24 [4d143509c] Create accessor functions for TupleHashEntry.
+Author: Jeff Davis <jdavis@postgresql.org>
+2025-03-24 [a0942f441] Add ExecCopySlotMinimalTupleExtra().
+Author: Jeff Davis <jdavis@postgresql.org>
+2025-03-24 [626df47ad] Remove 'additional' pointer from TupleHashEntryData.
+-->
+
+<listitem>
+<para>
+Improve the performance and reduce memory usage of hash joins and GROUP BY (David Rowley, Jeff Davis)
+<ulink url="&commit_baseurl;adf97c156">&sect;</ulink>
+<ulink url="&commit_baseurl;0f5738202">&sect;</ulink>
+<ulink url="&commit_baseurl;4d143509c">&sect;</ulink>
+<ulink url="&commit_baseurl;a0942f441">&sect;</ulink>
+<ulink url="&commit_baseurl;626df47ad">&sect;</ulink>
+</para>
+
+<para>
+This also improves hash set operations used by EXCEPT, and hash lookups of subplan values.
 </para>
 </listitem>
 
