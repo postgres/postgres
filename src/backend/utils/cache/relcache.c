@@ -4598,10 +4598,13 @@ CheckNNConstraintFetch(Relation relation)
 	HeapTuple	htup;
 	int			found = 0;
 
-	/* Allocate array with room for as many entries as expected */
-	check = (ConstrCheck *)
-		MemoryContextAllocZero(CacheMemoryContext,
-							   ncheck * sizeof(ConstrCheck));
+	/* Allocate array with room for as many entries as expected, if needed */
+	if (ncheck > 0)
+		check = (ConstrCheck *)
+			MemoryContextAllocZero(CacheMemoryContext,
+								   ncheck * sizeof(ConstrCheck));
+	else
+		check = NULL;
 
 	/* Search pg_constraint for relevant entries */
 	ScanKeyInit(&skey[0],
