@@ -2539,6 +2539,12 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "DOMAIN", MatchAny))
 		COMPLETE_WITH("ADD", "DROP", "OWNER TO", "RENAME", "SET",
 					  "VALIDATE CONSTRAINT");
+	/* ALTER DOMAIN <sth> ADD */
+	else if (Matches("ALTER", "DOMAIN", MatchAny, "ADD"))
+		COMPLETE_WITH("CONSTRAINT", "NOT NULL", "CHECK (");
+	/* ALTER DOMAIN <sth> ADD CONSTRAINT <sth> */
+	else if (Matches("ALTER", "DOMAIN", MatchAny, "ADD", "CONSTRAINT", MatchAny))
+		COMPLETE_WITH("NOT NULL", "CHECK (");
 	/* ALTER DOMAIN <sth> DROP */
 	else if (Matches("ALTER", "DOMAIN", MatchAny, "DROP"))
 		COMPLETE_WITH("CONSTRAINT", "DEFAULT", "NOT NULL");
