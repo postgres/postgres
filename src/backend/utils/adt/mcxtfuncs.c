@@ -15,11 +15,11 @@
 
 #include "postgres.h"
 
+#include "access/twophase.h"
+#include "catalog/pg_authid_d.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "access/twophase.h"
-#include "catalog/pg_authid_d.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
