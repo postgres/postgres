@@ -1176,10 +1176,11 @@ tsqueryout(PG_FUNCTION_ARGS)
  *
  * uint8	type, QI_VAL
  * uint8	weight
- *			operand text in client encoding, null-terminated
  * uint8	prefix
+ *			operand text in client encoding, null-terminated
  *
  * For each operator:
+ *
  * uint8	type, QI_OPR
  * uint8	operator, one of OP_AND, OP_PHRASE OP_OR, OP_NOT.
  * uint16	distance (only for OP_PHRASE)
