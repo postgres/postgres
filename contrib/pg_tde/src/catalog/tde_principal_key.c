@@ -887,41 +887,36 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		HeapTuple	tuple;
 		SysScanDesc scan;
 		Relation	rel;
-		bool		used = false;
+		TDEPrincipalKey *principal_key;
+		bool		used;
 
 		/* First verify that the global/default oid doesn't use it */
 
-		Oid			dbOid = GLOBAL_DATA_TDE_OID;
-		TDEPrincipalKey *principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
-
+		principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 		if (principal_key != NULL && providerId == principal_key->keyInfo.keyringId)
 		{
 			LWLockRelease(tde_lwlock_enc_keys());
-
 			return true;
 		}
 
-		dbOid = DEFAULT_DATA_TDE_OID;
-		principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
-
+		principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
 		if (principal_key != NULL && providerId == principal_key->keyInfo.keyringId)
 		{
 			LWLockRelease(tde_lwlock_enc_keys());
-
 			return true;
 		}
 
 		/* We have to verify that it isn't currently used by any database */
 
 		rel = table_open(DatabaseRelationId, AccessShareLock);
-
 		scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
 
+		used = false;
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
-			principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
+			Oid			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
 
+			principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 			if (principal_key && principal_key->keyInfo.keyringId == providerId)
 			{
 				used = true;
@@ -943,7 +938,6 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 		bool		used = principal_key != NULL && providerId == principal_key->keyInfo.keyringId;
 
 		LWLockRelease(tde_lwlock_enc_keys());
-
 		return used;
 	}
 }
@@ -977,11 +971,10 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 	HeapTuple	tuple;
 	SysScanDesc scan;
 	Relation	rel;
-	Oid			dbOid = GLOBAL_DATA_TDE_OID;
 	TDEPrincipalKey *principal_key;
 
 	/* First check the global oid */
-	principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
+	principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 
 	if (pg_tde_is_same_principal_key(oldKey, principal_key))
 	{
@@ -994,14 +987,13 @@ pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrinci
 	 * not ideal
 	 */
 	rel = table_open(DatabaseRelationId, RowExclusiveLock);
-
 	scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
-		dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
-		principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
+		Oid			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
 
+		principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 		if (pg_tde_is_same_principal_key(oldKey, principal_key))
 		{
 			pg_tde_rotate_default_key_for_database(principal_key, newKey);
