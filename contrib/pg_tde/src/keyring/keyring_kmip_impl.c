@@ -2,8 +2,8 @@
  * The libkmip specific code need to be in a separate library to avoid
  * collissions with PostgreSQL's header files.
  */
-
 #include <stdio.h>
+#include <string.h>
 #include <kmip.h>
 #include <kmip_bio.h>
 #include <kmip_locate.h>
