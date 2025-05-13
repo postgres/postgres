@@ -91,9 +91,20 @@ is($result, qq(20|1|10), 'check initial data is copied to subscriber');
 $node_publisher->safe_psql('postgres', "CREATE TABLE tab_3 (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_3 (a int)");
 
+my $oldpid = $node_publisher->safe_psql('postgres',
+	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
+);
+
 # Set the subscription with a missing publication
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub SET PUBLICATION tap_pub_3");
+
+# Wait for the walsender to restart after altering the subscription
+$node_publisher->poll_query_until('postgres',
+	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
+  )
+  or die
+  "Timed out while waiting for apply worker to restart after altering the subscription";
 
 my $offset = -s $node_publisher->logfile;
 
