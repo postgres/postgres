@@ -7,6 +7,15 @@
 #include "access/pg_tde_tdemap.h"
 #include "pg_tde_event_capture.h"
 
+typedef enum TDEMgrRelationDataEncryptionStatus
+{
+	/* This is a plaintext relation */
+	RELATION_NOT_ENCRYPTED = 0,
+
+	/* This is an encrypted relation, and we have the key available. */
+	RELATION_KEY_AVAILABLE = 1,
+} TDEMgrRelationDataEncryptionStatus;
+
 typedef struct TDESMgrRelationData
 {
 	/* parent data */
@@ -19,7 +28,7 @@ typedef struct TDESMgrRelationData
 	int			md_num_open_segs[MAX_FORKNUM + 1];
 	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
 
-	bool		encrypted_relation;
+	TDEMgrRelationDataEncryptionStatus encryption_status;
 	InternalKey relKey;
 } TDESMgrRelationData;
 
@@ -72,7 +81,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *int_key = &tdereln->relKey;
 
-	if (!tdereln->encrypted_relation)
+	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
 		mdwritev(reln, forknum, blocknum, buffers, nblocks, skipFsync);
 	}
@@ -131,7 +140,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
 	InternalKey *int_key = &tdereln->relKey;
 
-	if (!tdereln->encrypted_relation)
+	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
 		mdextend(reln, forknum, blocknum, buffer, skipFsync);
 	}
@@ -160,7 +169,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
-	if (!tdereln->encrypted_relation)
+	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 		return;
 
 	for (int i = 0; i < nblocks; ++i)
@@ -233,12 +242,12 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 		if (key)
 		{
-			tdereln->encrypted_relation = true;
+			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
 			tdereln->relKey = *key;
 		}
 		else
 		{
-			tdereln->encrypted_relation = false;
+			tdereln->encryption_status = RELATION_NOT_ENCRYPTED;
 		}
 	}
 }
@@ -258,12 +267,12 @@ tde_mdopen(SMgrRelation reln)
 
 	if (key)
 	{
-		tdereln->encrypted_relation = true;
+		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
 		tdereln->relKey = *key;
 	}
 	else
 	{
-		tdereln->encrypted_relation = false;
+		tdereln->encryption_status = RELATION_NOT_ENCRYPTED;
 	}
 }
 
