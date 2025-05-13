@@ -2922,7 +2922,7 @@ sub log_content
 
 =pod
 
-=item $node->log_check($offset, $test_name, %parameters)
+=item $node->log_check($test_name, $offset, %params)
 
 Check contents of server logs.
 
