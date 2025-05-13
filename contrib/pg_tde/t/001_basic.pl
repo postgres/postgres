@@ -24,7 +24,7 @@ PGTDE::psql($node, 'postgres',
 );
 
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_001_basic.per');"
 );
 
 PGTDE::psql($node, 'postgres',
@@ -56,6 +56,12 @@ my $strings = 'CONTAINS FOO (should be empty): ';
 $strings .= `strings $tablefile | grep foo`;
 PGTDE::append_to_result_file($strings);
 
+
+# An encrypted table can be dropped even if we don't have access to the principal key.
+$node->stop;
+unlink('/tmp/pg_tde_test_001_basic.per');
+$node->start;
+PGTDE::psql($node, 'postgres', 'SELECT pg_tde_verify_key()');
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc;');
 
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');

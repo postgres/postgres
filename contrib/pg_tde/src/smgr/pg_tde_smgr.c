@@ -14,6 +14,9 @@ typedef enum TDEMgrRelationDataEncryptionStatus
 
 	/* This is an encrypted relation, and we have the key available. */
 	RELATION_KEY_AVAILABLE = 1,
+
+	/* This is an encrypted relation, but we haven't loaded the key yet. */
+	RELATION_KEY_NOT_AVAILABLE = 2,
 } TDEMgrRelationDataEncryptionStatus;
 
 typedef struct TDESMgrRelationData
@@ -35,6 +38,16 @@ typedef struct TDESMgrRelationData
 typedef TDESMgrRelationData *TDESMgrRelation;
 
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
+
+static bool
+tde_smgr_is_encrypted(const RelFileLocatorBackend *smgr_rlocator)
+{
+	/* Do not try to encrypt/decrypt catalog tables */
+	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
+		return false;
+
+	return IsSMGRRelationEncrypted(*smgr_rlocator);
+}
 
 static InternalKey *
 tde_smgr_get_key(const RelFileLocatorBackend *smgr_rlocator)
@@ -80,7 +93,6 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *int_key = &tdereln->relKey;
 
 	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
@@ -88,9 +100,18 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
+		InternalKey *int_key;
 		unsigned char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		void	  **local_buffers = palloc_array(void *, nblocks);
+
+		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
+		{
+			tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
+			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+		}
+
+		int_key = &tdereln->relKey;
 
 		for (int i = 0; i < nblocks; ++i)
 		{
@@ -144,7 +165,6 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void *buffer, bool skipFsync)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *int_key = &tdereln->relKey;
 
 	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
@@ -152,9 +172,18 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
+		InternalKey *int_key;
 		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		unsigned char iv[16];
+
+		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
+		{
+			tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
+			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+		}
+
+		int_key = &tdereln->relKey;
 
 		CalcBlockIv(forknum, blocknum, int_key->base_iv, iv);
 
@@ -171,12 +200,19 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			void **buffers, BlockNumber nblocks)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *int_key = &tdereln->relKey;
+	InternalKey *int_key;
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
 	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 		return;
+	else if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
+	{
+		tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
+		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+	}
+
+	int_key = &tdereln->relKey;
 
 	for (int i = 0; i < nblocks; ++i)
 	{
@@ -260,21 +296,21 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 /*
  * mdopen() -- Initialize newly-opened relation.
+ *
+ * The current transaction might already be commited when this function is
+ * called, so do not call any code that uses ereport(ERROR) or otherwise tries
+ * to abort the transaction.
  */
 static void
 tde_mdopen(SMgrRelation reln)
 {
 	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
-	InternalKey *key;
 
 	mdopen(reln);
 
-	key = tde_smgr_get_key(&reln->smgr_rlocator);
-
-	if (key)
+	if (tde_smgr_is_encrypted(&reln->smgr_rlocator))
 	{
-		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
-		tdereln->relKey = *key;
+		tdereln->encryption_status = RELATION_KEY_NOT_AVAILABLE;
 	}
 	else
 	{
