@@ -13,7 +13,7 @@ jobs:
       matrix:
         os: ['ubuntu-22.04']
         compiler: [gcc, clang]
-        build_type: [debug,debugoptimized]
+        build_type: [debugoptimized]
         build_script: [make, meson]
     uses: ./.github/workflows/psp-reusable.yml
     with:
