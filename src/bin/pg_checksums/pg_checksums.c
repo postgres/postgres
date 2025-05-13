@@ -141,7 +141,7 @@ is_pg_tde_encypted(Oid spcOid, Oid dbOid, RelFileNumber relNumber)
 	RelFileLocator locator = {.spcOid = spcOid, .dbOid = dbOid,.relNumber = relNumber};
 	RelFileLocatorBackend rlocator = {.locator = locator,.backend = INVALID_PROC_NUMBER};
 
-	return GetSMGRRelationKey(rlocator) != NULL;
+	return IsSMGRRelationEncrypted(rlocator);
 }
 #endif
 

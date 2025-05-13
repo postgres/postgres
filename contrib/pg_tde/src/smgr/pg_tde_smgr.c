@@ -67,6 +67,7 @@ tde_smgr_should_encrypt(const RelFileLocatorBackend *smgr_rlocator, RelFileLocat
 					.backend = smgr_rlocator->backend,
 				};
 
+				/* Actually get the key here to ensure result is cached. */
 				return GetSMGRRelationKey(old_smgr_locator) != 0;
 			}
 	}
@@ -111,6 +112,11 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 }
 
+/*
+ * The current transaction might already be commited when this function is
+ * called, so do not call any code that uses ereport(ERROR) or otherwise tries
+ * to abort the transaction.
+ */
 static void
 tde_mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
@@ -128,7 +134,7 @@ tde_mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	 */
 	if (forknum == MAIN_FORKNUM || forknum == InvalidForkNumber)
 	{
-		if (!RelFileLocatorBackendIsTemp(rlocator) && GetSMGRRelationKey(rlocator))
+		if (!RelFileLocatorBackendIsTemp(rlocator) && IsSMGRRelationEncrypted(rlocator))
 			pg_tde_free_key_map_entry(&rlocator.locator);
 	}
 }

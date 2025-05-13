@@ -109,6 +109,7 @@ pg_tde_set_db_file_path(Oid dbOid, char *path)
 	join_path_components(path, pg_tde_get_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
 }
 
+extern bool IsSMGRRelationEncrypted(RelFileLocatorBackend rel);
 extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);
 extern int	pg_tde_count_relations(Oid dbOid);
 

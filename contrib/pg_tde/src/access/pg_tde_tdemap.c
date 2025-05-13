@@ -1075,6 +1075,38 @@ pg_tde_get_principal_key_info(Oid dbOid)
 }
 
 /*
+ * Figures out whether a relation is encrypted or not, but without trying to
+ * decrypt the key if it is. This also means that this function cannot push the
+ * key to cache.
+ */
+bool
+IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
+{
+	bool		result;
+	TDEMapEntry map_entry;
+	char		db_map_path[MAXPGPATH];
+
+	Assert(rel.locator.relNumber != InvalidRelFileNumber);
+
+	if (RelFileLocatorBackendIsTemp(rel))
+		return pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR) != NULL;
+	else if (pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR))
+		return true;
+
+	pg_tde_set_db_file_path(rel.locator.dbOid, db_map_path);
+
+	if (access(db_map_path, F_OK) == -1)
+		return false;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+
+	result = pg_tde_find_map_entry(&rel.locator, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+	return result;
+}
+
+/*
  * Returns TDE key for a given relation.
  * First it looks in a cache. If nothing found in the cache, it reads data from
  * the tde fork file and populates cache.
