@@ -62,9 +62,6 @@ static JsonParseErrorType json_resp_scalar(void *state, char *token, JsonTokenTy
 static JsonParseErrorType json_resp_object_field_start(void *state, char *fname, bool isnull);
 static JsonParseErrorType parse_json_response(JsonVaultRespState *parse, JsonLexContext *lex);
 
-static struct curl_slist *curlList = NULL;
-
-static bool curl_setup_token(VaultV2Keyring *keyring);
 static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, size_t out_size);
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
@@ -85,34 +82,12 @@ InstallVaultV2Keyring(void)
 }
 
 static bool
-curl_setup_token(VaultV2Keyring *keyring)
-{
-	if (curlList == NULL)
-	{
-		char		tokenHeader[256];
-
-		strcpy(tokenHeader, "X-Vault-Token:");
-		strcat(tokenHeader, keyring->vault_token);
-
-		curlList = curl_slist_append(curlList, tokenHeader);
-		if (curlList == NULL)
-			return 0;
-
-		curlList = curl_slist_append(curlList, "Content-Type: application/json");
-		if (curlList == NULL)
-			return 0;
-	}
-
-	if (curl_easy_setopt(keyringCurl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK)
-		return 0;
-
-	return 1;
-}
-
-static bool
 curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData)
 {
 	CURLcode	ret;
+	struct curl_slist *curlList = NULL;
+	char		tokenHeader[256];
+
 #if KEYRING_DEBUG
 	elog(DEBUG1, "Performing Vault HTTP [%s] request to '%s'", postData != NULL ? "POST" : "GET", url);
 	if (postData != NULL)
@@ -126,29 +101,49 @@ curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long 
 	if (!curlSetupSession(url, keyring->vault_ca_path, outStr))
 		return 0;
 
-	if (!curl_setup_token(keyring))
-		return 0;
-
 	if (postData != NULL)
 	{
 		if (curl_easy_setopt(keyringCurl, CURLOPT_POSTFIELDS, postData) != CURLE_OK)
 			return 0;
 	}
 
+	pg_snprintf(tokenHeader, sizeof(tokenHeader),
+				"X-Vault-Token: %s", keyring->vault_token);
+	curlList = curl_slist_append(curlList, tokenHeader);
+	if (curlList == NULL)
+		return 0;
+
+	if (!curl_slist_append(curlList, "Content-Type: application/json"))
+	{
+		curl_slist_free_all(curlList);
+		return 0;
+	}
+
+	if (curl_easy_setopt(keyringCurl, CURLOPT_HTTPHEADER, curlList) != CURLE_OK)
+	{
+		curl_slist_free_all(curlList);
+		return 0;
+	}
+
 	ret = curl_easy_perform(keyringCurl);
 	if (ret != CURLE_OK)
 	{
 		elog(LOG, "curl_easy_perform failed with return code: %d", ret);
+		curl_slist_free_all(curlList);
 		return 0;
 	}
 
 	if (curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, httpCode) != CURLE_OK)
+	{
+		curl_slist_free_all(curlList);
 		return 0;
+	}
 
 #if KEYRING_DEBUG
 	elog(DEBUG2, "Vault response [%li] '%s'", *httpCode, outStr->ptr != NULL ? outStr->ptr : "");
 #endif
 
+	curl_slist_free_all(curlList);
 	return 1;
 }
 
