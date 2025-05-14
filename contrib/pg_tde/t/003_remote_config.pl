@@ -49,6 +49,7 @@ use pgtde;
 }
 
 my $pid = MyWebServer->new(8888)->background();
+END { kill('TERM', $pid); }
 
 PGTDE::setup_files_dir(basename($0));
 
@@ -84,8 +85,6 @@ PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc2;');
 PGTDE::psql($node, 'postgres', 'DROP EXTENSION pg_tde;');
 
 $node->stop;
-
-kill('TERM', $pid);
 
 # Compare the expected and out file
 my $compare = PGTDE->compare_results();
