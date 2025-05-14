@@ -6,7 +6,6 @@ cd /tmp
 
 wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/bin/create_certificates.py
 python3 create_certificates.py
-cat client_certificate_jane_doe.pem >> client_key_jane_doe.pem
 
 mkdir policies
 cd policies

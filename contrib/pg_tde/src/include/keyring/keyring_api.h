@@ -86,6 +86,7 @@ typedef struct KmipKeyring
 	char	   *kmip_port;
 	char	   *kmip_ca_path;
 	char	   *kmip_cert_path;
+	char	   *kmip_key_path;
 } KmipKeyring;
 
 extern void RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type);

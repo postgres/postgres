@@ -61,7 +61,7 @@ kmipSslConnect(KmipCtx *ctx, KmipKeyring *kmip_keyring, bool throw_error)
 		return false;
 	}
 
-	if (SSL_CTX_use_PrivateKey_file(ctx->ssl, kmip_keyring->kmip_cert_path, SSL_FILETYPE_PEM) != 1)
+	if (SSL_CTX_use_PrivateKey_file(ctx->ssl, kmip_keyring->kmip_key_path, SSL_FILETYPE_PEM) != 1)
 	{
 		SSL_CTX_free(ctx->ssl);
 		ereport(level, errmsg("SSL error: Loading the client key failed"));

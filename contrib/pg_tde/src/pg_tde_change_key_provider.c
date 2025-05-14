@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	{
 		provider_found = true;
 
-		if (argc - argstart != 7 && argc - argstart != 8)
+		if (argc - argstart != 8 && argc - argstart != 9)
 		{
 			help();
 			puts("\n");
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if (!build_json(json, 5, "type", "kmip", "host", argv[4 + argstart], "port", argv[5 + argstart], "caPath", (argc - argstart > 7 ? argv[7 + argstart] : ""), "certPath", argv[6 + argstart]))
+		if (!build_json(json, 6, "type", "kmip", "host", argv[4 + argstart], "port", argv[5 + argstart], "caPath", (argc - argstart > 8 ? argv[8 + argstart] : ""), "certPath", argv[6 + argstart], "keyPath", argv[7 + argstart]))
 		{
 			exit(1);
 		}

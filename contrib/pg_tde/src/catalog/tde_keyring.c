@@ -888,15 +888,17 @@ load_kmip_keyring_provider_options(char *keyring_options)
 	if (kmip_keyring->kmip_host == NULL || kmip_keyring->kmip_host[0] == '\0' ||
 		kmip_keyring->kmip_port == NULL || kmip_keyring->kmip_port[0] == '\0' ||
 		kmip_keyring->kmip_ca_path == NULL || kmip_keyring->kmip_ca_path[0] == '\0' ||
-		kmip_keyring->kmip_cert_path == NULL || kmip_keyring->kmip_cert_path[0] == '\0')
+		kmip_keyring->kmip_cert_path == NULL || kmip_keyring->kmip_cert_path[0] == '\0' ||
+		kmip_keyring->kmip_key_path == NULL || kmip_keyring->kmip_key_path[0] == '\0')
 	{
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("missing in the keyring options:%s%s%s%s",
+				errmsg("missing in the keyring options:%s%s%s%s%s",
 					   (kmip_keyring->kmip_host != NULL && kmip_keyring->kmip_host[0] != '\0') ? "" : " host",
 					   (kmip_keyring->kmip_port != NULL && kmip_keyring->kmip_port[0] != '\0') ? "" : " port",
 					   (kmip_keyring->kmip_ca_path != NULL && kmip_keyring->kmip_ca_path[0] != '\0') ? "" : " caPath",
-					   (kmip_keyring->kmip_cert_path != NULL && kmip_keyring->kmip_cert_path[0] != '\0') ? "" : " certPath"));
+					   (kmip_keyring->kmip_cert_path != NULL && kmip_keyring->kmip_cert_path[0] != '\0') ? "" : " certPath",
+					   (kmip_keyring->kmip_key_path != NULL && kmip_keyring->kmip_key_path[0] != '\0') ? "" : " keyPath"));
 		return NULL;
 	}
 
@@ -925,6 +927,7 @@ debug_print_kerying(GenericKeyring *keyring)
 			elog(DEBUG2, "KMIP Keyring Port: %s", ((KmipKeyring *) keyring)->kmip_port);
 			elog(DEBUG2, "KMIP Keyring CA Path: %s", ((KmipKeyring *) keyring)->kmip_ca_path);
 			elog(DEBUG2, "KMIP Keyring Cert Path: %s", ((KmipKeyring *) keyring)->kmip_cert_path);
+			elog(DEBUG2, "KMIP Keyring Key Path: %s", ((KmipKeyring *) keyring)->kmip_key_path);
 			break;
 		case UNKNOWN_KEY_PROVIDER:
 			break;
