@@ -19,6 +19,14 @@ typedef enum TDEMgrRelationDataEncryptionStatus
 	RELATION_KEY_NOT_AVAILABLE = 2,
 } TDEMgrRelationDataEncryptionStatus;
 
+/*
+ * TDESMgrRelationData is an extended copy of MDSMgrRelationData in md.c
+ *
+ * The first fields of this struct must always exactly match
+ * MDSMgrRelationData since we will pass this structure to the md.c functions.
+ *
+ * Any fields specific to the tde smgr must be placed after these fields.
+ */
 typedef struct TDESMgrRelationData
 {
 	/* parent data */
