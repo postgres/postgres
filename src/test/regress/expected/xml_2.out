@@ -1359,6 +1359,10 @@ EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM xmltableview1;
 -- errors
 SELECT * FROM XMLTABLE (ROW () PASSING null COLUMNS v1 timestamp) AS f (v1, v2);
 ERROR:  XMLTABLE function has 1 columns available but 2 columns specified
+SELECT * FROM XMLTABLE (ROW () PASSING null COLUMNS v1 timestamp __pg__is_not_null 1) AS f (v1);
+ERROR:  option name "__pg__is_not_null" cannot be used in XMLTABLE
+LINE 1: ...MLTABLE (ROW () PASSING null COLUMNS v1 timestamp __pg__is_n...
+                                                             ^
 -- XMLNAMESPACES tests
 SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
                       '/zz:rows/zz:row'
