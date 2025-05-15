@@ -103,11 +103,9 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 {
 	KmipCtx		ctx;
 	KmipKeyring *kmip_keyring = (KmipKeyring *) keyring;
-	bool		sslresult;
 	int			result;
 
-	sslresult = kmipSslConnect(&ctx, kmip_keyring, true);
-	Assert(sslresult);
+	kmipSslConnect(&ctx, kmip_keyring, true);
 
 	result = pg_tde_kmip_set_by_name(ctx.bio, key->name, key->data.data, key->data.len);
 
