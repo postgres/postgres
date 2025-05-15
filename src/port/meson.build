@@ -2,6 +2,7 @@
 
 pgport_sources = [
   'bsearch_arg.c',
+  'memory_access_tracing.h',
   'chklocale.c',
   'inet_net_ntop.c',
   'noblock.c',

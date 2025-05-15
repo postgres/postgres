@@ -38,6 +38,7 @@ LIBS += $(PTHREAD_LIBS)
 OBJS = \
 	$(LIBOBJS) \
 	$(PG_CRC32C_OBJS) \
+	memory_access_tracing.o \
 	bsearch_arg.o \
 	chklocale.o \
 	inet_net_ntop.o \
