@@ -1,0 +1,56 @@
+name: CodeChecker
+on:
+  pull_request:
+  push:
+    branches:
+      - TDE_REL_17_STABLE
+
+env:
+  CC: clang
+  LD: clang
+
+jobs:
+  run:
+    name: Run
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: ci_scripts/ubuntu-deps.sh
+
+      - name: Install CodeChecker
+        run: |
+          ## CodeChecker version should match version installed on server side.
+          pip3 install codechecker==6.21
+
+      - name: Configure CodeChecker
+        run: |
+          echo "::add-mask::${{ secrets.CODECHECKER_ENDPOINT }}"
+          echo "::add-mask::${{ secrets.CODECHECKER_ENGINEERING_CREDENTIALS }}"
+          cat > ~/.codechecker.passwords.json << EOL
+          {
+            "client_autologin": true,
+            "credentials": {
+              "${{secrets.CODECHECKER_ENDPOINT}}": "${{secrets.CODECHECKER_ENGINEERING_CREDENTIALS}}"
+            }
+          }
+          EOL
+
+      - name: Set cc alternative
+        run: |
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100
+          sudo update-alternatives --set cc /usr/bin/clang
+
+      - name: Build postgres
+        run: ci_scripts/meson-build.sh debug
+
+      - name: Run CodeChecker
+        run: CodeChecker analyze build/compile_commands.json --enable sensitive --output ./reports --file ${{ github.workspace }}/contrib/pg_tde
+
+      - name: Upload CodeChecker reports
+        run: |
+          CodeChecker store ./reports --url=https://codechecker.percona.com/pg_tde --name=${GITHUB_REF_NAME} --tag=${GITHUB_SHA} --force
