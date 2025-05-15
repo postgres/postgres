@@ -48,18 +48,12 @@ static const EVP_CIPHER *cipher_ctr_ecb = NULL;
 void
 AesInit(void)
 {
-	static bool initialized = false;
-
-	Assert(!initialized);
-
 	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
 
 	cipher_cbc = EVP_aes_128_cbc();
 	cipher_gcm = EVP_aes_128_gcm();
 	cipher_ctr_ecb = EVP_aes_128_ecb();
-
-	initialized = true;
 }
 
 static void
