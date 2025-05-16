@@ -11,13 +11,15 @@
  <title>Legal Notice</title>
 
  <para>
-  <productname>PostgreSQL</productname> is Copyright &copy; 1996&ndash;2025
-  by the PostgreSQL Global Development Group.
+  <productname>PostgreSQL</productname> Database Management System
+  (also known as Postgres, formerly known as Postgres95)
  </para>
 
  <para>
-  <productname>Postgres95</productname> is Copyright &copy; 1994&ndash;5
-  by the Regents of the University of California.
+  Portions Copyright &copy; 1996-2025, PostgreSQL Global Development Group
+ </para>
+ <para>
+  Portions Copyright &copy; 1994, The Regents of the University of California
  </para>
 
  <para>
