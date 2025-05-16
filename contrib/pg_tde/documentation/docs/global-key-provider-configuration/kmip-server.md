@@ -3,7 +3,6 @@
 To use a Key Management Interoperability Protocol (KMIP) server with `pg_tde`, you must configure it as a global key provider. This setup enables `pg_tde` to securely fetch and manage encryption keys from a centralized key management appliance.
 
 !!! note
-
     You need the root certificate of the KMIP server and a client key/certificate pair with permissions to create and read keys on the server.
 
 It is recommended to review the [configuration guidelines for the HashiCorp Vault Enterprise KMIP Secrets Engine](https://developer.hashicorp.com/vault/tutorials/enterprise/kmip-engine) if you're using Vault.
@@ -12,16 +11,16 @@ For testing purposes, you can use a lightweight PyKMIP server, which enables eas
 
 ## Example usage
 
-    ```sql
-    SELECT pg_tde_add_global_key_provider_kmip(
-        'provider-name',
-        'kmip-IP', 
-        5696,
-        '/path_to/server_certificate.pem', 
-        '/path_to/client_cert.pem',
-        '/path_to/client_key.pem'
-    );
-    ```
+```sql
+SELECT pg_tde_add_global_key_provider_kmip(
+    'provider-name',
+    'kmip-IP', 
+    5696,
+    '/path_to/server_certificate.pem', 
+    '/path_to/client_cert.pem',
+    '/path_to/client_key.pem'
+);
+```
 
 ## Parameter descriptions
 
@@ -36,15 +35,15 @@ For testing purposes, you can use a lightweight PyKMIP server, which enables eas
 
 The following example is for testing purposes only.
 
-    ```sql
-    SELECT pg_tde_add_global_key_provider_kmip(
-        'kmip','127.0.0.1', 
-        5696, 
-        '/tmp/server_certificate.pem', 
-        '/tmp/client_cert_jane_doe.pem',
-        '/tmp/client_key_jane_doe.pem'
-    );
-    ```
+```sql
+SELECT pg_tde_add_global_key_provider_kmip(
+    'kmip','127.0.0.1', 
+    5696, 
+    '/tmp/server_certificate.pem', 
+    '/tmp/client_cert_jane_doe.pem',
+    '/tmp/client_key_jane_doe.pem'
+);
+```
 
 For more information on related functions, see the link below:
 

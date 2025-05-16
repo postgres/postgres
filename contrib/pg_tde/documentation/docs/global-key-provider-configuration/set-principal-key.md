@@ -7,11 +7,11 @@ You can configure a default principal key using a global key provider. This key 
 Run the following command:
 
 ```sql
-    SELECT pg_tde_set_default_key_using_global_key_provider(
-        'name-of-the-key',
-        'provider-name',
-        'ensure_new_key'
-    );
+SELECT pg_tde_set_default_key_using_global_key_provider(
+    'name-of-the-key',
+    'provider-name',
+    'ensure_new_key'
+);
 ```
 
 ## Parameter description
@@ -23,12 +23,15 @@ Run the following command:
 This example is for testing purposes only. Replace the key name and provider name with your values:
 
 ```sql
-        SELECT pg_tde_set_key_using_global_key_provider('test-db-master-key','file-vault','ensure_new_key');
+SELECT pg_tde_set_key_using_global_key_provider(
+    'test-db-master-key',
+    'file-vault',
+    'ensure_new_key'
+);
 ```
 
 !!! note
-
-        The key is auto-generated.
+    The key is auto-generated.
 
 After this, all databases that do not have something else configured will use this newly generated principal key.
 
