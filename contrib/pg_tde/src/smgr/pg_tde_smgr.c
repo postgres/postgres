@@ -7,7 +7,7 @@
 #include "access/pg_tde_tdemap.h"
 #include "pg_tde_event_capture.h"
 
-typedef enum TDEMgrRelationDataEncryptionStatus
+typedef enum TDEMgrRelationEncryptionStatus
 {
 	/* This is a plaintext relation */
 	RELATION_NOT_ENCRYPTED = 0,
@@ -17,17 +17,17 @@ typedef enum TDEMgrRelationDataEncryptionStatus
 
 	/* This is an encrypted relation, but we haven't loaded the key yet. */
 	RELATION_KEY_NOT_AVAILABLE = 2,
-} TDEMgrRelationDataEncryptionStatus;
+} TDEMgrRelationEncryptionStatus;
 
 /*
- * TDESMgrRelationData is an extended copy of MDSMgrRelationData in md.c
+ * TDESMgrRelation is an extended copy of MDSMgrRelationData in md.c
  *
  * The first fields of this struct must always exactly match
  * MDSMgrRelationData since we will pass this structure to the md.c functions.
  *
  * Any fields specific to the tde smgr must be placed after these fields.
  */
-typedef struct TDESMgrRelationData
+typedef struct TDESMgrRelation
 {
 	/* parent data */
 	SMgrRelationData reln;
@@ -39,11 +39,9 @@ typedef struct TDESMgrRelationData
 	int			md_num_open_segs[MAX_FORKNUM + 1];
 	struct _MdfdVec *md_seg_fds[MAX_FORKNUM + 1];
 
-	TDEMgrRelationDataEncryptionStatus encryption_status;
+	TDEMgrRelationEncryptionStatus encryption_status;
 	InternalKey relKey;
-} TDESMgrRelationData;
-
-typedef TDESMgrRelationData *TDESMgrRelation;
+} TDESMgrRelation;
 
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
@@ -100,7 +98,7 @@ static void
 tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void **buffers, BlockNumber nblocks, bool skipFsync)
 {
-	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
+	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 
 	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
@@ -172,7 +170,7 @@ static void
 tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 const void *buffer, bool skipFsync)
 {
-	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
+	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 
 	if (tdereln->encryption_status == RELATION_NOT_ENCRYPTED)
 	{
@@ -207,7 +205,7 @@ static void
 tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			void **buffers, BlockNumber nblocks)
 {
-	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
+	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 	InternalKey *int_key;
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
@@ -257,7 +255,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 static void
 tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
-	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
+	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 
 	/* Copied from mdcreate() in md.c */
 	if (isRedo && tdereln->md_num_open_segs[forknum] > 0)
@@ -312,7 +310,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 static void
 tde_mdopen(SMgrRelation reln)
 {
-	TDESMgrRelation tdereln = (TDESMgrRelation) reln;
+	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 
 	mdopen(reln);
 
@@ -352,7 +350,7 @@ RegisterStorageMgr(void)
 {
 	if (storage_manager_id != MdSMgrId)
 		elog(FATAL, "Another storage manager was loaded before pg_tde. Multiple storage managers is unsupported.");
-	storage_manager_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelationData));
+	storage_manager_id = smgr_register(&tde_smgr, sizeof(TDESMgrRelation));
 }
 
 /*
