@@ -170,7 +170,6 @@ pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
-	/* Add the encrypted key to the key map data file structure. */
 	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
 
@@ -210,7 +209,6 @@ pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator)
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
-	/* Add the encrypted key to the key map data file structure. */
 	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
 }
@@ -272,9 +270,6 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
 	pg_tde_generate_internal_key(rel_key_data, TDE_KEY_TYPE_GLOBAL | entry_type);
 
-	/*
-	 * Add the encrypted key to the key map data file structure.
-	 */
 	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
 
 	LWLockRelease(tde_lwlock_enc_keys());
@@ -354,12 +349,8 @@ pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrinci
 
 	Assert(signed_key_info);
 
-	/* Create the header for this file. */
 	fheader.file_version = PG_TDE_FILEMAGIC;
-
-	/* Fill in the data */
 	fheader.signed_key_info = *signed_key_info;
-
 	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
 
 	if (*bytes_written != TDE_FILE_HEADER_SIZE)
@@ -410,9 +401,6 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 	AesGcmEncrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), rel_key_data->key, INTERNAL_KEY_LEN, map_entry->enc_key.key, map_entry->aead_tag);
 }
 
-/*
- * Based on the given arguments,write the entry into the key map file.
- */
 static void
 pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path)
 {
@@ -420,7 +408,6 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 
 	bytes_written = pg_pwrite(fd, map_entry, MAP_ENTRY_SIZE, *offset);
 
-	/* Add the entry to the file */
 	if (bytes_written != MAP_ENTRY_SIZE)
 	{
 		ereport(ERROR,
@@ -568,9 +555,6 @@ keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *ro
 	return pg_tde_open_file_write(rotated_filename, signed_key_info, true, curr_pos);
 }
 
-/*
- * Do the final steps in the key rotation.
- */
 static void
 finalize_key_rotation(const char *path_old, const char *path_new)
 {
@@ -654,7 +638,6 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		xlrec.keyringId = principal_key->keyInfo.keyringId;
 		memcpy(xlrec.keyName, new_principal_key->keyInfo.name, sizeof(new_principal_key->keyInfo.name));
 
-		/* Insert the XLog record */
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, sizeof(XLogPrincipalKeyRotate));
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ROTATE_PRINCIPAL_KEY);
@@ -891,18 +874,13 @@ pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, con
 	return AesGcmDecrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
 }
 
-/*
- * Decrypts a given key and returns the decrypted one.
- */
 static InternalKey *
 tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 {
 	InternalKey *rel_key_data = palloc_object(InternalKey);
 
-	/* Ensure we are getting a valid pointer here */
 	Assert(principal_key);
 
-	/* Fill in the structure */
 	*rel_key_data = map_entry->enc_key;
 
 	if (!AesGcmDecrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), map_entry->enc_key.key, INTERNAL_KEY_LEN, rel_key_data->key, map_entry->aead_tag))
@@ -977,7 +955,6 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 	if (*bytes_read != TDE_FILE_HEADER_SIZE
 		|| fheader->file_version != PG_TDE_FILEMAGIC)
 	{
-		/* Corrupt file */
 		close(fd);
 		ereport(FATAL,
 				errcode_for_file_access(),
@@ -1016,10 +993,7 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
 {
 	off_t		read_pos;
 
-	/* Calculate the reading position in the file. */
 	read_pos = TDE_FILE_HEADER_SIZE + key_index * MAP_ENTRY_SIZE;
-
-	/* Read the encrypted key */
 	if (pg_pread(fd, map_entry, MAP_ENTRY_SIZE, read_pos) != MAP_ENTRY_SIZE)
 	{
 		char		db_map_path[MAXPGPATH];
@@ -1170,7 +1144,6 @@ pg_tde_get_wal_cache_keys(void)
 	return tde_wal_key_cache;
 }
 
-/* Updates WAL keys cache pointers */
 static void
 update_wal_keys_cache(void)
 {
