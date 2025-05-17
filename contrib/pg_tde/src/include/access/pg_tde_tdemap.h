@@ -25,10 +25,6 @@
 
 typedef struct InternalKey
 {
-	/*
-	 * DO NOT re-arrange fields! Any changes should be aligned with
-	 * pg_tde_read/write_one_keydata()
-	 */
 	uint8		key[INTERNAL_KEY_LEN];
 	uint8		base_iv[INTERNAL_KEY_IV_LEN];
 	uint32		rel_type;
