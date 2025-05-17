@@ -27,16 +27,16 @@ typedef struct InternalKey
 {
 	uint8		key[INTERNAL_KEY_LEN];
 	uint8		base_iv[INTERNAL_KEY_IV_LEN];
-	uint32		rel_type;
+	uint32		type;
 
 	XLogRecPtr	start_lsn;
 } InternalKey;
 
 #define WALKeySetInvalid(key) \
-	((key)->rel_type &= ~(TDE_KEY_TYPE_WAL_ENCRYPTED | TDE_KEY_TYPE_WAL_UNENCRYPTED))
+	((key)->type &= ~(TDE_KEY_TYPE_WAL_ENCRYPTED | TDE_KEY_TYPE_WAL_UNENCRYPTED))
 #define WALKeyIsValid(key) \
-	(((key)->rel_type & TDE_KEY_TYPE_WAL_UNENCRYPTED) != 0 || \
-	((key)->rel_type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
+	(((key)->type & TDE_KEY_TYPE_WAL_UNENCRYPTED) != 0 || \
+	((key)->type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
 
 #define MAP_ENTRY_EMPTY_IV_SIZE 16
 #define MAP_ENTRY_EMPTY_AEAD_TAG_SIZE 16

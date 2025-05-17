@@ -218,7 +218,7 @@ pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator)
 static void
 pg_tde_generate_internal_key(InternalKey *int_key, uint32 entry_type)
 {
-	int_key->rel_type = entry_type;
+	int_key->type = entry_type;
 	int_key->start_lsn = InvalidXLogRecPtr;
 
 	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
@@ -399,7 +399,7 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 {
 	map_entry->spcOid = rlocator->spcOid;
 	map_entry->relNumber = rlocator->relNumber;
-	map_entry->flags = rel_key_data->rel_type;
+	map_entry->flags = rel_key_data->type;
 	map_entry->enc_key = *rel_key_data;
 
 	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_EMPTY_IV_SIZE))
@@ -534,7 +534,7 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator)
 			TDEMapEntry empty_map_entry = {
 				.flags = MAP_ENTRY_EMPTY,
 				.enc_key = {
-					.rel_type = MAP_ENTRY_EMPTY,
+					.type = MAP_ENTRY_EMPTY,
 				},
 			};
 
@@ -1146,7 +1146,7 @@ pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type)
 	{
 		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
 
-		if (RelFileLocatorEquals(rec->locator, *rlocator) && rec->key.rel_type & key_type)
+		if (RelFileLocatorEquals(rec->locator, *rlocator) && rec->key.type & key_type)
 		{
 			return &rec->key;
 		}
