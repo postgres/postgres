@@ -396,7 +396,7 @@ SearchSysCacheCopy(int cacheId,
 /*
  * SearchSysCacheLockedCopy1
  *
- * Meld SearchSysCacheLockedCopy1 with SearchSysCacheCopy().  After the
+ * Meld SearchSysCacheLocked1 with SearchSysCacheCopy().  After the
  * caller's heap_update(), it should UnlockTuple(InplaceUpdateTupleLock) and
  * heap_freetuple().
  */
