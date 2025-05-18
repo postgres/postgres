@@ -1891,7 +1891,17 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			 */
 			if (root->tuple_fraction > 0)
 			{
-				double		path_fraction = (1.0 / root->tuple_fraction);
+				double		path_fraction = root->tuple_fraction;
+
+				/*
+				 * Merge Append considers only live children relations.  Dummy
+				 * relations must be filtered out before.
+				 */
+				Assert(childrel->rows > 0);
+
+				/* Convert absolute limit to a path fraction */
+				if (path_fraction >= 1.0)
+					path_fraction /= childrel->rows;
 
 				cheapest_fractional =
 					get_cheapest_fractional_path_for_pathkeys(childrel->pathlist,

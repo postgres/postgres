@@ -5260,6 +5260,24 @@ SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id) ORDER BY x.id DE
                      Index Cond: (id = x_2.id)
 (11 rows)
 
+EXPLAIN (COSTS OFF) -- Should use NestLoop with parameterised inner scan
+SELECT x.id, y.id FROM fract_t x LEFT JOIN fract_t y USING (id)
+ORDER BY x.id DESC LIMIT 2;
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Limit
+   ->  Merge Append
+         Sort Key: x.id DESC
+         ->  Nested Loop Left Join
+               ->  Index Only Scan Backward using fract_t0_pkey on fract_t0 x_1
+               ->  Index Only Scan using fract_t0_pkey on fract_t0 y_1
+                     Index Cond: (id = x_1.id)
+         ->  Nested Loop Left Join
+               ->  Index Only Scan Backward using fract_t1_pkey on fract_t1 x_2
+               ->  Index Only Scan using fract_t1_pkey on fract_t1 y_2
+                     Index Cond: (id = x_2.id)
+(11 rows)
+
 --
 -- Test Append's fractional paths
 --
