@@ -1757,7 +1757,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	inet_pton
 	kqueue
 	mbstowcs_l
-	memset_s
 	posix_fallocate
 	ppoll
 	pthread_is_threaded_np
@@ -1803,6 +1802,8 @@ AC_CHECK_DECLS([strlcat, strlcpy, strnlen])
 AC_CHECK_DECLS([preadv], [], [], [#include <sys/uio.h>])
 AC_CHECK_DECLS([pwritev], [], [], [#include <sys/uio.h>])
 AC_CHECK_DECLS([strchrnul], [], [], [#include <string.h>])
+AC_CHECK_DECLS([memset_s], [], [], [#define __STDC_WANT_LIB_EXT1__ 1
+#include <string.h>])
 
 # This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
