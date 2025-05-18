@@ -126,6 +126,10 @@
    to 0 if you don't. */
 #undef HAVE_DECL_LLVMORCGETSYMBOLADDRESSIN
 
+/* Define to 1 if you have the declaration of `memset_s', and to 0 if you
+   don't. */
+#undef HAVE_DECL_MEMSET_S
+
 /* Define to 1 if you have the declaration of `posix_fadvise', and to 0 if you
    don't. */
 #undef HAVE_DECL_POSIX_FADVISE
@@ -382,9 +386,6 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `memset_s' function. */
-#undef HAVE_MEMSET_S
 
 /* Define to 1 if the system has the type `MINIDUMP_TYPE'. */
 #undef HAVE_MINIDUMP_TYPE
