@@ -15616,7 +15616,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l memset_s posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast strsignal syncfs sync_file_range uselocale wcstombs_l
+for ac_func in backtrace_symbols copyfile copy_file_range elf_aux_info getauxval getifaddrs getpeerucred inet_pton kqueue localeconv_l mbstowcs_l posix_fallocate ppoll pthread_is_threaded_np setproctitle setproctitle_fast strsignal syncfs sync_file_range uselocale wcstombs_l
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -16190,6 +16190,19 @@ fi
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRCHRNUL $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "memset_s" "ac_cv_have_decl_memset_s" "#define __STDC_WANT_LIB_EXT1__ 1
+#include <string.h>
+"
+if test "x$ac_cv_have_decl_memset_s" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_MEMSET_S $ac_have_decl
 _ACEOF
 
 
