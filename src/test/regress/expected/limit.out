@@ -643,7 +643,7 @@ View definition:
   WHERE onek.thousand < 995
   ORDER BY onek.thousand
  OFFSET 10
- FETCH FIRST 5 ROWS WITH TIES;
+ FETCH FIRST (5) ROWS WITH TIES;
 
 CREATE VIEW limit_thousand_v_2 AS SELECT thousand FROM onek WHERE thousand < 995
 		ORDER BY thousand OFFSET 10 FETCH FIRST 5 ROWS ONLY;
@@ -675,12 +675,26 @@ View definition:
    FROM onek
   WHERE onek.thousand < 995
   ORDER BY onek.thousand
- FETCH FIRST (NULL::integer + 1) ROWS WITH TIES;
+ FETCH FIRST ((NULL::integer + 1)) ROWS WITH TIES;
 
 CREATE VIEW limit_thousand_v_4 AS SELECT thousand FROM onek WHERE thousand < 995
-		ORDER BY thousand FETCH FIRST NULL ROWS ONLY;
+		ORDER BY thousand FETCH FIRST (5::bigint) ROWS WITH TIES;
 \d+ limit_thousand_v_4
                       View "public.limit_thousand_v_4"
+  Column  |  Type   | Collation | Nullable | Default | Storage | Description 
+----------+---------+-----------+----------+---------+---------+-------------
+ thousand | integer |           |          |         | plain   | 
+View definition:
+ SELECT onek.thousand
+   FROM onek
+  WHERE onek.thousand < 995
+  ORDER BY onek.thousand
+ FETCH FIRST (5::bigint) ROWS WITH TIES;
+
+CREATE VIEW limit_thousand_v_5 AS SELECT thousand FROM onek WHERE thousand < 995
+		ORDER BY thousand FETCH FIRST NULL ROWS ONLY;
+\d+ limit_thousand_v_5
+                      View "public.limit_thousand_v_5"
   Column  |  Type   | Collation | Nullable | Default | Storage | Description 
 ----------+---------+-----------+----------+---------+---------+-------------
  thousand | integer |           |          |         | plain   | 
