@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS pg_buffercache;
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_key.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -3
+                                  -5
 (1 row)
 
 -- Should fail: no default principal key for the server yet
@@ -30,18 +30,20 @@ SELECT key_provider_id, key_provider_name, key_name
 		FROM pg_tde_default_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -3 | file-provider     | default-key
+              -5 | file-provider     | default-key
 (1 row)
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
-----+---------------
+ id |  provider_name   
+----+------------------
  -1 | file-keyring
- -3 | file-provider
-(2 rows)
+ -3 | global-provider
+ -4 | global-provider2
+ -5 | file-provider
+(4 rows)
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
@@ -60,7 +62,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -3 | file-provider     | default-key
+              -5 | file-provider     | default-key
 (1 row)
 
 SELECT current_database() AS regress_database
@@ -86,7 +88,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -3 | file-provider     | default-key
+              -5 | file-provider     | default-key
 (1 row)
 
 \c :regress_database
@@ -101,7 +103,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |    key_name     
 -----------------+-------------------+-----------------
-              -3 | file-provider     | new-default-key
+              -5 | file-provider     | new-default-key
 (1 row)
 
 \c regress_pg_tde_other
@@ -109,7 +111,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |    key_name     
 -----------------+-------------------+-----------------
-              -3 | file-provider     | new-default-key
+              -5 | file-provider     | new-default-key
 (1 row)
 
 SELECT pg_buffercache_evict(bufferid) FROM pg_buffercache WHERE relfilenode = (SELECT relfilenode FROM pg_class WHERE oid = 'test_enc'::regclass);

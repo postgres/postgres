@@ -511,6 +511,18 @@ check_provider_record(KeyringProviderRecord *provider_record)
 
 	KeyringValidate(provider);
 
+#ifndef FRONTEND				/* We can't scan the pg_database catalog from
+								 * frontend. */
+	if (provider->keyring_id != 0)
+	{
+		/*
+		 * If we are modifying an existing provider, verify that all of the
+		 * keys already in use are the same.
+		 */
+		pg_tde_verify_provider_keys_in_use(provider);
+	}
+#endif
+
 	pfree(provider);
 }
 

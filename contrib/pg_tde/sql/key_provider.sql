@@ -19,10 +19,6 @@ SELECT pg_tde_verify_key();
 SELECT pg_tde_change_database_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
-SELECT pg_tde_change_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_other.per');
-SELECT * FROM pg_tde_list_all_database_key_providers();
-SELECT pg_tde_verify_key();
-
 SELECT pg_tde_change_database_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
@@ -135,6 +131,31 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": tr
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": true}}');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": true}}');
 
+-- Modifying key providers fails if new settings can't fetch existing server key
+SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provider-file-1');
+SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'global-provider');
+SELECT pg_tde_change_global_key_provider_file('global-provider','/tmp/global-provider-file-2');
+
+-- Modifying key providers fails if new settings can't fetch existing database key
+SELECT pg_tde_add_global_key_provider_file('global-provider2', '/tmp/global-provider-file-1');
+SELECT current_database() AS regress_database
+\gset
+CREATE DATABASE db_using_global_provider;
+\c db_using_global_provider;
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_set_key_using_global_key_provider('database-key', 'global-provider2');
+\c :regress_database
+SELECT pg_tde_change_global_key_provider_file('global-provider2', '/tmp/global-provider-file-2');
+DROP DATABASE db_using_global_provider;
+CREATE DATABASE db_using_database_provider;
+\c db_using_database_provider;
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_database_key_provider_file('db-provider', '/tmp/db-provider-file');
+SELECT pg_tde_set_key_using_database_key_provider('database-key', 'db-provider');
+SELECT pg_tde_change_database_key_provider_file('db-provider', '/tmp/db-provider-file-2');
+\c :regress_database
+DROP DATABASE db_using_database_provider;
+
 -- Deleting key providers fails if key name is NULL
 SELECT pg_tde_delete_database_key_provider(NULL);
 SELECT pg_tde_delete_global_key_provider(NULL);
@@ -156,5 +177,6 @@ SELECT pg_tde_set_default_key_using_global_key_provider(repeat('K', 256), 'file-
 SELECT pg_tde_set_key_using_database_key_provider(repeat('K', 256), 'file-provider');
 SELECT pg_tde_set_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
 SELECT pg_tde_set_server_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+
 
 DROP EXTENSION pg_tde;

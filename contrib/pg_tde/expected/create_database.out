@@ -26,7 +26,7 @@ INSERT INTO test_plain (x) VALUES (30), (40);
 SELECT pg_tde_add_global_key_provider_file('global-file-vault','/tmp/template_provider_global.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -4
+                                  -6
 (1 row)
 
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'global-file-vault');
