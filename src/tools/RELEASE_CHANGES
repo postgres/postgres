@@ -89,6 +89,9 @@ Starting a New Development Cycle
 * Typically, we do pgindent and perltidy runs just before branching,
   as well as before beta (complete steps from src/tools/pgindent/README)
 
+* It's also advisable to check that copyright years are up-to-date
+  (run src/tools/copyright.pl, commit any changes it finds)
+
 * Create a branch in git for maintenance of the previous release
 	o on master branch, do:
 		git pull           # be sure you have the latest "master"
