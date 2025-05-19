@@ -30,7 +30,7 @@ PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 PGTDE::psql($node, 'postgres', "CHECKPOINT;");
 
 PGTDE::append_to_result_file("-- kill -9");
-$node->kill9();
+PGTDE::kill9_until_dead($node);
 
 PGTDE::append_to_result_file("-- server start");
 $node->start;

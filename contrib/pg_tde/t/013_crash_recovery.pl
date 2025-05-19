@@ -46,7 +46,7 @@ PGTDE::psql($node, 'postgres', "INSERT INTO test_plain (x) VALUES (3), (4);");
 PGTDE::psql($node, 'postgres', "ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';");
 
 PGTDE::append_to_result_file("-- kill -9");
-$node->kill9;
+PGTDE::kill9_until_dead($node);
 
 PGTDE::append_to_result_file("-- server start");
 $node->start;
@@ -60,7 +60,7 @@ PGTDE::psql($node, 'postgres',
 );
 PGTDE::psql($node, 'postgres', "INSERT INTO test_enc (x) VALUES (3), (4);");
 PGTDE::append_to_result_file("-- kill -9");
-$node->kill9;
+PGTDE::kill9_until_dead($node);
 PGTDE::append_to_result_file("-- server start");
 PGTDE::append_to_result_file(
 	"-- check that pg_tde_save_principal_key_redo hasn't destroyed a WAL key created during the server start"
@@ -76,7 +76,7 @@ PGTDE::psql($node, 'postgres',
 );
 PGTDE::psql($node, 'postgres', "INSERT INTO test_enc (x) VALUES (5), (6);");
 PGTDE::append_to_result_file("-- kill -9");
-$node->kill9;
+PGTDE::kill9_until_dead($node);
 PGTDE::append_to_result_file("-- server start");
 PGTDE::append_to_result_file(
 	"-- check that the key rotation hasn't destroyed a WAL key created during the server start"
@@ -88,7 +88,7 @@ PGTDE::psql($node, 'postgres', "TABLE test_enc;");
 PGTDE::psql($node, 'postgres',
 	"CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;");
 PGTDE::append_to_result_file("-- kill -9");
-$node->kill9;
+PGTDE::kill9_until_dead($node);
 PGTDE::append_to_result_file("-- server start");
 PGTDE::append_to_result_file(
 	"-- check redo of the smgr internal key creation when the key is on disk"

@@ -37,6 +37,23 @@ sub psql
 	}
 }
 
+sub kill9_until_dead
+{
+	my ($node) = @_;
+
+	return unless defined $node->{_pid};    # Cluster already stopped
+
+	my $pid = $node->{_pid};
+	$node->kill9;
+
+	# Wait for process to actually die.
+	while (kill(0, $pid) != 0)
+	{
+		sleep(0.1);
+	}
+}
+
+
 sub append_to_result_file
 {
 	my ($str) = @_;

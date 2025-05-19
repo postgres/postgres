@@ -74,7 +74,7 @@ PGTDE::psql($primary, 'postgres',
 
 PGTDE::psql($primary, 'postgres',
 	"ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';");
-$primary->kill9;
+PGTDE::kill9_until_dead($primary);
 
 PGTDE::append_to_result_file("-- primary start");
 $primary->start;
