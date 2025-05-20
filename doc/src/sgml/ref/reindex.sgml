@@ -465,14 +465,17 @@ Indexes:
 </programlisting>
 
     If the index marked <literal>INVALID</literal> is suffixed
-    <literal>ccnew</literal>, then it corresponds to the transient
+    <literal>_ccnew</literal>, then it corresponds to the transient
     index created during the concurrent operation, and the recommended
     recovery method is to drop it using <literal>DROP INDEX</literal>,
     then attempt <command>REINDEX CONCURRENTLY</command> again.
-    If the invalid index is instead suffixed <literal>ccold</literal>,
+    If the invalid index is instead suffixed <literal>_ccold</literal>,
     it corresponds to the original index which could not be dropped;
     the recommended recovery method is to just drop said index, since the
     rebuild proper has been successful.
+    A nonzero number may be appended to the suffix of the invalid index
+    names to keep them unique, like <literal>_ccnew1</literal>,
+    <literal>_ccold2</literal>, etc.
    </para>
 
    <para>
