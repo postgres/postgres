@@ -137,6 +137,19 @@ struct Node;
  * prevents gcc from making the unreachability deduction at optlevel -O0.
  *----------
  */
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+#define ereport_domain(elevel, domain, ...)	\
+	do { \
+		pg_prevent_errno_in_scope(); \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR ? \
+			errstart_cold(elevel, domain) : \
+			errstart(elevel, domain)) \
+			__VA_ARGS__, errfinish(__FILE__, __LINE__, __func__); \
+		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
+			{ puts("# 149:pg_unreachable():" __FILE__); pg_unreachable(); } \
+	} while(0)
+
+#else
 #ifdef HAVE__BUILTIN_CONSTANT_P
 #define ereport_domain(elevel, domain, ...)	\
 	do { \
@@ -159,7 +172,7 @@ struct Node;
 			pg_unreachable(); \
 	} while(0)
 #endif							/* HAVE__BUILTIN_CONSTANT_P */
-
+#endif
 #define ereport(elevel, ...)	\
 	ereport_domain(elevel, TEXTDOMAIN, __VA_ARGS__)
 

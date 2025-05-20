@@ -723,6 +723,7 @@ EventTriggerDDLCommandStart(Node *parsetree)
 	List	   *runlist;
 	EventTriggerData trigdata;
 
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	/*
 	 * Event Triggers are completely disabled in standalone mode.  There are
 	 * (at least) two reasons for this:
@@ -744,6 +745,10 @@ EventTriggerDDLCommandStart(Node *parsetree)
 	 */
 	if (!IsUnderPostmaster || !event_triggers)
 		return;
+#else
+	if (!event_triggers)
+		return;
+#endif
 
 	runlist = EventTriggerCommonSetup(parsetree,
 									  EVT_DDLCommandStart,
@@ -773,14 +778,17 @@ EventTriggerDDLCommandEnd(Node *parsetree)
 {
 	List	   *runlist;
 	EventTriggerData trigdata;
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
 	 * triggers are disabled in single user mode or via GUC.
 	 */
 	if (!IsUnderPostmaster || !event_triggers)
 		return;
-
+#else
+	if (!event_triggers)
+		return;
+#endif
 	/*
 	 * Also do nothing if our state isn't set up, which it won't be if there
 	 * weren't any relevant event triggers at the start of the current DDL
@@ -821,14 +829,17 @@ EventTriggerSQLDrop(Node *parsetree)
 {
 	List	   *runlist;
 	EventTriggerData trigdata;
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
 	 * triggers are disabled in single user mode or via a GUC.
 	 */
 	if (!IsUnderPostmaster || !event_triggers)
 		return;
-
+#else
+	if (!event_triggers)
+		return;
+#endif
 	/*
 	 * Use current state to determine whether this event fires at all.  If
 	 * there are no triggers for the sql_drop event, then we don't have
@@ -894,7 +905,7 @@ EventTriggerOnLogin(void)
 {
 	List	   *runlist;
 	EventTriggerData trigdata;
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
 	 * triggers are disabled in single user mode or via a GUC.  We also need a
@@ -903,7 +914,10 @@ EventTriggerOnLogin(void)
 	if (!IsUnderPostmaster || !event_triggers ||
 		!OidIsValid(MyDatabaseId) || !MyDatabaseHasLoginEventTriggers)
 		return;
-
+#else
+	if (!event_triggers || !OidIsValid(MyDatabaseId) || !MyDatabaseHasLoginEventTriggers)
+		return;
+#endif
 	StartTransactionCommand();
 	runlist = EventTriggerCommonSetup(NULL,
 									  EVT_Login, "login",
@@ -1005,14 +1019,17 @@ EventTriggerTableRewrite(Node *parsetree, Oid tableOid, int reason)
 {
 	List	   *runlist;
 	EventTriggerData trigdata;
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	/*
 	 * See EventTriggerDDLCommandStart for a discussion about why event
 	 * triggers are disabled in single user mode or via a GUC.
 	 */
 	if (!IsUnderPostmaster || !event_triggers)
 		return;
-
+#else
+	if (!event_triggers)
+		return;
+#endif
 	/*
 	 * Also do nothing if our state isn't set up, which it won't be if there
 	 * weren't any relevant event triggers at the start of the current DDL

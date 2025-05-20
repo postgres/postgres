@@ -154,6 +154,16 @@ static bool wait_for_postmaster_stop(void);
 static bool wait_for_postmaster_promote(void);
 static bool postmaster_is_alive(pid_t pid);
 
+#if defined(__wasi__)
+#if defined(HAVE_SETSID)
+#undef HAVE_SETSID
+#endif
+
+#if defined(HAVE_GETRLIMIT)
+#undef HAVE_GETRLIMIT
+#endif
+#endif /* __wasi__ */
+
 #if defined(HAVE_GETRLIMIT)
 static void unlimit_core_size(void);
 #endif
@@ -492,9 +502,9 @@ start_postmaster(void)
 	else
 		cmd = psprintf("exec \"%s\" %s%s < \"%s\" 2>&1",
 					   exec_path, pgdata_opt, post_opts, DEVNULL);
-
+#if !defined(__wasi__)
 	(void) execl("/bin/sh", "/bin/sh", "-c", cmd, (char *) NULL);
-
+#endif
 	/* exec failed */
 	write_stderr(_("%s: could not start server: %m\n"),
 				 progname);

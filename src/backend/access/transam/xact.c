@@ -1761,6 +1761,7 @@ RecordTransactionAbort(bool isSubXact)
 	if (TransactionIdDidCommit(xid))
 		elog(PANIC, "cannot abort transaction %u, it was already committed",
 			 xid);
+	else elog(WARNING, "# 1743: aborting transaction %u", xid);
 
 	/*
 	 * Are we using the replication origins feature?  Or, in other words, are
@@ -2804,7 +2805,9 @@ AbortTransaction(void)
 	 * handler.  We do this fairly early in the sequence so that the timeout
 	 * infrastructure will be functional if needed while aborting.
 	 */
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
+#endif
 
 	/*
 	 * check the current transaction state
@@ -5211,7 +5214,10 @@ AbortSubTransaction(void)
 	 * handler.  We do this fairly early in the sequence so that the timeout
 	 * infrastructure will be functional if needed while aborting.
 	 */
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	sigprocmask(SIG_SETMASK, &UnBlockSig, NULL);
+#endif
+
 
 	/*
 	 * check the current transaction state

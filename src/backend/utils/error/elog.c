@@ -348,12 +348,16 @@ errstart(int elevel, const char *domain)
 	ErrorData  *edata;
 	bool		output_to_server;
 	bool		output_to_client = false;
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+#   warning "FIXME: error levels"
+#else
 	int			i;
 
 	/*
 	 * Check some cases in which we want to promote an error into a more
 	 * severe error.  None of this logic applies for non-error messages.
 	 */
+
 	if (elevel >= ERROR)
 	{
 		/*
@@ -394,7 +398,7 @@ errstart(int elevel, const char *domain)
 		for (i = 0; i <= errordata_stack_depth; i++)
 			elevel = Max(elevel, errordata[i].elevel);
 	}
-
+#endif
 	/*
 	 * Now decide whether we need to process this report at all; if it's
 	 * warning or less and not enabled for logging, just return false without
@@ -539,7 +543,13 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 */
 
 		recursion_depth--;
+#if 0 //defined(__EMSCRIPTEN__) || defined(__wasi__)
+        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) ignored\n", recursion_depth);
+        trap();
+#else
+        fprintf(stderr, "# 549: PG_RE_THROW(ERROR : %d)\n", recursion_depth);
 		PG_RE_THROW();
+#endif
 	}
 
 	/* Emit the message to the right places */
@@ -587,7 +597,11 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * FATAL termination.  The postmaster may or may not consider this
 		 * worthy of panic, depending on which subprocess returns it.
 		 */
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+        puts("# 599: proc_exit(FATAL) ignored");
+#else
 		proc_exit(1);
+#endif
 	}
 
 	if (elevel >= PANIC)
@@ -697,6 +711,7 @@ errsave_finish(struct Node *context, const char *filename, int lineno,
 	 */
 	if (edata->elevel >= ERROR)
 	{
+puts("#712");
 		errfinish(filename, lineno, funcname);
 		pg_unreachable();
 	}

@@ -152,7 +152,9 @@ main(int argc, char **argv)
 	if (find_my_exec(argv[0], my_exec_path) < 0)
 	{
 		fprintf(stderr, _("%s: could not find own program executable\n"), progname);
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 		exit(1);
+#endif
 	}
 
 	configdata = get_configdata(my_exec_path, &configdata_len);
@@ -162,6 +164,7 @@ main(int argc, char **argv)
 		for (i = 0; i < configdata_len; i++)
 			printf("%s = %s\n", configdata[i].name, configdata[i].setting);
 		exit(0);
+
 	}
 
 	/* otherwise print requested items */

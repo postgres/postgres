@@ -12,7 +12,9 @@
 
 #ifndef PG_PTHREAD_H
 #define PG_PTHREAD_H
-
+#if defined(__wasi__)
+#define PYDK
+#endif /* __wasi__ */
 #include <pthread.h>
 
 #ifndef HAVE_PTHREAD_BARRIER_WAIT
@@ -20,7 +22,7 @@
 #ifndef PTHREAD_BARRIER_SERIAL_THREAD
 #define PTHREAD_BARRIER_SERIAL_THREAD (-1)
 #endif
-
+#if !defined(__wasi__)
 typedef struct pg_pthread_barrier
 {
 	bool		sense;			/* we only need a one bit phase */
@@ -29,10 +31,12 @@ typedef struct pg_pthread_barrier
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 } pthread_barrier_t;
-
 extern int	pthread_barrier_init(pthread_barrier_t *barrier,
 								 const void *attr,
 								 int count);
+#else
+    extern int pthread_barrier_init(pthread_barrier_t *__restrict, const pthread_barrierattr_t *__restrict, unsigned);
+#endif
 extern int	pthread_barrier_wait(pthread_barrier_t *barrier);
 extern int	pthread_barrier_destroy(pthread_barrier_t *barrier);
 

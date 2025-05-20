@@ -107,6 +107,18 @@ int			client_connection_check_interval = 0;
 /* flags for non-system relation kinds to restrict use */
 int			restrict_nonsystem_relation_kind;
 
+#if (defined(__EMSCRIPTEN__) || defined(__wasi__))
+#if !defined(PGL_MAIN)
+    volatile int cma_rsize = 0;
+#endif // PGL_MAIN
+bool quote_all_identifiers = false;
+FILE* SOCKET_FILE = NULL;
+int SOCKET_DATA = 0;
+#endif // WASM
+
+
+
+
 /* ----------------
  *		private typedefs etc
  * ----------------
@@ -4115,7 +4127,7 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 #endif
 }
 
-
+#if !defined(PGL_MAIN)
 /*
  * PostgresSingleUserMain
  *     Entry point for single user mode. argc/argv are the command line
@@ -5014,7 +5026,7 @@ PostgresMain(const char *dbname, const char *username)
 		}
 	}							/* end of input-reading loop */
 }
-
+#endif /* PGL_MAIN */
 /*
  * Throw an error if we're a WAL sender process.
  *
@@ -5133,6 +5145,7 @@ ShowUsage(const char *title)
 					 (long) user.tv_usec,
 					 (long) sys.tv_sec,
 					 (long) sys.tv_usec);
+#if !defined(__wasi__)
 #ifndef WIN32
 
 	/*
@@ -5177,7 +5190,7 @@ ShowUsage(const char *title)
 					 r.ru_nivcsw - Save_r.ru_nivcsw,
 					 r.ru_nvcsw, r.ru_nivcsw);
 #endif							/* !WIN32 */
-
+#endif
 	/* remove trailing newline */
 	if (str.data[str.len - 1] == '\n')
 		str.data[--str.len] = '\0';

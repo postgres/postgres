@@ -17,8 +17,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#define PG_SHMEM
 #include "postgres.h"
-
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>
@@ -700,11 +700,46 @@ PGShmemHeader *
 PGSharedMemoryCreate(Size size,
 					 PGShmemHeader **shim)
 {
-	IpcMemoryKey NextShmemSegID;
-	void	   *memAddress;
+	IpcMemoryKey NextShmemSegID = 0;
+	void	   *memAddress = NULL;
 	PGShmemHeader *hdr;
 	struct stat statbuf;
 	Size		sysvsize;
+
+/*
+    puts("@\n@\n@\n@\n@\n@\n PGSharedMemoryCreate @\n@\n@\n@\n@\n@\n");
+
+	elog(NOTICE, "Init WASM shared memory");
+
+	hdr = (PGShmemHeader *) malloc(size);
+	hdr->creatorPID = getpid();
+	hdr->magic = PGShmemMagic;
+	hdr->dsm_control = 0;
+
+
+	hdr->device = statbuf.st_dev;
+	hdr->inode = statbuf.st_ino;
+
+	hdr->totalsize = size;
+	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	*shim = hdr;
+
+	UsedShmemSegAddr = memAddress;
+	UsedShmemSegID = (unsigned long) NextShmemSegID;
+
+	if (AnonymousShmem == NULL)
+		return hdr;
+	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
+	return (PGShmemHeader *) AnonymousShmem;
+*/
+
+
+
+
+
+
+
+
 
 	/*
 	 * We use the data directory's ID info (inode and device numbers) to

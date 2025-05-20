@@ -656,9 +656,9 @@ pgstathashindex(PG_FUNCTION_ARGS)
 			stats.unused_pages++;
 		else if (PageGetSpecialSize(page) !=
 				 MAXALIGN(sizeof(HashPageOpaqueData)))
-			ereport(ERROR,
+			ereport(WARNING,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" contains corrupted page at block %u",
+					 errmsg("# 661(FATAL block=%d): index \"%s\" contains corrupted page at block %u", blkno,
 							RelationGetRelationName(rel),
 							BufferGetBlockNumber(buf))));
 		else

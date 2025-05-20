@@ -14,7 +14,13 @@
  */
 
 #include "postgres_fe.h"
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ifdef quote_all_identifiers
+#undef quote_all_identifiers
+#endif
+#define fe_utils_quote_all_identifiers quote_all_identifiers
+static bool quote_all_identifiers;
+#endif
 #include <time.h>
 #include <unistd.h>
 
@@ -163,7 +169,7 @@ main(int argc, char *argv[])
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-table-access-method", no_argument, &no_table_access_method, 1},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
-		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
+		{"quote-all-identifiers", no_argument, &fe_utils_quote_all_identifiers, true},
 		{"load-via-partition-root", no_argument, &load_via_partition_root, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
@@ -439,7 +445,7 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-table-access-method");
 	if (no_tablespaces)
 		appendPQExpBufferStr(pgdumpopts, " --no-tablespaces");
-	if (quote_all_identifiers)
+	if (fe_utils_quote_all_identifiers)
 		appendPQExpBufferStr(pgdumpopts, " --quote-all-identifiers");
 	if (load_via_partition_root)
 		appendPQExpBufferStr(pgdumpopts, " --load-via-partition-root");
@@ -540,8 +546,8 @@ main(int argc, char *argv[])
 	}
 
 	/* Force quoting of all identifiers if requested. */
-	if (quote_all_identifiers)
-		executeCommand(conn, "SET quote_all_identifiers = true");
+	if (fe_utils_quote_all_identifiers)
+		executeCommand(conn, "SET fe_utils_quote_all_identifiers = true");
 
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)

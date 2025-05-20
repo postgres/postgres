@@ -19,8 +19,10 @@
  * Probably these should have had the underscore-free names,
  * but too late now...
  */
-extern int	lo_read(int fd, char *buf, int len);
-extern int	lo_write(int fd, const char *buf, int len);
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+extern int	lo_read3(int fd, char *buf, int len);
+extern int	lo_write3(int fd, const char *buf, int len);
+#endif
 
 /*
  * Cleanup LOs at xact commit/abort

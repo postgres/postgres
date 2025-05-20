@@ -505,7 +505,10 @@ PG_MAGIC_FUNCTION_NAME(void) \
 	return &Pg_magic_data; \
 } \
 extern int no_such_variable
-
+#if defined(__wasi__) && !defined(__EMSCRIPTEN__)
+#undef PG_MODULE_MAGIC
+#define PG_MODULE_MAGIC
+#endif
 
 /*-------------------------------------------------------------------------
  *		Support routines and macros for callers of fmgr-compatible functions

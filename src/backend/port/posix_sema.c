@@ -298,10 +298,16 @@ PGSemaphoreReset(PGSemaphore sema)
 	 * There's no direct API for this in POSIX, so we have to ratchet the
 	 * semaphore down to 0 with repeated trywait's.
 	 */
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+    sem_trywait(PG_SEM_REF(sema));
+    return;
+#else
 	for (;;)
 	{
 		if (sem_trywait(PG_SEM_REF(sema)) < 0)
 		{
+
+
 			if (errno == EAGAIN || errno == EDEADLK)
 				break;			/* got it down to 0 */
 			if (errno == EINTR)
@@ -309,6 +315,7 @@ PGSemaphoreReset(PGSemaphore sema)
 			elog(FATAL, "sem_trywait failed: %m");
 		}
 	}
+#endif
 }
 
 /*

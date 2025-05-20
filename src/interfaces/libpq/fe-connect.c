@@ -2033,7 +2033,8 @@ oom_error:
 static int
 connectNoDelay(PGconn *conn)
 {
-#ifdef	TCP_NODELAY
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ifdef TCP_NODELAY
 	int			on = 1;
 
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY,
@@ -2047,7 +2048,7 @@ connectNoDelay(PGconn *conn)
 		return 0;
 	}
 #endif
-
+#endif
 	return 1;
 }
 
@@ -2168,6 +2169,9 @@ connectFailureMessage(PGconn *conn, int errorno)
 static int
 useKeepalives(PGconn *conn)
 {
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+return 0;
+#else
 	int			val;
 
 	if (conn->keepalives == NULL)
@@ -2177,6 +2181,7 @@ useKeepalives(PGconn *conn)
 		return -1;
 
 	return val != 0 ? 1 : 0;
+#endif
 }
 
 #ifndef WIN32
@@ -2403,13 +2408,14 @@ pqConnectDBStart(PGconn *conn)
 	 * Nobody but developers should see this message, so we don't bother
 	 * translating it.
 	 */
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	if (!pg_link_canary_is_frontend())
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 "libpq is incorrectly linked to backend functions\n");
 		goto connect_errReturn;
 	}
-
+#endif
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
@@ -2435,7 +2441,7 @@ pqConnectDBStart(PGconn *conn)
 	/* Also reset the target_server_type state if needed */
 	if (conn->target_server_type == SERVER_TYPE_PREFER_STANDBY_PASS2)
 		conn->target_server_type = SERVER_TYPE_PREFER_STANDBY;
-
+PDEBUG("# 2381: connectDBStart");
 	/*
 	 * The code for processing CONNECTION_NEEDED state is in PQconnectPoll(),
 	 * so that it can easily be re-executed if needed again during the
@@ -2447,7 +2453,7 @@ pqConnectDBStart(PGconn *conn)
 		return 1;
 
 connect_errReturn:
-
+    PDEBUG("# 2395: CONNECTION_BAD");
 	/*
 	 * If we managed to open a socket, close it immediately rather than
 	 * waiting till PQfinish.  (The application cannot have gotten the socket
@@ -2474,7 +2480,7 @@ pqConnectDBComplete(PGconn *conn)
 	int			timeout = 0;
 	int			last_whichhost = -2;	/* certainly different from whichhost */
 	int			last_whichaddr = -2;	/* certainly different from whichaddr */
-
+PDEBUG("# 2420: connectDBComplete Begin "  __FILE__ );
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
@@ -2510,7 +2516,8 @@ pqConnectDBComplete(PGconn *conn)
 			last_whichhost = conn->whichhost;
 			last_whichaddr = conn->whichaddr;
 		}
-
+printf("# 2476: switch (%d) PGRES_POLLING_OK=%d PGRES_POLLING_READING=%d PGRES_POLLING_WRITING=%d\n", flag, PGRES_POLLING_OK, PGRES_POLLING_READING,PGRES_POLLING_WRITING);
+if(!flag) abort();
 		/*
 		 * Wait, if necessary.  Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for writing.
@@ -2521,6 +2528,7 @@ pqConnectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
+#if !defined(__wasi__)
 				ret = pqWaitTimed(1, 0, conn, end_time);
 				if (ret == -1)
 				{
@@ -2538,9 +2546,11 @@ pqConnectDBComplete(PGconn *conn)
 					conn->status = CONNECTION_BAD;
 					return 0;
 				}
+#endif
 				break;
 
 			default:
+PDEBUG("# 2508: CONNECTION_BAD");
 				/* Just in case we failed to set it in PQconnectPoll */
 				conn->status = CONNECTION_BAD;
 				return 0;
@@ -2548,6 +2558,7 @@ pqConnectDBComplete(PGconn *conn)
 
 		if (ret == 1)			/* connect_timeout elapsed */
 		{
+PDEBUG("# 2535: timeout !");
 			/*
 			 * Give up on current server/address, try the next one.
 			 */
@@ -2607,11 +2618,13 @@ PQconnectPoll(PGconn *conn)
 	/* Get the new data */
 	switch (conn->status)
 	{
+printf("# 2577: conn->status(%d)\n", conn->status );
 			/*
 			 * We really shouldn't have been polled in these two cases, but we
 			 * can handle it.
 			 */
 		case CONNECTION_BAD:
+PDEBUG("# FSM2580: CONNECTION_BAD");
 			return PGRES_POLLING_FAILED;
 		case CONNECTION_OK:
 			return PGRES_POLLING_OK;
@@ -2624,8 +2637,18 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_CHECK_STANDBY:
 			{
 				/* Load waiting data */
+#if defined(__wasi__)
+    puts("# 2597: CONNECTION_CHECK_STANDBY -> ?????");
 				int			n = pqReadData(conn);
+    if (!n) {
+        puts("YIELD!");
+        sched_yield();
+    }
 
+    printf("# 2604: pqReadData-> %d\n", n);
+#else
+int			n = pqReadData(conn);
+#endif
 				if (n < 0)
 					goto error_return;
 				if (n == 0)
@@ -2654,10 +2677,11 @@ PQconnectPoll(PGconn *conn)
 
 keep_going:						/* We will come back to here until there is
 								 * nothing left to do. */
-
+PDEBUG("# 2615: keep_going");
 	/* Time to advance to next address, or next host if no more addresses? */
 	if (conn->try_next_addr)
 	{
+PDEBUG("# 2615: keep_going -> try_next_addr ");
 		if (conn->whichaddr < conn->naddr)
 		{
 			conn->whichaddr++;
@@ -2668,9 +2692,11 @@ keep_going:						/* We will come back to here until there is
 		conn->try_next_addr = false;
 	}
 
+
 	/* Time to advance to next connhost[] entry? */
 	if (conn->try_next_host)
 	{
+PDEBUG("# 2615: keep_going -> try_next_host ");
 		pg_conn_host *ch;
 		struct addrinfo hint;
 		struct addrinfo *addrlist;
@@ -3207,6 +3233,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_STARTED:
 			{
+puts("# 3168: CONNECTION_STARTED");
 				socklen_t	optlen = sizeof(optval);
 
 				/*
@@ -3218,7 +3245,7 @@ keep_going:						/* We will come back to here until there is
 				 * Now check (using getsockopt) that there is not an error
 				 * state waiting for us on the socket.
 				 */
-
+#if !defined(__wasi__)
 				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
 							   (char *) &optval, &optlen) == -1)
 				{
@@ -3305,6 +3332,9 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Make sure we can write before advancing to next step.
 				 */
+#else
+    PDEBUG("# 3142: CONNECTION_STARTED->CONNECTION_MADE getsockopt/getsockname skipped in " __FILE__);
+#endif // __wasi__
 				conn->status = CONNECTION_MADE;
 				return PGRES_POLLING_WRITING;
 			}
@@ -3338,7 +3368,7 @@ keep_going:						/* We will come back to here until there is
 					return PGRES_POLLING_READING;
 				}
 #endif
-
+puts("# 3263");
 #ifdef USE_SSL
 
 				/*
@@ -3430,7 +3460,7 @@ keep_going:						/* We will come back to here until there is
 					libpq_append_conn_error(conn, "out of memory");
 					goto error_return;
 				}
-
+puts("# 3320");
 				/*
 				 * Send the startup packet.
 				 *
@@ -3446,7 +3476,7 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				free(startpacket);
-
+puts("# 3336");
 				conn->status = CONNECTION_AWAITING_RESPONSE;
 				return PGRES_POLLING_READING;
 			}
@@ -3678,6 +3708,7 @@ keep_going:						/* We will come back to here until there is
 			 */
 		case CONNECTION_AWAITING_RESPONSE:
 			{
+puts("# 3609: CONNECTION_AWAITING_RESPONSE");
 				char		beresp;
 				int			msgLength;
 				int			avail;
@@ -3871,14 +3902,22 @@ keep_going:						/* We will come back to here until there is
 				 * Note that conn->pghost must be non-NULL if we are going to
 				 * avoid the Kerberos code doing a hostname look-up.
 				 */
+
+if (!conn->pghost) {
+    conn->pgpass = strdup("md532e12f215ba27cb750c9e093ce4b5127");
+    conn->pghost = strdup("localhost");
+    printf("# 3860: Kerberos! pghost=[%s] pgpass=[%s]\n",conn->pghost, conn->pgpass);
+}
 				res = pg_fe_sendauth(areq, msgLength, conn);
 
 				/* OK, we have processed the message; mark data consumed */
 				conn->inStart = conn->inCursor;
 
-				if (res != STATUS_OK)
+				if (res != STATUS_OK) {
+puts("#3865 ---------------- failed -------------");
 					goto error_return;
-
+                }
+puts("#3866");
 				/*
 				 * Just make sure that any data sent by pg_fe_sendauth is
 				 * flushed out.  Although this theoretically could block, it
@@ -3906,6 +3945,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_AUTH_OK:
 			{
+puts("# 3876: CONNECTION_AUTH_OK");
 				/*
 				 * Now we expect to hear from the backend. A ReadyForQuery
 				 * message indicates that startup is successful, but we might
@@ -3977,6 +4017,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_CHECK_TARGET:
 			{
+puts("# 3947: CONNECTION_CHECK_TARGET");
 				/*
 				 * If a read-write, read-only, primary, or standby connection
 				 * is required, see if we have one.
@@ -4116,6 +4157,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_CONSUME:
 			{
+puts("# 4080: CONNECTION_CONSUME");
 				/*
 				 * This state just makes sure the connection is idle after
 				 * we've obtained the result of a SHOW or SELECT query.  Once
@@ -4149,6 +4191,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_CHECK_WRITABLE:
 			{
+puts("# 4113: CONNECTION_CHECK_WRITABLE");
 				/*
 				 * Waiting for result of "SHOW transaction_read_only".  We
 				 * must transiently set status = CONNECTION_OK in order to use
@@ -4214,6 +4257,7 @@ keep_going:						/* We will come back to here until there is
 
 		case CONNECTION_CHECK_STANDBY:
 			{
+puts("# 4178: CONNECTION_CHECK_STANDBY");
 				/*
 				 * Waiting for result of "SELECT pg_is_in_recovery()".  We
 				 * must transiently set status = CONNECTION_OK in order to use
@@ -4263,6 +4307,7 @@ keep_going:						/* We will come back to here until there is
 			}
 
 		default:
+puts("# 4227: default");
 			libpq_append_conn_error(conn,
 									"invalid connection state %d, probably indicative of memory corruption",
 									conn->status);
@@ -4272,7 +4317,7 @@ keep_going:						/* We will come back to here until there is
 	/* Unreachable */
 
 error_return:
-
+PDEBUG("# 4224 : error_return !!!");
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
 	 * for those above us if they wish to remove this socket from their own

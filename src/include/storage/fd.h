@@ -185,12 +185,22 @@ extern int	pg_fdatasync(int fd);
 extern bool pg_file_exists(const char *name);
 extern void pg_flush_data(int fd, off_t offset, off_t nbytes);
 extern int	pg_truncate(const char *path, off_t length);
-extern void fsync_fname(const char *fname, bool isdir);
+/* extern void fsync_fname(const char *fname, bool isdir);
+ * does not match ./src/common/file_utils.c
+ */
+extern void fd_fsync_fname(const char *fname, bool isdir);
 extern int	fsync_fname_ext(const char *fname, bool isdir, bool ignore_perm, int elevel);
-extern int	durable_rename(const char *oldfile, const char *newfile, int elevel);
+
+/* extern int	durable_rename(const char *oldfile, const char *newfile, int elevel);
+ * does not mach ./src/common/file_utils.c
+ */
+extern int	fd_durable_rename(const char *oldfile, const char *newfile, int elevel);
 extern int	durable_unlink(const char *fname, int elevel);
 extern void SyncDataDirectory(void);
 extern int	data_sync_elevel(int elevel);
+
+#define durable_rename(oldfile, newfile, elevel) fd_durable_rename(oldfile, newfile, elevel)
+#define fsync_fname(fname, isdir) fd_fsync_fname(fname, isdir)
 
 static inline ssize_t
 FileRead(File file, void *buffer, size_t amount, off_t offset,

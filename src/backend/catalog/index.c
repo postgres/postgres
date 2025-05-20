@@ -2967,7 +2967,7 @@ index_build(Relation heapRelation,
 		indexInfo->ii_ParallelWorkers =
 			plan_create_index_workers(RelationGetRelid(heapRelation),
 									  RelationGetRelid(indexRelation));
-
+#if !defined(__EMSCRIPTEN__)
 	if (indexInfo->ii_ParallelWorkers == 0)
 		ereport(DEBUG1,
 				(errmsg_internal("building index \"%s\" on table \"%s\" serially",
@@ -2979,7 +2979,7 @@ index_build(Relation heapRelation,
 								 RelationGetRelationName(indexRelation),
 								 RelationGetRelationName(heapRelation),
 								 indexInfo->ii_ParallelWorkers)));
-
+#endif
 	/*
 	 * Switch to the table owner's userid, so that any index functions are run
 	 * as that user.  Also lock down security-restricted operations and

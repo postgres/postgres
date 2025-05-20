@@ -56,7 +56,9 @@ typedef struct MemoryContextCallback
  * Avoid accessing it directly!  Instead, use MemoryContextSwitchTo()
  * to change the setting.
  */
+#if !defined(PG_EXTERN)
 extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
+#endif
 
 /*
  * Flags for MemoryContextAllocExtended.
@@ -118,7 +120,7 @@ extern pg_nodiscard void *repalloc_huge(void *pointer, Size size);
  * it's necessary to hide the inline definition of MemoryContextSwitchTo in
  * this scenario; hence the #ifndef FRONTEND.
  */
-
+#if !defined(PG_EXTERN)
 #ifndef FRONTEND
 static inline MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
@@ -129,7 +131,8 @@ MemoryContextSwitchTo(MemoryContext context)
 	return old;
 }
 #endif							/* FRONTEND */
-
+#else
+#endif
 /* Registration of memory context reset/delete callbacks */
 extern void MemoryContextRegisterResetCallback(MemoryContext context,
 											   MemoryContextCallback *cb);

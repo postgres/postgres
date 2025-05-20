@@ -110,10 +110,20 @@ find_active_timeout(TimeoutId id)
  * Insert specified timeout reason into the list of active timeouts
  * at the given index.
  */
+
+bool insert_timeout_warned = false;
 static void
 insert_timeout(TimeoutId id, int index)
 {
 	int			i;
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+    if (!insert_timeout_warned) //(index<0)
+    {
+        insert_timeout_warned = true;
+        fprintf(stderr, "# 117(FATAL): insert_timeout(TimeoutId id=%d, int index=%d): " __FILE__ "\n", id, index);
+    }
+    return;
+#endif
 
 	if (index < 0 || index > num_active_timeouts)
 		elog(FATAL, "timeout index %d out of range 0..%d", index,
@@ -128,6 +138,7 @@ insert_timeout(TimeoutId id, int index)
 	active_timeouts[index] = &all_timeouts[id];
 
 	num_active_timeouts++;
+
 }
 
 /*
@@ -209,6 +220,10 @@ enable_timeout(TimeoutId id, TimestampTz now, TimestampTz fin_time,
 static void
 schedule_alarm(TimestampTz now)
 {
+#if defined(__wasi__)
+    puts("# 224: schedule_alarm(TimestampTz now)");
+    (void)signal_due_at;
+#else
 	if (num_active_timeouts > 0)
 	{
 		struct itimerval timeval;
@@ -347,6 +362,7 @@ schedule_alarm(TimestampTz now)
 			elog(FATAL, "could not enable SIGALRM timer: %m");
 		}
 	}
+#endif
 }
 
 

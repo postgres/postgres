@@ -23,20 +23,49 @@
  * Determine which dynamic shared memory implementations will be supported
  * on this platform, and which one will be the default.
  */
-#ifdef WIN32
-#define USE_DSM_WINDOWS
-#define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_WINDOWS
+#if 0 // defined(__wasi__) || defined(__EMSCRIPTEN__)
+    #define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_SYSV
+    #define USE_DSM_SYSV
+    extern PGDLLIMPORT int dynamic_shared_memory_type;
+    extern PGDLLIMPORT int min_dynamic_shared_memory;
+    #define PG_DYNSHMEM_DIR					"/tmp/pglite"
+    #define PG_DYNSHMEM_MMAP_FILE_PREFIX	"mmap."
+
+#elif 0 // defined(__wasi__) || defined(__EMSCRIPTEN__)
+    #define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_MMAP
+    #define USE_DSM_MMAP
+    extern PGDLLIMPORT int dynamic_shared_memory_type;
+    extern PGDLLIMPORT int min_dynamic_shared_memory;
+    #define PG_DYNSHMEM_DIR					"/tmp/pglite"
+    #define PG_DYNSHMEM_MMAP_FILE_PREFIX	"mmap."
+
+#elif defined(__wasi__) || defined(__EMSCRIPTEN__)
+    #define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_POSIX
+    #define USE_DSM_POSIX
+    extern PGDLLIMPORT int dynamic_shared_memory_type;
+    extern PGDLLIMPORT int min_dynamic_shared_memory;
+    #define PG_DYNSHMEM_DIR					"/tmp/pglite"
+    #define PG_DYNSHMEM_MMAP_FILE_PREFIX	"mmap."
+
 #else
-#ifdef HAVE_SHM_OPEN
-#define USE_DSM_POSIX
-#define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_POSIX
-#endif
-#define USE_DSM_SYSV
-#ifndef DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE
-#define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_SYSV
-#endif
+
+#ifdef WIN32
+#   define USE_DSM_WINDOWS
+#   define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_WINDOWS
+#else
+#   ifdef HAVE_SHM_OPEN
+#       define USE_DSM_POSIX
+#       define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_POSIX
+#   endif
+#   define USE_DSM_SYSV
+#   ifndef DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE
+#       define DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE		DSM_IMPL_SYSV
+#   endif
 #define USE_DSM_MMAP
-#endif
+
+#endif /* defined(__wasi__) || defined(__EMSCRIPTEN__) */
+
+
 
 /* GUC. */
 extern PGDLLIMPORT int dynamic_shared_memory_type;
@@ -50,7 +79,7 @@ extern PGDLLIMPORT int min_dynamic_shared_memory;
  */
 #define PG_DYNSHMEM_DIR					"pg_dynshmem"
 #define PG_DYNSHMEM_MMAP_FILE_PREFIX	"mmap."
-
+#endif
 /* A "name" for a dynamic shared memory segment. */
 typedef uint32 dsm_handle;
 

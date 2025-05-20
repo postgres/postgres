@@ -1875,7 +1875,7 @@ auth_peer(hbaPort *port)
 		return STATUS_ERROR;
 	}
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__wasi__)
 	errno = 0;					/* clear errno before call */
 	pw = getpwuid(uid);
 	if (!pw)

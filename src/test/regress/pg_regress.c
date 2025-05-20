@@ -38,6 +38,15 @@
 #include "pg_regress.h"
 #include "portability/instr_time.h"
 
+#if defined(__wasi__)
+#if defined(HAVE_GETRLIMIT)
+#undef HAVE_GETRLIMIT
+#endif
+#define execl(...) (-1)
+#define wait(...) (INVALID_PID)
+#define raise(...)
+#endif /* __wasi__ */
+
 /* for resultmap we need a list of pairs of strings */
 typedef struct _resultmap
 {

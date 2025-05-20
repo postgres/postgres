@@ -947,7 +947,9 @@ RequestCheckpoint(int flags)
 	/*
 	 * If in a standalone backend, just do it ourselves.
 	 */
+#if !defined(__wasi__) && !defined(__EMSCRIPTEN__)
 	if (!IsPostmasterEnvironment)
+#endif
 	{
 		/*
 		 * There's no point in doing slow checkpoints in a standalone backend,

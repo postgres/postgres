@@ -804,7 +804,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
 				CheckRestrictedOperation("LISTEN");
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 				/*
 				 * We don't allow LISTEN in background processes, as there is
 				 * no mechanism for them to collect NOTIFY messages, so they'd
@@ -820,7 +820,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 					/* translator: %s is name of a SQL command, eg LISTEN */
 							 errmsg("cannot execute %s within a background process",
 									"LISTEN")));
-
+#endif
 				Async_Listen(stmt->conditionname);
 			}
 			break;

@@ -11,7 +11,7 @@ DATA = xml2--1.1.sql xml2--1.0--1.1.sql
 PGFILEDESC = "xml2 - XPath querying and XSLT"
 
 REGRESS = xml2
-
+PG_CFLAGS=$(shell xml2-config --cflags)
 SHLIB_LINK += $(filter -lxslt, $(LIBS)) -lxml2
 
 ifdef USE_PGXS

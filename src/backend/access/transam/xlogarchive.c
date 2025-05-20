@@ -32,6 +32,10 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 
+#if defined(__wasi__)
+#define system(cmd) system_wasi(cmd)
+#endif
+
 /*
  * Attempt to retrieve the specified file from off-line archival storage.
  * If successful, fill "path" with its complete path (note that this will be

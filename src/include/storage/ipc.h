@@ -64,8 +64,11 @@ typedef void (*shmem_startup_hook_type) (void);
 /* ipc.c */
 extern PGDLLIMPORT bool proc_exit_inprogress;
 extern PGDLLIMPORT bool shmem_exit_inprogress;
-
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+extern void pg_proc_exit(int code);
+#else
 extern void proc_exit(int code) pg_attribute_noreturn();
+#endif
 extern void shmem_exit(int code);
 extern void on_proc_exit(pg_on_exit_callback function, Datum arg);
 extern void on_shmem_exit(pg_on_exit_callback function, Datum arg);

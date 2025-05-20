@@ -566,9 +566,10 @@ pqReadData(PGconn *conn)
 {
 	int			someread = 0;
 	int			nread;
-
+puts("------------------ pqReadData --------------- : " __FILE__);
 	if (conn->sock == PGINVALID_SOCKET)
 	{
+puts("# 573");
 		libpq_append_conn_error(conn, "connection not open");
 		return -1;
 	}
@@ -613,8 +614,16 @@ pqReadData(PGconn *conn)
 
 	/* OK, try to read some data */
 retry3:
+#if defined(__wasi__)
+    puts(" # 619 : pqReadData->recvfrom_bc "  __FILE__);
+    nread = recvfrom_bc(conn->sock, conn->inBuffer + conn->inEnd, conn->inBufSize - conn->inEnd, 0, NULL, NULL);
+    printf("# 620: pqsecure_read(%d)-> rtt\n", nread);
+    if (!nread)
+        return 0;
+#else
 	nread = pqsecure_read(conn, conn->inBuffer + conn->inEnd,
 						  conn->inBufSize - conn->inEnd);
+#endif
 	if (nread < 0)
 	{
 		switch (SOCK_ERRNO)
@@ -637,6 +646,7 @@ retry3:
 				goto definitelyFailed;
 
 			default:
+puts("# 642");
 				/* pqsecure_read set the error message for us */
 				return -1;
 		}
@@ -753,6 +763,7 @@ definitelyEOF:
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
+puts("# 764: definitelyFailed");
 	/* Do *not* drop any already-read data; caller still wants it */
 	pqDropConnection(conn, false);
 	conn->status = CONNECTION_BAD;	/* No more connection to backend */
@@ -826,7 +837,12 @@ pqSendSome(PGconn *conn, int len)
 		int			sent;
 
 #ifndef WIN32
+#if defined(__wasi__)
+        sent = send(conn->sock, ptr, len, 0);
+        printf("pqSendSome in progress %d/%d\n", sent, len);
+#else
 		sent = pqsecure_write(conn, ptr, len);
+#endif /* __wasi__ */
 #else
 
 		/*
@@ -860,6 +876,7 @@ pqSendSome(PGconn *conn, int len)
 					/* Absorb input data if any, and detect socket closure */
 					if (conn->sock != PGINVALID_SOCKET)
 					{
+PDEBUG("# 868: pqReadData ???????????????????????????????????");
 						if (pqReadData(conn) < 0)
 							return -1;
 					}
@@ -959,7 +976,9 @@ pqFlush(PGconn *conn)
 
 		return pqSendSome(conn, conn->outCount);
 	}
-
+#if defined(__wasi__)
+    sock_flush();
+#endif /* __wasi__ */
 	return 0;
 }
 
@@ -1040,6 +1059,9 @@ pqWriteReady(PGconn *conn)
 static int
 pqSocketCheck(PGconn *conn, int forRead, int forWrite, pg_usec_time_t end_time)
 {
+#if defined(__wasi__)
+    return 1;
+#else
 	int			result;
 
 	if (!conn)
@@ -1073,6 +1095,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, pg_usec_time_t end_time)
 	}
 
 	return result;
+#endif
 }
 
 

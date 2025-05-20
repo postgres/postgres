@@ -14,7 +14,7 @@
 #include "c.h"
 
 #include "port/pg_pthread.h"
-
+#if !defined(__wasi__)
 int
 pthread_barrier_init(pthread_barrier_t *barrier, const void *attr, int count)
 {
@@ -75,3 +75,20 @@ pthread_barrier_destroy(pthread_barrier_t *barrier)
 	pthread_mutex_destroy(&barrier->mutex);
 	return 0;
 }
+#else
+int
+pthread_barrier_init(pthread_barrier_t *__restrict barrier, const pthread_barrierattr_t *__restrict attr, unsigned count) {
+    return 0;
+}
+
+int
+pthread_barrier_wait(pthread_barrier_t *barrier) {
+    return 0;
+}
+
+int
+pthread_barrier_destroy(pthread_barrier_t *barrier) {
+    return 0;
+}
+#endif
+
