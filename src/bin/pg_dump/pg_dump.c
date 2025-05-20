@@ -10765,6 +10765,9 @@ fetchAttributeStats(Archive *fout)
 		restarted = true;
 	}
 
+	appendPQExpBufferChar(nspnames, '{');
+	appendPQExpBufferChar(relnames, '{');
+
 	/*
 	 * Scan the TOC for the next set of relevant stats entries.  We assume
 	 * that statistics are dumped in the order they are listed in the TOC.
@@ -10776,23 +10779,25 @@ fetchAttributeStats(Archive *fout)
 		if ((te->reqs & REQ_STATS) != 0 &&
 			strcmp(te->desc, "STATISTICS DATA") == 0)
 		{
-			appendPQExpBuffer(nspnames, "%s%s", count ? "," : "",
-							  fmtId(te->namespace));
-			appendPQExpBuffer(relnames, "%s%s", count ? "," : "",
-							  fmtId(te->tag));
+			appendPGArray(nspnames, te->namespace);
+			appendPGArray(relnames, te->tag);
 			count++;
 		}
 	}
+
+	appendPQExpBufferChar(nspnames, '}');
+	appendPQExpBufferChar(relnames, '}');
 
 	/* Execute the query for the next batch of relations. */
 	if (count > 0)
 	{
 		PQExpBuffer query = createPQExpBuffer();
 
-		appendPQExpBuffer(query, "EXECUTE getAttributeStats("
-						  "'{%s}'::pg_catalog.name[],"
-						  "'{%s}'::pg_catalog.name[])",
-						  nspnames->data, relnames->data);
+		appendPQExpBufferStr(query, "EXECUTE getAttributeStats(");
+		appendStringLiteralAH(query, nspnames->data, fout);
+		appendPQExpBufferStr(query, "::pg_catalog.name[],");
+		appendStringLiteralAH(query, relnames->data, fout);
+		appendPQExpBufferStr(query, "::pg_catalog.name[])");
 		res = ExecuteSqlQuery(fout, query->data, PGRES_TUPLES_OK);
 		destroyPQExpBuffer(query);
 	}

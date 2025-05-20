@@ -4834,13 +4834,13 @@ my %tests = (
 			CREATE TABLE dump_test.has_stats
 			AS SELECT g.g AS x, g.g / 2 AS y FROM generate_series(1,100) AS g(g);
 			CREATE MATERIALIZED VIEW dump_test.has_stats_mv AS SELECT * FROM dump_test.has_stats;
-			CREATE INDEX dup_test_post_data_ix ON dump_test.has_stats(x, (x - 1));
+			CREATE INDEX """dump_test""\'s post-data index" ON dump_test.has_stats(x, (x - 1));
 			ANALYZE dump_test.has_stats, dump_test.has_stats_mv;',
 		regexp => qr/^
 			\QSELECT * FROM pg_catalog.pg_restore_relation_stats(\E\s+
 			'version',\s'\d+'::integer,\s+
 			'schemaname',\s'dump_test',\s+
-			'relname',\s'dup_test_post_data_ix',\s+
+			'relname',\s'"dump_test"''s\ post-data\ index',\s+
 			'relpages',\s'\d+'::integer,\s+
 			'reltuples',\s'\d+'::real,\s+
 			'relallvisible',\s'\d+'::integer,\s+
@@ -4849,7 +4849,7 @@ my %tests = (
 			\QSELECT * FROM pg_catalog.pg_restore_attribute_stats(\E\s+
 			'version',\s'\d+'::integer,\s+
 			'schemaname',\s'dump_test',\s+
-			'relname',\s'dup_test_post_data_ix',\s+
+			'relname',\s'"dump_test"''s\ post-data\ index',\s+
 			'attnum',\s'2'::smallint,\s+
 			'inherited',\s'f'::boolean,\s+
 			'null_frac',\s'0'::real,\s+
