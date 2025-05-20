@@ -32,7 +32,11 @@
 int
 getpeereid(int sock, uid_t *uid, gid_t *gid)
 {
-#if defined(SO_PEERCRED)
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+	/* No implementation available on this platform */
+	errno = ENOSYS;
+	return -1;
+#elif defined(SO_PEERCRED)
 	/* Linux: use getsockopt(SO_PEERCRED) */
 	struct ucred peercred;
 	socklen_t	so_len = sizeof(peercred);
