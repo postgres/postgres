@@ -110,6 +110,7 @@ int			restrict_nonsystem_relation_kind;
 #if (defined(__EMSCRIPTEN__) || defined(__wasi__))
 #if !defined(PGL_MAIN)
     volatile int cma_rsize = 0;
+    volatile bool sockfiles = false;
 #endif // PGL_MAIN
 bool quote_all_identifiers = false;
 FILE* SOCKET_FILE = NULL;
@@ -5147,7 +5148,7 @@ ShowUsage(const char *title)
 					 (long) sys.tv_usec);
 #if !defined(__wasi__)
 #ifndef WIN32
-
+#if !defined(__wasi__)
 	/*
 	 * The following rusage fields are not defined by POSIX, but they're
 	 * present on all current Unix-like systems so we use them without any
@@ -5189,6 +5190,7 @@ ShowUsage(const char *title)
 					 r.ru_nvcsw - Save_r.ru_nvcsw,
 					 r.ru_nivcsw - Save_r.ru_nivcsw,
 					 r.ru_nvcsw, r.ru_nivcsw);
+#endif  /* !__wasi__ */
 #endif							/* !WIN32 */
 #endif
 	/* remove trailing newline */

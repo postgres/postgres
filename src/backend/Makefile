@@ -87,6 +87,22 @@ postgres: $(OBJS)
 	COPTS="$(LOPTS)" $(CC) $(MAIN_MODULE) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPGCORE) $(top_builddir)/libpgmain.a $(LIBS)
 endif
 
+ifeq ($(PORTNAME), wasi)
+AR ?= llvm-ar
+LIBPGCORE ?= $(top_builddir)/libpgcore.a
+LIBPG = $(top_builddir)/libpostgres.a
+PGCORE = $(top_builddir)/src/common/libpgcommon_srv.a $(top_builddir)/src/port/libpgport_srv.a $(LIBPG)
+PGMAIN = main/main.o tcop/postgres.o
+postgres: $(OBJS)
+	$(AR) rcs $(top_builddir)/libpgmain.a $(PGMAIN)
+	$(AR) rcs $(LIBPG) $(filter-out $(PGMAIN),$(call expand_subsys,$(ONLYOBJS)))
+	$(CC) -r -o $(top_builddir)/libpgcore.o -Wl,--whole-archive $(PGCORE)
+	$(AR) rcs $(LIBPGCORE) $(top_builddir)/libpgcore.o
+	COPTS="$(LOPTS)" $(CC) $(MAIN_MODULE) $(CFLAGS) $(LDFLAGS) -nostartfiles -o $@ $(LIBPGCORE) $(top_builddir)/libpgmain.a $(LIBS)
+	mv $@ $@.wasi
+	touch $@
+endif
+
 ifeq ($(PORTNAME), cygwin)
 
 postgres: $(OBJS)
