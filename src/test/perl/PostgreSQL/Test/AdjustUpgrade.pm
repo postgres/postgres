@@ -538,6 +538,7 @@ my @_unused_view_qualifiers = (
 	{ obj => 'VIEW public.limit_thousand_v_2', qual => 'onek' },
 	{ obj => 'VIEW public.limit_thousand_v_3', qual => 'onek' },
 	{ obj => 'VIEW public.limit_thousand_v_4', qual => 'onek' },
+	{ obj => 'VIEW public.limit_thousand_v_5', qual => 'onek' },
 	# Since 14
 	{ obj => 'MATERIALIZED VIEW public.compressmv', qual => 'cmdata1' });
 
