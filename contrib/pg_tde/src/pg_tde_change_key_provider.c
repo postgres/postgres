@@ -30,6 +30,8 @@ help(void)
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]");
 	puts("");
+	printf("Use dbOid %d for global key providers.\n", GLOBAL_DATA_TDE_OID);
+	puts("");
 	puts("WARNING:");
 	puts("");
 	puts("This tool only changes the values, without properly XLogging the changes, or adjusting the configuration in the running postgres processes. Only use it in case the database is inaccessible and can't be started.\n");
