@@ -161,8 +161,8 @@ tde_mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	 */
 	if (forknum == MAIN_FORKNUM || forknum == InvalidForkNumber)
 	{
-		if (!RelFileLocatorBackendIsTemp(rlocator) && IsSMGRRelationEncrypted(rlocator))
-			pg_tde_free_key_map_entry(&rlocator.locator);
+		if (IsSMGRRelationEncrypted(rlocator))
+			DeleteSMGRRelationKey(rlocator);
 	}
 }
 
