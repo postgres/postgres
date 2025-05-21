@@ -21,8 +21,6 @@ Let's break down what it means.
 * Sequences
 * Temporary tables
 * Write Ahead Log (WAL)
-* System tables (not yet implemented)
-* Temporary files (not yet implemented)
 
 **Extension** means that `pg_tde` should be implemented only as an extension, possibly compatible with any PostgreSQL distribution, including the open source community version. This requires changes in the PostgreSQL core to make it more extensible. Therefore, `pg_tde` currently works only with the [Percona Server for PostgreSQL](https://docs.percona.com/postgresql/17/index.html) - a binary replacement of community PostgreSQL and included in Percona Distribution for PostgreSQL.
 
@@ -273,7 +271,8 @@ These functions return a list of provider names, type and configuration.
 For keys and providers administration, it provides two pair of functions:
 
 ```sql
-pg_tde_(grant/revoke)_database_key_management_to_role
+pg_tde_GRANT_database_key_management_TO_role
+pg_tde_REVOKE_database_key_management_FROM_role
 ```
 
 ### Creating and rotating keys
@@ -297,19 +296,12 @@ With this feature, it is possible for the entire database server to easily use t
 A default key can be managed with the following functions:
 
 ```sql
-pg_tde_set_default_key('key-name', 'provider-name', ensure_new_key)
-pg_tde_drop_default_key() -- not yet implemented
+pg_tde_set_default_key_using_global_key_provider('key-name', 'provider-name', 'true/false')
 ```
 
 `DROP` is only possible if there's no table currently using the default principal key.
 
 Changing the default principal key will rotate the encryption of internal keys for all databases using the current default principal key.
-
-### Removing key (not yet implemented)
-
-`pg_tde_drop_key` removes the principal key for the current database. If the current database has any encrypted tables, and there isn't a default principal key configured, it reports an error instead. If there are encrypted tables, but there's also a global default principal key, internal keys will be encrypted with the default key.
-
-It isn't possible to remove the WAL (server) principal key.
 
 ### Current key details
 
@@ -321,23 +313,20 @@ It isn't possible to remove the WAL (server) principal key.
 
 `pg_tde_verify_key()` checks that the key provider is accessible, that the current principal key can be downloaded from it, and that it is the same as the current key stored in memory - if any of these fail, it reports an appropriate error.
 
-### Listing all active keys (not yet implemented)
-
-SUPERusers are able to use the following function:
-
-`pg_tde_list_active_keys()`
-
-Which reports all the actively used keys by all databases on the current server. Similarly to `pg_tde_key_info()`, it only shows names and associated providers, it doesn't reveal any sensitive information about the providers.
-
 ### Key permissions
 
-Users with management permissions to a specific database `(pg_tde_(grant/revoke)_(global/databse)_key_management_to_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
+Users with management permissions to a specific database `(pg_tde_(grant/revoke)_(global/databse)_key_management_(to/from)_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
 
 Also the `pg_tde_(grant/revoke)_database_key_management_to_role` function deals with only the specific permission for the above function: it allows a user to change the key for the database, but not to modify the provider configuration.
 
 ### Creating encrypted tables
 
-To create an encrypted table or modify an existing table to be encrypted, simply use `USING tde_heap` in the `CREATE` statement.
+To create an encrypted table or modify an existing table to be encrypted, use the following commands:
+
+```sql
+CREATE TABLE t1(a INT) USING tde_heap;
+ALTER TABLE t1 SET ACCESS METHOD tde_heap;
+```
 
 ### Changing the `pg_tde.inherit_global_keys` setting
 
@@ -349,12 +338,13 @@ In this case existing references to global providers, or the global default prin
 
 ### Simple "one principal key" encryption
 
-1. Installing the extension: `shared_preload_libraries` + `pg_tde.wal_encrypt`
+1. Passing the option from the postgres config file the extension: `shared_preload_libraries=‘pg_tde’`
 2. `CREATE EXTENSION pg_tde;` in `template1`
 3. Adding a global key provider
 4. Adding a default principal key using the same global provider
-5. Changing the WAL encryption to use the default principal key
-6. Optionally: setting the `default_table_access_method` to `tde_heap` so that tables are encrypted by default
+5. Enable WAL encryption to use the default principal key using `ALTER SYSTEM SET pg_tde.wal_encrypt=‘ON’`
+6. Restart the server
+7. Optionally: setting the `default_table_access_method` to `tde_heap` so that tables are encrypted by default
 
 Database users don't need permissions to any of the encryption functions:
 encryption is managed by the admins, normal users only have to create tables with encryption, which requires no specific permissions.

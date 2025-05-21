@@ -1,121 +1,129 @@
-<!-- robots: noindex, nofollow -->
-
-# pg_tde Release Candidate ({{date.RC2}})
+# pg_tde Release Candidate 2 ({{date.RC2}})
 
 `pg_tde` extension brings in [Transparent Data Encryption (TDE)](../index/index.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
 
-[Get started](../install.md){.md-button}
+[Get Started](../install.md){.md-button}
 
 ## Release Highlights
 
 This release provides the following features and improvements:
 
-* **Improved performance with redesigned WAL encryption**.
+* **Restricted key provider configuration to superusers**
 
-    The approach to WAL encryption has been redesigned. Now, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on. The information about what is encrypted is stored in the internal key metadata. This change improves WAL encryption flow with native replication and increases performance for large scale databases.
+    The database owners can no longer configure key providers directly. Instead, they must refer to the superuser who manages the provider setup. This security improvement clearly separates the responsibilities between users and administrators.
 
-* **Default encryption key for single-tenancy**.
+* **WAL encryption supports Vault**.
 
-    The new functionality allows you to set a default principal key for the entire database cluster. This key is used to encrypt all databases and tables that do not have a custom principal key set. This feature simplifies encryption configuration and management in single-tenant environments where each user has their own database instance.
+    `pg_tde` now supports using the Vault keyring for secure storage and management of WAL encryption keys.
 
-* **Ability to change key provider configuration**
+* **Automatic WAL internal key generation at server startup**.
 
-    You no longer need to configure a new key provider and set a new principal key if the provider's configuration changed. Now can change the key provider configuration both for the current database and the entire PostgreSQL cluster using [functions](../functions.md#key-provider-management). This enhancement lifts existing limitations and is a native and common way to operate in PostgreSQL.
+    On each server start, a new internal key is generated for encrypting subsequent WAL records (assuming WAL encryption is enabled). The existing WAL records and their keys remain unchanged, this ensures continuity and secure key management without affecting historical data.
 
-* **Key management permissions**
+* **Proper removal of relation-level encryption keys on table drop**
 
-    The new functions allow you to manage permissions for global and database key management separately. This feature provides more granular control over key management operations and allows you to delegate key management tasks to different roles.
+    Previously, encrypted relation keys persisted even after dropping the associated tables, potentially leaving orphaned entries in the map file. This is now corrected, when an encrypted table is dropped, its corresponding key is also removed from the key map.
 
-* **Additional information about principal keys and providers**
+* **Fixed external tablespace data loss with encrypted partitions**
 
-    The new functions allow you to display additional information about principal keys and providers. This feature helps you to understand the current key configuration and troubleshoot issues related to key management.
+    An issue was fixed where data could be lost when the encrypted partitioned tables were moved to external tablespaces.  
 
-* **`tde_heap_basic` access method deprecation**
+* **New visibility and verification functions for default principal keys**
 
-    The `tde_heap_basic` access method has limitations in encryption capabilities and affects performance. Also, it poses a potential security risk when used in production environments due to indexes remaining unencrypted. Considering all the above, we decided to deprecate this access method and remove it in future releases. Use the `tde_heap` access method instead that is available with Percona Server for PostgreSQL 17 - a drop-in replacement for PostgreSQL Community.
+    Added additional functions to help you verify and inspect the state of default principal keys more easily.
+
+* **Fixed SQL failures caused by inconsistent key provider switching**
+
+    An issue was resolved where SQL queries could fail after switching key providers while the server was running.
+    This occurred because principal keys became inaccessible when spread across multiple keyring backends, triggering the single-provider-at-a-time design constraint.
+    `pg_tde` now enforces consistency during provider changes to prevent a corrupted key state and query errors.
 
 ## Upgrade considerations
 
-`pg_tde` Release Candidate is not backward compatible with `pg_tde` Beta2 due to significant changes in code. This means you cannot directly upgrade from one version to another. You must [uninstall](../how-to/uninstall.md) `pg_tde` Beta2 first and then [install](../install.md) and configure the new Release Candidate version.
+`pg_tde` Release Candidate 2 is not backward compatible with `pg_tde` Beta2 due to significant changes in code. This means you cannot directly upgrade from one version to another. You must [uninstall](../how-to/uninstall.md) `pg_tde` Beta2 first and then [install](../install.md) and configure the new Release Candidate version.
 
 ## Known issues
 
 * The default `mlock` limit on Rocky Linux 8 for ARM64-based architectures equals the memory page size and is 64 Kb. This results in the child process with `pg_tde` failing to allocate another memory page because the max memory limit is reached by the parent process.
 
-    To prevent this, you can change the `mlock` limit to be at least twice bigger than the memory page size:
+To prevent this, you can change the `mlock` limit to be at least twice bigger than the memory page size:
 
-    * temporarily for the current session using the `ulimit -l <value>` command.
-    * set a new hard limit in the `/etc/security/limits.conf` file. To do so, you require the superuser privileges.
+* temporarily for the current session using the `ulimit -l <value>` command.
+* set a new hard limit in the `/etc/security/limits.conf` file. To do so, you require the superuser privileges.
 
-    Adjust the limits with caution since it affects other processes running in your system.
-
-* You can now delete global key providers even when their associated principal key is still in use. This known issue will be fixed in the next release. For now, avoid deleting global key providers. 
+Adjust the limits with caution since it affects other processes running in your system.
 
 ## Changelog
 
 ### New Features
 
-* [PG-1234](https://perconadev.atlassian.net/browse/PG-1234) - Added functions for separate global and database key management permissions.
-
-* [PG-1255](https://perconadev.atlassian.net/browse/PG-1255) - Added functionality to delete key providers.
-
-* [PG-1256](https://perconadev.atlassian.net/browse/PG-1256) - Added single-tenant support via the default principal key functionality.
-
-* [PG-1258](https://perconadev.atlassian.net/browse/PG-1258) - Added functions to display additional information  about principal keys / providers.
-
-* [PG-1294](https://perconadev.atlassian.net/browse/PG-1294) - Redesigned WAL encryption.
-
-* [PG-1303](https://perconadev.atlassian.net/browse/PG-1303) - Deprecated tde_heap_basic access method.
+* [PG-813](https://perconadev.atlassian.net/browse/PG-813) – Enabled support for logical replication in `pg_tde`.
+* [PG-817](https://perconadev.atlassian.net/browse/PG-817) – Added fuzz testing to `pstress` to strengthen validation and resilience.
+* [PG-824](https://perconadev.atlassian.net/browse/PG-824) – Ensured fsync is called on `pg_tde.map`, `pg_tde.dat`, and FS key provider files.
+* [PG-830](https://perconadev.atlassian.net/browse/PG-830) – Implemented full WAL encryption using Vault keyring.
+* [PG-831](https://perconadev.atlassian.net/browse/PG-831) – Tested WAL recovery and both streaming and logical replication compatibility.
+* [PG-855](https://perconadev.atlassian.net/browse/PG-855) – Added a contributor guide to help new developers engage with pg_tde.
+* [PG-938](https://perconadev.atlassian.net/browse/PG-938) – Evaluated use of `pg_basebackup` for automated backup validation with pg_tde.
+* [PG-962](https://perconadev.atlassian.net/browse/PG-962) – Automated test cases to validate data integrity after PostgreSQL restart.
+* [PG-1001](https://perconadev.atlassian.net/browse/PG-1001) – Verified encryption behavior of temporary tables.
+* [PG-1099](https://perconadev.atlassian.net/browse/PG-1099) – Developed automation for bare-metal performance benchmarking.
+* [PG-1232](https://perconadev.atlassian.net/browse/PG-1232) – Documented the architectural design behind pg_tde.
+* [PG-1289](https://perconadev.atlassian.net/browse/PG-1289) – Added test cases for verifying compatibility with different PostgreSQL versions.
+* [PG-1295](https://perconadev.atlassian.net/browse/PG-1295) – Introduced TAP test cases to validate WAL encryption across access methods.
+* [PG-1444](https://perconadev.atlassian.net/browse/PG-1444) – Implemented support for removing relation-level encryption keys when dropping tables.
+* [PG-1455](https://perconadev.atlassian.net/browse/PG-1455) – Introduced random base numbers in encryption IVs for enhanced security.
+* [PG-1458](https://perconadev.atlassian.net/browse/PG-1458) – Added visibility and verification functions for default principal keys.
+* [PG-1460](https://perconadev.atlassian.net/browse/PG-1460) – Enabled automatic rotation of WAL internal keys on server start.
+* [PG-1461](https://perconadev.atlassian.net/browse/PG-1461) – Implemented random IV initialization for WAL keys.
+* [PG-1506](https://perconadev.atlassian.net/browse/PG-1506) – Added parameter support for client certificates in KMIP provider configuration.
 
 ## Improvements
 
-* [PG-858](https://perconadev.atlassian.net/browse/PG-858) - Refactored internal/principal key LWLocks to make local databases inherit a global key provider.
-
-* [PG-1243](https://perconadev.atlassian.net/browse/PG-1243) - Investigated performance issues at a specific threshold and large databases and updated documentation about handling hint bits.
-
-* [PG-1310](https://perconadev.atlassian.net/browse/PG-1310) - Added access method enforcement via the GUC variable.
-
-* [PG-1361](https://perconadev.atlassian.net/browse/PG-1361) - Fixed pg_tde relocatability.
-
-* [PG-1380](https://perconadev.atlassian.net/browse/PG-1380) - Added support for `pg_tde_is_encrypted()` function on indexes and sequences.
+* [PG-826](https://perconadev.atlassian.net/browse/PG-826) – Documented how to encrypt and decrypt existing tables using pg_tde.
+* [PG-827](https://perconadev.atlassian.net/browse/PG-827) – Fixed CI pipeline tests on the smgr branch.
+* [PG-834](https://perconadev.atlassian.net/browse/PG-834) – Resolved issues with `CREATE ... USING pg_tde` on the smgr branch.
+* [PG-838](https://perconadev.atlassian.net/browse/PG-838) – Added documentation for setting up streaming replication with pg_tde.
+* [PG-1294](https://perconadev.atlassian.net/browse/PG-1294) – Improved WAL encryption design and performance.
+* [PG-1304](https://perconadev.atlassian.net/browse/PG-1304) – Removed deprecated `tde_heap_basic` access method before GA.
+* [PG-1307](https://perconadev.atlassian.net/browse/PG-1307) – Assessed overall development effort required for WAL encryption.
+* [PG-1392](https://perconadev.atlassian.net/browse/PG-1392) – Investigated encryption coverage gaps in freespace and visibility maps.
+* [PG-1419](https://perconadev.atlassian.net/browse/PG-1419) – Changed provider validation to occur during provider addition instead of key setup.
+* [PG-1427](https://perconadev.atlassian.net/browse/PG-1427) – Tested and fixed KMIP implementation for Thales support.
+* [PG-1437](https://perconadev.atlassian.net/browse/PG-1437) – Cleaned up and resolved TODO items in the codebase.
+* [PG-1440](https://perconadev.atlassian.net/browse/PG-1440) – Restricted key provider configuration to superusers for improved security.
+* [PG-1441](https://perconadev.atlassian.net/browse/PG-1441) – Prevented replication of table-level encryption keys.
+* [PG-1446](https://perconadev.atlassian.net/browse/PG-1446) – Improved locking mechanisms in pg_tde.
+* [PG-1447](https://perconadev.atlassian.net/browse/PG-1447) – Verified compatibility of encryption with template databases.
+* [PG-1457](https://perconadev.atlassian.net/browse/PG-1457) – Renamed key management functions for clarity and consistency.
+* [PG-1467](https://perconadev.atlassian.net/browse/PG-1467) – Added Clang-based CI integration on GitHub.
+* [PG-1507](https://perconadev.atlassian.net/browse/PG-1507) – Handled ALTER TYPE operations in the TDE event trigger.
+* [PG-1508](https://perconadev.atlassian.net/browse/PG-1508) – Fixed encryption state inconsistencies when altering inherited tables.
+* [PG-1550](https://perconadev.atlassian.net/browse/PG-1550) – Restricted database owners from creating key providers to improve security.
+* [PG-1586](https://perconadev.atlassian.net/browse/PG-1586) – Verified and fixed KMIP compatibility with Fortanix HSM.
 
 ### Bugs Fixed
 
-* [PG-821](https://perconadev.atlassian.net/browse/PG-821) - Fixed the issue with `pg_basebackup` failing when configuring replication.
-
-* [PG-847](https://perconadev.atlassian.net/browse/PG-847) - Fixed the issue with `pg_basebackup` and `pg_checksum` throwing an error on files created by `pg_tde` when the checksum is enabled on the database cluster.
-
-* [PG-1004](https://perconadev.atlassian.net/browse/PG-1004) - Fixed the issue with `pg_checksums` utility failing during checksum verification on `pg_tde` tables. Now `pg_checksum` skips encrypted relations by looking if the relation has a custom storage manager (SMGR) key.
-
-* [PG-1373](https://perconadev.atlassian.net/browse/PG-1373) - Fixed the issue with potential unterminated strings by using the `memcpy()` or `strlcpy()` instead of the `strncpy()` function.
-
-* [PG-1378](https://perconadev.atlassian.net/browse/PG-1378) - Fixed the issue with toast tables created by the `ALTER TABLE` command not being encrypted.
-
-* [PG-1379](https://perconadev.atlassian.net/browse/PG-1379) - Fixed sequence and alter table handling in the event trigger.
-
-* [PG-1222](https://perconadev.atlassian.net/browse/PG-1222) - Fixed the bug with  confused relations with the same `RelFileNumber` in different databases.
-
-* [PG-1400](https://perconadev.atlassian.net/browse/PG-1400) - Corrected the pg_tde_change_key_provider naming in help.
-
-* [PG-1401](https://perconadev.atlassian.net/browse/PG-1401) - Fixed the issue with inheriting an encryption status during the ALTER TABLE SET access method command execution by basing a new encryption status only on the new encryption setting.
-
-* [PG-1414](https://perconadev.atlassian.net/browse/PG-1414) - Fixed the error message wording when configuring WAL encryption by referencing to a correct function.
-
-* [PG-1450](https://perconadev.atlassian.net/browse/PG-1450) - Fixed the `pg_tde_delete_key_provider()` function behavior when called multiple times by ignoring already deleted records.
-
-* [PG-1451](https://perconadev.atlassian.net/browse/PG-1451) -Fixed the issue with the repeating error message about inability to retrieve a principal key even when a user creates non-encrypted tables by checking the current transaction ID in both the event trigger start function and during a file creation. If the transaction changed during the setup of the current event trigger data, the event trigger is reset.
-
-* [PG-1473](https://perconadev.atlassian.net/browse/PG-1473) - Allowed only users with key viewer privileges to execute `pg_tde_verify_principal_key()` and `pg_tde_verify_global_principal_key()` functions.
-
-* [PG-1474](https://perconadev.atlassian.net/browse/PG-1474) - Fixed the issue with the principal key reference corruption when reassigning it to a key provider with the same name by setting the key name in vault/kmip getters.
-
-* [PG-1476](https://perconadev.atlassian.net/browse/PG-1476) - Fixed the issue with the server failing to start when WAL encryption is enabled by creating a new principal key for WAL in case only one default key exists in the database.
-
-* [PG-1479](https://perconadev.atlassian.net/browse/PG-1479), [PG-1480](https://perconadev.atlassian.net/browse/PG-1480) - Fixed the issue with the lost access to data after the global key provider change and the server restart by fixing the incorrect parameter order in default key rotation.
-
-* [PG-1489](https://perconadev.atlassian.net/browse/PG-1489) - Fixed the issue with replicating the keys and key provider configuration by creating the `pg_tde` directory on the replica server.
-/browse/PG-1476) - Fixed the issue with the server failing to start when WAL encryption is enabled by creating a new principal key for WAL in case only one default key exists in the database.
-
-* [PG-1479](https://perconadev.atlassian.net/browse/PG-1479), [PG-1480](https://perconadev.atlassian.net/browse/PG-1480) - Fixed the issue with the lost access to data after the global key provider change and the server restart by fixing the incorrect parameter order in default key rotation.
-
-* [PG-1489](https://perconadev.atlassian.net/browse/PG-1489) - Fixed the issue with replicating the keys and key provider configuration by creating the `pg_tde` directory on the replica server.
+* [PG-1397](https://perconadev.atlassian.net/browse/PG-1397) – Fixed segmentation fault during replication with WAL encryption enabled.
+* [PG-1413](https://perconadev.atlassian.net/browse/PG-1413) – Resolved invalid WAL magic number errors after toggling encryption.
+* [PG-1416](https://perconadev.atlassian.net/browse/PG-1416) – Fixed SQL query failures caused by inconsistent key provider switching.
+* [PG-1468](https://perconadev.atlassian.net/browse/PG-1468) – Fixed WAL read failures on replicas after key rotation.
+* [PG-1491](https://perconadev.atlassian.net/browse/PG-1491) – Corrected `pg_tde_is_encrypted()` behavior for partitioned tables.
+* [PG-1493](https://perconadev.atlassian.net/browse/PG-1493) – Fixed data loss when encrypted partitioned tables were moved to external tablespaces.
+* [PG-1503](https://perconadev.atlassian.net/browse/PG-1503) – Blocked deletion of global key providers still associated with principal keys.
+* [PG-1504](https://perconadev.atlassian.net/browse/PG-1504) – Ensured correct encryption inheritance in partitioned `tde_heap` tables.
+* [PG-1510](https://perconadev.atlassian.net/browse/PG-1510) – Used different keys and IVs for PostgreSQL forks to prevent conflicts.
+* [PG-1530](https://perconadev.atlassian.net/browse/PG-1530) – Fixed inability to read WAL after toggling WAL encryption.
+* [PG-1532](https://perconadev.atlassian.net/browse/PG-1532) – Resolved errors rewriting owned sequences when pg_tde isn't in the default schema.
+* [PG-1535](https://perconadev.atlassian.net/browse/PG-1535) – Prevented server crash on calling `pg_tde_principal_key_info()`.
+* [PG-1537](https://perconadev.atlassian.net/browse/PG-1537) – Fixed crash on NULL input in user-facing functions.
+* [PG-1539](https://perconadev.atlassian.net/browse/PG-1539) – Handled principal key header verification errors gracefully.
+* [PG-1540](https://perconadev.atlassian.net/browse/PG-1540) – Ensured sequences are assigned correct encryption status.
+* [PG-1541](https://perconadev.atlassian.net/browse/PG-1541) – Resolved WAL decryption failure after key rotation.
+* [PG-1543](https://perconadev.atlassian.net/browse/PG-1543) – Fixed validation error when multiple server keys exist.
+* [PG-1545](https://perconadev.atlassian.net/browse/PG-1545) – Resolved error from `pg_tde_grant_grant_management_to_role()` execution.
+* [PG-1546](https://perconadev.atlassian.net/browse/PG-1546) – Fixed incorrect behavior in role grant function.
+* [PG-1551](https://perconadev.atlassian.net/browse/PG-1551) – Improved handling of short reads and errors in WAL storage code.
+* [PG-1571](https://perconadev.atlassian.net/browse/PG-1571) – Fixed WAL decryption failure due to corrupted or mismatched principal keys.
+* [PG-1573](https://perconadev.atlassian.net/browse/PG-1573) – Prevented crash during WAL replay when lock was not held.
+* [PG-1574](https://perconadev.atlassian.net/browse/PG-1574) – Ensured encrypted WAL is readable by streaming replica.
+* [PG-1576](https://perconadev.atlassian.net/browse/PG-1576) – Resolved crash from malformed JSON in user-facing functions.

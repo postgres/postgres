@@ -4,7 +4,12 @@ The `pg_tde` extension provides functions for managing different aspects of its 
 
 ## Permission management
 
-By default, `pg_tde` is restrictive. It doesn't allow any operations until permissions are granted to the user. Only superusers can create or modify to key providers or modify objects in the global scope. Functions for viewing keys and for setting the principal key in a database local key provider can on the other hand be run by the database owner and be delegated to normal users using the `GRANT EXECUTE` and `REVOKE EXECUTE` commands.
+By default, `pg_tde` is locked down. No one is allowed to do any operations until you grant them permissions. Only superusers may add or alter global key providers.
+
+However, database owners can run the “view keys” and “set principal key” functions on their own databases. You can delegate these rights to other roles with the following commands:
+
+* `GRANT EXECUTE`
+* `REVOKE EXECUTE`
 
 The following functions are also provided for easier management of functionality groups:
 
