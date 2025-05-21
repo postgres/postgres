@@ -62,7 +62,6 @@ static GenericKeyring *load_keyring_provider_options(ProviderType provider_type,
 static KmipKeyring *load_kmip_keyring_provider_options(char *keyring_options);
 static VaultV2Keyring *load_vaultV2_keyring_provider_options(char *keyring_options);
 static int	open_keyring_infofile(Oid dbOid, int flags);
-static void write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog);
 
 #ifdef FRONTEND
 
@@ -432,7 +431,7 @@ GetKeyProviderByID(int provider_id, Oid dbOid)
 
 #endif							/* !FRONTEND */
 
-static void
+void
 write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 {
 	off_t		bytes_written;
@@ -516,7 +515,7 @@ check_provider_record(KeyringProviderRecord *provider_record)
 }
 
 /* Returns true if the record is found, false otherwise. */
-static bool
+bool
 get_keyring_info_file_record_by_name(char *provider_name, Oid database_id,
 									 KeyringProviderRecordInFile *record)
 {

@@ -34,7 +34,7 @@ help(void)
 	puts("");
 	puts("WARNING:");
 	puts("");
-	puts("This tool only changes the values, without properly XLogging the changes, or adjusting the configuration in the running postgres processes. Only use it in case the database is inaccessible and can't be started.\n");
+	puts("This tool only changes the values, without properly XLogging the changes, or validating that keys can be fetched using them. Only use it in case the database is inaccessible and can't be started.\n");
 }
 
 #define BUFFER_SIZE 1024
@@ -115,8 +115,7 @@ main(int argc, char *argv[])
 	char		tdedir[MAXPGPATH] = {0,};
 	char	   *cptr = tdedir;
 	bool		provider_found = false;
-	GenericKeyring *keyring = NULL;
-	KeyringProviderRecord provider;
+	KeyringProviderRecordInFile record;
 
 	Oid			db_oid;
 
@@ -254,20 +253,17 @@ main(int argc, char *argv[])
 	cptr = strcat(cptr, PG_TDE_DATA_DIR);
 	pg_tde_set_data_dir(tdedir);
 
-	/* reports error if not found */
-	keyring = GetKeyProviderByName(provider_name, db_oid);
-
-	if (keyring == NULL)
+	if (get_keyring_info_file_record_by_name(provider_name, db_oid, &record) == false)
 	{
 		printf("Error: provider not found\n.");
 		exit(1);
 	}
 
-	strncpy(provider.options, json, sizeof(provider.options));
-	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
-	provider.provider_id = keyring->keyring_id;
-	provider.provider_type = get_keyring_provider_from_typename(new_provider_type);
-	modify_key_provider_info(&provider, db_oid, false);
+	record.provider.provider_type = get_keyring_provider_from_typename(new_provider_type);
+	memset(record.provider.options, 0, sizeof(record.provider.options));
+	strncpy(record.provider.options, json, sizeof(record.provider.options));
+
+	write_key_provider_info(&record, false);
 
 	printf("Key provider updated successfully!\n");
 

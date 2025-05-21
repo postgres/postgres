@@ -41,6 +41,11 @@ extern void modify_key_provider_info(KeyringProviderRecord *provider,
 									 Oid databaseId, bool write_xlog);
 extern void delete_key_provider_info(char *provider_name,
 									 Oid databaseId, bool write_xlog);
+extern bool get_keyring_info_file_record_by_name(char *provider_name,
+												 Oid database_id,
+												 KeyringProviderRecordInFile *record);
+extern void write_key_provider_info(KeyringProviderRecordInFile *record,
+									bool write_xlog);
 extern void redo_key_provider_info(KeyringProviderRecordInFile *xlrec);
 
 extern void ParseKeyringJSONOptions(ProviderType provider_type,
