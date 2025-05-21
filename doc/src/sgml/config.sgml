@@ -1155,6 +1155,22 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-md5-password-warnings" xreflabel="md5_password_warnings">
+      <term><varname>md5_password_warnings</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>md5_password_warnings</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls whether a <literal>WARNING</literal> about MD5 password
+        deprecation is produced when a <command>CREATE ROLE</command> or
+        <command>ALTER ROLE</command> statement sets an MD5-encrypted password.
+        The default value is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)
       <indexterm>
@@ -8114,22 +8130,6 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         See <xref linkend="datatype-timezones"/> for more information.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-md5-password-warnings" xreflabel="md5_password_warnings">
-      <term><varname>md5_password_warnings</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>md5_password_warnings</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Controls whether a <literal>WARNING</literal> about MD5 password
-        deprecation is produced when a <command>CREATE ROLE</command> or
-        <command>ALTER ROLE</command> statement sets an MD5-encrypted password.
-        The default value is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
