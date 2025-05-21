@@ -252,6 +252,8 @@ ParsePrepareRecord(uint8 info, xl_xact_prepare *xlrec, xl_xact_parsed_prepare *p
 	parsed->nsubxacts = xlrec->nsubxacts;
 	parsed->nrels = xlrec->ncommitrels;
 	parsed->nabortrels = xlrec->nabortrels;
+	parsed->nstats = xlrec->ncommitstats;
+	parsed->nabortstats = xlrec->nabortstats;
 	parsed->nmsgs = xlrec->ninvalmsgs;
 
 	strncpy(parsed->twophase_gid, bufptr, xlrec->gidlen);
