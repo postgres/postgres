@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if (!build_json(json, 2, "type", "file", "path", argv[4 + argstart]))
+		if (!build_json(json, 1, "path", argv[4 + argstart]))
 		{
 			exit(1);
 		}
@@ -193,7 +193,11 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if (!build_json(json, 5, "type", "vault-v2", "url", argv[4 + argstart], "token", argv[5 + argstart], "mountPath", argv[6 + argstart], "caPath", (argc - argstart > 7 ? argv[7 + argstart] : "")))
+		if (!build_json(json, 4,
+						"url", argv[4 + argstart],
+						"token", argv[5 + argstart],
+						"mountPath", argv[6 + argstart],
+						"caPath", (argc - argstart > 7 ? argv[7 + argstart] : "")))
 		{
 			exit(1);
 		}
@@ -211,7 +215,12 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if (!build_json(json, 6, "type", "kmip", "host", argv[4 + argstart], "port", argv[5 + argstart], "caPath", (argc - argstart > 8 ? argv[8 + argstart] : ""), "certPath", argv[6 + argstart], "keyPath", argv[7 + argstart]))
+		if (!build_json(json, 5,
+						"host", argv[4 + argstart],
+						"port", argv[5 + argstart],
+						"caPath", (argc - argstart > 8 ? argv[8 + argstart] : ""),
+						"certPath", argv[6 + argstart],
+						"keyPath", argv[7 + argstart]))
 		{
 			exit(1);
 		}
@@ -254,6 +263,7 @@ main(int argc, char *argv[])
 
 	strncpy(provider.options, json, sizeof(provider.options));
 	strncpy(provider.provider_name, provider_name, sizeof(provider.provider_name));
+	provider.provider_id = keyring->keyring_id;
 	provider.provider_type = get_keyring_provider_from_typename(new_provider_type);
 	modify_key_provider_info(&provider, db_oid, false);
 
