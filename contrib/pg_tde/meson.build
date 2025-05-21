@@ -118,6 +118,7 @@ tap_tests = [
   't/013_crash_recovery.pl',
   't/014_pg_waldump_basic.pl',
   't/015_pg_waldump_fullpage.pl',
+  't/016_pg_tde_change_key_provider.pl',
 ]
 
 tests += {
