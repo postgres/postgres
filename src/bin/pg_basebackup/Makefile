@@ -44,6 +44,17 @@ BBOBJS = \
 	bbstreamer_tar.o \
 	bbstreamer_zstd.o
 
+ifeq ($(enable_percona_ext),yes)
+
+OBJS += \
+	xlogreader.o \
+	$(top_srcdir)/src/fe_utils/simple_list.o \
+	$(top_builddir)/src/libtde/libtdexlog.a \
+	$(top_builddir)/src/libtde/libtde.a
+
+override CPPFLAGS := -I$(top_srcdir)/contrib/pg_tde/src/include -I$(top_srcdir)/contrib/pg_tde/src/libkmip/libkmip/include -DFRONTEND $(CPPFLAGS)
+endif
+
 all: pg_basebackup pg_createsubscriber pg_receivewal pg_recvlogical
 
 pg_basebackup: $(BBOBJS) $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
@@ -57,6 +68,9 @@ pg_receivewal: pg_receivewal.o $(OBJS) | submake-libpq submake-libpgport submake
 
 pg_recvlogical: pg_recvlogical.o $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) pg_recvlogical.o $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
+	rm -f $@ && $(LN_S) $< .
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_basebackup$(X) '$(DESTDIR)$(bindir)/pg_basebackup$(X)'
@@ -76,7 +90,7 @@ uninstall:
 clean distclean:
 	rm -f pg_basebackup$(X) pg_createsubscriber$(X) pg_receivewal$(X) pg_recvlogical$(X) \
 		$(BBOBJS) pg_createsubscriber.o pg_receivewal.o pg_recvlogical.o \
-		$(OBJS)
+		$(OBJS) xlogreader.c
 	rm -rf tmp_check
 
 check:

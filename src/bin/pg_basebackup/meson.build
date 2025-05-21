@@ -12,10 +12,15 @@ common_sources = files(
   'walmethods.c',
 )
 
+common_sources += xlogreader_sources
+
 pg_basebackup_deps = [frontend_code, libpq, lz4, zlib, zstd]
 pg_basebackup_common = static_library('libpg_basebackup_common',
   common_sources,
+  c_args: ['-DFRONTEND'], # needed for xlogreader et al
+  link_with: pg_tde_frontend,
   dependencies: pg_basebackup_deps,
+  include_directories: pg_tde_inc,
   kwargs: internal_lib_args,
 )
 
@@ -34,6 +39,7 @@ pg_basebackup = executable('pg_basebackup',
   link_with: [pg_basebackup_common],
   dependencies: pg_basebackup_deps,
   kwargs: default_bin_args,
+  include_directories: pg_tde_inc,
 )
 bin_targets += pg_basebackup
 
@@ -71,6 +77,7 @@ pg_receivewal = executable('pg_receivewal',
   link_with: [pg_basebackup_common],
   dependencies: pg_basebackup_deps,
   kwargs: default_bin_args,
+  include_directories: pg_tde_inc,
 )
 bin_targets += pg_receivewal
 

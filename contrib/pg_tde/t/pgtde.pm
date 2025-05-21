@@ -109,4 +109,17 @@ sub compare_results
 	return compare($expected_filename_with_path, $out_filename_with_path);
 }
 
+sub backup
+{
+	my ($node, $backup_name, %params) = @_;
+	my $backup_dir = $node->backup_dir . '/' . $backup_name;
+
+	mkdir $backup_dir or die "mkdir($backup_dir) failed: $!";
+
+	PostgreSQL::Test::RecursiveCopy::copypath($node->data_dir . '/pg_tde',
+		$backup_dir . '/pg_tde');
+
+	$node->backup($backup_name, %params);
+}
+
 1;

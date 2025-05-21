@@ -25,6 +25,12 @@
 #include "receivelog.h"
 #include "streamutil.h"
 
+#ifdef PERCONA_EXT
+#include "access/pg_tde_fe_init.h"
+#include "access/pg_tde_xlog_smgr.h"
+#include "catalog/tde_global_space.h"
+#endif
+
 /* currently open WAL file */
 static Walfile *walfile = NULL;
 static bool reportFlushPosition = false;
@@ -1044,6 +1050,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 	int			bytes_left;
 	int			bytes_written;
 	int			hdr_len;
+	XLogSegNo 	segno;
 
 	/*
 	 * Once we've decided we don't want to receive any more, just ignore any
@@ -1070,6 +1077,8 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 
 	/* Extract WAL location for this block */
 	xlogoff = XLogSegmentOffset(*blockpos, WalSegSz);
+
+	XLByteToSeg(*blockpos, segno, WalSegSz);
 
 	/*
 	 * Verify that the initial location in the stream matches where we think
@@ -1120,6 +1129,11 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 				return false;
 			}
 		}
+
+#ifdef PERCONA_EXT
+		TDEXLogCryptBuffer(copybuf + hdr_len + bytes_written, bytes_to_write,
+						   xlogoff, stream->timeline, segno, WalSegSz);
+#endif
 
 		if (stream->walmethod->ops->write(walfile,
 										  copybuf + hdr_len + bytes_written,

@@ -18,6 +18,10 @@
 #include "common/logging.h"
 #include "common/string.h"
 
+#ifdef PERCONA_EXT
+#include "pg_tde.h"
+#endif
+
 typedef struct bbstreamer_plain_writer
 {
 	bbstreamer	base;
@@ -297,7 +301,8 @@ should_allow_existing_directory(const char *pathname)
 		strcmp(filename, "pg_xlog") == 0 ||
 		strcmp(filename, "archive_status") == 0 ||
 		strcmp(filename, "summaries") == 0 ||
-		strcmp(filename, "pg_tblspc") == 0)
+		strcmp(filename, "pg_tblspc") == 0 ||
+		strcmp(filename, PG_TDE_DATA_DIR) == 0) 
 		return true;
 
 	if (strspn(filename, "0123456789") == strlen(filename))
