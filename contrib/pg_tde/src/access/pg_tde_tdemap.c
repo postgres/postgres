@@ -128,7 +128,6 @@ static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalK
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
-static void update_wal_keys_cache(void);
 
 InternalKey *
 pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
@@ -1144,24 +1143,6 @@ pg_tde_get_wal_cache_keys(void)
 	return tde_wal_key_cache;
 }
 
-static void
-update_wal_keys_cache(void)
-{
-	WALKeyCacheRec *wal_rec = tde_wal_key_cache;
-	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-
-	for (int i = 0; i < tde_rel_key_cache.len && wal_rec; i++)
-	{
-		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
-
-		if (RelFileLocatorEquals(rec->locator, rlocator))
-		{
-			wal_rec->key = &rec->key;
-			wal_rec = wal_rec->next;
-		}
-	}
-}
-
 InternalKey *
 pg_tde_read_last_wal_key(void)
 {
@@ -1240,14 +1221,12 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 	 */
 	if (keys_count == 0)
 	{
-		InternalKey *cached_key;
 		WALKeyCacheRec *wal_rec;
 		InternalKey stub_key = {
 			.start_lsn = InvalidXLogRecPtr,
 		};
 
-		cached_key = pg_tde_put_key_into_cache(&rlocator, &stub_key);
-		wal_rec = pg_tde_add_wal_key_to_cache(cached_key, InvalidXLogRecPtr);
+		wal_rec = pg_tde_add_wal_key_to_cache(&stub_key, InvalidXLogRecPtr);
 
 		LWLockRelease(lock_pk);
 		close(fd);
@@ -1268,12 +1247,12 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 			map_entry.enc_key.start_lsn >= start_lsn)
 		{
 			InternalKey *rel_key_data = tde_decrypt_rel_key(principal_key, &map_entry);
-			InternalKey *cached_key = pg_tde_put_key_into_cache(&rlocator, rel_key_data);
 			WALKeyCacheRec *wal_rec;
+
+			wal_rec = pg_tde_add_wal_key_to_cache(rel_key_data, map_entry.enc_key.start_lsn);
 
 			pfree(rel_key_data);
 
-			wal_rec = pg_tde_add_wal_key_to_cache(cached_key, map_entry.enc_key.start_lsn);
 			if (!return_wal_rec)
 				return_wal_rec = wal_rec;
 		}
@@ -1285,7 +1264,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 }
 
 static WALKeyCacheRec *
-pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
+pg_tde_add_wal_key_to_cache(InternalKey *key, XLogRecPtr start_lsn)
 {
 	WALKeyCacheRec *wal_rec;
 #ifndef FRONTEND
@@ -1300,7 +1279,7 @@ pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn)
 
 	wal_rec->start_lsn = start_lsn;
 	wal_rec->end_lsn = MaxXLogRecPtr;
-	wal_rec->key = cached_key;
+	wal_rec->key = *key;
 	wal_rec->crypt_ctx = NULL;
 	if (!tde_wal_key_last_rec)
 	{
@@ -1397,9 +1376,6 @@ pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)
 			elog(WARNING, "could not mlock internal key cache pages: %m");
 
 		tde_rel_key_cache.cap = (size - 1) / sizeof(RelKeyCacheRec);
-
-		/* update wal key pointers after moving the cache */
-		update_wal_keys_cache();
 	}
 
 	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;

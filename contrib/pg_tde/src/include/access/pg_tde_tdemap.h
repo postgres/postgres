@@ -66,20 +66,15 @@ typedef struct XLogRelKey
 } XLogRelKey;
 
 /*
- * WALKeyCacheRec is built on top of the InternalKeys cache. We still don't
- * want to key data be swapped out to the disk (implemented in the InternalKeys
- * cache) but we need extra information and the ability to have and reference
- * a sequence of keys.
- *
  * TODO: For now it's a simple linked list which is no good. So consider having
- * 			dedicated WAL keys cache inside some proper data structure.
+ * 		 dedicated WAL keys cache inside some proper data structure.
  */
 typedef struct WALKeyCacheRec
 {
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn;
 
-	InternalKey *key;
+	InternalKey key;
 	void	   *crypt_ctx;
 
 	struct WALKeyCacheRec *next;

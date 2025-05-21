@@ -314,11 +314,11 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 		elog(DEBUG1, "WAL key %X/%X-%X/%X, encrypted: %s",
 			 LSN_FORMAT_ARGS(curr_key->start_lsn),
 			 LSN_FORMAT_ARGS(curr_key->end_lsn),
-			 curr_key->key->type & TDE_KEY_TYPE_WAL_ENCRYPTED ? "yes" : "no");
+			 curr_key->key.type & TDE_KEY_TYPE_WAL_ENCRYPTED ? "yes" : "no");
 #endif
 
-		if (curr_key->key->start_lsn != InvalidXLogRecPtr &&
-			(curr_key->key->type & TDE_KEY_TYPE_WAL_ENCRYPTED))
+		if (curr_key->key.start_lsn != InvalidXLogRecPtr &&
+			(curr_key->key.type & TDE_KEY_TYPE_WAL_ENCRYPTED))
 		{
 			/*
 			 * Check if the key's range overlaps with the buffer's and decypt
@@ -334,7 +334,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 
 				Assert(dec_off >= offset);
 
-				CalcXLogPageIVPrefix(tli, segno, curr_key->key->base_iv, iv_prefix);
+				CalcXLogPageIVPrefix(tli, segno, curr_key->key.base_iv, iv_prefix);
 
 				/* We have reached the end of the segment */
 				if (dec_end == 0)
@@ -349,7 +349,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 					 dec_off, dec_off - offset, dec_sz, LSN_FORMAT_ARGS(curr_key->key->start_lsn));
 #endif
 				pg_tde_stream_crypt(iv_prefix, dec_off, dec_buf, dec_sz, dec_buf,
-									curr_key->key, &curr_key->crypt_ctx);
+									&curr_key->key, &curr_key->crypt_ctx);
 
 				if (dec_off + dec_sz == offset)
 				{
