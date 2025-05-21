@@ -22,12 +22,12 @@ help(void)
 	puts("");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> <new_provider_type> <provider_parameters...>");
 	puts("");
-	puts("  Where <new_provider_type> can be file, vault or kmip");
+	puts("  Where <new_provider_type> can be file, vault-v2 or kmip");
 	puts("");
 	puts("Depending on the provider type, the complete parameter list is:");
 	puts("");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>");
-	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault-v2 <url> <token> <mount_path> [<ca_path>]");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> <key_path> [<ca_path>]");
 	puts("");
 	printf("Use dbOid %d for global key providers.\n", GLOBAL_DATA_TDE_OID);
