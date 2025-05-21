@@ -28,7 +28,7 @@ help(void)
 	puts("");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]");
-	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> [<ca_path>]");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> <key_path> [<ca_path>]");
 	puts("");
 	printf("Use dbOid %d for global key providers.\n", GLOBAL_DATA_TDE_OID);
 	puts("");
