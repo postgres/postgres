@@ -253,19 +253,13 @@ parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
  * statements.  However, we have the statement's location plus the length
  * (p_stmt_len) and location (p_stmt_location) of the top level RawStmt,
  * stored in pstate.  Thus, the statement's length is the RawStmt's length
- * minus how much we've advanced in the RawStmt's string.
+ * minus how much we've advanced in the RawStmt's string.  If p_stmt_len
+ * is 0, the SQL string is used up to its end.
  */
 static void
 setQueryLocationAndLength(ParseState *pstate, Query *qry, Node *parseTree)
 {
 	ParseLoc	stmt_len = 0;
-
-	/*
-	 * If there is no information about the top RawStmt's length, leave it at
-	 * 0 to use the whole string.
-	 */
-	if (pstate->p_stmt_len == 0)
-		return;
 
 	switch (nodeTag(parseTree))
 	{
@@ -308,11 +302,12 @@ setQueryLocationAndLength(ParseState *pstate, Query *qry, Node *parseTree)
 		/* Statement's length is known, use it */
 		qry->stmt_len = stmt_len;
 	}
-	else
+	else if (pstate->p_stmt_len > 0)
 	{
 		/*
-		 * Compute the statement's length from the statement's location and
-		 * the RawStmt's length and location.
+		 * The top RawStmt's length is known, so calculate the statement's
+		 * length from the statement's location and the RawStmt's length and
+		 * location.
 		 */
 		qry->stmt_len = pstate->p_stmt_len - (qry->stmt_location - pstate->p_stmt_location);
 	}

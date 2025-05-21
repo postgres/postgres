@@ -334,6 +334,32 @@ END; $$;
 SELECT toplevel, calls, query FROM pg_stat_statements
   ORDER BY query COLLATE "C", toplevel;
 
+-- DO block --- multiple inner queries with separators
+SET pg_stat_statements.track = 'all';
+SET pg_stat_statements.track_utility = TRUE;
+CREATE TABLE pgss_do_util_tab_1 (a int);
+CREATE TABLE pgss_do_util_tab_2 (a int);
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+DO $$
+DECLARE BEGIN
+  EXECUTE 'CREATE TABLE pgss_do_table (id INT); DROP TABLE pgss_do_table';
+  EXECUTE 'SELECT a FROM pgss_do_util_tab_1; SELECT a FROM pgss_do_util_tab_2';
+END $$;
+SELECT toplevel, calls, rows, query FROM pg_stat_statements
+  WHERE toplevel IS FALSE
+  ORDER BY query COLLATE "C";
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+-- Note the extra semicolon at the end of the query.
+DO $$
+DECLARE BEGIN
+  EXECUTE 'CREATE TABLE pgss_do_table (id INT); DROP TABLE pgss_do_table;';
+  EXECUTE 'SELECT a FROM pgss_do_util_tab_1; SELECT a FROM pgss_do_util_tab_2;';
+END $$;
+SELECT toplevel, calls, rows, query FROM pg_stat_statements
+  WHERE toplevel IS FALSE
+  ORDER BY query COLLATE "C";
+DROP TABLE pgss_do_util_tab_1, pgss_do_util_tab_2;
+
 -- PL/pgSQL function - top-level tracking.
 SET pg_stat_statements.track = 'top';
 SET pg_stat_statements.track_utility = FALSE;
