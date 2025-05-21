@@ -83,7 +83,7 @@ build_json(char *buffer, int count,...)
 		}
 		if (ptr - buffer > BUFFER_SIZE)
 		{
-			printf("Error: Configuration too long.\n");
+			fprintf(stderr, "Error: Configuration too long.\n");
 			return false;
 		}
 	}
@@ -93,7 +93,7 @@ build_json(char *buffer, int count,...)
 
 	if (ptr - buffer > BUFFER_SIZE)
 	{
-		printf("Error: Configuration too long.\n");
+		fprintf(stderr, "Error: Configuration too long.\n");
 		return false;
 	}
 
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 	{
 		help();
 		puts("\n");
-		printf("Error: Data directory missing.\n");
+		fprintf(stderr, "Error: Data directory missing.\n");
 		exit(1);
 	}
 
@@ -172,7 +172,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments.\n");
+			fprintf(stderr, "Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments.\n");
+			fprintf(stderr, "Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -212,7 +212,7 @@ main(int argc, char *argv[])
 		{
 			help();
 			puts("\n");
-			printf("Error: wrong number of arguments.\n");
+			fprintf(stderr, "Error: wrong number of arguments.\n");
 			exit(1);
 		}
 
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	{
 		help();
 		puts("\n");
-		printf("Error: Unknown provider type: %s\n.", new_provider_type);
+		fprintf(stderr, "Error: Unknown provider type: %s\n.", new_provider_type);
 		exit(1);
 	}
 
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 
 	if (get_keyring_info_file_record_by_name(provider_name, db_oid, &record) == false)
 	{
-		printf("Error: provider not found\n.");
+		fprintf(stderr, "Error: provider not found\n.");
 		exit(1);
 	}
 
