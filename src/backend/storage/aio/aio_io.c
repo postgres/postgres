@@ -181,9 +181,9 @@ pgaio_io_get_op_name(PgAioHandle *ioh)
 		case PGAIO_OP_INVALID:
 			return "invalid";
 		case PGAIO_OP_READV:
-			return "read";
+			return "readv";
 		case PGAIO_OP_WRITEV:
-			return "write";
+			return "writev";
 	}
 
 	return NULL;				/* silence compiler */
