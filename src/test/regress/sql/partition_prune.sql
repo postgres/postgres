@@ -1371,12 +1371,12 @@ create view part_abc_view as select * from part_abc where b <> 'a' with check op
 prepare update_part_abc_view as update part_abc_view set b = $2 where a = $1 returning *;
 -- Only the unpruned partition should be shown in the list of relations to be
 -- updated
-explain (costs off) execute update_part_abc_view (1, 'd');
+explain (verbose, costs off) execute update_part_abc_view (1, 'd');
 execute update_part_abc_view (1, 'd');
-explain (costs off) execute update_part_abc_view (2, 'a');
+explain (verbose, costs off) execute update_part_abc_view (2, 'a');
 execute update_part_abc_view (2, 'a');
 -- All pruned.
-explain (costs off) execute update_part_abc_view (3, 'a');
+explain (verbose, costs off) execute update_part_abc_view (3, 'a');
 execute update_part_abc_view (3, 'a');
 deallocate update_part_abc_view;
 

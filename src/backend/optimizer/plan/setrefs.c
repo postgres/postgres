@@ -1097,9 +1097,10 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 					/*
 					 * Set up the visible plan targetlist as being the same as
-					 * the first RETURNING list. This is for the use of
-					 * EXPLAIN; the executor won't pay any attention to the
-					 * targetlist.  We postpone this step until here so that
+					 * the first RETURNING list.  This is mostly for the use
+					 * of EXPLAIN; the executor won't execute that targetlist,
+					 * although it does use it to prepare the node's result
+					 * tuple slot.  We postpone this step until here so that
 					 * we don't have to do set_returning_clause_references()
 					 * twice on identical targetlists.
 					 */

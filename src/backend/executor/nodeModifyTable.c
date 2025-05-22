@@ -4830,12 +4830,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		ExprContext *econtext;
 
 		/*
-		 * Initialize result tuple slot and assign its rowtype using the first
-		 * RETURNING list.  We assume the rest will look the same.
+		 * Initialize result tuple slot and assign its rowtype using the plan
+		 * node's declared targetlist, which the planner set up to be the same
+		 * as the first (before runtime pruning) RETURNING list.  We assume
+		 * all the result rels will produce compatible output.
 		 */
-		mtstate->ps.plan->targetlist = (List *) linitial(returningLists);
-
-		/* Set up a slot for the output of the RETURNING projection(s) */
 		ExecInitResultTupleSlotTL(&mtstate->ps, &TTSOpsVirtual);
 		slot = mtstate->ps.ps_ResultTupleSlot;
 
@@ -4865,7 +4864,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * We still must construct a dummy result tuple type, because InitPlan
 		 * expects one (maybe should change that?).
 		 */
-		mtstate->ps.plan->targetlist = NIL;
 		ExecInitResultTypeTL(&mtstate->ps);
 
 		mtstate->ps.ps_ExprContext = NULL;

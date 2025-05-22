@@ -1220,6 +1220,10 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			if (((ModifyTable *) plan)->exclRelRTI)
 				*rels_used = bms_add_member(*rels_used,
 											((ModifyTable *) plan)->exclRelRTI);
+			/* Ensure Vars used in RETURNING will have refnames */
+			if (plan->targetlist)
+				*rels_used = bms_add_member(*rels_used,
+											linitial_int(((ModifyTable *) plan)->resultRelations));
 			break;
 		case T_Append:
 			*rels_used = bms_add_members(*rels_used,

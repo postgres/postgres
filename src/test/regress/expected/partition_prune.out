@@ -4553,16 +4553,18 @@ create view part_abc_view as select * from part_abc where b <> 'a' with check op
 prepare update_part_abc_view as update part_abc_view set b = $2 where a = $1 returning *;
 -- Only the unpruned partition should be shown in the list of relations to be
 -- updated
-explain (costs off) execute update_part_abc_view (1, 'd');
-                      QUERY PLAN                       
--------------------------------------------------------
- Update on part_abc
-   Update on part_abc_1
+explain (verbose, costs off) execute update_part_abc_view (1, 'd');
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Update on public.part_abc
+   Output: part_abc_1.a, part_abc_1.b, part_abc_1.c
+   Update on public.part_abc_1
    ->  Append
          Subplans Removed: 1
-         ->  Seq Scan on part_abc_1
-               Filter: ((b <> 'a'::text) AND (a = $1))
-(6 rows)
+         ->  Seq Scan on public.part_abc_1
+               Output: $2, part_abc_1.tableoid, part_abc_1.ctid
+               Filter: ((part_abc_1.b <> 'a'::text) AND (part_abc_1.a = $1))
+(8 rows)
 
 execute update_part_abc_view (1, 'd');
  a | b | c 
@@ -4570,28 +4572,31 @@ execute update_part_abc_view (1, 'd');
  1 | d | t
 (1 row)
 
-explain (costs off) execute update_part_abc_view (2, 'a');
-                      QUERY PLAN                       
--------------------------------------------------------
- Update on part_abc
-   Update on part_abc_2 part_abc_1
+explain (verbose, costs off) execute update_part_abc_view (2, 'a');
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Update on public.part_abc
+   Output: part_abc_1.a, part_abc_1.b, part_abc_1.c
+   Update on public.part_abc_2
    ->  Append
          Subplans Removed: 1
-         ->  Seq Scan on part_abc_2 part_abc_1
-               Filter: ((b <> 'a'::text) AND (a = $1))
-(6 rows)
+         ->  Seq Scan on public.part_abc_2
+               Output: $2, part_abc_2.tableoid, part_abc_2.ctid
+               Filter: ((part_abc_2.b <> 'a'::text) AND (part_abc_2.a = $1))
+(8 rows)
 
 execute update_part_abc_view (2, 'a');
 ERROR:  new row violates check option for view "part_abc_view"
 DETAIL:  Failing row contains (2, a, t).
 -- All pruned.
-explain (costs off) execute update_part_abc_view (3, 'a');
-         QUERY PLAN          
------------------------------
- Update on part_abc
+explain (verbose, costs off) execute update_part_abc_view (3, 'a');
+                     QUERY PLAN                     
+----------------------------------------------------
+ Update on public.part_abc
+   Output: part_abc_1.a, part_abc_1.b, part_abc_1.c
    ->  Append
          Subplans Removed: 2
-(3 rows)
+(4 rows)
 
 execute update_part_abc_view (3, 'a');
  a | b | c 
