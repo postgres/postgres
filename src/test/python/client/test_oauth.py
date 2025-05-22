@@ -199,11 +199,15 @@ class OpenIDProvider(threading.Thread):
 
         self.exception = None
 
-        _, port = ssl_socket.getsockname()
-
+        port = ssl_socket.getsockname()[1]
         oauth = self._OAuthState()
-        oauth.host = f"localhost:{port}"
-        oauth.issuer = f"https://localhost:{port}"
+
+        if socket.has_dualstack_ipv6():
+            oauth.host = f"localhost:{port}"
+            oauth.issuer = f"https://localhost:{port}"
+        else:
+            oauth.host = f"127.0.0.1:{port}"
+            oauth.issuer = f"https://127.0.0.1:{port}"
 
         # The following endpoints are required to be advertised by providers,
         # even though our chosen client implementation does not actually make
@@ -447,7 +451,14 @@ def ssl_socket(certpair):
     A listening server-side socket for SSL connections, using the certpair
     fixture.
     """
-    sock = socket.create_server(("", 0))
+    # Try to listen on both IPv4 and v6, if possible, for extra coverage of Curl
+    # corner cases compared to the standard test suite. Otherwise just use IPv4.
+    if socket.has_dualstack_ipv6():
+        sock = socket.create_server(
+            ("", 0), family=socket.AF_INET6, dualstack_ipv6=True
+        )
+    else:
+        sock = socket.create_server(("", 0))
 
     # The TLS connections we're making are incredibly sensitive to delayed ACKs
     # from the client. (Without TCP_NODELAY, test performance degrades 4-5x.)
