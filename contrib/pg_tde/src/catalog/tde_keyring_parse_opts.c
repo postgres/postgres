@@ -135,7 +135,7 @@ static JsonParseErrorType json_kring_object_field_start(void *state, char *fname
 static JsonParseErrorType json_kring_object_start(void *state);
 static JsonParseErrorType json_kring_object_end(void *state);
 
-static JsonParseErrorType json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value);
+static void json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value);
 static char *get_remote_kring_value(const char *url, const char *field_name);
 static char *get_file_kring_value(const char *path, const char *field_name);
 
@@ -273,7 +273,6 @@ json_kring_object_end(void *state)
 			break;
 		case JK_EXPECT_EXTERN_VAL:
 			{
-				JsonParseErrorType ret;
 				char	   *value = NULL;
 
 				if (!parse->field_type)
@@ -312,13 +311,7 @@ json_kring_object_end(void *state)
 					return JSON_INCOMPLETE;
 				}
 
-				ret = json_kring_assign_scalar(parse, parse->top_level_field, value);
-
-				if (ret != JSON_SUCCESS)
-				{
-					return ret;
-				}
-
+				json_kring_assign_scalar(parse, parse->top_level_field, value);
 				parse->state = JK_EXPECT_TOP_FIELD;
 				break;
 			}
@@ -465,10 +458,12 @@ json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 			break;
 	}
 
-	return json_kring_assign_scalar(parse, *field, value);
+	json_kring_assign_scalar(parse, *field, value);
+
+	return JSON_SUCCESS;
 }
 
-static JsonParseErrorType
+static void
 json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *value)
 {
 	VaultV2Keyring *vault = (VaultV2Keyring *) parse->provider_opts;
@@ -523,8 +518,6 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 		default:
 			elog(ERROR, "json keyring: unexpected scalar field %d", field);
 	}
-
-	return JSON_SUCCESS;
 }
 
 static char *
