@@ -344,7 +344,9 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						parse->top_level_field = JK_FIELD_UNKNOWN;
-						elog(ERROR, "parse file keyring config: unexpected field %s", fname);
+						ereport(ERROR,
+								errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("unexpected field \"%s\" for file provider", fname));
 					}
 					break;
 
@@ -360,7 +362,9 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						parse->top_level_field = JK_FIELD_UNKNOWN;
-						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+						ereport(ERROR,
+								errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("unexpected field \"%s\" for vault-v2 provider", fname));
 					}
 					break;
 
@@ -378,7 +382,9 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					else
 					{
 						parse->top_level_field = JK_FIELD_UNKNOWN;
-						elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+						ereport(ERROR,
+								errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("unexpected field \"%s\" for vault-v2 provider", fname));
 					}
 					break;
 
@@ -397,7 +403,9 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 			else
 			{
 				parse->extern_field = JK_FIELD_UNKNOWN;
-				elog(ERROR, "parse json keyring config: unexpected field %s", fname);
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("unexpected field \"%s\" for external value \"%s\"", fname, JK_FIELD_NAMES[parse->top_level_field]));
 			}
 			break;
 	}
@@ -529,15 +537,15 @@ get_remote_kring_value(const char *url, const char *field_name)
 
 	if (!curlSetupSession(url, NULL, &outStr))
 	{
-		elog(ERROR, "CURL error for remote object %s", field_name);
+		elog(ERROR, "CURL error for remote object \"%s\"", field_name);
 	}
 	if (curl_easy_perform(keyringCurl) != CURLE_OK)
 	{
-		elog(ERROR, "HTTP request error for remote object %s", field_name);
+		elog(ERROR, "HTTP request error for remote object \"%s\"", field_name);
 	}
 	if (curl_easy_getinfo(keyringCurl, CURLINFO_RESPONSE_CODE, &httpCode) != CURLE_OK)
 	{
-		elog(ERROR, "HTTP error for remote object %s, HTTP code %li", field_name, httpCode);
+		elog(ERROR, "HTTP error for remote object \"%s\", HTTP code \"%li\"", field_name, httpCode);
 	}
 
 	/* remove trailing whitespace */
@@ -555,14 +563,14 @@ get_file_kring_value(const char *path, const char *field_name)
 	fd = BasicOpenFile(path, O_RDONLY);
 	if (fd < 0)
 	{
-		elog(ERROR, "failed to open file %s for %s", path, field_name);
+		elog(ERROR, "failed to open file \"%s\" for \"%s\"", path, field_name);
 	}
 
 	val = palloc0(MAX_CONFIG_FILE_DATA_LENGTH);
 	if (pg_pread(fd, val, MAX_CONFIG_FILE_DATA_LENGTH, 0) == -1)
 	{
 		close(fd);
-		elog(ERROR, "failed to read file %s for %s", path, field_name);
+		elog(ERROR, "failed to read file \"%s\" for \"%s\"", path, field_name);
 	}
 	/* remove trailing whitespace */
 	val[strcspn(val, " \t\n\r")] = '\0';
