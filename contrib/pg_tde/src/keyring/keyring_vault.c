@@ -251,11 +251,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 		goto cleanup;
 	}
 
-#if PG_VERSION_NUM < 170000
-	jlex = makeJsonLexContextCstringLen(str.ptr, str.len, PG_UTF8, true);
-#else
 	jlex = makeJsonLexContextCstringLen(NULL, str.ptr, str.len, PG_UTF8, true);
-#endif
 	json_error = parse_json_response(&parse, jlex);
 
 	if (json_error != JSON_SUCCESS)
@@ -292,10 +288,10 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 cleanup:
 	if (str.ptr != NULL)
 		pfree(str.ptr);
-#if PG_VERSION_NUM >= 170000
+
 	if (jlex != NULL)
 		freeJsonLexContext(jlex);
-#endif
+
 	return key;
 }
 

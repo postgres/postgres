@@ -155,12 +155,7 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 	parse.provider_type = provider_type;
 	parse.provider_opts = out_opts;
 	parse.state = JK_EXPECT_TOP_LEVEL_OBJECT;
-
-#if PG_VERSION_NUM >= 170000
 	jlex = makeJsonLexContextCstringLen(NULL, in_buf, buf_len, PG_UTF8, true);
-#else
-	jlex = makeJsonLexContextCstringLen(in_buf, buf_len, PG_UTF8, true);
-#endif
 
 	/*
 	 * Set up semantic actions. The function below will be called when the
@@ -185,9 +180,8 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 				errmsg("parsing of keyring options failed: %s",
 					   json_errdetail(jerr, jlex)));
 	}
-#if PG_VERSION_NUM >= 170000
+
 	freeJsonLexContext(jlex);
-#endif
 }
 
 /*

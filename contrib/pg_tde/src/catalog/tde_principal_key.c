@@ -76,9 +76,7 @@ static dshash_parameters principal_key_dsh_params = {
 	.entry_size = sizeof(TDEPrincipalKey),
 	.compare_function = dshash_memcmp,
 	.hash_function = dshash_memhash,
-#if PG_VERSION_NUM >= 170000
 	.copy_function = dshash_memcpy,
-#endif
 };
 
 static TdePrincipalKeylocalState principalKeyLocalState;
