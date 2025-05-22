@@ -38,4 +38,16 @@ UPDATE albums SET released='2020-04-01' WHERE id=2;
 SELECT * FROM albums;
 
 DROP TABLE albums;
+
+CREATE TEMPORARY TABLE animals (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    type TEXT UNIQUE,
+    num INT
+) USING tde_heap;
+
+INSERT INTO animals (type, num) VALUES ('cows', 3), ('pigs', 11);
+SELECT * FROM animals ORDER BY id;
+
+DROP TABLE animals;
+
 DROP EXTENSION pg_tde;

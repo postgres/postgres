@@ -91,4 +91,18 @@ SELECT * FROM albums;
 (12 rows)
 
 DROP TABLE albums;
+CREATE TEMPORARY TABLE animals (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    type TEXT UNIQUE,
+    num INT
+) USING tde_heap;
+INSERT INTO animals (type, num) VALUES ('cows', 3), ('pigs', 11);
+SELECT * FROM animals ORDER BY id;
+ id | type | num 
+----+------+-----
+  1 | cows |   3
+  2 | pigs |  11
+(2 rows)
+
+DROP TABLE animals;
 DROP EXTENSION pg_tde;
