@@ -331,7 +331,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	glob->finalrteperminfos = NIL;
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
-	glob->firstResultRels = NIL;
 	glob->appendRelations = NIL;
 	glob->partPruneInfos = NIL;
 	glob->relationOids = NIL;
@@ -571,7 +570,6 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 											  glob->prunableRelids);
 	result->permInfos = glob->finalrteperminfos;
 	result->resultRelations = glob->resultRelations;
-	result->firstResultRels = glob->firstResultRels;
 	result->appendRelations = glob->appendRelations;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;

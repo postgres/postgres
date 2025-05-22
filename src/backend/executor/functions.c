@@ -34,6 +34,7 @@
 #include "utils/funccache.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/plancache.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
@@ -1338,7 +1339,6 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		dest = None_Receiver;
 
 	es->qd = CreateQueryDesc(es->stmt,
-							 NULL,
 							 fcache->func->src,
 							 GetActiveSnapshot(),
 							 InvalidSnapshot,
@@ -1363,8 +1363,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 			eflags = EXEC_FLAG_SKIP_TRIGGERS;
 		else
 			eflags = 0;			/* default run-to-completion flags */
-		if (!ExecutorStart(es->qd, eflags))
-			elog(ERROR, "ExecutorStart() failed unexpectedly");
+		ExecutorStart(es->qd, eflags);
 	}
 
 	es->status = F_EXEC_RUN;

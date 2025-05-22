@@ -835,7 +835,7 @@ BeginCopyTo(ParseState *pstate,
 		((DR_copy *) dest)->cstate = cstate;
 
 		/* Create a QueryDesc requesting no output */
-		cstate->queryDesc = CreateQueryDesc(plan, NULL, pstate->p_sourcetext,
+		cstate->queryDesc = CreateQueryDesc(plan, pstate->p_sourcetext,
 											GetActiveSnapshot(),
 											InvalidSnapshot,
 											dest, NULL, NULL, 0);
@@ -845,8 +845,7 @@ BeginCopyTo(ParseState *pstate,
 		 *
 		 * ExecutorStart computes a result tupdesc for us
 		 */
-		if (!ExecutorStart(cstate->queryDesc, 0))
-			elog(ERROR, "ExecutorStart() failed unexpectedly");
+		ExecutorStart(cstate->queryDesc, 0);
 
 		tupDesc = cstate->queryDesc->tupDesc;
 	}

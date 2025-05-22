@@ -105,13 +105,6 @@ typedef struct PlannedStmt
 	/* integer list of RT indexes, or NIL */
 	List	   *resultRelations;
 
-	/*
-	 * rtable indexes of first target relation in each ModifyTable node in the
-	 * plan for INSERT/UPDATE/DELETE/MERGE
-	 */
-	/* integer list of RT indexes, or NIL */
-	List	   *firstResultRels;
-
 	/* list of AppendRelInfo nodes */
 	List	   *appendRelations;
 

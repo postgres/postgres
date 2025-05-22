@@ -589,27 +589,6 @@ Improve the locking performance of queries that access many relations (Tomas Von
 </listitem>
 
 <!--
-Author: Amit Langote <amitlan@postgresql.org>
-2025-01-30 [bb3ec16e1] Move PartitionPruneInfo out of plan nodes into PlannedSt
-Author: Amit Langote <amitlan@postgresql.org>
-2025-01-31 [d47cbf474] Perform runtime initial pruning outside ExecInitNode()
-Author: Amit Langote <amitlan@postgresql.org>
-2025-02-07 [cbc127917] Track unpruned relids to avoid processing pruned relatio
-Author: Amit Langote <amitlan@postgresql.org>
-2025-02-20 [525392d57] Don't lock partitions pruned by initial pruning
--->
-
-<listitem>
-<para>
-Avoid the locking of pruned partitions during execution (Amit Langote)
-<ulink url="&commit_baseurl;bb3ec16e1">&sect;</ulink>
-<ulink url="&commit_baseurl;d47cbf474">&sect;</ulink>
-<ulink url="&commit_baseurl;cbc127917">&sect;</ulink>
-<ulink url="&commit_baseurl;525392d57">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: David Rowley <drowley@postgresql.org>
 2024-08-20 [adf97c156] Speed up Hash Join by making ExprStates support hashing
 Author: David Rowley <drowley@postgresql.org>

@@ -1226,7 +1226,6 @@ exec_simple_query(const char *query_string)
 						  query_string,
 						  commandTag,
 						  plantree_list,
-						  NULL,
 						  NULL);
 
 		/*
@@ -2028,8 +2027,7 @@ exec_bind_message(StringInfo input_message)
 					  query_string,
 					  psrc->commandTag,
 					  cplan->stmt_list,
-					  cplan,
-					  psrc);
+					  cplan);
 
 	/* Portal is defined, set the plan ID based on its contents. */
 	foreach(lc, portal->stmts)

@@ -70,8 +70,7 @@ static int	_SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 static ParamListInfo _SPI_convert_params(int nargs, Oid *argtypes,
 										 Datum *Values, const char *Nulls);
 
-static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount,
-						CachedPlanSource *plansource, int query_index);
+static int	_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -1686,8 +1685,7 @@ SPI_cursor_open_internal(const char *name, SPIPlanPtr plan,
 					  query_string,
 					  plansource->commandTag,
 					  stmt_list,
-					  cplan,
-					  plansource);
+					  cplan);
 
 	/*
 	 * Set up options for portal.  Default SCROLL type is chosen the same way
@@ -2502,7 +2500,6 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc1);
 		List	   *stmt_list;
 		ListCell   *lc2;
-		int			query_index = 0;
 
 		spicallbackarg.query = plansource->query_string;
 
@@ -2693,16 +2690,14 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 					snap = InvalidSnapshot;
 
 				qdesc = CreateQueryDesc(stmt,
-										cplan,
 										plansource->query_string,
 										snap, crosscheck_snapshot,
 										dest,
 										options->params,
 										_SPI_current->queryEnv,
 										0);
-
-				res = _SPI_pquery(qdesc, fire_triggers, canSetTag ? options->tcount : 0,
-								  plansource, query_index);
+				res = _SPI_pquery(qdesc, fire_triggers,
+								  canSetTag ? options->tcount : 0);
 				FreeQueryDesc(qdesc);
 			}
 			else
@@ -2799,8 +2794,6 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 				my_res = res;
 				goto fail;
 			}
-
-			query_index++;
 		}
 
 		/* Done with this plan, so release refcount */
@@ -2878,8 +2871,7 @@ _SPI_convert_params(int nargs, Oid *argtypes,
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount,
-			CachedPlanSource *plansource, int query_index)
+_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount)
 {
 	int			operation = queryDesc->operation;
 	int			eflags;
@@ -2935,16 +2927,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, uint64 tcount,
 	else
 		eflags = EXEC_FLAG_SKIP_TRIGGERS;
 
-	if (queryDesc->cplan)
-	{
-		ExecutorStartCachedPlan(queryDesc, eflags, plansource, query_index);
-		Assert(queryDesc->planstate);
-	}
-	else
-	{
-		if (!ExecutorStart(queryDesc, eflags))
-			elog(ERROR, "ExecutorStart() failed unexpectedly");
-	}
+	ExecutorStart(queryDesc, eflags);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 

@@ -1248,9 +1248,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 						lappend_int(root->glob->resultRelations,
 									splan->rootRelation);
 				}
-				root->glob->firstResultRels =
-					lappend_int(root->glob->firstResultRels,
-								linitial_int(splan->resultRelations));
 			}
 			break;
 		case T_Append:

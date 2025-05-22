@@ -138,9 +138,6 @@ typedef struct PlannerGlobal
 	/* "flat" list of integer RT indexes */
 	List	   *resultRelations;
 
-	/* "flat" list of integer RT indexes (one per ModifyTable node) */
-	List	   *firstResultRels;
-
 	/* "flat" list of AppendRelInfos */
 	List	   *appendRelations;
 

@@ -92,8 +92,7 @@ static void ReleaseGenericPlan(CachedPlanSource *plansource);
 static bool StmtPlanRequiresRevalidation(CachedPlanSource *plansource);
 static bool BuildingPlanRequiresSnapshot(CachedPlanSource *plansource);
 static List *RevalidateCachedQuery(CachedPlanSource *plansource,
-								   QueryEnvironment *queryEnv,
-								   bool release_generic);
+								   QueryEnvironment *queryEnv);
 static bool CheckCachedPlan(CachedPlanSource *plansource);
 static CachedPlan *BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 								   ParamListInfo boundParams, QueryEnvironment *queryEnv);
@@ -663,17 +662,10 @@ BuildingPlanRequiresSnapshot(CachedPlanSource *plansource)
  * The result value is the transient analyzed-and-rewritten query tree if we
  * had to do re-analysis, and NIL otherwise.  (This is returned just to save
  * a tree copying step in a subsequent BuildCachedPlan call.)
- *
- * This also releases and drops the generic plan (plansource->gplan), if any,
- * as most callers will typically build a new CachedPlan for the plansource
- * right after this. However, when called from UpdateCachedPlan(), the
- * function does not release the generic plan, as UpdateCachedPlan() updates
- * an existing CachedPlan in place.
  */
 static List *
 RevalidateCachedQuery(CachedPlanSource *plansource,
-					  QueryEnvironment *queryEnv,
-					  bool release_generic)
+					  QueryEnvironment *queryEnv)
 {
 	bool		snapshot_set;
 	List	   *tlist;			/* transient query-tree list */
@@ -772,9 +764,8 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 		MemoryContextDelete(qcxt);
 	}
 
-	/* Drop the generic plan reference, if any, and if requested */
-	if (release_generic)
-		ReleaseGenericPlan(plansource);
+	/* Drop the generic plan reference if any */
+	ReleaseGenericPlan(plansource);
 
 	/*
 	 * Now re-do parse analysis and rewrite.  This not incidentally acquires
@@ -937,10 +928,8 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
  * Caller must have already called RevalidateCachedQuery to verify that the
  * querytree is up to date.
  *
- * On a "true" return, we have acquired locks on the "unprunableRelids" set
- * for all plans in plansource->stmt_list. However, the plans are not fully
- * race-condition-free until the executor acquires locks on the prunable
- * relations that survive initial runtime pruning during InitPlan().
+ * On a "true" return, we have acquired the locks needed to run the plan.
+ * (We must do this for the "true" result to be race-condition-free.)
  */
 static bool
 CheckCachedPlan(CachedPlanSource *plansource)
@@ -1025,8 +1014,6 @@ CheckCachedPlan(CachedPlanSource *plansource)
  * Planning work is done in the caller's memory context.  The finished plan
  * is in a child memory context, which typically should get reparented
  * (unless this is a one-shot plan, in which case we don't copy the plan).
- *
- * Note: When changing this, you should also look at UpdateCachedPlan().
  */
 static CachedPlan *
 BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
@@ -1037,7 +1024,6 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	bool		snapshot_set;
 	bool		is_transient;
 	MemoryContext plan_context;
-	MemoryContext stmt_context = NULL;
 	MemoryContext oldcxt = CurrentMemoryContext;
 	ListCell   *lc;
 
@@ -1055,7 +1041,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	 * let's treat it as real and redo the RevalidateCachedQuery call.
 	 */
 	if (!plansource->is_valid)
-		qlist = RevalidateCachedQuery(plansource, queryEnv, true);
+		qlist = RevalidateCachedQuery(plansource, queryEnv);
 
 	/*
 	 * If we don't already have a copy of the querytree list that can be
@@ -1093,19 +1079,10 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		PopActiveSnapshot();
 
 	/*
-	 * Normally, we create a dedicated memory context for the CachedPlan and
-	 * its subsidiary data. Although it's usually not very large, the context
-	 * is designed to allow growth if necessary.
-	 *
-	 * The PlannedStmts are stored in a separate child context (stmt_context)
-	 * of the CachedPlan's memory context. This separation allows
-	 * UpdateCachedPlan() to free and replace the PlannedStmts without
-	 * affecting the CachedPlan structure or its stmt_list List.
-	 *
-	 * For one-shot plans, we instead use the caller's memory context, as the
-	 * CachedPlan will not persist.  stmt_context will be set to NULL in this
-	 * case, because UpdateCachedPlan() should never get called on a one-shot
-	 * plan.
+	 * Normally we make a dedicated memory context for the CachedPlan and its
+	 * subsidiary data.  (It's probably not going to be large, but just in
+	 * case, allow it to grow large.  It's transient for the moment.)  But for
+	 * a one-shot plan, we just leave it in the caller's memory context.
 	 */
 	if (!plansource->is_oneshot)
 	{
@@ -1114,17 +1091,12 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 											 ALLOCSET_START_SMALL_SIZES);
 		MemoryContextCopyAndSetIdentifier(plan_context, plansource->query_string);
 
-		stmt_context = AllocSetContextCreate(CurrentMemoryContext,
-											 "CachedPlan PlannedStmts",
-											 ALLOCSET_START_SMALL_SIZES);
-		MemoryContextCopyAndSetIdentifier(stmt_context, plansource->query_string);
-		MemoryContextSetParent(stmt_context, plan_context);
-
-		MemoryContextSwitchTo(stmt_context);
-		plist = copyObject(plist);
-
+		/*
+		 * Copy plan into the new context.
+		 */
 		MemoryContextSwitchTo(plan_context);
-		plist = list_copy(plist);
+
+		plist = copyObject(plist);
 	}
 	else
 		plan_context = CurrentMemoryContext;
@@ -1165,10 +1137,8 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 		plan->saved_xmin = InvalidTransactionId;
 	plan->refcount = 0;
 	plan->context = plan_context;
-	plan->stmt_context = stmt_context;
 	plan->is_oneshot = plansource->is_oneshot;
 	plan->is_saved = false;
-	plan->is_reused = false;
 	plan->is_valid = true;
 
 	/* assign generation number to new plan */
@@ -1177,113 +1147,6 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	MemoryContextSwitchTo(oldcxt);
 
 	return plan;
-}
-
-/*
- * UpdateCachedPlan
- *		Create fresh plans for all queries in the CachedPlanSource, replacing
- *		those in the generic plan's stmt_list, and return the plan for the
- *		query_index'th query.
- *
- * This function is primarily used by ExecutorStartCachedPlan() to handle
- * cases where the original generic CachedPlan becomes invalid. Such
- * invalidation may occur when prunable relations in the old plan for the
- * query_index'th query are locked in preparation for execution.
- *
- * Note that invalidations received during the execution of the query_index'th
- * query can affect both the queries that have already finished execution
- * (e.g., due to concurrent modifications on prunable relations that were not
- * locked during their execution) and also the queries that have not yet been
- * executed.  As a result, this function updates all plans to ensure
- * CachedPlan.is_valid is safely set to true.
- *
- * The old PlannedStmts in plansource->gplan->stmt_list are freed here, so
- * the caller and any of its callers must not rely on them remaining accessible
- * after this function is called.
- */
-PlannedStmt *
-UpdateCachedPlan(CachedPlanSource *plansource, int query_index,
-				 QueryEnvironment *queryEnv)
-{
-	List	   *query_list = plansource->query_list,
-			   *plan_list;
-	ListCell   *l1,
-			   *l2;
-	CachedPlan *plan = plansource->gplan;
-	MemoryContext oldcxt;
-
-	Assert(ActiveSnapshotSet());
-
-	/* Sanity checks (XXX can be Asserts?) */
-	if (plan == NULL)
-		elog(ERROR, "UpdateCachedPlan() called in the wrong context: plansource->gplan is NULL");
-	else if (plan->is_valid)
-		elog(ERROR, "UpdateCachedPlan() called in the wrong context: plansource->gplan->is_valid is true");
-	else if (plan->is_oneshot)
-		elog(ERROR, "UpdateCachedPlan() called in the wrong context: plansource->gplan->is_oneshot is true");
-
-	/*
-	 * The plansource might have become invalid since GetCachedPlan() returned
-	 * the CachedPlan. See the comment in BuildCachedPlan() for details on why
-	 * this might happen.  Although invalidation is likely a false positive as
-	 * stated there, we make the plan valid to ensure the query list used for
-	 * planning is up to date.
-	 *
-	 * The risk of catching an invalidation is higher here than when
-	 * BuildCachedPlan() is called from GetCachedPlan(), because this function
-	 * is normally called long after GetCachedPlan() returns the CachedPlan,
-	 * so much more processing could have occurred including things that mark
-	 * the CachedPlanSource invalid.
-	 *
-	 * Note: Do not release plansource->gplan, because the upstream callers
-	 * (such as the callers of ExecutorStartCachedPlan()) would still be
-	 * referencing it.
-	 */
-	if (!plansource->is_valid)
-		query_list = RevalidateCachedQuery(plansource, queryEnv, false);
-	Assert(query_list != NIL);
-
-	/*
-	 * Build a new generic plan for all the queries after making a copy to be
-	 * scribbled on by the planner.
-	 */
-	query_list = copyObject(query_list);
-
-	/*
-	 * Planning work is done in the caller's memory context.  The resulting
-	 * PlannedStmt is then copied into plan->stmt_context after throwing away
-	 * the old ones.
-	 */
-	plan_list = pg_plan_queries(query_list, plansource->query_string,
-								plansource->cursor_options, NULL);
-	Assert(list_length(plan_list) == list_length(plan->stmt_list));
-
-	MemoryContextReset(plan->stmt_context);
-	oldcxt = MemoryContextSwitchTo(plan->stmt_context);
-	forboth(l1, plan_list, l2, plan->stmt_list)
-	{
-		PlannedStmt *plannedstmt = lfirst(l1);
-
-		lfirst(l2) = copyObject(plannedstmt);
-	}
-	MemoryContextSwitchTo(oldcxt);
-
-	/*
-	 * XXX Should this also (re)set the properties of the CachedPlan that are
-	 * set in BuildCachedPlan() after creating the fresh plans such as
-	 * planRoleId, dependsOnRole, and saved_xmin?
-	 */
-
-	/*
-	 * We've updated all the plans that might have been invalidated, so mark
-	 * the CachedPlan as valid.
-	 */
-	plan->is_valid = true;
-
-	/* Also update generic_cost because we just created a new generic plan. */
-	plansource->generic_cost = cached_plan_cost(plan, false);
-
-	return list_nth_node(PlannedStmt, plan->stmt_list, query_index);
 }
 
 /*
@@ -1402,13 +1265,8 @@ cached_plan_cost(CachedPlan *plan, bool include_planner)
  * plan or a custom plan for the given parameters: the caller does not know
  * which it will get.
  *
- * On return, the plan is valid, but if it is a reused generic plan, not all
- * locks are acquired. In such cases, CheckCachedPlan() does not take locks
- * on relations subject to initial runtime pruning; instead, these locks are
- * deferred until execution startup, when ExecDoInitialPruning() performs
- * initial pruning.  The plan's "is_reused" flag is set to indicate that
- * CachedPlanRequiresLocking() should return true when called by
- * ExecDoInitialPruning().
+ * On return, the plan is valid and we have sufficient locks to begin
+ * execution.
  *
  * On return, the refcount of the plan has been incremented; a later
  * ReleaseCachedPlan() call is expected.  If "owner" is not NULL then
@@ -1434,7 +1292,7 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 		elog(ERROR, "cannot apply ResourceOwner to non-saved cached plan");
 
 	/* Make sure the querytree list is valid and we have parse-time locks */
-	qlist = RevalidateCachedQuery(plansource, queryEnv, true);
+	qlist = RevalidateCachedQuery(plansource, queryEnv);
 
 	/* Decide whether to use a custom plan */
 	customplan = choose_custom_plan(plansource, boundParams);
@@ -1446,8 +1304,6 @@ GetCachedPlan(CachedPlanSource *plansource, ParamListInfo boundParams,
 			/* We want a generic plan, and we already have a valid one */
 			plan = plansource->gplan;
 			Assert(plan->magic == CACHEDPLAN_MAGIC);
-			/* Reusing the existing plan, so not all locks may be acquired. */
-			plan->is_reused = true;
 		}
 		else
 		{
@@ -1913,7 +1769,7 @@ CachedPlanGetTargetList(CachedPlanSource *plansource,
 		return NIL;
 
 	/* Make sure the querytree list is valid and we have parse-time locks */
-	RevalidateCachedQuery(plansource, queryEnv, true);
+	RevalidateCachedQuery(plansource, queryEnv);
 
 	/* Get the primary statement and find out what it returns */
 	pstmt = QueryListGetPrimaryStmt(plansource->query_list);
@@ -2035,7 +1891,7 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 	foreach(lc1, stmt_list)
 	{
 		PlannedStmt *plannedstmt = lfirst_node(PlannedStmt, lc1);
-		int			rtindex;
+		ListCell   *lc2;
 
 		if (plannedstmt->commandType == CMD_UTILITY)
 		{
@@ -2053,16 +1909,13 @@ AcquireExecutorLocks(List *stmt_list, bool acquire)
 			continue;
 		}
 
-		rtindex = -1;
-		while ((rtindex = bms_next_member(plannedstmt->unprunableRelids,
-										  rtindex)) >= 0)
+		foreach(lc2, plannedstmt->rtable)
 		{
-			RangeTblEntry *rte = list_nth_node(RangeTblEntry,
-											   plannedstmt->rtable,
-											   rtindex - 1);
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc2);
 
-			Assert(rte->rtekind == RTE_RELATION ||
-				   (rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid)));
+			if (!(rte->rtekind == RTE_RELATION ||
+				  (rte->rtekind == RTE_SUBQUERY && OidIsValid(rte->relid))))
+				continue;
 
 			/*
 			 * Acquire the appropriate type of lock on each relation OID. Note

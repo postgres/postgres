@@ -19,7 +19,6 @@
 
 #include "access/xact.h"
 #include "commands/prepare.h"
-#include "executor/execdesc.h"
 #include "executor/executor.h"
 #include "executor/tstoreReceiver.h"
 #include "miscadmin.h"
@@ -38,9 +37,6 @@ Portal		ActivePortal = NULL;
 
 
 static void ProcessQuery(PlannedStmt *plan,
-						 CachedPlan *cplan,
-						 CachedPlanSource *plansource,
-						 int query_index,
 						 const char *sourceText,
 						 ParamListInfo params,
 						 QueryEnvironment *queryEnv,
@@ -70,7 +66,6 @@ static void DoPortalRewind(Portal portal);
  */
 QueryDesc *
 CreateQueryDesc(PlannedStmt *plannedstmt,
-				CachedPlan *cplan,
 				const char *sourceText,
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
@@ -83,7 +78,6 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;	/* plan */
-	qd->cplan = cplan;			/* CachedPlan supplying the plannedstmt */
 	qd->sourceText = sourceText;	/* query text */
 	qd->snapshot = RegisterSnapshot(snapshot);	/* snapshot */
 	/* RI check snapshot */
@@ -129,9 +123,6 @@ FreeQueryDesc(QueryDesc *qdesc)
  *		PORTAL_ONE_RETURNING, or PORTAL_ONE_MOD_WITH portal
  *
  *	plan: the plan tree for the query
- *	cplan: CachedPlan supplying the plan
- *	plansource: CachedPlanSource supplying the cplan
- *	query_index: index of the query in plansource->query_list
  *	sourceText: the source text of the query
  *	params: any parameters needed
  *	dest: where to send results
@@ -144,9 +135,6 @@ FreeQueryDesc(QueryDesc *qdesc)
  */
 static void
 ProcessQuery(PlannedStmt *plan,
-			 CachedPlan *cplan,
-			 CachedPlanSource *plansource,
-			 int query_index,
 			 const char *sourceText,
 			 ParamListInfo params,
 			 QueryEnvironment *queryEnv,
@@ -158,23 +146,14 @@ ProcessQuery(PlannedStmt *plan,
 	/*
 	 * Create the QueryDesc object
 	 */
-	queryDesc = CreateQueryDesc(plan, cplan, sourceText,
+	queryDesc = CreateQueryDesc(plan, sourceText,
 								GetActiveSnapshot(), InvalidSnapshot,
 								dest, params, queryEnv, 0);
 
 	/*
-	 * Prepare the plan for execution
+	 * Call ExecutorStart to prepare the plan for execution
 	 */
-	if (queryDesc->cplan)
-	{
-		ExecutorStartCachedPlan(queryDesc, 0, plansource, query_index);
-		Assert(queryDesc->planstate);
-	}
-	else
-	{
-		if (!ExecutorStart(queryDesc, 0))
-			elog(ERROR, "ExecutorStart() failed unexpectedly");
-	}
+	ExecutorStart(queryDesc, 0);
 
 	/*
 	 * Run the plan to completion.
@@ -515,7 +494,6 @@ PortalStart(Portal portal, ParamListInfo params,
 				 * the destination to DestNone.
 				 */
 				queryDesc = CreateQueryDesc(linitial_node(PlannedStmt, portal->stmts),
-											portal->cplan,
 											portal->sourceText,
 											GetActiveSnapshot(),
 											InvalidSnapshot,
@@ -535,19 +513,9 @@ PortalStart(Portal portal, ParamListInfo params,
 					myeflags = eflags;
 
 				/*
-				 * Prepare the plan for execution.
+				 * Call ExecutorStart to prepare the plan for execution
 				 */
-				if (portal->cplan)
-				{
-					ExecutorStartCachedPlan(queryDesc, myeflags,
-											portal->plansource, 0);
-					Assert(queryDesc->planstate);
-				}
-				else
-				{
-					if (!ExecutorStart(queryDesc, myeflags))
-						elog(ERROR, "ExecutorStart() failed unexpectedly");
-				}
+				ExecutorStart(queryDesc, myeflags);
 
 				/*
 				 * This tells PortalCleanup to shut down the executor
@@ -1221,7 +1189,6 @@ PortalRunMulti(Portal portal,
 {
 	bool		active_snapshot_set = false;
 	ListCell   *stmtlist_item;
-	int			query_index = 0;
 
 	/*
 	 * If the destination is DestRemoteExecute, change to DestNone.  The
@@ -1303,9 +1270,6 @@ PortalRunMulti(Portal portal,
 			{
 				/* statement can set tag string */
 				ProcessQuery(pstmt,
-							 portal->cplan,
-							 portal->plansource,
-							 query_index,
 							 portal->sourceText,
 							 portal->portalParams,
 							 portal->queryEnv,
@@ -1315,9 +1279,6 @@ PortalRunMulti(Portal portal,
 			{
 				/* stmt added by rewrite cannot set tag */
 				ProcessQuery(pstmt,
-							 portal->cplan,
-							 portal->plansource,
-							 query_index,
 							 portal->sourceText,
 							 portal->portalParams,
 							 portal->queryEnv,
@@ -1382,8 +1343,6 @@ PortalRunMulti(Portal portal,
 		 */
 		if (lnext(portal->stmts, stmtlist_item) != NULL)
 			CommandCounterIncrement();
-
-		query_index++;
 	}
 
 	/* Pop the snapshot if we pushed one. */

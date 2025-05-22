@@ -993,13 +993,11 @@ execute_sql_string(const char *sql, const char *filename)
 				QueryDesc  *qdesc;
 
 				qdesc = CreateQueryDesc(stmt,
-										NULL,
 										sql,
 										GetActiveSnapshot(), NULL,
 										dest, NULL, NULL, 0);
 
-				if (!ExecutorStart(qdesc, 0))
-					elog(ERROR, "ExecutorStart() failed unexpectedly");
+				ExecutorStart(qdesc, 0);
 				ExecutorRun(qdesc, ForwardScanDirection, 0);
 				ExecutorFinish(qdesc);
 				ExecutorEnd(qdesc);
