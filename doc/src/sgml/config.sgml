@@ -140,7 +140,7 @@
      An example of what this file might look like is:
 <programlisting>
 # This is a comment
-log_connections = yes
+log_connections = all
 log_destination = 'syslog'
 search_path = '"$user", public'
 shared_buffers = 128MB
@@ -337,7 +337,7 @@ UPDATE pg_settings SET setting = reset_val WHERE name = 'configuration_parameter
        <option>-c name=value</option> command-line parameter, or its equivalent
        <option>--name=value</option> variation.  For example,
 <programlisting>
-postgres -c log_connections=yes --log-destination='syslog'
+postgres -c log_connections=all --log-destination='syslog'
 </programlisting>
        Settings provided in this way override those set via
        <filename>postgresql.conf</filename> or <command>ALTER SYSTEM</command>,

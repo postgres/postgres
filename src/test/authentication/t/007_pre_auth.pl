@@ -20,7 +20,7 @@ my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
 $node->append_conf(
 	'postgresql.conf', q[
-log_connections = on
+log_connections = 'receipt,authentication'
 ]);
 
 $node->start;

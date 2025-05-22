@@ -18,7 +18,7 @@ if (!$windows_os || $use_unix_sockets)
 # Initialize primary node
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init;
-$node->append_conf('postgresql.conf', "log_connections = on\n");
+$node->append_conf('postgresql.conf', "log_connections = authentication\n");
 $node->start;
 
 my $huge_pages_status =

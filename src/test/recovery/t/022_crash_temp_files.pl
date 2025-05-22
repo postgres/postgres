@@ -26,7 +26,7 @@ $node->start();
 $node->safe_psql(
 	'postgres',
 	q[ALTER SYSTEM SET remove_temp_files_after_crash = on;
-				   ALTER SYSTEM SET log_connections = 1;
+				   ALTER SYSTEM SET log_connections = receipt;
 				   ALTER SYSTEM SET work_mem = '64kB';
 				   ALTER SYSTEM SET restart_after_crash = on;
 				   SELECT pg_reload_conf();]);

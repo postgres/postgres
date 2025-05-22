@@ -107,7 +107,7 @@ $node->append_conf(
 listen_addresses = '$hostaddr'
 
 # Capturing the EVENTS that occur during tests requires these settings
-log_connections = on
+log_connections = 'receipt,authentication,authorization'
 log_disconnections = on
 trace_connection_negotiation = on
 lc_messages = 'C'

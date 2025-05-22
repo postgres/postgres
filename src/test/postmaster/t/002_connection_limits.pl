@@ -20,7 +20,8 @@ $node->init(
 $node->append_conf('postgresql.conf', "max_connections = 6");
 $node->append_conf('postgresql.conf', "reserved_connections = 2");
 $node->append_conf('postgresql.conf', "superuser_reserved_connections = 1");
-$node->append_conf('postgresql.conf', "log_connections = on");
+$node->append_conf('postgresql.conf',
+	"log_connections = 'receipt,authentication,authorization'");
 $node->append_conf('postgresql.conf', "log_min_messages=debug2");
 $node->start;
 

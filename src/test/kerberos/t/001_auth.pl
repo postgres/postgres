@@ -65,7 +65,7 @@ $node->append_conf(
 	'postgresql.conf', qq{
 listen_addresses = '$hostaddr'
 krb_server_keyfile = '$krb->{keytab}'
-log_connections = on
+log_connections = all
 log_min_messages = debug2
 lc_messages = 'C'
 });

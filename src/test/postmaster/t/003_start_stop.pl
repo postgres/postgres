@@ -33,7 +33,8 @@ $node->append_conf('postgresql.conf', "max_connections = 5");
 $node->append_conf('postgresql.conf', "max_wal_senders = 0");
 $node->append_conf('postgresql.conf', "autovacuum_max_workers = 1");
 $node->append_conf('postgresql.conf', "max_worker_processes = 1");
-$node->append_conf('postgresql.conf', "log_connections = on");
+$node->append_conf('postgresql.conf',
+	"log_connections = 'receipt,authentication,authorization'");
 $node->append_conf('postgresql.conf', "log_min_messages = debug2");
 $node->append_conf('postgresql.conf',
 	"authentication_timeout = '$authentication_timeout s'");

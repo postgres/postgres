@@ -3693,7 +3693,7 @@ set_debug_options(int debug_flag, GucContext context, GucSource source)
 
 	if (debug_flag >= 1 && context == PGC_POSTMASTER)
 	{
-		SetConfigOption("log_connections", "true", context, source);
+		SetConfigOption("log_connections", "all", context, source);
 		SetConfigOption("log_disconnections", "true", context, source);
 	}
 	if (debug_flag >= 2)

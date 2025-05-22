@@ -15,7 +15,7 @@ $node->append_conf(
 autovacuum = off
 max_prepared_transactions=5
 log_min_duration_statement=0
-log_connections=on
+log_connections=receipt
 log_disconnections=on
 ));
 
