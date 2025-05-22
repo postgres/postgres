@@ -306,10 +306,7 @@ json_kring_object_end(void *state)
 				pfree(parse->field_type);
 				parse->field_type = NULL;
 
-				if (value == NULL)
-				{
-					return JSON_INCOMPLETE;
-				}
+				Assert(value != NULL);
 
 				json_kring_assign_scalar(parse, parse->top_level_field, value);
 				parse->state = JK_EXPECT_TOP_FIELD;
