@@ -57,7 +57,6 @@ Adjust the limits with caution since it affects other processes running in your 
 
 ### New Features
 
-* [PG-813](https://perconadev.atlassian.net/browse/PG-813) – Enabled support for logical replication in `pg_tde`.
 * [PG-817](https://perconadev.atlassian.net/browse/PG-817) – Added fuzz testing to `pstress` to strengthen validation and resilience.
 * [PG-824](https://perconadev.atlassian.net/browse/PG-824) – Ensured fsync is called on `pg_tde.map`, `pg_tde.dat`, and FS key provider files.
 * [PG-830](https://perconadev.atlassian.net/browse/PG-830) – Implemented full WAL encryption using Vault keyring.
@@ -67,9 +66,7 @@ Adjust the limits with caution since it affects other processes running in your 
 * [PG-962](https://perconadev.atlassian.net/browse/PG-962) – Automated test cases to validate data integrity after PostgreSQL restart.
 * [PG-1001](https://perconadev.atlassian.net/browse/PG-1001) – Verified encryption behavior of temporary tables.
 * [PG-1099](https://perconadev.atlassian.net/browse/PG-1099) – Developed automation for bare-metal performance benchmarking.
-* [PG-1232](https://perconadev.atlassian.net/browse/PG-1232) – Documented the architectural design behind pg_tde.
 * [PG-1289](https://perconadev.atlassian.net/browse/PG-1289) – Added test cases for verifying compatibility with different PostgreSQL versions.
-* [PG-1295](https://perconadev.atlassian.net/browse/PG-1295) – Introduced TAP test cases to validate WAL encryption across access methods.
 * [PG-1444](https://perconadev.atlassian.net/browse/PG-1444) – Implemented support for removing relation-level encryption keys when dropping tables.
 * [PG-1455](https://perconadev.atlassian.net/browse/PG-1455) – Introduced random base numbers in encryption IVs for enhanced security.
 * [PG-1458](https://perconadev.atlassian.net/browse/PG-1458) – Added visibility and verification functions for default principal keys.
@@ -82,20 +79,7 @@ Adjust the limits with caution since it affects other processes running in your 
 * [PG-826](https://perconadev.atlassian.net/browse/PG-826) – Documented how to encrypt and decrypt existing tables using pg_tde.
 * [PG-827](https://perconadev.atlassian.net/browse/PG-827) – Fixed CI pipeline tests on the smgr branch.
 * [PG-834](https://perconadev.atlassian.net/browse/PG-834) – Resolved issues with `CREATE ... USING pg_tde` on the smgr branch.
-* [PG-838](https://perconadev.atlassian.net/browse/PG-838) – Added documentation for setting up streaming replication with pg_tde.
-* [PG-1294](https://perconadev.atlassian.net/browse/PG-1294) – Improved WAL encryption design and performance.
-* [PG-1304](https://perconadev.atlassian.net/browse/PG-1304) – Removed deprecated `tde_heap_basic` access method before GA.
-* [PG-1307](https://perconadev.atlassian.net/browse/PG-1307) – Assessed overall development effort required for WAL encryption.
-* [PG-1392](https://perconadev.atlassian.net/browse/PG-1392) – Investigated encryption coverage gaps in freespace and visibility maps.
-* [PG-1419](https://perconadev.atlassian.net/browse/PG-1419) – Changed provider validation to occur during provider addition instead of key setup.
 * [PG-1427](https://perconadev.atlassian.net/browse/PG-1427) – Tested and fixed KMIP implementation for Thales support.
-* [PG-1437](https://perconadev.atlassian.net/browse/PG-1437) – Cleaned up and resolved TODO items in the codebase.
-* [PG-1440](https://perconadev.atlassian.net/browse/PG-1440) – Restricted key provider configuration to superusers for improved security.
-* [PG-1441](https://perconadev.atlassian.net/browse/PG-1441) – Prevented replication of table-level encryption keys.
-* [PG-1446](https://perconadev.atlassian.net/browse/PG-1446) – Improved locking mechanisms in pg_tde.
-* [PG-1447](https://perconadev.atlassian.net/browse/PG-1447) – Verified compatibility of encryption with template databases.
-* [PG-1457](https://perconadev.atlassian.net/browse/PG-1457) – Renamed key management functions for clarity and consistency.
-* [PG-1467](https://perconadev.atlassian.net/browse/PG-1467) – Added Clang-based CI integration on GitHub.
 * [PG-1507](https://perconadev.atlassian.net/browse/PG-1507) – Handled ALTER TYPE operations in the TDE event trigger.
 * [PG-1508](https://perconadev.atlassian.net/browse/PG-1508) – Fixed encryption state inconsistencies when altering inherited tables.
 * [PG-1550](https://perconadev.atlassian.net/browse/PG-1550) – Restricted database owners from creating key providers to improve security.
