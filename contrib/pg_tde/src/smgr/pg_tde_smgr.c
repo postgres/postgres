@@ -86,8 +86,7 @@ tde_smgr_should_encrypt(const RelFileLocatorBackend *smgr_rlocator, RelFileLocat
 					.backend = smgr_rlocator->backend,
 				};
 
-				/* Actually get the key here to ensure result is cached. */
-				return GetSMGRRelationKey(old_smgr_locator) != 0;
+				return IsSMGRRelationEncrypted(old_smgr_locator);
 			}
 	}
 
@@ -106,18 +105,18 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		InternalKey *int_key;
 		unsigned char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		void	  **local_buffers = palloc_array(void *, nblocks);
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 		{
-			tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
-			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
-		}
+			InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
 
-		int_key = &tdereln->relKey;
+			tdereln->relKey = *int_key;
+			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+			pfree(int_key);
+		}
 
 		for (int i = 0; i < nblocks; ++i)
 		{
@@ -126,9 +125,9 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
 
-			CalcBlockIv(forknum, bn, int_key->base_iv, iv);
+			CalcBlockIv(forknum, bn, tdereln->relKey.base_iv, iv);
 
-			AesEncrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i]);
+			AesEncrypt(tdereln->relKey.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, local_buffers[i]);
 		}
 
 		mdwritev(reln, forknum, blocknum,
@@ -178,22 +177,22 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		InternalKey *int_key;
 		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
 		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
 		unsigned char iv[16];
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 		{
-			tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
+			InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
+
+			tdereln->relKey = *int_key;
 			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+			pfree(int_key);
 		}
 
-		int_key = &tdereln->relKey;
+		CalcBlockIv(forknum, blocknum, tdereln->relKey.base_iv, iv);
 
-		CalcBlockIv(forknum, blocknum, int_key->base_iv, iv);
-
-		AesEncrypt(int_key->key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
+		AesEncrypt(tdereln->relKey.key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
 
 		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
 
@@ -206,7 +205,6 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			void **buffers, BlockNumber nblocks)
 {
 	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
-	InternalKey *int_key;
 
 	mdreadv(reln, forknum, blocknum, buffers, nblocks);
 
@@ -214,11 +212,12 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		return;
 	else if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 	{
-		tdereln->relKey = *tde_smgr_get_key(&reln->smgr_rlocator);
-		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
-	}
+		InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
 
-	int_key = &tdereln->relKey;
+		tdereln->relKey = *int_key;
+		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+		pfree(int_key);
+	}
 
 	for (int i = 0; i < nblocks; ++i)
 	{
@@ -246,9 +245,9 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if (allZero)
 			continue;
 
-		CalcBlockIv(forknum, bn, int_key->base_iv, iv);
+		CalcBlockIv(forknum, bn, tdereln->relKey.base_iv, iv);
 
-		AesDecrypt(int_key->key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i]);
+		AesDecrypt(tdereln->relKey.key, iv, ((unsigned char **) buffers)[i], BLCKSZ, ((unsigned char **) buffers)[i]);
 	}
 }
 
@@ -292,6 +291,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 		{
 			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
 			tdereln->relKey = *key;
+			pfree(key);
 		}
 		else
 		{

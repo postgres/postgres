@@ -32,7 +32,6 @@
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
 #include "pg_tde_defines.h"
@@ -67,39 +66,6 @@ typedef struct TDEFileHeader
 	TDESignedPrincipalKeyInfo signed_key_info;
 } TDEFileHeader;
 
-typedef struct RelKeyCacheRec
-{
-	RelFileLocator locator;
-	InternalKey key;
-} RelKeyCacheRec;
-
-/*
- * Relation keys cache.
- *
- * This is a slice backed by memory `*data`. Initially, we allocate one memory
- * page (usually 4Kb). We reallocate it by adding another page when we run out
- * of space. This memory is locked in the RAM so it won't be paged to the swap
- * (we don't want decrypted keys on disk). We do allocations in mem pages as
- * these are the units `mlock()` operations are performed in.
- *
- * Currently, the cache can only grow (no eviction). The data is located in
- * TopMemoryContext hence being wiped when the process exits, as well as memory
- * is being unlocked by OS.
- */
-typedef struct RelKeyCache
-{
-	RelKeyCacheRec *data;		/* must be a multiple of a memory page
-								 * (usually 4Kb) */
-	int			len;			/* num of RelKeyCacheRecs currenty in cache */
-	int			cap;			/* max amount of RelKeyCacheRec data can fit */
-} RelKeyCache;
-
-RelKeyCache tde_rel_key_cache = {
-	.data = NULL,
-	.len = 0,
-	.cap = 0,
-};
-
 typedef struct
 {
 	RelFileLocator rel;
@@ -118,9 +84,6 @@ static HTAB *TempRelKeys = NULL;
 
 #endif
 
-/*
- * TODO: WAL should have its own RelKeyCache
- */
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
@@ -132,9 +95,7 @@ static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHea
 static bool pg_tde_read_one_map_entry(int fd, TDEMapEntry *map_entry, off_t *offset);
 static void pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId);
 static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
-static InternalKey *pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type);
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
-static InternalKey *pg_tde_put_key_into_cache(const RelFileLocator *locator, InternalKey *key);
 
 #ifndef FRONTEND
 static InternalKey *pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator);
@@ -161,8 +122,11 @@ pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
 static InternalKey *
 pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator)
 {
+	InternalKey *rel_key_data = palloc_object(InternalKey);
 	TempRelKeyEntry *entry;
 	bool		found;
+
+	pg_tde_generate_internal_key(rel_key_data, TDE_KEY_TYPE_SMGR);
 
 	if (TempRelKeys == NULL)
 	{
@@ -181,22 +145,22 @@ pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator)
 											HASH_ENTER, &found);
 	Assert(!found);
 
-	pg_tde_generate_internal_key(&entry->key, TDE_KEY_TYPE_SMGR);
+	entry->key = *rel_key_data;
 
-	return &entry->key;
+	return rel_key_data;
 }
 
 static InternalKey *
 pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 {
-	InternalKey rel_key_data;
+	InternalKey *rel_key_data = palloc_object(InternalKey);
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	XLogRelKey	xlrec = {
 		.rlocator = *newrlocator,
 	};
 
-	pg_tde_generate_internal_key(&rel_key_data, TDE_KEY_TYPE_SMGR);
+	pg_tde_generate_internal_key(rel_key_data, TDE_KEY_TYPE_SMGR);
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
@@ -207,7 +171,7 @@ pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
-	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
+	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
 
 	/*
@@ -218,7 +182,7 @@ pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 
-	return pg_tde_put_key_into_cache(newrlocator, &rel_key_data);
+	return rel_key_data;
 }
 
 void
@@ -281,13 +245,12 @@ tde_sprint_key(InternalKey *k)
 }
 
 /*
- * Generates a new internal key for WAL and adds it to the _dat file. It doesn't
- * add unecnrypted key into cache but rather sets it in `rel_key_data`.
+ * Generates a new internal key for WAL and adds it to the _dat file.
  *
  * We have a special function for WAL as it is being called during recovery
- * (start) so there should be no XLog records, aquired locks, and reads from
- * cache. The key is always created with start_lsn = InvalidXLogRecPtr. Which
- * will be updated with the actual lsn by the first WAL write.
+ * start so there should be no XLog records and aquired locks. The key is
+ * always created with start_lsn = InvalidXLogRecPtr. Which will be updated
+ * with the actual lsn by the first WAL write.
  */
 void
 pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 entry_type)
@@ -317,8 +280,8 @@ DeleteSMGRRelationKey(RelFileLocatorBackend rel)
 {
 	if (RelFileLocatorBackendIsTemp(rel))
 	{
-		if (TempRelKeys)
-			hash_search(TempRelKeys, &rel.locator, HASH_REMOVE, NULL);
+		Assert(TempRelKeys);
+		hash_search(TempRelKeys, &rel.locator, HASH_REMOVE, NULL);
 	}
 	else
 		pg_tde_free_key_map_entry(&rel.locator);
@@ -1109,7 +1072,12 @@ pg_tde_get_temporary_rel_key(const RelFileLocator *rel)
 	entry = hash_search(TempRelKeys, rel, HASH_FIND, NULL);
 
 	if (entry)
-		return &entry->key;
+	{
+		InternalKey *key = palloc_object(InternalKey);
+
+		*key = entry->key;
+		return key;
+	}
 #endif
 
 	return NULL;
@@ -1117,8 +1085,7 @@ pg_tde_get_temporary_rel_key(const RelFileLocator *rel)
 
 /*
  * Figures out whether a relation is encrypted or not, but without trying to
- * decrypt the key if it is. This also means that this function cannot push the
- * key to cache.
+ * decrypt the key if it is.
  */
 bool
 IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
@@ -1130,9 +1097,11 @@ IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
 	Assert(rel.locator.relNumber != InvalidRelFileNumber);
 
 	if (RelFileLocatorBackendIsTemp(rel))
-		return pg_tde_get_temporary_rel_key(&rel.locator) != NULL;
-	else if (pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR))
-		return true;
+#ifndef FRONTEND
+		return TempRelKeys && hash_search(TempRelKeys, &rel.locator, HASH_FIND, NULL);
+#else
+		return false;
+#endif
 
 	pg_tde_set_db_file_path(rel.locator.dbOid, db_map_path);
 
@@ -1149,8 +1118,6 @@ IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
 
 /*
  * Returns TDE key for a given relation.
- * First it looks in a cache. If nothing found in the cache, it reads data from
- * the tde fork file and populates cache.
  */
 InternalKey *
 GetSMGRRelationKey(RelFileLocatorBackend rel)
@@ -1160,40 +1127,7 @@ GetSMGRRelationKey(RelFileLocatorBackend rel)
 	if (RelFileLocatorBackendIsTemp(rel))
 		return pg_tde_get_temporary_rel_key(&rel.locator);
 	else
-	{
-		InternalKey *key;
-
-		key = pg_tde_get_key_from_cache(&rel.locator, TDE_KEY_TYPE_SMGR);
-		if (key)
-			return key;
-
-		key = pg_tde_get_key_from_file(&rel.locator, TDE_KEY_TYPE_SMGR);
-		if (key)
-		{
-			InternalKey *cached_key = pg_tde_put_key_into_cache(&rel.locator, key);
-
-			pfree(key);
-			return cached_key;
-		}
-
-		return NULL;
-	}
-}
-
-static InternalKey *
-pg_tde_get_key_from_cache(const RelFileLocator *rlocator, uint32 key_type)
-{
-	for (int i = 0; i < tde_rel_key_cache.len; i++)
-	{
-		RelKeyCacheRec *rec = tde_rel_key_cache.data + i;
-
-		if (RelFileLocatorEquals(rec->locator, *rlocator) && rec->key.type & key_type)
-		{
-			return &rec->key;
-		}
-	}
-
-	return NULL;
+		return pg_tde_get_key_from_file(&rel.locator, TDE_KEY_TYPE_SMGR);
 }
 
 /*
@@ -1362,95 +1296,4 @@ pg_tde_add_wal_key_to_cache(InternalKey *key, XLogRecPtr start_lsn)
 	}
 
 	return wal_rec;
-}
-
-/*
- * Add key to cache. See comments on `RelKeyCache`.
- */
-static InternalKey *
-pg_tde_put_key_into_cache(const RelFileLocator *rlocator, InternalKey *key)
-{
-	static long pageSize = 0;
-	RelKeyCacheRec *rec;
-	MemoryContext oldCtx;
-
-	if (pageSize == 0)
-	{
-#ifndef _SC_PAGESIZE
-		pageSize = getpagesize();
-#else
-		pageSize = sysconf(_SC_PAGESIZE);
-#endif
-	}
-
-	if (tde_rel_key_cache.data == NULL)
-	{
-#ifndef FRONTEND
-		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
-		tde_rel_key_cache.data = palloc_aligned(pageSize, pageSize, MCXT_ALLOC_ZERO);
-		MemoryContextSwitchTo(oldCtx);
-#else
-		tde_rel_key_cache.data = aligned_alloc(pageSize, pageSize);
-		memset(tde_rel_key_cache.data, 0, pageSize);
-#endif
-
-		if (mlock(tde_rel_key_cache.data, pageSize) == -1)
-			elog(ERROR, "could not mlock internal key initial cache page: %m");
-
-		tde_rel_key_cache.len = 0;
-		tde_rel_key_cache.cap = (pageSize - 1) / sizeof(RelKeyCacheRec);
-	}
-
-	/*
-	 * Add another mem page if there is no more room left for another key. We
-	 * allocate `current_memory_size` + 1 page and copy data there.
-	 */
-	if (tde_rel_key_cache.len == tde_rel_key_cache.cap)
-	{
-		size_t		size;
-		size_t		old_size;
-		RelKeyCacheRec *cachePage;
-
-		old_size = TYPEALIGN(pageSize, tde_rel_key_cache.cap * sizeof(RelKeyCacheRec));
-
-		/*
-		 * TODO: consider some formula for less allocations when  caching a
-		 * lot of objects. But on the other, hand it'll use more memory...
-		 * E.g.: if (old_size < 0x8000) size = old_size * 2; else size =
-		 * TYPEALIGN(pageSize, old_size + ((old_size + 3*256) >> 2));
-		 *
-		 */
-		size = old_size + pageSize;
-
-#ifndef FRONTEND
-		oldCtx = MemoryContextSwitchTo(TopMemoryContext);
-		cachePage = palloc_aligned(size, pageSize, MCXT_ALLOC_ZERO);
-		MemoryContextSwitchTo(oldCtx);
-#else
-		cachePage = aligned_alloc(pageSize, size);
-		memset(cachePage, 0, size);
-#endif
-
-		memcpy(cachePage, tde_rel_key_cache.data, old_size);
-
-		explicit_bzero(tde_rel_key_cache.data, old_size);
-		if (munlock(tde_rel_key_cache.data, old_size) == -1)
-			elog(WARNING, "could not munlock internal key cache pages: %m");
-		pfree(tde_rel_key_cache.data);
-
-		tde_rel_key_cache.data = cachePage;
-
-		if (mlock(tde_rel_key_cache.data, size) == -1)
-			elog(WARNING, "could not mlock internal key cache pages: %m");
-
-		tde_rel_key_cache.cap = (size - 1) / sizeof(RelKeyCacheRec);
-	}
-
-	rec = tde_rel_key_cache.data + tde_rel_key_cache.len;
-
-	rec->locator = *rlocator;
-	rec->key = *key;
-	tde_rel_key_cache.len++;
-
-	return &rec->key;
 }
