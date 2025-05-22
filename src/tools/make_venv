@@ -40,7 +40,7 @@ def run(*args):
     subprocess.run(args, **kwargs)
 
 # Create the virtualenv first.
-run(sys.executable, '-m', 'venv', args.venv_path)
+run(sys.executable, '-m', 'venv', '--system-site-packages', args.venv_path)
 
 # Update pip next. This helps avoid old pip bugs; the version inside system
 # Pythons tends to be pretty out of date.

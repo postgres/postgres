@@ -188,7 +188,7 @@ task:
     chown root:postgres /tmp/cores
     sysctl kern.corefile='/tmp/cores/%N.%P.core'
   setup_additional_packages_script: |
-    #pkg install -y ...
+    pkg install -y security/py-cryptography
 
   # NB: Intentionally build without -Dllvm. The freebsd image size is already
   # large enough to make VM startup slow, and even without llvm freebsd
@@ -269,7 +269,7 @@ task:
         # -Duuid is not set for the NetBSD, see the comment below, above
         # configure_script, for more information.
       setup_additional_packages_script: |
-        #pkgin -y install ...
+        pkgin -y install py312-cryptography
       <<: *netbsd_task_template
 
     - name: OpenBSD - Meson
@@ -281,7 +281,7 @@ task:
         UUID: -Duuid=e2fs
         TCL: -Dtcl_version=tcl86
       setup_additional_packages_script: |
-        #pkg_add -I ...
+        pkg_add -I security/py-cryptography
       # Always core dump to ${CORE_DUMP_DIR}
       set_core_dump_script: sysctl -w kern.nosuidcoredump=2
       <<: *openbsd_task_template
