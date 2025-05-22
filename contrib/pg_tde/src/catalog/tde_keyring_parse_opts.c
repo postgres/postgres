@@ -26,6 +26,7 @@
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "storage/fd.h"
+#include "utils/jsonfuncs.h"
 
 #include "catalog/tde_keyring.h"
 #include "keyring/keyring_curl.h"
@@ -149,7 +150,6 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 	JsonLexContext *jlex;
 	JsonKeyringState parse = {0};
 	JsonSemAction sem;
-	JsonParseErrorType jerr;
 
 	/* Set up parsing context and initial semantic state */
 	parse.provider_type = provider_type;
@@ -172,14 +172,21 @@ ParseKeyringJSONOptions(ProviderType provider_type, GenericKeyring *out_opts, ch
 	sem.array_element_end = NULL;
 	sem.scalar = json_kring_scalar;
 
-	/* Run the parser */
-	jerr = pg_parse_json(jlex, &sem);
-	if (jerr != JSON_SUCCESS)
+#ifndef FRONTEND
+	pg_parse_json_or_ereport(jlex, &sem);
+#else
 	{
-		ereport(ERROR,
-				errmsg("parsing of keyring options failed: %s",
-					   json_errdetail(jerr, jlex)));
+		JsonParseErrorType jerr = pg_parse_json(jlex, &sem);
+
+		if (jerr != JSON_SUCCESS)
+		{
+			ereport(ERROR,
+					errmsg("parsing of keyring options failed: %s",
+						   json_errdetail(jerr, jlex)));
+		}
+
 	}
+#endif
 
 	freeJsonLexContext(jlex);
 }
