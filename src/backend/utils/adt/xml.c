@@ -754,6 +754,7 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 			 * content nodes, and then iterate over the nodes.
 			 */
 			xmlNodePtr	root;
+			xmlNodePtr	oldroot;
 			xmlNodePtr	newline;
 
 			root = xmlNewNode(NULL, (const xmlChar *) "content-root");
@@ -761,8 +762,14 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 							"could not allocate xml node");
 
-			/* This attaches root to doc, so we need not free it separately. */
-			xmlDocSetRootElement(doc, root);
+			/*
+			 * This attaches root to doc, so we need not free it separately...
+			 * but instead, we have to free the old root if there was one.
+			 */
+			oldroot = xmlDocSetRootElement(doc, root);
+			if (oldroot != NULL)
+				xmlFreeNode(oldroot);
+
 			xmlAddChildList(root, content_nodes);
 
 			/*
@@ -1850,6 +1857,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 		else
 		{
 			xmlNodePtr	root;
+			xmlNodePtr	oldroot PG_USED_FOR_ASSERTS_ONLY;
 
 			/* set up document with empty root node to be the context node */
 			doc = xmlNewDoc(version);
@@ -1868,8 +1876,13 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 			if (root == NULL || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 							"could not allocate xml node");
-			/* This attaches root to doc, so we need not free it separately. */
-			xmlDocSetRootElement(doc, root);
+
+			/*
+			 * This attaches root to doc, so we need not free it separately;
+			 * and there can't yet be any old root to free.
+			 */
+			oldroot = xmlDocSetRootElement(doc, root);
+			Assert(oldroot == NULL);
 
 			/* allow empty content */
 			if (*(utf8string + count))
