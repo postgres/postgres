@@ -29,9 +29,7 @@ SELECT pg_tde_add_global_key_provider_kmip(
 * `port` is the port to communicate with the KMIP server. Typically used port is 5696
 * `server-certificate` is the path to the certificate file for the KMIP server
 * `client_cert` is the path to the client certificate.
-* `client_key` (optional) is the path to the client key. If not specified, the certificate key has to contain both the certifcate and the key.
-
-<i warning>:material-information: Warning:</i> `pg_tde_add_global_key_provider_kmip` currently accepts only a combined client key and a client certificate for its final parameter, reffered to as `client key`.
+* `client_key` is the path to the client key.
 
 The following example is for testing purposes only.
 
@@ -47,7 +45,7 @@ SELECT pg_tde_add_global_key_provider_kmip(
 
 For more information on related functions, see the link below:
 
-[Percona pg_tde function reference](../functions.md){.md-button}
+[Percona pg_tde Function Reference](../functions.md){.md-button}
 
 ## Next steps
 

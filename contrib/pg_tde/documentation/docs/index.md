@@ -6,6 +6,6 @@
 
     This is the {{release}} version of the extension and it is not meant for production use yet. We encourage you to use it in testing environments and [provide your feedback](https://forums.percona.com/c/postgresql/pg-tde-transparent-data-encryption-tde/82). 
 
-[What is Transparent Data Encryption (TDE)?](index/index.md){.md-button}
-[Get started](install.md){.md-button}
+[Overview](index/index.md){.md-button}
+[Get Started](install.md){.md-button}
 [What's new in pg_tde {{release}}](release-notes/release-notes.md){.md-button}

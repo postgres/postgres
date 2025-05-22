@@ -8,4 +8,4 @@
 * **Indexes** associated encrypted tables.
 * **Logical replication data** for encrypted tables (ensures encrypted content is preserved across replicas).
 
-[Table access methods and TDE](table-access-method.md){.md-button}
+[Table Access Methods and TDE](table-access-method.md){.md-button}

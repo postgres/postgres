@@ -18,7 +18,7 @@ use the following command:
 SELECT pg_tde_add_database_key_provider_file(
     'file-provider', 
     json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/hello' )
-    );"
+    );
 ```
 
 Or to use the `file` method, use the following command:

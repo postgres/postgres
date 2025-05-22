@@ -62,13 +62,13 @@ Before turning WAL encryption on, you must follow the steps below to create your
 3. Create principal key
 
     ```sql
-        SELECT pg_tde_set_server_key_using_global_key_provider('key', 'provider-name');
+    SELECT pg_tde_set_server_key_using_global_key_provider('key', 'provider-name');
     ```
 
 4. Enable WAL level encryption using the `ALTER SYSTEM` command. You need the privileges of the superuser to run this command:
 
     ```sql
-        ALTER SYSTEM SET pg_tde.wal_encrypt = on;
+    ALTER SYSTEM SET pg_tde.wal_encrypt = on;
     ```
 
 5. Restart the server to apply the changes.
@@ -76,15 +76,16 @@ Before turning WAL encryption on, you must follow the steps below to create your
     * On Debian and Ubuntu:
 
     ```sh
-       sudo systemctl restart postgresql
+    sudo systemctl restart postgresql
     ```
 
     * On RHEL and derivatives
 
     ```sh
-       sudo systemctl restart postgresql-17
+    sudo systemctl restart postgresql-17
     ```
 
 Now WAL files start to be encrypted for both encrypted and unencrypted tables.
 
-For more technical references related to architecture, variables or functions, see [Technical Reference](advanced-topics/index.md).
+For more technical references related to architecture, variables or functions, see:
+[Technical Reference](advanced-topics/index.md){.md-button}

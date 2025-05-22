@@ -79,13 +79,13 @@ Here is how you can set the new default table access method:
         You can run the SET command anytime during the session. 
 
         ```sql
-            SET default_table_access_method = tde_heap;
+        SET default_table_access_method = tde_heap;
         ```
 
 2. Reload the configuration to apply the changes:
 
     ```sql
-        SELECT pg_reload_conf();
+    SELECT pg_reload_conf();
     ```
 
 [Limitations of TDE](tde-limitations.md){.md-button}

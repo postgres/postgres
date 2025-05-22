@@ -39,7 +39,7 @@ SELECT pg_tde_add_global_key_provider_vault_v2(
 
 For more information on related functions, see the link below:
 
-[Percona pg_tde function reference](../functions.md){.md-button}
+[Percona pg_tde Function Reference](../functions.md){.md-button}
 
 ## Next steps
 

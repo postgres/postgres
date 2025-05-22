@@ -45,8 +45,8 @@ In the future these could be extracted into separate shared libraries with an op
 
 `pg_tde` uses two kinds of keys for encryption:
 
-* Internal keys to encrypt the data. They are stored in PostgreSQL's data directory under `$PGDATA/pg_tde``.
-* Higher-level keys to encrypt internal keys. These keys are called "principal keys". They are stored externally, in a Key Management System (KMS) using the key provider API.
+* Internal keys to encrypt the data. They are stored in PostgreSQL's data directory under `$PGDATA/pg_tde`.
+* Higher-level keys to encrypt internal keys. These keys are called *principal keys*. They are stored externally, in a Key Management System (KMS) using the key provider API.
 
 `pg_tde` uses one principal key per database. Every internal key for the given database is encrypted using this principal key.
 

@@ -21,4 +21,4 @@ The following features are available for the extension:
 * Multiple Key management options
 * Logical replication of encrypted tables
 
-[Overview](index/index.md){.md-button} [Get started](install.md){.md-button}
+[Overview](index/index.md){.md-button} [Get Started](install.md){.md-button}
