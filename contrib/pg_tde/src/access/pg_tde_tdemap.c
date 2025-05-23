@@ -69,7 +69,6 @@ typedef struct TDEFileHeader
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
-static InternalKey *pg_tde_get_key_from_file(const RelFileLocator *rlocator, TDEMapEntryType key_type);
 static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, char *db_map_path, TDEMapEntry *map_entry);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
@@ -646,59 +645,6 @@ pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo
 #endif							/* !FRONTEND */
 
 /*
- * Reads the key of the required relation. It identifies its map entry and then simply
- * reads the key data from the keydata file.
- */
-static InternalKey *
-pg_tde_get_key_from_file(const RelFileLocator *rlocator, TDEMapEntryType key_type)
-{
-	TDEMapEntry map_entry;
-	TDEPrincipalKey *principal_key;
-	LWLock	   *lock_pk = tde_lwlock_enc_keys();
-	char		db_map_path[MAXPGPATH];
-	InternalKey *rel_key;
-
-	Assert(rlocator);
-
-	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
-
-	if (access(db_map_path, F_OK) == -1)
-		return NULL;
-
-	LWLockAcquire(lock_pk, LW_SHARED);
-
-	if (!pg_tde_find_map_entry(rlocator, key_type, db_map_path, &map_entry))
-	{
-		LWLockRelease(lock_pk);
-		return NULL;
-	}
-
-	/*
-	 * Get/generate a principal key, create the key for relation and get the
-	 * encrypted key with bytes to write
-	 *
-	 * We should hold the lock until the internal key is loaded to be sure the
-	 * retrieved key was encrypted with the obtained principal key. Otherwise,
-	 * the next may happen: - GetPrincipalKey returns key "PKey_1". - Some
-	 * other process rotates the Principal key and re-encrypt an Internal key
-	 * with "PKey_2". - We read the Internal key and decrypt it with "PKey_1"
-	 * (that's what we've got). As the result we return an invalid Internal
-	 * key.
-	 */
-	principal_key = GetPrincipalKey(rlocator->dbOid, LW_SHARED);
-	if (principal_key == NULL)
-		ereport(ERROR,
-				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
-
-	rel_key = tde_decrypt_rel_key(principal_key, &map_entry);
-
-	LWLockRelease(lock_pk);
-
-	return rel_key;
-}
-
-/*
  * Returns true if we find a valid match; e.g. type is not set to
  * MAP_ENTRY_EMPTY and the relNumber and spcOid matches the one provided in
  * rlocator.
@@ -986,14 +932,55 @@ pg_tde_has_smgr_key(RelFileLocator rel)
 }
 
 /*
- * Returns TDE key for a given relation.
+ * Reads the map entry of the relation and decrypts the key.
  */
 InternalKey *
 pg_tde_get_smgr_key(RelFileLocator rel)
 {
+	TDEMapEntry map_entry;
+	TDEPrincipalKey *principal_key;
+	LWLock	   *lock_pk = tde_lwlock_enc_keys();
+	char		db_map_path[MAXPGPATH];
+	InternalKey *rel_key;
+
 	Assert(rel.relNumber != InvalidRelFileNumber);
 
-	return pg_tde_get_key_from_file(&rel, TDE_KEY_TYPE_SMGR);
+	pg_tde_set_db_file_path(rel.dbOid, db_map_path);
+
+	if (access(db_map_path, F_OK) == -1)
+		return NULL;
+
+	LWLockAcquire(lock_pk, LW_SHARED);
+
+	if (!pg_tde_find_map_entry(&rel, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry))
+	{
+		LWLockRelease(lock_pk);
+		return NULL;
+	}
+
+	/*
+	 * Get/generate a principal key, create the key for relation and get the
+	 * encrypted key with bytes to write
+	 *
+	 * We should hold the lock until the internal key is loaded to be sure the
+	 * retrieved key was encrypted with the obtained principal key. Otherwise,
+	 * the next may happen: - GetPrincipalKey returns key "PKey_1". - Some
+	 * other process rotates the Principal key and re-encrypt an Internal key
+	 * with "PKey_2". - We read the Internal key and decrypt it with "PKey_1"
+	 * (that's what we've got). As the result we return an invalid Internal
+	 * key.
+	 */
+	principal_key = GetPrincipalKey(rel.dbOid, LW_SHARED);
+	if (principal_key == NULL)
+		ereport(ERROR,
+				errmsg("principal key not configured"),
+				errhint("create one using pg_tde_set_key before using encrypted tables"));
+
+	rel_key = tde_decrypt_rel_key(principal_key, &map_entry);
+
+	LWLockRelease(lock_pk);
+
+	return rel_key;
 }
 
 /*
