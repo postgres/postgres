@@ -46,26 +46,6 @@ typedef struct TDESMgrRelation
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
 static bool
-tde_smgr_is_encrypted(const RelFileLocatorBackend *smgr_rlocator)
-{
-	/* Do not try to encrypt/decrypt catalog tables */
-	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
-		return false;
-
-	return IsSMGRRelationEncrypted(*smgr_rlocator);
-}
-
-static InternalKey *
-tde_smgr_get_key(const RelFileLocatorBackend *smgr_rlocator)
-{
-	/* Do not try to encrypt/decrypt catalog tables */
-	if (IsCatalogRelationOid(smgr_rlocator->locator.relNumber))
-		return NULL;
-
-	return GetSMGRRelationKey(*smgr_rlocator);
-}
-
-static bool
 tde_smgr_should_encrypt(const RelFileLocatorBackend *smgr_rlocator, RelFileLocator *old_locator)
 {
 	/* Do not try to encrypt/decrypt catalog tables */
@@ -110,7 +90,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 		{
-			InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
+			InternalKey *int_key = GetSMGRRelationKey(reln->smgr_rlocator);
 
 			tdereln->relKey = *int_key;
 			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
@@ -181,7 +161,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 		{
-			InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
+			InternalKey *int_key = GetSMGRRelationKey(reln->smgr_rlocator);
 
 			tdereln->relKey = *int_key;
 			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
@@ -210,7 +190,7 @@ tde_mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		return;
 	else if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
 	{
-		InternalKey *int_key = tde_smgr_get_key(&reln->smgr_rlocator);
+		InternalKey *int_key = GetSMGRRelationKey(reln->smgr_rlocator);
 
 		tdereln->relKey = *int_key;
 		tdereln->encryption_status = RELATION_KEY_AVAILABLE;
@@ -279,7 +259,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 		 * Since event triggers do not fire on the standby or in recovery we
 		 * do not try to generate any new keys and instead trust the xlog.
 		 */
-		InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
+		InternalKey *key = GetSMGRRelationKey(reln->smgr_rlocator);
 
 		if (!isRedo && !key && tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
 			key = pg_tde_create_smgr_key(&reln->smgr_rlocator);
@@ -311,7 +291,7 @@ tde_mdopen(SMgrRelation reln)
 
 	mdopen(reln);
 
-	if (tde_smgr_is_encrypted(&reln->smgr_rlocator))
+	if (IsSMGRRelationEncrypted(reln->smgr_rlocator))
 	{
 		tdereln->encryption_status = RELATION_KEY_NOT_AVAILABLE;
 	}
