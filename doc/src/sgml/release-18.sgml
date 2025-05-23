@@ -469,7 +469,8 @@ Allow skip scans of btree indexes (Peter Geoghegan)
 </para>
 
 <para>
-This is effective if the earlier non-referenced columns contain few unique values.
+This allows muti-column btree indexes to be used by queries that only
+reference the second or later indexed columns.
 </para>
 </listitem>
 
