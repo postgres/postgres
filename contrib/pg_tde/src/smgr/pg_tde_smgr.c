@@ -105,8 +105,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		unsigned char *local_blocks = palloc(BLCKSZ * (nblocks + 1));
-		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		unsigned char *local_blocks = palloc_aligned(BLCKSZ * nblocks, PG_IO_ALIGN_SIZE, 0);
 		void	  **local_buffers = palloc_array(void *, nblocks);
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
@@ -123,7 +122,7 @@ tde_mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			BlockNumber bn = blocknum + i;
 			unsigned char iv[16];
 
-			local_buffers[i] = &local_blocks_aligned[i * BLCKSZ];
+			local_buffers[i] = &local_blocks[i * BLCKSZ];
 
 			CalcBlockIv(forknum, bn, tdereln->relKey.base_iv, iv);
 
@@ -177,8 +176,7 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	}
 	else
 	{
-		unsigned char *local_blocks = palloc(BLCKSZ * (1 + 1));
-		unsigned char *local_blocks_aligned = (unsigned char *) TYPEALIGN(PG_IO_ALIGN_SIZE, local_blocks);
+		unsigned char *local_blocks = palloc_aligned(BLCKSZ, PG_IO_ALIGN_SIZE, 0);
 		unsigned char iv[16];
 
 		if (tdereln->encryption_status == RELATION_KEY_NOT_AVAILABLE)
@@ -192,9 +190,9 @@ tde_mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 		CalcBlockIv(forknum, blocknum, tdereln->relKey.base_iv, iv);
 
-		AesEncrypt(tdereln->relKey.key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks_aligned);
+		AesEncrypt(tdereln->relKey.key, iv, ((unsigned char *) buffer), BLCKSZ, local_blocks);
 
-		mdextend(reln, forknum, blocknum, local_blocks_aligned, skipFsync);
+		mdextend(reln, forknum, blocknum, local_blocks, skipFsync);
 
 		pfree(local_blocks);
 	}
