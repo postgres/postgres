@@ -46,6 +46,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 #ifdef WIN32

@@ -39,6 +39,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/fmgrprotos.h"
 #include "utils/memutils.h"
+#include "utils/relcache.h"
 #include "varatt.h"
 
 /*

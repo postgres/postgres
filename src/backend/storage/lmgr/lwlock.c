@@ -178,8 +178,6 @@ static const char *const BuiltinTrancheNames[] = {
 	[LWTRANCHE_XACT_SLRU] = "XactSLRU",
 	[LWTRANCHE_PARALLEL_VACUUM_DSA] = "ParallelVacuumDSA",
 	[LWTRANCHE_AIO_URING_COMPLETION] = "AioUringCompletion",
-	[LWTRANCHE_MEMORY_CONTEXT_REPORTING_STATE] = "MemoryContextReportingState",
-	[LWTRANCHE_MEMORY_CONTEXT_REPORTING_PROC] = "MemoryContextReportingPerProcess",
 };
 
 StaticAssertDecl(lengthof(BuiltinTrancheNames) ==

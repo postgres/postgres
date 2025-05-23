@@ -50,7 +50,6 @@
 #include "storage/procsignal.h"
 #include "storage/spin.h"
 #include "storage/standby.h"
-#include "utils/memutils.h"
 #include "utils/timeout.h"
 #include "utils/timestamp.h"
 
