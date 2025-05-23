@@ -459,15 +459,12 @@ Author: Peter Geoghegan <pg@bowt.ie>
 2025-04-04 [92fe23d93] Add nbtree skip scan optimization.
 Author: Peter Geoghegan <pg@bowt.ie>
 2025-04-04 [8a510275d] Further optimize nbtree search scan key comparisons.
-Author: Peter Geoghegan <pg@bowt.ie>
-2025-04-04 [8a510275d] Further optimize nbtree search scan key comparisons.
 -->
 
 <listitem>
 <para>
 Allow skip scans of btree indexes (Peter Geoghegan)
 <ulink url="&commit_baseurl;92fe23d93">&sect;</ulink>
-<ulink url="&commit_baseurl;8a510275d">&sect;</ulink>
 <ulink url="&commit_baseurl;8a510275d">&sect;</ulink>
 </para>
 
