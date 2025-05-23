@@ -98,14 +98,21 @@ SHLIB_PREREQS = submake-libpgport
 
 SHLIB_EXPORTS = exports.txt
 
+# Appends to a comma-separated list.
+comma := ,
+define add_to_list
+$(eval $1 := $(if $($1),$($1)$(comma) $2,$2))
+endef
+
 ifeq ($(with_ssl),openssl)
-PKG_CONFIG_REQUIRES_PRIVATE = libssl, libcrypto
+$(call add_to_list,PKG_CONFIG_REQUIRES_PRIVATE,libssl)
+$(call add_to_list,PKG_CONFIG_REQUIRES_PRIVATE,libcrypto)
 endif
 
 ifeq ($(with_libcurl),yes)
 # libpq.so doesn't link against libcurl, but libpq.a needs libpq-oauth, and
 # libpq-oauth needs libcurl. Put both into *.private.
-PKG_CONFIG_REQUIRES_PRIVATE += libcurl
+$(call add_to_list,PKG_CONFIG_REQUIRES_PRIVATE,libcurl)
 %.pc: override SHLIB_LINK_INTERNAL += -lpq-oauth
 endif
 
