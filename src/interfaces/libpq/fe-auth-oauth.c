@@ -157,6 +157,14 @@ client_initial_response(PGconn *conn, bool discover)
 #define ERROR_SCOPE_FIELD "scope"
 #define ERROR_OPENID_CONFIGURATION_FIELD "openid-configuration"
 
+/*
+ * Limit the maximum number of nested objects/arrays. Because OAUTHBEARER
+ * doesn't have any defined extensions for its JSON yet, we can be much more
+ * conservative here than with libpq-oauth's MAX_OAUTH_NESTING_LEVEL; we expect
+ * a nesting level of 1 in practice.
+ */
+#define MAX_SASL_NESTING_LEVEL 8
+
 struct json_ctx
 {
 	char	   *errmsg;			/* any non-NULL value stops all processing */
@@ -196,6 +204,9 @@ oauth_json_object_start(void *state)
 	}
 
 	++ctx->nested;
+	if (ctx->nested > MAX_SASL_NESTING_LEVEL)
+		oauth_json_set_error(ctx, libpq_gettext("JSON is too deeply nested"));
+
 	return oauth_json_has_error(ctx) ? JSON_SEM_ACTION_FAILED : JSON_SUCCESS;
 }
 
@@ -254,7 +265,20 @@ oauth_json_array_start(void *state)
 							 ctx->target_field_name);
 	}
 
+	++ctx->nested;
+	if (ctx->nested > MAX_SASL_NESTING_LEVEL)
+		oauth_json_set_error(ctx, libpq_gettext("JSON is too deeply nested"));
+
 	return oauth_json_has_error(ctx) ? JSON_SEM_ACTION_FAILED : JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+oauth_json_array_end(void *state)
+{
+	struct json_ctx *ctx = state;
+
+	--ctx->nested;
+	return JSON_SUCCESS;
 }
 
 static JsonParseErrorType
@@ -519,6 +543,7 @@ handle_oauth_sasl_error(PGconn *conn, const char *msg, int msglen)
 	sem.object_end = oauth_json_object_end;
 	sem.object_field_start = oauth_json_object_field_start;
 	sem.array_start = oauth_json_array_start;
+	sem.array_end = oauth_json_array_end;
 	sem.scalar = oauth_json_scalar;
 
 	err = pg_parse_json(lex, &sem);

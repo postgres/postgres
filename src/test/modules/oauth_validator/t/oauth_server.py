@@ -7,6 +7,7 @@
 #
 
 import base64
+import functools
 import http.server
 import json
 import os
@@ -213,14 +214,32 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
     @property
     def _response_padding(self):
         """
-        If the huge_response test parameter is set to True, returns a dict
-        containing a gigantic string value, which can then be folded into a JSON
-        response.
-        """
-        if not self._get_param("huge_response", False):
-            return dict()
+        Returns a dict with any additional entries that should be folded into a
+        JSON response, as determined by test parameters provided by the client:
 
-        return {"_pad_": "x" * 1024 * 1024}
+        - huge_response: if set to True, the dict will contain a gigantic string
+          value
+
+        - nested_array: if set to nonzero, the dict will contain a deeply nested
+          array so that the top-level object has the given depth
+
+        - nested_object: if set to nonzero, the dict will contain a deeply
+          nested JSON object so that the top-level object has the given depth
+        """
+        ret = dict()
+
+        if self._get_param("huge_response", False):
+            ret["_pad_"] = "x" * 1024 * 1024
+
+        depth = self._get_param("nested_array", 0)
+        if depth:
+            ret["_arr_"] = functools.reduce(lambda x, _: [x], range(depth))
+
+        depth = self._get_param("nested_object", 0)
+        if depth:
+            ret["_obj_"] = functools.reduce(lambda x, _: {"": x}, range(depth))
+
+        return ret
 
     @property
     def _access_token(self):
