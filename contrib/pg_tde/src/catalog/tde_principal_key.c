@@ -819,47 +819,40 @@ TDEPrincipalKey *
 GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 {
 	TDEPrincipalKey *principalKey = GetPrincipalKeyNoDefault(dbOid, lockMode);
-#ifndef FRONTEND
-	TDEPrincipalKey *newPrincipalKey = NULL;
-#endif
-
-	if (principalKey != NULL)
-	{
-		return principalKey;
-	}
 
 #ifndef FRONTEND
-
-	/*
-	 * If database doesn't have dedicated principal key we should try to
-	 * fallback to default principal key.
-	 */
-
-	/* Lock is already updated to exclusive at this point */
-	principalKey = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
-
 	if (principalKey == NULL)
 	{
-		return NULL;
+		/*
+		 * If database doesn't have dedicated principal key we should try to
+		 * fallback to default principal key.
+		 */
+		TDEPrincipalKey *newPrincipalKey;
+
+		/* Lock is already updated to exclusive at this point */
+		principalKey = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
+
+		if (principalKey == NULL)
+			return NULL;
+
+		newPrincipalKey = palloc_object(TDEPrincipalKey);
+		*newPrincipalKey = *principalKey;
+		newPrincipalKey->keyInfo.databaseId = dbOid;
+
+		/*
+		 * We have to write default principal key info to database keys file.
+		 * However we cannot write XLOG records about this operation as
+		 * current funcion may be invoked during server startup/recovery where
+		 * WAL writes forbidden.
+		 */
+		pg_tde_save_principal_key(newPrincipalKey, false);
+
+		push_principal_key_to_cache(newPrincipalKey);
+
+		pfree(newPrincipalKey);
+
+		principalKey = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 	}
-
-	newPrincipalKey = palloc_object(TDEPrincipalKey);
-	*newPrincipalKey = *principalKey;
-	newPrincipalKey->keyInfo.databaseId = dbOid;
-
-	/*
-	 * We have to write default principal key info to database keys file.
-	 * However we cannot write XLOG records about this operation as current
-	 * funcion may be invoked during server startup/recovery where WAL writes
-	 * forbidden.
-	 */
-	pg_tde_save_principal_key(newPrincipalKey, false);
-
-	push_principal_key_to_cache(newPrincipalKey);
-
-	pfree(newPrincipalKey);
-
-	principalKey = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 #endif
 
 	return principalKey;
