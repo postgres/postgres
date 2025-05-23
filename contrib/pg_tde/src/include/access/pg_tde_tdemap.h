@@ -83,8 +83,6 @@ extern WALKeyCacheRec *pg_tde_fetch_wal_keys(XLogRecPtr start_lsn);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
 extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path);
 
-extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
-extern void pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator);
 extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType flags);
 
 #define PG_TDE_MAP_FILENAME			"%d_keys"
@@ -95,9 +93,10 @@ pg_tde_set_db_file_path(Oid dbOid, char *path)
 	join_path_components(path, pg_tde_get_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
 }
 
-extern bool IsSMGRRelationEncrypted(RelFileLocatorBackend rel);
-extern InternalKey *GetSMGRRelationKey(RelFileLocatorBackend rel);
-extern void DeleteSMGRRelationKey(RelFileLocatorBackend rel);
+extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key, bool write_xlog);
+extern bool pg_tde_has_smgr_key(RelFileLocator rel);
+extern InternalKey *pg_tde_get_smgr_key(RelFileLocator rel);
+extern void pg_tde_free_key_map_entry(RelFileLocator rel);
 
 extern int	pg_tde_count_relations(Oid dbOid);
 

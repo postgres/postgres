@@ -138,10 +138,9 @@ pg_tde_init(const char *datadir)
 static bool
 is_pg_tde_encypted(Oid spcOid, Oid dbOid, RelFileNumber relNumber)
 {
-	RelFileLocator locator = {.spcOid = spcOid, .dbOid = dbOid,.relNumber = relNumber};
-	RelFileLocatorBackend rlocator = {.locator = locator,.backend = INVALID_PROC_NUMBER};
+	RelFileLocator locator = {.spcOid = spcOid,.dbOid = dbOid,.relNumber = relNumber};
 
-	return IsSMGRRelationEncrypted(rlocator);
+	return pg_tde_has_smgr_key(locator);
 }
 #endif
 

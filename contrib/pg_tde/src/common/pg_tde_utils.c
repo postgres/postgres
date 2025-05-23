@@ -16,8 +16,7 @@
 
 #ifndef FRONTEND
 #include "fmgr.h"
-#include "catalog/pg_class.h"
-#include "access/pg_tde_tdemap.h"
+#include "smgr/pg_tde_smgr.h"
 #include "access/relation.h"
 #include "utils/rel.h"
 
@@ -28,7 +27,6 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 	Oid			relationOid = PG_GETARG_OID(0);
 	LOCKMODE	lockmode = AccessShareLock;
 	Relation	rel = relation_open(relationOid, lockmode);
-	RelFileLocatorBackend rlocator = {.locator = rel->rd_locator,.backend = rel->rd_backend};
 	bool		result;
 
 	if (!RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
@@ -42,7 +40,7 @@ pg_tde_is_encrypted(PG_FUNCTION_ARGS)
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("we cannot check if temporary relations from other backends are encrypted"));
 
-	result = IsSMGRRelationEncrypted(rlocator);
+	result = tde_smgr_rel_is_encrypted(RelationGetSmgr(rel));
 
 	relation_close(rel, lockmode);
 

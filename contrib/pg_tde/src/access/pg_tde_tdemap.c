@@ -20,7 +20,6 @@
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
 #include "utils/builtins.h"
-#include "utils/hsearch.h"
 #include "miscadmin.h"
 
 #include "access/pg_tde_tdemap.h"
@@ -28,6 +27,7 @@
 #include "catalog/tde_global_space.h"
 #include "catalog/tde_principal_key.h"
 #include "encryption/enc_aes.h"
+#include "encryption/enc_tde.h"
 #include "keyring/keyring_api.h"
 
 #include <openssl/rand.h>
@@ -66,24 +66,6 @@ typedef struct TDEFileHeader
 	TDESignedPrincipalKeyInfo signed_key_info;
 } TDEFileHeader;
 
-typedef struct
-{
-	RelFileLocator rel;
-	InternalKey key;
-} TempRelKeyEntry;
-
-#ifndef FRONTEND
-
-/* Arbitrarily picked small number of temporary relations */
-#define INIT_TEMP_RELS 16
-
-/*
- * Each backend has a hashtable that stores the keys for all temporary tables.
- */
-static HTAB *TempRelKeys = NULL;
-
-#endif
-
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
@@ -98,72 +80,25 @@ static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, 
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
 
 #ifndef FRONTEND
-static InternalKey *pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator);
-static InternalKey *pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator);
-static void pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type);
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
 static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
-static void pg_tde_free_key_map_entry(const RelFileLocator *rlocator);
+static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 
-InternalKey *
-pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator)
+void
+pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data, bool write_xlog)
 {
-	if (RelFileLocatorBackendIsTemp(*newrlocator))
-		return pg_tde_create_smgr_key_temp(&newrlocator->locator);
-	else
-		return pg_tde_create_smgr_key_perm(&newrlocator->locator);
-}
-
-static InternalKey *
-pg_tde_create_smgr_key_temp(const RelFileLocator *newrlocator)
-{
-	InternalKey *rel_key_data = palloc_object(InternalKey);
-	TempRelKeyEntry *entry;
-	bool		found;
-
-	pg_tde_generate_internal_key(rel_key_data, TDE_KEY_TYPE_SMGR);
-
-	if (TempRelKeys == NULL)
-	{
-		HASHCTL		ctl;
-
-		ctl.keysize = sizeof(RelFileLocator);
-		ctl.entrysize = sizeof(TempRelKeyEntry);
-		TempRelKeys = hash_create("pg_tde temporary relation keys",
-								  INIT_TEMP_RELS,
-								  &ctl,
-								  HASH_ELEM | HASH_BLOBS);
-	}
-
-	entry = (TempRelKeyEntry *) hash_search(TempRelKeys,
-											newrlocator,
-											HASH_ENTER, &found);
-	Assert(!found);
-
-	entry->key = *rel_key_data;
-
-	return rel_key_data;
-}
-
-static InternalKey *
-pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
-{
-	InternalKey *rel_key_data = palloc_object(InternalKey);
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	XLogRelKey	xlrec = {
-		.rlocator = *newrlocator,
+		.rlocator = rel,
 	};
 
-	pg_tde_generate_internal_key(rel_key_data, TDE_KEY_TYPE_SMGR);
-
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
-	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
+	principal_key = GetPrincipalKey(rel.dbOid, LW_EXCLUSIVE);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -171,65 +106,19 @@ pg_tde_create_smgr_key_perm(const RelFileLocator *newrlocator)
 				errhint("create one using pg_tde_set_key before using encrypted tables"));
 	}
 
-	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
+	pg_tde_write_key_map_entry(&rel, rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
 
-	/*
-	 * It is fine to write the to WAL after writing to the file since we have
-	 * not WAL logged the SMGR CREATE event either.
-	 */
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
-
-	return rel_key_data;
-}
-
-void
-pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator)
-{
-	InternalKey rel_key_data;
-	InternalKey *old_key;
-	TDEPrincipalKey *principal_key;
-	LWLock	   *lock_pk = tde_lwlock_enc_keys();
-
-	if ((old_key = pg_tde_get_key_from_file(newrlocator, TDE_KEY_TYPE_SMGR)))
+	if (write_xlog)
 	{
-		pfree(old_key);
-		return;
+		/*
+		 * It is fine to write the to WAL after writing to the file since we
+		 * have not WAL logged the SMGR CREATE event either.
+		 */
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 	}
-
-	pg_tde_generate_internal_key(&rel_key_data, TDE_KEY_TYPE_SMGR);
-
-	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
-	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
-	if (principal_key == NULL)
-	{
-		ereport(ERROR,
-				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
-	}
-
-	pg_tde_write_key_map_entry(newrlocator, &rel_key_data, principal_key);
-	LWLockRelease(lock_pk);
-}
-
-static void
-pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type)
-{
-	int_key->type = entry_type;
-	int_key->start_lsn = InvalidXLogRecPtr;
-
-	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate internal key: %s",
-					   ERR_error_string(ERR_get_error(), NULL)));
-	if (!RAND_bytes(int_key->base_iv, INTERNAL_KEY_IV_LEN))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate IV: %s",
-					   ERR_error_string(ERR_get_error(), NULL)));
 }
 
 const char *
@@ -273,18 +162,6 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
 
 	LWLockRelease(tde_lwlock_enc_keys());
-}
-
-void
-DeleteSMGRRelationKey(RelFileLocatorBackend rel)
-{
-	if (RelFileLocatorBackendIsTemp(rel))
-	{
-		Assert(TempRelKeys);
-		hash_search(TempRelKeys, &rel.locator, HASH_REMOVE, NULL);
-	}
-	else
-		pg_tde_free_key_map_entry(&rel.locator);
 }
 
 /*
@@ -463,7 +340,7 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
  * concurrent in place updates leading to data conflicts.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
 {
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
@@ -518,16 +395,14 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, InternalKey *rel_key_
  * This fucntion is called by the pg_tde SMGR when storage is unlinked on
  * transaction commit/abort.
  */
-static void
-pg_tde_free_key_map_entry(const RelFileLocator *rlocator)
+void
+pg_tde_free_key_map_entry(const RelFileLocator rlocator)
 {
 	char		db_map_path[MAXPGPATH];
 	File		map_fd;
 	off_t		curr_pos = 0;
 
-	Assert(rlocator);
-
-	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
+	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
@@ -542,7 +417,7 @@ pg_tde_free_key_map_entry(const RelFileLocator *rlocator)
 		if (!pg_tde_read_one_map_entry(map_fd, &map_entry, &curr_pos))
 			break;
 
-		if (map_entry.type != MAP_ENTRY_EMPTY && map_entry.spcOid == rlocator->spcOid && map_entry.relNumber == rlocator->relNumber)
+		if (map_entry.type != MAP_ENTRY_EMPTY && map_entry.spcOid == rlocator.spcOid && map_entry.relNumber == rlocator.relNumber)
 		{
 			TDEMapEntry empty_map_entry = {
 				.type = MAP_ENTRY_EMPTY,
@@ -1084,57 +959,27 @@ pg_tde_get_principal_key_info(Oid dbOid)
 	return signed_key_info;
 }
 
-static InternalKey *
-pg_tde_get_temporary_rel_key(const RelFileLocator *rel)
-{
-#ifndef FRONTEND
-	TempRelKeyEntry *entry;
-
-	if (TempRelKeys == NULL)
-		return NULL;
-
-	entry = hash_search(TempRelKeys, rel, HASH_FIND, NULL);
-
-	if (entry)
-	{
-		InternalKey *key = palloc_object(InternalKey);
-
-		*key = entry->key;
-		return key;
-	}
-#endif
-
-	return NULL;
-}
-
 /*
  * Figures out whether a relation is encrypted or not, but without trying to
  * decrypt the key if it is.
  */
 bool
-IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
+pg_tde_has_smgr_key(RelFileLocator rel)
 {
 	bool		result;
 	TDEMapEntry map_entry;
 	char		db_map_path[MAXPGPATH];
 
-	Assert(rel.locator.relNumber != InvalidRelFileNumber);
+	Assert(rel.relNumber != InvalidRelFileNumber);
 
-	if (RelFileLocatorBackendIsTemp(rel))
-#ifndef FRONTEND
-		return TempRelKeys && hash_search(TempRelKeys, &rel.locator, HASH_FIND, NULL);
-#else
-		return false;
-#endif
-
-	pg_tde_set_db_file_path(rel.locator.dbOid, db_map_path);
+	pg_tde_set_db_file_path(rel.dbOid, db_map_path);
 
 	if (access(db_map_path, F_OK) == -1)
 		return false;
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
 
-	result = pg_tde_find_map_entry(&rel.locator, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry);
+	result = pg_tde_find_map_entry(&rel, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 	return result;
@@ -1144,14 +989,11 @@ IsSMGRRelationEncrypted(RelFileLocatorBackend rel)
  * Returns TDE key for a given relation.
  */
 InternalKey *
-GetSMGRRelationKey(RelFileLocatorBackend rel)
+pg_tde_get_smgr_key(RelFileLocator rel)
 {
-	Assert(rel.locator.relNumber != InvalidRelFileNumber);
+	Assert(rel.relNumber != InvalidRelFileNumber);
 
-	if (RelFileLocatorBackendIsTemp(rel))
-		return pg_tde_get_temporary_rel_key(&rel.locator);
-	else
-		return pg_tde_get_key_from_file(&rel.locator, TDE_KEY_TYPE_SMGR);
+	return pg_tde_get_key_from_file(&rel, TDE_KEY_TYPE_SMGR);
 }
 
 /*

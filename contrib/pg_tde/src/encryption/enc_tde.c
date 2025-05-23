@@ -7,6 +7,13 @@
 #include "encryption/enc_aes.h"
 #include "storage/bufmgr.h"
 
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
+#endif
+
+#include <openssl/rand.h>
+#include <openssl/err.h>
+
 #define AES_BLOCK_SIZE 		        16
 #define NUM_AES_BLOCKS_IN_BATCH     200
 #define DATA_BYTES_PER_AES_BATCH    (NUM_AES_BLOCKS_IN_BATCH * AES_BLOCK_SIZE)
@@ -22,6 +29,24 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
 	out_hex[32] = 0;
 }
 #endif
+
+void
+pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type)
+{
+	int_key->type = entry_type;
+	int_key->start_lsn = InvalidXLogRecPtr;
+
+	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate internal key: %s",
+					   ERR_error_string(ERR_get_error(), NULL)));
+	if (!RAND_bytes(int_key->base_iv, INTERNAL_KEY_IV_LEN))
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate IV: %s",
+					   ERR_error_string(ERR_get_error(), NULL)));
+}
 
 /*
  * Encrypts/decrypts `data` with a given `key`. The result is written to `out`.

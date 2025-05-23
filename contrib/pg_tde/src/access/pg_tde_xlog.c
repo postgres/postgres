@@ -25,6 +25,7 @@
 
 #include "access/pg_tde_xlog.h"
 #include "encryption/enc_tde.h"
+#include "smgr/pg_tde_smgr.h"
 
 static void tdeheap_rmgr_redo(XLogReaderState *record);
 static void tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record);
@@ -52,7 +53,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		pg_tde_create_smgr_key_perm_redo(&xlrec->rlocator);
+		tde_smgr_create_key_redo(&xlrec->rlocator);
 	}
 	else if (info == XLOG_TDE_ADD_PRINCIPAL_KEY)
 	{
