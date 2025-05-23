@@ -2211,6 +2211,12 @@ do_autovacuum(void)
 				}
 			}
 		}
+
+		/* Release stuff to avoid per-relation leakage */
+		if (relopts)
+			pfree(relopts);
+		if (tabentry)
+			pfree(tabentry);
 	}
 
 	table_endscan(relScan);
@@ -2227,7 +2233,8 @@ do_autovacuum(void)
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		PgStat_StatTabEntry *tabentry;
 		Oid			relid;
-		AutoVacOpts *relopts = NULL;
+		AutoVacOpts *relopts;
+		bool		free_relopts = false;
 		bool		dovacuum;
 		bool		doanalyze;
 		bool		wraparound;
@@ -2245,7 +2252,9 @@ do_autovacuum(void)
 		 * main rel
 		 */
 		relopts = extract_autovac_opts(tuple, pg_class_desc);
-		if (relopts == NULL)
+		if (relopts)
+			free_relopts = true;
+		else
 		{
 			av_relation *hentry;
 			bool		found;
@@ -2266,6 +2275,12 @@ do_autovacuum(void)
 		/* ignore analyze for toast tables */
 		if (dovacuum)
 			table_oids = lappend_oid(table_oids, relid);
+
+		/* Release stuff to avoid leakage */
+		if (free_relopts)
+			pfree(relopts);
+		if (tabentry)
+			pfree(tabentry);
 	}
 
 	table_endscan(relScan);
@@ -2637,6 +2652,8 @@ deleted:
 		pg_atomic_test_set_flag(&MyWorkerInfo->wi_dobalance);
 	}
 
+	list_free(table_oids);
+
 	/*
 	 * Perform additional work items, as requested by backends.
 	 */
@@ -2818,8 +2835,8 @@ deleted2:
 /*
  * extract_autovac_opts
  *
- * Given a relation's pg_class tuple, return the AutoVacOpts portion of
- * reloptions, if set; otherwise, return NULL.
+ * Given a relation's pg_class tuple, return a palloc'd copy of the
+ * AutoVacOpts portion of reloptions, if set; otherwise, return NULL.
  *
  * Note: callers do not have a relation lock on the table at this point,
  * so the table could have been dropped, and its catalog rows gone, after
@@ -2868,6 +2885,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	autovac_table *tab = NULL;
 	bool		wraparound;
 	AutoVacOpts *avopts;
+	bool		free_avopts = false;
 
 	/* fetch the relation's relcache entry */
 	classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(relid));
@@ -2880,8 +2898,10 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 	 * main table reloptions if the toast table itself doesn't have.
 	 */
 	avopts = extract_autovac_opts(classTup, pg_class_desc);
-	if (classForm->relkind == RELKIND_TOASTVALUE &&
-		avopts == NULL && table_toast_map != NULL)
+	if (avopts)
+		free_avopts = true;
+	else if (classForm->relkind == RELKIND_TOASTVALUE &&
+			 table_toast_map != NULL)
 	{
 		av_relation *hentry;
 		bool		found;
@@ -2983,6 +3003,8 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 						 avopts->vacuum_cost_delay >= 0));
 	}
 
+	if (free_avopts)
+		pfree(avopts);
 	heap_freetuple(classTup);
 	return tab;
 }
@@ -3013,6 +3035,10 @@ recheck_relation_needs_vacanalyze(Oid relid,
 	relation_needs_vacanalyze(relid, avopts, classForm, tabentry,
 							  effective_multixact_freeze_max_age,
 							  dovacuum, doanalyze, wraparound);
+
+	/* Release tabentry to avoid leakage */
+	if (tabentry)
+		pfree(tabentry);
 
 	/* ignore ANALYZE for toast tables */
 	if (classForm->relkind == RELKIND_TOASTVALUE)
@@ -3236,18 +3262,22 @@ autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 	VacuumRelation *rel;
 	List	   *rel_list;
 	MemoryContext vac_context;
+	MemoryContext old_context;
 
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(tab);
 
-	/* Set up one VacuumRelation target, identified by OID, for vacuum() */
-	rangevar = makeRangeVar(tab->at_nspname, tab->at_relname, -1);
-	rel = makeVacuumRelation(rangevar, tab->at_relid, NIL);
-	rel_list = list_make1(rel);
-
+	/* Create a context that vacuum() can use as cross-transaction storage */
 	vac_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Vacuum",
 										ALLOCSET_DEFAULT_SIZES);
+
+	/* Set up one VacuumRelation target, identified by OID, for vacuum() */
+	old_context = MemoryContextSwitchTo(vac_context);
+	rangevar = makeRangeVar(tab->at_nspname, tab->at_relname, -1);
+	rel = makeVacuumRelation(rangevar, tab->at_relid, NIL);
+	rel_list = list_make1(rel);
+	MemoryContextSwitchTo(old_context);
 
 	vacuum(rel_list, &tab->at_params, bstrategy, vac_context, true);
 
