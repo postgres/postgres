@@ -13,12 +13,14 @@
 #include "catalog/tde_principal_key.h"
 #include "common/pg_tde_utils.h"
 
-/* Map entry flags */
-#define MAP_ENTRY_EMPTY					0x00
-#define TDE_KEY_TYPE_SMGR				0x02
-#define TDE_KEY_TYPE_GLOBAL				0x04
-#define TDE_KEY_TYPE_WAL_UNENCRYPTED	0x08
-#define TDE_KEY_TYPE_WAL_ENCRYPTED		0x10
+typedef enum
+{
+	MAP_ENTRY_EMPTY = 0,
+	TDE_KEY_TYPE_SMGR = 1,
+	TDE_KEY_TYPE_WAL_UNENCRYPTED = 2,
+	TDE_KEY_TYPE_WAL_ENCRYPTED = 3,
+	TDE_KEY_TYPE_WAL_INVALID = 4,
+} TDEMapEntryType;
 
 #define INTERNAL_KEY_LEN 16
 #define INTERNAL_KEY_IV_LEN 16
@@ -31,12 +33,6 @@ typedef struct InternalKey
 
 	XLogRecPtr	start_lsn;
 } InternalKey;
-
-#define WALKeySetInvalid(key) \
-	((key)->type &= ~(TDE_KEY_TYPE_WAL_ENCRYPTED | TDE_KEY_TYPE_WAL_UNENCRYPTED))
-#define WALKeyIsValid(key) \
-	(((key)->type & TDE_KEY_TYPE_WAL_UNENCRYPTED) != 0 || \
-	((key)->type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
 
 #define MAP_ENTRY_IV_SIZE 16
 #define MAP_ENTRY_AEAD_TAG_SIZE 16
@@ -53,7 +49,7 @@ typedef struct TDEMapEntry
 {
 	Oid			spcOid;
 	RelFileNumber relNumber;
-	uint32		flags;
+	uint32		type;
 	InternalKey enc_key;
 	/* IV and tag used when encrypting the key itself */
 	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
@@ -89,7 +85,7 @@ extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path
 
 extern InternalKey *pg_tde_create_smgr_key(const RelFileLocatorBackend *newrlocator);
 extern void pg_tde_create_smgr_key_perm_redo(const RelFileLocator *newrlocator);
-extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, uint32 flags);
+extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType flags);
 
 #define PG_TDE_MAP_FILENAME			"%d_keys"
 
