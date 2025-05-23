@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2025-??-??, CURRENT AS OF 2025-05-01</para>
+   <para>2025-??-??, CURRENT AS OF 2025-05-23</para>
   </formalpara>
 
   <sect2 id="release-18-highlights">
@@ -1212,12 +1212,15 @@ This is useful for operating system configuration.
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2025-03-19 [4f7f7b037] extension_control_path
+Author: Peter Eisentraut <peter@eisentraut.org>
+2025-05-02 [81eaaa2c4] Make "directory" setting work with extension_control_pat
 -->
 
 <listitem>
 <para>
 Add server variable extension_control_path to specify the location of extension control files (Peter Eisentraut, Matheus Alcantara)
 <ulink url="&commit_baseurl;4f7f7b037">&sect;</ulink>
+<ulink url="&commit_baseurl;81eaaa2c4">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2582,12 +2585,15 @@ Add pg_dump options --with-schema, --with-data, and --with-statistics (Jeff Davi
 <!--
 Author: Nathan Bossart <nathan@postgresql.org>
 2025-03-25 [9c49f0e8c] pg_dump: Add - -sequence-data.
+Author: Nathan Bossart <nathan@postgresql.org>
+2025-05-07 [acea3fc49] pg_dumpall: Add - -sequence-data.
 -->
 
 <listitem>
 <para>
-Add pg_dump option --sequence-data to dump sequence data that would normally be excluded (Nathan Bossart)
+Add pg_dump and pg_dumpall option --sequence-data to dump sequence data that would normally be excluded (Nathan Bossart)
 <ulink url="&commit_baseurl;9c49f0e8c">&sect;</ulink>
+<ulink url="&commit_baseurl;acea3fc49">&sect;</ulink>
 </para>
 </listitem>
 
@@ -2830,6 +2836,18 @@ Separate the loading and running of injection points (Michael Paquier, Heikki Li
 
 <para>
 Injection points can now be created, but not run, via INJECTION_POINT_LOAD(), and such injection points can be run via INJECTION_POINT_CACHED().
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-05-10 [371f2db8b] Add support for runtime arguments in injection points
+-->
+
+<listitem>
+<para>
+Support runtime arguments in injection points (Michael Paquier)
+<ulink url="&commit_baseurl;371f2db8b">&sect;</ulink>
 </para>
 </listitem>
 
