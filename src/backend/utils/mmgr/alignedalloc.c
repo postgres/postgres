@@ -45,6 +45,7 @@ AlignedAllocFree(void *pointer)
 			 GetMemoryChunkContext(unaligned)->name, chunk);
 #endif
 
+	/* Recursively pfree the unaligned chunk */
 	pfree(unaligned);
 }
 
@@ -96,18 +97,32 @@ AlignedAllocRealloc(void *pointer, Size size, int flags)
 	Assert(old_size >= redirchunk->requested_size);
 #endif
 
+	/*
+	 * To keep things simple, we always allocate a new aligned chunk and copy
+	 * data into it.  Because of the above inaccuracy, this may end in copying
+	 * more data than was in the original allocation request size, but that
+	 * should be OK.
+	 */
 	ctx = GetMemoryChunkContext(unaligned);
 	newptr = MemoryContextAllocAligned(ctx, size, alignto, flags);
 
-	/*
-	 * We may memcpy beyond the end of the original allocation request size,
-	 * so we must mark the entire allocation as defined.
-	 */
-	if (likely(newptr != NULL))
+	/* Cope cleanly with OOM */
+	if (unlikely(newptr == NULL))
 	{
-		VALGRIND_MAKE_MEM_DEFINED(pointer, old_size);
-		memcpy(newptr, pointer, Min(size, old_size));
+		VALGRIND_MAKE_MEM_NOACCESS(redirchunk, sizeof(MemoryChunk));
+		return MemoryContextAllocationFailure(ctx, size, flags);
 	}
+
+	/*
+	 * We may memcpy more than the original allocation request size, which
+	 * would result in trying to copy trailing bytes that the original
+	 * MemoryContextAllocAligned call marked NOACCESS.  So we must mark the
+	 * entire old_size as defined.  That's slightly annoying, but probably not
+	 * worth improving.
+	 */
+	VALGRIND_MAKE_MEM_DEFINED(pointer, old_size);
+	memcpy(newptr, pointer, Min(size, old_size));
+
 	pfree(unaligned);
 
 	return newptr;
