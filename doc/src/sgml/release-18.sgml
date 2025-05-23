@@ -1316,7 +1316,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Change the default CREATE SUBSCRIPTION streaming option from "off" to "parallel" (Hayato Kuroda, Masahiko Sawada, Peter Smith, Amit Kapila)
+Change the default CREATE SUBSCRIPTION streaming option from "off" to "parallel" (Vignesh C)
 <ulink url="&commit_baseurl;1bf1140be">&sect;</ulink>
 </para>
 </listitem>
