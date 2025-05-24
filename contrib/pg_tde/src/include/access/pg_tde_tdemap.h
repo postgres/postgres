@@ -44,8 +44,8 @@ typedef struct InternalKey
 typedef struct
 {
 	TDEPrincipalKeyInfo data;
-	unsigned char sign_iv[16];
-	unsigned char aead_tag[16];
+	unsigned char sign_iv[MAP_ENTRY_IV_SIZE];
+	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
 } TDESignedPrincipalKeyInfo;
 
 /* We do not need the dbOid since the entries are stored in a file per db */

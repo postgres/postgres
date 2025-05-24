@@ -394,7 +394,12 @@ pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	AesGcmEncrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
+	AesGcmEncrypt(principal_key->keyData,
+				  signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE,
+				  (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data),
+				  NULL, 0,
+				  NULL,
+				  signed_key_info->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 
 static void
@@ -410,7 +415,12 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	AesGcmEncrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), rel_key_data->key, INTERNAL_KEY_LEN, map_entry->enc_key.key, map_entry->aead_tag);
+	AesGcmEncrypt(principal_key->keyData,
+				  map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
+				  (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
+				  rel_key_data->key, INTERNAL_KEY_LEN,
+				  map_entry->enc_key.key,
+				  map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 
 static void
@@ -883,7 +893,12 @@ pg_tde_count_relations(Oid dbOid)
 bool
 pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
 {
-	return AesGcmDecrypt(principal_key->keyData, signed_key_info->sign_iv, (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data), NULL, 0, NULL, signed_key_info->aead_tag);
+	return AesGcmDecrypt(principal_key->keyData,
+						 signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE,
+						 (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data),
+						 NULL, 0,
+						 NULL,
+						 signed_key_info->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 
 static InternalKey *
@@ -895,7 +910,12 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 
 	*rel_key_data = map_entry->enc_key;
 
-	if (!AesGcmDecrypt(principal_key->keyData, map_entry->entry_iv, (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key), map_entry->enc_key.key, INTERNAL_KEY_LEN, rel_key_data->key, map_entry->aead_tag))
+	if (!AesGcmDecrypt(principal_key->keyData,
+					   map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
+					   (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
+					   map_entry->enc_key.key, INTERNAL_KEY_LEN,
+					   rel_key_data->key,
+					   map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE))
 		ereport(ERROR,
 				errmsg("Failed to decrypt key, incorrect principal key or corrupted key file"));
 

@@ -133,7 +133,7 @@ AesDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned cha
 }
 
 void
-AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *aad, int aad_len, const unsigned char *in, int in_len, unsigned char *out, unsigned char *tag)
+AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, int iv_len, const unsigned char *aad, int aad_len, const unsigned char *in, int in_len, unsigned char *out, unsigned char *tag, int tag_len)
 {
 	int			out_len;
 	int			out_len_final;
@@ -153,7 +153,7 @@ AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 		ereport(ERROR,
 				errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL) == 0)
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) == 0)
 		ereport(ERROR,
 				errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
@@ -173,7 +173,7 @@ AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 		ereport(ERROR,
 				errmsg("EVP_CipherFinal_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag) == 0)
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, tag_len, tag) == 0)
 		ereport(ERROR,
 				errmsg("EVP_CTRL_GCM_GET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
@@ -189,7 +189,7 @@ AesGcmEncrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 }
 
 bool
-AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned char *aad, int aad_len, const unsigned char *in, int in_len, unsigned char *out, unsigned char *tag)
+AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, int iv_len, const unsigned char *aad, int aad_len, const unsigned char *in, int in_len, unsigned char *out, unsigned char *tag, int tag_len)
 {
 	int			out_len;
 	int			out_len_final;
@@ -208,7 +208,7 @@ AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 		ereport(ERROR,
 				errmsg("EVP_CIPHER_CTX_set_padding failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL) == 0)
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, iv_len, NULL) == 0)
 		ereport(ERROR,
 				errmsg("EVP_CTRL_GCM_SET_IVLEN failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
@@ -216,7 +216,7 @@ AesGcmDecrypt(const unsigned char *key, const unsigned char *iv, const unsigned 
 		ereport(ERROR,
 				errmsg("EVP_EncryptInit_ex failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag) == 0)
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, tag_len, tag) == 0)
 		ereport(ERROR,
 				errmsg("EVP_CTRL_GCM_SET_TAG failed. OpenSSL error: %s", ERR_error_string(ERR_get_error(), NULL)));
 
