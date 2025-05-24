@@ -38,8 +38,8 @@ typedef struct InternalKey
 	(((key)->type & TDE_KEY_TYPE_WAL_UNENCRYPTED) != 0 || \
 	((key)->type & TDE_KEY_TYPE_WAL_ENCRYPTED) != 0)
 
-#define MAP_ENTRY_EMPTY_IV_SIZE 16
-#define MAP_ENTRY_EMPTY_AEAD_TAG_SIZE 16
+#define MAP_ENTRY_IV_SIZE 16
+#define MAP_ENTRY_AEAD_TAG_SIZE 16
 
 typedef struct
 {
@@ -56,8 +56,8 @@ typedef struct TDEMapEntry
 	uint32		flags;
 	InternalKey enc_key;
 	/* IV and tag used when encrypting the key itself */
-	unsigned char entry_iv[MAP_ENTRY_EMPTY_IV_SIZE];
-	unsigned char aead_tag[MAP_ENTRY_EMPTY_AEAD_TAG_SIZE];
+	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
+	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
 } TDEMapEntry;
 
 typedef struct XLogRelKey

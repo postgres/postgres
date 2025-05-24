@@ -389,7 +389,7 @@ pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const
 {
 	signed_key_info->data = principal_key->keyInfo;
 
-	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_EMPTY_IV_SIZE))
+	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE))
 		ereport(ERROR,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
@@ -405,7 +405,7 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 	map_entry->flags = rel_key_data->type;
 	map_entry->enc_key = *rel_key_data;
 
-	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_EMPTY_IV_SIZE))
+	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_IV_SIZE))
 		ereport(ERROR,
 				errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
