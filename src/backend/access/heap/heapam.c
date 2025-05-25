@@ -1857,6 +1857,15 @@ heap_get_latest_tid(TableScanDesc sscan,
 	 */
 	Assert(ItemPointerIsValid(tid));
 
+	if (relation->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+	{
+		/* UnlockReleaseBuffer happens below in this function */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot delete from a blockchain table"),
+				 errdetail("DELETE operations are not allowed on blockchain tables.")));
+	}
+
 	/*
 	 * Loop to chase down t_ctid links.  At top of loop, ctid is the tuple we
 	 * need to examine, and *tid is the TID we will return if ctid turns out
@@ -2765,6 +2774,17 @@ heap_delete(Relation relation, ItemPointer tid,
 
 	Assert(ItemPointerIsValid(tid));
 
+	if (relation->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+	{
+		UnlockReleaseBuffer(buffer);
+		if (vmbuffer != InvalidBuffer)
+			ReleaseBuffer(vmbuffer);
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot delete from a blockchain table"),
+				 errdetail("DELETE operations are not allowed on blockchain tables.")));
+	}
+
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combo CID.
 	 * Other workers might need that combo CID for visibility checks, and we
@@ -3255,6 +3275,15 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 				infomask2_new_tuple;
 
 	Assert(ItemPointerIsValid(otid));
+
+	if (relation->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+	{
+		/* UnlockReleaseBuffer happens below in this function */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot update a blockchain table"),
+				 errdetail("UPDATE operations are not allowed on blockchain tables.")));
+	}
 
 	/* Cheap, simplistic check that the tuple matches the rel's rowtype. */
 	Assert(HeapTupleHeaderGetNatts(newtup->t_data) <=

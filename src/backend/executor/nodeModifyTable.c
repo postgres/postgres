@@ -4061,6 +4061,18 @@ ExecModifyTable(PlanState *pstate)
 	resultRelInfo = node->resultRelInfo + node->mt_lastResultIndex;
 	subplanstate = outerPlanState(node);
 
+	/*
+	 * Check if the target relation is a blockchain table and if the operation
+	 * is UPDATE or DELETE. If so, raise an error.
+	 */
+	if (resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE &&
+		(operation == CMD_UPDATE || operation == CMD_DELETE))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("UPDATE and DELETE operations are not allowed on blockchain tables")));
+	}
+
 	/* Set global context */
 	context.mtstate = node;
 	context.epqstate = &node->mt_epqstate;
@@ -4344,6 +4356,12 @@ ExecModifyTable(PlanState *pstate)
 				break;
 
 			case CMD_UPDATE:
+				if (resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("UPDATE operations are not allowed on blockchain tables")));
+				}
 				tuplock = false;
 
 				/* Initialize projection info if first time for this table */
@@ -4388,6 +4406,12 @@ ExecModifyTable(PlanState *pstate)
 				break;
 
 			case CMD_DELETE:
+				if (resultRelInfo->ri_RelationDesc->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("DELETE operations are not allowed on blockchain tables")));
+				}
 				slot = ExecDelete(&context, resultRelInfo, tupleid, oldtuple,
 								  true, false, node->canSetTag, NULL, NULL, NULL);
 				break;
