@@ -45,6 +45,8 @@ errdetail_relkind_not_supported(char relkind)
 			return errdetail("This operation is not supported for partitioned tables.");
 		case RELKIND_PARTITIONED_INDEX:
 			return errdetail("This operation is not supported for partitioned indexes.");
+		case RELKIND_BLOCKCHAIN_TABLE:
+			return errdetail("This operation is not supported for blockchain tables.");
 		default:
 			elog(ERROR, "unrecognized relkind: '%c'", relkind);
 			return 0;

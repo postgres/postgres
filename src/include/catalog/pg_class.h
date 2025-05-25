@@ -174,6 +174,7 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 #define		  RELKIND_FOREIGN_TABLE   'f'	/* foreign table */
 #define		  RELKIND_PARTITIONED_TABLE 'p' /* partitioned table */
 #define		  RELKIND_PARTITIONED_INDEX 'I' /* partitioned index */
+#define		  RELKIND_BLOCKCHAIN_TABLE 'b'	/* blockchain table */
 
 #define		  RELPERSISTENCE_PERMANENT	'p' /* regular table */
 #define		  RELPERSISTENCE_UNLOGGED	'u' /* unlogged permanent table */
@@ -202,7 +203,8 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 	 (relkind) == RELKIND_INDEX || \
 	 (relkind) == RELKIND_SEQUENCE || \
 	 (relkind) == RELKIND_TOASTVALUE || \
-	 (relkind) == RELKIND_MATVIEW)
+	 (relkind) == RELKIND_MATVIEW || \
+	 (relkind) == RELKIND_BLOCKCHAIN_TABLE)
 
 #define RELKIND_HAS_PARTITIONS(relkind) \
 	((relkind) == RELKIND_PARTITIONED_TABLE || \
@@ -229,7 +231,8 @@ MAKE_SYSCACHE(RELNAMENSP, pg_class_relname_nsp_index, 128);
 #define RELKIND_HAS_TABLE_AM(relkind) \
 	((relkind) == RELKIND_RELATION || \
 	 (relkind) == RELKIND_TOASTVALUE || \
-	 (relkind) == RELKIND_MATVIEW)
+	 (relkind) == RELKIND_MATVIEW || \
+	 (relkind) == RELKIND_BLOCKCHAIN_TABLE)
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 

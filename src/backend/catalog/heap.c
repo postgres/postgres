@@ -1137,6 +1137,7 @@ heap_create_with_catalog(const char *relname,
 	Oid			existing_relid;
 	Oid			old_type_oid;
 	Oid			new_type_oid;
+	bool		is_blockchain_table = false; /* Add this line */
 
 	/* By default set to InvalidOid unless overridden by binary-upgrade */
 	RelFileNumber relfilenumber = InvalidRelFileNumber;
@@ -1186,6 +1187,13 @@ heap_create_with_catalog(const char *relname,
 					 errhint("A relation has an associated type of the same name, "
 							 "so you must use a name that doesn't conflict "
 							 "with any existing type.")));
+	}
+
+	/* Check if we're creating a blockchain table */
+	if (relkind == RELKIND_RELATION && tupdesc->tdhasblockchain) /* Assuming tdhasblockchain is set in CreateStmt */
+	{
+		is_blockchain_table = true;
+		relkind = RELKIND_BLOCKCHAIN_TABLE;
 	}
 
 	/*
@@ -1276,6 +1284,7 @@ heap_create_with_catalog(const char *relname,
 			case RELKIND_MATVIEW:
 			case RELKIND_FOREIGN_TABLE:
 			case RELKIND_PARTITIONED_TABLE:
+			case RELKIND_BLOCKCHAIN_TABLE: /* Add this line */
 				relacl = get_user_default_acl(OBJECT_TABLE, ownerid,
 											  relnamespace);
 				break;
@@ -1328,7 +1337,8 @@ heap_create_with_catalog(const char *relname,
 	if (!(relkind == RELKIND_SEQUENCE ||
 		  relkind == RELKIND_TOASTVALUE ||
 		  relkind == RELKIND_INDEX ||
-		  relkind == RELKIND_PARTITIONED_INDEX))
+		  relkind == RELKIND_PARTITIONED_INDEX ||
+		  relkind == RELKIND_BLOCKCHAIN_TABLE)) /* Add this line */
 	{
 		Oid			new_array_oid;
 		ObjectAddress new_type_addr;
@@ -1448,6 +1458,7 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (relkind != RELKIND_COMPOSITE_TYPE &&
 		relkind != RELKIND_TOASTVALUE &&
+		relkind != RELKIND_BLOCKCHAIN_TABLE && /* Add this line */
 		!IsBootstrapProcessingMode())
 	{
 		ObjectAddress myself,
@@ -1481,7 +1492,7 @@ heap_create_with_catalog(const char *relname,
 		 * main table depends on it.  Partitioned tables may not have an
 		 * access method set.
 		 */
-		if ((RELKIND_HAS_TABLE_AM(relkind) && relkind != RELKIND_TOASTVALUE) ||
+		if ((RELKIND_HAS_TABLE_AM(relkind) && relkind != RELKIND_TOASTVALUE && relkind != RELKIND_BLOCKCHAIN_TABLE) || /* Modify this line */
 			(relkind == RELKIND_PARTITIONED_TABLE && OidIsValid(accessmtd)))
 		{
 			ObjectAddressSet(referenced, AccessMethodRelationId, accessmtd);
