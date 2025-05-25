@@ -766,7 +766,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	RANGE READ REAL REASSIGN RECURSIVE REF_P REFERENCES REFERENCING
 	REFRESH REINDEX RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA
 	RESET RESTART RESTRICT RETURN RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK ROLLUP
-	ROUTINE ROUTINES ROW ROWS RULE
+	ROUTINE ROUTINES ROW ROWS RULE BLOCKCHAIN
 
 	SAVEPOINT SCALAR SCHEMA SCHEMAS SCROLL SEARCH SECOND_P SECURITY SELECT
 	SEQUENCE SEQUENCES
@@ -3623,8 +3623,30 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $12;
 					n->tablespacename = $13;
 					n->if_not_exists = false;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
+		| CREATE OptTemp BLOCKCHAIN TABLE qualified_name '(' OptTableElementList ')'
+			OptInherit OptPartitionSpec table_access_method_clause OptWith
+			OnCommitOption OptTableSpace
+			{
+				CreateStmt *n = makeNode(CreateStmt);
+
+				$5->relpersistence = $2;
+				n->relation = $5;
+				n->tableElts = $7;
+				n->inhRelations = $9;
+				n->partspec = $10;
+				n->ofTypename = NULL;
+				n->constraints = NIL;
+				n->accessMethod = $11;
+				n->options = $12;
+				n->oncommit = $13;
+				n->tablespacename = $14;
+				n->if_not_exists = false;
+				n->relation->blockchain = true;
+				$$ = (Node *) n;
+			}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
 			OptTableElementList ')' OptInherit OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
@@ -3643,8 +3665,30 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $15;
 					n->tablespacename = $16;
 					n->if_not_exists = true;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
+		| CREATE OptTemp BLOCKCHAIN TABLE IF_P NOT EXISTS qualified_name '('
+			OptTableElementList ')' OptInherit OptPartitionSpec table_access_method_clause
+			OptWith OnCommitOption OptTableSpace
+			{
+				CreateStmt *n = makeNode(CreateStmt);
+
+				$8->relpersistence = $2;
+				n->relation = $8;
+				n->tableElts = $10;
+				n->inhRelations = $12;
+				n->partspec = $13;
+				n->ofTypename = NULL;
+				n->constraints = NIL;
+				n->accessMethod = $14;
+				n->options = $15;
+				n->oncommit = $16;
+				n->tablespacename = $17;
+				n->if_not_exists = true;
+				n->relation->blockchain = true;
+				$$ = (Node *) n;
+			}
 		| CREATE OptTemp TABLE qualified_name OF any_name
 			OptTypedTableElementList OptPartitionSpec table_access_method_clause
 			OptWith OnCommitOption OptTableSpace
@@ -3664,6 +3708,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $11;
 					n->tablespacename = $12;
 					n->if_not_exists = false;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
@@ -3685,6 +3730,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $14;
 					n->tablespacename = $15;
 					n->if_not_exists = true;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
@@ -3706,6 +3752,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $13;
 					n->tablespacename = $14;
 					n->if_not_exists = false;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
@@ -3727,6 +3774,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $16;
 					n->tablespacename = $17;
 					n->if_not_exists = true;
+					n->relation->blockchain = false;
 					$$ = (Node *) n;
 				}
 		;
@@ -17712,6 +17760,7 @@ BareColLabel:	IDENT								{ $$ = $1; }
 unreserved_keyword:
 			  ABORT_P
 			| ABSENT
+			| BLOCKCHAIN
 			| ABSOLUTE_P
 			| ACCESS
 			| ACTION

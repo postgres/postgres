@@ -1076,6 +1076,14 @@ other			.
 					SET_YYLLOC();
 
 					/* Is it a keyword? */
+					if (yytext[0] == 'b' || yytext[0] == 'B')
+					{
+						if (pg_strncasecmp(yytext, "blockchain", 10) == 0 && yyleng == 10)
+						{
+							yylval->keyword = GetScanKeyword(ScanKeywordLookup("blockchain", yyextra->keywordlist), yyextra->keywordlist);
+							return BLOCKCHAIN;
+						}
+					}
 					kwnum = ScanKeywordLookup(yytext,
 											  yyextra->keywordlist);
 					if (kwnum >= 0)
