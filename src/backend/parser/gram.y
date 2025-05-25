@@ -702,7 +702,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASENSITIVE ASSERTION ASSIGNMENT ASYMMETRIC ATOMIC AT ATTACH ATTRIBUTE AUTHORIZATION
 
-	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
+	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT BLOCKCHAIN
 	BOOLEAN_P BOTH BREADTH BY
 
 	CACHE CALL CALLED CASCADE CASCADED CASE CAST CATALOG_P CHAIN CHAR_P
@@ -3623,6 +3623,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $12;
 					n->tablespacename = $13;
 					n->if_not_exists = false;
+					n->is_blockchain = false; /* New Add */
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name '('
@@ -3664,6 +3665,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $11;
 					n->tablespacename = $12;
 					n->if_not_exists = false;
+					n->is_blockchain = false; /* New Add */
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name OF any_name
@@ -3685,6 +3687,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $14;
 					n->tablespacename = $15;
 					n->if_not_exists = true;
+					n->is_blockchain = false; /* New Add */
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE qualified_name PARTITION OF qualified_name
@@ -3706,6 +3709,7 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $13;
 					n->tablespacename = $14;
 					n->if_not_exists = false;
+					n->is_blockchain = false; /* New Add */
 					$$ = (Node *) n;
 				}
 		| CREATE OptTemp TABLE IF_P NOT EXISTS qualified_name PARTITION OF
@@ -3727,8 +3731,33 @@ CreateStmt:	CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
 					n->oncommit = $16;
 					n->tablespacename = $17;
 					n->if_not_exists = true;
+					n->is_blockchain = false; /* New Add */
 					$$ = (Node *) n;
 				}
+		/* Changes made by me */
+		| CREATE BLOCKCHAIN OptTemp TABLE qualified_name '(' OptTableElementList ')'
+        OptInherit OptPartitionSpec table_access_method_clause OptWith OnCommitOption OptTableSpace
+        {
+            CreateStmt *n = makeNode(CreateStmt);
+
+            n->relation = $5;
+            n->tableElts = $7;
+            n->inhRelations = $9;
+            n->partspec = $10;
+            n->ofTypename = NULL;           /* Not supported for now */
+            n->constraints = NIL;           /* No top-level constraints */
+            n->accessMethod = $11;
+            n->options = $12;
+            n->oncommit = $13;
+            n->tablespacename = $14;
+            n->if_not_exists = false;
+            n->relation->relpersistence = $3;
+            n->is_blockchain = true;        /*Blockchain flag */
+
+            $$ = (Node *) n;
+        }
+
+
 		;
 
 /*
@@ -17732,6 +17761,7 @@ unreserved_keyword:
 			| BACKWARD
 			| BEFORE
 			| BEGIN_P
+			| BLOCKCHAIN
 			| BREADTH
 			| BY
 			| CACHE
@@ -18285,6 +18315,7 @@ bare_label_keyword:
 			| BIGINT
 			| BINARY
 			| BIT
+			| BLOCKCHAIN
 			| BOOLEAN_P
 			| BOTH
 			| BREADTH
