@@ -184,7 +184,7 @@ CREATE FUNCTION pg_tde_add_global_key_provider_kmip(provider_name TEXT,
                                                     kmip_port INT,
                                                     kmip_ca_path TEXT,
                                                     kmip_cert_path TEXT,
-                                                    kmip_key_path TEXT DEFAULT '')
+                                                    kmip_key_path TEXT)
 RETURNS INT
 LANGUAGE SQL
 BEGIN ATOMIC
