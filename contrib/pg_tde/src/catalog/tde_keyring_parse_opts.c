@@ -216,7 +216,7 @@ json_kring_array_start(void *state)
 	}
 
 	/* Never reached */
-	Assert(0);
+	Assert(false);
 	return JSON_SEM_ACTION_FAILED;
 }
 
@@ -242,7 +242,7 @@ json_kring_object_start(void *state)
 			parse->state = JK_EXPECT_EXTERN_VAL;
 			break;
 		case JK_EXPECT_EXTERN_VAL:
-			Assert(0);
+			Assert(false);
 			elog(ERROR, "invalid semantic state");
 			break;
 	}
@@ -272,7 +272,7 @@ json_kring_object_end(void *state)
 	switch (parse->state)
 	{
 		case JK_EXPECT_TOP_LEVEL_OBJECT:
-			Assert(0);
+			Assert(false);
 			elog(ERROR, "invalid semantic state");
 			break;
 		case JK_EXPECT_TOP_FIELD:
@@ -339,7 +339,7 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 	switch (parse->state)
 	{
 		case JK_EXPECT_TOP_LEVEL_OBJECT:
-			Assert(0);
+			Assert(false);
 			elog(ERROR, "invalid semantic state");
 			break;
 		case JK_EXPECT_TOP_FIELD:
@@ -465,7 +465,7 @@ json_kring_scalar(void *state, char *token, JsonTokenType tokentype)
 			pfree(token);
 			break;
 		default:
-			Assert(0);
+			Assert(false);
 			elog(ERROR, "invalid token type");
 			break;
 	}
@@ -528,7 +528,7 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 			break;
 
 		default:
-			Assert(0);
+			Assert(false);
 			elog(ERROR, "json keyring: unexpected scalar field %d", field);
 	}
 }

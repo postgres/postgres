@@ -462,7 +462,7 @@ write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 		XLogRegisterData((char *) record, sizeof(KeyringProviderRecordInFile));
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_WRITE_KEY_PROVIDER);
 #else
-		Assert(0);
+		Assert(false);
 #endif
 	}
 
