@@ -455,9 +455,8 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      using the slot's contents without losing any changes.
     </para>
     <para>
-     Creation of a snapshot is not always possible.  In particular, it will
-     fail when connected to a hot standby.  Applications that do not require
-     snapshot export may suppress it with the <literal>NOEXPORT_SNAPSHOT</literal>
+     Applications that do not require
+     snapshot export may suppress it with the <literal>SNAPSHOT 'nothing'</literal>
      option.
     </para>
    </sect2>

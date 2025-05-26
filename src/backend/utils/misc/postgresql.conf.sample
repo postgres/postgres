@@ -178,12 +178,10 @@
 #temp_file_limit = -1			# limits per-process temp file space
 					# in kilobytes, or -1 for no limit
 
+#file_copy_method = copy		# copy, clone (if supported by OS)
+
 #max_notify_queue_pages = 1048576	# limits the number of SLRU pages allocated
 					# for NOTIFY / LISTEN queue
-
-#file_copy_method = copy	# the default is the first option
-					# 	copy
-					# 	clone (if system support is available)
 
 # - Kernel Resources -
 

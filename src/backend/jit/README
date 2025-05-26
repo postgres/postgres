@@ -205,7 +205,7 @@ The ability to do so allows us to get the LLVM IR for all operators
 bitcode files get installed into the server's
   $pkglibdir/bitcode/postgres/
 Using existing LLVM functionality (for parallel LTO compilation),
-additionally an index is over these is stored to
+additionally an index over these is stored to
 $pkglibdir/bitcode/postgres.index.bc
 
 Similarly extensions can install code into
