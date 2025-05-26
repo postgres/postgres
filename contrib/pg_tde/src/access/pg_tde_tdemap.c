@@ -325,6 +325,10 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
  * information.
  *
  * The caller must have an EXCLUSIVE LOCK on the files before calling this function.
+ *
+ * write_xlog: if true, the function will write an XLOG record about the
+ * principal key addition. We may want to skip this during server recovery/startup
+ * or in some other cases when WAL writes are not allowed.
  */
 void
 pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
