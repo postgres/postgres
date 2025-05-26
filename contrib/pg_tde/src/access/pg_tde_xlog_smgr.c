@@ -278,13 +278,13 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	if (!keys)
 	{
 		/* cache is empty, try to read keys from disk */
-		keys = pg_tde_fetch_wal_keys(0);
+		keys = pg_tde_fetch_wal_keys(InvalidXLogRecPtr);
 	}
 
 #ifndef FRONTEND
 	write_key_lsn = pg_atomic_read_u64(&EncryptionState->enc_key_lsn);
 
-	if (write_key_lsn != 0)
+	if (!XLogRecPtrIsInvalid(write_key_lsn))
 	{
 		WALKeyCacheRec *last_key = pg_tde_get_last_wal_key();
 
