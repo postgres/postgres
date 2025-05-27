@@ -2745,7 +2745,7 @@ This is to handle cases where a pre-Postgres 18 cluster's default CPU signedness
     </sect4>
 
     <sect4 id="release-18-logicalrep-app">
-     <title>Logical Replication Applications></title>
+     <title>Logical Replication Applications</title>
 
      <itemizedlist>
 
