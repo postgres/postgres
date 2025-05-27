@@ -262,7 +262,6 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	 * This is the only function that gets called during actual CREATE
 	 * TABLE/INDEX (EVENT TRIGGER)
 	 */
-	/* so we create the key here by loading it */
 
 	mdcreate(relold, reln, forknum, isRedo);
 
