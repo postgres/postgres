@@ -152,7 +152,7 @@ InitDumpOptions(DumpOptions *opts)
 	opts->dumpSections = DUMP_UNSECTIONED;
 	opts->dumpSchema = true;
 	opts->dumpData = true;
-	opts->dumpStatistics = true;
+	opts->dumpStatistics = false;
 }
 
 /*

@@ -567,7 +567,7 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
       <term><option>--no-statistics</option></term>
       <listitem>
        <para>
-        Do not dump statistics.
+        Do not dump statistics. This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -741,7 +741,7 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
       <term><option>--with-statistics</option></term>
       <listitem>
        <para>
-        Dump statistics. This is the default.
+        Dump statistics.
        </para>
       </listitem>
      </varlistentry>
@@ -957,14 +957,14 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
   </para>
 
   <para>
-   By default, <command>pg_dumpall</command> will include most optimizer
-   statistics in the resulting dump file.  However, some statistics may not be
-   included, such as those created explicitly with <xref
-   linkend="sql-createstatistics"/> or custom statistics added by an
-   extension.  Therefore, it may be useful to run <command>ANALYZE</command>
-   on each database after restoring from a dump file to ensure optimal
-   performance.  You can also run <command>vacuumdb -a -z</command> to analyze
-   all databases.
+   If <option>--with-statistics</option> is specified,
+   <command>pg_dumpall</command> will include most optimizer statistics in the
+   resulting dump file.  However, some statistics may not be included, such as
+   those created explicitly with <xref linkend="sql-createstatistics"/> or
+   custom statistics added by an extension.  Therefore, it may be useful to
+   run <command>ANALYZE</command> on each database after restoring from a dump
+   file to ensure optimal performance.  You can also run <command>vacuumdb -a
+   -z</command> to analyze all databases.
   </para>
 
   <para>
