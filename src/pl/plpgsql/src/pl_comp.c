@@ -226,8 +226,13 @@ plpgsql_compile_callback(FunctionCallInfo fcinfo,
 	/*
 	 * All the permanent output of compilation (e.g. parse tree) is kept in a
 	 * per-function memory context, so it can be reclaimed easily.
+	 *
+	 * While the func_cxt needs to be long-lived, we initially make it a child
+	 * of the assumed-short-lived caller's context, and reparent it under
+	 * CacheMemoryContext only upon success.  This arrangement avoids memory
+	 * leakage during compilation of a faulty function.
 	 */
-	func_cxt = AllocSetContextCreate(TopMemoryContext,
+	func_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									 "PL/pgSQL function",
 									 ALLOCSET_DEFAULT_SIZES);
 	plpgsql_compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
@@ -702,6 +707,11 @@ plpgsql_compile_callback(FunctionCallInfo fcinfo,
 	/* Debug dump for completed functions */
 	if (plpgsql_DumpExecTree)
 		plpgsql_dumptree(function);
+
+	/*
+	 * All is well, so make the func_cxt long-lived
+	 */
+	MemoryContextSetParent(func_cxt, CacheMemoryContext);
 
 	/*
 	 * Pop the error context stack
