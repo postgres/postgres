@@ -102,6 +102,10 @@ SELECT date 'J J 1520447';
 SELECT timestamp with time zone 'Y2001M12D27H04M05S06.789+08';
 SELECT timestamp with time zone 'Y2001M12D27H04MM05S06.789-08';
 
+-- More examples we used to accept and should not
+SELECT timestamp with time zone 'J2452271 T X03456-08';
+SELECT timestamp with time zone 'J2452271 T X03456.001e6-08';
+
 -- conflicting fields should throw errors
 SELECT date '1995-08-06 epoch';
 SELECT date '1995-08-06 infinity';
