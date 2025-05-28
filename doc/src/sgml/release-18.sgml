@@ -763,6 +763,33 @@ mode; tracking must be enabled with the server variable track_cost_delay_timing.
 </listitem>
 
 <!--
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-08-13 [4c1b4cdb8] Add resource statistics reporting to ANALYZE VERBOSE.
+Author: Masahiko Sawada <msawada@postgresql.org>
+2024-09-09 [bb7775234] Add WAL usage reporting to ANALYZE VERBOSE output.
+-->
+
+<listitem>
+<para>
+Add WAL, CPU, and average read statistics output to ANALYZE VERBOSE (Anthonin Bonnefoy)
+<ulink url="&commit_baseurl;4c1b4cdb8">&sect;</ulink>
+<ulink url="&commit_baseurl;bb7775234">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2025-02-17 [6a8a7ce47] Add information about WAL buffers full to VACUUM/ANALYZE
+-->
+
+<listitem>
+<para>
+Add full WAL buffer count to VACUUM/ANALYZE (VERBOSE) and autovacuum log output (Bertrand Drouvot)
+<ulink url="&commit_baseurl;6a8a7ce47">&sect;</ulink>
+</para>
+</listitem>
+
+<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2024-12-19 [9aea73fc6] Add backend-level statistics to pgstats
 Author: Michael Paquier <michael@paquier.xyz>
@@ -1741,32 +1768,14 @@ Automatically include BUFFERS output in EXPLAIN ANALYZE (Guillaume Lelarge, Davi
 </listitem>
 
 <!--
-Author: Masahiko Sawada <msawada@postgresql.org>
-2024-08-13 [4c1b4cdb8] Add resource statistics reporting to ANALYZE VERBOSE.
-Author: Masahiko Sawada <msawada@postgresql.org>
-2024-09-09 [bb7775234] Add WAL usage reporting to ANALYZE VERBOSE output.
--->
-
-<listitem>
-<para>
-Add WAL, CPU, and average read statistics output to EXPLAIN ANALYZE VERBOSE (Anthonin Bonnefoy)
-<ulink url="&commit_baseurl;4c1b4cdb8">&sect;</ulink>
-<ulink url="&commit_baseurl;bb7775234">&sect;</ulink>
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2025-02-17 [320545bfc] Add information about WAL buffers being full to EXPLAIN
-Author: Michael Paquier <michael@paquier.xyz>
-2025-02-17 [6a8a7ce47] Add information about WAL buffers full to VACUUM/ANALYZE
 -->
 
 <listitem>
 <para>
-Add full WAL buffer count to EXPLAIN (WAL), VACUUM/ANALYZE (VERBOSE), and autovacuum log output (Bertrand Drouvot)
+Add full WAL buffer count to EXPLAIN (WAL) output (Bertrand Drouvot)
 <ulink url="&commit_baseurl;320545bfc">&sect;</ulink>
-<ulink url="&commit_baseurl;6a8a7ce47">&sect;</ulink>
 </para>
 </listitem>
 
