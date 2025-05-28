@@ -2905,13 +2905,22 @@ Add ARM Neon and SVE CPU intrinsics for popcount (integer bit counting) (Chiranm
 
 <!--
 Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2024-07-09 [ca481d3c9] Optimise numeric multiplication for short inputs.
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2024-08-15 [c4e44224c] Extend mul_var_short() to 5 and 6-digit inputs.
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 2024-08-15 [8dc28d7eb] Optimise numeric multiplication using base-NBASE^2 arith
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+2024-10-04 [9428c001f] Speed up numeric division by always using the "fast" alg
 -->
 
 <listitem>
 <para>
-Improve the speed of multiplication (Joel Jacobson, Dean Rasheed)
+Improve the speed of numeric multiplication and division (Joel Jacobson, Dean Rasheed)
+<ulink url="&commit_baseurl;ca481d3c9">&sect;</ulink>
+<ulink url="&commit_baseurl;c4e44224c">&sect;</ulink>
 <ulink url="&commit_baseurl;8dc28d7eb">&sect;</ulink>
+<ulink url="&commit_baseurl;9428c001f">&sect;</ulink>
 </para>
 </listitem>
 
