@@ -93,7 +93,8 @@ SELECT pg_buffercache_evict(bufferid) FROM pg_buffercache WHERE relfilenode = (S
 SELECT * FROM test_enc;
 
 DROP TABLE test_enc;
-
+SELECT pg_tde_delete_default_key();
+SELECT pg_tde_delete_global_key_provider('file-provider');
 DROP EXTENSION pg_tde CASCADE;
 DROP EXTENSION pg_buffercache;
 

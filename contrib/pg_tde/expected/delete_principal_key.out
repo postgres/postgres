@@ -1,0 +1,130 @@
+CREATE EXTENSION IF NOT EXISTS pg_tde;
+SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
+ pg_tde_add_global_key_provider_file 
+-------------------------------------
+ 
+(1 row)
+
+-- Set the local key and delete it without any encrypted tables
+-- Should succeed: nothing used the key
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
+
+SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
+ key_provider_id | key_provider_name |  key_name   
+-----------------+-------------------+-------------
+              -3 | file-provider     | test-db-key
+(1 row)
+
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+-- Set local key, encrypt a table, and delete the key
+-- Should fail: the is no default key to fallback
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
+
+CREATE TABLE test_table (id int, data text) USING tde_heap;
+SELECT pg_tde_delete_key();
+ERROR:  cannot delete principal key
+DETAIL:  There are encrypted tables in the database.
+HINT:  Set default principal key as fallback option or decrypt all tables before deleting principal key.
+-- Decrypt the table and delete the key
+-- Should succeed: there is no more encrypted tables
+ALTER TABLE test_table SET ACCESS METHOD heap;
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+-- Set local key, encrypt the table then delete teable and key
+-- Should succeed: the table is deleted and there are no more encrypted tables
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
+
+ALTER TABLE test_table SET ACCESS METHOD tde_heap;
+DROP TABLE test_table;
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+-- Set default key, set regular key, create table, delete regular key
+-- Should succeed: regular key will be rotated to default key
+SELECT pg_tde_set_default_key_using_global_key_provider('defalut-key','file-provider');
+ pg_tde_set_default_key_using_global_key_provider 
+--------------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
+
+CREATE TABLE test_table (id int, data text) USING tde_heap;
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
+ key_provider_id | key_provider_name |  key_name   
+-----------------+-------------------+-------------
+              -3 | file-provider     | defalut-key
+(1 row)
+
+-- Try to delete key when default key is used
+-- Should fail: table already uses the default key, so there is no key to fallback to
+SELECT pg_tde_delete_key();
+ERROR:  cannot delete principal key
+DETAIL:  There are encrypted tables in the database.
+-- Try to delete default key
+-- Should fail: default key is used by the table
+SELECT pg_tde_delete_default_key();
+ERROR:  cannot delete default principal key
+HINT:  There are encrypted tables in the database with id: 16384.
+-- Set regular principal key, delete default key
+-- Should succeed: the table will use the regular key
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_set_key_using_global_key_provider 
+------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_delete_default_key();
+ pg_tde_delete_default_key 
+---------------------------
+ 
+(1 row)
+
+DROP TABLE test_table;
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+SELECT pg_tde_delete_global_key_provider('file-provider');
+ pg_tde_delete_global_key_provider 
+-----------------------------------
+ 
+(1 row)
+
+DROP EXTENSION pg_tde;

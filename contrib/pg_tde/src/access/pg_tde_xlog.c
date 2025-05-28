@@ -73,6 +73,12 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		xl_tde_perform_rotate_key(xlrec);
 	}
+	else if (info == XLOG_TDE_DELETE_PRINCIPAL_KEY)
+	{
+		Oid			dbOid = *((Oid *) XLogRecGetData(record));
+
+		pg_tde_delete_principal_key_redo(dbOid);
+	}
 	else if (info == XLOG_TDE_WRITE_KEY_PROVIDER)
 	{
 		KeyringProviderRecordInFile *xlrec = (KeyringProviderRecordInFile *) XLogRecGetData(record);
@@ -114,6 +120,12 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "db: %u", xlrec->databaseId);
 	}
+	else if (info == XLOG_TDE_DELETE_PRINCIPAL_KEY)
+	{
+		Oid			dbOid = *((Oid *) XLogRecGetData(record));
+
+		appendStringInfo(buf, "db: %u", dbOid);
+	}
 	else if (info == XLOG_TDE_WRITE_KEY_PROVIDER)
 	{
 		KeyringProviderRecordInFile *xlrec = (KeyringProviderRecordInFile *) XLogRecGetData(record);
@@ -139,6 +151,8 @@ tdeheap_rmgr_identify(uint8 info)
 			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_ROTATE_PRINCIPAL_KEY:
 			return "ROTATE_PRINCIPAL_KEY";
+		case XLOG_TDE_DELETE_PRINCIPAL_KEY:
+			return "DELETE_PRINCIPAL_KEY";
 		case XLOG_TDE_WRITE_KEY_PROVIDER:
 			return "WRITE_KEY_PROVIDER";
 		case XLOG_TDE_INSTALL_EXTENSION:

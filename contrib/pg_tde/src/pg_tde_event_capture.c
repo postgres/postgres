@@ -635,7 +635,11 @@ pg_tde_proccess_utility(PlannedStmt *pstmt,
 
 					if (dbOid != InvalidOid)
 					{
-						int			count = pg_tde_count_relations(dbOid);
+						int			count;
+
+						LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+						count = pg_tde_count_relations(dbOid);
+						LWLockRelease(tde_lwlock_enc_keys());
 
 						if (count > 0)
 							ereport(ERROR,

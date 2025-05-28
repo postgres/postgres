@@ -59,4 +59,6 @@ DROP DATABASE new_db_file_copy;
 DROP DATABASE new_db;
 DROP DATABASE template_db;
 
+SELECT pg_tde_delete_default_key();
+SELECT pg_tde_delete_global_key_provider('global-file-vault');
 DROP EXTENSION pg_tde;

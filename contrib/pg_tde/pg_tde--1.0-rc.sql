@@ -259,6 +259,18 @@ LANGUAGE C
 AS 'MODULE_PATHNAME';
 REVOKE ALL ON FUNCTION pg_tde_verify_default_key() FROM PUBLIC;
 
+CREATE FUNCTION pg_tde_delete_key()
+RETURNS VOID
+LANGUAGE C
+AS 'MODULE_PATHNAME';
+REVOKE ALL ON FUNCTION pg_tde_delete_key() FROM PUBLIC;
+
+CREATE FUNCTION pg_tde_delete_default_key()
+RETURNS VOID
+LANGUAGE C
+AS 'MODULE_PATHNAME';
+REVOKE ALL ON FUNCTION pg_tde_delete_default_key() FROM PUBLIC;
+
 CREATE FUNCTION pg_tde_key_info()
 RETURNS TABLE ( key_name TEXT,
                 key_provider_name TEXT,

@@ -33,20 +33,17 @@ SELECT key_provider_id, key_provider_name, key_name
 		FROM pg_tde_default_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -5 | file-provider     | default-key
+              -2 | file-provider     | default-key
 (1 row)
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id |  provider_name   
-----+------------------
- -1 | file-keyring
- -3 | global-provider
- -4 | global-provider2
- -5 | file-provider
-(4 rows)
+ id | provider_name 
+----+---------------
+ -2 | file-provider
+(1 row)
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
@@ -68,7 +65,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -5 | file-provider     | default-key
+              -2 | file-provider     | default-key
 (1 row)
 
 SELECT current_database() AS regress_database
@@ -97,7 +94,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |  key_name   
 -----------------+-------------------+-------------
-              -5 | file-provider     | default-key
+              -2 | file-provider     | default-key
 (1 row)
 
 \c :regress_database
@@ -112,7 +109,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |    key_name     
 -----------------+-------------------+-----------------
-              -5 | file-provider     | new-default-key
+              -2 | file-provider     | new-default-key
 (1 row)
 
 \c regress_pg_tde_other
@@ -120,7 +117,7 @@ SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
  key_provider_id | key_provider_name |    key_name     
 -----------------+-------------------+-----------------
-              -5 | file-provider     | new-default-key
+              -2 | file-provider     | new-default-key
 (1 row)
 
 SELECT pg_buffercache_evict(bufferid) FROM pg_buffercache WHERE relfilenode = (SELECT relfilenode FROM pg_class WHERE oid = 'test_enc'::regclass);
@@ -155,6 +152,18 @@ SELECT * FROM test_enc;
 (3 rows)
 
 DROP TABLE test_enc;
+SELECT pg_tde_delete_default_key();
+ pg_tde_delete_default_key 
+---------------------------
+ 
+(1 row)
+
+SELECT pg_tde_delete_global_key_provider('file-provider');
+ pg_tde_delete_global_key_provider 
+-----------------------------------
+ 
+(1 row)
+
 DROP EXTENSION pg_tde CASCADE;
 DROP EXTENSION pg_buffercache;
 DROP DATABASE regress_pg_tde_other;

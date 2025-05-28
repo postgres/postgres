@@ -102,4 +102,16 @@ CREATE DATABASE new_db_file_copy TEMPLATE template_db STRATEGY FILE_COPY;
 DROP DATABASE new_db_file_copy;
 DROP DATABASE new_db;
 DROP DATABASE template_db;
+SELECT pg_tde_delete_default_key();
+ pg_tde_delete_default_key 
+---------------------------
+ 
+(1 row)
+
+SELECT pg_tde_delete_global_key_provider('global-file-vault');
+ pg_tde_delete_global_key_provider 
+-----------------------------------
+ 
+(1 row)
+
 DROP EXTENSION pg_tde;

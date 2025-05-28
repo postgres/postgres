@@ -508,6 +508,40 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	}
 }
 
+void
+pg_tde_delete_principal_key_redo(Oid dbOid)
+{
+	char		path[MAXPGPATH];
+
+	pg_tde_set_db_file_path(dbOid, path);
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+	durable_unlink(path, WARNING);
+	LWLockRelease(tde_lwlock_enc_keys());
+}
+
+/*
+ * Deletes the principal key for the database. This fucntion checks if key map
+ * file has any entries, and if not, it removes the file. Otherwise raises an error.
+ */
+void
+pg_tde_delete_principal_key(Oid dbOid)
+{
+	char		path[MAXPGPATH];
+
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
+	Assert(pg_tde_count_relations(dbOid) == 0);
+
+	pg_tde_set_db_file_path(dbOid, path);
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &dbOid, sizeof(Oid));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_DELETE_PRINCIPAL_KEY);
+
+	/* Remove whole key map file */
+	durable_unlink(path, ERROR);
+}
+
 /*
  * It's called by seg_write inside crit section so no pallocs, hence
  * needs keyfile_path
@@ -652,15 +686,14 @@ int
 pg_tde_count_relations(Oid dbOid)
 {
 	char		db_map_path[MAXPGPATH];
-	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	File		map_fd;
 	off_t		curr_pos = 0;
 	TDEMapEntry map_entry;
 	int			count = 0;
 
-	pg_tde_set_db_file_path(dbOid, db_map_path);
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_SHARED) || LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
-	LWLockAcquire(lock_pk, LW_SHARED);
+	pg_tde_set_db_file_path(dbOid, db_map_path);
 
 	map_fd = pg_tde_open_file_read(db_map_path, true, &curr_pos);
 	if (map_fd < 0)
@@ -673,8 +706,6 @@ pg_tde_count_relations(Oid dbOid)
 	}
 
 	CloseTransientFile(map_fd);
-
-	LWLockRelease(lock_pk);
 
 	return count;
 }

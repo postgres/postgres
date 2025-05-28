@@ -39,7 +39,10 @@
 
 #ifndef FRONTEND
 #include "access/genam.h"
+#include "access/heapam.h"
 #include "access/table.h"
+#include "access/tableam.h"
+#include "common/pg_tde_shmem.h"
 #include "funcapi.h"
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
@@ -86,7 +89,7 @@ static void clear_principal_key_cache(Oid databaseId);
 static inline dshash_table *get_principal_key_hash(void);
 static TDEPrincipalKey *get_principal_key_from_cache(Oid dbOid);
 static bool pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b);
-static void pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
+static void pg_tde_update_default_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey);
 static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
 static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
@@ -97,11 +100,14 @@ static void set_principal_key_with_keyring(const char *key_name,
 										   Oid dbOid,
 										   bool ensure_new_key);
 static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
+static void pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKeyTemplate);
 
 PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
+PG_FUNCTION_INFO_V1(pg_tde_delete_key);
+PG_FUNCTION_INFO_V1(pg_tde_delete_default_key);
 
 static void pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *principal_key_name, const char *provider_name, bool ensure_new_key);
 
@@ -569,10 +575,157 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 		LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 		newDefaultKey = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 
-		pg_tde_update_global_principal_key_everywhere(&existingKeyCopy, newDefaultKey);
+		pg_tde_update_default_principal_key_everywhere(&existingKeyCopy, newDefaultKey);
 
 		LWLockRelease(tde_lwlock_enc_keys());
 	}
+}
+
+
+/*
+ * SQL interface to delete principal key.
+ *
+ * This operation allowed if there is no any encrypted tables in the database or
+ * if the default principal key is set for the database. In second case,
+ * key for database rotated to the default key.
+ */
+Datum
+pg_tde_delete_key(PG_FUNCTION_ARGS)
+{
+	TDEPrincipalKey *principal_key;
+	TDEPrincipalKey *default_principal_key;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	principal_key = GetPrincipalKeyNoDefault(MyDatabaseId, LW_EXCLUSIVE);
+	if (principal_key == NULL)
+		ereport(ERROR, errmsg("principal key does not exists for the database"));
+
+	ereport(LOG, errmsg("Deleting principal key [%s] for the database", principal_key->keyInfo.name));
+
+	/*
+	 * If database has something encryted, we can try to fallback to the
+	 * default principal key
+	 */
+	if (pg_tde_count_relations(MyDatabaseId) != 0)
+	{
+		default_principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
+		if (default_principal_key == NULL)
+		{
+			ereport(ERROR,
+					errmsg("cannot delete principal key"),
+					errdetail("There are encrypted tables in the database."),
+					errhint("Set default principal key as fallback option or decrypt all tables before deleting principal key."));
+		}
+
+		/*
+		 * If database already encrypted with default principal key, there is
+		 * nothing to do
+		 */
+		if (pg_tde_is_same_principal_key(principal_key, default_principal_key))
+		{
+			ereport(ERROR,
+					errmsg("cannot delete principal key"),
+					errdetail("There are encrypted tables in the database."));
+		}
+
+		pg_tde_rotate_default_key_for_database(principal_key, default_principal_key);
+
+		LWLockRelease(tde_lwlock_enc_keys());
+		PG_RETURN_VOID();
+	}
+
+	pg_tde_delete_principal_key(MyDatabaseId);
+	clear_principal_key_cache(MyDatabaseId);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+	PG_RETURN_VOID();
+}
+
+/*
+ * SQL interface to delete default principal key.
+ *
+ * This operation allowed if there is no databases using the default principal key.
+ */
+Datum
+pg_tde_delete_default_key(PG_FUNCTION_ARGS)
+{
+	HeapTuple	tuple;
+	SysScanDesc scan;
+	Relation	rel;
+	TDEPrincipalKey *principal_key;
+	TDEPrincipalKey *default_principal_key;
+	List	   *dbs = NIL;
+
+	if (!superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to access global key providers"));
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	default_principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
+	if (default_principal_key == NULL)
+		ereport(ERROR, errmsg("default principal key is not set"));
+
+	ereport(LOG, errmsg("Deleting default principal key [%s]", default_principal_key->keyInfo.name));
+
+	/*
+	 * Take row exclusive lock, as we do not want anybody to create/drop a
+	 * database in parallel. If it happens, its not the end of the world, but
+	 * not ideal.
+	 */
+	rel = table_open(DatabaseRelationId, RowExclusiveLock);
+	scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Oid			dbOid = ((Form_pg_database) GETSTRUCT(tuple))->oid;
+
+		principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
+
+		/* Check if database uses default principalkey */
+		if (pg_tde_is_same_principal_key(default_principal_key, principal_key))
+		{
+			/*
+			 * If database key map is non-empty raise an error, as we cannot
+			 * delete default principal key if there are encrypted tables in
+			 * the database.
+			 */
+			if (pg_tde_count_relations(dbOid) != 0)
+			{
+				ereport(ERROR,
+						errmsg("cannot delete default principal key"),
+						errhint("There are encrypted tables in the database with id: %u.", dbOid));
+			}
+
+			/* Remember databases that has no encrypted tables */
+			dbs = lappend_oid(dbs, dbOid);
+		}
+	}
+
+	/*
+	 * Remove empty key map files for databases that has no encrypted tables
+	 * as we cannot leave reference to the default principal key.
+	 */
+	foreach_oid(dbOid, dbs)
+	{
+		pg_tde_delete_principal_key(dbOid);
+		clear_principal_key_cache(dbOid);
+	}
+
+	systable_endscan(scan);
+	table_close(rel, RowExclusiveLock);
+
+	/* No databases use default principal key, so we can delete it */
+	pg_tde_delete_principal_key(DEFAULT_DATA_TDE_OID);
+	clear_principal_key_cache(DEFAULT_DATA_TDE_OID);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+
+	list_free(dbs);
+
+	PG_RETURN_VOID();
 }
 
 PG_FUNCTION_INFO_V1(pg_tde_key_info);
@@ -1024,8 +1177,17 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	pfree(newKey);
 }
 
+/*
+ * Update the default principal key for all databases that use it.
+ *
+ * This function is called when the default principal key is rotated. It
+ * updates all databases that use the old default principal key to use the new
+ * one.
+ *
+ * Caller should hold an exclusive tde_lwlock_enc_keys lock.
+ */
 static void
-pg_tde_update_global_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey)
+pg_tde_update_default_principal_key_everywhere(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKey)
 {
 	HeapTuple	tuple;
 	SysScanDesc scan;

@@ -67,5 +67,17 @@ SELECT relid, parentrelid, level FROM pg_partition_tree('concur_reindex_part_ind
 (5 rows)
 
 DROP TABLE concur_reindex_part;
+SELECT pg_tde_delete_key();
+ pg_tde_delete_key 
+-------------------
+ 
+(1 row)
+
+SELECT pg_tde_delete_database_key_provider('file-vault');
+ pg_tde_delete_database_key_provider 
+-------------------------------------
+ 
+(1 row)
+
 DROP EXTENSION pg_tde;
 RESET default_table_access_method;

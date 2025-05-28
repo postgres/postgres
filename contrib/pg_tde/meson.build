@@ -79,26 +79,25 @@ install_data(
   kwargs: contrib_data_args,
 )
 
-# create_database must run after default_principal_key which must run after
-# key_provider.
 sql_tests = [
   'access_control',
   'alter_index',
   'cache_alloc',
   'change_access_method',
+  'create_database',
+  'default_principal_key',
+  'delete_principal_key',
   'insert_update_delete',
   'key_provider',
   'kmip_test',
   'partition_table',
   'pg_tde_is_encrypted',
-  'relocate',
   'recreate_storage',
+  'relocate',
   'tablespace',
   'toast_decrypt',
   'vault_v2_test',
   'version',
-  'default_principal_key',
-  'create_database',
 ]
 
 tap_tests = [

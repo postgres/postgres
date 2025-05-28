@@ -8,6 +8,7 @@ SET ROLE regress_pg_tde_access_control;
 
 -- should throw access denied
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'local-file-provider');
+SELECT pg_tde_delete_key();
 SELECT pg_tde_list_all_database_key_providers();
 SELECT pg_tde_list_all_global_key_providers();
 SELECT pg_tde_key_info();
@@ -29,6 +30,7 @@ GRANT EXECUTE ON FUNCTION pg_tde_delete_global_key_provider(TEXT) TO regress_pg_
 GRANT EXECUTE ON FUNCTION pg_tde_set_default_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
 GRANT EXECUTE ON FUNCTION pg_tde_set_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
 GRANT EXECUTE ON FUNCTION pg_tde_set_server_key_using_global_key_provider(TEXT, TEXT, BOOLEAN) TO regress_pg_tde_access_control;
+GRANT EXECUTE ON FUNCTION pg_tde_delete_default_key() TO regress_pg_tde_access_control;
 
 SET ROLE regress_pg_tde_access_control;
 
@@ -41,6 +43,7 @@ SELECT pg_tde_delete_global_key_provider('global-file-provider');
 SELECT pg_tde_set_key_using_global_key_provider('key1', 'global-file-provider');
 SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'global-file-provider');
 SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'global-file-provider');
+SELECT pg_tde_delete_default_key();
 
 RESET ROLE;
 
