@@ -569,7 +569,7 @@ Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavu
 </para>
 
 <para>
-This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, and vacuums.
+This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, vacuums, etc.
 This is enabled by server variable io_method, with server variables io_combine_limit and io_max_combine_limit added to control it.  This also enables
 effective_io_concurrency and maintenance_io_concurrency values greater than zero for systems without fadvise() support.  The new system view pg_aios shows the file handles being used
 for asynchronous I/O.
