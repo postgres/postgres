@@ -569,6 +569,7 @@ Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavu
 </para>
 
 <para>
+This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, and vacuums.
 This is enabled by server variable io_method, with server variables io_combine_limit and io_max_combine_limit added to control it.  This also enables
 effective_io_concurrency and maintenance_io_concurrency values greater than zero for systems without fadvise() support.  The new system view pg_aios shows the file handles being used
 for asynchronous I/O.
@@ -682,19 +683,28 @@ This more accurately reflects modern hardware.
 <!--
 Author: Melanie Plageman <melanieplageman@gmail.com>
 2025-03-12 [9219093ca] Modularize log_connections output
-Author: Melanie Plageman <melanieplageman@gmail.com>
-2025-03-12 [18cd15e70] Add connection establishment duration logging
 -->
 
 <listitem>
 <para>
 Increase the logging granularity of server variable log_connections (Melanie Plageman)
 <ulink url="&commit_baseurl;9219093ca">&sect;</ulink>
-<ulink url="&commit_baseurl;18cd15e70">&sect;</ulink>
 </para>
 
 <para>
 This server variable was previously only boolean;  these options are still supported.
+</para>
+</listitem>
+
+<!--
+Author: Melanie Plageman <melanieplageman@gmail.com>
+2025-03-12 [18cd15e70] Add connection establishment duration logging
+-->
+
+<listitem>
+<para>
+Add log_connections option to report the duration of connection stages (Melanie Plageman)
+<ulink url="&commit_baseurl;18cd15e70">&sect;</ulink>
 </para>
 </listitem>
 
