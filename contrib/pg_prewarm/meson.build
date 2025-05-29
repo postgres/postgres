@@ -29,6 +29,11 @@ tests += {
   'name': 'pg_prewarm',
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
+  'regress': {
+    'sql': [
+      'pg_prewarm',
+    ],
+  },
   'tap': {
     'tests': [
       't/001_basic.pl',
