@@ -2801,6 +2801,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 				n_quer_loc = 0, /* Normalized query byte location */
 				last_off = 0,	/* Offset from start for previous tok */
 				last_tok_len = 0;	/* Length (in bytes) of that tok */
+	int			num_constants_replaced = 0;
 
 	/*
 	 * Get constants' lengths (core system only gives us locations).  Note
@@ -2844,7 +2845,8 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 
 		/* And insert a param symbol in place of the constant token */
 		n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d",
-							  i + 1 + jstate->highest_extern_param_id);
+							  num_constants_replaced + 1 + jstate->highest_extern_param_id);
+		num_constants_replaced++;
 
 		quer_loc = off + tok_len;
 		last_off = off;
