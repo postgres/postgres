@@ -7527,12 +7527,12 @@ local0.*    /var/log/postgresql
            <entry><literal>setup_durations</literal></entry>
            <entry>
             Logs the time spent establishing the connection and setting up the
-            backend at the time the connection is ready to execute its first
-            query. The log message includes the total setup duration, starting
-            from the postmaster accepting the incoming connection and ending
-            when the connection is ready for query. It also includes the time
-            it took to fork the new backend and the time it took to
-            authenticate the user.
+            backend until the connection is ready to execute its first
+            query. The log message includes three durations:  the total
+            setup duration (starting from the postmaster accepting the
+            incoming connection and ending when the connection is ready
+            for query), the time it took to fork the new backend, and
+            the time it took to authenticate the user.
            </entry>
           </row>
 
