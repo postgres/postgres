@@ -238,6 +238,35 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t
 (1 row)
 
+-- normalization of constants and parameters, with constant locations
+-- recorded one or more times.
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT WHERE '1' IN ('1'::int, '3'::int::text);
+--
+(1 row)
+
+SELECT WHERE (1, 2) IN ((1, 2), (2, 3));
+--
+(1 row)
+
+SELECT WHERE (3, 4) IN ((5, 6), (8, 7));
+--
+(0 rows)
+
+SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                 query                                  | calls 
+------------------------------------------------------------------------+-------
+ SELECT WHERE $1 IN ($2::int, $3::int::text)                            |     1
+ SELECT WHERE ($1, $2) IN (($3, $4), ($5, $6))                          |     2
+ SELECT pg_stat_statements_reset() IS NOT NULL AS t                     |     1
+ SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C" |     0
+(4 rows)
+
 --
 -- queries with locking clauses
 --

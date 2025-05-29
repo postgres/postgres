@@ -68,3 +68,61 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (4 rows)
 
+-- Various parameter numbering patterns
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Unique query IDs with parameter numbers switched.
+SELECT WHERE ($1::int, 7) IN ((8, $2::int), ($3::int, 9)) \bind '1' '2' '3' \g
+--
+(0 rows)
+
+SELECT WHERE ($2::int, 10) IN ((11, $3::int), ($1::int, 12)) \bind '1' '2' '3' \g
+--
+(0 rows)
+
+SELECT WHERE $1::int IN ($2::int, $3::int) \bind '1' '2' '3' \g
+--
+(0 rows)
+
+SELECT WHERE $2::int IN ($3::int, $1::int) \bind '1' '2' '3' \g
+--
+(0 rows)
+
+SELECT WHERE $3::int IN ($1::int, $2::int) \bind '1' '2' '3' \g
+--
+(0 rows)
+
+-- Two groups of two queries with the same query ID.
+SELECT WHERE '1'::int IN ($1::int, '2'::int) \bind '1' \g
+--
+(1 row)
+
+SELECT WHERE '4'::int IN ($1::int, '5'::int) \bind '2' \g
+--
+(0 rows)
+
+SELECT WHERE $2::int IN ($1::int, '1'::int) \bind '1' '2' \g
+--
+(0 rows)
+
+SELECT WHERE $2::int IN ($1::int, '2'::int) \bind '3' '4' \g
+--
+(0 rows)
+
+SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
+                            query                             | calls 
+--------------------------------------------------------------+-------
+ SELECT WHERE $1::int IN ($2::int, $3::int)                   |     1
+ SELECT WHERE $2::int IN ($1::int, $3::int)                   |     2
+ SELECT WHERE $2::int IN ($1::int, $3::int)                   |     2
+ SELECT WHERE $2::int IN ($3::int, $1::int)                   |     1
+ SELECT WHERE $3::int IN ($1::int, $2::int)                   |     1
+ SELECT WHERE ($1::int, $4) IN (($5, $2::int), ($3::int, $6)) |     1
+ SELECT WHERE ($2::int, $4) IN (($5, $3::int), ($1::int, $6)) |     1
+ SELECT pg_stat_statements_reset() IS NOT NULL AS t           |     1
+(8 rows)
+

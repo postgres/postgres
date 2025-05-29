@@ -2818,9 +2818,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 				last_off = 0,	/* Offset from start for previous tok */
 				last_tok_len = 0;	/* Length (in bytes) of that tok */
 	bool		in_squashed = false;	/* in a run of squashed consts? */
-	int			skipped_constants = 0;	/* Position adjustment of later
-										 * constants after squashed ones */
-
+	int			num_constants_replaced = 0;
 
 	/*
 	 * Get constants' lengths (core system only gives us locations).  Note
@@ -2878,7 +2876,7 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 
 			/* ... and then a param symbol replacing the constant itself */
 			n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d",
-								  i + 1 + jstate->highest_extern_param_id - skipped_constants);
+								  num_constants_replaced++ + 1 + jstate->highest_extern_param_id);
 
 			/* In case previous constants were merged away, stop doing that */
 			in_squashed = false;
@@ -2902,12 +2900,10 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 
 			/* ... and then start a run of squashed constants */
 			n_quer_loc += sprintf(norm_query + n_quer_loc, "$%d /*, ... */",
-								  i + 1 + jstate->highest_extern_param_id - skipped_constants);
+								  num_constants_replaced++ + 1 + jstate->highest_extern_param_id);
 
 			/* The next location will match the block below, to end the run */
 			in_squashed = true;
-
-			skipped_constants++;
 		}
 		else
 		{
