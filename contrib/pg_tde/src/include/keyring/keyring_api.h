@@ -74,6 +74,7 @@ typedef struct VaultV2Keyring
 {
 	GenericKeyring keyring;		/* Must be the first field */
 	char	   *vault_token;
+	char	   *vault_token_path;
 	char	   *vault_url;
 	char	   *vault_ca_path;
 	char	   *vault_mount_path;

@@ -63,14 +63,14 @@ Use the following functions to add the Vault provider:
 ```sql
 SELECT pg_tde_add_database_key_provider_vault_v2(
   'provider-name',
-  'secret_token',
+  'secret_token_path',
   'url','mount',
   'ca_path'
 );
 
 SELECT pg_tde_add_global_key_provider_vault_v2(
   'provider-name',
-  'secret_token',
+  'secret_token_path',
   'url','mount',
   'ca_path'
 );
@@ -81,7 +81,7 @@ These functions change the Vault provider:
 ```sql
 SELECT pg_tde_change_database_key_provider_vault_v2(
   'provider-name',
-  'secret_token',
+  'secret_token_path',
   'url',
   'mount',
   'ca_path'
@@ -89,7 +89,7 @@ SELECT pg_tde_change_database_key_provider_vault_v2(
 
 SELECT pg_tde_change_global_key_provider_vault_v2(
   'provider-name',
-  'secret_token',
+  'secret_token_path',
   'url',
   'mount',
   'ca_path'
@@ -101,13 +101,11 @@ where:
 * `provider-name` is the name of the key provider
 * `url` is the URL of the Vault server
 * `mount` is the mount point on the Vault server where the key provider should store the keys
-* `secret_token` is an access token with read and write access to the above mount point
+* `secret_token_path` is a path to the file that contains an access token with read and write access to the above mount point
 * **[optional]** `ca_path` is the path of the CA file used for SSL verification
 
 All parameters can be either strings, or JSON objects [referencing remote parameters](how-to/external-parameters.md).
 
-!!! important
-    Never specify the secret token directly, use a remote parameter instead.
 
 #### Adding or modifying KMIP providers
 

@@ -31,6 +31,6 @@ Depending on the provider type, the additional parameters are:
 
 ```bash
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>
-pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token> <url> <mount_path> [<ca_path>]
+pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault <token_path> <url> <mount_path> [<ca_path>]
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> <key_path> [<ca_path>] 
 ```

@@ -64,7 +64,7 @@ command_like(
 		'database-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		'secret-token',
+		'/tmp/vault_test_token',
 		'mount-path',
 		'/tmp/ca_path',
 	],
@@ -85,8 +85,8 @@ $options = decode_json(
 		'postgres',
 		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
 	));
-is($options->{token}, 'secret-token',
-	'token is set correctly for vault-v2 provider');
+is($options->{tokenPath}, '/tmp/vault_test_token',
+	'tokenPath is set correctly for vault-v2 provider');
 is( $options->{url},
 	'http://vault-server.example:8200/',
 	'url is set correctly for vault-v2 provider');
@@ -147,7 +147,7 @@ command_like(
 		'global-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		'secret-token',
+		'/tmp/vault_test_token',
 		'mount-path',
 		'/tmp/ca_path',
 	],

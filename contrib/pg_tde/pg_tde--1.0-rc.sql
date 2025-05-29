@@ -31,7 +31,7 @@ BEGIN ATOMIC
 END;
 
 CREATE FUNCTION pg_tde_add_database_key_provider_vault_v2(provider_name TEXT,
-                                                vault_token TEXT,
+                                                vault_token_path TEXT,
                                                 vault_url TEXT,
                                                 vault_mount_path TEXT,
                                                 vault_ca_path TEXT)
@@ -42,13 +42,13 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE COALESCE(vault_url, ''),
-                            'token' VALUE COALESCE(vault_token, ''),
+                            'tokenPath' VALUE COALESCE(vault_token_path, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_add_database_key_provider_vault_v2(provider_name TEXT,
-                                                vault_token JSON,
+                                                vault_token_path JSON,
                                                 vault_url JSON,
                                                 vault_mount_path JSON,
                                                 vault_ca_path JSON)
@@ -59,7 +59,7 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_database_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE vault_url,
-                            'token' VALUE vault_token,
+                            'tokenPath' VALUE vault_token_path,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
 END;
@@ -150,7 +150,7 @@ BEGIN ATOMIC
 END;
 
 CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
-                                                        vault_token TEXT,
+                                                        vault_token_path TEXT,
                                                         vault_url TEXT,
                                                         vault_mount_path TEXT,
                                                         vault_ca_path TEXT)
@@ -161,13 +161,13 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE COALESCE(vault_url, ''),
-                            'token' VALUE COALESCE(vault_token, ''),
+                            'tokenPath' VALUE COALESCE(vault_token_path, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
-                                                        vault_token JSON,
+                                                        vault_token_path JSON,
                                                         vault_url JSON,
                                                         vault_mount_path JSON,
                                                         vault_ca_path JSON)
@@ -178,7 +178,7 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_add_global_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE vault_url,
-                            'token' VALUE vault_token,
+                            'tokenPath' VALUE vault_token_path,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
 END;
@@ -249,7 +249,7 @@ BEGIN ATOMIC
 END;
 
 CREATE FUNCTION pg_tde_change_database_key_provider_vault_v2(provider_name TEXT,
-                                                    vault_token TEXT,
+                                                    vault_token_path TEXT,
                                                     vault_url TEXT,
                                                     vault_mount_path TEXT,
                                                     vault_ca_path TEXT)
@@ -260,13 +260,13 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE COALESCE(vault_url, ''),
-                            'token' VALUE COALESCE(vault_token, ''),
+                            'tokenPath' VALUE COALESCE(vault_token_path, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_change_database_key_provider_vault_v2(provider_name TEXT,
-                                                    vault_token JSON,
+                                                    vault_token_path JSON,
                                                     vault_url JSON,
                                                     vault_mount_path JSON,
                                                     vault_ca_path JSON)
@@ -277,7 +277,7 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_database_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE vault_url,
-                            'token' VALUE vault_token,
+                            'tokenPath' VALUE vault_token_path,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
 END;
@@ -348,7 +348,7 @@ BEGIN ATOMIC
 END;
 
 CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
-                                                           vault_token TEXT,
+                                                           vault_token_path TEXT,
                                                            vault_url TEXT,
                                                            vault_mount_path TEXT,
                                                            vault_ca_path TEXT)
@@ -359,13 +359,13 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE COALESCE(vault_url, ''),
-                            'token' VALUE COALESCE(vault_token, ''),
+                            'tokenPath' VALUE COALESCE(vault_token_path, ''),
                             'mountPath' VALUE COALESCE(vault_mount_path, ''),
                             'caPath' VALUE COALESCE(vault_ca_path, '')));
 END;
 
 CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
-                                                           vault_token JSON,
+                                                           vault_token_path JSON,
                                                            vault_url JSON,
                                                            vault_mount_path JSON,
                                                            vault_ca_path JSON)
@@ -376,7 +376,7 @@ BEGIN ATOMIC
     -- load_vaultV2_keyring_provider_options function.
     SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
                             json_object('url' VALUE vault_url,
-                            'token' VALUE vault_token,
+                            'tokenPath' VALUE vault_token_path,
                             'mountPath' VALUE vault_mount_path,
                             'caPath' VALUE vault_ca_path));
 END;

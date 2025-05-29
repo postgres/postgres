@@ -10,7 +10,7 @@ You can configure `pg_tde` to use HashiCorp Vault as a global key provider for m
 ```sql
 SELECT pg_tde_add_global_key_provider_vault_v2(
     'provider-name',
-    'secret_token',
+    'secret_token_path',
     'url',
     'mount',
     'ca_path'
@@ -20,7 +20,7 @@ SELECT pg_tde_add_global_key_provider_vault_v2(
 ## Parameter descriptions
 
 * `provider-name` is the name to identify this key provider
-* `secret_token` is an access token with read and write access to the above mount point
+* `secret_token_path` is a path to the file that contains an access token with read and write access to the above mount point
 * `url` is the URL of the Vault server
 * `mount` is the mount point where the keyring should store the keys
 * [optional] `ca_path` is the path of the CA file used for SSL verification
@@ -30,7 +30,7 @@ The following example is for testing purposes only. Use secure tokens and proper
 ```sql
 SELECT pg_tde_add_global_key_provider_vault_v2(
     'my-vault',
-    'hvs.zPuyktykA...example...ewUEnIRVaKoBzs2',
+    '/path/to/token_file',
     'http://vault.vault.svc.cluster.local:8200',
     'secret/data',
     NULL

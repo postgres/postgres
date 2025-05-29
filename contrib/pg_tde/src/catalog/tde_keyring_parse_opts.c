@@ -64,7 +64,7 @@ typedef enum JsonKeyringField
 	/* Settings specific for the individual key provider types. */
 	JK_FILE_PATH,
 
-	JK_VAULT_TOKEN,
+	JK_VAULT_TOKEN_PATH,
 	JK_VAULT_URL,
 	JK_VAULT_MOUNT_PATH,
 	JK_VAULT_CA_PATH,
@@ -93,7 +93,7 @@ static const char *JK_FIELD_NAMES[JK_FIELDS_TOTAL] = {
 	 */
 	[JK_FILE_PATH] = "path",
 
-	[JK_VAULT_TOKEN] = "token",
+	[JK_VAULT_TOKEN_PATH] = "tokenPath",
 	[JK_VAULT_URL] = "url",
 	[JK_VAULT_MOUNT_PATH] = "mountPath",
 	[JK_VAULT_CA_PATH] = "caPath",
@@ -358,8 +358,8 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 					break;
 
 				case VAULT_V2_KEY_PROVIDER:
-					if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_TOKEN]) == 0)
-						parse->top_level_field = JK_VAULT_TOKEN;
+					if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_TOKEN_PATH]) == 0)
+						parse->top_level_field = JK_VAULT_TOKEN_PATH;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_URL]) == 0)
 						parse->top_level_field = JK_VAULT_URL;
 					else if (strcmp(fname, JK_FIELD_NAMES[JK_VAULT_MOUNT_PATH]) == 0)
@@ -498,8 +498,8 @@ json_kring_assign_scalar(JsonKeyringState *parse, JsonKeyringField field, char *
 			file->file_name = value;
 			break;
 
-		case JK_VAULT_TOKEN:
-			vault->vault_token = value;
+		case JK_VAULT_TOKEN_PATH:
+			vault->vault_token_path = value;
 			break;
 		case JK_VAULT_URL:
 			vault->vault_url = value;
