@@ -240,6 +240,7 @@ typedef struct PgFdwDirectModifyState
 	PGresult   *result;			/* result for query */
 	int			num_tuples;		/* # of result tuples */
 	int			next_tuple;		/* index of next one to return */
+	MemoryContextCallback result_cb;	/* ensures result will get freed */
 	Relation	resultRel;		/* relcache entry for the target relation */
 	AttrNumber *attnoMap;		/* array of attnums of input user columns */
 	AttrNumber	ctidAttno;		/* attnum of input ctid column */
@@ -2671,6 +2672,17 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	node->fdw_state = dmstate;
 
 	/*
+	 * We use a memory context callback to ensure that the dmstate's PGresult
+	 * (if any) will be released, even if the query fails somewhere that's
+	 * outside our control.  The callback is always armed for the duration of
+	 * the query; this relies on PQclear(NULL) being a no-op.
+	 */
+	dmstate->result_cb.func = (MemoryContextCallbackFunction) PQclear;
+	dmstate->result_cb.arg = NULL;
+	MemoryContextRegisterResetCallback(CurrentMemoryContext,
+									   &dmstate->result_cb);
+
+	/*
 	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckPermissions() does.
 	 */
@@ -2817,7 +2829,13 @@ postgresEndDirectModify(ForeignScanState *node)
 		return;
 
 	/* Release PGresult */
-	PQclear(dmstate->result);
+	if (dmstate->result)
+	{
+		PQclear(dmstate->result);
+		dmstate->result = NULL;
+		/* ... and don't forget to disable the callback */
+		dmstate->result_cb.arg = NULL;
+	}
 
 	/* Release remote connection */
 	ReleaseConnection(dmstate->conn);
@@ -4591,13 +4609,17 @@ execute_dml_stmt(ForeignScanState *node)
 	/*
 	 * Get the result, and check for success.
 	 *
-	 * We don't use a PG_TRY block here, so be careful not to throw error
-	 * without releasing the PGresult.
+	 * We use a memory context callback to ensure that the PGresult will be
+	 * released, even if the query fails somewhere that's outside our control.
+	 * The callback is already registered, just need to fill in its arg.
 	 */
+	Assert(dmstate->result == NULL);
 	dmstate->result = pgfdw_get_result(dmstate->conn);
+	dmstate->result_cb.arg = dmstate->result;
+
 	if (PQresultStatus(dmstate->result) !=
 		(dmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
-		pgfdw_report_error(ERROR, dmstate->result, dmstate->conn, true,
+		pgfdw_report_error(ERROR, dmstate->result, dmstate->conn, false,
 						   dmstate->query);
 
 	/* Get the number of rows affected. */
@@ -4641,30 +4663,16 @@ get_returning_data(ForeignScanState *node)
 	}
 	else
 	{
-		/*
-		 * On error, be sure to release the PGresult on the way out.  Callers
-		 * do not have PG_TRY blocks to ensure this happens.
-		 */
-		PG_TRY();
-		{
-			HeapTuple	newtup;
+		HeapTuple	newtup;
 
-			newtup = make_tuple_from_result_row(dmstate->result,
-												dmstate->next_tuple,
-												dmstate->rel,
-												dmstate->attinmeta,
-												dmstate->retrieved_attrs,
-												node,
-												dmstate->temp_cxt);
-			ExecStoreHeapTuple(newtup, slot, false);
-		}
-		PG_CATCH();
-		{
-			PQclear(dmstate->result);
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-
+		newtup = make_tuple_from_result_row(dmstate->result,
+											dmstate->next_tuple,
+											dmstate->rel,
+											dmstate->attinmeta,
+											dmstate->retrieved_attrs,
+											node,
+											dmstate->temp_cxt);
+		ExecStoreHeapTuple(newtup, slot, false);
 		/* Get the updated/deleted tuple. */
 		if (dmstate->rel)
 			resultSlot = slot;
