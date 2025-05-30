@@ -6,7 +6,7 @@ for arg in "$@"
 do
     case "$arg" in
         --enable-coverage)
-            ARGS +=" --enable-coverage"
+            ARGS+=" --enable-coverage"
             ;;
     esac
 done
