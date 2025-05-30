@@ -46,7 +46,8 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Rotate key
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_key_using_database_key_provider('rotated-key1');");
+	"SELECT pg_tde_set_key_using_database_key_provider('rotated-key1', 'file-vault');"
+);
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 PGTDE::append_to_result_file("-- server restart");

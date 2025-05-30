@@ -228,10 +228,10 @@ void
 set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 							   Oid providerOid, Oid dbOid, bool ensure_new_key)
 {
-	TDEPrincipalKey *curr_principal_key = NULL;
-	TDEPrincipalKey *new_principal_key = NULL;
+	TDEPrincipalKey *curr_principal_key;
+	TDEPrincipalKey *new_principal_key;
 	LWLock	   *lock_files = tde_lwlock_enc_keys();
-	bool		already_has_key = false;
+	bool		already_has_key;
 	GenericKeyring *new_keyring;
 	const KeyInfo *keyInfo = NULL;
 
@@ -249,21 +249,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	curr_principal_key = GetPrincipalKeyNoDefault(dbOid, LW_EXCLUSIVE);
 	already_has_key = (curr_principal_key != NULL);
 
-	if (provider_name == NULL && !already_has_key)
-	{
-		ereport(ERROR,
-				errmsg("provider_name is a required parameter when creating the first principal key for a database"));
-	}
-
-	if (provider_name != NULL)
-	{
-		new_keyring = GetKeyProviderByName(provider_name, providerOid);
-	}
-	else
-	{
-		new_keyring = GetKeyProviderByID(curr_principal_key->keyInfo.keyringId,
-										 curr_principal_key->keyInfo.databaseId);
-	}
+	new_keyring = GetKeyProviderByName(provider_name, providerOid);
 
 	{
 		KeyringReturnCodes kr_ret;
@@ -291,11 +277,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 	if (keyInfo == NULL)
 		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, PRINCIPAL_KEY_LEN);
-
-	if (keyInfo == NULL)
-	{
-		ereport(ERROR, errmsg("failed to retrieve/create principal key."));
-	}
 
 	new_principal_key = palloc_object(TDEPrincipalKey);
 	new_principal_key->keyInfo.databaseId = dbOid;
@@ -549,6 +530,10 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("key name \"\" is too short"));
+	if (provider_name == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("key provider name cannot be null"));
 
 	ereport(LOG, errmsg("Setting principal key [%s : %s] for the database", key_name, provider_name));
 

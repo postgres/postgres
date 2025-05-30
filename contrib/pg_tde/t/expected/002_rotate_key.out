@@ -45,7 +45,7 @@ SELECT * FROM test_enc ORDER BY id;
   2 | 6
 (2 rows)
 
-SELECT pg_tde_set_key_using_database_key_provider('rotated-key1');
+SELECT pg_tde_set_key_using_database_key_provider('rotated-key1', 'file-vault');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------
  

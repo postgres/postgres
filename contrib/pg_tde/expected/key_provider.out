@@ -319,6 +319,15 @@ SELECT pg_tde_delete_database_key_provider(NULL);
 ERROR:  provider_name cannot be null
 SELECT pg_tde_delete_global_key_provider(NULL);
 ERROR:  provider_name cannot be null
+-- Setting principal key fails if provider name is NULL
+SELECT pg_tde_set_default_key_using_global_key_provider('key', NULL);
+ERROR:  key provider name cannot be null
+SELECT pg_tde_set_key_using_database_key_provider('key', NULL);
+ERROR:  key provider name cannot be null
+SELECT pg_tde_set_key_using_global_key_provider('key', NULL);
+ERROR:  key provider name cannot be null
+SELECT pg_tde_set_server_key_using_global_key_provider('key', NULL);
+ERROR:  key provider name cannot be null
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
 ERROR:  key name cannot be null

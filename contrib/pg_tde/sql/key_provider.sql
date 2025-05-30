@@ -156,6 +156,12 @@ DROP DATABASE db_using_database_provider;
 SELECT pg_tde_delete_database_key_provider(NULL);
 SELECT pg_tde_delete_global_key_provider(NULL);
 
+-- Setting principal key fails if provider name is NULL
+SELECT pg_tde_set_default_key_using_global_key_provider('key', NULL);
+SELECT pg_tde_set_key_using_database_key_provider('key', NULL);
+SELECT pg_tde_set_key_using_global_key_provider('key', NULL);
+SELECT pg_tde_set_server_key_using_global_key_provider('key', NULL);
+
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
 SELECT pg_tde_set_key_using_database_key_provider(NULL, 'file-keyring');
