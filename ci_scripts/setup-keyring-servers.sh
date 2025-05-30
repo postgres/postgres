@@ -17,12 +17,14 @@ cd ..
 echo $SCRIPT_DIR
 pykmip-server -f "$SCRIPT_DIR/../contrib/pg_tde/pykmip-server.conf" -l /tmp/kmip-server.log &
 
-TV=$(mktemp)
-{ exec >$TV; vault server -dev; } &
+CLUSTER_INFO=$(mktemp)
+vault server -dev -dev-tls -dev-cluster-json="$CLUSTER_INFO" > /dev/null &
 sleep 10
-export ROOT_TOKEN_FILE=$(mktemp)
-cat $TV | grep "Root Token" | cut -d ":" -f 2 | xargs echo -n > $ROOT_TOKEN_FILE
-echo "export ROOT_TOKEN_FILE=$ROOT_TOKEN_FILE"
+export VAULT_ROOT_TOKEN_FILE=$(mktemp)
+jq -r .root_token "$CLUSTER_INFO" > "$VAULT_ROOT_TOKEN_FILE"
+export VAULT_CACERT_FILE=$(jq -r .ca_cert_path "$CLUSTER_INFO")
+rm "$CLUSTER_INFO"
 if [ -v GITHUB_ACTIONS ]; then
-    echo "ROOT_TOKEN_FILE=$ROOT_TOKEN_FILE" >> $GITHUB_ENV
+    echo "VAULT_ROOT_TOKEN_FILE=$VAULT_ROOT_TOKEN_FILE" >> $GITHUB_ENV
+    echo "VAULT_CACERT_FILE=$VAULT_CACERT_FILE" >> $GITHUB_ENV
 fi
