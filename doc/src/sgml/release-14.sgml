@@ -2674,10 +2674,14 @@ FROM pg_catalog.pg_constraint c
 WHERE contype = 'f' AND conparentid = 0 AND
    (SELECT count(*) FROM pg_catalog.pg_constraint c2
     WHERE c2.conparentid = c.oid) &lt;&gt;
-   (SELECT count(*) FROM pg_catalog.pg_inherits i
+   ((SELECT count(*) FROM pg_catalog.pg_inherits i
     WHERE (i.inhparent = c.conrelid OR i.inhparent = c.confrelid) AND
       EXISTS (SELECT 1 FROM pg_catalog.pg_partitioned_table
-              WHERE partrelid = i.inhparent));
+              WHERE partrelid = i.inhparent)) +
+    CASE WHEN pg_catalog.pg_partition_root(conrelid) = confrelid THEN
+              (SELECT count(*) FROM pg_catalog.pg_partition_tree(confrelid)
+                WHERE level = 1)
+         ELSE 0 END);
 </programlisting>
       Since it is possible that one or more of the <literal>ADD
       CONSTRAINT</literal> steps will fail, you should save the query's
