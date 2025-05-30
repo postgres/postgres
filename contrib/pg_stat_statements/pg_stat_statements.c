@@ -144,7 +144,7 @@ typedef struct pgssHashKey
 {
 	Oid			userid;			/* user OID */
 	Oid			dbid;			/* database OID */
-	uint64		queryid;		/* query identifier */
+	int64		queryid;		/* query identifier */
 	bool		toplevel;		/* query executed at top level */
 } pgssHashKey;
 
@@ -346,7 +346,7 @@ static void pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 								ProcessUtilityContext context, ParamListInfo params,
 								QueryEnvironment *queryEnv,
 								DestReceiver *dest, QueryCompletion *qc);
-static void pgss_store(const char *query, uint64 queryId,
+static void pgss_store(const char *query, int64 queryId,
 					   int query_location, int query_len,
 					   pgssStoreKind kind,
 					   double total_time, uint64 rows,
@@ -370,7 +370,7 @@ static char *qtext_fetch(Size query_offset, int query_len,
 						 char *buffer, Size buffer_size);
 static bool need_gc_qtexts(void);
 static void gc_qtexts(void);
-static TimestampTz entry_reset(Oid userid, Oid dbid, uint64 queryid, bool minmax_only);
+static TimestampTz entry_reset(Oid userid, Oid dbid, int64 queryid, bool minmax_only);
 static char *generate_normalized_query(JumbleState *jstate, const char *query,
 									   int query_loc, int *query_len_p);
 static void fill_in_constant_lengths(JumbleState *jstate, const char *query,
@@ -852,7 +852,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	{
 		if (pgss_track_utility && IsA(query->utilityStmt, ExecuteStmt))
 		{
-			query->queryId = UINT64CONST(0);
+			query->queryId = INT64CONST(0);
 			return;
 		}
 	}
@@ -899,7 +899,7 @@ pgss_planner(Query *parse,
 	 */
 	if (pgss_enabled(nesting_level)
 		&& pgss_track_planning && query_string
-		&& parse->queryId != UINT64CONST(0))
+		&& parse->queryId != INT64CONST(0))
 	{
 		instr_time	start;
 		instr_time	duration;
@@ -1002,7 +1002,7 @@ pgss_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * counting of optimizable statements that are directly contained in
 	 * utility statements.
 	 */
-	if (pgss_enabled(nesting_level) && queryDesc->plannedstmt->queryId != UINT64CONST(0))
+	if (pgss_enabled(nesting_level) && queryDesc->plannedstmt->queryId != INT64CONST(0))
 	{
 		/*
 		 * Set up to track total elapsed time in ExecutorRun.  Make sure the
@@ -1068,9 +1068,9 @@ pgss_ExecutorFinish(QueryDesc *queryDesc)
 static void
 pgss_ExecutorEnd(QueryDesc *queryDesc)
 {
-	uint64		queryId = queryDesc->plannedstmt->queryId;
+	int64		queryId = queryDesc->plannedstmt->queryId;
 
-	if (queryId != UINT64CONST(0) && queryDesc->totaltime &&
+	if (queryId != INT64CONST(0) && queryDesc->totaltime &&
 		pgss_enabled(nesting_level))
 	{
 		/*
@@ -1111,7 +1111,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					DestReceiver *dest, QueryCompletion *qc)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
-	uint64		saved_queryId = pstmt->queryId;
+	int64		saved_queryId = pstmt->queryId;
 	int			saved_stmt_location = pstmt->stmt_location;
 	int			saved_stmt_len = pstmt->stmt_len;
 	bool		enabled = pgss_track_utility && pgss_enabled(nesting_level);
@@ -1131,7 +1131,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 	 * only.
 	 */
 	if (enabled)
-		pstmt->queryId = UINT64CONST(0);
+		pstmt->queryId = INT64CONST(0);
 
 	/*
 	 * If it's an EXECUTE statement, we don't track it and don't increment the
@@ -1278,7 +1278,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
  * for the arrays in the Counters field.
  */
 static void
-pgss_store(const char *query, uint64 queryId,
+pgss_store(const char *query, int64 queryId,
 		   int query_location, int query_len,
 		   pgssStoreKind kind,
 		   double total_time, uint64 rows,
@@ -1304,7 +1304,7 @@ pgss_store(const char *query, uint64 queryId,
 	 * Nothing to do if compute_query_id isn't enabled and no other module
 	 * computed a query identifier.
 	 */
-	if (queryId == UINT64CONST(0))
+	if (queryId == INT64CONST(0))
 		return;
 
 	/*
@@ -1514,11 +1514,11 @@ pg_stat_statements_reset_1_7(PG_FUNCTION_ARGS)
 {
 	Oid			userid;
 	Oid			dbid;
-	uint64		queryid;
+	int64		queryid;
 
 	userid = PG_GETARG_OID(0);
 	dbid = PG_GETARG_OID(1);
-	queryid = (uint64) PG_GETARG_INT64(2);
+	queryid = PG_GETARG_INT64(2);
 
 	entry_reset(userid, dbid, queryid, false);
 
@@ -1530,12 +1530,12 @@ pg_stat_statements_reset_1_11(PG_FUNCTION_ARGS)
 {
 	Oid			userid;
 	Oid			dbid;
-	uint64		queryid;
+	int64		queryid;
 	bool		minmax_only;
 
 	userid = PG_GETARG_OID(0);
 	dbid = PG_GETARG_OID(1);
-	queryid = (uint64) PG_GETARG_INT64(2);
+	queryid = PG_GETARG_INT64(2);
 	minmax_only = PG_GETARG_BOOL(3);
 
 	PG_RETURN_TIMESTAMPTZ(entry_reset(userid, dbid, queryid, minmax_only));
@@ -2671,7 +2671,7 @@ if (e) { \
  * Reset entries corresponding to parameters passed.
  */
 static TimestampTz
-entry_reset(Oid userid, Oid dbid, uint64 queryid, bool minmax_only)
+entry_reset(Oid userid, Oid dbid, int64 queryid, bool minmax_only)
 {
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
@@ -2691,7 +2691,7 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid, bool minmax_only)
 
 	stats_reset = GetCurrentTimestamp();
 
-	if (userid != 0 && dbid != 0 && queryid != UINT64CONST(0))
+	if (userid != 0 && dbid != 0 && queryid != INT64CONST(0))
 	{
 		/* If all the parameters are available, use the fast path. */
 		memset(&key, 0, sizeof(pgssHashKey));
@@ -2714,7 +2714,7 @@ entry_reset(Oid userid, Oid dbid, uint64 queryid, bool minmax_only)
 
 		SINGLE_ENTRY_RESET(entry);
 	}
-	else if (userid != 0 || dbid != 0 || queryid != UINT64CONST(0))
+	else if (userid != 0 || dbid != 0 || queryid != INT64CONST(0))
 	{
 		/* Reset entries corresponding to valid parameters. */
 		hash_seq_init(&hash_seq, pgss_hash);

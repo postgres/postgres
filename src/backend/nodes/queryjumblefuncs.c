@@ -56,7 +56,7 @@ int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
 bool		query_id_enabled = false;
 
 static JumbleState *InitJumble(void);
-static uint64 DoJumble(JumbleState *jstate, Node *node);
+static int64 DoJumble(JumbleState *jstate, Node *node);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *value, Size size);
 static void FlushPendingNulls(JumbleState *jstate);
@@ -141,12 +141,12 @@ JumbleQuery(Query *query)
 	 * If we are unlucky enough to get a hash of zero, use 1 instead for
 	 * normal statements and 2 for utility queries.
 	 */
-	if (query->queryId == UINT64CONST(0))
+	if (query->queryId == INT64CONST(0))
 	{
 		if (query->utilityStmt)
-			query->queryId = UINT64CONST(2);
+			query->queryId = INT64CONST(2);
 		else
-			query->queryId = UINT64CONST(1);
+			query->queryId = INT64CONST(1);
 	}
 
 	return jstate;
@@ -197,7 +197,7 @@ InitJumble(void)
  *		Jumble the given Node using the given JumbleState and return the resulting
  *		jumble hash.
  */
-static uint64
+static int64
 DoJumble(JumbleState *jstate, Node *node)
 {
 	/* Jumble the given node */
@@ -208,9 +208,9 @@ DoJumble(JumbleState *jstate, Node *node)
 		FlushPendingNulls(jstate);
 
 	/* Process the jumble buffer and produce the hash value */
-	return DatumGetUInt64(hash_any_extended(jstate->jumble,
-											jstate->jumble_len,
-											0));
+	return DatumGetInt64(hash_any_extended(jstate->jumble,
+										   jstate->jumble_len,
+										   0));
 }
 
 /*
@@ -256,10 +256,10 @@ AppendJumbleInternal(JumbleState *jstate, const unsigned char *item,
 
 		if (unlikely(jumble_len >= JUMBLE_SIZE))
 		{
-			uint64		start_hash;
+			int64		start_hash;
 
-			start_hash = DatumGetUInt64(hash_any_extended(jumble,
-														  JUMBLE_SIZE, 0));
+			start_hash = DatumGetInt64(hash_any_extended(jumble,
+														 JUMBLE_SIZE, 0));
 			memcpy(jumble, &start_hash, sizeof(start_hash));
 			jumble_len = sizeof(start_hash);
 		}

@@ -63,7 +63,7 @@ typedef struct PVShared
 	 */
 	Oid			relid;
 	int			elevel;
-	uint64		queryid;
+	int64		queryid;
 
 	/*
 	 * Fields for both index vacuum and cleanup.

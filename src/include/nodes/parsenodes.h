@@ -127,8 +127,13 @@ typedef struct Query
 	 * query identifier (can be set by plugins); ignored for equal, as it
 	 * might not be set; also not stored.  This is the result of the query
 	 * jumble, hence ignored.
+	 *
+	 * We store this as a signed value as this is the form it's displayed to
+	 * users in places such as EXPLAIN and pg_stat_statements.  Primarily this
+	 * is done due to lack of an SQL type to represent the full range of
+	 * uint64.
 	 */
-	uint64		queryId pg_node_attr(equal_ignore, query_jumble_ignore, read_write_ignore, read_as(0));
+	int64		queryId pg_node_attr(equal_ignore, query_jumble_ignore, read_write_ignore, read_as(0));
 
 	/* do I set the command result tag? */
 	bool		canSetTag pg_node_attr(query_jumble_ignore);

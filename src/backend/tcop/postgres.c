@@ -1682,7 +1682,7 @@ exec_bind_message(StringInfo input_message)
 	{
 		Query	   *query = lfirst_node(Query, lc);
 
-		if (query->queryId != UINT64CONST(0))
+		if (query->queryId != INT64CONST(0))
 		{
 			pgstat_report_query_id(query->queryId, false);
 			break;
@@ -2174,7 +2174,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	{
 		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc);
 
-		if (stmt->queryId != UINT64CONST(0))
+		if (stmt->queryId != INT64CONST(0))
 		{
 			pgstat_report_query_id(stmt->queryId, false);
 			break;
