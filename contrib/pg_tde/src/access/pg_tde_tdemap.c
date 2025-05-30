@@ -121,7 +121,7 @@ tde_sprint_key(InternalKey *k)
 }
 
 /*
- * Generates a new internal key for WAL and adds it to the _dat file.
+ * Generates a new internal key for WAL and adds it to the key file.
  *
  * We have a special function for WAL as it is being called during recovery
  * start so there should be no XLog records and aquired locks. The key is
@@ -152,7 +152,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 }
 
 /*
- * Deletes the key map file for a given database.
+ * Deletes the key file for a given database.
  */
 void
 pg_tde_delete_tde_files(Oid dbOid)
@@ -183,7 +183,7 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 }
 
 /*
- * Creates the key map file and saves the principal key information.
+ * Creates the key file and saves the principal key information.
  *
  * If the file pre-exist, it truncates the file before adding principal key
  * information.
@@ -315,15 +315,7 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 }
 
 /*
- * Calls the create map entry function to get an index into the keydata. This
- * The keydata function will then write the encrypted key on the desired
- * location.
- *
- * Key Map Table [pg_tde.map]:
- * 		header: {Format Version, Principal Key Name}
- * 		data: {OID, Flag, index of key in pg_tde.dat}...
- *
- * The caller must hold an exclusive lock on the map file to avoid
+ * The caller must hold an exclusive lock on the key file to avoid
  * concurrent in place updates leading to data conflicts.
  */
 void
@@ -601,7 +593,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 }
 
 /*
- * Open for write and Validate File Header [pg_tde.*]:
+ * Open for write and Validate File Header:
  * 		header: {Format Version, Principal Key Name}
  *
  * Returns the file descriptor in case of a success. Otherwise, error
@@ -736,7 +728,7 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 }
 
 /*
- * Open for read and Validate File Header [pg_tde.*]:
+ * Open for read and Validate File Header:
  * 		header: {Format Version, Principal Key Name}
  *
  * Returns the file descriptor in case of a success. Otherwise, error
@@ -762,7 +754,7 @@ pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr
 }
 
 /*
- * Open a TDE file [pg_tde.*]:
+ * Open a TDE file:
  *
  * Returns the file descriptor in case of a success. Otherwise, error
  * is raised except when ignore_missing is true and the file does not exit.
@@ -852,7 +844,7 @@ pg_tde_read_one_map_entry2(int fd, int32 key_index, TDEMapEntry *map_entry, Oid 
 }
 
 /*
- * Get the principal key from the map file. The caller must hold
+ * Get the principal key from the key file. The caller must hold
  * a LW_SHARED or higher lock on files before calling this function.
  */
 TDESignedPrincipalKeyInfo *
