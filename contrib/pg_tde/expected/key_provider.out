@@ -4,21 +4,10 @@ ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT pg_tde_add_database_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
 ERROR:  unexpected field "foo" for external value "path"
-SELECT * FROM pg_tde_list_all_database_key_providers();
- id | provider_name | provider_type | options 
-----+---------------+---------------+---------
-(0 rows)
-
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
  
-(1 row)
-
-SELECT * FROM pg_tde_list_all_database_key_providers();
- id | provider_name | provider_type |                  options                  
-----+---------------+---------------+-------------------------------------------
-  1 | file-provider | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
 (1 row)
 
 SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
@@ -27,6 +16,8 @@ SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_
  
 (1 row)
 
+SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_dup.per');
+ERROR:  Key provider "file-provider" already exists.
 SELECT * FROM pg_tde_list_all_database_key_providers();
  id | provider_name  | provider_type |                  options                   
 ----+----------------+---------------+--------------------------------------------

@@ -3,16 +3,12 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT  * FROM pg_tde_key_info();
 
 SELECT pg_tde_add_database_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
-SELECT * FROM pg_tde_list_all_database_key_providers();
-
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
-SELECT * FROM pg_tde_list_all_database_key_providers();
-
 SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
+SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_dup.per');
 SELECT * FROM pg_tde_list_all_database_key_providers();
 
 SELECT pg_tde_verify_key();
-
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');
 SELECT pg_tde_verify_key();
 
