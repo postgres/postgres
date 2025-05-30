@@ -1,15 +1,3 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_tdemap.c
- *	  tde relation fork manager code
- *
- *
- * IDENTIFICATION
- *	  src/access/pg_tde_tdemap.c
- *
- *-------------------------------------------------------------------------
- */
-
 #include "postgres.h"
 #include "access/pg_tde_tdemap.h"
 #include "common/file_perm.h"
