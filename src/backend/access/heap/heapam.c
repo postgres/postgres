@@ -53,6 +53,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_database_d.h"
+#include "catalog/pg_replication_origin.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -229,6 +230,38 @@ static const int MultiXactStatusLock[MaxMultiXactStatus + 1] =
 /* Get the LockTupleMode for a given MultiXactStatus */
 #define TUPLOCK_from_mxstatus(status) \
 			(MultiXactStatusLock[(status)])
+
+/*
+ * Check that we have a valid snapshot if we might need TOAST access.
+ */
+static inline void
+AssertHasSnapshotForToast(Relation rel)
+{
+#ifdef USE_ASSERT_CHECKING
+
+	/* bootstrap mode in particular breaks this rule */
+	if (!IsNormalProcessingMode())
+		return;
+
+	/* if the relation doesn't have a TOAST table, we are good */
+	if (!OidIsValid(rel->rd_rel->reltoastrelid))
+		return;
+
+	/*
+	 * Commit 16bf24e fixed accesses to pg_replication_origin without a
+	 * an active snapshot by removing its TOAST table.  On older branches,
+	 * these bugs are left in place.  Its only varlena column is roname (the
+	 * replication origin name), so this is only a problem if the name
+	 * requires out-of-line storage, which seems unlikely.  In any case,
+	 * fixing it doesn't seem worth extra code churn on the back-branches.
+	 */
+	if (RelationGetRelid(rel) == ReplicationOriginRelationId)
+		return;
+
+	Assert(HaveRegisteredOrActiveSnapshot());
+
+#endif							/* USE_ASSERT_CHECKING */
+}
 
 /* ----------------------------------------------------------------
  *						 heap support routines
@@ -2015,6 +2048,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	Assert(HeapTupleHeaderGetNatts(tup->t_data) <=
 		   RelationGetNumberOfAttributes(relation));
 
+	AssertHasSnapshotForToast(relation);
+
 	/*
 	 * Fill in tuple header fields and toast the tuple if necessary.
 	 *
@@ -2291,6 +2326,8 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 
 	/* currently not needed (thus unsupported) for heap_multi_insert() */
 	Assert(!(options & HEAP_INSERT_NO_LOGICAL));
+
+	AssertHasSnapshotForToast(relation);
 
 	needwal = RelationNeedsWAL(relation);
 	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,
@@ -2713,6 +2750,8 @@ heap_delete(Relation relation, ItemPointer tid,
 	bool		old_key_copied = false;
 
 	Assert(ItemPointerIsValid(tid));
+
+	AssertHasSnapshotForToast(relation);
 
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combo CID.
@@ -3208,6 +3247,8 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	/* Cheap, simplistic check that the tuple matches the rel's rowtype. */
 	Assert(HeapTupleHeaderGetNatts(newtup->t_data) <=
 		   RelationGetNumberOfAttributes(relation));
+
+	AssertHasSnapshotForToast(relation);
 
 	/*
 	 * Forbid this during a parallel operation, lest it allocate a combo CID.

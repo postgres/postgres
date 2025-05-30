@@ -4550,8 +4550,16 @@ run_apply_worker()
 		walrcv_startstreaming(LogRepWorkerWalRcvConn, &options);
 
 		StartTransactionCommand();
+
+		/*
+		 * Updating pg_subscription might involve TOAST table access, so
+		 * ensure we have a valid snapshot.
+		 */
+		PushActiveSnapshot(GetTransactionSnapshot());
+
 		UpdateTwoPhaseState(MySubscription->oid, LOGICALREP_TWOPHASE_STATE_ENABLED);
 		MySubscription->twophasestate = LOGICALREP_TWOPHASE_STATE_ENABLED;
+		PopActiveSnapshot();
 		CommitTransactionCommand();
 	}
 	else
@@ -4767,7 +4775,15 @@ DisableSubscriptionAndExit(void)
 
 	/* Disable the subscription */
 	StartTransactionCommand();
+
+	/*
+	 * Updating pg_subscription might involve TOAST table access, so ensure we
+	 * have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
 	DisableSubscription(MySubscription->oid);
+	PopActiveSnapshot();
 	CommitTransactionCommand();
 
 	/* Ensure we remove no-longer-useful entry for worker's start time */
@@ -4872,6 +4888,12 @@ clear_subscription_skip_lsn(XLogRecPtr finish_lsn)
 	}
 
 	/*
+	 * Updating pg_subscription might involve TOAST table access, so ensure we
+	 * have a valid snapshot.
+	 */
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	/*
 	 * Protect subskiplsn of pg_subscription from being concurrently updated
 	 * while clearing it.
 	 */
@@ -4928,6 +4950,8 @@ clear_subscription_skip_lsn(XLogRecPtr finish_lsn)
 
 	heap_freetuple(tup);
 	table_close(rel, NoLock);
+
+	PopActiveSnapshot();
 
 	if (started_tx)
 		CommitTransactionCommand();
