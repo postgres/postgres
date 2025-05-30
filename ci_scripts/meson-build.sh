@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ENABLE_COVERAGE=
 
 for arg in "$@"

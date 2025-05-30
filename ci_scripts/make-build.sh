@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 ARGS=
 
 for arg in "$@"

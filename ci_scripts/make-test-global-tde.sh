@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+
 ADD_FLAGS=
 
 for arg in "$@"

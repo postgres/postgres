@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e  # Exit on errors
 set -u  # Treat unset variables as errors
 set -o pipefail  # Stop on pipeline errors
