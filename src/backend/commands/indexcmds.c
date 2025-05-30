@@ -4226,7 +4226,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 									 false);
 
 		/*
-		 * Updating pg_index might involve TOAST table access, so ensure we
+		 * Swapping the indexes might involve TOAST table access, so ensure we
 		 * have a valid snapshot.
 		 */
 		PushActiveSnapshot(GetTransactionSnapshot());
