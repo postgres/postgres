@@ -12,7 +12,7 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
-                                     1
+ 
 (1 row)
 
 SELECT * FROM pg_tde_list_all_database_key_providers();
@@ -24,7 +24,7 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_keyring2.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
-                                     2
+ 
 (1 row)
 
 SELECT * FROM pg_tde_list_all_database_key_providers();
@@ -69,13 +69,13 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
 SELECT pg_tde_add_global_key_provider_file('file-keyring','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -1
+ 
 (1 row)
 
 SELECT pg_tde_add_global_key_provider_file('file-keyring2','/tmp/pg_tde_test_keyring2.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -2
+ 
 (1 row)
 
 SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
@@ -271,7 +271,7 @@ ERROR:  unexpected boolean in field "path"
 SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provider-file-1');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -3
+ 
 (1 row)
 
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'global-provider');
@@ -286,7 +286,7 @@ ERROR:  could not fetch key "server-key" used as server key from modified key pr
 SELECT pg_tde_add_global_key_provider_file('global-provider2', '/tmp/global-provider-file-1');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
-                                  -4
+ 
 (1 row)
 
 SELECT current_database() AS regress_database
@@ -310,7 +310,7 @@ CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_database_key_provider_file('db-provider', '/tmp/db-provider-file');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
-                                     1
+ 
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('database-key', 'db-provider');

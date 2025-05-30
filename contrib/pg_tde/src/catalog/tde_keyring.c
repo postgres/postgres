@@ -235,7 +235,7 @@ pg_tde_change_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 
 	modify_key_provider_info(&provider, dbOid, true);
 
-	PG_RETURN_INT32(provider.provider_id);
+	PG_RETURN_VOID();
 }
 
 Datum
@@ -294,7 +294,7 @@ pg_tde_add_key_provider_internal(PG_FUNCTION_ARGS, Oid dbOid)
 	provider.provider_type = get_keyring_provider_from_typename(provider_type);
 	save_new_key_provider_info(&provider, dbOid, true);
 
-	PG_RETURN_INT32(provider.provider_id);
+	PG_RETURN_VOID();
 }
 
 Datum

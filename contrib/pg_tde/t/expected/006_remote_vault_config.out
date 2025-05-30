@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_database_key_provider_vault_v2('vault-provider', json_object('type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/token'), json_object('type' VALUE 'remote', 'url' VALUE 'http://localhost:8889/url'), to_json('secret'::text), NULL);
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
-                                         1
+ 
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'vault-provider');

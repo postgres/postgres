@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect',:'root_token','http://127.0.0.1:8200','DUMMY-TOKEN',NULL);
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
-                                         1
+ 
 (1 row)
 
 -- FAILS
@@ -19,7 +19,7 @@ HINT:  create one using pg_tde_set_key before using encrypted tables
 SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2',:'root_token','http://127.0.0.1:8200','secret',NULL);
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
-                                         2
+ 
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('vault-v2-key','vault-v2');
