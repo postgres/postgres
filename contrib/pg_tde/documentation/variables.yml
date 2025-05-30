@@ -1,7 +1,7 @@
 #Variables used throughout the docs
 
 release: 'RC2'
-pgversion17: '17.5.1'
+pgversion17: '17.5'
 tdebranch: TDE_REL_17_STABLE
 
 date:

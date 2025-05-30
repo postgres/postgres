@@ -34,13 +34,13 @@ You need the `percona-release` repository management tool that enables the desir
 1. Install `percona-release`:
 
     ```{.bash data-prompt="$"}
-        $ sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
+        sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
     ```
 
 2. Enable the repository.
 
     ```{.bash data-prompt="$"}
-        $ sudo percona-release enable-only ppg-{{pgversion17}} 
+        sudo percona-release enable-only ppg-17.5
     ```
 
 ## Install pg_tde {.power-number}
@@ -62,7 +62,7 @@ You need the `percona-release` repository management tool that enables the desir
 Run the following command to install `pg_tde`:
 
 ```{.bash data-prompt="$"}
-    $ sudo yum -y install percona-postgresql17 percona-postgresql17-contrib 
+    sudo yum -y install percona-postgresql17-server percona-postgresql17-contrib 
 ```
 
 ## Next steps
