@@ -104,7 +104,6 @@ where:
 * `secret_token_path` is a path to the file that contains an access token with read and write access to the above mount point
 * **[optional]** `ca_path` is the path of the CA file used for SSL verification
 
-All parameters can be either strings, or JSON objects [referencing remote parameters](how-to/external-parameters.md).
 
 
 #### Adding or modifying KMIP providers
@@ -166,7 +165,6 @@ where:
 !!! note
     The specified access parameters require permission to read and write keys at the server.
 
-All parameters can be either strings, or JSON objects [referencing remote parameters](how-to/external-parameters.md).
 
 ### Adding or modifying local keyfile providers
 
@@ -210,8 +208,6 @@ where:
 * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
 * `/path/to/the/key/provider/data.file` is the path to the key provider file.
 
-!!! note
-    All parameters can be either strings, or JSON objects [referencing remote parameters](how-to/external-parameters.md).
 
 ### Delete a provider
 

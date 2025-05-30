@@ -3,7 +3,7 @@ SELECT  * FROM pg_tde_key_info();
 ERROR:  Principal key does not exists for the database
 HINT:  Use set_key interface to set the principal key
 SELECT pg_tde_add_database_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
-ERROR:  unexpected field "foo" for external value "path"
+ERROR:  key provider value cannot be an object
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
@@ -49,7 +49,7 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
 (2 rows)
 
 SELECT pg_tde_change_database_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
-ERROR:  unexpected field "foo" for external value "path"
+ERROR:  key provider value cannot be an object
 SELECT * FROM pg_tde_list_all_database_key_providers();
  id | provider_name  | provider_type |                  options                   
 ----+----------------+---------------+--------------------------------------------
@@ -177,32 +177,12 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
 ERROR:  key provider options must be an object
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
 ERROR:  key provider options must be an object
--- Creating key providers fails if an external value object doesn't have all required keys
+-- Creating key providers fails if vaules are not scalar
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {}}');
-ERROR:  external value must contain "type" in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": null}}');
-ERROR:  external value must contain "type" in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote"}}');
-ERROR:  external remote value must contain "url" in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote", "url": null}}');
-ERROR:  external remote value must contain "url" in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
-ERROR:  external file value must contain "path" in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": null}}');
-ERROR:  external file value must contain "path" in field "path"
--- Creating key providers fails if values are array instead of scalar
+ERROR:  key provider value cannot be an object
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": ["array"]}');
 ERROR:  unexpected array in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": ["array"]}}');
-ERROR:  unexpected array in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": ["array"]}}');
-ERROR:  unexpected array in field "path"
--- Creating key providers fails if values are boolean
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": true}');
-ERROR:  unexpected boolean in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": true}}');
-ERROR:  unexpected boolean in field "path"
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": true}}');
 ERROR:  unexpected boolean in field "path"
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
@@ -231,32 +211,12 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
 ERROR:  key provider options must be an object
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 ERROR:  key provider options must be an object
--- Modifying key providers fails if an external value object doesn't have all required keys
+-- Modifying key providers fails if vaules are not scalar
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
-ERROR:  external value must contain "type" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": null}}');
-ERROR:  external value must contain "type" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
-ERROR:  external remote value must contain "url" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote", "url": null}}');
-ERROR:  external remote value must contain "url" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
-ERROR:  external file value must contain "path" in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": null}}');
-ERROR:  external file value must contain "path" in field "path"
--- Modifying key providers fails if values are array instead of scalar
+ERROR:  key provider value cannot be an object
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
 ERROR:  unexpected array in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": ["array"]}}');
-ERROR:  unexpected array in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
-ERROR:  unexpected array in field "path"
--- Modifying key providers fails if values are boolean
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": true}');
-ERROR:  unexpected boolean in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": true}}');
-ERROR:  unexpected boolean in field "path"
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": true}}');
 ERROR:  unexpected boolean in field "path"
 -- Modifying key providers fails if new settings can't fetch existing server key
 SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provider-file-1');

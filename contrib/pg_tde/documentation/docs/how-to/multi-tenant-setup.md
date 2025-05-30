@@ -135,4 +135,3 @@ You must do these steps for every database where you have created the extension.
     !!! note
         The key is auto-generated.
 
-   <i info>:material-information: Info:</i> The key provider configuration is stored in the database catalog in an unencrypted table. See [how to use external reference to parameters](external-parameters.md) to add an extra security layer to your setup.

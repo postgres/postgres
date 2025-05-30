@@ -73,23 +73,10 @@ SELECT pg_tde_add_database_key_provider('file', 'provider', '["array"]');
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'true');
 SELECT pg_tde_add_database_key_provider('file', 'provider', 'null');
 
--- Creating key providers fails if an external value object doesn't have all required keys
+-- Creating key providers fails if vaules are not scalar
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": null}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote"}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "remote", "url": null}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file"}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": null}}');
-
--- Creating key providers fails if values are array instead of scalar
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": ["array"]}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": ["array"]}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": ["array"]}}');
-
--- Creating key providers fails if values are boolean
 SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": true}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": true}}');
-SELECT pg_tde_add_database_key_provider('file', 'provider', '{"path": {"type": "file", "path": true}}');
 
 -- Modifying key providers fails if any required parameter is NULL
 SELECT pg_tde_change_database_key_provider(NULL, 'file-keyring', '{}');
@@ -109,23 +96,10 @@ SELECT pg_tde_change_database_key_provider('file', 'file-provider', '["array"]')
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'true');
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', 'null');
 
--- Modifying key providers fails if an external value object doesn't have all required keys
+-- Modifying key providers fails if vaules are not scalar
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": null}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote"}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "remote", "url": null}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file"}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": null}}');
-
--- Modifying key providers fails if values are array instead of scalar
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": ["array"]}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": ["array"]}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": ["array"]}}');
-
--- Modifying key providers fails if values are boolean
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": true}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": true}}');
-SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"type": "file", "path": true}}');
 
 -- Modifying key providers fails if new settings can't fetch existing server key
 SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provider-file-1');

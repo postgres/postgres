@@ -116,9 +116,9 @@ _See [Make Builds for Developers](https://github.com/percona/pg_tde/wiki/Make-bu
         -- pg_tde_add_database_key_provider_vault_v2(provider_name, vault_token, vault_url, vault_mount_path, vault_ca_path)
         SELECT pg_tde_add_database_key_provider_vault_v2(
             'vault-provider',
-            json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/token' ),
-            json_object( 'type' VALUE 'remote', 'url' VALUE 'http://localhost:8888/url' ),
-            to_json('secret'::text), NULL);
+            '/path/to/token_file',
+            'https://your.vault.server',
+            'secret', NULL);
 
         -- For File key provider
         -- pg_tde_add_database_key_provider_file(provider_name, file_path);

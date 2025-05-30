@@ -22,6 +22,8 @@ my $db_oid = $node->safe_psql('postgres',
 	q{SELECT oid FROM pg_catalog.pg_database WHERE datname = 'postgres'});
 my $options;
 
+my $token_file = $ENV{ROOT_TOKEN_FILE};
+
 $node->stop;
 
 command_like(
@@ -64,7 +66,7 @@ command_like(
 		'database-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		'/tmp/vault_test_token',
+		$token_file,
 		'mount-path',
 		'/tmp/ca_path',
 	],
@@ -85,7 +87,7 @@ $options = decode_json(
 		'postgres',
 		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
 	));
-is($options->{tokenPath}, '/tmp/vault_test_token',
+is($options->{tokenPath}, $token_file,
 	'tokenPath is set correctly for vault-v2 provider');
 is( $options->{url},
 	'http://vault-server.example:8200/',
@@ -147,7 +149,7 @@ command_like(
 		'global-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		'/tmp/vault_test_token',
+		$token_file,
 		'mount-path',
 		'/tmp/ca_path',
 	],

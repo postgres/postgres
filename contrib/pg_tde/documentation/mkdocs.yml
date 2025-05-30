@@ -188,7 +188,6 @@ nav:
       - "pg_checksums": command-line-tools/pg-tde-checksums.md 
     - "Uninstall pg_tde": how-to/uninstall.md
     - "Configure Multi-tenancy": how-to/multi-tenant-setup.md
-    - "Use Reference to External Parameters": how-to/external-parameters.md
     - "Decrypt an Encrypted Table": how-to/decrypt.md
   - faq.md
   - "Release Notes":

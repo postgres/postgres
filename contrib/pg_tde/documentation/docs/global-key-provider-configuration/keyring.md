@@ -1,6 +1,6 @@
 # Keyring File Configuration
 
-This setup is intended for development and stores the keys unencrypted in the specified data file. See [how to use external reference to parameters](../how-to/external-parameters.md) to add an extra security layer to your setup.
+This setup is intended for development and stores the keys unencrypted in the specified data file.
 
 !!! note
      While keyfiles may be acceptable for **local** or **testing environments**, KMS integration is the recommended approach for production deployments.

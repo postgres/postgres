@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect','/tmp/vault_test_token','http://127.0.0.1:8200','DUMMY-TOKEN',NULL);
+\getenv root_token_file ROOT_TOKEN_FILE
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect',:'root_token_file','http://127.0.0.1:8200','DUMMY-TOKEN',NULL);
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
  
@@ -15,7 +16,7 @@ CREATE TABLE test_enc(
 	) USING tde_heap;
 ERROR:  principal key not configured
 HINT:  create one using pg_tde_set_key before using encrypted tables
-SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2','/tmp/vault_test_token','http://127.0.0.1:8200','secret',NULL);
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2',:'root_token_file','http://127.0.0.1:8200','secret',NULL);
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
  
@@ -51,6 +52,6 @@ SELECT pg_tde_verify_key();
 
 DROP TABLE test_enc;
 -- Creating provider fails if we can't connect to vault
-SELECT pg_tde_add_database_key_provider_vault_v2('will-not-work', '/tmp/vault_test_token', 'http://127.0.0.1:61', 'secret', NULL);
+SELECT pg_tde_add_database_key_provider_vault_v2('will-not-work', :'root_token_file', 'http://127.0.0.1:61', 'secret', NULL);
 ERROR:  HTTP(S) request to keyring provider "will-not-work" failed
 DROP EXTENSION pg_tde;

@@ -23,6 +23,7 @@
 #include "utils/fmgroids.h"
 #include "common/pg_tde_utils.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "unistd.h"
 #include "utils/builtins.h"
 #include "pg_tde.h"
@@ -925,25 +926,28 @@ load_kmip_keyring_provider_options(char *keyring_options)
 static char *
 get_file_value(const char *path, const char *field_name)
 {
-	int			fd = -1;
+	FILE	   *fd;
 	char	   *val;
 
-	fd = BasicOpenFile(path, O_RDONLY);
-	if (fd < 0)
+	fd = AllocateFile(path, "r");
+	if (fd == NULL)
 	{
-		elog(ERROR, "failed to open file \"%s\" for \"%s\"", path, field_name);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\" for \"%s\": %m", path, field_name)));
 	}
 
-	val = palloc0(MAX_FILE_DATA_LENGTH);
-	if (pg_pread(fd, val, MAX_FILE_DATA_LENGTH, 0) == -1)
+	val = palloc(MAX_FILE_DATA_LENGTH);
+	if (fgets(val, MAX_FILE_DATA_LENGTH, fd) == NULL && ferror(fd))
 	{
-		close(fd);
-		elog(ERROR, "failed to read file \"%s\" for \"%s\"", path, field_name);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read file \"%s\" for \"%s\": %m", path, field_name)));
 	}
 	/* remove trailing whitespace */
 	val[strcspn(val, " \t\n\r")] = '\0';
 
-	close(fd);
+	FreeFile(fd);
 	return val;
 }
 

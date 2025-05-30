@@ -168,11 +168,10 @@ For such situations, `pg_tde` also provides [command line tools](../command-line
 
 ### Sensitive key provider information
 
-Key provider information authentication details is a sensitive information. It is not safe to store it together with the database in the `$PGDATA` directory, or even on the same server.
+!!! important
 
-To safeguard key providers' sensitive information, `pg_tde` supports references to external services. Instead of specifying authentication details directly, users specify the reference to the external service where it is stored. `pg_tde` then downloads the provider's authentication details when needed.
-
-The currently supported external services are HTTP and external file references.
+    Authentication details for key providers are sensitive and must be protected.
+    Do not store these credentials in the `$PGDATA` directory alongside the database. Instead, ensure they are stored in a secure location with strict file system permissions to prevent unauthorized access.
 
 ## User interface
 
