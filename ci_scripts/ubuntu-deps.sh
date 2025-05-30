@@ -53,7 +53,7 @@ DEPS=(
 sudo apt-get update
 sudo apt-get install -y ${DEPS[@]}
 
-bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 pip3 install meson
 
 # Vault
