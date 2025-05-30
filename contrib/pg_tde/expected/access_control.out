@@ -27,56 +27,7 @@ ERROR:  permission denied for function pg_tde_verify_server_key
 SELECT pg_tde_verify_default_key();
 ERROR:  permission denied for function pg_tde_verify_default_key
 RESET ROLE;
-SELECT pg_tde_grant_database_key_management_to_role('regress_pg_tde_access_control');
- pg_tde_grant_database_key_management_to_role 
-----------------------------------------------
- 
-(1 row)
-
-SELECT pg_tde_grant_key_viewer_to_role('regress_pg_tde_access_control');
- pg_tde_grant_key_viewer_to_role 
----------------------------------
- 
-(1 row)
-
-SET ROLE regress_pg_tde_access_control;
--- should now be allowed
-SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'local-file-provider');
- pg_tde_set_key_using_database_key_provider 
---------------------------------------------
- 
-(1 row)
-
-SELECT * FROM pg_tde_list_all_database_key_providers();
- id |    provider_name    | provider_type |                  options                  
-----+---------------------+---------------+-------------------------------------------
-  1 | local-file-provider | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
-(1 row)
-
-SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_key_info();
-  key_name   |  key_provider_name  | key_provider_id 
--------------+---------------------+-----------------
- test-db-key | local-file-provider |               1
-(1 row)
-
-SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_server_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
-SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_default_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
-SELECT pg_tde_verify_key();
- pg_tde_verify_key 
--------------------
- 
-(1 row)
-
-SELECT pg_tde_verify_server_key();
-ERROR:  principal key not configured for current database
-SELECT pg_tde_verify_default_key();
-ERROR:  principal key not configured for current database
 -- Only superusers can execute key management functions, regardless of role grants
-RESET ROLE;
 GRANT EXECUTE ON FUNCTION pg_tde_add_database_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
 GRANT EXECUTE ON FUNCTION pg_tde_add_global_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
 GRANT EXECUTE ON FUNCTION pg_tde_change_database_key_provider(TEXT, TEXT, JSON) TO regress_pg_tde_access_control;
@@ -105,30 +56,5 @@ SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'global-file-pro
 ERROR:  must be superuser to access global key providers
 SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'global-file-provider');
 ERROR:  must be superuser to access global key providers
-RESET ROLE;
-SELECT pg_tde_revoke_key_viewer_from_role('regress_pg_tde_access_control');
- pg_tde_revoke_key_viewer_from_role 
-------------------------------------
- 
-(1 row)
-
-SET ROLE regress_pg_tde_access_control;
--- verify the view access is revoked
-SELECT pg_tde_list_all_database_key_providers();
-ERROR:  permission denied for function pg_tde_list_all_database_key_providers
-SELECT pg_tde_list_all_global_key_providers();
-ERROR:  permission denied for function pg_tde_list_all_global_key_providers
-SELECT pg_tde_key_info();
-ERROR:  permission denied for function pg_tde_key_info
-SELECT pg_tde_server_key_info();
-ERROR:  permission denied for function pg_tde_server_key_info
-SELECT pg_tde_default_key_info();
-ERROR:  permission denied for function pg_tde_default_key_info
-SELECT pg_tde_verify_key();
-ERROR:  permission denied for function pg_tde_verify_key
-SELECT pg_tde_verify_server_key();
-ERROR:  permission denied for function pg_tde_verify_server_key
-SELECT pg_tde_verify_default_key();
-ERROR:  permission denied for function pg_tde_verify_default_key
 RESET ROLE;
 DROP EXTENSION pg_tde CASCADE;

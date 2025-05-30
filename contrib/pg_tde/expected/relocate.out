@@ -9,12 +9,6 @@ SELECT other.pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_te
  
 (1 row)
 
-SELECT other.pg_tde_grant_key_viewer_to_role('public');
- pg_tde_grant_key_viewer_to_role 
----------------------------------
- 
-(1 row)
-
 ALTER EXTENSION pg_tde SET SCHEMA public;
 ERROR:  extension "pg_tde" does not support SET SCHEMA
 DROP EXTENSION pg_tde;

@@ -8,8 +8,6 @@ CREATE EXTENSION pg_tde SCHEMA other;
 
 SELECT other.pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');
 
-SELECT other.pg_tde_grant_key_viewer_to_role('public');
-
 ALTER EXTENSION pg_tde SET SCHEMA public;
 
 DROP EXTENSION pg_tde;

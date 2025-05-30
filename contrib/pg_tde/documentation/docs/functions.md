@@ -11,26 +11,6 @@ However, database owners can run the “view keys” and “set principal key”
 * `GRANT EXECUTE`
 * `REVOKE EXECUTE`
 
-The following functions are also provided for easier management of functionality groups:
-
-### Database local key management
-
-Use these functions to grant or revoke permissions to manage the key of the current database. They enable or disable all functions related to the key of the current database:
-
-* `pg_tde_grant_database_key_management_to_role(role)`
-* `pg_tde_revoke_database_key_management_from_role(role)`
-
-### Global scope key management
-
-Managment of the global scope is restricted to superusers only.
-
-### Inspections
-
-Use these functions to grant or revoke the use of query functions, which do not modify the encryption settings:
-
-* `pg_tde_grant_key_viewer_to_role(role)`
-* `pg_tde_revoke_key_viewer_from_role(role)`
-
 ## Key provider management
 
 A key provider is a system or service responsible for managing encryption keys. `pg_tde` supports the following key providers:
