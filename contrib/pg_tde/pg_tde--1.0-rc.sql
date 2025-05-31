@@ -405,7 +405,7 @@ LANGUAGE SQL
 BEGIN ATOMIC
     -- JSON keys in the options must be matched to the keys in
     -- load_kmip_keyring_provider_options function.
-    SELECT pg_tde_change_global_key_provider('vault-v2', provider_name,
+    SELECT pg_tde_change_global_key_provider('kmip', provider_name,
                             json_object('host' VALUE kmip_host,
                             'port' VALUE kmip_port,
                             'caPath' VALUE kmip_ca_path,
