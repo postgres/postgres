@@ -66,6 +66,7 @@
 #include "replication/slot.h"
 #include "replication/syncrep.h"
 #include "storage/bufmgr.h"
+#include "storage/fd.h"
 #include "storage/large_object.h"
 #include "storage/pg_shmem.h"
 #include "storage/predicate.h"
@@ -467,6 +468,14 @@ static const struct config_enum_entry wal_compression_options[] = {
 	{"no", WAL_COMPRESSION_NONE, true},
 	{"1", WAL_COMPRESSION_PGLZ, true},
 	{"0", WAL_COMPRESSION_NONE, true},
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry file_extend_method_options[] = {
+#ifdef HAVE_POSIX_FALLOCATE
+	{"posix_fallocate", FILE_EXTEND_METHOD_POSIX_FALLOCATE, false},
+#endif
+	{"write_zeros", FILE_EXTEND_METHOD_WRITE_ZEROS, false},
 	{NULL, 0, false}
 };
 
@@ -4844,6 +4853,16 @@ struct config_enum ConfigureNamesEnum[] =
 		},
 		&shared_memory_type,
 		DEFAULT_SHARED_MEMORY_TYPE, shared_memory_options,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"file_extend_method", PGC_SIGHUP, RESOURCES_DISK,
+			gettext_noop("Selects the method used for extending data files."),
+			NULL
+		},
+		&file_extend_method,
+		DEFAULT_FILE_EXTEND_METHOD, file_extend_method_options,
 		NULL, NULL, NULL
 	},
 

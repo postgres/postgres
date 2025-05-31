@@ -59,12 +59,23 @@ typedef int File;
 #define IO_DIRECT_WAL			0x02
 #define IO_DIRECT_WAL_INIT		0x04
 
+enum FileExtendMethod
+{
+#ifdef HAVE_POSIX_FALLOCATE
+	FILE_EXTEND_METHOD_POSIX_FALLOCATE,
+#endif
+	FILE_EXTEND_METHOD_WRITE_ZEROS,
+};
+
+/* Default to the first available file_extend_method. */
+#define DEFAULT_FILE_EXTEND_METHOD 0
 
 /* GUC parameter */
 extern PGDLLIMPORT int max_files_per_process;
 extern PGDLLIMPORT bool data_sync_retry;
 extern PGDLLIMPORT int recovery_init_sync_method;
 extern PGDLLIMPORT int io_direct_flags;
+extern PGDLLIMPORT int file_extend_method;
 
 /*
  * This is private to fd.c, but exported for save/restore_backend_variables()

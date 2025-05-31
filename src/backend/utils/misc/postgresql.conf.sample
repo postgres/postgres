@@ -167,6 +167,11 @@
 #temp_file_limit = -1			# limits per-process temp file space
 					# in kilobytes, or -1 for no limit
 
+#file_extend_method = posix_fallocate   # the default is the first option supported
+					# by the operating system:
+					#   posix_fallocate (most Unix-like systems)
+					#   write_zeros
+
 # - Kernel Resources -
 
 #max_files_per_process = 1000		# min 64
