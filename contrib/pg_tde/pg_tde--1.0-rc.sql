@@ -107,7 +107,7 @@ CREATE FUNCTION pg_tde_list_all_database_key_providers
     OUT provider_type TEXT,
     OUT options JSON)
 RETURNS SETOF RECORD
-LANGUAGE C STRICT
+LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 CREATE FUNCTION pg_tde_list_all_global_key_providers
@@ -116,7 +116,7 @@ CREATE FUNCTION pg_tde_list_all_global_key_providers
     OUT provider_type TEXT,
     OUT options JSON)
 RETURNS SETOF RECORD
-LANGUAGE C STRICT
+LANGUAGE C
 AS 'MODULE_PATHNAME';
 
 -- Global Tablespace Key Provider Management
