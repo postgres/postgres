@@ -602,13 +602,24 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 		 * that decision should be made though? For now just use a cutoff of
 		 * 8, anything between 4 and 8 worked OK in some local testing.
 		 */
-		if (numblocks > 8)
+		if (numblocks > 8 &&
+			file_extend_method != FILE_EXTEND_METHOD_WRITE_ZEROS)
 		{
-			int			ret;
+			int			ret = 0;
 
-			ret = FileFallocate(v->mdfd_vfd,
-								seekpos, (pgoff_t) BLCKSZ * numblocks,
-								WAIT_EVENT_DATA_FILE_EXTEND);
+#ifdef HAVE_POSIX_FALLOCATE
+			if (file_extend_method == FILE_EXTEND_METHOD_POSIX_FALLOCATE)
+			{
+				ret = FileFallocate(v->mdfd_vfd,
+									seekpos, (pgoff_t) BLCKSZ * numblocks,
+									WAIT_EVENT_DATA_FILE_EXTEND);
+			}
+			else
+#endif
+			{
+				elog(ERROR, "unsupported file_extend_method: %d",
+					 file_extend_method);
+			}
 			if (ret != 0)
 			{
 				ereport(ERROR,

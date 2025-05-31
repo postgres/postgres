@@ -1042,6 +1042,13 @@
   options => 'file_copy_method_options',
 },
 
+{ name => 'file_extend_method', type => 'enum', context => 'PGC_SIGHUP', group => 'RESOURCES_DISK',
+  short_desc => 'Selects the method used for extending data files.',
+  variable => 'file_extend_method',
+  boot_val => 'DEFAULT_FILE_EXTEND_METHOD',
+  options => 'file_extend_method_options',
+},
+
 { name => 'from_collapse_limit', type => 'int', context => 'PGC_USERSET', group => 'QUERY_TUNING_OTHER',
   short_desc => 'Sets the FROM-list size beyond which subqueries are not collapsed.',
   long_desc => 'The planner will merge subqueries into upper queries if the resulting FROM list would have no more than this many items.',
