@@ -2034,7 +2034,7 @@ exec_bind_message(StringInfo input_message)
 	{
 		PlannedStmt *plan = lfirst_node(PlannedStmt, lc);
 
-		if (plan->planId != UINT64CONST(0))
+		if (plan->planId != INT64CONST(0))
 		{
 			pgstat_report_plan_id(plan->planId, false);
 			break;
@@ -2185,7 +2185,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	{
 		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc);
 
-		if (stmt->planId != UINT64CONST(0))
+		if (stmt->planId != INT64CONST(0))
 		{
 			pgstat_report_plan_id(stmt->planId, false);
 			break;

@@ -56,7 +56,7 @@ typedef struct PlannedStmt
 	int64		queryId;
 
 	/* plan identifier (can be set by plugins) */
-	uint64		planId;
+	int64		planId;
 
 	/* is it insert|update|delete|merge RETURNING? */
 	bool		hasReturning;
