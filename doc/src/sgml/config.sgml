@@ -2295,6 +2295,43 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-file-extend-method" xreflabel="file_extend_method">
+      <term><varname>file_extend_method</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>file_extend_method</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the method used to extend data files during bulk operations
+        such as <command>COPY</command>.  The first available option is used as
+        the default, depending on the operating system:
+        <itemizedlist>
+         <listitem>
+          <para>
+           <literal>posix_fallocate</literal> (Unix) uses the standard POSIX
+            interface for allocating disk space, but is missing on some systems.
+            If it is present but the underlying file system doesn't support it,
+            this option silently falls back to <literal>write_zeros</literal>.
+            Current versions of BTRFS are known to disable compression when
+            this option is used.
+            This is the default on systems that have the function.
+           </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>write_zeros</literal> extends files by writing out blocks
+            of zero bytes.  This is the default on systems that don't have the
+            function <function>posix_fallocate</function>.
+          </para>
+         </listitem>
+        </itemizedlist>
+        The <literal>write_zeros</literal> method is always used when data
+        files are extended by 8 blocks or fewer.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-max-notify-queue-pages" xreflabel="max_notify_queue_pages">
       <term><varname>max_notify_queue_pages</varname> (<type>integer</type>)
       <indexterm>
