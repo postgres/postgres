@@ -61,64 +61,64 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 	/* Use a PG_TRY block to ensure we release the PyObjects just acquired */
 	PG_TRY();
 	{
-	const char *primary = NULL;
-	int			sqlerrcode = 0;
-	char	   *detail = NULL;
-	char	   *hint = NULL;
-	char	   *query = NULL;
-	int			position = 0;
-	char	   *schema_name = NULL;
-	char	   *table_name = NULL;
-	char	   *column_name = NULL;
-	char	   *datatype_name = NULL;
-	char	   *constraint_name = NULL;
+		const char *primary = NULL;
+		int			sqlerrcode = 0;
+		char	   *detail = NULL;
+		char	   *hint = NULL;
+		char	   *query = NULL;
+		int			position = 0;
+		char	   *schema_name = NULL;
+		char	   *table_name = NULL;
+		char	   *column_name = NULL;
+		char	   *datatype_name = NULL;
+		char	   *constraint_name = NULL;
 
-	if (exc != NULL)
-	{
-		PyErr_NormalizeException(&exc, &val, &tb);
+		if (exc != NULL)
+		{
+			PyErr_NormalizeException(&exc, &val, &tb);
 
-		if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
-			PLy_get_spi_error_data(val, &sqlerrcode,
-								   &detail, &hint, &query, &position,
+			if (PyErr_GivenExceptionMatches(val, PLy_exc_spi_error))
+				PLy_get_spi_error_data(val, &sqlerrcode,
+									   &detail, &hint, &query, &position,
+									   &schema_name, &table_name, &column_name,
+									   &datatype_name, &constraint_name);
+			else if (PyErr_GivenExceptionMatches(val, PLy_exc_error))
+				PLy_get_error_data(val, &sqlerrcode, &detail, &hint,
 								   &schema_name, &table_name, &column_name,
 								   &datatype_name, &constraint_name);
-		else if (PyErr_GivenExceptionMatches(val, PLy_exc_error))
-			PLy_get_error_data(val, &sqlerrcode, &detail, &hint,
-							   &schema_name, &table_name, &column_name,
-							   &datatype_name, &constraint_name);
-		else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
-			elevel = FATAL;
-	}
-
-	PLy_traceback(exc, val, tb,
-				  &xmsg, &tbmsg, &tb_depth);
-
-	if (fmt)
-	{
-		for (;;)
-		{
-			va_list		ap;
-			int			needed;
-
-			errno = save_errno;
-			va_start(ap, fmt);
-			needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
-			va_end(ap);
-			if (needed == 0)
-				break;
-			enlargeStringInfo(&emsg, needed);
+			else if (PyErr_GivenExceptionMatches(val, PLy_exc_fatal))
+				elevel = FATAL;
 		}
-		primary = emsg.data;
 
-		/* If there's an exception message, it goes in the detail. */
-		if (xmsg)
-			detail = xmsg;
-	}
-	else
-	{
-		if (xmsg)
-			primary = xmsg;
-	}
+		PLy_traceback(exc, val, tb,
+					  &xmsg, &tbmsg, &tb_depth);
+
+		if (fmt)
+		{
+			for (;;)
+			{
+				va_list		ap;
+				int			needed;
+
+				errno = save_errno;
+				va_start(ap, fmt);
+				needed = appendStringInfoVA(&emsg, dgettext(TEXTDOMAIN, fmt), ap);
+				va_end(ap);
+				if (needed == 0)
+					break;
+				enlargeStringInfo(&emsg, needed);
+			}
+			primary = emsg.data;
+
+			/* If there's an exception message, it goes in the detail. */
+			if (xmsg)
+				detail = xmsg;
+		}
+		else
+		{
+			if (xmsg)
+				primary = xmsg;
+		}
 
 		ereport(elevel,
 				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
@@ -195,43 +195,43 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	 */
 	PG_TRY();
 	{
-	char	   *e_type_s = NULL;
-	char	   *e_module_s = NULL;
-	const char *vstr;
-	StringInfoData xstr;
+		char	   *e_type_s = NULL;
+		char	   *e_module_s = NULL;
+		const char *vstr;
+		StringInfoData xstr;
 
-	e_type_o = PyObject_GetAttrString(e, "__name__");
-	e_module_o = PyObject_GetAttrString(e, "__module__");
-	if (e_type_o)
-		e_type_s = PyString_AsString(e_type_o);
-	if (e_module_o)
-		e_module_s = PyString_AsString(e_module_o);
+		e_type_o = PyObject_GetAttrString(e, "__name__");
+		e_module_o = PyObject_GetAttrString(e, "__module__");
+		if (e_type_o)
+			e_type_s = PyString_AsString(e_type_o);
+		if (e_module_o)
+			e_module_s = PyString_AsString(e_module_o);
 
-	if (v && ((vob = PyObject_Str(v)) != NULL))
-		vstr = PyString_AsString(vob);
-	else
-		vstr = "unknown";
-
-	initStringInfo(&xstr);
-	if (!e_type_s || !e_module_s)
-	{
-		if (PyString_Check(e))
-			/* deprecated string exceptions */
-			appendStringInfoString(&xstr, PyString_AsString(e));
+		if (v && ((vob = PyObject_Str(v)) != NULL))
+			vstr = PyString_AsString(vob);
 		else
-			/* shouldn't happen */
-			appendStringInfoString(&xstr, "unrecognized exception");
-	}
-	/* mimics behavior of traceback.format_exception_only */
-	else if (strcmp(e_module_s, "builtins") == 0
-			 || strcmp(e_module_s, "__main__") == 0
-			 || strcmp(e_module_s, "exceptions") == 0)
-		appendStringInfoString(&xstr, e_type_s);
-	else
-		appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
-	appendStringInfo(&xstr, ": %s", vstr);
+			vstr = "unknown";
 
-	*xmsg = xstr.data;
+		initStringInfo(&xstr);
+		if (!e_type_s || !e_module_s)
+		{
+			if (PyString_Check(e))
+				/* deprecated string exceptions */
+				appendStringInfoString(&xstr, PyString_AsString(e));
+			else
+				/* shouldn't happen */
+				appendStringInfoString(&xstr, "unrecognized exception");
+		}
+		/* mimics behavior of traceback.format_exception_only */
+		else if (strcmp(e_module_s, "builtins") == 0
+				 || strcmp(e_module_s, "__main__") == 0
+				 || strcmp(e_module_s, "exceptions") == 0)
+			appendStringInfoString(&xstr, e_type_s);
+		else
+			appendStringInfo(&xstr, "%s.%s", e_module_s, e_type_s);
+		appendStringInfo(&xstr, ": %s", vstr);
+
+		*xmsg = xstr.data;
 	}
 	PG_FINALLY();
 	{
@@ -278,60 +278,60 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			if (filename == NULL)
 				elog(ERROR, "could not get file name from Python code object");
 
-		/* The first frame always points at <module>, skip it. */
-		if (*tb_depth > 0)
-		{
-			PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-			char	   *proname;
-			char	   *fname;
-			char	   *line;
-			char	   *plain_filename;
-			long		plain_lineno;
-
-			/*
-			 * The second frame points at the internal function, but to mimic
-			 * Python error reporting we want to say <module>.
-			 */
-			if (*tb_depth == 1)
-				fname = "<module>";
-			else
-				fname = PyString_AsString(name);
-
-			proname = PLy_procedure_name(exec_ctx->curr_proc);
-			plain_filename = PyString_AsString(filename);
-			plain_lineno = PyInt_AsLong(lineno);
-
-			if (proname == NULL)
-				appendStringInfo(&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
-								 plain_lineno - 1, fname);
-			else
-				appendStringInfo(&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
-								 proname, plain_lineno - 1, fname);
-
-			/*
-			 * function code object was compiled with "<string>" as the
-			 * filename
-			 */
-			if (exec_ctx->curr_proc && plain_filename != NULL &&
-				strcmp(plain_filename, "<string>") == 0)
+			/* The first frame always points at <module>, skip it. */
+			if (*tb_depth > 0)
 			{
+				PLyExecutionContext *exec_ctx = PLy_current_execution_context();
+				char	   *proname;
+				char	   *fname;
+				char	   *line;
+				char	   *plain_filename;
+				long		plain_lineno;
+
 				/*
-				 * If we know the current procedure, append the exact line
-				 * from the source, again mimicking Python's traceback.py
-				 * module behavior.  We could store the already line-split
-				 * source to avoid splitting it every time, but producing a
-				 * traceback is not the most important scenario to optimize
-				 * for.  But we do not go as far as traceback.py in reading
-				 * the source of imported modules.
+				 * The second frame points at the internal function, but to
+				 * mimic Python error reporting we want to say <module>.
 				 */
-				line = get_source_line(exec_ctx->curr_proc->src, plain_lineno);
-				if (line)
+				if (*tb_depth == 1)
+					fname = "<module>";
+				else
+					fname = PyString_AsString(name);
+
+				proname = PLy_procedure_name(exec_ctx->curr_proc);
+				plain_filename = PyString_AsString(filename);
+				plain_lineno = PyInt_AsLong(lineno);
+
+				if (proname == NULL)
+					appendStringInfo(&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
+									 plain_lineno - 1, fname);
+				else
+					appendStringInfo(&tbstr, "\n  PL/Python function \"%s\", line %ld, in %s",
+									 proname, plain_lineno - 1, fname);
+
+				/*
+				 * function code object was compiled with "<string>" as the
+				 * filename
+				 */
+				if (exec_ctx->curr_proc && plain_filename != NULL &&
+					strcmp(plain_filename, "<string>") == 0)
 				{
-					appendStringInfo(&tbstr, "\n    %s", line);
-					pfree(line);
+					/*
+					 * If we know the current procedure, append the exact line
+					 * from the source, again mimicking Python's traceback.py
+					 * module behavior.  We could store the already line-split
+					 * source to avoid splitting it every time, but producing
+					 * a traceback is not the most important scenario to
+					 * optimize for.  But we do not go as far as traceback.py
+					 * in reading the source of imported modules.
+					 */
+					line = get_source_line(exec_ctx->curr_proc->src, plain_lineno);
+					if (line)
+					{
+						appendStringInfo(&tbstr, "\n    %s", line);
+						pfree(line);
+					}
 				}
 			}
-		}
 		}
 		PG_FINALLY();
 		{
