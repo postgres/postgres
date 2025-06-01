@@ -18,7 +18,8 @@ PyObject   *PLy_exc_spi_error = NULL;
 
 
 static void PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
-						  char **xmsg, char **tbmsg, int *tb_depth);
+						  char *volatile *xmsg, char *volatile *tbmsg,
+						  int *tb_depth);
 static void PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
 								   char **hint, char **query, int *position,
 								   char **schema_name, char **table_name, char **column_name,
@@ -43,13 +44,23 @@ void
 PLy_elog_impl(int elevel, const char *fmt,...)
 {
 	int			save_errno = errno;
-	char	   *xmsg;
-	char	   *tbmsg;
+	char	   *volatile xmsg = NULL;
+	char	   *volatile tbmsg = NULL;
 	int			tb_depth;
 	StringInfoData emsg;
 	PyObject   *exc,
 			   *val,
 			   *tb;
+
+	/* If we'll need emsg, must initialize it before entering PG_TRY */
+	if (fmt)
+		initStringInfo(&emsg);
+
+	PyErr_Fetch(&exc, &val, &tb);
+
+	/* Use a PG_TRY block to ensure we release the PyObjects just acquired */
+	PG_TRY();
+	{
 	const char *primary = NULL;
 	int			sqlerrcode = 0;
 	char	   *detail = NULL;
@@ -61,8 +72,6 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 	char	   *column_name = NULL;
 	char	   *datatype_name = NULL;
 	char	   *constraint_name = NULL;
-
-	PyErr_Fetch(&exc, &val, &tb);
 
 	if (exc != NULL)
 	{
@@ -81,13 +90,11 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 			elevel = FATAL;
 	}
 
-	/* this releases our refcount on tb! */
 	PLy_traceback(exc, val, tb,
 				  &xmsg, &tbmsg, &tb_depth);
 
 	if (fmt)
 	{
-		initStringInfo(&emsg);
 		for (;;)
 		{
 			va_list		ap;
@@ -113,8 +120,6 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 			primary = xmsg;
 	}
 
-	PG_TRY();
-	{
 		ereport(elevel,
 				(errcode(sqlerrcode ? sqlerrcode : ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
 				 errmsg_internal("%s", primary ? primary : "no exception data"),
@@ -136,14 +141,23 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 	}
 	PG_FINALLY();
 	{
+		Py_XDECREF(exc);
+		Py_XDECREF(val);
+		/* Must release all the objects in the traceback stack */
+		while (tb != NULL && tb != Py_None)
+		{
+			PyObject   *tb_prev = tb;
+
+			tb = PyObject_GetAttrString(tb, "tb_next");
+			Py_DECREF(tb_prev);
+		}
+		/* For neatness' sake, also release our string buffers */
 		if (fmt)
 			pfree(emsg.data);
 		if (xmsg)
 			pfree(xmsg);
 		if (tbmsg)
 			pfree(tbmsg);
-		Py_XDECREF(exc);
-		Py_XDECREF(val);
 	}
 	PG_END_TRY();
 }
@@ -154,21 +168,14 @@ PLy_elog_impl(int elevel, const char *fmt,...)
  * The exception error message is returned in xmsg, the traceback in
  * tbmsg (both as palloc'd strings) and the traceback depth in
  * tb_depth.
- *
- * We release refcounts on all the Python objects in the traceback stack,
- * but not on e or v.
  */
 static void
 PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
-			  char **xmsg, char **tbmsg, int *tb_depth)
+			  char *volatile *xmsg, char *volatile *tbmsg, int *tb_depth)
 {
-	PyObject   *e_type_o;
-	PyObject   *e_module_o;
-	char	   *e_type_s = NULL;
-	char	   *e_module_s = NULL;
-	PyObject   *vob = NULL;
-	char	   *vstr;
-	StringInfoData xstr;
+	PyObject   *volatile e_type_o = NULL;
+	PyObject   *volatile e_module_o = NULL;
+	PyObject   *volatile vob = NULL;
 	StringInfoData tbstr;
 
 	/*
@@ -186,12 +193,18 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	/*
 	 * Format the exception and its value and put it in xmsg.
 	 */
+	PG_TRY();
+	{
+	char	   *e_type_s = NULL;
+	char	   *e_module_s = NULL;
+	const char *vstr;
+	StringInfoData xstr;
 
 	e_type_o = PyObject_GetAttrString(e, "__name__");
 	e_module_o = PyObject_GetAttrString(e, "__module__");
 	if (e_type_o)
 		e_type_s = PLyUnicode_AsString(e_type_o);
-	if (e_type_s)
+	if (e_module_o)
 		e_module_s = PLyUnicode_AsString(e_module_o);
 
 	if (v && ((vob = PyObject_Str(v)) != NULL))
@@ -215,18 +228,24 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	appendStringInfo(&xstr, ": %s", vstr);
 
 	*xmsg = xstr.data;
+	}
+	PG_FINALLY();
+	{
+		Py_XDECREF(e_type_o);
+		Py_XDECREF(e_module_o);
+		Py_XDECREF(vob);
+	}
+	PG_END_TRY();
 
 	/*
 	 * Now format the traceback and put it in tbmsg.
 	 */
-
 	*tb_depth = 0;
 	initStringInfo(&tbstr);
 	/* Mimic Python traceback reporting as close as possible. */
 	appendStringInfoString(&tbstr, "Traceback (most recent call last):");
 	while (tb != NULL && tb != Py_None)
 	{
-		PyObject   *volatile tb_prev = NULL;
 		PyObject   *volatile frame = NULL;
 		PyObject   *volatile code = NULL;
 		PyObject   *volatile name = NULL;
@@ -254,17 +273,6 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			filename = PyObject_GetAttrString(code, "co_filename");
 			if (filename == NULL)
 				elog(ERROR, "could not get file name from Python code object");
-		}
-		PG_CATCH();
-		{
-			Py_XDECREF(frame);
-			Py_XDECREF(code);
-			Py_XDECREF(name);
-			Py_XDECREF(lineno);
-			Py_XDECREF(filename);
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
 
 		/* The first frame always points at <module>, skip it. */
 		if (*tb_depth > 0)
@@ -320,18 +328,19 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 				}
 			}
 		}
+		}
+		PG_FINALLY();
+		{
+			Py_XDECREF(frame);
+			Py_XDECREF(code);
+			Py_XDECREF(name);
+			Py_XDECREF(lineno);
+			Py_XDECREF(filename);
+		}
+		PG_END_TRY();
 
-		Py_DECREF(frame);
-		Py_DECREF(code);
-		Py_DECREF(name);
-		Py_DECREF(lineno);
-		Py_DECREF(filename);
-
-		/* Release the current frame and go to the next one. */
-		tb_prev = tb;
+		/* Advance to the next frame. */
 		tb = PyObject_GetAttrString(tb, "tb_next");
-		Assert(tb_prev != Py_None);
-		Py_DECREF(tb_prev);
 		if (tb == NULL)
 			elog(ERROR, "could not traverse Python traceback");
 		(*tb_depth)++;
@@ -339,10 +348,6 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 
 	/* Return the traceback. */
 	*tbmsg = tbstr.data;
-
-	Py_XDECREF(e_type_o);
-	Py_XDECREF(e_module_o);
-	Py_XDECREF(vob);
 }
 
 /*
