@@ -12543,9 +12543,9 @@
 
 # GiST stratnum implementations
 { oid => '8047', descr => 'GiST support',
-  proname => 'gist_stratnum_common', prorettype => 'int2',
+  proname => 'gist_translate_cmptype_common', prorettype => 'int2',
   proargtypes => 'int4',
-  prosrc => 'gist_stratnum_common' },
+  prosrc => 'gist_translate_cmptype_common' },
 
 # AIO related functions
 { oid => '9200', descr => 'information about in-progress asynchronous IOs',

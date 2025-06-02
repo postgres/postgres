@@ -1170,7 +1170,7 @@ my_sortsupport(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>stratnum</function></term>
+     <term><function>translate_cmptype</function></term>
      <listitem>
       <para>
        Given a <literal>CompareType</literal> value from
@@ -1189,11 +1189,22 @@ my_sortsupport(PG_FUNCTION_ARGS)
       </para>
 
       <para>
+       This support function corresponds to the index access method callback
+       function <structfield>amtranslatecmptype</structfield> (see <xref
+       linkend="index-functions"/>).  The
+       <structfield>amtranslatecmptype</structfield> callback function for
+       GiST indexes merely calls down to the
+       <function>translate_cmptype</function> support function of the
+       respective operator family, since the GiST index access method has no
+       fixed strategy numbers itself.
+      </para>
+
+      <para>
        The <acronym>SQL</acronym> declaration of the function must look like
        this:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION my_stratnum(integer)
+CREATE OR REPLACE FUNCTION my_translate_cmptype(integer)
 RETURNS smallint
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
@@ -1202,7 +1213,7 @@ LANGUAGE C STRICT;
        And the operator family registration must look like this:
 <programlisting>
 ALTER OPERATOR FAMILY my_opfamily USING gist ADD
-    FUNCTION 12 ("any", "any") my_stratnum(int);
+    FUNCTION 12 ("any", "any") my_translate_cmptype(int);
 </programlisting>
       </para>
 
@@ -1210,10 +1221,10 @@ ALTER OPERATOR FAMILY my_opfamily USING gist ADD
         The matching code in the C module could then follow this skeleton:
 
 <programlisting>
-PG_FUNCTION_INFO_V1(my_stratnum);
+PG_FUNCTION_INFO_V1(my_translate_cmptype);
 
 Datum
-my_stratnum(PG_FUNCTION_ARGS)
+my_translate_cmptype(PG_FUNCTION_ARGS)
 {
     CompareType cmptype = PG_GETARG_INT32(0);
     StrategyNumber ret = InvalidStrategy;
@@ -1232,11 +1243,11 @@ my_stratnum(PG_FUNCTION_ARGS)
       <para>
        One translation function is provided by
        <productname>PostgreSQL</productname>:
-       <literal>gist_stratnum_common</literal> is for operator classes that
+       <literal>gist_translate_cmptype_common</literal> is for operator classes that
        use the <literal>RT*StrategyNumber</literal> constants.
        The <literal>btree_gist</literal>
        extension defines a second translation function,
-       <literal>gist_stratnum_btree</literal>, for operator classes that use
+       <literal>gist_translate_cmptype_btree</literal>, for operator classes that use
        the <literal>BT*StrategyNumber</literal> constants.
       </para>
      </listitem>
