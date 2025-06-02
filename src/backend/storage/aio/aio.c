@@ -752,7 +752,7 @@ pgaio_io_wait_for_free(void)
 {
 	int			reclaimed = 0;
 
-	pgaio_debug(DEBUG2, "waiting for free IO with %d pending, %d in-flight, %d idle IOs",
+	pgaio_debug(DEBUG2, "waiting for free IO with %d pending, %u in-flight, %u idle IOs",
 				pgaio_my_backend->num_staged_ios,
 				dclist_count(&pgaio_my_backend->in_flight_ios),
 				dclist_count(&pgaio_my_backend->idle_ios));
@@ -797,7 +797,7 @@ pgaio_io_wait_for_free(void)
 	if (dclist_count(&pgaio_my_backend->in_flight_ios) == 0)
 		ereport(ERROR,
 				errmsg_internal("no free IOs despite no in-flight IOs"),
-				errdetail_internal("%d pending, %d in-flight, %d idle IOs",
+				errdetail_internal("%d pending, %u in-flight, %u idle IOs",
 								   pgaio_my_backend->num_staged_ios,
 								   dclist_count(&pgaio_my_backend->in_flight_ios),
 								   dclist_count(&pgaio_my_backend->idle_ios)));
@@ -828,7 +828,7 @@ pgaio_io_wait_for_free(void)
 			case PGAIO_HS_COMPLETED_IO:
 			case PGAIO_HS_SUBMITTED:
 				pgaio_debug_io(DEBUG2, ioh,
-							   "waiting for free io with %d in flight",
+							   "waiting for free io with %u in flight",
 							   dclist_count(&pgaio_my_backend->in_flight_ios));
 
 				/*
@@ -1252,7 +1252,7 @@ pgaio_closing_fd(int fd)
 				break;
 
 			pgaio_debug_io(DEBUG2, ioh,
-						   "waiting for IO before FD %d gets closed, %d in-flight IOs",
+						   "waiting for IO before FD %d gets closed, %u in-flight IOs",
 						   fd, dclist_count(&pgaio_my_backend->in_flight_ios));
 
 			/* see comment in pgaio_io_wait_for_free() about raciness */
@@ -1288,7 +1288,7 @@ pgaio_shutdown(int code, Datum arg)
 		uint64		generation = ioh->generation;
 
 		pgaio_debug_io(DEBUG2, ioh,
-					   "waiting for IO to complete during shutdown, %d in-flight IOs",
+					   "waiting for IO to complete during shutdown, %u in-flight IOs",
 					   dclist_count(&pgaio_my_backend->in_flight_ios));
 
 		/* see comment in pgaio_io_wait_for_free() about raciness */
