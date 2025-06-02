@@ -614,6 +614,73 @@ SELECT 'abcdefg' SIMILAR TO '_bcd%' ESCAPE NULL AS null;
 SELECT 'abcdefg' SIMILAR TO '_bcd#%' ESCAPE '##' AS error;
 ERROR:  invalid escape string
 HINT:  Escape string must be empty or one character.
+-- Characters that should be left alone in character classes when a
+-- SIMILAR TO regexp pattern is converted to POSIX style.
+-- Underscore "_"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '_[_[:alpha:]_]_';
+                   QUERY PLAN                   
+------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:.[_[:alpha:]_].)$'::text)
+(2 rows)
+
+-- Percentage "%"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '%[%[:alnum:]%]%';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:.*[%[:alnum:]%].*)$'::text)
+(2 rows)
+
+-- Dot "."
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '.[.[:alnum:].].';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\.[.[:alnum:].]\.)$'::text)
+(2 rows)
+
+-- Dollar "$"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '$[$[:alnum:]$]$';
+                    QUERY PLAN                    
+--------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\$[$[:alnum:]$]\$)$'::text)
+(2 rows)
+
+-- Opening parenthesis "("
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '()[([:alnum:](]()';
+                      QUERY PLAN                      
+------------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:(?:)[([:alnum:](](?:))$'::text)
+(2 rows)
+
+-- Caret "^"
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '^[^[:alnum:]^[^^][[^^]][\^][[\^]]\^]^';
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:\^[^[:alnum:]^[^^][[^^]][\^][[\^]]\^]\^)$'::text)
+(2 rows)
+
+-- Closing square bracket "]" at the beginning of character class
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[]%][^]%][^%]%';
+                   QUERY PLAN                   
+------------------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[]%][^]%][^%].*)$'::text)
+(2 rows)
+
+-- Closing square bracket effective after two carets at the beginning
+-- of character class.
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[^^]^';
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[^^]\^)$'::text)
+(2 rows)
+
 -- Test backslash escapes in regexp_replace's replacement string
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 

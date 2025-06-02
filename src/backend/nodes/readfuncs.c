@@ -68,6 +68,12 @@
 	token = pg_strtok(&length);		/* get field value */ \
 	local_node->fldname = atoui(token)
 
+/* Read a signed integer field (anything written using INT64_FORMAT) */
+#define READ_INT64_FIELD(fldname) \
+	token = pg_strtok(&length); /* skip :fldname */ \
+	token = pg_strtok(&length); /* get field value */ \
+	local_node->fldname = strtoi64(token, NULL, 10)
+
 /* Read an unsigned integer field (anything written using UINT64_FORMAT) */
 #define READ_UINT64_FIELD(fldname) \
 	token = pg_strtok(&length);		/* skip :fldname */ \

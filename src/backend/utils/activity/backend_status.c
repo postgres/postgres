@@ -320,8 +320,8 @@ pgstat_bestart_initial(void)
 	lbeentry.st_state = STATE_STARTING;
 	lbeentry.st_progress_command = PROGRESS_COMMAND_INVALID;
 	lbeentry.st_progress_command_target = InvalidOid;
-	lbeentry.st_query_id = UINT64CONST(0);
-	lbeentry.st_plan_id = UINT64CONST(0);
+	lbeentry.st_query_id = INT64CONST(0);
+	lbeentry.st_plan_id = INT64CONST(0);
 
 	/*
 	 * we don't zero st_progress_param here to save cycles; nobody should
@@ -599,8 +599,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 			beentry->st_activity_start_timestamp = 0;
 			/* st_xact_start_timestamp and wait_event_info are also disabled */
 			beentry->st_xact_start_timestamp = 0;
-			beentry->st_query_id = UINT64CONST(0);
-			beentry->st_plan_id = UINT64CONST(0);
+			beentry->st_query_id = INT64CONST(0);
+			beentry->st_plan_id = INT64CONST(0);
 			proc->wait_event_info = 0;
 			PGSTAT_END_WRITE_ACTIVITY(beentry);
 		}
@@ -662,8 +662,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	 */
 	if (state == STATE_RUNNING)
 	{
-		beentry->st_query_id = UINT64CONST(0);
-		beentry->st_plan_id = UINT64CONST(0);
+		beentry->st_query_id = INT64CONST(0);
+		beentry->st_plan_id = INT64CONST(0);
 	}
 
 	if (cmd_str != NULL)
@@ -683,7 +683,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
  * --------
  */
 void
-pgstat_report_query_id(uint64 query_id, bool force)
+pgstat_report_query_id(int64 query_id, bool force)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
@@ -702,7 +702,7 @@ pgstat_report_query_id(uint64 query_id, bool force)
 	 * command, so ignore the one provided unless it's an explicit call to
 	 * reset the identifier.
 	 */
-	if (beentry->st_query_id != 0 && !force)
+	if (beentry->st_query_id != INT64CONST(0) && !force)
 		return;
 
 	/*
@@ -722,7 +722,7 @@ pgstat_report_query_id(uint64 query_id, bool force)
  * --------
  */
 void
-pgstat_report_plan_id(uint64 plan_id, bool force)
+pgstat_report_plan_id(int64 plan_id, bool force)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
@@ -1134,7 +1134,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
  *
  * Return current backend's query identifier.
  */
-uint64
+int64
 pgstat_get_my_query_id(void)
 {
 	if (!MyBEEntry)
@@ -1154,7 +1154,7 @@ pgstat_get_my_query_id(void)
  *
  * Return current backend's plan identifier.
  */
-uint64
+int64
 pgstat_get_my_plan_id(void)
 {
 	if (!MyBEEntry)

@@ -1413,11 +1413,25 @@ lazy_scan_heap(LVRelState *vacrel)
 
 			if (vm_page_frozen)
 			{
-				Assert(vacrel->eager_scan_remaining_successes > 0);
-				vacrel->eager_scan_remaining_successes--;
+				if (vacrel->eager_scan_remaining_successes > 0)
+					vacrel->eager_scan_remaining_successes--;
 
 				if (vacrel->eager_scan_remaining_successes == 0)
 				{
+					/*
+					 * Report only once that we disabled eager scanning. We
+					 * may eagerly read ahead blocks in excess of the success
+					 * or failure caps before attempting to freeze them, so we
+					 * could reach here even after disabling additional eager
+					 * scanning.
+					 */
+					if (vacrel->eager_scan_max_fails_per_region > 0)
+						ereport(vacrel->verbose ? INFO : DEBUG2,
+								(errmsg("disabling eager scanning after freezing %u eagerly scanned blocks of \"%s.%s.%s\"",
+										orig_eager_scan_success_limit,
+										vacrel->dbname, vacrel->relnamespace,
+										vacrel->relname)));
+
 					/*
 					 * If we hit our success cap, permanently disable eager
 					 * scanning by setting the other eager scan management
@@ -1426,19 +1440,10 @@ lazy_scan_heap(LVRelState *vacrel)
 					vacrel->eager_scan_remaining_fails = 0;
 					vacrel->next_eager_scan_region_start = InvalidBlockNumber;
 					vacrel->eager_scan_max_fails_per_region = 0;
-
-					ereport(vacrel->verbose ? INFO : DEBUG2,
-							(errmsg("disabling eager scanning after freezing %u eagerly scanned blocks of \"%s.%s.%s\"",
-									orig_eager_scan_success_limit,
-									vacrel->dbname, vacrel->relnamespace,
-									vacrel->relname)));
 				}
 			}
-			else
-			{
-				Assert(vacrel->eager_scan_remaining_fails > 0);
+			else if (vacrel->eager_scan_remaining_fails > 0)
 				vacrel->eager_scan_remaining_fails--;
-			}
 		}
 
 		/*

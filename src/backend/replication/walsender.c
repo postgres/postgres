@@ -3449,8 +3449,16 @@ XLogSendLogical(void)
 	if (flushPtr == InvalidXLogRecPtr ||
 		logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
 	{
+		/*
+		 * For cascading logical WAL senders, we use the replay LSN instead of
+		 * the flush LSN, since logical decoding on a standby only processes
+		 * WAL that has been replayed.  This distinction becomes particularly
+		 * important during shutdown, as new WAL is no longer replayed and the
+		 * last replayed LSN marks the furthest point up to which decoding can
+		 * proceed.
+		 */
 		if (am_cascading_walsender)
-			flushPtr = GetStandbyFlushRecPtr(NULL);
+			flushPtr = GetXLogReplayRecPtr(NULL);
 		else
 			flushPtr = GetFlushRecPtr(NULL);
 	}

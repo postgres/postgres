@@ -51,6 +51,12 @@ static void outDouble(StringInfo str, double d);
 #define WRITE_UINT_FIELD(fldname) \
 	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
 
+/* Write a signed integer field (anything written with INT64_FORMAT) */
+#define WRITE_INT64_FIELD(fldname) \
+	appendStringInfo(str, \
+					 " :" CppAsString(fldname) " " INT64_FORMAT, \
+					 node->fldname)
+
 /* Write an unsigned integer field (anything written with UINT64_FORMAT) */
 #define WRITE_UINT64_FIELD(fldname) \
 	appendStringInfo(str, " :" CppAsString(fldname) " " UINT64_FORMAT, \

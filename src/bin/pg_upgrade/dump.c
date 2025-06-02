@@ -58,7 +58,7 @@ generate_old_dump(void)
 						   (user_opts.transfer_mode == TRANSFER_MODE_SWAP) ?
 						   "" : "--sequence-data",
 						   log_opts.verbose ? "--verbose" : "",
-						   user_opts.do_statistics ? "" : "--no-statistics",
+						   user_opts.do_statistics ? "--with-statistics" : "--no-statistics",
 						   log_opts.dumpdir,
 						   sql_file_name, escaped_connstr.data);
 

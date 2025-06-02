@@ -640,10 +640,10 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				values[28] = BoolGetDatum(false);	/* GSS credentials not
 													 * delegated */
 			}
-			if (beentry->st_query_id == 0)
+			if (beentry->st_query_id == INT64CONST(0))
 				nulls[30] = true;
 			else
-				values[30] = UInt64GetDatum(beentry->st_query_id);
+				values[30] = Int64GetDatum(beentry->st_query_id);
 		}
 		else
 		{

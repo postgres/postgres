@@ -46,11 +46,18 @@
  * don't want the other side to send arbitrarily huge packets as we
  * would have to allocate memory for them to then pass them to GSSAPI.
  *
- * Therefore, these two #define's are effectively part of the protocol
+ * Therefore, this #define is effectively part of the protocol
  * spec and can't ever be changed.
  */
-#define PQ_GSS_SEND_BUFFER_SIZE 16384
-#define PQ_GSS_RECV_BUFFER_SIZE 16384
+#define PQ_GSS_MAX_PACKET_SIZE 16384	/* includes uint32 header word */
+
+/*
+ * However, during the authentication exchange we must cope with whatever
+ * message size the GSSAPI library wants to send (because our protocol
+ * doesn't support splitting those messages).  Depending on configuration
+ * those messages might be as much as 64kB.
+ */
+#define PQ_GSS_AUTH_BUFFER_SIZE 65536	/* includes uint32 header word */
 
 /*
  * Since we manage at most one GSS-encrypted connection per backend,
@@ -210,12 +217,12 @@ be_gssapi_write(Port *port, const void *ptr, size_t len)
 			errno = ECONNRESET;
 			return -1;
 		}
-		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
+		if (output.length > PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32))
 		{
 			ereport(COMMERROR,
 					(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
 							(size_t) output.length,
-							PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
+							PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32))));
 			errno = ECONNRESET;
 			return -1;
 		}
@@ -346,12 +353,12 @@ be_gssapi_read(Port *port, void *ptr, size_t len)
 		/* Decode the packet length and check for overlength packet */
 		input.length = pg_ntoh32(*(uint32 *) PqGSSRecvBuffer);
 
-		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
+		if (input.length > PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32))
 		{
 			ereport(COMMERROR,
 					(errmsg("oversize GSSAPI packet sent by the client (%zu > %zu)",
 							(size_t) input.length,
-							PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))));
+							PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32))));
 			errno = ECONNRESET;
 			return -1;
 		}
@@ -517,10 +524,13 @@ secure_open_gssapi(Port *port)
 	 * that will never use them, and we ensure that the buffers are
 	 * sufficiently aligned for the length-word accesses that we do in some
 	 * places in this file.
+	 *
+	 * We'll use PQ_GSS_AUTH_BUFFER_SIZE-sized buffers until transport
+	 * negotiation is complete, then switch to PQ_GSS_MAX_PACKET_SIZE.
 	 */
-	PqGSSSendBuffer = malloc(PQ_GSS_SEND_BUFFER_SIZE);
-	PqGSSRecvBuffer = malloc(PQ_GSS_RECV_BUFFER_SIZE);
-	PqGSSResultBuffer = malloc(PQ_GSS_RECV_BUFFER_SIZE);
+	PqGSSSendBuffer = malloc(PQ_GSS_AUTH_BUFFER_SIZE);
+	PqGSSRecvBuffer = malloc(PQ_GSS_AUTH_BUFFER_SIZE);
+	PqGSSResultBuffer = malloc(PQ_GSS_AUTH_BUFFER_SIZE);
 	if (!PqGSSSendBuffer || !PqGSSRecvBuffer || !PqGSSResultBuffer)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -568,16 +578,16 @@ secure_open_gssapi(Port *port)
 
 		/*
 		 * During initialization, packets are always fully consumed and
-		 * shouldn't ever be over PQ_GSS_RECV_BUFFER_SIZE in length.
+		 * shouldn't ever be over PQ_GSS_AUTH_BUFFER_SIZE in total length.
 		 *
 		 * Verify on our side that the client doesn't do something funny.
 		 */
-		if (input.length > PQ_GSS_RECV_BUFFER_SIZE)
+		if (input.length > PQ_GSS_AUTH_BUFFER_SIZE - sizeof(uint32))
 		{
 			ereport(COMMERROR,
-					(errmsg("oversize GSSAPI packet sent by the client (%zu > %d)",
+					(errmsg("oversize GSSAPI packet sent by the client (%zu > %zu)",
 							(size_t) input.length,
-							PQ_GSS_RECV_BUFFER_SIZE)));
+							PQ_GSS_AUTH_BUFFER_SIZE - sizeof(uint32))));
 			return -1;
 		}
 
@@ -631,12 +641,12 @@ secure_open_gssapi(Port *port)
 		{
 			uint32		netlen = pg_hton32(output.length);
 
-			if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
+			if (output.length > PQ_GSS_AUTH_BUFFER_SIZE - sizeof(uint32))
 			{
 				ereport(COMMERROR,
 						(errmsg("server tried to send oversize GSSAPI packet (%zu > %zu)",
 								(size_t) output.length,
-								PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))));
+								PQ_GSS_AUTH_BUFFER_SIZE - sizeof(uint32))));
 				gss_release_buffer(&minor, &output);
 				return -1;
 			}
@@ -692,11 +702,28 @@ secure_open_gssapi(Port *port)
 	}
 
 	/*
+	 * Release the large authentication buffers and allocate the ones we want
+	 * for normal operation.
+	 */
+	free(PqGSSSendBuffer);
+	free(PqGSSRecvBuffer);
+	free(PqGSSResultBuffer);
+	PqGSSSendBuffer = malloc(PQ_GSS_MAX_PACKET_SIZE);
+	PqGSSRecvBuffer = malloc(PQ_GSS_MAX_PACKET_SIZE);
+	PqGSSResultBuffer = malloc(PQ_GSS_MAX_PACKET_SIZE);
+	if (!PqGSSSendBuffer || !PqGSSRecvBuffer || !PqGSSResultBuffer)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	PqGSSSendLength = PqGSSSendNext = PqGSSSendConsumed = 0;
+	PqGSSRecvLength = PqGSSResultLength = PqGSSResultNext = 0;
+
+	/*
 	 * Determine the max packet size which will fit in our buffer, after
 	 * accounting for the length.  be_gssapi_write will need this.
 	 */
 	major = gss_wrap_size_limit(&minor, port->gss->ctx, 1, GSS_C_QOP_DEFAULT,
-								PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32),
+								PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32),
 								&PqGSSMaxPktSize);
 
 	if (GSS_ERROR(major))

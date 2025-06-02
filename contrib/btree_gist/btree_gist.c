@@ -15,7 +15,7 @@ PG_MODULE_MAGIC_EXT(
 PG_FUNCTION_INFO_V1(gbt_decompress);
 PG_FUNCTION_INFO_V1(gbtreekey_in);
 PG_FUNCTION_INFO_V1(gbtreekey_out);
-PG_FUNCTION_INFO_V1(gist_stratnum_btree);
+PG_FUNCTION_INFO_V1(gist_translate_cmptype_btree);
 
 /**************************************************
  * In/Out for keys
@@ -62,7 +62,7 @@ gbt_decompress(PG_FUNCTION_ARGS)
  * Returns the btree number for supported operators, otherwise invalid.
  */
 Datum
-gist_stratnum_btree(PG_FUNCTION_ARGS)
+gist_translate_cmptype_btree(PG_FUNCTION_ARGS)
 {
 	CompareType cmptype = PG_GETARG_INT32(0);
 

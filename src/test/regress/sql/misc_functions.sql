@@ -400,9 +400,9 @@ SELECT pg_column_toast_chunk_id(a) IS NULL,
 DROP TABLE test_chunk_id;
 DROP FUNCTION explain_mask_costs(text, bool, bool, bool, bool);
 
--- test stratnum support functions
-SELECT gist_stratnum_common(7);
-SELECT gist_stratnum_common(3);
+-- test stratnum translation support functions
+SELECT gist_translate_cmptype_common(7);
+SELECT gist_translate_cmptype_common(3);
 
 
 -- relpath tests

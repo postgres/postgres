@@ -1039,6 +1039,11 @@ _read${n}(void)
 			print $off "\tWRITE_UINT_FIELD($f);\n";
 			print $rff "\tREAD_UINT_FIELD($f);\n" unless $no_read;
 		}
+		elsif ($t eq 'int64')
+		{
+			print $off "\tWRITE_INT64_FIELD($f);\n";
+			print $rff "\tREAD_INT64_FIELD($f);\n" unless $no_read;
+		}
 		elsif ($t eq 'uint64'
 			|| $t eq 'AclMode')
 		{
