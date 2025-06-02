@@ -1335,6 +1335,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		AddRelationNewConstraints(rel, NIL, stmt->constraints,
 								  true, true, false, queryString);
 
+	rel = table_open(relationId, NoLock);
+	StdRdOptions *opts = (StdRdOptions *) rel->rd_options;
+	if (opts && opts->blockchain)
+	{
+		elog(INFO, "Creating blockchain table \"%s\"",
+			 RelationGetRelationName(rel));
+	}
+
 	/*
 	 * Finally, merge the not-null constraints that are declared directly with
 	 * those that come from parent relations (making sure to count inheritance

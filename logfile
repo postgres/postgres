@@ -1,0 +1,47 @@
+2025-05-25 20:43:24.338 IST [39098] LOG:  starting PostgreSQL 18beta1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-05-25 20:43:24.338 IST [39098] LOG:  could not bind IPv4 address "127.0.0.1": Address already in use
+2025-05-25 20:43:24.338 IST [39098] HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+2025-05-25 20:43:24.338 IST [39098] WARNING:  could not create listen socket for "localhost"
+2025-05-25 20:43:24.338 IST [39098] FATAL:  could not create any TCP/IP sockets
+2025-05-25 20:43:24.339 IST [39098] LOG:  database system is shut down
+2025-05-29 21:35:10.206 IST [11939] LOG:  starting PostgreSQL 18beta1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-05-29 21:35:10.207 IST [11939] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-05-29 21:35:10.209 IST [11939] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-05-29 21:35:10.213 IST [11945] LOG:  database system was interrupted; last known up at 2025-05-25 21:46:41 IST
+2025-05-29 21:35:10.277 IST [11945] LOG:  could not open file "./bin/postgres": Text file busy
+2025-05-29 21:35:10.277 IST [11945] LOG:  could not open file "./bin/pg_ctl": Text file busy
+2025-05-29 21:35:10.313 IST [11945] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-05-29 21:35:10.314 IST [11945] LOG:  redo starts at 0/17CB250
+2025-05-29 21:35:10.314 IST [11945] LOG:  invalid record length at 0/17CB358: expected at least 24, got 0
+2025-05-29 21:35:10.314 IST [11945] LOG:  redo done at 0/17CB320 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-05-29 21:35:10.316 IST [11943] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-05-29 21:35:10.322 IST [11943] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.007 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/17CB358, redo lsn=0/17CB358
+2025-05-29 21:35:10.323 IST [11939] LOG:  database system is ready to accept connections
+2025-05-29 21:35:16.362 IST [11954] FATAL:  database "eagle" does not exist
+2025-05-29 21:36:36.626 IST [11957] ERROR:  syntax error at or near "{" at character 30
+2025-05-29 21:36:36.626 IST [11957] STATEMENT:  CREATE BLOCKCHAIN TABLE test {
+	id SERIAL PRIMARY KEY,
+	data TEXT
+	);
+2025-05-29 21:36:43.952 IST [11957] ERROR:  reloption "blockchain" not found in parse table
+2025-05-29 21:36:43.952 IST [11957] STATEMENT:  CREATE BLOCKCHAIN TABLE test (
+	id SERIAL PRIMARY KEY,
+	data TEXT
+	);
+2025-05-29 21:40:10.422 IST [11943] LOG:  checkpoint starting: time
+2025-05-29 21:40:11.847 IST [11943] LOG:  checkpoint complete: wrote 14 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.409 s, sync=0.005 s, total=1.425 s; sync files=15, longest=0.003 s, average=0.001 s; distance=50 kB, estimate=50 kB; lsn=0/17D7D78, redo lsn=0/17D7D20
+2025-05-29 21:41:33.714 IST [11957] ERROR:  reloption "blockchain" not found in parse table
+2025-05-29 21:41:33.714 IST [11957] STATEMENT:  CREATE TABLE test (
+	id SERIAL PRIMARY KEY,
+	data TEXT
+	) WITH (blockchain = on);
+2025-05-29 21:45:10.947 IST [11943] LOG:  checkpoint starting: time
+2025-05-29 21:45:12.678 IST [11943] LOG:  checkpoint complete: wrote 17 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.707 s, sync=0.010 s, total=1.731 s; sync files=16, longest=0.007 s, average=0.001 s; distance=76 kB, estimate=76 kB; lsn=0/17EAE70, redo lsn=0/17EAE18
+2025-05-29 22:18:26.827 IST [11939] LOG:  received fast shutdown request
+2025-05-29 22:18:26.834 IST [11939] LOG:  aborting any active transactions
+2025-05-29 22:18:26.834 IST [11957] FATAL:  terminating connection due to administrator command
+2025-05-29 22:18:26.835 IST [11939] LOG:  background worker "logical replication launcher" (PID 11948) exited with exit code 1
+2025-05-29 22:18:26.836 IST [11943] LOG:  shutting down
+2025-05-29 22:18:26.838 IST [11943] LOG:  checkpoint starting: shutdown immediate
+2025-05-29 22:18:26.843 IST [11943] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.008 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=68 kB; lsn=0/17EAF20, redo lsn=0/17EAF20
+2025-05-29 22:18:26.852 IST [11939] LOG:  database system is shut down

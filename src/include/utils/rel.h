@@ -348,12 +348,13 @@ typedef struct StdRdOptions
 	StdRdOptIndexCleanup vacuum_index_cleanup;	/* controls index vacuuming */
 	bool		vacuum_truncate;	/* enables vacuum to truncate a relation */
 	bool		vacuum_truncate_set;	/* whether vacuum_truncate is set */
-
 	/*
 	 * Fraction of pages in a relation that vacuum can eagerly scan and fail
 	 * to freeze. 0 if disabled, -1 if unspecified.
 	 */
 	double		vacuum_max_eager_freeze_failure_rate;
+
+	bool 		blockchain; /* enables blockchain behavior for the relation */
 } StdRdOptions;
 
 #define HEAP_MIN_FILLFACTOR			10

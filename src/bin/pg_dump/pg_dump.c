@@ -16821,12 +16821,23 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 			appendPQExpBuffer(q, "\n  WITH %s CHECK OPTION", tbinfo->checkoption);
 		appendPQExpBufferStr(q, ";\n");
 	}
+
+	bool is_blockchain = false;
+
+	if (nonemptyReloptions(tbinfo->reloptions) &&
+    	strstr(tbinfo->reloptions, "blockchain=true") != NULL)
+	{
+		is_blockchain = true;
+		
+	}
+
 	else
 	{
 		char	   *partkeydef = NULL;
 		char	   *ftoptions = NULL;
 		char	   *srvname = NULL;
 		const char *foreign = "";
+		bool 		is_blockchain = false;
 
 		/*
 		 * Set reltypename, and collect any relkind-specific data that we
@@ -16893,6 +16904,13 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 				break;
 		}
 
+		if ( nonemptyReloptions(tbinfo->reloptions) &&
+			 strstr(tbinfo->reloptions, "blockchain=true") != NULL)
+		{
+			is_blockchain = true;
+		}
+
+
 		numParents = tbinfo->numParents;
 		parents = tbinfo->parents;
 
@@ -16906,12 +16924,19 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		 * PostgreSQL 18 has disabled UNLOGGED for partitioned tables, so
 		 * ignore it when dumping if it was set in this case.
 		 */
+
+		/*if (is_blockchain)
+		{
+			appendPQExpBuffer(q, "CREATE BLOCKCHAIN TABLE %s", qualrelname);
+		}*/
+		else{
 		appendPQExpBuffer(q, "CREATE %s%s %s",
 						  (tbinfo->relpersistence == RELPERSISTENCE_UNLOGGED &&
 						   tbinfo->relkind != RELKIND_PARTITIONED_TABLE) ?
 						  "UNLOGGED " : "",
 						  reltypename,
 						  qualrelname);
+		}
 
 		/*
 		 * Attach to type, if reloftype; except in case of a binary upgrade,

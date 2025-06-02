@@ -2185,6 +2185,8 @@ describeOneTableDetails(const char *schemaname,
 		if (attdescr_col >= 0)
 			printTableAddCell(&cont, PQgetvalue(res, i, attdescr_col),
 							  false, false);
+
+		
 	}
 
 	/* Make footers */
@@ -3617,6 +3619,18 @@ describeOneTableDetails(const char *schemaname,
 		printTableAddFooter(&cont, buf.data);
 	}
 
+	 /*Blockchain table options*/
+	/* Blockchain table */
+	/*if (verbose &&
+		tableinfo.reloptions && strstr(tableinfo.reloptions, "blockchain=on"))
+	{
+		const char *t = _("Table type");
+
+		printfPQExpBuffer(&buf, "%s: %s", t, _("Blockchain table"));
+		printTableAddFooter(&cont, buf.data);
+	}
+
+	*/
 	printTable(&cont, pset.queryFout, false, pset.logfile);
 
 	retval = true;

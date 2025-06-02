@@ -166,6 +166,15 @@ static relopt_bool boolRelOpts[] =
 		},
 		true
 	},
+	{
+		{	
+			"blockchain",
+		 	"Enable blockchain logging and immutability for this table",
+			RELOPT_KIND_HEAP,
+			AccessExclusiveLock
+		},
+		false
+	},
 	/* list terminator */
 	{{NULL}}
 };
@@ -1906,7 +1915,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		{"vacuum_truncate", RELOPT_TYPE_BOOL,
 		offsetof(StdRdOptions, vacuum_truncate), offsetof(StdRdOptions, vacuum_truncate_set)},
 		{"vacuum_max_eager_freeze_failure_rate", RELOPT_TYPE_REAL,
-		offsetof(StdRdOptions, vacuum_max_eager_freeze_failure_rate)}
+		offsetof(StdRdOptions, vacuum_max_eager_freeze_failure_rate)},
+		{"blockchain", RELOPT_TYPE_BOOL, offsetof(StdRdOptions, blockchain)}
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate, kind,
