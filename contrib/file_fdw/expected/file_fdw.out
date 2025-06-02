@@ -48,6 +48,10 @@ SET ROLE regress_file_fdw_superuser;
 CREATE USER MAPPING FOR regress_file_fdw_superuser SERVER file_server;
 CREATE USER MAPPING FOR regress_no_priv_user SERVER file_server;
 -- validator tests
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (foo 'bar');  -- ERROR
+ERROR:  invalid option "foo"
+CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS ("a=b" 'true');  -- ERROR
+ERROR:  invalid option name "a=b": must not contain "="
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
 ERROR:  COPY format "xml" not recognized
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
