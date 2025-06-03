@@ -679,9 +679,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	/* Make the tuple into a datum */
 	result = HeapTupleGetDatum(tuple);
 
-#ifndef FRONTEND
 	pfree(keyring);
-#endif
 
 	PG_RETURN_DATUM(result);
 }
