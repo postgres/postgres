@@ -727,7 +727,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add server variable log_lock_failure to log lock acquisition failures (Yuki Seino)
+Add server variable log_lock_failures to log lock acquisition failures (Yuki Seino)
 <ulink url="&commit_baseurl;6d376c3b0">&sect;</ulink>
 </para>
 

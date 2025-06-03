@@ -7923,10 +7923,10 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-lock-failure" xreflabel="log_lock_failure">
-      <term><varname>log_lock_failure</varname> (<type>boolean</type>)
+     <varlistentry id="guc-log-lock-failures" xreflabel="log_lock_failures">
+      <term><varname>log_lock_failures</varname> (<type>boolean</type>)
       <indexterm>
-       <primary><varname>log_lock_failure</varname> configuration parameter</primary>
+       <primary><varname>log_lock_failures</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>

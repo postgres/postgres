@@ -1602,11 +1602,11 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
-		{"log_lock_failure", PGC_SUSET, LOGGING_WHAT,
+		{"log_lock_failures", PGC_SUSET, LOGGING_WHAT,
 			gettext_noop("Logs lock failures."),
 			NULL
 		},
-		&log_lock_failure,
+		&log_lock_failures,
 		false,
 		NULL, NULL, NULL
 	},

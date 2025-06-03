@@ -51,7 +51,7 @@
 
 /* GUC variables */
 int			max_locks_per_xact; /* used to set the lock table size */
-bool		log_lock_failure = false;
+bool		log_lock_failures = false;
 
 #define NLOCKENTS() \
 	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
