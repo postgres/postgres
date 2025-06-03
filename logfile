@@ -113,3 +113,28 @@
 2025-06-03 10:49:24.918 IST [85153] STATEMENT:  INSERT INTO test VALUES(1);
 2025-06-03 10:54:00.377 IST [83202] LOG:  checkpoint starting: time
 2025-06-03 10:54:00.494 IST [83202] LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.103 s, sync=0.003 s, total=0.117 s; sync files=1, longest=0.003 s, average=0.003 s; distance=7 kB, estimate=376 kB; lsn=0/17CAF08, redo lsn=0/17CAEB0
+2025-06-03 11:11:20.143 IST [86811] FATAL:  database "eagle" does not exist
+2025-06-03 11:11:44.580 IST [86817] ERROR:  syntax error at or near "sing" at character 1
+2025-06-03 11:11:44.580 IST [86817] STATEMENT:  sing 
+	
+	CREATE BLOCKCHAIN TABLE test(id int);
+2025-06-03 11:11:54.920 IST [86817] ERROR:  syntax error at or near "But" at character 1
+2025-06-03 11:11:54.920 IST [86817] STATEMENT:  But if you do 
+	[200~Okay so you create table using 
+	CREATE BLOCKCHAIN TABLE test(id int);
+2025-06-03 11:12:06.968 IST [86854] ERROR:  relation "test" already exists
+2025-06-03 11:12:06.968 IST [86854] STATEMENT:  CREATE BLOCKCHAIN TABLE test(id int);
+2025-06-03 11:13:04.628 IST [86854] ERROR:  syntax error at or near "/" at character 1
+2025-06-03 11:13:04.628 IST [86854] STATEMENT:  /d+
+	;
+2025-06-03 12:43:14.042 IST [83198] LOG:  received fast shutdown request
+2025-06-03 12:43:14.042 IST [83198] LOG:  aborting any active transactions
+2025-06-03 12:43:14.043 IST [86854] FATAL:  terminating connection due to administrator command
+2025-06-03 12:43:14.043 IST [83225] FATAL:  terminating connection due to administrator command
+2025-06-03 12:43:14.043 IST [86817] FATAL:  terminating connection due to administrator command
+2025-06-03 12:43:14.043 IST [85153] FATAL:  terminating connection due to administrator command
+2025-06-03 12:43:14.043 IST [83198] LOG:  background worker "logical replication launcher" (PID 83207) exited with exit code 1
+2025-06-03 12:43:14.044 IST [83202] LOG:  shutting down
+2025-06-03 12:43:14.045 IST [83202] LOG:  checkpoint starting: shutdown immediate
+2025-06-03 12:43:14.049 IST [83202] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=339 kB; lsn=0/17CAFB8, redo lsn=0/17CAFB8
+2025-06-03 12:43:14.056 IST [83198] LOG:  database system is shut down

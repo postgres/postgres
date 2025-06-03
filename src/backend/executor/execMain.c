@@ -1092,6 +1092,36 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
 						 errmsg("cannot change materialized view \"%s\"",
 								RelationGetRelationName(resultRel))));
 			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			/*Blocking UPDATE and DELETE*/
+			switch(operation)
+			{
+				case CMD_INSERT:
+					CheckCmdReplicaIdentity(resultRel, operation); 
+					break;
+				case CMD_UPDATE:
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot update blockchain table \"%s\"",
+									RelationGetRelationName(resultRel))));
+					break;
+				case CMD_DELETE:
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot delete from blockchain table \"%s\"",
+									RelationGetRelationName(resultRel))));
+					break;
+				case CMD_MERGE:
+					ereport(ERROR,
+							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+							 errmsg("cannot merge into blockchain table \"%s\"",
+									RelationGetRelationName(resultRel))));
+					break;
+				default:
+					elog(ERROR, "unrecognized CmdType: %d", (int) operation);
+					break;
+			}
+			break;
 		case RELKIND_FOREIGN_TABLE:
 			/* Okay only if the FDW supports it */
 			fdwroutine = resultRelInfo->ri_FdwRoutine;
