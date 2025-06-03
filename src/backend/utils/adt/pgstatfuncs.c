@@ -1510,7 +1510,7 @@ pg_stat_io_build_tuples(ReturnSetInfo *rsinfo,
 							bktype_stats->bytes[io_obj][io_context][io_op];
 
 						/* Convert to numeric */
-						snprintf(buf, sizeof buf, UINT64_FORMAT, byte);
+						snprintf(buf, sizeof buf, INT64_FORMAT, byte);
 						values[byte_idx] = DirectFunctionCall3(numeric_in,
 															   CStringGetDatum(buf),
 															   ObjectIdGetDatum(0),

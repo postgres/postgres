@@ -7320,7 +7320,7 @@ buffer_readv_report(PgAioResult result, const PgAioTargetData *td,
 				affected_count > 1 ?
 				errdetail("Block %u held first zeroed page.",
 						  first + first_off) : 0,
-				errhint("See server log for details about the other %u invalid block(s).",
+				errhint("See server log for details about the other %d invalid block(s).",
 						affected_count + checkfail_count - 1));
 		return;
 	}

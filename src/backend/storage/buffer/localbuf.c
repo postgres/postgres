@@ -629,7 +629,7 @@ InvalidateLocalBuffer(BufferDesc *bufHdr, bool check_unreferenced)
 	 */
 	if (check_unreferenced &&
 		(LocalRefCount[bufid] != 0 || BUF_STATE_GET_REFCOUNT(buf_state) != 0))
-		elog(ERROR, "block %u of %s is still referenced (local %u)",
+		elog(ERROR, "block %u of %s is still referenced (local %d)",
 			 bufHdr->tag.blockNum,
 			 relpathbackend(BufTagGetRelFileLocator(&bufHdr->tag),
 							MyProcNumber,
