@@ -4146,6 +4146,69 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
  </sect1>
 
+ <sect1 id="view-pg-dsm-registry-allocations">
+  <title><structname>pg_dsm_registry_allocations</structname></title>
+
+  <indexterm zone="view-pg-dsm-registry-allocations">
+   <primary>pg_dsm_registry_allocations</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_dsm_registry_allocations</structname> view shows current
+   allocations registered in the dynamic shared memory (DSM) registry. This
+   includes all DSM segments that have been allocated and tracked by
+   <productname>PostgreSQL</productname> during the server's operation.
+  </para>
+
+  <para>
+   This view is useful for monitoring DSM usage by extensions or internal
+   components using dynamic shared memory segments.
+  </para>
+
+  <table>
+   <title><structname>pg_dsm_registry_allocations</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+       <para>
+        Description
+       </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+       <para>
+        The name of the DSM allocation as registered in the DSM registry.
+       </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>size</structfield> <type>int8</type>
+      </para>
+       <para>
+        The size of the allocated dynamic shared memory segment in bytes.
+       </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   By default, access to the <structname>pg_dsm_registry_allocations</structname>
+   view is restricted to superusers or roles granted the
+   <literal>pg_read_all_stats</literal> role due to the sensitive nature
+   of dynamic shared memory usage information.
+  </para>
+ </sect1>
+
  <sect1 id="view-pg-stats">
   <title><structname>pg_stats</structname></title>
 
