@@ -2655,7 +2655,7 @@ WriteToc(ArchiveHandle *AH)
 				pg_fatal("unexpected TOC entry in WriteToc(): %d %s %s",
 						 te->dumpId, te->desc, te->tag);
 
-			if (fseeko(AH->FH, te->defnLen, SEEK_CUR != 0))
+			if (fseeko(AH->FH, te->defnLen, SEEK_CUR) != 0)
 				pg_fatal("error during file seek: %m");
 		}
 		else if (te->defnDumper)
