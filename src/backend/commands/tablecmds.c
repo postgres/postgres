@@ -779,6 +779,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	Datum		reloptions;
 	ListCell   *listptr;
 	AttrNumber	attnum;
+	bool 		blockchain;
 	bool		partitioned;
 	const char *const validnsps[] = HEAP_RELOPT_NAMESPACES;
 	Oid			ofTypeId;
@@ -801,6 +802,14 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
+	if(stmt->is_blockchain)
+	{
+		relkind = RELKIND_BLOCKCHAIN_TABLE;
+		blockchain = true;		
+	}
+	else 
+		blockchain = false;
+	
 	if (stmt->partspec != NULL)
 	{
 		if (relkind != RELKIND_RELATION)
@@ -939,6 +948,9 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 			break;
 		case RELKIND_PARTITIONED_TABLE:
 			(void) partitioned_table_reloptions(reloptions, true);
+			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			(void) blockchain_table_reloptions(reloptions, true);
 			break;
 		default:
 			(void) heap_reloptions(relkind, reloptions, true);
@@ -1336,6 +1348,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 								  true, true, false, queryString);
 
 	rel = table_open(relationId, NoLock);
+
 	StdRdOptions *opts = (StdRdOptions *) rel->rd_options;
 	if (opts && opts->blockchain)
 	{

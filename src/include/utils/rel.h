@@ -716,6 +716,13 @@ RelationCloseSmgr(Relation relation)
 	 (relation)->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&	\
 	 !IsCatalogRelation(relation))
 
+/*
+* RelationIsBlockchain
+*		True if the relation is a blockchain table.
+*/
+#define RelationIsBlockchain(relation) \
+    ((relation)->rd_rel->relkind == RELKIND_BLOCKCHAIN_TABLE)
+
 /* routines in utils/cache/relcache.c */
 extern void RelationIncrementReferenceCount(Relation rel);
 extern void RelationDecrementReferenceCount(Relation rel);

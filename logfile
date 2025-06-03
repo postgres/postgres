@@ -45,3 +45,71 @@
 2025-05-29 22:18:26.838 IST [11943] LOG:  checkpoint starting: shutdown immediate
 2025-05-29 22:18:26.843 IST [11943] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.008 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=68 kB; lsn=0/17EAF20, redo lsn=0/17EAF20
 2025-05-29 22:18:26.852 IST [11939] LOG:  database system is shut down
+2025-06-02 17:56:16.733 IST [37139] LOG:  starting PostgreSQL 18beta1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-06-02 17:56:16.733 IST [37139] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-02 17:56:16.737 IST [37139] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-06-02 17:56:16.742 IST [37145] LOG:  database system was interrupted; last known up at 2025-05-29 22:32:43 IST
+2025-06-02 17:56:16.796 IST [37145] LOG:  could not open file "./bin/postgres": Text file busy
+2025-06-02 17:56:16.796 IST [37145] LOG:  could not open file "./bin/pg_ctl": Text file busy
+2025-06-02 17:56:16.835 IST [37145] LOG:  database system was not properly shut down; automatic recovery in progress
+2025-06-02 17:56:16.837 IST [37145] LOG:  redo starts at 0/183ABD0
+2025-06-02 17:56:16.837 IST [37145] LOG:  invalid record length at 0/183ACD8: expected at least 24, got 0
+2025-06-02 17:56:16.837 IST [37145] LOG:  redo done at 0/183ACA0 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2025-06-02 17:56:16.839 IST [37143] LOG:  checkpoint starting: end-of-recovery immediate wait
+2025-06-02 17:56:16.847 IST [37143] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.009 s; sync files=2, longest=0.001 s, average=0.001 s; distance=0 kB, estimate=0 kB; lsn=0/183ACD8, redo lsn=0/183ACD8
+2025-06-02 17:56:16.848 IST [37139] LOG:  database system is ready to accept connections
+2025-06-02 17:56:19.712 IST [37153] FATAL:  database "eagle" does not exist
+2025-06-02 17:56:38.718 IST [37155] ERROR:  relation "test" already exists
+2025-06-02 17:56:38.718 IST [37155] STATEMENT:  CREATE BLOCKCHAIN TABLE test(id int);
+2025-06-02 17:56:44.274 IST [37155] WARNING:  resource was not closed: relation "teest"
+2025-06-02 18:01:16.947 IST [37143] LOG:  checkpoint starting: time
+2025-06-02 18:01:18.558 IST [37143] LOG:  checkpoint complete: wrote 16 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.606 s, sync=0.002 s, total=1.612 s; sync files=15, longest=0.001 s, average=0.001 s; distance=94 kB, estimate=94 kB; lsn=0/18526F0, redo lsn=0/1852698
+2025-06-02 18:28:36.244 IST [43686] FATAL:  database "eagle" does not exist
+2025-06-02 18:31:16.953 IST [37143] LOG:  checkpoint starting: time
+2025-06-02 18:31:17.678 IST [37143] LOG:  checkpoint complete: wrote 7 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.706 s, sync=0.008 s, total=0.726 s; sync files=6, longest=0.007 s, average=0.002 s; distance=51 kB, estimate=90 kB; lsn=0/185F6C8, redo lsn=0/185F670
+2025-06-02 18:31:43.462 IST [43805] WARNING:  resource was not closed: relation "test"
+2025-06-03 07:59:19.523 IST [37143] LOG:  checkpoint starting: time
+2025-06-03 07:59:21.454 IST [37143] LOG:  checkpoint complete: wrote 19 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.914 s, sync=0.006 s, total=1.931 s; sync files=17, longest=0.003 s, average=0.001 s; distance=109 kB, estimate=109 kB; lsn=0/187ACF0, redo lsn=0/187AC98
+2025-06-03 09:45:02.980 IST [67337] FATAL:  database "eagle" does not exist
+2025-06-03 09:45:50.803 IST [67349] WARNING:  resource was not closed: relation "try"
+2025-06-03 09:50:30.939 IST [37143] LOG:  checkpoint starting: time
+2025-06-03 09:50:32.764 IST [37143] LOG:  checkpoint complete: wrote 18 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.806 s, sync=0.009 s, total=1.826 s; sync files=16, longest=0.007 s, average=0.001 s; distance=102 kB, estimate=108 kB; lsn=0/18945F0, redo lsn=0/1894598
+2025-06-03 10:06:01.830 IST [37139] LOG:  received fast shutdown request
+2025-06-03 10:06:01.838 IST [37139] LOG:  aborting any active transactions
+2025-06-03 10:06:01.838 IST [67349] FATAL:  terminating connection due to administrator command
+2025-06-03 10:06:01.838 IST [37155] FATAL:  terminating connection due to administrator command
+2025-06-03 10:06:01.838 IST [43805] FATAL:  terminating connection due to administrator command
+2025-06-03 10:06:01.838 IST [43710] FATAL:  terminating connection due to administrator command
+2025-06-03 10:06:01.839 IST [37139] LOG:  background worker "logical replication launcher" (PID 37148) exited with exit code 1
+2025-06-03 10:06:01.840 IST [37143] LOG:  shutting down
+2025-06-03 10:06:01.841 IST [37143] LOG:  checkpoint starting: shutdown immediate
+2025-06-03 10:06:01.846 IST [37143] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=97 kB; lsn=0/18946A0, redo lsn=0/18946A0
+2025-06-03 10:06:01.856 IST [37139] LOG:  database system is shut down
+2025-06-03 10:18:59.397 IST [83198] LOG:  starting PostgreSQL 18beta1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-06-03 10:18:59.397 IST [83198] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-03 10:18:59.399 IST [83198] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-06-03 10:18:59.402 IST [83204] LOG:  database system was shut down at 2025-06-03 10:18:40 IST
+2025-06-03 10:18:59.404 IST [83198] LOG:  database system is ready to accept connections
+2025-06-03 10:19:10.062 IST [83221] FATAL:  database "eagle" does not exist
+2025-06-03 10:19:48.476 IST [83225] ERROR:  unrecognized configuration parameter "tables"
+2025-06-03 10:19:48.476 IST [83225] STATEMENT:  SHOW TABLES
+	;
+2025-06-03 10:20:02.346 IST [83225] WARNING:  resource was not closed: relation "test"
+2025-06-03 10:23:59.417 IST [83202] LOG:  checkpoint starting: time
+2025-06-03 10:24:05.859 IST [83202] LOG:  checkpoint complete: wrote 64 buffers (0.4%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=6.426 s, sync=0.005 s, total=6.442 s; sync files=30, longest=0.002 s, average=0.001 s; distance=417 kB, estimate=417 kB; lsn=0/17C92F8, redo lsn=0/17C9268
+2025-06-03 10:24:58.458 IST [83225] ERROR:  syntax error at or near "table" at character 6
+2025-06-03 10:24:58.458 IST [83225] STATEMENT:  Show table
+	;
+2025-06-03 10:46:05.409 IST [85153] ERROR:  syntax error at or near "table" at character 6
+2025-06-03 10:46:05.409 IST [85153] STATEMENT:  show table
+	l
+	;
+2025-06-03 10:46:55.642 IST [85153] ERROR:  syntax error at or near ")" at character 29
+2025-06-03 10:46:55.642 IST [85153] STATEMENT:  CREATE BLOCKCHAIN TABLE test)
+	;
+2025-06-03 10:47:00.590 IST [85153] ERROR:  relation "test" already exists
+2025-06-03 10:47:00.590 IST [85153] STATEMENT:  CREATE BLOCKCHAIN TABLE test(id int);
+2025-06-03 10:49:24.918 IST [85153] ERROR:  cannot change relation "test"
+2025-06-03 10:49:24.918 IST [85153] STATEMENT:  INSERT INTO test VALUES(1);
+2025-06-03 10:54:00.377 IST [83202] LOG:  checkpoint starting: time
+2025-06-03 10:54:00.494 IST [83202] LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.103 s, sync=0.003 s, total=0.117 s; sync files=1, longest=0.003 s, average=0.003 s; distance=7 kB, estimate=376 kB; lsn=0/17CAF08, redo lsn=0/17CAEB0

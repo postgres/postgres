@@ -255,6 +255,8 @@ extern bytea *index_reloptions(amoptions_function amoptions, Datum reloptions,
 							   bool validate);
 extern bytea *attribute_reloptions(Datum reloptions, bool validate);
 extern bytea *tablespace_reloptions(Datum reloptions, bool validate);
+extern bytea *blockchain_table_reloptions(Datum reloptions, bool validate);
+
 extern LOCKMODE AlterTableGetRelOptionsLockLevel(List *defList);
 
 #endif							/* RELOPTIONS_H */

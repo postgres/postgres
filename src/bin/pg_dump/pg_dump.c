@@ -16767,6 +16767,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 	int			actual_atts;	/* number of attrs in this CREATE statement */
 	const char *reltypename;
 	char	   *storage;
+	bool is_blockchain = false;
 	int			j,
 				k;
 
@@ -16822,7 +16823,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		appendPQExpBufferStr(q, ";\n");
 	}
 
-	bool is_blockchain = false;
+	
 
 	if (nonemptyReloptions(tbinfo->reloptions) &&
     	strstr(tbinfo->reloptions, "blockchain=true") != NULL)
@@ -16837,7 +16838,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		char	   *ftoptions = NULL;
 		char	   *srvname = NULL;
 		const char *foreign = "";
-		bool 		is_blockchain = false;
+		
 
 		/*
 		 * Set reltypename, and collect any relkind-specific data that we

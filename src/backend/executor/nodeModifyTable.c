@@ -2393,7 +2393,6 @@ ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
 		/* Root ancestor's triggers will be processed. */
 		if (rInfo == rootRelInfo)
 			continue;
-
 		if (trigdesc && trigdesc->trig_update_after_row)
 		{
 			for (int i = 0; i < trigdesc->numtriggers; i++)
@@ -2470,6 +2469,11 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 */
 	if (IsBootstrapProcessingMode())
 		elog(ERROR, "cannot UPDATE during bootstrap");
+	/*
+	* If the table is a blockchain table, we cannot update it.
+	*/
+	if (RelationIsBlockchain(resultRelationDesc))
+    	elog(ERROR, "cannot UPDATE blockchain table \"%s\"", resultRelationDesc);
 
 	/*
 	 * Prepare for the update.  This includes BEFORE ROW triggers, so we're

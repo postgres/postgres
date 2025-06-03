@@ -2029,6 +2029,17 @@ partitioned_table_reloptions(Datum reloptions, bool validate)
 }
 
 /*
+ * Option parser fo blockchain tables
+ */
+
+bytea *
+blockchain_table_reloptions(Datum reloptions, bool validate)
+{
+    return heap_reloptions(RELKIND_BLOCKCHAIN_TABLE, reloptions, validate);
+}
+
+
+/*
  * Option parser for views
  */
 bytea *
