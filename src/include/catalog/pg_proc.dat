@@ -8542,11 +8542,11 @@
   proargnames => '{name,off,size,allocated_size}',
   prosrc => 'pg_get_shmem_allocations' },
 { oid => '6062', descr => 'dsm registry allocations',
-  proname => 'pg_get_dsm_registry', prorows => '50', proretset => 't',
+  proname => 'pg_get_dsm_registry_allocations', prorows => '50', proretset => 't',
   provolatile => 'v', prorettype => 'record', proargtypes => '',
   proallargtypes => '{text,int8}', proargmodes => '{o,o}',
   proargnames => '{name,size}',
-  prosrc => 'pg_get_dsm_registry' },
+  prosrc => 'pg_get_dsm_registry_allocations' },
 
 { oid => '4099', descr => 'Is NUMA support available?',
   proname => 'pg_numa_available', provolatile => 's', prorettype => 'bool',

@@ -3,5 +3,4 @@ SELECT set_val_in_shmem(1236);
 \c
 SELECT get_val_in_shmem();
 
--- 20 bytes = int (4 bytes) + LWLock (16bytes)
-SELECT * FROM pg_dsm_registry;
+SELECT size > 0 FROM pg_dsm_registry_allocations WHERE name = 'test_dsm_registry';

@@ -203,81 +203,43 @@ GetNamedDSMSegment(const char *name, size_t size,
 	return ret;
 }
 
-void
-iterate_dsm_registry(void (*callback)(DSMRegistryEntry *, void *), void *arg);
-void
-iterate_dsm_registry(void (*callback)(DSMRegistryEntry *, void *), void *arg)
-{
-	DSMRegistryEntry *entry;
-	dshash_seq_status status;
-	/* Ensure DSM registry is initialized */
-	init_dsm_registry();
-
-	/* Use non-exclusive access to avoid blocking other backends */
-	dshash_seq_init(&status, dsm_registry_table, false);
-	while ((entry = dshash_seq_next(&status)) != NULL)
-		callback(entry, arg);
-	dshash_seq_term(&status);
-}
-
-/* SQL SRF showing DSM registry allocated memory */
-PG_FUNCTION_INFO_V1(pg_get_dsm_registry);
-
 typedef struct
 {
 	Tuplestorestate *tupstore;
 	TupleDesc        tupdesc;
 } DSMRegistrySRFContext;
 
-static void
-collect_dsm_registry(DSMRegistryEntry *entry, void *arg)
-{
-	DSMRegistrySRFContext *ctx = (DSMRegistrySRFContext *) arg;
-	Datum values[2];
-	bool nulls[2] = {false, false};
-
-	values[0] = CStringGetTextDatum(entry->name);
-	values[1] = Int64GetDatum(entry->size);
-
-	tuplestore_putvalues(ctx->tupstore, ctx->tupdesc, values, nulls);
-}
-
 Datum
-pg_get_dsm_registry(PG_FUNCTION_ARGS)
+pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	TupleDesc tupdesc;
-	Tuplestorestate *tupstore;
-	DSMRegistrySRFContext ctx;
+	DSMRegistryEntry *entry;
+	dshash_seq_status status;
 
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR, (errmsg("pg_get_dsm_registry must be used in a SRF context")));
+		ereport(ERROR, (errmsg("pg_get_dsm_registry_allocations must be used in a SRF context")));
 
-	/* Set up tuple descriptor */
-	tupdesc = CreateTemplateTupleDesc(2);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name", TEXTOID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size", INT8OID, -1, 0);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
-	/* Switch to per-query memory context */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	/* Ensure DSM registry initialized */
+	init_dsm_registry();
 
-	/* Initialize tuplestore */
-	tupstore = tuplestore_begin_heap(false, false, work_mem);
+	/* Use non-exclusive access to avoid blocking other backends */
+	dshash_seq_init(&status, dsm_registry_table, false);
 
-	ctx.tupstore = tupstore;
-	ctx.tupdesc = tupdesc;
+	while ((entry = dshash_seq_next(&status)) != NULL)
+	{
+		Datum values[2];
+		bool nulls[2] = {false, false};
 
-	/* Collect registry data */
-	iterate_dsm_registry(collect_dsm_registry, &ctx);
+		values[0] = CStringGetTextDatum(entry->name);
+		values[1] = Int64GetDatum(entry->size);
 
-	/* Switch back and return results */
-	MemoryContextSwitchTo(oldcontext);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
+	}
+
+	dshash_seq_term(&status);
 
 	return (Datum) 0;
 }
