@@ -1867,6 +1867,21 @@ ExecQueryAndProcessResults(const char *query,
 		{
 			FILE	   *copy_stream = NULL;
 
+			if (pset.piped_syncs > 1)
+			{
+				/*
+				 * When reading COPY data, the backend ignores sync messages
+				 * and will not send a matching ReadyForQuery response.  Even
+				 * if we adjust piped_syncs and requested_results, it is not
+				 * possible to salvage this as the sync message would still be
+				 * in libpq's command queue and we would be stuck in a busy
+				 * pipeline state.  Thus, we abort the connection to avoid
+				 * this state.
+				 */
+				pg_log_info("\\syncpipeline after COPY is not supported, aborting connection");
+				exit(EXIT_BADCONN);
+			}
+
 			/*
 			 * For COPY OUT, direct the output to the default place (probably
 			 * a pager pipe) for \watch, or to pset.copyStream for \copy,

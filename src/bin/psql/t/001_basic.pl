@@ -513,15 +513,33 @@ SELECT 'val1' \\bind \\sendpipeline
 	qr/server closed the connection unexpectedly/,
 	'protocol sync loss in pipeline: bind COPY, SELECT, sync and getresult');
 
-# This time, test without the \getresults.
+# This time, test without the \getresults and \syncpipeline.
 psql_fails_like(
 	$node,
 	qq{\\startpipeline
 COPY psql_pipeline FROM STDIN;
 SELECT 'val1';
-\\syncpipeline
 \\endpipeline},
 	qr/server closed the connection unexpectedly/,
 	'protocol sync loss in pipeline: COPY, SELECT and sync');
+
+# Tests sending a sync after a COPY TO/FROM.  These abort the connection
+# from the frontend.
+psql_fails_like(
+	$node,
+	qq{\\startpipeline
+COPY psql_pipeline FROM STDIN;
+\\syncpipeline
+\\endpipeline},
+	qr/\\syncpipeline after COPY is not supported, aborting connection/,
+	'sending sync after COPY FROM');
+psql_fails_like(
+	$node,
+	qq{\\startpipeline
+COPY psql_pipeline TO STDOUT;
+\\syncpipeline
+\\endpipeline},
+	qr/\\syncpipeline after COPY is not supported, aborting connection/,
+	'sending sync after COPY TO');
 
 done_testing();
