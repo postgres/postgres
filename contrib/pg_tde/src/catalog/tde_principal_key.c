@@ -625,64 +625,55 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 	Datum		values[6];
 	bool		isnull[6];
 	HeapTuple	tuple;
-	Datum		result;
 	TDEPrincipalKey *principal_key;
-	TimestampTz ts;
-	GenericKeyring *keyring;
 
-	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		ereport(ERROR,
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("function returning record called in context that cannot accept type record"));
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
+
 	principal_key = GetPrincipalKeyNoDefault(dbOid, LW_SHARED);
+
 	if (principal_key == NULL)
 	{
-		ereport(ERROR,
-				errmsg("Principal key does not exists for the database"),
-				errhint("Use set_key interface to set the principal key"));
-	}
-
-	keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);
-
-	/* Initialize the values and null flags */
-
-	/* TEXT: Principal key name */
-	values[0] = CStringGetTextDatum(principal_key->keyInfo.name);
-	isnull[0] = false;
-	/* TEXT: Keyring provider name */
-	if (keyring)
-	{
-		values[1] = CStringGetTextDatum(keyring->provider_name);
-		isnull[1] = false;
+		memset(isnull, true, sizeof(isnull));
 	}
 	else
-		isnull[1] = true;
+	{
+		GenericKeyring *keyring = GetKeyProviderByID(principal_key->keyInfo.keyringId, principal_key->keyInfo.databaseId);
+		TimestampTz ts;
 
-	/* INTEGERT:  key provider id */
-	values[2] = Int32GetDatum(principal_key->keyInfo.keyringId);
-	isnull[2] = false;
+		values[0] = CStringGetTextDatum(principal_key->keyInfo.name);
+		isnull[0] = false;
 
-	/* TIMESTAMP TZ: Principal key creation time */
-	ts = (TimestampTz) principal_key->keyInfo.creationTime.tv_sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
-	ts = (ts * USECS_PER_SEC) + principal_key->keyInfo.creationTime.tv_usec;
-	values[3] = TimestampTzGetDatum(ts);
-	isnull[3] = false;
+		if (keyring)
+		{
+			values[1] = CStringGetTextDatum(keyring->provider_name);
+			isnull[1] = false;
+		}
+		else
+			isnull[1] = true;
+
+		values[2] = Int32GetDatum(principal_key->keyInfo.keyringId);
+		isnull[2] = false;
+
+		ts = (TimestampTz) principal_key->keyInfo.creationTime.tv_sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
+		ts = (ts * USECS_PER_SEC) + principal_key->keyInfo.creationTime.tv_usec;
+		values[3] = TimestampTzGetDatum(ts);
+		isnull[3] = false;
+
+		pfree(keyring);
+	}
 
 	LWLockRelease(tde_lwlock_enc_keys());
 
-	/* Form the tuple */
 	tuple = heap_form_tuple(tupdesc, values, isnull);
 
-	/* Make the tuple into a datum */
-	result = HeapTupleGetDatum(tuple);
-
-	pfree(keyring);
-
-	PG_RETURN_DATUM(result);
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
 }
+
 #endif							/* FRONTEND */
 
 /*

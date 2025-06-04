@@ -66,8 +66,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT * FROM test_enc ORDER BY id;
  id | k 
 ----+---
@@ -96,8 +99,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT * FROM test_enc ORDER BY id;
  id | k 
 ----+---
@@ -126,8 +132,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT * FROM test_enc ORDER BY id;
  id | k 
 ----+---
@@ -156,8 +165,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT * FROM test_enc ORDER BY id;
  id | k 
 ----+---
@@ -176,8 +188,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('rotated-key2', 'file-2');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------
@@ -191,8 +206,11 @@ SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
 (1 row)
 
 SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
-psql:<stdin>:1: ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 DROP TABLE test_enc;
 ALTER SYSTEM RESET pg_tde.inherit_global_providers;
 -- server restart

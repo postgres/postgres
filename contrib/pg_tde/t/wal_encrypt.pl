@@ -26,10 +26,18 @@ PGTDE::psql($node, 'postgres',
 PGTDE::psql($node, 'postgres', 'SELECT pg_tde_verify_server_key();');
 
 PGTDE::psql($node, 'postgres',
+	'SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_server_key_info();'
+);
+
+PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-010');"
 );
 
 PGTDE::psql($node, 'postgres', 'SELECT pg_tde_verify_server_key();');
+
+PGTDE::psql($node, 'postgres',
+	'SELECT key_name, key_provider_name, key_provider_id FROM pg_tde_server_key_info();'
+);
 
 PGTDE::psql($node, 'postgres', 'ALTER SYSTEM SET pg_tde.wal_encrypt = on;');
 

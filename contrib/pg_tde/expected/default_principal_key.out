@@ -12,8 +12,11 @@ ERROR:  principal key not configured for current database
 -- Should fail: no default principal key for the server yet
 SELECT key_provider_id, key_provider_name, key_name
 		FROM pg_tde_default_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider', false);
  pg_tde_set_default_key_using_global_key_provider 
 --------------------------------------------------
@@ -48,8 +51,11 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 -- Should succeed: "localizes" the default principal key for the database
 CREATE TABLE test_enc(
 	id SERIAL,
@@ -74,8 +80,11 @@ CREATE EXTENSION pg_buffercache;
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name
 		FROM pg_tde_key_info();
-ERROR:  Principal key does not exists for the database
-HINT:  Use set_key interface to set the principal key
+ key_provider_id | key_provider_name | key_name 
+-----------------+-------------------+----------
+                 |                   | 
+(1 row)
+
 -- Should succeed: "localizes" the default principal key for the database
 CREATE TABLE test_enc(
 	id SERIAL,
