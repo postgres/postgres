@@ -22,7 +22,8 @@ my $db_oid = $node->safe_psql('postgres',
 	q{SELECT oid FROM pg_catalog.pg_database WHERE datname = 'postgres'});
 my $options;
 
-my $token_file = $ENV{ROOT_TOKEN_FILE};
+my $token_file = "${PostgreSQL::Test::Utils::tmp_check}/vault_token";
+append_to_file($token_file, 'DUMMY');
 
 $node->stop;
 
@@ -65,13 +66,53 @@ command_like(
 		$db_oid,
 		'database-provider',
 		'vault-v2',
-		'http://vault-server.example:8200/',
+		'https://vault-server.example:8200/',
 		$token_file,
 		'mount-path',
 		'/tmp/ca_path',
 	],
 	qr/Key provider updated successfully!/,
-	'updates key provider to vault-v2 type');
+	'updates key provider to vault-v2 type with https');
+
+$node->start;
+
+is( $node->safe_psql(
+		'postgres',
+		q{SELECT provider_type FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+	),
+	'vault-v2',
+	'provider type is set to vault-v2');
+
+$options = decode_json(
+	$node->safe_psql(
+		'postgres',
+		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+	));
+is($options->{tokenPath}, $token_file,
+	'tokenPath is set correctly for vault-v2 provider');
+is( $options->{url},
+	'https://vault-server.example:8200/',
+	'url is set correctly for vault-v2 provider');
+is($options->{mountPath}, 'mount-path',
+	'mount path is set correctly for vault-v2 provider');
+is($options->{caPath}, '/tmp/ca_path',
+	'CA path is set correctly for vault-v2 provider');
+
+$node->stop;
+
+command_like(
+	[
+		'pg_tde_change_key_provider',
+		'-D' => $node->data_dir,
+		$db_oid,
+		'database-provider',
+		'vault-v2',
+		'http://vault-server.example:8200/',
+		$token_file,
+		'mount-path-2',
+	],
+	qr/Key provider updated successfully!/,
+	'updates key provider to vault-v2 type with http');
 
 $node->start;
 
@@ -92,10 +133,9 @@ is($options->{tokenPath}, $token_file,
 is( $options->{url},
 	'http://vault-server.example:8200/',
 	'url is set correctly for vault-v2 provider');
-is($options->{mountPath}, 'mount-path',
+is($options->{mountPath}, 'mount-path-2',
 	'mount path is set correctly for vault-v2 provider');
-is($options->{caPath}, '/tmp/ca_path',
-	'CA path is set correctly for vault-v2 provider');
+is($options->{caPath}, '', 'CA path is set correctly for vault-v2 provider');
 
 $node->stop;
 
