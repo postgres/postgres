@@ -99,6 +99,14 @@ load_external_function(const char *filename, const char *funcname,
 	void	   *lib_handle;
 	void	   *retval;
 
+	/*
+	 * If the value starts with "$libdir/", strip that.  This is because many
+	 * extensions have hardcoded '$libdir/foo' as their library name, which
+	 * prevents using the path.
+	 */
+	if (strncmp(filename, "$libdir/", 8) == 0)
+		filename += 8;
+
 	/* Expand the possibly-abbreviated filename to an exact path name */
 	fullname = expand_dynamic_library_name(filename);
 
@@ -455,14 +463,6 @@ expand_dynamic_library_name(const char *name)
 	char	   *full;
 
 	Assert(name);
-
-	/*
-	 * If the value starts with "$libdir/", strip that.  This is because many
-	 * extensions have hardcoded '$libdir/foo' as their library name, which
-	 * prevents using the path.
-	 */
-	if (strncmp(name, "$libdir/", 8) == 0)
-		name += 8;
 
 	have_slash = (first_dir_separator(name) != NULL);
 
