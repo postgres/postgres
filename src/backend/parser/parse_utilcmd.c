@@ -141,6 +141,7 @@ static void validateInfiniteBounds(ParseState *pstate, List *blist);
 static Const *transformPartitionBoundValue(ParseState *pstate, Node *val,
 										   const char *colName, Oid colType, int32 colTypmod,
 										   Oid partCollation);
+static ColumnDef *make_system_col(char *name, Oid type, int typmod, int collation);
 
 
 /*

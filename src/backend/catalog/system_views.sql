@@ -136,7 +136,7 @@ CREATE VIEW pg_tables AS
         C.relrowsecurity AS rowsecurity
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
          LEFT JOIN pg_tablespace T ON (T.oid = C.reltablespace)
-    WHERE C.relkind IN ('r', 'p');
+    WHERE C.relkind IN ('r', 'p', 'b');
 
 CREATE VIEW pg_matviews AS
     SELECT

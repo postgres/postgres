@@ -28,6 +28,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "blockchain/blockchain.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -793,6 +794,25 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 */
 	strlcpy(relname, stmt->relation->relname, NAMEDATALEN);
 
+
+	if(stmt->is_blockchain)
+	{
+		elog(DEBUG1, "DefineRelation: is_blockchain = true");
+		relkind = RELKIND_BLOCKCHAIN_TABLE;
+		blockchain = true;	
+		elog(DEBUG1, "BEFORE AddBlockchainSystemColumns");
+		
+		AddBlockchainSystemColumns(stmt);	
+
+		elog(DEBUG1, "AFTER AddBlockchainSystemColumns");
+	}
+	else 
+	{	
+		elog(DEBUG1, "DefineRelation: is_blockchain = false");
+		blockchain = false;
+	}
+	
+
 	/*
 	 * Check consistency of arguments
 	 */
@@ -802,14 +822,6 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
-	if(stmt->is_blockchain)
-	{
-		relkind = RELKIND_BLOCKCHAIN_TABLE;
-		blockchain = true;		
-	}
-	else 
-		blockchain = false;
-	
 	if (stmt->partspec != NULL)
 	{
 		if (relkind != RELKIND_RELATION)

@@ -5599,7 +5599,8 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 							   CppAsString2(RELKIND_VIEW) ","
 							   CppAsString2(RELKIND_FOREIGN_TABLE) ","
 							   CppAsString2(RELKIND_MATVIEW) ","
-							   CppAsString2(RELKIND_PARTITIONED_TABLE) ") "
+							   CppAsString2(RELKIND_PARTITIONED_TABLE) ","
+							   CppAsString2(RELKIND_BLOCKCHAIN_TABLE)) "
 							   "  AND n.nspname = ");
 		deparseStringLiteral(&buf, stmt->remote_schema);
 

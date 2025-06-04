@@ -41,6 +41,7 @@
 #include "access/table.h"
 #include "access/tableam.h"
 #include "access/xact.h"
+#include "blockchain/blockchain.h"
 #include "catalog/namespace.h"
 #include "catalog/partition.h"
 #include "commands/matview.h"

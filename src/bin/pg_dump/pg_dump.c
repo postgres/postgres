@@ -1786,9 +1786,9 @@ expand_table_name_patterns(Archive *fout,
 						  "\n     LEFT JOIN pg_catalog.pg_namespace n"
 						  "\n     ON n.oid OPERATOR(pg_catalog.=) c.relnamespace"
 						  "\nWHERE c.relkind OPERATOR(pg_catalog.=) ANY"
-						  "\n    (array['%c', '%c', '%c', '%c', '%c', '%c'])\n",
+						  "\n    (array['%c', '%c', '%c', '%c', '%c', '%c', '%c'])\n",
 						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW,
-						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE,
+						  RELKIND_MATVIEW, RELKIND_FOREIGN_TABLE,RELKIND_BLOCKCHAIN_TABLE,
 						  RELKIND_PARTITIONED_TABLE);
 		initPQExpBuffer(&dbbuf);
 		processSQLNamePattern(GetConnection(fout), query, cell->val, true,
@@ -7164,6 +7164,7 @@ getTables(Archive *fout, int *numTables)
 						 CppAsString2(RELKIND_VIEW) ", "
 						 CppAsString2(RELKIND_COMPOSITE_TYPE) ", "
 						 CppAsString2(RELKIND_MATVIEW) ", "
+						 CppAsString2(RELKIND_BLOCKCHAIN_TABLE) ", "
 						 CppAsString2(RELKIND_FOREIGN_TABLE) ", "
 						 CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n"
 						 "ORDER BY c.oid");

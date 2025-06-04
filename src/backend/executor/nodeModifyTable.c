@@ -55,7 +55,8 @@
 #include "access/htup_details.h"
 #include "access/tableam.h"
 #include "access/xact.h"
-#include "commands/trigger.h"
+#include "blockchain/blockchain.h"
+#include "commands/trigger.h"	
 #include "executor/execPartition.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
@@ -884,6 +885,10 @@ ExecInsert(ModifyTableContext *context,
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
+	if(RelationIsBlockchain(resultRelationDesc))
+	{
+		ProcessBlockchainInsert(slot, resultRelationDesc);
+	}
 	/*
 	 * Open the table's indexes, if we have not done so already, so that we
 	 * can add new index entries for the inserted tuple.
@@ -2473,7 +2478,7 @@ ExecUpdate(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	* If the table is a blockchain table, we cannot update it.
 	*/
 	if (RelationIsBlockchain(resultRelationDesc))
-    	elog(ERROR, "cannot UPDATE blockchain table \"%s\"", resultRelationDesc);
+    	elog(ERROR, "cannot UPDATE blockchain table \"%s\"", RelationGetRelationName(resultRelationDesc));
 
 	/*
 	 * Prepare for the update.  This includes BEFORE ROW triggers, so we're

@@ -16,7 +16,7 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = access archive backup bootstrap catalog parser commands executor \
+SUBDIRS = access archive backup blockchain bootstrap catalog parser commands executor \
 	foreign lib libpq \
 	main nodes optimizer partitioning port postmaster \
 	regex replication rewrite \
@@ -41,7 +41,7 @@ OBJS = \
 	$(LOCALOBJS) \
 	$(SUBDIROBJS) \
 	$(top_builddir)/src/common/libpgcommon_srv.a \
-	$(top_builddir)/src/port/libpgport_srv.a
+	$(top_builddir)/src/port/libpgport_srv.a 
 
 # We put libpgport and libpgcommon into OBJS, so remove it from LIBS.
 LIBS := $(filter-out -lpgport -lpgcommon, $(LIBS))

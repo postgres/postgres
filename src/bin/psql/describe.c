@@ -1167,6 +1167,7 @@ permissionsList(const char *pattern, bool showSystem)
 						 CppAsString2(RELKIND_VIEW) ","
 						 CppAsString2(RELKIND_MATVIEW) ","
 						 CppAsString2(RELKIND_SEQUENCE) ","
+						 CppAsString2(RELKIND_BLOCKCHAIN_TABLE)","
 						 CppAsString2(RELKIND_FOREIGN_TABLE) ","
 						 CppAsString2(RELKIND_PARTITIONED_TABLE) ")\n");
 
@@ -1880,7 +1881,8 @@ describeOneTableDetails(const char *schemaname,
 		tableinfo.relkind == RELKIND_MATVIEW ||
 		tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
 		tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
-		tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
+		tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
+		tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE)
 		show_column_details = true;
 
 	/*
@@ -1953,6 +1955,7 @@ describeOneTableDetails(const char *schemaname,
 			!pset.hide_compression &&
 			(tableinfo.relkind == RELKIND_RELATION ||
 			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
+			 tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE ||
 			 tableinfo.relkind == RELKIND_MATVIEW))
 		{
 			appendPQExpBufferStr(&buf, ",\n  a.attcompression AS attcompression");
@@ -1965,6 +1968,7 @@ describeOneTableDetails(const char *schemaname,
 			tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
 			tableinfo.relkind == RELKIND_MATVIEW ||
 			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+			tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE ||
 			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
 		{
 			appendPQExpBufferStr(&buf, ",\n  CASE WHEN a.attstattarget=-1 THEN NULL ELSE a.attstattarget END AS attstattarget");
@@ -1979,6 +1983,7 @@ describeOneTableDetails(const char *schemaname,
 			tableinfo.relkind == RELKIND_VIEW ||
 			tableinfo.relkind == RELKIND_MATVIEW ||
 			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+			tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE ||
 			tableinfo.relkind == RELKIND_COMPOSITE_TYPE ||
 			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
 		{
@@ -2022,6 +2027,10 @@ describeOneTableDetails(const char *schemaname,
 			else
 				printfPQExpBuffer(&title, _("Index \"%s.%s\""),
 								  schemaname, relationname);
+			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			printfPQExpBuffer(&title, _("Blockchain table \"%s.%s\""),
+							  schemaname, relationname);
 			break;
 		case RELKIND_PARTITIONED_INDEX:
 			if (tableinfo.relpersistence == RELPERSISTENCE_UNLOGGED)
@@ -2411,6 +2420,7 @@ describeOneTableDetails(const char *schemaname,
 	else if (tableinfo.relkind == RELKIND_RELATION ||
 			 tableinfo.relkind == RELKIND_MATVIEW ||
 			 tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+			 tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE ||
 			 tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
 			 tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
 			 tableinfo.relkind == RELKIND_TOASTVALUE)
@@ -3381,6 +3391,7 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == RELKIND_RELATION ||
 		tableinfo.relkind == RELKIND_MATVIEW ||
 		tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
+		tableinfo.relkind == RELKIND_BLOCKCHAIN_TABLE ||
 		tableinfo.relkind == RELKIND_PARTITIONED_TABLE ||
 		tableinfo.relkind == RELKIND_PARTITIONED_INDEX ||
 		tableinfo.relkind == RELKIND_TOASTVALUE)
@@ -3559,7 +3570,7 @@ describeOneTableDetails(const char *schemaname,
 				printTableAddFooter(&cont, buf.data);
 			}
 		}
-		PQclear(result);
+		PQclear(result); 	
 
 		/* Table type */
 		if (tableinfo.reloftype)
@@ -3618,10 +3629,8 @@ describeOneTableDetails(const char *schemaname,
 		printfPQExpBuffer(&buf, "%s: %s", t, tableinfo.reloptions);
 		printTableAddFooter(&cont, buf.data);
 	}
-
-	 /*Blockchain table options*/
 	/* Blockchain table */
-	/*if (verbose &&
+	if (verbose &&
 		tableinfo.reloptions && strstr(tableinfo.reloptions, "blockchain=on"))
 	{
 		const char *t = _("Table type");
@@ -3630,7 +3639,6 @@ describeOneTableDetails(const char *schemaname,
 		printTableAddFooter(&cont, buf.data);
 	}
 
-	*/
 	printTable(&cont, pset.queryFout, false, pset.logfile);
 
 	retval = true;
@@ -3666,6 +3674,7 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 		relkind == RELKIND_INDEX ||
 		relkind == RELKIND_PARTITIONED_TABLE ||
 		relkind == RELKIND_PARTITIONED_INDEX ||
+		relkind == RELKIND_BLOCKCHAIN_TABLE ||
 		relkind == RELKIND_TOASTVALUE)
 	{
 		/*
@@ -4052,6 +4061,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  " WHEN " CppAsString2(RELKIND_INDEX) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_SEQUENCE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_TOASTVALUE) " THEN '%s'"
+					  " WHEN " CppAsString2(RELKIND_BLOCKCHAIN_TABLE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_FOREIGN_TABLE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_PARTITIONED_TABLE) " THEN '%s'"
 					  " WHEN " CppAsString2(RELKIND_PARTITIONED_INDEX) " THEN '%s'"
