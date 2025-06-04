@@ -31,9 +31,9 @@ The following example is for testing purposes only. Use secure tokens and proper
 SELECT pg_tde_add_global_key_provider_vault_v2(
     'my-vault',
     '/path/to/token_file',
-    'http://vault.vault.svc.cluster.local:8200',
+    'https://vault.vault.svc.cluster.local:8200',
     'secret/data',
-    NULL
+    '/path/to/ca_cert.pem'
 );
 ```
 
