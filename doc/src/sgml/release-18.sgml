@@ -194,6 +194,27 @@ These were previously zero-based.
 </para>
 </listitem>
 
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2024-10-16 [04bec894a04] initdb: Change default to using data checksums.
+-->
+
+<listitem>
+<para>
+initdb defaults to enabling data checksums
+<ulink url="&commit_baseurl;04bec894a04">&sect;</ulink>
+</para>
+
+<para>
+The previous default behavior (checksums disabled) can be obtained using the
+new option --no-data-checksums.  Note that pg_upgrade will reject upgrading
+between clusters with different checksum settings, so if the old cluster does
+not have checksums enabled (the previous default), then the new cluster will
+need to be initialized with --no-data-checksums in order to allow pg_upgrade
+to succeed.
+</para>
+</listitem>
+
    </itemizedlist>
 
   </sect2>
