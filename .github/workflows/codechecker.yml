@@ -1,6 +1,5 @@
 name: CodeChecker
 on:
-  pull_request:
   push:
     branches:
       - TDE_REL_17_STABLE
