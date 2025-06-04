@@ -103,19 +103,19 @@ sql_tests = [
 ]
 
 tap_tests = [
-  't/001_basic.pl',
-  't/002_rotate_key.pl',
-  't/003_multiple_extensions.pl',
-  't/004_tde_heap.pl',
-  't/005_key_rotate_tablespace.pl',
-  't/006_wal_encrypt.pl',
-  't/007_change_key_provider.pl',
-  't/008_unlogged_tables.pl',
-  't/009_replication.pl',
-  't/010_crash_recovery.pl',
-  't/011_pg_waldump_basic.pl',
-  't/012_pg_waldump_fullpage.pl',
-  't/013_pg_tde_change_key_provider.pl',
+  't/basic.pl',
+  't/change_key_provider.pl',
+  't/crash_recovery.pl',
+  't/key_rotate_tablespace.pl',
+  't/multiple_extensions.pl',
+  't/pg_tde_change_key_provider.pl',
+  't/pg_waldump_basic.pl',
+  't/pg_waldump_fullpage.pl',
+  't/replication.pl',
+  't/rotate_key.pl',
+  't/tde_heap.pl',
+  't/unlogged_tables.pl',
+  't/wal_encrypt.pl',
 ]
 
 tests += {
