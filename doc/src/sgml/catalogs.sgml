@@ -1590,7 +1590,7 @@
        <structfield>rolpassword</structfield> <type>text</type>
       </para>
       <para>
-       Password (possibly encrypted); null if none. The format depends
+       Encrypted password; null if none. The format depends
        on the form of encryption used.
       </para></entry>
      </row>
@@ -1625,11 +1625,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    where <replaceable>salt</replaceable>, <replaceable>StoredKey</replaceable> and
    <replaceable>ServerKey</replaceable> are in Base64 encoded format. This format is
    the same as that specified by <ulink url="https://datatracker.ietf.org/doc/html/rfc5803">RFC 5803</ulink>.
-  </para>
-
-  <para>
-    A password that does not follow either of those formats is assumed to be
-    unencrypted.
   </para>
  </sect1>
 
