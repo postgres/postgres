@@ -1037,6 +1037,17 @@ struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 	{
+		{"enable_toast_batch_optimization", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables optimized batch fetching for TOAST data."),
+			gettext_noop("When enabled, uses batch operations to fetch multiple TOAST chunks "
+						 "in fewer IO operations, particularly beneficial for cloud storage like Aurora."),
+			GUC_EXPLAIN
+		},
+		&enable_toast_batch_optimization,
+		true,
+		NULL, NULL, NULL
+	},
+	{
 		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("Enables genetic query optimization."),
 			gettext_noop("This algorithm attempts to do planning without "

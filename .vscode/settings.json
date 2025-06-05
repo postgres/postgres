@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "Gemfile": "ruby",
+    "detoast.h": "c"
+  }
+}

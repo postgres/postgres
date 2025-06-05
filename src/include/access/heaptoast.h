@@ -146,4 +146,16 @@ extern void heap_fetch_toast_slice(Relation toastrel, Oid valueid,
 								   int32 attrsize, int32 sliceoffset,
 								   int32 slicelength, struct varlena *result);
 
+/* ----------
+ * heap_fetch_toast_slice_batch_optimized
+ *
+ *	Optimized batch fetching for toast slices to reduce IO overhead.
+ * ----------
+ */
+void heap_fetch_toast_slice_batch_optimized(Relation toastrel, Relation *toastidxs,
+												   int validIndex, Oid valueid, int32 attrsize,
+												   int32 sliceoffset, int32 slicelength,
+												   struct varlena *result, int startchunk,
+												   int endchunk, int totalchunks);
+
 #endif							/* HEAPTOAST_H */

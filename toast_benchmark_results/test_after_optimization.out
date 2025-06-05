@@ -1,0 +1,385 @@
+Test: After Optimization
+Optimization enabled: on
+Timestamp: Thu Jun  5 08:41:15 EDT 2025
+===========================================
+SET
+              name               | setting |  context   
+---------------------------------+---------+------------
+ effective_cache_size            | 524288  | user
+ enable_toast_batch_optimization | on      | user
+ shared_buffers                  | 16384   | postmaster
+(3 rows)
+
+Timing is on.
+-- Enable additional timing and statistics
+SET track_io_timing = ON;
+SET
+Time: 0.078 ms
+SET log_min_duration_statement = 0;  -- Log all statements for timing analysis
+SET
+Time: 0.086 ms
+-- Create extension for generating random data if available
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+psql:toast_performance_test.sql:15: ERROR:  extension "pgcrypto" is not available
+HINT:  The extension must first be installed on the system where PostgreSQL is running.
+Time: 0.113 ms
+-- =====================================================
+-- SETUP: Create test tables
+-- =====================================================
+DROP TABLE IF EXISTS toast_perf_test;
+DROP TABLE
+Time: 2.593 ms
+CREATE TABLE toast_perf_test (
+    id SERIAL PRIMARY KEY,
+    small_data TEXT,
+    medium_data TEXT,   -- ~4KB (below threshold)
+    large_data TEXT,    -- ~16KB (above threshold)
+    huge_data TEXT,     -- ~64KB (well above threshold)
+    created_at TIMESTAMP DEFAULT now()
+);
+CREATE TABLE
+Time: 3.371 ms
+-- Create index for testing slice access patterns
+CREATE INDEX idx_toast_perf_test_id ON toast_perf_test(id);
+CREATE INDEX
+Time: 0.451 ms
+-- =====================================================
+-- TEST DATA GENERATION
+-- =====================================================
+-- Function to generate test data of specific sizes
+CREATE OR REPLACE FUNCTION generate_test_data(size_kb integer)
+RETURNS TEXT AS $$
+BEGIN
+    -- Generate random string of approximately size_kb kilobytes
+    RETURN repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16);
+END;
+$$ LANGUAGE plpgsql;
+CREATE FUNCTION
+Time: 0.664 ms
+-- =====================================================
+-- BASELINE METRICS COLLECTION
+-- =====================================================
+-- Reset statistics
+SELECT pg_stat_reset();
+ pg_stat_reset 
+---------------
+ 
+(1 row)
+
+Time: 0.118 ms
+SELECT pg_stat_reset_shared('bgwriter');
+ pg_stat_reset_shared 
+----------------------
+ 
+(1 row)
+
+Time: 0.089 ms
+-- Check current GUC setting
+SHOW enable_toast_batch_optimization;
+ enable_toast_batch_optimization 
+---------------------------------
+ on
+(1 row)
+
+Time: 0.080 ms
+-- Record start time
+\echo '====== STARTING PERFORMANCE TEST ======'
+====== STARTING PERFORMANCE TEST ======
+SELECT now() as test_start_time;
+        test_start_time        
+-------------------------------
+ 2025-06-05 08:41:15.133774-04
+(1 row)
+
+Time: 0.097 ms
+-- =====================================================
+-- TEST 1: INSERT Performance (Toast Creation)
+-- =====================================================
+\echo '====== TEST 1: INSERT Performance ======'
+====== TEST 1: INSERT Performance ======
+-- Small baseline (no toast)
+\echo 'Inserting 100 small records (1KB each)...'
+Inserting 100 small records (1KB each)...
+\timing on
+Timing is on.
+INSERT INTO toast_perf_test (small_data)
+SELECT generate_test_data(1) FROM generate_series(1, 100);
+psql:toast_performance_test.sql:72: ERROR:  function gen_random_bytes(integer) does not exist
+LINE 1: repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+CONTEXT:  PL/pgSQL function generate_test_data(integer) line 4 at RETURN
+Time: 0.170 ms
+\timing off
+Timing is off.
+-- Medium data (below optimization threshold)
+\echo 'Inserting 50 medium records (4KB each)...'
+Inserting 50 medium records (4KB each)...
+\timing on
+Timing is on.
+INSERT INTO toast_perf_test (medium_data)
+SELECT generate_test_data(4) FROM generate_series(1, 50);
+psql:toast_performance_test.sql:79: ERROR:  function gen_random_bytes(integer) does not exist
+LINE 1: repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+CONTEXT:  PL/pgSQL function generate_test_data(integer) line 4 at RETURN
+Time: 0.099 ms
+\timing off
+Timing is off.
+-- Large data (above optimization threshold)
+\echo 'Inserting 50 large records (16KB each)...'
+Inserting 50 large records (16KB each)...
+\timing on
+Timing is on.
+INSERT INTO toast_perf_test (large_data)
+SELECT generate_test_data(16) FROM generate_series(1, 50);
+psql:toast_performance_test.sql:86: ERROR:  function gen_random_bytes(integer) does not exist
+LINE 1: repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+CONTEXT:  PL/pgSQL function generate_test_data(integer) line 4 at RETURN
+Time: 0.088 ms
+\timing off
+Timing is off.
+-- Huge data (well above threshold)
+\echo 'Inserting 20 huge records (64KB each)...'
+Inserting 20 huge records (64KB each)...
+\timing on
+Timing is on.
+INSERT INTO toast_perf_test (huge_data)
+SELECT generate_test_data(64) FROM generate_series(1, 20);
+psql:toast_performance_test.sql:93: ERROR:  function gen_random_bytes(integer) does not exist
+LINE 1: repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+                      ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:  repeat(encode(gen_random_bytes(32), 'hex'), size_kb * 16)
+CONTEXT:  PL/pgSQL function generate_test_data(integer) line 4 at RETURN
+Time: 0.076 ms
+\timing off
+Timing is off.
+-- =====================================================
+-- TEST 2: FULL SELECT Performance (Complete Detoasting)
+-- =====================================================
+\echo '====== TEST 2: FULL SELECT Performance ======'
+====== TEST 2: FULL SELECT Performance ======
+-- Clear buffer cache to simulate cold reads
+SELECT pg_prewarm('toast_perf_test', 'buffer');
+psql:toast_performance_test.sql:103: ERROR:  function pg_prewarm(unknown, unknown) does not exist
+LINE 1: SELECT pg_prewarm('toast_perf_test', 'buffer');
+               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+\echo 'Selecting all large records (full detoast)...'
+Selecting all large records (full detoast)...
+\timing on
+Timing is on.
+SELECT id, length(large_data), substr(large_data, 1, 100)
+FROM toast_perf_test
+WHERE large_data IS NOT NULL
+ORDER BY id;
+ id | length | substr 
+----+--------+--------
+(0 rows)
+
+Time: 0.314 ms
+\timing off
+Timing is off.
+\echo 'Selecting all huge records (full detoast)...'
+Selecting all huge records (full detoast)...
+\timing on
+Timing is on.
+SELECT id, length(huge_data), substr(huge_data, 1, 100)
+FROM toast_perf_test
+WHERE huge_data IS NOT NULL
+ORDER BY id;
+ id | length | substr 
+----+--------+--------
+(0 rows)
+
+Time: 0.090 ms
+\timing off
+Timing is off.
+-- =====================================================
+-- TEST 3: SLICE ACCESS Performance (Partial Detoasting)
+-- =====================================================
+\echo '====== TEST 3: SLICE ACCESS Performance ======'
+====== TEST 3: SLICE ACCESS Performance ======
+\echo 'Testing substring access (slice access) on large data...'
+Testing substring access (slice access) on large data...
+\timing on
+Timing is on.
+SELECT id, substr(large_data, 1, 1000), substr(large_data, 5000, 1000)
+FROM toast_perf_test
+WHERE large_data IS NOT NULL
+ORDER BY id
+LIMIT 25;
+ id | substr | substr 
+----+--------+--------
+(0 rows)
+
+Time: 0.099 ms
+\timing off
+Timing is off.
+\echo 'Testing substring access on huge data...'
+Testing substring access on huge data...
+\timing on
+Timing is on.
+SELECT id, substr(huge_data, 1, 2000), substr(huge_data, 30000, 2000)
+FROM toast_perf_test
+WHERE huge_data IS NOT NULL
+ORDER BY id
+LIMIT 10;
+ id | substr | substr 
+----+--------+--------
+(0 rows)
+
+Time: 0.085 ms
+\timing off
+Timing is off.
+-- =====================================================
+-- TEST 4: REPEATED ACCESS Performance
+-- =====================================================
+\echo '====== TEST 4: REPEATED ACCESS Performance ======'
+====== TEST 4: REPEATED ACCESS Performance ======
+\echo 'Repeated access to same large toast values...'
+Repeated access to same large toast values...
+\timing on
+Timing is on.
+SELECT COUNT(*), AVG(length(large_data))
+FROM toast_perf_test
+WHERE large_data IS NOT NULL;
+ count | avg 
+-------+-----
+     0 |    
+(1 row)
+
+Time: 0.135 ms
+\timing off
+Timing is off.
+\timing on
+Timing is on.
+SELECT COUNT(*), AVG(length(large_data))
+FROM toast_perf_test
+WHERE large_data IS NOT NULL;
+ count | avg 
+-------+-----
+     0 |    
+(1 row)
+
+Time: 0.089 ms
+\timing off
+Timing is off.
+\timing on
+Timing is on.
+SELECT COUNT(*), AVG(length(large_data))
+FROM toast_perf_test
+WHERE large_data IS NOT NULL;
+ count | avg 
+-------+-----
+     0 |    
+(1 row)
+
+Time: 0.087 ms
+\timing off
+Timing is off.
+-- =====================================================
+-- PERFORMANCE METRICS COLLECTION
+-- =====================================================
+\echo '====== PERFORMANCE METRICS ======'
+====== PERFORMANCE METRICS ======
+-- Table sizes and toast usage
+SELECT
+    schemaname,
+    tablename,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as total_size,
+    pg_size_pretty(pg_relation_size(schemaname||'.'||tablename)) as table_size,
+    pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename) - pg_relation_size(schemaname||'.'||tablename)) as toast_size
+FROM pg_tables
+WHERE tablename = 'toast_perf_test';
+ schemaname |    tablename    | total_size | table_size | toast_size 
+------------+-----------------+------------+------------+------------
+ public     | toast_perf_test | 24 kB      | 0 bytes    | 24 kB
+(1 row)
+
+-- IO Statistics
+SELECT
+    schemaname,
+    relname,
+    heap_blks_read,
+    heap_blks_hit,
+    toast_blks_read,
+    toast_blks_hit,
+    CASE
+        WHEN heap_blks_read + heap_blks_hit > 0
+        THEN round((heap_blks_hit::numeric / (heap_blks_read + heap_blks_hit)) * 100, 2)
+        ELSE 0
+    END as heap_hit_ratio,
+    CASE
+        WHEN toast_blks_read + toast_blks_hit > 0
+        THEN round((toast_blks_hit::numeric / (toast_blks_read + toast_blks_hit)) * 100, 2)
+        ELSE 0
+    END as toast_hit_ratio
+FROM pg_statio_user_tables
+WHERE relname = 'toast_perf_test';
+ schemaname |     relname     | heap_blks_read | heap_blks_hit | toast_blks_read | toast_blks_hit | heap_hit_ratio | toast_hit_ratio 
+------------+-----------------+----------------+---------------+-----------------+----------------+----------------+-----------------
+ public     | toast_perf_test |              0 |             0 |               0 |              0 |              0 |               0
+(1 row)
+
+-- Buffer cache statistics
+SELECT
+    name,
+    setting,
+    unit
+FROM pg_settings
+WHERE name IN ('shared_buffers', 'effective_cache_size', 'enable_toast_batch_optimization');
+              name               | setting | unit 
+---------------------------------+---------+------
+ effective_cache_size            | 524288  | 8kB
+ enable_toast_batch_optimization | on      | 
+ shared_buffers                  | 16384   | 8kB
+(3 rows)
+
+-- Timing statistics (if track_io_timing enabled)
+SELECT
+    schemaname,
+    relname,
+    heap_blk_read_time,
+    heap_blk_write_time,
+    toast_blk_read_time,
+    toast_blk_write_time
+FROM pg_statio_user_tables
+WHERE relname = 'toast_perf_test';
+psql:toast_performance_test.sql:224: ERROR:  column "heap_blk_read_time" does not exist
+LINE 4:     heap_blk_read_time,
+            ^
+\echo '====== TEST COMPLETED ======'
+====== TEST COMPLETED ======
+SELECT now() as test_end_time;
+         test_end_time         
+-------------------------------
+ 2025-06-05 08:41:15.138037-04
+(1 row)
+
+-- Optional: Show query execution plans for analysis
+\echo '====== EXECUTION PLANS ======'
+====== EXECUTION PLANS ======
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, length(large_data)
+FROM toast_perf_test
+WHERE large_data IS NOT NULL
+LIMIT 5;
+                                                     QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.00..0.17 rows=5 width=8) (actual time=0.001..0.001 rows=0.00 loops=1)
+   ->  Seq Scan on toast_perf_test  (cost=0.00..16.00 rows=478 width=8) (actual time=0.001..0.001 rows=0.00 loops=1)
+         Filter: (large_data IS NOT NULL)
+ Planning:
+   Buffers: shared hit=2
+ Planning Time: 0.007 ms
+ Execution Time: 0.003 ms
+(7 rows)
+

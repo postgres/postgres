@@ -14,13 +14,21 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
+#include "access/heaptoast.h"
 #include "access/table.h"
 #include "access/tableam.h"
 #include "access/toast_internals.h"
 #include "common/int.h"
 #include "common/pg_lzcompress.h"
+#include "optimizer/cost.h"
 #include "utils/expandeddatum.h"
 #include "utils/rel.h"
+#include "utils/guc.h"
+
+/* GUC variable for enabling optimized toast access */
+
+/* Threshold size (in bytes) above which to use batch optimization */
+#define TOAST_BATCH_OPTIMIZATION_THRESHOLD	8192
 
 static struct varlena *toast_fetch_datum(struct varlena *attr);
 static struct varlena *toast_fetch_datum_slice(struct varlena *attr,
@@ -28,6 +36,21 @@ static struct varlena *toast_fetch_datum_slice(struct varlena *attr,
 											   int32 slicelength);
 static struct varlena *toast_decompress_datum(struct varlena *attr);
 static struct varlena *toast_decompress_datum_slice(struct varlena *attr, int32 slicelength);
+
+/* New optimized batch fetching function */
+static struct varlena *toast_fetch_datum_batch_optimized(struct varlena *attr);
+static struct varlena *toast_fetch_datum_slice_batch_optimized(struct varlena *attr,
+															   int32 sliceoffset,
+															   int32 slicelength);
+
+/* Chunk batch structure for optimized IO */
+typedef struct ToastChunkBatch
+{
+	int32		num_chunks;
+	int32		total_size;
+	char	   *data_buffer;
+	int32	   *chunk_offsets;
+} ToastChunkBatch;
 
 /* ----------
  * detoast_external_attr -
@@ -355,6 +378,19 @@ toast_fetch_datum(struct varlena *attr)
 
 	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
 
+	/*
+	 * For larger toast values on Aurora/cloud storage, use batch optimization
+	 * to reduce IO round-trips. This is especially beneficial for values
+	 * larger than a few KB where the overhead of multiple small reads
+	 * becomes significant.
+	 */
+	if (enable_toast_batch_optimization &&
+		attrsize >= TOAST_BATCH_OPTIMIZATION_THRESHOLD)
+	{
+		return toast_fetch_datum_batch_optimized(attr);
+	}
+
+	/* Traditional path for smaller values */
 	result = (struct varlena *) palloc(attrsize + VARHDRSZ);
 
 	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
@@ -416,6 +452,18 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset,
 
 	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
 
+	/*
+	 * Use batch optimization for larger slice requests to reduce IO overhead.
+	 * This is particularly beneficial on Aurora where reducing round-trips
+	 * is more important than the small CPU overhead of the optimization.
+	 */
+	if (enable_toast_batch_optimization &&
+		slicelength >= TOAST_BATCH_OPTIMIZATION_THRESHOLD)
+	{
+		return toast_fetch_datum_slice_batch_optimized(attr, sliceoffset, slicelength);
+	}
+
+	/* Traditional path for smaller slices */
 	if (sliceoffset >= attrsize)
 	{
 		sliceoffset = 0;
@@ -642,5 +690,127 @@ toast_datum_size(Datum value)
 		 */
 		result = VARSIZE(attr);
 	}
+	return result;
+}
+
+/* ----------
+ * toast_fetch_datum_batch_optimized -
+ *
+ *	Optimized version that fetches multiple chunks in a single scan
+ *	to reduce IO round-trips, especially beneficial for Aurora storage.
+ * ----------
+ */
+static struct varlena *
+toast_fetch_datum_batch_optimized(struct varlena *attr)
+{
+	Relation	toastrel;
+	struct varlena *result;
+	struct varatt_external toast_pointer;
+	int32		attrsize;
+
+	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
+		elog(ERROR, "toast_fetch_datum_batch_optimized shouldn't be called for non-ondisk datums");
+
+	/* Must copy to access aligned fields */
+	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+
+	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
+
+	result = (struct varlena *) palloc(attrsize + VARHDRSZ);
+
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+		SET_VARSIZE_COMPRESSED(result, attrsize + VARHDRSZ);
+	else
+		SET_VARSIZE(result, attrsize + VARHDRSZ);
+
+	if (attrsize == 0)
+		return result;
+
+	/*
+	 * Open the toast relation and its indexes
+	 */
+	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
+
+	/* Use the optimized batch fetch */
+	table_relation_fetch_toast_slice(toastrel, toast_pointer.va_valueid,
+									 attrsize, 0, attrsize, result);
+
+	/* Close toast table */
+	table_close(toastrel, AccessShareLock);
+
+	return result;
+}
+
+/* ----------
+ * toast_fetch_datum_slice_batch_optimized -
+ *
+ *	Optimized slice fetching with batch chunk access
+ * ----------
+ */
+static struct varlena *
+toast_fetch_datum_slice_batch_optimized(struct varlena *attr, int32 sliceoffset,
+										 int32 slicelength)
+{
+	Relation	toastrel;
+	struct varlena *result;
+	struct varatt_external toast_pointer;
+	int32		attrsize;
+
+	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
+		elog(ERROR, "toast_fetch_datum_slice_batch_optimized shouldn't be called for non-ondisk datums");
+
+	/* Must copy to access aligned fields */
+	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+
+	/*
+	 * It's nonsense to fetch slices of a compressed datum unless when it's a
+	 * prefix -- this isn't lo_* we can't return a compressed datum which is
+	 * meaningful to toast later.
+	 */
+	Assert(!VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) || 0 == sliceoffset);
+
+	attrsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
+
+	if (sliceoffset >= attrsize)
+	{
+		sliceoffset = 0;
+		slicelength = 0;
+	}
+
+	/*
+	 * When fetching a prefix of a compressed external datum, account for the
+	 * space required by va_tcinfo, which is stored at the beginning as an
+	 * int32 value.
+	 */
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) && slicelength > 0)
+		slicelength = slicelength + sizeof(int32);
+
+	/*
+	 * Adjust length request if needed.
+	 */
+	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
+		slicelength = attrsize - sliceoffset;
+
+	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
+
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+		SET_VARSIZE_COMPRESSED(result, slicelength + VARHDRSZ);
+	else
+		SET_VARSIZE(result, slicelength + VARHDRSZ);
+
+	if (slicelength == 0)
+		return result;
+
+	/* Open the toast relation */
+	toastrel = table_open(toast_pointer.va_toastrelid, AccessShareLock);
+
+	/* Use optimized batch fetch for slices */
+	table_relation_fetch_toast_slice(toastrel, toast_pointer.va_valueid,
+									 attrsize, sliceoffset, slicelength,
+									 result);
+
+	/* Close toast table */
+	table_close(toastrel, AccessShareLock);
+
 	return result;
 }

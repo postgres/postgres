@@ -163,6 +163,7 @@ bool		enable_parallel_hash = true;
 bool		enable_partition_pruning = true;
 bool		enable_presorted_aggregate = true;
 bool		enable_async_append = true;
+bool		enable_toast_batch_optimization = true;
 
 typedef struct
 {
