@@ -129,10 +129,9 @@
     In all cases, a trigger is executed as part of the same transaction as
     the statement that triggered it, so if either the statement or the
     trigger causes an error, the effects of both will be rolled back.
-    Also, the trigger will always run in the security context of the role
-    that executed the statement that caused the trigger to fire, unless
-    the trigger function is defined as <literal>SECURITY DEFINER</literal>,
-    in which case it will run as the function owner.
+    Also, the trigger will always run as the role that queued the trigger
+    event, unless the trigger function is marked as <literal>SECURITY
+    DEFINER</literal>, in which case it will run as the function owner.
    </para>
 
    <para>
