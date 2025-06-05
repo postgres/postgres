@@ -126,7 +126,7 @@ pgaio_uring_shmem_size(void)
 static void
 pgaio_uring_shmem_init(bool first_time)
 {
-	int			TotalProcs = MaxBackends + NUM_AUXILIARY_PROCS - MAX_IO_WORKERS;
+	int			TotalProcs = pgaio_uring_procs();
 	bool		found;
 
 	pgaio_uring_contexts = (PgAioUringContext *)
