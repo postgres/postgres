@@ -6188,8 +6188,8 @@ listExtensions(const char *pattern)
 					  "FROM pg_catalog.pg_extension e "
 					  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = e.extnamespace "
 					  "LEFT JOIN pg_catalog.pg_description d ON d.objoid = e.oid "
-					  "LEFT JOIN pg_catalog.pg_available_extensions() ae(name, default_version, comment) ON ae.name = e.extname "
-					  "AND d.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass\n",
+					  "AND d.classoid = 'pg_catalog.pg_extension'::pg_catalog.regclass "
+					  "LEFT JOIN pg_catalog.pg_available_extensions() ae(name, default_version, comment) ON ae.name = e.extname\n",
 					  gettext_noop("Name"),
 					  gettext_noop("Version"),
 					  gettext_noop("Default version"),
