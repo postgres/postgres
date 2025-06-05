@@ -1895,29 +1895,67 @@ WHERE conrelid::regclass::text like 'fk_partitioned_fk%' ORDER BY oid::regclass:
 (5 rows)
 
 DROP TABLE fk_partitioned_fk, fk_notpartitioned_pk;
--- NOT VALID foreign key on a non-partitioned table referencing a partitioned table
+-- NOT VALID foreign key on a non-partitioned table referencing a partitioned
+-- table
 CREATE TABLE fk_partitioned_pk (a int, b int, PRIMARY KEY (a, b)) PARTITION BY RANGE (a, b);
 CREATE TABLE fk_partitioned_pk_1 PARTITION OF fk_partitioned_pk FOR VALUES FROM (0,0) TO (1000,1000);
+CREATE TABLE fk_partitioned_pk_2 PARTITION OF fk_partitioned_pk FOR VALUES FROM (1000,1000) TO (2000,2000);
 CREATE TABLE fk_notpartitioned_fk (b int, a int);
-ALTER TABLE fk_notpartitioned_fk ADD FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
--- Constraint will be invalid.
-SELECT conname, convalidated FROM pg_constraint
+INSERT INTO fk_partitioned_pk VALUES(100,100), (1000,1000);
+INSERT INTO fk_notpartitioned_fk VALUES(100,100), (1000,1000);
+ALTER TABLE fk_notpartitioned_fk ADD CONSTRAINT fk_notpartitioned_fk_a_b_fkey
+	FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+-- All constraints will be invalid.
+SELECT conname, conenforced, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
-             conname             | convalidated 
----------------------------------+--------------
- fk_notpartitioned_fk_a_b_fkey   | f
- fk_notpartitioned_fk_a_b_fkey_1 | f
-(2 rows)
+             conname             | conenforced | convalidated 
+---------------------------------+-------------+--------------
+ fk_notpartitioned_fk_a_b_fkey   | t           | f
+ fk_notpartitioned_fk_a_b_fkey_1 | t           | f
+ fk_notpartitioned_fk_a_b_fkey_2 | t           | f
+(3 rows)
 
 ALTER TABLE fk_notpartitioned_fk VALIDATE CONSTRAINT fk_notpartitioned_fk_a_b_fkey;
 -- All constraints are now valid.
-SELECT conname, convalidated FROM pg_constraint
+SELECT conname, conenforced, convalidated FROM pg_constraint
 WHERE conrelid = 'fk_notpartitioned_fk'::regclass ORDER BY oid::regclass::text;
-             conname             | convalidated 
----------------------------------+--------------
- fk_notpartitioned_fk_a_b_fkey   | t
- fk_notpartitioned_fk_a_b_fkey_1 | t
-(2 rows)
+             conname             | conenforced | convalidated 
+---------------------------------+-------------+--------------
+ fk_notpartitioned_fk_a_b_fkey   | t           | t
+ fk_notpartitioned_fk_a_b_fkey_1 | t           | t
+ fk_notpartitioned_fk_a_b_fkey_2 | t           | t
+(3 rows)
+
+-- test a self-referential FK
+ALTER TABLE fk_partitioned_pk ADD CONSTRAINT selffk FOREIGN KEY (a, b) REFERENCES fk_partitioned_pk NOT VALID;
+CREATE TABLE fk_partitioned_pk_3 PARTITION OF fk_partitioned_pk FOR VALUES FROM (2000,2000) TO (3000,3000)
+  PARTITION BY RANGE (a);
+CREATE TABLE fk_partitioned_pk_3_1 PARTITION OF fk_partitioned_pk_3 FOR VALUES FROM (2000) TO (2100);
+SELECT conname, conenforced, convalidated FROM pg_constraint
+WHERE conrelid = 'fk_partitioned_pk'::regclass AND contype = 'f'
+ORDER BY oid::regclass::text;
+  conname   | conenforced | convalidated 
+------------+-------------+--------------
+ selffk     | t           | f
+ selffk_1   | t           | f
+ selffk_2   | t           | f
+ selffk_3   | t           | f
+ selffk_3_1 | t           | f
+(5 rows)
+
+ALTER TABLE fk_partitioned_pk_2 VALIDATE CONSTRAINT selffk;
+ALTER TABLE fk_partitioned_pk VALIDATE CONSTRAINT selffk;
+SELECT conname, conenforced, convalidated FROM pg_constraint
+WHERE conrelid = 'fk_partitioned_pk'::regclass AND contype = 'f'
+ORDER BY oid::regclass::text;
+  conname   | conenforced | convalidated 
+------------+-------------+--------------
+ selffk     | t           | t
+ selffk_1   | t           | t
+ selffk_2   | t           | t
+ selffk_3   | t           | t
+ selffk_3_1 | t           | t
+(5 rows)
 
 DROP TABLE fk_notpartitioned_fk, fk_partitioned_pk;
 -- Test some other exotic foreign key features: MATCH SIMPLE, ON UPDATE/DELETE
