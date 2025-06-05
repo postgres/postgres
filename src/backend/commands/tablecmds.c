@@ -12466,9 +12466,12 @@ ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 
 		/*
 		 * Tell Phase 3 to check that the constraint is satisfied by existing
-		 * rows.
+		 * rows.  Only applies to leaf partitions, and (for constraints that
+		 * reference a partitioned table) only if this is not one of the
+		 * pg_constraint rows that exist solely to support action triggers.
 		 */
-		if (rel->rd_rel->relkind == RELKIND_RELATION)
+		if (rel->rd_rel->relkind == RELKIND_RELATION &&
+			currcon->confrelid == pkrelid)
 		{
 			AlteredTableInfo *tab;
 			NewConstraint *newcon;
