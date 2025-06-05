@@ -1,0 +1,104 @@
+TOAST Optimization Benchmark Summary
+Generated: Thu Jun  5 08:41:15 EDT 2025
+Database: postgres@localhost:5432
+Test Rounds: 3
+
+=== Test Configuration ===
+- Small data: 1KB (no toast)
+- Medium data: 4KB (below optimization threshold)
+- Large data: 16KB (above optimization threshold)
+- Huge data: 64KB (well above optimization threshold)
+
+=== Key Metrics to Compare ===
+1. Insert timing for large/huge records
+2. Select timing for full detoasting
+3. Slice access (substring) timing
+4. Toast block reads (toast_blks_read)
+5. Toast block read time (toast_blk_read_time)
+
+[0;34m========================================[0m
+[0;34m PERFORMANCE COMPARISON SUMMARY[0m
+[0;34m========================================[0m
+Before optimization (enable_toast_batch_optimization = off):
+=== BEFORE Timings ===
+Time: 0.100 ms
+Time: 0.093 ms
+Time: 0.659 ms
+Time: 0.216 ms
+Time: 11.015 ms
+Time: 0.565 ms
+Time: 3.485 ms
+Time: 0.235 ms
+Time: 0.274 ms
+Time: 0.075 ms
+Time: 0.093 ms
+Time: 0.428 ms
+Time: 0.090 ms
+Time: 0.072 ms
+Time: 0.079 ms
+Time: 1.191 ms
+Time: 0.089 ms
+Time: 0.101 ms
+Time: 0.087 ms
+Time: 0.748 ms
+
+After optimization (enable_toast_batch_optimization = on):
+=== AFTER Timings ===
+Time: 0.078 ms
+Time: 0.086 ms
+Time: 0.113 ms
+Time: 2.593 ms
+Time: 3.371 ms
+Time: 0.451 ms
+Time: 0.664 ms
+Time: 0.118 ms
+Time: 0.089 ms
+Time: 0.080 ms
+Time: 0.097 ms
+Time: 0.170 ms
+Time: 0.099 ms
+Time: 0.088 ms
+Time: 0.076 ms
+Time: 0.314 ms
+Time: 0.090 ms
+Time: 0.099 ms
+Time: 0.085 ms
+Time: 0.135 ms
+
+[0;34m========================================[0m
+[0;34m IO STATISTICS COMPARISON[0m
+[0;34m========================================[0m
+BEFORE - Toast IO Statistics:
+    heap_blks_read,
+    heap_blks_hit,
+    toast_blks_read,
+    toast_blks_hit,
+    CASE
+        WHEN heap_blks_read + heap_blks_hit > 0
+        THEN round((heap_blks_hit::numeric / (heap_blks_read + heap_blks_hit)) * 100, 2)
+        ELSE 0
+    END as heap_hit_ratio,
+    CASE
+        WHEN toast_blks_read + toast_blks_hit > 0
+        THEN round((toast_blks_hit::numeric / (toast_blks_read + toast_blks_hit)) * 100, 2)
+        ELSE 0
+    END as toast_hit_ratio
+FROM pg_statio_user_tables
+
+AFTER - Toast IO Statistics:
+    heap_blks_read,
+    heap_blks_hit,
+    toast_blks_read,
+    toast_blks_hit,
+    CASE
+        WHEN heap_blks_read + heap_blks_hit > 0
+        THEN round((heap_blks_hit::numeric / (heap_blks_read + heap_blks_hit)) * 100, 2)
+        ELSE 0
+    END as heap_hit_ratio,
+    CASE
+        WHEN toast_blks_read + toast_blks_hit > 0
+        THEN round((toast_blks_hit::numeric / (toast_blks_read + toast_blks_hit)) * 100, 2)
+        ELSE 0
+    END as toast_hit_ratio
+FROM pg_statio_user_tables
+

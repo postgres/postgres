@@ -650,6 +650,22 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	endchunk = (sliceoffset + slicelength - 1) / TOAST_MAX_CHUNK_SIZE;
 	Assert(endchunk <= totalchunks);
 
+	/*
+	 * For larger toast values, use batch optimization to reduce IO round-trips.
+	 * This is particularly beneficial on Aurora where network latency to storage
+	 * makes multiple small reads expensive.
+	 */
+	if ((endchunk - startchunk + 1) >= 4)  /* Batch for 4+ chunks */
+	{
+		heap_fetch_toast_slice_batch_optimized(toastrel, toastidxs, validIndex,
+											   valueid, attrsize, sliceoffset,
+											   slicelength, result, startchunk,
+											   endchunk, totalchunks);
+		toast_close_indexes(toastidxs, num_indexes, AccessShareLock);
+		return;
+	}
+
+	/* Traditional single-chunk-at-a-time path for smaller fetches */
 	/* Set up a scan key to fetch from the index. */
 	ScanKeyInit(&toastkey[0],
 				(AttrNumber) 1,
@@ -788,4 +804,155 @@ heap_fetch_toast_slice(Relation toastrel, Oid valueid, int32 attrsize,
 	/* End scan and close indexes. */
 	systable_endscan_ordered(toastscan);
 	toast_close_indexes(toastidxs, num_indexes, AccessShareLock);
+}
+
+/*
+ * Optimized batch fetching for TOAST chunks.
+ *
+ * This function fetches multiple chunks in a more efficient manner,
+ * reducing IO round-trips which is especially beneficial for Aurora storage.
+ */
+void
+heap_fetch_toast_slice_batch_optimized(Relation toastrel, Relation *toastidxs,
+									   int validIndex, Oid valueid, int32 attrsize,
+									   int32 sliceoffset, int32 slicelength,
+									   struct varlena *result, int startchunk,
+									   int endchunk, int totalchunks)
+{
+	ScanKeyData toastkey[3];
+	TupleDesc	toasttupDesc = toastrel->rd_att;
+	SysScanDesc toastscan;
+	HeapTuple	ttup;
+	int32		expectedchunk;
+
+	/* Pre-allocate a buffer for batch processing multiple chunks */
+	int			chunks_needed = endchunk - startchunk + 1;
+	HeapTuple  *chunk_tuples = (HeapTuple *) palloc(chunks_needed * sizeof(HeapTuple));
+	int			chunks_found = 0;
+
+	/* Set up scan key for range of chunks we need */
+	ScanKeyInit(&toastkey[0],
+				(AttrNumber) 1,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(valueid));
+	ScanKeyInit(&toastkey[1],
+				(AttrNumber) 2,
+				BTGreaterEqualStrategyNumber, F_INT4GE,
+				Int32GetDatum(startchunk));
+	ScanKeyInit(&toastkey[2],
+				(AttrNumber) 2,
+				BTLessEqualStrategyNumber, F_INT4LE,
+				Int32GetDatum(endchunk));
+
+	/*
+	 * Perform a single range scan to fetch all needed chunks.
+	 * This reduces index lookups from N (one per chunk) to 1.
+	 */
+	toastscan = systable_beginscan_ordered(toastrel, toastidxs[validIndex],
+										   get_toast_snapshot(), 3, toastkey);
+
+	/* Collect all chunks in one pass */
+	while ((ttup = systable_getnext_ordered(toastscan, ForwardScanDirection)) != NULL)
+	{
+		if (chunks_found < chunks_needed)
+		{
+			/* Store tuple for batch processing */
+			chunk_tuples[chunks_found] = heap_copytuple(ttup);
+			chunks_found++;
+		}
+		else
+		{
+			/* Should not happen, but protect against buffer overflow */
+			elog(WARNING, "found more chunks than expected for toast value %u", valueid);
+			break;
+		}
+	}
+
+	systable_endscan_ordered(toastscan);
+
+	/*
+	 * Now process all chunks in batch - this allows for better memory access
+	 * patterns and potential CPU optimizations like vectorization.
+	 */
+	expectedchunk = startchunk;
+	for (int i = 0; i < chunks_found; i++)
+	{
+		HeapTuple	ctup = chunk_tuples[i];
+		int32		curchunk;
+		Pointer		chunk;
+		bool		isnull;
+		char	   *chunkdata;
+		int32		chunksize;
+		int32		expected_size;
+		int32		chcpystrt;
+		int32		chcpyend;
+
+		/* Extract chunk sequence number and data */
+		curchunk = DatumGetInt32(fastgetattr(ctup, 2, toasttupDesc, &isnull));
+		Assert(!isnull);
+		chunk = DatumGetPointer(fastgetattr(ctup, 3, toasttupDesc, &isnull));
+		Assert(!isnull);
+
+		if (!VARATT_IS_EXTENDED(chunk))
+		{
+			chunksize = VARSIZE(chunk) - VARHDRSZ;
+			chunkdata = VARDATA(chunk);
+		}
+		else if (VARATT_IS_SHORT(chunk))
+		{
+			chunksize = VARSIZE_SHORT(chunk) - VARHDRSZ_SHORT;
+			chunkdata = VARDATA_SHORT(chunk);
+		}
+		else
+		{
+			elog(ERROR, "found toasted toast chunk for toast value %u in %s",
+				 valueid, RelationGetRelationName(toastrel));
+			chunksize = 0;
+			chunkdata = NULL;
+		}
+
+		/* Validate chunk data */
+		if (curchunk != expectedchunk)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg_internal("unexpected chunk number %d (expected %d) for toast value %u in %s",
+									 curchunk, expectedchunk, valueid,
+									 RelationGetRelationName(toastrel))));
+
+		expected_size = curchunk < totalchunks - 1 ? TOAST_MAX_CHUNK_SIZE
+			: attrsize - ((totalchunks - 1) * TOAST_MAX_CHUNK_SIZE);
+		if (chunksize != expected_size)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg_internal("unexpected chunk size %d (expected %d) in chunk %d of %d for toast value %u in %s",
+									 chunksize, expected_size,
+									 curchunk, totalchunks, valueid,
+									 RelationGetRelationName(toastrel))));
+
+		/* Copy chunk data to result buffer */
+		chcpystrt = 0;
+		chcpyend = chunksize - 1;
+		if (curchunk == startchunk)
+			chcpystrt = sliceoffset % TOAST_MAX_CHUNK_SIZE;
+		if (curchunk == endchunk)
+			chcpyend = (sliceoffset + slicelength - 1) % TOAST_MAX_CHUNK_SIZE;
+
+		memcpy(VARDATA(result) +
+			   (curchunk * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
+			   chunkdata + chcpystrt,
+			   (chcpyend - chcpystrt) + 1);
+
+		expectedchunk++;
+		heap_freetuple(ctup);
+	}
+
+	/* Validate we got all expected chunks */
+	if (expectedchunk != (endchunk + 1))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_internal("missing chunk number %d for toast value %u in %s",
+								 expectedchunk, valueid,
+								 RelationGetRelationName(toastrel))));
+
+	pfree(chunk_tuples);
 }
