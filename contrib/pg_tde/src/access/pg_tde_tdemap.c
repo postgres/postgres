@@ -696,9 +696,9 @@ pg_tde_count_relations(Oid dbOid)
 }
 
 bool
-pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
+pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const KeyData *principal_key_data)
 {
-	return AesGcmDecrypt(principal_key->keyData,
+	return AesGcmDecrypt(principal_key_data->data,
 						 signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE,
 						 (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data),
 						 NULL, 0,

@@ -5,10 +5,10 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_prov
  
 (1 row)
 
-SELECT pg_tde_list_all_database_key_providers();
-                pg_tde_list_all_database_key_providers                 
------------------------------------------------------------------------
- (1,file-vault,file,"{""path"" : ""/tmp/change_key_provider_1.per""}")
+SELECT * FROM pg_tde_list_all_database_key_providers();
+ id | provider_name | provider_type |                   options                   
+----+---------------+---------------+---------------------------------------------
+  1 | file-vault    | file          | {"path" : "/tmp/change_key_provider_1.per"}
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
@@ -45,10 +45,10 @@ SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_p
  
 (1 row)
 
-SELECT pg_tde_list_all_database_key_providers();
-                pg_tde_list_all_database_key_providers                 
------------------------------------------------------------------------
- (1,file-vault,file,"{""path"" : ""/tmp/change_key_provider_2.per""}")
+SELECT * FROM pg_tde_list_all_database_key_providers();
+ id | provider_name | provider_type |                   options                   
+----+---------------+---------------+---------------------------------------------
+  1 | file-vault    | file          | {"path" : "/tmp/change_key_provider_2.per"}
 (1 row)
 
 SELECT pg_tde_verify_key();
@@ -71,6 +71,49 @@ SELECT * FROM test_enc ORDER BY id;
 (2 rows)
 
 -- server restart
+SELECT pg_tde_verify_key();
+ pg_tde_verify_key 
+-------------------
+ 
+(1 row)
+
+SELECT pg_tde_is_encrypted('test_enc');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT * FROM test_enc ORDER BY id;
+ id | k 
+----+---
+  1 | 5
+  2 | 6
+(2 rows)
+
+-- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_1.per
+-- server restart
+SELECT pg_tde_verify_key();
+psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
+SELECT pg_tde_is_encrypted('test_enc');
+ pg_tde_is_encrypted 
+---------------------
+ t
+(1 row)
+
+SELECT * FROM test_enc ORDER BY id;
+psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
+SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_1.per');
+ pg_tde_change_database_key_provider_file 
+------------------------------------------
+ 
+(1 row)
+
+SELECT * FROM pg_tde_list_all_database_key_providers();
+ id | provider_name | provider_type |                   options                   
+----+---------------+---------------+---------------------------------------------
+  1 | file-vault    | file          | {"path" : "/tmp/change_key_provider_1.per"}
+(1 row)
+
 SELECT pg_tde_verify_key();
  pg_tde_verify_key 
 -------------------

@@ -677,9 +677,7 @@ pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid)
 #endif							/* FRONTEND */
 
 /*
- * Gets principal key form the keyring.
- *
- * Caller should hold an exclusive tde_lwlock_enc_keys lock
+ * Get principal key form the keyring.
  */
 static TDEPrincipalKey *
 get_principal_key_from_keyring(Oid dbOid)
@@ -710,6 +708,12 @@ get_principal_key_from_keyring(Oid dbOid)
 				errmsg("failed to retrieve principal key %s from keyring with ID %d",
 					   principalKeyInfo->data.name, principalKeyInfo->data.keyringId));
 
+	if (!pg_tde_verify_principal_key_info(principalKeyInfo, &keyInfo->data))
+		ereport(ERROR,
+				errcode(ERRCODE_DATA_CORRUPTED),
+				errmsg("Failed to verify principal key header for key %s, incorrect principal key or corrupted key file",
+					   principalKeyInfo->data.name));
+
 	principalKey = palloc_object(TDEPrincipalKey);
 
 	principalKey->keyInfo = principalKeyInfo->data;
@@ -717,12 +721,6 @@ get_principal_key_from_keyring(Oid dbOid)
 	principalKey->keyLength = keyInfo->data.len;
 
 	Assert(dbOid == principalKey->keyInfo.databaseId);
-
-	if (!pg_tde_verify_principal_key_info(principalKeyInfo, principalKey))
-		ereport(ERROR,
-				errcode(ERRCODE_DATA_CORRUPTED),
-				errmsg("Failed to verify principal key header for key %s, incorrect principal key or corrupted key file",
-					   principalKeyInfo->data.name));
 
 	pfree(keyInfo);
 	pfree(keyring);
@@ -929,7 +927,7 @@ pg_tde_is_provider_used(Oid databaseOid, Oid providerId)
 void
 pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 {
-	TDEPrincipalKey *existing_principal_key;
+	TDESignedPrincipalKeyInfo *existing_principal_key;
 	HeapTuple	tuple;
 	SysScanDesc scan;
 	Relation	rel;
@@ -940,11 +938,11 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Check the server key that is used for WAL encryption */
-	existing_principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
+	existing_principal_key = pg_tde_get_principal_key_info(GLOBAL_DATA_TDE_OID);
 	if (existing_principal_key != NULL &&
-		existing_principal_key->keyInfo.keyringId == modified_provider->keyring_id)
+		existing_principal_key->data.keyringId == modified_provider->keyring_id)
 	{
-		char	   *key_name = existing_principal_key->keyInfo.name;
+		char	   *key_name = existing_principal_key->data.name;
 		KeyringReturnCodes return_code;
 		KeyInfo    *proposed_key;
 
@@ -956,14 +954,16 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 						   key_name, modified_provider->provider_name, return_code));
 		}
 
-		if (proposed_key->data.len != existing_principal_key->keyLength ||
-			memcmp(proposed_key->data.data, existing_principal_key->keyData, proposed_key->data.len) != 0)
+		if (!pg_tde_verify_principal_key_info(existing_principal_key, &proposed_key->data))
 		{
 			ereport(ERROR,
 					errmsg("key \"%s\" from modified key provider \"%s\" does not match existing server key",
 						   key_name, modified_provider->provider_name));
 		}
 	}
+
+	if (existing_principal_key)
+		pfree(existing_principal_key);
 
 	/* Check all databases for usage of keys from this key provider. */
 	rel = table_open(DatabaseRelationId, AccessShareLock);
@@ -973,11 +973,11 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 	{
 		Form_pg_database database = (Form_pg_database) GETSTRUCT(tuple);
 
-		existing_principal_key = GetPrincipalKeyNoDefault(database->oid, LW_EXCLUSIVE);
+		existing_principal_key = pg_tde_get_principal_key_info(database->oid);
 		if (existing_principal_key != NULL &&
-			existing_principal_key->keyInfo.keyringId == modified_provider->keyring_id)
+			existing_principal_key->data.keyringId == modified_provider->keyring_id)
 		{
-			char	   *key_name = existing_principal_key->keyInfo.name;
+			char	   *key_name = existing_principal_key->data.name;
 			KeyringReturnCodes return_code;
 			KeyInfo    *proposed_key;
 
@@ -989,14 +989,16 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 							   key_name, database->datname.data, modified_provider->provider_name, return_code));
 			}
 
-			if (proposed_key->data.len != existing_principal_key->keyLength ||
-				memcmp(proposed_key->data.data, existing_principal_key->keyData, proposed_key->data.len) != 0)
+			if (!pg_tde_verify_principal_key_info(existing_principal_key, &proposed_key->data))
 			{
 				ereport(ERROR,
 						errmsg("key \"%s\" from modified key provider \"%s\" does not match existing key used by database \"%s\"",
 							   key_name, modified_provider->provider_name, database->datname.data));
 			}
 		}
+
+		if (existing_principal_key)
+			pfree(existing_principal_key);
 	}
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);

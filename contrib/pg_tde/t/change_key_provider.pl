@@ -12,8 +12,6 @@ PGTDE::setup_files_dir(basename($0));
 
 unlink('/tmp/change_key_provider_1.per');
 unlink('/tmp/change_key_provider_2.per');
-unlink('/tmp/change_key_provider_3.per');
-unlink('/tmp/change_key_provider_4.per');
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -26,7 +24,7 @@ PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/change_key_provider_1.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_list_all_database_key_providers();");
+	"SELECT * FROM pg_tde_list_all_database_key_providers();");
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');"
 );
@@ -48,7 +46,7 @@ PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_2.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_list_all_database_key_providers();");
+	"SELECT * FROM pg_tde_list_all_database_key_providers();");
 
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
@@ -57,7 +55,28 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 PGTDE::append_to_result_file("-- server restart");
 $node->restart;
 
-# Verify
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
+
+# Move file, restart and then change provider
+PGTDE::append_to_result_file(
+	"-- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_1.per");
+move('/tmp/change_key_provider_2.per', '/tmp/change_key_provider_1.per');
+
+PGTDE::append_to_result_file("-- server restart");
+$node->restart;
+
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
+PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
+PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
+
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_1.per');"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT * FROM pg_tde_list_all_database_key_providers();");
+
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_verify_key();");
 PGTDE::psql($node, 'postgres', "SELECT pg_tde_is_encrypted('test_enc');");
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
