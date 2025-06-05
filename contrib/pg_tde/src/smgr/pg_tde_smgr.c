@@ -322,6 +322,7 @@ static void
 tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
+	InternalKey *key;
 
 	/* Copied from mdcreate() in md.c */
 	if (isRedo && tdereln->md_num_open_segs[forknum] > 0)
@@ -334,36 +335,46 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 
 	mdcreate(relold, reln, forknum, isRedo);
 
-	if (forknum == MAIN_FORKNUM || forknum == INIT_FORKNUM)
+	if (forknum != MAIN_FORKNUM)
 	{
 		/*
-		 * Only create keys when creating the main/init fork. Other forks can
-		 * be created later, even during tde creation events. We definitely do
+		 * Only create keys when creating the main fork. Other forks can be
+		 * created later, even during tde creation events. We definitely do
 		 * not want to create keys then, even later, when we encrypt all
 		 * forks!
 		 *
 		 * Later calls then decide to encrypt or not based on the existence of
 		 * the key.
-		 *
-		 * Since event triggers do not fire on the standby or in recovery we
-		 * do not try to generate any new keys and instead trust the xlog.
 		 */
-		InternalKey *key = tde_smgr_get_key(&reln->smgr_rlocator);
-
-		if (!isRedo && !key && tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
-			key = tde_smgr_create_key(&reln->smgr_rlocator);
-
-		if (key)
-		{
-			tdereln->encryption_status = RELATION_KEY_AVAILABLE;
-			tdereln->relKey = *key;
-			pfree(key);
-		}
-		else
-		{
-			tdereln->encryption_status = RELATION_NOT_ENCRYPTED;
-		}
+		return;
 	}
+
+	if (!tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
+	{
+		tdereln->encryption_status = RELATION_NOT_ENCRYPTED;
+		return;
+	}
+
+	if (isRedo)
+	{
+		/*
+		 * If we're in redo, the WAL record for creating the key has already
+		 * happened and we can just fetch it.
+		 */
+		key = tde_smgr_get_key(&reln->smgr_rlocator);
+
+		Assert(key);
+		if (!key)
+			elog(ERROR, "could not get key when creating encrypted relation");
+	}
+	else
+	{
+		key = tde_smgr_create_key(&reln->smgr_rlocator);
+	}
+
+	tdereln->encryption_status = RELATION_KEY_AVAILABLE;
+	tdereln->relKey = *key;
+	pfree(key);
 }
 
 /*
