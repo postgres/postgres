@@ -84,6 +84,10 @@ SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
    based on object labels, rather than traditional discretionary access control
    (DAC) concepts such as users and groups.
   </para>
+
+  <para>
+   You must own the database object to use <command>SECURITY LABEL</command>.
+  </para>
  </refsect1>
 
  <refsect1>
