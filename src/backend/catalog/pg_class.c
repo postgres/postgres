@@ -39,6 +39,8 @@ errdetail_relkind_not_supported(char relkind)
 			return errdetail("This operation is not supported for materialized views.");
 		case RELKIND_COMPOSITE_TYPE:
 			return errdetail("This operation is not supported for composite types.");
+		case RELKIND_BLOCKCHAIN_TABLE:
+			return errdetail("This operation is not supported for blockchain tables.");
 		case RELKIND_FOREIGN_TABLE:
 			return errdetail("This operation is not supported for foreign tables.");
 		case RELKIND_PARTITIONED_TABLE:

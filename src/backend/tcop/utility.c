@@ -2006,6 +2006,7 @@ ExecDropStmt(DropStmt *stmt, bool isTopLevel)
 		case OBJECT_SEQUENCE:
 		case OBJECT_VIEW:
 		case OBJECT_MATVIEW:
+		case OBJECT_BLOCKCHAIN_TABLE:
 		case OBJECT_FOREIGN_TABLE:
 			RemoveRelations(stmt);
 			break;
@@ -2585,6 +2586,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TSCONFIGURATION:
 					tag = CMDTAG_DROP_TEXT_SEARCH_CONFIGURATION;
+					break;
+				case OBJECT_BLOCKCHAIN_TABLE:
+					tag = CMDTAG_DROP_BLOCKCHAIN_TABLE;
 					break;
 				case OBJECT_FOREIGN_TABLE:
 					tag = CMDTAG_DROP_FOREIGN_TABLE;

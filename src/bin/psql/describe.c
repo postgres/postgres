@@ -4147,7 +4147,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showTables)
 	{
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_RELATION) ","
-							 CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
+							 CppAsString2(RELKIND_PARTITIONED_TABLE) ","
+							 CppAsString2(RELKIND_BLOCKCHAIN_TABLE) ",");
 		/* with 'S' or a pattern, allow 't' to match TOAST tables too */
 		if (showSystem || pattern)
 			appendPQExpBufferStr(&buf, CppAsString2(RELKIND_TOASTVALUE) ",");

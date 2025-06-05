@@ -138,3 +138,48 @@
 2025-06-03 12:43:14.045 IST [83202] LOG:  checkpoint starting: shutdown immediate
 2025-06-03 12:43:14.049 IST [83202] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.006 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=339 kB; lsn=0/17CAFB8, redo lsn=0/17CAFB8
 2025-06-03 12:43:14.056 IST [83198] LOG:  database system is shut down
+2025-06-04 15:41:29.628 IST [257818] LOG:  starting PostgreSQL 18beta1 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0, 64-bit
+2025-06-04 15:41:29.628 IST [257818] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-04 15:41:29.629 IST [257818] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-06-04 15:41:29.632 IST [257824] LOG:  database system was shut down at 2025-06-04 15:41:10 IST
+2025-06-04 15:41:29.635 IST [257818] LOG:  database system is ready to accept connections
+2025-06-04 15:41:50.237 IST [257872] WARNING:  resource was not closed: relation "a"
+2025-06-04 15:41:57.710 IST [257872] ERROR:  syntax error at or near "BLOCKCHAIN" at character 6
+2025-06-04 15:41:57.710 IST [257872] STATEMENT:  DROP BLOCKCHAIN TABLE a;
+2025-06-04 15:42:37.712 IST [257872] ERROR:  INSERT has more expressions than target columns at character 24
+2025-06-04 15:42:37.712 IST [257872] STATEMENT:  INSERT INTO a VALUES(5,6,3);
+2025-06-04 15:43:47.138 IST [257872] ERROR:  cannot delete from blockchain table "a"
+2025-06-04 15:43:47.138 IST [257872] STATEMENT:  DELETE from a where id = 1;
+2025-06-04 15:43:58.503 IST [257872] ERROR:  "a" is not a table
+2025-06-04 15:43:58.503 IST [257872] STATEMENT:  DROP table a;
+2025-06-04 15:44:04.679 IST [257872] ERROR:  syntax error at or near "relation" at character 6
+2025-06-04 15:44:04.679 IST [257872] STATEMENT:  drop relation a;
+2025-06-04 15:46:29.732 IST [257822] LOG:  checkpoint starting: time
+2025-06-04 15:46:36.258 IST [257822] LOG:  checkpoint complete: wrote 65 buffers (0.4%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=6.514 s, sync=0.009 s, total=6.527 s; sync files=30, longest=0.007 s, average=0.001 s; distance=416 kB, estimate=416 kB; lsn=0/17C8F60, redo lsn=0/17C8ED0
+2025-06-04 15:57:59.386 IST [266534] ERROR:  relation "a" already exists
+2025-06-04 15:57:59.386 IST [266534] STATEMENT:  CREATE BLOCKCHAIN TABLE a(id int);
+2025-06-04 15:58:03.019 IST [266534] WARNING:  resource was not closed: relation "b"
+2025-06-04 15:58:11.629 IST [266534] ERROR:  syntax error at or near "BLOCKCHAIN" at character 6
+2025-06-04 15:58:11.629 IST [266534] STATEMENT:  DROP BLOCKCHAIN TABLE a;
+2025-06-04 15:58:17.765 IST [266534] ERROR:  syntax error at or near "BLOCKCHAIN" at character 6
+2025-06-04 15:58:17.765 IST [266534] STATEMENT:  DROP BLOCKCHAIN TABLE b;
+2025-06-04 16:01:29.550 IST [257822] LOG:  checkpoint starting: time
+2025-06-04 16:01:31.667 IST [257822] LOG:  checkpoint complete: wrote 21 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.106 s, sync=0.002 s, total=2.117 s; sync files=19, longest=0.001 s, average=0.001 s; distance=103 kB, estimate=385 kB; lsn=0/17E2EF8, redo lsn=0/17E2EA0
+2025-06-04 16:12:32.893 IST [274279] WARNING:  resource was not closed: relation "c"
+2025-06-04 16:12:42.034 IST [274279] ERROR:  syntax error at or near "BLOCKCHAIN" at character 6
+2025-06-04 16:12:42.034 IST [274279] STATEMENT:  DROP BLOCKCHAIN TABLE c;
+2025-06-04 16:12:48.478 IST [274279] ERROR:  "c" is not a table
+2025-06-04 16:12:48.478 IST [274279] STATEMENT:  DROP TABLE c;
+2025-06-04 16:16:29.971 IST [257822] LOG:  checkpoint starting: time
+2025-06-04 16:16:31.697 IST [257822] LOG:  checkpoint complete: wrote 17 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.706 s, sync=0.009 s, total=1.727 s; sync files=16, longest=0.007 s, average=0.001 s; distance=90 kB, estimate=356 kB; lsn=0/17F99A0, redo lsn=0/17F9948
+2025-06-04 16:43:30.218 IST [274279] WARNING:  resource was not closed: relation "r1"
+2025-06-04 16:45:07.946 IST [257822] LOG:  checkpoint starting: time
+2025-06-04 16:45:09.964 IST [257822] LOG:  checkpoint complete: wrote 20 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.007 s, sync=0.009 s, total=2.019 s; sync files=16, longest=0.007 s, average=0.001 s; distance=118 kB, estimate=332 kB; lsn=0/18172C0, redo lsn=0/1817268
+2025-06-04 17:00:39.443 IST [277884] ERROR:  syntax error at or near "BLOCKCHAIN" at character 6
+2025-06-04 17:00:39.443 IST [277884] STATEMENT:  DROP BLOCKCHAIN TABLE a;
+2025-06-04 17:00:44.054 IST [277884] ERROR:  "a" is not a table
+2025-06-04 17:00:44.054 IST [277884] STATEMENT:  DROP TABLE a;
+2025-06-04 17:10:30.383 IST [279415] ERROR:  syntax error at or near "(" at character 6
+2025-06-04 17:10:30.383 IST [279415] STATEMENT:  SHOW (version
+	);
+2025-06-04 17:57:56.077 IST [283108] FATAL:  database "eagle" does not exist

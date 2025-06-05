@@ -946,6 +946,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_INDEX:
 			case OBJECT_SEQUENCE:
 			case OBJECT_TABLE:
+			case OBJECT_BLOCKCHAIN_TABLE:
 			case OBJECT_VIEW:
 			case OBJECT_MATVIEW:
 			case OBJECT_FOREIGN_TABLE:
@@ -1368,9 +1369,18 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 						 errmsg("\"%s\" is not a sequence",
 								RelationGetRelationName(relation))));
 			break;
+		case OBJECT_BLOCKCHAIN_TABLE:
+			if (relation->rd_rel->relkind != RELKIND_BLOCKCHAIN_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("\"%s\" is not a blockchain table",
+								RelationGetRelationName(relation))));
+			break;
+			
 		case OBJECT_TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION &&
-				relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+				relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE &&
+				relation->rd_rel->relkind != RELKIND_BLOCKCHAIN_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a table",
@@ -2279,6 +2289,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_VIEW:
 		case OBJECT_MATVIEW:
 		case OBJECT_INDEX:
+		case OBJECT_BLOCKCHAIN_TABLE:
 		case OBJECT_FOREIGN_TABLE:
 		case OBJECT_COLUMN:
 		case OBJECT_ATTRIBUTE:
@@ -2398,6 +2409,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_TABLE:
 		case OBJECT_VIEW:
 		case OBJECT_MATVIEW:
+		case OBJECT_BLOCKCHAIN_TABLE:
 		case OBJECT_FOREIGN_TABLE:
 		case OBJECT_COLUMN:
 		case OBJECT_RULE:
@@ -4141,6 +4153,10 @@ getRelationDescription(StringInfo buffer, Oid relid, bool missing_ok)
 			appendStringInfo(buffer, _("sequence %s"),
 							 relname);
 			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			appendStringInfo(buffer, _("blockchain table %s"),
+							 relname);
+			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfo(buffer, _("toast table %s"),
 							 relname);
@@ -4715,6 +4731,9 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId,
 			break;
 		case RELKIND_SEQUENCE:
 			appendStringInfoString(buffer, "sequence");
+			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			appendStringInfoString(buffer, "blockchain table");
 			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfoString(buffer, "toast table");
@@ -6199,6 +6218,8 @@ get_relkind_objtype(char relkind)
 			return OBJECT_VIEW;
 		case RELKIND_MATVIEW:
 			return OBJECT_MATVIEW;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			return OBJECT_BLOCKCHAIN_TABLE;
 		case RELKIND_FOREIGN_TABLE:
 			return OBJECT_FOREIGN_TABLE;
 		case RELKIND_TOASTVALUE:

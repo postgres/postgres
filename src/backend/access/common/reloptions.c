@@ -1418,6 +1418,7 @@ extractRelOptions(HeapTuple tuple, TupleDesc tupdesc,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_TOASTVALUE:
+		case RELKIND_BLOCKCHAIN_TABLE:
 		case RELKIND_MATVIEW:
 			options = heap_reloptions(classForm->relkind, datum, false);
 			break;
@@ -2082,6 +2083,7 @@ heap_reloptions(char relkind, Datum reloptions, bool validate)
 			}
 			return (bytea *) rdopts;
 		case RELKIND_RELATION:
+		case RELKIND_BLOCKCHAIN_TABLE:
 		case RELKIND_MATVIEW:
 			return default_reloptions(reloptions, validate, RELOPT_KIND_HEAP);
 		default:

@@ -480,6 +480,7 @@ does_not_exist_skipping(ObjectType objtype, Node *object)
 		case OBJECT_COLUMN:
 		case OBJECT_DATABASE:
 		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_BLOCKCHAIN_TABLE:
 		case OBJECT_INDEX:
 		case OBJECT_MATVIEW:
 		case OBJECT_ROLE:

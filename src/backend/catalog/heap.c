@@ -1038,7 +1038,7 @@ AddNewRelationType(const char *typeName,
 				   Oid ownerid,
 				   Oid new_row_type,
 				   Oid new_array_type)
-{
+{	
 	return
 		TypeCreate(new_row_type,	/* optional predetermined OID */
 				   typeName,	/* type name */

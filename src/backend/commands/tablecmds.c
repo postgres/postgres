@@ -296,6 +296,12 @@ static const struct dropmsgstrings dropmsgstringarray[] = {
 		gettext_noop("foreign table \"%s\" does not exist, skipping"),
 		gettext_noop("\"%s\" is not a foreign table"),
 	gettext_noop("Use DROP FOREIGN TABLE to remove a foreign table.")},
+	{RELKIND_BLOCKCHAIN_TABLE,
+		ERRCODE_UNDEFINED_OBJECT,
+		gettext_noop("blockchain table \"%s\" does not exist"),
+		gettext_noop("blockchain table \"%s\" does not exist, skipping"),
+		gettext_noop("\"%s\" is not a blockchain table"),
+	gettext_noop("Use DROP BLOCKCHAIN TABLE to remove a blockchain table.")},
 	{RELKIND_PARTITIONED_TABLE,
 		ERRCODE_UNDEFINED_TABLE,
 		gettext_noop("table \"%s\" does not exist"),
@@ -1619,6 +1625,9 @@ RemoveRelations(DropStmt *drop)
 			relkind = RELKIND_FOREIGN_TABLE;
 			break;
 
+		case OBJECT_BLOCKCHAIN_TABLE:
+			relkind = RELKIND_BLOCKCHAIN_TABLE;
+			break;
 		default:
 			elog(ERROR, "unrecognized drop object type: %d",
 				 (int) drop->removeType);
@@ -1780,7 +1789,9 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 * the relation is RELKIND_PARTITIONED_TABLE.  An equivalent problem
 	 * exists with indexes.
 	 */
-	if (classform->relkind == RELKIND_PARTITIONED_TABLE)
+	if (state->expected_relkind == RELKIND_BLOCKCHAIN_TABLE)
+		expected_relkind = RELKIND_BLOCKCHAIN_TABLE;
+	else if (classform->relkind == RELKIND_PARTITIONED_TABLE)
 		expected_relkind = RELKIND_RELATION;
 	else if (classform->relkind == RELKIND_PARTITIONED_INDEX)
 		expected_relkind = RELKIND_INDEX;
@@ -2414,7 +2425,8 @@ truncate_check_rel(Oid relid, Form_pg_class reltuple)
 							relname)));
 	}
 	else if (reltuple->relkind != RELKIND_RELATION &&
-			 reltuple->relkind != RELKIND_PARTITIONED_TABLE)
+			 reltuple->relkind != RELKIND_PARTITIONED_TABLE &&
+			 reltuple->relkind != RELKIND_BLOCKCHAIN_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table", relname)));

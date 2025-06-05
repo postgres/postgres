@@ -2653,6 +2653,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 					case OBJECT_AGGREGATE:
 						msg = gettext_noop("permission denied for aggregate %s");
 						break;
+					case OBJECT_BLOCKCHAIN_TABLE:
+						msg = gettext_noop("permission denied for blockchain table %s");
+						break;
 					case OBJECT_COLLATION:
 						msg = gettext_noop("permission denied for collation %s");
 						break;
@@ -2787,6 +2790,9 @@ aclcheck_error(AclResult aclerr, ObjectType objtype,
 				{
 					case OBJECT_AGGREGATE:
 						msg = gettext_noop("must be owner of aggregate %s");
+						break;
+					case OBJECT_BLOCKCHAIN_TABLE:
+						msg = gettext_noop("must be owner of blockchain table %s");
 						break;
 					case OBJECT_COLLATION:
 						msg = gettext_noop("must be owner of collation %s");

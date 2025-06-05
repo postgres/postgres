@@ -2324,6 +2324,7 @@ typedef enum ObjectType
 	OBJECT_AMOP,
 	OBJECT_AMPROC,
 	OBJECT_ATTRIBUTE,			/* type's attribute, when distinct from column */
+	OBJECT_BLOCKCHAIN_TABLE,
 	OBJECT_CAST,
 	OBJECT_COLUMN,
 	OBJECT_COLLATION,
