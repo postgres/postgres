@@ -885,10 +885,10 @@ ExecInsert(ModifyTableContext *context,
 
 	resultRelationDesc = resultRelInfo->ri_RelationDesc;
 
-	if(RelationIsBlockchain(resultRelationDesc))
-	{
-		ProcessBlockchainInsert(slot, resultRelationDesc);
-	}
+	// if(RelationIsBlockchain(resultRelationDesc))
+	// {
+	// 	ProcessBlockchainInsert(slot, resultRelationDesc);
+	// }
 	/*
 	 * Open the table's indexes, if we have not done so already, so that we
 	 * can add new index entries for the inserted tuple.

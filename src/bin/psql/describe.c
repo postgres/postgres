@@ -1875,6 +1875,7 @@ describeOneTableDetails(const char *schemaname,
 		goto error_return;		/* not an error, just return early */
 	}
 
+
 	/* Identify whether we should print collation, nullable, default vals */
 	if (tableinfo.relkind == RELKIND_RELATION ||
 		tableinfo.relkind == RELKIND_VIEW ||
@@ -2062,7 +2063,7 @@ describeOneTableDetails(const char *schemaname,
 			break;
 		default:
 			/* untranslated unknown relkind */
-			printfPQExpBuffer(&title, "?%c? \"%s.%s\"",
+			printfPQExpBuffer(&title, "?%c test? \"%s.%s\"",
 							  tableinfo.relkind, schemaname, relationname);
 			break;
 	}
@@ -4023,6 +4024,7 @@ describeRoleGrants(const char *pattern, bool showSystem)
  * m - materialized views
  * s - sequences
  * E - foreign table (Note: different from 'f', the relkind value)
+ * B - blockchain table
  * (any order of the above is fine)
  */
 bool
@@ -4034,20 +4036,22 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	bool		showMatViews = strchr(tabtypes, 'm') != NULL;
 	bool		showSeq = strchr(tabtypes, 's') != NULL;
 	bool		showForeign = strchr(tabtypes, 'E') != NULL;
+	bool 		showBlockchain = strchr(tabtypes, 'B') != NULL;
 
 	int			ntypes;
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 	int			cols_so_far;
-	bool		translate_columns[] = {false, false, true, false, false, false, false, false, false};
+	bool translate_columns[] = {false, false, true, false, false, false, false, false, false};
+
 
 	/* Count the number of explicitly-requested relation types */
 	ntypes = showTables + showIndexes + showViews + showMatViews +
-		showSeq + showForeign;
+		showSeq + showForeign + showBlockchain;
 	/* If none, we default to \dtvmsE (but see also command.c) */
 	if (ntypes == 0)
-		showTables = showViews = showMatViews = showSeq = showForeign = true;
+		showTables = showViews = showMatViews = showSeq = showForeign = showBlockchain = true;
 
 	initPQExpBuffer(&buf);
 
@@ -4075,6 +4079,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 					  gettext_noop("index"),
 					  gettext_noop("sequence"),
 					  gettext_noop("TOAST table"),
+					  gettext_noop("blockchain table"),
 					  gettext_noop("foreign table"),
 					  gettext_noop("partitioned table"),
 					  gettext_noop("partitioned index"),
@@ -4147,8 +4152,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (showTables)
 	{
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_RELATION) ","
-							 CppAsString2(RELKIND_PARTITIONED_TABLE) ","
-							 CppAsString2(RELKIND_BLOCKCHAIN_TABLE) ",");
+							 CppAsString2(RELKIND_PARTITIONED_TABLE) ",");
 		/* with 'S' or a pattern, allow 't' to match TOAST tables too */
 		if (showSystem || pattern)
 			appendPQExpBufferStr(&buf, CppAsString2(RELKIND_TOASTVALUE) ",");
@@ -4166,6 +4170,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 		appendPQExpBufferStr(&buf, "'s',"); /* was RELKIND_SPECIAL */
 	if (showForeign)
 		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_FOREIGN_TABLE) ",");
+	if (showBlockchain)
+		appendPQExpBufferStr(&buf, CppAsString2(RELKIND_BLOCKCHAIN_TABLE) ",");
 
 	appendPQExpBufferStr(&buf, "''");	/* dummy */
 	appendPQExpBufferStr(&buf, ")\n");
@@ -4221,6 +4227,9 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 			else if (showForeign)
 				pg_log_error("Did not find any foreign tables named \"%s\".",
 							 pattern);
+			else if (showBlockchain)
+				pg_log_error("Did not find any blockchain tables named \"%s\".",
+							 pattern);
 			else				/* should not get here */
 				pg_log_error_internal("Did not find any ??? named \"%s\".",
 									  pattern);
@@ -4241,6 +4250,8 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 				pg_log_error("Did not find any sequences.");
 			else if (showForeign)
 				pg_log_error("Did not find any foreign tables.");
+			else if (showBlockchain)
+				pg_log_error("Did not find any blockchain tables.");
 			else				/* should not get here */
 				pg_log_error_internal("Did not find any ??? relations.");
 		}
@@ -4255,6 +4266,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 			(showMatViews) ? _("List of materialized views") :
 			(showSeq) ? _("List of sequences") :
 			(showForeign) ? _("List of foreign tables") :
+			(showBlockchain) ? _("List of blockchain tables") :
 			"List of ???";		/* should not get here */
 		myopt.translate_header = true;
 		myopt.translate_columns = translate_columns;

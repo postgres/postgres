@@ -513,6 +513,9 @@ overexplain_range_table(PlannedStmt *plannedstmt, ExplainState *es)
 			case RELKIND_COMPOSITE_TYPE:
 				relkind = "composite_type";
 				break;
+			case RELKIND_BLOCKCHAIN_TABLE:
+				relkind = "blockchain_table";
+				break;
 			case RELKIND_FOREIGN_TABLE:
 				relkind = "foreign_table";
 				break;

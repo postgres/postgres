@@ -795,12 +795,13 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	Oid			accessMethodId = InvalidOid;
 
 	/*
-	 * Truncate relname to appropriate length (probably a waste of time, as
+	 * Truncate relname to Blockchainappropriate length (probably a waste of time, as
 	 * parser should have done this already).
 	 */
 	strlcpy(relname, stmt->relation->relname, NAMEDATALEN);
 
 
+	/*
 	if(stmt->is_blockchain)
 	{
 		elog(DEBUG1, "DefineRelation: is_blockchain = true");
@@ -817,6 +818,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		elog(DEBUG1, "DefineRelation: is_blockchain = false");
 		blockchain = false;
 	}
+	*/
 	
 
 	/*
@@ -1005,6 +1007,8 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	 * below.
 	 */
 	descriptor = BuildDescForRelation(stmt->tableElts);
+
+	/* INJECT COLUMNS INTO BC TABLE*/
 
 	/*
 	 * Find columns with default values and prepare for insertion of the
@@ -1364,16 +1368,17 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 	if (stmt->constraints)
 		AddRelationNewConstraints(rel, NIL, stmt->constraints,
 								  true, true, false, queryString);
-
+	
 	rel = table_open(relationId, NoLock);
-
+			
 	StdRdOptions *opts = (StdRdOptions *) rel->rd_options;
 	if (opts && opts->blockchain)
 	{
 		elog(INFO, "Creating blockchain table \"%s\"",
 			 RelationGetRelationName(rel));
 	}
-
+	table_close(rel, NoLock);
+    
 	/*
 	 * Finally, merge the not-null constraints that are declared directly with
 	 * those that come from parent relations (making sure to count inheritance
@@ -1789,14 +1794,15 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 * the relation is RELKIND_PARTITIONED_TABLE.  An equivalent problem
 	 * exists with indexes.
 	 */
-	if (state->expected_relkind == RELKIND_BLOCKCHAIN_TABLE)
-		expected_relkind = RELKIND_BLOCKCHAIN_TABLE;
-	else if (classform->relkind == RELKIND_PARTITIONED_TABLE)
+	if (classform->relkind == RELKIND_PARTITIONED_TABLE)
 		expected_relkind = RELKIND_RELATION;
+	else if(classform->relkind == RELKIND_BLOCKCHAIN_TABLE)
+		expected_relkind = RELKIND_BLOCKCHAIN_TABLE;
 	else if (classform->relkind == RELKIND_PARTITIONED_INDEX)
 		expected_relkind = RELKIND_INDEX;
 	else
 		expected_relkind = classform->relkind;
+
 
 	if (state->expected_relkind != expected_relkind)
 		DropErrorMsgWrongType(rel->relname, classform->relkind,

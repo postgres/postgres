@@ -4732,9 +4732,6 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId,
 		case RELKIND_SEQUENCE:
 			appendStringInfoString(buffer, "sequence");
 			break;
-		case RELKIND_BLOCKCHAIN_TABLE:
-			appendStringInfoString(buffer, "blockchain table");
-			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfoString(buffer, "toast table");
 			break;
@@ -4749,6 +4746,9 @@ getRelationTypeDescription(StringInfo buffer, Oid relid, int32 objectSubId,
 			break;
 		case RELKIND_FOREIGN_TABLE:
 			appendStringInfoString(buffer, "foreign table");
+			break;
+		case RELKIND_BLOCKCHAIN_TABLE:
+			appendStringInfoString(buffer, "blockchain table");
 			break;
 		default:
 			/* shouldn't get here */
@@ -6219,7 +6219,7 @@ get_relkind_objtype(char relkind)
 		case RELKIND_MATVIEW:
 			return OBJECT_MATVIEW;
 		case RELKIND_BLOCKCHAIN_TABLE:
-			return OBJECT_BLOCKCHAIN_TABLE;
+			return OBJECT_TABLE;
 		case RELKIND_FOREIGN_TABLE:
 			return OBJECT_FOREIGN_TABLE;
 		case RELKIND_TOASTVALUE:

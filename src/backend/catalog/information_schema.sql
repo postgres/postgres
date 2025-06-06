@@ -548,7 +548,7 @@ CREATE VIEW column_domain_usage AS
           AND a.attrelid = c.oid
           AND a.atttypid = t.oid
           AND t.typtype = 'd'
-          AND c.relkind IN ('r', 'v', 'f', 'p')
+          AND c.relkind IN ('r', 'v', 'f', 'p', 'b')
           AND a.attnum > 0
           AND NOT a.attisdropped
           AND pg_has_role(t.typowner, 'USAGE');
@@ -587,7 +587,7 @@ CREATE VIEW column_privileges AS
                   pr_c.relowner
            FROM (SELECT oid, relname, relnamespace, relowner, (aclexplode(coalesce(relacl, acldefault('r', relowner)))).*
                  FROM pg_class
-                 WHERE relkind IN ('r', 'v', 'f', 'p')
+                 WHERE relkind IN ('r', 'v', 'f', 'p', 'b')
                 ) pr_c (oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
                 pg_attribute a
            WHERE a.attrelid = pr_c.oid
@@ -609,7 +609,7 @@ CREATE VIEW column_privileges AS
                 ) pr_a (attrelid, attname, grantor, grantee, prtype, grantable),
                 pg_class c
            WHERE pr_a.attrelid = c.oid
-                 AND relkind IN ('r', 'v', 'f', 'p')
+                 AND relkind IN ('r', 'v', 'f', 'p', 'b')
          ) x,
          pg_namespace nc,
          pg_authid u_grantor,
@@ -653,7 +653,7 @@ CREATE VIEW column_udt_usage AS
           AND a.atttypid = t.oid
           AND nc.oid = c.relnamespace
           AND a.attnum > 0 AND NOT a.attisdropped
-          AND c.relkind in ('r', 'v', 'f', 'p')
+          AND c.relkind in ('r', 'v', 'f', 'p', 'b')
           AND pg_has_role(coalesce(bt.typowner, t.typowner), 'USAGE');
 
 GRANT SELECT ON column_udt_usage TO PUBLIC;
@@ -763,7 +763,7 @@ CREATE VIEW columns AS
            CAST(CASE WHEN a.attgenerated <> '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS character_data) AS generation_expression,
 
            CAST(CASE WHEN c.relkind IN ('r', 'p') OR
-                          (c.relkind IN ('v', 'f') AND
+                          (c.relkind IN ('v', 'f','b') AND
                            pg_column_is_updatable(c.oid, a.attnum, false))
                 THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_updatable
 
@@ -780,7 +780,7 @@ CREATE VIEW columns AS
     WHERE (NOT pg_is_other_temp_schema(nc.oid))
 
           AND a.attnum > 0 AND NOT a.attisdropped
-          AND c.relkind IN ('r', 'v', 'f', 'p')
+          AND c.relkind IN ('r', 'v', 'f', 'p','b')
 
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_column_privilege(c.oid, a.attnum,
@@ -1527,7 +1527,7 @@ CREATE VIEW routine_table_usage AS
           AND d.refobjid = t.oid
           AND d.refclassid = 'pg_catalog.pg_class'::regclass
           AND t.relnamespace = nt.oid
-          AND t.relkind IN ('r', 'v', 'f', 'p')
+          AND t.relkind IN ('r', 'v', 'f', 'p','b')
           AND pg_has_role(t.relowner, 'USAGE');
 
 GRANT SELECT ON routine_table_usage TO PUBLIC;
@@ -1908,7 +1908,7 @@ CREATE VIEW table_privileges AS
          ) AS grantee (oid, rolname)
 
     WHERE c.relnamespace = nc.oid
-          AND c.relkind IN ('r', 'v', 'f', 'p')
+          AND c.relkind IN ('r', 'v', 'f', 'p','b')
           AND c.grantee = grantee.oid
           AND c.grantor = u_grantor.oid
           AND c.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')
@@ -1955,6 +1955,7 @@ CREATE VIEW tables AS
                   WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
                   WHEN c.relkind = 'v' THEN 'VIEW'
                   WHEN c.relkind = 'f' THEN 'FOREIGN'
+                  WHEN c.relkind = 'b' THEN 'BLOCKCHAIN TABLE'
                   ELSE null END
              AS character_data) AS table_type,
 
@@ -1965,7 +1966,7 @@ CREATE VIEW tables AS
            CAST(nt.nspname AS sql_identifier) AS user_defined_type_schema,
            CAST(t.typname AS sql_identifier) AS user_defined_type_name,
 
-           CAST(CASE WHEN c.relkind IN ('r', 'p') OR
+           CAST(CASE WHEN c.relkind IN ('r', 'p','b') OR
                           (c.relkind IN ('v', 'f') AND
                            -- 1 << CMD_INSERT
                            pg_relation_is_updatable(c.oid, false) & 8 = 8)
@@ -1977,7 +1978,7 @@ CREATE VIEW tables AS
     FROM pg_namespace nc JOIN pg_class c ON (nc.oid = c.relnamespace)
            LEFT JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON (c.reloftype = t.oid)
 
-    WHERE c.relkind IN ('r', 'v', 'f', 'p')
+    WHERE c.relkind IN ('r', 'v', 'f', 'p', 'b')
           AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(c.relowner, 'USAGE')
                OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
@@ -2507,7 +2508,7 @@ CREATE VIEW view_column_usage AS
           AND dt.refclassid = 'pg_catalog.pg_class'::regclass
           AND dt.refobjid = t.oid
           AND t.relnamespace = nt.oid
-          AND t.relkind IN ('r', 'v', 'f', 'p')
+          AND t.relkind IN ('r', 'v', 'f', 'p','b')
           AND t.oid = a.attrelid
           AND dt.refobjsubid = a.attnum
           AND pg_has_role(t.relowner, 'USAGE');
@@ -2585,7 +2586,7 @@ CREATE VIEW view_table_usage AS
           AND dt.refclassid = 'pg_catalog.pg_class'::regclass
           AND dt.refobjid = t.oid
           AND t.relnamespace = nt.oid
-          AND t.relkind IN ('r', 'v', 'f', 'p')
+          AND t.relkind IN ('r', 'v', 'f', 'p','b')
           AND pg_has_role(t.relowner, 'USAGE');
 
 GRANT SELECT ON view_table_usage TO PUBLIC;
@@ -2736,7 +2737,7 @@ CREATE VIEW element_types AS
                   a.attnum, a.atttypid, a.attcollation
            FROM pg_class c, pg_attribute a
            WHERE c.oid = a.attrelid
-                 AND c.relkind IN ('r', 'v', 'f', 'c', 'p')
+                 AND c.relkind IN ('r', 'v', 'f', 'c', 'p', 'b')
                  AND attnum > 0 AND NOT attisdropped
 
            UNION ALL

@@ -21,7 +21,7 @@
  * operation.
  */
 int
-errdetail_relkind_not_supported(char relkind)
+errdetail_relkind_not_supported(char relkind)		
 {
 	switch (relkind)
 	{
