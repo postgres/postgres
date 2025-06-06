@@ -609,8 +609,15 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		return 0;
 	}
 
-	block_info_array =
-		(BlockInfoRecord *) palloc(sizeof(BlockInfoRecord) * NBuffers);
+	/*
+	 * With sufficiently large shared_buffers, allocation will exceed 1GB, so
+	 * allow for a huge allocation to prevent outright failure.
+	 *
+	 * (In the future, it might be a good idea to redesign this to use a more
+	 * memory-efficient data structure.)
+	 */
+	block_info_array = (BlockInfoRecord *)
+		palloc_extended((sizeof(BlockInfoRecord) * NBuffers), MCXT_ALLOC_HUGE);
 
 	for (num_blocks = 0, i = 0; i < NBuffers; i++)
 	{
