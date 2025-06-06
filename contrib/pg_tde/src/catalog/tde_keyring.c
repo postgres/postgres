@@ -476,13 +476,12 @@ save_new_key_provider_info(KeyringProviderRecord *provider, Oid databaseId)
 
 		if (strcmp(existing_provider.provider_name, provider->provider_name) == 0)
 		{
-			close(fd);
 			ereport(ERROR,
 					errcode(ERRCODE_DUPLICATE_OBJECT),
 					errmsg("Key provider \"%s\" already exists.", provider->provider_name));
 		}
 	}
-	close(fd);
+	CloseTransientFile(fd);
 
 	if (max_provider_id == PG_INT32_MAX)
 	{
@@ -610,7 +609,7 @@ write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 	Assert(LWLockHeldByMeInMode(tde_provider_info_lock(), LW_EXCLUSIVE));
 
 	get_keyring_infofile_path(kp_info_path, record->database_id);
-	fd = BasicOpenFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
+	fd = OpenTransientFile(kp_info_path, O_CREAT | O_RDWR | PG_BINARY);
 	if (fd < 0)
 	{
 		ereport(ERROR,
@@ -638,7 +637,6 @@ write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 							  record->offset_in_file);
 	if (bytes_written != sizeof(KeyringProviderRecord))
 	{
-		close(fd);
 		ereport(ERROR,
 				errcode_for_file_access(),
 				errmsg("key provider info file \"%s\" can't be written: %m",
@@ -646,12 +644,11 @@ write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 	}
 	if (pg_fsync(fd) != 0)
 	{
-		close(fd);
 		ereport(ERROR,
 				errcode_for_file_access(),
 				errmsg("could not fsync file \"%s\": %m", kp_info_path));
 	}
-	close(fd);
+	CloseTransientFile(fd);
 }
 
 /* Returns true if the record is found, false otherwise. */
@@ -678,7 +675,7 @@ get_keyring_info_file_record_by_name(char *provider_name, Oid database_id,
 			record->database_id = database_id;
 			record->offset_in_file = current_file_offset;
 			record->provider = existing_provider;
-			close(fd);
+			CloseTransientFile(fd);
 			return true;
 		}
 
@@ -686,7 +683,7 @@ get_keyring_info_file_record_by_name(char *provider_name, Oid database_id,
 	}
 
 	/* No matching key provider found */
-	close(fd);
+	CloseTransientFile(fd);
 	return false;
 }
 
@@ -750,7 +747,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 
 	LWLockAcquire(tde_provider_info_lock(), LW_SHARED);
 
-	fd = BasicOpenFile(kp_info_path, PG_BINARY);
+	fd = OpenTransientFile(kp_info_path, PG_BINARY);
 	if (fd < 0)
 	{
 		LWLockRelease(tde_provider_info_lock());
@@ -801,7 +798,7 @@ scan_key_provider_file(ProviderScanType scanType, void *scanKey, Oid dbOid)
 			}
 		}
 	}
-	close(fd);
+	CloseTransientFile(fd);
 	LWLockRelease(tde_provider_info_lock());
 	return providers_list;
 }
@@ -994,7 +991,7 @@ open_keyring_infofile(Oid database_id, int flags)
 	char		kp_info_path[MAXPGPATH];
 
 	get_keyring_infofile_path(kp_info_path, database_id);
-	fd = BasicOpenFile(kp_info_path, flags | PG_BINARY);
+	fd = OpenTransientFile(kp_info_path, flags | PG_BINARY);
 	if (fd < 0)
 	{
 		ereport(ERROR,
@@ -1022,7 +1019,6 @@ fetch_next_key_provider(int fd, off_t *curr_pos, KeyringProviderRecord *provider
 		return false;
 	if (bytes_read != sizeof(KeyringProviderRecord))
 	{
-		close(fd);
 		/* Corrupt file */
 		ereport(ERROR,
 				errcode_for_file_access(),

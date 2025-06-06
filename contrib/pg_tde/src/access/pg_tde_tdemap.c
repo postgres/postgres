@@ -177,7 +177,7 @@ pg_tde_save_principal_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	map_fd = pg_tde_open_file_write(db_map_path, signed_key_info, false, &curr_pos);
-	close(map_fd);
+	CloseTransientFile(map_fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 }
@@ -216,7 +216,7 @@ pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 	}
 
 	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, true, &curr_pos);
-	close(map_fd);
+	CloseTransientFile(map_fd);
 }
 
 /*
@@ -365,7 +365,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *re
 	/* Write the given entry at curr_pos; i.e. the free entry. */
 	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
 
-	close(map_fd);
+	CloseTransientFile(map_fd);
 }
 
 /*
@@ -410,7 +410,7 @@ pg_tde_free_key_map_entry(const RelFileLocator rlocator)
 		}
 	}
 
-	close(map_fd);
+	CloseTransientFile(map_fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 }
@@ -490,8 +490,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 		pfree(rel_key_data);
 	}
 
-	close(old_fd);
-	close(new_fd);
+	CloseTransientFile(old_fd);
+	CloseTransientFile(new_fd);
 
 	/*
 	 * Do the final steps - replace the current _map with the file with new
@@ -589,7 +589,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	}
 
 	LWLockRelease(lock_pk);
-	close(fd);
+	CloseTransientFile(fd);
 }
 
 /*
@@ -649,7 +649,7 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, 
 		}
 	}
 
-	close(map_fd);
+	CloseTransientFile(map_fd);
 
 	return found;
 }
@@ -688,7 +688,7 @@ pg_tde_count_relations(Oid dbOid)
 			count++;
 	}
 
-	close(map_fd);
+	CloseTransientFile(map_fd);
 
 	LWLockRelease(lock_pk);
 
@@ -764,7 +764,7 @@ pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_miss
 {
 	int			fd;
 
-	fd = BasicOpenFile(tde_filename, fileFlags);
+	fd = OpenTransientFile(tde_filename, fileFlags);
 	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
 	{
 		ereport(ERROR,
@@ -792,7 +792,6 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 	if (*bytes_read != TDE_FILE_HEADER_SIZE
 		|| fheader->file_version != PG_TDE_FILEMAGIC)
 	{
-		close(fd);
 		ereport(FATAL,
 				errcode_for_file_access(),
 				errmsg("TDE map file \"%s\" is corrupted: %m", tde_filename));
@@ -870,7 +869,7 @@ pg_tde_get_principal_key_info(Oid dbOid)
 
 	pg_tde_file_header_read(db_map_path, fd, &fheader, &bytes_read);
 
-	close(fd);
+	CloseTransientFile(fd);
 
 	/*
 	 * It's not a new file. So we can copy the principal key info from the
@@ -1008,6 +1007,7 @@ pg_tde_read_last_wal_key(void)
 	if (fsize == TDE_FILE_HEADER_SIZE)
 	{
 		LWLockRelease(lock_pk);
+		CloseTransientFile(fd);
 		return NULL;
 	}
 
@@ -1016,7 +1016,7 @@ pg_tde_read_last_wal_key(void)
 
 	rel_key_data = tde_decrypt_rel_key(principal_key, &map_entry);
 	LWLockRelease(lock_pk);
-	close(fd);
+	CloseTransientFile(fd);
 
 	return rel_key_data;
 }
@@ -1064,7 +1064,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 		wal_rec = pg_tde_add_wal_key_to_cache(&stub_key, InvalidXLogRecPtr);
 
 		LWLockRelease(lock_pk);
-		close(fd);
+		CloseTransientFile(fd);
 		return wal_rec;
 	}
 
@@ -1094,7 +1094,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 		}
 	}
 	LWLockRelease(lock_pk);
-	close(fd);
+	CloseTransientFile(fd);
 
 	return return_wal_rec;
 }

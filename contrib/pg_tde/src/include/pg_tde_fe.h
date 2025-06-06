@@ -85,7 +85,8 @@ static int	tde_fe_error_level = 0;
 #define LW_EXCLUSIVE NULL
 #define tde_lwlock_enc_keys() NULL
 
-#define BasicOpenFile(fileName, fileFlags) open(fileName, fileFlags, PG_FILE_MODE_OWNER)
+#define OpenTransientFile(fileName, fileFlags) open(fileName, fileFlags, PG_FILE_MODE_OWNER)
+#define CloseTransientFile(fd) close(fd)
 #define AllocateFile(name, mode) fopen(name, mode)
 #define FreeFile(file) fclose(file)
 
