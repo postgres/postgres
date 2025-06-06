@@ -1,11 +1,7 @@
-name: PgIndent
+name: Format
 on:
   pull_request:
   workflow_dispatch:
-
-defaults:
-  run:
-    working-directory: ./src
 
 jobs:
   check:
@@ -15,7 +11,6 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
-          path: 'src'
           submodules: recursive
 
       - name: Install dependencies

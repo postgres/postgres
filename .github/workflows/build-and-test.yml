@@ -1,4 +1,4 @@
-name: PSP-Reusable
+name: Reusable build and test
 on:
   workflow_call:
     inputs:
@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    name: Build PSP
+    name: Build
     runs-on: ${{ inputs.os }}
     steps:
       - name: Clone repository
@@ -50,7 +50,7 @@ jobs:
           retention-days: 1
 
   test:
-    name: Test PSP
+    name: Test
     runs-on: ${{ inputs.os }}
     needs: build
     
@@ -93,8 +93,8 @@ jobs:
             src/src/test/*/tmp_check
           retention-days: 3
 
-  test_tde:
-    name: Test PSP with TDE
+  test-default-tde:
+    name: Test with TDE as default access method
     runs-on: ${{ inputs.os }}
     if: inputs.build_script == 'make'
     needs: build

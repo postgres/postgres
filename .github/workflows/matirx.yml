@@ -1,0 +1,41 @@
+name: Build and Test
+on:
+  pull_request:
+  push:
+    branches:
+      - TDE_REL_17_STABLE
+  workflow_dispatch:
+
+jobs:
+  main:
+    name: Main matrix
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        compiler: [gcc, clang]
+        build_type: [debugoptimized]
+        build_script: [make, meson]
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+        os: ${{ matrix.os }}
+        compiler: ${{ matrix.compiler }}
+        build_type: ${{ matrix.build_type }}
+        build_script: ${{ matrix.build_script }}
+    secrets: inherit
+
+  arm:
+    name: ARM matrix
+    if: github.event_name != 'pull_request'
+    strategy:
+      matrix:
+        os: [ubuntu-22.04-arm]
+        compiler: [gcc, clang]
+        build_type: [debugoptimized]
+        build_script: [make, meson]
+    uses: ./.github/workflows/build-and-test.yml
+    with:
+        os: ${{ matrix.os }}
+        compiler: ${{ matrix.compiler }}
+        build_type: ${{ matrix.build_type }}
+        build_script: ${{ matrix.build_script }}
+    secrets: inherit
