@@ -29,11 +29,6 @@ DEPS=(
     mawk
     perl
     pkgconf
-    python3-dev
-    python3
-    python3-pip
-    python3-setuptools
-    python3-wheel
     systemtap-sdt-dev
     tcl-dev
     uuid-dev
@@ -45,7 +40,6 @@ DEPS=(
     # Test
     libipc-run-perl
     # Test pg_tde
-    python3-pykmip
     libhttp-server-simple-perl
     lcov
     # Run pgperltidy
@@ -56,7 +50,7 @@ sudo apt-get update
 sudo apt-get install -y ${DEPS[@]}
 
 sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-pip3 install meson
+pip3 install meson pykmip cryptography setuptools wheel
 
 # Vault
 wget -O - https://apt.releases.hashicorp.com/gpg | sudo tee /etc/apt/keyrings/hashicorp-archive-keyring.asc

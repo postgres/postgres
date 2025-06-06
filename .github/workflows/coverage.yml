@@ -11,12 +11,18 @@ env:
 jobs:
   collect:
     name: Collect and upload
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Clone repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      # KMIP server doesn't support Python 3.12 for now: https://github.com/OpenKMIP/PyKMIP/pull/707
+      - name: Downgrade python to 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
 
       - name: Install dependencies
         run: ci_scripts/ubuntu-deps.sh
