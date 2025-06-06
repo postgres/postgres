@@ -1065,16 +1065,41 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 
 	/* Check that the chosen locales are valid, and get canonical spellings */
 	if (!check_locale(LC_COLLATE, dbcollate, &canonname))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
-				 errhint("If the locale name is specific to ICU, use ICU_LOCALE.")));
+	{
+		if (dblocprovider == COLLPROVIDER_BUILTIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
+					 errhint("If the locale name is specific to the builtin provider, use BUILTIN_LOCALE.")));
+		else if (dblocprovider == COLLPROVIDER_ICU)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate),
+					 errhint("If the locale name is specific to the ICU provider, use ICU_LOCALE.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_COLLATE locale name: \"%s\"", dbcollate)));
+	}
 	dbcollate = canonname;
 	if (!check_locale(LC_CTYPE, dbctype, &canonname))
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
-				 errhint("If the locale name is specific to ICU, use ICU_LOCALE.")));
+	{
+		if (dblocprovider == COLLPROVIDER_BUILTIN)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
+					 errhint("If the locale name is specific to the builtin provider, use BUILTIN_LOCALE.")));
+		else if (dblocprovider == COLLPROVIDER_ICU)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype),
+					 errhint("If the locale name is specific to the ICU provider, use ICU_LOCALE.")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("invalid LC_CTYPE locale name: \"%s\"", dbctype)));
+	}
+
 	dbctype = canonname;
 
 	check_encoding_locale_matches(encoding, dbcollate, dbctype);
