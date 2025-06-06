@@ -183,7 +183,7 @@ StatsShmemInit(void)
 		p += MAXALIGN(pgstat_dsa_init_size());
 		dsa = dsa_create_in_place(ctl->raw_dsa_area,
 								  pgstat_dsa_init_size(),
-								  LWTRANCHE_PGSTATS_DSA, 0);
+								  LWTRANCHE_PGSTATS_DSA, NULL);
 		dsa_pin(dsa);
 
 		/*
@@ -255,7 +255,8 @@ pgstat_attach_shmem(void)
 	dsa_pin_mapping(pgStatLocal.dsa);
 
 	pgStatLocal.shared_hash = dshash_attach(pgStatLocal.dsa, &dsh_params,
-											pgStatLocal.shmem->hash_handle, 0);
+											pgStatLocal.shmem->hash_handle,
+											NULL);
 
 	MemoryContextSwitchTo(oldcontext);
 }

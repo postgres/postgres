@@ -1016,7 +1016,7 @@ logicalrep_launcher_attach_dshmem(void)
 		last_start_times_dsa = dsa_attach(LogicalRepCtx->last_start_dsa);
 		dsa_pin_mapping(last_start_times_dsa);
 		last_start_times = dshash_attach(last_start_times_dsa, &dsh_params,
-										 LogicalRepCtx->last_start_dsh, 0);
+										 LogicalRepCtx->last_start_dsh, NULL);
 	}
 
 	MemoryContextSwitchTo(oldcontext);
