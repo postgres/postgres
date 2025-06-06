@@ -228,6 +228,8 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	bool		res;
 
+	Assert(scan->heapRelation != NULL);
+
 	/* btree indexes are never lossy */
 	scan->xs_recheck = false;
 
@@ -288,6 +290,8 @@ btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int64		ntids = 0;
 	ItemPointer heapTid;
+
+	Assert(scan->heapRelation == NULL);
 
 	/* Each loop iteration performs another primitive index scan */
 	do
@@ -392,6 +396,32 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 		BTScanPosUnpinIfPinned(so->currPos);
 		BTScanPosInvalidate(so->currPos);
 	}
+
+	/*
+	 * We prefer to eagerly drop leaf page pins before btgettuple returns.
+	 * This avoids making VACUUM wait to acquire a cleanup lock on the page.
+	 *
+	 * We cannot safely drop leaf page pins during index-only scans due to a
+	 * race condition involving VACUUM setting pages all-visible in the VM.
+	 * It's also unsafe for plain index scans that use a non-MVCC snapshot.
+	 *
+	 * When we drop pins eagerly, the mechanism that marks so->killedItems[]
+	 * index tuples LP_DEAD has to deal with concurrent TID recycling races.
+	 * The scheme used to detect unsafe TID recycling won't work when scanning
+	 * unlogged relations (since it involves saving an affected page's LSN).
+	 * Opt out of eager pin dropping during unlogged relation scans for now
+	 * (this is preferable to opting out of kill_prior_tuple LP_DEAD setting).
+	 *
+	 * Also opt out of dropping leaf page pins eagerly during bitmap scans.
+	 * Pins cannot be held for more than an instant during bitmap scans either
+	 * way, so we might as well avoid wasting cycles on acquiring page LSNs.
+	 *
+	 * See nbtree/README section on making concurrent TID recycling safe.
+	 */
+	so->dropPin = (!scan->xs_want_itup &&
+				   IsMVCCSnapshot(scan->xs_snapshot) &&
+				   RelationNeedsWAL(scan->indexRelation) &&
+				   scan->heapRelation != NULL);
 
 	so->markItemIndex = -1;
 	so->needPrimScan = false;

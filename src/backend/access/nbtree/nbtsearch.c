@@ -25,7 +25,7 @@
 #include "utils/rel.h"
 
 
-static void _bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp);
+static inline void _bt_drop_lock_and_maybe_pin(Relation rel, BTScanOpaque so);
 static Buffer _bt_moveright(Relation rel, Relation heaprel, BTScanInsert key,
 							Buffer buf, bool forupdate, BTStack stack,
 							int access);
@@ -57,24 +57,29 @@ static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 /*
  *	_bt_drop_lock_and_maybe_pin()
  *
- * Unlock the buffer; and if it is safe to release the pin, do that, too.
- * This will prevent vacuum from stalling in a blocked state trying to read a
- * page when a cursor is sitting on it.
- *
- * See nbtree/README section on making concurrent TID recycling safe.
+ * Unlock so->currPos.buf.  If scan is so->dropPin, drop the pin, too.
+ * Dropping the pin prevents VACUUM from blocking on acquiring a cleanup lock.
  */
-static void
-_bt_drop_lock_and_maybe_pin(IndexScanDesc scan, BTScanPos sp)
+static inline void
+_bt_drop_lock_and_maybe_pin(Relation rel, BTScanOpaque so)
 {
-	_bt_unlockbuf(scan->indexRelation, sp->buf);
-
-	if (IsMVCCSnapshot(scan->xs_snapshot) &&
-		RelationNeedsWAL(scan->indexRelation) &&
-		!scan->xs_want_itup)
+	if (!so->dropPin)
 	{
-		ReleaseBuffer(sp->buf);
-		sp->buf = InvalidBuffer;
+		/* Just drop the lock (not the pin) */
+		_bt_unlockbuf(rel, so->currPos.buf);
+		return;
 	}
+
+	/*
+	 * Drop both the lock and the pin.
+	 *
+	 * Have to set so->currPos.lsn so that _bt_killitems has a way to detect
+	 * when concurrent heap TID recycling by VACUUM might have taken place.
+	 */
+	Assert(RelationNeedsWAL(rel));
+	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
+	_bt_relbuf(rel, so->currPos.buf);
+	so->currPos.buf = InvalidBuffer;
 }
 
 /*
@@ -866,8 +871,8 @@ _bt_compare(Relation rel,
  *		if backwards scan, the last item) in the tree that satisfies the
  *		qualifications in the scan key.  On success exit, data about the
  *		matching tuple(s) on the page has been loaded into so->currPos.  We'll
- *		drop all locks and hold onto a pin on page's buffer, except when
- *		_bt_drop_lock_and_maybe_pin dropped the pin to avoid blocking VACUUM.
+ *		drop all locks and hold onto a pin on page's buffer, except during
+ *		so->dropPin scans, when we drop both the lock and the pin.
  *		_bt_returnitem sets the next item to return to scan on success exit.
  *
  * If there are no matching items in the index, we return false, with no
@@ -1610,7 +1615,13 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	so->currPos.currPage = BufferGetBlockNumber(so->currPos.buf);
 	so->currPos.prevPage = opaque->btpo_prev;
 	so->currPos.nextPage = opaque->btpo_next;
+	/* delay setting so->currPos.lsn until _bt_drop_lock_and_maybe_pin */
+	so->currPos.dir = dir;
+	so->currPos.nextTupleOffset = 0;
 
+	/* either moreRight or moreLeft should be set now (may be unset later) */
+	Assert(ScanDirectionIsForward(dir) ? so->currPos.moreRight :
+		   so->currPos.moreLeft);
 	Assert(!P_IGNORE(opaque));
 	Assert(BTScanPosIsPinned(so->currPos));
 	Assert(!so->needPrimScan);
@@ -1625,14 +1636,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			_bt_parallel_release(scan, so->currPos.prevPage,
 								 so->currPos.currPage);
 	}
-
-	/* initialize remaining currPos fields related to current page */
-	so->currPos.lsn = BufferGetLSNAtomic(so->currPos.buf);
-	so->currPos.dir = dir;
-	so->currPos.nextTupleOffset = 0;
-	/* either moreLeft or moreRight should be set now (may be unset later) */
-	Assert(ScanDirectionIsForward(dir) ? so->currPos.moreRight :
-		   so->currPos.moreLeft);
 
 	PredicateLockPage(rel, so->currPos.currPage, scan->xs_snapshot);
 
@@ -2107,10 +2110,9 @@ _bt_returnitem(IndexScanDesc scan, BTScanOpaque so)
  *
  * Wrapper on _bt_readnextpage that performs final steps for the current page.
  *
- * On entry, if so->currPos.buf is valid the buffer is pinned but not locked.
- * If there's no pin held, it's because _bt_drop_lock_and_maybe_pin dropped
- * the pin eagerly earlier on.  The scan must have so->currPos.currPage set to
- * a valid block, in any case.
+ * On entry, so->currPos must be valid.  Its buffer will be pinned, though
+ * never locked. (Actually, when so->dropPin there won't even be a pin held,
+ * though so->currPos.currPage must still be set to a valid block number.)
  */
 static bool
 _bt_steppage(IndexScanDesc scan, ScanDirection dir)
@@ -2251,12 +2253,14 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
 	 */
 	if (_bt_readpage(scan, dir, offnum, true))
 	{
+		Relation	rel = scan->indexRelation;
+
 		/*
 		 * _bt_readpage succeeded.  Drop the lock (and maybe the pin) on
 		 * so->currPos.buf in preparation for btgettuple returning tuples.
 		 */
 		Assert(BTScanPosIsPinned(so->currPos));
-		_bt_drop_lock_and_maybe_pin(scan, &so->currPos);
+		_bt_drop_lock_and_maybe_pin(rel, so);
 		return true;
 	}
 
@@ -2294,8 +2298,8 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
  *
  * On success exit, so->currPos is updated to contain data from the next
  * interesting page, and we return true.  We hold a pin on the buffer on
- * success exit, except when _bt_drop_lock_and_maybe_pin decided it was safe
- * to eagerly drop the pin (to avoid blocking VACUUM).
+ * success exit (except during so->dropPin index scans, when we drop the pin
+ * eagerly to avoid blocking VACUUM).
  *
  * If there are no more matching records in the given direction, we drop all
  * locks and pins, invalidate so->currPos, and return false.
@@ -2413,7 +2417,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno,
 	 */
 	Assert(so->currPos.currPage == blkno);
 	Assert(BTScanPosIsPinned(so->currPos));
-	_bt_drop_lock_and_maybe_pin(scan, &so->currPos);
+	_bt_drop_lock_and_maybe_pin(rel, so);
 
 	return true;
 }
