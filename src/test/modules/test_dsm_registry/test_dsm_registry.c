@@ -54,7 +54,7 @@ set_val_in_shmem(PG_FUNCTION_ARGS)
 	tdr_attach_shmem();
 
 	LWLockAcquire(&tdr_state->lck, LW_EXCLUSIVE);
-	tdr_state->val = PG_GETARG_UINT32(0);
+	tdr_state->val = PG_GETARG_INT32(0);
 	LWLockRelease(&tdr_state->lck);
 
 	PG_RETURN_VOID();
@@ -72,5 +72,5 @@ get_val_in_shmem(PG_FUNCTION_ARGS)
 	ret = tdr_state->val;
 	LWLockRelease(&tdr_state->lck);
 
-	PG_RETURN_UINT32(ret);
+	PG_RETURN_INT32(ret);
 }
