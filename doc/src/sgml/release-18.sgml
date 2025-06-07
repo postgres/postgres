@@ -158,6 +158,22 @@ Previously ALTER TABLE SET [UN]LOGGED did nothing, and the creation of an unlogg
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2025-01-23 [01463e1cc] Ensure that AFTER triggers run as the instigating user.
+-->
+
+<listitem>
+<para>
+Execute AFTER triggers as the role that was active when trigger events were queued (Laurenz Albe)
+</para>
+
+<para>
+Previously such triggers were run as the role that was active at trigger execution time (e.g., at COMMIT).  This is significant for cases where the role is changed between queue time and
+transaction commit.
+</para>
+</listitem>
+
+<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2024-09-12 [fefa76f70] Remove old RULE privilege completely.
 -->
