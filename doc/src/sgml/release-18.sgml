@@ -54,6 +54,24 @@
    <itemizedlist>
 
 <!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2024-10-16 [04bec894a04] initdb: Change default to using data checksums.
+-->
+
+<listitem>
+<para>
+Change initdb default to enable data checksums
+<ulink url="&commit_baseurl;04bec894a04">&sect;</ulink>
+</para>
+
+<para>
+Checksums can be disabled with the new initdb option --no-data-checksums.
+pg_upgrade requires matching cluster checksum settings, so this new
+option can be useful to upgrade non-checksum old clusters.
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2025-01-16 [d7674c9fa] Seek zone abbreviations in the IANA data before timezone
 -->
@@ -191,27 +209,6 @@ Change pg_backend_memory_contexts.level and pg_log_backend_memory_contexts() to 
 
 <para>
 These were previously zero-based.
-</para>
-</listitem>
-
-<!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2024-10-16 [04bec894a04] initdb: Change default to using data checksums.
--->
-
-<listitem>
-<para>
-initdb defaults to enabling data checksums
-<ulink url="&commit_baseurl;04bec894a04">&sect;</ulink>
-</para>
-
-<para>
-The previous default behavior (checksums disabled) can be obtained using the
-new option --no-data-checksums.  Note that pg_upgrade will reject upgrading
-between clusters with different checksum settings, so if the old cluster does
-not have checksums enabled (the previous default), then the new cluster will
-need to be initialized with --no-data-checksums in order to allow pg_upgrade
-to succeed.
 </para>
 </listitem>
 
