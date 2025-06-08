@@ -1078,21 +1078,6 @@ postgres=# SELECT postgres_fdw_disconnect_all();
   </para>
 
   <para>
-   The remote transaction is opened in the same read/write mode as the local
-   transaction: if the local transaction is <literal>READ ONLY</literal>,
-   the remote transaction is opened in <literal>READ ONLY</literal> mode,
-   otherwise it is opened in <literal>READ WRITE</literal> mode.
-   (This rule is also applied to remote and local subtransactions.)
-  </para>
-
-  <para>
-   The remote transaction is also opened in the same deferrable mode as the
-   local transaction: if the local transaction is <literal>DEFERRABLE</literal>,
-   the remote transaction is opened in <literal>DEFERRABLE</literal> mode,
-   otherwise it is opened in <literal>NOT DEFERRABLE</literal> mode.
-  </para>
-
-  <para>
    Note that it is currently not supported by
    <filename>postgres_fdw</filename> to prepare the remote transaction for
    two-phase commit.
