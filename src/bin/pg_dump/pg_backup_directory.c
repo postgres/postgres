@@ -412,10 +412,15 @@ _LoadLOs(ArchiveHandle *AH, TocEntry *te)
 
 	/*
 	 * Note: before archive v16, there was always only one BLOBS TOC entry,
-	 * now there can be multiple.  We don't need to worry what version we are
-	 * reading though, because tctx->filename should be correct either way.
+	 * now there can be multiple.  Furthermore, although the actual filename
+	 * was always "blobs.toc" before v16, the value of tctx->filename did not
+	 * match that before commit 548e50976 fixed it.  For simplicity we assume
+	 * it must be "blobs.toc" in all archives before v16.
 	 */
-	setFilePath(AH, tocfname, tctx->filename);
+	if (AH->version < K_VERS_1_16)
+		setFilePath(AH, tocfname, "blobs.toc");
+	else
+		setFilePath(AH, tocfname, tctx->filename);
 
 	CFH = ctx->LOsTocFH = InitDiscoverCompressFileHandle(tocfname, PG_BINARY_R);
 
