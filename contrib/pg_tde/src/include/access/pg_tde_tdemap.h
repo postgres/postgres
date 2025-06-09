@@ -93,7 +93,7 @@ pg_tde_set_db_file_path(Oid dbOid, char *path)
 	join_path_components(path, pg_tde_get_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
 }
 
-extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key, bool write_xlog);
+extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key);
 extern bool pg_tde_has_smgr_key(RelFileLocator rel);
 extern InternalKey *pg_tde_get_smgr_key(RelFileLocator rel);
 extern void pg_tde_free_key_map_entry(RelFileLocator rel);

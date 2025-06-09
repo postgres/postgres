@@ -76,13 +76,10 @@ static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 
 void
-pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data, bool write_xlog)
+pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
 {
 	TDEPrincipalKey *principal_key;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
-	XLogRelKey	xlrec = {
-		.rlocator = rel,
-	};
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 	principal_key = GetPrincipalKey(rel.dbOid, LW_EXCLUSIVE);
@@ -95,17 +92,6 @@ pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data, bool w
 
 	pg_tde_write_key_map_entry(&rel, rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
-
-	if (write_xlog)
-	{
-		/*
-		 * It is fine to write the to WAL after writing to the file since we
-		 * have not WAL logged the SMGR CREATE event either.
-		 */
-		XLogBeginInsert();
-		XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
-	}
 }
 
 const char *

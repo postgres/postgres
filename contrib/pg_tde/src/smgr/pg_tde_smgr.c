@@ -3,7 +3,9 @@
 #include "smgr/pg_tde_smgr.h"
 #include "storage/smgr.h"
 #include "storage/md.h"
+#include "access/xloginsert.h"
 #include "catalog/catalog.h"
+#include "access/pg_tde_xlog.h"
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
 #include "access/pg_tde_tdemap.h"
@@ -77,9 +79,21 @@ tde_smgr_create_key(const RelFileLocatorBackend *smgr_rlocator)
 	if (RelFileLocatorBackendIsTemp(*smgr_rlocator))
 		tde_smgr_save_temp_key(&smgr_rlocator->locator, key);
 	else
-		pg_tde_save_smgr_key(smgr_rlocator->locator, key, true);
+		pg_tde_save_smgr_key(smgr_rlocator->locator, key);
 
 	return key;
+}
+
+static void
+tde_smgr_log_create_key(const RelFileLocatorBackend *smgr_rlocator)
+{
+	XLogRelKey	xlrec = {
+		.rlocator = smgr_rlocator->locator,
+	};
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 }
 
 void
@@ -92,7 +106,7 @@ tde_smgr_create_key_redo(const RelFileLocator *rlocator)
 
 	pg_tde_generate_internal_key(&key, TDE_KEY_TYPE_SMGR);
 
-	pg_tde_save_smgr_key(*rlocator, &key, false);
+	pg_tde_save_smgr_key(*rlocator, &key);
 }
 
 static bool
@@ -370,6 +384,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	else
 	{
 		key = tde_smgr_create_key(&reln->smgr_rlocator);
+		tde_smgr_log_create_key(&reln->smgr_rlocator);
 	}
 
 	tdereln->encryption_status = RELATION_KEY_AVAILABLE;
