@@ -830,10 +830,10 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
 
-	if(stmt->is_blockchain != NULL)
+	if(stmt->is_blockchain)
 	{
-		if(relkind != RELKIND_BLOCKCHAIN_TABLE)
-			elog(ERROR, "unexpected relkind: %d", (int) relkind);
+		// if(relkind != RELKIND_BLOCKCHAIN_TABLE)
+		// 	elog(ERROR, "unexpected relkind: %d", (int) relkind);
 
 		relkind = RELKIND_BLOCKCHAIN_TABLE;
 		blockchain = true;
