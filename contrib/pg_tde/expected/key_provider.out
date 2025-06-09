@@ -5,7 +5,7 @@ SELECT  * FROM pg_tde_key_info();
           |                   |                 | 
 (1 row)
 
-SELECT pg_tde_add_database_key_provider_file('incorrect-file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
+SELECT pg_tde_add_database_key_provider('file', 'incorrect-file-provider',  '{"path": {"foo": "/tmp/pg_tde_test_keyring.per"}}');
 ERROR:  key provider value cannot be an object
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
  pg_tde_add_database_key_provider_file 
@@ -51,7 +51,7 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
   2 | file-provider2 | file          | {"path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
-SELECT pg_tde_change_database_key_provider_file('file-provider',  json_object('foo' VALUE '/tmp/pg_tde_test_keyring.per'));
+SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"foo": "/tmp/pg_tde_test_keyring.per"}}');
 ERROR:  key provider value cannot be an object
 SELECT * FROM pg_tde_list_all_database_key_providers();
  id | provider_name  | provider_type |                  options                   
