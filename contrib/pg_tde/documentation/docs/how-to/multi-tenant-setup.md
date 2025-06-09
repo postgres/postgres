@@ -61,7 +61,7 @@ You must do these steps for every database where you have created the extension.
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
         ```sql
-        SELECT pg_tde_add_database_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/server_certificate.pem', '/path_to/client_cert.pem', '/path_to/client_key.pem');
+        SELECT pg_tde_add_database_key_provider_kmip('provider-name','kmip-addr', 5696, '/path_to/client_cert.pem', '/path_to/client_key.pem', '/path_to/server_certificate.pem');
         ```
 
         where:
@@ -75,8 +75,8 @@ You must do these steps for every database where you have created the extension.
 
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-        ```
-        SELECT pg_tde_add_database_key_provider_kmip('kmip','127.0.0.1', 5696, '/tmp/server_certificate.pem', '/tmp/client_cert_jane_doe.pem', '/tmp/client_key_jane_doe.pem');
+        ```sql
+        SELECT pg_tde_add_database_key_provider_kmip('kmip', '127.0.0.1', 5696, '/tmp/client_cert_jane_doe.pem', '/tmp/client_key_jane_doe.pem', '/tmp/server_certificate.pem');
         ```
 
     === "With HashiCorp Vault"
@@ -84,7 +84,7 @@ You must do these steps for every database where you have created the extension.
         The Vault server setup is out of scope of this document.
 
         ```sql
-        SELECT pg_tde_add_database_key_provider_vault_v2('provider-name','secret_token_path','url','mount','ca_path');
+        SELECT pg_tde_add_database_key_provider_vault_v2('provider-name', 'url', 'mount', 'secret_token_path', 'ca_path');
         ``` 
 
         where: 
@@ -105,13 +105,13 @@ You must do these steps for every database where you have created the extension.
         This setup is intended for development and stores the keys unencrypted in the specified data file.
 
         ```sql
-        SELECT pg_tde_add_database_key_provider_file('provider-name','/path/to/the/keyring/data.file');
+        SELECT pg_tde_add_database_key_provider_file('provider-name', '/path/to/the/keyring/data.file');
         ```
 
 	    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
 	    ```sql
-	    SELECT pg_tde_add_database_key_provider_file('file-keyring','/tmp/pg_tde_test_local_keyring.per');
+	    SELECT pg_tde_add_database_key_provider_file('file-keyring', '/tmp/pg_tde_test_local_keyring.per');
 	    ```
   
 2. Add a principal key

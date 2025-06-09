@@ -63,15 +63,17 @@ Use the following functions to add the Vault provider:
 ```sql
 SELECT pg_tde_add_database_key_provider_vault_v2(
   'provider-name',
+  'url',
+  'mount',
   'secret_token_path',
-  'url','mount',
   'ca_path'
 );
 
 SELECT pg_tde_add_global_key_provider_vault_v2(
   'provider-name',
+  'url',
+  'mount',
   'secret_token_path',
-  'url','mount',
   'ca_path'
 );
 ```
@@ -81,17 +83,17 @@ These functions change the Vault provider:
 ```sql
 SELECT pg_tde_change_database_key_provider_vault_v2(
   'provider-name',
-  'secret_token_path',
   'url',
   'mount',
+  'secret_token_path',
   'ca_path'
 );
 
 SELECT pg_tde_change_global_key_provider_vault_v2(
   'provider-name',
-  'secret_token_path',
   'url',
   'mount',
+  'secret_token_path',
   'ca_path'
 );
 ```
@@ -115,19 +117,19 @@ Use these functions to add a KMIP provider:
 ```sql
 SELECT pg_tde_add_database_key_provider_kmip(
   'provider-name',
-  'kmip-addr', 
-  `port`, 
-  '/path_to/server_certificate.pem', 
-  '/path_to/client_cert.pem', 
-  '/path_to/client_key.pem'
+  'kmip-addr',
+  port,
+  '/path_to/client_cert.pem',
+  '/path_to/client_key.pem',
+  '/path_to/server_certificate.pem'
 );
 SELECT pg_tde_add_global_key_provider_kmip(
   'provider-name',
-  'kmip-addr', 
-  `port`, 
-  '/path_to/server_certificate.pem', 
-  '/path_to/client_certificate.pem', 
-  '/path_to/client_key.pem'
+  'kmip-addr',
+  port,
+  '/path_to/client_certificate.pem',
+  '/path_to/client_key.pem',
+  '/path_to/server_certificate.pem'
 );
 ```
 
@@ -136,19 +138,19 @@ These functions change the KMIP provider:
 ```sql
 SELECT pg_tde_change_database_key_provider_kmip(
   'provider-name',
-  'kmip-addr', 
-  `port`, 
-  '/path_to/server_certificate.pem', 
-  '/path_to/client_cert.pem', 
-  '/path_to/client_key.pem'
+  'kmip-addr',
+  port,
+  '/path_to/client_cert.pem',
+  '/path_to/client_key.pem',
+  '/path_to/server_certificate.pem'
 );
 SELECT pg_tde_change_global_key_provider_kmip(
   'provider-name',
-  'kmip-addr', 
-  `port`, 
-  '/path_to/server_certificate.pem', 
-  '/path_to/client_certificate.pem', 
-  '/path_to/client_key.pem'
+  'kmip-addr',
+  port,
+  '/path_to/client_certificate.pem',
+  '/path_to/client_key.pem',
+  '/path_to/server_certificate.pem'
 );
 ```
 

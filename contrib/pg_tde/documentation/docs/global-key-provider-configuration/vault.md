@@ -10,9 +10,9 @@ You can configure `pg_tde` to use HashiCorp Vault as a global key provider for m
 ```sql
 SELECT pg_tde_add_global_key_provider_vault_v2(
     'provider-name',
-    'secret_token_path',
     'url',
     'mount',
+    'secret_token_path',
     'ca_path'
 );
 ```
@@ -30,9 +30,9 @@ The following example is for testing purposes only. Use secure tokens and proper
 ```sql
 SELECT pg_tde_add_global_key_provider_vault_v2(
     'my-vault',
-    '/path/to/token_file',
     'https://vault.vault.svc.cluster.local:8200',
     'secret/data',
+    '/path/to/token_file',
     '/path/to/ca_cert.pem'
 );
 ```

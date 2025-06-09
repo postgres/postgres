@@ -67,8 +67,8 @@ command_like(
 		'database-provider',
 		'vault-v2',
 		'https://vault-server.example:8200/',
-		$token_file,
 		'mount-path',
+		$token_file,
 		'/tmp/ca_path',
 	],
 	qr/Key provider updated successfully!/,
@@ -88,13 +88,13 @@ $options = decode_json(
 		'postgres',
 		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
 	));
-is($options->{tokenPath}, $token_file,
-	'tokenPath is set correctly for vault-v2 provider');
 is( $options->{url},
 	'https://vault-server.example:8200/',
 	'url is set correctly for vault-v2 provider');
 is($options->{mountPath}, 'mount-path',
 	'mount path is set correctly for vault-v2 provider');
+is($options->{tokenPath}, $token_file,
+	'tokenPath is set correctly for vault-v2 provider');
 is($options->{caPath}, '/tmp/ca_path',
 	'CA path is set correctly for vault-v2 provider');
 
@@ -108,8 +108,8 @@ command_like(
 		'database-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		$token_file,
 		'mount-path-2',
+		$token_file,
 	],
 	qr/Key provider updated successfully!/,
 	'updates key provider to vault-v2 type with http');
@@ -128,13 +128,13 @@ $options = decode_json(
 		'postgres',
 		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
 	));
-is($options->{tokenPath}, $token_file,
-	'tokenPath is set correctly for vault-v2 provider');
 is( $options->{url},
 	'http://vault-server.example:8200/',
 	'url is set correctly for vault-v2 provider');
 is($options->{mountPath}, 'mount-path-2',
 	'mount path is set correctly for vault-v2 provider');
+is($options->{tokenPath}, $token_file,
+	'tokenPath is set correctly for vault-v2 provider');
 is($options->{caPath}, '', 'CA path is set correctly for vault-v2 provider');
 
 $node->stop;
@@ -189,8 +189,8 @@ command_like(
 		'global-provider',
 		'vault-v2',
 		'http://vault-server.example:8200/',
-		$token_file,
 		'mount-path',
+		$token_file,
 		'/tmp/ca_path',
 	],
 	qr/Key provider updated successfully!/,

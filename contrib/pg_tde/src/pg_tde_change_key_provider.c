@@ -28,7 +28,7 @@ help(void)
 	puts("Depending on the provider type, the complete parameter list is:");
 	puts("");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>");
-	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault-v2 <url> <token_path> <mount_path> [<ca_path>]");
+	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault-v2 <url> <mount_path> <token_path> [<ca_path>]");
 	puts("pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> <key_path> [<ca_path>]");
 	puts("");
 	printf("Use dbOid %d for global key providers.\n", GLOBAL_DATA_TDE_OID);
@@ -197,8 +197,8 @@ main(int argc, char *argv[])
 
 		if (!build_json(json, 4,
 						"url", argv[4 + argstart],
-						"tokenPath", argv[5 + argstart],
-						"mountPath", argv[6 + argstart],
+						"mountPath", argv[5 + argstart],
+						"tokenPath", argv[6 + argstart],
 						"caPath", (argc - argstart > 7 ? argv[7 + argstart] : "")))
 		{
 			exit(1);
@@ -220,9 +220,9 @@ main(int argc, char *argv[])
 		if (!build_json(json, 5,
 						"host", argv[4 + argstart],
 						"port", argv[5 + argstart],
-						"caPath", (argc - argstart > 8 ? argv[8 + argstart] : ""),
 						"certPath", argv[6 + argstart],
-						"keyPath", argv[7 + argstart]))
+						"keyPath", argv[7 + argstart],
+						"caPath", argc - argstart > 8 ? argv[8 + argstart] : ""))
 		{
 			exit(1);
 		}
