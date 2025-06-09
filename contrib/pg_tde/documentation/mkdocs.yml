@@ -170,6 +170,7 @@ nav:
     - "2.1 Configure Key Management (KMS)": 
       - "2.1 Configure Key Management (KMS)": global-key-provider-configuration/index.md
       - "KMIP Configuration": global-key-provider-configuration/kmip-server.md
+      - "Fortanix Configuration": global-key-provider-configuration/kmip-fortanix.md  
       - "Vault Configuration": global-key-provider-configuration/vault.md
       - "Thales Configuration": global-key-provider-configuration/kmip-thales.md
       - "Keyring File Configuration": global-key-provider-configuration/keyring.md
