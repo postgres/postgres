@@ -93,6 +93,7 @@ _PG_init(void)
 
 	check_percona_api_version();
 
+	pg_tde_init_data_dir();
 	AesInit();
 	TdeGucInit();
 	TdeEventCaptureInit();
@@ -113,8 +114,6 @@ _PG_init(void)
 static void
 extension_install(Oid databaseId)
 {
-	/* Initialize the TDE dir */
-	pg_tde_init_data_dir();
 	key_provider_startup_cleanup(databaseId);
 	principal_key_startup_cleanup(databaseId);
 }

@@ -61,6 +61,12 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		pg_tde_save_principal_key_redo(mkey);
 	}
+	else if (info == XLOG_TDE_REMOVE_RELATION_KEY)
+	{
+		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
+
+		tde_smgr_delete_key_redo(&xlrec->rlocator);
+	}
 	else if (info == XLOG_TDE_ROTATE_PRINCIPAL_KEY)
 	{
 		XLogPrincipalKeyRotate *xlrec = (XLogPrincipalKeyRotate *) XLogRecGetData(record);

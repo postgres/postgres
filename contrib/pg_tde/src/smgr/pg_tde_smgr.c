@@ -109,6 +109,26 @@ tde_smgr_create_key_redo(const RelFileLocator *rlocator)
 	pg_tde_save_smgr_key(*rlocator, &key);
 }
 
+static void
+tde_smgr_delete_key(const RelFileLocatorBackend *smgr_rlocator)
+{
+	XLogRelKey	xlrec = {
+		.rlocator = smgr_rlocator->locator,
+	};
+
+	pg_tde_free_key_map_entry(smgr_rlocator->locator);
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_REMOVE_RELATION_KEY);
+}
+
+void
+tde_smgr_delete_key_redo(const RelFileLocator *rlocator)
+{
+	pg_tde_free_key_map_entry(*rlocator);
+}
+
 static bool
 tde_smgr_is_encrypted(const RelFileLocatorBackend *smgr_rlocator)
 {
@@ -361,6 +381,19 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 		 * the key.
 		 */
 		return;
+	}
+
+	if (!isRedo)
+	{
+		/*
+		 * If we have a key for this relation already, we need to remove it.
+		 * This can happen if OID is re-used after a crash left a key for a
+		 * non-existing relation in the key file.
+		 *
+		 * If we're in redo, a separate WAL record will make sure the key is
+		 * removed.
+		 */
+		tde_smgr_delete_key(&reln->smgr_rlocator);
 	}
 
 	if (!tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
