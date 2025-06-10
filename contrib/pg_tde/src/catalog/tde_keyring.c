@@ -34,12 +34,13 @@
 
 #ifndef FRONTEND
 #include "access/heapam.h"
+#include "funcapi.h"
+#include "access/relscan.h"
 #include "access/relation.h"
 #include "access/relscan.h"
 #include "catalog/namespace.h"
 #include "executor/spi.h"
 #include "funcapi.h"
-#include "common/pg_tde_shmem.h"
 #else
 #include "fe_utils/simple_list.h"
 #include "pg_tde_fe.h"

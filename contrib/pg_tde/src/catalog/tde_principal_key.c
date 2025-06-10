@@ -44,7 +44,6 @@
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
-#include "common/pg_tde_shmem.h"
 #else
 #include "pg_tde_fe.h"
 #endif
