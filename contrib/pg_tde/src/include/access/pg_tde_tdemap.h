@@ -77,13 +77,11 @@ typedef struct WALKeyCacheRec
 } WALKeyCacheRec;
 
 extern InternalKey *pg_tde_read_last_wal_key(void);
-
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(XLogRecPtr start_lsn);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
 extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path);
-
-extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType flags);
+extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type);
 
 #define PG_TDE_MAP_FILENAME			"%d_keys"
 
