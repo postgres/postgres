@@ -1009,7 +1009,7 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 static bool
 pg_tde_is_same_principal_key(TDEPrincipalKey *a, TDEPrincipalKey *b)
 {
-	return a != NULL && b != NULL && strncmp(a->keyInfo.name, b->keyInfo.name, PRINCIPAL_KEY_NAME_LEN) == 0 && a->keyInfo.keyringId == b->keyInfo.keyringId;
+	return a != NULL && b != NULL && strcmp(a->keyInfo.name, b->keyInfo.name) == 0 && a->keyInfo.keyringId == b->keyInfo.keyringId;
 }
 
 static void
