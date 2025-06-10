@@ -1,14 +1,15 @@
 #include "postgres_fe.h"
 
-#include "pg_tde.h"
-#include "catalog/tde_keyring.h"
-#include "catalog/tde_global_space.h"
-#include "common/controldata_utils.h"
-#include "common/logging.h"
-#include "common/pg_tde_utils.h"
-
 #include <stdarg.h>
 #include <stdio.h>
+
+#include "common/controldata_utils.h"
+#include "common/logging.h"
+
+#include "catalog/tde_global_space.h"
+#include "catalog/tde_keyring.h"
+#include "common/pg_tde_utils.h"
+#include "pg_tde.h"
 
 /* version string we expect back from pg_tde_change_key_provider */
 #define PROGNAME "pg_tde_change_key_provider (PostgreSQL) " PG_VERSION "\n"

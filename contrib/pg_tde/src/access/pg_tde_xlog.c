@@ -12,19 +12,19 @@
 
 #include "postgres.h"
 
-#include "pg_tde.h"
-#include "pg_tde_defines.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
-#include "catalog/tde_keyring.h"
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
 #include "access/pg_tde_xlog.h"
+#include "catalog/tde_keyring.h"
 #include "encryption/enc_tde.h"
+#include "pg_tde.h"
+#include "pg_tde_defines.h"
 #include "smgr/pg_tde_smgr.h"
 
 static void tdeheap_rmgr_redo(XLogReaderState *record);

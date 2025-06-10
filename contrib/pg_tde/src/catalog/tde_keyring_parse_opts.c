@@ -12,6 +12,7 @@
  */
 
 #include "postgres.h"
+
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "utils/jsonfuncs.h"

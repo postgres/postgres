@@ -1,16 +1,17 @@
 #include "postgres.h"
 
-#include "smgr/pg_tde_smgr.h"
-#include "storage/smgr.h"
-#include "storage/md.h"
 #include "access/xloginsert.h"
 #include "catalog/catalog.h"
+#include "storage/md.h"
+#include "storage/smgr.h"
+#include "utils/hsearch.h"
+
+#include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
-#include "access/pg_tde_tdemap.h"
-#include "utils/hsearch.h"
 #include "pg_tde_event_capture.h"
+#include "smgr/pg_tde_smgr.h"
 
 typedef enum TDEMgrRelationEncryptionStatus
 {

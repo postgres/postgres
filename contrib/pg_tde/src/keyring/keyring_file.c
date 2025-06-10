@@ -12,19 +12,20 @@
 
 #include "postgres.h"
 
-#include "keyring/keyring_file.h"
-#include "catalog/tde_keyring.h"
+#include <stdio.h>
+#include <unistd.h>
+
 #include "common/file_perm.h"
-#include "keyring/keyring_api.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"
+
+#include "catalog/tde_keyring.h"
+#include "keyring/keyring_api.h"
+#include "keyring/keyring_file.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"
 #endif
-
-#include <stdio.h>
-#include <unistd.h>
 
 static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);

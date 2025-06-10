@@ -10,12 +10,14 @@
  */
 
 #include "postgres.h"
-#include "storage/ipc.h"
-#include "common/pg_tde_shmem.h"
+
 #include "lib/dshash.h"
 #include "nodes/pg_list.h"
+#include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+
+#include "common/pg_tde_shmem.h"
 
 static void tde_shmem_shutdown(int code, Datum arg);
 

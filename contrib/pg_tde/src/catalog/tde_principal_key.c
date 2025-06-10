@@ -9,43 +9,45 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
-#include "access/xlog.h"
-#include "access/xloginsert.h"
-#include "catalog/tde_principal_key.h"
-#include "storage/fd.h"
-#include "utils/palloc.h"
-#include "utils/memutils.h"
-#include "utils/wait_event.h"
-#include "utils/timestamp.h"
-#include "common/relpath.h"
-#include "miscadmin.h"
-#include "utils/builtins.h"
-#include "pg_tde.h"
-#include "access/pg_tde_xlog.h"
+
 #include <sys/mman.h>
 #include <sys/time.h>
+
+#include "access/xlog.h"
+#include "access/xloginsert.h"
+#include "catalog/pg_database.h"
+#include "common/relpath.h"
+#include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
-#include "catalog/pg_database.h"
-#include "keyring/keyring_api.h"
+#include "utils/memutils.h"
+#include "utils/palloc.h"
+#include "utils/timestamp.h"
+#include "utils/wait_event.h"
 
 #include "access/pg_tde_tdemap.h"
+#include "access/pg_tde_xlog.h"
 #include "catalog/tde_global_space.h"
+#include "catalog/tde_principal_key.h"
+#include "keyring/keyring_api.h"
+#include "pg_tde.h"
+#include "pg_tde_guc.h"
+
 #ifndef FRONTEND
 #include "access/genam.h"
 #include "access/table.h"
-#include "common/pg_tde_shmem.h"
 #include "funcapi.h"
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "common/pg_tde_shmem.h"
 #else
 #include "pg_tde_fe.h"
 #endif
-#include "pg_tde_guc.h"
-
-#include <sys/time.h>
 
 #ifndef FRONTEND
 

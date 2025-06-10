@@ -11,19 +11,18 @@
 
 #include "postgres.h"
 
-#include "keyring/keyring_vault.h"
-#include "keyring/keyring_curl.h"
-#include "keyring/keyring_api.h"
-#include "pg_tde_defines.h"
+#include <curl/curl.h>
+#include <stdio.h>
+
+#include "common/base64.h"
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
-#include <stdio.h>
-
-#include <curl/curl.h>
-
-#include "common/base64.h"
+#include "keyring/keyring_api.h"
+#include "keyring/keyring_curl.h"
+#include "keyring/keyring_vault.h"
+#include "pg_tde_defines.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"

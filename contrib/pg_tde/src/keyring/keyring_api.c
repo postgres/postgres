@@ -1,16 +1,18 @@
-#include "keyring/keyring_api.h"
-
 #include "postgres.h"
+
+#include <assert.h>
+#include <openssl/err.h>
+#include <openssl/rand.h>
+
 #include "nodes/pg_list.h"
 #include "utils/memutils.h"
+
+#include "keyring/keyring_api.h"
+
 #ifdef FRONTEND
 #include "fe_utils/simple_list.h"
 #include "pg_tde_fe.h"
 #endif
-
-#include <assert.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
 
 typedef struct RegisteredKeyProviderType
 {

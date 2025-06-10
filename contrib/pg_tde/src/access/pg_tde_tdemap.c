@@ -1,14 +1,18 @@
 #include "postgres.h"
-#include "access/pg_tde_tdemap.h"
-#include "common/file_perm.h"
-#include "storage/fd.h"
-#include "utils/wait_event.h"
-#include "utils/memutils.h"
+
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <unistd.h>
+
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xloginsert.h"
-#include "utils/builtins.h"
+#include "common/file_perm.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/builtins.h"
+#include "utils/memutils.h"
+#include "utils/wait_event.h"
 
 #include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
@@ -17,12 +21,6 @@
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
 #include "keyring/keyring_api.h"
-
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include <unistd.h>
-
-#include "pg_tde_defines.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"

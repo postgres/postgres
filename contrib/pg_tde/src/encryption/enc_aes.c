@@ -1,22 +1,21 @@
 #include "postgres.h"
 
-#ifdef FRONTEND
-#include "pg_tde_fe.h"
-#endif
-
-#include "encryption/enc_aes.h"
-
+#include <errno.h>
+#include <fcntl.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
+#include "encryption/enc_aes.h"
+
+#ifdef FRONTEND
+#include "pg_tde_fe.h"
+#endif
 
 /* Implementation notes
  * =====================

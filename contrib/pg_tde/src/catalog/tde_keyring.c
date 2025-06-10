@@ -9,33 +9,37 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
+
+#include <unistd.h>
+
+#include "access/skey.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/builtins.h"
+#include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
+#include "utils/memutils.h"
+#include "utils/snapmgr.h"
+
 #include "access/pg_tde_xlog.h"
 #include "catalog/tde_global_space.h"
 #include "catalog/tde_keyring.h"
 #include "catalog/tde_principal_key.h"
-#include "access/skey.h"
-#include "utils/lsyscache.h"
-#include "utils/memutils.h"
-#include "utils/snapmgr.h"
-#include "utils/fmgroids.h"
 #include "common/pg_tde_utils.h"
-#include "miscadmin.h"
-#include "storage/fd.h"
-#include "unistd.h"
-#include "utils/builtins.h"
 #include "pg_tde.h"
 
 #ifndef FRONTEND
 #include "access/heapam.h"
-#include "common/pg_tde_shmem.h"
-#include "funcapi.h"
-#include "access/relscan.h"
 #include "access/relation.h"
+#include "access/relscan.h"
 #include "catalog/namespace.h"
 #include "executor/spi.h"
+#include "funcapi.h"
+#include "common/pg_tde_shmem.h"
 #else
 #include "fe_utils/simple_list.h"
 #include "pg_tde_fe.h"

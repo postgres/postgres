@@ -11,33 +11,35 @@
  */
 
 #include "postgres.h"
+
+#include <sys/stat.h>
+
+#include "access/tableam.h"
+#include "access/xlog.h"
+#include "access/xloginsert.h"
 #include "funcapi.h"
-#include "pg_tde.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "utils/builtins.h"
+#include "utils/percona.h"
+
+#include "access/pg_tde_tdemap.h"
 #include "access/pg_tde_xlog.h"
 #include "access/pg_tde_xlog_smgr.h"
-#include "encryption/enc_aes.h"
-#include "access/pg_tde_tdemap.h"
-#include "access/xlog.h"
-#include "access/xloginsert.h"
-#include "keyring/keyring_api.h"
-#include "common/pg_tde_shmem.h"
-#include "catalog/tde_principal_key.h"
-#include "keyring/keyring_file.h"
-#include "keyring/keyring_vault.h"
-#include "keyring/keyring_kmip.h"
-#include "utils/builtins.h"
-#include "smgr/pg_tde_smgr.h"
 #include "catalog/tde_global_space.h"
+#include "catalog/tde_principal_key.h"
+#include "common/pg_tde_shmem.h"
+#include "encryption/enc_aes.h"
+#include "keyring/keyring_api.h"
+#include "keyring/keyring_file.h"
+#include "keyring/keyring_kmip.h"
+#include "keyring/keyring_vault.h"
+#include "pg_tde.h"
 #include "pg_tde_event_capture.h"
-#include "utils/percona.h"
 #include "pg_tde_guc.h"
-#include "access/tableam.h"
-
-#include <sys/stat.h>
+#include "smgr/pg_tde_smgr.h"
 
 PG_MODULE_MAGIC;
 

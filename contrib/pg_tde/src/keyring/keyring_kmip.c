@@ -14,9 +14,9 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
+#include "keyring/keyring_api.h"
 #include "keyring/keyring_kmip.h"
 #include "keyring/keyring_kmip_impl.h"
-#include "keyring/keyring_api.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"
