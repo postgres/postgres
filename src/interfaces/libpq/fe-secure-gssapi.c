@@ -112,9 +112,9 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 	 * again, so if it offers a len less than that, something is wrong.
 	 *
 	 * Note: it may seem attractive to report partial write completion once
-	 * we've successfully sent any encrypted packets.  However, that can cause
-	 * problems for callers; notably, pqPutMsgEnd's heuristic to send only
-	 * full 8K blocks interacts badly with such a hack.  We won't save much,
+	 * we've successfully sent any encrypted packets.  However, doing that
+	 * expands the state space of this processing and has been responsible for
+	 * bugs in the past (cf. commit d053a879b).  We won't save much,
 	 * typically, by letting callers discard data early, so don't risk it.
 	 */
 	if (len < PqGSSSendConsumed)
