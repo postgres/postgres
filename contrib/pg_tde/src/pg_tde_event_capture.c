@@ -49,7 +49,7 @@ typedef struct
 	Oid			rebuildSequence;
 } TdeDdlEvent;
 
-static FullTransactionId ddlEventStackTid = {};
+static FullTransactionId ddlEventStackTid = {0};
 static List *ddlEventStack = NIL;
 
 static Oid	get_db_oid(const char *name);

@@ -20,7 +20,7 @@ pg_tde_kmip_set_by_name(BIO *bio, char *key_name, const unsigned char *key, unsi
 	int32		mask = KMIP_CRYPTOMASK_ENCRYPT | KMIP_CRYPTOMASK_DECRYPT;
 	Name		ts;
 	TextString	ts2;
-	TemplateAttribute ta = {};
+	TemplateAttribute ta = {0};
 	char	   *idp;
 	int			id_size;
 
