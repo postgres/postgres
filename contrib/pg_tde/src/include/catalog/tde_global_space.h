@@ -1,11 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * tde_global_space.h
- *	  Global catalog key management
- *
- * src/include/catalog/tde_global_space.h
- *
- *-------------------------------------------------------------------------
+/*
+ * Global catalog key management
  */
 
 #ifndef TDE_GLOBAL_CATALOG_H

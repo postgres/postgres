@@ -1,9 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_xlog_smgr.h
- *	   Encrypted XLog storage manager
- *
- *-------------------------------------------------------------------------
+/*
+ * Encrypted XLog storage manager
  */
 
 #ifndef PG_TDE_XLOGSMGR_H

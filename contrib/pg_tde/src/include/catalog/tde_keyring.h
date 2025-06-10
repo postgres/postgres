@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * tde_keyring.h
- *	  TDE catalog handling
- *
- * src/include/catalog/tde_keyring.h
- *
- *-------------------------------------------------------------------------
+/*
+ * TDE catalog handling
  */
+
 #ifndef TDE_KEYRING_H
 #define TDE_KEYRING_H
 

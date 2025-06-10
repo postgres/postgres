@@ -1,12 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * keyring_curl.c
- *      Contains common curl related methods.
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/keyring/keyring_curl.c
- *
- *-------------------------------------------------------------------------
+/*
+ * Contains common curl related methods.
  */
 
 #include "postgres.h"

@@ -1,14 +1,3 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_utils.c
- *      Utility functions.
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/pg_tde_utils.c
- *
- *-------------------------------------------------------------------------
- */
-
 #include "postgres.h"
 
 #include "common/pg_tde_utils.h"

@@ -1,5 +1,3 @@
-/* contrib/pg_tde/pg_tde--1.0-rc.sql */
-
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION pg_tde" to load this file. \quit
 

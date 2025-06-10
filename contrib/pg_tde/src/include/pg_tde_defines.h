@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_defines.h
- *  Debug definitions for pg_tde
- *
- * src/include/pg_tde_defines.h
- *
- *-------------------------------------------------------------------------
+/*
+ * Debug definitions for pg_tde
  */
+
 #ifndef PG_TDE_DEFINES_H
 #define PG_TDE_DEFINES_H
 

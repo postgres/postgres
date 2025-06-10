@@ -1,9 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_fe.h
- *	   Frontened definitions for encrypted XLog storage manager
- *
- *-------------------------------------------------------------------------
+/*
+ * Frontened definitions for encrypted XLog storage manager
  */
 
 #ifndef PG_TDE_FE_INIT_H

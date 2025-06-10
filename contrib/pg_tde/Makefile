@@ -1,5 +1,3 @@
-# contrib/pg_tde/Makefile
-
 PGFILEDESC = "pg_tde access method"
 MODULE_big = pg_tde
 EXTENSION = pg_tde

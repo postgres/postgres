@@ -1,12 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * keyring_kmip.h
- *      KMIP based keyring provider
- *
- * IDENTIFICATION
- * src/include/keyring/keyring_kmip.h
- *
- *-------------------------------------------------------------------------
+/*
+ * KMIP based keyring provider
  */
 
 #ifndef KEYRING_KMIP_H

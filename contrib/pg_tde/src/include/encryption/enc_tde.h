@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * enc_tde.h
- *	  Encryption / Decryption of functions for TDE
- *
- * src/include/encryption/enc_tde.h
- *
- *-------------------------------------------------------------------------
+/*
+ * Encryption / Decryption of functions for TDE
  */
+
 #ifndef ENC_TDE_H
 #define ENC_TDE_H
 

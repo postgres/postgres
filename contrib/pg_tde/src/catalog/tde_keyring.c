@@ -1,13 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * tde_keyring.c
- *      Deals with the tde keyring configuration
- *      routines.
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/catalog/tde_keyring.c
- *
- *-------------------------------------------------------------------------
+/*
+ * Deals with the tde keyring configuration routines.
  */
 
 #include "postgres.h"

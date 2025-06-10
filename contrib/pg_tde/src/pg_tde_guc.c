@@ -1,13 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_guc.c
- *	  GUC variables for pg_tde
- *
- *
- * IDENTIFICATION
- *	  src/pg_tde_guc.c
- *
- *-------------------------------------------------------------------------
+/*
+ * GUC variables for pg_tde
  */
 
 #include "postgres.h"

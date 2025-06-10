@@ -1,11 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * keyring_file.h
- *	  File vault implementation
- *
- * src/include/keyring/keyring_file.h
- *
- *-------------------------------------------------------------------------
+/*
+ * File vault implementation
  */
 
 #ifndef KEYRING_FILE_H

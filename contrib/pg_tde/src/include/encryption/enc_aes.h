@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * end_aes.h
- *	  AES Encryption / Decryption routines using OpenSSL
- *
- * src/include/encryption/enc_aes.h
- *
- *-------------------------------------------------------------------------
+/*
+ * AES Encryption / Decryption routines using OpenSSL
  */
+
 #ifndef ENC_AES_H
 #define ENC_AES_H
 

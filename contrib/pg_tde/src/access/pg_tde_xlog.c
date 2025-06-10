@@ -1,13 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * tdeheap_xlog.c
- *	  TDE XLog resource manager
- *
- *
- * IDENTIFICATION
- *	  src/access/pg_tde_xlog.c
- *
- *-------------------------------------------------------------------------
+/*
+ * TDE XLog resource manager
  */
 
 #include "postgres.h"

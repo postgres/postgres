@@ -1,13 +1,6 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde.c
- *      Main file: setup GUCs, shared memory, hooks and other general-purpose
- *      routines.
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/pg_tde.c
- *
- *-------------------------------------------------------------------------
+/*
+ * Main file: setup GUCs, shared memory, hooks and other general-purpose
+ * routines.
  */
 
 #include "postgres.h"

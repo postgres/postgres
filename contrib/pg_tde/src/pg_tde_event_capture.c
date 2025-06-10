@@ -1,12 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_event_capture.c
- *      event trigger logic to identify if we are creating the encrypted table or not.
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/pg_tde_event_trigger.c
- *
- *-------------------------------------------------------------------------
+/*
+ * event trigger logic to identify if we are creating the encrypted table or not.
  */
 
 #include "postgres.h"

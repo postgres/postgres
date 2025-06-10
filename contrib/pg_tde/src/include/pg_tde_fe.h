@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_fe.h
- * 		TDE redefinitions for frontend included code
- *
- * src/include/pg_tde_fe.h
- *
- *-------------------------------------------------------------------------
+/*
+ * TDE redefinitions for frontend included code
  */
+
 #ifndef PG_TDE_EREPORT_H
 #define PG_TDE_EREPORT_H
 

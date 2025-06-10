@@ -1,12 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- * tde_principal_key.h
- *	  TDE principal key handling
- *
- * src/include/catalog/tde_principal_key.h
- *
- *-------------------------------------------------------------------------
+/*
+ * TDE principal key handling
  */
+
 #ifndef PG_TDE_PRINCIPAL_KEY_H
 #define PG_TDE_PRINCIPAL_KEY_H
 

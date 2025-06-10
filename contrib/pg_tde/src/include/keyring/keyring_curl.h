@@ -1,12 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * keyring_curl.h
- *      Contains common curl related methods.
- *
- * IDENTIFICATION
- * src/include/keyring/keyring_curl.h
- *
- *-------------------------------------------------------------------------
+/*
+ * Contains common curl related methods.
  */
 
 #ifndef KEYRING_CURL_H

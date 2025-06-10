@@ -1,12 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * keyring_kmip.c
- *      KMIP based keyring provider
- *
- * IDENTIFICATION
- *    contrib/pg_tde/src/keyring/keyring_kmip.c
- *
- *-------------------------------------------------------------------------
+/*
+ * KMIP based keyring provider
  */
 
 #include "postgres.h"

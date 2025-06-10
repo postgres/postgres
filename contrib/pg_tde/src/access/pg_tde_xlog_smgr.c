@@ -1,13 +1,5 @@
-/*-------------------------------------------------------------------------
- *
- * pg_tde_xlog_smgr.c
- *	  Encrypted XLog storage manager
- *
- *
- * IDENTIFICATION
- *	  src/access/pg_tde_xlog_smgr.c
- *
- *-------------------------------------------------------------------------
+/*
+ * Encrypted XLog storage manager
  */
 
 #include "postgres.h"
