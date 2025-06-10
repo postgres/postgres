@@ -112,7 +112,7 @@ ifeq ($(PORTNAME), darwin)
     ifneq ($(SO_MAJOR_VERSION), 0)
       version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     endif
-    LINK.shared		= $(COMPILER) -dynamiclib -install_name '$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)' $(version_link) $(exported_symbols_list)
+    LINK.shared		= $(COMPILER) -dynamiclib -install_name '$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)' $(version_link)
     shlib		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
     shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
   else
@@ -122,7 +122,7 @@ ifeq ($(PORTNAME), darwin)
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
   ifneq (,$(exports_file))
-    exported_symbols_list = -exported_symbols_list $(exports_file)
+    LINK.shared		+= -exported_symbols_list $(exports_file)
   endif
 endif
 
