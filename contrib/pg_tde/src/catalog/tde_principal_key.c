@@ -1020,7 +1020,6 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	*newKey = *newKeyTemplate;
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
-	/* key rotation */
 	pg_tde_perform_rotate_key(oldKey, newKey, true);
 
 	clear_principal_key_cache(oldKey->keyInfo.databaseId);
