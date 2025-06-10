@@ -18,7 +18,6 @@ BEGIN ATOMIC
                 json_object('path' VALUE file_path));
 END;
 
-
 CREATE FUNCTION pg_tde_add_database_key_provider_vault_v2(provider_name TEXT,
                                                 vault_token_path TEXT,
                                                 vault_url TEXT,
@@ -85,7 +84,6 @@ BEGIN ATOMIC
     SELECT pg_tde_add_global_key_provider('file', provider_name,
                 json_object('path' VALUE file_path));
 END;
-
 
 CREATE FUNCTION pg_tde_add_global_key_provider_vault_v2(provider_name TEXT,
                                                         vault_token_path TEXT,
@@ -180,7 +178,6 @@ BEGIN ATOMIC
     SELECT pg_tde_change_global_key_provider('file', provider_name,
                 json_object('path' VALUE file_path));
 END;
-
 
 CREATE FUNCTION pg_tde_change_global_key_provider_vault_v2(provider_name TEXT,
                                                            vault_token_path TEXT,
