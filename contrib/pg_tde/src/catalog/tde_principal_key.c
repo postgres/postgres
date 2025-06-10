@@ -42,7 +42,6 @@
 #include "access/heapam.h"
 #include "access/table.h"
 #include "access/tableam.h"
-#include "common/pg_tde_shmem.h"
 #include "funcapi.h"
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
