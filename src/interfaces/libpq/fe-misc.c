@@ -553,9 +553,35 @@ pqPutMsgEnd(PGconn *conn)
 	/* Make message eligible to send */
 	conn->outCount = conn->outMsgEnd;
 
+	/* If appropriate, try to push out some data */
 	if (conn->outCount >= 8192)
 	{
-		int			toSend = conn->outCount - (conn->outCount % 8192);
+		int			toSend = conn->outCount;
+
+		/*
+		 * On Unix-pipe connections, it seems profitable to prefer sending
+		 * pipe-buffer-sized packets not randomly-sized ones, so retain the
+		 * last partial-8K chunk in our buffer for now.  On TCP connections,
+		 * the advantage of that is far less clear.  Moreover, it flat out
+		 * isn't safe when using SSL or GSSAPI, because those code paths have
+		 * API stipulations that if they fail to send all the data that was
+		 * offered in the previous write attempt, we mustn't offer less data
+		 * in this write attempt.  The previous write attempt might've been
+		 * pqFlush attempting to send everything in the buffer, so we mustn't
+		 * offer less now.  (Presently, we won't try to use SSL or GSSAPI on
+		 * Unix connections, so those checks are just Asserts.  They'll have
+		 * to become part of the regular if-test if we ever change that.)
+		 */
+		if (conn->raddr.addr.ss_family == AF_UNIX)
+		{
+#ifdef USE_SSL
+			Assert(!conn->ssl_in_use);
+#endif
+#ifdef ENABLE_GSS
+			Assert(!conn->gssenc);
+#endif
+			toSend -= toSend % 8192;
+		}
 
 		if (pqSendSome(conn, toSend) < 0)
 			return EOF;
