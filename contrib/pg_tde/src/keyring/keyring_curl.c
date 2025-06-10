@@ -16,8 +16,7 @@
 
 CURL	   *keyringCurl = NULL;
 
-static
-size_t
+static size_t
 write_func(void *ptr, size_t size, size_t nmemb, struct CurlString *s)
 {
 	size_t		new_len = s->len + size * nmemb;
