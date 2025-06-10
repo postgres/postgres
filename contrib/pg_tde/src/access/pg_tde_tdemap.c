@@ -2,7 +2,6 @@
 
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <unistd.h>
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"

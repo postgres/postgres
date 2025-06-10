@@ -12,9 +12,6 @@
 
 #include "postgres.h"
 
-#include <stdio.h>
-#include <unistd.h>
-
 #include "common/file_perm.h"
 #include "storage/fd.h"
 #include "utils/wait_event.h"

@@ -1,15 +1,7 @@
 #include "postgres.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "encryption/enc_aes.h"
 

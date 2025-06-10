@@ -12,7 +12,6 @@
 #include "postgres.h"
 
 #include <curl/curl.h>
-#include <stdio.h>
 
 #include "common/base64.h"
 #include "common/jsonapi.h"
