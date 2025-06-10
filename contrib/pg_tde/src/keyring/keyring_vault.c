@@ -236,7 +236,6 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 
 	if (httpCode == 404)
 	{
-		*return_code = KEYRING_CODE_RESOURCE_NOT_AVAILABLE;
 		goto cleanup;
 	}
 

@@ -256,7 +256,7 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 
 		keyInfo = KeyringGetKey(new_keyring, key_name, &kr_ret);
 
-		if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
+		if (kr_ret != KEYRING_CODE_SUCCESS)
 		{
 			ereport(ERROR,
 					errmsg("failed to retrieve principal key from keyring provider :\"%s\"", new_keyring->provider_name),
@@ -333,7 +333,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 	new_keyring = GetKeyProviderByID(xlrec->keyringId, xlrec->databaseId);
 	keyInfo = KeyringGetKey(new_keyring, xlrec->keyName, &kr_ret);
 
-	if (kr_ret != KEYRING_CODE_SUCCESS && kr_ret != KEYRING_CODE_RESOURCE_NOT_AVAILABLE)
+	if (kr_ret != KEYRING_CODE_SUCCESS)
 	{
 		ereport(ERROR,
 				errmsg("failed to retrieve principal key from keyring provider: \"%s\"", new_keyring->provider_name),
