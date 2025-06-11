@@ -417,6 +417,8 @@ btrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	 * way, so we might as well avoid wasting cycles on acquiring page LSNs.
 	 *
 	 * See nbtree/README section on making concurrent TID recycling safe.
+	 *
+	 * Note: so->dropPin should never change across rescans.
 	 */
 	so->dropPin = (!scan->xs_want_itup &&
 				   IsMVCCSnapshot(scan->xs_snapshot) &&

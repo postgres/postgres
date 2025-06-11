@@ -3323,24 +3323,26 @@ _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
  * current page and killed tuples thereon (generally, this should only be
  * called if so->numKilled > 0).
  *
- * The caller does not have a lock on the page and may or may not have the
- * page pinned in a buffer.  Note that read-lock is sufficient for setting
- * LP_DEAD status (which is only a hint).
+ * Caller should not have a lock on the so->currPos page, but must hold a
+ * buffer pin when !so->dropPin.  When we return, it still won't be locked.
+ * It'll continue to hold whatever pins were held before calling here.
  *
- * We match items by heap TID before assuming they are the right ones to
- * delete.  We cope with cases where items have moved right due to insertions.
- * If an item has moved off the current page due to a split, we'll fail to
- * find it and do nothing (this is not an error case --- we assume the item
- * will eventually get marked in a future indexscan).
- *
- * Note that if we hold a pin on the target page continuously from initially
- * reading the items until applying this function, VACUUM cannot have deleted
- * any items on the page, so the page's TIDs can't have been recycled by now.
- * There's no risk that we'll confuse a new index tuple that happens to use a
- * recycled TID with a now-removed tuple with the same TID (that used to be on
- * this same page).  We can't rely on that during scans that drop pins eagerly
+ * We match items by heap TID before assuming they are the right ones to set
+ * LP_DEAD.  If the scan is one that holds a buffer pin on the target page
+ * continuously from initially reading the items until applying this function
+ * (if it is a !so->dropPin scan), VACUUM cannot have deleted any items on the
+ * page, so the page's TIDs can't have been recycled by now.  There's no risk
+ * that we'll confuse a new index tuple that happens to use a recycled TID
+ * with a now-removed tuple with the same TID (that used to be on this same
+ * page).  We can't rely on that during scans that drop buffer pins eagerly
  * (so->dropPin scans), though, so we must condition setting LP_DEAD bits on
  * the page LSN having not changed since back when _bt_readpage saw the page.
+ * We totally give up on setting LP_DEAD bits when the page LSN changed.
+ *
+ * We give up much less often during !so->dropPin scans, but it still happens.
+ * We cope with cases where items have moved right due to insertions.  If an
+ * item has moved off the current page due to a split, we'll fail to find it
+ * and just give up on it.
  */
 void
 _bt_killitems(IndexScanDesc scan)
@@ -3353,6 +3355,7 @@ _bt_killitems(IndexScanDesc scan)
 	OffsetNumber maxoff;
 	int			numKilled = so->numKilled;
 	bool		killedsomething = false;
+	Buffer		buf;
 
 	Assert(numKilled > 0);
 	Assert(BTScanPosIsValid(so->currPos));
@@ -3369,11 +3372,11 @@ _bt_killitems(IndexScanDesc scan)
 		 * concurrent VACUUMs from recycling any of the TIDs on the page.
 		 */
 		Assert(BTScanPosIsPinned(so->currPos));
-		_bt_lockbuf(rel, so->currPos.buf, BT_READ);
+		buf = so->currPos.buf;
+		_bt_lockbuf(rel, buf, BT_READ);
 	}
 	else
 	{
-		Buffer		buf;
 		XLogRecPtr	latestlsn;
 
 		Assert(!BTScanPosIsPinned(so->currPos));
@@ -3391,10 +3394,9 @@ _bt_killitems(IndexScanDesc scan)
 		}
 
 		/* Unmodified, hinting is safe */
-		so->currPos.buf = buf;
 	}
 
-	page = BufferGetPage(so->currPos.buf);
+	page = BufferGetPage(buf);
 	opaque = BTPageGetOpaque(page);
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -3511,10 +3513,13 @@ _bt_killitems(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->btpo_flags |= BTP_HAS_GARBAGE;
-		MarkBufferDirtyHint(so->currPos.buf, true);
+		MarkBufferDirtyHint(buf, true);
 	}
 
-	_bt_unlockbuf(rel, so->currPos.buf);
+	if (!so->dropPin)
+		_bt_unlockbuf(rel, buf);
+	else
+		_bt_relbuf(rel, buf);
 }
 
 
