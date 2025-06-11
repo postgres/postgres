@@ -53,7 +53,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 
 		pg_tde_save_principal_key_redo(mkey);
 	}
-	else if (info == XLOG_TDE_REMOVE_RELATION_KEY)
+	else if (info == XLOG_TDE_DELETE_RELATION_KEY)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
@@ -118,6 +118,12 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "db: %u", dbOid);
 	}
+	else if (info == XLOG_TDE_DELETE_RELATION_KEY)
+	{
+		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
+
+		appendStringInfo(buf, "rel: %u/%u/%u", xlrec->rlocator.spcOid, xlrec->rlocator.dbOid, xlrec->rlocator.relNumber);
+	}
 	else if (info == XLOG_TDE_WRITE_KEY_PROVIDER)
 	{
 		KeyringProviderRecordInFile *xlrec = (KeyringProviderRecordInFile *) XLogRecGetData(record);
@@ -143,6 +149,8 @@ tdeheap_rmgr_identify(uint8 info)
 			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_ROTATE_PRINCIPAL_KEY:
 			return "ROTATE_PRINCIPAL_KEY";
+		case XLOG_TDE_DELETE_RELATION_KEY:
+			return "DELETE_RELATION_KEY";
 		case XLOG_TDE_DELETE_PRINCIPAL_KEY:
 			return "DELETE_PRINCIPAL_KEY";
 		case XLOG_TDE_WRITE_KEY_PROVIDER:

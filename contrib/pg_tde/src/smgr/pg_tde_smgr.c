@@ -121,7 +121,7 @@ tde_smgr_delete_key(const RelFileLocatorBackend *smgr_rlocator)
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_REMOVE_RELATION_KEY);
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_DELETE_RELATION_KEY);
 }
 
 void
