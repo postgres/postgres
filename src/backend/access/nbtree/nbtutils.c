@@ -1706,9 +1706,9 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
  * current page and killed tuples thereon (generally, this should only be
  * called if so->numKilled > 0).
  *
- * The caller does not have a lock on the page and may or may not have the
- * page pinned in a buffer.  Note that read-lock is sufficient for setting
- * LP_DEAD status (which is only a hint).
+ * Caller should not have a lock on the so->currPos page, but may hold a
+ * buffer pin.  When we return, it still won't be locked.  It'll continue to
+ * hold whatever pins were held before calling here.
  *
  * We match items by heap TID before assuming they are the right ones to
  * delete.  We cope with cases where items have moved right due to insertions.
@@ -1740,7 +1740,8 @@ _bt_killitems(IndexScanDesc scan)
 	int			i;
 	int			numKilled = so->numKilled;
 	bool		killedsomething = false;
-	bool		droppedpin PG_USED_FOR_ASSERTS_ONLY;
+	bool		droppedpin;
+	Buffer		buf;
 
 	Assert(BTScanPosIsValid(so->currPos));
 
@@ -1759,29 +1760,31 @@ _bt_killitems(IndexScanDesc scan)
 		 * LSN.
 		 */
 		droppedpin = false;
-		LockBuffer(so->currPos.buf, BT_READ);
-
-		page = BufferGetPage(so->currPos.buf);
+		buf = so->currPos.buf;
+		LockBuffer(buf, BT_READ);
 	}
 	else
 	{
-		Buffer		buf;
+		XLogRecPtr	latestlsn;
 
 		droppedpin = true;
 		/* Attempt to re-read the buffer, getting pin and lock. */
 		buf = _bt_getbuf(scan->indexRelation, so->currPos.currPage, BT_READ);
 
-		page = BufferGetPage(buf);
-		if (BufferGetLSNAtomic(buf) == so->currPos.lsn)
-			so->currPos.buf = buf;
-		else
+		latestlsn = BufferGetLSNAtomic(buf);
+		Assert(!XLogRecPtrIsInvalid(so->currPos.lsn));
+		Assert(so->currPos.lsn <= latestlsn);
+		if (so->currPos.lsn != latestlsn)
 		{
 			/* Modified while not pinned means hinting is not safe. */
 			_bt_relbuf(scan->indexRelation, buf);
 			return;
 		}
+
+		/* Unmodified, hinting is safe */
 	}
 
+	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -1897,10 +1900,13 @@ _bt_killitems(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->btpo_flags |= BTP_HAS_GARBAGE;
-		MarkBufferDirtyHint(so->currPos.buf, true);
+		MarkBufferDirtyHint(buf, true);
 	}
 
-	LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+	if (!droppedpin)
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	else
+		_bt_relbuf(scan->indexRelation, buf);
 }
 
 
