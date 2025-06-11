@@ -7,6 +7,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+unlink('/tmp/pg_waldump_basic.per');
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf(
@@ -28,7 +30,7 @@ $node->start;
 
 $node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
 $node->safe_psql('postgres',
-	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal', '/tmp/pg_tde_test_keyring-wal.per');"
+	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal', '/tmp/pg_waldump_basic.per');"
 );
 $node->safe_psql('postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');"

@@ -9,6 +9,8 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
+unlink('/tmp/replication.per');
+
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->append_conf(
@@ -28,7 +30,7 @@ PGTDE::append_to_result_file("-- At primary");
 
 PGTDE::psql($primary, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 PGTDE::psql($primary, 'postgres',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/replication.per');"
 );
 PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');"

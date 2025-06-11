@@ -9,6 +9,8 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
+unlink('/tmp/pg_tde_test_001_basic.per');
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");

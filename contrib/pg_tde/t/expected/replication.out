@@ -1,6 +1,6 @@
 -- At primary
 CREATE EXTENSION IF NOT EXISTS pg_tde;
-SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/unlogged_tables.per');
+SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/replication.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
  

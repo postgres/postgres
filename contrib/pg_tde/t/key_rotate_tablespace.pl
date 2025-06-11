@@ -9,6 +9,8 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
+unlink('/tmp/key_rotate_tablespace.per');
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
@@ -22,7 +24,7 @@ PGTDE::psql($node, 'postgres',
 
 PGTDE::psql($node, 'tbc', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 PGTDE::psql($node, 'tbc',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/key_rotate_tablespace.per');"
 );
 PGTDE::psql($node, 'tbc',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');"

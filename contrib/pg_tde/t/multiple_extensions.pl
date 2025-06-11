@@ -17,6 +17,8 @@ if (index(lc($PG_VERSION_STRING), lc("Percona Distribution")) == -1)
 	  "pg_tde test case only for PPG server package install with extensions.";
 }
 
+unlink('/tmp/keyring_data_file');
+
 open my $conf2, '>>', "/tmp/datafile-location";
 print $conf2 "/tmp/keyring_data_file\n";
 close $conf2;

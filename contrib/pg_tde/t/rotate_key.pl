@@ -9,6 +9,11 @@ use pgtde;
 
 PGTDE::setup_files_dir(basename($0));
 
+unlink('/tmp/rotate_key.per');
+unlink('/tmp/rotate_key_2.per');
+unlink('/tmp/rotate_key_2g.per');
+unlink('/tmp/rotate_key_3.per');
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
@@ -17,16 +22,16 @@ $node->start;
 PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
 
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/pg_tde_test_keyring.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/rotate_key.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_database_key_provider_file('file-2', '/tmp/pg_tde_test_keyring_2.per');"
+	"SELECT pg_tde_add_database_key_provider_file('file-2', '/tmp/rotate_key_2.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_global_key_provider_file('file-2', '/tmp/pg_tde_test_keyring_2g.per');"
+	"SELECT pg_tde_add_global_key_provider_file('file-2', '/tmp/rotate_key_2g.per');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_add_global_key_provider_file('file-3', '/tmp/pg_tde_test_keyring_3.per');"
+	"SELECT pg_tde_add_global_key_provider_file('file-3', '/tmp/rotate_key_3.per');"
 );
 
 PGTDE::psql($node, 'postgres',

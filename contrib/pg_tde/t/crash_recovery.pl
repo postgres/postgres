@@ -7,10 +7,9 @@ use Test::More;
 use lib 't';
 use pgtde;
 
-# ensure we start with a clean key provider file
-unlink('/tmp/crash_recovery.per');
-
 PGTDE::setup_files_dir(basename($0));
+
+unlink('/tmp/crash_recovery.per');
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
