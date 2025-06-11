@@ -4,10 +4,9 @@
 
 To read encrypted WAL records, `pg_waldump` supports the following additional arguments:
 
-* `keyring_path`: the directory where keyring configuration files for WAL are stored. These files include:
-  * `1664_keys`
-  * `1664_providers`
+* `keyring_path` is the directory where the keyring configuration files for WAL are stored. The following files are included:
+    * `1664_keys`
+    * `1664_providers`
 
 !!! note
-
-    `pg_waldump` will not decrypt WAL unless the `keyring_path` is set.
+    `pg_waldump` does not decrypt WAL unless the `keyring_path` is set.

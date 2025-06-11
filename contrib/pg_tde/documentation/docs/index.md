@@ -1,4 +1,4 @@
-# `pg_tde` Documentation
+# pg_tde Documentation
 
 `pg_tde` is the open source, community driven and futureproof PostgreSQL extension that provides Transparent Data Encryption (TDE) to protect data at rest. `pg_tde` ensures that the data stored on disk is encrypted, and that no one can read it without the proper encryption keys, even if they gain access to the physical storage media.
 

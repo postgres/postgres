@@ -15,7 +15,7 @@ However, database owners can run the “view keys” and “set principal key”
 
 A key provider is a system or service responsible for managing encryption keys. `pg_tde` supports the following key providers:
 
-* local file (not for production use)
+* local file (not recommended for production use)
 * Hashicorp Vault / OpenBao
 * KMIP compatible providers
 
@@ -26,7 +26,7 @@ Key provider management includes the following operations:
 * deleting a key provider,
 * listing key providers.
 
-### Add a provider
+### Add a key provider
 
 You can add a new key provider using the provided functions, which are implemented for each provider type.
 
@@ -35,7 +35,7 @@ There are two functions to add a key provider: one function adds it for the curr
 * `pg_tde_add_database_key_provider_<type>('provider-name', <provider specific parameters>)`
 * `pg_tde_add_global_key_provider_<type>('provider-name', <provider specific parameters>)`
 
-When you add a new provider, the provider name must be unqiue in the scope. But a local database provider and a global provider can have the same name.
+When you add a new provider, the provider name must be unique in the scope. But a local database provider and a global provider can have the same name.
 
 ### Change an existing provider
 
@@ -106,8 +106,6 @@ where:
 * `secret_token_path` is a path to the file that contains an access token with read and write access to the above mount point
 * **[optional]** `ca_path` is the path of the CA file used for SSL verification
 
-
-
 #### Adding or modifying KMIP providers
 
 The KMIP provider uses a remote KMIP server.
@@ -167,7 +165,6 @@ where:
 !!! note
     The specified access parameters require permission to read and write keys at the server.
 
-
 ### Adding or modifying local keyfile providers
 
 This provider manages database keys using a local keyfile.
@@ -209,7 +206,6 @@ where:
 
 * `provider-name` is the name of the provider. You can specify any name, it's for you to identify the provider.
 * `/path/to/the/key/provider/data.file` is the path to the key provider file.
-
 
 ### Delete a provider
 

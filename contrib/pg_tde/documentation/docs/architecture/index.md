@@ -175,7 +175,7 @@ For such situations, `pg_tde` also provides [command line tools](../command-line
 
 ## User interface
 
-### Setting up `pg_tde`
+### Setting up pg_tde
 
 To use `pg_tde`, users are required to:
 
