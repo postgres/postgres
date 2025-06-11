@@ -59,16 +59,16 @@ SELECT * FROM test_enc ORDER BY id;
 (2 rows)
 
 -- server restart
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |   key_name   
------------------+-------------------+--------------
-               1 | file-vault        | rotated-key1
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |   key_name   
+-------------+---------------+--------------
+           1 | file-vault    | rotated-key1
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 SELECT * FROM test_enc ORDER BY id;
@@ -92,16 +92,16 @@ SELECT * FROM test_enc ORDER BY id;
 (2 rows)
 
 -- server restart
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |   key_name   
------------------+-------------------+--------------
-               2 | file-2            | rotated-key2
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |   key_name   
+-------------+---------------+--------------
+           2 | file-2        | rotated-key2
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 SELECT * FROM test_enc ORDER BY id;
@@ -125,16 +125,16 @@ SELECT * FROM test_enc ORDER BY id;
 (2 rows)
 
 -- server restart
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |  key_name   
------------------+-------------------+-------------
-              -2 | file-3            | rotated-key
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |  key_name   
+-------------+---------------+-------------
+          -2 | file-3        | rotated-key
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 SELECT * FROM test_enc ORDER BY id;
@@ -158,16 +158,16 @@ SELECT * FROM test_enc ORDER BY id;
 (2 rows)
 
 -- server restart
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |   key_name   
------------------+-------------------+--------------
-              -1 | file-2            | rotated-keyX
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |   key_name   
+-------------+---------------+--------------
+          -1 | file-2        | rotated-keyX
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 SELECT * FROM test_enc ORDER BY id;
@@ -181,16 +181,16 @@ ALTER SYSTEM SET pg_tde.inherit_global_providers = off;
 -- server restart
 SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);
 psql:<stdin>:1: ERROR:  Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |   key_name   
------------------+-------------------+--------------
-              -1 | file-2            | rotated-keyX
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |   key_name   
+-------------+---------------+--------------
+          -1 | file-2        | rotated-keyX
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 SELECT pg_tde_set_key_using_database_key_provider('rotated-key2', 'file-2');
@@ -199,16 +199,16 @@ SELECT pg_tde_set_key_using_database_key_provider('rotated-key2', 'file-2');
  
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
- key_provider_id | key_provider_name |   key_name   
------------------+-------------------+--------------
-               2 | file-2            | rotated-key2
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
+ provider_id | provider_name |   key_name   
+-------------+---------------+--------------
+           2 | file-2        | rotated-key2
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();
- key_provider_id | key_provider_name | key_name 
------------------+-------------------+----------
-                 |                   | 
+SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();
+ provider_id | provider_name | key_name 
+-------------+---------------+----------
+             |               | 
 (1 row)
 
 DROP TABLE test_enc;

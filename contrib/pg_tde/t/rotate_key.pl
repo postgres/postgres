@@ -54,10 +54,9 @@ PGTDE::append_to_result_file("-- server restart");
 $node->restart;
 
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -71,10 +70,9 @@ PGTDE::append_to_result_file("-- server restart");
 $node->restart;
 
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -88,10 +86,9 @@ PGTDE::append_to_result_file("-- server restart");
 $node->restart;
 
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -108,10 +105,9 @@ PGTDE::append_to_result_file("-- server restart");
 $node->restart;
 
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -127,20 +123,18 @@ PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('rotated-key2', 'file-2');"
 );
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();"
-);
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");
 PGTDE::psql($node, 'postgres',
-	"SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_server_key_info();"
+	"SELECT provider_id, provider_name, key_name FROM pg_tde_server_key_info();"
 );
 
 PGTDE::psql($node, 'postgres', 'DROP TABLE test_enc;');

@@ -271,8 +271,8 @@ REVOKE ALL ON FUNCTION pg_tde_delete_default_key() FROM PUBLIC;
 
 CREATE FUNCTION pg_tde_key_info()
 RETURNS TABLE ( key_name TEXT,
-                key_provider_name TEXT,
-                key_provider_id INT,
+                provider_name TEXT,
+                provider_id INT,
                 key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -280,8 +280,8 @@ REVOKE ALL ON FUNCTION pg_tde_key_info() FROM PUBLIC;
 
 CREATE FUNCTION pg_tde_server_key_info()
 RETURNS TABLE ( key_name TEXT,
-                key_provider_name TEXT,
-                key_provider_id INT,
+                provider_name TEXT,
+                provider_id INT,
                 key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -289,8 +289,8 @@ REVOKE ALL ON FUNCTION pg_tde_server_key_info() FROM PUBLIC;
 
 CREATE FUNCTION pg_tde_default_key_info()
 RETURNS TABLE ( key_name TEXT,
-                key_provider_name TEXT,
-                key_provider_id INT,
+                provider_name TEXT,
+                provider_id INT,
                 key_creation_time TIMESTAMP WITH TIME ZONE)
 LANGUAGE C
 AS 'MODULE_PATHNAME';

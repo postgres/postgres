@@ -38,7 +38,7 @@ SELECT relname, pg_tde_is_encrypted(relname) FROM (VALUES ('test_enc_pkey'), ('t
 
 SELECT pg_tde_is_encrypted(NULL);
 
-SELECT key_provider_id, key_provider_name, key_name
+SELECT provider_id, provider_name, key_name
     FROM pg_tde_key_info();
 
 DROP TABLE test_temp_norm;

@@ -5,7 +5,7 @@ SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_test_key
 -- Set the local key and delete it without any encrypted tables
 -- Should succeed: nothing used the key
 SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
 SELECT pg_tde_delete_key();
 
 -- Set local key, encrypt a table, and delete the key
@@ -32,7 +32,7 @@ SELECT pg_tde_set_default_key_using_global_key_provider('defalut-key','file-prov
 SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
 CREATE TABLE test_table (id int, data text) USING tde_heap;
 SELECT pg_tde_delete_key();
-SELECT key_provider_id, key_provider_name, key_name FROM pg_tde_key_info();
+SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();
 
 -- Try to delete key when default key is used
 -- Should fail: table already uses the default key, so there is no key to fallback to

@@ -77,11 +77,11 @@ SELECT pg_tde_is_encrypted(NULL);
  
 (1 row)
 
-SELECT key_provider_id, key_provider_name, key_name
+SELECT provider_id, provider_name, key_name
     FROM pg_tde_key_info();
- key_provider_id | key_provider_name |  key_name   
------------------+-------------------+-------------
-               1 | file-vault        | test-db-key
+ provider_id | provider_name |  key_name   
+-------------+---------------+-------------
+           1 | file-vault    | test-db-key
 (1 row)
 
 DROP TABLE test_temp_norm;

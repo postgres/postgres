@@ -1,8 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT  * FROM pg_tde_key_info();
- key_name | key_provider_name | key_provider_id | key_creation_time 
-----------+-------------------+-----------------+-------------------
-          |                   |                 | 
+ key_name | provider_name | provider_id | key_creation_time 
+----------+---------------+-------------+-------------------
+          |               |             | 
 (1 row)
 
 SELECT pg_tde_add_database_key_provider('file', 'incorrect-file-provider',  '{"path": {"foo": "/tmp/pg_tde_test_keyring.per"}}');
