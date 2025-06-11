@@ -1538,7 +1538,7 @@ GetDecimalFromHex(char hex)
 	if (isdigit((unsigned char) hex))
 		return hex - '0';
 	else
-		return pg_ascii_tolower((unsigned char) hex) - 'a' + 10;
+		return tolower((unsigned char) hex) - 'a' + 10;
 }
 
 /*
