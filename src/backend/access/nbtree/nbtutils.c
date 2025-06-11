@@ -63,7 +63,7 @@ static bool _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 							  bool *continuescan, int *ikey);
 static bool _bt_check_rowcompare(ScanKey skey,
 								 IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
-								 ScanDirection dir, bool *continuescan);
+								 ScanDirection dir, bool forcenonrequired, bool *continuescan);
 static void _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
 									 int tupnatts, TupleDesc tupdesc);
 static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
@@ -2902,10 +2902,8 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 		/* row-comparison keys need special processing */
 		if (key->sk_flags & SK_ROW_HEADER)
 		{
-			Assert(!forcenonrequired);	/* forbidden by _bt_set_startikey */
-
 			if (_bt_check_rowcompare(key, tuple, tupnatts, tupdesc, dir,
-									 continuescan))
+									 forcenonrequired, continuescan))
 				continue;
 			return false;
 		}
@@ -3062,7 +3060,8 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
  */
 static bool
 _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
-					 TupleDesc tupdesc, ScanDirection dir, bool *continuescan)
+					 TupleDesc tupdesc, ScanDirection dir,
+					 bool forcenonrequired, bool *continuescan)
 {
 	ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
 	int32		cmpresult = 0;
@@ -3102,7 +3101,11 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 
 		if (isNull)
 		{
-			if (subkey->sk_flags & SK_BT_NULLS_FIRST)
+			if (forcenonrequired)
+			{
+				/* treating scan's keys as non-required */
+			}
+			else if (subkey->sk_flags & SK_BT_NULLS_FIRST)
 			{
 				/*
 				 * Since NULLs are sorted before non-NULLs, we know we have
@@ -3156,8 +3159,12 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			 */
 			Assert(subkey != (ScanKey) DatumGetPointer(skey->sk_argument));
 			subkey--;
-			if ((subkey->sk_flags & SK_BT_REQFWD) &&
-				ScanDirectionIsForward(dir))
+			if (forcenonrequired)
+			{
+				/* treating scan's keys as non-required */
+			}
+			else if ((subkey->sk_flags & SK_BT_REQFWD) &&
+					 ScanDirectionIsForward(dir))
 				*continuescan = false;
 			else if ((subkey->sk_flags & SK_BT_REQBKWD) &&
 					 ScanDirectionIsBackward(dir))
@@ -3209,7 +3216,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			break;
 	}
 
-	if (!result)
+	if (!result && !forcenonrequired)
 	{
 		/*
 		 * Tuple fails this qual.  If it's a required qual for the current
