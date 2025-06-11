@@ -3664,9 +3664,10 @@ match_previous_words(int pattern_id,
 			 TailMatches("CREATE", "TEMP|TEMPORARY|UNLOGGED", "TABLE", MatchAny, "(*)", "AS"))
 		COMPLETE_WITH("EXECUTE", "SELECT", "TABLE", "VALUES", "WITH");
 	/* Complete CREATE TABLE name (...) with supported options */
-	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)") ||
-			 TailMatches("CREATE", "UNLOGGED", "TABLE", MatchAny, "(*)"))
+	else if (TailMatches("CREATE", "TABLE", MatchAny, "(*)"))
 		COMPLETE_WITH("AS", "INHERITS (", "PARTITION BY", "USING", "TABLESPACE", "WITH (");
+	else if (TailMatches("CREATE", "UNLOGGED", "TABLE", MatchAny, "(*)"))
+		COMPLETE_WITH("AS", "INHERITS (", "USING", "TABLESPACE", "WITH (");
 	else if (TailMatches("CREATE", "TEMP|TEMPORARY", "TABLE", MatchAny, "(*)"))
 		COMPLETE_WITH("AS", "INHERITS (", "ON COMMIT", "PARTITION BY", "USING",
 					  "TABLESPACE", "WITH (");
