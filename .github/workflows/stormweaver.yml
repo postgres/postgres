@@ -1,0 +1,49 @@
+name: Stormweaver
+on:
+  pull_request:
+  push:
+    branches:
+      - TDE_REL_17_STABLE
+  workflow_dispatch:
+
+jobs:
+  run:
+    name: Run
+    runs-on: self-hosted
+    steps:
+
+      - name: Clone stormweaver
+        uses: actions/checkout@master
+        with:
+          repository: 'percona-lab/stormweaver'
+          path: 'stormweaver'
+          submodules: recursive
+
+      - name: Update path
+        run: |
+          echo "/home/ghrunner/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install/build dependencies
+        run: |
+          conan install . --build=missing --settings=build_type=Release
+        working-directory: stormweaver
+
+      - name: Build stormweaver
+        run: |
+          conan build . --settings=build_type=Release
+        working-directory: stormweaver
+
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          path: 'postgres'
+
+      - name: Build postgres
+        run: |
+          ci_scripts/meson-build.sh debugoptimized
+        working-directory: postgres
+
+      - name: Run Stormweaver
+        run: bin/stormweaver scenarios/basic.lua -i ../../pginst
+        working-directory: stormweaver
