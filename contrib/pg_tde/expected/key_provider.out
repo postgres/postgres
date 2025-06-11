@@ -22,10 +22,10 @@ SELECT pg_tde_add_database_key_provider_file('file-provider2','/tmp/pg_tde_test_
 SELECT pg_tde_add_database_key_provider_file('file-provider','/tmp/pg_tde_test_keyring_dup.per');
 ERROR:  Key provider "file-provider" already exists.
 SELECT * FROM pg_tde_list_all_database_key_providers();
- id | provider_name  | provider_type |                  options                   
-----+----------------+---------------+--------------------------------------------
-  1 | file-provider  | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
-  2 | file-provider2 | file          | {"path" : "/tmp/pg_tde_test_keyring2.per"}
+ id |      name      | type |                  options                   
+----+----------------+------+--------------------------------------------
+  1 | file-provider  | file | {"path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | file-provider2 | file | {"path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
 SELECT pg_tde_verify_key();
@@ -45,19 +45,19 @@ SELECT pg_tde_verify_key();
 SELECT pg_tde_change_database_key_provider_file('not-existent-provider','/tmp/pg_tde_test_keyring.per');
 ERROR:  key provider "not-existent-provider" does not exists
 SELECT * FROM pg_tde_list_all_database_key_providers();
- id | provider_name  | provider_type |                  options                   
-----+----------------+---------------+--------------------------------------------
-  1 | file-provider  | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
-  2 | file-provider2 | file          | {"path" : "/tmp/pg_tde_test_keyring2.per"}
+ id |      name      | type |                  options                   
+----+----------------+------+--------------------------------------------
+  1 | file-provider  | file | {"path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | file-provider2 | file | {"path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
 SELECT pg_tde_change_database_key_provider('file', 'file-provider', '{"path": {"foo": "/tmp/pg_tde_test_keyring.per"}}');
 ERROR:  key provider value cannot be an object
 SELECT * FROM pg_tde_list_all_database_key_providers();
- id | provider_name  | provider_type |                  options                   
-----+----------------+---------------+--------------------------------------------
-  1 | file-provider  | file          | {"path" : "/tmp/pg_tde_test_keyring.per"}
-  2 | file-provider2 | file          | {"path" : "/tmp/pg_tde_test_keyring2.per"}
+ id |      name      | type |                  options                   
+----+----------------+------+--------------------------------------------
+  1 | file-provider  | file | {"path" : "/tmp/pg_tde_test_keyring.per"}
+  2 | file-provider2 | file | {"path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
 SELECT pg_tde_add_global_key_provider_file('file-keyring','/tmp/pg_tde_test_keyring.per');
@@ -72,8 +72,8 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring2','/tmp/pg_tde_test_key
  
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
+ id |     name      
 ----+---------------
  -4 | file-keyring
  -5 | file-keyring2
@@ -82,8 +82,8 @@ SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
 -- fails
 SELECT pg_tde_delete_database_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use
-SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
- id | provider_name  
+SELECT id, name FROM pg_tde_list_all_database_key_providers();
+ id |      name      
 ----+----------------
   1 | file-provider
   2 | file-provider2
@@ -96,14 +96,14 @@ SELECT pg_tde_delete_database_key_provider('file-provider2');
  
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
- id | provider_name 
+SELECT id, name FROM pg_tde_list_all_database_key_providers();
+ id |     name      
 ----+---------------
   1 | file-provider
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
+ id |     name      
 ----+---------------
  -4 | file-keyring
  -5 | file-keyring2
@@ -118,8 +118,8 @@ SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'file-keyring', f
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-keyring');
 ERROR:  Can't delete a provider which is currently in use
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
+ id |     name      
 ----+---------------
  -4 | file-keyring
  -5 | file-keyring2
@@ -132,9 +132,9 @@ SELECT pg_tde_delete_global_key_provider('file-keyring2');
  
 (1 row)
 
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
-----+---------------
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
+ id |     name     
+----+--------------
  -4 | file-keyring
 (1 row)
 

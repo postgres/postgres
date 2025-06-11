@@ -39,8 +39,8 @@ SELECT key_provider_id, key_provider_name, key_name
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-provider');
 ERROR:  Can't delete a provider which is currently in use
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
- id | provider_name 
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
+ id |     name      
 ----+---------------
  -2 | file-provider
 (1 row)

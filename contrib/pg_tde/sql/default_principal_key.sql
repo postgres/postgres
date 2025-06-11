@@ -18,7 +18,7 @@ SELECT key_provider_id, key_provider_name, key_name
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-provider');
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
 
 -- Should fail: no principal key for the database yet
 SELECT  key_provider_id, key_provider_name, key_name

@@ -22,27 +22,27 @@ SELECT pg_tde_add_global_key_provider_file('file-keyring','/tmp/pg_tde_test_keyr
 
 SELECT pg_tde_add_global_key_provider_file('file-keyring2','/tmp/pg_tde_test_keyring2.per');
 
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
 
 -- fails
 SELECT pg_tde_delete_database_key_provider('file-provider');
-SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
+SELECT id, name FROM pg_tde_list_all_database_key_providers();
 
 -- works
 SELECT pg_tde_delete_database_key_provider('file-provider2');
-SELECT id, provider_name FROM pg_tde_list_all_database_key_providers();
+SELECT id, name FROM pg_tde_list_all_database_key_providers();
 
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
 
 SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'file-keyring', false);
 
 -- fails
 SELECT pg_tde_delete_global_key_provider('file-keyring');
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
 
 -- works
 SELECT pg_tde_delete_global_key_provider('file-keyring2');
-SELECT id, provider_name FROM pg_tde_list_all_global_key_providers();
+SELECT id, name FROM pg_tde_list_all_global_key_providers();
 
 -- Creating a file key provider fails if we can't open or create the file
 SELECT pg_tde_add_database_key_provider_file('will-not-work','/cant-create-file-in-root.per');

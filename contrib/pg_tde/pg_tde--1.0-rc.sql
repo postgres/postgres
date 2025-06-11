@@ -2,7 +2,7 @@
 \echo Use "CREATE EXTENSION pg_tde" to load this file. \quit
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_add_database_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
+CREATE FUNCTION pg_tde_add_database_key_provider(type TEXT, name TEXT, options JSON)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -50,8 +50,8 @@ END;
 
 CREATE FUNCTION pg_tde_list_all_database_key_providers
     (OUT id INT,
-    OUT provider_name TEXT,
-    OUT provider_type TEXT,
+    OUT name TEXT,
+    OUT type TEXT,
     OUT options JSON)
 RETURNS SETOF RECORD
 LANGUAGE C
@@ -60,8 +60,8 @@ REVOKE ALL ON FUNCTION pg_tde_list_all_database_key_providers() FROM PUBLIC;
 
 CREATE FUNCTION pg_tde_list_all_global_key_providers
     (OUT id INT,
-    OUT provider_name TEXT,
-    OUT provider_type TEXT,
+    OUT name TEXT,
+    OUT type TEXT,
     OUT options JSON)
 RETURNS SETOF RECORD
 LANGUAGE C
@@ -69,7 +69,7 @@ AS 'MODULE_PATHNAME';
 REVOKE ALL ON FUNCTION pg_tde_list_all_global_key_providers() FROM PUBLIC;
 
 -- Global Tablespace Key Provider Management
-CREATE FUNCTION pg_tde_add_global_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
+CREATE FUNCTION pg_tde_add_global_key_provider(type TEXT, name TEXT, options JSON)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -116,7 +116,7 @@ BEGIN ATOMIC
 END;
 
 -- Key Provider Management
-CREATE FUNCTION pg_tde_change_database_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
+CREATE FUNCTION pg_tde_change_database_key_provider(type TEXT, name TEXT, options JSON)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';
@@ -163,7 +163,7 @@ BEGIN ATOMIC
 END;
 
 -- Global Tablespace Key Provider Management
-CREATE FUNCTION pg_tde_change_global_key_provider(provider_type TEXT, provider_name TEXT, options JSON)
+CREATE FUNCTION pg_tde_change_global_key_provider(type TEXT, name TEXT, options JSON)
 RETURNS VOID
 LANGUAGE C
 AS 'MODULE_PATHNAME';

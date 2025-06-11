@@ -43,7 +43,7 @@ $node->start;
 
 is( $node->safe_psql(
 		'postgres',
-		q{SELECT provider_type FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT type FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	),
 	'file',
 	'provider type is set to file');
@@ -51,7 +51,7 @@ is( $node->safe_psql(
 $options = decode_json(
 	$node->safe_psql(
 		'postgres',
-		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	));
 is( $options->{path},
 	'/tmp/pg_tde_change_key_provider-database-2',
@@ -78,7 +78,7 @@ $node->start;
 
 is( $node->safe_psql(
 		'postgres',
-		q{SELECT provider_type FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT type FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	),
 	'vault-v2',
 	'provider type is set to vault-v2');
@@ -86,7 +86,7 @@ is( $node->safe_psql(
 $options = decode_json(
 	$node->safe_psql(
 		'postgres',
-		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	));
 is( $options->{url},
 	'https://vault-server.example:8200/',
@@ -118,7 +118,7 @@ $node->start;
 
 is( $node->safe_psql(
 		'postgres',
-		q{SELECT provider_type FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT type FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	),
 	'vault-v2',
 	'provider type is set to vault-v2');
@@ -126,7 +126,7 @@ is( $node->safe_psql(
 $options = decode_json(
 	$node->safe_psql(
 		'postgres',
-		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	));
 is( $options->{url},
 	'http://vault-server.example:8200/',
@@ -159,7 +159,7 @@ $node->start;
 
 is( $node->safe_psql(
 		'postgres',
-		q{SELECT provider_type FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT type FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	),
 	'kmip',
 	'provider type is set to kmip');
@@ -167,7 +167,7 @@ is( $node->safe_psql(
 $options = decode_json(
 	$node->safe_psql(
 		'postgres',
-		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE provider_name = 'database-provider'}
+		q{SELECT options FROM pg_tde_list_all_database_key_providers() WHERE name = 'database-provider'}
 	));
 is($options->{host}, 'kmip-server.example',
 	'host is set correctly for kmip provider');
@@ -200,7 +200,7 @@ $node->start;
 
 is( $node->safe_psql(
 		'postgres',
-		q{SELECT provider_type FROM pg_tde_list_all_global_key_providers() WHERE provider_name = 'global-provider'}
+		q{SELECT type FROM pg_tde_list_all_global_key_providers() WHERE name = 'global-provider'}
 	),
 	'vault-v2',
 	'provider type is set to vault-v2 for global provider');
@@ -208,7 +208,7 @@ is( $node->safe_psql(
 $options = decode_json(
 	$node->safe_psql(
 		'postgres',
-		q{SELECT options FROM pg_tde_list_all_global_key_providers() WHERE provider_name = 'global-provider'}
+		q{SELECT options FROM pg_tde_list_all_global_key_providers() WHERE name = 'global-provider'}
 	));
 is( $options->{url},
 	'http://vault-server.example:8200/',
