@@ -5,8 +5,6 @@
 
 #include "postgres.h"
 
-#include <sys/stat.h>
-
 #include "access/tableam.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
@@ -141,9 +139,7 @@ extension_install_redo(XLogExtensionInstall *xlrec)
 static void
 pg_tde_init_data_dir(void)
 {
-	struct stat st;
-
-	if (stat(PG_TDE_DATA_DIR, &st) < 0)
+	if (access(PG_TDE_DATA_DIR, F_OK) == -1)
 	{
 		if (MakePGDirectory(PG_TDE_DATA_DIR) < 0)
 			ereport(ERROR,
