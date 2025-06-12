@@ -108,20 +108,6 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * byte-wise locations in parse structures to character-wise cursor
  * positions.)
  *
- * p_stmt_location: location of the top level RawStmt's start.  During
- * transformation, the Query's location will be set to the statement's
- * location if available.  Otherwise, the RawStmt's start location will
- * be used.  Propagating the location through ParseState is needed for
- * the Query length calculation (see p_stmt_len below).
- *
- * p_stmt_len: length of the top level RawStmt.  Most of the time, the
- * statement's length is not provided by the parser, with the exception
- * of SelectStmt within parentheses and PreparableStmt in COPY.  If the
- * statement's location is provided by the parser, the top-level location
- * and length are needed to accurately compute the Query's length.  If the
- * statement's location is not provided, the RawStmt's length can be used
- * directly.
- *
  * p_rtable: list of RTEs that will become the rangetable of the query.
  * Note that neither relname nor refname of these entries are necessarily
  * unique; searching the rtable by name is a bad idea.
@@ -207,8 +193,6 @@ struct ParseState
 {
 	ParseState *parentParseState;	/* stack link */
 	const char *p_sourcetext;	/* source text, or NULL if not available */
-	ParseLoc	p_stmt_location;	/* start location, or -1 if unknown */
-	ParseLoc	p_stmt_len;		/* length in bytes; 0 means "rest of string" */
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_rteperminfos; /* list of RTEPermissionInfo nodes for each
 								 * RTE_RELATION entry in rtable */

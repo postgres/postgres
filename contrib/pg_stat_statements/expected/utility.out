@@ -540,7 +540,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
 -------+------+----------------------------------------------------
      2 |    0 | DEALLOCATE $1
      2 |    0 | DEALLOCATE ALL
-     2 |    2 | SELECT $1 AS a
+     2 |    2 | PREPARE stat_select AS SELECT $1 AS a
      1 |    1 | SELECT $1 as a
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (5 rows)

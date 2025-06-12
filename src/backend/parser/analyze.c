@@ -239,101 +239,22 @@ parse_sub_analyze(Node *parseTree, ParseState *parentParseState,
 }
 
 /*
- * setQueryLocationAndLength
- * 		Set query's location and length from statement and ParseState
- *
- * Some statements, like PreparableStmt, can be located within parentheses.
- * For example "(SELECT 1)" or "COPY (UPDATE ...) to x;".  For those, we
- * cannot use the whole string from the statement's location or the SQL
- * string would yield incorrectly.  The parser will set stmt_len, reflecting
- * the size of the statement within the parentheses.  Thus, when stmt_len is
- * available, we need to use it for the Query's stmt_len.
- *
- * For other cases, the parser can't provide the length of individual
- * statements.  However, we have the statement's location plus the length
- * (p_stmt_len) and location (p_stmt_location) of the top level RawStmt,
- * stored in pstate.  Thus, the statement's length is the RawStmt's length
- * minus how much we've advanced in the RawStmt's string.  If p_stmt_len
- * is 0, the SQL string is used up to its end.
- */
-static void
-setQueryLocationAndLength(ParseState *pstate, Query *qry, Node *parseTree)
-{
-	ParseLoc	stmt_len = 0;
-
-	switch (nodeTag(parseTree))
-	{
-		case T_InsertStmt:
-			qry->stmt_location = ((InsertStmt *) parseTree)->stmt_location;
-			stmt_len = ((InsertStmt *) parseTree)->stmt_len;
-			break;
-
-		case T_DeleteStmt:
-			qry->stmt_location = ((DeleteStmt *) parseTree)->stmt_location;
-			stmt_len = ((DeleteStmt *) parseTree)->stmt_len;
-			break;
-
-		case T_UpdateStmt:
-			qry->stmt_location = ((UpdateStmt *) parseTree)->stmt_location;
-			stmt_len = ((UpdateStmt *) parseTree)->stmt_len;
-			break;
-
-		case T_MergeStmt:
-			qry->stmt_location = ((MergeStmt *) parseTree)->stmt_location;
-			stmt_len = ((MergeStmt *) parseTree)->stmt_len;
-			break;
-
-		case T_SelectStmt:
-			qry->stmt_location = ((SelectStmt *) parseTree)->stmt_location;
-			stmt_len = ((SelectStmt *) parseTree)->stmt_len;
-			break;
-
-		case T_PLAssignStmt:
-			qry->stmt_location = ((PLAssignStmt *) parseTree)->location;
-			break;
-
-		default:
-			qry->stmt_location = pstate->p_stmt_location;
-			break;
-	}
-
-	if (stmt_len > 0)
-	{
-		/* Statement's length is known, use it */
-		qry->stmt_len = stmt_len;
-	}
-	else if (pstate->p_stmt_len > 0)
-	{
-		/*
-		 * The top RawStmt's length is known, so calculate the statement's
-		 * length from the statement's location and the RawStmt's length and
-		 * location.
-		 */
-		qry->stmt_len = pstate->p_stmt_len - (qry->stmt_location - pstate->p_stmt_location);
-	}
-
-	/* The calculated statement length should be calculated as positive. */
-	Assert(qry->stmt_len >= 0);
-}
-
-/*
  * transformTopLevelStmt -
  *	  transform a Parse tree into a Query tree.
  *
- * This function is just responsible for storing location data
- * from the RawStmt into the ParseState.
+ * This function is just responsible for transferring statement location data
+ * from the RawStmt into the finished Query.
  */
 Query *
 transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree)
 {
 	Query	   *result;
 
-	/* Store RawStmt's length and location in pstate */
-	pstate->p_stmt_len = parseTree->stmt_len;
-	pstate->p_stmt_location = parseTree->stmt_location;
-
 	/* We're at top level, so allow SELECT INTO */
 	result = transformOptionalSelectInto(pstate, parseTree->stmt);
+
+	result->stmt_location = parseTree->stmt_location;
+	result->stmt_len = parseTree->stmt_len;
 
 	return result;
 }
@@ -503,7 +424,6 @@ transformStmt(ParseState *pstate, Node *parseTree)
 	/* Mark as original query until we learn differently */
 	result->querySource = QSRC_ORIGINAL;
 	result->canSetTag = true;
-	setQueryLocationAndLength(pstate, result, parseTree);
 
 	return result;
 }

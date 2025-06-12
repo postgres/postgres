@@ -37,7 +37,7 @@ EXPLAIN (DEBUG) SELECT 1;
    Subplans Needing Rewind: none
    Relation OIDs: none
    Executor Parameter Types: none
-   Parse Location: 16 for 8 bytes
+   Parse Location: 0 to end
 (11 rows)
 
 EXPLAIN (RANGE_TABLE) SELECT 1;
@@ -119,7 +119,7 @@ $$);
    Subplans Needing Rewind: none
    Relation OIDs: NNN...
    Executor Parameter Types: none
-   Parse Location: 41 to end
+   Parse Location: 0 to end
  RTI 1 (relation, inherited, in-from-clause):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
@@ -240,7 +240,7 @@ $$);
        <Subplans-Needing-Rewind>none</Subplans-Needing-Rewind>      +
        <Relation-OIDs>NNN...</Relation-OIDs>                        +
        <Executor-Parameter-Types>none</Executor-Parameter-Types>    +
-       <Parse-Location>53 to end</Parse-Location>                   +
+       <Parse-Location>0 to end</Parse-Location>                    +
      </PlannedStmt>                                                 +
      <Range-Table>                                                  +
        <Range-Table-Entry>                                          +
@@ -344,7 +344,7 @@ $$);
    Subplans Needing Rewind: none
    Relation OIDs: NNN...
    Executor Parameter Types: none
-   Parse Location: 28 to end
+   Parse Location: 0 to end
 (37 rows)
 
 SET debug_parallel_query = false;
@@ -372,7 +372,7 @@ $$);
    Subplans Needing Rewind: none
    Relation OIDs: NNN...
    Executor Parameter Types: 0
-   Parse Location: 28 to end
+   Parse Location: 0 to end
 (15 rows)
 
 -- Create an index, and then attempt to force a nested loop with inner index
@@ -436,7 +436,7 @@ $$);
    Subplans Needing Rewind: none
    Relation OIDs: NNN...
    Executor Parameter Types: 23
-   Parse Location: 75 for 62 bytes
+   Parse Location: 0 to end
 (47 rows)
 
 RESET enable_hashjoin;
