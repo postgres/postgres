@@ -923,7 +923,8 @@ PostgreSQL documentation
       <term><option>--with-data</option></term>
       <listitem>
        <para>
-        Dump data. This is the default.
+        Output commands to restore data, if the archive contains them.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -932,7 +933,8 @@ PostgreSQL documentation
       <term><option>--with-schema</option></term>
       <listitem>
        <para>
-        Dump schema (data definitions). This is the default.
+        Output commands to restore schema (data definitions), if the archive
+        contains them. This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -941,7 +943,8 @@ PostgreSQL documentation
       <term><option>--with-statistics</option></term>
       <listitem>
        <para>
-        Dump statistics. This is the default.
+        Output commands to restore statistics, if the archive contains them.
+        This is the default.
        </para>
       </listitem>
      </varlistentry>
