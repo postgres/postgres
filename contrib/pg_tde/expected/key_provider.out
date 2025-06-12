@@ -1,3 +1,7 @@
+\! rm -f '/tmp/db-provider-file'
+\! rm -f '/tmp/global-provider-file-1'
+\! rm -f '/tmp/pg_tde_test_keyring.per'
+\! rm -f '/tmp/pg_tde_test_keyring2.per'
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 SELECT  * FROM pg_tde_key_info();
  key_name | provider_name | provider_id | key_creation_time 

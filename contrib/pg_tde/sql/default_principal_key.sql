@@ -1,3 +1,5 @@
+\! rm -f '/tmp/pg_tde_regression_default_key.per'
+
 CREATE EXTENSION IF NOT EXISTS pg_tde;
 CREATE EXTENSION IF NOT EXISTS pg_buffercache;
 

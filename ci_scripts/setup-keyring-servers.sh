@@ -15,6 +15,7 @@ wget https://raw.githubusercontent.com/OpenKMIP/PyKMIP/refs/heads/master/example
 cd ..
 
 echo $SCRIPT_DIR
+rm -f /tmp/pykmip.db
 pykmip-server -f "$SCRIPT_DIR/../contrib/pg_tde/pykmip-server.conf" -l /tmp/kmip-server.log &
 
 CLUSTER_INFO=$(mktemp)
