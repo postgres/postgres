@@ -267,6 +267,36 @@ SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C" |     0
 (4 rows)
 
+-- with the last element being an explicit function call with an argument, ensure
+-- the normalization of the squashing interval is correct.
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT WHERE 1 IN (1, int4(1), int4(2));
+--
+(1 row)
+
+SELECT WHERE 1 = ANY (ARRAY[1, int4(1), int4(2)]);
+--
+(1 row)
+
+SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
+                                 query                                  | calls 
+------------------------------------------------------------------------+-------
+ SELECT WHERE $1 IN ($2 /*, ... */)                                     |     2
+ SELECT pg_stat_statements_reset() IS NOT NULL AS t                     |     1
+ SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C" |     0
+(3 rows)
+
 --
 -- queries with locking clauses
 --

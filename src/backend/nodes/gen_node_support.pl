@@ -1329,7 +1329,7 @@ _jumble${n}(JumbleState *jstate, Node *node)
 			# Node type.  Squash constants if requested.
 			if ($query_jumble_squash)
 			{
-				print $jff "\tJUMBLE_ELEMENTS($f);\n"
+				print $jff "\tJUMBLE_ELEMENTS($f, node);\n"
 				  unless $query_jumble_ignore;
 			}
 			else

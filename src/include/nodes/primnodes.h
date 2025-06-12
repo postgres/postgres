@@ -1397,6 +1397,10 @@ typedef struct ArrayExpr
 	List	   *elements pg_node_attr(query_jumble_squash);
 	/* true if elements are sub-arrays */
 	bool		multidims pg_node_attr(query_jumble_ignore);
+	/* location of the start of the elements list */
+	ParseLoc	list_start;
+	/* location of the end of the elements list */
+	ParseLoc	list_end;
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } ArrayExpr;

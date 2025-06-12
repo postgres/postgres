@@ -87,6 +87,14 @@ SELECT WHERE (1, 2) IN ((1, 2), (2, 3));
 SELECT WHERE (3, 4) IN ((5, 6), (8, 7));
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
+-- with the last element being an explicit function call with an argument, ensure
+-- the normalization of the squashing interval is correct.
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+SELECT WHERE 1 IN (1, int4(1), int4(2));
+SELECT WHERE 1 = ANY (ARRAY[1, int4(1), int4(2)]);
+SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
+
 --
 -- queries with locking clauses
 --

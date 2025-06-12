@@ -61,9 +61,9 @@ static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *value, Size size);
 static void FlushPendingNulls(JumbleState *jstate);
 static void RecordConstLocation(JumbleState *jstate,
-								int location, bool squashed);
+								int location, int len);
 static void _jumbleNode(JumbleState *jstate, Node *node);
-static void _jumbleElements(JumbleState *jstate, List *elements);
+static void _jumbleElements(JumbleState *jstate, List *elements, Node *node);
 static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
 static void _jumbleVariableSetStmt(JumbleState *jstate, Node *node);
@@ -373,15 +373,17 @@ FlushPendingNulls(JumbleState *jstate)
 
 
 /*
- * Record location of constant within query string of query tree that is
- * currently being walked.
+ * Record the location of some kind of constant within a query string.
+ * These are not only bare constants but also expressions that ultimately
+ * constitute a constant, such as those inside casts and simple function
+ * calls.
  *
- * 'squashed' signals that the constant represents the first or the last
- * element in a series of merged constants, and everything but the first/last
- * element contributes nothing to the jumble hash.
+ * If length is -1, it indicates a single such constant element.  If
+ * it's a positive integer, it indicates the length of a squashable
+ * list of them.
  */
 static void
-RecordConstLocation(JumbleState *jstate, int location, bool squashed)
+RecordConstLocation(JumbleState *jstate, int location, int len)
 {
 	/* -1 indicates unknown or undefined location */
 	if (location >= 0)
@@ -396,9 +398,14 @@ RecordConstLocation(JumbleState *jstate, int location, bool squashed)
 						 sizeof(LocationLen));
 		}
 		jstate->clocations[jstate->clocations_count].location = location;
-		/* initialize lengths to -1 to simplify third-party module usage */
-		jstate->clocations[jstate->clocations_count].squashed = squashed;
-		jstate->clocations[jstate->clocations_count].length = -1;
+
+		/*
+		 * Lengths are either positive integers (indicating a squashable
+		 * list), or -1.
+		 */
+		Assert(len > -1 || len == -1);
+		jstate->clocations[jstate->clocations_count].length = len;
+		jstate->clocations[jstate->clocations_count].squashed = (len > -1);
 		jstate->clocations_count++;
 	}
 }
@@ -408,12 +415,12 @@ RecordConstLocation(JumbleState *jstate, int location, bool squashed)
  * deduce that the expression is a constant:
  *
  * - Ignore a possible wrapping RelabelType and CoerceViaIO.
- * - If it's a FuncExpr, check that the function is an implicit
+ * - If it's a FuncExpr, check that the function is a builtin
  *   cast and its arguments are Const.
  * - Otherwise test if the expression is a simple Const.
  */
 static bool
-IsSquashableConst(Node *element)
+IsSquashableConstant(Node *element)
 {
 	if (IsA(element, RelabelType))
 		element = (Node *) ((RelabelType *) element)->arg;
@@ -421,31 +428,49 @@ IsSquashableConst(Node *element)
 	if (IsA(element, CoerceViaIO))
 		element = (Node *) ((CoerceViaIO *) element)->arg;
 
-	if (IsA(element, FuncExpr))
+	switch (nodeTag(element))
 	{
-		FuncExpr   *func = (FuncExpr *) element;
-		ListCell   *temp;
+		case T_FuncExpr:
+			{
+				FuncExpr   *func = (FuncExpr *) element;
+				ListCell   *temp;
 
-		if (func->funcformat != COERCE_IMPLICIT_CAST &&
-			func->funcformat != COERCE_EXPLICIT_CAST)
-			return false;
+				if (func->funcformat != COERCE_IMPLICIT_CAST &&
+					func->funcformat != COERCE_EXPLICIT_CAST)
+					return false;
 
-		if (func->funcid > FirstGenbkiObjectId)
-			return false;
+				if (func->funcid > FirstGenbkiObjectId)
+					return false;
 
-		foreach(temp, func->args)
-		{
-			Node	   *arg = lfirst(temp);
+				/*
+				 * We can check function arguments recursively, being careful
+				 * about recursing too deep.  At each recursion level it's
+				 * enough to test the stack on the first element.  (Note that
+				 * I wasn't able to hit this without bloating the stack
+				 * artificially in this function: the parser errors out before
+				 * stack size becomes a problem here.)
+				 */
+				foreach(temp, func->args)
+				{
+					Node	   *arg = lfirst(temp);
 
-			if (!IsA(arg, Const))	/* XXX we could recurse here instead */
+					if (!IsA(arg, Const))
+					{
+						if (foreach_current_index(temp) == 0 &&
+							stack_is_too_deep())
+							return false;
+						else if (!IsSquashableConstant(arg))
+							return false;
+					}
+				}
+
+				return true;
+			}
+
+		default:
+			if (!IsA(element, Const))
 				return false;
-		}
-
-		return true;
 	}
-
-	if (!IsA(element, Const))
-		return false;
 
 	return true;
 }
@@ -461,35 +486,29 @@ IsSquashableConst(Node *element)
  * expressions.
  */
 static bool
-IsSquashableConstList(List *elements, Node **firstExpr, Node **lastExpr)
+IsSquashableConstantList(List *elements)
 {
 	ListCell   *temp;
 
-	/*
-	 * If squashing is disabled, or the list is too short, we don't try to
-	 * squash it.
-	 */
+	/* If the list is too short, we don't try to squash it. */
 	if (list_length(elements) < 2)
 		return false;
 
 	foreach(temp, elements)
 	{
-		if (!IsSquashableConst(lfirst(temp)))
+		if (!IsSquashableConstant(lfirst(temp)))
 			return false;
 	}
-
-	*firstExpr = linitial(elements);
-	*lastExpr = llast(elements);
 
 	return true;
 }
 
 #define JUMBLE_NODE(item) \
 	_jumbleNode(jstate, (Node *) expr->item)
-#define JUMBLE_ELEMENTS(list) \
-	_jumbleElements(jstate, (List *) expr->list)
+#define JUMBLE_ELEMENTS(list, node) \
+	_jumbleElements(jstate, (List *) expr->list, node)
 #define JUMBLE_LOCATION(location) \
-	RecordConstLocation(jstate, expr->location, false)
+	RecordConstLocation(jstate, expr->location, -1)
 #define JUMBLE_FIELD(item) \
 do { \
 	if (sizeof(expr->item) == 8) \
@@ -517,36 +536,36 @@ do { \
 #include "queryjumblefuncs.funcs.c"
 
 /*
- * We jumble lists of constant elements as one individual item regardless
- * of how many elements are in the list.  This means different queries
- * jumble to the same query_id, if the only difference is the number of
- * elements in the list.
+ * We try to jumble lists of expressions as one individual item regardless
+ * of how many elements are in the list. This is know as squashing, which
+ * results in different queries jumbling to the same query_id, if the only
+ * difference is the number of elements in the list.
+ *
+ * We allow constants to be squashed. To normalize such queries, we use
+ * the start and end locations of the list of elements in a list.
  */
 static void
-_jumbleElements(JumbleState *jstate, List *elements)
+_jumbleElements(JumbleState *jstate, List *elements, Node *node)
 {
-	Node	   *first,
-			   *last;
+	bool		normalize_list = false;
 
-	if (IsSquashableConstList(elements, &first, &last))
+	if (IsSquashableConstantList(elements))
 	{
-		/*
-		 * If this list of elements is squashable, keep track of the location
-		 * of its first and last elements.  When reading back the locations
-		 * array, we'll see two consecutive locations with ->squashed set to
-		 * true, indicating the location of initial and final elements of this
-		 * list.
-		 *
-		 * For the limited set of cases we support now (implicit coerce via
-		 * FuncExpr, Const) it's fine to use exprLocation of the 'last'
-		 * expression, but if more complex composite expressions are to be
-		 * supported (e.g., OpExpr or FuncExpr as an explicit call), more
-		 * sophisticated tracking will be needed.
-		 */
-		RecordConstLocation(jstate, exprLocation(first), true);
-		RecordConstLocation(jstate, exprLocation(last), true);
+		if (IsA(node, ArrayExpr))
+		{
+			ArrayExpr  *aexpr = (ArrayExpr *) node;
+
+			if (aexpr->list_start > 0 && aexpr->list_end > 0)
+			{
+				RecordConstLocation(jstate,
+									aexpr->list_start + 1,
+									(aexpr->list_end - aexpr->list_start) - 1);
+				normalize_list = true;
+			}
+		}
 	}
-	else
+
+	if (!normalize_list)
 	{
 		_jumbleNode(jstate, (Node *) elements);
 	}

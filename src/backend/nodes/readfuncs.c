@@ -526,6 +526,8 @@ _readA_Expr(void)
 
 	READ_NODE_FIELD(lexpr);
 	READ_NODE_FIELD(rexpr);
+	READ_LOCATION_FIELD(rexpr_list_start);
+	READ_LOCATION_FIELD(rexpr_list_end);
 	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
