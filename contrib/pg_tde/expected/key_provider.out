@@ -229,6 +229,7 @@ SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provi
 (1 row)
 
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'global-provider');
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
  
@@ -290,6 +291,7 @@ ERROR:  key provider name cannot be null
 SELECT pg_tde_set_key_using_global_key_provider('key', NULL);
 ERROR:  key provider name cannot be null
 SELECT pg_tde_set_server_key_using_global_key_provider('key', NULL);
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key provider name cannot be null
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
@@ -299,6 +301,7 @@ ERROR:  key name cannot be null
 SELECT pg_tde_set_key_using_global_key_provider(NULL, 'file-keyring');
 ERROR:  key name cannot be null
 SELECT pg_tde_set_server_key_using_global_key_provider(NULL, 'file-keyring');
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key name cannot be null
 -- Empty string is not allowed for a principal key name
 SELECT pg_tde_set_default_key_using_global_key_provider('', 'file-keyring');
@@ -308,6 +311,7 @@ ERROR:  key name "" is too short
 SELECT pg_tde_set_key_using_global_key_provider('', 'file-keyring');
 ERROR:  key name "" is too short
 SELECT pg_tde_set_server_key_using_global_key_provider('', 'file-keyring');
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key name "" is too short
 -- Setting principal key fails if the key name is too long
 SELECT pg_tde_set_default_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
@@ -317,5 +321,6 @@ ERROR:  too long principal key name, maximum length is 255 bytes
 SELECT pg_tde_set_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
 ERROR:  too long principal key name, maximum length is 255 bytes
 SELECT pg_tde_set_server_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  too long principal key name, maximum length is 255 bytes
 DROP EXTENSION pg_tde;

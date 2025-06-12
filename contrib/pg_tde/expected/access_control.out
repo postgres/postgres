@@ -58,6 +58,7 @@ ERROR:  must be superuser to access global key providers
 SELECT pg_tde_set_default_key_using_global_key_provider('key1', 'global-file-provider');
 ERROR:  must be superuser to access global key providers
 SELECT pg_tde_set_server_key_using_global_key_provider('key1', 'global-file-provider');
+WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  must be superuser to access global key providers
 SELECT pg_tde_delete_default_key();
 ERROR:  must be superuser to access global key providers
