@@ -400,9 +400,9 @@ pgaio_uring_wait_one(PgAioHandle *ioh, uint64 ref_generation)
 	while (true)
 	{
 		pgaio_debug_io(DEBUG3, ioh,
-					   "wait_one io_gen: %llu, ref_gen: %llu, cycle %d",
-					   (long long unsigned) ioh->generation,
-					   (long long unsigned) ref_generation,
+					   "wait_one io_gen: %" PRIu64 ", ref_gen: %" PRIu64 ", cycle %d",
+					   ioh->generation,
+					   ref_generation,
 					   waited);
 
 		if (pgaio_io_was_recycled(ioh, ref_generation, &state) ||
