@@ -13,6 +13,7 @@ SELECT current_database() AS regress_database
 CREATE EXTENSION pg_tde;
 
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/template_provider.per');
+SELECT pg_tde_create_key_using_database_key_provider('test-db-key', 'file-vault');
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
 
 CREATE TABLE test_enc (id serial PRIMARY KEY, x int) USING tde_heap;
@@ -27,7 +28,7 @@ INSERT INTO test_plain (x) VALUES (30), (40);
 --CREATE DATABASE new_db TEMPLATE template_db;
 
 SELECT pg_tde_add_global_key_provider_file('global-file-vault','/tmp/template_provider_global.per');
-
+SELECT pg_tde_create_key_using_global_key_provider('default-key', 'global-file-vault');
 SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'global-file-vault');
 
 CREATE DATABASE new_db TEMPLATE template_db;

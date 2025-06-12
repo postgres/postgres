@@ -5,6 +5,12 @@ SELECT pg_tde_add_global_key_provider_file('global_keyring', '/tmp/crash_recover
  
 (1 row)
 
+SELECT pg_tde_create_key_using_global_key_provider('wal_encryption_key', 'global_keyring');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key', 'global_keyring');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
@@ -15,6 +21,12 @@ psql:<stdin>:1: WARNING:  The WAL encryption feature is currently in beta and ma
 SELECT pg_tde_add_database_key_provider_file('db_keyring', '/tmp/crash_recovery.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_database_key_provider('db_key', 'db_keyring');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
  
 (1 row)
 
@@ -32,6 +44,12 @@ ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';
 -- kill -9
 -- server start
 -- rotate wal key
+SELECT pg_tde_create_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', 'global_keyring');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
@@ -39,6 +57,12 @@ SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_1', '
 (1 row)
 
 psql:<stdin>:1: WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
+SELECT pg_tde_create_key_using_database_key_provider('db_key_1', 'db_keyring');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('db_key_1', 'db_keyring');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------
@@ -50,6 +74,12 @@ INSERT INTO test_enc (x) VALUES (3), (4);
 -- server start
 -- check that pg_tde_save_principal_key_redo hasn't destroyed a WAL key created during the server start
 -- rotate wal key
+SELECT pg_tde_create_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', 'global_keyring');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
@@ -57,6 +87,12 @@ SELECT pg_tde_set_server_key_using_global_key_provider('wal_encryption_key_2', '
 (1 row)
 
 psql:<stdin>:1: WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
+SELECT pg_tde_create_key_using_database_key_provider('db_key_2', 'db_keyring');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('db_key_2', 'db_keyring');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------

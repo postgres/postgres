@@ -33,6 +33,9 @@ $node->safe_psql('postgres',
 	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal', '/tmp/pg_waldump_basic.per');"
 );
 $node->safe_psql('postgres',
+	"SELECT pg_tde_create_key_using_global_key_provider('server-key', 'file-keyring-wal');"
+);
+$node->safe_psql('postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-wal');"
 );
 

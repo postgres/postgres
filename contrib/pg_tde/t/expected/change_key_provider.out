@@ -11,6 +11,12 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
   1 | file-vault | file | {"path" : "/tmp/change_key_provider_1.per"}
 (1 row)
 
+SELECT pg_tde_create_key_using_database_key_provider('test-key', 'file-vault');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------

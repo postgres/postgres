@@ -12,6 +12,12 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/template_provid
  
 (1 row)
 
+SELECT pg_tde_create_key_using_database_key_provider('test-db-key', 'file-vault');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------
@@ -28,6 +34,12 @@ INSERT INTO test_plain (x) VALUES (30), (40);
 SELECT pg_tde_add_global_key_provider_file('global-file-vault','/tmp/template_provider_global.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_global_key_provider('default-key', 'global-file-vault');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
  
 (1 row)
 

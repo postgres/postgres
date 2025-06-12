@@ -32,6 +32,12 @@ SELECT * FROM pg_tde_list_all_database_key_providers();
   2 | file-provider2 | file | {"path" : "/tmp/pg_tde_test_keyring2.per"}
 (2 rows)
 
+SELECT pg_tde_create_key_using_database_key_provider('test-db-key','file-provider');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_verify_key();
 ERROR:  principal key not configured for current database
 SELECT pg_tde_set_key_using_database_key_provider('test-db-key','file-provider');
@@ -113,7 +119,7 @@ SELECT id, name FROM pg_tde_list_all_global_key_providers();
  -5 | file-keyring2
 (2 rows)
 
-SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'file-keyring', false);
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key', 'file-keyring');
  pg_tde_set_key_using_global_key_provider 
 ------------------------------------------
  
@@ -232,6 +238,12 @@ SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/global-provi
  
 (1 row)
 
+SELECT pg_tde_create_key_using_global_key_provider('server-key', 'global-provider');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'global-provider');
 WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
  pg_tde_set_server_key_using_global_key_provider 
@@ -253,6 +265,12 @@ SELECT current_database() AS regress_database
 CREATE DATABASE db_using_global_provider;
 \c db_using_global_provider;
 CREATE EXTENSION pg_tde;
+SELECT pg_tde_create_key_using_global_key_provider('database-key', 'global-provider2');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_global_key_provider('database-key', 'global-provider2');
  pg_tde_set_key_using_global_key_provider 
 ------------------------------------------
@@ -269,6 +287,12 @@ CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_database_key_provider_file('db-provider', '/tmp/db-provider-file');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_database_key_provider('database-key', 'db-provider');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
  
 (1 row)
 
@@ -308,27 +332,39 @@ SELECT pg_tde_set_server_key_using_global_key_provider(NULL, 'file-keyring');
 WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key name cannot be null
 -- Empty string is not allowed for a principal key name
-SELECT pg_tde_set_default_key_using_global_key_provider('', 'file-keyring');
+SELECT pg_tde_create_key_using_database_key_provider('', 'file-provider');
 ERROR:  key name "" is too short
-SELECT pg_tde_set_key_using_database_key_provider('', 'file-keyring');
+SELECT pg_tde_create_key_using_global_key_provider('', 'file-keyring');
 ERROR:  key name "" is too short
-SELECT pg_tde_set_key_using_global_key_provider('', 'file-keyring');
-ERROR:  key name "" is too short
-SELECT pg_tde_set_server_key_using_global_key_provider('', 'file-keyring');
+-- Creating principal key fails if the key name is too long
+SELECT pg_tde_create_key_using_database_key_provider(repeat('K', 256), 'file-provider');
+ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
+HINT:  Maximum length is 255 bytes.
+SELECT pg_tde_create_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
+ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
+HINT:  Maximum length is 255 bytes.
+-- Creating principal key fails if key already exists
+SELECT pg_tde_create_key_using_database_key_provider('existing-key','file-provider');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_database_key_provider('existing-key','file-provider');
+ERROR:  cannot to create key "existing-key" because it already exists
+SELECT pg_tde_create_key_using_global_key_provider('existing-key','file-keyring');
+ERROR:  cannot to create key "existing-key" because it already exists
+-- Setting principal key fails if key does not exist
+SELECT pg_tde_set_default_key_using_global_key_provider('not-existing', 'file-keyring');
+ERROR:  key "not-existing" does not exist
+HINT:  Use pg_tde_create_key_using_global_key_provider() to create it.
+SELECT pg_tde_set_key_using_database_key_provider('not-existing', 'file-keyring');
+ERROR:  key provider "file-keyring" does not exists
+SELECT pg_tde_set_key_using_global_key_provider('not-existing', 'file-keyring');
+ERROR:  key "not-existing" does not exist
+HINT:  Use pg_tde_create_key_using_global_key_provider() to create it.
+SELECT pg_tde_set_server_key_using_global_key_provider('not-existing', 'file-keyring');
 WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
-ERROR:  key name "" is too short
--- Setting principal key fails if the key name is too long
-SELECT pg_tde_set_default_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
-ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
-HINT:  Maximum length is 255 bytes.
-SELECT pg_tde_set_key_using_database_key_provider(repeat('K', 256), 'file-provider');
-ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
-HINT:  Maximum length is 255 bytes.
-SELECT pg_tde_set_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
-ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
-HINT:  Maximum length is 255 bytes.
-SELECT pg_tde_set_server_key_using_global_key_provider(repeat('K', 256), 'file-keyring');
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
-ERROR:  key name "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK" is too long
-HINT:  Maximum length is 255 bytes.
+ERROR:  key "not-existing" does not exist
+HINT:  Use pg_tde_create_key_using_global_key_provider() to create it.
 DROP EXTENSION pg_tde;

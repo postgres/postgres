@@ -6,6 +6,12 @@ SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/replication.per
  
 (1 row)
 
+SELECT pg_tde_create_key_using_database_key_provider('test-key', 'file-vault');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');
  pg_tde_set_key_using_database_key_provider 
 --------------------------------------------
@@ -59,6 +65,12 @@ SELECT * FROM test_plain ORDER BY x;
 SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/unlogged_tables.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_global_key_provider('test-global-key', 'file-vault');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
  
 (1 row)
 

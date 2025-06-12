@@ -36,7 +36,9 @@ PGTDE::psql($node, 'postgres',
 
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_list_all_database_key_providers();");
-
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('test-db-key', 'file-vault');"
+);
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');"
 );
@@ -50,6 +52,9 @@ PGTDE::psql($node, 'postgres', 'INSERT INTO test_enc (k) VALUES (5), (6);');
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Rotate key
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('rotated-key1', 'file-vault');"
+);
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('rotated-key1', 'file-vault');"
 );
@@ -67,6 +72,9 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Again rotate key
 PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('rotated-key2', 'file-2');"
+);
+PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('rotated-key2', 'file-2');"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
@@ -83,7 +91,10 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Again rotate key
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_key_using_global_key_provider('rotated-key', 'file-3', false);"
+	"SELECT pg_tde_create_key_using_global_key_provider('rotated-key', 'file-3');"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_set_key_using_global_key_provider('rotated-key', 'file-3');"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -102,7 +113,10 @@ PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
 # Again rotate key
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX', 'file-2', false);"
+	"SELECT pg_tde_create_key_using_global_key_provider('rotated-keyX', 'file-2');"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX', 'file-2');"
 );
 PGTDE::psql($node, 'postgres', 'SELECT * FROM test_enc ORDER BY id;');
 
@@ -125,7 +139,10 @@ $node->restart;
 
 # But now can't be changed to another global provider
 PGTDE::psql($node, 'postgres',
-	"SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2', false);"
+	"SELECT pg_tde_create_key_using_global_key_provider('rotated-keyX2', 'file-2');"
+);
+PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_set_key_using_global_key_provider('rotated-keyX2', 'file-2');"
 );
 PGTDE::psql($node, 'postgres',
 	"SELECT provider_id, provider_name, key_name FROM pg_tde_key_info();");

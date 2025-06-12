@@ -6,6 +6,18 @@ SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_test_key
  
 (1 row)
 
+SELECT pg_tde_create_key_using_global_key_provider('defalut-key','file-provider');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_global_key_provider('test-db-key','file-provider');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 -- Set the local key and delete it without any encrypted tables
 -- Should succeed: nothing used the key
 SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');

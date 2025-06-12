@@ -85,22 +85,20 @@ static void push_principal_key_to_cache(TDEPrincipalKey *principalKey);
 static Datum pg_tde_get_key_info(PG_FUNCTION_ARGS, Oid dbOid);
 static TDEPrincipalKey *get_principal_key_from_keyring(Oid dbOid);
 static TDEPrincipalKey *GetPrincipalKeyNoDefault(Oid dbOid, LWLockMode lockMode);
-static void set_principal_key_with_keyring(const char *key_name,
-										   const char *provider_name,
-										   Oid providerOid,
-										   Oid dbOid,
-										   bool ensure_new_key);
 static bool pg_tde_verify_principal_key_internal(Oid databaseOid);
+static void pg_tde_create_principal_key_internal(Oid providerOid, const char *key_name, const char *provider_name);
 static void pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey *newKeyTemplate);
+static void pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *principal_key_name, const char *provider_name);
+static void set_principal_key_with_keyring(const char *key_name, const char *provider_name, Oid providerOid, Oid dbOid);
 
+PG_FUNCTION_INFO_V1(pg_tde_create_key_using_database_key_provider);
+PG_FUNCTION_INFO_V1(pg_tde_create_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_default_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_database_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_set_server_key_using_global_key_provider);
 PG_FUNCTION_INFO_V1(pg_tde_delete_key);
 PG_FUNCTION_INFO_V1(pg_tde_delete_default_key);
-
-static void pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *principal_key_name, const char *provider_name, bool ensure_new_key);
 
 /*
  * Request some pages so we can fit the DSA header, empty hash table plus some
@@ -217,8 +215,10 @@ principal_key_info_attach_shmem(void)
 }
 
 void
-set_principal_key_with_keyring(const char *key_name, const char *provider_name,
-							   Oid providerOid, Oid dbOid, bool ensure_new_key)
+set_principal_key_with_keyring(const char *key_name,
+							   const char *provider_name,
+							   Oid providerOid,
+							   Oid dbOid)
 {
 	TDEPrincipalKey *curr_principal_key;
 	TDEPrincipalKey *new_principal_key;
@@ -249,15 +249,19 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 		}
 	}
 
-	if (keyInfo != NULL && ensure_new_key)
+	if (!keyInfo)
 	{
-		ereport(ERROR,
-				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("cannot to create key \"%s\" because it already exists", key_name));
+		if (providerOid == GLOBAL_DATA_TDE_OID)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("key \"%s\" does not exist", key_name),
+					errhint("Use pg_tde_create_key_using_global_key_provider() to create it."));
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("key \"%s\" does not exist", key_name),
+					errhint("Use pg_tde_create_key_using_database_key_provider() to create it."));
 	}
-
-	if (keyInfo == NULL)
-		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, PRINCIPAL_KEY_LEN);
 
 	new_principal_key = palloc_object(TDEPrincipalKey);
 	new_principal_key->keyInfo.databaseId = dbOid;
@@ -442,14 +446,98 @@ clear_principal_key_cache(Oid databaseId)
  */
 
 Datum
+pg_tde_create_key_using_database_key_provider(PG_FUNCTION_ARGS)
+{
+	char	   *key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	pg_tde_create_principal_key_internal(MyDatabaseId,
+										 key_name,
+										 provider_name);
+
+	PG_RETURN_VOID();
+}
+
+Datum
+pg_tde_create_key_using_global_key_provider(PG_FUNCTION_ARGS)
+{
+	char	   *key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	pg_tde_create_principal_key_internal(GLOBAL_DATA_TDE_OID,
+										 key_name,
+										 provider_name);
+
+	PG_RETURN_VOID();
+}
+
+static void
+pg_tde_create_principal_key_internal(Oid providerOid,
+									 const char *key_name,
+									 const char *provider_name)
+{
+
+	GenericKeyring *provider;
+	KeyInfo    *key_info;
+	KeyringReturnCodes return_code;
+
+	if (providerOid == GLOBAL_DATA_TDE_OID && !superuser())
+		ereport(ERROR,
+				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("must be superuser to access global key providers"));
+	if (providerOid == GLOBAL_DATA_TDE_OID && !AllowInheritGlobalProviders)
+		ereport(ERROR,
+				errmsg("usage of global key providers is disabled"),
+				errhint("Set \"pg_tde.inherit_global_providers = on\" in postgresql.conf."));
+
+	if (key_name == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("key name cannot be null"));
+	if (strlen(key_name) == 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("key name \"\" is too short"));
+	if (strlen(key_name) >= PRINCIPAL_KEY_NAME_LEN)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("key name \"%s\" is too long", key_name),
+				errhint("Maximum length is %d bytes.", PRINCIPAL_KEY_NAME_LEN - 1));
+	if (provider_name == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("key provider name cannot be null"));
+
+	provider = GetKeyProviderByName(provider_name, providerOid);
+
+	key_info = KeyringGetKey(provider, key_name, &return_code);
+
+	if (return_code != KEYRING_CODE_SUCCESS)
+		ereport(ERROR,
+				errmsg("could not successfully query key provider \"%s\"", provider->provider_name));
+
+	if (key_info != NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("cannot to create key \"%s\" because it already exists", key_name));
+
+	key_info = KeyringGenerateNewKeyAndStore(provider, key_name, PRINCIPAL_KEY_LEN);
+
+	pfree(key_info);
+	pfree(provider);
+}
+
+Datum
 pg_tde_set_default_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
 	/* Using a global provider for the default encryption setting */
-	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, DEFAULT_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID,
+									  DEFAULT_DATA_TDE_OID,
+									  principal_key_name,
+									  provider_name);
 
 	PG_RETURN_VOID();
 }
@@ -459,10 +547,12 @@ pg_tde_set_key_using_database_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
 	/* Using a local provider for the current database */
-	pg_tde_set_principal_key_internal(MyDatabaseId, MyDatabaseId, principal_key_name, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(MyDatabaseId,
+									  MyDatabaseId,
+									  principal_key_name,
+									  provider_name);
 
 	PG_RETURN_VOID();
 }
@@ -472,10 +562,12 @@ pg_tde_set_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
 	/* Using a global provider for the current database */
-	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, MyDatabaseId, principal_key_name, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID,
+									  MyDatabaseId,
+									  principal_key_name,
+									  provider_name);
 
 	PG_RETURN_VOID();
 }
@@ -485,19 +577,24 @@ pg_tde_set_server_key_using_global_key_provider(PG_FUNCTION_ARGS)
 {
 	char	   *principal_key_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 	char	   *provider_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
-	bool		ensure_new_key = PG_GETARG_BOOL(2);
 
 	ereport(WARNING,
 			errmsg("The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!"));
 
 	/* Using a global provider for the global (wal) database */
-	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID, GLOBAL_DATA_TDE_OID, principal_key_name, provider_name, ensure_new_key);
+	pg_tde_set_principal_key_internal(GLOBAL_DATA_TDE_OID,
+									  GLOBAL_DATA_TDE_OID,
+									  principal_key_name,
+									  provider_name);
 
 	PG_RETURN_VOID();
 }
 
 static void
-pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_name, const char *provider_name, bool ensure_new_key)
+pg_tde_set_principal_key_internal(Oid providerOid,
+								  Oid dbOid,
+								  const char *key_name,
+								  const char *provider_name)
 {
 	TDEPrincipalKey *existingDefaultKey = NULL;
 	TDEPrincipalKey existingKeyCopy;
@@ -546,8 +643,7 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 	set_principal_key_with_keyring(key_name,
 								   provider_name,
 								   providerOid,
-								   dbOid,
-								   ensure_new_key);
+								   dbOid);
 
 	if (dbOid == DEFAULT_DATA_TDE_OID && existingDefaultKey != NULL)
 	{

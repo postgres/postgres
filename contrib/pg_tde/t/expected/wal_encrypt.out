@@ -13,6 +13,12 @@ SELECT key_name, provider_name, provider_id FROM pg_tde_server_key_info();
           |               |            
 (1 row)
 
+SELECT pg_tde_create_key_using_global_key_provider('server-key', 'file-keyring-010');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-010');
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------

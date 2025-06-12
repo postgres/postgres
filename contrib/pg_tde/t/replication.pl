@@ -33,6 +33,9 @@ PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/replication.per');"
 );
 PGTDE::psql($primary, 'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('test-key', 'file-vault');"
+);
+PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');"
 );
 
@@ -64,6 +67,9 @@ PGTDE::psql($replica, 'postgres', "SELECT * FROM test_plain ORDER BY x;");
 PGTDE::append_to_result_file("-- check primary crash with WAL encryption");
 PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_add_global_key_provider_file('file-vault', '/tmp/unlogged_tables.per');"
+);
+PGTDE::psql($primary, 'postgres',
+	"SELECT pg_tde_create_key_using_global_key_provider('test-global-key', 'file-vault');"
 );
 PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('test-global-key', 'file-vault');"

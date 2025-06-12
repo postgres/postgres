@@ -32,6 +32,9 @@ PGTDE::psql($node, 'postgres',
 );
 
 PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_create_key_using_global_key_provider('server-key', 'file-keyring-010');"
+);
+PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'file-keyring-010');"
 );
 

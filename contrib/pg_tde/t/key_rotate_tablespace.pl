@@ -27,6 +27,9 @@ PGTDE::psql($node, 'tbc',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/key_rotate_tablespace.per');"
 );
 PGTDE::psql($node, 'tbc',
+	"SELECT pg_tde_create_key_using_database_key_provider('test-db-key', 'file-vault');"
+);
+PGTDE::psql($node, 'tbc',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-vault');"
 );
 
@@ -48,7 +51,9 @@ INSERT INTO country_table (country_name, continent)
 ");
 
 PGTDE::psql($node, 'tbc', 'SELECT * FROM country_table;');
-
+PGTDE::psql($node, 'tbc',
+	"SELECT pg_tde_create_key_using_database_key_provider('new-k', 'file-vault');"
+);
 PGTDE::psql($node, 'tbc',
 	"SELECT pg_tde_set_key_using_database_key_provider('new-k', 'file-vault');"
 );

@@ -125,6 +125,10 @@ $node->psql(
 	extra_params => ['-a']);
 $node->psql(
 	'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('test-db-key', 'file-provider');",
+	extra_params => ['-a']);
+$node->psql(
+	'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-db-key', 'file-provider');",
 	extra_params => ['-a']);
 

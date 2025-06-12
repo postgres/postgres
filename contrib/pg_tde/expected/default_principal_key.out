@@ -18,7 +18,13 @@ SELECT provider_id, provider_name, key_name
              |               | 
 (1 row)
 
-SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider', false);
+SELECT pg_tde_create_key_using_global_key_provider('default-key', 'file-provider');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_set_default_key_using_global_key_provider('default-key', 'file-provider');
  pg_tde_set_default_key_using_global_key_provider 
 --------------------------------------------------
  
@@ -100,7 +106,13 @@ SELECT  provider_id, provider_name, key_name
 
 \c :regress_database
 CHECKPOINT;
-SELECT pg_tde_set_default_key_using_global_key_provider('new-default-key', 'file-provider', false);
+SELECT pg_tde_create_key_using_global_key_provider('new-default-key', 'file-provider');
+ pg_tde_create_key_using_global_key_provider 
+---------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_set_default_key_using_global_key_provider('new-default-key', 'file-provider');
  pg_tde_set_default_key_using_global_key_provider 
 --------------------------------------------------
  

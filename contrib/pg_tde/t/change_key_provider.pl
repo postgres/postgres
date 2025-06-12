@@ -26,6 +26,9 @@ PGTDE::psql($node, 'postgres',
 PGTDE::psql($node, 'postgres',
 	"SELECT * FROM pg_tde_list_all_database_key_providers();");
 PGTDE::psql($node, 'postgres',
+	"SELECT pg_tde_create_key_using_database_key_provider('test-key', 'file-vault');"
+);
+PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_set_key_using_database_key_provider('test-key', 'file-vault');"
 );
 
