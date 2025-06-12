@@ -227,12 +227,6 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 	GenericKeyring *new_keyring;
 	const KeyInfo *keyInfo = NULL;
 
-	if (AllowInheritGlobalProviders == false && providerOid != dbOid)
-	{
-		ereport(ERROR,
-				errmsg("Usage of global key providers is disabled. Enable it with pg_tde.inherit_global_providers = ON"));
-	}
-
 	/*
 	 * Try to get principal key from cache.
 	 */
@@ -251,21 +245,16 @@ set_principal_key_with_keyring(const char *key_name, const char *provider_name,
 		if (kr_ret != KEYRING_CODE_SUCCESS)
 		{
 			ereport(ERROR,
-					errmsg("failed to retrieve principal key from keyring provider :\"%s\"", new_keyring->provider_name),
-					errdetail("Error code: %d", kr_ret));
+					errmsg("could not successfully query key provider \"%s\"", new_keyring->provider_name));
 		}
 	}
 
 	if (keyInfo != NULL && ensure_new_key)
 	{
 		ereport(ERROR,
-				errmsg("failed to create principal key: already exists"));
-	}
-
-	if (strlen(key_name) >= sizeof(keyInfo->name))
-		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("too long principal key name, maximum length is %ld bytes", sizeof(keyInfo->name) - 1));
+				errmsg("cannot to create key \"%s\" because it already exists", key_name));
+	}
 
 	if (keyInfo == NULL)
 		keyInfo = KeyringGenerateNewKeyAndStore(new_keyring, key_name, PRINCIPAL_KEY_LEN);
@@ -517,6 +506,10 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 		ereport(ERROR,
 				errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("must be superuser to access global key providers"));
+	if (providerOid == GLOBAL_DATA_TDE_OID && !AllowInheritGlobalProviders)
+		ereport(ERROR,
+				errmsg("usage of global key providers is disabled"),
+				errhint("Set \"pg_tde.inherit_global_providers = on\" in postgresql.conf."));
 
 	if (key_name == NULL)
 		ereport(ERROR,
@@ -526,6 +519,11 @@ pg_tde_set_principal_key_internal(Oid providerOid, Oid dbOid, const char *key_na
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("key name \"\" is too short"));
+	if (strlen(key_name) >= PRINCIPAL_KEY_NAME_LEN)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("key name \"%s\" is too long", key_name),
+				errhint("Maximum length is %d bytes.", PRINCIPAL_KEY_NAME_LEN - 1));
 	if (provider_name == NULL)
 		ereport(ERROR,
 				errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
