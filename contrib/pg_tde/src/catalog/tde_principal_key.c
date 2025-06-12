@@ -27,7 +27,6 @@
 #include "catalog/tde_principal_key.h"
 #include "keyring/keyring_api.h"
 #include "pg_tde.h"
-#include "pg_tde_guc.h"
 
 #ifndef FRONTEND
 #include "access/genam.h"
@@ -38,6 +37,7 @@
 #include "lib/dshash.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "pg_tde_guc.h"
 #else
 #include "pg_tde_fe.h"
 #endif

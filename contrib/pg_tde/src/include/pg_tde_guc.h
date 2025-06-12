@@ -7,13 +7,10 @@
 
 #include "c.h"
 
-#ifndef FRONTEND
-
 extern bool AllowInheritGlobalProviders;
 extern bool EncryptXLog;
 extern bool EnforceEncryption;
 
 extern void TdeGucInit(void);
 
-#endif
 #endif							/* TDE_GUC_H */
