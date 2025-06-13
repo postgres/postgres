@@ -1,8 +1,9 @@
 # Configure WAL Encryption (tech preview)
 
-Before turning WAL encryption on, you must follow the steps below to create your first principal key.
+!!! warning
+    The WAL encryption feature is currently in beta and      is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
 
-## Create the principal key
+Before enabling WAL encryption, follow the steps below to create a principal key and configure it for WAL:
 
 1. Create the `pg_tde` extension if it does not exist:
 
@@ -10,7 +11,7 @@ Before turning WAL encryption on, you must follow the steps below to create your
     CREATE EXTENSION IF NOT EXISTS pg_tde;
     ```
 
-2. Set up the key provider for WAL encryption
+2. Set up the key provider for WAL encryption:
 
     === "With KMIP server"
 
@@ -19,7 +20,14 @@ Before turning WAL encryption on, you must follow the steps below to create your
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance.
 
         ```sql
-        SELECT pg_tde_add_global_key_provider_kmip('provider-name', 'kmip-addr', 5696, '/path_to/client_cert.pem', '/path_to/client_key.pem', '/path_to/server_certificate.pem');
+        SELECT pg_tde_add_global_key_provider_kmip(
+            'provider-name', 
+            'kmip-addr', 
+            5696, 
+            '/path_to/client_cert.pem', 
+            '/path_to/client_key.pem', 
+            '/path_to/server_certificate.pem'
+        );
         ```
 
         where:
@@ -34,13 +42,26 @@ Before turning WAL encryption on, you must follow the steps below to create your
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
         ```sql
-        SELECT pg_tde_add_key_using_global_key_provider_kmip('kmip', '127.0.0.1', 5696, '/tmp/client_cert_jane_doe.pem', '/tmp/client_key_jane_doe.pem', '/tmp/server_certificate.pem');
+        SELECT pg_tde_add_key_using_global_key_provider_kmip(
+            'kmip', 
+            '127.0.0.1', 
+            5696, 
+            '/tmp/client_cert_jane_doe.pem', 
+            '/tmp/client_key_jane_doe.pem', 
+            '/tmp/server_certificate.pem'
+        );
         ```
 
     === "With HashiCorp Vault"
 
         ```sql
-        SELECT pg_tde_add_global_key_provider_vault_v2('provider-name', 'url', 'mount', 'secret_token_path', 'ca_path');
+        SELECT pg_tde_add_global_key_provider_vault_v2(
+            'provider-name', 
+            'url', 
+            'mount', 
+            'secret_token_path', 
+            'ca_path'
+        );
         ```
 
         where:
@@ -53,16 +74,24 @@ Before turning WAL encryption on, you must follow the steps below to create your
 
     === "With keyring file"
 
-        This setup is **not recommended**, as it is intended for development. The keys are stored **unencrypted** in the specified data file.
+        This setup is **not recommended**, as it is intended for development.
+        
+        <i warning>:material-information: Warning:</i> The keys are stored **unencrypted** in the specified data file.
 
         ```sql
-        SELECT pg_tde_add_global_key_provider_file('provider-name', '/path/to/the/keyring/data.file');
+        SELECT pg_tde_add_global_key_provider_file(
+            'provider-name', 
+            '/path/to/the/keyring/data.file'
+        );
         ```
 
 3. Create principal key
 
     ```sql
-    SELECT pg_tde_set_server_key_using_global_key_provider('key', 'provider-name');
+    SELECT pg_tde_set_server_key_using_global_key_provider(
+        'key', 
+        'provider-name'
+    );
     ```
 
 4. Enable WAL level encryption using the `ALTER SYSTEM` command. You need the privileges of the superuser to run this command:
