@@ -2282,9 +2282,12 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
  * previously-saved right link or left link.  lastcurrblkno is the page that
  * was current at the point where the blkno link was saved, which we use to
  * reason about concurrent page splits/page deletions during backwards scans.
+ * In the common case where seized=false, blkno is either so->currPos.nextPage
+ * or so->currPos.prevPage, and lastcurrblkno is so->currPos.currPage.
  *
- * On entry, caller shouldn't hold any locks or pins on any page (we work
- * directly off of blkno and lastcurrblkno instead).  Parallel scan callers
+ * On entry, so->currPos shouldn't be locked by caller.  so->currPos.buf must
+ * be InvalidBuffer/unpinned as needed by caller (note that lastcurrblkno
+ * won't need to be read again in almost all cases).  Parallel scan callers
  * that seized the scan before calling here should pass seized=true; such a
  * caller's blkno and lastcurrblkno arguments come from the seized scan.
  * seized=false callers just pass us the blkno/lastcurrblkno taken from their
@@ -2301,8 +2304,8 @@ _bt_readfirstpage(IndexScanDesc scan, OffsetNumber offnum, ScanDirection dir)
  * success exit (except during so->dropPin index scans, when we drop the pin
  * eagerly to avoid blocking VACUUM).
  *
- * If there are no more matching records in the given direction, we drop all
- * locks and pins, invalidate so->currPos, and return false.
+ * If there are no more matching records in the given direction, we invalidate
+ * so->currPos (while ensuring it retains no locks or pins), and return false.
  *
  * We always release the scan for a parallel scan caller, regardless of
  * success or failure; we'll call _bt_parallel_release as soon as possible.
