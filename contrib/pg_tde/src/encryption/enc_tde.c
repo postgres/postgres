@@ -3,12 +3,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#include "storage/bufmgr.h"
-
-#include "access/pg_tde_tdemap.h"
 #include "encryption/enc_tde.h"
 #include "encryption/enc_aes.h"
-#include "pg_tde_defines.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"
