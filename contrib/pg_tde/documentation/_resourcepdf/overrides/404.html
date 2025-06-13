@@ -1,0 +1,9 @@
+{#-
+    This file was automatically generated - do not edit
+  -#}
+  {% extends "main.html" %}
+  {% block content %}
+    <h1>404 - Not found</h1>
+    <p> 
+  We can't find the page you are looking for. Try using the Search or <a href= "{{ config.extra.homepage | d(nav.homepage.url, true) | url }}"> return to homepage </a>. </p>
+  {% endblock %}

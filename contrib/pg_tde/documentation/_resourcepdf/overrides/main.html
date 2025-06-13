@@ -1,0 +1,67 @@
+{#-
+  This file was automatically generated - do not edit
+-#}
+{% extends "base.html" %}
+
+{% block announce %}
+  This is the <strong>Release Candidate 2 (RC2)</strong> of Percona Transparent Data Encryption (TDE) extension. 
+  <p><strong>It is not recommended for production environments at this stage.</strong></p> 
+  <p>We encourage you to test it and <a href= "https://forums.percona.com/c/postgresql/pg-tde-transparent-data-encryption-tde/82">give your feedback</a>.
+  This will help us improve the product and make it production-ready faster.</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cmp.osano.com/Azqe5vTyLOSbN3OuT/49ad85b5-0418-4794-ab81-7599dddd534c/osano.js"></script>
+{{ super() }}
+{% endblock %}
+
+                 {% block extrahead %}
+                 {{ super() }}
+                 {% set title = config.site_name %}
+                 {% if page and page.meta and page.meta.title %}
+                 {% set title = title ~ " - " ~ page.meta.title %}
+                 {% elif page and page.title and not page.is_homepage %}
+                 {% set title = title ~ " - " ~ page.title %}
+                 {% endif %}
+                 <meta property="og:type" content="website" />
+                 <meta property="og:title" content="{{ title }}" />
+                 <meta property="og:image" content="https://docs.percona.com/pg-tde/_images/pg_tde.png">
+                 <meta property="og:url" content="https://docs.percona.com/pg-tde/">
+     {% endblock %}
+
+{% block site_nav %}
+                 {% if nav %}
+                   {% if page.meta and page.meta.hide %}
+                     {% set hidden = "hidden" if "navigation" in page.meta.hide %}
+                   {% endif %}
+                   <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" {{ hidden }}>
+                     <div class="md-sidebar__scrollwrap">
+                       <div class="md-sidebar__inner">
+                         {% include "partials/nav.html" %}
+                         <br>
+                         <label class="md-nav__title" for="__drawer">
+                         </label>
+                       </div>
+                     </div>
+                   </div>
+                 {% endif %}
+                 {% if "toc.integrate" not in features %}
+                   {% if page.meta and page.meta.hide %}
+                     {% set hidden = "hidden" if "toc" in page.meta.hide %}
+                   {% endif %}
+                   <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" {{ hidden }}>
+                     <div class="md-sidebar__scrollwrap">
+                       <div class="md-sidebar__inner">
+                         {% include "partials/toc.html" %}
+                       </div>
+                       <div class="md-sidebar__inner">
+                         {% include "partials/banner.html" %}
+                       </div>
+                     </div>
+                   </div>
+                 {% endif %}
+         <script>
+             !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+             posthog.init('phc_7unoI9J6Fm0SMrfDp35xNOpCRTkOAibbffQwdGWbHnL',{api_host:'https://eu.posthog.com'})
+         </script>
+               {% endblock %}

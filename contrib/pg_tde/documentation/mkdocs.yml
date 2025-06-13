@@ -17,7 +17,7 @@ theme:
   name: material
   logo: _images/postgresql-mark.svg
   favicon: _images/postgresql-fav.svg
-  custom_dir: _resource/overrides
+  custom_dir: _resourcepdf/overrides
   font:
     text: Roboto
   palette:
@@ -116,16 +116,24 @@ plugins:
   - macros:
       include_yaml:
         - 'variables.yml' # Use in markdown as '{{ VAR }}'
-  - with-pdf: # https://github.com/orzih/mkdocs-with-pdf
-          output_path: '_pdf/PerconaTDE.pdf'
-          cover_title: 'Percona Transparent Data Encryption'
-          cover_subtitle: Release Candidate (2025-03-27)
-          author: 'Percona Technical Documentation Team'
-          cover_logo: docs/_images/Percona_Logo_Color.png
-          debug_html: false
-          two_columns_level: 3
-          custom_template_path: _resource/templates
-          enabled_if_env: ENABLE_PDF_EXPORT
+  - print-site:
+      add_to_navigation: false
+      print_page_title: 'Percona Transparent Data Encryption documentation'
+      add_print_site_banner: false
+      # Table of contents
+      add_table_of_contents: true
+      toc_title: 'Table of Contents'
+      toc_depth: 2
+      # Content-related
+      add_full_urls: false
+      enumerate_headings: false
+      enumerate_headings_depth: 1
+      enumerate_figures: true
+      add_cover_page: true
+      cover_page_template: "docs/templates/pdf_cover_page.tpl"
+      path_to_pdf: ""
+      include_css: true
+      enabled: true
 
 extra:
   version:

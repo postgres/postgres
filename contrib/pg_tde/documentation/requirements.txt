@@ -16,3 +16,5 @@ mike
 mkdocs-glightbox
 Pillow > 10.1.0 # Pillow is required for mkdocs-glightbox
 mkdocs-open-in-new-tab # added to fix the open in new tab issue with mkdocs-material
+mkdocs-open-in-new-tab
+mkdocs-print-site-plugin
