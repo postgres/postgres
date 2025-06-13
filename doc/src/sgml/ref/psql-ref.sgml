@@ -3734,6 +3734,10 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
        </para>
 
        <para>
+        <command>COPY</command> is not supported while in pipeline mode.
+       </para>
+
+       <para>
         Example:
 <programlisting>
 \startpipeline
