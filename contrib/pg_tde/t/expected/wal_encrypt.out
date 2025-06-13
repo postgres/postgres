@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_global_key_provider_file('file-keyring-010', '/tmp/wal_encrypt.per');
  pg_tde_add_global_key_provider_file 
 -------------------------------------

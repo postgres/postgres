@@ -1,6 +1,6 @@
 \! rm -f '/tmp/pg_tde_test_keyring.per'
 
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_test_keyring.per');
 SELECT pg_tde_create_key_using_global_key_provider('defalut-key','file-provider');

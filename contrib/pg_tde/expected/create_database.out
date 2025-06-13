@@ -1,6 +1,6 @@
 \! rm -f '/tmp/template_provider_global.per'
 \! rm -f '/tmp/template_provider.per'
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 CREATE DATABASE template_db;
 SELECT current_database() AS regress_database
 \gset

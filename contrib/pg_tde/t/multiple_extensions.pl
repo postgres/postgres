@@ -50,10 +50,8 @@ ok($cmdret == 0, "Reset PGSM EXTENSION");
 PGTDE::append_to_debug_file($stdout);
 
 # Create pg_tde extension
-($cmdret, $stdout, $stderr) = $node->psql(
-	'postgres',
-	'CREATE EXTENSION IF NOT EXISTS pg_tde;',
-	extra_params => ['-a']);
+($cmdret, $stdout, $stderr) =
+  $node->psql('postgres', 'CREATE EXTENSION pg_tde;', extra_params => ['-a']);
 ok($cmdret == 0, "CREATE PGTDE EXTENSION");
 PGTDE::append_to_result_file($stdout);
 

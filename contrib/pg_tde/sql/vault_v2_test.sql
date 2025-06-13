@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 
 \getenv root_token_file VAULT_ROOT_TOKEN_FILE
 \getenv cacert_file VAULT_CACERT_FILE

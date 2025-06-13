@@ -1,7 +1,7 @@
 \! rm -f '/tmp/pg_tde_regression_default_key.per'
 
-CREATE EXTENSION IF NOT EXISTS pg_tde;
-CREATE EXTENSION IF NOT EXISTS pg_buffercache;
+CREATE EXTENSION pg_tde;
+CREATE EXTENSION pg_buffercache;
 
 SELECT pg_tde_add_global_key_provider_file('file-provider','/tmp/pg_tde_regression_default_key.per');
 

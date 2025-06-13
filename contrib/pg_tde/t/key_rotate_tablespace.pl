@@ -22,7 +22,7 @@ PGTDE::psql($node, 'postgres',
 PGTDE::psql($node, 'postgres',
 	'CREATE DATABASE tbc TABLESPACE = test_tblspace;');
 
-PGTDE::psql($node, 'tbc', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'tbc', 'CREATE EXTENSION pg_tde;');
 PGTDE::psql($node, 'tbc',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/key_rotate_tablespace.per');"
 );

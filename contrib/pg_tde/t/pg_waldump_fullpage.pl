@@ -42,7 +42,7 @@ shared_preload_libraries = 'pg_tde'
 });
 $node->start;
 
-$node->safe_psql('postgres', "CREATE EXTENSION IF NOT EXISTS pg_tde;");
+$node->safe_psql('postgres', "CREATE EXTENSION pg_tde;");
 $node->safe_psql('postgres',
 	"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal', '/tmp/pg_waldump_fullpage.per');"
 );

@@ -16,7 +16,7 @@ $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 $node->start;
 
-PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'postgres', 'CREATE EXTENSION pg_tde;');
 
 # Only whitelisted C or security definer functions are granted to public by default
 PGTDE::psql(

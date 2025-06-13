@@ -3,7 +3,7 @@
 \! rm -f '/tmp/pg_tde_test_keyring.per'
 \! rm -f '/tmp/pg_tde_test_keyring2.per'
 
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 
 SELECT  * FROM pg_tde_key_info();
 

@@ -16,7 +16,7 @@ $node->init;
 $node->append_conf('postgresql.conf', "shared_preload_libraries = 'pg_tde'");
 $node->start;
 
-PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'postgres', 'CREATE EXTENSION pg_tde;');
 
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/tde_heap.per');"

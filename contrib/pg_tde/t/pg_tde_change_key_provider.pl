@@ -11,7 +11,7 @@ $node->init;
 $node->append_conf('postgresql.conf', q{shared_preload_libraries = 'pg_tde'});
 $node->start;
 
-$node->safe_psql('postgres', q{CREATE EXTENSION IF NOT EXISTS pg_tde});
+$node->safe_psql('postgres', q{CREATE EXTENSION pg_tde});
 $node->safe_psql('postgres',
 	q{SELECT pg_tde_add_global_key_provider_file('global-provider', '/tmp/pg_tde_change_key_provider-global')}
 );

@@ -20,7 +20,7 @@ shared_preload_libraries = 'pg_tde'
 });
 $node->start;
 
-PGTDE::psql($node, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($node, 'postgres', 'CREATE EXTENSION pg_tde;');
 PGTDE::psql($node, 'postgres',
 	"SELECT pg_tde_add_global_key_provider_file('global_keyring', '/tmp/crash_recovery.per');"
 );

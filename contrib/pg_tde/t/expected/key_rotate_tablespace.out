@@ -1,6 +1,6 @@
 SET allow_in_place_tablespaces = true; CREATE TABLESPACE test_tblspace LOCATION '';
 CREATE DATABASE tbc TABLESPACE = test_tblspace;
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/key_rotate_tablespace.per');
  pg_tde_add_database_key_provider_file 
 ---------------------------------------

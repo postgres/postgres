@@ -28,7 +28,7 @@ $replica->start;
 
 PGTDE::append_to_result_file("-- At primary");
 
-PGTDE::psql($primary, 'postgres', 'CREATE EXTENSION IF NOT EXISTS pg_tde;');
+PGTDE::psql($primary, 'postgres', 'CREATE EXTENSION pg_tde;');
 PGTDE::psql($primary, 'postgres',
 	"SELECT pg_tde_add_database_key_provider_file('file-vault', '/tmp/replication.per');"
 );

@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS pg_tde;
+CREATE EXTENSION pg_tde;
 		SELECT
 			pg_proc.oid::regprocedure
 		FROM

@@ -1,7 +1,3 @@
--- Support pg_tde already being installed
-SET client_min_messages = 'warning';
-DROP EXTENSION IF EXISTS pg_tde;
-
 CREATE SCHEMA other;
 
 CREATE EXTENSION pg_tde SCHEMA other;
