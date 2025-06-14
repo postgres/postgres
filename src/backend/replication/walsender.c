@@ -2065,6 +2065,10 @@ PhysicalConfirmReceivedLocation(XLogRecPtr lsn)
 	 * be energy wasted - the worst lost information can do here is give us
 	 * wrong information in a statistics view - we'll just potentially be more
 	 * conservative in removing files.
+	 *
+	 * Checkpointer makes special efforts to keep the WAL segments required by
+	 * the restart_lsn written to the disk. See CreateCheckPoint() and
+	 * CreateRestartPoint() for details.
 	 */
 }
 
