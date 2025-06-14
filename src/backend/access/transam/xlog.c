@@ -7498,6 +7498,10 @@ CreateCheckPoint(int flags)
 	if (PriorRedoPtr != InvalidXLogRecPtr)
 		UpdateCheckPointDistanceEstimate(RedoRecPtr - PriorRedoPtr);
 
+#ifdef USE_INJECTION_POINTS
+	INJECTION_POINT("checkpoint-before-old-wal-removal", NULL);
+#endif
+
 	/*
 	 * Delete old log files, those no longer needed for last checkpoint to
 	 * prevent the disk holding the xlog from growing full.
