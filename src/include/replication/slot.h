@@ -215,6 +215,14 @@ typedef struct ReplicationSlot
 	 * recently stopped.
 	 */
 	TimestampTz inactive_since;
+
+	/*
+	 * Latest restart_lsn that has been flushed to disk. For persistent slots
+	 * the flushed LSN should be taken into account when calculating the
+	 * oldest LSN for WAL segments removal.
+	 */
+	XLogRecPtr	last_saved_restart_lsn;
+
 } ReplicationSlot;
 
 #define SlotIsPhysical(slot) ((slot)->data.database == InvalidOid)
