@@ -53,6 +53,8 @@ tests += {
       't/042_low_level_backup.pl',
       't/043_no_contrecord_switch.pl',
       't/045_archive_restartpoint.pl',
+      't/046_checkpoint_logical_slot.pl',
+      't/047_checkpoint_physical_slot.pl'
     ],
   },
 }
