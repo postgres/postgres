@@ -128,9 +128,11 @@ TidExprListCreate(TidRangeScanState *tidrangestate)
  *		TidRangeEval
  *
  *		Compute and set node's block and offset range to scan by evaluating
- *		the trss_tidexprs.  Returns false if we detect the range cannot
+ *		node->trss_tidexprs.  Returns false if we detect the range cannot
  *		contain any tuples.  Returns true if it's possible for the range to
- *		contain tuples.
+ *		contain tuples.  We don't bother validating that trss_mintid is less
+ *		than or equal to trss_maxtid, as the scan_set_tidrange() table AM
+ *		function will handle that.
  * ----------------------------------------------------------------
  */
 static bool
