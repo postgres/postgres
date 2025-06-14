@@ -778,6 +778,7 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 	int			ssl_in_use,
 				password_used,
 				gssapi_used;
+	int			version_num;
 	char	   *paramval;
 
 	if (!active_branch)
@@ -793,7 +794,9 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 	/* Get values for the parameters */
 	host = PQhost(pset.db);
 	hostaddr = PQhostaddr(pset.db);
-	protocol_version = psprintf("%d", PQprotocolVersion(pset.db));
+	version_num = PQfullProtocolVersion(pset.db);
+	protocol_version = psprintf("%d.%d", version_num / 10000,
+								version_num % 10000);
 	ssl_in_use = PQsslInUse(pset.db);
 	password_used = PQconnectionUsedPassword(pset.db);
 	gssapi_used = PQconnectionUsedGSSAPI(pset.db);
