@@ -1103,6 +1103,15 @@ SELECT $1 \parse stmt1
           Outputs information about the current database connection,
           including TLS-related information if TLS is in use.
          </para>
+         <para>
+          Note that the <structfield>Client User</structfield> field shows
+          the user at the time of connection, while the
+          <structfield>Superuser</structfield> field indicates whether
+          the current user (in the current execution context) has
+          superuser privileges. These users are usually the same, but they can
+          differ, for example, if the current user was changed with the
+          <command>SET ROLE</command> command.
+         </para>
         </listitem>
       </varlistentry>
 
