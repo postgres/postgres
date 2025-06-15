@@ -1101,7 +1101,7 @@ SELECT $1 \parse stmt1
         <listitem>
          <para>
           Outputs information about the current database connection,
-          including TLS-related information if TLS is in use.
+          including SSL-related information if SSL is in use.
          </para>
          <para>
           Note that the <structfield>Client User</structfield> field shows

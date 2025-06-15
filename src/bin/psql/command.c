@@ -877,11 +877,11 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 	printTableAddCell(&cont, _("Backend PID"), false, false);
 	printTableAddCell(&cont, backend_pid, false, false);
 
-	/* TLS Connection */
-	printTableAddCell(&cont, _("TLS Connection"), false, false);
+	/* SSL Connection */
+	printTableAddCell(&cont, _("SSL Connection"), false, false);
 	printTableAddCell(&cont, ssl_in_use ? _("true") : _("false"), false, false);
 
-	/* TLS Information */
+	/* SSL Information */
 	if (ssl_in_use)
 	{
 		char	   *library,
@@ -898,19 +898,19 @@ exec_command_conninfo(PsqlScanState scan_state, bool active_branch)
 		compression = (char *) PQsslAttribute(pset.db, "compression");
 		alpn = (char *) PQsslAttribute(pset.db, "alpn");
 
-		printTableAddCell(&cont, _("TLS Library"), false, false);
+		printTableAddCell(&cont, _("SSL Library"), false, false);
 		printTableAddCell(&cont, library ? library : _("unknown"), false, false);
 
-		printTableAddCell(&cont, _("TLS Protocol"), false, false);
+		printTableAddCell(&cont, _("SSL Protocol"), false, false);
 		printTableAddCell(&cont, protocol ? protocol : _("unknown"), false, false);
 
-		printTableAddCell(&cont, _("TLS Key Bits"), false, false);
+		printTableAddCell(&cont, _("SSL Key Bits"), false, false);
 		printTableAddCell(&cont, key_bits ? key_bits : _("unknown"), false, false);
 
-		printTableAddCell(&cont, _("TLS Cipher"), false, false);
+		printTableAddCell(&cont, _("SSL Cipher"), false, false);
 		printTableAddCell(&cont, cipher ? cipher : _("unknown"), false, false);
 
-		printTableAddCell(&cont, _("TLS Compression"), false, false);
+		printTableAddCell(&cont, _("SSL Compression"), false, false);
 		printTableAddCell(&cont, (compression && strcmp(compression, "off") != 0) ?
 						  _("true") : _("false"), false, false);
 
