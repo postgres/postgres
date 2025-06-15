@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+b27644bade0348d0dafd3036c47880a349fe9332 # 2025-06-15 13:04:24 -0400
+# Sync typedefs.list with the buildfarm.
+
 4672b6223910687b2aab075bcd2dd54ce90d5171 # 2025-06-01 14:55:24 -0400
 # Run pgindent on the previous commit.
 
