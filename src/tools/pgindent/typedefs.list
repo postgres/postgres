@@ -6,6 +6,7 @@ ASN1_INTEGER
 ASN1_OBJECT
 ASN1_OCTET_STRING
 ASN1_STRING
+ATAlterConstraint
 AV
 A_ArrayExpr
 A_Const
@@ -47,7 +48,6 @@ AggSplit
 AggState
 AggStatePerAgg
 AggStatePerGroup
-AggStatePerGroupData
 AggStatePerHash
 AggStatePerPhase
 AggStatePerTrans
@@ -161,7 +161,6 @@ ArrayType
 AsyncQueueControl
 AsyncQueueEntry
 AsyncRequest
-ATAlterConstraint
 AttInMetadata
 AttStatsSlot
 AttoptCacheEntry
@@ -174,8 +173,8 @@ AttrNumber
 AttributeOpts
 AuthRequest
 AuthToken
-AutoPrewarmSharedState
 AutoPrewarmReadStreamData
+AutoPrewarmSharedState
 AutoVacOpts
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
@@ -222,7 +221,6 @@ BTScanInsertData
 BTScanKeyPreproc
 BTScanOpaque
 BTScanOpaqueData
-BTScanPos
 BTScanPosData
 BTScanPosItem
 BTShared
@@ -270,8 +268,8 @@ BitmapAndPath
 BitmapAndState
 BitmapHeapPath
 BitmapHeapScan
-BitmapHeapScanInstrumentation
 BitmapHeapScanDesc
+BitmapHeapScanInstrumentation
 BitmapHeapScanState
 BitmapIndexScan
 BitmapIndexScanState
@@ -341,8 +339,8 @@ BufFile
 Buffer
 BufferAccessStrategy
 BufferAccessStrategyType
-BufferCacheNumaRec
 BufferCacheNumaContext
+BufferCacheNumaRec
 BufferCachePagesContext
 BufferCachePagesRec
 BufferDesc
@@ -382,6 +380,9 @@ CTEMaterialize
 CTESearchClause
 CURL
 CURLM
+CURLMcode
+CURLMsg
+CURLcode
 CURLoption
 CV
 CachedExpression
@@ -628,6 +629,7 @@ DefElem
 DefElemAction
 DefaultACLInfo
 DefineStmt
+DefnDumperPtr
 DeleteStmt
 DependencyGenerator
 DependencyGeneratorData
@@ -677,9 +679,8 @@ DumpableObjectType
 DumpableObjectWithAcl
 DynamicFileList
 DynamicZoneAbbrev
-EC_KEY
-ECDerivesKey
 ECDerivesEntry
+ECDerivesKey
 EDGE
 ENGINE
 EOM_flatten_into_method
@@ -761,10 +762,12 @@ ExpandedRange
 ExpandedRecordFieldInfo
 ExpandedRecordHeader
 ExplainDirectModify_function
+ExplainExtensionOption
 ExplainForeignModify_function
 ExplainForeignScan_function
 ExplainFormat
 ExplainOneQuery_hook_type
+ExplainOptionHandler
 ExplainSerializeOption
 ExplainState
 ExplainStmt
@@ -792,6 +795,7 @@ FDWCollateState
 FD_SET
 FILE
 FILETIME
+FPI
 FSMAddress
 FSMPage
 FSMPageData
@@ -806,7 +810,6 @@ FieldSelect
 FieldStore
 File
 FileBackupMethod
-FileCopyMethod
 FileFdwExecutionState
 FileFdwPlanState
 FileNameMap
@@ -1190,6 +1193,7 @@ HeapCheckContext
 HeapCheckReadStreamData
 HeapPageFreeze
 HeapScanDesc
+HeapScanDescData
 HeapTuple
 HeapTupleData
 HeapTupleFields
@@ -1249,6 +1253,7 @@ IndexClause
 IndexClauseSet
 IndexDeleteCounts
 IndexDeletePrefetchState
+IndexDoCheckCallback
 IndexElem
 IndexFetchHeapData
 IndexFetchTableData
@@ -1279,13 +1284,14 @@ InheritableSocket
 InitSampleScan_function
 InitializeDSMForeignScan_function
 InitializeWorkerForeignScan_function
+InjIoErrorState
 InjectionPointCacheEntry
 InjectionPointCallback
 InjectionPointCondition
 InjectionPointConditionType
 InjectionPointEntry
-InjectionPointsCtl
 InjectionPointSharedState
+InjectionPointsCtl
 InlineCodeBlock
 InsertStmt
 Instrumentation
@@ -1302,7 +1308,6 @@ IntoClause
 InvalMessageArray
 InvalidationInfo
 InvalidationMsgsGroup
-IoMethod
 IoMethodOps
 IpcMemoryId
 IpcMemoryKey
@@ -1492,8 +1497,7 @@ LLVMOrcResourceTrackerRef
 LLVMOrcSymbolStringPoolRef
 LLVMOrcThreadSafeContextRef
 LLVMOrcThreadSafeModuleRef
-LLVMPassManagerBuilderRef
-LLVMPassManagerRef
+LLVMPassBuilderOptionsRef
 LLVMTargetMachineRef
 LLVMTargetRef
 LLVMTypeRef
@@ -1563,6 +1567,7 @@ LoadStmt
 LocalBufferLookupEnt
 LocalPgBackendStatus
 LocalTransactionId
+Location
 LocationIndex
 LocationLen
 LockAcquireResult
@@ -1582,7 +1587,6 @@ LockTupleMode
 LockViewRecurse_context
 LockWaitPolicy
 LockingClause
-LogConnectionOption
 LogOpts
 LogStmtLevel
 LogicalDecodeBeginCB
@@ -1633,6 +1637,7 @@ LogicalSlotInfo
 LogicalSlotInfoArr
 LogicalTape
 LogicalTapeSet
+LookupSet
 LsnReadQueue
 LsnReadQueueNextFun
 LsnReadQueueNextStatus
@@ -1657,8 +1662,8 @@ ManyTestResourceKind
 Material
 MaterialPath
 MaterialState
-MdfdVec
 MdPathStr
+MdfdVec
 Memoize
 MemoizeEntry
 MemoizeInstrumentation
@@ -1672,6 +1677,7 @@ MemoryContextCallback
 MemoryContextCallbackFunction
 MemoryContextCounters
 MemoryContextData
+MemoryContextId
 MemoryContextMethodID
 MemoryContextMethods
 MemoryStatsPrintFunc
@@ -1765,6 +1771,7 @@ NumericSortSupport
 NumericSumAccum
 NumericVar
 OAuthValidatorCallbacks
+OAuthValidatorModuleInit
 OM_uint32
 OP
 OSAPerGroupState
@@ -1834,7 +1841,6 @@ PGCALL2
 PGCRYPTO_SHA_t
 PGChecksummablePage
 PGContextVisibility
-PGErrorVerbosity
 PGEvent
 PGEventConnDestroy
 PGEventConnReset
@@ -1904,7 +1910,6 @@ PLpgSQL_exception
 PLpgSQL_exception_block
 PLpgSQL_execstate
 PLpgSQL_expr
-PLpgSQL_func_hashkey
 PLpgSQL_function
 PLpgSQL_getdiag_kind
 PLpgSQL_if_elsif
@@ -2155,10 +2160,10 @@ PermutationStepBlockerType
 PgAioBackend
 PgAioCtl
 PgAioHandle
-PgAioHandleCallbackID
-PgAioHandleCallbackStage
 PgAioHandleCallbackComplete
+PgAioHandleCallbackID
 PgAioHandleCallbackReport
+PgAioHandleCallbackStage
 PgAioHandleCallbacks
 PgAioHandleCallbacksEntry
 PgAioHandleFlags
@@ -2203,9 +2208,9 @@ PgStatShared_Common
 PgStatShared_Database
 PgStatShared_Function
 PgStatShared_HashEntry
+PgStatShared_IO
 PgStatShared_InjectionPoint
 PgStatShared_InjectionPointFixed
-PgStatShared_IO
 PgStatShared_Relation
 PgStatShared_ReplSlot
 PgStatShared_SLRU
@@ -2226,7 +2231,6 @@ PgStat_FunctionCallUsage
 PgStat_FunctionCounts
 PgStat_HashKey
 PgStat_IO
-PgStat_Kind
 PgStat_KindInfo
 PgStat_LocalState
 PgStat_PendingDroppedStatsItem
@@ -2354,12 +2358,12 @@ PushFilter
 PushFilterOps
 PushFunction
 PyCFunction
-PyMappingMethods
 PyMethodDef
 PyModuleDef
 PyObject
-PySequenceMethods
 PyTypeObject
+PyType_Slot
+PyType_Spec
 Py_ssize_t
 QPRS_STATE
 QTN2QTState
@@ -2473,6 +2477,7 @@ RelOptInfo
 RelOptKind
 RelPathStr
 RelStatsInfo
+RelSyncCallbackFunction
 RelToCheck
 RelToCluster
 RelabelType
@@ -2625,7 +2630,6 @@ SQLDropObject
 SQLFunctionCache
 SQLFunctionCachePtr
 SQLFunctionHashEntry
-SQLFunctionLink
 SQLFunctionParseInfo
 SQLFunctionParseInfoPtr
 SQLValueFunction
@@ -2637,6 +2641,7 @@ STARTUPINFO
 STRLEN
 SV
 SYNCHRONIZATION_BARRIER
+SYSTEM_INFO
 SampleScan
 SampleScanGetSampleSize_function
 SampleScanState
@@ -2724,6 +2729,7 @@ SharedIncrementalSortInfo
 SharedIndexScanInstrumentation
 SharedInvalCatalogMsg
 SharedInvalCatcacheMsg
+SharedInvalRelSyncMsg
 SharedInvalRelcacheMsg
 SharedInvalRelmapMsg
 SharedInvalSmgrMsg
@@ -2763,7 +2769,7 @@ SingleBoundSortItem
 Size
 SkipPages
 SkipSupport
-SkipSupportData
+SkipSupportIncDec
 SlabBlock
 SlabContext
 SlabSlot
@@ -2989,6 +2995,7 @@ TarMethodData
 TarMethodFile
 TargetEntry
 TclExceptionNameMap
+Tcl_CmdInfo
 Tcl_DString
 Tcl_FileProc
 Tcl_HashEntry
@@ -2996,6 +3003,7 @@ Tcl_HashTable
 Tcl_Interp
 Tcl_NotifierProcs
 Tcl_Obj
+Tcl_Size
 Tcl_Time
 TempNamespaceStatus
 TestDSMRegistryStruct
@@ -3141,6 +3149,7 @@ UnicodeNormalizationQC
 Unique
 UniquePath
 UniquePathMethod
+UniqueRelInfo
 UniqueState
 UnlistenStmt
 UnresolvedTup
@@ -3171,8 +3180,11 @@ VacuumRelation
 VacuumStmt
 ValidIOData
 ValidateIndexState
-ValidatorModuleState
 ValidatorModuleResult
+ValidatorModuleState
+ValidatorShutdownCB
+ValidatorStartupCB
+ValidatorValidateCB
 ValuesScan
 ValuesScanState
 Var
@@ -3377,10 +3389,9 @@ _resultmap
 _stringlist
 access_vector_t
 acquireLocksOnSubLinks_context
-add_nulling_relids_context
 addFkConstraintSides
+add_nulling_relids_context
 adjust_appendrel_attrs_context
-allocfunc
 amadjustmembers_function
 ambeginscan_function
 ambuild_function
@@ -3392,6 +3403,7 @@ amcostestimate_function
 amendscan_function
 amestimateparallelscan_function
 amgetbitmap_function
+amgettreeheight_function
 amgettuple_function
 aminitparallelscan_function
 aminsert_function
@@ -3402,13 +3414,27 @@ amparallelrescan_function
 amproperty_function
 amrescan_function
 amrestrpos_function
-amtranslate_strategy_function amtranslatestrategy;
-amtranslate_cmptype_function amtranslatecmptype;
+amtranslate_cmptype_function
+amtranslate_strategy_function
 amvacuumcleanup_function
 amvalidate_function
 array_iter
 array_unnest_fctx
 assign_collations_context
+astreamer
+astreamer_archive_context
+astreamer_extractor
+astreamer_gzip_decompressor
+astreamer_gzip_writer
+astreamer_lz4_frame
+astreamer_member
+astreamer_ops
+astreamer_plain_writer
+astreamer_recovery_injector
+astreamer_tar_archiver
+astreamer_tar_parser
+astreamer_verify
+astreamer_zstd_frame
 auth_password_hook_typ
 autovac_table
 av_relation
@@ -3435,20 +3461,6 @@ bbsink_shell
 bbsink_state
 bbsink_throttle
 bbsink_zstd
-astreamer
-astreamer_archive_context
-astreamer_extractor
-astreamer_gzip_decompressor
-astreamer_gzip_writer
-astreamer_lz4_frame
-astreamer_member
-astreamer_ops
-astreamer_plain_writer
-astreamer_recovery_injector
-astreamer_tar_archiver
-astreamer_tar_parser
-astreamer_verify
-astreamer_zstd_frame
 bgworker_main_type
 bh_node_type
 binaryheap
@@ -3488,6 +3500,13 @@ colormaprange
 compare_context
 config_handle
 config_var_value
+conn_errorMessage_func
+conn_oauth_client_id_func
+conn_oauth_client_secret_func
+conn_oauth_discovery_uri_func
+conn_oauth_issuer_id_func
+conn_oauth_scope_func
+conn_sasl_state_func
 contain_aggs_of_level_context
 contain_placeholder_references_context
 convert_testexpr_context
@@ -3504,6 +3523,9 @@ create_upper_paths_hook_type
 createdb_failure_params
 crosstab_HashEnt
 crosstab_cat_desc
+curl_infotype
+curl_socket_t
+curl_version_info_data
 datapagemap_iterator_t
 datapagemap_t
 dateKEY
@@ -3515,9 +3537,8 @@ deparse_columns
 deparse_context
 deparse_expr_cxt
 deparse_namespace
-destructor
+derives_hash
 dev_t
-digit
 disassembledLeaf
 dlist_head
 dlist_iter
@@ -3555,18 +3576,23 @@ dsm_handle
 dsm_op
 dsm_segment
 dsm_segment_detach_callback
+duration
 eLogType
 ean13
 eary
 ec_matches_callback_type
 ec_member_foreign_arg
 ec_member_matches_arg
+element_type
 emit_log_hook_type
 eval_const_expressions_context
 exec_thread_arg
 execution_state
 exit_function
 explain_get_index_name_hook_type
+explain_per_node_hook_type
+explain_per_plan_hook_type
+explain_validate_options_hook_type
 f_smgr
 fasthash_state
 fd_set
@@ -3649,7 +3675,6 @@ gss_key_value_set_desc
 gss_name_t
 gtrgm_consistent_cache
 gzFile
-hashfunc
 hbaPort
 heap_page_items_state
 help_handler
@@ -3671,17 +3696,21 @@ init_function
 inline_cte_walker_context
 inline_error_callback_arg
 ino_t
+inquiry
 instr_time
 int128
 int16
 int16KEY
+int16_t
 int2vector
 int32
 int32KEY
 int32_t
 int64
 int64KEY
+int64_t
 int8
+int8_t
 int8x16_t
 internalPQconninfoOption
 intptr_t
@@ -3713,6 +3742,7 @@ lclContext
 lclTocEntry
 leafSegmentInfo
 leaf_item
+libpq_gettext_func
 libpq_source
 line_t
 lineno_t
@@ -3769,6 +3799,7 @@ mxact
 mxtruncinfo
 needs_fmgr_hook_type
 network_sortsupport_state
+nl_item
 nodeitem
 normal_rand_fctx
 nsphash_hash
@@ -3786,6 +3817,7 @@ openssl_tls_init_hook_typ
 ossl_EVP_cipher_func
 other
 output_type
+overexplain_options
 pagetable_hash
 pagetable_iterator
 pairingheap
@@ -3805,7 +3837,6 @@ pg_atomic_flag
 pg_atomic_uint32
 pg_atomic_uint64
 pg_be_sasl_mech
-pg_case_map
 pg_category_range
 pg_checksum_context
 pg_checksum_raw_context
@@ -3829,7 +3860,6 @@ pg_funcptr_t
 pg_gssinfo
 pg_hmac_ctx
 pg_hmac_errno
-pg_int64
 pg_local_to_utf_combined
 pg_locale_t
 pg_mb_radix_tree
@@ -3898,7 +3928,8 @@ plperl_query_entry
 plpgsql_CastExprHashEntry
 plpgsql_CastHashEntry
 plpgsql_CastHashKey
-plpgsql_HashEnt
+plpgsql_expr_walker_callback
+plpgsql_stmt_walker_callback
 pltcl_call_state
 pltcl_interp_desc
 pltcl_proc_desc
@@ -3921,7 +3952,6 @@ printTextLineFormat
 printTextLineWrap
 printTextRule
 printXheaderWidthType
-printfunc
 priv_map
 process_file_callback_t
 process_sublinks_context
@@ -3961,12 +3991,9 @@ reduce_outer_joins_pass1_state
 reduce_outer_joins_pass2_state
 reference
 regex_arc_t
-regex_t
 regexp
 regexp_matches_ctx
 registered_buffer
-regmatch_t
-regoff_t
 regproc
 relopt_bool
 relopt_enum
@@ -3985,6 +4012,7 @@ remoteConnHashEnt
 remoteDep
 remove_nulling_relids_context
 rendezvousHashEntry
+rep
 replace_rte_variables_callback
 replace_rte_variables_context
 report_error_fn
@@ -4003,6 +4031,7 @@ rt_node_class_test_elem
 rt_radix_tree
 saophash_hash
 save_buffer
+save_locale_t
 scram_state
 scram_state_enum
 script_error_callback_arg
@@ -4010,6 +4039,8 @@ security_class_t
 sem_t
 sepgsql_context_info_t
 sequence_magic
+set_conn_altsock_func
+set_conn_oauth_token_func
 set_join_pathlist_hook_type
 set_rel_pathlist_hook_type
 shared_ts_iter
@@ -4130,6 +4161,7 @@ uint32_t
 uint32x4_t
 uint64
 uint64_t
+uint64x2_t
 uint8
 uint8_t
 uint8x16_t
@@ -4139,7 +4171,6 @@ unicodeStyleColumnFormat
 unicodeStyleFormat
 unicodeStyleRowFormat
 unicode_linestyle
-UniqueRelInfo
 unit_conversion
 unlogged_relation_entry
 utf_local_conversion_func
@@ -4282,6 +4313,7 @@ xmlGenericErrorFunc
 xmlNodePtr
 xmlNodeSetPtr
 xmlParserCtxtPtr
+xmlParserErrors
 xmlParserInputPtr
 xmlSaveCtxt
 xmlSaveCtxtPtr
@@ -4302,6 +4334,3 @@ yyscan_t
 z_stream
 z_streamp
 zic_t
-ExplainExtensionOption
-ExplainOptionHandler
-overexplain_options

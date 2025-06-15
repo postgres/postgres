@@ -58,9 +58,9 @@ static PyType_Slot PLyCursor_slots[] =
 static PyType_Spec PLyCursor_spec =
 {
 	.name = "PLyCursor",
-		.basicsize = sizeof(PLyCursorObject),
-		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-		.slots = PLyCursor_slots,
+	.basicsize = sizeof(PLyCursorObject),
+	.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.slots = PLyCursor_slots,
 };
 
 static PyTypeObject *PLy_CursorType;

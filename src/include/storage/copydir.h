@@ -17,7 +17,7 @@ typedef enum FileCopyMethod
 {
 	FILE_COPY_METHOD_COPY,
 	FILE_COPY_METHOD_CLONE,
-} FileCopyMethod;
+}			FileCopyMethod;
 
 /* GUC parameters */
 extern PGDLLIMPORT int file_copy_method;

@@ -73,11 +73,14 @@ if ($sourcedir)
 # might make them so.  For the moment we just hardwire a list of names
 # to add and a list of names to exclude; eventually this may need to be
 # easier to configure.  Note that the typedefs need trailing newlines.
-my @additional = ("bool\n");
+my @additional = map { "$_\n" } qw(
+  bool regex_t regmatch_t regoff
+);
 
 my %excluded = map { +"$_\n" => 1 } qw(
-  ANY FD_SET U abs allocfunc boolean date digit ilist interval iterator other
-  pointer printfunc reference string timestamp type wrap
+  FD_SET LookupSet boolean date duration
+  element_type inquiry iterator other
+  pointer reference rep string timestamp type wrap
 );
 
 # globals

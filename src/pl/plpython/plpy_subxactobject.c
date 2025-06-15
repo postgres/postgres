@@ -46,9 +46,9 @@ static PyType_Slot PLySubtransaction_slots[] =
 static PyType_Spec PLySubtransaction_spec =
 {
 	.name = "PLySubtransaction",
-		.basicsize = sizeof(PLySubtransactionObject),
-		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-		.slots = PLySubtransaction_slots,
+	.basicsize = sizeof(PLySubtransactionObject),
+	.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.slots = PLySubtransaction_slots,
 };
 
 static PyTypeObject *PLy_SubtransactionType;

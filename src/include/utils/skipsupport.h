@@ -90,7 +90,7 @@ typedef struct SkipSupportData
 	 */
 	SkipSupportIncDec decrement;
 	SkipSupportIncDec increment;
-} SkipSupportData;
+}			SkipSupportData;
 
 extern SkipSupport PrepareSkipSupportFromOpclass(Oid opfamily, Oid opcintype,
 												 bool reverse);

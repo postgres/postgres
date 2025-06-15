@@ -70,9 +70,9 @@ static PyType_Slot PLyResult_slots[] =
 static PyType_Spec PLyResult_spec =
 {
 	.name = "PLyResult",
-		.basicsize = sizeof(PLyResultObject),
-		.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-		.slots = PLyResult_slots,
+	.basicsize = sizeof(PLyResultObject),
+	.flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.slots = PLyResult_slots,
 };
 
 static PyTypeObject *PLy_ResultType;

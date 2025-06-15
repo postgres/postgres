@@ -38,7 +38,7 @@ typedef struct MemoryContextId
 {
 	MemoryContext context;
 	int			context_id;
-}			MemoryContextId;
+} MemoryContextId;
 
 /*
  * int_list_to_array

@@ -42,9 +42,9 @@ typedef struct InjIoErrorState
 
 	bool		short_read_result_set;
 	int			short_read_result;
-}			InjIoErrorState;
+} InjIoErrorState;
 
-static InjIoErrorState * inj_io_error_state;
+static InjIoErrorState *inj_io_error_state;
 
 /* Shared memory init callbacks */
 static shmem_request_hook_type prev_shmem_request_hook = NULL;

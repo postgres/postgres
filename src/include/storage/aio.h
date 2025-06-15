@@ -36,7 +36,7 @@ typedef enum IoMethod
 #ifdef IOMETHOD_IO_URING_ENABLED
 	IOMETHOD_IO_URING,
 #endif
-} IoMethod;
+}			IoMethod;
 
 /* We'll default to worker based execution. */
 #define DEFAULT_IO_METHOD IOMETHOD_WORKER

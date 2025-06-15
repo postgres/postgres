@@ -264,7 +264,7 @@ typedef struct AggStatePerGroupData
 	 * NULL and not auto-replace it with a later input value. Only the first
 	 * non-NULL input will be auto-substituted.
 	 */
-} AggStatePerGroupData;
+}			AggStatePerGroupData;
 
 /*
  * AggStatePerPhaseData - per-grouping-set-phase state
