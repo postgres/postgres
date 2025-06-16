@@ -95,7 +95,9 @@ pg_comp_crc32c_choose(pg_crc32c crc, const void *data, size_t len)
 			__cpuidex(exx, 7, 0);
 #endif
 
-#ifdef USE_AVX512_CRC32C_WITH_RUNTIME_CHECK
+#if defined(__clang__) && !defined(__OPTIMIZE__)
+			/* Some versions of clang are broken at -O0 */
+#elif defined(USE_AVX512_CRC32C_WITH_RUNTIME_CHECK)
 			if (exx[2] & (1 << 10) &&	/* VPCLMULQDQ */
 				exx[1] & (1 << 31)) /* AVX512-VL */
 				pg_comp_crc32c = pg_comp_crc32c_avx512;
