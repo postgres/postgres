@@ -80,4 +80,33 @@ SELECT pg_tde_is_encrypted('partition_child_tde_heap');
 DROP TABLE partition_parent;
 RESET pg_tde.enforce_encryption;
 
+-- Partitioned indexes should be encrypted
+CREATE TABLE partition_parent (a int) PARTITION BY RANGE (a);
+CREATE TABLE partition_child PARTITION OF partition_parent FOR VALUES FROM (0) TO (9) USING tde_heap;
+CREATE INDEX ON partition_parent (a);
+SELECT pg_tde_is_encrypted('partition_parent_a_idx'); -- Also check that the parent index is NULL
+SELECT pg_tde_is_encrypted('partition_child_a_idx');
+DROP TABLE partition_parent;
+
+-- Partitioned indexes should be not encrypted with heap
+CREATE TABLE partition_parent (a int) PARTITION BY RANGE (a);
+CREATE TABLE partition_child PARTITION OF partition_parent FOR VALUES FROM (0) TO (9) USING heap;
+CREATE INDEX ON partition_parent (a);
+SELECT pg_tde_is_encrypted('partition_child_a_idx');
+DROP TABLE partition_parent;
+
+-- We refuse to create an index when the inheritance heirarchy has mixed statuses
+CREATE TABLE partition_parent (a int) PARTITION BY RANGE (a);
+CREATE TABLE partition_child_heap PARTITION OF partition_parent FOR VALUES FROM (0) TO (9) USING heap;
+CREATE TABLE partition_child_tde_heap PARTITION OF partition_parent FOR VALUES FROM (10) TO (19) USING tde_heap;
+CREATE INDEX ON partition_parent (a);
+DROP TABLE partition_parent;
+
+-- Index should also be encrypted for new partitionins
+CREATE TABLE partition_parent (a int) PARTITION BY RANGE (a);
+CREATE INDEX ON partition_parent (a);
+CREATE TABLE partition_child PARTITION OF partition_parent FOR VALUES FROM (10) TO (19) USING tde_heap;
+SELECT pg_tde_is_encrypted('partition_child_a_idx');
+DROP TABLE partition_parent;
+
 DROP EXTENSION pg_tde;
