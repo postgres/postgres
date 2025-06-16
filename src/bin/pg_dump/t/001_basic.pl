@@ -261,6 +261,6 @@ command_fails_like(
 
 command_fails_like(
 	[ 'pg_dumpall', '--format', 'x' ],
-	qr/\Qpg_dumpall: error: unrecognized archive format "x";\E/,
-	'pg_dumpall: unrecognized archive format');
+	qr/\Qpg_dumpall: error: unrecognized output format "x";\E/,
+	'pg_dumpall: unrecognized output format');
 done_testing();

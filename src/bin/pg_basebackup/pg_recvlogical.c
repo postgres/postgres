@@ -91,7 +91,7 @@ usage(void)
 	printf(_("\nOptions:\n"));
 	printf(_("  -E, --endpos=LSN       exit after receiving the specified LSN\n"));
 	printf(_("      --failover         enable replication slot synchronization to standby servers when\n"
-			 "                         creating a slot\n"));
+			 "                         creating a replication slot\n"));
 	printf(_("  -f, --file=FILE        receive log into this file, - for stdout\n"));
 	printf(_("  -F  --fsync-interval=SECS\n"
 			 "                         time between fsyncs to the output file (default: %d)\n"), (fsync_interval / 1000));

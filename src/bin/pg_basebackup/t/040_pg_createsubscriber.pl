@@ -399,7 +399,7 @@ command_fails_like(
 		'--database' => $db1,
 		'--all',
 	],
-	qr/--database cannot be used with -a\/--all/,
+	qr/options --database and -a\/--all cannot be used together/,
 	'fail if --database is used with --all');
 
 # run pg_createsubscriber with '--publication' and '--all' and verify
@@ -416,7 +416,7 @@ command_fails_like(
 		'--all',
 		'--publication' => 'pub1',
 	],
-	qr/--publication cannot be used with -a\/--all/,
+	qr/options --publication and -a\/--all cannot be used together/,
 	'fail if --publication is used with --all');
 
 # run pg_createsubscriber with '--all' option

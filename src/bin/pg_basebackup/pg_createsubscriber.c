@@ -247,14 +247,14 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -a, --all                       create subscriptions for all databases except template\n"
-			 "                                  databases or databases that don't allow connections\n"));
+			 "                                  databases and databases that don't allow connections\n"));
 	printf(_("  -d, --database=DBNAME           database in which to create a subscription\n"));
 	printf(_("  -D, --pgdata=DATADIR            location for the subscriber data directory\n"));
 	printf(_("  -n, --dry-run                   dry run, just show what would be done\n"));
 	printf(_("  -p, --subscriber-port=PORT      subscriber port number (default %s)\n"), DEFAULT_SUB_PORT);
 	printf(_("  -P, --publisher-server=CONNSTR  publisher connection string\n"));
 	printf(_("  -R, --remove=OBJECTTYPE         remove all objects of the specified type from specified\n"
-			 "                                  databases on the subscriber; accepts: publications\n"));
+			 "                                  databases on the subscriber; accepts: \"%s\"\n"), "publications");
 	printf(_("  -s, --socketdir=DIR             socket directory to use (default current dir.)\n"));
 	printf(_("  -t, --recovery-timeout=SECS     seconds to wait for recovery to end\n"));
 	printf(_("  -T, --enable-two-phase          enable two-phase commit for all subscriptions\n"));
@@ -973,7 +973,7 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 		pg_log_warning("two_phase option will not be enabled for replication slots");
 		pg_log_warning_detail("Subscriptions will be created with the two_phase option disabled.  "
 							  "Prepared transactions will be replicated at COMMIT PREPARED.");
-		pg_log_warning_hint("You can use --enable-two-phase switch to enable two_phase.");
+		pg_log_warning_hint("You can use the command-line option --enable-two-phase to enable two_phase.");
 	}
 
 	/*
@@ -2143,7 +2143,7 @@ main(int argc, char **argv)
 				if (!simple_string_list_member(&opt.objecttypes_to_remove, optarg))
 					simple_string_list_append(&opt.objecttypes_to_remove, optarg);
 				else
-					pg_fatal("object type \"%s\" is specified more than once for -R/--remove", optarg);
+					pg_fatal("object type \"%s\" specified more than once for -R/--remove", optarg);
 				break;
 			case 's':
 				opt.socket_dir = pg_strdup(optarg);
@@ -2214,7 +2214,7 @@ main(int argc, char **argv)
 
 		if (bad_switch)
 		{
-			pg_log_error("%s cannot be used with -a/--all", bad_switch);
+			pg_log_error("options %s and -a/--all cannot be used together", bad_switch);
 			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
@@ -2341,7 +2341,7 @@ main(int argc, char **argv)
 		else
 		{
 			pg_log_error("invalid object type \"%s\" specified for -R/--remove", cell->val);
-			pg_log_error_hint("The valid option is: \"publications\"");
+			pg_log_error_hint("The valid value is: \"%s\"", "publications");
 			exit(1);
 		}
 	}

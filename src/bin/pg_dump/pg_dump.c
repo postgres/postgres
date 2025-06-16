@@ -6936,7 +6936,7 @@ getRelationStatistics(Archive *fout, DumpableObject *rel, int32 relpages,
 				info->section = SECTION_POST_DATA;
 				break;
 			default:
-				pg_fatal("cannot dump statistics for relation kind '%c'",
+				pg_fatal("cannot dump statistics for relation kind \"%c\"",
 						 info->relkind);
 		}
 
@@ -9461,7 +9461,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		int			i_consrc;
 		int			i_conislocal;
 
-		pg_log_info("finding invalid not null constraints");
+		pg_log_info("finding invalid not-null constraints");
 
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q,
@@ -10855,7 +10855,7 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 		expected_te = expected_te->next;
 
 	if (te != expected_te)
-		pg_fatal("stats dumped out of order (current: %d %s %s) (expected: %d %s %s)",
+		pg_fatal("statistics dumped out of order (current: %d %s %s, expected: %d %s %s)",
 				 te->dumpId, te->desc, te->tag,
 				 expected_te->dumpId, expected_te->desc, expected_te->tag);
 
@@ -10996,7 +10996,7 @@ dumpRelationStats_dumper(Archive *fout, const void *userArg, const TocEntry *te)
 		appendStringLiteralAH(out, rsinfo->dobj.name, fout);
 
 		if (PQgetisnull(res, rownum, i_attname))
-			pg_fatal("attname cannot be NULL");
+			pg_fatal("unexpected null attname");
 		attname = PQgetvalue(res, rownum, i_attname);
 
 		/*

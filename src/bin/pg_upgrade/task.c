@@ -192,8 +192,7 @@ start_conn(const ClusterInfo *cluster, UpgradeTaskSlot *slot)
 	slot->conn = PQconnectStart(conn_opts.data);
 
 	if (!slot->conn)
-		pg_fatal("failed to create connection with connection string: \"%s\"",
-				 conn_opts.data);
+		pg_fatal("out of memory");
 
 	termPQExpBuffer(&conn_opts);
 }
@@ -402,7 +401,7 @@ wait_on_slots(UpgradeTaskSlot *slots, int numslots)
 	 * If we found socket(s) to wait on, wait.
 	 */
 	if (select_loop(maxFd, &input, &output) == -1)
-		pg_fatal("select() failed: %m");
+		pg_fatal("%s() failed: %m", "select");
 
 	/*
 	 * Mark which sockets appear to be ready.

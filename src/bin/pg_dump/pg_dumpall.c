@@ -525,7 +525,7 @@ main(int argc, char *argv[])
 
 		OPF = fopen(global_path, PG_BINARY_W);
 		if (!OPF)
-			pg_fatal("could not open \"%s\": %m", global_path);
+			pg_fatal("could not open file \"%s\": %m", global_path);
 	}
 	else if (filename)
 	{
@@ -1659,14 +1659,14 @@ dumpDatabases(PGconn *conn, ArchiveFormat archDumpFormat)
 
 		/* Create a subdirectory with 'databases' name under main directory. */
 		if (mkdir(db_subdir, pg_dir_create_mode) != 0)
-			pg_fatal("could not create subdirectory \"%s\": %m", db_subdir);
+			pg_fatal("could not create directory \"%s\": %m", db_subdir);
 
 		snprintf(map_file_path, MAXPGPATH, "%s/map.dat", filename);
 
 		/* Create a map file (to store dboid and dbname) */
 		map_file = fopen(map_file_path, PG_BINARY_W);
 		if (!map_file)
-			pg_fatal("could not open map file: %s", strerror(errno));
+			pg_fatal("could not open file \"%s\": %m", map_file_path);
 	}
 
 	for (i = 0; i < PQntuples(res); i++)
@@ -1976,7 +1976,7 @@ parseDumpFormat(const char *format)
 	else if (pg_strcasecmp(format, "tar") == 0)
 		archDumpFormat = archTar;
 	else
-		pg_fatal("unrecognized archive format \"%s\"; please specify \"c\", \"d\", \"p\", or \"t\"",
+		pg_fatal("unrecognized output format \"%s\"; please specify \"c\", \"d\", \"p\", or \"t\"",
 				 format);
 
 	return archDumpFormat;

@@ -204,7 +204,7 @@ ParseVariableDouble(const char *value, const char *name, double *result, double 
 	if ((value == NULL) || (*value == '\0'))
 	{
 		if (name)
-			pg_log_error("invalid input syntax for \"%s\"", name);
+			pg_log_error("invalid input syntax for variable \"%s\"", name);
 		return false;
 	}
 
@@ -215,14 +215,14 @@ ParseVariableDouble(const char *value, const char *name, double *result, double 
 		if (dblval < min)
 		{
 			if (name)
-				pg_log_error("invalid value \"%s\" for \"%s\": must be greater than %.2f",
+				pg_log_error("invalid value \"%s\" for variable \"%s\": must be greater than %.2f",
 							 value, name, min);
 			return false;
 		}
 		else if (dblval > max)
 		{
 			if (name)
-				pg_log_error("invalid value \"%s\" for \"%s\": must be less than %.2f",
+				pg_log_error("invalid value \"%s\" for variable \"%s\": must be less than %.2f",
 							 value, name, max);
 		}
 		*result = dblval;
@@ -238,13 +238,13 @@ ParseVariableDouble(const char *value, const char *name, double *result, double 
 			 (dblval == 0.0 || dblval >= HUGE_VAL || dblval <= -HUGE_VAL))
 	{
 		if (name)
-			pg_log_error("\"%s\" is out of range for \"%s\"", value, name);
+			pg_log_error("value \"%s\" is out of range for variable \"%s\"", value, name);
 		return false;
 	}
 	else
 	{
 		if (name)
-			pg_log_error("invalid value \"%s\" for \"%s\"", value, name);
+			pg_log_error("invalid value \"%s\" for variable \"%s\"", value, name);
 		return false;
 	}
 }

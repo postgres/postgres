@@ -523,7 +523,7 @@ main(int argc, char **argv)
 		 */
 		if (!globals_only && opts->createDB != 1)
 		{
-			pg_log_error("-C/--create option should be specified when restoring an archive created by pg_dumpall");
+			pg_log_error("option -C/--create must be specified when restoring an archive created by pg_dumpall");
 			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			pg_log_error_hint("Individual databases can be restored using their specific archives.");
 			exit_nicely(1);
@@ -557,7 +557,7 @@ main(int argc, char **argv)
 			if (conn)
 				PQfinish(conn);
 
-			pg_log_info("database restoring skipped as -g/--globals-only option was specified");
+			pg_log_info("database restoring skipped because option -g/--globals-only was specified");
 		}
 		else
 		{
@@ -725,8 +725,8 @@ usage(const char *progname)
 	printf(_("  --role=ROLENAME          do SET ROLE before restore\n"));
 
 	printf(_("\n"
-			 "The options -I, -n, -N, -P, -t, -T, --section, and --exclude-database can be combined\n"
-			 "and specified multiple times to select multiple objects.\n"));
+			 "The options -I, -n, -N, -P, -t, -T, --section, and --exclude-database can be\n"
+			 "combined and specified multiple times to select multiple objects.\n"));
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
@@ -946,7 +946,7 @@ get_dbnames_list_to_restore(PGconn *conn,
 	query = createPQExpBuffer();
 
 	if (!conn)
-		pg_log_info("considering PATTERN as NAME for --exclude-database option as no db connection while doing pg_restore.");
+		pg_log_info("considering PATTERN as NAME for --exclude-database option as no database connection while doing pg_restore");
 
 	/*
 	 * Process one by one all dbnames and if specified to skip restoring, then
@@ -992,7 +992,7 @@ get_dbnames_list_to_restore(PGconn *conn,
 				if ((PQresultStatus(res) == PGRES_TUPLES_OK) && PQntuples(res))
 				{
 					skip_db_restore = true;
-					pg_log_info("database \"%s\" matches exclude pattern: \"%s\"", dbidname->str, pat_cell->val);
+					pg_log_info("database name \"%s\" matches exclude pattern \"%s\"", dbidname->str, pat_cell->val);
 				}
 
 				PQclear(res);
@@ -1048,7 +1048,7 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimplePtrList *dbname_oi
 	 */
 	if (!file_exists_in_directory(dumpdirpath, "map.dat"))
 	{
-		pg_log_info("database restoring is skipped as \"map.dat\" is not present in \"%s\"", dumpdirpath);
+		pg_log_info("database restoring is skipped because file \"%s\" does not exist in directory \"%s\"", "map.dat", dumpdirpath);
 		return 0;
 	}
 
@@ -1058,7 +1058,7 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimplePtrList *dbname_oi
 	pfile = fopen(map_file_path, PG_BINARY_R);
 
 	if (pfile == NULL)
-		pg_fatal("could not open \"%s\": %m", map_file_path);
+		pg_fatal("could not open file \"%s\": %m", map_file_path);
 
 	initStringInfo(&linebuf);
 
@@ -1086,10 +1086,10 @@ get_dbname_oid_list_from_mfile(const char *dumpdirpath, SimplePtrList *dbname_oi
 
 		/* Report error and exit if the file has any corrupted data. */
 		if (!OidIsValid(db_oid) || namelen <= 1)
-			pg_fatal("invalid entry in \"%s\" at line: %d", map_file_path,
+			pg_fatal("invalid entry in file \"%s\" on line %d", map_file_path,
 					 count + 1);
 
-		pg_log_info("found database \"%s\" (OID: %u) in \"%s\"",
+		pg_log_info("found database \"%s\" (OID: %u) in file \"%s\"",
 					dbname, db_oid, map_file_path);
 
 		dbidname = pg_malloc(offsetof(DbOidName, str) + namelen + 1);
@@ -1142,11 +1142,14 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	if (dbname_oid_list.head == NULL)
 		return process_global_sql_commands(conn, dumpdirpath, opts->filename);
 
-	pg_log_info("found %d database names in \"map.dat\"", num_total_db);
+	pg_log_info(ngettext("found %d database name in \"%s\"",
+						 "found %d database names in \"%s\"",
+						 num_total_db),
+				num_total_db, "map.dat");
 
 	if (!conn)
 	{
-		pg_log_info("trying to connect database \"postgres\"");
+		pg_log_info("trying to connect to database \"%s\"", "postgres");
 
 		conn = ConnectDatabase("postgres", NULL, opts->cparams.pghost,
 							   opts->cparams.pgport, opts->cparams.username, TRI_DEFAULT,
@@ -1155,7 +1158,7 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 		/* Try with template1. */
 		if (!conn)
 		{
-			pg_log_info("trying to connect database \"template1\"");
+			pg_log_info("trying to connect to database \"%s\"", "template1");
 
 			conn = ConnectDatabase("template1", NULL, opts->cparams.pghost,
 								   opts->cparams.pgport, opts->cparams.username, TRI_DEFAULT,
@@ -1179,7 +1182,9 @@ restore_all_databases(PGconn *conn, const char *dumpdirpath,
 	/* Exit if no db needs to be restored. */
 	if (dbname_oid_list.head == NULL || num_db_restore == 0)
 	{
-		pg_log_info("no database needs to restore out of %d databases", num_total_db);
+		pg_log_info(ngettext("no database needs restoring out of %d database",
+							 "no database needs restoring out of %d databases", num_total_db),
+					num_total_db);
 		return n_errors_total;
 	}
 
@@ -1314,7 +1319,7 @@ process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *o
 	pfile = fopen(global_file_path, PG_BINARY_R);
 
 	if (pfile == NULL)
-		pg_fatal("could not open \"%s\": %m", global_file_path);
+		pg_fatal("could not open file \"%s\": %m", global_file_path);
 
 	/*
 	 * If outfile is given, then just copy all global.dat file data into
@@ -1354,15 +1359,17 @@ process_global_sql_commands(PGconn *conn, const char *dumpdirpath, const char *o
 				break;
 			default:
 				n_errors++;
-				pg_log_error("could not execute query: \"%s\" \nCommand was: \"%s\"", PQerrorMessage(conn), sqlstatement.data);
+				pg_log_error("could not execute query: %s", PQerrorMessage(conn));
+				pg_log_error_detail("Command was: %s", sqlstatement.data);
 		}
 		PQclear(result);
 	}
 
 	/* Print a summary of ignored errors during global.dat. */
 	if (n_errors)
-		pg_log_warning("ignored %d errors in \"%s\"", n_errors, global_file_path);
-
+		pg_log_warning(ngettext("ignored %d error in file \"%s\"",
+								"ignored %d errors in file \"%s\"", n_errors),
+					   n_errors, global_file_path);
 	fclose(pfile);
 
 	return n_errors;

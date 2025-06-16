@@ -885,7 +885,7 @@ check_cluster_versions(void)
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) >= 1800 &&
 		user_opts.char_signedness != -1)
-		pg_fatal("%s option cannot be used to upgrade from PostgreSQL %s and later.",
+		pg_fatal("The option %s cannot be used for upgrades from PostgreSQL %s and later.",
 				 "--set-char-signedness", "18");
 
 	check_ok();
@@ -1934,7 +1934,7 @@ check_for_unicode_update(ClusterInfo *cluster)
 	{
 		fclose(report.file);
 		report_status(PG_WARNING, "warning");
-		pg_log(PG_WARNING, "Your installation contains relations that may be affected by a new version of Unicode.\n"
+		pg_log(PG_WARNING, "Your installation contains relations that might be affected by a new version of Unicode.\n"
 			   "A list of potentially-affected relations is in the file:\n"
 			   "    %s", report.path);
 	}

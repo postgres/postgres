@@ -296,6 +296,7 @@ describeFunctions(const char *functypes, const char *func_pattern,
 				  char **arg_patterns, int num_arg_patterns,
 				  bool verbose, bool showSystem)
 {
+	const char *df_options = "anptwSx+";
 	bool		showAggregate = strchr(functypes, 'a') != NULL;
 	bool		showNormal = strchr(functypes, 'n') != NULL;
 	bool		showProcedure = strchr(functypes, 'p') != NULL;
@@ -310,9 +311,9 @@ describeFunctions(const char *functypes, const char *func_pattern,
 	/* No "Parallel" column before 9.6 */
 	static const bool translate_columns_pre_96[] = {false, false, false, false, true, true, false, true, true, false, false, false, false};
 
-	if (strlen(functypes) != strspn(functypes, "anptwSx+"))
+	if (strlen(functypes) != strspn(functypes, df_options))
 	{
-		pg_log_error("\\df only takes [anptwSx+] as options");
+		pg_log_error("\\df only takes [%s] as options", df_options);
 		return true;
 	}
 

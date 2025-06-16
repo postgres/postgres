@@ -65,7 +65,7 @@ command_checks_all(
 		$mode
 	],
 	1,
-	[qr/--set-char-signedness option cannot be used/],
+	[qr/option --set-char-signedness cannot be used/],
 	[],
 	'--set-char-signedness option cannot be used for upgrading from v18 or later'
 );
