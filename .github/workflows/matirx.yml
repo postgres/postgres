@@ -39,3 +39,24 @@ jobs:
         build_type: ${{ matrix.build_type }}
         build_script: ${{ matrix.build_script }}
     secrets: inherit
+
+  slack-notification:
+    if: ${{ failure() }} && github.event_name == 'push'
+    needs: [ main, arm ]
+    name: Slack Notification
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Notify
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            blocks:
+              - type: "section"
+                text:
+                  type: "mrkdwn"
+                  text: "Workflow *${{ github.workflow }}* failed on branch *${{ github.head_ref }}*\n
+                   Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n
+                   \n
+                   <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
