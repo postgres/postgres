@@ -2413,7 +2413,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <sect2 id="prepare-publisher-upgrades">
-   <title>Prepare for publisher upgrades</title>
+   <title>Prepare for Publisher Upgrades</title>
 
    <para>
     <application>pg_upgrade</application> attempts to migrate logical
@@ -2485,7 +2485,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </sect2>
 
   <sect2 id="prepare-subscriber-upgrades">
-   <title>Prepare for subscriber upgrades</title>
+   <title>Prepare for Subscriber Upgrades</title>
 
    <para>
     Setup the <link linkend="logical-replication-config-subscriber">
@@ -2535,7 +2535,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </sect2>
 
   <sect2 id="upgrading-logical-replication-clusters">
-   <title>Upgrading logical replication clusters</title>
+   <title>Upgrading Logical Replication Clusters</title>
 
    <para>
     While upgrading a subscriber, write operations can be performed in the
@@ -2599,7 +2599,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    </para>
 
    <sect3 id="steps-two-node-logical-replication-cluster">
-    <title>Steps to upgrade a two-node logical replication cluster</title>
+    <title>Steps to Upgrade a Two-node Logical Replication Cluster</title>
      <para>
       Let's say publisher is in <literal>node1</literal> and subscriber is
       in <literal>node2</literal>. The subscriber <literal>node2</literal> has
@@ -2743,7 +2743,7 @@ pg_ctl -D /opt/PostgreSQL/data2_upgraded start -l logfile
     </sect3>
 
     <sect3 id="steps-cascaded-logical-replication-cluster">
-     <title>Steps to upgrade a cascaded logical replication cluster</title>
+     <title>Steps to Upgrade a Cascaded Logical Replication Cluster</title>
      <para>
       Let's say we have a cascaded logical replication setup
       <literal>node1</literal>-><literal>node2</literal>-><literal>node3</literal>.
@@ -2972,7 +2972,7 @@ pg_ctl -D /opt/PostgreSQL/data3_upgraded start -l logfile
     </sect3>
 
     <sect3 id="steps-two-node-circular-logical-replication-cluster">
-     <title>Steps to upgrade a two-node circular logical replication cluster</title>
+     <title>Steps to Upgrade a Two-node Circular Logical Replication Cluster</title>
      <para>
       Let's say we have a circular logical replication setup
       <literal>node1</literal>-><literal>node2</literal> and

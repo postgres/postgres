@@ -1355,7 +1355,7 @@ ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type
     </itemizedlist>
 
     <warning>
-     <title>Warning: Cross-site scripting (XSS) safety</title>
+     <title>Warning: Cross-site Scripting (XSS) Safety</title>
      <para>
       The output from <function>ts_headline</function> is not guaranteed to
       be safe for direct inclusion in web pages. When

@@ -189,7 +189,7 @@
   </sect2>
 
   <sect2 id="protocol-versions">
-   <title>Protocol versions</title>
+   <title>Protocol Versions</title>
 
    <para>
     The current, latest version of the protocol is version 3.2. However, for
@@ -226,7 +226,7 @@
    </para>
 
    <table id="protocol-versions-table">
-    <title>Protocol versions</title>
+    <title>Protocol Versions</title>
 
     <tgroup cols="3">
      <thead>
