@@ -142,9 +142,16 @@ void
 verify_compact_attribute(TupleDesc tupdesc, int attnum)
 {
 #ifdef USE_ASSERT_CHECKING
-	CompactAttribute *cattr = &tupdesc->compact_attrs[attnum];
+	CompactAttribute cattr;
 	Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
 	CompactAttribute tmp;
+
+	/*
+	 * Make a temp copy of the TupleDesc's CompactAttribute.  This may be a
+	 * shared TupleDesc and the attcacheoff might get changed by another
+	 * backend.
+	 */
+	memcpy(&cattr, &tupdesc->compact_attrs[attnum], sizeof(CompactAttribute));
 
 	/*
 	 * Populate the temporary CompactAttribute from the corresponding
@@ -156,11 +163,11 @@ verify_compact_attribute(TupleDesc tupdesc, int attnum)
 	 * Make the attcacheoff match since it's been reset to -1 by
 	 * populate_compact_attribute_internal.  Same with attnullability.
 	 */
-	tmp.attcacheoff = cattr->attcacheoff;
-	tmp.attnullability = cattr->attnullability;
+	tmp.attcacheoff = cattr.attcacheoff;
+	tmp.attnullability = cattr.attnullability;
 
 	/* Check the freshly populated CompactAttribute matches the TupleDesc's */
-	Assert(memcmp(&tmp, cattr, sizeof(CompactAttribute)) == 0);
+	Assert(memcmp(&tmp, &cattr, sizeof(CompactAttribute)) == 0);
 #endif
 }
 
