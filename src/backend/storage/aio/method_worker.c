@@ -461,7 +461,12 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 		int			nwakeups = 0;
 		int			worker;
 
-		/* Try to get a job to do. */
+		/*
+		 * Try to get a job to do.
+		 *
+		 * The lwlock acquisition also provides the necessary memory barrier
+		 * to ensure that we don't see an outdated data in the handle.
+		 */
 		LWLockAcquire(AioWorkerSubmissionQueueLock, LW_EXCLUSIVE);
 		if ((io_index = pgaio_worker_submission_queue_consume()) == UINT32_MAX)
 		{

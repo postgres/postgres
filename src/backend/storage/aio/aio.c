@@ -556,6 +556,13 @@ bool
 pgaio_io_was_recycled(PgAioHandle *ioh, uint64 ref_generation, PgAioHandleState *state)
 {
 	*state = ioh->state;
+
+	/*
+	 * Ensure that we don't see an earlier state of the handle than ioh->state
+	 * due to compiler or CPU reordering. This protects both ->generation as
+	 * directly used here, and other fields in the handle accessed in the
+	 * caller if the handle was not reused.
+	 */
 	pg_read_barrier();
 
 	return ioh->generation != ref_generation;
@@ -773,7 +780,12 @@ pgaio_io_wait_for_free(void)
 			 * Note that no interrupts are processed between the state check
 			 * and the call to reclaim - that's important as otherwise an
 			 * interrupt could have already reclaimed the handle.
+			 *
+			 * Need to ensure that there's no reordering, in the more common
+			 * paths, where we wait for IO, that's done by
+			 * pgaio_io_was_recycled().
 			 */
+			pg_read_barrier();
 			pgaio_io_reclaim(ioh);
 			reclaimed++;
 		}
@@ -852,7 +864,12 @@ pgaio_io_wait_for_free(void)
 				 * check and the call to reclaim - that's important as
 				 * otherwise an interrupt could have already reclaimed the
 				 * handle.
+				 *
+				 * Need to ensure that there's no reordering, in the more
+				 * common paths, where we wait for IO, that's done by
+				 * pgaio_io_was_recycled().
 				 */
+				pg_read_barrier();
 				pgaio_io_reclaim(ioh);
 				break;
 		}

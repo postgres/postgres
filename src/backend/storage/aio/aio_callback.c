@@ -256,6 +256,9 @@ pgaio_io_call_complete_shared(PgAioHandle *ioh)
 					   pgaio_result_status_string(result.status),
 					   result.id, result.error_data, result.result);
 		result = ce->cb->complete_shared(ioh, result, cb_data);
+
+		/* the callback should never transition to unknown */
+		Assert(result.status != PGAIO_RS_UNKNOWN);
 	}
 
 	ioh->distilled_result = result;
@@ -290,6 +293,7 @@ pgaio_io_call_complete_local(PgAioHandle *ioh)
 
 	/* start with distilled result from shared callback */
 	result = ioh->distilled_result;
+	Assert(result.status != PGAIO_RS_UNKNOWN);
 
 	for (int i = ioh->num_callbacks; i > 0; i--)
 	{
@@ -306,6 +310,9 @@ pgaio_io_call_complete_local(PgAioHandle *ioh)
 					   pgaio_result_status_string(result.status),
 					   result.id, result.error_data, result.result);
 		result = ce->cb->complete_local(ioh, result, cb_data);
+
+		/* the callback should never transition to unknown */
+		Assert(result.status != PGAIO_RS_UNKNOWN);
 	}
 
 	/*
