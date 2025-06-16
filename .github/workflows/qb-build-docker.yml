@@ -1,0 +1,39 @@
+name: Build Docker Image
+run-name: "Build Image: ${{ github.event.repository.name }} #${{ github.run_number }} - ${{ github.actor }}"
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Tags to apply to the Docker image"
+        required: false
+        type: string
+      dry-run:
+        description: "Run the workflow in dry-run mode"
+        required: false
+        default: true
+        type: boolean
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create name
+        uses: nookyo/qubership-workflow-hub/actions/metadata-action@main
+        id: metadata
+        with:
+          configuration-path: .github/dev-metadata-config.yml
+          extra-tags: ${{ github.event.inputs.tags }}
+          default-template: "{{ref-name}}-{{timestamp}}-{{short-sha}}"
+          dry-run: ${{ inputs.dry-run }}
+
+      - name: Docker Build
+        uses: nookyo/qubership-workflow-hub/actions/docker-action@main
+        with:
+          ref: ${{ github.ref }}
+          dry-run: ${{ inputs.dry-run }}
+          download-artifact: false
+          tags: ${{ steps.metadata.outputs.result }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
