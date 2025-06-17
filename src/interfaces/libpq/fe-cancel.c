@@ -114,7 +114,7 @@ PQcancelCreate(PGconn *conn)
 	if (conn->be_cancel_key != NULL)
 	{
 		cancelConn->be_cancel_key = malloc(conn->be_cancel_key_len);
-		if (!conn->be_cancel_key)
+		if (cancelConn->be_cancel_key == NULL)
 			goto oom_error;
 		memcpy(cancelConn->be_cancel_key, conn->be_cancel_key, conn->be_cancel_key_len);
 	}
