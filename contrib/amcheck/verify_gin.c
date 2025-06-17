@@ -608,10 +608,10 @@ gin_check_parent_keys_consistency(Relation rel,
 				ptr = (GinScanItem *) palloc(sizeof(GinScanItem));
 				ptr->depth = stack->depth + 1;
 				/* last tuple in layer has no high key */
-				if (i != maxoff && !GinPageGetOpaque(page)->rightlink)
-					ptr->parenttup = CopyIndexTuple(idxtuple);
-				else
+				if (i == maxoff && rightlink == InvalidBlockNumber)
 					ptr->parenttup = NULL;
+				else
+					ptr->parenttup = CopyIndexTuple(idxtuple);
 				ptr->parentblk = stack->blkno;
 				ptr->blkno = GinGetDownlink(idxtuple);
 				ptr->next = stack->next;
@@ -748,7 +748,7 @@ gin_refind_parent(Relation rel, BlockNumber parentblkno,
 		ItemId		p_iid = PageGetItemIdCareful(rel, parentblkno, parentpage, o);
 		IndexTuple	itup = (IndexTuple) PageGetItem(parentpage, p_iid);
 
-		if (ItemPointerGetBlockNumber(&(itup->t_tid)) == childblkno)
+		if (GinGetDownlink(itup) == childblkno)
 		{
 			/* Found it! Make copy and return it */
 			result = CopyIndexTuple(itup);

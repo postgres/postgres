@@ -34,6 +34,8 @@ $node->safe_psql(
 invalid_entry_order_leaf_page_test();
 invalid_entry_order_inner_page_test();
 invalid_entry_columns_order_test();
+inconsistent_with_parent_key__parent_key_corrupted_test();
+inconsistent_with_parent_key__child_key_corrupted_test();
 
 sub invalid_entry_order_leaf_page_test
 {
@@ -156,6 +158,82 @@ sub invalid_entry_columns_order_test
 
 	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
 	my $expected = "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
+	like($stderr, qr/$expected/);
+}
+
+sub inconsistent_with_parent_key__parent_key_corrupted_test
+{
+	my $relname = "test";
+	my $indexname = "test_gin_idx";
+
+	# fill the table until we have a split
+	$node->safe_psql(
+		'postgres', qq(
+		DROP TABLE IF EXISTS $relname;
+		CREATE TABLE $relname (a text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'llllllllll' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'mmmmmmmmmm' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'nnnnnnnnnn' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'xxxxxxxxxx' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'yyyyyyyyyy' || random_string($filler_size) ||'}')::text[]);
+		CREATE INDEX $indexname ON $relname USING gin (a);
+	));
+	my $relpath = relation_filepath($indexname);
+
+	$node->stop;
+
+	my $blkno = 1;  # root
+
+	# we have nnnnnnnnnn... as parent key in the root, so replace it with something smaller then child's keys
+	string_replace_block(
+		$relpath,
+		'nnnnnnnnnn',
+		'aaaaaaaaaa',
+		$blkno
+	);
+
+	$node->start;
+
+	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected = "index \"$indexname\" has inconsistent records on page 3 offset 3";
+	like($stderr, qr/$expected/);
+}
+
+sub inconsistent_with_parent_key__child_key_corrupted_test
+{
+	my $relname = "test";
+	my $indexname = "test_gin_idx";
+
+	# fill the table until we have a split
+	$node->safe_psql(
+		'postgres', qq(
+		DROP TABLE IF EXISTS $relname;
+		CREATE TABLE $relname (a text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'llllllllll' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'mmmmmmmmmm' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'nnnnnnnnnn' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'xxxxxxxxxx' || random_string($filler_size) ||'}')::text[]);
+		INSERT INTO $relname (a) VALUES (('{' || 'yyyyyyyyyy' || random_string($filler_size) ||'}')::text[]);
+		CREATE INDEX $indexname ON $relname USING gin (a);
+	 ));
+	my $relpath = relation_filepath($indexname);
+
+	$node->stop;
+
+	my $blkno = 3;  # leaf
+
+	# we have nnnnnnnnnn... as parent key in the root, so replace child key with something bigger
+	string_replace_block(
+		$relpath,
+		'nnnnnnnnnn',
+		'pppppppppp',
+		$blkno
+	);
+
+	$node->start;
+
+	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected = "index \"$indexname\" has inconsistent records on page 3 offset 3";
 	like($stderr, qr/$expected/);
 }
 
