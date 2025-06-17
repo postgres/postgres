@@ -60,7 +60,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Change initdb default to enable data checksums
+Change initdb default to enable data checksums (Greg Sabino Mullane)
 <ulink url="&commit_baseurl;04bec894a04">&sect;</ulink>
 </para>
 
@@ -165,6 +165,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <listitem>
 <para>
 Execute AFTER triggers as the role that was active when trigger events were queued (Laurenz Albe)
+<ulink url="&commit_baseurl;01463e1cc">&sect;</ulink>
 </para>
 
 <para>
