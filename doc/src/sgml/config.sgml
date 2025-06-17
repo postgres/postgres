@@ -2779,6 +2779,7 @@ include_dir 'conf.d'
            </para>
           </listitem>
          </itemizedlist>
+         The default is <literal>worker</literal>.
         </para>
         <para>
          This parameter can only be set at server start.
