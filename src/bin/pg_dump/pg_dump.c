@@ -843,12 +843,12 @@ chdir("/");
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
-puts("# 813 : " __FILE__);
+puts("# 813 : " __FILE__ "\r\n");
     //setup();
 	ConnectDatabase(fout, &dopt.cparams, false);
-puts("# 815 : " __FILE__);
+puts("# 815 : " __FILE__ "\r\n");
 	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
-puts("# 817 : " __FILE__);
+puts("# 817 : " __FILE__ "\r\n");
 	/*
 	 * On hot standbys, never try to dump unlogged table data, since it will
 	 * just throw an error.
@@ -1203,10 +1203,10 @@ setup_connection(Archive *AH, const char *dumpencoding,
 				 const char *dumpsnapshot, char *use_role)
 {
 	DumpOptions *dopt = AH->dopt;
-puts("# 1164 : get_connection : "__FILE__);
+puts("# 1206 : get_connection : "__FILE__);
 	PGconn	   *conn = GetConnection(AH);
 	const char *std_strings;
-puts("# 1164 : setup_connection");
+puts("# 1209 : setup_connection");
 	PQclear(ExecuteSqlQueryForSingleRow(AH, ALWAYS_SECURE_SEARCH_PATH_SQL));
 
 	/*
@@ -1295,7 +1295,7 @@ puts("# 1164 : setup_connection");
 	 * Quote all identifiers, if requested.
 	 */
 	if (fe_utils_quote_all_identifiers)
-		ExecuteSqlStatement(AH, "SET fe_utils_quote_all_identifiers = true");
+		ExecuteSqlStatement(AH, "SET quote_all_identifiers = true");
 
 	/*
 	 * Adjust row-security mode, if supported.

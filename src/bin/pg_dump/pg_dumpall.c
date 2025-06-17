@@ -547,7 +547,7 @@ main(int argc, char *argv[])
 
 	/* Force quoting of all identifiers if requested. */
 	if (fe_utils_quote_all_identifiers)
-		executeCommand(conn, "SET fe_utils_quote_all_identifiers = true");
+		executeCommand(conn, "SET quote_all_identifiers = true");
 
 	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
