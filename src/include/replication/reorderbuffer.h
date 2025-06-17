@@ -160,9 +160,10 @@ typedef struct ReorderBufferChange
 } ReorderBufferChange;
 
 /* ReorderBufferTXN txn_flags */
-#define RBTXN_HAS_CATALOG_CHANGES 0x0001
-#define RBTXN_IS_SUBXACT          0x0002
-#define RBTXN_IS_SERIALIZED       0x0004
+#define RBTXN_HAS_CATALOG_CHANGES		0x0001
+#define RBTXN_IS_SUBXACT          		0x0002
+#define RBTXN_IS_SERIALIZED       		0x0004
+#define RBTXN_DISTR_INVAL_OVERFLOWED    0x0008
 
 /* Does the transaction have catalog changes? */
 #define rbtxn_has_catalog_changes(txn) \
@@ -180,6 +181,12 @@ typedef struct ReorderBufferChange
 #define rbtxn_is_serialized(txn) \
 ( \
 	((txn)->txn_flags & RBTXN_IS_SERIALIZED) != 0 \
+)
+
+/* Is the array of distributed inval messages overflowed? */
+#define rbtxn_distr_inval_overflowed(txn) \
+( \
+	((txn)->txn_flags & RBTXN_DISTR_INVAL_OVERFLOWED) != 0 \
 )
 
 typedef struct ReorderBufferTXN
@@ -311,6 +318,12 @@ typedef struct ReorderBufferTXN
 	 * Size of this transaction (changes currently in memory, in bytes).
 	 */
 	Size		size;
+
+	/*
+	 * Stores cache invalidation messages distributed by other transactions.
+	 */
+	uint32		ninvalidations_distributed;
+	SharedInvalidationMessage *invalidations_distributed;
 } ReorderBufferTXN;
 
 /* so we can define the callbacks used inside struct ReorderBuffer itself */
@@ -451,6 +464,9 @@ void		ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr ls
 										 CommandId cmin, CommandId cmax, CommandId combocid);
 void		ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
 										  Size nmsgs, SharedInvalidationMessage *msgs);
+void		ReorderBufferAddDistributedInvalidations(ReorderBuffer *rb, TransactionId xid,
+													 XLogRecPtr lsn, Size nmsgs,
+													 SharedInvalidationMessage *msgs);
 void		ReorderBufferImmediateInvalidation(ReorderBuffer *, uint32 ninvalidations,
 											   SharedInvalidationMessage *invalidations);
 void		ReorderBufferProcessXid(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
