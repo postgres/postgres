@@ -36,6 +36,7 @@ invalid_entry_order_inner_page_test();
 invalid_entry_columns_order_test();
 inconsistent_with_parent_key__parent_key_corrupted_test();
 inconsistent_with_parent_key__child_key_corrupted_test();
+inconsistent_with_parent_key__parent_key_corrupted_posting_tree_test();
 
 sub invalid_entry_order_leaf_page_test
 {
@@ -236,6 +237,44 @@ sub inconsistent_with_parent_key__child_key_corrupted_test
 	my $expected = "index \"$indexname\" has inconsistent records on page 3 offset 3";
 	like($stderr, qr/$expected/);
 }
+
+sub inconsistent_with_parent_key__parent_key_corrupted_posting_tree_test
+{
+	my $relname = "test";
+	my $indexname = "test_gin_idx";
+
+	$node->safe_psql(
+		'postgres', qq(
+		DROP TABLE IF EXISTS $relname;
+		CREATE TABLE $relname (a text[]);
+		INSERT INTO $relname (a) select ('{aaaaa}') from generate_series(1,10000);
+		CREATE INDEX $indexname ON $relname USING gin (a);
+	));
+	my $relpath = relation_filepath($indexname);
+
+	$node->stop;
+
+	my $blkno = 2;  # posting tree root
+
+	# we have a posting tree for 'aaaaa' key with the root at 2nd block
+	# and two leaf pages 3 and 4. replace 4th page's high key with (1,1)
+	# so that there are tid's in leaf page that are larger then the new high key.
+	my $find = pack('S*', 0, 4, 0) . '....';
+	my $replace = pack('S*', 0, 4, 0, 1, 1);
+	string_replace_block(
+		$relpath,
+		$find,
+		$replace,
+		$blkno
+	);
+
+	$node->start;
+
+	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected = "index \"$indexname\": tid exceeds parent's high key in postingTree leaf on block 4";
+	like($stderr, qr/$expected/);
+}
+
 
 # Returns the filesystem path for the named relation.
 sub relation_filepath
