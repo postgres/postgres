@@ -38,7 +38,6 @@ typedef struct GinScanItem
 	int			depth;
 	IndexTuple	parenttup;
 	BlockNumber parentblk;
-	XLogRecPtr	parentlsn;
 	BlockNumber blkno;
 	struct GinScanItem *next;
 } GinScanItem;
@@ -421,7 +420,6 @@ gin_check_parent_keys_consistency(Relation rel,
 	stack->depth = 0;
 	stack->parenttup = NULL;
 	stack->parentblk = InvalidBlockNumber;
-	stack->parentlsn = InvalidXLogRecPtr;
 	stack->blkno = GIN_ROOT_BLKNO;
 
 	while (stack)
@@ -432,7 +430,6 @@ gin_check_parent_keys_consistency(Relation rel,
 		OffsetNumber i,
 					maxoff,
 					prev_attnum;
-		XLogRecPtr	lsn;
 		IndexTuple	prev_tuple;
 		BlockNumber rightlink;
 
@@ -442,7 +439,6 @@ gin_check_parent_keys_consistency(Relation rel,
 									RBM_NORMAL, strategy);
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
-		lsn = BufferGetLSNAtomic(buffer);
 		maxoff = PageGetMaxOffsetNumber(page);
 		rightlink = GinPageGetOpaque(page)->rightlink;
 
@@ -484,7 +480,6 @@ gin_check_parent_keys_consistency(Relation rel,
 				ptr->depth = stack->depth;
 				ptr->parenttup = CopyIndexTuple(stack->parenttup);
 				ptr->parentblk = stack->parentblk;
-				ptr->parentlsn = stack->parentlsn;
 				ptr->blkno = rightlink;
 				ptr->next = stack->next;
 				stack->next = ptr;
@@ -614,7 +609,6 @@ gin_check_parent_keys_consistency(Relation rel,
 					ptr->parenttup = NULL;
 				ptr->parentblk = stack->blkno;
 				ptr->blkno = GinGetDownlink(idxtuple);
-				ptr->parentlsn = lsn;
 				ptr->next = stack->next;
 				stack->next = ptr;
 			}
