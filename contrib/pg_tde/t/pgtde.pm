@@ -37,22 +37,32 @@ sub psql
 	}
 }
 
-sub kill9_until_dead
+# Copied from src/test/recovery/t/017_shm.pl
+sub poll_start
 {
 	my ($node) = @_;
 
-	return unless defined $node->{_pid};    # Cluster already stopped
+	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
+	my $attempts = 0;
 
-	my $pid = $node->{_pid};
-	$node->kill9;
-
-	# Wait for process to actually die.
-	while (kill(0, $pid) != 0)
+	while ($attempts < $max_attempts)
 	{
-		sleep(0.1);
-	}
-}
+		$node->start(fail_ok => 1) && return 1;
 
+		# Wait 0.1 second before retrying.
+		usleep(100_000);
+
+		# Clean up in case the start attempt just timed out or some such.
+		$node->stop('fast', fail_ok => 1);
+
+		$attempts++;
+	}
+
+	# Try one last time without fail_ok, which will BAIL_OUT unless it
+	# succeeds.
+	$node->start && return 1;
+	return 0;
+}
 
 sub append_to_result_file
 {

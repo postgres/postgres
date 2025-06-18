@@ -35,10 +35,10 @@ PGTDE::psql($node, 'postgres', "INSERT INTO t SELECT generate_series(1, 4);");
 PGTDE::psql($node, 'postgres', "CHECKPOINT;");
 
 PGTDE::append_to_result_file("-- kill -9");
-PGTDE::kill9_until_dead($node);
+$node->kill9;
 
 PGTDE::append_to_result_file("-- server start");
-$node->start;
+PGTDE::poll_start($node);
 
 PGTDE::psql($node, 'postgres', "TABLE t;");
 

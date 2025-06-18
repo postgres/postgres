@@ -82,10 +82,10 @@ PGTDE::psql($primary, 'postgres',
 
 PGTDE::psql($primary, 'postgres',
 	"ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';");
-PGTDE::kill9_until_dead($primary);
+$primary->kill9;
 
 PGTDE::append_to_result_file("-- primary start");
-$primary->start;
+PGTDE::poll_start($primary);
 $primary->wait_for_catchup('replica');
 
 PGTDE::psql($replica, 'postgres', "SELECT * FROM test_enc2 ORDER BY x;");
