@@ -80,6 +80,15 @@ SELECT pg_tde_is_encrypted('partition_child_tde_heap');
 DROP TABLE partition_parent;
 RESET pg_tde.enforce_encryption;
 
+-- Does not change encryption of child tables when rewriting and changing AM
+CREATE TABLE partition_parent (a int, b int) PARTITION BY RANGE (a) USING tde_heap;
+CREATE TABLE partition_child PARTITION OF partition_parent FOR VALUES FROM (0) TO (9) USING tde_heap;
+SELECT pg_tde_is_encrypted('partition_child');
+ALTER TABLE partition_parent SET ACCESS METHOD heap, ALTER b TYPE bigint;
+SELECT relname, amname FROM pg_class JOIN pg_am ON pg_am.oid = pg_class.relam WHERE relname IN ('partition_parent', 'partition_child') ORDER BY relname;
+SELECT pg_tde_is_encrypted('partition_child');
+DROP TABLE partition_parent;
+
 -- Partitioned indexes should be encrypted
 CREATE TABLE partition_parent (a int) PARTITION BY RANGE (a);
 CREATE TABLE partition_child PARTITION OF partition_parent FOR VALUES FROM (0) TO (9) USING tde_heap;
