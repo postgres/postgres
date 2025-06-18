@@ -140,7 +140,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         after the creation of the new database. In some situations, this may
         have a noticeable negative impact on overall system performance. The
         <literal>FILE_COPY</literal> strategy is affected by the <xref
-        linkend="guc_file_copy_method"/> setting.
+        linkend="guc-file-copy-method"/> setting.
        </para>
       </listitem>
      </varlistentry>

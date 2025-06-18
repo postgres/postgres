@@ -83,7 +83,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
    must be empty for this database, and no one can be connected to
    the database.  Tables and indexes in non-default tablespaces are
    unaffected.  The method used to copy files to the new tablespace
-   is affected by the <xref linkend="guc_file_copy_method"/> setting.
+   is affected by the <xref linkend="guc-file-copy-method"/> setting.
   </para>
 
   <para>
