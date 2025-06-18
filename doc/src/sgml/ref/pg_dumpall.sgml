@@ -690,7 +690,8 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
       <listitem>
        <para>
         Dump only the statistics, not the schema (data definitions) or data.
-        Statistics for tables, materialized views, and indexes are dumped.
+        Statistics for tables, materialized views, foreign tables,
+        and indexes are dumped.
        </para>
       </listitem>
      </varlistentry>

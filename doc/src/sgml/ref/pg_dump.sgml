@@ -1277,8 +1277,8 @@ PostgreSQL documentation
          </para>
          <para>
           The data section contains actual table data, large-object
-          contents, statistics for tables and materialized views and
-          sequence values.
+          contents, sequence values, and statistics for tables,
+          materialized views, and foriegn tables.
           Post-data items include definitions of indexes, triggers, rules,
           statistics for indexes, and constraints other than validated check
           constraints.
@@ -1359,7 +1359,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         Dump only the statistics, not the schema (data definitions) or data.
-        Statistics for tables, materialized views, and indexes are dumped.
+        Statistics for tables, materialized views, foreign tables,
+        and indexes are dumped.
        </para>
       </listitem>
      </varlistentry>
