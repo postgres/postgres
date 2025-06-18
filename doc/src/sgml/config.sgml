@@ -2363,7 +2363,7 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc_file_copy_method" xreflabel="file_copy_method">
+     <varlistentry id="guc-file-copy-method" xreflabel="file_copy_method">
       <term><varname>file_copy_method</varname> (<type>enum</type>)
       <indexterm>
        <primary><varname>file_copy_method</varname> configuration parameter</primary>
@@ -5765,7 +5765,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable_self_join_elimination" xreflabel="enable_self_join_elimination">
+     <varlistentry id="guc-enable-self-join-elimination" xreflabel="enable_self_join_elimination">
       <term><varname>enable_self_join_elimination</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>enable_self_join_elimination</varname> configuration parameter</primary>
