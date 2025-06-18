@@ -1100,6 +1100,7 @@ AddNewRelationType(const char *typeName,
  *		if false, relacl is always set NULL
  *	allow_system_table_mods: true to allow creation in system namespaces
  *	is_internal: is this a system-generated catalog?
+ *	relrewrite: link to original relation during a table rewrite
  *
  * Output parameters:
  *	typaddress: if not null, gets the object address of the new pg_type entry
