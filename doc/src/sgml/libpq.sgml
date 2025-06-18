@@ -2168,6 +2168,24 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
+      <term><literal>ssl_max_protocol_version</literal></term>
+      <listitem>
+       <para>
+        This parameter specifies the maximum SSL/TLS protocol version to allow
+        for the connection. Valid values are <literal>TLSv1</literal>,
+        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
+        <literal>TLSv1.3</literal>. The supported protocols depend on the
+        version of <productname>OpenSSL</productname> used, older versions
+        not supporting the most modern protocol versions. If not set, this
+        parameter is ignored and the connection will use the maximum bound
+        defined by the backend, if set. Setting the maximum protocol version
+        is mainly useful for testing or if some component has issues working
+        with a newer protocol.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-min-protocol-version" xreflabel="min_protocol_version">
       <term><literal>min_protocol_version</literal></term>
       <listitem>
@@ -2212,24 +2230,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         and <literal>latest</literal>. The <literal>latest</literal> value is
         equivalent to the latest protocol version supported by the libpq
         version being used, which is currently <literal>3.2</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="libpq-connect-ssl-max-protocol-version" xreflabel="ssl_max_protocol_version">
-      <term><literal>ssl_max_protocol_version</literal></term>
-      <listitem>
-       <para>
-        This parameter specifies the maximum SSL/TLS protocol version to allow
-        for the connection. Valid values are <literal>TLSv1</literal>,
-        <literal>TLSv1.1</literal>, <literal>TLSv1.2</literal> and
-        <literal>TLSv1.3</literal>. The supported protocols depend on the
-        version of <productname>OpenSSL</productname> used, older versions
-        not supporting the most modern protocol versions. If not set, this
-        parameter is ignored and the connection will use the maximum bound
-        defined by the backend, if set. Setting the maximum protocol version
-        is mainly useful for testing or if some component has issues working
-        with a newer protocol.
        </para>
       </listitem>
      </varlistentry>
