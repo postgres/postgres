@@ -83,7 +83,7 @@ Change time zone abbreviation handling (Tom Lane)
 </para>
 
 <para>
-The system will now favor the current session's time zone abbreviations before checking the server variable <varname>timezone_abbreviations</varname>. Previously <varname>timezone_abbreviations</varname> was
+The system will now favor the current session's time zone abbreviations before checking the server variable <xref linkend="guc-timezone-abbreviations"/>. Previously <varname>timezone_abbreviations</varname> was
 checked first.
 </para>
 </listitem>
@@ -101,7 +101,7 @@ Deprecate MD5 password authentication (Nathan Bossart)
 
 <para>
 Support for MD5 passwords will be removed in a future major version release.  <command>CREATE ROLE</command> and <command>ALTER ROLE</command> now emit deprecation warnings when setting MD5 passwords.
-These warnings can be disabled by setting the <varname>md5_password_warnings</varname> parameter to <literal>off</literal>.
+These warnings can be disabled by setting the <xref linkend="guc-md5-password-warnings"/> parameter to <literal>off</literal>.
 </para>
 </listitem>
 
@@ -263,7 +263,7 @@ Automatically remove some unnecessary table self-joins (Andrey Lepikhov, Alexand
 </para>
 
 <para>
-This optimization can be disabled using server variable <varname>enable_self_join_elimination</varname>.
+This optimization can be disabled using server variable <xref linkend="guc-enable-self-join-elimination"/>.
 </para>
 </listitem>
 
@@ -324,7 +324,7 @@ Allow the keys of <command>SELECT DISTINCT</command> to be internally reordered 
 </para>
 
 <para>
-This optimization can be disabled using <varname>enable_distinct_reordering</varname>.
+This optimization can be disabled using <xref linkend="guc-enable-distinct-reordering"/>.
 </para>
 </listitem>
 
@@ -606,8 +606,8 @@ Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavu
 
 <para>
 This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, vacuums, etc.
-This is enabled by server variable <varname>io_method</varname>, with server variables <varname>io_combine_limit</varname> and <varname>io_max_combine_limit</varname> added to control it.  This also enables
-<varname>effective_io_concurrency</varname> and <varname>maintenance_io_concurrency</varname> values greater than zero for systems without <function>fadvise()</function> support.  The new system view <structname>pg_aios</structname> shows the file handles being used
+This is enabled by server variable <xref linkend="guc-io-method"/>, with server variables <xref linkend="guc-io-combine-limit"/> and <xref linkend="guc-io-max-combine-limit"/> added to control it.  This also enables
+<xref linkend="guc-effective-io-concurrency"/> and <xref linkend="guc-maintenance-io-concurrency"/> values greater than zero for systems without <function>fadvise()</function> support.  The new system view <structname>pg_aios</structname> shows the file handles being used
 for asynchronous I/O.
 </para>
 </listitem>
@@ -667,7 +667,7 @@ Allow normal vacuums to freeze some pages, even though they are all-visible (Mel
 </para>
 
 <para>
-This reduces the overhead of later full-relation freezing.  The aggressiveness of this can be controlled by server variable and per-table setting <varname>vacuum_max_eager_freeze_failure_rate</varname>.
+This reduces the overhead of later full-relation freezing.  The aggressiveness of this can be controlled by server variable and per-table setting <xref linkend="guc-vacuum-max-eager-freeze-failure-rate"/>.
 Previously vacuum never processed all-visible pages until freezing was required.
 </para>
 </listitem>
@@ -679,7 +679,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>vacuum_truncate</varname> to control file truncation during <command>VACUUM</command> (Nathan Bossart, Gurjeet Singh)
+Add server variable <xref linkend="guc-vacuum-truncate"/> to control file truncation during <command>VACUUM</command> (Nathan Bossart, Gurjeet Singh)
 <ulink url="&commit_baseurl;0164a0f9e">&sect;</ulink>
 </para>
 
@@ -697,7 +697,7 @@ Author: Melanie Plageman <melanieplageman@gmail.com>
 
 <listitem>
 <para>
-Increase server variables <varname>effective_io_concurrency</varname>'s and <varname>maintenance_io_concurrency</varname>'s default values to 16 (Melanie Plageman)
+Increase server variables <xref linkend="guc-effective-io-concurrency"/>'s and <xref linkend="guc-maintenance-io-concurrency"/>'s default values to 16 (Melanie Plageman)
 <ulink url="&commit_baseurl;ff79b5b2a">&sect;</ulink>
 <ulink url="&commit_baseurl;cc6be07eb">&sect;</ulink>
 </para>
@@ -723,7 +723,7 @@ Author: Melanie Plageman <melanieplageman@gmail.com>
 
 <listitem>
 <para>
-Increase the logging granularity of server variable <varname>log_connections</varname> (Melanie Plageman)
+Increase the logging granularity of server variable <xref linkend="guc-log-connections"/> (Melanie Plageman)
 <ulink url="&commit_baseurl;9219093ca">&sect;</ulink>
 </para>
 
@@ -751,7 +751,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add <varname>log_line_prefix</varname> escape <literal>%L</literal> to output the client <acronym>IP</acronym> address (Greg Sabino Mullane)
+Add <xref linkend="guc-log-line-prefix"/> escape <literal>%L</literal> to output the client <acronym>IP</acronym> address (Greg Sabino Mullane)
 <ulink url="&commit_baseurl;3516ea768">&sect;</ulink>
 </para>
 </listitem>
@@ -763,7 +763,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>log_lock_failures</varname> to log lock acquisition failures (Yuki Seino)
+Add server variable <xref linkend="guc-log-lock-failures"/> to log lock acquisition failures (Yuki Seino)
 <ulink url="&commit_baseurl;6d376c3b0">&sect;</ulink>
 </para>
 
@@ -804,7 +804,7 @@ Add delay time reporting to <command>VACUUM</command> and <command>ANALYZE</comm
 
 <para>
 This information appears in the autovacuum logs, the system views <structname>pg_stat_progress_vacuum</structname> and <structname>pg_stat_progress_analyze</structname>, and the output of <command>VACUUM</command> and <command>ANALYZE</command> when in <literal>VERBOSE</literal>
-mode; tracking must be enabled with the server variable <varname>track_cost_delay_timing</varname>.
+mode; tracking must be enabled with the server variable <xref linkend="guc-track-cost-delay-timing"/>.
 </para>
 </listitem>
 
@@ -900,7 +900,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Change server variable <varname>track_wal_io_timing</varname> to control tracking <acronym>WAL</acronym> timing in <structname>pg_stat_io</structname> instead of <structname>pg_stat_wal</structname> (Bertrand Drouvot)
+Change server variable <xref linkend="guc-track-wal-io-timing"/> to control tracking <acronym>WAL</acronym> timing in <structname>pg_stat_io</structname> instead of <structname>pg_stat_wal</structname> (Bertrand Drouvot)
 <ulink url="&commit_baseurl;6c349d83b">&sect;</ulink>
 </para>
 </listitem>
@@ -1144,7 +1144,7 @@ Add support for the OAuth authentication method (Jacob Champion, Daniel Gustafss
 </para>
 
 <para>
-This adds an <literal>oauth</literal> authentication method to <filename>pg_hba.conf</filename>, libpq OAuth options, a server variable <varname>oauth_validator_libraries</varname> to load token validation libraries, and
+This adds an <literal>oauth</literal> authentication method to <filename>pg_hba.conf</filename>, libpq OAuth options, a server variable <xref linkend="guc-oauth-validator-libraries"/> to load token validation libraries, and
 a configure flag <option>--with-libcurl</option> to add the required compile-time libraries.
 </para>
 </listitem>
@@ -1156,7 +1156,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>ssl_tls13_ciphers</varname> to allow specification of multiple colon-separated TLSv1.3 cipher suites (Erica Zhang, Daniel Gustafsson)
+Add server variable <xref linkend="guc-ssl-tls13-ciphers"/> to allow specification of multiple colon-separated TLSv1.3 cipher suites (Erica Zhang, Daniel Gustafsson)
 <ulink url="&commit_baseurl;45188c2ea">&sect;</ulink>
 </para>
 </listitem>
@@ -1168,7 +1168,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Change server variable <varname>ssl_groups</varname>'s default to include elliptic curve X25519 (Daniel Gustafsson, Jacob Champion)
+Change server variable <xref linkend="guc-ssl-groups"/>'s default to include elliptic curve X25519 (Daniel Gustafsson, Jacob Champion)
 <ulink url="&commit_baseurl;daa02c6bd">&sect;</ulink>
 </para>
 </listitem>
@@ -1180,7 +1180,7 @@ Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 
 <listitem>
 <para>
-Rename server variable <varname>ssl_ecdh_curve</varname> to <varname>ssl_groups</varname> and allow multiple colon-separated <acronym>ECDH</acronym> curves to be specified (Erica Zhang, Daniel Gustafsson)
+Rename server variable <varname>ssl_ecdh_curve</varname> to <xref linkend="guc-ssl-groups"/> and allow multiple colon-separated <acronym>ECDH</acronym> curves to be specified (Erica Zhang, Daniel Gustafsson)
 <ulink url="&commit_baseurl;3d1ef3a15">&sect;</ulink>
 </para>
 
@@ -1226,12 +1226,12 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>autovacuum_worker_slots</varname> to specify the maximum number of background workers (Nathan Bossart)
+Add server variable <xref linkend="guc-autovacuum-worker-slots"/> to specify the maximum number of background workers (Nathan Bossart)
 <ulink url="&commit_baseurl;c758119e5">&sect;</ulink>
 </para>
 
 <para>
-With this variable set, <varname>autovacuum_max_workers</varname> can be adjusted at runtime up to this maximum without a server restart.
+With this variable set, <xref linkend="guc-autovacuum-max-workers"/> can be adjusted at runtime up to this maximum without a server restart.
 </para>
 </listitem>
 
@@ -1247,7 +1247,7 @@ Allow specification of the fixed number of dead tuples that will trigger an auto
 </para>
 
 <para>
-The server variable is <varname>autovacuum_vacuum_max_threshold</varname>.  Percentages are still used for triggering.
+The server variable is <xref linkend="guc-autovacuum-vacuum-max-threshold"/>.  Percentages are still used for triggering.
 </para>
 </listitem>
 
@@ -1258,7 +1258,7 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Change server variable <varname>max_files_per_process</varname> to limit only files opened by a backend (Andres Freund)
+Change server variable <xref linkend="guc-max-files-per-process"/> to limit only files opened by a backend (Andres Freund)
 <ulink url="&commit_baseurl;adb5f85fa">&sect;</ulink>
 </para>
 
@@ -1274,7 +1274,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>num_os_semaphores</varname> to report the required number of semaphores (Nathan Bossart)
+Add server variable <xref linkend="guc-num-os-semaphores"/> to report the required number of semaphores (Nathan Bossart)
 <ulink url="&commit_baseurl;0dcaea569">&sect;</ulink>
 </para>
 
@@ -1292,7 +1292,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Add server variable <varname>extension_control_path</varname> to specify the location of extension control files (Peter Eisentraut, Matheus Alcantara)
+Add server variable <xref linkend="guc-extension-control-path"/> to specify the location of extension control files (Peter Eisentraut, Matheus Alcantara)
 <ulink url="&commit_baseurl;4f7f7b037">&sect;</ulink>
 <ulink url="&commit_baseurl;81eaaa2c4">&sect;</ulink>
 </para>
@@ -1314,7 +1314,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Allow inactive replication slots to be automatically invalided using server variable <varname>idle_replication_slot_timeout</varname> (Nisha Moond, Bharath Rupireddy)
+Allow inactive replication slots to be automatically invalided using server variable <xref linkend="guc-idle-replication-slot-timeout"/> (Nisha Moond, Bharath Rupireddy)
 <ulink url="&commit_baseurl;ac0e33136">&sect;</ulink>
 </para>
 </listitem>
@@ -1326,12 +1326,12 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>max_active_replication_origins</varname> to control the maximum active replication origins (Euler Taveira)
+Add server variable <xref linkend="guc-max-active-replication-origins"/> to control the maximum active replication origins (Euler Taveira)
 <ulink url="&commit_baseurl;04ff636cb">&sect;</ulink>
 </para>
 
 <para>
-This was previously controlled by <varname>max_replication_slots</varname>, but this new setting allows a higher origin count in cases where fewer slots are required.
+This was previously controlled by <xref linkend="guc-max-replication-slots"/>, but this new setting allows a higher origin count in cases where fewer slots are required.
 </para>
 </listitem>
 
@@ -1583,7 +1583,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <varname>file_copy_method</varname> to control the file copying method (Nazir Bilal Yavuz)
+Add server variable <xref linkend="guc-file-copy-method"/> to control the file copying method (Nazir Bilal Yavuz)
 <ulink url="&commit_baseurl;f78ca6f3e">&sect;</ulink>
 </para>
 
@@ -2271,7 +2271,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <listitem>
 <para>
-Report <varname>search_path</varname> changes to the client (Alexander Kukushkin, Jelte Fennema-Nio, Tomas Vondra)
+Report <xref linkend="guc-search-path"/> changes to the client (Alexander Kukushkin, Jelte Fennema-Nio, Tomas Vondra)
 <ulink url="&commit_baseurl;28a1121fd">&sect;</ulink>
 <ulink url="&commit_baseurl;0d06a7eac">&sect;</ulink>
 </para>
