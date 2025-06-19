@@ -448,11 +448,6 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      </para>
 
      <para>
-      Partitioned tables do not support <literal>EXCLUDE</literal> constraints;
-      however, you can define these constraints on individual partitions.
-     </para>
-
-     <para>
       See <xref linkend="ddl-partitioning"/> for more discussion on table
       partitioning.
      </para>
@@ -1161,6 +1156,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The <replaceable class="parameter">predicate</replaceable> allows you to specify an
       exclusion constraint on a subset of the table; internally this creates a
       partial index. Note that parentheses are required around the predicate.
+     </para>
+
+     <para>
+      When establishing an exclusion constraint for a multi-level partition
+      hierarchy, all the columns in the partition key of the target
+      partitioned table, as well as those of all its descendant partitioned
+      tables, must be included in the constraint definition.  Additionally,
+      those columns must be compared using the equality operator.  These
+      restrictions ensure that potentially-conflicting rows will exist in the
+      same partition.  The constraint may also refer to other columns which
+      are not a part of any partition key, which can be compared using any
+      appropriate operator.
      </para>
     </listitem>
    </varlistentry>
