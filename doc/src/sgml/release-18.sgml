@@ -60,13 +60,13 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Change <application>initdb</application> default to enable data checksums (Greg Sabino Mullane)
+Change <xref linkend="app-initdb"/> default to enable data checksums (Greg Sabino Mullane)
 <ulink url="&commit_baseurl;04bec894a04">&sect;</ulink>
 </para>
 
 <para>
 Checksums can be disabled with the new <application>initdb</application> option <option>--no-data-checksums</option>.
-<application>pg_upgrade</application> requires matching cluster checksum settings, so this new
+<xref linkend="pgupgrade"/> requires matching cluster checksum settings, so this new
 option can be useful to upgrade non-checksum old clusters.
 </para>
 </listitem>
@@ -136,7 +136,7 @@ Prevent <command>COPY FROM</command> from treating <literal>\.</literal> as an e
 </para>
 
 <para>
-<application>psql</application> will still treat <literal>\.</literal> as an end-of-file marker when reading <acronym>CSV</acronym> files from <literal>STDIN</literal>.  Older <application>psql</application> clients connecting to <productname>PostgreSQL</productname> 18 servers might
+<xref linkend="app-psql"/> will still treat <literal>\.</literal> as an end-of-file marker when reading <acronym>CSV</acronym> files from <literal>STDIN</literal>.  Older <application>psql</application> clients connecting to <productname>PostgreSQL</productname> 18 servers might
 experience <literal>\copy</literal> problems.  This
 release also enforces that <literal>\.</literal> must appear alone on a line.
 </para>
@@ -1015,7 +1015,7 @@ Have query jumbling of arrays consider only the first and last array elements (D
 </para>
 
 <para>
-Jumbling is used by <application>pg_stat_statements</application>.
+Jumbling is used by <xref linkend="pgstatstatements"/>.
 </para>
 </listitem>
 
@@ -1645,7 +1645,7 @@ Require primary/foreign key relationships to use either deterministic collations
 </para>
 
 <para>
-The restore of a <application>pg_dump</application>, also used by <application>pg_upgrade</application>, will fail if these requirements are not met;  schema changes must be made for these upgrade methods to succeed.
+The restore of a <xref linkend="app-pgdump"/>, also used by <xref linkend="pgupgrade"/>, will fail if these requirements are not met;  schema changes must be made for these upgrade methods to succeed.
 </para>
 </listitem>
 
@@ -1728,7 +1728,7 @@ This was previously erroneously prohibited.
     </sect4>
 
     <sect4 id="release-18-copy">
-     <title><link linkend="sql-copy"><command>COPY</command></link></title>
+     <title><xref linkend="sql-copy"/></title>
 
       <itemizedlist>
 
@@ -1796,7 +1796,7 @@ Previously, the <command>COPY</command> worked but the <literal>FREEZE</literal>
     </sect4>
 
     <sect4 id="release-18-explain">
-     <title><link linkend="sql-explain"><command>EXPLAIN</command></link></title>
+     <title><xref linkend="sql-explain"/></title>
 
      <itemizedlist>
 
@@ -2219,7 +2219,7 @@ Allow <function>regexp_match[es]()</function>/<function>regexp_like()</function>
    </sect3>
 
    <sect3 id="release-18-libpq">
-    <title><link linkend="libpq">libpq</link></title>
+    <title><xref linkend="libpq"/></title>
 
     <itemizedlist>
 
@@ -2502,7 +2502,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Change <application>initdb</application> to default to enabling checksums (Greg Sabino Mullane)
+Change <xref linkend="app-initdb"/> to default to enabling checksums (Greg Sabino Mullane)
 <ulink url="&commit_baseurl;983a588e0">&sect;</ulink>
 <ulink url="&commit_baseurl;04bec894a">&sect;</ulink>
 </para>
@@ -2554,7 +2554,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_combinebackup</application> option <option>-k</option>/<option>--link</option> to enable hard linking (Israel Barth Rubio, Robert Haas)
+Add <xref linkend="app-pgcombinebackup"/> option <option>-k</option>/<option>--link</option> to enable hard linking (Israel Barth Rubio, Robert Haas)
 <ulink url="&commit_baseurl;99aeb8470">&sect;</ulink>
 </para>
 
@@ -2582,7 +2582,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-If <application>pg_rewind</application>'s <option>--source-server</option> specifies a database name, use it in <option>--write-recovery-conf</option> output (Masahiko Sawada)
+If <xref linkend="app-pgrewind"/>'s <option>--source-server</option> specifies a database name, use it in <option>--write-recovery-conf</option> output (Masahiko Sawada)
 <ulink url="&commit_baseurl;4ecdd4110">&sect;</ulink>
 </para>
 </listitem>
@@ -2617,12 +2617,12 @@ Author: Andrew Dunstan <andrew@dunslane.net>
 
 <listitem>
 <para>
-Allow <application>pg_dumpall</application> to dump in the same output formats as <application>pg_dump</application> supports (Mahendra Singh Thalor, Andrew Dunstan)
+Allow <xref linkend="app-pg-dumpall"/> to dump in the same output formats as <application>pg_dump</application> supports (Mahendra Singh Thalor, Andrew Dunstan)
 <ulink url="&commit_baseurl;1495eff7b">&sect;</ulink>
 </para>
 
 <para>
-Also modify <application>pg_restore</application> to handle such dumps.  Previously <application>pg_dumpall</application> only supported text format.
+Also modify <xref linkend="app-pgrestore"/> to handle such dumps.  Previously <application>pg_dumpall</application> only supported text format.
 </para>
 </listitem>
 
@@ -2633,7 +2633,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_dump</application> options <option>--with-schema</option>, <option>--with-data</option>, and <option>--with-statistics</option> (Jeff Davis)
+Add <xref linkend="app-pgdump"/> options <option>--with-schema</option>, <option>--with-data</option>, and <option>--with-statistics</option> (Jeff Davis)
 <ulink url="&commit_baseurl;bde2fb797">&sect;</ulink>
 </para>
 </listitem>
@@ -2647,7 +2647,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_dump</application> and <application>pg_dumpall</application> option <option>--sequence-data</option> to dump sequence data that would normally be excluded (Nathan Bossart)
+Add <application>pg_dump</application> and <xref linkend="app-pg-dumpall"/> option <option>--sequence-data</option> to dump sequence data that would normally be excluded (Nathan Bossart)
 <ulink url="&commit_baseurl;9c49f0e8c">&sect;</ulink>
 <ulink url="&commit_baseurl;acea3fc49">&sect;</ulink>
 </para>
@@ -2660,7 +2660,8 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_dump</application>, <application>pg_dumpall</application>, and <application>pg_restore</application> options <option>--statistics-only</option>, <option>--no-statistics</option>, <option>--no-data</option>, and <option>--no-schema</option> (Corey Huinker, Jeff Davis)
+Add <xref linkend="app-pgdump"/>, <xref linkend="app-pg-dumpall"/>, and
+<xref linkend="app-pgrestore"/> options <option>--statistics-only</option>, <option>--no-statistics</option>, <option>--no-data</option>, and <option>--no-schema</option> (Corey Huinker, Jeff Davis)
 <ulink url="&commit_baseurl;1fd1bd871">&sect;</ulink>
 </para>
 </listitem>
@@ -2672,7 +2673,9 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add option <option>--no-policies</option> to disable row level security policy processing in <application>pg_dump</application>, <application>pg_dumpall</application>, <application>pg_restore</application> (Nikolay Samokhvalov)
+Add option <option>--no-policies</option> to disable row level security policy processing in
+<xref linkend="app-pgdump"/>, <xref linkend="app-pg-dumpall"/>,
+<xref linkend="app-pgrestore"/> (Nikolay Samokhvalov)
 <ulink url="&commit_baseurl;cd3c45125">&sect;</ulink>
 </para>
 
@@ -2686,7 +2689,7 @@ This is useful for migrating to systems with different policies.
     </sect4>
 
     <sect4 id="release-18-pgupgrade">
-     <title><link linkend="pgupgrade"><application>pg_upgrade</application></link></title>
+     <title><xref linkend="pgupgrade"/></title>
 
      <itemizedlist>
 
@@ -2812,7 +2815,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_createsubscriber</application> option <option>--all</option> to create logical replicas for all databases (Shubham Khanna)
+Add <xref linkend="app-pgcreatesubscriber"/> option <option>--all</option> to create logical replicas for all databases (Shubham Khanna)
 <ulink url="&commit_baseurl;fb2ea12f4">&sect;</ulink>
 </para>
 </listitem>
@@ -2848,7 +2851,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add <application>pg_recvlogical</application> option <option>--failover</option> to specify failover slots (Hayato Kuroda)
+Add <xref linkend="app-pgrecvlogical"/> option <option>--failover</option> to specify failover slots (Hayato Kuroda)
 <ulink url="&commit_baseurl;cf2655a90">&sect;</ulink>
 </para>
 </listitem>
@@ -3087,7 +3090,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Add support for Python "Limited <acronym>API</acronym>" in <application>PL/Python</application> (Peter Eisentraut)
+Add support for Python "Limited <acronym>API</acronym>" in <xref linkend="plpython"/> (Peter Eisentraut)
 <ulink url="&commit_baseurl;72a3d0462">&sect;</ulink>
 <ulink url="&commit_baseurl;0793ab810">&sect;</ulink>
 </para>
@@ -3239,7 +3242,7 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 
 <listitem>
 <para>
-Add extension <application>pg_logicalinspect</application> to inspect logical snapshots (Bertrand Drouvot)
+Add extension <xref linkend="pglogicalinspect"/> to inspect logical snapshots (Bertrand Drouvot)
 <ulink url="&commit_baseurl;7cdfeee32">&sect;</ulink>
 </para>
 </listitem>
@@ -3289,7 +3292,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Allow <acronym>SCRAM</acronym> authentication from the client to be passed to <application>postgres_fdw</application> servers (Matheus Alcantara, Peter Eisentraut)
+Allow <acronym>SCRAM</acronym> authentication from the client to be passed to
+<xref linkend="postgres-fdw"/> servers (Matheus Alcantara, Peter Eisentraut)
 <ulink url="&commit_baseurl;761c79508">&sect;</ulink>
 </para>
 
@@ -3307,7 +3311,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Allow <acronym>SCRAM</acronym> authentication from the client to be passed to <application>dblink</application> servers (Matheus Alcantara)
+Allow <acronym>SCRAM</acronym> authentication from the client to be passed to
+<xref linkend="dblink"/> servers (Matheus Alcantara)
 <ulink url="&commit_baseurl;3642df265">&sect;</ulink>
 </para>
 </listitem>
@@ -3319,7 +3324,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add <literal>on_error</literal> and <literal>log_verbosity</literal> options to <application>file_fdw</application> (Atsushi Torikoshi)
+Add <literal>on_error</literal> and <literal>log_verbosity</literal> options to <xref linkend="file-fdw"/> (Atsushi Torikoshi)
 <ulink url="&commit_baseurl;a1c4c8a9e">&sect;</ulink>
 </para>
 
@@ -3351,7 +3356,8 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add configurable variable <varname>min_password_length</varname> to <application>passwordcheck</application> (Emanuele Musella, Maurizio Boriani)
+Add configurable variable <varname>min_password_length</varname> to
+<xref linkend="passwordcheck"/> (Emanuele Musella, Maurizio Boriani)
 <ulink url="&commit_baseurl;f7e1b3828">&sect;</ulink>
 </para>
 
@@ -3379,7 +3385,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Add <application>isn</application> server variable <literal>weak</literal> to control invalid check digit acceptance (Viktor Holmberg)
+Add <xref linkend="isn"/> server variable <literal>weak</literal> to control invalid check digit acceptance (Viktor Holmberg)
 <ulink url="&commit_baseurl;448904423">&sect;</ulink>
 </para>
 
@@ -3464,7 +3470,7 @@ Allow extensions to use the server's cumulative statistics <acronym>API</acronym
     </itemizedlist>
 
     <sect4 id="release-18-pgstatstatements">
-     <title><link linkend="pgstatstatements"><application>pg_stat_statements</application></link></title>
+     <title><xref linkend="pgstatstatements"/></title>
 
      <itemizedlist>
 
@@ -3533,7 +3539,7 @@ Add <structname>pg_stat_statements</structname>.<structfield>wal_buffers_full</s
     </sect4>
 
     <sect4 id="release-18-pgcrypto">
-     <title><link linkend="pgcrypto"><application>pgcrypto</application></link></title>
+     <title><xref linkend="pgcrypto"/></title>
 
      <itemizedlist>
 
