@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/plpython.sgml -->
 
-<chapter id="plpython">
+<chapter id="plpython" xreflabel="PL/Python">
  <title>PL/Python &mdash; Python Procedural Language</title>
 
  <indexterm zone="plpython"><primary>PL/Python</primary></indexterm>
