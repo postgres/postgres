@@ -3020,7 +3020,7 @@ index_build(Relation heapRelation,
 
 	/*
 	 * Determine worker process details for parallel CREATE INDEX.  Currently,
-	 * only btree and BRIN have support for parallel builds.
+	 * only btree, GIN, and BRIN have support for parallel builds.
 	 *
 	 * Note that planner considers parallel safety for us.
 	 */
