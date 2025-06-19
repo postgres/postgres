@@ -100,7 +100,7 @@ Deprecate MD5 password authentication (Nathan Bossart)
 </para>
 
 <para>
-Support for MD5 passwords will be removed in a future major version release.  <command>CREATE ROLE</command> and <command>ALTER ROLE</command> now emit deprecation warnings when setting MD5 passwords.
+Support for MD5 passwords will be removed in a future major version release.  <xref linkend="sql-createrole"/> and <xref linkend="sql-alterrole"/> now emit deprecation warnings when setting MD5 passwords.
 These warnings can be disabled by setting the <xref linkend="guc-md5-password-warnings"/> parameter to <literal>off</literal>.
 </para>
 </listitem>
@@ -112,7 +112,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Change <command>VACUUM</command> and <command>ANALYZE</command> to process the inheritance children of a parent (Michael Harris)
+Change <xref linkend="sql-vacuum"/> and <xref linkend="sql-analyze"/> to process the inheritance children of a parent (Michael Harris)
 <ulink url="&commit_baseurl;62ddf7ee9">&sect;</ulink>
 </para>
 
@@ -130,7 +130,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Prevent <command>COPY FROM</command> from treating <literal>\.</literal> as an end-of-file marker when reading <acronym>CSV</acronym> files (Daniel Vérité, Tom Lane)
+Prevent <link linkend="sql-copy"><command>COPY FROM</command></link> from treating <literal>\.</literal> as an end-of-file marker when reading <acronym>CSV</acronym> files (Daniel Vérité, Tom Lane)
 <ulink url="&commit_baseurl;770233748">&sect;</ulink>
 <ulink url="&commit_baseurl;da8a4c166">&sect;</ulink>
 </para>
@@ -154,7 +154,7 @@ Disallow unlogged partitioned tables (Michael Paquier)
 </para>
 
 <para>
-Previously <command>ALTER TABLE SET [UN]LOGGED</command> did nothing, and the creation of an unlogged partitioned table did not cause its children to be unlogged.
+Previously <link linkend="sql-altertable"><command>ALTER TABLE SET [UN]LOGGED</command></link> did nothing, and the creation of an unlogged partitioned table did not cause its children to be unlogged.
 </para>
 </listitem>
 
@@ -170,7 +170,7 @@ Execute <literal>AFTER</literal> triggers as the role that was active when trigg
 </para>
 
 <para>
-Previously such triggers were run as the role that was active at trigger execution time (e.g., at <command>COMMIT</command>).  This is significant for cases where the role is changed between queue time and
+Previously such triggers were run as the role that was active at trigger execution time (e.g., at <xref linkend="sql-commit"/>).  This is significant for cases where the role is changed between queue time and
 transaction commit.
 </para>
 </listitem>
@@ -182,7 +182,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Remove non-functional support for rule privileges in <command>GRANT</command>/<command>REVOKE</command> (Fujii Masao)
+Remove non-functional support for rule privileges in <xref linkend="sql-grant"/>/<xref linkend="sql-revoke"/> (Fujii Masao)
 <ulink url="&commit_baseurl;fefa76f70">&sect;</ulink>
 </para>
 
@@ -198,7 +198,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Remove column <structname>pg_backend_memory_contexts</structname>.<structfield>parent</structfield> (Melih Mutlu)
+Remove column <link linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link>.<structfield>parent</structfield> (Melih Mutlu)
 <ulink url="&commit_baseurl;f0d112759">&sect;</ulink>
 </para>
 
@@ -319,7 +319,7 @@ Author: Richard Guo <rguo@postgresql.org>
 
 <listitem>
 <para>
-Allow the keys of <command>SELECT DISTINCT</command> to be internally reordered to avoid sorting (Richard Guo)
+Allow the keys of <link linkend="sql-select"><command>SELECT DISTINCT</command></link> to be internally reordered to avoid sorting (Richard Guo)
 <ulink url="&commit_baseurl;a8ccf4e93">&sect;</ulink>
 </para>
 
@@ -607,7 +607,7 @@ Add an asynchronous I/O subsystem (Andres Freund, Thomas Munro, Nazir Bilal Yavu
 <para>
 This feature allows backends to queue multiple read requests, which allows for more efficient sequential scans, bitmap heap scans, vacuums, etc.
 This is enabled by server variable <xref linkend="guc-io-method"/>, with server variables <xref linkend="guc-io-combine-limit"/> and <xref linkend="guc-io-max-combine-limit"/> added to control it.  This also enables
-<xref linkend="guc-effective-io-concurrency"/> and <xref linkend="guc-maintenance-io-concurrency"/> values greater than zero for systems without <function>fadvise()</function> support.  The new system view <structname>pg_aios</structname> shows the file handles being used
+<xref linkend="guc-effective-io-concurrency"/> and <xref linkend="guc-maintenance-io-concurrency"/> values greater than zero for systems without <function>fadvise()</function> support.  The new system view <link linkend="view-pg-aios"><structname>pg_aios</structname></link> shows the file handles being used
 for asynchronous I/O.
 </para>
 </listitem>
@@ -679,7 +679,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add server variable <xref linkend="guc-vacuum-truncate"/> to control file truncation during <command>VACUUM</command> (Nathan Bossart, Gurjeet Singh)
+Add server variable <xref linkend="guc-vacuum-truncate"/> to control file truncation during <xref linkend="sql-vacuum"/> (Nathan Bossart, Gurjeet Singh)
 <ulink url="&commit_baseurl;0164a0f9e">&sect;</ulink>
 </para>
 
@@ -768,7 +768,7 @@ Add server variable <xref linkend="guc-log-lock-failures"/> to log lock acquisit
 </para>
 
 <para>
-Specifically it reports <command>SELECT ... NOWAIT</command> lock failures.
+Specifically it reports <link linkend="sql-select"><command>SELECT ... NOWAIT</command></link> lock failures.
 </para>
 </listitem>
 
@@ -779,7 +779,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Modify <structname>pg_stat_all_tables</structname> and its variants to report the time spent in <literal>VACUUM</literal>, <literal>ANALYZE</literal>, and their automatic variants (Sami Imseih)
+Modify <link linkend="monitoring-pg-stat-all-tables-view"><structname>pg_stat_all_tables</structname></link> and its variants to report the time spent in <literal>VACUUM</literal>, <literal>ANALYZE</literal>, and their automatic variants (Sami Imseih)
 <ulink url="&commit_baseurl;30a6ed0ce">&sect;</ulink>
 </para>
 
@@ -797,13 +797,13 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add delay time reporting to <command>VACUUM</command> and <command>ANALYZE</command> (Bertrand Drouvot, Nathan Bossart)
+Add delay time reporting to <xref linkend="sql-vacuum"/> and <xref linkend="sql-analyze"/> (Bertrand Drouvot, Nathan Bossart)
 <ulink url="&commit_baseurl;bb8dff999">&sect;</ulink>
 <ulink url="&commit_baseurl;7720082ae">&sect;</ulink>
 </para>
 
 <para>
-This information appears in the autovacuum logs, the system views <structname>pg_stat_progress_vacuum</structname> and <structname>pg_stat_progress_analyze</structname>, and the output of <command>VACUUM</command> and <command>ANALYZE</command> when in <literal>VERBOSE</literal>
+This information appears in the autovacuum logs, the system views <link linkend="vacuum-progress-reporting"><structname>pg_stat_progress_vacuum</structname></link> and <link linkend="pg-stat-progress-analyze-view"><structname>pg_stat_progress_analyze</structname></link>, and the output of <command>VACUUM</command> and <command>ANALYZE</command> when in <literal>VERBOSE</literal>
 mode; tracking must be enabled with the server variable <xref linkend="guc-track-cost-delay-timing"/>.
 </para>
 </listitem>
@@ -861,7 +861,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add <structname>pg_stat_io</structname> columns to report I/O activity in bytes (Nazir Bilal Yavuz)
+Add <link linkend="monitoring-pg-stat-io-view"><structname>pg_stat_io</structname></link> columns to report I/O activity in bytes (Nazir Bilal Yavuz)
 <ulink url="&commit_baseurl;f92c854cf">&sect;</ulink>
 </para>
 
@@ -900,7 +900,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Change server variable <xref linkend="guc-track-wal-io-timing"/> to control tracking <acronym>WAL</acronym> timing in <structname>pg_stat_io</structname> instead of <structname>pg_stat_wal</structname> (Bertrand Drouvot)
+Change server variable <xref linkend="guc-track-wal-io-timing"/> to control tracking <acronym>WAL</acronym> timing in <structname>pg_stat_io</structname> instead of <link linkend="pg-stat-wal-view"><structname>pg_stat_wal</structname></link> (Bertrand Drouvot)
 <ulink url="&commit_baseurl;6c349d83b">&sect;</ulink>
 </para>
 </listitem>
@@ -959,7 +959,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Add column <structname>pg_stat_checkpointer</structname>.<structfield>num_done</structfield> to report the number of completed checkpoints (Anton A. Melnikov)
+Add column <link linkend="monitoring-pg-stat-checkpointer-view"><structname>pg_stat_checkpointer</structname></link>.<structfield>num_done</structfield> to report the number of completed checkpoints (Anton A. Melnikov)
 <ulink url="&commit_baseurl;559efce1d">&sect;</ulink>
 </para>
 
@@ -991,7 +991,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add columns to <structname>pg_stat_database</structname> to report parallel workers activity (Benoit Lobréau)
+Add columns to <link linkend="monitoring-pg-stat-database-view"><structname>pg_stat_database</structname></link> to report parallel workers activity (Benoit Lobréau)
 <ulink url="&commit_baseurl;e7a9496de">&sect;</ulink>
 </para>
 
@@ -1042,7 +1042,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Add column <structname>pg_backend_memory_contexts</structname>.<structfield>type</structfield> to report the type of memory context (David Rowley)
+Add column <link linkend="view-pg-backend-memory-contexts"><structname>pg_backend_memory_contexts</structname></link>.<structfield>type</structfield> to report the type of memory context (David Rowley)
 <ulink url="&commit_baseurl;12227a1d5">&sect;</ulink>
 </para>
 </listitem>
@@ -1102,7 +1102,7 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Allow <command>ALTER DEFAULT PRIVILEGES</command> to define large object default privileges (Takatsuka Haruka, Yugo Nagata, Laurenz Albe)
+Allow <xref linkend="sql-alterdefaultprivileges"/> to define large object default privileges (Takatsuka Haruka, Yugo Nagata, Laurenz Albe)
 <ulink url="&commit_baseurl;0d6c47766">&sect;</ulink>
 </para>
 </listitem>
@@ -1378,7 +1378,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Change the default <command>CREATE SUBSCRIPTION</command> streaming option from <literal>off</literal> to <literal>parallel</literal> (Vignesh C)
+Change the default <xref linkend="sql-createsubscription"/> streaming option from <literal>off</literal> to <literal>parallel</literal> (Vignesh C)
 <ulink url="&commit_baseurl;1bf1140be">&sect;</ulink>
 </para>
 </listitem>
@@ -1392,7 +1392,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Allow <command>ALTER SUBSCRIPTION</command> to change the replication slot's two-phase commit behavior (Hayato Kuroda, Ajin Cherian, Amit Kapila, Zhijie Hou)
+Allow <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION</command></link> to change the replication slot's two-phase commit behavior (Hayato Kuroda, Ajin Cherian, Amit Kapila, Zhijie Hou)
 <ulink url="&commit_baseurl;1462aad2e">&sect;</ulink>
 <ulink url="&commit_baseurl;4868c96bc">&sect;</ulink>
 </para>
@@ -1422,7 +1422,7 @@ Log conflicts while applying logical replication changes (Zhijie Hou, Nisha Moon
 </para>
 
 <para>
-Also report in new columns of <structname>pg_stat_subscription_stats</structname>.
+Also report in new columns of <link linkend="monitoring-pg-stat-subscription-stats"><structname>pg_stat_subscription_stats</structname></link>.
 </para>
 </listitem>
 
@@ -1471,7 +1471,7 @@ Add <literal>OLD</literal>/<literal>NEW</literal> support to <literal>RETURNING<
 </para>
 
 <para>
-Previously <literal>RETURNING</literal> only returned new values for <command>INSERT</command> and <command>UPDATE</command>, and old values for <command>DELETE</command>; <command>MERGE</command> would return the appropriate value for the internal query executed.  This new syntax
+Previously <literal>RETURNING</literal> only returned new values for <xref linkend="sql-insert"/> and <xref linkend="sql-update"/>, and old values for <xref linkend="sql-delete"/>; <xref linkend="sql-merge"/> would return the appropriate value for the internal query executed.  This new syntax
 allows the <literal>RETURNING</literal> list of <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command>/<command>MERGE</command> to explicitly return old and new values by using the special aliases <literal>old</literal> and <literal>new</literal>.  These aliases can be renamed to
 avoid identifier conflicts.
 </para>
@@ -1489,7 +1489,7 @@ Allow foreign tables to be created like existing local tables (Zhang Mingli)
 </para>
 
 <para>
-The syntax is <command>CREATE FOREIGN TABLE ... LIKE</command>.
+The syntax is <link linkend="sql-createforeigntable"><command>CREATE FOREIGN TABLE ... LIKE</command></link>.
 </para>
 </listitem>
 
@@ -1544,7 +1544,7 @@ Author: David Rowley <drowley@postgresql.org>
 
 <listitem>
 <para>
-Allow <command>VACUUM</command> and <command>ANALYZE</command> to process partitioned tables without processing their children (Michael Harris)
+Allow <xref linkend="sql-vacuum"/> and <xref linkend="sql-analyze"/> to process partitioned tables without processing their children (Michael Harris)
 <ulink url="&commit_baseurl;62ddf7ee9">&sect;</ulink>
 </para>
 
@@ -1588,7 +1588,7 @@ Add server variable <xref linkend="guc-file-copy-method"/> to control the file c
 </para>
 
 <para>
-This controls whether <command>CREATE DATABASE ... STRATEGY=FILE_COPY</command> and <command>ALTER DATABASE ... SET TABLESPACE</command> uses file copy or clone.
+This controls whether <link linkend="sql-createdatabase"><command>CREATE DATABASE ... STRATEGY=FILE_COPY</command></link> and <link linkend="sql-alterdatabase"><command>ALTER DATABASE ... SET TABLESPACE</command></link> uses file copy or clone.
 </para>
 </listitem>
 
@@ -1630,7 +1630,7 @@ Allow <literal>CHECK</literal> and foreign key constraints to be specified as <l
 </para>
 
 <para>
-This also adds column <structname>pg_constraint</structname>.<structfield>conenforced</structfield>.</para>
+This also adds column <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.<structfield>conenforced</structfield>.</para>
 </listitem>
 
 <!--
@@ -1672,7 +1672,7 @@ Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
 
 <listitem>
 <para>
-Allow <command>ALTER TABLE</command> to set the <literal>NOT VALID</literal> attribute of <literal>NOT NULL</literal> constraints (Rushabh Lathia, Jian He)
+Allow <xref linkend="sql-altertable"/> to set the <literal>NOT VALID</literal> attribute of <literal>NOT NULL</literal> constraints (Rushabh Lathia, Jian He)
 <ulink url="&commit_baseurl;a379061a2">&sect;</ulink>
 </para>
 </listitem>
@@ -1692,7 +1692,7 @@ Allow modification of the inheritability of <literal>NOT NULL</literal> constrai
 </para>
 
 <para>
-The syntax is <command>ALTER TABLE ... ALTER CONSTRAINT ... [NO] INHERIT</command>.
+The syntax is <link linkend="sql-altertable"><command>ALTER TABLE ... ALTER CONSTRAINT ... [NO] INHERIT</command></link>.
 </para>
 </listitem>
 
@@ -3000,7 +3000,7 @@ Add configure option <option>--with-libnuma</option> to enable <acronym>NUMA</ac
 </para>
 
 <para>
-The function <function>pg_numa_available()</function> reports on <acronym>NUMA</acronym> awareness, and system views <structname>pg_shmem_allocations_numa</structname> and <structname>pg_buffercache_numa</structname> which report on shared memory distribution across
+The function <function>pg_numa_available()</function> reports on <acronym>NUMA</acronym> awareness, and system views <link linkend="view-pg-shmem-allocations-numa"><structname>pg_shmem_allocations_numa</structname></link> and <link linkend="pgbuffercache-pg-buffercache-numa"><structname>pg_buffercache_numa</structname></link> which report on shared memory distribution across
 <acronym>NUMA</acronym> nodes.
 </para>
 </listitem>
@@ -3012,7 +3012,7 @@ Author: Nathan Bossart <nathan@postgresql.org>
 
 <listitem>
 <para>
-Add <acronym>TOAST</acronym> table to <structname>pg_index</structname> to allow for very large expression indexes (Nathan Bossart)
+Add <acronym>TOAST</acronym> table to <link linkend="catalog-pg-index"><structname>pg_index</structname></link> to allow for very large expression indexes (Nathan Bossart)
 <ulink url="&commit_baseurl;b52c4fc3c">&sect;</ulink>
 </para>
 </listitem>
@@ -3025,7 +3025,7 @@ Author: David Rowley <drowley@postgresql.org>
 <listitem>
 <para>
 Remove column
-<structname>pg_attribute</structname>.<structfield>attcacheoff</structfield> (David Rowley)
+<link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attcacheoff</structfield> (David Rowley)
 <ulink url="&commit_baseurl;02a8d0c45">&sect;</ulink>
 </para>
 </listitem>
@@ -3037,7 +3037,7 @@ Author: Melanie Plageman <melanieplageman@gmail.com>
 
 <listitem>
 <para>
-Add column <structname>pg_class</structname>.<structfield>relallfrozen</structfield> (Melanie Plageman)
+Add column <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relallfrozen</structfield> (Melanie Plageman)
 <ulink url="&commit_baseurl;99f8f3fbb">&sect;</ulink>
 </para>
 </listitem>
@@ -3254,7 +3254,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add extension <application>pg_overexplain</application> which adds debug details to <command>EXPLAIN</command> output (Robert Haas)
+Add extension <application>pg_overexplain</application> which adds debug details to <link linkend="sql-explain"><command>EXPLAIN</command></link> output (Robert Haas)
 <ulink url="&commit_baseurl;8d5ceb113">&sect;</ulink>
 </para>
 </listitem>
@@ -3445,7 +3445,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow extensions to install custom <command>EXPLAIN</command> options (Robert Haas, Sami Imseih)
+Allow extensions to install custom <link linkend="sql-explain"><command>EXPLAIN</command></link> options (Robert Haas, Sami Imseih)
 <ulink url="&commit_baseurl;c65bc2e1d">&sect;</ulink>
 <ulink url="&commit_baseurl;4fd02bf7c">&sect;</ulink>
 <ulink url="&commit_baseurl;50ba65e73">&sect;</ulink>
@@ -3481,7 +3481,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow the queries of <command>CREATE TABLE AS</command> and <command>DECLARE</command> to be tracked by <application>pg_stat_statements</application> (Anthonin Bonnefoy)
+Allow the queries of <xref linkend="sql-createtableas"/> and <xref linkend="sql-declare"/> to be tracked by <application>pg_stat_statements</application> (Anthonin Bonnefoy)
 <ulink url="&commit_baseurl;6b652e6ce">&sect;</ulink>
 </para>
 
@@ -3497,7 +3497,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow the parameterization of <command>SET</command> values in <application>pg_stat_statements</application> (Greg Sabino Mullane, Michael Paquier)
+Allow the parameterization of <xref linkend="sql-set"/> values in <application>pg_stat_statements</application> (Greg Sabino Mullane, Michael Paquier)
 <ulink url="&commit_baseurl;dc6851596">&sect;</ulink>
 </para>
 
@@ -3513,7 +3513,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add <application>pg_stat_statements</application> columns to report parallel activity (Guillaume Lelarge)
+Add <link linkend="pgstatstatements-pg-stat-statements"><structname>pg_stat_statements</structname></link> columns to report parallel activity (Guillaume Lelarge)
 <ulink url="&commit_baseurl;cf54a2c00">&sect;</ulink>
 </para>
 
