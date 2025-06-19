@@ -18,8 +18,8 @@ PostgreSQL documentation
   <refname>pg_restore</refname>
 
   <refpurpose>
-   restore a <productname>PostgreSQL</productname> database or cluster
-   from an archive created by <application>pg_dump</application> or
+   restore <productname>PostgreSQL</productname> databases from archives
+   created by <application>pg_dump</application> or
    <application>pg_dumpall</application>
   </refpurpose>
  </refnamediv>

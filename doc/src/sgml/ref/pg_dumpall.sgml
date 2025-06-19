@@ -16,7 +16,10 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>pg_dumpall</refname>
-  <refpurpose>extract a <productname>PostgreSQL</productname> database cluster using a specified dump format</refpurpose>
+
+  <refpurpose>
+   export a <productname>PostgreSQL</productname> database cluster as an SQL script or to other formats
+  </refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -33,7 +36,7 @@ PostgreSQL documentation
   <para>
    <application>pg_dumpall</application> is a utility for writing out
    (<quote>dumping</quote>) all <productname>PostgreSQL</productname> databases
-   of a cluster into an archive.  The archive contains
+   of a cluster into an SQL script file or an archive.  The output contains
    <acronym>SQL</acronym> commands that can be used as input to <xref
    linkend="app-psql"/> to restore the databases.  It does this by
    calling <xref linkend="app-pgdump"/> for each database in the cluster.

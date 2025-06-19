@@ -1235,7 +1235,7 @@ main(int argc, char **argv)
 static void
 help(const char *progname)
 {
-	printf(_("%s dumps a database as a text file or to other formats.\n\n"), progname);
+	printf(_("%s exports a PostgreSQL database as an SQL script or to other formats.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 

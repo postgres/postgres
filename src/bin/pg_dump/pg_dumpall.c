@@ -699,7 +699,7 @@ main(int argc, char *argv[])
 static void
 help(void)
 {
-	printf(_("%s extracts a PostgreSQL database cluster based on specified dump format.\n\n"), progname);
+	printf(_("%s exports a PostgreSQL database cluster as an SQL script or to other formats.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]...\n"), progname);
 

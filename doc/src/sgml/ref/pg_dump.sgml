@@ -18,7 +18,7 @@ PostgreSQL documentation
   <refname>pg_dump</refname>
 
   <refpurpose>
-   extract a <productname>PostgreSQL</productname> database into a script file or other archive file
+   export a <productname>PostgreSQL</productname> database as an SQL script or to other formats
   </refpurpose>
  </refnamediv>
 
