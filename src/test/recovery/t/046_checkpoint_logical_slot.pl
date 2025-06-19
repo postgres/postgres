@@ -21,15 +21,18 @@ my ($node, $result);
 
 $node = PostgreSQL::Test::Cluster->new('mike');
 $node->init;
-$node->append_conf('postgresql.conf',
-	"shared_preload_libraries = 'injection_points'");
 $node->append_conf('postgresql.conf', "wal_level = 'logical'");
 $node->start;
-$node->safe_psql('postgres', q(CREATE EXTENSION injection_points));
 
-# Create a simple table to generate data into.
-$node->safe_psql('postgres',
-	q{create table t (id serial primary key, b text)});
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+if (!$node->check_extension('injection_points'))
+{
+	plan skip_all => 'Extension injection_points not installed';
+}
+
+$node->safe_psql('postgres', q(CREATE EXTENSION injection_points));
 
 # Create the two slots we'll need.
 $node->safe_psql('postgres',
@@ -58,23 +61,17 @@ SELECT 1 \watch 0.1
 \q
 ));
 
-# Insert 2M rows; that's about 260MB (~20 segments) worth of WAL.
-$node->safe_psql('postgres',
-	q{insert into t (b) select md5(i::text) from generate_series(1,1000000) s(i)}
-);
+$node->advance_wal(20);
 
 # Run another checkpoint to set a new restore LSN.
 $node->safe_psql('postgres', q{checkpoint});
 
-# Another 2M rows; that's about 260MB (~20 segments) worth of WAL.
-$node->safe_psql('postgres',
-	q{insert into t (b) select md5(i::text) from generate_series(1,1000000) s(i)}
-);
+$node->advance_wal(20);
 
 # Run another checkpoint, this time in the background, and make it wait
 # on the injection point) so that the checkpoint stops right before
 # removing old WAL segments.
-note('starting checkpoint\n');
+note('starting checkpoint');
 
 my $checkpoint = $node->background_psql('postgres');
 $checkpoint->query_safe(
@@ -88,7 +85,7 @@ checkpoint;
 ));
 
 # Wait until the checkpoint stops right before removing WAL segments.
-note('waiting for injection_point\n');
+note('waiting for injection_point');
 $node->wait_for_event('checkpointer', 'checkpoint-before-old-wal-removal');
 note('injection_point is reached');
 
@@ -107,7 +104,7 @@ select count(*) from pg_logical_slot_get_changes('slot_logical', null, null) \wa
 ));
 
 # Wait until the slot's restart_lsn points to the next WAL segment.
-note('waiting for injection_point\n');
+note('waiting for injection_point');
 $node->wait_for_event('client backend',
 	'logical-replication-slot-advance-segment');
 note('injection_point is reached');

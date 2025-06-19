@@ -21,15 +21,18 @@ my ($node, $result);
 
 $node = PostgreSQL::Test::Cluster->new('mike');
 $node->init;
-$node->append_conf('postgresql.conf',
-	"shared_preload_libraries = 'injection_points'");
 $node->append_conf('postgresql.conf', "wal_level = 'replica'");
 $node->start;
-$node->safe_psql('postgres', q(CREATE EXTENSION injection_points));
 
-# Create a simple table to generate data into.
-$node->safe_psql('postgres',
-	q{create table t (id serial primary key, b text)});
+# Check if the extension injection_points is available, as it may be
+# possible that this script is run with installcheck, where the module
+# would not be installed by default.
+if (!$node->check_extension('injection_points'))
+{
+	plan skip_all => 'Extension injection_points not installed';
+}
+
+$node->safe_psql('postgres', q(CREATE EXTENSION injection_points));
 
 # Create a physical replication slot.
 $node->safe_psql('postgres',
@@ -44,9 +47,7 @@ $node->safe_psql('postgres',
 $node->safe_psql('postgres', q{checkpoint});
 
 # Insert 2M rows; that's about 260MB (~20 segments) worth of WAL.
-$node->safe_psql('postgres',
-	q{insert into t (b) select md5(i::text) from generate_series(1,100000) s(i)}
-);
+$node->advance_wal(20);
 
 # Advance slot to the current position, just to have everything "valid".
 $node->safe_psql('postgres',
@@ -57,9 +58,7 @@ $node->safe_psql('postgres',
 $node->safe_psql('postgres', q{checkpoint});
 
 # Another 2M rows; that's about 260MB (~20 segments) worth of WAL.
-$node->safe_psql('postgres',
-	q{insert into t (b) select md5(i::text) from generate_series(1,1000000) s(i)}
-);
+$node->advance_wal(20);
 
 my $restart_lsn_init = $node->safe_psql('postgres',
 	q{select restart_lsn from pg_replication_slots where slot_name = 'slot_physical'}
