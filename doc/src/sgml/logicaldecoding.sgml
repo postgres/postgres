@@ -370,10 +370,10 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      <function>pg_create_logical_replication_slot</function></link>, or by
      using the <link linkend="sql-createsubscription-params-with-failover">
      <literal>failover</literal></link> option of
-     <command>CREATE SUBSCRIPTION</command> during slot creation, and then calling
-     <link linkend="pg-sync-replication-slots">
-     <function>pg_sync_replication_slots</function></link>
-     on the standby. By setting <link linkend="guc-sync-replication-slots">
+     <command>CREATE SUBSCRIPTION</command> during slot creation.
+     Additionally, enabling <link linkend="guc-sync-replication-slots">
+     <varname>sync_replication_slots</varname></link> on the standby
+     is required. By enabling <link linkend="guc-sync-replication-slots">
      <varname>sync_replication_slots</varname></link>
      on the standby, the failover slots can be synchronized periodically in
      the slotsync worker. For the synchronization to work, it is mandatory to
@@ -396,6 +396,52 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      standbys, associated with the physical replication slots specified
      in <varname>synchronized_standby_slots</varname>, have confirmed
      receiving the WAL up to the latest flushed position on the primary server.
+    </para>
+
+    <note>
+     <para>
+      While enabling <link linkend="guc-sync-replication-slots">
+      <varname>sync_replication_slots</varname></link> allows for automatic
+      periodic synchronization of failover slots, they can also be manually
+      synchronized using the <link linkend="pg-sync-replication-slots">
+      <function>pg_sync_replication_slots</function></link> function on the standby.
+      However, this function is primarily intended for testing and debugging and
+      should be used with caution. Unlike automatic synchronization, it does not
+      include cyclic retries, making it more prone to synchronization failures,
+      particularly during initial sync scenarios where the required WAL files
+      or catalog rows for the slot may have already been removed or are at risk
+      of being removed on the standby. In contrast, automatic synchronization
+      via <varname>sync_replication_slots</varname> provides continuous slot
+      updates, enabling seamless failover and supporting high availability.
+      Therefore, it is the recommended method for synchronizing slots.
+     </para>
+    </note>
+
+    <para>
+     When slot synchronization is configured as recommended,
+     and the initial synchronization is performed either automatically or
+     manually via pg_sync_replication_slot, the standby can persist the
+     synchronized slot only if the following condition is met: The logical
+     replication slot on the primary must retain WALs and system catalog
+     rows that are still available on the standby. This ensures data
+     integrity and allows logical replication to continue smoothly after
+     promotion.
+     If the required WALs or catalog rows have already been purged from the
+     standby, the slot will not be persisted to avoid data loss. In such
+     cases, the following log message may appear:
+<programlisting>
+     LOG:  could not synchronize replication slot "failover_slot"
+     DETAIL:  Synchronization could lead to data loss as the remote slot needs WAL at LSN 0/3003F28 and catalog xmin 754, but the standby has LSN 0/3003F28 and catalog xmin 756
+</programlisting>
+     If the logical replication slot is actively used by a consumer, no
+     manual intervention is needed; the slot will advance automatically,
+     and synchronization will resume in the next cycle. However, if no
+     consumer is configured, it is advisable to manually advance the slot
+     on the primary using <link linkend="pg-logical-slot-get-changes">
+     <function>pg_logical_slot_get_changes</function></link> or
+     <link linkend="pg-logical-slot-get-binary-changes">
+     <function>pg_logical_slot_get_binary_changes</function></link>,
+     allowing synchronization to proceed.
     </para>
 
     <para>

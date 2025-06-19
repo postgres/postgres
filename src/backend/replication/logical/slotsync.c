@@ -212,9 +212,9 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		 * impact the users, so we used DEBUG1 level to log the message.
 		 */
 		ereport(slot->data.persistency == RS_TEMPORARY ? LOG : DEBUG1,
-				errmsg("could not synchronize replication slot \"%s\" because remote slot precedes local slot",
+				errmsg("could not synchronize replication slot \"%s\"",
 					   remote_slot->name),
-				errdetail("The remote slot has LSN %X/%X and catalog xmin %u, but the local slot has LSN %X/%X and catalog xmin %u.",
+				errdetail("Synchronization could lead to data loss as the remote slot needs WAL at LSN %X/%X and catalog xmin %u, but the standby has LSN %X/%X and catalog xmin %u.",
 						  LSN_FORMAT_ARGS(remote_slot->restart_lsn),
 						  remote_slot->catalog_xmin,
 						  LSN_FORMAT_ARGS(slot->data.restart_lsn),
@@ -577,7 +577,7 @@ update_and_persist_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 	{
 		ereport(LOG,
 				errmsg("could not synchronize replication slot \"%s\"", remote_slot->name),
-				errdetail("Logical decoding could not find consistent point from local slot's LSN %X/%X.",
+				errdetail("Synchronization could lead to data loss as standby could not build a consistent snapshot to decode WALs at LSN %X/%X.",
 						  LSN_FORMAT_ARGS(slot->data.restart_lsn)));
 
 		return false;
