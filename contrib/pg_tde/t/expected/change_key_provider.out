@@ -99,7 +99,7 @@ SELECT * FROM test_enc ORDER BY id;
 -- mv /tmp/change_key_provider_2.per /tmp/change_key_provider_1.per
 -- server restart
 SELECT pg_tde_verify_key();
-psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
+psql:<stdin>:1: ERROR:  key "test-key" not found in key provider "file-vault"
 SELECT pg_tde_is_encrypted('test_enc');
  pg_tde_is_encrypted 
 ---------------------
@@ -107,7 +107,7 @@ SELECT pg_tde_is_encrypted('test_enc');
 (1 row)
 
 SELECT * FROM test_enc ORDER BY id;
-psql:<stdin>:1: ERROR:  failed to retrieve principal key test-key from keyring with ID 1
+psql:<stdin>:1: ERROR:  key "test-key" not found in key provider "file-vault"
 SELECT pg_tde_change_database_key_provider_file('file-vault', '/tmp/change_key_provider_1.per');
  pg_tde_change_database_key_provider_file 
 ------------------------------------------

@@ -1,0 +1,27 @@
+CREATE EXTENSION pg_tde;
+SELECT pg_tde_add_database_key_provider_file('test-file-provider', '/tmp/pg_tde_test_key_validation.per');
+ pg_tde_add_database_key_provider_file 
+---------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_database_key_provider('key1', 'test-file-provider');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_create_key_using_database_key_provider('key2', 'test-file-provider');
+ pg_tde_create_key_using_database_key_provider 
+-----------------------------------------------
+ 
+(1 row)
+
+SELECT pg_tde_set_key_using_database_key_provider('key1', 'test-file-provider');
+psql:<stdin>:1: WARNING:  invalid key: data length is zero
+psql:<stdin>:1: ERROR:  failed to retrieve principal key "key1" from key provider "test-file-provider"
+DETAIL:  Invalid key
+SELECT pg_tde_set_key_using_database_key_provider('key2', 'test-file-provider');
+psql:<stdin>:1: WARNING:  invalid key: unsupported key length "4294967295"
+psql:<stdin>:1: ERROR:  failed to retrieve principal key "key2" from key provider "test-file-provider"
+DETAIL:  Invalid key

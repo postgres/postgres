@@ -225,7 +225,7 @@ set_principal_key_with_keyring(const char *key_name,
 	LWLock	   *lock_files = tde_lwlock_enc_keys();
 	bool		already_has_key;
 	GenericKeyring *new_keyring;
-	const KeyInfo *keyInfo = NULL;
+	KeyInfo    *keyInfo = NULL;
 
 	/*
 	 * Try to get principal key from cache.
@@ -238,14 +238,15 @@ set_principal_key_with_keyring(const char *key_name,
 	new_keyring = GetKeyProviderByName(provider_name, providerOid);
 
 	{
-		KeyringReturnCode kr_ret;
+		KeyringReturnCode return_code;
 
-		keyInfo = KeyringGetKey(new_keyring, key_name, &kr_ret);
+		keyInfo = KeyringGetKey(new_keyring, key_name, &return_code);
 
-		if (kr_ret != KEYRING_CODE_SUCCESS)
+		if (return_code != KEYRING_CODE_SUCCESS)
 		{
 			ereport(ERROR,
-					errmsg("could not successfully query key provider \"%s\"", new_keyring->provider_name));
+					errmsg("failed to retrieve principal key \"%s\" from key provider \"%s\"", key_name, new_keyring->provider_name),
+					errdetail("%s", KeyringErrorCodeToString(return_code)));
 		}
 	}
 
@@ -289,6 +290,7 @@ set_principal_key_with_keyring(const char *key_name,
 
 	LWLockRelease(lock_files);
 
+	pfree(keyInfo);
 	pfree(new_keyring);
 	pfree(new_principal_key);
 }
@@ -303,7 +305,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 	TDEPrincipalKey *new_principal_key;
 	GenericKeyring *new_keyring;
 	KeyInfo    *keyInfo;
-	KeyringReturnCode kr_ret;
+	KeyringReturnCode return_code;
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
@@ -316,19 +318,20 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 	}
 
 	new_keyring = GetKeyProviderByID(xlrec->keyringId, xlrec->databaseId);
-	keyInfo = KeyringGetKey(new_keyring, xlrec->keyName, &kr_ret);
+	keyInfo = KeyringGetKey(new_keyring, xlrec->keyName, &return_code);
 
-	if (kr_ret != KEYRING_CODE_SUCCESS)
+	if (return_code != KEYRING_CODE_SUCCESS)
 	{
 		ereport(ERROR,
-				errmsg("failed to retrieve principal key from keyring provider: \"%s\"", new_keyring->provider_name),
-				errdetail("Error code: %d", kr_ret));
+				errmsg("failed to retrieve principal key \"%s\" from key provider \"%s\"", xlrec->keyName, new_keyring->provider_name),
+				errdetail("%s", KeyringErrorCodeToString(return_code)));
 	}
 
 	/* The new key should be on keyring by this time */
 	if (keyInfo == NULL)
 	{
-		ereport(ERROR, errmsg("failed to retrieve principal key from keyring for database %u.", xlrec->databaseId));
+		ereport(ERROR, errmsg("failed to retrieve principal key \"%s\" from key provider \"%s\" for database %u",
+							  xlrec->keyName, new_keyring->provider_name, xlrec->databaseId));
 	}
 
 	new_principal_key = palloc_object(TDEPrincipalKey);
@@ -347,6 +350,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 
 	LWLockRelease(tde_lwlock_enc_keys());
 
+	pfree(keyInfo);
 	pfree(new_keyring);
 	pfree(new_principal_key);
 }
@@ -514,7 +518,8 @@ pg_tde_create_principal_key_internal(Oid providerOid,
 
 	if (return_code != KEYRING_CODE_SUCCESS)
 		ereport(ERROR,
-				errmsg("could not successfully query key provider \"%s\"", provider->provider_name));
+				errmsg("failed to retrieve principal key \"%s\" from key provider \"%s\"", key_name, provider_name),
+				errdetail("%s", KeyringErrorCodeToString(return_code)));
 
 	if (key_info != NULL)
 		ereport(ERROR,
@@ -939,11 +944,17 @@ get_principal_key_from_keyring(Oid dbOid)
 					   principalKeyInfo->data.name, principalKeyInfo->data.keyringId));
 
 	keyInfo = KeyringGetKey(keyring, principalKeyInfo->data.name, &keyring_ret);
+
+	if (keyring_ret != KEYRING_CODE_SUCCESS)
+		ereport(ERROR,
+				errmsg("failed to retrieve principal key \"%s\" from key provider \"%s\"", principalKeyInfo->data.name, keyring->provider_name),
+				errdetail("%s", KeyringErrorCodeToString(keyring_ret)));
+
 	if (keyInfo == NULL)
 		ereport(ERROR,
 				errcode(ERRCODE_NO_DATA_FOUND),
-				errmsg("failed to retrieve principal key %s from keyring with ID %d",
-					   principalKeyInfo->data.name, principalKeyInfo->data.keyringId));
+				errmsg("key \"%s\" not found in key provider \"%s\"",
+					   principalKeyInfo->data.name, keyring->provider_name));
 
 	if (!pg_tde_verify_principal_key_info(principalKeyInfo, &keyInfo->data))
 		ereport(ERROR,
@@ -1184,11 +1195,21 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 		KeyInfo    *proposed_key;
 
 		proposed_key = KeyringGetKey(modified_provider, key_name, &return_code);
+
+		if (return_code != KEYRING_CODE_SUCCESS)
+		{
+			ereport(ERROR,
+					errmsg("failed to retreive \"%s\" key used as server key from modified key provider \"%s\"",
+						   key_name, modified_provider->provider_name),
+					errdetail("%s", KeyringErrorCodeToString(return_code)));
+		}
+
 		if (!proposed_key)
 		{
 			ereport(ERROR,
-					errmsg("could not fetch key \"%s\" used as server key from modified key provider \"%s\": %d",
-						   key_name, modified_provider->provider_name, return_code));
+					errcode(ERRCODE_NO_DATA_FOUND),
+					errmsg("key \"%s\" used as server key not found in modified key provider \"%s\"",
+						   key_name, modified_provider->provider_name));
 		}
 
 		if (!pg_tde_verify_principal_key_info(existing_principal_key, &proposed_key->data))
@@ -1197,6 +1218,8 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 					errmsg("key \"%s\" from modified key provider \"%s\" does not match existing server key",
 						   key_name, modified_provider->provider_name));
 		}
+
+		pfree(proposed_key);
 	}
 
 	if (existing_principal_key)
@@ -1219,11 +1242,20 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 			KeyInfo    *proposed_key;
 
 			proposed_key = KeyringGetKey(modified_provider, key_name, &return_code);
+			if (return_code != KEYRING_CODE_SUCCESS)
+			{
+				ereport(ERROR,
+						errmsg("failed to retreive \"%s\" key used by database \"%s\" from modified key provider \"%s\"",
+							   key_name, database->datname.data, modified_provider->provider_name),
+						errdetail("%s", KeyringErrorCodeToString(return_code)));
+			}
+
 			if (!proposed_key)
 			{
 				ereport(ERROR,
-						errmsg("could not fetch key \"%s\" used by database \"%s\" from modified key provider \"%s\": %d",
-							   key_name, database->datname.data, modified_provider->provider_name, return_code));
+						errcode(ERRCODE_NO_DATA_FOUND),
+						errmsg("key \"%s\" used by database \"%s\" not found in modified key provider \"%s\"",
+							   key_name, database->datname.data, modified_provider->provider_name));
 			}
 
 			if (!pg_tde_verify_principal_key_info(existing_principal_key, &proposed_key->data))
@@ -1232,6 +1264,8 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 						errmsg("key \"%s\" from modified key provider \"%s\" does not match existing key used by database \"%s\"",
 							   key_name, modified_provider->provider_name, database->datname.data));
 			}
+
+			pfree(proposed_key);
 		}
 
 		if (existing_principal_key)

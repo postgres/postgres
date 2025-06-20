@@ -178,7 +178,7 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 		if (key->data.len > sizeof(key->data.data))
 		{
 			ereport(WARNING, errmsg("keyring provider returned invalid key size: %d", key->data.len));
-			*return_code = KEYRING_CODE_INVALID_KEY_SIZE;
+			*return_code = KEYRING_CODE_INVALID_KEY;
 			pfree(key);
 			BIO_free_all(ctx.bio);
 			SSL_CTX_free(ctx.ssl);

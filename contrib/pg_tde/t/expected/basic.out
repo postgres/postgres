@@ -64,6 +64,6 @@ SELECT * FROM test_enc ORDER BY id;
 TABLEFILE FOUND: yes
 CONTAINS FOO (should be empty): 
 SELECT pg_tde_verify_key()
-psql:<stdin>:1: ERROR:  failed to retrieve principal key test-db-key from keyring with ID 1
+psql:<stdin>:1: ERROR:  key "test-db-key" not found in key provider "file-vault"
 DROP TABLE test_enc;
 DROP EXTENSION pg_tde;

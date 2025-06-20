@@ -100,16 +100,57 @@ RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type)
 KeyInfo *
 KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *returnCode)
 {
+	KeyInfo    *key = NULL;
 	RegisteredKeyProviderType *kp = find_key_provider_type(keyring->type);
 
 	if (kp == NULL)
 	{
 		ereport(WARNING,
-				errmsg("Key provider of type %d not registered", keyring->type));
+				errmsg("key provider of type %d not registered", keyring->type));
 		*returnCode = KEYRING_CODE_INVALID_PROVIDER;
 		return NULL;
 	}
-	return kp->routine->keyring_get_key(keyring, key_name, returnCode);
+	key = kp->routine->keyring_get_key(keyring, key_name, returnCode);
+
+	if (*returnCode != KEYRING_CODE_SUCCESS || key == NULL)
+		return NULL;
+
+	if (!ValidateKey(key))
+	{
+		*returnCode = KEYRING_CODE_INVALID_KEY;
+		pfree(key);
+		return NULL;
+	}
+
+	return key;
+}
+
+bool
+ValidateKey(KeyInfo *key)
+{
+	Assert(key != NULL);
+
+	if (key->name[0] == '\0')
+	{
+		ereport(WARNING, errmsg("invalid key: name is empty"));
+		return false;
+	}
+
+	if (key->data.len == 0)
+	{
+		ereport(WARNING, errmsg("invalid key: data length is zero"));
+		return false;
+	}
+
+	/* For now we only support 128-bit keys */
+	if (key->data.len != KEY_DATA_SIZE_128)
+	{
+		ereport(WARNING,
+				errmsg("invalid key: unsupported key length \"%u\"", key->data.len));
+		return false;
+	}
+
+	return true;
 }
 
 static void
@@ -162,4 +203,26 @@ KeyringValidate(GenericKeyring *keyring)
 				errmsg("Key provider of type %d not registered", keyring->type));
 
 	kp->routine->keyring_validate(keyring);
+}
+
+char *
+KeyringErrorCodeToString(KeyringReturnCode code)
+{
+	switch (code)
+	{
+		case KEYRING_CODE_SUCCESS:
+			return "Success";
+		case KEYRING_CODE_INVALID_PROVIDER:
+			return "Invalid key";
+		case KEYRING_CODE_RESOURCE_NOT_AVAILABLE:
+			return "Resource not available";
+		case KEYRING_CODE_INVALID_RESPONSE:
+			return "Invalid response from keyring provider";
+		case KEYRING_CODE_INVALID_KEY:
+			return "Invalid key";
+		case KEYRING_CODE_DATA_CORRUPTED:
+			return "Data corrupted";
+		default:
+			return "Unknown error code";
+	}
 }

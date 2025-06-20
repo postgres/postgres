@@ -14,7 +14,9 @@ typedef enum ProviderType
 } ProviderType;
 
 #define TDE_KEY_NAME_LEN 256
-#define MAX_KEY_DATA_SIZE 32	/* maximum 256 bit encryption */
+#define KEY_DATA_SIZE_128 16	/* 128 bit encryption */
+#define KEY_DATA_SIZE_256 32	/* 256 bit encryption, not yet supported */
+#define MAX_KEY_DATA_SIZE KEY_DATA_SIZE_256 /* maximum 256 bit encryption */
 #define INTERNAL_KEY_LEN 16
 
 typedef struct KeyData
@@ -35,7 +37,7 @@ typedef enum KeyringReturnCode
 	KEYRING_CODE_INVALID_PROVIDER = 1,
 	KEYRING_CODE_RESOURCE_NOT_AVAILABLE = 2,
 	KEYRING_CODE_INVALID_RESPONSE = 5,
-	KEYRING_CODE_INVALID_KEY_SIZE = 6,
+	KEYRING_CODE_INVALID_KEY = 6,
 	KEYRING_CODE_DATA_CORRUPTED = 7,
 } KeyringReturnCode;
 
@@ -87,5 +89,7 @@ extern void RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderTy
 extern KeyInfo *KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *returnCode);
 extern KeyInfo *KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len);
 extern void KeyringValidate(GenericKeyring *keyring);
+extern bool ValidateKey(KeyInfo *key);
+extern char *KeyringErrorCodeToString(KeyringReturnCode code);
 
 #endif							/* KEYRING_API_H */
