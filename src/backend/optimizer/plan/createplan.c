@@ -4348,9 +4348,11 @@ create_nestloop_plan(PlannerInfo *root,
 	List	   *joinrestrictclauses = best_path->jpath.joinrestrictinfo;
 	List	   *joinclauses;
 	List	   *otherclauses;
-	Relids		outerrelids;
 	List	   *nestParams;
+	List	   *outer_tlist;
+	bool		outer_parallel_safe;
 	Relids		saveOuterRels = root->curOuterRels;
+	ListCell   *lc;
 
 	/*
 	 * If the inner path is parameterized by the topmost parent of the outer
@@ -4412,9 +4414,47 @@ create_nestloop_plan(PlannerInfo *root,
 	 * Identify any nestloop parameters that should be supplied by this join
 	 * node, and remove them from root->curOuterParams.
 	 */
-	outerrelids = best_path->jpath.outerjoinpath->parent->relids;
-	nestParams = identify_current_nestloop_params(root, outerrelids);
+	nestParams = identify_current_nestloop_params(root,
+												  best_path->jpath.outerjoinpath);
 
+	/*
+	 * While nestloop parameters that are Vars had better be available from
+	 * the outer_plan already, there are edge cases where nestloop parameters
+	 * that are PHVs won't be.  In such cases we must add them to the
+	 * outer_plan's tlist, since the executor's NestLoopParam machinery
+	 * requires the params to be simple outer-Var references to that tlist.
+	 */
+	outer_tlist = outer_plan->targetlist;
+	outer_parallel_safe = outer_plan->parallel_safe;
+	foreach(lc, nestParams)
+	{
+		NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
+		TargetEntry *tle;
+
+		if (IsA(nlp->paramval, Var))
+			continue;			/* nothing to do for simple Vars */
+		if (tlist_member((Expr *) nlp->paramval, outer_tlist))
+			continue;			/* already available */
+
+		/* Make a shallow copy of outer_tlist, if we didn't already */
+		if (outer_tlist == outer_plan->targetlist)
+			outer_tlist = list_copy(outer_tlist);
+		/* ... and add the needed expression */
+		tle = makeTargetEntry((Expr *) copyObject(nlp->paramval),
+							  list_length(outer_tlist) + 1,
+							  NULL,
+							  true);
+		outer_tlist = lappend(outer_tlist, tle);
+		/* ... and track whether tlist is (still) parallel-safe */
+		if (outer_parallel_safe)
+			outer_parallel_safe = is_parallel_safe(root,
+												   (Node *) nlp->paramval);
+	}
+	if (outer_tlist != outer_plan->targetlist)
+		outer_plan = change_plan_targetlist(outer_plan, outer_tlist,
+											outer_parallel_safe);
+
+	/* And finally, we can build the join plan node */
 	join_plan = make_nestloop(tlist,
 							  joinclauses,
 							  otherclauses,

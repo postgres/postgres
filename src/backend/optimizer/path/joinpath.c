@@ -876,16 +876,13 @@ try_nestloop_path(PlannerInfo *root,
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
 	 * parameterization wouldn't be sensible --- unless allow_star_schema_join
-	 * says to allow it anyway.  Also, we must reject if have_dangerous_phv
-	 * doesn't like the look of it, which could only happen if the nestloop is
-	 * still parameterized.
+	 * says to allow it anyway.
 	 */
 	required_outer = calc_nestloop_required_outer(outerrelids, outer_paramrels,
 												  innerrelids, inner_paramrels);
 	if (required_outer &&
-		((!bms_overlap(required_outer, extra->param_source_rels) &&
-		  !allow_star_schema_join(root, outerrelids, inner_paramrels)) ||
-		 have_dangerous_phv(root, outerrelids, inner_paramrels)))
+		!bms_overlap(required_outer, extra->param_source_rels) &&
+		!allow_star_schema_join(root, outerrelids, inner_paramrels))
 	{
 		/* Waste no memory when we reject a path here */
 		bms_free(required_outer);

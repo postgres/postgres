@@ -3946,6 +3946,59 @@ where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 (1 row)
 
 -- variant that isn't quite a star-schema case
+explain (verbose, costs off)
+select ss1.d1 from
+  tenk1 as t1
+  inner join tenk1 as t2
+  on t1.tenthous = t2.ten
+  inner join
+    int8_tbl as i8
+    left join int4_tbl as i4
+      inner join (select 64::information_schema.cardinal_number as d1
+                  from tenk1 t3,
+                       lateral (select abs(t3.unique1) + random()) ss0(x)
+                  where t3.fivethous < 0) as ss1
+      on i4.f1 = ss1.d1
+    on i8.q1 = i4.f1
+  on t1.tenthous = ss1.d1
+where t1.unique1 < i4.f1;
+                                                                                                             QUERY PLAN                                                                                                              
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: (64)::information_schema.cardinal_number
+   Join Filter: (t1.tenthous = ((64)::information_schema.cardinal_number)::integer)
+   ->  Seq Scan on public.tenk1 t3
+         Output: t3.unique1, t3.unique2, t3.two, t3.four, t3.ten, t3.twenty, t3.hundred, t3.thousand, t3.twothousand, t3.fivethous, t3.tenthous, t3.odd, t3.even, t3.stringu1, t3.stringu2, t3.string4
+         Filter: (t3.fivethous < 0)
+   ->  Nested Loop
+         Output: t1.tenthous, t2.ten
+         ->  Nested Loop
+               Output: t1.tenthous, t2.ten, i4.f1
+               Join Filter: (t1.unique1 < i4.f1)
+               ->  Hash Join
+                     Output: t1.tenthous, t1.unique1, t2.ten
+                     Hash Cond: (t2.ten = t1.tenthous)
+                     ->  Seq Scan on public.tenk1 t2
+                           Output: t2.unique1, t2.unique2, t2.two, t2.four, t2.ten, t2.twenty, t2.hundred, t2.thousand, t2.twothousand, t2.fivethous, t2.tenthous, t2.odd, t2.even, t2.stringu1, t2.stringu2, t2.string4
+                     ->  Hash
+                           Output: t1.tenthous, t1.unique1
+                           ->  Nested Loop
+                                 Output: t1.tenthous, t1.unique1
+                                 ->  Subquery Scan on ss0
+                                       Output: ss0.x, (64)::information_schema.cardinal_number
+                                       ->  Result
+                                             Output: ((abs(t3.unique1))::double precision + random())
+                                 ->  Index Scan using tenk1_thous_tenthous on public.tenk1 t1
+                                       Output: t1.unique1, t1.unique2, t1.two, t1.four, t1.ten, t1.twenty, t1.hundred, t1.thousand, t1.twothousand, t1.fivethous, t1.tenthous, t1.odd, t1.even, t1.stringu1, t1.stringu2, t1.string4
+                                       Index Cond: (t1.tenthous = (((64)::information_schema.cardinal_number))::integer)
+               ->  Seq Scan on public.int4_tbl i4
+                     Output: i4.f1
+                     Filter: (i4.f1 = ((64)::information_schema.cardinal_number)::integer)
+         ->  Seq Scan on public.int8_tbl i8
+               Output: i8.q1, i8.q2
+               Filter: (i8.q1 = ((64)::information_schema.cardinal_number)::integer)
+(33 rows)
+
 select ss1.d1 from
   tenk1 as t1
   inner join tenk1 as t2
@@ -4035,6 +4088,37 @@ select * from
  1 | 2 | 2
 (1 row)
 
+-- This example demonstrates the folly of our old "have_dangerous_phv" logic
+begin;
+set local from_collapse_limit to 2;
+explain (verbose, costs off)
+select * from int8_tbl t1
+  left join
+    (select coalesce(t2.q1 + x, 0) from int8_tbl t2,
+       lateral (select t3.q1 as x from int8_tbl t3,
+                  lateral (select t2.q1, t3.q1 offset 0) s))
+  on true;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.q1, t1.q2, (COALESCE((t2.q1 + t3.q1), '0'::bigint))
+   ->  Seq Scan on public.int8_tbl t1
+         Output: t1.q1, t1.q2
+   ->  Materialize
+         Output: (COALESCE((t2.q1 + t3.q1), '0'::bigint))
+         ->  Nested Loop
+               Output: COALESCE((t2.q1 + t3.q1), '0'::bigint)
+               ->  Seq Scan on public.int8_tbl t2
+                     Output: t2.q1, t2.q2
+               ->  Nested Loop
+                     Output: t3.q1
+                     ->  Seq Scan on public.int8_tbl t3
+                           Output: t3.q1, t3.q2
+                     ->  Result
+                           Output: NULL::bigint, NULL::bigint
+(16 rows)
+
+rollback;
 -- Test proper handling of appendrel PHVs during useless-RTE removal
 explain (costs off)
 select * from

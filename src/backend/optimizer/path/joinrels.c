@@ -565,9 +565,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 		 * Also, if the lateral reference is only indirect, we should reject
 		 * the join; whatever rel(s) the reference chain goes through must be
 		 * joined to first.
-		 *
-		 * Another case that might keep us from building a valid plan is the
-		 * implementation restriction described by have_dangerous_phv().
 		 */
 		lateral_fwd = bms_overlap(rel1->relids, rel2->lateral_relids);
 		lateral_rev = bms_overlap(rel2->relids, rel1->lateral_relids);
@@ -584,9 +581,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			/* check there is a direct reference from rel2 to rel1 */
 			if (!bms_overlap(rel1->relids, rel2->direct_lateral_relids))
 				return false;	/* only indirect refs, so reject */
-			/* check we won't have a dangerous PHV */
-			if (have_dangerous_phv(root, rel1->relids, rel2->lateral_relids))
-				return false;	/* might be unable to handle required PHV */
 		}
 		else if (lateral_rev)
 		{
@@ -599,9 +593,6 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			/* check there is a direct reference from rel1 to rel2 */
 			if (!bms_overlap(rel2->relids, rel1->direct_lateral_relids))
 				return false;	/* only indirect refs, so reject */
-			/* check we won't have a dangerous PHV */
-			if (have_dangerous_phv(root, rel2->relids, rel1->lateral_relids))
-				return false;	/* might be unable to handle required PHV */
 		}
 
 		/*
@@ -1274,57 +1265,6 @@ has_legal_joinclause(PlannerInfo *root, RelOptInfo *rel)
 		}
 	}
 
-	return false;
-}
-
-
-/*
- * There's a pitfall for creating parameterized nestloops: suppose the inner
- * rel (call it A) has a parameter that is a PlaceHolderVar, and that PHV's
- * minimum eval_at set includes the outer rel (B) and some third rel (C).
- * We might think we could create a B/A nestloop join that's parameterized by
- * C.  But we would end up with a plan in which the PHV's expression has to be
- * evaluated as a nestloop parameter at the B/A join; and the executor is only
- * set up to handle simple Vars as NestLoopParams.  Rather than add complexity
- * and overhead to the executor for such corner cases, it seems better to
- * forbid the join.  (Note that we can still make use of A's parameterized
- * path with pre-joined B+C as the outer rel.  have_join_order_restriction()
- * ensures that we will consider making such a join even if there are not
- * other reasons to do so.)
- *
- * So we check whether any PHVs used in the query could pose such a hazard.
- * We don't have any simple way of checking whether a risky PHV would actually
- * be used in the inner plan, and the case is so unusual that it doesn't seem
- * worth working very hard on it.
- *
- * This needs to be checked in two places.  If the inner rel's minimum
- * parameterization would trigger the restriction, then join_is_legal() should
- * reject the join altogether, because there will be no workable paths for it.
- * But joinpath.c has to check again for every proposed nestloop path, because
- * the inner path might have more than the minimum parameterization, causing
- * some PHV to be dangerous for it that otherwise wouldn't be.
- */
-bool
-have_dangerous_phv(PlannerInfo *root,
-				   Relids outer_relids, Relids inner_params)
-{
-	ListCell   *lc;
-
-	foreach(lc, root->placeholder_list)
-	{
-		PlaceHolderInfo *phinfo = (PlaceHolderInfo *) lfirst(lc);
-
-		if (!bms_is_subset(phinfo->ph_eval_at, inner_params))
-			continue;			/* ignore, could not be a nestloop param */
-		if (!bms_overlap(phinfo->ph_eval_at, outer_relids))
-			continue;			/* ignore, not relevant to this join */
-		if (bms_is_subset(phinfo->ph_eval_at, outer_relids))
-			continue;			/* safe, it can be eval'd within outerrel */
-		/* Otherwise, it's potentially unsafe, so reject the join */
-		return true;
-	}
-
-	/* OK to perform the join */
 	return false;
 }
 

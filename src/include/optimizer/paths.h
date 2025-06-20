@@ -109,8 +109,6 @@ extern Relids add_outer_joins_to_relids(PlannerInfo *root, Relids input_relids,
 										List **pushed_down_joins);
 extern bool have_join_order_restriction(PlannerInfo *root,
 										RelOptInfo *rel1, RelOptInfo *rel2);
-extern bool have_dangerous_phv(PlannerInfo *root,
-							   Relids outer_relids, Relids inner_params);
 extern void mark_dummy_rel(RelOptInfo *rel);
 extern void init_dummy_sjinfo(SpecialJoinInfo *sjinfo, Relids left_relids,
 							  Relids right_relids);

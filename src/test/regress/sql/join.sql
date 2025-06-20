@@ -1277,6 +1277,23 @@ where t1.unique2 < 42 and t1.stringu1 > t2.stringu2;
 
 -- variant that isn't quite a star-schema case
 
+explain (verbose, costs off)
+select ss1.d1 from
+  tenk1 as t1
+  inner join tenk1 as t2
+  on t1.tenthous = t2.ten
+  inner join
+    int8_tbl as i8
+    left join int4_tbl as i4
+      inner join (select 64::information_schema.cardinal_number as d1
+                  from tenk1 t3,
+                       lateral (select abs(t3.unique1) + random()) ss0(x)
+                  where t3.fivethous < 0) as ss1
+      on i4.f1 = ss1.d1
+    on i8.q1 = i4.f1
+  on t1.tenthous = ss1.d1
+where t1.unique1 < i4.f1;
+
 select ss1.d1 from
   tenk1 as t1
   inner join tenk1 as t2
@@ -1331,6 +1348,18 @@ select * from
 select * from
   (select 1 as x) ss1 left join (select 2 as y) ss2 on (true),
   lateral (select ss2.y as z limit 1) ss3;
+
+-- This example demonstrates the folly of our old "have_dangerous_phv" logic
+begin;
+set local from_collapse_limit to 2;
+explain (verbose, costs off)
+select * from int8_tbl t1
+  left join
+    (select coalesce(t2.q1 + x, 0) from int8_tbl t2,
+       lateral (select t3.q1 as x from int8_tbl t3,
+                  lateral (select t2.q1, t3.q1 offset 0) s))
+  on true;
+rollback;
 
 -- Test proper handling of appendrel PHVs during useless-RTE removal
 explain (costs off)

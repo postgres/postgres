@@ -600,7 +600,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 
 /*
  * Identify any NestLoopParams that should be supplied by a NestLoop plan
- * node with the specified lefthand rels.  Remove them from the active
+ * node with the specified lefthand input path.  Remove them from the active
  * root->curOuterParams list and return them as the result list.
  *
  * XXX Here we also hack up the returned Vars and PHVs so that they do not
@@ -626,10 +626,25 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
  * subquery, which'd be unduly expensive.
  */
 List *
-identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
+identify_current_nestloop_params(PlannerInfo *root, Path *leftpath)
 {
 	List	   *result;
+	Relids		leftrelids = leftpath->parent->relids;
+	Relids		outerrelids = PATH_REQ_OUTER(leftpath);
+	Relids		allleftrelids;
 	ListCell   *cell;
+
+	/*
+	 * We'll be able to evaluate a PHV in the lefthand path if it uses the
+	 * lefthand rels plus any available required-outer rels.  But don't do so
+	 * if it uses *only* required-outer rels; in that case it should be
+	 * evaluated higher in the tree.  For Vars, no such hair-splitting is
+	 * necessary since they depend on only one relid.
+	 */
+	if (outerrelids)
+		allleftrelids = bms_union(leftrelids, outerrelids);
+	else
+		allleftrelids = leftrelids;
 
 	result = NIL;
 	foreach(cell, root->curOuterParams)
@@ -653,18 +668,20 @@ identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
 												leftrelids);
 			result = lappend(result, nlp);
 		}
-		else if (IsA(nlp->paramval, PlaceHolderVar) &&
-				 bms_is_subset(find_placeholder_info(root,
-													 (PlaceHolderVar *) nlp->paramval)->ph_eval_at,
-							   leftrelids))
+		else if (IsA(nlp->paramval, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) nlp->paramval;
+			Relids		eval_at = find_placeholder_info(root, phv)->ph_eval_at;
 
-			root->curOuterParams = foreach_delete_current(root->curOuterParams,
-														  cell);
-			phv->phnullingrels = bms_intersect(phv->phnullingrels,
-											   leftrelids);
-			result = lappend(result, nlp);
+			if (bms_is_subset(eval_at, allleftrelids) &&
+				bms_overlap(eval_at, leftrelids))
+			{
+				root->curOuterParams = foreach_delete_current(root->curOuterParams,
+															  cell);
+				phv->phnullingrels = bms_intersect(phv->phnullingrels,
+												   leftrelids);
+				result = lappend(result, nlp);
+			}
 		}
 	}
 	return result;
