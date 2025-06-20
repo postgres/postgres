@@ -253,6 +253,15 @@ get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode
 		goto cleanup;
 	}
 
+	if (parse.key == NULL)
+	{
+		*return_code = KEYRING_CODE_INVALID_RESPONSE;
+		ereport(WARNING,
+				errmsg("HTTP(S) request to keyring provider \"%s\" returned no key",
+					   vault_keyring->keyring.provider_name));
+		goto cleanup;
+	}
+
 	responseKey = parse.key;
 
 #if KEYRING_DEBUG
