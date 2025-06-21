@@ -3980,8 +3980,8 @@ float84ge(PG_FUNCTION_ARGS)
  * in the histogram. width_bucket() returns an integer indicating the
  * bucket number that 'operand' belongs to in an equiwidth histogram
  * with the specified characteristics. An operand smaller than the
- * lower bound is assigned to bucket 0. An operand greater than the
- * upper bound is assigned to an additional bucket (with number
+ * lower bound is assigned to bucket 0. An operand greater than or equal
+ * to the upper bound is assigned to an additional bucket (with number
  * count+1). We don't allow "NaN" for any of the float8 inputs, and we
  * don't allow either of the histogram bounds to be +/- infinity.
  */
