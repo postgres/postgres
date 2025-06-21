@@ -1824,13 +1824,23 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
         which <parameter>operand</parameter> falls in a histogram
         having <parameter>count</parameter> equal-width buckets spanning the
         range <parameter>low</parameter> to <parameter>high</parameter>.
-        Returns <literal>0</literal>
+        The buckets have inclusive lower bounds and exclusive upper bounds.
+        Returns <literal>0</literal> for an input less
+        than <parameter>low</parameter>,
         or <literal><parameter>count</parameter>+1</literal> for an input
-        outside that range.
+        greater than or equal to <parameter>high</parameter>.
+        If <parameter>low</parameter> &gt; <parameter>high</parameter>,
+        the behavior is mirror-reversed, with bucket <literal>1</literal>
+        now being the one just below <parameter>low</parameter>, and the
+        inclusive bounds now being on the upper side.
        </para>
        <para>
         <literal>width_bucket(5.35, 0.024, 10.06, 5)</literal>
         <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>width_bucket(9, 10, 0, 10)</literal>
+        <returnvalue>2</returnvalue>
        </para></entry>
       </row>
 
@@ -1842,8 +1852,8 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        <para>
         Returns the number of the bucket in
         which <parameter>operand</parameter> falls given an array listing the
-        lower bounds of the buckets.  Returns <literal>0</literal> for an
-        input less than the first lower
+        inclusive lower bounds of the buckets.
+        Returns <literal>0</literal> for an input less than the first lower
         bound.  <parameter>operand</parameter> and the array elements can be
         of any type having standard comparison operators.
         The <parameter>thresholds</parameter> array <emphasis>must be
