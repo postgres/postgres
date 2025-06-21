@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2025-??-??, CURRENT AS OF 2025-05-23</para>
+   <para>2025-??-??, CURRENT AS OF 2025-06-20</para>
   </formalpara>
 
   <sect2 id="release-18-highlights">
@@ -869,13 +869,16 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2025-03-14 [6d376c3b0] Add GUC option to log lock acquisition failures.
+Author: Fujii Masao <fujii@postgresql.org>
+2025-06-03 [73bdcfab3] Rename log_lock_failure GUC to log_lock_failures for con
 -->
 
       <listitem>
       <para>
       Add server variable <xref linkend="guc-log-lock-failures"/> to log
-      lock acquisition failures (Yuki Seino)
+      lock acquisition failures (Yuki Seino, Fujii Masao)
       <ulink url="&commit_baseurl;6d376c3b0">&sect;</ulink>
+      <ulink url="&commit_baseurl;73bdcfab3">&sect;</ulink>
       </para>
 
       <para>
