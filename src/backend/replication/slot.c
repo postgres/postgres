@@ -1810,8 +1810,6 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 		 */
 		SpinLockAcquire(&s->mutex);
 
-		Assert(s->data.restart_lsn >= s->last_saved_restart_lsn);
-
 		restart_lsn = s->data.restart_lsn;
 
 		/* we do nothing if the slot is already invalid */
