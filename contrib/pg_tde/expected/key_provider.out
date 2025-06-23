@@ -351,9 +351,9 @@ SELECT pg_tde_create_key_using_database_key_provider('existing-key','file-provid
 (1 row)
 
 SELECT pg_tde_create_key_using_database_key_provider('existing-key','file-provider');
-ERROR:  cannot to create key "existing-key" because it already exists
+ERROR:  cannot create key "existing-key" because it already exists
 SELECT pg_tde_create_key_using_global_key_provider('existing-key','file-keyring');
-ERROR:  cannot to create key "existing-key" because it already exists
+ERROR:  cannot create key "existing-key" because it already exists
 -- Setting principal key fails if key does not exist
 SELECT pg_tde_set_default_key_using_global_key_provider('not-existing', 'file-keyring');
 ERROR:  key "not-existing" does not exist

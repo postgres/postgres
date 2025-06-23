@@ -519,7 +519,7 @@ pg_tde_create_principal_key_internal(Oid providerOid,
 	if (key_info != NULL)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("cannot to create key \"%s\" because it already exists", key_name));
+				errmsg("cannot create key \"%s\" because it already exists", key_name));
 
 	key_info = KeyringGenerateNewKeyAndStore(provider, key_name, PRINCIPAL_KEY_LEN);
 
