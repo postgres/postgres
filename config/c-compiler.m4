@@ -602,6 +602,7 @@ AC_CACHE_CHECK([for _mm512_clmulepi64_epi128], [Ac_cachevar],
     {
       __m128i z;
 
+      x = _mm512_xor_si512(_mm512_zextsi128_si512(_mm_cvtsi32_si128(0)), x);
       y = _mm512_clmulepi64_epi128(x, y, 0);
       z = _mm_ternarylogic_epi64(
                 _mm512_castsi512_si128(y),
