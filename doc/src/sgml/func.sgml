@@ -14384,7 +14384,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
  <sect1 id="functions-uuid">
   <title>UUID Functions</title>
 
-  <indexterm zone="datatype-uuid">
+  <indexterm zone="functions-uuid">
    <primary>UUID</primary>
    <secondary>generating</secondary>
   </indexterm>
