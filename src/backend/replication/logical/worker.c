@@ -109,13 +109,6 @@
  * If ever a user needs to be aware of the tri-state value, they can fetch it
  * from the pg_subscription catalog (see column subtwophasestate).
  *
- * We don't allow to toggle two_phase option of a subscription because it can
- * lead to an inconsistent replica. Consider, initially, it was on and we have
- * received some prepare then we turn it off, now at commit time the server
- * will send the entire transaction data along with the commit. With some more
- * analysis, we can allow changing this option from off to on but not sure if
- * that alone would be useful.
- *
  * Finally, to avoid problems mentioned in previous paragraphs from any
  * subsequent (not READY) tablesyncs (need to toggle two_phase option from 'on'
  * to 'off' and then again back to 'on') there is a restriction for
