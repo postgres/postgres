@@ -9340,7 +9340,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <varlistentry id="guc-vacuum-truncate" xreflabel="vacuum_truncate">
        <term><varname>vacuum_truncate</varname> (<type>boolean</type>)
        <indexterm>
-        <primary><varname>vacuum_truncate</varname> configuration parameter</primary>
+        <primary><varname>vacuum_truncate</varname></primary>
+        <secondary>configuration parameter</secondary>
        </indexterm>
        </term>
        <listitem>
@@ -9544,7 +9545,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <varlistentry id="guc-vacuum-max-eager-freeze-failure-rate" xreflabel="vacuum_max_eager_freeze_failure_rate">
       <term><varname>vacuum_max_eager_freeze_failure_rate</varname> (<type>floating point</type>)
       <indexterm>
-       <primary><varname>vacuum_max_eager_freeze_failure_rate</varname> configuration parameter</primary>
+       <primary><varname>vacuum_max_eager_freeze_failure_rate</varname></primary>
+       <secondary>configuration parameter</secondary>
       </indexterm>
       </term>
       <listitem>

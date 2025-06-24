@@ -1694,7 +1694,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    <varlistentry id="reloption-vacuum-truncate" xreflabel="vacuum_truncate">
     <term><literal>vacuum_truncate</literal>, <literal>toast.vacuum_truncate</literal> (<type>boolean</type>)
     <indexterm>
-     <primary><varname>vacuum_truncate</varname> storage parameter</primary>
+     <primary><varname>vacuum_truncate</varname></primary>
+     <secondary>storage parameter</secondary>
     </indexterm>
     </term>
     <listitem>
