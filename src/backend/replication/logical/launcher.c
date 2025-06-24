@@ -175,12 +175,14 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 							   uint16 generation,
 							   BackgroundWorkerHandle *handle)
 {
-	BgwHandleStatus status;
-	int			rc;
+	bool		result = false;
+	bool		dropped_latch = false;
 
 	for (;;)
 	{
+		BgwHandleStatus status;
 		pid_t		pid;
+		int			rc;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -189,8 +191,9 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 		/* Worker either died or has started. Return false if died. */
 		if (!worker->in_use || worker->proc)
 		{
+			result = worker->in_use;
 			LWLockRelease(LogicalRepWorkerLock);
-			return worker->in_use;
+			break;
 		}
 
 		LWLockRelease(LogicalRepWorkerLock);
@@ -205,7 +208,7 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 			if (generation == worker->generation)
 				logicalrep_worker_cleanup(worker);
 			LWLockRelease(LogicalRepWorkerLock);
-			return false;
+			break;				/* result is already false */
 		}
 
 		/*
@@ -220,8 +223,18 @@ WaitForReplicationWorkerAttach(LogicalRepWorker *worker,
 		{
 			ResetLatch(MyLatch);
 			CHECK_FOR_INTERRUPTS();
+			dropped_latch = true;
 		}
 	}
+
+	/*
+	 * If we had to clear a latch event in order to wait, be sure to restore
+	 * it before exiting.  Otherwise caller may miss events.
+	 */
+	if (dropped_latch)
+		SetLatch(MyLatch);
+
+	return result;
 }
 
 /*
@@ -1194,10 +1207,21 @@ ApplyLauncherMain(Datum main_arg)
 				(elapsed = TimestampDifferenceMilliseconds(last_start, now)) >= wal_retrieve_retry_interval)
 			{
 				ApplyLauncherSetWorkerStartTime(sub->oid, now);
-				logicalrep_worker_launch(WORKERTYPE_APPLY,
-										 sub->dbid, sub->oid, sub->name,
-										 sub->owner, InvalidOid,
-										 DSM_HANDLE_INVALID);
+				if (!logicalrep_worker_launch(WORKERTYPE_APPLY,
+											  sub->dbid, sub->oid, sub->name,
+											  sub->owner, InvalidOid,
+											  DSM_HANDLE_INVALID))
+				{
+					/*
+					 * We get here either if we failed to launch a worker
+					 * (perhaps for resource-exhaustion reasons) or if we
+					 * launched one but it immediately quit.  Either way, it
+					 * seems appropriate to try again after
+					 * wal_retrieve_retry_interval.
+					 */
+					wait_time = Min(wait_time,
+									wal_retrieve_retry_interval);
+				}
 			}
 			else
 			{
