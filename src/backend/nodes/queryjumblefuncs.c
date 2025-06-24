@@ -21,6 +21,11 @@
  * tree(s) generated from the query.  The executor can then use this value
  * to blame query costs on the proper queryId.
  *
+ * Arrays of two or more constants and PARAM_EXTERN parameters are "squashed"
+ * and contribute only once to the jumble.  This has the effect that queries
+ * that differ only on the length of such lists have the same queryId.
+ *
+ *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
@@ -61,11 +66,13 @@ static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *value, Size size);
 static void FlushPendingNulls(JumbleState *jstate);
 static void RecordConstLocation(JumbleState *jstate,
+								bool extern_param,
 								int location, int len);
 static void _jumbleNode(JumbleState *jstate, Node *node);
-static void _jumbleElements(JumbleState *jstate, List *elements, Node *node);
-static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleList(JumbleState *jstate, Node *node);
+static void _jumbleElements(JumbleState *jstate, List *elements, Node *node);
+static void _jumbleParam(JumbleState *jstate, Node *node);
+static void _jumbleA_Const(JumbleState *jstate, Node *node);
 static void _jumbleVariableSetStmt(JumbleState *jstate, Node *node);
 static void _jumbleRangeTblEntry_eref(JumbleState *jstate,
 									  RangeTblEntry *rte,
@@ -185,6 +192,7 @@ InitJumble(void)
 	jstate->clocations_count = 0;
 	jstate->highest_extern_param_id = 0;
 	jstate->pending_nulls = 0;
+	jstate->has_squashed_lists = false;
 #ifdef USE_ASSERT_CHECKING
 	jstate->total_jumble_len = 0;
 #endif
@@ -206,6 +214,10 @@ DoJumble(JumbleState *jstate, Node *node)
 	/* Flush any pending NULLs before doing the final hash */
 	if (jstate->pending_nulls > 0)
 		FlushPendingNulls(jstate);
+
+	/* Squashed list found, reset highest_extern_param_id */
+	if (jstate->has_squashed_lists)
+		jstate->highest_extern_param_id = 0;
 
 	/* Process the jumble buffer and produce the hash value */
 	return DatumGetInt64(hash_any_extended(jstate->jumble,
@@ -376,14 +388,14 @@ FlushPendingNulls(JumbleState *jstate)
  * Record the location of some kind of constant within a query string.
  * These are not only bare constants but also expressions that ultimately
  * constitute a constant, such as those inside casts and simple function
- * calls.
+ * calls; if extern_param, then it corresponds to a PARAM_EXTERN Param.
  *
  * If length is -1, it indicates a single such constant element.  If
  * it's a positive integer, it indicates the length of a squashable
  * list of them.
  */
 static void
-RecordConstLocation(JumbleState *jstate, int location, int len)
+RecordConstLocation(JumbleState *jstate, bool extern_param, int location, int len)
 {
 	/* -1 indicates unknown or undefined location */
 	if (location >= 0)
@@ -406,6 +418,7 @@ RecordConstLocation(JumbleState *jstate, int location, int len)
 		Assert(len > -1 || len == -1);
 		jstate->clocations[jstate->clocations_count].length = len;
 		jstate->clocations[jstate->clocations_count].squashed = (len > -1);
+		jstate->clocations[jstate->clocations_count].extern_param = extern_param;
 		jstate->clocations_count++;
 	}
 }
@@ -417,7 +430,8 @@ RecordConstLocation(JumbleState *jstate, int location, int len)
  * - See through any wrapping RelabelType and CoerceViaIO layers.
  * - If it's a FuncExpr, check that the function is a builtin
  *   cast and its arguments are Const.
- * - Otherwise test if the expression is a simple Const.
+ * - Otherwise test if the expression is a simple Const or a
+ *   PARAM_EXTERN param.
  */
 static bool
 IsSquashableConstant(Node *element)
@@ -437,6 +451,9 @@ restart:
 
 		case T_Const:
 			return true;
+
+		case T_Param:
+			return castNode(Param, element)->paramkind == PARAM_EXTERN;
 
 		case T_FuncExpr:
 			{
@@ -487,8 +504,8 @@ restart:
  * Return value indicates if squashing is possible.
  *
  * Note that this function searches only for explicit Const nodes with
- * possibly very simple decorations on top, and does not try to simplify
- * expressions.
+ * possibly very simple decorations on top and PARAM_EXTERN parameters,
+ * and does not try to simplify expressions.
  */
 static bool
 IsSquashableConstantList(List *elements)
@@ -513,7 +530,7 @@ IsSquashableConstantList(List *elements)
 #define JUMBLE_ELEMENTS(list, node) \
 	_jumbleElements(jstate, (List *) expr->list, node)
 #define JUMBLE_LOCATION(location) \
-	RecordConstLocation(jstate, expr->location, -1)
+	RecordConstLocation(jstate, false, expr->location, -1)
 #define JUMBLE_FIELD(item) \
 do { \
 	if (sizeof(expr->item) == 8) \
@@ -539,42 +556,6 @@ do { \
 	_jumble##nodetype##_##item(jstate, expr, expr->item)
 
 #include "queryjumblefuncs.funcs.c"
-
-/*
- * We try to jumble lists of expressions as one individual item regardless
- * of how many elements are in the list. This is know as squashing, which
- * results in different queries jumbling to the same query_id, if the only
- * difference is the number of elements in the list.
- *
- * We allow constants to be squashed. To normalize such queries, we use
- * the start and end locations of the list of elements in a list.
- */
-static void
-_jumbleElements(JumbleState *jstate, List *elements, Node *node)
-{
-	bool		normalize_list = false;
-
-	if (IsSquashableConstantList(elements))
-	{
-		if (IsA(node, ArrayExpr))
-		{
-			ArrayExpr  *aexpr = (ArrayExpr *) node;
-
-			if (aexpr->list_start > 0 && aexpr->list_end > 0)
-			{
-				RecordConstLocation(jstate,
-									aexpr->list_start + 1,
-									(aexpr->list_end - aexpr->list_start) - 1);
-				normalize_list = true;
-			}
-		}
-	}
-
-	if (!normalize_list)
-	{
-		_jumbleNode(jstate, (Node *) elements);
-	}
-}
 
 static void
 _jumbleNode(JumbleState *jstate, Node *node)
@@ -617,26 +598,6 @@ _jumbleNode(JumbleState *jstate, Node *node)
 			break;
 	}
 
-	/* Special cases to handle outside the automated code */
-	switch (nodeTag(expr))
-	{
-		case T_Param:
-			{
-				Param	   *p = (Param *) node;
-
-				/*
-				 * Update the highest Param id seen, in order to start
-				 * normalization correctly.
-				 */
-				if (p->paramkind == PARAM_EXTERN &&
-					p->paramid > jstate->highest_extern_param_id)
-					jstate->highest_extern_param_id = p->paramid;
-			}
-			break;
-		default:
-			break;
-	}
-
 	/* Ensure we added something to the jumble buffer */
 	Assert(jstate->total_jumble_len > prev_jumble_len);
 }
@@ -669,6 +630,79 @@ _jumbleList(JumbleState *jstate, Node *node)
 			elog(ERROR, "unrecognized list node type: %d",
 				 (int) expr->type);
 			return;
+	}
+}
+
+/*
+ * We try to jumble lists of expressions as one individual item regardless
+ * of how many elements are in the list. This is know as squashing, which
+ * results in different queries jumbling to the same query_id, if the only
+ * difference is the number of elements in the list.
+ *
+ * We allow constants and PARAM_EXTERN parameters to be squashed. To normalize
+ * such queries, we use the start and end locations of the list of elements in
+ * a list.
+ */
+static void
+_jumbleElements(JumbleState *jstate, List *elements, Node *node)
+{
+	bool		normalize_list = false;
+
+	if (IsSquashableConstantList(elements))
+	{
+		if (IsA(node, ArrayExpr))
+		{
+			ArrayExpr  *aexpr = (ArrayExpr *) node;
+
+			if (aexpr->list_start > 0 && aexpr->list_end > 0)
+			{
+				RecordConstLocation(jstate,
+									false,
+									aexpr->list_start + 1,
+									(aexpr->list_end - aexpr->list_start) - 1);
+				normalize_list = true;
+				jstate->has_squashed_lists = true;
+			}
+		}
+	}
+
+	if (!normalize_list)
+	{
+		_jumbleNode(jstate, (Node *) elements);
+	}
+}
+
+/*
+ * We store the highest param ID of extern params.  This can later be used
+ * to start the numbering of the placeholder for squashed lists.
+ */
+static void
+_jumbleParam(JumbleState *jstate, Node *node)
+{
+	Param	   *expr = (Param *) node;
+
+	JUMBLE_FIELD(paramkind);
+	JUMBLE_FIELD(paramid);
+	JUMBLE_FIELD(paramtype);
+	/* paramtypmode and paramcollid are ignored */
+
+	if (expr->paramkind == PARAM_EXTERN)
+	{
+		/*
+		 * At this point, only external parameter locations outside of
+		 * squashable lists will be recorded.
+		 */
+		RecordConstLocation(jstate, true, expr->location, -1);
+
+		/*
+		 * Update the highest Param id seen, in order to start normalization
+		 * correctly.
+		 *
+		 * Note: This value is reset at the end of jumbling if there exists a
+		 * squashable list. See the comment in the definition of JumbleState.
+		 */
+		if (expr->paramid > jstate->highest_extern_param_id)
+			jstate->highest_extern_param_id = expr->paramid;
 	}
 }
 

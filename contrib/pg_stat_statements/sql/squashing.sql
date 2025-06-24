@@ -32,7 +32,7 @@ SELECT WHERE 1 IN (1, int4(1), int4(2), 2);
 SELECT WHERE 1 = ANY (ARRAY[1, int4(1), int4(2), 2]);
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
--- external parameters will not be squashed
+-- external parameters will be squashed
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT * FROM test_squash WHERE id IN ($1, $2, $3, $4, $5)  \bind 1 2 3 4 5
 ;
@@ -40,7 +40,7 @@ SELECT * FROM test_squash WHERE id::text = ANY(ARRAY[$1, $2, $3, $4, $5]) \bind 
 ;
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
--- neither are prepared statements
+-- prepared statements will also be squashed
 -- the IN and ARRAY forms of this statement will have the same queryId
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 PREPARE p1(int, int, int, int, int) AS

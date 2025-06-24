@@ -103,7 +103,7 @@ SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
  SELECT pg_stat_statements_reset() IS NOT NULL AS t |     1
 (2 rows)
 
--- external parameters will not be squashed
+-- external parameters will be squashed
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t 
 ---
@@ -123,14 +123,14 @@ SELECT * FROM test_squash WHERE id::text = ANY(ARRAY[$1, $2, $3, $4, $5]) \bind 
 (0 rows)
 
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
-                                   query                                   | calls 
----------------------------------------------------------------------------+-------
- SELECT * FROM test_squash WHERE id IN ($1, $2, $3, $4, $5)                |     1
- SELECT * FROM test_squash WHERE id::text = ANY(ARRAY[$1, $2, $3, $4, $5]) |     1
- SELECT pg_stat_statements_reset() IS NOT NULL AS t                        |     1
+                                query                                 | calls 
+----------------------------------------------------------------------+-------
+ SELECT * FROM test_squash WHERE id IN ($1 /*, ... */)                |     1
+ SELECT * FROM test_squash WHERE id::text = ANY(ARRAY[$1 /*, ... */]) |     1
+ SELECT pg_stat_statements_reset() IS NOT NULL AS t                   |     1
 (3 rows)
 
--- neither are prepared statements
+-- prepared statements will also be squashed
 -- the IN and ARRAY forms of this statement will have the same queryId
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
  t 
@@ -155,12 +155,12 @@ EXECUTE p1(1, 2, 3, 4, 5);
 
 DEALLOCATE p1;
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
-                           query                            | calls 
-------------------------------------------------------------+-------
- DEALLOCATE $1                                              |     2
- PREPARE p1(int, int, int, int, int) AS                    +|     2
- SELECT * FROM test_squash WHERE id IN ($1, $2, $3, $4, $5) | 
- SELECT pg_stat_statements_reset() IS NOT NULL AS t         |     1
+                         query                         | calls 
+-------------------------------------------------------+-------
+ DEALLOCATE $1                                         |     2
+ PREPARE p1(int, int, int, int, int) AS               +|     2
+ SELECT * FROM test_squash WHERE id IN ($1 /*, ... */) | 
+ SELECT pg_stat_statements_reset() IS NOT NULL AS t    |     1
 (3 rows)
 
 -- More conditions in the query
