@@ -41,7 +41,7 @@ jobs:
     secrets: inherit
 
   slack-notification:
-    if: ${{ failure() }} && github.event_name == 'push'
+    if: failure() && github.event_name == 'push'
     needs: [ main, arm ]
     name: Slack Notification
     runs-on: ubuntu-24.04
