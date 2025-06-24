@@ -414,7 +414,7 @@ RecordConstLocation(JumbleState *jstate, int location, int len)
  * Subroutine for _jumbleElements: Verify a few simple cases where we can
  * deduce that the expression is a constant:
  *
- * - Ignore a possible wrapping RelabelType and CoerceViaIO.
+ * - See through any wrapping RelabelType and CoerceViaIO layers.
  * - If it's a FuncExpr, check that the function is a builtin
  *   cast and its arguments are Const.
  * - Otherwise test if the expression is a simple Const.
@@ -422,14 +422,22 @@ RecordConstLocation(JumbleState *jstate, int location, int len)
 static bool
 IsSquashableConstant(Node *element)
 {
-	if (IsA(element, RelabelType))
-		element = (Node *) ((RelabelType *) element)->arg;
-
-	if (IsA(element, CoerceViaIO))
-		element = (Node *) ((CoerceViaIO *) element)->arg;
-
+restart:
 	switch (nodeTag(element))
 	{
+		case T_RelabelType:
+			/* Unwrap RelabelType */
+			element = (Node *) ((RelabelType *) element)->arg;
+			goto restart;
+
+		case T_CoerceViaIO:
+			/* Unwrap CoerceViaIO */
+			element = (Node *) ((CoerceViaIO *) element)->arg;
+			goto restart;
+
+		case T_Const:
+			return true;
+
 		case T_FuncExpr:
 			{
 				FuncExpr   *func = (FuncExpr *) element;
@@ -468,11 +476,8 @@ IsSquashableConstant(Node *element)
 			}
 
 		default:
-			if (!IsA(element, Const))
-				return false;
+			return false;
 	}
-
-	return true;
 }
 
 /*

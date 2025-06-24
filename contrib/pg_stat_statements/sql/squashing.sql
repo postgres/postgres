@@ -234,7 +234,7 @@ SELECT * FROM test_squash_jsonb WHERE data = ANY(ARRAY
 	 (SELECT '"10"')::jsonb]);
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
--- Multiple CoerceViaIO wrapping a constant. Will not squash
+-- Multiple CoerceViaIO are squashed
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 SELECT WHERE 1 IN (1::text::int::text::int, 1::text::int::text::int);
 SELECT WHERE 1 = ANY(ARRAY[1::text::int::text::int, 1::text::int::text::int]);
@@ -245,14 +245,15 @@ SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 --
 
 SELECT pg_stat_statements_reset() IS NOT NULL AS t;
--- if there is only one level of RelabelType, the list will be squashable
+-- However many layers of RelabelType there are, the list will be squashable.
 SELECT * FROM test_squash WHERE id IN
 	(1::oid, 2::oid, 3::oid, 4::oid, 5::oid, 6::oid, 7::oid, 8::oid, 9::oid);
 SELECT ARRAY[1::oid, 2::oid, 3::oid, 4::oid, 5::oid, 6::oid, 7::oid, 8::oid, 9::oid];
--- if there is at least one element with multiple levels of RelabelType,
--- the list will not be squashable
 SELECT * FROM test_squash WHERE id IN (1::oid, 2::oid::int::oid);
 SELECT * FROM test_squash WHERE id = ANY(ARRAY[1::oid, 2::oid::int::oid]);
+-- RelabelType together with CoerceViaIO is also squashable
+SELECT * FROM test_squash WHERE id = ANY(ARRAY[1::oid::text::int::oid, 2::oid::int::oid]);
+SELECT * FROM test_squash WHERE id = ANY(ARRAY[1::text::int::oid, 2::oid::int::oid]);
 SELECT query, calls FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --
