@@ -56,7 +56,7 @@ jobs:
               - type: "section"
                 text:
                   type: "mrkdwn"
-                  text: "Workflow *${{ github.workflow }}* failed on branch *${{ github.head_ref }}*\n
+                  text: "Workflow *${{ github.workflow }}* failed on branch *${{ github.ref_name }}*\n
                    Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>\n
                    \n
                    <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"
