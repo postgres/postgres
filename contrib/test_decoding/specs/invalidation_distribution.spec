@@ -1,6 +1,10 @@
 # Test that catalog cache invalidation messages are distributed to ongoing
 # transactions, ensuring they can access the updated catalog content after
 # processing these messages.
+#
+# This file contains a cache-behavior-dependent test case. Its result is
+# different between regular and CLOBBER_CACHE_ALWAYS builds, so we must have
+# two expected-output files to cover both cases.
 setup
 {
     SELECT 'init' FROM pg_create_logical_replication_slot('isolation_slot', 'pgoutput');
@@ -40,4 +44,10 @@ permutation "s1_insert_tbl1" "s1_begin" "s1_insert_tbl1" "s2_alter_pub_add_tbl" 
 # Expect to get no change because both s1's and s3's transactions
 # use the snapshot from before adding the table tbl1 to the
 # publication by "s2_alter_pub_add_tbl".
+#
+# Note that with CLOBBER_CACHE_ALWAYS, we expect to get one insert
+# change with LOGICAL_REP_MSG_INSERT = 'I' from the second
+# "s1_insert_tbl1" executed after adding the table tbl1 to the
+# publication in "s2_alter_pub_add_tbl" as the cache for table tbl1
+# is forcibly flushed due to CLOBBER_CACHE_ALWAYS.
 permutation "s1_begin" "s1_insert_tbl1" "s3_begin" "s3_insert_tbl1" "s2_alter_pub_add_tbl" "s1_insert_tbl1" "s1_commit" "s3_commit" "s2_get_binary_changes"
