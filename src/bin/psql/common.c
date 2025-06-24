@@ -2628,7 +2628,7 @@ clean_extended_state(void)
 
 	switch (pset.send_mode)
 	{
-		case PSQL_SEND_EXTENDED_CLOSE:	/* \close */
+		case PSQL_SEND_EXTENDED_CLOSE:	/* \close_prepared */
 			free(pset.stmtName);
 			break;
 		case PSQL_SEND_EXTENDED_PARSE:	/* \parse */

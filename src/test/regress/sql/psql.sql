@@ -68,11 +68,11 @@ SELECT $1, $2 \parse stmt3
 -- Multiple \g calls mean multiple executions
 \bind_named stmt2 'foo3' \g \bind_named stmt3 'foo4' 'bar4' \g
 
--- \close (extended query protocol)
-\close
-\close ''
-\close stmt2
-\close stmt2
+-- \close_prepared (extended query protocol)
+\close_prepared
+\close_prepared ''
+\close_prepared stmt2
+\close_prepared stmt2
 SELECT name, statement FROM pg_prepared_statements ORDER BY name;
 
 -- \bind (extended query protocol)
@@ -1035,7 +1035,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\C arg1
 	\c arg1 arg2 arg3 arg4
 	\cd arg1
-	\close stmt1
+	\close_prepared stmt1
 	\conninfo
 	\copy arg1 arg2 arg3 arg4 arg5 arg6
 	\copyright

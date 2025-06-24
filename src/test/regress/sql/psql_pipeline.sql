@@ -306,21 +306,21 @@ SELECT $1 \bind \sendpipeline
 SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
 \bind_named a 1 \sendpipeline
-\close a
+\close_prepared a
 \flushrequest
 \getresults
 -- Pipeline is aborted.
 SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
 \bind_named a 1 \sendpipeline
-\close a
+\close_prepared a
 -- Sync allows pipeline to recover.
 \syncpipeline
 \getresults
 SELECT $1 \bind 1 \sendpipeline
 SELECT $1 \parse a
 \bind_named a 1 \sendpipeline
-\close a
+\close_prepared a
 \flushrequest
 \getresults
 \endpipeline

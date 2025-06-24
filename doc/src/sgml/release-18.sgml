@@ -2746,7 +2746,7 @@ Author: Michael Paquier <michael@paquier.xyz>
      <link
      linkend="app-psql-meta-command-bind-named"><literal>\bind_named</literal></link>,
      and <link
-     linkend="app-psql-meta-command-close"><literal>\close</literal></link>.
+     linkend="app-psql-meta-command-close-prepared"><literal>\close_prepared</literal></link>.
      </para>
      </listitem>
 

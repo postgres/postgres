@@ -331,7 +331,8 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\bind [PARAM]...       set query parameters\n");
 	HELP0("  \\bind_named STMT_NAME [PARAM]...\n"
 		  "                         set query parameters for an existing prepared statement\n");
-	HELP0("  \\close STMT_NAME       close an existing prepared statement\n");
+	HELP0("  \\close_prepared STMT_NAME\n"
+		  "                         close an existing prepared statement\n");
 	HELP0("  \\endpipeline           exit pipeline mode\n");
 	HELP0("  \\flush                 flush output data to the server\n");
 	HELP0("  \\flushrequest          send request to the server to flush its output buffer\n");

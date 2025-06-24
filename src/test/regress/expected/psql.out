@@ -160,12 +160,12 @@ LINE 1: SELECT $1, $2
  foo4     | bar4
 (1 row)
 
--- \close (extended query protocol)
-\close
-\close: missing required argument
-\close ''
-\close stmt2
-\close stmt2
+-- \close_prepared (extended query protocol)
+\close_prepared
+\close_prepared: missing required argument
+\close_prepared ''
+\close_prepared stmt2
+\close_prepared stmt2
 SELECT name, statement FROM pg_prepared_statements ORDER BY name;
  name  |   statement    
 -------+----------------
@@ -4666,7 +4666,7 @@ bar 'bar' "bar"
 	\C arg1
 	\c arg1 arg2 arg3 arg4
 	\cd arg1
-	\close stmt1
+	\close_prepared stmt1
 	\conninfo
 	\copy arg1 arg2 arg3 arg4 arg5 arg6
 	\copyright

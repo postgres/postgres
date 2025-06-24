@@ -1067,8 +1067,8 @@ INSERT INTO tbls1 VALUES ($1, $2) \parse stmt1
        </listitem>
       </varlistentry>
 
-      <varlistentry id="app-psql-meta-command-close">
-       <term><literal>\close</literal> <replaceable class="parameter">prepared_statement_name</replaceable></term>
+      <varlistentry id="app-psql-meta-command-close-prepared">
+       <term><literal>\close_prepared</literal> <replaceable class="parameter">prepared_statement_name</replaceable></term>
 
        <listitem>
         <para>
@@ -1081,7 +1081,7 @@ INSERT INTO tbls1 VALUES ($1, $2) \parse stmt1
          Example:
 <programlisting>
 SELECT $1 \parse stmt1
-\close stmt1
+\close_prepared stmt1
 </programlisting>
         </para>
 
@@ -3710,7 +3710,7 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         All queries executed while a pipeline is ongoing use the extended
         query protocol. Queries are appended to the pipeline when ending with
         a semicolon. The meta-commands <literal>\bind</literal>,
-        <literal>\bind_named</literal>, <literal>\close</literal> or
+        <literal>\bind_named</literal>, <literal>\close_prepared</literal> or
         <literal>\parse</literal> can be used in an ongoing pipeline. While
         a pipeline is ongoing, <literal>\sendpipeline</literal> will append
         the current query buffer to the pipeline. Other meta-commands like
