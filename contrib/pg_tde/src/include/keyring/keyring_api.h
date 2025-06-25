@@ -29,7 +29,7 @@ typedef struct KeyInfo
 	KeyData		data;
 } KeyInfo;
 
-typedef enum KeyringReturnCodes
+typedef enum KeyringReturnCode
 {
 	KEYRING_CODE_SUCCESS = 0,
 	KEYRING_CODE_INVALID_PROVIDER = 1,
@@ -37,7 +37,7 @@ typedef enum KeyringReturnCodes
 	KEYRING_CODE_INVALID_RESPONSE = 5,
 	KEYRING_CODE_INVALID_KEY_SIZE = 6,
 	KEYRING_CODE_DATA_CORRUPTED = 7,
-} KeyringReturnCodes;
+} KeyringReturnCode;
 
 /* Base type for all keyring */
 typedef struct GenericKeyring
@@ -51,7 +51,7 @@ typedef struct GenericKeyring
 
 typedef struct TDEKeyringRoutine
 {
-	KeyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode);
+	KeyInfo    *(*keyring_get_key) (GenericKeyring *keyring, const char *key_name, KeyringReturnCode *returnCode);
 	void		(*keyring_store_key) (GenericKeyring *keyring, KeyInfo *key);
 	void		(*keyring_validate) (GenericKeyring *keyring);
 } TDEKeyringRoutine;
@@ -84,7 +84,7 @@ typedef struct KmipKeyring
 
 extern void RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type);
 
-extern KeyInfo *KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode);
+extern KeyInfo *KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *returnCode);
 extern KeyInfo *KeyringGenerateNewKeyAndStore(GenericKeyring *keyring, const char *key_name, unsigned key_len);
 extern void KeyringValidate(GenericKeyring *keyring);
 

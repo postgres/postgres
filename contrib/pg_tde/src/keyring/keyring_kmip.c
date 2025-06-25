@@ -18,7 +18,7 @@
 #define MAX_LOCATE_LEN 128
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
-static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
+static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *return_code);
 static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringKmipRoutine = {
@@ -110,7 +110,7 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 }
 
 static KeyInfo *
-get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code)
+get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *return_code)
 {
 	KeyInfo    *key = NULL;
 	KmipKeyring *kmip_keyring = (KmipKeyring *) keyring;

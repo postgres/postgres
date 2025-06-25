@@ -59,7 +59,7 @@ static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
 
 static void set_key_by_name(GenericKeyring *keyring, KeyInfo *key);
-static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code);
+static KeyInfo *get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *return_code);
 static void validate(GenericKeyring *keyring);
 
 const TDEKeyringRoutine keyringVaultV2Routine = {
@@ -201,7 +201,7 @@ set_key_by_name(GenericKeyring *keyring, KeyInfo *key)
 }
 
 static KeyInfo *
-get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *return_code)
+get_key_by_name(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *return_code)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
 	KeyInfo    *key = NULL;

@@ -98,7 +98,7 @@ RegisterKeyProviderType(const TDEKeyringRoutine *routine, ProviderType type)
 }
 
 KeyInfo *
-KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCodes *returnCode)
+KeyringGetKey(GenericKeyring *keyring, const char *key_name, KeyringReturnCode *returnCode)
 {
 	RegisteredKeyProviderType *kp = find_key_provider_type(keyring->type);
 

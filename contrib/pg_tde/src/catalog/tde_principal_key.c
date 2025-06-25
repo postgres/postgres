@@ -238,7 +238,7 @@ set_principal_key_with_keyring(const char *key_name,
 	new_keyring = GetKeyProviderByName(provider_name, providerOid);
 
 	{
-		KeyringReturnCodes kr_ret;
+		KeyringReturnCode kr_ret;
 
 		keyInfo = KeyringGetKey(new_keyring, key_name, &kr_ret);
 
@@ -303,7 +303,7 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 	TDEPrincipalKey *new_principal_key;
 	GenericKeyring *new_keyring;
 	KeyInfo    *keyInfo;
-	KeyringReturnCodes kr_ret;
+	KeyringReturnCode kr_ret;
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
@@ -479,7 +479,7 @@ pg_tde_create_principal_key_internal(Oid providerOid,
 
 	GenericKeyring *provider;
 	KeyInfo    *key_info;
-	KeyringReturnCodes return_code;
+	KeyringReturnCode return_code;
 
 	if (providerOid == GLOBAL_DATA_TDE_OID && !superuser())
 		ereport(ERROR,
@@ -922,7 +922,7 @@ get_principal_key_from_keyring(Oid dbOid)
 	TDESignedPrincipalKeyInfo *principalKeyInfo;
 	GenericKeyring *keyring;
 	KeyInfo    *keyInfo;
-	KeyringReturnCodes keyring_ret;
+	KeyringReturnCode keyring_ret;
 	TDEPrincipalKey *principalKey;
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
@@ -1180,7 +1180,7 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 		existing_principal_key->data.keyringId == modified_provider->keyring_id)
 	{
 		char	   *key_name = existing_principal_key->data.name;
-		KeyringReturnCodes return_code;
+		KeyringReturnCode return_code;
 		KeyInfo    *proposed_key;
 
 		proposed_key = KeyringGetKey(modified_provider, key_name, &return_code);
@@ -1215,7 +1215,7 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 			existing_principal_key->data.keyringId == modified_provider->keyring_id)
 		{
 			char	   *key_name = existing_principal_key->data.name;
-			KeyringReturnCodes return_code;
+			KeyringReturnCode return_code;
 			KeyInfo    *proposed_key;
 
 			proposed_key = KeyringGetKey(modified_provider, key_name, &return_code);
