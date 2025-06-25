@@ -619,7 +619,15 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params, bstrategy))
+				VacuumParams params_copy;
+
+				/*
+				 * vacuum_rel() scribbles on the parameters, so give it a copy
+				 * to avoid affecting other relations.
+				 */
+				memcpy(&params_copy, params, sizeof(VacuumParams));
+
+				if (!vacuum_rel(vrel->oid, vrel->relation, &params_copy, bstrategy))
 					continue;
 			}
 
@@ -1993,8 +2001,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	VacuumParams toast_vacuum_params;
 
 	Assert(params != NULL);
+
+	/*
+	 * This function scribbles on the parameters, so make a copy early to
+	 * avoid affecting the TOAST table (if we do end up recursing to it).
+	 */
+	memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -2258,10 +2273,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (toast_relid != InvalidOid)
 	{
-		VacuumParams toast_vacuum_params;
-
 		/* force VACOPT_PROCESS_MAIN so vacuum_rel() processes it */
-		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
 
 		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, bstrategy);
