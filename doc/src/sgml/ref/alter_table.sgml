@@ -460,8 +460,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
      <para>
       This form adds a new constraint to a table using the same constraint
       syntax as <link linkend="sql-createtable"><command>CREATE TABLE</command></link>, plus the option <literal>NOT
-      VALID</literal>, which is currently only allowed for foreign key,
-      <literal>CHECK</literal> constraints and not-null constraints.
+      VALID</literal>, which is currently only allowed for foreign-key,
+      <literal>CHECK</literal>, and not-null constraints.
      </para>
 
      <para>
@@ -469,7 +469,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       existing rows in the table satisfy the new constraint.  But if
       the <literal>NOT VALID</literal> option is used, this
       potentially-lengthy scan is skipped.  The constraint will still be
-      enforced against subsequent inserts or updates (that is, they'll fail
+      applied against subsequent inserts or updates (that is, they'll fail
       unless there is a matching row in the referenced table, in the case
       of foreign keys, or they'll fail unless the new row matches the
       specified check condition).  But the
@@ -591,7 +591,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This form validates a foreign key, check, or not-null constraint that was
       previously created as <literal>NOT VALID</literal>, by scanning the
       table to ensure there are no rows for which the constraint is not
-      satisfied.  If the constraint is not enforced, an error is thrown.
+      satisfied.  If the constraint was set to <literal>NOT ENFORCED</literal>, an error is thrown.
       Nothing happens if the constraint is already marked valid.
       (See <xref linkend="sql-altertable-notes"/> below for an explanation
       of the usefulness of this command.)
@@ -1466,11 +1466,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </para>
 
    <para>
-    Adding an enforced <literal>CHECK</literal> or <literal>NOT NULL</literal>
+    Adding a <literal>CHECK</literal> or <literal>NOT NULL</literal>
     constraint requires scanning the table to verify that existing rows meet the
     constraint, but does not require a table rewrite.  If a <literal>CHECK</literal>
-    constraint is added as <literal>NOT ENFORCED</literal>, the validation will
-    not be performed.
+    constraint is added as <literal>NOT ENFORCED</literal>, no verification will
+    be performed.
    </para>
 
    <para>
@@ -1485,7 +1485,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </para>
 
    <para>
-    Scanning a large table to verify a new foreign key or check constraint
+    Scanning a large table to verify new foreign-key, check, or not-null constraints
     can take a long time, and other updates to the table are locked out
     until the <command>ALTER TABLE ADD CONSTRAINT</command> command is
     committed.  The main purpose of the <literal>NOT VALID</literal>
