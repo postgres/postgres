@@ -253,10 +253,10 @@ CREATE TABLE gtest4 (
     a int,
     b double_int GENERATED ALWAYS AS ((a * 2, a * 3)) VIRTUAL
 );
-INSERT INTO gtest4 VALUES (1), (6);
-SELECT * FROM gtest4;
+--INSERT INTO gtest4 VALUES (1), (6);
+--SELECT * FROM gtest4;
 
-DROP TABLE gtest4;
+--DROP TABLE gtest4;
 DROP TYPE double_int;
 
 -- using tableoid is allowed
@@ -290,20 +290,21 @@ GRANT SELECT (a, c) ON gtest11 TO regress_user11;
 CREATE FUNCTION gf1(a int) RETURNS int AS $$ SELECT a * 3 $$ IMMUTABLE LANGUAGE SQL;
 REVOKE ALL ON FUNCTION gf1(int) FROM PUBLIC;
 
-CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);
-INSERT INTO gtest12 VALUES (1, 10), (2, 20);
-GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
+CREATE TABLE gtest12 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (gf1(b)) VIRTUAL);  -- fails, user-defined function
+--INSERT INTO gtest12 VALUES (1, 10), (2, 20);
+--GRANT SELECT (a, c), INSERT ON gtest12 TO regress_user11;
 
 SET ROLE regress_user11;
 SELECT a, b FROM gtest11;  -- not allowed
 SELECT a, c FROM gtest11;  -- allowed
 SELECT gf1(10);  -- not allowed
-INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
-SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
+--INSERT INTO gtest12 VALUES (3, 30), (4, 40);  -- allowed (does not actually invoke the function)
+--SELECT a, c FROM gtest12;  -- currently not allowed because of function permissions, should arguably be allowed
 RESET ROLE;
 
-DROP FUNCTION gf1(int);  -- fail
-DROP TABLE gtest11, gtest12;
+--DROP FUNCTION gf1(int);  -- fail
+DROP TABLE gtest11;
+--DROP TABLE gtest12;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
 
@@ -462,6 +463,9 @@ CREATE DOMAIN gtestdomainnn AS int CHECK (VALUE IS NOT NULL);
 CREATE TABLE gtest24nn (a int, b gtestdomainnn GENERATED ALWAYS AS (a * 2) VIRTUAL);
 --INSERT INTO gtest24nn (a) VALUES (4);  -- ok
 --INSERT INTO gtest24nn (a) VALUES (NULL);  -- error
+
+-- using user-defined type not yet supported
+CREATE TABLE gtest24xxx (a gtestdomain1, b gtestdomain1, c int GENERATED ALWAYS AS (greatest(a, b)) VIRTUAL);  -- error
 
 -- typed tables (currently not supported)
 CREATE TYPE gtest_type AS (f1 integer, f2 text, f3 bigint);

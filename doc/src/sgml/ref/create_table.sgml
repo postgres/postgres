@@ -924,6 +924,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       not other generated columns.  Any functions and operators used must be
       immutable.  References to other tables are not allowed.
      </para>
+
+     <para>
+      A virtual generated column cannot have a user-defined type, and the
+      generation expression of a virtual generated column must not reference
+      user-defined functions or types, that is, it can only use built-in
+      functions or types.  This applies also indirectly, such as for functions
+      or types that underlie operators or casts.  (This restriction does not
+      exist for stored generated columns.)
+     </para>
     </listitem>
    </varlistentry>
 

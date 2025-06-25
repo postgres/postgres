@@ -262,6 +262,9 @@ ALTER PUBLICATION testpub6 SET TABLES IN SCHEMA testpub_rf_schema2, TABLE testpu
 RESET client_min_messages;
 \dRp+ testpub6
 -- fail - virtual generated column uses user-defined function
+-- (Actually, this already fails at CREATE TABLE rather than at CREATE
+-- PUBLICATION, but let's keep the test in case the former gets
+-- relaxed sometime.)
 CREATE TABLE testpub_rf_tbl6 (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * testpub_rf_func2()) VIRTUAL);
 CREATE PUBLICATION testpub7 FOR TABLE testpub_rf_tbl6 WHERE (y > 100);
 -- test that SET EXPRESSION is rejected, because it could affect a row filter
@@ -276,7 +279,7 @@ DROP TABLE testpub_rf_tbl2;
 DROP TABLE testpub_rf_tbl3;
 DROP TABLE testpub_rf_tbl4;
 DROP TABLE testpub_rf_tbl5;
-DROP TABLE testpub_rf_tbl6;
+--DROP TABLE testpub_rf_tbl6;
 DROP TABLE testpub_rf_schema1.testpub_rf_tbl5;
 DROP TABLE testpub_rf_schema2.testpub_rf_tbl6;
 DROP SCHEMA testpub_rf_schema1;

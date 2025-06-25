@@ -665,6 +665,15 @@ CheckAttributeType(const char *attname,
 	}
 
 	/*
+	 * For consistency with check_virtual_generated_security().
+	 */
+	if ((flags & CHKATYPE_IS_VIRTUAL) && atttypid >= FirstUnpinnedObjectId)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("virtual generated column \"%s\" cannot have a user-defined type", attname),
+				errdetail("Virtual generated columns that make use of user-defined types are not yet supported."));
+
+	/*
 	 * This might not be strictly invalid per SQL standard, but it is pretty
 	 * useless, and it cannot be dumped, so we must disallow it.
 	 */
@@ -3216,6 +3225,86 @@ check_nested_generated(ParseState *pstate, Node *node)
 }
 
 /*
+ * Check security of virtual generated column expression.
+ *
+ * Just like selecting from a view is exploitable (CVE-2024-7348), selecting
+ * from a table with virtual generated columns is exploitable.  Users who are
+ * concerned about this can avoid selecting from views, but telling them to
+ * avoid selecting from tables is less practical.
+ *
+ * To address this, this restricts generation expressions for virtual
+ * generated columns are restricted to using built-in functions and types.  We
+ * assume that built-in functions and types cannot be exploited for this
+ * purpose.  Note the overall security also requires that all functions in use
+ * a immutable.  (For example, there are some built-in non-immutable functions
+ * that can run arbitrary SQL.)  The immutability is checked elsewhere, since
+ * that is a property that needs to hold independent of security
+ * considerations.
+ *
+ * In the future, this could be expanded by some new mechanism to declare
+ * other functions and types as safe or trusted for this purpose, but that is
+ * to be designed.
+ */
+
+/*
+ * Callback for check_functions_in_node() that determines whether a function
+ * is user-defined.
+ */
+static bool
+contains_user_functions_checker(Oid func_id, void *context)
+{
+	return (func_id >= FirstUnpinnedObjectId);
+}
+
+/*
+ * Checks for all the things we don't want in the generation expressions of
+ * virtual generated columns for security reasons.  Errors out if it finds
+ * one.
+ */
+static bool
+check_virtual_generated_security_walker(Node *node, void *context)
+{
+	ParseState *pstate = context;
+
+	if (node == NULL)
+		return false;
+
+	if (!IsA(node, List))
+	{
+		if (check_functions_in_node(node, contains_user_functions_checker, NULL))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("generation expression uses user-defined function"),
+					errdetail("Virtual generated columns that make use of user-defined functions are not yet supported."),
+					parser_errposition(pstate, exprLocation(node)));
+
+		/*
+		 * check_functions_in_node() doesn't check some node types (see
+		 * comment there).  We handle CoerceToDomain and MinMaxExpr by
+		 * checking for built-in types.  The other listed node types cannot
+		 * call user-definable SQL-visible functions.
+		 *
+		 * We furthermore need this type check to handle built-in, immutable
+		 * polymorphic functions such as array_eq().
+		 */
+		if (exprType(node) >= FirstUnpinnedObjectId)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("generation expression uses user-defined type"),
+					errdetail("Virtual generated columns that make use of user-defined types are not yet supported."),
+					parser_errposition(pstate, exprLocation(node)));
+	}
+
+	return expression_tree_walker(node, check_virtual_generated_security_walker, context);
+}
+
+static void
+check_virtual_generated_security(ParseState *pstate, Node *node)
+{
+	check_virtual_generated_security_walker(node, pstate);
+}
+
+/*
  * Take a raw default and convert it to a cooked format ready for
  * storage.
  *
@@ -3254,6 +3343,10 @@ cookDefault(ParseState *pstate,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 errmsg("generation expression is not immutable")));
+
+		/* Check security of expressions for virtual generated column */
+		if (attgenerated == ATTRIBUTE_GENERATED_VIRTUAL)
+			check_virtual_generated_security(pstate, expr);
 	}
 	else
 	{

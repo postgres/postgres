@@ -421,6 +421,16 @@ CREATE TABLE people (
     </listitem>
     <listitem>
      <para>
+      A virtual generated column cannot have a user-defined type, and the
+      generation expression of a virtual generated column must not reference
+      user-defined functions or types, that is, it can only use built-in
+      functions or types.  This applies also indirectly, such as for functions
+      or types that underlie operators or casts.  (This restriction does not
+      exist for stored generated columns.)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       A generated column cannot have a column default or an identity definition.
      </para>
     </listitem>
