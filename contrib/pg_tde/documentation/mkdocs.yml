@@ -198,6 +198,7 @@ nav:
       - "pg_checksums": command-line-tools/pg-tde-checksums.md 
     - "Uninstall pg_tde": how-to/uninstall.md
     - "Configure Multi-tenancy": how-to/multi-tenant-setup.md
+    - "Encryption Enforcement": how-to/enforcement.md
     - "Decrypt an Encrypted Table": how-to/decrypt.md
   - faq.md
   - "Release Notes":

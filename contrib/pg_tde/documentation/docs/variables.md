@@ -32,14 +32,14 @@ Similarly, `ALTER TABLE <x> SET ACCESS METHOD` is only allowed, if the access me
 
 Other DDL operations are still allowed. For example other `ALTER` commands are allowed on unencrypted tables, as long as the access method isn't changed.
 
-You can set this variable at the following levels: 
+You can set this variable at the following levels:
 
-* global - for the entire PostgreSQL cluster.
-* database - for specific databases. 
-* user - for specific users.
-* session - for the current session.
+* global - for the entire PostgreSQL cluster
+* database - for specific databases
+* user - for specific users
+* session - for the current session
 
-Setting or changing the value requires superuser permissions.
+Setting or changing the value requires superuser permissions. For examples, see the [Encryption Enforcement](how-to/enforcement.md) topic.
 
 ## pg_tde.inherit_global_providers
 
@@ -52,12 +52,12 @@ If disabled, functions that change the key providers can only work with database
 
 In this case, the default principal key, if set, is also disabled.
 
-You can set this variable at the following levels: 
+You can set this variable at the following levels:
 
-* global - for the entire PostgreSQL cluster.
-* database - for specific databases. 
-* user - for specific users.
-* session - for the current session.
+* global - for the entire PostgreSQL cluster
+* database - for specific databases
+* user - for specific users
+* session - for the current session
 
-
-Setting this variable doesn't affect existing uses of global keys. It only prevents the creation of new principal keys using global providers.
+!!! note
+    Setting this variable doesn't affect existing uses of global keys. It only prevents the creation of new principal keys using global providers.
