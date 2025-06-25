@@ -331,7 +331,7 @@ $node_p->safe_psql($db1,
 $node_p->wait_for_replay_catchup($node_s);
 
 # Create user-defined publications, wait for streaming replication to sync them
-# to the standby, then verify that '--remove'
+# to the standby, then verify that '--clean'
 # removes them.
 $node_p->safe_psql(
 	$db1, qq(
@@ -446,7 +446,7 @@ is(scalar(() = $stderr =~ /creating subscription/g),
 # Run pg_createsubscriber on node S.  --verbose is used twice
 # to show more information.
 # In passing, also test the --enable-two-phase option and
-# --remove option
+# --clean option
 command_ok(
 	[
 		'pg_createsubscriber',
@@ -463,7 +463,7 @@ command_ok(
 		'--database' => $db1,
 		'--database' => $db2,
 		'--enable-two-phase',
-		'--remove' => 'publications',
+		'--clean' => 'publications',
 	],
 	'run pg_createsubscriber on node S');
 

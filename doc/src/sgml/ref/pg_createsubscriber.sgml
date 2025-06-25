@@ -170,36 +170,6 @@ PostgreSQL documentation
     </varlistentry>
 
     <varlistentry>
-     <term><option>-R <replaceable class="parameter">objtype</replaceable></option></term>
-     <term><option>--remove=<replaceable class="parameter">objtype</replaceable></option></term>
-     <listitem>
-      <para>
-       Remove all objects of the specified type from specified databases on the
-       target server.
-      </para>
-      <para>
-       <itemizedlist>
-        <listitem>
-         <para>
-          <literal>publications</literal>:
-          The <literal>FOR ALL TABLES</literal> publications established for this
-          subscriber are always removed; specifying this object type causes all
-          other publications replicated from the source server to be dropped as
-          well.
-         </para>
-        </listitem>
-       </itemizedlist>
-      </para>
-      <para>
-       The objects selected to be dropped are individually logged, including during
-       a <option>--dry-run</option>.  There is no opportunity to affect or stop the
-       dropping of the selected objects, so consider taking a backup of them
-       using <application>pg_dump</application>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><option>-s <replaceable class="parameter">dir</replaceable></option></term>
      <term><option>--socketdir=<replaceable class="parameter">dir</replaceable></option></term>
      <listitem>
@@ -255,6 +225,35 @@ PostgreSQL documentation
        messages and detailed information about each step to standard error.
        Repeating the option causes additional debug-level messages to appear
        on standard error.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><option>--clean=<replaceable class="parameter">objtype</replaceable></option></term>
+     <listitem>
+      <para>
+       Drop all objects of the specified type from specified databases on the
+       target server.
+      </para>
+      <para>
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>publications</literal>:
+          The <literal>FOR ALL TABLES</literal> publications established for this
+          subscriber are always dropped; specifying this object type causes all
+          other publications replicated from the source server to be dropped as
+          well.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para>
+      <para>
+       The objects selected to be dropped are individually logged, including during
+       a <option>--dry-run</option>.  There is no opportunity to affect or stop the
+       dropping of the selected objects, so consider taking a backup of them
+       using <application>pg_dump</application>.
       </para>
      </listitem>
     </varlistentry>
