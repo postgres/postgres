@@ -89,7 +89,7 @@ checkPrincipalKeyConfigured(void)
 	if (!pg_tde_principal_key_configured(MyDatabaseId))
 		ereport(ERROR,
 				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
+				errhint("Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one."));
 }
 
 static void
