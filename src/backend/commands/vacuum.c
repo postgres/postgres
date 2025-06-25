@@ -56,6 +56,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/guc_hooks.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -619,7 +620,15 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 
 			if (params->options & VACOPT_VACUUM)
 			{
-				if (!vacuum_rel(vrel->oid, vrel->relation, params, bstrategy))
+				VacuumParams params_copy;
+
+				/*
+				 * vacuum_rel() scribbles on the parameters, so give it a copy
+				 * to avoid affecting other relations.
+				 */
+				memcpy(&params_copy, params, sizeof(VacuumParams));
+
+				if (!vacuum_rel(vrel->oid, vrel->relation, &params_copy, bstrategy))
 					continue;
 			}
 
@@ -1972,8 +1981,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	Oid			save_userid;
 	int			save_sec_context;
 	int			save_nestlevel;
+	VacuumParams toast_vacuum_params;
 
 	Assert(params != NULL);
+
+	/*
+	 * This function scribbles on the parameters, so make a copy early to
+	 * avoid affecting the TOAST table (if we do end up recursing to it).
+	 */
+	memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
@@ -2155,6 +2171,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		}
 	}
 
+#ifdef USE_INJECTION_POINTS
+	if (params->index_cleanup == VACOPTVALUE_AUTO)
+		INJECTION_POINT("vacuum-index-cleanup-auto");
+	else if (params->index_cleanup == VACOPTVALUE_DISABLED)
+		INJECTION_POINT("vacuum-index-cleanup-disabled");
+	else if (params->index_cleanup == VACOPTVALUE_ENABLED)
+		INJECTION_POINT("vacuum-index-cleanup-enabled");
+#endif
+
 	/*
 	 * Set truncate option based on truncate reloption if it wasn't specified
 	 * in VACUUM command, or when running in an autovacuum worker
@@ -2167,6 +2192,15 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		else
 			params->truncate = VACOPTVALUE_DISABLED;
 	}
+
+#ifdef USE_INJECTION_POINTS
+	if (params->truncate == VACOPTVALUE_AUTO)
+		INJECTION_POINT("vacuum-truncate-auto");
+	else if (params->truncate == VACOPTVALUE_DISABLED)
+		INJECTION_POINT("vacuum-truncate-disabled");
+	else if (params->truncate == VACOPTVALUE_ENABLED)
+		INJECTION_POINT("vacuum-truncate-enabled");
+#endif
 
 	/*
 	 * Remember the relation's TOAST relation for later, if the caller asked
@@ -2247,15 +2281,12 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (toast_relid != InvalidOid)
 	{
-		VacuumParams toast_vacuum_params;
-
 		/*
 		 * Force VACOPT_PROCESS_MAIN so vacuum_rel() processes it.  Likewise,
 		 * set toast_parent so that the privilege checks are done on the main
 		 * relation.  NB: This is only safe to do because we hold a session
 		 * lock on the main relation that prevents concurrent deletion.
 		 */
-		memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
 		toast_vacuum_params.toast_parent = relid;
 

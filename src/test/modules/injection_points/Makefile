@@ -9,7 +9,7 @@ EXTENSION = injection_points
 DATA = injection_points--1.0.sql
 PGFILEDESC = "injection_points - facility for injection points"
 
-REGRESS = injection_points reindex_conc
+REGRESS = injection_points reindex_conc vacuum
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
 ISOLATION = inplace syscache-update-pruned
