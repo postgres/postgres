@@ -1,0 +1,122 @@
+-- Tests for VACUUM
+CREATE EXTENSION injection_points;
+SELECT injection_points_set_local();
+ injection_points_set_local 
+----------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-index-cleanup-auto', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-index-cleanup-disabled', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-index-cleanup-enabled', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-truncate-auto', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-truncate-disabled', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_attach('vacuum-truncate-enabled', 'notice');
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+-- Check state of index_cleanup and truncate in VACUUM.
+CREATE TABLE vac_tab_on_toast_off(i int, j text) WITH
+  (autovacuum_enabled=false,
+   vacuum_index_cleanup=true, toast.vacuum_index_cleanup=false,
+   vacuum_truncate=true, toast.vacuum_truncate=false);
+CREATE TABLE vac_tab_off_toast_on(i int, j text) WITH
+  (autovacuum_enabled=false,
+   vacuum_index_cleanup=false, toast.vacuum_index_cleanup=true,
+   vacuum_truncate=false, toast.vacuum_truncate=true);
+-- Multiple relations should use their options in isolation.
+VACUUM vac_tab_on_toast_off, vac_tab_off_toast_on;
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-enabled
+NOTICE:  notice triggered for injection point vacuum-truncate-enabled
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-disabled
+NOTICE:  notice triggered for injection point vacuum-truncate-disabled
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-disabled
+NOTICE:  notice triggered for injection point vacuum-truncate-disabled
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-enabled
+NOTICE:  notice triggered for injection point vacuum-truncate-enabled
+-- Check "auto" case of index_cleanup and "truncate" controlled by
+-- its GUC.
+CREATE TABLE vac_tab_auto(i int, j text) WITH
+  (autovacuum_enabled=false,
+   vacuum_index_cleanup=auto, toast.vacuum_index_cleanup=auto);
+SET vacuum_truncate = false;
+VACUUM vac_tab_auto;
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-auto
+NOTICE:  notice triggered for injection point vacuum-truncate-disabled
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-auto
+NOTICE:  notice triggered for injection point vacuum-truncate-disabled
+SET vacuum_truncate = true;
+VACUUM vac_tab_auto;
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-auto
+NOTICE:  notice triggered for injection point vacuum-truncate-enabled
+NOTICE:  notice triggered for injection point vacuum-index-cleanup-auto
+NOTICE:  notice triggered for injection point vacuum-truncate-enabled
+RESET vacuum_truncate;
+DROP TABLE vac_tab_auto;
+DROP TABLE vac_tab_on_toast_off;
+DROP TABLE vac_tab_off_toast_on;
+-- Cleanup
+SELECT injection_points_detach('vacuum-index-cleanup-auto');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('vacuum-index-cleanup-disabled');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('vacuum-index-cleanup-enabled');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('vacuum-truncate-auto');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('vacuum-truncate-disabled');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('vacuum-truncate-enabled');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
+DROP EXTENSION injection_points;
