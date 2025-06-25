@@ -190,6 +190,7 @@ nav:
     - "Architecture": architecture/index.md
     - "GUC Variables": variables.md
     - "Functions": functions.md
+    - "Streaming Replication with tde_heap": replication.md
   - "TDE Operations":
     - "pg_tde CLI Tools":
       - "CLI Overview": command-line-tools/index.md
