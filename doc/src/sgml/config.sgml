@@ -2788,7 +2788,7 @@ include_dir 'conf.d'
       </varlistentry>
 
       <varlistentry id="guc-io-workers" xreflabel="io_workers">
-       <term><varname>io_workers</varname> (<type>int</type>)
+       <term><varname>io_workers</varname> (<type>integer</type>)
        <indexterm>
         <primary><varname>io_workers</varname> configuration parameter</primary>
        </indexterm>
