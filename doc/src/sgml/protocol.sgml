@@ -7292,8 +7292,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The LSN of the abort. This field is available since protocol version
-         4.
+         The LSN of the abort operation, present only when streaming is set to parallel.
+         This field is available since protocol version 4.
         </para>
        </listitem>
       </varlistentry>
@@ -7302,9 +7302,9 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (TimestampTz)</term>
        <listitem>
         <para>
-         Abort timestamp of the transaction. The value is in number
-         of microseconds since PostgreSQL epoch (2000-01-01). This field is
-         available since protocol version 4.
+         Abort timestamp of the transaction, present only when streaming is set to
+         parallel. The value is in number of microseconds since PostgreSQL epoch (2000-01-01).
+         This field is available since protocol version 4.
         </para>
        </listitem>
       </varlistentry>
