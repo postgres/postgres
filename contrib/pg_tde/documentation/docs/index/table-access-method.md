@@ -52,9 +52,9 @@ Here is how you can set the new default table access method:
 
 1. Add the access method to the `default_table_access_method` parameter:
 
-    === "via the SQL statement"
+    === "via the `ALTER SYSTEM` command"
 
-        Use the `ALTER SYSTEM` command. This requires superuser or ALTER SYSTEM privileges.
+        Use `ALTER SYSTEM`, it requires superuser or `ALTER SYSTEM` privileges.
         
         ```sql
         ALTER SYSTEM SET default_table_access_method = tde_heap;
@@ -68,7 +68,7 @@ Here is how you can set the new default table access method:
         default_table_access_method = 'tde_heap'
         ```  
 
-    === "via the SET command"
+    === "via the `SET` command"
 
         You can use the SET command to change the default table access method temporarily, for the current session. 
         
