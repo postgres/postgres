@@ -302,6 +302,22 @@ SELECT pg_tde_set_default_key_using_global_key_provider(
 );
 ```
 
+### pg_tde_delete_key
+
+Deletes the principal key for the current database. If the current database has any encrypted tables, and there isn’t a default principal key configured, it reports an error instead. If there are encrypted tables, but there’s also a default principal key, internal keys will be encrypted with the default key.
+
+```sql
+SELECT pg_tde_delete_key();
+```
+
+### pg_tde_delete_default_key
+
+Deletes default principal key. It's possible only if no database uses default principal key.
+
+```sql
+SELECT pg_tde_delete_default_key();
+```
+
 ## Encryption status check
 
 ### pg_tde_is_encrypted
