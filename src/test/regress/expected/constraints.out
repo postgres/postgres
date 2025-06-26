@@ -1659,6 +1659,8 @@ EXECUTE get_nnconstraint_info('{constr_parent3, constr_child3}');
  constr_parent3 | constr_parent3_a_not_null | t            | t          |           0
 (2 rows)
 
+COMMENT ON CONSTRAINT constr_parent2_a_not_null ON constr_parent2 IS 'this constraint is invalid';
+COMMENT ON CONSTRAINT constr_parent2_a_not_null ON constr_child2 IS 'this constraint is valid';
 DEALLOCATE get_nnconstraint_info;
 -- end NOT NULL NOT VALID
 -- Comments

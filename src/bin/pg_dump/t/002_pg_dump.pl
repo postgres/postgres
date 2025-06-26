@@ -1191,13 +1191,43 @@ my %tests = (
 							) INHERITS (dump_test.test_table_nn, dump_test.test_table_nn_2);
 			ALTER TABLE dump_test.test_table_nn ADD CONSTRAINT nn NOT NULL col1 NOT VALID;
 			ALTER TABLE dump_test.test_table_nn_chld1 VALIDATE CONSTRAINT nn;
-			ALTER TABLE dump_test.test_table_nn_chld2 VALIDATE CONSTRAINT nn;',
+			ALTER TABLE dump_test.test_table_nn_chld2 VALIDATE CONSTRAINT nn;
+			COMMENT ON CONSTRAINT nn ON dump_test.test_table_nn IS \'nn comment is valid\';
+			COMMENT ON CONSTRAINT nn ON dump_test.test_table_nn_chld2 IS \'nn_chld2 comment is valid\';',
 		regexp => qr/^
 			\QALTER TABLE dump_test.test_table_nn\E \n^\s+
 			\QADD CONSTRAINT nn NOT NULL col1 NOT VALID;\E
 			/xm,
 		like => {
 			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	# This constraint is invalid therefore it goes in SECTION_POST_DATA
+	'COMMENT ON CONSTRAINT ON test_table_nn' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON dump_test.test_table_nn IS\E
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_post_data => 1,
+		},
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	# This constraint is valid therefore it goes in SECTION_PRE_DATA
+	'COMMENT ON CONSTRAINT ON test_table_chld2' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON dump_test.test_table_nn_chld2 IS\E
+		/xm,
+		like => {
+			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,

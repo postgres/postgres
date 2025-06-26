@@ -997,6 +997,9 @@ create table constr_parent3 (a int not null);
 create table constr_child3 () inherits (constr_parent2, constr_parent3);
 EXECUTE get_nnconstraint_info('{constr_parent3, constr_child3}');
 
+COMMENT ON CONSTRAINT constr_parent2_a_not_null ON constr_parent2 IS 'this constraint is invalid';
+COMMENT ON CONSTRAINT constr_parent2_a_not_null ON constr_child2 IS 'this constraint is valid';
+
 DEALLOCATE get_nnconstraint_info;
 
 -- end NOT NULL NOT VALID

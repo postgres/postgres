@@ -1281,7 +1281,7 @@ PostgreSQL documentation
           materialized views, and foriegn tables.
           Post-data items include definitions of indexes, triggers, rules,
           statistics for indexes, and constraints other than validated check
-          constraints.
+          and not-null constraints.
           Pre-data items include all other data definition items.
          </para>
        </listitem>
