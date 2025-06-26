@@ -797,7 +797,8 @@ create table gtest32 (
   a int primary key,
   b int generated always as (a * 2),
   c int generated always as (10 + 10),
-  d int generated always as (coalesce(a, 100))
+  d int generated always as (coalesce(a, 100)),
+  e int
 );
 
 insert into gtest32 values (1), (2);
@@ -838,7 +839,10 @@ select t2.* from gtest32 t1 left join gtest32 t2 on false;
 select t2.* from gtest32 t1 left join gtest32 t2 on false;
 
 explain (verbose, costs off)
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
-select * from gtest32 t group by grouping sets (a, b, c, d) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
+
+-- Ensure that the virtual generated columns in ALTER COLUMN TYPE USING expression are expanded
+alter table gtest32 alter column e type bigint using b;
 
 drop table gtest32;

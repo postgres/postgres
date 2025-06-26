@@ -14484,6 +14484,9 @@ ATPrepAlterColumnType(List **wqueue,
 		/* Fix collations after all else */
 		assign_expr_collations(pstate, transform);
 
+		/* Expand virtual generated columns in the expr. */
+		transform = expand_generated_columns_in_expr(transform, rel, 1);
+
 		/* Plan the expr now so we can accurately assess the need to rewrite. */
 		transform = (Node *) expression_planner((Expr *) transform);
 
