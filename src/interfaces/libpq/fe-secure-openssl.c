@@ -711,7 +711,7 @@ SSL_CTX_keylog_cb(const SSL *ssl, const char *line)
 
 	if (fd == -1)
 	{
-		libpq_append_conn_error(conn, "could not open ssl keylog file \"%s\": %s",
+		libpq_append_conn_error(conn, "could not open SSL key logging file \"%s\": %s",
 								conn->sslkeylogfile, pg_strerror(errno));
 		return;
 	}
@@ -719,7 +719,7 @@ SSL_CTX_keylog_cb(const SSL *ssl, const char *line)
 	/* line is guaranteed by OpenSSL to be NUL terminated */
 	rc = write(fd, line, strlen(line));
 	if (rc < 0)
-		libpq_append_conn_error(conn, "could not write to ssl keylog file \"%s\": %s",
+		libpq_append_conn_error(conn, "could not write to SSL key logging file \"%s\": %s",
 								conn->sslkeylogfile, pg_strerror(errno));
 	else
 		rc = write(fd, "\n", 1);
