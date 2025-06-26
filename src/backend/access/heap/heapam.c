@@ -9613,6 +9613,9 @@ heap_xlog_insert(XLogReaderState *record)
 	ItemPointerSetBlockNumber(&target_tid, blkno);
 	ItemPointerSetOffsetNumber(&target_tid, xlrec->offnum);
 
+	/* No freezing in the heap_insert() code path */
+	Assert(!(xlrec->flags & XLH_INSERT_ALL_FROZEN_SET));
+
 	/*
 	 * The visibility map may need to be fixed even if the heap page is
 	 * already up-to-date.
@@ -9682,10 +9685,6 @@ heap_xlog_insert(XLogReaderState *record)
 
 		if (xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED)
 			PageClearAllVisible(page);
-
-		/* XLH_INSERT_ALL_FROZEN_SET implies that all tuples are visible */
-		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)
-			PageSetAllVisible(page);
 
 		MarkBufferDirty(buffer);
 	}
