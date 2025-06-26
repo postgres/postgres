@@ -11,7 +11,7 @@ The `pg_tde` extension requires additional shared memory. You need to configure 
 
 You can configure the `shared_preload_libraries` parameter in two ways:
 
-* Add the following line to the `shared_preload_libraries` file:
+* Add the following line to the `postgresql.conf` file:
 
     ```bash
     shared_preload_libraries = 'pg_tde'
@@ -50,20 +50,18 @@ CREATE EXTENSION pg_tde;
 See [CREATE EXTENSION :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-createextension.html) for more details.
 
 !!! note
-
     The `pg_tde` extension is created only for the current database. To enable it for other databases, you must run the command in each individual database.
 
 ## 4. (Optional) Enable pg_tde by default
 
 To automatically have `pg_tde` enabled for all new databases, modify the `template1` database:
 
-```
+```sql
 psql -d template1 -c 'CREATE EXTENSION pg_tde;'
 ```
 
 !!! note
-
-    You can use external key providers to manage encryption keys. The recommended approach is to use the Key Management Store (KMS). See the next step on how to configure the KMS.
+    It’s recommended to use an external key provider (KMS) to manage encryption keys. For configuration instructions, see [Next steps](#next-steps).
 
 ## Next steps
 

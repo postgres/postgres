@@ -17,7 +17,10 @@ This variable only controls new writes to the WAL, it doesn't affect existing WA
 
 `pg_tde` is always capable of reading existing encrypted WAL records, as long as the keys used for the encryption are still available.
 
-Enabling WAL encryption requires a configured global principal key. Refer to the [WAL encryption configuration](wal-encryption.md) documentation for more information.
+Enabling WAL encryption requires a configured global principal key. Refer to the [WAL encryption configuration](wal-encryption.md) topic for more information.
+
+!!! warning
+    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
 
 ## pg_tde.enforce_encryption
 
