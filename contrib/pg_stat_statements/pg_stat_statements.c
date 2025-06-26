@@ -2844,9 +2844,9 @@ generate_normalized_query(JumbleState *jstate, const char *query,
 		/*
 		 * If we have an external param at this location, but no lists are
 		 * being squashed across the query, then we skip here; this will make
-		 * us print print the characters found in the original query that
-		 * represent the parameter in the next iteration (or after the loop is
-		 * done), which is a bit odd but seems to work okay in most cases.
+		 * us print the characters found in the original query that represent
+		 * the parameter in the next iteration (or after the loop is done),
+		 * which is a bit odd but seems to work okay in most cases.
 		 */
 		if (jstate->clocations[i].extern_param && !jstate->has_squashed_lists)
 			continue;
