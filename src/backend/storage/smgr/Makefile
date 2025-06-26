@@ -13,8 +13,9 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = \
-	bulk_write.o \
-	md.o \
-	smgr.o
+        bulk_write.o \
+        s3.o \
+        md.o \
+        smgr.o
 
 include $(top_srcdir)/src/backend/common.mk

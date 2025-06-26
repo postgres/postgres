@@ -2,6 +2,7 @@
 
 backend_sources += files(
   'bulk_write.c',
+  's3.c',
   'md.c',
   'smgr.c',
 )
