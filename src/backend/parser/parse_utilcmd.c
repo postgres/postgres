@@ -1279,6 +1279,28 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 		lst = RelationGetNotNullConstraints(RelationGetRelid(relation), false,
 											true);
 		cxt->nnconstraints = list_concat(cxt->nnconstraints, lst);
+
+		/* Copy comments on not-null constraints */
+		if (table_like_clause->options & CREATE_TABLE_LIKE_COMMENTS)
+		{
+			foreach_node(Constraint, nnconstr, lst)
+			{
+				if ((comment = GetComment(get_relation_constraint_oid(RelationGetRelid(relation),
+																	  nnconstr->conname, false),
+										  ConstraintRelationId,
+										  0)) != NULL)
+				{
+					CommentStmt *stmt = makeNode(CommentStmt);
+
+					stmt->objtype = OBJECT_TABCONSTRAINT;
+					stmt->object = (Node *) list_make3(makeString(cxt->relation->schemaname),
+													   makeString(cxt->relation->relname),
+													   makeString(nnconstr->conname));
+					stmt->comment = comment;
+					cxt->alist = lappend(cxt->alist, stmt);
+				}
+			}
+		}
 	}
 
 	/*
