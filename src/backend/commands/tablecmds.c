@@ -10330,8 +10330,8 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 					for_overlaps
 					? errmsg("could not identify an overlaps operator for foreign key")
 					: errmsg("could not identify an equality operator for foreign key"),
-					errdetail("Could not translate compare type %d for operator family \"%s\", input type %s, access method \"%s\".",
-							  cmptype, get_opfamily_name(opfamily, false), format_type_be(opcintype), get_am_name(amid)));
+					errdetail("Could not translate compare type %d for operator family \"%s\" of access method \"%s\".",
+							  cmptype, get_opfamily_name(opfamily, false), get_am_name(amid)));
 
 		/*
 		 * There had better be a primary equality operator for the index.
