@@ -230,77 +230,84 @@ These functions list the details of all key providers for the current database o
 
 ## Principal key management
 
-Use these functions to create a new principal key at a given keyprover, and to use those keys for a specific scope such as a current database, a global or default scope. You can also use them to start using a different existing key for a specific scope.
+Use these functions to create a new principal key for a specific scope such as a current database, a global or default scope. You can also use them to start using a different existing key for a specific scope.
 
 Princial keys are stored on key providers by the name specified in this function - for example, when using the Vault provider, after creating a key named "foo", a key named "foo" will be visible on the Vault server at the specified mount point.
 
-### pg_tde_creates_key_using_database_key_provider
-
-Creates a principal key at a database local key provider with the given name. For later use with pg_tde_set_key_using_database_key_provider().
-
-```sql
-SELECT pg_tde_create_key_using_database_key_provider(
-  'key-name',
-  'provider-name'
-);
-```
-### pg_tde_create_key_using_global_key_provider
-
-Creates a principal key at a global  key provider with the given name. For later use with pg_tde_set_ series of functions.
-
-```sql
-SELECT pg_tde_create_key_using_global_key_provider(
-  'key-name',
-  'provider-name'
-);
-```
-
 ### pg_tde_set_key_using_database_key_provider
 
-Sets the principal key for the **current** database, using the specified local key provider. It also rotates internal encryption keys to use the specified principal key.
+Creates or reuses a principal key for the **current** database, using the specified local key provider. It also rotates internal encryption keys to use the specified principal key.
 
 This function is typically used when working with per-database encryption through a local key provider.
 
 ```sql
 SELECT pg_tde_set_key_using_database_key_provider(
   'key-name',
-  'provider-name'
+  'provider-name',
+  'false' -- or 'true'
 );
 ```
+
+For the third parameter (`true`, `false`, or omitted):
+
+* `true`: Requires the key to be newly created. If a key with the same name already exists, the function fails.
+* `false` (default if omitted): Reuses the existing key with that name, if present. If the key does not exist, a new key is created.
+
 ### pg_tde_set_key_using_global_key_provider
 
-Sets or rotates the global principal key using the specified global key provider and the key name. This key is used for global settings like WAL encryption.
+Creates or rotates the global principal key using the specified global key provider and the key name. This key is used for global settings like WAL encryption.
 
 ```sql
 SELECT pg_tde_set_key_using_global_key_provider(
   'key-name',
-  'provider-name'
+  'provider-name',
+  'ensure_new_key'
 );
 ```
 
+ The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true`, a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false` (default), an existing principal key may be reused.
+
 ### pg_tde_set_server_key_using_global_key_provider
 
-Sets or rotates the server principal key using the specified global key provider. Use this function to set a principal key for WAL encryption.
+Creates or rotates the server principal key using the specified global key provider. Use this function to set a principal key for WAL encryption.
 
 ```sql
 SELECT pg_tde_set_server_key_using_global_key_provider(
   'key-name',
-  'provider-name'
+  'provider-name',
+  'ensure_new_key'
 );
 ```
 
+The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true`, a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false` (default), an existing principal key may be reused.
+
 ### pg_tde_set_default_key_using_global_key_provider
 
-Sets or rotates the default principal key for the server using the specified global key provider.
+Creates or rotates the default principal key for the server using the specified global key provider.
 
-The default key is automatically used as a principal key by any database that doesn't have an individual key provider and key configuration.
+The default key is automatically used as a principal key  by any database that doesn't have an individual key provider and key configuration.
 
 ```sql
 SELECT pg_tde_set_default_key_using_global_key_provider(
   'key-name',
-  'provider-name'
+  'provider-name',
+  'ensure_new_key'
 );
 ```
+
+The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true`, a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false` (default), an existing principal key may be reused.
 
 ### pg_tde_delete_key
 

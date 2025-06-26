@@ -42,7 +42,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
     !!! tip
 
-        You can have the `pg_tde` extension automatically enabled for every newly created database. Modify the template `template1` database as follows:
+        You can have the `pg_tde` extension automatically enabled for every newly created database. Modify the template `template1` database as follows: 
 
         ```sh
         psql -d template1 -c 'CREATE EXTENSION pg_tde;'
@@ -59,8 +59,8 @@ You must do these steps for every database where you have created the extension.
         The KMIP server setup is out of scope of this document. 
 
         Make sure you have obtained the root certificate for the KMIP server and the keypair for the client. The client key needs permissions to create / read keys on the server. Find the [configuration guidelines for the HashiCorp Vault Enterprise KMIP Secrets Engine](https://developer.hashicorp.com/vault/tutorials/enterprise/kmip-engine).
-
-        For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance.
+        
+        For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance. 
 
         ```sql
         SELECT pg_tde_add_database_key_provider_kmip(
@@ -100,16 +100,10 @@ You must do these steps for every database where you have created the extension.
         The Vault server setup is out of scope of this document.
 
         ```sql
-        SELECT pg_tde_add_database_key_provider_vault_v2(
-            'provider-name', 
-            'url', 
-            'mount', 
-            'secret_token_path', 
-            'ca_path'
-            );
-        ```
+        SELECT pg_tde_add_database_key_provider_vault_v2('provider-name', 'url', 'mount', 'secret_token_path', 'ca_path');
+        ``` 
 
-        where:
+        where: 
 
         * `url` is the URL of the Vault server
         * `mount` is the mount point where the keyring should store the keys
@@ -147,52 +141,25 @@ You must do these steps for every database where you have created the extension.
             '/tmp/pg_tde_test_local_keyring.per'
             );
 	    ```
-
-2. Create a key
-    ```sql
-
-    SELECT pg_tde_create_key_using_database_key_provider(
-        'name-of-the-key', 
-        'provider-name'
-        );
-    ```
-
-    where:
-
-    * `name-of-the-key` is the name of the principal key. You will use this name to identify the key.
-    * `provider-name` is the name of the key provider you added before. The principal key is associated with this provider and it is the location where it is stored and fetched from.
-
-    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
+  
+2. Add a principal key
 
     ```sql
-    SELECT pg_tde_create_key_using_database_key_provider(
-        'test-db-master-key', 
-        'file-vault'
-        );
-    ```
-
-    !!! note
-        The key is auto-generated.
-
-3. Use the key as principal key
-    ```sql
-
-    SELECT pg_tde_set_key_using_database_key_provider(
-        'name-of-the-key', 
-        'provider-name'
-        );
+    SELECT pg_tde_set_key_using_database_key_provider('name-of-the-key', 'provider-name','ensure_new_key');
     ```
 
     where:
 
     * `name-of-the-key` is the name of the principal key. You will use this name to identify the key.
     * `provider-name` is the name of the key provider you added before. The principal key will be associated with this provider.
+    * `ensure_new_key` defines if a principal key must be unique. The default value `true` means that you must speficy a unique key during key rotation. The `false` value allows reusing an existing principal key.
 
     <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
     ```sql
-    SELECT pg_tde_set_key_using_database_key_provider(
-        'test-db-master-key',
-        'file-vault'
-        );
+    SELECT pg_tde_set_key_using_database_key_provider('test-db-master-key','file-vault','ensure_new_key');
     ```
+
+    !!! note
+        The key is auto-generated.
+
