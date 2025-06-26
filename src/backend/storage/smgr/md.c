@@ -34,6 +34,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/md.h"
+#include "storage/s3.h"
 #include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
@@ -157,9 +158,12 @@ _mdfd_open_flags(void)
 void
 mdinit(void)
 {
-	MdCxt = AllocSetContextCreate(TopMemoryContext,
-								  "MdSmgr",
-								  ALLOCSET_DEFAULT_SIZES);
+        MdCxt = AllocSetContextCreate(TopMemoryContext,
+                                                                  "MdSmgr",
+                                                                  ALLOCSET_DEFAULT_SIZES);
+
+       /* Initialize S3 asynchronous persistence infrastructure */
+       InitS3Async();
 }
 
 /*
@@ -1361,8 +1365,8 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 	/* Temp relations should never be fsync'd */
 	Assert(!SmgrIsTemp(reln));
 
-	if (!RegisterSyncRequest(&tag, SYNC_REQUEST, false /* retryOnError */ ))
-	{
+       if (!RegisterSyncRequest(&tag, SYNC_REQUEST, false /* retryOnError */ ))
+       {
 		instr_time	io_start;
 
 		ereport(DEBUG1,
@@ -1387,9 +1391,12 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 		 * IOCONTEXT_NORMAL is likely clearer when investigating the number of
 		 * backend fsyncs.
 		 */
-		pgstat_count_io_op_time(IOOBJECT_RELATION, IOCONTEXT_NORMAL,
-								IOOP_FSYNC, io_start, 1);
-	}
+               pgstat_count_io_op_time(IOOBJECT_RELATION, IOCONTEXT_NORMAL,
+                                                               IOOP_FSYNC, io_start, 1);
+       }
+
+       /* schedule asynchronous persistence to S3 */
+       S3ScheduleUpload(FilePathName(seg->mdfd_vfd));
 }
 
 /*
@@ -1558,12 +1565,17 @@ _mdfd_openseg(SMgrRelation reln, ForkNumber forknum, BlockNumber segno,
 	fullpath = _mdfd_segpath(reln, forknum, segno);
 
 	/* open the file */
-	fd = PathNameOpenFile(fullpath, _mdfd_open_flags() | oflags);
+        fd = PathNameOpenFile(fullpath, _mdfd_open_flags() | oflags);
+        if (fd < 0 && errno == ENOENT)
+        {
+                if (S3FetchFile(fullpath))
+                        fd = PathNameOpenFile(fullpath, _mdfd_open_flags() | oflags);
+        }
 
-	pfree(fullpath);
+        pfree(fullpath);
 
-	if (fd < 0)
-		return NULL;
+        if (fd < 0)
+                return NULL;
 
 	/*
 	 * Segments are always opened in order from lowest to highest, so we must

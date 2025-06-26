@@ -840,3 +840,5 @@
 #------------------------------------------------------------------------------
 
 # Add settings for extensions here
+#s3.cache_size_mb = 64                  # size of cache for async S3 persistence in MB
+#s3.disk_limit_mb = 1024                # limit local S3 cache on disk
