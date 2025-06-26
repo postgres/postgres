@@ -29,6 +29,10 @@ If to translate sensitive data to files stored in your database, these are user 
 
 `pg_tde` does not encrypt system catalogs yet. This means that statistics data and database metadata are not encrypted. The encryption of system catalogs is planned for future releases.
 
+## Will logical replication work with pg_tde?
+
+Yes, logical replication works with the encrypted tables.
+
 ## I use disk-level encryption. Why should I care about TDE?
 
 Encrypting a hard drive encrypts all data, including system, application, and temporary files.
@@ -70,13 +74,15 @@ Thus, to protect your sensitive data, consider using TDE to encrypt it at the ta
 
 You can use the following KMSs:
 
-* [HashiCorp Vault](https://developer.hashicorp.com/vault/docs/what-is-vault). `pg_tde` supports the KV secrets engine v2 of Vault.
+* [HashiCorp Vault](https://developer.hashicorp.com/vault/docs/what-is-vault). `pg_tde` supports the KV secrets engine v2 of Vault, for more information see [Vault Configuration](global-key-provider-configuration/vault.md).
 * [OpenBao](https://openbao.org/) implementation of Vault
-* KMIP-compatible server. KMIP is a standardized protocol for handling cryptographic workloads and secrets management
+* KMIP-compatible servers, KMIP is a standardized protocol for handling cryptographic workloads and secrets management, for more information see [KMIP configuration](global-key-provider-configuration/kmip-server.md).
 
-HashiCorp Vault can also act as the KMIP server, managing cryptographic keys for clients that use the KMIP protocol.
+!!! note
+    HashiCorp Vault can also act as a KMIP server, managing cryptographic keys for clients that use the KMIP protocol.
+    *(KMIP functionality is available in Vault's enterprise edition.)*
 
-Let's break the encryption into two parts:
+Let's break the encryption down into two parts:
 
 ### Encryption of data files
 
@@ -87,6 +93,9 @@ The initial decision on what file to encrypt is based on the table access method
 The principal key is used to encrypt the internal keys. The principal key is stored in the key management store. When you query the table, the principal key is retrieved from the key store to decrypt the table. Then the internal key for that table is used to decrypt the data.
 
 ### WAL encryption
+
+!!! note
+    WAL encryption is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
 
 WAL encryption is done globally for the entire database cluster. All modifications to any database within a PostgreSQL cluster are written to the same WAL to maintain data consistency and integrity and ensure that PostgreSQL cluster can be restored to a consistent state. Therefore, WAL is encrypted globally.
 
@@ -114,10 +123,6 @@ For WAL encryption, AES-CTR-128 is used.
 
 The support of other encryption mechanisms such as AES256 is planned for future releases. Reach out to us with your requirements and usage scenarios of other encryption methods are needed.
 
-## Is post-quantum encryption supported?
-
-No, it's not yet supported. In our implementation we reply on OpenSSL libraries that don't yet support post-quantum encryption.
-
 ## Can I encrypt an existing table?
 
 Yes, you can encrypt an existing table. Run the `ALTER TABLE` command as follows:
@@ -133,7 +138,7 @@ Since the `SET ACCESS METHOD` command drops hint bits and this may affect the pe
 You must restart the database in the following cases to apply the changes:
 
 * after you enabled the `pg_tde` extension
-* to turn on / off the WAL encryption
+* when enabling WAL encryption, which is currently in beta. **Do not enable this feature in production environments**.
 
 After that, no database restart is required. When you create or alter the table using the `tde_heap` access method, the files are marked as those that require encryption. The encryption happens at the storage manager level, before a transaction is written to disk. Read more about [how tde_heap works](index/table-access-method.md#how-tde_heap-works).
 
@@ -149,7 +154,7 @@ In `pg_tde`, multi-tenancy is supported via a separate principal key per databas
 
 To control user access to the databases, you can use role-based access control (RBAC).
 
-WAL files are encrypted globally across the entire PostgreSQL cluster using the same encryption keys. Users don't interact with WAL files as these are used by the database management system to ensure data integrity and durability.
+<!--- WAL files are encrypted globally across the entire PostgreSQL cluster using the same encryption keys. Users don't interact with WAL files as these are used by the database management system to ensure data integrity and durability. --->
 
 ## Are my backups safe? Can I restore from them?
 
@@ -162,3 +167,7 @@ To restore from an encrypted backup, you must have the same principal encryption
 ## I'm using OpenSSL in FIPS mode and need to use pg_tde. Does pg_tde comply with FIPS requirements? Can I use my own FIPS-mode OpenSSL library with pg_tde?
 
 Yes. `pg_tde` works with the FIPS-compliant version of OpenSSL, whether it is provided by your operating system or if you use your own OpenSSL libraries. If you use your own libraries, make sure they are FIPS certified.
+
+## Is post-quantum encryption supported?
+
+No. Post-quantum encryption is not currently supported.
