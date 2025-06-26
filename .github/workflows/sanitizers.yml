@@ -1,9 +1,13 @@
 name: Sanitizers
 on:
   pull_request:
+    paths-ignore:
+      - contrib/pg_tde/documentation/**
   push:
     branches:
       - TDE_REL_17_STABLE
+    paths-ignore:
+      - contrib/pg_tde/documentation/**
 
 env:
   CC: clang

@@ -1,9 +1,13 @@
 name: Code coverage
 on:
   pull_request:
+    paths-ignore:
+      - contrib/pg_tde/documentation/**
   push:
     branches:
       - TDE_REL_17_STABLE
+    paths-ignore:
+      - contrib/pg_tde/documentation/**
 
 env:
   PGCTLTIMEOUT: 120 # Avoid failures on slow recovery

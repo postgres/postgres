@@ -1,6 +1,8 @@
 name: Format
 on:
   pull_request:
+    paths-ignore:
+      - contrib/pg_tde/documentation/**
   workflow_dispatch:
 
 jobs:
