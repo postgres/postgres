@@ -106,10 +106,11 @@ MERGE INTO [ ONLY ] <replaceable class="parameter">target_table_name</replaceabl
    to compute and return value(s) based on each row inserted, updated, or
    deleted.  Any expression using the source or target table's columns, or
    the <link linkend="merge-action"><function>merge_action()</function></link>
-   function can be computed.  When an <command>INSERT</command> or
+   function can be computed.  By default, when an <command>INSERT</command> or
    <command>UPDATE</command> action is performed, the new values of the target
-   table's columns are used.  When a <command>DELETE</command> is performed,
-   the old values of the target table's columns are used.  The syntax of the
+   table's columns are used, and when a <command>DELETE</command> is performed,
+   the old values of the target table's columns are used, but it is also
+   possible to explicitly request old and new values.  The syntax of the
    <literal>RETURNING</literal> list is identical to that of the output list
    of <command>SELECT</command>.
   </para>
