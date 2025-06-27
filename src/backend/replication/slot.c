@@ -2079,6 +2079,7 @@ void
 CheckPointReplicationSlots(bool is_shutdown)
 {
 	int			i;
+	bool		last_saved_restart_lsn_updated = false;
 
 	elog(DEBUG1, "performing replication slot checkpoint");
 
@@ -2123,15 +2124,23 @@ CheckPointReplicationSlots(bool is_shutdown)
 			SpinLockRelease(&s->mutex);
 		}
 
+		/*
+		 * Track if we're going to update slot's last_saved_restart_lsn. We
+		 * need this to know if we need to recompute the required LSN.
+		 */
+		if (s->last_saved_restart_lsn != s->data.restart_lsn)
+			last_saved_restart_lsn_updated = true;
+
 		SaveSlotToPath(s, path, LOG);
 	}
 	LWLockRelease(ReplicationSlotAllocationLock);
 
 	/*
-	 * Recompute the required LSN as SaveSlotToPath() updated
-	 * last_saved_restart_lsn for slots.
+	 * Recompute the required LSN if SaveSlotToPath() updated
+	 * last_saved_restart_lsn for any slot.
 	 */
-	ReplicationSlotsComputeRequiredLSN();
+	if (last_saved_restart_lsn_updated)
+		ReplicationSlotsComputeRequiredLSN();
 }
 
 /*
