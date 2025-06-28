@@ -1426,7 +1426,7 @@ CREATE TABLE temporal_fk_rng2rng (
   CONSTRAINT temporal_fk_rng2rng_fk FOREIGN KEY (parent_id, valid_at)
     REFERENCES temporal_rng (id, valid_at)
 );
-ERROR:  foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS
+ERROR:  foreign key must use PERIOD when referencing a primary key using WITHOUT OVERLAPS
 -- (parent_id, valid_at) REFERENCES (id, PERIOD valid_at)
 -- FOREIGN KEY part should specify PERIOD
 CREATE TABLE temporal_fk_rng2rng (
@@ -1900,7 +1900,7 @@ CREATE TABLE temporal_fk_mltrng2mltrng (
   CONSTRAINT temporal_fk_mltrng2mltrng_fk FOREIGN KEY (parent_id, valid_at)
     REFERENCES temporal_mltrng (id, valid_at)
 );
-ERROR:  foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS
+ERROR:  foreign key must use PERIOD when referencing a primary key using WITHOUT OVERLAPS
 -- (parent_id, valid_at) REFERENCES (id, PERIOD valid_at)
 -- FOREIGN KEY part should specify PERIOD
 CREATE TABLE temporal_fk_mltrng2mltrng (

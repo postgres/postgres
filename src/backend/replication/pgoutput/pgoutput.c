@@ -1789,7 +1789,7 @@ LoadPublications(List *pubnames)
 		else
 			ereport(WARNING,
 					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					errmsg("skipped loading publication: %s", pubname),
+					errmsg("skipped loading publication \"%s\"", pubname),
 					errdetail("The publication does not exist at this point in the WAL."),
 					errhint("Create the publication if it does not exist."));
 	}

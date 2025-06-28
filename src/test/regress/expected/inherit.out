@@ -2281,7 +2281,7 @@ Inherits: pp1,
 create table cc3 (a2 int not null no inherit) inherits (cc1);
 NOTICE:  moving and merging column "a2" with inherited definition
 DETAIL:  User-specified column moved to the position of the inherited column.
-ERROR:  cannot define not-null constraint on column "a2" with NO INHERIT
+ERROR:  cannot define not-null constraint with NO INHERIT on column "a2"
 DETAIL:  The column has an inherited not-null constraint.
 -- change NO INHERIT status of inherited constraint: no dice, it's inherited
 alter table cc2 add not null a2 no inherit;
@@ -2530,7 +2530,7 @@ ERROR:  conflicting NO INHERIT declaration for not-null constraint on column "a"
 CREATE TABLE inh_nn1 (a int not null);
 CREATE TABLE inh_nn2 (a int not null no inherit) INHERITS (inh_nn1);
 NOTICE:  merging column "a" with inherited definition
-ERROR:  cannot define not-null constraint on column "a" with NO INHERIT
+ERROR:  cannot define not-null constraint with NO INHERIT on column "a"
 DETAIL:  The column has an inherited not-null constraint.
 CREATE TABLE inh_nn3 (a int not null, b int,  not null a no inherit);
 ERROR:  conflicting NO INHERIT declaration for not-null constraint on column "a"

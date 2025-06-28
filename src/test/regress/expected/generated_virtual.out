@@ -634,10 +634,10 @@ INSERT INTO gtest20 (a) VALUES (30);  -- violates constraint
 ERROR:  new row for relation "gtest20" violates check constraint "gtest20_b_check"
 DETAIL:  Failing row contains (30, virtual).
 ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 100);  -- violates constraint (currently not supported)
-ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables with check constraints
 DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
 ALTER TABLE gtest20 ALTER COLUMN b SET EXPRESSION AS (a * 3);  -- ok (currently not supported)
-ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables with check constraints
 DETAIL:  Column "b" of relation "gtest20" is a virtual generated column.
 CREATE TABLE gtest20a (a int PRIMARY KEY, b int GENERATED ALWAYS AS (a * 2) VIRTUAL);
 INSERT INTO gtest20a (a) VALUES (10);

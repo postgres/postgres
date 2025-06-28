@@ -1436,10 +1436,10 @@ initialize_ecdh(SSL_CTX *context, bool isServerStart)
 		 */
 		ereport(isServerStart ? FATAL : LOG,
 				errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("failed to set group names specified in ssl_groups: %s",
+				errmsg("could not set group names specified in ssl_groups: %s",
 					   SSLerrmessageExt(ERR_get_error(),
 										_("No valid groups found"))),
-				errhint("Ensure that each group name is spelled correctly and supported by the installed version of OpenSSL"));
+				errhint("Ensure that each group name is spelled correctly and supported by the installed version of OpenSSL."));
 		return false;
 	}
 #endif

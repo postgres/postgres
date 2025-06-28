@@ -1428,7 +1428,7 @@ lazy_scan_heap(LVRelState *vacrel)
 					 */
 					if (vacrel->eager_scan_max_fails_per_region > 0)
 						ereport(vacrel->verbose ? INFO : DEBUG2,
-								(errmsg("disabling eager scanning after freezing %u eagerly scanned blocks of \"%s.%s.%s\"",
+								(errmsg("disabling eager scanning after freezing %u eagerly scanned blocks of relation \"%s.%s.%s\"",
 										orig_eager_scan_success_limit,
 										vacrel->dbname, vacrel->relnamespace,
 										vacrel->relname)));

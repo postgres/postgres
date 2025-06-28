@@ -587,7 +587,7 @@ CREATE MATERIALIZED VIEW drop_idx_matview AS
 NOTICE:  index "mvtest_drop_idx" does not exist, skipping
 CREATE UNIQUE INDEX mvtest_drop_idx ON drop_idx_matview (i);
 REFRESH MATERIALIZED VIEW CONCURRENTLY drop_idx_matview;
-ERROR:  could not find suitable unique index on materialized view
+ERROR:  could not find suitable unique index on materialized view "drop_idx_matview"
 DROP MATERIALIZED VIEW drop_idx_matview; -- clean up
 RESET search_path;
 -- make sure that create WITH NO DATA works via SPI

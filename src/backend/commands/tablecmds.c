@@ -8609,7 +8609,7 @@ ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 		rel->rd_att->constr && rel->rd_att->constr->num_check > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables with check constraints"),
+				 errmsg("ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables with check constraints"),
 				 errdetail("Column \"%s\" of relation \"%s\" is a virtual generated column.",
 						   colName, RelationGetRelationName(rel))));
 
@@ -8627,7 +8627,7 @@ ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 		GetRelationPublications(RelationGetRelid(rel)) != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables that are part of a publication"),
+				 errmsg("ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables that are part of a publication"),
 				 errdetail("Column \"%s\" of relation \"%s\" is a virtual generated column.",
 						   colName, RelationGetRelationName(rel))));
 
@@ -10189,7 +10189,7 @@ ATAddForeignKeyConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	if (pk_has_without_overlaps && !with_period)
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				errmsg("foreign key must use PERIOD when referencing a primary using WITHOUT OVERLAPS"));
+				errmsg("foreign key must use PERIOD when referencing a primary key using WITHOUT OVERLAPS"));
 
 	/*
 	 * Now we can check permissions.
@@ -12913,8 +12913,9 @@ ATExecValidateConstraint(List **wqueue, Relation rel, char *constrName,
 		con->contype != CONSTRAINT_NOTNULL)
 		ereport(ERROR,
 				errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				errmsg("constraint \"%s\" of relation \"%s\" is not a foreign key, check, or not-null constraint",
-					   constrName, RelationGetRelationName(rel)));
+				errmsg("cannot validate constraint \"%s\" of relation \"%s\"",
+					   constrName, RelationGetRelationName(rel)),
+				errdetail("This operation is not supported for this type of constraint."));
 
 	if (!con->conenforced)
 		ereport(ERROR,

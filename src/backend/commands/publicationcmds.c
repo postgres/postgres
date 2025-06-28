@@ -2130,8 +2130,8 @@ defGetGeneratedColsOption(DefElem *def)
 
 	ereport(ERROR,
 			errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("%s requires a \"none\" or \"stored\" value",
-				   def->defname));
+			errmsg("invalid value for publication parameter \"%s\": \"%s\"", def->defname, sval),
+			errdetail("Valid values are \"%s\" and \"%s\".", "none", "stored"));
 
 	return PUBLISH_GENCOLS_NONE;	/* keep compiler quiet */
 }

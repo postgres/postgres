@@ -1267,7 +1267,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						IsSet(opts.specified_opts, SUBOPT_SLOT_NAME))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("slot_name and two_phase cannot be altered at the same time")));
+								 errmsg("\"slot_name\" and \"two_phase\" cannot be altered at the same time")));
 
 					/*
 					 * Note that workers may still survive even if the
@@ -1283,7 +1283,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					if (logicalrep_workers_find(subid, true, true))
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot alter two_phase when logical replication worker is still running"),
+								 errmsg("cannot alter \"two_phase\" when logical replication worker is still running"),
 								 errhint("Try again after some time.")));
 
 					/*
@@ -1297,7 +1297,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						LookupGXactBySubid(subid))
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-								 errmsg("cannot disable two_phase when prepared transactions are present"),
+								 errmsg("cannot disable \"two_phase\" when prepared transactions exist"),
 								 errhint("Resolve these transactions and try again.")));
 
 					/* Change system catalog accordingly */

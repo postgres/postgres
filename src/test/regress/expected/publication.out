@@ -34,7 +34,8 @@ ERROR:  conflicting or redundant options
 LINE 1: ...pub_xxx WITH (publish_generated_columns = stored, publish_ge...
                                                              ^
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
-ERROR:  publish_generated_columns requires a "none" or "stored" value
+ERROR:  invalid value for publication parameter "publish_generated_columns": "foo"
+DETAIL:  Valid values are "none" and "stored".
 \dRp
                                                         List of publications
         Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
@@ -539,7 +540,7 @@ SET client_min_messages = 'ERROR';
 CREATE TABLE testpub_rf_tbl7 (id int PRIMARY KEY, x int, y int GENERATED ALWAYS AS (x * 111) VIRTUAL);
 CREATE PUBLICATION testpub8 FOR TABLE testpub_rf_tbl7 WHERE (y > 100);
 ALTER TABLE testpub_rf_tbl7 ALTER COLUMN y SET EXPRESSION AS (x * testpub_rf_func2());
-ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns on tables that are part of a publication
+ERROR:  ALTER TABLE / SET EXPRESSION is not supported for virtual generated columns in tables that are part of a publication
 DETAIL:  Column "y" of relation "testpub_rf_tbl7" is a virtual generated column.
 RESET client_min_messages;
 DROP TABLE testpub_rf_tbl1;

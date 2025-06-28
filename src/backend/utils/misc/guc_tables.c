@@ -1028,7 +1028,7 @@ struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"enable_distinct_reordering", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("Enables reordering of DISTINCT pathkeys."),
+			gettext_noop("Enables reordering of DISTINCT keys."),
 			NULL,
 			GUC_EXPLAIN
 		},
@@ -4837,7 +4837,7 @@ struct config_string ConfigureNamesString[] =
 	{
 		{"ssl_groups", PGC_SIGHUP, CONN_AUTH_SSL,
 			gettext_noop("Sets the group(s) to use for Diffie-Hellman key exchange."),
-			gettext_noop("Multiple groups can be specified using colon-separated list."),
+			gettext_noop("Multiple groups can be specified using a colon-separated list."),
 			GUC_SUPERUSER_ONLY
 		},
 		&SSLECDHCurve,

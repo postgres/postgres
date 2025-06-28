@@ -3006,7 +3006,7 @@ AddRelationNotNullConstraints(Relation rel, List *constraints,
 				if (constr->is_no_inherit)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("cannot define not-null constraint on column \"%s\" with NO INHERIT",
+							 errmsg("cannot define not-null constraint with NO INHERIT on column \"%s\"",
 									strVal(linitial(constr->keys))),
 							 errdetail("The column has an inherited not-null constraint.")));
 

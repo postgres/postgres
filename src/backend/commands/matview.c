@@ -835,7 +835,8 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	if (!foundUniqueIndex)
 		ereport(ERROR,
 				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("could not find suitable unique index on materialized view"));
+				errmsg("could not find suitable unique index on materialized view \"%s\"",
+					   RelationGetRelationName(matviewRel)));
 
 	appendStringInfoString(&querybuf,
 						   " AND newdata.* OPERATOR(pg_catalog.*=) mv.*) "
