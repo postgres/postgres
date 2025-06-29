@@ -30,7 +30,8 @@ extern Param *replace_nestloop_param_placeholdervar(PlannerInfo *root,
 extern void process_subquery_nestloop_params(PlannerInfo *root,
 											 List *subplan_params);
 extern List *identify_current_nestloop_params(PlannerInfo *root,
-											  Path *leftpath);
+											  Relids leftrelids,
+											  Relids outerrelids);
 extern Param *generate_new_exec_param(PlannerInfo *root, Oid paramtype,
 									  int32 paramtypmod, Oid paramcollation);
 extern int	assign_special_exec_param(PlannerInfo *root);

@@ -4344,6 +4344,7 @@ create_nestloop_plan(PlannerInfo *root,
 	NestLoop   *join_plan;
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
+	Relids		outerrelids;
 	List	   *tlist = build_path_tlist(root, &best_path->jpath.path);
 	List	   *joinrestrictclauses = best_path->jpath.joinrestrictinfo;
 	List	   *joinclauses;
@@ -4374,8 +4375,8 @@ create_nestloop_plan(PlannerInfo *root,
 	outer_plan = create_plan_recurse(root, best_path->jpath.outerjoinpath, 0);
 
 	/* For a nestloop, include outer relids in curOuterRels for inner side */
-	root->curOuterRels = bms_union(root->curOuterRels,
-								   best_path->jpath.outerjoinpath->parent->relids);
+	outerrelids = best_path->jpath.outerjoinpath->parent->relids;
+	root->curOuterRels = bms_union(root->curOuterRels, outerrelids);
 
 	inner_plan = create_plan_recurse(root, best_path->jpath.innerjoinpath, 0);
 
@@ -4415,7 +4416,8 @@ create_nestloop_plan(PlannerInfo *root,
 	 * node, and remove them from root->curOuterParams.
 	 */
 	nestParams = identify_current_nestloop_params(root,
-												  best_path->jpath.outerjoinpath);
+												  outerrelids,
+												  PATH_REQ_OUTER((Path *) best_path));
 
 	/*
 	 * While nestloop parameters that are Vars had better be available from
@@ -4423,32 +4425,50 @@ create_nestloop_plan(PlannerInfo *root,
 	 * that are PHVs won't be.  In such cases we must add them to the
 	 * outer_plan's tlist, since the executor's NestLoopParam machinery
 	 * requires the params to be simple outer-Var references to that tlist.
+	 * (This is cheating a little bit, because the outer path's required-outer
+	 * relids might not be enough to allow evaluating such a PHV.  But in
+	 * practice, if we could have evaluated the PHV at the nestloop node, we
+	 * can do so in the outer plan too.)
 	 */
 	outer_tlist = outer_plan->targetlist;
 	outer_parallel_safe = outer_plan->parallel_safe;
 	foreach(lc, nestParams)
 	{
 		NestLoopParam *nlp = (NestLoopParam *) lfirst(lc);
+		PlaceHolderVar *phv;
 		TargetEntry *tle;
 
 		if (IsA(nlp->paramval, Var))
 			continue;			/* nothing to do for simple Vars */
-		if (tlist_member((Expr *) nlp->paramval, outer_tlist))
+		/* Otherwise it must be a PHV */
+		phv = castNode(PlaceHolderVar, nlp->paramval);
+
+		if (tlist_member((Expr *) phv, outer_tlist))
 			continue;			/* already available */
+
+		/*
+		 * It's possible that nestloop parameter PHVs selected to evaluate
+		 * here contain references to surviving root->curOuterParams items
+		 * (that is, they reference values that will be supplied by some
+		 * higher-level nestloop).  Those need to be converted to Params now.
+		 * Note: it's safe to do this after the tlist_member() check, because
+		 * equal() won't pay attention to phv->phexpr.
+		 */
+		phv->phexpr = (Expr *) replace_nestloop_params(root,
+													   (Node *) phv->phexpr);
 
 		/* Make a shallow copy of outer_tlist, if we didn't already */
 		if (outer_tlist == outer_plan->targetlist)
 			outer_tlist = list_copy(outer_tlist);
 		/* ... and add the needed expression */
-		tle = makeTargetEntry((Expr *) copyObject(nlp->paramval),
+		tle = makeTargetEntry((Expr *) copyObject(phv),
 							  list_length(outer_tlist) + 1,
 							  NULL,
 							  true);
 		outer_tlist = lappend(outer_tlist, tle);
 		/* ... and track whether tlist is (still) parallel-safe */
 		if (outer_parallel_safe)
-			outer_parallel_safe = is_parallel_safe(root,
-												   (Node *) nlp->paramval);
+			outer_parallel_safe = is_parallel_safe(root, (Node *) phv);
 	}
 	if (outer_tlist != outer_plan->targetlist)
 		outer_plan = change_plan_targetlist(outer_plan, outer_tlist,

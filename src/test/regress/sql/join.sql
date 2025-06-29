@@ -1361,6 +1361,52 @@ select * from int8_tbl t1
   on true;
 rollback;
 
+-- ... not that the initial replacement didn't have some bugs too
+begin;
+create temp table t(i int primary key);
+
+explain (verbose, costs off)
+select * from t t1
+    left join (select 1 as x, * from t t2(i2)) t2ss on t1.i = t2ss.i2
+    left join t t3(i3) on false
+    left join t t4(i4) on t4.i4 > t2ss.x;
+
+explain (verbose, costs off)
+select * from
+     (select k from
+         (select i, coalesce(i, j) as k from
+             (select i from t union all select 0)
+             join (select 1 as j limit 1) on i = j)
+         right join (select 2 as x) on true
+         join (select 3 as y) on i is not null
+     ),
+     lateral (select k as kl limit 1);
+
+rollback;
+
+-- PHVs containing SubLinks are quite tricky to get right
+explain (verbose, costs off)
+select *
+from int8_tbl i8
+  inner join
+    (select (select true) as x
+       from int4_tbl i4, lateral (select i4.f1 as y limit 1) ss1
+       where i4.f1 = 0) ss2 on true
+  right join (select false as z) ss3 on true,
+  lateral (select i8.q2 as q2l where x limit 1) ss4
+where i8.q2 = 123;
+
+explain (verbose, costs off)
+select *
+from int8_tbl i8
+  inner join
+    (select (select true) as x
+       from int4_tbl i4, lateral (select 1 as y limit 1) ss1
+       where i4.f1 = 0) ss2 on true
+  right join (select false as z) ss3 on true,
+  lateral (select i8.q2 as q2l where x limit 1) ss4
+where i8.q2 = 123;
+
 -- Test proper handling of appendrel PHVs during useless-RTE removal
 explain (costs off)
 select * from

@@ -599,38 +599,31 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 }
 
 /*
- * Identify any NestLoopParams that should be supplied by a NestLoop plan
- * node with the specified lefthand input path.  Remove them from the active
- * root->curOuterParams list and return them as the result list.
+ * Identify any NestLoopParams that should be supplied by a NestLoop
+ * plan node with the specified lefthand rels and required-outer rels.
+ * Remove them from the active root->curOuterParams list and return
+ * them as the result list.
  *
- * XXX Here we also hack up the returned Vars and PHVs so that they do not
- * contain nullingrel sets exceeding what is available from the outer side.
- * This is needed if we have applied outer join identity 3,
- *		(A leftjoin B on (Pab)) leftjoin C on (Pb*c)
- *		= A leftjoin (B leftjoin C on (Pbc)) on (Pab)
- * and C contains lateral references to B.  It's still safe to apply the
- * identity, but the parser will have created those references in the form
- * "b*" (i.e., with varnullingrels listing the A/B join), while what we will
- * have available from the nestloop's outer side is just "b".  We deal with
- * that here by stripping the nullingrels down to what is available from the
- * outer side according to leftrelids.
- *
- * That fixes matters for the case of forward application of identity 3.
- * If the identity was applied in the reverse direction, we will have
- * parameter Vars containing too few nullingrel bits rather than too many.
- * Currently, that causes no problems because setrefs.c applies only a
- * subset check to nullingrels in NestLoopParams, but we'd have to work
- * harder if we ever want to tighten that check.  This is all pretty annoying
- * because it greatly weakens setrefs.c's cross-check, but the alternative
+ * Vars and PHVs appearing in the result list must have nullingrel sets
+ * that could validly appear in the lefthand rel's output.  Ordinarily that
+ * would be true already, but if we have applied outer join identity 3,
+ * there could be more or fewer nullingrel bits in the nodes appearing in
+ * curOuterParams than are in the nominal leftrelids.  We deal with that by
+ * forcing their nullingrel sets to include exactly the outer-join relids
+ * that appear in leftrelids and can null the respective Var or PHV.
+ * This fix is a bit ad-hoc and intellectually unsatisfactory, because it's
+ * essentially jumping to the conclusion that we've placed evaluation of
+ * the nestloop parameters correctly, and thus it defeats the intent of the
+ * subsequent nullingrel cross-checks in setrefs.c.  But the alternative
  * seems to be to generate multiple versions of each laterally-parameterized
  * subquery, which'd be unduly expensive.
  */
 List *
-identify_current_nestloop_params(PlannerInfo *root, Path *leftpath)
+identify_current_nestloop_params(PlannerInfo *root,
+								 Relids leftrelids,
+								 Relids outerrelids)
 {
 	List	   *result;
-	Relids		leftrelids = leftpath->parent->relids;
-	Relids		outerrelids = PATH_REQ_OUTER(leftpath);
 	Relids		allleftrelids;
 	ListCell   *cell;
 
@@ -661,25 +654,58 @@ identify_current_nestloop_params(PlannerInfo *root, Path *leftpath)
 			bms_is_member(nlp->paramval->varno, leftrelids))
 		{
 			Var		   *var = (Var *) nlp->paramval;
+			RelOptInfo *rel = root->simple_rel_array[var->varno];
 
 			root->curOuterParams = foreach_delete_current(root->curOuterParams,
 														  cell);
-			var->varnullingrels = bms_intersect(var->varnullingrels,
+			var->varnullingrels = bms_intersect(rel->nulling_relids,
 												leftrelids);
 			result = lappend(result, nlp);
 		}
 		else if (IsA(nlp->paramval, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) nlp->paramval;
-			Relids		eval_at = find_placeholder_info(root, phv)->ph_eval_at;
+			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
+			Relids		eval_at = phinfo->ph_eval_at;
 
 			if (bms_is_subset(eval_at, allleftrelids) &&
 				bms_overlap(eval_at, leftrelids))
 			{
 				root->curOuterParams = foreach_delete_current(root->curOuterParams,
 															  cell);
-				phv->phnullingrels = bms_intersect(phv->phnullingrels,
-												   leftrelids);
+
+				/*
+				 * Deal with an edge case: if the PHV was pulled up out of a
+				 * subquery and it contains a subquery that was originally
+				 * pushed down from this query level, then that will still be
+				 * represented as a SubLink, because SS_process_sublinks won't
+				 * recurse into outer PHVs, so it didn't get transformed
+				 * during expression preprocessing in the subquery.  We need a
+				 * version of the PHV that has a SubPlan, which we can get
+				 * from the current query level's placeholder_list.  This is
+				 * quite grotty of course, but dealing with it earlier in the
+				 * handling of subplan params would be just as grotty, and it
+				 * might end up being a waste of cycles if we don't decide to
+				 * treat the PHV as a NestLoopParam.  (Perhaps that whole
+				 * mechanism should be redesigned someday, but today is not
+				 * that day.)
+				 */
+				if (root->parse->hasSubLinks)
+				{
+					phv = copyObject(phinfo->ph_var);
+
+					/*
+					 * The ph_var will have empty nullingrels, but that
+					 * doesn't matter since we're about to overwrite
+					 * phv->phnullingrels.  Other fields should be OK already.
+					 */
+					nlp->paramval = (Var *) phv;
+				}
+
+				phv->phnullingrels =
+					bms_intersect(get_placeholder_nulling_relids(root, phinfo),
+								  leftrelids);
+
 				result = lappend(result, nlp);
 			}
 		}
