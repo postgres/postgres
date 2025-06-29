@@ -3027,6 +3027,15 @@ drop table attbl, atref;
 
 /* End test case for bug #17409 */
 
+/* Test case for bug #18970 */
+
+create table attbl(a int);
+create table atref(b attbl check ((b).a is not null));
+alter table attbl alter column a type numeric;  -- someday this should work
+drop table attbl, atref;
+
+/* End test case for bug #18970 */
+
 -- Test that ALTER TABLE rewrite preserves a clustered index
 -- for normal indexes and indexes on constraints.
 create table alttype_cluster (a int);
