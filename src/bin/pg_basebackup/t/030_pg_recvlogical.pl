@@ -110,7 +110,7 @@ $node->command_fails(
 		'--dbname' => $node->connstr('postgres'),
 		'--start',
 		'--endpos' => $nextlsn,
-		'--two-phase', '--no-loop',
+		'--enable-two-phase', '--no-loop',
 		'--file' => '-',
 	],
 	'incorrect usage');
@@ -142,7 +142,7 @@ $node->command_ok(
 		'--slot' => 'test',
 		'--dbname' => $node->connstr('postgres'),
 		'--create-slot',
-		'--failover',
+		'--enable-failover',
 	],
 	'slot with failover created');
 

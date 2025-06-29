@@ -79,8 +79,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--two-phase</option> and <option>--failover</option> options
-        can be specified with <option>--create-slot</option>.
+        The <option>--enable-two-phase</option> and <option>--enable-failover</option>
+        options can be specified with <option>--create-slot</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -166,7 +166,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--failover</option></term>
+      <term><option>--enable-failover</option></term>
       <listitem>
        <para>
         Enables the slot to be synchronized to the standbys. This option may
@@ -300,7 +300,8 @@ PostgreSQL documentation
 
      <varlistentry>
        <term><option>-t</option></term>
-       <term><option>--two-phase</option></term>
+       <term><option>--enable-two-phase</option></term>
+       <term><option>--two-phase</option> (deprecated)</term>
        <listitem>
        <para>
         Enables decoding of prepared transactions. This option may only be specified with
