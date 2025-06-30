@@ -684,7 +684,7 @@ sub init
 	print $conf "\n# Added by PostgreSQL::Test::Cluster.pm\n";
 	print $conf "fsync = off\n";
 	print $conf "restart_after_crash = off\n";
-	print $conf "log_line_prefix = '%m [%p] %q%a '\n";
+	print $conf "log_line_prefix = '%m %b[%p] %q%a '\n";
 	print $conf "log_statement = all\n";
 	print $conf "log_replication_commands = on\n";
 	print $conf "wal_retrieve_retry_interval = '500ms'\n";
