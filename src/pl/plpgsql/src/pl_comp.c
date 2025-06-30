@@ -1211,17 +1211,22 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 				}
 
 				/*
-				 * We should not get here, because a RECFIELD datum should
-				 * have been built at parse time for every possible qualified
-				 * reference to fields of this record.  But if we do, handle
-				 * it like field-not-found: throw error or return NULL.
+				 * Ideally we'd never get here, because a RECFIELD datum
+				 * should have been built at parse time for every qualified
+				 * reference to a field of this record that appears in the
+				 * source text.  However, plpgsql_yylex will not build such a
+				 * datum unless the field name lexes as token type IDENT.
+				 * Hence, if the would-be field name is a PL/pgSQL reserved
+				 * word, we lose.  Assume that that's what happened and tell
+				 * the user to quote it, unless the caller prefers we just
+				 * return NULL.
 				 */
 				if (error_if_no_field)
 					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("record \"%s\" has no field \"%s\"",
-									(nnames_field == 1) ? name1 : name2,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("field name \"%s\" is a reserved key word",
 									colname),
+							 errhint("Use double quotes to quote it."),
 							 parser_errposition(pstate, cref->location)));
 			}
 			break;

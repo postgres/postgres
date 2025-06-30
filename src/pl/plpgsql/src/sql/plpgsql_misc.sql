@@ -50,3 +50,19 @@ begin
   select 1 as strict into r;
   raise notice 'r.strict = %', r.strict;
 end $$;
+
+-- Test handling of a reserved keyword as a record field name.
+
+do $$ declare r record;
+begin
+  select 1 as x, 2 as foreach into r;
+  raise notice 'r.x = %', r.x;
+  raise notice 'r.foreach = %', r.foreach;  -- fails
+end $$;
+
+do $$ declare r record;
+begin
+  select 1 as x, 2 as foreach into r;
+  raise notice 'r.x = %', r.x;
+  raise notice 'r."foreach" = %', r."foreach";  -- ok
+end $$;
