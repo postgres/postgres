@@ -163,14 +163,14 @@ nav:
   - "Features": features.md 
   - "Overview":
     - "What is Transparent Data Encryption (TDE)?":
-      - "TDE Overview": index/index.md
-      - "TDE Benefits": index/how-tde-helps.md
-      - "How TDE Works": index/how-does-tde-work.md
-      - "Encrypted Data Scope": index/tde-encrypts.md
-      - "Table Access Methods and TDE": index/table-access-method.md
+      - "TDE overview": index/index.md
+      - "TDE benefits": index/how-tde-helps.md
+      - "How TDE works": index/how-does-tde-work.md
+      - "Encrypted data scope": index/tde-encrypts.md
+      - "Table access methods and TDE": index/table-access-method.md
     - "Limitations of TDE": index/tde-limitations.md
-    - "Versions and Supported PostgreSQL Deployments": index/supported-versions.md
-  - "Get Started":
+    - "Versions and supported PostgreSQL deployments": index/supported-versions.md
+  - "Get started":
     - "1. Install pg_tde": install.md
     - "1.1 Via apt": apt.md
     - "1.2 Via yum": yum.md   
@@ -189,7 +189,7 @@ nav:
   - "Technical Reference":
     - "Overview": advanced-topics/index.md
     - "Architecture": architecture/index.md
-    - "GUC Variables": variables.md
+    - "GUC variables": variables.md
     - "Functions": functions.md
     - "Streaming Replication with tde_heap": replication.md
   - "TDE Operations":
@@ -204,8 +204,9 @@ nav:
     - "Decrypt an Encrypted Table": how-to/decrypt.md
     - "Restore an encrypted pg_tde backup": how-to/restore-backups.md
   - faq.md
-  - "Release Notes":
+  - "Release notes":
     - "pg_tde release notes": release-notes/release-notes.md
+    - release-notes/release-notes-v1.0.md
     - release-notes/rc2.md
     - release-notes/rc.md
     - release-notes/beta2.md
