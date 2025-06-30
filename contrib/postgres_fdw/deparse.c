@@ -39,6 +39,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
@@ -453,6 +454,11 @@ foreign_expr_walker(Node *node,
 						case REGROLEOID:
 							if (!is_shippable(DatumGetObjectId(c->constvalue),
 											  AuthIdRelationId, fpinfo))
+								return false;
+							break;
+						case REGDATABASEOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  DatabaseRelationId, fpinfo))
 								return false;
 							break;
 					}

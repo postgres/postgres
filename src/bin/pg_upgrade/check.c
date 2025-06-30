@@ -168,6 +168,7 @@ static DataTypesUsageChecks data_types_usage_checks[] =
 		/* pg_class.oid is preserved, so 'regclass' is OK */
 		"           'regcollation', "
 		"           'regconfig', "
+		/* pg_database.oid is preserved, so 'regdatabase' is OK */
 		"           'regdictionary', "
 		"           'regnamespace', "
 		"           'regoper', "

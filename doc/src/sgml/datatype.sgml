@@ -4738,6 +4738,10 @@ INSERT INTO mytable VALUES(-1);  -- fails
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>regdatabase</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>regdictionary</primary>
    </indexterm>
 
@@ -4876,6 +4880,13 @@ SELECT * FROM pg_attribute
         <entry><structname>pg_ts_config</structname></entry>
         <entry>text search configuration</entry>
         <entry><literal>english</literal></entry>
+       </row>
+
+       <row>
+        <entry><type>regdatabase</type></entry>
+        <entry><structname>pg_database</structname></entry>
+        <entry>database name</entry>
+        <entry><literal>template1</literal></entry>
        </row>
 
        <row>
@@ -5049,8 +5060,8 @@ WHERE ...
     be dropped without first removing the default expression.  The
     alternative of <literal>nextval('my_seq'::text)</literal> does not
     create a dependency.
-    (<type>regrole</type> is an exception to this property. Constants of this
-    type are not allowed in stored expressions.)
+    (<type>regdatabase</type> and <type>regrole</type> are exceptions to this
+    property.  Constants of these types are not allowed in stored expressions.)
    </para>
 
    <para>

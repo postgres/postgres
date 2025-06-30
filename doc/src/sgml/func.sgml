@@ -26753,6 +26753,23 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>to_regdatabase</primary>
+        </indexterm>
+        <function>to_regdatabase</function> ( <type>text</type> )
+        <returnvalue>regdatabase</returnvalue>
+       </para>
+       <para>
+        Translates a textual database name to its OID.  A similar result is
+        obtained by casting the string to type <type>regdatabase</type> (see
+        <xref linkend="datatype-oid"/>); however, this function will return
+        <literal>NULL</literal> rather than throwing an error if the name is
+        not found.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>to_regcollation</primary>
         </indexterm>
         <function>to_regcollation</function> ( <type>text</type> )

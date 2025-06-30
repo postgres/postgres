@@ -399,6 +399,11 @@
   typinput => 'regnamespacein', typoutput => 'regnamespaceout',
   typreceive => 'regnamespacerecv', typsend => 'regnamespacesend',
   typalign => 'i' },
+{ oid => '8326', array_type_oid => '8327', descr => 'registered database',
+  typname => 'regdatabase', typlen => '4', typbyval => 't', typcategory => 'N',
+  typinput => 'regdatabasein', typoutput => 'regdatabaseout',
+  typreceive => 'regdatabaserecv', typsend => 'regdatabasesend',
+  typalign => 'i' },
 
 # uuid
 { oid => '2950', array_type_oid => '2951', descr => 'UUID',

@@ -1850,6 +1850,17 @@ find_expr_references_walker(Node *node,
 							 errmsg("constant of the type %s cannot be used here",
 									"regrole")));
 					break;
+
+					/*
+					 * Dependencies for regdatabase should be shared among all
+					 * databases, so explicitly inhibit to have dependencies.
+					 */
+				case REGDATABASEOID:
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("constant of the type %s cannot be used here",
+									"regdatabase")));
+					break;
 			}
 		}
 		return false;

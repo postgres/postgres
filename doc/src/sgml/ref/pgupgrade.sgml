@@ -1110,7 +1110,8 @@ psql --username=postgres --file=script.sql postgres
     <member><type>regproc</type></member>
     <member><type>regprocedure</type></member>
    </simplelist>
-   (<type>regclass</type>, <type>regrole</type>, and <type>regtype</type> can be upgraded.)
+   (<type>regclass</type>, <type>regdatabase</type>, <type>regrole</type>, and
+   <type>regtype</type> can be upgraded.)
   </para>
 
   <para>

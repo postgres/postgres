@@ -47,11 +47,42 @@ SELECT regrole('regress_regrole_test');
 SELECT regrole('"regress_regrole_test"');
 SELECT regnamespace('pg_catalog');
 SELECT regnamespace('"pg_catalog"');
+SELECT regdatabase('template1');
+SELECT regdatabase('"template1"');
 
 SELECT to_regrole('regress_regrole_test');
 SELECT to_regrole('"regress_regrole_test"');
 SELECT to_regnamespace('pg_catalog');
 SELECT to_regnamespace('"pg_catalog"');
+SELECT to_regdatabase('template1');
+SELECT to_regdatabase('"template1"');
+
+-- special "single dash" case
+
+SELECT regproc('-')::oid;
+SELECT regprocedure('-')::oid;
+SELECT regclass('-')::oid;
+SELECT regcollation('-')::oid;
+SELECT regtype('-')::oid;
+SELECT regconfig('-')::oid;
+SELECT regdictionary('-')::oid;
+SELECT regrole('-')::oid;
+SELECT regnamespace('-')::oid;
+SELECT regdatabase('-')::oid;
+
+SELECT to_regproc('-')::oid;
+SELECT to_regprocedure('-')::oid;
+SELECT to_regclass('-')::oid;
+SELECT to_regcollation('-')::oid;
+SELECT to_regtype('-')::oid;
+SELECT to_regrole('-')::oid;
+SELECT to_regnamespace('-')::oid;
+SELECT to_regdatabase('-')::oid;
+
+-- constant cannot be used here
+
+CREATE TABLE regrole_test (rolid OID DEFAULT 'regress_regrole_test'::regrole);
+CREATE TABLE regdatabase_test (datid OID DEFAULT 'template1'::regdatabase);
 
 /* If objects don't exist, raise errors. */
 
@@ -88,6 +119,9 @@ SELECT regrole('foo.bar');
 SELECT regnamespace('Nonexistent');
 SELECT regnamespace('"Nonexistent"');
 SELECT regnamespace('foo.bar');
+SELECT regdatabase('Nonexistent');
+SELECT regdatabase('"Nonexistent"');
+SELECT regdatabase('foo.bar');
 
 /* If objects don't exist, return NULL with no error. */
 
@@ -122,6 +156,9 @@ SELECT to_regrole('foo.bar');
 SELECT to_regnamespace('Nonexistent');
 SELECT to_regnamespace('"Nonexistent"');
 SELECT to_regnamespace('foo.bar');
+SELECT to_regdatabase('Nonexistent');
+SELECT to_regdatabase('"Nonexistent"');
+SELECT to_regdatabase('foo.bar');
 
 -- Test to_regtypemod
 SELECT to_regtypemod('text');
@@ -147,6 +184,7 @@ SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric)', 'regprocedure');
 SELECT * FROM pg_input_error_info('ng_catalog.abs(numeric', 'regprocedure');
 SELECT * FROM pg_input_error_info('regress_regrole_test', 'regrole');
 SELECT * FROM pg_input_error_info('no_such_type', 'regtype');
+SELECT * FROM pg_input_error_info('Nonexistent', 'regdatabase');
 
 -- Some cases that should be soft errors, but are not yet
 SELECT * FROM pg_input_error_info('incorrect type name syntax', 'regtype');

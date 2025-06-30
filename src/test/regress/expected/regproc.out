@@ -192,6 +192,18 @@ SELECT regnamespace('"pg_catalog"');
  pg_catalog
 (1 row)
 
+SELECT regdatabase('template1');
+ regdatabase 
+-------------
+ template1
+(1 row)
+
+SELECT regdatabase('"template1"');
+ regdatabase 
+-------------
+ template1
+(1 row)
+
 SELECT to_regrole('regress_regrole_test');
       to_regrole      
 ----------------------
@@ -216,6 +228,132 @@ SELECT to_regnamespace('"pg_catalog"');
  pg_catalog
 (1 row)
 
+SELECT to_regdatabase('template1');
+ to_regdatabase 
+----------------
+ template1
+(1 row)
+
+SELECT to_regdatabase('"template1"');
+ to_regdatabase 
+----------------
+ template1
+(1 row)
+
+-- special "single dash" case
+SELECT regproc('-')::oid;
+ regproc 
+---------
+       0
+(1 row)
+
+SELECT regprocedure('-')::oid;
+ regprocedure 
+--------------
+            0
+(1 row)
+
+SELECT regclass('-')::oid;
+ regclass 
+----------
+        0
+(1 row)
+
+SELECT regcollation('-')::oid;
+ regcollation 
+--------------
+            0
+(1 row)
+
+SELECT regtype('-')::oid;
+ regtype 
+---------
+       0
+(1 row)
+
+SELECT regconfig('-')::oid;
+ regconfig 
+-----------
+         0
+(1 row)
+
+SELECT regdictionary('-')::oid;
+ regdictionary 
+---------------
+             0
+(1 row)
+
+SELECT regrole('-')::oid;
+ regrole 
+---------
+       0
+(1 row)
+
+SELECT regnamespace('-')::oid;
+ regnamespace 
+--------------
+            0
+(1 row)
+
+SELECT regdatabase('-')::oid;
+ regdatabase 
+-------------
+           0
+(1 row)
+
+SELECT to_regproc('-')::oid;
+ to_regproc 
+------------
+          0
+(1 row)
+
+SELECT to_regprocedure('-')::oid;
+ to_regprocedure 
+-----------------
+               0
+(1 row)
+
+SELECT to_regclass('-')::oid;
+ to_regclass 
+-------------
+           0
+(1 row)
+
+SELECT to_regcollation('-')::oid;
+ to_regcollation 
+-----------------
+               0
+(1 row)
+
+SELECT to_regtype('-')::oid;
+ to_regtype 
+------------
+          0
+(1 row)
+
+SELECT to_regrole('-')::oid;
+ to_regrole 
+------------
+          0
+(1 row)
+
+SELECT to_regnamespace('-')::oid;
+ to_regnamespace 
+-----------------
+               0
+(1 row)
+
+SELECT to_regdatabase('-')::oid;
+ to_regdatabase 
+----------------
+              0
+(1 row)
+
+-- constant cannot be used here
+CREATE TABLE regrole_test (rolid OID DEFAULT 'regress_regrole_test'::regrole);
+ERROR:  constant of the type regrole cannot be used here
+CREATE TABLE regdatabase_test (datid OID DEFAULT 'template1'::regdatabase);
+ERROR:  constant of the type regdatabase cannot be used here
 /* If objects don't exist, raise errors. */
 DROP ROLE regress_regrole_test;
 -- without schemaname
@@ -305,6 +443,18 @@ SELECT regnamespace('foo.bar');
 ERROR:  invalid name syntax
 LINE 1: SELECT regnamespace('foo.bar');
                             ^
+SELECT regdatabase('Nonexistent');
+ERROR:  database "nonexistent" does not exist
+LINE 1: SELECT regdatabase('Nonexistent');
+                           ^
+SELECT regdatabase('"Nonexistent"');
+ERROR:  database "Nonexistent" does not exist
+LINE 1: SELECT regdatabase('"Nonexistent"');
+                           ^
+SELECT regdatabase('foo.bar');
+ERROR:  invalid name syntax
+LINE 1: SELECT regdatabase('foo.bar');
+                           ^
 /* If objects don't exist, return NULL with no error. */
 -- without schemaname
 SELECT to_regoper('||//');
@@ -447,6 +597,24 @@ SELECT to_regnamespace('foo.bar');
  
 (1 row)
 
+SELECT to_regdatabase('Nonexistent');
+ to_regdatabase 
+----------------
+ 
+(1 row)
+
+SELECT to_regdatabase('"Nonexistent"');
+ to_regdatabase 
+----------------
+ 
+(1 row)
+
+SELECT to_regdatabase('foo.bar');
+ to_regdatabase 
+----------------
+ 
+(1 row)
+
 -- Test to_regtypemod
 SELECT to_regtypemod('text');
  to_regtypemod 
@@ -567,6 +735,12 @@ SELECT * FROM pg_input_error_info('no_such_type', 'regtype');
               message               | detail | hint | sql_error_code 
 ------------------------------------+--------+------+----------------
  type "no_such_type" does not exist |        |      | 42704
+(1 row)
+
+SELECT * FROM pg_input_error_info('Nonexistent', 'regdatabase');
+                message                | detail | hint | sql_error_code 
+---------------------------------------+--------+------+----------------
+ database "nonexistent" does not exist |        |      | 42704
 (1 row)
 
 -- Some cases that should be soft errors, but are not yet
