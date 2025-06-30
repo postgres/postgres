@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> (
     {FUNCTION|PROCEDURE} = <replaceable class="parameter">function_name</replaceable>
-    [, LEFTARG = <replaceable class="parameter">left_type</replaceable> ] [, RIGHTARG = <replaceable class="parameter">right_type</replaceable> ]
+    [, LEFTARG = <replaceable class="parameter">left_type</replaceable> ] , RIGHTARG = <replaceable class="parameter">right_type</replaceable>
     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
     [, HASHES ] [, MERGES ]
@@ -88,8 +88,8 @@ CREATE OPERATOR <replaceable>name</replaceable> (
 
   <para>
    For binary operators, both <literal>LEFTARG</literal> and
-   <literal>RIGHTARG</literal> must be defined.  For prefix operators only
-   <literal>RIGHTARG</literal> should be defined.
+   <literal>RIGHTARG</literal> must be defined.  For prefix operators, only
+   <literal>RIGHTARG</literal> must be defined.
    The <replaceable class="parameter">function_name</replaceable>
    function must have been previously defined using <command>CREATE
    FUNCTION</command> and must be defined to accept the correct number
