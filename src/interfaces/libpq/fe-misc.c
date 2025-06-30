@@ -616,7 +616,7 @@ puts("# 573");
 retry3:
 #if defined(__wasi__)
     puts(" # 619 : pqReadData->recvfrom_bc "  __FILE__);
-    nread = recvfrom_bc(conn->sock, conn->inBuffer + conn->inEnd, conn->inBufSize - conn->inEnd, 0, NULL, NULL);
+    nread = sdk_recvfrom(conn->sock, conn->inBuffer + conn->inEnd, conn->inBufSize - conn->inEnd, 0, NULL, NULL);
     printf("# 620: pqsecure_read(%d)-> rtt\n", nread);
     if (!nread)
         return 0;
@@ -977,7 +977,7 @@ pqFlush(PGconn *conn)
 		return pqSendSome(conn, conn->outCount);
 	}
 #if defined(__wasi__)
-    sock_flush();
+    sdk_sock_flush();
 #endif /* __wasi__ */
 	return 0;
 }
