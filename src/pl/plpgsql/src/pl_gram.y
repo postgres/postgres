@@ -1368,7 +1368,8 @@ for_control		: for_variable K_IN
 						int			tok = yylex(&yylval, &yylloc, yyscanner);
 						int			tokloc = yylloc;
 
-						if (tok == K_EXECUTE)
+						if (tok_is_keyword(tok, &yylval,
+										   K_EXECUTE, "execute"))
 						{
 							/* EXECUTE means it's a dynamic FOR loop */
 							PLpgSQL_stmt_dynfors *new;
@@ -2135,7 +2136,8 @@ stmt_open		: K_OPEN cursor_variable
 								yyerror(&yylloc, NULL, yyscanner, "syntax error, expected \"FOR\"");
 
 							tok = yylex(&yylval, &yylloc, yyscanner);
-							if (tok == K_EXECUTE)
+							if (tok_is_keyword(tok, &yylval,
+											   K_EXECUTE, "execute"))
 							{
 								int			endtoken;
 
@@ -2536,6 +2538,7 @@ unreserved_keyword	:
 				| K_ERRCODE
 				| K_ERROR
 				| K_EXCEPTION
+				| K_EXECUTE
 				| K_EXIT
 				| K_FETCH
 				| K_FIRST
@@ -2581,6 +2584,7 @@ unreserved_keyword	:
 				| K_SLICE
 				| K_SQLSTATE
 				| K_STACKED
+				| K_STRICT
 				| K_TABLE
 				| K_TABLE_NAME
 				| K_TYPE
@@ -3514,7 +3518,8 @@ make_return_query_stmt(int location, YYSTYPE *yylvalp, YYLTYPE *yyllocp, yyscan_
 	new->stmtid = ++plpgsql_curr_compile->nstatements;
 
 	/* check for RETURN QUERY EXECUTE */
-	if ((tok = yylex(yylvalp, yyllocp, yyscanner)) != K_EXECUTE)
+	tok = yylex(yylvalp, yyllocp, yyscanner);
+	if (!tok_is_keyword(tok, yylvalp, K_EXECUTE, "execute"))
 	{
 		/* ordinary static query */
 		plpgsql_push_back_token(tok, yylvalp, yyllocp, yyscanner);
@@ -3597,7 +3602,7 @@ read_into_target(PLpgSQL_variable **target, bool *strict, YYSTYPE *yylvalp, YYLT
 		*strict = false;
 
 	tok = yylex(yylvalp, yyllocp, yyscanner);
-	if (strict && tok == K_STRICT)
+	if (strict && tok_is_keyword(tok, yylvalp, K_STRICT, "strict"))
 	{
 		*strict = true;
 		tok = yylex(yylvalp, yyllocp, yyscanner);

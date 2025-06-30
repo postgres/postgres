@@ -65,3 +65,17 @@ do $$ declare x public.foo%rowtype; begin end $$;
 ERROR:  relation "public.foo" does not exist
 CONTEXT:  compilation of PL/pgSQL function "inline_code_block" near line 1
 do $$ declare x public.misc_table%rowtype; begin end $$;
+-- Test handling of an unreserved keyword as a variable name
+-- and record field name.
+do $$
+declare
+  execute int;
+  r record;
+begin
+  execute := 10;
+  raise notice 'execute = %', execute;
+  select 1 as strict into r;
+  raise notice 'r.strict = %', r.strict;
+end $$;
+NOTICE:  execute = 10
+NOTICE:  r.strict = 1

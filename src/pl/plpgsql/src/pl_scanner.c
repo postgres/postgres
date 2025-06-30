@@ -53,7 +53,7 @@ IdentifierLookup plpgsql_IdentifierLookup = IDENTIFIER_LOOKUP_NORMAL;
  * We try to avoid reserving more keywords than we have to; but there's
  * little point in not reserving a word if it's reserved in the core grammar.
  * Currently, the following words are reserved here but not in the core:
- * BEGIN BY DECLARE EXECUTE FOREACH IF LOOP STRICT WHILE
+ * BEGIN BY DECLARE FOREACH IF LOOP WHILE
  */
 
 /* ScanKeywordList lookup data for PL/pgSQL keywords */
