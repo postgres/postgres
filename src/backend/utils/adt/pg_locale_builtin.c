@@ -18,7 +18,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/syscache.h"
 
