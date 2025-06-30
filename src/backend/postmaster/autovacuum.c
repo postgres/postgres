@@ -3190,7 +3190,7 @@ autovacuum_do_vac_analyze(autovac_table *tab, BufferAccessStrategy bstrategy)
 	rel_list = list_make1(rel);
 	MemoryContextSwitchTo(old_context);
 
-	vacuum(rel_list, &tab->at_params, bstrategy, vac_context, true);
+	vacuum(rel_list, tab->at_params, bstrategy, vac_context, true);
 
 	MemoryContextDelete(vac_context);
 }

@@ -20,6 +20,7 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xact.h"
+#include "commands/vacuum.h"
 #include "executor/tuptable.h"
 #include "storage/read_stream.h"
 #include "utils/rel.h"
@@ -36,7 +37,6 @@ extern PGDLLIMPORT bool synchronize_seqscans;
 struct BulkInsertStateData;
 struct IndexInfo;
 struct SampleScanState;
-struct VacuumParams;
 struct ValidateIndexState;
 
 /*
@@ -645,7 +645,7 @@ typedef struct TableAmRoutine
 	 * integrate with autovacuum's scheduling.
 	 */
 	void		(*relation_vacuum) (Relation rel,
-									struct VacuumParams *params,
+									const VacuumParams params,
 									BufferAccessStrategy bstrategy);
 
 	/*
@@ -1664,7 +1664,7 @@ table_relation_copy_for_cluster(Relation OldTable, Relation NewTable,
  * routine, even if (for ANALYZE) it is part of the same VACUUM command.
  */
 static inline void
-table_relation_vacuum(Relation rel, struct VacuumParams *params,
+table_relation_vacuum(Relation rel, const VacuumParams params,
 					  BufferAccessStrategy bstrategy)
 {
 	rel->rd_tableam->relation_vacuum(rel, params, bstrategy);

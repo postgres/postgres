@@ -917,7 +917,7 @@ copy_table_data(Relation NewHeap, Relation OldHeap, Relation OldIndex, bool verb
 	 * not to be aggressive about this.
 	 */
 	memset(&params, 0, sizeof(VacuumParams));
-	vacuum_get_cutoffs(OldHeap, &params, &cutoffs);
+	vacuum_get_cutoffs(OldHeap, params, &cutoffs);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go

@@ -423,7 +423,7 @@ typedef struct LVSavedErrInfo
 /* non-export function prototypes */
 static void lazy_scan_heap(LVRelState *vacrel);
 static void heap_vacuum_eager_scan_setup(LVRelState *vacrel,
-										 VacuumParams *params);
+										 const VacuumParams params);
 static BlockNumber heap_vac_scan_next_block(ReadStream *stream,
 											void *callback_private_data,
 											void *per_buffer_data);
@@ -485,7 +485,7 @@ static void restore_vacuum_error_info(LVRelState *vacrel,
  * vacuum options or for relfrozenxid/relminmxid advancement.
  */
 static void
-heap_vacuum_eager_scan_setup(LVRelState *vacrel, VacuumParams *params)
+heap_vacuum_eager_scan_setup(LVRelState *vacrel, const VacuumParams params)
 {
 	uint32		randseed;
 	BlockNumber allvisible;
@@ -504,7 +504,7 @@ heap_vacuum_eager_scan_setup(LVRelState *vacrel, VacuumParams *params)
 	vacrel->eager_scan_remaining_successes = 0;
 
 	/* If eager scanning is explicitly disabled, just return. */
-	if (params->max_eager_freeze_failure_rate == 0)
+	if (params.max_eager_freeze_failure_rate == 0)
 		return;
 
 	/*
@@ -581,11 +581,11 @@ heap_vacuum_eager_scan_setup(LVRelState *vacrel, VacuumParams *params)
 
 	vacrel->next_eager_scan_region_start = randseed % EAGER_SCAN_REGION_SIZE;
 
-	Assert(params->max_eager_freeze_failure_rate > 0 &&
-		   params->max_eager_freeze_failure_rate <= 1);
+	Assert(params.max_eager_freeze_failure_rate > 0 &&
+		   params.max_eager_freeze_failure_rate <= 1);
 
 	vacrel->eager_scan_max_fails_per_region =
-		params->max_eager_freeze_failure_rate *
+		params.max_eager_freeze_failure_rate *
 		EAGER_SCAN_REGION_SIZE;
 
 	/*
@@ -612,7 +612,7 @@ heap_vacuum_eager_scan_setup(LVRelState *vacrel, VacuumParams *params)
  *		and locked the relation.
  */
 void
-heap_vacuum_rel(Relation rel, VacuumParams *params,
+heap_vacuum_rel(Relation rel, const VacuumParams params,
 				BufferAccessStrategy bstrategy)
 {
 	LVRelState *vacrel;
@@ -634,9 +634,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	ErrorContextCallback errcallback;
 	char	  **indnames = NULL;
 
-	verbose = (params->options & VACOPT_VERBOSE) != 0;
+	verbose = (params.options & VACOPT_VERBOSE) != 0;
 	instrument = (verbose || (AmAutoVacuumWorkerProcess() &&
-							  params->log_min_duration >= 0));
+							  params.log_min_duration >= 0));
 	if (instrument)
 	{
 		pg_rusage_init(&ru0);
@@ -699,9 +699,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * The truncate param allows user to avoid attempting relation truncation,
 	 * though it can't force truncation to happen.
 	 */
-	Assert(params->index_cleanup != VACOPTVALUE_UNSPECIFIED);
-	Assert(params->truncate != VACOPTVALUE_UNSPECIFIED &&
-		   params->truncate != VACOPTVALUE_AUTO);
+	Assert(params.index_cleanup != VACOPTVALUE_UNSPECIFIED);
+	Assert(params.truncate != VACOPTVALUE_UNSPECIFIED &&
+		   params.truncate != VACOPTVALUE_AUTO);
 
 	/*
 	 * While VacuumFailSafeActive is reset to false before calling this, we
@@ -711,14 +711,14 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	vacrel->consider_bypass_optimization = true;
 	vacrel->do_index_vacuuming = true;
 	vacrel->do_index_cleanup = true;
-	vacrel->do_rel_truncate = (params->truncate != VACOPTVALUE_DISABLED);
-	if (params->index_cleanup == VACOPTVALUE_DISABLED)
+	vacrel->do_rel_truncate = (params.truncate != VACOPTVALUE_DISABLED);
+	if (params.index_cleanup == VACOPTVALUE_DISABLED)
 	{
 		/* Force disable index vacuuming up-front */
 		vacrel->do_index_vacuuming = false;
 		vacrel->do_index_cleanup = false;
 	}
-	else if (params->index_cleanup == VACOPTVALUE_ENABLED)
+	else if (params.index_cleanup == VACOPTVALUE_ENABLED)
 	{
 		/* Force index vacuuming.  Note that failsafe can still bypass. */
 		vacrel->consider_bypass_optimization = false;
@@ -726,7 +726,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	else
 	{
 		/* Default/auto, make all decisions dynamically */
-		Assert(params->index_cleanup == VACOPTVALUE_AUTO);
+		Assert(params.index_cleanup == VACOPTVALUE_AUTO);
 	}
 
 	/* Initialize page counters explicitly (be tidy) */
@@ -789,7 +789,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	vacrel->skippedallvis = false;
 	skipwithvm = true;
-	if (params->options & VACOPT_DISABLE_PAGE_SKIPPING)
+	if (params.options & VACOPT_DISABLE_PAGE_SKIPPING)
 	{
 		/*
 		 * Force aggressive mode, and disable skipping blocks using the
@@ -830,7 +830,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * is already dangerously old.)
 	 */
 	lazy_check_wraparound_failsafe(vacrel);
-	dead_items_alloc(vacrel, params->nworkers);
+	dead_items_alloc(vacrel, params.nworkers);
 
 	/*
 	 * Call lazy_scan_heap to perform all required heap pruning, index
@@ -947,9 +947,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	{
 		TimestampTz endtime = GetCurrentTimestamp();
 
-		if (verbose || params->log_min_duration == 0 ||
+		if (verbose || params.log_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, endtime,
-									   params->log_min_duration))
+									   params.log_min_duration))
 		{
 			long		secs_dur;
 			int			usecs_dur;
@@ -984,10 +984,10 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				 * Aggressiveness already reported earlier, in dedicated
 				 * VACUUM VERBOSE ereport
 				 */
-				Assert(!params->is_wraparound);
+				Assert(!params.is_wraparound);
 				msgfmt = _("finished vacuuming \"%s.%s.%s\": index scans: %d\n");
 			}
-			else if (params->is_wraparound)
+			else if (params.is_wraparound)
 			{
 				/*
 				 * While it's possible for a VACUUM to be both is_wraparound

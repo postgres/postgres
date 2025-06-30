@@ -124,7 +124,7 @@ static void vac_truncate_clog(TransactionId frozenXID,
 							  MultiXactId minMulti,
 							  TransactionId lastSaneFrozenXid,
 							  MultiXactId lastSaneMinMulti);
-static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
+static bool vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 					   BufferAccessStrategy bstrategy);
 static double compute_parallel_delay(void);
 static VacOptValue get_vacoptval_from_boolean(DefElem *def);
@@ -465,7 +465,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	}
 
 	/* Now go through the common routine */
-	vacuum(vacstmt->rels, &params, bstrategy, vac_context, isTopLevel);
+	vacuum(vacstmt->rels, params, bstrategy, vac_context, isTopLevel);
 
 	/* Finally, clean up the vacuum memory context */
 	MemoryContextDelete(vac_context);
@@ -494,7 +494,7 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
  * memory context that will not disappear at transaction commit.
  */
 void
-vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
+vacuum(List *relations, const VacuumParams params, BufferAccessStrategy bstrategy,
 	   MemoryContext vac_context, bool isTopLevel)
 {
 	static bool in_vacuum = false;
@@ -503,9 +503,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 	volatile bool in_outer_xact,
 				use_own_xacts;
 
-	Assert(params != NULL);
-
-	stmttype = (params->options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
+	stmttype = (params.options & VACOPT_VACUUM) ? "VACUUM" : "ANALYZE";
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were inside
@@ -515,7 +513,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 	 *
 	 * ANALYZE (without VACUUM) can run either way.
 	 */
-	if (params->options & VACOPT_VACUUM)
+	if (params.options & VACOPT_VACUUM)
 	{
 		PreventInTransactionBlock(isTopLevel, stmttype);
 		in_outer_xact = false;
@@ -538,7 +536,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 	 * Build list of relation(s) to process, putting any new data in
 	 * vac_context for safekeeping.
 	 */
-	if (params->options & VACOPT_ONLY_DATABASE_STATS)
+	if (params.options & VACOPT_ONLY_DATABASE_STATS)
 	{
 		/* We don't process any tables in this case */
 		Assert(relations == NIL);
@@ -554,7 +552,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 			List	   *sublist;
 			MemoryContext old_context;
 
-			sublist = expand_vacuum_rel(vrel, vac_context, params->options);
+			sublist = expand_vacuum_rel(vrel, vac_context, params.options);
 			old_context = MemoryContextSwitchTo(vac_context);
 			newrels = list_concat(newrels, sublist);
 			MemoryContextSwitchTo(old_context);
@@ -562,7 +560,7 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 		relations = newrels;
 	}
 	else
-		relations = get_all_vacuum_rels(vac_context, params->options);
+		relations = get_all_vacuum_rels(vac_context, params.options);
 
 	/*
 	 * Decide whether we need to start/commit our own transactions.
@@ -578,11 +576,11 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 	 * transaction block, and also in an autovacuum worker, use own
 	 * transactions so we can release locks sooner.
 	 */
-	if (params->options & VACOPT_VACUUM)
+	if (params.options & VACOPT_VACUUM)
 		use_own_xacts = true;
 	else
 	{
-		Assert(params->options & VACOPT_ANALYZE);
+		Assert(params.options & VACOPT_ANALYZE);
 		if (AmAutoVacuumWorkerProcess())
 			use_own_xacts = true;
 		else if (in_outer_xact)
@@ -633,21 +631,13 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 		{
 			VacuumRelation *vrel = lfirst_node(VacuumRelation, cur);
 
-			if (params->options & VACOPT_VACUUM)
+			if (params.options & VACOPT_VACUUM)
 			{
-				VacuumParams params_copy;
-
-				/*
-				 * vacuum_rel() scribbles on the parameters, so give it a copy
-				 * to avoid affecting other relations.
-				 */
-				memcpy(&params_copy, params, sizeof(VacuumParams));
-
-				if (!vacuum_rel(vrel->oid, vrel->relation, &params_copy, bstrategy))
+				if (!vacuum_rel(vrel->oid, vrel->relation, params, bstrategy))
 					continue;
 			}
 
-			if (params->options & VACOPT_ANALYZE)
+			if (params.options & VACOPT_ANALYZE)
 			{
 				/*
 				 * If using separate xacts, start one for analyze. Otherwise,
@@ -711,8 +701,8 @@ vacuum(List *relations, VacuumParams *params, BufferAccessStrategy bstrategy,
 		StartTransactionCommand();
 	}
 
-	if ((params->options & VACOPT_VACUUM) &&
-		!(params->options & VACOPT_SKIP_DATABASE_STATS))
+	if ((params.options & VACOPT_VACUUM) &&
+		!(params.options & VACOPT_SKIP_DATABASE_STATS))
 	{
 		/*
 		 * Update pg_database.datfrozenxid, and truncate pg_xact if possible.
@@ -1110,7 +1100,7 @@ get_all_vacuum_rels(MemoryContext vac_context, int options)
  * minimum).
  */
 bool
-vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
+vacuum_get_cutoffs(Relation rel, const VacuumParams params,
 				   struct VacuumCutoffs *cutoffs)
 {
 	int			freeze_min_age,
@@ -1126,10 +1116,10 @@ vacuum_get_cutoffs(Relation rel, const VacuumParams *params,
 				aggressiveMXIDCutoff;
 
 	/* Use mutable copies of freeze age parameters */
-	freeze_min_age = params->freeze_min_age;
-	multixact_freeze_min_age = params->multixact_freeze_min_age;
-	freeze_table_age = params->freeze_table_age;
-	multixact_freeze_table_age = params->multixact_freeze_table_age;
+	freeze_min_age = params.freeze_min_age;
+	multixact_freeze_min_age = params.multixact_freeze_min_age;
+	freeze_table_age = params.freeze_table_age;
+	multixact_freeze_table_age = params.multixact_freeze_table_age;
 
 	/* Set pg_class fields in cutoffs */
 	cutoffs->relfrozenxid = rel->rd_rel->relfrozenxid;
@@ -2006,7 +1996,7 @@ vac_truncate_clog(TransactionId frozenXID,
  *		At entry and exit, we are not inside a transaction.
  */
 static bool
-vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
+vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 		   BufferAccessStrategy bstrategy)
 {
 	LOCKMODE	lmode;
@@ -2019,18 +2009,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	int			save_nestlevel;
 	VacuumParams toast_vacuum_params;
 
-	Assert(params != NULL);
-
 	/*
 	 * This function scribbles on the parameters, so make a copy early to
 	 * avoid affecting the TOAST table (if we do end up recursing to it).
 	 */
-	memcpy(&toast_vacuum_params, params, sizeof(VacuumParams));
+	memcpy(&toast_vacuum_params, &params, sizeof(VacuumParams));
 
 	/* Begin a transaction for vacuuming this relation */
 	StartTransactionCommand();
 
-	if (!(params->options & VACOPT_FULL))
+	if (!(params.options & VACOPT_FULL))
 	{
 		/*
 		 * In lazy vacuum, we can set the PROC_IN_VACUUM flag, which lets
@@ -2056,7 +2044,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		 */
 		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->statusFlags |= PROC_IN_VACUUM;
-		if (params->is_wraparound)
+		if (params.is_wraparound)
 			MyProc->statusFlags |= PROC_VACUUM_FOR_WRAPAROUND;
 		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 		LWLockRelease(ProcArrayLock);
@@ -2080,12 +2068,12 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * vacuum, but just ShareUpdateExclusiveLock for concurrent vacuum. Either
 	 * way, we can be sure that no other backend is vacuuming the same table.
 	 */
-	lmode = (params->options & VACOPT_FULL) ?
+	lmode = (params.options & VACOPT_FULL) ?
 		AccessExclusiveLock : ShareUpdateExclusiveLock;
 
 	/* open the relation and get the appropriate lock on it */
-	rel = vacuum_open_relation(relid, relation, params->options,
-							   params->log_min_duration >= 0, lmode);
+	rel = vacuum_open_relation(relid, relation, params.options,
+							   params.log_min_duration >= 0, lmode);
 
 	/* leave if relation could not be opened or locked */
 	if (!rel)
@@ -2100,8 +2088,8 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * This is only safe to do because we hold a session lock on the main
 	 * relation that prevents concurrent deletion.
 	 */
-	if (OidIsValid(params->toast_parent))
-		priv_relid = params->toast_parent;
+	if (OidIsValid(params.toast_parent))
+		priv_relid = params.toast_parent;
 	else
 		priv_relid = RelationGetRelid(rel);
 
@@ -2114,7 +2102,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (!vacuum_is_permitted_for_relation(priv_relid,
 										  rel->rd_rel,
-										  params->options & ~VACOPT_ANALYZE))
+										  params.options & ~VACOPT_ANALYZE))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
@@ -2185,7 +2173,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * Set index_cleanup option based on index_cleanup reloption if it wasn't
 	 * specified in VACUUM command, or when running in an autovacuum worker
 	 */
-	if (params->index_cleanup == VACOPTVALUE_UNSPECIFIED)
+	if (params.index_cleanup == VACOPTVALUE_UNSPECIFIED)
 	{
 		StdRdOptIndexCleanup vacuum_index_cleanup;
 
@@ -2196,23 +2184,23 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 				((StdRdOptions *) rel->rd_options)->vacuum_index_cleanup;
 
 		if (vacuum_index_cleanup == STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO)
-			params->index_cleanup = VACOPTVALUE_AUTO;
+			params.index_cleanup = VACOPTVALUE_AUTO;
 		else if (vacuum_index_cleanup == STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON)
-			params->index_cleanup = VACOPTVALUE_ENABLED;
+			params.index_cleanup = VACOPTVALUE_ENABLED;
 		else
 		{
 			Assert(vacuum_index_cleanup ==
 				   STDRD_OPTION_VACUUM_INDEX_CLEANUP_OFF);
-			params->index_cleanup = VACOPTVALUE_DISABLED;
+			params.index_cleanup = VACOPTVALUE_DISABLED;
 		}
 	}
 
 #ifdef USE_INJECTION_POINTS
-	if (params->index_cleanup == VACOPTVALUE_AUTO)
+	if (params.index_cleanup == VACOPTVALUE_AUTO)
 		INJECTION_POINT("vacuum-index-cleanup-auto", NULL);
-	else if (params->index_cleanup == VACOPTVALUE_DISABLED)
+	else if (params.index_cleanup == VACOPTVALUE_DISABLED)
 		INJECTION_POINT("vacuum-index-cleanup-disabled", NULL);
-	else if (params->index_cleanup == VACOPTVALUE_ENABLED)
+	else if (params.index_cleanup == VACOPTVALUE_ENABLED)
 		INJECTION_POINT("vacuum-index-cleanup-enabled", NULL);
 #endif
 
@@ -2222,36 +2210,36 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 */
 	if (rel->rd_options != NULL &&
 		((StdRdOptions *) rel->rd_options)->vacuum_max_eager_freeze_failure_rate >= 0)
-		params->max_eager_freeze_failure_rate =
+		params.max_eager_freeze_failure_rate =
 			((StdRdOptions *) rel->rd_options)->vacuum_max_eager_freeze_failure_rate;
 
 	/*
 	 * Set truncate option based on truncate reloption or GUC if it wasn't
 	 * specified in VACUUM command, or when running in an autovacuum worker
 	 */
-	if (params->truncate == VACOPTVALUE_UNSPECIFIED)
+	if (params.truncate == VACOPTVALUE_UNSPECIFIED)
 	{
 		StdRdOptions *opts = (StdRdOptions *) rel->rd_options;
 
 		if (opts && opts->vacuum_truncate_set)
 		{
 			if (opts->vacuum_truncate)
-				params->truncate = VACOPTVALUE_ENABLED;
+				params.truncate = VACOPTVALUE_ENABLED;
 			else
-				params->truncate = VACOPTVALUE_DISABLED;
+				params.truncate = VACOPTVALUE_DISABLED;
 		}
 		else if (vacuum_truncate)
-			params->truncate = VACOPTVALUE_ENABLED;
+			params.truncate = VACOPTVALUE_ENABLED;
 		else
-			params->truncate = VACOPTVALUE_DISABLED;
+			params.truncate = VACOPTVALUE_DISABLED;
 	}
 
 #ifdef USE_INJECTION_POINTS
-	if (params->truncate == VACOPTVALUE_AUTO)
+	if (params.truncate == VACOPTVALUE_AUTO)
 		INJECTION_POINT("vacuum-truncate-auto", NULL);
-	else if (params->truncate == VACOPTVALUE_DISABLED)
+	else if (params.truncate == VACOPTVALUE_DISABLED)
 		INJECTION_POINT("vacuum-truncate-disabled", NULL);
-	else if (params->truncate == VACOPTVALUE_ENABLED)
+	else if (params.truncate == VACOPTVALUE_ENABLED)
 		INJECTION_POINT("vacuum-truncate-enabled", NULL);
 #endif
 
@@ -2261,9 +2249,9 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * automatically rebuilt by cluster_rel so we shouldn't recurse to it,
 	 * unless PROCESS_MAIN is disabled.
 	 */
-	if ((params->options & VACOPT_PROCESS_TOAST) != 0 &&
-		((params->options & VACOPT_FULL) == 0 ||
-		 (params->options & VACOPT_PROCESS_MAIN) == 0))
+	if ((params.options & VACOPT_PROCESS_TOAST) != 0 &&
+		((params.options & VACOPT_FULL) == 0 ||
+		 (params.options & VACOPT_PROCESS_MAIN) == 0))
 		toast_relid = rel->rd_rel->reltoastrelid;
 	else
 		toast_relid = InvalidOid;
@@ -2286,16 +2274,16 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 	 * table is required (e.g., PROCESS_TOAST is set), we force PROCESS_MAIN
 	 * to be set when we recurse to the TOAST table.
 	 */
-	if (params->options & VACOPT_PROCESS_MAIN)
+	if (params.options & VACOPT_PROCESS_MAIN)
 	{
 		/*
 		 * Do the actual work --- either FULL or "lazy" vacuum
 		 */
-		if (params->options & VACOPT_FULL)
+		if (params.options & VACOPT_FULL)
 		{
 			ClusterParams cluster_params = {0};
 
-			if ((params->options & VACOPT_VERBOSE) != 0)
+			if ((params.options & VACOPT_VERBOSE) != 0)
 				cluster_params.options |= CLUOPT_VERBOSE;
 
 			/* VACUUM FULL is now a variant of CLUSTER; see cluster.c */
@@ -2342,7 +2330,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params,
 		toast_vacuum_params.options |= VACOPT_PROCESS_MAIN;
 		toast_vacuum_params.toast_parent = relid;
 
-		vacuum_rel(toast_relid, NULL, &toast_vacuum_params, bstrategy);
+		vacuum_rel(toast_relid, NULL, toast_vacuum_params, bstrategy);
 	}
 
 	/*
