@@ -268,9 +268,9 @@ notice_processor(void *arg, const char *message)
 static void
 die_on_query_failure(ArchiveHandle *AH, const char *query)
 {
-	pg_log_error("query failed: %s",
+	pg_log_error("# 271:" __FILE__ ": query failed: %s",
 				 PQerrorMessage(AH->connection));
-	pg_log_error_detail("Query was: %s", query);
+	pg_log_error_detail("# 273:" __FILE__ ": Query was: %s", query);
 	exit(1);
 }
 
@@ -292,7 +292,7 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	PGresult   *res;
 
-	res = PQexec(AH->connection, query);
+	res = PQexec(AH->connection, query); printf("# 295:" __FILE__ ": PQexec fail == %d q=%s\r\n", PQresultStatus(res) != status, query );
 	if (PQresultStatus(res) != status)
 		die_on_query_failure(AH, query);
 	return res;

@@ -35,7 +35,7 @@ connectDatabase(const ConnParams *cparams, const char *progname,
 	PGconn	   *conn;
 	bool		new_pass;
 	static char *password = NULL;
-
+puts("# 38:" __FILE__ "\r\n");
 	/* Callers must supply at least dbname; other params can be NULL */
 	Assert(cparams->dbname);
 
@@ -84,9 +84,9 @@ connectDatabase(const ConnParams *cparams, const char *progname,
 		values[i++] = NULL;
 		Assert(i <= lengthof(keywords));
 
-		new_pass = false;
+		new_pass = false; puts("# 87:" __FILE__ ": connectDatabase->PQconnectdbParams\r\n");
 		conn = PQconnectdbParams(keywords, values, true);
-
+puts("# 89:" __FILE__ ": connectDatabase<-PQconnectdbParams\r\n");
 		if (!conn)
 			pg_fatal("could not connect to database %s: out of memory",
 					 cparams->dbname);
@@ -118,7 +118,7 @@ connectDatabase(const ConnParams *cparams, const char *progname,
 
 	/* Start strict; callers may override this. */
 	PQclear(executeQuery(conn, ALWAYS_SECURE_SEARCH_PATH_SQL, echo));
-
+puts("# 121:" __FILE__ ": connectDatabase->conn\r\n");
 	return conn;
 }
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdio.h> // for FILE
+
+#include <stdlib.h> // for abort
+
 #define WAIT_USE_POLL 1
 
 #define HAVE_LINUX_EIDRM_BUG
@@ -238,3 +242,4 @@ shmdt (const void *__shmaddr) {
 
 
 #endif // PG_SHMEM
+

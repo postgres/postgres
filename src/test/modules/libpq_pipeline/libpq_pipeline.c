@@ -334,7 +334,7 @@ test_cancel(PGconn *conn)
 			{
 				if (errno == EINTR)
 					continue;
-				pg_fatal("select() failed: %m");
+				pg_fatal("# 337:" __FILE__ ": select() failed: %m");
 			}
 			break;
 		}
@@ -391,7 +391,7 @@ test_cancel(PGconn *conn)
 			{
 				if (errno == EINTR)
 					continue;
-				pg_fatal("select() failed: %m");
+				pg_fatal("# 394:" __FILE__ ": select() failed: %m");
 			}
 			break;
 		}
@@ -643,7 +643,7 @@ test_nosync(PGconn *conn)
 		tv.tv_usec = 0;
 		if (select(sock + 1, &input_mask, NULL, NULL, &tv) < 0)
 		{
-			fprintf(stderr, "select() failed: %m\n");
+			fprintf(stderr, "# 646:" __FILE__ ": select() failed: %m\n");
 			exit_nicely(conn);
 		}
 		if (FD_ISSET(sock, &input_mask) && PQconsumeInput(conn) != 1)
@@ -1094,7 +1094,7 @@ test_pipelined_insert(PGconn *conn, int n_rows)
 
 		if (select(sock + 1, &input_mask, &output_mask, NULL, NULL) < 0)
 		{
-			fprintf(stderr, "select() failed: %m\n");
+			fprintf(stderr, "# 1097:" __FILE__ ": select() failed: %m\n");
 			exit_nicely(conn);
 		}
 
@@ -2010,7 +2010,7 @@ test_uniqviol(PGconn *conn)
 		{
 			if (errno == EINTR)
 				continue;
-			pg_fatal("select() failed: %m");
+			pg_fatal("# 2013:" __FILE__ ": select() failed: %m");
 		}
 
 		if (FD_ISSET(sock, &in_fds) && PQconsumeInput(conn) == 0)

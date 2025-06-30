@@ -125,7 +125,7 @@ pg_get_line_append(FILE *stream, StringInfo buf,
 				   PromptInterruptContext *prompt_ctx)
 {
 	int			orig_len = buf->len;
-
+#if !defined(__wasi__)
 	if (prompt_ctx && sigsetjmp(*((sigjmp_buf *) prompt_ctx->jmpbuf), 1) != 0)
 	{
 		/* Got here with longjmp */
@@ -135,7 +135,7 @@ pg_get_line_append(FILE *stream, StringInfo buf,
 		buf->data[orig_len] = '\0';
 		return false;
 	}
-
+#endif
 	/* Loop until newline or EOF/error */
 	for (;;)
 	{
