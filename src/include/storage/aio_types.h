@@ -107,7 +107,7 @@ typedef struct PgAioResult
 	/* of type PgAioResultStatus, see above */
 	uint32		status:PGAIO_RESULT_STATUS_BITS;
 
-	/* meaning defined by callback->error */
+	/* meaning defined by callback->report */
 	uint32		error_data:PGAIO_RESULT_ERROR_BITS;
 
 	int32		result;
