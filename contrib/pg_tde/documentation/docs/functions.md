@@ -2,15 +2,6 @@
 
 The `pg_tde` extension provides functions for managing different aspects of its operation:
 
-## Permission management
-
-By default, `pg_tde` is locked down. No one is allowed to do any operations until you grant them permissions. Only superusers may add or alter global key providers.
-
-However, database owners can run the “view keys” and “set principal key” functions on their own databases. You can delegate these rights to other roles with the following commands:
-
-* `GRANT EXECUTE ON FUNCTION`
-* `REVOKE EXECUTE ON FUNCTION`
-
 ## Key provider management
 
 A key provider is a system or service responsible for managing encryption keys. `pg_tde` supports the following key providers:

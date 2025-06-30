@@ -64,13 +64,13 @@ You must do these steps for every database where you have created the extension.
 
         ```sql
         SELECT pg_tde_add_database_key_provider_kmip(
-            'provider-name',
-            'kmip-addr', 
-            5696, 
-            '/path_to/client_cert.pem', 
-            '/path_to/client_key.pem', 
-            '/path_to/server_certificate.pem'
-            );
+          'provider-name',
+          'kmip-addr', 
+          `port`, 
+          '/path_to/client_cert.pem', 
+          '/path_to/client_key.pem', 
+          '/path_to/server_certificate.pem'
+          );
         ```
 
         where:

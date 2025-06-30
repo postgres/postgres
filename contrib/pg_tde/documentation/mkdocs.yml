@@ -1,6 +1,6 @@
 # MkDocs general configuration
 
-site_name: pg_tde documentation
+site_name: Percona Transparent Data Encryption for PostgreSQL
 site_description: Documentation
 site_author: Percona LLC
 copyright: >

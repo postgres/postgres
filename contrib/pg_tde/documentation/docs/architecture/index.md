@@ -239,20 +239,16 @@ This is also the reason why it requires a `dbOid` instead of a name, as it has n
 
 ### Deleting providers
 
-Providers can be deleted by using the
+Providers can be deleted by using the following functions:
 
 ```sql
 pg_tde_delete_database_key_provider(provider_name)
 pg_tde_delete_global_key_provider(provider_name)
 ```
 
-functions.
-
 For database specific providers, the function first checks if the provider is used or not, and the provider is only deleted if it's not used.
 
 For global providers, the function checks if the provider is used anywhere, WAL or any specific database, and returns an error if it is.
-
-This somewhat goes against the principle that `pg_tde` should not interact with other databases than the one the user is connected to, but on the other hand, it only does this lookup in the internal `pg_tde` metadata, not in postgres catalogs, so it is a gray zone. Making this check makes more sense than potentially making some databases inaccessible.
 
 ### Listing/querying providers
 
@@ -262,17 +258,6 @@ This somewhat goes against the principle that `pg_tde` should not interact with 
 * `pg_tde_list_all_global_key_providers()`
 
 These functions return a list of provider names, type and configuration.
-
-### Provider permissions
-
-`pg_tde` implements access control based on execution rights on the administration functions.
-
-For keys and providers administration, it provides two pair of functions:
-
-```sql
-pg_tde_GRANT_database_key_management_TO_role
-pg_tde_REVOKE_database_key_management_FROM_role
-```
 
 ### Creating and rotating keys
 
@@ -324,12 +309,6 @@ The `pg_tde_delete_key()` function unsets the principal key for the current data
 `pg_tde_default_key_info()` does the same for the default key.
 
 `pg_tde_verify_key()` checks that the key provider is accessible, that the current principal key can be downloaded from it, and that it is the same as the current key stored in memory - if any of these fail, it reports an appropriate error.
-
-### Key permissions
-
-Users with management permissions to a specific database `(pg_tde_(grant/revoke)_(global/databse)_key_management_(to/from)_role)` can change the keys for the database, and use the current key functions. This includes creating keys using global providers, if `pg_tde.inherit_global_providers` is enabled.
-
-Also the `pg_tde_(grant/revoke)_database_key_management_to_role` function deals with only the specific permission for the above function: it allows a user to change the key for the database, but not to modify the provider configuration.
 
 ### Creating encrypted tables
 
