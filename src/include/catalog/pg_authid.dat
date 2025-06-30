@@ -99,7 +99,7 @@
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
   rolpassword => '_null_', rolvaliduntil => '_null_' },
-{ oid => '8916', oid_symbol => 'ROLE_PG_SIGNAL_AUTOVACUUM_WORKER',
+{ oid => '6392', oid_symbol => 'ROLE_PG_SIGNAL_AUTOVACUUM_WORKER',
   rolname => 'pg_signal_autovacuum_worker', rolsuper => 'f', rolinherit => 't',
   rolcreaterole => 'f', rolcreatedb => 'f', rolcanlogin => 'f',
   rolreplication => 'f', rolbypassrls => 'f', rolconnlimit => '-1',
