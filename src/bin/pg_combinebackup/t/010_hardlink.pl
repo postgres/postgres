@@ -56,7 +56,7 @@ $primary->command_ok(
 		'--pgdata' => $backup1path,
 		'--no-sync',
 		'--checkpoint' => 'fast',
-        '--wal-method' => 'none'
+		'--wal-method' => 'none'
 	],
 	"full backup");
 
@@ -74,7 +74,7 @@ $primary->command_ok(
 		'--pgdata' => $backup2path,
 		'--no-sync',
 		'--checkpoint' => 'fast',
-        '--wal-method' => 'none',
+		'--wal-method' => 'none',
 		'--incremental' => $backup1path . '/backup_manifest'
 	],
 	"incremental backup");
@@ -112,45 +112,45 @@ done_testing();
 #                        of the given data file.
 sub check_data_file
 {
-    my ($data_file, $last_segment_nlinks) = @_;
+	my ($data_file, $last_segment_nlinks) = @_;
 
-    my @data_file_segments = ($data_file);
+	my @data_file_segments = ($data_file);
 
-    # Start checking for additional segments
-    my $segment_number = 1;
+	# Start checking for additional segments
+	my $segment_number = 1;
 
-    while (1)
-    {
-        my $next_segment = $data_file . '.' . $segment_number;
+	while (1)
+	{
+		my $next_segment = $data_file . '.' . $segment_number;
 
-        # If the file exists and is a regular file, add it to the list
-        if (-f $next_segment)
-        {
-            push @data_file_segments, $next_segment;
-            $segment_number++;
-        }
-        # Stop the loop if the file doesn't exist
-        else
-        {
-            last;
-        }
-    }
+		# If the file exists and is a regular file, add it to the list
+		if (-f $next_segment)
+		{
+			push @data_file_segments, $next_segment;
+			$segment_number++;
+		}
+		# Stop the loop if the file doesn't exist
+		else
+		{
+			last;
+		}
+	}
 
-    # All segments of the given data file should contain 2 hard links, except
-    # for the last one, which should match the given number of links.
-    my $last_segment = pop @data_file_segments;
+	# All segments of the given data file should contain 2 hard links, except
+	# for the last one, which should match the given number of links.
+	my $last_segment = pop @data_file_segments;
 
-    for my $segment (@data_file_segments)
-    {
-        # Get the file's stat information of each segment
-        my $nlink_count = get_hard_link_count($segment);
-        ok($nlink_count == 2, "File '$segment' has 2 hard links");
-    }
+	for my $segment (@data_file_segments)
+	{
+		# Get the file's stat information of each segment
+		my $nlink_count = get_hard_link_count($segment);
+		ok($nlink_count == 2, "File '$segment' has 2 hard links");
+	}
 
-    # Get the file's stat information of the last segment
-    my $nlink_count = get_hard_link_count($last_segment);
-    ok($nlink_count == $last_segment_nlinks,
-       "File '$last_segment' has $last_segment_nlinks hard link(s)");
+	# Get the file's stat information of the last segment
+	my $nlink_count = get_hard_link_count($last_segment);
+	ok($nlink_count == $last_segment_nlinks,
+		"File '$last_segment' has $last_segment_nlinks hard link(s)");
 }
 
 
@@ -159,11 +159,11 @@ sub check_data_file
 # that file.
 sub get_hard_link_count
 {
-    my ($file) = @_;
+	my ($file) = @_;
 
-    # Get file stats
-    my @stats = stat($file);
-    my $nlink = $stats[3];  # Number of hard links
+	# Get file stats
+	my @stats = stat($file);
+	my $nlink = $stats[3];    # Number of hard links
 
-    return $nlink;
+	return $nlink;
 }

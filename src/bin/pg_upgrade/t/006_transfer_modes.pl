@@ -13,7 +13,8 @@ sub test_mode
 {
 	my ($mode) = @_;
 
-	my $old = PostgreSQL::Test::Cluster->new('old', install_path => $ENV{oldinstall});
+	my $old =
+	  PostgreSQL::Test::Cluster->new('old', install_path => $ENV{oldinstall});
 	my $new = PostgreSQL::Test::Cluster->new('new');
 
 	# --swap can't be used to upgrade from versions older than 10, so just skip
@@ -40,9 +41,11 @@ sub test_mode
 	# Create a small variety of simple test objects on the old cluster.  We'll
 	# check that these reach the new version after upgrading.
 	$old->start;
-	$old->safe_psql('postgres', "CREATE TABLE test1 AS SELECT generate_series(1, 100)");
+	$old->safe_psql('postgres',
+		"CREATE TABLE test1 AS SELECT generate_series(1, 100)");
 	$old->safe_psql('postgres', "CREATE DATABASE testdb1");
-	$old->safe_psql('testdb1', "CREATE TABLE test2 AS SELECT generate_series(200, 300)");
+	$old->safe_psql('testdb1',
+		"CREATE TABLE test2 AS SELECT generate_series(200, 300)");
 	$old->safe_psql('testdb1', "VACUUM FULL test2");
 	$old->safe_psql('testdb1', "CREATE SEQUENCE testseq START 5432");
 
@@ -51,10 +54,15 @@ sub test_mode
 	if (defined($ENV{oldinstall}))
 	{
 		my $tblspc = PostgreSQL::Test::Utils::tempdir_short();
-		$old->safe_psql('postgres', "CREATE TABLESPACE test_tblspc LOCATION '$tblspc'");
-		$old->safe_psql('postgres', "CREATE DATABASE testdb2 TABLESPACE test_tblspc");
-		$old->safe_psql('postgres', "CREATE TABLE test3 TABLESPACE test_tblspc AS SELECT generate_series(300, 401)");
-		$old->safe_psql('testdb2', "CREATE TABLE test4 AS SELECT generate_series(400, 502)");
+		$old->safe_psql('postgres',
+			"CREATE TABLESPACE test_tblspc LOCATION '$tblspc'");
+		$old->safe_psql('postgres',
+			"CREATE DATABASE testdb2 TABLESPACE test_tblspc");
+		$old->safe_psql('postgres',
+			"CREATE TABLE test3 TABLESPACE test_tblspc AS SELECT generate_series(300, 401)"
+		);
+		$old->safe_psql('testdb2',
+			"CREATE TABLE test4 AS SELECT generate_series(400, 502)");
 	}
 	$old->stop;
 
@@ -90,9 +98,11 @@ sub test_mode
 		# tablespace.
 		if (defined($ENV{oldinstall}))
 		{
-			$result = $new->safe_psql('postgres', "SELECT COUNT(*) FROM test3");
+			$result =
+			  $new->safe_psql('postgres', "SELECT COUNT(*) FROM test3");
 			is($result, '102', "test3 data after pg_upgrade $mode");
-			$result = $new->safe_psql('testdb2', "SELECT COUNT(*) FROM test4");
+			$result =
+			  $new->safe_psql('testdb2', "SELECT COUNT(*) FROM test4");
 			is($result, '103', "test4 data after pg_upgrade $mode");
 		}
 		$new->stop;

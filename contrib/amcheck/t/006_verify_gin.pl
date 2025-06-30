@@ -54,20 +54,17 @@ sub invalid_entry_order_leaf_page_test
 
 	$node->stop;
 
-	my $blkno = 1;  # root
+	my $blkno = 1;    # root
 
 	# produce wrong order by replacing aaaaa with ccccc
-	string_replace_block(
-		$relpath,
-		'aaaaa',
-		'ccccc',
-		$blkno
-	);
+	string_replace_block($relpath, 'aaaaa', 'ccccc', $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
 	like($stderr, qr/$expected/);
 }
 
@@ -96,20 +93,17 @@ sub invalid_entry_order_inner_page_test
 
 	$node->stop;
 
-	my $blkno = 1;  # root
+	my $blkno = 1;    # root
 
 	# we have rrrrrrrrr... and tttttttttt... as keys in the root, so produce wrong order by replacing rrrrrrrrrr....
-	string_replace_block(
-		$relpath,
-		'rrrrrrrrrr',
-		'zzzzzzzzzz',
-		$blkno
-	);
+	string_replace_block($relpath, 'rrrrrrrrrr', 'zzzzzzzzzz', $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
 	like($stderr, qr/$expected/);
 }
 
@@ -129,7 +123,7 @@ sub invalid_entry_columns_order_test
 
 	$node->stop;
 
-	my $blkno = 1;  # root
+	my $blkno = 1;    # root
 
 	# mess column numbers
 	# root items order before: (1,aaa), (2,bbb)
@@ -139,26 +133,18 @@ sub invalid_entry_columns_order_test
 
 	my $find = qr/($attrno_1)(.)(aaa)/s;
 	my $replace = $attrno_2 . '$2$3';
-	string_replace_block(
-		$relpath,
-		$find,
-		$replace,
-		$blkno
-	);
+	string_replace_block($relpath, $find, $replace, $blkno);
 
 	$find = qr/($attrno_2)(.)(bbb)/s;
 	$replace = $attrno_1 . '$2$3';
-	string_replace_block(
-		$relpath,
-		$find,
-		$replace,
-		$blkno
-	);
+	string_replace_block($relpath, $find, $replace, $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\" has wrong tuple order on entry tree page, block 1, offset 2, rightlink 4294967295";
 	like($stderr, qr/$expected/);
 }
 
@@ -183,20 +169,17 @@ sub inconsistent_with_parent_key__parent_key_corrupted_test
 
 	$node->stop;
 
-	my $blkno = 1;  # root
+	my $blkno = 1;    # root
 
 	# we have nnnnnnnnnn... as parent key in the root, so replace it with something smaller then child's keys
-	string_replace_block(
-		$relpath,
-		'nnnnnnnnnn',
-		'aaaaaaaaaa',
-		$blkno
-	);
+	string_replace_block($relpath, 'nnnnnnnnnn', 'aaaaaaaaaa', $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\" has inconsistent records on page 3 offset 3";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\" has inconsistent records on page 3 offset 3";
 	like($stderr, qr/$expected/);
 }
 
@@ -221,20 +204,17 @@ sub inconsistent_with_parent_key__child_key_corrupted_test
 
 	$node->stop;
 
-	my $blkno = 3;  # leaf
+	my $blkno = 3;    # leaf
 
 	# we have nnnnnnnnnn... as parent key in the root, so replace child key with something bigger
-	string_replace_block(
-		$relpath,
-		'nnnnnnnnnn',
-		'pppppppppp',
-		$blkno
-	);
+	string_replace_block($relpath, 'nnnnnnnnnn', 'pppppppppp', $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\" has inconsistent records on page 3 offset 3";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\" has inconsistent records on page 3 offset 3";
 	like($stderr, qr/$expected/);
 }
 
@@ -254,24 +234,21 @@ sub inconsistent_with_parent_key__parent_key_corrupted_posting_tree_test
 
 	$node->stop;
 
-	my $blkno = 2;  # posting tree root
+	my $blkno = 2;    # posting tree root
 
 	# we have a posting tree for 'aaaaa' key with the root at 2nd block
 	# and two leaf pages 3 and 4. replace 4th page's high key with (1,1)
 	# so that there are tid's in leaf page that are larger then the new high key.
 	my $find = pack('S*', 0, 4, 0) . '....';
 	my $replace = pack('S*', 0, 4, 0, 1, 1);
-	string_replace_block(
-		$relpath,
-		$find,
-		$replace,
-		$blkno
-	);
+	string_replace_block($relpath, $find, $replace, $blkno);
 
 	$node->start;
 
-	my ($result, $stdout, $stderr) = $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
-	my $expected = "index \"$indexname\": tid exceeds parent's high key in postingTree leaf on block 4";
+	my ($result, $stdout, $stderr) =
+	  $node->psql('postgres', qq(SELECT gin_index_check('$indexname')));
+	my $expected =
+	  "index \"$indexname\": tid exceeds parent's high key in postingTree leaf on block 4";
 	like($stderr, qr/$expected/);
 }
 

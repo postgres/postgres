@@ -368,7 +368,7 @@ my %pgdump_runs = (
 			'--data-only',
 			'--superuser' => 'test_superuser',
 			'--disable-triggers',
-			'--verbose',         # no-op, just make sure it works
+			'--verbose',    # no-op, just make sure it works
 			'postgres',
 		],
 	},
@@ -810,8 +810,7 @@ my %pgdump_runs = (
 		dump_cmd => [
 			'pg_dump', '--no-sync',
 			"--file=$tempdir/no_schema.sql", '--no-schema',
-			'--with-statistics',
-			'postgres',
+			'--with-statistics', 'postgres',
 		],
 	},);
 

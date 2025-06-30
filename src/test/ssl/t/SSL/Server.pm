@@ -318,7 +318,8 @@ sub switch_server_cert
 	$node->append_conf('sslconfig.conf', "ssl=on");
 	$node->append_conf('sslconfig.conf', $backend->set_server_cert(\%params));
 	# use lists of ECDH curves and cipher suites for syntax testing
-	$node->append_conf('sslconfig.conf', 'ssl_groups=X25519:prime256v1:secp521r1');
+	$node->append_conf('sslconfig.conf',
+		'ssl_groups=X25519:prime256v1:secp521r1');
 	$node->append_conf('sslconfig.conf',
 		'ssl_tls13_ciphers=TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256');
 

@@ -53,7 +53,8 @@ for my $testname (@tests)
 	$node->command_ok(
 		[
 			'libpq_pipeline', @extraargs,
-			$testname, $node->connstr('postgres') . " max_protocol_version=latest"
+			$testname,
+			$node->connstr('postgres') . " max_protocol_version=latest"
 		],
 		"libpq_pipeline $testname");
 
@@ -76,7 +77,8 @@ for my $testname (@tests)
 # test separately that it still works the old protocol version too.
 $node->command_ok(
 	[
-	 'libpq_pipeline', 'cancel', $node->connstr('postgres') . " max_protocol_version=3.0"
+		'libpq_pipeline', 'cancel',
+		$node->connstr('postgres') . " max_protocol_version=3.0"
 	],
 	"libpq_pipeline cancel with protocol 3.0");
 

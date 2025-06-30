@@ -26,7 +26,8 @@ $node_publisher->safe_psql('postgres',
 	"CREATE TABLE conf_tab (a int PRIMARY KEY, b int UNIQUE, c int UNIQUE);");
 
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE conf_tab_2 (a int PRIMARY KEY, b int UNIQUE, c int UNIQUE);");
+	"CREATE TABLE conf_tab_2 (a int PRIMARY KEY, b int UNIQUE, c int UNIQUE);"
+);
 
 # Create same table on subscriber
 $node_subscriber->safe_psql('postgres',

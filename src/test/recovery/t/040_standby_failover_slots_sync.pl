@@ -941,8 +941,7 @@ is( $standby1->safe_psql(
 	'synced slot retained on the new primary');
 
 # Commit the prepared transaction
-$standby1->safe_psql('postgres',
-	"COMMIT PREPARED 'test_twophase_slotsync';");
+$standby1->safe_psql('postgres', "COMMIT PREPARED 'test_twophase_slotsync';");
 $standby1->wait_for_catchup('regress_mysub1');
 
 # Confirm that the prepared transaction is replicated to the subscriber

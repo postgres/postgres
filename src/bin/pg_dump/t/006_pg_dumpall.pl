@@ -294,17 +294,17 @@ my %pgdumpall_runs = (
 			'--format' => 'directory',
 			'--globals-only',
 			'--file' => "$tempdir/dump_globals_only",
-			],
-			restore_cmd => [
-				'pg_restore', '-C', '--globals-only',
-				'--format' => 'directory',
-				'--file' => "$tempdir/dump_globals_only.sql",
-				"$tempdir/dump_globals_only",
-				],
-				like => qr/
+		],
+		restore_cmd => [
+			'pg_restore', '-C', '--globals-only',
+			'--format' => 'directory',
+			'--file' => "$tempdir/dump_globals_only.sql",
+			"$tempdir/dump_globals_only",
+		],
+		like => qr/
             ^\s*\QCREATE ROLE dumpall;\E\s*\n
 			/xm
-			}, );
+	},);
 
 # First execute the setup_sql
 foreach my $run (sort keys %pgdumpall_runs)
@@ -339,7 +339,8 @@ foreach my $run (sort keys %pgdumpall_runs)
 	# pg_restore --file output file.
 	my $output_file = slurp_file("$tempdir/${run}.sql");
 
-	if (!($pgdumpall_runs{$run}->{like}) && !($pgdumpall_runs{$run}->{unlike}))
+	if (   !($pgdumpall_runs{$run}->{like})
+		&& !($pgdumpall_runs{$run}->{unlike}))
 	{
 		die "missing \"like\" or \"unlike\" in test \"$run\"";
 	}
@@ -361,30 +362,38 @@ foreach my $run (sort keys %pgdumpall_runs)
 # Some negative test case with dump of pg_dumpall and restore using pg_restore
 # test case 1: when -C is not used in pg_restore with dump of pg_dumpall
 $node->command_fails_like(
-    [ 'pg_restore',
-    "$tempdir/format_custom",
-    '--format' => 'custom',
-    '--file' => "$tempdir/error_test.sql", ],
-    qr/\Qpg_restore: error: option -C\/--create must be specified when restoring an archive created by pg_dumpall\E/,
-    'When -C is not used in pg_restore with dump of pg_dumpall');
+	[
+		'pg_restore',
+		"$tempdir/format_custom",
+		'--format' => 'custom',
+		'--file' => "$tempdir/error_test.sql",
+	],
+	qr/\Qpg_restore: error: option -C\/--create must be specified when restoring an archive created by pg_dumpall\E/,
+	'When -C is not used in pg_restore with dump of pg_dumpall');
 
 # test case 2: When --list option is used with dump of pg_dumpall
 $node->command_fails_like(
-	[ 'pg_restore',
+	[
+		'pg_restore',
 		"$tempdir/format_custom", '-C',
-		'--format' => 'custom', '--list',
-		'--file' => "$tempdir/error_test.sql", ],
+		'--format' => 'custom',
+		'--list',
+		'--file' => "$tempdir/error_test.sql",
+	],
 	qr/\Qpg_restore: error: option -l\/--list cannot be used when restoring an archive created by pg_dumpall\E/,
 	'When --list is used in pg_restore with dump of pg_dumpall');
 
 # test case 3: When non-exist database is given with -d option
 $node->command_fails_like(
-	[ 'pg_restore',
+	[
+		'pg_restore',
 		"$tempdir/format_custom", '-C',
 		'--format' => 'custom',
-		'-d' => 'dbpq', ],
+		'-d' => 'dbpq',
+	],
 	qr/\Qpg_restore: error: could not connect to database "dbpq"\E/,
-	'When non-existent database is given with -d option in pg_restore with dump of pg_dumpall');
+	'When non-existent database is given with -d option in pg_restore with dump of pg_dumpall'
+);
 
 $node->stop('fast');
 

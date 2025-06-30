@@ -68,7 +68,8 @@ sub connect_fails_wait
 	my $log_location = -s $node->logfile;
 
 	$node->connect_fails($connstr, $test_name, %params);
-	$node->wait_for_log(qr/DEBUG:  (00000: )?client backend.*exited with exit code 1/,
+	$node->wait_for_log(
+		qr/DEBUG:  (00000: )?client backend.*exited with exit code 1/,
 		$log_location);
 	ok(1, "$test_name: client backend process exited");
 }

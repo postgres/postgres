@@ -76,7 +76,8 @@ command_like(
 	'checksums are enabled in control file');
 
 command_ok([ 'initdb', '--sync-only', $datadir ], 'sync only');
-command_ok([ 'initdb', '--sync-only', '--no-sync-data-files', $datadir ], '--no-sync-data-files');
+command_ok([ 'initdb', '--sync-only', '--no-sync-data-files', $datadir ],
+	'--no-sync-data-files');
 command_fails([ 'initdb', $datadir ], 'existing data directory');
 
 if ($supports_syncfs)

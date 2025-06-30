@@ -53,7 +53,8 @@ $old_sub->safe_psql('postgres',
 
 $old_sub->stop;
 
-$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 0");
+$new_sub->append_conf('postgresql.conf',
+	"max_active_replication_origins = 0");
 
 # pg_upgrade will fail because the new cluster has insufficient
 # max_active_replication_origins.
@@ -80,7 +81,8 @@ command_checks_all(
 );
 
 # Reset max_active_replication_origins
-$new_sub->append_conf('postgresql.conf', "max_active_replication_origins = 10");
+$new_sub->append_conf('postgresql.conf',
+	"max_active_replication_origins = 10");
 
 # Cleanup
 $publisher->safe_psql('postgres', "DROP PUBLICATION regress_pub1");
