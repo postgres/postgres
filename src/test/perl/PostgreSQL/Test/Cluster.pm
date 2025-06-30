@@ -2199,6 +2199,14 @@ sub psql
 			$ret = $?;
 		};
 		my $exc_save = $@;
+
+		# we need a dummy $stderr from hereon, if we didn't collect it
+		if (! defined $stderr)
+		{
+			my $errtxt = "<not collected>";
+			$stderr = \$errtxt;
+		}
+
 		if ($exc_save)
 		{
 
