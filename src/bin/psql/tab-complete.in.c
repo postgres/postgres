@@ -889,6 +889,14 @@ static const SchemaQuery Query_for_list_of_analyzables = {
 	.result = "c.relname",
 };
 
+/*
+ * Relations supporting COPY TO/FROM are currently almost the same as
+ * those supporting ANALYZE. Although views with INSTEAD OF INSERT triggers
+ * can be used with COPY FROM, they are rarely used for this purpose,
+ * so plain views are intentionally excluded from this tab completion.
+ */
+#define Query_for_list_of_tables_for_copy Query_for_list_of_analyzables
+
 /* Relations supporting index creation */
 static const SchemaQuery Query_for_list_of_indexables = {
 	.catname = "pg_catalog.pg_class c",
@@ -3255,7 +3263,7 @@ match_previous_words(int pattern_id,
 	 * backslash command).
 	 */
 	else if (Matches("COPY|\\copy"))
-		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_tables, "(");
+		COMPLETE_WITH_SCHEMA_QUERY_PLUS(Query_for_list_of_tables_for_copy, "(");
 	/* Complete COPY ( with legal query commands */
 	else if (Matches("COPY|\\copy", "("))
 		COMPLETE_WITH("SELECT", "TABLE", "VALUES", "INSERT INTO", "UPDATE", "DELETE FROM", "MERGE INTO", "WITH");
