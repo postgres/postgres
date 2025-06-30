@@ -25,7 +25,7 @@ use warnings FATAL => 'all';
 
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
-my $majorversion = 18;
+my $majorversion = 19;
 
 # Validate argument and compute derived variables
 my $minor = shift;
