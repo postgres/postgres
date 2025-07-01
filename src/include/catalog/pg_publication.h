@@ -146,7 +146,7 @@ extern Publication *GetPublicationByName(const char *pubname, bool missing_ok);
 extern List *GetRelationPublications(Oid relid);
 
 /*---------
- * Expected values for pub_partopt parameter of GetRelationPublications(),
+ * Expected values for pub_partopt parameter of GetPublicationRelations(),
  * which allows callers to specify which partitions of partitioned tables
  * mentioned in the publication they expect to see.
  *
