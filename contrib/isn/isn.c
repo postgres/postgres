@@ -726,7 +726,7 @@ string2ean(const char *str, struct Node *escontext, ean13 *result,
 			if (type != INVALID)
 				goto eaninvalid;
 			type = ISSN;
-			*aux1++ = toupper((unsigned char) *aux2);
+			*aux1++ = pg_ascii_toupper((unsigned char) *aux2);
 			length++;
 		}
 		else if (length == 9 && (digit || *aux2 == 'X' || *aux2 == 'x') && last)
@@ -736,7 +736,7 @@ string2ean(const char *str, struct Node *escontext, ean13 *result,
 				goto eaninvalid;
 			if (type == INVALID)
 				type = ISBN;	/* ISMN must start with 'M' */
-			*aux1++ = toupper((unsigned char) *aux2);
+			*aux1++ = pg_ascii_toupper((unsigned char) *aux2);
 			length++;
 		}
 		else if (length == 11 && digit && last)
