@@ -3847,17 +3847,13 @@ make: *** [postgres] Error 1
    <para>
     Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
     32-bit PostgreSQL builds are possible with
-    <productname>Visual Studio 2015</productname> to
+    <productname>Visual Studio 2019</productname> to
     <productname>Visual Studio 2022</productname>,
     as well as standalone Windows SDK releases 10 and above.
     64-bit PostgreSQL builds are supported with
     <productname>Microsoft Windows SDK</productname> version 10 and above or
-    <productname>Visual Studio 2015</productname> and above.
+    <productname>Visual Studio 2019</productname> and above.
     <!--
-        For 2015 requirements:
-        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
-        For 2017 requirements:
-        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2017-system-requirements-vs
         For 2019 requirements:
         https://docs.microsoft.com/en-us/visualstudio/releases/2019/system-requirements
         For 2022 requirements:

@@ -279,6 +279,10 @@ elif host_system == 'windows'
     # define before including <time.h> for getting localtime_r() etc. on MinGW
     cppflags += '-D_POSIX_C_SOURCE'
   endif
+  if cc.get_id() == 'msvc'
+    # required for VA_ARGS_NARGS() in c.h; requires VS 2019
+    cppflags += '/Zc:preprocessor'
+  endif
 
   export_file_format = 'win'
   export_file_suffix = 'def'
