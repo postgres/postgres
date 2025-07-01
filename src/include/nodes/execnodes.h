@@ -139,8 +139,9 @@ typedef struct ExprState
  *		UniqueOps			These are like Exclusion*, but for unique indexes
  *		UniqueProcs
  *		UniqueStrats
- *		Unique				is it a unique index?
  *		OpclassOptions		opclass-specific options, or NULL if none
+ *		Unique				is it a unique index?
+ *		NullsNotDistinct	is NULLS NOT DISTINCT?
  *		ReadyForInserts		is it valid for inserts?
  *		CheckedUnchanged	IndexUnchanged status determined yet?
  *		IndexUnchanged		aminsert hint, cached for retail inserts
