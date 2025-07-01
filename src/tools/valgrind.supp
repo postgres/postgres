@@ -180,3 +180,17 @@
    Memcheck:Cond
    fun:PyObject_Realloc
 }
+
+# NUMA introspection requires touching memory first, and some of it may
+# be marked as noacess (e.g. unpinned buffers). So just ignore that.
+{
+   pg_numa_touch_mem_if_required
+   Memcheck:Addr4
+   fun:pg_numa_touch_mem_if_required
+}
+
+{
+   pg_numa_touch_mem_if_required
+   Memcheck:Addr8
+   fun:pg_numa_touch_mem_if_required
+}
