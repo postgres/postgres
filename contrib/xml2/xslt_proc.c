@@ -58,7 +58,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	volatile xsltSecurityPrefsPtr xslt_sec_prefs = NULL;
 	volatile xsltTransformContextPtr xslt_ctxt = NULL;
 	volatile int resstat = -1;
-	xmlChar    *resstr = NULL;
+	volatile xmlChar *resstr = NULL;
 	int			reslen = 0;
 
 	if (fcinfo->nargs == 3)
@@ -86,7 +86,7 @@ xslt_process(PG_FUNCTION_ARGS)
 								VARSIZE_ANY_EXHDR(doct), NULL, NULL,
 								XML_PARSE_NOENT);
 
-		if (doctree == NULL)
+		if (doctree == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"error parsing XML document");
 
@@ -95,14 +95,14 @@ xslt_process(PG_FUNCTION_ARGS)
 							  VARSIZE_ANY_EXHDR(ssheet), NULL, NULL,
 							  XML_PARSE_NOENT);
 
-		if (ssdoc == NULL)
+		if (ssdoc == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"error parsing stylesheet as XML document");
 
 		/* After this call we need not free ssdoc separately */
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
 
-		if (stylesheet == NULL)
+		if (stylesheet == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
 						"failed to parse stylesheet");
 
@@ -137,11 +137,15 @@ xslt_process(PG_FUNCTION_ARGS)
 		restree = xsltApplyStylesheetUser(stylesheet, doctree, params,
 										  NULL, NULL, xslt_ctxt);
 
-		if (restree == NULL)
+		if (restree == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_ARGUMENT_FOR_XQUERY,
 						"failed to apply stylesheet");
 
-		resstat = xsltSaveResultToString(&resstr, &reslen, restree, stylesheet);
+		resstat = xsltSaveResultToString((xmlChar **) &resstr, &reslen,
+										 restree, stylesheet);
+
+		if (resstat >= 0)
+			result = cstring_to_text_with_len((char *) resstr, reslen);
 	}
 	PG_CATCH();
 	{
@@ -155,6 +159,8 @@ xslt_process(PG_FUNCTION_ARGS)
 			xsltFreeStylesheet(stylesheet);
 		if (doctree != NULL)
 			xmlFreeDoc(doctree);
+		if (resstr != NULL)
+			xmlFree((xmlChar *) resstr);
 		xsltCleanupGlobals();
 
 		pg_xml_done(xmlerrcxt, true);
@@ -170,16 +176,14 @@ xslt_process(PG_FUNCTION_ARGS)
 	xmlFreeDoc(doctree);
 	xsltCleanupGlobals();
 
+	if (resstr)
+		xmlFree((xmlChar *) resstr);
+
 	pg_xml_done(xmlerrcxt, false);
 
 	/* XXX this is pretty dubious, really ought to throw error instead */
 	if (resstat < 0)
 		PG_RETURN_NULL();
-
-	result = cstring_to_text_with_len((char *) resstr, reslen);
-
-	if (resstr)
-		xmlFree(resstr);
 
 	PG_RETURN_TEXT_P(result);
 #else							/* !USE_LIBXSLT */
