@@ -16,6 +16,7 @@
 #include "c.h"
 #include <unistd.h>
 
+#include "miscadmin.h"
 #include "port/pg_numa.h"
 
 /*
@@ -75,6 +76,8 @@ pg_numa_query_pages(int pid, unsigned long count, void **pages, int *status)
 	{
 		unsigned long count_chunk = Min(count - next,
 										NUMA_QUERY_CHUNK_SIZE);
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Bail out if any of the chunks errors out (ret<0). We ignore
