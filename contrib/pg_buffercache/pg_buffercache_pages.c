@@ -320,7 +320,6 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		uint64		os_page_count;
 		int			pages_per_buffer;
 		int			max_entries;
-		volatile uint64 touch pg_attribute_unused();
 		char	   *startptr,
 				   *endptr;
 
@@ -375,7 +374,7 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 
 			/* Only need to touch memory once per backend process lifetime */
 			if (firstNumaTouch)
-				pg_numa_touch_mem_if_required(touch, ptr);
+				pg_numa_touch_mem_if_required(ptr);
 		}
 
 		Assert(idx == os_page_count);

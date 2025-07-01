@@ -679,12 +679,10 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 		 */
 		for (i = 0; i < shm_ent_page_count; i++)
 		{
-			volatile uint64 touch pg_attribute_unused();
-
 			page_ptrs[i] = startptr + (i * os_page_size);
 
 			if (firstNumaTouch)
-				pg_numa_touch_mem_if_required(touch, page_ptrs[i]);
+				pg_numa_touch_mem_if_required(page_ptrs[i]);
 
 			CHECK_FOR_INTERRUPTS();
 		}
