@@ -442,7 +442,7 @@ UPDATE t1 SET x = 2, y = func1(y) WHERE z = 100;
    <para>
     The default database privilege system allows database superusers to
     modify system catalogs using DML commands, and reference or modify
-    toast tables.  These operations are prohibited when
+    TOAST tables.  These operations are prohibited when
     <filename>sepgsql</filename> is enabled.
    </para>
   </sect3>

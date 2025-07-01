@@ -1412,7 +1412,7 @@ commit_prepared_cb(...);  &lt;-- commit of the prepared transaction
     currently used for decoded changes) is selected and streamed.  However, in
     some cases we still have to spill to disk even if streaming is enabled
     because we exceed the memory threshold but still have not decoded the
-    complete tuple e.g., only decoded toast table insert but not the main table
+    complete tuple e.g., only decoded TOAST table insert but not the main table
     insert.
    </para>
 

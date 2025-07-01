@@ -852,7 +852,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
      <para>
       <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
-      fillfactor, toast and autovacuum storage parameters, as well as the
+      fillfactor, TOAST and autovacuum storage parameters, as well as the
       planner parameter <varname>parallel_workers</varname>.
      </para>
     </listitem>

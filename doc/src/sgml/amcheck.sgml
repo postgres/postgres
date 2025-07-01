@@ -278,8 +278,8 @@ SET client_min_messages = DEBUG1;
          TOAST table.
         </para>
         <para>
-         This option is known to be slow.  Also, if the toast table or its
-         index is corrupt, checking it against toast values could conceivably
+         This option is known to be slow.  Also, if the TOAST table or its
+         index is corrupt, checking it against TOAST values could conceivably
          crash the server, although in many cases this would just produce an
          error.
         </para>

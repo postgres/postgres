@@ -41,7 +41,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Only ordinary and toast table relations, materialized views, sequences, and
+   Only ordinary and TOAST table relations, materialized views, sequences, and
    btree indexes are currently supported.  Other relation types are silently
    skipped.
   </para>
@@ -276,7 +276,7 @@ PostgreSQL documentation
      <term><option>--no-dependent-toast</option></term>
      <listitem>
       <para>
-       By default, if a table is checked, its toast table, if any, will also
+       By default, if a table is checked, its TOAST table, if any, will also
        be checked, even if it is not explicitly selected by an option
        such as <literal>--table</literal> or <literal>--relation</literal>.
        This option suppresses that behavior.
@@ -306,9 +306,9 @@ PostgreSQL documentation
      <term><option>--exclude-toast-pointers</option></term>
      <listitem>
       <para>
-       By default, whenever a toast pointer is encountered in a table,
+       By default, whenever a TOAST pointer is encountered in a table,
        a lookup is performed to ensure that it references apparently-valid
-       entries in the toast table. These checks can be quite slow, and this
+       entries in the TOAST table. These checks can be quite slow, and this
        option can be used to skip them.
       </para>
      </listitem>
@@ -368,9 +368,9 @@ PostgreSQL documentation
        End checking at the specified block number.  An error will occur if the
        table relation being checked has fewer than this number of blocks.
        This option does not apply to indexes, and is probably only useful when
-       checking a single table relation. If both a regular table and a toast
+       checking a single table relation. If both a regular table and a TOAST
        table are checked, this option will apply to both, but higher-numbered
-       toast blocks may still be accessed while validating toast pointers,
+       TOAST blocks may still be accessed while validating TOAST pointers,
        unless that is suppressed using
        <option>--exclude-toast-pointers</option>.
       </para>
