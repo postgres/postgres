@@ -34,6 +34,46 @@
 #endif
 
 /*
+ * For the libc provider, to provide as much functionality as possible on a
+ * variety of platforms without going so far as to implement everything from
+ * scratch, we use several implementation strategies depending on the
+ * situation:
+ *
+ * 1. In C/POSIX collations, we use hard-wired code.  We can't depend on
+ * the <ctype.h> functions since those will obey LC_CTYPE.  Note that these
+ * collations don't give a fig about multibyte characters.
+ *
+ * 2. When working in UTF8 encoding, we use the <wctype.h> functions.
+ * This assumes that every platform uses Unicode codepoints directly
+ * as the wchar_t representation of Unicode.  (XXX: ICU makes this assumption
+ * even for non-UTF8 encodings, which may be a problem.)  On some platforms
+ * wchar_t is only 16 bits wide, so we have to punt for codepoints > 0xFFFF.
+ *
+ * 3. In all other encodings, we use the <ctype.h> functions for pg_wchar
+ * values up to 255, and punt for values above that.  This is 100% correct
+ * only in single-byte encodings such as LATINn.  However, non-Unicode
+ * multibyte encodings are mostly Far Eastern character sets for which the
+ * properties being tested here aren't very relevant for higher code values
+ * anyway.  The difficulty with using the <wctype.h> functions with
+ * non-Unicode multibyte encodings is that we can have no certainty that
+ * the platform's wchar_t representation matches what we do in pg_wchar
+ * conversions.
+ *
+ * As a special case, in the "default" collation, (2) and (3) force ASCII
+ * letters to follow ASCII upcase/downcase rules, while in a non-default
+ * collation we just let the library functions do what they will.  The case
+ * where this matters is treatment of I/i in Turkish, and the behavior is
+ * meant to match the upper()/lower() SQL functions.
+ *
+ * We store the active collation setting in static variables.  In principle
+ * it could be passed down to here via the regex library's "struct vars" data
+ * structure; but that would require somewhat invasive changes in the regex
+ * library, and right now there's no real benefit to be gained from that.
+ *
+ * NB: the coding here assumes pg_wchar is an unsigned type.
+ */
+
+/*
  * Size of stack buffer to use for string transformations, used to avoid heap
  * allocations in typical cases. This should be large enough that most strings
  * will fit, but small enough that we feel comfortable putting it on the
@@ -42,13 +82,6 @@
 #define		TEXTBUFLEN			1024
 
 extern pg_locale_t create_pg_locale_libc(Oid collid, MemoryContext context);
-
-extern size_t strlower_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
-extern size_t strtitle_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
-extern size_t strupper_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
 
 static int	strncoll_libc(const char *arg1, ssize_t len1,
 						  const char *arg2, ssize_t len2,
@@ -85,6 +118,251 @@ static size_t strupper_libc_mb(char *dest, size_t destsize,
 							   const char *src, ssize_t srclen,
 							   pg_locale_t locale);
 
+static bool
+wc_isdigit_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isdigit_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isalpha_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isalpha_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isalnum_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isalnum_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isupper_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isupper_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_islower_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return islower_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isgraph_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isgraph_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isprint_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isprint_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_ispunct_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return ispunct_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isspace_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	return isspace_l((unsigned char) wc, locale->info.lt);
+}
+
+static bool
+wc_isdigit_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswdigit_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isalpha_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswalpha_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isalnum_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswalnum_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isupper_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswupper_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_islower_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswlower_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isgraph_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswgraph_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isprint_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswprint_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_ispunct_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswpunct_l((wint_t) wc, locale->info.lt);
+}
+
+static bool
+wc_isspace_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	return iswspace_l((wint_t) wc, locale->info.lt);
+}
+
+static char
+char_tolower_libc(unsigned char ch, pg_locale_t locale)
+{
+	Assert(pg_database_encoding_max_length() == 1);
+	return tolower_l(ch, locale->info.lt);
+}
+
+static bool
+char_is_cased_libc(char ch, pg_locale_t locale)
+{
+	bool		is_multibyte = pg_database_encoding_max_length() > 1;
+
+	if (is_multibyte && IS_HIGHBIT_SET(ch))
+		return true;
+	else
+		return isalpha_l((unsigned char) ch, locale->info.lt);
+}
+
+static pg_wchar
+toupper_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	Assert(GetDatabaseEncoding() != PG_UTF8);
+
+	/* force C behavior for ASCII characters, per comments above */
+	if (locale->is_default && wc <= (pg_wchar) 127)
+		return pg_ascii_toupper((unsigned char) wc);
+	if (wc <= (pg_wchar) UCHAR_MAX)
+		return toupper_l((unsigned char) wc, locale->info.lt);
+	else
+		return wc;
+}
+
+static pg_wchar
+toupper_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	Assert(GetDatabaseEncoding() == PG_UTF8);
+
+	/* force C behavior for ASCII characters, per comments above */
+	if (locale->is_default && wc <= (pg_wchar) 127)
+		return pg_ascii_toupper((unsigned char) wc);
+	if (sizeof(wchar_t) >= 4 || wc <= (pg_wchar) 0xFFFF)
+		return towupper_l((wint_t) wc, locale->info.lt);
+	else
+		return wc;
+}
+
+static pg_wchar
+tolower_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+	Assert(GetDatabaseEncoding() != PG_UTF8);
+
+	/* force C behavior for ASCII characters, per comments above */
+	if (locale->is_default && wc <= (pg_wchar) 127)
+		return pg_ascii_tolower((unsigned char) wc);
+	if (wc <= (pg_wchar) UCHAR_MAX)
+		return tolower_l((unsigned char) wc, locale->info.lt);
+	else
+		return wc;
+}
+
+static pg_wchar
+tolower_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+	Assert(GetDatabaseEncoding() == PG_UTF8);
+
+	/* force C behavior for ASCII characters, per comments above */
+	if (locale->is_default && wc <= (pg_wchar) 127)
+		return pg_ascii_tolower((unsigned char) wc);
+	if (sizeof(wchar_t) >= 4 || wc <= (pg_wchar) 0xFFFF)
+		return towlower_l((wint_t) wc, locale->info.lt);
+	else
+		return wc;
+}
+
+static const struct ctype_methods ctype_methods_libc_sb = {
+	.strlower = strlower_libc_sb,
+	.strtitle = strtitle_libc_sb,
+	.strupper = strupper_libc_sb,
+	.wc_isdigit = wc_isdigit_libc_sb,
+	.wc_isalpha = wc_isalpha_libc_sb,
+	.wc_isalnum = wc_isalnum_libc_sb,
+	.wc_isupper = wc_isupper_libc_sb,
+	.wc_islower = wc_islower_libc_sb,
+	.wc_isgraph = wc_isgraph_libc_sb,
+	.wc_isprint = wc_isprint_libc_sb,
+	.wc_ispunct = wc_ispunct_libc_sb,
+	.wc_isspace = wc_isspace_libc_sb,
+	.char_is_cased = char_is_cased_libc,
+	.char_tolower = char_tolower_libc,
+	.wc_toupper = toupper_libc_sb,
+	.wc_tolower = tolower_libc_sb,
+	.max_chr = UCHAR_MAX,
+};
+
+/*
+ * Non-UTF8 multibyte encodings use multibyte semantics for case mapping, but
+ * single-byte semantics for pattern matching.
+ */
+static const struct ctype_methods ctype_methods_libc_other_mb = {
+	.strlower = strlower_libc_mb,
+	.strtitle = strtitle_libc_mb,
+	.strupper = strupper_libc_mb,
+	.wc_isdigit = wc_isdigit_libc_sb,
+	.wc_isalpha = wc_isalpha_libc_sb,
+	.wc_isalnum = wc_isalnum_libc_sb,
+	.wc_isupper = wc_isupper_libc_sb,
+	.wc_islower = wc_islower_libc_sb,
+	.wc_isgraph = wc_isgraph_libc_sb,
+	.wc_isprint = wc_isprint_libc_sb,
+	.wc_ispunct = wc_ispunct_libc_sb,
+	.wc_isspace = wc_isspace_libc_sb,
+	.char_is_cased = char_is_cased_libc,
+	.char_tolower = char_tolower_libc,
+	.wc_toupper = toupper_libc_sb,
+	.wc_tolower = tolower_libc_sb,
+	.max_chr = UCHAR_MAX,
+};
+
+static const struct ctype_methods ctype_methods_libc_utf8 = {
+	.strlower = strlower_libc_mb,
+	.strtitle = strtitle_libc_mb,
+	.strupper = strupper_libc_mb,
+	.wc_isdigit = wc_isdigit_libc_mb,
+	.wc_isalpha = wc_isalpha_libc_mb,
+	.wc_isalnum = wc_isalnum_libc_mb,
+	.wc_isupper = wc_isupper_libc_mb,
+	.wc_islower = wc_islower_libc_mb,
+	.wc_isgraph = wc_isgraph_libc_mb,
+	.wc_isprint = wc_isprint_libc_mb,
+	.wc_ispunct = wc_ispunct_libc_mb,
+	.wc_isspace = wc_isspace_libc_mb,
+	.char_is_cased = char_is_cased_libc,
+	.char_tolower = char_tolower_libc,
+	.wc_toupper = toupper_libc_mb,
+	.wc_tolower = tolower_libc_mb,
+};
+
 static const struct collate_methods collate_methods_libc = {
 	.strncoll = strncoll_libc,
 	.strnxfrm = strnxfrm_libc,
@@ -118,36 +396,6 @@ static const struct collate_methods collate_methods_libc_win32_utf8 = {
 #endif
 };
 #endif
-
-size_t
-strlower_libc(char *dst, size_t dstsize, const char *src,
-			  ssize_t srclen, pg_locale_t locale)
-{
-	if (pg_database_encoding_max_length() > 1)
-		return strlower_libc_mb(dst, dstsize, src, srclen, locale);
-	else
-		return strlower_libc_sb(dst, dstsize, src, srclen, locale);
-}
-
-size_t
-strtitle_libc(char *dst, size_t dstsize, const char *src,
-			  ssize_t srclen, pg_locale_t locale)
-{
-	if (pg_database_encoding_max_length() > 1)
-		return strtitle_libc_mb(dst, dstsize, src, srclen, locale);
-	else
-		return strtitle_libc_sb(dst, dstsize, src, srclen, locale);
-}
-
-size_t
-strupper_libc(char *dst, size_t dstsize, const char *src,
-			  ssize_t srclen, pg_locale_t locale)
-{
-	if (pg_database_encoding_max_length() > 1)
-		return strupper_libc_mb(dst, dstsize, src, srclen, locale);
-	else
-		return strupper_libc_sb(dst, dstsize, src, srclen, locale);
-}
 
 static size_t
 strlower_libc_sb(char *dest, size_t destsize, const char *src, ssize_t srclen,
@@ -480,6 +728,15 @@ create_pg_locale_libc(Oid collid, MemoryContext context)
 		else
 #endif
 			result->collate = &collate_methods_libc;
+	}
+	if (!result->ctype_is_c)
+	{
+		if (GetDatabaseEncoding() == PG_UTF8)
+			result->ctype = &ctype_methods_libc_utf8;
+		else if (pg_database_encoding_max_length() > 1)
+			result->ctype = &ctype_methods_libc_other_mb;
+		else
+			result->ctype = &ctype_methods_libc_sb;
 	}
 
 	return result;

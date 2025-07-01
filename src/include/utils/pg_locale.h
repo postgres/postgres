@@ -12,6 +12,8 @@
 #ifndef _PG_LOCALE_
 #define _PG_LOCALE_
 
+#include "mb/pg_wchar.h"
+
 #ifdef USE_ICU
 #include <unicode/ucol.h>
 #endif
@@ -77,6 +79,52 @@ struct collate_methods
 	bool		strxfrm_is_safe;
 };
 
+struct ctype_methods
+{
+	/* case mapping: LOWER()/INITCAP()/UPPER() */
+	size_t		(*strlower) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strtitle) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strupper) (char *dest, size_t destsize,
+							 const char *src, ssize_t srclen,
+							 pg_locale_t locale);
+	size_t		(*strfold) (char *dest, size_t destsize,
+							const char *src, ssize_t srclen,
+							pg_locale_t locale);
+
+	/* required */
+	bool		(*wc_isdigit) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isalpha) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isalnum) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isupper) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_islower) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isgraph) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isprint) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_ispunct) (pg_wchar wc, pg_locale_t locale);
+	bool		(*wc_isspace) (pg_wchar wc, pg_locale_t locale);
+	pg_wchar	(*wc_toupper) (pg_wchar wc, pg_locale_t locale);
+	pg_wchar	(*wc_tolower) (pg_wchar wc, pg_locale_t locale);
+
+	/* required */
+	bool		(*char_is_cased) (char ch, pg_locale_t locale);
+
+	/*
+	 * Optional. If defined, will only be called for single-byte encodings. If
+	 * not defined, or if the encoding is multibyte, will fall back to
+	 * pg_strlower().
+	 */
+	char		(*char_tolower) (unsigned char ch, pg_locale_t locale);
+
+	/*
+	 * For regex and pattern matching efficiency, the maximum char value
+	 * supported by the above methods. If zero, limit is set by regex code.
+	 */
+	pg_wchar	max_chr;
+};
+
 /*
  * We use a discriminated union to hold either a locale_t or an ICU collator.
  * pg_locale_t is occasionally checked for truth, so make it a pointer.
@@ -102,6 +150,7 @@ struct pg_locale_struct
 	bool		is_default;
 
 	const struct collate_methods *collate;	/* NULL if collate_is_c */
+	const struct ctype_methods *ctype;	/* NULL if ctype_is_c */
 
 	union
 	{
@@ -125,6 +174,10 @@ extern void init_database_collation(void);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
+
+extern bool char_is_cased(char ch, pg_locale_t locale);
+extern bool char_tolower_enabled(pg_locale_t locale);
+extern char char_tolower(unsigned char ch, pg_locale_t locale);
 extern size_t pg_strlower(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);

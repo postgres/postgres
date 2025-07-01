@@ -79,31 +79,6 @@ extern pg_locale_t create_pg_locale_icu(Oid collid, MemoryContext context);
 extern pg_locale_t create_pg_locale_libc(Oid collid, MemoryContext context);
 extern char *get_collation_actual_version_libc(const char *collcollate);
 
-extern size_t strlower_builtin(char *dst, size_t dstsize, const char *src,
-							   ssize_t srclen, pg_locale_t locale);
-extern size_t strtitle_builtin(char *dst, size_t dstsize, const char *src,
-							   ssize_t srclen, pg_locale_t locale);
-extern size_t strupper_builtin(char *dst, size_t dstsize, const char *src,
-							   ssize_t srclen, pg_locale_t locale);
-extern size_t strfold_builtin(char *dst, size_t dstsize, const char *src,
-							  ssize_t srclen, pg_locale_t locale);
-
-extern size_t strlower_icu(char *dst, size_t dstsize, const char *src,
-						   ssize_t srclen, pg_locale_t locale);
-extern size_t strtitle_icu(char *dst, size_t dstsize, const char *src,
-						   ssize_t srclen, pg_locale_t locale);
-extern size_t strupper_icu(char *dst, size_t dstsize, const char *src,
-						   ssize_t srclen, pg_locale_t locale);
-extern size_t strfold_icu(char *dst, size_t dstsize, const char *src,
-						  ssize_t srclen, pg_locale_t locale);
-
-extern size_t strlower_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
-extern size_t strtitle_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
-extern size_t strupper_libc(char *dst, size_t dstsize, const char *src,
-							ssize_t srclen, pg_locale_t locale);
-
 /* GUC settings */
 char	   *locale_messages;
 char	   *locale_monetary;
@@ -1092,6 +1067,9 @@ create_pg_locale(Oid collid, MemoryContext context)
 	Assert((result->collate_is_c && result->collate == NULL) ||
 		   (!result->collate_is_c && result->collate != NULL));
 
+	Assert((result->ctype_is_c && result->ctype == NULL) ||
+		   (!result->ctype_is_c && result->ctype != NULL));
+
 	datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
 							&isnull);
 	if (!isnull)
@@ -1256,77 +1234,31 @@ size_t
 pg_strlower(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
-		return strlower_builtin(dst, dstsize, src, srclen, locale);
-#ifdef USE_ICU
-	else if (locale->provider == COLLPROVIDER_ICU)
-		return strlower_icu(dst, dstsize, src, srclen, locale);
-#endif
-	else if (locale->provider == COLLPROVIDER_LIBC)
-		return strlower_libc(dst, dstsize, src, srclen, locale);
-	else
-		/* shouldn't happen */
-		PGLOCALE_SUPPORT_ERROR(locale->provider);
-
-	return 0;					/* keep compiler quiet */
+	return locale->ctype->strlower(dst, dstsize, src, srclen, locale);
 }
 
 size_t
 pg_strtitle(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
-		return strtitle_builtin(dst, dstsize, src, srclen, locale);
-#ifdef USE_ICU
-	else if (locale->provider == COLLPROVIDER_ICU)
-		return strtitle_icu(dst, dstsize, src, srclen, locale);
-#endif
-	else if (locale->provider == COLLPROVIDER_LIBC)
-		return strtitle_libc(dst, dstsize, src, srclen, locale);
-	else
-		/* shouldn't happen */
-		PGLOCALE_SUPPORT_ERROR(locale->provider);
-
-	return 0;					/* keep compiler quiet */
+	return locale->ctype->strtitle(dst, dstsize, src, srclen, locale);
 }
 
 size_t
 pg_strupper(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
-		return strupper_builtin(dst, dstsize, src, srclen, locale);
-#ifdef USE_ICU
-	else if (locale->provider == COLLPROVIDER_ICU)
-		return strupper_icu(dst, dstsize, src, srclen, locale);
-#endif
-	else if (locale->provider == COLLPROVIDER_LIBC)
-		return strupper_libc(dst, dstsize, src, srclen, locale);
-	else
-		/* shouldn't happen */
-		PGLOCALE_SUPPORT_ERROR(locale->provider);
-
-	return 0;					/* keep compiler quiet */
+	return locale->ctype->strupper(dst, dstsize, src, srclen, locale);
 }
 
 size_t
 pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 		   pg_locale_t locale)
 {
-	if (locale->provider == COLLPROVIDER_BUILTIN)
-		return strfold_builtin(dst, dstsize, src, srclen, locale);
-#ifdef USE_ICU
-	else if (locale->provider == COLLPROVIDER_ICU)
-		return strfold_icu(dst, dstsize, src, srclen, locale);
-#endif
-	/* for libc, just use strlower */
-	else if (locale->provider == COLLPROVIDER_LIBC)
-		return strlower_libc(dst, dstsize, src, srclen, locale);
+	if (locale->ctype->strfold)
+		return locale->ctype->strfold(dst, dstsize, src, srclen, locale);
 	else
-		/* shouldn't happen */
-		PGLOCALE_SUPPORT_ERROR(locale->provider);
-
-	return 0;					/* keep compiler quiet */
+		return locale->ctype->strlower(dst, dstsize, src, srclen, locale);
 }
 
 /*
@@ -1461,6 +1393,41 @@ pg_strnxfrm_prefix(char *dest, size_t destsize, const char *src,
 				   ssize_t srclen, pg_locale_t locale)
 {
 	return locale->collate->strnxfrm_prefix(dest, destsize, src, srclen, locale);
+}
+
+/*
+ * char_is_cased()
+ *
+ * Fuzzy test of whether the given char is case-varying or not. The argument
+ * is a single byte, so in a multibyte encoding, just assume any non-ASCII
+ * char is case-varying.
+ */
+bool
+char_is_cased(char ch, pg_locale_t locale)
+{
+	return locale->ctype->char_is_cased(ch, locale);
+}
+
+/*
+ * char_tolower_enabled()
+ *
+ * Does the provider support char_tolower()?
+ */
+bool
+char_tolower_enabled(pg_locale_t locale)
+{
+	return (locale->ctype->char_tolower != NULL);
+}
+
+/*
+ * char_tolower()
+ *
+ * Convert char (single-byte encoding) to lowercase.
+ */
+char
+char_tolower(unsigned char ch, pg_locale_t locale)
+{
+	return locale->ctype->char_tolower(ch, locale);
 }
 
 /*
