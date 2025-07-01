@@ -65,8 +65,8 @@ pg_numa_init(void)
 int
 pg_numa_query_pages(int pid, unsigned long count, void **pages, int *status)
 {
-	unsigned long	next = 0;
-	int				ret = 0;
+	unsigned long next = 0;
+	int			ret = 0;
 
 	/*
 	 * Chunk pointers passed to numa_move_pages to NUMA_QUERY_CHUNK_SIZE
@@ -80,9 +80,9 @@ pg_numa_query_pages(int pid, unsigned long count, void **pages, int *status)
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * Bail out if any of the chunks errors out (ret<0). We ignore
-		 * (ret>0) which is used to return number of nonmigrated pages,
-		 * but we're not migrating any pages here.
+		 * Bail out if any of the chunks errors out (ret<0). We ignore (ret>0)
+		 * which is used to return number of nonmigrated pages, but we're not
+		 * migrating any pages here.
 		 */
 		ret = numa_move_pages(pid, count_chunk, &pages[next], NULL, &status[next], 0);
 		if (ret < 0)
