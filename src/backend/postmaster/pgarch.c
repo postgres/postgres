@@ -718,15 +718,15 @@ pgarch_readyXlog(char *xlog)
 		/*
 		 * Store the file in our max-heap if it has a high enough priority.
 		 */
-		if (arch_files->arch_heap->bh_size < NUM_FILES_PER_DIRECTORY_SCAN)
+		if (binaryheap_size(arch_files->arch_heap) < NUM_FILES_PER_DIRECTORY_SCAN)
 		{
 			/* If the heap isn't full yet, quickly add it. */
-			arch_file = arch_files->arch_filenames[arch_files->arch_heap->bh_size];
+			arch_file = arch_files->arch_filenames[binaryheap_size(arch_files->arch_heap)];
 			strcpy(arch_file, basename);
 			binaryheap_add_unordered(arch_files->arch_heap, CStringGetDatum(arch_file));
 
 			/* If we just filled the heap, make it a valid one. */
-			if (arch_files->arch_heap->bh_size == NUM_FILES_PER_DIRECTORY_SCAN)
+			if (binaryheap_size(arch_files->arch_heap) == NUM_FILES_PER_DIRECTORY_SCAN)
 				binaryheap_build(arch_files->arch_heap);
 		}
 		else if (ready_file_comparator(binaryheap_first(arch_files->arch_heap),
@@ -744,21 +744,21 @@ pgarch_readyXlog(char *xlog)
 	FreeDir(rldir);
 
 	/* If no files were found, simply return. */
-	if (arch_files->arch_heap->bh_size == 0)
+	if (binaryheap_empty(arch_files->arch_heap))
 		return false;
 
 	/*
 	 * If we didn't fill the heap, we didn't make it a valid one.  Do that
 	 * now.
 	 */
-	if (arch_files->arch_heap->bh_size < NUM_FILES_PER_DIRECTORY_SCAN)
+	if (binaryheap_size(arch_files->arch_heap) < NUM_FILES_PER_DIRECTORY_SCAN)
 		binaryheap_build(arch_files->arch_heap);
 
 	/*
 	 * Fill arch_files array with the files to archive in ascending order of
 	 * priority.
 	 */
-	arch_files->arch_files_size = arch_files->arch_heap->bh_size;
+	arch_files->arch_files_size = binaryheap_size(arch_files->arch_heap);
 	for (int i = 0; i < arch_files->arch_files_size; i++)
 		arch_files->arch_files[i] = DatumGetCString(binaryheap_remove_first(arch_files->arch_heap));
 

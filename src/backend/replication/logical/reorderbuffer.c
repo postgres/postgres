@@ -1415,7 +1415,7 @@ ReorderBufferIterTXNNext(ReorderBuffer *rb, ReorderBufferIterTXNState *state)
 	int32		off;
 
 	/* nothing there anymore */
-	if (state->heap->bh_size == 0)
+	if (binaryheap_empty(state->heap))
 		return NULL;
 
 	off = DatumGetInt32(binaryheap_first(state->heap));
