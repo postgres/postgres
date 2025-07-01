@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+9e345415bcd3c4358350b89edfd710469b8bfaf9 # 2025-07-01 15:23:07 +0200
+# Fix indentation in pg_numa code
+
 b27644bade0348d0dafd3036c47880a349fe9332 # 2025-06-15 13:04:24 -0400
 # Sync typedefs.list with the buildfarm.
 
