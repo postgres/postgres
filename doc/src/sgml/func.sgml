@@ -27704,6 +27704,31 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         details.
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_multixact_members</primary>
+        </indexterm>
+        <function>pg_get_multixact_members</function> ( <parameter>multixid</parameter> <type>xid</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>xid</parameter> <type>xid</type>,
+        <parameter>mode</parameter> <type>text</type> )
+       </para>
+       <para>
+        Returns the transaction ID and lock mode for each member of the
+        specified multixact ID.  The lock modes <literal>forupd</literal>,
+        <literal>fornokeyupd</literal>, <literal>sh</literal>, and
+        <literal>keysh</literal> correspond to the row-level locks
+        <literal>FOR UPDATE</literal>, <literal>FOR NO KEY UPDATE</literal>,
+        <literal>FOR SHARE</literal>, and <literal>FOR KEY SHARE</literal>,
+        respectively, as described in <xref linkend="locking-rows"/>.  Two
+        additional modes are specific to multixacts:
+        <literal>nokeyupd</literal>, used by updates that do not modify key
+        columns, and <literal>upd</literal>, used by updates or deletes that
+        modify key columns.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -27712,7 +27737,8 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
     The internal transaction ID type <type>xid</type> is 32 bits wide and
     wraps around every 4 billion transactions.  However,
     the functions shown in <xref linkend="functions-pg-snapshot"/>, except
-    <function>age</function> and <function>mxid_age</function>, use a
+    <function>age</function>, <function>mxid_age</function>, and
+    <function>pg_get_multixact_members</function>, use a
     64-bit type <type>xid8</type> that does not wrap around during the life
     of an installation and can be converted to <type>xid</type> by casting if
     required;  see <xref linkend="transaction-id"/> for details.
