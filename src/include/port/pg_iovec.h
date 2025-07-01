@@ -21,9 +21,6 @@
 
 #else
 
-/* POSIX requires at least 16 as a maximum iovcnt. */
-#define IOV_MAX 16
-
 /* Define our own POSIX-compatible iovec struct. */
 struct iovec
 {
@@ -31,6 +28,15 @@ struct iovec
 	size_t		iov_len;
 };
 
+#endif
+
+/*
+ * If <limits.h> didn't define IOV_MAX, define our own.  X/Open requires at
+ * least 16.  (GNU Hurd apparently feel that they're not bound by X/Open,
+ * because they don't define this symbol at all.)
+ */
+#ifndef IOV_MAX
+#define IOV_MAX 16
 #endif
 
 /*
