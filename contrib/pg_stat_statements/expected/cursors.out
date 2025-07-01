@@ -57,8 +57,8 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |    0 | COMMIT
      1 |    0 | DECLARE cursor_stats_1 CURSOR WITH HOLD FOR SELECT $1
      1 |    0 | DECLARE cursor_stats_2 CURSOR WITH HOLD FOR SELECT $1
-     1 |    1 | FETCH 1 IN cursor_stats_1
-     1 |    1 | FETCH 1 IN cursor_stats_2
+     1 |    1 | FETCH $1 IN cursor_stats_1
+     1 |    1 | FETCH $1 IN cursor_stats_2
      1 |    1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (9 rows)
 
@@ -67,4 +67,141 @@ SELECT pg_stat_statements_reset() IS NOT NULL AS t;
 ---
  t
 (1 row)
+
+-- Normalization of FETCH statements
+BEGIN;
+DECLARE pgss_cursor CURSOR FOR SELECT FROM generate_series(1, 10);
+-- implicit directions
+FETCH pgss_cursor;
+--
+(1 row)
+
+FETCH 1 pgss_cursor;
+--
+(1 row)
+
+FETCH 2 pgss_cursor;
+--
+(2 rows)
+
+FETCH -1 pgss_cursor;
+--
+(1 row)
+
+-- explicit NEXT
+FETCH NEXT pgss_cursor;
+--
+(1 row)
+
+-- explicit PRIOR
+FETCH PRIOR pgss_cursor;
+--
+(1 row)
+
+-- explicit FIRST
+FETCH FIRST pgss_cursor;
+--
+(1 row)
+
+-- explicit LAST
+FETCH LAST pgss_cursor;
+--
+(1 row)
+
+-- explicit ABSOLUTE
+FETCH ABSOLUTE 1 pgss_cursor;
+--
+(1 row)
+
+FETCH ABSOLUTE 2 pgss_cursor;
+--
+(1 row)
+
+FETCH ABSOLUTE -1 pgss_cursor;
+--
+(1 row)
+
+-- explicit RELATIVE
+FETCH RELATIVE 1 pgss_cursor;
+--
+(0 rows)
+
+FETCH RELATIVE 2 pgss_cursor;
+--
+(0 rows)
+
+FETCH RELATIVE -1 pgss_cursor;
+--
+(1 row)
+
+-- explicit FORWARD
+FETCH ALL pgss_cursor;
+--
+(0 rows)
+
+-- explicit FORWARD ALL
+FETCH FORWARD ALL pgss_cursor;
+--
+(0 rows)
+
+-- explicit FETCH FORWARD
+FETCH FORWARD pgss_cursor;
+--
+(0 rows)
+
+FETCH FORWARD 1 pgss_cursor;
+--
+(0 rows)
+
+FETCH FORWARD 2 pgss_cursor;
+--
+(0 rows)
+
+FETCH FORWARD -1 pgss_cursor;
+--
+(1 row)
+
+-- explicit FETCH BACKWARD
+FETCH BACKWARD pgss_cursor;
+--
+(1 row)
+
+FETCH BACKWARD 1 pgss_cursor;
+--
+(1 row)
+
+FETCH BACKWARD 2 pgss_cursor;
+--
+(2 rows)
+
+FETCH BACKWARD -1 pgss_cursor;
+--
+(1 row)
+
+-- explicit BACKWARD ALL
+FETCH BACKWARD ALL pgss_cursor;
+--
+(6 rows)
+
+COMMIT;
+SELECT calls, query FROM pg_stat_statements ORDER BY query COLLATE "C";
+ calls |                               query                                
+-------+--------------------------------------------------------------------
+     1 | BEGIN
+     1 | COMMIT
+     1 | DECLARE pgss_cursor CURSOR FOR SELECT FROM generate_series($1, $2)
+     3 | FETCH ABSOLUTE $1 pgss_cursor
+     1 | FETCH ALL pgss_cursor
+     1 | FETCH BACKWARD ALL pgss_cursor
+     4 | FETCH BACKWARD pgss_cursor
+     1 | FETCH FIRST pgss_cursor
+     1 | FETCH FORWARD ALL pgss_cursor
+     4 | FETCH FORWARD pgss_cursor
+     1 | FETCH LAST pgss_cursor
+     1 | FETCH NEXT pgss_cursor
+     1 | FETCH PRIOR pgss_cursor
+     3 | FETCH RELATIVE $1 pgss_cursor
+     4 | FETCH pgss_cursor
+     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+(16 rows)
 

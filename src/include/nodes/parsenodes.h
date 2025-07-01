@@ -3422,15 +3422,44 @@ typedef enum FetchDirection
 	FETCH_RELATIVE,
 } FetchDirection;
 
+typedef enum FetchDirectionKeywords
+{
+	FETCH_KEYWORD_NONE = 0,
+	FETCH_KEYWORD_NEXT,
+	FETCH_KEYWORD_PRIOR,
+	FETCH_KEYWORD_FIRST,
+	FETCH_KEYWORD_LAST,
+	FETCH_KEYWORD_ABSOLUTE,
+	FETCH_KEYWORD_RELATIVE,
+	FETCH_KEYWORD_ALL,
+	FETCH_KEYWORD_FORWARD,
+	FETCH_KEYWORD_FORWARD_ALL,
+	FETCH_KEYWORD_BACKWARD,
+	FETCH_KEYWORD_BACKWARD_ALL,
+} FetchDirectionKeywords;
+
 #define FETCH_ALL	LONG_MAX
 
 typedef struct FetchStmt
 {
 	NodeTag		type;
 	FetchDirection direction;	/* see above */
-	long		howMany;		/* number of rows, or position argument */
-	char	   *portalname;		/* name of portal (cursor) */
-	bool		ismove;			/* true if MOVE */
+	/* number of rows, or position argument */
+	long		howMany pg_node_attr(query_jumble_ignore);
+	/* name of portal (cursor) */
+	char	   *portalname;
+	/* true if MOVE */
+	bool		ismove;
+
+	/*
+	 * Set when a direction_keyword (e.g., FETCH FORWARD) is used, to
+	 * distinguish it from a numeric variant (e.g., FETCH 1) for the purpose
+	 * of query jumbling.
+	 */
+	FetchDirectionKeywords direction_keyword;
+
+	/* token location, or -1 if unknown */
+	ParseLoc	location pg_node_attr(query_jumble_location);
 } FetchStmt;
 
 /* ----------------------

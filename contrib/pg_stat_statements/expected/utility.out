@@ -702,7 +702,7 @@ SELECT calls, rows, query FROM pg_stat_statements ORDER BY query COLLATE "C";
      1 |   13 | CREATE MATERIALIZED VIEW pgss_matv AS SELECT * FROM pgss_ctas
      1 |   10 | CREATE TABLE pgss_ctas AS SELECT a, $1 b FROM generate_series($2, $3) a
      1 |    0 | DECLARE pgss_cursor CURSOR FOR SELECT * FROM pgss_matv
-     1 |    5 | FETCH FORWARD 5 pgss_cursor
+     1 |    5 | FETCH FORWARD $1 pgss_cursor
      1 |    7 | FETCH FORWARD ALL pgss_cursor
      1 |    1 | FETCH NEXT pgss_cursor
      1 |   13 | REFRESH MATERIALIZED VIEW pgss_matv

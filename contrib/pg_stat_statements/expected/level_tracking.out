@@ -1147,7 +1147,7 @@ SELECT toplevel, calls, query FROM pg_stat_statements
  t        |     1 | COMMIT
  t        |     1 | DECLARE FOOCUR CURSOR FOR SELECT * from stats_track_tab
  f        |     1 | DECLARE FOOCUR CURSOR FOR SELECT * from stats_track_tab;
- t        |     1 | FETCH FORWARD 1 FROM foocur
+ t        |     1 | FETCH FORWARD $1 FROM foocur
  t        |     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (7 rows)
 
@@ -1176,7 +1176,7 @@ SELECT toplevel, calls, query FROM pg_stat_statements
  t        |     1 | CLOSE foocur
  t        |     1 | COMMIT
  t        |     1 | DECLARE FOOCUR CURSOR FOR SELECT * FROM stats_track_tab
- t        |     1 | FETCH FORWARD 1 FROM foocur
+ t        |     1 | FETCH FORWARD $1 FROM foocur
  t        |     1 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
 (6 rows)
 

@@ -7477,6 +7477,8 @@ fetch_args:	cursor_name
 					n->portalname = $1;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_NONE;
 					$$ = (Node *) n;
 				}
 			| from_in cursor_name
@@ -7486,60 +7488,8 @@ fetch_args:	cursor_name
 					n->portalname = $2;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
-					$$ = (Node *) n;
-				}
-			| NEXT opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $3;
-					n->direction = FETCH_FORWARD;
-					n->howMany = 1;
-					$$ = (Node *) n;
-				}
-			| PRIOR opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $3;
-					n->direction = FETCH_BACKWARD;
-					n->howMany = 1;
-					$$ = (Node *) n;
-				}
-			| FIRST_P opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $3;
-					n->direction = FETCH_ABSOLUTE;
-					n->howMany = 1;
-					$$ = (Node *) n;
-				}
-			| LAST_P opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $3;
-					n->direction = FETCH_ABSOLUTE;
-					n->howMany = -1;
-					$$ = (Node *) n;
-				}
-			| ABSOLUTE_P SignedIconst opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $4;
-					n->direction = FETCH_ABSOLUTE;
-					n->howMany = $2;
-					$$ = (Node *) n;
-				}
-			| RELATIVE_P SignedIconst opt_from_in cursor_name
-				{
-					FetchStmt *n = makeNode(FetchStmt);
-
-					n->portalname = $4;
-					n->direction = FETCH_RELATIVE;
-					n->howMany = $2;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_NONE;
 					$$ = (Node *) n;
 				}
 			| SignedIconst opt_from_in cursor_name
@@ -7549,6 +7499,74 @@ fetch_args:	cursor_name
 					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = $1;
+					n->location = @1;
+					n->direction_keyword = FETCH_KEYWORD_NONE;
+					$$ = (Node *) n;
+				}
+			| NEXT opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $3;
+					n->direction = FETCH_FORWARD;
+					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_NEXT;
+					$$ = (Node *) n;
+				}
+			| PRIOR opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $3;
+					n->direction = FETCH_BACKWARD;
+					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_PRIOR;
+					$$ = (Node *) n;
+				}
+			| FIRST_P opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $3;
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_FIRST;
+					$$ = (Node *) n;
+				}
+			| LAST_P opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $3;
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = -1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_LAST;
+					$$ = (Node *) n;
+				}
+			| ABSOLUTE_P SignedIconst opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $4;
+					n->direction = FETCH_ABSOLUTE;
+					n->howMany = $2;
+					n->location = @2;
+					n->direction_keyword = FETCH_KEYWORD_ABSOLUTE;
+					$$ = (Node *) n;
+				}
+			| RELATIVE_P SignedIconst opt_from_in cursor_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+
+					n->portalname = $4;
+					n->direction = FETCH_RELATIVE;
+					n->howMany = $2;
+					n->location = @2;
+					n->direction_keyword = FETCH_KEYWORD_RELATIVE;
 					$$ = (Node *) n;
 				}
 			| ALL opt_from_in cursor_name
@@ -7558,6 +7576,8 @@ fetch_args:	cursor_name
 					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = FETCH_ALL;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_ALL;
 					$$ = (Node *) n;
 				}
 			| FORWARD opt_from_in cursor_name
@@ -7567,6 +7587,8 @@ fetch_args:	cursor_name
 					n->portalname = $3;
 					n->direction = FETCH_FORWARD;
 					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_FORWARD;
 					$$ = (Node *) n;
 				}
 			| FORWARD SignedIconst opt_from_in cursor_name
@@ -7576,6 +7598,8 @@ fetch_args:	cursor_name
 					n->portalname = $4;
 					n->direction = FETCH_FORWARD;
 					n->howMany = $2;
+					n->location = @2;
+					n->direction_keyword = FETCH_KEYWORD_FORWARD;
 					$$ = (Node *) n;
 				}
 			| FORWARD ALL opt_from_in cursor_name
@@ -7585,6 +7609,8 @@ fetch_args:	cursor_name
 					n->portalname = $4;
 					n->direction = FETCH_FORWARD;
 					n->howMany = FETCH_ALL;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_FORWARD_ALL;
 					$$ = (Node *) n;
 				}
 			| BACKWARD opt_from_in cursor_name
@@ -7594,6 +7620,8 @@ fetch_args:	cursor_name
 					n->portalname = $3;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = 1;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_BACKWARD;
 					$$ = (Node *) n;
 				}
 			| BACKWARD SignedIconst opt_from_in cursor_name
@@ -7603,6 +7631,8 @@ fetch_args:	cursor_name
 					n->portalname = $4;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = $2;
+					n->location = @2;
+					n->direction_keyword = FETCH_KEYWORD_BACKWARD;
 					$$ = (Node *) n;
 				}
 			| BACKWARD ALL opt_from_in cursor_name
@@ -7612,6 +7642,8 @@ fetch_args:	cursor_name
 					n->portalname = $4;
 					n->direction = FETCH_BACKWARD;
 					n->howMany = FETCH_ALL;
+					n->location = -1;
+					n->direction_keyword = FETCH_KEYWORD_BACKWARD_ALL;
 					$$ = (Node *) n;
 				}
 		;
