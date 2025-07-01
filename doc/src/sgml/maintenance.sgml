@@ -761,7 +761,10 @@ HINT:  Execute a database-wide VACUUM in that database.
      careful aging management, storage cleanup, and wraparound handling.
      There is a separate storage area which holds the list of members in
      each multixact, which also uses a 32-bit counter and which must also
-     be managed.
+     be managed.  The system function
+     <function>pg_get_multixact_members()</function> described in
+     <xref linkend="functions-pg-snapshot"/> can be used to examine the
+     transaction IDs associated with a multixact ID.
     </para>
 
     <para>
