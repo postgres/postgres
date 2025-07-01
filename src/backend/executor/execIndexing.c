@@ -268,7 +268,7 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		executor is performing an UPDATE that could not use an
  *		optimization like heapam's HOT (in more general terms a
  *		call to table_tuple_update() took place and set
- *		'update_indexes' to TUUI_All).  Receiving this hint makes
+ *		'update_indexes' to TU_All).  Receiving this hint makes
  *		us consider if we should pass down the 'indexUnchanged'
  *		hint in turn.  That's something that we figure out for
  *		each index_insert() call iff 'update' is true.
@@ -279,7 +279,7 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		HOT has been applied and any updated columns are indexed
  *		only by summarizing indexes (or in more general terms a
  *		call to table_tuple_update() took place and set
- *		'update_indexes' to TUUI_Summarizing). We can (and must)
+ *		'update_indexes' to TU_Summarizing). We can (and must)
  *		therefore only update the indexes that have
  *		'amsummarizing' = true.
  *
