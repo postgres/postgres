@@ -143,7 +143,6 @@ struct ctype_methods
  */
 struct pg_locale_struct
 {
-	char		provider;
 	bool		deterministic;
 	bool		collate_is_c;
 	bool		ctype_is_c;
