@@ -28,6 +28,7 @@ static inline void
 pg_numa_touch_mem_if_required(void *ptr)
 {
 	volatile uint64 touch pg_attribute_unused();
+
 	touch = *(volatile uint64 *) ptr;
 }
 
