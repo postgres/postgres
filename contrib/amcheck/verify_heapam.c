@@ -1942,7 +1942,7 @@ check_tuple(HeapCheckContext *ctx, bool *xmin_commit_status_ok,
 	if (RelationGetDescr(ctx->rel)->natts < ctx->natts)
 	{
 		report_corruption(ctx,
-						  psprintf("number of attributes %u exceeds maximum expected for table %u",
+						  psprintf("number of attributes %u exceeds maximum %u expected for table",
 								   ctx->natts,
 								   RelationGetDescr(ctx->rel)->natts));
 		return;
