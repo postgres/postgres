@@ -35,6 +35,16 @@ typedef enum
 
 typedef enum
 {
+	JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD,
+	JRESP_MOUNT_INFO_EXPECT_TYPE_VALUE,
+	JRESP_MOUNT_INFO_EXPECT_VERSION_VALUE,
+	JRESP_MOUNT_INFO_EXPECT_OPTIONS_START,
+	JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD,
+} JsonVaultRespMountInfoSemState;
+
+
+typedef enum
+{
 	JRESP_F_UNUSED,
 
 	JRESP_F_KEY
@@ -49,11 +59,26 @@ typedef struct JsonVaultRespState
 	char	   *key;
 } JsonVaultRespState;
 
+typedef struct JsonVaultMountInfoState
+{
+	JsonVaultRespMountInfoSemState state;
+	int			level;
+
+	char	   *type;
+	char	   *version;
+} JsonVaultMountInfoState;
+
 static JsonParseErrorType json_resp_object_start(void *state);
 static JsonParseErrorType json_resp_object_end(void *state);
 static JsonParseErrorType json_resp_scalar(void *state, char *token, JsonTokenType tokentype);
 static JsonParseErrorType json_resp_object_field_start(void *state, char *fname, bool isnull);
 static JsonParseErrorType parse_json_response(JsonVaultRespState *parse, JsonLexContext *lex);
+
+static JsonParseErrorType json_mountinfo_object_start(void *state);
+static JsonParseErrorType json_mountinfo_object_end(void *state);
+static JsonParseErrorType json_mountinfo_scalar(void *state, char *token, JsonTokenType tokentype);
+static JsonParseErrorType json_mountinfo_object_field_start(void *state, char *fname, bool isnull);
+static JsonParseErrorType parse_vault_mount_info(JsonVaultMountInfoState *state, JsonLexContext *lex);
 
 static char *get_keyring_vault_url(VaultV2Keyring *keyring, const char *key_name, char *out, size_t out_size);
 static bool curl_perform(VaultV2Keyring *keyring, const char *url, CurlString *outStr, long *httpCode, const char *postData);
@@ -299,38 +324,99 @@ validate(GenericKeyring *keyring)
 {
 	VaultV2Keyring *vault_keyring = (VaultV2Keyring *) keyring;
 	char		url[VAULT_URL_MAX_LEN];
+	int			len = 0;
 	CurlString	str;
 	long		httpCode = 0;
+	JsonParseErrorType json_error;
+	JsonLexContext *jlex = NULL;
+	JsonVaultMountInfoState parse;
 
 	/*
-	 * Validate connection by listing available keys at the root level of the
-	 * mount point
+	 * Validate that the mount has the correct engine type and version.
 	 */
-	snprintf(url, VAULT_URL_MAX_LEN, "%s/v1/%s/metadata/?list=true",
-			 vault_keyring->vault_url, vault_keyring->vault_mount_path);
+	len = snprintf(url, VAULT_URL_MAX_LEN, "%s/v1/sys/mounts/%s", vault_keyring->vault_url, vault_keyring->vault_mount_path);
+	if (len >= VAULT_URL_MAX_LEN)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("vault mounts URL is too long"));
 
 	if (!curl_perform(vault_keyring, url, &str, &httpCode, NULL))
-	{
 		ereport(ERROR,
 				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
 					   vault_keyring->keyring.provider_name));
-	}
+
+	if (httpCode != 200)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("failed to get mount info for \"%s\" at mountpoint \"%s\" (HTTP %ld)",
+					   vault_keyring->vault_url, vault_keyring->vault_mount_path, httpCode));
+
+	jlex = makeJsonLexContextCstringLen(NULL, str.ptr, str.len, PG_UTF8, true);
+	json_error = parse_vault_mount_info(&parse, jlex);
+
+	if (json_error != JSON_SUCCESS)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_JSON_TEXT),
+				errmsg("failed to parse mount info for \"%s\" at mountpoint \"%s\": %s",
+					   vault_keyring->vault_url, vault_keyring->vault_mount_path, json_errdetail(json_error, jlex)));
+
+	if (parse.type == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("failed to parse mount info for \"%s\" at mountpoint \"%s\": missing type field",
+					   vault_keyring->vault_url, vault_keyring->vault_mount_path));
+
+	if (strcmp(parse.type, "kv") != 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("vault mount at \"%s\" has unsupported engine type \"%s\"",
+					   vault_keyring->vault_mount_path, parse.type),
+				errhint("The only supported vault engine type is Key/Value version \"2\""));
+
+	if (parse.version == NULL)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("failed to parse mount info for \"%s\" at mountpoint \"%s\": missing version field",
+					   vault_keyring->vault_url, vault_keyring->vault_mount_path));
+
+	if (strcmp(parse.version, "2") != 0)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("vault mount at \"%s\" has unsupported Key/Value engine version \"%s\"",
+					   vault_keyring->vault_mount_path, parse.version),
+				errhint("The only supported vault engine type is Key/Value version \"2\""));
+
+	/*
+	 * Validate that we can read the secrets at the mount point.
+	 */
+	len = snprintf(url, VAULT_URL_MAX_LEN, "%s/v1/%s/metadata/?list=true",
+				   vault_keyring->vault_url, vault_keyring->vault_mount_path);
+	if (len >= VAULT_URL_MAX_LEN)
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("vault metadata URL is too long"));
+
+	if (!curl_perform(vault_keyring, url, &str, &httpCode, NULL))
+		ereport(ERROR,
+				errmsg("HTTP(S) request to keyring provider \"%s\" failed",
+					   vault_keyring->keyring.provider_name));
 
 	/* If the mount point doesn't have any secrets yet, we'll get a 404. */
 	if (httpCode != 200 && httpCode != 404)
-	{
 		ereport(ERROR,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("Listing secrets of \"%s\" at mountpoint \"%s\" failed",
 					   vault_keyring->vault_url, vault_keyring->vault_mount_path));
-	}
 
 	if (str.ptr != NULL)
 		pfree(str.ptr);
+
+	if (jlex != NULL)
+		freeJsonLexContext(jlex);
 }
 
 /*
- * JSON parser routines
+ * JSON parser routines for key response
  *
  * We expect the response in the form of:
  * {
@@ -444,6 +530,152 @@ json_resp_object_field_start(void *state, char *fname, bool isnull)
 		case JRESP_EXPECT_KEY:
 			if (strcmp(fname, "key") == 0 && parse->level == 2)
 				parse->field = JRESP_F_KEY;
+			break;
+		default:
+			/* NOP */
+			break;
+	}
+
+	return JSON_SUCCESS;
+}
+
+/*
+ * JSON parser routines for mount info
+ *
+ * We expect the response in the form of:
+ * {
+ * ...
+ *   "type": "kv",
+ *   "options": {
+ *      "version": "2"
+ *   }
+ * ...
+ * }
+ *
+ * the rest fields are ignored
+ */
+
+static JsonParseErrorType
+parse_vault_mount_info(JsonVaultMountInfoState *state, JsonLexContext *lex)
+{
+	JsonSemAction sem;
+
+	state->state = JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD;
+	state->type = NULL;
+	state->version = NULL;
+	state->level = -1;
+
+	memset(&sem, 0, sizeof(sem));
+	sem.semstate = state;
+	sem.object_start = json_mountinfo_object_start;
+	sem.object_end = json_mountinfo_object_end;
+	sem.scalar = json_mountinfo_scalar;
+	sem.object_field_start = json_mountinfo_object_field_start;
+
+	return pg_parse_json(lex, &sem);
+}
+
+static JsonParseErrorType
+json_mountinfo_object_start(void *state)
+{
+	JsonVaultMountInfoState *parse = (JsonVaultMountInfoState *) state;
+
+	switch (parse->state)
+	{
+		case JRESP_MOUNT_INFO_EXPECT_OPTIONS_START:
+			parse->state = JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD;
+			break;
+		default:
+			/* NOP */
+			break;
+	}
+
+	parse->level++;
+
+	return JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+json_mountinfo_object_end(void *state)
+{
+	JsonVaultMountInfoState *parse = (JsonVaultMountInfoState *) state;
+
+	if (parse->state == JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD)
+		parse->state = JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD;
+
+	parse->level--;
+
+	return JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+json_mountinfo_scalar(void *state, char *token, JsonTokenType tokentype)
+{
+	JsonVaultMountInfoState *parse = (JsonVaultMountInfoState *) state;
+
+	switch (parse->state)
+	{
+		case JRESP_MOUNT_INFO_EXPECT_TYPE_VALUE:
+			parse->type = token;
+			parse->state = JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD;
+			break;
+		case JRESP_MOUNT_INFO_EXPECT_VERSION_VALUE:
+			parse->version = token;
+			parse->state = JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD;
+			break;
+		case JRESP_MOUNT_INFO_EXPECT_OPTIONS_START:
+
+			/*
+			 * Reset "options" object expectations if we got scalar. Most
+			 * likely just a null.
+			 */
+			parse->state = JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD;
+			break;
+		default:
+			/* NOP */
+			break;
+	}
+
+	return JSON_SUCCESS;
+}
+
+static JsonParseErrorType
+json_mountinfo_object_field_start(void *state, char *fname, bool isnull)
+{
+	JsonVaultMountInfoState *parse = (JsonVaultMountInfoState *) state;
+
+	switch (parse->state)
+	{
+		case JRESP_MOUNT_INFO_EXPECT_TOPLEVEL_FIELD:
+			if (parse->level == 0)
+			{
+				if (strcmp(fname, "type") == 0)
+				{
+					parse->state = JRESP_MOUNT_INFO_EXPECT_TYPE_VALUE;
+					break;
+				}
+
+				if (strcmp(fname, "options") == 0)
+				{
+					parse->state = JRESP_MOUNT_INFO_EXPECT_OPTIONS_START;
+					break;
+				}
+			}
+			break;
+
+		case JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD:
+			if (parse->level == 1)
+			{
+				if (strcmp(fname, "version") == 0)
+				{
+					parse->state = JRESP_MOUNT_INFO_EXPECT_VERSION_VALUE;
+					break;
+				}
+			}
+			break;
+
+		default:
+			/* NOP */
 			break;
 	}
 

@@ -1,22 +1,17 @@
 CREATE EXTENSION pg_tde;
 \getenv root_token_file VAULT_ROOT_TOKEN_FILE
 \getenv cacert_file VAULT_CACERT_FILE
-SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect', 'https://127.0.0.1:8200', 'DUMMY-TOKEN', :'root_token_file', :'cacert_file');
- pg_tde_add_database_key_provider_vault_v2 
--------------------------------------------
- 
-(1 row)
-
--- FAILS
-SELECT pg_tde_create_key_using_database_key_provider('vault-v2-key', 'vault-incorrect');
-ERROR:  Invalid HTTP response from keyring provider "vault-incorrect": 404
-CREATE TABLE test_enc(
-	  id SERIAL,
-	  k INTEGER DEFAULT '0' NOT NULL,
-	  PRIMARY KEY (id)
-	) USING tde_heap;
-ERROR:  principal key not configured
-HINT:  Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one.
+-- FAILS as mount path does not exist
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect', 'https://127.0.0.1:8200', 'DUMMY-MOUNT-PATH', :'root_token_file', :'cacert_file');
+ERROR:  failed to get mount info for "https://127.0.0.1:8200" at mountpoint "DUMMY-MOUNT-PATH" (HTTP 400)
+-- FAILS as it's not supported engine type
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect', 'https://127.0.0.1:8200', 'cubbyhole', :'root_token_file', :'cacert_file');
+ERROR:  vault mount at "cubbyhole" has unsupported engine type "cubbyhole"
+HINT:  The only supported vault engine type is Key/Value version "2"
+-- FAILS as it's not supported engine version
+SELECT pg_tde_add_database_key_provider_vault_v2('vault-incorrect', 'https://127.0.0.1:8200', 'kv-v1', :'root_token_file', :'cacert_file');
+ERROR:  vault mount at "kv-v1" has unsupported Key/Value engine version "1"
+HINT:  The only supported vault engine type is Key/Value version "2"
 SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2', 'https://127.0.0.1:8200', 'secret', :'root_token_file', :'cacert_file');
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------
@@ -69,5 +64,5 @@ SELECT pg_tde_change_database_key_provider_vault_v2('vault-v2', 'https://127.0.0
 ERROR:  HTTP(S) request to keyring provider "vault-v2" failed
 -- HTTP against HTTPS server fails
 SELECT pg_tde_change_database_key_provider_vault_v2('vault-v2', 'http://127.0.0.1:8200', 'secret', :'root_token_file', NULL);
-ERROR:  Listing secrets of "http://127.0.0.1:8200" at mountpoint "secret" failed
+ERROR:  failed to get mount info for "http://127.0.0.1:8200" at mountpoint "secret" (HTTP 400)
 DROP EXTENSION pg_tde;

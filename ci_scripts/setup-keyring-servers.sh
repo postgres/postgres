@@ -25,6 +25,10 @@ export VAULT_ROOT_TOKEN_FILE=$(mktemp)
 jq -r .root_token "$CLUSTER_INFO" > "$VAULT_ROOT_TOKEN_FILE"
 export VAULT_CACERT_FILE=$(jq -r .ca_cert_path "$CLUSTER_INFO")
 rm "$CLUSTER_INFO"
+
+## We need to enable key/value version 1 engine for just for tests
+vault secrets enable -ca-cert="$VAULT_CACERT_FILE" -path=kv-v1 -version=1 kv
+
 if [ -v GITHUB_ACTIONS ]; then
     echo "VAULT_ROOT_TOKEN_FILE=$VAULT_ROOT_TOKEN_FILE" >> $GITHUB_ENV
     echo "VAULT_CACERT_FILE=$VAULT_CACERT_FILE" >> $GITHUB_ENV

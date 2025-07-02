@@ -41,6 +41,15 @@ For more information on related functions, see the link below:
 
 [Percona pg_tde Function Reference](../functions.md){.md-button}
 
+## Required permissions
+`pg_tde` requires given permissions on listed Vault's API endpoints
+* `sys/mounts/<mount>` - **read** permissions
+* `<mount>/data/*` - **create**, **read** permissions
+* `<mount>/metadata` - **list** permissions
+
+!!! note
+    For more information on Vault permissions, see the [following documentation](https://developer.hashicorp.com/vault/docs/concepts/policies).
+
 ## Next steps
 
 [Global Principal Key Configuration :material-arrow-right:](set-principal-key.md){.md-button}
