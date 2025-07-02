@@ -72,7 +72,7 @@ pg_comp_crc32c_dispatch(pg_crc32c crc, const void *data, size_t len)
 {
 	if (__builtin_constant_p(len) && len < 32)
 	{
-		const unsigned char *p = data;
+		const unsigned char *p = (const unsigned char *) data;
 
 		/*
 		 * For small constant inputs, inline the computation to avoid a
