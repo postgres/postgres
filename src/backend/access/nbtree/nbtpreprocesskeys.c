@@ -752,9 +752,12 @@ _bt_fix_scankey_strategy(ScanKey skey, int16 *indoption)
  *
  * Depending on the operator type, the key may be required for both scan
  * directions or just one.  Also, if the key is a row comparison header,
- * we have to mark its first subsidiary ScanKey as required.  (Subsequent
- * subsidiary ScanKeys are normally for lower-order columns, and thus
- * cannot be required, since they're after the first non-equality scankey.)
+ * we have to mark the appropriate subsidiary ScanKeys as required.  In such
+ * cases, the first subsidiary key is required, but subsequent ones are
+ * required only as long as they correspond to successive index columns and
+ * match the leading column as to sort direction.  Otherwise the row
+ * comparison ordering is different from the index ordering and so we can't
+ * stop the scan on the basis of those lower-order columns.
  *
  * Note: when we set required-key flag bits in a subsidiary scankey, we are
  * scribbling on a data structure belonging to the index AM's caller, not on
