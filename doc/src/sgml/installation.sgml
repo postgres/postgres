@@ -65,7 +65,7 @@
      </para>
 
      <para>
-      The minimum required version of <application>Meson</application> is 0.54.
+      The minimum required version of <application>Meson</application> is 0.57.2.
      </para>
     </listitem>
 

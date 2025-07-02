@@ -39,7 +39,7 @@ tests += {
       'postgres_fdw',
       'query_cancel',
     ],
-    'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
+    'regress_args': ['--dlpath', meson.project_build_root() / 'src/test/regress'],
   },
   'tap': {
     'tests': [

@@ -91,9 +91,9 @@ tests += {
   'bd': meson.current_build_dir(),
   'tap': {
     'env': {
-      'GZIP_PROGRAM': gzip.found() ? gzip.path() : '',
-      'LZ4': program_lz4.found() ? program_lz4.path() : '',
-      'ZSTD': program_zstd.found() ? program_zstd.path() : '',
+      'GZIP_PROGRAM': gzip.found() ? gzip.full_path() : '',
+      'LZ4': program_lz4.found() ? program_lz4.full_path() : '',
+      'ZSTD': program_zstd.found() ? program_zstd.full_path() : '',
       'with_icu': icu.found() ? 'yes' : 'no',
     },
     'tests': [

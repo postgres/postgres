@@ -11,10 +11,11 @@ project('postgresql',
   version: '19devel',
   license: 'PostgreSQL',
 
-  # We want < 0.56 for python 3.5 compatibility on old platforms. EPEL for
-  # RHEL 7 has 0.55. < 0.54 would require replacing some uses of the fs
-  # module, < 0.53 all uses of fs. So far there's no need to go to >=0.56.
-  meson_version: '>=0.54',
+  # We want < 0.62 for python 3.6 compatibility on old platforms.
+  # RHEL 8 has 0.58.  < 0.57 would require various additional
+  # backward-compatibility conditionals.
+  # Meson 0.57.0 and 0.57.1 are buggy, therefore >=0.57.2.
+  meson_version: '>=0.57.2',
   default_options: [
     'warning_level=1', #-Wall equivalent
     'b_pch=false',
@@ -1288,7 +1289,7 @@ pyopt = get_option('plpython')
 python3_dep = not_found_dep
 if not pyopt.disabled()
   pm = import('python')
-  python3_inst = pm.find_installation(python.path(), required: pyopt)
+  python3_inst = pm.find_installation(python.full_path(), required: pyopt)
   if python3_inst.found()
     python3_dep = python3_inst.dependency(embed: true, required: pyopt)
     # Remove this check after we depend on Meson >= 1.1.0
@@ -3150,13 +3151,13 @@ gen_kwlist_cmd = [
 ###
 
 if host_system == 'windows'
-  pg_ico = meson.source_root() / 'src' / 'port' / 'win32.ico'
+  pg_ico = meson.project_source_root() / 'src' / 'port' / 'win32.ico'
   win32ver_rc = files('src/port/win32ver.rc')
   rcgen = find_program('src/tools/rcgen', native: true)
 
   rcgen_base_args = [
     '--srcdir', '@SOURCE_DIR@',
-    '--builddir', meson.build_root(),
+    '--builddir', meson.project_build_root(),
     '--rcout', '@OUTPUT0@',
     '--out', '@OUTPUT1@',
     '--input', '@INPUT@',
@@ -3165,11 +3166,11 @@ if host_system == 'windows'
 
   if cc.get_argument_syntax() == 'msvc'
     rc = find_program('rc', required: true)
-    rcgen_base_args += ['--rc', rc.path()]
+    rcgen_base_args += ['--rc', rc.full_path()]
     rcgen_outputs = ['@BASENAME@.rc', '@BASENAME@.res']
   else
     windres = find_program('windres', required: true)
-    rcgen_base_args += ['--windres', windres.path()]
+    rcgen_base_args += ['--windres', windres.full_path()]
     rcgen_outputs = ['@BASENAME@.rc', '@BASENAME@.obj']
   endif
 
@@ -3402,7 +3403,7 @@ foreach t1 : configure_files
   potentially_conflicting_files += meson.current_build_dir() / t
 endforeach
 foreach sub, fnames : generated_sources_ac
-  sub = meson.build_root() / sub
+  sub = meson.project_build_root() / sub
   foreach fname : fnames
     potentially_conflicting_files += sub / fname
   endforeach
@@ -3502,7 +3503,7 @@ run_target('install-test-files',
 ###############################################################
 
 # DESTDIR for the installation we'll run tests in
-test_install_destdir = meson.build_root() / 'tmp_install/'
+test_install_destdir = meson.project_build_root() / 'tmp_install/'
 
 # DESTDIR + prefix appropriately munged
 if build_system != 'windows'
@@ -3545,7 +3546,7 @@ test('install_test_files',
     is_parallel: false,
     suite: ['setup'])
 
-test_result_dir = meson.build_root() / 'testrun'
+test_result_dir = meson.project_build_root() / 'testrun'
 
 
 # XXX: pg_regress doesn't assign unique ports on windows. To avoid the
@@ -3556,12 +3557,12 @@ testport = 40000
 
 test_env = environment()
 
-test_initdb_template = meson.build_root() / 'tmp_install' / 'initdb-template'
+test_initdb_template = meson.project_build_root() / 'tmp_install' / 'initdb-template'
 test_env.set('PG_REGRESS', pg_regress.full_path())
 test_env.set('REGRESS_SHLIB', regress_module.full_path())
 test_env.set('INITDB_TEMPLATE', test_initdb_template)
 # for Cluster.pm's portlock logic
-test_env.set('top_builddir', meson.build_root())
+test_env.set('top_builddir', meson.project_build_root())
 
 # Add the temporary installation to the library search path on platforms where
 # that works (everything but windows, basically). On windows everything
@@ -3605,26 +3606,20 @@ sys.exit(sp.returncode)
 # Test Generation
 ###############################################################
 
-# When using a meson version understanding exclude_suites, define a
-# 'tmp_install' test setup (the default) that excludes tests running against a
-# pre-existing install and a 'running' setup that conflicts with creation of
-# the temporary installation and tap tests (which don't support running
-# against a running server).
+# Define a 'tmp_install' test setup (the default) that excludes tests
+# running against a pre-existing install and a 'running' setup that
+# conflicts with creation of the temporary installation and tap tests
+# (which don't support running against a running server).
 
 running_suites = []
 install_suites = []
-if meson.version().version_compare('>=0.57')
-  runningcheck = true
-else
-  runningcheck = false
-endif
 
 testwrap = files('src/tools/testwrap')
 
 foreach test_dir : tests
   testwrap_base = [
     testwrap,
-    '--basedir', meson.build_root(),
+    '--basedir', meson.project_build_root(),
     '--srcdir', test_dir['sd'],
     # Some test suites are not run by default but can be run if selected by the
     # user via variable PG_TEST_EXTRA. Pass configuration time value of
@@ -3714,7 +3709,7 @@ foreach test_dir : tests
       install_suites += test_group
 
       # some tests can't support running against running DB
-      if runningcheck and t.get('runningcheck', true)
+      if t.get('runningcheck', true)
         test(test_group_running / kind,
           python,
           args: [
@@ -3741,8 +3736,8 @@ foreach test_dir : tests
       endif
 
       test_command = [
-        perl.path(),
-        '-I', meson.source_root() / 'src/test/perl',
+        perl.full_path(),
+        '-I', meson.project_source_root() / 'src/test/perl',
         '-I', test_dir['sd'],
       ]
 
@@ -3797,13 +3792,11 @@ foreach test_dir : tests
 endforeach # directories with tests
 
 # repeat condition so meson realizes version dependency
-if meson.version().version_compare('>=0.57')
-  add_test_setup('tmp_install',
-    is_default: true,
-    exclude_suites: running_suites)
-  add_test_setup('running',
-    exclude_suites: ['setup'] + install_suites)
-endif
+add_test_setup('tmp_install',
+  is_default: true,
+  exclude_suites: running_suites)
+add_test_setup('running',
+  exclude_suites: ['setup'] + install_suites)
 
 
 
@@ -3860,7 +3853,7 @@ tar_gz = custom_target('tar.gz',
             '--format', 'tar.gz',
             '-9',
             '--prefix', distdir + '/',
-            '-o', join_paths(meson.build_root(), '@OUTPUT@'),
+            '-o', join_paths(meson.project_build_root(), '@OUTPUT@'),
             pg_git_revision],
   output: distdir + '.tar.gz',
 )
@@ -3870,11 +3863,11 @@ if bzip2.found()
     build_always_stale: true,
     command: [git, '-C', '@SOURCE_ROOT@',
               '-c', 'core.autocrlf=false',
-              '-c', 'tar.tar.bz2.command="@0@" -c'.format(bzip2.path()),
+              '-c', 'tar.tar.bz2.command="@0@" -c'.format(bzip2.full_path()),
               'archive',
               '--format', 'tar.bz2',
               '--prefix', distdir + '/',
-              '-o', join_paths(meson.build_root(), '@OUTPUT@'),
+              '-o', join_paths(meson.project_build_root(), '@OUTPUT@'),
               pg_git_revision],
     output: distdir + '.tar.bz2',
   )
@@ -3891,10 +3884,7 @@ alias_target('pgdist', [tar_gz, tar_bz2])
 # But not if we are in a subproject, in case the parent project wants to
 # create a dist using the standard Meson command.
 if not meson.is_subproject()
-  # We can only pass the identifier perl here when we depend on >= 0.55
-  if meson.version().version_compare('>=0.55')
-    meson.add_dist_script(perl, '-e', 'exit 1')
-  endif
+  meson.add_dist_script(perl, '-e', 'exit 1')
 endif
 
 
@@ -3903,106 +3893,102 @@ endif
 # The End, The End, My Friend
 ###############################################################
 
-if meson.version().version_compare('>=0.57')
+summary(
+  {
+    'data block size': '@0@ kB'.format(cdata.get('BLCKSZ') / 1024),
+    'WAL block size': '@0@ kB'.format(cdata.get('XLOG_BLCKSZ') / 1024),
+    'segment size': get_option('segsize_blocks') != 0 ?
+      '@0@ blocks'.format(cdata.get('RELSEG_SIZE')) :
+      '@0@ GB'.format(get_option('segsize')),
+  },
+  section: 'Data layout',
+)
 
+summary(
+  {
+    'host system': '@0@ @1@'.format(host_system, host_cpu),
+    'build system': '@0@ @1@'.format(build_machine.system(),
+                                     build_machine.cpu_family()),
+  },
+  section: 'System',
+)
+
+summary(
+  {
+    'linker': '@0@'.format(cc.get_linker_id()),
+    'C compiler': '@0@ @1@'.format(cc.get_id(), cc.version()),
+  },
+  section: 'Compiler',
+)
+
+summary(
+  {
+    'CPP FLAGS': ' '.join(cppflags),
+    'C FLAGS, functional': ' '.join(cflags),
+    'C FLAGS, warnings': ' '.join(cflags_warn),
+    'C FLAGS, modules': ' '.join(cflags_mod),
+    'C FLAGS, user specified': ' '.join(get_option('c_args')),
+    'LD FLAGS': ' '.join(ldflags + get_option('c_link_args')),
+  },
+  section: 'Compiler Flags',
+)
+
+if llvm.found()
   summary(
     {
-      'data block size': '@0@ kB'.format(cdata.get('BLCKSZ') / 1024),
-      'WAL block size': '@0@ kB'.format(cdata.get('XLOG_BLCKSZ') / 1024),
-      'segment size': get_option('segsize_blocks') != 0 ?
-        '@0@ blocks'.format(cdata.get('RELSEG_SIZE')) :
-        '@0@ GB'.format(get_option('segsize')),
-    },
-    section: 'Data layout',
-  )
-
-  summary(
-    {
-      'host system': '@0@ @1@'.format(host_system, host_cpu),
-      'build system': '@0@ @1@'.format(build_machine.system(),
-                                       build_machine.cpu_family()),
-    },
-    section: 'System',
-  )
-
-  summary(
-    {
-      'linker': '@0@'.format(cc.get_linker_id()),
-      'C compiler': '@0@ @1@'.format(cc.get_id(), cc.version()),
+      'C++ compiler': '@0@ @1@'.format(cpp.get_id(), cpp.version()),
     },
     section: 'Compiler',
   )
 
   summary(
     {
-      'CPP FLAGS': ' '.join(cppflags),
-      'C FLAGS, functional': ' '.join(cflags),
-      'C FLAGS, warnings': ' '.join(cflags_warn),
-      'C FLAGS, modules': ' '.join(cflags_mod),
-      'C FLAGS, user specified': ' '.join(get_option('c_args')),
-      'LD FLAGS': ' '.join(ldflags + get_option('c_link_args')),
+      'C++ FLAGS, functional': ' '.join(cxxflags),
+      'C++ FLAGS, warnings': ' '.join(cxxflags_warn),
+      'C++ FLAGS, user specified': ' '.join(get_option('cpp_args')),
     },
     section: 'Compiler Flags',
   )
-
-  if llvm.found()
-    summary(
-      {
-        'C++ compiler': '@0@ @1@'.format(cpp.get_id(), cpp.version()),
-      },
-      section: 'Compiler',
-    )
-
-    summary(
-      {
-        'C++ FLAGS, functional': ' '.join(cxxflags),
-        'C++ FLAGS, warnings': ' '.join(cxxflags_warn),
-        'C++ FLAGS, user specified': ' '.join(get_option('cpp_args')),
-      },
-      section: 'Compiler Flags',
-    )
-  endif
-
-  summary(
-    {
-      'bison': '@0@ @1@'.format(bison.full_path(), bison_version),
-      'dtrace': dtrace,
-      'flex': '@0@ @1@'.format(flex.full_path(), flex_version),
-    },
-    section: 'Programs',
-  )
-
-  summary(
-    {
-      'bonjour': bonjour,
-      'bsd_auth': bsd_auth,
-      'docs': docs_dep,
-      'docs_pdf': docs_pdf_dep,
-      'gss': gssapi,
-      'icu': icu,
-      'ldap': ldap,
-      'libcurl': libcurl,
-      'libnuma': libnuma,
-      'liburing': liburing,
-      'libxml': libxml,
-      'libxslt': libxslt,
-      'llvm': llvm,
-      'lz4': lz4,
-      'nls': libintl,
-      'openssl': ssl,
-      'pam': pam,
-      'plperl': [perl_dep, perlversion],
-      'plpython': python3_dep,
-      'pltcl': tcl_dep,
-      'readline': readline,
-      'selinux': selinux,
-      'systemd': systemd,
-      'uuid': uuid,
-      'zlib': zlib,
-      'zstd': zstd,
-    },
-    section: 'External libraries',
-    list_sep: ' ',
-  )
-
 endif
+
+summary(
+  {
+    'bison': '@0@ @1@'.format(bison.full_path(), bison_version),
+    'dtrace': dtrace,
+    'flex': '@0@ @1@'.format(flex.full_path(), flex_version),
+  },
+  section: 'Programs',
+)
+
+summary(
+  {
+    'bonjour': bonjour,
+    'bsd_auth': bsd_auth,
+    'docs': docs_dep,
+    'docs_pdf': docs_pdf_dep,
+    'gss': gssapi,
+    'icu': icu,
+    'ldap': ldap,
+    'libcurl': libcurl,
+    'libnuma': libnuma,
+    'liburing': liburing,
+    'libxml': libxml,
+    'libxslt': libxslt,
+    'llvm': llvm,
+    'lz4': lz4,
+    'nls': libintl,
+    'openssl': ssl,
+    'pam': pam,
+    'plperl': [perl_dep, perlversion],
+    'plpython': python3_dep,
+    'pltcl': tcl_dep,
+    'readline': readline,
+    'selinux': selinux,
+    'systemd': systemd,
+    'uuid': uuid,
+    'zlib': zlib,
+    'zstd': zstd,
+  },
+  section: 'External libraries',
+  list_sep: ' ',
+)

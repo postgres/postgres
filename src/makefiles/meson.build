@@ -6,7 +6,7 @@
 
 # Emulation of PGAC_CHECK_STRIP
 strip_bin = find_program(get_option('STRIP'), required: false, native: true)
-strip_cmd = strip_bin.found() ? [strip_bin.path()] : [':']
+strip_cmd = strip_bin.found() ? [strip_bin.full_path()] : [':']
 
 working_strip = false
 if strip_bin.found()
@@ -49,8 +49,8 @@ pgxs_kv = {
   'PORTNAME': portname,
   'PG_SYSROOT': pg_sysroot,
 
-  'abs_top_builddir': meson.build_root(),
-  'abs_top_srcdir': meson.source_root(),
+  'abs_top_builddir': meson.project_build_root(),
+  'abs_top_srcdir': meson.project_source_root(),
 
   'enable_rpath': get_option('rpath') ? 'yes' : 'no',
   'enable_nls': libintl.found() ? 'yes' : 'no',
@@ -123,7 +123,7 @@ pgxs_kv = {
 
 if llvm.found()
   pgxs_kv += {
-    'CLANG': clang.path(),
+    'CLANG': clang.full_path(),
     'CXX': ' '.join(cpp.cmd_array()),
     'LLVM_BINPATH': llvm_binpath,
   }
@@ -258,7 +258,7 @@ pgxs_deps = {
 pgxs_cdata = configuration_data(pgxs_kv)
 
 foreach b, p : pgxs_bins
-  pgxs_cdata.set(b, p.found() ? p.path() : '')
+  pgxs_cdata.set(b, p.found() ? p.full_path() : '')
 endforeach
 
 foreach pe : pgxs_empty

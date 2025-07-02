@@ -77,7 +77,7 @@ tests += {
       't/002_client.pl',
     ],
     'env': {
-      'PYTHON': python.path(),
+      'PYTHON': python.full_path(),
       'with_libcurl': oauth_flow_supported ? 'yes' : 'no',
       'with_python': 'yes',
     },

@@ -24,7 +24,7 @@ tests += {
     'tests': [
       't/001_basic.pl',
     ],
-    'env': {'GZIP_PROGRAM': gzip.found() ? gzip.path() : '',
-            'TAR': tar.found() ? tar.path() : '' },
+    'env': {'GZIP_PROGRAM': gzip.found() ? gzip.full_path() : '',
+            'TAR': tar.found() ? tar.full_path() : '' },
   },
 }
