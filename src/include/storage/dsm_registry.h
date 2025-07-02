@@ -13,10 +13,15 @@
 #ifndef DSM_REGISTRY_H
 #define DSM_REGISTRY_H
 
+#include "lib/dshash.h"
+
 extern void *GetNamedDSMSegment(const char *name, size_t size,
 								void (*init_callback) (void *ptr),
 								bool *found);
-
+extern dsa_area *GetNamedDSA(const char *name, bool *found);
+extern dshash_table *GetNamedDSHash(const char *name,
+									const dshash_parameters *params,
+									bool *found);
 extern Size DSMRegistryShmemSize(void);
 extern void DSMRegistryShmemInit(void);
 

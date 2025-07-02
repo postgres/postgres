@@ -532,6 +532,21 @@ dsa_attach(dsa_handle handle)
 }
 
 /*
+ * Returns whether the area with the given handle was already attached by the
+ * current process.  The area must have been created with dsa_create (not
+ * dsa_create_in_place).
+ */
+bool
+dsa_is_attached(dsa_handle handle)
+{
+	/*
+	 * An area handle is really a DSM segment handle for the first segment, so
+	 * we can just search for that.
+	 */
+	return dsm_find_mapping(handle) != NULL;
+}
+
+/*
  * Attach to an area that was created with dsa_create_in_place.  The caller
  * must somehow know the location in memory that was used when the area was
  * created, though it may be mapped at a different virtual address in this

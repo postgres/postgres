@@ -601,6 +601,7 @@ DR_intorel
 DR_printtup
 DR_sqlfunction
 DR_transientrel
+DSMREntryType
 DSMRegistryCtxStruct
 DSMRegistryEntry
 DWORD
@@ -1737,6 +1738,9 @@ Name
 NameData
 NameHashEntry
 NamedArgExpr
+NamedDSAState
+NamedDSHState
+NamedDSMState
 NamedLWLockTranche
 NamedLWLockTrancheRequest
 NamedTuplestoreScan
@@ -3006,6 +3010,7 @@ Tcl_Obj
 Tcl_Size
 Tcl_Time
 TempNamespaceStatus
+TestDSMRegistryHashEntry
 TestDSMRegistryStruct
 TestDecodingData
 TestDecodingTxnData

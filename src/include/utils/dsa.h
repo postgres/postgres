@@ -145,6 +145,7 @@ extern dsa_area *dsa_create_in_place_ext(void *place, size_t size,
 										 size_t init_segment_size,
 										 size_t max_segment_size);
 extern dsa_area *dsa_attach(dsa_handle handle);
+extern bool dsa_is_attached(dsa_handle handle);
 extern dsa_area *dsa_attach_in_place(void *place, dsm_segment *segment);
 extern void dsa_release_in_place(void *place);
 extern void dsa_on_dsm_detach_release_in_place(dsm_segment *, Datum);
