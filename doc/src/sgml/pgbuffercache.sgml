@@ -37,12 +37,12 @@
 
  <para>
   This module provides the <function>pg_buffercache_pages()</function>
-  function (wrapped in the <structname>pg_buffercache</structname> view),
+  function (wrapped in the <structname>pg_buffercache</structname> view), the
   <function>pg_buffercache_numa_pages()</function> function (wrapped in the
   <structname>pg_buffercache_numa</structname> view), the
   <function>pg_buffercache_summary()</function> function, the
   <function>pg_buffercache_usage_counts()</function> function, the
-  <function>pg_buffercache_evict()</function>, the
+  <function>pg_buffercache_evict()</function> function, the
   <function>pg_buffercache_evict_relation()</function> function and the
   <function>pg_buffercache_evict_all()</function> function.
  </para>
@@ -55,7 +55,7 @@
  </para>
 
  <para>
-  The <function>pg_buffercache_numa_pages()</function> provides
+  The <function>pg_buffercache_numa_pages()</function> function provides
   <acronym>NUMA</acronym> node mappings for shared buffer entries. This
   information is not part of <function>pg_buffercache_pages()</function>
   itself, as it is much slower to retrieve.
