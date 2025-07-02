@@ -157,35 +157,6 @@ typedef struct ExprState
  *		entries for a particular index.  Used for both index_build and
  *		retail creation of index entries.
  *
- *		NumIndexAttrs		total number of columns in this index
- *		NumIndexKeyAttrs	number of key columns in index
- *		IndexAttrNumbers	underlying-rel attribute numbers used as keys
- *							(zeroes indicate expressions). It also contains
- * 							info about included columns.
- *		Expressions			expr trees for expression entries, or NIL if none
- *		ExpressionsState	exec state for expressions, or NIL if none
- *		Predicate			partial-index predicate, or NIL if none
- *		PredicateState		exec state for predicate, or NIL if none
- *		ExclusionOps		Per-column exclusion operators, or NULL if none
- *		ExclusionProcs		Underlying function OIDs for ExclusionOps
- *		ExclusionStrats		Opclass strategy numbers for ExclusionOps
- *		UniqueOps			These are like Exclusion*, but for unique indexes
- *		UniqueProcs
- *		UniqueStrats
- *		Unique				is it a unique index?
- *		NullsNotDistinct	is NULLS NOT DISTINCT?
- *		ReadyForInserts		is it valid for inserts?
- *		CheckedUnchanged	IndexUnchanged status determined yet?
- *		IndexUnchanged		aminsert hint, cached for retail inserts
- *		Concurrent			are we doing a concurrent index build?
- *		BrokenHotChain		did we detect any broken HOT chains?
- *		WithoutOverlaps		is it a WITHOUT OVERLAPS index?
- *		Summarizing			is it a summarizing index?
- *		ParallelWorkers		# of workers requested (excludes leader)
- *		Am					Oid of index AM
- *		AmCache				private cache area for index AM
- *		Context				memory context holding this IndexInfo
- *
  * ii_Concurrent, ii_BrokenHotChain, and ii_ParallelWorkers are used only
  * during index build; they're conventionally zeroed otherwise.
  * ----------------
@@ -193,31 +164,67 @@ typedef struct ExprState
 typedef struct IndexInfo
 {
 	NodeTag		type;
-	int			ii_NumIndexAttrs;	/* total number of columns in index */
-	int			ii_NumIndexKeyAttrs;	/* number of key columns in index */
+
+	/* total number of columns in index */
+	int			ii_NumIndexAttrs;
+	/* number of key columns in index */
+	int			ii_NumIndexKeyAttrs;
+
+	/*
+	 * Underlying-rel attribute numbers used as keys (zeroes indicate
+	 * expressions). It also contains info about included columns.
+	 */
 	AttrNumber	ii_IndexAttrNumbers[INDEX_MAX_KEYS];
+
+	/* expr trees for expression entries, or NIL if none */
 	List	   *ii_Expressions; /* list of Expr */
+	/* exec state for expressions, or NIL if none */
 	List	   *ii_ExpressionsState;	/* list of ExprState */
+
+	/* partial-index predicate, or NIL if none */
 	List	   *ii_Predicate;	/* list of Expr */
+	/* exec state for expressions, or NIL if none */
 	ExprState  *ii_PredicateState;
+
+	/* Per-column exclusion operators, or NULL if none */
 	Oid		   *ii_ExclusionOps;	/* array with one entry per column */
+	/* Underlying function OIDs for ExclusionOps */
 	Oid		   *ii_ExclusionProcs;	/* array with one entry per column */
+	/* Opclass strategy numbers for ExclusionOps */
 	uint16	   *ii_ExclusionStrats; /* array with one entry per column */
+
+	/* These are like Exclusion*, but for unique indexes */
 	Oid		   *ii_UniqueOps;	/* array with one entry per column */
 	Oid		   *ii_UniqueProcs; /* array with one entry per column */
 	uint16	   *ii_UniqueStrats;	/* array with one entry per column */
+
+	/* is it a unique index? */
 	bool		ii_Unique;
+	/* is NULLS NOT DISTINCT? */
 	bool		ii_NullsNotDistinct;
+	/* is it valid for inserts? */
 	bool		ii_ReadyForInserts;
+	/* IndexUnchanged status determined yet? */
 	bool		ii_CheckedUnchanged;
+	/* aminsert hint, cached for retail inserts */
 	bool		ii_IndexUnchanged;
+	/* are we doing a concurrent index build? */
 	bool		ii_Concurrent;
+	/* did we detect any broken HOT chains? */
 	bool		ii_BrokenHotChain;
+	/* is it a summarizing index? */
 	bool		ii_Summarizing;
+	/* is it a WITHOUT OVERLAPS index? */
 	bool		ii_WithoutOverlaps;
+	/* # of workers requested (excludes leader) */
 	int			ii_ParallelWorkers;
+
+	/* Oid of index AM */
 	Oid			ii_Am;
+	/* private cache area for index AM */
 	void	   *ii_AmCache;
+
+	/* memory context holding this IndexInfo */
 	MemoryContext ii_Context;
 } IndexInfo;
 
