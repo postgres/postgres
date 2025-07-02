@@ -2711,8 +2711,7 @@ MergeAttributes(List *columns, const List *supers, char relpersistence,
 							RelationGetRelationName(relation))));
 
 		/* If existing rel is temp, it must belong to this session */
-		if (relation->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-			!relation->rd_islocaltemp)
+		if (RELATION_IS_OTHER_TEMP(relation))
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg(!is_partition
@@ -17230,15 +17229,13 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode)
 						RelationGetRelationName(parent_rel))));
 
 	/* If parent rel is temp, it must belong to this session */
-	if (parent_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!parent_rel->rd_islocaltemp)
+	if (RELATION_IS_OTHER_TEMP(parent_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot inherit from temporary relation of another session")));
 
 	/* Ditto for the child */
-	if (child_rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!child_rel->rd_islocaltemp)
+	if (RELATION_IS_OTHER_TEMP(child_rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot inherit to temporary relation of another session")));
@@ -20309,15 +20306,13 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 						RelationGetRelationName(rel))));
 
 	/* If the parent is temp, it must belong to this session */
-	if (rel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!rel->rd_islocaltemp)
+	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach as partition of temporary relation of another session")));
 
 	/* Ditto for the partition */
-	if (attachrel->rd_rel->relpersistence == RELPERSISTENCE_TEMP &&
-		!attachrel->rd_islocaltemp)
+	if (RELATION_IS_OTHER_TEMP(attachrel))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot attach temporary relation of another session as partition")));
