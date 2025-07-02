@@ -195,54 +195,123 @@ ORDER BY proname DESC, proargtypes DESC, pronamespace DESC LIMIT 1;
 (1 row)
 
 --
--- Add coverage for RowCompare quals whose rhs row has a NULL that ends scan
+-- Forwards scan RowCompare qual whose row arg has a NULL that affects our
+-- initial positioning strategy
 --
 explain (costs off)
 SELECT proname, proargtypes, pronamespace
    FROM pg_proc
-   WHERE proname = 'abs' AND (proname, proargtypes) < ('abs', NULL)
+   WHERE (proname, proargtypes) >= ('abs', NULL) AND proname <= 'abs'
 ORDER BY proname, proargtypes, pronamespace;
-                                                 QUERY PLAN                                                  
--------------------------------------------------------------------------------------------------------------
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
  Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
-   Index Cond: ((ROW(proname, proargtypes) < ROW('abs'::name, NULL::oidvector)) AND (proname = 'abs'::name))
+   Index Cond: ((ROW(proname, proargtypes) >= ROW('abs'::name, NULL::oidvector)) AND (proname <= 'abs'::name))
 (2 rows)
 
 SELECT proname, proargtypes, pronamespace
    FROM pg_proc
-   WHERE proname = 'abs' AND (proname, proargtypes) < ('abs', NULL)
+   WHERE (proname, proargtypes) >= ('abs', NULL) AND proname <= 'abs'
 ORDER BY proname, proargtypes, pronamespace;
  proname | proargtypes | pronamespace 
 ---------+-------------+--------------
 (0 rows)
 
 --
--- Add coverage for backwards scan RowCompare quals whose rhs row has a NULL
--- that ends scan
+-- Forwards scan RowCompare quals whose row arg has a NULL that ends scan
 --
 explain (costs off)
 SELECT proname, proargtypes, pronamespace
    FROM pg_proc
-   WHERE proname = 'abs' AND (proname, proargtypes) > ('abs', NULL)
-ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
-                                                 QUERY PLAN                                                  
--------------------------------------------------------------------------------------------------------------
- Index Only Scan Backward using pg_proc_proname_args_nsp_index on pg_proc
-   Index Cond: ((ROW(proname, proargtypes) > ROW('abs'::name, NULL::oidvector)) AND (proname = 'abs'::name))
+   WHERE proname >= 'abs' AND (proname, proargtypes) < ('abs', NULL)
+ORDER BY proname, proargtypes, pronamespace;
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abs'::name) AND (ROW(proname, proargtypes) < ROW('abs'::name, NULL::oidvector)))
 (2 rows)
 
 SELECT proname, proargtypes, pronamespace
    FROM pg_proc
-   WHERE proname = 'abs' AND (proname, proargtypes) > ('abs', NULL)
+   WHERE proname >= 'abs' AND (proname, proargtypes) < ('abs', NULL)
+ORDER BY proname, proargtypes, pronamespace;
+ proname | proargtypes | pronamespace 
+---------+-------------+--------------
+(0 rows)
+
+--
+-- Backwards scan RowCompare qual whose row arg has a NULL that affects our
+-- initial positioning strategy
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname >= 'abs' AND (proname, proargtypes) <= ('abs', NULL)
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
+                                                  QUERY PLAN                                                   
+---------------------------------------------------------------------------------------------------------------
+ Index Only Scan Backward using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((proname >= 'abs'::name) AND (ROW(proname, proargtypes) <= ROW('abs'::name, NULL::oidvector)))
+(2 rows)
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname >= 'abs' AND (proname, proargtypes) <= ('abs', NULL)
 ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
  proname | proargtypes | pronamespace 
 ---------+-------------+--------------
 (0 rows)
 
 --
--- Add coverage for recheck of > key following array advancement on previous
--- (left sibling) page that used a high key whose attribute value corresponding
--- to the > key was -inf (due to being truncated when the high key was created).
+-- Backwards scan RowCompare qual whose row arg has a NULL that ends scan
+--
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, proargtypes) > ('abs', NULL) AND proname <= 'abs'
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
+                                                  QUERY PLAN                                                  
+--------------------------------------------------------------------------------------------------------------
+ Index Only Scan Backward using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((ROW(proname, proargtypes) > ROW('abs'::name, NULL::oidvector)) AND (proname <= 'abs'::name))
+(2 rows)
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE (proname, proargtypes) > ('abs', NULL) AND proname <= 'abs'
+ORDER BY proname DESC, proargtypes DESC, pronamespace DESC;
+ proname | proargtypes | pronamespace 
+---------+-------------+--------------
+(0 rows)
+
+-- Makes B-Tree preprocessing deal with unmarking redundant keys that were
+-- initially marked required (test case relies on current row compare
+-- preprocessing limitations)
+explain (costs off)
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'zzzzzz' AND (proname, proargtypes) > ('abs', NULL)
+   AND pronamespace IN (1, 2, 3) AND proargtypes IN ('26 23', '5077')
+ORDER BY proname, proargtypes, pronamespace;
+                                                                                                     QUERY PLAN                                                                                                     
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using pg_proc_proname_args_nsp_index on pg_proc
+   Index Cond: ((ROW(proname, proargtypes) > ROW('abs'::name, NULL::oidvector)) AND (proname = 'zzzzzz'::name) AND (proargtypes = ANY ('{"26 23",5077}'::oidvector[])) AND (pronamespace = ANY ('{1,2,3}'::oid[])))
+(2 rows)
+
+SELECT proname, proargtypes, pronamespace
+   FROM pg_proc
+   WHERE proname = 'zzzzzz' AND (proname, proargtypes) > ('abs', NULL)
+   AND pronamespace IN (1, 2, 3) AND proargtypes IN ('26 23', '5077')
+ORDER BY proname, proargtypes, pronamespace;
+ proname | proargtypes | pronamespace 
+---------+-------------+--------------
+(0 rows)
+
+--
+-- Performs a recheck of > key following array advancement on previous (left
+-- sibling) page that used a high key whose attribute value corresponding to
+-- the > key was -inf (due to being truncated when the high key was created).
 --
 -- XXX This relies on the assumption that tenk1_thous_tenthous has a truncated
 -- high key "(183, -inf)" on the first page that we'll scan.  The test will only

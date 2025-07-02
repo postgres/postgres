@@ -792,12 +792,25 @@ _bt_mark_scankey_required(ScanKey skey)
 	if (skey->sk_flags & SK_ROW_HEADER)
 	{
 		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+		AttrNumber	attno = skey->sk_attno;
 
 		/* First subkey should be same column/operator as the header */
-		Assert(subkey->sk_flags & SK_ROW_MEMBER);
-		Assert(subkey->sk_attno == skey->sk_attno);
+		Assert(subkey->sk_attno == attno);
 		Assert(subkey->sk_strategy == skey->sk_strategy);
-		subkey->sk_flags |= addflags;
+
+		for (;;)
+		{
+			Assert(subkey->sk_flags & SK_ROW_MEMBER);
+			if (subkey->sk_attno != attno)
+				break;			/* non-adjacent key, so not required */
+			if (subkey->sk_strategy != skey->sk_strategy)
+				break;			/* wrong direction, so not required */
+			subkey->sk_flags |= addflags;
+			if (subkey->sk_flags & SK_ROW_END)
+				break;
+			subkey++;
+			attno++;
+		}
 	}
 }
 

@@ -1016,8 +1016,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * traversing a lot of null entries at the start of the scan.
 	 *
 	 * In this loop, row-comparison keys are treated the same as keys on their
-	 * first (leftmost) columns.  We'll add on lower-order columns of the row
-	 * comparison below, if possible.
+	 * first (leftmost) columns.  We'll add all lower-order columns of the row
+	 * comparison that were marked required during preprocessing below.
 	 *
 	 * _bt_advance_array_keys needs to know exactly how we'll reposition the
 	 * scan (should it opt to schedule another primitive index scan).  It is
@@ -1261,16 +1261,18 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	Assert(keysz <= INDEX_MAX_KEYS);
 	for (int i = 0; i < keysz; i++)
 	{
-		ScanKey		cur = startKeys[i];
+		ScanKey		bkey = startKeys[i];
 
-		Assert(cur->sk_attno == i + 1);
+		Assert(bkey->sk_attno == i + 1);
 
-		if (cur->sk_flags & SK_ROW_HEADER)
+		if (bkey->sk_flags & SK_ROW_HEADER)
 		{
 			/*
 			 * Row comparison header: look to the first row member instead
 			 */
-			ScanKey		subkey = (ScanKey) DatumGetPointer(cur->sk_argument);
+			ScanKey		subkey = (ScanKey) DatumGetPointer(bkey->sk_argument);
+			bool		loosen_strat = false,
+						tighten_strat = false;
 
 			/*
 			 * Cannot be a NULL in the first row member: _bt_preprocess_keys
@@ -1278,8 +1280,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * ever getting this far
 			 */
 			Assert(subkey->sk_flags & SK_ROW_MEMBER);
-			Assert(subkey->sk_attno == cur->sk_attno);
+			Assert(subkey->sk_attno == bkey->sk_attno);
 			Assert(!(subkey->sk_flags & SK_ISNULL));
+
+			/*
+			 * This is either a > or >= key (during backwards scans it is
+			 * either < or <=) that was marked required during preprocessing.
+			 * Later so->keyData[] keys can't have been marked required, so
+			 * our row compare header key must be the final startKeys[] entry.
+			 */
+			Assert(subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD));
+			Assert(i == keysz - 1);
 
 			/*
 			 * The member scankeys are already in insertion format (ie, they
@@ -1288,112 +1299,141 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			memcpy(inskey.scankeys + i, subkey, sizeof(ScanKeyData));
 
 			/*
-			 * If the row comparison is the last positioning key we accepted,
-			 * try to add additional keys from the lower-order row members.
-			 * (If we accepted independent conditions on additional index
-			 * columns, we use those instead --- doesn't seem worth trying to
-			 * determine which is more restrictive.)  Note that this is OK
-			 * even if the row comparison is of ">" or "<" type, because the
-			 * condition applied to all but the last row member is effectively
-			 * ">=" or "<=", and so the extra keys don't break the positioning
-			 * scheme.  But, by the same token, if we aren't able to use all
-			 * the row members, then the part of the row comparison that we
-			 * did use has to be treated as just a ">=" or "<=" condition, and
-			 * so we'd better adjust strat_total accordingly.
+			 * Now look to later row compare members.
+			 *
+			 * If there's an "index attribute gap" between two row compare
+			 * members, the second member won't have been marked required, and
+			 * so can't be used as a starting boundary key here.  The part of
+			 * the row comparison that we do still use has to be treated as a
+			 * ">=" or "<=" condition.  For example, a qual "(a, c) > (1, 42)"
+			 * with an omitted intervening index attribute "b" will use an
+			 * insertion scan key "a >= 1".  Even the first "a = 1" tuple on
+			 * the leaf level might satisfy the row compare qual.
+			 *
+			 * We're able to use a _more_ restrictive strategy when we reach a
+			 * NULL row compare member, since they're always unsatisfiable.
+			 * For example, a qual "(a, b, c) >= (1, NULL, 77)" will use an
+			 * insertion scan key "a > 1".  All tuples where "a = 1" cannot
+			 * possibly satisfy the row compare qual, so this is safe.
 			 */
-			if (i == keysz - 1)
+			Assert(!(subkey->sk_flags & SK_ROW_END));
+			for (;;)
 			{
-				bool		used_all_subkeys = false;
+				subkey++;
+				Assert(subkey->sk_flags & SK_ROW_MEMBER);
 
-				Assert(!(subkey->sk_flags & SK_ROW_END));
-				for (;;)
+				if (subkey->sk_flags & SK_ISNULL)
 				{
-					subkey++;
-					Assert(subkey->sk_flags & SK_ROW_MEMBER);
-					if (subkey->sk_attno != keysz + 1)
-						break;	/* out-of-sequence, can't use it */
-					if (subkey->sk_strategy != cur->sk_strategy)
-						break;	/* wrong direction, can't use it */
-					if (subkey->sk_flags & SK_ISNULL)
-						break;	/* can't use null keys */
-					Assert(keysz < INDEX_MAX_KEYS);
-					memcpy(inskey.scankeys + keysz, subkey,
-						   sizeof(ScanKeyData));
-					keysz++;
-					if (subkey->sk_flags & SK_ROW_END)
-					{
-						used_all_subkeys = true;
-						break;
-					}
+					/*
+					 * NULL member key, can only use earlier keys.
+					 *
+					 * We deliberately avoid checking if this key is marked
+					 * required.  All earlier keys are required, and this key
+					 * is unsatisfiable either way, so we can't miss anything.
+					 */
+					tighten_strat = true;
+					break;
 				}
-				if (!used_all_subkeys)
+
+				if (!(subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)))
 				{
-					switch (strat_total)
-					{
-						case BTLessStrategyNumber:
-							strat_total = BTLessEqualStrategyNumber;
-							break;
-						case BTGreaterStrategyNumber:
-							strat_total = BTGreaterEqualStrategyNumber;
-							break;
-					}
+					/* nonrequired member key, can only use earlier keys */
+					loosen_strat = true;
+					break;
 				}
-				break;			/* done with outer loop */
+
+				Assert(subkey->sk_attno == keysz + 1);
+				Assert(subkey->sk_strategy == bkey->sk_strategy);
+				Assert(keysz < INDEX_MAX_KEYS);
+
+				memcpy(inskey.scankeys + keysz, subkey,
+					   sizeof(ScanKeyData));
+				keysz++;
+				if (subkey->sk_flags & SK_ROW_END)
+					break;
 			}
+			Assert(!(loosen_strat && tighten_strat));
+			if (loosen_strat)
+			{
+				/* Use less restrictive strategy (and fewer member keys) */
+				switch (strat_total)
+				{
+					case BTLessStrategyNumber:
+						strat_total = BTLessEqualStrategyNumber;
+						break;
+					case BTGreaterStrategyNumber:
+						strat_total = BTGreaterEqualStrategyNumber;
+						break;
+				}
+			}
+			if (tighten_strat)
+			{
+				/* Use more restrictive strategy (and fewer member keys) */
+				switch (strat_total)
+				{
+					case BTLessEqualStrategyNumber:
+						strat_total = BTLessStrategyNumber;
+						break;
+					case BTGreaterEqualStrategyNumber:
+						strat_total = BTGreaterStrategyNumber;
+						break;
+				}
+			}
+
+			/* done adding to inskey (row comparison keys always come last) */
+			break;
+		}
+
+		/*
+		 * Ordinary comparison key/search-style key.
+		 *
+		 * Transform the search-style scan key to an insertion scan key by
+		 * replacing the sk_func with the appropriate btree 3-way-comparison
+		 * function.
+		 *
+		 * If scankey operator is not a cross-type comparison, we can use the
+		 * cached comparison function; otherwise gotta look it up in the
+		 * catalogs.  (That can't lead to infinite recursion, since no
+		 * indexscan initiated by syscache lookup will use cross-data-type
+		 * operators.)
+		 *
+		 * We support the convention that sk_subtype == InvalidOid means the
+		 * opclass input type; this hack simplifies life for ScanKeyInit().
+		 */
+		if (bkey->sk_subtype == rel->rd_opcintype[i] ||
+			bkey->sk_subtype == InvalidOid)
+		{
+			FmgrInfo   *procinfo;
+
+			procinfo = index_getprocinfo(rel, bkey->sk_attno, BTORDER_PROC);
+			ScanKeyEntryInitializeWithInfo(inskey.scankeys + i,
+										   bkey->sk_flags,
+										   bkey->sk_attno,
+										   InvalidStrategy,
+										   bkey->sk_subtype,
+										   bkey->sk_collation,
+										   procinfo,
+										   bkey->sk_argument);
 		}
 		else
 		{
-			/*
-			 * Ordinary comparison key.  Transform the search-style scan key
-			 * to an insertion scan key by replacing the sk_func with the
-			 * appropriate btree comparison function.
-			 *
-			 * If scankey operator is not a cross-type comparison, we can use
-			 * the cached comparison function; otherwise gotta look it up in
-			 * the catalogs.  (That can't lead to infinite recursion, since no
-			 * indexscan initiated by syscache lookup will use cross-data-type
-			 * operators.)
-			 *
-			 * We support the convention that sk_subtype == InvalidOid means
-			 * the opclass input type; this is a hack to simplify life for
-			 * ScanKeyInit().
-			 */
-			if (cur->sk_subtype == rel->rd_opcintype[i] ||
-				cur->sk_subtype == InvalidOid)
-			{
-				FmgrInfo   *procinfo;
+			RegProcedure cmp_proc;
 
-				procinfo = index_getprocinfo(rel, cur->sk_attno, BTORDER_PROC);
-				ScanKeyEntryInitializeWithInfo(inskey.scankeys + i,
-											   cur->sk_flags,
-											   cur->sk_attno,
-											   InvalidStrategy,
-											   cur->sk_subtype,
-											   cur->sk_collation,
-											   procinfo,
-											   cur->sk_argument);
-			}
-			else
-			{
-				RegProcedure cmp_proc;
-
-				cmp_proc = get_opfamily_proc(rel->rd_opfamily[i],
-											 rel->rd_opcintype[i],
-											 cur->sk_subtype,
-											 BTORDER_PROC);
-				if (!RegProcedureIsValid(cmp_proc))
-					elog(ERROR, "missing support function %d(%u,%u) for attribute %d of index \"%s\"",
-						 BTORDER_PROC, rel->rd_opcintype[i], cur->sk_subtype,
-						 cur->sk_attno, RelationGetRelationName(rel));
-				ScanKeyEntryInitialize(inskey.scankeys + i,
-									   cur->sk_flags,
-									   cur->sk_attno,
-									   InvalidStrategy,
-									   cur->sk_subtype,
-									   cur->sk_collation,
-									   cmp_proc,
-									   cur->sk_argument);
-			}
+			cmp_proc = get_opfamily_proc(rel->rd_opfamily[i],
+										 rel->rd_opcintype[i],
+										 bkey->sk_subtype, BTORDER_PROC);
+			if (!RegProcedureIsValid(cmp_proc))
+				elog(ERROR, "missing support function %d(%u,%u) for attribute %d of index \"%s\"",
+					 BTORDER_PROC, rel->rd_opcintype[i], bkey->sk_subtype,
+					 bkey->sk_attno, RelationGetRelationName(rel));
+			ScanKeyEntryInitialize(inskey.scankeys + i,
+								   bkey->sk_flags,
+								   bkey->sk_attno,
+								   InvalidStrategy,
+								   bkey->sk_subtype,
+								   bkey->sk_collation,
+								   cmp_proc,
+								   bkey->sk_argument);
 		}
 	}
 
@@ -1482,6 +1522,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	if (!BufferIsValid(so->currPos.buf))
 	{
+		Assert(!so->needPrimScan);
+
 		/*
 		 * We only get here if the index is completely empty. Lock relation
 		 * because nothing finer to lock exists.  Without a buffer lock, it's
@@ -1500,7 +1542,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 		if (!BufferIsValid(so->currPos.buf))
 		{
-			Assert(!so->needPrimScan);
 			_bt_parallel_done(scan);
 			return false;
 		}
