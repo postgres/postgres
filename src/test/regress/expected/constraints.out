@@ -748,6 +748,11 @@ ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key ENFORCED;
 ERROR:  cannot alter enforceability of constraint "unique_tbl_i_key" of relation "unique_tbl"
 ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT ENFORCED;
 ERROR:  cannot alter enforceability of constraint "unique_tbl_i_key" of relation "unique_tbl"
+-- can't make an existing constraint NOT VALID
+ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT VALID;
+ERROR:  constraints cannot be altered to be NOT VALID
+LINE 1: ...ABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT VALID;
+                                                             ^
 DROP TABLE unique_tbl;
 --
 -- EXCLUDE constraints
