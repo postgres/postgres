@@ -584,3 +584,49 @@ IsInjectionPointAttached(const char *name)
 	return false;				/* silence compiler */
 #endif
 }
+
+/*
+ * Retrieve a list of all the injection points currently attached.
+ *
+ * This list is palloc'd in the current memory context.
+ */
+List *
+InjectionPointList(void)
+{
+#ifdef USE_INJECTION_POINTS
+	List	   *inj_points = NIL;
+	uint32		max_inuse;
+
+	LWLockAcquire(InjectionPointLock, LW_SHARED);
+
+	max_inuse = pg_atomic_read_u32(&ActiveInjectionPoints->max_inuse);
+
+	for (uint32 idx = 0; idx < max_inuse; idx++)
+	{
+		InjectionPointEntry *entry;
+		InjectionPointData *inj_point;
+		uint64		generation;
+
+		entry = &ActiveInjectionPoints->entries[idx];
+		generation = pg_atomic_read_u64(&entry->generation);
+
+		/* skip free slots */
+		if (generation % 2 == 0)
+			continue;
+
+		inj_point = (InjectionPointData *) palloc0(sizeof(InjectionPointData));
+		inj_point->name = pstrdup(entry->name);
+		inj_point->library = pstrdup(entry->library);
+		inj_point->function = pstrdup(entry->function);
+		inj_points = lappend(inj_points, inj_point);
+	}
+
+	LWLockRelease(InjectionPointLock);
+
+	return inj_points;
+
+#else
+	elog(ERROR, "Injection points are not supported by this build");
+	return NIL;					/* keep compiler quiet */
+#endif
+}
