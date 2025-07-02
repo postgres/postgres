@@ -70,9 +70,9 @@ tdr_attach_shmem(void)
 		tdr_hash = GetNamedDSHash("test_dsm_registry_hash", &dsh_params, &found);
 }
 
-PG_FUNCTION_INFO_V1(set_val_in_dsm);
+PG_FUNCTION_INFO_V1(set_val_in_shmem);
 Datum
-set_val_in_dsm(PG_FUNCTION_ARGS)
+set_val_in_shmem(PG_FUNCTION_ARGS)
 {
 	tdr_attach_shmem();
 
@@ -83,9 +83,9 @@ set_val_in_dsm(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-PG_FUNCTION_INFO_V1(get_val_in_dsm);
+PG_FUNCTION_INFO_V1(get_val_in_shmem);
 Datum
-get_val_in_dsm(PG_FUNCTION_ARGS)
+get_val_in_shmem(PG_FUNCTION_ARGS)
 {
 	int			ret;
 

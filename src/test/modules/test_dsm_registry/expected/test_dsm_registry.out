@@ -1,7 +1,7 @@
 CREATE EXTENSION test_dsm_registry;
-SELECT set_val_in_dsm(1236);
- set_val_in_dsm 
-----------------
+SELECT set_val_in_shmem(1236);
+ set_val_in_shmem 
+------------------
  
 (1 row)
 
@@ -12,10 +12,10 @@ SELECT set_val_in_hash('test', '1414');
 (1 row)
 
 \c
-SELECT get_val_in_dsm();
- get_val_in_dsm 
-----------------
-           1236
+SELECT get_val_in_shmem();
+ get_val_in_shmem 
+------------------
+             1236
 (1 row)
 
 SELECT get_val_in_hash('test');
