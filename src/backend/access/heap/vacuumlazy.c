@@ -235,7 +235,7 @@ static void find_next_unskippable_block(LVRelState *vacrel, bool *skipsallvis);
 static bool lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf,
 								   BlockNumber blkno, Page page,
 								   bool sharelock, Buffer vmbuffer);
-static void lazy_scan_prune(LVRelState *vacrel, Buffer buf,
+static int	lazy_scan_prune(LVRelState *vacrel, Buffer buf,
 							BlockNumber blkno, Page page,
 							Buffer vmbuffer, bool all_visible_according_to_vm,
 							bool *has_lpdead_items);
@@ -844,6 +844,7 @@ lazy_scan_heap(LVRelState *vacrel)
 	{
 		Buffer		buf;
 		Page		page;
+		int			ndeleted = 0;
 		bool		has_lpdead_items;
 		bool		got_cleanup_lock = false;
 
@@ -973,9 +974,9 @@ lazy_scan_heap(LVRelState *vacrel)
 		 * line pointers previously marked LP_DEAD.
 		 */
 		if (got_cleanup_lock)
-			lazy_scan_prune(vacrel, buf, blkno, page,
-							vmbuffer, all_visible_according_to_vm,
-							&has_lpdead_items);
+			ndeleted = lazy_scan_prune(vacrel, buf, blkno, page,
+									   vmbuffer, all_visible_according_to_vm,
+									   &has_lpdead_items);
 
 		/*
 		 * Now drop the buffer lock and, potentially, update the FSM.
@@ -1011,7 +1012,7 @@ lazy_scan_heap(LVRelState *vacrel)
 			 * table has indexes. There will only be newly-freed space if we
 			 * held the cleanup lock and lazy_scan_prune() was called.
 			 */
-			if (got_cleanup_lock && vacrel->nindexes == 0 && has_lpdead_items &&
+			if (got_cleanup_lock && vacrel->nindexes == 0 && ndeleted > 0 &&
 				blkno - next_fsm_block_to_vacuum >= VACUUM_FSM_EVERY_PAGES)
 			{
 				FreeSpaceMapVacuumRange(vacrel->rel, next_fsm_block_to_vacuum,
@@ -1402,8 +1403,10 @@ cmpOffsetNumbers(const void *a, const void *b)
  *
  * *has_lpdead_items is set to true or false depending on whether, upon return
  * from this function, any LP_DEAD items are still present on the page.
+ *
+ * Returns the number of tuples deleted from the page during HOT pruning.
  */
-static void
+static int
 lazy_scan_prune(LVRelState *vacrel,
 				Buffer buf,
 				BlockNumber blkno,
@@ -1623,6 +1626,8 @@ lazy_scan_prune(LVRelState *vacrel,
 						  VISIBILITYMAP_ALL_VISIBLE |
 						  VISIBILITYMAP_ALL_FROZEN);
 	}
+
+	return presult.ndeleted;
 }
 
 /*
