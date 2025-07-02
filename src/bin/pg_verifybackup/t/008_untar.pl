@@ -16,6 +16,22 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
+# Create file with some random data and an arbitrary size, useful to check
+# the solidity of the compression and decompression logic.  The size of the
+# file is chosen to be around 640kB.  This has proven to be large enough to
+# detect some issues related to LZ4, and low enough to not impact the runtime
+# of the test significantly.
+my $junk_data = $primary->safe_psql(
+	'postgres', qq(
+		SELECT string_agg(encode(sha256(i::bytea), 'hex'), '')
+		FROM generate_series(1, 10240) s(i);));
+my $data_dir = $primary->data_dir;
+my $junk_file = "$data_dir/junk";
+open my $jf, '>', $junk_file
+  or die "Could not create junk file: $!";
+print $jf $junk_data;
+close $jf;
+
 # Create a tablespace directory.
 my $source_ts_path = PostgreSQL::Test::Utils::tempdir_short();
 
@@ -49,6 +65,12 @@ my @test_configuration = (
 	{
 		'compression_method' => 'lz4',
 		'backup_flags' => [ '--compress', 'server-lz4' ],
+		'backup_archive' => [ 'base.tar.lz4', "$tsoid.tar.lz4" ],
+		'enabled' => check_pg_config("#define USE_LZ4 1")
+	},
+	{
+		'compression_method' => 'lz4',
+		'backup_flags' => [ '--compress', 'server-lz4:5' ],
 		'backup_archive' => [ 'base.tar.lz4', "$tsoid.tar.lz4" ],
 		'enabled' => check_pg_config("#define USE_LZ4 1")
 	},
