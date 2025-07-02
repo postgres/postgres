@@ -537,6 +537,9 @@ CREATE TABLE UNIQUE_NOTEN_TBL(i int UNIQUE NOT ENFORCED);
 ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key ENFORCED;
 ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT ENFORCED;
 
+-- can't make an existing constraint NOT VALID
+ALTER TABLE unique_tbl ALTER CONSTRAINT unique_tbl_i_key NOT VALID;
+
 DROP TABLE unique_tbl;
 
 --
