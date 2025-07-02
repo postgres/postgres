@@ -1960,8 +1960,9 @@ generate_series_numeric_support(PG_FUNCTION_ARGS)
  * with the specified characteristics. An operand smaller than the
  * lower bound is assigned to bucket 0. An operand greater than or equal
  * to the upper bound is assigned to an additional bucket (with number
- * count+1). We don't allow "NaN" for any of the numeric inputs, and we
- * don't allow either of the histogram bounds to be +/- infinity.
+ * count+1). We don't allow the histogram bounds to be NaN or +/- infinity,
+ * but we do allow those values for the operand (taking NaN to be larger
+ * than any other value, as we do in comparisons).
  */
 Datum
 width_bucket_numeric(PG_FUNCTION_ARGS)
@@ -1979,17 +1980,13 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 				 errmsg("count must be greater than zero")));
 
-	if (NUMERIC_IS_SPECIAL(operand) ||
-		NUMERIC_IS_SPECIAL(bound1) ||
-		NUMERIC_IS_SPECIAL(bound2))
+	if (NUMERIC_IS_SPECIAL(bound1) || NUMERIC_IS_SPECIAL(bound2))
 	{
-		if (NUMERIC_IS_NAN(operand) ||
-			NUMERIC_IS_NAN(bound1) ||
-			NUMERIC_IS_NAN(bound2))
+		if (NUMERIC_IS_NAN(bound1) || NUMERIC_IS_NAN(bound2))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-					 errmsg("operand, lower bound, and upper bound cannot be NaN")));
-		/* We allow "operand" to be infinite; cmp_numerics will cope */
+					 errmsg("lower and upper bounds cannot be NaN")));
+
 		if (NUMERIC_IS_INF(bound1) || NUMERIC_IS_INF(bound2))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),

@@ -4067,8 +4067,9 @@ float84ge(PG_FUNCTION_ARGS)
  * with the specified characteristics. An operand smaller than the
  * lower bound is assigned to bucket 0. An operand greater than or equal
  * to the upper bound is assigned to an additional bucket (with number
- * count+1). We don't allow "NaN" for any of the float8 inputs, and we
- * don't allow either of the histogram bounds to be +/- infinity.
+ * count+1). We don't allow the histogram bounds to be NaN or +/- infinity,
+ * but we do allow those values for the operand (taking NaN to be larger
+ * than any other value, as we do in comparisons).
  */
 Datum
 width_bucket_float8(PG_FUNCTION_ARGS)
@@ -4084,12 +4085,11 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 				 errmsg("count must be greater than zero")));
 
-	if (isnan(operand) || isnan(bound1) || isnan(bound2))
+	if (isnan(bound1) || isnan(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-				 errmsg("operand, lower bound, and upper bound cannot be NaN")));
+				 errmsg("lower and upper bounds cannot be NaN")));
 
-	/* Note that we allow "operand" to be infinite */
 	if (isinf(bound1) || isinf(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
@@ -4097,15 +4097,15 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 
 	if (bound1 < bound2)
 	{
-		if (operand < bound1)
-			result = 0;
-		else if (operand >= bound2)
+		if (isnan(operand) || operand >= bound2)
 		{
 			if (pg_add_s32_overflow(count, 1, &result))
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 						 errmsg("integer out of range")));
 		}
+		else if (operand < bound1)
+			result = 0;
 		else
 		{
 			if (!isinf(bound2 - bound1))
@@ -4135,7 +4135,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 	}
 	else if (bound1 > bound2)
 	{
-		if (operand > bound1)
+		if (isnan(operand) || operand > bound1)
 			result = 0;
 		else if (operand <= bound2)
 		{
