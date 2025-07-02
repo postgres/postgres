@@ -44,7 +44,6 @@ static bool _bt_array_decrement(Relation rel, ScanKey skey, BTArrayKeyInfo *arra
 static bool _bt_array_increment(Relation rel, ScanKey skey, BTArrayKeyInfo *array);
 static bool _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir,
 											 bool *skip_array_set);
-static void _bt_rewind_nonrequired_arrays(IndexScanDesc scan, ScanDirection dir);
 static bool _bt_tuple_before_array_skeys(IndexScanDesc scan, ScanDirection dir,
 										 IndexTuple tuple, TupleDesc tupdesc, int tupnatts,
 										 bool readpagetup, int sktrig, bool *scanBehind);
@@ -52,7 +51,6 @@ static bool _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 								   IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
 								   int sktrig, bool sktrig_required);
 #ifdef USE_ASSERT_CHECKING
-static bool _bt_verify_arrays_bt_first(IndexScanDesc scan, ScanDirection dir);
 static bool _bt_verify_keys_with_arraykeys(IndexScanDesc scan);
 #endif
 static bool _bt_oppodir_checkkeys(IndexScanDesc scan, ScanDirection dir,
@@ -1035,73 +1033,6 @@ _bt_advance_array_keys_increment(IndexScanDesc scan, ScanDirection dir,
 }
 
 /*
- * _bt_rewind_nonrequired_arrays() -- Rewind SAOP arrays not marked required
- *
- * Called when _bt_advance_array_keys decides to start a new primitive index
- * scan on the basis of the current scan position being before the position
- * that _bt_first is capable of repositioning the scan to by applying an
- * inequality operator required in the opposite-to-scan direction only.
- *
- * Although equality strategy scan keys (for both arrays and non-arrays alike)
- * are either marked required in both directions or in neither direction,
- * there is a sense in which non-required arrays behave like required arrays.
- * With a qual such as "WHERE a IN (100, 200) AND b >= 3 AND c IN (5, 6, 7)",
- * the scan key on "c" is non-required, but nevertheless enables positioning
- * the scan at the first tuple >= "(100, 3, 5)" on the leaf level during the
- * first descent of the tree by _bt_first.  Later on, there could also be a
- * second descent, that places the scan right before tuples >= "(200, 3, 5)".
- * _bt_first must never be allowed to build an insertion scan key whose "c"
- * entry is set to a value other than 5, the "c" array's first element/value.
- * (Actually, it's the first in the current scan direction.  This example uses
- * a forward scan.)
- *
- * Calling here resets the array scan key elements for the scan's non-required
- * arrays.  This is strictly necessary for correctness in a subset of cases
- * involving "required in opposite direction"-triggered primitive index scans.
- * Not all callers are at risk of _bt_first using a non-required array like
- * this, but advancement always resets the arrays when another primitive scan
- * is scheduled, just to keep things simple.  Array advancement even makes
- * sure to reset non-required arrays during scans that have no inequalities.
- * (Advancement still won't call here when there are no inequalities, though
- * that's just because it's all handled indirectly instead.)
- *
- * Note: _bt_verify_arrays_bt_first is called by an assertion to enforce that
- * everybody got this right.
- *
- * Note: In practice almost all SAOP arrays are marked required during
- * preprocessing (if necessary by generating skip arrays).  It is hardly ever
- * truly necessary to call here, but consistently doing so is simpler.
- */
-static void
-_bt_rewind_nonrequired_arrays(IndexScanDesc scan, ScanDirection dir)
-{
-	Relation	rel = scan->indexRelation;
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	int			arrayidx = 0;
-
-	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
-	{
-		ScanKey		cur = so->keyData + ikey;
-		BTArrayKeyInfo *array = NULL;
-
-		if (!(cur->sk_flags & SK_SEARCHARRAY) ||
-			cur->sk_strategy != BTEqualStrategyNumber)
-			continue;
-
-		array = &so->arrayKeys[arrayidx++];
-		Assert(array->scan_key == ikey);
-
-		if ((cur->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)))
-			continue;
-
-		Assert(array->num_elems != -1); /* No non-required skip arrays */
-
-		_bt_array_set_low_or_high(rel, cur, array,
-								  ScanDirectionIsForward(dir));
-	}
-}
-
-/*
  * _bt_tuple_before_array_skeys() -- too early to advance required arrays?
  *
  * We always compare the tuple using the current array keys (which we assume
@@ -1380,8 +1311,6 @@ _bt_start_prim_scan(IndexScanDesc scan, ScanDirection dir)
 	 */
 	if (so->needPrimScan)
 	{
-		Assert(_bt_verify_arrays_bt_first(scan, dir));
-
 		/*
 		 * Flag was set -- must call _bt_first again, which will reset the
 		 * scan's needPrimScan flag
@@ -2007,14 +1936,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 	 */
 	else if (has_required_opposite_direction_only && pstate->finaltup &&
 			 unlikely(!_bt_oppodir_checkkeys(scan, dir, pstate->finaltup)))
-	{
-		/*
-		 * Make sure that any SAOP arrays that were not marked required by
-		 * preprocessing are reset to their first element for this direction
-		 */
-		_bt_rewind_nonrequired_arrays(scan, dir);
 		goto new_prim_scan;
-	}
 
 continue_scan:
 
@@ -2044,8 +1966,6 @@ continue_scan:
 		 * marked required in the opposite scan direction" for why).
 		 */
 		so->oppositeDirCheck = has_required_opposite_direction_only;
-
-		_bt_rewind_nonrequired_arrays(scan, dir);
 
 		/*
 		 * skip by setting "look ahead" mechanism's offnum for forwards scans
@@ -2143,48 +2063,6 @@ end_toplevel_scan:
 
 #ifdef USE_ASSERT_CHECKING
 /*
- * Verify that the scan's qual state matches what we expect at the point that
- * _bt_start_prim_scan is about to start a just-scheduled new primitive scan.
- *
- * We enforce a rule against non-required array scan keys: they must start out
- * with whatever element is the first for the scan's current scan direction.
- * See _bt_rewind_nonrequired_arrays comments for an explanation.
- */
-static bool
-_bt_verify_arrays_bt_first(IndexScanDesc scan, ScanDirection dir)
-{
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	int			arrayidx = 0;
-
-	for (int ikey = 0; ikey < so->numberOfKeys; ikey++)
-	{
-		ScanKey		cur = so->keyData + ikey;
-		BTArrayKeyInfo *array = NULL;
-		int			first_elem_dir;
-
-		if (!(cur->sk_flags & SK_SEARCHARRAY) ||
-			cur->sk_strategy != BTEqualStrategyNumber)
-			continue;
-
-		array = &so->arrayKeys[arrayidx++];
-
-		if (((cur->sk_flags & SK_BT_REQFWD) && ScanDirectionIsForward(dir)) ||
-			((cur->sk_flags & SK_BT_REQBKWD) && ScanDirectionIsBackward(dir)))
-			continue;
-
-		if (ScanDirectionIsForward(dir))
-			first_elem_dir = 0;
-		else
-			first_elem_dir = array->num_elems - 1;
-
-		if (array->cur_elem != first_elem_dir)
-			return false;
-	}
-
-	return _bt_verify_keys_with_arraykeys(scan);
-}
-
-/*
  * Verify that the scan's "so->keyData[]" scan keys are in agreement with
  * its array key state
  */
@@ -2194,6 +2072,7 @@ _bt_verify_keys_with_arraykeys(IndexScanDesc scan)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			last_sk_attno = InvalidAttrNumber,
 				arrayidx = 0;
+	bool		nonrequiredseen = false;
 
 	if (!so->qual_ok)
 		return false;
@@ -2217,8 +2096,16 @@ _bt_verify_keys_with_arraykeys(IndexScanDesc scan)
 		if (array->num_elems != -1 &&
 			cur->sk_argument != array->elem_values[array->cur_elem])
 			return false;
-		if (last_sk_attno > cur->sk_attno)
-			return false;
+		if (cur->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))
+		{
+			if (last_sk_attno > cur->sk_attno)
+				return false;
+			if (nonrequiredseen)
+				return false;
+		}
+		else
+			nonrequiredseen = true;
+
 		last_sk_attno = cur->sk_attno;
 	}
 
@@ -2551,7 +2438,6 @@ _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate)
 		if (!(key->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)))
 		{
 			/* Scan key isn't marked required (corner case) */
-			Assert(!(key->sk_flags & SK_ROW_HEADER));
 			break;				/* unsafe */
 		}
 		if (key->sk_flags & SK_ROW_HEADER)

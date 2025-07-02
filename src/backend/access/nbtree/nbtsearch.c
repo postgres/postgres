@@ -960,46 +960,51 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/*----------
 	 * Examine the scan keys to discover where we need to start the scan.
+	 * The selected scan keys (at most one per index column) are remembered by
+	 * storing their addresses into the local startKeys[] array.  The final
+	 * startKeys[] entry's strategy is set in strat_total. (Actually, there
+	 * are a couple of cases where we force a less/more restrictive strategy.)
 	 *
-	 * We want to identify the keys that can be used as starting boundaries;
-	 * these are =, >, or >= keys for a forward scan or =, <, <= keys for
-	 * a backwards scan.  We can use keys for multiple attributes so long as
-	 * the prior attributes had only =, >= (resp. =, <=) keys.  Once we accept
-	 * a > or < boundary or find an attribute with no boundary (which can be
-	 * thought of as the same as "> -infinity"), we can't use keys for any
-	 * attributes to its right, because it would break our simplistic notion
-	 * of what initial positioning strategy to use.
+	 * We must use the key that was marked required (in the direction opposite
+	 * our own scan's) during preprocessing.  Each index attribute can only
+	 * have one such required key.  In general, the keys that we use to find
+	 * an initial position when scanning forwards are the same keys that end
+	 * the scan on the leaf level when scanning backwards (and vice-versa).
 	 *
 	 * When the scan keys include cross-type operators, _bt_preprocess_keys
-	 * may not be able to eliminate redundant keys; in such cases we will
-	 * arbitrarily pick a usable one for each attribute.  This is correct
-	 * but possibly not optimal behavior.  (For example, with keys like
-	 * "x >= 4 AND x >= 5" we would elect to scan starting at x=4 when
-	 * x=5 would be more efficient.)  Since the situation only arises given
-	 * a poorly-worded query plus an incomplete opfamily, live with it.
+	 * may not be able to eliminate redundant keys; in such cases it will
+	 * arbitrarily pick a usable key for each attribute (and scan direction),
+	 * ensuring that there is no more than one key required in each direction.
+	 * We stop considering further keys once we reach the first nonrequired
+	 * key (which must come after all required keys), so this can't affect us.
 	 *
-	 * When both equality and inequality keys appear for a single attribute
-	 * (again, only possible when cross-type operators appear), we *must*
-	 * select one of the equality keys for the starting point, because
-	 * _bt_checkkeys() will stop the scan as soon as an equality qual fails.
-	 * For example, if we have keys like "x >= 4 AND x = 10" and we elect to
-	 * start at x=4, we will fail and stop before reaching x=10.  If multiple
-	 * equality quals survive preprocessing, however, it doesn't matter which
-	 * one we use --- by definition, they are either redundant or
-	 * contradictory.
+	 * The required keys that we use as starting boundaries have to be =, >,
+	 * or >= keys for a forward scan or =, <, <= keys for a backwards scan.
+	 * We can use keys for multiple attributes so long as the prior attributes
+	 * had only =, >= (resp. =, <=) keys.  These rules are very similar to the
+	 * rules that preprocessing used to determine which keys to mark required.
+	 * We cannot always use every required key as a positioning key, though.
+	 * Skip arrays necessitate independently applying our own rules here.
+	 * Skip arrays are always generally considered = array keys, but we'll
+	 * nevertheless treat them as inequalities at certain points of the scan.
+	 * When that happens, it _might_ have implications for the number of
+	 * required keys that we can safely use for initial positioning purposes.
 	 *
-	 * In practice we rarely see any "attribute boundary key gaps" here.
-	 * Preprocessing can usually backfill skip array keys for any attributes
-	 * that were omitted from the original scan->keyData[] input keys.  All
-	 * array keys are always considered = keys, but we'll sometimes need to
-	 * treat the current key value as if we were using an inequality strategy.
-	 * This happens with range skip arrays, which store inequality keys in the
-	 * array's low_compare/high_compare fields (used to find the first/last
-	 * set of matches, when = key will lack a usable sk_argument value).
-	 * These are always preferred over any redundant "standard" inequality
-	 * keys on the same column (per the usual rule about preferring = keys).
-	 * Note also that any column with an = skip array key can never have an
-	 * additional, contradictory = key.
+	 * For example, a forward scan with a skip array on its leading attribute
+	 * (with no low_compare/high_compare) will have at least two required scan
+	 * keys, but we won't use any of them as boundary keys during the scan's
+	 * initial call here.  Our positioning key during the first call here can
+	 * be thought of as representing "> -infinity".  Similarly, if such a skip
+	 * array's low_compare is "a > 'foo'", then we position using "a > 'foo'"
+	 * during the scan's initial call here; a lower-order key such as "b = 42"
+	 * can't be used until the "a" array advances beyond MINVAL/low_compare.
+	 *
+	 * On the other hand, if such a skip array's low_compare was "a >= 'foo'",
+	 * then we _can_ use "a >= 'foo' AND b = 42" during the initial call here.
+	 * A subsequent call here might have us use "a = 'fop' AND b = 42".  Note
+	 * that we treat = and >= as equivalent when scanning forwards (just as we
+	 * treat = and <= as equivalent when scanning backwards).  We effectively
+	 * do the same thing (though with a distinct "a" element/value) each time.
 	 *
 	 * All keys (with the exception of SK_SEARCHNULL keys and SK_BT_SKIP
 	 * array keys whose array is "null_elem=true") imply a NOT NULL qualifier.
@@ -1014,18 +1019,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * first (leftmost) columns.  We'll add on lower-order columns of the row
 	 * comparison below, if possible.
 	 *
-	 * The selected scan keys (at most one per index column) are remembered by
-	 * storing their addresses into the local startKeys[] array.
-	 *
-	 * _bt_checkkeys/_bt_advance_array_keys decide whether and when to start
-	 * the next primitive index scan (for scans with array keys) based in part
-	 * on an understanding of how it'll enable us to reposition the scan.
-	 * They're directly aware of how we'll sometimes cons up an explicit
-	 * SK_SEARCHNOTNULL key.  They'll even end primitive scans by applying a
-	 * symmetric "deduce NOT NULL" rule of their own.  This allows top-level
-	 * scans to skip large groups of NULLs through repeated deductions about
-	 * key strictness (for a required inequality key) and whether NULLs in the
-	 * key's index column are stored last or first (relative to non-NULLs).
+	 * _bt_advance_array_keys needs to know exactly how we'll reposition the
+	 * scan (should it opt to schedule another primitive index scan).  It is
+	 * critical that primscans only be scheduled when they'll definitely make
+	 * some useful progress.  _bt_advance_array_keys does this by calling
+	 * _bt_checkkeys routines that report whether a tuple is past the end of
+	 * matches for the scan's keys (given the scan's current array elements).
+	 * If the page's final tuple is "after the end of matches" for a scan that
+	 * uses the *opposite* scan direction, then it must follow that it's also
+	 * "before the start of matches" for the actual current scan direction.
+	 * It is therefore essential that all of our initial positioning rules are
+	 * symmetric with _bt_checkkeys's corresponding continuescan=false rule.
 	 * If you update anything here, _bt_checkkeys/_bt_advance_array_keys might
 	 * need to be kept in sync.
 	 *----------
@@ -1034,18 +1038,17 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (so->numberOfKeys > 0)
 	{
 		AttrNumber	curattr;
-		ScanKey		chosen;
+		ScanKey		bkey;
 		ScanKey		impliesNN;
 		ScanKey		cur;
 
 		/*
-		 * chosen is the so-far-chosen key for the current attribute, if any.
-		 * We don't cast the decision in stone until we reach keys for the
-		 * next attribute.
+		 * bkey will be set to the key that preprocessing left behind as the
+		 * boundary key for this attribute, in this scan direction (if any)
 		 */
 		cur = so->keyData;
 		curattr = 1;
-		chosen = NULL;
+		bkey = NULL;
 		/* Also remember any scankey that implies a NOT NULL constraint */
 		impliesNN = NULL;
 
@@ -1058,23 +1061,29 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		{
 			if (i >= so->numberOfKeys || cur->sk_attno != curattr)
 			{
+				/* Done looking for the curattr boundary key */
+				Assert(bkey == NULL ||
+					   (bkey->sk_attno == curattr &&
+						(bkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))));
+				Assert(impliesNN == NULL ||
+					   (impliesNN->sk_attno == curattr &&
+						(impliesNN->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD))));
+
 				/*
-				 * Done looking at keys for curattr.
-				 *
 				 * If this is a scan key for a skip array whose current
 				 * element is MINVAL, choose low_compare (when scanning
 				 * backwards it'll be MAXVAL, and we'll choose high_compare).
 				 *
-				 * Note: if the array's low_compare key makes 'chosen' NULL,
+				 * Note: if the array's low_compare key makes 'bkey' NULL,
 				 * then we behave as if the array's first element is -inf,
 				 * except when !array->null_elem implies a usable NOT NULL
 				 * constraint.
 				 */
-				if (chosen != NULL &&
-					(chosen->sk_flags & (SK_BT_MINVAL | SK_BT_MAXVAL)))
+				if (bkey != NULL &&
+					(bkey->sk_flags & (SK_BT_MINVAL | SK_BT_MAXVAL)))
 				{
-					int			ikey = chosen - so->keyData;
-					ScanKey		skipequalitykey = chosen;
+					int			ikey = bkey - so->keyData;
+					ScanKey		skipequalitykey = bkey;
 					BTArrayKeyInfo *array = NULL;
 
 					for (int arridx = 0; arridx < so->numArrayKeys; arridx++)
@@ -1087,35 +1096,35 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					if (ScanDirectionIsForward(dir))
 					{
 						Assert(!(skipequalitykey->sk_flags & SK_BT_MAXVAL));
-						chosen = array->low_compare;
+						bkey = array->low_compare;
 					}
 					else
 					{
 						Assert(!(skipequalitykey->sk_flags & SK_BT_MINVAL));
-						chosen = array->high_compare;
+						bkey = array->high_compare;
 					}
 
-					Assert(chosen == NULL ||
-						   chosen->sk_attno == skipequalitykey->sk_attno);
+					Assert(bkey == NULL ||
+						   bkey->sk_attno == skipequalitykey->sk_attno);
 
 					if (!array->null_elem)
 						impliesNN = skipequalitykey;
 					else
-						Assert(chosen == NULL && impliesNN == NULL);
+						Assert(bkey == NULL && impliesNN == NULL);
 				}
 
 				/*
 				 * If we didn't find a usable boundary key, see if we can
 				 * deduce a NOT NULL key
 				 */
-				if (chosen == NULL && impliesNN != NULL &&
+				if (bkey == NULL && impliesNN != NULL &&
 					((impliesNN->sk_flags & SK_BT_NULLS_FIRST) ?
 					 ScanDirectionIsForward(dir) :
 					 ScanDirectionIsBackward(dir)))
 				{
 					/* Yes, so build the key in notnullkeys[keysz] */
-					chosen = &notnullkeys[keysz];
-					ScanKeyEntryInitialize(chosen,
+					bkey = &notnullkeys[keysz];
+					ScanKeyEntryInitialize(bkey,
 										   (SK_SEARCHNOTNULL | SK_ISNULL |
 											(impliesNN->sk_flags &
 											 (SK_BT_DESC | SK_BT_NULLS_FIRST))),
@@ -1130,12 +1139,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				}
 
 				/*
-				 * If we still didn't find a usable boundary key, quit; else
-				 * save the boundary key pointer in startKeys.
+				 * If preprocessing didn't leave a usable boundary key, quit;
+				 * else save the boundary key pointer in startKeys[]
 				 */
-				if (chosen == NULL)
+				if (bkey == NULL)
 					break;
-				startKeys[keysz++] = chosen;
+				startKeys[keysz++] = bkey;
 
 				/*
 				 * We can only consider adding more boundary keys when the one
@@ -1143,7 +1152,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				 * (during backwards scans we can only do so when the key that
 				 * we just added to startKeys[] uses the = or <= strategy)
 				 */
-				strat_total = chosen->sk_strategy;
+				strat_total = bkey->sk_strategy;
 				if (strat_total == BTGreaterStrategyNumber ||
 					strat_total == BTLessStrategyNumber)
 					break;
@@ -1154,19 +1163,19 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				 * make strat_total > or < (and stop adding boundary keys).
 				 * This can only happen with opclasses that lack skip support.
 				 */
-				if (chosen->sk_flags & (SK_BT_NEXT | SK_BT_PRIOR))
+				if (bkey->sk_flags & (SK_BT_NEXT | SK_BT_PRIOR))
 				{
-					Assert(chosen->sk_flags & SK_BT_SKIP);
+					Assert(bkey->sk_flags & SK_BT_SKIP);
 					Assert(strat_total == BTEqualStrategyNumber);
 
 					if (ScanDirectionIsForward(dir))
 					{
-						Assert(!(chosen->sk_flags & SK_BT_PRIOR));
+						Assert(!(bkey->sk_flags & SK_BT_PRIOR));
 						strat_total = BTGreaterStrategyNumber;
 					}
 					else
 					{
-						Assert(!(chosen->sk_flags & SK_BT_NEXT));
+						Assert(!(bkey->sk_flags & SK_BT_NEXT));
 						strat_total = BTLessStrategyNumber;
 					}
 
@@ -1180,24 +1189,30 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 				/*
 				 * Done if that was the last scan key output by preprocessing.
-				 * Also done if there is a gap index attribute that lacks a
-				 * usable key (only possible when preprocessing was unable to
-				 * generate a skip array key to "fill in the gap").
+				 * Also done if we've now examined all keys marked required.
 				 */
 				if (i >= so->numberOfKeys ||
-					cur->sk_attno != curattr + 1)
+					!(cur->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD)))
 					break;
 
 				/*
 				 * Reset for next attr.
 				 */
+				Assert(cur->sk_attno == curattr + 1);
 				curattr = cur->sk_attno;
-				chosen = NULL;
+				bkey = NULL;
 				impliesNN = NULL;
 			}
 
 			/*
-			 * Can we use this key as a starting boundary for this attr?
+			 * If we've located the starting boundary key for curattr, we have
+			 * no interest in curattr's other required key
+			 */
+			if (bkey != NULL)
+				continue;
+
+			/*
+			 * Is this key the starting boundary key for curattr?
 			 *
 			 * If not, does it imply a NOT NULL constraint?  (Because
 			 * SK_SEARCHNULL keys are always assigned BTEqualStrategyNumber,
@@ -1207,27 +1222,20 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			{
 				case BTLessStrategyNumber:
 				case BTLessEqualStrategyNumber:
-					if (chosen == NULL)
-					{
-						if (ScanDirectionIsBackward(dir))
-							chosen = cur;
-						else
-							impliesNN = cur;
-					}
+					if (ScanDirectionIsBackward(dir))
+						bkey = cur;
+					else if (impliesNN == NULL)
+						impliesNN = cur;
 					break;
 				case BTEqualStrategyNumber:
-					/* override any non-equality choice */
-					chosen = cur;
+					bkey = cur;
 					break;
 				case BTGreaterEqualStrategyNumber:
 				case BTGreaterStrategyNumber:
-					if (chosen == NULL)
-					{
-						if (ScanDirectionIsForward(dir))
-							chosen = cur;
-						else
-							impliesNN = cur;
-					}
+					if (ScanDirectionIsForward(dir))
+						bkey = cur;
+					else if (impliesNN == NULL)
+						impliesNN = cur;
 					break;
 			}
 		}
