@@ -12,6 +12,7 @@ backend_sources += files(
   'arrayutils.c',
   'ascii.c',
   'bool.c',
+  'bytea.c',
   'cash.c',
   'char.c',
   'cryptohashfuncs.c',
