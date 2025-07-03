@@ -1283,6 +1283,15 @@ CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c t
 CREATE TABLE gtest31_2 (x int, y gtest31_1);
 ALTER TABLE gtest31_1 ALTER COLUMN b TYPE varchar;  -- fails
 ERROR:  cannot alter table "gtest31_1" because column "gtest31_2.y" uses its row type
+-- bug #18970
+ALTER TABLE gtest31_2 ADD CONSTRAINT cc CHECK ((y).b IS NOT NULL);
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello1');
+ALTER TABLE gtest31_2 DROP CONSTRAINT cc;
+CREATE STATISTICS gtest31_2_stat ON ((y).b is not null) FROM gtest31_2;
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello2');
+DROP STATISTICS gtest31_2_stat;
+CREATE INDEX gtest31_2_y_idx ON gtest31_2(((y).b));
+ALTER TABLE gtest31_1 ALTER COLUMN b SET EXPRESSION AS ('hello3');
 DROP TABLE gtest31_1, gtest31_2;
 -- Check it for a partitioned table, too
 CREATE TABLE gtest31_1 (a int, b text GENERATED ALWAYS AS ('hello') VIRTUAL, c text) PARTITION BY LIST (a);
