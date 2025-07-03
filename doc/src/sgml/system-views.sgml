@@ -2819,20 +2819,18 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
          <para>
           <literal>unreserved</literal> means that the slot no longer
           retains the required WAL files and some of them are to be removed at
-          the next checkpoint.  This state can return
+          the next checkpoint.  This typically occurs when
+          <xref linkend="guc-max-slot-wal-keep-size"/> is set to
+          a non-negative value.  This state can return
           to <literal>reserved</literal> or <literal>extended</literal>.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>lost</literal> means that some required WAL files have
-          been removed and this slot is no longer usable.
+          <literal>lost</literal> means that this slot is no longer usable.
          </para>
         </listitem>
        </itemizedlist>
-       The last two states are seen only when
-       <xref linkend="guc-max-slot-wal-keep-size"/> is
-       non-negative.
       </para></entry>
      </row>
 
