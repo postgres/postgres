@@ -2832,8 +2832,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        </itemizedlist>
        The last two states are seen only when
        <xref linkend="guc-max-slot-wal-keep-size"/> is
-       non-negative. If <structfield>restart_lsn</structfield> is NULL, this
-       field is null.
+       non-negative.
       </para></entry>
      </row>
 
