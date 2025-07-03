@@ -1343,7 +1343,7 @@ ProcessUtilitySlow(ParseState *pstate,
 					 */
 					switch (stmt->subtype)
 					{
-						case 'T':	/* ALTER DOMAIN DEFAULT */
+						case AD_AlterDefault:
 
 							/*
 							 * Recursively alter column default for table and,
@@ -1353,30 +1353,30 @@ ProcessUtilitySlow(ParseState *pstate,
 								AlterDomainDefault(stmt->typeName,
 												   stmt->def);
 							break;
-						case 'N':	/* ALTER DOMAIN DROP NOT NULL */
+						case AD_DropNotNull:
 							address =
 								AlterDomainNotNull(stmt->typeName,
 												   false);
 							break;
-						case 'O':	/* ALTER DOMAIN SET NOT NULL */
+						case AD_SetNotNull:
 							address =
 								AlterDomainNotNull(stmt->typeName,
 												   true);
 							break;
-						case 'C':	/* ADD CONSTRAINT */
+						case AD_AddConstraint:
 							address =
 								AlterDomainAddConstraint(stmt->typeName,
 														 stmt->def,
 														 &secondaryObject);
 							break;
-						case 'X':	/* DROP CONSTRAINT */
+						case AD_DropConstraint:
 							address =
 								AlterDomainDropConstraint(stmt->typeName,
 														  stmt->name,
 														  stmt->behavior,
 														  stmt->missing_ok);
 							break;
-						case 'V':	/* VALIDATE CONSTRAINT */
+						case AD_ValidateConstraint:
 							address =
 								AlterDomainValidateConstraint(stmt->typeName,
 															  stmt->name);

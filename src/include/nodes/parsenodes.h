@@ -2536,17 +2536,20 @@ typedef struct AlterCollationStmt
  * this command.
  * ----------------------
  */
+typedef enum AlterDomainType
+{
+	AD_AlterDefault = 'T',		/* SET|DROP DEFAULT */
+	AD_DropNotNull = 'N',		/* DROP NOT NULL */
+	AD_SetNotNull = 'O',		/* SET NOT NULL */
+	AD_AddConstraint = 'C',		/* ADD CONSTRAINT */
+	AD_DropConstraint = 'X',	/* DROP CONSTRAINT */
+	AD_ValidateConstraint = 'V',	/* VALIDATE CONSTRAINT */
+} AlterDomainType;
+
 typedef struct AlterDomainStmt
 {
 	NodeTag		type;
-	char		subtype;		/*------------
-								 *	T = alter column default
-								 *	N = alter column drop not null
-								 *	O = alter column set not null
-								 *	C = add constraint
-								 *	X = drop constraint
-								 *------------
-								 */
+	AlterDomainType subtype;	/* subtype of command */
 	List	   *typeName;		/* domain to work on */
 	char	   *name;			/* column or constraint name to act on */
 	Node	   *def;			/* definition of default or constraint */

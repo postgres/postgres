@@ -74,6 +74,7 @@ AlterDatabaseSetStmt
 AlterDatabaseStmt
 AlterDefaultPrivilegesStmt
 AlterDomainStmt
+AlterDomainType
 AlterEnumStmt
 AlterEventTrigStmt
 AlterExtensionContentsStmt
