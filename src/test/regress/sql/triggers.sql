@@ -1577,6 +1577,19 @@ drop table parted;
 drop function parted_trigfunc();
 
 --
+-- Constraint triggers
+--
+create constraint trigger crtr
+  after insert on foo not valid
+  for each row execute procedure foo ();
+create constraint trigger crtr
+  after insert on foo no inherit
+  for each row execute procedure foo ();
+create constraint trigger crtr
+  after insert on foo not enforced
+  for each row execute procedure foo ();
+
+--
 -- Constraint triggers and partitioned tables
 create table parted_constr_ancestor (a int, b text)
   partition by range (b);
@@ -1591,7 +1604,7 @@ create constraint trigger parted_trig after insert on parted_constr_ancestor
   deferrable
   for each row execute procedure trigger_notice_ab();
 create constraint trigger parted_trig_two after insert on parted_constr
-  deferrable initially deferred
+  deferrable initially deferred enforced
   for each row when (bark(new.b) AND new.a % 2 = 1)
   execute procedure trigger_notice_ab();
 

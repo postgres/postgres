@@ -29,7 +29,7 @@ PostgreSQL documentation
 CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="parameter">event</replaceable> [ OR ... ] }
     ON <replaceable class="parameter">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
-    [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ]
+    [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ] [ ENFORCED ]
     [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="parameter">transition_relation_name</replaceable> } [ ... ] ]
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
@@ -320,6 +320,13 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>ENFORCED</literal></term>
+    <listitem>
+     This is a noise word.  Constraint triggers are always enforced.
+    </listitem>
+   </varlistitem>
 
    <varlistentry>
     <term><literal>REFERENCING</literal></term>
