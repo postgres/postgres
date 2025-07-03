@@ -1,7 +1,7 @@
 # Configure WAL Encryption (tech preview)
 
 !!! warning
-    The WAL encryption feature is currently in beta and      is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
+    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
 
 Before enabling WAL encryption, follow the steps below to create a principal key and configure it for WAL:
 

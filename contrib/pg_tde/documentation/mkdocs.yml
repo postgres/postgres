@@ -1,6 +1,6 @@
 # MkDocs general configuration
 
-site_name: pg_tde documentation
+site_name: Percona Transparent Data Encryption for PostgreSQL
 site_description: Documentation
 site_author: Percona LLC
 copyright: >
@@ -163,14 +163,14 @@ nav:
   - "Features": features.md 
   - "Overview":
     - "What is Transparent Data Encryption (TDE)?":
-      - "TDE Overview": index/index.md
-      - "TDE Benefits": index/how-tde-helps.md
-      - "How TDE Works": index/how-does-tde-work.md
-      - "Encrypted Data Scope": index/tde-encrypts.md
-      - "Table Access Methods and TDE": index/table-access-method.md
+      - "TDE overview": index/index.md
+      - "TDE benefits": index/how-tde-helps.md
+      - "How TDE works": index/how-does-tde-work.md
+      - "Encrypted data scope": index/tde-encrypts.md
+      - "Table access methods and TDE": index/table-access-method.md
     - "Limitations of TDE": index/tde-limitations.md
-    - "Versions and Supported PostgreSQL Deployments": index/supported-versions.md
-  - "Get Started":
+    - "Versions and supported PostgreSQL deployments": index/supported-versions.md
+  - "Get started":
     - "1. Install pg_tde": install.md
     - "1.1 Via apt": apt.md
     - "1.2 Via yum": yum.md   
@@ -181,15 +181,17 @@ nav:
       - "Fortanix Configuration": global-key-provider-configuration/kmip-fortanix.md  
       - "Vault Configuration": global-key-provider-configuration/vault.md
       - "Thales Configuration": global-key-provider-configuration/kmip-thales.md
+      - "Using OpenBao as a Key Provider": global-key-provider-configuration/kmip-openbao.md
       - "Keyring File Configuration": global-key-provider-configuration/keyring.md
     - "2.2 Global Principal Key Configuration": global-key-provider-configuration/set-principal-key.md
     - "3. Validate Encryption with pg_tde": test.md
     - "4. Configure WAL Encryption (tech preview)": wal-encryption.md
   - "Technical Reference":
-    - "Technical Reference": advanced-topics/index.md
+    - "Overview": advanced-topics/index.md
     - "Architecture": architecture/index.md
-    - "GUC Variables": variables.md
+    - "GUC variables": variables.md
     - "Functions": functions.md
+    - "Streaming Replication with tde_heap": replication.md
   - "TDE Operations":
     - "pg_tde CLI Tools":
       - "CLI Overview": command-line-tools/index.md
@@ -198,10 +200,13 @@ nav:
       - "pg_checksums": command-line-tools/pg-tde-checksums.md 
     - "Uninstall pg_tde": how-to/uninstall.md
     - "Configure Multi-tenancy": how-to/multi-tenant-setup.md
+    - "Encryption Enforcement": how-to/enforcement.md
     - "Decrypt an Encrypted Table": how-to/decrypt.md
+    - "Restore an encrypted pg_tde backup": how-to/restore-backups.md
   - faq.md
-  - "Release Notes":
+  - "Release notes":
     - "pg_tde release notes": release-notes/release-notes.md
+    - release-notes/release-notes-v1.0.md
     - release-notes/rc2.md
     - release-notes/rc.md
     - release-notes/beta2.md

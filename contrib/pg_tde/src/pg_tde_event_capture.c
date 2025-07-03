@@ -89,7 +89,7 @@ checkPrincipalKeyConfigured(void)
 	if (!pg_tde_principal_key_configured(MyDatabaseId))
 		ereport(ERROR,
 				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
+				errhint("Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one."));
 }
 
 static void
@@ -258,21 +258,22 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 	if (IsA(parsetree, IndexStmt))
 	{
 		IndexStmt  *stmt = castNode(IndexStmt, parsetree);
-		Relation	rel;
 		TdeDdlEvent event = {.parsetree = parsetree};
+		EncryptionMix encmix;
+		Oid			relid = RangeVarGetRelid(stmt->relation, AccessShareLock, false);
 
-		rel = table_openrv(stmt->relation, AccessShareLock);
+		encmix = alter_table_encryption_mix(relid);
 
-		if (rel->rd_rel->relam == get_tde_table_am_oid())
-		{
+		if (encmix == ENC_MIX_ENCRYPTED)
 			event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
-			checkPrincipalKeyConfigured();
-		}
-		else
+		else if (encmix == ENC_MIX_PLAIN)
 			event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
-
-		/* Hold on to lock until end of transaction */
-		table_close(rel, NoLock);
+		else if (encmix == ENC_MIX_UNKNOWN)
+			event.encryptMode = TDE_ENCRYPT_MODE_RETAIN;
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Recursive CREATE INDEX on a mix of encrypted and unencrypted relations is not supported"));
 
 		push_event_stack(&event);
 	}
@@ -356,6 +357,7 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 			ListCell   *lcmd;
 			TdeDdlEvent event = {.parsetree = parsetree};
 			EncryptionMix encmix;
+			Relation	rel;
 
 			foreach(lcmd, stmt->cmds)
 			{
@@ -379,17 +381,25 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 						errmsg("Recursive ALTER TABLE on a mix of encrypted and unencrypted relations is not supported"));
 			}
 
+			rel = relation_open(relid, NoLock);
+
 			/*
 			 * With a SET ACCESS METHOD clause, use that as the basis for
 			 * decisions. But if it's not present, look up encryption status
 			 * of the table.
+			 *
+			 * Since partitioned tables lack storage we do not need to set the
+			 * encryption mode.
 			 */
-			if (setAccessMethod)
+			if (setAccessMethod && RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
 			{
 				event.rebuildSequencesFor = relid;
 
 				if (shouldEncryptTable(setAccessMethod->name))
+				{
 					event.encryptMode = TDE_ENCRYPT_MODE_ENCRYPT;
+					checkPrincipalKeyConfigured();
+				}
 				else
 					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 			}
@@ -403,6 +413,8 @@ pg_tde_ddl_command_start_capture(PG_FUNCTION_ARGS)
 				else if (encmix == ENC_MIX_PLAIN)
 					event.encryptMode = TDE_ENCRYPT_MODE_PLAIN;
 			}
+
+			relation_close(rel, NoLock);
 
 			push_event_stack(&event);
 			checkEncryptionStatus();

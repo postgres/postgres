@@ -16,7 +16,7 @@ CREATE TABLE test_enc(
 	  PRIMARY KEY (id)
 	) USING tde_heap;
 ERROR:  principal key not configured
-HINT:  create one using pg_tde_set_key before using encrypted tables
+HINT:  Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one.
 SELECT pg_tde_add_database_key_provider_vault_v2('vault-v2', 'https://127.0.0.1:8200', 'secret', :'root_token_file', :'cacert_file');
  pg_tde_add_database_key_provider_vault_v2 
 -------------------------------------------

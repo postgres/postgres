@@ -84,7 +84,7 @@ pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
 	{
 		ereport(ERROR,
 				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
+				errhint("Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one."));
 	}
 
 	pg_tde_write_key_map_entry(&rel, rel_key_data, principal_key);
@@ -967,8 +967,7 @@ pg_tde_get_smgr_key(RelFileLocator rel)
 	if (principal_key == NULL)
 		ereport(ERROR,
 				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_key before using encrypted tables"));
-
+				errhint("Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one."));
 	rel_key = tde_decrypt_rel_key(principal_key, &map_entry);
 
 	LWLockRelease(lock_pk);

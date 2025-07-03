@@ -15,7 +15,7 @@ For testing purposes, you can use a lightweight PyKMIP server, which enables eas
 SELECT pg_tde_add_global_key_provider_kmip(
     'provider-name',
     'kmip-IP', 
-    5696,
+    `port`,
     '/path_to/server_certificate.pem', 
     '/path_to/client_cert.pem',
     '/path_to/client_key.pem'

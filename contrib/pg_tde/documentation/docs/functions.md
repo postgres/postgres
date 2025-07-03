@@ -2,21 +2,12 @@
 
 The `pg_tde` extension provides functions for managing different aspects of its operation:
 
-## Permission management
-
-By default, `pg_tde` is locked down. No one is allowed to do any operations until you grant them permissions. Only superusers may add or alter global key providers.
-
-However, database owners can run the “view keys” and “set principal key” functions on their own databases. You can delegate these rights to other roles with the following commands:
-
-* `GRANT EXECUTE`
-* `REVOKE EXECUTE`
-
 ## Key provider management
 
 A key provider is a system or service responsible for managing encryption keys. `pg_tde` supports the following key providers:
 
 * local file (not recommended for production use)
-* Hashicorp Vault / OpenBao
+* HashiCorp Vault / OpenBao
 * KMIP compatible providers
 
 Key provider management includes the following operations:
@@ -52,9 +43,11 @@ The `change` functions require the same parameters as the `add` functions. They 
 
 Provider specific parameters differ for each implementation. Refer to the  respective subsection for details.
 
-**Some provider specific parameters contain sensitive information, such as passwords. Never specify these directly, use the remote configuration option instead.**
+!!! note
+    The updated provider must be able to retrieve the same principal keys as the original configuration.
+    If the new configuration cannot access existing keys, encrypted data and backups will become unreadable.
 
-#### Adding or modifying Vault providers
+#### Add or modify Vault providers
 
 The Vault provider connects to a HashiCorp Vault or an OpenBao server, and stores the keys on a key-value store version 2.
 
@@ -106,7 +99,7 @@ where:
 * `secret_token_path` is a path to the file that contains an access token with read and write access to the above mount point
 * **[optional]** `ca_path` is the path of the CA file used for SSL verification
 
-#### Adding or modifying KMIP providers
+#### Add or modify KMIP providers
 
 The KMIP provider uses a remote KMIP server.
 
@@ -165,16 +158,16 @@ where:
 !!! note
     The specified access parameters require permission to read and write keys at the server.
 
-### Adding or modifying local keyfile providers
+### Add or modify local key file providers
 
-This provider manages database keys using a local keyfile.
+This provider manages database keys using a local key file.
 
 This function is intended for development or quick testing, and stores the keys unencrypted in the specified data file.
 
 !!! important
-    Local keyfile providers are **not recommended** for production environments, they lack the security and manageability of external key management systems.
+    Local key file providers are **not recommended** for production environments, they lack the security and manageability of external key management systems.
 
-Add a local keyfile provider:
+Add a local key file provider:
 
 ```sql
 SELECT pg_tde_add_database_key_provider_file(
@@ -188,7 +181,7 @@ SELECT pg_tde_add_global_key_provider_file(
 );
 ```
 
-Change a local keyfile provider:
+Change a local key file provider:
 
 ```sql
 SELECT pg_tde_change_database_key_provider_file(
@@ -225,18 +218,15 @@ These functions list the details of all key providers for the current database o
 * `pg_tde_list_all_database_key_providers()`
 * `pg_tde_list_all_global_key_providers()`
 
-!!! important
-    All configuration values include possibly sensitive values, such as passwords. **Never** specify these directly, use the remote configuration option instead.
-
 ## Principal key management
 
 Use these functions to create a new principal key at a given keyprover, and to use those keys for a specific scope such as a current database, a global or default scope. You can also use them to start using a different existing key for a specific scope.
 
-Princial keys are stored on key providers by the name specified in this function - for example, when using the Vault provider, after creating a key named "foo", a key named "foo" will be visible on the Vault server at the specified mount point.
+Principal keys are stored on key providers by the name specified in this function - for example, when using the Vault provider, after creating a key named "foo", a key named "foo" will be visible on the Vault server at the specified mount point.
 
 ### pg_tde_creates_key_using_database_key_provider
 
-Creates a principal key at a database local key provider with the given name. For later use with pg_tde_set_key_using_database_key_provider().
+Creates a principal key using the database-local key provider with the specified name. Use this key later with [`pg_tde_set_key_using_database_key_provider()`](#pg_tde_set_key_using_database_key_provider).
 
 ```sql
 SELECT pg_tde_create_key_using_database_key_provider(
@@ -244,9 +234,10 @@ SELECT pg_tde_create_key_using_database_key_provider(
   'provider-name'
 );
 ```
+
 ### pg_tde_create_key_using_global_key_provider
 
-Creates a principal key at a global  key provider with the given name. For later use with pg_tde_set_ series of functions.
+Creates a principal key at a global  key provider with the given name. Use this key later with the `pg_tde_set_` series of functions.
 
 ```sql
 SELECT pg_tde_create_key_using_global_key_provider(
@@ -289,6 +280,15 @@ SELECT pg_tde_set_server_key_using_global_key_provider(
 );
 ```
 
+!!! warning
+    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
+=======
+The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
+
+* If set to `true`, a new key must be unique.
+  If the provider already stores a key by that name, the function returns an error.
+* If set to `false` (default), an existing principal key may be reused.
+
 ### pg_tde_set_default_key_using_global_key_provider
 
 Sets or rotates the default principal key for the server using the specified global key provider.
@@ -300,6 +300,22 @@ SELECT pg_tde_set_default_key_using_global_key_provider(
   'key-name',
   'provider-name'
 );
+```
+
+### pg_tde_delete_key
+
+Unsets the principal key for the current database. If the current database has any encrypted tables, and there isn’t a default principal key configured, it reports an error instead. If there are encrypted tables, but there’s also a default principal key, internal keys will be encrypted with the default key.
+
+```sql
+SELECT pg_tde_delete_key();
+```
+
+### pg_tde_delete_default_key
+
+Unsets default principal key. It's possible only if no database uses default principal key.
+
+```sql
+SELECT pg_tde_delete_default_key();
 ```
 
 ## Encryption status check

@@ -1,7 +1,7 @@
 PGFILEDESC = "pg_tde access method"
 MODULE_big = pg_tde
 EXTENSION = pg_tde
-DATA = pg_tde--1.0-rc.sql
+DATA = pg_tde--1.0.sql
 
 # Since meson supports skipping test suites this is a make only feature
 ifndef TDE_MODE
