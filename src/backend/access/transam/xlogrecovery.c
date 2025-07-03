@@ -4994,13 +4994,25 @@ check_recovery_target_timeline(char **newval, void **extra, GucSource source)
 		rttg = RECOVERY_TARGET_TIMELINE_LATEST;
 	else
 	{
+		char	   *endp;
+		uint64		timeline;
+
 		rttg = RECOVERY_TARGET_TIMELINE_NUMERIC;
 
 		errno = 0;
-		strtoul(*newval, NULL, 0);
-		if (errno == EINVAL || errno == ERANGE)
+		timeline = strtou64(*newval, &endp, 0);
+
+		if (*endp != '\0' || errno == EINVAL || errno == ERANGE)
 		{
-			GUC_check_errdetail("\"recovery_target_timeline\" is not a valid number.");
+			GUC_check_errdetail("\"%s\" is not a valid number.",
+								"recovery_target_timeline");
+			return false;
+		}
+
+		if (timeline < 1 || timeline > PG_UINT32_MAX)
+		{
+			GUC_check_errdetail("\"%s\" must be between %u and %u.",
+								"recovery_target_timeline", 1, UINT_MAX);
 			return false;
 		}
 	}
