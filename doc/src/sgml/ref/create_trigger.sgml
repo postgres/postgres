@@ -324,9 +324,11 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    <varlistentry>
     <term><literal>ENFORCED</literal></term>
     <listitem>
-     This is a noise word.  Constraint triggers are always enforced.
+     <para>
+      This is a noise word.  Constraint triggers are always enforced.
+     </para>
     </listitem>
-   </varlistitem>
+   </varlistentry>
 
    <varlistentry>
     <term><literal>REFERENCING</literal></term>
