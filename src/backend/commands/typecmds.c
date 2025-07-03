@@ -939,11 +939,19 @@ DefineDomain(ParseState *pstate, CreateDomainStmt *stmt)
 				break;
 
 			case CONSTR_NOTNULL:
-				if (nullDefined && !typNotNull)
+				if (nullDefined)
+				{
+					if (!typNotNull)
+						ereport(ERROR,
+								errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("conflicting NULL/NOT NULL constraints"),
+								parser_errposition(pstate, constr->location));
+
 					ereport(ERROR,
-							errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("conflicting NULL/NOT NULL constraints"),
+							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							errmsg("redundant NOT NULL constraint definition"),
 							parser_errposition(pstate, constr->location));
+				}
 				if (constr->is_no_inherit)
 					ereport(ERROR,
 							errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
