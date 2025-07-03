@@ -13926,6 +13926,14 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		Oid			relid;
 
 		relid = IndexGetRelation(oldId, false);
+
+		/*
+		 * As above, make sure we have lock on the index's table if it's not
+		 * the same table.
+		 */
+		if (relid != tab->relid)
+			LockRelationOid(relid, AccessExclusiveLock);
+
 		ATPostAlterTypeParse(oldId, relid, InvalidOid,
 							 (char *) lfirst(def_item),
 							 wqueue, lockmode, tab->rewrite);
@@ -13942,6 +13950,20 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		Oid			relid;
 
 		relid = StatisticsGetRelation(oldId, false);
+
+		/*
+		 * As above, make sure we have lock on the statistics object's table
+		 * if it's not the same table.  However, we take
+		 * ShareUpdateExclusiveLock here, aligning with the lock level used in
+		 * CreateStatistics and RemoveStatisticsById.
+		 *
+		 * CAUTION: this should be done after all cases that grab
+		 * AccessExclusiveLock, else we risk causing deadlock due to needing
+		 * to promote our table lock.
+		 */
+		if (relid != tab->relid)
+			LockRelationOid(relid, ShareUpdateExclusiveLock);
+
 		ATPostAlterTypeParse(oldId, relid, InvalidOid,
 							 (char *) lfirst(def_item),
 							 wqueue, lockmode, tab->rewrite);
