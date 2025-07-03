@@ -2127,30 +2127,30 @@ explain (verbose, costs off)
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Sort
-   Output: (COALESCE(t3.q1)), t4.q1, t4.q2
-   Sort Key: (COALESCE(t3.q1)), t4.q1, t4.q2
+   Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
+   Sort Key: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
    ->  Hash Right Join
-         Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+         Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
          Hash Cond: (t4.q1 = t1.q2)
          ->  Hash Join
-               Output: (COALESCE(t3.q1)), t4.q1, t4.q2
+               Output: (COALESCE(t3.q1, t3.q1)), t4.q1, t4.q2
                Hash Cond: (t2.q2 = t4.q1)
                ->  Hash Left Join
-                     Output: t2.q2, (COALESCE(t3.q1))
+                     Output: t2.q2, (COALESCE(t3.q1, t3.q1))
                      Hash Cond: (t2.q1 = t3.q2)
                      ->  Seq Scan on public.int8_tbl t2
                            Output: t2.q1, t2.q2
                      ->  Hash
-                           Output: t3.q2, (COALESCE(t3.q1))
+                           Output: t3.q2, (COALESCE(t3.q1, t3.q1))
                            ->  Seq Scan on public.int8_tbl t3
-                                 Output: t3.q2, COALESCE(t3.q1)
+                                 Output: t3.q2, COALESCE(t3.q1, t3.q1)
                ->  Hash
                      Output: t4.q1, t4.q2
                      ->  Seq Scan on public.int8_tbl t4
@@ -2164,7 +2164,7 @@ order by 1, 2, 3;
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 inner join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
@@ -2201,32 +2201,32 @@ explain (verbose, costs off)
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                              QUERY PLAN                               
+-----------------------------------------------------------------------
  Sort
-   Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
-   Sort Key: ((COALESCE(t3.q1))), t4.q1, t4.q2
+   Output: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
+   Sort Key: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
    ->  Hash Right Join
-         Output: ((COALESCE(t3.q1))), t4.q1, t4.q2
+         Output: ((COALESCE(t3.q1, t3.q1))), t4.q1, t4.q2
          Hash Cond: (t4.q1 = t1.q2)
          ->  Nested Loop
-               Output: t4.q1, t4.q2, ((COALESCE(t3.q1)))
+               Output: t4.q1, t4.q2, ((COALESCE(t3.q1, t3.q1)))
                Join Filter: (t2.q2 = t4.q1)
                ->  Hash Left Join
-                     Output: t2.q2, (COALESCE(t3.q1))
+                     Output: t2.q2, (COALESCE(t3.q1, t3.q1))
                      Hash Cond: (t2.q1 = t3.q2)
                      ->  Seq Scan on public.int8_tbl t2
                            Output: t2.q1, t2.q2
                      ->  Hash
-                           Output: t3.q2, (COALESCE(t3.q1))
+                           Output: t3.q2, (COALESCE(t3.q1, t3.q1))
                            ->  Seq Scan on public.int8_tbl t3
-                                 Output: t3.q2, COALESCE(t3.q1)
+                                 Output: t3.q2, COALESCE(t3.q1, t3.q1)
                ->  Seq Scan on public.int8_tbl t4
-                     Output: t4.q1, t4.q2, (COALESCE(t3.q1))
+                     Output: t4.q1, t4.q2, (COALESCE(t3.q1, t3.q1))
          ->  Hash
                Output: t1.q2
                ->  Seq Scan on public.int8_tbl t1
@@ -2236,7 +2236,7 @@ order by 1, 2, 3;
 select ss2.* from
   int8_tbl t1 left join
   (int8_tbl t2 left join
-   (select coalesce(q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
+   (select coalesce(q1, q1) as x, * from int8_tbl t3) ss1 on t2.q1 = ss1.q2 left join
    lateral (select ss1.x as y, * from int8_tbl t4) ss2 on t2.q2 = ss2.q1)
   on t1.q2 = ss2.q1
 order by 1, 2, 3;

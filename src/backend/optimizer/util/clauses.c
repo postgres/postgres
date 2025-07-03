@@ -3333,6 +3333,13 @@ eval_const_expressions_mutator(Node *node,
 												  -1,
 												  coalesceexpr->coalescecollid);
 
+				/*
+				 * If there's exactly one surviving argument, we no longer
+				 * need COALESCE at all: the result is that argument
+				 */
+				if (list_length(newargs) == 1)
+					return (Node *) linitial(newargs);
+
 				newcoalesce = makeNode(CoalesceExpr);
 				newcoalesce->coalescetype = coalesceexpr->coalescetype;
 				newcoalesce->coalescecollid = coalesceexpr->coalescecollid;

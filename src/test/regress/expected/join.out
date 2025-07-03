@@ -5626,14 +5626,14 @@ select * from
   (select 1 as id) as xx
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
-  on (xx.id = coalesce(yy.id));
-              QUERY PLAN               
----------------------------------------
+  on (xx.id = coalesce(yy.id, yy.id));
+                QUERY PLAN                
+------------------------------------------
  Nested Loop Left Join
    ->  Result
    ->  Hash Full Join
          Hash Cond: (a1.unique1 = (1))
-         Filter: (1 = COALESCE((1)))
+         Filter: (1 = COALESCE((1), (1)))
          ->  Seq Scan on tenk1 a1
          ->  Hash
                ->  Result
@@ -5643,7 +5643,7 @@ select * from
   (select 1 as id) as xx
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
-  on (xx.id = coalesce(yy.id));
+  on (xx.id = coalesce(yy.id, yy.id));
  id | unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 | id 
 ----+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------+----
   1 |       1 |    2838 |   1 |    1 |   1 |      1 |       1 |        1 |           1 |         1 |        1 |   2 |    3 | BAAAAA   | EFEAAA   | OOOOxx  |  1
@@ -8411,20 +8411,20 @@ select * from int4_tbl i left join
 
 explain (verbose, costs off)
 select * from int4_tbl i left join
-  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
-             QUERY PLAN              
--------------------------------------
+  lateral (select coalesce(i, i) from int2_tbl j where i.f1 = j.f1) k on true;
+                QUERY PLAN                
+------------------------------------------
  Nested Loop Left Join
-   Output: i.f1, (COALESCE(i.*))
+   Output: i.f1, (COALESCE(i.*, i.*))
    ->  Seq Scan on public.int4_tbl i
          Output: i.f1, i.*
    ->  Seq Scan on public.int2_tbl j
-         Output: j.f1, COALESCE(i.*)
+         Output: j.f1, COALESCE(i.*, i.*)
          Filter: (i.f1 = j.f1)
 (7 rows)
 
 select * from int4_tbl i left join
-  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
+  lateral (select coalesce(i, i) from int2_tbl j where i.f1 = j.f1) k on true;
      f1      | coalesce 
 -------------+----------
            0 | (0)
@@ -9593,14 +9593,14 @@ CREATE STATISTICS group_tbl_stat (ndistinct) ON a, b FROM group_tbl;
 ANALYZE group_tbl;
 EXPLAIN (COSTS OFF)
 SELECT 1 FROM group_tbl t1
-    LEFT JOIN (SELECT a c1, COALESCE(a) c2 FROM group_tbl t2) s ON TRUE
+    LEFT JOIN (SELECT a c1, COALESCE(a, a) c2 FROM group_tbl t2) s ON TRUE
 GROUP BY s.c1, s.c2;
-                 QUERY PLAN                 
---------------------------------------------
+                   QUERY PLAN                   
+------------------------------------------------
  Group
-   Group Key: t2.a, (COALESCE(t2.a))
+   Group Key: t2.a, (COALESCE(t2.a, t2.a))
    ->  Sort
-         Sort Key: t2.a, (COALESCE(t2.a))
+         Sort Key: t2.a, (COALESCE(t2.a, t2.a))
          ->  Nested Loop Left Join
                ->  Seq Scan on group_tbl t1
                ->  Seq Scan on group_tbl t2

@@ -1977,13 +1977,13 @@ select * from
   (select 1 as id) as xx
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
-  on (xx.id = coalesce(yy.id));
+  on (xx.id = coalesce(yy.id, yy.id));
 
 select * from
   (select 1 as id) as xx
   left join
     (tenk1 as a1 full join (select 1 as id) as yy on (a1.unique1 = yy.id))
-  on (xx.id = coalesce(yy.id));
+  on (xx.id = coalesce(yy.id, yy.id));
 
 --
 -- test ability to push constants through outer join clauses
@@ -3169,9 +3169,9 @@ select * from int4_tbl i left join
   lateral (select * from int2_tbl j where i.f1 = j.f1) k on true;
 explain (verbose, costs off)
 select * from int4_tbl i left join
-  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
+  lateral (select coalesce(i, i) from int2_tbl j where i.f1 = j.f1) k on true;
 select * from int4_tbl i left join
-  lateral (select coalesce(i) from int2_tbl j where i.f1 = j.f1) k on true;
+  lateral (select coalesce(i, i) from int2_tbl j where i.f1 = j.f1) k on true;
 explain (verbose, costs off)
 select * from int4_tbl a,
   lateral (
@@ -3637,7 +3637,7 @@ ANALYZE group_tbl;
 
 EXPLAIN (COSTS OFF)
 SELECT 1 FROM group_tbl t1
-    LEFT JOIN (SELECT a c1, COALESCE(a) c2 FROM group_tbl t2) s ON TRUE
+    LEFT JOIN (SELECT a c1, COALESCE(a, a) c2 FROM group_tbl t2) s ON TRUE
 GROUP BY s.c1, s.c2;
 
 DROP TABLE group_tbl;
