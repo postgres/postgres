@@ -602,6 +602,9 @@ insert into domain_test values (1, 2);
 -- should fail
 alter table domain_test add column c str_domain;
 
+-- disallow duplicated not-null constraints
+create domain int_domain1 as int constraint nn1 not null constraint nn2 not null;
+
 create domain str_domain2 as text check (value <> 'foo') default 'foo';
 
 -- should fail
