@@ -6,6 +6,7 @@
 #include <limits.h>
 
 #include "access/stratnum.h"
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/float.h"
@@ -13,6 +14,7 @@
 #include "utils/numeric.h"
 #include "utils/timestamp.h"
 #include "utils/uuid.h"
+#include "varatt.h"
 
 PG_MODULE_MAGIC_EXT(
 					.name = "btree_gin",
@@ -401,13 +403,34 @@ leftmostvalue_float4(void)
 	return Float4GetDatum(-get_float4_infinity());
 }
 
+static Datum
+cvt_float8_float4(Datum input)
+{
+	float8		val = DatumGetFloat8(input);
+	float4		result;
+
+	/*
+	 * Assume that ordinary C conversion will produce a usable result.
+	 * (Compare dtof(), which raises error conditions that we don't need.)
+	 * Note that for inputs that aren't exactly representable as float4, it
+	 * doesn't matter whether the conversion rounds up or down.  That might
+	 * cause us to scan a few index entries that we'll reject as not matching,
+	 * but we won't miss any that should match.
+	 */
+	result = (float4) val;
+	return Float4GetDatum(result);
+}
+
 static const bool float4_rhs_is_varlena[] =
-{false};
+{false, false};
+
+static const btree_gin_convert_function float4_cvt_fns[] =
+{NULL, cvt_float8_float4};
 
 static const PGFunction float4_cmp_fns[] =
-{btfloat4cmp};
+{btfloat4cmp, btfloat84cmp};
 
-GIN_SUPPORT(float4, leftmostvalue_float4, float4_rhs_is_varlena, NULL, float4_cmp_fns)
+GIN_SUPPORT(float4, leftmostvalue_float4, float4_rhs_is_varlena, float4_cvt_fns, float4_cmp_fns)
 
 static Datum
 leftmostvalue_float8(void)
@@ -415,13 +438,24 @@ leftmostvalue_float8(void)
 	return Float8GetDatum(-get_float8_infinity());
 }
 
+static Datum
+cvt_float4_float8(Datum input)
+{
+	float4		val = DatumGetFloat4(input);
+
+	return Float8GetDatum((float8) val);
+}
+
 static const bool float8_rhs_is_varlena[] =
-{false};
+{false, false};
+
+static const btree_gin_convert_function float8_cvt_fns[] =
+{NULL, cvt_float4_float8};
 
 static const PGFunction float8_cmp_fns[] =
-{btfloat8cmp};
+{btfloat8cmp, btfloat48cmp};
 
-GIN_SUPPORT(float8, leftmostvalue_float8, float8_rhs_is_varlena, NULL, float8_cmp_fns)
+GIN_SUPPORT(float8, leftmostvalue_float8, float8_rhs_is_varlena, float8_cvt_fns, float8_cmp_fns)
 
 static Datum
 leftmostvalue_money(void)
@@ -457,21 +491,75 @@ leftmostvalue_timestamp(void)
 	return TimestampGetDatum(DT_NOBEGIN);
 }
 
+static Datum
+cvt_date_timestamp(Datum input)
+{
+	DateADT		val = DatumGetDateADT(input);
+	Timestamp	result;
+	int			overflow;
+
+	result = date2timestamp_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return TimestampGetDatum(result);
+}
+
+static Datum
+cvt_timestamptz_timestamp(Datum input)
+{
+	TimestampTz val = DatumGetTimestampTz(input);
+	Timestamp	result;
+	int			overflow;
+
+	result = timestamptz2timestamp_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return TimestampGetDatum(result);
+}
+
 static const bool timestamp_rhs_is_varlena[] =
-{false};
+{false, false, false};
+
+static const btree_gin_convert_function timestamp_cvt_fns[] =
+{NULL, cvt_date_timestamp, cvt_timestamptz_timestamp};
 
 static const PGFunction timestamp_cmp_fns[] =
-{timestamp_cmp};
+{timestamp_cmp, date_cmp_timestamp, timestamptz_cmp_timestamp};
 
-GIN_SUPPORT(timestamp, leftmostvalue_timestamp, timestamp_rhs_is_varlena, NULL, timestamp_cmp_fns)
+GIN_SUPPORT(timestamp, leftmostvalue_timestamp, timestamp_rhs_is_varlena, timestamp_cvt_fns, timestamp_cmp_fns)
+
+static Datum
+cvt_date_timestamptz(Datum input)
+{
+	DateADT		val = DatumGetDateADT(input);
+	TimestampTz result;
+	int			overflow;
+
+	result = date2timestamptz_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return TimestampTzGetDatum(result);
+}
+
+static Datum
+cvt_timestamp_timestamptz(Datum input)
+{
+	Timestamp	val = DatumGetTimestamp(input);
+	TimestampTz result;
+	int			overflow;
+
+	result = timestamp2timestamptz_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return TimestampTzGetDatum(result);
+}
 
 static const bool timestamptz_rhs_is_varlena[] =
-{false};
+{false, false, false};
+
+static const btree_gin_convert_function timestamptz_cvt_fns[] =
+{NULL, cvt_date_timestamptz, cvt_timestamp_timestamptz};
 
 static const PGFunction timestamptz_cmp_fns[] =
-{timestamp_cmp};
+{timestamp_cmp, date_cmp_timestamptz, timestamp_cmp_timestamptz};
 
-GIN_SUPPORT(timestamptz, leftmostvalue_timestamp, timestamptz_rhs_is_varlena, NULL, timestamptz_cmp_fns)
+GIN_SUPPORT(timestamptz, leftmostvalue_timestamp, timestamptz_rhs_is_varlena, timestamptz_cvt_fns, timestamptz_cmp_fns)
 
 static Datum
 leftmostvalue_time(void)
@@ -512,13 +600,40 @@ leftmostvalue_date(void)
 	return DateADTGetDatum(DATEVAL_NOBEGIN);
 }
 
+static Datum
+cvt_timestamp_date(Datum input)
+{
+	Timestamp	val = DatumGetTimestamp(input);
+	DateADT		result;
+	int			overflow;
+
+	result = timestamp2date_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return DateADTGetDatum(result);
+}
+
+static Datum
+cvt_timestamptz_date(Datum input)
+{
+	TimestampTz val = DatumGetTimestampTz(input);
+	DateADT		result;
+	int			overflow;
+
+	result = timestamptz2date_opt_overflow(val, &overflow);
+	/* We can ignore the overflow result, since result is useful as-is */
+	return DateADTGetDatum(result);
+}
+
 static const bool date_rhs_is_varlena[] =
-{false};
+{false, false, false};
+
+static const btree_gin_convert_function date_cvt_fns[] =
+{NULL, cvt_timestamp_date, cvt_timestamptz_date};
 
 static const PGFunction date_cmp_fns[] =
-{date_cmp};
+{date_cmp, timestamp_cmp_date, timestamptz_cmp_date};
 
-GIN_SUPPORT(date, leftmostvalue_date, date_rhs_is_varlena, NULL, date_cmp_fns)
+GIN_SUPPORT(date, leftmostvalue_date, date_rhs_is_varlena, date_cvt_fns, date_cmp_fns)
 
 static Datum
 leftmostvalue_interval(void)
@@ -598,13 +713,24 @@ leftmostvalue_text(void)
 	return PointerGetDatum(cstring_to_text_with_len("", 0));
 }
 
+static Datum
+cvt_name_text(Datum input)
+{
+	Name		val = DatumGetName(input);
+
+	return PointerGetDatum(cstring_to_text(NameStr(*val)));
+}
+
 static const bool text_rhs_is_varlena[] =
-{true};
+{true, false};
+
+static const btree_gin_convert_function text_cvt_fns[] =
+{NULL, cvt_name_text};
 
 static const PGFunction text_cmp_fns[] =
-{bttextcmp};
+{bttextcmp, btnametextcmp};
 
-GIN_SUPPORT(text, leftmostvalue_text, text_rhs_is_varlena, NULL, text_cmp_fns)
+GIN_SUPPORT(text, leftmostvalue_text, text_rhs_is_varlena, text_cvt_fns, text_cmp_fns)
 
 static const bool bpchar_rhs_is_varlena[] =
 {true};
@@ -804,13 +930,37 @@ leftmostvalue_name(void)
 	return NameGetDatum(result);
 }
 
+static Datum
+cvt_text_name(Datum input)
+{
+	text	   *val = DatumGetTextPP(input);
+	NameData   *result = (NameData *) palloc0(NAMEDATALEN);
+	int			len = VARSIZE_ANY_EXHDR(val);
+
+	/*
+	 * Truncate oversize input.  We're assuming this will produce a result
+	 * considered less than the original.  That could be a bad assumption in
+	 * some collations, but fortunately an index on "name" is generally going
+	 * to use C collation.
+	 */
+	if (len >= NAMEDATALEN)
+		len = pg_mbcliplen(VARDATA_ANY(val), len, NAMEDATALEN - 1);
+
+	memcpy(NameStr(*result), VARDATA_ANY(val), len);
+
+	return NameGetDatum(result);
+}
+
 static const bool name_rhs_is_varlena[] =
-{false};
+{false, true};
+
+static const btree_gin_convert_function name_cvt_fns[] =
+{NULL, cvt_text_name};
 
 static const PGFunction name_cmp_fns[] =
-{btnamecmp};
+{btnamecmp, bttextnamecmp};
 
-GIN_SUPPORT(name, leftmostvalue_name, name_rhs_is_varlena, NULL, name_cmp_fns)
+GIN_SUPPORT(name, leftmostvalue_name, name_rhs_is_varlena, name_cvt_fns, name_cmp_fns)
 
 static Datum
 leftmostvalue_bool(void)

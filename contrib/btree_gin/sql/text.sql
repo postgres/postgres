@@ -13,3 +13,12 @@ SELECT * FROM test_text WHERE i<='abc' ORDER BY i;
 SELECT * FROM test_text WHERE i='abc' ORDER BY i;
 SELECT * FROM test_text WHERE i>='abc' ORDER BY i;
 SELECT * FROM test_text WHERE i>'abc' ORDER BY i;
+
+explain (costs off)
+SELECT * FROM test_text WHERE i<'abc'::name COLLATE "default" ORDER BY i;
+
+SELECT * FROM test_text WHERE i<'abc'::name COLLATE "default" ORDER BY i;
+SELECT * FROM test_text WHERE i<='abc'::name COLLATE "default" ORDER BY i;
+SELECT * FROM test_text WHERE i='abc'::name COLLATE "default" ORDER BY i;
+SELECT * FROM test_text WHERE i>='abc'::name COLLATE "default" ORDER BY i;
+SELECT * FROM test_text WHERE i>'abc'::name COLLATE "default" ORDER BY i;

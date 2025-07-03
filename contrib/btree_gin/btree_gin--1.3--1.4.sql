@@ -61,3 +61,91 @@ ADD
     OPERATOR        0x24    >= (int8, int4),
     OPERATOR        0x25    > (int8, int4)
 ;
+
+ALTER OPERATOR FAMILY float4_ops USING gin
+ADD
+    -- Code 1: RHS is float8
+    OPERATOR        0x11    < (float4, float8),
+    OPERATOR        0x12    <= (float4, float8),
+    OPERATOR        0x13    = (float4, float8),
+    OPERATOR        0x14    >= (float4, float8),
+    OPERATOR        0x15    > (float4, float8)
+;
+
+ALTER OPERATOR FAMILY float8_ops USING gin
+ADD
+    -- Code 1: RHS is float4
+    OPERATOR        0x11    < (float8, float4),
+    OPERATOR        0x12    <= (float8, float4),
+    OPERATOR        0x13    = (float8, float4),
+    OPERATOR        0x14    >= (float8, float4),
+    OPERATOR        0x15    > (float8, float4)
+;
+
+ALTER OPERATOR FAMILY text_ops USING gin
+ADD
+    -- Code 1: RHS is name
+    OPERATOR        0x11    < (text, name),
+    OPERATOR        0x12    <= (text, name),
+    OPERATOR        0x13    = (text, name),
+    OPERATOR        0x14    >= (text, name),
+    OPERATOR        0x15    > (text, name)
+;
+
+ALTER OPERATOR FAMILY name_ops USING gin
+ADD
+    -- Code 1: RHS is text
+    OPERATOR        0x11    < (name, text),
+    OPERATOR        0x12    <= (name, text),
+    OPERATOR        0x13    = (name, text),
+    OPERATOR        0x14    >= (name, text),
+    OPERATOR        0x15    > (name, text)
+;
+
+ALTER OPERATOR FAMILY date_ops USING gin
+ADD
+    -- Code 1: RHS is timestamp
+    OPERATOR        0x11    < (date, timestamp),
+    OPERATOR        0x12    <= (date, timestamp),
+    OPERATOR        0x13    = (date, timestamp),
+    OPERATOR        0x14    >= (date, timestamp),
+    OPERATOR        0x15    > (date, timestamp),
+    -- Code 2: RHS is timestamptz
+    OPERATOR        0x21    < (date, timestamptz),
+    OPERATOR        0x22    <= (date, timestamptz),
+    OPERATOR        0x23    = (date, timestamptz),
+    OPERATOR        0x24    >= (date, timestamptz),
+    OPERATOR        0x25    > (date, timestamptz)
+;
+
+ALTER OPERATOR FAMILY timestamp_ops USING gin
+ADD
+    -- Code 1: RHS is date
+    OPERATOR        0x11    < (timestamp, date),
+    OPERATOR        0x12    <= (timestamp, date),
+    OPERATOR        0x13    = (timestamp, date),
+    OPERATOR        0x14    >= (timestamp, date),
+    OPERATOR        0x15    > (timestamp, date),
+    -- Code 2: RHS is timestamptz
+    OPERATOR        0x21    < (timestamp, timestamptz),
+    OPERATOR        0x22    <= (timestamp, timestamptz),
+    OPERATOR        0x23    = (timestamp, timestamptz),
+    OPERATOR        0x24    >= (timestamp, timestamptz),
+    OPERATOR        0x25    > (timestamp, timestamptz)
+;
+
+ALTER OPERATOR FAMILY timestamptz_ops USING gin
+ADD
+    -- Code 1: RHS is date
+    OPERATOR        0x11    < (timestamptz, date),
+    OPERATOR        0x12    <= (timestamptz, date),
+    OPERATOR        0x13    = (timestamptz, date),
+    OPERATOR        0x14    >= (timestamptz, date),
+    OPERATOR        0x15    > (timestamptz, date),
+    -- Code 2: RHS is timestamp
+    OPERATOR        0x21    < (timestamptz, timestamp),
+    OPERATOR        0x22    <= (timestamptz, timestamp),
+    OPERATOR        0x23    = (timestamptz, timestamp),
+    OPERATOR        0x24    >= (timestamptz, timestamp),
+    OPERATOR        0x25    > (timestamptz, timestamp)
+;

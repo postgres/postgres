@@ -42,3 +42,53 @@ SELECT * FROM test_text WHERE i>'abc' ORDER BY i;
  xyz
 (2 rows)
 
+explain (costs off)
+SELECT * FROM test_text WHERE i<'abc'::name COLLATE "default" ORDER BY i;
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_text
+         Recheck Cond: (i < 'abc'::name COLLATE "default")
+         ->  Bitmap Index Scan on idx_text
+               Index Cond: (i < 'abc'::name COLLATE "default")
+(6 rows)
+
+SELECT * FROM test_text WHERE i<'abc'::name COLLATE "default" ORDER BY i;
+  i  
+-----
+ a
+ ab
+ abb
+(3 rows)
+
+SELECT * FROM test_text WHERE i<='abc'::name COLLATE "default" ORDER BY i;
+  i  
+-----
+ a
+ ab
+ abb
+ abc
+(4 rows)
+
+SELECT * FROM test_text WHERE i='abc'::name COLLATE "default" ORDER BY i;
+  i  
+-----
+ abc
+(1 row)
+
+SELECT * FROM test_text WHERE i>='abc'::name COLLATE "default" ORDER BY i;
+  i  
+-----
+ abc
+ axy
+ xyz
+(3 rows)
+
+SELECT * FROM test_text WHERE i>'abc'::name COLLATE "default" ORDER BY i;
+  i  
+-----
+ axy
+ xyz
+(2 rows)
+
