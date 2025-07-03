@@ -26,6 +26,7 @@ begin
         ln := regexp_replace(ln, 'Heap Fetches: \d+', 'Heap Fetches: N');
         ln := regexp_replace(ln, 'loops=\d+', 'loops=N');
         ln := regexp_replace(ln, 'Index Searches: \d+', 'Index Searches: N');
+        ln := regexp_replace(ln, 'Memory: \d+kB', 'Memory: NkB');
         return next ln;
     end loop;
 end;
@@ -244,3 +245,29 @@ RESET max_parallel_workers_per_gather;
 RESET parallel_tuple_cost;
 RESET parallel_setup_cost;
 RESET min_parallel_table_scan_size;
+
+-- Ensure memoize works for ANTI joins
+CREATE TABLE tab_anti (a int, b boolean);
+INSERT INTO tab_anti SELECT i%3, false FROM generate_series(1,100)i;
+ANALYZE tab_anti;
+
+-- Ensure we get a Memoize plan for ANTI join
+SELECT explain_memoize('
+SELECT COUNT(*) FROM tab_anti t1 LEFT JOIN
+LATERAL (SELECT DISTINCT ON (a) a, b, t1.a AS x FROM tab_anti t2) t2
+ON t1.a+1 = t2.a
+WHERE t2.a IS NULL;', false);
+
+-- And check we get the expected results.
+SELECT COUNT(*) FROM tab_anti t1 LEFT JOIN
+LATERAL (SELECT DISTINCT ON (a) a, b, t1.a AS x FROM tab_anti t2) t2
+ON t1.a+1 = t2.a
+WHERE t2.a IS NULL;
+
+-- Ensure we do not add memoize node for SEMI join
+EXPLAIN (COSTS OFF)
+SELECT * FROM tab_anti t1 WHERE t1.a IN
+ (SELECT a FROM tab_anti t2 WHERE t2.b IN
+  (SELECT t1.b FROM tab_anti t3 WHERE t2.a > 1 OFFSET 0));
+
+DROP TABLE tab_anti;

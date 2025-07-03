@@ -25,6 +25,7 @@ begin
         ln := regexp_replace(ln, 'Heap Fetches: \d+', 'Heap Fetches: N');
         ln := regexp_replace(ln, 'loops=\d+', 'loops=N');
         ln := regexp_replace(ln, 'Index Searches: \d+', 'Index Searches: N');
+        ln := regexp_replace(ln, 'Memory: \d+kB', 'Memory: NkB');
         return next ln;
     end loop;
 end;
@@ -500,3 +501,62 @@ RESET max_parallel_workers_per_gather;
 RESET parallel_tuple_cost;
 RESET parallel_setup_cost;
 RESET min_parallel_table_scan_size;
+-- Ensure memoize works for ANTI joins
+CREATE TABLE tab_anti (a int, b boolean);
+INSERT INTO tab_anti SELECT i%3, false FROM generate_series(1,100)i;
+ANALYZE tab_anti;
+-- Ensure we get a Memoize plan for ANTI join
+SELECT explain_memoize('
+SELECT COUNT(*) FROM tab_anti t1 LEFT JOIN
+LATERAL (SELECT DISTINCT ON (a) a, b, t1.a AS x FROM tab_anti t2) t2
+ON t1.a+1 = t2.a
+WHERE t2.a IS NULL;', false);
+                                      explain_memoize                                       
+--------------------------------------------------------------------------------------------
+ Aggregate (actual rows=1.00 loops=N)
+   ->  Nested Loop Anti Join (actual rows=33.00 loops=N)
+         ->  Seq Scan on tab_anti t1 (actual rows=100.00 loops=N)
+         ->  Memoize (actual rows=0.67 loops=N)
+               Cache Key: (t1.a + 1), t1.a
+               Cache Mode: binary
+               Hits: 97  Misses: 3  Evictions: Zero  Overflows: 0  Memory Usage: NkB
+               ->  Subquery Scan on t2 (actual rows=0.67 loops=N)
+                     Filter: ((t1.a + 1) = t2.a)
+                     Rows Removed by Filter: 2
+                     ->  Unique (actual rows=2.67 loops=N)
+                           ->  Sort (actual rows=67.33 loops=N)
+                                 Sort Key: t2_1.a
+                                 Sort Method: quicksort  Memory: NkB
+                                 ->  Seq Scan on tab_anti t2_1 (actual rows=100.00 loops=N)
+(15 rows)
+
+-- And check we get the expected results.
+SELECT COUNT(*) FROM tab_anti t1 LEFT JOIN
+LATERAL (SELECT DISTINCT ON (a) a, b, t1.a AS x FROM tab_anti t2) t2
+ON t1.a+1 = t2.a
+WHERE t2.a IS NULL;
+ count 
+-------
+    33
+(1 row)
+
+-- Ensure we do not add memoize node for SEMI join
+EXPLAIN (COSTS OFF)
+SELECT * FROM tab_anti t1 WHERE t1.a IN
+ (SELECT a FROM tab_anti t2 WHERE t2.b IN
+  (SELECT t1.b FROM tab_anti t3 WHERE t2.a > 1 OFFSET 0));
+                   QUERY PLAN                    
+-------------------------------------------------
+ Nested Loop Semi Join
+   ->  Seq Scan on tab_anti t1
+   ->  Nested Loop Semi Join
+         Join Filter: (t1.a = t2.a)
+         ->  Seq Scan on tab_anti t2
+         ->  Subquery Scan on "ANY_subquery"
+               Filter: (t2.b = "ANY_subquery".b)
+               ->  Result
+                     One-Time Filter: (t2.a > 1)
+                     ->  Seq Scan on tab_anti t3
+(10 rows)
+
+DROP TABLE tab_anti;

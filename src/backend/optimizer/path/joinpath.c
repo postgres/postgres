@@ -154,13 +154,17 @@ add_paths_to_joinrel(PlannerInfo *root,
 	/*
 	 * See if the inner relation is provably unique for this outer rel.
 	 *
-	 * We have some special cases: for JOIN_SEMI and JOIN_ANTI, it doesn't
-	 * matter since the executor can make the equivalent optimization anyway;
-	 * we need not expend planner cycles on proofs.  For JOIN_UNIQUE_INNER, we
-	 * must be considering a semijoin whose inner side is not provably unique
-	 * (else reduce_unique_semijoins would've simplified it), so there's no
-	 * point in calling innerrel_is_unique.  However, if the LHS covers all of
-	 * the semijoin's min_lefthand, then it's appropriate to set inner_unique
+	 * We have some special cases: for JOIN_SEMI, it doesn't matter since the
+	 * executor can make the equivalent optimization anyway.  It also doesn't
+	 * help enable use of Memoize, since a semijoin with a provably unique
+	 * inner side should have been reduced to an inner join in that case.
+	 * Therefore, we need not expend planner cycles on proofs.  (For
+	 * JOIN_ANTI, although it doesn't help the executor for the same reason,
+	 * it can benefit Memoize paths.)  For JOIN_UNIQUE_INNER, we must be
+	 * considering a semijoin whose inner side is not provably unique (else
+	 * reduce_unique_semijoins would've simplified it), so there's no point in
+	 * calling innerrel_is_unique.  However, if the LHS covers all of the
+	 * semijoin's min_lefthand, then it's appropriate to set inner_unique
 	 * because the path produced by create_unique_path will be unique relative
 	 * to the LHS.  (If we have an LHS that's only part of the min_lefthand,
 	 * that is *not* true.)  For JOIN_UNIQUE_OUTER, pass JOIN_INNER to avoid
@@ -169,12 +173,6 @@ add_paths_to_joinrel(PlannerInfo *root,
 	switch (jointype)
 	{
 		case JOIN_SEMI:
-		case JOIN_ANTI:
-
-			/*
-			 * XXX it may be worth proving this to allow a Memoize to be
-			 * considered for Nested Loop Semi/Anti Joins.
-			 */
 			extra.inner_unique = false; /* well, unproven */
 			break;
 		case JOIN_UNIQUE_INNER:
@@ -715,16 +713,21 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 		return NULL;
 
 	/*
-	 * Currently we don't do this for SEMI and ANTI joins unless they're
-	 * marked as inner_unique.  This is because nested loop SEMI/ANTI joins
-	 * don't scan the inner node to completion, which will mean memoize cannot
-	 * mark the cache entry as complete.
-	 *
-	 * XXX Currently we don't attempt to mark SEMI/ANTI joins as inner_unique
-	 * = true.  Should we?  See add_paths_to_joinrel()
+	 * Currently we don't do this for SEMI and ANTI joins, because nested loop
+	 * SEMI/ANTI joins don't scan the inner node to completion, which means
+	 * memoize cannot mark the cache entry as complete.  Nor can we mark the
+	 * cache entry as complete after fetching the first inner tuple, because
+	 * if that tuple and the current outer tuple don't satisfy the join
+	 * clauses, a second inner tuple that satisfies the parameters would find
+	 * the cache entry already marked as complete.  The only exception is when
+	 * the inner relation is provably unique, as in that case, there won't be
+	 * a second matching tuple and we can safely mark the cache entry as
+	 * complete after fetching the first inner tuple.  Note that in such
+	 * cases, the SEMI join should have been reduced to an inner join by
+	 * reduce_unique_semijoins.
 	 */
-	if (!extra->inner_unique && (jointype == JOIN_SEMI ||
-								 jointype == JOIN_ANTI))
+	if ((jointype == JOIN_SEMI || jointype == JOIN_ANTI) &&
+		!extra->inner_unique)
 		return NULL;
 
 	/*
