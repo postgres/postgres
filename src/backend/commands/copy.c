@@ -322,11 +322,13 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 }
 
 /*
- * Extract a CopyHeaderChoice value from a DefElem.  This is like
- * defGetBoolean() but also accepts the special value "match".
+ * Extract the CopyFormatOptions.header_line value from a DefElem.
+ *
+ * Parses the HEADER option for COPY, which can be a boolean, a non-negative
+ * integer (number of lines to skip), or the special value "match".
  */
-static CopyHeaderChoice
-defGetCopyHeaderChoice(DefElem *def, bool is_from)
+static int
+defGetCopyHeaderOption(DefElem *def, bool is_from)
 {
 	/*
 	 * If no parameter value given, assume "true" is meant.
@@ -335,20 +337,27 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 		return COPY_HEADER_TRUE;
 
 	/*
-	 * Allow 0, 1, "true", "false", "on", "off", or "match".
+	 * Allow 0, 1, "true", "false", "on", "off", a non-negative integer, or
+	 * "match".
 	 */
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-			switch (intVal(def->arg))
 			{
-				case 0:
-					return COPY_HEADER_FALSE;
-				case 1:
-					return COPY_HEADER_TRUE;
-				default:
-					/* otherwise, error out below */
-					break;
+				int			ival = intVal(def->arg);
+
+				if (ival < 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("a negative integer value cannot be "
+									"specified for %s", def->defname)));
+
+				if (!is_from && ival > 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot use multi-line header in COPY TO")));
+
+				return ival;
 			}
 			break;
 		default:
@@ -381,7 +390,8 @@ defGetCopyHeaderChoice(DefElem *def, bool is_from)
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("%s requires a Boolean value or \"match\"",
+			 errmsg("%s requires a Boolean value, a non-negative integer, "
+					"or the string \"match\"",
 					def->defname)));
 	return COPY_HEADER_FALSE;	/* keep compiler quiet */
 }
@@ -566,7 +576,7 @@ ProcessCopyOptions(ParseState *pstate,
 			if (header_specified)
 				errorConflictingDefElem(defel, pstate);
 			header_specified = true;
-			opts_out->header_line = defGetCopyHeaderChoice(defel, is_from);
+			opts_out->header_line = defGetCopyHeaderOption(defel, is_from);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
@@ -769,7 +779,7 @@ ProcessCopyOptions(ParseState *pstate,
 				 errmsg("COPY delimiter cannot be \"%s\"", opts_out->delim)));
 
 	/* Check header */
-	if (opts_out->binary && opts_out->header_line)
+	if (opts_out->binary && opts_out->header_line != COPY_HEADER_FALSE)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/*- translator: %s is the name of a COPY option, e.g. ON_ERROR */

@@ -132,6 +132,12 @@ COPY x from stdin with (reject_limit 1);
 ERROR:  COPY REJECT_LIMIT requires ON_ERROR to be set to IGNORE
 COPY x from stdin with (on_error ignore, reject_limit 0);
 ERROR:  REJECT_LIMIT (0) must be greater than zero
+COPY x from stdin with (header -1);
+ERROR:  a negative integer value cannot be specified for header
+COPY x from stdin with (header 2.5);
+ERROR:  header requires a Boolean value, a non-negative integer, or the string "match"
+COPY x to stdout with (header 2);
+ERROR:  cannot use multi-line header in COPY TO
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
 ERROR:  column "d" specified more than once

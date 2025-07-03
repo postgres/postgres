@@ -94,6 +94,36 @@ this is just a line full of junk that would error out if parsed
 
 copy copytest4 to stdout (header);
 
+-- test multi-line header line feature
+
+create temp table copytest5 (c1 int);
+
+copy copytest5 from stdin (format csv, header 2);
+this is a first header line.
+this is a second header line.
+1
+2
+\.
+copy copytest5 to stdout (header);
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 4);
+this is a first header line.
+this is a second header line.
+1
+2
+\.
+select count(*) from copytest5;
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 5);
+this is a first header line.
+this is a second header line.
+1
+2
+\.
+select count(*) from copytest5;
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,

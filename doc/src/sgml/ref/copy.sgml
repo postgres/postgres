@@ -37,7 +37,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     DELIMITER '<replaceable class="parameter">delimiter_character</replaceable>'
     NULL '<replaceable class="parameter">null_string</replaceable>'
     DEFAULT '<replaceable class="parameter">default_string</replaceable>'
-    HEADER [ <replaceable class="parameter">boolean</replaceable> | MATCH ]
+    HEADER [ <replaceable class="parameter">boolean</replaceable> | <replaceable class="parameter">integer</replaceable> | MATCH ]
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
@@ -213,6 +213,15 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">integer</replaceable></term>
+    <listitem>
+     <para>
+      Specifies a non-negative integer value passed to the selected option.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>FORMAT</literal></term>
     <listitem>
      <para>
@@ -303,16 +312,25 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <term><literal>HEADER</literal></term>
     <listitem>
      <para>
-      Specifies that the file contains a header line with the names of each
-      column in the file.  On output, the first line contains the column
-      names from the table.  On input, the first line is discarded when this
-      option is set to <literal>true</literal> (or equivalent Boolean value).
-      If this option is set to <literal>MATCH</literal>, the number and names
-      of the columns in the header line must match the actual column names of
-      the table, in order;  otherwise an error is raised.
+      On output, if this option is set to <literal>true</literal>
+      (or an equivalent Boolean value), the first line of the output will
+      contain the column names from the table.
+      Integer values <literal>0</literal> and <literal>1</literal> are
+      accepted as Boolean values, but other integers are not allowed for
+      <command>COPY TO</command> commands.
+     </para>
+     <para>
+      On input, if this option is set to <literal>true</literal>
+      (or an equivalent Boolean value), the first line of the input is
+      discarded.  If set to a non-negative integer, that number of
+      lines are discarded.  If set to <literal>MATCH</literal>, the first line
+      is discarded, and it must contain column names that exactly match the
+      table's columns, in both number and order; otherwise, an error is raised.
+      The <literal>MATCH</literal> value is only valid for
+      <command>COPY FROM</command> commands.
+     </para>
+     <para>
       This option is not allowed when using <literal>binary</literal> format.
-      The <literal>MATCH</literal> option is only valid for <command>COPY
-      FROM</command> commands.
      </para>
     </listitem>
    </varlistentry>

@@ -81,6 +81,29 @@ copy copytest4 to stdout (header);
 c1	colname with tab: \t
 1	a
 2	b
+-- test multi-line header line feature
+create temp table copytest5 (c1 int);
+copy copytest5 from stdin (format csv, header 2);
+copy copytest5 to stdout (header);
+c1
+1
+2
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 4);
+select count(*) from copytest5;
+ count 
+-------
+     0
+(1 row)
+
+truncate copytest5;
+copy copytest5 from stdin (format csv, header 5);
+select count(*) from copytest5;
+ count 
+-------
+     0
+(1 row)
+
 -- test copy from with a partitioned table
 create table parted_copytest (
 	a int,
@@ -224,7 +247,7 @@ alter table header_copytest add column c text;
 copy header_copytest to stdout with (header match);
 ERROR:  cannot use "match" with HEADER in COPY TO
 copy header_copytest from stdin with (header wrong_choice);
-ERROR:  header requires a Boolean value or "match"
+ERROR:  header requires a Boolean value, a non-negative integer, or the string "match"
 -- works
 copy header_copytest from stdin with (header match);
 copy header_copytest (c, a, b) from stdin with (header match);

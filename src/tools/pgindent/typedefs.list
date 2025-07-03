@@ -521,7 +521,6 @@ CopyFormatOptions
 CopyFromRoutine
 CopyFromState
 CopyFromStateData
-CopyHeaderChoice
 CopyInsertMethod
 CopyLogVerbosityChoice
 CopyMethod

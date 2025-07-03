@@ -771,21 +771,30 @@ static pg_attribute_always_inline bool
 NextCopyFromRawFieldsInternal(CopyFromState cstate, char ***fields, int *nfields, bool is_csv)
 {
 	int			fldct;
-	bool		done;
+	bool		done = false;
 
 	/* only available for text or csv input */
 	Assert(!cstate->opts.binary);
 
 	/* on input check that the header line is correct if needed */
-	if (cstate->cur_lineno == 0 && cstate->opts.header_line)
+	if (cstate->cur_lineno == 0 && cstate->opts.header_line != COPY_HEADER_FALSE)
 	{
 		ListCell   *cur;
 		TupleDesc	tupDesc;
+		int			lines_to_skip = cstate->opts.header_line;
+
+		/* If set to "match", one header line is skipped */
+		if (cstate->opts.header_line == COPY_HEADER_MATCH)
+			lines_to_skip = 1;
 
 		tupDesc = RelationGetDescr(cstate->rel);
 
-		cstate->cur_lineno++;
-		done = CopyReadLine(cstate, is_csv);
+		for (int i = 0; i < lines_to_skip; i++)
+		{
+			cstate->cur_lineno++;
+			if ((done = CopyReadLine(cstate, is_csv)))
+				break;
+		}
 
 		if (cstate->opts.header_line == COPY_HEADER_MATCH)
 		{
