@@ -7,7 +7,7 @@ OBJS = \
 
 EXTENSION = btree_gin
 DATA = btree_gin--1.0.sql btree_gin--1.0--1.1.sql btree_gin--1.1--1.2.sql \
-	 btree_gin--1.2--1.3.sql
+	 btree_gin--1.2--1.3.sql btree_gin--1.3--1.4.sql
 PGFILEDESC = "btree_gin - B-tree equivalent GIN operator classes"
 
 REGRESS = install_btree_gin int2 int4 int8 float4 float8 money oid \

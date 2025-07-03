@@ -42,3 +42,103 @@ SELECT * FROM test_int4 WHERE i>1::int4 ORDER BY i;
  3
 (2 rows)
 
+explain (costs off)
+SELECT * FROM test_int4 WHERE i<1::int2 ORDER BY i;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_int4
+         Recheck Cond: (i < '1'::smallint)
+         ->  Bitmap Index Scan on idx_int4
+               Index Cond: (i < '1'::smallint)
+(6 rows)
+
+SELECT * FROM test_int4 WHERE i<1::int2 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+(3 rows)
+
+SELECT * FROM test_int4 WHERE i<=1::int2 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+  1
+(4 rows)
+
+SELECT * FROM test_int4 WHERE i=1::int2 ORDER BY i;
+ i 
+---
+ 1
+(1 row)
+
+SELECT * FROM test_int4 WHERE i>=1::int2 ORDER BY i;
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+SELECT * FROM test_int4 WHERE i>1::int2 ORDER BY i;
+ i 
+---
+ 2
+ 3
+(2 rows)
+
+explain (costs off)
+SELECT * FROM test_int4 WHERE i<1::int8 ORDER BY i;
+                 QUERY PLAN                  
+---------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_int4
+         Recheck Cond: (i < '1'::bigint)
+         ->  Bitmap Index Scan on idx_int4
+               Index Cond: (i < '1'::bigint)
+(6 rows)
+
+SELECT * FROM test_int4 WHERE i<1::int8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+(3 rows)
+
+SELECT * FROM test_int4 WHERE i<=1::int8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+  1
+(4 rows)
+
+SELECT * FROM test_int4 WHERE i=1::int8 ORDER BY i;
+ i 
+---
+ 1
+(1 row)
+
+SELECT * FROM test_int4 WHERE i>=1::int8 ORDER BY i;
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+SELECT * FROM test_int4 WHERE i>1::int8 ORDER BY i;
+ i 
+---
+ 2
+ 3
+(2 rows)
+

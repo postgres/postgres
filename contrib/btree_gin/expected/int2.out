@@ -42,3 +42,193 @@ SELECT * FROM test_int2 WHERE i>1::int2 ORDER BY i;
  3
 (2 rows)
 
+explain (costs off)
+SELECT * FROM test_int2 WHERE i<1::int4 ORDER BY i;
+                QUERY PLAN                 
+-------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_int2
+         Recheck Cond: (i < 1)
+         ->  Bitmap Index Scan on idx_int2
+               Index Cond: (i < 1)
+(6 rows)
+
+SELECT * FROM test_int2 WHERE i<1::int4 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+(3 rows)
+
+SELECT * FROM test_int2 WHERE i<=1::int4 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+  1
+(4 rows)
+
+SELECT * FROM test_int2 WHERE i=1::int4 ORDER BY i;
+ i 
+---
+ 1
+(1 row)
+
+SELECT * FROM test_int2 WHERE i>=1::int4 ORDER BY i;
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+SELECT * FROM test_int2 WHERE i>1::int4 ORDER BY i;
+ i 
+---
+ 2
+ 3
+(2 rows)
+
+explain (costs off)
+SELECT * FROM test_int2 WHERE i<1::int8 ORDER BY i;
+                 QUERY PLAN                  
+---------------------------------------------
+ Sort
+   Sort Key: i
+   ->  Bitmap Heap Scan on test_int2
+         Recheck Cond: (i < '1'::bigint)
+         ->  Bitmap Index Scan on idx_int2
+               Index Cond: (i < '1'::bigint)
+(6 rows)
+
+SELECT * FROM test_int2 WHERE i<1::int8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+(3 rows)
+
+SELECT * FROM test_int2 WHERE i<=1::int8 ORDER BY i;
+ i  
+----
+ -2
+ -1
+  0
+  1
+(4 rows)
+
+SELECT * FROM test_int2 WHERE i=1::int8 ORDER BY i;
+ i 
+---
+ 1
+(1 row)
+
+SELECT * FROM test_int2 WHERE i>=1::int8 ORDER BY i;
+ i 
+---
+ 1
+ 2
+ 3
+(3 rows)
+
+SELECT * FROM test_int2 WHERE i>1::int8 ORDER BY i;
+ i 
+---
+ 2
+ 3
+(2 rows)
+
+-- Check endpoint and out-of-range cases
+INSERT INTO test_int2 VALUES ((-32768)::int2),(32767);
+SELECT gin_clean_pending_list('idx_int2');
+ gin_clean_pending_list 
+------------------------
+                      1
+(1 row)
+
+SELECT * FROM test_int2 WHERE i<(-32769)::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_int2 WHERE i<=(-32769)::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_int2 WHERE i=(-32769)::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_int2 WHERE i>=(-32769)::int4 ORDER BY i;
+   i    
+--------
+ -32768
+     -2
+     -1
+      0
+      1
+      2
+      3
+  32767
+(8 rows)
+
+SELECT * FROM test_int2 WHERE i>(-32769)::int4 ORDER BY i;
+   i    
+--------
+ -32768
+     -2
+     -1
+      0
+      1
+      2
+      3
+  32767
+(8 rows)
+
+SELECT * FROM test_int2 WHERE i<32768::int4 ORDER BY i;
+   i    
+--------
+ -32768
+     -2
+     -1
+      0
+      1
+      2
+      3
+  32767
+(8 rows)
+
+SELECT * FROM test_int2 WHERE i<=32768::int4 ORDER BY i;
+   i    
+--------
+ -32768
+     -2
+     -1
+      0
+      1
+      2
+      3
+  32767
+(8 rows)
+
+SELECT * FROM test_int2 WHERE i=32768::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_int2 WHERE i>=32768::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+
+SELECT * FROM test_int2 WHERE i>32768::int4 ORDER BY i;
+ i 
+---
+(0 rows)
+

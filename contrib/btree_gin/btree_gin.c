@@ -19,13 +19,28 @@ PG_MODULE_MAGIC_EXT(
 					.version = PG_VERSION
 );
 
+/*
+ * Our opclasses use the same strategy numbers as btree (1-5) for same-type
+ * comparison operators.  For cross-type comparison operators, the
+ * low 4 bits of our strategy numbers are the btree strategy number,
+ * and the upper bits are a code for the right-hand-side data type.
+ */
+#define BTGIN_GET_BTREE_STRATEGY(strat)		((strat) & 0x0F)
+#define BTGIN_GET_RHS_TYPE_CODE(strat)		((strat) >> 4)
+
+/* extra data passed from gin_btree_extract_query to gin_btree_compare_prefix */
 typedef struct QueryInfo
 {
-	StrategyNumber strategy;
-	Datum		datum;
-	bool		is_varlena;
-	Datum		(*typecmp) (FunctionCallInfo);
+	StrategyNumber strategy;	/* operator strategy number */
+	Datum		orig_datum;		/* original query (comparison) datum */
+	Datum		entry_datum;	/* datum we reported as the entry value */
+	PGFunction	typecmp;		/* appropriate btree comparison function */
 } QueryInfo;
+
+typedef Datum (*btree_gin_convert_function) (Datum input);
+
+typedef Datum (*btree_gin_leftmost_function) (void);
+
 
 /*** GIN support functions shared by all datatypes ***/
 
@@ -36,6 +51,7 @@ gin_btree_extract_value(FunctionCallInfo fcinfo, bool is_varlena)
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = (Datum *) palloc(sizeof(Datum));
 
+	/* Ensure that values stored in the index are not toasted */
 	if (is_varlena)
 		datum = PointerGetDatum(PG_DETOAST_DATUM(datum));
 	entries[0] = datum;
@@ -44,19 +60,12 @@ gin_btree_extract_value(FunctionCallInfo fcinfo, bool is_varlena)
 	PG_RETURN_POINTER(entries);
 }
 
-/*
- * For BTGreaterEqualStrategyNumber, BTGreaterStrategyNumber, and
- * BTEqualStrategyNumber we want to start the index scan at the
- * supplied query datum, and work forward. For BTLessStrategyNumber
- * and BTLessEqualStrategyNumber, we need to start at the leftmost
- * key, and work forward until the supplied query datum (which must be
- * sent along inside the QueryInfo structure).
- */
 static Datum
 gin_btree_extract_query(FunctionCallInfo fcinfo,
-						bool is_varlena,
-						Datum (*leftmostvalue) (void),
-						Datum (*typecmp) (FunctionCallInfo))
+						btree_gin_leftmost_function leftmostvalue,
+						const bool *rhs_is_varlena,
+						const btree_gin_convert_function *cvt_fns,
+						const PGFunction *cmp_fns)
 {
 	Datum		datum = PG_GETARG_DATUM(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
@@ -65,21 +74,40 @@ gin_btree_extract_query(FunctionCallInfo fcinfo,
 	Pointer   **extra_data = (Pointer **) PG_GETARG_POINTER(4);
 	Datum	   *entries = (Datum *) palloc(sizeof(Datum));
 	QueryInfo  *data = (QueryInfo *) palloc(sizeof(QueryInfo));
-	bool	   *ptr_partialmatch;
+	bool	   *ptr_partialmatch = (bool *) palloc(sizeof(bool));
+	int			btree_strat,
+				rhs_code;
 
-	*nentries = 1;
-	ptr_partialmatch = *partialmatch = (bool *) palloc(sizeof(bool));
-	*ptr_partialmatch = false;
-	if (is_varlena)
+	/*
+	 * Extract the btree strategy code and the RHS data type code from the
+	 * given strategy number.
+	 */
+	btree_strat = BTGIN_GET_BTREE_STRATEGY(strategy);
+	rhs_code = BTGIN_GET_RHS_TYPE_CODE(strategy);
+
+	/*
+	 * Detoast the comparison datum.  This isn't necessary for correctness,
+	 * but it can save repeat detoastings within the comparison function.
+	 */
+	if (rhs_is_varlena[rhs_code])
 		datum = PointerGetDatum(PG_DETOAST_DATUM(datum));
-	data->strategy = strategy;
-	data->datum = datum;
-	data->is_varlena = is_varlena;
-	data->typecmp = typecmp;
-	*extra_data = (Pointer *) palloc(sizeof(Pointer));
-	**extra_data = (Pointer) data;
 
-	switch (strategy)
+	/* Prep single comparison key with possible partial-match flag */
+	*nentries = 1;
+	*partialmatch = ptr_partialmatch;
+	*ptr_partialmatch = false;
+
+	/*
+	 * For BTGreaterEqualStrategyNumber, BTGreaterStrategyNumber, and
+	 * BTEqualStrategyNumber we want to start the index scan at the supplied
+	 * query datum, and work forward.  For BTLessStrategyNumber and
+	 * BTLessEqualStrategyNumber, we need to start at the leftmost key, and
+	 * work forward until the supplied query datum (which we'll send along
+	 * inside the QueryInfo structure).  Use partial match rules except for
+	 * BTEqualStrategyNumber without a conversion function.  (If there is a
+	 * conversion function, comparison to the entry value is not trustworthy.)
+	 */
+	switch (btree_strat)
 	{
 		case BTLessStrategyNumber:
 		case BTLessEqualStrategyNumber:
@@ -91,75 +119,106 @@ gin_btree_extract_query(FunctionCallInfo fcinfo,
 			*ptr_partialmatch = true;
 			/* FALLTHROUGH */
 		case BTEqualStrategyNumber:
-			entries[0] = datum;
+			/* If we have a conversion function, apply it */
+			if (cvt_fns && cvt_fns[rhs_code])
+			{
+				entries[0] = (*cvt_fns[rhs_code]) (datum);
+				*ptr_partialmatch = true;
+			}
+			else
+				entries[0] = datum;
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
 	}
 
+	/* Fill "extra" data */
+	data->strategy = strategy;
+	data->orig_datum = datum;
+	data->entry_datum = entries[0];
+	data->typecmp = cmp_fns[rhs_code];
+	*extra_data = (Pointer *) palloc(sizeof(Pointer));
+	**extra_data = (Pointer) data;
+
 	PG_RETURN_POINTER(entries);
 }
 
-/*
- * Datum a is a value from extract_query method and for BTLess*
- * strategy it is a left-most value.  So, use original datum from QueryInfo
- * to decide to stop scanning or not.  Datum b is always from index.
- */
 static Datum
 gin_btree_compare_prefix(FunctionCallInfo fcinfo)
 {
-	Datum		a = PG_GETARG_DATUM(0);
-	Datum		b = PG_GETARG_DATUM(1);
+	Datum		partial_key PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(0);
+	Datum		key = PG_GETARG_DATUM(1);
 	QueryInfo  *data = (QueryInfo *) PG_GETARG_POINTER(3);
 	int32		res,
 				cmp;
 
+	/*
+	 * partial_key is only an approximation to the real comparison value,
+	 * especially if it's a leftmost value.  We can get an accurate answer by
+	 * doing a possibly-cross-type comparison to the real comparison value.
+	 * (Note that partial_key and key are of the indexed datatype while
+	 * orig_datum is of the query operator's RHS datatype.)
+	 *
+	 * But just to be sure that things are what we expect, let's assert that
+	 * partial_key is indeed what gin_btree_extract_query reported, so that
+	 * we'll notice if anyone ever changes the core code in a way that breaks
+	 * our assumptions.
+	 */
+	Assert(partial_key == data->entry_datum);
+
 	cmp = DatumGetInt32(CallerFInfoFunctionCall2(data->typecmp,
 												 fcinfo->flinfo,
 												 PG_GET_COLLATION(),
-												 (data->strategy == BTLessStrategyNumber ||
-												  data->strategy == BTLessEqualStrategyNumber)
-												 ? data->datum : a,
-												 b));
+												 data->orig_datum,
+												 key));
 
-	switch (data->strategy)
+	/*
+	 * Convert the comparison result to the correct thing for the search
+	 * operator strategy.  When dealing with cross-type comparisons, an
+	 * imprecise entry datum could lead GIN to start the scan just before the
+	 * first possible match, so we must continue the scan if the current index
+	 * entry doesn't satisfy the search condition for >= and > cases.  But if
+	 * that happens in an = search we can stop, because an imprecise entry
+	 * datum means that the search value is unrepresentable in the indexed
+	 * data type, so that there will be no exact matches.
+	 */
+	switch (BTGIN_GET_BTREE_STRATEGY(data->strategy))
 	{
 		case BTLessStrategyNumber:
 			/* If original datum > indexed one then return match */
 			if (cmp > 0)
 				res = 0;
 			else
-				res = 1;
+				res = 1;		/* end scan */
 			break;
 		case BTLessEqualStrategyNumber:
-			/* The same except equality */
+			/* If original datum >= indexed one then return match */
 			if (cmp >= 0)
 				res = 0;
 			else
-				res = 1;
+				res = 1;		/* end scan */
 			break;
 		case BTEqualStrategyNumber:
-			if (cmp != 0)
-				res = 1;
-			else
+			/* If original datum = indexed one then return match */
+			/* See above about why we can end scan when cmp < 0 */
+			if (cmp == 0)
 				res = 0;
+			else
+				res = 1;		/* end scan */
 			break;
 		case BTGreaterEqualStrategyNumber:
 			/* If original datum <= indexed one then return match */
 			if (cmp <= 0)
 				res = 0;
 			else
-				res = 1;
+				res = -1;		/* keep scanning */
 			break;
 		case BTGreaterStrategyNumber:
-			/* If original datum <= indexed one then return match */
-			/* If original datum == indexed one then continue scan */
+			/* If original datum < indexed one then return match */
 			if (cmp < 0)
 				res = 0;
-			else if (cmp == 0)
-				res = -1;
 			else
-				res = 1;
+				res = -1;		/* keep scanning */
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d",
@@ -182,19 +241,20 @@ gin_btree_consistent(PG_FUNCTION_ARGS)
 
 /*** GIN_SUPPORT macro defines the datatype specific functions ***/
 
-#define GIN_SUPPORT(type, is_varlena, leftmostvalue, typecmp)				\
+#define GIN_SUPPORT(type, leftmostvalue, is_varlena, cvtfns, cmpfns)		\
 PG_FUNCTION_INFO_V1(gin_extract_value_##type);								\
 Datum																		\
 gin_extract_value_##type(PG_FUNCTION_ARGS)									\
 {																			\
-	return gin_btree_extract_value(fcinfo, is_varlena);						\
+	return gin_btree_extract_value(fcinfo, is_varlena[0]);					\
 }	\
 PG_FUNCTION_INFO_V1(gin_extract_query_##type);								\
 Datum																		\
 gin_extract_query_##type(PG_FUNCTION_ARGS)									\
 {																			\
 	return gin_btree_extract_query(fcinfo,									\
-								   is_varlena, leftmostvalue, typecmp);		\
+								   leftmostvalue, is_varlena,				\
+								   cvtfns, cmpfns);							\
 }	\
 PG_FUNCTION_INFO_V1(gin_compare_prefix_##type);								\
 Datum																		\
@@ -206,13 +266,66 @@ gin_compare_prefix_##type(PG_FUNCTION_ARGS)									\
 
 /*** Datatype specifications ***/
 
+/* Function to produce the least possible value of the indexed datatype */
 static Datum
 leftmostvalue_int2(void)
 {
 	return Int16GetDatum(SHRT_MIN);
 }
 
-GIN_SUPPORT(int2, false, leftmostvalue_int2, btint2cmp)
+/*
+ * For cross-type support, we must provide conversion functions that produce
+ * a Datum of the indexed datatype, since GIN requires the "entry" datums to
+ * be of that type.  If an exact conversion is not possible, produce a value
+ * that will lead GIN to find the first index entry that is greater than
+ * or equal to the actual comparison value.  (But rounding down is OK, so
+ * sometimes we might find an index entry that's just less than the
+ * comparison value.)
+ *
+ * For integer values, it's sufficient to clamp the input to be in-range.
+ *
+ * Note: for out-of-range input values, we could in theory detect that the
+ * search condition matches all or none of the index, and avoid a useless
+ * index descent in the latter case.  Such searches are probably rare though,
+ * so we don't contort this code enough to do that.
+ */
+static Datum
+cvt_int4_int2(Datum input)
+{
+	int32		val = DatumGetInt32(input);
+
+	val = Max(val, SHRT_MIN);
+	val = Min(val, SHRT_MAX);
+	return Int16GetDatum((int16) val);
+}
+
+static Datum
+cvt_int8_int2(Datum input)
+{
+	int64		val = DatumGetInt64(input);
+
+	val = Max(val, SHRT_MIN);
+	val = Min(val, SHRT_MAX);
+	return Int16GetDatum((int16) val);
+}
+
+/*
+ * RHS-type-is-varlena flags, conversion and comparison function arrays,
+ * indexed by high bits of the operator strategy number.  A NULL in the
+ * conversion function array indicates that no conversion is needed, which
+ * will always be the case for the zero'th entry.  Note that the cross-type
+ * comparison functions should be the ones with the indexed datatype second.
+ */
+static const bool int2_rhs_is_varlena[] =
+{false, false, false};
+
+static const btree_gin_convert_function int2_cvt_fns[] =
+{NULL, cvt_int4_int2, cvt_int8_int2};
+
+static const PGFunction int2_cmp_fns[] =
+{btint2cmp, btint42cmp, btint82cmp};
+
+GIN_SUPPORT(int2, leftmostvalue_int2, int2_rhs_is_varlena, int2_cvt_fns, int2_cmp_fns)
 
 static Datum
 leftmostvalue_int4(void)
@@ -220,7 +333,34 @@ leftmostvalue_int4(void)
 	return Int32GetDatum(INT_MIN);
 }
 
-GIN_SUPPORT(int4, false, leftmostvalue_int4, btint4cmp)
+static Datum
+cvt_int2_int4(Datum input)
+{
+	int16		val = DatumGetInt16(input);
+
+	return Int32GetDatum((int32) val);
+}
+
+static Datum
+cvt_int8_int4(Datum input)
+{
+	int64		val = DatumGetInt64(input);
+
+	val = Max(val, INT_MIN);
+	val = Min(val, INT_MAX);
+	return Int32GetDatum((int32) val);
+}
+
+static const bool int4_rhs_is_varlena[] =
+{false, false, false};
+
+static const btree_gin_convert_function int4_cvt_fns[] =
+{NULL, cvt_int2_int4, cvt_int8_int4};
+
+static const PGFunction int4_cmp_fns[] =
+{btint4cmp, btint24cmp, btint84cmp};
+
+GIN_SUPPORT(int4, leftmostvalue_int4, int4_rhs_is_varlena, int4_cvt_fns, int4_cmp_fns)
 
 static Datum
 leftmostvalue_int8(void)
@@ -228,7 +368,32 @@ leftmostvalue_int8(void)
 	return Int64GetDatum(PG_INT64_MIN);
 }
 
-GIN_SUPPORT(int8, false, leftmostvalue_int8, btint8cmp)
+static Datum
+cvt_int2_int8(Datum input)
+{
+	int16		val = DatumGetInt16(input);
+
+	return Int64GetDatum((int64) val);
+}
+
+static Datum
+cvt_int4_int8(Datum input)
+{
+	int32		val = DatumGetInt32(input);
+
+	return Int64GetDatum((int64) val);
+}
+
+static const bool int8_rhs_is_varlena[] =
+{false, false, false};
+
+static const btree_gin_convert_function int8_cvt_fns[] =
+{NULL, cvt_int2_int8, cvt_int4_int8};
+
+static const PGFunction int8_cmp_fns[] =
+{btint8cmp, btint28cmp, btint48cmp};
+
+GIN_SUPPORT(int8, leftmostvalue_int8, int8_rhs_is_varlena, int8_cvt_fns, int8_cmp_fns)
 
 static Datum
 leftmostvalue_float4(void)
@@ -236,7 +401,13 @@ leftmostvalue_float4(void)
 	return Float4GetDatum(-get_float4_infinity());
 }
 
-GIN_SUPPORT(float4, false, leftmostvalue_float4, btfloat4cmp)
+static const bool float4_rhs_is_varlena[] =
+{false};
+
+static const PGFunction float4_cmp_fns[] =
+{btfloat4cmp};
+
+GIN_SUPPORT(float4, leftmostvalue_float4, float4_rhs_is_varlena, NULL, float4_cmp_fns)
 
 static Datum
 leftmostvalue_float8(void)
@@ -244,7 +415,13 @@ leftmostvalue_float8(void)
 	return Float8GetDatum(-get_float8_infinity());
 }
 
-GIN_SUPPORT(float8, false, leftmostvalue_float8, btfloat8cmp)
+static const bool float8_rhs_is_varlena[] =
+{false};
+
+static const PGFunction float8_cmp_fns[] =
+{btfloat8cmp};
+
+GIN_SUPPORT(float8, leftmostvalue_float8, float8_rhs_is_varlena, NULL, float8_cmp_fns)
 
 static Datum
 leftmostvalue_money(void)
@@ -252,7 +429,13 @@ leftmostvalue_money(void)
 	return Int64GetDatum(PG_INT64_MIN);
 }
 
-GIN_SUPPORT(money, false, leftmostvalue_money, cash_cmp)
+static const bool money_rhs_is_varlena[] =
+{false};
+
+static const PGFunction money_cmp_fns[] =
+{cash_cmp};
+
+GIN_SUPPORT(money, leftmostvalue_money, money_rhs_is_varlena, NULL, money_cmp_fns)
 
 static Datum
 leftmostvalue_oid(void)
@@ -260,7 +443,13 @@ leftmostvalue_oid(void)
 	return ObjectIdGetDatum(0);
 }
 
-GIN_SUPPORT(oid, false, leftmostvalue_oid, btoidcmp)
+static const bool oid_rhs_is_varlena[] =
+{false};
+
+static const PGFunction oid_cmp_fns[] =
+{btoidcmp};
+
+GIN_SUPPORT(oid, leftmostvalue_oid, oid_rhs_is_varlena, NULL, oid_cmp_fns)
 
 static Datum
 leftmostvalue_timestamp(void)
@@ -268,9 +457,21 @@ leftmostvalue_timestamp(void)
 	return TimestampGetDatum(DT_NOBEGIN);
 }
 
-GIN_SUPPORT(timestamp, false, leftmostvalue_timestamp, timestamp_cmp)
+static const bool timestamp_rhs_is_varlena[] =
+{false};
 
-GIN_SUPPORT(timestamptz, false, leftmostvalue_timestamp, timestamp_cmp)
+static const PGFunction timestamp_cmp_fns[] =
+{timestamp_cmp};
+
+GIN_SUPPORT(timestamp, leftmostvalue_timestamp, timestamp_rhs_is_varlena, NULL, timestamp_cmp_fns)
+
+static const bool timestamptz_rhs_is_varlena[] =
+{false};
+
+static const PGFunction timestamptz_cmp_fns[] =
+{timestamp_cmp};
+
+GIN_SUPPORT(timestamptz, leftmostvalue_timestamp, timestamptz_rhs_is_varlena, NULL, timestamptz_cmp_fns)
 
 static Datum
 leftmostvalue_time(void)
@@ -278,7 +479,13 @@ leftmostvalue_time(void)
 	return TimeADTGetDatum(0);
 }
 
-GIN_SUPPORT(time, false, leftmostvalue_time, time_cmp)
+static const bool time_rhs_is_varlena[] =
+{false};
+
+static const PGFunction time_cmp_fns[] =
+{time_cmp};
+
+GIN_SUPPORT(time, leftmostvalue_time, time_rhs_is_varlena, NULL, time_cmp_fns)
 
 static Datum
 leftmostvalue_timetz(void)
@@ -291,7 +498,13 @@ leftmostvalue_timetz(void)
 	return TimeTzADTPGetDatum(v);
 }
 
-GIN_SUPPORT(timetz, false, leftmostvalue_timetz, timetz_cmp)
+static const bool timetz_rhs_is_varlena[] =
+{false};
+
+static const PGFunction timetz_cmp_fns[] =
+{timetz_cmp};
+
+GIN_SUPPORT(timetz, leftmostvalue_timetz, timetz_rhs_is_varlena, NULL, timetz_cmp_fns)
 
 static Datum
 leftmostvalue_date(void)
@@ -299,7 +512,13 @@ leftmostvalue_date(void)
 	return DateADTGetDatum(DATEVAL_NOBEGIN);
 }
 
-GIN_SUPPORT(date, false, leftmostvalue_date, date_cmp)
+static const bool date_rhs_is_varlena[] =
+{false};
+
+static const PGFunction date_cmp_fns[] =
+{date_cmp};
+
+GIN_SUPPORT(date, leftmostvalue_date, date_rhs_is_varlena, NULL, date_cmp_fns)
 
 static Datum
 leftmostvalue_interval(void)
@@ -311,7 +530,13 @@ leftmostvalue_interval(void)
 	return IntervalPGetDatum(v);
 }
 
-GIN_SUPPORT(interval, false, leftmostvalue_interval, interval_cmp)
+static const bool interval_rhs_is_varlena[] =
+{false};
+
+static const PGFunction interval_cmp_fns[] =
+{interval_cmp};
+
+GIN_SUPPORT(interval, leftmostvalue_interval, interval_rhs_is_varlena, NULL, interval_cmp_fns)
 
 static Datum
 leftmostvalue_macaddr(void)
@@ -321,7 +546,13 @@ leftmostvalue_macaddr(void)
 	return MacaddrPGetDatum(v);
 }
 
-GIN_SUPPORT(macaddr, false, leftmostvalue_macaddr, macaddr_cmp)
+static const bool macaddr_rhs_is_varlena[] =
+{false};
+
+static const PGFunction macaddr_cmp_fns[] =
+{macaddr_cmp};
+
+GIN_SUPPORT(macaddr, leftmostvalue_macaddr, macaddr_rhs_is_varlena, NULL, macaddr_cmp_fns)
 
 static Datum
 leftmostvalue_macaddr8(void)
@@ -331,7 +562,13 @@ leftmostvalue_macaddr8(void)
 	return Macaddr8PGetDatum(v);
 }
 
-GIN_SUPPORT(macaddr8, false, leftmostvalue_macaddr8, macaddr8_cmp)
+static const bool macaddr8_rhs_is_varlena[] =
+{false};
+
+static const PGFunction macaddr8_cmp_fns[] =
+{macaddr8_cmp};
+
+GIN_SUPPORT(macaddr8, leftmostvalue_macaddr8, macaddr8_rhs_is_varlena, NULL, macaddr8_cmp_fns)
 
 static Datum
 leftmostvalue_inet(void)
@@ -339,9 +576,21 @@ leftmostvalue_inet(void)
 	return DirectFunctionCall1(inet_in, CStringGetDatum("0.0.0.0/0"));
 }
 
-GIN_SUPPORT(inet, true, leftmostvalue_inet, network_cmp)
+static const bool inet_rhs_is_varlena[] =
+{true};
 
-GIN_SUPPORT(cidr, true, leftmostvalue_inet, network_cmp)
+static const PGFunction inet_cmp_fns[] =
+{network_cmp};
+
+GIN_SUPPORT(inet, leftmostvalue_inet, inet_rhs_is_varlena, NULL, inet_cmp_fns)
+
+static const bool cidr_rhs_is_varlena[] =
+{true};
+
+static const PGFunction cidr_cmp_fns[] =
+{network_cmp};
+
+GIN_SUPPORT(cidr, leftmostvalue_inet, cidr_rhs_is_varlena, NULL, cidr_cmp_fns)
 
 static Datum
 leftmostvalue_text(void)
@@ -349,9 +598,21 @@ leftmostvalue_text(void)
 	return PointerGetDatum(cstring_to_text_with_len("", 0));
 }
 
-GIN_SUPPORT(text, true, leftmostvalue_text, bttextcmp)
+static const bool text_rhs_is_varlena[] =
+{true};
 
-GIN_SUPPORT(bpchar, true, leftmostvalue_text, bpcharcmp)
+static const PGFunction text_cmp_fns[] =
+{bttextcmp};
+
+GIN_SUPPORT(text, leftmostvalue_text, text_rhs_is_varlena, NULL, text_cmp_fns)
+
+static const bool bpchar_rhs_is_varlena[] =
+{true};
+
+static const PGFunction bpchar_cmp_fns[] =
+{bpcharcmp};
+
+GIN_SUPPORT(bpchar, leftmostvalue_text, bpchar_rhs_is_varlena, NULL, bpchar_cmp_fns)
 
 static Datum
 leftmostvalue_char(void)
@@ -359,9 +620,21 @@ leftmostvalue_char(void)
 	return CharGetDatum(0);
 }
 
-GIN_SUPPORT(char, false, leftmostvalue_char, btcharcmp)
+static const bool char_rhs_is_varlena[] =
+{false};
 
-GIN_SUPPORT(bytea, true, leftmostvalue_text, byteacmp)
+static const PGFunction char_cmp_fns[] =
+{btcharcmp};
+
+GIN_SUPPORT(char, leftmostvalue_char, char_rhs_is_varlena, NULL, char_cmp_fns)
+
+static const bool bytea_rhs_is_varlena[] =
+{true};
+
+static const PGFunction bytea_cmp_fns[] =
+{byteacmp};
+
+GIN_SUPPORT(bytea, leftmostvalue_text, bytea_rhs_is_varlena, NULL, bytea_cmp_fns)
 
 static Datum
 leftmostvalue_bit(void)
@@ -372,7 +645,13 @@ leftmostvalue_bit(void)
 							   Int32GetDatum(-1));
 }
 
-GIN_SUPPORT(bit, true, leftmostvalue_bit, bitcmp)
+static const bool bit_rhs_is_varlena[] =
+{true};
+
+static const PGFunction bit_cmp_fns[] =
+{bitcmp};
+
+GIN_SUPPORT(bit, leftmostvalue_bit, bit_rhs_is_varlena, NULL, bit_cmp_fns)
 
 static Datum
 leftmostvalue_varbit(void)
@@ -383,7 +662,13 @@ leftmostvalue_varbit(void)
 							   Int32GetDatum(-1));
 }
 
-GIN_SUPPORT(varbit, true, leftmostvalue_varbit, bitcmp)
+static const bool varbit_rhs_is_varlena[] =
+{true};
+
+static const PGFunction varbit_cmp_fns[] =
+{bitcmp};
+
+GIN_SUPPORT(varbit, leftmostvalue_varbit, varbit_rhs_is_varlena, NULL, varbit_cmp_fns)
 
 /*
  * Numeric type hasn't a real left-most value, so we use PointerGetDatum(NULL)
@@ -428,7 +713,13 @@ leftmostvalue_numeric(void)
 	return PointerGetDatum(NULL);
 }
 
-GIN_SUPPORT(numeric, true, leftmostvalue_numeric, gin_numeric_cmp)
+static const bool numeric_rhs_is_varlena[] =
+{true};
+
+static const PGFunction numeric_cmp_fns[] =
+{gin_numeric_cmp};
+
+GIN_SUPPORT(numeric, leftmostvalue_numeric, numeric_rhs_is_varlena, NULL, numeric_cmp_fns)
 
 /*
  * Use a similar trick to that used for numeric for enums, since we don't
@@ -477,7 +768,13 @@ leftmostvalue_enum(void)
 	return ObjectIdGetDatum(InvalidOid);
 }
 
-GIN_SUPPORT(anyenum, false, leftmostvalue_enum, gin_enum_cmp)
+static const bool enum_rhs_is_varlena[] =
+{false};
+
+static const PGFunction enum_cmp_fns[] =
+{gin_enum_cmp};
+
+GIN_SUPPORT(anyenum, leftmostvalue_enum, enum_rhs_is_varlena, NULL, enum_cmp_fns)
 
 static Datum
 leftmostvalue_uuid(void)
@@ -491,7 +788,13 @@ leftmostvalue_uuid(void)
 	return UUIDPGetDatum(retval);
 }
 
-GIN_SUPPORT(uuid, false, leftmostvalue_uuid, uuid_cmp)
+static const bool uuid_rhs_is_varlena[] =
+{false};
+
+static const PGFunction uuid_cmp_fns[] =
+{uuid_cmp};
+
+GIN_SUPPORT(uuid, leftmostvalue_uuid, uuid_rhs_is_varlena, NULL, uuid_cmp_fns)
 
 static Datum
 leftmostvalue_name(void)
@@ -501,7 +804,13 @@ leftmostvalue_name(void)
 	return NameGetDatum(result);
 }
 
-GIN_SUPPORT(name, false, leftmostvalue_name, btnamecmp)
+static const bool name_rhs_is_varlena[] =
+{false};
+
+static const PGFunction name_cmp_fns[] =
+{btnamecmp};
+
+GIN_SUPPORT(name, leftmostvalue_name, name_rhs_is_varlena, NULL, name_cmp_fns)
 
 static Datum
 leftmostvalue_bool(void)
@@ -509,4 +818,10 @@ leftmostvalue_bool(void)
 	return BoolGetDatum(false);
 }
 
-GIN_SUPPORT(bool, false, leftmostvalue_bool, btboolcmp)
+static const bool bool_rhs_is_varlena[] =
+{false};
+
+static const PGFunction bool_cmp_fns[] =
+{btboolcmp};
+
+GIN_SUPPORT(bool, leftmostvalue_bool, bool_rhs_is_varlena, NULL, bool_cmp_fns)

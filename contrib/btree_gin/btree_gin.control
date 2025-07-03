@@ -1,6 +1,6 @@
 # btree_gin extension
 comment = 'support for indexing common datatypes in GIN'
-default_version = '1.3'
+default_version = '1.4'
 module_pathname = '$libdir/btree_gin'
 relocatable = true
 trusted = true

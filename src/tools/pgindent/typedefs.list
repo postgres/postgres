@@ -3481,6 +3481,8 @@ bloom_filter
 boolKEY
 brin_column_state
 brin_serialize_callback_type
+btree_gin_convert_function
+btree_gin_leftmost_function
 bytea
 cached_re_str
 canonicalize_state
