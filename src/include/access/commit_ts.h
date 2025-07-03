@@ -46,17 +46,6 @@ extern int	committssyncfiletag(const FileTag *ftag, char *path);
 #define COMMIT_TS_ZEROPAGE		0x00
 #define COMMIT_TS_TRUNCATE		0x10
 
-typedef struct xl_commit_ts_set
-{
-	TimestampTz timestamp;
-	RepOriginId nodeid;
-	TransactionId mainxid;
-	/* subxact Xids follow */
-}			xl_commit_ts_set;
-
-#define SizeOfCommitTsSet	(offsetof(xl_commit_ts_set, mainxid) + \
-							 sizeof(TransactionId))
-
 typedef struct xl_commit_ts_truncate
 {
 	int64		pageno;
