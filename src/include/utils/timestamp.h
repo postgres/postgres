@@ -144,6 +144,9 @@ extern int	timestamp_cmp_internal(Timestamp dt1, Timestamp dt2);
 
 extern TimestampTz timestamp2timestamptz_opt_overflow(Timestamp timestamp,
 													  int *overflow);
+extern Timestamp timestamptz2timestamp_opt_overflow(TimestampTz timestamp,
+													int *overflow);
+
 extern int32 timestamp_cmp_timestamptz_internal(Timestamp timestampVal,
 												TimestampTz dt2);
 

@@ -1363,9 +1363,34 @@ timestamp_date(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
+
+	result = timestamp2date_opt_overflow(timestamp, NULL);
+	PG_RETURN_DATEADT(result);
+}
+
+/*
+ * Convert timestamp to date.
+ *
+ * On successful conversion, *overflow is set to zero if it's not NULL.
+ *
+ * If the timestamp is finite but out of the valid range for date, then:
+ * if overflow is NULL, we throw an out-of-range error.
+ * if overflow is not NULL, we store +1 or -1 there to indicate the sign
+ * of the overflow, and return the appropriate date infinity.
+ *
+ * Note: given the ranges of the types, overflow is only possible at
+ * the minimum end of the range, but we don't assume that in this code.
+ */
+DateADT
+timestamp2date_opt_overflow(Timestamp timestamp, int *overflow)
+{
+	DateADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
+
+	if (overflow)
+		*overflow = 0;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
 		DATE_NOBEGIN(result);
@@ -1374,14 +1399,30 @@ timestamp_date(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
+		{
+			if (overflow)
+			{
+				if (timestamp < 0)
+				{
+					*overflow = -1;
+					DATE_NOBEGIN(result);
+				}
+				else
+				{
+					*overflow = 1;	/* not actually reachable */
+					DATE_NOEND(result);
+				}
+				return result;
+			}
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
+		}
 
 		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	}
 
-	PG_RETURN_DATEADT(result);
+	return result;
 }
 
 
@@ -1408,10 +1449,35 @@ timestamptz_date(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
+
+	result = timestamptz2date_opt_overflow(timestamp, NULL);
+	PG_RETURN_DATEADT(result);
+}
+
+/*
+ * Convert timestamptz to date.
+ *
+ * On successful conversion, *overflow is set to zero if it's not NULL.
+ *
+ * If the timestamptz is finite but out of the valid range for date, then:
+ * if overflow is NULL, we throw an out-of-range error.
+ * if overflow is not NULL, we store +1 or -1 there to indicate the sign
+ * of the overflow, and return the appropriate date infinity.
+ *
+ * Note: given the ranges of the types, overflow is only possible at
+ * the minimum end of the range, but we don't assume that in this code.
+ */
+DateADT
+timestamptz2date_opt_overflow(TimestampTz timestamp, int *overflow)
+{
+	DateADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
+
+	if (overflow)
+		*overflow = 0;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
 		DATE_NOBEGIN(result);
@@ -1420,14 +1486,30 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
+		{
+			if (overflow)
+			{
+				if (timestamp < 0)
+				{
+					*overflow = -1;
+					DATE_NOBEGIN(result);
+				}
+				else
+				{
+					*overflow = 1;	/* not actually reachable */
+					DATE_NOEND(result);
+				}
+				return result;
+			}
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
+		}
 
 		result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 	}
 
-	PG_RETURN_DATEADT(result);
+	return result;
 }
 
 
