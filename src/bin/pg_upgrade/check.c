@@ -479,7 +479,7 @@ check_for_data_types_usage(ClusterInfo *cluster, DataTypesUsageChecks *checks)
 				if (!results[checknum])
 				{
 					pg_log(PG_REPORT, "failed check: %s", _(cur_check->status));
-					appendPQExpBuffer(&report, "\n%s\n%s    %s\n",
+					appendPQExpBuffer(&report, "\n%s\n%s\n    %s\n",
 									  _(cur_check->report_text),
 									  _("A list of the problem columns is in the file:"),
 									  output_path);
