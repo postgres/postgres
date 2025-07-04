@@ -707,6 +707,13 @@ ActivateCommitTs(void)
 	TransactionId xid;
 	int64		pageno;
 
+	/*
+	 * During bootstrap, we should not register commit timestamps so skip the
+	 * activation in this case.
+	 */
+	if (IsBootstrapProcessingMode())
+		return;
+
 	/* If we've done this already, there's nothing to do */
 	LWLockAcquire(CommitTsLock, LW_EXCLUSIVE);
 	if (commitTsShared->commitTsActive)
