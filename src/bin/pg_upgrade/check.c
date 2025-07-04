@@ -1689,12 +1689,13 @@ check_for_not_null_inheritance(ClusterInfo *cluster)
 			 log_opts.basedir,
 			 "not_null_inconsistent_columns.txt");
 
-	query = "SELECT cc.relnamespace::pg_catalog.regnamespace AS nspname, "
-		"       cc.relname, ac.attname "
+	query = "SELECT nspname, cc.relname, ac.attname "
 		"FROM pg_catalog.pg_inherits i, pg_catalog.pg_attribute ac, "
-		"     pg_catalog.pg_attribute ap, pg_catalog.pg_class cc "
+		"     pg_catalog.pg_attribute ap, pg_catalog.pg_class cc, "
+		"     pg_catalog.pg_namespace nc "
 		"WHERE cc.oid = ac.attrelid AND i.inhrelid = ac.attrelid "
 		"      AND i.inhparent = ap.attrelid AND ac.attname = ap.attname "
+		"      AND cc.relnamespace = nc.oid "
 		"      AND ap.attnum > 0 and ap.attnotnull AND NOT ac.attnotnull";
 
 	task = upgrade_task_create();
