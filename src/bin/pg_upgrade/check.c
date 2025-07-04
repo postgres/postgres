@@ -24,6 +24,7 @@ static void check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster);
 static void check_for_user_defined_postfix_ops(ClusterInfo *cluster);
 static void check_for_incompatible_polymorphics(ClusterInfo *cluster);
 static void check_for_tables_with_oids(ClusterInfo *cluster);
+static void check_for_not_null_inheritance(ClusterInfo *cluster);
 static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
@@ -647,6 +648,13 @@ check_and_dump_old_cluster(bool live_check)
 	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1100)
 		check_for_tables_with_oids(&old_cluster);
+
+	/*
+	 * Pre-PG 18 allowed child tables to omit not-null constraints that their
+	 * parents columns have, but schema restore fails for them.  Verify there
+	 * are none.
+	 */
+	check_for_not_null_inheritance(&old_cluster);
 
 	/*
 	 * Pre-PG 10 allowed tables with 'unknown' type columns and non WAL logged
@@ -1576,6 +1584,84 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 		check_ok();
 }
 
+/*
+ * check_for_not_null_inheritance()
+ *
+ * An attempt to create child tables lacking not-null constraints that are
+ * present in their parents errors out.  This can no longer occur since 18,
+ * but previously there were various ways for that to happen.  Check that
+ * the cluster to be upgraded doesn't have any of those problems.
+ */
+static void
+check_for_not_null_inheritance(ClusterInfo *cluster)
+{
+	FILE	   *script = NULL;
+	char		output_path[MAXPGPATH];
+	int			ntup;
+
+	prep_status("Checking for not-null constraint inconsistencies");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "not_null_inconsistent_columns.txt");
+	for (int dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
+	{
+		PGresult   *res;
+		bool		db_used = false;
+		int			i_nspname,
+					i_relname,
+					i_attname;
+		DbInfo	   *active_db = &old_cluster.dbarr.dbs[dbnum];
+		PGconn	   *conn = connectToServer(&old_cluster, active_db->db_name);
+
+		res = executeQueryOrDie(conn,
+								"SELECT cc.relnamespace::pg_catalog.regnamespace AS nspname, "
+								"       cc.relname, ac.attname "
+								"FROM pg_catalog.pg_inherits i, pg_catalog.pg_attribute ac, "
+								"     pg_catalog.pg_attribute ap, pg_catalog.pg_class cc "
+								"WHERE cc.oid = ac.attrelid AND i.inhrelid = ac.attrelid "
+								"      AND i.inhparent = ap.attrelid AND ac.attname = ap.attname "
+								"      AND ap.attnum > 0 and ap.attnotnull AND NOT ac.attnotnull");
+
+		ntup = PQntuples(res);
+		i_nspname = PQfnumber(res, "nspname");
+		i_relname = PQfnumber(res, "relname");
+		i_attname = PQfnumber(res, "attname");
+		for (int i = 0; i < ntup; i++)
+		{
+			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+				pg_fatal("could not open file \"%s\": %m", output_path);
+			if (!db_used)
+			{
+				fprintf(script, "In database: %s\n", active_db->db_name);
+				db_used = true;
+			}
+
+			fprintf(script, "  %s.%s.%s\n",
+					PQgetvalue(res, i, i_nspname),
+					PQgetvalue(res, i, i_relname),
+					PQgetvalue(res, i, i_attname));
+		}
+
+		PQclear(res);
+		PQfinish(conn);
+	}
+
+	if (script)
+	{
+		fclose(script);
+		pg_log(PG_REPORT, "fatal");
+		pg_fatal("Your installation contains inconsistent NOT NULL constraints.\n"
+				 "If the parent column(s) are NOT NULL, then the child column must\n"
+				 "also be marked NOT NULL, or the upgrade will fail.\n"
+				 "You can fix this by running\n"
+				 "  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+				 "on each column listed in the file:\n"
+				 "    %s", output_path);
+	}
+	else
+		check_ok();
+}
 
 /*
  * check_for_pg_role_prefix()
