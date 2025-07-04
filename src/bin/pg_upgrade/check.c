@@ -421,7 +421,7 @@ process_data_type_check(DbInfo *dbinfo, PGresult *res, void *arg)
 	if (!state->result)
 	{
 		pg_log(PG_REPORT, "failed check: %s", _(state->check->status));
-		appendPQExpBuffer(*state->report, "\n%s\n%s    %s\n",
+		appendPQExpBuffer(*state->report, "\n%s\n%s\n    %s\n",
 						  _(state->check->report_text),
 						  _("A list of the problem columns is in the file:"),
 						  output_path);
