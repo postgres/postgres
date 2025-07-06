@@ -3507,6 +3507,13 @@ estimate_path_cost_size(PlannerInfo *root,
 			{
 				Assert(foreignrel->reloptkind == RELOPT_UPPER_REL &&
 					   fpinfo->stage == UPPERREL_GROUP_AGG);
+
+				/*
+				 * We can only get here when this function is called from
+				 * add_foreign_ordered_paths() or add_foreign_final_paths();
+				 * in which cases, the passed-in fpextra should not be NULL.
+				 */
+				Assert(fpextra);
 				adjust_foreign_grouping_path_cost(root, pathkeys,
 												  retrieved_rows, width,
 												  fpextra->limit_tuples,
