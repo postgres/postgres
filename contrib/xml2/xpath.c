@@ -209,7 +209,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 			xmlBufferWriteChar(buf, ">");
 		}
 
-		result = xmlStrdup(buf->content);
+		result = xmlStrdup(xmlBufferContent(buf));
 		if (result == NULL || pg_xml_error_occurred(xmlerrcxt))
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate result");
