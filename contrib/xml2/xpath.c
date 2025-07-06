@@ -174,7 +174,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 		xmlBufferWriteCHAR(buf, toptagname);
 		xmlBufferWriteChar(buf, ">");
 	}
-	result = xmlStrdup(buf->content);
+	result = xmlStrdup(xmlBufferContent(buf));
 	xmlBufferFree(buf);
 	return result;
 }
