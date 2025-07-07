@@ -385,7 +385,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 
 			switch_lsn = tliSwitchPoint(current_tli, tles, &switch_tli);
 			ereport(DEBUG1,
-					errmsg_internal("switch point from TLI %u to TLI %u is at %X/%X",
+					errmsg_internal("switch point from TLI %u to TLI %u is at %X/%08X",
 									current_tli, switch_tli, LSN_FORMAT_ARGS(switch_lsn)));
 		}
 
@@ -741,7 +741,7 @@ WaitForWalSummarization(XLogRecPtr lsn)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("WAL summarization is not progressing"),
-						 errdetail("Summarization is needed through %X/%X, but is stuck at %X/%X on disk and %X/%X in memory.",
+						 errdetail("Summarization is needed through %X/%08X, but is stuck at %X/%08X on disk and %X/%08X in memory.",
 								   LSN_FORMAT_ARGS(lsn),
 								   LSN_FORMAT_ARGS(summarized_lsn),
 								   LSN_FORMAT_ARGS(pending_lsn))));
@@ -755,12 +755,12 @@ WaitForWalSummarization(XLogRecPtr lsn)
 												current_time) / 1000;
 			ereport(WARNING,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg_plural("still waiting for WAL summarization through %X/%X after %ld second",
-								   "still waiting for WAL summarization through %X/%X after %ld seconds",
+					 errmsg_plural("still waiting for WAL summarization through %X/%08X after %ld second",
+								   "still waiting for WAL summarization through %X/%08X after %ld seconds",
 								   elapsed_seconds,
 								   LSN_FORMAT_ARGS(lsn),
 								   elapsed_seconds),
-					 errdetail("Summarization has reached %X/%X on disk and %X/%X in memory.",
+					 errdetail("Summarization has reached %X/%08X on disk and %X/%08X in memory.",
 							   LSN_FORMAT_ARGS(summarized_lsn),
 							   LSN_FORMAT_ARGS(pending_lsn))));
 		}
@@ -981,7 +981,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 			if (private_data->end_of_wal)
 			{
 				ereport(DEBUG1,
-						errmsg_internal("could not read WAL from timeline %u at %X/%X: end of WAL at %X/%X",
+						errmsg_internal("could not read WAL from timeline %u at %X/%08X: end of WAL at %X/%08X",
 										tli,
 										LSN_FORMAT_ARGS(start_lsn),
 										LSN_FORMAT_ARGS(private_data->read_upto)));
@@ -1000,8 +1000,8 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 			}
 			else
 				ereport(ERROR,
-						(errmsg("could not find a valid record after %X/%X",
-								LSN_FORMAT_ARGS(start_lsn))));
+						errmsg("could not find a valid record after %X/%08X",
+							   LSN_FORMAT_ARGS(start_lsn)));
 		}
 
 		/* We shouldn't go backward. */
@@ -1034,7 +1034,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 				 * able to read a complete record.
 				 */
 				ereport(DEBUG1,
-						errmsg_internal("could not read WAL from timeline %u at %X/%X: end of WAL at %X/%X",
+						errmsg_internal("could not read WAL from timeline %u at %X/%08X: end of WAL at %X/%08X",
 										tli,
 										LSN_FORMAT_ARGS(xlogreader->EndRecPtr),
 										LSN_FORMAT_ARGS(private_data->read_upto)));
@@ -1045,13 +1045,13 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 			if (errormsg)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not read WAL from timeline %u at %X/%X: %s",
+						 errmsg("could not read WAL from timeline %u at %X/%08X: %s",
 								tli, LSN_FORMAT_ARGS(xlogreader->EndRecPtr),
 								errormsg)));
 			else
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not read WAL from timeline %u at %X/%X",
+						 errmsg("could not read WAL from timeline %u at %X/%08X",
 								tli, LSN_FORMAT_ARGS(xlogreader->EndRecPtr))));
 		}
 
@@ -1222,7 +1222,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 
 		/* Tell the user what we did. */
 		ereport(DEBUG1,
-				errmsg_internal("summarized WAL on TLI %u from %X/%X to %X/%X",
+				errmsg_internal("summarized WAL on TLI %u from %X/%08X to %X/%08X",
 								tli,
 								LSN_FORMAT_ARGS(summary_start_lsn),
 								LSN_FORMAT_ARGS(summary_end_lsn)));
@@ -1234,7 +1234,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	/* If we skipped a non-zero amount of WAL, log a debug message. */
 	if (summary_end_lsn > summary_start_lsn && fast_forward)
 		ereport(DEBUG1,
-				errmsg_internal("skipped summarizing WAL on TLI %u from %X/%X to %X/%X",
+				errmsg_internal("skipped summarizing WAL on TLI %u from %X/%08X to %X/%08X",
 								tli,
 								LSN_FORMAT_ARGS(summary_start_lsn),
 								LSN_FORMAT_ARGS(summary_end_lsn)));
@@ -1580,7 +1580,7 @@ summarizer_read_local_xlog_page(XLogReaderState *state,
 
 					/* Debugging output. */
 					ereport(DEBUG1,
-							errmsg_internal("timeline %u became historic, can read up to %X/%X",
+							errmsg_internal("timeline %u became historic, can read up to %X/%08X",
 											private_data->tli, LSN_FORMAT_ARGS(private_data->read_upto)));
 				}
 

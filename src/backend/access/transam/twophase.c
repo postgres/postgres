@@ -1429,12 +1429,12 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 		if (errormsg)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read two-phase state from WAL at %X/%X: %s",
+					 errmsg("could not read two-phase state from WAL at %X/%08X: %s",
 							LSN_FORMAT_ARGS(lsn), errormsg)));
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read two-phase state from WAL at %X/%X",
+					 errmsg("could not read two-phase state from WAL at %X/%08X",
 							LSN_FORMAT_ARGS(lsn))));
 	}
 
@@ -1442,7 +1442,7 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 		(XLogRecGetInfo(xlogreader) & XLOG_XACT_OPMASK) != XLOG_XACT_PREPARE)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("expected two-phase state data is not present in WAL at %X/%X",
+				 errmsg("expected two-phase state data is not present in WAL at %X/%08X",
 						LSN_FORMAT_ARGS(lsn))));
 
 	if (len != NULL)
@@ -2533,7 +2533,7 @@ PrepareRedoAdd(FullTransactionId fxid, char *buf,
 			ereport(reachedConsistency ? ERROR : WARNING,
 					(errmsg("could not recover two-phase state file for transaction %u",
 							hdr->xid),
-					 errdetail("Two-phase state file has been found in WAL record %X/%X, but this transaction has already been restored from disk.",
+					 errdetail("Two-phase state file has been found in WAL record %X/%08X, but this transaction has already been restored from disk.",
 							   LSN_FORMAT_ARGS(start_lsn))));
 			return;
 		}

@@ -1591,8 +1591,8 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 				uint64		ex = oldestLSN - restart_lsn;
 
 				appendStringInfo(&err_detail,
-								 ngettext("The slot's restart_lsn %X/%X exceeds the limit by %" PRIu64 " byte.",
-										  "The slot's restart_lsn %X/%X exceeds the limit by %" PRIu64 " bytes.",
+								 ngettext("The slot's restart_lsn %X/%08X exceeds the limit by %" PRIu64 " byte.",
+										  "The slot's restart_lsn %X/%08X exceeds the limit by %" PRIu64 " bytes.",
 										  ex),
 								 LSN_FORMAT_ARGS(restart_lsn),
 								 ex);

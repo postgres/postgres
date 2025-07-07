@@ -95,7 +95,7 @@ two_phase_at             | 0/40796AF8
 initial_xmin_horizon     | 0
 building_full_snapshot   | f
 in_slot_creation         | f
-last_serialized_snapshot | 0/0
+last_serialized_snapshot | 0/00000000
 next_phase_at            | 0
 committed_count          | 0
 committed_xip            |
@@ -114,7 +114,7 @@ two_phase_at             | 0/40796AF8
 initial_xmin_horizon     | 0
 building_full_snapshot   | f
 in_slot_creation         | f
-last_serialized_snapshot | 0/0
+last_serialized_snapshot | 0/00000000
 next_phase_at            | 0
 committed_count          | 0
 committed_xip            |

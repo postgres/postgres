@@ -65,7 +65,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		appendStringInfo(buf, "redo %X/%X; "
+		appendStringInfo(buf, "redo %X/%08X; "
 						 "tli %u; prev tli %u; fpw %s; wal_level %s; xid %u:%u; oid %u; multi %u; offset %u; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
@@ -111,7 +111,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		XLogRecPtr	startpoint;
 
 		memcpy(&startpoint, rec, sizeof(XLogRecPtr));
-		appendStringInfo(buf, "%X/%X", LSN_FORMAT_ARGS(startpoint));
+		appendStringInfo(buf, "%X/%08X", LSN_FORMAT_ARGS(startpoint));
 	}
 	else if (info == XLOG_PARAMETER_CHANGE)
 	{
@@ -156,7 +156,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		xl_overwrite_contrecord xlrec;
 
 		memcpy(&xlrec, rec, sizeof(xl_overwrite_contrecord));
-		appendStringInfo(buf, "lsn %X/%X; time %s",
+		appendStringInfo(buf, "lsn %X/%08X; time %s",
 						 LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
 						 timestamptz_to_str(xlrec.overwrite_time));
 	}

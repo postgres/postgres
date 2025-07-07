@@ -795,7 +795,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage,
 
 		list_free_deep(timelineHistory);
 
-		elog(DEBUG3, "switched to timeline %u valid until %X/%X",
+		elog(DEBUG3, "switched to timeline %u valid until %X/%08X",
 			 state->currTLI,
 			 LSN_FORMAT_ARGS(state->currTLIValidUntil));
 	}

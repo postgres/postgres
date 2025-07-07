@@ -39,7 +39,7 @@ sub find_largest_lsn
 	defined($len) or die "read error on $filename: $!";
 	close($fh);
 
-	return sprintf("%X/%X", $max_hi, $max_lo);
+	return sprintf("%X/%08X", $max_hi, $max_lo);
 }
 
 # Initialize primary node

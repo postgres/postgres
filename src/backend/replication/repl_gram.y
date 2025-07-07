@@ -279,7 +279,7 @@ alter_replication_slot:
 			;
 
 /*
- * START_REPLICATION [SLOT slot] [PHYSICAL] %X/%X [TIMELINE %u]
+ * START_REPLICATION [SLOT slot] [PHYSICAL] %X/%08X [TIMELINE %u]
  */
 start_replication:
 			K_START_REPLICATION opt_slot opt_physical RECPTR opt_timeline
@@ -295,7 +295,7 @@ start_replication:
 				}
 			;
 
-/* START_REPLICATION SLOT slot LOGICAL %X/%X options */
+/* START_REPLICATION SLOT slot LOGICAL %X/%08X options */
 start_logical_replication:
 			K_START_REPLICATION K_SLOT IDENT K_LOGICAL RECPTR plugin_options
 				{

@@ -42,7 +42,7 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 
 	XLByteToSeg(state->startpoint, startsegno, wal_segment_size);
 	XLogFileName(startxlogfile, state->starttli, startsegno, wal_segment_size);
-	appendStringInfo(result, "START WAL LOCATION: %X/%X (file %s)\n",
+	appendStringInfo(result, "START WAL LOCATION: %X/%08X (file %s)\n",
 					 LSN_FORMAT_ARGS(state->startpoint), startxlogfile);
 
 	if (ishistoryfile)
@@ -52,11 +52,11 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 
 		XLByteToSeg(state->stoppoint, stopsegno, wal_segment_size);
 		XLogFileName(stopxlogfile, state->stoptli, stopsegno, wal_segment_size);
-		appendStringInfo(result, "STOP WAL LOCATION: %X/%X (file %s)\n",
+		appendStringInfo(result, "STOP WAL LOCATION: %X/%08X (file %s)\n",
 						 LSN_FORMAT_ARGS(state->stoppoint), stopxlogfile);
 	}
 
-	appendStringInfo(result, "CHECKPOINT LOCATION: %X/%X\n",
+	appendStringInfo(result, "CHECKPOINT LOCATION: %X/%08X\n",
 					 LSN_FORMAT_ARGS(state->checkpointloc));
 	appendStringInfoString(result, "BACKUP METHOD: streamed\n");
 	appendStringInfo(result, "BACKUP FROM: %s\n",
@@ -81,7 +81,7 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 	Assert(XLogRecPtrIsInvalid(state->istartpoint) == (state->istarttli == 0));
 	if (!XLogRecPtrIsInvalid(state->istartpoint))
 	{
-		appendStringInfo(result, "INCREMENTAL FROM LSN: %X/%X\n",
+		appendStringInfo(result, "INCREMENTAL FROM LSN: %X/%08X\n",
 						 LSN_FORMAT_ARGS(state->istartpoint));
 		appendStringInfo(result, "INCREMENTAL FROM TLI: %u\n",
 						 state->istarttli);

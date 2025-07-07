@@ -213,7 +213,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 		ereport(slot->data.persistency == RS_TEMPORARY ? LOG : DEBUG1,
 				errmsg("could not synchronize replication slot \"%s\"",
 					   remote_slot->name),
-				errdetail("Synchronization could lead to data loss, because the remote slot needs WAL at LSN %X/%X and catalog xmin %u, but the standby has LSN %X/%X and catalog xmin %u.",
+				errdetail("Synchronization could lead to data loss, because the remote slot needs WAL at LSN %X/%08X and catalog xmin %u, but the standby has LSN %X/%08X and catalog xmin %u.",
 						  LSN_FORMAT_ARGS(remote_slot->restart_lsn),
 						  remote_slot->catalog_xmin,
 						  LSN_FORMAT_ARGS(slot->data.restart_lsn),
@@ -275,7 +275,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 				ereport(ERROR,
 						errmsg_internal("synchronized confirmed_flush for slot \"%s\" differs from remote slot",
 										remote_slot->name),
-						errdetail_internal("Remote slot has LSN %X/%X but local slot has LSN %X/%X.",
+						errdetail_internal("Remote slot has LSN %X/%08X but local slot has LSN %X/%08X.",
 										   LSN_FORMAT_ARGS(remote_slot->confirmed_lsn),
 										   LSN_FORMAT_ARGS(slot->data.confirmed_flush)));
 		}
@@ -593,7 +593,7 @@ update_and_persist_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 	{
 		ereport(LOG,
 				errmsg("could not synchronize replication slot \"%s\"", remote_slot->name),
-				errdetail("Synchronization could lead to data loss, because the standby could not build a consistent snapshot to decode WALs at LSN %X/%X.",
+				errdetail("Synchronization could lead to data loss, because the standby could not build a consistent snapshot to decode WALs at LSN %X/%08X.",
 						  LSN_FORMAT_ARGS(slot->data.restart_lsn)));
 
 		return false;
@@ -642,7 +642,7 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		ereport(AmLogicalSlotSyncWorkerProcess() ? LOG : ERROR,
 				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				errmsg("skipping slot synchronization because the received slot sync"
-					   " LSN %X/%X for slot \"%s\" is ahead of the standby position %X/%X",
+					   " LSN %X/%08X for slot \"%s\" is ahead of the standby position %X/%08X",
 					   LSN_FORMAT_ARGS(remote_slot->confirmed_lsn),
 					   remote_slot->name,
 					   LSN_FORMAT_ARGS(latestFlushPtr)));
@@ -733,7 +733,7 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 				ereport(ERROR,
 						errmsg_internal("cannot synchronize local slot \"%s\"",
 										remote_slot->name),
-						errdetail_internal("Local slot's start streaming location LSN(%X/%X) is ahead of remote slot's LSN(%X/%X).",
+						errdetail_internal("Local slot's start streaming location LSN(%X/%08X) is ahead of remote slot's LSN(%X/%08X).",
 										   LSN_FORMAT_ARGS(slot->data.confirmed_flush),
 										   LSN_FORMAT_ARGS(remote_slot->confirmed_lsn)));
 

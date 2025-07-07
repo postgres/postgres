@@ -359,7 +359,7 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 
 	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
 	{
-		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%08X, at %s",
 						 origin_id,
 						 LSN_FORMAT_ARGS(parsed.origin_lsn),
 						 timestamptz_to_str(parsed.origin_timestamp));
@@ -384,7 +384,7 @@ xact_desc_abort(StringInfo buf, uint8 info, xl_xact_abort *xlrec, RepOriginId or
 
 	if (parsed.xinfo & XACT_XINFO_HAS_ORIGIN)
 	{
-		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%08X, at %s",
 						 origin_id,
 						 LSN_FORMAT_ARGS(parsed.origin_lsn),
 						 timestamptz_to_str(parsed.origin_timestamp));
@@ -418,7 +418,7 @@ xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, RepOriginI
 	 * way as PrepareRedoAdd().
 	 */
 	if (origin_id != InvalidRepOriginId)
-		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",
+		appendStringInfo(buf, "; origin: node %u, lsn %X/%08X, at %s",
 						 origin_id,
 						 LSN_FORMAT_ARGS(parsed.origin_lsn),
 						 timestamptz_to_str(parsed.origin_timestamp));

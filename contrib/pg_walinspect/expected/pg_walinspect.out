@@ -19,14 +19,14 @@ INSERT INTO sample_tbl SELECT * FROM generate_series(3, 4);
 -- ===================================================================
 -- Invalid input LSN.
 SELECT * FROM pg_get_wal_record_info('0/0');
-ERROR:  could not read WAL at LSN 0/0
+ERROR:  could not read WAL at LSN 0/00000000
 -- Invalid start LSN.
 SELECT * FROM pg_get_wal_records_info('0/0', :'wal_lsn1');
-ERROR:  could not read WAL at LSN 0/0
+ERROR:  could not read WAL at LSN 0/00000000
 SELECT * FROM pg_get_wal_stats('0/0', :'wal_lsn1');
-ERROR:  could not read WAL at LSN 0/0
+ERROR:  could not read WAL at LSN 0/00000000
 SELECT * FROM pg_get_wal_block_info('0/0', :'wal_lsn1');
-ERROR:  could not read WAL at LSN 0/0
+ERROR:  could not read WAL at LSN 0/00000000
 -- Start LSN > End LSN.
 SELECT * FROM pg_get_wal_records_info(:'wal_lsn2', :'wal_lsn1');
 ERROR:  WAL start LSN must be less than end LSN

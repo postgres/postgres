@@ -258,7 +258,7 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	{
 		char		buffer[32];
 
-		sprintf(buffer, "waiting for %X/%X", LSN_FORMAT_ARGS(lsn));
+		sprintf(buffer, "waiting for %X/%08X", LSN_FORMAT_ARGS(lsn));
 		set_ps_display_suffix(buffer);
 	}
 
@@ -566,7 +566,7 @@ SyncRepReleaseWaiters(void)
 
 	LWLockRelease(SyncRepLock);
 
-	elog(DEBUG3, "released %d procs up to write %X/%X, %d procs up to flush %X/%X, %d procs up to apply %X/%X",
+	elog(DEBUG3, "released %d procs up to write %X/%08X, %d procs up to flush %X/%08X, %d procs up to apply %X/%08X",
 		 numwrite, LSN_FORMAT_ARGS(writePtr),
 		 numflush, LSN_FORMAT_ARGS(flushPtr),
 		 numapply, LSN_FORMAT_ARGS(applyPtr));

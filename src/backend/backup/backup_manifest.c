@@ -281,7 +281,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 		}
 
 		AppendToManifest(manifest,
-						 "%s{ \"Timeline\": %u, \"Start-LSN\": \"%X/%X\", \"End-LSN\": \"%X/%X\" }",
+						 "%s{ \"Timeline\": %u, \"Start-LSN\": \"%X/%08X\", \"End-LSN\": \"%X/%08X\" }",
 						 first_wal_range ? "" : ",\n",
 						 entry->tli,
 						 LSN_FORMAT_ARGS(tl_beginptr),

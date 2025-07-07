@@ -188,14 +188,14 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 
 	/* we assume that we get called once at the end of each segment */
 	if (verbose && segment_finished)
-		pg_log_info("finished segment at %X/%X (timeline %u)",
+		pg_log_info("finished segment at %X/%08X (timeline %u)",
 					LSN_FORMAT_ARGS(xlogpos),
 					timeline);
 
 	if (!XLogRecPtrIsInvalid(endpos) && endpos < xlogpos)
 	{
 		if (verbose)
-			pg_log_info("stopped log streaming at %X/%X (timeline %u)",
+			pg_log_info("stopped log streaming at %X/%08X (timeline %u)",
 						LSN_FORMAT_ARGS(xlogpos),
 						timeline);
 		time_to_stop = true;
@@ -211,7 +211,7 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 	 * timeline, but it's close enough for reporting purposes.
 	 */
 	if (verbose && prevtimeline != 0 && prevtimeline != timeline)
-		pg_log_info("switched to timeline %u at %X/%X",
+		pg_log_info("switched to timeline %u at %X/%08X",
 					timeline,
 					LSN_FORMAT_ARGS(prevpos));
 
@@ -575,7 +575,7 @@ StreamLog(void)
 	 * Start the replication
 	 */
 	if (verbose)
-		pg_log_info("starting log streaming at %X/%X (timeline %u)",
+		pg_log_info("starting log streaming at %X/%08X (timeline %u)",
 					LSN_FORMAT_ARGS(stream.startpos),
 					stream.timeline);
 
@@ -689,7 +689,7 @@ main(int argc, char **argv)
 				basedir = pg_strdup(optarg);
 				break;
 			case 'E':
-				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
+				if (sscanf(optarg, "%X/%08X", &hi, &lo) != 2)
 					pg_fatal("could not parse end position \"%s\"", optarg);
 				endpos = ((uint64) hi) << 32 | lo;
 				break;

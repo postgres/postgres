@@ -154,7 +154,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		if (*ptr == '\0' || *ptr == '#')
 			continue;
 
-		nfields = sscanf(fline, "%u\t%X/%X", &tli, &switchpoint_hi, &switchpoint_lo);
+		nfields = sscanf(fline, "%u\t%X/%08X", &tli, &switchpoint_hi, &switchpoint_lo);
 
 		if (nfields < 1)
 		{
@@ -399,7 +399,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	 * parent file failed to end with one.
 	 */
 	snprintf(buffer, sizeof(buffer),
-			 "%s%u\t%X/%X\t%s\n",
+			 "%s%u\t%X/%08X\t%s\n",
 			 (srcfd < 0) ? "" : "\n",
 			 parentTLI,
 			 LSN_FORMAT_ARGS(switchpoint),

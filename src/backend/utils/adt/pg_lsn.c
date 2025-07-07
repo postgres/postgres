@@ -83,7 +83,7 @@ pg_lsn_out(PG_FUNCTION_ARGS)
 	char		buf[MAXPG_LSNLEN + 1];
 	char	   *result;
 
-	snprintf(buf, sizeof buf, "%X/%X", LSN_FORMAT_ARGS(lsn));
+	snprintf(buf, sizeof buf, "%X/%08X", LSN_FORMAT_ARGS(lsn));
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
 }

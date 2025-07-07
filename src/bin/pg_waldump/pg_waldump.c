@@ -656,7 +656,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogStats *stats)
 	}
 	total_len = total_rec_len + total_fpi_len;
 
-	printf("WAL statistics between %X/%X and %X/%X:\n",
+	printf("WAL statistics between %X/%08X and %X/%08X:\n",
 		   LSN_FORMAT_ARGS(stats->startptr), LSN_FORMAT_ARGS(stats->endptr));
 
 	/*
@@ -904,7 +904,7 @@ main(int argc, char **argv)
 				config.filter_by_extended = true;
 				break;
 			case 'e':
-				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
+				if (sscanf(optarg, "%X/%08X", &xlogid, &xrecoff) != 2)
 				{
 					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
@@ -1002,7 +1002,7 @@ main(int argc, char **argv)
 				config.filter_by_extended = true;
 				break;
 			case 's':
-				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
+				if (sscanf(optarg, "%X/%08X", &xlogid, &xrecoff) != 2)
 				{
 					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
@@ -1140,7 +1140,7 @@ main(int argc, char **argv)
 			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, private.startptr);
 		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
 		{
-			pg_log_error("start WAL location %X/%X is not inside file \"%s\"",
+			pg_log_error("start WAL location %X/%08X is not inside file \"%s\"",
 						 LSN_FORMAT_ARGS(private.startptr),
 						 fname);
 			goto bad_argument;
@@ -1182,7 +1182,7 @@ main(int argc, char **argv)
 		if (!XLByteInSeg(private.endptr, segno, WalSegSz) &&
 			private.endptr != (segno + 1) * WalSegSz)
 		{
-			pg_log_error("end WAL location %X/%X is not inside file \"%s\"",
+			pg_log_error("end WAL location %X/%08X is not inside file \"%s\"",
 						 LSN_FORMAT_ARGS(private.endptr),
 						 argv[argc - 1]);
 			goto bad_argument;
@@ -1214,7 +1214,7 @@ main(int argc, char **argv)
 	first_record = XLogFindNextRecord(xlogreader_state, private.startptr);
 
 	if (first_record == InvalidXLogRecPtr)
-		pg_fatal("could not find a valid record after %X/%X",
+		pg_fatal("could not find a valid record after %X/%08X",
 				 LSN_FORMAT_ARGS(private.startptr));
 
 	/*
@@ -1224,8 +1224,8 @@ main(int argc, char **argv)
 	 */
 	if (first_record != private.startptr &&
 		XLogSegmentOffset(private.startptr, WalSegSz) != 0)
-		pg_log_info(ngettext("first record is after %X/%X, at %X/%X, skipping over %u byte",
-							 "first record is after %X/%X, at %X/%X, skipping over %u bytes",
+		pg_log_info(ngettext("first record is after %X/%08X, at %X/%08X, skipping over %u byte",
+							 "first record is after %X/%08X, at %X/%08X, skipping over %u bytes",
 							 (first_record - private.startptr)),
 					LSN_FORMAT_ARGS(private.startptr),
 					LSN_FORMAT_ARGS(first_record),
@@ -1309,7 +1309,7 @@ main(int argc, char **argv)
 		exit(0);
 
 	if (errormsg)
-		pg_fatal("error in WAL record at %X/%X: %s",
+		pg_fatal("error in WAL record at %X/%08X: %s",
 				 LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
 				 errormsg);
 

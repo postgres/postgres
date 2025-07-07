@@ -408,7 +408,7 @@ IdentifySystem(void)
 	else
 		logptr = GetFlushRecPtr(&currTLI);
 
-	snprintf(xloc, sizeof(xloc), "%X/%X", LSN_FORMAT_ARGS(logptr));
+	snprintf(xloc, sizeof(xloc), "%X/%08X", LSN_FORMAT_ARGS(logptr));
 
 	if (MyDatabaseId != InvalidOid)
 	{
@@ -515,7 +515,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 		{
 			char		xloc[64];
 
-			snprintf(xloc, sizeof(xloc), "%X/%X",
+			snprintf(xloc, sizeof(xloc), "%X/%08X",
 					 LSN_FORMAT_ARGS(slot_contents.data.restart_lsn));
 			values[i] = CStringGetTextDatum(xloc);
 			nulls[i] = false;
@@ -892,12 +892,12 @@ StartReplication(StartReplicationCmd *cmd)
 				switchpoint < cmd->startpoint)
 			{
 				ereport(ERROR,
-						(errmsg("requested starting point %X/%X on timeline %u is not in this server's history",
-								LSN_FORMAT_ARGS(cmd->startpoint),
-								cmd->timeline),
-						 errdetail("This server's history forked from timeline %u at %X/%X.",
-								   cmd->timeline,
-								   LSN_FORMAT_ARGS(switchpoint))));
+						errmsg("requested starting point %X/%08X on timeline %u is not in this server's history",
+							   LSN_FORMAT_ARGS(cmd->startpoint),
+							   cmd->timeline),
+						errdetail("This server's history forked from timeline %u at %X/%08X.",
+								  cmd->timeline,
+								  LSN_FORMAT_ARGS(switchpoint)));
 			}
 			sendTimeLineValidUpto = switchpoint;
 		}
@@ -939,9 +939,9 @@ StartReplication(StartReplicationCmd *cmd)
 		if (FlushPtr < cmd->startpoint)
 		{
 			ereport(ERROR,
-					(errmsg("requested starting point %X/%X is ahead of the WAL flush position of this server %X/%X",
-							LSN_FORMAT_ARGS(cmd->startpoint),
-							LSN_FORMAT_ARGS(FlushPtr))));
+					errmsg("requested starting point %X/%08X is ahead of the WAL flush position of this server %X/%08X",
+						   LSN_FORMAT_ARGS(cmd->startpoint),
+						   LSN_FORMAT_ARGS(FlushPtr)));
 		}
 
 		/* Start streaming from the requested point */
@@ -983,7 +983,7 @@ StartReplication(StartReplicationCmd *cmd)
 		Datum		values[2];
 		bool		nulls[2] = {0};
 
-		snprintf(startpos_str, sizeof(startpos_str), "%X/%X",
+		snprintf(startpos_str, sizeof(startpos_str), "%X/%08X",
 				 LSN_FORMAT_ARGS(sendTimeLineValidUpto));
 
 		dest = CreateDestReceiver(DestRemoteSimple);
@@ -1324,7 +1324,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			ReplicationSlotPersist();
 	}
 
-	snprintf(xloc, sizeof(xloc), "%X/%X",
+	snprintf(xloc, sizeof(xloc), "%X/%08X",
 			 LSN_FORMAT_ARGS(MyReplicationSlot->data.confirmed_flush));
 
 	dest = CreateDestReceiver(DestRemoteSimple);
@@ -2429,7 +2429,7 @@ ProcessStandbyReplyMessage(void)
 		/* Copy because timestamptz_to_str returns a static buffer */
 		replyTimeStr = pstrdup(timestamptz_to_str(replyTime));
 
-		elog(DEBUG2, "write %X/%X flush %X/%X apply %X/%X%s reply_time %s",
+		elog(DEBUG2, "write %X/%08X flush %X/%08X apply %X/%08X%s reply_time %s",
 			 LSN_FORMAT_ARGS(writePtr),
 			 LSN_FORMAT_ARGS(flushPtr),
 			 LSN_FORMAT_ARGS(applyPtr),
@@ -3251,7 +3251,7 @@ XLogSendPhysical(void)
 
 		WalSndCaughtUp = true;
 
-		elog(DEBUG1, "walsender reached end of timeline at %X/%X (sent up to %X/%X)",
+		elog(DEBUG1, "walsender reached end of timeline at %X/%08X (sent up to %X/%08X)",
 			 LSN_FORMAT_ARGS(sendTimeLineValidUpto),
 			 LSN_FORMAT_ARGS(sentPtr));
 		return;
@@ -3392,7 +3392,7 @@ retry:
 	{
 		char		activitymsg[50];
 
-		snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%X",
+		snprintf(activitymsg, sizeof(activitymsg), "streaming %X/%08X",
 				 LSN_FORMAT_ARGS(sentPtr));
 		set_ps_display(activitymsg);
 	}

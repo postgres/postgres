@@ -361,7 +361,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	tstate = begin_tup_output_tupdesc(dest, tupdesc, &TTSOpsVirtual);
 
 	/* Data row */
-	values[0] = CStringGetTextDatum(psprintf("%X/%X", LSN_FORMAT_ARGS(ptr)));
+	values[0] = CStringGetTextDatum(psprintf("%X/%08X", LSN_FORMAT_ARGS(ptr)));
 	values[1] = Int64GetDatum(tli);
 	do_tup_output(tstate, values, nulls);
 

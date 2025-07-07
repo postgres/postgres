@@ -105,7 +105,7 @@ InitXLogReaderState(XLogRecPtr lsn)
 	if (lsn < XLOG_BLCKSZ)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not read WAL at LSN %X/%X",
+				 errmsg("could not read WAL at LSN %X/%08X",
 						LSN_FORMAT_ARGS(lsn))));
 
 	private_data = (ReadLocalXLogPageNoWaitPrivate *)
@@ -128,8 +128,8 @@ InitXLogReaderState(XLogRecPtr lsn)
 
 	if (XLogRecPtrIsInvalid(first_valid_record))
 		ereport(ERROR,
-				(errmsg("could not find a valid record after %X/%X",
-						LSN_FORMAT_ARGS(lsn))));
+				errmsg("could not find a valid record after %X/%08X",
+					   LSN_FORMAT_ARGS(lsn)));
 
 	return xlogreader;
 }
@@ -168,12 +168,12 @@ ReadNextXLogRecord(XLogReaderState *xlogreader)
 		if (errormsg)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read WAL at %X/%X: %s",
+					 errmsg("could not read WAL at %X/%08X: %s",
 							LSN_FORMAT_ARGS(xlogreader->EndRecPtr), errormsg)));
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not read WAL at %X/%X",
+					 errmsg("could not read WAL at %X/%08X",
 							LSN_FORMAT_ARGS(xlogreader->EndRecPtr))));
 	}
 
@@ -479,7 +479,7 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("WAL input LSN must be less than current LSN"),
-				 errdetail("Current WAL LSN on the database system is at %X/%X.",
+				 errdetail("Current WAL LSN on the database system is at %X/%08X.",
 						   LSN_FORMAT_ARGS(curr_lsn))));
 
 	/* Build a tuple descriptor for our result type. */
@@ -491,7 +491,7 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 	if (!ReadNextXLogRecord(xlogreader))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not read WAL at %X/%X",
+				 errmsg("could not read WAL at %X/%08X",
 						LSN_FORMAT_ARGS(xlogreader->EndRecPtr))));
 
 	GetWALRecordInfo(xlogreader, values, nulls, PG_GET_WAL_RECORD_INFO_COLS);
@@ -521,7 +521,7 @@ ValidateInputLSNs(XLogRecPtr start_lsn, XLogRecPtr *end_lsn)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("WAL start LSN must be less than current LSN"),
-				 errdetail("Current WAL LSN on the database system is at %X/%X.",
+				 errdetail("Current WAL LSN on the database system is at %X/%08X.",
 						   LSN_FORMAT_ARGS(curr_lsn))));
 
 	if (start_lsn > *end_lsn)
@@ -827,7 +827,7 @@ pg_get_wal_records_info_till_end_of_wal(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("WAL start LSN must be less than current LSN"),
-				 errdetail("Current WAL LSN on the database system is at %X/%X.",
+				 errdetail("Current WAL LSN on the database system is at %X/%08X.",
 						   LSN_FORMAT_ARGS(end_lsn))));
 
 	GetWALRecordsInfo(fcinfo, start_lsn, end_lsn);
@@ -846,7 +846,7 @@ pg_get_wal_stats_till_end_of_wal(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("WAL start LSN must be less than current LSN"),
-				 errdetail("Current WAL LSN on the database system is at %X/%X.",
+				 errdetail("Current WAL LSN on the database system is at %X/%08X.",
 						   LSN_FORMAT_ARGS(end_lsn))));
 
 	GetWalStats(fcinfo, start_lsn, end_lsn, stats_per_record);

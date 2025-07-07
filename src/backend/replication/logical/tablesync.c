@@ -1553,7 +1553,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 copy_table_done:
 
 	elog(DEBUG1,
-		 "LogicalRepSyncTableStart: '%s' origin_startpos lsn %X/%X",
+		 "LogicalRepSyncTableStart: '%s' origin_startpos lsn %X/%08X",
 		 originname, LSN_FORMAT_ARGS(*origin_startpos));
 
 	/*

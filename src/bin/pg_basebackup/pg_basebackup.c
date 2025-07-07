@@ -487,7 +487,7 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 			if (r < 0)
 				pg_fatal("could not read from ready pipe: %m");
 
-			if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
+			if (sscanf(xlogend, "%X/%08X", &hi, &lo) != 2)
 				pg_fatal("could not parse write-ahead log location \"%s\"",
 						 xlogend);
 			xlogendptr = ((uint64) hi) << 32 | lo;
@@ -629,7 +629,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	param->wal_compress_level = wal_compress_level;
 
 	/* Convert the starting position */
-	if (sscanf(startpos, "%X/%X", &hi, &lo) != 2)
+	if (sscanf(startpos, "%X/%08X", &hi, &lo) != 2)
 		pg_fatal("could not parse write-ahead log location \"%s\"",
 				 startpos);
 	param->startptr = ((uint64) hi) << 32 | lo;
@@ -2255,7 +2255,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * value directly in the variable, and then set the flag that says
 		 * it's there.
 		 */
-		if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
+		if (sscanf(xlogend, "%X/%08X", &hi, &lo) != 2)
 			pg_fatal("could not parse write-ahead log location \"%s\"",
 					 xlogend);
 		xlogendptr = ((uint64) hi) << 32 | lo;

@@ -575,8 +575,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('sub1', 'pgoutput');
  slot_name |    lsn
------------+-----------
- sub1      | 0/19404D0
+-----------+------------
+ sub1      | 0/019404D0
 (1 row)
 </programlisting></para>
      </listitem>
@@ -617,8 +617,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
  slot_name |    lsn
------------+-----------
- myslot    | 0/19059A0
+-----------+------------
+ myslot    | 0/019059A0
 (1 row)
 </programlisting></para>
      </listitem>
@@ -655,8 +655,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting>
 /* pub # */ SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
  slot_name |    lsn
------------+-----------
- myslot    | 0/1905930
+-----------+------------
+ myslot    | 0/01905930
 (1 row)
 </programlisting></para>
      </listitem>
@@ -1965,15 +1965,15 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
 ERROR:  conflict detected on relation "public.test": conflict=insert_exists
 DETAIL:  Key already exists in unique index "t_pkey", which was modified locally in transaction 740 at 2024-06-26 10:47:04.727375+08.
 Key (c)=(1); existing local tuple (1, 'local'); remote tuple (1, 'remote').
-CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/14C0378
+CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/014C0378
 </screen>
    The LSN of the transaction that contains the change violating the constraint and
-   the replication origin name can be found from the server log (LSN 0/14C0378 and
+   the replication origin name can be found from the server log (LSN 0/014C0378 and
    replication origin <literal>pg_16395</literal> in the above case).  The
    transaction that produced the conflict can be skipped by using
    <link linkend="sql-altersubscription-params-skip"><command>ALTER SUBSCRIPTION ... SKIP</command></link>
    with the finish LSN
-   (i.e., LSN 0/14C0378).  The finish LSN could be an LSN at which the transaction
+   (i.e., LSN 0/014C0378).  The finish LSN could be an LSN at which the transaction
    is committed or prepared on the publisher.  Alternatively, the transaction can
    also be skipped by calling the <link linkend="pg-replication-origin-advance">
    <function>pg_replication_origin_advance()</function></link> function.
@@ -1984,7 +1984,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    <link linkend="sql-createsubscription-params-with-disable-on-error"><literal>disable_on_error</literal></link>
    option. Then, you can use <function>pg_replication_origin_advance()</function>
    function with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
-   and the next LSN of the finish LSN (i.e., 0/14C0379).  The current position of
+   and the next LSN of the finish LSN (i.e., 0/014C0379).  The current position of
    origins can be seen in the <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
    Please note that skipping the whole transaction includes skipping changes that

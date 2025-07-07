@@ -73,9 +73,9 @@
       passed as argument.  For example:
 <screen>
 test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
-    lsn    | checksum | flags  | lower | upper | special | pagesize | version | prune_xid
------------+----------+--------+-------+-------+---------+----------+---------+-----------
- 0/24A1B50 |        0 |      1 |   232 |   368 |    8192 |     8192 |       4 |         0
+    lsn     | checksum | flags  | lower | upper | special | pagesize | version | prune_xid
+------------+----------+--------+-------+-------+---------+----------+---------+-----------
+ 0/024A1B50 |        0 |      1 |   232 |   368 |    8192 |     8192 |       4 |         0
 </screen>
       The returned columns correspond to the fields in the
       <structname>PageHeaderData</structname> struct.
@@ -741,9 +741,9 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
       For example:
 <screen>
 test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
- lsn | nsn | rightlink | flags
------+-----+-----------+--------
- 0/1 | 0/0 |         1 | {leaf}
+    lsn     │    nsn     │ rightlink │ flags  
+────────────┼────────────┼───────────┼────────
+ 0/0B5FE088 │ 0/00000000 │         1 │ {leaf}
 (1 row)
 </screen>
      </para>

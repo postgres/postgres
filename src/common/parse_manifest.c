@@ -942,7 +942,7 @@ parse_xlogrecptr(XLogRecPtr *result, char *input)
 	uint32		hi;
 	uint32		lo;
 
-	if (sscanf(input, "%X/%X", &hi, &lo) != 2)
+	if (sscanf(input, "%X/%08X", &hi, &lo) != 2)
 		return false;
 	*result = ((uint64) hi) << 32 | lo;
 	return true;

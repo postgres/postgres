@@ -571,7 +571,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			return true;
 
 		/* Initiate the replication stream at specified location */
-		snprintf(query, sizeof(query), "START_REPLICATION %s%X/%X TIMELINE %u",
+		snprintf(query, sizeof(query), "START_REPLICATION %s%X/%08X TIMELINE %u",
 				 slotcmd,
 				 LSN_FORMAT_ARGS(stream->startpos),
 				 stream->timeline);
@@ -628,7 +628,7 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 			}
 			if (stream->startpos > stoppos)
 			{
-				pg_log_error("server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X",
+				pg_log_error("server stopped streaming timeline %u at %X/%08X, but reported next timeline %u to begin at %X/%08X",
 							 stream->timeline, LSN_FORMAT_ARGS(stoppos),
 							 newtimeline, LSN_FORMAT_ARGS(stream->startpos));
 				goto error;
@@ -720,7 +720,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 	}
 
 	*timeline = atoi(PQgetvalue(res, 0, 0));
-	if (sscanf(PQgetvalue(res, 0, 1), "%X/%X", &startpos_xlogid,
+	if (sscanf(PQgetvalue(res, 0, 1), "%X/%08X", &startpos_xlogid,
 			   &startpos_xrecoff) != 2)
 	{
 		pg_log_error("could not parse next timeline's starting point \"%s\"",
