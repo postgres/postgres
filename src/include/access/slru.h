@@ -187,6 +187,7 @@ extern void SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 						  int bank_tranche_id, SyncRequestHandler sync_handler,
 						  bool long_segment_names);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int64 pageno);
+extern void SimpleLruZeroAndWritePage(SlruCtl ctl, int64 pageno);
 extern int	SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 							  TransactionId xid);
 extern int	SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno,

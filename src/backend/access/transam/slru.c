@@ -434,6 +434,31 @@ SimpleLruZeroLSNs(SlruCtl ctl, int slotno)
 }
 
 /*
+ * This is a convenience wrapper for the common case of zeroing a page and
+ * immediately flushing it to disk.
+ *
+ * Control lock is acquired and released here.
+ */
+void
+SimpleLruZeroAndWritePage(SlruCtl ctl, int64 pageno)
+{
+	int			slotno;
+	LWLock	   *lock;
+
+	lock = SimpleLruGetBankLock(ctl, pageno);
+	LWLockAcquire(lock, LW_EXCLUSIVE);
+
+	/* Create and zero the page */
+	slotno = SimpleLruZeroPage(ctl, pageno);
+
+	/* Make sure it's written out */
+	SimpleLruWritePage(ctl, slotno);
+	Assert(!ctl->shared->page_dirty[slotno]);
+
+	LWLockRelease(lock);
+}
+
+/*
  * Wait for any active I/O on a page slot to finish.  (This does not
  * guarantee that new I/O hasn't been started before we return, though.
  * In fact the slot might not even contain the same page anymore.)

@@ -74,7 +74,6 @@ static SlruCtlData SubTransCtlData;
 #define SubTransCtl  (&SubTransCtlData)
 
 
-static int	ZeroSUBTRANSPage(int64 pageno);
 static bool SubTransPagePrecedes(int64 page1, int64 page2);
 
 
@@ -269,33 +268,8 @@ check_subtrans_buffers(int *newval, void **extra, GucSource source)
 void
 BootStrapSUBTRANS(void)
 {
-	int			slotno;
-	LWLock	   *lock = SimpleLruGetBankLock(SubTransCtl, 0);
-
-	LWLockAcquire(lock, LW_EXCLUSIVE);
-
-	/* Create and zero the first page of the subtrans log */
-	slotno = ZeroSUBTRANSPage(0);
-
-	/* Make sure it's written out */
-	SimpleLruWritePage(SubTransCtl, slotno);
-	Assert(!SubTransCtl->shared->page_dirty[slotno]);
-
-	LWLockRelease(lock);
-}
-
-/*
- * Initialize (or reinitialize) a page of SUBTRANS to zeroes.
- *
- * The page is not actually written, just set up in shared memory.
- * The slot number of the new page is returned.
- *
- * Control lock must be held at entry, and will be held at exit.
- */
-static int
-ZeroSUBTRANSPage(int64 pageno)
-{
-	return SimpleLruZeroPage(SubTransCtl, pageno);
+	/* Zero the initial page and flush it to disk */
+	SimpleLruZeroAndWritePage(SubTransCtl, 0);
 }
 
 /*
@@ -335,7 +309,7 @@ StartupSUBTRANS(TransactionId oldestActiveXID)
 			prevlock = lock;
 		}
 
-		(void) ZeroSUBTRANSPage(startPage);
+		(void) SimpleLruZeroPage(SubTransCtl, startPage);
 		if (startPage == endPage)
 			break;
 
@@ -395,7 +369,7 @@ ExtendSUBTRANS(TransactionId newestXact)
 	LWLockAcquire(lock, LW_EXCLUSIVE);
 
 	/* Zero the page */
-	ZeroSUBTRANSPage(pageno);
+	SimpleLruZeroPage(SubTransCtl, pageno);
 
 	LWLockRelease(lock);
 }
