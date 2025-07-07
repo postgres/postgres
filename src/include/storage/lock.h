@@ -18,6 +18,7 @@
 #error "lock.h may not be included from frontend code"
 #endif
 
+#include "access/transam.h"
 #include "lib/ilist.h"
 #include "storage/lockdefs.h"
 #include "storage/lwlock.h"
@@ -581,7 +582,7 @@ extern bool LockHasWaiters(const LOCKTAG *locktag,
 extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
 											  LOCKMODE lockmode, int *countp);
 extern void AtPrepare_Locks(void);
-extern void PostPrepare_Locks(TransactionId xid);
+extern void PostPrepare_Locks(FullTransactionId fxid);
 extern bool LockCheckConflicts(LockMethod lockMethodTable,
 							   LOCKMODE lockmode,
 							   LOCK *lock, PROCLOCK *proclock);
@@ -597,13 +598,13 @@ extern BlockedProcsData *GetBlockerStatusData(int blocked_pid);
 extern xl_standby_lock *GetRunningTransactionLocks(int *nlocks);
 extern const char *GetLockmodeName(LOCKMETHODID lockmethodid, LOCKMODE mode);
 
-extern void lock_twophase_recover(TransactionId xid, uint16 info,
+extern void lock_twophase_recover(FullTransactionId fxid, uint16 info,
 								  void *recdata, uint32 len);
-extern void lock_twophase_postcommit(TransactionId xid, uint16 info,
+extern void lock_twophase_postcommit(FullTransactionId fxid, uint16 info,
 									 void *recdata, uint32 len);
-extern void lock_twophase_postabort(TransactionId xid, uint16 info,
+extern void lock_twophase_postabort(FullTransactionId fxid, uint16 info,
 									void *recdata, uint32 len);
-extern void lock_twophase_standby_recover(TransactionId xid, uint16 info,
+extern void lock_twophase_standby_recover(FullTransactionId fxid, uint16 info,
 										  void *recdata, uint32 len);
 
 extern DeadLockState DeadLockCheck(PGPROC *proc);

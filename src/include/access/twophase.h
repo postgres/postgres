@@ -36,10 +36,10 @@ extern void PostPrepare_Twophase(void);
 
 extern TransactionId TwoPhaseGetXidByVirtualXID(VirtualTransactionId vxid,
 												bool *have_more);
-extern PGPROC *TwoPhaseGetDummyProc(TransactionId xid, bool lock_held);
-extern int	TwoPhaseGetDummyProcNumber(TransactionId xid, bool lock_held);
+extern PGPROC *TwoPhaseGetDummyProc(FullTransactionId fxid, bool lock_held);
+extern int	TwoPhaseGetDummyProcNumber(FullTransactionId fxid, bool lock_held);
 
-extern GlobalTransaction MarkAsPreparing(TransactionId xid, const char *gid,
+extern GlobalTransaction MarkAsPreparing(FullTransactionId fxid, const char *gid,
 										 TimestampTz prepared_at,
 										 Oid owner, Oid databaseid);
 
@@ -56,8 +56,9 @@ extern void CheckPointTwoPhase(XLogRecPtr redo_horizon);
 
 extern void FinishPreparedTransaction(const char *gid, bool isCommit);
 
-extern void PrepareRedoAdd(char *buf, XLogRecPtr start_lsn,
-						   XLogRecPtr end_lsn, RepOriginId origin_id);
+extern void PrepareRedoAdd(FullTransactionId fxid, char *buf,
+						   XLogRecPtr start_lsn, XLogRecPtr end_lsn,
+						   RepOriginId origin_id);
 extern void PrepareRedoRemove(TransactionId xid, bool giveWarning);
 extern void restoreTwoPhaseData(void);
 extern bool LookupGXact(const char *gid, XLogRecPtr prepare_end_lsn,

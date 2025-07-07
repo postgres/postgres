@@ -1847,7 +1847,7 @@ AtPrepare_MultiXact(void)
  *		Clean up after successful PREPARE TRANSACTION
  */
 void
-PostPrepare_MultiXact(TransactionId xid)
+PostPrepare_MultiXact(FullTransactionId fxid)
 {
 	MultiXactId myOldestMember;
 
@@ -1858,7 +1858,7 @@ PostPrepare_MultiXact(TransactionId xid)
 	myOldestMember = OldestMemberMXactId[MyProcNumber];
 	if (MultiXactIdIsValid(myOldestMember))
 	{
-		ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, false);
+		ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(fxid, false);
 
 		/*
 		 * Even though storing MultiXactId is atomic, acquire lock to make
@@ -1896,10 +1896,10 @@ PostPrepare_MultiXact(TransactionId xid)
  *		Recover the state of a prepared transaction at startup
  */
 void
-multixact_twophase_recover(TransactionId xid, uint16 info,
+multixact_twophase_recover(FullTransactionId fxid, uint16 info,
 						   void *recdata, uint32 len)
 {
-	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, false);
+	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(fxid, false);
 	MultiXactId oldestMember;
 
 	/*
@@ -1917,10 +1917,10 @@ multixact_twophase_recover(TransactionId xid, uint16 info,
  *		Similar to AtEOXact_MultiXact but for COMMIT PREPARED
  */
 void
-multixact_twophase_postcommit(TransactionId xid, uint16 info,
+multixact_twophase_postcommit(FullTransactionId fxid, uint16 info,
 							  void *recdata, uint32 len)
 {
-	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(xid, true);
+	ProcNumber	dummyProcNumber = TwoPhaseGetDummyProcNumber(fxid, true);
 
 	Assert(len == sizeof(MultiXactId));
 
@@ -1932,10 +1932,10 @@ multixact_twophase_postcommit(TransactionId xid, uint16 info,
  *		This is actually just the same as the COMMIT case.
  */
 void
-multixact_twophase_postabort(TransactionId xid, uint16 info,
+multixact_twophase_postabort(FullTransactionId fxid, uint16 info,
 							 void *recdata, uint32 len)
 {
-	multixact_twophase_postcommit(xid, info, recdata, len);
+	multixact_twophase_postcommit(fxid, info, recdata, len);
 }
 
 /*

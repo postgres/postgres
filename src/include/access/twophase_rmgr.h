@@ -14,7 +14,9 @@
 #ifndef TWOPHASE_RMGR_H
 #define TWOPHASE_RMGR_H
 
-typedef void (*TwoPhaseCallback) (TransactionId xid, uint16 info,
+#include "access/transam.h"
+
+typedef void (*TwoPhaseCallback) (FullTransactionId fxid, uint16 info,
 								  void *recdata, uint32 len);
 typedef uint8 TwoPhaseRmgrId;
 

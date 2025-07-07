@@ -11,6 +11,7 @@
 #ifndef MULTIXACT_H
 #define MULTIXACT_H
 
+#include "access/transam.h"
 #include "access/xlogreader.h"
 #include "lib/stringinfo.h"
 #include "storage/sync.h"
@@ -119,7 +120,7 @@ extern int	multixactmemberssyncfiletag(const FileTag *ftag, char *path);
 
 extern void AtEOXact_MultiXact(void);
 extern void AtPrepare_MultiXact(void);
-extern void PostPrepare_MultiXact(TransactionId xid);
+extern void PostPrepare_MultiXact(FullTransactionId fxid);
 
 extern Size MultiXactShmemSize(void);
 extern void MultiXactShmemInit(void);
@@ -145,11 +146,11 @@ extern void MultiXactAdvanceNextMXact(MultiXactId minMulti,
 extern void MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB);
 extern int	MultiXactMemberFreezeThreshold(void);
 
-extern void multixact_twophase_recover(TransactionId xid, uint16 info,
+extern void multixact_twophase_recover(FullTransactionId fxid, uint16 info,
 									   void *recdata, uint32 len);
-extern void multixact_twophase_postcommit(TransactionId xid, uint16 info,
+extern void multixact_twophase_postcommit(FullTransactionId fxid, uint16 info,
 										  void *recdata, uint32 len);
-extern void multixact_twophase_postabort(TransactionId xid, uint16 info,
+extern void multixact_twophase_postabort(FullTransactionId fxid, uint16 info,
 										 void *recdata, uint32 len);
 
 extern void multixact_redo(XLogReaderState *record);

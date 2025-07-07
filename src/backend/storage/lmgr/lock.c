@@ -3539,9 +3539,9 @@ AtPrepare_Locks(void)
  * but that probably costs more cycles.
  */
 void
-PostPrepare_Locks(TransactionId xid)
+PostPrepare_Locks(FullTransactionId fxid)
 {
-	PGPROC	   *newproc = TwoPhaseGetDummyProc(xid, false);
+	PGPROC	   *newproc = TwoPhaseGetDummyProc(fxid, false);
 	HASH_SEQ_STATUS status;
 	LOCALLOCK  *locallock;
 	LOCK	   *lock;
@@ -4324,11 +4324,11 @@ DumpAllLocks(void)
  * and PANIC anyway.
  */
 void
-lock_twophase_recover(TransactionId xid, uint16 info,
+lock_twophase_recover(FullTransactionId fxid, uint16 info,
 					  void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
-	PGPROC	   *proc = TwoPhaseGetDummyProc(xid, false);
+	PGPROC	   *proc = TwoPhaseGetDummyProc(fxid, false);
 	LOCKTAG    *locktag;
 	LOCKMODE	lockmode;
 	LOCKMETHODID lockmethodid;
@@ -4505,7 +4505,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
  * starting up into hot standby mode.
  */
 void
-lock_twophase_standby_recover(TransactionId xid, uint16 info,
+lock_twophase_standby_recover(FullTransactionId fxid, uint16 info,
 							  void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
@@ -4524,7 +4524,7 @@ lock_twophase_standby_recover(TransactionId xid, uint16 info,
 	if (lockmode == AccessExclusiveLock &&
 		locktag->locktag_type == LOCKTAG_RELATION)
 	{
-		StandbyAcquireAccessExclusiveLock(xid,
+		StandbyAcquireAccessExclusiveLock(XidFromFullTransactionId(fxid),
 										  locktag->locktag_field1 /* dboid */ ,
 										  locktag->locktag_field2 /* reloid */ );
 	}
@@ -4537,11 +4537,11 @@ lock_twophase_standby_recover(TransactionId xid, uint16 info,
  * Find and release the lock indicated by the 2PC record.
  */
 void
-lock_twophase_postcommit(TransactionId xid, uint16 info,
+lock_twophase_postcommit(FullTransactionId fxid, uint16 info,
 						 void *recdata, uint32 len)
 {
 	TwoPhaseLockRecord *rec = (TwoPhaseLockRecord *) recdata;
-	PGPROC	   *proc = TwoPhaseGetDummyProc(xid, true);
+	PGPROC	   *proc = TwoPhaseGetDummyProc(fxid, true);
 	LOCKTAG    *locktag;
 	LOCKMETHODID lockmethodid;
 	LockMethod	lockMethodTable;
@@ -4563,10 +4563,10 @@ lock_twophase_postcommit(TransactionId xid, uint16 info,
  * This is actually just the same as the COMMIT case.
  */
 void
-lock_twophase_postabort(TransactionId xid, uint16 info,
+lock_twophase_postabort(FullTransactionId fxid, uint16 info,
 						void *recdata, uint32 len)
 {
-	lock_twophase_postcommit(xid, info, recdata, len);
+	lock_twophase_postcommit(fxid, info, recdata, len);
 }
 
 /*
