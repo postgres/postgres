@@ -251,6 +251,32 @@ sub adjust_database_contents
 			'drop operator if exists public.=> (bigint, NONE)');
 	}
 
+	# Version 19 changed the output format of pg_lsn.  To avoid output
+	# differences, set all pg_lsn columns to NULL if the old version is
+	# older than 19.
+	if ($old_version < 19)
+	{
+		if ($old_version >= '9.5')
+		{
+			_add_st($result, 'regression',
+				"update brintest set lsncol = NULL");
+		}
+
+		if ($old_version >= 12)
+		{
+			_add_st($result, 'regression',
+				"update tab_core_types set pg_lsn = NULL");
+		}
+
+		if ($old_version >= 14)
+		{
+			_add_st($result, 'regression',
+				"update brintest_multi set lsncol = NULL");
+			_add_st($result, 'regression',
+				"update brintest_bloom set lsncol = NULL");
+		}
+	}
+
 	return $result;
 }
 
