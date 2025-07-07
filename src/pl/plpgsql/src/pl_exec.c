@@ -5703,7 +5703,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	/*
 	 * Else do it the hard way via exec_run_select
 	 */
-	rc = exec_run_select(estate, expr, 2, NULL);
+	rc = exec_run_select(estate, expr, 0, NULL);
 	if (rc != SPI_OK_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -5757,6 +5757,10 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 
 /* ----------
  * exec_run_select			Execute a select query
+ *
+ * Note: passing maxtuples different from 0 ("return all tuples") is
+ * deprecated because it will prevent parallel execution of the query.
+ * However, we retain the parameter in case we need it someday.
  * ----------
  */
 static int
