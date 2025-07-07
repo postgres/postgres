@@ -948,10 +948,10 @@ if not libcurlopt.disabled()
   # libcurl and one of either epoll or kqueue.
   oauth_flow_supported = (
     libcurl.found()
-    and (cc.check_header('sys/event.h', required: false,
-                         args: test_c_args, include_directories: postgres_inc)
-         or cc.check_header('sys/epoll.h', required: false,
-                            args: test_c_args, include_directories: postgres_inc))
+    and (cc.has_header('sys/event.h',
+                       args: test_c_args, include_directories: postgres_inc)
+         or cc.has_header('sys/epoll.h',
+                          args: test_c_args, include_directories: postgres_inc))
   )
 
   if oauth_flow_supported
