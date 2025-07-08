@@ -1318,6 +1318,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 			Oid		   *sortOperators;
 			Oid		   *collations;
 			bool	   *nullsFirst;
+			int			presorted_keys;
 
 			/*
 			 * Compute sort column info, and adjust subplan's tlist as needed.
@@ -1353,14 +1354,38 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 						  numsortkeys * sizeof(bool)) == 0);
 
 			/* Now, insert a Sort node if subplan isn't sufficiently ordered */
-			if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+			if (!pathkeys_count_contained_in(pathkeys, subpath->pathkeys,
+											 &presorted_keys))
 			{
-				Sort	   *sort = make_sort(subplan, numsortkeys,
+				Plan	   *sort_plan;
+
+				/*
+				 * We choose to use incremental sort if it is enabled and
+				 * there are presorted keys; otherwise we use full sort.
+				 */
+				if (enable_incremental_sort && presorted_keys > 0)
+				{
+					sort_plan = (Plan *)
+						make_incrementalsort(subplan, numsortkeys, presorted_keys,
 											 sortColIdx, sortOperators,
 											 collations, nullsFirst);
 
-				label_sort_with_costsize(root, sort, best_path->limit_tuples);
-				subplan = (Plan *) sort;
+					label_incrementalsort_with_costsize(root,
+														(IncrementalSort *) sort_plan,
+														pathkeys,
+														best_path->limit_tuples);
+				}
+				else
+				{
+					sort_plan = (Plan *) make_sort(subplan, numsortkeys,
+												   sortColIdx, sortOperators,
+												   collations, nullsFirst);
+
+					label_sort_with_costsize(root, (Sort *) sort_plan,
+											 best_path->limit_tuples);
+				}
+
+				subplan = sort_plan;
 			}
 		}
 
@@ -1491,6 +1516,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 		Oid		   *sortOperators;
 		Oid		   *collations;
 		bool	   *nullsFirst;
+		int			presorted_keys;
 
 		/* Build the child plan */
 		/* Must insist that all children return the same tlist */
@@ -1525,14 +1551,38 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 					  numsortkeys * sizeof(bool)) == 0);
 
 		/* Now, insert a Sort node if subplan isn't sufficiently ordered */
-		if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+		if (!pathkeys_count_contained_in(pathkeys, subpath->pathkeys,
+										 &presorted_keys))
 		{
-			Sort	   *sort = make_sort(subplan, numsortkeys,
+			Plan	   *sort_plan;
+
+			/*
+			 * We choose to use incremental sort if it is enabled and there
+			 * are presorted keys; otherwise we use full sort.
+			 */
+			if (enable_incremental_sort && presorted_keys > 0)
+			{
+				sort_plan = (Plan *)
+					make_incrementalsort(subplan, numsortkeys, presorted_keys,
 										 sortColIdx, sortOperators,
 										 collations, nullsFirst);
 
-			label_sort_with_costsize(root, sort, best_path->limit_tuples);
-			subplan = (Plan *) sort;
+				label_incrementalsort_with_costsize(root,
+													(IncrementalSort *) sort_plan,
+													pathkeys,
+													best_path->limit_tuples);
+			}
+			else
+			{
+				sort_plan = (Plan *) make_sort(subplan, numsortkeys,
+											   sortColIdx, sortOperators,
+											   collations, nullsFirst);
+
+				label_sort_with_costsize(root, (Sort *) sort_plan,
+										 best_path->limit_tuples);
+			}
+
+			subplan = sort_plan;
 		}
 
 		subplans = lappend(subplans, subplan);

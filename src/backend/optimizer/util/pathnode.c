@@ -1404,12 +1404,12 @@ create_append_path(PlannerInfo *root,
 			pathnode->path.total_cost = child->total_cost;
 		}
 		else
-			cost_append(pathnode);
+			cost_append(pathnode, root);
 		/* Must do this last, else cost_append complains */
 		pathnode->path.pathkeys = child->pathkeys;
 	}
 	else
-		cost_append(pathnode);
+		cost_append(pathnode, root);
 
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
@@ -1515,6 +1515,9 @@ create_merge_append_path(PlannerInfo *root,
 	foreach(l, subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
+		int			presorted_keys;
+		Path		sort_path;	/* dummy for result of
+								 * cost_sort/cost_incremental_sort */
 
 		/* All child paths should be unparameterized */
 		Assert(bms_is_empty(PATH_REQ_OUTER(subpath)));
@@ -1523,32 +1526,52 @@ create_merge_append_path(PlannerInfo *root,
 		pathnode->path.parallel_safe = pathnode->path.parallel_safe &&
 			subpath->parallel_safe;
 
-		if (pathkeys_contained_in(pathkeys, subpath->pathkeys))
+		if (!pathkeys_count_contained_in(pathkeys, subpath->pathkeys,
+										 &presorted_keys))
 		{
-			/* Subpath is adequately ordered, we won't need to sort it */
-			input_disabled_nodes += subpath->disabled_nodes;
-			input_startup_cost += subpath->startup_cost;
-			input_total_cost += subpath->total_cost;
-		}
-		else
-		{
-			/* We'll need to insert a Sort node, so include cost for that */
-			Path		sort_path;	/* dummy for result of cost_sort */
+			/*
+			 * We'll need to insert a Sort node, so include costs for that. We
+			 * choose to use incremental sort if it is enabled and there are
+			 * presorted keys; otherwise we use full sort.
+			 *
+			 * We can use the parent's LIMIT if any, since we certainly won't
+			 * pull more than that many tuples from any child.
+			 */
+			if (enable_incremental_sort && presorted_keys > 0)
+			{
+				cost_incremental_sort(&sort_path,
+									  root,
+									  pathkeys,
+									  presorted_keys,
+									  subpath->disabled_nodes,
+									  subpath->startup_cost,
+									  subpath->total_cost,
+									  subpath->rows,
+									  subpath->pathtarget->width,
+									  0.0,
+									  work_mem,
+									  pathnode->limit_tuples);
+			}
+			else
+			{
+				cost_sort(&sort_path,
+						  root,
+						  pathkeys,
+						  subpath->disabled_nodes,
+						  subpath->total_cost,
+						  subpath->rows,
+						  subpath->pathtarget->width,
+						  0.0,
+						  work_mem,
+						  pathnode->limit_tuples);
+			}
 
-			cost_sort(&sort_path,
-					  root,
-					  pathkeys,
-					  subpath->disabled_nodes,
-					  subpath->total_cost,
-					  subpath->rows,
-					  subpath->pathtarget->width,
-					  0.0,
-					  work_mem,
-					  pathnode->limit_tuples);
-			input_disabled_nodes += sort_path.disabled_nodes;
-			input_startup_cost += sort_path.startup_cost;
-			input_total_cost += sort_path.total_cost;
+			subpath = &sort_path;
 		}
+
+		input_disabled_nodes += subpath->disabled_nodes;
+		input_startup_cost += subpath->startup_cost;
+		input_total_cost += subpath->total_cost;
 	}
 
 	/*

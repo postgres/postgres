@@ -2247,7 +2247,7 @@ append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers)
  *	  Determines and returns the cost of an Append node.
  */
 void
-cost_append(AppendPath *apath)
+cost_append(AppendPath *apath, PlannerInfo *root)
 {
 	ListCell   *l;
 
@@ -2309,26 +2309,52 @@ cost_append(AppendPath *apath)
 			foreach(l, apath->subpaths)
 			{
 				Path	   *subpath = (Path *) lfirst(l);
-				Path		sort_path;	/* dummy for result of cost_sort */
+				int			presorted_keys;
+				Path		sort_path;	/* dummy for result of
+										 * cost_sort/cost_incremental_sort */
 
-				if (!pathkeys_contained_in(pathkeys, subpath->pathkeys))
+				if (!pathkeys_count_contained_in(pathkeys, subpath->pathkeys,
+												 &presorted_keys))
 				{
 					/*
 					 * We'll need to insert a Sort node, so include costs for
-					 * that.  We can use the parent's LIMIT if any, since we
+					 * that.  We choose to use incremental sort if it is
+					 * enabled and there are presorted keys; otherwise we use
+					 * full sort.
+					 *
+					 * We can use the parent's LIMIT if any, since we
 					 * certainly won't pull more than that many tuples from
 					 * any child.
 					 */
-					cost_sort(&sort_path,
-							  NULL, /* doesn't currently need root */
-							  pathkeys,
-							  subpath->disabled_nodes,
-							  subpath->total_cost,
-							  subpath->rows,
-							  subpath->pathtarget->width,
-							  0.0,
-							  work_mem,
-							  apath->limit_tuples);
+					if (enable_incremental_sort && presorted_keys > 0)
+					{
+						cost_incremental_sort(&sort_path,
+											  root,
+											  pathkeys,
+											  presorted_keys,
+											  subpath->disabled_nodes,
+											  subpath->startup_cost,
+											  subpath->total_cost,
+											  subpath->rows,
+											  subpath->pathtarget->width,
+											  0.0,
+											  work_mem,
+											  apath->limit_tuples);
+					}
+					else
+					{
+						cost_sort(&sort_path,
+								  root,
+								  pathkeys,
+								  subpath->disabled_nodes,
+								  subpath->total_cost,
+								  subpath->rows,
+								  subpath->pathtarget->width,
+								  0.0,
+								  work_mem,
+								  apath->limit_tuples);
+					}
+
 					subpath = &sort_path;
 				}
 

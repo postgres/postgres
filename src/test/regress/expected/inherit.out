@@ -1898,10 +1898,11 @@ ORDER BY thousand, tenthous;
  Merge Append
    Sort Key: tenk1.thousand, tenk1.tenthous
    ->  Index Only Scan using tenk1_thous_tenthous on tenk1
-   ->  Sort
+   ->  Incremental Sort
          Sort Key: tenk1_1.thousand, tenk1_1.thousand
+         Presorted Key: tenk1_1.thousand
          ->  Index Only Scan using tenk1_thous_tenthous on tenk1 tenk1_1
-(6 rows)
+(7 rows)
 
 explain (costs off)
 SELECT thousand, tenthous, thousand+tenthous AS x FROM tenk1
@@ -1982,10 +1983,11 @@ ORDER BY x, y;
  Merge Append
    Sort Key: a.thousand, a.tenthous
    ->  Index Only Scan using tenk1_thous_tenthous on tenk1 a
-   ->  Sort
+   ->  Incremental Sort
          Sort Key: b.unique2, b.unique2
+         Presorted Key: b.unique2
          ->  Index Only Scan using tenk1_unique2 on tenk1 b
-(6 rows)
+(7 rows)
 
 -- exercise rescan code path via a repeatedly-evaluated subquery
 explain (costs off)

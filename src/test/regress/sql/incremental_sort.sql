@@ -298,3 +298,27 @@ explain (costs off)
 select * from
   (select * from tenk1 order by four) t1 join tenk1 t2 on t1.four = t2.four and t1.two = t2.two
 order by t1.four, t1.two limit 1;
+
+--
+-- Test incremental sort for Append/MergeAppend
+--
+create table prt_tbl (a int, b int) partition by range (a);
+create table prt_tbl_1 partition of prt_tbl for values from (0) to (100);
+create table prt_tbl_2 partition of prt_tbl for values from (100) to (200);
+insert into prt_tbl select i%200, i from generate_series(1,1000)i;
+create index on prt_tbl_1(a);
+create index on prt_tbl_2(a, b);
+analyze prt_tbl;
+
+set enable_seqscan to off;
+set enable_bitmapscan to off;
+
+-- Ensure we get an incremental sort for the subpath of Append
+explain (costs off) select * from prt_tbl order by a, b;
+
+-- Ensure we get an incremental sort for the subpath of MergeAppend
+explain (costs off) select * from prt_tbl_1 union all select * from prt_tbl_2 order by a, b;
+
+reset enable_bitmapscan;
+reset enable_seqscan;
+drop table prt_tbl;
