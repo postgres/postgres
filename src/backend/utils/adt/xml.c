@@ -532,7 +532,7 @@ xmltext(PG_FUNCTION_ARGS)
 	volatile xmlChar *xmlbuf = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
-	/* Otherwise, we gotta spin up some error handling. */
+	/* First we gotta spin up some error handling. */
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
@@ -685,7 +685,7 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 	volatile xmlBufferPtr buf = NULL;
 	volatile xmlSaveCtxtPtr ctxt = NULL;
 	ErrorSaveContext escontext = {T_ErrorSaveContext};
-	PgXmlErrorContext *xmlerrcxt;
+	PgXmlErrorContext *volatile xmlerrcxt = NULL;
 #endif
 
 	if (xmloption_arg != XMLOPTION_DOCUMENT && !indent)
@@ -726,12 +726,17 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 		return (text *) data;
 	}
 
-	/* Otherwise, we gotta spin up some error handling. */
-	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
-
+	/*
+	 * Otherwise, we gotta spin up some error handling.  Unlike most other
+	 * routines in this module, we already have a libxml "doc" structure to
+	 * free, so we need to call pg_xml_init() inside the PG_TRY and be
+	 * prepared for it to fail (typically due to palloc OOM).
+	 */
 	PG_TRY();
 	{
 		size_t		decl_len = 0;
+
+		xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 		/* The serialized data will go into this buffer. */
 		buf = xmlBufferCreate();
@@ -863,10 +868,10 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 			xmlSaveClose(ctxt);
 		if (buf)
 			xmlBufferFree(buf);
-		if (doc)
-			xmlFreeDoc(doc);
+		xmlFreeDoc(doc);
 
-		pg_xml_done(xmlerrcxt, true);
+		if (xmlerrcxt)
+			pg_xml_done(xmlerrcxt, true);
 
 		PG_RE_THROW();
 	}
