@@ -54,7 +54,7 @@ static xmlChar *pgxml_texttoxmlchar(text *textstring);
 static xpath_workspace *pgxml_xpath(text *document, xmlChar *xpath,
 									PgXmlErrorContext *xmlerrcxt);
 
-static void cleanup_workspace(volatile xpath_workspace *workspace);
+static void cleanup_workspace(xpath_workspace *workspace);
 
 
 /*
@@ -88,8 +88,8 @@ Datum
 xml_encode_special_chars(PG_FUNCTION_ARGS)
 {
 	text	   *tin = PG_GETARG_TEXT_PP(0);
-	text	   *tout;
-	volatile xmlChar *tt = NULL;
+	text	   *volatile tout = NULL;
+	xmlChar    *volatile tt = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
@@ -111,7 +111,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		if (tt != NULL)
-			xmlFree((xmlChar *) tt);
+			xmlFree(tt);
 
 		pg_xml_done(xmlerrcxt, true);
 
@@ -120,7 +120,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 
 	if (tt != NULL)
-		xmlFree((xmlChar *) tt);
+		xmlFree(tt);
 
 	pg_xml_done(xmlerrcxt, false);
 
@@ -145,11 +145,10 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 				   xmlChar *plainsep)
 {
 	volatile xmlBufferPtr buf = NULL;
-	xmlChar    *result;
-	int			i;
+	xmlChar    *volatile result = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
-	/* spin some error handling */
+	/* spin up some error handling */
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
@@ -168,7 +167,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 		}
 		if (nodeset != NULL)
 		{
-			for (i = 0; i < nodeset->nodeNr; i++)
+			for (int i = 0; i < nodeset->nodeNr; i++)
 			{
 				if (plainsep != NULL)
 				{
@@ -257,8 +256,8 @@ xpath_nodeset(PG_FUNCTION_ARGS)
 	xmlChar    *toptag = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(2));
 	xmlChar    *septag = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(3));
 	xmlChar    *xpath;
-	text	   *xpres;
-	volatile xpath_workspace *workspace;
+	text	   *volatile xpres = NULL;
+	xpath_workspace *volatile workspace = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
@@ -302,8 +301,8 @@ xpath_list(PG_FUNCTION_ARGS)
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *plainsep = pgxml_texttoxmlchar(PG_GETARG_TEXT_PP(2));
 	xmlChar    *xpath;
-	text	   *xpres;
-	volatile xpath_workspace *workspace;
+	text	   *volatile xpres = NULL;
+	xpath_workspace *volatile workspace = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
@@ -344,8 +343,8 @@ xpath_string(PG_FUNCTION_ARGS)
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *xpath;
 	int32		pathsize;
-	text	   *xpres;
-	volatile xpath_workspace *workspace;
+	text	   *volatile xpres = NULL;
+	xpath_workspace *volatile workspace = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	pathsize = VARSIZE_ANY_EXHDR(xpathsupp);
@@ -398,9 +397,9 @@ xpath_number(PG_FUNCTION_ARGS)
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *xpath;
-	float4		fRes = 0.0;
-	bool		isNull = false;
-	volatile xpath_workspace *workspace = NULL;
+	volatile float4 fRes = 0.0;
+	volatile bool isNull = false;
+	xpath_workspace *volatile workspace = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
@@ -444,8 +443,8 @@ xpath_bool(PG_FUNCTION_ARGS)
 	text	   *document = PG_GETARG_TEXT_PP(0);
 	text	   *xpathsupp = PG_GETARG_TEXT_PP(1);	/* XPath expression */
 	xmlChar    *xpath;
-	int			bRes;
-	volatile xpath_workspace *workspace = NULL;
+	volatile int bRes = 0;
+	xpath_workspace *volatile workspace = NULL;
 	PgXmlErrorContext *xmlerrcxt;
 
 	xpath = pgxml_texttoxmlchar(xpathsupp);
@@ -518,7 +517,7 @@ pgxml_xpath(text *document, xmlChar *xpath, PgXmlErrorContext *xmlerrcxt)
 
 /* Clean up after processing the result of pgxml_xpath() */
 static void
-cleanup_workspace(volatile xpath_workspace *workspace)
+cleanup_workspace(xpath_workspace *workspace)
 {
 	if (workspace->res)
 		xmlXPathFreeObject(workspace->res);
@@ -537,9 +536,9 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 					 xmlChar *septag,
 					 xmlChar *plainsep)
 {
-	volatile xmlChar *xpresstr = NULL;
+	xmlChar    *volatile xpresstr = NULL;
+	text	   *volatile xpres = NULL;
 	PgXmlErrorContext *xmlerrcxt;
-	text	   *xpres;
 
 	if (res == NULL)
 		return NULL;
@@ -578,7 +577,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	PG_CATCH();
 	{
 		if (xpresstr != NULL)
-			xmlFree((xmlChar *) xpresstr);
+			xmlFree(xpresstr);
 
 		pg_xml_done(xmlerrcxt, true);
 
@@ -587,7 +586,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	PG_END_TRY();
 
 	/* Free various storage */
-	xmlFree((xmlChar *) xpresstr);
+	xmlFree(xpresstr);
 
 	pg_xml_done(xmlerrcxt, false);
 

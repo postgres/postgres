@@ -48,7 +48,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	text	   *doct = PG_GETARG_TEXT_PP(0);
 	text	   *ssheet = PG_GETARG_TEXT_PP(1);
-	text	   *result;
+	text	   *volatile result = NULL;
 	text	   *paramstr;
 	const char **params;
 	PgXmlErrorContext *xmlerrcxt;
@@ -58,8 +58,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	volatile xsltSecurityPrefsPtr xslt_sec_prefs = NULL;
 	volatile xsltTransformContextPtr xslt_ctxt = NULL;
 	volatile int resstat = -1;
-	volatile xmlChar *resstr = NULL;
-	int			reslen = 0;
+	xmlChar    *volatile resstr = NULL;
 
 	if (fcinfo->nargs == 3)
 	{
@@ -80,6 +79,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	{
 		xmlDocPtr	ssdoc;
 		bool		xslt_sec_prefs_error;
+		int			reslen = 0;
 
 		/* Parse document */
 		doctree = xmlReadMemory((char *) VARDATA_ANY(doct),
@@ -160,7 +160,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		if (doctree != NULL)
 			xmlFreeDoc(doctree);
 		if (resstr != NULL)
-			xmlFree((xmlChar *) resstr);
+			xmlFree(resstr);
 		xsltCleanupGlobals();
 
 		pg_xml_done(xmlerrcxt, true);
@@ -177,7 +177,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	xsltCleanupGlobals();
 
 	if (resstr)
-		xmlFree((xmlChar *) resstr);
+		xmlFree(resstr);
 
 	pg_xml_done(xmlerrcxt, false);
 
