@@ -2181,6 +2181,7 @@ PgAioReturn
 PgAioTargetData
 PgAioTargetID
 PgAioTargetInfo
+PgAioUringCaps
 PgAioUringContext
 PgAioWaitRef
 PgArchData
