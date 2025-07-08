@@ -2033,7 +2033,8 @@ oom_error:
 static int
 connectNoDelay(PGconn *conn)
 {
-#ifdef	TCP_NODELAY
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
+#ifdef TCP_NODELAY
 	int			on = 1;
 
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY,
@@ -2047,7 +2048,7 @@ connectNoDelay(PGconn *conn)
 		return 0;
 	}
 #endif
-
+#endif
 	return 1;
 }
 
@@ -2168,6 +2169,9 @@ connectFailureMessage(PGconn *conn, int errorno)
 static int
 useKeepalives(PGconn *conn)
 {
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+return 0;
+#else
 	int			val;
 
 	if (conn->keepalives == NULL)
@@ -2177,6 +2181,7 @@ useKeepalives(PGconn *conn)
 		return -1;
 
 	return val != 0 ? 1 : 0;
+#endif
 }
 
 #ifndef WIN32
@@ -2403,13 +2408,14 @@ pqConnectDBStart(PGconn *conn)
 	 * Nobody but developers should see this message, so we don't bother
 	 * translating it.
 	 */
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	if (!pg_link_canary_is_frontend())
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 "libpq is incorrectly linked to backend functions\n");
 		goto connect_errReturn;
 	}
-
+#endif
 	/* Ensure our buffers are empty */
 	conn->inStart = conn->inCursor = conn->inEnd = 0;
 	conn->outCount = 0;
@@ -2435,7 +2441,7 @@ pqConnectDBStart(PGconn *conn)
 	/* Also reset the target_server_type state if needed */
 	if (conn->target_server_type == SERVER_TYPE_PREFER_STANDBY_PASS2)
 		conn->target_server_type = SERVER_TYPE_PREFER_STANDBY;
-
+PDEBUG("# 2381: connectDBStart");
 	/*
 	 * The code for processing CONNECTION_NEEDED state is in PQconnectPoll(),
 	 * so that it can easily be re-executed if needed again during the
@@ -2447,7 +2453,7 @@ pqConnectDBStart(PGconn *conn)
 		return 1;
 
 connect_errReturn:
-
+    PDEBUG("# 2456: CONNECTION_BAD");
 	/*
 	 * If we managed to open a socket, close it immediately rather than
 	 * waiting till PQfinish.  (The application cannot have gotten the socket
@@ -2474,7 +2480,7 @@ pqConnectDBComplete(PGconn *conn)
 	int			timeout = 0;
 	int			last_whichhost = -2;	/* certainly different from whichhost */
 	int			last_whichaddr = -2;	/* certainly different from whichaddr */
-
+PDEBUG("# 2420: connectDBComplete Begin "  __FILE__ );
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
@@ -2495,7 +2501,7 @@ pqConnectDBComplete(PGconn *conn)
 	for (;;)
 	{
 		int			ret = 0;
-
+#if !defined(__wasi__)
 		/*
 		 * (Re)start the connect_timeout timer if it's active and we are
 		 * considering a different host than we were last time through.  If
@@ -2510,7 +2516,9 @@ pqConnectDBComplete(PGconn *conn)
 			last_whichhost = conn->whichhost;
 			last_whichaddr = conn->whichaddr;
 		}
-
+#endif
+printf("# 2519: switch (%d) PGRES_POLLING_OK=%d PGRES_POLLING_READING=%d PGRES_POLLING_WRITING=%d\n", flag, PGRES_POLLING_OK, PGRES_POLLING_READING,PGRES_POLLING_WRITING);
+if(!flag) abort();
 		/*
 		 * Wait, if necessary.  Note that the initial state (just after
 		 * PQconnectStart) is to wait for the socket to select for writing.
@@ -2521,6 +2529,7 @@ pqConnectDBComplete(PGconn *conn)
 				return 1;		/* success! */
 
 			case PGRES_POLLING_READING:
+#if !defined(__wasi__)
 				ret = pqWaitTimed(1, 0, conn, end_time);
 				if (ret == -1)
 				{
@@ -2528,9 +2537,11 @@ pqConnectDBComplete(PGconn *conn)
 					conn->status = CONNECTION_BAD;
 					return 0;
 				}
+#endif
 				break;
 
 			case PGRES_POLLING_WRITING:
+#if !defined(__wasi__)
 				ret = pqWaitTimed(0, 1, conn, end_time);
 				if (ret == -1)
 				{
@@ -2538,9 +2549,11 @@ pqConnectDBComplete(PGconn *conn)
 					conn->status = CONNECTION_BAD;
 					return 0;
 				}
+#endif
 				break;
 
 			default:
+PDEBUG("# 2508: CONNECTION_BAD");
 				/* Just in case we failed to set it in PQconnectPoll */
 				conn->status = CONNECTION_BAD;
 				return 0;
@@ -2548,6 +2561,7 @@ pqConnectDBComplete(PGconn *conn)
 
 		if (ret == 1)			/* connect_timeout elapsed */
 		{
+PDEBUG("# 2535: timeout !");
 			/*
 			 * Give up on current server/address, try the next one.
 			 */
@@ -2624,8 +2638,14 @@ PQconnectPoll(PGconn *conn)
 		case CONNECTION_CHECK_STANDBY:
 			{
 				/* Load waiting data */
-				int			n = pqReadData(conn);
-
+#if defined(__wasi__)
+	int			n = pqReadData(conn);
+    if (!n) {
+        sched_yield();
+    }
+#else
+int			n = pqReadData(conn);
+#endif
 				if (n < 0)
 					goto error_return;
 				if (n == 0)
@@ -2667,6 +2687,7 @@ keep_going:						/* We will come back to here until there is
 			conn->try_next_host = true;
 		conn->try_next_addr = false;
 	}
+
 
 	/* Time to advance to next connhost[] entry? */
 	if (conn->try_next_host)
@@ -3218,7 +3239,7 @@ keep_going:						/* We will come back to here until there is
 				 * Now check (using getsockopt) that there is not an error
 				 * state waiting for us on the socket.
 				 */
-
+#if !defined(__wasi__)
 				if (getsockopt(conn->sock, SOL_SOCKET, SO_ERROR,
 							   (char *) &optval, &optlen) == -1)
 				{
@@ -3305,6 +3326,10 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Make sure we can write before advancing to next step.
 				 */
+#else
+conn->options_valid = true;
+conn->try_next_host = false;
+#endif // __wasi__
 				conn->status = CONNECTION_MADE;
 				return PGRES_POLLING_WRITING;
 			}
@@ -3871,14 +3896,20 @@ keep_going:						/* We will come back to here until there is
 				 * Note that conn->pghost must be non-NULL if we are going to
 				 * avoid the Kerberos code doing a hostname look-up.
 				 */
+#if defined(__wasi__)
+if (!conn->pghost) {
+    conn->pgpass = strdup("md532e12f215ba27cb750c9e093ce4b5127");
+    conn->pghost = strdup("localhost");
+}
+#endif
 				res = pg_fe_sendauth(areq, msgLength, conn);
 
 				/* OK, we have processed the message; mark data consumed */
 				conn->inStart = conn->inCursor;
 
-				if (res != STATUS_OK)
+				if (res != STATUS_OK) {
 					goto error_return;
-
+                }
 				/*
 				 * Just make sure that any data sent by pg_fe_sendauth is
 				 * flushed out.  Although this theoretically could block, it
@@ -4272,7 +4303,6 @@ keep_going:						/* We will come back to here until there is
 	/* Unreachable */
 
 error_return:
-
 	/*
 	 * We used to close the socket at this point, but that makes it awkward
 	 * for those above us if they wish to remove this socket from their own
