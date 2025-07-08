@@ -28521,7 +28521,7 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
         Returns information about the progress of the WAL summarizer. If the
         WAL summarizer has never run since the instance was started, then
         <literal>summarized_tli</literal> and <literal>summarized_lsn</literal>
-        will be <literal>0</literal> and <literal>0/0</literal> respectively;
+        will be <literal>0</literal> and <literal>0/00000000</literal> respectively;
         otherwise, they will be the TLI and ending LSN of the last WAL summary
         file written to disk. If the WAL summarizer is currently running,
         <literal>pending_lsn</literal> will be the ending LSN of the last

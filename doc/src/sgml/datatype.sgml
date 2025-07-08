@@ -5121,7 +5121,7 @@ WHERE ...
     <literal>+(pg_lsn,numeric)</literal> and
     <literal>-(pg_lsn,numeric)</literal> operators, respectively. Note that
     the calculated LSN should be in the range of <type>pg_lsn</type> type,
-    i.e., between <literal>0/0</literal> and
+    i.e., between <literal>0/00000000</literal> and
     <literal>FFFFFFFF/FFFFFFFF</literal>.
    </para>
   </sect1>

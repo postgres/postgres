@@ -741,9 +741,9 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
       For example:
 <screen>
 test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
-    lsn     │    nsn     │ rightlink │ flags  
-────────────┼────────────┼───────────┼────────
- 0/0B5FE088 │ 0/00000000 │         1 │ {leaf}
+    lsn     |    nsn     | rightlink | flags  
+------------+------------+-----------+--------
+ 0/0B5FE088 | 0/00000000 |         1 | {leaf}
 (1 row)
 </screen>
      </para>
