@@ -13309,6 +13309,23 @@ fi
 
 fi
 
+if test "$with_liburing" = yes; then
+  _LIBS="$LIBS"
+  LIBS="$LIBURING_LIBS $LIBS"
+  for ac_func in io_uring_queue_init_mem
+do :
+  ac_fn_c_check_func "$LINENO" "io_uring_queue_init_mem" "ac_cv_func_io_uring_queue_init_mem"
+if test "x$ac_cv_func_io_uring_queue_init_mem" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_IO_URING_QUEUE_INIT_MEM 1
+_ACEOF
+
+fi
+done
+
+  LIBS="$_LIBS"
+fi
+
 if test "$with_lz4" = yes ; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4_compress_default in -llz4" >&5
 $as_echo_n "checking for LZ4_compress_default in -llz4... " >&6; }
