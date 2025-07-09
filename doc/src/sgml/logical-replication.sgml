@@ -709,8 +709,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
   </para>
 
   <para>
-   To confirm that the standby server is indeed ready for failover, follow these
-   steps to verify that all necessary logical replication slots have been
+   To confirm that the standby server is indeed ready for failover for a given subscriber, follow these
+   steps to verify that all the logical replication slots required by that subscriber have been
    synchronized to the standby server:
   </para>
 
@@ -764,7 +764,7 @@ HINT:  To initiate replication, you must manually create the replication slot, e
      Check that the logical replication slots identified above exist on
      the standby server and are ready for failover.
 <programlisting>
-/* standby # */ SELECT slot_name, (synced AND NOT temporary AND NOT conflicting) AS failover_ready
+/* standby # */ SELECT slot_name, (synced AND NOT temporary AND invalidation_reason IS NULL) AS failover_ready
                FROM pg_replication_slots
                WHERE slot_name IN
                    ('sub1','sub2','sub3', 'pg_16394_sync_16385_7394666715149055164');
@@ -782,10 +782,42 @@ HINT:  To initiate replication, you must manually create the replication slot, e
   <para>
    If all the slots are present on the standby server and the result
    (<literal>failover_ready</literal>) of the above SQL query is true, then
-   existing subscriptions can continue subscribing to publications now on the
-   new primary server.
+   existing subscriptions can continue subscribing to publications on the new
+   primary server.
   </para>
 
+  <para>
+   The first two steps in the above procedure are meant for a
+   <productname>PostgreSQL</productname> subscriber. It is recommended to run
+   these steps on each subscriber node, that will be served by the designated
+   standby after failover, to obtain the complete list of replication
+   slots. This list can then be verified in Step 3 to ensure failover readiness.
+   Non-<productname>PostgreSQL</productname> subscribers, on the other hand, may
+   use their own methods to identify the replication slots used by their
+   respective subscriptions.
+  </para>
+
+  <para>
+   In some cases, such as during a planned failover, it is necessary to confirm
+   that all subscribers, whether <productname>PostgreSQL</productname> or
+   non-<productname>PostgreSQL</productname>, will be able to continue
+   replication after failover to a given standby server. In such cases, use the
+   following SQL, instead of performing the first two steps above, to identify
+   which replication slots on the primary need to be synced to the standby that
+   is intended for promotion. This query returns the relevant replication slots
+   associated with all the failover-enabled subscriptions.
+  </para>
+
+   <para>
+<programlisting>
+/* primary # */ SELECT array_agg(quote_literal(r.slot_name)) AS slots
+               FROM pg_replication_slots r
+               WHERE r.failover AND NOT r.temporary;
+ slots
+-------
+ {'sub1','sub2','sub3', 'pg_16394_sync_16385_7394666715149055164'}
+(1 row)
+</programlisting></para>
  </sect1>
 
  <sect1 id="logical-replication-row-filter">
