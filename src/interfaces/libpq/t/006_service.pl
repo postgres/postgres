@@ -47,6 +47,12 @@ my $srvfile_default = "$td/pg_service.conf";
 # Missing service file.
 my $srvfile_missing = "$td/pg_service_missing.conf";
 
+# Service file with nested "service" defined.
+my $srvfile_nested = "$td/pg_service_nested.conf";
+copy($srvfile_valid, $srvfile_nested)
+  or die "Could not copy $srvfile_valid to $srvfile_nested: $!";
+append_to_file($srvfile_nested, 'service=invalid_srv' . $newline);
+
 # Set the fallback directory lookup of the service file to the temporary
 # directory of this test.  PGSYSCONFDIR is used if the service file
 # defined in PGSERVICEFILE cannot be found, or when a service file is
@@ -144,6 +150,17 @@ local $ENV{PGSERVICEFILE} = "$srvfile_empty";
 
 	# Remove default pg_service.conf.
 	unlink($srvfile_default);
+}
+
+# Checks nested service file contents.
+{
+	local $ENV{PGSERVICEFILE} = $srvfile_nested;
+
+	$dummy_node->connect_fails(
+		'service=my_srv',
+		'connection with nested service file',
+		expected_stderr =>
+		  qr/nested service specifications not supported in service file/);
 }
 
 $node->teardown_node;
