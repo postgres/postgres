@@ -333,6 +333,36 @@
 #endif
 
 /*
+ * pg_assume(expr) states that we assume `expr` to evaluate to true. In assert
+ * enabled builds pg_assume() is turned into an assertion, in optimized builds
+ * we try to clue the compiler into the fact that `expr` is true.
+ *
+ * This is useful for two purposes:
+ *
+ * 1) Avoid compiler warnings by telling the compiler about assumptions the
+ *	  code makes. This is particularly useful when building with optimizations
+ *	  and w/o assertions.
+ *
+ * 2) Help the compiler to generate more efficient code
+ *
+ * It is unspecified whether `expr` is evaluated, therefore it better be
+ * side-effect free.
+ */
+#if defined(USE_ASSERT_CHECKING)
+#define pg_assume(expr) Assert(expr)
+#elif defined(HAVE__BUILTIN_UNREACHABLE)
+#define pg_assume(expr) \
+	do { \
+		if (!(expr)) \
+			__builtin_unreachable(); \
+	} while (0)
+#elif defined(_MSC_VER)
+#define pg_assume(expr) __assume(expr)
+#else
+#define pg_assume(expr) ((void) 0)
+#endif
+
+/*
  * Hints to the compiler about the likelihood of a branch. Both likely() and
  * unlikely() return the boolean value of the contained expression.
  *
