@@ -4624,6 +4624,26 @@ match_previous_words(int pattern_id,
 			COMPLETE_WITH("FROM");
 	}
 
+	/* Complete "GRANT/REVOKE * ON LARGE OBJECT *" with TO/FROM */
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "LARGE", "OBJECT", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "LARGE", "OBJECT", MatchAny))
+	{
+		if (TailMatches("GRANT", MatchAny, MatchAny, MatchAny, MatchAny, MatchAny))
+			COMPLETE_WITH("TO");
+		else
+			COMPLETE_WITH("FROM");
+	}
+
+	/* Complete "GRANT/REVOKE * ON LARGE OBJECTS" with TO/FROM */
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "LARGE", "OBJECTS") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "LARGE", "OBJECTS"))
+	{
+		if (TailMatches("GRANT", MatchAny, MatchAny, MatchAny, MatchAny))
+			COMPLETE_WITH("TO");
+		else
+			COMPLETE_WITH("FROM");
+	}
+
 /* GROUP BY */
 	else if (TailMatches("FROM", MatchAny, "GROUP"))
 		COMPLETE_WITH("BY");
