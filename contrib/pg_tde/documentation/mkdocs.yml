@@ -205,7 +205,7 @@ nav:
     - "Restore an encrypted pg_tde backup": how-to/restore-backups.md
   - faq.md
   - "Release notes":
-    - "pg_tde release notes": release-notes/release-notes.md
+    - "Release notes index": release-notes/release-notes.md
     - release-notes/release-notes-v1.0.md
     - release-notes/rc2.md
     - release-notes/rc.md

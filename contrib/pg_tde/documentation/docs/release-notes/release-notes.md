@@ -1,12 +1,10 @@
-# `pg_tde` release notes index
+# Release notes index
 
-`pg_tde` extension brings in [Transparent Data Encryption (TDE)](../index/index.md) to PostgreSQL and enables you to keep sensitive data safe and secure.
-
-* [Percona Transparent Database Encryption for PostgreSQL 1.0 ({{date.GA10}})](release-notes-v1.0.md)
-* [pg_tde Release Candidate 2 (RC2) ({{date.RC2}})](rc2.md)
-* [pg_tde Release Candidate 2 (RC2) ({{date.RC2}})](rc2.md)
-* [pg_tde Release Candidate ({{date.RC}})](rc.md)
-* [pg_tde Beta2 (2024-12-16)](beta2.md)
-* [pg_tde Beta (2024-06-30)](beta.md)
-* [pg_tde Alpha1 (2024-03-28)](alpha1.md)
-* [pg_tde MVP (2023-12-12)](mvp.md)
+* [Percona Transparent Database Encryption for PostgreSQL 1.0](release-notes-v1.0.md) ({{date.GA10}})
+* [pg_tde Release Candidate 2 (RC2)](rc2.md)  ({{date.RC2}})
+* [pg_tde Release Candidate 1 (RC1)](rc2.md)  ({{date.RC}})
+* [pg_tde Release Candidate](rc.md) ({{date.RC}})
+* [pg_tde Beta2](beta2.md) (2024-12-16)
+* [pg_tde Beta](beta.md) (2024-06-30)
+* [pg_tde Alpha1](alpha1.md) (2024-03-28)
+* [pg_tde MVP](mvp.md) (2023-12-12)
