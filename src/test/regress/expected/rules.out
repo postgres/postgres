@@ -1340,6 +1340,10 @@ pg_cursors| SELECT name,
     is_scrollable,
     creation_time
    FROM pg_cursor() c(name, statement, is_holdable, is_binary, is_scrollable, creation_time);
+pg_dsm_registry_allocations| SELECT name,
+    type,
+    size
+   FROM pg_get_dsm_registry_allocations() pg_get_dsm_registry_allocations(name, type, size);
 pg_file_settings| SELECT sourcefile,
     sourceline,
     seqno,

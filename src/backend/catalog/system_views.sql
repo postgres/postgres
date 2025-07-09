@@ -666,6 +666,14 @@ GRANT SELECT ON pg_shmem_allocations_numa TO pg_read_all_stats;
 REVOKE EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pg_get_shmem_allocations_numa() TO pg_read_all_stats;
 
+CREATE VIEW pg_dsm_registry_allocations AS
+    SELECT * FROM pg_get_dsm_registry_allocations();
+
+REVOKE ALL ON pg_dsm_registry_allocations FROM PUBLIC;
+GRANT SELECT ON pg_dsm_registry_allocations TO pg_read_all_stats;
+REVOKE EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION pg_get_dsm_registry_allocations() TO pg_read_all_stats;
+
 CREATE VIEW pg_backend_memory_contexts AS
     SELECT * FROM pg_get_backend_memory_contexts();
 

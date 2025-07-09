@@ -40,10 +40,12 @@
 
 #include "postgres.h"
 
+#include "funcapi.h"
 #include "lib/dshash.h"
 #include "storage/dsm_registry.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 #define DSMR_NAME_LEN				128
@@ -87,6 +89,13 @@ typedef enum DSMREntryType
 	DSMR_ENTRY_TYPE_DSA,
 	DSMR_ENTRY_TYPE_DSH,
 } DSMREntryType;
+
+static const char *const DSMREntryTypeNames[] =
+{
+	[DSMR_ENTRY_TYPE_DSM] = "segment",
+	[DSMR_ENTRY_TYPE_DSA] = "area",
+	[DSMR_ENTRY_TYPE_DSH] = "hash",
+};
 
 typedef struct DSMRegistryEntry
 {
@@ -434,4 +443,44 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 	MemoryContextSwitchTo(oldcontext);
 
 	return ret;
+}
+
+Datum
+pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
+{
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	DSMRegistryEntry *entry;
+	MemoryContext oldcontext;
+	dshash_seq_status status;
+
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
+
+	/* Be sure any local memory allocated by DSM/DSA routines is persistent. */
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	init_dsm_registry();
+	MemoryContextSwitchTo(oldcontext);
+
+	dshash_seq_init(&status, dsm_registry_table, false);
+	while ((entry = dshash_seq_next(&status)) != NULL)
+	{
+		Datum		vals[3];
+		bool		nulls[3] = {0};
+
+		vals[0] = CStringGetTextDatum(entry->name);
+		vals[1] = CStringGetTextDatum(DSMREntryTypeNames[entry->type]);
+
+		/*
+		 * Since we can't know the size of DSA/dshash entries without first
+		 * attaching to them, return NULL for those.
+		 */
+		if (entry->type == DSMR_ENTRY_TYPE_DSM)
+			vals[2] = Int64GetDatum(entry->data.dsm.size);
+		else
+			nulls[2] = true;
+
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, vals, nulls);
+	}
+	dshash_seq_term(&status);
+
+	return (Datum) 0;
 }

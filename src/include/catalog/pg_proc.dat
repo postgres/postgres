@@ -8572,6 +8572,14 @@
   proargnames => '{name,numa_node,size}',
   prosrc => 'pg_get_shmem_allocations_numa' },
 
+{ oid => '9314',
+  descr => 'shared memory allocations tracked in the DSM registry',
+  proname => 'pg_get_dsm_registry_allocations', prorows => '50',
+  proretset => 't', provolatile => 'v', prorettype => 'record',
+  proargtypes => '', proallargtypes => '{text,text,int8}',
+  proargmodes => '{o,o,o}', proargnames => '{name,type,size}',
+  prosrc => 'pg_get_dsm_registry_allocations' },
+
 # memory context of local backend
 { oid => '2282',
   descr => 'information about all memory contexts of local backend',

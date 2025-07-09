@@ -82,6 +82,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-dsm-registry-allocations"><structname>pg_dsm_registry_allocations</structname></link></entry>
+      <entry>shared memory allocations tracked in the DSM registry</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link></entry>
       <entry>summary of configuration file contents</entry>
      </row>
@@ -1084,6 +1089,75 @@ AND c1.path[c2.level] = c2.path[c2.level];
    The <structname>pg_cursors</structname> view is read-only.
   </para>
 
+ </sect1>
+
+ <sect1 id="view-pg-dsm-registry-allocations">
+  <title><structname>pg_dsm_registry_allocations</structname></title>
+
+  <indexterm zone="view-pg-dsm-registry-allocations">
+   <primary>pg_dsm_registry_allocations</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_dsm_registry_allocations</structname> view shows shared
+   memory allocations tracked in the dynamic shared memory (DSM) registry.
+   This includes memory allocated by extensions using the mechanisms detailed
+   in <xref linkend="xfunc-shared-addin-after-startup" />.
+  </para>
+
+  <table>
+   <title><structname>pg_dsm_registry_allocations</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>name</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of the allocation in the DSM registry.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       The type of allocation.  Possible values are <literal>segment</literal>,
+       <literal>area</literal>, and <literal>hash</literal>, which correspond
+       to dynamic shared memory segments, areas, and hash tables, respectively.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>size</structfield> <type>int8</type>
+      </para>
+      <para>
+       Size of the allocation in bytes.  NULL for entries of type
+       <literal>area</literal> and <literal>hash</literal>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   By default, the <structname>pg_dsm_registry_allocations</structname> view
+   can be read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
+  </para>
  </sect1>
 
  <sect1 id="view-pg-file-settings">
