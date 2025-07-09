@@ -169,8 +169,12 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					break;
 					/* service name */
 				case 's':
-					if (pset.db && PQservice(pset.db))
-						strlcpy(buf, PQservice(pset.db), sizeof(buf));
+					{
+						const char *service_name = GetVariable(pset.vars, "SERVICE");
+
+						if (service_name)
+							strlcpy(buf, service_name, sizeof(buf));
+					}
 					break;
 					/* backend pid */
 				case 'p':

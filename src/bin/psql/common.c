@@ -2531,6 +2531,41 @@ session_username(void)
 		return PQuser(pset.db);
 }
 
+/*
+ * Return the value of option for keyword in the current connection.
+ *
+ * The caller is responsible for freeing the result value allocated.
+ */
+char *
+get_conninfo_value(const char *keyword)
+{
+	PQconninfoOption *opts;
+	PQconninfoOption *serviceopt = NULL;
+	char	   *res = NULL;
+
+	if (pset.db == NULL)
+		return NULL;
+
+	opts = PQconninfo(pset.db);
+	if (opts == NULL)
+		return NULL;
+
+	for (PQconninfoOption *opt = opts; opt->keyword != NULL; ++opt)
+	{
+		if (strcmp(opt->keyword, keyword) == 0)
+		{
+			serviceopt = opt;
+			break;
+		}
+	}
+
+	/* Take a copy of the value, as it is freed by PQconninfoFree(). */
+	if (serviceopt && serviceopt->val != NULL)
+		res = pg_strdup(serviceopt->val);
+	PQconninfoFree(opts);
+
+	return res;
+}
 
 /* expand_tilde
  *

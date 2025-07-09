@@ -400,7 +400,6 @@ extern int	PQrequestCancel(PGconn *conn);
 
 /* Accessor functions for PGconn objects */
 extern char *PQdb(const PGconn *conn);
-extern char *PQservice(const PGconn *conn);
 extern char *PQuser(const PGconn *conn);
 extern char *PQpass(const PGconn *conn);
 extern char *PQhost(const PGconn *conn);
