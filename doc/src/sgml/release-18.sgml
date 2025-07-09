@@ -2627,20 +2627,6 @@ Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
      </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2024-12-18 [4b99fed75] libpq: Add service name to PGconn and PQservice()
--->
-
-     <listitem>
-     <para>
-     Add libpq function <link
-     linkend="libpq-PQservice"><function>PQservice()</function></link>
-     to return the connection service name (Michael Banck)
-     <ulink url="&commit_baseurl;4b99fed75">&sect;</ulink>
-     </para>
-     </listitem>
-
-<!--
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
 2024-08-19 [28a1121fd] Mark search_path as GUC_REPORT
 Author: Tomas Vondra <tomas.vondra@postgresql.org>
