@@ -938,14 +938,11 @@ task:
   # - Don't use ccache, the files are uncacheable, polluting ccache's
   #   cache
   # - Use -fmax-errors, as particularly cpluspluscheck can be very verbose
-  # - XXX have to disable ICU to avoid errors:
-  #   https://postgr.es/m/20220323002024.f2g6tivduzrktgfa%40alap3.anarazel.de
   ###
   always:
     headers_headerscheck_script: |
       time ./configure \
         ${LINUX_CONFIGURE_FEATURES} \
-        --without-icu \
         --quiet \
         CC="gcc" CXX"=g++" CLANG="clang-16"
       make -s -j${BUILD_JOBS} clean
