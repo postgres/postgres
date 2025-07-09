@@ -1,0 +1,7 @@
+PG_VERSION=17.5
+PG_BRANCH=REL_17_5_WASM
+SDK_VERSION=3.1.74.11.6
+SDKROOT=/tmp/sdk
+GETZIC=false
+ZIC=/usr/sbin/zic
+
