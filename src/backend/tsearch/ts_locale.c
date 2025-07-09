@@ -36,7 +36,7 @@ t_isalpha(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
+	locale_t	mylocale = 0;	/* TODO */
 
 	if (clen == 1 || database_ctype_is_c)
 		return isalpha(TOUCHAR(ptr));
@@ -51,7 +51,7 @@ t_isalnum(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);
 	wchar_t		character[WC_BUF_LEN];
-	pg_locale_t mylocale = 0;	/* TODO */
+	locale_t	mylocale = 0;	/* TODO */
 
 	if (clen == 1 || database_ctype_is_c)
 		return isalnum(TOUCHAR(ptr));

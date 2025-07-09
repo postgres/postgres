@@ -299,7 +299,7 @@ TParserInit(char *str, int len)
 	 */
 	if (prs->charmaxlen > 1)
 	{
-		pg_locale_t mylocale = 0;	/* TODO */
+		locale_t	mylocale = 0;	/* TODO */
 
 		prs->usewide = true;
 		if (database_ctype_is_c)

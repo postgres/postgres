@@ -214,8 +214,8 @@ extern void report_newlocale_failure(const char *localename);
 
 /* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,
-						 pg_locale_t locale);
+						 locale_t loc);
 extern size_t char2wchar(wchar_t *to, size_t tolen,
-						 const char *from, size_t fromlen, pg_locale_t locale);
+						 const char *from, size_t fromlen, locale_t loc);
 
 #endif							/* _PG_LOCALE_ */
