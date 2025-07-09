@@ -263,7 +263,7 @@ command_fails_like(
 		'file',
 		'/tmp/file',
 	],
-	qr/Error: provider not found/,
+	qr/error: provder "incorrect-global-provider" not found for database 1664/,
 	'gives error on unknown key provider');
 
 command_fails_like(
@@ -274,7 +274,7 @@ command_fails_like(
 		'global-provider',
 		'incorrect-provider-type',
 	],
-	qr/Error: Unknown provider type: incorrect-provider-type/,
+	qr/error: unknown provider type "incorrect-provider-type"/,
 	'gives error on unknown provider type');
 
 command_fails_like(
@@ -285,7 +285,7 @@ command_fails_like(
 		'global-provider',
 		'file',
 	],
-	qr/Error: wrong number of arguments./,
+	qr/error: wrong number of arguments for "file"/,
 	'gives error on missing arguments for file provider');
 
 command_fails_like(
@@ -296,7 +296,7 @@ command_fails_like(
 		'global-provider',
 		'kmip',
 	],
-	qr/Error: wrong number of arguments./,
+	qr/error: wrong number of arguments for "kmip"/,
 	'gives error on missing arguments for kmip provider');
 
 command_fails_like(
@@ -307,7 +307,7 @@ command_fails_like(
 		'global-provider',
 		'vault-v2',
 	],
-	qr/Error: wrong number of arguments./,
+	qr/error: wrong number of arguments for "vault-v2"/,
 	'gives error on missing arguments for vault-v2 provider');
 
 done_testing();
