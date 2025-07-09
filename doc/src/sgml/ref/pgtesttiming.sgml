@@ -161,7 +161,7 @@ PostgreSQL documentation
   <para>
 <screen><![CDATA[
 Testing timing overhead for 3 seconds.
-Per loop time including overhead: 16.40 ns
+Average loop time including overhead: 16.40 ns
 Histogram of timing durations:
    <= ns   % of total  running %      count
        0       0.0000     0.0000          0

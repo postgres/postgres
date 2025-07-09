@@ -20,8 +20,8 @@ static double max_rprct = 99.99;
 /* record duration in powers of 2 nanoseconds */
 static long long int histogram[32];
 
-/* record counts of first 1024 durations directly */
-#define NUM_DIRECT 1024
+/* record counts of first 10K durations directly */
+#define NUM_DIRECT 10000
 static long long int direct_histogram[NUM_DIRECT];
 
 /* separately record highest observed duration */
@@ -161,6 +161,16 @@ test_timing(unsigned int duration)
 				end_time,
 				temp;
 
+	/*
+	 * Pre-zero the statistics data structures.  They're already zero by
+	 * default, but this helps bring them into processor cache and avoid
+	 * possible timing glitches due to COW behavior.
+	 */
+	memset(direct_histogram, 0, sizeof(direct_histogram));
+	memset(histogram, 0, sizeof(histogram));
+	largest_diff = 0;
+	largest_diff_count = 0;
+
 	total_time = duration > 0 ? duration * INT64CONST(1000000000) : 0;
 
 	INSTR_TIME_SET_CURRENT(start_time);
@@ -177,7 +187,7 @@ test_timing(unsigned int duration)
 		diff = cur - prev;
 
 		/* Did time go backwards? */
-		if (diff < 0)
+		if (unlikely(diff < 0))
 		{
 			fprintf(stderr, _("Detected clock going backwards in time.\n"));
 			fprintf(stderr, _("Time warp: %d ms\n"), diff);
@@ -215,7 +225,7 @@ test_timing(unsigned int duration)
 
 	INSTR_TIME_SUBTRACT(end_time, start_time);
 
-	printf(_("Per loop time including overhead: %0.2f ns\n"),
+	printf(_("Average loop time including overhead: %0.2f ns\n"),
 		   INSTR_TIME_GET_DOUBLE(end_time) * 1e9 / loop_count);
 
 	return loop_count;
