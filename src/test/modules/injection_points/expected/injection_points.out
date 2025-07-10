@@ -39,6 +39,15 @@ SELECT injection_points_attach('TestInjectionLog2', 'notice');
  
 (1 row)
 
+SELECT point_name, library, function FROM injection_points_list()
+  ORDER BY point_name COLLATE "C";
+     point_name     |     library      |     function     
+--------------------+------------------+------------------
+ TestInjectionError | injection_points | injection_error
+ TestInjectionLog   | injection_points | injection_notice
+ TestInjectionLog2  | injection_points | injection_notice
+(3 rows)
+
 SELECT injection_points_run('TestInjectionBooh'); -- nothing
  injection_points_run 
 ----------------------
@@ -297,6 +306,13 @@ SELECT injection_points_detach('TestConditionLocal1');
 -------------------------
  
 (1 row)
+
+-- No points should be left around.
+SELECT point_name, library, function FROM injection_points_list()
+  ORDER BY point_name COLLATE "C";
+ point_name | library | function 
+------------+---------+----------
+(0 rows)
 
 DROP EXTENSION injection_points;
 DROP FUNCTION wait_pid;

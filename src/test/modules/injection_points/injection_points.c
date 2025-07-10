@@ -18,6 +18,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "funcapi.h"
 #include "injection_stats.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
@@ -543,6 +544,44 @@ injection_points_detach(PG_FUNCTION_ARGS)
 	pgstat_drop_inj(name);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * SQL function for listing all the injection points attached.
+ */
+PG_FUNCTION_INFO_V1(injection_points_list);
+Datum
+injection_points_list(PG_FUNCTION_ARGS)
+{
+#define NUM_INJECTION_POINTS_LIST 3
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	List	   *inj_points;
+	ListCell   *lc;
+
+	/* Build a tuplestore to return our results in */
+	InitMaterializedSRF(fcinfo, 0);
+
+	inj_points = InjectionPointList();
+
+	foreach(lc, inj_points)
+	{
+		Datum		values[NUM_INJECTION_POINTS_LIST];
+		bool		nulls[NUM_INJECTION_POINTS_LIST];
+		InjectionPointData *inj_point = lfirst(lc);
+
+		memset(values, 0, sizeof(values));
+		memset(nulls, 0, sizeof(nulls));
+
+		values[0] = PointerGetDatum(cstring_to_text(inj_point->name));
+		values[1] = PointerGetDatum(cstring_to_text(inj_point->library));
+		values[2] = PointerGetDatum(cstring_to_text(inj_point->function));
+
+		/* shove row into tuplestore */
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
+	}
+
+	return (Datum) 0;
+#undef NUM_INJECTION_POINTS_LIST
 }
 
 

@@ -78,6 +78,18 @@ AS 'MODULE_PATHNAME', 'injection_points_detach'
 LANGUAGE C STRICT PARALLEL UNSAFE;
 
 --
+-- injection_points_list()
+--
+-- List of all the injection points currently attached.
+--
+CREATE FUNCTION injection_points_list(OUT point_name text,
+   OUT library text,
+   OUT function text)
+RETURNS SETOF record
+AS 'MODULE_PATHNAME', 'injection_points_list'
+LANGUAGE C STRICT VOLATILE PARALLEL RESTRICTED;
+
+--
 -- injection_points_stats_numcalls()
 --
 -- Reports statistics, if any, related to the given injection point.
