@@ -173,6 +173,13 @@ SKIP:
 	ok( (@status = stat("$tempdir/key.txt")),
 		"keylog file exists and returned status");
 	ok(@status && !($status[2] & 0006), "keylog file is not world readable");
+
+	# Connect should work with an incorrect sslkeylogfile, with the error to
+	# open the logfile printed to stderr
+	$node->connect_ok(
+		"$common_connstr sslrootcert=ssl/root+server_ca.crt sslkeylogfile=$tempdir/invalid/key.txt sslmode=require",
+		"connect with server root cert and incorrect sslkeylogfile path",
+		expected_stderr => qr/could not open/);
 }
 
 # The server should not accept non-SSL connections.

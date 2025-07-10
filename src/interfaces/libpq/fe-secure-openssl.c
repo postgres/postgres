@@ -693,34 +693,35 @@ static unsigned char alpn_protos[] = PG_ALPN_PROTOCOL_VECTOR;
  * purposes.  The file will be written using the NSS keylog format.  LibreSSL
  * 3.5 introduced stub function to set the callback for OpenSSL compatibility
  * but the callback is never invoked.
+ *
+ * Error messages added to the connection object wont be printed anywhere if
+ * the connection is successful.  Errors in processing keylogging are printed
+ * to stderr to overcome this.
  */
 static void
 SSL_CTX_keylog_cb(const SSL *ssl, const char *line)
 {
 	int			fd;
-	mode_t		old_umask;
 	ssize_t		rc;
 	PGconn	   *conn = SSL_get_app_data(ssl);
 
 	if (conn == NULL)
 		return;
 
-	old_umask = umask(077);
 	fd = open(conn->sslkeylogfile, O_WRONLY | O_APPEND | O_CREAT, 0600);
-	umask(old_umask);
 
 	if (fd == -1)
 	{
-		libpq_append_conn_error(conn, "could not open SSL key logging file \"%s\": %s",
-								conn->sslkeylogfile, pg_strerror(errno));
+		fprintf(stderr, libpq_gettext("WARNING: could not open SSL key logging file \"%s\": %m\n"),
+				conn->sslkeylogfile);
 		return;
 	}
 
 	/* line is guaranteed by OpenSSL to be NUL terminated */
 	rc = write(fd, line, strlen(line));
 	if (rc < 0)
-		libpq_append_conn_error(conn, "could not write to SSL key logging file \"%s\": %s",
-								conn->sslkeylogfile, pg_strerror(errno));
+		fprintf(stderr, libpq_gettext("WARNING: could not write to SSL key logging file \"%s\": %m\n"),
+				conn->sslkeylogfile);
 	else
 		rc = write(fd, "\n", 1);
 	(void) rc;					/* silence compiler warnings */
@@ -1044,6 +1045,10 @@ initialize_SSL(PGconn *conn)
 	}
 	conn->ssl_in_use = true;
 
+	/*
+	 * If SSL key logging is requested, set up the callback if a compatible
+	 * version of OpenSSL is used and libpq was compiled to support it.
+	 */
 	if (conn->sslkeylogfile && strlen(conn->sslkeylogfile) > 0)
 	{
 #ifdef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
@@ -1056,7 +1061,6 @@ initialize_SSL(PGconn *conn)
 #endif
 #endif
 	}
-
 
 	/*
 	 * SSL contexts are reference counted by OpenSSL. We can free it as soon
