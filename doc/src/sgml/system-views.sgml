@@ -3003,7 +3003,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
         <listitem>
          <para>
           <literal>idle_timeout</literal> means that the slot has remained
-          idle longer than the configured
+          inactive longer than the configured
           <xref linkend="guc-idle-replication-slot-timeout"/> duration.
          </para>
         </listitem>

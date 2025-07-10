@@ -1892,7 +1892,7 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 		 * max_slot_wal_keep_size is set to -1 and
 		 * idle_replication_slot_timeout is set to 0 during the binary
 		 * upgrade. See check_old_cluster_for_valid_slots() where we ensure
-		 * that no invalidated before the upgrade.
+		 * that no slot was invalidated before the upgrade.
 		 */
 		Assert(!(*invalidated && SlotIsLogical(s) && IsBinaryUpgrade));
 
