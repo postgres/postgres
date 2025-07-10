@@ -40,5 +40,6 @@ extern void redo_key_provider_info(KeyringProviderRecordInFile *xlrec);
 extern void ParseKeyringJSONOptions(ProviderType provider_type,
 									GenericKeyring *out_opts,
 									char *in_buf, int buf_len);
+extern void free_keyring(GenericKeyring *keyring);
 
 #endif							/* TDE_KEYRING_H */

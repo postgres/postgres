@@ -1,14 +1,52 @@
-leak:save_ps_display_args
-leak:initdb.c
-leak:fe_memutils.c
-leak:fe-exec.c
-leak:fe-connect.c
-leak:pqexpbuffer.c
-leak:strdup
-leak:preproc.y
-leak:pgtypeslib/common.c
-leak:ecpglib/memory.c
+# external submodule
 leak:kmip.c
+
+# the parser of command line arguments of the backend
+leak:save_ps_display_args
+
+# a bunch of not freed addrinfo sctructs, escaped values etc.
+leak:initdb.c
+
+# shlibs loaded with dlsym() never gets dlclose'd
+# TODO: needs an investigation as it is down the call stack
+#		of exec_simple_query->PortalRun
+leak:internal_load_library
+
+# pg_config utility does not free configdata
+leak:pg_config/pg_config.c
+
+# A psprintf() result assigned to the global var pgdata_opt
+leak:bin/pg_ctl/pg_ctl.c
+
+# TODO: A couple of not freed char *. Whilst wit's trivially to fix
+# meson complains with "maybe-uninitialized" on free()
+leak:bin/psql/describe.c
+
+# options parsing during the regressions start
+leak:regression_main
+
+# Static funcs in /bin/psql/startup.c are used
+# during the start to parse options
+leak:simple_action_list_append
+leak:parse_psql_options
+
+# A bunch of parameters, options and identifiers are not being freed.
+#
+# TODO?: ReceiveArchiveStreamChunk->CreateBackupStreamer down in the
+# callstak creates a streamer that is never freed. It's being called in a loop
+# but it looks like it is not a repetitive action and rather happens once per
+# receiving CopyData message from server.
+#
+# bin/pg_basebackup/pg_basebackup.c
+leak:BaseBackup
+
+# `varname` doesn't get freed in the case of warning and `continue` in the loop
+# 
+# bin/psql/common.c
+leak:StoreQueryTuple
+
+# does not free a bunch of parsed flags
+leak:bin/pg_waldump/pg_waldump.c
 
 #pg_dump
 leak:getSchemaData

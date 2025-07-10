@@ -249,6 +249,7 @@ main(int argc, char *argv[])
 		controlfile->state != DB_SHUTDOWNED_IN_RECOVERY)
 		pg_fatal("cluster must be shut down");
 
+	pfree(controlfile);
 	cptr = strcat(cptr, datadir);
 	cptr = strcat(cptr, "/");
 	cptr = strcat(cptr, PG_TDE_DATA_DIR);

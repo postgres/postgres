@@ -1076,6 +1076,10 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 
 		wal_rec = pg_tde_add_wal_key_to_cache(&stub_key, InvalidXLogRecPtr);
 
+#ifdef FRONTEND
+		/* The backend frees it after copying to the cache. */
+		pfree(principal_key);
+#endif
 		LWLockRelease(lock_pk);
 		CloseTransientFile(fd);
 		return wal_rec;
@@ -1106,6 +1110,9 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 				return_wal_rec = wal_rec;
 		}
 	}
+#ifdef FRONTEND
+	pfree(principal_key);
+#endif
 	LWLockRelease(lock_pk);
 	CloseTransientFile(fd);
 

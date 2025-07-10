@@ -563,6 +563,51 @@ check_provider_record(KeyringProviderRecord *provider_record)
 #endif							/* !FRONTEND */
 
 void
+free_keyring(GenericKeyring *keyring)
+{
+	FileKeyring *file = (FileKeyring *) keyring;
+	VaultV2Keyring *vault = (VaultV2Keyring *) keyring;
+	KmipKeyring *kmip = (KmipKeyring *) keyring;
+
+	switch (keyring->type)
+	{
+		case FILE_KEY_PROVIDER:
+			if (file->file_name)
+				pfree(file->file_name);
+			break;
+		case VAULT_V2_KEY_PROVIDER:
+			if (vault->vault_ca_path)
+				pfree(vault->vault_ca_path);
+			if (vault->vault_mount_path)
+				pfree(vault->vault_mount_path);
+			if (vault->vault_token)
+				pfree(vault->vault_token);
+			if (vault->vault_token_path)
+				pfree(vault->vault_token_path);
+			if (vault->vault_url)
+				pfree(vault->vault_url);
+			break;
+		case KMIP_KEY_PROVIDER:
+			if (kmip->kmip_ca_path)
+				pfree(kmip->kmip_ca_path);
+			if (kmip->kmip_cert_path)
+				pfree(kmip->kmip_cert_path);
+			if (kmip->kmip_host)
+				pfree(kmip->kmip_host);
+			if (kmip->kmip_key_path)
+				pfree(kmip->kmip_key_path);
+			if (kmip->kmip_port)
+				pfree(kmip->kmip_port);
+			break;
+		default:
+			Assert(false);
+			break;
+	}
+
+	pfree(keyring);
+}
+
+void
 write_key_provider_info(KeyringProviderRecordInFile *record, bool write_xlog)
 {
 	off_t		bytes_written;
@@ -682,6 +727,8 @@ simple_list_free(SimplePtrList *list)
 		pfree(cell);
 		cell = next;
 	}
+
+	pfree(list);
 }
 #endif							/* FRONTEND */
 
@@ -818,6 +865,8 @@ load_file_keyring_provider_options(char *keyring_options)
 		ereport(WARNING,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("file path is missing in the keyring options"));
+
+		free_keyring((GenericKeyring *) file_keyring);
 		return NULL;
 	}
 
@@ -845,6 +894,8 @@ load_vaultV2_keyring_provider_options(char *keyring_options)
 					   (vaultV2_keyring->vault_token_path != NULL && vaultV2_keyring->vault_token_path[0] != '\0') ? "" : " tokenPath",
 					   (vaultV2_keyring->vault_url != NULL && vaultV2_keyring->vault_url[0] != '\0') ? "" : " url",
 					   (vaultV2_keyring->vault_mount_path != NULL && vaultV2_keyring->vault_mount_path[0] != '\0') ? "" : " mountPath"));
+
+		free_keyring((GenericKeyring *) vaultV2_keyring);
 		return NULL;
 	}
 
@@ -878,6 +929,8 @@ load_kmip_keyring_provider_options(char *keyring_options)
 					   (kmip_keyring->kmip_ca_path != NULL && kmip_keyring->kmip_ca_path[0] != '\0') ? "" : " caPath",
 					   (kmip_keyring->kmip_cert_path != NULL && kmip_keyring->kmip_cert_path[0] != '\0') ? "" : " certPath",
 					   (kmip_keyring->kmip_key_path != NULL && kmip_keyring->kmip_key_path[0] != '\0') ? "" : " keyPath"));
+
+		free_keyring((GenericKeyring *) kmip_keyring);
 		return NULL;
 	}
 
@@ -946,7 +999,10 @@ debug_print_kerying(GenericKeyring *keyring)
 static inline void
 get_keyring_infofile_path(char *resPath, Oid dbOid)
 {
-	join_path_components(resPath, pg_tde_get_data_dir(), psprintf(PG_TDE_KEYRING_FILENAME, dbOid));
+	char	   *fname = psprintf(PG_TDE_KEYRING_FILENAME, dbOid);
+
+	join_path_components(resPath, pg_tde_get_data_dir(), fname);
+	pfree(fname);
 }
 
 static int

@@ -960,7 +960,7 @@ get_principal_key_from_keyring(Oid dbOid)
 	Assert(dbOid == principalKey->keyInfo.databaseId);
 
 	pfree(keyInfo);
-	pfree(keyring);
+	free_keyring(keyring);
 	pfree(principalKeyInfo);
 
 	return principalKey;

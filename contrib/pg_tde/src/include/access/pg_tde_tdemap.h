@@ -81,7 +81,10 @@ extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocato
 static inline void
 pg_tde_set_db_file_path(Oid dbOid, char *path)
 {
-	join_path_components(path, pg_tde_get_data_dir(), psprintf(PG_TDE_MAP_FILENAME, dbOid));
+	char	   *fname = psprintf(PG_TDE_MAP_FILENAME, dbOid);
+
+	join_path_components(path, pg_tde_get_data_dir(), fname);
+	pfree(fname);
 }
 
 extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key);
