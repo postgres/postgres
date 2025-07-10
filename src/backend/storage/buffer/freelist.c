@@ -39,14 +39,6 @@ typedef struct
 	 */
 	pg_atomic_uint32 nextVictimBuffer;
 
-	int			firstFreeBuffer;	/* Head of list of unused buffers */
-	int			lastFreeBuffer; /* Tail of list of unused buffers */
-
-	/*
-	 * NOTE: lastFreeBuffer is undefined when firstFreeBuffer is -1 (that is,
-	 * when the list is empty)
-	 */
-
 	/*
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
@@ -164,23 +156,6 @@ ClockSweepTick(void)
 }
 
 /*
- * have_free_buffer -- a lockless check to see if there is a free buffer in
- *					   buffer pool.
- *
- * If the result is true that will become stale once free buffers are moved out
- * by other operations, so the caller who strictly want to use a free buffer
- * should not call this.
- */
-bool
-have_free_buffer(void)
-{
-	if (StrategyControl->firstFreeBuffer >= 0)
-		return true;
-	else
-		return false;
-}
-
-/*
  * StrategyGetBuffer
  *
  *	Called by the bufmgr to get the next candidate buffer to use in
@@ -243,75 +218,14 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 	}
 
 	/*
-	 * We count buffer allocation requests so that the bgwriter can estimate
-	 * the rate of buffer consumption.  Note that buffers recycled by a
-	 * strategy object are intentionally not counted here.
+	 * We keep an approximate count of buffer allocation requests so that the
+	 * bgwriter can estimate the rate of buffer consumption.  Note that
+	 * buffers recycled by a strategy object are intentionally not counted
+	 * here.
 	 */
 	pg_atomic_fetch_add_u32(&StrategyControl->numBufferAllocs, 1);
 
-	/*
-	 * First check, without acquiring the lock, whether there's buffers in the
-	 * freelist. Since we otherwise don't require the spinlock in every
-	 * StrategyGetBuffer() invocation, it'd be sad to acquire it here -
-	 * uselessly in most cases. That obviously leaves a race where a buffer is
-	 * put on the freelist but we don't see the store yet - but that's pretty
-	 * harmless, it'll just get used during the next buffer acquisition.
-	 *
-	 * If there's buffers on the freelist, acquire the spinlock to pop one
-	 * buffer of the freelist. Then check whether that buffer is usable and
-	 * repeat if not.
-	 *
-	 * Note that the freeNext fields are considered to be protected by the
-	 * buffer_strategy_lock not the individual buffer spinlocks, so it's OK to
-	 * manipulate them without holding the spinlock.
-	 */
-	if (StrategyControl->firstFreeBuffer >= 0)
-	{
-		while (true)
-		{
-			/* Acquire the spinlock to remove element from the freelist */
-			SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-
-			if (StrategyControl->firstFreeBuffer < 0)
-			{
-				SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-				break;
-			}
-
-			buf = GetBufferDescriptor(StrategyControl->firstFreeBuffer);
-			Assert(buf->freeNext != FREENEXT_NOT_IN_LIST);
-
-			/* Unconditionally remove buffer from freelist */
-			StrategyControl->firstFreeBuffer = buf->freeNext;
-			buf->freeNext = FREENEXT_NOT_IN_LIST;
-
-			/*
-			 * Release the lock so someone else can access the freelist while
-			 * we check out this buffer.
-			 */
-			SpinLockRelease(&StrategyControl->buffer_strategy_lock);
-
-			/*
-			 * If the buffer is pinned or has a nonzero usage_count, we cannot
-			 * use it; discard it and retry.  (This can only happen if VACUUM
-			 * put a valid buffer in the freelist and then someone else used
-			 * it before we got to it.  It's probably impossible altogether as
-			 * of 8.3, but we'd better check anyway.)
-			 */
-			local_buf_state = LockBufHdr(buf);
-			if (BUF_STATE_GET_REFCOUNT(local_buf_state) == 0
-				&& BUF_STATE_GET_USAGECOUNT(local_buf_state) == 0)
-			{
-				if (strategy != NULL)
-					AddBufferToRing(strategy, buf);
-				*buf_state = local_buf_state;
-				return buf;
-			}
-			UnlockBufHdr(buf, local_buf_state);
-		}
-	}
-
-	/* Nothing on the freelist, so run the "clock sweep" algorithm */
+	/* Use the "clock sweep" algorithm to find a free buffer */
 	trycounter = NBuffers;
 	for (;;)
 	{
@@ -354,29 +268,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 		}
 		UnlockBufHdr(buf, local_buf_state);
 	}
-}
-
-/*
- * StrategyFreeBuffer: put a buffer on the freelist
- */
-void
-StrategyFreeBuffer(BufferDesc *buf)
-{
-	SpinLockAcquire(&StrategyControl->buffer_strategy_lock);
-
-	/*
-	 * It is possible that we are told to put something in the freelist that
-	 * is already in it; don't screw up the list if so.
-	 */
-	if (buf->freeNext == FREENEXT_NOT_IN_LIST)
-	{
-		buf->freeNext = StrategyControl->firstFreeBuffer;
-		if (buf->freeNext < 0)
-			StrategyControl->lastFreeBuffer = buf->buf_id;
-		StrategyControl->firstFreeBuffer = buf->buf_id;
-	}
-
-	SpinLockRelease(&StrategyControl->buffer_strategy_lock);
 }
 
 /*
@@ -503,13 +394,6 @@ StrategyInitialize(bool init)
 		Assert(init);
 
 		SpinLockInit(&StrategyControl->buffer_strategy_lock);
-
-		/*
-		 * Grab the whole linked list of free buffers for our strategy. We
-		 * assume it was previously set up by BufferManagerShmemInit().
-		 */
-		StrategyControl->firstFreeBuffer = 0;
-		StrategyControl->lastFreeBuffer = NBuffers - 1;
 
 		/* Initialize the clock sweep pointer */
 		pg_atomic_init_u32(&StrategyControl->nextVictimBuffer, 0);

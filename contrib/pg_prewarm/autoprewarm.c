@@ -410,10 +410,6 @@ apw_load_buffers(void)
 		apw_state->database = current_db;
 		Assert(apw_state->prewarm_start_idx < apw_state->prewarm_stop_idx);
 
-		/* If we've run out of free buffers, don't launch another worker. */
-		if (!have_free_buffer())
-			break;
-
 		/*
 		 * Likewise, don't launch if we've already been told to shut down.
 		 * (The launch would fail anyway, but we might as well skip it.)
@@ -461,12 +457,6 @@ apw_read_stream_next_block(ReadStream *stream,
 	while (p->pos < apw_state->prewarm_stop_idx)
 	{
 		BlockInfoRecord blk = p->block_info[p->pos];
-
-		if (!have_free_buffer())
-		{
-			p->pos = apw_state->prewarm_stop_idx;
-			return InvalidBlockNumber;
-		}
 
 		if (blk.tablespace != p->tablespace)
 			return InvalidBlockNumber;
@@ -526,7 +516,7 @@ autoprewarm_database_main(Datum main_arg)
 	 * Loop until we run out of blocks to prewarm or until we run out of free
 	 * buffers.
 	 */
-	while (i < apw_state->prewarm_stop_idx && have_free_buffer())
+	while (i < apw_state->prewarm_stop_idx)
 	{
 		Oid			tablespace = blk.tablespace;
 		RelFileNumber filenumber = blk.filenumber;
@@ -574,8 +564,8 @@ autoprewarm_database_main(Datum main_arg)
 		 */
 		while (i < apw_state->prewarm_stop_idx &&
 			   blk.tablespace == tablespace &&
-			   blk.filenumber == filenumber &&
-			   have_free_buffer())
+			   blk.filenumber == filenumber)
+			/* have_free_buffer()) */
 		{
 			ForkNumber	forknum = blk.forknum;
 			BlockNumber nblocks;

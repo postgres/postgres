@@ -2099,12 +2099,6 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		 */
 		UnpinBuffer(victim_buf_hdr);
 
-		/*
-		 * The victim buffer we acquired previously is clean and unused, let
-		 * it be found again quickly
-		 */
-		StrategyFreeBuffer(victim_buf_hdr);
-
 		/* remaining code should match code at top of routine */
 
 		existing_buf_hdr = GetBufferDescriptor(existing_buf_id);
@@ -2163,8 +2157,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 }
 
 /*
- * InvalidateBuffer -- mark a shared buffer invalid and return it to the
- * freelist.
+ * InvalidateBuffer -- mark a shared buffer invalid.
  *
  * The buffer header spinlock must be held at entry.  We drop it before
  * returning.  (This is sane because the caller must have locked the
@@ -2262,11 +2255,6 @@ retry:
 	 * Done with mapping lock.
 	 */
 	LWLockRelease(oldPartitionLock);
-
-	/*
-	 * Insert the buffer at the head of the list of free buffers.
-	 */
-	StrategyFreeBuffer(buf);
 }
 
 /*
@@ -2684,11 +2672,6 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		{
 			BufferDesc *buf_hdr = GetBufferDescriptor(buffers[i] - 1);
 
-			/*
-			 * The victim buffer we acquired previously is clean and unused,
-			 * let it be found again quickly
-			 */
-			StrategyFreeBuffer(buf_hdr);
 			UnpinBuffer(buf_hdr);
 		}
 
@@ -2763,12 +2746,6 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 			valid = PinBuffer(existing_hdr, strategy);
 
 			LWLockRelease(partition_lock);
-
-			/*
-			 * The victim buffer we acquired previously is clean and unused,
-			 * let it be found again quickly
-			 */
-			StrategyFreeBuffer(victim_buf_hdr);
 			UnpinBuffer(victim_buf_hdr);
 
 			buffers[i] = BufferDescriptorGetBuffer(existing_hdr);
@@ -3666,8 +3643,8 @@ BgBufferSync(WritebackContext *wb_context)
 	uint32		new_recent_alloc;
 
 	/*
-	 * Find out where the freelist clock sweep currently is, and how many
-	 * buffer allocations have happened since our last call.
+	 * Find out where the clock sweep currently is, and how many buffer
+	 * allocations have happened since our last call.
 	 */
 	strategy_buf_id = StrategySyncStart(&strategy_passes, &recent_alloc);
 
