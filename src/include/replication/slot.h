@@ -266,7 +266,7 @@ extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 /* GUCs */
 extern PGDLLIMPORT int max_replication_slots;
 extern PGDLLIMPORT char *synchronized_standby_slots;
-extern PGDLLIMPORT int idle_replication_slot_timeout_mins;
+extern PGDLLIMPORT int idle_replication_slot_timeout_secs;
 
 /* shmem initialization functions */
 extern Size ReplicationSlotsShmemSize(void);

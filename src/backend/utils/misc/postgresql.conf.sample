@@ -342,7 +342,7 @@
 				# (change requires restart)
 #wal_keep_size = 0		# in megabytes; 0 disables
 #max_slot_wal_keep_size = -1	# in megabytes; -1 disables
-#idle_replication_slot_timeout = 0	# in minutes; 0 disables
+#idle_replication_slot_timeout = 0	# in seconds; 0 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 #track_commit_timestamp = off	# collect timestamp of transaction commit
 				# (change requires restart)

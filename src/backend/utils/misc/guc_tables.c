@@ -3100,10 +3100,10 @@ struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the duration a replication slot can remain idle before "
 						 "it is invalidated."),
 			NULL,
-			GUC_UNIT_MIN
+			GUC_UNIT_S
 		},
-		&idle_replication_slot_timeout_mins,
-		0, 0, INT_MAX / SECS_PER_MINUTE,
+		&idle_replication_slot_timeout_secs,
+		0, 0, INT_MAX,
 		check_idle_replication_slot_timeout, NULL, NULL
 	},
 
