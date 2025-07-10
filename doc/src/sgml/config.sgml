@@ -4618,10 +4618,12 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Invalidate replication slots that have remained idle longer than this
-        duration. If this value is specified without units, it is taken as
-        seconds. A value of zero (the default) disables the idle timeout
-        invalidation mechanism. This parameter can only be set in the
+        Invalidate replication slots that have remained inactive (not used by
+        a <link linkend="protocol-replication">replication connection</link>)
+        for longer than this duration.
+        If this value is specified without units, it is taken as seconds.
+        A value of zero (the default) disables the idle timeout
+        invalidation mechanism.  This parameter can only be set in the
         <filename>postgresql.conf</filename> file or on the server command
         line.
        </para>
