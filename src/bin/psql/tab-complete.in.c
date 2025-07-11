@@ -3153,6 +3153,9 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH_VERSIONED_SCHEMA_QUERY(Query_for_list_of_procedures);
 	else if (Matches("CALL", MatchAny))
 		COMPLETE_WITH("(");
+/* CHECKPOINT */
+	else if (Matches("CHECKPOINT"))
+		COMPLETE_WITH("(");
 /* CLOSE */
 	else if (Matches("CLOSE"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_cursors,

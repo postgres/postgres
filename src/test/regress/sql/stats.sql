@@ -439,6 +439,9 @@ DROP TABLE test_stats_temp;
 -- Checkpoint twice: The checkpointer reports stats after reporting completion
 -- of the checkpoint. But after a second checkpoint we'll see at least the
 -- results of the first.
+--
+-- While at it, test checkpoint options.
+CHECKPOINT (WRONG);
 CHECKPOINT;
 CHECKPOINT;
 

@@ -42,6 +42,7 @@
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
+#include "catalog/pg_authid.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -61,6 +62,7 @@
 #include "storage/shmem.h"
 #include "storage/smgr.h"
 #include "storage/spin.h"
+#include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/resowner.h"
@@ -974,6 +976,35 @@ CheckpointerShmemInit(void)
 		ConditionVariableInit(&CheckpointerShmem->start_cv);
 		ConditionVariableInit(&CheckpointerShmem->done_cv);
 	}
+}
+
+/*
+ * ExecCheckpoint
+ *		Primary entry point for manual CHECKPOINT commands
+ *
+ * This is mainly a wrapper for RequestCheckpoint().
+ */
+void
+ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
+{
+	foreach_ptr(DefElem, opt, stmt->options)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unrecognized CHECKPOINT option \"%s\"", opt->defname),
+				 parser_errposition(pstate, opt->location)));
+
+	if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+		/* translator: %s is name of an SQL command (e.g., CHECKPOINT) */
+				 errmsg("permission denied to execute %s command",
+						"CHECKPOINT"),
+				 errdetail("Only roles with privileges of the \"%s\" role may execute this command.",
+						   "pg_checkpoint")));
+
+	RequestCheckpoint(CHECKPOINT_WAIT |
+					  CHECKPOINT_FAST |
+					  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 }
 
 /*

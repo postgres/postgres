@@ -943,17 +943,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_CheckPointStmt:
-			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				/* translator: %s is name of a SQL command, eg CHECKPOINT */
-						 errmsg("permission denied to execute %s command",
-								"CHECKPOINT"),
-						 errdetail("Only roles with privileges of the \"%s\" role may execute this command.",
-								   "pg_checkpoint")));
-
-			RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_WAIT |
-							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
+			ExecCheckpoint(pstate, (CheckPointStmt *) parsetree);
 			break;
 
 			/*

@@ -21,7 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CHECKPOINT
+CHECKPOINT [ ( option [, ...] ) ]
+
+<phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 </synopsis>
  </refsynopsisdiv>
 
@@ -55,6 +57,13 @@ CHECKPOINT
    Only superusers or users with the privileges of
    the <xref linkend="predefined-role-pg-checkpoint"/>
    role can call <command>CHECKPOINT</command>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <para>
   </para>
  </refsect1>
 
