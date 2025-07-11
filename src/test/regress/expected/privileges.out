@@ -2568,6 +2568,26 @@ SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
 	'SELECT, fake_privilege', FALSE);  -- error
 ERROR:  unrecognized privilege type: "fake_privilege"
+-- Test quoting and dequoting of user names in ACLs
+CREATE ROLE "regress_""quoted";
+SELECT makeaclitem('regress_"quoted'::regrole, 'regress_"quoted'::regrole,
+                   'SELECT', TRUE);
+               makeaclitem                
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '"regress_""quoted"=r*/"regress_""quoted"'::aclitem;
+                 aclitem                  
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '""=r*/""'::aclitem;  -- used to be misparsed as """"
+ERROR:  a name must follow the "/" sign
+LINE 1: SELECT '""=r*/""'::aclitem;
+               ^
+DROP ROLE "regress_""quoted";
 -- Test non-throwing aclitem I/O
 SELECT pg_input_is_valid('regress_priv_user1=r/regress_priv_user2', 'aclitem');
  pg_input_is_valid 
