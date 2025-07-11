@@ -25,6 +25,7 @@ CHECKPOINT [ ( option [, ...] ) ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
+    FLUSH_UNLOGGED [ <replaceable class="parameter">boolean</replaceable> ]
     MODE { FAST | SPREAD }
 </synopsis>
  </refsynopsisdiv>
@@ -77,6 +78,17 @@ CHECKPOINT [ ( option [, ...] ) ]
 
   <variablelist>
    <varlistentry>
+    <term><literal>FLUSH_UNLOGGED</literal></term>
+    <listitem>
+     <para>
+      Normally, <command>CHECKPOINT</command> does not flush dirty buffers of
+      unlogged relations.  This option, which is disabled by default, enables
+      flushing unlogged relations to disk.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>MODE</literal></term>
     <listitem>
      <para>
@@ -90,6 +102,20 @@ CHECKPOINT [ ( option [, ...] ) ]
       the settings in <xref linkend="runtime-config-wal-checkpoints"/>), like a
       regular checkpoint scheduled by the system.  This can reduce the rate of
       I/O during the checkpoint.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">boolean</replaceable></term>
+    <listitem>
+     <para>
+      Specifies whether the selected option should be turned on or off.
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
+      <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
+      <replaceable class="parameter">boolean</replaceable> value can also
+      be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
     </listitem>
    </varlistentry>

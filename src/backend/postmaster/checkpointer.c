@@ -989,6 +989,7 @@ void
 ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 {
 	bool		fast = true;
+	bool		unlogged = false;
 
 	foreach_ptr(DefElem, opt, stmt->options)
 	{
@@ -1004,6 +1005,8 @@ ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 						 errmsg("unrecognized MODE option \"%s\"", mode),
 						 parser_errposition(pstate, opt->location)));
 		}
+		else if (strcmp(opt->defname, "flush_unlogged") == 0)
+			unlogged = defGetBoolean(opt);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1022,6 +1025,7 @@ ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 
 	RequestCheckpoint(CHECKPOINT_WAIT |
 					  (fast ? CHECKPOINT_FAST : 0) |
+					  (unlogged ? CHECKPOINT_FLUSH_UNLOGGED : 0) |
 					  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 }
 

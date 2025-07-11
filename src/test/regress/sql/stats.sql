@@ -444,8 +444,8 @@ DROP TABLE test_stats_temp;
 -- because it would prolong the test.
 CHECKPOINT (WRONG);
 CHECKPOINT (MODE WRONG);
-CHECKPOINT (MODE FAST);
-CHECKPOINT;
+CHECKPOINT (MODE FAST, FLUSH_UNLOGGED FALSE);
+CHECKPOINT (FLUSH_UNLOGGED);
 
 SELECT num_requested > :rqst_ckpts_before FROM pg_stat_checkpointer;
 SELECT wal_bytes > :wal_bytes_before FROM pg_stat_wal;

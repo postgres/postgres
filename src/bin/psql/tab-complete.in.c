@@ -3165,7 +3165,7 @@ match_previous_words(int pattern_id,
 		 * one word, so the above test is correct.
 		 */
 		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
-			COMPLETE_WITH("MODE");
+			COMPLETE_WITH("MODE", "FLUSH_UNLOGGED");
 		else if (TailMatches("MODE"))
 			COMPLETE_WITH("FAST", "SPREAD");
 	}

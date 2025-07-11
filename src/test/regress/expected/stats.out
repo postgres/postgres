@@ -937,8 +937,8 @@ CHECKPOINT (MODE WRONG);
 ERROR:  unrecognized MODE option "wrong"
 LINE 1: CHECKPOINT (MODE WRONG);
                     ^
-CHECKPOINT (MODE FAST);
-CHECKPOINT;
+CHECKPOINT (MODE FAST, FLUSH_UNLOGGED FALSE);
+CHECKPOINT (FLUSH_UNLOGGED);
 SELECT num_requested > :rqst_ckpts_before FROM pg_stat_checkpointer;
  ?column? 
 ----------
