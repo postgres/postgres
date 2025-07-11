@@ -242,24 +242,6 @@ start_postmaster(ClusterInfo *cluster, bool report_and_exit_on_error)
 		appendPQExpBufferStr(&pgoptions, " -c synchronous_commit=off -c fsync=off -c full_page_writes=off");
 
 	/*
-	 * Use max_slot_wal_keep_size as -1 to prevent the WAL removal by the
-	 * checkpointer process.  If WALs required by logical replication slots
-	 * are removed, the slots are unusable.  This setting prevents the
-	 * invalidation of slots during the upgrade. We set this option when
-	 * cluster is PG17 or later because logical replication slots can only be
-	 * migrated since then. Besides, max_slot_wal_keep_size is added in PG13.
-	 */
-	if (GET_MAJOR_VERSION(cluster->major_version) >= 1700)
-		appendPQExpBufferStr(&pgoptions, " -c max_slot_wal_keep_size=-1");
-
-	/*
-	 * Use idle_replication_slot_timeout=0 to prevent slot invalidation due to
-	 * idle_timeout by checkpointer process during upgrade.
-	 */
-	if (GET_MAJOR_VERSION(cluster->major_version) >= 1800)
-		appendPQExpBufferStr(&pgoptions, " -c idle_replication_slot_timeout=0");
-
-	/*
 	 * Use -b to disable autovacuum and logical replication launcher
 	 * (effective in PG17 or later for the latter).
 	 */

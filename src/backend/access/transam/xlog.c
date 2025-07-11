@@ -2347,25 +2347,6 @@ check_wal_segment_size(int *newval, void **extra, GucSource source)
 }
 
 /*
- * GUC check_hook for max_slot_wal_keep_size
- *
- * We don't allow the value of max_slot_wal_keep_size other than -1 during the
- * binary upgrade. See start_postmaster() in pg_upgrade for more details.
- */
-bool
-check_max_slot_wal_keep_size(int *newval, void **extra, GucSource source)
-{
-	if (IsBinaryUpgrade && *newval != -1)
-	{
-		GUC_check_errdetail("\"%s\" must be set to -1 during binary upgrade mode.",
-							"max_slot_wal_keep_size");
-		return false;
-	}
-
-	return true;
-}
-
-/*
  * At a checkpoint, how many WAL segments to recycle as preallocated future
  * XLOG segments? Returns the highest segment that should be preallocated.
  */
@@ -8151,17 +8132,19 @@ KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo)
 	XLByteToSeg(recptr, currSegNo, wal_segment_size);
 	segno = currSegNo;
 
-	/*
-	 * Calculate how many segments are kept by slots first, adjusting for
-	 * max_slot_wal_keep_size.
-	 */
+	/* Calculate how many segments are kept by slots. */
 	keep = XLogGetReplicationSlotMinimumLSN();
 	if (keep != InvalidXLogRecPtr && keep < recptr)
 	{
 		XLByteToSeg(keep, segno, wal_segment_size);
 
-		/* Cap by max_slot_wal_keep_size ... */
-		if (max_slot_wal_keep_size_mb >= 0)
+		/*
+		 * Account for max_slot_wal_keep_size to avoid keeping more than
+		 * configured.  However, don't do that during a binary upgrade: if
+		 * slots were to be invalidated because of this, it would not be
+		 * possible to preserve logical ones during the upgrade.
+		 */
+		if (max_slot_wal_keep_size_mb >= 0 && !IsBinaryUpgrade)
 		{
 			uint64		slot_keep_segs;
 

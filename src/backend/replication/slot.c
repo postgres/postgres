@@ -1888,15 +1888,6 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 		SpinLockRelease(&s->mutex);
 
 		/*
-		 * The logical replication slots shouldn't be invalidated as GUC
-		 * max_slot_wal_keep_size is set to -1 and
-		 * idle_replication_slot_timeout is set to 0 during the binary
-		 * upgrade. See check_old_cluster_for_valid_slots() where we ensure
-		 * that no slot was invalidated before the upgrade.
-		 */
-		Assert(!(*invalidated && SlotIsLogical(s) && IsBinaryUpgrade));
-
-		/*
 		 * Calculate the idle time duration of the slot if slot is marked
 		 * invalidated with RS_INVAL_IDLE_TIMEOUT.
 		 */
@@ -2040,6 +2031,10 @@ restart:
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 
 		if (!s->in_use)
+			continue;
+
+		/* Prevent invalidation of logical slots during binary upgrade */
+		if (SlotIsLogical(s) && IsBinaryUpgrade)
 			continue;
 
 		if (InvalidatePossiblyObsoleteSlot(possible_causes, s, oldestLSN, dboid,
@@ -3053,23 +3048,4 @@ WaitForStandbyConfirmation(XLogRecPtr wait_for_lsn)
 	}
 
 	ConditionVariableCancelSleep();
-}
-
-/*
- * GUC check_hook for idle_replication_slot_timeout
- *
- * The value of idle_replication_slot_timeout must be set to 0 during
- * a binary upgrade. See start_postmaster() in pg_upgrade for more details.
- */
-bool
-check_idle_replication_slot_timeout(int *newval, void **extra, GucSource source)
-{
-	if (IsBinaryUpgrade && *newval != 0)
-	{
-		GUC_check_errdetail("\"%s\" must be set to 0 during binary upgrade mode.",
-							"idle_replication_slot_timeout");
-		return false;
-	}
-
-	return true;
 }
