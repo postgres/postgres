@@ -43,6 +43,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "catalog/pg_authid.h"
+#include "commands/defrem.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -987,11 +988,28 @@ CheckpointerShmemInit(void)
 void
 ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 {
+	bool		fast = true;
+
 	foreach_ptr(DefElem, opt, stmt->options)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("unrecognized CHECKPOINT option \"%s\"", opt->defname),
-				 parser_errposition(pstate, opt->location)));
+	{
+		if (strcmp(opt->defname, "mode") == 0)
+		{
+			char	   *mode = defGetString(opt);
+
+			if (strcmp(mode, "spread") == 0)
+				fast = false;
+			else if (strcmp(mode, "fast") != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("unrecognized MODE option \"%s\"", mode),
+						 parser_errposition(pstate, opt->location)));
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("unrecognized CHECKPOINT option \"%s\"", opt->defname),
+					 parser_errposition(pstate, opt->location)));
+	}
 
 	if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
 		ereport(ERROR,
@@ -1003,7 +1021,7 @@ ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 						   "pg_checkpoint")));
 
 	RequestCheckpoint(CHECKPOINT_WAIT |
-					  CHECKPOINT_FAST |
+					  (fast ? CHECKPOINT_FAST : 0) |
 					  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 }
 

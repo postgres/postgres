@@ -24,6 +24,8 @@ PostgreSQL documentation
 CHECKPOINT [ ( option [, ...] ) ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
+
+    MODE { FAST | SPREAD }
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,12 +41,22 @@ CHECKPOINT [ ( option [, ...] ) ]
   </para>
 
   <para>
-   The <command>CHECKPOINT</command> command forces a fast
+   By default, the <command>CHECKPOINT</command> command forces a fast
    checkpoint when the command is issued, without waiting for a
    regular checkpoint scheduled by the system (controlled by the settings in
    <xref linkend="runtime-config-wal-checkpoints"/>).
+   To request the checkpoint be spread over a longer interval, set the
+   <literal>MODE</literal> option to <literal>SPREAD</literal>.
    <command>CHECKPOINT</command> is not intended for use during normal
    operation.
+  </para>
+
+  <para>
+   The server may consolidate concurrently requested checkpoints.  Such
+   consolidated requests will contain a combined set of options.  For example,
+   if one session requests a fast checkpoint and another requests a spread
+   checkpoint, the server may combine those requests and perform one fast
+   checkpoint.
   </para>
 
   <para>
@@ -63,8 +75,25 @@ CHECKPOINT [ ( option [, ...] ) ]
  <refsect1>
   <title>Parameters</title>
 
-  <para>
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><literal>MODE</literal></term>
+    <listitem>
+     <para>
+      When set to <literal>FAST</literal>, which is the default, the requested
+      checkpoint will be completed as fast as possible, which may result in a
+      significantly higher rate of I/O during the checkpoint.
+     </para>
+     <para>
+      <literal>MODE</literal> can also be set to <literal>SPREAD</literal> to
+      request the checkpoint be spread over a longer interval (controlled via
+      the settings in <xref linkend="runtime-config-wal-checkpoints"/>), like a
+      regular checkpoint scheduled by the system.  This can reduce the rate of
+      I/O during the checkpoint.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>

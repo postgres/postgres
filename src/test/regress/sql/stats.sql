@@ -440,9 +440,11 @@ DROP TABLE test_stats_temp;
 -- of the checkpoint. But after a second checkpoint we'll see at least the
 -- results of the first.
 --
--- While at it, test checkpoint options.
+-- While at it, test checkpoint options.  Note that we don't test MODE SPREAD
+-- because it would prolong the test.
 CHECKPOINT (WRONG);
-CHECKPOINT;
+CHECKPOINT (MODE WRONG);
+CHECKPOINT (MODE FAST);
 CHECKPOINT;
 
 SELECT num_requested > :rqst_ckpts_before FROM pg_stat_checkpointer;

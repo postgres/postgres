@@ -3156,6 +3156,19 @@ match_previous_words(int pattern_id,
 /* CHECKPOINT */
 	else if (Matches("CHECKPOINT"))
 		COMPLETE_WITH("(");
+	else if (HeadMatches("CHECKPOINT", "(*") &&
+			 !HeadMatches("CHECKPOINT", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH("MODE");
+		else if (TailMatches("MODE"))
+			COMPLETE_WITH("FAST", "SPREAD");
+	}
 /* CLOSE */
 	else if (Matches("CLOSE"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_cursors,
