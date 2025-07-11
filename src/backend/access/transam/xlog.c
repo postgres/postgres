@@ -6828,7 +6828,7 @@ LogCheckpointStart(int flags, bool restartpoint)
 						(flags & CHECKPOINT_WAIT) ? " wait" : "",
 						(flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
 						(flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
-						(flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "")));
+						(flags & CHECKPOINT_FLUSH_UNLOGGED) ? " flush-unlogged" : "")));
 	else
 		ereport(LOG,
 		/* translator: the placeholders show checkpoint options */
@@ -6840,7 +6840,7 @@ LogCheckpointStart(int flags, bool restartpoint)
 						(flags & CHECKPOINT_WAIT) ? " wait" : "",
 						(flags & CHECKPOINT_CAUSE_XLOG) ? " wal" : "",
 						(flags & CHECKPOINT_CAUSE_TIME) ? " time" : "",
-						(flags & CHECKPOINT_FLUSH_ALL) ? " flush-all" : "")));
+						(flags & CHECKPOINT_FLUSH_UNLOGGED) ? " flush-unlogged" : "")));
 }
 
 /*
@@ -7028,7 +7028,7 @@ update_checkpoint_display(int flags, bool restartpoint, bool reset)
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occurred
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN or
  *		CHECKPOINT_END_OF_RECOVERY).
- *	CHECKPOINT_FLUSH_ALL: also flush buffers of unlogged tables.
+ *	CHECKPOINT_FLUSH_UNLOGGED: also flush buffers of unlogged tables.
  *
  * Note: flags contains other bits, of interest here only for logging purposes.
  * In particular note that this routine is synchronous and does not pay
