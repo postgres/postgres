@@ -108,6 +108,7 @@ BEGIN
 	delete $ENV{LANGUAGE};
 	delete $ENV{LC_ALL};
 	$ENV{LC_MESSAGES} = 'C';
+	$ENV{LC_NUMERIC} = 'C';
 	setlocale(LC_ALL, "");
 
 	# This list should be kept in sync with pg_regress.c.
