@@ -6081,13 +6081,14 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       </varlistentry>
 
       <varlistentry>
-       <term>Int32(196608)</term>
+       <term>Int32</term>
        <listitem>
         <para>
          The protocol version number.  The most significant 16 bits are
-         the major version number (3 for the protocol described here).
-         The least significant 16 bits are the minor version number
-         (0 for the protocol described here).
+         the major version number. The least significant 16 bits are the minor
+         version number. As an example protocol version 3.2 is represented as
+         <literal>196610</literal> in decimal or more clearly as
+         <literal>0x00030002</literal> in hexadecimal.
         </para>
        </listitem>
       </varlistentry>
