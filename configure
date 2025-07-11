@@ -12717,6 +12717,15 @@ fi
 
 if test "$with_libcurl" = yes ; then
 
+  # libcurl compiler/linker flags are kept separate from the global flags, so
+  # they have to be added back temporarily for the following tests.
+  pgac_save_CPPFLAGS=$CPPFLAGS
+  pgac_save_LDFLAGS=$LDFLAGS
+  pgac_save_LIBS=$LIBS
+
+  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
+  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+
   ac_fn_c_check_header_mongrel "$LINENO" "curl/curl.h" "ac_cv_header_curl_curl_h" "$ac_includes_default"
 if test "x$ac_cv_header_curl_curl_h" = xyes; then :
 
@@ -12725,6 +12734,9 @@ else
 fi
 
 
+
+  # LIBCURL_LDLIBS is determined here. Like the compiler flags, it should not
+  # pollute the global LIBS setting.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for curl_multi_init in -lcurl" >&5
 $as_echo_n "checking for curl_multi_init in -lcurl... " >&6; }
 if ${ac_cv_lib_curl_curl_multi_init+:} false; then :
@@ -12774,12 +12786,6 @@ else
 fi
 
 
-  pgac_save_CPPFLAGS=$CPPFLAGS
-  pgac_save_LDFLAGS=$LDFLAGS
-  pgac_save_LIBS=$LIBS
-
-  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
-  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
   LIBS="$LIBCURL_LDLIBS $LIBS"
 
   # Check to see whether the current platform supports threadsafe Curl

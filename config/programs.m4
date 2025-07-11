@@ -284,20 +284,26 @@ AC_DEFUN([PGAC_CHECK_STRIP],
 
 AC_DEFUN([PGAC_CHECK_LIBCURL],
 [
-  AC_CHECK_HEADER(curl/curl.h, [],
-				  [AC_MSG_ERROR([header file <curl/curl.h> is required for --with-libcurl])])
-  AC_CHECK_LIB(curl, curl_multi_init, [
-				 AC_DEFINE([HAVE_LIBCURL], [1], [Define to 1 if you have the `curl' library (-lcurl).])
-				 AC_SUBST(LIBCURL_LDLIBS, -lcurl)
-			   ],
-			   [AC_MSG_ERROR([library 'curl' does not provide curl_multi_init])])
-
+  # libcurl compiler/linker flags are kept separate from the global flags, so
+  # they have to be added back temporarily for the following tests.
   pgac_save_CPPFLAGS=$CPPFLAGS
   pgac_save_LDFLAGS=$LDFLAGS
   pgac_save_LIBS=$LIBS
 
   CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
   LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+
+  AC_CHECK_HEADER(curl/curl.h, [],
+				  [AC_MSG_ERROR([header file <curl/curl.h> is required for --with-libcurl])])
+
+  # LIBCURL_LDLIBS is determined here. Like the compiler flags, it should not
+  # pollute the global LIBS setting.
+  AC_CHECK_LIB(curl, curl_multi_init, [
+				 AC_DEFINE([HAVE_LIBCURL], [1], [Define to 1 if you have the `curl' library (-lcurl).])
+				 AC_SUBST(LIBCURL_LDLIBS, -lcurl)
+			   ],
+			   [AC_MSG_ERROR([library 'curl' does not provide curl_multi_init])])
+
   LIBS="$LIBCURL_LDLIBS $LIBS"
 
   # Check to see whether the current platform supports threadsafe Curl
