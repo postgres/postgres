@@ -127,11 +127,10 @@ bits of the tag's hash value.  The rules stated above apply to each partition
 independently.  If it is necessary to lock more than one partition at a time,
 they must be locked in partition-number order to avoid risk of deadlock.
 
-* A separate system-wide spinlock, buffer_strategy_lock, provides mutual
-exclusion for operations that select buffers for replacement.  A spinlock is
-used here rather than a lightweight lock for efficiency; no other locks of any
-sort should be acquired while buffer_strategy_lock is held.  This is essential
-to allow buffer replacement to happen in multiple backends with reasonable
+* Operations that select buffers for replacement don't require a lock, but
+rather use atomic operations to ensure coordination across backends when
+accessing members of the BufferStrategyControl datastructure. This allows
+buffer replacement to happen in multiple backends with reasonable
 concurrency.
 
 * Each buffer header contains a spinlock that must be taken when examining
@@ -173,14 +172,12 @@ buffer_strategy_lock.
 
 The algorithm for a process that needs to obtain a victim buffer is:
 
-1. Obtain buffer_strategy_lock.
+1. Select the buffer pointed to by nextVictimBuffer, and circularly advance
+nextVictimBuffer for next time.
 
-2. Select the buffer pointed to by nextVictimBuffer, and circularly advance
-nextVictimBuffer for next time. Release buffer_strategy_lock.
-
-3. If the selected buffer is pinned or has a nonzero usage count, it cannot
-be used.  Decrement its usage count (if nonzero), reacquire
-buffer_strategy_lock, and return to step 3 to examine the next buffer.
+2. If the selected buffer is pinned or has a nonzero usage count, it cannot be
+used.  Decrement its usage count (if nonzero), return to step 3 to examine the
+next buffer.
 
 4. Pin the selected buffer, and return.
 
@@ -196,9 +193,9 @@ Buffer Ring Replacement Strategy
 When running a query that needs to access a large number of pages just once,
 such as VACUUM or a large sequential scan, a different strategy is used.
 A page that has been touched only by such a scan is unlikely to be needed
-again soon, so instead of running the normal clock sweep algorithm and
+again soon, so instead of running the normal clock-sweep algorithm and
 blowing out the entire buffer cache, a small ring of buffers is allocated
-using the normal clock sweep algorithm and those buffers are reused for the
+using the normal clock-sweep algorithm and those buffers are reused for the
 whole scan.  This also implies that much of the write traffic caused by such
 a statement will be done by the backend itself and not pushed off onto other
 processes.
@@ -244,13 +241,13 @@ nextVictimBuffer (which it does not change!), looking for buffers that are
 dirty and not pinned nor marked with a positive usage count.  It pins,
 writes, and releases any such buffer.
 
-If we can assume that reading nextVictimBuffer is an atomic action, then
-the writer doesn't even need to take buffer_strategy_lock in order to look
-for buffers to write; it needs only to spinlock each buffer header for long
-enough to check the dirtybit.  Even without that assumption, the writer
-only needs to take the lock long enough to read the variable value, not
-while scanning the buffers.  (This is a very substantial improvement in
-the contention cost of the writer compared to PG 8.0.)
+We enforce reading nextVictimBuffer within an atomic action so that the writer
+doesn't even need to take buffer_strategy_lock in order to look for buffers to
+write; it needs only to spinlock each buffer header for long enough to check
+the dirtybit.  Even without that assumption, the writer only needs to take the
+lock long enough to read the variable value, not while scanning the buffers.
+(This is a very substantial improvement in the contention cost of the writer
+compared to PG 8.0.)
 
 The background writer takes shared content lock on a buffer while writing it
 out (and anyone else who flushes buffer contents to disk must do so too).

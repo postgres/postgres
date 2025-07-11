@@ -81,7 +81,7 @@ StaticAssertDecl(BUF_REFCOUNT_BITS + BUF_USAGECOUNT_BITS + BUF_FLAG_BITS == 32,
  * accuracy and speed of the clock-sweep buffer management algorithm.  A
  * large value (comparable to NBuffers) would approximate LRU semantics.
  * But it can take as many as BM_MAX_USAGE_COUNT+1 complete cycles of
- * clock sweeps to find a free buffer, so in practice we don't want the
+ * clock-sweeps to find a free buffer, so in practice we don't want the
  * value to be very large.
  */
 #define BM_MAX_USAGE_COUNT	5
