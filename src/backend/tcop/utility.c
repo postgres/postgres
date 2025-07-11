@@ -952,7 +952,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 						 errdetail("Only roles with privileges of the \"%s\" role may execute this command.",
 								   "pg_checkpoint")));
 
-			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
+			RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_WAIT |
 							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
 			break;
 

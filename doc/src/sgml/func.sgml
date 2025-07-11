@@ -28973,7 +28973,7 @@ LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560
         will be stored.)
         If the optional second parameter is given as <literal>true</literal>,
         it specifies executing <function>pg_backup_start</function> as quickly
-        as possible.  This forces an immediate checkpoint which will cause a
+        as possible.  This forces a fast checkpoint which will cause a
         spike in I/O operations, slowing any concurrently executing queries.
        </para>
        <para>

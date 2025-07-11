@@ -37,7 +37,7 @@ CHECKPOINT
   </para>
 
   <para>
-   The <command>CHECKPOINT</command> command forces an immediate
+   The <command>CHECKPOINT</command> command forces a fast
    checkpoint when the command is issued, without waiting for a
    regular checkpoint scheduled by the system (controlled by the settings in
    <xref linkend="runtime-config-wal-checkpoints"/>).

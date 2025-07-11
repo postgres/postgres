@@ -500,8 +500,9 @@ PostgreSQL documentation
       <term><option>--checkpoint={fast|spread}</option></term>
       <listitem>
        <para>
-        Sets checkpoint mode to fast (immediate) or spread (the default)
+        Sets checkpoint mode to fast or spread
         (see <xref linkend="backup-lowlevel-base-backup"/>).
+        The default is spread.
        </para>
       </listitem>
      </varlistentry>

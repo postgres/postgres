@@ -570,7 +570,7 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * any CREATE DATABASE commands.
 	 */
 	if (!IsBinaryUpgrade)
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE |
 						  CHECKPOINT_WAIT | CHECKPOINT_FLUSH_UNLOGGED);
 
 	/*
@@ -673,7 +673,7 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 	 * strategy that avoids these problems.
 	 */
 	if (!IsBinaryUpgrade)
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE |
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE |
 						  CHECKPOINT_WAIT);
 }
 
@@ -1870,7 +1870,7 @@ dropdb(const char *dbname, bool missing_ok, bool force)
 	 * Force a checkpoint to make sure the checkpointer has received the
 	 * message sent by ForgetDatabaseSyncRequests.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+	RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 	/* Close all smgr fds in all backends. */
 	WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
@@ -2120,7 +2120,7 @@ movedb(const char *dbname, const char *tblspcname)
 	 * On Windows, this also ensures that background procs don't hold any open
 	 * files, which would cause rmdir() to fail.
 	 */
-	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT
+	RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT
 					  | CHECKPOINT_FLUSH_UNLOGGED);
 
 	/* Close all smgr fds in all backends. */
@@ -2252,7 +2252,7 @@ movedb(const char *dbname, const char *tblspcname)
 		 * any unlogged operations done in the new DB tablespace before the
 		 * next checkpoint.
 		 */
-		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
+		RequestCheckpoint(CHECKPOINT_FAST | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
 		 * Force synchronous commit, thus minimizing the window between

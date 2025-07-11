@@ -3339,8 +3339,8 @@ UnpinBufferNoOwner(BufferDesc *buf)
  * BufferSync -- Write out all dirty buffers in the pool.
  *
  * This is called at checkpoint time to write out all dirty shared buffers.
- * The checkpoint request flags should be passed in.  If CHECKPOINT_IMMEDIATE
- * is set, we disable delays between writes; if CHECKPOINT_IS_SHUTDOWN,
+ * The checkpoint request flags should be passed in.  If CHECKPOINT_FAST is
+ * set, we disable delays between writes; if CHECKPOINT_IS_SHUTDOWN,
  * CHECKPOINT_END_OF_RECOVERY or CHECKPOINT_FLUSH_UNLOGGED is set, we write
  * even unlogged buffers, which are otherwise skipped.  The remaining flags
  * currently have no effect here.

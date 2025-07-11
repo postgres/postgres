@@ -991,7 +991,7 @@ SELECT pg_backup_start(label => 'label', fast => false);
      usually preferable as it minimizes the impact on the running system.  If you
      want to start the backup as soon as possible, pass <literal>true</literal> as
      the second parameter to <function>pg_backup_start</function> and it will
-     request an immediate checkpoint, which will finish as fast as possible using
+     request a fast checkpoint, which will finish as fast as possible using
      as much I/O as possible.
     </para>
 
