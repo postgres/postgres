@@ -1196,6 +1196,14 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE EXECUTE ON FUNCTIONS
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_priv_user2; -- error
 
+-- Test quoting and dequoting of user names in ACLs
+CREATE ROLE "regress_""quoted";
+SELECT makeaclitem('regress_"quoted'::regrole, 'regress_"quoted'::regrole,
+                   'SELECT', TRUE);
+SELECT '"regress_""quoted"=r*/"regress_""quoted"'::aclitem;
+SELECT '""=r*/""'::aclitem;  -- used to be misparsed as """"
+DROP ROLE "regress_""quoted";
+
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.
