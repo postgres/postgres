@@ -3081,7 +3081,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&max_slot_wal_keep_size_mb,
 		-1, -1, MAX_KILOBYTES,
-		check_max_slot_wal_keep_size, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
@@ -3104,7 +3104,7 @@ struct config_int ConfigureNamesInt[] =
 		},
 		&idle_replication_slot_timeout_secs,
 		0, 0, INT_MAX,
-		check_idle_replication_slot_timeout, NULL, NULL
+		NULL, NULL, NULL
 	},
 
 	{
