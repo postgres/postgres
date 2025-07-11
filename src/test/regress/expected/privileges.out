@@ -2076,6 +2076,26 @@ SELECT has_table_privilege('regress_priv_user1', 'testns.acltest1', 'INSERT'); -
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE EXECUTE ON FUNCTIONS FROM public;
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_priv_user2; -- error
 ERROR:  cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS
+-- Test quoting and dequoting of user names in ACLs
+CREATE ROLE "regress_""quoted";
+SELECT makeaclitem('regress_"quoted'::regrole, 'regress_"quoted'::regrole,
+                   'SELECT', TRUE);
+               makeaclitem                
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '"regress_""quoted"=r*/"regress_""quoted"'::aclitem;
+                 aclitem                  
+------------------------------------------
+ "regress_""quoted"=r*/"regress_""quoted"
+(1 row)
+
+SELECT '""=r*/""'::aclitem;  -- used to be misparsed as """"
+ERROR:  a name must follow the "/" sign
+LINE 1: SELECT '""=r*/""'::aclitem;
+               ^
+DROP ROLE "regress_""quoted";
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.
