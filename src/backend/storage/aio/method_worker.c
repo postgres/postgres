@@ -172,6 +172,7 @@ pgaio_choose_idle_worker(void)
 	/* Find the lowest bit position, and clear it. */
 	worker = pg_rightmost_one_pos64(io_worker_control->idle_worker_mask);
 	io_worker_control->idle_worker_mask &= ~(UINT64_C(1) << worker);
+	Assert(io_worker_control->workers[worker].in_use);
 
 	return worker;
 }
@@ -316,6 +317,7 @@ pgaio_worker_die(int code, Datum arg)
 	Assert(io_worker_control->workers[MyIoWorkerId].in_use);
 	Assert(io_worker_control->workers[MyIoWorkerId].latch == MyLatch);
 
+	io_worker_control->idle_worker_mask &= ~(UINT64_C(1) << MyIoWorkerId);
 	io_worker_control->workers[MyIoWorkerId].in_use = false;
 	io_worker_control->workers[MyIoWorkerId].latch = NULL;
 	LWLockRelease(AioWorkerSubmissionQueueLock);
