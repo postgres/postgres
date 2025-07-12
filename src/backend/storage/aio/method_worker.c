@@ -575,6 +575,12 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 		}
 
 		CHECK_FOR_INTERRUPTS();
+
+		if (ConfigReloadPending)
+		{
+			ConfigReloadPending = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
 	}
 
 	error_context_stack = errcallback.previous;
