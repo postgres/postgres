@@ -5312,10 +5312,10 @@ isoweekdate2date(int isoweek, int wday, int *year, int *mon, int *mday)
 int
 date2isoweek(int year, int mon, int mday)
 {
-	float8		result;
 	int			day0,
 				day4,
-				dayn;
+				dayn,
+				week;
 
 	/* current day */
 	dayn = date2j(year, mon, mday);
@@ -5338,13 +5338,13 @@ date2isoweek(int year, int mon, int mday)
 		day0 = j2day(day4 - 1);
 	}
 
-	result = (dayn - (day4 - day0)) / 7 + 1;
+	week = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
 	 * Sometimes the last few days in a year will fall into the first week of
 	 * the next year, so check for this.
 	 */
-	if (result >= 52)
+	if (week >= 52)
 	{
 		day4 = date2j(year + 1, 1, 4);
 
@@ -5352,10 +5352,10 @@ date2isoweek(int year, int mon, int mday)
 		day0 = j2day(day4 - 1);
 
 		if (dayn >= day4 - day0)
-			result = (dayn - (day4 - day0)) / 7 + 1;
+			week = (dayn - (day4 - day0)) / 7 + 1;
 	}
 
-	return (int) result;
+	return week;
 }
 
 
@@ -5367,10 +5367,10 @@ date2isoweek(int year, int mon, int mday)
 int
 date2isoyear(int year, int mon, int mday)
 {
-	float8		result;
 	int			day0,
 				day4,
-				dayn;
+				dayn,
+				week;
 
 	/* current day */
 	dayn = date2j(year, mon, mday);
@@ -5395,13 +5395,13 @@ date2isoyear(int year, int mon, int mday)
 		year--;
 	}
 
-	result = (dayn - (day4 - day0)) / 7 + 1;
+	week = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
 	 * Sometimes the last few days in a year will fall into the first week of
 	 * the next year, so check for this.
 	 */
-	if (result >= 52)
+	if (week >= 52)
 	{
 		day4 = date2j(year + 1, 1, 4);
 
