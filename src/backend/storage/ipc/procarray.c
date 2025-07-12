@@ -1622,58 +1622,6 @@ TransactionIdIsInProgress(TransactionId xid)
 	return false;
 }
 
-/*
- * TransactionIdIsActive -- is xid the top-level XID of an active backend?
- *
- * This differs from TransactionIdIsInProgress in that it ignores prepared
- * transactions, as well as transactions running on the primary if we're in
- * hot standby.  Also, we ignore subtransactions since that's not needed
- * for current uses.
- */
-bool
-TransactionIdIsActive(TransactionId xid)
-{
-	bool		result = false;
-	ProcArrayStruct *arrayP = procArray;
-	TransactionId *other_xids = ProcGlobal->xids;
-	int			i;
-
-	/*
-	 * Don't bother checking a transaction older than RecentXmin; it could not
-	 * possibly still be running.
-	 */
-	if (TransactionIdPrecedes(xid, RecentXmin))
-		return false;
-
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
-
-	for (i = 0; i < arrayP->numProcs; i++)
-	{
-		int			pgprocno = arrayP->pgprocnos[i];
-		PGPROC	   *proc = &allProcs[pgprocno];
-		TransactionId pxid;
-
-		/* Fetch xid just once - see GetNewTransactionId */
-		pxid = UINT32_ACCESS_ONCE(other_xids[i]);
-
-		if (!TransactionIdIsValid(pxid))
-			continue;
-
-		if (proc->pid == 0)
-			continue;			/* ignore prepared transactions */
-
-		if (TransactionIdEquals(pxid, xid))
-		{
-			result = true;
-			break;
-		}
-	}
-
-	LWLockRelease(ProcArrayLock);
-
-	return result;
-}
-
 
 /*
  * Determine XID horizons.
