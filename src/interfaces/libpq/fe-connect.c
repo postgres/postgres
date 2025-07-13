@@ -201,6 +201,10 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Database-Service", "", 20,
 	offsetof(struct pg_conn, pgservice)},
 
+	{"servicefile", "PGSERVICEFILE", NULL, NULL,
+		"Database-Service-File", "", 64,
+	offsetof(struct pg_conn, pgservicefile)},
+
 	{"user", "PGUSER", NULL, NULL,
 		"Database-User", "", 20,
 	offsetof(struct pg_conn, pguser)},
@@ -5062,6 +5066,7 @@ freePGconn(PGconn *conn)
 	free(conn->dbName);
 	free(conn->replication);
 	free(conn->pgservice);
+	free(conn->pgservicefile);
 	free(conn->pguser);
 	if (conn->pgpass)
 	{
@@ -5914,6 +5919,7 @@ static int
 parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
 	const char *service = conninfo_getval(options, "service");
+	const char *service_fname = conninfo_getval(options, "servicefile");
 	char		serviceFile[MAXPGPATH];
 	char	   *env;
 	bool		group_found = false;
@@ -5933,10 +5939,13 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		return 0;
 
 	/*
-	 * Try PGSERVICEFILE if specified, else try ~/.pg_service.conf (if that
-	 * exists).
+	 * First, try the "servicefile" option in connection string.  Then, try
+	 * the PGSERVICEFILE environment variable.  Finally, check
+	 * ~/.pg_service.conf (if that exists).
 	 */
-	if ((env = getenv("PGSERVICEFILE")) != NULL)
+	if (service_fname != NULL)
+		strlcpy(serviceFile, service_fname, sizeof(serviceFile));
+	else if ((env = getenv("PGSERVICEFILE")) != NULL)
 		strlcpy(serviceFile, env, sizeof(serviceFile));
 	else
 	{
@@ -6092,7 +6101,17 @@ parseServiceFile(const char *serviceFile,
 				if (strcmp(key, "service") == 0)
 				{
 					libpq_append_error(errorMessage,
-									   "nested service specifications not supported in service file \"%s\", line %d",
+									   "nested \"service\" specifications not supported in service file \"%s\", line %d",
+									   serviceFile,
+									   linenr);
+					result = 3;
+					goto exit;
+				}
+
+				if (strcmp(key, "servicefile") == 0)
+				{
+					libpq_append_error(errorMessage,
+									   "nested \"servicefile\" specifications not supported in service file \"%s\", line %d",
 									   serviceFile,
 									   linenr);
 					result = 3;
@@ -6135,6 +6154,33 @@ parseServiceFile(const char *serviceFile,
 	}
 
 exit:
+
+	/*
+	 * If a service has been successfully found, set the "servicefile" option
+	 * if not already set.  This matters when we use a default service file or
+	 * PGSERVICEFILE, where we want to be able track the value.
+	 */
+	if (*group_found && result == 0)
+	{
+		for (i = 0; options[i].keyword; i++)
+		{
+			if (strcmp(options[i].keyword, "servicefile") != 0)
+				continue;
+
+			/* If value is already set, nothing to do */
+			if (options[i].val != NULL)
+				break;
+
+			options[i].val = strdup(serviceFile);
+			if (options[i].val == NULL)
+			{
+				libpq_append_error(errorMessage, "out of memory");
+				result = 3;
+			}
+			break;
+		}
+	}
+
 	fclose(f);
 
 	return result;

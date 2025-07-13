@@ -389,6 +389,8 @@ struct pg_conn
 	char	   *dbName;			/* database name */
 	char	   *replication;	/* connect as the replication standby? */
 	char	   *pgservice;		/* Postgres service, if any */
+	char	   *pgservicefile;	/* path to a service file containing
+								 * service(s) */
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
 	char	   *pgpassfile;		/* path to a file containing password(s) */
