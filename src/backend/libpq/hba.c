@@ -2873,8 +2873,11 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 			!token_has_regexp(identLine->pg_user) &&
 			(ofs = strstr(identLine->pg_user->string, "\\1")) != NULL)
 		{
+			const char *repl_str;
+			size_t		repl_len;
+			char	   *old_pg_user;
 			char	   *expanded_pg_user;
-			int			offset;
+			size_t		offset;
 
 			/* substitution of the first argument requested */
 			if (matches[1].rm_so < 0)
@@ -2886,18 +2889,33 @@ check_ident_usermap(IdentLine *identLine, const char *usermap_name,
 				*error_p = true;
 				return;
 			}
+			repl_str = system_user + matches[1].rm_so;
+			repl_len = matches[1].rm_eo - matches[1].rm_so;
 
 			/*
-			 * length: original length minus length of \1 plus length of match
-			 * plus null terminator
+			 * It's allowed to have more than one \1 in the string, and we'll
+			 * replace them all.  But that's pretty unusual so we optimize on
+			 * the assumption of only one occurrence, which motivates doing
+			 * repeated replacements instead of making two passes over the
+			 * string to determine the final length right away.
 			 */
-			expanded_pg_user = palloc0(strlen(identLine->pg_user->string) - 2 + (matches[1].rm_eo - matches[1].rm_so) + 1);
-			offset = ofs - identLine->pg_user->string;
-			memcpy(expanded_pg_user, identLine->pg_user->string, offset);
-			memcpy(expanded_pg_user + offset,
-				   system_user + matches[1].rm_so,
-				   matches[1].rm_eo - matches[1].rm_so);
-			strcat(expanded_pg_user, ofs + 2);
+			old_pg_user = identLine->pg_user->string;
+			do
+			{
+				/*
+				 * length: current length minus length of \1 plus length of
+				 * replacement plus null terminator
+				 */
+				expanded_pg_user = palloc(strlen(old_pg_user) - 2 + repl_len + 1);
+				/* ofs points into the old_pg_user string at this point */
+				offset = ofs - old_pg_user;
+				memcpy(expanded_pg_user, old_pg_user, offset);
+				memcpy(expanded_pg_user + offset, repl_str, repl_len);
+				strcpy(expanded_pg_user + offset + repl_len, ofs + 2);
+				if (old_pg_user != identLine->pg_user->string)
+					pfree(old_pg_user);
+				old_pg_user = expanded_pg_user;
+			} while ((ofs = strstr(old_pg_user + offset + repl_len, "\\1")) != NULL);
 
 			/*
 			 * Mark the token as quoted, so it will only be compared literally
