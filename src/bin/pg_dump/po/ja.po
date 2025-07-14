@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-14 09:41+0900\n"
-"PO-Revision-Date: 2025-04-14 10:24+0900\n"
+"POT-Creation-Date: 2025-06-20 13:22+0900\n"
+"PO-Revision-Date: 2025-06-20 14:05+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -150,7 +150,8 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null ポインタを複製できません（内部エラー）。\n"
 
 #: ../../common/file_utils.c:69 ../../common/file_utils.c:370
-#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_dumpall.c:528
+#: pg_dumpall.c:1669 pg_restore.c:1061 pg_restore.c:1322
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "ファイル\"%s\"をオープンできませんでした: %m"
@@ -466,12 +467,12 @@ msgstr "健全性検査に失敗しました、テーブル\"%2$s\"(OID %3$u)の
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用の親テーブルの数%1$dが不正です"
 
-#: common.c:1087
+#: common.c:1109
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
 msgstr "数値配列\"%s\"のパースに失敗しました: 要素が多すぎます"
 
-#: common.c:1099
+#: common.c:1121
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "数値配列\"%s\"のパースに失敗しました: 数値に不正な文字が含まれています"
@@ -507,13 +508,13 @@ msgid "could not read from input file: %s"
 msgstr "入力ファイルから読み込めませんでした: %s"
 
 #: compress_gzip.c:295 compress_none.c:97 compress_none.c:139
-#: compress_zstd.c:374 pg_backup_custom.c:650
+#: compress_zstd.c:375 pg_backup_custom.c:650
 #, c-format
 msgid "could not read from input file: %m"
 msgstr "入力ファイルから読み込めませんでした: %m"
 
 #: compress_gzip.c:297 compress_lz4.c:630 compress_none.c:141
-#: compress_zstd.c:372 pg_backup_custom.c:648 pg_backup_directory.c:533
+#: compress_zstd.c:373 pg_backup_custom.c:648 pg_backup_directory.c:538
 #: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
@@ -554,73 +555,73 @@ msgstr "展開を終了できませんでした: %s"
 msgid "could not set compression parameter \"%s\": %s"
 msgstr "圧縮パラメータ\"%s\"を設定できませんでした: %s"
 
-#: compress_zstd.c:78 compress_zstd.c:232 compress_zstd.c:491
-#: compress_zstd.c:499
+#: compress_zstd.c:78 compress_zstd.c:233 compress_zstd.c:492
+#: compress_zstd.c:500
 #, c-format
 msgid "could not initialize compression library"
 msgstr "圧縮ライブラリを初期化できませんでした"
 
-#: compress_zstd.c:195 compress_zstd.c:309
+#: compress_zstd.c:196 compress_zstd.c:310
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "データを伸張できませんでした: %s"
 
-#: compress_zstd.c:502
+#: compress_zstd.c:503
 #, c-format
 msgid "unhandled mode \"%s\""
 msgstr "処理されないモード \"%s\""
 
-#: connectdb.c:56 connectdb.c:164 pg_backup_db.c:126
+#: connectdb.c:56 connectdb.c:165 pg_backup_db.c:126
 msgid "Password: "
 msgstr "パスワード: "
 
-#: connectdb.c:83 connectdb.c:173 pg_backup_db.c:203 pg_dump.c:925
+#: connectdb.c:83 connectdb.c:174 pg_backup_db.c:203 pg_dump.c:925
 #: pg_dump_sort.c:1251 pg_dump_sort.c:1271
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: connectdb.c:156 pg_dumpall.c:548 pg_restore.c:534
+#: connectdb.c:157 pg_dumpall.c:552 pg_restore.c:544
 #, c-format
 msgid "could not connect to database \"%s\""
 msgstr "データベース\"%s\"へ接続できませんでした"
 
-#: connectdb.c:200
+#: connectdb.c:201
 #, c-format
 msgid "could not get server version"
 msgstr "サーバーバージョンを取得できませんでした"
 
-#: connectdb.c:204
+#: connectdb.c:205
 #, c-format
 msgid "could not parse server version \"%s\""
 msgstr "サーバーバージョン\"%s\"をパースできませんでした"
 
-#: connectdb.c:221 pg_backup_db.c:52
+#: connectdb.c:222 pg_backup_db.c:52
 #, c-format
 msgid "aborting because of server version mismatch"
 msgstr "サーバーバージョンの不一致のため処理を中断します"
 
-#: connectdb.c:222 pg_backup_db.c:53
+#: connectdb.c:223 pg_backup_db.c:53
 #, c-format
 msgid "server version: %s; %s version: %s"
 msgstr "サーバーバージョン: %s、%s バージョン: %s"
 
-#: connectdb.c:281 pg_dumpall.c:1859
+#: connectdb.c:282 pg_dumpall.c:1864
 #, c-format
 msgid "executing %s"
 msgstr "%s を実行しています"
 
-#: connectdb.c:287 pg_backup_db.c:210 pg_dumpall.c:1865
+#: connectdb.c:288 pg_backup_db.c:210 pg_dumpall.c:1870
 #, c-format
 msgid "query failed: %s"
 msgstr "問い合わせが失敗しました: %s"
 
-#: connectdb.c:288 pg_backup_db.c:212 pg_dumpall.c:1866
+#: connectdb.c:289 pg_backup_db.c:212 pg_dumpall.c:1871
 #, c-format
 msgid "Query was: %s"
 msgstr "問い合わせ: %s"
 
-#: dumputils.c:910
+#: dumputils.c:910 pg_dumpall.c:1662
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を作成できませんでした: %m"
@@ -782,7 +783,7 @@ msgstr "想定外のセクションコード %d"
 #: pg_backup_archiver.c:365
 #, c-format
 msgid "parallel restore is not supported with this archive file format"
-msgstr "このアーカイブファイル形式での並列リストアはサポートしていません"
+msgstr "このアーカイブファイル形式での並列はサポートしていません"
 
 #: pg_backup_archiver.c:369
 #, c-format
@@ -878,7 +879,7 @@ msgstr "選択した形式ではラージオブジェクト出力をサポート
 #, c-format
 msgid "restored %d large object"
 msgid_plural "restored %d large objects"
-msgstr[0] "%d個のラージオブジェクトをリストアしました"
+msgstr[0] "%d個のラージオブジェクトを復元しました"
 
 #: pg_backup_archiver.c:1494 pg_backup_tar.c:683
 #, c-format
@@ -911,14 +912,14 @@ msgid "could not find entry for ID %d"
 msgstr "ID %dのエントリがありませんでした"
 
 #: pg_backup_archiver.c:1625 pg_backup_directory.c:187
-#: pg_backup_directory.c:581
+#: pg_backup_directory.c:586
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "TOCファイルをクローズできませんでした: %m"
 
 #: pg_backup_archiver.c:1713 pg_backup_custom.c:151 pg_backup_directory.c:301
-#: pg_backup_directory.c:568 pg_backup_directory.c:634
-#: pg_backup_directory.c:652 pg_dumpall.c:530
+#: pg_backup_directory.c:573 pg_backup_directory.c:639
+#: pg_backup_directory.c:657 pg_dumpall.c:534
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "出力ファイル\"%s\"をオープンできませんでした: %m"
@@ -979,7 +980,7 @@ msgstr "想定外のデータオフセットフラグ %d"
 msgid "file offset in dump file is too large"
 msgstr "ダンプファイルのファイルオフセットが大きすぎます"
 
-#: pg_backup_archiver.c:2222 pg_restore.c:838
+#: pg_backup_archiver.c:2222 pg_restore.c:847
 #, c-format
 msgid "directory name too long: \"%s\""
 msgstr "ディレクトリ名が長すぎます: \"%s\""
@@ -1013,7 +1014,7 @@ msgstr "入力ファイルが小さすぎます(読み取り%lu、想定は 5)"
 #: pg_backup_archiver.c:2327
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql."
-msgstr "入力ファイルがテキスト形式のダンプのようです。psqlを使用してください。"
+msgstr "入力ファイルがテキスト形式のようです。psqlを使用してください。"
 
 #: pg_backup_archiver.c:2333
 #, c-format
@@ -1235,7 +1236,7 @@ msgstr "アーカイブの探索中に認識不能のデータブロックタイ
 #: pg_backup_custom.c:518
 #, c-format
 msgid "could not find block ID %d in archive -- possibly due to out-of-order restore request, which cannot be handled due to non-seekable input file"
-msgstr "アーカイブ中にブロックID %d がありません -- おそらくリストア要求が順不同だったためですが、入力ファイルがシーク不可なため処理できません"
+msgstr "アーカイブ中にブロックID %d がありません -- おそらく復元要求が順不同だったためですが、入力ファイルがシーク不可なため処理できません"
 
 #: pg_backup_custom.c:523
 #, c-format
@@ -1346,8 +1347,8 @@ msgstr "データベーストランザクションをコミットできません
 msgid "no output directory specified"
 msgstr "出力ディレクトリが指定されていません"
 
-#: pg_backup_directory.c:325 pg_backup_directory.c:474
-#: pg_backup_directory.c:512
+#: pg_backup_directory.c:325 pg_backup_directory.c:479
+#: pg_backup_directory.c:517
 #, c-format
 msgid "could not write to output file: %s"
 msgstr "出力ファイルに書き込めませんでした: %s"
@@ -1362,42 +1363,42 @@ msgstr "データファイルをクローズできませんでした: %m"
 msgid "could not close data file \"%s\": %m"
 msgstr "データファイル\"%s\"をクローズできませんでした: %m"
 
-#: pg_backup_directory.c:423
+#: pg_backup_directory.c:428
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "ラージオブジェクトTOCファイル\"%s\"を入力用としてオープンできませんでした: %m"
 
-#: pg_backup_directory.c:434
+#: pg_backup_directory.c:439
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "ラージオブジェクトTOCファイル\"%s\"の中に不正な行がありました: \"%s\""
 
-#: pg_backup_directory.c:443
+#: pg_backup_directory.c:448
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "ラージオブジェクトTOCファイル\"%s\"の読み取り中にエラーがありました"
 
-#: pg_backup_directory.c:447
+#: pg_backup_directory.c:452
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "ラージオブジェクトTOCファイル\"%s\"をクローズできませんでした: %m"
 
-#: pg_backup_directory.c:670
+#: pg_backup_directory.c:675
 #, c-format
 msgid "could not close LO data file: %m"
 msgstr "ラージオブジェクトのデータファイルをクローズできませんでした: %m"
 
-#: pg_backup_directory.c:680
+#: pg_backup_directory.c:685
 #, c-format
 msgid "could not write to LOs TOC file: %s"
 msgstr "ラージオブジェクトのTOCファイルに書き出せませんでした: %s"
 
-#: pg_backup_directory.c:696
+#: pg_backup_directory.c:701
 #, c-format
 msgid "could not close LOs TOC file: %m"
 msgstr "ラージオブジェクトのTOCファイルをクローズできませんでした: %m"
 
-#: pg_backup_directory.c:715
+#: pg_backup_directory.c:720
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "ファイル名が長すぎます: \"%s\""
@@ -1489,10 +1490,10 @@ msgstr "破損したtarヘッダが%sにありました(想定 %d、算出結果
 msgid "unrecognized section name: \"%s\""
 msgstr "認識不可のセクション名: \"%s\""
 
-#: pg_backup_utils.c:57 pg_dump.c:803 pg_dump.c:820 pg_dumpall.c:385
-#: pg_dumpall.c:395 pg_dumpall.c:403 pg_dumpall.c:411 pg_dumpall.c:418
-#: pg_dumpall.c:428 pg_dumpall.c:443 pg_dumpall.c:564 pg_restore.c:351
-#: pg_restore.c:367 pg_restore.c:378 pg_restore.c:388 pg_restore.c:517
+#: pg_backup_utils.c:57 pg_dump.c:803 pg_dump.c:820 pg_dumpall.c:387
+#: pg_dumpall.c:397 pg_dumpall.c:405 pg_dumpall.c:413 pg_dumpall.c:420
+#: pg_dumpall.c:430 pg_dumpall.c:445 pg_dumpall.c:568 pg_restore.c:361
+#: pg_restore.c:377 pg_restore.c:388 pg_restore.c:398 pg_restore.c:527
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
@@ -1502,52 +1503,52 @@ msgstr "詳細は\"%s --help\"を実行してください。"
 msgid "out of on_exit_nicely slots"
 msgstr "on_exit_nicelyスロットが足りません"
 
-#: pg_dump.c:818 pg_dumpall.c:393 pg_restore.c:365
+#: pg_dump.c:818 pg_dumpall.c:395 pg_restore.c:375
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "コマンドライン引数が多すぎます(先頭は\"%s\")"
 
-#: pg_dump.c:830 pg_restore.c:396
+#: pg_dump.c:830 pg_restore.c:406
 #, c-format
 msgid "options -s/--schema-only and -a/--data-only cannot be used together"
 msgstr "-s/--schema-only と -a/--data-only オプションは同時には使用できません"
 
-#: pg_dump.c:832 pg_restore.c:398
+#: pg_dump.c:832 pg_restore.c:408
 #, c-format
 msgid "options -s/--schema-only and --statistics-only cannot be used together"
 msgstr "-s/--schema-only と--statistics-only オプションは同時には使用できません"
 
-#: pg_dump.c:834 pg_restore.c:400
+#: pg_dump.c:834 pg_restore.c:410
 #, c-format
 msgid "options -a/--data-only and --statistics-only cannot be used together"
 msgstr "-a/--data-only と --statistics-only オプションは同時には使用できません"
 
-#: pg_dump.c:838 pg_restore.c:404
+#: pg_dump.c:838 pg_restore.c:414
 #, c-format
 msgid "options -a/--data-only and --no-data cannot be used together"
 msgstr "-a/--data-only と --no-data オプションは同時には使用できません"
 
-#: pg_dump.c:840 pg_restore.c:406
+#: pg_dump.c:840 pg_restore.c:416
 #, c-format
 msgid "options -s/--schema-only and --no-schema cannot be used together"
 msgstr "-s/--schema-only と --no-schema オプションは同時には使用できません"
 
-#: pg_dump.c:842 pg_restore.c:408
+#: pg_dump.c:842 pg_restore.c:418
 #, c-format
 msgid "options --statistics-only and --no-statistics cannot be used together"
 msgstr "オプション --statistics-only と --no-statistics とは同時には使用できません"
 
-#: pg_dump.c:846 pg_restore.c:412
+#: pg_dump.c:846 pg_restore.c:422
 #, c-format
 msgid "options --with-data and --no-data cannot be used together"
 msgstr "--with-data と --no-data オプションは同時には使用できません"
 
-#: pg_dump.c:848 pg_restore.c:414
+#: pg_dump.c:848 pg_restore.c:424
 #, c-format
 msgid "options --with-schema and --no-schema cannot be used together"
 msgstr "--with-schema と --no-schema オプションは同時には使用できません"
 
-#: pg_dump.c:850 pg_restore.c:416
+#: pg_dump.c:850 pg_restore.c:426
 #, c-format
 msgid "options --with-statistics and --no-statistics cannot be used together"
 msgstr "オプション --with-statistics と --no-statistics とは同時には使用できません"
@@ -1562,12 +1563,12 @@ msgstr "-s/--schema-only と --include-foreign-data オプションは同時に�
 msgid "option --include-foreign-data is not supported with parallel backup"
 msgstr "オプション --include-foreign-data はパラレルバックアップではサポートされません"
 
-#: pg_dump.c:859 pg_restore.c:419
+#: pg_dump.c:859 pg_restore.c:429
 #, c-format
 msgid "options -c/--clean and -a/--data-only cannot be used together"
 msgstr "-c/--clean と -a/--data-only オプションは同時には使用できません"
 
-#: pg_dump.c:862 pg_dumpall.c:423 pg_restore.c:462
+#: pg_dump.c:862 pg_dumpall.c:425 pg_restore.c:472
 #, c-format
 msgid "option --if-exists requires option -c/--clean"
 msgstr "--if-existsは -c/--clean の指定が必要です"
@@ -1620,13 +1621,13 @@ msgstr "合致する機能拡張が見つかりません"
 #: pg_dump.c:1238
 #, c-format
 msgid ""
-"%s dumps a database as a text file or to other formats.\n"
+"%s exports a PostgreSQL database as an SQL script or to other formats.\n"
 "\n"
 msgstr ""
-"%sはデータベースをテキストファイルまたはその他の形式でダンプします。\n"
+"%sは、ひとつのPostgreSQLデータベースをSQLスクリプトまたは他の形式でエクスポートします。\n"
 "\n"
 
-#: pg_dump.c:1239 pg_dumpall.c:699 pg_restore.c:648
+#: pg_dump.c:1239 pg_dumpall.c:703 pg_restore.c:657
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
@@ -1636,7 +1637,7 @@ msgstr "使用方法:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [DBNAME]\n"
 
-#: pg_dump.c:1242 pg_dumpall.c:702 pg_restore.c:651
+#: pg_dump.c:1242 pg_dumpall.c:706 pg_restore.c:660
 #, c-format
 msgid ""
 "\n"
@@ -1650,7 +1651,7 @@ msgstr ""
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=ファイル名        出力ファイルまたはディレクトリの名前\n"
 
-#: pg_dump.c:1244 pg_dumpall.c:704
+#: pg_dump.c:1244 pg_dumpall.c:708
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1664,12 +1665,12 @@ msgstr ""
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=NUM               ダンプ時に指定した数の並列ジョブを使用\n"
 
-#: pg_dump.c:1247 pg_dumpall.c:706
+#: pg_dump.c:1247 pg_dumpall.c:710
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                冗長モード\n"
 
-#: pg_dump.c:1248 pg_dumpall.c:707
+#: pg_dump.c:1248 pg_dumpall.c:711
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                バージョン情報を表示して終了\n"
@@ -1683,12 +1684,12 @@ msgstr ""
 "  -Z, --compress=方式[:詳細]\n"
 "                         指定のとおり圧縮\n"
 
-#: pg_dump.c:1251 pg_dumpall.c:708
+#: pg_dump.c:1251 pg_dumpall.c:712
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TIMEOUT  テーブルロックをTIMEOUT待ってから失敗\n"
 
-#: pg_dump.c:1252 pg_dumpall.c:740
+#: pg_dump.c:1252 pg_dumpall.c:744
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
 msgstr "  --no-sync                    変更のディスクへの安全な書き出しを待機しない\n"
@@ -1700,12 +1701,12 @@ msgstr ""
 "  --sync-method=METHOD         ファイルをディスクに同期させる方法を指定\n"
 "\n"
 
-#: pg_dump.c:1254 pg_dumpall.c:709
+#: pg_dump.c:1254 pg_dumpall.c:713
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   このヘルプを表示して終了\n"
 
-#: pg_dump.c:1256 pg_dumpall.c:710
+#: pg_dump.c:1256 pg_dumpall.c:714
 #, c-format
 msgid ""
 "\n"
@@ -1714,7 +1715,7 @@ msgstr ""
 "\n"
 "出力内容を制御するためのオプション:\n"
 
-#: pg_dump.c:1257 pg_dumpall.c:711
+#: pg_dump.c:1257 pg_dumpall.c:715
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema or statistics\n"
 msgstr "  -a, --data-only              データのみをダンプし、スキーマまたは統計情報をダンプしない\n"
@@ -1743,7 +1744,7 @@ msgstr ""
 "  --no-blobs                   (--no-large-objectsに同じ、非推奨)\n"
 "\n"
 
-#: pg_dump.c:1262 pg_restore.c:662
+#: pg_dump.c:1262 pg_restore.c:671
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
 msgstr "  -c, --clean                  再作成前にデータベースオブジェクトを整理(削除)\n"
@@ -1756,9 +1757,9 @@ msgstr "  -C, --create                 ダンプにデータベース生成用�
 #: pg_dump.c:1264
 #, c-format
 msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
-msgstr "  -e, --extension=PATTERN      指定した機能拡張のみをダンプ\n"
+msgstr "  -e, --extension=PATTERN      指定した機能拡張(群)のみをダンプ\n"
 
-#: pg_dump.c:1265 pg_dumpall.c:713
+#: pg_dump.c:1265 pg_dumpall.c:717
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=ENCODING      指定した符号化方式でデータをダンプ\n"
@@ -1766,12 +1767,12 @@ msgstr "  -E, --encoding=ENCODING      指定した符号化方式でデータ�
 #: pg_dump.c:1266
 #, c-format
 msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
-msgstr "  -n, --schema=SCHEMA          指定したスキーマのみをダンプ\n"
+msgstr "  -n, --schema=SCHEMA          指定したスキーマ(群)のみをダンプ\n"
 
 #: pg_dump.c:1267
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
-msgstr "  -N, --exclude-schema=SCHEMA  指定したスキーマをダンプしない\n"
+msgstr "  -N, --exclude-schema=SCHEMA  指定したスキーマ(群)をダンプしない\n"
 
 #: pg_dump.c:1268
 #, c-format
@@ -1782,7 +1783,7 @@ msgstr ""
 "  -O, --no-owner               プレインテキスト形式で、オブジェクト所有権の\n"
 "                               復元を行わない\n"
 
-#: pg_dump.c:1270 pg_dumpall.c:717
+#: pg_dump.c:1270 pg_dumpall.c:721
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data or statistics\n"
 msgstr ""
@@ -1804,34 +1805,34 @@ msgstr "  -t, --table=PATTERN          指定したテーブル(群)のみをダ
 #: pg_dump.c:1273
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
-msgstr "  -T, --exclude-table=PATTERN  指定したテーブルをダンプしない\n"
+msgstr "  -T, --exclude-table=PATTERN  指定したテーブル(群)をダンプしない\n"
 
-#: pg_dump.c:1274 pg_dumpall.c:720
+#: pg_dump.c:1274 pg_dumpall.c:724
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          権限(grant/revoke)をダンプしない\n"
 
-#: pg_dump.c:1275 pg_dumpall.c:721
+#: pg_dump.c:1275 pg_dumpall.c:725
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             アップグレードユーティリティ専用\n"
 
-#: pg_dump.c:1276 pg_dumpall.c:722
+#: pg_dump.c:1276 pg_dumpall.c:726
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr "  --column-inserts             列名指定のINSERTコマンドでデータをダンプ\n"
 
-#: pg_dump.c:1277 pg_dumpall.c:723
+#: pg_dump.c:1277 pg_dumpall.c:727
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr ""
 "  --disable-dollar-quoting     ドル記号による引用符付けを禁止、SQL標準の引用符\n"
 "                               付けを使用\n"
 
-#: pg_dump.c:1278 pg_dumpall.c:724 pg_restore.c:681
+#: pg_dump.c:1278 pg_dumpall.c:728 pg_restore.c:689
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
-msgstr "  --disable-triggers           データのみのリストアの際にトリガを無効化\n"
+msgstr "  --disable-triggers           データのみの復元の際にトリガを無効化\n"
 
 #: pg_dump.c:1279
 #, c-format
@@ -1845,7 +1846,7 @@ msgstr ""
 #: pg_dump.c:1281
 #, c-format
 msgid "  --exclude-extension=PATTERN  do NOT dump the specified extension(s)\n"
-msgstr "  --exclude-extension=PATTERN  指定した機能拡張をダンプしない\n"
+msgstr "  --exclude-extension=PATTERN  指定した機能拡張(群)をダンプしない\n"
 
 #: pg_dump.c:1282
 #, c-format
@@ -1861,7 +1862,7 @@ msgstr ""
 #: pg_dump.c:1285
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
-msgstr "  --exclude-table-data=PATTERN 指定したテーブルのデータをダンプしない\n"
+msgstr "  --exclude-table-data=PATTERN 指定したテーブル(群)のデータをダンプしない\n"
 
 #: pg_dump.c:1286
 #, c-format
@@ -1874,7 +1875,7 @@ msgstr ""
 "                               指定したテーブル(群)のデータを子テーブルを含めて\n"
 "                               ダンプしない\n"
 
-#: pg_dump.c:1289 pg_dumpall.c:726
+#: pg_dump.c:1289 pg_dumpall.c:730
 #, c-format
 msgid "  --extra-float-digits=NUM     override default setting for extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     extra_float_digitsの設定を上書きする\n"
@@ -1888,7 +1889,7 @@ msgstr ""
 "  --filter=FILENAME            オブジェクトやデータの指定や除外を\n"
 "                               FILENAMEに記述された式をもとに行う\n"
 
-#: pg_dump.c:1292 pg_dumpall.c:728 pg_restore.c:685
+#: pg_dump.c:1292 pg_dumpall.c:732 pg_restore.c:694
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  オブジェクト削除の際に IF EXISTS を使用\n"
@@ -1904,89 +1905,89 @@ msgstr ""
 "                               PATTERNに合致する外部サーバー上の外部テーブルの\n"
 "                               データを含める\n"
 
-#: pg_dump.c:1296 pg_dumpall.c:729
+#: pg_dump.c:1296 pg_dumpall.c:733
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
 msgstr "  --inserts                    COPYではなくINSERTコマンドでデータをダンプ\n"
 
-#: pg_dump.c:1297 pg_dumpall.c:730
+#: pg_dump.c:1297 pg_dumpall.c:734
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
 msgstr "  --load-via-partition-root    子テーブルをルートテーブル経由でロードする\n"
 
-#: pg_dump.c:1298 pg_dumpall.c:731
+#: pg_dump.c:1298 pg_dumpall.c:735
 #, c-format
 msgid "  --no-comments                do not dump comment commands\n"
 msgstr "  --no-comments                コメントコマンドをダンプしない\n"
 
-#: pg_dump.c:1299 pg_dumpall.c:732
+#: pg_dump.c:1299 pg_dumpall.c:736
 #, c-format
 msgid "  --no-data                    do not dump data\n"
 msgstr "  --no-data                    データをダンプしない\n"
 
-#: pg_dump.c:1300 pg_dumpall.c:733
+#: pg_dump.c:1300 pg_dumpall.c:737
 #, c-format
 msgid "  --no-policies                do not dump row security policies\n"
 msgstr "  --no-policies                行セキュリティポリシーをダンプしない\n"
 
-#: pg_dump.c:1301 pg_dumpall.c:734
+#: pg_dump.c:1301 pg_dumpall.c:738
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
 msgstr "  --no-publications            パブリケーションをダンプしない\n"
 
-#: pg_dump.c:1302 pg_dumpall.c:736
+#: pg_dump.c:1302 pg_dumpall.c:740
 #, c-format
 msgid "  --no-schema                  do not dump schema\n"
 msgstr "  --no-schema                  スキーマをダンプしない\n"
 
-#: pg_dump.c:1303 pg_dumpall.c:737
+#: pg_dump.c:1303 pg_dumpall.c:741
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         セキュリティラベルの割り当てをダンプしない\n"
 
-#: pg_dump.c:1304 pg_dumpall.c:738
+#: pg_dump.c:1304 pg_dumpall.c:742
 #, c-format
 msgid "  --no-statistics              do not dump statistics\n"
 msgstr "  --no-statistics              統計情報をダンプしない\n"
 
-#: pg_dump.c:1305 pg_dumpall.c:739
+#: pg_dump.c:1305 pg_dumpall.c:743
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           サブスクリプションをダンプしない\n"
 
-#: pg_dump.c:1306 pg_dumpall.c:741
+#: pg_dump.c:1306 pg_dumpall.c:745
 #, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
 msgstr "  --no-table-access-method     テーブルアクセスメソッドをダンプしない\n"
 
-#: pg_dump.c:1307 pg_dumpall.c:742
+#: pg_dump.c:1307 pg_dumpall.c:746
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             テーブルスペースの割り当てをダンプしない\n"
 
-#: pg_dump.c:1308 pg_dumpall.c:743
+#: pg_dump.c:1308 pg_dumpall.c:747
 #, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
 msgstr "  --no-toast-compression       TOAST圧縮方式をダンプしない\n"
 
-#: pg_dump.c:1309 pg_dumpall.c:744
+#: pg_dump.c:1309 pg_dumpall.c:748
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     非ログテーブルのデータをダンプしない\n"
 
-#: pg_dump.c:1310 pg_dumpall.c:745
+#: pg_dump.c:1310 pg_dumpall.c:749
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
 msgstr "  --on-conflict-do-nothing     INSERTコマンドにON CONFLICT DO NOTHINGを付加する\n"
 
-#: pg_dump.c:1311 pg_dumpall.c:746
+#: pg_dump.c:1311 pg_dumpall.c:750
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr ""
 "  --quote-all-identifiers      すべての識別子をキーワードでなかったとしても\n"
 "                               引用符で囲む\n"
 
-#: pg_dump.c:1312 pg_dumpall.c:747
+#: pg_dump.c:1312 pg_dumpall.c:751
 #, c-format
 msgid "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
 msgstr "  --rows-per-insert=NROWS      INSERT毎の行数; --insertsを暗黙的に指定する\n"
@@ -1998,7 +1999,7 @@ msgstr ""
 "  --section=SECTION            指定したセクション(pre-data、data または\n"
 "                               post-data)をダンプする\n"
 
-#: pg_dump.c:1314
+#: pg_dump.c:1314 pg_dumpall.c:752
 #, c-format
 msgid "  --sequence-data              include sequence data in dump\n"
 msgstr "  --sequence-data              ダンプにシーケンスデータを含める\n"
@@ -2013,14 +2014,14 @@ msgstr "  --serializable-deferrable    ダンプを異常なく実行できる�
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
 msgstr "  --snapshot=SNAPSHOT          ダンプに指定のスナップショットを使用する\n"
 
-#: pg_dump.c:1317 pg_dumpall.c:748
+#: pg_dump.c:1317 pg_dumpall.c:753
 #, c-format
 msgid "  --statistics-only            dump only the statistics, not schema or data\n"
 msgstr ""
 "  --statistics-only            統計情報のみをダンプし、スキーマまたはデータを\n"
 "                               ダンプしない\n"
 
-#: pg_dump.c:1318 pg_restore.c:700
+#: pg_dump.c:1318 pg_restore.c:709
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
@@ -2038,7 +2039,7 @@ msgstr ""
 "  --table-and-children=PATTERN 指定したテーブル(群)のみを子テーブル\n"
 "                               を含めてダンプ\n"
 
-#: pg_dump.c:1322 pg_dumpall.c:749 pg_restore.c:703
+#: pg_dump.c:1322 pg_dumpall.c:754 pg_restore.c:712
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -2049,22 +2050,22 @@ msgstr ""
 "                               所有者をセットする際、ALTER OWNERコマンドの代わり\n"
 "                               にSET SESSION AUTHORIZATIONコマンドを使用する\n"
 
-#: pg_dump.c:1325 pg_dumpall.c:752 pg_restore.c:706
+#: pg_dump.c:1325 pg_dumpall.c:757
 #, c-format
 msgid "  --with-data                  dump the data\n"
 msgstr "  --with-data                  データをダンプする\n"
 
-#: pg_dump.c:1326 pg_dumpall.c:753 pg_restore.c:707
+#: pg_dump.c:1326 pg_dumpall.c:758
 #, c-format
 msgid "  --with-schema                dump the schema\n"
 msgstr "  --with-schema                スキーマをダンプする\n"
 
-#: pg_dump.c:1327 pg_dumpall.c:754 pg_restore.c:708
+#: pg_dump.c:1327 pg_dumpall.c:759
 #, c-format
 msgid "  --with-statistics            dump the statistics\n"
 msgstr "  --with-statistics            統計情報をダンプする\n"
 
-#: pg_dump.c:1329 pg_dumpall.c:756 pg_restore.c:710
+#: pg_dump.c:1329 pg_dumpall.c:761 pg_restore.c:719
 #, c-format
 msgid ""
 "\n"
@@ -2078,36 +2079,36 @@ msgstr ""
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=DBNAME      ダンプするデータベース\n"
 
-#: pg_dump.c:1331 pg_dumpall.c:758 pg_restore.c:711
+#: pg_dump.c:1331 pg_dumpall.c:763 pg_restore.c:720
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr ""
 "  -h, --host=HOSTNAME      データベースサーバーのホストまたはソケット\n"
 "                           ディレクトリ\n"
 
-#: pg_dump.c:1332 pg_dumpall.c:760 pg_restore.c:712
+#: pg_dump.c:1332 pg_dumpall.c:765 pg_restore.c:721
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORT          データベースサーバーのポート番号\n"
 
-#: pg_dump.c:1333 pg_dumpall.c:761 pg_restore.c:713
+#: pg_dump.c:1333 pg_dumpall.c:766 pg_restore.c:722
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=NAME      指定したデータベースユーザーで接続\n"
 
-#: pg_dump.c:1334 pg_dumpall.c:762 pg_restore.c:714
+#: pg_dump.c:1334 pg_dumpall.c:767 pg_restore.c:723
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        パスワード入力を要求しない\n"
 
-#: pg_dump.c:1335 pg_dumpall.c:763 pg_restore.c:715
+#: pg_dump.c:1335 pg_dumpall.c:768 pg_restore.c:724
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr ""
 "  -W, --password           パスワードプロンプトを強制表示\n"
 "                           (自動的に表示されるはず)\n"
 
-#: pg_dump.c:1336 pg_dumpall.c:764
+#: pg_dump.c:1336 pg_dumpall.c:769
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=ROLENAME          ダンプの前に SET ROLE を行う\n"
@@ -2124,17 +2125,17 @@ msgstr ""
 "データベース名が指定されなかった場合、環境変数PGDATABASEが使用されます\n"
 "\n"
 
-#: pg_dump.c:1340 pg_dumpall.c:768 pg_restore.c:722
+#: pg_dump.c:1340 pg_dumpall.c:773 pg_restore.c:731
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "バグは<%s>に報告してください。\n"
 
-#: pg_dump.c:1341 pg_dumpall.c:769 pg_restore.c:723
+#: pg_dump.c:1341 pg_dumpall.c:774 pg_restore.c:732
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_dump.c:1360 pg_dumpall.c:581
+#: pg_dump.c:1360 pg_dumpall.c:585
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
 msgstr "不正なクライアントエンコーディング\"%s\"が指定されました"
@@ -2149,8 +2150,8 @@ msgstr "スタンバイサーバーからの並列ダンプはこのサーバー
 msgid "invalid output format \"%s\" specified"
 msgstr "不正な出力形式\"%s\"が指定されました"
 
-#: pg_dump.c:1614 pg_dump.c:1670 pg_dump.c:1723 pg_dumpall.c:1593
-#: pg_restore.c:974
+#: pg_dump.c:1614 pg_dump.c:1670 pg_dump.c:1723 pg_dumpall.c:1598
+#: pg_restore.c:984
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "修飾名が不適切です(ドット区切りの名前が多すぎます): %s"
@@ -2205,7 +2206,7 @@ msgstr "テーブル\"%s\"の内容のダンプに失敗: PQgetCopyData()が失�
 msgid "Error message from server: %s"
 msgstr "サーバーのエラーメッセージ: %s"
 
-#: pg_dump.c:2422 pg_dump.c:2432
+#: pg_dump.c:2422 pg_dump.c:2432 pg_restore.c:1363
 #, c-format
 msgid "Command was: %s"
 msgstr "コマンド: %s"
@@ -2275,8 +2276,8 @@ msgstr "行レベルセキュリティポリシーを読み取ります"
 msgid "unexpected policy command type: %c"
 msgstr "想定外のポリシコマンドタイプ: \"%c\""
 
-#: pg_dump.c:4764 pg_dump.c:5321 pg_dump.c:7917 pg_dump.c:13277 pg_dump.c:19381
-#: pg_dump.c:19383 pg_dump.c:20015
+#: pg_dump.c:4764 pg_dump.c:5321 pg_dump.c:7919 pg_dump.c:13307 pg_dump.c:19425
+#: pg_dump.c:19427 pg_dump.c:20059
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s配列をパースできませんでした"
@@ -2306,307 +2307,307 @@ msgstr "%s %sの親となる機能拡張がありませんでした"
 msgid "schema with OID %u does not exist"
 msgstr "OID %uのスキーマは存在しません"
 
-#: pg_dump.c:6939
+#: pg_dump.c:6941
 #, c-format
-msgid "cannot dump statistics for relation kind '%c'"
-msgstr "リレーション種別\"%c\"の統計情報はダンプできません"
+msgid "cannot dump statistics for relation kind \"%c\""
+msgstr "リレーション種別 '%c' の統計情報はダンプできません"
 
-#: pg_dump.c:7451 pg_dump.c:18725
+#: pg_dump.c:7453 pg_dump.c:18769
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるシーケンスの OID %1$u である親テーブルがありません"
 
-#: pg_dump.c:7596
+#: pg_dump.c:7598
 #, c-format
 msgid "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
 msgstr "健全性検査に失敗しました、pg_partitioned_tableにあるテーブルOID %u が見つかりません"
 
-#: pg_dump.c:7861 pg_dump.c:8154 pg_dump.c:8595 pg_dump.c:9232 pg_dump.c:9366
-#: pg_dump.c:9511 pg_dump.c:9611
+#: pg_dump.c:7863 pg_dump.c:8156 pg_dump.c:8597 pg_dump.c:9234 pg_dump.c:9369
+#: pg_dump.c:9514 pg_dump.c:9614
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "認識できないテーブルOID %u"
 
-#: pg_dump.c:7865
+#: pg_dump.c:7867
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外のインデックスデータ"
 
-#: pg_dump.c:8382
+#: pg_dump.c:8384
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるpg_rewriteエントリのOID %1$u である親テーブルが見つかりません"
 
-#: pg_dump.c:9236
+#: pg_dump.c:9238
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外の列データ"
 
-#: pg_dump.c:9266
+#: pg_dump.c:9269
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "テーブル\"%s\"の列番号が不正です"
 
-#: pg_dump.c:9328
+#: pg_dump.c:9331
 #, c-format
 msgid "finding table default expressions"
 msgstr "テーブルのデフォルト式を探しています"
 
-#: pg_dump.c:9370
+#: pg_dump.c:9373
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用のadnumの値%1$dが不正です"
 
-#: pg_dump.c:9463
+#: pg_dump.c:9466
 #, c-format
-msgid "finding invalid not null constraints"
+msgid "finding invalid not-null constraints"
 msgstr "未検証の非NULL制約を探しています"
 
-#: pg_dump.c:9561
+#: pg_dump.c:9564
 #, c-format
 msgid "finding table check constraints"
 msgstr "テーブルのチェック制約を探しています"
 
-#: pg_dump.c:9615
+#: pg_dump.c:9618
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "テーブル\"%2$s\"で想定する検査制約は%1$d個でしたが、%3$dありました"
 
-#: pg_dump.c:9619
+#: pg_dump.c:9622
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "システムカタログが破損している可能性があります。"
 
-#: pg_dump.c:10411
+#: pg_dump.c:10423
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "OID が %u であるロールは存在しません"
 
-#: pg_dump.c:10523 pg_dump.c:10552
+#: pg_dump.c:10535 pg_dump.c:10564
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "非サポートのpg_init_privsエントリ: %u %u %d"
 
-#: pg_dump.c:10843
+#: pg_dump.c:10860
 #, c-format
-msgid "stats dumped out of order (current: %d %s %s) (expected: %d %s %s)"
-msgstr "統計情報が異常な順序でダンプされています (現在: %d %s %s) (想定: %d %s %s)"
+msgid "statistics dumped out of order (current: %d %s %s, expected: %d %s %s)"
+msgstr "統計情報が異常な順序でダンプされています (現在: %d %s %s, 想定: %d %s %s)"
 
-#: pg_dump.c:10971
+#: pg_dump.c:11001
 #, c-format
-msgid "attname cannot be NULL"
-msgstr "attname はNULLにはできません"
+msgid "unexpected null attname"
+msgstr "attname が NULL です"
 
-#: pg_dump.c:11000
+#: pg_dump.c:11030
 #, c-format
 msgid "could not find index attname \"%s\""
 msgstr "\"%s\" というインデックスのattnameは見つかりませんでした"
 
-#: pg_dump.c:11486
+#: pg_dump.c:11516
 #, c-format
 msgid "missing metadata for large objects \"%s\""
 msgstr "ラージオブジェクト\"%s\"のメタデータがありません"
 
-#: pg_dump.c:11772
+#: pg_dump.c:11802
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "データ型\"%s\"のtyptypeが不正なようです"
 
-#: pg_dump.c:13348
+#: pg_dump.c:13378
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "関数\"%s\"のprovolatileの値が認識できません"
 
-#: pg_dump.c:13398 pg_dump.c:15294
+#: pg_dump.c:13428 pg_dump.c:15324
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "関数\"%s\"のproparallel値が認識できません"
 
-#: pg_dump.c:13528 pg_dump.c:13634 pg_dump.c:13641
+#: pg_dump.c:13558 pg_dump.c:13664 pg_dump.c:13671
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "OID %uの関数の関数定義が見つかりませんでした"
 
-#: pg_dump.c:13567
+#: pg_dump.c:13597
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfuncまたはpg_cast.castmethodフィールドの値がおかしいです"
 
-#: pg_dump.c:13570
+#: pg_dump.c:13600
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:13660
+#: pg_dump.c:13690
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "おかしな変換定義、trffromsql か trftosql の少なくとも一方は非ゼロであるはずです"
 
-#: pg_dump.c:13677
+#: pg_dump.c:13707
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:13698
+#: pg_dump.c:13728
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:13843
+#: pg_dump.c:13873
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "後置演算子は今後サポートされません(演算子\"%s\")"
 
-#: pg_dump.c:14013
+#: pg_dump.c:14043
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "OID %sの演算子がありませんでした"
 
-#: pg_dump.c:14081
+#: pg_dump.c:14111
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "アクセスメソッド\"%2$s\"の不正なタイプ\"%1$c\""
 
-#: pg_dump.c:14755 pg_dump.c:14823
+#: pg_dump.c:14785 pg_dump.c:14853
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "認識できないの照合順序プロバイダ: %s"
 
-#: pg_dump.c:14764 pg_dump.c:14771 pg_dump.c:14782 pg_dump.c:14792
-#: pg_dump.c:14807
+#: pg_dump.c:14794 pg_dump.c:14801 pg_dump.c:14812 pg_dump.c:14822
+#: pg_dump.c:14837
 #, c-format
 msgid "invalid collation \"%s\""
 msgstr "不正な照合順序\"%s\""
 
-#: pg_dump.c:15213
+#: pg_dump.c:15243
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggfinalmodifyの値が識別できません"
 
-#: pg_dump.c:15269
+#: pg_dump.c:15299
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggmfinalmodifyの値が識別できません"
 
-#: pg_dump.c:15989
+#: pg_dump.c:16019
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "デフォルト権限設定中の認識できないオブジェクト型: %d"
 
-#: pg_dump.c:16005
+#: pg_dump.c:16035
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "デフォルトの ACL リスト(%s)をパースできませんでした"
 
-#: pg_dump.c:16089
+#: pg_dump.c:16119
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)の初期ACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:16114
+#: pg_dump.c:16144
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)のACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:16657
+#: pg_dump.c:16687
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせがデータを返却しませんでした"
 
-#: pg_dump.c:16660
+#: pg_dump.c:16690
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせが2つ以上の定義を返却しました"
 
-#: pg_dump.c:16667
+#: pg_dump.c:16697
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ビュー\"%s\"の定義が空のようです(長さが0)"
 
-#: pg_dump.c:16752
+#: pg_dump.c:16782
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDSは今後サポートされません(テーブル\"%s\")"
 
-#: pg_dump.c:17842
+#: pg_dump.c:17872
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "テーブル\"%2$s\"の列番号%1$dは不正です"
 
-#: pg_dump.c:17920
+#: pg_dump.c:17950
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "インデックス統計列をパースできませんでした"
 
-#: pg_dump.c:17922
+#: pg_dump.c:17952
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "インデックス統計値をパースできませんでした"
 
-#: pg_dump.c:17924
+#: pg_dump.c:17954
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "インデックス統計に対して列と値の数が合致しません"
 
-#: pg_dump.c:18139
+#: pg_dump.c:18183
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "制約\"%s\"のインデックスが見つかりません"
 
-#: pg_dump.c:18383
+#: pg_dump.c:18427
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "制約のタイプが識別できません: %c"
 
-#: pg_dump.c:18436
+#: pg_dump.c:18480
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "認識されないシーケンスの型\"%s\""
 
-#: pg_dump.c:18568 pg_dump.c:18800
+#: pg_dump.c:18612 pg_dump.c:18844
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "シーケンス\"%s\"のデータを得るための問い合わせが%d行返却しました(想定は1)"
 
-#: pg_dump.c:18604
+#: pg_dump.c:18648
 #, c-format
 msgid "unrecognized sequence type: %d"
 msgstr "認識されないシーケンスの型: %d"
 
-#: pg_dump.c:19133
+#: pg_dump.c:19177
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "テーブル\"%2$s\"のルール\"%1$s\"を得るための問い合わせが失敗しました: 間違った行数が返却されました"
 
-#: pg_dump.c:19286
+#: pg_dump.c:19330
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "親の機能拡張%uが見つかりません"
 
-#: pg_dump.c:19385
+#: pg_dump.c:19429
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "機能拡張に対して設定と条件の数が一致しません"
 
-#: pg_dump.c:19517
+#: pg_dump.c:19561
 #, c-format
 msgid "reading dependency data"
 msgstr "データの依存データを読み込んでいます"
 
-#: pg_dump.c:19603
+#: pg_dump.c:19647
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "参照元オブジェクト%u %uがありません"
 
-#: pg_dump.c:19614
+#: pg_dump.c:19658
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "参照先オブジェクト%u %uがありません"
 
-#: pg_dump.c:20049 pg_dump.c:20087 pg_dumpall.c:1911 pg_restore.c:757
-#: pg_restore.c:803
+#: pg_dump.c:20093 pg_dump.c:20131 pg_dumpall.c:1916 pg_restore.c:766
+#: pg_restore.c:812
 #, c-format
 msgid "%s filter for \"%s\" is not allowed"
 msgstr "\"%2$s\"に対しては%1$sフィルターを指定できません"
@@ -2635,7 +2636,7 @@ msgstr[0] "次のテーブルの中で外部キー制約の循環があります
 #: pg_dump_sort.c:1252
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
-msgstr "--disable-triggersの使用または一時的な制約の削除を行わずにこのダンプをリストアすることはできないかもしれません。"
+msgstr "--disable-triggersを使用するか、制約を一時的に削除しないと、このダンプデータからのリストアはできない可能性があります。"
 
 #: pg_dump_sort.c:1253
 #, c-format
@@ -2647,47 +2648,42 @@ msgstr "この問題を回避するために--data-onlyダンプの代わりに�
 msgid "could not resolve dependency loop among these items:"
 msgstr "以下の項目の間の依存関係のループを解決できませんでした:"
 
-#: pg_dumpall.c:244
+#: pg_dumpall.c:246
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "%2$sには\"%1$s\"プログラムが必要ですが、\"%3$s\"と同じディレクトリにありませんでした。"
 
-#: pg_dumpall.c:247
+#: pg_dumpall.c:249
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "\"%2$s\"がプログラム\"%1$s\"を見つけましたが、これは%3$sと同じバージョンではありませんでした。"
 
-#: pg_dumpall.c:402
+#: pg_dumpall.c:404
 #, c-format
 msgid "option --exclude-database cannot be used together with -g/--globals-only, -r/--roles-only, or -t/--tablespaces-only"
 msgstr "--exclude-database オプションは -g/--globals-only、-r/--roles-only もしくは -t/--tablespaces-only と一緒には使用できません"
 
-#: pg_dumpall.c:410
+#: pg_dumpall.c:412
 #, c-format
 msgid "options -g/--globals-only and -r/--roles-only cannot be used together"
 msgstr "-g/--globals-onlyと-r/--roles-onlyオプションは同時に使用できません"
 
-#: pg_dumpall.c:417
+#: pg_dumpall.c:419
 #, c-format
 msgid "options -g/--globals-only and -t/--tablespaces-only cannot be used together"
 msgstr "-g/--globals-onlyと-t/--tablespaces-onlyオプションは同時に使用できません"
 
-#: pg_dumpall.c:427
+#: pg_dumpall.c:429
 #, c-format
 msgid "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
 msgstr "-r/--roles-onlyと-t/--tablespaces-onlyオプションは同時に使用できません"
 
-#: pg_dumpall.c:442
+#: pg_dumpall.c:444
 #, c-format
 msgid "option -F/--format=d|c|t requires option -f/--file"
 msgstr "オプション -F/--format=d|c|t はオプション -f/--file の指定が必要です"
 
-#: pg_dumpall.c:524 pg_restore.c:1050 pg_restore.c:1295
-#, c-format
-msgid "could not open \"%s\": %m"
-msgstr "\"%s\"をオープンできませんでした: %m"
-
-#: pg_dumpall.c:562
+#: pg_dumpall.c:566
 #, c-format
 msgid ""
 "could not connect to databases \"postgres\" or \"template1\"\n"
@@ -2696,89 +2692,89 @@ msgstr ""
 "\"postgres\"または\"template1\"データベースに接続できませんでした\n"
 "代わりのデータベースを指定してください。"
 
-#: pg_dumpall.c:698
+#: pg_dumpall.c:702
 #, c-format
 msgid ""
-"%s extracts a PostgreSQL database cluster based on specified dump format.\n"
+"%s exports a PostgreSQL database cluster as an SQL script or to other formats.\n"
 "\n"
 msgstr ""
-"%sはPostgreSQLデータベースクラスタを指定されたダンプ形式で抽出します。\n"
+"%sは、PostgreSQLデータベースクラスタをSQLスクリプトまたは他の形式でエクスポートします。\n"
 "\n"
 
-#: pg_dumpall.c:700
+#: pg_dumpall.c:704
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [OPTION]...\n"
 
-#: pg_dumpall.c:703
+#: pg_dumpall.c:707
 #, c-format
 msgid "  -f, --file=FILENAME          output file name\n"
 msgstr "  -f, --file=ファイル名        出力ファイル名\n"
 
-#: pg_dumpall.c:712
+#: pg_dumpall.c:716
 #, c-format
 msgid "  -c, --clean                  clean (drop) databases before recreating\n"
 msgstr "  -c, --clean                  再作成前にデータベースを整理（削除）\n"
 
-#: pg_dumpall.c:714
+#: pg_dumpall.c:718
 #, c-format
 msgid "  -g, --globals-only           dump only global objects, no databases\n"
 msgstr ""
 "  -g, --globals-only           グローバルオブジェクトのみをダンプし、\n"
 "                               データベースをダンプしない\n"
 
-#: pg_dumpall.c:715 pg_restore.c:672
+#: pg_dumpall.c:719 pg_restore.c:681
 #, c-format
 msgid "  -O, --no-owner               skip restoration of object ownership\n"
 msgstr "  -O, --no-owner               オブジェクトの所有権の復元を省略\n"
 
-#: pg_dumpall.c:716
+#: pg_dumpall.c:720
 #, c-format
 msgid "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
 msgstr ""
 "  -r, --roles-only             ロールのみをダンプ。\n"
 "                               データベースとテーブル空間をダンプしない\n"
 
-#: pg_dumpall.c:718
+#: pg_dumpall.c:722
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
 msgstr ""
 "  -S, --superuser=NAME         ダンプで使用するスーパーユーザーのユーザー名を\n"
 "                               指定\n"
 
-#: pg_dumpall.c:719
+#: pg_dumpall.c:723
 #, c-format
 msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
 msgstr ""
 "  -t, --tablespaces-only       テーブル空間のみをダンプ。データベースとロールを\n"
 "                               ダンプしない\n"
 
-#: pg_dumpall.c:725
+#: pg_dumpall.c:729
 #, c-format
 msgid "  --exclude-database=PATTERN   exclude databases whose name matches PATTERN\n"
 msgstr "  --exclude-database=PATTERN   PATTERNに合致する名前のデータベースを除外\n"
 
-#: pg_dumpall.c:727
+#: pg_dumpall.c:731
 #, c-format
 msgid "  --filter=FILENAME            exclude databases based on expressions in FILENAME\n"
 msgstr "  --filter=FILENAME            FILENAMEで指定された式に基づいてデータベースを除外する\n"
 
-#: pg_dumpall.c:735
+#: pg_dumpall.c:739
 #, c-format
 msgid "  --no-role-passwords          do not dump passwords for roles\n"
 msgstr "  --no-role-passwords          ロールのパスワードをダンプしない\n"
 
-#: pg_dumpall.c:757
+#: pg_dumpall.c:762
 #, c-format
 msgid "  -d, --dbname=CONNSTR     connect using connection string\n"
 msgstr "  -d, --dbname=CONSTR      接続文字列を用いた接続\n"
 
-#: pg_dumpall.c:759
+#: pg_dumpall.c:764
 #, c-format
 msgid "  -l, --database=DBNAME    alternative default database\n"
 msgstr "  -l, --database=DBNAME    代替のデフォルトデータベースを指定\n"
 
-#: pg_dumpall.c:766
+#: pg_dumpall.c:771
 #, c-format
 msgid ""
 "\n"
@@ -2790,210 +2786,198 @@ msgstr ""
 "-f/--file が指定されない場合、SQLスクリプトは標準出力に書き出されます。\n"
 "\n"
 
-#: pg_dumpall.c:911
+#: pg_dumpall.c:916
 #, c-format
 msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "\"pg_\"で始まるロール名はスキップされました(%s)"
 
 #. translator: %s represents a numeric role OID
-#: pg_dumpall.c:1125 pg_dumpall.c:1183 pg_dumpall.c:1192
+#: pg_dumpall.c:1130 pg_dumpall.c:1188 pg_dumpall.c:1197
 #, c-format
 msgid "found orphaned pg_auth_members entry for role %s"
 msgstr "ロール %s に対する pg_auth_members エントリがありましたが、このロールは存在しません"
 
-#: pg_dumpall.c:1158
+#: pg_dumpall.c:1163
 #, c-format
 msgid "could not find a legal dump ordering for memberships in role \"%s\""
 msgstr "ロール\"%s\"のメンバーシップに対して正当なダンプ順序が見つかりませんでした"
 
-#: pg_dumpall.c:1313
+#: pg_dumpall.c:1318
 #, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
 msgstr "パラメータ\"%2$s\"のACLリスト(%1$s)をパースできませんでした"
 
-#: pg_dumpall.c:1440
+#: pg_dumpall.c:1445
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
 msgstr "テーブル空間\"%2$s\"のACLリスト(%1$s)をパースできませんでした"
 
-#: pg_dumpall.c:1657
-#, c-format
-msgid "could not create subdirectory \"%s\": %m"
-msgstr "サブディレクトリ\"%s\"を作成できませんでした: %m"
-
-#: pg_dumpall.c:1664
-#, c-format
-msgid "could not open map file: %s"
-msgstr "マップファイルを開くことができませんでした: %s"
-
-#: pg_dumpall.c:1681 pg_restore.c:1004
+#: pg_dumpall.c:1686 pg_restore.c:1014
 #, c-format
 msgid "excluding database \"%s\""
 msgstr "データベース\"%s\"を除外します"
 
-#: pg_dumpall.c:1702
+#: pg_dumpall.c:1707
 #, c-format
 msgid "dumping database \"%s\""
 msgstr "データベース\"%s\"をダンプしています"
 
-#: pg_dumpall.c:1731
+#: pg_dumpall.c:1736
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
 msgstr "データベース\"%s\"のダンプが失敗しました、終了します"
 
-#: pg_dumpall.c:1744
+#: pg_dumpall.c:1749
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
 msgstr "出力ファイル\"%s\"を再オープンできませんでした: %m"
 
-#: pg_dumpall.c:1812
+#: pg_dumpall.c:1817
 #, c-format
 msgid "running \"%s\""
 msgstr "\"%s\"を実行しています"
 
-#: pg_dumpall.c:1931
+#: pg_dumpall.c:1936
 msgid "unsupported filter object"
 msgstr "サポートされていないフィルターオブジェクト"
 
-#: pg_dumpall.c:1974
+#: pg_dumpall.c:1979
 #, c-format
-msgid "unrecognized archive format \"%s\"; please specify \"c\", \"d\", \"p\", or \"t\""
-msgstr "アーカイブ形式\"%s\"が認識できません; \"c\"、\"d\"、\"p\" または\"t\"を指定してください"
+msgid "unrecognized output format \"%s\"; please specify \"c\", \"d\", \"p\", or \"t\""
+msgstr "認識不能の出力形式\"%s\"; \"c\"、\"d\"、\"p\" または\"t\"を指定してください"
 
-#: pg_restore.c:373
+#: pg_restore.c:383
 #, c-format
 msgid "one of -d/--dbname and -f/--file must be specified"
 msgstr "-d/--dbnameと-f/--fileのどちらか一方が指定されていなければなりません"
 
-#: pg_restore.c:377
+#: pg_restore.c:387
 #, c-format
 msgid "option --exclude-database cannot be used together with -g/--globals-only"
 msgstr "オプション --exclude-database は -g/--globals-only と一緒には使用できません"
 
-#: pg_restore.c:387
+#: pg_restore.c:397
 #, c-format
 msgid "options -d/--dbname and -f/--file cannot be used together"
 msgstr "オプション-d/--dbnameと-f/--fileは同時に使用できません"
 
-#: pg_restore.c:422
+#: pg_restore.c:432
 #, c-format
 msgid "options -1/--single-transaction and --transaction-size cannot be used together"
 msgstr "オプション -1/--single-transaction と --transaction-size とは同時には使用できません"
 
-#: pg_restore.c:429
+#: pg_restore.c:439
 #, c-format
 msgid "options -C/--create and -1/--single-transaction cannot be used together"
 msgstr "オプション-C/--createと-1/--single-transactionとは同時には使用できません"
 
-#: pg_restore.c:433
+#: pg_restore.c:443
 #, c-format
 msgid "cannot specify both --single-transaction and multiple jobs"
 msgstr "--single-transaction と複数ジョブは同時には指定できません"
 
-#: pg_restore.c:481
+#: pg_restore.c:491
 #, c-format
 msgid "archive format \"%s\" is not supported; please use psql"
 msgstr "アーカイブ形式\"%s\"はサポートされていません、psqlを使ってください"
 
-#: pg_restore.c:485
+#: pg_restore.c:495
 #, c-format
 msgid "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\""
 msgstr "アーカイブ形式\"%s\"が認識できません; \"c\"、\"d\"または\"t\"を指定してください"
 
-#: pg_restore.c:506
+#: pg_restore.c:516
 #, c-format
 msgid "option -l/--list cannot be used when restoring an archive created by pg_dumpall"
 msgstr "オプション -l/--list はpg_dumpallで作成されたアーカイブの復元では使用できません"
 
-#: pg_restore.c:508
+#: pg_restore.c:518
 #, c-format
 msgid "option -L/--use-list cannot be used when restoring an archive created by pg_dumpall"
 msgstr "オプション-L/--use-list はpg_dumpallで作成されたアーカイブの復元では使用できません"
 
-#: pg_restore.c:516
+#: pg_restore.c:526
 #, c-format
-msgid "-C/--create option should be specified when restoring an archive created by pg_dumpall"
-msgstr "pg_dumpallで作成されたアーカイブを復元する際には、-C/--create オプションの指定が必要です"
+msgid "option -C/--create must be specified when restoring an archive created by pg_dumpall"
+msgstr "pg_dumpallで作成されたアーカイブを復元する際には、-C/--create オプションの指定が必須です"
 
-#: pg_restore.c:518
+#: pg_restore.c:528
 #, c-format
 msgid "Individual databases can be restored using their specific archives."
 msgstr "各々のデータベースは対応するアーカイブを使って復元できます。"
 
-#: pg_restore.c:550
+#: pg_restore.c:560
 #, c-format
-msgid "database restoring skipped as -g/--globals-only option was specified"
+msgid "database restoring skipped because option -g/--globals-only was specified"
 msgstr "-g/--globals-only オプションが指定されているため、データベースの復元はスキップされました"
 
-#: pg_restore.c:565
+#: pg_restore.c:575
 #, c-format
 msgid "option --exclude-database can be used only when restoring an archive created by pg_dumpall"
 msgstr "オプション --exclude-database はpg_dumpallで作成したアーカイブの復元時のみ使用できます"
 
-#: pg_restore.c:568
+#: pg_restore.c:578
 #, c-format
 msgid "option -g/--globals-only can be used only when restoring an archive created by pg_dumpall"
 msgstr "オプション -g/--globals-only はpg_dumpallで作成したアーカイブの復元時のみ使用できます"
 
-#: pg_restore.c:576
+#: pg_restore.c:586
 #, c-format
 msgid "errors ignored on restore: %d"
 msgstr "リストア中に無視されたエラー数: %d"
 
-#: pg_restore.c:646
+#: pg_restore.c:656
 #, c-format
 msgid ""
-"%s restores a PostgreSQL database from an archive created by pg_dump or pg_dumpall.\n"
-"If the archive is created by pg_dumpall, then restores multiple databases also.\n"
+"%s restores PostgreSQL databases from archives created by pg_dump or pg_dumpall.\n"
 "\n"
 msgstr ""
 "%sはpg_dumpまたはpg_dumpallで作成したアーカイブからPostgreSQLデータベースを復元します。\n"
-"pg_dumpallで作成されたものの場合は、複数のデータベースを復元します。\n"
 "\n"
 
-#: pg_restore.c:649
+#: pg_restore.c:658
 #, c-format
 msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [OPTION]... [FILE]\n"
 
-#: pg_restore.c:652
+#: pg_restore.c:661
 #, c-format
 msgid "  -d, --dbname=NAME        connect to database name\n"
 msgstr "  -d, --dbname=NAME        接続するデータベース名\n"
 
-#: pg_restore.c:653
+#: pg_restore.c:662
 #, c-format
 msgid "  -f, --file=FILENAME      output file name (- for stdout)\n"
 msgstr "  -f, --file=FILENAME      出力ファイル名(- で標準出力)\n"
 
-#: pg_restore.c:654
+#: pg_restore.c:663
 #, c-format
 msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
 msgstr ""
 "  -F, --format=c|d|t         バックアップファイルの形式\n"
 "                           （自動的に設定されるはずです）\n"
 
-#: pg_restore.c:655
+#: pg_restore.c:664
 #, c-format
 msgid "  -l, --list               print summarized TOC of the archive\n"
 msgstr "  -l, --list               アーカイブのTOCの要約を表示\n"
 
-#: pg_restore.c:656
+#: pg_restore.c:665
 #, c-format
 msgid "  -v, --verbose            verbose mode\n"
 msgstr "  -v, --verbose            冗長モード\n"
 
-#: pg_restore.c:657
+#: pg_restore.c:666
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
 msgstr "  -V, --version             バージョン情報を表示し、終了します\n"
 
-#: pg_restore.c:658
+#: pg_restore.c:667
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
 msgstr "  -?, --help                このヘルプを表示し、終了します\n"
 
-#: pg_restore.c:660
+#: pg_restore.c:669
 #, c-format
 msgid ""
 "\n"
@@ -3002,39 +2986,39 @@ msgstr ""
 "\n"
 "リストア制御用のオプション:\n"
 
-#: pg_restore.c:661
+#: pg_restore.c:670
 #, c-format
 msgid "  -a, --data-only              restore only the data, no schema\n"
-msgstr "  -a, --data-only          データのみをリストア。スキーマをリストアしない\n"
+msgstr "  -a, --data-only          データのみを復元。スキーマを復元しない\n"
 
-#: pg_restore.c:663
+#: pg_restore.c:672
 #, c-format
 msgid "  -C, --create                 create the target database\n"
 msgstr "  -C, --create             対象のデータベースを作成\n"
 
-#: pg_restore.c:664
+#: pg_restore.c:673
 #, c-format
 msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
 msgstr "  -e, --exit-on-error      エラー時に終了。デフォルトは継続\n"
 
-#: pg_restore.c:665
+#: pg_restore.c:674
 #, c-format
 msgid "  -g, --globals-only           restore only global objects, no databases\n"
 msgstr ""
 "  -g, --globals-only           グローバルオブジェクトのみを復元し、\n"
 "                               データベースを復元しない\n"
 
-#: pg_restore.c:666
+#: pg_restore.c:675
 #, c-format
 msgid "  -I, --index=NAME             restore named index\n"
-msgstr "  -I, --index=NAME         指名したインデックスをリストア\n"
+msgstr "  -I, --index=NAME         指名したインデックスを復元n\n"
 
-#: pg_restore.c:667
+#: pg_restore.c:676
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
 msgstr "  -j, --jobs=NUM           リストア時に指定した数の並列ジョブを使用\n"
 
-#: pg_restore.c:668
+#: pg_restore.c:677
 #, c-format
 msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
@@ -3043,62 +3027,62 @@ msgstr ""
 "  -L, --use-list=FILENAME  このファイルの内容に従って SELECT や\n"
 "                           出力のソートを行います\n"
 
-#: pg_restore.c:670
+#: pg_restore.c:679
 #, c-format
 msgid "  -n, --schema=NAME            restore only objects in this schema\n"
-msgstr "  -n, --schema=NAME        指定したスキーマのオブジェクトのみをリストア\n"
+msgstr "  -n, --schema=NAME        指定したスキーマのオブジェクトのみを復元\n"
 
-#: pg_restore.c:671
+#: pg_restore.c:680
 #, c-format
 msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
-msgstr "  -N, --exclude-schema=NAME    指定したスキーマのオブジェクトはリストアしない\n"
+msgstr "  -N, --exclude-schema=NAME    指定したスキーマのオブジェクトは復元しない\n"
 
-#: pg_restore.c:673
+#: pg_restore.c:682
 #, c-format
 msgid "  -P, --function=NAME(args)    restore named function\n"
-msgstr "  -P, --function=NAME(args)           指名された関数をリストア\n"
+msgstr "  -P, --function=NAME(args)           指名された関数を復元\n"
 
-#: pg_restore.c:674
+#: pg_restore.c:683
 #, c-format
 msgid "  -s, --schema-only            restore only the schema, no data\n"
-msgstr "  -s, --schema-only        スキーマのみをリストア。データをリストアしない\n"
+msgstr "  -s, --schema-only        スキーマのみを復元。データを復元しない\n"
 
-#: pg_restore.c:675
+#: pg_restore.c:684
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
 msgstr "  -S, --superuser=NAME     トリガを無効にするためのスーパーユーザーの名前\n"
 
-#: pg_restore.c:676
+#: pg_restore.c:685
 #, c-format
 msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
-msgstr "  -t, --table=NAME             指名したリレーション(テーブル、ビューなど)をリストア\n"
+msgstr "  -t, --table=NAME             指名したリレーション(テーブル、ビューなど)を復元\n"
 
-#: pg_restore.c:677
+#: pg_restore.c:686
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
-msgstr "  -T, --trigger=NAME       指名したトリガをリストア\n"
+msgstr "  -T, --trigger=NAME       指名したトリガを復元\n"
 
-#: pg_restore.c:678
-#, c-format
-msgid "  --exclude-database=PATTERN   exclude databases whose name matches with pattern\n"
-msgstr "  --exclude-database=<パターン> <パターン>に合致する名前のデータベースを除外\n"
-
-#: pg_restore.c:679
+#: pg_restore.c:687
 #, c-format
 msgid "  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges      アクセス権限(grant/revoke)の復元を省略\n"
 
-#: pg_restore.c:680
+#: pg_restore.c:688
 #, c-format
 msgid "  -1, --single-transaction     restore as a single transaction\n"
-msgstr "  -1, --single-transaction     単一のトランザクションとしてリストア\n"
+msgstr "  -1, --single-transaction     リストアを単一トランザクションで実行\n"
 
-#: pg_restore.c:682
+#: pg_restore.c:690
 #, c-format
 msgid "  --enable-row-security        enable row security\n"
 msgstr "  --enable-row-security        行セキュリティを有効にします\n"
 
-#: pg_restore.c:683
+#: pg_restore.c:691
+#, c-format
+msgid "  --exclude-database=PATTERN   do not restore the specified database(s)\n"
+msgstr "  --exclude-database=PATTERN   指定したデータベース(群)を復元しない\n"
+
+#: pg_restore.c:692
 #, c-format
 msgid ""
 "  --filter=FILENAME            restore or skip objects based on expressions\n"
@@ -3107,97 +3091,110 @@ msgstr ""
 "  --filter=FILENAME            オブジェクトの復元またはスキップをFILENAMEに\n"
 "                               記述されている式を元に行う\n"
 
-#: pg_restore.c:686
+#: pg_restore.c:695
 #, c-format
 msgid "  --no-comments                do not restore comment commands\n"
-msgstr "  --no-comments                コメントコマンドをリストアしない\n"
+msgstr "  --no-comments                コメントコマンドを復元しない\n"
 
-#: pg_restore.c:687
+#: pg_restore.c:696
 #, c-format
 msgid "  --no-data                    do not restore data\n"
-msgstr "  --no-data                    データをリストアしない\n"
+msgstr "  --no-data                    データを復元しない\n"
 
-#: pg_restore.c:688
+#: pg_restore.c:697
 #, c-format
 msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 "                               created\n"
-msgstr ""
-"  --no-data-for-failed-tables    作成できなかったテーッブルのデータはリストア\n"
-"                                 しない\n"
-
-#: pg_restore.c:690
-#, c-format
-msgid "  --no-policies                do not restore row security policies\n"
-msgstr "  --no-policies                行セキュリティポリシーをリストアしない\n"
-
-#: pg_restore.c:691
-#, c-format
-msgid "  --no-publications            do not restore publications\n"
-msgstr "  --no-publications            パブリケーションをリストアしない\n"
-
-#: pg_restore.c:692
-#, c-format
-msgid "  --no-schema                  do not restore schema\n"
-msgstr "  --no-schema                  スキーマをリストアしない\n"
-
-#: pg_restore.c:693
-#, c-format
-msgid "  --no-security-labels         do not restore security labels\n"
-msgstr "  --no-security-labels     セキュリティラベルをリストアしない\n"
-
-#: pg_restore.c:694
-#, c-format
-msgid "  --no-statistics              do not restore statistics\n"
-msgstr "  --no-statistics              統計情報をリストアしない\n"
-
-#: pg_restore.c:695
-#, c-format
-msgid "  --no-subscriptions           do not restore subscriptions\n"
-msgstr "  --no-subscriptions           サブスクリプションをリストアしない\n"
-
-#: pg_restore.c:696
-#, c-format
-msgid "  --no-table-access-method     do not restore table access methods\n"
-msgstr "  --no-table-access-method     テーブルアクセスメソッドをリストアしない\n"
-
-#: pg_restore.c:697
-#, c-format
-msgid "  --no-tablespaces             do not restore tablespace assignments\n"
-msgstr "  --no-tablespaces         テーブル空間の割り当てをリストアしない\n"
-
-#: pg_restore.c:698
-#, c-format
-msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
-msgstr "  --section=SECTION        指定されたセクション（データ前部、データ、データ後部）をリストア\n"
+msgstr "  --no-data-for-failed-tables    作成できなかったテーブルのデータは復元しない\n"
 
 #: pg_restore.c:699
 #, c-format
-msgid "  --statistics-only            restore only the statistics, not schema or data\n"
-msgstr "  --statistics-only            統計情報のみをリストア、スキーマまたはデータをリストアしない\n"
+msgid "  --no-policies                do not restore row security policies\n"
+msgstr "  --no-policies                行セキュリティポリシーを復元しない\n"
+
+#: pg_restore.c:700
+#, c-format
+msgid "  --no-publications            do not restore publications\n"
+msgstr "  --no-publications            パブリケーションを復元しない\n"
+
+#: pg_restore.c:701
+#, c-format
+msgid "  --no-schema                  do not restore schema\n"
+msgstr "  --no-schema                  スキーマを復元しない\n"
 
 #: pg_restore.c:702
+#, c-format
+msgid "  --no-security-labels         do not restore security labels\n"
+msgstr "  --no-security-labels     セキュリティラベルを復元しない\n"
+
+#: pg_restore.c:703
+#, c-format
+msgid "  --no-statistics              do not restore statistics\n"
+msgstr "  --no-statistics              統計情報を復元しない\n"
+
+#: pg_restore.c:704
+#, c-format
+msgid "  --no-subscriptions           do not restore subscriptions\n"
+msgstr "  --no-subscriptions           サブスクリプションを復元しない\n"
+
+#: pg_restore.c:705
+#, c-format
+msgid "  --no-table-access-method     do not restore table access methods\n"
+msgstr "  --no-table-access-method     テーブルアクセスメソッドを復元しない\n"
+
+#: pg_restore.c:706
+#, c-format
+msgid "  --no-tablespaces             do not restore tablespace assignments\n"
+msgstr "  --no-tablespaces         テーブル空間の割り当てを復元しない\n"
+
+#: pg_restore.c:707
+#, c-format
+msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
+msgstr "  --section=SECTION        指定されたセクション（データ前部、データ、データ後部）を復元\n"
+
+#: pg_restore.c:708
+#, c-format
+msgid "  --statistics-only            restore only the statistics, not schema or data\n"
+msgstr "  --statistics-only            統計情報のみを復元、スキーマやデータを復元しない\n"
+
+#: pg_restore.c:711
 #, c-format
 msgid "  --transaction-size=N         commit after every N objects\n"
 msgstr "  --transaction-size=N         Nオブジェクトごとにコミットします\n"
 
+#: pg_restore.c:715
+#, c-format
+msgid "  --with-data                  restore the data\n"
+msgstr "  --with-data                  データを復元する\n"
+
 #: pg_restore.c:716
+#, c-format
+msgid "  --with-schema                restore the schema\n"
+msgstr "  --with-schema                スキーマを復元する\n"
+
+#: pg_restore.c:717
+#, c-format
+msgid "  --with-statistics            restore the statistics\n"
+msgstr "  --with-statistics            統計情報を復元する\n"
+
+#: pg_restore.c:725
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before restore\n"
 msgstr "  --role=ROLENAME          リストアに先立って SET ROLE します\n"
 
-#: pg_restore.c:718
+#: pg_restore.c:727
 #, c-format
 msgid ""
 "\n"
-"The options -I, -n, -N, -P, -t, -T, --section, and --exclude-database can be combined\n"
-"and specified multiple times to select multiple objects.\n"
+"The options -I, -n, -N, -P, -t, -T, --section, and --exclude-database can be\n"
+"combined and specified multiple times to select multiple objects.\n"
 msgstr ""
 "\n"
 "オプション -I、-n、-N、-P、-t、-T、--section および --exclude-databaseを組み\n"
 "合わせて複数回指定することで複数のオブジェクトを指定できます。\n"
 
-#: pg_restore.c:721
+#: pg_restore.c:730
 #, c-format
 msgid ""
 "\n"
@@ -3208,94 +3205,85 @@ msgstr ""
 "入力ファイル名が指定されない場合、標準入力が使用されます。\n"
 "\n"
 
-#: pg_restore.c:940
+#: pg_restore.c:949
 #, c-format
-msgid "considering PATTERN as NAME for --exclude-database option as no db connection while doing pg_restore."
-msgstr "pg_restoreの実行中にDB接続がないため、--exclude-database オプションの<パターン>は<名前>とみなします。"
+msgid "considering PATTERN as NAME for --exclude-database option as no database connection while doing pg_restore"
+msgstr "pg_restoreの実行中にデータベース接続がないため、--exclude-database オプションの<パターン>は<名前>とみなします。"
 
-#: pg_restore.c:985
+#: pg_restore.c:995
 #, c-format
-msgid "database \"%s\" matches exclude pattern: \"%s\""
-msgstr "データベース\"%s\"は除外パターンに合致します: \"%s\""
+msgid "database name \"%s\" matches exclude pattern \"%s\""
+msgstr "データベース名\"%s\"は除外パターン\"%s\"に合致します"
 
-#: pg_restore.c:1040
+#: pg_restore.c:1051
 #, c-format
-msgid "database restoring is skipped as \"map.dat\" is not present in \"%s\""
-msgstr "\"%s\"に \"map.dat\" がないため、データベースの復元をスキップします"
+msgid "database restoring is skipped because file \"%s\" does not exist in directory \"%s\""
+msgstr "ディレクトリ \"%2$s\" 内にファイル \"%1$s\" がないため、データベースの復元をスキップします"
 
-#: pg_restore.c:1069
+#: pg_restore.c:1089
 #, c-format
-msgid "found database \"%s\" (OID: %u) in \"%s\""
-msgstr "\"%3$s\" 内でデータベース \"%1$s\" (OID: %2$u) を検出しました。"
+msgid "invalid entry in file \"%s\" on line %d"
+msgstr "ファイル\"%s\"の%d行目に不正なエントリ"
 
-#: pg_restore.c:1074
+#: pg_restore.c:1092
 #, c-format
-msgid "invalid entry in \"%s\" at line : %d"
-msgstr "\"%s\" 内に不正なエントリ: 行 %d"
+msgid "found database \"%s\" (OID: %u) in file \"%s\""
+msgstr "ファイル \"%3$s\" 内でデータベース \"%1$s\" (OID: %2$u) を検出しました。"
 
-#: pg_restore.c:1123
+#: pg_restore.c:1145
 #, c-format
-msgid "found %d database names in \"map.dat\""
-msgstr "\"map.dat\" 内に %d 個のデータベースを検出しました"
+msgid "found %d database name in \"%s\""
+msgid_plural "found %d database names in \"%s\""
+msgstr[0] "\"%2$s\" 内に %1$d 個のデータベース名を検出しました"
 
-#: pg_restore.c:1127
+#: pg_restore.c:1152 pg_restore.c:1161
 #, c-format
-msgid "trying to connect database \"postgres\""
-msgstr "データベース\"postgres\"に接続を試みています"
+msgid "trying to connect to database \"%s\""
+msgstr "データベース\"%s\"に接続を試みています"
 
-#: pg_restore.c:1136
+#: pg_restore.c:1185
 #, c-format
-msgid "trying to connect database \"template1\""
-msgstr "データベース\"template1\"に接続を試みています"
+msgid "no database needs restoring out of %d database"
+msgid_plural "no database needs restoring out of %d databases"
+msgstr[0] "%d 個のデータベースの中で復元が必要なものはありません"
 
-#: pg_restore.c:1160
-#, c-format
-msgid "no database needs to restore out of %d databases"
-msgstr "%d 個のデータベースの中で復元が必要なものはありません"
-
-#: pg_restore.c:1164
+#: pg_restore.c:1191
 #, c-format
 msgid "need to restore %d databases out of %d databases"
 msgstr "%2$d 個のうち %1$d 個のデータベースの復元が必要です"
 
-#: pg_restore.c:1213
+#: pg_restore.c:1240
 #, c-format
 msgid "restoring database \"%s\""
 msgstr "データベース\"%s\"の復元中"
 
-#: pg_restore.c:1254
+#: pg_restore.c:1281
 #, c-format
 msgid "errors ignored on database \"%s\" restore: %d"
 msgstr "データベース\"%s\"の復元中に無視されたエラー数: %d"
 
-#: pg_restore.c:1261
+#: pg_restore.c:1288
 #, c-format
 msgid "number of restored databases is %d"
 msgstr "復元されたデータベースの数は %d です"
 
-#: pg_restore.c:1324
+#: pg_restore.c:1351
 #, c-format
 msgid "executing query: %s"
 msgstr "実行クエリ: %s"
 
-#: pg_restore.c:1335
+#: pg_restore.c:1362
 #, c-format
-msgid ""
-"could not execute query: \"%s\" \n"
-"Command was: \"%s\""
-msgstr ""
-"クエリを実行できませんでした: \"%s\"\n"
-"コマンドは: \"%s\""
+msgid "could not execute query: %s"
+msgstr "問い合わせを実行できませんでした: %s"
 
-#: pg_restore.c:1342
+#: pg_restore.c:1370
 #, c-format
-msgid "ignored %d errors in \"%s\""
-msgstr "\"%2$s\" 内のエラー%1$d件を無視しました"
+msgid "ignored %d error in file \"%s\""
+msgid_plural "ignored %d errors in file \"%s\""
+msgstr[0] "ファイル \"%2$s\" 内のエラー%1$d件を無視しました"
 
-#: pg_restore.c:1373
+#: pg_restore.c:1402
 #, c-format
 msgid "could not open file: \"%s\""
 msgstr "ファイルを開くことができませんでした: \"%s\""
-
-#~ msgid "could not close directory \"%s\": %m"
-#~ msgstr "ディレクトリ\"%s\"をクローズできませんでした: %m"

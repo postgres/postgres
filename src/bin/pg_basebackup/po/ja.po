@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-04-07 09:45+0900\n"
-"PO-Revision-Date: 2025-04-07 15:32+0900\n"
+"POT-Creation-Date: 2025-06-17 09:30+0900\n"
+"PO-Revision-Date: 2025-06-17 10:05+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1340,11 +1340,11 @@ msgstr ""
 #, c-format
 msgid ""
 "  -a, --all                       create subscriptions for all databases except template\n"
-"                                  databases or databases that don't allow connections\n"
+"                                  databases and databases that don't allow connections\n"
 msgstr ""
-"  -a, --all                       テンプレートデータベースまたは接続を許可\n"
-"                                  しないデーバーベースを除くすべてのデータ\n"
-"                                  ベースでサブスクリプションを作成する\n"
+"  -a, --all                       テンプレートデータベースと接続を許可しない\n"
+"                                  データベースを除くすべてのデータベースに\n"
+"                                  サブスクリプションを作成する\n"
 
 #: pg_createsubscriber.c:251
 #, c-format
@@ -1375,11 +1375,11 @@ msgstr "  -P, --publisher-server=CONNSTR  パブリッシャの接続文字列\n
 #, c-format
 msgid ""
 "  -R, --remove=OBJECTTYPE         remove all objects of the specified type from specified\n"
-"                                  databases on the subscriber; accepts: publications\n"
+"                                  databases on the subscriber; accepts: \"%s\"\n"
 msgstr ""
 "  -R, --remove=OBJECTTYPE         サブスクライバ側の指定したデータベースから、\n"
 "                                  指定された種類のオブジェクトをすべて削除する;\n"
-"                                  指定可能なオブジェクト種別: publications\n"
+"                                  指定可能なオブジェクト種別: \"%s\"\n"
 
 #: pg_createsubscriber.c:258
 #, c-format
@@ -1613,8 +1613,8 @@ msgstr "サブスクリプションはtwo_phaseオプションが無効な状態
 
 #: pg_createsubscriber.c:976
 #, c-format
-msgid "You can use --enable-two-phase switch to enable two_phase."
-msgstr "--enable-two-phase オプションで two_phase を有効にできます。"
+msgid "You can use the command-line option --enable-two-phase to enable two_phase."
+msgstr "コマンドラインオプション --enable-two-phase で two_phase を有効にできます。"
 
 #: pg_createsubscriber.c:986
 #, c-format
@@ -1878,7 +1878,7 @@ msgstr "-d/--database に対してデータベース\"%s\"が複数回指定さ�
 
 #: pg_createsubscriber.c:2146
 #, c-format
-msgid "object type \"%s\" is specified more than once for -R/--remove"
+msgid "object type \"%s\" specified more than once for -R/--remove"
 msgstr "-R/--remove に対してオブジェクト種別%s\"が複数回指定されました"
 
 #: pg_createsubscriber.c:2174
@@ -1898,8 +1898,8 @@ msgstr "--subscription に対してブスクリプション\"%s\"が複数回指
 
 #: pg_createsubscriber.c:2217
 #, c-format
-msgid "%s cannot be used with -a/--all"
-msgstr "%s は -a/--all と同時には使えません"
+msgid "options %s and -a/--all cannot be used together"
+msgstr "%s と -a/--all は同時には使用できません"
 
 #: pg_createsubscriber.c:2235
 #, c-format
@@ -1978,8 +1978,8 @@ msgstr "-R/--remove に対して指定された不正なオブジェクト種別
 
 #: pg_createsubscriber.c:2344
 #, c-format
-msgid "The valid option is: \"publications\""
-msgstr "有効なオプション: \"publications\""
+msgid "The valid value is: \"%s\""
+msgstr "指定可能な値は: \"%s\""
 
 #: pg_createsubscriber.c:2375
 #, c-format
@@ -2262,10 +2262,10 @@ msgstr ""
 #, c-format
 msgid ""
 "      --failover         enable replication slot synchronization to standby servers when\n"
-"                         creating a slot\n"
+"                         creating a replication slot\n"
 msgstr ""
-"      --failover         スロット作成時にスタンバイサーバーへのスロット同期を\n"
-"                         有効にする\n"
+"      --failover         レプリケーションスロット作成時にスタンバイサーバーへの\n"
+"                         レプリケーションスロット同期を有効にする\n"
 
 #: pg_recvlogical.c:95
 #, c-format

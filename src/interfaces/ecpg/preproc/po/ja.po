@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-03-12 11:10+0900\n"
-"PO-Revision-Date: 2025-03-31 16:23+0900\n"
+"POT-Creation-Date: 2025-04-30 10:33+0900\n"
+"PO-Revision-Date: 2025-04-30 11:34+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -385,12 +385,12 @@ msgstr "型定義では初期化子は許されません"
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "型名\"string\"はInformixモードですでに予約されています"
 
-#: preproc.y:512 preproc.y:8820
+#: preproc.y:512 preproc.y:8822
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "\"%s\"型はすでに定義されています"
 
-#: preproc.y:539 preproc.y:9534 preproc.y:9879 variable.c:652
+#: preproc.y:539 preproc.y:9536 preproc.y:9881 variable.c:652
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "単純なデータ型の多次元配列はサポートされていません"
@@ -435,8 +435,8 @@ msgstr "VAR文ではATオプションは許されません"
 msgid "AT option not allowed in WHENEVER statement"
 msgstr "WHENEVER文ではATオプションは許されません"
 
-#: preproc.y:1375 preproc.y:1498 preproc.y:2260 preproc.y:2586 preproc.y:3017
-#: preproc.y:3104 preproc.y:6086
+#: preproc.y:1375 preproc.y:1498 preproc.y:2259 preproc.y:2585 preproc.y:3016
+#: preproc.y:3103 preproc.y:6086
 #, c-format
 msgid "unsupported feature will be passed to server"
 msgstr "非サポートの機能がサーバーに渡されます"
@@ -446,22 +446,22 @@ msgstr "非サポートの機能がサーバーに渡されます"
 msgid "SHOW ALL is not implemented"
 msgstr "SHOW ALLは実装されていません"
 
-#: preproc.y:1896
+#: preproc.y:1895
 #, c-format
 msgid "COPY FROM STDIN is not implemented"
 msgstr "COPY FROM STDINは実装されていません"
 
-#: preproc.y:5146 preproc.y:8271
+#: preproc.y:5146 preproc.y:8273
 #, c-format
 msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
 msgstr "INFORMIXモードでは\"database\"をカーソル名として使用できません"
 
-#: preproc.y:5153 preproc.y:8281
+#: preproc.y:5153 preproc.y:8283
 #, c-format
 msgid "using variable \"%s\" in different declare statements is not supported"
 msgstr "異なったdeclareステートメントにおける変数\"%s\"の使用はサポートされていません"
 
-#: preproc.y:5155 preproc.y:8283
+#: preproc.y:5155 preproc.y:8285
 #, c-format
 msgid "cursor \"%s\" is already defined"
 msgstr "カーソル\"%s\"はすでに定義されています"
@@ -471,103 +471,103 @@ msgstr "カーソル\"%s\"はすでに定義されています"
 msgid "no longer supported LIMIT #,# syntax passed to server"
 msgstr "サーバーに渡されるLIMIT #,#構文はもはやサポートされていません"
 
-#: preproc.y:7919 preproc.y:7927
+#: preproc.y:7921 preproc.y:7929
 #, c-format
 msgid "CREATE TABLE AS cannot specify INTO"
 msgstr "CREATE TABLE ASはINTOを指定できません"
 
-#: preproc.y:7972
+#: preproc.y:7974
 #, c-format
 msgid "expected \"@\", found \"%s\""
 msgstr "想定では\"@\"、結果では\"%s\""
 
-#: preproc.y:7984
+#: preproc.y:7986
 #, c-format
 msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
 msgstr "プロトコルでは\"tcp\"および\"unix\"のみ、データベースの種類では\"postgresql\"のみがサポートされています"
 
-#: preproc.y:7987
+#: preproc.y:7989
 #, c-format
 msgid "expected \"://\", found \"%s\""
 msgstr "想定では\"://\"、結果では\"%s\""
 
-#: preproc.y:7992
+#: preproc.y:7994
 #, c-format
 msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
 msgstr "Unixドメインソケットは\"localhost\"でのみで動作し、\"%s\"では動作しません"
 
-#: preproc.y:8019
+#: preproc.y:8021
 #, c-format
 msgid "expected \"postgresql\", found \"%s\""
 msgstr "想定では\"postgresql\"、結果では\"%s\""
 
-#: preproc.y:8022
+#: preproc.y:8024
 #, c-format
 msgid "invalid connection type: %s"
 msgstr "無効な接続種類: %s"
 
-#: preproc.y:8031
+#: preproc.y:8033
 #, c-format
 msgid "expected \"@\" or \"://\", found \"%s\""
 msgstr "想定では\"@または\"\"://\"、結果では\"%s\""
 
-#: preproc.y:8129 preproc.y:8147
+#: preproc.y:8131 preproc.y:8149
 #, c-format
 msgid "invalid data type"
 msgstr "無効なデータ型"
 
-#: preproc.y:8158 preproc.y:8175
+#: preproc.y:8160 preproc.y:8177
 #, c-format
 msgid "incomplete statement"
 msgstr "不完全な文"
 
-#: preproc.y:8161 preproc.y:8178
+#: preproc.y:8163 preproc.y:8180
 #, c-format
 msgid "unrecognized token \"%s\""
 msgstr "認識できないトークン\"%s\""
 
-#: preproc.y:8233
+#: preproc.y:8235
 #, c-format
 msgid "name \"%s\" is already declared"
 msgstr "名前\"%s\"はすでに定義されています"
 
-#: preproc.y:8536
+#: preproc.y:8538
 #, c-format
 msgid "only data types numeric and decimal have precision/scale argument"
 msgstr "数値データ型または10進数データ型のみが精度/位取り引数と取ることができます"
 
-#: preproc.y:8635
+#: preproc.y:8637
 #, c-format
 msgid "interval specification not allowed here"
 msgstr "時間間隔の指定はここでは許されません"
 
-#: preproc.y:8791 preproc.y:8849
+#: preproc.y:8793 preproc.y:8851
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "構造体/ユニオンの定義の入れ子レベルが深すぎます"
 
-#: preproc.y:8984
+#: preproc.y:8986
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "varcharを指し示すポインタは実装されていません"
 
-#: preproc.y:9499
+#: preproc.y:9501
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "EXEC SQL VARコマンドでは初期化子は許されません"
 
-#: preproc.y:9822
+#: preproc.y:9824
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "指示子配列は入力として許されません"
 
-#: preproc.y:10056
+#: preproc.y:10058
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "変数定義では演算子は許されません"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:10101
+#: preproc.y:10103
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "\"%2$s\"またはその近辺で%1$s"
@@ -674,8 +674,8 @@ msgstr "変数\"%s\"は配列ではありません"
 
 #: variable.c:220
 #, c-format
-msgid "unmatched brace in variable \"%s\""
-msgstr "変数\"%s\"に閉じられていないブレースがあります"
+msgid "unmatched bracket in variable \"%s\""
+msgstr "変数\"%s\"に閉じられていない角括弧があります"
 
 #: variable.c:235 variable.c:258
 #, c-format
