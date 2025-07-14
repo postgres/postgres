@@ -51,10 +51,10 @@ src/libkmip/libkmip/src/kmip_bio.o \
 src/libkmip/libkmip/src/kmip_locate.o \
 src/libkmip/libkmip/src/kmip_memset.o
 
-SCRIPTS_built = src/pg_tde_change_key_provider
+SCRIPTS_built = src/bin/pg_tde_change_key_provider
 
 EXTRA_INSTALL += contrib/pg_buffercache contrib/test_decoding
-EXTRA_CLEAN += src/pg_tde_change_key_provider.o
+EXTRA_CLEAN += src/bin/pg_tde_change_key_provider.o
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -71,7 +71,7 @@ endif
 
 override SHLIB_LINK += -lcurl -lcrypto -lssl
 
-src/pg_tde_change_key_provider: src/pg_tde_change_key_provider.o $(top_srcdir)/src/fe_utils/simple_list.o $(top_builddir)/src/libtde/libtde.a
+src/bin/pg_tde_change_key_provider: src/bin/pg_tde_change_key_provider.o $(top_srcdir)/src/fe_utils/simple_list.o $(top_builddir)/src/libtde/libtde.a
 	$(CC) -DFRONTEND $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # Fetches typedefs list for PostgreSQL core and merges it with typedefs defined in this project.

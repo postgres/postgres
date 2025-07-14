@@ -11,7 +11,7 @@ __pycache__
 /configure~
 /log
 /results
-/src/pg_tde_change_key_provider
+/src/bin/pg_tde_change_key_provider
 /t/results
 /tmp_check
 

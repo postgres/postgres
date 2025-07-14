@@ -151,7 +151,7 @@ pg_tde_frontend = static_library('pg_tde_frontend',
 )
 
 pg_tde_change_key_provider_sources = files(
-  'src/pg_tde_change_key_provider.c',
+  'src/bin/pg_tde_change_key_provider.c',
 )
 
 pg_tde_change_key_provider = executable('pg_tde_change_key_provider',
