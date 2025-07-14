@@ -25,6 +25,11 @@ cat .buildconfig
 IMG_TAG="${PG_VERSION}_${SDK_VERSION}"
 
 
+wget -Osdk.tar.lz4 \
+ https://github.com/electric-sql/portable-sdk/releases/download/${SDK_VERSION}/python3.13-wasm-sdk-debian12-$(arch).tar.lz4
+IMG_TAG="debian:12"
+
+
 mkdir -p dist/pglite dist/extensions-emsdk
 
 if echo -n $@|grep -q it$
@@ -42,4 +47,4 @@ docker run $@ \
   -v ${WORKSPACE}/postgres-pglite:${DOCKER_WORKSPACE}:rw \
   -v ${WORKSPACE}/postgres-pglite/dist:/tmp/sdk/dist:rw \
   $IMG_NAME:$IMG_TAG \
-  bash --noprofile --rcfile ${SDKROOT}/wasm32-bi-emscripten-shell.sh -ci "( ./wasm-build.sh ${WHAT:-\"contrib extra\"} $PROMPT"
+  bash --noprofile --rcfile ./docker_rc.sh -ci "( ./wasm-build.sh ${WHAT:-\"contrib extra\"} $PROMPT"
