@@ -3,7 +3,6 @@
 # we are using a custom emsdk to build pglite wasm
 # this is available as a docker image under electricsql/pglite-builder
 IMG_NAME="electricsql/pglite-builder"
-IMG_TAG="17.4_3.1.61.7bi"
 
 [ -f postgres-pglite/configure ] || ln -s . postgres-pglite
 
@@ -21,6 +20,9 @@ cd $(realpath ${WORKSPACE}/postgres-pglite)
 source .buildconfig
 
 cat .buildconfig
+
+
+IMG_TAG="${PG_VERSION}_${SDK_VERSION}"
 
 
 mkdir -p dist/pglite dist/extensions-emsdk
