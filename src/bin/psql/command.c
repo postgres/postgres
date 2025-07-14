@@ -4481,6 +4481,7 @@ SyncVariables(void)
 	char		vbuf[32];
 	const char *server_version;
 	char	   *service_name;
+	char	   *service_file;
 
 	/* get stuff from connection */
 	pset.encoding = PQclientEncoding(pset.db);
@@ -4499,6 +4500,11 @@ SyncVariables(void)
 	SetVariable(pset.vars, "SERVICE", service_name);
 	if (service_name)
 		pg_free(service_name);
+
+	service_file = get_conninfo_value("servicefile");
+	SetVariable(pset.vars, "SERVICEFILE", service_file);
+	if (service_file)
+		pg_free(service_file);
 
 	/* this bit should match connection_warnings(): */
 	/* Try to get full text form of version, might include "devel" etc */
@@ -4529,6 +4535,7 @@ UnsyncVariables(void)
 {
 	SetVariable(pset.vars, "DBNAME", NULL);
 	SetVariable(pset.vars, "SERVICE", NULL);
+	SetVariable(pset.vars, "SERVICEFILE", NULL);
 	SetVariable(pset.vars, "USER", NULL);
 	SetVariable(pset.vars, "HOST", NULL);
 	SetVariable(pset.vars, "PORT", NULL);
