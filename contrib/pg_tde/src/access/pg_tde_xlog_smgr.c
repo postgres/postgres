@@ -229,6 +229,21 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
 }
 
+void
+TDEXLogSmgrInitWriteReuseKey()
+{
+	InternalKey *key = pg_tde_read_last_wal_key();
+
+	if (key)
+	{
+		EncryptionKey = *key;
+		TDEXLogSetEncKeyLsn(EncryptionKey.start_lsn);
+		pfree(key);
+	}
+
+	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
+}
+
 /*
  * Encrypt XLog page(s) from the buf and write to the segment file.
  */

@@ -51,10 +51,16 @@ src/libkmip/libkmip/src/kmip_bio.o \
 src/libkmip/libkmip/src/kmip_locate.o \
 src/libkmip/libkmip/src/kmip_memset.o
 
-SCRIPTS_built = src/bin/pg_tde_change_key_provider
+SCRIPTS_built = src/bin/pg_tde_archive_decrypt \
+src/bin/pg_tde_change_key_provider \
+src/bin/pg_tde_restore_encrypt
 
 EXTRA_INSTALL += contrib/pg_buffercache contrib/test_decoding
-EXTRA_CLEAN += src/bin/pg_tde_change_key_provider.o
+EXTRA_CLEAN += src/bin/pg_tde_archive_decrypt.o \
+src/bin/pg_tde_change_key_provider.o \
+src/bin/pg_tde_restore_encrypt.o \
+xlogreader.c \
+xlogreader.o
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -73,6 +79,18 @@ override SHLIB_LINK += -lcurl -lcrypto -lssl
 
 src/bin/pg_tde_change_key_provider: src/bin/pg_tde_change_key_provider.o $(top_srcdir)/src/fe_utils/simple_list.o $(top_builddir)/src/libtde/libtde.a
 	$(CC) -DFRONTEND $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+src/bin/pg_tde_archive_decrypt: src/bin/pg_tde_archive_decrypt.o xlogreader.o $(top_srcdir)/src/fe_utils/simple_list.o $(top_builddir)/src/libtde/libtdexlog.a $(top_builddir)/src/libtde/libtde.a
+	$(CC) -DFRONTEND $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+src/bin/pg_tde_restore_encrypt: src/bin/pg_tde_restore_encrypt.o xlogreader.o $(top_srcdir)/src/fe_utils/simple_list.o $(top_builddir)/src/libtde/libtdexlog.a $(top_builddir)/src/libtde/libtde.a
+	$(CC) -DFRONTEND $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
+
+xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
+	rm -f $@ && $(LN_S) $< .
+
+xlogreader.o: xlogreader.c
+	$(CC) $(CPPFLAGS) -DFRONTEND -c $< -o $@
 
 # Fetches typedefs list for PostgreSQL core and merges it with typedefs defined in this project.
 # https://wiki.postgresql.org/wiki/Running_pgindent_on_non-core_code_or_development_code

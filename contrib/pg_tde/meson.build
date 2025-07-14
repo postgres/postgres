@@ -122,6 +122,7 @@ tap_tests = [
   't/rotate_key.pl',
   't/tde_heap.pl',
   't/unlogged_tables.pl',
+  't/wal_archiving.pl',
   't/wal_encrypt.pl',
 ]
 
@@ -163,3 +164,31 @@ pg_tde_change_key_provider = executable('pg_tde_change_key_provider',
   link_with: [pg_tde_frontend]
 )
 contrib_targets += pg_tde_change_key_provider
+
+pg_tde_archive_decrypt_sources = files(
+  'src/bin/pg_tde_archive_decrypt.c',
+) + xlogreader_sources
+
+pg_tde_archive_decrypt = executable('pg_tde_archive_decrypt',
+  pg_tde_archive_decrypt_sources,
+  dependencies: [frontend_code],
+  c_args: ['-DFRONTEND'], # needed for xlogreader et al
+  kwargs: default_bin_args,
+  include_directories: [postgres_inc, pg_tde_inc],
+  link_with: [pg_tde_frontend]
+)
+contrib_targets += pg_tde_archive_decrypt
+
+pg_tde_restore_encrypt_sources = files(
+  'src/bin/pg_tde_restore_encrypt.c',
+) + xlogreader_sources
+
+pg_tde_restore_encrypt = executable('pg_tde_restore_encrypt',
+  pg_tde_restore_encrypt_sources,
+  dependencies: [frontend_code],
+  c_args: ['-DFRONTEND'], # needed for xlogreader et al
+  kwargs: default_bin_args,
+  include_directories: [postgres_inc, pg_tde_inc],
+  link_with: [pg_tde_frontend]
+)
+contrib_targets += pg_tde_restore_encrypt

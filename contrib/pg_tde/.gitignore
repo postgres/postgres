@@ -11,7 +11,9 @@ __pycache__
 /configure~
 /log
 /results
+/src/bin/pg_tde_archive_decrypt
 /src/bin/pg_tde_change_key_provider
+/src/bin/pg_tde_restore_encrypt
 /t/results
 /tmp_check
 

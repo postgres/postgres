@@ -11,5 +11,6 @@ extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
 extern void TDEXLogSmgrInit(void);
 extern void TDEXLogSmgrInitWrite(bool encrypt_xlog);
+extern void TDEXLogSmgrInitWriteReuseKey(void);
 
 #endif							/* PG_TDE_XLOGSMGR_H */
