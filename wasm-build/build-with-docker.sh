@@ -24,10 +24,10 @@ cat .buildconfig
 
 if echo $IMG_NAME|grep -q debian
 then
-    wget -q -Osdk.tar.lz4 \
-     https://github.com/electric-sql/portable-sdk/releases/download/${SDK_VERSION}/python3.13-wasm-sdk-debian12-$(arch).tar.lz4
     IMG_NAME="debian"
     IMG_TAG="12"
+    wget -q -Osdk.tar.lz4 \
+     https://github.com/electric-sql/portable-sdk/releases/download/${SDK_VERSION}/python3.13-wasm-sdk-${IMG_NAME}${IMG_TAG}-$(arch).tar.lz4
 else
     IMG_TAG="${PG_VERSION}_${SDK_VERSION}"
 fi
