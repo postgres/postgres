@@ -26,5 +26,3 @@ extern void amcheck_lock_relation_and_check(Oid indrelid,
 											Oid am_id,
 											IndexDoCheckCallback check,
 											LOCKMODE lockmode, void *state);
-
-extern bool index_checkable(Relation rel, Oid am_id);

@@ -60,6 +60,14 @@ SELECT bt_index_parent_check('bttest_a_brin_idx');
 ERROR:  expected "btree" index as targets for verification
 DETAIL:  Relation "bttest_a_brin_idx" is a brin index.
 ROLLBACK;
+-- verify partitioned indexes are rejected (error)
+BEGIN;
+CREATE TABLE bttest_partitioned (a int, b int) PARTITION BY list (a);
+CREATE INDEX bttest_btree_partitioned_idx ON bttest_partitioned USING btree (b);
+SELECT bt_index_parent_check('bttest_btree_partitioned_idx');
+ERROR:  expected index as targets for verification
+DETAIL:  This operation is not supported for partitioned indexes.
+ROLLBACK;
 -- normal check outside of xact
 SELECT bt_index_check('bttest_a_idx');
  bt_index_check 

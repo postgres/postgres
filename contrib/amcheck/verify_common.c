@@ -18,11 +18,13 @@
 #include "verify_common.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
+#include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
 
 static bool amcheck_index_mainfork_expected(Relation rel);
+static bool index_checkable(Relation rel, Oid am_id);
 
 
 /*
@@ -155,23 +157,21 @@ amcheck_lock_relation_and_check(Oid indrelid,
  * callable by non-superusers. If granted, it's useful to be able to check a
  * whole cluster.
  */
-bool
+static bool
 index_checkable(Relation rel, Oid am_id)
 {
-	if (rel->rd_rel->relkind != RELKIND_INDEX ||
-		rel->rd_rel->relam != am_id)
-	{
-		HeapTuple	amtup;
-		HeapTuple	amtuprel;
+	if (rel->rd_rel->relkind != RELKIND_INDEX)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("expected index as targets for verification"),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-		amtup = SearchSysCache1(AMOID, ObjectIdGetDatum(am_id));
-		amtuprel = SearchSysCache1(AMOID, ObjectIdGetDatum(rel->rd_rel->relam));
+	if (rel->rd_rel->relam != am_id)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("expected \"%s\" index as targets for verification", NameStr(((Form_pg_am) GETSTRUCT(amtup))->amname)),
+				 errmsg("expected \"%s\" index as targets for verification", get_am_name(am_id)),
 				 errdetail("Relation \"%s\" is a %s index.",
-						   RelationGetRelationName(rel), NameStr(((Form_pg_am) GETSTRUCT(amtuprel))->amname))));
-	}
+						   RelationGetRelationName(rel), get_am_name(rel->rd_rel->relam))));
 
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
@@ -182,7 +182,7 @@ index_checkable(Relation rel, Oid am_id)
 
 	if (!rel->rd_index->indisvalid)
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot check index \"%s\"",
 						RelationGetRelationName(rel)),
 				 errdetail("Index is not valid.")));
