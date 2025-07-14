@@ -2,7 +2,7 @@
 
 # we are using a custom emsdk to build pglite wasm
 # this is available as a docker image under electricsql/pglite-builder
-IMG_NAME="electricsql/pglite-builder"
+IMG_NAME=${IMG_NAME:-"electricsql/pglite-builder"}
 
 [ -f postgres-pglite/configure ] || ln -s . postgres-pglite
 
@@ -22,12 +22,15 @@ source .buildconfig
 cat .buildconfig
 
 
-IMG_TAG="${PG_VERSION}_${SDK_VERSION}"
-
-
-wget -Osdk.tar.lz4 \
- https://github.com/electric-sql/portable-sdk/releases/download/${SDK_VERSION}/python3.13-wasm-sdk-debian12-$(arch).tar.lz4
-IMG_TAG="debian:12"
+if echo $IMG_NAME|grep -q debian
+then
+    wget -q -Osdk.tar.lz4 \
+     https://github.com/electric-sql/portable-sdk/releases/download/${SDK_VERSION}/python3.13-wasm-sdk-debian12-$(arch).tar.lz4
+    IMG_NAME="debian"
+    IMG_TAG="12"
+else
+    IMG_TAG="${PG_VERSION}_${SDK_VERSION}"
+fi
 
 
 mkdir -p dist/pglite dist/extensions-emsdk
