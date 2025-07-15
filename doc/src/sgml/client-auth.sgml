@@ -1003,8 +1003,9 @@ local   db1,db2,@demodbs  all                                   md5
    the remainder of the field is treated as a regular expression.
    (See <xref linkend="posix-syntax-details"/> for details of
    <productname>PostgreSQL</productname>'s regular expression syntax.)  The regular
-   expression can include a single capture, or parenthesized subexpression,
-   which can then be referenced in the <replaceable>database-username</replaceable>
+   expression can include a single capture, or parenthesized subexpression.
+   The portion of the system user name that matched the capture can then
+   be referenced in the <replaceable>database-username</replaceable>
    field as <literal>\1</literal> (backslash-one).  This allows the mapping of
    multiple user names in a single line, which is particularly useful for
    simple syntax substitutions.  For example, these entries
@@ -1022,12 +1023,11 @@ mymap   /^(.*)@otherdomain\.com$   guest
   <para>
    If the <replaceable>database-username</replaceable> field starts with
    a slash (<literal>/</literal>), the remainder of the field is treated
-   as a regular expression (see <xref linkend="posix-syntax-details"/>
-   for details of <productname>PostgreSQL</productname>'s regular
-   expression syntax). It is not possible to use <literal>\1</literal>
-   to use a capture from regular expression on
-   <replaceable>system-username</replaceable> for a regular expression
-   on <replaceable>database-username</replaceable>.
+   as a regular expression.
+   When the <replaceable>database-username</replaceable> field is a regular
+   expression, it is not possible to use <literal>\1</literal> within it to
+   refer to a capture from the <replaceable>system-username</replaceable>
+   field.
   </para>
 
   <tip>
