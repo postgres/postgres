@@ -4619,10 +4619,14 @@ match_previous_words(int pattern_id,
 	else if (Matches("ALTER", "DEFAULT", "PRIVILEGES", MatchAnyN, "TO", MatchAny))
 		COMPLETE_WITH("WITH GRANT OPTION");
 	/* Complete "GRANT/REVOKE ... ON * *" with TO/FROM */
-	else if (Matches("GRANT", MatchAnyN, "ON", MatchAny, MatchAny))
-		COMPLETE_WITH("TO");
-	else if (Matches("REVOKE", MatchAnyN, "ON", MatchAny, MatchAny))
-		COMPLETE_WITH("FROM");
+	else if (Matches("GRANT|REVOKE", MatchAnyN, "ON", MatchAny, MatchAny) &&
+			 !TailMatches("FOREIGN", "SERVER") && !TailMatches("LARGE", "OBJECT"))
+	{
+		if (Matches("GRANT", MatchAnyN, "ON", MatchAny, MatchAny))
+			COMPLETE_WITH("TO");
+		else
+			COMPLETE_WITH("FROM");
+	}
 
 	/* Complete "GRANT/REVOKE * ON ALL * IN SCHEMA *" with TO/FROM */
 	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "ALL", MatchAny, "IN", "SCHEMA", MatchAny) ||
