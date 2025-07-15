@@ -3980,6 +3980,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Estimated number of rows inserted since this table was last vacuumed
+       (not counting <command>VACUUM FULL</command>)
       </para></entry>
      </row>
 
@@ -4066,7 +4067,8 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        <structfield>total_vacuum_time</structfield> <type>double precision</type>
       </para>
       <para>
-       Total time this table has been manually vacuumed, in milliseconds.
+       Total time this table has been manually vacuumed, in milliseconds
+       (not counting <command>VACUUM FULL</command>).
        (This includes the time spent sleeping due to cost-based delays.)
       </para></entry>
      </row>
