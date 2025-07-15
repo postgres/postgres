@@ -3514,11 +3514,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
      </term>
      <listitem>
       <para>
-       Boolean option to enable streaming of in-progress transactions.
-       It accepts an additional value "parallel" to enable sending extra
-       information with some messages to be used for parallelisation.
-       Minimum protocol version 2 is required to turn it on.  Minimum protocol
-       version 4 is required for the "parallel" option.
+       Option to enable streaming of in-progress transactions. Valid values are
+       <literal>off</literal> (the default), <literal>on</literal> and
+       <literal>parallel</literal>. The setting <literal>parallel</literal>
+       enables sending extra information with some messages to be used for
+       parallelization. Minimum protocol version 2 is required to turn it
+       <literal>on</literal>.  Minimum protocol version 4 is required for the
+       <literal>parallel</literal> value.
       </para>
      </listitem>
     </varlistentry>
