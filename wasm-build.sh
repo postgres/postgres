@@ -103,8 +103,8 @@ export PG_EXTRA=${PG_BUILD}/extra-${BUILD}
 
 # default to user writeable paths in /tmp/ .
 DIST_ALL="${PGROOT}/bin ${PG_DIST} ${PG_DIST_EXT} ${PG_BUILD_DUMPS} ${PGL_DIST_JS} ${PGL_BUILD_NATIVE}"
-DIST_ALL="$DIST_ALL ${PGL_DIST_LINK} ${PGL_DIST_NATIVE} ${PGL_DIST_WEB} ${PGL_DIST_C}"
-DIST_ALL="$DIST_ALL ${PG_EXTRA}"
+DIST_ALL="$DIST_ALL ${PGL_DIST_NATIVE} ${PGL_DIST_WEB} ${PGL_DIST_C} ${PG_EXTRA}"
+DIST_ALL="$DIST_ALL ${PGL_DIST_LINK}/imports ${PGL_DIST_LINK}/exports"
 
 if mkdir -p $DIST_ALL
 then
