@@ -818,6 +818,16 @@ SELCT 1/0;<!-- this typo is intentional -->
      Errors detected at semantic analysis or later, such as a misspelled
      table or column name, do not have this effect.
     </para>
+
+    <para>
+     Lastly, note that all the statements within the Query message will
+     observe the same value of <function>statement_timestamp()</function>,
+     since that timestamp is updated only upon receipt of the Query
+     message.  This will result in them all observing the same
+     value of <function>transaction_timestamp()</function> as well,
+     except in cases where the query string ends a previously-started
+     transaction and begins a new one.
+    </para>
    </sect3>
   </sect2>
 
