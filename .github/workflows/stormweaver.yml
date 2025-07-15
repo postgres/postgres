@@ -50,7 +50,7 @@ jobs:
         working-directory: postgres
 
       - name: Run Stormweaver
-        run: bin/stormweaver scenarios/basic.lua -i ../../pginst
+        run: bin/stormweaver scenarios/basic.lua -i ../pginst
         working-directory: stormweaver
 
       - name: Upload logs on test fail
