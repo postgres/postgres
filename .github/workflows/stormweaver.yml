@@ -52,3 +52,21 @@ jobs:
       - name: Run Stormweaver
         run: bin/stormweaver scenarios/basic.lua -i ../../pginst
         working-directory: stormweaver
+
+      - name: Upload logs on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: stormweaver-logs
+          path: |
+            stormweaver/logs/*
+          retention-days: 3
+
+      - name: Upload datadir on test fail
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: stormweaver-datadirs
+          path: |
+            stormweaver/datadirs/*
+          retention-days: 3
