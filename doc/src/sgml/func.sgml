@@ -11247,10 +11247,10 @@ now()
     statement (more specifically, the time of receipt of the latest command
     message from the client).
     <function>statement_timestamp()</function> and <function>transaction_timestamp()</function>
-    return the same value during the first command of a transaction, but might
-    differ during subsequent commands.
+    return the same value during the first statement of a transaction, but might
+    differ during subsequent statements.
     <function>clock_timestamp()</function> returns the actual current time, and
-    therefore its value changes even within a single SQL command.
+    therefore its value changes even within a single SQL statement.
     <function>timeofday()</function> is a historical
     <productname>PostgreSQL</productname> function.  Like
     <function>clock_timestamp()</function>, it returns the actual current time,
