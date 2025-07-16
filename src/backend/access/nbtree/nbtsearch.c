@@ -892,9 +892,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	OffsetNumber offnum;
 	BTScanInsertData inskey;
 	ScanKey		startKeys[INDEX_MAX_KEYS];
-	ScanKeyData notnullkeys[INDEX_MAX_KEYS];
+	ScanKeyData notnullkey;
 	int			keysz = 0;
-	StrategyNumber strat_total;
+	StrategyNumber strat_total = InvalidStrategy;
 	BlockNumber blkno = InvalidBlockNumber,
 				lastcurrblkno;
 
@@ -1034,7 +1034,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * need to be kept in sync.
 	 *----------
 	 */
-	strat_total = BTEqualStrategyNumber;
 	if (so->numberOfKeys > 0)
 	{
 		AttrNumber	curattr;
@@ -1122,16 +1121,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 					 ScanDirectionIsForward(dir) :
 					 ScanDirectionIsBackward(dir)))
 				{
-					/* Yes, so build the key in notnullkeys[keysz] */
-					bkey = &notnullkeys[keysz];
+					/* Final startKeys[] entry will be deduced NOT NULL key */
+					bkey = &notnullkey;
 					ScanKeyEntryInitialize(bkey,
 										   (SK_SEARCHNOTNULL | SK_ISNULL |
 											(impliesNN->sk_flags &
 											 (SK_BT_DESC | SK_BT_NULLS_FIRST))),
 										   curattr,
-										   ((impliesNN->sk_flags & SK_BT_NULLS_FIRST) ?
-											BTGreaterStrategyNumber :
-											BTLessStrategyNumber),
+										   ScanDirectionIsForward(dir) ?
+										   BTGreaterStrategyNumber : BTLessStrategyNumber,
 										   InvalidOid,
 										   InvalidOid,
 										   InvalidOid,
