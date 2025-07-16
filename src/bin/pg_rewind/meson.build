@@ -19,11 +19,21 @@ if host_system == 'windows'
     '--FILEDESC', 'pg_rewind - synchronize a data directory with another one forked from'])
 endif
 
+link_w  = []
+include_dirs = [postgres_inc]
+
+if percona_ext == true
+  link_w = [pg_tde_frontend]
+  include_dirs = [postgres_inc, pg_tde_inc]
+endif
+
 pg_rewind = executable('pg_rewind',
   pg_rewind_sources,
   dependencies: [frontend_code, libpq, lz4, zstd],
   c_args: ['-DFRONTEND'], # needed for xlogreader et al
   kwargs: default_bin_args,
+  include_directories: include_dirs,
+  link_with: link_w,
 )
 bin_targets += pg_rewind
 
