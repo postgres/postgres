@@ -36,6 +36,7 @@ use warnings FATAL => 'all';
 
 use Carp;
 use Exporter 'import';
+use File::Basename;
 use File::Copy;
 use File::Path qw(rmtree);
 use IPC::Run   qw(run);
@@ -113,6 +114,13 @@ sub setup_cluster
 	my $extra_name = shift;    # Used to differentiate clusters
 	my $extra = shift;         # Extra params for initdb
 
+	my ($test_name) = basename($0) =~ /([^.]*)/;
+	my ($test_mode) = $extra_name //= 'default';
+	my $tde_keyring_file =
+	  "/tmp/pg_tde_rewind_test_${test_name}_${test_mode}.per";
+
+	unlink($tde_keyring_file);
+
 	# Initialize primary, data checksums are mandatory
 	$node_primary =
 	  PostgreSQL::Test::Cluster->new(
@@ -132,7 +140,31 @@ sub setup_cluster
 		'postgresql.conf', qq(
 wal_keep_size = 320MB
 allow_in_place_tablespaces = on
+
+shared_preload_libraries = 'pg_tde'
 ));
+
+	$node_primary->start;
+
+	$node_primary->safe_psql('postgres',
+		"CREATE EXTENSION IF NOT EXISTS pg_tde;");
+	$node_primary->safe_psql('postgres',
+		"SELECT pg_tde_add_global_key_provider_file('file-keyring-wal','${tde_keyring_file}');"
+	);
+	$node_primary->safe_psql('postgres',
+		"SELECT pg_tde_create_key_using_global_key_provider('global-db-principal-key', 'file-keyring-wal');"
+	);
+	$node_primary->safe_psql('postgres',
+		"SELECT pg_tde_set_server_key_using_global_key_provider('global-db-principal-key', 'file-keyring-wal');"
+	);
+
+	$node_primary->append_conf(
+		'postgresql.conf', q{
+pg_tde.wal_encrypt = on
+});
+
+	$node_primary->stop;
+
 	return;
 }
 
