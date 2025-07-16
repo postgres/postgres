@@ -25,11 +25,11 @@
 /* GUC */
 int			default_toast_compression = TOAST_PGLZ_COMPRESSION;
 
-#define NO_LZ4_SUPPORT() \
+#define NO_COMPRESSION_SUPPORT(method) \
 	ereport(ERROR, \
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
-			 errmsg("compression method lz4 not supported"), \
-			 errdetail("This functionality requires the server to be built with lz4 support.")))
+			 errmsg("compression method %s not supported", method), \
+			 errdetail("This functionality requires the server to be built with %s support.", method)))
 
 /*
  * Compress a varlena using PGLZ.
@@ -139,7 +139,7 @@ struct varlena *
 lz4_compress_datum(const struct varlena *value)
 {
 #ifndef USE_LZ4
-	NO_LZ4_SUPPORT();
+	NO_COMPRESSION_SUPPORT("lz4");
 	return NULL;				/* keep compiler quiet */
 #else
 	int32		valsize;
@@ -182,7 +182,7 @@ struct varlena *
 lz4_decompress_datum(const struct varlena *value)
 {
 #ifndef USE_LZ4
-	NO_LZ4_SUPPORT();
+	NO_COMPRESSION_SUPPORT("lz4");
 	return NULL;				/* keep compiler quiet */
 #else
 	int32		rawsize;
@@ -215,7 +215,7 @@ struct varlena *
 lz4_decompress_datum_slice(const struct varlena *value, int32 slicelength)
 {
 #ifndef USE_LZ4
-	NO_LZ4_SUPPORT();
+	NO_COMPRESSION_SUPPORT("lz4");
 	return NULL;				/* keep compiler quiet */
 #else
 	int32		rawsize;
@@ -289,7 +289,7 @@ CompressionNameToMethod(const char *compression)
 	else if (strcmp(compression, "lz4") == 0)
 	{
 #ifndef USE_LZ4
-		NO_LZ4_SUPPORT();
+		NO_COMPRESSION_SUPPORT("lz4");
 #endif
 		return TOAST_LZ4_COMPRESSION;
 	}
