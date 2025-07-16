@@ -125,13 +125,17 @@ main(int argc, char *argv[])
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("postgres"));
 
 	/*
-	 * In the postmaster, absorb the environment values for LC_COLLATE and
-	 * LC_CTYPE.  Individual backends will change these later to settings
-	 * taken from pg_database, but the postmaster cannot do that.  If we leave
-	 * these set to "C" then message localization might not work well in the
-	 * postmaster.
+	 * Collation is handled by pg_locale.c, and the behavior is dependent on
+	 * the provider. strcoll(), etc., should not be called directly.
 	 */
-	init_locale("LC_COLLATE", LC_COLLATE, "");
+	init_locale("LC_COLLATE", LC_COLLATE, "C");
+
+	/*
+	 * In the postmaster, absorb the environment value for LC_CTYPE.
+	 * Individual backends will change it later to pg_database.datctype, but
+	 * the postmaster cannot do that.  If we leave it set to "C" then message
+	 * localization might not work well in the postmaster.
+	 */
 	init_locale("LC_CTYPE", LC_CTYPE, "");
 
 	/*

@@ -150,12 +150,12 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        <para>
         Sets the default collation order and character classification in the
         new database.  Collation affects the sort order applied to strings,
-        e.g., in queries with <literal>ORDER BY</literal>, as well as the order used in indexes
-        on text columns.  Character classification affects the categorization
-        of characters, e.g., lower, upper, and digit.  Also sets the
-        associated aspects of the operating system environment,
-        <literal>LC_COLLATE</literal> and <literal>LC_CTYPE</literal>.  The
-        default is the same setting as the template database.  See <xref
+        e.g., in queries with <literal>ORDER BY</literal>, as well as the
+        order used in indexes on text columns.  Character classification
+        affects the categorization of characters, e.g., lower, upper, and
+        digit.  Also sets the <literal>LC_CTYPE</literal> aspect of the
+        operating system environment.  The default is the same setting as the
+        template database.  See <xref
         linkend="collation-managing-create-libc"/> and <xref
         linkend="collation-managing-create-icu"/> for details.
        </para>
@@ -189,17 +189,16 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">lc_collate</replaceable></term>
       <listitem>
        <para>
-        Sets <literal>LC_COLLATE</literal> in the database server's operating
-        system environment.  The default is the setting of <xref
-        linkend="create-database-locale"/> if specified, otherwise the same
-        setting as the template database.  See below for additional
-        restrictions.
+        If <xref linkend="create-database-locale-provider"/> is
+        <literal>libc</literal>, sets the default collation order to use in
+        the new database, overriding the setting <xref
+        linkend="create-database-locale"/>. Otherwise, this setting is
+        ignored.
        </para>
        <para>
-        If <xref linkend="create-database-locale-provider"/> is
-        <literal>libc</literal>, also sets the default collation order to use
-        in the new database, overriding the setting <xref
-        linkend="create-database-locale"/>.
+        The default is the setting of <xref linkend="create-database-locale"/>
+        if specified, otherwise the same setting as the template database.
+        See below for additional restrictions.
        </para>
       </listitem>
      </varlistentry>
@@ -208,16 +207,18 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         Sets <literal>LC_CTYPE</literal> in the database server's operating
-        system environment.  The default is the setting of <xref
-        linkend="create-database-locale"/> if specified, otherwise the same
-        setting as the template database.  See below for additional
-        restrictions.
+        system environment.
        </para>
        <para>
         If <xref linkend="create-database-locale-provider"/> is
-        <literal>libc</literal>, also sets the default character
-        classification to use in the new database, overriding the setting
-        <xref linkend="create-database-locale"/>.
+        <literal>libc</literal>, sets the default character classification to
+        use in the new database, overriding the setting <xref
+        linkend="create-database-locale"/>.
+       </para>
+       <para>
+        The default is the setting of <xref linkend="create-database-locale"/>
+        if specified, otherwise the same setting as the template database.
+        See below for additional restrictions.
        </para>
       </listitem>
      </varlistentry>

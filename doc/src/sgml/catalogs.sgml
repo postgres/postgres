@@ -3158,7 +3158,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>datcollate</structfield> <type>text</type>
       </para>
       <para>
-       LC_COLLATE for this database
+       LC_COLLATE for this database (ignored unless <structfield>datlocprovider</structfield> is <literal>c</literal>)
       </para></entry>
      </row>
 

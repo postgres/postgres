@@ -100,7 +100,7 @@ initdb --locale=sv_SE
       <tbody>
        <row>
         <entry><envar>LC_COLLATE</envar></entry>
-        <entry>String sort order</entry>
+        <entry>String sort order (ignored unless the provider is <literal>libc</literal>)</entry>
        </row>
        <row>
         <entry><envar>LC_CTYPE</envar></entry>
