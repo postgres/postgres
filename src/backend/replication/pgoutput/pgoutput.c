@@ -297,10 +297,12 @@ parse_output_parameters(List *options, PGOutputData *data)
 	bool		two_phase_option_given = false;
 	bool		origin_option_given = false;
 
+	/* Initialize optional parameters to defaults */
 	data->binary = false;
 	data->streaming = LOGICALREP_STREAM_OFF;
 	data->messages = false;
 	data->two_phase = false;
+	data->publish_no_origin = false;
 
 	foreach(lc, options)
 	{
