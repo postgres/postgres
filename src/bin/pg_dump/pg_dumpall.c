@@ -632,7 +632,7 @@ main(int argc, char *argv[])
 		fprintf(OPF, "SET escape_string_warning = off;\n");
 	fprintf(OPF, "\n");
 
-	if (!data_only)
+	if (!data_only && !statistics_only && !no_schema)
 	{
 		/*
 		 * If asked to --clean, do that first.  We can avoid detailed
