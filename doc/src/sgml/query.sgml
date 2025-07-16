@@ -264,8 +264,18 @@ COPY weather FROM '/home/user/weather.txt';
 
     where the file name for the source file must be available on the
     machine running the backend process, not the client, since the backend process
-    reads the file directly.  You can read more about the
-    <command>COPY</command> command in <xref linkend="sql-copy"/>.
+    reads the file directly.  The data inserted above into the weather table
+    could also be inserted from a file containing (values are separated by a
+    tab character):
+
+<programlisting>
+San Francisco    46    50    0.25    1994-11-27
+San Francisco    43    57    0.0    1994-11-29
+Hayward    37    54    \N    1994-11-29
+</programlisting>
+
+    You can read more about the <command>COPY</command> command in
+    <xref linkend="sql-copy"/>.
    </para>
   </sect1>
 
