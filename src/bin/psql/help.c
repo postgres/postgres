@@ -748,7 +748,7 @@ void
 print_copyright(void)
 {
 	puts("PostgreSQL Database Management System\n"
-		 "(formerly known as Postgres, then as Postgres95)\n\n"
+		 "(also known as Postgres, formerly known as Postgres95)\n\n"
 		 "Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group\n\n"
 		 "Portions Copyright (c) 1994, The Regents of the University of California\n\n"
 		 "Permission to use, copy, modify, and distribute this software and its\n"
