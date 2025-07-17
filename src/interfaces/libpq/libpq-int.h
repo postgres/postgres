@@ -357,7 +357,8 @@ typedef struct pg_conn_host
 	pg_conn_host_type type;		/* type of host address */
 	char	   *host;			/* host name or socket path */
 	char	   *hostaddr;		/* host numeric IP address */
-	char	   *port;			/* port number (always provided) */
+	char	   *port;			/* port number (if NULL or empty, use
+								 * DEF_PGPORT[_STR]) */
 	char	   *password;		/* password for this host, read from the
 								 * password file; NULL if not sought or not
 								 * found in password file. */
