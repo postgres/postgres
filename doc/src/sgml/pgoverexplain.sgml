@@ -8,13 +8,28 @@
  </indexterm>
 
  <para>
-  The <filename>pg_overexplain</filename> extends <command>EXPLAIN</command>
+  The <filename>pg_overexplain</filename> module extends <command>EXPLAIN</command>
   with new options that provide additional output. It is mostly intended to
   assist with debugging of and development of the planner, rather than for
   general use. Since this module displays internal details of planner data
   structures, it may be necessary to refer to the source code to make sense
   of the output. Furthermore, the output is likely to change whenever (and as
   often as) those data structures change.
+ </para>
+
+ <para>
+  To use it, simply load it into the server.  You can load it into an
+  individual session:
+
+<programlisting>
+LOAD 'pg_overexplain';
+</programlisting>
+
+  You can also preload it into some or all sessions by including
+  <literal>pg_overexplain</literal> in
+  <xref linkend="guc-session-preload-libraries"/> or
+  <xref linkend="guc-shared-preload-libraries"/> in
+  <filename>postgresql.conf</filename>.
  </para>
 
  <sect2 id="pgoverexplain-debug">
