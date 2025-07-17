@@ -1350,24 +1350,15 @@ PortalRunMulti(Portal portal,
 		PopActiveSnapshot();
 
 	/*
-	 * If a query completion data was supplied, use it.  Otherwise use the
-	 * portal's query completion data.
-	 *
-	 * Exception: Clients expect INSERT/UPDATE/DELETE tags to have counts, so
-	 * fake them with zeros.  This can happen with DO INSTEAD rules if there
-	 * is no replacement query of the same type as the original.  We print "0
-	 * 0" here because technically there is no query of the matching tag type,
-	 * and printing a non-zero count for a different query type seems wrong,
-	 * e.g.  an INSERT that does an UPDATE instead should not print "0 1" if
-	 * one row was updated.  See QueryRewrite(), step 3, for details.
+	 * If a command tag was requested and we did not fill in a run-time-
+	 * determined tag above, copy the parse-time tag from the Portal.  (There
+	 * might not be any tag there either, in edge cases such as empty prepared
+	 * statements.  That's OK.)
 	 */
-	if (qc && qc->commandTag == CMDTAG_UNKNOWN)
-	{
-		if (portal->qc.commandTag != CMDTAG_UNKNOWN)
-			CopyQueryCompletion(qc, &portal->qc);
-		/* If the caller supplied a qc, we should have set it by now. */
-		Assert(qc->commandTag != CMDTAG_UNKNOWN);
-	}
+	if (qc &&
+		qc->commandTag == CMDTAG_UNKNOWN &&
+		portal->qc.commandTag != CMDTAG_UNKNOWN)
+		CopyQueryCompletion(qc, &portal->qc);
 }
 
 /*
