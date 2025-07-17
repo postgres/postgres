@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-table-access-method", no_argument, &no_table_access_method, 1},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
-		{"quote-all-identifiers", no_argument, &fe_utils_quote_all_identifiers, true},
+		{"quote-all-identifiers", no_argument, (int *)(&fe_utils_quote_all_identifiers), true},
 		{"load-via-partition-root", no_argument, &load_via_partition_root, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},

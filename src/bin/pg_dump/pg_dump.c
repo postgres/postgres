@@ -69,6 +69,30 @@
 #include "pg_dump.h"
 #include "storage/block.h"
 
+#if !defined(__wasi__) && !defined(__EMSCRIPTEN__)
+extern PGDLLIMPORT bool fe_utils_quote_all_identifiers;
+#else
+#if defined(WASM)
+#ifdef errno
+    #undef errno
+    int errno;
+#endif
+
+pid_t fork(void) {
+    return -1;
+}
+
+#   include <wasi/api.h>
+
+__attribute__((export_name("sdk_fd_seek")))
+int sdk_fd_seek(int fd, int  offset,int  whence, unsigned long long *retptr) {
+    puts("sdk_fd_seek called !");
+    return __wasi_fd_seek(fd, offset, whence, retptr);
+}
+
+#endif
+#endif
+
 typedef struct
 {
 	Oid			roleoid;		/* role's OID */
@@ -425,7 +449,7 @@ main(int argc, char **argv)
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-table-access-method", no_argument, &dopt.outputNoTableAm, 1},
 		{"no-tablespaces", no_argument, &dopt.outputNoTablespaces, 1},
-		{"quote-all-identifiers", no_argument, &fe_utils_quote_all_identifiers, 1},
+		{"quote-all-identifiers", no_argument, (int *)(&fe_utils_quote_all_identifiers), 1},
 		{"load-via-partition-root", no_argument, &dopt.load_via_partition_root, 1},
 		{"role", required_argument, NULL, 3},
 		{"section", required_argument, NULL, 5},

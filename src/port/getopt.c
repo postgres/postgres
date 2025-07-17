@@ -67,8 +67,13 @@ char	   *optarg;				/* argument associated with option */
  * (Internally, this means we must be sure to reset "place" to EMSG before
  * returning -1.)
  */
+
 int
+#if defined(__wasi__)
+sdk_getopt(int nargc, char *const *nargv, const char *ostr)
+#else
 getopt(int nargc, char *const *nargv, const char *ostr)
+#endif
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */

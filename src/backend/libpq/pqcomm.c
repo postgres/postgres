@@ -289,7 +289,7 @@ pq_init(ClientSocket *client_sock)
 		(void) pq_settcpusertimeout(tcp_user_timeout, port);
 	}
 #endif /* WASM */
-PDEBUG("# 287:" __FILE__);
+
 	/* initialize state variables */
 	PqSendBufferSize = PQ_SEND_BUFFER_SIZE;
 	PqSendBuffer = MemoryContextAlloc(TopMemoryContext, PqSendBufferSize);

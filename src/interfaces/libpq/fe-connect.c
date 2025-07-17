@@ -2441,7 +2441,7 @@ pqConnectDBStart(PGconn *conn)
 	/* Also reset the target_server_type state if needed */
 	if (conn->target_server_type == SERVER_TYPE_PREFER_STANDBY_PASS2)
 		conn->target_server_type = SERVER_TYPE_PREFER_STANDBY;
-PDEBUG("# 2381: connectDBStart");
+
 	/*
 	 * The code for processing CONNECTION_NEEDED state is in PQconnectPoll(),
 	 * so that it can easily be re-executed if needed again during the
@@ -2453,7 +2453,7 @@ PDEBUG("# 2381: connectDBStart");
 		return 1;
 
 connect_errReturn:
-    PDEBUG("# 2456: CONNECTION_BAD");
+
 	/*
 	 * If we managed to open a socket, close it immediately rather than
 	 * waiting till PQfinish.  (The application cannot have gotten the socket
@@ -2480,7 +2480,7 @@ pqConnectDBComplete(PGconn *conn)
 	int			timeout = 0;
 	int			last_whichhost = -2;	/* certainly different from whichhost */
 	int			last_whichaddr = -2;	/* certainly different from whichaddr */
-PDEBUG("# 2420: connectDBComplete Begin "  __FILE__ );
+
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
@@ -2553,7 +2553,7 @@ if(!flag) abort();
 				break;
 
 			default:
-PDEBUG("# 2508: CONNECTION_BAD");
+
 				/* Just in case we failed to set it in PQconnectPoll */
 				conn->status = CONNECTION_BAD;
 				return 0;
@@ -2561,7 +2561,6 @@ PDEBUG("# 2508: CONNECTION_BAD");
 
 		if (ret == 1)			/* connect_timeout elapsed */
 		{
-PDEBUG("# 2535: timeout !");
 			/*
 			 * Give up on current server/address, try the next one.
 			 */

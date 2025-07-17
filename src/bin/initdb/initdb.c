@@ -1622,7 +1622,6 @@ bootstrap_template1(void)
 	PG_CMD_CLOSE();
     termPQExpBuffer(&cmd);
 	free(bki_lines);
-PDEBUG("# 1624: BOOT pipe complete");
 	check_ok();
 }
 
@@ -3112,7 +3111,7 @@ initialize_data_directory(void)
 	initPQExpBuffer(&cmd);
 	printfPQExpBuffer(&cmd, "\"%s\" %s %s template1 >%s",
 					  backend_exec, backend_options, extra_options, DEVNULL);
-PDEBUG("# 3115: post-bootstrap sql begin");
+
 	PG_CMD_OPEN(cmd.data);
 
 	setup_auth(cmdfd);
@@ -3150,7 +3149,7 @@ PDEBUG("# 3115: post-bootstrap sql begin");
 
 	PG_CMD_CLOSE();
 	termPQExpBuffer(&cmd);
-PDEBUG("# 3115: post-bootstrap sql end");
+
 	check_ok();
 }
 
@@ -3470,7 +3469,10 @@ printf("# 3245:" __FILE__ " calling pg_initdb_main for %s\n", progname);
 	if (icu_rules && locale_provider != COLLPROVIDER_ICU)
 		pg_fatal("%s cannot be specified unless locale provider \"%s\" is chosen",
 				 "--icu-rules", "icu");
-PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit)");
+#if defined(__wasi__) || defined(__EMSCRIPTEN__)
+#pragma message "#TODO: atexit(cleanup_directories_atexit)"
+PDEBUG("# 3472:"__FILE__ "#TODO: atexit(cleanup_directories_atexit)");
+#endif
 	atexit(cleanup_directories_atexit);
 
 	/* If we only need to sync, just do it and exit */
@@ -3506,13 +3508,11 @@ PDEBUG("# 3463:"__FILE__ " TODO: atexit(cleanup_directories_atexit)");
 	get_restricted_token();
 
 	setup_pgdata();
-PDEBUG("# 3493:pgl_initdb_main " __FILE__);
 	setup_bin_paths(argv[0]);
-PDEBUG("# 3495:pgl_initdb_main " __FILE__);
 	effective_user = get_id();
 	if (!username)
 		username = effective_user;
-PDEBUG("# 3514:pgl_initdb_main " __FILE__);
+
 	if (strncmp(username, "pg_", 3) == 0)
 		pg_fatal("superuser name \"%s\" is disallowed; role names cannot begin with \"pg_\"", username);
 
@@ -3596,7 +3596,6 @@ puts("# 3527:" __FILE__);
 		destroyPQExpBuffer(start_db_cmd);
 	}
 
-PDEBUG("# 3583");
 	success = true;
 	return 0;
 }

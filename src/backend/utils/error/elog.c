@@ -543,11 +543,10 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 */
 
 		recursion_depth--;
-#if 0 //defined(__EMSCRIPTEN__) || defined(__wasi__)
-        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) ignored\n", recursion_depth);
-        trap();
+#if defined(__wasi__)
+        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) ignored\r\n", recursion_depth);
+        abort();
 #else
-        fprintf(stderr, "# 549: PG_RE_THROW(ERROR : %d)\n", recursion_depth);
 		PG_RE_THROW();
 #endif
 	}
@@ -598,7 +597,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * worthy of panic, depending on which subprocess returns it.
 		 */
 #if defined(__EMSCRIPTEN__) || defined(__wasi__)
-        puts("# 599: proc_exit(FATAL) ignored");
+        puts("# 600: proc_exit(FATAL) ignored\r\n");
 #else
 		proc_exit(1);
 #endif
