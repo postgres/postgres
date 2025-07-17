@@ -30,53 +30,7 @@ fi
 
 if $WASI
 then
-    if [ -f ${WASI_SYSROOT}/extra ]
-    then
-        echo -n
-    else
-        echo "
 
-   * add wasi third parties to ${WASI_SYSROOT}
-
-        "
-        mkdir -p ${WASI_SYSROOT}
-        pushd ${WASI_SYSROOT}
-            VMLABS="https://github.com/vmware-labs/webassembly-language-runtimes/releases/download"
-            wget -q "${VMLABS}/libs%2Flibpng%2F1.6.39%2B20230629-ccb4cb0/libpng-1.6.39-wasi-sdk-20.0.tar.gz" -O-| tar xfz -
-            wget -q "${VMLABS}/libs%2Fzlib%2F1.2.13%2B20230623-2993864/libz-1.2.13-wasi-sdk-20.0.tar.gz"  -O-| tar xfz -
-            wget -q "${VMLABS}/libs%2Fsqlite%2F3.42.0%2B20230623-2993864/libsqlite-3.42.0-wasi-sdk-20.0.tar.gz" -O-| tar xfz -
-            wget -q "${VMLABS}/libs%2Flibxml2%2F2.11.4%2B20230623-2993864/libxml2-2.11.4-wasi-sdk-20.0.tar.gz" -O-| tar xfz -
-            wget -q "${VMLABS}/libs%2Fbzip2%2F1.0.8%2B20230623-2993864/libbzip2-1.0.8-wasi-sdk-20.0.tar.gz"  -O-| tar xfz -
-            wget -q "${VMLABS}/libs%2Flibuuid%2F1.0.3%2B20230623-2993864/libuuid-1.0.3-wasi-sdk-20.0.tar.gz" -O-| tar xfz -
-            cat > ./include/wasm32-wasi/__struct_sockaddr_un.h <<END
-#ifndef __wasilibc___struct_sockaddr_un_h
-#define __wasilibc___struct_sockaddr_un_h
-
-#include <__typedef_sa_family_t.h>
-
-struct sockaddr_un {
-    __attribute__((aligned(__BIGGEST_ALIGNMENT__))) sa_family_t sun_family;
-	char sun_path[108];
-};
-
-#endif
-END
-
-            for level in p1 p2
-            do
-                cp -Rn lib/wasm32-wasi/* lib/wasm32-wasi${level}/
-                cp include/wasm32-wasi/__struct_sockaddr_un.h include/wasm32-wasi${level}/__struct_sockaddr_un.h
-                cp include/wasm32-wasi/sys/shm.h include/wasm32-wasi${level}/sys/shm.h
-                cp include/wasm32-wasi/bits/shm.h include/wasm32-wasi${level}/bits/shm.h
-                sed -i 's|extern FILE \*const stdin;|extern FILE \* stdin;|g'  include/wasm32-wasi${level}/stdio.h
-                sed -i 's|extern FILE \*const stdout;|extern FILE \* stdout;|g'  include/wasm32-wasi${level}/stdio.h
-                sed -i 's|extern FILE \*const stderr;|extern FILE \* stderr;|g'  include/wasm32-wasi${level}/stdio.h
-
-                sed -i 's|int getrusage|//int getrusage|g' include/wasm32-wasi${level}/__header_sys_resource.h
-            done
-        popd
-        touch ${WASI_SYSROOT}/extra
-    fi
     exit 0
 fi
 

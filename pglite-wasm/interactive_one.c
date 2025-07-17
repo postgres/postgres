@@ -236,11 +236,11 @@ clear_error() {
     idle_in_transaction_timeout_enabled = false;
     idle_session_timeout_enabled = false;
     DoingCommandRead = false;
-
+puts("# 239:" __FILE__ );
     pq_comm_reset();
     EmitErrorReport();
     debug_query_string = NULL;
-
+puts("# 243:" __FILE__ );
     AbortCurrentTransaction();
 
     if (am_walsender)
@@ -381,6 +381,8 @@ interactive_one() {
     bool had_notification = notifyInterruptPending;
     bool notified = false;
     // send_ready_for_query = false;
+if (cma_rsize<0)
+    goto resume_on_error;
 
     if (!MyProcPort) {
         PDEBUG("# 353: client created");
@@ -644,7 +646,7 @@ incoming:
             }
         }
     }
-
+resume_on_error:
     if (!is_repl) {
 wire_flush:
         if (!ClientAuthInProgress) {

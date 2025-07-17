@@ -3,10 +3,13 @@
 #else
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
+#if !defined(INITDB_SINGLE)
+        clear_error();
+#else
         error_context_stack = NULL;
         HOLD_INTERRUPTS();
 
-        disable_all_timeouts(false);	/* do first to avoid race condition */
+        disable_all_timeouts(false);	// do first to avoid race condition
         QueryCancelPending = false;
         idle_in_transaction_timeout_enabled = false;
         idle_session_timeout_enabled = false;
@@ -25,7 +28,11 @@
         if (MyReplicationSlot != NULL)
             ReplicationSlotRelease();
 
+#ifdef PG16
+        ReplicationSlotCleanup();
+#else
         ReplicationSlotCleanup(false);
+#endif
 
         MemoryContextSwitchTo(TopMemoryContext);
         FlushErrorState();
@@ -41,14 +48,15 @@
 	                 errmsg("terminating connection because protocol synchronization was lost")));
 
         RESUME_INTERRUPTS();
-#if !defined(INITDB_SINGLE)
-        /*
-         * If we were handling an extended-query-protocol message, skip till next Sync.
-         * This also causes us not to issue ReadyForQuery (until we get Sync).
-         */
+
+        // If we were handling an extended-query-protocol message, skip till next Sync.
+        // This also causes us not to issue ReadyForQuery (until we get Sync).
 
         if (!ignore_till_sync)
             send_ready_for_query = true;
+#endif
+
+#if !defined(INITDB_SINGLE)
 #if PGDEBUG
         if (is_repl)
             pg_prompt();
