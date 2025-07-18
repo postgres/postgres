@@ -49,8 +49,10 @@
 #include "catalog/pg_class_d.h"
 #include "catalog/pg_default_acl_d.h"
 #include "catalog/pg_largeobject_d.h"
+#include "catalog/pg_largeobject_metadata_d.h"
 #include "catalog/pg_proc_d.h"
 #include "catalog/pg_publication_d.h"
+#include "catalog/pg_shdepend_d.h"
 #include "catalog/pg_subscription_d.h"
 #include "catalog/pg_type_d.h"
 #include "common/connect.h"
@@ -208,6 +210,12 @@ static int	nbinaryUpgradeClassOids = 0;
 /* sorted table of sequences */
 static SequenceItem *sequences = NULL;
 static int	nsequences = 0;
+
+/*
+ * For binary upgrade, the dump ID of pg_largeobject_metadata is saved for use
+ * as a dependency for pg_shdepend and any large object comments/seclabels.
+ */
+static DumpId lo_metadata_dumpId;
 
 /* Maximum number of relations to fetch in a fetchAttributeStats() call. */
 #define MAX_ATTR_STATS_RELS 64
@@ -1084,6 +1092,36 @@ main(int argc, char **argv)
 
 	if (!dopt.dumpData && dopt.sequence_data)
 		getTableData(&dopt, tblinfo, numTables, RELKIND_SEQUENCE);
+
+	/*
+	 * For binary upgrade mode, dump pg_largeobject_metadata and the
+	 * associated pg_shdepend rows. This is faster to restore than the
+	 * equivalent set of large object commands.  We can only do this for
+	 * upgrades from v12 and newer; in older versions, pg_largeobject_metadata
+	 * was created WITH OIDS, so the OID column is hidden and won't be dumped.
+	 */
+	if (dopt.binary_upgrade && fout->remoteVersion >= 120000)
+	{
+		TableInfo  *lo_metadata = findTableByOid(LargeObjectMetadataRelationId);
+		TableInfo  *shdepend = findTableByOid(SharedDependRelationId);
+
+		makeTableDataInfo(&dopt, lo_metadata);
+		makeTableDataInfo(&dopt, shdepend);
+
+		/*
+		 * Save pg_largeobject_metadata's dump ID for use as a dependency for
+		 * pg_shdepend and any large object comments/seclabels.
+		 */
+		lo_metadata_dumpId = lo_metadata->dataObj->dobj.dumpId;
+		addObjectDependency(&shdepend->dataObj->dobj, lo_metadata_dumpId);
+
+		/*
+		 * Only dump large object shdepend rows for this database.
+		 */
+		shdepend->dataObj->filtercond = "WHERE classid = 'pg_largeobject'::regclass "
+			"AND dbid = (SELECT oid FROM pg_database "
+			"            WHERE datname = current_database())";
+	}
 
 	/*
 	 * In binary-upgrade mode, we do not have to worry about the actual LO
@@ -3924,10 +3962,37 @@ getLOs(Archive *fout)
 		 * as it will be copied by pg_upgrade, which simply copies the
 		 * pg_largeobject table. We *do* however dump out anything but the
 		 * data, as pg_upgrade copies just pg_largeobject, but not
-		 * pg_largeobject_metadata, after the dump is restored.
+		 * pg_largeobject_metadata, after the dump is restored.  In versions
+		 * before v12, this is done via proper large object commands.  In
+		 * newer versions, we dump the content of pg_largeobject_metadata and
+		 * any associated pg_shdepend rows, which is faster to restore.  (On
+		 * <v12, pg_largeobject_metadata was created WITH OIDS, so the OID
+		 * column is hidden and won't be dumped.)
 		 */
 		if (dopt->binary_upgrade)
-			loinfo->dobj.dump &= ~DUMP_COMPONENT_DATA;
+		{
+			if (fout->remoteVersion >= 120000)
+			{
+				/*
+				 * We should've saved pg_largeobject_metadata's dump ID before
+				 * this point.
+				 */
+				Assert(lo_metadata_dumpId);
+
+				loinfo->dobj.dump &= ~(DUMP_COMPONENT_DATA | DUMP_COMPONENT_ACL | DUMP_COMPONENT_DEFINITION);
+
+				/*
+				 * Mark the large object as dependent on
+				 * pg_largeobject_metadata so that any large object
+				 * comments/seclables are dumped after it.
+				 */
+				loinfo->dobj.dependencies = (DumpId *) pg_malloc(sizeof(DumpId));
+				loinfo->dobj.dependencies[0] = lo_metadata_dumpId;
+				loinfo->dobj.nDeps = loinfo->dobj.allocDeps = 1;
+			}
+			else
+				loinfo->dobj.dump &= ~DUMP_COMPONENT_DATA;
+		}
 
 		/*
 		 * Create a "BLOBS" data item for the group, too. This is just a
@@ -9039,8 +9104,20 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			continue;
 
-		/* Don't bother with uninteresting tables, either */
-		if (!tbinfo->interesting)
+		/*
+		 * Don't bother with uninteresting tables, either.  For binary
+		 * upgrades, this is bypassed for pg_largeobject_metadata and
+		 * pg_shdepend so that the columns names are collected for the
+		 * corresponding COPY commands.  Restoring the data for those catalogs
+		 * is faster than restoring the equivalent set of large object
+		 * commands.  We can only do this for upgrades from v12 and newer; in
+		 * older versions, pg_largeobject_metadata was created WITH OIDS, so
+		 * the OID column is hidden and won't be dumped.
+		 */
+		if (!tbinfo->interesting &&
+			!(fout->dopt->binary_upgrade && fout->remoteVersion >= 120000 &&
+			  (tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId ||
+			   tbinfo->dobj.catId.oid == SharedDependRelationId)))
 			continue;
 
 		/* OK, we need info for this table */
@@ -9244,7 +9321,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 			pg_fatal("unrecognized table OID %u", attrelid);
 		/* cross-check that we only got requested tables */
 		if (tbinfo->relkind == RELKIND_SEQUENCE ||
-			!tbinfo->interesting)
+			(!tbinfo->interesting &&
+			 !(fout->dopt->binary_upgrade && fout->remoteVersion >= 120000 &&
+			   (tbinfo->dobj.catId.oid == LargeObjectMetadataRelationId ||
+				tbinfo->dobj.catId.oid == SharedDependRelationId))))
 			pg_fatal("unexpected column data for table \"%s\"",
 					 tbinfo->dobj.name);
 
