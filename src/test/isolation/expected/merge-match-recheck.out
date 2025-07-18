@@ -241,19 +241,28 @@ starting permutation: update_bal1_tg merge_bal_tg c2 select1_tg c1
 s2: NOTICE:  Update: (1,160,s1,setup) -> (1,50,s1,"setup updated by update_bal1_tg")
 step update_bal1_tg: UPDATE target_tg t SET balance = 50, val = t.val || ' updated by update_bal1_tg' WHERE t.key = 1;
 step merge_bal_tg: 
-  MERGE INTO target_tg t
-  USING (SELECT 1 as key) s
-  ON s.key = t.key
-  WHEN MATCHED AND balance < 100 THEN
-	UPDATE SET balance = balance * 2, val = t.val || ' when1'
-  WHEN MATCHED AND balance < 200 THEN
-	UPDATE SET balance = balance * 4, val = t.val || ' when2'
-  WHEN MATCHED AND balance < 300 THEN
-	UPDATE SET balance = balance * 8, val = t.val || ' when3';
+  WITH t AS (
+    MERGE INTO target_tg t
+    USING (SELECT 1 as key) s
+    ON s.key = t.key
+    WHEN MATCHED AND balance < 100 THEN
+      UPDATE SET balance = balance * 2, val = t.val || ' when1'
+    WHEN MATCHED AND balance < 200 THEN
+      UPDATE SET balance = balance * 4, val = t.val || ' when2'
+    WHEN MATCHED AND balance < 300 THEN
+      UPDATE SET balance = balance * 8, val = t.val || ' when3'
+    RETURNING t.*
+  )
+  SELECT * FROM t;
  <waiting ...>
 step c2: COMMIT;
 s1: NOTICE:  Update: (1,50,s1,"setup updated by update_bal1_tg") -> (1,100,s1,"setup updated by update_bal1_tg when1")
 step merge_bal_tg: <... completed>
+key|balance|status|val                                  
+---+-------+------+-------------------------------------
+  1|    100|s1    |setup updated by update_bal1_tg when1
+(1 row)
+
 step select1_tg: SELECT * FROM target_tg;
 key|balance|status|val                                  
 ---+-------+------+-------------------------------------
