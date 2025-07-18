@@ -99,15 +99,19 @@ step "merge_bal_pa"
 }
 step "merge_bal_tg"
 {
-  MERGE INTO target_tg t
-  USING (SELECT 1 as key) s
-  ON s.key = t.key
-  WHEN MATCHED AND balance < 100 THEN
-	UPDATE SET balance = balance * 2, val = t.val || ' when1'
-  WHEN MATCHED AND balance < 200 THEN
-	UPDATE SET balance = balance * 4, val = t.val || ' when2'
-  WHEN MATCHED AND balance < 300 THEN
-	UPDATE SET balance = balance * 8, val = t.val || ' when3';
+  WITH t AS (
+    MERGE INTO target_tg t
+    USING (SELECT 1 as key) s
+    ON s.key = t.key
+    WHEN MATCHED AND balance < 100 THEN
+      UPDATE SET balance = balance * 2, val = t.val || ' when1'
+    WHEN MATCHED AND balance < 200 THEN
+      UPDATE SET balance = balance * 4, val = t.val || ' when2'
+    WHEN MATCHED AND balance < 300 THEN
+      UPDATE SET balance = balance * 8, val = t.val || ' when3'
+    RETURNING t.*
+  )
+  SELECT * FROM t;
 }
 
 step "merge_delete"

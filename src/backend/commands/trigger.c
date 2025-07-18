@@ -80,6 +80,7 @@ static bool GetTupleForTrigger(EState *estate,
 							   ItemPointer tid,
 							   LockTupleMode lockmode,
 							   TupleTableSlot *oldslot,
+							   bool do_epq_recheck,
 							   TupleTableSlot **epqslot,
 							   TM_Result *tmresultp,
 							   TM_FailureData *tmfdp);
@@ -2693,7 +2694,8 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot **epqslot,
 					 TM_Result *tmresult,
-					 TM_FailureData *tmfd)
+					 TM_FailureData *tmfd,
+					 bool is_merge_delete)
 {
 	TupleTableSlot *slot = ExecGetTriggerOldSlot(estate, relinfo);
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
@@ -2708,9 +2710,17 @@ ExecBRDeleteTriggers(EState *estate, EPQState *epqstate,
 	{
 		TupleTableSlot *epqslot_candidate = NULL;
 
+		/*
+		 * Get a copy of the on-disk tuple we are planning to delete.  In
+		 * general, if the tuple has been concurrently updated, we should
+		 * recheck it using EPQ.  However, if this is a MERGE DELETE action,
+		 * we skip this EPQ recheck and leave it to the caller (it must do
+		 * additional rechecking, and might end up executing a different
+		 * action entirely).
+		 */
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								LockTupleExclusive, slot, &epqslot_candidate,
-								tmresult, tmfd))
+								LockTupleExclusive, slot, !is_merge_delete,
+								&epqslot_candidate, tmresult, tmfd))
 			return false;
 
 		/*
@@ -2800,6 +2810,7 @@ ExecARDeleteTriggers(EState *estate,
 							   tupleid,
 							   LockTupleExclusive,
 							   slot,
+							   false,
 							   NULL,
 							   NULL,
 							   NULL);
@@ -2944,7 +2955,8 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 					 HeapTuple fdw_trigtuple,
 					 TupleTableSlot *newslot,
 					 TM_Result *tmresult,
-					 TM_FailureData *tmfd)
+					 TM_FailureData *tmfd,
+					 bool is_merge_update)
 {
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	TupleTableSlot *oldslot = ExecGetTriggerOldSlot(estate, relinfo);
@@ -2965,10 +2977,17 @@ ExecBRUpdateTriggers(EState *estate, EPQState *epqstate,
 	{
 		TupleTableSlot *epqslot_candidate = NULL;
 
-		/* get a copy of the on-disk tuple we are planning to update */
+		/*
+		 * Get a copy of the on-disk tuple we are planning to update.  In
+		 * general, if the tuple has been concurrently updated, we should
+		 * recheck it using EPQ.  However, if this is a MERGE UPDATE action,
+		 * we skip this EPQ recheck and leave it to the caller (it must do
+		 * additional rechecking, and might end up executing a different
+		 * action entirely).
+		 */
 		if (!GetTupleForTrigger(estate, epqstate, relinfo, tupleid,
-								lockmode, oldslot, &epqslot_candidate,
-								tmresult, tmfd))
+								lockmode, oldslot, !is_merge_update,
+								&epqslot_candidate, tmresult, tmfd))
 			return false;		/* cancel the update action */
 
 		/*
@@ -3142,6 +3161,7 @@ ExecARUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 							   tupleid,
 							   LockTupleExclusive,
 							   oldslot,
+							   false,
 							   NULL,
 							   NULL,
 							   NULL);
@@ -3298,6 +3318,7 @@ GetTupleForTrigger(EState *estate,
 				   ItemPointer tid,
 				   LockTupleMode lockmode,
 				   TupleTableSlot *oldslot,
+				   bool do_epq_recheck,
 				   TupleTableSlot **epqslot,
 				   TM_Result *tmresultp,
 				   TM_FailureData *tmfdp)
@@ -3357,29 +3378,30 @@ GetTupleForTrigger(EState *estate,
 				if (tmfd.traversed)
 				{
 					/*
-					 * Recheck the tuple using EPQ. For MERGE, we leave this
-					 * to the caller (it must do additional rechecking, and
-					 * might end up executing a different action entirely).
+					 * Recheck the tuple using EPQ, if requested.  Otherwise,
+					 * just return that it was concurrently updated.
 					 */
-					if (estate->es_plannedstmt->commandType == CMD_MERGE)
+					if (do_epq_recheck)
+					{
+						*epqslot = EvalPlanQual(epqstate,
+												relation,
+												relinfo->ri_RangeTableIndex,
+												oldslot);
+
+						/*
+						 * If PlanQual failed for updated tuple - we must not
+						 * process this tuple!
+						 */
+						if (TupIsNull(*epqslot))
+						{
+							*epqslot = NULL;
+							return false;
+						}
+					}
+					else
 					{
 						if (tmresultp)
 							*tmresultp = TM_Updated;
-						return false;
-					}
-
-					*epqslot = EvalPlanQual(epqstate,
-											relation,
-											relinfo->ri_RangeTableIndex,
-											oldslot);
-
-					/*
-					 * If PlanQual failed for updated tuple - we must not
-					 * process this tuple!
-					 */
-					if (TupIsNull(*epqslot))
-					{
-						*epqslot = NULL;
 						return false;
 					}
 				}
