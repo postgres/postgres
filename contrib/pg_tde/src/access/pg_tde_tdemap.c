@@ -123,7 +123,7 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 	{
 		ereport(ERROR,
 				errmsg("principal key not configured"),
-				errhint("create one using pg_tde_set_server_key before using encrypted WAL"));
+				errhint("Use pg_tde_set_server_key_using_global_key_provider() to configure one."));
 	}
 
 	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
