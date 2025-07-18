@@ -1180,6 +1180,27 @@ SELECT * FROM ft1 WHERE CASE c3 COLLATE "C" WHEN c6 THEN true ELSE c3 < 'bar' EN
    Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8 FROM "S 1"."T 1"
 (4 rows)
 
+-- Test array type conversion pushdown
+SET plan_cache_mode = force_generic_plan;
+PREPARE s(varchar[]) AS SELECT count(*) FROM ft2 WHERE c6 = ANY ($1);
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE s(ARRAY['1','2']);
+                                         QUERY PLAN                                          
+---------------------------------------------------------------------------------------------
+ Foreign Scan
+   Output: (count(*))
+   Relations: Aggregate on (public.ft2)
+   Remote SQL: SELECT count(*) FROM "S 1"."T 1" WHERE ((c6 = ANY ($1::character varying[])))
+(4 rows)
+
+EXECUTE s(ARRAY['1','2']);
+ count 
+-------
+   200
+(1 row)
+
+DEALLOCATE s;
+RESET plan_cache_mode;
 -- a regconfig constant referring to this text search configuration
 -- is initially unshippable
 CREATE TEXT SEARCH CONFIGURATION public.custom_search

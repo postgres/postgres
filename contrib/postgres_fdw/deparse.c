@@ -161,6 +161,7 @@ static void deparseDistinctExpr(DistinctExpr *node, deparse_expr_cxt *context);
 static void deparseScalarArrayOpExpr(ScalarArrayOpExpr *node,
 									 deparse_expr_cxt *context);
 static void deparseRelabelType(RelabelType *node, deparse_expr_cxt *context);
+static void deparseArrayCoerceExpr(ArrayCoerceExpr *node, deparse_expr_cxt *context);
 static void deparseBoolExpr(BoolExpr *node, deparse_expr_cxt *context);
 static void deparseNullTest(NullTest *node, deparse_expr_cxt *context);
 static void deparseCaseExpr(CaseExpr *node, deparse_expr_cxt *context);
@@ -691,6 +692,34 @@ foreign_expr_walker(Node *node,
 				 * an input foreign Var (same logic as for a real function).
 				 */
 				collation = r->resultcollid;
+				if (collation == InvalidOid)
+					state = FDW_COLLATE_NONE;
+				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
+						 collation == inner_cxt.collation)
+					state = FDW_COLLATE_SAFE;
+				else if (collation == DEFAULT_COLLATION_OID)
+					state = FDW_COLLATE_NONE;
+				else
+					state = FDW_COLLATE_UNSAFE;
+			}
+			break;
+		case T_ArrayCoerceExpr:
+			{
+				ArrayCoerceExpr *e = (ArrayCoerceExpr *) node;
+
+				/*
+				 * Recurse to input subexpression.
+				 */
+				if (!foreign_expr_walker((Node *) e->arg,
+										 glob_cxt, &inner_cxt, case_arg_cxt))
+					return false;
+
+				/*
+				 * T_ArrayCoerceExpr must not introduce a collation not
+				 * derived from an input foreign Var (same logic as for a
+				 * function).
+				 */
+				collation = e->resultcollid;
 				if (collation == InvalidOid)
 					state = FDW_COLLATE_NONE;
 				else if (inner_cxt.state == FDW_COLLATE_SAFE &&
@@ -2919,6 +2948,9 @@ deparseExpr(Expr *node, deparse_expr_cxt *context)
 		case T_RelabelType:
 			deparseRelabelType((RelabelType *) node, context);
 			break;
+		case T_ArrayCoerceExpr:
+			deparseArrayCoerceExpr((ArrayCoerceExpr *) node, context);
+			break;
 		case T_BoolExpr:
 			deparseBoolExpr((BoolExpr *) node, context);
 			break;
@@ -3502,6 +3534,24 @@ deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 {
 	deparseExpr(node->arg, context);
 	if (node->relabelformat != COERCE_IMPLICIT_CAST)
+		appendStringInfo(context->buf, "::%s",
+						 deparse_type_name(node->resulttype,
+										   node->resulttypmod));
+}
+
+/*
+ * Deparse a ArrayCoerceExpr (array-type conversion) node.
+ */
+static void
+deparseArrayCoerceExpr(ArrayCoerceExpr *node, deparse_expr_cxt *context)
+{
+	deparseExpr(node->arg, context);
+
+	/*
+	 * No difference how to deparse explicit cast, but if we omit implicit
+	 * cast in the query, it'll be more user-friendly
+	 */
+	if (node->coerceformat != COERCE_IMPLICIT_CAST)
 		appendStringInfo(context->buf, "::%s",
 						 deparse_type_name(node->resulttype,
 										   node->resulttypmod));

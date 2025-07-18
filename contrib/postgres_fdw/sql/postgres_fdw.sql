@@ -458,6 +458,15 @@ SELECT * FROM ft1 WHERE CASE c3 WHEN c6 THEN true ELSE c3 < 'bar' END;
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM ft1 WHERE CASE c3 COLLATE "C" WHEN c6 THEN true ELSE c3 < 'bar' END;
 
+-- Test array type conversion pushdown
+SET plan_cache_mode = force_generic_plan;
+PREPARE s(varchar[]) AS SELECT count(*) FROM ft2 WHERE c6 = ANY ($1);
+EXPLAIN (VERBOSE, COSTS OFF)
+EXECUTE s(ARRAY['1','2']);
+EXECUTE s(ARRAY['1','2']);
+DEALLOCATE s;
+RESET plan_cache_mode;
+
 -- a regconfig constant referring to this text search configuration
 -- is initially unshippable
 CREATE TEXT SEARCH CONFIGURATION public.custom_search
