@@ -3540,7 +3540,7 @@ deparseRelabelType(RelabelType *node, deparse_expr_cxt *context)
 }
 
 /*
- * Deparse a ArrayCoerceExpr (array-type conversion) node.
+ * Deparse an ArrayCoerceExpr (array-type conversion) node.
  */
 static void
 deparseArrayCoerceExpr(ArrayCoerceExpr *node, deparse_expr_cxt *context)
