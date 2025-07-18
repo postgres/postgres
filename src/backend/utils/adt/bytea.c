@@ -182,27 +182,21 @@ bytea_overlay(bytea *t1, bytea *t2, int sp, int sl)
  *
  *		Non-printable characters must be passed as '\nnn' (octal) and are
  *		converted to internal form.  '\' must be passed as '\\'.
- *		ereport(ERROR, ...) if bad form.
- *
- *		BUGS:
- *				The input is scanned twice.
- *				The error checking of input is minimal.
  */
 Datum
 byteain(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
 	Node	   *escontext = fcinfo->context;
+	size_t		len = strlen(inputText);
+	size_t		bc;
 	char	   *tp;
 	char	   *rp;
-	int			bc;
 	bytea	   *result;
 
 	/* Recognize hex input */
 	if (inputText[0] == '\\' && inputText[1] == 'x')
 	{
-		size_t		len = strlen(inputText);
-
 		bc = (len - 2) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
 		bc = hex_decode_safe(inputText + 2, len - 2, VARDATA(result),
@@ -213,18 +207,33 @@ byteain(PG_FUNCTION_ARGS)
 	}
 
 	/* Else, it's the traditional escaped style */
-	for (bc = 0, tp = inputText; *tp != '\0'; bc++)
+	result = (bytea *) palloc(len + VARHDRSZ);	/* maximum possible length */
+
+	tp = inputText;
+	rp = VARDATA(result);
+	while (*tp != '\0')
 	{
 		if (tp[0] != '\\')
-			tp++;
-		else if ((tp[0] == '\\') &&
-				 (tp[1] >= '0' && tp[1] <= '3') &&
+			*rp++ = *tp++;
+		else if ((tp[1] >= '0' && tp[1] <= '3') &&
 				 (tp[2] >= '0' && tp[2] <= '7') &&
 				 (tp[3] >= '0' && tp[3] <= '7'))
+		{
+			int			v;
+
+			v = VAL(tp[1]);
+			v <<= 3;
+			v += VAL(tp[2]);
+			v <<= 3;
+			*rp++ = v + VAL(tp[3]);
+
 			tp += 4;
-		else if ((tp[0] == '\\') &&
-				 (tp[1] == '\\'))
+		}
+		else if (tp[1] == '\\')
+		{
+			*rp++ = '\\';
 			tp += 2;
+		}
 		else
 		{
 			/*
@@ -236,46 +245,8 @@ byteain(PG_FUNCTION_ARGS)
 		}
 	}
 
-	bc += VARHDRSZ;
-
-	result = (bytea *) palloc(bc);
-	SET_VARSIZE(result, bc);
-
-	tp = inputText;
-	rp = VARDATA(result);
-	while (*tp != '\0')
-	{
-		if (tp[0] != '\\')
-			*rp++ = *tp++;
-		else if ((tp[0] == '\\') &&
-				 (tp[1] >= '0' && tp[1] <= '3') &&
-				 (tp[2] >= '0' && tp[2] <= '7') &&
-				 (tp[3] >= '0' && tp[3] <= '7'))
-		{
-			bc = VAL(tp[1]);
-			bc <<= 3;
-			bc += VAL(tp[2]);
-			bc <<= 3;
-			*rp++ = bc + VAL(tp[3]);
-
-			tp += 4;
-		}
-		else if ((tp[0] == '\\') &&
-				 (tp[1] == '\\'))
-		{
-			*rp++ = '\\';
-			tp += 2;
-		}
-		else
-		{
-			/*
-			 * We should never get here. The first pass should not allow it.
-			 */
-			ereturn(escontext, (Datum) 0,
-					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type %s", "bytea")));
-		}
-	}
+	bc = rp - VARDATA(result);	/* actual length */
+	SET_VARSIZE(result, bc + VARHDRSZ);
 
 	PG_RETURN_BYTEA_P(result);
 }

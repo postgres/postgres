@@ -76,6 +76,7 @@ SELECT E'De\\000dBeEf'::bytea;
 SELECT E'De\123dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
 SELECT E'De\\678dBeEf'::bytea;
+SELECT E'DeAd\\\\BeEf'::bytea;
 
 SELECT reverse(''::bytea);
 SELECT reverse('\xaa'::bytea);
@@ -88,6 +89,7 @@ SELECT E'\\xDe00BeEf'::bytea;
 SELECT E'DeAdBeEf'::bytea;
 SELECT E'De\\000dBeEf'::bytea;
 SELECT E'De\\123dBeEf'::bytea;
+SELECT E'DeAd\\\\BeEf'::bytea;
 
 -- Test non-error-throwing API too
 SELECT pg_input_is_valid(E'\\xDeAdBeE', 'bytea');

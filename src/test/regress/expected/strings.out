@@ -236,6 +236,12 @@ SELECT E'De\\678dBeEf'::bytea;
 ERROR:  invalid input syntax for type bytea
 LINE 1: SELECT E'De\\678dBeEf'::bytea;
                ^
+SELECT E'DeAd\\\\BeEf'::bytea;
+        bytea         
+----------------------
+ \x446541645c42654566
+(1 row)
+
 SELECT reverse(''::bytea);
  reverse 
 ---------
@@ -289,6 +295,12 @@ SELECT E'De\\123dBeEf'::bytea;
   bytea   
 ----------
  DeSdBeEf
+(1 row)
+
+SELECT E'DeAd\\\\BeEf'::bytea;
+   bytea    
+------------
+ DeAd\\BeEf
 (1 row)
 
 -- Test non-error-throwing API too
