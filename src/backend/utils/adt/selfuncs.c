@@ -3798,18 +3798,25 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 								 List *hashclauses,
 								 Selectivity *innerbucketsize)
 {
-	List	   *clauses = list_copy(hashclauses);
-	List	   *otherclauses = NIL;
-	double		ndistinct = 1.0;
+	List	   *clauses;
+	List	   *otherclauses;
+	double		ndistinct;
 
 	if (list_length(hashclauses) <= 1)
-
+	{
 		/*
 		 * Nothing to do for a single clause.  Could we employ univariate
 		 * extended stat here?
 		 */
 		return hashclauses;
+	}
 
+	/* "clauses" is the list of hashclauses we've not dealt with yet */
+	clauses = list_copy(hashclauses);
+	/* "otherclauses" holds clauses we are going to return to caller */
+	otherclauses = NIL;
+	/* current estimate of ndistinct */
+	ndistinct = 1.0;
 	while (clauses != NIL)
 	{
 		ListCell   *lc;
@@ -3874,12 +3881,13 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 					group_rel = root->simple_rel_array[relid];
 				}
 				else if (group_relid != relid)
-
+				{
 					/*
 					 * Being in the group forming state we don't need other
 					 * clauses.
 					 */
 					continue;
+				}
 
 				/*
 				 * We're going to add the new clause to the varinfos list.  We
