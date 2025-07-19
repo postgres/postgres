@@ -290,6 +290,32 @@ sub connstr
 
 =pod
 
+=item $node->is_alive()
+
+Check if the node is alive, using pg_isready.
+Returns 1 if successful, 0 on failure.
+
+=cut
+
+sub is_alive
+{
+	my ($self) = @_;
+	local %ENV = $self->_get_env();
+
+	my $ret = PostgreSQL::Test::Utils::system_log(
+		'pg_isready',
+		'--host' => $self->host,
+		'--port' => $self->port);
+
+	if ($ret != 0)
+	{
+		return 0;
+	}
+	return 1;
+}
+
+=pod
+
 =item $node->raw_connect()
 
 Open a raw TCP or Unix domain socket connection to the server. This is
