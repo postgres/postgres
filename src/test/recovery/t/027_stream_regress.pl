@@ -81,7 +81,14 @@ my $rc =
 	  . "--max-concurrent-tests=20 "
 	  . "--inputdir=../regress "
 	  . "--outputdir=\"$outputdir\"");
-if ($rc != 0)
+
+# Regression diffs are only meaningful if both the primary and the standby
+# are still alive after a regression test failure.  A crash would cause a
+# useless increase in the log quantity, mostly filled with information
+# related to queries that could not run.
+my $primary_alive = $node_primary->is_alive;
+my $standby_alive = $node_standby_1->is_alive;
+if ($rc != 0 && $primary_alive && $standby_alive)
 {
 	# Dump out the regression diffs file, if there is one
 	my $diffs = "$outputdir/regression.diffs";
@@ -93,6 +100,8 @@ if ($rc != 0)
 	}
 }
 is($rc, 0, 'regression tests pass');
+is($primary_alive, 1, 'primary alive after regression test run');
+is($standby_alive, 1, 'standby alive after regression test run');
 
 # Clobber all sequences with their next value, so that we don't have
 # differences between nodes due to caching.
