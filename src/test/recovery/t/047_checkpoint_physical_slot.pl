@@ -94,9 +94,11 @@ $node->safe_psql('postgres',
 	q{select pg_replication_slot_advance('slot_physical', pg_current_wal_lsn())}
 );
 
-# Continue the checkpoint.
+# Continue the checkpoint and wait for its completion.
+my $log_offset = -s $node->logfile;
 $node->safe_psql('postgres',
 	q{select injection_points_wakeup('checkpoint-before-old-wal-removal')});
+$node->wait_for_log(qr/checkpoint complete/, $log_offset);
 
 my $restart_lsn_old = $node->safe_psql('postgres',
 	q{select restart_lsn from pg_replication_slots where slot_name = 'slot_physical'}
@@ -104,8 +106,7 @@ my $restart_lsn_old = $node->safe_psql('postgres',
 chomp($restart_lsn_old);
 note("restart lsn before stop: $restart_lsn_old");
 
-# Abruptly stop the server (1 second should be enough for the checkpoint
-# to finish; it would be better).
+# Abruptly stop the server.
 $node->stop('immediate');
 
 $node->start;
