@@ -53,6 +53,16 @@ PostgreSQL documentation
    (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>)
    or <systemitem>SIGTERM</systemitem> signal.
   </para>
+
+  <para>
+   When <application>pg_recvlogical</application> receives
+   a <systemitem>SIGHUP</systemitem> signal, it closes the current output file
+   and opens a new one using the filename specified by
+   the <option>--file</option> option.  This allows us to rotate
+   the output file by first renaming the current file and then sending
+   a <systemitem>SIGHUP</systemitem> signal to
+   <application>pg_recvlogical</application>.
+  </para>
  </refsect1>
 
  <refsect1>
