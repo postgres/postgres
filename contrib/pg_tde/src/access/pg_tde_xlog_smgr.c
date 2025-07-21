@@ -55,12 +55,12 @@ static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
 
 typedef struct EncryptionStateData
 {
-	char	   *segBuf;
 	char		db_map_path[MAXPGPATH];
 	pg_atomic_uint64 enc_key_lsn;	/* to sync with readers */
 } EncryptionStateData;
 
 static EncryptionStateData *EncryptionState = NULL;
+static char *EncryptionBuf;
 
 /* TODO: can be swapped out to the disk */
 static InternalKey EncryptionKey =
@@ -126,7 +126,6 @@ void
 TDEXLogShmemInit(void)
 {
 	bool		foundBuf;
-	char	   *allocptr;
 
 	EncryptionState = (EncryptionStateData *)
 		ShmemInitStruct("TDE XLog Encryption State",
@@ -137,11 +136,9 @@ TDEXLogShmemInit(void)
 
 	if (EncryptXLog)
 	{
-		allocptr = ((char *) EncryptionState) + sizeof(EncryptionStateData);
-		allocptr = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, allocptr);
-		EncryptionState->segBuf = allocptr;
+		EncryptionBuf = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, ((char *) EncryptionState) + sizeof(EncryptionStateData));
 
-		Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionState->segBuf + TDEXLogEncryptBuffSize());
+		Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionBuf + TDEXLogEncryptBuffSize());
 	}
 
 	pg_atomic_init_u64(&EncryptionState->enc_key_lsn, 0);
@@ -158,7 +155,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 {
 	char		iv_prefix[16];
 	InternalKey *key = &EncryptionKey;
-	char	   *enc_buff = EncryptionState->segBuf;
+	char	   *enc_buff = EncryptionBuf;
 
 	Assert(count <= TDEXLogEncryptBuffSize());
 
