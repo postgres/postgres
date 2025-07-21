@@ -461,7 +461,7 @@ fi
 
 if $WASI
 then
-        echo "
+    echo "
 
 
     ================================================================================
@@ -478,11 +478,10 @@ then
 
 
 
-            "
-        fi
-
-        cp /tmp/pglite/bin/pg_dump.wasi /tmp/sdk/dist/
+    "
+    cp /tmp/pglite/bin/pg_dump.wasi /tmp/sdk/dist/
 fi
+
 
 # only build extra when targeting pglite-wasm .
 rm -f pglite-link.sh
@@ -510,6 +509,8 @@ END
         then
             echo "TODO: extensions fs packing"
         fi
+
+
     else
 
         # this is for initial emscripten MEMFS
