@@ -342,11 +342,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 #endif
 				pg_tde_stream_crypt(iv_prefix, dec_off, dec_buf, dec_sz, dec_buf,
 									&curr_key->key, &curr_key->crypt_ctx);
-
-				if (dec_off + dec_sz == offset)
-				{
-					break;
-				}
 			}
 		}
 	}
