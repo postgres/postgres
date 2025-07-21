@@ -884,7 +884,7 @@ repairTableAttrDefMultiLoop(DumpableObject *tableobj,
 }
 
 /*
- * CHECK constraints on domains work just like those on tables ...
+ * CHECK, NOT NULL constraints on domains work just like those on tables ...
  */
 static void
 repairDomainConstraintLoop(DumpableObject *domainobj,
@@ -1135,11 +1135,12 @@ repairDependencyLoop(DumpableObject **loop,
 		}
 	}
 
-	/* Domain and CHECK constraint */
+	/* Domain and CHECK or NOT NULL constraint */
 	if (nLoop == 2 &&
 		loop[0]->objType == DO_TYPE &&
 		loop[1]->objType == DO_CONSTRAINT &&
-		((ConstraintInfo *) loop[1])->contype == 'c' &&
+		(((ConstraintInfo *) loop[1])->contype == 'c' ||
+		 ((ConstraintInfo *) loop[1])->contype == 'n') &&
 		((ConstraintInfo *) loop[1])->condomain == (TypeInfo *) loop[0])
 	{
 		repairDomainConstraintLoop(loop[0], loop[1]);
@@ -1148,14 +1149,15 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[1]->objType == DO_TYPE &&
 		loop[0]->objType == DO_CONSTRAINT &&
-		((ConstraintInfo *) loop[0])->contype == 'c' &&
+		(((ConstraintInfo *) loop[0])->contype == 'c' ||
+		 ((ConstraintInfo *) loop[0])->contype == 'n') &&
 		((ConstraintInfo *) loop[0])->condomain == (TypeInfo *) loop[1])
 	{
 		repairDomainConstraintLoop(loop[1], loop[0]);
 		return;
 	}
 
-	/* Indirect loop involving domain and CHECK constraint */
+	/* Indirect loop involving domain and CHECK or NOT NULL constraint */
 	if (nLoop > 2)
 	{
 		for (i = 0; i < nLoop; i++)
@@ -1165,7 +1167,8 @@ repairDependencyLoop(DumpableObject **loop,
 				for (j = 0; j < nLoop; j++)
 				{
 					if (loop[j]->objType == DO_CONSTRAINT &&
-						((ConstraintInfo *) loop[j])->contype == 'c' &&
+						(((ConstraintInfo *) loop[j])->contype == 'c' ||
+						 ((ConstraintInfo *) loop[j])->contype == 'n') &&
 						((ConstraintInfo *) loop[j])->condomain == (TypeInfo *) loop[i])
 					{
 						repairDomainConstraintMultiLoop(loop[i], loop[j]);
