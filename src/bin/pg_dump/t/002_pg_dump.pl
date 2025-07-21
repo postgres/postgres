@@ -2379,18 +2379,44 @@ my %tests = (
 		create_sql => 'CREATE DOMAIN dump_test.us_postal_code AS TEXT
 		               COLLATE "C"
 					   DEFAULT \'10014\'
+					   CONSTRAINT nn NOT NULL
 					   CHECK(VALUE ~ \'^\d{5}$\' OR
 							 VALUE ~ \'^\d{5}-\d{4}$\');
+					   COMMENT ON CONSTRAINT nn
+						 ON DOMAIN dump_test.us_postal_code IS \'not null\';
 					   COMMENT ON CONSTRAINT us_postal_code_check
 						 ON DOMAIN dump_test.us_postal_code IS \'check it\';',
 		regexp => qr/^
-			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
+			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" CONSTRAINT nn NOT NULL DEFAULT '10014'::text\E\n\s+
 			\QCONSTRAINT us_postal_code_check CHECK \E
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
 			\Q'::text)));\E(.|\n)*
-			\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
 			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'COMMENT ON CONSTRAINT ON DOMAIN (1)' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT nn ON DOMAIN dump_test.us_postal_code IS 'not null';\E
+		/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			only_dump_measurement => 1,
+		},
+	},
+
+	'COMMENT ON CONSTRAINT ON DOMAIN (2)' => {
+		regexp => qr/^
+		\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
+		/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
 		unlike => {

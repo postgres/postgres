@@ -222,7 +222,9 @@ typedef struct _typeInfo
 	bool		isDefined;		/* true if typisdefined */
 	/* If needed, we'll create a "shell type" entry for it; link that here: */
 	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */
-	/* If it's a domain, we store links to its constraints here: */
+	/* If it's a domain, its not-null constraint is here: */
+	struct _constraintInfo *notnull;
+	/* If it's a domain, we store links to its CHECK constraints here: */
 	int			nDomChecks;
 	struct _constraintInfo *domChecks;
 } TypeInfo;
