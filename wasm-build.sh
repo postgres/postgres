@@ -475,7 +475,7 @@ then
 "
         cat > pglite-link.sh <<END
 . ${PGROOT}/pgopts.sh
-. ${SDKROOT}/wasm32-bi-emscripten-shell.sh
+. ${SDKROOT}/wasm32-wasi-shell.sh
 if ./pglite-${PG_BRANCH}/build.sh
 then
     echo "TODO: tests"
@@ -487,7 +487,27 @@ END
         if ./pglite-link.sh
         then
             echo "TODO: extensions fs packing"
+        echo "
+
+
+    ================================================================================
+    ================================================================================
+
+
+
+            $(md5sum /tmp/pglite/bin/pg_dump.wasi)
+
+
+
+    ================================================================================
+    ================================================================================
+
+
+
+            "
         fi
+
+        cp /tmp/pglite/bin/pg_dump.wasi /tmp/sdk/dist/
 
     else
 

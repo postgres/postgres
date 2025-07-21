@@ -249,14 +249,7 @@ int sigismember(const sigset_t *set, int signum) {
     return -1;
 }
 
-int
-pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset) {
-    return 0;
-}
 
-int sigpending(sigset_t *set) {
-    return -1;
-}
 
 int sigwait(const sigset_t *restrict set, int *restrict sig) {
     return 0;
@@ -266,6 +259,17 @@ unsigned int alarm(unsigned int seconds) {
     return 0;
 }
 
+/*
+int
+pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset) {
+    return 0;
+}
+
+
+int sigpending(sigset_t *set) {
+    return -1;
+}
+*/
 
 // WIP : shm
 // ========================================================================================

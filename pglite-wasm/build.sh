@@ -1,5 +1,12 @@
 export WASI=${WASI:-false}
 
+if ${PGCRYPTO:-false}
+then
+    export LINK_CRYPTO="-lcrypto"
+else
+    export LINK_CRYPTO=""
+fi
+
 if ${WASI}
 then
     BUILD=wasi
@@ -61,7 +68,9 @@ Folders :
      CMA_MB : $CMA_MB
 GLOBAL_BASE : $GLOBAL_BASE_B
 
- CC_PGLITE : $CC_PGLITE
+  CC_PGLITE : $CC_PGLITE
+
+   PGCRYPTO : ${LINK_CRYPTO}
 
   ICU i18n : $USE_ICU
 
@@ -240,7 +249,12 @@ ________________________________________________________
     if ${CC} ${CC_PGLITE} ${PGINC} -o ${BUILD_PATH}/pglite.o -c ${WORKSPACE}/pglite-${PG_BRANCH}/pg_main.c \
      -Wno-incompatible-pointer-types-discards-qualifiers
     then
-        echo "  * linking node raw version of pglite ${PG_BRANCH} (with all symbols)"
+        echo "
+
+          * linking node raw version of pglite ${PG_BRANCH} (with all symbols)
+               PGCRYPTO : ${LINK_CRYPTO}
+
+"
 
         # wgpu ???
         export EMCC_FORCE_STDLIBS=1
@@ -253,7 +267,7 @@ ________________________________________________________
          ${BUILD_PATH}/pglite.o \
          $LIBPGCORE \
          $LINK_ICU \
-         -lnodefs.js -lidbfs.js -lxml2 -lz
+         -lnodefs.js -lidbfs.js ${LINK_CRYPTO} -lxml2 -lz
         then
             ./wasm-build/linkexport.sh
             ./wasm-build/linkimports.sh
@@ -275,6 +289,8 @@ ________________________________________________________
         BUILD_PATH=${BUILD_PATH}
         LINKER=$LINKER
         LIBPGCORE=$LIBPGCORE
+
+       PGCRYPTO : ${LINK_CRYPTO}
 
 
 "
@@ -298,7 +314,7 @@ ________________________________________________________
          ${PGINC} ${BUILD_PATH}/pglite.o \
          $LIBPGCORE \
          $LINK_ICU \
-         -lnodefs.js -lidbfs.js -lxml2 -lz
+         -lnodefs.js -lidbfs.js ${LINK_CRYPTO} -lxml2 -lz
         then
             du -hs du -hs ${PG_DIST}/*
             touch ${WORKSPACE}/${BUILD}.done
