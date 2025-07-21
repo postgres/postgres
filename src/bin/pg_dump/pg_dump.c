@@ -47,6 +47,7 @@
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_cast_d.h"
 #include "catalog/pg_class_d.h"
+#include "catalog/pg_constraint_d.h"
 #include "catalog/pg_default_acl_d.h"
 #include "catalog/pg_largeobject_d.h"
 #include "catalog/pg_proc_d.h"
@@ -6122,6 +6123,7 @@ getTypes(Archive *fout)
 		 */
 		tyinfo[i].nDomChecks = 0;
 		tyinfo[i].domChecks = NULL;
+		tyinfo[i].notnull = NULL;
 		if ((tyinfo[i].dobj.dump & DUMP_COMPONENT_DEFINITION) &&
 			tyinfo[i].typtype == TYPTYPE_DOMAIN)
 			getDomainConstraints(fout, &(tyinfo[i]));
@@ -8247,27 +8249,33 @@ addConstrChildIdxDeps(DumpableObject *dobj, const IndxInfo *refidx)
 static void
 getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 {
-	int			i;
 	ConstraintInfo *constrinfo;
 	PQExpBuffer query = createPQExpBuffer();
 	PGresult   *res;
 	int			i_tableoid,
 				i_oid,
 				i_conname,
-				i_consrc;
+				i_consrc,
+				i_convalidated,
+				i_contype;
 	int			ntups;
 
 	if (!fout->is_prepared[PREPQUERY_GETDOMAINCONSTRAINTS])
 	{
-		/* Set up query for constraint-specific details */
-		appendPQExpBufferStr(query,
-							 "PREPARE getDomainConstraints(pg_catalog.oid) AS\n"
-							 "SELECT tableoid, oid, conname, "
-							 "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
-							 "convalidated "
-							 "FROM pg_catalog.pg_constraint "
-							 "WHERE contypid = $1 AND contype = 'c' "
-							 "ORDER BY conname");
+		/*
+		 * Set up query for constraint-specific details.  For servers 17 and
+		 * up, domains have constraints of type 'n' as well as 'c', otherwise
+		 * just the latter.
+		 */
+		appendPQExpBuffer(query,
+						  "PREPARE getDomainConstraints(pg_catalog.oid) AS\n"
+						  "SELECT tableoid, oid, conname, "
+						  "pg_catalog.pg_get_constraintdef(oid) AS consrc, "
+						  "convalidated, contype "
+						  "FROM pg_catalog.pg_constraint "
+						  "WHERE contypid = $1 AND contype IN (%s) "
+						  "ORDER BY conname",
+						  fout->remoteVersion < 170000 ? "'c'" : "'c', 'n'");
 
 		ExecuteSqlStatement(fout, query->data);
 
@@ -8286,33 +8294,50 @@ getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 	i_oid = PQfnumber(res, "oid");
 	i_conname = PQfnumber(res, "conname");
 	i_consrc = PQfnumber(res, "consrc");
+	i_convalidated = PQfnumber(res, "convalidated");
+	i_contype = PQfnumber(res, "contype");
 
 	constrinfo = (ConstraintInfo *) pg_malloc(ntups * sizeof(ConstraintInfo));
-
-	tyinfo->nDomChecks = ntups;
 	tyinfo->domChecks = constrinfo;
 
-	for (i = 0; i < ntups; i++)
+	/* 'i' tracks result rows; 'j' counts CHECK constraints */
+	for (int i = 0, j = 0; i < ntups; i++)
 	{
-		bool		validated = PQgetvalue(res, i, 4)[0] == 't';
+		bool		validated = PQgetvalue(res, i, i_convalidated)[0] == 't';
+		char		contype = (PQgetvalue(res, i, i_contype))[0];
+		ConstraintInfo *constraint;
 
-		constrinfo[i].dobj.objType = DO_CONSTRAINT;
-		constrinfo[i].dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
-		constrinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
-		AssignDumpId(&constrinfo[i].dobj);
-		constrinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_conname));
-		constrinfo[i].dobj.namespace = tyinfo->dobj.namespace;
-		constrinfo[i].contable = NULL;
-		constrinfo[i].condomain = tyinfo;
-		constrinfo[i].contype = 'c';
-		constrinfo[i].condef = pg_strdup(PQgetvalue(res, i, i_consrc));
-		constrinfo[i].confrelid = InvalidOid;
-		constrinfo[i].conindex = 0;
-		constrinfo[i].condeferrable = false;
-		constrinfo[i].condeferred = false;
-		constrinfo[i].conislocal = true;
+		if (contype == CONSTRAINT_CHECK)
+		{
+			constraint = &constrinfo[j++];
+			tyinfo->nDomChecks++;
+		}
+		else
+		{
+			Assert(contype == CONSTRAINT_NOTNULL);
+			Assert(tyinfo->notnull == NULL);
+			/* use last item in array for the not-null constraint */
+			tyinfo->notnull = &(constrinfo[ntups - 1]);
+			constraint = tyinfo->notnull;
+		}
 
-		constrinfo[i].separate = !validated;
+		constraint->dobj.objType = DO_CONSTRAINT;
+		constraint->dobj.catId.tableoid = atooid(PQgetvalue(res, i, i_tableoid));
+		constraint->dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&(constraint->dobj));
+		constraint->dobj.name = pg_strdup(PQgetvalue(res, i, i_conname));
+		constraint->dobj.namespace = tyinfo->dobj.namespace;
+		constraint->contable = NULL;
+		constraint->condomain = tyinfo;
+		constraint->contype = contype;
+		constraint->condef = pg_strdup(PQgetvalue(res, i, i_consrc));
+		constraint->confrelid = InvalidOid;
+		constraint->conindex = 0;
+		constraint->condeferrable = false;
+		constraint->condeferred = false;
+		constraint->conislocal = true;
+
+		constraint->separate = !validated;
 
 		/*
 		 * Make the domain depend on the constraint, ensuring it won't be
@@ -8321,8 +8346,7 @@ getDomainConstraints(Archive *fout, TypeInfo *tyinfo)
 		 * anyway, so this doesn't matter.
 		 */
 		if (validated)
-			addObjectDependency(&tyinfo->dobj,
-								constrinfo[i].dobj.dumpId);
+			addObjectDependency(&tyinfo->dobj, constraint->dobj.dumpId);
 	}
 
 	PQclear(res);
@@ -12517,8 +12541,36 @@ dumpDomain(Archive *fout, const TypeInfo *tyinfo)
 			appendPQExpBuffer(q, " COLLATE %s", fmtQualifiedDumpable(coll));
 	}
 
+	/*
+	 * Print a not-null constraint if there's one.  In servers older than 17
+	 * these don't have names, so just print it unadorned; in newer ones they
+	 * do, but most of the time it's going to be the standard generated one,
+	 * so omit the name in that case also.
+	 */
 	if (typnotnull[0] == 't')
-		appendPQExpBufferStr(q, " NOT NULL");
+	{
+		if (fout->remoteVersion < 170000 || tyinfo->notnull == NULL)
+			appendPQExpBufferStr(q, " NOT NULL");
+		else
+		{
+			ConstraintInfo *notnull = tyinfo->notnull;
+
+			if (!notnull->separate)
+			{
+				char	   *default_name;
+
+				/* XXX should match ChooseConstraintName better */
+				default_name = psprintf("%s_not_null", tyinfo->dobj.name);
+
+				if (strcmp(default_name, notnull->dobj.name) == 0)
+					appendPQExpBufferStr(q, " NOT NULL");
+				else
+					appendPQExpBuffer(q, " CONSTRAINT %s %s",
+									  fmtId(notnull->dobj.name), notnull->condef);
+				free(default_name);
+			}
+		}
+	}
 
 	if (typdefault != NULL)
 	{
@@ -12538,7 +12590,7 @@ dumpDomain(Archive *fout, const TypeInfo *tyinfo)
 	{
 		ConstraintInfo *domcheck = &(tyinfo->domChecks[i]);
 
-		if (!domcheck->separate)
+		if (!domcheck->separate && domcheck->contype == 'c')
 			appendPQExpBuffer(q, "\n\tCONSTRAINT %s %s",
 							  fmtId(domcheck->dobj.name), domcheck->condef);
 	}
@@ -12599,6 +12651,25 @@ dumpDomain(Archive *fout, const TypeInfo *tyinfo)
 						tyinfo->rolname,
 						domcheck->dobj.catId, 0, tyinfo->dobj.dumpId);
 
+		destroyPQExpBuffer(conprefix);
+	}
+
+	/*
+	 * And a comment on the not-null constraint, if there's one -- but only if
+	 * the constraint itself was dumped here
+	 */
+	if (tyinfo->notnull != NULL && !tyinfo->notnull->separate)
+	{
+		PQExpBuffer conprefix = createPQExpBuffer();
+
+		appendPQExpBuffer(conprefix, "CONSTRAINT %s ON DOMAIN",
+						  fmtId(tyinfo->notnull->dobj.name));
+
+		if (tyinfo->notnull->dobj.dump & DUMP_COMPONENT_COMMENT)
+			dumpComment(fout, conprefix->data, qtypname,
+						tyinfo->dobj.namespace->dobj.name,
+						tyinfo->rolname,
+						tyinfo->notnull->dobj.catId, 0, tyinfo->dobj.dumpId);
 		destroyPQExpBuffer(conprefix);
 	}
 
@@ -18463,14 +18534,23 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 										  .dropStmt = delq->data));
 		}
 	}
-	else if (coninfo->contype == 'c' && tbinfo == NULL)
+	else if (tbinfo == NULL)
 	{
-		/* CHECK constraint on a domain */
+		/* CHECK, NOT NULL constraint on a domain */
 		TypeInfo   *tyinfo = coninfo->condomain;
+
+		Assert(coninfo->contype == 'c' || coninfo->contype == 'n');
 
 		/* Ignore if not to be dumped separately */
 		if (coninfo->separate)
 		{
+			const char *keyword;
+
+			if (coninfo->contype == 'c')
+				keyword = "CHECK CONSTRAINT";
+			else
+				keyword = "CONSTRAINT";
+
 			appendPQExpBuffer(q, "ALTER DOMAIN %s\n",
 							  fmtQualifiedDumpable(tyinfo));
 			appendPQExpBuffer(q, "    ADD CONSTRAINT %s %s;\n",
@@ -18489,7 +18569,7 @@ dumpConstraint(Archive *fout, const ConstraintInfo *coninfo)
 							 ARCHIVE_OPTS(.tag = tag,
 										  .namespace = tyinfo->dobj.namespace->dobj.name,
 										  .owner = tyinfo->rolname,
-										  .description = "CHECK CONSTRAINT",
+										  .description = keyword,
 										  .section = SECTION_POST_DATA,
 										  .createStmt = q->data,
 										  .dropStmt = delq->data));
