@@ -58,7 +58,12 @@ ecpg_get_connection_nr(const char *connection_name)
 
 		for (con = all_connections; con != NULL; con = con->next)
 		{
-			if (strcmp(connection_name, con->name) == 0)
+			/*
+			 * Check for the case of a NULL connection name, stored as such in
+			 * the connection information by ECPGconnect() when the database
+			 * name is not specified by its caller.
+			 */
+			if (con->name != NULL && strcmp(connection_name, con->name) == 0)
 				break;
 		}
 		ret = con;
