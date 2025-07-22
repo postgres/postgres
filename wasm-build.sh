@@ -577,16 +577,7 @@ END
 
         if ./pglite-link.sh
         then
-            if [ -d pglite ]
-            then
-               echo -n
-            else
-                for archive in ${PG_DIST_EXT}/*.tar
-                do
-                    echo "    packing extension $archive (docker build)"
-                    gzip -f -k -9 $archive
-                done
-            fi
+            echo "linking libpglite done"
         else
             exit $LINENO
         fi
@@ -594,3 +585,15 @@ END
 else
     echo "linking libpglite skipped"
 fi
+
+if [ -d pglite ]
+then
+   echo -n
+else
+    for archive in ${PG_DIST_EXT}/*.tar
+    do
+        echo "    packing extension $archive (docker build)"
+        gzip -f -k -9 $archive
+    done
+fi
+
