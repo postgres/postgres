@@ -12,12 +12,12 @@ typedef struct XLogSmgr
 							 TimeLineID tli, XLogSegNo segno, int segSize);
 
 	ssize_t		(*seg_write) (int fd, const void *buf, size_t count, off_t offset,
-							  TimeLineID tli, XLogSegNo segno);
+							  TimeLineID tli, XLogSegNo segno, int segSize);
 } XLogSmgr;
 
 static inline ssize_t
 default_seg_write(int fd, const void *buf, size_t count, off_t offset,
-				  TimeLineID tli, XLogSegNo segno)
+				  TimeLineID tli, XLogSegNo segno, int segSize)
 {
 	return pg_pwrite(fd, buf, count, offset);
 }

@@ -2446,7 +2446,7 @@ XLogWrite(XLogwrtRqst WriteRqst, TimeLineID tli, bool flexible)
 					INSTR_TIME_SET_ZERO(start);
 
 				pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
-				written = xlog_smgr->seg_write(openLogFile, from, nleft, startoffset, tli, openLogSegNo);
+				written = xlog_smgr->seg_write(openLogFile, from, nleft, startoffset, tli, openLogSegNo, wal_segment_size);
 				pgstat_report_wait_end();
 
 				/*
@@ -3491,7 +3491,7 @@ XLogFileCopy(TimeLineID destTLI, XLogSegNo destsegno,
 		}
 		errno = 0;
 		pgstat_report_wait_start(WAIT_EVENT_WAL_COPY_WRITE);
-		if ((int) xlog_smgr->seg_write(fd, buffer.data, sizeof(buffer), offset, destTLI, destsegno) != (int) sizeof(buffer))
+		if ((int) xlog_smgr->seg_write(fd, buffer.data, sizeof(buffer), offset, destTLI, destsegno, wal_segment_size) != (int) sizeof(buffer))
 		{
 			int			save_errno = errno;
 
