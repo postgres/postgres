@@ -376,7 +376,7 @@ main(int argc, char **argv)
  		char tde_path[MAXPGPATH];
  		snprintf(tde_path, sizeof(tde_path), "%s/%s", datadir_target, PG_TDE_DATA_DIR);
  		pg_tde_fe_init(tde_path);
- 		TDEXLogSmgrInit();
+		TDEXLogSmgrInit();
  	}
 #endif
 	/*
