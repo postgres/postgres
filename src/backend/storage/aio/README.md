@@ -94,7 +94,7 @@ pgaio_io_register_callbacks(ioh, PGAIO_HCB_SHARED_BUFFER_READV, 0);
  *
  * In this example we're reading only a single buffer, hence the 1.
  */
-pgaio_io_set_handle_data_32(ioh, (uint32 *) buffer, 1);
+pgaio_io_set_handle_data_32(ioh, (uint32 *) &buffer, 1);
 
 /*
  * Pass the AIO handle to lower-level function. When operating on the level of
@@ -119,8 +119,9 @@ pgaio_io_set_handle_data_32(ioh, (uint32 *) buffer, 1);
  * e.g. due to reaching a limit on the number of unsubmitted IOs, and even
  * complete before smgrstartreadv() returns.
  */
+void *page = BufferGetBlock(buffer);
 smgrstartreadv(ioh, operation->smgr, forknum, blkno,
-               BufferGetBlock(buffer), 1);
+               &page, 1);
 
 /*
  * To benefit from AIO, it is beneficial to perform other work, including
