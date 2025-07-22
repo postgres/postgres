@@ -201,7 +201,7 @@ typedef enum PgAioHandleCallbackID
 } PgAioHandleCallbackID;
 
 #define PGAIO_HCB_MAX	PGAIO_HCB_LOCAL_BUFFER_READV
-StaticAssertDecl(PGAIO_HCB_MAX <= (1 << PGAIO_RESULT_ID_BITS),
+StaticAssertDecl(PGAIO_HCB_MAX < (1 << PGAIO_RESULT_ID_BITS),
 				 "PGAIO_HCB_MAX is too big for PGAIO_RESULT_ID_BITS");
 
 
