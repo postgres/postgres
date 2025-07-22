@@ -36,6 +36,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/placeholder.h"
+#include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
@@ -401,8 +402,9 @@ transform_MERGE_to_join(Query *parse)
  *
  * This scans the rangetable for relation RTEs and retrieves the necessary
  * catalog information for each relation.  Using this information, it clears
- * the inh flag for any relation that has no children, and expands virtual
- * generated columns for any relation that contains them.
+ * the inh flag for any relation that has no children, collects not-null
+ * attribute numbers for any relation that has column not-null constraints, and
+ * expands virtual generated columns for any relation that contains them.
  *
  * Note that expanding virtual generated columns may cause the query tree to
  * have new copies of rangetable entries.  Therefore, we have to use list_nth
@@ -446,6 +448,13 @@ preprocess_relation_rtes(PlannerInfo *root)
 		 */
 		if (rte->inh)
 			rte->inh = relation->rd_rel->relhassubclass;
+
+		/*
+		 * Check to see if the relation has any column not-null constraints;
+		 * if so, retrieve the constraint information and store it in a
+		 * relation OID based hash table.
+		 */
+		get_relation_notnullatts(root, relation);
 
 		/*
 		 * Check to see if the relation has any virtual generated columns; if
@@ -1384,8 +1393,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	/*
 	 * Scan the rangetable for relation RTEs and retrieve the necessary
 	 * catalog information for each relation.  Using this information, clear
-	 * the inh flag for any relation that has no children, and expand virtual
-	 * generated columns for any relation that contains them.
+	 * the inh flag for any relation that has no children, collect not-null
+	 * attribute numbers for any relation that has column not-null
+	 * constraints, and expand virtual generated columns for any relation that
+	 * contains them.
 	 */
 	subquery = subroot->parse = preprocess_relation_rtes(subroot);
 

@@ -466,8 +466,7 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 								Index *childRTindex_p)
 {
 	Query	   *parse = root->parse;
-	Oid			parentOID PG_USED_FOR_ASSERTS_ONLY =
-		RelationGetRelid(parentrel);
+	Oid			parentOID = RelationGetRelid(parentrel);
 	Oid			childOID = RelationGetRelid(childrel);
 	RangeTblEntry *childrte;
 	Index		childRTindex;
@@ -512,6 +511,13 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 	childRTindex = list_length(parse->rtable);
 	*childrte_p = childrte;
 	*childRTindex_p = childRTindex;
+
+	/*
+	 * Retrieve column not-null constraint information for the child relation
+	 * if its relation OID is different from the parent's.
+	 */
+	if (childOID != parentOID)
+		get_relation_notnullatts(root, childrel);
 
 	/*
 	 * Build an AppendRelInfo struct for each parent/child pair.

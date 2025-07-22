@@ -1759,6 +1759,7 @@ NonEmptyRange
 Notification
 NotificationList
 NotifyStmt
+NotnullHashEntry
 Nsrt
 NtDllRoutine
 NtFlushBuffersFileEx_t

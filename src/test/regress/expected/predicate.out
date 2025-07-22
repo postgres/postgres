@@ -84,10 +84,10 @@ SELECT * FROM pred_tab t WHERE t.a IS NULL OR t.c IS NULL;
 -- are provably false
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab t WHERE t.b IS NULL OR t.c IS NULL;
-               QUERY PLAN               
-----------------------------------------
+       QUERY PLAN       
+------------------------
  Seq Scan on pred_tab t
-   Filter: ((b IS NULL) OR (c IS NULL))
+   Filter: (b IS NULL)
 (2 rows)
 
 --
@@ -230,6 +230,54 @@ SELECT * FROM pred_tab t1
    ->  Materialize
          ->  Seq Scan on pred_tab t3
 (9 rows)
+
+--
+-- Tests for NullTest reduction in EXISTS sublink
+--
+-- Ensure the IS_NOT_NULL qual is ignored
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON EXISTS
+        (SELECT 1 FROM pred_tab t3, pred_tab t4, pred_tab t5, pred_tab t6
+         WHERE t1.a = t3.a AND t6.a IS NOT NULL);
+                       QUERY PLAN                        
+---------------------------------------------------------
+ Nested Loop Left Join
+   Join Filter: EXISTS(SubPlan 1)
+   ->  Seq Scan on pred_tab t1
+   ->  Materialize
+         ->  Seq Scan on pred_tab t2
+   SubPlan 1
+     ->  Nested Loop
+           ->  Nested Loop
+                 ->  Nested Loop
+                       ->  Seq Scan on pred_tab t4
+                       ->  Materialize
+                             ->  Seq Scan on pred_tab t3
+                                   Filter: (t1.a = a)
+                 ->  Materialize
+                       ->  Seq Scan on pred_tab t5
+           ->  Materialize
+                 ->  Seq Scan on pred_tab t6
+(17 rows)
+
+-- Ensure the IS_NULL qual is reduced to constant-FALSE
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab t1
+    LEFT JOIN pred_tab t2 ON EXISTS
+        (SELECT 1 FROM pred_tab t3, pred_tab t4, pred_tab t5, pred_tab t6
+         WHERE t1.a = t3.a AND t6.a IS NULL);
+             QUERY PLAN              
+-------------------------------------
+ Nested Loop Left Join
+   Join Filter: (InitPlan 1).col1
+   InitPlan 1
+     ->  Result
+           One-Time Filter: false
+   ->  Seq Scan on pred_tab t1
+   ->  Materialize
+         ->  Seq Scan on pred_tab t2
+(8 rows)
 
 DROP TABLE pred_tab;
 -- Validate we handle IS NULL and IS NOT NULL quals correctly with inheritance

@@ -1519,8 +1519,10 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	/*
 	 * Scan the rangetable for relation RTEs and retrieve the necessary
 	 * catalog information for each relation.  Using this information, clear
-	 * the inh flag for any relation that has no children, and expand virtual
-	 * generated columns for any relation that contains them.
+	 * the inh flag for any relation that has no children, collect not-null
+	 * attribute numbers for any relation that has column not-null
+	 * constraints, and expand virtual generated columns for any relation that
+	 * contains them.
 	 *
 	 * Note: we construct up an entirely dummy PlannerInfo for use here.  This
 	 * is fine because only the "glob" and "parse" links will be used in this
@@ -1760,6 +1762,7 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 					  Node **testexpr, List **paramIds)
 {
 	Node	   *whereClause;
+	PlannerInfo subroot;
 	List	   *leftargs,
 			   *rightargs,
 			   *opids,
@@ -1819,12 +1822,15 @@ convert_EXISTS_to_ANY(PlannerInfo *root, Query *subselect,
 	 * parent aliases were flattened already, and we're not going to pull any
 	 * child Vars (of any description) into the parent.
 	 *
-	 * Note: passing the parent's root to eval_const_expressions is
-	 * technically wrong, but we can get away with it since only the
-	 * boundParams (if any) are used, and those would be the same in a
-	 * subroot.
+	 * Note: we construct up an entirely dummy PlannerInfo to pass to
+	 * eval_const_expressions.  This is fine because only the "glob" and
+	 * "parse" links are used by eval_const_expressions.
 	 */
-	whereClause = eval_const_expressions(root, whereClause);
+	MemSet(&subroot, 0, sizeof(subroot));
+	subroot.type = T_PlannerInfo;
+	subroot.glob = root->glob;
+	subroot.parse = subselect;
+	whereClause = eval_const_expressions(&subroot, whereClause);
 	whereClause = (Node *) canonicalize_qual((Expr *) whereClause, false);
 	whereClause = (Node *) make_ands_implicit((Expr *) whereClause);
 

@@ -3639,8 +3639,8 @@ from nt3 as nt3
     ) as ss2
     on ss2.id = nt3.nt2_id
 where nt3.id = 1 and ss2.b3;
-                  QUERY PLAN                   
------------------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  Nested Loop
    ->  Nested Loop
          ->  Index Scan using nt3_pkey on nt3
@@ -3649,7 +3649,7 @@ where nt3.id = 1 and ss2.b3;
                Index Cond: (id = nt3.nt2_id)
    ->  Index Only Scan using nt1_pkey on nt1
          Index Cond: (id = nt2.nt1_id)
-         Filter: (nt2.b1 AND (id IS NOT NULL))
+         Filter: (nt2.b1 AND true)
 (9 rows)
 
 select nt3.id

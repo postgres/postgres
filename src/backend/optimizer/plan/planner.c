@@ -342,6 +342,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	glob->transientPlan = false;
 	glob->dependsOnRole = false;
 	glob->partition_directory = NULL;
+	glob->rel_notnullatts_hash = NULL;
 
 	/*
 	 * Assess whether it's feasible to use parallel mode for this query. We
@@ -723,11 +724,12 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	/*
 	 * Scan the rangetable for relation RTEs and retrieve the necessary
 	 * catalog information for each relation.  Using this information, clear
-	 * the inh flag for any relation that has no children, and expand virtual
-	 * generated columns for any relation that contains them.  Note that this
-	 * step does not descend into sublinks and subqueries; if we pull up any
-	 * sublinks or subqueries below, their relation RTEs are processed just
-	 * before pulling them up.
+	 * the inh flag for any relation that has no children, collect not-null
+	 * attribute numbers for any relation that has column not-null
+	 * constraints, and expand virtual generated columns for any relation that
+	 * contains them.  Note that this step does not descend into sublinks and
+	 * subqueries; if we pull up any sublinks or subqueries below, their
+	 * relation RTEs are processed just before pulling them up.
 	 */
 	parse = root->parse = preprocess_relation_rtes(root);
 
