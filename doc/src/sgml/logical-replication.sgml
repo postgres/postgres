@@ -1048,28 +1048,28 @@ HINT:  To initiate replication, you must manually create the replication slot, e
     defined) for each publication.
 <programlisting><![CDATA[
 /* pub # */ \dRp+
-          Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                         Publication p1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | t       | t       | t       | t         | none              | f
 Tables:
- "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
+    "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
 
-          Publication p2
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                         Publication p2
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | t       | t       | t       | t         | none              | f
 Tables:
- "public.t1"
- "public.t2" WHERE (e = 99)
+    "public.t1"
+    "public.t2" WHERE (e = 99)
 
-          Publication p3
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                         Publication p3
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | t       | t       | t       | t         | none              | f
 Tables:
- "public.t2" WHERE (d = 10)
- "public.t3" WHERE (g = 10)
+    "public.t2" WHERE (d = 10)
+    "public.t3" WHERE (g = 10)
 ]]></programlisting></para>
 
    <para>
@@ -1491,10 +1491,10 @@ Publications:
      for each publication.
 <programlisting>
 /* pub # */ \dRp+
-                               Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
-----------+------------+---------+---------+---------+-----------+----------
- postgres | f          | t       | t       | t       | t         | f
+                                         Publication p1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | t       | t       | t       | t         | none              | f
 Tables:
     "public.t1" (id, a, b, d)
 </programlisting></para>
