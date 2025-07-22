@@ -625,6 +625,9 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 							server->servername),
 					 errdetail_internal("%s", pchomp(PQerrorMessage(conn)))));
 
+		PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+							gettext_noop("received message via remote connection"));
+
 		/* Perform post-connection security checks. */
 		pgfdw_security_check(keywords, values, user, conn);
 

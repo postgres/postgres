@@ -240,6 +240,10 @@ dblink_get_conn(char *conname_or_str,
 					 errmsg("could not establish connection"),
 					 errdetail_internal("%s", msg)));
 		}
+
+		PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+							gettext_noop("received message via remote connection"));
+
 		dblink_security_check(conn, NULL, connstr);
 		if (PQclientEncoding(conn) != GetDatabaseEncoding())
 			PQsetClientEncoding(conn, GetDatabaseEncodingName());
@@ -337,6 +341,9 @@ dblink_connect(PG_FUNCTION_ARGS)
 				 errmsg("could not establish connection"),
 				 errdetail_internal("%s", msg)));
 	}
+
+	PQsetNoticeReceiver(conn, libpqsrv_notice_receiver,
+						gettext_noop("received message via remote connection"));
 
 	/* check password actually used if not superuser */
 	dblink_security_check(conn, connname, connstr);

@@ -454,4 +454,34 @@ exit:	;
 	return error;
 }
 
+/*
+ * libpqsrv_notice_receiver
+ *
+ * Custom notice receiver for libpq connections.
+ *
+ * This function is intended to be set via PQsetNoticeReceiver() so that
+ * NOTICE, WARNING, and similar messages from the connection are reported via
+ * ereport(), instead of being printed to stderr.
+ */
+static inline void
+libpqsrv_notice_receiver(void *arg, const PGresult *res)
+{
+	char	   *message;
+	int			len;
+	char	   *prefix = (char *) arg;
+
+	/*
+	 * Trim the trailing newline from the message text returned from
+	 * PQresultErrorMessage(), as it always includes one, to produce cleaner
+	 * log output.
+	 */
+	message = PQresultErrorMessage(res);
+	len = strlen(message);
+	if (len > 0 && message[len - 1] == '\n')
+		len--;
+
+	ereport(LOG,
+			errmsg_internal("%s: %.*s", _(prefix), len, message));
+}
+
 #endif							/* LIBPQ_BE_FE_HELPERS_H */
