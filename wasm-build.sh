@@ -482,6 +482,7 @@ then
     cp /tmp/pglite/bin/pg_dump.wasi /tmp/sdk/dist/
 fi
 
+[ -d pglite-wasm ] && export PG_BRANCH=wasm
 
 # only build extra when targeting pglite-wasm .
 rm -f pglite-link.sh
