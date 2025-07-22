@@ -233,7 +233,7 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 	}
 
 	PQsetNoticeReceiver(conn->streamConn, libpqsrv_notice_receiver,
-						gettext_noop("received message via replication"));
+						"received message via replication");
 
 	/*
 	 * Set always-secure search path for the cases where the connection is

@@ -481,7 +481,7 @@ libpqsrv_notice_receiver(void *arg, const PGresult *res)
 		len--;
 
 	ereport(LOG,
-			errmsg_internal("%s: %.*s", _(prefix), len, message));
+			errmsg_internal("%s: %.*s", prefix, len, message));
 }
 
 #endif							/* LIBPQ_BE_FE_HELPERS_H */
