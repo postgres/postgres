@@ -22,7 +22,7 @@
  * prototypes for prepjointree.c
  */
 extern void transform_MERGE_to_join(Query *parse);
-extern Query *expand_virtual_generated_columns(PlannerInfo *root);
+extern Query *preprocess_relation_rtes(PlannerInfo *root);
 extern void replace_empty_jointree(Query *parse);
 extern void pull_up_sublinks(PlannerInfo *root);
 extern void preprocess_function_rtes(PlannerInfo *root);

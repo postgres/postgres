@@ -721,13 +721,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	transform_MERGE_to_join(parse);
 
 	/*
-	 * Scan the rangetable for relations with virtual generated columns, and
-	 * replace all Var nodes in the query that reference these columns with
-	 * the generation expressions.  Note that this step does not descend into
-	 * sublinks and subqueries; if we pull up any sublinks or subqueries
-	 * below, their rangetables are processed just before pulling them up.
+	 * Scan the rangetable for relation RTEs and retrieve the necessary
+	 * catalog information for each relation.  Using this information, clear
+	 * the inh flag for any relation that has no children, and expand virtual
+	 * generated columns for any relation that contains them.  Note that this
+	 * step does not descend into sublinks and subqueries; if we pull up any
+	 * sublinks or subqueries below, their relation RTEs are processed just
+	 * before pulling them up.
 	 */
-	parse = root->parse = expand_virtual_generated_columns(root);
+	parse = root->parse = preprocess_relation_rtes(root);
 
 	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
@@ -788,23 +790,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 
 		switch (rte->rtekind)
 		{
-			case RTE_RELATION:
-				if (rte->inh)
-				{
-					/*
-					 * Check to see if the relation actually has any children;
-					 * if not, clear the inh flag so we can treat it as a
-					 * plain base relation.
-					 *
-					 * Note: this could give a false-positive result, if the
-					 * rel once had children but no longer does.  We used to
-					 * be able to clear rte->inh later on when we discovered
-					 * that, but no more; we have to handle such cases as
-					 * full-fledged inheritance.
-					 */
-					rte->inh = has_subclass(rte->relid);
-				}
-				break;
 			case RTE_JOIN:
 				root->hasJoinRTEs = true;
 				if (IS_OUTER_JOIN(rte->jointype))

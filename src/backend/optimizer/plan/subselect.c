@@ -1517,9 +1517,10 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 		return NULL;
 
 	/*
-	 * Scan the rangetable for relations with virtual generated columns, and
-	 * replace all Var nodes in the subquery that reference these columns with
-	 * the generation expressions.
+	 * Scan the rangetable for relation RTEs and retrieve the necessary
+	 * catalog information for each relation.  Using this information, clear
+	 * the inh flag for any relation that has no children, and expand virtual
+	 * generated columns for any relation that contains them.
 	 *
 	 * Note: we construct up an entirely dummy PlannerInfo for use here.  This
 	 * is fine because only the "glob" and "parse" links will be used in this
@@ -1534,7 +1535,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	subroot.glob = root->glob;
 	subroot.parse = subselect;
 	subselect->jointree->quals = whereClause;
-	subselect = expand_virtual_generated_columns(&subroot);
+	subselect = preprocess_relation_rtes(&subroot);
 
 	/*
 	 * Now separate out the WHERE clause again.
