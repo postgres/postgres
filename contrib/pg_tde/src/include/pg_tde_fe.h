@@ -67,6 +67,8 @@
 
 static int	tde_fe_error_level = 0;
 
+#define data_sync_elevel(elevel) (elevel)
+
 /*
  * -------------
  */

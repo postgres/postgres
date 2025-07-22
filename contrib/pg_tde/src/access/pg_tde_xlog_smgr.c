@@ -39,8 +39,14 @@ static const XLogSmgr tde_xlog_smgr = {
 	.seg_write = tdeheap_xlog_seg_write,
 };
 
-#ifndef FRONTEND
-static Size TDEXLogEncryptBuffSize(void);
+static void *EncryptionCryptCtx = NULL;
+
+/* TODO: can be swapped out to the disk */
+static InternalKey EncryptionKey =
+{
+	.type = MAP_ENTRY_EMPTY,
+	.start_lsn = InvalidXLogRecPtr,
+};
 
 /*
  * Must be the same as in replication/walsender.c
@@ -49,9 +55,13 @@ static Size TDEXLogEncryptBuffSize(void);
  */
 #define MAX_SEND_SIZE (XLOG_BLCKSZ * 16)
 
-static ssize_t TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count,
-										  off_t offset, TimeLineID tli,
-										  XLogSegNo segno);
+/*
+ * Since the backend code needs to use atomics and shared memory while the
+ * frotnend code cannot do that we provide two separate implementations of some
+ * data structures and the functions which operate one them.
+ */
+
+#ifndef FRONTEND
 
 typedef struct EncryptionStateData
 {
@@ -60,15 +70,22 @@ typedef struct EncryptionStateData
 } EncryptionStateData;
 
 static EncryptionStateData *EncryptionState = NULL;
+
 static char *EncryptionBuf;
 
-/* TODO: can be swapped out to the disk */
-static InternalKey EncryptionKey =
+static XLogRecPtr
+TDEXLogGetEncKeyLsn()
 {
-	.type = MAP_ENTRY_EMPTY,
-	.start_lsn = InvalidXLogRecPtr,
-};
-static void *EncryptionCryptCtx = NULL;
+	return (XLogRecPtr) pg_atomic_read_u64(&EncryptionState->enc_key_lsn);
+}
+
+static void
+TDEXLogSetEncKeyLsn(XLogRecPtr start_lsn)
+{
+	pg_atomic_write_u64(&EncryptionState->enc_key_lsn, start_lsn);
+}
+
+static Size TDEXLogEncryptBuffSize(void);
 
 static int	XLOGChooseNumBuffers(void);
 
@@ -146,33 +163,33 @@ TDEXLogShmemInit(void)
 	elog(DEBUG1, "pg_tde: initialized encryption buffer %lu bytes", TDEXLogEncryptStateSize());
 }
 
-/*
- * Encrypt XLog page(s) from the buf and write to the segment file.
- */
-static ssize_t
-TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
-						   TimeLineID tli, XLogSegNo segno)
+#else							/* !FRONTEND */
+
+typedef struct EncryptionStateData
 {
-	char		iv_prefix[16];
-	InternalKey *key = &EncryptionKey;
-	char	   *enc_buff = EncryptionBuf;
+	char		db_map_path[MAXPGPATH];
+	XLogRecPtr	enc_key_lsn;	/* to sync with reader */
+} EncryptionStateData;
 
-	Assert(count <= TDEXLogEncryptBuffSize());
+static EncryptionStateData EncryptionStateD = {0};
 
-#ifdef TDE_XLOG_DEBUG
-	elog(DEBUG1, "write encrypted WAL, size: %lu, offset: %ld [%lX], seg: %X/%X, key_start_lsn: %X/%X",
-		 count, offset, offset, LSN_FORMAT_ARGS(segno), LSN_FORMAT_ARGS(key->start_lsn));
-#endif
+static EncryptionStateData *EncryptionState = &EncryptionStateD;
 
-	CalcXLogPageIVPrefix(tli, segno, key->base_iv, iv_prefix);
-	pg_tde_stream_crypt(iv_prefix, offset,
-						(char *) buf, count,
-						enc_buff, key, &EncryptionCryptCtx);
+static char EncryptionBuf[MAX_SEND_SIZE];
 
-	return pg_pwrite(fd, enc_buff, count, offset);
+static XLogRecPtr
+TDEXLogGetEncKeyLsn()
+{
+	return (XLogRecPtr) EncryptionState->enc_key_lsn;
 }
 
-#endif							/* !FRONTEND */
+static void
+TDEXLogSetEncKeyLsn(XLogRecPtr start_lsn)
+{
+	EncryptionState->enc_key_lsn = EncryptionKey.start_lsn;
+}
+
+#endif							/* FRONTEND */
 
 void
 TDEXLogSmgrInit()
@@ -183,7 +200,6 @@ TDEXLogSmgrInit()
 void
 TDEXLogSmgrInitWrite(bool encrypt_xlog)
 {
-#ifndef FRONTEND
 	InternalKey *key = pg_tde_read_last_wal_key();
 
 	/*
@@ -204,30 +220,53 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 	else if (key)
 	{
 		EncryptionKey = *key;
-		pg_atomic_write_u64(&EncryptionState->enc_key_lsn, EncryptionKey.start_lsn);
+		TDEXLogSetEncKeyLsn(EncryptionKey.start_lsn);
 	}
 
 	if (key)
 		pfree(key);
 
 	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
+}
 
+/*
+ * Encrypt XLog page(s) from the buf and write to the segment file.
+ */
+static ssize_t
+TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
+						   TimeLineID tli, XLogSegNo segno)
+{
+	char		iv_prefix[16];
+	InternalKey *key = &EncryptionKey;
+	char	   *enc_buff = EncryptionBuf;
+
+#ifndef FRONTEND
+	Assert(count <= TDEXLogEncryptBuffSize());
 #endif
+
+#ifdef TDE_XLOG_DEBUG
+	elog(DEBUG1, "write encrypted WAL, size: %lu, offset: %ld [%lX], seg: %X/%X, key_start_lsn: %X/%X",
+		 count, offset, offset, LSN_FORMAT_ARGS(segno), LSN_FORMAT_ARGS(key->start_lsn));
+#endif
+
+	CalcXLogPageIVPrefix(tli, segno, key->base_iv, iv_prefix);
+	pg_tde_stream_crypt(iv_prefix, offset,
+						(char *) buf, count,
+						enc_buff, key, &EncryptionCryptCtx);
+
+	return pg_pwrite(fd, enc_buff, count, offset);
 }
 
 static ssize_t
 tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 					   TimeLineID tli, XLogSegNo segno, int segSize)
 {
-#ifndef FRONTEND
-
 	/*
 	 * Set the last (most recent) key's start LSN if not set.
 	 *
 	 * This func called with WALWriteLock held, so no need in any extra sync.
 	 */
-	if (EncryptionKey.type != MAP_ENTRY_EMPTY &&
-		pg_atomic_read_u64(&EncryptionState->enc_key_lsn) == 0)
+	if (EncryptionKey.type != MAP_ENTRY_EMPTY && TDEXLogGetEncKeyLsn() == 0)
 	{
 		XLogRecPtr	lsn;
 
@@ -235,13 +274,12 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 
 		pg_tde_wal_last_key_set_lsn(lsn, EncryptionState->db_map_path);
 		EncryptionKey.start_lsn = lsn;
-		pg_atomic_write_u64(&EncryptionState->enc_key_lsn, lsn);
+		TDEXLogSetEncKeyLsn(lsn);
 	}
 
 	if (EncryptionKey.type == TDE_KEY_TYPE_WAL_ENCRYPTED)
 		return TDEXLogWriteEncryptedPages(fd, buf, count, offset, tli, segno);
 	else
-#endif
 		return pg_pwrite(fd, buf, count, offset);
 }
 
@@ -274,8 +312,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 		keys = pg_tde_fetch_wal_keys(InvalidXLogRecPtr);
 	}
 
-#ifndef FRONTEND
-	write_key_lsn = pg_atomic_read_u64(&EncryptionState->enc_key_lsn);
+	write_key_lsn = TDEXLogGetEncKeyLsn();
 
 	if (!XLogRecPtrIsInvalid(write_key_lsn))
 	{
@@ -292,7 +329,6 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 			keys = pg_tde_get_wal_cache_keys();
 		}
 	}
-#endif
 
 	XLogSegNoOffsetToRecPtr(segno, offset, segSize, data_start);
 	XLogSegNoOffsetToRecPtr(segno, offset + readsz, segSize, data_end);

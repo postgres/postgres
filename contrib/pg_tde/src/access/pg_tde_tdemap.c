@@ -54,23 +54,24 @@ typedef struct TDEFileHeader
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
+static void pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data);
+static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
 static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, char *db_map_path, TDEMapEntry *map_entry);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
+static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
+static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
+static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static bool pg_tde_read_one_map_entry(int fd, TDEMapEntry *map_entry, off_t *offset);
 static void pg_tde_read_one_map_entry2(int keydata_fd, int32 key_index, TDEMapEntry *map_entry, Oid databaseId);
-static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(InternalKey *cached_key, XLogRecPtr start_lsn);
 
 #ifndef FRONTEND
-static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
 static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
 static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
 static void finalize_key_rotation(const char *path_old, const char *path_new);
-static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 
 void
 pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
@@ -101,37 +102,6 @@ tde_sprint_key(InternalKey *k)
 		sprintf(buf + i, "%02X", k->key[i]);
 
 	return buf;
-}
-
-/*
- * Generates a new internal key for WAL and adds it to the key file.
- *
- * We have a special function for WAL as it is being called during recovery
- * start so there should be no XLog records and aquired locks. The key is
- * always created with start_lsn = InvalidXLogRecPtr. Which will be updated
- * with the actual lsn by the first WAL write.
- */
-void
-pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type)
-{
-	TDEPrincipalKey *principal_key;
-
-	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
-
-	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
-	if (principal_key == NULL)
-	{
-		ereport(ERROR,
-				errmsg("principal key not configured"),
-				errhint("Use pg_tde_set_server_key_using_global_key_provider() to configure one."));
-	}
-
-	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
-	pg_tde_generate_internal_key(rel_key_data, entry_type);
-
-	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
-
-	LWLockRelease(tde_lwlock_enc_keys());
 }
 
 /*
@@ -199,155 +169,6 @@ pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 	}
 
 	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, true, &curr_pos);
-	CloseTransientFile(map_fd);
-}
-
-/*
- * Write TDE file header to a TDE file.
- */
-static int
-pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written)
-{
-	TDEFileHeader fheader;
-
-	Assert(signed_key_info);
-
-	fheader.file_version = PG_TDE_FILEMAGIC;
-	fheader.signed_key_info = *signed_key_info;
-	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
-
-	if (*bytes_written != TDE_FILE_HEADER_SIZE)
-	{
-		ereport(ERROR,
-				errcode_for_file_access(),
-				errmsg("could not write tde file \"%s\": %m", tde_filename));
-	}
-
-	if (pg_fsync(fd) != 0)
-	{
-		ereport(data_sync_elevel(ERROR),
-				errcode_for_file_access(),
-				errmsg("could not fsync file \"%s\": %m", tde_filename));
-	}
-
-	ereport(DEBUG2, errmsg("Wrote the header to %s", tde_filename));
-
-	return fd;
-}
-
-static void
-pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
-{
-	signed_key_info->data = principal_key->keyInfo;
-
-	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
-
-	AesGcmEncrypt(principal_key->keyData,
-				  signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE,
-				  (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data),
-				  NULL, 0,
-				  NULL,
-				  signed_key_info->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
-}
-
-static void
-pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data)
-{
-	map_entry->spcOid = rlocator->spcOid;
-	map_entry->relNumber = rlocator->relNumber;
-	map_entry->type = rel_key_data->type;
-	map_entry->enc_key = *rel_key_data;
-
-	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_IV_SIZE))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
-
-	AesGcmEncrypt(principal_key->keyData,
-				  map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
-				  (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
-				  rel_key_data->key, INTERNAL_KEY_LEN,
-				  map_entry->enc_key.key,
-				  map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
-}
-
-static void
-pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path)
-{
-	int			bytes_written = 0;
-
-	bytes_written = pg_pwrite(fd, map_entry, MAP_ENTRY_SIZE, *offset);
-
-	if (bytes_written != MAP_ENTRY_SIZE)
-	{
-		ereport(ERROR,
-				errcode_for_file_access(),
-				errmsg("could not write tde map file \"%s\": %m", db_map_path));
-	}
-	if (pg_fsync(fd) != 0)
-	{
-		ereport(data_sync_elevel(ERROR),
-				errcode_for_file_access(),
-				errmsg("could not fsync file \"%s\": %m", db_map_path));
-	}
-
-	*offset += bytes_written;
-}
-
-/*
- * The caller must hold an exclusive lock on the key file to avoid
- * concurrent in place updates leading to data conflicts.
- */
-void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
-{
-	char		db_map_path[MAXPGPATH];
-	int			map_fd;
-	off_t		curr_pos = 0;
-	TDEMapEntry write_map_entry;
-	TDESignedPrincipalKeyInfo signed_key_Info;
-
-	Assert(rlocator);
-
-	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
-
-	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
-
-	/* Open and validate file for basic correctness. */
-	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, false, &curr_pos);
-
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
-	while (1)
-	{
-		TDEMapEntry read_map_entry;
-		off_t		prev_pos = curr_pos;
-
-		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-
-		if (read_map_entry.type == MAP_ENTRY_EMPTY)
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-	}
-
-	/* Initialize map entry and encrypt key */
-	pg_tde_initialize_map_entry(&write_map_entry, principal_key, rlocator, rel_key_data);
-
-	/* Write the given entry at curr_pos; i.e. the free entry. */
-	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
-
 	CloseTransientFile(map_fd);
 }
 
@@ -541,6 +362,8 @@ pg_tde_delete_principal_key(Oid dbOid)
 	durable_unlink(path, ERROR);
 }
 
+#endif							/* !FRONTEND */
+
 /*
  * It's called by seg_write inside crit section so no pallocs, hence
  * needs keyfile_path
@@ -609,37 +432,152 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 	CloseTransientFile(fd);
 }
 
-/*
- * Open for write and Validate File Header:
- * 		header: {Format Version, Principal Key Name}
- *
- * Returns the file descriptor in case of a success. Otherwise, error
- * is raised.
- */
-static int
-pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos)
+static void
+pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)
 {
-	int			fd;
-	TDEFileHeader fheader;
-	off_t		bytes_read = 0;
-	off_t		bytes_written = 0;
-	int			file_flags = O_RDWR | O_CREAT | PG_BINARY | (truncate ? O_TRUNC : 0);
+	signed_key_info->data = principal_key->keyInfo;
 
-	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
+	if (!RAND_bytes(signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE))
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
 
-	fd = pg_tde_open_file_basic(tde_filename, file_flags, false);
-
-	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
-
-	/* In case it's a new file, let's add the header now. */
-	if (bytes_read == 0 && signed_key_info)
-		pg_tde_file_header_write(tde_filename, fd, signed_key_info, &bytes_written);
-
-	*curr_pos = bytes_read + bytes_written;
-	return fd;
+	AesGcmEncrypt(principal_key->keyData,
+				  signed_key_info->sign_iv, MAP_ENTRY_IV_SIZE,
+				  (unsigned char *) &signed_key_info->data, sizeof(signed_key_info->data),
+				  NULL, 0,
+				  NULL,
+				  signed_key_info->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 
-#endif							/* !FRONTEND */
+static void
+pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data)
+{
+	map_entry->spcOid = rlocator->spcOid;
+	map_entry->relNumber = rlocator->relNumber;
+	map_entry->type = rel_key_data->type;
+	map_entry->enc_key = *rel_key_data;
+
+	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_IV_SIZE))
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("could not generate iv for key map: %s", ERR_error_string(ERR_get_error(), NULL)));
+
+	AesGcmEncrypt(principal_key->keyData,
+				  map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
+				  (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
+				  rel_key_data->key, INTERNAL_KEY_LEN,
+				  map_entry->enc_key.key,
+				  map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
+}
+
+static void
+pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path)
+{
+	int			bytes_written = 0;
+
+	bytes_written = pg_pwrite(fd, map_entry, MAP_ENTRY_SIZE, *offset);
+
+	if (bytes_written != MAP_ENTRY_SIZE)
+	{
+		ereport(ERROR,
+				errcode_for_file_access(),
+				errmsg("could not write tde map file \"%s\": %m", db_map_path));
+	}
+	if (pg_fsync(fd) != 0)
+	{
+		ereport(data_sync_elevel(ERROR),
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m", db_map_path));
+	}
+
+	*offset += bytes_written;
+}
+
+/*
+ * Generates a new internal key for WAL and adds it to the key file.
+ *
+ * We have a special function for WAL as it is being called during recovery
+ * start so there should be no XLog records and aquired locks. The key is
+ * always created with start_lsn = InvalidXLogRecPtr. Which will be updated
+ * with the actual lsn by the first WAL write.
+ */
+void
+pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type)
+{
+	TDEPrincipalKey *principal_key;
+
+	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
+
+	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
+	if (principal_key == NULL)
+	{
+		ereport(ERROR,
+				errmsg("principal key not configured"),
+				errhint("Use pg_tde_set_server_key_using_global_key_provider() to configure one."));
+	}
+
+	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
+	pg_tde_generate_internal_key(rel_key_data, entry_type);
+
+	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
+
+	LWLockRelease(tde_lwlock_enc_keys());
+}
+
+/*
+ * The caller must hold an exclusive lock on the key file to avoid
+ * concurrent in place updates leading to data conflicts.
+ */
+void
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
+{
+	char		db_map_path[MAXPGPATH];
+	int			map_fd;
+	off_t		curr_pos = 0;
+	TDEMapEntry write_map_entry;
+	TDESignedPrincipalKeyInfo signed_key_Info;
+
+	Assert(rlocator);
+
+	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
+
+	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
+
+	/* Open and validate file for basic correctness. */
+	map_fd = pg_tde_open_file_write(db_map_path, &signed_key_Info, false, &curr_pos);
+
+	/*
+	 * Read until we find an empty slot. Otherwise, read until end. This seems
+	 * to be less frequent than vacuum. So let's keep this function here
+	 * rather than overloading the vacuum process.
+	 */
+	while (1)
+	{
+		TDEMapEntry read_map_entry;
+		off_t		prev_pos = curr_pos;
+
+		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
+		{
+			curr_pos = prev_pos;
+			break;
+		}
+
+		if (read_map_entry.type == MAP_ENTRY_EMPTY)
+		{
+			curr_pos = prev_pos;
+			break;
+		}
+	}
+
+	/* Initialize map entry and encrypt key */
+	pg_tde_initialize_map_entry(&write_map_entry, principal_key, rlocator, rel_key_data);
+
+	/* Write the given entry at curr_pos; i.e. the free entry. */
+	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
+
+	CloseTransientFile(map_fd);
+}
 
 /*
  * Returns true if we find a valid match; e.g. type is not set to
@@ -740,6 +678,28 @@ tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 }
 
 /*
+ * Open a TDE file:
+ *
+ * Returns the file descriptor in case of a success. Otherwise, error
+ * is raised except when ignore_missing is true and the file does not exit.
+ */
+static int
+pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing)
+{
+	int			fd;
+
+	fd = OpenTransientFile(tde_filename, fileFlags);
+	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
+	{
+		ereport(ERROR,
+				errcode_for_file_access(),
+				errmsg("could not open tde file \"%s\": %m", tde_filename));
+	}
+
+	return fd;
+}
+
+/*
  * Open for read and Validate File Header:
  * 		header: {Format Version, Principal Key Name}
  *
@@ -766,24 +726,32 @@ pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr
 }
 
 /*
- * Open a TDE file:
+ * Open for write and Validate File Header:
+ * 		header: {Format Version, Principal Key Name}
  *
  * Returns the file descriptor in case of a success. Otherwise, error
- * is raised except when ignore_missing is true and the file does not exit.
+ * is raised.
  */
 static int
-pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing)
+pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos)
 {
 	int			fd;
+	TDEFileHeader fheader;
+	off_t		bytes_read = 0;
+	off_t		bytes_written = 0;
+	int			file_flags = O_RDWR | O_CREAT | PG_BINARY | (truncate ? O_TRUNC : 0);
 
-	fd = OpenTransientFile(tde_filename, fileFlags);
-	if (fd < 0 && !(errno == ENOENT && ignore_missing == true))
-	{
-		ereport(ERROR,
-				errcode_for_file_access(),
-				errmsg("could not open tde file \"%s\": %m", tde_filename));
-	}
+	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
+	fd = pg_tde_open_file_basic(tde_filename, file_flags, false);
+
+	pg_tde_file_header_read(tde_filename, fd, &fheader, &bytes_read);
+
+	/* In case it's a new file, let's add the header now. */
+	if (bytes_read == 0 && signed_key_info)
+		pg_tde_file_header_write(tde_filename, fd, signed_key_info, &bytes_written);
+
+	*curr_pos = bytes_read + bytes_written;
 	return fd;
 }
 
@@ -808,6 +776,39 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 				errcode_for_file_access(),
 				errmsg("TDE map file \"%s\" is corrupted: %m", tde_filename));
 	}
+}
+
+/*
+ * Write TDE file header to a TDE file.
+ */
+static int
+pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written)
+{
+	TDEFileHeader fheader;
+
+	Assert(signed_key_info);
+
+	fheader.file_version = PG_TDE_FILEMAGIC;
+	fheader.signed_key_info = *signed_key_info;
+	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
+
+	if (*bytes_written != TDE_FILE_HEADER_SIZE)
+	{
+		ereport(ERROR,
+				errcode_for_file_access(),
+				errmsg("could not write tde file \"%s\": %m", tde_filename));
+	}
+
+	if (pg_fsync(fd) != 0)
+	{
+		ereport(data_sync_elevel(ERROR),
+				errcode_for_file_access(),
+				errmsg("could not fsync file \"%s\": %m", tde_filename));
+	}
+
+	ereport(DEBUG2, errmsg("Wrote the header to %s", tde_filename));
+
+	return fd;
 }
 
 /*
