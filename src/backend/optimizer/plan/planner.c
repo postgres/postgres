@@ -721,6 +721,15 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	transform_MERGE_to_join(parse);
 
 	/*
+	 * Scan the rangetable for relations with virtual generated columns, and
+	 * replace all Var nodes in the query that reference these columns with
+	 * the generation expressions.  Note that this step does not descend into
+	 * sublinks and subqueries; if we pull up any sublinks or subqueries
+	 * below, their rangetables are processed just before pulling them up.
+	 */
+	parse = root->parse = expand_virtual_generated_columns(root);
+
+	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
 	 * that we don't need so many special cases to deal with that situation.
 	 */
@@ -742,14 +751,6 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	 * for SubLinks.
 	 */
 	preprocess_function_rtes(root);
-
-	/*
-	 * Scan the rangetable for relations with virtual generated columns, and
-	 * replace all Var nodes in the query that reference these columns with
-	 * the generation expressions.  Recursion issues here are handled in the
-	 * same way as for SubLinks.
-	 */
-	parse = root->parse = expand_virtual_generated_columns(root);
 
 	/*
 	 * Check to see if any subqueries in the jointree can be merged into this

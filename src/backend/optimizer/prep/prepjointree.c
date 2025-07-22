@@ -4,10 +4,10 @@
  *	  Planner preprocessing for subqueries and join tree manipulation.
  *
  * NOTE: the intended sequence for invoking these operations is
+ *		expand_virtual_generated_columns
  *		replace_empty_jointree
  *		pull_up_sublinks
  *		preprocess_function_rtes
- *		expand_virtual_generated_columns
  *		pull_up_subqueries
  *		flatten_simple_union_all
  *		do expression preprocessing (including flattening JOIN alias vars)
@@ -958,10 +958,6 @@ preprocess_function_rtes(PlannerInfo *root)
  * generation expressions.  Note that we do not descend into subqueries; that
  * is taken care of when the subqueries are planned.
  *
- * This has to be done after we have pulled up any SubLinks within the query's
- * quals; otherwise any virtual generated column references within the SubLinks
- * that should be transformed into joins wouldn't get expanded.
- *
  * Returns a modified copy of the query tree, if any relations with virtual
  * generated columns are present.
  */
@@ -1334,6 +1330,13 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	Assert(subquery->cteList == NIL);
 
 	/*
+	 * Scan the rangetable for relations with virtual generated columns, and
+	 * replace all Var nodes in the subquery that reference these columns with
+	 * the generation expressions.
+	 */
+	subquery = subroot->parse = expand_virtual_generated_columns(subroot);
+
+	/*
 	 * If the FROM clause is empty, replace it with a dummy RTE_RESULT RTE, so
 	 * that we don't need so many special cases to deal with that situation.
 	 */
@@ -1351,13 +1354,6 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * functions in its rangetable.
 	 */
 	preprocess_function_rtes(subroot);
-
-	/*
-	 * Scan the rangetable for relations with virtual generated columns, and
-	 * replace all Var nodes in the query that reference these columns with
-	 * the generation expressions.
-	 */
-	subquery = subroot->parse = expand_virtual_generated_columns(subroot);
 
 	/*
 	 * Recursively pull up the subquery's subqueries, so that

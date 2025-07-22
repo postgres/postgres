@@ -1454,6 +1454,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
 	Node	   *whereClause;
+	PlannerInfo subroot;
 	int			rtoffset;
 	int			varno;
 	Relids		clause_varnos;
@@ -1514,6 +1515,32 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	if (contain_volatile_functions(whereClause))
 		return NULL;
+
+	/*
+	 * Scan the rangetable for relations with virtual generated columns, and
+	 * replace all Var nodes in the subquery that reference these columns with
+	 * the generation expressions.
+	 *
+	 * Note: we construct up an entirely dummy PlannerInfo for use here.  This
+	 * is fine because only the "glob" and "parse" links will be used in this
+	 * case.
+	 *
+	 * Note: we temporarily assign back the WHERE clause so that any virtual
+	 * generated column references within it can be expanded.  It should be
+	 * separated out again afterward.
+	 */
+	MemSet(&subroot, 0, sizeof(subroot));
+	subroot.type = T_PlannerInfo;
+	subroot.glob = root->glob;
+	subroot.parse = subselect;
+	subselect->jointree->quals = whereClause;
+	subselect = expand_virtual_generated_columns(&subroot);
+
+	/*
+	 * Now separate out the WHERE clause again.
+	 */
+	whereClause = subselect->jointree->quals;
+	subselect->jointree->quals = NULL;
 
 	/*
 	 * The subquery must have a nonempty jointree, but we can make it so.
