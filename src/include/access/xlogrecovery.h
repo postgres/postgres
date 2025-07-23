@@ -40,6 +40,16 @@ typedef enum
 	RECOVERY_TARGET_TIMELINE_NUMERIC,
 } RecoveryTargetTimeLineGoal;
 
+/*
+ * Recovery target action.
+ */
+typedef enum
+{
+	RECOVERY_TARGET_ACTION_PAUSE,
+	RECOVERY_TARGET_ACTION_PROMOTE,
+	RECOVERY_TARGET_ACTION_SHUTDOWN,
+}			RecoveryTargetAction;
+
 /* Recovery pause states */
 typedef enum RecoveryPauseState
 {

@@ -316,16 +316,6 @@ typedef struct XLogRecData
 	uint32		len;			/* length of rmgr data to include */
 } XLogRecData;
 
-/*
- * Recovery target action.
- */
-typedef enum
-{
-	RECOVERY_TARGET_ACTION_PAUSE,
-	RECOVERY_TARGET_ACTION_PROMOTE,
-	RECOVERY_TARGET_ACTION_SHUTDOWN,
-}			RecoveryTargetAction;
-
 struct LogicalDecodingContext;
 struct XLogRecordBuffer;
 
