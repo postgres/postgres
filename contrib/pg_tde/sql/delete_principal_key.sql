@@ -53,5 +53,16 @@ SELECT pg_tde_delete_default_key();
 
 DROP TABLE test_table;
 SELECT pg_tde_delete_key();
+
+-- Delete default key even if it's configured for a database or server key, as
+-- long as it's unused. Regardless how the key was set, we unset it if it's the
+-- same key as is used as a default key. This is probably a bug.
+SELECT pg_tde_set_default_key_using_global_key_provider('test-db-key','file-provider');
+SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
+SELECT pg_tde_set_server_key_using_global_key_provider('test-db-key','file-provider');
+SELECT pg_tde_delete_default_key();
+SELECT pg_tde_key_info(); -- No key configured
+SELECT pg_tde_server_key_info(); -- No key configured
+
 SELECT pg_tde_delete_global_key_provider('file-provider');
 DROP EXTENSION pg_tde;
