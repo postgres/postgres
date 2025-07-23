@@ -206,11 +206,14 @@ nav:
   - faq.md
   - "Release notes":
     - "Release notes index": release-notes/release-notes.md
-    - release-notes/release-notes-v1.0.md
-    - release-notes/rc2.md
-    - release-notes/rc.md
-    - release-notes/beta2.md
-    - release-notes/beta.md
-    - release-notes/alpha1.md
-    - release-notes/mvp.md
+    - "2025":
+      - "1.0": release-notes/release-notes-v1.0.md
+      - "Release Candidate 2": release-notes/rc2.md
+      - "Release Candidate 1": release-notes/rc.md
+    - "2024 (Alpha 1 - Beta 2)":
+      - "Beta 2": release-notes/beta2.md
+      - "Beta": release-notes/beta.md
+      - "Alpha 1": release-notes/alpha1.md
+    - "2023 (MVP)":
+      - "MVP": release-notes/mvp.md
   - contribute.md
