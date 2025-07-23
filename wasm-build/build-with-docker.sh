@@ -52,5 +52,6 @@ docker run $@ \
   --workdir=${DOCKER_WORKSPACE} \
   -v ${WORKSPACE}/postgres-pglite:${DOCKER_WORKSPACE}:rw \
   -v ${WORKSPACE}/postgres-pglite/dist:/tmp/sdk/dist:rw \
+  -v ${WORKSPACE}/postgres-pglite/build:/tmp/sdk/build:rw \
   $IMG_NAME:$IMG_TAG \
   bash --noprofile --rcfile ./docker_rc.sh -ci "( ./wasm-build.sh ${WHAT:-\"contrib extra\"} $PROMPT"
