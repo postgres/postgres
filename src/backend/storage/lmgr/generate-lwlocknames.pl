@@ -27,18 +27,24 @@ print $h "/* there is deliberately not an #ifndef LWLOCKNAMES_H here */\n\n";
 
 
 #
-# First, record the predefined LWLocks listed in wait_event_names.txt.  We'll
-# cross-check those with the ones in lwlocklist.h.
+# First, record the predefined LWLocks and built-in tranches listed in
+# wait_event_names.txt.  We'll cross-check those with the ones in lwlocklist.h.
 #
+my @wait_event_tranches;
 my @wait_event_lwlocks;
 my $record_lwlocks = 0;
+my $in_tranches = 0;
 
 while (<$wait_event_names>)
 {
 	chomp;
 
 	# Check for end marker.
-	last if /^# END OF PREDEFINED LWLOCKS/;
+	if (/^# END OF PREDEFINED LWLOCKS/)
+	{
+		$in_tranches = 1;
+		next;
+	}
 
 	# Skip comments and empty lines.
 	next if /^#/;
@@ -54,13 +60,29 @@ while (<$wait_event_names>)
 	# Go to the next line if we are not yet recording LWLocks.
 	next if not $record_lwlocks;
 
+	# Stop recording if we reach another section.
+	last if /^Section:/;
+
 	# Record the LWLock.
 	(my $waiteventname, my $waitevendocsentence) = split(/\t/, $_);
-	push(@wait_event_lwlocks, $waiteventname);
+
+	if ($in_tranches)
+	{
+		push(@wait_event_tranches, $waiteventname);
+	}
+	else
+	{
+		push(@wait_event_lwlocks, $waiteventname);
+	}
 }
 
+#
+# While gathering the list of predefined LWLocks, cross-check the lists in
+# lwlocklist.h with the wait events we just recorded.
+#
 my $in_comment = 0;
-my $i = 0;
+my $lwlock_count = 0;
+my $tranche_count = 0;
 while (<$lwlocklist>)
 {
 	chomp;
@@ -81,38 +103,72 @@ while (<$lwlocklist>)
 		next;
 	}
 
-	die "unable to parse lwlocklist.h line \"$_\""
-	  unless /^PG_LWLOCK\((\d+),\s+(\w+)\)$/;
-
-	(my $lockidx, my $lockname) = ($1, $2);
-
-	die "lwlocklist.h not in order" if $lockidx < $lastlockidx;
-	die "lwlocklist.h has duplicates" if $lockidx == $lastlockidx;
-
-	die "$lockname defined in lwlocklist.h but missing from "
-	  . "wait_event_names.txt"
-	  if $i >= scalar @wait_event_lwlocks;
-	die "lists of predefined LWLocks do not match (first mismatch at "
-	  . "$wait_event_lwlocks[$i] in wait_event_names.txt and $lockname in "
-	  . "lwlocklist.h)"
-	  if $wait_event_lwlocks[$i] ne $lockname;
-	$i++;
-
-	while ($lastlockidx < $lockidx - 1)
+	#
+	# Gather list of predefined LWLocks and cross-check with the wait events.
+	#
+	if (/^PG_LWLOCK\((\d+),\s+(\w+)\)$/)
 	{
-		++$lastlockidx;
-	}
-	$lastlockidx = $lockidx;
+		my ($lockidx, $lockname) = ($1, $2);
 
-	# Add a "Lock" suffix to each lock name, as the C code depends on that
-	printf $h "#define %-32s (&MainLWLockArray[$lockidx].lock)\n",
-	  $lockname . "Lock";
+		die "lwlocklist.h not in order" if $lockidx < $lastlockidx;
+		die "lwlocklist.h has duplicates" if $lockidx == $lastlockidx;
+
+		die "$lockname defined in lwlocklist.h but missing from "
+		  . "wait_event_names.txt"
+		  if $lwlock_count >= scalar @wait_event_lwlocks;
+		die "lists of predefined LWLocks do not match (first mismatch at "
+		  . "$wait_event_lwlocks[$lwlock_count] in wait_event_names.txt and "
+		  . "$lockname in lwlocklist.h)"
+		  if $wait_event_lwlocks[$lwlock_count] ne $lockname;
+
+		$lwlock_count++;
+
+		while ($lastlockidx < $lockidx - 1)
+		{
+			++$lastlockidx;
+		}
+		$lastlockidx = $lockidx;
+
+		# Add a "Lock" suffix to each lock name, as the C code depends on that.
+		printf $h "#define %-32s (&MainLWLockArray[$lockidx].lock)\n",
+		  $lockname . "Lock";
+
+		next;
+	}
+
+	#
+	# Cross-check the built-in LWLock tranches with the wait events.
+	#
+	if (/^PG_LWLOCKTRANCHE\((\w+),\s+(\w+)\)$/)
+	{
+		my ($tranche_id, $tranche_name) = ($1, $2);
+
+		die "$tranche_name defined in lwlocklist.h but missing from "
+		  . "wait_event_names.txt"
+		  if $tranche_count >= scalar @wait_event_tranches;
+		die
+		  "lists of built-in LWLock tranches do not match (first mismatch at "
+		  . "$wait_event_tranches[$tranche_count] in wait_event_names.txt and "
+		  . "$tranche_name in lwlocklist.h)"
+		  if $wait_event_tranches[$tranche_count] ne $tranche_name;
+
+		$tranche_count++;
+
+		next;
+	}
+
+	die "unable to parse lwlocklist.h line \"$_\"";
 }
 
 die
-  "$wait_event_lwlocks[$i] defined in wait_event_names.txt but missing from "
-  . "lwlocklist.h"
-  if $i < scalar @wait_event_lwlocks;
+  "$wait_event_lwlocks[$lwlock_count] defined in wait_event_names.txt but "
+  . " missing from lwlocklist.h"
+  if $lwlock_count < scalar @wait_event_lwlocks;
+
+die
+  "$wait_event_tranches[$tranche_count] defined in wait_event_names.txt but "
+  . "missing from lwlocklist.h"
+  if $tranche_count < scalar @wait_event_tranches;
 
 print $h "\n";
 printf $h "#define NUM_INDIVIDUAL_LWLOCKS		%s\n", $lastlockidx + 1;

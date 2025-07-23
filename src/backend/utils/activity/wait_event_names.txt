@@ -356,9 +356,13 @@ AioWorkerSubmissionQueue	"Waiting to access AIO worker submission queue."
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
 #
-# Predefined LWLocks (i.e., those declared in lwlocknames.h) must be listed
-# in the section above and must be listed in the same order as in
-# lwlocknames.h.  Other LWLocks must be listed in the section below.
+# Predefined LWLocks (i.e., those declared at the top of lwlocknames.h) must be
+# listed in the section above and must be listed in the same order as in
+# lwlocknames.h.
+#
+# Likewise, the built-in LWLock tranches (i.e., those declared at the bottom of
+# lwlocknames.h) must be listed in the section below and must be listed in the
+# same order as in lwlocknames.h.
 #
 
 XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."

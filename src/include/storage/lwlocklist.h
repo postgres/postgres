@@ -2,9 +2,10 @@
  *
  * lwlocklist.h
  *
- * The predefined LWLock list is kept in its own source file for use by
- * automatic tools.  The exact representation of a keyword is determined by
- * the PG_LWLOCK macro, which is not defined in this file; it can be
+ * The list of predefined LWLocks and built-in LWLock tranches is kept in
+ * its own source file for use by automatic tools.  The exact
+ * representation of a keyword is determined by the PG_LWLOCK and
+ * PG_LWLOCKTRANCHE macros, which are not defined in this file; they can be
  * defined by the caller for special purposes.
  *
  * Also, generate-lwlocknames.pl processes this file to create lwlocknames.h.
@@ -84,3 +85,53 @@ PG_LWLOCK(50, DSMRegistry)
 PG_LWLOCK(51, InjectionPoint)
 PG_LWLOCK(52, SerialControl)
 PG_LWLOCK(53, AioWorkerSubmissionQueue)
+
+/*
+ * There also exist several built-in LWLock tranches.  As with the predefined
+ * LWLocks, be sure to update the WaitEventLWLock section of
+ * src/backend/utils/activity/wait_event_names.txt when modifying this list.
+ *
+ * Note that the IDs here (the first value) don't include the LWTRANCHE_
+ * prefix.  It's added elsewhere.
+ */
+PG_LWLOCKTRANCHE(XACT_BUFFER, XactBuffer)
+PG_LWLOCKTRANCHE(COMMITTS_BUFFER, CommitTsBuffer)
+PG_LWLOCKTRANCHE(SUBTRANS_BUFFER, SubtransBuffer)
+PG_LWLOCKTRANCHE(MULTIXACTOFFSET_BUFFER, MultiXactOffsetBuffer)
+PG_LWLOCKTRANCHE(MULTIXACTMEMBER_BUFFER, MultiXactMemberBuffer)
+PG_LWLOCKTRANCHE(NOTIFY_BUFFER, NotifyBuffer)
+PG_LWLOCKTRANCHE(SERIAL_BUFFER, SerialBuffer)
+PG_LWLOCKTRANCHE(WAL_INSERT, WALInsert)
+PG_LWLOCKTRANCHE(BUFFER_CONTENT, BufferContent)
+PG_LWLOCKTRANCHE(REPLICATION_ORIGIN_STATE, ReplicationOriginState)
+PG_LWLOCKTRANCHE(REPLICATION_SLOT_IO, ReplicationSlotIO)
+PG_LWLOCKTRANCHE(LOCK_FASTPATH, LockFastPath)
+PG_LWLOCKTRANCHE(BUFFER_MAPPING, BufferMapping)
+PG_LWLOCKTRANCHE(LOCK_MANAGER, LockManager)
+PG_LWLOCKTRANCHE(PREDICATE_LOCK_MANAGER, PredicateLockManager)
+PG_LWLOCKTRANCHE(PARALLEL_HASH_JOIN, ParallelHashJoin)
+PG_LWLOCKTRANCHE(PARALLEL_BTREE_SCAN, ParallelBtreeScan)
+PG_LWLOCKTRANCHE(PARALLEL_QUERY_DSA, ParallelQueryDSA)
+PG_LWLOCKTRANCHE(PER_SESSION_DSA, PerSessionDSA)
+PG_LWLOCKTRANCHE(PER_SESSION_RECORD_TYPE, PerSessionRecordType)
+PG_LWLOCKTRANCHE(PER_SESSION_RECORD_TYPMOD, PerSessionRecordTypmod)
+PG_LWLOCKTRANCHE(SHARED_TUPLESTORE, SharedTupleStore)
+PG_LWLOCKTRANCHE(SHARED_TIDBITMAP, SharedTidBitmap)
+PG_LWLOCKTRANCHE(PARALLEL_APPEND, ParallelAppend)
+PG_LWLOCKTRANCHE(PER_XACT_PREDICATE_LIST, PerXactPredicateList)
+PG_LWLOCKTRANCHE(PGSTATS_DSA, PgStatsDSA)
+PG_LWLOCKTRANCHE(PGSTATS_HASH, PgStatsHash)
+PG_LWLOCKTRANCHE(PGSTATS_DATA, PgStatsData)
+PG_LWLOCKTRANCHE(LAUNCHER_DSA, LogicalRepLauncherDSA)
+PG_LWLOCKTRANCHE(LAUNCHER_HASH, LogicalRepLauncherHash)
+PG_LWLOCKTRANCHE(DSM_REGISTRY_DSA, DSMRegistryDSA)
+PG_LWLOCKTRANCHE(DSM_REGISTRY_HASH, DSMRegistryHash)
+PG_LWLOCKTRANCHE(COMMITTS_SLRU, CommitTsSLRU)
+PG_LWLOCKTRANCHE(MULTIXACTOFFSET_SLRU, MultiXactOffsetSLRU)
+PG_LWLOCKTRANCHE(MULTIXACTMEMBER_SLRU, MultiXactMemberSLRU)
+PG_LWLOCKTRANCHE(NOTIFY_SLRU, NotifySLRU)
+PG_LWLOCKTRANCHE(SERIAL_SLRU, SerialSLRU)
+PG_LWLOCKTRANCHE(SUBTRANS_SLRU, SubtransSLRU)
+PG_LWLOCKTRANCHE(XACT_SLRU, XactSLRU)
+PG_LWLOCKTRANCHE(PARALLEL_VACUUM_DSA, ParallelVacuumDSA)
+PG_LWLOCKTRANCHE(AIO_URING_COMPLETION, AioUringCompletion)
