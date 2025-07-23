@@ -309,7 +309,8 @@ pg_tde_delete_key_provider_internal(PG_FUNCTION_ARGS, Oid db_oid)
 	if (provider_used)
 	{
 		ereport(ERROR,
-				errmsg("Can't delete a provider which is currently in use"));
+				errcode(ERRCODE_OBJECT_IN_USE),
+				errmsg("cannot delete provider which is currently in use"));
 	}
 
 	delete_key_provider_info(provider_name, db_oid);
