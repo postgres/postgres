@@ -5,7 +5,7 @@ The Percona Server for PostgreSQL provides an extended Storage Manager API that 
 
 The following features are available for the extension:
 
-* Table encryption, including:
+* [Table encryption](test.md#encrypt-data-in-a-new-table), including:
     * Data tables
     * Index data for encrypted tables
     * TOAST tables
@@ -14,9 +14,9 @@ The following features are available for the extension:
 !!! note
     Metadata of those tables is not encrypted.
 
-* Single-tenancy support via a global keyring provider
-* Multi-tenancy support
+* Single-tenancy support via a [global keyring provider](global-key-provider-configuration/set-principal-key.md)
+* [Multi-tenancy support](how-to/multi-tenant-setup.md)
 * Table-level granularity for encryption and access control
-* Multiple Key management options
+* Multiple [Key management options](global-key-provider-configuration/index.md)
 
-[Overview](index/index.md){.md-button} [Get Started](install.md){.md-button}
+[What is Transparent Data Encryption (TDE)?](index/index.md){.md-button} [Install pg_tde to get started](install.md){.md-button}
