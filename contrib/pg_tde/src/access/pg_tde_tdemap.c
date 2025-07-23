@@ -529,7 +529,7 @@ pg_tde_delete_principal_key(Oid dbOid)
 	char		path[MAXPGPATH];
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
-	Assert(pg_tde_count_relations(dbOid) == 0);
+	Assert(pg_tde_count_encryption_keys(dbOid) == 0);
 
 	pg_tde_set_db_file_path(dbOid, path);
 
@@ -672,17 +672,15 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, 
 }
 
 /*
- * Counts number of encrypted objects in a database.
+ * Counts number of encryption keys in a key file.
  *
  * Does not check if objects actually exist but just that they have keys in
- * the map file. For the only current caller, checking if we can use
- * FILE_COPY, this is good enough but for other workloads where a false
- * positive is more harmful this might not be.
+ * the key file.
  *
- * Works even if the database has no map file.
+ * Works even if the database has no key file.
  */
 int
-pg_tde_count_relations(Oid dbOid)
+pg_tde_count_encryption_keys(Oid dbOid)
 {
 	char		db_map_path[MAXPGPATH];
 	File		map_fd;

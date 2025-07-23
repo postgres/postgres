@@ -700,7 +700,7 @@ pg_tde_delete_key(PG_FUNCTION_ARGS)
 	 * If database has something encryted, we can try to fallback to the
 	 * default principal key
 	 */
-	if (pg_tde_count_relations(MyDatabaseId) != 0)
+	if (pg_tde_count_encryption_keys(MyDatabaseId) != 0)
 	{
 		default_principal_key = GetPrincipalKeyNoDefault(DEFAULT_DATA_TDE_OID, LW_EXCLUSIVE);
 		if (default_principal_key == NULL)
@@ -785,7 +785,7 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 			 * delete default principal key if there are encrypted tables in
 			 * the database.
 			 */
-			if (pg_tde_count_relations(dbOid) != 0)
+			if (pg_tde_count_encryption_keys(dbOid) != 0)
 			{
 				ereport(ERROR,
 						errmsg("cannot delete default principal key"),

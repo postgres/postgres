@@ -643,7 +643,7 @@ pg_tde_proccess_utility(PlannedStmt *pstmt,
 						int			count;
 
 						LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
-						count = pg_tde_count_relations(dbOid);
+						count = pg_tde_count_encryption_keys(dbOid);
 						LWLockRelease(tde_lwlock_enc_keys());
 
 						if (count > 0)

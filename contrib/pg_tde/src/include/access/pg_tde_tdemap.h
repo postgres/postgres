@@ -92,7 +92,7 @@ extern bool pg_tde_has_smgr_key(RelFileLocator rel);
 extern InternalKey *pg_tde_get_smgr_key(RelFileLocator rel);
 extern void pg_tde_free_key_map_entry(RelFileLocator rel);
 
-extern int	pg_tde_count_relations(Oid dbOid);
+extern int	pg_tde_count_encryption_keys(Oid dbOid);
 
 extern void pg_tde_delete_tde_files(Oid dbOid);
 
