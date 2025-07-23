@@ -84,6 +84,7 @@
 #include "storage/ipc.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/procarray.h"
 #include "tcop/dest.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -258,6 +259,7 @@ static void StartLogicalReplication(StartReplicationCmd *cmd);
 static void ProcessStandbyMessage(void);
 static void ProcessStandbyReplyMessage(void);
 static void ProcessStandbyHSFeedbackMessage(void);
+static void ProcessStandbyPSRequestMessage(void);
 static void ProcessRepliesIfAny(void);
 static void ProcessPendingWrites(void);
 static void WalSndKeepalive(bool requestReply, XLogRecPtr writePtr);
@@ -2355,6 +2357,10 @@ ProcessStandbyMessage(void)
 			ProcessStandbyHSFeedbackMessage();
 			break;
 
+		case 'p':
+			ProcessStandbyPSRequestMessage();
+			break;
+
 		default:
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -2699,6 +2705,60 @@ ProcessStandbyHSFeedbackMessage(void)
 		else
 			MyProc->xmin = feedbackXmin;
 	}
+}
+
+/*
+ * Process the request for a primary status update message.
+ */
+static void
+ProcessStandbyPSRequestMessage(void)
+{
+	XLogRecPtr	lsn = InvalidXLogRecPtr;
+	TransactionId oldestXidInCommit;
+	FullTransactionId nextFullXid;
+	FullTransactionId fullOldestXidInCommit;
+	WalSnd	   *walsnd = MyWalSnd;
+	TimestampTz replyTime;
+
+	/*
+	 * This shouldn't happen because we don't support getting primary status
+	 * message from standby.
+	 */
+	if (RecoveryInProgress())
+		elog(ERROR, "the primary status is unavailable during recovery");
+
+	replyTime = pq_getmsgint64(&reply_message);
+
+	/*
+	 * Update shared state for this WalSender process based on reply data from
+	 * standby.
+	 */
+	SpinLockAcquire(&walsnd->mutex);
+	walsnd->replyTime = replyTime;
+	SpinLockRelease(&walsnd->mutex);
+
+	/*
+	 * Consider transactions in the current database, as only these are the
+	 * ones replicated.
+	 */
+	oldestXidInCommit = GetOldestActiveTransactionId(true, false);
+	nextFullXid = ReadNextFullTransactionId();
+	fullOldestXidInCommit = FullTransactionIdFromAllowableAt(nextFullXid,
+															 oldestXidInCommit);
+	lsn = GetXLogWriteRecPtr();
+
+	elog(DEBUG2, "sending primary status");
+
+	/* construct the message... */
+	resetStringInfo(&output_message);
+	pq_sendbyte(&output_message, 's');
+	pq_sendint64(&output_message, lsn);
+	pq_sendint64(&output_message, (int64) U64FromFullTransactionId(fullOldestXidInCommit));
+	pq_sendint64(&output_message, (int64) U64FromFullTransactionId(nextFullXid));
+	pq_sendint64(&output_message, GetCurrentTimestamp());
+
+	/* ... and send it wrapped in CopyData */
+	pq_putmessage_noblock('d', output_message.data, output_message.len);
 }
 
 /*

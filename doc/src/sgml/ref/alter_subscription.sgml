@@ -235,8 +235,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <link linkend="sql-createsubscription-params-with-password-required"><literal>password_required</literal></link>,
       <link linkend="sql-createsubscription-params-with-run-as-owner"><literal>run_as_owner</literal></link>,
       <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>,
-      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>, and
-      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>.
+      <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>,
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>.
       Only a superuser can set <literal>password_required = false</literal>.
      </para>
 
@@ -261,8 +262,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      </para>
 
      <para>
-      The <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>
-      and <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>
+      The <link linkend="sql-createsubscription-params-with-failover"><literal>failover</literal></link>,
+      <link linkend="sql-createsubscription-params-with-two-phase"><literal>two_phase</literal></link>, and
+      <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
       parameters can only be altered when the subscription is disabled.
      </para>
 
@@ -284,6 +286,14 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       to find the required prepared transactions. After the <literal>two_phase</literal>
       option is changed from <literal>true</literal> to <literal>false</literal>,
       the publisher will replicate the transactions again when they are committed.
+     </para>
+
+     <para>
+      If the <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+      option is altered to <literal>false</literal> and no other subscription
+      has this option enabled, the replication slot named
+      <quote><literal>pg_conflict_detection</literal></quote>, created to retain
+      dead tuples for conflict detection, will be dropped.
      </para>
     </listitem>
    </varlistentry>

@@ -1183,7 +1183,11 @@ EndPrepare(GlobalTransaction gxact)
 	 * starting immediately after the WAL record is inserted could complete
 	 * without fsync'ing our state file.  (This is essentially the same kind
 	 * of race condition as the COMMIT-to-clog-write case that
-	 * RecordTransactionCommit uses DELAY_CHKPT_START for; see notes there.)
+	 * RecordTransactionCommit uses DELAY_CHKPT_IN_COMMIT for; see notes
+	 * there.) Note that DELAY_CHKPT_IN_COMMIT is used to find transactions in
+	 * the critical commit section. We need to know about such transactions
+	 * for conflict detection in logical replication. See
+	 * GetOldestActiveTransactionId(true, false) and its use.
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
@@ -2298,7 +2302,7 @@ ProcessTwoPhaseBuffer(FullTransactionId fxid,
  *	RecordTransactionCommitPrepared
  *
  * This is basically the same as RecordTransactionCommit (q.v. if you change
- * this function): in particular, we must set DELAY_CHKPT_START to avoid a
+ * this function): in particular, we must set DELAY_CHKPT_IN_COMMIT to avoid a
  * race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
@@ -2318,7 +2322,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 								const char *gid)
 {
 	XLogRecPtr	recptr;
-	TimestampTz committs = GetCurrentTimestamp();
+	TimestampTz committs;
 	bool		replorigin;
 
 	/*
@@ -2331,8 +2335,24 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
-	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
-	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_IN_COMMIT) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_IN_COMMIT;
+
+	/*
+	 * Ensures the DELAY_CHKPT_IN_COMMIT flag write is globally visible before
+	 * commit time is written.
+	 */
+	pg_write_barrier();
+
+	/*
+	 * Note it is important to set committs value after marking ourselves as
+	 * in the commit critical section (DELAY_CHKPT_IN_COMMIT). This is because
+	 * we want to ensure all transactions that have acquired commit timestamp
+	 * are finished before we allow the logical replication client to advance
+	 * its xid which is used to hold back dead rows for conflict detection.
+	 * See comments atop worker.c.
+	 */
+	committs = GetCurrentTimestamp();
 
 	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC commits as
@@ -2381,7 +2401,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */
-	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_IN_COMMIT;
 
 	END_CRIT_SECTION();
 

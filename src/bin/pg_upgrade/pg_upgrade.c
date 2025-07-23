@@ -67,6 +67,7 @@ static void set_frozenxids(bool minmxid_only);
 static void make_outputdirs(char *pgdata);
 static void setup(char *argv0);
 static void create_logical_replication_slots(void);
+static void create_conflict_detection_slot(void);
 
 ClusterInfo old_cluster,
 			new_cluster;
@@ -88,6 +89,7 @@ int
 main(int argc, char **argv)
 {
 	char	   *deletion_script_file_name = NULL;
+	bool		migrate_logical_slots;
 
 	/*
 	 * pg_upgrade doesn't currently use common/logging.c, but initialize it
@@ -198,18 +200,39 @@ main(int argc, char **argv)
 			  new_cluster.pgdata);
 	check_ok();
 
+	migrate_logical_slots = count_old_cluster_logical_slots();
+
 	/*
-	 * Migrate the logical slots to the new cluster.  Note that we need to do
-	 * this after resetting WAL because otherwise the required WAL would be
-	 * removed and slots would become unusable.  There is a possibility that
-	 * background processes might generate some WAL before we could create the
-	 * slots in the new cluster but we can ignore that WAL as that won't be
-	 * required downstream.
+	 * Migrate replication slots to the new cluster.
+	 *
+	 * Note that we must migrate logical slots after resetting WAL because
+	 * otherwise the required WAL would be removed and slots would become
+	 * unusable.  There is a possibility that background processes might
+	 * generate some WAL before we could create the slots in the new cluster
+	 * but we can ignore that WAL as that won't be required downstream.
+	 *
+	 * The conflict detection slot is not affected by concerns related to WALs
+	 * as it only retains the dead tuples. It is created here for consistency.
+	 * Note that the new conflict detection slot uses the latest transaction
+	 * ID as xmin, so it cannot protect dead tuples that existed before the
+	 * upgrade. Additionally, commit timestamps and origin data are not
+	 * preserved during the upgrade. So, even after creating the slot, the
+	 * upgraded subscriber may be unable to detect conflicts or log relevant
+	 * commit timestamps and origins when applying changes from the publisher
+	 * occurred before the upgrade especially if those changes were not
+	 * replicated. It can only protect tuples that might be deleted after the
+	 * new cluster starts.
 	 */
-	if (count_old_cluster_logical_slots())
+	if (migrate_logical_slots || old_cluster.sub_retain_dead_tuples)
 	{
 		start_postmaster(&new_cluster, true);
-		create_logical_replication_slots();
+
+		if (migrate_logical_slots)
+			create_logical_replication_slots();
+
+		if (old_cluster.sub_retain_dead_tuples)
+			create_conflict_detection_slot();
+
 		stop_postmaster(false);
 	}
 
@@ -1024,4 +1047,25 @@ create_logical_replication_slots(void)
 	check_ok();
 
 	return;
+}
+
+/*
+ * create_conflict_detection_slot()
+ *
+ * Create a replication slot to retain information necessary for conflict
+ * detection such as dead tuples, commit timestamps, and origins, for migrated
+ * subscriptions with retain_dead_tuples enabled.
+ */
+static void
+create_conflict_detection_slot(void)
+{
+	PGconn	   *conn_new_template1;
+
+	prep_status("Creating the replication conflict detection slot");
+
+	conn_new_template1 = connectToServer(&new_cluster, "template1");
+	PQclear(executeQueryOrDie(conn_new_template1, "SELECT pg_catalog.binary_upgrade_create_conflict_detection_slot()"));
+	PQfinish(conn_new_template1);
+
+	check_ok();
 }

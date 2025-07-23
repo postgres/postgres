@@ -28,7 +28,7 @@ static void check_for_pg_role_prefix(ClusterInfo *cluster);
 static void check_for_new_tablespace_dir(void);
 static void check_for_user_defined_encoding_conversions(ClusterInfo *cluster);
 static void check_for_unicode_update(ClusterInfo *cluster);
-static void check_new_cluster_logical_replication_slots(void);
+static void check_new_cluster_replication_slots(void);
 static void check_new_cluster_subscription_configuration(void);
 static void check_old_cluster_for_valid_slots(void);
 static void check_old_cluster_subscription_state(void);
@@ -631,7 +631,7 @@ check_and_dump_old_cluster(void)
 		 * Before that the logical slots are not upgraded, so we will not be
 		 * able to upgrade the logical replication clusters completely.
 		 */
-		get_subscription_count(&old_cluster);
+		get_subscription_info(&old_cluster);
 		check_old_cluster_subscription_state();
 	}
 
@@ -764,7 +764,7 @@ check_new_cluster(void)
 
 	check_for_new_tablespace_dir();
 
-	check_new_cluster_logical_replication_slots();
+	check_new_cluster_replication_slots();
 
 	check_new_cluster_subscription_configuration();
 }
@@ -2040,48 +2040,80 @@ check_for_unicode_update(ClusterInfo *cluster)
 }
 
 /*
- * check_new_cluster_logical_replication_slots()
+ * check_new_cluster_replication_slots()
  *
- * Verify that there are no logical replication slots on the new cluster and
- * that the parameter settings necessary for creating slots are sufficient.
+ * Validate the new cluster's readiness for migrating replication slots:
+ * - Ensures no existing logical replication slots on the new cluster when
+ *   migrating logical slots.
+ * - Ensure conflict detection slot does not exist on the new cluster when
+ *   migrating subscriptions with retain_dead_tuples enabled.
+ * - Ensure that the parameter settings on the new cluster necessary for
+ *   creating slots are sufficient.
  */
 static void
-check_new_cluster_logical_replication_slots(void)
+check_new_cluster_replication_slots(void)
 {
 	PGresult   *res;
 	PGconn	   *conn;
 	int			nslots_on_old;
 	int			nslots_on_new;
+	int			rdt_slot_on_new;
 	int			max_replication_slots;
 	char	   *wal_level;
+	int			i_nslots_on_new;
+	int			i_rdt_slot_on_new;
 
-	/* Logical slots can be migrated since PG17. */
+	/*
+	 * Logical slots can be migrated since PG17 and a physical slot
+	 * CONFLICT_DETECTION_SLOT can be migrated since PG19.
+	 */
 	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1600)
 		return;
 
 	nslots_on_old = count_old_cluster_logical_slots();
 
-	/* Quick return if there are no logical slots to be migrated. */
-	if (nslots_on_old == 0)
+	/*
+	 * Quick return if there are no slots to be migrated and no subscriptions
+	 * have the retain_dead_tuples option enabled.
+	 */
+	if (nslots_on_old == 0 && !old_cluster.sub_retain_dead_tuples)
 		return;
 
 	conn = connectToServer(&new_cluster, "template1");
 
-	prep_status("Checking for new cluster logical replication slots");
+	prep_status("Checking for new cluster replication slots");
 
-	res = executeQueryOrDie(conn, "SELECT count(*) "
-							"FROM pg_catalog.pg_replication_slots "
-							"WHERE slot_type = 'logical' AND "
-							"temporary IS FALSE;");
+	res = executeQueryOrDie(conn, "SELECT %s AS nslots_on_new, %s AS rdt_slot_on_new "
+							"FROM pg_catalog.pg_replication_slots",
+							nslots_on_old > 0
+							? "COUNT(*) FILTER (WHERE slot_type = 'logical' AND temporary IS FALSE)"
+							: "0",
+							old_cluster.sub_retain_dead_tuples
+							? "COUNT(*) FILTER (WHERE slot_name = 'pg_conflict_detection')"
+							: "0");
 
 	if (PQntuples(res) != 1)
-		pg_fatal("could not count the number of logical replication slots");
+		pg_fatal("could not count the number of replication slots");
 
-	nslots_on_new = atoi(PQgetvalue(res, 0, 0));
+	i_nslots_on_new = PQfnumber(res, "nslots_on_new");
+	i_rdt_slot_on_new = PQfnumber(res, "rdt_slot_on_new");
+
+	nslots_on_new = atoi(PQgetvalue(res, 0, i_nslots_on_new));
 
 	if (nslots_on_new)
+	{
+		Assert(nslots_on_old);
 		pg_fatal("expected 0 logical replication slots but found %d",
 				 nslots_on_new);
+	}
+
+	rdt_slot_on_new = atoi(PQgetvalue(res, 0, i_rdt_slot_on_new));
+
+	if (rdt_slot_on_new)
+	{
+		Assert(old_cluster.sub_retain_dead_tuples);
+		pg_fatal("The replication slot \"pg_conflict_detection\" already exists on the new cluster");
+	}
 
 	PQclear(res);
 
@@ -2094,11 +2126,23 @@ check_new_cluster_logical_replication_slots(void)
 
 	wal_level = PQgetvalue(res, 0, 0);
 
-	if (strcmp(wal_level, "logical") != 0)
+	if (nslots_on_old > 0 && strcmp(wal_level, "logical") != 0)
 		pg_fatal("\"wal_level\" must be \"logical\" but is set to \"%s\"",
 				 wal_level);
 
+	if (old_cluster.sub_retain_dead_tuples &&
+		strcmp(wal_level, "minimal") == 0)
+		pg_fatal("\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\"",
+				 wal_level);
+
 	max_replication_slots = atoi(PQgetvalue(res, 1, 0));
+
+	if (old_cluster.sub_retain_dead_tuples &&
+		nslots_on_old + 1 > max_replication_slots)
+		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
+				 "logical replication slots on the old cluster plus one additional slot required "
+				 "for retaining conflict detection information (%d)",
+				 max_replication_slots, nslots_on_old + 1);
 
 	if (nslots_on_old > max_replication_slots)
 		pg_fatal("\"max_replication_slots\" (%d) must be greater than or equal to the number of "
@@ -2209,6 +2253,22 @@ check_old_cluster_for_valid_slots(void)
 
 				fprintf(script,
 						"The slot \"%s\" has not consumed the WAL yet\n",
+						slot->slotname);
+			}
+
+			/*
+			 * The name "pg_conflict_detection" (defined as
+			 * CONFLICT_DETECTION_SLOT) has been reserved for logical
+			 * replication conflict detection slot since PG19.
+			 */
+			if (strcmp(slot->slotname, "pg_conflict_detection") == 0)
+			{
+				if (script == NULL &&
+					(script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %m", output_path);
+
+				fprintf(script,
+						"The slot name \"%s\" is reserved\n",
 						slot->slotname);
 			}
 		}

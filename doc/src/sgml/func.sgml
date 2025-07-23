@@ -29592,7 +29592,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        </para>
        <para>
         Creates a new physical replication slot named
-        <parameter>slot_name</parameter>. The optional second parameter,
+        <parameter>slot_name</parameter>. The name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for the
+        conflict detection slot. The optional second parameter,
         when <literal>true</literal>, specifies that the <acronym>LSN</acronym> for this
         replication slot be reserved immediately; otherwise
         the <acronym>LSN</acronym> is reserved on first connection from a streaming
@@ -29636,7 +29638,9 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        <para>
         Creates a new logical (decoding) replication slot named
         <parameter>slot_name</parameter> using the output plugin
-        <parameter>plugin</parameter>. The optional third
+        <parameter>plugin</parameter>. The name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for
+        the conflict detection slot. The optional third
         parameter, <parameter>temporary</parameter>, when set to true, specifies that
         the slot should not be permanently stored to disk and is only meant
         for use by the current session. Temporary slots are also
@@ -29666,6 +29670,8 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
        <para>
         Copies an existing physical replication slot named <parameter>src_slot_name</parameter>
         to a physical replication slot named <parameter>dst_slot_name</parameter>.
+        The new slot name cannot be <literal>pg_conflict_detection</literal>,
+        as it is reserved for the conflict detection.
         The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
         source slot.
         <parameter>temporary</parameter> is optional. If <parameter>temporary</parameter>
@@ -29688,8 +29694,10 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         Copies an existing logical replication slot
         named <parameter>src_slot_name</parameter> to a logical replication
         slot named <parameter>dst_slot_name</parameter>, optionally changing
-        the output plugin and persistence.  The copied logical slot starts
-        from the same <acronym>LSN</acronym> as the source logical slot.  Both
+        the output plugin and persistence.  The new slot name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for
+        the conflict detection.  The copied logical slot starts from the same
+        <acronym>LSN</acronym> as the source logical slot.  Both
         <parameter>temporary</parameter> and <parameter>plugin</parameter> are
         optional; if they are omitted, the values of the source slot are used.
         The <literal>failover</literal> option of the source logical slot

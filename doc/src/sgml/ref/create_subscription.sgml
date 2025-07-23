@@ -169,7 +169,9 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
         <listitem>
          <para>
           Name of the publisher's replication slot to use.  The default is
-          to use the name of the subscription for the slot name.
+          to use the name of the subscription for the slot name. The name cannot
+          be <literal>pg_conflict_detection</literal> as it is reserved for the
+          conflict detection.
          </para>
 
          <para>
@@ -432,6 +434,89 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           are enabled to be synced to the standbys so that logical
           replication can be resumed from the new primary after failover.
           The default is <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+      <varlistentry id="sql-createsubscription-params-with-retain-dead-tuples">
+        <term><literal>retain_dead_tuples</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the information (e.g., dead tuples, commit
+          timestamps, and origins) required for conflict detection on the
+          subscriber is retained. The default is <literal>false</literal>.
+          If set to <literal>true</literal>, a physical replication slot named
+          <quote><literal>pg_conflict_detection</literal></quote> will be
+          created on the subscriber to prevent the conflict information from
+          being removed.
+         </para>
+
+         <para>
+          Note that the information useful for conflict detection is retained
+          only after the creation of the slot. You can verify the existence of
+          this slot by querying <link linkend="view-pg-replication-slots">pg_replication_slots</link>.
+          And even if multiple subscriptions on one node enable this option,
+          only one replication slot will be created. Also,
+          <varname>wal_level</varname> must be set to <literal>replica</literal>
+          or higher to allow the replication slot to be used.
+         </para>
+
+         <caution>
+          <para>
+           Note that the information for conflict detection cannot be purged if
+           the subscription is disabled; thus, the information will accumulate
+           until the subscription is enabled. To prevent excessive accumulation,
+           it is recommended to disable <literal>retain_dead_tuples</literal>
+           if the subscription will be inactive for an extended period.
+          </para>
+
+          <para>
+           Additionally when enabling <literal>retain_dead_tuples</literal> for
+           conflict detection in logical replication, it is important to design the
+           replication topology to balance data retention requirements with
+           overall system performance. This option provides minimal performance
+           overhead when applied appropriately. The following scenarios illustrate
+           effective usage patterns when enabling this option.
+          </para>
+
+          <para>
+           a. Large Tables with Bidirectional Writes:
+           For large tables subject to concurrent writes on both publisher and
+           subscriber nodes, publishers can define row filters when creating
+           publications to segment data. This allows multiple subscriptions
+           to replicate exclusive subsets of the table in parallel, optimizing
+           the throughput.
+          </para>
+
+          <para>
+           b. Write-Enabled Subscribers:
+           If a subscriber node is expected to perform write operations, replication
+           can be structured using multiple publications and subscriptions. By
+           distributing tables across these publications, the workload is spread among
+           several apply workers, improving concurrency and reducing contention.
+          </para>
+
+          <para>
+           c. Read-Only Subscribers:
+           In configurations involving single or multiple publisher nodes
+           performing concurrent write operations, read-only subscriber nodes may
+           replicate changes without seeing a performance impact if it does index
+           scan. However, if the subscriber is impacted due to replication lag or
+           scan performance (say due to sequential scans), it needs to follow one
+           of the two previous strategies to distribute the workload on the
+           subscriber.
+          </para>
+         </caution>
+
+         <para>
+          This option cannot be enabled if the publisher is a physical standby.
+         </para>
+
+         <para>
+          Enabling this option ensures retention of information useful for
+          conflict detection solely for changes occurring locally on the
+          publisher. For the changes originating from different origins,
+          reliable conflict detection cannot be guaranteed.
          </para>
         </listitem>
        </varlistentry>

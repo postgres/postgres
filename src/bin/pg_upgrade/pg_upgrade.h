@@ -302,6 +302,8 @@ typedef struct
 	uint32		bin_version;	/* version returned from pg_ctl */
 	const char *tablespace_suffix;	/* directory specification */
 	int			nsubs;			/* number of subscriptions */
+	bool		sub_retain_dead_tuples; /* whether a subscription enables
+										 * retain_dead_tuples. */
 } ClusterInfo;
 
 
@@ -441,7 +443,7 @@ FileNameMap *gen_db_file_maps(DbInfo *old_db,
 							  const char *new_pgdata);
 void		get_db_rel_and_slot_infos(ClusterInfo *cluster);
 int			count_old_cluster_logical_slots(void);
-void		get_subscription_count(ClusterInfo *cluster);
+void		get_subscription_info(ClusterInfo *cluster);
 
 /* option.c */
 

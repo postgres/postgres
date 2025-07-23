@@ -11801,6 +11801,10 @@
   proname => 'binary_upgrade_replorigin_advance', proisstrict => 'f',
   provolatile => 'v', proparallel => 'u', prorettype => 'void',
   proargtypes => 'text pg_lsn', prosrc => 'binary_upgrade_replorigin_advance' },
+{ oid => '9159', descr => 'for use by pg_upgrade (conflict detection slot)',
+  proname => 'binary_upgrade_create_conflict_detection_slot', proisstrict => 'f',
+  provolatile => 'v', proparallel => 'u', prorettype => 'void',
+  proargtypes => '', prosrc => 'binary_upgrade_create_conflict_detection_slot' },
 
 # conversion functions
 { oid => '4302',

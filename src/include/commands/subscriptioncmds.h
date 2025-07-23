@@ -28,4 +28,9 @@ extern void AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId);
 
 extern char defGetStreamingMode(DefElem *def);
 
+extern ObjectAddress AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt, bool isTopLevel);
+
+extern void CheckSubDeadTupleRetention(bool check_guc, bool sub_disabled,
+									   int elevel_for_sub_disabled);
+
 #endif							/* SUBSCRIPTIONCMDS_H */

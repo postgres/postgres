@@ -2235,6 +2235,8 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          <para>
           The name of the slot to create. Must be a valid replication slot
           name (see <xref linkend="streaming-replication-slots-manipulation"/>).
+          The name cannot be <literal>pg_conflict_detection</literal> as it
+          is reserved for the conflict detection.
          </para>
         </listitem>
        </varlistentry>
@@ -2653,6 +2655,65 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          </variablelist>
         </listitem>
        </varlistentry>
+
+       <varlistentry id="protocol-replication-primary-status-update">
+        <term>Primary status update (B)</term>
+        <listitem>
+         <variablelist>
+          <varlistentry>
+           <term>Byte1('s')</term>
+           <listitem>
+            <para>
+             Identifies the message as a primary status update.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The latest WAL write position on the server.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The oldest transaction ID that is currently in the commit phase on
+             the server, along with its epoch. The most significant 32 bits are
+             the epoch. The least significant 32 bits are the transaction ID.
+             If no transactions are active on the server, this number will be
+             the next transaction ID to be assigned.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The next transaction ID to be assigned on the server, along with
+             its epoch. The most significant 32 bits are the epoch. The least
+             significant 32 bits are the transaction ID.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The server's system clock at the time of transmission, as
+             microseconds since midnight on 2000-01-01.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
       </variablelist>
 
       <para>
@@ -2797,6 +2858,33 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          </variablelist>
         </listitem>
        </varlistentry>
+
+       <varlistentry id="protocol-replication-standby-wal-status-request">
+        <term>Request primary status update (F)</term>
+        <listitem>
+         <variablelist>
+          <varlistentry>
+           <term>Byte1('p')</term>
+           <listitem>
+            <para>
+             Identifies the message as a request for a primary status update.
+            </para>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>Int64</term>
+           <listitem>
+            <para>
+             The client's system clock at the time of transmission, as
+             microseconds since midnight on 2000-01-01.
+            </para>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </listitem>
+       </varlistentry>
+
       </variablelist>
      </listitem>
     </varlistentry>

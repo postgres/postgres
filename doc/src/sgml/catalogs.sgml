@@ -8084,6 +8084,17 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subretaindeadtuples</structfield> <type>bool</type>
+      </para>
+      <para>
+       If true, the information (e.g., dead tuples, commit timestamps, and
+       origins) on the subscriber that is useful for conflict detection is
+       retained.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>subconninfo</structfield> <type>text</type>
       </para>
       <para>

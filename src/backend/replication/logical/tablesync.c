@@ -615,7 +615,8 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 														MySubscription->name,
 														MyLogicalRepWorker->userid,
 														rstate->relid,
-														DSM_HANDLE_INVALID);
+														DSM_HANDLE_INVALID,
+														false);
 					}
 				}
 			}

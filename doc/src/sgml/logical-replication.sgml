@@ -2397,6 +2397,12 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    </para>
 
    <para>
+    <link linkend="guc-max-replication-slots"><varname>max_replication_slots</varname></link>
+    must be set to at least 1 when <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+    is enabled for any subscription.
+   </para>
+
+   <para>
     <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
     must be set to at least the number of subscriptions (for leader apply
     workers), plus some reserve for the table synchronization workers and
@@ -2532,6 +2538,22 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
     dependencies on clusters before version 17.0 will silently be ignored.
    </para>
 
+   <note>
+    <para>
+     Commit timestamps and origin data are not preserved during the upgrade.
+     As a result, even if
+     <link linkend="sql-createsubscription-params-with-retain-dead-tuples"><literal>retain_dead_tuples</literal></link>
+     is enabled, the upgraded subscriber may be unable to detect conflicts or
+     log relevant commit timestamps and origins when applying changes from the
+     publisher occurred before the upgrade. Additionally, immediately after the
+     upgrade, the vacuum may remove the deleted rows that are required for
+     conflict detection. This can affect the changes that were not replicated
+     before the upgrade. To ensure consistent conflict tracking, users should
+     ensure that all potentially conflicting changes are replicated to the
+     subscriber before initiating the upgrade.
+    </para>
+   </note>
+
    <para>
     There are some prerequisites for <application>pg_upgrade</application> to
     be able to upgrade the subscriptions. If these are not met an error
@@ -2561,6 +2583,16 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
       <link linkend="guc-max-active-replication-origins"><varname>max_active_replication_origins</varname></link>
       configured to a value greater than or equal to the number of
       subscriptions present in the old cluster.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      If there are subscriptions with retain_dead_tuples enabled, the reserved
+      replication slot <quote><literal>pg_conflict_detection</literal></quote>
+      must not exist on the new cluster. Additionally, the
+      <link linkend="guc-wal-level"><varname>wal_level</varname></link> on the
+      new cluster must be set to <literal>replica</literal> or
+      <literal>logical</literal>.
      </para>
     </listitem>
    </itemizedlist>

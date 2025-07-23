@@ -47,6 +47,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "postmaster/interrupt.h"
+#include "replication/logicallauncher.h"
 #include "replication/slotsync.h"
 #include "replication/slot.h"
 #include "replication/walsender_private.h"
@@ -172,6 +173,7 @@ static SyncStandbySlotsConfigData *synchronized_standby_slots_config;
 static XLogRecPtr ss_oldest_flush_lsn = InvalidXLogRecPtr;
 
 static void ReplicationSlotShmemExit(int code, Datum arg);
+static bool IsSlotForConflictCheck(const char *name);
 static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 
 /* internal persistency functions */
@@ -258,13 +260,17 @@ ReplicationSlotShmemExit(int code, Datum arg)
 /*
  * Check whether the passed slot name is valid and report errors at elevel.
  *
+ * An error will be reported for a reserved replication slot name if
+ * allow_reserved_name is set to false.
+ *
  * Slot names may consist out of [a-z0-9_]{1,NAMEDATALEN-1} which should allow
  * the name to be used as a directory name on every supported OS.
  *
  * Returns whether the directory name is valid or not if elevel < ERROR.
  */
 bool
-ReplicationSlotValidateName(const char *name, int elevel)
+ReplicationSlotValidateName(const char *name, bool allow_reserved_name,
+							int elevel)
 {
 	const char *cp;
 
@@ -300,7 +306,29 @@ ReplicationSlotValidateName(const char *name, int elevel)
 			return false;
 		}
 	}
+
+	if (!allow_reserved_name && IsSlotForConflictCheck(name))
+	{
+		ereport(elevel,
+				errcode(ERRCODE_RESERVED_NAME),
+				errmsg("replication slot name \"%s\" is reserved",
+					   name),
+				errdetail("The name \"%s\" is reserved for the conflict detection slot.",
+						  CONFLICT_DETECTION_SLOT));
+
+		return false;
+	}
+
 	return true;
+}
+
+/*
+ * Return true if the replication slot name is "pg_conflict_detection".
+ */
+static bool
+IsSlotForConflictCheck(const char *name)
+{
+	return (strcmp(name, CONFLICT_DETECTION_SLOT) == 0);
 }
 
 /*
@@ -330,7 +358,12 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 
 	Assert(MyReplicationSlot == NULL);
 
-	ReplicationSlotValidateName(name, ERROR);
+	/*
+	 * The logical launcher or pg_upgrade may create or migrate an internal
+	 * slot, so using a reserved name is allowed in these cases.
+	 */
+	ReplicationSlotValidateName(name, IsBinaryUpgrade || IsLogicalLauncher(),
+								ERROR);
 
 	if (failover)
 	{
@@ -580,6 +613,17 @@ retry:
 				 errmsg("replication slot \"%s\" does not exist",
 						name)));
 	}
+
+	/*
+	 * Do not allow users to acquire the reserved slot. This scenario may
+	 * occur if the launcher that owns the slot has terminated unexpectedly
+	 * due to an error, and a backend process attempts to reuse the slot.
+	 */
+	if (!IsLogicalLauncher() && IsSlotForConflictCheck(name))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("cannot acquire replication slot \"%s\"", name),
+				errdetail("The slot is reserved for conflict detection and can only be acquired by logical replication launcher."));
 
 	/*
 	 * This is the slot we want; check if it's active under some other

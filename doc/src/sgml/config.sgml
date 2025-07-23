@@ -4965,6 +4965,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
           new setting.
           This setting has no effect if <varname>primary_conninfo</varname> is not
           set or the server is not in standby mode.
+          The name cannot be <literal>pg_conflict_detection</literal> as it is
+          reserved for the conflict detection slot.
          </para>
         </listitem>
        </varlistentry>

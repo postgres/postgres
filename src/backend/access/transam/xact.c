@@ -1431,10 +1431,22 @@ RecordTransactionCommit(void)
 		 * without holding the ProcArrayLock, since we're the only one
 		 * modifying it.  This makes checkpoint's determination of which xacts
 		 * are delaying the checkpoint a bit fuzzy, but it doesn't matter.
+		 *
+		 * Note, it is important to get the commit timestamp after marking the
+		 * transaction in the commit critical section. See
+		 * RecordTransactionCommitPrepared.
 		 */
-		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_IN_COMMIT) == 0);
 		START_CRIT_SECTION();
-		MyProc->delayChkptFlags |= DELAY_CHKPT_START;
+		MyProc->delayChkptFlags |= DELAY_CHKPT_IN_COMMIT;
+
+		Assert(xactStopTimestamp == 0);
+
+		/*
+		 * Ensures the DELAY_CHKPT_IN_COMMIT flag write is globally visible
+		 * before commit time is written.
+		 */
+		pg_write_barrier();
 
 		/*
 		 * Insert the commit XLOG record.
@@ -1537,7 +1549,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
+		MyProc->delayChkptFlags &= ~DELAY_CHKPT_IN_COMMIT;
 		END_CRIT_SECTION();
 	}
 

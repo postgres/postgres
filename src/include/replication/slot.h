@@ -21,6 +21,13 @@
 #define PG_REPLSLOT_DIR     "pg_replslot"
 
 /*
+ * The reserved name for a replication slot used to retain dead tuples for
+ * conflict detection in logical replication. See
+ * maybe_advance_nonremovable_xid() for detail.
+ */
+#define CONFLICT_DETECTION_SLOT "pg_conflict_detection"
+
+/*
  * Behaviour of replication slots, upon release or crash.
  *
  * Slots marked as PERSISTENT are crash-safe and will not be dropped when
@@ -311,7 +318,9 @@ extern void ReplicationSlotMarkDirty(void);
 
 /* misc stuff */
 extern void ReplicationSlotInitialize(void);
-extern bool ReplicationSlotValidateName(const char *name, int elevel);
+extern bool ReplicationSlotValidateName(const char *name,
+										bool allow_reserved_name,
+										int elevel);
 extern void ReplicationSlotReserveWal(void);
 extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
 extern void ReplicationSlotsComputeRequiredLSN(void);

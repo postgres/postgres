@@ -21,6 +21,7 @@
 #include "commands/extension.h"
 #include "miscadmin.h"
 #include "replication/logical.h"
+#include "replication/logicallauncher.h"
 #include "replication/origin.h"
 #include "replication/worker_internal.h"
 #include "storage/lmgr.h"
@@ -407,6 +408,24 @@ binary_upgrade_replorigin_advance(PG_FUNCTION_ARGS)
 
 	UnlockRelationOid(ReplicationOriginRelationId, RowExclusiveLock);
 	table_close(rel, RowExclusiveLock);
+
+	PG_RETURN_VOID();
+}
+
+/*
+ * binary_upgrade_create_conflict_detection_slot
+ *
+ * Create a replication slot to retain information necessary for conflict
+ * detection such as dead tuples, commit timestamps, and origins.
+ */
+Datum
+binary_upgrade_create_conflict_detection_slot(PG_FUNCTION_ARGS)
+{
+	CHECK_IS_BINARY_UPGRADE;
+
+	CreateConflictDetectionSlot();
+
+	ReplicationSlotRelease();
 
 	PG_RETURN_VOID();
 }
