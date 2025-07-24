@@ -42,7 +42,19 @@ else
     PROMPT=")"
 fi
 
+if $WASI 
+then
+    OUT_DIR=wasi
+else 
+    OUT_DIR=emscripten
+fi
 
+if $DEBUG
+then
+    MAP_OUT_DIRS="-v ${WORKSPACE}/postgres-pglite/out/${OUT_DIR}/build:/tmp/sdk/build:rw -v ${WORKSPACE}/postgres-pglite/out/${OUT_DIR}/pglite:/tmp/pglite:rw"
+else
+    MAP_OUT_DIRS=""
+fi
 
 docker run $@ \
   --rm \
@@ -52,6 +64,6 @@ docker run $@ \
   --workdir=${DOCKER_WORKSPACE} \
   -v ${WORKSPACE}/postgres-pglite:${DOCKER_WORKSPACE}:rw \
   -v ${WORKSPACE}/postgres-pglite/dist:/tmp/sdk/dist:rw \
-  -v ${WORKSPACE}/postgres-pglite/build:/tmp/sdk/build:rw \
+  $MAP_OUT_DIRS \
   $IMG_NAME:$IMG_TAG \
   bash --noprofile --rcfile ./docker_rc.sh -ci "( ./wasm-build.sh ${WHAT:-\"contrib extra\"} $PROMPT"
