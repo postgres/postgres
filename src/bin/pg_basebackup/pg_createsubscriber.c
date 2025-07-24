@@ -1250,8 +1250,17 @@ setup_recovery(const struct LogicalRepInfo *dbinfo, const char *datadir, const c
 	appendPQExpBufferStr(recoveryconfcontents, "recovery_target = ''\n");
 	appendPQExpBufferStr(recoveryconfcontents,
 						 "recovery_target_timeline = 'latest'\n");
+
+	/*
+	 * Set recovery_target_inclusive = false to avoid reapplying the
+	 * transaction committed at 'lsn' after subscription is enabled. This is
+	 * because the provided 'lsn' is also used as the replication start point
+	 * for the subscription. So, the server can send the transaction committed
+	 * at that 'lsn' after replication is started which can lead to applying
+	 * the same transaction twice if we keep recovery_target_inclusive = true.
+	 */
 	appendPQExpBufferStr(recoveryconfcontents,
-						 "recovery_target_inclusive = true\n");
+						 "recovery_target_inclusive = false\n");
 	appendPQExpBufferStr(recoveryconfcontents,
 						 "recovery_target_action = promote\n");
 	appendPQExpBufferStr(recoveryconfcontents, "recovery_target_name = ''\n");
