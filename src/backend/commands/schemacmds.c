@@ -215,6 +215,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 		wrapper->utilityStmt = stmt;
 		wrapper->stmt_location = stmt_location;
 		wrapper->stmt_len = stmt_len;
+		wrapper->cached_plan_type = PLAN_CACHE_NONE;
 
 		/* do this step */
 		ProcessUtility(wrapper,

@@ -29,6 +29,20 @@
  */
 
 /* ----------------
+ *		CachedPlanType
+ *
+ * CachedPlanType identifies whether a PlannedStmt is a cached plan, and if
+ * so, whether it is generic or custom.
+ * ----------------
+ */
+typedef enum CachedPlanType
+{
+	PLAN_CACHE_NONE = 0,		/* Not a cached plan */
+	PLAN_CACHE_GENERIC,			/* Generic cached plan */
+	PLAN_CACHE_CUSTOM,			/* Custom cached plan */
+} CachedPlanType;
+
+/* ----------------
  *		PlannedStmt node
  *
  * The output of the planner is a Plan tree headed by a PlannedStmt node.
@@ -57,6 +71,9 @@ typedef struct PlannedStmt
 
 	/* plan identifier (can be set by plugins) */
 	int64		planId;
+
+	/* type of cached plan */
+	CachedPlanType cached_plan_type;
 
 	/* is it insert|update|delete|merge RETURNING? */
 	bool		hasReturning;

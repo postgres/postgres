@@ -189,6 +189,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->permInfos = estate->es_rteperminfos;
 	pstmt->resultRelations = NIL;
 	pstmt->appendRelations = NIL;
+	pstmt->cached_plan_type = PLAN_CACHE_NONE;
 
 	/*
 	 * Transfer only parallel-safe subplans, leaving a NULL "hole" in the list

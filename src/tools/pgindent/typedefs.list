@@ -391,6 +391,7 @@ CachedFunctionHashEntry
 CachedFunctionHashKey
 CachedPlan
 CachedPlanSource
+CachedPlanType
 CallContext
 CallStmt
 CancelRequestPacket
