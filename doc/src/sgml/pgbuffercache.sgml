@@ -20,7 +20,15 @@
  </indexterm>
 
  <indexterm>
+  <primary>pg_buffercache_numa</primary>
+ </indexterm>
+
+ <indexterm>
   <primary>pg_buffercache_summary</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_usage_counts</primary>
  </indexterm>
 
  <indexterm>
@@ -489,7 +497,7 @@
  </sect2>
 
  <sect2 id="pgbuffercache-pg-buffercache-evict-relation">
-  <title>The <structname>pg_buffercache_evict_relation</structname> Function</title>
+  <title>The <structname>pg_buffercache_evict_relation()</structname> Function</title>
   <para>
    The <function>pg_buffercache_evict_relation()</function> function is very
    similar to the <function>pg_buffercache_evict()</function> function.  The
@@ -507,7 +515,7 @@
  </sect2>
 
  <sect2 id="pgbuffercache-pg-buffercache-evict-all">
-  <title>The <structname>pg_buffercache_evict_all</structname> Function</title>
+  <title>The <structname>pg_buffercache_evict_all()</structname> Function</title>
   <para>
    The <function>pg_buffercache_evict_all()</function> function is very
    similar to the <function>pg_buffercache_evict()</function> function.  The
