@@ -364,7 +364,7 @@ visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf)
 	{
 		*vmbuf = vm_readbuf(rel, mapBlock, false);
 		if (!BufferIsValid(*vmbuf))
-			return false;
+			return (uint8) 0;
 	}
 
 	map = PageGetContents(BufferGetPage(*vmbuf));
