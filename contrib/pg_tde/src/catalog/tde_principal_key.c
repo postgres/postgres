@@ -706,6 +706,7 @@ pg_tde_delete_key(PG_FUNCTION_ARGS)
 		if (default_principal_key == NULL)
 		{
 			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete principal key"),
 					errdetail("There are encrypted tables in the database."),
 					errhint("Set default principal key as fallback option or decrypt all tables before deleting principal key."));
@@ -718,6 +719,7 @@ pg_tde_delete_key(PG_FUNCTION_ARGS)
 		if (pg_tde_is_same_principal_key(principal_key, default_principal_key))
 		{
 			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete principal key"),
 					errdetail("There are encrypted tables in the database."));
 		}
@@ -788,6 +790,7 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 			if (pg_tde_count_encryption_keys(dbOid) != 0)
 			{
 				ereport(ERROR,
+						errcode(ERRCODE_OBJECT_IN_USE),
 						errmsg("cannot delete default principal key"),
 						errhint("There are encrypted tables in the database with id: %u.", dbOid));
 			}
@@ -806,6 +809,7 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 	{
 		if (pg_tde_count_encryption_keys(GLOBAL_DATA_TDE_OID) != 0)
 			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete default principal key"),
 					errhint("There are WAL encryption keys."));
 		dbs = lappend_oid(dbs, GLOBAL_DATA_TDE_OID);
