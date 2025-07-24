@@ -1,2 +1,5 @@
 /pg_resetwal
 /tmp_check/
+
+# Source files copied from src/backend/access/transam/
+/xlogreader.c
