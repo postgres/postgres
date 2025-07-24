@@ -228,6 +228,11 @@ ok( $stderr =~
 # Disable the subscription
 $node_A->psql('postgres', "ALTER SUBSCRIPTION $subname_AB DISABLE;");
 
+# Wait for the apply worker to stop
+$node_A->poll_query_until('postgres',
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
+);
+
 # Enable retain_dead_tuples for disabled subscription
 ($cmdret, $stdout, $stderr) = $node_A->psql('postgres',
 	"ALTER SUBSCRIPTION $subname_AB SET (retain_dead_tuples = true);");
@@ -277,6 +282,11 @@ is($result, qq(1|1
 
 # Disable the logical replication from node B to node A
 $node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB DISABLE");
+
+# Wait for the apply worker to stop
+$node_A->poll_query_until('postgres',
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
+);
 
 $node_B->safe_psql('postgres', "UPDATE tab SET b = 3 WHERE a = 1;");
 $node_A->safe_psql('postgres', "DELETE FROM tab WHERE a = 1;");
