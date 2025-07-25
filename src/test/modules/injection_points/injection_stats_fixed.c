@@ -64,7 +64,7 @@ static const PgStat_KindInfo injection_stats_fixed = {
 /*
  * Kind ID reserved for statistics of injection points.
  */
-#define PGSTAT_KIND_INJECTION_FIXED	130
+#define PGSTAT_KIND_INJECTION_FIXED	26
 
 /* Track if fixed-numbered stats are loaded */
 static bool inj_fixed_loaded = false;

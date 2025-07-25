@@ -59,7 +59,7 @@ static const PgStat_KindInfo injection_stats = {
 /*
  * Kind ID reserved for statistics of injection points.
  */
-#define PGSTAT_KIND_INJECTION	129
+#define PGSTAT_KIND_INJECTION	25
 
 /* Track if stats are loaded */
 static bool inj_stats_loaded = false;
