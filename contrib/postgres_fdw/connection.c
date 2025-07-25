@@ -982,40 +982,40 @@ void
 pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				   const char *sql)
 {
-		char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-		char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
-		char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
-		char	   *message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
-		char	   *message_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
-		int			sqlstate;
+	char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+	char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+	char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
+	char	   *message_hint = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
+	char	   *message_context = PQresultErrorField(res, PG_DIAG_CONTEXT);
+	int			sqlstate;
 
-		if (diag_sqlstate)
-			sqlstate = MAKE_SQLSTATE(diag_sqlstate[0],
-									 diag_sqlstate[1],
-									 diag_sqlstate[2],
-									 diag_sqlstate[3],
-									 diag_sqlstate[4]);
-		else
-			sqlstate = ERRCODE_CONNECTION_FAILURE;
+	if (diag_sqlstate)
+		sqlstate = MAKE_SQLSTATE(diag_sqlstate[0],
+								 diag_sqlstate[1],
+								 diag_sqlstate[2],
+								 diag_sqlstate[3],
+								 diag_sqlstate[4]);
+	else
+		sqlstate = ERRCODE_CONNECTION_FAILURE;
 
-		/*
-		 * If we don't get a message from the PGresult, try the PGconn.  This
-		 * is needed because for connection-level failures, PQgetResult may
-		 * just return NULL, not a PGresult at all.
-		 */
-		if (message_primary == NULL)
-			message_primary = pchomp(PQerrorMessage(conn));
+	/*
+	 * If we don't get a message from the PGresult, try the PGconn.  This is
+	 * needed because for connection-level failures, PQgetResult may just
+	 * return NULL, not a PGresult at all.
+	 */
+	if (message_primary == NULL)
+		message_primary = pchomp(PQerrorMessage(conn));
 
-		ereport(elevel,
-				(errcode(sqlstate),
-				 (message_primary != NULL && message_primary[0] != '\0') ?
-				 errmsg_internal("%s", message_primary) :
-				 errmsg("could not obtain message string for remote error"),
-				 message_detail ? errdetail_internal("%s", message_detail) : 0,
-				 message_hint ? errhint("%s", message_hint) : 0,
-				 message_context ? errcontext("%s", message_context) : 0,
-				 sql ? errcontext("remote SQL command: %s", sql) : 0));
-			PQclear(res);
+	ereport(elevel,
+			(errcode(sqlstate),
+			 (message_primary != NULL && message_primary[0] != '\0') ?
+			 errmsg_internal("%s", message_primary) :
+			 errmsg("could not obtain message string for remote error"),
+			 message_detail ? errdetail_internal("%s", message_detail) : 0,
+			 message_hint ? errhint("%s", message_hint) : 0,
+			 message_context ? errcontext("%s", message_context) : 0,
+			 sql ? errcontext("remote SQL command: %s", sql) : 0));
+	PQclear(res);
 }
 
 /*
@@ -1617,83 +1617,83 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 
 	*result = NULL;
 	*timed_out = false;
-		for (;;)
+	for (;;)
+	{
+		PGresult   *res;
+
+		while (PQisBusy(conn))
 		{
-			PGresult   *res;
+			int			wc;
+			TimestampTz now = GetCurrentTimestamp();
+			long		cur_timeout;
 
-			while (PQisBusy(conn))
+			/* If timeout has expired, give up. */
+			if (now >= endtime)
 			{
-				int			wc;
-				TimestampTz now = GetCurrentTimestamp();
-				long		cur_timeout;
-
-				/* If timeout has expired, give up. */
-				if (now >= endtime)
-				{
-					*timed_out = true;
-					failed = true;
-					goto exit;
-				}
-
-				/* If we need to re-issue the cancel request, do that. */
-				if (now >= retrycanceltime)
-				{
-					/* We ignore failure to issue the repeated request. */
-					(void) libpqsrv_cancel(conn, endtime);
-
-					/* Recompute "now" in case that took measurable time. */
-					now = GetCurrentTimestamp();
-
-					/* Adjust re-cancel timeout in increasing steps. */
-					retrycanceltime = TimestampTzPlusMilliseconds(now,
-																  canceldelta);
-					canceldelta += canceldelta;
-				}
-
-				/* If timeout has expired, give up, else get sleep time. */
-				cur_timeout = TimestampDifferenceMilliseconds(now,
-															  Min(endtime,
-																  retrycanceltime));
-				if (cur_timeout <= 0)
-				{
-					*timed_out = true;
-					failed = true;
-					goto exit;
-				}
-
-				/* first time, allocate or get the custom wait event */
-				if (pgfdw_we_cleanup_result == 0)
-					pgfdw_we_cleanup_result = WaitEventExtensionNew("PostgresFdwCleanupResult");
-
-				/* Sleep until there's something to do */
-				wc = WaitLatchOrSocket(MyLatch,
-									   WL_LATCH_SET | WL_SOCKET_READABLE |
-									   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
-									   PQsocket(conn),
-									   cur_timeout, pgfdw_we_cleanup_result);
-				ResetLatch(MyLatch);
-
-				CHECK_FOR_INTERRUPTS();
-
-				/* Data available in socket? */
-				if (wc & WL_SOCKET_READABLE)
-				{
-					if (!PQconsumeInput(conn))
-					{
-						/* connection trouble */
-						failed = true;
-						goto exit;
-					}
-				}
+				*timed_out = true;
+				failed = true;
+				goto exit;
 			}
 
-			res = PQgetResult(conn);
-			if (res == NULL)
-				break;			/* query is complete */
+			/* If we need to re-issue the cancel request, do that. */
+			if (now >= retrycanceltime)
+			{
+				/* We ignore failure to issue the repeated request. */
+				(void) libpqsrv_cancel(conn, endtime);
 
-			PQclear(last_res);
-			last_res = res;
+				/* Recompute "now" in case that took measurable time. */
+				now = GetCurrentTimestamp();
+
+				/* Adjust re-cancel timeout in increasing steps. */
+				retrycanceltime = TimestampTzPlusMilliseconds(now,
+															  canceldelta);
+				canceldelta += canceldelta;
+			}
+
+			/* If timeout has expired, give up, else get sleep time. */
+			cur_timeout = TimestampDifferenceMilliseconds(now,
+														  Min(endtime,
+															  retrycanceltime));
+			if (cur_timeout <= 0)
+			{
+				*timed_out = true;
+				failed = true;
+				goto exit;
+			}
+
+			/* first time, allocate or get the custom wait event */
+			if (pgfdw_we_cleanup_result == 0)
+				pgfdw_we_cleanup_result = WaitEventExtensionNew("PostgresFdwCleanupResult");
+
+			/* Sleep until there's something to do */
+			wc = WaitLatchOrSocket(MyLatch,
+								   WL_LATCH_SET | WL_SOCKET_READABLE |
+								   WL_TIMEOUT | WL_EXIT_ON_PM_DEATH,
+								   PQsocket(conn),
+								   cur_timeout, pgfdw_we_cleanup_result);
+			ResetLatch(MyLatch);
+
+			CHECK_FOR_INTERRUPTS();
+
+			/* Data available in socket? */
+			if (wc & WL_SOCKET_READABLE)
+			{
+				if (!PQconsumeInput(conn))
+				{
+					/* connection trouble */
+					failed = true;
+					goto exit;
+				}
+			}
 		}
+
+		res = PQgetResult(conn);
+		if (res == NULL)
+			break;				/* query is complete */
+
+		PQclear(last_res);
+		last_res = res;
+	}
 exit:
 	if (failed)
 		PQclear(last_res);

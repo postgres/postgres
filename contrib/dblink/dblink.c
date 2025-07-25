@@ -870,115 +870,115 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 	/* prepTuplestoreResult must have been called previously */
 	Assert(rsinfo->returnMode == SFRM_Materialize);
 
-		if (PQresultStatus(res) == PGRES_COMMAND_OK)
-		{
-			is_sql_cmd = true;
-
-			/*
-			 * need a tuple descriptor representing one TEXT column to return
-			 * the command status string as our result tuple
-			 */
-			tupdesc = CreateTemplateTupleDesc(1);
-			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
-							   TEXTOID, -1, 0);
-			ntuples = 1;
-			nfields = 1;
-		}
-		else
-		{
-			Assert(PQresultStatus(res) == PGRES_TUPLES_OK);
-
-			is_sql_cmd = false;
-
-			/* get a tuple descriptor for our result type */
-			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
-			{
-				case TYPEFUNC_COMPOSITE:
-					/* success */
-					break;
-				case TYPEFUNC_RECORD:
-					/* failed to determine actual type of RECORD */
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("function returning record called in context "
-									"that cannot accept type record")));
-					break;
-				default:
-					/* result type isn't composite */
-					elog(ERROR, "return type must be a row type");
-					break;
-			}
-
-			/* make sure we have a persistent copy of the tupdesc */
-			tupdesc = CreateTupleDescCopy(tupdesc);
-			ntuples = PQntuples(res);
-			nfields = PQnfields(res);
-		}
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		is_sql_cmd = true;
 
 		/*
-		 * check result and tuple descriptor have the same number of columns
+		 * need a tuple descriptor representing one TEXT column to return the
+		 * command status string as our result tuple
 		 */
-		if (nfields != tupdesc->natts)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("remote query result rowtype does not match "
-							"the specified FROM clause rowtype")));
+		tupdesc = CreateTemplateTupleDesc(1);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "status",
+						   TEXTOID, -1, 0);
+		ntuples = 1;
+		nfields = 1;
+	}
+	else
+	{
+		Assert(PQresultStatus(res) == PGRES_TUPLES_OK);
 
-		if (ntuples > 0)
+		is_sql_cmd = false;
+
+		/* get a tuple descriptor for our result type */
+		switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 		{
-			AttInMetadata *attinmeta;
-			int			nestlevel = -1;
-			Tuplestorestate *tupstore;
-			MemoryContext oldcontext;
-			int			row;
-			char	  **values;
-
-			attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-			/* Set GUCs to ensure we read GUC-sensitive data types correctly */
-			if (!is_sql_cmd)
-				nestlevel = applyRemoteGucs(conn);
-
-			oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-			tupstore = tuplestore_begin_heap(true, false, work_mem);
-			rsinfo->setResult = tupstore;
-			rsinfo->setDesc = tupdesc;
-			MemoryContextSwitchTo(oldcontext);
-
-			values = palloc_array(char *, nfields);
-
-			/* put all tuples into the tuplestore */
-			for (row = 0; row < ntuples; row++)
-			{
-				HeapTuple	tuple;
-
-				if (!is_sql_cmd)
-				{
-					int			i;
-
-					for (i = 0; i < nfields; i++)
-					{
-						if (PQgetisnull(res, row, i))
-							values[i] = NULL;
-						else
-							values[i] = PQgetvalue(res, row, i);
-					}
-				}
-				else
-				{
-					values[0] = PQcmdStatus(res);
-				}
-
-				/* build the tuple and put it into the tuplestore. */
-				tuple = BuildTupleFromCStrings(attinmeta, values);
-				tuplestore_puttuple(tupstore, tuple);
-			}
-
-			/* clean up GUC settings, if we changed any */
-			restoreLocalGucs(nestlevel);
+			case TYPEFUNC_COMPOSITE:
+				/* success */
+				break;
+			case TYPEFUNC_RECORD:
+				/* failed to determine actual type of RECORD */
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record")));
+				break;
+			default:
+				/* result type isn't composite */
+				elog(ERROR, "return type must be a row type");
+				break;
 		}
 
-		PQclear(res);
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
+		ntuples = PQntuples(res);
+		nfields = PQnfields(res);
+	}
+
+	/*
+	 * check result and tuple descriptor have the same number of columns
+	 */
+	if (nfields != tupdesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("remote query result rowtype does not match "
+						"the specified FROM clause rowtype")));
+
+	if (ntuples > 0)
+	{
+		AttInMetadata *attinmeta;
+		int			nestlevel = -1;
+		Tuplestorestate *tupstore;
+		MemoryContext oldcontext;
+		int			row;
+		char	  **values;
+
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+
+		/* Set GUCs to ensure we read GUC-sensitive data types correctly */
+		if (!is_sql_cmd)
+			nestlevel = applyRemoteGucs(conn);
+
+		oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
+		tupstore = tuplestore_begin_heap(true, false, work_mem);
+		rsinfo->setResult = tupstore;
+		rsinfo->setDesc = tupdesc;
+		MemoryContextSwitchTo(oldcontext);
+
+		values = palloc_array(char *, nfields);
+
+		/* put all tuples into the tuplestore */
+		for (row = 0; row < ntuples; row++)
+		{
+			HeapTuple	tuple;
+
+			if (!is_sql_cmd)
+			{
+				int			i;
+
+				for (i = 0; i < nfields; i++)
+				{
+					if (PQgetisnull(res, row, i))
+						values[i] = NULL;
+					else
+						values[i] = PQgetvalue(res, row, i);
+				}
+			}
+			else
+			{
+				values[0] = PQcmdStatus(res);
+			}
+
+			/* build the tuple and put it into the tuplestore. */
+			tuple = BuildTupleFromCStrings(attinmeta, values);
+			tuplestore_puttuple(tupstore, tuple);
+		}
+
+		/* clean up GUC settings, if we changed any */
+		restoreLocalGucs(nestlevel);
+	}
+
+	PQclear(res);
 }
 
 /*

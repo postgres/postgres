@@ -281,28 +281,28 @@ libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info)
 {
 	PGresult   *lastResult = NULL;
 
-		for (;;)
-		{
-			/* Wait for, and collect, the next PGresult. */
-			PGresult   *result;
+	for (;;)
+	{
+		/* Wait for, and collect, the next PGresult. */
+		PGresult   *result;
 
-			result = libpqsrv_get_result(conn, wait_event_info);
-			if (result == NULL)
-				break;			/* query is complete, or failure */
+		result = libpqsrv_get_result(conn, wait_event_info);
+		if (result == NULL)
+			break;				/* query is complete, or failure */
 
-			/*
-			 * Emulate PQexec()'s behavior of returning the last result when
-			 * there are many.
-			 */
-			PQclear(lastResult);
-			lastResult = result;
+		/*
+		 * Emulate PQexec()'s behavior of returning the last result when there
+		 * are many.
+		 */
+		PQclear(lastResult);
+		lastResult = result;
 
-			if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
-				PQresultStatus(lastResult) == PGRES_COPY_OUT ||
-				PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
-				PQstatus(conn) == CONNECTION_BAD)
-				break;
-		}
+		if (PQresultStatus(lastResult) == PGRES_COPY_IN ||
+			PQresultStatus(lastResult) == PGRES_COPY_OUT ||
+			PQresultStatus(lastResult) == PGRES_COPY_BOTH ||
+			PQstatus(conn) == CONNECTION_BAD)
+			break;
+	}
 	return lastResult;
 }
 
