@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+73873805fb3627cb23937c750fa83ffd8f16fc6c # 2025-07-25 16:36:44 -0400
+# Run pgindent on the changes of the previous patch.
+
 9e345415bcd3c4358350b89edfd710469b8bfaf9 # 2025-07-01 15:23:07 +0200
 # Fix indentation in pg_numa code
 
