@@ -2630,6 +2630,13 @@ CleanupBackend(PMChild *bp,
 	}
 	bp = NULL;
 
+	/*
+	 * In a crash case, exit immediately without resetting background worker
+	 * state. However, if restart_after_crash is enabled, the background
+	 * worker state (e.g., rw_pid) still needs be reset so the worker can
+	 * restart after crash recovery. This reset is handled in
+	 * ResetBackgroundWorkerCrashTimes(), not here.
+	 */
 	if (crashed)
 	{
 		HandleChildCrash(bp_pid, exitstatus, procname);
