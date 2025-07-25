@@ -8,6 +8,9 @@ For how to enable WAL encryption, refer to the [Configure WAL Encryption :octico
 
 --8<-- "kms-considerations.md"
 
+!!! note
+    If no error is reported when running the commands below, the operation completed successfully.
+
 ## Enable extension
 
 Load the `pg_tde` at startup time. The extension requires additional shared memory; therefore, add the `pg_tde` value for the `shared_preload_libraries` parameter and restart the `postgresql` cluster.
