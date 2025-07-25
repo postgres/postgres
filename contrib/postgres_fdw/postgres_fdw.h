@@ -167,7 +167,7 @@ extern PGresult *pgfdw_get_result(PGconn *conn);
 extern PGresult *pgfdw_exec_query(PGconn *conn, const char *query,
 								  PgFdwConnState *state);
 extern void pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-							   bool clear, const char *sql);
+							   const char *sql);
 
 /* in option.c */
 extern int	ExtractConnectionOptions(List *defelems,

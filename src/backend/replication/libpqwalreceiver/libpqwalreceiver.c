@@ -421,31 +421,22 @@ libpqrcv_identify_system(WalReceiverConn *conn, TimeLineID *primary_tli)
 						"IDENTIFY_SYSTEM",
 						WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not receive database system identifier and timeline ID from "
 						"the primary server: %s",
 						pchomp(PQerrorMessage(conn->streamConn)))));
-	}
 
 	/*
 	 * IDENTIFY_SYSTEM returns 3 columns in 9.3 and earlier, and 4 columns in
 	 * 9.4 and onwards.
 	 */
 	if (PQnfields(res) < 3 || PQntuples(res) != 1)
-	{
-		int			ntuples = PQntuples(res);
-		int			nfields = PQnfields(res);
-
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("invalid response from primary server"),
 				 errdetail("Could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields.",
-						   ntuples, nfields, 1, 3)));
-	}
+						   PQntuples(res), PQnfields(res), 1, 3)));
 	primary_sysid = pstrdup(PQgetvalue(res, 0, 0));
 	*primary_tli = pg_strtoint32(PQgetvalue(res, 0, 1));
 	PQclear(res);
@@ -607,13 +598,10 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 		return false;
 	}
 	else if (PQresultStatus(res) != PGRES_COPY_BOTH)
-	{
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not start WAL streaming: %s",
 						pchomp(PQerrorMessage(conn->streamConn)))));
-	}
 	PQclear(res);
 	return true;
 }
@@ -721,26 +709,17 @@ libpqrcv_readtimelinehistoryfile(WalReceiverConn *conn,
 						cmd,
 						WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not receive timeline history file from "
 						"the primary server: %s",
 						pchomp(PQerrorMessage(conn->streamConn)))));
-	}
 	if (PQnfields(res) != 2 || PQntuples(res) != 1)
-	{
-		int			ntuples = PQntuples(res);
-		int			nfields = PQnfields(res);
-
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("invalid response from primary server"),
 				 errdetail("Expected 1 tuple with 2 fields, got %d tuples with %d fields.",
-						   ntuples, nfields)));
-	}
+						   PQntuples(res), PQnfields(res))));
 	*filename = pstrdup(PQgetvalue(res, 0, 0));
 
 	*len = PQgetlength(res, 0, 1);
@@ -844,13 +823,10 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 			return -1;
 		}
 		else
-		{
-			PQclear(res);
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("could not receive data from WAL stream: %s",
 							pchomp(PQerrorMessage(conn->streamConn)))));
-		}
 	}
 	if (rawlen < -1)
 		ereport(ERROR,
@@ -974,13 +950,10 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	pfree(cmd.data);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		PQclear(res);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("could not create replication slot \"%s\": %s",
 						slotname, pchomp(PQerrorMessage(conn->streamConn)))));
-	}
 
 	if (lsn)
 		*lsn = DatumGetLSN(DirectFunctionCall1Coll(pg_lsn_in, InvalidOid,

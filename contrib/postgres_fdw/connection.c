@@ -815,7 +815,7 @@ static void
 do_sql_command_begin(PGconn *conn, const char *sql)
 {
 	if (!PQsendQuery(conn, sql))
-		pgfdw_report_error(ERROR, NULL, conn, false, sql);
+		pgfdw_report_error(ERROR, NULL, conn, sql);
 }
 
 static void
@@ -830,10 +830,10 @@ do_sql_command_end(PGconn *conn, const char *sql, bool consume_input)
 	 * would be large compared to the overhead of PQconsumeInput.)
 	 */
 	if (consume_input && !PQconsumeInput(conn))
-		pgfdw_report_error(ERROR, NULL, conn, false, sql);
+		pgfdw_report_error(ERROR, NULL, conn, sql);
 	res = pgfdw_get_result(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, conn, true, sql);
+		pgfdw_report_error(ERROR, res, conn, sql);
 	PQclear(res);
 }
 
@@ -967,10 +967,12 @@ pgfdw_get_result(PGconn *conn)
  * Report an error we got from the remote server.
  *
  * elevel: error level to use (typically ERROR, but might be less)
- * res: PGresult containing the error
+ * res: PGresult containing the error (might be NULL)
  * conn: connection we did the query on
- * clear: if true, PQclear the result (otherwise caller will handle it)
  * sql: NULL, or text of remote command we tried to execute
+ *
+ * If "res" is not NULL, it'll be PQclear'ed here (unless we throw error,
+ * in which case memory context cleanup will clear it eventually).
  *
  * Note: callers that choose not to throw ERROR for a remote error are
  * responsible for making sure that the associated ConnCacheEntry gets
@@ -978,11 +980,8 @@ pgfdw_get_result(PGconn *conn)
  */
 void
 pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-				   bool clear, const char *sql)
+				   const char *sql)
 {
-	/* If requested, PGresult must be released before leaving this function. */
-	PG_TRY();
-	{
 		char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 		char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
 		char	   *message_detail = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
@@ -1016,13 +1015,7 @@ pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
 				 message_hint ? errhint("%s", message_hint) : 0,
 				 message_context ? errcontext("%s", message_context) : 0,
 				 sql ? errcontext("remote SQL command: %s", sql) : 0));
-	}
-	PG_FINALLY();
-	{
-		if (clear)
 			PQclear(res);
-	}
-	PG_END_TRY();
 }
 
 /*
@@ -1545,7 +1538,7 @@ pgfdw_exec_cleanup_query_begin(PGconn *conn, const char *query)
 	 */
 	if (!PQsendQuery(conn, query))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, false, query);
+		pgfdw_report_error(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1570,7 +1563,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	 */
 	if (consume_input && !PQconsumeInput(conn))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, false, query);
+		pgfdw_report_error(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1582,7 +1575,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 					(errmsg("could not get query result due to timeout"),
 					 errcontext("remote SQL command: %s", query)));
 		else
-			pgfdw_report_error(WARNING, NULL, conn, false, query);
+			pgfdw_report_error(WARNING, NULL, conn, query);
 
 		return false;
 	}
@@ -1590,7 +1583,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	/* Issue a warning if not successful. */
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		pgfdw_report_error(WARNING, result, conn, true, query);
+		pgfdw_report_error(WARNING, result, conn, query);
 		return ignore_errors;
 	}
 	PQclear(result);
@@ -1618,17 +1611,12 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 						 PGresult **result,
 						 bool *timed_out)
 {
-	volatile bool failed = false;
-	PGresult   *volatile last_res = NULL;
+	bool		failed = false;
+	PGresult   *last_res = NULL;
+	int			canceldelta = RETRY_CANCEL_TIMEOUT * 2;
 
 	*result = NULL;
 	*timed_out = false;
-
-	/* In what follows, do not leak any PGresults on an error. */
-	PG_TRY();
-	{
-		int			canceldelta = RETRY_CANCEL_TIMEOUT * 2;
-
 		for (;;)
 		{
 			PGresult   *res;
@@ -1706,15 +1694,7 @@ pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 			PQclear(last_res);
 			last_res = res;
 		}
-exit:	;
-	}
-	PG_CATCH();
-	{
-		PQclear(last_res);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
+exit:
 	if (failed)
 		PQclear(last_res);
 	else

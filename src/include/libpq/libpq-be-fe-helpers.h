@@ -279,11 +279,8 @@ libpqsrv_exec_params(PGconn *conn,
 static inline PGresult *
 libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info)
 {
-	PGresult   *volatile lastResult = NULL;
+	PGresult   *lastResult = NULL;
 
-	/* In what follows, do not leak any PGresults on an error. */
-	PG_TRY();
-	{
 		for (;;)
 		{
 			/* Wait for, and collect, the next PGresult. */
@@ -306,14 +303,6 @@ libpqsrv_get_result_last(PGconn *conn, uint32 wait_event_info)
 				PQstatus(conn) == CONNECTION_BAD)
 				break;
 		}
-	}
-	PG_CATCH();
-	{
-		PQclear(lastResult);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
 	return lastResult;
 }
 
