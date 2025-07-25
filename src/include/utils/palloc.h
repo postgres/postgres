@@ -133,6 +133,8 @@ MemoryContextSwitchTo(MemoryContext context)
 /* Registration of memory context reset/delete callbacks */
 extern void MemoryContextRegisterResetCallback(MemoryContext context,
 											   MemoryContextCallback *cb);
+extern void MemoryContextUnregisterResetCallback(MemoryContext context,
+												 MemoryContextCallback *cb);
 
 /*
  * These are like standard strdup() except the copied string is

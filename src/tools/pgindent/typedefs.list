@@ -3757,6 +3757,7 @@ leafSegmentInfo
 leaf_item
 libpq_gettext_func
 libpq_source
+libpqsrv_PGresult
 line_t
 lineno_t
 list_sort_comparator

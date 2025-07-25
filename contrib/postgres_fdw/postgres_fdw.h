@@ -15,7 +15,7 @@
 
 #include "foreign/foreign.h"
 #include "lib/stringinfo.h"
-#include "libpq-fe.h"
+#include "libpq/libpq-be-fe.h"
 #include "nodes/execnodes.h"
 #include "nodes/pathnodes.h"
 #include "utils/relcache.h"

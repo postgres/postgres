@@ -240,7 +240,6 @@ typedef struct PgFdwDirectModifyState
 	PGresult   *result;			/* result for query */
 	int			num_tuples;		/* # of result tuples */
 	int			next_tuple;		/* index of next one to return */
-	MemoryContextCallback result_cb;	/* ensures result will get freed */
 	Relation	resultRel;		/* relcache entry for the target relation */
 	AttrNumber *attnoMap;		/* array of attnums of input user columns */
 	AttrNumber	ctidAttno;		/* attnum of input ctid column */
@@ -2672,17 +2671,6 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	node->fdw_state = dmstate;
 
 	/*
-	 * We use a memory context callback to ensure that the dmstate's PGresult
-	 * (if any) will be released, even if the query fails somewhere that's
-	 * outside our control.  The callback is always armed for the duration of
-	 * the query; this relies on PQclear(NULL) being a no-op.
-	 */
-	dmstate->result_cb.func = (MemoryContextCallbackFunction) PQclear;
-	dmstate->result_cb.arg = NULL;
-	MemoryContextRegisterResetCallback(CurrentMemoryContext,
-									   &dmstate->result_cb);
-
-	/*
 	 * Identify which user to do the remote access as.  This should match what
 	 * ExecCheckPermissions() does.
 	 */
@@ -2829,13 +2817,7 @@ postgresEndDirectModify(ForeignScanState *node)
 		return;
 
 	/* Release PGresult */
-	if (dmstate->result)
-	{
-		PQclear(dmstate->result);
-		dmstate->result = NULL;
-		/* ... and don't forget to disable the callback */
-		dmstate->result_cb.arg = NULL;
-	}
+	PQclear(dmstate->result);
 
 	/* Release remote connection */
 	ReleaseConnection(dmstate->conn);
@@ -4615,19 +4597,19 @@ execute_dml_stmt(ForeignScanState *node)
 
 	/*
 	 * Get the result, and check for success.
-	 *
-	 * We use a memory context callback to ensure that the PGresult will be
-	 * released, even if the query fails somewhere that's outside our control.
-	 * The callback is already registered, just need to fill in its arg.
 	 */
-	Assert(dmstate->result == NULL);
 	dmstate->result = pgfdw_get_result(dmstate->conn);
-	dmstate->result_cb.arg = dmstate->result;
-
 	if (PQresultStatus(dmstate->result) !=
 		(dmstate->has_returning ? PGRES_TUPLES_OK : PGRES_COMMAND_OK))
-		pgfdw_report_error(ERROR, dmstate->result, dmstate->conn, false,
+		pgfdw_report_error(ERROR, dmstate->result, dmstate->conn, true,
 						   dmstate->query);
+
+	/*
+	 * The result potentially needs to survive across multiple executor row
+	 * cycles, so move it to the context where the dmstate is.
+	 */
+	dmstate->result = libpqsrv_PGresultSetParent(dmstate->result,
+												 GetMemoryChunkContext(dmstate));
 
 	/* Get the number of rows affected. */
 	if (dmstate->has_returning)

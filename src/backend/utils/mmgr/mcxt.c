@@ -560,9 +560,7 @@ MemoryContextDeleteChildren(MemoryContext context)
  * the specified context, since that means it will automatically be freed
  * when no longer needed.
  *
- * There is no API for deregistering a callback once registered.  If you
- * want it to not do anything anymore, adjust the state pointed to by its
- * "arg" to indicate that.
+ * Note that callers can assume this cannot fail.
  */
 void
 MemoryContextRegisterResetCallback(MemoryContext context,
@@ -575,6 +573,41 @@ MemoryContextRegisterResetCallback(MemoryContext context,
 	context->reset_cbs = cb;
 	/* Mark the context as non-reset (it probably is already). */
 	context->isReset = false;
+}
+
+/*
+ * MemoryContextUnregisterResetCallback
+ *		Undo the effects of MemoryContextRegisterResetCallback.
+ *
+ * This can be used if a callback's effects are no longer required
+ * at some point before the context has been reset/deleted.  It is the
+ * caller's responsibility to pfree the callback struct (if needed).
+ *
+ * An assertion failure occurs if the callback was not registered.
+ * We could alternatively define that case as a no-op, but that seems too
+ * likely to mask programming errors such as passing the wrong context.
+ */
+void
+MemoryContextUnregisterResetCallback(MemoryContext context,
+									 MemoryContextCallback *cb)
+{
+	MemoryContextCallback *prev,
+			   *cur;
+
+	Assert(MemoryContextIsValid(context));
+
+	for (prev = NULL, cur = context->reset_cbs; cur != NULL;
+		 prev = cur, cur = cur->next)
+	{
+		if (cur != cb)
+			continue;
+		if (prev)
+			prev->next = cur->next;
+		else
+			context->reset_cbs = cur->next;
+		return;
+	}
+	Assert(false);
 }
 
 /*

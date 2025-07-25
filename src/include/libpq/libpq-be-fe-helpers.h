@@ -30,17 +30,7 @@
 #ifndef LIBPQ_BE_FE_HELPERS_H
 #define LIBPQ_BE_FE_HELPERS_H
 
-/*
- * Despite the name, BUILDING_DLL is set only when building code directly part
- * of the backend. Which also is where libpq isn't allowed to be
- * used. Obviously this doesn't protect against libpq-fe.h getting included
- * otherwise, but perhaps still protects against a few mistakes...
- */
-#ifdef BUILDING_DLL
-#error "libpq may not be used code directly built into the backend"
-#endif
-
-#include "libpq-fe.h"
+#include "libpq/libpq-be-fe.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
@@ -462,13 +452,21 @@ exit:	;
  * This function is intended to be set via PQsetNoticeReceiver() so that
  * NOTICE, WARNING, and similar messages from the connection are reported via
  * ereport(), instead of being printed to stderr.
+ *
+ * Because this will be called from libpq with a "real" (not wrapped)
+ * PGresult, we need to temporarily ignore libpq-be-fe.h's wrapper macros
+ * for PGresult and also PQresultErrorMessage, and put back the wrappers
+ * afterwards.  That's not pretty, but there seems no better alternative.
  */
+#undef PGresult
+#undef PQresultErrorMessage
+
 static inline void
 libpqsrv_notice_receiver(void *arg, const PGresult *res)
 {
-	char	   *message;
+	const char *message;
 	int			len;
-	char	   *prefix = (char *) arg;
+	const char *prefix = (const char *) arg;
 
 	/*
 	 * Trim the trailing newline from the message text returned from
@@ -483,5 +481,8 @@ libpqsrv_notice_receiver(void *arg, const PGresult *res)
 	ereport(LOG,
 			errmsg_internal("%s: %.*s", prefix, len, message));
 }
+
+#define PGresult libpqsrv_PGresult
+#define PQresultErrorMessage libpqsrv_PQresultErrorMessage
 
 #endif							/* LIBPQ_BE_FE_HELPERS_H */
