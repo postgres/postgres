@@ -162,13 +162,13 @@ nav:
   - get-help.md
   - "Features": features.md 
   - "Overview":
-    - "What is Transparent Data Encryption (TDE)?":
-      - "TDE overview": index/index.md
-      - "TDE benefits": index/how-tde-helps.md
-      - "How TDE works": index/how-does-tde-work.md
+    - "About Transparent Data Encryption": index/about-tde.md
+    - "About pg_tde": 
+      - "Benefits of pg_tde": index/how-tde-helps.md
+      - "How pg_tde works": index/how-does-tde-work.md
       - "Encrypted data scope": index/tde-encrypts.md
-      - "Table access methods and TDE": index/table-access-method.md
-    - "Limitations of TDE": index/tde-limitations.md
+      - "Table access methods and pg_tde": index/table-access-method.md
+    - "Limitations of pg_tde": index/tde-limitations.md
     - "Versions and supported PostgreSQL deployments": index/supported-versions.md
   - "Get started":
     - "1. Install pg_tde": install.md
@@ -176,25 +176,25 @@ nav:
     - "1.2 Via yum": yum.md   
     - "2. Configure pg_tde": setup.md
     - "2.1 Configure Key Management (KMS)": 
-      - "2.1 Configure Key Management (KMS)": global-key-provider-configuration/index.md
-      - "KMIP Configuration": global-key-provider-configuration/kmip-server.md
-      - "Fortanix Configuration": global-key-provider-configuration/kmip-fortanix.md  
-      - "Vault Configuration": global-key-provider-configuration/vault.md
-      - "Thales Configuration": global-key-provider-configuration/kmip-thales.md
-      - "Using OpenBao as a Key Provider": global-key-provider-configuration/kmip-openbao.md
-      - "Keyring File Configuration": global-key-provider-configuration/keyring.md
-    - "2.2 Global Principal Key Configuration": global-key-provider-configuration/set-principal-key.md
-    - "3. Validate Encryption with pg_tde": test.md
-    - "4. Configure WAL Encryption (tech preview)": wal-encryption.md
-  - "Technical Reference":
-    - "Overview": advanced-topics/index.md
-    - "Architecture": architecture/index.md
+      - "Key management overview": global-key-provider-configuration/overview.md
+      - "KMIP configuration": global-key-provider-configuration/kmip-server.md
+      - "Fortanix configuration": global-key-provider-configuration/kmip-fortanix.md  
+      - "Vault configuration": global-key-provider-configuration/vault.md
+      - "Thales configuration": global-key-provider-configuration/kmip-thales.md
+      - "Using OpenBao as a key provider": global-key-provider-configuration/kmip-openbao.md
+      - "Keyring file configuration": global-key-provider-configuration/keyring.md
+    - "2.2 Global Principal Key configuration": global-key-provider-configuration/set-principal-key.md
+    - "3. Validate encryption with pg_tde": test.md
+    - "4. Configure WAL encryption (tech preview)": wal-encryption.md
+  - "Technical reference":
+    - "Overview": advanced-topics/tech-reference.md
+    - "Architecture": architecture/architecture.md
     - "GUC variables": variables.md
     - "Functions": functions.md
     - "Streaming Replication with tde_heap": replication.md
-  - "TDE Operations":
+  - "TDE operations":
     - "pg_tde CLI Tools":
-      - "CLI Overview": command-line-tools/index.md
+      - "Overview": command-line-tools/cli-tools.md
       - "pg_tde_change_key_provider": command-line-tools/pg-tde-change-key-provider.md
       - "pg_waldump": command-line-tools/pg-waldump.md
       - "pg_checksums": command-line-tools/pg-tde-checksums.md 

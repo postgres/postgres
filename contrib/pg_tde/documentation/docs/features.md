@@ -19,4 +19,4 @@ The following features are available for the extension:
 * Table-level granularity for encryption and access control
 * Multiple [Key management options](global-key-provider-configuration/index.md)
 
-[What is Transparent Data Encryption (TDE)?](index/index.md){.md-button} [Install pg_tde to get started](install.md){.md-button}
+[Learn more about TDE and pg_tde :material-arrow-right:](index/about-tde.md){.md-button} [Get started with installation :material-arrow-right:](install.md){.md-button}

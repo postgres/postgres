@@ -167,7 +167,7 @@ Key provider configuration or location may change. For example, a service is mov
 
 In certain cases you can't use SQL functions to manage key providers. For example, if the key provider changed while the server wasn't running and is therefore unaware of these changes. The startup can fail if it needs to access the encryption keys.
 
-For such situations, `pg_tde` also provides [command line tools](../command-line-tools/index.md) to recover the database.
+For such situations, `pg_tde` also provides [command line tools](../command-line-tools/cli-tools.md) to recover the database.
 
 ### Sensitive key provider information
 

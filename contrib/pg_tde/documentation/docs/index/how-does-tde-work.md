@@ -1,4 +1,4 @@
-# How TDE Works
+# How pg_tde works
 
 To encrypt the data, two types of keys are used:
 
@@ -7,7 +7,7 @@ To encrypt the data, two types of keys are used:
 
 !!! note
 
-    For more information on managing and storing principal keys externally, see [Configure Global Key Provider](../global-key-provider-configuration/index.md).
+    For more information on managing and storing principal keys externally, see [Configure Global Key Provider](../global-key-provider-configuration/overview.md).
 
 You have the following options to store and manage principal keys externally:
 
@@ -24,4 +24,4 @@ The internal key itself is encrypted using the principal key. The principal key 
 
 Similarly when the user queries the encrypted table, the principal key is retrieved from the key store to decrypt the internal key. Then the same unique internal key for that table is used to decrypt the data, and unencrypted data gets returned to the user. So, effectively, every TDE table has a unique key, and each table key is encrypted using the principal key.
 
-[Encrypted Data Scope](tde-encrypts.md){.md-button}
+[Understand the encrypted data scope :material-arrow-right:](tde-encrypts.md){.md-button}

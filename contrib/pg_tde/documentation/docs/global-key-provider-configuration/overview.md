@@ -1,4 +1,4 @@
-# Configure Key Management (KMS)
+# Key management overview
 
 In production environments, storing encryption keys locally on the PostgreSQL server can introduce security risks. To enhance security, `pg_tde` supports integration with external Key Management Systems (KMS) through a Global Key Provider interface.
 
@@ -13,4 +13,6 @@ To use an external KMS with `pg_tde`, follow these two steps:
 
 Select your prefered configuration from the links below:
 
-[KMIP Configuration :material-arrow-right:](kmip-server.md){.md-button} [Vault Configuration :material-arrow-right:](vault.md){.md-button} [Keyring File Configuration (not recommended) :material-arrow-right:](keyring.md){.md-button}
+[KMIP Configuration :material-arrow-right:](kmip-server.md){.md-button}
+[Vault Configuration :material-arrow-right:](vault.md){.md-button}
+[Keyring File Configuration (not recommended) :material-arrow-right:](keyring.md){.md-button}

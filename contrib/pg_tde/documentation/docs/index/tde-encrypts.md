@@ -1,4 +1,4 @@
-# Encrypted Data Scope
+# Encrypted data scope
 
 `pg_tde` encrypts the following components:
 
@@ -7,6 +7,4 @@
 * **Write-Ahead Log (WAL) data** for the entire database cluster. This includes WAL data in encrypted and non-encrypted tables.
 * **Indexes** on encrypted tables.
 
-!!!
-
-[Table Access Methods and TDE](table-access-method.md){.md-button}
+[Check out the table access methods :material-arrow-right:](table-access-method.md){.md-button}

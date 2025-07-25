@@ -1,4 +1,4 @@
-# Table Access Methods and TDE
+# Table Access Methods and pg_tde
 
 A table access method is the way how PostgreSQL stores the data in a table. The default table access method is `heap`. PostgreSQL organizes data in a heap structure, meaning there is no particular order to the rows in the table. Each row is stored independently and identified by its unique row identifier (TID).
 
@@ -28,7 +28,7 @@ CREATE TABLE table_name (
 ) USING tde_heap;
 ```
 
-### How tde_heap works
+### How tde_heap works with pg_tde
 
 The `tde_heap` access method works on top of the default `heap` access method and is a marker to point which tables require encryption. It uses the custom storage manager TDE SMGR, which becomes active only after you installed the `pg_tde` extension.
 
@@ -88,4 +88,4 @@ Here is how you can set the new default table access method:
     SELECT pg_reload_conf();
     ```
 
-[Limitations of TDE](tde-limitations.md){.md-button}
+[Understand pg_tde's limitations :material-arrow-right:](tde-limitations.md){.md-button}

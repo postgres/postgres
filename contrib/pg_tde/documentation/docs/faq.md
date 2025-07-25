@@ -142,7 +142,7 @@ You must restart the database in the following cases to apply the changes:
 * after you enabled the `pg_tde` extension
 * when enabling WAL encryption, which is currently in beta. **Do not enable this feature in production environments**.
 
-After that, no database restart is required. When you create or alter the table using the `tde_heap` access method, the files are marked as those that require encryption. The encryption happens at the storage manager level, before a transaction is written to disk. Read more about [how tde_heap works](index/table-access-method.md#how-tde_heap-works).
+After that, no database restart is required. When you create or alter the table using the `tde_heap` access method, the files are marked as those that require encryption. The encryption happens at the storage manager level, before a transaction is written to disk. Read more about [how tde_heap works](index/table-access-method.md#how-tde_heap-works-with-pg_tde).
 
 ## What happens to my data if I lose a principal key?
 

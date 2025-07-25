@@ -2,9 +2,9 @@
 
 The steps below describe how to set up multi-tenancy with `pg_tde`. Multi-tenancy allows you to encrypt different databases with different keys. This provides granular control over data and enables you to introduce different security policies and access controls for each database so that only authorized users of specific databases have access to the data.
 
-If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Configure pg_tde](../setup.md) section.
+If you don't need multi-tenancy, use the global key provider. See the configuration steps from the [Configure pg_tde :octicons-link-external-16:](../setup.md) section.
 
-For how to enable WAL encryption, refer to the [Configure WAL Encryption](../wal-encryption.md) section.
+For how to enable WAL encryption, refer to the [Configure WAL Encryption :octicons-link-external-16:](../wal-encryption.md) section.
 
 --8<-- "kms-considerations.md"
 
@@ -32,7 +32,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
        sudo systemctl restart postgresql-17
        ```
 
-3. Create the extension using the [CREATE EXTENSION](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
+3. Create the extension using the [CREATE EXTENSION :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
 
     ```
     CREATE EXTENSION pg_tde;
@@ -50,7 +50,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
 ## Key provider configuration
 
-You must do these steps for every database where you have created the extension. For more information on configurations, please see the [Configure Key Management (KMS)](../global-key-provider-configuration/index.md) topic.
+You must do these steps for every database where you have created the extension. For more information on configurations, please see the [Configure Key Management (KMS) :octicons-link-external-16:](../global-key-provider-configuration/overview.md) topic.
 
 1. Set up a key provider.
 
@@ -58,7 +58,7 @@ You must do these steps for every database where you have created the extension.
 
         The KMIP server setup is out of scope of this document. 
 
-        Make sure you have obtained the root certificate for the KMIP server and the keypair for the client. The client key needs permissions to create / read keys on the server. Find the [configuration guidelines for the HashiCorp Vault Enterprise KMIP Secrets Engine](https://developer.hashicorp.com/vault/tutorials/enterprise/kmip-engine).
+        Make sure you have obtained the root certificate for the KMIP server and the keypair for the client. The client key needs permissions to create / read keys on the server. Find the [configuration guidelines for the HashiCorp Vault Enterprise KMIP Secrets Engine :octicons-link-external-16:](https://developer.hashicorp.com/vault/tutorials/enterprise/kmip-engine).
 
         For testing purposes, you can use the PyKMIP server which enables you to set up required certificates. To use a real KMIP server, make sure to obtain the valid certificates issued by the key management appliance.
 

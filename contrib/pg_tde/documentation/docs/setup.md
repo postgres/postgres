@@ -65,4 +65,4 @@ psql -d template1 -c 'CREATE EXTENSION pg_tde;'
 
 ## Next steps
 
-[Configure Key Management (KMS) :material-arrow-right:](global-key-provider-configuration/index.md){.md-button}
+[Configure Key Management (KMS) :material-arrow-right:](global-key-provider-configuration/overview.md){.md-button}

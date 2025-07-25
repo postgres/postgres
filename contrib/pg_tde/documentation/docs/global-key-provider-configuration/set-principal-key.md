@@ -1,4 +1,4 @@
-# Global Principal Key Configuration
+# Global Principal Key configuration
 
 You can configure a default principal key using a global key provider. This key will be used by all databases that do not have their own encryption keys configured. The function **both** sets the principal key and rotates internal keys as needed.
 

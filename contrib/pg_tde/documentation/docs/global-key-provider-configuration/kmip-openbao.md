@@ -1,4 +1,4 @@
-# Using OpenBao as a Key Provider
+# Using OpenBao as a key provider
 
 You can configure `pg_tde` to use OpenBao as a global key provider for managing encryption keys securely.
 

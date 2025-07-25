@@ -1,4 +1,6 @@
-# TDE Benefits
+# Benefits of pg_tde
+
+The benefits of using `pg_tde` are outlined below for different users and organizations.
 
 ## Benefits for organizations
 
@@ -11,10 +13,10 @@
 * **Operational simplicity:** Works transparently without requiring major application changes.
 * **Defense in depth:** Adds another layer of protection to existing controls like TLS (encryption in transit), access control, and role-based permissions.
 
-When combined with the external Key Management Systems (KMS), TDE enables centralized control, auditing, and rotation of encryption keys—critical for secure production environments.
+When combined with the external Key Management Systems (KMS), `pg_tde` enables centralized control, auditing, and rotation of encryption keys—critical for secure production environments.
 
 !!! admonition "See also"
 
-    Percona Blog: [Transparent Data Encryption (TDE)](https://www.percona.com/blog/transparent-data-encryption-tde/)
+    You can find more information on Transparent Data Encryption (TDE) in [this article](https://www.percona.com/blog/transparent-data-encryption-tde/).
     
-[How TDE works](how-does-tde-work.md){.md-button}
+[Learn how pg_tde works :material-arrow-right:](how-does-tde-work.md){.md-button}

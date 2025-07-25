@@ -1,4 +1,4 @@
-# Keyring File Configuration
+# Keyring file configuration
 
 This setup is intended for development and stores the keys unencrypted in the specified data file.
 

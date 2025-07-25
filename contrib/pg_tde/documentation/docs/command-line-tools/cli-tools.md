@@ -1,4 +1,4 @@
-# pg_tde CLI Tools
+# Overview of pg_tde CLI tools
 
 The `pg_tde` extension introduces new command-line utilities and extends some existing PostgreSQL tools to support encrypted WAL and tables. These include:
 

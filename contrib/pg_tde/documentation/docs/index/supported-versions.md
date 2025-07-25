@@ -1,4 +1,4 @@
-# Versions and Supported PostgreSQL Deployments
+# Versions and Supported PostgreSQL deployments
 
 The `pg_tde` extension is available for [Percona Server for PostgreSQL 17.x](https://docs.percona.com/postgresql/17/postgresql-server.html), an open source, drop-in replacement for PostgreSQL Community. This version provides the `tde_heap` access method and offers [full encryption capabilities](../features.md), including encryption of tables, indexes and WAL data.
 
@@ -18,4 +18,4 @@ By using our PostgreSQL distribution, you get:
 
 Still unsure which deployment fits your needs? [Contact our experts](https://www.percona.com/about/contact) to find the best solution for your environment.
 
-[Get Started: Install pg_tde :material-arrow-right:](../install.md){.md-button}
+[Get started with installation :material-arrow-right:](../install.md){.md-button}

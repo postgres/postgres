@@ -117,4 +117,4 @@ Before enabling WAL encryption, follow the steps below to create a principal key
 Now WAL files start to be encrypted for both encrypted and unencrypted tables.
 
 For more technical references related to architecture, variables or functions, see:
-[Technical Reference](advanced-topics/index.md){.md-button}
+[Technical Reference](advanced-topics/tech-reference.md){.md-button}

@@ -1,4 +1,4 @@
-# KMIP Configuration
+# KMIP configuration
 
 To use a Key Management Interoperability Protocol (KMIP) server with `pg_tde`, you must configure it as a global key provider. This setup enables `pg_tde` to securely fetch and manage encryption keys from a centralized key management appliance.
 
