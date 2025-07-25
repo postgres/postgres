@@ -195,6 +195,7 @@ struct HASHHDR
 	long		ssize;			/* segment size --- must be power of 2 */
 	int			sshift;			/* segment shift = log2(ssize) */
 	int			nelem_alloc;	/* number of entries to allocate at once */
+	bool		isfixed;		/* if true, don't enlarge */
 
 #ifdef HASH_STATISTICS
 
@@ -227,7 +228,6 @@ struct HTAB
 	MemoryContext hcxt;			/* memory context if default allocator used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
-	bool		isfixed;		/* if true, don't enlarge */
 
 	/* freezing a shared table isn't allowed, so we can keep state here */
 	bool		frozen;			/* true = no more inserts allowed */
@@ -618,8 +618,10 @@ hash_create(const char *tabname, long nelem, const HASHCTL *info, int flags)
 		}
 	}
 
+	/* Set isfixed if requested, but not till after we build initial entries */
 	if (flags & HASH_FIXED_SIZE)
-		hashp->isfixed = true;
+		hctl->isfixed = true;
+
 	return hashp;
 }
 
@@ -643,6 +645,8 @@ hdefault(HTAB *hashp)
 
 	hctl->ssize = DEF_SEGSIZE;
 	hctl->sshift = DEF_SEGSIZE_SHIFT;
+
+	hctl->isfixed = false;		/* can be enlarged */
 
 #ifdef HASH_STATISTICS
 	hctl->accesses = hctl->collisions = 0;
@@ -1713,7 +1717,7 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 	HASHELEMENT *prevElement;
 	int			i;
 
-	if (hashp->isfixed)
+	if (hctl->isfixed)
 		return false;
 
 	/* Each element has a HASHELEMENT header plus user data. */
