@@ -318,6 +318,11 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>		opt_qualified_name
 %type <boolean>		opt_concurrently
 %type <dbehavior>	opt_drop_behavior
+%type <list>		opt_utility_option_list
+%type <list>		utility_option_list
+%type <defelt>		utility_option_elem
+%type <str>			utility_option_name
+%type <node>		utility_option_arg
 
 %type <node>	alter_column_default opclass_item opclass_drop alter_using
 %type <ival>	add_drop opt_asc_desc opt_nulls_order
@@ -338,10 +343,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				create_extension_opt_item alter_extension_opt_item
 
 %type <ival>	opt_lock lock_type cast_context
-%type <str>		utility_option_name
-%type <defelt>	utility_option_elem
-%type <list>	utility_option_list
-%type <node>	utility_option_arg
 %type <defelt>	drop_option
 %type <boolean>	opt_or_replace opt_no
 				opt_grant_grant_option
@@ -556,7 +557,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>	generic_option_list alter_generic_option_list
 
 %type <ival>	reindex_target_relation reindex_target_all
-%type <list>	opt_reindex_option_list
 
 %type <node>	copy_generic_opt_arg copy_generic_opt_arg_list_item
 %type <defelt>	copy_generic_opt_elem
@@ -1139,6 +1139,41 @@ opt_drop_behavior:
 			CASCADE							{ $$ = DROP_CASCADE; }
 			| RESTRICT						{ $$ = DROP_RESTRICT; }
 			| /* EMPTY */					{ $$ = DROP_RESTRICT; /* default */ }
+		;
+
+opt_utility_option_list:
+			'(' utility_option_list ')'		{ $$ = $2; }
+			| /* EMPTY */					{ $$ = NULL; }
+		;
+
+utility_option_list:
+			utility_option_elem
+				{
+					$$ = list_make1($1);
+				}
+			| utility_option_list ',' utility_option_elem
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+utility_option_elem:
+			utility_option_name utility_option_arg
+				{
+					$$ = makeDefElem($1, $2, @1);
+				}
+		;
+
+utility_option_name:
+			NonReservedWord					{ $$ = $1; }
+			| analyze_keyword				{ $$ = "analyze"; }
+			| FORMAT_LA						{ $$ = "format"; }
+		;
+
+utility_option_arg:
+			opt_boolean_or_string			{ $$ = (Node *) makeString($1); }
+			| NumericOnly					{ $$ = (Node *) $1; }
+			| /* EMPTY */					{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -2028,18 +2063,12 @@ constraints_set_mode:
  * Checkpoint statement
  */
 CheckPointStmt:
-			CHECKPOINT
+			CHECKPOINT opt_utility_option_list
 				{
 					CheckPointStmt *n = makeNode(CheckPointStmt);
 
 					$$ = (Node *) n;
-				}
-			| CHECKPOINT '(' utility_option_list ')'
-				{
-					CheckPointStmt *n = makeNode(CheckPointStmt);
-
-					$$ = (Node *) n;
-					n->options = $3;
+					n->options = $2;
 				}
 		;
 
@@ -9354,7 +9383,7 @@ DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_d
  *****************************************************************************/
 
 ReindexStmt:
-			REINDEX opt_reindex_option_list reindex_target_relation opt_concurrently qualified_name
+			REINDEX opt_utility_option_list reindex_target_relation opt_concurrently qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 
@@ -9367,7 +9396,7 @@ ReindexStmt:
 											makeDefElem("concurrently", NULL, @4));
 					$$ = (Node *) n;
 				}
-			| REINDEX opt_reindex_option_list SCHEMA opt_concurrently name
+			| REINDEX opt_utility_option_list SCHEMA opt_concurrently name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 
@@ -9380,7 +9409,7 @@ ReindexStmt:
 											makeDefElem("concurrently", NULL, @4));
 					$$ = (Node *) n;
 				}
-			| REINDEX opt_reindex_option_list reindex_target_all opt_concurrently opt_single_name
+			| REINDEX opt_utility_option_list reindex_target_all opt_concurrently opt_single_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 
@@ -9401,10 +9430,6 @@ reindex_target_relation:
 reindex_target_all:
 			SYSTEM_P				{ $$ = REINDEX_OBJECT_SYSTEM; }
 			| DATABASE				{ $$ = REINDEX_OBJECT_DATABASE; }
-		;
-opt_reindex_option_list:
-			'(' utility_option_list ')'				{ $$ = $2; }
-			| /* EMPTY */							{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -11903,13 +11928,13 @@ ClusterStmt:
 					n->params = $3;
 					$$ = (Node *) n;
 				}
-			| CLUSTER '(' utility_option_list ')'
+			| CLUSTER opt_utility_option_list
 				{
 					ClusterStmt *n = makeNode(ClusterStmt);
 
 					n->relation = NULL;
 					n->indexname = NULL;
-					n->params = $3;
+					n->params = $2;
 					$$ = (Node *) n;
 				}
 			/* unparenthesized VERBOSE kept for pre-14 compatibility */
@@ -11919,21 +11944,18 @@ ClusterStmt:
 
 					n->relation = $3;
 					n->indexname = $4;
-					n->params = NIL;
 					if ($2)
-						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
+						n->params = list_make1(makeDefElem("verbose", NULL, @2));
 					$$ = (Node *) n;
 				}
 			/* unparenthesized VERBOSE kept for pre-17 compatibility */
-			| CLUSTER opt_verbose
+			| CLUSTER VERBOSE
 				{
 					ClusterStmt *n = makeNode(ClusterStmt);
 
 					n->relation = NULL;
 					n->indexname = NULL;
-					n->params = NIL;
-					if ($2)
-						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
+					n->params = list_make1(makeDefElem("verbose", NULL, @2));
 					$$ = (Node *) n;
 				}
 			/* kept for pre-8.3 compatibility */
@@ -11943,9 +11965,8 @@ ClusterStmt:
 
 					n->relation = $5;
 					n->indexname = $3;
-					n->params = NIL;
 					if ($2)
-						n->params = lappend(n->params, makeDefElem("verbose", NULL, @2));
+						n->params = list_make1(makeDefElem("verbose", NULL, @2));
 					$$ = (Node *) n;
 				}
 		;
@@ -11996,62 +12017,29 @@ VacuumStmt: VACUUM opt_full opt_freeze opt_verbose opt_analyze opt_vacuum_relati
 				}
 		;
 
-AnalyzeStmt: analyze_keyword opt_verbose opt_vacuum_relation_list
+AnalyzeStmt: analyze_keyword opt_utility_option_list opt_vacuum_relation_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 
-					n->options = NIL;
-					if ($2)
-						n->options = lappend(n->options,
-											 makeDefElem("verbose", NULL, @2));
+					n->options = $2;
 					n->rels = $3;
 					n->is_vacuumcmd = false;
 					$$ = (Node *) n;
 				}
-			| analyze_keyword '(' utility_option_list ')' opt_vacuum_relation_list
+			| analyze_keyword VERBOSE opt_vacuum_relation_list
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 
-					n->options = $3;
-					n->rels = $5;
+					n->options = list_make1(makeDefElem("verbose", NULL, @2));
+					n->rels = $3;
 					n->is_vacuumcmd = false;
 					$$ = (Node *) n;
-				}
-		;
-
-utility_option_list:
-			utility_option_elem
-				{
-					$$ = list_make1($1);
-				}
-			| utility_option_list ',' utility_option_elem
-				{
-					$$ = lappend($1, $3);
 				}
 		;
 
 analyze_keyword:
 			ANALYZE
 			| ANALYSE /* British */
-		;
-
-utility_option_elem:
-			utility_option_name utility_option_arg
-				{
-					$$ = makeDefElem($1, $2, @1);
-				}
-		;
-
-utility_option_name:
-			NonReservedWord							{ $$ = $1; }
-			| analyze_keyword						{ $$ = "analyze"; }
-			| FORMAT_LA								{ $$ = "format"; }
-		;
-
-utility_option_arg:
-			opt_boolean_or_string					{ $$ = (Node *) makeString($1); }
-			| NumericOnly							{ $$ = (Node *) $1; }
-			| /* EMPTY */							{ $$ = NULL; }
 		;
 
 opt_analyze:
