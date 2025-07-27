@@ -144,15 +144,6 @@ pgstat_get_slru_index(const char *name)
 }
 
 /*
- * Check if there are any SLRU stats entries waiting for flush.
- */
-bool
-pgstat_slru_have_pending_cb(void)
-{
-	return have_slrustats;
-}
-
-/*
  * Flush out locally pending SLRU stats entries
  *
  * If nowait is true, this function returns false on lock failure. Otherwise
@@ -247,6 +238,7 @@ get_slru_entry(int slru_idx)
 	Assert((slru_idx >= 0) && (slru_idx < SLRU_NUM_ELEMENTS));
 
 	have_slrustats = true;
+	pgstat_report_fixed = true;
 
 	return &pending_SLRUStats[slru_idx];
 }
