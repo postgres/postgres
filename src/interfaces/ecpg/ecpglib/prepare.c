@@ -603,7 +603,10 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 		prep = ecpg_find_prepared_statement(stmtID, con, NULL);
 		/* This prepared name doesn't exist on this connection. */
 		if (!prep && !prepare_common(lineno, con, stmtID, query))
+		{
+			ecpg_free(*name);
 			return false;
+		}
 
 	}
 	else
@@ -619,11 +622,17 @@ ecpg_auto_prepare(int lineno, const char *connection_name, const int compat, cha
 			return false;
 
 		if (!ECPGprepare(lineno, connection_name, 0, stmtID, query))
+		{
+			ecpg_free(*name);
 			return false;
+		}
 
 		entNo = AddStmtToCache(lineno, stmtID, connection_name, compat, query);
 		if (entNo < 0)
+		{
+			ecpg_free(*name);
 			return false;
+		}
 	}
 
 	/* increase usage counter */
