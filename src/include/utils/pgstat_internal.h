@@ -295,18 +295,11 @@ typedef struct PgStat_KindInfo
 	 *
 	 * Returns true if some of the stats could not be flushed, due to lock
 	 * contention for example. Optional.
+	 *
+	 * "pgstat_report_fixed" needs to be set to trigger the flush of pending
+	 * stats.
 	 */
 	bool		(*flush_static_cb) (bool nowait);
-
-	/*
-	 * For fixed-numbered or variable-numbered statistics: Check for pending
-	 * stats in need of flush with flush_static_cb, when these do not use
-	 * PgStat_EntryRef->pending.
-	 *
-	 * Returns true if there are any stats pending for flush, triggering
-	 * flush_static_cb. Optional.
-	 */
-	bool		(*have_static_pending_cb) (void);
 
 	/*
 	 * For fixed-numbered statistics: Reset All.
@@ -627,7 +620,6 @@ extern void pgstat_archiver_snapshot_cb(void);
 
 extern bool pgstat_flush_backend(bool nowait, bits32 flags);
 extern bool pgstat_backend_flush_cb(bool nowait);
-extern bool pgstat_backend_have_pending_cb(void);
 extern void pgstat_backend_reset_timestamp_cb(PgStatShared_Common *header,
 											  TimestampTz ts);
 
@@ -676,7 +668,6 @@ extern bool pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
 
 extern void pgstat_flush_io(bool nowait);
 
-extern bool pgstat_io_have_pending_cb(void);
 extern bool pgstat_io_flush_cb(bool nowait);
 extern void pgstat_io_init_shmem_cb(void *stats);
 extern void pgstat_io_reset_all_cb(TimestampTz ts);
@@ -738,7 +729,6 @@ extern PgStatShared_Common *pgstat_init_entry(PgStat_Kind kind,
  * Functions in pgstat_slru.c
  */
 
-extern bool pgstat_slru_have_pending_cb(void);
 extern bool pgstat_slru_flush_cb(bool nowait);
 extern void pgstat_slru_init_shmem_cb(void *stats);
 extern void pgstat_slru_reset_all_cb(TimestampTz ts);
@@ -750,7 +740,6 @@ extern void pgstat_slru_snapshot_cb(void);
  */
 
 extern void pgstat_wal_init_backend_cb(void);
-extern bool pgstat_wal_have_pending_cb(void);
 extern bool pgstat_wal_flush_cb(bool nowait);
 extern void pgstat_wal_init_shmem_cb(void *stats);
 extern void pgstat_wal_reset_all_cb(TimestampTz ts);
@@ -778,8 +767,23 @@ extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, uint64 obji
  * Variables in pgstat.c
  */
 
-extern PGDLLIMPORT PgStat_LocalState pgStatLocal;
+/*
+ * Track if *any* pending fixed-numbered statistics should be flushed to
+ * shared memory.
+ *
+ * This flag can be switched to true by fixed-numbered statistics to let
+ * pgstat_report_stat() know if it needs to go through one round of
+ * reports, calling flush_static_cb for each fixed-numbered statistics
+ * kind.  When this flag is not set, pgstat_report_stat() is able to do
+ * a fast exit, knowing that there are no pending fixed-numbered statistics.
+ *
+ * Statistics callbacks should never reset this flag; pgstat_report_stat()
+ * is in charge of doing that.
+ */
+extern PGDLLIMPORT bool pgstat_report_fixed;
 
+/* Backend-local stats state */
+extern PGDLLIMPORT PgStat_LocalState pgStatLocal;
 
 /*
  * Implementation of inline functions declared above.

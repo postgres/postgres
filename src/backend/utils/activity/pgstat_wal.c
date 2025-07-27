@@ -72,6 +72,15 @@ pgstat_fetch_stat_wal(void)
 }
 
 /*
+ * To determine whether WAL usage happened.
+ */
+static inline bool
+pgstat_wal_have_pending(void)
+{
+	return pgWalUsage.wal_records != prevWalUsage.wal_records;
+}
+
+/*
  * Calculate how much WAL usage counters have increased by subtracting the
  * previous counters from the current ones.
  *
@@ -92,7 +101,7 @@ pgstat_wal_flush_cb(bool nowait)
 	 * This function can be called even if nothing at all has happened. Avoid
 	 * taking lock for nothing in that case.
 	 */
-	if (!pgstat_wal_have_pending_cb())
+	if (!pgstat_wal_have_pending())
 		return false;
 
 	/*
@@ -134,15 +143,6 @@ pgstat_wal_init_backend_cb(void)
 	 * prevWalUsage from pgWalUsage.
 	 */
 	prevWalUsage = pgWalUsage;
-}
-
-/*
- * To determine whether WAL usage happened.
- */
-bool
-pgstat_wal_have_pending_cb(void)
-{
-	return pgWalUsage.wal_records != prevWalUsage.wal_records;
 }
 
 void
