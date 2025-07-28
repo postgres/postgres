@@ -1730,7 +1730,7 @@ xml_doctype_in_content(const xmlChar *str)
  * xmloption_arg, but a DOCTYPE node in the input can force DOCUMENT mode).
  *
  * If parsed_nodes isn't NULL and we parse in CONTENT mode, the list
- * of parsed nodes from the xmlParseInNodeContext call will be returned
+ * of parsed nodes from the xmlParseBalancedChunkMemory call will be returned
  * to *parsed_nodes.  (It is caller's responsibility to free that.)
  *
  * Errors normally result in ereport(ERROR), but if escontext is an
@@ -1756,6 +1756,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlParserCtxtPtr ctxt = NULL;
 	volatile xmlDocPtr doc = NULL;
+	volatile int save_keep_blanks = -1;
 
 	/*
 	 * This step looks annoyingly redundant, but we must do it to have a
@@ -1783,7 +1784,6 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 	PG_TRY();
 	{
 		bool		parse_as_document = false;
-		int			options;
 		int			res_code;
 		size_t		count = 0;
 		xmlChar    *version = NULL;
@@ -1814,18 +1814,6 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 				parse_as_document = true;
 		}
 
-		/*
-		 * Select parse options.
-		 *
-		 * Note that here we try to apply DTD defaults (XML_PARSE_DTDATTR)
-		 * according to SQL/XML:2008 GR 10.16.7.d: 'Default values defined by
-		 * internal DTD are applied'.  As for external DTDs, we try to support
-		 * them too (see SQL/XML:2008 GR 10.16.7.e), but that doesn't really
-		 * happen because xmlPgEntityLoader prevents it.
-		 */
-		options = XML_PARSE_NOENT | XML_PARSE_DTDATTR
-			| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS);
-
 		/* initialize output parameters */
 		if (parsed_xmloptiontype != NULL)
 			*parsed_xmloptiontype = parse_as_document ? XMLOPTION_DOCUMENT :
@@ -1835,10 +1823,25 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 
 		if (parse_as_document)
 		{
+			int			options;
+
+			/* set up parser context used by xmlCtxtReadDoc */
 			ctxt = xmlNewParserCtxt();
 			if (ctxt == NULL || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 							"could not allocate parser context");
+
+			/*
+			 * Select parse options.
+			 *
+			 * Note that here we try to apply DTD defaults (XML_PARSE_DTDATTR)
+			 * according to SQL/XML:2008 GR 10.16.7.d: 'Default values defined
+			 * by internal DTD are applied'.  As for external DTDs, we try to
+			 * support them too (see SQL/XML:2008 GR 10.16.7.e), but that
+			 * doesn't really happen because xmlPgEntityLoader prevents it.
+			 */
+			options = XML_PARSE_NOENT | XML_PARSE_DTDATTR
+				| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS);
 
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
 								 NULL,	/* no URL */
@@ -1861,10 +1864,7 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 		}
 		else
 		{
-			xmlNodePtr	root;
-			xmlNodePtr	oldroot PG_USED_FOR_ASSERTS_ONLY;
-
-			/* set up document with empty root node to be the context node */
+			/* set up document that xmlParseBalancedChunkMemory will add to */
 			doc = xmlNewDoc(version);
 			if (doc == NULL || xmlerrcxt->err_occurred)
 				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
@@ -1877,36 +1877,23 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 							"could not allocate XML document");
 			doc->standalone = standalone;
 
-			root = xmlNewNode(NULL, (const xmlChar *) "content-root");
-			if (root == NULL || xmlerrcxt->err_occurred)
-				xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
-							"could not allocate xml node");
-
-			/*
-			 * This attaches root to doc, so we need not free it separately;
-			 * and there can't yet be any old root to free.
-			 */
-			oldroot = xmlDocSetRootElement(doc, root);
-			Assert(oldroot == NULL);
+			/* set parse options --- have to do this the ugly way */
+			save_keep_blanks = xmlKeepBlanksDefault(preserve_whitespace ? 1 : 0);
 
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
 				xmlNodePtr	node_list = NULL;
-				xmlParserErrors res;
 
-				res = xmlParseInNodeContext(root,
-											(char *) utf8string + count,
-											strlen((char *) utf8string + count),
-											options,
-											&node_list);
-
-				if (res != XML_ERR_OK || xmlerrcxt->err_occurred)
+				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
+													   utf8string + count,
+													   &node_list);
+				if (res_code != 0 || xmlerrcxt->err_occurred)
 				{
-					xmlFreeNodeList(node_list);
 					xml_errsave(escontext, xmlerrcxt,
 								ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
+					xmlFreeNodeList(node_list);
 					goto fail;
 				}
 
@@ -1922,6 +1909,8 @@ fail:
 	}
 	PG_CATCH();
 	{
+		if (save_keep_blanks != -1)
+			xmlKeepBlanksDefault(save_keep_blanks);
 		if (doc != NULL)
 			xmlFreeDoc(doc);
 		if (ctxt != NULL)
@@ -1932,6 +1921,9 @@ fail:
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if (save_keep_blanks != -1)
+		xmlKeepBlanksDefault(save_keep_blanks);
 
 	if (ctxt != NULL)
 		xmlFreeParserCtxt(ctxt);
