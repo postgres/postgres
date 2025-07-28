@@ -2743,11 +2743,9 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		 * because mdread doesn't complain about reads beyond EOF (when
 		 * zero_damaged_pages is ON) and so a previous attempt to read a block
 		 * beyond EOF could have left a "valid" zero-filled buffer.
-		 * Unfortunately, we have also seen this case occurring because of
-		 * buggy Linux kernels that sometimes return an lseek(SEEK_END) result
-		 * that doesn't account for a recent write. In that situation, the
-		 * pre-existing buffer would contain valid data that we don't want to
-		 * overwrite.  Since the legitimate cases should always have left a
+		 *
+		 * This has also been observed when relation was overwritten by external
+		 * process. Since the legitimate cases should always have left a
 		 * zero-filled buffer, complain if not PageIsNew.
 		 */
 		if (existing_id >= 0)
@@ -2778,8 +2776,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 				ereport(ERROR,
 						(errmsg("unexpected data beyond EOF in block %u of relation %s",
 								existing_hdr->tag.blockNum,
-								relpath(bmr.smgr->smgr_rlocator, fork).str),
-						 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
+								relpath(bmr.smgr->smgr_rlocator, fork).str)));
 
 			/*
 			 * We *must* do smgr[zero]extend before succeeding, else the page
