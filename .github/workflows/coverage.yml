@@ -10,7 +10,9 @@ on:
       - contrib/pg_tde/documentation/**
 
 env:
-  PGCTLTIMEOUT: 120 # Avoid failures on slow recovery
+  # Avoid failures on slow recovery
+  PGCTLTIMEOUT: 120
+  PG_TEST_TIMEOUT_DEFAULT: 300
 
 jobs:
   collect:

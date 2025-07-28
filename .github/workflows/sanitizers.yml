@@ -17,7 +17,9 @@ env:
   LSAN_OPTIONS: log_path=${{ github.workspace }}/sanitize.log print_suppressions=0 suppressions=${{ github.workspace }}/ci_scripts/suppressions/lsan.supp
   ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-14
   EXTRA_REGRESS_OPTS: "--temp-config=${{ github.workspace }}/test_postgresql.conf"
+  # Avoid failures on slow recovery
   PGCTLTIMEOUT: 120
+  PG_TEST_TIMEOUT_DEFAULT: 300
 
 jobs:
   run:
