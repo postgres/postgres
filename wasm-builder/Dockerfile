@@ -20,5 +20,4 @@ RUN apt-get update && \
 
 RUN apt-get install -y clang autoconf wget curl lz4 lsb-release zlib1g-dev libssl-dev 
 
-# RUN bash -c "wget -qO- https://github.com/electric-sql/portable-sdk/releases/download/3.1.74.11bi-w-n/python3.13-wasm-sdk-debian12-$(arch).tar.lz4 | lz4 -d | tar -xvf -"
-RUN bash -c "wget -qO- https://github.com/electric-sql/portable-sdk/releases/download/3.1.74.11.11/python3.13-wasm-sdk-debian12-$(arch).tar.lz4 | lz4 -d | tar -xvf -"
+RUN bash -c "wget -qO- https://github.com/electric-sql/portable-sdk/releases/download/3.1.74.12.0/python3.13-wasm-sdk-debian12-$(arch).tar.lz4 | lz4 -d | tar -xvf -"
