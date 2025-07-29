@@ -3148,8 +3148,11 @@ SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in 
        </para>
        <para>
         Converts the first letter of each word to upper case and the
-        rest to lower case. Words are sequences of alphanumeric
-        characters separated by non-alphanumeric characters.
+        rest to lower case. When using the <literal>libc</literal> locale
+        provider, words are sequences of alphanumeric characters separated
+        by non-alphanumeric characters; when using the ICU locale provider,
+        words are separated according to
+        <ulink url="https://www.unicode.org/reports/tr29/#Word_Boundaries">Unicode Standard Annex #29</ulink>.
        </para>
        <para>
         <literal>initcap('hi THOMAS')</literal>
