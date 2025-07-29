@@ -6,6 +6,7 @@ use PostgreSQL::Test::Utils;
 use File::Basename;
 use File::Compare;
 use Test::More;
+use Time::HiRes qw(usleep);
 
 # Expected .out filename of TAP testcase being executed. These are already part of repo under t/expected/*.
 our $expected_filename_with_path;
