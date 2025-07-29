@@ -1922,24 +1922,16 @@ xml_parse(text *data, XmlOptionType xmloption_arg,
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
-				xmlNodePtr	node_list = NULL;
-
 				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
 													   utf8string + count,
-													   &node_list);
+													   parsed_nodes);
 				if (res_code != 0 || xmlerrcxt->err_occurred)
 				{
 					xml_errsave(escontext, xmlerrcxt,
 								ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
-					xmlFreeNodeList(node_list);
 					goto fail;
 				}
-
-				if (parsed_nodes != NULL)
-					*parsed_nodes = node_list;
-				else
-					xmlFreeNodeList(node_list);
 			}
 		}
 
