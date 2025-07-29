@@ -1622,14 +1622,9 @@ xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace,
 			/* allow empty content */
 			if (*(utf8string + count))
 			{
-				xmlNodePtr	node_list = NULL;
-
 				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0,
 													   utf8string + count,
-													   &node_list);
-
-				xmlFreeNodeList(node_list);
-
+													   NULL);
 				if (res_code != 0 || xmlerrcxt->err_occurred)
 					xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_CONTENT,
 								"invalid XML content");
