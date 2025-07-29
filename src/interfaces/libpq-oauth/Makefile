@@ -24,7 +24,7 @@ NAME = pq-oauth-$(MAJORVERSION)
 override shlib := lib$(NAME)$(DLSUFFIX)
 override stlib := libpq-oauth.a
 
-override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(LIBCURL_CPPFLAGS) $(CPPFLAGS)
+override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS) $(LIBCURL_CPPFLAGS)
 
 OBJS = \
 	$(WIN32RES)

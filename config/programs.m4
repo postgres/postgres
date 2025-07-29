@@ -290,8 +290,8 @@ AC_DEFUN([PGAC_CHECK_LIBCURL],
   pgac_save_LDFLAGS=$LDFLAGS
   pgac_save_LIBS=$LIBS
 
-  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
-  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $LIBCURL_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $LIBCURL_LDFLAGS"
 
   AC_CHECK_HEADER(curl/curl.h, [],
 				  [AC_MSG_ERROR([header file <curl/curl.h> is required for --with-libcurl])])
