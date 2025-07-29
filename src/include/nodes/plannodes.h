@@ -1073,6 +1073,16 @@ typedef struct Memoize
 
 	/* paramids from param_exprs */
 	Bitmapset  *keyparamids;
+
+	/* Estimated number of rescans, for EXPLAIN */
+	Cardinality est_calls;
+
+	/* Estimated number of distinct lookup keys, for EXPLAIN */
+	Cardinality est_unique_keys;
+
+	/* Estimated cache hit ratio, for EXPLAIN */
+	double		est_hit_ratio;
+
 } Memoize;
 
 /* ----------------

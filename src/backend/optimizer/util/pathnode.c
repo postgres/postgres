@@ -1689,7 +1689,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 MemoizePath *
 create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 					List *param_exprs, List *hash_operators,
-					bool singlerow, bool binary_mode, double calls)
+					bool singlerow, bool binary_mode, Cardinality est_calls)
 {
 	MemoizePath *pathnode = makeNode(MemoizePath);
 
@@ -1710,7 +1710,6 @@ create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->param_exprs = param_exprs;
 	pathnode->singlerow = singlerow;
 	pathnode->binary_mode = binary_mode;
-	pathnode->calls = clamp_row_est(calls);
 
 	/*
 	 * For now we set est_entries to 0.  cost_memoize_rescan() does all the
@@ -1719,6 +1718,12 @@ create_memoize_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 * If left at 0, the executor will make a guess at a good value.
 	 */
 	pathnode->est_entries = 0;
+
+	pathnode->est_calls = clamp_row_est(est_calls);
+
+	/* These will also be set later in cost_memoize_rescan() */
+	pathnode->est_unique_keys = 0.0;
+	pathnode->est_hit_ratio = 0.0;
 
 	/* we should not generate this path type when enable_memoize=false */
 	Assert(enable_memoize);
@@ -4259,7 +4264,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 													mpath->hash_operators,
 													mpath->singlerow,
 													mpath->binary_mode,
-													mpath->calls);
+													mpath->est_calls);
 			}
 		default:
 			break;

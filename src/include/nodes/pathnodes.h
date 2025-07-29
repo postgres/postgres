@@ -2133,10 +2133,12 @@ typedef struct MemoizePath
 								 * complete after caching the first record. */
 	bool		binary_mode;	/* true when cache key should be compared bit
 								 * by bit, false when using hash equality ops */
-	Cardinality calls;			/* expected number of rescans */
 	uint32		est_entries;	/* The maximum number of entries that the
 								 * planner expects will fit in the cache, or 0
 								 * if unknown */
+	Cardinality est_calls;		/* expected number of rescans */
+	Cardinality est_unique_keys;	/* estimated unique keys, for EXPLAIN */
+	double		est_hit_ratio;	/* estimated cache hit ratio, for EXPLAIN */
 } MemoizePath;
 
 /*

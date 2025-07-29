@@ -2572,13 +2572,13 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	Cost		input_startup_cost = mpath->subpath->startup_cost;
 	Cost		input_total_cost = mpath->subpath->total_cost;
 	double		tuples = mpath->subpath->rows;
-	double		calls = mpath->calls;
+	Cardinality est_calls = mpath->est_calls;
 	int			width = mpath->subpath->pathtarget->width;
 
 	double		hash_mem_bytes;
 	double		est_entry_bytes;
-	double		est_cache_entries;
-	double		ndistinct;
+	Cardinality est_cache_entries;
+	Cardinality ndistinct;
 	double		evict_ratio;
 	double		hit_ratio;
 	Cost		startup_cost;
@@ -2604,7 +2604,7 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	est_cache_entries = floor(hash_mem_bytes / est_entry_bytes);
 
 	/* estimate on the distinct number of parameter values */
-	ndistinct = estimate_num_groups(root, mpath->param_exprs, calls, NULL,
+	ndistinct = estimate_num_groups(root, mpath->param_exprs, est_calls, NULL,
 									&estinfo);
 
 	/*
@@ -2616,7 +2616,10 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	 * certainly mean a MemoizePath will never survive add_path().
 	 */
 	if ((estinfo.flags & SELFLAG_USED_DEFAULT) != 0)
-		ndistinct = calls;
+		ndistinct = est_calls;
+
+	/* Remember the ndistinct estimate for EXPLAIN */
+	mpath->est_unique_keys = ndistinct;
 
 	/*
 	 * Since we've already estimated the maximum number of entries we can
@@ -2644,8 +2647,11 @@ cost_memoize_rescan(PlannerInfo *root, MemoizePath *mpath,
 	 * must look at how many scans are estimated in total for this node and
 	 * how many of those scans we expect to get a cache hit.
 	 */
-	hit_ratio = ((calls - ndistinct) / calls) *
+	hit_ratio = ((est_calls - ndistinct) / est_calls) *
 		(est_cache_entries / Max(ndistinct, est_cache_entries));
+
+	/* Remember the hit ratio estimate for EXPLAIN */
+	mpath->est_hit_ratio = hit_ratio;
 
 	Assert(hit_ratio >= 0 && hit_ratio <= 1.0);
 

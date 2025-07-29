@@ -3582,6 +3582,7 @@ static void
 show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 {
 	Plan	   *plan = ((PlanState *) mstate)->plan;
+	Memoize    *mplan = (Memoize *) plan;
 	ListCell   *lc;
 	List	   *context;
 	StringInfoData keystr;
@@ -3602,7 +3603,7 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 									   plan,
 									   ancestors);
 
-	foreach(lc, ((Memoize *) plan)->param_exprs)
+	foreach(lc, mplan->param_exprs)
 	{
 		Node	   *expr = (Node *) lfirst(lc);
 
@@ -3617,6 +3618,24 @@ show_memoize_info(MemoizeState *mstate, List *ancestors, ExplainState *es)
 	ExplainPropertyText("Cache Mode", mstate->binary_mode ? "binary" : "logical", es);
 
 	pfree(keystr.data);
+
+	if (es->costs)
+	{
+		if (es->format == EXPLAIN_FORMAT_TEXT)
+		{
+			ExplainIndentText(es);
+			appendStringInfo(es->str, "Estimates: capacity=%u distinct keys=%.0f lookups=%.0f hit percent=%.2f%%\n",
+							 mplan->est_entries, mplan->est_unique_keys,
+							 mplan->est_calls, mplan->est_hit_ratio * 100.0);
+		}
+		else
+		{
+			ExplainPropertyUInteger("Estimated Capacity", NULL, mplan->est_entries, es);
+			ExplainPropertyFloat("Estimated Distinct Lookup Keys", NULL, mplan->est_unique_keys, 0, es);
+			ExplainPropertyFloat("Estimated Lookups", NULL, mplan->est_calls, 0, es);
+			ExplainPropertyFloat("Estimated Hit Percent", NULL, mplan->est_hit_ratio * 100.0, 2, es);
+		}
+	}
 
 	if (!es->analyze)
 		return;
