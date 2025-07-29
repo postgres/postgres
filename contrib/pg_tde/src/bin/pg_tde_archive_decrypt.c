@@ -31,7 +31,7 @@ write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
 
 	fd = open(segpath, O_RDONLY | PG_BINARY, 0);
 	if (fd < 0)
-		pg_fatal("could not open file \"%s\": %m", segname);
+		pg_fatal("could not open file \"%s\": %m", segpath);
 
 	/*
 	 * WalSegSz extracted from the first page header but it might be
