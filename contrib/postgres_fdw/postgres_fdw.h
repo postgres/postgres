@@ -166,8 +166,10 @@ extern void do_sql_command(PGconn *conn, const char *sql);
 extern PGresult *pgfdw_get_result(PGconn *conn);
 extern PGresult *pgfdw_exec_query(PGconn *conn, const char *query,
 								  PgFdwConnState *state);
-extern void pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-							   const char *sql);
+pg_noreturn extern void pgfdw_report_error(PGresult *res, PGconn *conn,
+										   const char *sql);
+extern void pgfdw_report(int elevel, PGresult *res, PGconn *conn,
+						 const char *sql);
 
 /* in option.c */
 extern int	ExtractConnectionOptions(List *defelems,

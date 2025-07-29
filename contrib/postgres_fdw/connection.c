@@ -142,6 +142,8 @@ static void do_sql_command_begin(PGconn *conn, const char *sql);
 static void do_sql_command_end(PGconn *conn, const char *sql,
 							   bool consume_input);
 static void begin_remote_xact(ConnCacheEntry *entry);
+static void pgfdw_report_internal(int elevel, PGresult *res, PGconn *conn,
+								  const char *sql);
 static void pgfdw_xact_callback(XactEvent event, void *arg);
 static void pgfdw_subxact_callback(SubXactEvent event,
 								   SubTransactionId mySubid,
@@ -815,7 +817,7 @@ static void
 do_sql_command_begin(PGconn *conn, const char *sql)
 {
 	if (!PQsendQuery(conn, sql))
-		pgfdw_report_error(ERROR, NULL, conn, sql);
+		pgfdw_report_error(NULL, conn, sql);
 }
 
 static void
@@ -830,10 +832,10 @@ do_sql_command_end(PGconn *conn, const char *sql, bool consume_input)
 	 * would be large compared to the overhead of PQconsumeInput.)
 	 */
 	if (consume_input && !PQconsumeInput(conn))
-		pgfdw_report_error(ERROR, NULL, conn, sql);
+		pgfdw_report_error(NULL, conn, sql);
 	res = pgfdw_get_result(conn);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		pgfdw_report_error(ERROR, res, conn, sql);
+		pgfdw_report_error(res, conn, sql);
 	PQclear(res);
 }
 
@@ -966,7 +968,10 @@ pgfdw_get_result(PGconn *conn)
 /*
  * Report an error we got from the remote server.
  *
- * elevel: error level to use (typically ERROR, but might be less)
+ * Callers should use pgfdw_report_error() to throw an error, or use
+ * pgfdw_report() for lesser message levels.  (We make this distinction
+ * so that pgfdw_report_error() can be marked noreturn.)
+ *
  * res: PGresult containing the error (might be NULL)
  * conn: connection we did the query on
  * sql: NULL, or text of remote command we tried to execute
@@ -979,8 +984,22 @@ pgfdw_get_result(PGconn *conn)
  * marked with have_error = true.
  */
 void
-pgfdw_report_error(int elevel, PGresult *res, PGconn *conn,
-				   const char *sql)
+pgfdw_report_error(PGresult *res, PGconn *conn, const char *sql)
+{
+	pgfdw_report_internal(ERROR, res, conn, sql);
+	pg_unreachable();
+}
+
+void
+pgfdw_report(int elevel, PGresult *res, PGconn *conn, const char *sql)
+{
+	Assert(elevel < ERROR);		/* use pgfdw_report_error for that */
+	pgfdw_report_internal(elevel, res, conn, sql);
+}
+
+static void
+pgfdw_report_internal(int elevel, PGresult *res, PGconn *conn,
+					  const char *sql)
 {
 	char	   *diag_sqlstate = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 	char	   *message_primary = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
@@ -1538,7 +1557,7 @@ pgfdw_exec_cleanup_query_begin(PGconn *conn, const char *query)
 	 */
 	if (!PQsendQuery(conn, query))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, query);
+		pgfdw_report(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1563,7 +1582,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	 */
 	if (consume_input && !PQconsumeInput(conn))
 	{
-		pgfdw_report_error(WARNING, NULL, conn, query);
+		pgfdw_report(WARNING, NULL, conn, query);
 		return false;
 	}
 
@@ -1575,7 +1594,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 					(errmsg("could not get query result due to timeout"),
 					 errcontext("remote SQL command: %s", query)));
 		else
-			pgfdw_report_error(WARNING, NULL, conn, query);
+			pgfdw_report(WARNING, NULL, conn, query);
 
 		return false;
 	}
@@ -1583,7 +1602,7 @@ pgfdw_exec_cleanup_query_end(PGconn *conn, const char *query,
 	/* Issue a warning if not successful. */
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		pgfdw_report_error(WARNING, result, conn, query);
+		pgfdw_report(WARNING, result, conn, query);
 		return ignore_errors;
 	}
 	PQclear(result);
