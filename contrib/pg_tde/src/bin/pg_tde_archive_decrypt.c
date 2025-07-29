@@ -11,6 +11,8 @@
 #include "access/pg_tde_fe_init.h"
 #include "access/pg_tde_xlog_smgr.h"
 
+#define TMPFS_DIRECTORY "/dev/shm"
+
 static bool
 is_segment(const char *filename)
 {
@@ -18,9 +20,10 @@ is_segment(const char *filename)
 }
 
 static void
-write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
+write_decrypted_segment(const char *segpath, const char *segname, const char *tmppath)
 {
-	int			fd;
+	int			segfd;
+	int			tmpfd;
 	off_t		fsize;
 	int			r;
 	int			w;
@@ -29,9 +32,13 @@ write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
 	PGAlignedXLogBlock buf;
 	off_t		pos = 0;
 
-	fd = open(segpath, O_RDONLY | PG_BINARY, 0);
-	if (fd < 0)
+	segfd = open(segpath, O_RDONLY | PG_BINARY, 0);
+	if (segfd < 0)
 		pg_fatal("could not open file \"%s\": %m", segpath);
+
+	tmpfd = open(tmppath, O_CREAT | O_WRONLY | PG_BINARY, 0666);
+	if (tmpfd < 0)
+		pg_fatal("could not open file \"%s\": %m", tmppath);
 
 	/*
 	 * WalSegSz extracted from the first page header but it might be
@@ -40,10 +47,10 @@ write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
 	 * size from the file's actual size. XLogLongPageHeaderData->xlp_seg_size
 	 * there is "just as a cross-check" anyway.
 	 */
-	fsize = lseek(fd, 0, SEEK_END);
+	fsize = lseek(segfd, 0, SEEK_END);
 	XLogFromFileName(segname, &tli, &segno, fsize);
 
-	r = xlog_smgr->seg_read(fd, buf.data, XLOG_BLCKSZ, pos, tli, segno, fsize);
+	r = xlog_smgr->seg_read(segfd, buf.data, XLOG_BLCKSZ, pos, tli, segno, fsize);
 
 	if (r == XLOG_BLCKSZ)
 	{
@@ -73,16 +80,17 @@ write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
 
 	pos += r;
 
-	w = write(pipewr, buf.data, XLOG_BLCKSZ);
+	w = write(tmpfd, buf.data, XLOG_BLCKSZ);
 
 	if (w < 0)
-		pg_fatal("could not write to pipe: %m");
+		pg_fatal("could not write file \"%s\": %m", tmppath);
 	else if (w != r)
-		pg_fatal("could not write to pipe: wrote %d of %d", w, r);
+		pg_fatal("could not write file \"%s\": wrote %d of %d",
+				 tmppath, w, r);
 
 	while (1)
 	{
-		r = xlog_smgr->seg_read(fd, buf.data, XLOG_BLCKSZ, pos, tli, segno, fsize);
+		r = xlog_smgr->seg_read(segfd, buf.data, XLOG_BLCKSZ, pos, tli, segno, fsize);
 
 		if (r == 0)
 			break;
@@ -91,15 +99,17 @@ write_decrypted_segment(const char *segpath, const char *segname, int pipewr)
 
 		pos += r;
 
-		w = write(pipewr, buf.data, r);
+		w = write(tmpfd, buf.data, r);
 
 		if (w < 0)
-			pg_fatal("could not write to pipe: %m");
+			pg_fatal("could not write file \"%s\": %m", tmppath);
 		else if (w != r)
-			pg_fatal("could not write to pipe: wrote %d of %d", w, r);
+			pg_fatal("could not write file \"%s\": wrote %d of %d",
+					 tmppath, w, r);
 	}
 
-	close(fd);
+	close(tmpfd);
+	close(segfd);
 }
 
 static void
@@ -119,10 +129,9 @@ main(int argc, char *argv[])
 	char	   *sourcepath;
 	char	   *sep;
 	char	   *sourcename;
-	char		stdindir[MAXPGPATH] = "/tmp/pg_tde_archiveXXXXXX";
-	char		stdinpath[MAXPGPATH];
+	char		tmpdir[MAXPGPATH] = TMPFS_DIRECTORY "/pg_tde_archiveXXXXXX";
+	char		tmppath[MAXPGPATH];
 	bool		issegment;
-	int			pipefd[2];
 	pid_t		child;
 	int			status;
 	int			r;
@@ -169,47 +178,28 @@ main(int argc, char *argv[])
 	{
 		char	   *s;
 
-		if (mkdtemp(stdindir) == NULL)
-			pg_fatal("could not create temporary directory \"%s\": %m", stdindir);
+		if (mkdtemp(tmpdir) == NULL)
+			pg_fatal("could not create temporary directory \"%s\": %m", tmpdir);
 
-		s = stpcpy(stdinpath, stdindir);
+		s = stpcpy(tmppath, tmpdir);
 		s = stpcpy(s, "/");
 		stpcpy(s, sourcename);
 
-		if (pipe(pipefd) < 0)
-			pg_fatal("could not create pipe: %m");
-
-		if (symlink("/dev/stdin", stdinpath) < 0)
-			pg_fatal("could not create symlink \"%s\": %m", stdinpath);
-
 		for (int i = 2; i < argc; i++)
 			if (strcmp(sourcepath, argv[i]) == 0)
-				argv[i] = stdinpath;
+				argv[i] = tmppath;
+
+		write_decrypted_segment(sourcepath, sourcename, tmppath);
 	}
 
 	child = fork();
 	if (child == 0)
 	{
-		if (issegment)
-		{
-			close(0);
-			dup2(pipefd[0], 0);
-			close(pipefd[0]);
-			close(pipefd[1]);
-		}
-
 		if (execvp(argv[2], argv + 2) < 0)
 			pg_fatal("exec failed: %m");
 	}
 	else if (child < 0)
 		pg_fatal("could not create background process: %m");
-
-	if (issegment)
-	{
-		close(pipefd[0]);
-		write_decrypted_segment(sourcepath, sourcename, pipefd[1]);
-		close(pipefd[1]);
-	}
 
 	r = waitpid(child, &status, 0);
 	if (r == (pid_t) -1)
@@ -219,10 +209,13 @@ main(int argc, char *argv[])
 	if (status != 0)
 		pg_fatal("%s", wait_result_to_str(status));
 
-	if (issegment && unlink(stdinpath) < 0)
-		pg_log_warning("could not remove symlink \"%s\": %m", stdinpath);
-	if (issegment && rmdir(stdindir) < 0)
-		pg_log_warning("could not remove directory \"%s\": %m", stdindir);
+	if (issegment)
+	{
+		if (unlink(tmppath) < 0)
+			pg_log_warning("could not remove file \"%s\": %m", tmppath);
+		if (rmdir(tmpdir) < 0)
+			pg_log_warning("could not remove directory \"%s\": %m", tmpdir);
+	}
 
 	return 0;
 }
