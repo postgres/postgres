@@ -24,7 +24,7 @@ NAME= pq
 SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= $(MAJORVERSION)
 
-override CPPFLAGS :=  -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
+override CPPFLAGS := -I$(srcdir) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port $(CPPFLAGS)
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif

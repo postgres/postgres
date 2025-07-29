@@ -5194,7 +5194,7 @@ fi
 
   for pgac_option in `$LLVM_CONFIG --ldflags`; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LLVM_LIBS="$LLVM_LIBS $pgac_option";;
     esac
   done
 
@@ -9436,12 +9436,12 @@ fi
   # Note the user could also set XML2_CFLAGS/XML2_LIBS directly
   for pgac_option in $XML2_CFLAGS; do
     case $pgac_option in
-      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      -I*|-D*) INCLUDES="$INCLUDES $pgac_option";;
     esac
   done
   for pgac_option in $XML2_LIBS; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LIBDIRS="$LIBDIRS $pgac_option";;
     esac
   done
 fi
@@ -9666,12 +9666,12 @@ fi
   # note that -llz4 will be added by AC_CHECK_LIB below.
   for pgac_option in $LZ4_CFLAGS; do
     case $pgac_option in
-      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      -I*|-D*) INCLUDES="$INCLUDES $pgac_option";;
     esac
   done
   for pgac_option in $LZ4_LIBS; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LIBDIRS="$LIBDIRS $pgac_option";;
     esac
   done
 fi
@@ -9807,12 +9807,12 @@ fi
   # note that -lzstd will be added by AC_CHECK_LIB below.
   for pgac_option in $ZSTD_CFLAGS; do
     case $pgac_option in
-      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      -I*|-D*) INCLUDES="$INCLUDES $pgac_option";;
     esac
   done
   for pgac_option in $ZSTD_LIBS; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LIBDIRS="$LIBDIRS $pgac_option";;
     esac
   done
 fi
@@ -12723,8 +12723,8 @@ if test "$with_libcurl" = yes ; then
   pgac_save_LDFLAGS=$LDFLAGS
   pgac_save_LIBS=$LIBS
 
-  CPPFLAGS="$LIBCURL_CPPFLAGS $CPPFLAGS"
-  LDFLAGS="$LIBCURL_LDFLAGS $LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $LIBCURL_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $LIBCURL_LDFLAGS"
 
   ac_fn_c_check_header_mongrel "$LINENO" "curl/curl.h" "ac_cv_header_curl_curl_h" "$ac_includes_default"
 if test "x$ac_cv_header_curl_curl_h" = xyes; then :
@@ -16658,7 +16658,7 @@ fi
 
 if test "$with_icu" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $ICU_CFLAGS"
 
   # Verify we have ICU's header files
   ac_fn_c_check_header_mongrel "$LINENO" "unicode/ucol.h" "ac_cv_header_unicode_ucol_h" "$ac_includes_default"
@@ -18876,7 +18876,7 @@ Use --without-tcl to disable building PL/Tcl." "$LINENO" 5
     fi
     # now that we have TCL_INCLUDE_SPEC, we can check for <tcl.h>
     ac_save_CPPFLAGS=$CPPFLAGS
-    CPPFLAGS="$TCL_INCLUDE_SPEC $CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $TCL_INCLUDE_SPEC"
     ac_fn_c_check_header_mongrel "$LINENO" "tcl.h" "ac_cv_header_tcl_h" "$ac_includes_default"
 if test "x$ac_cv_header_tcl_h" = xyes; then :
 
@@ -18945,7 +18945,7 @@ fi
 # check for <Python.h>
 if test "$with_python" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$python_includespec $CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $python_includespec"
   ac_fn_c_check_header_mongrel "$LINENO" "Python.h" "ac_cv_header_Python_h" "$ac_includes_default"
 if test "x$ac_cv_header_Python_h" = xyes; then :
 

@@ -163,7 +163,7 @@ libpgcommon_shlib.a: $(OBJS_SHLIB)
 # The JSON API normally exits on out-of-memory; disable that behavior for shared
 # library builds. This requires libpq's pqexpbuffer.h.
 jsonapi_shlib.o: override CPPFLAGS += -DJSONAPI_USE_PQEXPBUFFER
-jsonapi_shlib.o: override CPPFLAGS += -I$(libpq_srcdir)
+jsonapi_shlib.o: override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 # Because this uses its own compilation rule, it doesn't use the
 # dependency tracking logic from Makefile.global.  To make sure that
