@@ -5018,7 +5018,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	int			server_version_num;
 	PgFdwSamplingMethod method = ANALYZE_SAMPLE_AUTO;	/* auto is default */
 	double		sample_frac = -1.0;
-	double		reltuples;
+	double		reltuples = -1.0;
 	unsigned int cursor_number;
 	StringInfoData sql;
 	PGresult   *res;
