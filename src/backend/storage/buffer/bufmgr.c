@@ -2744,9 +2744,9 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		 * zero_damaged_pages is ON) and so a previous attempt to read a block
 		 * beyond EOF could have left a "valid" zero-filled buffer.
 		 *
-		 * This has also been observed when relation was overwritten by external
-		 * process. Since the legitimate cases should always have left a
-		 * zero-filled buffer, complain if not PageIsNew.
+		 * This has also been observed when relation was overwritten by
+		 * external process. Since the legitimate cases should always have
+		 * left a zero-filled buffer, complain if not PageIsNew.
 		 */
 		if (existing_id >= 0)
 		{
