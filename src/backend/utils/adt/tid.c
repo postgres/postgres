@@ -84,7 +84,7 @@ tidin(PG_FUNCTION_ARGS)
 	/*
 	 * Cope with possibility that unsigned long is wider than BlockNumber, in
 	 * which case strtoul will not raise an error for some values that are out
-	 * of the range of BlockNumber.  (See similar code in oidin().)
+	 * of the range of BlockNumber.  (See similar code in uint32in_subr().)
 	 */
 #if SIZEOF_LONG > 4
 	if (cvt != (unsigned long) blockNumber &&
