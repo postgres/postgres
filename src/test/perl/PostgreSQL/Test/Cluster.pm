@@ -304,6 +304,7 @@ sub is_alive
 
 	my $ret = PostgreSQL::Test::Utils::system_log(
 		'pg_isready',
+		'--timeout' => $PostgreSQL::Test::Utils::timeout_default,
 		'--host' => $self->host,
 		'--port' => $self->port);
 
