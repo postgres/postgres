@@ -4,7 +4,7 @@
 # -----------------
 #
 # Look for the LLVM installation, check that it's new enough, set the
-# corresponding LLVM_{CFLAGS,CXXFLAGS,BINPATH} and LDFLAGS
+# corresponding LLVM_{CFLAGS,CXXFLAGS,BINPATH,LIBS}
 # variables. Also verify that CLANG is available, to transform C
 # into bitcode.
 #
@@ -55,7 +55,7 @@ AC_DEFUN([PGAC_LLVM_SUPPORT],
 
   for pgac_option in `$LLVM_CONFIG --ldflags`; do
     case $pgac_option in
-      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      -L*) LLVM_LIBS="$LLVM_LIBS $pgac_option";;
     esac
   done
 

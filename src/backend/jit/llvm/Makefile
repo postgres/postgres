@@ -31,7 +31,7 @@ endif
 # All files in this directory use LLVM.
 CFLAGS += $(LLVM_CFLAGS)
 CXXFLAGS += $(LLVM_CXXFLAGS)
-override CPPFLAGS := $(LLVM_CPPFLAGS) $(CPPFLAGS)
+override CPPFLAGS += $(LLVM_CPPFLAGS)
 SHLIB_LINK += $(LLVM_LIBS)
 
 # Because this module includes C++ files, we need to use a C++
