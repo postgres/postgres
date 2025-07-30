@@ -3044,26 +3044,6 @@ Author: Masahiko Sawada <msawada@postgresql.org>
      <itemizedlist>
 
 <!--
-Author: Andrew Dunstan <andrew@dunslane.net>
-2025-04-04 [1495eff7b] Non text modes for pg_dumpall, correspondingly change pg
--->
-
-      <listitem>
-      <para>
-      Allow <xref linkend="app-pg-dumpall"/> to dump in the same output
-      formats as <application>pg_dump</application> supports (Mahendra
-      Singh Thalor, Andrew Dunstan)
-      <ulink url="&commit_baseurl;1495eff7b">&sect;</ulink>
-      </para>
-
-      <para>
-      Also modify <xref linkend="app-pgrestore"/> to handle such dumps.
-      Previously <application>pg_dumpall</application> only supported
-      text format.
-      </para>
-      </listitem>
-
-<!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2025-03-25 [bde2fb797] Add pg_dump - -with-{schema|data|statistics} options.
 -->
