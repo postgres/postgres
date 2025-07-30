@@ -87,7 +87,7 @@ static int	RestoringToDB(ArchiveHandle *AH);
 static void dump_lo_buf(ArchiveHandle *AH);
 static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
 static void SetOutput(ArchiveHandle *AH, const char *filename,
-					  const pg_compress_specification compression_spec, bool append_data);
+					  const pg_compress_specification compression_spec);
 static CompressFileHandle *SaveOutput(ArchiveHandle *AH);
 static void RestoreOutput(ArchiveHandle *AH, CompressFileHandle *savedOutput);
 
@@ -339,14 +339,9 @@ ProcessArchiveRestoreOptions(Archive *AHX)
 		StrictNamesCheck(ropt);
 }
 
-/*
- * RestoreArchive
- *
- * If append_data is set, then append data into file as we are restoring dump
- * of multiple databases which was taken by pg_dumpall.
- */
+/* Public */
 void
-RestoreArchive(Archive *AHX, bool append_data)
+RestoreArchive(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	RestoreOptions *ropt = AH->public.ropt;
@@ -463,7 +458,7 @@ RestoreArchive(Archive *AHX, bool append_data)
 	 */
 	sav = SaveOutput(AH);
 	if (ropt->filename || ropt->compression_spec.algorithm != PG_COMPRESSION_NONE)
-		SetOutput(AH, ropt->filename, ropt->compression_spec, append_data);
+		SetOutput(AH, ropt->filename, ropt->compression_spec);
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
 
@@ -1302,7 +1297,7 @@ PrintTOCSummary(Archive *AHX)
 
 	sav = SaveOutput(AH);
 	if (ropt->filename)
-		SetOutput(AH, ropt->filename, out_compression_spec, false);
+		SetOutput(AH, ropt->filename, out_compression_spec);
 
 	if (strftime(stamp_str, sizeof(stamp_str), PGDUMP_STRFTIME_FMT,
 				 localtime(&AH->createDate)) == 0)
@@ -1681,8 +1676,7 @@ archprintf(Archive *AH, const char *fmt,...)
 
 static void
 SetOutput(ArchiveHandle *AH, const char *filename,
-		  const pg_compress_specification compression_spec,
-		  bool append_data)
+		  const pg_compress_specification compression_spec)
 {
 	CompressFileHandle *CFH;
 	const char *mode;
@@ -1702,7 +1696,7 @@ SetOutput(ArchiveHandle *AH, const char *filename,
 	else
 		fn = fileno(stdout);
 
-	if (append_data || AH->mode == archModeAppend)
+	if (AH->mode == archModeAppend)
 		mode = PG_BINARY_A;
 	else
 		mode = PG_BINARY_W;
