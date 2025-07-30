@@ -956,12 +956,12 @@ check_for_new_tablespace_dir(void)
 
 	prep_status("Checking for new cluster tablespace directories");
 
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < new_cluster.num_tablespaces; tblnum++)
 	{
 		struct stat statbuf;
 
 		snprintf(new_tablespace_dir, MAXPGPATH, "%s%s",
-				 os_info.old_tablespaces[tblnum],
+				 new_cluster.tablespaces[tblnum],
 				 new_cluster.tablespace_suffix);
 
 		if (stat(new_tablespace_dir, &statbuf) == 0 || errno != ENOENT)
@@ -1013,17 +1013,17 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	 * directory.  We can't create a proper old cluster delete script in that
 	 * case.
 	 */
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < new_cluster.num_tablespaces; tblnum++)
 	{
-		char		old_tablespace_dir[MAXPGPATH];
+		char		new_tablespace_dir[MAXPGPATH];
 
-		strlcpy(old_tablespace_dir, os_info.old_tablespaces[tblnum], MAXPGPATH);
-		canonicalize_path(old_tablespace_dir);
-		if (path_is_prefix_of_path(old_cluster_pgdata, old_tablespace_dir))
+		strlcpy(new_tablespace_dir, new_cluster.tablespaces[tblnum], MAXPGPATH);
+		canonicalize_path(new_tablespace_dir);
+		if (path_is_prefix_of_path(old_cluster_pgdata, new_tablespace_dir))
 		{
 			/* reproduce warning from CREATE TABLESPACE that is in the log */
 			pg_log(PG_WARNING,
-				   "\nWARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s", old_tablespace_dir);
+				   "\nWARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s", new_tablespace_dir);
 
 			/* Unlink file in case it is left over from a previous run. */
 			unlink(*deletion_script_file_name);
@@ -1051,9 +1051,9 @@ create_script_for_old_cluster_deletion(char **deletion_script_file_name)
 	/* delete old cluster's alternate tablespaces */
 	old_tblspc_suffix = pg_strdup(old_cluster.tablespace_suffix);
 	fix_path_separator(old_tblspc_suffix);
-	for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+	for (tblnum = 0; tblnum < old_cluster.num_tablespaces; tblnum++)
 		fprintf(script, RMDIR_CMD " %c%s%s%c\n", PATH_QUOTE,
-				fix_path_separator(os_info.old_tablespaces[tblnum]),
+				fix_path_separator(old_cluster.tablespaces[tblnum]),
 				old_tblspc_suffix, PATH_QUOTE);
 	pfree(old_tblspc_suffix);
 

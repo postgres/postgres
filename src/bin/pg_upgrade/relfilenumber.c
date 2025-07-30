@@ -17,7 +17,7 @@
 #include "common/logging.h"
 #include "pg_upgrade.h"
 
-static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace);
+static void transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace, char *new_tablespace);
 static void transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_frozenbit);
 
 /*
@@ -136,21 +136,22 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	 */
 	if (user_opts.jobs <= 1)
 		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
-									  new_pgdata, NULL);
+									  new_pgdata, NULL, NULL);
 	else
 	{
 		int			tblnum;
 
 		/* transfer default tablespace */
 		parallel_transfer_all_new_dbs(old_db_arr, new_db_arr, old_pgdata,
-									  new_pgdata, old_pgdata);
+									  new_pgdata, old_pgdata, new_pgdata);
 
-		for (tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+		for (tblnum = 0; tblnum < old_cluster.num_tablespaces; tblnum++)
 			parallel_transfer_all_new_dbs(old_db_arr,
 										  new_db_arr,
 										  old_pgdata,
 										  new_pgdata,
-										  os_info.old_tablespaces[tblnum]);
+										  old_cluster.tablespaces[tblnum],
+										  new_cluster.tablespaces[tblnum]);
 		/* reap all children */
 		while (reap_child(true) == true)
 			;
@@ -169,7 +170,8 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
  */
 void
 transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
-					 char *old_pgdata, char *new_pgdata, char *old_tablespace)
+					 char *old_pgdata, char *new_pgdata,
+					 char *old_tablespace, char *new_tablespace)
 {
 	int			old_dbnum,
 				new_dbnum;
@@ -204,7 +206,7 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 									new_pgdata);
 		if (n_maps)
 		{
-			transfer_single_new_db(mappings, n_maps, old_tablespace);
+			transfer_single_new_db(mappings, n_maps, old_tablespace, new_tablespace);
 		}
 		/* We allocate something even for n_maps == 0 */
 		pg_free(mappings);
@@ -234,10 +236,10 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
  *	moved_db_dir: Destination for the pg_restore-generated database directory.
  */
 static bool
-prepare_for_swap(const char *old_tablespace, Oid db_oid,
-				 char *old_catalog_dir, char *new_db_dir, char *moved_db_dir)
+prepare_for_swap(const char *old_tablespace, const char *new_tablespace,
+				 Oid db_oid, char *old_catalog_dir, char *new_db_dir,
+				 char *moved_db_dir)
 {
-	const char *new_tablespace;
 	const char *old_tblspc_suffix;
 	const char *new_tblspc_suffix;
 	char		old_tblspc[MAXPGPATH];
@@ -247,24 +249,14 @@ prepare_for_swap(const char *old_tablespace, Oid db_oid,
 	struct stat st;
 
 	if (strcmp(old_tablespace, old_cluster.pgdata) == 0)
-	{
-		new_tablespace = new_cluster.pgdata;
-		new_tblspc_suffix = "/base";
 		old_tblspc_suffix = "/base";
-	}
 	else
-	{
-		/*
-		 * XXX: The below line is a hack to deal with the fact that we
-		 * presently don't have an easy way to find the corresponding new
-		 * tablespace's path.  This will need to be fixed if/when we add
-		 * pg_upgrade support for in-place tablespaces.
-		 */
-		new_tablespace = old_tablespace;
-
-		new_tblspc_suffix = new_cluster.tablespace_suffix;
 		old_tblspc_suffix = old_cluster.tablespace_suffix;
-	}
+
+	if (strcmp(new_tablespace, new_cluster.pgdata) == 0)
+		new_tblspc_suffix = "/base";
+	else
+		new_tblspc_suffix = new_cluster.tablespace_suffix;
 
 	/* Old and new cluster paths. */
 	snprintf(old_tblspc, sizeof(old_tblspc), "%s%s", old_tablespace, old_tblspc_suffix);
@@ -450,7 +442,7 @@ swap_catalog_files(FileNameMap *maps, int size, const char *old_catalog_dir,
  * during pg_restore.
  */
 static void
-do_swap(FileNameMap *maps, int size, char *old_tablespace)
+do_swap(FileNameMap *maps, int size, char *old_tablespace, char *new_tablespace)
 {
 	char		old_catalog_dir[MAXPGPATH];
 	char		new_db_dir[MAXPGPATH];
@@ -470,21 +462,23 @@ do_swap(FileNameMap *maps, int size, char *old_tablespace)
 	 */
 	if (old_tablespace)
 	{
-		if (prepare_for_swap(old_tablespace, maps[0].db_oid,
+		if (prepare_for_swap(old_tablespace, new_tablespace, maps[0].db_oid,
 							 old_catalog_dir, new_db_dir, moved_db_dir))
 			swap_catalog_files(maps, size,
 							   old_catalog_dir, new_db_dir, moved_db_dir);
 	}
 	else
 	{
-		if (prepare_for_swap(old_cluster.pgdata, maps[0].db_oid,
+		if (prepare_for_swap(old_cluster.pgdata, new_cluster.pgdata, maps[0].db_oid,
 							 old_catalog_dir, new_db_dir, moved_db_dir))
 			swap_catalog_files(maps, size,
 							   old_catalog_dir, new_db_dir, moved_db_dir);
 
-		for (int tblnum = 0; tblnum < os_info.num_old_tablespaces; tblnum++)
+		for (int tblnum = 0; tblnum < old_cluster.num_tablespaces; tblnum++)
 		{
-			if (prepare_for_swap(os_info.old_tablespaces[tblnum], maps[0].db_oid,
+			if (prepare_for_swap(old_cluster.tablespaces[tblnum],
+								 new_cluster.tablespaces[tblnum],
+								 maps[0].db_oid,
 								 old_catalog_dir, new_db_dir, moved_db_dir))
 				swap_catalog_files(maps, size,
 								   old_catalog_dir, new_db_dir, moved_db_dir);
@@ -498,7 +492,8 @@ do_swap(FileNameMap *maps, int size, char *old_tablespace)
  * create links for mappings stored in "maps" array.
  */
 static void
-transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
+transfer_single_new_db(FileNameMap *maps, int size,
+					   char *old_tablespace, char *new_tablespace)
 {
 	int			mapnum;
 	bool		vm_must_add_frozenbit = false;
@@ -520,7 +515,7 @@ transfer_single_new_db(FileNameMap *maps, int size, char *old_tablespace)
 		 */
 		Assert(!vm_must_add_frozenbit);
 
-		do_swap(maps, size, old_tablespace);
+		do_swap(maps, size, old_tablespace, new_tablespace);
 		return;
 	}
 

@@ -300,6 +300,8 @@ typedef struct
 	uint32		major_version;	/* PG_VERSION of cluster */
 	char		major_version_str[64];	/* string PG_VERSION of cluster */
 	uint32		bin_version;	/* version returned from pg_ctl */
+	char	  **tablespaces;	/* tablespace directories */
+	int			num_tablespaces;
 	const char *tablespace_suffix;	/* directory specification */
 	int			nsubs;			/* number of subscriptions */
 	bool		sub_retain_dead_tuples; /* whether a subscription enables
@@ -356,8 +358,6 @@ typedef struct
 	const char *progname;		/* complete pathname for this program */
 	char	   *user;			/* username for clusters */
 	bool		user_specified; /* user specified on command-line */
-	char	  **old_tablespaces;	/* tablespaces */
-	int			num_old_tablespaces;
 	LibraryInfo *libraries;		/* loadable libraries */
 	int			num_libraries;
 	ClusterInfo *running_cluster;
@@ -457,7 +457,7 @@ void		transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
 										 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);
 void		transfer_all_new_dbs(DbInfoArr *old_db_arr,
 								 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata,
-								 char *old_tablespace);
+								 char *old_tablespace, char *new_tablespace);
 
 /* tablespace.c */
 
@@ -505,7 +505,7 @@ void		parallel_exec_prog(const char *log_file, const char *opt_log_file,
 							   const char *fmt,...) pg_attribute_printf(3, 4);
 void		parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 										  char *old_pgdata, char *new_pgdata,
-										  char *old_tablespace);
+										  char *old_tablespace, char *new_tablespace);
 bool		reap_child(bool wait_for_child);
 
 /* task.c */

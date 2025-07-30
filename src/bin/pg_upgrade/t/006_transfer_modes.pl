@@ -38,6 +38,13 @@ sub test_mode
 	}
 	$new->init();
 
+	# allow_in_place_tablespaces is available as far back as v10.
+	if ($old->pg_version >= 10)
+	{
+		$new->append_conf('postgresql.conf', "allow_in_place_tablespaces = true");
+		$old->append_conf('postgresql.conf', "allow_in_place_tablespaces = true");
+	}
+
 	# Create a small variety of simple test objects on the old cluster.  We'll
 	# check that these reach the new version after upgrading.
 	$old->start;
@@ -49,8 +56,7 @@ sub test_mode
 	$old->safe_psql('testdb1', "VACUUM FULL test2");
 	$old->safe_psql('testdb1', "CREATE SEQUENCE testseq START 5432");
 
-	# For cross-version tests, we can also check that pg_upgrade handles
-	# tablespaces.
+	# If an old installation is provided, we can test non-in-place tablespaces.
 	if (defined($ENV{oldinstall}))
 	{
 		my $tblspc = PostgreSQL::Test::Utils::tempdir_short();
@@ -63,6 +69,19 @@ sub test_mode
 		);
 		$old->safe_psql('testdb2',
 			"CREATE TABLE test4 AS SELECT generate_series(400, 502)");
+	}
+
+	# If the old cluster is >= v10, we can test in-place tablespaces.
+	if ($old->pg_version >= 10)
+	{
+		$old->safe_psql('postgres',
+			"CREATE TABLESPACE inplc_tblspc LOCATION ''");
+		$old->safe_psql('postgres',
+			"CREATE DATABASE testdb3 TABLESPACE inplc_tblspc");
+		$old->safe_psql('postgres',
+			"CREATE TABLE test5 TABLESPACE inplc_tblspc AS SELECT generate_series(503, 606)");
+		$old->safe_psql('testdb3',
+			"CREATE TABLE test6 AS SELECT generate_series(607, 711)");
 	}
 	$old->stop;
 
@@ -94,8 +113,7 @@ sub test_mode
 		$result = $new->safe_psql('testdb1', "SELECT nextval('testseq')");
 		is($result, '5432', "sequence data after pg_upgrade $mode");
 
-		# For cross-version tests, we should have some objects in a non-default
-		# tablespace.
+		# Tests for non-in-place tablespaces.
 		if (defined($ENV{oldinstall}))
 		{
 			$result =
@@ -104,6 +122,15 @@ sub test_mode
 			$result =
 			  $new->safe_psql('testdb2', "SELECT COUNT(*) FROM test4");
 			is($result, '103', "test4 data after pg_upgrade $mode");
+		}
+
+		# Tests for in-place tablespaces.
+		if ($old->pg_version >= 10)
+		{
+			$result = $new->safe_psql('postgres', "SELECT COUNT(*) FROM test5");
+			is($result, '104', "test5 data after pg_upgrade $mode");
+			$result = $new->safe_psql('testdb3', "SELECT COUNT(*) FROM test6");
+			is($result, '105', "test6 data after pg_upgrade $mode");
 		}
 		$new->stop;
 	}

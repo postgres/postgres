@@ -443,10 +443,26 @@ get_db_infos(ClusterInfo *cluster)
 
 	for (tupnum = 0; tupnum < ntups; tupnum++)
 	{
+		char	   *spcloc = PQgetvalue(res, tupnum, i_spclocation);
+		bool		inplace = spcloc[0] && !is_absolute_path(spcloc);
+
 		dbinfos[tupnum].db_oid = atooid(PQgetvalue(res, tupnum, i_oid));
 		dbinfos[tupnum].db_name = pg_strdup(PQgetvalue(res, tupnum, i_datname));
-		snprintf(dbinfos[tupnum].db_tablespace, sizeof(dbinfos[tupnum].db_tablespace), "%s",
-				 PQgetvalue(res, tupnum, i_spclocation));
+
+		/*
+		 * The tablespace location might be "", meaning the cluster default
+		 * location, i.e. pg_default or pg_global.  For in-place tablespaces,
+		 * pg_tablespace_location() returns a path relative to the data
+		 * directory.
+		 */
+		if (inplace)
+			snprintf(dbinfos[tupnum].db_tablespace,
+					 sizeof(dbinfos[tupnum].db_tablespace),
+					 "%s/%s", cluster->pgdata, spcloc);
+		else
+			snprintf(dbinfos[tupnum].db_tablespace,
+					 sizeof(dbinfos[tupnum].db_tablespace),
+					 "%s", spcloc);
 	}
 	PQclear(res);
 
@@ -616,11 +632,21 @@ process_rel_infos(DbInfo *dbinfo, PGresult *res, void *arg)
 		/* Is the tablespace oid non-default? */
 		if (atooid(PQgetvalue(res, relnum, i_reltablespace)) != 0)
 		{
+			char	   *spcloc = PQgetvalue(res, relnum, i_spclocation);
+			bool		inplace = spcloc[0] && !is_absolute_path(spcloc);
+
 			/*
 			 * The tablespace location might be "", meaning the cluster
-			 * default location, i.e. pg_default or pg_global.
+			 * default location, i.e. pg_default or pg_global.  For in-place
+			 * tablespaces, pg_tablespace_location() returns a path relative
+			 * to the data directory.
 			 */
-			tablespace = PQgetvalue(res, relnum, i_spclocation);
+			if (inplace)
+				tablespace = psprintf("%s/%s",
+									  os_info.running_cluster->pgdata,
+									  spcloc);
+			else
+				tablespace = spcloc;
 
 			/* Can we reuse the previous string allocation? */
 			if (last_tablespace && strcmp(tablespace, last_tablespace) == 0)
@@ -630,6 +656,10 @@ process_rel_infos(DbInfo *dbinfo, PGresult *res, void *arg)
 				last_tablespace = curr->tablespace = pg_strdup(tablespace);
 				curr->tblsp_alloc = true;
 			}
+
+			/* Free palloc'd string for in-place tablespaces. */
+			if (inplace)
+				pfree(tablespace);
 		}
 		else
 			/* A zero reltablespace oid indicates the database tablespace. */
