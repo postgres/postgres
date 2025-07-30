@@ -19,6 +19,7 @@
  */
 #include "postgres.h"
 
+#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/file.h>
@@ -67,8 +68,8 @@
  */
 
 
-typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
-typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
+ typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget_for_oh(2) */
+ typedef int IpcMemoryId;		/* shared memory ID returned by shmget_for_oh(2) */
 
 /*
  * How does a given IpcMemoryId relate to this PostgreSQL process?
@@ -92,6 +93,7 @@ typedef enum
 
 
 unsigned long UsedShmemSegID = 0;
+int UsedShmemID = 0;
 void	   *UsedShmemSegAddr = NULL;
 
 static Size AnonymousShmemSize;
@@ -103,8 +105,152 @@ static void IpcMemoryDelete(int status, Datum shmId);
 static IpcMemoryState PGSharedMemoryAttach(IpcMemoryId shmId,
 										   void *attachAt,
 										   PGShmemHeader **addr);
+/**
+ * @brief Creates or opens a POSIX shared memory object.
+ * 
+ * @param key The key for the shared memory segment.
+ * @param size The size of the shared memory segment.
+ * @param shmflg The flags for shared memory creation and access.
+ * @return int The shared memory ID, or -1 on failure.
+ */
+static int shmget_for_oh(key_t key, size_t size, int shmflg)
+{
+    char name[32] = {0};
+    snprintf(name, sizeof(name), "/%d", key); 
 
+    int oflag = O_RDWR; 
+    mode_t mode = shmflg & 0777; 
 
+    if (shmflg & IPC_CREAT) {
+        oflag |= O_CREAT;
+        if (shmflg & IPC_EXCL) {
+            oflag |= O_EXCL;
+        }
+    }
+	
+    // 打开或创建共享内存对象
+    int shm_id = shm_open(name, oflag, mode);
+	
+    if (shm_id == -1) {
+		perror("shm_open");
+		printf("get out shmopen -1\r\n");
+        return -1;
+    }
+
+    // 如果设置了 IPC_CREAT 或共享内存对象已经存在，设置共享内存对象的大小
+    if (ftruncate(shm_id, size) < 0) {  
+        perror("ftruncate");  
+        printf("shmget_for_oh failed! ftruncate error.\n");  
+        close(shm_id);  
+        if (oflag & O_CREAT) {  
+            if (shm_unlink(name) < 0) {  
+                perror("shm_unlink");  
+            }  
+        }  
+        return -1;  
+    }  
+
+    UsedShmemID = shm_id;
+
+    return shm_id;
+}
+
+/**
+ * @brief Attaches the shared memory segment to the address space of the calling process.
+ * 
+ * @param shm_id The shared memory ID.
+ * @param shm_addr The desired address where to attach the shared memory.
+ * @param shmflg The flags for attaching the shared memory.
+ * @return void* The address of the attached shared memory, or (void*)-1 on failure.
+ */
+static void *shmat_for_oh(int shm_id, const void *shm_addr, int shmflg)
+{
+
+    struct stat buf;
+    if (fstat(shm_id, &buf) < 0) {
+        perror("fstat");
+        printf("shmat_for_oh out! fstat failed!\n");
+        return (void *) -1;
+    }
+
+    void *ptr = mmap((void *)shm_addr, buf.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_id, 0);
+    if (ptr == MAP_FAILED) {
+        perror("mmap");
+        printf("shmat_for_oh out! mmap failed!\n");
+        return (void *) -1;
+    }
+
+    return ptr;
+}
+
+/**
+ * @brief Performs the control operations on the shared memory segment.
+ * 
+ * @param shm_id The shared memory ID.
+ * @param command The command to be executed.
+ * @param buffer The buffer for the IPC_STAT command.
+ * @return int 0 on success, -1 on failure.
+ */
+static int shmctl_for_oh(int shm_id, int command, struct shmid_ds *buffer)
+{
+
+    if (command == IPC_STAT) {
+        if (buffer == NULL) {
+            printf("shmctl_for_oh out! buffer null!\n");
+            return -1;
+        }
+        struct stat buf;
+        if (fstat(shm_id, &buf) < 0) {
+            perror("fstat");
+            printf("shmctl_for_oh out! fstat failed!\n");
+            return -1;
+        }
+        buffer->shm_perm.uid = buf.st_uid;
+        buffer->shm_perm.gid = buf.st_gid;
+        buffer->shm_perm.mode = buf.st_mode;
+        buffer->shm_nattch = buf.st_nlink;
+        printf("shmctl_for_oh out! stat\n");
+        return 0;
+    } else if (command == IPC_RMID) {
+        char name[32] = {0};
+        snprintf(name, sizeof(name), "/%d",UsedShmemSegID); // POSIX shared memory names should start with '/'
+        int ret = shm_unlink(name);
+        if (ret == -1) {
+            return -1;
+        }
+        return ret;
+    }
+    return -1; // Return -1 for unsupported commands
+}
+
+/**
+ * @brief Detaches the shared memory segment from the address space of the calling process.
+ * 
+ * @param shmaddr The address of the attached shared memory.
+ * @return int 0 on success, -1 on failure.
+ */
+static int shmdt_for_oh(const void *shmaddr)
+{
+
+    if (shmaddr == NULL) {
+        printf("shmdt_for_oh out! shmaddr null!\n");
+        return -1;
+    }
+    struct stat buf;
+    if (fstat(UsedShmemID, &buf) < 0) {
+        perror("fstat");
+        printf("shmdt_for_oh out! fstat failed!\n");
+        return -1;
+    }
+    int ret = munmap((void *)shmaddr, buf.st_size);
+    if (ret == -1) {
+        perror("munmap");
+        printf("shmdt_for_oh out! munmap failed!\n");
+        return -1;
+    }
+
+    return ret;
+}
 /*
  *	InternalIpcMemoryCreate(memKey, size)
  *
@@ -125,7 +271,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	void	   *memAddress;
 
 	/*
-	 * Normally we just pass requestedAddress = NULL to shmat(), allowing the
+	 * Normally we just pass requestedAddress = NULL to shmat_for_oh(), allowing the
 	 * system to choose where the segment gets mapped.  But in an EXEC_BACKEND
 	 * build, it's possible for whatever is chosen in the postmaster to not
 	 * work for backends, due to variations in address space layout.  As a
@@ -153,7 +299,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	}
 #endif
 
-	shmid = shmget(memKey, size, IPC_CREAT | IPC_EXCL | IPCProtection);
+	shmid = shmget_for_oh(memKey, size, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 	if (shmid < 0)
 	{
@@ -183,7 +329,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		 */
 		if (shmget_errno == EINVAL)
 		{
-			shmid = shmget(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
+			shmid = shmget_for_oh(memKey, 0, IPC_CREAT | IPC_EXCL | IPCProtection);
 
 			if (shmid < 0)
 			{
@@ -204,8 +350,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 				 * zero-size segment, free it and then fall through to report
 				 * the original error.
 				 */
-				if (shmctl(shmid, IPC_RMID, NULL) < 0)
-					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
+				if (shmctl_for_oh(shmid, IPC_RMID, NULL) < 0)
+					elog(LOG, "shmctl_for_oh(%d, %d, 0) failed: %m",
 						 (int) shmid, IPC_RMID);
 			}
 		}
@@ -222,7 +368,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		errno = shmget_errno;
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-				 errdetail("Failed system call was shmget(key=%lu, size=%zu, 0%o).",
+				 errdetail("Failed system call was shmget_for_oh(key=%lu, size=%zu, 0%o).",
 						   (unsigned long) memKey, size,
 						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (shmget_errno == EINVAL) ?
@@ -252,10 +398,10 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
-	memAddress = shmat(shmid, requestedAddress, PG_SHMAT_FLAGS);
+	memAddress = shmat_for_oh(shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	if (memAddress == (void *) -1)
-		elog(FATAL, "shmat(id=%d, addr=%p, flags=0x%x) failed: %m",
+		elog(FATAL, "shmat_for_oh(id=%d, addr=%p, flags=0x%x) failed: %m",
 			 shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	/* Register on-exit routine to detach new segment before deleting */
@@ -286,8 +432,8 @@ static void
 IpcMemoryDetach(int status, Datum shmaddr)
 {
 	/* Detach System V shared memory block. */
-	if (shmdt(DatumGetPointer(shmaddr)) < 0)
-		elog(LOG, "shmdt(%p) failed: %m", DatumGetPointer(shmaddr));
+	if (shmdt_for_oh((void *) DatumGetPointer(shmaddr)) < 0)
+		elog(LOG, "shmdt_for_oh(%p) failed: %m", DatumGetPointer(shmaddr));
 }
 
 /****************************************************************************/
@@ -297,8 +443,8 @@ IpcMemoryDetach(int status, Datum shmaddr)
 static void
 IpcMemoryDelete(int status, Datum shmId)
 {
-	if (shmctl(DatumGetInt32(shmId), IPC_RMID, NULL) < 0)
-		elog(LOG, "shmctl(%d, %d, 0) failed: %m",
+	if (shmctl_for_oh(DatumGetInt32(shmId), IPC_RMID, NULL) < 0)
+		elog(LOG, "shmctl_for_oh(%d, %d, 0) failed: %m",
 			 DatumGetInt32(shmId), IPC_RMID);
 }
 
@@ -320,8 +466,8 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	IpcMemoryState state;
 
 	state = PGSharedMemoryAttach((IpcMemoryId) id2, NULL, &memAddress);
-	if (memAddress && shmdt(memAddress) < 0)
-		elog(LOG, "shmdt(%p) failed: %m", memAddress);
+	if (memAddress && shmdt_for_oh(memAddress) < 0)
+		elog(LOG, "shmdt_for_oh(%p) failed: %m", memAddress);
 	switch (state)
 	{
 		case SHMSTATE_ENOENT:
@@ -357,11 +503,11 @@ PGSharedMemoryAttach(IpcMemoryId shmId,
 	/*
 	 * First, try to stat the shm segment ID, to see if it exists at all.
 	 */
-	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
+	if (shmctl_for_oh(shmId, IPC_STAT, &shmStat) < 0)
 	{
 		/*
 		 * EINVAL actually has multiple possible causes documented in the
-		 * shmctl man page, but we assume it must mean the segment no longer
+		 * shmctl_for_oh man page, but we assume it must mean the segment no longer
 		 * exists.
 		 */
 		if (errno == EINVAL)
@@ -408,14 +554,14 @@ PGSharedMemoryAttach(IpcMemoryId shmId,
 	if (stat(DataDir, &statbuf) < 0)
 		return SHMSTATE_ANALYSIS_FAILURE;	/* can't stat; be conservative */
 
-	hdr = (PGShmemHeader *) shmat(shmId, attachAt, PG_SHMAT_FLAGS);
+	hdr = (PGShmemHeader *) shmat_for_oh(shmId, attachAt, PG_SHMAT_FLAGS);
 	if (hdr == (PGShmemHeader *) -1)
 	{
 		/*
 		 * Attachment failed.  The cases we're interested in are the same as
-		 * for the shmctl() call above.  In particular, note that the owning
+		 * for the shmctl_for_oh() call above.  In particular, note that the owning
 		 * postmaster could have terminated and removed the segment between
-		 * shmctl() and shmat().
+		 * shmctl_for_oh() and shmat_for_oh().
 		 *
 		 * If attachAt isn't NULL, it's possible that EINVAL reflects a
 		 * problem with that address not a vanished segment, so it's best to
@@ -776,11 +922,11 @@ PGSharedMemoryCreate(Size size,
 		/* Check shared memory and possibly remove and recreate */
 
 		/*
-		 * shmget() failure is typically EACCES, hence SHMSTATE_FOREIGN.
+		 * shmget_for_oh() failure is typically EACCES, hence SHMSTATE_FOREIGN.
 		 * ENOENT, a narrow possibility, implies SHMSTATE_ENOENT, but one can
 		 * safely treat SHMSTATE_ENOENT like SHMSTATE_FOREIGN.
 		 */
-		shmid = shmget(NextShmemSegID, sizeof(PGShmemHeader), 0);
+		shmid = shmget_for_oh(NextShmemSegID, sizeof(PGShmemHeader), 0);
 		if (shmid < 0)
 		{
 			oldhdr = NULL;
@@ -830,13 +976,13 @@ PGSharedMemoryCreate(Size size,
 				 */
 				if (oldhdr->dsm_control != 0)
 					dsm_cleanup_using_control_segment(oldhdr->dsm_control);
-				if (shmctl(shmid, IPC_RMID, NULL) < 0)
+				if (shmctl_for_oh(shmid, IPC_RMID, NULL) < 0)
 					NextShmemSegID++;
 				break;
 		}
 
-		if (oldhdr && shmdt(oldhdr) < 0)
-			elog(LOG, "shmdt(%p) failed: %m", oldhdr);
+		if (oldhdr && shmdt_for_oh(oldhdr) < 0)
+			elog(LOG, "shmdt_for_oh(%p) failed: %m", oldhdr);
 	}
 
 	/* Initialize new segment. */
@@ -904,7 +1050,7 @@ PGSharedMemoryReAttach(void)
 #endif
 
 	elog(DEBUG3, "attaching to %p", UsedShmemSegAddr);
-	shmid = shmget(UsedShmemSegID, sizeof(PGShmemHeader), 0);
+	shmid = shmget_for_oh(UsedShmemSegID, sizeof(PGShmemHeader), 0);
 	if (shmid < 0)
 		state = SHMSTATE_FOREIGN;
 	else
@@ -971,13 +1117,13 @@ PGSharedMemoryDetach(void)
 {
 	if (UsedShmemSegAddr != NULL)
 	{
-		if ((shmdt(UsedShmemSegAddr) < 0)
+		if ((shmdt_for_oh(UsedShmemSegAddr) < 0)
 #if defined(EXEC_BACKEND) && defined(__CYGWIN__)
 		/* Work-around for cygipc exec bug */
-			&& shmdt(NULL) < 0
+			&& shmdt_for_oh(NULL) < 0
 #endif
 			)
-			elog(LOG, "shmdt(%p) failed: %m", UsedShmemSegAddr);
+			elog(LOG, "shmdt_for_oh(%p) failed: %m", UsedShmemSegAddr);
 		UsedShmemSegAddr = NULL;
 	}
 
