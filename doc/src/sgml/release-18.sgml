@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2025-??-??, CURRENT AS OF 2025-06-20</para>
+   <para>2025-??-??, CURRENT AS OF 2025-07-29</para>
   </formalpara>
 
   <sect2 id="release-18-highlights">
@@ -1181,15 +1181,18 @@ Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
 2025-03-18 [62d712ecf] Introduce squashing of constant lists in query jumbling
 Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
 2025-03-27 [9fbd53dea] Remove the query_id_squash_values GUC
+Author: Álvaro Herrera <alvherre@kurilemu.de>
+Branch: master Release: REL_18_BR [c2da1a5d6] 2025-06-24 19:36:32 +0200
 -->
 
       <listitem>
       <para>
       Have <link linkend="guc-compute-query-id">query id</link> computation
-      of arrays consider only the first and last array elements (Dmitry
+      of constant lists consider only the first and last constants (Dmitry
       Dolgov, Sami Imseih)
       <ulink url="&commit_baseurl;62d712ecf">&sect;</ulink>
       <ulink url="&commit_baseurl;9fbd53dea">&sect;</ulink>
+      <ulink url="&commit_baseurl;c2da1a5d6">&sect;</ulink>
       </para>
 
       <para>
@@ -1930,6 +1933,8 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <!--
 Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
 2024-11-08 [14e87ffa5] Add pg_constraint rows for not-null constraints
+Author: Fujii Masao <fujii@postgresql.org>
+Branch: master Release: REL_18_BR [81ce602d4] 2025-06-26 20:25:34 +0900
 -->
 
       <listitem>
@@ -1940,6 +1945,7 @@ Author: Álvaro Herrera <alvherre@alvh.no-ip.org>
       linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>
       (Álvaro Herrera, Bernd Helmle)
       <ulink url="&commit_baseurl;14e87ffa5">&sect;</ulink>
+      <ulink url="&commit_baseurl;81ce602d4">&sect;</ulink>
       </para>
 
       <para>
@@ -2717,6 +2723,8 @@ Author: Thomas Munro <tmunro@postgresql.org>
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
 2024-08-22 [d55322b0d] psql: Add more meta-commands able to use the extended pr
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master Release: REL_18_BR [fc39b286a] 2025-06-24 13:12:46 +0900
 -->
 
      <listitem>
@@ -2724,6 +2732,7 @@ Author: Michael Paquier <michael@paquier.xyz>
      Allow <application>psql</application> to parse, bind, and close
      named prepared statements (Anthonin Bonnefoy, Michael Paquier)
      <ulink url="&commit_baseurl;d55322b0d">&sect;</ulink>
+     <ulink url="&commit_baseurl;fc39b286a">&sect;</ulink>
      </para>
 
      <para>
@@ -3271,13 +3280,16 @@ Author: Amit Kapila <akapila@postgresql.org>
 <!--
 Author: Amit Kapila <akapila@postgresql.org>
 2025-03-20 [e5aeed4b8] pg_createsubscriber: Add -R publications option.
+Author: Peter Eisentraut <peter@eisentraut.org>
+Branch: master Release: REL_18_BR [60dda7bbc] 2025-06-25 10:50:43 +0200
 -->
 
       <listitem>
       <para>
       Add <application>pg_createsubscriber</application> option
-      <option>--remove</option> to remove publications (Shubham Khanna)
+      <option>--clean</option> to remove publications (Shubham Khanna)
       <ulink url="&commit_baseurl;e5aeed4b8">&sect;</ulink>
+      <ulink url="&commit_baseurl;60dda7bbc">&sect;</ulink>
       </para>
       </listitem>
 
@@ -3303,8 +3315,13 @@ Author: Masahiko Sawada <msawada@postgresql.org>
       <listitem>
       <para>
       Add <xref linkend="app-pgrecvlogical"/> option
-      <option>--failover</option> to specify failover slots (Hayato Kuroda)
+      <option>--enable-failover</option> to specify failover slots (Hayato Kuroda)
       <ulink url="&commit_baseurl;cf2655a90">&sect;</ulink>
+      </para>
+
+      <para>
+      Also add option <option>--enable-two-phase</option> as a synonym
+      for <option>--two-phase</option>, and deprecate the latter.
       </para>
       </listitem>
 
