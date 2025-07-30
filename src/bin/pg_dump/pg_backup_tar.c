@@ -826,7 +826,7 @@ _CloseArchive(ArchiveHandle *AH)
 		savVerbose = AH->public.verbose;
 		AH->public.verbose = 0;
 
-		RestoreArchive((Archive *) AH, false);
+		RestoreArchive((Archive *) AH);
 
 		SetArchiveOptions((Archive *) AH, savDopt, savRopt);
 

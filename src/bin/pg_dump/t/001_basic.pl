@@ -237,24 +237,6 @@ command_fails_like(
 	'pg_restore: options -C\/--create and -1\/--single-transaction cannot be used together'
 );
 
-command_fails_like(
-	[ 'pg_restore', '--exclude-database=foo', '--globals-only', '-d', 'xxx' ],
-	qr/\Qpg_restore: error: option --exclude-database cannot be used together with -g\/--globals-only\E/,
-	'pg_restore: option --exclude-database cannot be used together with -g/--globals-only'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--exclude-database=foo', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option --exclude-database can be used only when restoring an archive created by pg_dumpall\E/,
-	'When option --exclude-database is used in pg_restore with dump of pg_dump'
-);
-
-command_fails_like(
-	[ 'pg_restore', '--globals-only', '-d', 'xxx', 'dumpdir' ],
-	qr/\Qpg_restore: error: option -g\/--globals-only can be used only when restoring an archive created by pg_dumpall\E/,
-	'When option --globals-only is not used in pg_restore with dump of pg_dump'
-);
-
 # also fails for -r and -t, but it seems pointless to add more tests for those.
 command_fails_like(
 	[ 'pg_dumpall', '--exclude-database=foo', '--globals-only' ],
@@ -262,8 +244,4 @@ command_fails_like(
 	'pg_dumpall: option --exclude-database cannot be used together with -g/--globals-only'
 );
 
-command_fails_like(
-	[ 'pg_dumpall', '--format', 'x' ],
-	qr/\Qpg_dumpall: error: unrecognized output format "x";\E/,
-	'pg_dumpall: unrecognized output format');
 done_testing();
