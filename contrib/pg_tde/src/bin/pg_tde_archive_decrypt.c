@@ -16,7 +16,8 @@
 static bool
 is_segment(const char *filename)
 {
-	return strspn(filename, "0123456789ABCDEF") == XLOG_FNAME_LEN && filename[XLOG_FNAME_LEN] == '\0';
+	return strspn(filename, "0123456789ABCDEF") == XLOG_FNAME_LEN &&
+		(filename[XLOG_FNAME_LEN] == '\0' || strcmp(filename + XLOG_FNAME_LEN, ".partial") == 0);
 }
 
 static void

@@ -13,10 +13,17 @@
 
 #define TMPFS_DIRECTORY "/dev/shm"
 
+/*
+ * Partial WAL segments are archived but never automatically fetched from the
+ * archive by the restore_command. We support them here for symmetry though
+ * since if someone would want to fetch a partial segment from the archive and
+ * write it to pg_wal then they would want it encrypted.
+ */
 static bool
 is_segment(const char *filename)
 {
-	return strspn(filename, "0123456789ABCDEF") == XLOG_FNAME_LEN && filename[XLOG_FNAME_LEN] == '\0';
+	return strspn(filename, "0123456789ABCDEF") == XLOG_FNAME_LEN &&
+		(filename[XLOG_FNAME_LEN] == '\0' || strcmp(filename + XLOG_FNAME_LEN, ".partial") == 0);
 }
 
 static void
