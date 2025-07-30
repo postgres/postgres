@@ -91,7 +91,7 @@ export LOPTS=${LOPTS:-"-O0 -sDEMANGLE_SUPPORT=1 -frtti -gsource-map --no-wasm-op
     else
         # DO NOT CHANGE COPTS - optimized wasm corruption fix
         export COPTS="-O2 -g3 --no-wasm-opt"
-        export LOPTS=${LOPTS:-"-Os -g0 --closure=0 -sASSERTIONS=0"}
+        export LOPTS=${LOPTS:-"-O2 -g0 --closure=0 -sASSERTIONS=0"}
     fi
 fi
 
