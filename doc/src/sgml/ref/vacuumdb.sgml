@@ -282,9 +282,11 @@ PostgreSQL documentation
       <listitem>
        <para>
         Only analyze relations that are missing statistics for a column, index
-        expression, or extended statistics object.  This option prevents
-        <application>vacuumdb</application> from deleting existing statistics
-        so that the query optimizer's choices do not become transiently worse.
+        expression, or extended statistics object.  When used with
+        <option>--analyze-in-stages</option>, this option prevents
+        <application>vacuumdb</application> from temporarily replacing existing
+        statistics with ones generated with lower statistics targets, thus
+        avoiding transiently worse query optimizer choices.
        </para>
        <para>
         This option can only be used in conjunction with
