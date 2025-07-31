@@ -34,44 +34,6 @@ then
     exit 0
 fi
 
-# this one is critical for release mode
-if grep -q __emscripten_tempret_get ${SDKROOT}/emsdk/upstream/emscripten/src/library_dylink.js
-then
-    echo -n
-else
-    pushd ${SDKROOT}/emsdk
-    patch -p1 <<END
---- emsdk/upstream/emscripten/src/library_dylink.js
-+++ emsdk.fix/upstream/emscripten/src/library_dylink.js
-@@ -724,6 +724,8 @@
-             stubs[prop] = (...args) => {
-               resolved ||= resolveSymbol(prop);
-               if (!resolved) {
-+                if (prop==='getTempRet0')
-+                    return __emscripten_tempret_get(...args);
-                 throw new Error(\`Dynamic linking error: cannot resolve symbol \${prop}\`);
-               }
-               return resolved(...args);
-END
-    # this one for debug mode and changing  -Wl,--global-base= with -sGLOBAL_BASE
-    patch -p1 <<END
---- emsdk/upstream/emscripten/tools/link.py	2025-06-23 08:45:26.554013381 +0200
-+++ emsdk.fix/upstream/emscripten/tools/link.py	2025-06-23 08:45:31.445921560 +0200
-@@ -1662,7 +1662,7 @@
-     # use a smaller LEB encoding).
-     # However, for debugability is better to have the stack come first
-     # (because stack overflows will trap rather than corrupting data).
--    settings.STACK_FIRST = True
-+    settings.STACK_FIRST = False
-
-   if state.has_link_flag('--stack-first'):
-     settings.STACK_FIRST = True
-END
-
-    popd
-
-fi
-
 
 if ${NO_SDK_CHECK:-false}
 then
