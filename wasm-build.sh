@@ -497,7 +497,7 @@ fi
 
 if [ -d pglite-wasm ]
 then
-    [ -L pglite-${PG_BRANCH}/pglite-wasm ] || ln -s $(pwd)/pglite-wasm pglite-${PG_BRANCH}/
+    [ -L pglite-${PG_BRANCH} ] || ln -s $(pwd)/pglite-wasm pglite-${PG_BRANCH}
 fi
 
 # only build extra when targeting pglite-wasm .

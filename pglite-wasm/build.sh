@@ -1,3 +1,7 @@
+#!/bin/bash
+
+. ${PGROOT}/pgopts.sh
+
 export WASI=${WASI:-false}
 
 if ${PGCRYPTO:-false}
@@ -94,7 +98,7 @@ ________________________________________________________
          -c wasm-build/sdk_port-wasi/sdk_port-wasi-dlfcn.c \
          -Wno-incompatible-pointer-types
         then
-            COPTS="$LOPTS" ${CC} ${CC_PGLITE} -ferror-limit=1 -Wl,--global-base=${GLOBAL_BASE_B} -o ${PG_DIST}/pglite.wasi \
+            COPTS="$LOPTS" ${CC} ${CC_PGLITE} -ferror-limit=1 -Wl,--no-stack-first -Wl,--global-base=${GLOBAL_BASE_B} -o ${PG_DIST}/pglite.wasi \
              -nostartfiles ${PGINC} ${BUILD_PATH}/pglite.o \
              ${BUILD_PATH}/sdk_port-wasi.o \
              $LINKER $LIBPGCORE \
@@ -177,7 +181,7 @@ else
     EXPORTED_FUNCTIONS="_main,_use_wire,_pgl_initdb,_pgl_backend,_pgl_shutdown,_interactive_write,_interactive_read,_interactive_one"
     EXPORTED_FUNCTIONS="$EXPORTED_FUNCTIONS,_get_channel,_get_buffer_size,_get_buffer_addr"
 
-    EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack"
+    EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack,getTempRet0,setTempRet0"
 
 
     if $DEBUG
@@ -259,7 +263,7 @@ ________________________________________________________
         # wgpu ???
         export EMCC_FORCE_STDLIBS=1
 
-        if COPTS="-O2 -g3 --no-wasm-opt" ${CC} ${CC_PGLITE} ${PGINC} -o ${PGL_DIST_JS}/pglite-js.js \
+        if COPTS="-O2 -g3" ${CC} ${CC_PGLITE} ${PGINC} -o ${PGL_DIST_JS}/pglite-js.js \
          -sGLOBAL_BASE=${CMA_MB}MB -ferror-limit=1  \
          -sFORCE_FILESYSTEM=1 $EMCC_NODE -sMAIN_MODULE=1 -sEXPORT_ALL -sASSERTIONS=0 \
              -sALLOW_TABLE_GROWTH -sALLOW_MEMORY_GROWTH -sERROR_ON_UNDEFINED_SYMBOLS=0 \
