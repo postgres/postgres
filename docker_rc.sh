@@ -46,6 +46,17 @@ echo "
 
 Setting up SDK shell
 
+
+Applying Hotfixes
+------------------------------------------------------------------------------------------
 "
+
+echo "linker fix"
+cp -vf hotfix/library_dylink.js ${SDKROOT}/emsdk/upstream/emscripten/src/
+
+
+
+echo "------------------------------------------------------------------------------------------"
+
 
 ${SDKROOT}/wasm32-bi-emscripten-shell.sh
