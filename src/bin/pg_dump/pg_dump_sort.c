@@ -162,6 +162,8 @@ static DumpId postDataBoundId;
 
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
+static int	pgTypeNameCompare(Oid typid1, Oid typid2);
+static int	accessMethodNameCompare(Oid am1, Oid am2);
 static bool TopoSort(DumpableObject **objs,
 					 int numObjs,
 					 DumpableObject **ordering,
@@ -228,12 +230,39 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	else if (obj2->namespace)
 		return 1;
 
-	/* Sort by name */
+	/*
+	 * Sort by name.  With a few exceptions, names here are single catalog
+	 * columns.  To get a fuller picture, grep pg_dump.c for "dobj.name = ".
+	 * Names here don't match "Name:" in plain format output, which is a
+	 * _tocEntry.tag.  For example, DumpableObject.name of a constraint is
+	 * pg_constraint.conname, but _tocEntry.tag of a constraint is relname and
+	 * conname joined with a space.
+	 */
 	cmpval = strcmp(obj1->name, obj2->name);
 	if (cmpval != 0)
 		return cmpval;
 
-	/* To have a stable sort order, break ties for some object types */
+	/*
+	 * Sort by type.  This helps types that share a type priority without
+	 * sharing a unique name constraint, e.g. opclass and opfamily.
+	 */
+	cmpval = obj1->objType - obj2->objType;
+	if (cmpval != 0)
+		return cmpval;
+
+	/*
+	 * To have a stable sort order, break ties for some object types.  Most
+	 * catalogs have a natural key, e.g. pg_proc_proname_args_nsp_index. Where
+	 * the above "namespace" and "name" comparisons don't cover all natural
+	 * key columns, compare the rest here.
+	 *
+	 * The natural key usually refers to other catalogs by surrogate keys.
+	 * Hence, this translates each of those references to the natural key of
+	 * the referenced catalog.  That may descend through multiple levels of
+	 * catalog references.  For example, to sort by pg_proc.proargtypes,
+	 * descend to each pg_type and then further to its pg_namespace, for an
+	 * overall sort by (nspname, typname).
+	 */
 	if (obj1->objType == DO_FUNC || obj1->objType == DO_AGG)
 	{
 		FuncInfo   *fobj1 = *(FuncInfo *const *) p1;
@@ -246,22 +275,10 @@ DOTypeNameCompare(const void *p1, const void *p2)
 			return cmpval;
 		for (i = 0; i < fobj1->nargs; i++)
 		{
-			TypeInfo   *argtype1 = findTypeByOid(fobj1->argtypes[i]);
-			TypeInfo   *argtype2 = findTypeByOid(fobj2->argtypes[i]);
-
-			if (argtype1 && argtype2)
-			{
-				if (argtype1->dobj.namespace && argtype2->dobj.namespace)
-				{
-					cmpval = strcmp(argtype1->dobj.namespace->dobj.name,
-									argtype2->dobj.namespace->dobj.name);
-					if (cmpval != 0)
-						return cmpval;
-				}
-				cmpval = strcmp(argtype1->dobj.name, argtype2->dobj.name);
-				if (cmpval != 0)
-					return cmpval;
-			}
+			cmpval = pgTypeNameCompare(fobj1->argtypes[i],
+									   fobj2->argtypes[i]);
+			if (cmpval != 0)
+				return cmpval;
 		}
 	}
 	else if (obj1->objType == DO_OPERATOR)
@@ -271,6 +288,57 @@ DOTypeNameCompare(const void *p1, const void *p2)
 
 		/* oprkind is 'l', 'r', or 'b'; this sorts prefix, postfix, infix */
 		cmpval = (oobj2->oprkind - oobj1->oprkind);
+		if (cmpval != 0)
+			return cmpval;
+		/* Within an oprkind, sort by argument type names */
+		cmpval = pgTypeNameCompare(oobj1->oprleft, oobj2->oprleft);
+		if (cmpval != 0)
+			return cmpval;
+		cmpval = pgTypeNameCompare(oobj1->oprright, oobj2->oprright);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_OPCLASS)
+	{
+		OpclassInfo *opcobj1 = *(OpclassInfo *const *) p1;
+		OpclassInfo *opcobj2 = *(OpclassInfo *const *) p2;
+
+		/* Sort by access method name, per pg_opclass_am_name_nsp_index */
+		cmpval = accessMethodNameCompare(opcobj1->opcmethod,
+										 opcobj2->opcmethod);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_OPFAMILY)
+	{
+		OpfamilyInfo *opfobj1 = *(OpfamilyInfo *const *) p1;
+		OpfamilyInfo *opfobj2 = *(OpfamilyInfo *const *) p2;
+
+		/* Sort by access method name, per pg_opfamily_am_name_nsp_index */
+		cmpval = accessMethodNameCompare(opfobj1->opfmethod,
+										 opfobj2->opfmethod);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_COLLATION)
+	{
+		CollInfo   *cobj1 = *(CollInfo *const *) p1;
+		CollInfo   *cobj2 = *(CollInfo *const *) p2;
+
+		/*
+		 * Sort by encoding, per pg_collation_name_enc_nsp_index. Technically,
+		 * this is not necessary, because wherever this changes dump order,
+		 * restoring the dump fails anyway.  CREATE COLLATION can't create a
+		 * tie for this to break, because it imposes restrictions to make
+		 * (nspname, collname) uniquely identify a collation within a given
+		 * DatabaseEncoding.  While pg_import_system_collations() can create a
+		 * tie, pg_dump+restore fails after
+		 * pg_import_system_collations('my_schema') does so. However, there's
+		 * little to gain by ignoring one natural key column on the basis of
+		 * those limitations elsewhere, so respect the full natural key like
+		 * we do for other object types.
+		 */
+		cmpval = cobj1->collencoding - cobj2->collencoding;
 		if (cmpval != 0)
 			return cmpval;
 	}
@@ -317,9 +385,141 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
+	else if (obj1->objType == DO_CONSTRAINT)
+	{
+		ConstraintInfo *robj1 = *(ConstraintInfo *const *) p1;
+		ConstraintInfo *robj2 = *(ConstraintInfo *const *) p2;
 
-	/* Usually shouldn't get here, but if we do, sort by OID */
+		/*
+		 * Sort domain constraints before table constraints, for consistency
+		 * with our decision to sort CREATE DOMAIN before CREATE TABLE.
+		 */
+		if (robj1->condomain)
+		{
+			if (robj2->condomain)
+			{
+				/* Sort by domain name (domain namespace was considered) */
+				cmpval = strcmp(robj1->condomain->dobj.name,
+								robj2->condomain->dobj.name);
+				if (cmpval != 0)
+					return cmpval;
+			}
+			else
+				return PRIO_TYPE - PRIO_TABLE;
+		}
+		else if (robj2->condomain)
+			return PRIO_TABLE - PRIO_TYPE;
+		else
+		{
+			/* Sort by table name (table namespace was considered already) */
+			cmpval = strcmp(robj1->contable->dobj.name,
+							robj2->contable->dobj.name);
+			if (cmpval != 0)
+				return cmpval;
+		}
+	}
+	else if (obj1->objType == DO_PUBLICATION_REL)
+	{
+		PublicationRelInfo *probj1 = *(PublicationRelInfo *const *) p1;
+		PublicationRelInfo *probj2 = *(PublicationRelInfo *const *) p2;
+
+		/* Sort by publication name, since (namespace, name) match the rel */
+		cmpval = strcmp(probj1->publication->dobj.name,
+						probj2->publication->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	else if (obj1->objType == DO_PUBLICATION_TABLE_IN_SCHEMA)
+	{
+		PublicationSchemaInfo *psobj1 = *(PublicationSchemaInfo *const *) p1;
+		PublicationSchemaInfo *psobj2 = *(PublicationSchemaInfo *const *) p2;
+
+		/* Sort by publication name, since ->name is just nspname */
+		cmpval = strcmp(psobj1->publication->dobj.name,
+						psobj2->publication->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
+
+	/*
+	 * Shouldn't get here except after catalog corruption, but if we do, sort
+	 * by OID.  This may make logically-identical databases differ in the
+	 * order of objects in dump output.  Users will get spurious schema diffs.
+	 * Expect flaky failures of 002_pg_upgrade.pl test 'dump outputs from
+	 * original and restored regression databases match' if the regression
+	 * database contains objects allowing that test to reach here.  That's a
+	 * consequence of the test using "pg_restore -j", which doesn't fully
+	 * constrain OID assignment order.
+	 */
+	Assert(false);
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);
+}
+
+/* Compare two OID-identified pg_type values by nspname, then by typname. */
+static int
+pgTypeNameCompare(Oid typid1, Oid typid2)
+{
+	TypeInfo   *typobj1;
+	TypeInfo   *typobj2;
+	int			cmpval;
+
+	if (typid1 == typid2)
+		return 0;
+
+	typobj1 = findTypeByOid(typid1);
+	typobj2 = findTypeByOid(typid2);
+
+	if (!typobj1 || !typobj2)
+	{
+		/*
+		 * getTypes() didn't find some OID.  Assume catalog corruption, e.g.
+		 * an oprright value without the corresponding OID in a pg_type row.
+		 * Report as "equal", so the caller uses the next available basis for
+		 * comparison, e.g. the next function argument.
+		 *
+		 * Unary operators have InvalidOid in oprleft (if oprkind='r') or in
+		 * oprright (if oprkind='l').  Caller already sorted by oprkind,
+		 * calling us only for like-kind operators.  Hence, "typid1 == typid2"
+		 * took care of InvalidOid.  (v14 removed postfix operator support.
+		 * Hence, when dumping from v14+, only oprleft can be InvalidOid.)
+		 */
+		Assert(false);
+		return 0;
+	}
+
+	if (!typobj1->dobj.namespace || !typobj2->dobj.namespace)
+		Assert(false);			/* catalog corruption */
+	else
+	{
+		cmpval = strcmp(typobj1->dobj.namespace->dobj.name,
+						typobj2->dobj.namespace->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
+	return strcmp(typobj1->dobj.name, typobj2->dobj.name);
+}
+
+/* Compare two OID-identified pg_am values by amname. */
+static int
+accessMethodNameCompare(Oid am1, Oid am2)
+{
+	AccessMethodInfo *amobj1;
+	AccessMethodInfo *amobj2;
+
+	if (am1 == am2)
+		return 0;
+
+	amobj1 = findAccessMethodByOid(am1);
+	amobj2 = findAccessMethodByOid(am2);
+
+	if (!amobj1 || !amobj2)
+	{
+		/* catalog corruption: handle like pgTypeNameCompare() does */
+		Assert(false);
+		return 0;
+	}
+
+	return strcmp(amobj1->dobj.name, amobj2->dobj.name);
 }
 
 
