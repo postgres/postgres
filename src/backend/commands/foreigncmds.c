@@ -1588,7 +1588,7 @@ ImportForeignSchema(ImportForeignSchemaStmt *stmt)
 			pstmt->utilityStmt = (Node *) cstmt;
 			pstmt->stmt_location = rs->stmt_location;
 			pstmt->stmt_len = rs->stmt_len;
-			pstmt->cached_plan_type = PLAN_CACHE_NONE;
+			pstmt->planOrigin = PLAN_STMT_INTERNAL;
 
 			/* Execute statement */
 			ProcessUtility(pstmt, cmd, false,

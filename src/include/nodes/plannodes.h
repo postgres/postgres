@@ -29,18 +29,19 @@
  */
 
 /* ----------------
- *		CachedPlanType
+ *		PlannedStmtOrigin
  *
- * CachedPlanType identifies whether a PlannedStmt is a cached plan, and if
- * so, whether it is generic or custom.
+ * PlannedStmtOrigin identifies from where a PlannedStmt comes from.
  * ----------------
  */
-typedef enum CachedPlanType
+typedef enum PlannedStmtOrigin
 {
-	PLAN_CACHE_NONE = 0,		/* Not a cached plan */
-	PLAN_CACHE_GENERIC,			/* Generic cached plan */
-	PLAN_CACHE_CUSTOM,			/* Custom cached plan */
-} CachedPlanType;
+	PLAN_STMT_UNKNOWN = 0,		/* plan origin is not yet known */
+	PLAN_STMT_INTERNAL,			/* generated internally by a query */
+	PLAN_STMT_STANDARD,			/* standard planned statement */
+	PLAN_STMT_CACHE_GENERIC,	/* Generic cached plan */
+	PLAN_STMT_CACHE_CUSTOM,		/* Custom cached plan */
+} PlannedStmtOrigin;
 
 /* ----------------
  *		PlannedStmt node
@@ -72,8 +73,8 @@ typedef struct PlannedStmt
 	/* plan identifier (can be set by plugins) */
 	int64		planId;
 
-	/* type of cached plan */
-	CachedPlanType cached_plan_type;
+	/* origin of plan */
+	PlannedStmtOrigin planOrigin;
 
 	/* is it insert|update|delete|merge RETURNING? */
 	bool		hasReturning;
