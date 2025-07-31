@@ -1100,3 +1100,25 @@ DROP SCHEMA sch2 cascade;
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_publication_user, regress_publication_user2;
 DROP ROLE regress_publication_user_dummy;
+
+-- stage objects for pg_dump tests
+CREATE SCHEMA pubme CREATE TABLE t0 (c int, d int) CREATE TABLE t1 (c int);
+CREATE SCHEMA pubme2 CREATE TABLE t0 (c int, d int);
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION dump_pub_qual_1ct FOR
+  TABLE ONLY pubme.t0 (c, d) WHERE (c > 0);
+CREATE PUBLICATION dump_pub_qual_2ct FOR
+  TABLE ONLY pubme.t0 (c) WHERE (c > 0),
+  TABLE ONLY pubme.t1 (c);
+CREATE PUBLICATION dump_pub_nsp_1ct FOR
+  TABLES IN SCHEMA pubme;
+CREATE PUBLICATION dump_pub_nsp_2ct FOR
+  TABLES IN SCHEMA pubme,
+  TABLES IN SCHEMA pubme2;
+CREATE PUBLICATION dump_pub_all FOR
+  TABLE ONLY pubme.t0,
+  TABLE ONLY pubme.t1 WHERE (c < 0),
+  TABLES IN SCHEMA pubme,
+  TABLES IN SCHEMA pubme2
+  WITH (publish_via_partition_root = true);
+RESET client_min_messages;
