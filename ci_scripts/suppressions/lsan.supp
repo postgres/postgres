@@ -51,3 +51,7 @@ leak:bin/pg_waldump/pg_waldump.c
 #pg_dump
 leak:getSchemaData
 leak:dumpDumpableObject
+
+#pg_rewind
+leak:decide_file_actions
+leak:GenerateRecoveryConfig

@@ -264,6 +264,7 @@ json_kring_object_field_start(void *state, char *fname, bool isnull)
 			break;
 	}
 
+	pfree(fname);
 	return JSON_SUCCESS;
 }
 
