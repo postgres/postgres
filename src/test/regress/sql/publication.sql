@@ -218,3 +218,12 @@ DROP SCHEMA pub_test CASCADE;
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_publication_user, regress_publication_user2;
 DROP ROLE regress_publication_user_dummy;
+
+-- stage objects for pg_dump tests
+CREATE SCHEMA pubme CREATE TABLE t0 (c int, d int) CREATE TABLE t1 (c int);
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION dump_pub_1ct FOR TABLE ONLY pubme.t0;
+CREATE PUBLICATION dump_pub_2ct FOR TABLE ONLY pubme.t0, pubme.t1;
+CREATE PUBLICATION dump_pub_all FOR TABLE ONLY pubme.t0, pubme.t1
+  WITH (publish_via_partition_root = true);
+RESET client_min_messages;
