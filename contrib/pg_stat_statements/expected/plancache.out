@@ -1,0 +1,224 @@
+--
+-- Tests with plan cache
+--
+-- Setup
+CREATE OR REPLACE FUNCTION select_one_func(int) RETURNS VOID AS $$
+DECLARE
+  ret INT;
+BEGIN
+  SELECT $1 INTO ret;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE PROCEDURE select_one_proc(int) AS $$
+DECLARE
+  ret INT;
+BEGIN
+  SELECT $1 INTO ret;
+END;
+$$ LANGUAGE plpgsql;
+-- Prepared statements
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+PREPARE p1 AS SELECT $1 AS a;
+SET plan_cache_mode TO force_generic_plan;
+EXECUTE p1(1);
+ a 
+---
+ 1
+(1 row)
+
+SET plan_cache_mode TO force_custom_plan;
+EXECUTE p1(1);
+ a 
+---
+ 1
+(1 row)
+
+SELECT calls, generic_plan_calls, custom_plan_calls, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ calls | generic_plan_calls | custom_plan_calls |                       query                        
+-------+--------------------+-------------------+----------------------------------------------------
+     2 |                  1 |                 1 | PREPARE p1 AS SELECT $1 AS a
+     1 |                  0 |                 0 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+     2 |                  0 |                 0 | SET plan_cache_mode TO $1
+(3 rows)
+
+DEALLOCATE p1;
+-- Extended query protocol
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT $1 AS a \parse p1
+SET plan_cache_mode TO force_generic_plan;
+\bind_named p1 1
+;
+ a 
+---
+ 1
+(1 row)
+
+SET plan_cache_mode TO force_custom_plan;
+\bind_named p1 1
+;
+ a 
+---
+ 1
+(1 row)
+
+SELECT calls, generic_plan_calls, custom_plan_calls, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ calls | generic_plan_calls | custom_plan_calls |                       query                        
+-------+--------------------+-------------------+----------------------------------------------------
+     2 |                  1 |                 1 | SELECT $1 AS a
+     1 |                  0 |                 0 | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+     2 |                  0 |                 0 | SET plan_cache_mode TO $1
+(3 rows)
+
+\close_prepared p1
+-- EXPLAIN [ANALYZE] EXECUTE
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+PREPARE p1 AS SELECT $1;
+SET plan_cache_mode TO force_generic_plan;
+EXPLAIN (COSTS OFF) EXECUTE p1(1);
+ QUERY PLAN 
+------------
+ Result
+(1 row)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) EXECUTE p1(1);
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
+(1 row)
+
+SET plan_cache_mode TO force_custom_plan;
+EXPLAIN (COSTS OFF) EXECUTE p1(1);
+ QUERY PLAN 
+------------
+ Result
+(1 row)
+
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) EXECUTE p1(1);
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
+(1 row)
+
+SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ calls | generic_plan_calls | custom_plan_calls | toplevel |                                      query                                       
+-------+--------------------+-------------------+----------+----------------------------------------------------------------------------------
+     2 |                  0 |                 0 | t        | EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) EXECUTE p1(1)
+     2 |                  0 |                 0 | t        | EXPLAIN (COSTS OFF) EXECUTE p1(1)
+     4 |                  2 |                 2 | f        | PREPARE p1 AS SELECT $1
+     1 |                  0 |                 0 | t        | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+     2 |                  0 |                 0 | t        | SET plan_cache_mode TO $1
+(5 rows)
+
+RESET pg_stat_statements.track;
+DEALLOCATE p1;
+-- Functions/procedures
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SET plan_cache_mode TO force_generic_plan;
+SELECT select_one_func(1);
+ select_one_func 
+-----------------
+ 
+(1 row)
+
+CALL select_one_proc(1);
+SET plan_cache_mode TO force_custom_plan;
+SELECT select_one_func(1);
+ select_one_func 
+-----------------
+ 
+(1 row)
+
+CALL select_one_proc(1);
+SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C";
+ calls | generic_plan_calls | custom_plan_calls | toplevel |                       query                        
+-------+--------------------+-------------------+----------+----------------------------------------------------
+     2 |                  0 |                 0 | t        | CALL select_one_proc($1)
+     4 |                  2 |                 2 | f        | SELECT $1
+     1 |                  0 |                 0 | t        | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+     2 |                  0 |                 0 | t        | SELECT select_one_func($1)
+     2 |                  0 |                 0 | t        | SET plan_cache_mode TO $1
+(5 rows)
+
+--
+-- EXPLAIN [ANALYZE] EXECUTE + functions/procedures
+--
+SET pg_stat_statements.track = 'all';
+SELECT pg_stat_statements_reset() IS NOT NULL AS t;
+ t 
+---
+ t
+(1 row)
+
+SET plan_cache_mode TO force_generic_plan;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func(1);
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT select_one_func(1);
+ QUERY PLAN 
+------------
+ Result
+(1 row)
+
+CALL select_one_proc(1);
+SET plan_cache_mode TO force_custom_plan;
+EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func(1);
+            QUERY PLAN             
+-----------------------------------
+ Result (actual rows=1.00 loops=1)
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT select_one_func(1);
+ QUERY PLAN 
+------------
+ Result
+(1 row)
+
+CALL select_one_proc(1);
+SELECT calls, generic_plan_calls, custom_plan_calls, toplevel, query FROM pg_stat_statements
+  ORDER BY query COLLATE "C", toplevel;
+ calls | generic_plan_calls | custom_plan_calls | toplevel |                                             query                                              
+-------+--------------------+-------------------+----------+------------------------------------------------------------------------------------------------
+     2 |                  0 |                 0 | t        | CALL select_one_proc($1)
+     2 |                  0 |                 0 | t        | EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func($1)
+     4 |                  0 |                 0 | f        | EXPLAIN (ANALYZE, COSTS OFF, SUMMARY OFF, TIMING OFF, BUFFERS OFF) SELECT select_one_func($1);
+     2 |                  0 |                 0 | t        | EXPLAIN (COSTS OFF) SELECT select_one_func($1)
+     4 |                  2 |                 2 | f        | SELECT $1
+     1 |                  0 |                 0 | t        | SELECT pg_stat_statements_reset() IS NOT NULL AS t
+     2 |                  0 |                 0 | t        | SET plan_cache_mode TO $1
+(7 rows)
+
+RESET pg_stat_statements.track;
+--
+-- Cleanup
+--
+DROP FUNCTION select_one_func(int);
+DROP PROCEDURE select_one_proc(int);
