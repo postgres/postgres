@@ -17,6 +17,7 @@
 
 #include <ctype.h>
 
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_class_d.h"
 #include "fe_utils/string_utils.h"
 #include "pg_backup_archiver.h"
@@ -49,6 +50,7 @@ static DumpableObject **tblinfoindex;
 static DumpableObject **typinfoindex;
 static DumpableObject **funinfoindex;
 static DumpableObject **oprinfoindex;
+static DumpableObject **aminfoindex;
 static DumpableObject **collinfoindex;
 static DumpableObject **nspinfoindex;
 static DumpableObject **extinfoindex;
@@ -57,6 +59,7 @@ static int	numTables;
 static int	numTypes;
 static int	numFuncs;
 static int	numOperators;
+static int	numAccessMethods;
 static int	numCollations;
 static int	numNamespaces;
 static int	numExtensions;
@@ -92,6 +95,7 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	TypeInfo   *typinfo;
 	FuncInfo   *funinfo;
 	OprInfo    *oprinfo;
+	AccessMethodInfo *aminfo;
 	CollInfo   *collinfo;
 	NamespaceInfo *nspinfo;
 	ExtensionInfo *extinfo;
@@ -103,7 +107,6 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	int			numProcLangs;
 	int			numCasts;
 	int			numTransforms;
-	int			numAccessMethods;
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
@@ -166,7 +169,8 @@ getSchemaData(Archive *fout, int *numTablesPtr)
 	oprinfoindex = buildIndexArray(oprinfo, numOperators, sizeof(OprInfo));
 
 	pg_log_info("reading user-defined access methods");
-	getAccessMethods(fout, &numAccessMethods);
+	aminfo = getAccessMethods(fout, &numAccessMethods);
+	aminfoindex = buildIndexArray(aminfo, numAccessMethods, sizeof(AccessMethodInfo));
 
 	pg_log_info("reading user-defined operator classes");
 	getOpclasses(fout, &numOpclasses);
@@ -888,6 +892,17 @@ OprInfo *
 findOprByOid(Oid oid)
 {
 	return (OprInfo *) findObjectByOid(oid, oprinfoindex, numOperators);
+}
+
+/*
+ * findAccessMethodByOid
+ *	  finds the DumpableObject for the access method with the given oid
+ *	  returns NULL if not found
+ */
+AccessMethodInfo *
+findAccessMethodByOid(Oid oid)
+{
+	return (AccessMethodInfo *) findObjectByOid(oid, aminfoindex, numAccessMethods);
 }
 
 /*
