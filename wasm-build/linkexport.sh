@@ -1,3 +1,4 @@
+# tobesourced
 # this only runs when wasm-objdump is working and OBJDUMP not set to false
 
 mkdir -p ${PGL_DIST_LINK}/exports ${PGL_DIST_LINK}/imports ${PG_BUILD_DUMPS}

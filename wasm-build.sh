@@ -9,9 +9,16 @@ export CI=${CI:-false}
 export PORTABLE=${PORTABLE:-$(pwd)/wasm-build}
 export SDKROOT=${SDKROOT:-/tmp/sdk}
 
-export GETZIC=${GETZIC:-true}
+
 # systems default may not be in path
 export ZIC=${ZIC:-/usr/sbin/zic}
+
+if [ -x $ZIC ]
+then
+    export GETZIC=false
+else
+    export GETZIC=true
+fi
 
 # data transfer zone this is == (wire query size + result size ) + 2
 # expressed in EMSDK MB, max is 13MB on emsdk 3.1.74+
@@ -81,16 +88,21 @@ else
             # docker debug ( expected to be ide friendly )
             export COPTS="-g3 --no-wasm-opt"
             export LOPTS=${LOPTS:-"-g3 --no-wasm-opt -sASSERTIONS=1"}
-# TODO: test those
-export COPTS="-O0 -sDEMANGLE_SUPPORT=1 -frtti -gsource-map --no-wasm-opt"
-export LOPTS=${LOPTS:-"-O0 -sDEMANGLE_SUPPORT=1 -frtti -gsource-map --no-wasm-opt -sASSERTIONS=1"}
+
+# 3.1.61
+# export COPTS="-O0 -sDEMANGLE_SUPPORT=1 -frtti -g -gsplit-dwarf=split -gsource-map "
+# export LOPTS="-Oz -sDEMANGLE_SUPPORT=1 -frtti -g -gsplit-dwarf=split -gsource-map -sASSERTIONS=1"
+
+export COPTS="-O2 -g3 --no-wasm-opt"
+export LOPTS=${LOPTS:-"-O2 -g3 --no-wasm-opt -sASSERTIONS=1"}
+
 
         fi
 
 
     else
         # DO NOT CHANGE COPTS - optimized wasm corruption fix
-        export COPTS="-O2 -g3 --no-wasm-opt"
+        export COPTS="-O2 -g3" # --no-wasm-opt"
         export LOPTS=${LOPTS:-"-O2 -g0 --closure=0 -sASSERTIONS=0"}
     fi
 fi
@@ -365,9 +377,10 @@ export PG_DIST=$PG_DIST
 export PG_DIST_EXT=$PG_DIST_EXT
 export PGL_DIST_JS=$PGL_DIST_JS
 export PGL_DIST_LINK=$PGL_DIST_LINK
-
 export PGL_DIST_NATIVE=$PGL_DIST_NATIVE
 export PGL_DIST_WEB=$PGL_DIST_WEB
+export XDG_CACHE_HOME=$XDG_CACHE_HOME
+
 export DEBUG=$DEBUG
 
 export USE_ICU=$USE_ICU
@@ -482,7 +495,10 @@ then
     cp /tmp/pglite/bin/pg_dump.wasi /tmp/sdk/dist/
 fi
 
-[ -d pglite-wasm ] && ln -s $(pwd)/pglite-wasm pglite-${PG_BRANCH}
+if [ -d pglite-wasm ]
+then
+    [ -L pglite-${PG_BRANCH}/pglite-wasm ] || ln -s $(pwd)/pglite-wasm pglite-${PG_BRANCH}/
+fi
 
 # only build extra when targeting pglite-wasm .
 rm -f pglite-link.sh
@@ -531,8 +547,22 @@ END
         cat > pglite-link.sh <<END
 . ${PGROOT}/pgopts.sh
 . ${SDKROOT}/wasm32-bi-emscripten-shell.sh
+
+echo "
+        * emsdk: building pglite-wasm (initdb/loop/transport/repl/backend)
+
+    LINK FOLDER : '\$PGL_DIST_LINK'  ($PGL_DIST_LINK)
+    JS CACHE : '\$XDG_CACHE_HOME/node_modules' ($XDG_CACHE_HOME/node_modules)
+
+
+
+"
+
 if ./pglite-${PG_BRANCH}/build.sh
 then
+    echo "
+        * emsdk: linking pglite-wasm (initdb/loop/transport/repl/backend)
+    "
     if [ -d pglite ]
     then
         mkdir -p pglite/packages/pglite/release
@@ -546,18 +576,51 @@ then
 
         cp ${PGL_DIST_WEB}/pglite.* pglite/packages/pglite/release/
         pushd pglite
+            mkdir -p $XDG_CACHE_HOME/node_modules
+            touch $XDG_CACHE_HOME/node_modules/.nodel
+
+            echo "
+                * linking all node_modules to : $XDG_CACHE_HOME/node_modules
+"
+
+            for nmdir in ./node_modules \
+./docs/node_modules \
+./examples/react/node_modules \
+./examples/unixSocket/node_modules \
+./packages/benchmark/node_modules \
+./packages/pg-protocol/node_modules \
+./packages/pglite-react/node_modules \
+./packages/pglite-repl/node_modules \
+./packages/pglite-socket/node_modules \
+./packages/pglite-sync/node_modules \
+./packages/pglite-tools/node_modules \
+./packages/pglite-vue/node_modules
+            do
+                if pushd \$(dirname \$nmdir)
+                then
+                    if [ -d node_modules ]
+                    then
+                        echo "WARNING: $(pwd) has a node_modules directory !"
+                    else
+                        [ -L node_modules ] || ln -s $XDG_CACHE_HOME/node_modules
+                    fi
+                    popd
+                fi
+            done
+
             export PNPM_HOME=\$(echo -n $SDKROOT/emsdk/node/*.*.*/bin)
             export PATH=\$PNPM_HOME:\$PATH
 
             if which pnpm
             then
-                echo -n
+                pnpm install -g npm vitest
             else
-                npm install -g pnpm@latest-10
+                npm install -g pnpm@latest-10 vitest
             fi
-            pnpm install -g npm vitest
+
             pnpm install
             pnpm run ts:build
+
         popd
 
         if [ -f /skiptest ]

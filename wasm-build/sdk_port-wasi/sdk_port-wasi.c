@@ -117,8 +117,12 @@ sigaction(int signum, const struct sigaction *act, struct sigaction *oldact) {
 
 int
 sigfillset (sigset_t *set) {
-  *set = (sigset_t)( ((2U << (NSIG - 1)) - 1) & ~ SIGABRT_COMPAT_MASK );
-  return 0;
+    // *set = (sigset_t)( ((2U << (NSIG - 1)) - 1) & ~ SIGABRT_COMPAT_MASK );
+    if (set == NULL) {
+        return -1;
+    }
+    *set = ~(sigset_t)0;
+    return 0;
 }
 
 int
