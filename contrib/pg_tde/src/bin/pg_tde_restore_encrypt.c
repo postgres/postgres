@@ -202,7 +202,13 @@ main(int argc, char *argv[])
 	if (r != child)
 		pg_fatal("child %d died, expected %d", (int) r, (int) child);
 	if (status != 0)
-		pg_fatal("%s", wait_result_to_str(status));
+	{
+		char	   *reason = wait_result_to_str(status);
+
+		pg_fatal("%s", reason);
+		/* keep lsan happy */
+		free(reason);
+	}
 
 	if (issegment)
 	{

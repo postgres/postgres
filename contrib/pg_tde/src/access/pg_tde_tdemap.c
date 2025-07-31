@@ -1018,6 +1018,9 @@ pg_tde_read_last_wal_key(void)
 	/* No keys */
 	if (fsize == TDE_FILE_HEADER_SIZE)
 	{
+#ifdef FRONTEND
+		pfree(principal_key);
+#endif
 		LWLockRelease(lock_pk);
 		CloseTransientFile(fd);
 		return NULL;
@@ -1027,6 +1030,9 @@ pg_tde_read_last_wal_key(void)
 	pg_tde_read_one_map_entry2(fd, file_idx, &map_entry, rlocator.dbOid);
 
 	rel_key_data = tde_decrypt_rel_key(principal_key, &map_entry);
+#ifdef FRONTEND
+	pfree(principal_key);
+#endif
 	LWLockRelease(lock_pk);
 	CloseTransientFile(fd);
 

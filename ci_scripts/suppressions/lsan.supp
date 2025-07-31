@@ -55,3 +55,7 @@ leak:dumpDumpableObject
 #pg_rewind
 leak:decide_file_actions
 leak:GenerateRecoveryConfig
+
+# Returns strdup'd string which never gets freed in frontend tools. Trying to 
+# free it leads to comiler complains that it discards 'const' qualifier.
+leak:get_progname
