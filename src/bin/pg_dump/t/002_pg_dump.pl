@@ -799,13 +799,6 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
-	schema_only_with_statistics => {
-		dump_cmd => [
-			'pg_dump', '--no-sync',
-			"--file=$tempdir/schema_only_with_statistics.sql",
-			'--schema-only', '--with-statistics', 'postgres',
-		],
-	},
 	no_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
@@ -5204,6 +5197,17 @@ command_fails_like(
 	],
 	qr/\Qpg_dump: error: no matching schemas were found for pattern\E/,
 	'no matching schemas');
+
+command_fails_like(
+	[
+		'pg_dump',
+		'--port' => $port,
+		'--strict-names',
+		'--schema-only',
+		'--with-statistics',
+	],
+	qr/\Qpg_dump: error: options -s\/--schema-only and --with-statistics cannot be used together\E/,
+	'cannot use --schema-only and --with-statistics together');
 
 command_fails_like(
 	[
