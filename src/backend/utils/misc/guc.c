@@ -4725,8 +4725,13 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 			 * the config file cannot cause postmaster start to fail, so we
 			 * don't have to be too tense about possibly installing a bad
 			 * value.)
+			 *
+			 * As an exception, we skip this check if this is a RESET command
+			 * for an unknown custom GUC, else there'd be no way for users to
+			 * remove such settings with reserved prefixes.
 			 */
-			(void) assignable_custom_variable_name(name, false, ERROR);
+			if (value || !valid_custom_variable_name(name))
+				(void) assignable_custom_variable_name(name, false, ERROR);
 		}
 
 		/*
@@ -6713,6 +6718,7 @@ validate_option_array_item(const char *name, const char *value,
 
 {
 	struct config_generic *gconf;
+	bool		reset_custom;
 
 	/*
 	 * There are three cases to consider:
@@ -6731,16 +6737,21 @@ validate_option_array_item(const char *name, const char *value,
 	 * it's assumed to be fully validated.)
 	 *
 	 * name is not known and can't be created as a placeholder.  Throw error,
-	 * unless skipIfNoPermissions is true, in which case return false.
+	 * unless skipIfNoPermissions or reset_custom is true.  If reset_custom is
+	 * true, this is a RESET or RESET ALL operation for an unknown custom GUC
+	 * with a reserved prefix, in which case we want to fall through to the
+	 * placeholder case described in the preceding paragraph (else there'd be
+	 * no way for users to remove them).  Otherwise, return false.
 	 */
-	gconf = find_option(name, true, skipIfNoPermissions, ERROR);
-	if (!gconf)
+	reset_custom = (!value && valid_custom_variable_name(name));
+	gconf = find_option(name, true, skipIfNoPermissions || reset_custom, ERROR);
+	if (!gconf && !reset_custom)
 	{
 		/* not known, failed to make a placeholder */
 		return false;
 	}
 
-	if (gconf->flags & GUC_CUSTOM_PLACEHOLDER)
+	if (!gconf || gconf->flags & GUC_CUSTOM_PLACEHOLDER)
 	{
 		/*
 		 * We cannot do any meaningful check on the value, so only permissions
