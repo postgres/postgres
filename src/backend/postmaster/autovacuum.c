@@ -562,10 +562,10 @@ AutoVacLauncherMain(const void *startup_data, size_t startup_data_len)
 
 	/*
 	 * Create the initial database list.  The invariant we want this list to
-	 * keep is that it's ordered by decreasing next_time.  As soon as an entry
-	 * is updated to a higher time, it will be moved to the front (which is
-	 * correct because the only operation is to add autovacuum_naptime to the
-	 * entry, and time always increases).
+	 * keep is that it's ordered by decreasing next_worker.  As soon as an
+	 * entry is updated to a higher time, it will be moved to the front (which
+	 * is correct because the only operation is to add autovacuum_naptime to
+	 * the entry, and time always increases).
 	 */
 	rebuild_database_list(InvalidOid);
 
