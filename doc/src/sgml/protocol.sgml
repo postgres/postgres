@@ -537,6 +537,11 @@
         The frontend should not respond to this message, but should
         continue listening for a ReadyForQuery message.
        </para>
+       <para>
+        The <productname>PostgreSQL</productname> server will always send this
+        message, but some third party backend implementations of the protocol
+        that don't support query cancellation are known not to.
+       </para>
       </listitem>
      </varlistentry>
 
