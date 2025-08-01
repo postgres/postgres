@@ -6,6 +6,36 @@ Percona Transparent Data Encryption for PostgreSQL (`pg_tde`) is an open source,
     There is no safe upgrade path from the previous versions, such as Release Candidate 2, to the General Availability (GA) version of `pg_tde`.  
     We recommend starting with a **clean installation** for GA deployments. Avoid using RC environments in production.
 
-[Learn more about TDE and pg_tde :material-arrow-right:](index/about-tde.md){.md-button}
-[Get started with installation :material-arrow-right:](install.md){.md-button}
-[Check out what's new in pg_tde {{release}} :material-arrow-right:](release-notes/release-notes.md){.md-button}
+<div data-grid markdown><div data-banner markdown>
+
+### :material-progress-download: Installation guide { .title }
+
+Get started quickly with the step-by-step installation instructions.
+
+[How to install `pg_tde` :material-arrow-right:](install.md){ .md-button }
+
+</div><div data-banner markdown>
+
+### :rocket: Features { .title }
+
+Explore what features Percona's `pg_tde` extension brings to PostgreSQL.
+
+[Check what you can do with `pg_tde` :material-arrow-right:](features.md){ .md-button }
+
+</div><div data-banner markdown>
+
+### :material-cog-refresh-outline: Architecture { .title }
+
+Understand how `pg_tde` integrates into PostgreSQL with Percona's architecture. Learn how keys are managed, how encryption is applied, and how our design ensures performance and security.
+
+[Check what’s under the hood for `pg_tde` :material-arrow-right:](architecture/architecture.md){.md-button}
+
+</div><div data-banner markdown>
+
+### :loudspeaker: What's new? { .title }
+
+Learn about the releases and changes in `pg_tde`.
+
+[Check what’s new in the latest version :material-arrow-right:](release-notes/{{latestreleasenotes}}.md){.md-button}
+</div>
+</div>

@@ -1,5 +1,6 @@
 #Variables used throughout the docs
 
+latestreleasenotes: 'release-notes-v1.0'
 tdeversion: '1.0'
 release: '1.0'
 pgversion17: '17.5'
