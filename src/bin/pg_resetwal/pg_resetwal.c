@@ -408,7 +408,11 @@ main(int argc, char *argv[])
 		WalSegSz = ControlFile.xlog_seg_size;
 
 	if (log_fname != NULL)
+	{
 		XLogFromFileName(log_fname, &minXlogTli, &minXlogSegNo, WalSegSz);
+		free(log_fname);
+	}
+
 
 	/*
 	 * Also look at existing segment files to set up newXlogSegNo
@@ -639,6 +643,8 @@ read_controlfile(void)
 
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
 
+		free(buffer);
+
 		/* return false if WAL segment size is not valid */
 		if (!IsValidWalSegSize(ControlFile.xlog_seg_size))
 		{
@@ -651,6 +657,8 @@ read_controlfile(void)
 
 		return true;
 	}
+
+	free(buffer);
 
 	/* Looks like it's a mess. */
 	pg_log_warning("pg_control exists but is broken or wrong version; ignoring it");

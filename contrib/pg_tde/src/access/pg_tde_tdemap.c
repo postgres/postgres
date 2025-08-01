@@ -522,6 +522,9 @@ pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocat
 
 	pg_tde_write_key_map_entry(newrlocator, rel_key_data, principal_key);
 
+#ifdef FRONTEND
+	free(principal_key);
+#endif
 	LWLockRelease(tde_lwlock_enc_keys());
 }
 
