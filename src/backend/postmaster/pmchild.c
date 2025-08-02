@@ -60,6 +60,17 @@ NON_EXEC_STATIC int num_pmchild_slots = 0;
 dlist_head	ActiveChildList;
 
 /*
+ * Dummy pointer to persuade Valgrind that we've not leaked the array of
+ * PMChild structs.  Make it global to ensure the compiler doesn't
+ * optimize it away.
+ */
+#ifdef USE_VALGRIND
+extern PMChild *pmchild_array;
+PMChild    *pmchild_array;
+#endif
+
+
+/*
  * MaxLivePostmasterChildren
  *
  * This reports the number of postmaster child processes that can be active.
@@ -125,8 +136,13 @@ InitPostmasterChildSlots(void)
 	for (int i = 0; i < BACKEND_NUM_TYPES; i++)
 		num_pmchild_slots += pmchild_pools[i].size;
 
-	/* Initialize them */
+	/* Allocate enough slots, and make sure Valgrind doesn't complain */
 	slots = palloc(num_pmchild_slots * sizeof(PMChild));
+#ifdef USE_VALGRIND
+	pmchild_array = slots;
+#endif
+
+	/* Initialize them */
 	slotno = 0;
 	for (int btype = 0; btype < BACKEND_NUM_TYPES; btype++)
 	{

@@ -310,6 +310,16 @@ static AutoVacuumShmemStruct *AutoVacuumShmem;
 static dlist_head DatabaseList = DLIST_STATIC_INIT(DatabaseList);
 static MemoryContext DatabaseListCxt = NULL;
 
+/*
+ * Dummy pointer to persuade Valgrind that we've not leaked the array of
+ * avl_dbase structs.  Make it global to ensure the compiler doesn't
+ * optimize it away.
+ */
+#ifdef USE_VALGRIND
+extern avl_dbase *avl_dbase_array;
+avl_dbase  *avl_dbase_array;
+#endif
+
 /* Pointer to my own WorkerInfo, valid on each worker */
 static WorkerInfo MyWorkerInfo = NULL;
 
@@ -1020,6 +1030,10 @@ rebuild_database_list(Oid newdb)
 
 		/* put all the hash elements into an array */
 		dbary = palloc(nelems * sizeof(avl_dbase));
+		/* keep Valgrind quiet */
+#ifdef USE_VALGRIND
+		avl_dbase_array = dbary;
+#endif
 
 		i = 0;
 		hash_seq_init(&seq, dbhash);
@@ -2565,8 +2579,18 @@ deleted:
 
 	/*
 	 * We leak table_toast_map here (among other things), but since we're
-	 * going away soon, it's not a problem.
+	 * going away soon, it's not a problem normally.  But when using Valgrind,
+	 * release some stuff to reduce complaints about leaked storage.
 	 */
+#ifdef USE_VALGRIND
+	hash_destroy(table_toast_map);
+	FreeTupleDesc(pg_class_desc);
+	if (bstrategy)
+		pfree(bstrategy);
+#endif
+
+	/* Run the rest in xact context, mainly to avoid Valgrind leak warnings */
+	MemoryContextSwitchTo(TopTransactionContext);
 
 	/*
 	 * Update pg_database.datfrozenxid, and truncate pg_xact if possible. We

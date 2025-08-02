@@ -858,7 +858,6 @@ RemoveSocketFiles(void)
 		(void) unlink(sock_path);
 	}
 	/* Since we're about to exit, no need to reclaim storage */
-	sock_paths = NIL;
 }
 
 

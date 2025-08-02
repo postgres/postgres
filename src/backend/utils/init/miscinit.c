@@ -1183,7 +1183,6 @@ UnlinkLockFiles(int status, Datum arg)
 		/* Should we complain if the unlink fails? */
 	}
 	/* Since we're about to exit, no need to reclaim storage */
-	lock_files = NIL;
 
 	/*
 	 * Lock file removal should always be the last externally visible action

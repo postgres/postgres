@@ -22,10 +22,11 @@
  * lookup key's hash value as a partition number --- this will work because
  * of the way calc_bucket() maps hash values to bucket numbers.
  *
- * For hash tables in shared memory, the memory allocator function should
- * match malloc's semantics of returning NULL on failure.  For hash tables
- * in local memory, we typically use palloc() which will throw error on
- * failure.  The code in this file has to cope with both cases.
+ * The memory allocator function should match malloc's semantics of returning
+ * NULL on failure.  (This is essential for hash tables in shared memory.
+ * For hash tables in local memory, we used to use palloc() which will throw
+ * error on failure; but we no longer do, so it's untested whether this
+ * module will still cope with that behavior.)
  *
  * dynahash.c provides support for these types of lookup keys:
  *
@@ -98,6 +99,7 @@
 
 #include "access/xact.h"
 #include "common/hashfn.h"
+#include "lib/ilist.h"
 #include "port/pg_bitutils.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
@@ -236,6 +238,16 @@ struct HTAB
 	Size		keysize;		/* hash key length in bytes */
 	long		ssize;			/* segment size --- must be power of 2 */
 	int			sshift;			/* segment shift = log2(ssize) */
+
+	/*
+	 * In a USE_VALGRIND build, non-shared hashtables keep an slist chain of
+	 * all the element blocks they have allocated.  This pacifies Valgrind,
+	 * which would otherwise often claim that the element blocks are "possibly
+	 * lost" for lack of any non-interior pointers to their starts.
+	 */
+#ifdef USE_VALGRIND
+	slist_head	element_blocks;
+#endif
 };
 
 /*
@@ -1712,6 +1724,8 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	Size		elementSize;
+	Size		requestSize;
+	char	   *allocedBlock;
 	HASHELEMENT *firstElement;
 	HASHELEMENT *tmpElement;
 	HASHELEMENT *prevElement;
@@ -1723,11 +1737,37 @@ element_alloc(HTAB *hashp, int nelem, int freelist_idx)
 	/* Each element has a HASHELEMENT header plus user data. */
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(hctl->entrysize);
 
-	CurrentDynaHashCxt = hashp->hcxt;
-	firstElement = (HASHELEMENT *) hashp->alloc(nelem * elementSize);
+	requestSize = nelem * elementSize;
 
-	if (!firstElement)
+	/* Add space for slist_node list link if we need one. */
+#ifdef USE_VALGRIND
+	if (!hashp->isshared)
+		requestSize += MAXALIGN(sizeof(slist_node));
+#endif
+
+	/* Allocate the memory. */
+	CurrentDynaHashCxt = hashp->hcxt;
+	allocedBlock = hashp->alloc(requestSize);
+
+	if (!allocedBlock)
 		return false;
+
+	/*
+	 * If USE_VALGRIND, each allocated block of elements of a non-shared
+	 * hashtable is chained into a list, so that Valgrind won't think it's
+	 * been leaked.
+	 */
+#ifdef USE_VALGRIND
+	if (hashp->isshared)
+		firstElement = (HASHELEMENT *) allocedBlock;
+	else
+	{
+		slist_push_head(&hashp->element_blocks, (slist_node *) allocedBlock);
+		firstElement = (HASHELEMENT *) (allocedBlock + MAXALIGN(sizeof(slist_node)));
+	}
+#else
+	firstElement = (HASHELEMENT *) allocedBlock;
+#endif
 
 	/* prepare to link all the new entries into the freelist */
 	prevElement = NULL;
