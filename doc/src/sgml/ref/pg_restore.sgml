@@ -816,6 +816,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics</option></term>
+      <listitem>
+       <para>
+        Output commands to restore statistics, if the archive contains them.
+        This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--statistics-only</option></term>
       <listitem>
        <para>
@@ -869,36 +879,6 @@ PostgreSQL documentation
         ownership.  This makes the dump more standards-compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Output commands to restore data, if the archive contains them.
-        This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Output commands to restore schema (data definitions), if the archive
-        contains them. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Output commands to restore statistics, if the archive contains them.
-        This is the default.
        </para>
       </listitem>
      </varlistentry>

@@ -82,8 +82,6 @@ main(int argc, char **argv)
 	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
 	static int	statistics_only = 0;
-	static int	with_data = 0;
-	static int	with_schema = 0;
 	static int	with_statistics = 0;
 
 	struct option cmdopts[] = {
@@ -139,9 +137,7 @@ main(int argc, char **argv)
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 		{"no-statistics", no_argument, &no_statistics, 1},
-		{"with-data", no_argument, &with_data, 1},
-		{"with-schema", no_argument, &with_schema, 1},
-		{"with-statistics", no_argument, &with_statistics, 1},
+		{"statistics", no_argument, &with_statistics, 1},
 		{"statistics-only", no_argument, &statistics_only, 1},
 		{"filter", required_argument, NULL, 4},
 
@@ -373,24 +369,17 @@ main(int argc, char **argv)
 	if (statistics_only && no_statistics)
 		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
 
-	/* reject conflicting "with-" and "no-" options */
-	if (with_data && no_data)
-		pg_fatal("options --with-data and --no-data cannot be used together");
-	if (with_schema && no_schema)
-		pg_fatal("options --with-schema and --no-schema cannot be used together");
+	/* reject conflicting "no-" options */
 	if (with_statistics && no_statistics)
-		pg_fatal("options --with-statistics and --no-statistics cannot be used together");
+		pg_fatal("options --statistics and --no-statistics cannot be used together");
 
-	/* reject conflicting "only-" and "with-" options */
-	if (data_only && (with_schema || with_statistics))
+	/* reject conflicting "only-" options */
+	if (data_only && with_statistics)
 		pg_fatal("options %s and %s cannot be used together",
-				 "-a/--data-only", with_schema ? "--with-schema" : "--with-statistics");
-	if (schema_only && (with_data || with_statistics))
+				 "-a/--data-only", "--statistics");
+	if (schema_only && with_statistics)
 		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", with_data ? "--with-data" : "--with-statistics");
-	if (statistics_only && (with_data || with_schema))
-		pg_fatal("options %s and %s cannot be used together",
-				 "--statistics-only", with_data ? "--with-data" : "--with-schema");
+				 "-s/--schema-only", "--statistics");
 
 	if (data_only && opts->dropSchema)
 		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
@@ -415,9 +404,9 @@ main(int argc, char **argv)
 	 * of the checks above.
 	 */
 	opts->dumpData = ((opts->dumpData && !schema_only && !statistics_only) ||
-					  (data_only || with_data)) && !no_data;
+					  data_only) && !no_data;
 	opts->dumpSchema = ((opts->dumpSchema && !data_only && !statistics_only) ||
-						(schema_only || with_schema)) && !no_schema;
+						schema_only) && !no_schema;
 	opts->dumpStatistics = ((opts->dumpStatistics && !schema_only && !data_only) ||
 							(statistics_only || with_statistics)) && !no_statistics;
 
@@ -558,6 +547,7 @@ usage(const char *progname)
 	printf(_("  --no-table-access-method     do not restore table access methods\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
+	printf(_("  --statistics                 restore the statistics\n"));
 	printf(_("  --statistics-only            restore only the statistics, not schema or data\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
 			 "                               match at least one entity each\n"));
@@ -565,9 +555,6 @@ usage(const char *progname)
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
-	printf(_("  --with-data                  restore the data\n"));
-	printf(_("  --with-schema                restore the schema\n"));
-	printf(_("  --with-statistics            restore the statistics\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));

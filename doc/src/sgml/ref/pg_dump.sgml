@@ -1355,6 +1355,15 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics</option></term>
+      <listitem>
+       <para>
+        Dump statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--statistics-only</option></term>
       <listitem>
        <para>
@@ -1436,33 +1445,6 @@ PostgreSQL documentation
         properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</command>
         will certainly require superuser privileges to restore correctly,
         whereas <command>ALTER OWNER</command> requires lesser privileges.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Dump data. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Dump schema (data definitions). This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Dump statistics.
        </para>
       </listitem>
      </varlistentry>
@@ -1682,7 +1664,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   If <option>--with-statistics</option> is specified,
+   If <option>--statistics</option> is specified,
    <command>pg_dump</command> will include most optimizer statistics in the
    resulting dump file.  However, some statistics may not be included, such as
    those created explicitly with <xref linkend="sql-createstatistics"/> or
