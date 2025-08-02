@@ -2599,7 +2599,7 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 			if (++changes_count >= CHANGES_THRESHOLD)
 			{
-				rb->update_progress_txn(rb, txn, change->lsn);
+				rb->update_progress_txn(rb, txn, prev_lsn);
 				changes_count = 0;
 			}
 		}
