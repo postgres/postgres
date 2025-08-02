@@ -932,10 +932,11 @@ GetLocalBufferStorage(void)
 		num_bufs = Min(num_bufs, MaxAllocSize / BLCKSZ);
 
 		/* Buffers should be I/O aligned. */
-		cur_block = (char *)
-			TYPEALIGN(PG_IO_ALIGN_SIZE,
-					  MemoryContextAlloc(LocalBufferContext,
-										 num_bufs * BLCKSZ + PG_IO_ALIGN_SIZE));
+		cur_block = MemoryContextAllocAligned(LocalBufferContext,
+											  num_bufs * BLCKSZ,
+											  PG_IO_ALIGN_SIZE,
+											  0);
+
 		next_buf_in_block = 0;
 		num_bufs_in_block = num_bufs;
 	}

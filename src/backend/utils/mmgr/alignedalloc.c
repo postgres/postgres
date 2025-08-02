@@ -45,6 +45,15 @@ AlignedAllocFree(void *pointer)
 			 GetMemoryChunkContext(unaligned)->name, chunk);
 #endif
 
+	/*
+	 * Create a dummy vchunk covering the start of the unaligned chunk, but
+	 * not overlapping the aligned chunk.  This will be freed while pfree'ing
+	 * the unaligned chunk, keeping Valgrind happy.  Then when we return to
+	 * the outer pfree, that will clean up the vchunk for the aligned chunk.
+	 */
+	VALGRIND_MEMPOOL_ALLOC(GetMemoryChunkContext(unaligned), unaligned,
+						   (char *) pointer - (char *) unaligned);
+
 	/* Recursively pfree the unaligned chunk */
 	pfree(unaligned);
 }
@@ -122,6 +131,15 @@ AlignedAllocRealloc(void *pointer, Size size, int flags)
 	 */
 	VALGRIND_MAKE_MEM_DEFINED(pointer, old_size);
 	memcpy(newptr, pointer, Min(size, old_size));
+
+	/*
+	 * Create a dummy vchunk covering the start of the old unaligned chunk,
+	 * but not overlapping the aligned chunk.  This will be freed while
+	 * pfree'ing the old unaligned chunk, keeping Valgrind happy.  Then when
+	 * we return to repalloc, it will move the vchunk for the aligned chunk.
+	 */
+	VALGRIND_MEMPOOL_ALLOC(ctx, unaligned,
+						   (char *) pointer - (char *) unaligned);
 
 	pfree(unaligned);
 

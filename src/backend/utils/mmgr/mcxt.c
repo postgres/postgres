@@ -1465,7 +1465,13 @@ MemoryContextAllocAligned(MemoryContext context,
 	void	   *unaligned;
 	void	   *aligned;
 
-	/* wouldn't make much sense to waste that much space */
+	/*
+	 * Restrict alignto to ensure that it can fit into the "value" field of
+	 * the redirection MemoryChunk, and that the distance back to the start of
+	 * the unaligned chunk will fit into the space available for that.  This
+	 * isn't a limitation in practice, since it wouldn't make much sense to
+	 * waste that much space.
+	 */
 	Assert(alignto < (128 * 1024 * 1024));
 
 	/* ensure alignto is a power of 2 */
@@ -1502,10 +1508,15 @@ MemoryContextAllocAligned(MemoryContext context,
 	alloc_size += 1;
 #endif
 
-	/* perform the actual allocation */
-	unaligned = MemoryContextAllocExtended(context, alloc_size, flags);
+	/*
+	 * Perform the actual allocation, but do not pass down MCXT_ALLOC_ZERO.
+	 * This ensures that wasted bytes beyond the aligned chunk do not become
+	 * DEFINED.
+	 */
+	unaligned = MemoryContextAllocExtended(context, alloc_size,
+										   flags & ~MCXT_ALLOC_ZERO);
 
-	/* set the aligned pointer */
+	/* compute the aligned pointer */
 	aligned = (void *) TYPEALIGN(alignto, (char *) unaligned +
 								 sizeof(MemoryChunk));
 
@@ -1533,12 +1544,23 @@ MemoryContextAllocAligned(MemoryContext context,
 	set_sentinel(aligned, size);
 #endif
 
-	/* Mark the bytes before the redirection header as noaccess */
-	VALGRIND_MAKE_MEM_NOACCESS(unaligned,
-							   (char *) alignedchunk - (char *) unaligned);
+	/*
+	 * MemoryContextAllocExtended marked the whole unaligned chunk as a
+	 * vchunk.  Undo that, instead making just the aligned chunk be a vchunk.
+	 * This prevents Valgrind from complaining that the vchunk is possibly
+	 * leaked, since only pointers to the aligned chunk will exist.
+	 *
+	 * After these calls, the aligned chunk will be marked UNDEFINED, and all
+	 * the rest of the unaligned chunk (the redirection chunk header, the
+	 * padding bytes before it, and any wasted trailing bytes) will be marked
+	 * NOACCESS, which is what we want.
+	 */
+	VALGRIND_MEMPOOL_FREE(context, unaligned);
+	VALGRIND_MEMPOOL_ALLOC(context, aligned, size);
 
-	/* Disallow access to the redirection chunk header. */
-	VALGRIND_MAKE_MEM_NOACCESS(alignedchunk, sizeof(MemoryChunk));
+	/* Now zero (and make DEFINED) just the aligned chunk, if requested */
+	if ((flags & MCXT_ALLOC_ZERO) != 0)
+		MemSetAligned(aligned, 0, size);
 
 	return aligned;
 }
@@ -1572,16 +1594,12 @@ void
 pfree(void *pointer)
 {
 #ifdef USE_VALGRIND
-	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
 
 	MCXT_METHOD(pointer, free_p) (pointer);
 
-#ifdef USE_VALGRIND
-	if (method != MCTX_ALIGNED_REDIRECT_ID)
-		VALGRIND_MEMPOOL_FREE(context, pointer);
-#endif
+	VALGRIND_MEMPOOL_FREE(context, pointer);
 }
 
 /*
@@ -1591,9 +1609,6 @@ pfree(void *pointer)
 void *
 repalloc(void *pointer, Size size)
 {
-#ifdef USE_VALGRIND
-	MemoryContextMethodID method = GetMemoryChunkMethodID(pointer);
-#endif
 #if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
 	MemoryContext context = GetMemoryChunkContext(pointer);
 #endif
@@ -1616,10 +1631,7 @@ repalloc(void *pointer, Size size)
 	 */
 	ret = MCXT_METHOD(pointer, realloc) (pointer, size, 0);
 
-#ifdef USE_VALGRIND
-	if (method != MCTX_ALIGNED_REDIRECT_ID)
-		VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
-#endif
+	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
 	return ret;
 }
