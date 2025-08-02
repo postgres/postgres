@@ -45,7 +45,9 @@
 #include "utils/memutils_memorychunk.h"
 #include "utils/memutils_internal.h"
 
-#define Bump_BLOCKHDRSZ	MAXALIGN(sizeof(BumpBlock))
+#define Bump_BLOCKHDRSZ		MAXALIGN(sizeof(BumpBlock))
+#define FIRST_BLOCKHDRSZ	(MAXALIGN(sizeof(BumpContext)) + \
+							 Bump_BLOCKHDRSZ)
 
 /* No chunk header unless built with MEMORY_CONTEXT_CHECKING */
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -189,6 +191,12 @@ BumpContextCreate(MemoryContext parent, const char *name, Size minContextSize,
 	 * Avoid writing code that can fail between here and MemoryContextCreate;
 	 * we'd leak the header and initial block if we ereport in this stretch.
 	 */
+
+	/* See comments about Valgrind interactions in aset.c */
+	VALGRIND_CREATE_MEMPOOL(set, 0, false);
+	/* This vchunk covers the BumpContext and the keeper block header */
+	VALGRIND_MEMPOOL_ALLOC(set, set, FIRST_BLOCKHDRSZ);
+
 	dlist_init(&set->blocks);
 
 	/* Fill in the initial block's block header */
@@ -262,6 +270,14 @@ BumpReset(MemoryContext context)
 			BumpBlockFree(set, block);
 	}
 
+	/*
+	 * Instruct Valgrind to throw away all the vchunks associated with this
+	 * context, except for the one covering the BumpContext and keeper-block
+	 * header.  This gets rid of the vchunks for whatever user data is getting
+	 * discarded by the context reset.
+	 */
+	VALGRIND_MEMPOOL_TRIM(set, set, FIRST_BLOCKHDRSZ);
+
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
 
@@ -279,6 +295,10 @@ BumpDelete(MemoryContext context)
 {
 	/* Reset to release all releasable BumpBlocks */
 	BumpReset(context);
+
+	/* Destroy the vpool -- see notes in aset.c */
+	VALGRIND_DESTROY_MEMPOOL(context);
+
 	/* And free the context header and keeper block */
 	free(context);
 }
@@ -317,6 +337,9 @@ BumpAllocLarge(MemoryContext context, Size size, int flags)
 	block = (BumpBlock *) malloc(blksize);
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
+
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, Bump_BLOCKHDRSZ);
 
 	context->mem_allocated += blksize;
 
@@ -454,6 +477,9 @@ BumpAllocFromNewBlock(MemoryContext context, Size size, int flags,
 
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
+
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, Bump_BLOCKHDRSZ);
 
 	context->mem_allocated += blksize;
 
@@ -605,6 +631,9 @@ BumpBlockFree(BumpContext *set, BumpBlock *block)
 #ifdef CLOBBER_FREED_MEMORY
 	wipe_mem(block, ((char *) block->endptr - (char *) block));
 #endif
+
+	/* As in aset.c, free block-header vchunks explicitly */
+	VALGRIND_MEMPOOL_FREE(set, block);
 
 	free(block);
 }

@@ -8,6 +8,23 @@
  * context-type-specific operations via the function pointers in a
  * context's MemoryContextMethods struct.
  *
+ * A note about Valgrind support: when USE_VALGRIND is defined, we provide
+ * support for memory leak tracking at the allocation-unit level.  Valgrind
+ * does leak detection by tracking allocated "chunks", which can be grouped
+ * into "pools".  The "chunk" terminology is overloaded, since we use that
+ * word for our allocation units, and it's sometimes important to distinguish
+ * those from the Valgrind objects that describe them.  To reduce confusion,
+ * let's use the terms "vchunk" and "vpool" for the Valgrind objects.
+ *
+ * We use a separate vpool for each memory context.  The context-type-specific
+ * code is responsible for creating and deleting the vpools, and also for
+ * creating vchunks to cover its management data structures such as block
+ * headers.  (There must be a vchunk that includes every pointer we want
+ * Valgrind to consider for leak-tracking purposes.)  This module creates
+ * and deletes the vchunks that cover the caller-visible allocated chunks.
+ * However, the context-type-specific code must handle cleaning up those
+ * vchunks too during memory context reset operations.
+ *
  *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -418,8 +435,6 @@ MemoryContextResetOnly(MemoryContext context)
 
 		context->methods->reset(context);
 		context->isReset = true;
-		VALGRIND_DESTROY_MEMPOOL(context);
-		VALGRIND_CREATE_MEMPOOL(context, 0, false);
 	}
 }
 
@@ -526,8 +541,6 @@ MemoryContextDeleteOnly(MemoryContext context)
 	context->ident = NULL;
 
 	context->methods->delete_context(context);
-
-	VALGRIND_DESTROY_MEMPOOL(context);
 }
 
 /*
@@ -1170,8 +1183,6 @@ MemoryContextCreate(MemoryContext node,
 		node->nextchild = NULL;
 		node->allowInCritSection = false;
 	}
-
-	VALGRIND_CREATE_MEMPOOL(node, 0, false);
 }
 
 /*

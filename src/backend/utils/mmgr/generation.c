@@ -45,6 +45,8 @@
 
 #define Generation_BLOCKHDRSZ	MAXALIGN(sizeof(GenerationBlock))
 #define Generation_CHUNKHDRSZ	sizeof(MemoryChunk)
+#define FIRST_BLOCKHDRSZ		(MAXALIGN(sizeof(GenerationContext)) + \
+								 Generation_BLOCKHDRSZ)
 
 #define Generation_CHUNK_FRACTION	8
 
@@ -221,6 +223,12 @@ GenerationContextCreate(MemoryContext parent,
 	 * Avoid writing code that can fail between here and MemoryContextCreate;
 	 * we'd leak the header if we ereport in this stretch.
 	 */
+
+	/* See comments about Valgrind interactions in aset.c */
+	VALGRIND_CREATE_MEMPOOL(set, 0, false);
+	/* This vchunk covers the GenerationContext and the keeper block header */
+	VALGRIND_MEMPOOL_ALLOC(set, set, FIRST_BLOCKHDRSZ);
+
 	dlist_init(&set->blocks);
 
 	/* Fill in the initial block's block header */
@@ -309,6 +317,14 @@ GenerationReset(MemoryContext context)
 			GenerationBlockFree(set, block);
 	}
 
+	/*
+	 * Instruct Valgrind to throw away all the vchunks associated with this
+	 * context, except for the one covering the GenerationContext and
+	 * keeper-block header.  This gets rid of the vchunks for whatever user
+	 * data is getting discarded by the context reset.
+	 */
+	VALGRIND_MEMPOOL_TRIM(set, set, FIRST_BLOCKHDRSZ);
+
 	/* set it so new allocations to make use of the keeper block */
 	set->block = KeeperBlock(set);
 
@@ -329,6 +345,10 @@ GenerationDelete(MemoryContext context)
 {
 	/* Reset to release all releasable GenerationBlocks */
 	GenerationReset(context);
+
+	/* Destroy the vpool -- see notes in aset.c */
+	VALGRIND_DESTROY_MEMPOOL(context);
+
 	/* And free the context header and keeper block */
 	free(context);
 }
@@ -364,6 +384,9 @@ GenerationAllocLarge(MemoryContext context, Size size, int flags)
 	block = (GenerationBlock *) malloc(blksize);
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
+
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, Generation_BLOCKHDRSZ);
 
 	context->mem_allocated += blksize;
 
@@ -486,6 +509,9 @@ GenerationAllocFromNewBlock(MemoryContext context, Size size, int flags,
 
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
+
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, Generation_BLOCKHDRSZ);
 
 	context->mem_allocated += blksize;
 
@@ -676,6 +702,9 @@ GenerationBlockFree(GenerationContext *set, GenerationBlock *block)
 #ifdef CLOBBER_FREED_MEMORY
 	wipe_mem(block, block->blksize);
 #endif
+
+	/* As in aset.c, free block-header vchunks explicitly */
+	VALGRIND_MEMPOOL_FREE(set, block);
 
 	free(block);
 }

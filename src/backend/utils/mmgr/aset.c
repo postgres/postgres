@@ -103,6 +103,8 @@
 
 #define ALLOC_BLOCKHDRSZ	MAXALIGN(sizeof(AllocBlockData))
 #define ALLOC_CHUNKHDRSZ	sizeof(MemoryChunk)
+#define FIRST_BLOCKHDRSZ	(MAXALIGN(sizeof(AllocSetContext)) + \
+							 ALLOC_BLOCKHDRSZ)
 
 typedef struct AllocBlockData *AllocBlock;	/* forward reference */
 
@@ -458,6 +460,21 @@ AllocSetContextCreateInternal(MemoryContext parent,
 	 * we'd leak the header/initial block if we ereport in this stretch.
 	 */
 
+	/* Create a vpool associated with the context */
+	VALGRIND_CREATE_MEMPOOL(set, 0, false);
+
+	/*
+	 * Create a vchunk covering both the AllocSetContext struct and the keeper
+	 * block's header.  (Perhaps it would be more sensible for these to be two
+	 * separate vchunks, but doing that seems to tickle bugs in some versions
+	 * of Valgrind.)  We must have these vchunks, and also a vchunk for each
+	 * subsequently-added block header, so that Valgrind considers the
+	 * pointers within them while checking for leaked memory.  Note that
+	 * Valgrind doesn't distinguish between these vchunks and those created by
+	 * mcxt.c for the user-accessible-data chunks we allocate.
+	 */
+	VALGRIND_MEMPOOL_ALLOC(set, set, FIRST_BLOCKHDRSZ);
+
 	/* Fill in the initial block's block header */
 	block = KeeperBlock(set);
 	block->aset = set;
@@ -585,12 +602,28 @@ AllocSetReset(MemoryContext context)
 #ifdef CLOBBER_FREED_MEMORY
 			wipe_mem(block, block->freeptr - ((char *) block));
 #endif
+
+			/*
+			 * We need to free the block header's vchunk explicitly, although
+			 * the user-data vchunks within will go away in the TRIM below.
+			 * Otherwise Valgrind complains about leaked allocations.
+			 */
+			VALGRIND_MEMPOOL_FREE(set, block);
+
 			free(block);
 		}
 		block = next;
 	}
 
 	Assert(context->mem_allocated == keepersize);
+
+	/*
+	 * Instruct Valgrind to throw away all the vchunks associated with this
+	 * context, except for the one covering the AllocSetContext and
+	 * keeper-block header.  This gets rid of the vchunks for whatever user
+	 * data is getting discarded by the context reset.
+	 */
+	VALGRIND_MEMPOOL_TRIM(set, set, FIRST_BLOCKHDRSZ);
 
 	/* Reset block size allocation sequence, too */
 	set->nextBlockSize = set->initBlockSize;
@@ -648,6 +681,9 @@ AllocSetDelete(MemoryContext context)
 				freelist->first_free = (AllocSetContext *) oldset->header.nextchild;
 				freelist->num_free--;
 
+				/* Destroy the context's vpool --- see notes below */
+				VALGRIND_DESTROY_MEMPOOL(oldset);
+
 				/* All that remains is to free the header/initial block */
 				free(oldset);
 			}
@@ -675,12 +711,23 @@ AllocSetDelete(MemoryContext context)
 #endif
 
 		if (!IsKeeperBlock(set, block))
+		{
+			/* As in AllocSetReset, free block-header vchunks explicitly */
+			VALGRIND_MEMPOOL_FREE(set, block);
 			free(block);
+		}
 
 		block = next;
 	}
 
 	Assert(context->mem_allocated == keepersize);
+
+	/*
+	 * Destroy the vpool.  We don't seem to need to explicitly free the
+	 * initial block's header vchunk, nor any user-data vchunks that Valgrind
+	 * still knows about; they'll all go away automatically.
+	 */
+	VALGRIND_DESTROY_MEMPOOL(set);
 
 	/* Finally, free the context header, including the keeper block */
 	free(set);
@@ -715,6 +762,9 @@ AllocSetAllocLarge(MemoryContext context, Size size, int flags)
 	block = (AllocBlock) malloc(blksize);
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
+
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, ALLOC_BLOCKHDRSZ);
 
 	context->mem_allocated += blksize;
 
@@ -922,6 +972,9 @@ AllocSetAllocFromNewBlock(MemoryContext context, Size size, int flags,
 	if (block == NULL)
 		return MemoryContextAllocationFailure(context, size, flags);
 
+	/* Make a vchunk covering the new block's header */
+	VALGRIND_MEMPOOL_ALLOC(set, block, ALLOC_BLOCKHDRSZ);
+
 	context->mem_allocated += blksize;
 
 	block->aset = set;
@@ -1104,6 +1157,10 @@ AllocSetFree(void *pointer)
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, block->freeptr - ((char *) block));
 #endif
+
+		/* As in AllocSetReset, free block-header vchunks explicitly */
+		VALGRIND_MEMPOOL_FREE(set, block);
+
 		free(block);
 	}
 	else
@@ -1184,6 +1241,7 @@ AllocSetRealloc(void *pointer, Size size, int flags)
 		 * realloc() to make the containing block bigger, or smaller, with
 		 * minimum space wastage.
 		 */
+		AllocBlock	newblock;
 		Size		chksize;
 		Size		blksize;
 		Size		oldblksize;
@@ -1223,13 +1281,20 @@ AllocSetRealloc(void *pointer, Size size, int flags)
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		oldblksize = block->endptr - ((char *) block);
 
-		block = (AllocBlock) realloc(block, blksize);
-		if (block == NULL)
+		newblock = (AllocBlock) realloc(block, blksize);
+		if (newblock == NULL)
 		{
 			/* Disallow access to the chunk header. */
 			VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 			return MemoryContextAllocationFailure(&set->header, size, flags);
 		}
+
+		/*
+		 * Move the block-header vchunk explicitly.  (mcxt.c will take care of
+		 * moving the vchunk for the user data.)
+		 */
+		VALGRIND_MEMPOOL_CHANGE(set, block, newblock, ALLOC_BLOCKHDRSZ);
+		block = newblock;
 
 		/* updated separately, not to underflow when (oldblksize > blksize) */
 		set->header.mem_allocated -= oldblksize;
@@ -1294,7 +1359,7 @@ AllocSetRealloc(void *pointer, Size size, int flags)
 		/* Ensure any padding bytes are marked NOACCESS. */
 		VALGRIND_MAKE_MEM_NOACCESS((char *) pointer + size, chksize - size);
 
-		/* Disallow access to the chunk header . */
+		/* Disallow access to the chunk header. */
 		VALGRIND_MAKE_MEM_NOACCESS(chunk, ALLOC_CHUNKHDRSZ);
 
 		return pointer;

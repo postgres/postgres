@@ -377,6 +377,11 @@ SlabContextCreate(MemoryContext parent,
 	 * we'd leak the header if we ereport in this stretch.
 	 */
 
+	/* See comments about Valgrind interactions in aset.c */
+	VALGRIND_CREATE_MEMPOOL(slab, 0, false);
+	/* This vchunk covers the SlabContext only */
+	VALGRIND_MEMPOOL_ALLOC(slab, slab, sizeof(SlabContext));
+
 	/* Fill in SlabContext-specific header fields */
 	slab->chunkSize = (uint32) chunkSize;
 	slab->fullChunkSize = (uint32) fullChunkSize;
@@ -451,6 +456,10 @@ SlabReset(MemoryContext context)
 #ifdef CLOBBER_FREED_MEMORY
 		wipe_mem(block, slab->blockSize);
 #endif
+
+		/* As in aset.c, free block-header vchunks explicitly */
+		VALGRIND_MEMPOOL_FREE(slab, block);
+
 		free(block);
 		context->mem_allocated -= slab->blockSize;
 	}
@@ -467,10 +476,22 @@ SlabReset(MemoryContext context)
 #ifdef CLOBBER_FREED_MEMORY
 			wipe_mem(block, slab->blockSize);
 #endif
+
+			/* As in aset.c, free block-header vchunks explicitly */
+			VALGRIND_MEMPOOL_FREE(slab, block);
+
 			free(block);
 			context->mem_allocated -= slab->blockSize;
 		}
 	}
+
+	/*
+	 * Instruct Valgrind to throw away all the vchunks associated with this
+	 * context, except for the one covering the SlabContext.  This gets rid of
+	 * the vchunks for whatever user data is getting discarded by the context
+	 * reset.
+	 */
+	VALGRIND_MEMPOOL_TRIM(slab, slab, sizeof(SlabContext));
 
 	slab->curBlocklistIndex = 0;
 
@@ -486,6 +507,10 @@ SlabDelete(MemoryContext context)
 {
 	/* Reset to release all the SlabBlocks */
 	SlabReset(context);
+
+	/* Destroy the vpool -- see notes in aset.c */
+	VALGRIND_DESTROY_MEMPOOL(context);
+
 	/* And free the context header */
 	free(context);
 }
@@ -566,6 +591,9 @@ SlabAllocFromNewBlock(MemoryContext context, Size size, int flags)
 
 		if (unlikely(block == NULL))
 			return MemoryContextAllocationFailure(context, size, flags);
+
+		/* Make a vchunk covering the new block's header */
+		VALGRIND_MEMPOOL_ALLOC(slab, block, Slab_BLOCKHDRSZ);
 
 		block->slab = slab;
 		context->mem_allocated += slab->blockSize;
@@ -795,6 +823,10 @@ SlabFree(void *pointer)
 #ifdef CLOBBER_FREED_MEMORY
 			wipe_mem(block, slab->blockSize);
 #endif
+
+			/* As in aset.c, free block-header vchunks explicitly */
+			VALGRIND_MEMPOOL_FREE(slab, block);
+
 			free(block);
 			slab->header.mem_allocated -= slab->blockSize;
 		}
