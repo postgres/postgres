@@ -441,8 +441,6 @@ main(int argc, char **argv)
 	bool		data_only = false;
 	bool		schema_only = false;
 	bool		statistics_only = false;
-	bool		with_data = false;
-	bool		with_schema = false;
 	bool		with_statistics = false;
 	bool		no_data = false;
 	bool		no_schema = false;
@@ -506,6 +504,7 @@ main(int argc, char **argv)
 		{"section", required_argument, NULL, 5},
 		{"serializable-deferrable", no_argument, &dopt.serializable_deferrable, 1},
 		{"snapshot", required_argument, NULL, 6},
+		{"statistics", no_argument, NULL, 22},
 		{"statistics-only", no_argument, NULL, 18},
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &dopt.use_setsessauth, 1},
@@ -520,9 +519,6 @@ main(int argc, char **argv)
 		{"no-toast-compression", no_argument, &dopt.no_toast_compression, 1},
 		{"no-unlogged-table-data", no_argument, &dopt.no_unlogged_table_data, 1},
 		{"no-sync", no_argument, NULL, 7},
-		{"with-data", no_argument, NULL, 22},
-		{"with-schema", no_argument, NULL, 23},
-		{"with-statistics", no_argument, NULL, 24},
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
 		{"include-foreign-data", required_argument, NULL, 11},
@@ -790,14 +786,6 @@ main(int argc, char **argv)
 				break;
 
 			case 22:
-				with_data = true;
-				break;
-
-			case 23:
-				with_schema = true;
-				break;
-
-			case 24:
 				with_statistics = true;
 				break;
 
@@ -844,24 +832,17 @@ main(int argc, char **argv)
 	if (statistics_only && no_statistics)
 		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
 
-	/* reject conflicting "with-" and "no-" options */
-	if (with_data && no_data)
-		pg_fatal("options --with-data and --no-data cannot be used together");
-	if (with_schema && no_schema)
-		pg_fatal("options --with-schema and --no-schema cannot be used together");
+	/* reject conflicting "no-" options */
 	if (with_statistics && no_statistics)
-		pg_fatal("options --with-statistics and --no-statistics cannot be used together");
+		pg_fatal("options --statistics and --no-statistics cannot be used together");
 
-	/* reject conflicting "-only" and "with-" options */
-	if (data_only && (with_schema || with_statistics))
+	/* reject conflicting "-only" options */
+	if (data_only && with_statistics)
 		pg_fatal("options %s and %s cannot be used together",
-				 "-a/--data-only", with_schema ? "--with-schema" : "--with-statistics");
-	if (schema_only && (with_data || with_statistics))
+				 "-a/--data-only", "--statistics");
+	if (schema_only && with_statistics)
 		pg_fatal("options %s and %s cannot be used together",
-				 "-s/--schema-only", with_data ? "--with-data" : "--with-statistics");
-	if (statistics_only && (with_data || with_schema))
-		pg_fatal("options %s and %s cannot be used together",
-				 "--statistics-only", with_data ? "--with-data" : "--with-schema");
+				 "-s/--schema-only", "--statistics");
 
 	if (schema_only && foreign_servers_include_patterns.head != NULL)
 		pg_fatal("options -s/--schema-only and --include-foreign-data cannot be used together");
@@ -881,9 +862,9 @@ main(int argc, char **argv)
 	 * of the checks above.
 	 */
 	dopt.dumpData = ((dopt.dumpData && !schema_only && !statistics_only) ||
-					 (data_only || with_data)) && !no_data;
+					 data_only) && !no_data;
 	dopt.dumpSchema = ((dopt.dumpSchema && !data_only && !statistics_only) ||
-					   (schema_only || with_schema)) && !no_schema;
+					   schema_only) && !no_schema;
 	dopt.dumpStatistics = ((dopt.dumpStatistics && !schema_only && !data_only) ||
 						   (statistics_only || with_statistics)) && !no_statistics;
 
@@ -1326,6 +1307,7 @@ help(const char *progname)
 	printf(_("  --sequence-data              include sequence data in dump\n"));
 	printf(_("  --serializable-deferrable    wait until the dump can run without anomalies\n"));
 	printf(_("  --snapshot=SNAPSHOT          use given snapshot for the dump\n"));
+	printf(_("  --statistics                 dump the statistics\n"));
 	printf(_("  --statistics-only            dump only the statistics, not schema or data\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
 			 "                               match at least one entity each\n"));
@@ -1334,9 +1316,6 @@ help(const char *progname)
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
-	printf(_("  --with-data                  dump the data\n"));
-	printf(_("  --with-schema                dump the schema\n"));
-	printf(_("  --with-statistics            dump the statistics\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=DBNAME      database to dump\n"));

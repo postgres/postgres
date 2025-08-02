@@ -606,6 +606,15 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
      </varlistentry>
 
      <varlistentry>
+      <term><option>--statistics</option></term>
+      <listitem>
+       <para>
+        Dump statistics.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--statistics-only</option></term>
       <listitem>
        <para>
@@ -636,33 +645,6 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
         ownership.  This makes the dump more standards compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-data</option></term>
-      <listitem>
-       <para>
-        Dump data. This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-schema</option></term>
-      <listitem>
-       <para>
-        Dump schema (data definitions). This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--with-statistics</option></term>
-      <listitem>
-       <para>
-        Dump statistics.
        </para>
       </listitem>
      </varlistentry>
@@ -878,7 +860,7 @@ exclude database <replaceable class="parameter">PATTERN</replaceable>
   </para>
 
   <para>
-   If <option>--with-statistics</option> is specified,
+   If <option>--statistics</option> is specified,
    <command>pg_dumpall</command> will include most optimizer statistics in the
    resulting dump file.  However, some statistics may not be included, such as
    those created explicitly with <xref linkend="sql-createstatistics"/> or

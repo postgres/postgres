@@ -105,8 +105,6 @@ static int	no_subscriptions = 0;
 static int	no_toast_compression = 0;
 static int	no_unlogged_table_data = 0;
 static int	no_role_passwords = 0;
-static int	with_data = 0;
-static int	with_schema = 0;
 static int	with_statistics = 0;
 static int	server_version;
 static int	load_via_partition_root = 0;
@@ -180,11 +178,9 @@ main(int argc, char *argv[])
 		{"no-sync", no_argument, NULL, 4},
 		{"no-toast-compression", no_argument, &no_toast_compression, 1},
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
-		{"with-data", no_argument, &with_data, 1},
-		{"with-schema", no_argument, &with_schema, 1},
-		{"with-statistics", no_argument, &with_statistics, 1},
 		{"on-conflict-do-nothing", no_argument, &on_conflict_do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 7},
+		{"statistics", no_argument, &with_statistics, 1},
 		{"statistics-only", no_argument, &statistics_only, 1},
 		{"filter", required_argument, NULL, 8},
 		{"sequence-data", no_argument, &sequence_data, 1},
@@ -475,12 +471,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-toast-compression");
 	if (no_unlogged_table_data)
 		appendPQExpBufferStr(pgdumpopts, " --no-unlogged-table-data");
-	if (with_data)
-		appendPQExpBufferStr(pgdumpopts, " --with-data");
-	if (with_schema)
-		appendPQExpBufferStr(pgdumpopts, " --with-schema");
 	if (with_statistics)
-		appendPQExpBufferStr(pgdumpopts, " --with-statistics");
+		appendPQExpBufferStr(pgdumpopts, " --statistics");
 	if (on_conflict_do_nothing)
 		appendPQExpBufferStr(pgdumpopts, " --on-conflict-do-nothing");
 	if (statistics_only)
@@ -712,13 +704,11 @@ help(void)
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
 	printf(_("  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"));
 	printf(_("  --sequence-data              include sequence data in dump\n"));
+	printf(_("  --statistics                 dump the statistics\n"));
 	printf(_("  --statistics-only            dump only the statistics, not schema or data\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));
-	printf(_("  --with-data                  dump the data\n"));
-	printf(_("  --with-schema                dump the schema\n"));
-	printf(_("  --with-statistics            dump the statistics\n"));
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR     connect using connection string\n"));
