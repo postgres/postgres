@@ -3853,6 +3853,7 @@ parse_datatype(const char *string, int location, yyscan_t yyscanner)
 	int32		typmod;
 	sql_error_callback_arg cbarg;
 	ErrorContextCallback syntax_errcontext;
+	MemoryContext oldCxt;
 
 	cbarg.location = location;
 	cbarg.yyscanner = yyscanner;
@@ -3862,9 +3863,14 @@ parse_datatype(const char *string, int location, yyscan_t yyscanner)
 	syntax_errcontext.previous = error_context_stack;
 	error_context_stack = &syntax_errcontext;
 
-	/* Let the main parser try to parse it under standard SQL rules */
+	/*
+	 * Let the main parser try to parse it under standard SQL rules.  The
+	 * parser leaks memory, so run it in temp context.
+	 */
+	oldCxt = MemoryContextSwitchTo(plpgsql_compile_tmp_cxt);
 	typeName = typeStringToTypeName(string, NULL);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
+	MemoryContextSwitchTo(oldCxt);
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;
