@@ -47,24 +47,30 @@ dispell_init(PG_FUNCTION_ARGS)
 
 		if (strcmp(defel->defname, "dictfile") == 0)
 		{
+			char	   *filename;
+
 			if (dictloaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
-			NIImportDictionary(&(d->obj),
-							   get_tsearch_config_filename(defGetString(defel),
-														   "dict"));
+			filename = get_tsearch_config_filename(defGetString(defel),
+												   "dict");
+			NIImportDictionary(&(d->obj), filename);
+			pfree(filename);
 			dictloaded = true;
 		}
 		else if (strcmp(defel->defname, "afffile") == 0)
 		{
+			char	   *filename;
+
 			if (affloaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple AffFile parameters")));
-			NIImportAffixes(&(d->obj),
-							get_tsearch_config_filename(defGetString(defel),
-														"affix"));
+			filename = get_tsearch_config_filename(defGetString(defel),
+												   "affix");
+			NIImportAffixes(&(d->obj), filename);
+			pfree(filename);
 			affloaded = true;
 		}
 		else if (strcmp(defel->defname, "stopwords") == 0)

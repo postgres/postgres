@@ -199,6 +199,7 @@ skipline:
 	}
 
 	tsearch_readline_end(&trst);
+	pfree(filename);
 
 	d->len = cur;
 	qsort(d->syn, d->len, sizeof(Syn), compareSyn);

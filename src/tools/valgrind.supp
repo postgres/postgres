@@ -215,3 +215,15 @@
    ...
    fun:cached_function_compile
 }
+
+# Suppress complaints about stuff leaked during TS dictionary loading.
+# Not very much is typically lost there, and preventing it would
+# require a risky API change for TS tmplinit functions.
+{
+   hide_ts_dictionary_leaks
+   Memcheck:Leak
+   match-leak-kinds: definite,possible,indirect
+
+   ...
+   fun:lookup_ts_dictionary_cache
+}

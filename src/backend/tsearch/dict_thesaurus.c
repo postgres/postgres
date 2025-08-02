@@ -167,17 +167,17 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 static void
 thesaurusRead(const char *filename, DictThesaurus *d)
 {
+	char	   *real_filename = get_tsearch_config_filename(filename, "ths");
 	tsearch_readline_state trst;
 	uint32		idsubst = 0;
 	bool		useasis = false;
 	char	   *line;
 
-	filename = get_tsearch_config_filename(filename, "ths");
-	if (!tsearch_readline_begin(&trst, filename))
+	if (!tsearch_readline_begin(&trst, real_filename))
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("could not open thesaurus file \"%s\": %m",
-						filename)));
+						real_filename)));
 
 	while ((line = tsearch_readline(&trst)) != NULL)
 	{
@@ -297,6 +297,7 @@ thesaurusRead(const char *filename, DictThesaurus *d)
 	d->nsubst = idsubst;
 
 	tsearch_readline_end(&trst);
+	pfree(real_filename);
 }
 
 static TheLexeme *
