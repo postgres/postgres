@@ -249,6 +249,7 @@ static void reapply_stacked_values(struct config_generic *variable,
 								   const char *curvalue,
 								   GucContext curscontext, GucSource cursource,
 								   Oid cursrole);
+static void free_placeholder(struct config_string *pHolder);
 static bool validate_option_array_item(const char *name, const char *value,
 									   bool skipIfNoPermissions);
 static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head);
@@ -5023,16 +5024,8 @@ define_custom_variable(struct config_generic *variable)
 		set_config_sourcefile(name, pHolder->gen.sourcefile,
 							  pHolder->gen.sourceline);
 
-	/*
-	 * Free up as much as we conveniently can of the placeholder structure.
-	 * (This neglects any stack items, so it's possible for some memory to be
-	 * leaked.  Since this can only happen once per session per variable, it
-	 * doesn't seem worth spending much code on.)
-	 */
-	set_string_field(pHolder, pHolder->variable, NULL);
-	set_string_field(pHolder, &pHolder->reset_val, NULL);
-
-	guc_free(pHolder);
+	/* Now we can free the no-longer-referenced placeholder variable */
+	free_placeholder(pHolder);
 }
 
 /*
@@ -5129,6 +5122,25 @@ reapply_stacked_values(struct config_generic *variable,
 			}
 		}
 	}
+}
+
+/*
+ * Free up a no-longer-referenced placeholder GUC variable.
+ *
+ * This neglects any stack items, so it's possible for some memory to be
+ * leaked.  Since this can only happen once per session per variable, it
+ * doesn't seem worth spending much code on.
+ */
+static void
+free_placeholder(struct config_string *pHolder)
+{
+	/* Placeholders are always STRING type, so free their values */
+	Assert(pHolder->gen.vartype == PGC_STRING);
+	set_string_field(pHolder, pHolder->variable, NULL);
+	set_string_field(pHolder, &pHolder->reset_val, NULL);
+
+	guc_free(unconstify(char *, pHolder->gen.name));
+	guc_free(pHolder);
 }
 
 /*
@@ -5291,9 +5303,7 @@ MarkGUCPrefixReserved(const char *className)
 
 	/*
 	 * Check for existing placeholders.  We must actually remove invalid
-	 * placeholders, else future parallel worker startups will fail.  (We
-	 * don't bother trying to free associated memory, since this shouldn't
-	 * happen often.)
+	 * placeholders, else future parallel worker startups will fail.
 	 */
 	hash_seq_init(&status, guc_hashtab);
 	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
@@ -5317,6 +5327,8 @@ MarkGUCPrefixReserved(const char *className)
 						NULL);
 			/* Remove it from any lists it's in, too */
 			RemoveGUCFromLists(var);
+			/* And free it */
+			free_placeholder((struct config_string *) var);
 		}
 	}
 

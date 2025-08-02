@@ -78,7 +78,6 @@ BuildEventTriggerCache(void)
 {
 	HASHCTL		ctl;
 	HTAB	   *cache;
-	MemoryContext oldcontext;
 	Relation	rel;
 	Relation	irel;
 	SysScanDesc scan;
@@ -109,9 +108,6 @@ BuildEventTriggerCache(void)
 									  InvalidateEventCacheCallback,
 									  (Datum) 0);
 	}
-
-	/* Switch to correct memory context. */
-	oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
 
 	/* Prevent the memory context from being nuked while we're rebuilding. */
 	EventTriggerCacheState = ETCS_REBUILD_STARTED;
@@ -145,6 +141,7 @@ BuildEventTriggerCache(void)
 		bool		evttags_isnull;
 		EventTriggerCacheEntry *entry;
 		bool		found;
+		MemoryContext oldcontext;
 
 		/* Get next tuple. */
 		tup = systable_getnext_ordered(scan, ForwardScanDirection);
@@ -171,6 +168,9 @@ BuildEventTriggerCache(void)
 		else
 			continue;
 
+		/* Switch to correct memory context. */
+		oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
+
 		/* Allocate new cache item. */
 		item = palloc0(sizeof(EventTriggerCacheItem));
 		item->fnoid = form->evtfoid;
@@ -188,15 +188,15 @@ BuildEventTriggerCache(void)
 			entry->triggerlist = lappend(entry->triggerlist, item);
 		else
 			entry->triggerlist = list_make1(item);
+
+		/* Restore previous memory context. */
+		MemoryContextSwitchTo(oldcontext);
 	}
 
 	/* Done with pg_event_trigger scan. */
 	systable_endscan_ordered(scan);
 	index_close(irel, AccessShareLock);
 	relation_close(rel, AccessShareLock);
-
-	/* Restore previous memory context. */
-	MemoryContextSwitchTo(oldcontext);
 
 	/* Install new cache. */
 	EventTriggerCache = cache;
@@ -240,6 +240,8 @@ DecodeTextArrayToBitmapset(Datum array)
 	}
 
 	pfree(elems);
+	if ((Pointer) arr != DatumGetPointer(array))
+		pfree(arr);
 
 	return bms;
 }

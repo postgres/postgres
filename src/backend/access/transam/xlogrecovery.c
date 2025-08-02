@@ -1626,6 +1626,7 @@ ShutdownWalRecovery(void)
 		close(readFile);
 		readFile = -1;
 	}
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 	XLogPrefetcherFree(xlogprefetcher);
 

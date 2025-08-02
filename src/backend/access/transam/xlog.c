@@ -703,7 +703,7 @@ static void InitControlFile(uint64 sysidentifier, uint32 data_checksum_version);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
 static void UpdateControlFile(void);
-static char *str_time(pg_time_t tnow);
+static char *str_time(pg_time_t tnow, char *buf, size_t bufsize);
 
 static int	get_sync_bit(int method);
 
@@ -5371,11 +5371,9 @@ BootStrapXLOG(uint32 data_checksum_version)
 }
 
 static char *
-str_time(pg_time_t tnow)
+str_time(pg_time_t tnow, char *buf, size_t bufsize)
 {
-	char	   *buf = palloc(128);
-
-	pg_strftime(buf, 128,
+	pg_strftime(buf, bufsize,
 				"%Y-%m-%d %H:%M:%S %Z",
 				pg_localtime(&tnow, log_timezone));
 
@@ -5618,6 +5616,7 @@ StartupXLOG(void)
 	XLogRecPtr	missingContrecPtr;
 	TransactionId oldestActiveXID;
 	bool		promoted = false;
+	char		timebuf[128];
 
 	/*
 	 * We should have an aux process resource owner to use, and we should not
@@ -5646,25 +5645,29 @@ StartupXLOG(void)
 			 */
 			ereport(IsPostmasterEnvironment ? LOG : NOTICE,
 					(errmsg("database system was shut down at %s",
-							str_time(ControlFile->time))));
+							str_time(ControlFile->time,
+									 timebuf, sizeof(timebuf)))));
 			break;
 
 		case DB_SHUTDOWNED_IN_RECOVERY:
 			ereport(LOG,
 					(errmsg("database system was shut down in recovery at %s",
-							str_time(ControlFile->time))));
+							str_time(ControlFile->time,
+									 timebuf, sizeof(timebuf)))));
 			break;
 
 		case DB_SHUTDOWNING:
 			ereport(LOG,
 					(errmsg("database system shutdown was interrupted; last known up at %s",
-							str_time(ControlFile->time))));
+							str_time(ControlFile->time,
+									 timebuf, sizeof(timebuf)))));
 			break;
 
 		case DB_IN_CRASH_RECOVERY:
 			ereport(LOG,
 					(errmsg("database system was interrupted while in recovery at %s",
-							str_time(ControlFile->time)),
+							str_time(ControlFile->time,
+									 timebuf, sizeof(timebuf))),
 					 errhint("This probably means that some data is corrupted and"
 							 " you will have to use the last backup for recovery.")));
 			break;
@@ -5672,7 +5675,8 @@ StartupXLOG(void)
 		case DB_IN_ARCHIVE_RECOVERY:
 			ereport(LOG,
 					(errmsg("database system was interrupted while in recovery at log time %s",
-							str_time(ControlFile->checkPointCopy.time)),
+							str_time(ControlFile->checkPointCopy.time,
+									 timebuf, sizeof(timebuf))),
 					 errhint("If this has occurred more than once some data might be corrupted"
 							 " and you might need to choose an earlier recovery target.")));
 			break;
@@ -5680,7 +5684,8 @@ StartupXLOG(void)
 		case DB_IN_PRODUCTION:
 			ereport(LOG,
 					(errmsg("database system was interrupted; last known up at %s",
-							str_time(ControlFile->time))));
+							str_time(ControlFile->time,
+									 timebuf, sizeof(timebuf)))));
 			break;
 
 		default:
@@ -6324,6 +6329,12 @@ StartupXLOG(void)
 	 * commit timestamp.
 	 */
 	CompleteCommitTsInitialization();
+
+	/* Clean up EndOfWalRecoveryInfo data to appease Valgrind leak checking */
+	if (endOfRecoveryInfo->lastPage)
+		pfree(endOfRecoveryInfo->lastPage);
+	pfree(endOfRecoveryInfo->recoveryStopReason);
+	pfree(endOfRecoveryInfo);
 
 	/*
 	 * All done with end-of-recovery actions.

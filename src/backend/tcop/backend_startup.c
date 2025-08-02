@@ -492,7 +492,7 @@ static int
 ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 {
 	int32		len;
-	char	   *buf;
+	char	   *buf = NULL;
 	ProtocolVersion proto;
 	MemoryContext oldcontext;
 
@@ -516,7 +516,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 		 * scanners, which may be less benign, but it's not really our job to
 		 * notice those.)
 		 */
-		return STATUS_ERROR;
+		goto fail;
 	}
 
 	if (pq_getbytes(((char *) &len) + 1, 3) == EOF)
@@ -526,7 +526,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 			ereport(COMMERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("incomplete startup packet")));
-		return STATUS_ERROR;
+		goto fail;
 	}
 
 	len = pg_ntoh32(len);
@@ -538,7 +538,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("invalid length of startup packet")));
-		return STATUS_ERROR;
+		goto fail;
 	}
 
 	/*
@@ -554,7 +554,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("incomplete startup packet")));
-		return STATUS_ERROR;
+		goto fail;
 	}
 	pq_endmsgread();
 
@@ -568,7 +568,7 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	{
 		ProcessCancelRequestPacket(port, buf, len);
 		/* Not really an error, but we don't want to proceed further */
-		return STATUS_ERROR;
+		goto fail;
 	}
 
 	if (proto == NEGOTIATE_SSL_CODE && !ssl_done)
@@ -607,13 +607,15 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
 					 errmsg("failed to send SSL negotiation response: %m")));
-			return STATUS_ERROR;	/* close the connection */
+			goto fail;			/* close the connection */
 		}
 
 #ifdef USE_SSL
 		if (SSLok == 'S' && secure_open_server(port) == -1)
-			return STATUS_ERROR;
+			goto fail;
 #endif
+
+		pfree(buf);
 
 		/*
 		 * At this point we should have no data already buffered.  If we do,
@@ -661,13 +663,15 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 			ereport(COMMERROR,
 					(errcode_for_socket_access(),
 					 errmsg("failed to send GSSAPI negotiation response: %m")));
-			return STATUS_ERROR;	/* close the connection */
+			goto fail;			/* close the connection */
 		}
 
 #ifdef ENABLE_GSS
 		if (GSSok == 'G' && secure_open_gssapi(port) == -1)
-			return STATUS_ERROR;
+			goto fail;
 #endif
+
+		pfree(buf);
 
 		/*
 		 * At this point we should have no data already buffered.  If we do,
@@ -863,7 +867,16 @@ ProcessStartupPacket(Port *port, bool ssl_done, bool gss_done)
 	 */
 	MemoryContextSwitchTo(oldcontext);
 
+	pfree(buf);
+
 	return STATUS_OK;
+
+fail:
+	/* be tidy, just to avoid Valgrind complaints */
+	if (buf)
+		pfree(buf);
+
+	return STATUS_ERROR;
 }
 
 /*

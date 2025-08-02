@@ -790,6 +790,8 @@ logicalrep_worker_detach(void)
 		}
 
 		LWLockRelease(LogicalRepWorkerLock);
+
+		list_free(workers);
 	}
 
 	/* Block concurrent access. */
