@@ -1128,12 +1128,15 @@ set_backtrace(ErrorData *edata, int num_skip)
 
 		nframes = backtrace(buf, lengthof(buf));
 		strfrms = backtrace_symbols(buf, nframes);
-		if (strfrms == NULL)
-			return;
-
-		for (int i = num_skip; i < nframes; i++)
-			appendStringInfo(&errtrace, "\n%s", strfrms[i]);
-		free(strfrms);
+		if (strfrms != NULL)
+		{
+			for (int i = num_skip; i < nframes; i++)
+				appendStringInfo(&errtrace, "\n%s", strfrms[i]);
+			free(strfrms);
+		}
+		else
+			appendStringInfoString(&errtrace,
+								   "insufficient memory for backtrace generation");
 	}
 #else
 	appendStringInfoString(&errtrace,
