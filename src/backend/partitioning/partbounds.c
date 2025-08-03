@@ -1007,9 +1007,6 @@ partition_bounds_copy(PartitionBoundInfo src,
 	int			ndatums;
 	int			nindexes;
 	int			partnatts;
-	bool		hash_part;
-	int			natts;
-	Datum	   *boundDatums;
 
 	dest = (PartitionBoundInfo) palloc(sizeof(PartitionBoundInfoData));
 
@@ -1023,7 +1020,7 @@ partition_bounds_copy(PartitionBoundInfo src,
 
 	dest->datums = (Datum **) palloc(sizeof(Datum *) * ndatums);
 
-	if (src->kind != NULL)
+	if (src->kind != NULL && ndatums > 0)
 	{
 		PartitionRangeDatumKind *boundKinds;
 
@@ -1058,36 +1055,40 @@ partition_bounds_copy(PartitionBoundInfo src,
 	 * For hash partitioning, datums array will have two elements - modulus
 	 * and remainder.
 	 */
-	hash_part = (key->strategy == PARTITION_STRATEGY_HASH);
-	natts = hash_part ? 2 : partnatts;
-	boundDatums = palloc(ndatums * natts * sizeof(Datum));
-
-	for (i = 0; i < ndatums; i++)
+	if (ndatums > 0)
 	{
-		int			j;
+		bool		hash_part = (key->strategy == PARTITION_STRATEGY_HASH);
+		int			natts = hash_part ? 2 : partnatts;
+		Datum	   *boundDatums = palloc(ndatums * natts * sizeof(Datum));
 
-		dest->datums[i] = &boundDatums[i * natts];
-
-		for (j = 0; j < natts; j++)
+		for (i = 0; i < ndatums; i++)
 		{
-			bool		byval;
-			int			typlen;
+			int			j;
 
-			if (hash_part)
-			{
-				typlen = sizeof(int32); /* Always int4 */
-				byval = true;	/* int4 is pass-by-value */
-			}
-			else
-			{
-				byval = key->parttypbyval[j];
-				typlen = key->parttyplen[j];
-			}
+			dest->datums[i] = &boundDatums[i * natts];
 
-			if (dest->kind == NULL ||
-				dest->kind[i][j] == PARTITION_RANGE_DATUM_VALUE)
-				dest->datums[i][j] = datumCopy(src->datums[i][j],
-											   byval, typlen);
+			for (j = 0; j < natts; j++)
+			{
+				if (dest->kind == NULL ||
+					dest->kind[i][j] == PARTITION_RANGE_DATUM_VALUE)
+				{
+					bool		byval;
+					int			typlen;
+
+					if (hash_part)
+					{
+						typlen = sizeof(int32); /* Always int4 */
+						byval = true;	/* int4 is pass-by-value */
+					}
+					else
+					{
+						byval = key->parttypbyval[j];
+						typlen = key->parttyplen[j];
+					}
+					dest->datums[i][j] = datumCopy(src->datums[i][j],
+												   byval, typlen);
+				}
+			}
 		}
 	}
 
