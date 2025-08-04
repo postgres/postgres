@@ -690,8 +690,8 @@ do_analyze_rel(Relation onerel, const VacuumParams params,
 	 * only do it for inherited stats. (We're never called for not-inherited
 	 * stats on partitioned tables anyway.)
 	 *
-	 * Reset the changes_since_analyze counter only if we analyzed all
-	 * columns; otherwise, there is still work for auto-analyze to do.
+	 * Reset the mod_since_analyze counter only if we analyzed all columns;
+	 * otherwise, there is still work for auto-analyze to do.
 	 */
 	if (!inh)
 		pgstat_report_analyze(onerel, totalrows, totaldeadrows,
