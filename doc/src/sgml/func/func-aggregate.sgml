@@ -1,0 +1,1418 @@
+ <sect1 id="functions-aggregate">
+  <title>Aggregate Functions</title>
+
+  <indexterm zone="functions-aggregate">
+   <primary>aggregate function</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
+  <para>
+   <firstterm>Aggregate functions</firstterm> compute a single result
+   from a set of input values.  The built-in general-purpose aggregate
+   functions are listed in <xref linkend="functions-aggregate-table"/>
+   while statistical aggregates are in <xref
+   linkend="functions-aggregate-statistics-table"/>.
+   The built-in within-group ordered-set aggregate functions
+   are listed in <xref linkend="functions-orderedset-table"/>
+   while the built-in within-group hypothetical-set ones are in <xref
+   linkend="functions-hypothetical-table"/>.  Grouping operations,
+   which are closely related to aggregate functions, are listed in
+   <xref linkend="functions-grouping-table"/>.
+   The special syntax considerations for aggregate
+   functions are explained in <xref linkend="syntax-aggregates"/>.
+   Consult <xref linkend="tutorial-agg"/> for additional introductory
+   information.
+  </para>
+
+  <para>
+   Aggregate functions that support <firstterm>Partial Mode</firstterm>
+   are eligible to participate in various optimizations, such as parallel
+   aggregation.
+  </para>
+
+  <para>
+   While all aggregates below accept an optional
+   <literal>ORDER BY</literal> clause (as outlined in <xref
+   linkend="syntax-aggregates"/>), the clause has only been added to
+   aggregates whose output is affected by ordering.
+  </para>
+
+   <table id="functions-aggregate-table">
+    <title>General-Purpose Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>any_value</primary>
+        </indexterm>
+        <function>any_value</function> ( <type>anyelement</type> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Returns an arbitrary value from the non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_agg</primary>
+        </indexterm>
+        <function>array_agg</function> ( <type>anynonarray</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, including nulls, into an array.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>array_agg</function> ( <type>anyarray</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Concatenates all the input arrays into an array of one higher
+        dimension.  (The inputs must all have the same dimensionality, and
+        cannot be empty or null.)
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>average</primary>
+        </indexterm>
+        <indexterm>
+         <primary>avg</primary>
+        </indexterm>
+        <function>avg</function> ( <type>smallint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>integer</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>real</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>avg</function> ( <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para>
+        Computes the average (arithmetic mean) of all the non-null input
+        values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_and</primary>
+        </indexterm>
+        <function>bit_and</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_and</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise AND of all non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_or</primary>
+        </indexterm>
+        <function>bit_or</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_or</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise OR of all non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_xor</primary>
+        </indexterm>
+        <function>bit_xor</function> ( <type>smallint</type> )
+        <returnvalue>smallint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>bigint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>bit_xor</function> ( <type>bit</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Computes the bitwise exclusive OR of all non-null input values.
+        Can be useful as a checksum for an unordered set of values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bool_and</primary>
+        </indexterm>
+        <function>bool_and</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if all non-null input values are true, otherwise false.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bool_or</primary>
+        </indexterm>
+        <function>bool_or</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if any non-null input value is true, otherwise false.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>count</primary>
+        </indexterm>
+        <function>count</function> ( <literal>*</literal> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of input rows.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>count</function> ( <type>"any"</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of input rows in which the input value is not
+        null.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>every</primary>
+        </indexterm>
+        <function>every</function> ( <type>boolean</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        This is the SQL standard's equivalent to <function>bool_and</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_agg</primary>
+        </indexterm>
+        <function>json_agg</function> ( <type>anyelement</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_agg</primary>
+        </indexterm>
+        <function>jsonb_agg</function> ( <type>anyelement</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, including nulls, into a JSON array.
+        Values are converted to JSON as per <function>to_json</function>
+        or <function>to_jsonb</function>.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_agg_strict</primary>
+        </indexterm>
+        <function>json_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_agg_strict</primary>
+        </indexterm>
+        <function>jsonb_agg_strict</function> ( <type>anyelement</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the input values, skipping nulls, into a JSON array.
+        Values are converted to JSON as per <function>to_json</function>
+        or <function>to_jsonb</function>.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_arrayagg</primary></indexterm>
+        <function>json_arrayagg</function> (
+        <optional> <replaceable>value_expression</replaceable> </optional>
+        <optional> <literal>ORDER BY</literal> <replaceable>sort_expression</replaceable> </optional>
+        <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+       </para>
+       <para>
+        Behaves in the same way as <function>json_array</function>
+        but as an aggregate function so it only takes one
+        <replaceable>value_expression</replaceable> parameter.
+        If <literal>ABSENT ON NULL</literal> is specified, any NULL
+        values are omitted.
+        If <literal>ORDER BY</literal> is specified, the elements will
+        appear in the array in that order rather than in the input order.
+       </para>
+       <para>
+        <literal>SELECT json_arrayagg(v) FROM (VALUES(2),(1)) t(v)</literal>
+        <returnvalue>[2, 1]</returnvalue>
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+         <indexterm><primary>json_objectagg</primary></indexterm>
+         <function>json_objectagg</function> (
+         <optional> { <replaceable>key_expression</replaceable> { <literal>VALUE</literal> | ':' } <replaceable>value_expression</replaceable> } </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+        <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Behaves like <function>json_object</function><!-- xref -->, but as an
+         aggregate function, so it only takes one
+         <replaceable>key_expression</replaceable> and one
+         <replaceable>value_expression</replaceable> parameter.
+        </para>
+        <para>
+         <literal>SELECT json_objectagg(k:v) FROM (VALUES ('a'::text,current_date),('b',current_date + 1)) AS t(k,v)</literal>
+         <returnvalue>{ "a" : "2022-05-10", "b" : "2022-05-11" }</returnvalue>
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg</primary>
+        </indexterm>
+        <function>json_object_agg</function> ( <parameter>key</parameter>
+         <type>"any"</type>, <parameter>value</parameter>
+         <type>"any"</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg</primary>
+        </indexterm>
+        <function>jsonb_object_agg</function> ( <parameter>key</parameter>
+         <type>"any"</type>, <parameter>value</parameter>
+         <type>"any"</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but keys cannot.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_strict</primary>
+        </indexterm>
+        <function>json_object_agg_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_strict</primary>
+        </indexterm>
+        <function>jsonb_object_agg_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        The <parameter>key</parameter> can not be null. If the
+        <parameter>value</parameter> is null then the entry is skipped,
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_unique</primary>
+        </indexterm>
+        <function>json_object_agg_unique</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_unique</primary>
+        </indexterm>
+        <function>jsonb_object_agg_unique</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but keys cannot.
+        If there is a duplicate key an error is thrown.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_agg_unique_strict</primary>
+        </indexterm>
+        <function>json_object_agg_unique_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_agg_unique_strict</primary>
+        </indexterm>
+        <function>jsonb_object_agg_unique_strict</function> (
+         <parameter>key</parameter> <type>"any"</type>,
+         <parameter>value</parameter> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Collects all the key/value pairs into a JSON object.  Key arguments
+        are coerced to text; value arguments are converted as per
+        <function>to_json</function> or <function>to_jsonb</function>.
+        The <parameter>key</parameter> can not be null. If the
+        <parameter>value</parameter> is null then the entry is skipped.
+        If there is a duplicate key an error is thrown.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>max</primary>
+        </indexterm>
+        <function>max</function> ( <replaceable>see text</replaceable> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Computes the maximum of the non-null input
+        values.  Available for any numeric, string, date/time, or enum type,
+        as well as <type>bytea</type>, <type>inet</type>, <type>interval</type>,
+        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
+        <type>tid</type>, <type>xid8</type>,
+        and also arrays and composite types containing sortable data types.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>min</primary>
+        </indexterm>
+        <function>min</function> ( <replaceable>see text</replaceable> )
+        <returnvalue><replaceable>same as input type</replaceable></returnvalue>
+       </para>
+       <para>
+        Computes the minimum of the non-null input
+        values.  Available for any numeric, string, date/time, or enum type,
+        as well as <type>bytea</type>, <type>inet</type>, <type>interval</type>,
+        <type>money</type>, <type>oid</type>, <type>pg_lsn</type>,
+        <type>tid</type>, <type>xid8</type>,
+        and also arrays and composite types containing sortable data types.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_agg</primary>
+        </indexterm>
+        <function>range_agg</function> ( <parameter>value</parameter>
+         <type>anyrange</type> )
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>range_agg</function> ( <parameter>value</parameter>
+         <type>anymultirange</type> )
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Computes the union of the non-null input values.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_intersect_agg</primary>
+        </indexterm>
+        <function>range_intersect_agg</function> ( <parameter>value</parameter>
+         <type>anyrange</type> )
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>range_intersect_agg</function> ( <parameter>value</parameter>
+         <type>anymultirange</type> )
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Computes the intersection of the non-null input values.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_agg</primary>
+        </indexterm>
+        <function>string_agg</function> ( <parameter>value</parameter>
+         <type>text</type>, <parameter>delimiter</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>string_agg</function> ( <parameter>value</parameter>
+         <type>bytea</type>, <parameter>delimiter</parameter> <type>bytea</type>
+         <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Concatenates the non-null input values into a string.  Each value
+        after the first is preceded by the
+        corresponding <parameter>delimiter</parameter> (if it's not null).
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sum</primary>
+        </indexterm>
+        <function>sum</function> ( <type>smallint</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>integer</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>bigint</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>numeric</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>real</type> )
+        <returnvalue>real</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>sum</function> ( <type>money</type> )
+        <returnvalue>money</returnvalue>
+       </para>
+       <para>
+        Computes the sum of the non-null input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>xmlagg</primary>
+        </indexterm>
+        <function>xmlagg</function> ( <type>xml</type> <literal>ORDER BY</literal> <literal>input_sort_columns</literal> )
+        <returnvalue>xml</returnvalue>
+       </para>
+       <para>
+        Concatenates the non-null XML input values (see
+        <xref linkend="functions-xml-xmlagg"/>).
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   It should be noted that except for <function>count</function>,
+   these functions return a null value when no rows are selected.  In
+   particular, <function>sum</function> of no rows returns null, not
+   zero as one might expect, and <function>array_agg</function>
+   returns null rather than an empty array when there are no input
+   rows.  The <function>coalesce</function> function can be used to
+   substitute zero or an empty array for null when necessary.
+  </para>
+
+  <para>
+   The aggregate functions <function>array_agg</function>,
+   <function>json_agg</function>, <function>jsonb_agg</function>,
+   <function>json_agg_strict</function>, <function>jsonb_agg_strict</function>,
+   <function>json_object_agg</function>, <function>jsonb_object_agg</function>,
+   <function>json_object_agg_strict</function>, <function>jsonb_object_agg_strict</function>,
+   <function>json_object_agg_unique</function>, <function>jsonb_object_agg_unique</function>,
+   <function>json_object_agg_unique_strict</function>,
+   <function>jsonb_object_agg_unique_strict</function>,
+   <function>string_agg</function>,
+   and <function>xmlagg</function>, as well as similar user-defined
+   aggregate functions, produce meaningfully different result values
+   depending on the order of the input values.  This ordering is
+   unspecified by default, but can be controlled by writing an
+   <literal>ORDER BY</literal> clause within the aggregate call, as shown in
+   <xref linkend="syntax-aggregates"/>.
+   Alternatively, supplying the input values from a sorted subquery
+   will usually work.  For example:
+
+<screen><![CDATA[
+SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
+]]></screen>
+
+   Beware that this approach can fail if the outer query level contains
+   additional processing, such as a join, because that might cause the
+   subquery's output to be reordered before the aggregate is computed.
+  </para>
+
+  <note>
+    <indexterm>
+      <primary>ANY</primary>
+    </indexterm>
+    <indexterm>
+      <primary>SOME</primary>
+    </indexterm>
+    <para>
+      The boolean aggregates <function>bool_and</function> and
+      <function>bool_or</function> correspond to the standard SQL aggregates
+      <function>every</function> and <function>any</function> or
+      <function>some</function>.
+      <productname>PostgreSQL</productname>
+      supports <function>every</function>, but not <function>any</function>
+      or <function>some</function>, because there is an ambiguity built into
+      the standard syntax:
+<programlisting>
+SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
+</programlisting>
+      Here <function>ANY</function> can be considered either as introducing
+      a subquery, or as being an aggregate function, if the subquery
+      returns one row with a Boolean value.
+      Thus the standard name cannot be given to these aggregates.
+    </para>
+  </note>
+
+  <note>
+   <para>
+    Users accustomed to working with other SQL database management
+    systems might be disappointed by the performance of the
+    <function>count</function> aggregate when it is applied to the
+    entire table. A query like:
+<programlisting>
+SELECT count(*) FROM sometable;
+</programlisting>
+    will require effort proportional to the size of the table:
+    <productname>PostgreSQL</productname> will need to scan either the
+    entire table or the entirety of an index that includes all rows in
+    the table.
+   </para>
+  </note>
+
+  <para>
+   <xref linkend="functions-aggregate-statistics-table"/> shows
+   aggregate functions typically used in statistical analysis.
+   (These are separated out merely to avoid cluttering the listing
+   of more-commonly-used aggregates.)  Functions shown as
+   accepting <replaceable>numeric_type</replaceable> are available for all
+   the types <type>smallint</type>, <type>integer</type>,
+   <type>bigint</type>, <type>numeric</type>, <type>real</type>,
+   and <type>double precision</type>.
+   Where the description mentions
+   <parameter>N</parameter>, it means the
+   number of input rows for which all the input expressions are non-null.
+   In all cases, null is returned if the computation is meaningless,
+   for example when <parameter>N</parameter> is zero.
+  </para>
+
+  <indexterm>
+   <primary>statistics</primary>
+  </indexterm>
+  <indexterm>
+   <primary>linear regression</primary>
+  </indexterm>
+
+   <table id="functions-aggregate-statistics-table">
+    <title>Aggregate Functions for Statistics</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>correlation</primary>
+        </indexterm>
+        <indexterm>
+         <primary>corr</primary>
+        </indexterm>
+        <function>corr</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the correlation coefficient.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>covariance</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>covar_pop</primary>
+        </indexterm>
+        <function>covar_pop</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the population covariance.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>covariance</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>covar_samp</primary>
+        </indexterm>
+        <function>covar_samp</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the sample covariance.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_avgx</primary>
+        </indexterm>
+        <function>regr_avgx</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the average of the independent variable,
+        <literal>sum(<parameter>X</parameter>)/<parameter>N</parameter></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_avgy</primary>
+        </indexterm>
+        <function>regr_avgy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the average of the dependent variable,
+        <literal>sum(<parameter>Y</parameter>)/<parameter>N</parameter></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_count</primary>
+        </indexterm>
+        <function>regr_count</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the number of rows in which both inputs are non-null.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regression intercept</primary>
+        </indexterm>
+        <indexterm>
+         <primary>regr_intercept</primary>
+        </indexterm>
+        <function>regr_intercept</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the y-intercept of the least-squares-fit linear equation
+        determined by the
+        (<parameter>X</parameter>, <parameter>Y</parameter>) pairs.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_r2</primary>
+        </indexterm>
+        <function>regr_r2</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the square of the correlation coefficient.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regression slope</primary>
+        </indexterm>
+        <indexterm>
+         <primary>regr_slope</primary>
+        </indexterm>
+        <function>regr_slope</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the slope of the least-squares-fit linear equation determined
+        by the (<parameter>X</parameter>, <parameter>Y</parameter>)
+        pairs.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_sxx</primary>
+        </indexterm>
+        <function>regr_sxx</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of squares</quote> of the independent
+        variable,
+        <literal>sum(<parameter>X</parameter>^2) - sum(<parameter>X</parameter>)^2/<parameter>N</parameter></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_sxy</primary>
+        </indexterm>
+        <function>regr_sxy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of products</quote> of independent times
+        dependent variables,
+        <literal>sum(<parameter>X</parameter>*<parameter>Y</parameter>) - sum(<parameter>X</parameter>) * sum(<parameter>Y</parameter>)/<parameter>N</parameter></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regr_syy</primary>
+        </indexterm>
+        <function>regr_syy</function> ( <parameter>Y</parameter> <type>double precision</type>, <parameter>X</parameter> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the <quote>sum of squares</quote> of the dependent
+        variable,
+        <literal>sum(<parameter>Y</parameter>^2) - sum(<parameter>Y</parameter>)^2/<parameter>N</parameter></literal>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev</primary>
+        </indexterm>
+        <function>stddev</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        This is a historical alias for <function>stddev_samp</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev_pop</primary>
+        </indexterm>
+        <function>stddev_pop</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the population standard deviation of the input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>standard deviation</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>stddev_samp</primary>
+        </indexterm>
+        <function>stddev_samp</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the sample standard deviation of the input values.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+        </indexterm>
+        <function>variance</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        This is a historical alias for <function>var_samp</function>.
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+         <secondary>population</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>var_pop</primary>
+        </indexterm>
+        <function>var_pop</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the population variance of the input values (square of the
+        population standard deviation).
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>variance</primary>
+         <secondary>sample</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>var_samp</primary>
+        </indexterm>
+        <function>var_samp</function> ( <replaceable>numeric_type</replaceable> )
+        <returnvalue></returnvalue> <type>double precision</type>
+        for <type>real</type> or <type>double precision</type>,
+        otherwise <type>numeric</type>
+       </para>
+       <para>
+        Computes the sample variance of the input values (square of the sample
+        standard deviation).
+       </para></entry>
+       <entry>Yes</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   <xref linkend="functions-orderedset-table"/> shows some
+   aggregate functions that use the <firstterm>ordered-set aggregate</firstterm>
+   syntax.  These functions are sometimes referred to as <quote>inverse
+   distribution</quote> functions.  Their aggregated input is introduced by
+   <literal>ORDER BY</literal>, and they may also take a <firstterm>direct
+   argument</firstterm> that is not aggregated, but is computed only once.
+   All these functions ignore null values in their aggregated input.
+   For those that take a <parameter>fraction</parameter> parameter, the
+   fraction value must be between 0 and 1; an error is thrown if not.
+   However, a null <parameter>fraction</parameter> value simply produces a
+   null result.
+  </para>
+
+  <indexterm>
+   <primary>ordered-set aggregate</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+  <indexterm>
+   <primary>inverse distribution</primary>
+  </indexterm>
+
+   <table id="functions-orderedset-table">
+    <title>Ordered-Set Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>mode</primary>
+         <secondary>statistical</secondary>
+        </indexterm>
+        <function>mode</function> () <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>mode</firstterm>, the most frequent
+        value of the aggregated argument (arbitrarily choosing the first one
+        if there are multiple equally-frequent values).  The aggregated
+        argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percentile</primary>
+         <secondary>continuous</secondary>
+        </indexterm>
+        <function>percentile_cont</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>percentile_cont</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <returnvalue>interval</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>continuous percentile</firstterm>, a value
+        corresponding to the specified <parameter>fraction</parameter>
+        within the ordered set of aggregated argument values.  This will
+        interpolate between adjacent input items if needed.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>percentile_cont</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>double precision</type> )
+        <returnvalue>double precision[]</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>percentile_cont</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>interval</type> )
+        <returnvalue>interval[]</returnvalue>
+       </para>
+       <para>
+        Computes multiple continuous percentiles.  The result is an array of
+        the same dimensions as the <parameter>fractions</parameter>
+        parameter, with each non-null element replaced by the (possibly
+        interpolated) value corresponding to that percentile.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percentile</primary>
+         <secondary>discrete</secondary>
+        </indexterm>
+        <function>percentile_disc</function> ( <parameter>fraction</parameter> <type>double precision</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Computes the <firstterm>discrete percentile</firstterm>, the first
+        value within the ordered set of aggregated argument values whose
+        position in the ordering equals or exceeds the
+        specified <parameter>fraction</parameter>.  The aggregated
+        argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>percentile_disc</function> ( <parameter>fractions</parameter> <type>double precision[]</type> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <type>anyelement</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Computes multiple discrete percentiles.  The result is an array of the
+        same dimensions as the <parameter>fractions</parameter> parameter,
+        with each non-null element replaced by the input value corresponding
+        to that percentile.
+        The aggregated argument must be of a sortable type.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <indexterm>
+   <primary>hypothetical-set aggregate</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
+  <para>
+   Each of the <quote>hypothetical-set</quote> aggregates listed in
+   <xref linkend="functions-hypothetical-table"/> is associated with a
+   window function of the same name defined in
+   <xref linkend="functions-window"/>.  In each case, the aggregate's result
+   is the value that the associated window function would have
+   returned for the <quote>hypothetical</quote> row constructed from
+   <replaceable>args</replaceable>, if such a row had been added to the sorted
+   group of rows represented by the <replaceable>sorted_args</replaceable>.
+   For each of these functions, the list of direct arguments
+   given in <replaceable>args</replaceable> must match the number and types of
+   the aggregated arguments given in <replaceable>sorted_args</replaceable>.
+   Unlike most built-in aggregates, these aggregates are not strict, that is
+   they do not drop input rows containing nulls.  Null values sort according
+   to the rule specified in the <literal>ORDER BY</literal> clause.
+  </para>
+
+   <table id="functions-hypothetical-table">
+    <title>Hypothetical-Set Aggregate Functions</title>
+    <tgroup cols="2">
+     <colspec colname="col1" colwidth="10*"/>
+     <colspec colname="col2" colwidth="1*"/>
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+       <entry>Partial Mode</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the rank of the hypothetical row, with gaps; that is, the row
+        number of the first row in its peer group.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>dense_rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>dense_rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the rank of the hypothetical row, without gaps; this function
+        effectively counts peer groups.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percent_rank</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>percent_rank</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the relative rank of the hypothetical row, that is
+        (<function>rank</function> - 1) / (total rows - 1).
+        The value thus ranges from 0 to 1 inclusive.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>cume_dist</primary>
+         <secondary>hypothetical</secondary>
+        </indexterm>
+        <function>cume_dist</function> ( <replaceable>args</replaceable> ) <literal>WITHIN GROUP</literal> ( <literal>ORDER BY</literal> <replaceable>sorted_args</replaceable> )
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Computes the cumulative distribution, that is (number of rows
+        preceding or peers with hypothetical row) / (total rows).  The value
+        thus ranges from 1/<parameter>N</parameter> to 1.
+       </para></entry>
+       <entry>No</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <table id="functions-grouping-table">
+   <title>Grouping Operations</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>GROUPING</primary>
+        </indexterm>
+        <function>GROUPING</function> ( <replaceable>group_by_expression(s)</replaceable> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns a bit mask indicating which <literal>GROUP BY</literal>
+        expressions are not included in the current grouping set.
+        Bits are assigned with the rightmost argument corresponding to the
+        least-significant bit; each bit is 0 if the corresponding expression
+        is included in the grouping criteria of the grouping set generating
+        the current result row, and 1 if it is not included.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The grouping operations shown in
+    <xref linkend="functions-grouping-table"/> are used in conjunction with
+    grouping sets (see <xref linkend="queries-grouping-sets"/>) to distinguish
+    result rows.  The arguments to the <literal>GROUPING</literal> function
+    are not actually evaluated, but they must exactly match expressions given
+    in the <literal>GROUP BY</literal> clause of the associated query level.
+    For example:
+<screen>
+<prompt>=&gt;</prompt> <userinput>SELECT * FROM items_sold;</userinput>
+ make  | model | sales
+-------+-------+-------
+ Foo   | GT    |  10
+ Foo   | Tour  |  20
+ Bar   | City  |  15
+ Bar   | Sport |  5
+(4 rows)
+
+<prompt>=&gt;</prompt> <userinput>SELECT make, model, GROUPING(make,model), sum(sales) FROM items_sold GROUP BY ROLLUP(make,model);</userinput>
+ make  | model | grouping | sum
+-------+-------+----------+-----
+ Foo   | GT    |        0 | 10
+ Foo   | Tour  |        0 | 20
+ Bar   | City  |        0 | 15
+ Bar   | Sport |        0 | 5
+ Foo   |       |        1 | 30
+ Bar   |       |        1 | 20
+       |       |        3 | 50
+(7 rows)
+</screen>
+    Here, the <literal>grouping</literal> value <literal>0</literal> in the
+    first four rows shows that those have been grouped normally, over both the
+    grouping columns.  The value <literal>1</literal> indicates
+    that <literal>model</literal> was not grouped by in the next-to-last two
+    rows, and the value <literal>3</literal> indicates that
+    neither <literal>make</literal> nor <literal>model</literal> was grouped
+    by in the last row (which therefore is an aggregate over all the input
+    rows).
+   </para>
+
+ </sect1>

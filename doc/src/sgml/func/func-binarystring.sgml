@@ -1,0 +1,854 @@
+  <sect1 id="functions-binarystring">
+   <title>Binary String Functions and Operators</title>
+
+   <indexterm zone="functions-binarystring">
+    <primary>binary data</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    This section describes functions and operators for examining and
+    manipulating binary strings, that is values of type <type>bytea</type>.
+    Many of these are equivalent, in purpose and syntax, to the
+    text-string functions described in the previous section.
+   </para>
+
+   <para>
+    <acronym>SQL</acronym> defines some string functions that use
+    key words, rather than commas, to separate
+    arguments.  Details are in
+    <xref linkend="functions-binarystring-sql"/>.
+    <productname>PostgreSQL</productname> also provides versions of these functions
+    that use the regular function invocation syntax
+    (see <xref linkend="functions-binarystring-other"/>).
+   </para>
+
+   <table id="functions-binarystring-sql">
+    <title><acronym>SQL</acronym> Binary String Functions and Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function/Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>binary string</primary>
+         <secondary>concatenation</secondary>
+        </indexterm>
+        <type>bytea</type> <literal>||</literal> <type>bytea</type>
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Concatenates the two binary strings.
+       </para>
+       <para>
+        <literal>'\x123456'::bytea || '\x789a00bcde'::bytea</literal>
+        <returnvalue>\x123456789a00bcde</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_length</primary>
+        </indexterm>
+        <function>bit_length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bits in the binary string (8
+        times the <function>octet_length</function>).
+       </para>
+       <para>
+        <literal>bit_length('\x123456'::bytea)</literal>
+        <returnvalue>24</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>btrim</primary>
+        </indexterm>
+        <function>btrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>bytesremoved</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only bytes appearing in
+        <parameter>bytesremoved</parameter> from the start and end of
+        <parameter>bytes</parameter>.
+       </para>
+       <para>
+        <literal>btrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
+       </para></entry>
+      </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>ltrim</primary>
+         </indexterm>
+         <function>ltrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the start of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>ltrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x34567890</returnvalue>
+        </para></entry>
+       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bytes in the binary string.
+       </para>
+       <para>
+        <literal>octet_length('\x123456'::bytea)</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>overlay</primary>
+        </indexterm>
+        <function>overlay</function> ( <parameter>bytes</parameter> <type>bytea</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>bytea</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Replaces the substring of <parameter>bytes</parameter> that starts at
+        the <parameter>start</parameter>'th byte and extends
+        for <parameter>count</parameter> bytes
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       </para>
+       <para>
+        <literal>overlay('\x1234567890'::bytea placing '\002\003'::bytea from 2 for 3)</literal>
+        <returnvalue>\x12020390</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>position</primary>
+        </indexterm>
+        <function>position</function> ( <parameter>substring</parameter> <type>bytea</type> <literal>IN</literal> <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns first starting index of the specified
+        <parameter>substring</parameter> within
+        <parameter>bytes</parameter>, or zero if it's not present.
+       </para>
+       <para>
+        <literal>position('\x5678'::bytea in '\x1234567890'::bytea)</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>rtrim</primary>
+         </indexterm>
+         <function>rtrim</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+         <parameter>bytesremoved</parameter> <type>bytea</type> )
+         <returnvalue>bytea</returnvalue>
+        </para>
+        <para>
+         Removes the longest string containing only bytes appearing in
+         <parameter>bytesremoved</parameter> from the end of
+         <parameter>bytes</parameter>.
+        </para>
+        <para>
+         <literal>rtrim('\x1234567890'::bytea, '\x9012'::bytea)</literal>
+         <returnvalue>\x12345678</returnvalue>
+        </para></entry>
+       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>substring</primary>
+        </indexterm>
+        <function>substring</function> ( <parameter>bytes</parameter> <type>bytea</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Extracts the substring of <parameter>bytes</parameter> starting at
+        the <parameter>start</parameter>'th byte if that is specified,
+        and stopping after <parameter>count</parameter> bytes if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       </para>
+       <para>
+        <literal>substring('\x1234567890'::bytea from 3 for 2)</literal>
+        <returnvalue>\x5678</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>trim</primary>
+        </indexterm>
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional>
+        <parameter>bytesremoved</parameter> <type>bytea</type> <literal>FROM</literal>
+        <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only bytes appearing in
+        <parameter>bytesremoved</parameter> from the start,
+        end, or both ends (<literal>BOTH</literal> is the default)
+        of <parameter>bytes</parameter>.
+       </para>
+       <para>
+        <literal>trim('\x9012'::bytea from '\x1234567890'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
+        <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>bytesremoved</parameter> <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        This is a non-standard syntax for <function>trim()</function>.
+       </para>
+       <para>
+        <literal>trim(both from '\x1234567890'::bytea, '\x9012'::bytea)</literal>
+        <returnvalue>\x345678</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Additional binary string manipulation functions are available and
+    are listed in <xref linkend="functions-binarystring-other"/>.  Some
+    of them are used internally to implement the
+    <acronym>SQL</acronym>-standard string functions listed in <xref
+    linkend="functions-binarystring-sql"/>.
+   </para>
+
+   <table id="functions-binarystring-other">
+    <title>Other Binary String Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_count</primary>
+        </indexterm>
+        <indexterm>
+         <primary>popcount</primary>
+         <see>bit_count</see>
+        </indexterm>
+        <function>bit_count</function> ( <parameter>bytes</parameter> <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of bits set in the binary string (also known as
+        <quote>popcount</quote>).
+       </para>
+       <para>
+        <literal>bit_count('\x1234567890'::bytea)</literal>
+        <returnvalue>15</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>crc32</primary>
+        </indexterm>
+        <function>crc32</function> ( <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the CRC-32 value of the binary string.
+       </para>
+       <para>
+        <literal>crc32('abc'::bytea)</literal>
+        <returnvalue>891568578</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>crc32c</primary>
+        </indexterm>
+        <function>crc32c</function> ( <type>bytea</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the CRC-32C value of the binary string.
+       </para>
+       <para>
+        <literal>crc32c('abc'::bytea)</literal>
+        <returnvalue>910901175</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+        <function>get_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>bigint</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Extracts <link linkend="functions-zerobased-note">n'th</link> bit
+        from binary string.
+       </para>
+       <para>
+        <literal>get_bit('\x1234567890'::bytea, 30)</literal>
+        <returnvalue>1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>get_byte</primary>
+        </indexterm>
+        <function>get_byte</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Extracts <link linkend="functions-zerobased-note">n'th</link> byte
+        from binary string.
+       </para>
+       <para>
+        <literal>get_byte('\x1234567890'::bytea, 4)</literal>
+        <returnvalue>144</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <indexterm>
+         <primary>binary string</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>length</primary>
+         <secondary sortas="binary string">of a binary string</secondary>
+         <see>binary strings, length</see>
+        </indexterm>
+        <function>length</function> ( <type>bytea</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of bytes in the binary string.
+       </para>
+       <para>
+        <literal>length('\x1234567890'::bytea)</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>length</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>encoding</parameter> <type>name</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of characters in the binary string, assuming
+        that it is text in the given <parameter>encoding</parameter>.
+       </para>
+       <para>
+        <literal>length('jose'::bytea, 'UTF8')</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>md5</primary>
+        </indexterm>
+        <function>md5</function> ( <type>bytea</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Computes the MD5 <link linkend="functions-hash-note">hash</link> of
+        the binary string, with the result written in hexadecimal.
+       </para>
+       <para>
+        <literal>md5('Th\000omas'::bytea)</literal>
+        <returnvalue>8ab2d3c9689aaf18&zwsp;b4958c334c82d8b1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>reverse</primary>
+        </indexterm>
+        <function>reverse</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Reverses the order of the bytes in the binary string.
+       </para>
+       <para>
+        <literal>reverse('\xabcd'::bytea)</literal>
+        <returnvalue>\xcdab</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+        <function>set_bit</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>bigint</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Sets <link linkend="functions-zerobased-note">n'th</link> bit in
+        binary string to <parameter>newvalue</parameter>.
+       </para>
+       <para>
+        <literal>set_bit('\x1234567890'::bytea, 30, 0)</literal>
+        <returnvalue>\x1234563890</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>set_byte</primary>
+        </indexterm>
+        <function>set_byte</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+        <parameter>n</parameter> <type>integer</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Sets <link linkend="functions-zerobased-note">n'th</link> byte in
+        binary string to <parameter>newvalue</parameter>.
+       </para>
+       <para>
+        <literal>set_byte('\x1234567890'::bytea, 4, 64)</literal>
+        <returnvalue>\x1234567840</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sha224</primary>
+        </indexterm>
+        <function>sha224</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Computes the SHA-224 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       </para>
+       <para>
+        <literal>sha224('abc'::bytea)</literal>
+        <returnvalue>\x23097d223405d8228642a477bda2&zwsp;55b32aadbce4bda0b3f7e36c9da7</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sha256</primary>
+        </indexterm>
+        <function>sha256</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Computes the SHA-256 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       </para>
+       <para>
+        <literal>sha256('abc'::bytea)</literal>
+        <returnvalue>\xba7816bf8f01cfea414140de5dae2223&zwsp;b00361a396177a9cb410ff61f20015ad</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sha384</primary>
+        </indexterm>
+        <function>sha384</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Computes the SHA-384 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       </para>
+       <para>
+        <literal>sha384('abc'::bytea)</literal>
+        <returnvalue>\xcb00753f45a35e8bb5a03d699ac65007&zwsp;272c32ab0eded1631a8b605a43ff5bed&zwsp;8086072ba1e7cc2358baeca134c825a7</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>sha512</primary>
+        </indexterm>
+        <function>sha512</function> ( <type>bytea</type> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Computes the SHA-512 <link linkend="functions-hash-note">hash</link>
+        of the binary string.
+       </para>
+       <para>
+        <literal>sha512('abc'::bytea)</literal>
+        <returnvalue>\xddaf35a193617abacc417349ae204131&zwsp;12e6fa4e89a97ea20a9eeee64b55d39a&zwsp;2192992a274fc1a836ba3c23a3feebbd&zwsp;454d4423643ce80e2a9ac94fa54ca49f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>substr</primary>
+        </indexterm>
+        <function>substr</function> ( <parameter>bytes</parameter> <type>bytea</type>, <parameter>start</parameter> <type>integer</type> <optional>, <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Extracts the substring of <parameter>bytes</parameter> starting at
+        the <parameter>start</parameter>'th byte,
+        and extending for <parameter>count</parameter> bytes if that is
+        specified.  (Same
+        as <literal>substring(<parameter>bytes</parameter>
+        from <parameter>start</parameter>
+        for <parameter>count</parameter>)</literal>.)
+       </para>
+       <para>
+        <literal>substr('\x1234567890'::bytea, 3, 2)</literal>
+        <returnvalue>\x5678</returnvalue>
+       </para></entry>
+      </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para id="functions-zerobased-note">
+   Functions <function>get_byte</function> and <function>set_byte</function>
+   number the first byte of a binary string as byte 0.
+   Functions <function>get_bit</function> and <function>set_bit</function>
+   number bits from the right within each byte; for example bit 0 is the least
+   significant bit of the first byte, and bit 15 is the most significant bit
+   of the second byte.
+  </para>
+
+  <para id="functions-hash-note">
+   For historical reasons, the function <function>md5</function>
+   returns a hex-encoded value of type <type>text</type> whereas the SHA-2
+   functions return type <type>bytea</type>.  Use the functions
+   <link linkend="function-encode"><function>encode</function></link>
+   and <link linkend="function-decode"><function>decode</function></link> to
+   convert between the two.  For example write <literal>encode(sha256('abc'),
+   'hex')</literal> to get a hex-encoded text representation,
+   or <literal>decode(md5('abc'), 'hex')</literal> to get
+   a <type>bytea</type> value.
+  </para>
+
+  <para>
+   <indexterm>
+    <primary>character string</primary>
+    <secondary>converting to binary string</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>binary string</primary>
+    <secondary>converting to character string</secondary>
+   </indexterm>
+   Functions for converting strings between different character sets
+   (encodings), and for representing arbitrary binary data in textual
+   form, are shown in
+   <xref linkend="functions-binarystring-conversions"/>.  For these
+   functions, an argument or result of type <type>text</type> is expressed
+   in the database's default encoding, while arguments or results of
+   type <type>bytea</type> are in an encoding named by another argument.
+  </para>
+
+  <table id="functions-binarystring-conversions">
+   <title>Text/Binary String Conversion Functions</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       Function
+      </para>
+      <para>
+       Description
+      </para>
+      <para>
+       Example(s)
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm>
+        <primary>convert</primary>
+       </indexterm>
+       <function>convert</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>src_encoding</parameter> <type>name</type>,
+       <parameter>dest_encoding</parameter> <type>name</type> )
+       <returnvalue>bytea</returnvalue>
+      </para>
+      <para>
+       Converts a binary string representing text in
+       encoding <parameter>src_encoding</parameter>
+       to a binary string in encoding <parameter>dest_encoding</parameter>
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions).
+      </para>
+      <para>
+       <literal>convert('text_in_utf8', 'UTF8', 'LATIN1')</literal>
+       <returnvalue>\x746578745f696e5f75746638</returnvalue>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm>
+        <primary>convert_from</primary>
+       </indexterm>
+       <function>convert_from</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>src_encoding</parameter> <type>name</type> )
+       <returnvalue>text</returnvalue>
+      </para>
+      <para>
+       Converts a binary string representing text in
+       encoding <parameter>src_encoding</parameter>
+       to <type>text</type> in the database encoding
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions).
+      </para>
+      <para>
+       <literal>convert_from('text_in_utf8', 'UTF8')</literal>
+       <returnvalue>text_in_utf8</returnvalue>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm>
+        <primary>convert_to</primary>
+       </indexterm>
+       <function>convert_to</function> ( <parameter>string</parameter> <type>text</type>,
+       <parameter>dest_encoding</parameter> <type>name</type> )
+       <returnvalue>bytea</returnvalue>
+      </para>
+      <para>
+       Converts a <type>text</type> string (in the database encoding) to a
+       binary string encoded in encoding <parameter>dest_encoding</parameter>
+       (see <xref linkend="multibyte-conversions-supported"/> for
+       available conversions).
+      </para>
+      <para>
+       <literal>convert_to('some_text', 'UTF8')</literal>
+       <returnvalue>\x736f6d655f74657874</returnvalue>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm id="function-encode">
+        <primary>encode</primary>
+       </indexterm>
+       <function>encode</function> ( <parameter>bytes</parameter> <type>bytea</type>,
+       <parameter>format</parameter> <type>text</type> )
+       <returnvalue>text</returnvalue>
+      </para>
+      <para>
+       Encodes binary data into a textual representation; supported
+       <parameter>format</parameter> values are:
+       <link linkend="encode-format-base64"><literal>base64</literal></link>,
+       <link linkend="encode-format-escape"><literal>escape</literal></link>,
+       <link linkend="encode-format-hex"><literal>hex</literal></link>.
+      </para>
+      <para>
+       <literal>encode('123\000\001', 'base64')</literal>
+       <returnvalue>MTIzAAE=</returnvalue>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+       <indexterm id="function-decode">
+        <primary>decode</primary>
+       </indexterm>
+       <function>decode</function> ( <parameter>string</parameter> <type>text</type>,
+       <parameter>format</parameter> <type>text</type> )
+       <returnvalue>bytea</returnvalue>
+      </para>
+      <para>
+       Decodes binary data from a textual representation; supported
+       <parameter>format</parameter> values are the same as
+       for <function>encode</function>.
+      </para>
+      <para>
+       <literal>decode('MTIzAAE=', 'base64')</literal>
+       <returnvalue>\x3132330001</returnvalue>
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <function>encode</function> and <function>decode</function>
+   functions support the following textual formats:
+
+   <variablelist>
+    <varlistentry id="encode-format-base64">
+     <term>base64
+     <indexterm>
+      <primary>base64 format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>base64</literal> format is that
+       of <ulink url="https://datatracker.ietf.org/doc/html/rfc2045#section-6.8">RFC
+       2045 Section 6.8</ulink>.  As per the <acronym>RFC</acronym>, encoded lines are
+       broken at 76 characters.  However instead of the MIME CRLF
+       end-of-line marker, only a newline is used for end-of-line.
+       The <function>decode</function> function ignores carriage-return,
+       newline, space, and tab characters.  Otherwise, an error is
+       raised when <function>decode</function> is supplied invalid
+       base64 data &mdash; including when trailing padding is incorrect.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="encode-format-escape">
+     <term>escape
+     <indexterm>
+      <primary>escape format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>escape</literal> format converts zero bytes and
+       bytes with the high bit set into octal escape sequences
+       (<literal>\</literal><replaceable>nnn</replaceable>), and it doubles
+       backslashes.  Other byte values are represented literally.
+       The <function>decode</function> function will raise an error if a
+       backslash is not followed by either a second backslash or three
+       octal digits; it accepts other byte values unchanged.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="encode-format-hex">
+     <term>hex
+     <indexterm>
+      <primary>hex format</primary>
+     </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>hex</literal> format represents each 4 bits of
+       data as one hexadecimal digit, <literal>0</literal>
+       through <literal>f</literal>, writing the higher-order digit of
+       each byte first.  The <function>encode</function> function outputs
+       the <literal>a</literal>-<literal>f</literal> hex digits in lower
+       case.  Because the smallest unit of data is 8 bits, there are
+       always an even number of characters returned
+       by <function>encode</function>.
+       The <function>decode</function> function
+       accepts the <literal>a</literal>-<literal>f</literal> characters in
+       either upper or lower case.  An error is raised
+       when <function>decode</function> is given invalid hex data
+       &mdash; including when given an odd number of characters.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   In addition, it is possible to cast integral values to and from type
+   <type>bytea</type>. Casting an integer to <type>bytea</type> produces
+   2, 4, or 8 bytes, depending on the width of the integer type. The result
+   is the two's complement representation of the integer, with the most
+   significant byte first. Some examples:
+<programlisting>
+1234::smallint::bytea          <lineannotation>\x04d2</lineannotation>
+cast(1234 as bytea)            <lineannotation>\x000004d2</lineannotation>
+cast(-1234 as bytea)           <lineannotation>\xfffffb2e</lineannotation>
+'\x8000'::bytea::smallint      <lineannotation>-32768</lineannotation>
+'\x8000'::bytea::integer       <lineannotation>32768</lineannotation>
+</programlisting>
+   Casting a <type>bytea</type> to an integer will raise an error if the
+   length of the <type>bytea</type> exceeds the width of the integer type.
+  </para>
+
+  <para>
+   See also the aggregate function <function>string_agg</function> in
+   <xref linkend="functions-aggregate"/> and the large object functions
+   in <xref linkend="lo-funcs"/>.
+  </para>
+ </sect1>

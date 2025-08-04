@@ -1,0 +1,2200 @@
+  <sect1 id="functions-datetime">
+   <title>Date/Time Functions and Operators</title>
+
+  <para>
+   <xref linkend="functions-datetime-table"/> shows the available
+   functions for date/time value processing, with details appearing in
+   the following subsections.  <xref
+   linkend="operators-datetime-table"/> illustrates the behaviors of
+   the basic arithmetic operators (<literal>+</literal>,
+   <literal>*</literal>, etc.).  For formatting functions, refer to
+   <xref linkend="functions-formatting"/>.  You should be familiar with
+   the background information on date/time data types from <xref
+   linkend="datatype-datetime"/>.
+  </para>
+
+  <para>
+   In addition, the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/> are available for the
+   date/time types.  Dates and timestamps (with or without time zone) are
+   all comparable, while times (with or without time zone) and intervals
+   can only be compared to other values of the same data type.  When
+   comparing a timestamp without time zone to a timestamp with time zone,
+   the former value is assumed to be given in the time zone specified by
+   the <xref linkend="guc-timezone"/> configuration parameter, and is
+   rotated to UTC for comparison to the latter value (which is already
+   in UTC internally).  Similarly, a date value is assumed to represent
+   midnight in the <varname>TimeZone</varname> zone when comparing it
+   to a timestamp.
+  </para>
+
+  <para>
+   All the functions and operators described below that take <type>time</type> or <type>timestamp</type>
+   inputs actually come in two variants: one that takes <type>time with time zone</type> or <type>timestamp
+   with time zone</type>, and one that takes <type>time without time zone</type> or <type>timestamp without time zone</type>.
+   For brevity, these variants are not shown separately.  Also, the
+   <literal>+</literal> and <literal>*</literal> operators come in commutative pairs (for
+   example both <type>date</type> <literal>+</literal> <type>integer</type>
+   and <type>integer</type> <literal>+</literal> <type>date</type>); we show
+   only one of each such pair.
+  </para>
+
+    <table id="operators-datetime-table">
+     <title>Date/Time Operators</title>
+
+     <tgroup cols="1">
+      <thead>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         Operator
+        </para>
+        <para>
+         Description
+        </para>
+        <para>
+         Example(s)
+        </para></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>+</literal> <type>integer</type>
+         <returnvalue>date</returnvalue>
+        </para>
+        <para>
+         Add a number of days to a date
+        </para>
+        <para>
+         <literal>date '2001-09-28' + 7</literal>
+         <returnvalue>2001-10-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Add an interval to a date
+        </para>
+        <para>
+         <literal>date '2001-09-28' + interval '1 hour'</literal>
+         <returnvalue>2001-09-28 01:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>+</literal> <type>time</type>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Add a time-of-day to a date
+        </para>
+        <para>
+         <literal>date '2001-09-28' + time '03:00'</literal>
+         <returnvalue>2001-09-28 03:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>interval</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Add intervals
+        </para>
+        <para>
+         <literal>interval '1 day' + interval '1 hour'</literal>
+         <returnvalue>1 day 01:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Add an interval to a timestamp
+        </para>
+        <para>
+         <literal>timestamp '2001-09-28 01:00' + interval '23 hours'</literal>
+         <returnvalue>2001-09-29 00:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time</type> <literal>+</literal> <type>interval</type>
+         <returnvalue>time</returnvalue>
+        </para>
+        <para>
+         Add an interval to a time
+        </para>
+        <para>
+         <literal>time '01:00' + interval '3 hours'</literal>
+         <returnvalue>04:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Negate an interval
+        </para>
+        <para>
+         <literal>- interval '23 hours'</literal>
+         <returnvalue>-23:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>-</literal> <type>date</type>
+         <returnvalue>integer</returnvalue>
+        </para>
+        <para>
+         Subtract dates, producing the number of days elapsed
+        </para>
+        <para>
+         <literal>date '2001-10-01' - date '2001-09-28'</literal>
+         <returnvalue>3</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>-</literal> <type>integer</type>
+         <returnvalue>date</returnvalue>
+        </para>
+        <para>
+         Subtract a number of days from a date
+        </para>
+        <para>
+         <literal>date '2001-10-01' - 7</literal>
+         <returnvalue>2001-09-24</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>date</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Subtract an interval from a date
+        </para>
+        <para>
+         <literal>date '2001-09-28' - interval '1 hour'</literal>
+         <returnvalue>2001-09-27 23:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time</type> <literal>-</literal> <type>time</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Subtract times
+        </para>
+        <para>
+         <literal>time '05:00' - time '03:00'</literal>
+         <returnvalue>02:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>time</returnvalue>
+        </para>
+        <para>
+         Subtract an interval from a time
+        </para>
+        <para>
+         <literal>time '05:00' - interval '2 hours'</literal>
+         <returnvalue>03:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Subtract an interval from a timestamp
+        </para>
+        <para>
+         <literal>timestamp '2001-09-28 23:00' - interval '23 hours'</literal>
+         <returnvalue>2001-09-28 00:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>interval</type> <literal>-</literal> <type>interval</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Subtract intervals
+        </para>
+        <para>
+         <literal>interval '1 day' - interval '1 hour'</literal>
+         <returnvalue>1 day -01:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp</type> <literal>-</literal> <type>timestamp</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Subtract timestamps (converting 24-hour intervals into days,
+         similarly to <link
+         linkend="function-justify-hours"><function>justify_hours()</function></link>)
+        </para>
+        <para>
+         <literal>timestamp '2001-09-29 03:00' - timestamp '2001-07-27 12:00'</literal>
+         <returnvalue>63 days 15:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>interval</type> <literal>*</literal> <type>double precision</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Multiply an interval by a scalar
+        </para>
+        <para>
+         <literal>interval '1 second' * 900</literal>
+         <returnvalue>00:15:00</returnvalue>
+        </para>
+        <para>
+         <literal>interval '1 day' * 21</literal>
+         <returnvalue>21 days</returnvalue>
+        </para>
+        <para>
+         <literal>interval '1 hour' * 3.5</literal>
+         <returnvalue>03:30:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>interval</type> <literal>/</literal> <type>double precision</type>
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Divide an interval by a scalar
+        </para>
+        <para>
+         <literal>interval '1 hour' / 1.5</literal>
+         <returnvalue>00:40:00</returnvalue>
+        </para></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <table id="functions-datetime-table">
+     <title>Date/Time Functions</title>
+     <tgroup cols="1">
+      <thead>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         Function
+        </para>
+        <para>
+         Description
+        </para>
+        <para>
+         Example(s)
+        </para></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>age</primary>
+         </indexterm>
+         <function>age</function> ( <type>timestamp</type>, <type>timestamp</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Subtract arguments, producing a <quote>symbolic</quote> result that
+         uses years and months, rather than just days
+        </para>
+        <para>
+         <literal>age(timestamp '2001-04-10', timestamp '1957-06-13')</literal>
+         <returnvalue>43 years 9 mons 27 days</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>age</function> ( <type>timestamp</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Subtract argument from <function>current_date</function> (at midnight)
+        </para>
+        <para>
+         <literal>age(timestamp '1957-06-13')</literal>
+         <returnvalue>62 years 6 mons 10 days</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>clock_timestamp</primary>
+         </indexterm>
+         <function>clock_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (changes during statement execution);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>clock_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>current_date</primary>
+         </indexterm>
+         <function>current_date</function>
+         <returnvalue>date</returnvalue>
+        </para>
+        <para>
+         Current date; see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>current_date</literal>
+         <returnvalue>2019-12-23</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>current_time</primary>
+         </indexterm>
+         <function>current_time</function>
+         <returnvalue>time with time zone</returnvalue>
+        </para>
+        <para>
+         Current time of day; see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>current_time</literal>
+         <returnvalue>14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>current_time</function> ( <type>integer</type> )
+         <returnvalue>time with time zone</returnvalue>
+        </para>
+        <para>
+         Current time of day, with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>current_time(2)</literal>
+         <returnvalue>14:39:53.66-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>current_timestamp</primary>
+         </indexterm>
+         <function>current_timestamp</function>
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>current_timestamp</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>current_timestamp</function> ( <type>integer</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current transaction), with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>current_timestamp(0)</literal>
+         <returnvalue>2019-12-23 14:39:53-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_add</primary>
+         </indexterm>
+         <function>date_add</function> ( <type>timestamp with time zone</type>, <type>interval</type> <optional>, <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Add an <type>interval</type> to a <type>timestamp with time
+         zone</type>, computing times of day and daylight-savings adjustments
+         according to the time zone named by the third argument, or the
+         current <xref linkend="guc-timezone"/> setting if that is omitted.
+         The form with two arguments is equivalent to the <type>timestamp with
+         time zone</type> <literal>+</literal> <type>interval</type> operator.
+        </para>
+        <para>
+         <literal>date_add('2021-10-31 00:00:00+02'::timestamptz, '1 day'::interval, 'Europe/Warsaw')</literal>
+         <returnvalue>2021-10-31 23:00:00+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>date_bin</function> ( <type>interval</type>, <type>timestamp</type>, <type>timestamp</type> )
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Bin input into specified interval aligned with specified origin; see <xref linkend="functions-datetime-bin"/>
+        </para>
+        <para>
+         <literal>date_bin('15 minutes', timestamp '2001-02-16 20:38:40', timestamp '2001-02-16 20:05:00')</literal>
+         <returnvalue>2001-02-16 20:35:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_part</primary>
+         </indexterm>
+         <function>date_part</function> ( <type>text</type>, <type>timestamp</type> )
+         <returnvalue>double precision</returnvalue>
+        </para>
+        <para>
+         Get timestamp subfield (equivalent to <function>extract</function>);
+         see <xref linkend="functions-datetime-extract"/>
+        </para>
+        <para>
+         <literal>date_part('hour', timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>20</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>date_part</function> ( <type>text</type>, <type>interval</type> )
+         <returnvalue>double precision</returnvalue>
+        </para>
+        <para>
+         Get interval subfield (equivalent to <function>extract</function>);
+         see <xref linkend="functions-datetime-extract"/>
+        </para>
+        <para>
+         <literal>date_part('month', interval '2 years 3 months')</literal>
+         <returnvalue>3</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_subtract</primary>
+         </indexterm>
+         <function>date_subtract</function> ( <type>timestamp with time zone</type>, <type>interval</type> <optional>, <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Subtract an <type>interval</type> from a <type>timestamp with time
+         zone</type>, computing times of day and daylight-savings adjustments
+         according to the time zone named by the third argument, or the
+         current <xref linkend="guc-timezone"/> setting if that is omitted.
+         The form with two arguments is equivalent to the <type>timestamp with
+         time zone</type> <literal>-</literal> <type>interval</type> operator.
+        </para>
+        <para>
+         <literal>date_subtract('2021-11-01 00:00:00+01'::timestamptz, '1 day'::interval, 'Europe/Warsaw')</literal>
+         <returnvalue>2021-10-30 22:00:00+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>date_trunc</primary>
+         </indexterm>
+         <function>date_trunc</function> ( <type>text</type>, <type>timestamp</type> )
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Truncate to specified precision; see <xref linkend="functions-datetime-trunc"/>
+        </para>
+        <para>
+         <literal>date_trunc('hour', timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>2001-02-16 20:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>date_trunc</function> ( <type>text</type>, <type>timestamp with time zone</type>, <type>text</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Truncate to specified precision in the specified time zone; see
+         <xref linkend="functions-datetime-trunc"/>
+        </para>
+        <para>
+         <literal>date_trunc('day', timestamptz '2001-02-16 20:38:40+00', 'Australia/Sydney')</literal>
+         <returnvalue>2001-02-16 13:00:00+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>date_trunc</function> ( <type>text</type>, <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Truncate to specified precision; see
+         <xref linkend="functions-datetime-trunc"/>
+        </para>
+        <para>
+         <literal>date_trunc('hour', interval '2 days 3 hours 40 minutes')</literal>
+         <returnvalue>2 days 03:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>extract</primary>
+         </indexterm>
+         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>timestamp</type> )
+         <returnvalue>numeric</returnvalue>
+        </para>
+        <para>
+         Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
+        </para>
+        <para>
+         <literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal>
+         <returnvalue>20</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>interval</type> )
+         <returnvalue>numeric</returnvalue>
+        </para>
+        <para>
+         Get interval subfield; see <xref linkend="functions-datetime-extract"/>
+        </para>
+        <para>
+         <literal>extract(month from interval '2 years 3 months')</literal>
+         <returnvalue>3</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>isfinite</primary>
+         </indexterm>
+         <function>isfinite</function> ( <type>date</type> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Test for finite date (not +/-infinity)
+        </para>
+        <para>
+         <literal>isfinite(date '2001-02-16')</literal>
+         <returnvalue>true</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>isfinite</function> ( <type>timestamp</type> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Test for finite timestamp (not +/-infinity)
+        </para>
+        <para>
+         <literal>isfinite(timestamp 'infinity')</literal>
+         <returnvalue>false</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>isfinite</function> ( <type>interval</type> )
+         <returnvalue>boolean</returnvalue>
+        </para>
+        <para>
+         Test for finite interval (not +/-infinity)
+        </para>
+        <para>
+         <literal>isfinite(interval '4 hours')</literal>
+         <returnvalue>true</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm id="function-justify-days">
+          <primary>justify_days</primary>
+         </indexterm>
+         <function>justify_days</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Adjust interval, converting 30-day time periods to months
+        </para>
+        <para>
+         <literal>justify_days(interval '1 year 65 days')</literal>
+         <returnvalue>1 year 2 mons 5 days</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm id="function-justify-hours">
+          <primary>justify_hours</primary>
+         </indexterm>
+         <function>justify_hours</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Adjust interval, converting 24-hour time periods to days
+        </para>
+        <para>
+         <literal>justify_hours(interval '50 hours 10 minutes')</literal>
+         <returnvalue>2 days 02:10:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>justify_interval</primary>
+         </indexterm>
+         <function>justify_interval</function> ( <type>interval</type> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Adjust interval using <function>justify_days</function>
+         and <function>justify_hours</function>, with additional sign
+         adjustments
+        </para>
+        <para>
+         <literal>justify_interval(interval '1 mon -1 hour')</literal>
+         <returnvalue>29 days 23:00:00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>localtime</primary>
+         </indexterm>
+         <function>localtime</function>
+         <returnvalue>time</returnvalue>
+        </para>
+        <para>
+         Current time of day;
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>localtime</literal>
+         <returnvalue>14:39:53.662522</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>localtime</function> ( <type>integer</type> )
+         <returnvalue>time</returnvalue>
+        </para>
+        <para>
+         Current time of day, with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>localtime(0)</literal>
+         <returnvalue>14:39:53</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>localtimestamp</primary>
+         </indexterm>
+         <function>localtimestamp</function>
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>localtimestamp</literal>
+         <returnvalue>2019-12-23 14:39:53.662522</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <function>localtimestamp</function> ( <type>integer</type> )
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current
+         transaction), with limited precision;
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>localtimestamp(2)</literal>
+         <returnvalue>2019-12-23 14:39:53.66</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>make_date</primary>
+         </indexterm>
+         <function>make_date</function> ( <parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type> )
+         <returnvalue>date</returnvalue>
+        </para>
+        <para>
+         Create date from year, month and day fields
+         (negative years signify BC)
+        </para>
+        <para>
+         <literal>make_date(2013, 7, 15)</literal>
+         <returnvalue>2013-07-15</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature"><indexterm>
+          <primary>make_interval</primary>
+         </indexterm>
+         <function>make_interval</function> ( <optional> <parameter>years</parameter> <type>int</type>
+         <optional>, <parameter>months</parameter> <type>int</type>
+         <optional>, <parameter>weeks</parameter> <type>int</type>
+         <optional>, <parameter>days</parameter> <type>int</type>
+         <optional>, <parameter>hours</parameter> <type>int</type>
+         <optional>, <parameter>mins</parameter> <type>int</type>
+         <optional>, <parameter>secs</parameter> <type>double precision</type>
+         </optional></optional></optional></optional></optional></optional></optional> )
+         <returnvalue>interval</returnvalue>
+        </para>
+        <para>
+         Create interval from years, months, weeks, days, hours, minutes and
+         seconds fields, each of which can default to zero
+        </para>
+        <para>
+         <literal>make_interval(days =&gt; 10)</literal>
+         <returnvalue>10 days</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>make_time</primary>
+         </indexterm>
+         <function>make_time</function> ( <parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type> )
+         <returnvalue>time</returnvalue>
+        </para>
+        <para>
+         Create time from hour, minute and seconds fields
+        </para>
+        <para>
+         <literal>make_time(8, 15, 23.5)</literal>
+         <returnvalue>08:15:23.5</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>make_timestamp</primary>
+         </indexterm>
+         <function>make_timestamp</function> ( <parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type>,
+         <parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type> )
+         <returnvalue>timestamp</returnvalue>
+        </para>
+        <para>
+         Create timestamp from year, month, day, hour, minute and seconds fields
+         (negative years signify BC)
+        </para>
+        <para>
+         <literal>make_timestamp(2013, 7, 15, 8, 15, 23.5)</literal>
+         <returnvalue>2013-07-15 08:15:23.5</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>make_timestamptz</primary>
+         </indexterm>
+         <function>make_timestamptz</function> ( <parameter>year</parameter> <type>int</type>,
+         <parameter>month</parameter> <type>int</type>,
+         <parameter>day</parameter> <type>int</type>,
+         <parameter>hour</parameter> <type>int</type>,
+         <parameter>min</parameter> <type>int</type>,
+         <parameter>sec</parameter> <type>double precision</type>
+         <optional>, <parameter>timezone</parameter> <type>text</type> </optional> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Create timestamp with time zone from year, month, day, hour, minute
+         and seconds fields (negative years signify BC).
+         If <parameter>timezone</parameter> is not
+         specified, the current time zone is used; the examples assume the
+         session time zone is <literal>Europe/London</literal>
+        </para>
+        <para>
+         <literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5)</literal>
+         <returnvalue>2013-07-15 08:15:23.5+01</returnvalue>
+        </para>
+        <para>
+         <literal>make_timestamptz(2013, 7, 15, 8, 15, 23.5, 'America/New_York')</literal>
+         <returnvalue>2013-07-15 13:15:23.5+01</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>now</primary>
+         </indexterm>
+         <function>now</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>now()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>statement_timestamp</primary>
+         </indexterm>
+         <function>statement_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current statement);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>statement_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>timeofday</primary>
+         </indexterm>
+         <function>timeofday</function> ( )
+         <returnvalue>text</returnvalue>
+        </para>
+        <para>
+         Current date and time
+         (like <function>clock_timestamp</function>, but as a <type>text</type> string);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>timeofday()</literal>
+         <returnvalue>Mon Dec 23 14:39:53.662522 2019 EST</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>transaction_timestamp</primary>
+         </indexterm>
+         <function>transaction_timestamp</function> ( )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Current date and time (start of current transaction);
+         see <xref linkend="functions-datetime-current"/>
+        </para>
+        <para>
+         <literal>transaction_timestamp()</literal>
+         <returnvalue>2019-12-23 14:39:53.662522-05</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <indexterm>
+          <primary>to_timestamp</primary>
+         </indexterm>
+         <function>to_timestamp</function> ( <type>double precision</type> )
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Convert Unix epoch (seconds since 1970-01-01 00:00:00+00) to
+         timestamp with time zone
+        </para>
+        <para>
+         <literal>to_timestamp(1284352323)</literal>
+         <returnvalue>2010-09-13 04:32:03+00</returnvalue>
+        </para></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    <indexterm>
+      <primary>OVERLAPS</primary>
+    </indexterm>
+    In addition to these functions, the SQL <literal>OVERLAPS</literal> operator is
+    supported:
+<synopsis>
+(<replaceable>start1</replaceable>, <replaceable>end1</replaceable>) OVERLAPS (<replaceable>start2</replaceable>, <replaceable>end2</replaceable>)
+(<replaceable>start1</replaceable>, <replaceable>length1</replaceable>) OVERLAPS (<replaceable>start2</replaceable>, <replaceable>length2</replaceable>)
+</synopsis>
+    This expression yields true when two time periods (defined by their
+    endpoints) overlap, false when they do not overlap.  The endpoints
+    can be specified as pairs of dates, times, or time stamps; or as
+    a date, time, or time stamp followed by an interval.  When a pair
+    of values is provided, either the start or the end can be written
+    first; <literal>OVERLAPS</literal> automatically takes the earlier value
+    of the pair as the start.  Each time period is considered to
+    represent the half-open interval <replaceable>start</replaceable> <literal>&lt;=</literal>
+    <replaceable>time</replaceable> <literal>&lt;</literal> <replaceable>end</replaceable>, unless
+    <replaceable>start</replaceable> and <replaceable>end</replaceable> are equal in which case it
+    represents that single time instant.  This means for instance that two
+    time periods with only an endpoint in common do not overlap.
+   </para>
+
+<screen>
+SELECT (DATE '2001-02-16', DATE '2001-12-21') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<lineannotation>Result: </lineannotation><computeroutput>true</computeroutput>
+SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
+SELECT (DATE '2001-10-29', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<lineannotation>Result: </lineannotation><computeroutput>false</computeroutput>
+SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<lineannotation>Result: </lineannotation><computeroutput>true</computeroutput>
+</screen>
+
+  <para>
+   When adding an <type>interval</type> value to (or subtracting an
+   <type>interval</type> value from) a <type>timestamp</type>
+   or <type>timestamp with time zone</type> value, the months, days, and
+   microseconds fields of the <type>interval</type> value are handled in turn.
+   First, a nonzero months field advances or decrements the date of the
+   timestamp by the indicated number of months, keeping the day of month the
+   same unless it would be past the end of the new month, in which case the
+   last day of that month is used.  (For example, March 31 plus 1 month
+   becomes April 30, but March 31 plus 2 months becomes May 31.)
+   Then the days field advances or decrements the date of the timestamp by
+   the indicated number of days.  In both these steps the local time of day
+   is kept the same.  Finally, if there is a nonzero microseconds field, it
+   is added or subtracted literally.
+   When doing arithmetic on a <type>timestamp with time zone</type> value in
+   a time zone that recognizes DST, this means that adding or subtracting
+   (say) <literal>interval '1 day'</literal> does not necessarily have the
+   same result as adding or subtracting <literal>interval '24
+   hours'</literal>.
+   For example, with the session time zone set
+   to <literal>America/Denver</literal>:
+<screen>
+SELECT timestamp with time zone '2005-04-02 12:00:00-07' + interval '1 day';
+<lineannotation>Result: </lineannotation><computeroutput>2005-04-03 12:00:00-06</computeroutput>
+SELECT timestamp with time zone '2005-04-02 12:00:00-07' + interval '24 hours';
+<lineannotation>Result: </lineannotation><computeroutput>2005-04-03 13:00:00-06</computeroutput>
+</screen>
+   This happens because an hour was skipped due to a change in daylight saving
+   time at <literal>2005-04-03 02:00:00</literal> in time zone
+   <literal>America/Denver</literal>.
+  </para>
+
+  <para>
+   Note there can be ambiguity in the <literal>months</literal> field returned by
+   <function>age</function> because different months have different numbers of
+   days.  <productname>PostgreSQL</productname>'s approach uses the month from the
+   earlier of the two dates when calculating partial months.  For example,
+   <literal>age('2004-06-01', '2004-04-30')</literal> uses April to yield
+   <literal>1 mon 1 day</literal>, while using May would yield <literal>1 mon 2
+   days</literal> because May has 31 days, while April has only 30.
+  </para>
+
+  <para>
+   Subtraction of dates and timestamps can also be complex.  One conceptually
+   simple way to perform subtraction is to convert each value to a number
+   of seconds using <literal>EXTRACT(EPOCH FROM ...)</literal>, then subtract the
+   results; this produces the
+   number of <emphasis>seconds</emphasis> between the two values.  This will adjust
+   for the number of days in each month, timezone changes, and daylight
+   saving time adjustments.  Subtraction of date or timestamp
+   values with the <quote><literal>-</literal></quote> operator
+   returns the number of days (24-hours) and hours/minutes/seconds
+   between the values, making the same adjustments.  The <function>age</function>
+   function returns years, months, days, and hours/minutes/seconds,
+   performing field-by-field subtraction and then adjusting for negative
+   field values.  The following queries illustrate the differences in these
+   approaches.  The sample results were produced with <literal>timezone
+   = 'US/Eastern'</literal>; there is a daylight saving time change between the
+   two dates used:
+  </para>
+
+<screen>
+SELECT EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+       EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00');
+<lineannotation>Result: </lineannotation><computeroutput>10537200.000000</computeroutput>
+SELECT (EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00'))
+        / 60 / 60 / 24;
+<lineannotation>Result: </lineannotation><computeroutput>121.9583333333333333</computeroutput>
+SELECT timestamptz '2013-07-01 12:00:00' - timestamptz '2013-03-01 12:00:00';
+<lineannotation>Result: </lineannotation><computeroutput>121 days 23:00:00</computeroutput>
+SELECT age(timestamptz '2013-07-01 12:00:00', timestamptz '2013-03-01 12:00:00');
+<lineannotation>Result: </lineannotation><computeroutput>4 mons</computeroutput>
+</screen>
+
+  <sect2 id="functions-datetime-extract">
+   <title><function>EXTRACT</function>, <function>date_part</function></title>
+
+   <indexterm>
+    <primary>date_part</primary>
+   </indexterm>
+   <indexterm>
+    <primary>extract</primary>
+   </indexterm>
+
+<synopsis>
+EXTRACT(<replaceable>field</replaceable> FROM <replaceable>source</replaceable>)
+</synopsis>
+
+   <para>
+    The <function>extract</function> function retrieves subfields
+    such as year or hour from date/time values.
+    <replaceable>source</replaceable> must be a value expression of
+    type <type>timestamp</type>, <type>date</type>, <type>time</type>,
+    or <type>interval</type>.  (Timestamps and times can be with or
+    without time zone.)
+    <replaceable>field</replaceable> is an identifier or
+    string that selects what field to extract from the source value.
+    Not all fields are valid for every input data type; for example, fields
+    smaller than a day cannot be extracted from a <type>date</type>, while
+    fields of a day or more cannot be extracted from a <type>time</type>.
+    The <function>extract</function> function returns values of type
+    <type>numeric</type>.
+   </para>
+
+   <para>
+    The following are valid field names:
+
+    <!-- alphabetical -->
+    <variablelist>
+     <varlistentry>
+      <term><literal>century</literal></term>
+      <listitem>
+       <para>
+        The century; for <type>interval</type> values, the year field
+        divided by 100
+       </para>
+
+<screen>
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2000-12-16 12:21:13');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>21</computeroutput>
+SELECT EXTRACT(CENTURY FROM DATE '0001-01-01 AD');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+SELECT EXTRACT(CENTURY FROM DATE '0001-12-31 BC');
+<lineannotation>Result: </lineannotation><computeroutput>-1</computeroutput>
+SELECT EXTRACT(CENTURY FROM INTERVAL '2001 years');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>day</literal></term>
+      <listitem>
+       <para>
+        The day of the month (1&ndash;31); for <type>interval</type>
+        values, the number of days
+       </para>
+
+<screen>
+SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
+SELECT EXTRACT(DAY FROM INTERVAL '40 days 1 minute');
+<lineannotation>Result: </lineannotation><computeroutput>40</computeroutput>
+</screen>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>decade</literal></term>
+      <listitem>
+       <para>
+        The year field divided by 10
+       </para>
+
+<screen>
+SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>200</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>dow</literal></term>
+      <listitem>
+       <para>
+        The day of the week as Sunday (<literal>0</literal>) to
+        Saturday (<literal>6</literal>)
+       </para>
+
+<screen>
+SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>5</computeroutput>
+</screen>
+       <para>
+        Note that <function>extract</function>'s day of the week numbering
+        differs from that of the <function>to_char(...,
+        'D')</function> function.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>doy</literal></term>
+      <listitem>
+       <para>
+        The day of the year (1&ndash;365/366)
+       </para>
+
+<screen>
+SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>47</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>epoch</literal></term>
+      <listitem>
+       <para>
+        For <type>timestamp with time zone</type> values, the
+        number of seconds since 1970-01-01 00:00:00 UTC (negative for
+        timestamps before that);
+        for <type>date</type> and <type>timestamp</type> values, the
+        nominal number of seconds since 1970-01-01 00:00:00,
+        without regard to timezone or daylight-savings rules;
+        for <type>interval</type> values, the total number
+        of seconds in the interval
+       </para>
+
+<screen>
+SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40.12-08');
+<lineannotation>Result: </lineannotation><computeroutput>982384720.120000</computeroutput>
+SELECT EXTRACT(EPOCH FROM TIMESTAMP '2001-02-16 20:38:40.12');
+<lineannotation>Result: </lineannotation><computeroutput>982355920.120000</computeroutput>
+SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
+<lineannotation>Result: </lineannotation><computeroutput>442800.000000</computeroutput>
+</screen>
+
+       <para>
+        You can convert an epoch value back to a <type>timestamp with time zone</type>
+        with <function>to_timestamp</function>:
+       </para>
+<screen>
+SELECT to_timestamp(982384720.12);
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-17 04:38:40.12+00</computeroutput>
+</screen>
+
+       <para>
+        Beware that applying <function>to_timestamp</function> to an epoch
+        extracted from a <type>date</type> or <type>timestamp</type> value
+        could produce a misleading result: the result will effectively
+        assume that the original value had been given in UTC, which might
+        not be the case.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>hour</literal></term>
+      <listitem>
+       <para>
+        The hour field (0&ndash;23 in timestamps, unrestricted in
+        intervals)
+       </para>
+
+<screen>
+SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>isodow</literal></term>
+      <listitem>
+       <para>
+        The day of the week as Monday (<literal>1</literal>) to
+        Sunday (<literal>7</literal>)
+       </para>
+
+<screen>
+SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>7</computeroutput>
+</screen>
+       <para>
+        This is identical to <literal>dow</literal> except for Sunday.  This
+        matches the <acronym>ISO</acronym> 8601 day of the week numbering.
+       </para>
+
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>isoyear</literal></term>
+      <listitem>
+       <para>
+        The <acronym>ISO</acronym> 8601 week-numbering year that the date
+        falls in
+       </para>
+
+<screen>
+SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2005</computeroutput>
+SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
+<lineannotation>Result: </lineannotation><computeroutput>2006</computeroutput>
+</screen>
+
+       <para>
+        Each <acronym>ISO</acronym> 8601 week-numbering year begins with the
+        Monday of the week containing the 4th of January, so in early
+        January or late December the <acronym>ISO</acronym> year may be
+        different from the Gregorian year.  See the <literal>week</literal>
+        field for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>julian</literal></term>
+      <listitem>
+       <para>
+        The <firstterm>Julian Date</firstterm> corresponding to the
+        date or timestamp.  Timestamps
+        that are not local midnight result in a fractional value.  See
+        <xref linkend="datetime-julian-dates"/> for more information.
+       </para>
+
+<screen>
+SELECT EXTRACT(JULIAN FROM DATE '2006-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2453737</computeroutput>
+SELECT EXTRACT(JULIAN FROM TIMESTAMP '2006-01-01 12:00');
+<lineannotation>Result: </lineannotation><computeroutput>2453737.50000000000000000000</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>microseconds</literal></term>
+      <listitem>
+       <para>
+        The seconds field, including fractional parts, multiplied by 1
+        000 000;  note that this includes full seconds
+       </para>
+
+<screen>
+SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28500000</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>millennium</literal></term>
+      <listitem>
+       <para>
+        The millennium; for <type>interval</type> values, the year field
+        divided by 1000
+       </para>
+
+<screen>
+SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
+SELECT EXTRACT(MILLENNIUM FROM INTERVAL '2001 years');
+<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
+</screen>
+
+       <para>
+        Years in the 1900s are in the second millennium.
+        The third millennium started January 1, 2001.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>milliseconds</literal></term>
+      <listitem>
+       <para>
+        The seconds field, including fractional parts, multiplied by
+        1000.  Note that this includes full seconds.
+       </para>
+
+<screen>
+SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28500.000</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>minute</literal></term>
+      <listitem>
+       <para>
+        The minutes field (0&ndash;59)
+       </para>
+
+<screen>
+SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>38</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>month</literal></term>
+      <listitem>
+       <para>
+        The number of the month within the year (1&ndash;12);
+        for <type>interval</type> values, the number of months modulo 12
+        (0&ndash;11)
+       </para>
+
+<screen>
+SELECT EXTRACT(MONTH FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 3 months');
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>quarter</literal></term>
+      <listitem>
+       <para>
+        The quarter of the year (1&ndash;4) that the date is in;
+        for <type>interval</type> values, the month field divided by 3
+        plus 1
+       </para>
+
+<screen>
+SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+SELECT EXTRACT(QUARTER FROM INTERVAL '1 year 6 months');
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>second</literal></term>
+      <listitem>
+       <para>
+        The seconds field, including any fractional seconds
+       </para>
+
+<screen>
+SELECT EXTRACT(SECOND FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>40.000000</computeroutput>
+SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
+<lineannotation>Result: </lineannotation><computeroutput>28.500000</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><literal>timezone</literal></term>
+      <listitem>
+       <para>
+        The time zone offset from UTC, measured in seconds.  Positive values
+        correspond to time zones east of UTC, negative values to
+        zones west of UTC.  (Technically,
+        <productname>PostgreSQL</productname> does not use UTC because
+        leap seconds are not handled.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>timezone_hour</literal></term>
+      <listitem>
+       <para>
+        The hour component of the time zone offset
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>timezone_minute</literal></term>
+      <listitem>
+       <para>
+        The minute component of the time zone offset
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>week</literal></term>
+      <listitem>
+       <para>
+        The number of the <acronym>ISO</acronym> 8601 week-numbering week of
+        the year.  By definition, ISO weeks start on Mondays and the first
+        week of a year contains January 4 of that year.  In other words, the
+        first Thursday of a year is in week 1 of that year.
+       </para>
+       <para>
+        In the ISO week-numbering system, it is possible for early-January
+        dates to be part of the 52nd or 53rd week of the previous year, and for
+        late-December dates to be part of the first week of the next year.
+        For example, <literal>2005-01-01</literal> is part of the 53rd week of year
+        2004, and <literal>2006-01-01</literal> is part of the 52nd week of year
+        2005, while <literal>2012-12-31</literal> is part of the first week of 2013.
+        It's recommended to use the <literal>isoyear</literal> field together with
+        <literal>week</literal> to get consistent results.
+       </para>
+
+       <para>
+        For <type>interval</type> values, the week field is simply the number
+        of integral days divided by 7.
+       </para>
+
+<screen>
+SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>7</computeroutput>
+SELECT EXTRACT(WEEK FROM INTERVAL '13 days 24 hours');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>year</literal></term>
+      <listitem>
+       <para>
+        The year field.  Keep in mind there is no <literal>0 AD</literal>, so subtracting
+        <literal>BC</literal> years from <literal>AD</literal> years should be done with care.
+       </para>
+
+<screen>
+SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001</computeroutput>
+</screen>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    When processing an <type>interval</type> value,
+    the <function>extract</function> function produces field values that
+    match the interpretation used by the interval output function.  This
+    can produce surprising results if one starts with a non-normalized
+    interval representation, for example:
+<screen>
+SELECT INTERVAL '80 minutes';
+<lineannotation>Result: </lineannotation><computeroutput>01:20:00</computeroutput>
+SELECT EXTRACT(MINUTES FROM INTERVAL '80 minutes');
+<lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+</screen>
+   </para>
+
+   <note>
+    <para>
+     When the input value is +/-Infinity, <function>extract</function> returns
+     +/-Infinity for monotonically-increasing fields (<literal>epoch</literal>,
+     <literal>julian</literal>, <literal>year</literal>, <literal>isoyear</literal>,
+     <literal>decade</literal>, <literal>century</literal>, and <literal>millennium</literal>
+     for <type>timestamp</type> inputs; <literal>epoch</literal>, <literal>hour</literal>,
+     <literal>day</literal>, <literal>year</literal>, <literal>decade</literal>,
+     <literal>century</literal>, and <literal>millennium</literal> for
+     <type>interval</type> inputs).
+     For other fields, NULL is returned.  <productname>PostgreSQL</productname>
+     versions before 9.6 returned zero for all cases of infinite input.
+    </para>
+   </note>
+
+   <para>
+    The <function>extract</function> function is primarily intended
+    for computational processing.  For formatting date/time values for
+    display, see <xref linkend="functions-formatting"/>.
+   </para>
+
+   <para>
+    The <function>date_part</function> function is modeled on the traditional
+    <productname>Ingres</productname> equivalent to the
+    <acronym>SQL</acronym>-standard function <function>extract</function>:
+<synopsis>
+date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
+</synopsis>
+    Note that here the <replaceable>field</replaceable> parameter needs to
+    be a string value, not a name.  The valid field names for
+    <function>date_part</function> are the same as for
+    <function>extract</function>.
+    For historical reasons, the <function>date_part</function> function
+    returns values of type <type>double precision</type>.  This can result in
+    a loss of precision in certain uses.  Using <function>extract</function>
+    is recommended instead.
+   </para>
+
+<screen>
+SELECT date_part('day', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
+SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
+<lineannotation>Result: </lineannotation><computeroutput>4</computeroutput>
+</screen>
+
+  </sect2>
+
+  <sect2 id="functions-datetime-trunc">
+   <title><function>date_trunc</function></title>
+
+   <indexterm>
+    <primary>date_trunc</primary>
+   </indexterm>
+
+   <para>
+    The function <function>date_trunc</function> is conceptually
+    similar to the <function>trunc</function> function for numbers.
+   </para>
+
+   <para>
+<synopsis>
+date_trunc(<replaceable>field</replaceable>, <replaceable>source</replaceable> <optional>, <replaceable>time_zone</replaceable> </optional>)
+</synopsis>
+    <replaceable>source</replaceable> is a value expression of type
+    <type>timestamp</type>, <type>timestamp with time zone</type>,
+    or <type>interval</type>.
+    (Values of type <type>date</type> and
+    <type>time</type> are cast automatically to <type>timestamp</type> or
+    <type>interval</type>, respectively.)
+    <replaceable>field</replaceable> selects to which precision to
+    truncate the input value.  The return value is likewise of type
+    <type>timestamp</type>, <type>timestamp with time zone</type>,
+    or <type>interval</type>,
+    and it has all fields that are less significant than the
+    selected one set to zero (or one, for day and month).
+   </para>
+
+   <para>
+    Valid values for <replaceable>field</replaceable> are:
+    <simplelist>
+     <member><literal>microseconds</literal></member>
+     <member><literal>milliseconds</literal></member>
+     <member><literal>second</literal></member>
+     <member><literal>minute</literal></member>
+     <member><literal>hour</literal></member>
+     <member><literal>day</literal></member>
+     <member><literal>week</literal></member>
+     <member><literal>month</literal></member>
+     <member><literal>quarter</literal></member>
+     <member><literal>year</literal></member>
+     <member><literal>decade</literal></member>
+     <member><literal>century</literal></member>
+     <member><literal>millennium</literal></member>
+    </simplelist>
+   </para>
+
+   <para>
+    When the input value is of type <type>timestamp with time zone</type>,
+    the truncation is performed with respect to a particular time zone;
+    for example, truncation to <literal>day</literal> produces a value that
+    is midnight in that zone.  By default, truncation is done with respect
+    to the current <xref linkend="guc-timezone"/> setting, but the
+    optional <replaceable>time_zone</replaceable> argument can be provided
+    to specify a different time zone.  The time zone name can be specified
+    in any of the ways described in <xref linkend="datatype-timezones"/>.
+   </para>
+
+   <para>
+    A time zone cannot be specified when processing <type>timestamp without
+    time zone</type> or <type>interval</type> inputs.  These are always
+    taken at face value.
+   </para>
+
+   <para>
+    Examples (assuming the local time zone is <literal>America/New_York</literal>):
+<screen>
+SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:00:00</computeroutput>
+SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>2001-01-01 00:00:00</computeroutput>
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 00:00:00-05</computeroutput>
+SELECT date_trunc('day', TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40+00', 'Australia/Sydney');
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 08:00:00-05</computeroutput>
+SELECT date_trunc('hour', INTERVAL '3 days 02:47:33');
+<lineannotation>Result: </lineannotation><computeroutput>3 days 02:00:00</computeroutput>
+</screen>
+   </para>
+  </sect2>
+
+  <sect2 id="functions-datetime-bin">
+   <title><function>date_bin</function></title>
+
+   <indexterm>
+    <primary>date_bin</primary>
+   </indexterm>
+
+   <para>
+    The function <function>date_bin</function> <quote>bins</quote> the input
+    timestamp into the specified interval (the <firstterm>stride</firstterm>)
+    aligned with a specified origin.
+   </para>
+
+   <para>
+<synopsis>
+date_bin(<replaceable>stride</replaceable>, <replaceable>source</replaceable>, <replaceable>origin</replaceable>)
+</synopsis>
+    <replaceable>source</replaceable> is a value expression of type
+    <type>timestamp</type> or <type>timestamp with time zone</type>.  (Values
+    of type <type>date</type> are cast automatically to
+    <type>timestamp</type>.)  <replaceable>stride</replaceable> is a value
+    expression of type <type>interval</type>.  The return value is likewise
+    of type <type>timestamp</type> or <type>timestamp with time zone</type>,
+    and it marks the beginning of the bin into which the
+    <replaceable>source</replaceable> is placed.
+   </para>
+
+   <para>
+    Examples:
+<screen>
+SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:30:00</computeroutput>
+SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-01-01 00:02:30');
+<lineannotation>Result: </lineannotation><computeroutput>2020-02-11 15:32:30</computeroutput>
+</screen>
+   </para>
+
+   <para>
+    In the case of full units (1 minute, 1 hour, etc.), it gives the same result as
+    the analogous <function>date_trunc</function> call, but the difference is
+    that <function>date_bin</function> can truncate to an arbitrary interval.
+   </para>
+
+   <para>
+    The <parameter>stride</parameter> interval must be greater than zero and
+    cannot contain units of month or larger.
+   </para>
+  </sect2>
+
+  <sect2 id="functions-datetime-zoneconvert">
+   <title><literal>AT TIME ZONE</literal> and <literal>AT LOCAL</literal></title>
+
+   <indexterm>
+    <primary>time zone</primary>
+    <secondary>conversion</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>AT TIME ZONE</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>AT LOCAL</primary>
+   </indexterm>
+
+   <para>
+    The <literal>AT TIME ZONE</literal> operator converts time
+    stamp <emphasis>without</emphasis> time zone to/from
+    time stamp <emphasis>with</emphasis> time zone, and
+    <type>time with time zone</type> values to different time
+    zones. <xref linkend="functions-datetime-zoneconvert-table"/> shows its
+    variants.
+   </para>
+
+    <table id="functions-datetime-zoneconvert-table">
+     <title><literal>AT TIME ZONE</literal> and <literal>AT LOCAL</literal> Variants</title>
+     <tgroup cols="1">
+      <thead>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         Operator
+        </para>
+        <para>
+         Description
+        </para>
+        <para>
+         Example(s)
+        </para></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp without time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>without</emphasis> time zone to
+         time stamp <emphasis>with</emphasis> time zone, assuming the given
+         value is in the named time zone.
+        </para>
+        <para>
+         <literal>timestamp '2001-02-16 20:38:40' at time zone 'America/Denver'</literal>
+         <returnvalue>2001-02-17 03:38:40+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp without time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>timestamp with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>without</emphasis> time zone to
+         time stamp <emphasis>with</emphasis> the session's
+         <varname>TimeZone</varname> value as time zone.
+        </para>
+        <para>
+         <literal>timestamp '2001-02-16 20:38:40' at local</literal>
+         <returnvalue>2001-02-17 03:38:40+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp with time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>timestamp without time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>with</emphasis> time zone to
+         time stamp <emphasis>without</emphasis> time zone, as the time would
+         appear in that zone.
+        </para>
+        <para>
+         <literal>timestamp with time zone '2001-02-16 20:38:40-05' at time zone 'America/Denver'</literal>
+         <returnvalue>2001-02-16 18:38:40</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>timestamp with time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>timestamp without time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time stamp <emphasis>with</emphasis> time zone to
+         time stamp <emphasis>without</emphasis> time zone, as the time would
+         appear with the session's <varname>TimeZone</varname> value as time zone.
+        </para>
+        <para>
+         <literal>timestamp with time zone '2001-02-16 20:38:40-05' at local</literal>
+         <returnvalue>2001-02-16 18:38:40</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time with time zone</type> <literal>AT TIME ZONE</literal> <replaceable>zone</replaceable>
+         <returnvalue>time with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time <emphasis>with</emphasis> time zone to a new time
+         zone.  Since no date is supplied, this uses the currently active UTC
+         offset for the named destination zone.
+        </para>
+        <para>
+         <literal>time with time zone '05:34:17-05' at time zone 'UTC'</literal>
+         <returnvalue>10:34:17+00</returnvalue>
+        </para></entry>
+       </row>
+
+       <row>
+        <entry role="func_table_entry"><para role="func_signature">
+         <type>time with time zone</type> <literal>AT LOCAL</literal>
+         <returnvalue>time with time zone</returnvalue>
+        </para>
+        <para>
+         Converts given time <emphasis>with</emphasis> time zone to a new time
+         zone.  Since no date is supplied, this uses the currently active UTC
+         offset for the session's <varname>TimeZone</varname> value.
+        </para>
+        <para>
+         Assuming the session's <varname>TimeZone</varname> is set to <literal>UTC</literal>:
+        </para>
+        <para>
+         <literal>time with time zone '05:34:17-05' at local</literal>
+         <returnvalue>10:34:17+00</returnvalue>
+        </para></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    In these expressions, the desired time zone <replaceable>zone</replaceable> can be
+    specified either as a text value (e.g., <literal>'America/Los_Angeles'</literal>)
+    or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
+    In the text case, a time zone name can be specified in any of the ways
+    described in <xref linkend="datatype-timezones"/>.
+    The interval case is only useful for zones that have fixed offsets from
+    UTC, so it is not very common in practice.
+   </para>
+
+   <para>
+    The syntax <literal>AT LOCAL</literal> may be used as shorthand for
+    <literal>AT TIME ZONE <replaceable>local</replaceable></literal>, where
+    <replaceable>local</replaceable> is the session's
+    <varname>TimeZone</varname> value.
+   </para>
+
+   <para>
+    Examples (assuming the current <xref linkend="guc-timezone"/> setting
+    is <literal>America/Los_Angeles</literal>):
+<screen>
+SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 19:38:40-08</computeroutput>
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'America/Denver';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 18:38:40</computeroutput>
+SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'Asia/Tokyo' AT TIME ZONE 'America/Chicago';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 05:38:40</computeroutput>
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT LOCAL;
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 17:38:40</computeroutput>
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE '+05';
+<lineannotation>Result: </lineannotation><computeroutput>2001-02-16 20:38:40</computeroutput>
+SELECT TIME WITH TIME ZONE '20:38:40-05' AT LOCAL;
+<lineannotation>Result: </lineannotation><computeroutput>17:38:40</computeroutput>
+</screen>
+    The first example adds a time zone to a value that lacks it, and
+    displays the value using the current <varname>TimeZone</varname>
+    setting.  The second example shifts the time stamp with time zone value
+    to the specified time zone, and returns the value without a time zone.
+    This allows storage and display of values different from the current
+    <varname>TimeZone</varname> setting.  The third example converts
+    Tokyo time to Chicago time.  The fourth example shifts the time stamp
+    with time zone value to the time zone currently specified by the
+    <varname>TimeZone</varname> setting and returns the value without a
+    time zone.  The fifth example demonstrates that the sign in a POSIX-style
+    time zone specification has the opposite meaning of the sign in an
+    ISO-8601 datetime literal, as described in <xref linkend="datatype-timezones"/>
+    and <xref linkend="datetime-appendix"/>.
+   </para>
+
+   <para>
+    The sixth example is a cautionary tale. Due to the fact that there is no
+    date associated with the input value, the conversion is made using the
+    current date of the session. Therefore, this static example may show a wrong
+    result depending on the time of the year it is viewed because
+    <literal>'America/Los_Angeles'</literal> observes Daylight Savings Time.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>zone</replaceable>,
+    <replaceable>timestamp</replaceable>)</literal> is equivalent to the SQL-conforming construct
+    <literal><replaceable>timestamp</replaceable> AT TIME ZONE
+    <replaceable>zone</replaceable></literal>.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>zone</replaceable>,
+    <replaceable>time</replaceable>)</literal> is equivalent to the SQL-conforming construct
+    <literal><replaceable>time</replaceable> AT TIME ZONE
+    <replaceable>zone</replaceable></literal>.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>timestamp</replaceable>)</literal>
+    is equivalent to the SQL-conforming construct <literal><replaceable>timestamp</replaceable>
+    AT LOCAL</literal>.
+   </para>
+
+   <para>
+    The function <literal><function>timezone</function>(<replaceable>time</replaceable>)</literal>
+    is equivalent to the SQL-conforming construct <literal><replaceable>time</replaceable>
+    AT LOCAL</literal>.
+   </para>
+  </sect2>
+
+  <sect2 id="functions-datetime-current">
+   <title>Current Date/Time</title>
+
+   <indexterm>
+    <primary>date</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>time</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <para>
+    <productname>PostgreSQL</productname> provides a number of functions
+    that return values related to the current date and time.  These
+    SQL-standard functions all return values based on the start time of
+    the current transaction:
+<synopsis>
+CURRENT_DATE
+CURRENT_TIME
+CURRENT_TIMESTAMP
+CURRENT_TIME(<replaceable>precision</replaceable>)
+CURRENT_TIMESTAMP(<replaceable>precision</replaceable>)
+LOCALTIME
+LOCALTIMESTAMP
+LOCALTIME(<replaceable>precision</replaceable>)
+LOCALTIMESTAMP(<replaceable>precision</replaceable>)
+</synopsis>
+    </para>
+
+    <para>
+     <function>CURRENT_TIME</function> and
+     <function>CURRENT_TIMESTAMP</function> deliver values with time zone;
+     <function>LOCALTIME</function> and
+     <function>LOCALTIMESTAMP</function> deliver values without time zone.
+    </para>
+
+    <para>
+     <function>CURRENT_TIME</function>,
+     <function>CURRENT_TIMESTAMP</function>,
+     <function>LOCALTIME</function>, and
+     <function>LOCALTIMESTAMP</function>
+     can optionally take
+     a precision parameter, which causes the result to be rounded
+     to that many fractional digits in the seconds field.  Without a precision parameter,
+     the result is given to the full available precision.
+    </para>
+
+   <para>
+    Some examples:
+<screen>
+SELECT CURRENT_TIME;
+<lineannotation>Result: </lineannotation><computeroutput>14:39:53.662522-05</computeroutput>
+SELECT CURRENT_DATE;
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23</computeroutput>
+SELECT CURRENT_TIMESTAMP;
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522-05</computeroutput>
+SELECT CURRENT_TIMESTAMP(2);
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.66-05</computeroutput>
+SELECT LOCALTIMESTAMP;
+<lineannotation>Result: </lineannotation><computeroutput>2019-12-23 14:39:53.662522</computeroutput>
+</screen>
+   </para>
+
+   <para>
+    Since these functions return
+    the start time of the current transaction, their values do not
+    change during the transaction. This is considered a feature:
+    the intent is to allow a single transaction to have a consistent
+    notion of the <quote>current</quote> time, so that multiple
+    modifications within the same transaction bear the same
+    time stamp.
+   </para>
+
+   <note>
+    <para>
+     Other database systems might advance these values more
+     frequently.
+    </para>
+   </note>
+
+   <para>
+    <productname>PostgreSQL</productname> also provides functions that
+    return the start time of the current statement, as well as the actual
+    current time at the instant the function is called.  The complete list
+    of non-SQL-standard time functions is:
+<synopsis>
+transaction_timestamp()
+statement_timestamp()
+clock_timestamp()
+timeofday()
+now()
+</synopsis>
+   </para>
+
+   <para>
+    <function>transaction_timestamp()</function> is equivalent to
+    <function>CURRENT_TIMESTAMP</function>, but is named to clearly reflect
+    what it returns.
+    <function>statement_timestamp()</function> returns the start time of the current
+    statement (more specifically, the time of receipt of the latest command
+    message from the client).
+    <function>statement_timestamp()</function> and <function>transaction_timestamp()</function>
+    return the same value during the first statement of a transaction, but might
+    differ during subsequent statements.
+    <function>clock_timestamp()</function> returns the actual current time, and
+    therefore its value changes even within a single SQL statement.
+    <function>timeofday()</function> is a historical
+    <productname>PostgreSQL</productname> function.  Like
+    <function>clock_timestamp()</function>, it returns the actual current time,
+    but as a formatted <type>text</type> string rather than a <type>timestamp
+    with time zone</type> value.
+    <function>now()</function> is a traditional <productname>PostgreSQL</productname>
+    equivalent to <function>transaction_timestamp()</function>.
+   </para>
+
+   <para>
+    All the date/time data types also accept the special literal value
+    <literal>now</literal> to specify the current date and time (again,
+    interpreted as the transaction start time).  Thus,
+    the following three all return the same result:
+<programlisting>
+SELECT CURRENT_TIMESTAMP;
+SELECT now();
+SELECT TIMESTAMP 'now';  -- but see tip below
+</programlisting>
+   </para>
+
+    <tip>
+     <para>
+      Do not use the third form when specifying a value to be evaluated later,
+      for example in a <literal>DEFAULT</literal> clause for a table column.
+      The system will convert <literal>now</literal>
+      to a <type>timestamp</type> as soon as the constant is parsed, so that when
+      the default value is needed,
+      the time of the table creation would be used!  The first two
+      forms will not be evaluated until the default value is used,
+      because they are function calls.  Thus they will give the desired
+      behavior of defaulting to the time of row insertion.
+      (See also <xref linkend="datatype-datetime-special-values"/>.)
+     </para>
+    </tip>
+  </sect2>
+
+  <sect2 id="functions-datetime-delay">
+   <title>Delaying Execution</title>
+
+   <indexterm>
+    <primary>pg_sleep</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_sleep_for</primary>
+   </indexterm>
+   <indexterm>
+    <primary>pg_sleep_until</primary>
+   </indexterm>
+   <indexterm>
+    <primary>sleep</primary>
+   </indexterm>
+   <indexterm>
+    <primary>delay</primary>
+   </indexterm>
+
+   <para>
+    The following functions are available to delay execution of the server
+    process:
+<synopsis>
+pg_sleep ( <type>double precision</type> )
+pg_sleep_for ( <type>interval</type> )
+pg_sleep_until ( <type>timestamp with time zone</type> )
+</synopsis>
+
+    <function>pg_sleep</function> makes the current session's process
+    sleep until the given number of seconds have
+    elapsed.  Fractional-second delays can be specified.
+    <function>pg_sleep_for</function> is a convenience function to
+    allow the sleep time to be specified as an <type>interval</type>.
+    <function>pg_sleep_until</function> is a convenience function for when
+    a specific wake-up time is desired.
+    For example:
+
+<programlisting>
+SELECT pg_sleep(1.5);
+SELECT pg_sleep_for('5 minutes');
+SELECT pg_sleep_until('tomorrow 03:00');
+</programlisting>
+   </para>
+
+   <note>
+     <para>
+      The effective resolution of the sleep interval is platform-specific;
+      0.01 seconds is a common value.  The sleep delay will be at least as long
+      as specified. It might be longer depending on factors such as server load.
+      In particular, <function>pg_sleep_until</function> is not guaranteed to
+      wake up exactly at the specified time, but it will not wake up any earlier.
+     </para>
+   </note>
+
+   <warning>
+     <para>
+      Make sure that your session does not hold more locks than necessary
+      when calling <function>pg_sleep</function> or its variants.  Otherwise
+      other sessions might have to wait for your sleeping process, slowing down
+      the entire system.
+     </para>
+   </warning>
+  </sect2>
+
+ </sect1>

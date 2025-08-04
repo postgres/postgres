@@ -17,7 +17,10 @@
 <!ENTITY datatype   SYSTEM "datatype.sgml">
 <!ENTITY ddl        SYSTEM "ddl.sgml">
 <!ENTITY dml        SYSTEM "dml.sgml">
-<!ENTITY func       SYSTEM "func.sgml">
+
+<!ENTITY % allfiles_func   SYSTEM "func/allfiles.sgml">
+%allfiles_func;
+
 <!ENTITY indices    SYSTEM "indices.sgml">
 <!ENTITY json       SYSTEM "json.sgml">
 <!ENTITY mvcc       SYSTEM "mvcc.sgml">

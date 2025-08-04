@@ -1,0 +1,1053 @@
+ <sect1 id="functions-range">
+  <title>Range/Multirange Functions and Operators</title>
+
+  <para>
+   See <xref linkend="rangetypes"/> for an overview of range types.
+  </para>
+
+  <para>
+   <xref linkend="range-operators-table"/> shows the specialized operators
+   available for range types.
+   <xref linkend="multirange-operators-table"/> shows the specialized operators
+   available for multirange types.
+   In addition to those, the usual comparison operators shown in
+   <xref linkend="functions-comparison-op-table"/> are available for range
+   and multirange types.  The comparison operators order first by the range lower
+   bounds, and only if those are equal do they compare the upper bounds.  The
+   multirange operators compare each range until one is unequal. This
+   does not usually result in a useful overall ordering, but the operators are
+   provided to allow unique indexes to be constructed on ranges.
+  </para>
+
+   <table id="range-operators-table">
+    <title>Range Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range contain the second?
+       </para>
+       <para>
+        <literal>int4range(2,4) @&gt; int4range(2,3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anyelement</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range contain the element?
+       </para>
+       <para>
+        <literal>'[2011-01-01,2011-03-01)'::tsrange @&gt; '2011-01-10'::timestamp</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;@</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range contained by the second?
+       </para>
+       <para>
+        <literal>int4range(2,4) &lt;@ int4range(1,7)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyelement</type> <literal>&lt;@</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the element contained in the range?
+       </para>
+       <para>
+        <literal>42 &lt;@ int4range(1,7)</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&amp;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the ranges overlap, that is, have any elements in common?
+       </para>
+       <para>
+        <literal>int8range(3,7) &amp;&amp; int8range(4,12)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range strictly left of the second?
+       </para>
+       <para>
+        <literal>int8range(1,10) &lt;&lt; int8range(100,110)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&gt;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first range strictly right of the second?
+       </para>
+       <para>
+        <literal>int8range(50,60) &gt;&gt; int8range(20,30)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range not extend to the right of the second?
+       </para>
+       <para>
+        <literal>int8range(1,20) &amp;&lt; int8range(18,20)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first range not extend to the left of the second?
+       </para>
+       <para>
+        <literal>int8range(7,20) &amp;&gt; int8range(5,10)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>-|-</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Are the ranges adjacent?
+       </para>
+       <para>
+        <literal>numrange(1.1,2.2) -|- numrange(2.2,3.3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>+</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the union of the ranges.  The ranges must overlap or be
+        adjacent, so that the union is a single range (but
+        see <function>range_merge()</function>).
+       </para>
+       <para>
+        <literal>numrange(5,15) + numrange(10,20)</literal>
+        <returnvalue>[5,20)</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>*</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the intersection of the ranges.
+       </para>
+       <para>
+        <literal>int8range(5,15) * int8range(10,20)</literal>
+        <returnvalue>[10,15)</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>-</literal> <type>anyrange</type>
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the difference of the ranges.  The second range must not be
+        contained in the first in such a way that the difference would not be
+        a single range.
+       </para>
+       <para>
+        <literal>int8range(5,15) - int8range(10,20)</literal>
+        <returnvalue>[5,10)</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="multirange-operators-table">
+    <title>Multirange Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>@&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first multirange contain the second?
+       </para>
+       <para>
+        <literal>'{[2,4)}'::int4multirange @&gt; '{[2,3)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>@&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange contain the range?
+       </para>
+       <para>
+        <literal>'{[2,4)}'::int4multirange @&gt; int4range(2,3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>@&gt;</literal> <type>anyelement</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange contain the element?
+       </para>
+       <para>
+        <literal>'{[2011-01-01,2011-03-01)}'::tsmultirange @&gt; '2011-01-10'::timestamp</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>@&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range contain the multirange?
+       </para>
+       <para>
+        <literal>'[2,4)'::int4range @&gt; '{[2,3)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&lt;@</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first multirange contained by the second?
+       </para>
+       <para>
+        <literal>'{[2,4)}'::int4multirange &lt;@ '{[1,7)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&lt;@</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange contained by the range?
+       </para>
+       <para>
+        <literal>'{[2,4)}'::int4multirange &lt;@ int4range(1,7)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;@</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range contained by the multirange?
+       </para>
+       <para>
+        <literal>int4range(2,4) &lt;@ '{[1,7)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyelement</type> <literal>&lt;@</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the element contained by the multirange?
+       </para>
+       <para>
+        <literal>4 &lt;@ '{[1,7)}'::int4multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&amp;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the multiranges overlap, that is, have any elements in common?
+       </para>
+       <para>
+        <literal>'{[3,7)}'::int8multirange &amp;&amp; '{[4,12)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&amp;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange overlap the range?
+       </para>
+       <para>
+        <literal>'{[3,7)}'::int8multirange &amp;&amp; int8range(4,12)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&amp;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range overlap the multirange?
+       </para>
+       <para>
+        <literal>int8range(3,7) &amp;&amp; '{[4,12)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&lt;&lt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first multirange strictly left of the second?
+       </para>
+       <para>
+        <literal>'{[1,10)}'::int8multirange &lt;&lt; '{[100,110)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&lt;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange strictly left of the range?
+       </para>
+       <para>
+        <literal>'{[1,10)}'::int8multirange &lt;&lt; int8range(100,110)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&lt;&lt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range strictly left of the multirange?
+       </para>
+       <para>
+        <literal>int8range(1,10) &lt;&lt; '{[100,110)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&gt;&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first multirange strictly right of the second?
+       </para>
+       <para>
+        <literal>'{[50,60)}'::int8multirange &gt;&gt; '{[20,30)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&gt;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange strictly right of the range?
+       </para>
+       <para>
+        <literal>'{[50,60)}'::int8multirange &gt;&gt; int8range(20,30)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&gt;&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range strictly right of the multirange?
+       </para>
+       <para>
+        <literal>int8range(50,60) &gt;&gt; '{[20,30)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&lt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first multirange not extend to the right of the second?
+       </para>
+       <para>
+        <literal>'{[1,20)}'::int8multirange &amp;&lt; '{[18,20)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&lt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange not extend to the right of the range?
+       </para>
+       <para>
+        <literal>'{[1,20)}'::int8multirange &amp;&lt; int8range(18,20)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&lt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range not extend to the right of the multirange?
+       </para>
+       <para>
+        <literal>int8range(1,20) &amp;&lt; '{[18,20)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first multirange not extend to the left of the second?
+       </para>
+       <para>
+        <literal>'{[7,20)}'::int8multirange &amp;&gt; '{[5,10)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>&amp;&gt;</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange not extend to the left of the range?
+       </para>
+       <para>
+        <literal>'{[7,20)}'::int8multirange &amp;&gt; int8range(5,10)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>&amp;&gt;</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range not extend to the left of the multirange?
+       </para>
+       <para>
+        <literal>int8range(7,20) &amp;&gt; '{[5,10)}'::int8multirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>-|-</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Are the multiranges adjacent?
+       </para>
+       <para>
+        <literal>'{[1.1,2.2)}'::nummultirange -|- '{[2.2,3.3)}'::nummultirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>-|-</literal> <type>anyrange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange adjacent to the range?
+       </para>
+       <para>
+        <literal>'{[1.1,2.2)}'::nummultirange -|- numrange(2.2,3.3)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyrange</type> <literal>-|-</literal> <type>anymultirange</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range adjacent to the multirange?
+       </para>
+       <para>
+        <literal>numrange(1.1,2.2) -|- '{[2.2,3.3)}'::nummultirange</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>+</literal> <type>anymultirange</type>
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Computes the union of the multiranges.  The multiranges need not overlap
+        or be adjacent.
+       </para>
+       <para>
+        <literal>'{[5,10)}'::nummultirange + '{[15,20)}'::nummultirange</literal>
+        <returnvalue>{[5,10), [15,20)}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>*</literal> <type>anymultirange</type>
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Computes the intersection of the multiranges.
+       </para>
+       <para>
+        <literal>'{[5,15)}'::int8multirange * '{[10,20)}'::int8multirange</literal>
+        <returnvalue>{[10,15)}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anymultirange</type> <literal>-</literal> <type>anymultirange</type>
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Computes the difference of the multiranges.
+       </para>
+       <para>
+        <literal>'{[5,20)}'::int8multirange - '{[10,15)}'::int8multirange</literal>
+        <returnvalue>{[5,10), [15,20)}</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   The left-of/right-of/adjacent operators always return false when an empty
+   range or multirange is involved; that is, an empty range is not considered to
+   be either before or after any other range.
+  </para>
+
+  <para>
+   Elsewhere empty ranges and multiranges are treated as the additive identity:
+   anything unioned with an empty value is itself. Anything minus an empty
+   value is itself. An empty multirange has exactly the same points as an empty
+   range. Every range contains the empty range. Every multirange contains as many
+   empty ranges as you like.
+  </para>
+
+  <para>
+   The range union and difference operators will fail if the resulting range would
+   need to contain two disjoint sub-ranges, as such a range cannot be
+   represented. There are separate operators for union and difference that take
+   multirange parameters and return a multirange, and they do not fail even if
+   their arguments are disjoint. So if you need a union or difference operation
+   for ranges that may be disjoint, you can avoid errors by first casting your
+   ranges to multiranges.
+  </para>
+
+  <para>
+   <xref linkend="range-functions-table"/> shows the functions
+   available for use with range types.
+   <xref linkend="multirange-functions-table"/> shows the functions
+   available for use with multirange types.
+  </para>
+
+   <table id="range-functions-table">
+    <title>Range Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower</primary>
+        </indexterm>
+        <function>lower</function> ( <type>anyrange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the lower bound of the range (<literal>NULL</literal> if the
+        range is empty or has no lower bound).
+       </para>
+       <para>
+        <literal>lower(numrange(1.1,2.2))</literal>
+        <returnvalue>1.1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper</primary>
+        </indexterm>
+        <function>upper</function> ( <type>anyrange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the upper bound of the range (<literal>NULL</literal> if the
+        range is empty or has no upper bound).
+       </para>
+       <para>
+        <literal>upper(numrange(1.1,2.2))</literal>
+        <returnvalue>2.2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>isempty</primary>
+        </indexterm>
+        <function>isempty</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range empty?
+       </para>
+       <para>
+        <literal>isempty(numrange(1.1,2.2))</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inc</primary>
+        </indexterm>
+        <function>lower_inc</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's lower bound inclusive?
+       </para>
+       <para>
+        <literal>lower_inc(numrange(1.1,2.2))</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inc</primary>
+        </indexterm>
+        <function>upper_inc</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the range's upper bound inclusive?
+       </para>
+       <para>
+        <literal>upper_inc(numrange(1.1,2.2))</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inf</primary>
+        </indexterm>
+        <function>lower_inf</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range have no lower bound?  (A lower bound of
+        <literal>-Infinity</literal> returns false.)
+       </para>
+       <para>
+        <literal>lower_inf('(,)'::daterange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inf</primary>
+        </indexterm>
+        <function>upper_inf</function> ( <type>anyrange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the range have no upper bound?  (An upper bound of
+        <literal>Infinity</literal> returns false.)
+       </para>
+       <para>
+        <literal>upper_inf('(,)'::daterange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_merge</primary>
+        </indexterm>
+        <function>range_merge</function> ( <type>anyrange</type>, <type>anyrange</type> )
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the smallest range that includes both of the given ranges.
+       </para>
+       <para>
+        <literal>range_merge('[1,2)'::int4range, '[3,4)'::int4range)</literal>
+        <returnvalue>[1,4)</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <table id="multirange-functions-table">
+    <title>Multirange Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower</primary>
+        </indexterm>
+        <function>lower</function> ( <type>anymultirange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the lower bound of the multirange (<literal>NULL</literal> if the
+        multirange is empty or has no lower bound).
+       </para>
+       <para>
+        <literal>lower('{[1.1,2.2)}'::nummultirange)</literal>
+        <returnvalue>1.1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper</primary>
+        </indexterm>
+        <function>upper</function> ( <type>anymultirange</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Extracts the upper bound of the multirange (<literal>NULL</literal> if the
+        multirange is empty or has no upper bound).
+       </para>
+       <para>
+        <literal>upper('{[1.1,2.2)}'::nummultirange)</literal>
+        <returnvalue>2.2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>isempty</primary>
+        </indexterm>
+        <function>isempty</function> ( <type>anymultirange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange empty?
+       </para>
+       <para>
+        <literal>isempty('{[1.1,2.2)}'::nummultirange)</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inc</primary>
+        </indexterm>
+        <function>lower_inc</function> ( <type>anymultirange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange's lower bound inclusive?
+       </para>
+       <para>
+        <literal>lower_inc('{[1.1,2.2)}'::nummultirange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inc</primary>
+        </indexterm>
+        <function>upper_inc</function> ( <type>anymultirange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the multirange's upper bound inclusive?
+       </para>
+       <para>
+        <literal>upper_inc('{[1.1,2.2)}'::nummultirange)</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lower_inf</primary>
+        </indexterm>
+        <function>lower_inf</function> ( <type>anymultirange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange have no lower bound?  (A lower bound of
+        <literal>-Infinity</literal> returns false.)
+       </para>
+       <para>
+        <literal>lower_inf('{(,)}'::datemultirange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper_inf</primary>
+        </indexterm>
+        <function>upper_inf</function> ( <type>anymultirange</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the multirange have no upper bound?  (An upper bound of
+        <literal>Infinity</literal> returns false.)
+       </para>
+       <para>
+        <literal>upper_inf('{(,)}'::datemultirange)</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_merge</primary>
+        </indexterm>
+        <function>range_merge</function> ( <type>anymultirange</type> )
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para>
+        Computes the smallest range that includes the entire multirange.
+       </para>
+       <para>
+        <literal>range_merge('{[1,2), [3,4)}'::int4multirange)</literal>
+        <returnvalue>[1,4)</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>multirange (function)</primary>
+        </indexterm>
+        <function>multirange</function> ( <type>anyrange</type> )
+        <returnvalue>anymultirange</returnvalue>
+       </para>
+       <para>
+        Returns a multirange containing just the given range.
+       </para>
+       <para>
+        <literal>multirange('[1,2)'::int4range)</literal>
+        <returnvalue>{[1,2)}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unnest</primary>
+         <secondary>for multirange</secondary>
+        </indexterm>
+        <function>unnest</function> ( <type>anymultirange</type> )
+        <returnvalue>setof anyrange</returnvalue>
+       </para>
+       <para>
+        Expands a multirange into a set of ranges in ascending order.
+       </para>
+       <para>
+        <literal>unnest('{[1,2), [3,4)}'::int4multirange)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ [1,2)
+ [3,4)
+</programlisting>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   The <function>lower_inc</function>, <function>upper_inc</function>,
+   <function>lower_inf</function>, and <function>upper_inf</function>
+   functions all return false for an empty range or multirange.
+  </para>
+  </sect1>

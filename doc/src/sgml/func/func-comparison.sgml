@@ -1,0 +1,638 @@
+  <sect1 id="functions-comparison">
+   <title>Comparison Functions and Operators</title>
+
+   <indexterm zone="functions-comparison">
+    <primary>comparison</primary>
+    <secondary>operators</secondary>
+   </indexterm>
+
+   <para>
+    The usual comparison operators are available, as shown in <xref
+    linkend="functions-comparison-op-table"/>.
+   </para>
+
+   <table id="functions-comparison-op-table">
+    <title>Comparison Operators</title>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operator</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Less than</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&gt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Greater than</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Less than or equal to</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&gt;=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Greater than or equal to</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Equal</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>&lt;&gt;</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Not equal</entry>
+      </row>
+
+      <row>
+       <entry>
+        <replaceable>datatype</replaceable> <literal>!=</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </entry>
+       <entry>Not equal</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <note>
+    <para>
+     <literal>&lt;&gt;</literal> is the standard SQL notation for <quote>not
+     equal</quote>.  <literal>!=</literal> is an alias, which is converted
+     to <literal>&lt;&gt;</literal> at a very early stage of parsing.
+     Hence, it is not possible to implement <literal>!=</literal>
+     and <literal>&lt;&gt;</literal> operators that do different things.
+    </para>
+   </note>
+
+   <para>
+    These comparison operators are available for all built-in data types
+    that have a natural ordering, including numeric, string, and date/time
+    types.  In addition, arrays, composite types, and ranges can be compared
+    if their component data types are comparable.
+   </para>
+
+   <para>
+    It is usually possible to compare values of related data
+    types as well; for example <type>integer</type> <literal>&gt;</literal>
+    <type>bigint</type> will work.  Some cases of this sort are implemented
+    directly by <quote>cross-type</quote> comparison operators, but if no
+    such operator is available, the parser will coerce the less-general type
+    to the more-general type and apply the latter's comparison operator.
+   </para>
+
+   <para>
+    As shown above, all comparison operators are binary operators that
+    return values of type <type>boolean</type>.  Thus, expressions like
+    <literal>1 &lt; 2 &lt; 3</literal> are not valid (because there is
+    no <literal>&lt;</literal> operator to compare a Boolean value with
+    <literal>3</literal>).  Use the <literal>BETWEEN</literal> predicates
+    shown below to perform range tests.
+   </para>
+
+   <para>
+    There are also some comparison predicates, as shown in <xref
+    linkend="functions-comparison-pred-table"/>.  These behave much like
+    operators, but have special syntax mandated by the SQL standard.
+   </para>
+
+   <table id="functions-comparison-pred-table">
+    <title>Comparison Predicates</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Predicate
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>BETWEEN</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Between (inclusive of the range endpoints).
+       </para>
+       <para>
+        <literal>2 BETWEEN 1 AND 3</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>2 BETWEEN 3 AND 1</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>NOT BETWEEN</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Not between (the negation of <literal>BETWEEN</literal>).
+       </para>
+       <para>
+        <literal>2 NOT BETWEEN 1 AND 3</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>BETWEEN SYMMETRIC</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Between, after sorting the two endpoint values.
+       </para>
+       <para>
+        <literal>2 BETWEEN SYMMETRIC 3 AND 1</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>NOT BETWEEN SYMMETRIC</literal> <replaceable>datatype</replaceable> <literal>AND</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Not between, after sorting the two endpoint values.
+       </para>
+       <para>
+        <literal>2 NOT BETWEEN SYMMETRIC 3 AND 1</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>IS DISTINCT FROM</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Not equal, treating null as a comparable value.
+       </para>
+       <para>
+        <literal>1 IS DISTINCT FROM NULL</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </para>
+       <para>
+        <literal>NULL IS DISTINCT FROM NULL</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>IS NOT DISTINCT FROM</literal> <replaceable>datatype</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Equal, treating null as a comparable value.
+       </para>
+       <para>
+        <literal>1 IS NOT DISTINCT FROM NULL</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </para>
+       <para>
+        <literal>NULL IS NOT DISTINCT FROM NULL</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>IS NULL</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether value is null.
+       </para>
+       <para>
+        <literal>1.5 IS NULL</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>IS NOT NULL</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether value is not null.
+       </para>
+       <para>
+        <literal>'null' IS NOT NULL</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>ISNULL</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether value is null (nonstandard syntax).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>datatype</replaceable> <literal>NOTNULL</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether value is not null (nonstandard syntax).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS TRUE</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields true.
+       </para>
+       <para>
+        <literal>true IS TRUE</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS TRUE</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS NOT TRUE</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields false or unknown.
+       </para>
+       <para>
+        <literal>true IS NOT TRUE</literal>
+        <returnvalue>f</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS NOT TRUE</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS FALSE</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields false.
+       </para>
+       <para>
+        <literal>true IS FALSE</literal>
+        <returnvalue>f</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS FALSE</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS NOT FALSE</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields true or unknown.
+       </para>
+       <para>
+        <literal>true IS NOT FALSE</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS NOT FALSE</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS UNKNOWN</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields unknown.
+       </para>
+       <para>
+        <literal>true IS UNKNOWN</literal>
+        <returnvalue>f</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS UNKNOWN</literal>
+        <returnvalue>t</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>boolean</type> <literal>IS NOT UNKNOWN</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Test whether boolean expression yields true or false.
+       </para>
+       <para>
+        <literal>true IS NOT UNKNOWN</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>NULL::boolean IS NOT UNKNOWN</literal>
+        <returnvalue>f</returnvalue> (rather than <literal>NULL</literal>)
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <indexterm>
+     <primary>BETWEEN</primary>
+    </indexterm>
+    <indexterm>
+     <primary>BETWEEN SYMMETRIC</primary>
+    </indexterm>
+    The <token>BETWEEN</token> predicate simplifies range tests:
+<synopsis>
+<replaceable>a</replaceable> BETWEEN <replaceable>x</replaceable> AND <replaceable>y</replaceable>
+</synopsis>
+    is equivalent to
+<synopsis>
+<replaceable>a</replaceable> &gt;= <replaceable>x</replaceable> AND <replaceable>a</replaceable> &lt;= <replaceable>y</replaceable>
+</synopsis>
+    Notice that <token>BETWEEN</token> treats the endpoint values as included
+    in the range.
+    <literal>BETWEEN SYMMETRIC</literal> is like <literal>BETWEEN</literal>
+    except there is no requirement that the argument to the left of
+    <literal>AND</literal> be less than or equal to the argument on the right.
+    If it is not, those two arguments are automatically swapped, so that
+    a nonempty range is always implied.
+   </para>
+
+   <para>
+    The various variants of <literal>BETWEEN</literal> are implemented in
+    terms of the ordinary comparison operators, and therefore will work for
+    any data type(s) that can be compared.
+   </para>
+
+   <note>
+    <para>
+     The use of <literal>AND</literal> in the <literal>BETWEEN</literal>
+     syntax creates an ambiguity with the use of <literal>AND</literal> as a
+     logical operator.  To resolve this, only a limited set of expression
+     types are allowed as the second argument of a <literal>BETWEEN</literal>
+     clause.  If you need to write a more complex sub-expression
+     in <literal>BETWEEN</literal>, write parentheses around the
+     sub-expression.
+    </para>
+   </note>
+
+   <para>
+    <indexterm>
+     <primary>IS DISTINCT FROM</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT DISTINCT FROM</primary>
+    </indexterm>
+    Ordinary comparison operators yield null (signifying <quote>unknown</quote>),
+    not true or false, when either input is null.  For example,
+    <literal>7 = NULL</literal> yields null, as does <literal>7 &lt;&gt; NULL</literal>.  When
+    this behavior is not suitable, use the
+    <literal>IS <optional> NOT </optional> DISTINCT FROM</literal> predicates:
+<synopsis>
+<replaceable>a</replaceable> IS DISTINCT FROM <replaceable>b</replaceable>
+<replaceable>a</replaceable> IS NOT DISTINCT FROM <replaceable>b</replaceable>
+</synopsis>
+    For non-null inputs, <literal>IS DISTINCT FROM</literal> is
+    the same as the <literal>&lt;&gt;</literal> operator.  However, if both
+    inputs are null it returns false, and if only one input is
+    null it returns true.  Similarly, <literal>IS NOT DISTINCT
+    FROM</literal> is identical to <literal>=</literal> for non-null
+    inputs, but it returns true when both inputs are null, and false when only
+    one input is null. Thus, these predicates effectively act as though null
+    were a normal data value, rather than <quote>unknown</quote>.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>IS NULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT NULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>ISNULL</primary>
+    </indexterm>
+    <indexterm>
+     <primary>NOTNULL</primary>
+    </indexterm>
+    To check whether a value is or is not null, use the predicates:
+<synopsis>
+<replaceable>expression</replaceable> IS NULL
+<replaceable>expression</replaceable> IS NOT NULL
+</synopsis>
+    or the equivalent, but nonstandard, predicates:
+<synopsis>
+<replaceable>expression</replaceable> ISNULL
+<replaceable>expression</replaceable> NOTNULL
+</synopsis>
+    <indexterm><primary>null value</primary><secondary>comparing</secondary></indexterm>
+   </para>
+
+   <para>
+    Do <emphasis>not</emphasis> write
+    <literal><replaceable>expression</replaceable> = NULL</literal>
+    because <literal>NULL</literal> is not <quote>equal to</quote>
+    <literal>NULL</literal>.  (The null value represents an unknown value,
+    and it is not known whether two unknown values are equal.)
+   </para>
+
+  <tip>
+   <para>
+    Some applications might expect that
+    <literal><replaceable>expression</replaceable> = NULL</literal>
+    returns true if <replaceable>expression</replaceable> evaluates to
+    the null value.  It is highly recommended that these applications
+    be modified to comply with the SQL standard. However, if that
+    cannot be done the <xref linkend="guc-transform-null-equals"/>
+    configuration variable is available. If it is enabled,
+    <productname>PostgreSQL</productname> will convert <literal>x =
+    NULL</literal> clauses to <literal>x IS NULL</literal>.
+   </para>
+  </tip>
+
+   <para>
+    If the <replaceable>expression</replaceable> is row-valued, then
+    <literal>IS NULL</literal> is true when the row expression itself is null
+    or when all the row's fields are null, while
+    <literal>IS NOT NULL</literal> is true when the row expression itself is non-null
+    and all the row's fields are non-null.  Because of this behavior,
+    <literal>IS NULL</literal> and <literal>IS NOT NULL</literal> do not always return
+    inverse results for row-valued expressions; in particular, a row-valued
+    expression that contains both null and non-null fields will return false
+    for both tests.  For example:
+
+<programlisting>
+SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
+
+SELECT ROW(table.*) IS NULL FROM table;  -- detect all-null rows
+
+SELECT ROW(table.*) IS NOT NULL FROM table;  -- detect all-non-null rows
+
+SELECT NOT(ROW(table.*) IS NOT NULL) FROM TABLE; -- detect at least one null in rows
+</programlisting>
+
+    In some cases, it may be preferable to
+    write <replaceable>row</replaceable> <literal>IS DISTINCT FROM NULL</literal>
+    or <replaceable>row</replaceable> <literal>IS NOT DISTINCT FROM NULL</literal>,
+    which will simply check whether the overall row value is null without any
+    additional tests on the row fields.
+   </para>
+
+   <para>
+    <indexterm>
+     <primary>IS TRUE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT TRUE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS FALSE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT FALSE</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS UNKNOWN</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT UNKNOWN</primary>
+    </indexterm>
+    Boolean values can also be tested using the predicates
+<synopsis>
+<replaceable>boolean_expression</replaceable> IS TRUE
+<replaceable>boolean_expression</replaceable> IS NOT TRUE
+<replaceable>boolean_expression</replaceable> IS FALSE
+<replaceable>boolean_expression</replaceable> IS NOT FALSE
+<replaceable>boolean_expression</replaceable> IS UNKNOWN
+<replaceable>boolean_expression</replaceable> IS NOT UNKNOWN
+</synopsis>
+    These will always return true or false, never a null value, even when the
+    operand is null.
+    A null input is treated as the logical value <quote>unknown</quote>.
+    Notice that <literal>IS UNKNOWN</literal> and <literal>IS NOT UNKNOWN</literal> are
+    effectively the same as <literal>IS NULL</literal> and
+    <literal>IS NOT NULL</literal>, respectively, except that the input
+    expression must be of Boolean type.
+   </para>
+
+   <para>
+    Some comparison-related functions are also available, as shown in <xref
+    linkend="functions-comparison-func-table"/>.
+   </para>
+
+  <table id="functions-comparison-func-table">
+    <title>Comparison Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>num_nonnulls</primary>
+        </indexterm>
+        <function>num_nonnulls</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of non-null arguments.
+       </para>
+       <para>
+        <literal>num_nonnulls(1, NULL, 2)</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>num_nulls</primary>
+        </indexterm>
+        <function>num_nulls</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of null arguments.
+       </para>
+       <para>
+        <literal>num_nulls(1, NULL, 2)</literal>
+        <returnvalue>1</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect1>

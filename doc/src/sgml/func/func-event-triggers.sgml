@@ -1,0 +1,332 @@
+  <sect1 id="functions-event-triggers">
+   <title>Event Trigger Functions</title>
+
+   <para>
+    <productname>PostgreSQL</productname> provides these helper functions
+    to retrieve information from event triggers.
+   </para>
+
+   <para>
+    For more information about event triggers,
+    see <xref linkend="event-triggers"/>.
+   </para>
+
+  <sect2 id="pg-event-trigger-ddl-command-end-functions">
+   <title>Capturing Changes at Command End</title>
+
+   <indexterm>
+    <primary>pg_event_trigger_ddl_commands</primary>
+   </indexterm>
+
+<synopsis>
+<function>pg_event_trigger_ddl_commands</function> () <returnvalue>setof record</returnvalue>
+</synopsis>
+
+   <para>
+    <function>pg_event_trigger_ddl_commands</function> returns a list of
+    <acronym>DDL</acronym> commands executed by each user action,
+    when invoked in a function attached to a
+    <literal>ddl_command_end</literal> event trigger.  If called in any other
+    context, an error is raised.
+    <function>pg_event_trigger_ddl_commands</function> returns one row for each
+    base command executed; some commands that are a single SQL sentence
+    may return more than one row.  This function returns the following
+    columns:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>classid</literal></entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of catalog the object belongs in</entry>
+       </row>
+       <row>
+        <entry><literal>objid</literal></entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of the object itself</entry>
+       </row>
+       <row>
+        <entry><literal>objsubid</literal></entry>
+        <entry><type>integer</type></entry>
+        <entry>Sub-object ID (e.g., attribute number for a column)</entry>
+       </row>
+       <row>
+        <entry><literal>command_tag</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Command tag</entry>
+       </row>
+       <row>
+        <entry><literal>object_type</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Type of the object</entry>
+       </row>
+       <row>
+        <entry><literal>schema_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the schema the object belongs in, if any; otherwise <literal>NULL</literal>.
+         No quoting is applied.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_identity</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Text rendering of the object identity, schema-qualified. Each
+         identifier included in the identity is quoted if necessary.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>in_extension</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>True if the command is part of an extension script</entry>
+       </row>
+       <row>
+        <entry><literal>command</literal></entry>
+        <entry><type>pg_ddl_command</type></entry>
+        <entry>
+         A complete representation of the command, in internal format.
+         This cannot be output directly, but it can be passed to other
+         functions to obtain different pieces of information about the
+         command.
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+  </sect2>
+
+  <sect2 id="pg-event-trigger-sql-drop-functions">
+   <title>Processing Objects Dropped by a DDL Command</title>
+
+   <indexterm>
+     <primary>pg_event_trigger_dropped_objects</primary>
+   </indexterm>
+
+<synopsis>
+<function>pg_event_trigger_dropped_objects</function> () <returnvalue>setof record</returnvalue>
+</synopsis>
+
+   <para>
+    <function>pg_event_trigger_dropped_objects</function> returns a list of all objects
+    dropped by the command in whose <literal>sql_drop</literal> event it is called.
+    If called in any other context, an error is raised.
+    This function returns the following columns:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal>classid</literal></entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of catalog the object belonged in</entry>
+       </row>
+       <row>
+        <entry><literal>objid</literal></entry>
+        <entry><type>oid</type></entry>
+        <entry>OID of the object itself</entry>
+       </row>
+       <row>
+        <entry><literal>objsubid</literal></entry>
+        <entry><type>integer</type></entry>
+        <entry>Sub-object ID (e.g., attribute number for a column)</entry>
+       </row>
+       <row>
+        <entry><literal>original</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>True if this was one of the root object(s) of the deletion</entry>
+       </row>
+       <row>
+        <entry><literal>normal</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>
+         True if there was a normal dependency relationship
+         in the dependency graph leading to this object
+        </entry>
+       </row>
+       <row>
+        <entry><literal>is_temporary</literal></entry>
+        <entry><type>boolean</type></entry>
+        <entry>
+         True if this was a temporary object
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_type</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>Type of the object</entry>
+       </row>
+       <row>
+        <entry><literal>schema_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the schema the object belonged in, if any; otherwise <literal>NULL</literal>.
+         No quoting is applied.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_name</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Name of the object, if the combination of schema and name can be
+         used as a unique identifier for the object; otherwise <literal>NULL</literal>.
+         No quoting is applied, and name is never schema-qualified.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>object_identity</literal></entry>
+        <entry><type>text</type></entry>
+        <entry>
+         Text rendering of the object identity, schema-qualified. Each
+         identifier included in the identity is quoted if necessary.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>address_names</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>
+         An array that, together with <literal>object_type</literal> and
+         <literal>address_args</literal>, can be used by
+         the <function>pg_get_object_address</function> function to
+         recreate the object address in a remote server containing an
+         identically named object of the same kind.
+        </entry>
+       </row>
+       <row>
+        <entry><literal>address_args</literal></entry>
+        <entry><type>text[]</type></entry>
+        <entry>
+         Complement for <literal>address_names</literal>
+        </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </informaltable>
+   </para>
+
+   <para>
+    The <function>pg_event_trigger_dropped_objects</function> function can be used
+    in an event trigger like this:
+<programlisting>
+CREATE FUNCTION test_event_trigger_for_drops()
+        RETURNS event_trigger LANGUAGE plpgsql AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()
+    LOOP
+        RAISE NOTICE '% dropped object: % %.% %',
+                     tg_tag,
+                     obj.object_type,
+                     obj.schema_name,
+                     obj.object_name,
+                     obj.object_identity;
+    END LOOP;
+END;
+$$;
+CREATE EVENT TRIGGER test_event_trigger_for_drops
+   ON sql_drop
+   EXECUTE FUNCTION test_event_trigger_for_drops();
+</programlisting>
+    </para>
+  </sect2>
+
+  <sect2 id="pg-event-trigger-table-rewrite-functions">
+   <title>Handling a Table Rewrite Event</title>
+
+   <para>
+    The functions shown in
+    <xref linkend="functions-event-trigger-table-rewrite"/>
+    provide information about a table for which a
+    <literal>table_rewrite</literal> event has just been called.
+    If called in any other context, an error is raised.
+   </para>
+
+   <table id="functions-event-trigger-table-rewrite">
+    <title>Table Rewrite Information Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_event_trigger_table_rewrite_oid</primary>
+        </indexterm>
+        <function>pg_event_trigger_table_rewrite_oid</function> ()
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Returns the OID of the table about to be rewritten.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_event_trigger_table_rewrite_reason</primary>
+        </indexterm>
+        <function>pg_event_trigger_table_rewrite_reason</function> ()
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns a code explaining the reason(s) for rewriting. The value is
+        a bitmap built from the following values: <literal>1</literal>
+        (the table has changed its persistence), <literal>2</literal>
+        (default value of a column has changed), <literal>4</literal>
+        (a column has a new data type) and <literal>8</literal>
+        (the table access method has changed).
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    These functions can be used in an event trigger like this:
+<programlisting>
+CREATE FUNCTION test_event_trigger_table_rewrite_oid()
+ RETURNS event_trigger
+ LANGUAGE plpgsql AS
+$$
+BEGIN
+  RAISE NOTICE 'rewriting table % for reason %',
+                pg_event_trigger_table_rewrite_oid()::regclass,
+                pg_event_trigger_table_rewrite_reason();
+END;
+$$;
+
+CREATE EVENT TRIGGER test_table_rewrite_oid
+                  ON table_rewrite
+   EXECUTE FUNCTION test_event_trigger_table_rewrite_oid();
+</programlisting>
+    </para>
+  </sect2>
+  </sect1>

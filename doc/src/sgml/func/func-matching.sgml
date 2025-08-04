@@ -1,0 +1,2471 @@
+ <sect1 id="functions-matching">
+  <title>Pattern Matching</title>
+
+  <indexterm zone="functions-matching">
+   <primary>pattern matching</primary>
+  </indexterm>
+
+   <para>
+    There are three separate approaches to pattern matching provided
+    by <productname>PostgreSQL</productname>: the traditional
+    <acronym>SQL</acronym> <function>LIKE</function> operator, the
+    more recent <function>SIMILAR TO</function> operator (added in
+    SQL:1999), and <acronym>POSIX</acronym>-style regular
+    expressions.  Aside from the basic <quote>does this string match
+    this pattern?</quote> operators, functions are available to extract
+    or replace matching substrings and to split a string at matching
+    locations.
+   </para>
+
+   <tip>
+    <para>
+     If you have pattern matching needs that go beyond this,
+     consider writing a user-defined function in Perl or Tcl.
+    </para>
+   </tip>
+
+   <caution>
+    <para>
+     While most regular-expression searches can be executed very quickly,
+     regular expressions can be contrived that take arbitrary amounts of
+     time and memory to process.  Be wary of accepting regular-expression
+     search patterns from hostile sources.  If you must do so, it is
+     advisable to impose a statement timeout.
+    </para>
+
+    <para>
+     Searches using <function>SIMILAR TO</function> patterns have the same
+     security hazards, since <function>SIMILAR TO</function> provides many
+     of the same capabilities as <acronym>POSIX</acronym>-style regular
+     expressions.
+    </para>
+
+    <para>
+     <function>LIKE</function> searches, being much simpler than the other
+     two options, are safer to use with possibly-hostile pattern sources.
+    </para>
+   </caution>
+
+   <para>
+    <function>SIMILAR TO</function> and <acronym>POSIX</acronym>-style regular
+    expressions do not support nondeterministic collations.  If required, use
+    <function>LIKE</function> or apply a different collation to the expression
+    to work around this limitation.
+   </para>
+
+  <sect2 id="functions-like">
+   <title><function>LIKE</function></title>
+
+   <indexterm>
+    <primary>LIKE</primary>
+   </indexterm>
+
+<synopsis>
+<replaceable>string</replaceable> LIKE <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+<replaceable>string</replaceable> NOT LIKE <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+</synopsis>
+
+    <para>
+     The <function>LIKE</function> expression returns true if the
+     <replaceable>string</replaceable> matches the supplied
+     <replaceable>pattern</replaceable>.  (As
+     expected, the <function>NOT LIKE</function> expression returns
+     false if <function>LIKE</function> returns true, and vice versa.
+     An equivalent expression is
+     <literal>NOT (<replaceable>string</replaceable> LIKE
+      <replaceable>pattern</replaceable>)</literal>.)
+    </para>
+
+    <para>
+     If <replaceable>pattern</replaceable> does not contain percent
+     signs or underscores, then the pattern only represents the string
+     itself; in that case <function>LIKE</function> acts like the
+     equals operator.  An underscore (<literal>_</literal>) in
+     <replaceable>pattern</replaceable> stands for (matches) any single
+     character; a percent sign (<literal>%</literal>) matches any sequence
+     of zero or more characters.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+'abc' LIKE 'abc'    <lineannotation>true</lineannotation>
+'abc' LIKE 'a%'     <lineannotation>true</lineannotation>
+'abc' LIKE '_b_'    <lineannotation>true</lineannotation>
+'abc' LIKE 'c'      <lineannotation>false</lineannotation>
+</programlisting>
+   </para>
+
+   <para>
+    <function>LIKE</function> pattern matching supports nondeterministic
+    collations (see <xref linkend="collation-nondeterministic"/>), such as
+    case-insensitive collations or collations that, say, ignore punctuation.
+    So with a case-insensitive collation, one could have:
+<programlisting>
+'AbC' LIKE 'abc' COLLATE case_insensitive    <lineannotation>true</lineannotation>
+'AbC' LIKE 'a%' COLLATE case_insensitive     <lineannotation>true</lineannotation>
+</programlisting>
+    With collations that ignore certain characters or in general that consider
+    strings of different lengths equal, the semantics can become a bit more
+    complicated.  Consider these examples:
+<programlisting>
+'.foo.' LIKE 'foo' COLLATE ign_punct    <lineannotation>true</lineannotation>
+'.foo.' LIKE 'f_o' COLLATE ign_punct    <lineannotation>true</lineannotation>
+'.foo.' LIKE '_oo' COLLATE ign_punct    <lineannotation>false</lineannotation>
+</programlisting>
+    The way the matching works is that the pattern is partitioned into
+    sequences of wildcards and non-wildcard strings (wildcards being
+    <literal>_</literal> and <literal>%</literal>).  For example, the pattern
+    <literal>f_o</literal> is partitioned into <literal>f, _, o</literal>, the
+    pattern <literal>_oo</literal> is partitioned into <literal>_,
+    oo</literal>.  The input string matches the pattern if it can be
+    partitioned in such a way that the wildcards match one character or any
+    number of characters respectively and the non-wildcard partitions are
+    equal under the applicable collation.  So for example, <literal>'.foo.'
+    LIKE 'f_o' COLLATE ign_punct</literal> is true because one can partition
+    <literal>.foo.</literal> into <literal>.f, o, o.</literal>, and then
+    <literal>'.f' = 'f' COLLATE ign_punct</literal>, <literal>'o'</literal>
+    matches the <literal>_</literal> wildcard, and <literal>'o.' = 'o' COLLATE
+    ign_punct</literal>.  But <literal>'.foo.' LIKE '_oo' COLLATE
+    ign_punct</literal> is false because <literal>.foo.</literal> cannot be
+    partitioned in a way that the first character is any character and the
+    rest of the string compares equal to <literal>oo</literal>.  (Note that
+    the single-character wildcard always matches exactly one character,
+    independent of the collation.  So in this example, the
+    <literal>_</literal> would match <literal>.</literal>, but then the rest
+    of the input string won't match the rest of the pattern.)
+   </para>
+
+   <para>
+    <function>LIKE</function> pattern matching always covers the entire
+    string.  Therefore, if it's desired to match a sequence anywhere within
+    a string, the pattern must start and end with a percent sign.
+   </para>
+
+   <para>
+    To match a literal underscore or percent sign without matching
+    other characters, the respective character in
+    <replaceable>pattern</replaceable> must be
+    preceded by the escape character.  The default escape
+    character is the backslash but a different one can be selected by
+    using the <literal>ESCAPE</literal> clause.  To match the escape
+    character itself, write two escape characters.
+   </para>
+
+   <note>
+    <para>
+     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
+     any backslashes you write in literal string constants will need to be
+     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
+    </para>
+   </note>
+
+   <para>
+    It's also possible to select no escape character by writing
+    <literal>ESCAPE ''</literal>.  This effectively disables the
+    escape mechanism, which makes it impossible to turn off the
+    special meaning of underscore and percent signs in the pattern.
+   </para>
+
+   <para>
+    According to the SQL standard, omitting <literal>ESCAPE</literal>
+    means there is no escape character (rather than defaulting to a
+    backslash), and a zero-length <literal>ESCAPE</literal> value is
+    disallowed.  <productname>PostgreSQL</productname>'s behavior in
+    this regard is therefore slightly nonstandard.
+   </para>
+
+   <para>
+    The key word <token>ILIKE</token> can be used instead of
+    <token>LIKE</token> to make the match case-insensitive according to the
+    active locale.  (But this does not support nondeterministic collations.)
+    This is not in the <acronym>SQL</acronym> standard but is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+
+   <para>
+    The operator <literal>~~</literal> is equivalent to
+    <function>LIKE</function>, and <literal>~~*</literal> corresponds to
+    <function>ILIKE</function>.  There are also
+    <literal>!~~</literal> and <literal>!~~*</literal> operators that
+    represent <function>NOT LIKE</function> and <function>NOT
+    ILIKE</function>, respectively.  All of these operators are
+    <productname>PostgreSQL</productname>-specific.  You may see these
+    operator names in <command>EXPLAIN</command> output and similar
+    places, since the parser actually translates <function>LIKE</function>
+    et al. to these operators.
+   </para>
+
+   <para>
+    The phrases <function>LIKE</function>, <function>ILIKE</function>,
+    <function>NOT LIKE</function>, and <function>NOT ILIKE</function> are
+    generally treated as operators
+    in <productname>PostgreSQL</productname> syntax; for example they can
+    be used in <replaceable>expression</replaceable>
+    <replaceable>operator</replaceable> ANY
+    (<replaceable>subquery</replaceable>) constructs, although
+    an <literal>ESCAPE</literal> clause cannot be included there.  In some
+    obscure cases it may be necessary to use the underlying operator names
+    instead.
+   </para>
+
+   <para>
+    Also see the starts-with operator <literal>^@</literal> and the
+    corresponding <function>starts_with()</function> function, which are
+    useful in cases where simply matching the beginning of a string is
+    needed.
+   </para>
+  </sect2>
+
+
+  <sect2 id="functions-similarto-regexp">
+   <title><function>SIMILAR TO</function> Regular Expressions</title>
+
+   <indexterm>
+    <primary>regular expression</primary>
+    <!-- <seealso>pattern matching</seealso> breaks index build -->
+   </indexterm>
+
+   <indexterm>
+    <primary>SIMILAR TO</primary>
+   </indexterm>
+   <indexterm>
+    <primary>substring</primary>
+   </indexterm>
+
+<synopsis>
+<replaceable>string</replaceable> SIMILAR TO <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+<replaceable>string</replaceable> NOT SIMILAR TO <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
+</synopsis>
+
+   <para>
+    The <function>SIMILAR TO</function> operator returns true or
+    false depending on whether its pattern matches the given string.
+    It is similar to <function>LIKE</function>, except that it
+    interprets the pattern using the SQL standard's definition of a
+    regular expression.  SQL regular expressions are a curious cross
+    between <function>LIKE</function> notation and common (POSIX) regular
+    expression notation.
+   </para>
+
+   <para>
+    Like <function>LIKE</function>, the <function>SIMILAR TO</function>
+    operator succeeds only if its pattern matches the entire string;
+    this is unlike common regular expression behavior where the pattern
+    can match any part of the string.
+    Also like
+    <function>LIKE</function>, <function>SIMILAR TO</function> uses
+    <literal>_</literal> and <literal>%</literal> as wildcard characters denoting
+    any single character and any string, respectively (these are
+    comparable to <literal>.</literal> and <literal>.*</literal> in POSIX regular
+    expressions).
+   </para>
+
+   <para>
+    In addition to these facilities borrowed from <function>LIKE</function>,
+    <function>SIMILAR TO</function> supports these pattern-matching
+    metacharacters borrowed from POSIX regular expressions:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>|</literal> denotes alternation (either of two alternatives).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>*</literal> denotes repetition of the previous item zero
+      or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>+</literal> denotes repetition of the previous item one
+      or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>?</literal> denotes repetition of the previous item zero
+      or one time.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</literal><replaceable>m</replaceable><literal>}</literal> denotes repetition
+      of the previous item exactly <replaceable>m</replaceable> times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</literal><replaceable>m</replaceable><literal>,}</literal> denotes repetition
+      of the previous item <replaceable>m</replaceable> or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}</literal>
+      denotes repetition of the previous item at least <replaceable>m</replaceable> and
+      not more than <replaceable>n</replaceable> times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Parentheses <literal>()</literal> can be used to group items into
+      a single logical item.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A bracket expression <literal>[...]</literal> specifies a character
+      class, just as in POSIX regular expressions.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+    Notice that the period (<literal>.</literal>) is not a metacharacter
+    for <function>SIMILAR TO</function>.
+   </para>
+
+   <para>
+    As with <function>LIKE</function>, a backslash disables the special
+    meaning of any of these metacharacters.  A different escape character
+    can be specified with <literal>ESCAPE</literal>, or the escape
+    capability can be disabled by writing <literal>ESCAPE ''</literal>.
+   </para>
+
+   <para>
+    According to the SQL standard, omitting <literal>ESCAPE</literal>
+    means there is no escape character (rather than defaulting to a
+    backslash), and a zero-length <literal>ESCAPE</literal> value is
+    disallowed.  <productname>PostgreSQL</productname>'s behavior in
+    this regard is therefore slightly nonstandard.
+   </para>
+
+   <para>
+    Another nonstandard extension is that following the escape character
+    with a letter or digit provides access to the escape sequences
+    defined for POSIX regular expressions; see
+    <xref linkend="posix-character-entry-escapes-table"/>,
+    <xref linkend="posix-class-shorthand-escapes-table"/>, and
+    <xref linkend="posix-constraint-escapes-table"/> below.
+   </para>
+
+   <para>
+    Some examples:
+<programlisting>
+'abc' SIMILAR TO 'abc'          <lineannotation>true</lineannotation>
+'abc' SIMILAR TO 'a'            <lineannotation>false</lineannotation>
+'abc' SIMILAR TO '%(b|d)%'      <lineannotation>true</lineannotation>
+'abc' SIMILAR TO '(b|c)%'       <lineannotation>false</lineannotation>
+'-abc-' SIMILAR TO '%\mabc\M%'  <lineannotation>true</lineannotation>
+'xabcy' SIMILAR TO '%\mabc\M%'  <lineannotation>false</lineannotation>
+</programlisting>
+   </para>
+
+   <para>
+    The <function>substring</function> function with three parameters
+    provides extraction of a substring that matches an SQL
+    regular expression pattern.  The function can be written according
+    to standard SQL syntax:
+<synopsis>
+substring(<replaceable>string</replaceable> similar <replaceable>pattern</replaceable> escape <replaceable>escape-character</replaceable>)
+</synopsis>
+    or using the now obsolete SQL:1999 syntax:
+<synopsis>
+substring(<replaceable>string</replaceable> from <replaceable>pattern</replaceable> for <replaceable>escape-character</replaceable>)
+</synopsis>
+    or as a plain three-argument function:
+<synopsis>
+substring(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>escape-character</replaceable>)
+</synopsis>
+    As with <literal>SIMILAR TO</literal>, the
+    specified pattern must match the entire data string, or else the
+    function fails and returns null.  To indicate the part of the
+    pattern for which the matching data sub-string is of interest,
+    the pattern should contain
+    two occurrences of the escape character followed by a double quote
+    (<literal>"</literal>). <!-- " font-lock sanity -->
+    The text matching the portion of the pattern
+    between these separators is returned when the match is successful.
+   </para>
+
+   <para>
+    The escape-double-quote separators actually
+    divide <function>substring</function>'s pattern into three independent
+    regular expressions; for example, a vertical bar (<literal>|</literal>)
+    in any of the three sections affects only that section.  Also, the first
+    and third of these regular expressions are defined to match the smallest
+    possible amount of text, not the largest, when there is any ambiguity
+    about how much of the data string matches which pattern.  (In POSIX
+    parlance, the first and third regular expressions are forced to be
+    non-greedy.)
+   </para>
+
+   <para>
+    As an extension to the SQL standard, <productname>PostgreSQL</productname>
+    allows there to be just one escape-double-quote separator, in which case
+    the third regular expression is taken as empty; or no separators, in which
+    case the first and third regular expressions are taken as empty.
+   </para>
+
+   <para>
+    Some examples, with <literal>#&quot;</literal> delimiting the return string:
+<programlisting>
+substring('foobar' similar '%#"o_b#"%' escape '#')   <lineannotation>oob</lineannotation>
+substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</lineannotation>
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2 id="functions-posix-regexp">
+   <title><acronym>POSIX</acronym> Regular Expressions</title>
+
+   <indexterm zone="functions-posix-regexp">
+    <primary>regular expression</primary>
+    <seealso>pattern matching</seealso>
+   </indexterm>
+   <indexterm>
+    <primary>substring</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_count</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_instr</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_like</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_match</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_matches</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_replace</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_split_to_table</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_split_to_array</primary>
+   </indexterm>
+   <indexterm>
+    <primary>regexp_substr</primary>
+   </indexterm>
+
+   <para>
+    <xref linkend="functions-posix-table"/> lists the available
+    operators for pattern matching using POSIX regular expressions.
+   </para>
+
+   <table id="functions-posix-table">
+    <title>Regular Expression Match Operators</title>
+
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>~</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        String matches regular expression, case sensitively
+       </para>
+       <para>
+        <literal>'thomas' ~ 't.*ma'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+       </row>
+
+       <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>~*</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        String matches regular expression, case-insensitively
+       </para>
+       <para>
+        <literal>'thomas' ~* 'T.*ma'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+       </row>
+
+       <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>!~</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        String does not match regular expression, case sensitively
+       </para>
+       <para>
+        <literal>'thomas' !~ 't.*max'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+       </row>
+
+       <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>!~*</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        String does not match regular expression, case-insensitively
+       </para>
+       <para>
+        <literal>'thomas' !~* 'T.*ma'</literal>
+        <returnvalue>f</returnvalue>
+       </para></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+     <acronym>POSIX</acronym> regular expressions provide a more
+     powerful means for pattern matching than the <function>LIKE</function> and
+     <function>SIMILAR TO</function> operators.
+     Many Unix tools such as <command>egrep</command>,
+     <command>sed</command>, or <command>awk</command> use a pattern
+     matching language that is similar to the one described here.
+    </para>
+
+    <para>
+     A regular expression is a character sequence that is an
+     abbreviated definition of a set of strings (a <firstterm>regular
+     set</firstterm>).  A string is said to match a regular expression
+     if it is a member of the regular set described by the regular
+     expression.  As with <function>LIKE</function>, pattern characters
+     match string characters exactly unless they are special characters
+     in the regular expression language &mdash; but regular expressions use
+     different special characters than <function>LIKE</function> does.
+     Unlike <function>LIKE</function> patterns, a
+     regular expression is allowed to match anywhere within a string, unless
+     the regular expression is explicitly anchored to the beginning or
+     end of the string.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+'abcd' ~ 'bc'     <lineannotation>true</lineannotation>
+'abcd' ~ 'a.c'    <lineannotation>true &mdash; dot matches any character</lineannotation>
+'abcd' ~ 'a.*d'   <lineannotation>true &mdash; <literal>*</literal> repeats the preceding pattern item</lineannotation>
+'abcd' ~ '(b|x)'  <lineannotation>true &mdash; <literal>|</literal> means OR, parentheses group</lineannotation>
+'abcd' ~ '^a'     <lineannotation>true &mdash; <literal>^</literal> anchors to start of string</lineannotation>
+'abcd' ~ '^(b|c)' <lineannotation>false &mdash; would match except for anchoring</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <acronym>POSIX</acronym> pattern language is described in much
+     greater detail below.
+    </para>
+
+    <para>
+     The <function>substring</function> function with two parameters,
+     <function>substring(<replaceable>string</replaceable> from
+     <replaceable>pattern</replaceable>)</function>, provides extraction of a
+     substring
+     that matches a POSIX regular expression pattern.  It returns null if
+     there is no match, otherwise the first portion of the text that matched the
+     pattern.  But if the pattern contains any parentheses, the portion
+     of the text that matched the first parenthesized subexpression (the
+     one whose left parenthesis comes first) is
+     returned.  You can put parentheses around the whole expression
+     if you want to use parentheses within it without triggering this
+     exception.  If you need parentheses in the pattern before the
+     subexpression you want to extract, see the non-capturing parentheses
+     described below.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+substring('foobar' from 'o.b')     <lineannotation>oob</lineannotation>
+substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
+</programlisting>
+   </para>
+
+    <para>
+     The <function>regexp_count</function> function counts the number of
+     places where a POSIX regular expression pattern matches a string.
+     It has the syntax
+     <function>regexp_count</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     </optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  For example, including <literal>i</literal> in
+     <replaceable>flags</replaceable> specifies case-insensitive matching.
+     Supported flags are described in
+     <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_count('ABCABCAXYaxy', 'A.')          <lineannotation>3</lineannotation>
+regexp_count('ABCABCAXYaxy', 'A.', 1, 'i')  <lineannotation>4</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <function>regexp_instr</function> function returns the starting or
+     ending position of the <replaceable>N</replaceable>'th match of a
+     POSIX regular expression pattern to a string, or zero if there is no
+     such match.  It has the syntax
+     <function>regexp_instr</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     <optional>, <replaceable>endoption</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     <optional>, <replaceable>subexpr</replaceable>
+     </optional></optional></optional></optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     If <replaceable>N</replaceable> is specified
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is located, otherwise the first match is located.
+     If the <replaceable>endoption</replaceable> parameter is omitted or
+     specified as zero, the function returns the position of the first
+     character of the match.  Otherwise, <replaceable>endoption</replaceable>
+     must be one, and the function returns the position of the character
+     following the match.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     For a pattern containing parenthesized
+     subexpressions, <replaceable>subexpr</replaceable> is an integer
+     indicating which subexpression is of interest: the result identifies
+     the position of the substring matching that subexpression.
+     Subexpressions are numbered in the order of their leading parentheses.
+     When <replaceable>subexpr</replaceable> is omitted or zero, the result
+     identifies the position of the whole match regardless of
+     parenthesized subexpressions.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_instr('number of your street, town zip, FR', '[^,]+', 1, 2)
+                                   <lineannotation>23</lineannotation>
+regexp_instr(string=>'ABCDEFGHI', pattern=>'(c..)(...)', start=>1, "N"=>1, endoption=>0, flags=>'i', subexpr=>2)
+                                   <lineannotation>6</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <function>regexp_like</function> function checks whether a match
+     of a POSIX regular expression pattern occurs within a string,
+     returning boolean true or false.  It has the syntax
+     <function>regexp_like</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>).
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     This function has the same results as the <literal>~</literal>
+     operator if no flags are specified.  If only the <literal>i</literal>
+     flag is specified, it has the same results as
+     the <literal>~*</literal> operator.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_like('Hello World', 'world')       <lineannotation>false</lineannotation>
+regexp_like('Hello World', 'world', 'i')  <lineannotation>true</lineannotation>
+</programlisting>
+    </para>
+
+    <para>
+     The <function>regexp_match</function> function returns a text array of
+     matching substring(s) within the first match of a POSIX
+     regular expression pattern to a string.  It has the syntax
+     <function>regexp_match</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable> <optional>, <replaceable>flags</replaceable> </optional>).
+     If there is no match, the result is <literal>NULL</literal>.
+     If a match is found, and the <replaceable>pattern</replaceable> contains no
+     parenthesized subexpressions, then the result is a single-element text
+     array containing the substring matching the whole pattern.
+     If a match is found, and the <replaceable>pattern</replaceable> contains
+     parenthesized subexpressions, then the result is a text array
+     whose <replaceable>n</replaceable>'th element is the substring matching
+     the <replaceable>n</replaceable>'th parenthesized subexpression of
+     the <replaceable>pattern</replaceable> (not counting <quote>non-capturing</quote>
+     parentheses; see below for details).
+     The <replaceable>flags</replaceable> parameter is an optional text string
+     containing zero or more single-letter flags that change the function's
+     behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+SELECT regexp_match('foobarbequebaz', 'bar.*que');
+ regexp_match
+--------------
+ {barbeque}
+(1 row)
+
+SELECT regexp_match('foobarbequebaz', '(bar)(beque)');
+ regexp_match
+--------------
+ {bar,beque}
+(1 row)
+</programlisting>
+   </para>
+
+    <tip>
+     <para>
+      In the common case where you just want the whole matching substring
+      or <literal>NULL</literal> for no match, the best solution is to
+      use <function>regexp_substr()</function>.
+      However, <function>regexp_substr()</function> only exists
+      in <productname>PostgreSQL</productname> version 15 and up.  When
+      working in older versions, you can extract the first element
+      of <function>regexp_match()</function>'s result, for example:
+<programlisting>
+SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
+ regexp_match
+--------------
+ barbeque
+(1 row)
+</programlisting>
+     </para>
+    </tip>
+
+    <para>
+     The <function>regexp_matches</function> function returns a set of text arrays
+     of matching substring(s) within matches of a POSIX regular
+     expression pattern to a string.  It has the same syntax as
+     <function>regexp_match</function>.
+     This function returns no rows if there is no match, one row if there is
+     a match and the <literal>g</literal> flag is not given, or <replaceable>N</replaceable>
+     rows if there are <replaceable>N</replaceable> matches and the <literal>g</literal> flag
+     is given.  Each returned row is a text array containing the whole
+     matched substring or the substrings matching parenthesized
+     subexpressions of the <replaceable>pattern</replaceable>, just as described above
+     for <function>regexp_match</function>.
+     <function>regexp_matches</function> accepts all the flags shown
+     in <xref linkend="posix-embedded-options-table"/>, plus
+     the <literal>g</literal> flag which commands it to return all matches, not
+     just the first one.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+SELECT regexp_matches('foo', 'not there');
+ regexp_matches
+----------------
+(0 rows)
+
+SELECT regexp_matches('foobarbequebazilbarfbonk', '(b[^b]+)(b[^b]+)', 'g');
+ regexp_matches
+----------------
+ {bar,beque}
+ {bazil,barf}
+(2 rows)
+</programlisting>
+   </para>
+
+   <tip>
+    <para>
+     In most cases <function>regexp_matches()</function> should be used with
+     the <literal>g</literal> flag, since if you only want the first match, it's
+     easier and more efficient to use <function>regexp_match()</function>.
+     However, <function>regexp_match()</function> only exists
+     in <productname>PostgreSQL</productname> version 10 and up.  When working in older
+     versions, a common trick is to place a <function>regexp_matches()</function>
+     call in a sub-select, for example:
+<programlisting>
+SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;
+</programlisting>
+     This produces a text array if there's a match, or <literal>NULL</literal> if
+     not, the same as <function>regexp_match()</function> would do.  Without the
+     sub-select, this query would produce no output at all for table rows
+     without a match, which is typically not the desired behavior.
+    </para>
+   </tip>
+
+    <para>
+     The <function>regexp_replace</function> function provides substitution of
+     new text for substrings that match POSIX regular expression patterns.
+     It has the syntax
+     <function>regexp_replace</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>)
+     or
+     <function>regexp_replace</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>,
+     <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional></optional>).
+     The source <replaceable>string</replaceable> is returned unchanged if
+     there is no match to the <replaceable>pattern</replaceable>.  If there is a
+     match, the <replaceable>string</replaceable> is returned with the
+     <replaceable>replacement</replaceable> string substituted for the matching
+     substring.  The <replaceable>replacement</replaceable> string can contain
+     <literal>\</literal><replaceable>n</replaceable>, where <replaceable>n</replaceable> is 1
+     through 9, to indicate that the source substring matching the
+     <replaceable>n</replaceable>'th parenthesized subexpression of the pattern should be
+     inserted, and it can contain <literal>\&amp;</literal> to indicate that the
+     substring matching the entire pattern should be inserted.  Write
+     <literal>\\</literal> if you need to put a literal backslash in the replacement
+     text.
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     By default, only the first match of the pattern is replaced.
+     If <replaceable>N</replaceable> is specified and is greater than zero,
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is replaced.
+     If the <literal>g</literal> flag is given, or
+     if <replaceable>N</replaceable> is specified and is zero, then all
+     matches at or after the <replaceable>start</replaceable> position are
+     replaced.  (The <literal>g</literal> flag is ignored
+     when <replaceable>N</replaceable> is specified.)
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags (though
+     not <literal>g</literal>) are
+     described in <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+regexp_replace('foobarbaz', 'b..', 'X')
+                                   <lineannotation>fooXbaz</lineannotation>
+regexp_replace('foobarbaz', 'b..', 'X', 'g')
+                                   <lineannotation>fooXX</lineannotation>
+regexp_replace('foobarbaz', 'b(..)', 'X\1Y', 'g')
+                                   <lineannotation>fooXarYXazY</lineannotation>
+regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 0, 'i')
+                                   <lineannotation>X PXstgrXSQL fXnctXXn</lineannotation>
+regexp_replace(string=>'A PostgreSQL function', pattern=>'a|e|i|o|u', replacement=>'X', start=>1, "N"=>3, flags=>'i')
+                                   <lineannotation>A PostgrXSQL function</lineannotation>
+</programlisting>
+   </para>
+
+    <para>
+     The <function>regexp_split_to_table</function> function splits a string using a POSIX
+     regular expression pattern as a delimiter.  It has the syntax
+     <function>regexp_split_to_table</function>(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>).
+     If there is no match to the <replaceable>pattern</replaceable>, the function returns the
+     <replaceable>string</replaceable>.  If there is at least one match, for each match it returns
+     the text from the end of the last match (or the beginning of the string)
+     to the beginning of the match.  When there are no more matches, it
+     returns the text from the end of the last match to the end of the string.
+     The <replaceable>flags</replaceable> parameter is an optional text string containing
+     zero or more single-letter flags that change the function's behavior.
+     <function>regexp_split_to_table</function> supports the flags described in
+     <xref linkend="posix-embedded-options-table"/>.
+    </para>
+
+    <para>
+     The <function>regexp_split_to_array</function> function behaves the same as
+     <function>regexp_split_to_table</function>, except that <function>regexp_split_to_array</function>
+     returns its result as an array of <type>text</type>.  It has the syntax
+     <function>regexp_split_to_array</function>(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>
+     <optional>, <replaceable>flags</replaceable> </optional>).
+     The parameters are the same as for <function>regexp_split_to_table</function>.
+    </para>
+
+   <para>
+    Some examples:
+<programlisting>
+SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', '\s+') AS foo;
+  foo
+-------
+ the
+ quick
+ brown
+ fox
+ jumps
+ over
+ the
+ lazy
+ dog
+(9 rows)
+
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '\s+');
+              regexp_split_to_array
+-----------------------------------------------
+ {the,quick,brown,fox,jumps,over,the,lazy,dog}
+(1 row)
+
+SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
+ foo
+-----
+ t
+ h
+ e
+ q
+ u
+ i
+ c
+ k
+ b
+ r
+ o
+ w
+ n
+ f
+ o
+ x
+(16 rows)
+</programlisting>
+   </para>
+
+   <para>
+    As the last example demonstrates, the regexp split functions ignore
+    zero-length matches that occur at the start or end of the string
+    or immediately after a previous match.  This is contrary to the strict
+    definition of regexp matching that is implemented by
+    the other regexp functions, but is usually the most convenient behavior
+    in practice.  Other software systems such as Perl use similar definitions.
+   </para>
+
+    <para>
+     The <function>regexp_substr</function> function returns the substring
+     that matches a POSIX regular expression pattern,
+     or <literal>NULL</literal> if there is no match.  It has the syntax
+     <function>regexp_substr</function>(<replaceable>string</replaceable>,
+     <replaceable>pattern</replaceable>
+     <optional>, <replaceable>start</replaceable>
+     <optional>, <replaceable>N</replaceable>
+     <optional>, <replaceable>flags</replaceable>
+     <optional>, <replaceable>subexpr</replaceable>
+     </optional></optional></optional></optional>).
+     <replaceable>pattern</replaceable> is searched for
+     in <replaceable>string</replaceable>, normally from the beginning of
+     the string, but if the <replaceable>start</replaceable> parameter is
+     provided then beginning from that character index.
+     If <replaceable>N</replaceable> is specified
+     then the <replaceable>N</replaceable>'th match of the pattern
+     is returned, otherwise the first match is returned.
+     The <replaceable>flags</replaceable> parameter is an optional text
+     string containing zero or more single-letter flags that change the
+     function's behavior.  Supported flags are described
+     in <xref linkend="posix-embedded-options-table"/>.
+     For a pattern containing parenthesized
+     subexpressions, <replaceable>subexpr</replaceable> is an integer
+     indicating which subexpression is of interest: the result is the
+     substring matching that subexpression.
+     Subexpressions are numbered in the order of their leading parentheses.
+     When <replaceable>subexpr</replaceable> is omitted or zero, the result
+     is the whole match regardless of parenthesized subexpressions.
+    </para>
+
+    <para>
+     Some examples:
+<programlisting>
+regexp_substr('number of your street, town zip, FR', '[^,]+', 1, 2)
+                                   <lineannotation> town zip</lineannotation>
+regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
+                                   <lineannotation>FGH</lineannotation>
+</programlisting>
+    </para>
+
+<!-- derived from the re_syntax.n man page -->
+
+   <sect3 id="posix-syntax-details">
+    <title>Regular Expression Details</title>
+
+   <para>
+    <productname>PostgreSQL</productname>'s regular expressions are implemented
+    using a software package written by Henry Spencer.  Much of
+    the description of regular expressions below is copied verbatim from his
+    manual.
+   </para>
+
+   <para>
+    Regular expressions (<acronym>RE</acronym>s), as defined in
+    <acronym>POSIX</acronym> 1003.2, come in two forms:
+    <firstterm>extended</firstterm> <acronym>RE</acronym>s or <acronym>ERE</acronym>s
+    (roughly those of <command>egrep</command>), and
+    <firstterm>basic</firstterm> <acronym>RE</acronym>s or <acronym>BRE</acronym>s
+    (roughly those of <command>ed</command>).
+    <productname>PostgreSQL</productname> supports both forms, and
+    also implements some extensions
+    that are not in the POSIX standard, but have become widely used
+    due to their availability in programming languages such as Perl and Tcl.
+    <acronym>RE</acronym>s using these non-POSIX extensions are called
+    <firstterm>advanced</firstterm> <acronym>RE</acronym>s or <acronym>ARE</acronym>s
+    in this documentation.  AREs are almost an exact superset of EREs,
+    but BREs have several notational incompatibilities (as well as being
+    much more limited).
+    We first describe the ARE and ERE forms, noting features that apply
+    only to AREs, and then describe how BREs differ.
+   </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</productname> always initially presumes that a regular
+     expression follows the ARE rules.  However, the more limited ERE or
+     BRE rules can be chosen by prepending an <firstterm>embedded option</firstterm>
+     to the RE pattern, as described in <xref linkend="posix-metasyntax"/>.
+     This can be useful for compatibility with applications that expect
+     exactly the <acronym>POSIX</acronym> 1003.2 rules.
+    </para>
+   </note>
+
+   <para>
+    A regular expression is defined as one or more
+    <firstterm>branches</firstterm>, separated by
+    <literal>|</literal>.  It matches anything that matches one of the
+    branches.
+   </para>
+
+   <para>
+    A branch is zero or more <firstterm>quantified atoms</firstterm> or
+    <firstterm>constraints</firstterm>, concatenated.
+    It matches a match for the first, followed by a match for the second, etc.;
+    an empty branch matches the empty string.
+   </para>
+
+   <para>
+    A quantified atom is an <firstterm>atom</firstterm> possibly followed
+    by a single <firstterm>quantifier</firstterm>.
+    Without a quantifier, it matches a match for the atom.
+    With a quantifier, it can match some number of matches of the atom.
+    An <firstterm>atom</firstterm> can be any of the possibilities
+    shown in <xref linkend="posix-atoms-table"/>.
+    The possible quantifiers and their meanings are shown in
+    <xref linkend="posix-quantifiers-table"/>.
+   </para>
+
+   <para>
+    A <firstterm>constraint</firstterm> matches an empty string, but matches only when
+    specific conditions are met.  A constraint can be used where an atom
+    could be used, except it cannot be followed by a quantifier.
+    The simple constraints are shown in
+    <xref linkend="posix-constraints-table"/>;
+    some more constraints are described later.
+   </para>
+
+
+   <table id="posix-atoms-table">
+    <title>Regular Expression Atoms</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Atom</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>(</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> (where <replaceable>re</replaceable> is any regular expression)
+       matches a match for
+       <replaceable>re</replaceable>, with the match noted for possible reporting </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?:</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> as above, but the match is not noted for reporting
+       (a <quote>non-capturing</quote> set of parentheses)
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>.</literal> </entry>
+       <entry> matches any single character </entry>
+       </row>
+
+       <row>
+       <entry> <literal>[</literal><replaceable>chars</replaceable><literal>]</literal> </entry>
+       <entry> a <firstterm>bracket expression</firstterm>,
+       matching any one of the <replaceable>chars</replaceable> (see
+       <xref linkend="posix-bracket-expressions"/> for more detail) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</literal><replaceable>k</replaceable> </entry>
+       <entry> (where <replaceable>k</replaceable> is a non-alphanumeric character)
+       matches that character taken as an ordinary character,
+       e.g., <literal>\\</literal> matches a backslash character </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</literal><replaceable>c</replaceable> </entry>
+       <entry> where <replaceable>c</replaceable> is alphanumeric
+       (possibly followed by other characters)
+       is an <firstterm>escape</firstterm>, see <xref linkend="posix-escape-sequences"/>
+       (AREs only; in EREs and BREs, this matches <replaceable>c</replaceable>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</literal> </entry>
+       <entry> when followed by a character other than a digit,
+       matches the left-brace character <literal>{</literal>;
+       when followed by a digit, it is the beginning of a
+       <replaceable>bound</replaceable> (see below) </entry>
+       </row>
+
+       <row>
+       <entry> <replaceable>x</replaceable> </entry>
+       <entry> where <replaceable>x</replaceable> is a single character with no other
+       significance, matches that character </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    An RE cannot end with a backslash (<literal>\</literal>).
+   </para>
+
+   <note>
+    <para>
+     If you have <xref linkend="guc-standard-conforming-strings"/> turned off,
+     any backslashes you write in literal string constants will need to be
+     doubled.  See <xref linkend="sql-syntax-strings"/> for more information.
+    </para>
+   </note>
+
+   <table id="posix-quantifiers-table">
+    <title>Regular Expression Quantifiers</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Quantifier</entry>
+       <entry>Matches</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>*</literal> </entry>
+       <entry> a sequence of 0 or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>+</literal> </entry>
+       <entry> a sequence of 1 or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>?</literal> </entry>
+       <entry> a sequence of 0 or 1 matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</literal><replaceable>m</replaceable><literal>}</literal> </entry>
+       <entry> a sequence of exactly <replaceable>m</replaceable> matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</literal><replaceable>m</replaceable><literal>,}</literal> </entry>
+       <entry> a sequence of <replaceable>m</replaceable> or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry>
+       <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}</literal> </entry>
+       <entry> a sequence of <replaceable>m</replaceable> through <replaceable>n</replaceable>
+       (inclusive) matches of the atom; <replaceable>m</replaceable> cannot exceed
+       <replaceable>n</replaceable> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>*?</literal> </entry>
+       <entry> non-greedy version of <literal>*</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>+?</literal> </entry>
+       <entry> non-greedy version of <literal>+</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>??</literal> </entry>
+       <entry> non-greedy version of <literal>?</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</literal><replaceable>m</replaceable><literal>}?</literal> </entry>
+       <entry> non-greedy version of <literal>{</literal><replaceable>m</replaceable><literal>}</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</literal><replaceable>m</replaceable><literal>,}?</literal> </entry>
+       <entry> non-greedy version of <literal>{</literal><replaceable>m</replaceable><literal>,}</literal> </entry>
+       </row>
+
+       <row>
+       <entry>
+       <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}?</literal> </entry>
+       <entry> non-greedy version of <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}</literal> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    The forms using <literal>{</literal><replaceable>...</replaceable><literal>}</literal>
+    are known as <firstterm>bounds</firstterm>.
+    The numbers <replaceable>m</replaceable> and <replaceable>n</replaceable> within a bound are
+    unsigned decimal integers with permissible values from 0 to 255 inclusive.
+   </para>
+
+    <para>
+     <firstterm>Non-greedy</firstterm> quantifiers (available in AREs only) match the
+     same possibilities as their corresponding normal (<firstterm>greedy</firstterm>)
+     counterparts, but prefer the smallest number rather than the largest
+     number of matches.
+     See <xref linkend="posix-matching-rules"/> for more detail.
+   </para>
+
+   <note>
+    <para>
+     A quantifier cannot immediately follow another quantifier, e.g.,
+     <literal>**</literal> is invalid.
+     A quantifier cannot
+     begin an expression or subexpression or follow
+     <literal>^</literal> or <literal>|</literal>.
+    </para>
+   </note>
+
+   <table id="posix-constraints-table">
+    <title>Regular Expression Constraints</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Constraint</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>^</literal> </entry>
+       <entry> matches at the beginning of the string </entry>
+       </row>
+
+       <row>
+       <entry> <literal>$</literal> </entry>
+       <entry> matches at the end of the string </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?=</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> <firstterm>positive lookahead</firstterm> matches at any point
+       where a substring matching <replaceable>re</replaceable> begins
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?!</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> <firstterm>negative lookahead</firstterm> matches at any point
+       where no substring matching <replaceable>re</replaceable> begins
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?&lt;=</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> <firstterm>positive lookbehind</firstterm> matches at any point
+       where a substring matching <replaceable>re</replaceable> ends
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?&lt;!</literal><replaceable>re</replaceable><literal>)</literal> </entry>
+       <entry> <firstterm>negative lookbehind</firstterm> matches at any point
+       where no substring matching <replaceable>re</replaceable> ends
+       (AREs only) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Lookahead and lookbehind constraints cannot contain <firstterm>back
+    references</firstterm> (see <xref linkend="posix-escape-sequences"/>),
+    and all parentheses within them are considered non-capturing.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-bracket-expressions">
+    <title>Bracket Expressions</title>
+
+   <para>
+    A <firstterm>bracket expression</firstterm> is a list of
+    characters enclosed in <literal>[]</literal>.  It normally matches
+    any single character from the list (but see below).  If the list
+    begins with <literal>^</literal>, it matches any single character
+    <emphasis>not</emphasis> from the rest of the list.
+    If two characters
+    in the list are separated by <literal>-</literal>, this is
+    shorthand for the full range of characters between those two
+    (inclusive) in the collating sequence,
+    e.g., <literal>[0-9]</literal> in <acronym>ASCII</acronym> matches
+    any decimal digit.  It is illegal for two ranges to share an
+    endpoint, e.g.,  <literal>a-c-e</literal>.  Ranges are very
+    collating-sequence-dependent, so portable programs should avoid
+    relying on them.
+   </para>
+
+   <para>
+    To include a literal <literal>]</literal> in the list, make it the
+    first character (after <literal>^</literal>, if that is used).  To
+    include a literal <literal>-</literal>, make it the first or last
+    character, or the second endpoint of a range.  To use a literal
+    <literal>-</literal> as the first endpoint of a range, enclose it
+    in <literal>[.</literal> and <literal>.]</literal> to make it a
+    collating element (see below).  With the exception of these characters,
+    some combinations using <literal>[</literal>
+    (see next paragraphs), and escapes (AREs only), all other special
+    characters lose their special significance within a bracket expression.
+    In particular, <literal>\</literal> is not special when following
+    ERE or BRE rules, though it is special (as introducing an escape)
+    in AREs.
+   </para>
+
+   <para>
+    Within a bracket expression, a collating element (a character, a
+    multiple-character sequence that collates as if it were a single
+    character, or a collating-sequence name for either) enclosed in
+    <literal>[.</literal> and <literal>.]</literal> stands for the
+    sequence of characters of that collating element.  The sequence is
+    treated as a single element of the bracket expression's list.  This
+    allows a bracket
+    expression containing a multiple-character collating element to
+    match more than one character, e.g., if the collating sequence
+    includes a <literal>ch</literal> collating element, then the RE
+    <literal>[[.ch.]]*c</literal> matches the first five characters of
+    <literal>chchcc</literal>.
+   </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</productname> currently does not support multi-character collating
+     elements. This information describes possible future behavior.
+    </para>
+   </note>
+
+   <para>
+    Within a bracket expression, a collating element enclosed in
+    <literal>[=</literal> and <literal>=]</literal> is an <firstterm>equivalence
+    class</firstterm>, standing for the sequences of characters of all collating
+    elements equivalent to that one, including itself.  (If there are
+    no other equivalent collating elements, the treatment is as if the
+    enclosing delimiters were <literal>[.</literal> and
+    <literal>.]</literal>.)  For example, if <literal>o</literal> and
+    <literal>^</literal> are the members of an equivalence class, then
+    <literal>[[=o=]]</literal>, <literal>[[=^=]]</literal>, and
+    <literal>[o^]</literal> are all synonymous.  An equivalence class
+    cannot be an endpoint of a range.
+   </para>
+
+   <para>
+    Within a bracket expression, the name of a character class
+    enclosed in <literal>[:</literal> and <literal>:]</literal> stands
+    for the list of all characters belonging to that class.  A character
+    class cannot be used as an endpoint of a range.
+    The <acronym>POSIX</acronym> standard defines these character class
+    names:
+    <literal>alnum</literal> (letters and numeric digits),
+    <literal>alpha</literal> (letters),
+    <literal>blank</literal> (space and tab),
+    <literal>cntrl</literal> (control characters),
+    <literal>digit</literal> (numeric digits),
+    <literal>graph</literal> (printable characters except space),
+    <literal>lower</literal> (lower-case letters),
+    <literal>print</literal> (printable characters including space),
+    <literal>punct</literal> (punctuation),
+    <literal>space</literal> (any white space),
+    <literal>upper</literal> (upper-case letters),
+    and <literal>xdigit</literal> (hexadecimal digits).
+    The behavior of these standard character classes is generally
+    consistent across platforms for characters in the 7-bit ASCII set.
+    Whether a given non-ASCII character is considered to belong to one
+    of these classes depends on the <firstterm>collation</firstterm>
+    that is used for the regular-expression function or operator
+    (see <xref linkend="collation"/>), or by default on the
+    database's <envar>LC_CTYPE</envar> locale setting (see
+    <xref linkend="locale"/>).  The classification of non-ASCII
+    characters can vary across platforms even in similarly-named
+    locales.  (But the <literal>C</literal> locale never considers any
+    non-ASCII characters to belong to any of these classes.)
+    In addition to these standard character
+    classes, <productname>PostgreSQL</productname> defines
+    the <literal>word</literal> character class, which is the same as
+    <literal>alnum</literal> plus the underscore (<literal>_</literal>)
+    character, and
+    the <literal>ascii</literal> character class, which contains exactly
+    the 7-bit ASCII set.
+   </para>
+
+   <para>
+    There are two special cases of bracket expressions:  the bracket
+    expressions <literal>[[:&lt;:]]</literal> and
+    <literal>[[:&gt;:]]</literal> are constraints,
+    matching empty strings at the beginning
+    and end of a word respectively.  A word is defined as a sequence
+    of word characters that is neither preceded nor followed by word
+    characters.  A word character is any character belonging to the
+    <literal>word</literal> character class, that is, any letter, digit,
+    or underscore.  This is an extension, compatible with but not
+    specified by <acronym>POSIX</acronym> 1003.2, and should be used with
+    caution in software intended to be portable to other systems.
+    The constraint escapes described below are usually preferable; they
+    are no more standard, but are easier to type.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-escape-sequences">
+    <title>Regular Expression Escapes</title>
+
+   <para>
+    <firstterm>Escapes</firstterm> are special sequences beginning with <literal>\</literal>
+    followed by an alphanumeric character. Escapes come in several varieties:
+    character entry, class shorthands, constraint escapes, and back references.
+    A <literal>\</literal> followed by an alphanumeric character but not constituting
+    a valid escape is illegal in AREs.
+    In EREs, there are no escapes: outside a bracket expression,
+    a <literal>\</literal> followed by an alphanumeric character merely stands for
+    that character as an ordinary character, and inside a bracket expression,
+    <literal>\</literal> is an ordinary character.
+    (The latter is the one actual incompatibility between EREs and AREs.)
+   </para>
+
+   <para>
+    <firstterm>Character-entry escapes</firstterm> exist to make it easier to specify
+    non-printing and other inconvenient characters in REs.  They are
+    shown in <xref linkend="posix-character-entry-escapes-table"/>.
+   </para>
+
+   <para>
+    <firstterm>Class-shorthand escapes</firstterm> provide shorthands for certain
+    commonly-used character classes.  They are
+    shown in <xref linkend="posix-class-shorthand-escapes-table"/>.
+   </para>
+
+   <para>
+    A <firstterm>constraint escape</firstterm> is a constraint,
+    matching the empty string if specific conditions are met,
+    written as an escape.  They are
+    shown in <xref linkend="posix-constraint-escapes-table"/>.
+   </para>
+
+   <para>
+    A <firstterm>back reference</firstterm> (<literal>\</literal><replaceable>n</replaceable>) matches the
+    same string matched by the previous parenthesized subexpression specified
+    by the number <replaceable>n</replaceable>
+    (see <xref linkend="posix-constraint-backref-table"/>).  For example,
+    <literal>([bc])\1</literal> matches <literal>bb</literal> or <literal>cc</literal>
+    but not <literal>bc</literal> or <literal>cb</literal>.
+    The subexpression must entirely precede the back reference in the RE.
+    Subexpressions are numbered in the order of their leading parentheses.
+    Non-capturing parentheses do not define subexpressions.
+    The back reference considers only the string characters matched by the
+    referenced subexpression, not any constraints contained in it.  For
+    example, <literal>(^\d)\1</literal> will match <literal>22</literal>.
+   </para>
+
+   <table id="posix-character-entry-escapes-table">
+    <title>Regular Expression Character-Entry Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\a</literal> </entry>
+       <entry> alert (bell) character, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\b</literal> </entry>
+       <entry> backspace, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\B</literal> </entry>
+       <entry> synonym for backslash (<literal>\</literal>) to help reduce the need for backslash
+       doubling </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\c</literal><replaceable>X</replaceable> </entry>
+       <entry> (where <replaceable>X</replaceable> is any character) the character whose
+       low-order 5 bits are the same as those of
+       <replaceable>X</replaceable>, and whose other bits are all zero </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\e</literal> </entry>
+       <entry> the character whose collating-sequence name
+       is <literal>ESC</literal>,
+       or failing that, the character with octal value <literal>033</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\f</literal> </entry>
+       <entry> form feed, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\n</literal> </entry>
+       <entry> newline, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\r</literal> </entry>
+       <entry> carriage return, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\t</literal> </entry>
+       <entry> horizontal tab, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\u</literal><replaceable>wxyz</replaceable> </entry>
+       <entry> (where <replaceable>wxyz</replaceable> is exactly four hexadecimal digits)
+       the character whose hexadecimal value is
+       <literal>0x</literal><replaceable>wxyz</replaceable>
+       </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\U</literal><replaceable>stuvwxyz</replaceable> </entry>
+       <entry> (where <replaceable>stuvwxyz</replaceable> is exactly eight hexadecimal
+       digits)
+       the character whose hexadecimal value is
+       <literal>0x</literal><replaceable>stuvwxyz</replaceable>
+       </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\v</literal> </entry>
+       <entry> vertical tab, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\x</literal><replaceable>hhh</replaceable> </entry>
+       <entry> (where <replaceable>hhh</replaceable> is any sequence of hexadecimal
+       digits)
+       the character whose hexadecimal value is
+       <literal>0x</literal><replaceable>hhh</replaceable>
+       (a single character no matter how many hexadecimal digits are used)
+       </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\0</literal> </entry>
+       <entry> the character whose value is <literal>0</literal> (the null byte)</entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</literal><replaceable>xy</replaceable> </entry>
+       <entry> (where <replaceable>xy</replaceable> is exactly two octal digits,
+       and is not a <firstterm>back reference</firstterm>)
+       the character whose octal value is
+       <literal>0</literal><replaceable>xy</replaceable> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</literal><replaceable>xyz</replaceable> </entry>
+       <entry> (where <replaceable>xyz</replaceable> is exactly three octal digits,
+       and is not a <firstterm>back reference</firstterm>)
+       the character whose octal value is
+       <literal>0</literal><replaceable>xyz</replaceable> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Hexadecimal digits are <literal>0</literal>-<literal>9</literal>,
+    <literal>a</literal>-<literal>f</literal>, and <literal>A</literal>-<literal>F</literal>.
+    Octal digits are <literal>0</literal>-<literal>7</literal>.
+   </para>
+
+   <para>
+    Numeric character-entry escapes specifying values outside the ASCII range
+    (0&ndash;127) have meanings dependent on the database encoding.  When the
+    encoding is UTF-8, escape values are equivalent to Unicode code points,
+    for example <literal>\u1234</literal> means the character <literal>U+1234</literal>.
+    For other multibyte encodings, character-entry escapes usually just
+    specify the concatenation of the byte values for the character.  If the
+    escape value does not correspond to any legal character in the database
+    encoding, no error will be raised, but it will never match any data.
+   </para>
+
+   <para>
+    The character-entry escapes are always taken as ordinary characters.
+    For example, <literal>\135</literal> is <literal>]</literal> in ASCII, but
+    <literal>\135</literal> does not terminate a bracket expression.
+   </para>
+
+   <table id="posix-class-shorthand-escapes-table">
+    <title>Regular Expression Class-Shorthand Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\d</literal> </entry>
+       <entry> matches any digit, like
+        <literal>[[:digit:]]</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\s</literal> </entry>
+       <entry> matches any whitespace character, like
+        <literal>[[:space:]]</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\w</literal> </entry>
+       <entry> matches any word character, like
+        <literal>[[:word:]]</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\D</literal> </entry>
+       <entry> matches any non-digit, like
+        <literal>[^[:digit:]]</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\S</literal> </entry>
+       <entry> matches any non-whitespace character, like
+        <literal>[^[:space:]]</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\W</literal> </entry>
+       <entry> matches any non-word character, like
+        <literal>[^[:word:]]</literal> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    The class-shorthand escapes also work within bracket expressions,
+    although the definitions shown above are not quite syntactically
+    valid in that context.
+    For example, <literal>[a-c\d]</literal> is equivalent to
+    <literal>[a-c[:digit:]]</literal>.
+   </para>
+
+   <table id="posix-constraint-escapes-table">
+    <title>Regular Expression Constraint Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\A</literal> </entry>
+       <entry> matches only at the beginning of the string
+       (see <xref linkend="posix-matching-rules"/> for how this differs from
+       <literal>^</literal>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\m</literal> </entry>
+       <entry> matches only at the beginning of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\M</literal> </entry>
+       <entry> matches only at the end of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\y</literal> </entry>
+       <entry> matches only at the beginning or end of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\Y</literal> </entry>
+       <entry> matches only at a point that is not the beginning or end of a
+       word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\Z</literal> </entry>
+       <entry> matches only at the end of the string
+       (see <xref linkend="posix-matching-rules"/> for how this differs from
+       <literal>$</literal>) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    A word is defined as in the specification of
+    <literal>[[:&lt;:]]</literal> and <literal>[[:&gt;:]]</literal> above.
+    Constraint escapes are illegal within bracket expressions.
+   </para>
+
+   <table id="posix-constraint-backref-table">
+    <title>Regular Expression Back References</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\</literal><replaceable>m</replaceable> </entry>
+       <entry> (where <replaceable>m</replaceable> is a nonzero digit)
+       a back reference to the <replaceable>m</replaceable>'th subexpression </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</literal><replaceable>mnn</replaceable> </entry>
+       <entry> (where <replaceable>m</replaceable> is a nonzero digit, and
+       <replaceable>nn</replaceable> is some more digits, and the decimal value
+       <replaceable>mnn</replaceable> is not greater than the number of closing capturing
+       parentheses seen so far)
+       a back reference to the <replaceable>mnn</replaceable>'th subexpression </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <note>
+    <para>
+     There is an inherent ambiguity between octal character-entry
+     escapes and back references, which is resolved by the following heuristics,
+     as hinted at above.
+     A leading zero always indicates an octal escape.
+     A single non-zero digit, not followed by another digit,
+     is always taken as a back reference.
+     A multi-digit sequence not starting with a zero is taken as a back
+     reference if it comes after a suitable subexpression
+     (i.e., the number is in the legal range for a back reference),
+     and otherwise is taken as octal.
+    </para>
+   </note>
+   </sect3>
+
+   <sect3 id="posix-metasyntax">
+    <title>Regular Expression Metasyntax</title>
+
+   <para>
+    In addition to the main syntax described above, there are some special
+    forms and miscellaneous syntactic facilities available.
+   </para>
+
+   <para>
+    An RE can begin with one of two special <firstterm>director</firstterm> prefixes.
+    If an RE begins with <literal>***:</literal>,
+    the rest of the RE is taken as an ARE.  (This normally has no effect in
+    <productname>PostgreSQL</productname>, since REs are assumed to be AREs;
+    but it does have an effect if ERE or BRE mode had been specified by
+    the <replaceable>flags</replaceable> parameter to a regex function.)
+    If an RE begins with <literal>***=</literal>,
+    the rest of the RE is taken to be a literal string,
+    with all characters considered ordinary characters.
+   </para>
+
+   <para>
+    An ARE can begin with <firstterm>embedded options</firstterm>:
+    a sequence <literal>(?</literal><replaceable>xyz</replaceable><literal>)</literal>
+    (where <replaceable>xyz</replaceable> is one or more alphabetic characters)
+    specifies options affecting the rest of the RE.
+    These options override any previously determined options &mdash;
+    in particular, they can override the case-sensitivity behavior implied by
+    a regex operator, or the <replaceable>flags</replaceable> parameter to a regex
+    function.
+    The available option letters are
+    shown in <xref linkend="posix-embedded-options-table"/>.
+    Note that these same option letters are used in the <replaceable>flags</replaceable>
+    parameters of regex functions.
+   </para>
+
+   <table id="posix-embedded-options-table">
+    <title>ARE Embedded-Option Letters</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Option</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>b</literal> </entry>
+       <entry> rest of RE is a BRE </entry>
+       </row>
+
+       <row>
+       <entry> <literal>c</literal> </entry>
+       <entry> case-sensitive matching (overrides operator type) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>e</literal> </entry>
+       <entry> rest of RE is an ERE </entry>
+       </row>
+
+       <row>
+       <entry> <literal>i</literal> </entry>
+       <entry> case-insensitive matching (see
+       <xref linkend="posix-matching-rules"/>) (overrides operator type) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>m</literal> </entry>
+       <entry> historical synonym for <literal>n</literal> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>n</literal> </entry>
+       <entry> newline-sensitive matching (see
+       <xref linkend="posix-matching-rules"/>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>p</literal> </entry>
+       <entry> partial newline-sensitive matching (see
+       <xref linkend="posix-matching-rules"/>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>q</literal> </entry>
+       <entry> rest of RE is a literal (<quote>quoted</quote>) string, all ordinary
+       characters </entry>
+       </row>
+
+       <row>
+       <entry> <literal>s</literal> </entry>
+       <entry> non-newline-sensitive matching (default) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>t</literal> </entry>
+       <entry> tight syntax (default; see below) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>w</literal> </entry>
+       <entry> inverse partial newline-sensitive (<quote>weird</quote>) matching
+       (see <xref linkend="posix-matching-rules"/>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>x</literal> </entry>
+       <entry> expanded syntax (see below) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Embedded options take effect at the <literal>)</literal> terminating the sequence.
+    They can appear only at the start of an ARE (after the
+    <literal>***:</literal> director if any).
+   </para>
+
+   <para>
+    In addition to the usual (<firstterm>tight</firstterm>) RE syntax, in which all
+    characters are significant, there is an <firstterm>expanded</firstterm> syntax,
+    available by specifying the embedded <literal>x</literal> option.
+    In the expanded syntax,
+    white-space characters in the RE are ignored, as are
+    all characters between a <literal>#</literal>
+    and the following newline (or the end of the RE).  This
+    permits paragraphing and commenting a complex RE.
+    There are three exceptions to that basic rule:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       a white-space character or <literal>#</literal> preceded by <literal>\</literal> is
+       retained
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       white space or <literal>#</literal> within a bracket expression is retained
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       white space and comments cannot appear within multi-character symbols,
+       such as <literal>(?:</literal>
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    For this purpose, white-space characters are blank, tab, newline, and
+    any character that belongs to the <replaceable>space</replaceable> character class.
+   </para>
+
+   <para>
+    Finally, in an ARE, outside bracket expressions, the sequence
+    <literal>(?#</literal><replaceable>ttt</replaceable><literal>)</literal>
+    (where <replaceable>ttt</replaceable> is any text not containing a <literal>)</literal>)
+    is a comment, completely ignored.
+    Again, this is not allowed between the characters of
+    multi-character symbols, like <literal>(?:</literal>.
+    Such comments are more a historical artifact than a useful facility,
+    and their use is deprecated; use the expanded syntax instead.
+   </para>
+
+   <para>
+    <emphasis>None</emphasis> of these metasyntax extensions is available if
+    an initial <literal>***=</literal> director
+    has specified that the user's input be treated as a literal string
+    rather than as an RE.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-matching-rules">
+    <title>Regular Expression Matching Rules</title>
+
+   <para>
+    In the event that an RE could match more than one substring of a given
+    string, the RE matches the one starting earliest in the string.
+    If the RE could match more than one substring starting at that point,
+    either the longest possible match or the shortest possible match will
+    be taken, depending on whether the RE is <firstterm>greedy</firstterm> or
+    <firstterm>non-greedy</firstterm>.
+   </para>
+
+   <para>
+    Whether an RE is greedy or not is determined by the following rules:
+    <itemizedlist>
+     <listitem>
+      <para>
+       Most atoms, and all constraints, have no greediness attribute (because
+       they cannot match variable amounts of text anyway).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Adding parentheses around an RE does not change its greediness.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with a fixed-repetition quantifier
+       (<literal>{</literal><replaceable>m</replaceable><literal>}</literal>
+       or
+       <literal>{</literal><replaceable>m</replaceable><literal>}?</literal>)
+       has the same greediness (possibly none) as the atom itself.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with other normal quantifiers (including
+       <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}</literal>
+       with <replaceable>m</replaceable> equal to <replaceable>n</replaceable>)
+       is greedy (prefers longest match).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A quantified atom with a non-greedy quantifier (including
+       <literal>{</literal><replaceable>m</replaceable><literal>,</literal><replaceable>n</replaceable><literal>}?</literal>
+       with <replaceable>m</replaceable> equal to <replaceable>n</replaceable>)
+       is non-greedy (prefers shortest match).
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       A branch &mdash; that is, an RE that has no top-level
+       <literal>|</literal> operator &mdash; has the same greediness as the first
+       quantified atom in it that has a greediness attribute.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       An RE consisting of two or more branches connected by the
+       <literal>|</literal> operator is always greedy.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    The above rules associate greediness attributes not only with individual
+    quantified atoms, but with branches and entire REs that contain quantified
+    atoms.  What that means is that the matching is done in such a way that
+    the branch, or whole RE, matches the longest or shortest possible
+    substring <emphasis>as a whole</emphasis>.  Once the length of the entire match
+    is determined, the part of it that matches any particular subexpression
+    is determined on the basis of the greediness attribute of that
+    subexpression, with subexpressions starting earlier in the RE taking
+    priority over ones starting later.
+   </para>
+
+   <para>
+    An example of what this means:
+<screen>
+SELECT SUBSTRING('XY1234Z', 'Y*([0-9]{1,3})');
+<lineannotation>Result: </lineannotation><computeroutput>123</computeroutput>
+SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
+<lineannotation>Result: </lineannotation><computeroutput>1</computeroutput>
+</screen>
+    In the first case, the RE as a whole is greedy because <literal>Y*</literal>
+    is greedy.  It can match beginning at the <literal>Y</literal>, and it matches
+    the longest possible string starting there, i.e., <literal>Y123</literal>.
+    The output is the parenthesized part of that, or <literal>123</literal>.
+    In the second case, the RE as a whole is non-greedy because <literal>Y*?</literal>
+    is non-greedy.  It can match beginning at the <literal>Y</literal>, and it matches
+    the shortest possible string starting there, i.e., <literal>Y1</literal>.
+    The subexpression <literal>[0-9]{1,3}</literal> is greedy but it cannot change
+    the decision as to the overall match length; so it is forced to match
+    just <literal>1</literal>.
+   </para>
+
+   <para>
+    In short, when an RE contains both greedy and non-greedy subexpressions,
+    the total match length is either as long as possible or as short as
+    possible, according to the attribute assigned to the whole RE.  The
+    attributes assigned to the subexpressions only affect how much of that
+    match they are allowed to <quote>eat</quote> relative to each other.
+   </para>
+
+   <para>
+    The quantifiers <literal>{1,1}</literal> and <literal>{1,1}?</literal>
+    can be used to force greediness or non-greediness, respectively,
+    on a subexpression or a whole RE.
+    This is useful when you need the whole RE to have a greediness attribute
+    different from what's deduced from its elements.  As an example,
+    suppose that we are trying to separate a string containing some digits
+    into the digits and the parts before and after them.  We might try to
+    do that like this:
+<screen>
+SELECT regexp_match('abc01234xyz', '(.*)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc0123,4,xyz}</computeroutput>
+</screen>
+    That didn't work: the first <literal>.*</literal> is greedy so
+    it <quote>eats</quote> as much as it can, leaving the <literal>\d+</literal> to
+    match at the last possible place, the last digit.  We might try to fix
+    that by making it non-greedy:
+<screen>
+SELECT regexp_match('abc01234xyz', '(.*?)(\d+)(.*)');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,0,""}</computeroutput>
+</screen>
+    That didn't work either, because now the RE as a whole is non-greedy
+    and so it ends the overall match as soon as possible.  We can get what
+    we want by forcing the RE as a whole to be greedy:
+<screen>
+SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
+<lineannotation>Result: </lineannotation><computeroutput>{abc,01234,xyz}</computeroutput>
+</screen>
+    Controlling the RE's overall greediness separately from its components'
+    greediness allows great flexibility in handling variable-length patterns.
+   </para>
+
+   <para>
+    When deciding what is a longer or shorter match,
+    match lengths are measured in characters, not collating elements.
+    An empty string is considered longer than no match at all.
+    For example:
+    <literal>bb*</literal>
+    matches the three middle characters of <literal>abbbc</literal>;
+    <literal>(week|wee)(night|knights)</literal>
+    matches all ten characters of <literal>weeknights</literal>;
+    when <literal>(.*).*</literal>
+    is matched against <literal>abc</literal> the parenthesized subexpression
+    matches all three characters; and when
+    <literal>(a*)*</literal> is matched against <literal>bc</literal>
+    both the whole RE and the parenthesized
+    subexpression match an empty string.
+   </para>
+
+   <para>
+    If case-independent matching is specified,
+    the effect is much as if all case distinctions had vanished from the
+    alphabet.
+    When an alphabetic that exists in multiple cases appears as an
+    ordinary character outside a bracket expression, it is effectively
+    transformed into a bracket expression containing both cases,
+    e.g., <literal>x</literal> becomes <literal>[xX]</literal>.
+    When it appears inside a bracket expression, all case counterparts
+    of it are added to the bracket expression, e.g.,
+    <literal>[x]</literal> becomes <literal>[xX]</literal>
+    and <literal>[^x]</literal> becomes <literal>[^xX]</literal>.
+   </para>
+
+   <para>
+    If newline-sensitive matching is specified, <literal>.</literal>
+    and bracket expressions using <literal>^</literal>
+    will never match the newline character
+    (so that matches will not cross lines unless the RE
+    explicitly includes a newline)
+    and <literal>^</literal> and <literal>$</literal>
+    will match the empty string after and before a newline
+    respectively, in addition to matching at beginning and end of string
+    respectively.
+    But the ARE escapes <literal>\A</literal> and <literal>\Z</literal>
+    continue to match beginning or end of string <emphasis>only</emphasis>.
+    Also, the character class shorthands <literal>\D</literal>
+    and <literal>\W</literal> will match a newline regardless of this mode.
+    (Before <productname>PostgreSQL</productname> 14, they did not match
+    newlines when in newline-sensitive mode.
+    Write <literal>[^[:digit:]]</literal>
+    or <literal>[^[:word:]]</literal> to get the old behavior.)
+   </para>
+
+   <para>
+    If partial newline-sensitive matching is specified,
+    this affects <literal>.</literal> and bracket expressions
+    as with newline-sensitive matching, but not <literal>^</literal>
+    and <literal>$</literal>.
+   </para>
+
+   <para>
+    If inverse partial newline-sensitive matching is specified,
+    this affects <literal>^</literal> and <literal>$</literal>
+    as with newline-sensitive matching, but not <literal>.</literal>
+    and bracket expressions.
+    This isn't very useful but is provided for symmetry.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-limits-compatibility">
+    <title>Limits and Compatibility</title>
+
+   <para>
+    No particular limit is imposed on the length of REs in this
+    implementation.  However,
+    programs intended to be highly portable should not employ REs longer
+    than 256 bytes,
+    as a POSIX-compliant implementation can refuse to accept such REs.
+   </para>
+
+   <para>
+    The only feature of AREs that is actually incompatible with
+    POSIX EREs is that <literal>\</literal> does not lose its special
+    significance inside bracket expressions.
+    All other ARE features use syntax which is illegal or has
+    undefined or unspecified effects in POSIX EREs;
+    the <literal>***</literal> syntax of directors likewise is outside the POSIX
+    syntax for both BREs and EREs.
+   </para>
+
+   <para>
+    Many of the ARE extensions are borrowed from Perl, but some have
+    been changed to clean them up, and a few Perl extensions are not present.
+    Incompatibilities of note include <literal>\b</literal>, <literal>\B</literal>,
+    the lack of special treatment for a trailing newline,
+    the addition of complemented bracket expressions to the things
+    affected by newline-sensitive matching,
+    the restrictions on parentheses and back references in lookahead/lookbehind
+    constraints, and the longest/shortest-match (rather than first-match)
+    matching semantics.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-basic-regexes">
+    <title>Basic Regular Expressions</title>
+
+   <para>
+    BREs differ from EREs in several respects.
+    In BREs, <literal>|</literal>, <literal>+</literal>, and <literal>?</literal>
+    are ordinary characters and there is no equivalent
+    for their functionality.
+    The delimiters for bounds are
+    <literal>\{</literal> and <literal>\}</literal>,
+    with <literal>{</literal> and <literal>}</literal>
+    by themselves ordinary characters.
+    The parentheses for nested subexpressions are
+    <literal>\(</literal> and <literal>\)</literal>,
+    with <literal>(</literal> and <literal>)</literal> by themselves ordinary characters.
+    <literal>^</literal> is an ordinary character except at the beginning of the
+    RE or the beginning of a parenthesized subexpression,
+    <literal>$</literal> is an ordinary character except at the end of the
+    RE or the end of a parenthesized subexpression,
+    and <literal>*</literal> is an ordinary character if it appears at the beginning
+    of the RE or the beginning of a parenthesized subexpression
+    (after a possible leading <literal>^</literal>).
+    Finally, single-digit back references are available, and
+    <literal>\&lt;</literal> and <literal>\&gt;</literal>
+    are synonyms for
+    <literal>[[:&lt;:]]</literal> and <literal>[[:&gt;:]]</literal>
+    respectively; no other escapes are available in BREs.
+   </para>
+   </sect3>
+
+<!-- end re_syntax.n man page -->
+
+   <sect3 id="posix-vs-xquery">
+   <title>Differences from SQL Standard and XQuery</title>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>LIKE_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>OCCURRENCES_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>POSITION_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>SUBSTRING_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>TRANSLATE_REGEX</primary>
+   </indexterm>
+
+   <indexterm zone="posix-vs-xquery">
+    <primary>XQuery regular expressions</primary>
+   </indexterm>
+
+    <para>
+     Since SQL:2008, the SQL standard includes regular expression operators
+     and functions that performs pattern
+     matching according to the XQuery regular expression
+     standard:
+     <itemizedlist>
+      <listitem><para><literal>LIKE_REGEX</literal></para></listitem>
+      <listitem><para><literal>OCCURRENCES_REGEX</literal></para></listitem>
+      <listitem><para><literal>POSITION_REGEX</literal></para></listitem>
+      <listitem><para><literal>SUBSTRING_REGEX</literal></para></listitem>
+      <listitem><para><literal>TRANSLATE_REGEX</literal></para></listitem>
+     </itemizedlist>
+     <productname>PostgreSQL</productname> does not currently implement these
+     operators and functions.  You can get approximately equivalent
+     functionality in each case as shown in <xref
+     linkend="functions-regexp-sql-table"/>.  (Various optional clauses on
+     both sides have been omitted in this table.)
+    </para>
+
+    <table id="functions-regexp-sql-table">
+     <title>Regular Expression Functions Equivalencies</title>
+
+     <tgroup cols="2">
+      <thead>
+       <row>
+        <entry>SQL standard</entry>
+        <entry><productname>PostgreSQL</productname></entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><literal><replaceable>string</replaceable> LIKE_REGEX <replaceable>pattern</replaceable></literal></entry>
+        <entry><literal>regexp_like(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal> or <literal><replaceable>string</replaceable> ~ <replaceable>pattern</replaceable></literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
+        <entry><literal>regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
+        <entry><literal>regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
+        <entry><literal>regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
+       </row>
+
+       <row>
+        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable>)</literal></entry>
+        <entry><literal>regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>)</literal></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+    <para>
+     Regular expression functions similar to those provided by PostgreSQL are
+     also available in a number of other SQL implementations, whereas the
+     SQL-standard functions are not as widely implemented.  Some of the
+     details of the regular expression syntax will likely differ in each
+     implementation.
+    </para>
+
+    <para>
+     The SQL-standard operators and functions use XQuery regular expressions,
+     which are quite close to the ARE syntax described above.
+     Notable differences between the existing POSIX-based
+     regular-expression feature and XQuery regular expressions include:
+
+     <itemizedlist>
+      <listitem>
+       <para>
+        XQuery character class subtraction is not supported.  An example of
+        this feature is using the following to match only English
+        consonants: <literal>[a-z-[aeiou]]</literal>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery character class shorthands <literal>\c</literal>,
+        <literal>\C</literal>, <literal>\i</literal>,
+        and <literal>\I</literal> are not supported.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery character class elements
+        using <literal>\p{UnicodeProperty}</literal> or the
+        inverse <literal>\P{UnicodeProperty}</literal> are not supported.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        POSIX interprets character classes such as <literal>\w</literal>
+        (see <xref linkend="posix-class-shorthand-escapes-table"/>)
+        according to the prevailing locale (which you can control by
+        attaching a <literal>COLLATE</literal> clause to the operator or
+        function).  XQuery specifies these classes by reference to Unicode
+        character properties, so equivalent behavior is obtained only with
+        a locale that follows the Unicode rules.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The SQL standard (not XQuery itself) attempts to cater for more
+        variants of <quote>newline</quote> than POSIX does.  The
+        newline-sensitive matching options described above consider only
+        ASCII NL (<literal>\n</literal>) to be a newline, but SQL would have
+        us treat CR (<literal>\r</literal>), CRLF (<literal>\r\n</literal>)
+        (a Windows-style newline), and some Unicode-only characters like
+        LINE SEPARATOR (U+2028) as newlines as well.
+        Notably, <literal>.</literal> and <literal>\s</literal> should
+        count <literal>\r\n</literal> as one character not two according to
+        SQL.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Of the character-entry escapes described in
+        <xref linkend="posix-character-entry-escapes-table"/>,
+        XQuery supports only <literal>\n</literal>, <literal>\r</literal>,
+        and <literal>\t</literal>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery does not support
+        the <literal>[:<replaceable>name</replaceable>:]</literal> syntax
+        for character classes within bracket expressions.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        XQuery does not have lookahead or lookbehind constraints,
+        nor any of the constraint escapes described in
+        <xref linkend="posix-constraint-escapes-table"/>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The metasyntax forms described in <xref linkend="posix-metasyntax"/>
+        do not exist in XQuery.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The regular expression flag letters defined by XQuery are
+        related to but not the same as the option letters for POSIX
+        (<xref linkend="posix-embedded-options-table"/>).  While the
+        <literal>i</literal> and <literal>q</literal> options behave the
+        same, others do not:
+        <itemizedlist>
+         <listitem>
+          <para>
+           XQuery's <literal>s</literal> (allow dot to match newline)
+           and <literal>m</literal> (allow <literal>^</literal>
+           and <literal>$</literal> to match at newlines) flags provide
+           access to the same behaviors as
+           POSIX's <literal>n</literal>, <literal>p</literal>
+           and <literal>w</literal> flags, but they
+           do <emphasis>not</emphasis> match the behavior of
+           POSIX's <literal>s</literal> and <literal>m</literal> flags.
+           Note in particular that dot-matches-newline is the default
+           behavior in POSIX but not XQuery.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           XQuery's <literal>x</literal> (ignore whitespace in pattern) flag
+           is noticeably different from POSIX's expanded-mode flag.
+           POSIX's <literal>x</literal> flag also
+           allows <literal>#</literal> to begin a comment in the pattern,
+           and POSIX will not ignore a whitespace character after a
+           backslash.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+   </sect3>
+  </sect2>
+ </sect1>

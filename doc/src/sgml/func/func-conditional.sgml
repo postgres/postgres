@@ -1,0 +1,283 @@
+ <sect1 id="functions-conditional">
+  <title>Conditional Expressions</title>
+
+  <indexterm>
+   <primary>CASE</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>conditional expression</primary>
+  </indexterm>
+
+  <para>
+   This section describes the <acronym>SQL</acronym>-compliant conditional expressions
+   available in <productname>PostgreSQL</productname>.
+  </para>
+
+  <tip>
+   <para>
+    If your needs go beyond the capabilities of these conditional
+    expressions, you might want to consider writing a server-side function
+    in a more expressive programming language.
+   </para>
+  </tip>
+
+   <note>
+    <para>
+     Although <token>COALESCE</token>, <token>GREATEST</token>, and
+     <token>LEAST</token> are syntactically similar to functions, they are
+     not ordinary functions, and thus cannot be used with explicit
+     <token>VARIADIC</token> array arguments.
+    </para>
+   </note>
+
+  <sect2 id="functions-case">
+   <title><literal>CASE</literal></title>
+
+  <para>
+   The <acronym>SQL</acronym> <token>CASE</token> expression is a
+   generic conditional expression, similar to if/else statements in
+   other programming languages:
+
+<synopsis>
+CASE WHEN <replaceable>condition</replaceable> THEN <replaceable>result</replaceable>
+     <optional>WHEN ...</optional>
+     <optional>ELSE <replaceable>result</replaceable></optional>
+END
+</synopsis>
+
+   <token>CASE</token> clauses can be used wherever
+   an expression is valid.  Each <replaceable>condition</replaceable> is an
+   expression that returns a <type>boolean</type> result.  If the condition's
+   result is true, the value of the <token>CASE</token> expression is the
+   <replaceable>result</replaceable> that follows the condition, and the
+   remainder of the <token>CASE</token> expression is not processed.  If the
+   condition's result is not true, any subsequent <token>WHEN</token> clauses
+   are examined in the same manner.  If no <token>WHEN</token>
+   <replaceable>condition</replaceable> yields true, the value of the
+   <token>CASE</token> expression is the <replaceable>result</replaceable> of the
+   <token>ELSE</token> clause.  If the <token>ELSE</token> clause is
+   omitted and no condition is true, the result is null.
+  </para>
+
+   <para>
+    An example:
+<screen>
+SELECT * FROM test;
+
+ a
+---
+ 1
+ 2
+ 3
+
+
+SELECT a,
+       CASE WHEN a=1 THEN 'one'
+            WHEN a=2 THEN 'two'
+            ELSE 'other'
+       END
+    FROM test;
+
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other
+</screen>
+   </para>
+
+  <para>
+   The data types of all the <replaceable>result</replaceable>
+   expressions must be convertible to a single output type.
+   See <xref linkend="typeconv-union-case"/> for more details.
+  </para>
+
+  <para>
+   There is a <quote>simple</quote> form of <token>CASE</token> expression
+   that is a variant of the general form above:
+
+<synopsis>
+CASE <replaceable>expression</replaceable>
+    WHEN <replaceable>value</replaceable> THEN <replaceable>result</replaceable>
+    <optional>WHEN ...</optional>
+    <optional>ELSE <replaceable>result</replaceable></optional>
+END
+</synopsis>
+
+   The first
+   <replaceable>expression</replaceable> is computed, then compared to
+   each of the <replaceable>value</replaceable> expressions in the
+   <token>WHEN</token> clauses until one is found that is equal to it.  If
+   no match is found, the <replaceable>result</replaceable> of the
+   <token>ELSE</token> clause (or a null value) is returned.  This is similar
+   to the <function>switch</function> statement in C.
+  </para>
+
+   <para>
+    The example above can be written using the simple
+    <token>CASE</token> syntax:
+<screen>
+SELECT a,
+       CASE a WHEN 1 THEN 'one'
+              WHEN 2 THEN 'two'
+              ELSE 'other'
+       END
+    FROM test;
+
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other
+</screen>
+   </para>
+
+   <para>
+    A <token>CASE</token> expression does not evaluate any subexpressions
+    that are not needed to determine the result.  For example, this is a
+    possible way of avoiding a division-by-zero failure:
+<programlisting>
+SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
+</programlisting>
+   </para>
+
+   <note>
+    <para>
+     As described in <xref linkend="syntax-express-eval"/>, there are various
+     situations in which subexpressions of an expression are evaluated at
+     different times, so that the principle that <quote><token>CASE</token>
+     evaluates only necessary subexpressions</quote> is not ironclad.  For
+     example a constant <literal>1/0</literal> subexpression will usually result in
+     a division-by-zero failure at planning time, even if it's within
+     a <token>CASE</token> arm that would never be entered at run time.
+    </para>
+   </note>
+  </sect2>
+
+  <sect2 id="functions-coalesce-nvl-ifnull">
+   <title><literal>COALESCE</literal></title>
+
+  <indexterm>
+   <primary>COALESCE</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>NVL</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>IFNULL</primary>
+  </indexterm>
+
+<synopsis>
+<function>COALESCE</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The <function>COALESCE</function> function returns the first of its
+   arguments that is not null.  Null is returned only if all arguments
+   are null.  It is often used to substitute a default value for
+   null values when data is retrieved for display, for example:
+<programlisting>
+SELECT COALESCE(description, short_description, '(none)') ...
+</programlisting>
+   This returns <varname>description</varname> if it is not null, otherwise
+   <varname>short_description</varname> if it is not null, otherwise <literal>(none)</literal>.
+  </para>
+
+   <para>
+    The arguments must all be convertible to a common data type, which
+    will be the type of the result (see
+    <xref linkend="typeconv-union-case"/> for details).
+   </para>
+
+   <para>
+    Like a <token>CASE</token> expression, <function>COALESCE</function> only
+    evaluates the arguments that are needed to determine the result;
+    that is, arguments to the right of the first non-null argument are
+    not evaluated.  This SQL-standard function provides capabilities similar
+    to <function>NVL</function> and <function>IFNULL</function>, which are used in some other
+    database systems.
+   </para>
+  </sect2>
+
+  <sect2 id="functions-nullif">
+   <title><literal>NULLIF</literal></title>
+
+  <indexterm>
+   <primary>NULLIF</primary>
+  </indexterm>
+
+<synopsis>
+<function>NULLIF</function>(<replaceable>value1</replaceable>, <replaceable>value2</replaceable>)
+</synopsis>
+
+  <para>
+   The <function>NULLIF</function> function returns a null value if
+   <replaceable>value1</replaceable> equals <replaceable>value2</replaceable>;
+   otherwise it returns <replaceable>value1</replaceable>.
+   This can be used to perform the inverse operation of the
+   <function>COALESCE</function> example given above:
+<programlisting>
+SELECT NULLIF(value, '(none)') ...
+</programlisting>
+   In this example, if <literal>value</literal> is <literal>(none)</literal>,
+   null is returned, otherwise the value of <literal>value</literal>
+   is returned.
+  </para>
+
+  <para>
+   The two arguments must be of comparable types.
+   To be specific, they are compared exactly as if you had
+   written <literal><replaceable>value1</replaceable>
+   = <replaceable>value2</replaceable></literal>, so there must be a
+   suitable <literal>=</literal> operator available.
+  </para>
+
+  <para>
+   The result has the same type as the first argument &mdash; but there is
+   a subtlety.  What is actually returned is the first argument of the
+   implied <literal>=</literal> operator, and in some cases that will have
+   been promoted to match the second argument's type.  For
+   example, <literal>NULLIF(1, 2.2)</literal> yields <type>numeric</type>,
+   because there is no <type>integer</type> <literal>=</literal>
+   <type>numeric</type> operator,
+   only <type>numeric</type> <literal>=</literal> <type>numeric</type>.
+  </para>
+
+  </sect2>
+
+  <sect2 id="functions-greatest-least">
+   <title><literal>GREATEST</literal> and <literal>LEAST</literal></title>
+
+  <indexterm>
+   <primary>GREATEST</primary>
+  </indexterm>
+  <indexterm>
+   <primary>LEAST</primary>
+  </indexterm>
+
+<synopsis>
+<function>GREATEST</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+</synopsis>
+<synopsis>
+<function>LEAST</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+</synopsis>
+
+   <para>
+    The <function>GREATEST</function> and <function>LEAST</function> functions select the
+    largest or smallest value from a list of any number of expressions.
+    The expressions must all be convertible to a common data type, which
+    will be the type of the result
+    (see <xref linkend="typeconv-union-case"/> for details).
+   </para>
+
+   <para>
+    NULL values in the argument list are ignored.  The result will be NULL
+    only if all the expressions evaluate to NULL.  (This is a deviation from
+    the SQL standard.  According to the standard, the return value is NULL if
+    any argument is NULL.  Some other databases behave this way.)
+   </para>
+  </sect2>
+ </sect1>

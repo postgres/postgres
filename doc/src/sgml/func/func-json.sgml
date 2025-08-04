@@ -1,0 +1,3945 @@
+ <sect1 id="functions-json">
+  <title>JSON Functions and Operators</title>
+
+  <indexterm zone="functions-json">
+   <primary>JSON</primary>
+   <secondary>functions and operators</secondary>
+  </indexterm>
+   <indexterm zone="functions-json">
+    <primary>SQL/JSON</primary>
+    <secondary>functions and expressions</secondary>
+   </indexterm>
+
+  <para>
+   This section describes:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      functions and operators for processing and creating JSON data
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      the SQL/JSON path language
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      the SQL/JSON query functions
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   To provide native support for JSON data types within the SQL environment,
+   <productname>PostgreSQL</productname> implements the
+   <firstterm>SQL/JSON data model</firstterm>.
+   This model comprises sequences of items. Each item can hold SQL scalar
+   values, with an additional SQL/JSON null value, and composite data structures
+   that use JSON arrays and objects. The model is a formalization of the implied
+   data model in the JSON specification
+   <ulink url="https://datatracker.ietf.org/doc/html/rfc7159">RFC 7159</ulink>.
+  </para>
+
+  <para>
+   SQL/JSON allows you to handle JSON data alongside regular SQL data,
+   with transaction support, including:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Uploading JSON data into the database and storing it in
+     regular SQL columns as character or binary strings.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Generating JSON objects and arrays from relational data.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Querying JSON data using SQL/JSON query functions and
+     SQL/JSON path language expressions.
+    </para>
+   </listitem>
+  </itemizedlist>
+  </para>
+
+  <para>
+   To learn more about the SQL/JSON standard, see
+   <xref linkend="sqltr-19075-6"/>. For details on JSON types
+   supported in <productname>PostgreSQL</productname>,
+   see <xref linkend="datatype-json"/>.
+  </para>
+
+  <sect2 id="functions-json-processing">
+   <title>Processing and Creating JSON Data</title>
+
+  <para>
+   <xref linkend="functions-json-op-table"/> shows the operators that
+   are available for use with JSON data types (see <xref
+   linkend="datatype-json"/>).
+   In addition, the usual comparison operators shown in <xref
+   linkend="functions-comparison-op-table"/> are available for
+   <type>jsonb</type>, though not for <type>json</type>.  The comparison
+   operators follow the ordering rules for B-tree operations outlined in
+   <xref linkend="json-indexing"/>.
+   See also <xref linkend="functions-aggregate"/> for the aggregate
+   function <function>json_agg</function> which aggregates record
+   values as JSON, the aggregate function
+   <function>json_object_agg</function> which aggregates pairs of values
+   into a JSON object, and their <type>jsonb</type> equivalents,
+   <function>jsonb_agg</function> and <function>jsonb_object_agg</function>.
+  </para>
+
+  <table id="functions-json-op-table">
+    <title><type>json</type> and <type>jsonb</type> Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>-&gt;</literal> <type>integer</type>
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>-&gt;</literal> <type>integer</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Extracts <parameter>n</parameter>'th element of JSON array
+        (array elements are indexed from zero, but negative integers count
+        from the end).
+       </para>
+       <para>
+        <literal>'[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json -&gt; 2</literal>
+        <returnvalue>{"c":"baz"}</returnvalue>
+       </para>
+       <para>
+        <literal>'[{"a":"foo"},{"b":"bar"},{"c":"baz"}]'::json -&gt; -3</literal>
+        <returnvalue>{"a":"foo"}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>-&gt;</literal> <type>text</type>
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>-&gt;</literal> <type>text</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Extracts JSON object field with the given key.
+       </para>
+       <para>
+        <literal>'{"a": {"b":"foo"}}'::json -&gt; 'a'</literal>
+        <returnvalue>{"b":"foo"}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>-&gt;&gt;</literal> <type>integer</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>-&gt;&gt;</literal> <type>integer</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts <parameter>n</parameter>'th element of JSON array,
+        as <type>text</type>.
+       </para>
+       <para>
+        <literal>'[1,2,3]'::json -&gt;&gt; 2</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>-&gt;&gt;</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>-&gt;&gt;</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts JSON object field with the given key, as <type>text</type>.
+       </para>
+       <para>
+        <literal>'{"a":1,"b":2}'::json -&gt;&gt; 'b'</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>#&gt;</literal> <type>text[]</type>
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>#&gt;</literal> <type>text[]</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Extracts JSON sub-object at the specified path, where path elements
+        can be either field keys or array indexes.
+       </para>
+       <para>
+        <literal>'{"a": {"b": ["foo","bar"]}}'::json #&gt; '{a,b,1}'</literal>
+        <returnvalue>"bar"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>json</type> <literal>#&gt;&gt;</literal> <type>text[]</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>jsonb</type> <literal>#&gt;&gt;</literal> <type>text[]</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts JSON sub-object at the specified path as <type>text</type>.
+       </para>
+       <para>
+        <literal>'{"a": {"b": ["foo","bar"]}}'::json #&gt;&gt; '{a,b,1}'</literal>
+        <returnvalue>bar</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <note>
+   <para>
+    The field/element/path extraction operators return NULL, rather than
+    failing, if the JSON input does not have the right structure to match
+    the request; for example if no such key or array element exists.
+   </para>
+  </note>
+
+  <para>
+   Some further operators exist only for <type>jsonb</type>, as shown
+   in <xref linkend="functions-jsonb-op-table"/>.
+   <xref linkend="json-indexing"/>
+   describes how these operators can be used to effectively search indexed
+   <type>jsonb</type> data.
+  </para>
+
+  <table id="functions-jsonb-op-table">
+    <title>Additional <type>jsonb</type> Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>@&gt;</literal> <type>jsonb</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first JSON value contain the second?
+        (See <xref linkend="json-containment"/> for details about containment.)
+       </para>
+       <para>
+        <literal>'{"a":1, "b":2}'::jsonb &#64;&gt; '{"b":2}'::jsonb</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>&lt;@</literal> <type>jsonb</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first JSON value contained in the second?
+       </para>
+       <para>
+        <literal>'{"b":2}'::jsonb &lt;@ '{"a":1, "b":2}'::jsonb</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>?</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the text string exist as a top-level key or array element within
+        the JSON value?
+       </para>
+       <para>
+        <literal>'{"a":1, "b":2}'::jsonb ? 'b'</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>'["a", "b", "c"]'::jsonb ? 'b'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>?|</literal> <type>text[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do any of the strings in the text array exist as top-level keys or
+        array elements?
+       </para>
+       <para>
+        <literal>'{"a":1, "b":2, "c":3}'::jsonb ?| array['b', 'd']</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>?&amp;</literal> <type>text[]</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do all of the strings in the text array exist as top-level keys or
+        array elements?
+       </para>
+       <para>
+        <literal>'["a", "b", "c"]'::jsonb ?&amp; array['a', 'b']</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>||</literal> <type>jsonb</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Concatenates two <type>jsonb</type> values.
+        Concatenating two arrays generates an array containing all the
+        elements of each input.  Concatenating two objects generates an
+        object containing the union of their
+        keys, taking the second object's value when there are duplicate keys.
+        All other cases are treated by converting a non-array input into a
+        single-element array, and then proceeding as for two arrays.
+        Does not operate recursively: only the top-level array or object
+        structure is merged.
+       </para>
+       <para>
+        <literal>'["a", "b"]'::jsonb || '["a", "d"]'::jsonb</literal>
+        <returnvalue>["a", "b", "a", "d"]</returnvalue>
+       </para>
+       <para>
+        <literal>'{"a": "b"}'::jsonb || '{"c": "d"}'::jsonb</literal>
+        <returnvalue>{"a": "b", "c": "d"}</returnvalue>
+       </para>
+       <para>
+        <literal>'[1, 2]'::jsonb || '3'::jsonb</literal>
+        <returnvalue>[1, 2, 3]</returnvalue>
+       </para>
+       <para>
+        <literal>'{"a": "b"}'::jsonb || '42'::jsonb</literal>
+        <returnvalue>[{"a": "b"}, 42]</returnvalue>
+       </para>
+       <para>
+        To append an array to another array as a single entry, wrap it
+        in an additional layer of array, for example:
+       </para>
+       <para>
+        <literal>'[1, 2]'::jsonb || jsonb_build_array('[3, 4]'::jsonb)</literal>
+        <returnvalue>[1, 2, [3, 4]]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>-</literal> <type>text</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Deletes a key (and its value) from a JSON object, or matching string
+        value(s) from a JSON array.
+       </para>
+       <para>
+        <literal>'{"a": "b", "c": "d"}'::jsonb - 'a'</literal>
+        <returnvalue>{"c": "d"}</returnvalue>
+       </para>
+       <para>
+        <literal>'["a", "b", "c", "b"]'::jsonb - 'b'</literal>
+        <returnvalue>["a", "c"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>-</literal> <type>text[]</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Deletes all matching keys or array elements from the left operand.
+       </para>
+       <para>
+        <literal>'{"a": "b", "c": "d"}'::jsonb - '{a,c}'::text[]</literal>
+        <returnvalue>{}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>-</literal> <type>integer</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Deletes the array element with specified index (negative
+        integers count from the end).  Throws an error if JSON value
+        is not an array.
+       </para>
+       <para>
+        <literal>'["a", "b"]'::jsonb - 1 </literal>
+        <returnvalue>["a"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>#-</literal> <type>text[]</type>
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Deletes the field or array element at the specified path, where path
+        elements can be either field keys or array indexes.
+       </para>
+       <para>
+        <literal>'["a", {"b":1}]'::jsonb #- '{1,b}'</literal>
+        <returnvalue>["a", {}]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>@?</literal> <type>jsonpath</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does JSON path return any item for the specified JSON value?
+        (This is useful only with SQL-standard JSON path expressions, not
+        <link linkend="functions-sqljson-check-expressions">predicate check
+        expressions</link>, since those always return a value.)
+       </para>
+       <para>
+        <literal>'{"a":[1,2,3,4,5]}'::jsonb @? '$.a[*] ? (@ > 2)'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>jsonb</type> <literal>@@</literal> <type>jsonpath</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns the result of a JSON path predicate check for the
+        specified JSON value.
+        (This is useful only
+        with <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link>, not SQL-standard JSON path expressions,
+        since it will return <literal>NULL</literal> if the path result is
+        not a single boolean value.)
+       </para>
+       <para>
+        <literal>'{"a":[1,2,3,4,5]}'::jsonb @@ '$.a[*] > 2'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <note>
+   <para>
+    The <type>jsonpath</type> operators <literal>@?</literal>
+    and <literal>@@</literal> suppress the following errors: missing object
+    field or array element, unexpected JSON item type, datetime and numeric
+    errors.  The <type>jsonpath</type>-related functions described below can
+    also be told to suppress these types of errors.  This behavior might be
+    helpful when searching JSON document collections of varying structure.
+   </para>
+  </note>
+
+  <para>
+   <xref linkend="functions-json-creation-table"/> shows the functions that are
+   available for constructing <type>json</type> and <type>jsonb</type> values.
+   Some functions in this table have a <literal>RETURNING</literal> clause,
+   which specifies the data type returned.  It must be one of <type>json</type>,
+   <type>jsonb</type>, <type>bytea</type>, a character string type (<type>text</type>,
+   <type>char</type>, or <type>varchar</type>), or a type
+   that can be cast to <type>json</type>.
+   By default, the <type>json</type> type is returned.
+  </para>
+
+  <table id="functions-json-creation-table">
+    <title>JSON Creation Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_json</primary>
+        </indexterm>
+        <function>to_json</function> ( <type>anyelement</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>to_jsonb</primary>
+        </indexterm>
+        <function>to_jsonb</function> ( <type>anyelement</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Converts any SQL value to <type>json</type> or <type>jsonb</type>.
+        Arrays and composites are converted recursively to arrays and
+        objects (multidimensional arrays become arrays of arrays in JSON).
+        Otherwise, if there is a cast from the SQL data type
+        to <type>json</type>, the cast function will be used to perform the
+        conversion;<footnote>
+         <para>
+          For example, the <xref linkend="hstore"/> extension has a cast
+          from <type>hstore</type> to <type>json</type>, so that
+          <type>hstore</type> values converted via the JSON creation functions
+          will be represented as JSON objects, not as primitive string values.
+         </para>
+        </footnote>
+        otherwise, a scalar JSON value is produced.  For any scalar other than
+        a number, a Boolean, or a null value, the text representation will be
+        used, with escaping as necessary to make it a valid JSON string value.
+       </para>
+       <para>
+        <literal>to_json('Fred said "Hi."'::text)</literal>
+        <returnvalue>"Fred said \"Hi.\""</returnvalue>
+       </para>
+       <para>
+        <literal>to_jsonb(row(42, 'Fred said "Hi."'::text))</literal>
+        <returnvalue>{"f1": 42, "f2": "Fred said \"Hi.\""}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_to_json</primary>
+        </indexterm>
+        <function>array_to_json</function> ( <type>anyarray</type> <optional>, <type>boolean</type> </optional> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para>
+        Converts an SQL array to a JSON array.  The behavior is the same
+        as <function>to_json</function> except that line feeds will be added
+        between top-level array elements if the optional boolean parameter is
+        true.
+       </para>
+       <para>
+        <literal>array_to_json('{{1,5},{99,100}}'::int[])</literal>
+        <returnvalue>[[1,5],[99,100]]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <!--
+           Note that this is barely legible in the output; it looks like a
+           salad of braces and brackets.  It would be better to split it out
+           in multiple lines, but that's surprisingly hard to do in a way that
+           matches in HTML and PDF output.  Other standard SQL/JSON functions
+           have the same problem.
+         -->
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_array</primary></indexterm>
+         <function>json_array</function> (
+         <optional> { <replaceable>value_expression</replaceable> <optional> <literal>FORMAT JSON</literal> </optional> } <optional>, ...</optional> </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para role="func_signature">
+         <function>json_array</function> (
+         <optional> <replaceable>query_expression</replaceable> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Constructs a JSON array from either a series of
+         <replaceable>value_expression</replaceable> parameters or from the results
+         of <replaceable>query_expression</replaceable>,
+         which must be a SELECT query returning a single column. If
+         <literal>ABSENT ON NULL</literal> is specified, NULL values are ignored.
+         This is always the case if a
+         <replaceable>query_expression</replaceable> is used.
+        </para>
+        <para>
+         <literal>json_array(1,true,json '{"a":null}')</literal>
+         <returnvalue>[1, true, {"a":null}]</returnvalue>
+        </para>
+        <para>
+         <literal>json_array(SELECT * FROM (VALUES(1),(2)) t)</literal>
+         <returnvalue>[1, 2]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>row_to_json</primary>
+        </indexterm>
+        <function>row_to_json</function> ( <type>record</type> <optional>, <type>boolean</type> </optional> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para>
+        Converts an SQL composite value to a JSON object.  The behavior is the
+        same as <function>to_json</function> except that line feeds will be
+        added between top-level elements if the optional boolean parameter is
+        true.
+       </para>
+       <para>
+        <literal>row_to_json(row(1,'foo'))</literal>
+        <returnvalue>{"f1":1,"f2":"foo"}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_build_array</primary>
+        </indexterm>
+        <function>json_build_array</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_build_array</primary>
+        </indexterm>
+        <function>jsonb_build_array</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Builds a possibly-heterogeneously-typed JSON array out of a variadic
+        argument list.  Each argument is converted as
+        per <function>to_json</function> or <function>to_jsonb</function>.
+       </para>
+       <para>
+        <literal>json_build_array(1, 2, 'foo', 4, 5)</literal>
+        <returnvalue>[1, 2, "foo", 4, 5]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_build_object</primary>
+        </indexterm>
+        <function>json_build_object</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_build_object</primary>
+        </indexterm>
+        <function>jsonb_build_object</function> ( <literal>VARIADIC</literal> <type>"any"</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Builds a JSON object out of a variadic argument list.  By convention,
+        the argument list consists of alternating keys and values.  Key
+        arguments are coerced to text; value arguments are converted as
+        per <function>to_json</function> or <function>to_jsonb</function>.
+       </para>
+       <para>
+        <literal>json_build_object('foo', 1, 2, row(3,'bar'))</literal>
+        <returnvalue>{"foo" : 1, "2" : {"f1":3,"f2":"bar"}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+         <indexterm><primary>json_object</primary></indexterm>
+         <function>json_object</function> (
+         <optional> { <replaceable>key_expression</replaceable> { <literal>VALUE</literal> | ':' }
+          <replaceable>value_expression</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> }<optional>, ...</optional> </optional>
+         <optional> { <literal>NULL</literal> | <literal>ABSENT</literal> } <literal>ON NULL</literal> </optional>
+         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+         <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>)
+        </para>
+        <para>
+         Constructs a JSON object of all the key/value pairs given,
+         or an empty object if none are given.
+         <replaceable>key_expression</replaceable> is a scalar expression
+         defining the <acronym>JSON</acronym> key, which is
+         converted to the <type>text</type> type.
+         It cannot be <literal>NULL</literal> nor can it
+         belong to a type that has a cast to the <type>json</type> type.
+         If <literal>WITH UNIQUE KEYS</literal> is specified, there must not
+         be any duplicate <replaceable>key_expression</replaceable>.
+         Any pair for which the <replaceable>value_expression</replaceable>
+         evaluates to <literal>NULL</literal> is omitted from the output
+         if <literal>ABSENT ON NULL</literal> is specified;
+         if <literal>NULL ON NULL</literal> is specified or the clause
+         omitted, the key is included with value <literal>NULL</literal>.
+        </para>
+        <para>
+         <literal>json_object('code' VALUE 'P123', 'title': 'Jaws')</literal>
+         <returnvalue>{"code" : "P123", "title" : "Jaws"}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object</primary>
+        </indexterm>
+        <function>json_object</function> ( <type>text[]</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object</primary>
+        </indexterm>
+        <function>jsonb_object</function> ( <type>text[]</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Builds a JSON object out of a text array.  The array must have either
+        exactly one dimension with an even number of members, in which case
+        they are taken as alternating key/value pairs, or two dimensions
+        such that each inner array has exactly two elements, which
+        are taken as a key/value pair.  All values are converted to JSON
+        strings.
+       </para>
+       <para>
+        <literal>json_object('{a, 1, b, "def", c, 3.5}')</literal>
+        <returnvalue>{"a" : "1", "b" : "def", "c" : "3.5"}</returnvalue>
+       </para>
+        <para><literal>json_object('{{a, 1}, {b, "def"}, {c, 3.5}}')</literal>
+        <returnvalue>{"a" : "1", "b" : "def", "c" : "3.5"}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>json_object</function> ( <parameter>keys</parameter> <type>text[]</type>, <parameter>values</parameter> <type>text[]</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>jsonb_object</function> ( <parameter>keys</parameter> <type>text[]</type>, <parameter>values</parameter> <type>text[]</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        This form of <function>json_object</function> takes keys and values
+        pairwise from separate text arrays.  Otherwise it is identical to
+        the one-argument form.
+       </para>
+       <para>
+        <literal>json_object('{a,b}', '{1,2}')</literal>
+        <returnvalue>{"a": "1", "b": "2"}</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm><primary>json constructor</primary></indexterm>
+         <function>json</function> (
+         <replaceable>expression</replaceable>
+         <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional></optional>
+         <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional></optional> )
+         <returnvalue>json</returnvalue>
+        </para>
+        <para>
+         Converts a given expression specified as <type>text</type> or
+         <type>bytea</type> string (in UTF8 encoding) into a JSON
+         value.  If <replaceable>expression</replaceable> is NULL, an
+         <acronym>SQL</acronym> null value is returned.
+         If <literal>WITH UNIQUE</literal> is specified, the
+         <replaceable>expression</replaceable> must not contain any duplicate
+         object keys.
+        </para>
+        <para>
+         <literal>json('{"a":123, "b":[true,"foo"], "a":"bar"}')</literal>
+         <returnvalue>{"a":123, "b":[true,"foo"], "a":"bar"}</returnvalue>
+        </para>
+       </entry>
+      </row>
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+        <indexterm><primary>json_scalar</primary></indexterm>
+        <function>json_scalar</function> ( <replaceable>expression</replaceable> )
+       </para>
+       <para>
+        Converts a given SQL scalar value into a JSON scalar value.
+        If the input is NULL, an <acronym>SQL</acronym> null is returned. If
+        the input is number or a boolean value, a corresponding JSON number
+        or boolean value is returned. For any other value, a JSON string is
+        returned.
+       </para>
+       <para>
+        <literal>json_scalar(123.45)</literal>
+        <returnvalue>123.45</returnvalue>
+       </para>
+       <para>
+        <literal>json_scalar(CURRENT_TIMESTAMP)</literal>
+        <returnvalue>"2022-05-10T10:51:04.62128-04:00"</returnvalue>
+      </para></entry>
+     </row>
+     <row>
+      <entry role="func_table_entry">
+       <para role="func_signature">
+        <function>json_serialize</function> (
+        <replaceable>expression</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional>
+        <optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional> )
+       </para>
+       <para>
+        Converts an SQL/JSON expression into a character or binary string. The
+        <replaceable>expression</replaceable> can be of any JSON type, any
+        character string type, or <type>bytea</type> in UTF8 encoding.
+        The returned type used in <literal> RETURNING</literal> can be any
+        character string type or <type>bytea</type>. The default is
+        <type>text</type>.
+       </para>
+       <para>
+        <literal>json_serialize('{ "a" : 1 } ' RETURNING bytea)</literal>
+        <returnvalue>\x7b20226122203a2031207d20</returnvalue>
+      </para></entry>
+     </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   <xref linkend="functions-sqljson-misc" /> details SQL/JSON
+   facilities for testing JSON.
+  </para>
+
+  <table id="functions-sqljson-misc">
+   <title>SQL/JSON Testing Functions</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        Function signature
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+      </para></entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>IS JSON</primary></indexterm>
+        <replaceable>expression</replaceable> <literal>IS</literal> <optional> <literal>NOT</literal> </optional> <literal>JSON</literal>
+        <optional> { <literal>VALUE</literal> | <literal>SCALAR</literal> | <literal>ARRAY</literal> | <literal>OBJECT</literal> } </optional>
+        <optional> { <literal>WITH</literal> | <literal>WITHOUT</literal> } <literal>UNIQUE</literal> <optional> <literal>KEYS</literal> </optional> </optional>
+       </para>
+       <para>
+        This predicate tests whether <replaceable>expression</replaceable> can be
+        parsed as JSON, possibly of a specified type.
+        If <literal>SCALAR</literal> or <literal>ARRAY</literal> or
+        <literal>OBJECT</literal> is specified, the
+        test is whether or not the JSON is of that particular type. If
+        <literal>WITH UNIQUE KEYS</literal> is specified, then any object in the
+        <replaceable>expression</replaceable> is also tested to see if it
+        has duplicate keys.
+       </para>
+       <para>
+<programlisting>
+SELECT js,
+  js IS JSON "json?",
+  js IS JSON SCALAR "scalar?",
+  js IS JSON OBJECT "object?",
+  js IS JSON ARRAY "array?"
+FROM (VALUES
+      ('123'), ('"abc"'), ('{"a": "b"}'), ('[1,2]'),('abc')) foo(js);
+     js     | json? | scalar? | object? | array?
+------------+-------+---------+---------+--------
+ 123        | t     | t       | f       | f
+ "abc"      | t     | t       | f       | f
+ {"a": "b"} | t     | f       | t       | f
+ [1,2]      | t     | f       | f       | t
+ abc        | f     | f       | f       | f
+</programlisting>
+       </para>
+       <para>
+<programlisting>
+SELECT js,
+  js IS JSON OBJECT "object?",
+  js IS JSON ARRAY "array?",
+  js IS JSON ARRAY WITH UNIQUE KEYS "array w. UK?",
+  js IS JSON ARRAY WITHOUT UNIQUE KEYS "array w/o UK?"
+FROM (VALUES ('[{"a":"1"},
+ {"b":"2","b":"3"}]')) foo(js);
+-[ RECORD 1 ]-+--------------------
+js            | [{"a":"1"},        +
+              |  {"b":"2","b":"3"}]
+object?       | f
+array?        | t
+array w. UK?  | f
+array w/o UK? | t
+</programlisting>
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   <xref linkend="functions-json-processing-table"/> shows the functions that
+   are available for processing <type>json</type> and <type>jsonb</type> values.
+  </para>
+
+  <table id="functions-json-processing-table">
+    <title>JSON Processing Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_array_elements</primary>
+        </indexterm>
+        <function>json_array_elements</function> ( <type>json</type> )
+        <returnvalue>setof json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_array_elements</primary>
+        </indexterm>
+        <function>jsonb_array_elements</function> ( <type>jsonb</type> )
+        <returnvalue>setof jsonb</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON array into a set of JSON values.
+       </para>
+       <para>
+        <literal>select * from json_array_elements('[1,true, [2,false]]')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+   value
+-----------
+ 1
+ true
+ [2,false]
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_array_elements_text</primary>
+        </indexterm>
+        <function>json_array_elements_text</function> ( <type>json</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_array_elements_text</primary>
+        </indexterm>
+        <function>jsonb_array_elements_text</function> ( <type>jsonb</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON array into a set of <type>text</type> values.
+       </para>
+       <para>
+        <literal>select * from json_array_elements_text('["foo", "bar"]')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+   value
+-----------
+ foo
+ bar
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_array_length</primary>
+        </indexterm>
+        <function>json_array_length</function> ( <type>json</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_array_length</primary>
+        </indexterm>
+        <function>jsonb_array_length</function> ( <type>jsonb</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of elements in the top-level JSON array.
+       </para>
+       <para>
+        <literal>json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]')</literal>
+        <returnvalue>5</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_array_length('[]')</literal>
+        <returnvalue>0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_each</primary>
+        </indexterm>
+        <function>json_each</function> ( <type>json</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>json</type> )
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_each</primary>
+        </indexterm>
+        <function>jsonb_each</function> ( <type>jsonb</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>jsonb</type> )
+       </para>
+       <para>
+        Expands the top-level JSON object into a set of key/value pairs.
+       </para>
+       <para>
+        <literal>select * from json_each('{"a":"foo", "b":"bar"}')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ key | value
+-----+-------
+ a   | "foo"
+ b   | "bar"
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_each_text</primary>
+        </indexterm>
+        <function>json_each_text</function> ( <type>json</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>text</type> )
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_each_text</primary>
+        </indexterm>
+        <function>jsonb_each_text</function> ( <type>jsonb</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>key</parameter> <type>text</type>,
+        <parameter>value</parameter> <type>text</type> )
+       </para>
+       <para>
+        Expands the top-level JSON object into a set of key/value pairs.
+        The returned <parameter>value</parameter>s will be of
+        type <type>text</type>.
+       </para>
+       <para>
+        <literal>select * from json_each_text('{"a":"foo", "b":"bar"}')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ key | value
+-----+-------
+ a   | foo
+ b   | bar
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_extract_path</primary>
+        </indexterm>
+        <function>json_extract_path</function> ( <parameter>from_json</parameter> <type>json</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_extract_path</primary>
+        </indexterm>
+        <function>jsonb_extract_path</function> ( <parameter>from_json</parameter> <type>jsonb</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Extracts JSON sub-object at the specified path.
+        (This is functionally equivalent to the <literal>#&gt;</literal>
+        operator, but writing the path out as a variadic list can be more
+        convenient in some cases.)
+       </para>
+       <para>
+        <literal>json_extract_path('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}', 'f4', 'f6')</literal>
+        <returnvalue>"foo"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_extract_path_text</primary>
+        </indexterm>
+        <function>json_extract_path_text</function> ( <parameter>from_json</parameter> <type>json</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_extract_path_text</primary>
+        </indexterm>
+        <function>jsonb_extract_path_text</function> ( <parameter>from_json</parameter> <type>jsonb</type>, <literal>VARIADIC</literal> <parameter>path_elems</parameter> <type>text[]</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts JSON sub-object at the specified path as <type>text</type>.
+        (This is functionally equivalent to the <literal>#&gt;&gt;</literal>
+        operator.)
+       </para>
+       <para>
+        <literal>json_extract_path_text('{"f2":{"f3":1},"f4":{"f5":99,"f6":"foo"}}', 'f4', 'f6')</literal>
+        <returnvalue>foo</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_object_keys</primary>
+        </indexterm>
+        <function>json_object_keys</function> ( <type>json</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_object_keys</primary>
+        </indexterm>
+        <function>jsonb_object_keys</function> ( <type>jsonb</type> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Returns the set of keys in the top-level JSON object.
+       </para>
+       <para>
+        <literal>select * from json_object_keys('{"f1":"abc","f2":{"f3":"a", "f4":"b"}}')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ json_object_keys
+------------------
+ f1
+ f2
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_populate_record</primary>
+        </indexterm>
+        <function>json_populate_record</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_populate_record</primary>
+        </indexterm>
+        <function>jsonb_populate_record</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>jsonb</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON object to a row having the composite type
+        of the <parameter>base</parameter> argument.  The JSON object
+        is scanned for fields whose names match column names of the output row
+        type, and their values are inserted into those columns of the output.
+        (Fields that do not correspond to any output column name are ignored.)
+        In typical use, the value of <parameter>base</parameter> is just
+        <literal>NULL</literal>, which means that any output columns that do
+        not match any object field will be filled with nulls.  However,
+        if <parameter>base</parameter> isn't <literal>NULL</literal> then
+        the values it contains will be used for unmatched columns.
+       </para>
+       <para>
+        To convert a JSON value to the SQL type of an output column, the
+        following rules are applied in sequence:
+        <itemizedlist spacing="compact">
+         <listitem>
+          <para>
+           A JSON null value is converted to an SQL null in all cases.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If the output column is of type <type>json</type>
+           or <type>jsonb</type>, the JSON value is just reproduced exactly.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           If the output column is a composite (row) type, and the JSON value
+           is a JSON object, the fields of the object are converted to columns
+           of the output row type by recursive application of these rules.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           Likewise, if the output column is an array type and the JSON value
+           is a JSON array, the elements of the JSON array are converted to
+           elements of the output array by recursive application of these
+           rules.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           Otherwise, if the JSON value is a string, the contents of the
+           string are fed to the input conversion function for the column's
+           data type.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           Otherwise, the ordinary text representation of the JSON value is
+           fed to the input conversion function for the column's data type.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para>
+       <para>
+        While the example below uses a constant JSON value, typical use would
+        be to reference a <type>json</type> or <type>jsonb</type> column
+        laterally from another table in the query's <literal>FROM</literal>
+        clause.  Writing <function>json_populate_record</function> in
+        the <literal>FROM</literal> clause is good practice, since all of the
+        extracted columns are available for use without duplicate function
+        calls.
+       </para>
+       <para>
+        <literal>create type subrowtype as (d int, e text);</literal>
+        <literal>create type myrowtype as (a int, b text[], c subrowtype);</literal>
+       </para>
+       <para>
+        <literal>select * from json_populate_record(null::myrowtype,
+         '{"a": 1, "b": ["2", "a b"], "c": {"d": 4, "e": "a  b c"}, "x": "foo"}')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a |   b       |      c
+---+-----------+-------------
+ 1 | {2,"a b"} | (4,"a b c")
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_populate_record_valid</primary>
+        </indexterm>
+        <function>jsonb_populate_record_valid</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Function for testing <function>jsonb_populate_record</function>.  Returns
+        <literal>true</literal> if the input <function>jsonb_populate_record</function>
+        would finish without an error for the given input JSON object; that is, it's
+        valid input, <literal>false</literal> otherwise.
+       </para>
+       <para>
+        <literal>create type jsb_char2 as (a char(2));</literal>
+       </para>
+       <para>
+        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aaa"}');</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ jsonb_populate_record_valid
+-----------------------------
+ f
+(1 row)
+</programlisting>
+
+        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aaa"}') q;</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ERROR:  value too long for type character(2)
+</programlisting>
+        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aa"}');</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ jsonb_populate_record_valid
+-----------------------------
+ t
+(1 row)
+</programlisting>
+
+        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aa"}') q;</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a
+----
+ aa
+(1 row)
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_populate_recordset</primary>
+        </indexterm>
+        <function>json_populate_recordset</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>json</type> )
+        <returnvalue>setof anyelement</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_populate_recordset</primary>
+        </indexterm>
+        <function>jsonb_populate_recordset</function> ( <parameter>base</parameter> <type>anyelement</type>, <parameter>from_json</parameter> <type>jsonb</type> )
+        <returnvalue>setof anyelement</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON array of objects to a set of rows having
+        the composite type of the <parameter>base</parameter> argument.
+        Each element of the JSON array is processed as described above
+        for <function>json[b]_populate_record</function>.
+       </para>
+       <para>
+        <literal>create type twoints as (a int, b int);</literal>
+       </para>
+       <para>
+        <literal>select * from json_populate_recordset(null::twoints, '[{"a":1,"b":2}, {"a":3,"b":4}]')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a | b
+---+---
+ 1 | 2
+ 3 | 4
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_to_record</primary>
+        </indexterm>
+        <function>json_to_record</function> ( <type>json</type> )
+        <returnvalue>record</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_to_record</primary>
+        </indexterm>
+        <function>jsonb_to_record</function> ( <type>jsonb</type> )
+        <returnvalue>record</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON object to a row having the composite type
+        defined by an <literal>AS</literal> clause.  (As with all functions
+        returning <type>record</type>, the calling query must explicitly
+        define the structure of the record with an <literal>AS</literal>
+        clause.)  The output record is filled from fields of the JSON object,
+        in the same way as described above
+        for <function>json[b]_populate_record</function>.  Since there is no
+        input record value, unmatched columns are always filled with nulls.
+       </para>
+       <para>
+        <literal>create type myrowtype as (a int, b text);</literal>
+       </para>
+       <para>
+        <literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":[1,2,3],"e":"bar","r": {"a": 123, "b": "a b c"}}') as x(a int, b text, c int[], d text, r myrowtype)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a |    b    |    c    | d |       r
+---+---------+---------+---+---------------
+ 1 | [1,2,3] | {1,2,3} |   | (123,"a b c")
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_to_recordset</primary>
+        </indexterm>
+        <function>json_to_recordset</function> ( <type>json</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_to_recordset</primary>
+        </indexterm>
+        <function>jsonb_to_recordset</function> ( <type>jsonb</type> )
+        <returnvalue>setof record</returnvalue>
+       </para>
+       <para>
+        Expands the top-level JSON array of objects to a set of rows having
+        the composite type defined by an <literal>AS</literal> clause.  (As
+        with all functions returning <type>record</type>, the calling query
+        must explicitly define the structure of the record with
+        an <literal>AS</literal> clause.)  Each element of the JSON array is
+        processed as described above
+        for <function>json[b]_populate_record</function>.
+       </para>
+       <para>
+        <literal>select * from json_to_recordset('[{"a":1,"b":"foo"}, {"a":"2","c":"bar"}]') as x(a int, b text)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a |  b
+---+-----
+ 1 | foo
+ 2 |
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_set</primary>
+        </indexterm>
+        <function>jsonb_set</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> </optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>target</parameter>
+        with the item designated by <parameter>path</parameter>
+        replaced by <parameter>new_value</parameter>, or with
+        <parameter>new_value</parameter> added if
+        <parameter>create_if_missing</parameter> is true (which is the
+        default) and the item designated by <parameter>path</parameter>
+        does not exist.
+        All earlier steps in the path must exist, or
+        the <parameter>target</parameter> is returned unchanged.
+        As with the path oriented operators, negative integers that
+        appear in the <parameter>path</parameter> count from the end
+        of JSON arrays.
+        If the last path step is an array index that is out of range,
+        and <parameter>create_if_missing</parameter> is true, the new
+        value is added at the beginning of the array if the index is negative,
+        or at the end of the array if it is positive.
+       </para>
+       <para>
+        <literal>jsonb_set('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', '[2,3,4]', false)</literal>
+        <returnvalue>[{"f1": [2, 3, 4], "f2": null}, 2, null, 3]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_set('[{"f1":1,"f2":null},2]', '{0,f3}', '[2,3,4]')</literal>
+        <returnvalue>[{"f1": 1, "f2": null, "f3": [2, 3, 4]}, 2]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_set_lax</primary>
+        </indexterm>
+        <function>jsonb_set_lax</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>create_if_missing</parameter> <type>boolean</type> <optional>, <parameter>null_value_treatment</parameter> <type>text</type> </optional></optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        If <parameter>new_value</parameter> is not <literal>NULL</literal>,
+        behaves identically to <literal>jsonb_set</literal>. Otherwise behaves
+        according to the value
+        of <parameter>null_value_treatment</parameter> which must be one
+        of <literal>'raise_exception'</literal>,
+        <literal>'use_json_null'</literal>, <literal>'delete_key'</literal>, or
+        <literal>'return_target'</literal>. The default is
+        <literal>'use_json_null'</literal>.
+       </para>
+       <para>
+        <literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', null)</literal>
+        <returnvalue>[{"f1": null, "f2": null}, 2, null, 3]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}', null, true, 'return_target')</literal>
+        <returnvalue>[{"f1": 99, "f2": null}, 2]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_insert</primary>
+        </indexterm>
+        <function>jsonb_insert</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>text[]</type>, <parameter>new_value</parameter> <type>jsonb</type> <optional>, <parameter>insert_after</parameter> <type>boolean</type> </optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>target</parameter>
+        with <parameter>new_value</parameter> inserted.  If the item
+        designated by the <parameter>path</parameter> is an array
+        element, <parameter>new_value</parameter> will be inserted before
+        that item if <parameter>insert_after</parameter> is false (which
+        is the default), or after it
+        if <parameter>insert_after</parameter> is true.  If the item
+        designated by the <parameter>path</parameter> is an object
+        field, <parameter>new_value</parameter> will be inserted only if
+        the object does not already contain that key.
+        All earlier steps in the path must exist, or
+        the <parameter>target</parameter> is returned unchanged.
+        As with the path oriented operators, negative integers that
+        appear in the <parameter>path</parameter> count from the end
+        of JSON arrays.
+        If the last path step is an array index that is out of range, the new
+        value is added at the beginning of the array if the index is negative,
+        or at the end of the array if it is positive.
+       </para>
+       <para>
+        <literal>jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"')</literal>
+        <returnvalue>{"a": [0, "new_value", 1, 2]}</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_insert('{"a": [0,1,2]}', '{a, 1}', '"new_value"', true)</literal>
+        <returnvalue>{"a": [0, 1, "new_value", 2]}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_strip_nulls</primary>
+        </indexterm>
+        <function>json_strip_nulls</function> ( <parameter>target</parameter> <type>json</type> <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
+        <returnvalue>json</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_strip_nulls</primary>
+        </indexterm>
+        <function>jsonb_strip_nulls</function> ( <parameter>target</parameter> <type>jsonb</type> <optional>,<parameter>strip_in_arrays</parameter> <type>boolean</type> </optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Deletes all object fields that have null values from the given JSON
+        value, recursively.
+        If <parameter>strip_in_arrays</parameter> is true (the default is false),
+        null array elements are also stripped.
+        Otherwise they are not stripped. Bare null values are never stripped.
+       </para>
+       <para>
+        <literal>json_strip_nulls('[{"f1":1, "f2":null}, 2, null, 3]')</literal>
+        <returnvalue>[{"f1":1},2,null,3]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_strip_nulls('[1,2,null,3,4]', true);</literal>
+        <returnvalue>[1,2,3,4]</returnvalue>
+       </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_exists</primary>
+        </indexterm>
+        <function>jsonb_path_exists</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Checks whether the JSON path returns any item for the specified JSON
+        value.
+        (This is useful only with SQL-standard JSON path expressions, not
+        <link linkend="functions-sqljson-check-expressions">predicate check
+        expressions</link>, since those always return a value.)
+        If the <parameter>vars</parameter> argument is specified, it must
+        be a JSON object, and its fields provide named values to be
+        substituted into the <type>jsonpath</type> expression.
+        If the <parameter>silent</parameter> argument is specified and
+        is <literal>true</literal>, the function suppresses the same errors
+        as the <literal>@?</literal> and <literal>@@</literal> operators do.
+       </para>
+       <para>
+        <literal>jsonb_path_exists('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_match</primary>
+        </indexterm>
+        <function>jsonb_path_match</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns the SQL boolean result of a JSON path predicate check
+        for the specified JSON value.
+        (This is useful only
+        with <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link>, not SQL-standard JSON path expressions,
+        since it will either fail or return <literal>NULL</literal> if the
+        path result is not a single boolean value.)
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
+        for <function>jsonb_path_exists</function>.
+       </para>
+       <para>
+        <literal>jsonb_path_match('{"a":[1,2,3,4,5]}', 'exists($.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max))', '{"min":2, "max":4}')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query</primary>
+        </indexterm>
+        <function>jsonb_path_query</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>setof jsonb</returnvalue>
+       </para>
+       <para>
+        Returns all JSON items returned by the JSON path for the specified
+        JSON value.
+        For SQL-standard JSON path expressions it returns the JSON
+        values selected from <parameter>target</parameter>.
+        For <link linkend="functions-sqljson-check-expressions">predicate
+        check expressions</link> it returns the result of the predicate
+        check: <literal>true</literal>, <literal>false</literal>,
+        or <literal>null</literal>.
+        The optional <parameter>vars</parameter>
+        and <parameter>silent</parameter> arguments act the same as
+        for <function>jsonb_path_exists</function>.
+       </para>
+       <para>
+        <literal>select * from jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ jsonb_path_query
+------------------
+ 2
+ 3
+ 4
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query_array</primary>
+        </indexterm>
+        <function>jsonb_path_query_array</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Returns all JSON items returned by the JSON path for the specified
+        JSON value, as a JSON array.
+        The parameters are the same as
+        for <function>jsonb_path_query</function>.
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
+        <returnvalue>[2, 3, 4]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query_first</primary>
+        </indexterm>
+        <function>jsonb_path_query_first</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        Returns the first JSON item returned by the JSON path for the
+        specified JSON value, or <literal>NULL</literal> if there are no
+        results.
+        The parameters are the same as
+        for <function>jsonb_path_query</function>.
+       </para>
+       <para>
+        <literal>jsonb_path_query_first('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_exists_tz</primary>
+        </indexterm>
+        <function>jsonb_path_exists_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_match_tz</primary>
+        </indexterm>
+        <function>jsonb_path_match_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query_tz</primary>
+        </indexterm>
+        <function>jsonb_path_query_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>setof jsonb</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query_array_tz</primary>
+        </indexterm>
+        <function>jsonb_path_query_array_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_path_query_first_tz</primary>
+        </indexterm>
+        <function>jsonb_path_query_first_tz</function> ( <parameter>target</parameter> <type>jsonb</type>, <parameter>path</parameter> <type>jsonpath</type> <optional>, <parameter>vars</parameter> <type>jsonb</type> <optional>, <parameter>silent</parameter> <type>boolean</type> </optional></optional> )
+        <returnvalue>jsonb</returnvalue>
+       </para>
+       <para>
+        These functions act like their counterparts described above without
+        the <literal>_tz</literal> suffix, except that these functions support
+        comparisons of date/time values that require timezone-aware
+        conversions.  The example below requires interpretation of the
+        date-only value <literal>2015-08-02</literal> as a timestamp with time
+        zone, so the result depends on the current
+        <xref linkend="guc-timezone"/> setting.  Due to this dependency, these
+        functions are marked as stable, which means these functions cannot be
+        used in indexes.  Their counterparts are immutable, and so can be used
+        in indexes; but they will throw errors if asked to make such
+        comparisons.
+       </para>
+       <para>
+        <literal>jsonb_path_exists_tz('["2015-08-01 12:00:00-05"]', '$[*] ? (@.datetime() &lt; "2015-08-02".datetime())')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>jsonb_pretty</primary>
+        </indexterm>
+        <function>jsonb_pretty</function> ( <type>jsonb</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the given JSON value to pretty-printed, indented text.
+       </para>
+       <para>
+        <literal>jsonb_pretty('[{"f1":1,"f2":null}, 2]')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+[
+    {
+        "f1": 1,
+        "f2": null
+    },
+    2
+]
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>json_typeof</primary>
+        </indexterm>
+        <function>json_typeof</function> ( <type>json</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>jsonb_typeof</primary>
+        </indexterm>
+        <function>jsonb_typeof</function> ( <type>jsonb</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the type of the top-level JSON value as a text string.
+        Possible types are
+        <literal>object</literal>, <literal>array</literal>,
+        <literal>string</literal>, <literal>number</literal>,
+        <literal>boolean</literal>, and <literal>null</literal>.
+        (The <literal>null</literal> result should not be confused
+        with an SQL NULL; see the examples.)
+       </para>
+       <para>
+        <literal>json_typeof('-123.4')</literal>
+        <returnvalue>number</returnvalue>
+       </para>
+       <para>
+        <literal>json_typeof('null'::json)</literal>
+        <returnvalue>null</returnvalue>
+       </para>
+       <para>
+        <literal>json_typeof(NULL::json) IS NULL</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+ </sect2>
+
+ <sect2 id="functions-sqljson-path">
+  <title>The SQL/JSON Path Language</title>
+
+  <indexterm zone="functions-sqljson-path">
+   <primary>SQL/JSON path language</primary>
+  </indexterm>
+
+  <para>
+   SQL/JSON path expressions specify item(s) to be retrieved
+   from a JSON value, similarly to XPath expressions used
+   for access to XML content. In <productname>PostgreSQL</productname>,
+   path expressions are implemented as the <type>jsonpath</type>
+   data type and can use any elements described in
+   <xref linkend="datatype-jsonpath"/>.
+  </para>
+
+  <para>
+   JSON query functions and operators
+   pass the provided path expression to the <firstterm>path engine</firstterm>
+   for evaluation. If the expression matches the queried JSON data,
+   the corresponding JSON item, or set of items, is returned.
+   If there is no match, the result will be <literal>NULL</literal>,
+   <literal>false</literal>, or an error, depending on the function.
+   Path expressions are written in the SQL/JSON path language
+   and can include arithmetic expressions and functions.
+  </para>
+
+  <para>
+   A path expression consists of a sequence of elements allowed
+   by the <type>jsonpath</type> data type.
+   The path expression is normally evaluated from left to right, but
+   you can use parentheses to change the order of operations.
+   If the evaluation is successful, a sequence of JSON items is produced,
+   and the evaluation result is returned to the JSON query function
+   that completes the specified computation.
+  </para>
+
+  <para>
+   To refer to the JSON value being queried (the
+   <firstterm>context item</firstterm>), use the <literal>$</literal> variable
+   in the path expression. The first element of a path must always
+   be <literal>$</literal>. It can be followed by one or more
+   <link linkend="type-jsonpath-accessors">accessor operators</link>,
+   which go down the JSON structure level by level to retrieve sub-items
+   of the context item. Each accessor operator acts on the
+   result(s) of the previous evaluation step, producing zero, one, or more
+   output items from each input item.
+  </para>
+
+  <para>
+   For example, suppose you have some JSON data from a GPS tracker that you
+   would like to parse, such as:
+<programlisting>
+SELECT '{
+  "track": {
+    "segments": [
+      {
+        "location":   [ 47.763, 13.4034 ],
+        "start time": "2018-10-14 10:05:14",
+        "HR": 73
+      },
+      {
+        "location":   [ 47.706, 13.2635 ],
+        "start time": "2018-10-14 10:39:21",
+        "HR": 135
+      }
+    ]
+  }
+}' AS json \gset
+</programlisting>
+   (The above example can be copied-and-pasted
+   into <application>psql</application> to set things up for the following
+   examples.  Then <application>psql</application> will
+   expand <literal>:'json'</literal> into a suitably-quoted string
+   constant containing the JSON value.)
+  </para>
+
+  <para>
+   To retrieve the available track segments, you need to use the
+   <literal>.<replaceable>key</replaceable></literal> accessor
+   operator to descend through surrounding JSON objects, for example:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments');</userinput>
+                                                                         jsonb_path_query
+-----------------------------------------------------------&zwsp;-----------------------------------------------------------&zwsp;---------------------------------------------
+ [{"HR": 73, "location": [47.763, 13.4034], "start time": "2018-10-14 10:05:14"}, {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}]
+</screen>
+  </para>
+
+  <para>
+   To retrieve the contents of an array, you typically use the
+   <literal>[*]</literal> operator.
+   The following example will return the location coordinates for all
+   the available track segments:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
+   Here we started with the whole JSON input value (<literal>$</literal>),
+   then the <literal>.track</literal> accessor selected the JSON object
+   associated with the <literal>"track"</literal> object key, then
+   the <literal>.segments</literal> accessor selected the JSON array
+   associated with the <literal>"segments"</literal> key within that
+   object, then the <literal>[*]</literal> accessor selected each element
+   of that array (producing a series of items), then
+   the <literal>.location</literal> accessor selected the JSON array
+   associated with the <literal>"location"</literal> key within each of
+   those objects.  In this example, each of those objects had
+   a <literal>"location"</literal> key; but if any of them did not,
+   the <literal>.location</literal> accessor would have simply produced no
+   output for that input item.
+  </para>
+
+  <para>
+   To return the coordinates of the first segment only, you can
+   specify the corresponding subscript in the <literal>[]</literal>
+   accessor operator. Recall that JSON array indexes are 0-relative:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[0].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+</screen>
+  </para>
+
+  <para>
+   The result of each path evaluation step can be processed
+   by one or more of the <type>jsonpath</type> operators and methods
+   listed in <xref linkend="functions-sqljson-path-operators"/>.
+   Each method name must be preceded by a dot. For example,
+   you can get the size of an array:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments.size()');</userinput>
+ jsonb_path_query
+------------------
+ 2
+</screen>
+   More examples of using <type>jsonpath</type> operators
+   and methods within path expressions appear below in
+   <xref linkend="functions-sqljson-path-operators"/>.
+  </para>
+
+  <para>
+   A path can also contain
+   <firstterm>filter expressions</firstterm> that work similarly to the
+   <literal>WHERE</literal> clause in SQL. A filter expression begins with
+   a question mark and provides a condition in parentheses:
+
+<synopsis>
+? (<replaceable>condition</replaceable>)
+</synopsis>
+  </para>
+
+  <para>
+   Filter expressions must be written just after the path evaluation step
+   to which they should apply. The result of that step is filtered to include
+   only those items that satisfy the provided condition. SQL/JSON defines
+   three-valued logic, so the condition can
+   produce <literal>true</literal>, <literal>false</literal>,
+   or <literal>unknown</literal>. The <literal>unknown</literal> value
+   plays the same role as SQL <literal>NULL</literal> and can be tested
+   for with the <literal>is unknown</literal> predicate. Further path
+   evaluation steps use only those items for which the filter expression
+   returned <literal>true</literal>.
+  </para>
+
+  <para>
+   The functions and operators that can be used in filter expressions are
+   listed in <xref linkend="functions-sqljson-filter-ex-table"/>.  Within a
+   filter expression, the <literal>@</literal> variable denotes the value
+   being considered (i.e., one result of the preceding path step).  You can
+   write accessor operators after <literal>@</literal> to retrieve component
+   items.
+  </para>
+
+  <para>
+   For example, suppose you would like to retrieve all heart rate values higher
+   than 130. You can achieve this as follows:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR ? (@ &gt; 130)');</userinput>
+ jsonb_path_query
+------------------
+ 135
+</screen>
+  </para>
+
+  <para>
+   To get the start times of segments with such values, you have to
+   filter out irrelevant segments before selecting the start times, so the
+   filter expression is applied to the previous step, and the path used
+   in the condition is different:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.HR &gt; 130)."start time"');</userinput>
+   jsonb_path_query
+-----------------------
+ "2018-10-14 10:39:21"
+</screen>
+  </para>
+
+  <para>
+   You can use several filter expressions in sequence, if required.
+   The following example selects start times of all segments that
+   contain locations with relevant coordinates and high heart rate values:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4) ? (@.HR &gt; 130)."start time"');</userinput>
+   jsonb_path_query
+-----------------------
+ "2018-10-14 10:39:21"
+</screen>
+  </para>
+
+  <para>
+   Using filter expressions at different nesting levels is also allowed.
+   The following example first filters all segments by location, and then
+   returns high heart rate values for these segments, if available:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4).HR ? (@ &gt; 130)');</userinput>
+ jsonb_path_query
+------------------
+ 135
+</screen>
+  </para>
+
+  <para>
+   You can also nest filter expressions within each other.
+   This example returns the size of the track if it contains any
+   segments with high heart rate values, or an empty sequence otherwise:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()');</userinput>
+ jsonb_path_query
+------------------
+ 2
+</screen>
+  </para>
+
+  <sect3 id="functions-sqljson-deviations">
+  <title>Deviations from the SQL Standard</title>
+   <para>
+    <productname>PostgreSQL</productname>'s implementation of the SQL/JSON path
+    language has the following deviations from the SQL/JSON standard.
+   </para>
+
+   <sect4 id="functions-sqljson-check-expressions">
+   <title>Boolean Predicate Check Expressions</title>
+    <para>
+     As an extension to the SQL standard,
+     a <productname>PostgreSQL</productname> path expression can be a
+     Boolean predicate, whereas the SQL standard allows predicates only within
+     filters. While SQL-standard path expressions return the relevant
+     element(s) of the queried JSON value, predicate check expressions
+     return the single three-valued <type>jsonb</type> result of the
+     predicate: <literal>true</literal>,
+     <literal>false</literal>, or <literal>null</literal>.
+     For example, we could write this SQL-standard filter expression:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
+                                jsonb_path_query
+-----------------------------------------------------------&zwsp;----------------------
+ {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}
+</screen>
+     The similar predicate check expression simply
+     returns <literal>true</literal>, indicating that a match exists:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR &gt; 130');</userinput>
+ jsonb_path_query
+------------------
+ true
+</screen>
+     </para>
+
+     <note>
+      <para>
+       Predicate check expressions are required in the
+       <literal>@@</literal> operator (and the
+       <function>jsonb_path_match</function> function), and should not be used
+       with the <literal>@?</literal> operator (or the
+       <function>jsonb_path_exists</function> function).
+      </para>
+     </note>
+    </sect4>
+
+    <sect4 id="functions-sqljson-regular-expression-deviation">
+    <title>Regular Expression Interpretation</title>
+     <para>
+      There are minor differences in the interpretation of regular
+      expression patterns used in <literal>like_regex</literal> filters, as
+      described in <xref linkend="jsonpath-regular-expressions"/>.
+     </para>
+    </sect4>
+   </sect3>
+
+   <sect3 id="functions-sqljson-strict-and-lax-modes">
+   <title>Strict and Lax Modes</title>
+    <para>
+     When you query JSON data, the path expression may not match the
+     actual JSON data structure. An attempt to access a non-existent
+     member of an object or element of an array is defined as a
+     structural error. SQL/JSON path expressions have two modes
+     of handling structural errors:
+    </para>
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      lax (default) &mdash; the path engine implicitly adapts
+      the queried data to the specified path.
+      Any structural errors that cannot be fixed as described below
+      are suppressed, producing no match.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      strict &mdash; if a structural error occurs, an error is raised.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   <para>
+    Lax mode facilitates matching of a JSON document and path
+    expression when the JSON data does not conform to the expected schema.
+    If an operand does not match the requirements of a particular operation,
+    it can be automatically wrapped as an SQL/JSON array, or unwrapped by
+    converting its elements into an SQL/JSON sequence before performing
+    the operation. Also, comparison operators automatically unwrap their
+    operands in lax mode, so you can compare SQL/JSON arrays
+    out-of-the-box. An array of size 1 is considered equal to its sole element.
+    Automatic unwrapping is not performed when:
+    <itemizedlist>
+     <listitem>
+      <para>
+       The path expression contains <literal>type()</literal> or
+       <literal>size()</literal> methods that return the type
+       and the number of elements in the array, respectively.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The queried JSON data contain nested arrays. In this case, only
+       the outermost array is unwrapped, while all the inner arrays
+       remain unchanged. Thus, implicit unwrapping can only go one
+       level down within each path evaluation step.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    For example, when querying the GPS data listed above, you can
+    abstract from the fact that it stores an array of segments
+    when using lax mode:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments.location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
+   </para>
+
+   <para>
+    In strict mode, the specified path must exactly match the structure of
+    the queried JSON document, so using this path
+    expression will cause an error:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments.location');</userinput>
+ERROR:  jsonpath member accessor can only be applied to an object
+</screen>
+    To get the same result as in lax mode, you have to explicitly unwrap the
+    <literal>segments</literal> array:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+</screen>
+   </para>
+
+   <para>
+    The unwrapping behavior of lax mode can lead to surprising results. For
+    instance, the following query using the <literal>.**</literal> accessor
+    selects every <literal>HR</literal> value twice:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
+ jsonb_path_query
+------------------
+ 73
+ 135
+ 73
+ 135
+</screen>
+    This happens because the <literal>.**</literal> accessor selects both
+    the <literal>segments</literal> array and each of its elements, while
+    the <literal>.HR</literal> accessor automatically unwraps arrays when
+    using lax mode. To avoid surprising results, we recommend using
+    the <literal>.**</literal> accessor only in strict mode. The
+    following query selects each <literal>HR</literal> value just once:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
+ jsonb_path_query
+------------------
+ 73
+ 135
+</screen>
+   </para>
+
+   <para>
+    The unwrapping of arrays can also lead to unexpected results. Consider this
+    example, which selects all the <literal>location</literal> arrays:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+(2 rows)
+</screen>
+    As expected it returns the full arrays. But applying a filter expression
+    causes the arrays to be unwrapped to evaluate each item, returning only the
+    items that match the expression:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+ jsonb_path_query
+------------------
+ 47.763
+ 47.706
+(2 rows)
+</screen>
+    This despite the fact that the full arrays are selected by the path
+    expression. Use strict mode to restore selecting the arrays:
+<screen>
+<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+ jsonb_path_query
+-------------------
+ [47.763, 13.4034]
+ [47.706, 13.2635]
+(2 rows)
+</screen>
+   </para>
+   </sect3>
+
+   <sect3 id="functions-sqljson-path-operators">
+   <title>SQL/JSON Path Operators and Methods</title>
+
+   <para>
+    <xref linkend="functions-sqljson-op-table"/> shows the operators and
+    methods available in <type>jsonpath</type>.  Note that while the unary
+    operators and methods can be applied to multiple values resulting from a
+    preceding path step, the binary operators (addition etc.) can only be
+    applied to single values.  In lax mode, methods applied to an array will be
+    executed for each value in the array.  The exceptions are
+    <literal>.type()</literal> and <literal>.size()</literal>, which apply to
+    the array itself.
+   </para>
+
+   <table id="functions-sqljson-op-table">
+    <title><type>jsonpath</type> Operators and Methods</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator/Method
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>+</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Addition
+       </para>
+       <para>
+        <literal>jsonb_path_query('[2]', '$[0] + 3')</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>+</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Unary plus (no operation); unlike addition, this can iterate over
+        multiple values
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('{"x": [2,3,4]}', '+ $.x')</literal>
+        <returnvalue>[2, 3, 4]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>-</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Subtraction
+       </para>
+       <para>
+        <literal>jsonb_path_query('[2]', '7 - $[0]')</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>-</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Negation; unlike subtraction, this can iterate over
+        multiple values
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('{"x": [2,3,4]}', '- $.x')</literal>
+        <returnvalue>[-2, -3, -4]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>*</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Multiplication
+       </para>
+       <para>
+        <literal>jsonb_path_query('[4]', '2 * $[0]')</literal>
+        <returnvalue>8</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>/</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Division
+       </para>
+       <para>
+        <literal>jsonb_path_query('[8.5]', '$[0] / 2')</literal>
+        <returnvalue>4.2500000000000000</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>%</literal> <replaceable>number</replaceable>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Modulo (remainder)
+       </para>
+       <para>
+        <literal>jsonb_path_query('[32]', '$[0] % 10')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>type()</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        Type of the JSON item (see <function>json_typeof</function>)
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, "2", {}]', '$[*].type()')</literal>
+        <returnvalue>["number", "string", "object"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>size()</literal>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Size of the JSON item (number of array elements, or 1 if not an
+        array)
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"m": [11, 15]}', '$.m.size()')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>boolean()</literal>
+        <returnvalue><replaceable>boolean</replaceable></returnvalue>
+       </para>
+       <para>
+        Boolean value converted from a JSON boolean, number, or string
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, "yes", false]', '$[*].boolean()')</literal>
+        <returnvalue>[true, true, false]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>string()</literal>
+        <returnvalue><replaceable>string</replaceable></returnvalue>
+       </para>
+       <para>
+        String value converted from a JSON boolean, number, string, or
+        datetime
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1.23, "xyz", false]', '$[*].string()')</literal>
+        <returnvalue>["1.23", "xyz", "false"]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp().string()')</literal>
+        <returnvalue>"2023-08-15T12:34:56"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>double()</literal>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Approximate floating-point number converted from a JSON number or
+        string
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"len": "1.9"}', '$.len.double() * 2')</literal>
+        <returnvalue>3.8</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>.</literal> <literal>ceiling()</literal>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Nearest integer greater than or equal to the given number
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"h": 1.3}', '$.h.ceiling()')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>.</literal> <literal>floor()</literal>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Nearest integer less than or equal to the given number
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"h": 1.7}', '$.h.floor()')</literal>
+        <returnvalue>1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>number</replaceable> <literal>.</literal> <literal>abs()</literal>
+        <returnvalue><replaceable>number</replaceable></returnvalue>
+       </para>
+       <para>
+        Absolute value of the given number
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"z": -0.3}', '$.z.abs()')</literal>
+        <returnvalue>0.3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>bigint()</literal>
+        <returnvalue><replaceable>bigint</replaceable></returnvalue>
+       </para>
+       <para>
+        Big integer value converted from a JSON number or string
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"len": "9876543219"}', '$.len.bigint()')</literal>
+        <returnvalue>9876543219</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>decimal( [ <replaceable>precision</replaceable> [ , <replaceable>scale</replaceable> ] ] )</literal>
+        <returnvalue><replaceable>decimal</replaceable></returnvalue>
+       </para>
+       <para>
+        Rounded decimal value converted from a JSON number or string
+        (<literal>precision</literal> and <literal>scale</literal> must be
+        integer values)
+       </para>
+       <para>
+        <literal>jsonb_path_query('1234.5678', '$.decimal(6, 2)')</literal>
+        <returnvalue>1234.57</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>integer()</literal>
+        <returnvalue><replaceable>integer</replaceable></returnvalue>
+       </para>
+       <para>
+        Integer value converted from a JSON number or string
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"len": "12345"}', '$.len.integer()')</literal>
+        <returnvalue>12345</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>.</literal> <literal>number()</literal>
+        <returnvalue><replaceable>numeric</replaceable></returnvalue>
+       </para>
+       <para>
+        Numeric value converted from a JSON number or string
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"len": "123.45"}', '$.len.number()')</literal>
+        <returnvalue>123.45</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>datetime()</literal>
+        <returnvalue><replaceable>datetime_type</replaceable></returnvalue>
+        (see note)
+       </para>
+       <para>
+        Date/time value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('["2015-8-1", "2015-08-12"]', '$[*] ? (@.datetime() &lt; "2015-08-2".datetime())')</literal>
+        <returnvalue>"2015-8-1"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>datetime(<replaceable>template</replaceable>)</literal>
+        <returnvalue><replaceable>datetime_type</replaceable></returnvalue>
+        (see note)
+       </para>
+       <para>
+        Date/time value converted from a string using the
+        specified <function>to_timestamp</function> template
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('["12:30", "18:40"]', '$[*].datetime("HH24:MI")')</literal>
+        <returnvalue>["12:30:00", "18:40:00"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>date()</literal>
+        <returnvalue><replaceable>date</replaceable></returnvalue>
+       </para>
+       <para>
+        Date value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15"', '$.date()')</literal>
+        <returnvalue>"2023-08-15"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>time()</literal>
+        <returnvalue><replaceable>time without time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Time without time zone value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('"12:34:56"', '$.time()')</literal>
+        <returnvalue>"12:34:56"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>time(<replaceable>precision</replaceable>)</literal>
+        <returnvalue><replaceable>time without time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Time without time zone value converted from a string, with fractional
+        seconds adjusted to the given precision
+       </para>
+       <para>
+        <literal>jsonb_path_query('"12:34:56.789"', '$.time(2)')</literal>
+        <returnvalue>"12:34:56.79"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>time_tz()</literal>
+        <returnvalue><replaceable>time with time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Time with time zone value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('"12:34:56 +05:30"', '$.time_tz()')</literal>
+        <returnvalue>"12:34:56+05:30"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>time_tz(<replaceable>precision</replaceable>)</literal>
+        <returnvalue><replaceable>time with time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Time with time zone value converted from a string, with fractional
+        seconds adjusted to the given precision
+       </para>
+       <para>
+        <literal>jsonb_path_query('"12:34:56.789 +05:30"', '$.time_tz(2)')</literal>
+        <returnvalue>"12:34:56.79+05:30"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>timestamp()</literal>
+        <returnvalue><replaceable>timestamp without time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Timestamp without time zone value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56"', '$.timestamp()')</literal>
+        <returnvalue>"2023-08-15T12:34:56"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>timestamp(<replaceable>precision</replaceable>)</literal>
+        <returnvalue><replaceable>timestamp without time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Timestamp without time zone value converted from a string, with
+        fractional seconds adjusted to the given precision
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56.789"', '$.timestamp(2)')</literal>
+        <returnvalue>"2023-08-15T12:34:56.79"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>timestamp_tz()</literal>
+        <returnvalue><replaceable>timestamp with time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Timestamp with time zone value converted from a string
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56 +05:30"', '$.timestamp_tz()')</literal>
+        <returnvalue>"2023-08-15T12:34:56+05:30"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>.</literal> <literal>timestamp_tz(<replaceable>precision</replaceable>)</literal>
+        <returnvalue><replaceable>timestamp with time zone</replaceable></returnvalue>
+       </para>
+       <para>
+        Timestamp with time zone value converted from a string, with fractional
+        seconds adjusted to the given precision
+       </para>
+       <para>
+        <literal>jsonb_path_query('"2023-08-15 12:34:56.789 +05:30"', '$.timestamp_tz(2)')</literal>
+        <returnvalue>"2023-08-15T12:34:56.79+05:30"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>object</replaceable> <literal>.</literal> <literal>keyvalue()</literal>
+        <returnvalue><replaceable>array</replaceable></returnvalue>
+       </para>
+       <para>
+        The object's key-value pairs, represented as an array of objects
+        containing three fields: <literal>"key"</literal>,
+        <literal>"value"</literal>, and <literal>"id"</literal>;
+        <literal>"id"</literal> is a unique identifier of the object the
+        key-value pair belongs to
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('{"x": "20", "y": 32}', '$.keyvalue()')</literal>
+        <returnvalue>[{"id": 0, "key": "x", "value": "20"}, {"id": 0, "key": "y", "value": 32}]</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+    <note>
+     <para>
+      The result type of the <literal>datetime()</literal> and
+      <literal>datetime(<replaceable>template</replaceable>)</literal>
+      methods can be <type>date</type>, <type>timetz</type>, <type>time</type>,
+      <type>timestamptz</type>, or <type>timestamp</type>.
+      Both methods determine their result type dynamically.
+     </para>
+     <para>
+      The <literal>datetime()</literal> method sequentially tries to
+      match its input string to the ISO formats
+      for <type>date</type>, <type>timetz</type>, <type>time</type>,
+      <type>timestamptz</type>, and <type>timestamp</type>. It stops on
+      the first matching format and emits the corresponding data type.
+     </para>
+     <para>
+      The <literal>datetime(<replaceable>template</replaceable>)</literal>
+      method determines the result type according to the fields used in the
+      provided template string.
+     </para>
+     <para>
+      The <literal>datetime()</literal> and
+      <literal>datetime(<replaceable>template</replaceable>)</literal> methods
+      use the same parsing rules as the <literal>to_timestamp</literal> SQL
+      function does (see <xref linkend="functions-formatting"/>), with three
+      exceptions.  First, these methods don't allow unmatched template
+      patterns.  Second, only the following separators are allowed in the
+      template string: minus sign, period, solidus (slash), comma, apostrophe,
+      semicolon, colon and space.  Third, separators in the template string
+      must exactly match the input string.
+     </para>
+     <para>
+      If different date/time types need to be compared, an implicit cast is
+      applied. A <type>date</type> value can be cast to <type>timestamp</type>
+      or <type>timestamptz</type>, <type>timestamp</type> can be cast to
+      <type>timestamptz</type>, and <type>time</type> to <type>timetz</type>.
+      However, all but the first of these conversions depend on the current
+      <xref linkend="guc-timezone"/> setting, and thus can only be performed
+      within timezone-aware <type>jsonpath</type> functions.  Similarly, other
+      date/time-related methods that convert strings to date/time types
+      also do this casting, which may involve the current
+      <xref linkend="guc-timezone"/> setting. Therefore, these conversions can
+      also only be performed within timezone-aware <type>jsonpath</type>
+      functions.
+     </para>
+    </note>
+
+   <para>
+    <xref linkend="functions-sqljson-filter-ex-table"/> shows the available
+    filter expression elements.
+   </para>
+
+   <table id="functions-sqljson-filter-ex-table">
+    <title><type>jsonpath</type> Filter Expression Elements</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Predicate/Value
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>==</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Equality comparison (this, and the other comparison operators, work on
+        all JSON scalar values)
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, "a", 1, 3]', '$[*] ? (@ == 1)')</literal>
+        <returnvalue>[1, 1]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, "a", 1, 3]', '$[*] ? (@ == "a")')</literal>
+        <returnvalue>["a"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>!=</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <replaceable>value</replaceable> <literal>&lt;&gt;</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Non-equality comparison
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, 2, 1, 3]', '$[*] ? (@ != 1)')</literal>
+        <returnvalue>[2, 3]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('["a", "b", "c"]', '$[*] ? (@ &lt;&gt; "b")')</literal>
+        <returnvalue>["a", "c"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>&lt;</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Less-than comparison
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, 2, 3]', '$[*] ? (@ &lt; 2)')</literal>
+        <returnvalue>[1]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>&lt;=</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Less-than-or-equal-to comparison
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('["a", "b", "c"]', '$[*] ? (@ &lt;= "b")')</literal>
+        <returnvalue>["a", "b"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>&gt;</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Greater-than comparison
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, 2, 3]', '$[*] ? (@ &gt; 2)')</literal>
+        <returnvalue>[3]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>value</replaceable> <literal>&gt;=</literal> <replaceable>value</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Greater-than-or-equal-to comparison
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('[1, 2, 3]', '$[*] ? (@ &gt;= 2)')</literal>
+        <returnvalue>[2, 3]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>true</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        JSON constant <literal>true</literal>
+       </para>
+       <para>
+        <literal>jsonb_path_query('[{"name": "John", "parent": false}, {"name": "Chris", "parent": true}]', '$[*] ? (@.parent == true)')</literal>
+        <returnvalue>{"name": "Chris", "parent": true}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>false</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        JSON constant <literal>false</literal>
+       </para>
+       <para>
+        <literal>jsonb_path_query('[{"name": "John", "parent": false}, {"name": "Chris", "parent": true}]', '$[*] ? (@.parent == false)')</literal>
+        <returnvalue>{"name": "John", "parent": false}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>null</literal>
+        <returnvalue><replaceable>value</replaceable></returnvalue>
+       </para>
+       <para>
+        JSON constant <literal>null</literal> (note that, unlike in SQL,
+        comparison to <literal>null</literal> works normally)
+       </para>
+       <para>
+        <literal>jsonb_path_query('[{"name": "Mary", "job": null}, {"name": "Michael", "job": "driver"}]', '$[*] ? (@.job == null) .name')</literal>
+        <returnvalue>"Mary"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>boolean</replaceable> <literal>&amp;&amp;</literal> <replaceable>boolean</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Boolean AND
+       </para>
+       <para>
+        <literal>jsonb_path_query('[1, 3, 7]', '$[*] ? (@ &gt; 1 &amp;&amp; @ &lt; 5)')</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>boolean</replaceable> <literal>||</literal> <replaceable>boolean</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Boolean OR
+       </para>
+       <para>
+        <literal>jsonb_path_query('[1, 3, 7]', '$[*] ? (@ &lt; 1 || @ &gt; 5)')</literal>
+        <returnvalue>7</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>!</literal> <replaceable>boolean</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Boolean NOT
+       </para>
+       <para>
+        <literal>jsonb_path_query('[1, 3, 7]', '$[*] ? (!(@ &lt; 5))')</literal>
+        <returnvalue>7</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>boolean</replaceable> <literal>is unknown</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether a Boolean condition is <literal>unknown</literal>.
+       </para>
+       <para>
+        <literal>jsonb_path_query('[-1, 2, 7, "foo"]', '$[*] ? ((@ > 0) is unknown)')</literal>
+        <returnvalue>"foo"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>like_regex</literal> <replaceable>string</replaceable> <optional> <literal>flag</literal> <replaceable>string</replaceable> </optional>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether the first operand matches the regular expression
+        given by the second operand, optionally with modifications
+        described by a string of <literal>flag</literal> characters (see
+        <xref linkend="jsonpath-regular-expressions"/>).
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('["abc", "abd", "aBdC", "abdacb", "babc"]', '$[*] ? (@ like_regex "^ab.*c")')</literal>
+        <returnvalue>["abc", "abdacb"]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('["abc", "abd", "aBdC", "abdacb", "babc"]', '$[*] ? (@ like_regex "^ab.*c" flag "i")')</literal>
+        <returnvalue>["abc", "aBdC", "abdacb"]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <replaceable>string</replaceable> <literal>starts with</literal> <replaceable>string</replaceable>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether the second operand is an initial substring of the first
+        operand.
+       </para>
+       <para>
+        <literal>jsonb_path_query('["John Smith", "Mary Stone", "Bob Johnson"]', '$[*] ? (@ starts with "John")')</literal>
+        <returnvalue>"John Smith"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>exists</literal> <literal>(</literal> <replaceable>path_expression</replaceable> <literal>)</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Tests whether a path expression matches at least one SQL/JSON item.
+        Returns <literal>unknown</literal> if the path expression would result
+        in an error; the second example uses this to avoid a no-such-key error
+        in strict mode.
+       </para>
+       <para>
+        <literal>jsonb_path_query('{"x": [1, 2], "y": [2, 4]}', 'strict $.* ? (exists (@ ? (@[*] &gt; 2)))')</literal>
+        <returnvalue>[2, 4]</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_path_query_array('{"value": 41}', 'strict $ ? (exists (@.name)) .name')</literal>
+        <returnvalue>[]</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   </sect3>
+
+   <sect3 id="jsonpath-regular-expressions">
+    <title>SQL/JSON Regular Expressions</title>
+
+    <indexterm zone="jsonpath-regular-expressions">
+     <primary><literal>LIKE_REGEX</literal></primary>
+     <secondary>in SQL/JSON</secondary>
+    </indexterm>
+
+    <para>
+     SQL/JSON path expressions allow matching text to a regular expression
+     with the <literal>like_regex</literal> filter.  For example, the
+     following SQL/JSON path query would case-insensitively match all
+     strings in an array that start with an English vowel:
+<programlisting>
+$[*] ? (@ like_regex "^[aeiou]" flag "i")
+</programlisting>
+    </para>
+
+    <para>
+     The optional <literal>flag</literal> string may include one or more of
+     the characters
+     <literal>i</literal> for case-insensitive match,
+     <literal>m</literal> to allow <literal>^</literal>
+     and <literal>$</literal> to match at newlines,
+     <literal>s</literal> to allow <literal>.</literal> to match a newline,
+     and <literal>q</literal> to quote the whole pattern (reducing the
+     behavior to a simple substring match).
+    </para>
+
+    <para>
+     The SQL/JSON standard borrows its definition for regular expressions
+     from the <literal>LIKE_REGEX</literal> operator, which in turn uses the
+     XQuery standard.  PostgreSQL does not currently support the
+     <literal>LIKE_REGEX</literal> operator.  Therefore,
+     the <literal>like_regex</literal> filter is implemented using the
+     POSIX regular expression engine described in
+     <xref linkend="functions-posix-regexp"/>.  This leads to various minor
+     discrepancies from standard SQL/JSON behavior, which are cataloged in
+     <xref linkend="posix-vs-xquery"/>.
+     Note, however, that the flag-letter incompatibilities described there
+     do not apply to SQL/JSON, as it translates the XQuery flag letters to
+     match what the POSIX engine expects.
+    </para>
+
+    <para>
+     Keep in mind that the pattern argument of <literal>like_regex</literal>
+     is a JSON path string literal, written according to the rules given in
+     <xref linkend="datatype-jsonpath"/>.  This means in particular that any
+     backslashes you want to use in the regular expression must be doubled.
+     For example, to match string values of the root document that contain
+     only digits:
+<programlisting>
+$.* ? (@ like_regex "^\\d+$")
+</programlisting>
+    </para>
+   </sect3>
+  </sect2>
+
+   <sect2 id="sqljson-query-functions">
+    <title>SQL/JSON Query Functions</title>
+  <para>
+   SQL/JSON functions <literal>JSON_EXISTS()</literal>,
+   <literal>JSON_QUERY()</literal>, and <literal>JSON_VALUE()</literal>
+   described in <xref linkend="functions-sqljson-querying"/> can be used
+   to query JSON documents.  Each of these functions apply a
+   <replaceable>path_expression</replaceable> (an SQL/JSON path query) to a
+   <replaceable>context_item</replaceable> (the document).  See
+   <xref linkend="functions-sqljson-path"/> for more details on what
+   the <replaceable>path_expression</replaceable> can contain. The
+   <replaceable>path_expression</replaceable> can also reference variables,
+   whose values are specified with their respective names in the
+   <literal>PASSING</literal> clause that is supported by each function.
+   <replaceable>context_item</replaceable> can be a <type>jsonb</type> value
+   or a character string that can be successfully cast to <type>jsonb</type>.
+  </para>
+
+  <table id="functions-sqljson-querying">
+   <title>SQL/JSON Query Functions</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        Function signature
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+      </para></entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_exists</primary></indexterm>
+<synopsis>
+<function>JSON_EXISTS</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional>{ <literal>TRUE</literal> | <literal>FALSE</literal> |<literal> UNKNOWN</literal> | <literal>ERROR</literal> } <literal>ON ERROR</literal> </optional>) <returnvalue>boolean</returnvalue>
+</synopsis>
+       </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Returns true if the SQL/JSON <replaceable>path_expression</replaceable>
+        applied to the <replaceable>context_item</replaceable> yields any
+        items, false otherwise.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The <literal>ON ERROR</literal> clause specifies the behavior if
+        an error occurs during <replaceable>path_expression</replaceable>
+        evaluation.  Specifying <literal>ERROR</literal> will cause an error to
+        be thrown with the appropriate message.  Other options include
+        returning <type>boolean</type> values <literal>FALSE</literal> or
+        <literal>TRUE</literal> or the value <literal>UNKNOWN</literal> which
+        is actually an SQL NULL. The default when no <literal>ON ERROR</literal>
+        clause is specified is to return the <type>boolean</type> value
+        <literal>FALSE</literal>.
+       </para>
+      </listitem>
+      </itemizedlist>
+       <para>
+        Examples:
+       </para>
+       <para>
+        <literal>JSON_EXISTS(jsonb '{"key1": [1,2,3]}', 'strict $.key1[*] ? (@ > $x)' PASSING 2 AS x)</literal>
+        <returnvalue>t</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'lax $.a[5]' ERROR ON ERROR)</literal>
+        <returnvalue>f</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]' ERROR ON ERROR)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ERROR:  jsonpath array subscript is out of bounds
+</programlisting>
+      </para></entry>
+     </row>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_query</primary></indexterm>
+<synopsis>
+<function>JSON_QUERY</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> <optional> <literal>FORMAT JSON</literal> <optional> <literal>ENCODING UTF8</literal> </optional> </optional> </optional>
+<optional> { <literal>WITHOUT</literal> | <literal>WITH</literal> { <literal>CONDITIONAL</literal> | <optional><literal>UNCONDITIONAL</literal></optional> } } <optional> <literal>ARRAY</literal> </optional> <literal>WRAPPER</literal> </optional>
+<optional> { <literal>KEEP</literal> | <literal>OMIT</literal> } <literal>QUOTES</literal> <optional> <literal>ON SCALAR STRING</literal> </optional> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>EMPTY</literal> { <optional> <literal>ARRAY</literal> </optional> | <literal>OBJECT</literal> } | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>) <returnvalue>jsonb</returnvalue>
+</synopsis>
+      </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Returns the result of applying the SQL/JSON
+        <replaceable>path_expression</replaceable> to the
+        <replaceable>context_item</replaceable>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         By default, the result is returned as a value of type <type>jsonb</type>,
+         though the <literal>RETURNING</literal> clause can be used to return
+         as some other type to which it can be successfully coerced.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If the path expression may return multiple values, it might be necessary
+        to wrap those values using the <literal>WITH WRAPPER</literal> clause to
+        make it a valid JSON string, because the default behavior is to not wrap
+        them, as if <literal>WITHOUT WRAPPER</literal> were specified. The
+        <literal>WITH WRAPPER</literal> clause is by default taken to mean
+        <literal>WITH UNCONDITIONAL WRAPPER</literal>, which means that even a
+        single result value will be wrapped. To apply the wrapper only when
+        multiple values are present, specify <literal>WITH CONDITIONAL WRAPPER</literal>.
+        Getting multiple values in result will be treated as an error if
+        <literal>WITHOUT WRAPPER</literal> is specified.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        If the result is a scalar string, by default, the returned value will
+        be surrounded by quotes, making it a valid JSON value.  It can be made
+        explicit by specifying <literal>KEEP QUOTES</literal>.  Conversely,
+        quotes can be omitted by specifying <literal>OMIT QUOTES</literal>.
+        To ensure that the result is a valid JSON value, <literal>OMIT QUOTES</literal>
+        cannot be specified when <literal>WITH WRAPPER</literal> is also
+        specified.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The <literal>ON EMPTY</literal> clause specifies the behavior if
+        evaluating <replaceable>path_expression</replaceable> yields an empty
+        set. The <literal>ON ERROR</literal> clause specifies the behavior
+        if an error occurs when evaluating <replaceable>path_expression</replaceable>,
+        when coercing the result value to the <literal>RETURNING</literal> type,
+        or when evaluating the <literal>ON EMPTY</literal> expression if the
+        <replaceable>path_expression</replaceable> evaluation returns an empty
+        set.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        For both <literal>ON EMPTY</literal> and <literal>ON ERROR</literal>,
+        specifying <literal>ERROR</literal> will cause an error to be thrown with
+        the appropriate message. Other options include returning an SQL NULL, an
+        empty array (<literal>EMPTY <optional>ARRAY</optional></literal>),
+        an empty object (<literal>EMPTY OBJECT</literal>), or a user-specified
+        expression (<literal>DEFAULT</literal> <replaceable>expression</replaceable>)
+        that can be coerced to jsonb or the type specified in <literal>RETURNING</literal>.
+        The default when <literal>ON EMPTY</literal> or <literal>ON ERROR</literal>
+        is not specified is to return an SQL NULL value.
+       </para>
+      </listitem>
+     </itemizedlist>
+       <para>
+        Examples:
+       </para>
+       <para>
+        <literal>JSON_QUERY(jsonb '[1,[2,3],null]', 'lax $[*][$off]' PASSING 1 AS off WITH CONDITIONAL WRAPPER)</literal>
+        <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_QUERY(jsonb '{"a": "[1, 2]"}', 'lax $.a' OMIT QUOTES)</literal>
+        <returnvalue>[1, 2]</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_QUERY(jsonb '{"a": "[1, 2]"}', 'lax $.a' RETURNING int[] OMIT QUOTES ERROR ON ERROR)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ERROR:  malformed array literal: "[1, 2]"
+DETAIL:  Missing "]" after array dimensions.
+</programlisting>
+       </para>
+      </entry>
+     </row>
+     <row>
+      <entry role="func_table_entry"><para role="func_signature">
+        <indexterm><primary>json_value</primary></indexterm>
+<synopsis>
+<function>JSON_VALUE</function> (
+<replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
+<optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
+<optional> <literal>RETURNING</literal> <replaceable>data_type</replaceable> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON EMPTY</literal> </optional>
+<optional> { <literal>ERROR</literal> | <literal>NULL</literal> | <literal>DEFAULT</literal> <replaceable>expression</replaceable> } <literal>ON ERROR</literal> </optional>) <returnvalue>text</returnvalue>
+</synopsis>
+       </para>
+     <itemizedlist>
+      <listitem>
+       <para>
+        Returns the result of applying the SQL/JSON
+        <replaceable>path_expression</replaceable> to the
+        <replaceable>context_item</replaceable>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Only use <function>JSON_VALUE()</function> if the extracted value is
+        expected to be a single <acronym>SQL/JSON</acronym> scalar item;
+        getting multiple values will be treated as an error. If you expect that
+        extracted value might be an object or an array, use the
+        <function>JSON_QUERY</function> function instead.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        By default, the result, which must be a single scalar value, is
+        returned as a value of type <type>text</type>, though the
+        <literal>RETURNING</literal> clause can be used to return as some
+        other type to which it can be successfully coerced.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        The <literal>ON ERROR</literal> and <literal>ON EMPTY</literal>
+        clauses have similar semantics as mentioned in the description of
+        <function>JSON_QUERY</function>, except the set of values returned in
+        lieu of throwing an error is different.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+        Note that scalar strings returned by <function>JSON_VALUE</function>
+        always have their quotes removed, equivalent to specifying
+        <literal>OMIT QUOTES</literal> in <function>JSON_QUERY</function>.
+       </para>
+      </listitem>
+     </itemizedlist>
+       <para>
+        Examples:
+       </para>
+       <para>
+        <literal>JSON_VALUE(jsonb '"123.45"', '$' RETURNING float)</literal>
+        <returnvalue>123.45</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_VALUE(jsonb '"03:04 2015-02-01"', '$.datetime("HH24:MI&nbsp;YYYY-MM-DD")' RETURNING date)</literal>
+        <returnvalue>2015-02-01</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[$off]' PASSING 1 as off)</literal>
+        <returnvalue>2</returnvalue>
+       </para>
+       <para>
+        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 9 ON ERROR)</literal>
+        <returnvalue>9</returnvalue>
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+  <note>
+   <para>
+    The <replaceable>context_item</replaceable> expression is converted to
+    <type>jsonb</type> by an implicit cast if the expression is not already of
+    type <type>jsonb</type>. Note, however, that any parsing errors that occur
+    during that conversion are thrown unconditionally, that is, are not
+    handled according to the (specified or implicit) <literal>ON ERROR</literal>
+    clause.
+   </para>
+  </note>
+  <note>
+   <para>
+    <function>JSON_VALUE()</function> returns an SQL NULL if
+    <replaceable>path_expression</replaceable> returns a JSON
+    <literal>null</literal>, whereas <function>JSON_QUERY()</function> returns
+    the JSON <literal>null</literal> as is.
+   </para>
+  </note>
+  </sect2>
+
+ <sect2 id="functions-sqljson-table">
+  <title>JSON_TABLE</title>
+  <indexterm>
+   <primary>json_table</primary>
+  </indexterm>
+
+  <para>
+   <function>JSON_TABLE</function> is an SQL/JSON function which
+   queries <acronym>JSON</acronym> data
+   and presents the results as a relational view, which can be accessed as a
+   regular SQL table. You can use <function>JSON_TABLE</function> inside
+   the <literal>FROM</literal> clause of a <literal>SELECT</literal>,
+   <literal>UPDATE</literal>, or <literal>DELETE</literal> and as data source
+   in a <literal>MERGE</literal> statement.
+  </para>
+
+  <para>
+   Taking JSON data as input, <function>JSON_TABLE</function> uses a JSON path
+   expression to extract a part of the provided data to use as a
+   <firstterm>row pattern</firstterm> for the constructed view.  Each SQL/JSON
+   value given by the row pattern serves as source for a separate row in the
+   constructed view.
+  </para>
+
+  <para>
+   To split the row pattern into columns, <function>JSON_TABLE</function>
+   provides the <literal>COLUMNS</literal> clause that defines the
+   schema of the created view. For each column, a separate JSON path expression
+   can be specified to be evaluated against the row pattern to get an SQL/JSON
+   value that will become the value for the specified column in a given output
+   row.
+  </para>
+
+  <para>
+   JSON data stored at a nested level of the row pattern can be extracted using
+   the <literal>NESTED PATH</literal> clause.  Each
+   <literal>NESTED PATH</literal> clause can be used to generate one or more
+   columns using the data from a nested level of the row pattern.  Those
+   columns can be specified using a <literal>COLUMNS</literal> clause that
+   looks similar to the top-level COLUMNS clause.  Rows constructed from
+   NESTED COLUMNS are called <firstterm>child rows</firstterm> and are joined
+   against the row constructed from the columns specified in the parent
+   <literal>COLUMNS</literal> clause to get the row in the final view.  Child
+   columns themselves may contain a <literal>NESTED PATH</literal>
+   specification thus allowing to extract data located at arbitrary nesting
+   levels.  Columns produced by multiple <literal>NESTED PATH</literal>s at the
+   same level are considered to be <firstterm>siblings</firstterm> of each
+   other and their rows after joining with the parent row are combined using
+   UNION.
+  </para>
+
+  <para>
+   The rows produced by <function>JSON_TABLE</function> are laterally
+   joined to the row that generated them, so you do not have to explicitly join
+   the constructed view with the original table holding <acronym>JSON</acronym>
+   data.
+  </para>
+
+  <para>
+   The syntax is:
+  </para>
+
+<synopsis>
+JSON_TABLE (
+    <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional> </optional>
+    COLUMNS ( <replaceable class="parameter">json_table_column</replaceable> <optional>, ...</optional> )
+    <optional> { <literal>ERROR</literal> | <literal>EMPTY</literal> <optional>ARRAY</optional>} <literal>ON ERROR</literal> </optional>
+)
+
+<phrase>
+where <replaceable class="parameter">json_table_column</replaceable> is:
+</phrase>
+  <replaceable>name</replaceable> FOR ORDINALITY
+  | <replaceable>name</replaceable> <replaceable>type</replaceable>
+        <optional> FORMAT JSON <optional>ENCODING <literal>UTF8</literal></optional></optional>
+        <optional> PATH <replaceable>path_expression</replaceable> </optional>
+        <optional> { WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER </optional>
+        <optional> { KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional> </optional>
+        <optional> { ERROR | NULL | EMPTY { <optional>ARRAY</optional> | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON EMPTY </optional>
+        <optional> { ERROR | NULL | EMPTY { <optional>ARRAY</optional> | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
+  | <replaceable>name</replaceable> <replaceable>type</replaceable> EXISTS <optional> PATH <replaceable>path_expression</replaceable> </optional>
+        <optional> { ERROR | TRUE | FALSE | UNKNOWN } ON ERROR </optional>
+  | NESTED <optional> PATH </optional> <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
+</synopsis>
+
+  <para>
+   Each syntax element is described below in more detail.
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> <literal>AS</literal> <replaceable>json_path_name</replaceable> </optional> <optional> <literal>PASSING</literal> { <replaceable>value</replaceable> <literal>AS</literal> <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
+    </term>
+    <listitem>
+    <para>
+     The <replaceable>context_item</replaceable> specifies the input document
+     to query, the <replaceable>path_expression</replaceable> is an SQL/JSON
+     path expression defining the query, and <replaceable>json_path_name</replaceable>
+     is an optional name for the <replaceable>path_expression</replaceable>.
+     The optional <literal>PASSING</literal> clause provides data values for
+     the variables mentioned in the <replaceable>path_expression</replaceable>.
+     The result of the input data evaluation using the aforementioned elements
+     is called the <firstterm>row pattern</firstterm>, which is used as the
+     source for row values in the constructed view.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <literal>COLUMNS</literal> ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
+    </term>
+    <listitem>
+
+    <para>
+     The <literal>COLUMNS</literal> clause defining the schema of the
+     constructed view. In this clause, you can specify each column to be
+     filled with an SQL/JSON value obtained by applying a JSON path expression
+     against the row pattern.  <replaceable>json_table_column</replaceable> has
+     the following variants:
+    </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <replaceable>name</replaceable> <literal>FOR ORDINALITY</literal>
+    </term>
+    <listitem>
+    <para>
+     Adds an ordinality column that provides sequential row numbering starting
+     from 1.  Each <literal>NESTED PATH</literal> (see below) gets its own
+     counter for any nested ordinality columns.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <literal><replaceable>name</replaceable> <replaceable>type</replaceable>
+          <optional><literal>FORMAT JSON</literal> <optional>ENCODING <literal>UTF8</literal></optional></optional>
+          <optional> <literal>PATH</literal> <replaceable>path_expression</replaceable> </optional></literal>
+    </term>
+    <listitem>
+    <para>
+     Inserts an SQL/JSON value obtained by applying
+     <replaceable>path_expression</replaceable> against the row pattern into
+     the view's output row after coercing it to specified
+     <replaceable>type</replaceable>.
+    </para>
+    <para>
+     Specifying <literal>FORMAT JSON</literal> makes it explicit that you
+     expect the value to be a valid <type>json</type> object.  It only
+     makes sense to specify <literal>FORMAT JSON</literal> if
+     <replaceable>type</replaceable> is one of <type>bpchar</type>,
+     <type>bytea</type>, <type>character varying</type>, <type>name</type>,
+     <type>json</type>, <type>jsonb</type>, <type>text</type>, or a domain over
+     these types.
+    </para>
+    <para>
+     Optionally, you can specify <literal>WRAPPER</literal> and
+     <literal>QUOTES</literal> clauses to format the output. Note that
+     specifying <literal>OMIT QUOTES</literal> overrides
+     <literal>FORMAT JSON</literal> if also specified, because unquoted
+     literals do not constitute valid <type>json</type> values.
+    </para>
+    <para>
+     Optionally, you can use <literal>ON EMPTY</literal> and
+     <literal>ON ERROR</literal> clauses to specify whether to throw the error
+     or return the specified value when the result of JSON path evaluation is
+     empty and when an error occurs during JSON path evaluation or when
+     coercing the SQL/JSON value to the specified type, respectively.  The
+     default for both is to return a <literal>NULL</literal> value.
+    </para>
+    <note>
+     <para>
+      This clause is internally turned into and has the same semantics as
+      <function>JSON_VALUE</function> or <function>JSON_QUERY</function>.
+      The latter if the specified type is not a scalar type or if either of
+      <literal>FORMAT JSON</literal>, <literal>WRAPPER</literal>, or
+      <literal>QUOTES</literal> clause is present.
+     </para>
+    </note>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+       <replaceable>name</replaceable> <replaceable>type</replaceable>
+       <literal>EXISTS</literal> <optional> <literal>PATH</literal> <replaceable>path_expression</replaceable> </optional>
+    </term>
+    <listitem>
+    <para>
+     Inserts a boolean value obtained by applying
+     <replaceable>path_expression</replaceable> against the row pattern
+     into the view's output row after coercing it to specified
+     <replaceable>type</replaceable>.
+    </para>
+    <para>
+     The value corresponds to whether applying the <literal>PATH</literal>
+     expression to the row pattern yields any values.
+    </para>
+    <para>
+     The specified <replaceable>type</replaceable> should have a cast from the
+     <type>boolean</type> type.
+    </para>
+    <para>
+     Optionally, you can use <literal>ON ERROR</literal> to specify whether to
+     throw the error or return the specified value when an error occurs during
+     JSON path evaluation or when coercing SQL/JSON value to the specified
+     type.  The default is to return a boolean value
+     <literal>FALSE</literal>.
+    </para>
+    <note>
+     <para>
+      This clause is internally turned into and has the same semantics as
+      <function>JSON_EXISTS</function>.
+     </para>
+    </note>
+      </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+      <literal>NESTED <optional> PATH </optional></literal> <replaceable>path_expression</replaceable> <optional> <literal>AS</literal> <replaceable>json_path_name</replaceable> </optional>
+          <literal>COLUMNS</literal> ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
+    </term>
+    <listitem>
+
+    <para>
+     Extracts SQL/JSON values from nested levels of the row pattern,
+     generates one or more columns as defined by the <literal>COLUMNS</literal>
+     subclause, and inserts the extracted SQL/JSON values into those
+     columns.  The <replaceable>json_table_column</replaceable>
+     expression in the <literal>COLUMNS</literal> subclause uses the same
+     syntax as in the parent <literal>COLUMNS</literal> clause.
+    </para>
+
+    <para>
+     The <literal>NESTED PATH</literal> syntax is recursive,
+     so you can go down multiple nested levels by specifying several
+     <literal>NESTED PATH</literal> subclauses within each other.
+     It allows to unnest the hierarchy of JSON objects and arrays
+     in a single function invocation rather than chaining several
+     <function>JSON_TABLE</function> expressions in an SQL statement.
+    </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+   <note>
+     <para>
+      In each variant of <replaceable>json_table_column</replaceable> described
+      above, if the <literal>PATH</literal> clause is omitted, path expression
+      <literal>$.<replaceable>name</replaceable></literal> is used, where
+      <replaceable>name</replaceable> is the provided column name.
+     </para>
+    </note>
+
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <literal>AS</literal> <replaceable>json_path_name</replaceable>
+    </term>
+    <listitem>
+
+    <para>
+     The optional <replaceable>json_path_name</replaceable> serves as an
+     identifier of the provided <replaceable>path_expression</replaceable>.
+     The name must be unique and distinct from the column names.
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     { <literal>ERROR</literal> | <literal>EMPTY</literal> } <literal>ON ERROR</literal>
+    </term>
+    <listitem>
+
+    <para>
+     The optional <literal>ON ERROR</literal> can be used to specify how to
+     handle errors when evaluating the top-level
+     <replaceable>path_expression</replaceable>.  Use <literal>ERROR</literal>
+     if you want the errors to be thrown and <literal>EMPTY</literal> to
+     return an empty table, that is, a table containing 0 rows.  Note that
+     this clause does not affect the errors that occur when evaluating
+     columns, for which the behavior depends on whether the
+     <literal>ON ERROR</literal> clause is specified against a given column.
+    </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>Examples</para>
+
+     <para>
+      In the examples that follow, the following table containing JSON data
+      will be used:
+
+<programlisting>
+CREATE TABLE my_films ( js jsonb );
+
+INSERT INTO my_films VALUES (
+'{ "favorites" : [
+   { "kind" : "comedy", "films" : [
+     { "title" : "Bananas",
+       "director" : "Woody Allen"},
+     { "title" : "The Dinner Game",
+       "director" : "Francis Veber" } ] },
+   { "kind" : "horror", "films" : [
+     { "title" : "Psycho",
+       "director" : "Alfred Hitchcock" } ] },
+   { "kind" : "thriller", "films" : [
+     { "title" : "Vertigo",
+       "director" : "Alfred Hitchcock" } ] },
+   { "kind" : "drama", "films" : [
+     { "title" : "Yojimbo",
+       "director" : "Akira Kurosawa" } ] }
+  ] }');
+</programlisting>
+
+     </para>
+     <para>
+      The following query shows how to use <function>JSON_TABLE</function> to
+      turn the JSON objects in the <structname>my_films</structname> table
+      to a view containing columns for the keys <literal>kind</literal>,
+      <literal>title</literal>, and <literal>director</literal> contained in
+      the original JSON along with an ordinality column:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE (js, '$.favorites[*]' COLUMNS (
+   id FOR ORDINALITY,
+   kind text PATH '$.kind',
+   title text PATH '$.films[*].title' WITH WRAPPER,
+   director text PATH '$.films[*].director' WITH WRAPPER)) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |             title              |             director
+----+----------+--------------------------------+----------------------------------
+  1 | comedy   | ["Bananas", "The Dinner Game"] | ["Woody Allen", "Francis Veber"]
+  2 | horror   | ["Psycho"]                     | ["Alfred Hitchcock"]
+  3 | thriller | ["Vertigo"]                    | ["Alfred Hitchcock"]
+  4 | drama    | ["Yojimbo"]                    | ["Akira Kurosawa"]
+(4 rows)
+</screen>
+
+     </para>
+     <para>
+      The following is a modified version of the above query to show the
+      usage of <literal>PASSING</literal> arguments in the filter specified in
+      the top-level JSON path expression and the various options for the
+      individual columns:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE (js, '$.favorites[*] ? (@.films[*].director == $filter)'
+   PASSING 'Alfred Hitchcock' AS filter
+     COLUMNS (
+     id FOR ORDINALITY,
+     kind text PATH '$.kind',
+     title text FORMAT JSON PATH '$.films[*].title' OMIT QUOTES,
+     director text PATH '$.films[*].director' KEEP QUOTES)) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |  title  |      director
+----+----------+---------+--------------------
+  1 | horror   | Psycho  | "Alfred Hitchcock"
+  2 | thriller | Vertigo | "Alfred Hitchcock"
+(2 rows)
+</screen>
+
+     </para>
+     <para>
+      The following is a modified version of the above query to show the usage
+      of <literal>NESTED PATH</literal> for populating title and director
+      columns, illustrating how they are joined to the parent columns id and
+      kind:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE ( js, '$.favorites[*] ? (@.films[*].director == $filter)'
+   PASSING 'Alfred Hitchcock' AS filter
+   COLUMNS (
+    id FOR ORDINALITY,
+    kind text PATH '$.kind',
+    NESTED PATH '$.films[*]' COLUMNS (
+      title text FORMAT JSON PATH '$.title' OMIT QUOTES,
+      director text PATH '$.director' KEEP QUOTES))) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |  title  |      director
+----+----------+---------+--------------------
+  1 | horror   | Psycho  | "Alfred Hitchcock"
+  2 | thriller | Vertigo | "Alfred Hitchcock"
+(2 rows)
+</screen>
+
+     </para>
+
+     <para>
+      The following is the same query but without the filter in the root
+      path:
+
+<programlisting>
+SELECT jt.* FROM
+ my_films,
+ JSON_TABLE ( js, '$.favorites[*]'
+   COLUMNS (
+    id FOR ORDINALITY,
+    kind text PATH '$.kind',
+    NESTED PATH '$.films[*]' COLUMNS (
+      title text FORMAT JSON PATH '$.title' OMIT QUOTES,
+      director text PATH '$.director' KEEP QUOTES))) AS jt;
+</programlisting>
+
+<screen>
+ id |   kind   |      title      |      director
+----+----------+-----------------+--------------------
+  1 | comedy   | Bananas         | "Woody Allen"
+  1 | comedy   | The Dinner Game | "Francis Veber"
+  2 | horror   | Psycho          | "Alfred Hitchcock"
+  3 | thriller | Vertigo         | "Alfred Hitchcock"
+  4 | drama    | Yojimbo         | "Akira Kurosawa"
+(5 rows)
+</screen>
+
+     </para>
+
+     <para>
+      The following shows another query using a different <type>JSON</type>
+      object as input.  It shows the UNION "sibling join" between
+      <literal>NESTED</literal> paths <literal>$.movies[*]</literal> and
+      <literal>$.books[*]</literal> and also the usage of
+      <literal>FOR ORDINALITY</literal> column at <literal>NESTED</literal>
+      levels (columns <literal>movie_id</literal>, <literal>book_id</literal>,
+      and <literal>author_id</literal>):
+
+<programlisting>
+SELECT * FROM JSON_TABLE (
+'{"favorites":
+    [{"movies":
+      [{"name": "One", "director": "John Doe"},
+       {"name": "Two", "director": "Don Joe"}],
+     "books":
+      [{"name": "Mystery", "authors": [{"name": "Brown Dan"}]},
+       {"name": "Wonder", "authors": [{"name": "Jun Murakami"}, {"name":"Craig Doe"}]}]
+}]}'::json, '$.favorites[*]'
+COLUMNS (
+  user_id FOR ORDINALITY,
+  NESTED '$.movies[*]'
+    COLUMNS (
+    movie_id FOR ORDINALITY,
+    mname text PATH '$.name',
+    director text),
+  NESTED '$.books[*]'
+    COLUMNS (
+      book_id FOR ORDINALITY,
+      bname text PATH '$.name',
+      NESTED '$.authors[*]'
+        COLUMNS (
+          author_id FOR ORDINALITY,
+          author_name text PATH '$.name'))));
+</programlisting>
+
+<screen>
+ user_id | movie_id | mname | director | book_id |  bname  | author_id | author_name
+---------+----------+-------+----------+---------+---------+-----------+--------------
+       1 |        1 | One   | John Doe |         |         |           |
+       1 |        2 | Two   | Don Joe  |         |         |           |
+       1 |          |       |          |       1 | Mystery |         1 | Brown Dan
+       1 |          |       |          |       2 | Wonder  |         1 | Jun Murakami
+       1 |          |       |          |       2 | Wonder  |         2 | Craig Doe
+(5 rows)
+</screen>
+
+     </para>
+  </sect2>
+ </sect1>

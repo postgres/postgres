@@ -1,0 +1,195 @@
+ <sect1 id="functions-sequence">
+  <title>Sequence Manipulation Functions</title>
+
+  <indexterm>
+   <primary>sequence</primary>
+  </indexterm>
+
+  <para>
+   This section describes functions for operating on <firstterm>sequence
+   objects</firstterm>, also called sequence generators or just sequences.
+   Sequence objects are special single-row tables created with <xref
+   linkend="sql-createsequence"/>.
+   Sequence objects are commonly used to generate unique identifiers
+   for rows of a table.  The sequence functions, listed in <xref
+   linkend="functions-sequence-table"/>, provide simple, multiuser-safe
+   methods for obtaining successive sequence values from sequence
+   objects.
+  </para>
+
+   <table id="functions-sequence-table">
+    <title>Sequence Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>nextval</primary>
+        </indexterm>
+        <function>nextval</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Advances the sequence object to its next value and returns that value.
+        This is done atomically: even if multiple sessions
+        execute <function>nextval</function> concurrently, each will safely
+        receive a distinct sequence value.
+        If the sequence object has been created with default parameters,
+        successive <function>nextval</function> calls will return successive
+        values beginning with 1.  Other behaviors can be obtained by using
+        appropriate parameters in the <xref linkend="sql-createsequence"/>
+        command.
+      </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>UPDATE</literal> privilege on the sequence.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>setval</primary>
+        </indexterm>
+        <function>setval</function> ( <type>regclass</type>, <type>bigint</type> <optional>, <type>boolean</type> </optional> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Sets the sequence object's current value, and optionally
+        its <literal>is_called</literal> flag.  The two-parameter
+        form sets the sequence's <literal>last_value</literal> field to the
+        specified value and sets its <literal>is_called</literal> field to
+        <literal>true</literal>, meaning that the next
+        <function>nextval</function> will advance the sequence before
+        returning a value.  The value that will be reported
+        by <function>currval</function> is also set to the specified value.
+        In the three-parameter form, <literal>is_called</literal> can be set
+        to either <literal>true</literal>
+        or <literal>false</literal>.  <literal>true</literal> has the same
+        effect as the two-parameter form. If it is set
+        to <literal>false</literal>, the next <function>nextval</function>
+        will return exactly the specified value, and sequence advancement
+        commences with the following <function>nextval</function>.
+        Furthermore, the value reported by <function>currval</function> is not
+        changed in this case.  For example,
+<programlisting>
+SELECT setval('myseq', 42);           <lineannotation>Next <function>nextval</function> will return 43</lineannotation>
+SELECT setval('myseq', 42, true);     <lineannotation>Same as above</lineannotation>
+SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</function> will return 42</lineannotation>
+</programlisting>
+        The result returned by <function>setval</function> is just the value of its
+        second argument.
+       </para>
+       <para>
+        This function requires <literal>UPDATE</literal> privilege on the
+        sequence.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>currval</primary>
+        </indexterm>
+        <function>currval</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the value most recently obtained
+        by <function>nextval</function> for this sequence in the current
+        session.  (An error is reported if <function>nextval</function> has
+        never been called for this sequence in this session.)  Because this is
+        returning a session-local value, it gives a predictable answer whether
+        or not other sessions have executed <function>nextval</function> since
+        the current session did.
+       </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the sequence.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lastval</primary>
+        </indexterm>
+        <function>lastval</function> ()
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the value most recently returned by
+        <function>nextval</function> in the current session. This function is
+        identical to <function>currval</function>, except that instead
+        of taking the sequence name as an argument it refers to whichever
+        sequence <function>nextval</function> was most recently applied to
+        in the current session. It is an error to call
+        <function>lastval</function> if <function>nextval</function>
+        has not yet been called in the current session.
+       </para>
+       <para>
+        This function requires <literal>USAGE</literal>
+        or <literal>SELECT</literal> privilege on the last used sequence.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <caution>
+   <para>
+    To avoid blocking concurrent transactions that obtain numbers from
+    the same sequence, the value obtained by <function>nextval</function>
+    is not reclaimed for re-use if the calling transaction later aborts.
+    This means that transaction aborts or database crashes can result in
+    gaps in the sequence of assigned values.  That can happen without a
+    transaction abort, too.  For example an <command>INSERT</command> with
+    an <literal>ON CONFLICT</literal> clause will compute the to-be-inserted
+    tuple, including doing any required <function>nextval</function>
+    calls, before detecting any conflict that would cause it to follow
+    the <literal>ON CONFLICT</literal> rule instead.
+    Thus, <productname>PostgreSQL</productname> sequence
+    objects <emphasis>cannot be used to obtain <quote>gapless</quote>
+    sequences</emphasis>.
+   </para>
+
+   <para>
+    Likewise, sequence state changes made by <function>setval</function>
+    are immediately visible to other transactions, and are not undone if
+    the calling transaction rolls back.
+   </para>
+
+   <para>
+    If the database cluster crashes before committing a transaction
+    containing a <function>nextval</function>
+    or <function>setval</function> call, the sequence state change might
+    not have made its way to persistent storage, so that it is uncertain
+    whether the sequence will have its original or updated state after the
+    cluster restarts.  This is harmless for usage of the sequence within
+    the database, since other effects of uncommitted transactions will not
+    be visible either.  However, if you wish to use a sequence value for
+    persistent outside-the-database purposes, make sure that the
+    <function>nextval</function> call has been committed before doing so.
+   </para>
+  </caution>
+
+  <para>
+   The sequence to be operated on by a sequence function is specified by
+   a <type>regclass</type> argument, which is simply the OID of the sequence in the
+   <structname>pg_class</structname> system catalog.  You do not have to look up the
+   OID by hand, however, since the <type>regclass</type> data type's input
+   converter will do the work for you.  See <xref linkend="datatype-oid"/>
+   for details.
+  </para>
+ </sect1>

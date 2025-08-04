@@ -1,0 +1,1818 @@
+  <sect1 id="functions-string">
+   <title>String Functions and Operators</title>
+
+   <para>
+    This section describes functions and operators for examining and
+    manipulating string values.  Strings in this context include values
+    of the types <type>character</type>, <type>character varying</type>,
+    and <type>text</type>.  Except where noted, these functions and operators
+    are declared to accept and return type <type>text</type>.  They will
+    interchangeably accept <type>character varying</type> arguments.
+    Values of type <type>character</type> will be converted
+    to <type>text</type> before the function or operator is applied, resulting
+    in stripping any trailing spaces in the <type>character</type> value.
+   </para>
+
+   <para>
+    <acronym>SQL</acronym> defines some string functions that use
+    key words, rather than commas, to separate
+    arguments.  Details are in
+    <xref linkend="functions-string-sql"/>.
+    <productname>PostgreSQL</productname> also provides versions of these functions
+    that use the regular function invocation syntax
+    (see <xref linkend="functions-string-other"/>).
+   </para>
+
+   <note>
+    <para>
+     The string concatenation operator (<literal>||</literal>) will accept
+     non-string input, so long as at least one input is of string type, as shown
+     in <xref linkend="functions-string-sql"/>.  For other cases, inserting an
+     explicit coercion to <type>text</type> can be used to have non-string input
+     accepted.
+    </para>
+   </note>
+
+   <table id="functions-string-sql">
+    <title><acronym>SQL</acronym> String Functions and Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function/Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>character string</primary>
+         <secondary>concatenation</secondary>
+        </indexterm>
+        <type>text</type> <literal>||</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Concatenates the two strings.
+       </para>
+       <para>
+        <literal>'Post' || 'greSQL'</literal>
+        <returnvalue>PostgreSQL</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>text</type> <literal>||</literal> <type>anynonarray</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <type>anynonarray</type> <literal>||</literal> <type>text</type>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the non-string input to text, then concatenates the two
+        strings.  (The non-string input cannot be of an array type, because
+        that would create ambiguity with the array <literal>||</literal>
+        operators.  If you want to concatenate an array's text equivalent,
+        cast it to <type>text</type> explicitly.)
+       </para>
+       <para>
+        <literal>'Value: ' || 42</literal>
+        <returnvalue>Value: 42</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>btrim</primary>
+        </indexterm>
+        <function>btrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters
+        in <parameter>characters</parameter> (a space by default)
+        from the start and end of <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>btrim('xyxtrimyyx', 'xyz')</literal>
+        <returnvalue>trim</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>normalized</primary>
+        </indexterm>
+        <indexterm>
+         <primary>Unicode normalization</primary>
+        </indexterm>
+         <type>text</type> <literal>IS</literal> <optional><literal>NOT</literal></optional> <optional><parameter>form</parameter></optional> <literal>NORMALIZED</literal>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Checks whether the string is in the specified Unicode normalization
+        form.  The optional <parameter>form</parameter> key word specifies the
+        form: <literal>NFC</literal> (the default), <literal>NFD</literal>,
+        <literal>NFKC</literal>, or <literal>NFKD</literal>.  This expression can
+        only be used when the server encoding is <literal>UTF8</literal>.  Note
+        that checking for normalization using this expression is often faster
+        than normalizing possibly already normalized strings.
+       </para>
+       <para>
+        <literal>U&amp;'\0061\0308bc' IS NFD NORMALIZED</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_length</primary>
+        </indexterm>
+        <function>bit_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bits in the string (8
+        times the <function>octet_length</function>).
+       </para>
+       <para>
+        <literal>bit_length('jose')</literal>
+        <returnvalue>32</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>char_length</primary>
+        </indexterm>
+        <indexterm>
+         <primary>character string</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <indexterm>
+         <primary>length</primary>
+         <secondary sortas="character string">of a character string</secondary>
+         <see>character string, length</see>
+        </indexterm>
+        <function>char_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para role="func_signature">
+        <indexterm>
+         <primary>character_length</primary>
+        </indexterm>
+        <function>character_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of characters in the string.
+       </para>
+       <para>
+        <literal>char_length('jos&eacute;')</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-lower">
+         <primary>lower</primary>
+        </indexterm>
+        <function>lower</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the string to all lower case, according to the rules of the
+        database's locale.
+       </para>
+       <para>
+        <literal>lower('TOM')</literal>
+        <returnvalue>tom</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lpad</primary>
+        </indexterm>
+        <function>lpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extends the <parameter>string</parameter> to length
+        <parameter>length</parameter> by prepending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated (on the right).
+       </para>
+       <para>
+        <literal>lpad('hi', 5, 'xy')</literal>
+        <returnvalue>xyxhi</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>ltrim</primary>
+        </indexterm>
+        <function>ltrim</function> ( <parameter>string</parameter> <type>text</type>
+        <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters in
+        <parameter>characters</parameter> (a space by default) from the start of
+        <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>ltrim('zzzytest', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-normalize">
+         <primary>normalize</primary>
+        </indexterm>
+        <indexterm>
+         <primary>Unicode normalization</primary>
+        </indexterm>
+        <function>normalize</function> ( <type>text</type>
+        <optional>, <parameter>form</parameter> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the string to the specified Unicode
+        normalization form.  The optional <parameter>form</parameter> key word
+        specifies the form: <literal>NFC</literal> (the default),
+        <literal>NFD</literal>, <literal>NFKC</literal>, or
+        <literal>NFKD</literal>.  This function can only be used when the
+        server encoding is <literal>UTF8</literal>.
+       </para>
+       <para>
+        <literal>normalize(U&amp;'\0061\0308bc', NFC)</literal>
+        <returnvalue>U&amp;'\00E4bc'</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bytes in the string.
+       </para>
+       <para>
+        <literal>octet_length('jos&eacute;')</literal>
+        <returnvalue>5</returnvalue> (if server encoding is UTF8)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>character</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bytes in the string.  Since this version of the
+        function accepts type <type>character</type> directly, it will not
+        strip trailing spaces.
+       </para>
+       <para>
+        <literal>octet_length('abc '::character(4))</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>overlay</primary>
+        </indexterm>
+        <function>overlay</function> ( <parameter>string</parameter> <type>text</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>text</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces the substring of <parameter>string</parameter> that starts at
+        the <parameter>start</parameter>'th character and extends
+        for <parameter>count</parameter> characters
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       </para>
+       <para>
+        <literal>overlay('Txxxxas' placing 'hom' from 2 for 4)</literal>
+        <returnvalue>Thomas</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>position</primary>
+        </indexterm>
+        <function>position</function> ( <parameter>substring</parameter> <type>text</type> <literal>IN</literal> <parameter>string</parameter> <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns first starting index of the specified
+        <parameter>substring</parameter> within
+        <parameter>string</parameter>, or zero if it's not present.
+       </para>
+       <para>
+        <literal>position('om' in 'Thomas')</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rpad</primary>
+        </indexterm>
+        <function>rpad</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>length</parameter> <type>integer</type>
+        <optional>, <parameter>fill</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extends the <parameter>string</parameter> to length
+        <parameter>length</parameter> by appending the characters
+        <parameter>fill</parameter> (a space by default).  If the
+        <parameter>string</parameter> is already longer than
+        <parameter>length</parameter> then it is truncated.
+       </para>
+       <para>
+        <literal>rpad('hi', 5, 'xy')</literal>
+        <returnvalue>hixyx</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rtrim</primary>
+        </indexterm>
+        <function>rtrim</function> ( <parameter>string</parameter> <type>text</type>
+         <optional>, <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters in
+        <parameter>characters</parameter> (a space by default) from the end of
+        <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>rtrim('testxxzx', 'xyz')</literal>
+        <returnvalue>test</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>substring</primary>
+        </indexterm>
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts the substring of <parameter>string</parameter> starting at
+        the <parameter>start</parameter>'th character if that is specified,
+        and stopping after <parameter>count</parameter> characters if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       </para>
+       <para>
+        <literal>substring('Thomas' from 2 for 3)</literal>
+        <returnvalue>hom</returnvalue>
+       </para>
+       <para>
+        <literal>substring('Thomas' from 3)</literal>
+        <returnvalue>omas</returnvalue>
+       </para>
+       <para>
+        <literal>substring('Thomas' for 2)</literal>
+        <returnvalue>Th</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <parameter>pattern</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts the first substring matching POSIX regular expression; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>substring('Thomas' from '...$')</literal>
+        <returnvalue>mas</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>SIMILAR</literal> <parameter>pattern</parameter> <type>text</type> <literal>ESCAPE</literal> <parameter>escape</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>substring</function> ( <parameter>string</parameter> <type>text</type> <literal>FROM</literal> <parameter>pattern</parameter> <type>text</type> <literal>FOR</literal> <parameter>escape</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts the first substring matching <acronym>SQL</acronym> regular expression;
+        see <xref linkend="functions-similarto-regexp"/>.  The first form has
+        been specified since SQL:2003; the second form was only in SQL:1999
+        and should be considered obsolete.
+       </para>
+       <para>
+        <literal>substring('Thomas' similar '%#"o_a#"_' escape '#')</literal>
+        <returnvalue>oma</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>trim</primary>
+        </indexterm>
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional>
+        <optional> <parameter>characters</parameter> <type>text</type> </optional> <literal>FROM</literal>
+        <parameter>string</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Removes the longest string containing only characters in
+        <parameter>characters</parameter> (a space by default) from the
+        start, end, or both ends (<literal>BOTH</literal> is the default)
+        of <parameter>string</parameter>.
+       </para>
+       <para>
+        <literal>trim(both 'xyz' from 'yxTomxx')</literal>
+        <returnvalue>Tom</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>trim</function> ( <optional> <literal>LEADING</literal> | <literal>TRAILING</literal> | <literal>BOTH</literal> </optional> <optional> <literal>FROM</literal> </optional>
+        <parameter>string</parameter> <type>text</type> <optional>,
+        <parameter>characters</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        This is a non-standard syntax for <function>trim()</function>.
+       </para>
+       <para>
+        <literal>trim(both from 'yxTomxx', 'xyz')</literal>
+        <returnvalue>Tom</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unicode_assigned</primary>
+        </indexterm>
+        <function>unicode_assigned</function> ( <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns <literal>true</literal> if all characters in the string are
+        assigned Unicode codepoints; <literal>false</literal> otherwise. This
+        function can only be used when the server encoding is
+        <literal>UTF8</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>upper</primary>
+        </indexterm>
+        <function>upper</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the string to all upper case, according to the rules of the
+        database's locale.
+       </para>
+       <para>
+        <literal>upper('tom')</literal>
+        <returnvalue>TOM</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Additional string manipulation functions and operators are available
+    and are listed in <xref linkend="functions-string-other"/>.  (Some of
+    these are used internally to implement
+    the <acronym>SQL</acronym>-standard string functions listed in
+    <xref linkend="functions-string-sql"/>.)
+    There are also pattern-matching operators, which are described in
+    <xref linkend="functions-matching"/>, and operators for full-text
+    search, which are described in <xref linkend="textsearch"/>.
+   </para>
+
+   <table id="functions-string-other">
+    <title>Other String Functions and Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function/Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>character string</primary>
+         <secondary>prefix test</secondary>
+        </indexterm>
+        <type>text</type> <literal>^@</literal> <type>text</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if the first string starts with the second string
+        (equivalent to the <function>starts_with()</function> function).
+       </para>
+       <para>
+        <literal>'alphabet' ^@ 'alph'</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>ascii</primary>
+        </indexterm>
+        <function>ascii</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the numeric code of the first character of the argument.
+        In <acronym>UTF8</acronym> encoding, returns the Unicode code point
+        of the character.  In other multibyte encodings, the argument must
+        be an <acronym>ASCII</acronym> character.
+       </para>
+       <para>
+        <literal>ascii('x')</literal>
+        <returnvalue>120</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>chr</primary>
+        </indexterm>
+        <function>chr</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the character with the given code. In <acronym>UTF8</acronym>
+        encoding the argument is treated as a Unicode code point. In other
+        multibyte encodings the argument must designate
+        an <acronym>ASCII</acronym> character.  <literal>chr(0)</literal> is
+        disallowed because text data types cannot store that character.
+      </para>
+      <para>
+        <literal>chr(65)</literal>
+        <returnvalue>A</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>concat</primary>
+        </indexterm>
+        <function>concat</function> ( <parameter>val1</parameter> <type>"any"</type>
+         <optional>, <parameter>val2</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Concatenates the text representations of all the arguments.
+        NULL arguments are ignored.
+       </para>
+       <para>
+        <literal>concat('abcde', 2, NULL, 22)</literal>
+        <returnvalue>abcde222</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>concat_ws</primary>
+        </indexterm>
+        <function>concat_ws</function> ( <parameter>sep</parameter> <type>text</type>,
+        <parameter>val1</parameter> <type>"any"</type>
+        <optional>, <parameter>val2</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Concatenates all but the first argument, with separators. The first
+        argument is used as the separator string, and should not be NULL.
+        Other NULL arguments are ignored.
+       </para>
+       <para>
+        <literal>concat_ws(',', 'abcde', 2, NULL, 22)</literal>
+        <returnvalue>abcde,2,22</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>format</primary>
+        </indexterm>
+        <function>format</function> ( <parameter>formatstr</parameter> <type>text</type>
+        <optional>, <parameter>formatarg</parameter> <type>"any"</type> <optional>, ...</optional> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+         Formats arguments according to a format string;
+         see <xref linkend="functions-string-format"/>.
+         This function is similar to the C function <function>sprintf</function>.
+       </para>
+       <para>
+        <literal>format('Hello %s, %1$s', 'World')</literal>
+        <returnvalue>Hello World, World</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>initcap</primary>
+        </indexterm>
+        <function>initcap</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the first letter of each word to upper case and the
+        rest to lower case. When using the <literal>libc</literal> locale
+        provider, words are sequences of alphanumeric characters separated
+        by non-alphanumeric characters; when using the ICU locale provider,
+        words are separated according to
+        <ulink url="https://www.unicode.org/reports/tr29/#Word_Boundaries">Unicode Standard Annex #29</ulink>.
+       </para>
+       <para>
+        <literal>initcap('hi THOMAS')</literal>
+        <returnvalue>Hi Thomas</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>casefold</primary>
+        </indexterm>
+        <function>casefold</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Performs case folding of the input string according to the collation.
+        Case folding is similar to case conversion, but the purpose of case
+        folding is to facilitate case-insensitive matching of strings,
+        whereas the purpose of case conversion is to convert to a particular
+        cased form.  This function can only be used when the server encoding
+        is <literal>UTF8</literal>.
+       </para>
+       <para>
+        Ordinarily, case folding simply converts to lowercase, but there may
+        be exceptions depending on the collation.  For instance, some
+        characters have more than two lowercase variants, or fold to uppercase.
+       </para>
+       <para>
+        Case folding may change the length of the string.  For instance, in
+        the <literal>PG_UNICODE_FAST</literal> collation, <literal>ß</literal>
+        (U+00DF) folds to <literal>ss</literal>.
+       </para>
+       <para>
+        <function>casefold</function> can be used for Unicode Default Caseless
+        Matching.  It does not always preserve the normalized form of the
+        input string (see <xref linkend="function-normalize"/>).
+       </para>
+       <para>
+        The <literal>libc</literal> provider doesn't support case folding, so
+        <function>casefold</function> is identical to <xref
+        linkend="function-lower"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>left</primary>
+        </indexterm>
+        <function>left</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns first <parameter>n</parameter> characters in the
+        string, or when <parameter>n</parameter> is negative, returns
+        all but last |<parameter>n</parameter>| characters.
+       </para>
+       <para>
+        <literal>left('abcde', 2)</literal>
+        <returnvalue>ab</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <function>length</function> ( <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of characters in the string.
+       </para>
+       <para>
+        <literal>length('jose')</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>md5</primary>
+        </indexterm>
+        <function>md5</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Computes the MD5 <link linkend="functions-hash-note">hash</link> of
+        the argument, with the result written in hexadecimal.
+       </para>
+       <para>
+        <literal>md5('abc')</literal>
+        <returnvalue>900150983cd24fb0&zwsp;d6963f7d28e17f72</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>parse_ident</primary>
+        </indexterm>
+        <function>parse_ident</function> ( <parameter>qualified_identifier</parameter> <type>text</type>
+        <optional>, <parameter>strict_mode</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits <parameter>qualified_identifier</parameter> into an array of
+        identifiers, removing any quoting of individual identifiers.  By
+        default, extra characters after the last identifier are considered an
+        error; but if the second parameter is <literal>false</literal>, then such
+        extra characters are ignored. (This behavior is useful for parsing
+        names for objects like functions.) Note that this function does not
+        truncate over-length identifiers. If you want truncation you can cast
+        the result to <type>name[]</type>.
+       </para>
+       <para>
+        <literal>parse_ident('"SomeSchema".someTable')</literal>
+        <returnvalue>{SomeSchema,sometable}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_client_encoding</primary>
+        </indexterm>
+        <function>pg_client_encoding</function> ( )
+        <returnvalue>name</returnvalue>
+       </para>
+       <para>
+        Returns current client encoding name.
+       </para>
+       <para>
+        <literal>pg_client_encoding()</literal>
+        <returnvalue>UTF8</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>quote_ident</primary>
+        </indexterm>
+        <function>quote_ident</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the given string suitably quoted to be used as an identifier
+        in an <acronym>SQL</acronym> statement string.
+        Quotes are added only if necessary (i.e., if the string contains
+        non-identifier characters or would be case-folded).
+        Embedded quotes are properly doubled.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
+       </para>
+       <para>
+        <literal>quote_ident('Foo bar')</literal>
+        <returnvalue>"Foo bar"</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>quote_literal</primary>
+        </indexterm>
+        <function>quote_literal</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the given string suitably quoted to be used as a string literal
+        in an <acronym>SQL</acronym> statement string.
+        Embedded single-quotes and backslashes are properly doubled.
+        Note that <function>quote_literal</function> returns null on null
+        input; if the argument might be null,
+        <function>quote_nullable</function> is often more suitable.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
+       </para>
+       <para>
+        <literal>quote_literal(E'O\'Reilly')</literal>
+        <returnvalue>'O''Reilly'</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>quote_literal</function> ( <type>anyelement</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the given value to text and then quotes it as a literal.
+        Embedded single-quotes and backslashes are properly doubled.
+       </para>
+       <para>
+        <literal>quote_literal(42.5)</literal>
+        <returnvalue>'42.5'</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>quote_nullable</primary>
+        </indexterm>
+        <function>quote_nullable</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the given string suitably quoted to be used as a string literal
+        in an <acronym>SQL</acronym> statement string; or, if the argument
+        is null, returns <literal>NULL</literal>.
+        Embedded single-quotes and backslashes are properly doubled.
+        See also <xref linkend="plpgsql-quote-literal-example"/>.
+       </para>
+       <para>
+        <literal>quote_nullable(NULL)</literal>
+        <returnvalue>NULL</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>quote_nullable</function> ( <type>anyelement</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the given value to text and then quotes it as a literal;
+        or, if the argument is null, returns <literal>NULL</literal>.
+        Embedded single-quotes and backslashes are properly doubled.
+       </para>
+       <para>
+        <literal>quote_nullable(42.5)</literal>
+        <returnvalue>'42.5'</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_count</primary>
+        </indexterm>
+        <function>regexp_count</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> </optional> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of times the POSIX regular
+        expression <parameter>pattern</parameter> matches in
+        the <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_count('123456789012', '\d\d\d', 2)</literal>
+        <returnvalue>3</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_instr</primary>
+        </indexterm>
+        <function>regexp_instr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>endoption</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type>
+         <optional>, <parameter>subexpr</parameter> <type>integer</type> </optional> </optional> </optional> </optional> </optional> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the position within <parameter>string</parameter> where
+        the <parameter>N</parameter>'th match of the POSIX regular
+        expression <parameter>pattern</parameter> occurs, or zero if there is
+        no such match; see <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_instr('ABCDEF', 'c(.)(..)', 1, 1, 0, 'i')</literal>
+        <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_instr('ABCDEF', 'c(.)(..)', 1, 1, 0, 'i', 2)</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_like</primary>
+        </indexterm>
+        <function>regexp_like</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Checks whether a match of the POSIX regular
+        expression <parameter>pattern</parameter> occurs
+        within <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_like('Hello World', 'world$', 'i')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_match</primary>
+        </indexterm>
+        <function>regexp_match</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Returns substrings within the first match of the POSIX regular
+        expression <parameter>pattern</parameter> to
+        the <parameter>string</parameter>; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_match('foobarbequebaz', '(bar)(beque)')</literal>
+        <returnvalue>{bar,beque}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_matches</primary>
+        </indexterm>
+        <function>regexp_matches</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>setof text[]</returnvalue>
+       </para>
+       <para>
+        Returns substrings within the first match of the POSIX regular
+        expression <parameter>pattern</parameter> to
+        the <parameter>string</parameter>, or substrings within all
+        such matches if the <literal>g</literal> flag is used;
+        see <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_matches('foobarbequebaz', 'ba.', 'g')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ {bar}
+ {baz}
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_replace</primary>
+        </indexterm>
+        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces the substring that is the first match to the POSIX
+        regular expression <parameter>pattern</parameter>, or all such
+        matches if the <literal>g</literal> flag is used; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal>
+        <returnvalue>ThM</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>regexp_replace</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type>,
+         <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type> </optional> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces the substring that is the <parameter>N</parameter>'th
+        match to the POSIX regular expression <parameter>pattern</parameter>,
+        or all such matches if <parameter>N</parameter> is zero, with the
+        search beginning at the <parameter>start</parameter>'th character
+        of <parameter>string</parameter>.  If <parameter>N</parameter> is
+        omitted, it defaults to 1.  See
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_replace('Thomas', '.', 'X', 3, 2)</literal>
+        <returnvalue>ThoXas</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_replace(string=>'hello world', pattern=>'l', replacement=>'XX', start=>1, "N"=>2)</literal>
+        <returnvalue>helXXo world</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_split_to_array</primary>
+        </indexterm>
+        <function>regexp_split_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits <parameter>string</parameter> using a POSIX regular
+        expression as the delimiter, producing an array of results; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_split_to_array('hello world', '\s+')</literal>
+        <returnvalue>{hello,world}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_split_to_table</primary>
+        </indexterm>
+        <function>regexp_split_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> <optional>, <parameter>flags</parameter> <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Splits <parameter>string</parameter> using a POSIX regular
+        expression as the delimiter, producing a set of results; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_split_to_table('hello world', '\s+')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ hello
+ world
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>regexp_substr</primary>
+        </indexterm>
+        <function>regexp_substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>
+         <optional>, <parameter>start</parameter> <type>integer</type>
+         <optional>, <parameter>N</parameter> <type>integer</type>
+         <optional>, <parameter>flags</parameter> <type>text</type>
+         <optional>, <parameter>subexpr</parameter> <type>integer</type> </optional> </optional> </optional> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the substring within <parameter>string</parameter> that
+        matches the <parameter>N</parameter>'th occurrence of the POSIX
+        regular expression <parameter>pattern</parameter>,
+        or <literal>NULL</literal> if there is no such match; see
+        <xref linkend="functions-posix-regexp"/>.
+       </para>
+       <para>
+        <literal>regexp_substr('ABCDEF', 'c(.)(..)', 1, 1, 'i')</literal>
+        <returnvalue>CDEF</returnvalue>
+       </para>
+       <para>
+        <literal>regexp_substr('ABCDEF', 'c(.)(..)', 1, 1, 'i', 2)</literal>
+        <returnvalue>EF</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>repeat</primary>
+        </indexterm>
+        <function>repeat</function> ( <parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Repeats <parameter>string</parameter> the specified
+        <parameter>number</parameter> of times.
+       </para>
+       <para>
+        <literal>repeat('Pg', 4)</literal>
+        <returnvalue>PgPgPgPg</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>replace</primary>
+        </indexterm>
+        <function>replace</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>from</parameter> <type>text</type>,
+        <parameter>to</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces all occurrences in <parameter>string</parameter> of
+        substring <parameter>from</parameter> with
+        substring <parameter>to</parameter>.
+       </para>
+       <para>
+        <literal>replace('abcdefabcdef', 'cd', 'XX')</literal>
+        <returnvalue>abXXefabXXef</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>reverse</primary>
+        </indexterm>
+        <function>reverse</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reverses the order of the characters in the string.
+       </para>
+       <para>
+        <literal>reverse('abcde')</literal>
+        <returnvalue>edcba</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>right</primary>
+        </indexterm>
+        <function>right</function> ( <parameter>string</parameter> <type>text</type>,
+         <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns last <parameter>n</parameter> characters in the string,
+        or when <parameter>n</parameter> is negative, returns all but
+        first |<parameter>n</parameter>| characters.
+       </para>
+       <para>
+        <literal>right('abcde', 2)</literal>
+        <returnvalue>de</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>split_part</primary>
+        </indexterm>
+        <function>split_part</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>delimiter</parameter> <type>text</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Splits <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and returns
+        the <parameter>n</parameter>'th field (counting from one),
+        or when <parameter>n</parameter> is negative, returns
+        the |<parameter>n</parameter>|'th-from-last field.
+       </para>
+       <para>
+        <literal>split_part('abc~@~def~@~ghi', '~@~', 2)</literal>
+        <returnvalue>def</returnvalue>
+       </para>
+       <para>
+        <literal>split_part('abc,def,ghi,jkl', ',', -2)</literal>
+        <returnvalue>ghi</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>starts_with</primary>
+        </indexterm>
+        <function>starts_with</function> ( <parameter>string</parameter> <type>text</type>, <parameter>prefix</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if <parameter>string</parameter> starts
+        with <parameter>prefix</parameter>.
+       </para>
+       <para>
+        <literal>starts_with('alphabet', 'alph')</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-string-to-array">
+         <primary>string_to_array</primary>
+        </indexterm>
+        <function>string_to_array</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>text[]</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and forms the resulting fields
+        into a <type>text</type> array.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate element in the array.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+        See also <link linkend="function-array-to-string"><function>array_to_string</function></link>.
+       </para>
+       <para>
+        <literal>string_to_array('xx~~yy~~zz', '~~', 'yy')</literal>
+        <returnvalue>{xx,NULL,zz}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>string_to_table</primary>
+        </indexterm>
+        <function>string_to_table</function> ( <parameter>string</parameter> <type>text</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Splits the <parameter>string</parameter> at occurrences
+        of <parameter>delimiter</parameter> and returns the resulting fields
+        as a set of <type>text</type> rows.
+        If <parameter>delimiter</parameter> is <literal>NULL</literal>,
+        each character in the <parameter>string</parameter> will become a
+        separate row of the result.
+        If <parameter>delimiter</parameter> is an empty string, then
+        the <parameter>string</parameter> is treated as a single field.
+        If <parameter>null_string</parameter> is supplied and is
+        not <literal>NULL</literal>, fields matching that string are
+        replaced by <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>string_to_table('xx~^~yy~^~zz', '~^~', 'yy')</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ xx
+ NULL
+ zz
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>strpos</primary>
+        </indexterm>
+        <function>strpos</function> ( <parameter>string</parameter> <type>text</type>, <parameter>substring</parameter> <type>text</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns first starting index of the specified <parameter>substring</parameter>
+        within <parameter>string</parameter>, or zero if it's not present.
+        (Same as <literal>position(<parameter>substring</parameter> in
+        <parameter>string</parameter>)</literal>, but note the reversed
+        argument order.)
+       </para>
+       <para>
+        <literal>strpos('high', 'ig')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>substr</primary>
+        </indexterm>
+        <function>substr</function> ( <parameter>string</parameter> <type>text</type>, <parameter>start</parameter> <type>integer</type> <optional>, <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Extracts the substring of <parameter>string</parameter> starting at
+        the <parameter>start</parameter>'th character,
+        and extending for <parameter>count</parameter> characters if that is
+        specified.  (Same
+        as <literal>substring(<parameter>string</parameter>
+        from <parameter>start</parameter>
+        for <parameter>count</parameter>)</literal>.)
+       </para>
+       <para>
+        <literal>substr('alphabet', 3)</literal>
+        <returnvalue>phabet</returnvalue>
+       </para>
+       <para>
+        <literal>substr('alphabet', 3, 2)</literal>
+        <returnvalue>ph</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_ascii</primary>
+        </indexterm>
+        <function>to_ascii</function> ( <parameter>string</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_ascii</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>encoding</parameter> <type>name</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_ascii</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>encoding</parameter> <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts <parameter>string</parameter> to <acronym>ASCII</acronym>
+        from another encoding, which may be identified by name or number.
+        If <parameter>encoding</parameter> is omitted the database encoding
+        is assumed (which in practice is the only useful case).
+        The conversion consists primarily of dropping accents.
+        Conversion is only supported
+        from <literal>LATIN1</literal>, <literal>LATIN2</literal>,
+        <literal>LATIN9</literal>, and <literal>WIN1250</literal> encodings.
+        (See the <xref linkend="unaccent"/> module for another, more flexible
+        solution.)
+       </para>
+       <para>
+        <literal>to_ascii('Kar&eacute;l')</literal>
+        <returnvalue>Karel</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_bin</primary>
+        </indexterm>
+        <function>to_bin</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_bin</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the number to its equivalent two's complement binary
+        representation.
+       </para>
+       <para>
+        <literal>to_bin(2147483647)</literal>
+        <returnvalue>1111111111111111111111111111111</returnvalue>
+       </para>
+       <para>
+        <literal>to_bin(-1234)</literal>
+        <returnvalue>11111111111111111111101100101110</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_hex</primary>
+        </indexterm>
+        <function>to_hex</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_hex</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the number to its equivalent two's complement hexadecimal
+        representation.
+       </para>
+       <para>
+        <literal>to_hex(2147483647)</literal>
+        <returnvalue>7fffffff</returnvalue>
+       </para>
+       <para>
+        <literal>to_hex(-1234)</literal>
+        <returnvalue>fffffb2e</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>to_oct</primary>
+        </indexterm>
+        <function>to_oct</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>to_oct</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts the number to its equivalent two's complement octal
+        representation.
+       </para>
+       <para>
+        <literal>to_oct(2147483647)</literal>
+        <returnvalue>17777777777</returnvalue>
+       </para>
+       <para>
+        <literal>to_oct(-1234)</literal>
+        <returnvalue>37777775456</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>translate</primary>
+        </indexterm>
+        <function>translate</function> ( <parameter>string</parameter> <type>text</type>,
+        <parameter>from</parameter> <type>text</type>,
+        <parameter>to</parameter> <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Replaces each character in <parameter>string</parameter> that
+        matches a character in the <parameter>from</parameter> set with the
+        corresponding character in the <parameter>to</parameter>
+        set. If <parameter>from</parameter> is longer than
+        <parameter>to</parameter>, occurrences of the extra characters in
+        <parameter>from</parameter> are deleted.
+       </para>
+       <para>
+        <literal>translate('12345', '143', 'ax')</literal>
+        <returnvalue>a2x5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unistr</primary>
+        </indexterm>
+        <function>unistr</function> ( <type>text</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Evaluate escaped Unicode characters in the argument.  Unicode characters
+        can be specified as
+        <literal>\<replaceable>XXXX</replaceable></literal> (4 hexadecimal
+        digits), <literal>\+<replaceable>XXXXXX</replaceable></literal> (6
+        hexadecimal digits),
+        <literal>\u<replaceable>XXXX</replaceable></literal> (4 hexadecimal
+        digits), or <literal>\U<replaceable>XXXXXXXX</replaceable></literal>
+        (8 hexadecimal digits).  To specify a backslash, write two
+        backslashes.  All other characters are taken literally.
+       </para>
+
+       <para>
+        If the server encoding is not UTF-8, the Unicode code point identified
+        by one of these escape sequences is converted to the actual server
+        encoding; an error is reported if that's not possible.
+       </para>
+
+       <para>
+        This function provides a (non-standard) alternative to string
+        constants with Unicode escapes (see <xref
+        linkend="sql-syntax-strings-uescape"/>).
+       </para>
+
+       <para>
+        <literal>unistr('d\0061t\+000061')</literal>
+        <returnvalue>data</returnvalue>
+       </para>
+       <para>
+        <literal>unistr('d\u0061t\U00000061')</literal>
+        <returnvalue>data</returnvalue>
+       </para></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The <function>concat</function>, <function>concat_ws</function> and
+    <function>format</function> functions are variadic, so it is possible to
+    pass the values to be concatenated or formatted as an array marked with
+    the <literal>VARIADIC</literal> keyword (see <xref
+    linkend="xfunc-sql-variadic-functions"/>).  The array's elements are
+    treated as if they were separate ordinary arguments to the function.
+    If the variadic array argument is NULL, <function>concat</function>
+    and <function>concat_ws</function> return NULL, but
+    <function>format</function> treats a NULL as a zero-element array.
+   </para>
+
+   <para>
+    See also the aggregate function <function>string_agg</function> in
+    <xref linkend="functions-aggregate"/>, and the functions for
+    converting between strings and the <type>bytea</type> type in
+    <xref linkend="functions-binarystring-conversions"/>.
+   </para>
+
+   <sect2 id="functions-string-format">
+    <title><function>format</function></title>
+
+    <indexterm>
+     <primary>format</primary>
+    </indexterm>
+
+    <para>
+     The function <function>format</function> produces output formatted according to
+     a format string, in a style similar to the C function
+     <function>sprintf</function>.
+    </para>
+
+    <para>
+<synopsis>
+<function>format</function>(<parameter>formatstr</parameter> <type>text</type> <optional>, <parameter>formatarg</parameter> <type>"any"</type> <optional>, ...</optional> </optional>)
+</synopsis>
+     <parameter>formatstr</parameter> is a format string that specifies how the
+     result should be formatted.  Text in the format string is copied
+     directly to the result, except where <firstterm>format specifiers</firstterm> are
+     used.  Format specifiers act as placeholders in the string, defining how
+     subsequent function arguments should be formatted and inserted into the
+     result.  Each <parameter>formatarg</parameter> argument is converted to text
+     according to the usual output rules for its data type, and then formatted
+     and inserted into the result string according to the format specifier(s).
+    </para>
+
+    <para>
+     Format specifiers are introduced by a <literal>%</literal> character and have
+     the form
+<synopsis>
+%[<parameter>position</parameter>][<parameter>flags</parameter>][<parameter>width</parameter>]<parameter>type</parameter>
+</synopsis>
+     where the component fields are:
+
+     <variablelist>
+      <varlistentry>
+       <term><parameter>position</parameter> (optional)</term>
+       <listitem>
+        <para>
+         A string of the form <literal><parameter>n</parameter>$</literal> where
+         <parameter>n</parameter> is the index of the argument to print.
+         Index 1 means the first argument after
+         <parameter>formatstr</parameter>.  If the <parameter>position</parameter> is
+         omitted, the default is to use the next argument in sequence.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><parameter>flags</parameter> (optional)</term>
+       <listitem>
+        <para>
+         Additional options controlling how the format specifier's output is
+         formatted.  Currently the only supported flag is a minus sign
+         (<literal>-</literal>) which will cause the format specifier's output to be
+         left-justified.  This has no effect unless the <parameter>width</parameter>
+         field is also specified.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><parameter>width</parameter> (optional)</term>
+       <listitem>
+        <para>
+         Specifies the <emphasis>minimum</emphasis> number of characters to use to
+         display the format specifier's output.  The output is padded on the
+         left or right (depending on the <literal>-</literal> flag) with spaces as
+         needed to fill the width.  A too-small width does not cause
+         truncation of the output, but is simply ignored.  The width may be
+         specified using any of the following: a positive integer; an
+         asterisk (<literal>*</literal>) to use the next function argument as the
+         width; or a string of the form <literal>*<parameter>n</parameter>$</literal> to
+         use the <parameter>n</parameter>th function argument as the width.
+        </para>
+
+        <para>
+         If the width comes from a function argument, that argument is
+         consumed before the argument that is used for the format specifier's
+         value.  If the width argument is negative, the result is left
+         aligned (as if the <literal>-</literal> flag had been specified) within a
+         field of length <function>abs</function>(<parameter>width</parameter>).
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><parameter>type</parameter> (required)</term>
+       <listitem>
+        <para>
+         The type of format conversion to use to produce the format
+         specifier's output.  The following types are supported:
+         <itemizedlist>
+          <listitem>
+           <para>
+            <literal>s</literal> formats the argument value as a simple
+            string.  A null value is treated as an empty string.
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            <literal>I</literal> treats the argument value as an SQL
+            identifier, double-quoting it if necessary.
+            It is an error for the value to be null (equivalent to
+            <function>quote_ident</function>).
+           </para>
+          </listitem>
+          <listitem>
+           <para>
+            <literal>L</literal> quotes the argument value as an SQL literal.
+            A null value is displayed as the string <literal>NULL</literal>, without
+            quotes (equivalent to <function>quote_nullable</function>).
+           </para>
+          </listitem>
+         </itemizedlist>
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     In addition to the format specifiers described above, the special sequence
+     <literal>%%</literal> may be used to output a literal <literal>%</literal> character.
+    </para>
+
+    <para>
+     Here are some examples of the basic format conversions:
+
+<screen>
+SELECT format('Hello %s', 'World');
+<lineannotation>Result: </lineannotation><computeroutput>Hello World</computeroutput>
+
+SELECT format('Testing %s, %s, %s, %%', 'one', 'two', 'three');
+<lineannotation>Result: </lineannotation><computeroutput>Testing one, two, three, %</computeroutput>
+
+SELECT format('INSERT INTO %I VALUES(%L)', 'Foo bar', E'O\'Reilly');
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO "Foo bar" VALUES('O''Reilly')</computeroutput>
+
+SELECT format('INSERT INTO %I VALUES(%L)', 'locations', 'C:\Program Files');
+<lineannotation>Result: </lineannotation><computeroutput>INSERT INTO locations VALUES('C:\Program Files')</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     Here are examples using <parameter>width</parameter> fields
+     and the <literal>-</literal> flag:
+
+<screen>
+SELECT format('|%10s|', 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|       foo|</computeroutput>
+
+SELECT format('|%-10s|', 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|foo       |</computeroutput>
+
+SELECT format('|%*s|', 10, 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|       foo|</computeroutput>
+
+SELECT format('|%*s|', -10, 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|foo       |</computeroutput>
+
+SELECT format('|%-*s|', 10, 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|foo       |</computeroutput>
+
+SELECT format('|%-*s|', -10, 'foo');
+<lineannotation>Result: </lineannotation><computeroutput>|foo       |</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     These examples show use of <parameter>position</parameter> fields:
+
+<screen>
+SELECT format('Testing %3$s, %2$s, %1$s', 'one', 'two', 'three');
+<lineannotation>Result: </lineannotation><computeroutput>Testing three, two, one</computeroutput>
+
+SELECT format('|%*2$s|', 'foo', 10, 'bar');
+<lineannotation>Result: </lineannotation><computeroutput>|       bar|</computeroutput>
+
+SELECT format('|%1$*2$s|', 'foo', 10, 'bar');
+<lineannotation>Result: </lineannotation><computeroutput>|       foo|</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     Unlike the standard C function <function>sprintf</function>,
+     <productname>PostgreSQL</productname>'s <function>format</function> function allows format
+     specifiers with and without <parameter>position</parameter> fields to be mixed
+     in the same format string.  A format specifier without a
+     <parameter>position</parameter> field always uses the next argument after the
+     last argument consumed.
+     In addition, the <function>format</function> function does not require all
+     function arguments to be used in the format string.
+     For example:
+
+<screen>
+SELECT format('Testing %3$s, %2$s, %s', 'one', 'two', 'three');
+<lineannotation>Result: </lineannotation><computeroutput>Testing three, two, three</computeroutput>
+</screen>
+    </para>
+
+    <para>
+     The <literal>%I</literal> and <literal>%L</literal> format specifiers are particularly
+     useful for safely constructing dynamic SQL statements.  See
+     <xref linkend="plpgsql-quote-literal-example"/>.
+    </para>
+   </sect2>
+
+  </sect1>

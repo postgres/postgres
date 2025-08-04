@@ -1,0 +1,2962 @@
+  <sect1 id="functions-admin">
+   <title>System Administration Functions</title>
+
+   <para>
+    The functions described in this section are used to control and
+    monitor a <productname>PostgreSQL</productname> installation.
+   </para>
+
+  <sect2 id="functions-admin-set">
+   <title>Configuration Settings Functions</title>
+
+   <indexterm>
+    <primary>SET</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>SHOW</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>configuration</primary>
+    <secondary sortas="server">of the server</secondary>
+    <tertiary>functions</tertiary>
+   </indexterm>
+
+   <para>
+    <xref linkend="functions-admin-set-table"/> shows the functions
+    available to query and alter run-time configuration parameters.
+   </para>
+
+   <table id="functions-admin-set-table">
+    <title>Configuration Settings Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>current_setting</primary>
+        </indexterm>
+        <function>current_setting</function> ( <parameter>setting_name</parameter> <type>text</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the current value of the
+        setting <parameter>setting_name</parameter>.  If there is no such
+        setting, <function>current_setting</function> throws an error
+        unless <parameter>missing_ok</parameter> is supplied and
+        is <literal>true</literal> (in which case NULL is returned).
+        This function corresponds to
+        the <acronym>SQL</acronym> command <xref linkend="sql-show"/>.
+       </para>
+       <para>
+        <literal>current_setting('datestyle')</literal>
+        <returnvalue>ISO, MDY</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>set_config</primary>
+        </indexterm>
+        <function>set_config</function> (
+          <parameter>setting_name</parameter> <type>text</type>,
+          <parameter>new_value</parameter> <type>text</type>,
+          <parameter>is_local</parameter> <type>boolean</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Sets the parameter <parameter>setting_name</parameter>
+        to <parameter>new_value</parameter>, and returns that value.
+        If <parameter>is_local</parameter> is <literal>true</literal>, the new
+        value will only apply during the current transaction. If you want the
+        new value to apply for the rest of the current session,
+        use <literal>false</literal> instead. This function corresponds to
+        the SQL command <xref linkend="sql-set"/>.
+       </para>
+       <para>
+        <function>set_config</function> accepts the NULL value for
+        <parameter>new_value</parameter>, but as settings cannot be null, it
+        is interpreted as a request to reset the setting to its default value.
+       </para>
+       <para>
+        <literal>set_config('log_statement_stats', 'off', false)</literal>
+        <returnvalue>off</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-admin-signal">
+   <title>Server Signaling Functions</title>
+
+   <indexterm>
+    <primary>signal</primary>
+    <secondary sortas="backend">backend processes</secondary>
+   </indexterm>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-admin-signal-table"/> send control signals to
+    other server processes.  Use of these functions is restricted to
+    superusers by default but access may be granted to others using
+    <command>GRANT</command>, with noted exceptions.
+   </para>
+
+   <para>
+    Each of these functions returns <literal>true</literal> if
+    the signal was successfully sent and <literal>false</literal>
+    if sending the signal failed.
+   </para>
+
+   <table id="functions-admin-signal-table">
+    <title>Server Signaling Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_cancel_backend</primary>
+        </indexterm>
+        <function>pg_cancel_backend</function> ( <parameter>pid</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Cancels the current query of the session whose backend process has the
+        specified process ID.  This is also allowed if the
+        calling role is a member of the role whose backend is being canceled or
+        the calling role has privileges of <literal>pg_signal_backend</literal>,
+        however only superusers can cancel superuser backends.
+        As an exception, roles with privileges of
+        <literal>pg_signal_autovacuum_worker</literal> are permitted to
+        cancel autovacuum worker processes, which are otherwise considered
+        superuser backends.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_log_backend_memory_contexts</primary>
+        </indexterm>
+        <function>pg_log_backend_memory_contexts</function> ( <parameter>pid</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Requests to log the memory contexts of the backend with the
+        specified process ID.  This function can send the request to
+        backends and auxiliary processes except logger.  These memory contexts
+        will be logged at
+        <literal>LOG</literal> message level. They will appear in
+        the server log based on the log configuration set
+        (see <xref linkend="runtime-config-logging"/> for more information),
+        but will not be sent to the client regardless of
+        <xref linkend="guc-client-min-messages"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_reload_conf</primary>
+        </indexterm>
+        <function>pg_reload_conf</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Causes all processes of the <productname>PostgreSQL</productname>
+        server to reload their configuration files.  (This is initiated by
+        sending a <systemitem>SIGHUP</systemitem> signal to the postmaster
+        process, which in turn sends <systemitem>SIGHUP</systemitem> to each
+        of its children.) You can use the
+        <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>,
+        <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> and
+        <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link> views
+        to check the configuration files for possible errors, before reloading.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_rotate_logfile</primary>
+        </indexterm>
+        <function>pg_rotate_logfile</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Signals the log-file manager to switch to a new output file
+        immediately.  This works only when the built-in log collector is
+        running, since otherwise there is no log-file manager subprocess.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_terminate_backend</primary>
+        </indexterm>
+        <function>pg_terminate_backend</function> ( <parameter>pid</parameter> <type>integer</type>, <parameter>timeout</parameter> <type>bigint</type> <literal>DEFAULT</literal> <literal>0</literal> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Terminates the session whose backend process has the
+        specified process ID.  This is also allowed if the calling role
+        is a member of the role whose backend is being terminated or the
+        calling role has privileges of <literal>pg_signal_backend</literal>,
+        however only superusers can terminate superuser backends.
+        As an exception, roles with privileges of
+        <literal>pg_signal_autovacuum_worker</literal> are permitted to
+        terminate autovacuum worker processes, which are otherwise considered
+        superuser backends.
+       </para>
+       <para>
+        If <parameter>timeout</parameter> is not specified or zero, this
+        function returns <literal>true</literal> whether the process actually
+        terminates or not, indicating only that the sending of the signal was
+        successful.  If the <parameter>timeout</parameter> is specified (in
+        milliseconds) and greater than zero, the function waits until the
+        process is actually terminated or until the given time has passed. If
+        the process is terminated, the function
+        returns <literal>true</literal>.  On timeout, a warning is emitted and
+        <literal>false</literal> is returned.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_cancel_backend</function> and <function>pg_terminate_backend</function>
+    send signals (<systemitem>SIGINT</systemitem> or <systemitem>SIGTERM</systemitem>
+    respectively) to backend processes identified by process ID.
+    The process ID of an active backend can be found from
+    the <structfield>pid</structfield> column of the
+    <structname>pg_stat_activity</structname> view, or by listing the
+    <command>postgres</command> processes on the server (using
+    <application>ps</application> on Unix or the <application>Task
+    Manager</application> on <productname>Windows</productname>).
+    The role of an active backend can be found from the
+    <structfield>usename</structfield> column of the
+    <structname>pg_stat_activity</structname> view.
+   </para>
+
+   <para>
+    <function>pg_log_backend_memory_contexts</function> can be used
+    to log the memory contexts of a backend process. For example:
+<programlisting>
+postgres=# SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+ pg_log_backend_memory_contexts
+--------------------------------
+ t
+(1 row)
+</programlisting>
+One message for each memory context will be logged. For example:
+<screen>
+LOG:  logging memory contexts of PID 10377
+STATEMENT:  SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+LOG:  level: 1; TopMemoryContext: 80800 total in 6 blocks; 14432 free (5 chunks); 66368 used
+LOG:  level: 2; pgstat TabStatusArray lookup hash table: 8192 total in 1 blocks; 1408 free (0 chunks); 6784 used
+LOG:  level: 2; TopTransactionContext: 8192 total in 1 blocks; 7720 free (1 chunks); 472 used
+LOG:  level: 2; RowDescriptionContext: 8192 total in 1 blocks; 6880 free (0 chunks); 1312 used
+LOG:  level: 2; MessageContext: 16384 total in 2 blocks; 5152 free (0 chunks); 11232 used
+LOG:  level: 2; Operator class cache: 8192 total in 1 blocks; 512 free (0 chunks); 7680 used
+LOG:  level: 2; smgr relation table: 16384 total in 2 blocks; 4544 free (3 chunks); 11840 used
+LOG:  level: 2; TransactionAbortContext: 32768 total in 1 blocks; 32504 free (0 chunks); 264 used
+...
+LOG:  level: 2; ErrorContext: 8192 total in 1 blocks; 7928 free (3 chunks); 264 used
+LOG:  Grand total: 1651920 bytes in 201 blocks; 622360 free (88 chunks); 1029560 used
+</screen>
+    If there are more than 100 child contexts under the same parent, the first
+    100 child contexts are logged, along with a summary of the remaining contexts.
+    Note that frequent calls to this function could incur significant overhead,
+    because it may generate a large number of log messages.
+   </para>
+
+  </sect2>
+
+  <sect2 id="functions-admin-backup">
+   <title>Backup Control Functions</title>
+
+   <indexterm>
+    <primary>backup</primary>
+   </indexterm>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-admin-backup-table"/> assist in making on-line backups.
+    These functions cannot be executed during recovery (except
+    <function>pg_backup_start</function>,
+    <function>pg_backup_stop</function>,
+    and <function>pg_wal_lsn_diff</function>).
+   </para>
+
+   <para>
+    For details about proper usage of these functions, see
+    <xref linkend="continuous-archiving"/>.
+   </para>
+
+   <table id="functions-admin-backup-table">
+    <title>Backup Control Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_create_restore_point</primary>
+        </indexterm>
+        <function>pg_create_restore_point</function> ( <parameter>name</parameter> <type>text</type> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Creates a named marker record in the write-ahead log that can later be
+        used as a recovery target, and returns the corresponding write-ahead
+        log location.  The given name can then be used with
+        <xref linkend="guc-recovery-target-name"/> to specify the point up to
+        which recovery will proceed.  Avoid creating multiple restore points
+        with the same name, since recovery will stop at the first one whose
+        name matches the recovery target.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_current_wal_flush_lsn</primary>
+        </indexterm>
+        <function>pg_current_wal_flush_lsn</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the current write-ahead log flush location (see notes below).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_current_wal_insert_lsn</primary>
+        </indexterm>
+        <function>pg_current_wal_insert_lsn</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the current write-ahead log insert location (see notes below).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_current_wal_lsn</primary>
+        </indexterm>
+        <function>pg_current_wal_lsn</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the current write-ahead log write location (see notes below).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_backup_start</primary>
+        </indexterm>
+        <function>pg_backup_start</function> (
+          <parameter>label</parameter> <type>text</type>
+          <optional>, <parameter>fast</parameter> <type>boolean</type>
+          </optional> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Prepares the server to begin an on-line backup.  The only required
+        parameter is an arbitrary user-defined label for the backup.
+        (Typically this would be the name under which the backup dump file
+        will be stored.)
+        If the optional second parameter is given as <literal>true</literal>,
+        it specifies executing <function>pg_backup_start</function> as quickly
+        as possible.  This forces a fast checkpoint which will cause a
+        spike in I/O operations, slowing any concurrently executing queries.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_backup_stop</primary>
+        </indexterm>
+        <function>pg_backup_stop</function> (
+          <optional><parameter>wait_for_archive</parameter> <type>boolean</type>
+          </optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+        <parameter>labelfile</parameter> <type>text</type>,
+        <parameter>spcmapfile</parameter> <type>text</type> )
+       </para>
+       <para>
+        Finishes performing an on-line backup.  The desired contents of the
+        backup label file and the tablespace map file are returned as part of
+        the result of the function and must be written to files in the
+        backup area.  These files must not be written to the live data directory
+        (doing so will cause PostgreSQL to fail to restart in the event of a
+        crash).
+       </para>
+       <para>
+        There is an optional parameter of type <type>boolean</type>.
+        If false, the function will return immediately after the backup is
+        completed, without waiting for WAL to be archived.  This behavior is
+        only useful with backup software that independently monitors WAL
+        archiving.  Otherwise, WAL required to make the backup consistent might
+        be missing and make the backup useless.  By default or when this
+        parameter is true, <function>pg_backup_stop</function> will wait for
+        WAL to be archived when archiving is enabled.  (On a standby, this
+        means that it will wait only when <varname>archive_mode</varname> =
+        <literal>always</literal>.  If write activity on the primary is low,
+        it may be useful to run <function>pg_switch_wal</function> on the
+        primary in order to trigger an immediate segment switch.)
+       </para>
+       <para>
+        When executed on a primary, this function also creates a backup
+        history file in the write-ahead log archive area.  The history file
+        includes the label given to <function>pg_backup_start</function>, the
+        starting and ending write-ahead log locations for the backup, and the
+        starting and ending times of the backup.  After recording the ending
+        location, the current write-ahead log insertion point is automatically
+        advanced to the next write-ahead log file, so that the ending
+        write-ahead log file can be archived immediately to complete the
+        backup.
+       </para>
+       <para>
+        The result of the function is a single record.
+        The <parameter>lsn</parameter> column holds the backup's ending
+        write-ahead log location (which again can be ignored).  The second
+        column returns the contents of the backup label file, and the third
+        column returns the contents of the tablespace map file.  These must be
+        stored as part of the backup and are required as part of the restore
+        process.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_switch_wal</primary>
+        </indexterm>
+        <function>pg_switch_wal</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Forces the server to switch to a new write-ahead log file, which
+        allows the current file to be archived (assuming you are using
+        continuous archiving).  The result is the ending write-ahead log
+        location plus 1 within the just-completed write-ahead log file.  If
+        there has been no write-ahead log activity since the last write-ahead
+        log switch, <function>pg_switch_wal</function> does nothing and
+        returns the start location of the write-ahead log file currently in
+        use.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_walfile_name</primary>
+        </indexterm>
+        <function>pg_walfile_name</function> ( <parameter>lsn</parameter> <type>pg_lsn</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts a write-ahead log location to the name of the WAL file
+        holding that location.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_walfile_name_offset</primary>
+        </indexterm>
+        <function>pg_walfile_name_offset</function> ( <parameter>lsn</parameter> <type>pg_lsn</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>file_name</parameter> <type>text</type>,
+        <parameter>file_offset</parameter> <type>integer</type> )
+       </para>
+       <para>
+        Converts a write-ahead log location to a WAL file name and byte offset
+        within that file.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_split_walfile_name</primary>
+        </indexterm>
+        <function>pg_split_walfile_name</function> ( <parameter>file_name</parameter> <type>text</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>segment_number</parameter> <type>numeric</type>,
+        <parameter>timeline_id</parameter> <type>bigint</type> )
+       </para>
+       <para>
+        Extracts the sequence number and timeline ID from a WAL file
+        name.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_wal_lsn_diff</primary>
+        </indexterm>
+        <function>pg_wal_lsn_diff</function> ( <parameter>lsn1</parameter> <type>pg_lsn</type>, <parameter>lsn2</parameter> <type>pg_lsn</type> )
+        <returnvalue>numeric</returnvalue>
+       </para>
+       <para>
+        Calculates the difference in bytes (<parameter>lsn1</parameter> - <parameter>lsn2</parameter>) between two write-ahead log
+        locations.  This can be used
+        with <structname>pg_stat_replication</structname> or some of the
+        functions shown in <xref linkend="functions-admin-backup-table"/> to
+        get the replication lag.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_current_wal_lsn</function> displays the current write-ahead
+    log write location in the same format used by the above functions.
+    Similarly, <function>pg_current_wal_insert_lsn</function> displays the
+    current write-ahead log insertion location
+    and <function>pg_current_wal_flush_lsn</function> displays the current
+    write-ahead log flush location. The insertion location is
+    the <quote>logical</quote> end of the write-ahead log at any instant,
+    while the write location is the end of what has actually been written out
+    from the server's internal buffers, and the flush location is the last
+    location known to be written to durable storage. The write location is the
+    end of what can be examined from outside the server, and is usually what
+    you want if you are interested in archiving partially-complete write-ahead
+    log files.  The insertion and flush locations are made available primarily
+    for server debugging purposes.  These are all read-only operations and do
+    not require superuser permissions.
+   </para>
+
+   <para>
+    You can use <function>pg_walfile_name_offset</function> to extract the
+    corresponding write-ahead log file name and byte offset from
+    a <type>pg_lsn</type> value.  For example:
+<programlisting>
+postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
+        file_name         | file_offset
+--------------------------+-------------
+ 00000001000000000000000D |     4039624
+(1 row)
+</programlisting>
+    Similarly, <function>pg_walfile_name</function> extracts just the write-ahead log file name.
+   </para>
+
+   <para>
+    <function>pg_split_walfile_name</function> is useful to compute a
+    <acronym>LSN</acronym> from a file offset and WAL file name, for example:
+<programlisting>
+postgres=# \set file_name '000000010000000100C000AB'
+postgres=# \set offset 256
+postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset AS lsn
+  FROM pg_split_walfile_name(:'file_name') pd,
+       pg_show_all_settings() ps
+  WHERE ps.name = 'wal_segment_size';
+      lsn
+---------------
+ C001/AB000100
+(1 row)
+</programlisting>
+   </para>
+
+  </sect2>
+
+  <sect2 id="functions-recovery-control">
+   <title>Recovery Control Functions</title>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-recovery-info-table"/> provide information
+    about the current status of a standby server.
+    These functions may be executed both during recovery and in normal running.
+   </para>
+
+   <table id="functions-recovery-info-table">
+    <title>Recovery Information Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_is_in_recovery</primary>
+        </indexterm>
+        <function>pg_is_in_recovery</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if recovery is still in progress.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_last_wal_receive_lsn</primary>
+        </indexterm>
+        <function>pg_last_wal_receive_lsn</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the last write-ahead log location that has been received and
+        synced to disk by streaming replication. While streaming replication
+        is in progress this will increase monotonically. If recovery has
+        completed then this will remain static at the location of the last WAL
+        record received and synced to disk during recovery. If streaming
+        replication is disabled, or if it has not yet started, the function
+        returns <literal>NULL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_last_wal_replay_lsn</primary>
+        </indexterm>
+        <function>pg_last_wal_replay_lsn</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the last write-ahead log location that has been replayed
+        during recovery.  If recovery is still in progress this will increase
+        monotonically.  If recovery has completed then this will remain
+        static at the location of the last WAL record applied during recovery.
+        When the server has been started normally without recovery, the
+        function returns <literal>NULL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_last_xact_replay_timestamp</primary>
+        </indexterm>
+        <function>pg_last_xact_replay_timestamp</function> ()
+        <returnvalue>timestamp with time zone</returnvalue>
+       </para>
+       <para>
+        Returns the time stamp of the last transaction replayed during
+        recovery.  This is the time at which the commit or abort WAL record
+        for that transaction was generated on the primary.  If no transactions
+        have been replayed during recovery, the function
+        returns <literal>NULL</literal>.  Otherwise, if recovery is still in
+        progress this will increase monotonically.  If recovery has completed
+        then this will remain static at the time of the last transaction
+        applied during recovery.  When the server has been started normally
+        without recovery, the function returns <literal>NULL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_wal_resource_managers</primary>
+        </indexterm>
+        <function>pg_get_wal_resource_managers</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>rm_id</parameter> <type>integer</type>,
+        <parameter>rm_name</parameter> <type>text</type>,
+        <parameter>rm_builtin</parameter> <type>boolean</type> )
+       </para>
+       <para>
+        Returns the currently-loaded WAL resource managers in the system. The
+        column <parameter>rm_builtin</parameter> indicates whether it's a
+        built-in resource manager, or a custom resource manager loaded by an
+        extension.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-recovery-control-table"/> control the progress of recovery.
+    These functions may be executed only during recovery.
+   </para>
+
+   <table id="functions-recovery-control-table">
+    <title>Recovery Control Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_is_wal_replay_paused</primary>
+        </indexterm>
+        <function>pg_is_wal_replay_paused</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if recovery pause is requested.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_wal_replay_pause_state</primary>
+        </indexterm>
+        <function>pg_get_wal_replay_pause_state</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns recovery pause state.  The return values are <literal>
+        not paused</literal> if pause is not requested, <literal>
+        pause requested</literal> if pause is requested but recovery is
+        not yet paused, and <literal>paused</literal> if the recovery is
+        actually paused.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_promote</primary>
+        </indexterm>
+        <function>pg_promote</function> ( <parameter>wait</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>true</literal>, <parameter>wait_seconds</parameter> <type>integer</type> <literal>DEFAULT</literal> <literal>60</literal> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Promotes a standby server to primary status.
+        With <parameter>wait</parameter> set to <literal>true</literal> (the
+        default), the function waits until promotion is completed
+        or <parameter>wait_seconds</parameter> seconds have passed, and
+        returns <literal>true</literal> if promotion is successful
+        and <literal>false</literal> otherwise.
+        If <parameter>wait</parameter> is set to <literal>false</literal>, the
+        function returns <literal>true</literal> immediately after sending a
+        <literal>SIGUSR1</literal> signal to the postmaster to trigger
+        promotion.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_wal_replay_pause</primary>
+        </indexterm>
+        <function>pg_wal_replay_pause</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Request to pause recovery.  A request doesn't mean that recovery stops
+        right away.  If you want a guarantee that recovery is actually paused,
+        you need to check for the recovery pause state returned by
+        <function>pg_get_wal_replay_pause_state()</function>.  Note that
+        <function>pg_is_wal_replay_paused()</function> returns whether a request
+        is made.  While recovery is paused, no further database changes are applied.
+        If hot standby is active, all new queries will see the same consistent
+        snapshot of the database, and no further query conflicts will be generated
+        until recovery is resumed.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_wal_replay_resume</primary>
+        </indexterm>
+        <function>pg_wal_replay_resume</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Restarts recovery if it was paused.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <function>pg_wal_replay_pause</function> and
+    <function>pg_wal_replay_resume</function> cannot be executed while
+    a promotion is ongoing. If a promotion is triggered while recovery
+    is paused, the paused state ends and promotion continues.
+   </para>
+
+   <para>
+    If streaming replication is disabled, the paused state may continue
+    indefinitely without a problem. If streaming replication is in
+    progress then WAL records will continue to be received, which will
+    eventually fill available disk space, depending upon the duration of
+    the pause, the rate of WAL generation and available disk space.
+   </para>
+
+  </sect2>
+
+  <sect2 id="functions-snapshot-synchronization">
+   <title>Snapshot Synchronization Functions</title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows database sessions to synchronize their
+    snapshots. A <firstterm>snapshot</firstterm> determines which data is visible to the
+    transaction that is using the snapshot. Synchronized snapshots are
+    necessary when two or more sessions need to see identical content in the
+    database. If two sessions just start their transactions independently,
+    there is always a possibility that some third transaction commits
+    between the executions of the two <command>START TRANSACTION</command> commands,
+    so that one session sees the effects of that transaction and the other
+    does not.
+   </para>
+
+   <para>
+    To solve this problem, <productname>PostgreSQL</productname> allows a transaction to
+    <firstterm>export</firstterm> the snapshot it is using.  As long as the exporting
+    transaction remains open, other transactions can <firstterm>import</firstterm> its
+    snapshot, and thereby be guaranteed that they see exactly the same view
+    of the database that the first transaction sees.  But note that any
+    database changes made by any one of these transactions remain invisible
+    to the other transactions, as is usual for changes made by uncommitted
+    transactions.  So the transactions are synchronized with respect to
+    pre-existing data, but act normally for changes they make themselves.
+   </para>
+
+   <para>
+    Snapshots are exported with the <function>pg_export_snapshot</function> function,
+    shown in <xref linkend="functions-snapshot-synchronization-table"/>, and
+    imported with the <xref linkend="sql-set-transaction"/> command.
+   </para>
+
+   <table id="functions-snapshot-synchronization-table">
+    <title>Snapshot Synchronization Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_export_snapshot</primary>
+        </indexterm>
+        <function>pg_export_snapshot</function> ()
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Saves the transaction's current snapshot and returns
+        a <type>text</type> string identifying the snapshot.  This string must
+        be passed (outside the database) to clients that want to import the
+        snapshot.  The snapshot is available for import only until the end of
+        the transaction that exported it.
+       </para>
+       <para>
+        A transaction can export more than one snapshot, if needed.  Note that
+        doing so is only useful in <literal>READ COMMITTED</literal>
+        transactions, since in <literal>REPEATABLE READ</literal> and higher
+        isolation levels, transactions use the same snapshot throughout their
+        lifetime.  Once a transaction has exported any snapshots, it cannot be
+        prepared with <xref linkend="sql-prepare-transaction"/>.
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_log_standby_snapshot</primary>
+        </indexterm>
+        <function>pg_log_standby_snapshot</function> ()
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Take a snapshot of running transactions and write it to WAL, without
+        having to wait for bgwriter or checkpointer to log one. This is useful
+        for logical decoding on standby, as logical slot creation has to wait
+        until such a record is replayed on the standby.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-replication">
+   <title>Replication Management Functions</title>
+
+   <para>
+    The functions shown
+    in <xref linkend="functions-replication-table"/> are for
+    controlling and interacting with replication features.
+    See <xref linkend="streaming-replication"/>,
+    <xref linkend="streaming-replication-slots"/>, and
+    <xref linkend="replication-origins"/>
+    for information about the underlying features.
+    Use of functions for replication origin is only allowed to the
+    superuser by default, but may be allowed to other users by using the
+    <literal>GRANT</literal> command.
+    Use of functions for replication slots is restricted to superusers
+    and users having <literal>REPLICATION</literal> privilege.
+   </para>
+
+   <para>
+    Many of these functions have equivalent commands in the replication
+    protocol; see <xref linkend="protocol-replication"/>.
+   </para>
+
+   <para>
+    The functions described in
+    <xref linkend="functions-admin-backup"/>,
+    <xref linkend="functions-recovery-control"/>, and
+    <xref linkend="functions-snapshot-synchronization"/>
+    are also relevant for replication.
+   </para>
+
+   <table id="functions-replication-table">
+    <title>Replication Management Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_create_physical_replication_slot</primary>
+        </indexterm>
+        <function>pg_create_physical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type> <optional>, <parameter>immediately_reserve</parameter> <type>boolean</type>, <parameter>temporary</parameter> <type>boolean</type> </optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>slot_name</parameter> <type>name</type>,
+        <parameter>lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Creates a new physical replication slot named
+        <parameter>slot_name</parameter>. The name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for the
+        conflict detection slot. The optional second parameter,
+        when <literal>true</literal>, specifies that the <acronym>LSN</acronym> for this
+        replication slot be reserved immediately; otherwise
+        the <acronym>LSN</acronym> is reserved on first connection from a streaming
+        replication client. Streaming changes from a physical slot is only
+        possible with the streaming-replication protocol &mdash;
+        see <xref linkend="protocol-replication"/>. The optional third
+        parameter, <parameter>temporary</parameter>, when set to true, specifies that
+        the slot should not be permanently stored to disk and is only meant
+        for use by the current session. Temporary slots are also
+        released upon any error. This function corresponds
+        to the replication protocol command <literal>CREATE_REPLICATION_SLOT
+        ... PHYSICAL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_drop_replication_slot</primary>
+        </indexterm>
+        <function>pg_drop_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Drops the physical or logical replication slot
+        named <parameter>slot_name</parameter>. Same as replication protocol
+        command <literal>DROP_REPLICATION_SLOT</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-create-logical-replication-slot" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_create_logical_replication_slot</primary>
+        </indexterm>
+        <function>pg_create_logical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type>, <parameter>twophase</parameter> <type>boolean</type>, <parameter>failover</parameter> <type>boolean</type> </optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>slot_name</parameter> <type>name</type>,
+        <parameter>lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Creates a new logical (decoding) replication slot named
+        <parameter>slot_name</parameter> using the output plugin
+        <parameter>plugin</parameter>. The name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for
+        the conflict detection slot. The optional third
+        parameter, <parameter>temporary</parameter>, when set to true, specifies that
+        the slot should not be permanently stored to disk and is only meant
+        for use by the current session. Temporary slots are also
+        released upon any error. The optional fourth parameter,
+        <parameter>twophase</parameter>, when set to true, specifies
+        that the decoding of prepared transactions is enabled for this
+        slot. The optional fifth parameter,
+        <parameter>failover</parameter>, when set to true,
+        specifies that this slot is enabled to be synced to the
+        standbys so that logical replication can be resumed after
+        failover. A call to this function has the same effect as
+        the replication protocol command
+        <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_copy_physical_replication_slot</primary>
+        </indexterm>
+        <function>pg_copy_physical_replication_slot</function> ( <parameter>src_slot_name</parameter> <type>name</type>, <parameter>dst_slot_name</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type> </optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>slot_name</parameter> <type>name</type>,
+        <parameter>lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Copies an existing physical replication slot named <parameter>src_slot_name</parameter>
+        to a physical replication slot named <parameter>dst_slot_name</parameter>.
+        The new slot name cannot be <literal>pg_conflict_detection</literal>,
+        as it is reserved for the conflict detection.
+        The copied physical slot starts to reserve WAL from the same <acronym>LSN</acronym> as the
+        source slot.
+        <parameter>temporary</parameter> is optional. If <parameter>temporary</parameter>
+        is omitted, the same value as the source slot is used. Copy of an
+        invalidated slot is not allowed.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_copy_logical_replication_slot</primary>
+        </indexterm>
+        <function>pg_copy_logical_replication_slot</function> ( <parameter>src_slot_name</parameter> <type>name</type>, <parameter>dst_slot_name</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type> <optional>, <parameter>plugin</parameter> <type>name</type> </optional></optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>slot_name</parameter> <type>name</type>,
+        <parameter>lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Copies an existing logical replication slot
+        named <parameter>src_slot_name</parameter> to a logical replication
+        slot named <parameter>dst_slot_name</parameter>, optionally changing
+        the output plugin and persistence.  The new slot name cannot be
+        <literal>pg_conflict_detection</literal> as it is reserved for
+        the conflict detection.  The copied logical slot starts from the same
+        <acronym>LSN</acronym> as the source logical slot.  Both
+        <parameter>temporary</parameter> and <parameter>plugin</parameter> are
+        optional; if they are omitted, the values of the source slot are used.
+        The <literal>failover</literal> option of the source logical slot
+        is not copied and is set to <literal>false</literal> by default. This
+        is to avoid the risk of being unable to continue logical replication
+        after failover to standby where the slot is being synchronized. Copy of
+        an invalidated slot is not allowed.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-logical-slot-get-changes" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_logical_slot_get_changes</primary>
+        </indexterm>
+        <function>pg_logical_slot_get_changes</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>integer</type>, <literal>VARIADIC</literal> <parameter>options</parameter> <type>text[]</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+        <parameter>xid</parameter> <type>xid</type>,
+        <parameter>data</parameter> <type>text</type> )
+       </para>
+       <para>
+        Returns changes in the slot <parameter>slot_name</parameter>, starting
+        from the point from which changes have been consumed last.  If
+        <parameter>upto_lsn</parameter>
+        and <parameter>upto_nchanges</parameter> are NULL,
+        logical decoding will continue until end of WAL.  If
+        <parameter>upto_lsn</parameter> is non-NULL, decoding will include only
+        those transactions which commit prior to the specified LSN.  If
+        <parameter>upto_nchanges</parameter> is non-NULL, decoding will
+        stop when the number of rows produced by decoding exceeds
+        the specified value.  Note, however, that the actual number of
+        rows returned may be larger, since this limit is only checked after
+        adding the rows produced when decoding each new transaction commit.
+        If the specified slot is a logical failover slot then the function will
+        not return until all physical slots specified in
+        <link linkend="guc-synchronized-standby-slots"><varname>synchronized_standby_slots</varname></link>
+        have confirmed WAL receipt.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-logical-slot-peek-changes" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_logical_slot_peek_changes</primary>
+        </indexterm>
+        <function>pg_logical_slot_peek_changes</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>integer</type>, <literal>VARIADIC</literal> <parameter>options</parameter> <type>text[]</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+        <parameter>xid</parameter> <type>xid</type>,
+         <parameter>data</parameter> <type>text</type> )
+       </para>
+       <para>
+        Behaves just like
+        the <function>pg_logical_slot_get_changes()</function> function,
+        except that changes are not consumed; that is, they will be returned
+        again on future calls.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-logical-slot-get-binary-changes" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_logical_slot_get_binary_changes</primary>
+        </indexterm>
+        <function>pg_logical_slot_get_binary_changes</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>integer</type>, <literal>VARIADIC</literal> <parameter>options</parameter> <type>text[]</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+        <parameter>xid</parameter> <type>xid</type>,
+        <parameter>data</parameter> <type>bytea</type> )
+       </para>
+       <para>
+        Behaves just like
+        the <function>pg_logical_slot_get_changes()</function> function,
+        except that changes are returned as <type>bytea</type>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_logical_slot_peek_binary_changes</primary>
+        </indexterm>
+        <function>pg_logical_slot_peek_binary_changes</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type>, <parameter>upto_nchanges</parameter> <type>integer</type>, <literal>VARIADIC</literal> <parameter>options</parameter> <type>text[]</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>lsn</parameter> <type>pg_lsn</type>,
+        <parameter>xid</parameter> <type>xid</type>,
+        <parameter>data</parameter> <type>bytea</type> )
+       </para>
+       <para>
+        Behaves just like
+        the <function>pg_logical_slot_peek_changes()</function> function,
+        except that changes are returned as <type>bytea</type>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-slot-advance" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_slot_advance</primary>
+        </indexterm>
+        <function>pg_replication_slot_advance</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>upto_lsn</parameter> <type>pg_lsn</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>slot_name</parameter> <type>name</type>,
+        <parameter>end_lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Advances the current confirmed position of a replication slot named
+        <parameter>slot_name</parameter>. The slot will not be moved backwards,
+        and it will not be moved beyond the current insert location. Returns
+        the name of the slot and the actual position that it was advanced to.
+        The updated slot position information is written out at the next
+        checkpoint if any advancing is done. So in the event of a crash, the
+        slot may return to an earlier position. If the specified slot is a
+        logical failover slot then the function will not return until all
+        physical slots specified in
+        <link linkend="guc-synchronized-standby-slots"><varname>synchronized_standby_slots</varname></link>
+        have confirmed WAL receipt.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-create" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_create</primary>
+        </indexterm>
+        <function>pg_replication_origin_create</function> ( <parameter>node_name</parameter> <type>text</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Creates a replication origin with the given external
+        name, and returns the internal ID assigned to it.
+        The name must be no longer than 512 bytes.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-drop" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_drop</primary>
+        </indexterm>
+        <function>pg_replication_origin_drop</function> ( <parameter>node_name</parameter> <type>text</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Deletes a previously-created replication origin, including any
+        associated replay progress.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_oid</primary>
+        </indexterm>
+        <function>pg_replication_origin_oid</function> ( <parameter>node_name</parameter> <type>text</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Looks up a replication origin by name and returns the internal ID. If
+        no such replication origin is found, <literal>NULL</literal> is
+        returned.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-session-setup" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_session_setup</primary>
+        </indexterm>
+        <function>pg_replication_origin_session_setup</function> ( <parameter>node_name</parameter> <type>text</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Marks the current session as replaying from the given
+        origin, allowing replay progress to be tracked.
+        Can only be used if no origin is currently selected.
+        Use <function>pg_replication_origin_session_reset</function> to undo.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_session_reset</primary>
+        </indexterm>
+        <function>pg_replication_origin_session_reset</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Cancels the effects
+        of <function>pg_replication_origin_session_setup()</function>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_session_is_setup</primary>
+        </indexterm>
+        <function>pg_replication_origin_session_is_setup</function> ()
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Returns true if a replication origin has been selected in the
+        current session.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-session-progress" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_session_progress</primary>
+        </indexterm>
+        <function>pg_replication_origin_session_progress</function> ( <parameter>flush</parameter> <type>boolean</type> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the replay location for the replication origin selected in
+        the current session. The parameter <parameter>flush</parameter>
+        determines whether the corresponding local transaction will be
+        guaranteed to have been flushed to disk or not.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-xact-setup" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_xact_setup</primary>
+        </indexterm>
+        <function>pg_replication_origin_xact_setup</function> ( <parameter>origin_lsn</parameter> <type>pg_lsn</type>, <parameter>origin_timestamp</parameter> <type>timestamp with time zone</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Marks the current transaction as replaying a transaction that has
+        committed at the given <acronym>LSN</acronym> and timestamp. Can
+        only be called when a replication origin has been selected
+        using <function>pg_replication_origin_session_setup</function>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-xact-reset" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_xact_reset</primary>
+        </indexterm>
+        <function>pg_replication_origin_xact_reset</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Cancels the effects of
+        <function>pg_replication_origin_xact_setup()</function>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-advance" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_advance</primary>
+        </indexterm>
+        <function>pg_replication_origin_advance</function> ( <parameter>node_name</parameter> <type>text</type>, <parameter>lsn</parameter> <type>pg_lsn</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Sets replication progress for the given node to the given
+        location. This is primarily useful for setting up the initial
+        location, or setting a new location after configuration changes and
+        similar. Be aware that careless use of this function can lead to
+        inconsistently replicated data.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-replication-origin-progress" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_replication_origin_progress</primary>
+        </indexterm>
+        <function>pg_replication_origin_progress</function> ( <parameter>node_name</parameter> <type>text</type>, <parameter>flush</parameter> <type>boolean</type> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Returns the replay location for the given replication origin. The
+        parameter <parameter>flush</parameter> determines whether the
+        corresponding local transaction will be guaranteed to have been
+        flushed to disk or not.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-logical-emit-message" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_logical_emit_message</primary>
+        </indexterm>
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>text</type> <optional>, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal></optional> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_logical_emit_message</function> ( <parameter>transactional</parameter> <type>boolean</type>, <parameter>prefix</parameter> <type>text</type>, <parameter>content</parameter> <type>bytea</type> <optional>, <parameter>flush</parameter> <type>boolean</type> <literal>DEFAULT</literal> <literal>false</literal></optional> )
+        <returnvalue>pg_lsn</returnvalue>
+       </para>
+       <para>
+        Emits a logical decoding message. This can be used to pass generic
+        messages to logical decoding plugins through
+        WAL. The <parameter>transactional</parameter> parameter specifies if
+        the message should be part of the current transaction, or if it should
+        be written immediately and decoded as soon as the logical decoder
+        reads the record. The <parameter>prefix</parameter> parameter is a
+        textual prefix that can be used by logical decoding plugins to easily
+        recognize messages that are interesting for them.
+        The <parameter>content</parameter> parameter is the content of the
+        message, given either in text or binary form.
+        The <parameter>flush</parameter> parameter (default set to
+        <literal>false</literal>) controls if the message is immediately
+        flushed to WAL or not. <parameter>flush</parameter> has no effect
+        with <parameter>transactional</parameter>, as the message's WAL
+        record is flushed along with its transaction.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry id="pg-sync-replication-slots" role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_sync_replication_slots</primary>
+        </indexterm>
+        <function>pg_sync_replication_slots</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Synchronize the logical failover replication slots from the primary
+        server to the standby server. This function can only be executed on the
+        standby server. Temporary synced slots, if any, cannot be used for
+        logical decoding and must be dropped after promotion. See
+        <xref linkend="logicaldecoding-replication-slots-synchronization"/> for details.
+        Note that this function is primarily intended for testing and
+        debugging purposes and should be used with caution. Additionally,
+        this function cannot be executed if
+        <link linkend="guc-sync-replication-slots"><varname>
+        sync_replication_slots</varname></link> is enabled and the slotsync
+        worker is already running to perform the synchronization of slots.
+       </para>
+
+       <caution>
+        <para>
+          If, after executing the function,
+          <link linkend="guc-hot-standby-feedback">
+          <varname>hot_standby_feedback</varname></link> is disabled on
+          the standby or the physical slot configured in
+          <link linkend="guc-primary-slot-name">
+          <varname>primary_slot_name</varname></link> is
+          removed, then it is possible that the necessary rows of the
+          synchronized slot will be removed by the VACUUM process on the primary
+          server, resulting in the synchronized slot becoming invalidated.
+        </para>
+       </caution>
+      </entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-admin-dbobject">
+   <title>Database Object Management Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-admin-dbsize"/> calculate
+    the disk space usage of database objects, or assist in presentation
+    or understanding of usage results.  <literal>bigint</literal> results
+    are measured in bytes.  If an OID that does
+    not represent an existing object is passed to one of these
+    functions, <literal>NULL</literal> is returned.
+   </para>
+
+   <table id="functions-admin-dbsize">
+    <title>Database Object Size Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_column_size</primary>
+        </indexterm>
+        <function>pg_column_size</function> ( <type>"any"</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Shows the number of bytes used to store any individual data value.  If
+        applied directly to a table column value, this reflects any
+        compression that was done.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_column_compression</primary>
+        </indexterm>
+        <function>pg_column_compression</function> ( <type>"any"</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Shows the compression algorithm that was used to compress
+        an individual variable-length value. Returns <literal>NULL</literal>
+        if the value is not compressed.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_column_toast_chunk_id</primary>
+        </indexterm>
+        <function>pg_column_toast_chunk_id</function> ( <type>"any"</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Shows the <structfield>chunk_id</structfield> of an on-disk
+        <acronym>TOAST</acronym>ed value.  Returns <literal>NULL</literal>
+        if the value is un-<acronym>TOAST</acronym>ed or not on-disk.  See
+        <xref linkend="storage-toast"/> for more information about
+        <acronym>TOAST</acronym>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_database_size</primary>
+        </indexterm>
+        <function>pg_database_size</function> ( <type>name</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_database_size</function> ( <type>oid</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the total disk space used by the database with the specified
+        name or OID.  To use this function, you must
+        have <literal>CONNECT</literal> privilege on the specified database
+        (which is granted by default) or have privileges of
+        the <literal>pg_read_all_stats</literal> role.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_indexes_size</primary>
+        </indexterm>
+        <function>pg_indexes_size</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the total disk space used by indexes attached to the
+        specified table.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_relation_size</primary>
+        </indexterm>
+        <function>pg_relation_size</function> ( <parameter>relation</parameter> <type>regclass</type> <optional>, <parameter>fork</parameter> <type>text</type> </optional> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the disk space used by one <quote>fork</quote> of the
+        specified relation.  (Note that for most purposes it is more
+        convenient to use the higher-level
+        functions <function>pg_total_relation_size</function>
+        or <function>pg_table_size</function>, which sum the sizes of all
+        forks.)  With one argument, this returns the size of the main data
+        fork of the relation.  The second argument can be provided to specify
+        which fork to examine:
+        <itemizedlist spacing="compact">
+         <listitem>
+          <para>
+           <literal>main</literal> returns the size of the main
+           data fork of the relation.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>fsm</literal> returns the size of the Free Space Map
+           (see <xref linkend="storage-fsm"/>) associated with the relation.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>vm</literal> returns the size of the Visibility Map
+           (see <xref linkend="storage-vm"/>) associated with the relation.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>init</literal> returns the size of the initialization
+           fork, if any, associated with the relation.
+          </para>
+         </listitem>
+        </itemizedlist>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_size_bytes</primary>
+        </indexterm>
+        <function>pg_size_bytes</function> ( <type>text</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Converts a size in human-readable format (as returned
+        by <function>pg_size_pretty</function>) into bytes.  Valid units are
+        <literal>bytes</literal>, <literal>B</literal>, <literal>kB</literal>,
+        <literal>MB</literal>, <literal>GB</literal>, <literal>TB</literal>,
+        and <literal>PB</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_size_pretty</primary>
+        </indexterm>
+        <function>pg_size_pretty</function> ( <type>bigint</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_size_pretty</function> ( <type>numeric</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts a size in bytes into a more easily human-readable format with
+        size units (bytes, kB, MB, GB, TB, or PB as appropriate).  Note that the
+        units are powers of 2 rather than powers of 10, so 1kB is 1024 bytes,
+        1MB is 1024<superscript>2</superscript> = 1048576 bytes, and so on.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_table_size</primary>
+        </indexterm>
+        <function>pg_table_size</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the disk space used by the specified table, excluding indexes
+        (but including its TOAST table if any, free space map, and visibility
+        map).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_tablespace_size</primary>
+        </indexterm>
+        <function>pg_tablespace_size</function> ( <type>name</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_tablespace_size</function> ( <type>oid</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the total disk space used in the tablespace with the
+        specified name or OID. To use this function, you must
+        have <literal>CREATE</literal> privilege on the specified tablespace
+        or have privileges of the <literal>pg_read_all_stats</literal> role,
+        unless it is the default tablespace for the current database.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_total_relation_size</primary>
+        </indexterm>
+        <function>pg_total_relation_size</function> ( <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Computes the total disk space used by the specified table, including
+        all indexes and <acronym>TOAST</acronym> data.  The result is
+        equivalent to <function>pg_table_size</function>
+        <literal>+</literal> <function>pg_indexes_size</function>.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    The functions above that operate on tables or indexes accept a
+    <type>regclass</type> argument, which is simply the OID of the table or index
+    in the <structname>pg_class</structname> system catalog.  You do not have to look up
+    the OID by hand, however, since the <type>regclass</type> data type's input
+    converter will do the work for you.  See <xref linkend="datatype-oid"/>
+    for details.
+   </para>
+
+   <para>
+    The functions shown in <xref linkend="functions-admin-dblocation"/> assist
+    in identifying the specific disk files associated with database objects.
+   </para>
+
+   <table id="functions-admin-dblocation">
+    <title>Database Object Location Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_relation_filenode</primary>
+        </indexterm>
+        <function>pg_relation_filenode</function> ( <parameter>relation</parameter> <type>regclass</type> )
+        <returnvalue>oid</returnvalue>
+       </para>
+       <para>
+        Returns the <quote>filenode</quote> number currently assigned to the
+        specified relation.  The filenode is the base component of the file
+        name(s) used for the relation (see
+        <xref linkend="storage-file-layout"/> for more information).
+        For most relations the result is the same as
+        <structname>pg_class</structname>.<structfield>relfilenode</structfield>,
+        but for certain system catalogs <structfield>relfilenode</structfield>
+        is zero and this function must be used to get the correct value.  The
+        function returns NULL if passed a relation that does not have storage,
+        such as a view.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_relation_filepath</primary>
+        </indexterm>
+        <function>pg_relation_filepath</function> ( <parameter>relation</parameter> <type>regclass</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the entire file path name (relative to the database cluster's
+        data directory, <varname>PGDATA</varname>) of the relation.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_filenode_relation</primary>
+        </indexterm>
+        <function>pg_filenode_relation</function> ( <parameter>tablespace</parameter> <type>oid</type>, <parameter>filenode</parameter> <type>oid</type> )
+        <returnvalue>regclass</returnvalue>
+       </para>
+       <para>
+        Returns a relation's OID given the tablespace OID and filenode it is
+        stored under.  This is essentially the inverse mapping of
+        <function>pg_relation_filepath</function>.  For a relation in the
+        database's default tablespace, the tablespace can be specified as zero.
+        Returns <literal>NULL</literal> if no relation in the current database
+        is associated with the given values.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <xref linkend="functions-admin-collation"/> lists functions used to manage
+    collations.
+   </para>
+
+   <table id="functions-admin-collation">
+    <title>Collation Management Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_collation_actual_version</primary>
+        </indexterm>
+        <function>pg_collation_actual_version</function> ( <type>oid</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the actual version of the collation object as it is currently
+        installed in the operating system.  If this is different from the
+        value in
+        <structname>pg_collation</structname>.<structfield>collversion</structfield>,
+        then objects depending on the collation might need to be rebuilt.  See
+        also <xref linkend="sql-altercollation"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_database_collation_actual_version</primary>
+        </indexterm>
+        <function>pg_database_collation_actual_version</function> ( <type>oid</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the actual version of the database's collation as it is currently
+        installed in the operating system.  If this is different from the
+        value in
+        <structname>pg_database</structname>.<structfield>datcollversion</structfield>,
+        then objects depending on the collation might need to be rebuilt.  See
+        also <xref linkend="sql-alterdatabase"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_import_system_collations</primary>
+        </indexterm>
+        <function>pg_import_system_collations</function> ( <parameter>schema</parameter> <type>regnamespace</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Adds collations to the system
+        catalog <structname>pg_collation</structname> based on all the locales
+        it finds in the operating system.  This is
+        what <command>initdb</command> uses; see
+        <xref linkend="collation-managing"/> for more details.  If additional
+        locales are installed into the operating system later on, this
+        function can be run again to add collations for the new locales.
+        Locales that match existing entries
+        in <structname>pg_collation</structname> will be skipped.  (But
+        collation objects based on locales that are no longer present in the
+        operating system are not removed by this function.)
+        The <parameter>schema</parameter> parameter would typically
+        be <literal>pg_catalog</literal>, but that is not a requirement; the
+        collations could be installed into some other schema as well.  The
+        function returns the number of new collation objects it created.
+        Use of this function is restricted to superusers.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <xref linkend="functions-admin-statsmod"/> lists functions used to
+    manipulate statistics.
+    These functions cannot be executed during recovery.
+    <warning>
+     <para>
+      Changes made by these statistics manipulation functions are likely to be
+      overwritten by <link linkend="autovacuum">autovacuum</link> (or manual
+      <command>VACUUM</command> or <command>ANALYZE</command>) and should be
+      considered temporary.
+     </para>
+    </warning>
+   </para>
+
+   <table id="functions-admin-statsmod">
+    <title>Database Object Statistics Manipulation Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_restore_relation_stats</primary>
+        </indexterm>
+        <function>pg_restore_relation_stats</function> (
+        <literal>VARIADIC</literal> <parameter>kwargs</parameter> <type>"any"</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+        <para>
+         Updates table-level statistics.  Ordinarily, these statistics are
+         collected automatically or updated as a part of <xref
+         linkend="sql-vacuum"/> or <xref linkend="sql-analyze"/>, so it's not
+         necessary to call this function.  However, it is useful after a
+         restore to enable the optimizer to choose better plans if
+         <command>ANALYZE</command> has not been run yet.
+        </para>
+        <para>
+         The tracked statistics may change from version to version, so
+         arguments are passed as pairs of <replaceable>argname</replaceable>
+         and <replaceable>argvalue</replaceable> in the form:
+<programlisting>
+SELECT pg_restore_relation_stats(
+    '<replaceable>arg1name</replaceable>', '<replaceable>arg1value</replaceable>'::<replaceable>arg1type</replaceable>,
+    '<replaceable>arg2name</replaceable>', '<replaceable>arg2value</replaceable>'::<replaceable>arg2type</replaceable>,
+    '<replaceable>arg3name</replaceable>', '<replaceable>arg3value</replaceable>'::<replaceable>arg3type</replaceable>);
+</programlisting>
+        </para>
+        <para>
+         For example, to set the <structfield>relpages</structfield> and
+         <structfield>reltuples</structfield> values for the table
+         <structname>mytable</structname>:
+<programlisting>
+SELECT pg_restore_relation_stats(
+    'schemaname', 'myschema',
+    'relname',    'mytable',
+    'relpages',   173::integer,
+    'reltuples',  10000::real);
+</programlisting>
+        </para>
+        <para>
+         The arguments <literal>schemaname</literal> and
+         <literal>relname</literal> are required, and specify the table. Other
+         arguments are the names and values of statistics corresponding to
+         certain columns in <link
+         linkend="catalog-pg-class"><structname>pg_class</structname></link>.
+         The currently-supported relation statistics are
+         <literal>relpages</literal> with a value of type
+         <type>integer</type>, <literal>reltuples</literal> with a value of
+         type <type>real</type>, <literal>relallvisible</literal> with a value
+         of type <type>integer</type>, and <literal>relallfrozen</literal>
+         with a value of type <type>integer</type>.
+        </para>
+        <para>
+         Additionally, this function accepts argument name
+         <literal>version</literal> of type <type>integer</type>, which
+         specifies the server version from which the statistics originated.
+         This is anticipated to be helpful in porting statistics from older
+         versions of <productname>PostgreSQL</productname>.
+        </para>
+        <para>
+         Minor errors are reported as a <literal>WARNING</literal> and
+         ignored, and remaining statistics will still be restored. If all
+         specified statistics are successfully restored, returns
+         <literal>true</literal>, otherwise <literal>false</literal>.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on the
+         table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_clear_relation_stats</primary>
+         </indexterm>
+         <function>pg_clear_relation_stats</function> ( <parameter>schemaname</parameter> <type>text</type>, <parameter>relname</parameter> <type>text</type> )
+         <returnvalue>void</returnvalue>
+        </para>
+        <para>
+         Clears table-level statistics for the given relation, as though the
+         table was newly created.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on the
+         table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_restore_attribute_stats</primary>
+        </indexterm>
+        <function>pg_restore_attribute_stats</function> (
+        <literal>VARIADIC</literal> <parameter>kwargs</parameter> <type>"any"</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+        <para>
+         Creates or updates column-level statistics.  Ordinarily, these
+         statistics are collected automatically or updated as a part of <xref
+         linkend="sql-vacuum"/> or <xref linkend="sql-analyze"/>, so it's not
+         necessary to call this function.  However, it is useful after a
+         restore to enable the optimizer to choose better plans if
+         <command>ANALYZE</command> has not been run yet.
+        </para>
+        <para>
+         The tracked statistics may change from version to version, so
+         arguments are passed as pairs of <replaceable>argname</replaceable>
+         and <replaceable>argvalue</replaceable> in the form:
+<programlisting>
+SELECT pg_restore_attribute_stats(
+    '<replaceable>arg1name</replaceable>', '<replaceable>arg1value</replaceable>'::<replaceable>arg1type</replaceable>,
+    '<replaceable>arg2name</replaceable>', '<replaceable>arg2value</replaceable>'::<replaceable>arg2type</replaceable>,
+    '<replaceable>arg3name</replaceable>', '<replaceable>arg3value</replaceable>'::<replaceable>arg3type</replaceable>);
+</programlisting>
+        </para>
+        <para>
+         For example, to set the <structfield>avg_width</structfield> and
+         <structfield>null_frac</structfield> values for the attribute
+         <structfield>col1</structfield> of the table
+         <structname>mytable</structname>:
+<programlisting>
+SELECT pg_restore_attribute_stats(
+    'schemaname', 'myschema',
+    'relname',    'mytable',
+    'attname',    'col1',
+    'inherited',  false,
+    'avg_width',  125::integer,
+    'null_frac',  0.5::real);
+</programlisting>
+        </para>
+        <para>
+         The required arguments are <literal>schemaname</literal> and
+         <literal>relname</literal> with a value of type <type>text</type>
+         which specify the table; either <literal>attname</literal> with a
+         value of type <type>text</type> or <literal>attnum</literal> with a
+         value of type <type>smallint</type>, which specifies the column; and
+         <literal>inherited</literal>, which specifies whether the statistics
+         include values from child tables.  Other arguments are the names and
+         values of statistics corresponding to columns in <link
+         linkend="view-pg-stats"><structname>pg_stats</structname></link>.
+        </para>
+        <para>
+         Additionally, this function accepts argument name
+         <literal>version</literal> of type <type>integer</type>, which
+         specifies the server version from which the statistics originated.
+         This is anticipated to be helpful in porting statistics from older
+         versions of <productname>PostgreSQL</productname>.
+        </para>
+        <para>
+         Minor errors are reported as a <literal>WARNING</literal> and
+         ignored, and remaining statistics will still be restored. If all
+         specified statistics are successfully restored, returns
+         <literal>true</literal>, otherwise <literal>false</literal>.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on the
+         table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry">
+        <para role="func_signature">
+         <indexterm>
+          <primary>pg_clear_attribute_stats</primary>
+         </indexterm>
+         <function>pg_clear_attribute_stats</function> (
+         <parameter>schemaname</parameter> <type>text</type>,
+         <parameter>relname</parameter> <type>text</type>,
+         <parameter>attname</parameter> <type>text</type>,
+         <parameter>inherited</parameter> <type>boolean</type> )
+         <returnvalue>void</returnvalue>
+        </para>
+        <para>
+         Clears column-level statistics for the given relation and
+         attribute, as though the table was newly created.
+        </para>
+        <para>
+         The caller must have the <literal>MAINTAIN</literal> privilege on
+         the table or be the owner of the database.
+        </para>
+       </entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    <xref linkend="functions-info-partition"/> lists functions that provide
+    information about the structure of partitioned tables.
+   </para>
+
+   <table id="functions-info-partition">
+    <title>Partitioning Information Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_partition_tree</primary>
+        </indexterm>
+        <function>pg_partition_tree</function> ( <type>regclass</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>relid</parameter> <type>regclass</type>,
+        <parameter>parentrelid</parameter> <type>regclass</type>,
+        <parameter>isleaf</parameter> <type>boolean</type>,
+        <parameter>level</parameter> <type>integer</type> )
+       </para>
+       <para>
+        Lists the tables or indexes in the partition tree of the
+        given partitioned table or partitioned index, with one row for each
+        partition.  Information provided includes the OID of the partition,
+        the OID of its immediate parent, a boolean value telling if the
+        partition is a leaf, and an integer telling its level in the hierarchy.
+        The level value is 0 for the input table or index, 1 for its
+        immediate child partitions, 2 for their partitions, and so on.
+        Returns no rows if the relation does not exist or is not a partition
+        or partitioned table.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_partition_ancestors</primary>
+        </indexterm>
+        <function>pg_partition_ancestors</function> ( <type>regclass</type> )
+        <returnvalue>setof regclass</returnvalue>
+       </para>
+       <para>
+        Lists the ancestor relations of the given partition,
+        including the relation itself.  Returns no rows if the relation
+        does not exist or is not a partition or partitioned table.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_partition_root</primary>
+        </indexterm>
+        <function>pg_partition_root</function> ( <type>regclass</type> )
+        <returnvalue>regclass</returnvalue>
+       </para>
+       <para>
+        Returns the top-most parent of the partition tree to which the given
+        relation belongs.  Returns <literal>NULL</literal> if the relation
+        does not exist or is not a partition or partitioned table.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    For example, to check the total size of the data contained in a
+    partitioned table <structname>measurement</structname>, one could use the
+    following query:
+<programlisting>
+SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
+  FROM pg_partition_tree('measurement');
+</programlisting>
+   </para>
+
+  </sect2>
+
+  <sect2 id="functions-admin-index">
+   <title>Index Maintenance Functions</title>
+
+   <para>
+    <xref linkend="functions-admin-index-table"/> shows the functions
+    available for index maintenance tasks.  (Note that these maintenance
+    tasks are normally done automatically by autovacuum; use of these
+    functions is only required in special cases.)
+    These functions cannot be executed during recovery.
+    Use of these functions is restricted to superusers and the owner
+    of the given index.
+   </para>
+
+   <table id="functions-admin-index-table">
+    <title>Index Maintenance Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>brin_summarize_new_values</primary>
+        </indexterm>
+        <function>brin_summarize_new_values</function> ( <parameter>index</parameter> <type>regclass</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Scans the specified BRIN index to find page ranges in the base table
+        that are not currently summarized by the index; for any such range it
+        creates a new summary index tuple by scanning those table pages.
+        Returns the number of new page range summaries that were inserted
+        into the index.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>brin_summarize_range</primary>
+        </indexterm>
+        <function>brin_summarize_range</function> ( <parameter>index</parameter> <type>regclass</type>, <parameter>blockNumber</parameter> <type>bigint</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Summarizes the page range covering the given block, if not already
+        summarized.  This is
+        like <function>brin_summarize_new_values</function> except that it
+        only processes the page range that covers the given table block number.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>brin_desummarize_range</primary>
+        </indexterm>
+        <function>brin_desummarize_range</function> ( <parameter>index</parameter> <type>regclass</type>, <parameter>blockNumber</parameter> <type>bigint</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Removes the BRIN index tuple that summarizes the page range covering
+        the given table block, if there is one.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>gin_clean_pending_list</primary>
+        </indexterm>
+        <function>gin_clean_pending_list</function> ( <parameter>index</parameter> <type>regclass</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Cleans up the <quote>pending</quote> list of the specified GIN index
+        by moving entries in it, in bulk, to the main GIN data structure.
+        Returns the number of pages removed from the pending list.
+        If the argument is a GIN index built with
+        the <literal>fastupdate</literal> option disabled, no cleanup happens
+        and the result is zero, because the index doesn't have a pending list.
+        See <xref linkend="gin-fast-update"/> and <xref linkend="gin-tips"/>
+        for details about the pending list and <literal>fastupdate</literal>
+        option.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-admin-genfile">
+   <title>Generic File Access Functions</title>
+
+   <para>
+    The functions shown in <xref
+    linkend="functions-admin-genfile-table"/> provide native access to
+    files on the machine hosting the server. Only files within the
+    database cluster directory and the <varname>log_directory</varname> can be
+    accessed, unless the user is a superuser or is granted the role
+    <literal>pg_read_server_files</literal>.  Use a relative path for files in
+    the cluster directory, and a path matching the <varname>log_directory</varname>
+    configuration setting for log files.
+   </para>
+
+   <para>
+    Note that granting users the EXECUTE privilege on
+    <function>pg_read_file()</function>, or related functions, allows them the
+    ability to read any file on the server that the database server process can
+    read; these functions bypass all in-database privilege checks.  This means
+    that, for example, a user with such access is able to read the contents of
+    the <structname>pg_authid</structname> table where authentication
+    information is stored, as well as read any table data in the database.
+    Therefore, granting access to these functions should be carefully
+    considered.
+   </para>
+
+   <para>
+    When granting privilege on these functions, note that the table entries
+    showing optional parameters are mostly implemented as several physical
+    functions with different parameter lists.  Privilege must be granted
+    separately on each such function, if it is to be
+    used.  <application>psql</application>'s <command>\df</command> command
+    can be useful to check what the actual function signatures are.
+   </para>
+
+   <para>
+    Some of these functions take an optional <parameter>missing_ok</parameter>
+    parameter, which specifies the behavior when the file or directory does
+    not exist.  If <literal>true</literal>, the function
+    returns <literal>NULL</literal> or an empty result set, as appropriate.
+    If <literal>false</literal>, an error is raised.  (Failure conditions
+    other than <quote>file not found</quote> are reported as errors in any
+    case.)  The default is <literal>false</literal>.
+   </para>
+
+   <table id="functions-admin-genfile-table">
+    <title>Generic File Access Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_dir</primary>
+        </indexterm>
+        <function>pg_ls_dir</function> ( <parameter>dirname</parameter> <type>text</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type>, <parameter>include_dot_dirs</parameter> <type>boolean</type> </optional> )
+        <returnvalue>setof text</returnvalue>
+       </para>
+       <para>
+        Returns the names of all files (and directories and other special
+        files) in the specified
+        directory. The <parameter>include_dot_dirs</parameter> parameter
+        indicates whether <quote>.</quote> and <quote>..</quote> are to be
+        included in the result set; the default is to exclude them.  Including
+        them can be useful when <parameter>missing_ok</parameter>
+        is <literal>true</literal>, to distinguish an empty directory from a
+        non-existent directory.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_logdir</primary>
+        </indexterm>
+        <function>pg_ls_logdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's log directory.  Filenames beginning with
+        a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and roles with privileges of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_waldir</primary>
+        </indexterm>
+        <function>pg_ls_waldir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's write-ahead log (WAL) directory.
+        Filenames beginning with a dot, directories, and other special files
+        are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and roles with privileges of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_logicalmapdir</primary>
+        </indexterm>
+        <function>pg_ls_logicalmapdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_logical/mappings</filename>
+        directory. Filenames beginning with a dot, directories, and other
+        special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_logicalsnapdir</primary>
+        </indexterm>
+        <function>pg_ls_logicalsnapdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_logical/snapshots</filename>
+        directory. Filenames beginning with a dot, directories, and other
+        special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_replslotdir</primary>
+        </indexterm>
+        <function>pg_ls_replslotdir</function> ( <parameter>slot_name</parameter> <type>text</type> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's <filename>pg_replslot/slot_name</filename>
+        directory, where <parameter>slot_name</parameter> is the name of the
+        replication slot provided as input of the function. Filenames beginning
+        with a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_summariesdir</primary>
+        </indexterm>
+        <function>pg_ls_summariesdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's WAL summaries directory
+        (<filename>pg_wal/summaries</filename>).  Filenames beginning
+        with a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_ls_archive_statusdir</primary>
+        </indexterm>
+        <function>pg_ls_archive_statusdir</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the server's WAL archive status directory
+        (<filename>pg_wal/archive_status</filename>).  Filenames beginning
+        with a dot, directories, and other special files are excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+
+        <indexterm>
+         <primary>pg_ls_tmpdir</primary>
+        </indexterm>
+        <function>pg_ls_tmpdir</function> ( <optional> <parameter>tablespace</parameter> <type>oid</type> </optional> )
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>name</parameter> <type>text</type>,
+        <parameter>size</parameter> <type>bigint</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type> )
+       </para>
+       <para>
+        Returns the name, size, and last modification time (mtime) of each
+        ordinary file in the temporary file directory for the
+        specified <parameter>tablespace</parameter>.
+        If <parameter>tablespace</parameter> is not provided,
+        the <literal>pg_default</literal> tablespace is examined.  Filenames
+        beginning with a dot, directories, and other special files are
+        excluded.
+       </para>
+       <para>
+        This function is restricted to superusers and members of
+        the <literal>pg_monitor</literal> role by default, but other users can
+        be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_read_file</primary>
+        </indexterm>
+        <function>pg_read_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns all or part of a text file, starting at the
+        given byte <parameter>offset</parameter>, returning at
+        most <parameter>length</parameter> bytes (less if the end of file is
+        reached first).  If <parameter>offset</parameter> is negative, it is
+        relative to the end of the file.  If <parameter>offset</parameter>
+        and <parameter>length</parameter> are omitted, the entire file is
+        returned.  The bytes read from the file are interpreted as a string in
+        the database's encoding; an error is thrown if they are not valid in
+        that encoding.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_read_binary_file</primary>
+        </indexterm>
+        <function>pg_read_binary_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
+        <returnvalue>bytea</returnvalue>
+       </para>
+       <para>
+        Returns all or part of a file.  This function is identical to
+        <function>pg_read_file</function> except that it can read arbitrary
+        binary data, returning the result as <type>bytea</type>
+        not <type>text</type>; accordingly, no encoding checks are performed.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para>
+       <para>
+        In combination with the <function>convert_from</function> function,
+        this function can be used to read a text file in a specified encoding
+        and convert to the database's encoding:
+<programlisting>
+SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_file</primary>
+        </indexterm>
+        <function>pg_stat_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>size</parameter> <type>bigint</type>,
+        <parameter>access</parameter> <type>timestamp with time zone</type>,
+        <parameter>modification</parameter> <type>timestamp with time zone</type>,
+        <parameter>change</parameter> <type>timestamp with time zone</type>,
+        <parameter>creation</parameter> <type>timestamp with time zone</type>,
+        <parameter>isdir</parameter> <type>boolean</type> )
+       </para>
+       <para>
+        Returns a record containing the file's size, last access time stamp,
+        last modification time stamp, last file status change time stamp (Unix
+        platforms only), file creation time stamp (Windows only), and a flag
+        indicating if it is a directory.
+       </para>
+       <para>
+        This function is restricted to superusers by default, but other users
+        can be granted EXECUTE to run the function.
+       </para></entry>
+      </row>
+
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="functions-advisory-locks">
+   <title>Advisory Lock Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-advisory-locks-table"/>
+    manage advisory locks.  For details about proper use of these functions,
+    see <xref linkend="advisory-locks"/>.
+   </para>
+
+   <para>
+    All these functions are intended to be used to lock application-defined
+    resources, which can be identified either by a single 64-bit key value or
+    two 32-bit key values (note that these two key spaces do not overlap).
+    If another session already holds a conflicting lock on the same resource
+    identifier, the functions will either wait until the resource becomes
+    available, or return a <literal>false</literal> result, as appropriate for
+    the function.
+    Locks can be either shared or exclusive: a shared lock does not conflict
+    with other shared locks on the same resource, only with exclusive locks.
+    Locks can be taken at session level (so that they are held until released
+    or the session ends) or at transaction level (so that they are held until
+    the current transaction ends; there is no provision for manual release).
+    Multiple session-level lock requests stack, so that if the same resource
+    identifier is locked three times there must then be three unlock requests
+    to release the resource in advance of session end.
+   </para>
+
+   <table id="functions-advisory-locks-table">
+    <title>Advisory Lock Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_lock</primary>
+        </indexterm>
+        <function>pg_advisory_lock</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_lock</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Obtains an exclusive session-level advisory lock, waiting if necessary.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_lock_shared</primary>
+        </indexterm>
+        <function>pg_advisory_lock_shared</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_lock_shared</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Obtains a shared session-level advisory lock, waiting if necessary.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_unlock</primary>
+        </indexterm>
+        <function>pg_advisory_unlock</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_unlock</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Releases a previously-acquired exclusive session-level advisory lock.
+        Returns <literal>true</literal> if the lock is successfully released.
+        If the lock was not held, <literal>false</literal> is returned, and in
+        addition, an SQL warning will be reported by the server.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_unlock_all</primary>
+        </indexterm>
+        <function>pg_advisory_unlock_all</function> ()
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Releases all session-level advisory locks held by the current session.
+        (This function is implicitly invoked at session end, even if the
+        client disconnects ungracefully.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_unlock_shared</primary>
+        </indexterm>
+        <function>pg_advisory_unlock_shared</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_unlock_shared</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Releases a previously-acquired shared session-level advisory lock.
+        Returns <literal>true</literal> if the lock is successfully released.
+        If the lock was not held, <literal>false</literal> is returned, and in
+        addition, an SQL warning will be reported by the server.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_xact_lock</primary>
+        </indexterm>
+        <function>pg_advisory_xact_lock</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_xact_lock</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Obtains an exclusive transaction-level advisory lock, waiting if
+        necessary.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_advisory_xact_lock_shared</primary>
+        </indexterm>
+        <function>pg_advisory_xact_lock_shared</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_advisory_xact_lock_shared</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>void</returnvalue>
+       </para>
+       <para>
+        Obtains a shared transaction-level advisory lock, waiting if
+        necessary.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_try_advisory_lock</primary>
+        </indexterm>
+        <function>pg_try_advisory_lock</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_try_advisory_lock</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Obtains an exclusive session-level advisory lock if available.
+        This will either obtain the lock immediately and
+        return <literal>true</literal>, or return <literal>false</literal>
+        without waiting if the lock cannot be acquired immediately.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_try_advisory_lock_shared</primary>
+        </indexterm>
+        <function>pg_try_advisory_lock_shared</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_try_advisory_lock_shared</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Obtains a shared session-level advisory lock if available.
+        This will either obtain the lock immediately and
+        return <literal>true</literal>, or return <literal>false</literal>
+        without waiting if the lock cannot be acquired immediately.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_try_advisory_xact_lock</primary>
+        </indexterm>
+        <function>pg_try_advisory_xact_lock</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_try_advisory_xact_lock</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Obtains an exclusive transaction-level advisory lock if available.
+        This will either obtain the lock immediately and
+        return <literal>true</literal>, or return <literal>false</literal>
+        without waiting if the lock cannot be acquired immediately.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_try_advisory_xact_lock_shared</primary>
+        </indexterm>
+        <function>pg_try_advisory_xact_lock_shared</function> ( <parameter>key</parameter> <type>bigint</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>pg_try_advisory_xact_lock_shared</function> ( <parameter>key1</parameter> <type>integer</type>, <parameter>key2</parameter> <type>integer</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Obtains a shared transaction-level advisory lock if available.
+        This will either obtain the lock immediately and
+        return <literal>true</literal>, or return <literal>false</literal>
+        without waiting if the lock cannot be acquired immediately.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
+  </sect1>

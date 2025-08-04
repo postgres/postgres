@@ -1,0 +1,358 @@
+  <sect1 id="functions-bitstring">
+   <title>Bit String Functions and Operators</title>
+
+   <indexterm zone="functions-bitstring">
+    <primary>bit strings</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    This section describes functions and operators for examining and
+    manipulating bit strings, that is values of the types
+    <type>bit</type> and <type>bit varying</type>.  (While only
+    type <type>bit</type> is mentioned in these tables, values of
+    type <type>bit varying</type> can be used interchangeably.)
+    Bit strings support the usual comparison operators shown in
+    <xref linkend="functions-comparison-op-table"/>, as well as the
+    operators shown in <xref linkend="functions-bit-string-op-table"/>.
+   </para>
+
+   <table id="functions-bit-string-op-table">
+    <title>Bit String Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>||</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Concatenation
+       </para>
+       <para>
+        <literal>B'10001' || B'011'</literal>
+        <returnvalue>10001011</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>&amp;</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise AND (inputs must be of equal length)
+       </para>
+       <para>
+        <literal>B'10001' &amp; B'01101'</literal>
+        <returnvalue>00001</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>|</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise OR (inputs must be of equal length)
+       </para>
+       <para>
+        <literal>B'10001' | B'01101'</literal>
+        <returnvalue>11101</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>#</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise exclusive OR (inputs must be of equal length)
+       </para>
+       <para>
+        <literal>B'10001' # B'01101'</literal>
+        <returnvalue>11100</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <literal>~</literal> <type>bit</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise NOT
+       </para>
+       <para>
+        <literal>~ B'10001'</literal>
+        <returnvalue>01110</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>&lt;&lt;</literal> <type>integer</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise shift left
+        (string length is preserved)
+       </para>
+       <para>
+        <literal>B'10001' &lt;&lt; 3</literal>
+        <returnvalue>01000</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>bit</type> <literal>&gt;&gt;</literal> <type>integer</type>
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Bitwise shift right
+        (string length is preserved)
+       </para>
+       <para>
+        <literal>B'10001' &gt;&gt; 2</literal>
+        <returnvalue>00100</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Some of the functions available for binary strings are also available
+    for bit strings, as shown in <xref linkend="functions-bit-string-table"/>.
+   </para>
+
+   <table id="functions-bit-string-table">
+    <title>Bit String Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_count</primary>
+        </indexterm>
+        <function>bit_count</function> ( <type>bit</type> )
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of bits set in the bit string (also known as
+        <quote>popcount</quote>).
+       </para>
+       <para>
+        <literal>bit_count(B'10111')</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>bit_length</primary>
+        </indexterm>
+        <function>bit_length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bits in the bit string.
+       </para>
+       <para>
+        <literal>bit_length(B'10111')</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>length</primary>
+        </indexterm>
+        <indexterm>
+         <primary>bit string</primary>
+         <secondary>length</secondary>
+        </indexterm>
+        <function>length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bits in the bit string.
+       </para>
+       <para>
+        <literal>length(B'10111')</literal>
+        <returnvalue>5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>octet_length</primary>
+        </indexterm>
+        <function>octet_length</function> ( <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns number of bytes in the bit string.
+       </para>
+       <para>
+        <literal>octet_length(B'1011111011')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>overlay</primary>
+        </indexterm>
+        <function>overlay</function> ( <parameter>bits</parameter> <type>bit</type> <literal>PLACING</literal> <parameter>newsubstring</parameter> <type>bit</type> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Replaces the substring of <parameter>bits</parameter> that starts at
+        the <parameter>start</parameter>'th bit and extends
+        for <parameter>count</parameter> bits
+        with <parameter>newsubstring</parameter>.
+        If <parameter>count</parameter> is omitted, it defaults to the length
+        of <parameter>newsubstring</parameter>.
+       </para>
+       <para>
+        <literal>overlay(B'01010101010101010' placing B'11111' from 2 for 3)</literal>
+        <returnvalue>0111110101010101010</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>position</primary>
+        </indexterm>
+        <function>position</function> ( <parameter>substring</parameter> <type>bit</type> <literal>IN</literal> <parameter>bits</parameter> <type>bit</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns first starting index of the specified <parameter>substring</parameter>
+        within <parameter>bits</parameter>, or zero if it's not present.
+       </para>
+       <para>
+        <literal>position(B'010' in B'000001101011')</literal>
+        <returnvalue>8</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>substring</primary>
+        </indexterm>
+        <function>substring</function> ( <parameter>bits</parameter> <type>bit</type> <optional> <literal>FROM</literal> <parameter>start</parameter> <type>integer</type> </optional> <optional> <literal>FOR</literal> <parameter>count</parameter> <type>integer</type> </optional> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Extracts the substring of <parameter>bits</parameter> starting at
+        the <parameter>start</parameter>'th bit if that is specified,
+        and stopping after <parameter>count</parameter> bits if that is
+        specified.  Provide at least one of <parameter>start</parameter>
+        and <parameter>count</parameter>.
+       </para>
+       <para>
+        <literal>substring(B'110010111111' from 3 for 2)</literal>
+        <returnvalue>00</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>get_bit</primary>
+        </indexterm>
+        <function>get_bit</function> ( <parameter>bits</parameter> <type>bit</type>,
+        <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Extracts <parameter>n</parameter>'th bit
+        from bit string; the first (leftmost) bit is bit 0.
+       </para>
+       <para>
+        <literal>get_bit(B'101010101010101010', 6)</literal>
+        <returnvalue>1</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>set_bit</primary>
+        </indexterm>
+        <function>set_bit</function> ( <parameter>bits</parameter> <type>bit</type>,
+        <parameter>n</parameter> <type>integer</type>,
+        <parameter>newvalue</parameter> <type>integer</type> )
+        <returnvalue>bit</returnvalue>
+       </para>
+       <para>
+        Sets <parameter>n</parameter>'th bit in
+        bit string to <parameter>newvalue</parameter>;
+        the first (leftmost) bit is bit 0.
+       </para>
+       <para>
+        <literal>set_bit(B'101010101010101010', 6, 0)</literal>
+        <returnvalue>101010001010101010</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    In addition, it is possible to cast integral values to and from type
+    <type>bit</type>.
+    Casting an integer to <type>bit(n)</type> copies the rightmost
+    <literal>n</literal> bits.  Casting an integer to a bit string width wider
+    than the integer itself will sign-extend on the left.
+    Some examples:
+<programlisting>
+44::bit(10)                    <lineannotation>0000101100</lineannotation>
+44::bit(3)                     <lineannotation>100</lineannotation>
+cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
+'1110'::bit(4)::integer        <lineannotation>14</lineannotation>
+</programlisting>
+    Note that casting to just <quote>bit</quote> means casting to
+    <literal>bit(1)</literal>, and so will deliver only the least significant
+    bit of the integer.
+   </para>
+  </sect1>

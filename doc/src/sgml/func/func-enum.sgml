@@ -1,0 +1,121 @@
+ <sect1 id="functions-enum">
+  <title>Enum Support Functions</title>
+
+  <para>
+   For enum types (described in <xref linkend="datatype-enum"/>),
+   there are several functions that allow cleaner programming without
+   hard-coding particular values of an enum type.
+   These are listed in <xref linkend="functions-enum-table"/>. The examples
+   assume an enum type created as:
+
+<programlisting>
+CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple');
+</programlisting>
+
+  </para>
+
+  <table id="functions-enum-table">
+    <title>Enum Support Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>enum_first</primary>
+        </indexterm>
+        <function>enum_first</function> ( <type>anyenum</type> )
+        <returnvalue>anyenum</returnvalue>
+       </para>
+       <para>
+        Returns the first value of the input enum type.
+       </para>
+       <para>
+        <literal>enum_first(null::rainbow)</literal>
+        <returnvalue>red</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>enum_last</primary>
+        </indexterm>
+        <function>enum_last</function> ( <type>anyenum</type> )
+        <returnvalue>anyenum</returnvalue>
+       </para>
+       <para>
+        Returns the last value of the input enum type.
+       </para>
+       <para>
+        <literal>enum_last(null::rainbow)</literal>
+        <returnvalue>purple</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>enum_range</primary>
+        </indexterm>
+        <function>enum_range</function> ( <type>anyenum</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns all values of the input enum type in an ordered array.
+       </para>
+       <para>
+        <literal>enum_range(null::rainbow)</literal>
+        <returnvalue>{red,orange,yellow,&zwsp;green,blue,purple}</returnvalue>
+       </para></entry>
+      </row>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>enum_range</function> ( <type>anyenum</type>, <type>anyenum</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns the range between the two given enum values, as an ordered
+        array. The values must be from the same enum type. If the first
+        parameter is null, the result will start with the first value of
+        the enum type.
+        If the second parameter is null, the result will end with the last
+        value of the enum type.
+       </para>
+       <para>
+        <literal>enum_range('orange'::rainbow, 'green'::rainbow)</literal>
+        <returnvalue>{orange,yellow,green}</returnvalue>
+       </para>
+       <para>
+        <literal>enum_range(NULL, 'green'::rainbow)</literal>
+        <returnvalue>{red,orange,&zwsp;yellow,green}</returnvalue>
+       </para>
+       <para>
+        <literal>enum_range('orange'::rainbow, NULL)</literal>
+        <returnvalue>{orange,yellow,green,&zwsp;blue,purple}</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Notice that except for the two-argument form of <function>enum_range</function>,
+    these functions disregard the specific value passed to them; they care
+    only about its declared data type.  Either null or a specific value of
+    the type can be passed, with the same result.  It is more common to
+    apply these functions to a table column or function argument than to
+    a hardwired type name as used in the examples.
+   </para>
+ </sect1>

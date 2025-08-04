@@ -1,0 +1,646 @@
+ <sect1 id="functions-array">
+  <title>Array Functions and Operators</title>
+
+  <para>
+   <xref linkend="array-operators-table"/> shows the specialized operators
+   available for array types.
+   In addition to those, the usual comparison operators shown in <xref
+   linkend="functions-comparison-op-table"/> are available for
+   arrays.  The comparison operators compare the array contents
+   element-by-element, using the default B-tree comparison function for
+   the element data type, and sort based on the first difference.
+   In multidimensional arrays the elements are visited in row-major order
+   (last subscript varies most rapidly).
+   If the contents of two arrays are equal but the dimensionality is
+   different, the first difference in the dimensionality information
+   determines the sort order.
+  </para>
+
+   <table id="array-operators-table">
+    <title>Array Operators</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Operator
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>@&gt;</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does the first array contain the second, that is, does each element
+        appearing in the second array equal some element of the first array?
+        (Duplicates are not treated specially,
+        thus <literal>ARRAY[1]</literal> and <literal>ARRAY[1,1]</literal> are
+        each considered to contain the other.)
+       </para>
+       <para>
+        <literal>ARRAY[1,4,3] @&gt; ARRAY[3,1,3]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>&lt;@</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Is the first array contained by the second?
+       </para>
+       <para>
+        <literal>ARRAY[2,2,7] &lt;@ ARRAY[1,7,4,2,6]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anyarray</type> <literal>&amp;&amp;</literal> <type>anyarray</type>
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Do the arrays overlap, that is, have any elements in common?
+       </para>
+       <para>
+        <literal>ARRAY[1,4,3] &amp;&amp; ARRAY[2,1]</literal>
+        <returnvalue>t</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatiblearray</type>
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Concatenates the two arrays.  Concatenating a null or empty array is a
+        no-op; otherwise the arrays must have the same number of dimensions
+        (as illustrated by the first example) or differ in number of
+        dimensions by one (as illustrated by the second).
+        If the arrays are not of identical element types, they will be coerced
+        to a common type (see <xref linkend="typeconv-union-case"/>).
+       </para>
+       <para>
+        <literal>ARRAY[1,2,3] || ARRAY[4,5,6,7]</literal>
+        <returnvalue>{1,2,3,4,5,6,7}</returnvalue>
+       </para>
+       <para>
+        <literal>ARRAY[1,2,3] || ARRAY[[4,5,6],[7,8,9.9]]</literal>
+        <returnvalue>{{1,2,3},{4,5,6},{7,8,9.9}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anycompatible</type> <literal>||</literal> <type>anycompatiblearray</type>
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Concatenates an element onto the front of an array (which must be
+        empty or one-dimensional).
+       </para>
+       <para>
+        <literal>3 || ARRAY[4,5,6]</literal>
+        <returnvalue>{3,4,5,6}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatible</type>
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Concatenates an element onto the end of an array (which must be
+        empty or one-dimensional).
+       </para>
+       <para>
+        <literal>ARRAY[4,5,6] || 7</literal>
+        <returnvalue>{4,5,6,7}</returnvalue>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   See <xref linkend="arrays"/> for more details about array operator
+   behavior.  See <xref linkend="indexes-types"/> for more details about
+   which operators support indexed operations.
+  </para>
+
+  <para>
+   <xref linkend="array-functions-table"/> shows the functions
+   available for use with array types. See <xref linkend="arrays"/>
+   for more information  and examples of the use of these functions.
+  </para>
+
+   <table id="array-functions-table">
+    <title>Array Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para>
+       <para>
+        Example(s)
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_append</primary>
+        </indexterm>
+        <function>array_append</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Appends an element to the end of an array (same as
+        the <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatible</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_append(ARRAY[1,2], 3)</literal>
+        <returnvalue>{1,2,3}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_cat</primary>
+        </indexterm>
+        <function>array_cat</function> ( <type>anycompatiblearray</type>, <type>anycompatiblearray</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Concatenates two arrays (same as
+        the <type>anycompatiblearray</type> <literal>||</literal> <type>anycompatiblearray</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal>
+        <returnvalue>{1,2,3,4,5}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_dims</primary>
+        </indexterm>
+        <function>array_dims</function> ( <type>anyarray</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns a text representation of the array's dimensions.
+       </para>
+       <para>
+        <literal>array_dims(ARRAY[[1,2,3], [4,5,6]])</literal>
+        <returnvalue>[1:2][1:3]</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_fill</primary>
+        </indexterm>
+        <function>array_fill</function> ( <type>anyelement</type>, <type>integer[]</type>
+          <optional>, <type>integer[]</type> </optional> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns an array filled with copies of the given value, having
+        dimensions of the lengths specified by the second argument.
+        The optional third argument supplies lower-bound values for each
+        dimension (which default to all <literal>1</literal>).
+       </para>
+       <para>
+        <literal>array_fill(11, ARRAY[2,3])</literal>
+        <returnvalue>{{11,11,11},{11,11,11}}</returnvalue>
+       </para>
+       <para>
+        <literal>array_fill(7, ARRAY[3], ARRAY[2])</literal>
+        <returnvalue>[2:4]={7,7,7}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_length</primary>
+        </indexterm>
+        <function>array_length</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the length of the requested array dimension.
+        (Produces NULL instead of 0 for empty or missing array dimensions.)
+       </para>
+       <para>
+        <literal>array_length(array[1,2,3], 1)</literal>
+        <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>array_length(array[]::int[], 1)</literal>
+        <returnvalue>NULL</returnvalue>
+       </para>
+       <para>
+        <literal>array_length(array['text'], 2)</literal>
+        <returnvalue>NULL</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_lower</primary>
+        </indexterm>
+        <function>array_lower</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the lower bound of the requested array dimension.
+       </para>
+       <para>
+        <literal>array_lower('[0:2]={1,2,3}'::integer[], 1)</literal>
+        <returnvalue>0</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_ndims</primary>
+        </indexterm>
+        <function>array_ndims</function> ( <type>anyarray</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the number of dimensions of the array.
+       </para>
+       <para>
+        <literal>array_ndims(ARRAY[[1,2,3], [4,5,6]])</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_position</primary>
+        </indexterm>
+        <function>array_position</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> <optional>, <type>integer</type> </optional> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the subscript of the first occurrence of the second argument
+        in the array, or <literal>NULL</literal> if it's not present.
+        If the third argument is given, the search begins at that subscript.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to search for <literal>NULL</literal>.
+       </para>
+       <para>
+        <literal>array_position(ARRAY['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'], 'mon')</literal>
+        <returnvalue>2</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_positions</primary>
+        </indexterm>
+        <function>array_positions</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
+        <returnvalue>integer[]</returnvalue>
+       </para>
+       <para>
+        Returns an array of the subscripts of all occurrences of the second
+        argument in the array given as first argument.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to search for <literal>NULL</literal>.
+        <literal>NULL</literal> is returned only if the array
+        is <literal>NULL</literal>; if the value is not found in the array, an
+        empty array is returned.
+       </para>
+       <para>
+        <literal>array_positions(ARRAY['A','A','B','A'], 'A')</literal>
+        <returnvalue>{1,2,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_prepend</primary>
+        </indexterm>
+        <function>array_prepend</function> ( <type>anycompatible</type>, <type>anycompatiblearray</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Prepends an element to the beginning of an array (same as
+        the <type>anycompatible</type> <literal>||</literal> <type>anycompatiblearray</type>
+        operator).
+       </para>
+       <para>
+        <literal>array_prepend(1, ARRAY[2,3])</literal>
+        <returnvalue>{1,2,3}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_remove</primary>
+        </indexterm>
+        <function>array_remove</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Removes all elements equal to the given value from the array.
+        The array must be one-dimensional.
+        Comparisons are done using <literal>IS NOT DISTINCT FROM</literal>
+        semantics, so it is possible to remove <literal>NULL</literal>s.
+       </para>
+       <para>
+        <literal>array_remove(ARRAY[1,2,3,2], 2)</literal>
+        <returnvalue>{1,3}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_replace</primary>
+        </indexterm>
+        <function>array_replace</function> ( <type>anycompatiblearray</type>, <type>anycompatible</type>, <type>anycompatible</type> )
+        <returnvalue>anycompatiblearray</returnvalue>
+       </para>
+       <para>
+        Replaces each array element equal to the second argument with the
+        third argument.
+       </para>
+       <para>
+        <literal>array_replace(ARRAY[1,2,5,4], 5, 3)</literal>
+        <returnvalue>{1,2,3,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_reverse</primary>
+        </indexterm>
+        <function>array_reverse</function> ( <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Reverses the first dimension of the array.
+       </para>
+       <para>
+        <literal>array_reverse(ARRAY[[1,2],[3,4],[5,6]])</literal>
+        <returnvalue>{{5,6},{3,4},{1,2}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_sample</primary>
+        </indexterm>
+        <function>array_sample</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Returns an array of <parameter>n</parameter> items randomly selected
+        from <parameter>array</parameter>.  <parameter>n</parameter> may not
+        exceed the length of <parameter>array</parameter>'s first dimension.
+        If <parameter>array</parameter> is multi-dimensional,
+        an <quote>item</quote> is a slice having a given first subscript.
+       </para>
+       <para>
+        <literal>array_sample(ARRAY[1,2,3,4,5,6], 3)</literal>
+        <returnvalue>{2,6,1}</returnvalue>
+       </para>
+       <para>
+        <literal>array_sample(ARRAY[[1,2],[3,4],[5,6]], 2)</literal>
+        <returnvalue>{{5,6},{1,2}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_shuffle</primary>
+        </indexterm>
+        <function>array_shuffle</function> ( <type>anyarray</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Randomly shuffles the first dimension of the array.
+       </para>
+       <para>
+        <literal>array_shuffle(ARRAY[[1,2],[3,4],[5,6]])</literal>
+        <returnvalue>{{5,6},{1,2},{3,4}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_sort</primary>
+        </indexterm>
+        <function>array_sort</function> (
+          <parameter>array</parameter> <type>anyarray</type>
+          <optional>, <parameter>descending</parameter> <type>boolean</type>
+          <optional>, <parameter>nulls_first</parameter> <type>boolean</type>
+          </optional></optional> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Sorts the first dimension of the array.
+        The sort order is determined by the default sort ordering of the
+        array's element type; however, if the element type is collatable,
+        the collation to use can be specified by adding
+        a <literal>COLLATE</literal> clause to
+        the <parameter>array</parameter> argument.
+       </para>
+       <para>
+        If <parameter>descending</parameter> is true then sort in
+        descending order, otherwise ascending order.  If omitted, the
+        default is ascending order.
+        If <parameter>nulls_first</parameter> is true then nulls appear
+        before non-null values, otherwise nulls appear after non-null
+        values.
+        If omitted, <parameter>nulls_first</parameter> is taken to have
+        the same value as <parameter>descending</parameter>.
+       </para>
+       <para>
+        <literal>array_sort(ARRAY[[2,4],[2,1],[6,5]])</literal>
+        <returnvalue>{{2,1},{2,4},{6,5}}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm id="function-array-to-string">
+         <primary>array_to_string</primary>
+        </indexterm>
+        <function>array_to_string</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>delimiter</parameter> <type>text</type> <optional>, <parameter>null_string</parameter> <type>text</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Converts each array element to its text representation, and
+        concatenates those separated by
+        the <parameter>delimiter</parameter> string.
+        If <parameter>null_string</parameter> is given and is
+        not <literal>NULL</literal>, then <literal>NULL</literal> array
+        entries are represented by that string; otherwise, they are omitted.
+        See also <link linkend="function-string-to-array"><function>string_to_array</function></link>.
+       </para>
+       <para>
+        <literal>array_to_string(ARRAY[1, 2, 3, NULL, 5], ',', '*')</literal>
+        <returnvalue>1,2,3,*,5</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>array_upper</primary>
+        </indexterm>
+        <function>array_upper</function> ( <type>anyarray</type>, <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the upper bound of the requested array dimension.
+       </para>
+       <para>
+        <literal>array_upper(ARRAY[1,8,3,7], 1)</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>cardinality</primary>
+        </indexterm>
+        <function>cardinality</function> ( <type>anyarray</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns the total number of elements in the array, or 0 if the array
+        is empty.
+       </para>
+       <para>
+        <literal>cardinality(ARRAY[[1,2],[3,4]])</literal>
+        <returnvalue>4</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>trim_array</primary>
+        </indexterm>
+        <function>trim_array</function> ( <parameter>array</parameter> <type>anyarray</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>anyarray</returnvalue>
+       </para>
+       <para>
+        Trims an array by removing the last <parameter>n</parameter> elements.
+        If the array is multidimensional, only the first dimension is trimmed.
+       </para>
+       <para>
+        <literal>trim_array(ARRAY[1,2,3,4,5,6], 2)</literal>
+        <returnvalue>{1,2,3,4}</returnvalue>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>unnest</primary>
+        </indexterm>
+        <function>unnest</function> ( <type>anyarray</type> )
+        <returnvalue>setof anyelement</returnvalue>
+       </para>
+       <para>
+        Expands an array into a set of rows.
+        The array's elements are read out in storage order.
+       </para>
+       <para>
+        <literal>unnest(ARRAY[1,2])</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ 1
+ 2
+</programlisting>
+       </para>
+       <para>
+        <literal>unnest(ARRAY[['foo','bar'],['baz','quux']])</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ foo
+ bar
+ baz
+ quux
+</programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <function>unnest</function> ( <type>anyarray</type>, <type>anyarray</type> <optional>, ... </optional> )
+        <returnvalue>setof anyelement, anyelement [, ... ]</returnvalue>
+       </para>
+       <para>
+        Expands multiple arrays (possibly of different data types) into a set of
+        rows.  If the arrays are not all the same length then the shorter ones
+        are padded with <literal>NULL</literal>s.  This form is only allowed
+        in a query's FROM clause; see <xref linkend="queries-tablefunctions"/>.
+       </para>
+       <para>
+        <literal>select * from unnest(ARRAY[1,2], ARRAY['foo','bar','baz']) as x(a,b)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ a |  b
+---+-----
+ 1 | foo
+ 2 | bar
+   | baz
+</programlisting>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    See also <xref linkend="functions-aggregate"/> about the aggregate
+    function <function>array_agg</function> for use with arrays.
+   </para>
+  </sect1>

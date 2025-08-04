@@ -1,0 +1,284 @@
+ <sect1 id="functions-window">
+  <title>Window Functions</title>
+
+  <indexterm zone="functions-window">
+   <primary>window function</primary>
+   <secondary>built-in</secondary>
+  </indexterm>
+
+  <para>
+   <firstterm>Window functions</firstterm> provide the ability to perform
+   calculations across sets of rows that are related to the current query
+   row.  See <xref linkend="tutorial-window"/> for an introduction to this
+   feature, and <xref linkend="syntax-window-functions"/> for syntax
+   details.
+  </para>
+
+  <para>
+   The built-in window functions are listed in
+   <xref linkend="functions-window-table"/>.  Note that these functions
+   <emphasis>must</emphasis> be invoked using window function syntax, i.e., an
+   <literal>OVER</literal> clause is required.
+  </para>
+
+  <para>
+   In addition to these functions, any built-in or user-defined
+   ordinary aggregate (i.e., not ordered-set or hypothetical-set aggregates)
+   can be used as a window function; see
+   <xref linkend="functions-aggregate"/> for a list of the built-in aggregates.
+   Aggregate functions act as window functions only when an <literal>OVER</literal>
+   clause follows the call; otherwise they act as plain aggregates
+   and return a single row for the entire set.
+  </para>
+
+   <table id="functions-window-table">
+    <title>General-Purpose Window Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>row_number</primary>
+        </indexterm>
+        <function>row_number</function> ()
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the number of the current row within its partition, counting
+        from 1.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>rank</primary>
+        </indexterm>
+        <function>rank</function> ()
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the rank of the current row, with gaps; that is,
+        the <function>row_number</function> of the first row in its peer
+        group.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>dense_rank</primary>
+        </indexterm>
+        <function>dense_rank</function> ()
+        <returnvalue>bigint</returnvalue>
+       </para>
+       <para>
+        Returns the rank of the current row, without gaps; this function
+        effectively counts peer groups.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>percent_rank</primary>
+        </indexterm>
+        <function>percent_rank</function> ()
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Returns the relative rank of the current row, that is
+        (<function>rank</function> - 1) / (total partition rows - 1).
+        The value thus ranges from 0 to 1 inclusive.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>cume_dist</primary>
+        </indexterm>
+        <function>cume_dist</function> ()
+        <returnvalue>double precision</returnvalue>
+       </para>
+       <para>
+        Returns the cumulative distribution, that is (number of partition rows
+        preceding or peers with current row) / (total partition rows).
+        The value thus ranges from 1/<parameter>N</parameter> to 1.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>ntile</primary>
+        </indexterm>
+        <function>ntile</function> ( <parameter>num_buckets</parameter> <type>integer</type> )
+        <returnvalue>integer</returnvalue>
+       </para>
+       <para>
+        Returns an integer ranging from 1 to the argument value, dividing the
+        partition as equally as possible.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lag</primary>
+        </indexterm>
+        <function>lag</function> ( <parameter>value</parameter> <type>anycompatible</type>
+          <optional>, <parameter>offset</parameter> <type>integer</type>
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+        <returnvalue>anycompatible</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>value</parameter> evaluated at
+        the row that is <parameter>offset</parameter>
+        rows before the current row within the partition; if there is no such
+        row, instead returns <parameter>default</parameter>
+        (which must be of a type compatible with
+        <parameter>value</parameter>).
+        Both <parameter>offset</parameter> and
+        <parameter>default</parameter> are evaluated
+        with respect to the current row.  If omitted,
+        <parameter>offset</parameter> defaults to 1 and
+        <parameter>default</parameter> to <literal>NULL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>lead</primary>
+        </indexterm>
+        <function>lead</function> ( <parameter>value</parameter> <type>anycompatible</type>
+          <optional>, <parameter>offset</parameter> <type>integer</type>
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+        <returnvalue>anycompatible</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>value</parameter> evaluated at
+        the row that is <parameter>offset</parameter>
+        rows after the current row within the partition; if there is no such
+        row, instead returns <parameter>default</parameter>
+        (which must be of a type compatible with
+        <parameter>value</parameter>).
+        Both <parameter>offset</parameter> and
+        <parameter>default</parameter> are evaluated
+        with respect to the current row.  If omitted,
+        <parameter>offset</parameter> defaults to 1 and
+        <parameter>default</parameter> to <literal>NULL</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>first_value</primary>
+        </indexterm>
+        <function>first_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>value</parameter> evaluated
+        at the row that is the first row of the window frame.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>last_value</primary>
+        </indexterm>
+        <function>last_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>value</parameter> evaluated
+        at the row that is the last row of the window frame.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>nth_value</primary>
+        </indexterm>
+        <function>nth_value</function> ( <parameter>value</parameter> <type>anyelement</type>, <parameter>n</parameter> <type>integer</type> )
+        <returnvalue>anyelement</returnvalue>
+       </para>
+       <para>
+        Returns <parameter>value</parameter> evaluated
+        at the row that is the <parameter>n</parameter>'th
+        row of the window frame (counting from 1);
+        returns <literal>NULL</literal> if there is no such row.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   All of the functions listed in
+   <xref linkend="functions-window-table"/> depend on the sort ordering
+   specified by the <literal>ORDER BY</literal> clause of the associated window
+   definition.  Rows that are not distinct when considering only the
+   <literal>ORDER BY</literal> columns are said to be <firstterm>peers</firstterm>.
+   The four ranking functions (including <function>cume_dist</function>) are
+   defined so that they give the same answer for all rows of a peer group.
+  </para>
+
+  <para>
+   Note that <function>first_value</function>, <function>last_value</function>, and
+   <function>nth_value</function> consider only the rows within the <quote>window
+   frame</quote>, which by default contains the rows from the start of the
+   partition through the last peer of the current row.  This is
+   likely to give unhelpful results for <function>last_value</function> and
+   sometimes also <function>nth_value</function>.  You can redefine the frame by
+   adding a suitable frame specification (<literal>RANGE</literal>,
+   <literal>ROWS</literal> or <literal>GROUPS</literal>) to
+   the <literal>OVER</literal> clause.
+   See <xref linkend="syntax-window-functions"/> for more information
+   about frame specifications.
+  </para>
+
+  <para>
+   When an aggregate function is used as a window function, it aggregates
+   over the rows within the current row's window frame.
+   An aggregate used with <literal>ORDER BY</literal> and the default window frame
+   definition produces a <quote>running sum</quote> type of behavior, which may or
+   may not be what's wanted.  To obtain
+   aggregation over the whole partition, omit <literal>ORDER BY</literal> or use
+   <literal>ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</literal>.
+   Other frame specifications can be used to obtain other effects.
+  </para>
+
+  <note>
+   <para>
+    The SQL standard defines a <literal>RESPECT NULLS</literal> or
+    <literal>IGNORE NULLS</literal> option for <function>lead</function>, <function>lag</function>,
+    <function>first_value</function>, <function>last_value</function>, and
+    <function>nth_value</function>.  This is not implemented in
+    <productname>PostgreSQL</productname>: the behavior is always the
+    same as the standard's default, namely <literal>RESPECT NULLS</literal>.
+    Likewise, the standard's <literal>FROM FIRST</literal> or <literal>FROM LAST</literal>
+    option for <function>nth_value</function> is not implemented: only the
+    default <literal>FROM FIRST</literal> behavior is supported.  (You can achieve
+    the result of <literal>FROM LAST</literal> by reversing the <literal>ORDER BY</literal>
+    ordering.)
+   </para>
+  </note>
+
+ </sect1>

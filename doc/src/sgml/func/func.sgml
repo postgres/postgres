@@ -1,0 +1,84 @@
+<!-- doc/src/sgml/func.sgml -->
+
+ <chapter id="functions">
+  <title>Functions and Operators</title>
+
+  <indexterm zone="functions">
+   <primary>function</primary>
+  </indexterm>
+
+  <indexterm zone="functions">
+   <primary>operator</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> provides a large number of
+   functions and operators for the built-in data types.  This chapter
+   describes most of them, although additional special-purpose functions
+   appear in relevant sections of the manual.  Users can also
+   define their own functions and operators, as described in
+   <xref linkend="server-programming"/>.  The
+   <application>psql</application> commands <command>\df</command> and
+   <command>\do</command> can be used to list all
+   available functions and operators, respectively.
+  </para>
+
+  <para>
+   The notation used throughout this chapter to describe the argument and
+   result data types of a function or operator is like this:
+<synopsis>
+<function>repeat</function> ( <type>text</type>, <type>integer</type> ) <returnvalue>text</returnvalue>
+</synopsis>
+   which says that the function <function>repeat</function> takes one text and
+   one integer argument and returns a result of type text.  The right arrow
+   is also used to indicate the result of an example, thus:
+<programlisting>
+repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
+</programlisting>
+  </para>
+
+  <para>
+   If you are concerned about portability then note that most of
+   the functions and operators described in this chapter, with the
+   exception of the most trivial arithmetic and comparison operators
+   and some explicitly marked functions, are not specified by the
+   <acronym>SQL</acronym> standard. Some of this extended functionality
+   is present in other <acronym>SQL</acronym> database management
+   systems, and in many cases this functionality is compatible and
+   consistent between the various implementations.
+  </para>
+
+
+&func-logical;
+&func-comparison;
+&func-math;
+&func-string;
+&func-binarystring;
+&func-bitstring;
+&func-matching;
+&func-formatting;
+&func-datetime;
+&func-enum;
+&func-geometry;
+&func-net;
+&func-textsearch;
+&func-uuid;
+&func-xml;
+&func-json;
+&func-sequence;
+&func-conditional;
+&func-array;
+&func-range;
+&func-aggregate;
+&func-window;
+&func-merge-support;
+&func-subquery;
+&func-comparisons;
+&func-srf;
+&func-info;
+&func-admin;
+&func-trigger;
+&func-event-triggers;
+&func-statistics;
+
+</chapter>
