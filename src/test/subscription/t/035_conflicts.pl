@@ -150,7 +150,9 @@ pass('multiple_unique_conflicts detected on a leaf partition during insert');
 # Setup a bidirectional logical replication between node_A & node_B
 ###############################################################################
 
-# Initialize nodes.
+# Initialize nodes. Enable the track_commit_timestamp on both nodes to detect
+# the conflict when attempting to update a row that was previously modified by
+# a different origin.
 
 # node_A. Increase the log_min_messages setting to DEBUG2 to debug test
 # failures. Disable autovacuum to avoid generating xid that could affect the
@@ -158,7 +160,8 @@ pass('multiple_unique_conflicts detected on a leaf partition during insert');
 my $node_A = $node_publisher;
 $node_A->append_conf(
 	'postgresql.conf',
-	qq{autovacuum = off
+	qq{track_commit_timestamp = on
+	autovacuum = off
 	log_min_messages = 'debug2'});
 $node_A->restart;
 
@@ -270,6 +273,8 @@ $node_A->psql('postgres',
 ###############################################################################
 # Check that dead tuples on node A cannot be cleaned by VACUUM until the
 # concurrent transactions on Node B have been applied and flushed on Node A.
+# Also, check that an update_deleted conflict is detected when updating a row
+# that was deleted by a different origin.
 ###############################################################################
 
 # Insert a record
@@ -288,6 +293,8 @@ $node_A->poll_query_until('postgres',
 	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
 );
 
+my $log_location = -s $node_B->logfile;
+
 $node_B->safe_psql('postgres', "UPDATE tab SET b = 3 WHERE a = 1;");
 $node_A->safe_psql('postgres', "DELETE FROM tab WHERE a = 1;");
 
@@ -299,9 +306,29 @@ ok( $stderr =~
 	  qr/1 are dead but not yet removable/,
 	'the deleted column is non-removable');
 
+# Ensure the DELETE is replayed on Node B
+$node_A->wait_for_catchup($subname_BA);
+
+# Check the conflict detected on Node B
+my $logfile = slurp_file($node_B->logfile(), $log_location);
+ok( $logfile =~
+	  qr/conflict detected on relation "public.tab": conflict=delete_origin_differs.*
+.*DETAIL:.* Deleting the row that was modified locally in transaction [0-9]+ at .*
+.*Existing local tuple \(1, 3\); replica identity \(a\)=\(1\)/,
+	'delete target row was modified in tab');
+
+$log_location = -s $node_A->logfile;
+
 $node_A->safe_psql(
 	'postgres', "ALTER SUBSCRIPTION $subname_AB ENABLE;");
 $node_B->wait_for_catchup($subname_AB);
+
+$logfile = slurp_file($node_A->logfile(), $log_location);
+ok( $logfile =~
+	  qr/conflict detected on relation "public.tab": conflict=update_deleted.*
+.*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
+.*Remote tuple \(1, 3\); replica identity \(a\)=\(1\)/,
+	'update target row was deleted in tab');
 
 # Remember the next transaction ID to be assigned
 my $next_xid = $node_A->safe_psql('postgres', "SELECT txid_current() + 1;");
@@ -323,6 +350,41 @@ ok( $node_A->poll_query_until(
 ok( $stderr =~
 	  qr/1 removed, 1 remain, 0 are dead but not yet removable/,
 	'the deleted column is removed');
+
+###############################################################################
+# Ensure that the deleted tuple needed to detect an update_deleted conflict is
+# accessible via a sequential table scan.
+###############################################################################
+
+# Drop the primary key from tab on node A and set REPLICA IDENTITY to FULL to
+# enforce sequential scanning of the table.
+$node_A->safe_psql('postgres', "ALTER TABLE tab REPLICA IDENTITY FULL");
+$node_B->safe_psql('postgres', "ALTER TABLE tab REPLICA IDENTITY FULL");
+$node_A->safe_psql('postgres', "ALTER TABLE tab DROP CONSTRAINT tab_pkey;");
+
+# Disable the logical replication from node B to node A
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB DISABLE");
+
+# Wait for the apply worker to stop
+$node_A->poll_query_until('postgres',
+	"SELECT count(*) = 0 FROM pg_stat_activity WHERE backend_type = 'logical replication apply worker'"
+);
+
+$node_B->safe_psql('postgres', "UPDATE tab SET b = 4 WHERE a = 2;");
+$node_A->safe_psql('postgres', "DELETE FROM tab WHERE a = 2;");
+
+$log_location = -s $node_A->logfile;
+
+$node_A->safe_psql(
+	'postgres', "ALTER SUBSCRIPTION $subname_AB ENABLE;");
+$node_B->wait_for_catchup($subname_AB);
+
+$logfile = slurp_file($node_A->logfile(), $log_location);
+ok( $logfile =~
+	  qr/conflict detected on relation "public.tab": conflict=update_deleted.*
+.*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
+.*Remote tuple \(2, 4\); replica identity full \(2, 2\)/,
+	'update target row was deleted in tab');
 
 ###############################################################################
 # Check that the replication slot pg_conflict_detection is dropped after

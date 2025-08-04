@@ -2225,6 +2225,17 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>confl_update_deleted</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times the tuple to be updated was concurrently deleted by
+       another source during the application of changes. See <xref linkend="conflict-update-deleted"/>
+       for details about this conflict.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>confl_update_missing</structfield> <type>bigint</type>
       </para>
       <para>

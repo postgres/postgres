@@ -1399,6 +1399,7 @@ CREATE VIEW pg_stat_subscription_stats AS
         ss.confl_insert_exists,
         ss.confl_update_origin_differs,
         ss.confl_update_exists,
+        ss.confl_update_deleted,
         ss.confl_update_missing,
         ss.confl_delete_origin_differs,
         ss.confl_delete_missing,

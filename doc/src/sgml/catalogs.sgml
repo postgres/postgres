@@ -8087,7 +8087,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>subretaindeadtuples</structfield> <type>bool</type>
       </para>
       <para>
-       If true, the information (e.g., dead tuples, commit timestamps, and
+       If true, the detection of <xref linkend="conflict-update-deleted"/> is
+       enabled and the information (e.g., dead tuples, commit timestamps, and
        origins) on the subscriber that is useful for conflict detection is
        retained.
       </para></entry>

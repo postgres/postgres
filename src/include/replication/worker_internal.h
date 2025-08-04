@@ -87,8 +87,9 @@ typedef struct LogicalRepWorker
 	bool		parallel_apply;
 
 	/*
-	 * The changes made by this and later transactions must be retained to
-	 * ensure reliable conflict detection during the apply phase.
+	 * Changes made by this transaction and subsequent ones must be preserved.
+	 * This ensures that update_deleted conflicts can be accurately detected
+	 * during the apply phase of logical replication by this worker.
 	 *
 	 * The logical replication launcher manages an internal replication slot
 	 * named "pg_conflict_detection". It asynchronously collects this ID to

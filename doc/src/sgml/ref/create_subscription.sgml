@@ -445,10 +445,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           Specifies whether the information (e.g., dead tuples, commit
           timestamps, and origins) required for conflict detection on the
           subscriber is retained. The default is <literal>false</literal>.
-          If set to <literal>true</literal>, a physical replication slot named
-          <quote><literal>pg_conflict_detection</literal></quote> will be
-          created on the subscriber to prevent the conflict information from
-          being removed.
+          If set to <literal>true</literal>, the detection of
+          <xref linkend="conflict-update-deleted"/> is enabled, and a physical
+          replication slot named <quote><literal>pg_conflict_detection</literal></quote>
+          created on the subscriber to prevent the information for detecting
+          conflicts from being removed.
          </para>
 
          <para>

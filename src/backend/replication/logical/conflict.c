@@ -29,6 +29,7 @@ static const char *const ConflictTypeNames[] = {
 	[CT_UPDATE_EXISTS] = "update_exists",
 	[CT_UPDATE_MISSING] = "update_missing",
 	[CT_DELETE_ORIGIN_DIFFERS] = "delete_origin_differs",
+	[CT_UPDATE_DELETED] = "update_deleted",
 	[CT_DELETE_MISSING] = "delete_missing",
 	[CT_MULTIPLE_UNIQUE_CONFLICTS] = "multiple_unique_conflicts"
 };
@@ -176,6 +177,7 @@ errcode_apply_conflict(ConflictType type)
 		case CT_UPDATE_ORIGIN_DIFFERS:
 		case CT_UPDATE_MISSING:
 		case CT_DELETE_ORIGIN_DIFFERS:
+		case CT_UPDATE_DELETED:
 		case CT_DELETE_MISSING:
 			return errcode(ERRCODE_T_R_SERIALIZATION_FAILURE);
 	}
@@ -258,6 +260,26 @@ errdetail_apply_conflict(EState *estate, ResultRelInfo *relinfo,
 			else
 				appendStringInfo(&err_detail, _("Updating the row that was modified by a non-existent origin in transaction %u at %s."),
 								 localxmin, timestamptz_to_str(localts));
+
+			break;
+
+		case CT_UPDATE_DELETED:
+			if (localts)
+			{
+				if (localorigin == InvalidRepOriginId)
+					appendStringInfo(&err_detail, _("The row to be updated was deleted locally in transaction %u at %s."),
+									 localxmin, timestamptz_to_str(localts));
+				else if (replorigin_by_oid(localorigin, true, &origin_name))
+					appendStringInfo(&err_detail, _("The row to be updated was deleted by a different origin \"%s\" in transaction %u at %s."),
+									 origin_name, localxmin, timestamptz_to_str(localts));
+
+				/* The origin that modified this row has been removed. */
+				else
+					appendStringInfo(&err_detail, _("The row to be updated was deleted by a non-existent origin in transaction %u at %s."),
+									 localxmin, timestamptz_to_str(localts));
+			}
+			else
+				appendStringInfo(&err_detail, _("The row to be updated was deleted."));
 
 			break;
 

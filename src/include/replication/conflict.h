@@ -32,6 +32,9 @@ typedef enum
 	/* The updated row value violates unique constraint */
 	CT_UPDATE_EXISTS,
 
+	/* The row to be updated was concurrently deleted by a different origin */
+	CT_UPDATE_DELETED,
+
 	/* The row to be updated is missing */
 	CT_UPDATE_MISSING,
 
