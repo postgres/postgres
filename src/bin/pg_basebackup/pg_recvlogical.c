@@ -517,7 +517,7 @@ StreamLogicalLog(void)
 		}
 
 		/*
-		 * Read the header of the XLogData message, enclosed in the CopyData
+		 * Read the header of the WALData message, enclosed in the CopyData
 		 * message. We only need the WAL location field (dataStart), the rest
 		 * of the header is ignored.
 		 */
@@ -605,7 +605,7 @@ StreamLogicalLog(void)
 		/*
 		 * We're doing a client-initiated clean exit and have sent CopyDone to
 		 * the server. Drain any messages, so we don't miss a last-minute
-		 * ErrorResponse. The walsender stops generating XLogData records once
+		 * ErrorResponse. The walsender stops generating WALData records once
 		 * it sees CopyDone, so expect this to finish quickly. After CopyDone,
 		 * it's too late for sendFeedback(), even if this were to take a long
 		 * time. Hence, use synchronous-mode PQgetCopyData().

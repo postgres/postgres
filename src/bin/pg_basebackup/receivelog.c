@@ -38,8 +38,8 @@ static int	CopyStreamReceive(PGconn *conn, long timeout, pgsocket stop_socket,
 							  char **buffer);
 static bool ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf,
 								int len, XLogRecPtr blockpos, TimestampTz *last_status);
-static bool ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
-							   XLogRecPtr *blockpos);
+static bool ProcessWALDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
+							  XLogRecPtr *blockpos);
 static PGresult *HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
 									   XLogRecPtr blockpos, XLogRecPtr *stoppos);
 static bool CheckCopyStreamStop(PGconn *conn, StreamCtl *stream, XLogRecPtr blockpos);
@@ -831,7 +831,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 			}
 			else if (copybuf[0] == 'w')
 			{
-				if (!ProcessXLogDataMsg(conn, stream, copybuf, r, &blockpos))
+				if (!ProcessWALDataMsg(conn, stream, copybuf, r, &blockpos))
 					goto error;
 
 				/*
@@ -1041,11 +1041,11 @@ ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 }
 
 /*
- * Process XLogData message.
+ * Process WALData message.
  */
 static bool
-ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
-				   XLogRecPtr *blockpos)
+ProcessWALDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
+				  XLogRecPtr *blockpos)
 {
 	int			xlogoff;
 	int			bytes_left;
@@ -1054,13 +1054,13 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 
 	/*
 	 * Once we've decided we don't want to receive any more, just ignore any
-	 * subsequent XLogData messages.
+	 * subsequent WALData messages.
 	 */
 	if (!(still_sending))
 		return true;
 
 	/*
-	 * Read the header of the XLogData message, enclosed in the CopyData
+	 * Read the header of the WALData message, enclosed in the CopyData
 	 * message. We only need the WAL location field (dataStart), the rest of
 	 * the header is ignored.
 	 */
@@ -1162,7 +1162,7 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 					return false;
 				}
 				still_sending = false;
-				return true;	/* ignore the rest of this XLogData packet */
+				return true;	/* ignore the rest of this WALData packet */
 			}
 		}
 	}
