@@ -237,9 +237,10 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       provided none of the records in the table contain a
       <literal>NULL</literal> value for the column.  Ordinarily this is
       checked during the <literal>ALTER TABLE</literal> by scanning the
-      entire table; however, if a valid <literal>CHECK</literal> constraint is
-      found which proves no <literal>NULL</literal> can exist, then the
-      table scan is skipped.
+      entire table;
+      however, if a valid <literal>CHECK</literal> constraint exists
+      (and is not dropped in the same command) which proves no
+      <literal>NULL</literal> can exist, then the table scan is skipped.
      </para>
 
      <para>
