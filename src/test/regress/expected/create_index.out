@@ -1624,8 +1624,8 @@ DROP TABLE cwi_test;
 --
 CREATE TABLE syscol_table (a INT);
 -- System columns cannot be indexed
-CREATE INDEX ON syscolcol_table (ctid);
-ERROR:  relation "syscolcol_table" does not exist
+CREATE INDEX ON syscol_table (ctid);
+ERROR:  index creation on system columns is not supported
 -- nor used in expressions
 CREATE INDEX ON syscol_table ((ctid >= '(1000,0)'));
 ERROR:  index creation on system columns is not supported
