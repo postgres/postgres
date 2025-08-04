@@ -1524,7 +1524,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <listitem>
       <para>
-      Allow inactive replication slots to be automatically invalided using
+      Allow inactive replication slots to be automatically invalidated using
       server variable <xref linkend="guc-idle-replication-slot-timeout"/>
       (Nisha Moond, Bharath Rupireddy)
       <ulink url="&commit_baseurl;ac0e33136">&sect;</ulink>
