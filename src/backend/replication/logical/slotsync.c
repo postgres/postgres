@@ -1059,14 +1059,14 @@ ValidateSlotSyncParams(int elevel)
 {
 	/*
 	 * Logical slot sync/creation requires wal_level >= logical.
-	 *
-	 * Since altering the wal_level requires a server restart, so error out in
-	 * this case regardless of elevel provided by caller.
 	 */
 	if (wal_level < WAL_LEVEL_LOGICAL)
-		ereport(ERROR,
+	{
+		ereport(elevel,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("replication slot synchronization requires \"wal_level\" >= \"logical\""));
+		return false;
+	}
 
 	/*
 	 * A physical replication slot(primary_slot_name) is required on the
