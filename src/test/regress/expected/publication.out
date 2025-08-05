@@ -36,6 +36,9 @@ LINE 1: ...pub_xxx WITH (publish_generated_columns = stored, publish_ge...
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
 ERROR:  invalid value for publication parameter "publish_generated_columns": "foo"
 DETAIL:  Valid values are "none" and "stored".
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns);
+ERROR:  invalid value for publication parameter "publish_generated_columns": ""
+DETAIL:  Valid values are "none" and "stored".
 \dRp
                                                         List of publications
         Name        |          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
@@ -1844,8 +1847,7 @@ DROP SCHEMA sch1 cascade;
 DROP SCHEMA sch2 cascade;
 -- ======================================================
 -- Test the 'publish_generated_columns' parameter with the following values:
--- 'stored', 'none', and the default (no value specified), which defaults to
--- 'stored'.
+-- 'stored', 'none'.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns = stored);
 \dRp+ pub1
@@ -1863,17 +1865,8 @@ CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns = none);
  regress_publication_user | t          | t       | t       | t       | t         | none              | f
 (1 row)
 
-CREATE PUBLICATION pub3 FOR ALL TABLES WITH (publish_generated_columns);
-\dRp+ pub3
-                                                Publication pub3
-          Owner           | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root 
---------------------------+------------+---------+---------+---------+-----------+-------------------+----------
- regress_publication_user | t          | t       | t       | t       | t         | stored            | f
-(1 row)
-
 DROP PUBLICATION pub1;
 DROP PUBLICATION pub2;
-DROP PUBLICATION pub3;
 -- Test the 'publish_generated_columns' parameter as 'none' and 'stored' for
 -- different scenarios with/without generated columns in column lists.
 CREATE TABLE gencols (a int, gen1 int GENERATED ALWAYS AS (a * 2) STORED);

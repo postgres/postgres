@@ -26,6 +26,7 @@ CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
 CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = stored, publish_generated_columns = none);
 CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns = foo);
+CREATE PUBLICATION testpub_xxx WITH (publish_generated_columns);
 
 \dRp
 
@@ -1183,19 +1184,15 @@ DROP SCHEMA sch2 cascade;
 -- ======================================================
 
 -- Test the 'publish_generated_columns' parameter with the following values:
--- 'stored', 'none', and the default (no value specified), which defaults to
--- 'stored'.
+-- 'stored', 'none'.
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION pub1 FOR ALL TABLES WITH (publish_generated_columns = stored);
 \dRp+ pub1
 CREATE PUBLICATION pub2 FOR ALL TABLES WITH (publish_generated_columns = none);
 \dRp+ pub2
-CREATE PUBLICATION pub3 FOR ALL TABLES WITH (publish_generated_columns);
-\dRp+ pub3
 
 DROP PUBLICATION pub1;
 DROP PUBLICATION pub2;
-DROP PUBLICATION pub3;
 
 -- Test the 'publish_generated_columns' parameter as 'none' and 'stored' for
 -- different scenarios with/without generated columns in column lists.
