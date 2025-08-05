@@ -1052,7 +1052,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		dbctype = src_ctype;
 	if (dblocprovider == '\0')
 		dblocprovider = src_locprovider;
-	if (dblocale == NULL)
+	if (dblocale == NULL && dblocprovider == src_locprovider)
 		dblocale = src_locale;
 	if (dbicurules == NULL)
 		dbicurules = src_icurules;
