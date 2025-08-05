@@ -2833,7 +2833,7 @@ hash_multirange(PG_FUNCTION_ARGS)
 			upper_hash = 0;
 
 		/* Merge hashes of flags and bounds */
-		range_hash = hash_uint32((uint32) flags);
+		range_hash = hash_bytes_uint32((uint32) flags);
 		range_hash ^= lower_hash;
 		range_hash = pg_rotate_left32(range_hash, 1);
 		range_hash ^= upper_hash;

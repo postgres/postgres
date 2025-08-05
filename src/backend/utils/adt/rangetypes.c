@@ -1444,7 +1444,7 @@ hash_range(PG_FUNCTION_ARGS)
 		upper_hash = 0;
 
 	/* Merge hashes of flags and bounds */
-	result = hash_uint32((uint32) flags);
+	result = hash_bytes_uint32((uint32) flags);
 	result ^= lower_hash;
 	result = pg_rotate_left32(result, 1);
 	result ^= upper_hash;
