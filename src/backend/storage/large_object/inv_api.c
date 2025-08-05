@@ -561,7 +561,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		char		data[LOBLKSIZE + VARHDRSZ];
 		/* ensure union is aligned well enough: */
 		int32		align_it;
-	}			workbuf;
+	}			workbuf = {0};
 	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
@@ -752,7 +752,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 		char		data[LOBLKSIZE + VARHDRSZ];
 		/* ensure union is aligned well enough: */
 		int32		align_it;
-	}			workbuf;
+	}			workbuf = {0};
 	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
