@@ -350,7 +350,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 		 */
 		if (thisState->typisvarlena)
 			VALGRIND_CHECK_MEM_IS_DEFINED(DatumGetPointer(attr),
-										  VARSIZE_ANY(attr));
+										  VARSIZE_ANY(DatumGetPointer(attr)));
 
 		if (thisState->format == 0)
 		{
