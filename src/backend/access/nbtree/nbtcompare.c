@@ -555,7 +555,7 @@ btcharcmp(PG_FUNCTION_ARGS)
 static Datum
 char_decrement(Relation rel, Datum existing, bool *underflow)
 {
-	uint8		cexisting = UInt8GetDatum(existing);
+	uint8		cexisting = DatumGetUInt8(existing);
 
 	if (cexisting == 0)
 	{
@@ -571,7 +571,7 @@ char_decrement(Relation rel, Datum existing, bool *underflow)
 static Datum
 char_increment(Relation rel, Datum existing, bool *overflow)
 {
-	uint8		cexisting = UInt8GetDatum(existing);
+	uint8		cexisting = DatumGetUInt8(existing);
 
 	if (cexisting == UCHAR_MAX)
 	{

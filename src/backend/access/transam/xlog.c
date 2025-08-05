@@ -9011,7 +9011,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 	 * work correctly, it is critical that sessionBackupState is only updated
 	 * after this block is over.
 	 */
-	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, DatumGetBool(true));
+	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(true));
 	{
 		bool		gotUniqueStartpoint = false;
 		DIR		   *tblspcdir;
@@ -9250,7 +9250,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 
 		state->starttime = (pg_time_t) time(NULL);
 	}
-	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, DatumGetBool(true));
+	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(true));
 
 	state->started_in_recovery = backup_started_in_recovery;
 
@@ -9590,7 +9590,7 @@ register_persistent_abort_backup_handler(void)
 
 	if (already_done)
 		return;
-	before_shmem_exit(do_pg_abort_backup, DatumGetBool(false));
+	before_shmem_exit(do_pg_abort_backup, BoolGetDatum(false));
 	already_done = true;
 }
 

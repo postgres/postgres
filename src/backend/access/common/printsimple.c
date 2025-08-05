@@ -123,7 +123,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 
 			case OIDOID:
 				{
-					Oid			num = ObjectIdGetDatum(value);
+					Oid			num = DatumGetObjectId(value);
 					char		str[10];	/* 10 digits */
 					int			len;
 
