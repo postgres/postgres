@@ -54,28 +54,6 @@ typedef struct XLogRelKey
 	RelFileLocator rlocator;
 } XLogRelKey;
 
-/*
- * TODO: For now it's a simple linked list which is no good. So consider having
- * 		 dedicated WAL keys cache inside some proper data structure.
- */
-typedef struct WALKeyCacheRec
-{
-	XLogRecPtr	start_lsn;
-	XLogRecPtr	end_lsn;
-
-	InternalKey key;
-	void	   *crypt_ctx;
-
-	struct WALKeyCacheRec *next;
-} WALKeyCacheRec;
-
-extern InternalKey *pg_tde_read_last_wal_key(void);
-extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
-extern WALKeyCacheRec *pg_tde_fetch_wal_keys(XLogRecPtr start_lsn);
-extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
-extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path);
-extern void pg_tde_create_wal_key(InternalKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type);
-
 #define PG_TDE_MAP_FILENAME			"%d_keys"
 
 static inline void

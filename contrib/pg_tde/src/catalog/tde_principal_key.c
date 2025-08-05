@@ -22,6 +22,7 @@
 #include "utils/wait_event.h"
 
 #include "access/pg_tde_tdemap.h"
+#include "access/pg_tde_xlog_keys.h"
 #include "access/pg_tde_xlog.h"
 #include "catalog/tde_global_space.h"
 #include "catalog/tde_principal_key.h"
@@ -276,13 +277,19 @@ set_principal_key_with_keyring(const char *key_name,
 	if (!already_has_key)
 	{
 		/* First key created for the database */
-		pg_tde_save_principal_key(new_principal_key, true);
+		if (dbOid == GLOBAL_DATA_TDE_OID)
+			pg_tde_save_server_key(new_principal_key, true);
+		else
+			pg_tde_save_principal_key(new_principal_key, true);
 		push_principal_key_to_cache(new_principal_key);
 	}
 	else
 	{
 		/* key rotation */
-		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, true);
+		if (dbOid == GLOBAL_DATA_TDE_OID)
+			pg_tde_perform_rotate_server_key(curr_principal_key, new_principal_key, true);
+		else
+			pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, true);
 
 		clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
 		push_principal_key_to_cache(new_principal_key);
@@ -343,7 +350,10 @@ xl_tde_perform_rotate_key(XLogPrincipalKeyRotate *xlrec)
 
 	memcpy(new_principal_key->keyData, keyInfo->data.data, keyInfo->data.len);
 
-	pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, false);
+	if (xlrec->databaseId == GLOBAL_DATA_TDE_OID)
+		pg_tde_perform_rotate_server_key(curr_principal_key, new_principal_key, false);
+	else
+		pg_tde_perform_rotate_key(curr_principal_key, new_principal_key, false);
 
 	clear_principal_key_cache(curr_principal_key->keyInfo.databaseId);
 	push_principal_key_to_cache(new_principal_key);
@@ -807,12 +817,14 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 	principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 	if (pg_tde_is_same_principal_key(default_principal_key, principal_key))
 	{
-		if (pg_tde_count_encryption_keys(GLOBAL_DATA_TDE_OID) != 0)
+		if (pg_tde_count_wal_keys_in_file(GLOBAL_DATA_TDE_OID) != 0)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete default principal key"),
 					errhint("There are WAL encryption keys."));
-		dbs = lappend_oid(dbs, GLOBAL_DATA_TDE_OID);
+
+		pg_tde_delete_server_key(GLOBAL_DATA_TDE_OID);
+		clear_principal_key_cache(GLOBAL_DATA_TDE_OID);
 	}
 
 	/*
@@ -950,7 +962,11 @@ get_principal_key_from_keyring(Oid dbOid)
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
-	principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
+	if (dbOid == GLOBAL_DATA_TDE_OID)
+		principalKeyInfo = pg_tde_get_server_key_info(dbOid);
+	else
+		principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
+
 	if (principalKeyInfo == NULL)
 		return NULL;
 
@@ -1083,7 +1099,10 @@ GetPrincipalKey(Oid dbOid, LWLockMode lockMode)
 		 * current funcion may be invoked during server startup/recovery where
 		 * WAL writes forbidden.
 		 */
-		pg_tde_save_principal_key(newPrincipalKey, false);
+		if (dbOid == GLOBAL_DATA_TDE_OID)
+			pg_tde_save_server_key(newPrincipalKey, false);
+		else
+			pg_tde_save_principal_key(newPrincipalKey, false);
 
 		push_principal_key_to_cache(newPrincipalKey);
 
@@ -1204,7 +1223,7 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Check the server key that is used for WAL encryption */
-	existing_principal_key = pg_tde_get_principal_key_info(GLOBAL_DATA_TDE_OID);
+	existing_principal_key = pg_tde_get_server_key_info(GLOBAL_DATA_TDE_OID);
 	if (existing_principal_key != NULL &&
 		existing_principal_key->data.keyringId == modified_provider->keyring_id)
 	{
@@ -1309,7 +1328,10 @@ pg_tde_rotate_default_key_for_database(TDEPrincipalKey *oldKey, TDEPrincipalKey 
 	*newKey = *newKeyTemplate;
 	newKey->keyInfo.databaseId = oldKey->keyInfo.databaseId;
 
-	pg_tde_perform_rotate_key(oldKey, newKey, true);
+	if (oldKey->keyInfo.databaseId == GLOBAL_DATA_TDE_OID)
+		pg_tde_perform_rotate_server_key(oldKey, newKey, true);
+	else
+		pg_tde_perform_rotate_key(oldKey, newKey, true);
 
 	clear_principal_key_cache(oldKey->keyInfo.databaseId);
 	push_principal_key_to_cache(newKey);

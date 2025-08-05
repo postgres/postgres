@@ -3,6 +3,7 @@ curldep = dependency('libcurl')
 pg_tde_sources = files(
   'src/access/pg_tde_tdemap.c',
   'src/access/pg_tde_xlog.c',
+  'src/access/pg_tde_xlog_keys.c',
   'src/access/pg_tde_xlog_smgr.c',
   'src/catalog/tde_keyring.c',
   'src/catalog/tde_keyring_parse_opts.c',
@@ -24,6 +25,7 @@ pg_tde_sources = files(
 
 tde_frontend_sources = files(
   'src/access/pg_tde_tdemap.c',
+  'src/access/pg_tde_xlog_keys.c',
   'src/access/pg_tde_xlog_smgr.c',
   'src/catalog/tde_keyring.c',
   'src/catalog/tde_keyring_parse_opts.c',

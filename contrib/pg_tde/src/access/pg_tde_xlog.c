@@ -12,7 +12,9 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
+#include "access/pg_tde_xlog_keys.h"
 #include "access/pg_tde_xlog.h"
+#include "catalog/tde_global_space.h"
 #include "catalog/tde_keyring.h"
 #include "encryption/enc_tde.h"
 #include "pg_tde.h"
@@ -51,7 +53,10 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		TDESignedPrincipalKeyInfo *mkey = (TDESignedPrincipalKeyInfo *) XLogRecGetData(record);
 
-		pg_tde_save_principal_key_redo(mkey);
+		if (mkey->data.databaseId == GLOBAL_DATA_TDE_OID)
+			pg_tde_save_server_key_redo(mkey);
+		else
+			pg_tde_save_principal_key_redo(mkey);
 	}
 	else if (info == XLOG_TDE_DELETE_RELATION_KEY)
 	{

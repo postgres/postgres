@@ -13,7 +13,7 @@
 #include "utils/guc.h"
 #include "utils/memutils.h"
 
-#include "access/pg_tde_tdemap.h"
+#include "access/pg_tde_xlog_keys.h"
 #include "access/pg_tde_xlog_smgr.h"
 #include "catalog/tde_global_space.h"
 #include "encryption/enc_tde.h"
@@ -42,7 +42,7 @@ static const XLogSmgr tde_xlog_smgr = {
 static void *EncryptionCryptCtx = NULL;
 
 /* TODO: can be swapped out to the disk */
-static InternalKey EncryptionKey =
+static WalEncryptionKey EncryptionKey =
 {
 	.type = MAP_ENTRY_EMPTY,
 	.start_lsn = InvalidXLogRecPtr,
@@ -200,7 +200,7 @@ TDEXLogSmgrInit()
 void
 TDEXLogSmgrInitWrite(bool encrypt_xlog)
 {
-	InternalKey *key = pg_tde_read_last_wal_key();
+	WalEncryptionKey *key = pg_tde_read_last_wal_key();
 
 	/*
 	 * Always generate a new key on starting PostgreSQL to protect against
@@ -232,7 +232,7 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 void
 TDEXLogSmgrInitWriteReuseKey()
 {
-	InternalKey *key = pg_tde_read_last_wal_key();
+	WalEncryptionKey *key = pg_tde_read_last_wal_key();
 
 	if (key)
 	{
@@ -252,7 +252,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 						   TimeLineID tli, XLogSegNo segno)
 {
 	char		iv_prefix[16];
-	InternalKey *key = &EncryptionKey;
+	WalEncryptionKey *key = &EncryptionKey;
 	char	   *enc_buff = EncryptionBuf;
 
 #ifndef FRONTEND

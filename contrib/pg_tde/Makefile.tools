@@ -4,6 +4,7 @@ TDE_XLOG_OBJS = \
 TDE_OBJS = \
 	src/access/pg_tde_tdemap.frontend \
 	src/catalog/tde_keyring.frontend \
+	src/access/pg_tde_xlog_keys.frontend \
 	src/catalog/tde_keyring_parse_opts.frontend \
 	src/catalog/tde_principal_key.frontend \
 	src/common/pg_tde_utils.frontend \
