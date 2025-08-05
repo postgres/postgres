@@ -684,22 +684,22 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 
 		if (!value_nulls || value_nulls[i])
 		{
-			pairs[i].key = VARDATA(key_datums[i]);
+			pairs[i].key = VARDATA(DatumGetPointer(key_datums[i]));
 			pairs[i].val = NULL;
 			pairs[i].keylen =
-				hstoreCheckKeyLen(VARSIZE(key_datums[i]) - VARHDRSZ);
+				hstoreCheckKeyLen(VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			pairs[i].vallen = 4;
 			pairs[i].isnull = true;
 			pairs[i].needfree = false;
 		}
 		else
 		{
-			pairs[i].key = VARDATA(key_datums[i]);
-			pairs[i].val = VARDATA(value_datums[i]);
+			pairs[i].key = VARDATA(DatumGetPointer(key_datums[i]));
+			pairs[i].val = VARDATA(DatumGetPointer(value_datums[i]));
 			pairs[i].keylen =
-				hstoreCheckKeyLen(VARSIZE(key_datums[i]) - VARHDRSZ);
+				hstoreCheckKeyLen(VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			pairs[i].vallen =
-				hstoreCheckValLen(VARSIZE(value_datums[i]) - VARHDRSZ);
+				hstoreCheckValLen(VARSIZE(DatumGetPointer(value_datums[i])) - VARHDRSZ);
 			pairs[i].isnull = false;
 			pairs[i].needfree = false;
 		}
@@ -778,22 +778,22 @@ hstore_from_array(PG_FUNCTION_ARGS)
 
 		if (in_nulls[i * 2 + 1])
 		{
-			pairs[i].key = VARDATA(in_datums[i * 2]);
+			pairs[i].key = VARDATA(DatumGetPointer(in_datums[i * 2]));
 			pairs[i].val = NULL;
 			pairs[i].keylen =
-				hstoreCheckKeyLen(VARSIZE(in_datums[i * 2]) - VARHDRSZ);
+				hstoreCheckKeyLen(VARSIZE(DatumGetPointer(in_datums[i * 2])) - VARHDRSZ);
 			pairs[i].vallen = 4;
 			pairs[i].isnull = true;
 			pairs[i].needfree = false;
 		}
 		else
 		{
-			pairs[i].key = VARDATA(in_datums[i * 2]);
-			pairs[i].val = VARDATA(in_datums[i * 2 + 1]);
+			pairs[i].key = VARDATA(DatumGetPointer(in_datums[i * 2]));
+			pairs[i].val = VARDATA(DatumGetPointer(in_datums[i * 2 + 1]));
 			pairs[i].keylen =
-				hstoreCheckKeyLen(VARSIZE(in_datums[i * 2]) - VARHDRSZ);
+				hstoreCheckKeyLen(VARSIZE(DatumGetPointer(in_datums[i * 2])) - VARHDRSZ);
 			pairs[i].vallen =
-				hstoreCheckValLen(VARSIZE(in_datums[i * 2 + 1]) - VARHDRSZ);
+				hstoreCheckValLen(VARSIZE(DatumGetPointer(in_datums[i * 2 + 1])) - VARHDRSZ);
 			pairs[i].isnull = false;
 			pairs[i].needfree = false;
 		}

@@ -767,7 +767,7 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 				values[dim][i] = PointerGetDatum(PG_DETOAST_DATUM(values[dim][i]));
 
 				/* serialized length (uint32 length + data) */
-				len = VARSIZE_ANY_EXHDR(values[dim][i]);
+				len = VARSIZE_ANY_EXHDR(DatumGetPointer(values[dim][i]));
 				info[dim].nbytes += sizeof(uint32); /* length */
 				info[dim].nbytes += len;	/* value (no header) */
 

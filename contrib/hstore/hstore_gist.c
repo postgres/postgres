@@ -576,7 +576,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			crc = crc32_sz(VARDATA(DatumGetPointer(key_datums[i])), VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			if (!(GETBIT(sign, HASHVAL(crc, siglen))))
 				res = false;
 		}
@@ -599,7 +599,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 
 			if (key_nulls[i])
 				continue;
-			crc = crc32_sz(VARDATA(key_datums[i]), VARSIZE(key_datums[i]) - VARHDRSZ);
+			crc = crc32_sz(VARDATA(DatumGetPointer(key_datums[i])), VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ);
 			if (GETBIT(sign, HASHVAL(crc, siglen)))
 				res = true;
 		}

@@ -785,7 +785,7 @@ SpGistGetInnerTypeSize(SpGistTypeDesc *att, Datum datum)
 	else if (att->attlen > 0)
 		size = att->attlen;
 	else
-		size = VARSIZE_ANY(datum);
+		size = VARSIZE_ANY(DatumGetPointer(datum));
 
 	return MAXALIGN(size);
 }
@@ -804,7 +804,7 @@ memcpyInnerDatum(void *target, SpGistTypeDesc *att, Datum datum)
 	}
 	else
 	{
-		size = (att->attlen > 0) ? att->attlen : VARSIZE_ANY(datum);
+		size = (att->attlen > 0) ? att->attlen : VARSIZE_ANY(DatumGetPointer(datum));
 		memcpy(target, DatumGetPointer(datum), size);
 	}
 }

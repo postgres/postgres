@@ -896,8 +896,8 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 				continue;
 			/* We rely on the array elements not being toasted */
 			entries[j++] = make_text_key(JGINFLAG_KEY,
-										 VARDATA_ANY(key_datums[i]),
-										 VARSIZE_ANY_EXHDR(key_datums[i]));
+										 VARDATA_ANY(DatumGetPointer(key_datums[i])),
+										 VARSIZE_ANY_EXHDR(DatumGetPointer(key_datums[i])));
 		}
 
 		*nentries = j;

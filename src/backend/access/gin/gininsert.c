@@ -2233,7 +2233,7 @@ _gin_build_tuple(OffsetNumber attrnum, unsigned char category,
 	else if (typlen > 0)
 		keylen = typlen;
 	else if (typlen == -1)
-		keylen = VARSIZE_ANY(key);
+		keylen = VARSIZE_ANY(DatumGetPointer(key));
 	else if (typlen == -2)
 		keylen = strlen(DatumGetPointer(key)) + 1;
 	else

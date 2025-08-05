@@ -809,7 +809,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, TupleTableSlot *slot,
 			continue;
 		}
 
-		if (att->attlen == -1 && VARATT_IS_EXTERNAL_ONDISK(values[i]))
+		if (att->attlen == -1 && VARATT_IS_EXTERNAL_ONDISK(DatumGetPointer(values[i])))
 		{
 			/*
 			 * Unchanged toasted datum.  (Note that we don't promise to detect

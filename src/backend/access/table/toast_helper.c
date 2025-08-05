@@ -330,7 +330,7 @@ toast_delete_external(Relation rel, const Datum *values, const bool *isnull,
 
 			if (isnull[i])
 				continue;
-			else if (VARATT_IS_EXTERNAL_ONDISK(value))
+			else if (VARATT_IS_EXTERNAL_ONDISK(DatumGetPointer(value)))
 				toast_delete_datum(rel, value, is_speculative);
 		}
 	}

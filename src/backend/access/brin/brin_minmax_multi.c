@@ -624,7 +624,7 @@ brin_range_serialize(Ranges *range)
 
 		for (i = 0; i < nvalues; i++)
 		{
-			len += VARSIZE_ANY(range->values[i]);
+			len += VARSIZE_ANY(DatumGetPointer(range->values[i]));
 		}
 	}
 	else if (typlen == -2)		/* cstring */

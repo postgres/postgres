@@ -144,7 +144,7 @@ toast_save_datum(Relation rel, Datum value,
 	int			num_indexes;
 	int			validIndex;
 
-	Assert(!VARATT_IS_EXTERNAL(value));
+	Assert(!VARATT_IS_EXTERNAL(dval));
 
 	/*
 	 * Open the toast relation and its indexes.  We can use the index to check

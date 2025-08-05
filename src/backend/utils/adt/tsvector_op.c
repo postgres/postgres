@@ -329,8 +329,8 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 		if (nulls[i])
 			continue;
 
-		lex = VARDATA(dlexemes[i]);
-		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
+		lex = VARDATA(DatumGetPointer(dlexemes[i]));
+		lex_len = VARSIZE(DatumGetPointer(dlexemes[i])) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsout, lex, lex_len);
 
 		if (lex_pos >= 0 && (j = POSDATALEN(tsout, entry + lex_pos)) != 0)
@@ -443,10 +443,10 @@ compare_text_lexemes(const void *va, const void *vb)
 {
 	Datum		a = *((const Datum *) va);
 	Datum		b = *((const Datum *) vb);
-	char	   *alex = VARDATA_ANY(a);
-	int			alex_len = VARSIZE_ANY_EXHDR(a);
-	char	   *blex = VARDATA_ANY(b);
-	int			blex_len = VARSIZE_ANY_EXHDR(b);
+	char	   *alex = VARDATA_ANY(DatumGetPointer(a));
+	int			alex_len = VARSIZE_ANY_EXHDR(DatumGetPointer(a));
+	char	   *blex = VARDATA_ANY(DatumGetPointer(b));
+	int			blex_len = VARSIZE_ANY_EXHDR(DatumGetPointer(b));
 
 	return tsCompareString(alex, alex_len, blex, blex_len, false);
 }
@@ -605,8 +605,8 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 		if (nulls[i])
 			continue;
 
-		lex = VARDATA(dlexemes[i]);
-		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
+		lex = VARDATA(DatumGetPointer(dlexemes[i]));
+		lex_len = VARSIZE(DatumGetPointer(dlexemes[i])) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsin, lex, lex_len);
 
 		if (lex_pos >= 0)
@@ -770,7 +770,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
 
-		if (VARSIZE(dlexemes[i]) - VARHDRSZ == 0)
+		if (VARSIZE(DatumGetPointer(dlexemes[i])) - VARHDRSZ == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
 					 errmsg("lexeme array may not contain empty strings")));
@@ -786,7 +786,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 
 	/* Calculate space needed for surviving lexemes. */
 	for (i = 0; i < nitems; i++)
-		datalen += VARSIZE(dlexemes[i]) - VARHDRSZ;
+		datalen += VARSIZE(DatumGetPointer(dlexemes[i])) - VARHDRSZ;
 	tslen = CALCDATASIZE(nitems, datalen);
 
 	/* Allocate and fill tsvector. */
@@ -798,8 +798,8 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	cur = STRPTR(tsout);
 	for (i = 0; i < nitems; i++)
 	{
-		char	   *lex = VARDATA(dlexemes[i]);
-		int			lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
+		char	   *lex = VARDATA(DatumGetPointer(dlexemes[i]));
+		int			lex_len = VARSIZE(DatumGetPointer(dlexemes[i])) - VARHDRSZ;
 
 		memcpy(cur, lex, lex_len);
 		arrout[i].haspos = 0;

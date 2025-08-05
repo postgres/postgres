@@ -4766,8 +4766,8 @@ jsonb_delete_array(PG_FUNCTION_ARGS)
 					continue;
 
 				/* We rely on the array elements not being toasted */
-				keyptr = VARDATA_ANY(keys_elems[i]);
-				keylen = VARSIZE_ANY_EXHDR(keys_elems[i]);
+				keyptr = VARDATA_ANY(DatumGetPointer(keys_elems[i]));
+				keylen = VARSIZE_ANY_EXHDR(DatumGetPointer(keys_elems[i]));
 				if (keylen == v.val.string.len &&
 					memcmp(keyptr, v.val.string.val, keylen) == 0)
 				{

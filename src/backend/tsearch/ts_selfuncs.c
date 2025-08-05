@@ -233,7 +233,7 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 		 * The text Datums came from an array, so it cannot be compressed or
 		 * stored out-of-line -- it's safe to use VARSIZE_ANY*.
 		 */
-		Assert(!VARATT_IS_COMPRESSED(mcelem[i]) && !VARATT_IS_EXTERNAL(mcelem[i]));
+		Assert(!VARATT_IS_COMPRESSED(DatumGetPointer(mcelem[i])) && !VARATT_IS_EXTERNAL(DatumGetPointer(mcelem[i])));
 		lookup[i].element = (text *) DatumGetPointer(mcelem[i]);
 		lookup[i].frequency = numbers[i];
 	}

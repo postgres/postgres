@@ -107,8 +107,8 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 	{
 		if (!key_nulls[i])
 		{
-			key_pairs[j].key = VARDATA(key_datums[i]);
-			key_pairs[j].keylen = VARSIZE(key_datums[i]) - VARHDRSZ;
+			key_pairs[j].key = VARDATA(DatumGetPointer(key_datums[i]));
+			key_pairs[j].keylen = VARSIZE(DatumGetPointer(key_datums[i])) - VARHDRSZ;
 			key_pairs[j].val = NULL;
 			key_pairs[j].vallen = 0;
 			key_pairs[j].needfree = 0;
