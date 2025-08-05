@@ -285,6 +285,19 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
+     <term><literal>regress_dump_restore</literal></term>
+     <listitem>
+      <para>
+       Runs an additional test suite in
+       <filename>src/bin/pg_upgrade/t/002_pg_upgrade.pl</filename> which
+       cycles the regression database through <command>pg_dump</command>/
+       <command>pg_restore</command>.  Not enabled by default because it
+       is resource intensive.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>sepgsql</literal></term>
      <listitem>
       <para>
