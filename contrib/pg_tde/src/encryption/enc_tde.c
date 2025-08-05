@@ -50,7 +50,13 @@ pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type)
  * start_offset: is the absolute location of start of data in the file.
  */
 void
-pg_tde_stream_crypt(const char *iv_prefix, uint32 start_offset, const char *data, uint32 data_len, char *out, InternalKey *key, void **ctxPtr)
+pg_tde_stream_crypt(const char *iv_prefix,
+					uint32 start_offset,
+					const char *data,
+					uint32 data_len,
+					char *out,
+					const uint8 *key,
+					void **ctxPtr)
 {
 	const uint64 aes_start_block = start_offset / AES_BLOCK_SIZE;
 	const uint64 aes_end_block = (start_offset + data_len + (AES_BLOCK_SIZE - 1)) / AES_BLOCK_SIZE;
@@ -65,7 +71,7 @@ pg_tde_stream_crypt(const char *iv_prefix, uint32 start_offset, const char *data
 		uint32		current_batch_bytes;
 		uint64		batch_end_block = Min(batch_start_block + NUM_AES_BLOCKS_IN_BATCH, aes_end_block);
 
-		AesCtrEncryptedZeroBlocks(ctxPtr, key->key, iv_prefix, batch_start_block, batch_end_block, enc_key);
+		AesCtrEncryptedZeroBlocks(ctxPtr, key, iv_prefix, batch_start_block, batch_end_block, enc_key);
 
 #ifdef ENCRYPTION_DEBUG
 		{
