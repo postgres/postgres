@@ -2165,7 +2165,7 @@ memcpy(destination->data, buffer, 40);
      it's considered good style to use the macro <literal>VARHDRSZ</literal>
      to refer to the size of the overhead for a variable-length type.
      Also, the length field <emphasis>must</emphasis> be set using the
-     <literal>SET_VARSIZE</literal> macro, not by simple assignment.
+     <literal>SET_VARSIZE</literal> function, not by simple assignment.
     </para>
 
     <para>
