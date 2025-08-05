@@ -104,6 +104,8 @@ extern void pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincip
 extern void pg_tde_delete_principal_key(Oid dbOid);
 extern void pg_tde_delete_principal_key_redo(Oid dbOid);
 
+extern void pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key);
+
 const char *tde_sprint_key(InternalKey *k);
 
 #endif							/* PG_TDE_MAP_H */
