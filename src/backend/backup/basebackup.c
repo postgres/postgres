@@ -1048,7 +1048,7 @@ SendBaseBackup(BaseBackupCmd *cmd, IncrementalBackupInfo *ib)
 		sink = bbsink_zstd_new(sink, &opt.compression_specification);
 
 	/* Set up progress reporting. */
-	sink = bbsink_progress_new(sink, opt.progress);
+	sink = bbsink_progress_new(sink, opt.progress, opt.incremental);
 
 	/*
 	 * Perform the base backup, but make sure we clean up the bbsink even if

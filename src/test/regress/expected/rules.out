@@ -1977,7 +1977,12 @@ pg_stat_progress_basebackup| SELECT pid,
         END AS backup_total,
     param3 AS backup_streamed,
     param4 AS tablespaces_total,
-    param5 AS tablespaces_streamed
+    param5 AS tablespaces_streamed,
+        CASE param6
+            WHEN 1 THEN 'full'::text
+            WHEN 2 THEN 'incremental'::text
+            ELSE NULL::text
+        END AS backup_type
    FROM pg_stat_get_progress_info('BASEBACKUP'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20);
 pg_stat_progress_cluster| SELECT s.pid,
     s.datid,
