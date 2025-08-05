@@ -285,6 +285,39 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
+     <term><literal>libpq_encryption</literal></term>
+     <listitem>
+      <para>
+       Runs the test <filename>src/interfaces/libpq/t/005_negotiate_encryption.pl</filename>.
+       This opens TCP/IP listen sockets. If <varname>PG_TEST_EXTRA</varname>
+       also includes <literal>kerberos</literal>, additional tests that require
+       an MIT Kerberos installation are enabled.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>load_balance</literal></term>
+     <listitem>
+      <para>
+       Runs the test <filename>src/interfaces/libpq/t/004_load_balance_dns.pl</filename>.
+       This requires editing the system <filename>hosts</filename> file and
+       opens TCP/IP listen sockets.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>oauth</literal></term>
+     <listitem>
+      <para>
+       Runs the test suite under <filename>src/test/modules/oauth_validator</filename>.
+       This opens TCP/IP listen sockets for a test server running HTTPS.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>regress_dump_restore</literal></term>
      <listitem>
       <para>
@@ -318,29 +351,6 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
     </varlistentry>
 
     <varlistentry>
-     <term><literal>load_balance</literal></term>
-     <listitem>
-      <para>
-       Runs the test <filename>src/interfaces/libpq/t/004_load_balance_dns.pl</filename>.
-       This requires editing the system <filename>hosts</filename> file and
-       opens TCP/IP listen sockets.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>libpq_encryption</literal></term>
-     <listitem>
-      <para>
-       Runs the test <filename>src/interfaces/libpq/t/005_negotiate_encryption.pl</filename>.
-       This opens TCP/IP listen sockets. If <varname>PG_TEST_EXTRA</varname>
-       also includes <literal>kerberos</literal>, additional tests that require
-       an MIT Kerberos installation are enabled.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><literal>wal_consistency_checking</literal></term>
      <listitem>
       <para>
@@ -357,16 +367,6 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
       <para>
        Runs the test suite under <filename>src/test/modules/xid_wraparound</filename>.
        Not enabled by default because it is resource intensive.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><literal>oauth</literal></term>
-     <listitem>
-      <para>
-       Runs the test suite under <filename>src/test/modules/oauth_validator</filename>.
-       This opens TCP/IP listen sockets for a test server running HTTPS.
       </para>
      </listitem>
     </varlistentry>
