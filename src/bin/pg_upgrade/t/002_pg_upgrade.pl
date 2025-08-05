@@ -375,6 +375,9 @@ SKIP:
 {
 	my $dstnode = PostgreSQL::Test::Cluster->new('dst_node');
 
+	skip "regress_dump_restore not enabled in PG_TEST_EXTRA"
+	  if (!$ENV{PG_TEST_EXTRA}
+		|| $ENV{PG_TEST_EXTRA} !~ /\bregress_dump_restore\b/);
 	skip "different Postgres versions"
 	  if ($oldnode->pg_version != $dstnode->pg_version);
 	skip "source node not using default install"
