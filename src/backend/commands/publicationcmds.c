@@ -2113,20 +2113,20 @@ AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId)
 static char
 defGetGeneratedColsOption(DefElem *def)
 {
-	char	   *sval;
+	char	   *sval = "";
 
 	/*
-	 * If no parameter value given, assume "stored" is meant.
+	 * A parameter value is required.
 	 */
-	if (!def->arg)
-		return PUBLISH_GENCOLS_STORED;
+	if (def->arg)
+	{
+		sval = defGetString(def);
 
-	sval = defGetString(def);
-
-	if (pg_strcasecmp(sval, "none") == 0)
-		return PUBLISH_GENCOLS_NONE;
-	if (pg_strcasecmp(sval, "stored") == 0)
-		return PUBLISH_GENCOLS_STORED;
+		if (pg_strcasecmp(sval, "none") == 0)
+			return PUBLISH_GENCOLS_NONE;
+		if (pg_strcasecmp(sval, "stored") == 0)
+			return PUBLISH_GENCOLS_STORED;
+	}
 
 	ereport(ERROR,
 			errcode(ERRCODE_SYNTAX_ERROR),
