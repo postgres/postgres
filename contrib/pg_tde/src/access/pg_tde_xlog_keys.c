@@ -21,7 +21,7 @@
 #include "pg_tde_fe.h"
 #endif
 
-#define PG_TDE_WAL_KEY_FILE_MAGIC 0x03454454	/* version ID value = TDE 03 */
+#define PG_TDE_WAL_KEY_FILE_MAGIC 0x014B4557	/* version ID value = WEK 01 */
 
 #define MaxXLogRecPtr (~(XLogRecPtr)0)
 
