@@ -105,7 +105,7 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf(INT128_HEX_FORMAT " + unsigned " PRIx64 "\n", x, y, z);
+			printf(INT128_HEX_FORMAT " + unsigned %016" PRIx64 "\n", x, y, z);
 			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
 			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf(INT128_HEX_FORMAT " + signed " PRIx64 "\n", x, y, z);
+			printf(INT128_HEX_FORMAT " + signed %016" PRIx64 "\n", x, y, z);
 			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
 			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
@@ -134,7 +134,7 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf(PRIx64 " * " PRIx64 "\n", x, y);
+			printf("%016" PRIx64 " * %016" PRIx64 "\n", x, y);
 			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
 			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
