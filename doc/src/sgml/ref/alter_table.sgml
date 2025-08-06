@@ -265,6 +265,12 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       in the column is rewritten and all the future changes will apply the new
       generation expression.
      </para>
+
+     <para>
+      When this form is used, the column's statistics are removed,
+      so running <link linkend="sql-analyze"><command>ANALYZE</command></link>
+      on the table afterwards is recommended.
+     </para>
     </listitem>
    </varlistentry>
 
