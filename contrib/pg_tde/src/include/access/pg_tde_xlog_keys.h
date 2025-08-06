@@ -49,17 +49,17 @@ typedef struct WALKeyCacheRec
 	struct WALKeyCacheRec *next;
 } WALKeyCacheRec;
 
-extern int	pg_tde_count_wal_keys_in_file(Oid dbOid);
+extern int	pg_tde_count_wal_keys_in_file(void);
 extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type);
-extern void pg_tde_delete_server_key(Oid dbOid);
+extern void pg_tde_delete_server_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(XLogRecPtr start_lsn);
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
-extern TDESignedPrincipalKeyInfo *pg_tde_get_server_key_info(Oid dbOid);
+extern TDESignedPrincipalKeyInfo *pg_tde_get_server_key_info(void);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
 extern void pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key, bool write_xlog);
 extern WalEncryptionKey *pg_tde_read_last_wal_key(void);
 extern void pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog);
 extern void pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info);
-extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path);
+extern void pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn);
 
 #endif							/* PG_TDE_XLOG_KEYS_H */

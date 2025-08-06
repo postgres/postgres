@@ -22,6 +22,7 @@
 #endif
 
 #define PG_TDE_WAL_KEY_FILE_MAGIC 0x014B4557	/* version ID value = WEK 01 */
+#define PG_TDE_WAL_KEY_FILE_NAME "wal_encryption_keys"
 
 #define MaxXLogRecPtr (~(XLogRecPtr)0)
 
@@ -41,12 +42,19 @@ static int	pg_tde_wal_key_file_header_write(const char *filename, int fd, const 
 static void pg_tde_write_one_wal_key_file_entry(int fd, const WalKeyFileEntry *entry, off_t *offset, const char *db_map_path);
 static void pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator, const WalEncryptionKey *rel_key_data, TDEPrincipalKey *principal_key);
 
-/*
- * It's called by seg_write inside crit section so no pallocs, hence
- * needs keyfile_path
- */
+static char *
+get_wal_key_file_path(void)
+{
+	static char wal_key_file_path[MAXPGPATH] = {0};
+
+	if (strlen(wal_key_file_path) == 0)
+		join_path_components(wal_key_file_path, pg_tde_get_data_dir(), PG_TDE_WAL_KEY_FILE_NAME);
+
+	return wal_key_file_path;
+}
+
 void
-pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
+pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn)
 {
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	int			fd;
@@ -56,7 +64,7 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn, const char *keyfile_path)
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
 
-	fd = pg_tde_open_wal_key_file_write(keyfile_path, NULL, false, &read_pos);
+	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), NULL, false, &read_pos);
 
 	last_key_idx = ((lseek(fd, 0, SEEK_END) - sizeof(WalKeyFileHeader)) / sizeof(WalKeyFileEntry)) - 1;
 	write_pos = sizeof(WalKeyFileHeader) +
@@ -179,7 +187,6 @@ WalEncryptionKey *
 pg_tde_read_last_wal_key(void)
 {
 	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-	char		db_map_path[MAXPGPATH];
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
@@ -197,9 +204,8 @@ pg_tde_read_last_wal_key(void)
 		elog(DEBUG1, "init WAL encryption: no principal key");
 		return NULL;
 	}
-	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
 
-	fd = pg_tde_open_wal_key_file_read(db_map_path, false, &read_pos);
+	fd = pg_tde_open_wal_key_file_read(get_wal_key_file_path(), false, &read_pos);
 	fsize = lseek(fd, 0, SEEK_END);
 	/* No keys */
 	if (fsize == sizeof(WalKeyFileHeader))
@@ -230,7 +236,6 @@ WALKeyCacheRec *
 pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 {
 	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
-	char		db_map_path[MAXPGPATH];
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
@@ -247,9 +252,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 		return NULL;
 	}
 
-	pg_tde_set_db_file_path(rlocator.dbOid, db_map_path);
-
-	fd = pg_tde_open_wal_key_file_read(db_map_path, false, &read_pos);
+	fd = pg_tde_open_wal_key_file_read(get_wal_key_file_path(), false, &read_pos);
 
 	keys_count = (lseek(fd, 0, SEEK_END) - sizeof(WalKeyFileHeader)) / sizeof(WalKeyFileEntry);
 
@@ -501,13 +504,10 @@ pg_tde_read_one_wal_key_file_entry2(int fd,
 	read_pos = sizeof(WalKeyFileHeader) + key_index * sizeof(WalKeyFileEntry);
 	if (pg_pread(fd, entry, sizeof(WalKeyFileEntry), read_pos) != sizeof(WalKeyFileEntry))
 	{
-		char		db_map_path[MAXPGPATH];
-
-		pg_tde_set_db_file_path(databaseId, db_map_path);
 		ereport(FATAL,
 				errcode_for_file_access(),
 				errmsg("could not find the required key at index %d in WAL key file \"%s\": %m",
-					   key_index, db_map_path));
+					   key_index, get_wal_key_file_path()));
 	}
 }
 
@@ -516,7 +516,6 @@ pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator,
 								const WalEncryptionKey *rel_key_data,
 								TDEPrincipalKey *principal_key)
 {
-	char		db_map_path[MAXPGPATH];
 	int			fd;
 	off_t		curr_pos = 0;
 	WalKeyFileEntry write_entry;
@@ -524,12 +523,10 @@ pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator,
 
 	Assert(rlocator);
 
-	pg_tde_set_db_file_path(rlocator->dbOid, db_map_path);
-
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
 	/* Open and validate file for basic correctness. */
-	fd = pg_tde_open_wal_key_file_write(db_map_path, &signed_key_Info, false, &curr_pos);
+	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), &signed_key_Info, false, &curr_pos);
 
 	/*
 	 * Read until we find an empty slot. Otherwise, read until end. This seems
@@ -558,7 +555,7 @@ pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator,
 	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, rlocator, rel_key_data);
 
 	/* Write the given entry at curr_pos; i.e. the free entry. */
-	pg_tde_write_one_wal_key_file_entry(fd, &write_entry, &curr_pos, db_map_path);
+	pg_tde_write_one_wal_key_file_entry(fd, &write_entry, &curr_pos, get_wal_key_file_path());
 
 	CloseTransientFile(fd);
 }
@@ -648,19 +645,17 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 				new_curr_pos;
 	int			old_fd,
 				new_fd;
-	char		old_path[MAXPGPATH],
-				new_path[MAXPGPATH];
+	char		tmp_path[MAXPGPATH];
 
 	Assert(principal_key);
 	Assert(principal_key->keyInfo.databaseId == GLOBAL_DATA_TDE_OID);
 
 	pg_tde_sign_principal_key_info(&new_signed_key_info, new_principal_key);
 
-	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, old_path);
-	snprintf(new_path, MAXPGPATH, "%s.r", old_path);
+	snprintf(tmp_path, MAXPGPATH, "%s.r", get_wal_key_file_path());
 
-	old_fd = pg_tde_open_wal_key_file_read(old_path, false, &old_curr_pos);
-	new_fd = pg_tde_open_wal_key_file_write(new_path, &new_signed_key_info, true, &new_curr_pos);
+	old_fd = pg_tde_open_wal_key_file_read(get_wal_key_file_path(), false, &old_curr_pos);
+	new_fd = pg_tde_open_wal_key_file_write(tmp_path, &new_signed_key_info, true, &new_curr_pos);
 
 	/* Read all entries until EOF */
 	while (1)
@@ -680,7 +675,7 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 		key = pg_tde_decrypt_wal_key(principal_key, &read_map_entry);
 		pg_tde_initialize_wal_key_file_entry(&write_map_entry, new_principal_key, &rloc, key);
 
-		pg_tde_write_one_wal_key_file_entry(new_fd, &write_map_entry, &new_curr_pos, new_path);
+		pg_tde_write_one_wal_key_file_entry(new_fd, &write_map_entry, &new_curr_pos, tmp_path);
 
 		pfree(key);
 	}
@@ -692,8 +687,8 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 	 * Do the final steps - replace the current WAL key file with the file
 	 * with new data.
 	 */
-	durable_unlink(old_path, ERROR);
-	durable_rename(new_path, old_path, ERROR);
+	durable_unlink(get_wal_key_file_path(), ERROR);
+	durable_rename(tmp_path, get_wal_key_file_path(), ERROR);
 
 	/*
 	 * We do WAL writes past the event ("the write behind logging") rather
@@ -727,13 +722,10 @@ pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 {
 	int			fd;
 	off_t		curr_pos;
-	char		db_map_path[MAXPGPATH];
-
-	pg_tde_set_db_file_path(signed_key_info->data.databaseId, db_map_path);
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	fd = pg_tde_open_wal_key_file_write(db_map_path, signed_key_info, false, &curr_pos);
+	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), signed_key_info, false, &curr_pos);
 	CloseTransientFile(fd);
 
 	LWLockRelease(tde_lwlock_enc_keys());
@@ -758,10 +750,7 @@ pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 {
 	int			fd;
 	off_t		curr_pos = 0;
-	char		db_map_path[MAXPGPATH];
 	TDESignedPrincipalKeyInfo signed_key_Info;
-
-	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
 
 	ereport(DEBUG2, errmsg("pg_tde_save_server_key"));
 
@@ -774,7 +763,7 @@ pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
 	}
 
-	fd = pg_tde_open_wal_key_file_write(db_map_path, &signed_key_Info, true, &curr_pos);
+	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), &signed_key_Info, true, &curr_pos);
 	CloseTransientFile(fd);
 }
 #endif
@@ -784,27 +773,24 @@ pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog)
  * a LW_SHARED or higher lock on files before calling this function.
  */
 TDESignedPrincipalKeyInfo *
-pg_tde_get_server_key_info(Oid dbOid)
+pg_tde_get_server_key_info(void)
 {
-	char		db_map_path[MAXPGPATH];
 	int			fd;
 	WalKeyFileHeader fheader;
 	TDESignedPrincipalKeyInfo *signed_key_info = NULL;
 	off_t		bytes_read = 0;
 
-	pg_tde_set_db_file_path(dbOid, db_map_path);
-
 	/*
 	 * Ensuring that we always open the file in binary mode. The caller must
 	 * specify other flags for reading, writing or creating the file.
 	 */
-	fd = pg_tde_open_wal_key_file_basic(db_map_path, O_RDONLY, true);
+	fd = pg_tde_open_wal_key_file_basic(get_wal_key_file_path(), O_RDONLY, true);
 
 	/* The file does not exist. */
 	if (fd < 0)
 		return NULL;
 
-	pg_tde_wal_key_file_header_read(db_map_path, fd, &fheader, &bytes_read);
+	pg_tde_wal_key_file_header_read(get_wal_key_file_path(), fd, &fheader, &bytes_read);
 
 	CloseTransientFile(fd);
 
@@ -822,9 +808,8 @@ pg_tde_get_server_key_info(Oid dbOid)
 }
 
 int
-pg_tde_count_wal_keys_in_file(Oid dbOid)
+pg_tde_count_wal_keys_in_file(void)
 {
-	char		db_map_path[MAXPGPATH];
 	File		fd;
 	off_t		curr_pos = 0;
 	WalKeyFileEntry entry;
@@ -833,9 +818,7 @@ pg_tde_count_wal_keys_in_file(Oid dbOid)
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_SHARED) ||
 		   LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
-	pg_tde_set_db_file_path(dbOid, db_map_path);
-
-	fd = pg_tde_open_wal_key_file_read(db_map_path, true, &curr_pos);
+	fd = pg_tde_open_wal_key_file_read(get_wal_key_file_path(), true, &curr_pos);
 	if (fd < 0)
 		return count;
 
@@ -852,20 +835,18 @@ pg_tde_count_wal_keys_in_file(Oid dbOid)
 
 #ifndef FRONTEND
 void
-pg_tde_delete_server_key(Oid dbOid)
+pg_tde_delete_server_key(void)
 {
-	char		path[MAXPGPATH];
+	Oid			dbOid = GLOBAL_DATA_TDE_OID;
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
-	Assert(pg_tde_count_wal_keys_in_file(dbOid) == 0);
-
-	pg_tde_set_db_file_path(dbOid, path);
+	Assert(pg_tde_count_wal_keys_in_file() == 0);
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &dbOid, sizeof(Oid));
 	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_DELETE_PRINCIPAL_KEY);
 
 	/* Remove whole key map file */
-	durable_unlink(path, ERROR);
+	durable_unlink(get_wal_key_file_path(), ERROR);
 }
 #endif

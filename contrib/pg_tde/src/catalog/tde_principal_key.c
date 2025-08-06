@@ -817,13 +817,13 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 	principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 	if (pg_tde_is_same_principal_key(default_principal_key, principal_key))
 	{
-		if (pg_tde_count_wal_keys_in_file(GLOBAL_DATA_TDE_OID) != 0)
+		if (pg_tde_count_wal_keys_in_file() != 0)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete default principal key"),
 					errhint("There are WAL encryption keys."));
 
-		pg_tde_delete_server_key(GLOBAL_DATA_TDE_OID);
+		pg_tde_delete_server_key();
 		clear_principal_key_cache(GLOBAL_DATA_TDE_OID);
 	}
 
@@ -963,7 +963,7 @@ get_principal_key_from_keyring(Oid dbOid)
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
 
 	if (dbOid == GLOBAL_DATA_TDE_OID)
-		principalKeyInfo = pg_tde_get_server_key_info(dbOid);
+		principalKeyInfo = pg_tde_get_server_key_info();
 	else
 		principalKeyInfo = pg_tde_get_principal_key_info(dbOid);
 
@@ -1223,7 +1223,7 @@ pg_tde_verify_provider_keys_in_use(GenericKeyring *modified_provider)
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
 	/* Check the server key that is used for WAL encryption */
-	existing_principal_key = pg_tde_get_server_key_info(GLOBAL_DATA_TDE_OID);
+	existing_principal_key = pg_tde_get_server_key_info();
 	if (existing_principal_key != NULL &&
 		existing_principal_key->data.keyringId == modified_provider->keyring_id)
 	{

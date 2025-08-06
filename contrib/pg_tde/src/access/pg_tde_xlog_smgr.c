@@ -65,7 +65,6 @@ static WalEncryptionKey EncryptionKey =
 
 typedef struct EncryptionStateData
 {
-	char		db_map_path[MAXPGPATH];
 	pg_atomic_uint64 enc_key_lsn;	/* to sync with readers */
 } EncryptionStateData;
 
@@ -167,7 +166,6 @@ TDEXLogShmemInit(void)
 
 typedef struct EncryptionStateData
 {
-	char		db_map_path[MAXPGPATH];
 	XLogRecPtr	enc_key_lsn;	/* to sync with reader */
 } EncryptionStateData;
 
@@ -225,8 +223,6 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 
 	if (key)
 		pfree(key);
-
-	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
 }
 
 void
@@ -240,8 +236,6 @@ TDEXLogSmgrInitWriteReuseKey()
 		TDEXLogSetEncKeyLsn(EncryptionKey.start_lsn);
 		pfree(key);
 	}
-
-	pg_tde_set_db_file_path(GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID).dbOid, EncryptionState->db_map_path);
 }
 
 /*
@@ -291,7 +285,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 
 		XLogSegNoOffsetToRecPtr(segno, offset, segSize, lsn);
 
-		pg_tde_wal_last_key_set_lsn(lsn, EncryptionState->db_map_path);
+		pg_tde_wal_last_key_set_lsn(lsn);
 		EncryptionKey.start_lsn = lsn;
 		TDEXLogSetEncKeyLsn(lsn);
 	}
