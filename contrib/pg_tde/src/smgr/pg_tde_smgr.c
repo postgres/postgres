@@ -113,9 +113,6 @@ tde_smgr_create_key_redo(const RelFileLocator *rlocator)
 {
 	InternalKey key;
 
-	if (pg_tde_has_smgr_key(*rlocator))
-		return;
-
 	pg_tde_generate_internal_key(&key);
 
 	pg_tde_save_smgr_key(*rlocator, &key);
@@ -383,18 +380,18 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	if (forknum != MAIN_FORKNUM)
 		return;
 
-	/*
-	 * If we have a key for this relation already, we need to remove it. This
-	 * can happen if OID is re-used after a crash left a key for a
-	 * non-existing relation in the key file.
-	 *
-	 * If we're in redo, a separate WAL record will make sure the key is
-	 * removed.
-	 */
-	tde_smgr_delete_leftover_key(&reln->smgr_rlocator);
-
 	if (!tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
 	{
+		/*
+		 * If we have a key for this relation already, we need to remove it.
+		 * This can happen if OID is re-used after a crash left a key for a
+		 * non-existing relation in the key file.
+		 *
+		 * Old keys for encrypted tables are replace when creating the new
+		 * key.
+		 */
+		tde_smgr_delete_leftover_key(&reln->smgr_rlocator);
+
 		tdereln->encryption_status = RELATION_NOT_ENCRYPTED;
 		return;
 	}

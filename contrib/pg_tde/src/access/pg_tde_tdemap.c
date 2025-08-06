@@ -97,7 +97,7 @@ static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key);
+static void pg_tde_replace_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key);
 
 void
 pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
@@ -114,7 +114,7 @@ pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
 				errhint("Use pg_tde_set_key_using_database_key_provider() or pg_tde_set_key_using_global_key_provider() to configure one."));
 	}
 
-	pg_tde_write_key_map_entry(&rel, rel_key_data, principal_key);
+	pg_tde_replace_key_map_entry(&rel, rel_key_data, principal_key);
 	LWLockRelease(lock_pk);
 }
 
@@ -452,11 +452,12 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
  * concurrent in place updates leading to data conflicts.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key)
+pg_tde_replace_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key)
 {
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
 	off_t		curr_pos = 0;
+	off_t		write_pos = 0;
 	TDEMapEntry write_map_entry;
 	TDESignedPrincipalKeyInfo signed_key_Info;
 
@@ -481,22 +482,26 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *re
 
 		if (!pg_tde_read_one_map_entry(map_fd, &read_map_entry, &curr_pos))
 		{
-			curr_pos = prev_pos;
+			if (write_pos == 0)
+				write_pos = prev_pos;
 			break;
 		}
 
-		if (read_map_entry.type == MAP_ENTRY_TYPE_EMPTY)
+		if (read_map_entry.spcOid == rlocator->spcOid && read_map_entry.relNumber == rlocator->relNumber)
 		{
-			curr_pos = prev_pos;
+			write_pos = prev_pos;
 			break;
 		}
+
+		if (write_pos == 0 && read_map_entry.type == MAP_ENTRY_TYPE_EMPTY)
+			write_pos = prev_pos;
 	}
 
 	/* Initialize map entry and encrypt key */
 	pg_tde_initialize_map_entry(&write_map_entry, principal_key, rlocator, rel_key_data);
 
 	/* Write the given entry at curr_pos; i.e. the free entry. */
-	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &curr_pos, db_map_path);
+	pg_tde_write_one_map_entry(map_fd, &write_map_entry, &write_pos, db_map_path);
 
 	CloseTransientFile(map_fd);
 }
