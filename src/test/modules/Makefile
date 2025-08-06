@@ -25,6 +25,7 @@ SUBDIRS = \
 		  test_escape \
 		  test_extensions \
 		  test_ginpostinglist \
+		  test_int128 \
 		  test_integerset \
 		  test_json_parser \
 		  test_lfind \

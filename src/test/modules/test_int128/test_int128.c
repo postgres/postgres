@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * testint128.c
+ * test_int128.c
  *	  Testbed for roll-our-own 128-bit integer arithmetic.
  *
  * This is a standalone test program that compares the behavior of an
@@ -10,12 +10,17 @@
  *
  *
  * IDENTIFICATION
- *	  src/tools/testint128.c
+ *	  src/test/modules/test_int128/test_int128.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
+
+#include <time.h>
+
+/* Require a native int128 type */
+#ifdef HAVE_INT128
 
 /*
  * By default, we test the non-native implementation in int128.h; but
@@ -36,7 +41,7 @@ typedef union
 {
 	int128		i128;
 	INT128		I128;
-	union
+	struct
 	{
 #ifdef WORDS_BIGENDIAN
 		int64		hi;
@@ -48,6 +53,7 @@ typedef union
 	}			hl;
 }			test128;
 
+#define INT128_HEX_FORMAT	"%016" PRIx64 "%016" PRIx64
 
 /*
  * Control version of comparator.
@@ -75,7 +81,7 @@ main(int argc, char **argv)
 {
 	long		count;
 
-	pg_prng_seed(&pg_global_prng_state, 0);
+	pg_prng_seed(&pg_global_prng_state, (uint64) time(NULL));
 
 	if (argc >= 2)
 		count = strtol(argv[1], NULL, 0);
@@ -99,9 +105,9 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf("%016lX%016lX + unsigned %lX\n", x, y, z);
-			printf("native = %016lX%016lX\n", t1.hl.hi, t1.hl.lo);
-			printf("result = %016lX%016lX\n", t2.hl.hi, t2.hl.lo);
+			printf(INT128_HEX_FORMAT " + unsigned " PRIx64 "\n", x, y, z);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
 		}
 
@@ -114,9 +120,9 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf("%016lX%016lX + signed %lX\n", x, y, z);
-			printf("native = %016lX%016lX\n", t1.hl.hi, t1.hl.lo);
-			printf("result = %016lX%016lX\n", t2.hl.hi, t2.hl.lo);
+			printf(INT128_HEX_FORMAT " + signed " PRIx64 "\n", x, y, z);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
 		}
 
@@ -128,9 +134,9 @@ main(int argc, char **argv)
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf("%lX * %lX\n", x, y);
-			printf("native = %016lX%016lX\n", t1.hl.hi, t1.hl.lo);
-			printf("result = %016lX%016lX\n", t2.hl.hi, t2.hl.lo);
+			printf(PRIx64 " * " PRIx64 "\n", x, y);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
 		}
 
@@ -146,8 +152,8 @@ main(int argc, char **argv)
 			printf("comparison failure: %d vs %d\n",
 				   my_int128_compare(t1.i128, t2.i128),
 				   int128_compare(t1.I128, t2.I128));
-			printf("arg1 = %016lX%016lX\n", t1.hl.hi, t1.hl.lo);
-			printf("arg2 = %016lX%016lX\n", t2.hl.hi, t2.hl.lo);
+			printf("arg1 = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("arg2 = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
 		}
 
@@ -160,11 +166,25 @@ main(int argc, char **argv)
 			printf("comparison failure: %d vs %d\n",
 				   my_int128_compare(t1.i128, t2.i128),
 				   int128_compare(t1.I128, t2.I128));
-			printf("arg1 = %016lX%016lX\n", t1.hl.hi, t1.hl.lo);
-			printf("arg2 = %016lX%016lX\n", t2.hl.hi, t2.hl.lo);
+			printf("arg1 = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("arg2 = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
 			return 1;
 		}
 	}
 
 	return 0;
 }
+
+#else							/* ! HAVE_INT128 */
+
+/*
+ * For now, do nothing if we don't have a native int128 type.
+ */
+int
+main(int argc, char **argv)
+{
+	printf("skipping tests: no native int128 type\n");
+	return 0;
+}
+
+#endif

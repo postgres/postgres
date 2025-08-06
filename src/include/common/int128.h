@@ -6,7 +6,7 @@
  * We make use of the native int128 type if there is one, otherwise
  * implement things the hard way based on two int64 halves.
  *
- * See src/tools/testint128.c for a simple test harness for this file.
+ * See src/test/modules/test_int128 for a simple test harness for this file.
  *
  * Copyright (c) 2017-2025, PostgreSQL Global Development Group
  *
