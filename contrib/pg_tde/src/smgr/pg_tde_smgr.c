@@ -70,6 +70,26 @@ static bool tde_smgr_has_temp_key(const RelFileLocator *rel);
 static void tde_smgr_remove_temp_key(const RelFileLocator *rel);
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
+static void
+tde_smgr_log_create_key(const RelFileLocator *rlocator)
+{
+	XLogRelKey	xlrec = {.rlocator = *rlocator};
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
+}
+
+static void
+tde_smgr_log_delete_key(const RelFileLocator *rlocator)
+{
+	XLogRelKey	xlrec = {.rlocator = *rlocator};
+
+	XLogBeginInsert();
+	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_DELETE_RELATION_KEY);
+}
+
 static InternalKey *
 tde_smgr_create_key(const RelFileLocatorBackend *smgr_rlocator)
 {
@@ -80,21 +100,12 @@ tde_smgr_create_key(const RelFileLocatorBackend *smgr_rlocator)
 	if (RelFileLocatorBackendIsTemp(*smgr_rlocator))
 		tde_smgr_save_temp_key(&smgr_rlocator->locator, key);
 	else
+	{
 		pg_tde_save_smgr_key(smgr_rlocator->locator, key);
+		tde_smgr_log_create_key(&smgr_rlocator->locator);
+	}
 
 	return key;
-}
-
-static void
-tde_smgr_log_create_key(const RelFileLocatorBackend *smgr_rlocator)
-{
-	XLogRelKey	xlrec = {
-		.rlocator = smgr_rlocator->locator,
-	};
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
 }
 
 void
@@ -111,17 +122,22 @@ tde_smgr_create_key_redo(const RelFileLocator *rlocator)
 }
 
 static void
+tde_smgr_remove_key(const RelFileLocatorBackend *smgr_rlocator)
+{
+	if (RelFileLocatorBackendIsTemp(*smgr_rlocator))
+		tde_smgr_remove_temp_key(&smgr_rlocator->locator);
+	else
+		pg_tde_free_key_map_entry(smgr_rlocator->locator);
+}
+
+static void
 tde_smgr_delete_key(const RelFileLocatorBackend *smgr_rlocator)
 {
-	XLogRelKey	xlrec = {
-		.rlocator = smgr_rlocator->locator,
-	};
-
-	pg_tde_free_key_map_entry(smgr_rlocator->locator);
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_DELETE_RELATION_KEY);
+	if (!RelFileLocatorBackendIsTemp(*smgr_rlocator))
+	{
+		pg_tde_free_key_map_entry(smgr_rlocator->locator);
+		tde_smgr_log_delete_key(&smgr_rlocator->locator);
+	}
 }
 
 void
@@ -146,15 +162,6 @@ tde_smgr_get_key(const RelFileLocatorBackend *smgr_rlocator)
 		return tde_smgr_get_temp_key(&smgr_rlocator->locator);
 	else
 		return pg_tde_get_smgr_key(smgr_rlocator->locator);
-}
-
-static void
-tde_smgr_remove_key(const RelFileLocatorBackend *smgr_rlocator)
-{
-	if (RelFileLocatorBackendIsTemp(*smgr_rlocator))
-		tde_smgr_remove_temp_key(&smgr_rlocator->locator);
-	else
-		pg_tde_free_key_map_entry(smgr_rlocator->locator);
 }
 
 static bool
@@ -393,7 +400,6 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	}
 
 	key = tde_smgr_create_key(&reln->smgr_rlocator);
-	tde_smgr_log_create_key(&reln->smgr_rlocator);
 
 	tdereln->encryption_status = RELATION_KEY_AVAILABLE;
 	tdereln->relKey = *key;
