@@ -44,7 +44,7 @@
 		uint64		_expected = (expected_expr); \
 		if (_result != _expected) \
 			elog(ERROR, \
-				 "%s yielded " UINT64_HEX_FORMAT ", expected " UINT64_HEX_FORMAT " (%s) in file \"%s\" line %u", \
+				 "%s yielded %" PRIx64 ", expected %" PRIx64 " (%s) in file \"%s\" line %u", \
 				 #result_expr, _result, _expected, #expected_expr, __FILE__, __LINE__); \
 	} while (0)
 
