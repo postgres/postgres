@@ -530,8 +530,6 @@ typedef uint32 bits32;			/* >= 32 bits */
 /* snprintf format strings to use for 64-bit integers */
 #define INT64_FORMAT "%" PRId64
 #define UINT64_FORMAT "%" PRIu64
-#define INT64_HEX_FORMAT "%" PRIx64
-#define UINT64_HEX_FORMAT "%" PRIx64
 
 /*
  * 128-bit signed and unsigned integers
