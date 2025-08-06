@@ -29,81 +29,21 @@
 #endif
 #endif
 
-
-#if USE_NATIVE_INT128
-
-typedef int128 INT128;
-
 /*
- * Add an unsigned int64 value into an INT128 variable.
- */
-static inline void
-int128_add_uint64(INT128 *i128, uint64 v)
-{
-	*i128 += v;
-}
-
-/*
- * Add a signed int64 value into an INT128 variable.
- */
-static inline void
-int128_add_int64(INT128 *i128, int64 v)
-{
-	*i128 += v;
-}
-
-/*
- * Add the 128-bit product of two int64 values into an INT128 variable.
+ * If native int128 support is enabled, INT128 is just int128. Otherwise, it
+ * is a structure with separate 64-bit high and low parts.
  *
- * XXX with a stupid compiler, this could actually be less efficient than
- * the other implementation; maybe we should do it by hand always?
- */
-static inline void
-int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
-{
-	*i128 += (int128) x * (int128) y;
-}
-
-/*
- * Compare two INT128 values, return -1, 0, or +1.
- */
-static inline int
-int128_compare(INT128 x, INT128 y)
-{
-	if (x < y)
-		return -1;
-	if (x > y)
-		return 1;
-	return 0;
-}
-
-/*
- * Widen int64 to INT128.
- */
-static inline INT128
-int64_to_int128(int64 v)
-{
-	return (INT128) v;
-}
-
-/*
- * Convert INT128 to int64 (losing any high-order bits).
- * This also works fine for casting down to uint64.
- */
-static inline int64
-int128_to_int64(INT128 val)
-{
-	return (int64) val;
-}
-
-#else							/* !USE_NATIVE_INT128 */
-
-/*
  * We lay out the INT128 structure with the same content and byte ordering
  * that a native int128 type would (probably) have.  This makes no difference
  * for ordinary use of INT128, but allows union'ing INT128 with int128 for
  * testing purposes.
  */
+#if USE_NATIVE_INT128
+
+typedef int128 INT128;
+
+#else
+
 typedef struct
 {
 #ifdef WORDS_BIGENDIAN
@@ -115,12 +55,17 @@ typedef struct
 #endif
 } INT128;
 
+#endif
+
 /*
  * Add an unsigned int64 value into an INT128 variable.
  */
 static inline void
 int128_add_uint64(INT128 *i128, uint64 v)
 {
+#if USE_NATIVE_INT128
+	*i128 += v;
+#else
 	/*
 	 * First add the value to the .lo part, then check to see if a carry needs
 	 * to be propagated into the .hi part.  A carry is needed if both inputs
@@ -134,6 +79,7 @@ int128_add_uint64(INT128 *i128, uint64 v)
 	if (((int64) v < 0 && (int64) oldlo < 0) ||
 		(((int64) v < 0 || (int64) oldlo < 0) && (int64) i128->lo >= 0))
 		i128->hi++;
+#endif
 }
 
 /*
@@ -142,6 +88,9 @@ int128_add_uint64(INT128 *i128, uint64 v)
 static inline void
 int128_add_int64(INT128 *i128, int64 v)
 {
+#if USE_NATIVE_INT128
+	*i128 += v;
+#else
 	/*
 	 * This is much like the above except that the carry logic differs for
 	 * negative v.  Ordinarily we'd need to subtract 1 from the .hi part
@@ -161,6 +110,7 @@ int128_add_int64(INT128 *i128, int64 v)
 		if (!((int64) oldlo < 0 || (int64) i128->lo >= 0))
 			i128->hi--;
 	}
+#endif
 }
 
 /*
@@ -176,6 +126,13 @@ int128_add_int64(INT128 *i128, int64 v)
 static inline void
 int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 {
+#if USE_NATIVE_INT128
+	/*
+	 * XXX with a stupid compiler, this could actually be less efficient than
+	 * the non-native implementation; maybe we should do it by hand always?
+	 */
+	*i128 += (int128) x * (int128) y;
+#else
 	/* INT64_AU32 must use arithmetic right shift */
 	StaticAssertDecl(((int64) -1 >> 1) == (int64) -1,
 					 "arithmetic right shift is needed");
@@ -229,6 +186,7 @@ int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 		/* the fourth term: always unsigned */
 		int128_add_uint64(i128, x_l32 * y_l32);
 	}
+#endif
 }
 
 /*
@@ -237,6 +195,13 @@ int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 static inline int
 int128_compare(INT128 x, INT128 y)
 {
+#if USE_NATIVE_INT128
+	if (x < y)
+		return -1;
+	if (x > y)
+		return 1;
+	return 0;
+#else
 	if (x.hi < y.hi)
 		return -1;
 	if (x.hi > y.hi)
@@ -246,6 +211,7 @@ int128_compare(INT128 x, INT128 y)
 	if (x.lo > y.lo)
 		return 1;
 	return 0;
+#endif
 }
 
 /*
@@ -254,11 +220,15 @@ int128_compare(INT128 x, INT128 y)
 static inline INT128
 int64_to_int128(int64 v)
 {
+#if USE_NATIVE_INT128
+	return (INT128) v;
+#else
 	INT128		val;
 
 	val.lo = (uint64) v;
 	val.hi = (v < 0) ? -INT64CONST(1) : INT64CONST(0);
 	return val;
+#endif
 }
 
 /*
@@ -268,9 +238,11 @@ int64_to_int128(int64 v)
 static inline int64
 int128_to_int64(INT128 val)
 {
+#if USE_NATIVE_INT128
+	return (int64) val;
+#else
 	return (int64) val.lo;
+#endif
 }
-
-#endif							/* USE_NATIVE_INT128 */
 
 #endif							/* INT128_H */
