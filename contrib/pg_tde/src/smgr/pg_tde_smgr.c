@@ -359,43 +359,32 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	TDESMgrRelation *tdereln = (TDESMgrRelation *) reln;
 	InternalKey *key;
 
-	/* Copied from mdcreate() in md.c */
-	if (isRedo && tdereln->md_num_open_segs[forknum] > 0)
+	mdcreate(relold, reln, forknum, isRedo);
+
+	/*
+	 * Creating the key is handled by a separate WAL record on redo and
+	 * fetching the key can be delayed to when we actually need it like we do
+	 * for other forks anyway.
+	 */
+	if (isRedo)
 		return;
 
 	/*
-	 * This is the only function that gets called during actual CREATE
-	 * TABLE/INDEX (EVENT TRIGGER)
+	 * Only create keys when creating the main fork. Other forks are created
+	 * later and use the key which was created when creating the main fork.
 	 */
-
-	mdcreate(relold, reln, forknum, isRedo);
-
 	if (forknum != MAIN_FORKNUM)
-	{
-		/*
-		 * Only create keys when creating the main fork. Other forks can be
-		 * created later, even during tde creation events. We definitely do
-		 * not want to create keys then, even later, when we encrypt all
-		 * forks!
-		 *
-		 * Later calls then decide to encrypt or not based on the existence of
-		 * the key.
-		 */
 		return;
-	}
 
-	if (!isRedo)
-	{
-		/*
-		 * If we have a key for this relation already, we need to remove it.
-		 * This can happen if OID is re-used after a crash left a key for a
-		 * non-existing relation in the key file.
-		 *
-		 * If we're in redo, a separate WAL record will make sure the key is
-		 * removed.
-		 */
-		tde_smgr_delete_key(&reln->smgr_rlocator);
-	}
+	/*
+	 * If we have a key for this relation already, we need to remove it. This
+	 * can happen if OID is re-used after a crash left a key for a
+	 * non-existing relation in the key file.
+	 *
+	 * If we're in redo, a separate WAL record will make sure the key is
+	 * removed.
+	 */
+	tde_smgr_delete_key(&reln->smgr_rlocator);
 
 	if (!tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
 	{
@@ -403,23 +392,8 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 		return;
 	}
 
-	if (isRedo)
-	{
-		/*
-		 * If we're in redo, the WAL record for creating the key has already
-		 * happened and we can just fetch it.
-		 */
-		key = tde_smgr_get_key(&reln->smgr_rlocator);
-
-		Assert(key);
-		if (!key)
-			elog(ERROR, "could not get key when creating encrypted relation");
-	}
-	else
-	{
-		key = tde_smgr_create_key(&reln->smgr_rlocator);
-		tde_smgr_log_create_key(&reln->smgr_rlocator);
-	}
+	key = tde_smgr_create_key(&reln->smgr_rlocator);
+	tde_smgr_log_create_key(&reln->smgr_rlocator);
 
 	tdereln->encryption_status = RELATION_KEY_AVAILABLE;
 	tdereln->relKey = *key;
