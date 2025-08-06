@@ -210,6 +210,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       When this form is used, the column's statistics are removed,
       so running <link linkend="sql-analyze"><command>ANALYZE</command></link>
       on the table afterwards is recommended.
+      For a virtual generated column, <command>ANALYZE</command>
+      is not necessary because such columns never have statistics.
      </para>
     </listitem>
    </varlistentry>
@@ -270,6 +272,15 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       This form replaces the expression of a generated column.  Existing data
       in a stored generated column is rewritten and all the future changes
       will apply the new generation expression.
+     </para>
+
+     <para>
+      When this form is used on a stored generated column, its statistics
+      are removed, so running
+      <link linkend="sql-analyze"><command>ANALYZE</command></link>
+      on the table afterwards is recommended.
+      For a virtual generated column, <command>ANALYZE</command>
+      is not necessary because such columns never have statistics.
      </para>
     </listitem>
    </varlistentry>
