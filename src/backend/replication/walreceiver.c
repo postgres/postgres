@@ -826,7 +826,7 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len, TimeLineID tli)
 
 	switch (type)
 	{
-		case 'w':				/* WAL records */
+		case PqReplMsg_WALData:
 			{
 				StringInfoData incoming_message;
 
@@ -850,7 +850,7 @@ XLogWalRcvProcessMsg(unsigned char type, char *buf, Size len, TimeLineID tli)
 				XLogWalRcvWrite(buf, len, dataStart, tli);
 				break;
 			}
-		case 'k':				/* Keepalive */
+		case PqReplMsg_Keepalive:
 			{
 				StringInfoData incoming_message;
 
@@ -1130,7 +1130,7 @@ XLogWalRcvSendReply(bool force, bool requestReply)
 	applyPtr = GetXLogReplayRecPtr(NULL);
 
 	resetStringInfo(&reply_message);
-	pq_sendbyte(&reply_message, 'r');
+	pq_sendbyte(&reply_message, PqReplMsg_StandbyStatusUpdate);
 	pq_sendint64(&reply_message, writePtr);
 	pq_sendint64(&reply_message, flushPtr);
 	pq_sendint64(&reply_message, applyPtr);
@@ -1234,7 +1234,7 @@ XLogWalRcvSendHSFeedback(bool immed)
 
 	/* Construct the message and send it. */
 	resetStringInfo(&reply_message);
-	pq_sendbyte(&reply_message, 'h');
+	pq_sendbyte(&reply_message, PqReplMsg_HotStandbyFeedback);
 	pq_sendint64(&reply_message, GetCurrentTimestamp());
 	pq_sendint32(&reply_message, xmin);
 	pq_sendint32(&reply_message, xmin_epoch);

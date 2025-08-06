@@ -143,7 +143,7 @@ bbsink_copystream_begin_backup(bbsink *sink)
 	buf = palloc(mysink->base.bbs_buffer_length + MAXIMUM_ALIGNOF);
 	mysink->msgbuffer = buf + (MAXIMUM_ALIGNOF - 1);
 	mysink->base.bbs_buffer = buf + MAXIMUM_ALIGNOF;
-	mysink->msgbuffer[0] = 'd'; /* archive or manifest data */
+	mysink->msgbuffer[0] = PqMsg_CopyData;	/* archive or manifest data */
 
 	/* Tell client the backup start location. */
 	SendXlogRecPtrResult(state->startptr, state->starttli);
@@ -170,7 +170,7 @@ bbsink_copystream_begin_archive(bbsink *sink, const char *archive_name)
 
 	ti = list_nth(state->tablespaces, state->tablespace_num);
 	pq_beginmessage(&buf, PqMsg_CopyData);
-	pq_sendbyte(&buf, 'n');		/* New archive */
+	pq_sendbyte(&buf, PqBackupMsg_NewArchive);
 	pq_sendstring(&buf, archive_name);
 	pq_sendstring(&buf, ti->path == NULL ? "" : ti->path);
 	pq_endmessage(&buf);
@@ -191,7 +191,7 @@ bbsink_copystream_archive_contents(bbsink *sink, size_t len)
 	if (mysink->send_to_client)
 	{
 		/* Add one because we're also sending a leading type byte. */
-		pq_putmessage('d', mysink->msgbuffer, len + 1);
+		pq_putmessage(PqMsg_CopyData, mysink->msgbuffer, len + 1);
 	}
 
 	/* Consider whether to send a progress report to the client. */
@@ -221,7 +221,7 @@ bbsink_copystream_archive_contents(bbsink *sink, size_t len)
 			mysink->last_progress_report_time = now;
 
 			pq_beginmessage(&buf, PqMsg_CopyData);
-			pq_sendbyte(&buf, 'p'); /* Progress report */
+			pq_sendbyte(&buf, PqBackupMsg_ProgressReport);
 			pq_sendint64(&buf, state->bytes_done);
 			pq_endmessage(&buf);
 			pq_flush_if_writable();
@@ -247,7 +247,7 @@ bbsink_copystream_end_archive(bbsink *sink)
 	mysink->bytes_done_at_last_time_check = state->bytes_done;
 	mysink->last_progress_report_time = GetCurrentTimestamp();
 	pq_beginmessage(&buf, PqMsg_CopyData);
-	pq_sendbyte(&buf, 'p');		/* Progress report */
+	pq_sendbyte(&buf, PqBackupMsg_ProgressReport);
 	pq_sendint64(&buf, state->bytes_done);
 	pq_endmessage(&buf);
 	pq_flush_if_writable();
@@ -262,7 +262,7 @@ bbsink_copystream_begin_manifest(bbsink *sink)
 	StringInfoData buf;
 
 	pq_beginmessage(&buf, PqMsg_CopyData);
-	pq_sendbyte(&buf, 'm');		/* Manifest */
+	pq_sendbyte(&buf, PqBackupMsg_Manifest);
 	pq_endmessage(&buf);
 }
 
@@ -277,7 +277,7 @@ bbsink_copystream_manifest_contents(bbsink *sink, size_t len)
 	if (mysink->send_to_client)
 	{
 		/* Add one because we're also sending a leading type byte. */
-		pq_putmessage('d', mysink->msgbuffer, len + 1);
+		pq_putmessage(PqMsg_CopyData, mysink->msgbuffer, len + 1);
 	}
 }
 

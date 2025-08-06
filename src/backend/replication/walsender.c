@@ -1534,7 +1534,7 @@ WalSndPrepareWrite(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId xi
 
 	resetStringInfo(ctx->out);
 
-	pq_sendbyte(ctx->out, 'w');
+	pq_sendbyte(ctx->out, PqReplMsg_WALData);
 	pq_sendint64(ctx->out, lsn);	/* dataStart */
 	pq_sendint64(ctx->out, lsn);	/* walEnd */
 
@@ -2292,7 +2292,8 @@ ProcessRepliesIfAny(void)
 		switch (firstchar)
 		{
 				/*
-				 * 'd' means a standby reply wrapped in a CopyData packet.
+				 * PqMsg_CopyData means a standby reply wrapped in a CopyData
+				 * packet.
 				 */
 			case PqMsg_CopyData:
 				ProcessStandbyMessage();
@@ -2300,8 +2301,9 @@ ProcessRepliesIfAny(void)
 				break;
 
 				/*
-				 * CopyDone means the standby requested to finish streaming.
-				 * Reply with CopyDone, if we had not sent that already.
+				 * PqMsg_CopyDone means the standby requested to finish
+				 * streaming.  Reply with CopyDone, if we had not sent that
+				 * already.
 				 */
 			case PqMsg_CopyDone:
 				if (!streamingDoneSending)
@@ -2315,7 +2317,8 @@ ProcessRepliesIfAny(void)
 				break;
 
 				/*
-				 * 'X' means that the standby is closing down the socket.
+				 * PqMsg_Terminate means that the standby is closing down the
+				 * socket.
 				 */
 			case PqMsg_Terminate:
 				proc_exit(0);
@@ -2350,15 +2353,15 @@ ProcessStandbyMessage(void)
 
 	switch (msgtype)
 	{
-		case 'r':
+		case PqReplMsg_StandbyStatusUpdate:
 			ProcessStandbyReplyMessage();
 			break;
 
-		case 'h':
+		case PqReplMsg_HotStandbyFeedback:
 			ProcessStandbyHSFeedbackMessage();
 			break;
 
-		case 'p':
+		case PqReplMsg_PrimaryStatusRequest:
 			ProcessStandbyPSRequestMessage();
 			break;
 
@@ -2752,7 +2755,7 @@ ProcessStandbyPSRequestMessage(void)
 
 	/* construct the message... */
 	resetStringInfo(&output_message);
-	pq_sendbyte(&output_message, 's');
+	pq_sendbyte(&output_message, PqReplMsg_PrimaryStatusUpdate);
 	pq_sendint64(&output_message, lsn);
 	pq_sendint64(&output_message, (int64) U64FromFullTransactionId(fullOldestXidInCommit));
 	pq_sendint64(&output_message, (int64) U64FromFullTransactionId(nextFullXid));
@@ -3364,7 +3367,7 @@ XLogSendPhysical(void)
 	 * OK to read and send the slice.
 	 */
 	resetStringInfo(&output_message);
-	pq_sendbyte(&output_message, 'w');
+	pq_sendbyte(&output_message, PqReplMsg_WALData);
 
 	pq_sendint64(&output_message, startptr);	/* dataStart */
 	pq_sendint64(&output_message, SendRqstPtr); /* walEnd */
@@ -4135,7 +4138,7 @@ WalSndKeepalive(bool requestReply, XLogRecPtr writePtr)
 
 	/* construct the message... */
 	resetStringInfo(&output_message);
-	pq_sendbyte(&output_message, 'k');
+	pq_sendbyte(&output_message, PqReplMsg_Keepalive);
 	pq_sendint64(&output_message, XLogRecPtrIsInvalid(writePtr) ? sentPtr : writePtr);
 	pq_sendint64(&output_message, GetCurrentTimestamp());
 	pq_sendbyte(&output_message, requestReply ? 1 : 0);

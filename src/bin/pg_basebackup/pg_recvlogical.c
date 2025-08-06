@@ -24,6 +24,7 @@
 #include "getopt_long.h"
 #include "libpq-fe.h"
 #include "libpq/pqsignal.h"
+#include "libpq/protocol.h"
 #include "pqexpbuffer.h"
 #include "streamutil.h"
 
@@ -149,7 +150,7 @@ sendFeedback(PGconn *conn, TimestampTz now, bool force, bool replyRequested)
 					LSN_FORMAT_ARGS(output_fsync_lsn),
 					replication_slot);
 
-	replybuf[len] = 'r';
+	replybuf[len] = PqReplMsg_StandbyStatusUpdate;
 	len += 1;
 	fe_sendint64(output_written_lsn, &replybuf[len]);	/* write */
 	len += 8;
@@ -454,7 +455,7 @@ StreamLogicalLog(void)
 		}
 
 		/* Check the message type. */
-		if (copybuf[0] == 'k')
+		if (copybuf[0] == PqReplMsg_Keepalive)
 		{
 			int			pos;
 			bool		replyRequested;
@@ -466,7 +467,7 @@ StreamLogicalLog(void)
 			 * We just check if the server requested a reply, and ignore the
 			 * rest.
 			 */
-			pos = 1;			/* skip msgtype 'k' */
+			pos = 1;			/* skip msgtype PqReplMsg_Keepalive */
 			walEnd = fe_recvint64(&copybuf[pos]);
 			output_written_lsn = Max(walEnd, output_written_lsn);
 
@@ -509,7 +510,7 @@ StreamLogicalLog(void)
 
 			continue;
 		}
-		else if (copybuf[0] != 'w')
+		else if (copybuf[0] != PqReplMsg_WALData)
 		{
 			pg_log_error("unrecognized streaming header: \"%c\"",
 						 copybuf[0]);
@@ -521,7 +522,7 @@ StreamLogicalLog(void)
 		 * message. We only need the WAL location field (dataStart), the rest
 		 * of the header is ignored.
 		 */
-		hdr_len = 1;			/* msgtype 'w' */
+		hdr_len = 1;			/* msgtype PqReplMsg_WALData */
 		hdr_len += 8;			/* dataStart */
 		hdr_len += 8;			/* walEnd */
 		hdr_len += 8;			/* sendTime */

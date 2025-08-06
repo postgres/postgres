@@ -35,6 +35,7 @@
 #include "fe_utils/option_utils.h"
 #include "fe_utils/recovery_gen.h"
 #include "getopt_long.h"
+#include "libpq/protocol.h"
 #include "receivelog.h"
 #include "streamutil.h"
 
@@ -1338,7 +1339,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 	/* Each CopyData message begins with a type byte. */
 	switch (GetCopyDataByte(r, copybuf, &cursor))
 	{
-		case 'n':
+		case PqBackupMsg_NewArchive:
 			{
 				/* New archive. */
 				char	   *archive_name;
@@ -1410,7 +1411,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				break;
 			}
 
-		case 'd':
+		case PqMsg_CopyData:
 			{
 				/* Archive or manifest data. */
 				if (state->manifest_buffer != NULL)
@@ -1446,7 +1447,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				break;
 			}
 
-		case 'p':
+		case PqBackupMsg_ProgressReport:
 			{
 				/*
 				 * Progress report.
@@ -1465,7 +1466,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				break;
 			}
 
-		case 'm':
+		case PqBackupMsg_Manifest:
 			{
 				/*
 				 * Manifest data will be sent next. This message is not

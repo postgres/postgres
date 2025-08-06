@@ -21,6 +21,7 @@
 #include "access/xlog_internal.h"
 #include "common/logging.h"
 #include "libpq-fe.h"
+#include "libpq/protocol.h"
 #include "receivelog.h"
 #include "streamutil.h"
 
@@ -338,7 +339,7 @@ sendFeedback(PGconn *conn, XLogRecPtr blockpos, TimestampTz now, bool replyReque
 	char		replybuf[1 + 8 + 8 + 8 + 8 + 1];
 	int			len = 0;
 
-	replybuf[len] = 'r';
+	replybuf[len] = PqReplMsg_StandbyStatusUpdate;
 	len += 1;
 	fe_sendint64(blockpos, &replybuf[len]); /* write */
 	len += 8;
@@ -823,13 +824,13 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 			}
 
 			/* Check the message type. */
-			if (copybuf[0] == 'k')
+			if (copybuf[0] == PqReplMsg_Keepalive)
 			{
 				if (!ProcessKeepaliveMsg(conn, stream, copybuf, r, blockpos,
 										 &last_status))
 					goto error;
 			}
-			else if (copybuf[0] == 'w')
+			else if (copybuf[0] == PqReplMsg_WALData)
 			{
 				if (!ProcessWALDataMsg(conn, stream, copybuf, r, &blockpos))
 					goto error;
@@ -1001,7 +1002,7 @@ ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 	 * Parse the keepalive message, enclosed in the CopyData message. We just
 	 * check if the server requested a reply, and ignore the rest.
 	 */
-	pos = 1;					/* skip msgtype 'k' */
+	pos = 1;					/* skip msgtype PqReplMsg_Keepalive */
 	pos += 8;					/* skip walEnd */
 	pos += 8;					/* skip sendTime */
 
@@ -1064,7 +1065,7 @@ ProcessWALDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 	 * message. We only need the WAL location field (dataStart), the rest of
 	 * the header is ignored.
 	 */
-	hdr_len = 1;				/* msgtype 'w' */
+	hdr_len = 1;				/* msgtype PqReplMsg_WALData */
 	hdr_len += 8;				/* dataStart */
 	hdr_len += 8;				/* walEnd */
 	hdr_len += 8;				/* sendTime */

@@ -3994,7 +3994,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 					c = pq_getmsgbyte(&s);
 
-					if (c == 'w')
+					if (c == PqReplMsg_WALData)
 					{
 						XLogRecPtr	start_lsn;
 						XLogRecPtr	end_lsn;
@@ -4016,7 +4016,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 						maybe_advance_nonremovable_xid(&rdt_data, false);
 					}
-					else if (c == 'k')
+					else if (c == PqReplMsg_Keepalive)
 					{
 						XLogRecPtr	end_lsn;
 						TimestampTz timestamp;
@@ -4035,7 +4035,7 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 						UpdateWorkerStats(last_received, timestamp, true);
 					}
-					else if (c == 's')	/* Primary status update */
+					else if (c == PqReplMsg_PrimaryStatusUpdate)
 					{
 						rdt_data.remote_lsn = pq_getmsgint64(&s);
 						rdt_data.remote_oldestxid = FullTransactionIdFromU64((uint64) pq_getmsgint64(&s));
@@ -4267,7 +4267,7 @@ send_feedback(XLogRecPtr recvpos, bool force, bool requestReply)
 	else
 		resetStringInfo(reply_message);
 
-	pq_sendbyte(reply_message, 'r');
+	pq_sendbyte(reply_message, PqReplMsg_StandbyStatusUpdate);
 	pq_sendint64(reply_message, recvpos);	/* write */
 	pq_sendint64(reply_message, flushpos);	/* flush */
 	pq_sendint64(reply_message, writepos);	/* apply */
@@ -4438,7 +4438,7 @@ request_publisher_status(RetainDeadTuplesData *rdt_data)
 	 * Send the current time to update the remote walsender's latest reply
 	 * message received time.
 	 */
-	pq_sendbyte(request_message, 'p');
+	pq_sendbyte(request_message, PqReplMsg_PrimaryStatusRequest);
 	pq_sendint64(request_message, GetCurrentTimestamp());
 
 	elog(DEBUG2, "sending publisher status request message");

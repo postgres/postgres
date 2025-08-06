@@ -69,6 +69,27 @@
 #define PqMsg_Progress              'P'
 
 
+/* Replication codes sent by the primary (wrapped in CopyData messages). */
+
+#define PqReplMsg_Keepalive			'k'
+#define PqReplMsg_PrimaryStatusUpdate 's'
+#define PqReplMsg_WALData			'w'
+
+
+/* Replication codes sent by the standby (wrapped in CopyData messages). */
+
+#define PqReplMsg_HotStandbyFeedback 'h'
+#define PqReplMsg_PrimaryStatusRequest 'p'
+#define PqReplMsg_StandbyStatusUpdate 'r'
+
+
+/* Codes used for backups via COPY OUT (wrapped in CopyData messages). */
+
+#define PqBackupMsg_Manifest		'm'
+#define PqBackupMsg_NewArchive		'n'
+#define PqBackupMsg_ProgressReport	'p'
+
+
 /* These are the authentication request codes sent by the backend. */
 
 #define AUTH_REQ_OK			0	/* User is authenticated  */
