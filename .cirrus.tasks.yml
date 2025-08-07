@@ -581,8 +581,6 @@ task:
   # - Don't use ccache, the files are uncacheable, polluting ccache's
   #   cache
   # - Use -fmax-errors, as particularly cpluspluscheck can be very verbose
-  # - XXX have to disable ICU to avoid errors:
-  #   https://postgr.es/m/20220323002024.f2g6tivduzrktgfa%40alap3.anarazel.de
   # - XXX: the -Wno-register avoids verbose warnings:
   #   https://postgr.es/m/20220308181837.aun3tdtdvao4vb7o%40alap3.anarazel.de
   ###
@@ -590,7 +588,6 @@ task:
     headers_headerscheck_script: |
       time ./configure \
         ${LINUX_CONFIGURE_FEATURES} \
-        --without-icu \
         --quiet \
         CC="gcc" CXX"=g++" CLANG="clang"
       make -s -j${BUILD_JOBS} clean
