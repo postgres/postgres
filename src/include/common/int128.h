@@ -110,11 +110,11 @@ int128_add_int64(INT128 *i128, int64 v)
 }
 
 /*
- * INT64_AU32 extracts the most significant 32 bits of int64 as int64, while
- * INT64_AL32 extracts the least significant 32 bits as uint64.
+ * INT64_HI_INT32 extracts the most significant 32 bits of int64 as int32.
+ * INT64_LO_UINT32 extracts the least significant 32 bits as uint32.
  */
-#define INT64_AU32(i64) ((i64) >> 32)
-#define INT64_AL32(i64) ((i64) & UINT64CONST(0xFFFFFFFF))
+#define INT64_HI_INT32(i64)		((int32) ((i64) >> 32))
+#define INT64_LO_UINT32(i64)	((uint32) (i64))
 
 /*
  * Add the 128-bit product of two int64 values into an INT128 variable.
@@ -129,7 +129,7 @@ int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 	 */
 	*i128 += (int128) x * (int128) y;
 #else
-	/* INT64_AU32 must use arithmetic right shift */
+	/* INT64_HI_INT32 must use arithmetic right shift */
 	StaticAssertDecl(((int64) -1 >> 1) == (int64) -1,
 					 "arithmetic right shift is needed");
 
@@ -154,33 +154,27 @@ int128_add_int64_mul_int64(INT128 *i128, int64 x, int64 y)
 	/* No need to work hard if product must be zero */
 	if (x != 0 && y != 0)
 	{
-		int64		x_u32 = INT64_AU32(x);
-		uint64		x_l32 = INT64_AL32(x);
-		int64		y_u32 = INT64_AU32(y);
-		uint64		y_l32 = INT64_AL32(y);
+		int32		x_hi = INT64_HI_INT32(x);
+		uint32		x_lo = INT64_LO_UINT32(x);
+		int32		y_hi = INT64_HI_INT32(y);
+		uint32		y_lo = INT64_LO_UINT32(y);
 		int64		tmp;
 
 		/* the first term */
-		i128->hi += x_u32 * y_u32;
+		i128->hi += (int64) x_hi * (int64) y_hi;
 
-		/* the second term: sign-extend it only if x is negative */
-		tmp = x_u32 * y_l32;
-		if (x < 0)
-			i128->hi += INT64_AU32(tmp);
-		else
-			i128->hi += ((uint64) tmp) >> 32;
-		int128_add_uint64(i128, ((uint64) INT64_AL32(tmp)) << 32);
+		/* the second term: sign-extended with the sign of x */
+		tmp = (int64) x_hi * (int64) y_lo;
+		i128->hi += INT64_HI_INT32(tmp);
+		int128_add_uint64(i128, ((uint64) INT64_LO_UINT32(tmp)) << 32);
 
-		/* the third term: sign-extend it only if y is negative */
-		tmp = x_l32 * y_u32;
-		if (y < 0)
-			i128->hi += INT64_AU32(tmp);
-		else
-			i128->hi += ((uint64) tmp) >> 32;
-		int128_add_uint64(i128, ((uint64) INT64_AL32(tmp)) << 32);
+		/* the third term: sign-extended with the sign of y */
+		tmp = (int64) x_lo * (int64) y_hi;
+		i128->hi += INT64_HI_INT32(tmp);
+		int128_add_uint64(i128, ((uint64) INT64_LO_UINT32(tmp)) << 32);
 
 		/* the fourth term: always unsigned */
-		int128_add_uint64(i128, x_l32 * y_l32);
+		int128_add_uint64(i128, (uint64) x_lo * (uint64) y_lo);
 	}
 #endif
 }
