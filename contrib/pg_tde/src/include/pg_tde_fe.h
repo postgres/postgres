@@ -88,6 +88,8 @@ static int	tde_fe_error_level = 0;
 #define FreeFile(file) fclose(file)
 
 #define pg_fsync(fd) fsync(fd)
+
+#define pg_read_barrier() NULL
 #endif							/* FRONTEND */
 
 #endif							/* PG_TDE_EREPORT_H */

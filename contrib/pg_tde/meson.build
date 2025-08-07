@@ -126,6 +126,7 @@ tap_tests = [
   't/unlogged_tables.pl',
   't/wal_archiving.pl',
   't/wal_encrypt.pl',
+  't/wal_key_tli.pl',
 ]
 
 tests += {
