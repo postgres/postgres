@@ -4954,7 +4954,7 @@ timestamptz_trunc_internal(text *units, TimestampTz timestamp, pg_tz *tzp)
 				case DTK_SECOND:
 				case DTK_MILLISEC:
 				case DTK_MICROSEC:
-					PG_RETURN_TIMESTAMPTZ(timestamp);
+					return timestamp;
 					break;
 
 				default:
