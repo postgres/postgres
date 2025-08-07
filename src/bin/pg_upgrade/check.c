@@ -1275,7 +1275,7 @@ check_for_not_null_inheritance(ClusterInfo *cluster)
 	if (script)
 	{
 		fclose(script);
-		pg_log(PG_REPORT, "fatal");
+		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation contains inconsistent NOT NULL constraints.\n"
 				 "If the parent column(s) are NOT NULL, then the child column must\n"
 				 "also be marked NOT NULL, or the upgrade will fail.\n"
