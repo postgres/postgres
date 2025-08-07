@@ -68,17 +68,17 @@ int128_add_uint64(INT128 *i128, uint64 v)
 #else
 	/*
 	 * First add the value to the .lo part, then check to see if a carry needs
-	 * to be propagated into the .hi part.  A carry is needed if both inputs
-	 * have high bits set, or if just one input has high bit set while the new
-	 * .lo part doesn't.  Remember that .lo part is unsigned; we cast to
-	 * signed here just as a cheap way to check the high bit.
+	 * to be propagated into the .hi part.  Since this is unsigned integer
+	 * arithmetic, which is just modular arithmetic, a carry is needed if the
+	 * new .lo part is less than the old .lo part (i.e., if modular
+	 * wrap-around occurred).  Writing this in the form below, rather than
+	 * using an "if" statement causes modern compilers to produce branchless
+	 * machine code identical to the native code.
 	 */
 	uint64		oldlo = i128->lo;
 
 	i128->lo += v;
-	if (((int64) v < 0 && (int64) oldlo < 0) ||
-		(((int64) v < 0 || (int64) oldlo < 0) && (int64) i128->lo >= 0))
-		i128->hi++;
+	i128->hi += (i128->lo < oldlo);
 #endif
 }
 
@@ -93,23 +93,19 @@ int128_add_int64(INT128 *i128, int64 v)
 #else
 	/*
 	 * This is much like the above except that the carry logic differs for
-	 * negative v.  Ordinarily we'd need to subtract 1 from the .hi part
-	 * (corresponding to adding the sign-extended bits of v to it); but if
-	 * there is a carry out of the .lo part, that cancels and we do nothing.
+	 * negative v -- we need to subtract 1 from the .hi part if the new .lo
+	 * value is greater than the old .lo value.  That can be achieved without
+	 * any branching by adding the sign bit from v (v >> 63 = 0 or -1) to the
+	 * previous result (for negative v, if the new .lo value is less than the
+	 * old .lo value, the two terms cancel and we leave the .hi part
+	 * unchanged, otherwise we subtract 1 from the .hi part).  With modern
+	 * compilers this often produces machine code identical to the native
+	 * code.
 	 */
 	uint64		oldlo = i128->lo;
 
 	i128->lo += v;
-	if (v >= 0)
-	{
-		if ((int64) oldlo < 0 && (int64) i128->lo >= 0)
-			i128->hi++;
-	}
-	else
-	{
-		if (!((int64) oldlo < 0 || (int64) i128->lo >= 0))
-			i128->hi--;
-	}
+	i128->hi += (i128->lo < oldlo) + (v >> 63);
 #endif
 }
 
