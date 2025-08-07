@@ -538,28 +538,8 @@ pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 	/* Open and validate file for basic correctness. */
 	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), &signed_key_Info, false, &curr_pos);
 
-	/*
-	 * Read until we find an empty slot. Otherwise, read until end. This seems
-	 * to be less frequent than vacuum. So let's keep this function here
-	 * rather than overloading the vacuum process.
-	 */
-	while (1)
-	{
-		WalKeyFileEntry read_entry;
-		off_t		prev_pos = curr_pos;
-
-		if (!pg_tde_read_one_wal_key_file_entry(fd, &read_entry, &curr_pos))
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-
-		if (read_entry.type == MAP_ENTRY_EMPTY)
-		{
-			curr_pos = prev_pos;
-			break;
-		}
-	}
+	/* WAL keys are always added at the end of the file */
+	curr_pos = lseek(fd, 0, SEEK_END);
 
 	/* Initialize WAL key file entry and encrypt key */
 	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, rel_key_data);
@@ -673,9 +653,6 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 
 		if (!pg_tde_read_one_wal_key_file_entry(old_fd, &read_map_entry, &old_curr_pos))
 			break;
-
-		if (read_map_entry.type == MAP_ENTRY_EMPTY)
-			continue;
 
 		/* Decrypt and re-encrypt key */
 		key = pg_tde_decrypt_wal_key(principal_key, &read_map_entry);
@@ -829,10 +806,7 @@ pg_tde_count_wal_keys_in_file(void)
 		return count;
 
 	while (pg_tde_read_one_wal_key_file_entry(fd, &entry, &curr_pos))
-	{
-		if (entry.type != MAP_ENTRY_EMPTY)
-			count++;
-	}
+		count++;
 
 	CloseTransientFile(fd);
 
