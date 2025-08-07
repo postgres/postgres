@@ -117,7 +117,7 @@
 
       <row>
        <entry><type>double precision</type></entry>
-       <entry><type>float8</type></entry>
+       <entry><type>float</type>, <type>float8</type></entry>
        <entry>double precision floating-point number (8 bytes)</entry>
       </row>
 
