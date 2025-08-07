@@ -290,7 +290,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     <para>
      A logical slot will emit each change just once in normal operation.
      The current position of each slot is persisted only at checkpoint, so in
-     the case of a crash the slot may return to an earlier LSN, which will
+     the case of a crash the slot might return to an earlier LSN, which will
      then cause recent changes to be sent again when the server restarts.
      Logical decoding clients are responsible for avoiding ill effects from
      handling the same message more than once.  Clients may wish to record
@@ -409,7 +409,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
       should be used with caution. Unlike automatic synchronization, it does not
       include cyclic retries, making it more prone to synchronization failures,
       particularly during initial sync scenarios where the required WAL files
-      or catalog rows for the slot may have already been removed or are at risk
+      or catalog rows for the slot might have already been removed or are at risk
       of being removed on the standby. In contrast, automatic synchronization
       via <varname>sync_replication_slots</varname> provides continuous slot
       updates, enabling seamless failover and supporting high availability.
@@ -430,8 +430,8 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
      standby, the slot will not be persisted to avoid data loss. In such
      cases, the following log message may appear:
 <programlisting>
-     LOG:  could not synchronize replication slot "failover_slot"
-     DETAIL:  Synchronization could lead to data loss as the remote slot needs WAL at LSN 0/03003F28 and catalog xmin 754, but the standby has LSN 0/03003F28 and catalog xmin 756
+LOG:  could not synchronize replication slot "failover_slot"
+DETAIL:  Synchronization could lead to data loss, because the remote slot needs WAL at LSN 0/03003F28 and catalog xmin 754, but the standby has LSN 0/03003F28 and catalog xmin 756.
 </programlisting>
      If the logical replication slot is actively used by a consumer, no
      manual intervention is needed; the slot will advance automatically,
