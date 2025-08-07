@@ -182,6 +182,11 @@ SELECT newcnt(*) AS cnt_1000 FROM onek;
 SELECT oldcnt(*) AS cnt_1000 FROM onek;
 SELECT sum2(q1,q2) FROM int8_tbl;
 
+-- sanity checks
+SELECT sum(q1+q2), sum(q1)+sum(q2) FROM int8_tbl;
+SELECT sum(q1-q2), sum(q2-q1), sum(q1)-sum(q2) FROM int8_tbl;
+SELECT sum(q1*2000), sum(-q1*2000), 2000*sum(q1) FROM int8_tbl;
+
 -- test for outer-level aggregates
 
 -- this should work

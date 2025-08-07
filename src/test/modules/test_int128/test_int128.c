@@ -93,8 +93,13 @@ main(int argc, char **argv)
 		int64		x = pg_prng_uint64(&pg_global_prng_state);
 		int64		y = pg_prng_uint64(&pg_global_prng_state);
 		int64		z = pg_prng_uint64(&pg_global_prng_state);
+		int64		w = pg_prng_uint64(&pg_global_prng_state);
+		int32		z32 = (int32) z;
 		test128		t1;
 		test128		t2;
+		test128		t3;
+		int32		r1;
+		int32		r2;
 
 		/* check unsigned addition */
 		t1.hl.hi = x;
@@ -126,17 +131,103 @@ main(int argc, char **argv)
 			return 1;
 		}
 
-		/* check multiplication */
-		t1.i128 = (int128) x * (int128) y;
-
-		t2.hl.hi = t2.hl.lo = 0;
-		int128_add_int64_mul_int64(&t2.I128, x, y);
+		/* check 128-bit signed addition */
+		t1.hl.hi = x;
+		t1.hl.lo = y;
+		t2 = t1;
+		t3.hl.hi = z;
+		t3.hl.lo = w;
+		t1.i128 += t3.i128;
+		int128_add_int128(&t2.I128, t3.I128);
 
 		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
 		{
-			printf("%016" PRIx64 " * %016" PRIx64 "\n", x, y);
+			printf(INT128_HEX_FORMAT " + " INT128_HEX_FORMAT "\n", x, y, z, w);
 			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
 			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+
+		/* check unsigned subtraction */
+		t1.hl.hi = x;
+		t1.hl.lo = y;
+		t2 = t1;
+		t1.i128 -= (int128) (uint64) z;
+		int128_sub_uint64(&t2.I128, (uint64) z);
+
+		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
+		{
+			printf(INT128_HEX_FORMAT " - unsigned %016" PRIx64 "\n", x, y, z);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+
+		/* check signed subtraction */
+		t1.hl.hi = x;
+		t1.hl.lo = y;
+		t2 = t1;
+		t1.i128 -= (int128) z;
+		int128_sub_int64(&t2.I128, z);
+
+		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
+		{
+			printf(INT128_HEX_FORMAT " - signed %016" PRIx64 "\n", x, y, z);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+
+		/* check 64x64-bit multiply-add */
+		t1.hl.hi = x;
+		t1.hl.lo = y;
+		t2 = t1;
+		t1.i128 += (int128) z * (int128) w;
+		int128_add_int64_mul_int64(&t2.I128, z, w);
+
+		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
+		{
+			printf(INT128_HEX_FORMAT " + %016" PRIx64 " * %016" PRIx64 "\n", x, y, z, w);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+
+		/* check 64x64-bit multiply-subtract */
+		t1.hl.hi = x;
+		t1.hl.lo = y;
+		t2 = t1;
+		t1.i128 -= (int128) z * (int128) w;
+		int128_sub_int64_mul_int64(&t2.I128, z, w);
+
+		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
+		{
+			printf(INT128_HEX_FORMAT " - %016" PRIx64 " * %016" PRIx64 "\n", x, y, z, w);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+
+		/* check 128/32-bit division */
+		t3.hl.hi = x;
+		t3.hl.lo = y;
+		t1.i128 = t3.i128 / z32;
+		r1 = (int32) (t3.i128 % z32);
+		t2 = t3;
+		int128_div_mod_int32(&t2.I128, z32, &r2);
+
+		if (t1.hl.hi != t2.hl.hi || t1.hl.lo != t2.hl.lo)
+		{
+			printf(INT128_HEX_FORMAT " / signed %08X\n", t3.hl.hi, t3.hl.lo, z32);
+			printf("native = " INT128_HEX_FORMAT "\n", t1.hl.hi, t1.hl.lo);
+			printf("result = " INT128_HEX_FORMAT "\n", t2.hl.hi, t2.hl.lo);
+			return 1;
+		}
+		if (r1 != r2)
+		{
+			printf(INT128_HEX_FORMAT " %% signed %08X\n", t3.hl.hi, t3.hl.lo, z32);
+			printf("native = %08X\n", r1);
+			printf("result = %08X\n", r2);
 			return 1;
 		}
 
@@ -144,7 +235,7 @@ main(int argc, char **argv)
 		t1.hl.hi = x;
 		t1.hl.lo = y;
 		t2.hl.hi = z;
-		t2.hl.lo = pg_prng_uint64(&pg_global_prng_state);
+		t2.hl.lo = w;
 
 		if (my_int128_compare(t1.i128, t2.i128) !=
 			int128_compare(t1.I128, t2.I128))

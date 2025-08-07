@@ -680,6 +680,25 @@ SELECT sum2(q1,q2) FROM int8_tbl;
  18271560493827981
 (1 row)
 
+-- sanity checks
+SELECT sum(q1+q2), sum(q1)+sum(q2) FROM int8_tbl;
+        sum        |     ?column?      
+-------------------+-------------------
+ 18271560493827981 | 18271560493827981
+(1 row)
+
+SELECT sum(q1-q2), sum(q2-q1), sum(q1)-sum(q2) FROM int8_tbl;
+       sum        |        sum        |     ?column?     
+------------------+-------------------+------------------
+ 9135780246913245 | -9135780246913245 | 9135780246913245
+(1 row)
+
+SELECT sum(q1*2000), sum(-q1*2000), 2000*sum(q1) FROM int8_tbl;
+         sum          |          sum          |       ?column?       
+----------------------+-----------------------+----------------------
+ 27407340740741226000 | -27407340740741226000 | 27407340740741226000
+(1 row)
+
 -- test for outer-level aggregates
 -- this should work
 select ten, sum(distinct four) from onek a
