@@ -953,11 +953,14 @@ CheckpointerShmemSize(void)
 	Size		size;
 
 	/*
-	 * Currently, the size of the requests[] array is arbitrarily set equal to
-	 * NBuffers.  This may prove too large or small ...
+	 * The size of the requests[] array is arbitrarily set equal to NBuffers.
+	 * But there is a cap of MAX_CHECKPOINT_REQUESTS to prevent accumulating
+	 * too many checkpoint requests in the ring buffer.
 	 */
 	size = offsetof(CheckpointerShmemStruct, requests);
-	size = add_size(size, mul_size(NBuffers, sizeof(CheckpointerRequest)));
+	size = add_size(size, mul_size(Min(NBuffers,
+									   MAX_CHECKPOINT_REQUESTS),
+								   sizeof(CheckpointerRequest)));
 
 	return size;
 }
