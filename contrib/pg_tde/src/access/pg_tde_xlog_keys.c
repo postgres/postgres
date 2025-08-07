@@ -22,7 +22,7 @@
 #endif
 
 #define PG_TDE_WAL_KEY_FILE_MAGIC 0x014B4557	/* version ID value = WEK 01 */
-#define PG_TDE_WAL_KEY_FILE_NAME "wal_encryption_keys"
+#define PG_TDE_WAL_KEY_FILE_NAME "wal_keys"
 
 #define MaxXLogRecPtr (~(XLogRecPtr)0)
 
