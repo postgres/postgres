@@ -3467,6 +3467,13 @@ installed_targets = [
   ecpg_targets,
 ]
 
+if oauth_flow_supported
+  installed_targets += [
+    libpq_oauth_so,
+    libpq_oauth_st,
+  ]
+endif
+
 # all targets that require building code
 all_built = [
   installed_targets,
