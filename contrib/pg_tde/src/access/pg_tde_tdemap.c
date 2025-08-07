@@ -39,6 +39,7 @@
 #endif
 
 #define PG_TDE_FILEMAGIC			0x03454454	/* version ID value = TDE 03 */
+#define PG_TDE_MAP_FILENAME			"%d_keys"
 
 #define MAP_ENTRY_SIZE			sizeof(TDEMapEntry)
 #define TDE_FILE_HEADER_SIZE	sizeof(TDEFileHeader)
@@ -49,6 +50,19 @@ typedef struct TDEFileHeader
 	TDESignedPrincipalKeyInfo signed_key_info;
 } TDEFileHeader;
 
+/* We do not need the dbOid since the entries are stored in a file per db */
+typedef struct TDEMapEntry
+{
+	Oid			spcOid;
+	RelFileNumber relNumber;
+	uint32		type;
+	InternalKey enc_key;
+	/* IV and tag used when encrypting the key itself */
+	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
+	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
+} TDEMapEntry;
+
+static void pg_tde_set_db_file_path(Oid dbOid, char *path);
 static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, char *db_map_path, TDEMapEntry *map_entry);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
@@ -359,6 +373,15 @@ pg_tde_delete_principal_key(Oid dbOid)
 }
 
 #endif							/* !FRONTEND */
+
+static void
+pg_tde_set_db_file_path(Oid dbOid, char *path)
+{
+	char	   *fname = psprintf(PG_TDE_MAP_FILENAME, dbOid);
+
+	join_path_components(path, pg_tde_get_data_dir(), fname);
+	pfree(fname);
+}
 
 void
 pg_tde_sign_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, const TDEPrincipalKey *principal_key)

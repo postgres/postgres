@@ -5,7 +5,6 @@
 
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_principal_key.h"
-#include "common/pg_tde_utils.h"
 
 typedef struct WalEncryptionKey
 {
@@ -15,21 +14,6 @@ typedef struct WalEncryptionKey
 
 	XLogRecPtr	start_lsn;
 } WalEncryptionKey;
-
-typedef struct WalKeyFileEntry
-{
-	uint32		type;
-	WalEncryptionKey enc_key;
-	/* IV and tag used when encrypting the key itself */
-	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
-	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
-} WalKeyFileEntry;
-
-typedef struct WalKeyFileHeader
-{
-	int32		file_version;
-	TDESignedPrincipalKeyInfo signed_key_info;
-} WalKeyFileHeader;
 
 /*
  * TODO: For now it's a simple linked list which is no good. So consider having

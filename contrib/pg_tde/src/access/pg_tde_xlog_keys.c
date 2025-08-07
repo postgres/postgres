@@ -26,6 +26,21 @@
 
 #define MaxXLogRecPtr (~(XLogRecPtr)0)
 
+typedef struct WalKeyFileHeader
+{
+	int32		file_version;
+	TDESignedPrincipalKeyInfo signed_key_info;
+} WalKeyFileHeader;
+
+typedef struct WalKeyFileEntry
+{
+	uint32		type;
+	WalEncryptionKey enc_key;
+	/* IV and tag used when encrypting the key itself */
+	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
+	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
+} WalKeyFileEntry;
+
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
