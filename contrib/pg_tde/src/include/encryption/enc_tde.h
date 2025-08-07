@@ -7,7 +7,7 @@
 
 #include "access/pg_tde_tdemap.h"
 
-extern void pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type);
+extern void pg_tde_generate_internal_key(InternalKey *int_key);
 extern void pg_tde_stream_crypt(const char *iv_prefix,
 								uint32 start_offset,
 								const char *data,

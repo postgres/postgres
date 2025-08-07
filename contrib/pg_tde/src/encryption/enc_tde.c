@@ -27,11 +27,8 @@ iv_prefix_debug(const char *iv_prefix, char *out_hex)
 #endif
 
 void
-pg_tde_generate_internal_key(InternalKey *int_key, TDEMapEntryType entry_type)
+pg_tde_generate_internal_key(InternalKey *int_key)
 {
-	int_key->type = entry_type;
-	int_key->start_lsn = InvalidXLogRecPtr;
-
 	if (!RAND_bytes(int_key->key, INTERNAL_KEY_LEN))
 		ereport(ERROR,
 				errcode(ERRCODE_INTERNAL_ERROR),

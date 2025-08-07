@@ -22,9 +22,6 @@ typedef struct InternalKey
 {
 	uint8		key[INTERNAL_KEY_LEN];
 	uint8		base_iv[INTERNAL_KEY_IV_LEN];
-	uint32		type;
-
-	XLogRecPtr	start_lsn;
 } InternalKey;
 
 #define MAP_ENTRY_IV_SIZE 16

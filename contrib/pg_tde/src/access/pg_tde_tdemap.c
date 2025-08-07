@@ -56,7 +56,25 @@ typedef struct TDEMapEntry
 	Oid			spcOid;
 	RelFileNumber relNumber;
 	uint32		type;
-	InternalKey enc_key;
+
+	/*
+	 * This anonymous struct is here to ensure the same alignment as before
+	 * the unused fields were removed from InternalKey.
+	 */
+	struct
+	{
+		InternalKey enc_key;
+
+		/*
+		 * These fields were added here to keep the file format the same after
+		 * some fields were removed from InternalKey. Feel free to use them
+		 * for something, but beware that existing files may contain
+		 * unexpected values here.
+		 */
+		uint32		_unused1;	/* Will be 1 in existing files entries. */
+		uint64		_unused2;	/* Will be 0 in existing files entries. */
+	};
+
 	/* IV and tag used when encrypting the key itself */
 	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
 	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
@@ -210,9 +228,6 @@ pg_tde_free_key_map_entry(const RelFileLocator rlocator)
 		{
 			TDEMapEntry empty_map_entry = {
 				.type = MAP_ENTRY_EMPTY,
-				.enc_key = {
-					.type = MAP_ENTRY_EMPTY,
-				},
 			};
 
 			pg_tde_write_one_map_entry(map_fd, &empty_map_entry, &prev_pos, db_map_path);
@@ -407,8 +422,15 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 {
 	map_entry->spcOid = rlocator->spcOid;
 	map_entry->relNumber = rlocator->relNumber;
-	map_entry->type = rel_key_data->type;
+	map_entry->type = TDE_KEY_TYPE_SMGR;
 	map_entry->enc_key = *rel_key_data;
+
+	/*
+	 * We set these fields here so that existing file entries will be
+	 * consistent and future use of these fields easier.
+	 */
+	map_entry->_unused1 = 1;
+	map_entry->_unused2 = 0;
 
 	if (!RAND_bytes(map_entry->entry_iv, MAP_ENTRY_IV_SIZE))
 		ereport(ERROR,
