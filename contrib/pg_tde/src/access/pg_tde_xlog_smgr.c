@@ -207,13 +207,11 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 	 */
 	if (encrypt_xlog)
 	{
-		pg_tde_create_wal_key(&EncryptionKey, &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
-							  TDE_KEY_TYPE_WAL_ENCRYPTED);
+		pg_tde_create_wal_key(&EncryptionKey, TDE_KEY_TYPE_WAL_ENCRYPTED);
 	}
 	else if (key && key->type == TDE_KEY_TYPE_WAL_ENCRYPTED)
 	{
-		pg_tde_create_wal_key(&EncryptionKey, &GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID),
-							  TDE_KEY_TYPE_WAL_UNENCRYPTED);
+		pg_tde_create_wal_key(&EncryptionKey, TDE_KEY_TYPE_WAL_UNENCRYPTED);
 	}
 	else if (key)
 	{

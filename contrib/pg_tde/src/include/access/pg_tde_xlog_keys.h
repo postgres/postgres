@@ -2,7 +2,6 @@
 #define PG_TDE_XLOG_KEYS_H
 
 #include "access/xlog_internal.h"
-#include "storage/relfilelocator.h"
 
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_principal_key.h"
@@ -19,8 +18,6 @@ typedef struct WalEncryptionKey
 
 typedef struct WalKeyFileEntry
 {
-	Oid			spcOid;
-	RelFileNumber relNumber;
 	uint32		type;
 	WalEncryptionKey enc_key;
 	/* IV and tag used when encrypting the key itself */
@@ -50,7 +47,7 @@ typedef struct WALKeyCacheRec
 } WALKeyCacheRec;
 
 extern int	pg_tde_count_wal_keys_in_file(void);
-extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, const RelFileLocator *newrlocator, TDEMapEntryType entry_type);
+extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, TDEMapEntryType entry_type);
 extern void pg_tde_delete_server_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(XLogRecPtr start_lsn);
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);

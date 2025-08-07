@@ -31,16 +31,16 @@ static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(WalEncryptionKey *cached_key, XLogRecPtr start_lsn);
 static WalEncryptionKey *pg_tde_decrypt_wal_key(TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
-static void pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const WalEncryptionKey *rel_key_data);
+static void pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry, const TDEPrincipalKey *principal_key, const WalEncryptionKey *rel_key_data);
 static int	pg_tde_open_wal_key_file_basic(const char *filename, int flags, bool ignore_missing);
 static int	pg_tde_open_wal_key_file_read(const char *filename, bool ignore_missing, off_t *curr_pos);
 static int	pg_tde_open_wal_key_file_write(const char *filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
 static bool pg_tde_read_one_wal_key_file_entry(int fd, WalKeyFileEntry *entry, off_t *offset);
-static void pg_tde_read_one_wal_key_file_entry2(int fd, int32 key_index, WalKeyFileEntry *entry, Oid databaseId);
+static void pg_tde_read_one_wal_key_file_entry2(int fd, int32 key_index, WalKeyFileEntry *entry);
 static void pg_tde_wal_key_file_header_read(const char *filename, int fd, WalKeyFileHeader *fheader, off_t *bytes_read);
 static int	pg_tde_wal_key_file_header_write(const char *filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_write_one_wal_key_file_entry(int fd, const WalKeyFileEntry *entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator, const WalEncryptionKey *rel_key_data, TDEPrincipalKey *principal_key);
+static void pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data, TDEPrincipalKey *principal_key);
 
 static char *
 get_wal_key_file_path(void)
@@ -129,15 +129,13 @@ pg_tde_wal_last_key_set_lsn(XLogRecPtr lsn)
  * with the actual lsn by the first WAL write.
  */
 void
-pg_tde_create_wal_key(WalEncryptionKey *rel_key_data,
-					  const RelFileLocator *newrlocator,
-					  TDEMapEntryType entry_type)
+pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, TDEMapEntryType entry_type)
 {
 	TDEPrincipalKey *principal_key;
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_EXCLUSIVE);
 
-	principal_key = GetPrincipalKey(newrlocator->dbOid, LW_EXCLUSIVE);
+	principal_key = GetPrincipalKey(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 	if (principal_key == NULL)
 	{
 		ereport(ERROR,
@@ -160,7 +158,7 @@ pg_tde_create_wal_key(WalEncryptionKey *rel_key_data,
 				errmsg("could not generate IV for WAL encryption key: %s",
 					   ERR_error_string(ERR_get_error(), NULL)));
 
-	pg_tde_write_wal_key_file_entry(newrlocator, rel_key_data, principal_key);
+	pg_tde_write_wal_key_file_entry(rel_key_data, principal_key);
 
 #ifdef FRONTEND
 	free(principal_key);
@@ -186,7 +184,6 @@ pg_tde_get_wal_cache_keys(void)
 WalEncryptionKey *
 pg_tde_read_last_wal_key(void)
 {
-	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
@@ -197,7 +194,7 @@ pg_tde_read_last_wal_key(void)
 	off_t		fsize;
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
-	principal_key = GetPrincipalKey(rlocator.dbOid, LW_EXCLUSIVE);
+	principal_key = GetPrincipalKey(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 	if (principal_key == NULL)
 	{
 		LWLockRelease(lock_pk);
@@ -219,7 +216,7 @@ pg_tde_read_last_wal_key(void)
 	}
 
 	file_idx = ((fsize - sizeof(WalKeyFileHeader)) / sizeof(WalKeyFileEntry)) - 1;
-	pg_tde_read_one_wal_key_file_entry2(fd, file_idx, &entry, rlocator.dbOid);
+	pg_tde_read_one_wal_key_file_entry2(fd, file_idx, &entry);
 
 	rel_key_data = pg_tde_decrypt_wal_key(principal_key, &entry);
 #ifdef FRONTEND
@@ -235,7 +232,6 @@ pg_tde_read_last_wal_key(void)
 WALKeyCacheRec *
 pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 {
-	RelFileLocator rlocator = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	TDEPrincipalKey *principal_key;
@@ -244,7 +240,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 	WALKeyCacheRec *return_wal_rec = NULL;
 
 	LWLockAcquire(lock_pk, LW_SHARED);
-	principal_key = GetPrincipalKey(rlocator.dbOid, LW_SHARED);
+	principal_key = GetPrincipalKey(GLOBAL_DATA_TDE_OID, LW_SHARED);
 	if (principal_key == NULL)
 	{
 		LWLockRelease(lock_pk);
@@ -283,7 +279,7 @@ pg_tde_fetch_wal_keys(XLogRecPtr start_lsn)
 	{
 		WalKeyFileEntry entry;
 
-		pg_tde_read_one_wal_key_file_entry2(fd, file_idx, &entry, rlocator.dbOid);
+		pg_tde_read_one_wal_key_file_entry2(fd, file_idx, &entry);
 
 		/*
 		 * Skip new (just created but not updated by write) and invalid keys
@@ -496,8 +492,7 @@ pg_tde_read_one_wal_key_file_entry(int fd,
 static void
 pg_tde_read_one_wal_key_file_entry2(int fd,
 									int32 key_index,
-									WalKeyFileEntry *entry,
-									Oid databaseId)
+									WalKeyFileEntry *entry)
 {
 	off_t		read_pos;
 
@@ -512,16 +507,13 @@ pg_tde_read_one_wal_key_file_entry2(int fd,
 }
 
 static void
-pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator,
-								const WalEncryptionKey *rel_key_data,
+pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 								TDEPrincipalKey *principal_key)
 {
 	int			fd;
 	off_t		curr_pos = 0;
 	WalKeyFileEntry write_entry;
 	TDESignedPrincipalKeyInfo signed_key_Info;
-
-	Assert(rlocator);
 
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
@@ -552,7 +544,7 @@ pg_tde_write_wal_key_file_entry(const RelFileLocator *rlocator,
 	}
 
 	/* Initialize WAL key file entry and encrypt key */
-	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, rlocator, rel_key_data);
+	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, rel_key_data);
 
 	/* Write the given entry at curr_pos; i.e. the free entry. */
 	pg_tde_write_one_wal_key_file_entry(fd, &write_entry, &curr_pos, get_wal_key_file_path());
@@ -610,11 +602,8 @@ pg_tde_write_one_wal_key_file_entry(int fd,
 static void
 pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry,
 									 const TDEPrincipalKey *principal_key,
-									 const RelFileLocator *rlocator,
 									 const WalEncryptionKey *rel_key_data)
 {
-	entry->spcOid = rlocator->spcOid;
-	entry->relNumber = rlocator->relNumber;
 	entry->type = rel_key_data->type;
 	entry->enc_key = *rel_key_data;
 
@@ -663,7 +652,6 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 		WalEncryptionKey *key;
 		WalKeyFileEntry read_map_entry;
 		WalKeyFileEntry write_map_entry;
-		RelFileLocator rloc = GLOBAL_SPACE_RLOCATOR(XLOG_TDE_OID);
 
 		if (!pg_tde_read_one_wal_key_file_entry(old_fd, &read_map_entry, &old_curr_pos))
 			break;
@@ -673,7 +661,7 @@ pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
 
 		/* Decrypt and re-encrypt key */
 		key = pg_tde_decrypt_wal_key(principal_key, &read_map_entry);
-		pg_tde_initialize_wal_key_file_entry(&write_map_entry, new_principal_key, &rloc, key);
+		pg_tde_initialize_wal_key_file_entry(&write_map_entry, new_principal_key, key);
 
 		pg_tde_write_one_wal_key_file_entry(new_fd, &write_map_entry, &new_curr_pos, tmp_path);
 
