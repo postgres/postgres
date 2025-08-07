@@ -81,7 +81,7 @@ typedef struct TDEMapEntry
 } TDEMapEntry;
 
 static void pg_tde_set_db_file_path(Oid dbOid, char *path);
-static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, char *db_map_path, TDEMapEntry *map_entry);
+static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, char *db_map_path, TDEMapEntry *map_entry);
 static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
 static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
@@ -224,7 +224,7 @@ pg_tde_free_key_map_entry(const RelFileLocator rlocator)
 		if (!pg_tde_read_one_map_entry(map_fd, &map_entry, &curr_pos))
 			break;
 
-		if (map_entry.type != MAP_ENTRY_EMPTY && map_entry.spcOid == rlocator.spcOid && map_entry.relNumber == rlocator.relNumber)
+		if (map_entry.type == TDE_KEY_TYPE_SMGR && map_entry.spcOid == rlocator.spcOid && map_entry.relNumber == rlocator.relNumber)
 		{
 			TDEMapEntry empty_map_entry = {
 				.type = MAP_ENTRY_EMPTY,
@@ -533,7 +533,7 @@ pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *re
  * rlocator.
  */
 static bool
-pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, char *db_map_path, TDEMapEntry *map_entry)
+pg_tde_find_map_entry(const RelFileLocator *rlocator, char *db_map_path, TDEMapEntry *map_entry)
 {
 	File		map_fd;
 	off_t		curr_pos = 0;
@@ -545,7 +545,7 @@ pg_tde_find_map_entry(const RelFileLocator *rlocator, TDEMapEntryType key_type, 
 
 	while (pg_tde_read_one_map_entry(map_fd, map_entry, &curr_pos))
 	{
-		if (map_entry->type == key_type && map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber)
+		if (map_entry->type == TDE_KEY_TYPE_SMGR && map_entry->spcOid == rlocator->spcOid && map_entry->relNumber == rlocator->relNumber)
 		{
 			found = true;
 			break;
@@ -848,7 +848,7 @@ pg_tde_has_smgr_key(RelFileLocator rel)
 
 	LWLockAcquire(tde_lwlock_enc_keys(), LW_SHARED);
 
-	result = pg_tde_find_map_entry(&rel, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry);
+	result = pg_tde_find_map_entry(&rel, db_map_path, &map_entry);
 
 	LWLockRelease(tde_lwlock_enc_keys());
 	return result;
@@ -875,7 +875,7 @@ pg_tde_get_smgr_key(RelFileLocator rel)
 
 	LWLockAcquire(lock_pk, LW_SHARED);
 
-	if (!pg_tde_find_map_entry(&rel, TDE_KEY_TYPE_SMGR, db_map_path, &map_entry))
+	if (!pg_tde_find_map_entry(&rel, db_map_path, &map_entry))
 	{
 		LWLockRelease(lock_pk);
 		return NULL;
