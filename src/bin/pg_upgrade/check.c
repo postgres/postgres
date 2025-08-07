@@ -1713,7 +1713,7 @@ check_for_not_null_inheritance(ClusterInfo *cluster)
 				 "If the parent column(s) are NOT NULL, then the child column must\n"
 				 "also be marked NOT NULL, or the upgrade will fail.\n"
 				 "You can fix this by running\n"
-				 "  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+				 "    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 				 "on each column listed in the file:\n"
 				 "    %s", report.path);
 	}
