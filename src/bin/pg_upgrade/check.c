@@ -1152,7 +1152,7 @@ check_for_not_null_inheritance(ClusterInfo *cluster)
 		for (int i = 0; i < ntup; i++)
 		{
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %m", output_path);
+				pg_fatal("could not open file \"%s\": %s", output_path, strerror(errno));
 			if (!db_used)
 			{
 				fprintf(script, "In database: %s\n", active_db->db_name);
