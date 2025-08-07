@@ -6,15 +6,6 @@
 #include "catalog/tde_principal_key.h"
 #include "common/pg_tde_utils.h"
 
-typedef enum
-{
-	MAP_ENTRY_EMPTY = 0,
-	TDE_KEY_TYPE_SMGR = 1,
-	TDE_KEY_TYPE_WAL_UNENCRYPTED = 2,
-	TDE_KEY_TYPE_WAL_ENCRYPTED = 3,
-	TDE_KEY_TYPE_WAL_INVALID = 4,
-} TDEMapEntryType;
-
 #define INTERNAL_KEY_LEN 16
 #define INTERNAL_KEY_IV_LEN 16
 

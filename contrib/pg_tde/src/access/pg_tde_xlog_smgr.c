@@ -44,7 +44,7 @@ static void *EncryptionCryptCtx = NULL;
 /* TODO: can be swapped out to the disk */
 static WalEncryptionKey EncryptionKey =
 {
-	.type = MAP_ENTRY_EMPTY,
+	.type = WAL_KEY_TYPE_INVALID,
 	.wal_start = {.tli = 0,.lsn = InvalidXLogRecPtr},
 };
 
@@ -234,11 +234,11 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 	 */
 	if (encrypt_xlog)
 	{
-		pg_tde_create_wal_key(&EncryptionKey, TDE_KEY_TYPE_WAL_ENCRYPTED);
+		pg_tde_create_wal_key(&EncryptionKey, WAL_KEY_TYPE_ENCRYPTED);
 	}
-	else if (key && key->type == TDE_KEY_TYPE_WAL_ENCRYPTED)
+	else if (key && key->type == WAL_KEY_TYPE_ENCRYPTED)
 	{
-		pg_tde_create_wal_key(&EncryptionKey, TDE_KEY_TYPE_WAL_UNENCRYPTED);
+		pg_tde_create_wal_key(&EncryptionKey, WAL_KEY_TYPE_UNENCRYPTED);
 	}
 	else if (key)
 	{
@@ -304,7 +304,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 	 *
 	 * This func called with WALWriteLock held, so no need in any extra sync.
 	 */
-	if (EncryptionKey.type != MAP_ENTRY_EMPTY && TDEXLogGetEncKeyLsn() == 0)
+	if (EncryptionKey.type != WAL_KEY_TYPE_INVALID && TDEXLogGetEncKeyLsn() == 0)
 	{
 		WalLocation loc = {.tli = tli};
 
@@ -315,7 +315,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 		TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
 	}
 
-	if (EncryptionKey.type == TDE_KEY_TYPE_WAL_ENCRYPTED)
+	if (EncryptionKey.type == WAL_KEY_TYPE_ENCRYPTED)
 		return TDEXLogWriteEncryptedPages(fd, buf, count, offset, tli, segno);
 	else
 		return pg_pwrite(fd, buf, count, offset);
@@ -389,11 +389,11 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 		elog(DEBUG1, "WAL key %u_%X/%X - %u_%X/%X, encrypted: %s",
 			 curr_key->start.tli, LSN_FORMAT_ARGS(curr_key->start.lsn),
 			 curr_key->end.tli, LSN_FORMAT_ARGS(curr_key->end.lsn),
-			 curr_key->key.type == TDE_KEY_TYPE_WAL_ENCRYPTED ? "yes" : "no");
+			 curr_key->key.type == WAL_KEY_TYPE_ENCRYPTED ? "yes" : "no");
 #endif
 
 		if (wal_location_valid(curr_key->key.wal_start) &&
-			curr_key->key.type == TDE_KEY_TYPE_WAL_ENCRYPTED)
+			curr_key->key.type == WAL_KEY_TYPE_ENCRYPTED)
 		{
 			/*
 			 * Check if the key's range overlaps with the buffer's and decypt

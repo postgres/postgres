@@ -6,6 +6,13 @@
 #include "access/pg_tde_tdemap.h"
 #include "catalog/tde_principal_key.h"
 
+typedef enum
+{
+	WAL_KEY_TYPE_INVALID = 0,
+	WAL_KEY_TYPE_UNENCRYPTED = 1,
+	WAL_KEY_TYPE_ENCRYPTED = 2,
+} WalEncryptionKeyType;
+
 typedef struct WalLocation
 {
 	XLogRecPtr	lsn;
@@ -65,7 +72,7 @@ typedef struct WALKeyCacheRec
 } WALKeyCacheRec;
 
 extern int	pg_tde_count_wal_keys_in_file(void);
-extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, TDEMapEntryType entry_type);
+extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry_type);
 extern void pg_tde_delete_server_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(WalLocation start);
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);

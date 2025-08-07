@@ -114,7 +114,7 @@ pg_tde_wal_last_key_set_location(WalLocation loc)
 
 		if (wal_location_cmp(prev_entry.enc_key.wal_start, loc) >= 0)
 		{
-			prev_entry.enc_key.type = TDE_KEY_TYPE_WAL_INVALID;
+			prev_entry.enc_key.type = WAL_KEY_TYPE_INVALID;
 
 			if (pg_pwrite(fd, &prev_entry, sizeof(WalKeyFileEntry), prev_key_pos) != sizeof(WalKeyFileEntry))
 			{
@@ -145,7 +145,7 @@ pg_tde_wal_last_key_set_location(WalLocation loc)
  * with the actual lsn by the first WAL write.
  */
 void
-pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, TDEMapEntryType entry_type)
+pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry_type)
 {
 	TDEPrincipalKey *principal_key;
 
@@ -159,7 +159,7 @@ pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, TDEMapEntryType entry_type
 				errhint("Use pg_tde_set_server_key_using_global_key_provider() to configure one."));
 	}
 
-	/* TODO: no need in generating key if TDE_KEY_TYPE_WAL_UNENCRYPTED */
+	/* TODO: no need in generating key if WAL_KEY_TYPE_UNENCRYPTED */
 	rel_key_data->type = entry_type;
 	rel_key_data->wal_start.lsn = InvalidXLogRecPtr;
 	rel_key_data->wal_start.tli = 0;
@@ -302,8 +302,8 @@ pg_tde_fetch_wal_keys(WalLocation start)
 		 * Skip new (just created but not updated by write) and invalid keys
 		 */
 		if (wal_location_valid(entry.enc_key.wal_start) &&
-			(entry.enc_key.type == TDE_KEY_TYPE_WAL_UNENCRYPTED ||
-			 entry.enc_key.type == TDE_KEY_TYPE_WAL_ENCRYPTED) &&
+			(entry.enc_key.type == WAL_KEY_TYPE_UNENCRYPTED ||
+			 entry.enc_key.type == WAL_KEY_TYPE_ENCRYPTED) &&
 			wal_location_cmp(entry.enc_key.wal_start, start) >= 0)
 		{
 			WalEncryptionKey *rel_key_data = pg_tde_decrypt_wal_key(principal_key, &entry);
