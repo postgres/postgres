@@ -154,7 +154,7 @@ index_getattr(IndexTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 		if (att_isnull(attnum - 1, (bits8 *) tup + sizeof(IndexTupleData)))
 		{
 			*isnull = true;
-			return (Datum) NULL;
+			return (Datum) 0;
 		}
 		else
 			return nocache_index_getattr(tup, attnum, tupleDesc);

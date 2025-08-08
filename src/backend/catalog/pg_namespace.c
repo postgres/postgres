@@ -76,7 +76,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 	for (i = 0; i < Natts_pg_namespace; i++)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;
+		values[i] = (Datum) 0;
 	}
 
 	nspoid = GetNewOidWithIndex(nspdesc, NamespaceOidIndexId,

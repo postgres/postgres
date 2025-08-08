@@ -87,7 +87,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	for (i = 0; i < Natts_pg_conversion; i++)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;
+		values[i] = (Datum) 0;
 	}
 
 	/* form a tuple */

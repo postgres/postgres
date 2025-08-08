@@ -630,7 +630,7 @@ readDatum(bool typbyval)
 		}
 	}
 	else if (length <= 0)
-		res = (Datum) NULL;
+		res = (Datum) 0;
 	else
 	{
 		s = (char *) palloc(length);

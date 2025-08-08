@@ -654,7 +654,7 @@ AggregateCreate(const char *aggName,
 	for (i = 0; i < Natts_pg_aggregate; i++)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;
+		values[i] = (Datum) 0;
 		replaces[i] = true;
 	}
 	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);

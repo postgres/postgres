@@ -84,7 +84,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, false);
 	}
-	else if (!LTG_ISALLTRUE(entry->key))
+	else if (!LTG_ISALLTRUE(DatumGetPointer(entry->key)))
 	{
 		int32		i;
 		ltree_gist *key;
