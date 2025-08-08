@@ -1377,6 +1377,53 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 }
 
 /*
+ * If there is no work to do on any of the descriptors in the multiplexer, then
+ * this function must ensure that the multiplexer is not readable.
+ *
+ * Unlike epoll descriptors, kqueue descriptors only transition from readable to
+ * unreadable when kevent() is called and finds nothing, after removing
+ * level-triggered conditions that have gone away. We therefore need a dummy
+ * kevent() call after operations might have been performed on the monitored
+ * sockets or timer_fd. Any event returned is ignored here, but it also remains
+ * queued (being level-triggered) and leaves the descriptor readable. This is a
+ * no-op for epoll descriptors.
+ */
+static bool
+comb_multiplexer(struct async_ctx *actx)
+{
+#if defined(HAVE_SYS_EPOLL_H)
+	/* The epoll implementation doesn't hold onto stale events. */
+	return true;
+#elif defined(HAVE_SYS_EVENT_H)
+	struct timespec timeout = {0};
+	struct kevent ev;
+
+	/*
+	 * Try to read a single pending event. We can actually ignore the result:
+	 * either we found an event to process, in which case the multiplexer is
+	 * correctly readable for that event at minimum, and it doesn't matter if
+	 * there are any stale events; or we didn't find any, in which case the
+	 * kernel will have discarded any stale events as it traveled to the end
+	 * of the queue.
+	 *
+	 * Note that this depends on our registrations being level-triggered --
+	 * even the timer, so we use a chained kqueue for that instead of an
+	 * EVFILT_TIMER on the top-level mux. If we used edge-triggered events,
+	 * this call would improperly discard them.
+	 */
+	if (kevent(actx->mux, NULL, 0, &ev, 1, &timeout) < 0)
+	{
+		actx_error(actx, "could not comb kqueue: %m");
+		return false;
+	}
+
+	return true;
+#else
+#error comb_multiplexer is not implemented on this platform
+#endif
+}
+
+/*
  * Enables or disables the timer in the multiplexer set. The timeout value is
  * in milliseconds (negative values disable the timer).
  *
@@ -2755,13 +2802,21 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 
 					if (status == PGRES_POLLING_FAILED)
 						goto error_return;
-					else if (status != PGRES_POLLING_OK)
-					{
-						/* not done yet */
-						return status;
-					}
+					else if (status == PGRES_POLLING_OK)
+						break;	/* done! */
 
-					break;
+					/*
+					 * This request is still running.
+					 *
+					 * Make sure that stale events don't cause us to come back
+					 * early. (Currently, this can occur only with kqueue.) If
+					 * this is forgotten, the multiplexer can get stuck in a
+					 * signaled state and we'll burn CPU cycles pointlessly.
+					 */
+					if (!comb_multiplexer(actx))
+						goto error_return;
+
+					return status;
 				}
 
 			case OAUTH_STEP_WAIT_INTERVAL:
