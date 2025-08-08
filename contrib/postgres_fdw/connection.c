@@ -464,7 +464,7 @@ pgfdw_security_check(const char **keywords, const char **values, UserMapping *us
 	 * assume that UseScramPassthrough is also true since SCRAM options are
 	 * only set when UseScramPassthrough is enabled.
 	 */
-	if (MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
 		return;
 
 	ereport(ERROR,
@@ -570,7 +570,7 @@ connect_pg_server(ForeignServer *server, UserMapping *user)
 		n++;
 
 		/* Add required SCRAM pass-through connection options if it's enabled. */
-		if (MyProcPort->has_scram_keys && UseScramPassthrough(server, user))
+		if (MyProcPort != NULL && MyProcPort->has_scram_keys && UseScramPassthrough(server, user))
 		{
 			int			len;
 			int			encoded_len;
@@ -748,7 +748,7 @@ check_conn_params(const char **keywords, const char **values, UserMapping *user)
 	 * assume that UseScramPassthrough is also true since SCRAM options are
 	 * only set when UseScramPassthrough is enabled.
 	 */
-	if (MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && pgfdw_has_required_scram_options(keywords, values))
 		return;
 
 	ereport(ERROR,
@@ -2559,7 +2559,7 @@ pgfdw_has_required_scram_options(const char **keywords, const char **values)
 		}
 	}
 
-	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort->has_scram_keys;
+	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort != NULL && MyProcPort->has_scram_keys;
 
 	return (has_scram_keys && has_require_auth);
 }

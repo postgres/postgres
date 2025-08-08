@@ -2643,7 +2643,7 @@ dblink_connstr_has_required_scram_options(const char *connstr)
 		PQconninfoFree(options);
 	}
 
-	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort->has_scram_keys;
+	has_scram_keys = has_scram_client_key && has_scram_server_key && MyProcPort != NULL && MyProcPort->has_scram_keys;
 
 	return (has_scram_keys && has_require_auth);
 }
@@ -2676,7 +2676,7 @@ dblink_security_check(PGconn *conn, const char *connname, const char *connstr)
 	 * only added if UseScramPassthrough is set, and the user is not allowed
 	 * to add the SCRAM keys on fdw and user mapping options.
 	 */
-	if (MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
 		return;
 
 #ifdef ENABLE_GSS
@@ -2749,7 +2749,7 @@ dblink_connstr_check(const char *connstr)
 	if (dblink_connstr_has_pw(connstr))
 		return;
 
-	if (MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
+	if (MyProcPort != NULL && MyProcPort->has_scram_keys && dblink_connstr_has_required_scram_options(connstr))
 		return;
 
 #ifdef ENABLE_GSS
@@ -2896,7 +2896,7 @@ get_connect_string(const char *servername)
 		 * the user overwrites these options we can ereport on
 		 * dblink_connstr_check and dblink_security_check.
 		 */
-		if (MyProcPort->has_scram_keys && UseScramPassthrough(foreign_server, user_mapping))
+		if (MyProcPort != NULL && MyProcPort->has_scram_keys && UseScramPassthrough(foreign_server, user_mapping))
 			appendSCRAMKeysInfo(&buf);
 
 		foreach(cell, fdw->options)
