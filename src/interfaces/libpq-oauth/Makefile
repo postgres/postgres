@@ -79,19 +79,5 @@ uninstall:
 	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
 	rm -f '$(DESTDIR)$(libdir)/$(shlib)'
 
-.PHONY: all-tests
-all-tests: oauth_tests$(X)
-
-oauth_tests$(X): test-oauth-curl.o oauth-utils.o $(WIN32RES) | submake-libpgport submake-libpq
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(SHLIB_LINK) -o $@
-
-check: all-tests
-	$(prove_check)
-
-installcheck: all-tests
-	$(prove_installcheck)
-
 clean distclean: clean-lib
 	rm -f $(OBJS) $(OBJS_STATIC) $(OBJS_SHLIB)
-	rm -f test-oauth-curl.o oauth_tests$(X)
-	rm -rf tmp_check
