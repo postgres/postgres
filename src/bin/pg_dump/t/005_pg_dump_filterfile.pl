@@ -418,10 +418,16 @@ command_fails_like(
 	qr/invalid filter command/,
 	"invalid syntax: incorrect filter command");
 
-# Test invalid object type
+# Test invalid object type.
+#
+# This test also verifies that keywords are correctly recognized as strings of
+# non-whitespace characters. If the parser incorrectly treats non-whitespace
+# delimiters (like hyphens) as keyword boundaries, "table-data" might be
+# misread as the valid object type "table". To catch such issues,
+# "table-data" is used here as an intentionally invalid object type.
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
-print $inputfile "include xxx";
+print $inputfile "exclude table-data one";
 close $inputfile;
 
 command_fails_like(
@@ -432,8 +438,8 @@ command_fails_like(
 		'--filter' => "$tempdir/inputfile.txt",
 		'postgres'
 	],
-	qr/unsupported filter object type: "xxx"/,
-	"invalid syntax: invalid object type specified, should be table, schema, foreign_data or data"
+	qr/unsupported filter object type: "table-data"/,
+	"invalid syntax: invalid object type specified"
 );
 
 # Test missing object identifier pattern
