@@ -1536,40 +1536,20 @@ set_timer(struct async_ctx *actx, long timeout)
 
 /*
  * Returns 1 if the timeout in the multiplexer set has expired since the last
- * call to set_timer(), 0 if the timer is still running, or -1 (with an
- * actx_error() report) if the timer cannot be queried.
+ * call to set_timer(), 0 if the timer is either still running or disarmed, or
+ * -1 (with an actx_error() report) if the timer cannot be queried.
  */
 static int
 timer_expired(struct async_ctx *actx)
 {
-#if defined(HAVE_SYS_EPOLL_H)
-	struct itimerspec spec = {0};
-
-	if (timerfd_gettime(actx->timerfd, &spec) < 0)
-	{
-		actx_error(actx, "getting timerfd value: %m");
-		return -1;
-	}
-
-	/*
-	 * This implementation assumes we're using single-shot timers. If you
-	 * change to using intervals, you'll need to reimplement this function
-	 * too, possibly with the read() or select() interfaces for timerfd.
-	 */
-	Assert(spec.it_interval.tv_sec == 0
-		   && spec.it_interval.tv_nsec == 0);
-
-	/* If the remaining time to expiration is zero, we're done. */
-	return (spec.it_value.tv_sec == 0
-			&& spec.it_value.tv_nsec == 0);
-#elif defined(HAVE_SYS_EVENT_H)
+#if defined(HAVE_SYS_EPOLL_H) || defined(HAVE_SYS_EVENT_H)
 	int			res;
 
-	/* Is the timer queue ready? */
+	/* Is the timer ready? */
 	res = PQsocketPoll(actx->timerfd, 1 /* forRead */ , 0, 0);
 	if (res < 0)
 	{
-		actx_error(actx, "checking kqueue for timeout: %m");
+		actx_error(actx, "checking timer expiration: %m");
 		return -1;
 	}
 
@@ -1599,6 +1579,36 @@ register_timer(CURLM *curlm, long timeout, void *ctx)
 		return -1;				/* actx_error already called */
 
 	return 0;
+}
+
+/*
+ * Removes any expired-timer event from the multiplexer. If was_expired is not
+ * NULL, it will contain whether or not the timer was expired at time of call.
+ */
+static bool
+drain_timer_events(struct async_ctx *actx, bool *was_expired)
+{
+	int			res;
+
+	res = timer_expired(actx);
+	if (res < 0)
+		return false;
+
+	if (res > 0)
+	{
+		/*
+		 * Timer is expired. We could drain the event manually from the
+		 * timerfd, but it's easier to simply disable it; that keeps the
+		 * platform-specific code in set_timer().
+		 */
+		if (!set_timer(actx, -1))
+			return false;
+	}
+
+	if (was_expired)
+		*was_expired = (res > 0);
+
+	return true;
 }
 
 /*
@@ -2804,6 +2814,22 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				{
 					PostgresPollingStatusType status;
 
+					/*
+					 * Clear any expired timeout before calling back into
+					 * Curl. Curl is not guaranteed to do this for us, because
+					 * its API expects us to use single-shot (i.e.
+					 * edge-triggered) timeouts, and ours are level-triggered
+					 * via the mux.
+					 *
+					 * This can't be combined with the comb_multiplexer() call
+					 * below: we might accidentally clear a short timeout that
+					 * was both set and expired during the call to
+					 * drive_request().
+					 */
+					if (!drain_timer_events(actx, NULL))
+						goto error_return;
+
+					/* Move the request forward. */
 					status = drive_request(actx);
 
 					if (status == PGRES_POLLING_FAILED)
@@ -2826,24 +2852,26 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				}
 
 			case OAUTH_STEP_WAIT_INTERVAL:
-
-				/*
-				 * The client application is supposed to wait until our timer
-				 * expires before calling PQconnectPoll() again, but that
-				 * might not happen. To avoid sending a token request early,
-				 * check the timer before continuing.
-				 */
-				if (!timer_expired(actx))
 				{
-					set_conn_altsock(conn, actx->timerfd);
-					return PGRES_POLLING_READING;
+					bool		expired;
+
+					/*
+					 * The client application is supposed to wait until our
+					 * timer expires before calling PQconnectPoll() again, but
+					 * that might not happen. To avoid sending a token request
+					 * early, check the timer before continuing.
+					 */
+					if (!drain_timer_events(actx, &expired))
+						goto error_return;
+
+					if (!expired)
+					{
+						set_conn_altsock(conn, actx->timerfd);
+						return PGRES_POLLING_READING;
+					}
+
+					break;
 				}
-
-				/* Disable the expired timer. */
-				if (!set_timer(actx, -1))
-					goto error_return;
-
-				break;
 		}
 
 		/*
