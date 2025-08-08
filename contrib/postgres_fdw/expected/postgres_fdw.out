@@ -7615,6 +7615,119 @@ DELETE FROM rem1;                 -- can't be pushed down
 (5 rows)
 
 DROP TRIGGER trig_row_after_delete ON rem1;
+-- We are allowed to create transition-table triggers on both kinds of
+-- inheritance even if they contain foreign tables as children, but currently
+-- collecting transition tuples from such foreign tables is not supported.
+CREATE TABLE local_tbl (a text, b int);
+CREATE FOREIGN TABLE foreign_tbl (a text, b int)
+  SERVER loopback OPTIONS (table_name 'local_tbl');
+INSERT INTO foreign_tbl VALUES ('AAA', 42);
+-- Test case for partition hierarchy
+CREATE TABLE parent_tbl (a text, b int) PARTITION BY LIST (a);
+ALTER TABLE parent_tbl ATTACH PARTITION foreign_tbl FOR VALUES IN ('AAA');
+CREATE TRIGGER parent_tbl_insert_trig
+  AFTER INSERT ON parent_tbl REFERENCING NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_update_trig
+  AFTER UPDATE ON parent_tbl REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_delete_trig
+  AFTER DELETE ON parent_tbl REFERENCING OLD TABLE AS old_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+INSERT INTO parent_tbl VALUES ('AAA', 42);
+ERROR:  cannot collect transition tuples from child foreign tables
+COPY parent_tbl (a, b) FROM stdin;
+ERROR:  cannot collect transition tuples from child foreign tables
+CONTEXT:  COPY parent_tbl, line 1: "AAA	42"
+ALTER SERVER loopback OPTIONS (ADD batch_size '10');
+INSERT INTO parent_tbl VALUES ('AAA', 42);
+ERROR:  cannot collect transition tuples from child foreign tables
+COPY parent_tbl (a, b) FROM stdin;
+ERROR:  cannot collect transition tuples from child foreign tables
+CONTEXT:  COPY parent_tbl, line 1: "AAA	42"
+ALTER SERVER loopback OPTIONS (DROP batch_size);
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE parent_tbl SET b = b + 1;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Update on public.parent_tbl
+   Foreign Update on public.foreign_tbl parent_tbl_1
+     Remote SQL: UPDATE public.local_tbl SET b = $2 WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl parent_tbl_1
+         Output: (parent_tbl_1.b + 1), parent_tbl_1.tableoid, parent_tbl_1.ctid, parent_tbl_1.*
+         Remote SQL: SELECT a, b, ctid FROM public.local_tbl FOR UPDATE
+(6 rows)
+
+UPDATE parent_tbl SET b = b + 1;
+ERROR:  cannot collect transition tuples from child foreign tables
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM parent_tbl;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Delete on public.parent_tbl
+   Foreign Delete on public.foreign_tbl parent_tbl_1
+     Remote SQL: DELETE FROM public.local_tbl WHERE ctid = $1
+   ->  Foreign Scan on public.foreign_tbl parent_tbl_1
+         Output: parent_tbl_1.tableoid, parent_tbl_1.ctid
+         Remote SQL: SELECT ctid FROM public.local_tbl FOR UPDATE
+(6 rows)
+
+DELETE FROM parent_tbl;
+ERROR:  cannot collect transition tuples from child foreign tables
+ALTER TABLE parent_tbl DETACH PARTITION foreign_tbl;
+DROP TABLE parent_tbl;
+-- Test case for non-partition hierarchy
+CREATE TABLE parent_tbl (a text, b int);
+ALTER FOREIGN TABLE foreign_tbl INHERIT parent_tbl;
+CREATE TRIGGER parent_tbl_update_trig
+  AFTER UPDATE ON parent_tbl REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+CREATE TRIGGER parent_tbl_delete_trig
+  AFTER DELETE ON parent_tbl REFERENCING OLD TABLE AS old_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE trigger_func();
+EXPLAIN (VERBOSE, COSTS OFF)
+UPDATE parent_tbl SET b = b + 1;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Update on public.parent_tbl
+   Update on public.parent_tbl parent_tbl_1
+   Foreign Update on public.foreign_tbl parent_tbl_2
+     Remote SQL: UPDATE public.local_tbl SET b = $2 WHERE ctid = $1
+   ->  Result
+         Output: (parent_tbl.b + 1), parent_tbl.tableoid, parent_tbl.ctid, (NULL::record)
+         ->  Append
+               ->  Seq Scan on public.parent_tbl parent_tbl_1
+                     Output: parent_tbl_1.b, parent_tbl_1.tableoid, parent_tbl_1.ctid, NULL::record
+               ->  Foreign Scan on public.foreign_tbl parent_tbl_2
+                     Output: parent_tbl_2.b, parent_tbl_2.tableoid, parent_tbl_2.ctid, parent_tbl_2.*
+                     Remote SQL: SELECT a, b, ctid FROM public.local_tbl FOR UPDATE
+(12 rows)
+
+UPDATE parent_tbl SET b = b + 1;
+ERROR:  cannot collect transition tuples from child foreign tables
+EXPLAIN (VERBOSE, COSTS OFF)
+DELETE FROM parent_tbl;
+                               QUERY PLAN                               
+------------------------------------------------------------------------
+ Delete on public.parent_tbl
+   Delete on public.parent_tbl parent_tbl_1
+   Foreign Delete on public.foreign_tbl parent_tbl_2
+     Remote SQL: DELETE FROM public.local_tbl WHERE ctid = $1
+   ->  Append
+         ->  Seq Scan on public.parent_tbl parent_tbl_1
+               Output: parent_tbl_1.tableoid, parent_tbl_1.ctid
+         ->  Foreign Scan on public.foreign_tbl parent_tbl_2
+               Output: parent_tbl_2.tableoid, parent_tbl_2.ctid
+               Remote SQL: SELECT ctid FROM public.local_tbl FOR UPDATE
+(10 rows)
+
+DELETE FROM parent_tbl;
+ERROR:  cannot collect transition tuples from child foreign tables
+ALTER FOREIGN TABLE foreign_tbl NO INHERIT parent_tbl;
+DROP TABLE parent_tbl;
+-- Cleanup
+DROP FOREIGN TABLE foreign_tbl;
+DROP TABLE local_tbl;
 -- ===================================================================
 -- test inheritance features
 -- ===================================================================
