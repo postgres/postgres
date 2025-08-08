@@ -1291,21 +1291,30 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 
 	return 0;
 #elif defined(HAVE_SYS_EVENT_H)
-	struct kevent ev[2] = {0};
+	struct kevent ev[2];
 	struct kevent ev_out[2];
 	struct timespec timeout = {0};
 	int			nev = 0;
 	int			res;
 
+	/*
+	 * We don't know which of the events is currently registered, perhaps
+	 * both, so we always try to remove unneeded events. This means we need to
+	 * tolerate ENOENT below.
+	 */
 	switch (what)
 	{
 		case CURL_POLL_IN:
 			EV_SET(&ev[nev], socket, EVFILT_READ, EV_ADD | EV_RECEIPT, 0, 0, 0);
 			nev++;
+			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_DELETE | EV_RECEIPT, 0, 0, 0);
+			nev++;
 			break;
 
 		case CURL_POLL_OUT:
 			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_ADD | EV_RECEIPT, 0, 0, 0);
+			nev++;
+			EV_SET(&ev[nev], socket, EVFILT_READ, EV_DELETE | EV_RECEIPT, 0, 0, 0);
 			nev++;
 			break;
 
@@ -1317,12 +1326,6 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		case CURL_POLL_REMOVE:
-
-			/*
-			 * We don't know which of these is currently registered, perhaps
-			 * both, so we try to remove both.  This means we need to tolerate
-			 * ENOENT below.
-			 */
 			EV_SET(&ev[nev], socket, EVFILT_READ, EV_DELETE | EV_RECEIPT, 0, 0, 0);
 			nev++;
 			EV_SET(&ev[nev], socket, EVFILT_WRITE, EV_DELETE | EV_RECEIPT, 0, 0, 0);
@@ -1334,7 +1337,10 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			return -1;
 	}
 
-	res = kevent(actx->mux, ev, nev, ev_out, lengthof(ev_out), &timeout);
+	Assert(nev <= lengthof(ev));
+	Assert(nev <= lengthof(ev_out));
+
+	res = kevent(actx->mux, ev, nev, ev_out, nev, &timeout);
 	if (res < 0)
 	{
 		actx_error(actx, "could not modify kqueue: %m");
