@@ -6726,6 +6726,8 @@ make_modifytable(PlannerInfo *root,
 				 List *rowMarks, OnConflictExpr *onconflict, int epqParam)
 {
 	ModifyTable *node = makeNode(ModifyTable);
+	bool		transition_tables = false;
+	bool		transition_tables_valid = false;
 	List	   *fdw_private_list;
 	Bitmapset  *direct_modify_plans;
 	ListCell   *lc;
@@ -6842,7 +6844,7 @@ make_modifytable(PlannerInfo *root,
 		 * callback functions needed for that and (2) there are no local
 		 * structures that need to be run for each modified row: row-level
 		 * triggers on the foreign table, stored generated columns, WITH CHECK
-		 * OPTIONs from parent views.
+		 * OPTIONs from parent views, transition tables on the named relation.
 		 */
 		direct_modify = false;
 		if (fdwroutine != NULL &&
@@ -6853,7 +6855,19 @@ make_modifytable(PlannerInfo *root,
 			withCheckOptionLists == NIL &&
 			!has_row_triggers(subroot, rti, operation) &&
 			!has_stored_generated_columns(subroot, rti))
-			direct_modify = fdwroutine->PlanDirectModify(subroot, node, rti, i);
+		{
+			/* transition_tables is the same for all result relations */
+			if (!transition_tables_valid)
+			{
+				transition_tables = has_transition_tables(root,
+														  nominalRelation,
+														  operation);
+				transition_tables_valid = true;
+			}
+			if (!transition_tables)
+				direct_modify = fdwroutine->PlanDirectModify(subroot, node,
+															 rti, i);
+		}
 		if (direct_modify)
 			direct_modify_plans = bms_add_member(direct_modify_plans, i);
 
