@@ -904,7 +904,7 @@ json_unique_hash(const void *key, Size keysize)
 
 	hash ^= hash_bytes((const unsigned char *) entry->key, entry->key_len);
 
-	return DatumGetUInt32(hash);
+	return hash;
 }
 
 static int

@@ -2618,7 +2618,7 @@ make_build_data(Relation rel, StatExtEntry *stat, int numrows, HeapTuple *rows,
 			}
 			else
 			{
-				result->values[idx][i] = (Datum) datum;
+				result->values[idx][i] = datum;
 				result->nulls[idx][i] = false;
 			}
 

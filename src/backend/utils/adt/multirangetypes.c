@@ -2082,15 +2082,14 @@ range_overleft_multirange_internal(TypeCacheEntry *rangetyp,
 	bool		empty;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
-		PG_RETURN_BOOL(false);
-
+		return false;
 
 	range_deserialize(rangetyp, r, &lower1, &upper1, &empty);
 	Assert(!empty);
 	multirange_get_bounds(rangetyp, mr, mr->rangeCount - 1,
 						  &lower2, &upper2);
 
-	PG_RETURN_BOOL(range_cmp_bounds(rangetyp, &upper1, &upper2) <= 0);
+	return (range_cmp_bounds(rangetyp, &upper1, &upper2) <= 0);
 }
 
 Datum
@@ -2167,7 +2166,7 @@ range_overright_multirange_internal(TypeCacheEntry *rangetyp,
 	bool		empty;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
-		PG_RETURN_BOOL(false);
+		return false;
 
 	range_deserialize(rangetyp, r, &lower1, &upper1, &empty);
 	Assert(!empty);

@@ -1075,8 +1075,8 @@ range_union_internal(TypeCacheEntry *typcache, RangeType *r1, RangeType *r2,
 		return r1;
 
 	if (strict &&
-		!DatumGetBool(range_overlaps_internal(typcache, r1, r2)) &&
-		!DatumGetBool(range_adjacent_internal(typcache, r1, r2)))
+		!range_overlaps_internal(typcache, r1, r2) &&
+		!range_adjacent_internal(typcache, r1, r2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("result of range union would not be contiguous")));

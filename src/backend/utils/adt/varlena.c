@@ -408,13 +408,12 @@ text_length(Datum str)
 {
 	/* fastpath when max encoding length is one */
 	if (pg_database_encoding_max_length() == 1)
-		PG_RETURN_INT32(toast_raw_datum_size(str) - VARHDRSZ);
+		return (toast_raw_datum_size(str) - VARHDRSZ);
 	else
 	{
 		text	   *t = DatumGetTextPP(str);
 
-		PG_RETURN_INT32(pg_mbstrlen_with_len(VARDATA_ANY(t),
-											 VARSIZE_ANY_EXHDR(t)));
+		return (pg_mbstrlen_with_len(VARDATA_ANY(t), VARSIZE_ANY_EXHDR(t)));
 	}
 }
 

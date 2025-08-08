@@ -821,7 +821,7 @@ pgstat_force_next_flush(void)
 static bool
 match_db_entries(PgStatShared_HashEntry *entry, Datum match_data)
 {
-	return entry->key.dboid == DatumGetObjectId(MyDatabaseId);
+	return entry->key.dboid == MyDatabaseId;
 }
 
 /*
