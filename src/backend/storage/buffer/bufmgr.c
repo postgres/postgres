@@ -1484,11 +1484,6 @@ StartReadBuffersImpl(ReadBuffersOperation *operation,
  * buffers must remain valid until WaitReadBuffers() is called, and any
  * forwarded buffers must also be preserved for a continuing call unless
  * they are explicitly released.
- *
- * Currently the I/O is only started with optional operating system advice if
- * requested by the caller with READ_BUFFERS_ISSUE_ADVICE, and the real I/O
- * happens synchronously in WaitReadBuffers().  In future work, true I/O could
- * be initiated here.
  */
 bool
 StartReadBuffers(ReadBuffersOperation *operation,
