@@ -7233,6 +7233,8 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 	ModifyTable *node = makeNode(ModifyTable);
 	bool		returning_old_or_new = false;
 	bool		returning_old_or_new_valid = false;
+	bool		transition_tables = false;
+	bool		transition_tables_valid = false;
 	List	   *fdw_private_list;
 	Bitmapset  *direct_modify_plans;
 	ListCell   *lc;
@@ -7379,8 +7381,8 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 		 * callback functions needed for that and (2) there are no local
 		 * structures that need to be run for each modified row: row-level
 		 * triggers on the foreign table, stored generated columns, WITH CHECK
-		 * OPTIONs from parent views, or Vars returning OLD/NEW in the
-		 * RETURNING list.
+		 * OPTIONs from parent views, Vars returning OLD/NEW in the RETURNING
+		 * list, or transition tables on the named relation.
 		 */
 		direct_modify = false;
 		if (fdwroutine != NULL &&
@@ -7392,7 +7394,10 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 			!has_row_triggers(root, rti, operation) &&
 			!has_stored_generated_columns(root, rti))
 		{
-			/* returning_old_or_new is the same for all result relations */
+			/*
+			 * returning_old_or_new and transition_tables are the same for all
+			 * result relations, respectively
+			 */
 			if (!returning_old_or_new_valid)
 			{
 				returning_old_or_new =
@@ -7401,7 +7406,18 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 				returning_old_or_new_valid = true;
 			}
 			if (!returning_old_or_new)
-				direct_modify = fdwroutine->PlanDirectModify(root, node, rti, i);
+			{
+				if (!transition_tables_valid)
+				{
+					transition_tables = has_transition_tables(root,
+															  nominalRelation,
+															  operation);
+					transition_tables_valid = true;
+				}
+				if (!transition_tables)
+					direct_modify = fdwroutine->PlanDirectModify(root, node,
+																 rti, i);
+			}
 		}
 		if (direct_modify)
 			direct_modify_plans = bms_add_member(direct_modify_plans, i);
