@@ -178,7 +178,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	if (query->size == 0)
 	{
 		ReleaseVariableStats(vardata);
-		return (Selectivity) 0.0;
+		PG_RETURN_FLOAT8(0.0);
 	}
 
 	/*
