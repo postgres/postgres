@@ -57,7 +57,7 @@ comparison_shim(Datum x, Datum y, SortSupport ssup)
 	if (extra->fcinfo.isnull)
 		elog(ERROR, "function %u returned NULL", extra->flinfo.fn_oid);
 
-	return result;
+	return DatumGetInt32(result);
 }
 
 /*

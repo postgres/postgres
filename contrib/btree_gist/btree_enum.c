@@ -193,8 +193,8 @@ gbt_enum_ssup_cmp(Datum x, Datum y, SortSupport ssup)
 	return DatumGetInt32(CallerFInfoFunctionCall2(enum_cmp,
 												  ssup->ssup_extra,
 												  InvalidOid,
-												  arg1->lower,
-												  arg2->lower));
+												  ObjectIdGetDatum(arg1->lower),
+												  ObjectIdGetDatum(arg2->lower)));
 }
 
 Datum

@@ -299,9 +299,9 @@ datum_image_eq(Datum value1, Datum value2, bool typByVal, int typLen)
 							 len1 - VARHDRSZ) == 0);
 
 			/* Only free memory if it's a copy made here. */
-			if ((Pointer) arg1val != (Pointer) value1)
+			if ((Pointer) arg1val != DatumGetPointer(value1))
 				pfree(arg1val);
-			if ((Pointer) arg2val != (Pointer) value2)
+			if ((Pointer) arg2val != DatumGetPointer(value2))
 				pfree(arg2val);
 		}
 	}
@@ -355,7 +355,7 @@ datum_image_hash(Datum value, bool typByVal, int typLen)
 		result = hash_bytes((unsigned char *) VARDATA_ANY(val), len - VARHDRSZ);
 
 		/* Only free memory if it's a copy made here. */
-		if ((Pointer) val != (Pointer) value)
+		if ((Pointer) val != DatumGetPointer(value))
 			pfree(val);
 	}
 	else if (typLen == -2)

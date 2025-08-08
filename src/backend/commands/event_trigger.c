@@ -2021,8 +2021,8 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 								elog(ERROR, "cache lookup failed for object %u/%u",
 									 addr.classId, addr.objectId);
 							schema_oid =
-								heap_getattr(objtup, nspAttnum,
-											 RelationGetDescr(catalog), &isnull);
+								DatumGetObjectId(heap_getattr(objtup, nspAttnum,
+															  RelationGetDescr(catalog), &isnull));
 							if (isnull)
 								elog(ERROR,
 									 "invalid null namespace in object %u/%u/%d",

@@ -152,7 +152,7 @@ retry:
 			nulls[0] = false;
 
 		/* column: IO's id */
-		values[1] = ioh_id;
+		values[1] = UInt32GetDatum(ioh_id);
 
 		/* column: IO's generation */
 		values[2] = Int64GetDatum(start_generation);

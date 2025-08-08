@@ -256,7 +256,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 					nulls[11] = true;
 
 				if (tuphdr->t_infomask & HEAP_HASOID_OLD)
-					values[12] = HeapTupleHeaderGetOidOld(tuphdr);
+					values[12] = ObjectIdGetDatum(HeapTupleHeaderGetOidOld(tuphdr));
 				else
 					nulls[12] = true;
 

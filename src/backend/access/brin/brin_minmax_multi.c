@@ -1992,8 +1992,8 @@ brin_minmax_multi_distance_tid(PG_FUNCTION_ARGS)
 	double		da1,
 				da2;
 
-	ItemPointer pa1 = (ItemPointer) PG_GETARG_DATUM(0);
-	ItemPointer pa2 = (ItemPointer) PG_GETARG_DATUM(1);
+	ItemPointer pa1 = (ItemPointer) PG_GETARG_POINTER(0);
+	ItemPointer pa2 = (ItemPointer) PG_GETARG_POINTER(1);
 
 	/*
 	 * We know the values are range boundaries, but the range may be collapsed
@@ -2414,7 +2414,7 @@ brin_minmax_multi_add_value(PG_FUNCTION_ARGS)
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
 	Datum		newval = PG_GETARG_DATUM(2);
-	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(3);
+	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_BOOL(3);
 	MinMaxMultiOptions *opts = (MinMaxMultiOptions *) PG_GET_OPCLASS_OPTIONS();
 	Oid			colloid = PG_GET_COLLATION();
 	bool		modified = false;

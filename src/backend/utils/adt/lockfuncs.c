@@ -398,15 +398,15 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[0] = CStringGetTextDatum(PredicateLockTagTypeNames[lockType]);
 
 		/* lock target */
-		values[1] = GET_PREDICATELOCKTARGETTAG_DB(*predTag);
-		values[2] = GET_PREDICATELOCKTARGETTAG_RELATION(*predTag);
+		values[1] = ObjectIdGetDatum(GET_PREDICATELOCKTARGETTAG_DB(*predTag));
+		values[2] = ObjectIdGetDatum(GET_PREDICATELOCKTARGETTAG_RELATION(*predTag));
 		if (lockType == PREDLOCKTAG_TUPLE)
-			values[4] = GET_PREDICATELOCKTARGETTAG_OFFSET(*predTag);
+			values[4] = UInt16GetDatum(GET_PREDICATELOCKTARGETTAG_OFFSET(*predTag));
 		else
 			nulls[4] = true;
 		if ((lockType == PREDLOCKTAG_TUPLE) ||
 			(lockType == PREDLOCKTAG_PAGE))
-			values[3] = GET_PREDICATELOCKTARGETTAG_PAGE(*predTag);
+			values[3] = UInt32GetDatum(GET_PREDICATELOCKTARGETTAG_PAGE(*predTag));
 		else
 			nulls[3] = true;
 

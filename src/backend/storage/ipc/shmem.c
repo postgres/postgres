@@ -714,7 +714,7 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 		for (i = 0; i <= max_nodes; i++)
 		{
 			values[0] = CStringGetTextDatum(ent->key);
-			values[1] = i;
+			values[1] = Int32GetDatum(i);
 			values[2] = Int64GetDatum(nodes[i] * os_page_size);
 
 			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,

@@ -1058,10 +1058,10 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 			memset(slot[slot_stored_count]->tts_isnull, false,
 				   slot[slot_stored_count]->tts_tupleDescriptor->natts * sizeof(bool));
 
-			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapcfg - 1] = cfgOid;
-			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_maptokentype - 1] = cfgmap->maptokentype;
-			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapseqno - 1] = cfgmap->mapseqno;
-			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapdict - 1] = cfgmap->mapdict;
+			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapcfg - 1] = ObjectIdGetDatum(cfgOid);
+			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_maptokentype - 1] = Int32GetDatum(cfgmap->maptokentype);
+			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapseqno - 1] = Int32GetDatum(cfgmap->mapseqno);
+			slot[slot_stored_count]->tts_values[Anum_pg_ts_config_map_mapdict - 1] = ObjectIdGetDatum(cfgmap->mapdict);
 
 			ExecStoreVirtualTuple(slot[slot_stored_count]);
 			slot_stored_count++;

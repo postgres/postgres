@@ -1529,9 +1529,9 @@ record_image_cmp(FunctionCallInfo fcinfo)
 				if ((cmpresult == 0) && (len1 != len2))
 					cmpresult = (len1 < len2) ? -1 : 1;
 
-				if ((Pointer) arg1val != (Pointer) values1[i1])
+				if ((Pointer) arg1val != DatumGetPointer(values1[i1]))
 					pfree(arg1val);
-				if ((Pointer) arg2val != (Pointer) values2[i2])
+				if ((Pointer) arg2val != DatumGetPointer(values2[i2]))
 					pfree(arg2val);
 			}
 			else

@@ -66,7 +66,7 @@ brin_minmax_add_value(PG_FUNCTION_ARGS)
 	BrinDesc   *bdesc = (BrinDesc *) PG_GETARG_POINTER(0);
 	BrinValues *column = (BrinValues *) PG_GETARG_POINTER(1);
 	Datum		newval = PG_GETARG_DATUM(2);
-	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_DATUM(3);
+	bool		isnull PG_USED_FOR_ASSERTS_ONLY = PG_GETARG_BOOL(3);
 	Oid			colloid = PG_GET_COLLATION();
 	FmgrInfo   *cmpFn;
 	Datum		compar;
@@ -225,8 +225,8 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 	/* Adjust minimum, if B's min is less than A's min */
 	finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
 										 BTLessStrategyNumber);
-	needsadj = FunctionCall2Coll(finfo, colloid, col_b->bv_values[0],
-								 col_a->bv_values[0]);
+	needsadj = DatumGetBool(FunctionCall2Coll(finfo, colloid, col_b->bv_values[0],
+											  col_a->bv_values[0]));
 	if (needsadj)
 	{
 		if (!attr->attbyval)
@@ -238,8 +238,8 @@ brin_minmax_union(PG_FUNCTION_ARGS)
 	/* Adjust maximum, if B's max is greater than A's max */
 	finfo = minmax_get_strategy_procinfo(bdesc, attno, attr->atttypid,
 										 BTGreaterStrategyNumber);
-	needsadj = FunctionCall2Coll(finfo, colloid, col_b->bv_values[1],
-								 col_a->bv_values[1]);
+	needsadj = DatumGetBool(FunctionCall2Coll(finfo, colloid, col_b->bv_values[1],
+											  col_a->bv_values[1]));
 	if (needsadj)
 	{
 		if (!attr->attbyval)

@@ -105,7 +105,7 @@ missing_hash(const void *key, Size keysize)
 {
 	const missing_cache_key *entry = (missing_cache_key *) key;
 
-	return hash_bytes((const unsigned char *) entry->value, entry->len);
+	return hash_bytes((const unsigned char *) DatumGetPointer(entry->value), entry->len);
 }
 
 static int

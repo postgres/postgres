@@ -417,7 +417,7 @@ gseg_same(PG_FUNCTION_ARGS)
 {
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	if (DirectFunctionCall2(seg_same, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1)))
+	if (DatumGetBool(DirectFunctionCall2(seg_same, PG_GETARG_DATUM(0), PG_GETARG_DATUM(1))))
 		*result = true;
 	else
 		*result = false;
@@ -470,7 +470,7 @@ gseg_leaf_consistent(Datum key, Datum query, StrategyNumber strategy)
 			retval = DirectFunctionCall2(seg_contained, key, query);
 			break;
 		default:
-			retval = false;
+			retval = BoolGetDatum(false);
 	}
 
 	PG_RETURN_DATUM(retval);

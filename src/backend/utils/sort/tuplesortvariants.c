@@ -865,7 +865,7 @@ tuplesort_putbrintuple(Tuplesortstate *state, BrinTuple *tuple, Size size)
 	memcpy(&bstup->tuple, tuple, size);
 
 	stup.tuple = bstup;
-	stup.datum1 = tuple->bt_blkno;
+	stup.datum1 = UInt32GetDatum(tuple->bt_blkno);
 	stup.isnull1 = false;
 
 	/* GetMemoryChunkSpace is not supported for bump contexts */
@@ -1836,7 +1836,7 @@ removeabbrev_index_brin(Tuplesortstate *state, SortTuple *stups, int count)
 		BrinSortTuple *tuple;
 
 		tuple = stups[i].tuple;
-		stups[i].datum1 = tuple->tuple.bt_blkno;
+		stups[i].datum1 = UInt32GetDatum(tuple->tuple.bt_blkno);
 	}
 }
 
@@ -1893,7 +1893,7 @@ readtup_index_brin(Tuplesortstate *state, SortTuple *stup,
 	stup->tuple = tuple;
 
 	/* set up first-column key value, which is block number */
-	stup->datum1 = tuple->tuple.bt_blkno;
+	stup->datum1 = UInt32GetDatum(tuple->tuple.bt_blkno);
 }
 
 /*

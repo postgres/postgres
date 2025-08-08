@@ -2523,7 +2523,7 @@ multirange_adjacent_range(PG_FUNCTION_ARGS)
 	TypeCacheEntry *typcache;
 
 	if (RangeIsEmpty(r) || MultirangeIsEmpty(mr))
-		return false;
+		PG_RETURN_BOOL(false);
 
 	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr));
 
@@ -2544,7 +2544,7 @@ multirange_adjacent_multirange(PG_FUNCTION_ARGS)
 				upper2;
 
 	if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
-		return false;
+		PG_RETURN_BOOL(false);
 
 	typcache = multirange_get_typcache(fcinfo, MultirangeTypeGetOid(mr1));
 
@@ -2639,7 +2639,7 @@ multirange_cmp(PG_FUNCTION_ARGS)
 Datum
 multirange_lt(PG_FUNCTION_ARGS)
 {
-	int			cmp = multirange_cmp(fcinfo);
+	int			cmp = DatumGetInt32(multirange_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp < 0);
 }
@@ -2647,7 +2647,7 @@ multirange_lt(PG_FUNCTION_ARGS)
 Datum
 multirange_le(PG_FUNCTION_ARGS)
 {
-	int			cmp = multirange_cmp(fcinfo);
+	int			cmp = DatumGetInt32(multirange_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp <= 0);
 }
@@ -2655,7 +2655,7 @@ multirange_le(PG_FUNCTION_ARGS)
 Datum
 multirange_ge(PG_FUNCTION_ARGS)
 {
-	int			cmp = multirange_cmp(fcinfo);
+	int			cmp = DatumGetInt32(multirange_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp >= 0);
 }
@@ -2663,7 +2663,7 @@ multirange_ge(PG_FUNCTION_ARGS)
 Datum
 multirange_gt(PG_FUNCTION_ARGS)
 {
-	int			cmp = multirange_cmp(fcinfo);
+	int			cmp = DatumGetInt32(multirange_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp > 0);
 }

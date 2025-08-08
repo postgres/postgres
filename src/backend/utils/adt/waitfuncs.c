@@ -73,7 +73,7 @@ pg_isolation_test_session_is_blocked(PG_FUNCTION_ARGS)
 	 * acquire heavyweight locks.
 	 */
 	blocking_pids_a =
-		DatumGetArrayTypeP(DirectFunctionCall1(pg_blocking_pids, blocked_pid));
+		DatumGetArrayTypeP(DirectFunctionCall1(pg_blocking_pids, Int32GetDatum(blocked_pid)));
 
 	Assert(ARR_ELEMTYPE(blocking_pids_a) == INT4OID);
 	Assert(!array_contains_nulls(blocking_pids_a));

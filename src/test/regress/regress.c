@@ -727,7 +727,7 @@ PG_FUNCTION_INFO_V1(is_catalog_text_unique_index_oid);
 Datum
 is_catalog_text_unique_index_oid(PG_FUNCTION_ARGS)
 {
-	return IsCatalogTextUniqueIndexOid(PG_GETARG_OID(0));
+	return BoolGetDatum(IsCatalogTextUniqueIndexOid(PG_GETARG_OID(0)));
 }
 
 PG_FUNCTION_INFO_V1(test_support_func);

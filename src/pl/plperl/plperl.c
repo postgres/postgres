@@ -1453,7 +1453,7 @@ plperl_sv_to_literal(SV *sv, char *fqtypename)
 
 	check_spi_usage_allowed();
 
-	typid = DirectFunctionCall1(regtypein, CStringGetDatum(fqtypename));
+	typid = DatumGetObjectId(DirectFunctionCall1(regtypein, CStringGetDatum(fqtypename)));
 	if (!OidIsValid(typid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -2569,13 +2569,13 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 		TriggerData *trigdata = ((TriggerData *) fcinfo->context);
 
 		if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-			retval = (Datum) trigdata->tg_trigtuple;
+			retval = PointerGetDatum(trigdata->tg_trigtuple);
 		else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-			retval = (Datum) trigdata->tg_newtuple;
+			retval = PointerGetDatum(trigdata->tg_newtuple);
 		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-			retval = (Datum) trigdata->tg_trigtuple;
+			retval = PointerGetDatum(trigdata->tg_trigtuple);
 		else if (TRIGGER_FIRED_BY_TRUNCATE(trigdata->tg_event))
-			retval = (Datum) trigdata->tg_trigtuple;
+			retval = PointerGetDatum(trigdata->tg_trigtuple);
 		else
 			retval = (Datum) 0; /* can this happen? */
 	}

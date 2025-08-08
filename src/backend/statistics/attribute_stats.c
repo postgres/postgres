@@ -339,7 +339,7 @@ attribute_statistics_update(FunctionCallInfo fcinfo)
 
 	starel = table_open(StatisticRelationId, RowExclusiveLock);
 
-	statup = SearchSysCache3(STATRELATTINH, reloid, attnum, inherited);
+	statup = SearchSysCache3(STATRELATTINH, ObjectIdGetDatum(reloid), Int16GetDatum(attnum), BoolGetDatum(inherited));
 
 	/* initialize from existing tuple if exists */
 	if (HeapTupleIsValid(statup))
@@ -895,9 +895,9 @@ init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 	{
 		values[Anum_pg_statistic_stakind1 + slotnum - 1] = (Datum) 0;
 		nulls[Anum_pg_statistic_stakind1 + slotnum - 1] = false;
-		values[Anum_pg_statistic_staop1 + slotnum - 1] = InvalidOid;
+		values[Anum_pg_statistic_staop1 + slotnum - 1] = ObjectIdGetDatum(InvalidOid);
 		nulls[Anum_pg_statistic_staop1 + slotnum - 1] = false;
-		values[Anum_pg_statistic_stacoll1 + slotnum - 1] = InvalidOid;
+		values[Anum_pg_statistic_stacoll1 + slotnum - 1] = ObjectIdGetDatum(InvalidOid);
 		nulls[Anum_pg_statistic_stacoll1 + slotnum - 1] = false;
 	}
 }

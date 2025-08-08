@@ -119,38 +119,38 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 	switch (tinfo->t)
 	{
 		case gbt_t_bool:
-			datum = BoolGetDatum(*(bool *) entry->key);
+			datum = BoolGetDatum(*(bool *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_int2:
-			datum = Int16GetDatum(*(int16 *) entry->key);
+			datum = Int16GetDatum(*(int16 *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_int4:
-			datum = Int32GetDatum(*(int32 *) entry->key);
+			datum = Int32GetDatum(*(int32 *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_int8:
-			datum = Int64GetDatum(*(int64 *) entry->key);
+			datum = Int64GetDatum(*(int64 *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_oid:
 		case gbt_t_enum:
-			datum = ObjectIdGetDatum(*(Oid *) entry->key);
+			datum = ObjectIdGetDatum(*(Oid *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_float4:
-			datum = Float4GetDatum(*(float4 *) entry->key);
+			datum = Float4GetDatum(*(float4 *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_float8:
-			datum = Float8GetDatum(*(float8 *) entry->key);
+			datum = Float8GetDatum(*(float8 *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_date:
-			datum = DateADTGetDatum(*(DateADT *) entry->key);
+			datum = DateADTGetDatum(*(DateADT *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_time:
-			datum = TimeADTGetDatum(*(TimeADT *) entry->key);
+			datum = TimeADTGetDatum(*(TimeADT *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_ts:
-			datum = TimestampGetDatum(*(Timestamp *) entry->key);
+			datum = TimestampGetDatum(*(Timestamp *) DatumGetPointer(entry->key));
 			break;
 		case gbt_t_cash:
-			datum = CashGetDatum(*(Cash *) entry->key);
+			datum = CashGetDatum(*(Cash *) DatumGetPointer(entry->key));
 			break;
 		default:
 			datum = entry->key;

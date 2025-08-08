@@ -757,7 +757,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * because it's range
 				 */
 				previousCentroid = datumCopy(in->prefixDatum, false, -1);
-				out->traversalValues[out->nNodes] = (void *) previousCentroid;
+				out->traversalValues[out->nNodes] = DatumGetPointer(previousCentroid);
 			}
 			out->nodeNumbers[out->nNodes] = i - 1;
 			out->nNodes++;

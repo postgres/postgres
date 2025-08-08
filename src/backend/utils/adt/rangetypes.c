@@ -1356,7 +1356,7 @@ range_fast_cmp(Datum a, Datum b, SortSupport ssup)
 Datum
 range_lt(PG_FUNCTION_ARGS)
 {
-	int			cmp = range_cmp(fcinfo);
+	int			cmp = DatumGetInt32(range_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp < 0);
 }
@@ -1364,7 +1364,7 @@ range_lt(PG_FUNCTION_ARGS)
 Datum
 range_le(PG_FUNCTION_ARGS)
 {
-	int			cmp = range_cmp(fcinfo);
+	int			cmp = DatumGetInt32(range_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp <= 0);
 }
@@ -1372,7 +1372,7 @@ range_le(PG_FUNCTION_ARGS)
 Datum
 range_ge(PG_FUNCTION_ARGS)
 {
-	int			cmp = range_cmp(fcinfo);
+	int			cmp = DatumGetInt32(range_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp >= 0);
 }
@@ -1380,7 +1380,7 @@ range_ge(PG_FUNCTION_ARGS)
 Datum
 range_gt(PG_FUNCTION_ARGS)
 {
-	int			cmp = range_cmp(fcinfo);
+	int			cmp = DatumGetInt32(range_cmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp > 0);
 }

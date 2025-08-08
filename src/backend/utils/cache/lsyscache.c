@@ -3817,7 +3817,7 @@ get_subscription_oid(const char *subname, bool missing_ok)
 	Oid			oid;
 
 	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
-						  MyDatabaseId, CStringGetDatum(subname));
+						  ObjectIdGetDatum(MyDatabaseId), CStringGetDatum(subname));
 	if (!OidIsValid(oid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),

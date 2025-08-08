@@ -108,7 +108,7 @@ _int_overlap(PG_FUNCTION_ARGS)
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
 	if (ARRISEMPTY(a) || ARRISEMPTY(b))
-		return false;
+		PG_RETURN_BOOL(false);
 
 	SORT(a);
 	SORT(b);

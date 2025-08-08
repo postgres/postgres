@@ -4283,8 +4283,8 @@ pg_identify_object(PG_FUNCTION_ARGS)
 			nspAttnum = get_object_attnum_namespace(address.classId);
 			if (nspAttnum != InvalidAttrNumber)
 			{
-				schema_oid = heap_getattr(objtup, nspAttnum,
-										  RelationGetDescr(catalog), &isnull);
+				schema_oid = DatumGetObjectId(heap_getattr(objtup, nspAttnum,
+														   RelationGetDescr(catalog), &isnull));
 				if (isnull)
 					elog(ERROR, "invalid null namespace in object %u/%u/%d",
 						 address.classId, address.objectId, address.objectSubId);
