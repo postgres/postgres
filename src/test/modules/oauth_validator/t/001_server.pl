@@ -418,6 +418,35 @@ $node->connect_fails(
 	  qr/failed to obtain access token: mutual TLS required for client \(invalid_client\)/
 );
 
+# Count the number of calls to the internal flow when multiple retries are
+# triggered. The exact number depends on many things -- the TCP stack, the
+# version of Curl in use, random chance -- but a ridiculously high number
+# suggests something is wrong with our ability to clear multiplexer events after
+# they're no longer applicable.
+my ($ret, $stdout, $stderr) = $node->psql(
+	'postgres',
+	"SELECT 'connected for call count'",
+	extra_params => ['-w'],
+	connstr => connstr(stage => 'token', retries => 2),
+	on_error_stop => 0);
+
+is($ret, 0, "call count connection succeeds");
+like(
+	$stderr,
+	qr@Visit https://example\.com/ and enter the code: postgresuser@,
+	"call count: stderr matches");
+
+my $count_pattern = qr/\[libpq\] total number of polls: (\d+)/;
+if (like($stderr, $count_pattern, "call count: count is printed"))
+{
+	# For reference, a typical flow with two retries might take between 5-15
+	# calls to the client implementation. And while this will probably continue
+	# to change across OSes and Curl updates, we're likely in trouble if we see
+	# hundreds or thousands of calls.
+	$stderr =~ $count_pattern;
+	cmp_ok($1, '<', 100, "call count is reasonably small");
+}
+
 # Stress test: make sure our builtin flow operates correctly even if the client
 # application isn't respecting PGRES_POLLING_READING/WRITING signals returned
 # from PQconnectPoll().
@@ -428,7 +457,7 @@ my @cmd = (
 	connstr(stage => 'all', retries => 1, interval => 1));
 
 note "running '" . join("' '", @cmd) . "'";
-my ($stdout, $stderr) = run_command(\@cmd);
+($stdout, $stderr) = run_command(\@cmd);
 
 like($stdout, qr/connection succeeded/, "stress-async: stdout matches");
 unlike(
