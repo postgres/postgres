@@ -245,7 +245,6 @@ SELECT pg_tde_create_key_using_global_key_provider('server-key', 'global-provide
 (1 row)
 
 SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'global-provider');
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
  
@@ -319,7 +318,6 @@ ERROR:  key provider name cannot be null
 SELECT pg_tde_set_key_using_global_key_provider('key', NULL);
 ERROR:  key provider name cannot be null
 SELECT pg_tde_set_server_key_using_global_key_provider('key', NULL);
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key provider name cannot be null
 -- Setting principal key fails if key name is NULL
 SELECT pg_tde_set_default_key_using_global_key_provider(NULL, 'file-keyring');
@@ -329,7 +327,6 @@ ERROR:  key name cannot be null
 SELECT pg_tde_set_key_using_global_key_provider(NULL, 'file-keyring');
 ERROR:  key name cannot be null
 SELECT pg_tde_set_server_key_using_global_key_provider(NULL, 'file-keyring');
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key name cannot be null
 -- Empty string is not allowed for a principal key name
 SELECT pg_tde_create_key_using_database_key_provider('', 'file-provider');
@@ -364,7 +361,6 @@ SELECT pg_tde_set_key_using_global_key_provider('not-existing', 'file-keyring');
 ERROR:  key "not-existing" does not exist
 HINT:  Use pg_tde_create_key_using_global_key_provider() to create it.
 SELECT pg_tde_set_server_key_using_global_key_provider('not-existing', 'file-keyring');
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 ERROR:  key "not-existing" does not exist
 HINT:  Use pg_tde_create_key_using_global_key_provider() to create it.
 DROP EXTENSION pg_tde;

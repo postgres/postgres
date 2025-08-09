@@ -80,7 +80,6 @@ SELECT pg_tde_set_server_key_using_global_key_provider('test-global-key', 'file-
  
 (1 row)
 
-psql:<stdin>:1: WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
 CREATE TABLE test_enc2 (x int PRIMARY KEY) USING tde_heap;
 INSERT INTO test_enc2 (x) VALUES (1), (2);
 ALTER SYSTEM SET pg_tde.wal_encrypt = 'on';

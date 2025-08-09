@@ -150,7 +150,6 @@ SELECT pg_tde_set_key_using_global_key_provider('test-db-key','file-provider');
 (1 row)
 
 SELECT pg_tde_set_server_key_using_global_key_provider('test-db-key','file-provider');
-WARNING:  The WAL encryption feature is currently in beta and may be unstable. Do not use it in production environments!
  pg_tde_set_server_key_using_global_key_provider 
 -------------------------------------------------
  
