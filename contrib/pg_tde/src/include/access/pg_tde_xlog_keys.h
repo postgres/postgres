@@ -3,8 +3,7 @@
 
 #include "access/xlog_internal.h"
 
-#include "access/pg_tde_tdemap.h"
-#include "catalog/tde_principal_key.h"
+#include "access/pg_tde_keys_common.h"
 
 typedef enum
 {

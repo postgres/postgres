@@ -17,6 +17,7 @@
 #include "access/pg_tde_xlog.h"
 #include "catalog/tde_global_space.h"
 #include "catalog/tde_principal_key.h"
+#include "common/pg_tde_utils.h"
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
 #include "keyring/keyring_api.h"

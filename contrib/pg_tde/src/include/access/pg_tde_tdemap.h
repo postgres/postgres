@@ -1,29 +1,15 @@
 #ifndef PG_TDE_MAP_H
 #define PG_TDE_MAP_H
 
-#include "access/xlog_internal.h"
 #include "storage/relfilelocator.h"
-#include "catalog/tde_principal_key.h"
-#include "common/pg_tde_utils.h"
 
-#define INTERNAL_KEY_LEN 16
-#define INTERNAL_KEY_IV_LEN 16
+#include "access/pg_tde_keys_common.h"
 
 typedef struct InternalKey
 {
 	uint8		key[INTERNAL_KEY_LEN];
 	uint8		base_iv[INTERNAL_KEY_IV_LEN];
 } InternalKey;
-
-#define MAP_ENTRY_IV_SIZE 16
-#define MAP_ENTRY_AEAD_TAG_SIZE 16
-
-typedef struct
-{
-	TDEPrincipalKeyInfo data;
-	unsigned char sign_iv[MAP_ENTRY_IV_SIZE];
-	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
-} TDESignedPrincipalKeyInfo;
 
 extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key);
 extern bool pg_tde_has_smgr_key(RelFileLocator rel);
