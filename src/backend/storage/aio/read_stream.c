@@ -247,11 +247,32 @@ read_stream_start_pending_read(ReadStream *stream)
 	Assert(stream->pinned_buffers + stream->pending_read_nblocks <=
 		   stream->max_pinned_buffers);
 
+#ifdef USE_ASSERT_CHECKING
 	/* We had better not be overwriting an existing pinned buffer. */
 	if (stream->pinned_buffers > 0)
 		Assert(stream->next_buffer_index != stream->oldest_buffer_index);
 	else
 		Assert(stream->next_buffer_index == stream->oldest_buffer_index);
+
+	/*
+	 * Pinned buffers forwarded by a preceding StartReadBuffers() call that
+	 * had to split the operation should match the leading blocks of this
+	 * following StartReadBuffers() call.
+	 */
+	Assert(stream->forwarded_buffers <= stream->pending_read_nblocks);
+	for (int i = 0; i < stream->forwarded_buffers; ++i)
+		Assert(BufferGetBlockNumber(stream->buffers[stream->next_buffer_index + i]) ==
+			   stream->pending_read_blocknum + i);
+
+	/*
+	 * Check that we've cleared the queue/overflow entries corresponding to
+	 * the rest of the blocks covered by this read, unless it's the first go
+	 * around and we haven't even initialized them yet.
+	 */
+	for (int i = stream->forwarded_buffers; i < stream->pending_read_nblocks; ++i)
+		Assert(stream->next_buffer_index + i >= stream->initialized_buffers ||
+			   stream->buffers[stream->next_buffer_index + i] == InvalidBuffer);
+#endif
 
 	/* Do we need to issue read-ahead advice? */
 	flags = stream->read_buffers_flags;
@@ -979,6 +1000,19 @@ read_stream_next_buffer(ReadStream *stream, void **per_buffer_data)
 		stream->pending_read_nblocks == 0 &&
 		stream->per_buffer_data_size == 0)
 	{
+		/*
+		 * The fast path spins on one buffer entry repeatedly instead of
+		 * rotating through the whole queue and clearing the entries behind
+		 * it.  If the buffer it starts with happened to be forwarded between
+		 * StartReadBuffers() calls and also wrapped around the circular queue
+		 * partway through, then a copy also exists in the overflow zone, and
+		 * it won't clear it out as the regular path would.  Do that now, so
+		 * it doesn't need code for that.
+		 */
+		if (stream->oldest_buffer_index < stream->io_combine_limit - 1)
+			stream->buffers[stream->queue_size + stream->oldest_buffer_index] =
+				InvalidBuffer;
+
 		stream->fast_path = true;
 	}
 #endif
