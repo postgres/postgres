@@ -447,7 +447,6 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	 * consequence of the test using "pg_restore -j", which doesn't fully
 	 * constrain OID assignment order.
 	 */
-	Assert(false);
 	return oidcmp(obj1->catId.oid, obj2->catId.oid);
 }
 
