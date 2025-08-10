@@ -85,7 +85,7 @@ typedef struct TDEMapEntry
 
 static void pg_tde_set_db_file_path(Oid dbOid, char *path);
 static bool pg_tde_find_map_entry(const RelFileLocator *rlocator, char *db_map_path, TDEMapEntry *map_entry);
-static InternalKey *tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
+static InternalKey *tde_decrypt_rel_key(const TDEPrincipalKey *principal_key, TDEMapEntry *map_entry);
 static int	pg_tde_open_file_basic(const char *tde_filename, int fileFlags, bool ignore_missing);
 static int	pg_tde_open_file_read(const char *tde_filename, bool ignore_missing, off_t *curr_pos);
 static void pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader, off_t *bytes_read);
@@ -96,7 +96,7 @@ static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
-static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key);
+static void pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key);
 
 void
 pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *rel_key_data)
@@ -243,7 +243,7 @@ pg_tde_free_key_map_entry(const RelFileLocator rlocator)
  * Rotate keys and generates the WAL record for it.
  */
 void
-pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key, bool write_xlog)
+pg_tde_perform_rotate_key(const TDEPrincipalKey *principal_key, const TDEPrincipalKey *new_principal_key, bool write_xlog)
 {
 	TDESignedPrincipalKeyInfo new_signed_key_info;
 	off_t		old_curr_pos,
@@ -451,7 +451,7 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
  * concurrent in place updates leading to data conflicts.
  */
 void
-pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, TDEPrincipalKey *principal_key)
+pg_tde_write_key_map_entry(const RelFileLocator *rlocator, const InternalKey *rel_key_data, const TDEPrincipalKey *principal_key)
 {
 	char		db_map_path[MAXPGPATH];
 	int			map_fd;
@@ -579,7 +579,7 @@ pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, con
 }
 
 static InternalKey *
-tde_decrypt_rel_key(TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
+tde_decrypt_rel_key(const TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 {
 	InternalKey *rel_key_data = palloc_object(InternalKey);
 

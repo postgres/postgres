@@ -78,7 +78,7 @@ extern WALKeyCacheRec *pg_tde_fetch_wal_keys(WalLocation start);
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
 extern TDESignedPrincipalKeyInfo *pg_tde_get_server_key_info(void);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
-extern void pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_principal_key, bool write_xlog);
+extern void pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key, const TDEPrincipalKey *new_principal_key, bool write_xlog);
 extern WalEncryptionKey *pg_tde_read_last_wal_key(void);
 extern void pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog);
 extern void pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info);

@@ -46,7 +46,7 @@ static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
 
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(WalEncryptionKey *cached_key);
-static WalEncryptionKey *pg_tde_decrypt_wal_key(TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
+static WalEncryptionKey *pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
 static void pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry, const TDEPrincipalKey *principal_key, const WalEncryptionKey *rel_key_data);
 static int	pg_tde_open_wal_key_file_basic(const char *filename, int flags, bool ignore_missing);
 static int	pg_tde_open_wal_key_file_read(const char *filename, bool ignore_missing, off_t *curr_pos);
@@ -56,7 +56,7 @@ static void pg_tde_read_one_wal_key_file_entry2(int fd, int32 key_index, WalKeyF
 static void pg_tde_wal_key_file_header_read(const char *filename, int fd, WalKeyFileHeader *fheader, off_t *bytes_read);
 static int	pg_tde_wal_key_file_header_write(const char *filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_write_one_wal_key_file_entry(int fd, const WalKeyFileEntry *entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data, TDEPrincipalKey *principal_key);
+static void pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data, const TDEPrincipalKey *principal_key);
 
 static char *
 get_wal_key_file_path(void)
@@ -526,7 +526,7 @@ pg_tde_read_one_wal_key_file_entry2(int fd,
 
 static void
 pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
-								TDEPrincipalKey *principal_key)
+								const TDEPrincipalKey *principal_key)
 {
 	int			fd;
 	off_t		curr_pos = 0;
@@ -551,7 +551,7 @@ pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 }
 
 static WalEncryptionKey *
-pg_tde_decrypt_wal_key(TDEPrincipalKey *principal_key, WalKeyFileEntry *entry)
+pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry)
 {
 	WalEncryptionKey *key = palloc_object(WalEncryptionKey);
 
@@ -623,8 +623,8 @@ pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry,
  * Rotate keys and generates the WAL record for it.
  */
 void
-pg_tde_perform_rotate_server_key(TDEPrincipalKey *principal_key,
-								 TDEPrincipalKey *new_principal_key,
+pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key,
+								 const TDEPrincipalKey *new_principal_key,
 								 bool write_xlog)
 {
 	TDESignedPrincipalKeyInfo new_signed_key_info;
