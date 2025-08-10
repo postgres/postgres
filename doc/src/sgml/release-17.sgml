@@ -1159,12 +1159,20 @@ Branch: REL_16_STABLE [9affed263] 2025-07-31 06:38:00 -0700
 Branch: REL_15_STABLE [e99010cbd] 2025-07-31 06:38:01 -0700
 Branch: REL_14_STABLE [25388fb2c] 2025-07-31 06:38:02 -0700
 Branch: REL_13_STABLE [cc9a62c51] 2025-07-31 06:38:03 -0700
+Author: Noah Misch <noah@leadboat.com>
+Branch: REL_18_STABLE [0d2734eac] 2025-08-10 13:05:13 -0700
+Branch: REL_17_STABLE [28e7252e4] 2025-08-10 13:05:16 -0700
+Branch: REL_16_STABLE [216683296] 2025-08-10 13:05:16 -0700
+Branch: REL_15_STABLE [70637d7ae] 2025-08-10 13:05:17 -0700
+Branch: REL_14_STABLE [7846f4709] 2025-08-10 13:05:17 -0700
+Branch: REL_13_STABLE [bc05590c7] 2025-08-10 13:05:17 -0700
 -->
      <para>
       Ensure stable sort ordering in <application>pg_dump</application>
       for all types of database objects (Noah Misch, Andreas Karlsson)
       <ulink url="&commit_baseurl;1ca1889ea">&sect;</ulink>
       <ulink url="&commit_baseurl;5dd4957b2">&sect;</ulink>
+      <ulink url="&commit_baseurl;28e7252e4">&sect;</ulink>
      </para>
 
      <para>
