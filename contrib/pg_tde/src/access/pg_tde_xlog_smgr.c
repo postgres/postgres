@@ -415,16 +415,54 @@ TDEXLogCryptBuffer(void *buf, size_t count, off_t offset,
 			if (wal_location_cmp(data_start, curr_key->end) < 0 && wal_location_cmp(data_end, curr_key->start) > 0)
 			{
 				char		iv_prefix[16];
-				off_t		dec_off = XLogSegmentOffset(Max(data_start.lsn, curr_key->start.lsn), segSize);
-				off_t		dec_end = XLogSegmentOffset(Min(data_end.lsn, curr_key->end.lsn), segSize);
+
+				/*
+				 * We want to calculate where to start / end encrypting. This
+				 * depends on two factors:
+				 *
+				 * 1. Where does the key start / end
+				 *
+				 * 2. Where does the data start / end
+				 *
+				 * And this is complicated even more by the fact that keys can
+				 * span multiple timelines: if a key starts at TLI 3 LSN 100,
+				 * and ends at TLI 5 LSN 200 it means it is used for
+				 * everything between two, including the entire TLI 4. For
+				 * example, TLI 4 LSN 1 and TLI 4 LSN 400 are both encrypted
+				 * with it, even through 1 is less than 100 and 400 is greater
+				 * than 200.
+				 *
+				 * The below min/max calculations make sure that if the key
+				 * and data are in the same timeline, we only encrypt/decrypt
+				 * in the range of the current key - if the data is longer in
+				 * some directions, we use multiple keys. But if the data
+				 * starts/ends in a TLI "within" the key, we can safely
+				 * decrypt/encrypt from the beginning / until the end, as it
+				 * is part of the key.
+				 */
+
+
+				size_t		end_lsn =
+					data_end.tli < curr_key->end.tli ? data_end.lsn :
+					Min(data_end.lsn, curr_key->end.lsn);
+				size_t		start_lsn =
+					data_start.tli > curr_key->start.tli ? data_start.lsn :
+					Max(data_start.lsn, curr_key->start.lsn);
+				off_t		dec_off =
+					XLogSegmentOffset(start_lsn, segSize);
+				off_t		dec_end =
+					XLogSegmentOffset(end_lsn, segSize);
 				size_t		dec_sz;
 				char	   *dec_buf = (char *) buf + (dec_off - offset);
 
 				Assert(dec_off >= offset);
 
-				CalcXLogPageIVPrefix(tli, segno, curr_key->key.base_iv, iv_prefix);
+				CalcXLogPageIVPrefix(tli, segno, curr_key->key.base_iv,
+									 iv_prefix);
 
-				/* We have reached the end of the segment */
+				/*
+				 * We have reached the end of the segment
+				 */
 				if (dec_end == 0)
 				{
 					dec_end = offset + count;
