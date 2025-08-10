@@ -41,9 +41,6 @@
 #define PG_TDE_FILEMAGIC			0x03454454	/* version ID value = TDE 03 */
 #define PG_TDE_MAP_FILENAME			"%d_keys"
 
-#define MAP_ENTRY_SIZE			sizeof(TDEMapEntry)
-#define TDE_FILE_HEADER_SIZE	sizeof(TDEFileHeader)
-
 typedef enum
 {
 	MAP_ENTRY_TYPE_EMPTY = 0,
@@ -458,9 +455,9 @@ pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, 
 {
 	int			bytes_written = 0;
 
-	bytes_written = pg_pwrite(fd, map_entry, MAP_ENTRY_SIZE, *offset);
+	bytes_written = pg_pwrite(fd, map_entry, sizeof(TDEMapEntry), *offset);
 
-	if (bytes_written != MAP_ENTRY_SIZE)
+	if (bytes_written != sizeof(TDEMapEntry))
 	{
 		ereport(ERROR,
 				errcode_for_file_access(),
@@ -719,13 +716,13 @@ pg_tde_file_header_read(const char *tde_filename, int fd, TDEFileHeader *fheader
 {
 	Assert(fheader);
 
-	*bytes_read = pg_pread(fd, fheader, TDE_FILE_HEADER_SIZE, 0);
+	*bytes_read = pg_pread(fd, fheader, sizeof(TDEFileHeader), 0);
 
 	/* File is empty */
 	if (*bytes_read == 0)
 		return;
 
-	if (*bytes_read != TDE_FILE_HEADER_SIZE
+	if (*bytes_read != sizeof(TDEFileHeader)
 		|| fheader->file_version != PG_TDE_FILEMAGIC)
 	{
 		ereport(FATAL,
@@ -747,9 +744,9 @@ pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrinci
 
 	fheader.file_version = PG_TDE_FILEMAGIC;
 	fheader.signed_key_info = *signed_key_info;
-	*bytes_written = pg_pwrite(fd, &fheader, TDE_FILE_HEADER_SIZE, 0);
+	*bytes_written = pg_pwrite(fd, &fheader, sizeof(TDEFileHeader), 0);
 
-	if (*bytes_written != TDE_FILE_HEADER_SIZE)
+	if (*bytes_written != sizeof(TDEFileHeader))
 	{
 		ereport(ERROR,
 				errcode_for_file_access(),
@@ -781,10 +778,10 @@ pg_tde_read_one_map_entry(int map_file, TDEMapEntry *map_entry, off_t *offset)
 	Assert(map_entry);
 	Assert(offset);
 
-	bytes_read = pg_pread(map_file, map_entry, MAP_ENTRY_SIZE, *offset);
+	bytes_read = pg_pread(map_file, map_entry, sizeof(TDEMapEntry), *offset);
 
 	/* We've reached the end of the file. */
-	if (bytes_read != MAP_ENTRY_SIZE)
+	if (bytes_read != sizeof(TDEMapEntry))
 		return false;
 
 	*offset += bytes_read;
