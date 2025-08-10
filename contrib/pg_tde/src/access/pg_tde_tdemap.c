@@ -93,8 +93,6 @@ static bool pg_tde_read_one_map_entry(int fd, TDEMapEntry *map_entry, off_t *off
 
 #ifndef FRONTEND
 static void pg_tde_write_one_map_entry(int fd, const TDEMapEntry *map_entry, off_t *offset, const char *db_map_path);
-static int	keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos);
-static void finalize_key_rotation(const char *path_old, const char *path_new);
 static int	pg_tde_file_header_write(const char *tde_filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *principal_key, const RelFileLocator *rlocator, const InternalKey *rel_key_data);
 static int	pg_tde_open_file_write(const char *tde_filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
@@ -244,33 +242,6 @@ pg_tde_free_key_map_entry(const RelFileLocator rlocator)
 }
 
 /*
- * Accepts the unrotated filename and returns the rotation temp
- * filename. Both the strings are expected to be of the size
- * MAXPGPATH.
- *
- * No error checking by this function.
- */
-static File
-keyrotation_init_file(const TDESignedPrincipalKeyInfo *signed_key_info, char *rotated_filename, const char *filename, off_t *curr_pos)
-{
-	/*
-	 * Set the new filenames for the key rotation process - temporary at the
-	 * moment
-	 */
-	snprintf(rotated_filename, MAXPGPATH, "%s.r", filename);
-
-	/* Create file, truncate if the rotate file already exits */
-	return pg_tde_open_file_write(rotated_filename, signed_key_info, true, curr_pos);
-}
-
-static void
-finalize_key_rotation(const char *path_old, const char *path_new)
-{
-	durable_unlink(path_old, ERROR);
-	durable_rename(path_new, path_old, ERROR);
-}
-
-/*
  * Rotate keys and generates the WAL record for it.
  */
 void
@@ -291,9 +262,10 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	pg_tde_sign_principal_key_info(&new_signed_key_info, new_principal_key);
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, old_path);
+	snprintf(new_path, MAXPGPATH, "%s.r", old_path);
 
 	old_fd = pg_tde_open_file_read(old_path, false, &old_curr_pos);
-	new_fd = keyrotation_init_file(&new_signed_key_info, new_path, old_path, &new_curr_pos);
+	new_fd = pg_tde_open_file_write(new_path, &new_signed_key_info, true, &new_curr_pos);
 
 	/* Read all entries until EOF */
 	while (1)
@@ -329,7 +301,8 @@ pg_tde_perform_rotate_key(TDEPrincipalKey *principal_key, TDEPrincipalKey *new_p
 	 * Do the final steps - replace the current _map with the file with new
 	 * data
 	 */
-	finalize_key_rotation(old_path, new_path);
+	durable_unlink(old_path, ERROR);
+	durable_rename(new_path, old_path, ERROR);
 
 	/*
 	 * We do WAL writes past the event ("the write behind logging") rather
