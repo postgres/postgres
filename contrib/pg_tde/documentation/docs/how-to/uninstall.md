@@ -1,59 +1,142 @@
 # Uninstall pg_tde
 
-If you no longer wish to use TDE in your deployment, you can remove the `pg_tde` extension. To do so, you must have superuser privileges, or database owner privileges in case you only want to remove it from a single database.
+If you no longer wish to use Transparent Data Encryption (TDE) in your deployment, you can remove the `pg_tde` extension.
+
+To proceed, you must have one of the following privileges:
+
+- Superuser privileges (to remove the extension globally), or
+- Database owner privileges (to remove it from a specific database only)
+
+To uninstall `pg_tde`, follow the steps below.
+
+## Step 1. Remove `pg_tde` from all databases
+
+Before uninstalling, you must remove the extension from every database where it is loaded. This includes template databases if `pg_tde` was previously enabled there.
+
+a. Clean up encrypted tables:
+
+To decrypt a table and restore it to its default storage method:
+
+```sql
+ALTER TABLE <table_name> SET ACCESS METHOD heap;
+```
+
+b. Remove the extension once all encrypted tables have been handled:
+
+```sql
+DROP EXTENSION pg_tde;
+```
+
+!!! note
+
+    If there are any encrypted objects that were not previously decrypted or deleted, this command will fail and you have to follow the steps above for these objects.
+
+## Step 2. Turn off WAL encryption
+
+If you are using WAL encryption, you need to **turn it off** before you uninstall the `pg_tde` library:
+
+a. Run:
+
+```sql
+ALTER SYSTEM SET pg_tde.wal_encrypt = off;
+```
+
+b. Restart the PostgreSQL cluster to apply the changes:
+
+- On Debian and Ubuntu:
+
+```sh
+sudo systemctl restart postgresql
+```
+
+- On RHEL and derivatives:
+
+```sh
+sudo systemctl restart postgresql-17
+```
+
+## Step 3. Uninstall the `pg_tde` shared library
 
 !!! warning
-    This process removes the extension, but does not decrypt data automatically.  Only uninstall the extension after all encrypted data **has been removed or decrypted**.
 
-To uninstall `pg_tde`, follow these steps:
+    This process removes the extension, but **does not** decrypt data automatically. Only uninstall the shared library after all encrypted data **has been removed or decrypted** and WAL encryption **has been disabled**.
 
-1. Decrypt or drop encrypted tables:
+!!! note
 
-    Before removing the extension, you must either **decrypt** or **drop** all encrypted tables:
+    Encrypted WAL pages **will not be decrypted**, so any postgres cluster needing to read them will need the `pg_tde` library loaded, and the WAL encryption keys available and in use.
 
-    - To decrypt a table, run:
+At this point, the shared library is still loaded but no longer active. To fully uninstall `pg_tde`, complete the steps below.
 
-    ```sql
-    ALTER TABLE <table name> SET ACCESS METHOD heap;
+a. Run `SHOW shared_preload_libraries` to view the current configuration of preloaded libraries.
+
+For example:
+
+```sql
+postgres=# SHOW shared_preload_libraries;
+        shared_preload_libraries
+-----------------------------------------
+pg_stat_statements,pg_tde,auto_explain
+(1 row)
+
+postgres=#
+```
+
+b. Remove `pg_tde` from the list and apply the new setting using `ALTER SYSTEM SET shared_preload_libraries=<your list of libraries>`.
+
+For example:
+
+```sql
+postgres=# ALTER SYSTEM SET shared_preload_libraries=pg_stat_statements,auto_explain;
+ALTER SYSTEM
+postgres=#
+```
+
+!!! note
+
+    Your list of libraries will most likely be different than the above example.
+    
+    If `pg_tde` is the only shared library in the list, and it was set via `postgresql.conf` you cannot disable it using the `ALTER SYSTEM SET ...` command. Instead:
+    
+    1. Remove the `shared_preload_libraries` line from `postgresql.conf`
+    2. Run `ALTER SYSTEM RESET shared_preload_libraries;`
+
+c. Restart the `postgresql` cluster to apply the changes:
+
+- On Debian and Ubuntu:
+
+    ```sh
+    sudo systemctl restart postgresql
     ```
 
-    - To discard data, drop the encrypted tables.
+- On RHEL and derivatives:
 
-2. Drop the extension using the `DROP EXTENSION` command:
-
-    ```sql
-    DROP EXTENSION pg_tde;
+    ```sh
+    sudo systemctl restart postgresql-17
     ```
 
-    Alternatively, to remove everything at once:
+## Step 4. (Optional) Clean up configuration
 
-    ```sql
-    DROP EXTENSION pg_tde CASCADE;
-    ```
+At this point it is safe to remove any configuration related to `pg_tde` from `postgresql.conf` and `postgresql.auto.conf`. Look for any configuration parameters prefixed with `pg_tde.` and remove or comment them out, as needed.
 
-    !!! note
-        The `DROP EXTENSION` command does not delete the underlying `pg_tde`-specific data files from disk.
+## Troubleshooting: PANIC checkpoint not found on restart
 
-3. Run the `DROP EXTENSION` command against every database where you have enabled the `pg_tde` extension, if the goal is to completely remove the extension. This also includes the template databases, in case `pg_tde` was previously enabled there.
+This can happen if WAL encryption was not properly disabled before removing `pg_tde` from `shared_preload_libraries`, when the PostgreSQL server was not restarted after disabling WAL encryption (see step 3.c).
 
-4. Remove any reference to `pg_tde` GUC variables from the PostgreSQL configuration file.
+You might see this when restarting the PostgreSQL cluster:
 
-5. Modify the `shared_preload_libraries` and remove the 'pg_tde' from it. Use the `ALTER SYSTEM` command for this purpose, or edit the configuration file.
+```sh
+2025-04-01 17:12:50.607 CEST [496385] PANIC:  could not locate a valid checkpoint record at 0/17B2580
+```
 
-    !!! warning
-        Once `pg_tde` is removed from the `shared_preload_libraries`, reading any leftover encrypted files will fail. Removing the extension from the `shared_preload_libraries` is also possible if the extension is still installed in some databases.
-        Make sure to do this only if the server has no encrypted files in its data directory.
+To resolve it follow these steps:
 
-6. Start or restart the `postgresql` cluster to apply the changes.
+1. Re-add `pg_tde` to `shared_preload_libraries`
+2. Restart the PostgreSQL cluster
+3. Follow the [instructions for turning off WAL encryption](#step-2-turn-off-wal-encryption) before uninstalling the shared library again
 
-    * On Debian and Ubuntu:
+!!! note
 
-       ```sh
-       sudo systemctl restart postgresql
-       ```
-
-    * On RHEL and derivatives
-
-       ```sh
-       sudo systemctl restart postgresql-17
-       ```
+    Two restarts are required to uninstall properly if WAL encryption was enabled:
+    
+    - First to disable WAL encryption
+    - Second to remove the `pg_tde` library
