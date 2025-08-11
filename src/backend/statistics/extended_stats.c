@@ -1345,6 +1345,9 @@ choose_best_statistics(List *stats, char requiredkind, bool inh,
  *		so we can't cope with system columns.
  * *exprs: input/output parameter collecting primitive subclauses within
  *		the clause tree
+ * *leakproof: input/output parameter recording the leakproofness of the
+ *		clause tree.  This should be true initially, and will be set to false
+ *		if any operator function used in an OpExpr is not leakproof.
  *
  * Returns false if there is something we definitively can't handle.
  * On true return, we can proceed to match the *exprs against statistics.
@@ -1352,7 +1355,7 @@ choose_best_statistics(List *stats, char requiredkind, bool inh,
 static bool
 statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 									  Index relid, Bitmapset **attnums,
-									  List **exprs)
+									  List **exprs, bool *leakproof)
 {
 	/* Look inside any binary-compatible relabeling (as in examine_variable) */
 	if (IsA(clause, RelabelType))
@@ -1387,7 +1390,6 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 	/* (Var/Expr op Const) or (Const op Var/Expr) */
 	if (is_opclause(clause))
 	{
-		RangeTblEntry *rte = root->simple_rte_array[relid];
 		OpExpr	   *expr = (OpExpr *) clause;
 		Node	   *clause_expr;
 
@@ -1422,24 +1424,15 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 				return false;
 		}
 
-		/*
-		 * If there are any securityQuals on the RTE from security barrier
-		 * views or RLS policies, then the user may not have access to all the
-		 * table's data, and we must check that the operator is leak-proof.
-		 *
-		 * If the operator is leaky, then we must ignore this clause for the
-		 * purposes of estimating with MCV lists, otherwise the operator might
-		 * reveal values from the MCV list that the user doesn't have
-		 * permission to see.
-		 */
-		if (rte->securityQuals != NIL &&
-			!get_func_leakproof(get_opcode(expr->opno)))
-			return false;
+		/* Check if the operator is leakproof */
+		if (*leakproof)
+			*leakproof = get_func_leakproof(get_opcode(expr->opno));
 
 		/* Check (Var op Const) or (Const op Var) clauses by recursing. */
 		if (IsA(clause_expr, Var))
 			return statext_is_compatible_clause_internal(root, clause_expr,
-														 relid, attnums, exprs);
+														 relid, attnums,
+														 exprs, leakproof);
 
 		/* Otherwise we have (Expr op Const) or (Const op Expr). */
 		*exprs = lappend(*exprs, clause_expr);
@@ -1449,7 +1442,6 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 	/* Var/Expr IN Array */
 	if (IsA(clause, ScalarArrayOpExpr))
 	{
-		RangeTblEntry *rte = root->simple_rte_array[relid];
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) clause;
 		Node	   *clause_expr;
 		bool		expronleft;
@@ -1489,24 +1481,15 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 				return false;
 		}
 
-		/*
-		 * If there are any securityQuals on the RTE from security barrier
-		 * views or RLS policies, then the user may not have access to all the
-		 * table's data, and we must check that the operator is leak-proof.
-		 *
-		 * If the operator is leaky, then we must ignore this clause for the
-		 * purposes of estimating with MCV lists, otherwise the operator might
-		 * reveal values from the MCV list that the user doesn't have
-		 * permission to see.
-		 */
-		if (rte->securityQuals != NIL &&
-			!get_func_leakproof(get_opcode(expr->opno)))
-			return false;
+		/* Check if the operator is leakproof */
+		if (*leakproof)
+			*leakproof = get_func_leakproof(get_opcode(expr->opno));
 
 		/* Check Var IN Array clauses by recursing. */
 		if (IsA(clause_expr, Var))
 			return statext_is_compatible_clause_internal(root, clause_expr,
-														 relid, attnums, exprs);
+														 relid, attnums,
+														 exprs, leakproof);
 
 		/* Otherwise we have Expr IN Array. */
 		*exprs = lappend(*exprs, clause_expr);
@@ -1543,7 +1526,8 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 			 */
 			if (!statext_is_compatible_clause_internal(root,
 													   (Node *) lfirst(lc),
-													   relid, attnums, exprs))
+													   relid, attnums, exprs,
+													   leakproof))
 				return false;
 		}
 
@@ -1557,8 +1541,10 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 
 		/* Check Var IS NULL clauses by recursing. */
 		if (IsA(nt->arg, Var))
-			return statext_is_compatible_clause_internal(root, (Node *) (nt->arg),
-														 relid, attnums, exprs);
+			return statext_is_compatible_clause_internal(root,
+														 (Node *) (nt->arg),
+														 relid, attnums,
+														 exprs, leakproof);
 
 		/* Otherwise we have Expr IS NULL. */
 		*exprs = lappend(*exprs, nt->arg);
@@ -1597,10 +1583,9 @@ static bool
 statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 							 Bitmapset **attnums, List **exprs)
 {
-	RangeTblEntry *rte = root->simple_rte_array[relid];
 	RestrictInfo *rinfo;
 	int			clause_relid;
-	Oid			userid;
+	bool		leakproof;
 
 	/*
 	 * Special-case handling for bare BoolExpr AND clauses, because the
@@ -1640,19 +1625,31 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 		clause_relid != relid)
 		return false;
 
-	/* Check the clause and determine what attributes it references. */
+	/*
+	 * Check the clause, determine what attributes it references, and whether
+	 * it includes any non-leakproof operators.
+	 */
+	leakproof = true;
 	if (!statext_is_compatible_clause_internal(root, (Node *) rinfo->clause,
-											   relid, attnums, exprs))
+											   relid, attnums, exprs,
+											   &leakproof))
 		return false;
 
 	/*
-	 * Check that the user has permission to read all required attributes. Use
-	 * checkAsUser if it's set, in case we're accessing the table via a view.
+	 * If the clause includes any non-leakproof operators, check that the user
+	 * has permission to read all required attributes, otherwise the operators
+	 * might reveal values from the MCV list that the user doesn't have
+	 * permission to see.  We require all rows to be selectable --- there must
+	 * be no securityQuals from security barrier views or RLS policies.  See
+	 * similar code in examine_variable(), examine_simple_variable(), and
+	 * statistic_proc_security_check().
+	 *
+	 * Note that for an inheritance child, the permission checks are performed
+	 * on the inheritance root parent, and whole-table select privilege on the
+	 * parent doesn't guarantee that the user could read all columns of the
+	 * child. Therefore we must check all referenced columns.
 	 */
-	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
-
-	/* Table-level SELECT privilege is sufficient for all columns */
-	if (pg_class_aclcheck(rte->relid, userid, ACL_SELECT) != ACLCHECK_OK)
+	if (!leakproof)
 	{
 		Bitmapset  *clause_attnums = NULL;
 		int			attnum = -1;
@@ -1677,26 +1674,9 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 		if (*exprs != NIL)
 			pull_varattnos((Node *) *exprs, relid, &clause_attnums);
 
-		attnum = -1;
-		while ((attnum = bms_next_member(clause_attnums, attnum)) >= 0)
-		{
-			/* Undo the offset */
-			AttrNumber	attno = attnum + FirstLowInvalidHeapAttributeNumber;
-
-			if (attno == InvalidAttrNumber)
-			{
-				/* Whole-row reference, so must have access to all columns */
-				if (pg_attribute_aclcheck_all(rte->relid, userid, ACL_SELECT,
-											  ACLMASK_ALL) != ACLCHECK_OK)
-					return false;
-			}
-			else
-			{
-				if (pg_attribute_aclcheck(rte->relid, attno, userid,
-										  ACL_SELECT) != ACLCHECK_OK)
-					return false;
-			}
-		}
+		/* Must have permission to read all rows from these columns */
+		if (!all_rows_selectable(root, relid, clause_attnums))
+			return false;
 	}
 
 	/* If we reach here, the clause is OK */
