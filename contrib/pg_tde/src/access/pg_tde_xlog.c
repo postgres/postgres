@@ -43,7 +43,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
-	if (info == XLOG_TDE_ADD_RELATION_KEY)
+	if (info == XLOG_TDE_CREATE_RELATION_KEY)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
@@ -62,7 +62,7 @@ tdeheap_rmgr_redo(XLogReaderState *record)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
-		tde_smgr_delete_key_redo(&xlrec->rlocator);
+		tde_smgr_delete_leftover_key_redo(&xlrec->rlocator);
 	}
 	else if (info == XLOG_TDE_ROTATE_PRINCIPAL_KEY)
 	{
@@ -99,7 +99,7 @@ tdeheap_rmgr_desc(StringInfo buf, XLogReaderState *record)
 {
 	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
 
-	if (info == XLOG_TDE_ADD_RELATION_KEY)
+	if (info == XLOG_TDE_CREATE_RELATION_KEY)
 	{
 		XLogRelKey *xlrec = (XLogRelKey *) XLogRecGetData(record);
 
@@ -148,8 +148,8 @@ tdeheap_rmgr_identify(uint8 info)
 {
 	switch (info & ~XLR_INFO_MASK)
 	{
-		case XLOG_TDE_ADD_RELATION_KEY:
-			return "ADD_RELATION_KEY";
+		case XLOG_TDE_CREATE_RELATION_KEY:
+			return "CREATE_RELATION_KEY";
 		case XLOG_TDE_ADD_PRINCIPAL_KEY:
 			return "ADD_PRINCIPAL_KEY";
 		case XLOG_TDE_ROTATE_PRINCIPAL_KEY:

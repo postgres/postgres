@@ -67,7 +67,7 @@ static SMgrId OurSMgrId = MaxSMgrId;
 static void tde_smgr_save_temp_key(const RelFileLocator *newrlocator, const InternalKey *key);
 static InternalKey *tde_smgr_get_temp_key(const RelFileLocator *rel);
 static bool tde_smgr_has_temp_key(const RelFileLocator *rel);
-static void tde_smgr_remove_temp_key(const RelFileLocator *rel);
+static void tde_smgr_delete_temp_key(const RelFileLocator *rel);
 static void CalcBlockIv(ForkNumber forknum, BlockNumber bn, const unsigned char *base_iv, unsigned char *iv);
 
 static void
@@ -77,11 +77,11 @@ tde_smgr_log_create_key(const RelFileLocator *rlocator)
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec, sizeof(xlrec));
-	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_RELATION_KEY);
+	XLogInsert(RM_TDERMGR_ID, XLOG_TDE_CREATE_RELATION_KEY);
 }
 
 static void
-tde_smgr_log_delete_key(const RelFileLocator *rlocator)
+tde_smgr_log_delete_leftover_key(const RelFileLocator *rlocator)
 {
 	XLogRelKey	xlrec = {.rlocator = *rlocator};
 
@@ -122,26 +122,26 @@ tde_smgr_create_key_redo(const RelFileLocator *rlocator)
 }
 
 static void
-tde_smgr_remove_key(const RelFileLocatorBackend *smgr_rlocator)
+tde_smgr_delete_key(const RelFileLocatorBackend *smgr_rlocator)
 {
 	if (RelFileLocatorBackendIsTemp(*smgr_rlocator))
-		tde_smgr_remove_temp_key(&smgr_rlocator->locator);
+		tde_smgr_delete_temp_key(&smgr_rlocator->locator);
 	else
 		pg_tde_free_key_map_entry(smgr_rlocator->locator);
 }
 
 static void
-tde_smgr_delete_key(const RelFileLocatorBackend *smgr_rlocator)
+tde_smgr_delete_leftover_key(const RelFileLocatorBackend *smgr_rlocator)
 {
 	if (!RelFileLocatorBackendIsTemp(*smgr_rlocator))
 	{
 		pg_tde_free_key_map_entry(smgr_rlocator->locator);
-		tde_smgr_log_delete_key(&smgr_rlocator->locator);
+		tde_smgr_log_delete_leftover_key(&smgr_rlocator->locator);
 	}
 }
 
 void
-tde_smgr_delete_key_redo(const RelFileLocator *rlocator)
+tde_smgr_delete_leftover_key_redo(const RelFileLocator *rlocator)
 {
 	pg_tde_free_key_map_entry(*rlocator);
 }
@@ -271,7 +271,7 @@ tde_mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	if (forknum == MAIN_FORKNUM || forknum == InvalidForkNumber)
 	{
 		if (tde_smgr_is_encrypted(&rlocator))
-			tde_smgr_remove_key(&rlocator);
+			tde_smgr_delete_key(&rlocator);
 	}
 }
 
@@ -391,7 +391,7 @@ tde_mdcreate(RelFileLocator relold, SMgrRelation reln, ForkNumber forknum, bool 
 	 * If we're in redo, a separate WAL record will make sure the key is
 	 * removed.
 	 */
-	tde_smgr_delete_key(&reln->smgr_rlocator);
+	tde_smgr_delete_leftover_key(&reln->smgr_rlocator);
 
 	if (!tde_smgr_should_encrypt(&reln->smgr_rlocator, &relold))
 	{
@@ -514,7 +514,7 @@ tde_smgr_has_temp_key(const RelFileLocator *rel)
 }
 
 static void
-tde_smgr_remove_temp_key(const RelFileLocator *rel)
+tde_smgr_delete_temp_key(const RelFileLocator *rel)
 {
 	Assert(TempRelKeys);
 	hash_search(TempRelKeys, rel, HASH_REMOVE, NULL);
