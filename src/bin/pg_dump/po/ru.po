@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-03 16:01+0300\n"
+"POT-Creation-Date: 2025-08-02 11:38+0300\n"
 "PO-Revision-Date: 2025-05-03 16:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -116,224 +116,224 @@ msgstr "дочерний процесс завершён по сигналу %d:
 msgid "child process exited with unrecognized status %d"
 msgstr "дочерний процесс завершился с нераспознанным кодом состояния %d"
 
-#: common.c:124
+#: common.c:127
 #, c-format
 msgid "reading extensions"
 msgstr "чтение расширений"
 
-#: common.c:128
+#: common.c:131
 #, c-format
 msgid "identifying extension members"
 msgstr "выявление членов расширений"
 
-#: common.c:131
+#: common.c:134
 #, c-format
 msgid "reading schemas"
 msgstr "чтение схем"
 
-#: common.c:141
+#: common.c:144
 #, c-format
 msgid "reading user-defined tables"
 msgstr "чтение пользовательских таблиц"
 
-#: common.c:148
+#: common.c:151
 #, c-format
 msgid "reading user-defined functions"
 msgstr "чтение пользовательских функций"
 
-#: common.c:153
+#: common.c:156
 #, c-format
 msgid "reading user-defined types"
 msgstr "чтение пользовательских типов"
 
-#: common.c:158
+#: common.c:161
 #, c-format
 msgid "reading procedural languages"
 msgstr "чтение процедурных языков"
 
-#: common.c:161
+#: common.c:164
 #, c-format
 msgid "reading user-defined aggregate functions"
 msgstr "чтение пользовательских агрегатных функций"
 
-#: common.c:164
+#: common.c:167
 #, c-format
 msgid "reading user-defined operators"
 msgstr "чтение пользовательских операторов"
 
-#: common.c:168
+#: common.c:171
 #, c-format
 msgid "reading user-defined access methods"
 msgstr "чтение пользовательских методов доступа"
 
-#: common.c:171
+#: common.c:175
 #, c-format
 msgid "reading user-defined operator classes"
 msgstr "чтение пользовательских классов операторов"
 
-#: common.c:174
+#: common.c:178
 #, c-format
 msgid "reading user-defined operator families"
 msgstr "чтение пользовательских семейств операторов"
 
-#: common.c:177
+#: common.c:181
 #, c-format
 msgid "reading user-defined text search parsers"
 msgstr "чтение пользовательских анализаторов текстового поиска"
 
-#: common.c:180
+#: common.c:184
 #, c-format
 msgid "reading user-defined text search templates"
 msgstr "чтение пользовательских шаблонов текстового поиска"
 
-#: common.c:183
+#: common.c:187
 #, c-format
 msgid "reading user-defined text search dictionaries"
 msgstr "чтение пользовательских словарей текстового поиска"
 
-#: common.c:186
+#: common.c:190
 #, c-format
 msgid "reading user-defined text search configurations"
 msgstr "чтение пользовательских конфигураций текстового поиска"
 
-#: common.c:189
+#: common.c:193
 #, c-format
 msgid "reading user-defined foreign-data wrappers"
 msgstr "чтение пользовательских оболочек сторонних данных"
 
-#: common.c:192
+#: common.c:196
 #, c-format
 msgid "reading user-defined foreign servers"
 msgstr "чтение пользовательских сторонних серверов"
 
-#: common.c:195
+#: common.c:199
 #, c-format
 msgid "reading default privileges"
 msgstr "чтение прав по умолчанию"
 
-#: common.c:198
+#: common.c:202
 #, c-format
 msgid "reading user-defined collations"
 msgstr "чтение пользовательских правил сортировки"
 
-#: common.c:202
+#: common.c:206
 #, c-format
 msgid "reading user-defined conversions"
 msgstr "чтение пользовательских преобразований"
 
-#: common.c:205
+#: common.c:209
 #, c-format
 msgid "reading type casts"
 msgstr "чтение приведений типов"
 
-#: common.c:208
+#: common.c:212
 #, c-format
 msgid "reading transforms"
 msgstr "чтение преобразований"
 
-#: common.c:211
+#: common.c:215
 #, c-format
 msgid "reading table inheritance information"
 msgstr "чтение информации о наследовании таблиц"
 
-#: common.c:214
+#: common.c:218
 #, c-format
 msgid "reading event triggers"
 msgstr "чтение событийных триггеров"
 
-#: common.c:218
+#: common.c:222
 #, c-format
 msgid "finding extension tables"
 msgstr "поиск таблиц расширений"
 
-#: common.c:222
+#: common.c:226
 #, c-format
 msgid "finding inheritance relationships"
 msgstr "поиск связей наследования"
 
-#: common.c:225
+#: common.c:229
 #, c-format
 msgid "reading column info for interesting tables"
 msgstr "чтение информации о столбцах интересующих таблиц"
 
-#: common.c:228
+#: common.c:232
 #, c-format
 msgid "flagging inherited columns in subtables"
 msgstr "пометка наследованных столбцов в подтаблицах"
 
-#: common.c:231
+#: common.c:235
 #, c-format
 msgid "reading partitioning data"
 msgstr "чтение информации о секционировании"
 
-#: common.c:234
+#: common.c:238
 #, c-format
 msgid "reading indexes"
 msgstr "чтение индексов"
 
-#: common.c:237
+#: common.c:241
 #, c-format
 msgid "flagging indexes in partitioned tables"
 msgstr "пометка индексов в секционированных таблицах"
 
-#: common.c:240
+#: common.c:244
 #, c-format
 msgid "reading extended statistics"
 msgstr "чтение расширенной статистики"
 
-#: common.c:243
+#: common.c:247
 #, c-format
 msgid "reading constraints"
 msgstr "чтение ограничений"
 
-#: common.c:246
+#: common.c:250
 #, c-format
 msgid "reading triggers"
 msgstr "чтение триггеров"
 
-#: common.c:249
+#: common.c:253
 #, c-format
 msgid "reading rewrite rules"
 msgstr "чтение правил перезаписи"
 
-#: common.c:252
+#: common.c:256
 #, c-format
 msgid "reading policies"
 msgstr "чтение политик"
 
-#: common.c:255
+#: common.c:259
 #, c-format
 msgid "reading publications"
 msgstr "чтение публикаций"
 
-#: common.c:260
+#: common.c:264
 #, c-format
 msgid "reading publication membership"
 msgstr "чтение участников публикаций"
 
-#: common.c:263
+#: common.c:267
 #, c-format
 msgid "reading subscriptions"
 msgstr "чтение подписок"
 
-#: common.c:340
+#: common.c:344
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
 msgstr "неверное число родителей (%d) для таблицы \"%s\""
 
-#: common.c:1102
+#: common.c:1117
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
 msgstr ""
 "нарушение целостности: родительская таблица с OID %u для таблицы \"%s\" (OID "
 "%u) не найдена"
 
-#: common.c:1144
+#: common.c:1159
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
 msgstr "не удалось разобрать числовой массив \"%s\": слишком много чисел"
 
-#: common.c:1159
+#: common.c:1174
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
 msgstr "не удалось разобрать числовой массив \"%s\": неверный символ в числе"
@@ -609,7 +609,7 @@ msgstr "восстановление большого объекта с OID %u"
 msgid "could not create large object %u: %s"
 msgstr "не удалось создать большой объект %u: %s"
 
-#: pg_backup_archiver.c:1375 pg_dump.c:3816
+#: pg_backup_archiver.c:1375 pg_dump.c:3823
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "не удалось открыть большой объект %u: %s"
@@ -1092,7 +1092,7 @@ msgstr "ошибка в PQputCopyEnd: %s"
 msgid "COPY failed for table \"%s\": %s"
 msgstr "сбой команды COPY для таблицы \"%s\": %s"
 
-#: pg_backup_db.c:525 pg_dump.c:2166
+#: pg_backup_db.c:525 pg_dump.c:2173
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
 msgstr "неожиданные лишние результаты получены при COPY для таблицы \"%s\""
@@ -1952,159 +1952,159 @@ msgstr "В данный момент вы не подключены к базе 
 msgid "cross-database references are not implemented: %s"
 msgstr "ссылки между базами не реализованы: %s"
 
-#: pg_dump.c:2036
+#: pg_dump.c:2043
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
 msgstr "выгрузка содержимого таблицы \"%s.%s\""
 
-#: pg_dump.c:2147
+#: pg_dump.c:2154
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
 msgstr "Ошибка выгрузки таблицы \"%s\": сбой в PQgetCopyData()."
 
-#: pg_dump.c:2148 pg_dump.c:2158
+#: pg_dump.c:2155 pg_dump.c:2165
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Сообщение об ошибке с сервера: %s"
 
-#: pg_dump.c:2149 pg_dump.c:2159
+#: pg_dump.c:2156 pg_dump.c:2166
 #, c-format
 msgid "The command was: %s"
 msgstr "Выполнялась команда: %s"
 
-#: pg_dump.c:2157
+#: pg_dump.c:2164
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
 msgstr "Ошибка выгрузки таблицы \"%s\": сбой в PQgetResult()."
 
-#: pg_dump.c:2248
+#: pg_dump.c:2255
 #, c-format
 msgid "wrong number of fields retrieved from table \"%s\""
 msgstr "из таблицы \"%s\" получено неверное количество полей"
 
-#: pg_dump.c:3003
+#: pg_dump.c:3010
 #, c-format
 msgid "saving database definition"
 msgstr "сохранение определения базы данных"
 
-#: pg_dump.c:3475
+#: pg_dump.c:3482
 #, c-format
 msgid "saving encoding = %s"
 msgstr "сохранение кодировки (%s)"
 
-#: pg_dump.c:3500
+#: pg_dump.c:3507
 #, c-format
 msgid "saving standard_conforming_strings = %s"
 msgstr "сохранение standard_conforming_strings (%s)"
 
-#: pg_dump.c:3539
+#: pg_dump.c:3546
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "не удалось разобрать результат current_schemas()"
 
-#: pg_dump.c:3558
+#: pg_dump.c:3565
 #, c-format
 msgid "saving search_path = %s"
 msgstr "сохранение search_path = %s"
 
-#: pg_dump.c:3598
+#: pg_dump.c:3605
 #, c-format
 msgid "reading large objects"
 msgstr "чтение больших объектов"
 
-#: pg_dump.c:3780
+#: pg_dump.c:3787
 #, c-format
 msgid "saving large objects"
 msgstr "сохранение больших объектов"
 
-#: pg_dump.c:3826
+#: pg_dump.c:3833
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "ошибка чтения большого объекта %u: %s"
 
-#: pg_dump.c:3930
+#: pg_dump.c:3937
 #, c-format
 msgid "reading row-level security policies"
 msgstr "чтение политик защиты на уровне строк"
 
-#: pg_dump.c:4069
+#: pg_dump.c:4076
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "нераспознанный тип команды в политике: %c"
 
-#: pg_dump.c:4223
+#: pg_dump.c:4230
 #, c-format
 msgid "owner of publication \"%s\" appears to be invalid"
 msgstr "у публикации \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:4537
+#: pg_dump.c:4544
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr ""
 "подписки не выгружены, так как текущий пользователь не суперпользователь"
 
-#: pg_dump.c:4608
+#: pg_dump.c:4615
 #, c-format
 msgid "owner of subscription \"%s\" appears to be invalid"
 msgstr "у подписки \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:4651
+#: pg_dump.c:4658
 #, c-format
 msgid "could not parse subpublications array"
 msgstr "не удалось разобрать массив subpublications"
 
-#: pg_dump.c:5009
+#: pg_dump.c:5016
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "не удалось найти родительское расширение для %s %s"
 
 # TO REVIEW
-#: pg_dump.c:5141
+#: pg_dump.c:5148
 #, c-format
 msgid "owner of schema \"%s\" appears to be invalid"
 msgstr "у схемы \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:5164
+#: pg_dump.c:5171
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "схема с OID %u не существует"
 
-#: pg_dump.c:5494
+#: pg_dump.c:5501
 #, c-format
 msgid "owner of data type \"%s\" appears to be invalid"
 msgstr "у типа данных \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:5578
+#: pg_dump.c:5593
 #, c-format
 msgid "owner of operator \"%s\" appears to be invalid"
 msgstr "у оператора \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:5877
+#: pg_dump.c:5917
 #, c-format
 msgid "owner of operator class \"%s\" appears to be invalid"
 msgstr "у класса операторов \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:5960
+#: pg_dump.c:6003
 #, c-format
 msgid "owner of operator family \"%s\" appears to be invalid"
 msgstr "у семейства операторов \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:6128
+#: pg_dump.c:6171
 #, c-format
 msgid "owner of aggregate function \"%s\" appears to be invalid"
 msgstr "у агрегатной функции \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:6389
+#: pg_dump.c:6432
 #, c-format
 msgid "owner of function \"%s\" appears to be invalid"
 msgstr "у функции \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:7185
+#: pg_dump.c:7228
 #, c-format
 msgid "owner of table \"%s\" appears to be invalid"
 msgstr "у таблицы \"%s\" по-видимому неправильный владелец"
 
-#: pg_dump.c:7227 pg_dump.c:17792
+#: pg_dump.c:7270 pg_dump.c:17856
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of sequence with OID %u not "
@@ -2113,7 +2113,7 @@ msgstr ""
 "нарушение целостности: по OID %u не удалось найти родительскую таблицу "
 "последовательности с OID %u"
 
-#: pg_dump.c:7372
+#: pg_dump.c:7415
 #, c-format
 msgid ""
 "failed sanity check, table OID %u appearing in pg_partitioned_table not found"
@@ -2121,17 +2121,17 @@ msgstr ""
 "нарушение целостности: таблица с OID %u, фигурирующим в "
 "pg_partitioned_table, не найдена"
 
-#: pg_dump.c:7438
+#: pg_dump.c:7481
 #, c-format
 msgid "reading indexes for table \"%s.%s\""
 msgstr "чтение индексов таблицы \"%s.%s\""
 
-#: pg_dump.c:7856
+#: pg_dump.c:7899
 #, c-format
 msgid "reading foreign key constraints for table \"%s.%s\""
 msgstr "чтение ограничений внешних ключей таблицы \"%s.%s\""
 
-#: pg_dump.c:8135
+#: pg_dump.c:8178
 #, c-format
 msgid ""
 "failed sanity check, parent table with OID %u of pg_rewrite entry with OID "
@@ -2140,12 +2140,12 @@ msgstr ""
 "нарушение целостности: по OID %u не удалось найти родительскую таблицу для "
 "записи pg_rewrite с OID %u"
 
-#: pg_dump.c:8219
+#: pg_dump.c:8262
 #, c-format
 msgid "reading triggers for table \"%s.%s\""
 msgstr "чтение триггеров таблицы \"%s.%s\""
 
-#: pg_dump.c:8401
+#: pg_dump.c:8444
 #, c-format
 msgid ""
 "query produced null referenced table name for foreign key trigger \"%s\" on "
@@ -2154,32 +2154,32 @@ msgstr ""
 "запрос выдал NULL вместо имени целевой таблицы для триггера внешнего ключа "
 "\"%s\" в таблице \"%s\" (OID целевой таблицы: %u)"
 
-#: pg_dump.c:8951
+#: pg_dump.c:8994
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\""
 msgstr "поиск столбцов и типов таблицы \"%s.%s\""
 
-#: pg_dump.c:9075
+#: pg_dump.c:9118
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "неверная нумерация столбцов в таблице \"%s\""
 
-#: pg_dump.c:9114
+#: pg_dump.c:9157
 #, c-format
 msgid "finding default expressions of table \"%s.%s\""
 msgstr "поиск выражений по умолчанию для таблицы \"%s.%s\""
 
-#: pg_dump.c:9136
+#: pg_dump.c:9179
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "неверное значение adnum (%d) в таблице \"%s\""
 
-#: pg_dump.c:9229
+#: pg_dump.c:9272
 #, c-format
 msgid "finding check constraints for table \"%s.%s\""
 msgstr "поиск ограничений-проверок для таблицы \"%s.%s\""
 
-#: pg_dump.c:9278
+#: pg_dump.c:9321
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
@@ -2190,69 +2190,69 @@ msgstr[1] ""
 msgstr[2] ""
 "ожидалось %d ограничений-проверок для таблицы \"%s\", но найдено: %d"
 
-#: pg_dump.c:9282
+#: pg_dump.c:9325
 #, c-format
 msgid "(The system catalogs might be corrupted.)"
 msgstr "(Возможно, повреждены системные каталоги.)"
 
-#: pg_dump.c:10884
+#: pg_dump.c:10927
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "у типа данных \"%s\" по-видимому неправильный тип типа"
 
-#: pg_dump.c:12232
+#: pg_dump.c:12280
 #, c-format
 msgid "bogus value in proargmodes array"
 msgstr "неприемлемое значение в массиве proargmodes"
 
-#: pg_dump.c:12534
+#: pg_dump.c:12582
 #, c-format
 msgid "could not parse proallargtypes array"
 msgstr "не удалось разобрать массив proallargtypes"
 
-#: pg_dump.c:12550
+#: pg_dump.c:12598
 #, c-format
 msgid "could not parse proargmodes array"
 msgstr "не удалось разобрать массив proargmodes"
 
-#: pg_dump.c:12564
+#: pg_dump.c:12612
 #, c-format
 msgid "could not parse proargnames array"
 msgstr "не удалось разобрать массив proargnames"
 
-#: pg_dump.c:12574
+#: pg_dump.c:12622
 #, c-format
 msgid "could not parse proconfig array"
 msgstr "не удалось разобрать массив proconfig"
 
 # TO REVEIW
-#: pg_dump.c:12650
+#: pg_dump.c:12698
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "недопустимое значение provolatile для функции \"%s\""
 
 # TO REVEIW
-#: pg_dump.c:12700 pg_dump.c:14642
+#: pg_dump.c:12748 pg_dump.c:14690
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "недопустимое значение proparallel для функции \"%s\""
 
-#: pg_dump.c:12840 pg_dump.c:12946 pg_dump.c:12953
+#: pg_dump.c:12888 pg_dump.c:12994 pg_dump.c:13001
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "не удалось найти определение функции для функции с OID %u"
 
-#: pg_dump.c:12879
+#: pg_dump.c:12927
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "неприемлемое значение в поле pg_cast.castfunc или pg_cast.castmethod"
 
-#: pg_dump.c:12882
+#: pg_dump.c:12930
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "неприемлемое значение в поле pg_cast.castmethod"
 
-#: pg_dump.c:12972
+#: pg_dump.c:13020
 #, c-format
 msgid ""
 "bogus transform definition, at least one of trffromsql and trftosql should "
@@ -2261,57 +2261,57 @@ msgstr ""
 "неприемлемое определение преобразования (trffromsql или trftosql должно быть "
 "ненулевым)"
 
-#: pg_dump.c:12989
+#: pg_dump.c:13037
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "неприемлемое значение в поле pg_transform.trffromsql"
 
-#: pg_dump.c:13010
+#: pg_dump.c:13058
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "неприемлемое значение в поле pg_transform.trftosql"
 
-#: pg_dump.c:13161
+#: pg_dump.c:13209
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "постфиксные операторы больше не поддерживаются (оператор \"%s\")"
 
-#: pg_dump.c:13331
+#: pg_dump.c:13379
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "оператор с OID %s не найден"
 
-#: pg_dump.c:13399
+#: pg_dump.c:13447
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "неверный тип \"%c\" метода доступа \"%s\""
 
-#: pg_dump.c:14153
+#: pg_dump.c:14201
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "нераспознанный провайдер правил сортировки: %s"
 
-#: pg_dump.c:14561
+#: pg_dump.c:14609
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "нераспознанное значение aggfinalmodify для агрегата \"%s\""
 
-#: pg_dump.c:14617
+#: pg_dump.c:14665
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "нераспознанное значение aggmfinalmodify для агрегата \"%s\""
 
-#: pg_dump.c:15339
+#: pg_dump.c:15387
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "нераспознанный тип объекта в определении прав по умолчанию: %d"
 
-#: pg_dump.c:15357
+#: pg_dump.c:15405
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "не удалось разобрать список прав по умолчанию (%s)"
 
-#: pg_dump.c:15442
+#: pg_dump.c:15490
 #, c-format
 msgid ""
 "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) "
@@ -2320,7 +2320,7 @@ msgstr ""
 "не удалось разобрать изначальный список GRANT ACL (%s) или изначальный "
 "список REVOKE ACL (%s) для объекта \"%s\" (%s)"
 
-#: pg_dump.c:15450
+#: pg_dump.c:15498
 #, c-format
 msgid ""
 "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object "
@@ -2329,13 +2329,13 @@ msgstr ""
 "не удалось разобрать список GRANT ACL (%s) или список REVOKE ACL (%s) для "
 "объекта \"%s\" (%s)"
 
-#: pg_dump.c:15965
+#: pg_dump.c:16013
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr ""
 "запрос на получение определения представления \"%s\" не возвратил данные"
 
-#: pg_dump.c:15968
+#: pg_dump.c:16016
 #, c-format
 msgid ""
 "query to obtain definition of view \"%s\" returned more than one definition"
@@ -2343,49 +2343,49 @@ msgstr ""
 "запрос на получение определения представления \"%s\" возвратил несколько "
 "определений"
 
-#: pg_dump.c:15975
+#: pg_dump.c:16023
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "определение представления \"%s\" пустое (длина равна нулю)"
 
-#: pg_dump.c:16059
+#: pg_dump.c:16107
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "свойство WITH OIDS больше не поддерживается (таблица \"%s\")"
 
-#: pg_dump.c:16965
+#: pg_dump.c:17013
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "неверный номер столбца %d для таблицы \"%s\""
 
-#: pg_dump.c:17042
+#: pg_dump.c:17090
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "не удалось разобрать столбцы статистики в индексе"
 
-#: pg_dump.c:17044
+#: pg_dump.c:17092
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "не удалось разобрать значения статистики в индексе"
 
-#: pg_dump.c:17046
+#: pg_dump.c:17094
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr ""
 "столбцы, задающие статистику индекса, не соответствуют значениям по "
 "количеству"
 
-#: pg_dump.c:17277
+#: pg_dump.c:17325
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "отсутствует индекс для ограничения \"%s\""
 
-#: pg_dump.c:17502
+#: pg_dump.c:17566
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "нераспознанный тип ограничения: %c"
 
-#: pg_dump.c:17634 pg_dump.c:17857
+#: pg_dump.c:17698 pg_dump.c:17921
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural ""
@@ -2400,22 +2400,22 @@ msgstr[2] ""
 "запрос на получение данных последовательности \"%s\" вернул %d строк "
 "(ожидалась 1)"
 
-#: pg_dump.c:17668
+#: pg_dump.c:17732
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "нераспознанный тип последовательности: %s"
 
-#: pg_dump.c:17955
+#: pg_dump.c:18019
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "неожиданное значение tgtype: %d"
 
-#: pg_dump.c:18029
+#: pg_dump.c:18093
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "неверная строка аргументов (%s) для триггера \"%s\" таблицы \"%s\""
 
-#: pg_dump.c:18298
+#: pg_dump.c:18362
 #, c-format
 msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
@@ -2424,62 +2424,62 @@ msgstr ""
 "запрос на получение правила \"%s\" для таблицы \"%s\" возвратил неверное "
 "число строк"
 
-#: pg_dump.c:18460
+#: pg_dump.c:18524
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "не удалось найти упомянутое расширение %u"
 
-#: pg_dump.c:18551
+#: pg_dump.c:18615
 #, c-format
 msgid "could not parse extension configuration array"
 msgstr "не удалось разобрать массив конфигураций расширения"
 
-#: pg_dump.c:18553
+#: pg_dump.c:18617
 #, c-format
 msgid "could not parse extension condition array"
 msgstr "не удалось разобрать массив условий расширения"
 
-#: pg_dump.c:18555
+#: pg_dump.c:18619
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "конфигурации расширения не соответствуют условиям по количеству"
 
-#: pg_dump.c:18687
+#: pg_dump.c:18751
 #, c-format
 msgid "reading dependency data"
 msgstr "чтение информации о зависимостях"
 
-#: pg_dump.c:18780
+#: pg_dump.c:18844
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "нет подчинённого объекта %u %u"
 
-#: pg_dump.c:18791
+#: pg_dump.c:18855
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "нет вышестоящего объекта %u %u"
 
-#: pg_dump.c:19180
+#: pg_dump.c:19244
 #, c-format
 msgid "could not parse reloptions array"
 msgstr "не удалось разобрать массив reloptions"
 
-#: pg_dump_sort.c:420
+#: pg_dump_sort.c:620
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "неверный dumpId %d"
 
-#: pg_dump_sort.c:426
+#: pg_dump_sort.c:626
 #, c-format
 msgid "invalid dependency %d"
 msgstr "неверная зависимость %d"
 
-#: pg_dump_sort.c:659
+#: pg_dump_sort.c:859
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "не удалось определить цикл зависимостей"
 
-#: pg_dump_sort.c:1274
+#: pg_dump_sort.c:1474
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
@@ -2487,12 +2487,12 @@ msgstr[0] "в следующей таблице зациклены ограни�
 msgstr[1] "в следующих таблицах зациклены ограничения внешних ключей:"
 msgstr[2] "в следующих таблицах зациклены ограничения внешних ключей:"
 
-#: pg_dump_sort.c:1278 pg_dump_sort.c:1298
+#: pg_dump_sort.c:1478 pg_dump_sort.c:1498
 #, c-format
 msgid "  %s"
 msgstr "  %s"
 
-#: pg_dump_sort.c:1279
+#: pg_dump_sort.c:1479
 #, c-format
 msgid ""
 "You might not be able to restore the dump without using --disable-triggers "
@@ -2501,7 +2501,7 @@ msgstr ""
 "Возможно, для восстановления базы потребуется использовать --disable-"
 "triggers или временно удалить ограничения."
 
-#: pg_dump_sort.c:1280
+#: pg_dump_sort.c:1480
 #, c-format
 msgid ""
 "Consider using a full dump instead of a --data-only dump to avoid this "
@@ -2510,7 +2510,7 @@ msgstr ""
 "Во избежание этой проблемы, вероятно, стоит выгружать всю базу данных, а не "
 "только данные (--data-only)."
 
-#: pg_dump_sort.c:1292
+#: pg_dump_sort.c:1492
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "не удалось разрешить цикл зависимостей для следующих объектов:"
