@@ -196,6 +196,7 @@ if "$MAKE" -C "$oldsrc" installcheck-parallel; then
 	fi
 
 	pg_dumpall $extra_dump_options --no-sync \
+		--restrict-key=test \
 		-f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
 
 	if [ "$newsrc" != "$oldsrc" ]; then
@@ -259,6 +260,7 @@ esac
 pg_ctl start -l "$logdir/postmaster2.log" -o "$POSTMASTER_OPTS" -w
 
 pg_dumpall $extra_dump_options --no-sync \
+	--restrict-key=test \
 	-f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
 
