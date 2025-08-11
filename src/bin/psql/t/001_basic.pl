@@ -443,4 +443,11 @@ psql_like($node, "copy (values ('foo'),('bar')) to stdout \\g | $pipe_cmd",
 my $c4 = slurp_file($g_file);
 like($c4, qr/foo.*bar/s);
 
+psql_fails_like(
+	$node,
+	qq{\\restrict test
+\\! should_fail},
+	qr/backslash commands are restricted; only \\unrestrict is allowed/,
+	'meta-command in restrict mode fails');
+
 done_testing();

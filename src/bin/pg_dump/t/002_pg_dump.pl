@@ -718,6 +718,16 @@ my %full_runs = (
 
 # This is where the actual tests are defined.
 my %tests = (
+	'restrict' => {
+		all_runs => 1,
+		regexp => qr/^\\restrict [a-zA-Z0-9]+$/m,
+	},
+
+	'unrestrict' => {
+		all_runs => 1,
+		regexp => qr/^\\unrestrict [a-zA-Z0-9]+$/m,
+	},
+
 	'ALTER DEFAULT PRIVILEGES FOR ROLE regress_dump_test_role GRANT' => {
 		create_order => 14,
 		create_sql => 'ALTER DEFAULT PRIVILEGES
@@ -3875,7 +3885,6 @@ my %tests = (
 	},
 
 	'ALTER TABLE measurement PRIMARY KEY' => {
-		all_runs => 1,
 		catch_all => 'CREATE ... commands',
 		create_order => 93,
 		create_sql =>
@@ -3927,7 +3936,6 @@ my %tests = (
 	},
 
 	'ALTER INDEX ... ATTACH PARTITION (primary key)' => {
-		all_runs => 1,
 		catch_all => 'CREATE ... commands',
 		regexp => qr/^
 		\QALTER INDEX dump_test.measurement_pkey ATTACH PARTITION dump_test_second_schema.measurement_y2006m2_pkey\E
@@ -4952,9 +4960,10 @@ foreach my $run (sort keys %pgdump_runs)
 
 		# Check for proper test definitions
 		#
-		# There should be a "like" list, even if it is empty.  (This
-		# makes the test more self-documenting.)
-		if (!defined($tests{$test}->{like}))
+		# Either "all_runs" should be set or there should be a "like" list,
+		# even if it is empty.  (This makes the test more self-documenting.)
+		if (!defined($tests{$test}->{all_runs})
+			&& !defined($tests{$test}->{like}))
 		{
 			die "missing \"like\" in test \"$test\"";
 		}
@@ -4990,9 +4999,10 @@ foreach my $run (sort keys %pgdump_runs)
 			next;
 		}
 
-		# Run the test listed as a like, unless it is specifically noted
-		# as an unlike (generally due to an explicit exclusion or similar).
-		if ($tests{$test}->{like}->{$test_key}
+		# Run the test if all_runs is set or if listed as a like, unless it is
+		# specifically noted as an unlike (generally due to an explicit
+		# exclusion or similar).
+		if (($tests{$test}->{like}->{$test_key} || $tests{$test}->{all_runs})
 			&& !defined($tests{$test}->{unlike}->{$test_key}))
 		{
 			if (!ok($output_file =~ $tests{$test}->{regexp},
