@@ -735,8 +735,6 @@ pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 	off_t		curr_pos = 0;
 	TDESignedPrincipalKeyInfo signed_key_Info;
 
-	ereport(DEBUG2, errmsg("pg_tde_save_server_key"));
-
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
 	if (write_xlog)

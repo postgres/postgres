@@ -182,8 +182,6 @@ pg_tde_save_principal_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 
 	pg_tde_set_db_file_path(principal_key->keyInfo.databaseId, db_map_path);
 
-	ereport(DEBUG2, errmsg("pg_tde_save_principal_key"));
-
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
 	if (write_xlog)
