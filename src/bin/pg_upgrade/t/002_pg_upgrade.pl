@@ -86,6 +86,7 @@ sub get_dump_for_comparison
 	$node->run_log(
 		[
 			'pg_dump', '--no-sync',
+			'--restrict-key=test',
 			'-d' => $node->connstr($db),
 			'-f' => $dumpfile
 		]);
@@ -427,6 +428,7 @@ SKIP:
 # that we need to use pg_dumpall from the new node here.
 my @dump_command = (
 	'pg_dumpall', '--no-sync',
+	'--restrict-key=test',
 	'--dbname' => $oldnode->connstr('postgres'),
 	'--file' => $dump1_file);
 # --extra-float-digits is needed when upgrading from a version older than 11.
@@ -624,6 +626,7 @@ is( $result,
 # Second dump from the upgraded instance.
 @dump_command = (
 	'pg_dumpall', '--no-sync',
+	'--restrict-key=test',
 	'--dbname' => $newnode->connstr('postgres'),
 	'--file' => $dump2_file);
 # --extra-float-digits is needed when upgrading from a version older than 11.

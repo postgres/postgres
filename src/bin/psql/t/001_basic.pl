@@ -530,4 +530,11 @@ psql_fails_like(
 	qr/COPY in a pipeline is not supported, aborting connection/,
 	'\copy to in pipeline: fails');
 
+psql_fails_like(
+	$node,
+	qq{\\restrict test
+\\! should_fail},
+	qr/backslash commands are restricted; only \\unrestrict is allowed/,
+	'meta-command in restrict mode fails');
+
 done_testing();

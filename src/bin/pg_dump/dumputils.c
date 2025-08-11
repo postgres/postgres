@@ -21,6 +21,7 @@
 #include "dumputils.h"
 #include "fe_utils/string_utils.h"
 
+static const char restrict_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 static bool parseAclItem(const char *item, const char *type,
 						 const char *name, const char *subname, int remoteVersion,
@@ -956,4 +957,41 @@ create_or_open_dir(const char *dirname)
 			/* exists and is not empty */
 			pg_fatal("directory \"%s\" is not empty", dirname);
 	}
+}
+
+/*
+ * Generates a valid restrict key (i.e., an alphanumeric string) for use with
+ * psql's \restrict and \unrestrict meta-commands.  For safety, the value is
+ * chosen at random.
+ */
+char *
+generate_restrict_key(void)
+{
+	uint8		buf[64];
+	char	   *ret = palloc(sizeof(buf));
+
+	if (!pg_strong_random(buf, sizeof(buf)))
+		return NULL;
+
+	for (int i = 0; i < sizeof(buf) - 1; i++)
+	{
+		uint8		idx = buf[i] % strlen(restrict_chars);
+
+		ret[i] = restrict_chars[idx];
+	}
+	ret[sizeof(buf) - 1] = '\0';
+
+	return ret;
+}
+
+/*
+ * Checks that a given restrict key (intended for use with psql's \restrict and
+ * \unrestrict meta-commands) contains only alphanumeric characters.
+ */
+bool
+valid_restrict_key(const char *restrict_key)
+{
+	return restrict_key != NULL &&
+		restrict_key[0] != '\0' &&
+		strspn(restrict_key, restrict_chars) == strlen(restrict_key);
 }

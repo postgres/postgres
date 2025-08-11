@@ -65,4 +65,7 @@ extern void makeAlterConfigCommand(PGconn *conn, const char *configitem,
 								   PQExpBuffer buf);
 extern void create_or_open_dir(const char *dirname);
 
+extern char *generate_restrict_key(void);
+extern bool valid_restrict_key(const char *restrict_key);
+
 #endif							/* DUMPUTILS_H */

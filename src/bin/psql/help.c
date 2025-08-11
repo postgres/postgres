@@ -171,6 +171,10 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
 	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
 	HELP0("  \\q                     quit psql\n");
+	HELP0("  \\restrict RESTRICT_KEY\n"
+		  "                         enter restricted mode with provided key\n");
+	HELP0("  \\unrestrict RESTRICT_KEY\n"
+		  "                         exit restricted mode if key matches\n");
 	HELP0("  \\watch [[i=]SEC] [c=N] [m=MIN]\n"
 		  "                         execute query every SEC seconds, up to N times,\n"
 		  "                         stop if less than MIN rows are returned\n");

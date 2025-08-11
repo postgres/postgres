@@ -163,6 +163,8 @@ typedef struct _restoreOptions
 	bool		dumpSchema;
 	bool		dumpData;
 	bool		dumpStatistics;
+
+	char	   *restrict_key;
 } RestoreOptions;
 
 typedef struct _dumpOptions
@@ -213,6 +215,8 @@ typedef struct _dumpOptions
 	bool		dumpSchema;
 	bool		dumpData;
 	bool		dumpStatistics;
+
+	char	   *restrict_key;
 } DumpOptions;
 
 /*
