@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 		}
 		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
 		{
-			puts("pg_tde_archive_deceypt (PostgreSQL) " PG_VERSION);
+			puts("pg_tde_archive_decrypt (PostgreSQL) " PG_VERSION);
 			exit(0);
 		}
 	}
