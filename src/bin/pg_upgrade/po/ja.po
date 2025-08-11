@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-06-17 09:30+0900\n"
-"PO-Revision-Date: 2025-06-17 10:23+0900\n"
+"PO-Revision-Date: 2025-07-08 10:27+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -24,7 +24,7 @@ msgstr ""
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
 #, c-format
 msgid "out of memory\n"
-msgstr "メモリ不足です\n"
+msgstr "メモリ不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:153
 #, c-format
@@ -2167,18 +2167,3 @@ msgstr ""
 "あります。以下のファイルをpsqlを使ってデータベースのスーパーユーザーとして実行することで\n"
 "これらの機能拡張をアップデートできます。\n"
 "   %s"
-
-#~ msgid "could not create directory \"%s\""
-#~ msgstr "ディレクトリ\"%s\"を作成できませんでした"
-
-#~ msgid "could not rename \"%s\" to \"%s\""
-#~ msgstr "ファイル\"%s\"の名前を\"%s\"に変更できませんでした"
-
-#~ msgid "could not rename \"%s\" to \"%s\": %m"
-#~ msgstr "\"%s\"の名前を\"%s\"に変更できませんでした: %m"
-
-#~ msgid "failed to create connection with connection string: \"%s\""
-#~ msgstr "次の接続文字列で接続できませんでした: \"%s\""
-
-#~ msgid "select() failed: %m"
-#~ msgstr "select() が失敗しました: %m"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-06-27 09:10+0000\n"
-"PO-Revision-Date: 2025-06-27 15:03+0200\n"
+"POT-Creation-Date: 2025-07-19 13:10+0000\n"
+"PO-Revision-Date: 2025-07-20 04:37+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -227,7 +227,7 @@ msgstr "libcurl-ის დამმუშავებლის შექმნ�
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
 #: fe-auth.c:382 fe-auth.c:416 fe-auth.c:694 fe-auth.c:827 fe-auth.c:1330
-#: fe-auth.c:1493 fe-cancel.c:177 fe-connect.c:1011 fe-connect.c:1051
+#: fe-auth.c:1493 fe-cancel.c:178 fe-connect.c:1011 fe-connect.c:1051
 #: fe-connect.c:2171 fe-connect.c:2333 fe-connect.c:3726 fe-connect.c:5182
 #: fe-connect.c:5495 fe-connect.c:5750 fe-connect.c:5868 fe-connect.c:6115
 #: fe-connect.c:6195 fe-connect.c:6293 fe-connect.c:6544 fe-connect.c:6571
@@ -239,7 +239,7 @@ msgstr "libcurl-ის დამმუშავებლის შექმნ�
 #: fe-protocol3.c:732 fe-protocol3.c:972 fe-protocol3.c:1553
 #: fe-protocol3.c:1862 fe-protocol3.c:2263 fe-secure-common.c:110
 #: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
-#: fe-secure-openssl.c:1131
+#: fe-secure-openssl.c:1135
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
@@ -648,12 +648,12 @@ msgstr "შეერთება ღია არაა"
 msgid "no cancellation key received"
 msgstr "გაუქმების გასაღები არ მიმიღია"
 
-#: fe-cancel.c:211
+#: fe-cancel.c:212
 #, c-format
 msgid "cancel request is already being sent on this connection"
 msgstr "ამ მიერთებით გაუქმების მოთხოვნის გაგზავნა უკვე მიმდინარეობს"
 
-#: fe-cancel.c:281
+#: fe-cancel.c:282
 #, c-format
 msgid "unexpected response from server"
 msgstr "მოულოდნელი პასუხი სერვერიდან"
@@ -680,7 +680,7 @@ msgstr "require_auth-ის მეთოდს \"%s\" უარყოფით �
 
 #: fe-connect.c:1605 fe-connect.c:1734 fe-connect.c:1776 fe-connect.c:1819
 #: fe-connect.c:1922 fe-connect.c:1968 fe-connect.c:2008 fe-connect.c:2075
-#: fe-connect.c:8254
+#: fe-connect.c:8248
 #, c-format
 msgid "invalid %s value: \"%s\""
 msgstr "%s-ის არასწორი მნიშვნელობა: \"%s\""
@@ -1154,31 +1154,31 @@ msgstr "პროცენტში კოდირებული მნიშ�
 msgid "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead"
 msgstr "\"%s\"-ში აღმოჩენილია მოულოდნელი ჰარეები. მათ მაგიერ გამოიყენეთ პროცენტით კოდირებული (%%20)"
 
-#: fe-connect.c:7632
+#: fe-connect.c:7626
 msgid "connection pointer is NULL\n"
 msgstr "შეერთების მაჩვენებელი ნულოვანია\n"
 
-#: fe-connect.c:7640 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
+#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
 #: fe-protocol3.c:987 fe-protocol3.c:1020
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
-#: fe-connect.c:7942
+#: fe-connect.c:7936
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "გაფრთხილება. პაროლის ფაილი \"%s\" უბრალოდ ფაილს არ წარმოადგენს\n"
 
-#: fe-connect.c:7952
+#: fe-connect.c:7946
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "გაფრთხილება: პაროლების ფაილს \"%s\" ჯგუფზე ან დანარჩენ ყველაზე წვდომა გააჩნია. წვდომა 0600 ან ნაკლები უნდა იყოს\n"
 
-#: fe-connect.c:8056
+#: fe-connect.c:8050
 #, c-format
 msgid "password retrieved from file \"%s\""
 msgstr "პაროლი მიღებულია ფაილიდან \"%s\""
 
-#: fe-connect.c:8222
+#: fe-connect.c:8216
 #, c-format
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "არასწორი მნიშვნელობა: \"%s\" (უნდა იყოს მთელი რიცხვი) შეერთების პარამეტრისთვის \"%s\""
@@ -1686,17 +1686,17 @@ msgstr "'GSSAPI' უსაფრთხოების კონტექსტ�
 msgid "GSSAPI size check error"
 msgstr "GSSAPI-ის ზომის შემოწმების შეცდომა"
 
-#: fe-secure-openssl.c:185 fe-secure-openssl.c:291 fe-secure-openssl.c:1378
+#: fe-secure-openssl.c:185 fe-secure-openssl.c:291 fe-secure-openssl.c:1382
 #, c-format
 msgid "SSL SYSCALL error: %s"
 msgstr "SSL SYSCALL-ის შეცდომა: %s"
 
-#: fe-secure-openssl.c:191 fe-secure-openssl.c:297 fe-secure-openssl.c:1381
+#: fe-secure-openssl.c:191 fe-secure-openssl.c:297 fe-secure-openssl.c:1385
 #, c-format
 msgid "SSL SYSCALL error: EOF detected"
 msgstr "SSL SYSCALL -ის შეცდომა: ნაპოვნია EOF"
 
-#: fe-secure-openssl.c:201 fe-secure-openssl.c:307 fe-secure-openssl.c:1389
+#: fe-secure-openssl.c:201 fe-secure-openssl.c:307 fe-secure-openssl.c:1393
 #, c-format
 msgid "SSL error: %s"
 msgstr "SSL-ის შეცდომა: %s"
@@ -1706,7 +1706,7 @@ msgstr "SSL-ის შეცდომა: %s"
 msgid "SSL connection has been closed unexpectedly"
 msgstr "SSL შეერთება მოულოდნელად დაიხურა"
 
-#: fe-secure-openssl.c:220 fe-secure-openssl.c:326 fe-secure-openssl.c:1436
+#: fe-secure-openssl.c:220 fe-secure-openssl.c:326 fe-secure-openssl.c:1440
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "უცნობი SSL-ის შეცდომის კოდი: %d"
@@ -1736,52 +1736,52 @@ msgstr "SSL სერტიფიკატის სახელის ჩან
 msgid "SSL certificate's address entry is missing"
 msgstr "SSL სერტიფიკატის მისამართის ჩანაწერი არ არსებობს"
 
-#: fe-secure-openssl.c:714
+#: fe-secure-openssl.c:715
 #, c-format
-msgid "could not open SSL key logging file \"%s\": %s"
-msgstr "ვერ გავხსენი SSL გასაღების ჟურნალის ფაილი \"%s\": %s"
+msgid "WARNING: could not open SSL key logging file \"%s\": %m\n"
+msgstr "გაფრთხილება: ვერ გავხსენი SSL გასაღების ჟურნალის ფაილი \"%s\": %m\n"
 
-#: fe-secure-openssl.c:722
+#: fe-secure-openssl.c:723
 #, c-format
-msgid "could not write to SSL key logging file \"%s\": %s"
-msgstr "SSL გასაღების ჟურნალის ფაილში \"%s\" ჩაწერის შეცდომა: %s"
+msgid "WARNING: could not write to SSL key logging file \"%s\": %m\n"
+msgstr "გაფრთხილება: SSL გასაღების ჟურნალის ფაილში \"%s\" ჩაწერის შეცდომა: %m\n"
 
-#: fe-secure-openssl.c:775
+#: fe-secure-openssl.c:776
 #, c-format
 msgid "could not create SSL context: %s"
 msgstr "შეცდომა SSL კონტექსტის შექმნისას: %s"
 
-#: fe-secure-openssl.c:817
+#: fe-secure-openssl.c:818
 #, c-format
 msgid "invalid value \"%s\" for minimum SSL protocol version"
 msgstr "'SSL' პროტოკოლის ვერსიის არასწორი მინიმალური მნიშვნელობა: %s"
 
-#: fe-secure-openssl.c:827
+#: fe-secure-openssl.c:828
 #, c-format
 msgid "could not set minimum SSL protocol version: %s"
 msgstr "'SSL' პროტოკოლის ვერსიის მინიმალური მნიშვნელობის დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:843
+#: fe-secure-openssl.c:844
 #, c-format
 msgid "invalid value \"%s\" for maximum SSL protocol version"
 msgstr "'SSL' პროტოკოლის ვერსიის არასწორი მაქსიმალური მნიშვნელობა: %s"
 
-#: fe-secure-openssl.c:853
+#: fe-secure-openssl.c:854
 #, c-format
 msgid "could not set maximum SSL protocol version: %s"
 msgstr "'SSL' პროტოკოლის ვერსიის მაქსიმალური მნიშვნელობის დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:891
+#: fe-secure-openssl.c:892
 #, c-format
 msgid "could not load system root certificate paths: %s"
 msgstr "სისტემური root სერტიფიკატების ბილიკების ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:908
+#: fe-secure-openssl.c:909
 #, c-format
 msgid "could not read root certificate file \"%s\": %s"
 msgstr "root სერტიფიკატის ფაილის (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:960
+#: fe-secure-openssl.c:961
 #, c-format
 msgid ""
 "could not get home directory to locate root certificate file\n"
@@ -1790,7 +1790,7 @@ msgstr ""
 "root სერტიფიკატის ფაილის მოსაძებნად საწყისი საქაღალდის მიღება შეუძლებელია\n"
 "ამ წარმოადგინეთ ფაილი, ან გამოიყენეთ სისტემის სანდო root-ები პარამეტრით sslrootcert=system, ან sslmode სერვერის სერტიფიკატის შემოწმება გამორთეთ."
 
-#: fe-secure-openssl.c:963
+#: fe-secure-openssl.c:964
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -1799,127 +1799,127 @@ msgstr ""
 "root სერტიფიკატის ფაილი \"%s\" არ არსებობს\n"
 "წარმოადგინეთ ფაილი ან გამორთეთ sslmode სერვერის სერტიფიკატის შემოწმება."
 
-#: fe-secure-openssl.c:998
+#: fe-secure-openssl.c:999
 #, c-format
 msgid "could not open certificate file \"%s\": %s"
 msgstr "სერტიფიკატის ფაილის გახსნის შეცდომა \"%s\": %s"
 
-#: fe-secure-openssl.c:1016
+#: fe-secure-openssl.c:1017
 #, c-format
 msgid "could not read certificate file \"%s\": %s"
 msgstr "სერტიფიკატის ფაილის წაკითხვის შეცდომა \"%s\": %s"
 
-#: fe-secure-openssl.c:1040
+#: fe-secure-openssl.c:1041
 #, c-format
 msgid "could not establish SSL connection: %s"
 msgstr "'SSL' შეერთების დამყარების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1053
+#: fe-secure-openssl.c:1058
 #, c-format
 msgid "WARNING: sslkeylogfile support requires OpenSSL\n"
 msgstr "გაფრთხილება: sslkeylogfile-ის მხარდაჭერას OpenSSL სჭირდება\n"
 
-#: fe-secure-openssl.c:1055
+#: fe-secure-openssl.c:1060
 #, c-format
 msgid "WARNING: libpq was not built with sslkeylogfile support\n"
 msgstr "გაფრთხილება: libpq არ იყო აგებული sslkeylogfile-ის მხარდაჭერით\n"
 
-#: fe-secure-openssl.c:1086
+#: fe-secure-openssl.c:1090
 #, c-format
 msgid "could not set SSL Server Name Indication (SNI): %s"
 msgstr "'SSL' სერვერის სახელის ინდიკაციის (SNI) დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1103
+#: fe-secure-openssl.c:1107
 #, c-format
 msgid "could not set SSL ALPN extension: %s"
 msgstr "\"SSL ALPN\" გაფართოების დაყენების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1146
+#: fe-secure-openssl.c:1150
 #, c-format
 msgid "could not load SSL engine \"%s\": %s"
 msgstr "'SSL' ძრავის (\"%s\") ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1157
+#: fe-secure-openssl.c:1161
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s"
 msgstr "'SSL' ძრავის (\"%s\") ინიციალიზაციის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1172
+#: fe-secure-openssl.c:1176
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "'SSL'-ის პირადი გასაღების (\"%s\") ძრავიდან (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1185
+#: fe-secure-openssl.c:1189
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s"
 msgstr "'SSL'-ის პირადი გასაღების (\"%s\") ძრავიდან (\"%s\") წაკითხვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1222
+#: fe-secure-openssl.c:1226
 #, c-format
 msgid "certificate present, but not private key file \"%s\""
 msgstr "სერტიფიკატისგან განსხვავებით, პირადი გასაღების ფაილი \"%s\" არ არსებობს"
 
-#: fe-secure-openssl.c:1225
+#: fe-secure-openssl.c:1229
 #, c-format
 msgid "could not stat private key file \"%s\": %m"
 msgstr "პირადი გასაღების ფაილი \"%s\" არ არსებობს: %m"
 
-#: fe-secure-openssl.c:1233
+#: fe-secure-openssl.c:1237
 #, c-format
 msgid "private key file \"%s\" is not a regular file"
 msgstr "პირადი გასაღების ფაილი \"%s\" ჩვეულებრივი ფაილი არაა"
 
-#: fe-secure-openssl.c:1266
+#: fe-secure-openssl.c:1270
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root"
 msgstr "პირადი გასაღების ფაილს \"%s\" აქვს ჯგუფური ან ყველა სხვაზე წვდომა; ფაილს უნდა ჰქონდეს ნებართვები u=rw (0600) ან ნაკლები, თუ ეკუთვნის ამჟამინდელ მომხმარებელს, ან ნებართვები u=rw,g=r (0640) ან ნაკლები, თუ ეკუთვნის root-ს"
 
-#: fe-secure-openssl.c:1290
+#: fe-secure-openssl.c:1294
 #, c-format
 msgid "could not load private key file \"%s\": %s"
 msgstr "პირადი გასაღების ფაილის \"%s\" ჩატვირთვის შეცდომა: %s"
 
-#: fe-secure-openssl.c:1306
+#: fe-secure-openssl.c:1310
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s"
 msgstr "სერტიფიკატი პირადი გასაღების ფაილს (\"%s\") არ ემთხვევა: %s"
 
-#: fe-secure-openssl.c:1375
+#: fe-secure-openssl.c:1379
 #, c-format
 msgid "SSL error: certificate verify failed: %s"
 msgstr "SSL-ის შეცდომა: სერტიფიკატის გადამოწმების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1420
+#: fe-secure-openssl.c:1424
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s."
 msgstr "ეს შეიძლება ნიშნავდეს, რომ სერვერს SSL პროტოკოლის %s-სა და %s-ს შორის ვერსიების მხარდაჭერა არ გააჩნია."
 
-#: fe-secure-openssl.c:1452
+#: fe-secure-openssl.c:1456
 #, c-format
 msgid "direct SSL connection was established without ALPN protocol negotiation extension"
 msgstr "პირდაპირი SSL მიერთება დამყარდა ALPN პროტოკოლის მიმოცვლის გაფართოების გარეშე"
 
-#: fe-secure-openssl.c:1464
+#: fe-secure-openssl.c:1468
 #, c-format
 msgid "SSL connection was established with unexpected ALPN protocol"
 msgstr "SSL შეერთება დამყარდა მოულოდნელი ALPN პროტოკოლით"
 
-#: fe-secure-openssl.c:1481
+#: fe-secure-openssl.c:1485
 #, c-format
 msgid "certificate could not be obtained: %s"
 msgstr "სერტიფიკატის მიღების შეცდომა: %s"
 
-#: fe-secure-openssl.c:1560
+#: fe-secure-openssl.c:1564
 #, c-format
 msgid "no SSL error reported"
 msgstr "'SSL'-ის შეცდომების გარეშე"
 
-#: fe-secure-openssl.c:1603
+#: fe-secure-openssl.c:1607
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-ის შეცდომის კოდი %lu"
 
-#: fe-secure-openssl.c:1905
+#: fe-secure-openssl.c:1909
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "გაფრთხილება: sslpasswrord შეკვეცილია\n"

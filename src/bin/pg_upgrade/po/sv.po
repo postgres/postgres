@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-20 08:20+0000\n"
-"PO-Revision-Date: 2025-05-20 20:08+0200\n"
+"POT-Creation-Date: 2025-08-09 01:50+0000\n"
+"PO-Revision-Date: 2025-08-09 20:10+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -57,11 +57,11 @@ msgstr "shell-kommandots argument innehåller nyrad eller vagnretur: \"%s\"\n"
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "databasnamnet innehåller nyrad eller vagnretur: \"%s\"\n"
 
-#: check.c:111
+#: check.c:112
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Letar i användartabeller efter systemdefinierade typer av sorten \"composite\""
 
-#: check.c:118
+#: check.c:119
 msgid ""
 "Your installation contains system-defined composite types in user tables.\n"
 "These type OIDs are not stable across PostgreSQL versions,\n"
@@ -73,11 +73,11 @@ msgstr ""
 "PostgreSQL-versioner så detta kluster kan inte uppgraderas för tillfället.\n"
 "Du kan slänga problemkolumnerna och återstarta uppgraderingen.\n"
 
-#: check.c:132
+#: check.c:133
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Letar efter inkompatibel \"line\"-datatyp"
 
-#: check.c:137
+#: check.c:138
 msgid ""
 "Your installation contains the \"line\" data type in user tables.\n"
 "This data type changed its internal and input/output format\n"
@@ -91,11 +91,11 @@ msgstr ""
 "Du kan radera problemkolumnerna och återstarta uppgraderingen.\n"
 
 # FIXME: is this msgid correct?
-#: check.c:154
+#: check.c:155
 msgid "Checking for reg* data types in user tables"
 msgstr "Letar efter reg*-datatyper i användartabeller"
 
-#: check.c:181
+#: check.c:182
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
 "These data types reference system OIDs that are not preserved by\n"
@@ -107,11 +107,11 @@ msgstr ""
 "så detta kluster kan för närvarande inte uppgraderas. Du kan ta bort\n"
 "problemkolumnerna och starta om uppgraderingen.\n"
 
-#: check.c:193
+#: check.c:194
 msgid "Checking for incompatible \"aclitem\" data type"
 msgstr "Letar efter inkompatibel datatype \"aclitem\""
 
-#: check.c:198
+#: check.c:199
 msgid ""
 "Your installation contains the \"aclitem\" data type in user tables.\n"
 "The internal format of \"aclitem\" changed in PostgreSQL version 16\n"
@@ -123,11 +123,11 @@ msgstr ""
 "kan för närvarande inte uppgraderas. Du kan ta bort problemkolumnerna\n"
 "och starta om uppgraderingen.\n"
 
-#: check.c:217
+#: check.c:218
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Letar efter ogiltiga användarkolumner av typen \"unknown\""
 
-#: check.c:222
+#: check.c:223
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.\n"
 "This data type is no longer allowed in tables, so this cluster\n"
@@ -139,11 +139,11 @@ msgstr ""
 "för närvarande inte uppgraderas. Du kan radera problemkolumnerna och\n"
 "återstarta uppgraderingen.\n"
 
-#: check.c:239
+#: check.c:240
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr "Letar efter ogiltiga användarkolumner av typen \"sql_identifier\""
 
-#: check.c:244
+#: check.c:245
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables.\n"
 "The on-disk format for this data type has changed, so this\n"
@@ -155,11 +155,11 @@ msgstr ""
 "närvarande inte uppgraderas. Du kan radera problemkolumnerna och\n"
 "återstarta uppgraderingen.\n"
 
-#: check.c:255
+#: check.c:256
 msgid "Checking for incompatible \"jsonb\" data type in user tables"
 msgstr "Letar efter inkompatibel datatyp \"jsonb\"-datatyp i användartabeller"
 
-#: check.c:260
+#: check.c:261
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
 "The internal format of \"jsonb\" changed during 9.4 beta so this\n"
@@ -171,11 +171,11 @@ msgstr ""
 "för närvarande inte uppgraderas. Du kan ta bort problemkolumnerna och\n"
 "starta om uppgraderingen.\n"
 
-#: check.c:272
+#: check.c:273
 msgid "Checking for removed \"abstime\" data type in user tables"
 msgstr "Letar efter borttagen datatype \"abstime\" i användartabeller"
 
-#: check.c:277
+#: check.c:278
 msgid ""
 "Your installation contains the \"abstime\" data type in user tables.\n"
 "The \"abstime\" type has been removed in PostgreSQL version 12,\n"
@@ -188,11 +188,11 @@ msgstr ""
 "kan för närvarande inte uppgraderas. Du kan ta bort problemkolumnerna\n"
 "eller ändra dem till en annan datatype och starta om uppgraderingen.\n"
 
-#: check.c:285
+#: check.c:286
 msgid "Checking for removed \"reltime\" data type in user tables"
 msgstr "Letar efter borttagen datatype \"reltime\" i användartabeller"
 
-#: check.c:290
+#: check.c:291
 msgid ""
 "Your installation contains the \"reltime\" data type in user tables.\n"
 "The \"reltime\" type has been removed in PostgreSQL version 12,\n"
@@ -205,11 +205,11 @@ msgstr ""
 "kan för närvarande inte uppgraderas. Du kan ta bort problemkolumnerna\n"
 "eller ändra dem till en annan datatype och starta om uppgraderingen.\n"
 
-#: check.c:298
+#: check.c:299
 msgid "Checking for removed \"tinterval\" data type in user tables"
 msgstr "Letar efter borttagen datatype \"tinterval\" i användartabeller"
 
-#: check.c:303
+#: check.c:304
 msgid ""
 "Your installation contains the \"tinterval\" data type in user tables.\n"
 "The \"tinterval\" type has been removed in PostgreSQL version 12,\n"
@@ -222,34 +222,34 @@ msgstr ""
 "kan för närvarande inte uppgraderas. Du kan ta bort problemkolumnerna\n"
 "eller ändra dem till en annan datatype och starta om uppgraderingen.\n"
 
-#: check.c:421
+#: check.c:422
 #, c-format
 msgid "failed check: %s"
 msgstr "misslyckad kontroll: %s"
 
-#: check.c:424
+#: check.c:425
 msgid "A list of the problem columns is in the file:"
 msgstr "En lista med problemkolumner finns i filen:"
 
-#: check.c:430 check.c:1029 check.c:1180 check.c:1263 check.c:1352 check.c:1443
-#: check.c:1575 check.c:1660 check.c:1707 check.c:1787 check.c:2092
-#: check.c:2111 check.c:2157 check.c:2210 file.c:378 file.c:415 function.c:208
-#: option.c:519 version.c:79 version.c:162
+#: check.c:431 check.c:1038 check.c:1189 check.c:1272 check.c:1361 check.c:1452
+#: check.c:1584 check.c:1656 check.c:1757 check.c:1804 check.c:1884
+#: check.c:2189 check.c:2208 check.c:2254 check.c:2307 file.c:378 file.c:415
+#: function.c:208 option.c:519 version.c:79 version.c:162
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: check.c:472
+#: check.c:473
 #, c-format
 msgid "Checking data type usage"
 msgstr "Letar efter användning av datatyp"
 
-#: check.c:526
+#: check.c:527
 #, c-format
 msgid "Data type checks failed: %s"
 msgstr "Kontroll av datatyper misslyckades: %s"
 
-#: check.c:575
+#: check.c:576
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -258,7 +258,7 @@ msgstr ""
 "Utför konsistenskontroller på gamla live-servern\n"
 "------------------------------------------------"
 
-#: check.c:581
+#: check.c:582
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -267,12 +267,12 @@ msgstr ""
 "Utför konsistenskontroller\n"
 "--------------------------"
 
-#: check.c:745
+#: check.c:754
 #, c-format
 msgid "Swap mode can only upgrade clusters from PostgreSQL version %s and later."
 msgstr "Swap-läget kan bara uppgradera kluster från PostgreSQL version %s eller senare."
 
-#: check.c:768
+#: check.c:777
 #, c-format
 msgid ""
 "\n"
@@ -281,7 +281,7 @@ msgstr ""
 "\n"
 "*Klustren är kompatibla*"
 
-#: check.c:776
+#: check.c:785
 #, c-format
 msgid ""
 "\n"
@@ -292,7 +292,7 @@ msgstr ""
 "Om pg_upgrade misslyckas efter denna punkt så måste du\n"
 "köra om initdb på nya klustret innan du fortsätter."
 
-#: check.c:817
+#: check.c:826
 #, c-format
 msgid ""
 "Some statistics are not transferred by pg_upgrade.\n"
@@ -305,7 +305,7 @@ msgstr ""
 "    %s/vacuumdb %s--all --analyze-in-stages --missing-stats-only\n"
 "    %s/vacuumdb %s--all --analyze-only"
 
-#: check.c:826
+#: check.c:835
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -314,7 +314,7 @@ msgstr ""
 "När detta skript körs så raderas gamla klustrets datafiler:\n"
 "    %s"
 
-#: check.c:831
+#: check.c:840
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -327,62 +327,62 @@ msgstr ""
 "ligger i gamla klusterkatalogen. Det gamla klustrets innehåll\n"
 "måste raderas för hand."
 
-#: check.c:843
+#: check.c:852
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Kontrollerar klustrets versioner"
 
-#: check.c:855
+#: check.c:864
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgstr "Detta verktyg kan bara uppgradera från PostgreSQL version %s eller senare."
 
-#: check.c:860
+#: check.c:869
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s."
 msgstr "Detta verktyg kan bara uppgradera till PostgreSQL version %s."
 
-#: check.c:869
+#: check.c:878
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions."
 msgstr "Detta verktyg kan inte användas för att nergradera till äldre major-versioner av PostgreSQL."
 
-#: check.c:874
+#: check.c:883
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions."
 msgstr "Gammal klusterdata och binära kataloger är från olika major-versioner."
 
-#: check.c:877
+#: check.c:886
 #, c-format
 msgid "New cluster data and binary directories are from different major versions."
 msgstr "Nya klusterdata och binära kataloger är från olika major-versioner."
 
-#: check.c:888
+#: check.c:897
 #, c-format
-msgid "%s option cannot be used to upgrade from PostgreSQL %s and later."
+msgid "The option %s cannot be used for upgrades from PostgreSQL %s and later."
 msgstr "Flaggan %s kan inte användas för att uppgradera från PostgreSQL %s eller senare."
 
-#: check.c:904
+#: check.c:913
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different."
 msgstr "Vid kontroll av en live-server så måste gamla och nya portnumren vara olika."
 
-#: check.c:924
+#: check.c:933
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\""
 msgstr "Nya databasklustret \"%s\" är inte tomt: hittade relation \"%s.%s\""
 
-#: check.c:947
+#: check.c:956
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Letar efter nya tablespace-kataloger i klustret"
 
-#: check.c:958
+#: check.c:967
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\""
 msgstr "i klustret finns redan ny tablespace-katalog: \"%s\""
 
-#: check.c:992
+#: check.c:1001
 #, c-format
 msgid ""
 "\n"
@@ -391,7 +391,7 @@ msgstr ""
 "\n"
 "VARNING:  nya datakatalogen skall inte ligga inuti den gamla datakatalogen, dvs. %s"
 
-#: check.c:1016
+#: check.c:1025
 #, c-format
 msgid ""
 "\n"
@@ -400,53 +400,54 @@ msgstr ""
 "\n"
 "VARNING:  användardefinierade tabellutrymmens plats skall inte vara i datakatalogen, dvs. %s"
 
-#: check.c:1026
+#: check.c:1035
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Skapar skript för att radera gamla klustret"
 
-#: check.c:1054
+#: check.c:1063
 #, c-format
 msgid "could not add execute permission to file \"%s\": %m"
 msgstr "kunde inte lägga till rättigheten \"körbar\" på filen \"%s\": %m"
 
-#: check.c:1074
+#: check.c:1083
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Kontrollerar att databasanvändaren är installationsanvändaren"
 
-#: check.c:1090
+#: check.c:1099
 #, c-format
 msgid "database user \"%s\" is not the install user"
 msgstr "databasanvändare \"%s\" är inte installationsanvändaren"
 
-#: check.c:1101
+#: check.c:1110
 #, c-format
 msgid "could not determine the number of users"
 msgstr "kunde inte bestämma antalet användare"
 
-#: check.c:1109
+#: check.c:1118
 #, c-format
 msgid "Only the install user can be defined in the new cluster."
 msgstr "Bara installationsanvändaren får finnas i nya klustret."
 
-#: check.c:1139
+#: check.c:1148
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Kontrollerar databasens anslutningsinställningar"
 
-#: check.c:1167
+#: check.c:1176
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false"
 msgstr "template0 får inte tillåta anslutningar, dvs dess pg_database.datallowconn måste vara false"
 
-#: check.c:1194 check.c:1315 check.c:1411 check.c:1539 check.c:1615
-#: check.c:1673 check.c:1756 check.c:2124 check.c:2266 function.c:229
+#: check.c:1203 check.c:1324 check.c:1420 check.c:1548 check.c:1624
+#: check.c:1710 check.c:1770 check.c:1853 check.c:2221 check.c:2363
+#: function.c:229
 #, c-format
 msgid "fatal"
 msgstr "fatalt"
 
-#: check.c:1195
+#: check.c:1204
 #, c-format
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
@@ -465,27 +466,27 @@ msgstr ""
 "tillåter anslutningar. En lista med problemdatabaser finns i filen:\n"
 "    %s"
 
-#: check.c:1220
+#: check.c:1229
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Letar efter förberedda transaktioner"
 
-#: check.c:1229
+#: check.c:1238
 #, c-format
 msgid "The source cluster contains prepared transactions"
 msgstr "Källklustret innehåller förberedda transaktioner"
 
-#: check.c:1231
+#: check.c:1240
 #, c-format
 msgid "The target cluster contains prepared transactions"
 msgstr "Målklustret innehåller förberedda transaktioner"
 
-#: check.c:1291
+#: check.c:1300
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Letar efter contrib/isn med bigint-anropsfel"
 
-#: check.c:1316
+#: check.c:1325
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -504,12 +505,12 @@ msgstr ""
 "En lista med problemfunktionerna finns i filen:\n"
 "    %s"
 
-#: check.c:1396
+#: check.c:1405
 #, c-format
 msgid "Checking for user-defined postfix operators"
 msgstr "Letar efter användardefinierade postfix-operatorer"
 
-#: check.c:1412
+#: check.c:1421
 #, c-format
 msgid ""
 "Your installation contains user-defined postfix operators, which are not\n"
@@ -524,12 +525,12 @@ msgstr ""
 "En lista med användardefinierade postfix-operatorer finns i filen:\n"
 "    %s"
 
-#: check.c:1467
+#: check.c:1476
 #, c-format
 msgid "Checking for incompatible polymorphic functions"
 msgstr "Letar efter inkompatibla polymorfa funktioner"
 
-#: check.c:1540
+#: check.c:1549
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
@@ -550,12 +551,12 @@ msgstr ""
 "En lista med problemobjekten finns i filen:\n"
 "    %s"
 
-#: check.c:1600
+#: check.c:1609
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Letar efter tabeller med WITH OIDS"
 
-#: check.c:1616
+#: check.c:1625
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -570,12 +571,36 @@ msgstr ""
 "En lista över tabeller med detta problem finns i filen:\n"
 "    %s"
 
-#: check.c:1643
+#: check.c:1684
+#, c-format
+msgid "Checking for not-null constraint inconsistencies"
+msgstr "Kontrollerar att icke-null-villkor är konsistenta"
+
+#: check.c:1711
+#, c-format
+msgid ""
+"Your installation contains inconsistent NOT NULL constraints.\n"
+"If the parent column(s) are NOT NULL, then the child column must\n"
+"also be marked NOT NULL, or the upgrade will fail.\n"
+"You can fix this by running\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"on each column listed in the file:\n"
+"    %s"
+msgstr ""
+"Din installation har inkonsistenta NOT NULL-villkor.\n"
+"Om en föräldrakolumn är NOT NULL så måste barnkolumnen också\n"
+"sättas till NOT NULL annars så kommer uppgraderingen misslyckas.\n"
+"Du kan lösa detta genom att köra\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"för varje kolumn som listas i filen:\n"
+"    %s"
+
+#: check.c:1740
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Letar efter roller som startar med \"pg_\""
 
-#: check.c:1674
+#: check.c:1771
 #, c-format
 msgid ""
 "Your installation contains roles starting with \"pg_\".\n"
@@ -590,12 +615,12 @@ msgstr ""
 "En lista med rollerna som startar på \"pg_\" finns i denna fil:\n"
 "    %s"
 
-#: check.c:1728
+#: check.c:1825
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Letar efter användardefinierade teckenkodkonverteringar"
 
-#: check.c:1757
+#: check.c:1854
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"
@@ -612,20 +637,20 @@ msgstr ""
 "En lista med användardefinierade teckenkodkonverteringar finns i filen:\n"
 "    %s"
 
-#: check.c:1842
+#: check.c:1939
 #, c-format
 msgid "Checking for objects affected by Unicode update"
 msgstr "Letar efter objekt som påverkas av uppdatering av Unicode"
 
-#: check.c:1936 version.c:121
+#: check.c:2033 version.c:121
 #, c-format
 msgid "warning"
 msgstr "varning"
 
-#: check.c:1937
+#: check.c:2034
 #, c-format
 msgid ""
-"Your installation contains relations that may be affected by a new version of Unicode.\n"
+"Your installation contains relations that might be affected by a new version of Unicode.\n"
 "A list of potentially-affected relations is in the file:\n"
 "    %s"
 msgstr ""
@@ -633,52 +658,52 @@ msgstr ""
 "En lista med potentiellt påverkade relationer är i filen:\n"
 "    %s"
 
-#: check.c:1973
+#: check.c:2070
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "Letar efter replikeringsslottar i nya klustret"
 
-#: check.c:1981
+#: check.c:2078
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "kunde inte räkna antalet logiska replikeringsslottar"
 
-#: check.c:1986
+#: check.c:2083
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "förväntade 0 logiska replikeringsslottar men hittade %d."
 
-#: check.c:1996 check.c:2047
+#: check.c:2093 check.c:2144
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "kunde inte plocka fram inställningar i det nya klustret"
 
-#: check.c:2001
+#: check.c:2098
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "\"wal_level\" måste vara satt till \"logical\" men är satt som \"%s\""
 
-#: check.c:2007
+#: check.c:2104
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
 msgstr "\"max_replication_slots\" (%d) måste vara större än eller lika med antalet logiska replikeringsslottar (%d) i gamla klustret"
 
-#: check.c:2039
+#: check.c:2136
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "Letar efter konfiguration för prenumerationer i nya klustret"
 
-#: check.c:2051
+#: check.c:2148
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "\"max_active_replication_origins\" (%d) måste vara större än eller lika med antalet prenumerationer (%d) i gamla klustret"
 
-#: check.c:2073
+#: check.c:2170
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "Letar efter giltiga logiska replikeringsslottar"
 
-#: check.c:2125
+#: check.c:2222
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -693,12 +718,12 @@ msgstr ""
 "En lista med problemkolumner finns i filen:\n"
 "    %s"
 
-#: check.c:2185
+#: check.c:2282
 #, c-format
 msgid "Checking for subscription state"
 msgstr "Kontrollerar läget för prenumerationer"
 
-#: check.c:2267
+#: check.c:2364
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -970,7 +995,7 @@ msgstr "gamla och nya klustrets pg_controldata checksumversioner matchar inte"
 msgid "Adding \".old\" suffix to old \"%s\""
 msgstr "Lägger till \".old\"-suffix till gamla \"%s\""
 
-#: controldata.c:767
+#: controldata.c:767 relfilenumber.c:393 relfilenumber.c:420
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
@@ -1695,7 +1720,7 @@ msgstr "kunde inte skapa arbetsprocess: %m"
 msgid "could not create worker thread: %m"
 msgstr "kunde inte skapa arbetstråd: %m"
 
-#: parallel.c:294
+#: parallel.c:294 task.c:404
 #, c-format
 msgid "%s() failed: %m"
 msgstr "%s() misslyckades: %m"
@@ -1754,6 +1779,7 @@ msgid "directory path for new cluster is too long"
 msgstr "katalogsökväg för nytt kluster är för lång"
 
 #: pg_upgrade.c:301 pg_upgrade.c:303 pg_upgrade.c:305 pg_upgrade.c:307
+#: relfilenumber.c:293 relfilenumber.c:297
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "kunde inte skapa katalog \"%s\": %m"
@@ -1906,25 +1932,15 @@ msgstr "gamla databasen \"%s\" kan inte hittas i nya klustret"
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: relfilenumber.c:293 relfilenumber.c:297
-#, c-format
-msgid "could not create directory \"%s\""
-msgstr "kunde inte skapa katalog \"%s\""
-
 #: relfilenumber.c:301 relfilenumber.c:305
 #, c-format
-msgid "could not rename \"%s\" to \"%s\""
-msgstr "kunde inte döpa om fil \"%s\" till \"%s\""
+msgid "could not rename directory \"%s\" to \"%s\": %m"
+msgstr "kunde inte döpa om katalog \"%s\" till \"%s\": %m"
 
 #: relfilenumber.c:375 relfilenumber.c:402
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
-
-#: relfilenumber.c:393 relfilenumber.c:420
-#, c-format
-msgid "could not rename \"%s\" to \"%s\": %m"
-msgstr "kunde inte döpa om \"%s\" till \"%s\": %m"
 
 #: relfilenumber.c:396 relfilenumber.c:434
 #, c-format
@@ -2007,7 +2023,7 @@ msgstr "kunde inte öppna versionsfil \"%s\": %m"
 msgid "could not parse version file \"%s\""
 msgstr "kunde inte tolka versionsfil \"%s\""
 
-#: server.c:317
+#: server.c:299
 #, c-format
 msgid ""
 "\n"
@@ -2016,7 +2032,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:321
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2025,7 +2041,7 @@ msgstr ""
 "kunde inte ansluta till käll-postmaster som startats med kommandot:\n"
 "%s"
 
-#: server.c:325
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2034,22 +2050,22 @@ msgstr ""
 "kunde inte ansluta till mål-postmaster som startats med kommandot:\n"
 "%s"
 
-#: server.c:339
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl misslyckades att start källservern eller så misslyckades anslutningen"
 
-#: server.c:341
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl misslyckades att start målservern eller så misslyckades anslutningen"
 
-#: server.c:386
+#: server.c:368 task.c:195
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: server.c:399
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq:s omgivningsvariabel %s har ett icke-lokalt servervärde: %s"
@@ -2078,25 +2094,15 @@ msgstr "kunde inte göra stat på tablespace-katalog \"%s\": %m"
 msgid "tablespace path \"%s\" is not a directory"
 msgstr "tablespace-sökväg \"%s\" är inte en katalog"
 
-#: task.c:195
-#, c-format
-msgid "failed to create connection with connection string: \"%s\""
-msgstr "misslyckades att skapa anslutning med anslutningssträngen: \"%s\""
-
-#: task.c:217 task.c:268 task.c:283 task.c:294
+#: task.c:216 task.c:267 task.c:282 task.c:293
 #, c-format
 msgid "connection failure: %s"
 msgstr "anslutningsfel: %s"
 
-#: task.c:396
+#: task.c:395
 #, c-format
 msgid "invalid socket"
 msgstr "ogiltig socket"
-
-#: task.c:405
-#, c-format
-msgid "select() failed: %m"
-msgstr "select() misslyckades: %m"
 
 #: util.c:53 util.c:56 util.c:139 util.c:170 util.c:172
 #, c-format

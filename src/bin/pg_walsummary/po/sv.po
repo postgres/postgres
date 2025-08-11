@@ -4,10 +4,10 @@
 # Dennis Björklund <db@zigo.dhs.org>, 2024.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2024-07-12 17:54+0000\n"
-"PO-Revision-Date: 2024-07-12 23:39+0200\n"
+"PO-Revision-Date: 2025-07-29 19:46+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"

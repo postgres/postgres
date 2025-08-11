@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-06-02 09:43+0900\n"
-"PO-Revision-Date: 2025-06-05 16:04+0900\n"
+"POT-Creation-Date: 2025-06-27 18:25+0900\n"
+"PO-Revision-Date: 2025-06-30 13:15+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -238,8 +238,8 @@ msgstr "libcurl ハンドルの作成に失敗しました"
 #: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4293 fe-exec.c:4459
 #: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:210 fe-protocol3.c:233
 #: fe-protocol3.c:256 fe-protocol3.c:273 fe-protocol3.c:294 fe-protocol3.c:368
-#: fe-protocol3.c:732 fe-protocol3.c:972 fe-protocol3.c:1552
-#: fe-protocol3.c:1861 fe-protocol3.c:2262 fe-secure-common.c:110
+#: fe-protocol3.c:732 fe-protocol3.c:972 fe-protocol3.c:1553
+#: fe-protocol3.c:1862 fe-protocol3.c:2263 fe-secure-common.c:110
 #: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
 #: fe-secure-openssl.c:1131
 #, c-format
@@ -639,7 +639,7 @@ msgstr "認識できないパスワード暗号化アルゴリズム \"%s\""
 msgid "connection pointer is NULL"
 msgstr "接続ポインタはNULLです"
 
-#: fe-cancel.c:85 fe-misc.c:587
+#: fe-cancel.c:85 fe-misc.c:613
 #, c-format
 msgid "connection not open"
 msgstr "接続はオープンされていません"
@@ -753,8 +753,8 @@ msgstr "不正なSCRAMサーバーキー長: %d"
 
 #: fe-connect.c:2144
 #, c-format
-msgid "min_protocol_version is greater than max_protocol_version"
-msgstr "min_protocol_version が max_protocol_version よりも大きいです"
+msgid "\"%s\" is greater than \"%s\""
+msgstr "\"%s\"が\"%s\"より大きいです"
 
 #: fe-connect.c:2356
 #, c-format
@@ -1189,7 +1189,7 @@ msgstr "接続オプション\"%2$s\"に対する不正な整数値\"%1$s\""
 msgid "row number %d is out of range 0..%d"
 msgstr "行番号%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:531 fe-protocol3.c:2067
+#: fe-exec.c:531 fe-protocol3.c:2068
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1280,7 +1280,7 @@ msgstr "COPY BOTH 実行中の PQexec は許可されていません"
 msgid "unrecognized message type \"%c\""
 msgstr "認識できないメッセージタイプ\"%c\""
 
-#: fe-exec.c:2702 fe-exec.c:2756 fe-exec.c:2824 fe-protocol3.c:1998
+#: fe-exec.c:2702 fe-exec.c:2756 fe-exec.c:2824 fe-protocol3.c:1999
 #, c-format
 msgid "no COPY in progress"
 msgstr "実行中のCOPYはありません"
@@ -1404,7 +1404,7 @@ msgstr "サイズ%luの整数はpqGetIntでサポートされていません"
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "サイズ%luの整数はpqPutIntでサポートされていません"
 
-#: fe-misc.c:765 fe-secure-openssl.c:181 fe-secure-openssl.c:287
+#: fe-misc.c:791 fe-secure-openssl.c:181 fe-secure-openssl.c:287
 #: fe-secure.c:222 fe-secure.c:389
 #, c-format
 msgid ""
@@ -1416,21 +1416,21 @@ msgstr ""
 "        おそらく要求の処理前または処理中にサーバーが異常終了\n"
 "        したことを意味しています。"
 
-#: fe-misc.c:832
+#: fe-misc.c:858
 msgid "connection not open\n"
 msgstr "接続はオープンされていません\n"
 
-#: fe-misc.c:1020
+#: fe-misc.c:1046
 #, c-format
 msgid "timeout expired"
 msgstr "タイムアウト期間が過ぎました"
 
-#: fe-misc.c:1072
+#: fe-misc.c:1098
 #, c-format
 msgid "invalid socket"
 msgstr "不正なソケットです"
 
-#: fe-misc.c:1095
+#: fe-misc.c:1121
 #, c-format
 msgid "%s() failed: %s"
 msgstr "%s() が失敗しました: %s"
@@ -1566,8 +1566,8 @@ msgstr "不正なプロトコルネゴシエーションメッセージを受信
 
 #: fe-protocol3.c:1437
 #, c-format
-msgid "received invalid protocol negotiation message: server requests downgrade to non-existent 3.1 protocol version"
-msgstr "不正なプロトコルネゴシエーションメッセージを受信: サーバーが存在しない 3.1 プロトコルバージョンを要求しました"
+msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
+msgstr "不正なプロトコルネゴシエーションメッセージを受信: サーバーが、存在しない 3.1 プロトコルバージョンへのダウングレードを要求しました"
 
 #: fe-protocol3.c:1443
 #, c-format
@@ -1581,35 +1581,35 @@ msgstr "不正なプロトコルネゴシエーションメッセージを受信
 
 #: fe-protocol3.c:1455
 #, c-format
-msgid "server only supports protocol version %d.%d, but min_protocol_version was set to %d.%d"
-msgstr "サーバーはプロトコルバージョン %d.%d のみサポートしていますが、min_protocol_version は %d.%d に設定されています"
+msgid "server only supports protocol version %d.%d, but \"%s\" was set to %d.%d"
+msgstr "サーバーはプロトコルバージョン %d.%d のみサポートしていますが、\"%s\"は %d.%d に設定されています"
 
-#: fe-protocol3.c:1479
+#: fe-protocol3.c:1480
 #, c-format
-msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a _pq_. prefix (\"%s\")"
-msgstr "不正なプロトコルネゴシエーションメッセージを受信: サーバーが _pq_. プレフィクスのないサポートされていないパラメータ名(\"%s\")を報告しました"
+msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
+msgstr "不正なプロトコルネゴシエーションメッセージを受信: サーバーが\"%s\"プレフィクスのないサポートされていないパラメータ名(\"%s\")を報告しました"
 
-#: fe-protocol3.c:1482
+#: fe-protocol3.c:1483
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
 msgstr "不正なプロトコルネゴシエーションメッセージを受信: サーバーが要求されていないサポート外のパラメータ(\"%s\")を通知しました"
 
-#: fe-protocol3.c:1489
+#: fe-protocol3.c:1490
 #, c-format
 msgid "received invalid protocol negotiation message: message too short"
 msgstr "不正なプロトコルネゴシエーションメッセージを受信: メッセージが短すぎます"
 
-#: fe-protocol3.c:1893
+#: fe-protocol3.c:1894
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: テキストのCOPY OUTを行っていません"
 
-#: fe-protocol3.c:2268
+#: fe-protocol3.c:2269
 #, c-format
 msgid "protocol error: no function result"
 msgstr "プロトコルエラー: 関数の結果がありません"
 
-#: fe-protocol3.c:2280
+#: fe-protocol3.c:2281
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "プロトコルエラー: id=0x%x"
@@ -1738,13 +1738,13 @@ msgstr "SSL証明書のアドレスのエントリがありません"
 
 #: fe-secure-openssl.c:714
 #, c-format
-msgid "could not open ssl keylog file \"%s\": %s"
-msgstr "SSLキーログファイル \"%s\" をオープンできませんでした: %s"
+msgid "could not open SSL key logging file \"%s\": %s"
+msgstr "SSLキー記録ファイル\"%s\"をオープンできませんでした: %s"
 
 #: fe-secure-openssl.c:722
 #, c-format
-msgid "could not write to ssl keylog file \"%s\": %s"
-msgstr "SSLキーログファイル \"%s\" に書き込めませんでした: %s"
+msgid "could not write to SSL key logging file \"%s\": %s"
+msgstr "SSLキー記録ファイル\"%s\"に書き込めませんでした: %s"
 
 #: fe-secure-openssl.c:775
 #, c-format

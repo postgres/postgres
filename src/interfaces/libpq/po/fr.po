@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-11 05:40+0000\n"
-"PO-Revision-Date: 2025-07-11 16:40+0200\n"
+"POT-Creation-Date: 2025-08-01 08:40+0000\n"
+"PO-Revision-Date: 2025-08-01 11:36+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -332,6 +332,10 @@ msgid ""
 "\tlibcurl reports that it is not. Recompile libpq against\n"
 "\tthe installed version of libcurl."
 msgstr ""
+"libcurl n'est plus garanti avec les threads\n"
+"\tL'initialisation de curl était indiquée comme garantie avec les threads quand libpq\n"
+"\ta été compilé, mais la version actuellement installée de libcurl indique que ce n'est\n"
+"\tplus le cas. Recompilez libpq avec la version installée de libcurl."
 
 #: fe-auth-scram.c:228
 #, c-format
@@ -680,7 +684,7 @@ msgstr "la méthode require_auth  « %s » ne peut pas être mélangée avec des
 
 #: fe-connect.c:1605 fe-connect.c:1734 fe-connect.c:1776 fe-connect.c:1819
 #: fe-connect.c:1922 fe-connect.c:1968 fe-connect.c:2008 fe-connect.c:2075
-#: fe-connect.c:8246
+#: fe-connect.c:8248
 #, c-format
 msgid "invalid %s value: \"%s\""
 msgstr "valeur %s invalide : « %s »"
@@ -1156,21 +1160,21 @@ msgstr "valeur %%00 interdite dans la valeur codée en pourcentage : « %s »"
 msgid "unexpected spaces found in \"%s\", use percent-encoded spaces (%%20) instead"
 msgstr "espaces inattendus trouvés dans « %s », utilisez des espaces encodés (%%20) à la place"
 
-#: fe-connect.c:7624
+#: fe-connect.c:7626
 msgid "connection pointer is NULL\n"
 msgstr "le pointeur de connexion est NULL\n"
 
-#: fe-connect.c:7632 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
+#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
 #: fe-protocol3.c:987 fe-protocol3.c:1020
 msgid "out of memory\n"
 msgstr "mémoire épuisée\n"
 
-#: fe-connect.c:7934
+#: fe-connect.c:7936
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ATTENTION : le fichier de mots de passe « %s » n'est pas un fichier texte\n"
 
-#: fe-connect.c:7944
+#: fe-connect.c:7946
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr ""
@@ -1178,12 +1182,12 @@ msgstr ""
 "lecture pour le groupe ou universel ; les droits devraient être u=rw (0600)\n"
 "ou inférieur\n"
 
-#: fe-connect.c:8048
+#: fe-connect.c:8050
 #, c-format
 msgid "password retrieved from file \"%s\""
 msgstr "mot de passe récupéré dans le fichier « %s »"
 
-#: fe-connect.c:8214
+#: fe-connect.c:8216
 #, c-format
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "valeur entière « %s » invalide pour l'option de connexion « %s »"
@@ -1573,7 +1577,7 @@ msgstr "a reçu un message invalide pour la négociation du protocole : le serve
 #: fe-protocol3.c:1437
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
-msgstr ""
+msgstr "a reçu un message invalide de négociation du protocole : le serveur a réclamé le retour à une version inexistante du protocole (3.1)"
 
 #: fe-protocol3.c:1443
 #, c-format
@@ -1593,12 +1597,12 @@ msgstr "le serveur accepte seulement la version %d.%d du protocole mais « %s »
 #: fe-protocol3.c:1480
 #, c-format
 msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
-msgstr ""
+msgstr "a reçu un message invalide de négociation du protocole : le serveur a rapporté un nom de paramètre non supporté avec un préfixe « %s » (« %s »)"
 
 #: fe-protocol3.c:1483
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
-msgstr ""
+msgstr "a reçu un message invalide de négociation du protocole : le serveur a rapporté un paramètre non supporté qui n'était pas demandé (« %s »)"
 
 #: fe-protocol3.c:1490
 #, c-format

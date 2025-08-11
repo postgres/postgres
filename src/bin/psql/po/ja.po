@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 18)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-06-17 09:30+0900\n"
-"PO-Revision-Date: 2025-06-17 10:29+0900\n"
+"POT-Creation-Date: 2025-06-25 13:03+0900\n"
+"PO-Revision-Date: 2025-06-25 13:09+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2714,7 +2714,7 @@ msgstr ""
 "psql は PostgreSQL の対話型ターミナルです。\n"
 "\n"
 
-#: help.c:61 help.c:384 help.c:471 help.c:517
+#: help.c:61 help.c:385 help.c:472 help.c:518
 msgid "Usage:\n"
 msgstr "使い方:\n"
 
@@ -3539,44 +3539,48 @@ msgstr ""
 "                         既存の準備済みの文にパラメータを設定する\n"
 
 #: help.c:334
-msgid "  \\close STMT_NAME       close an existing prepared statement\n"
-msgstr "  \\close STMT_NAME       準備済みの文をクローズする\n"
+msgid ""
+"  \\close_prepared STMT_NAME\n"
+"                         close an existing prepared statement\n"
+msgstr ""
+"  \\close_prepared ステートメント名\n"
+"                         既存の準備済みの文をクローズする\n"
 
-#: help.c:335
+#: help.c:336
 msgid "  \\endpipeline           exit pipeline mode\n"
 msgstr "  \\endpipeline           パイプラインモードを終了\n"
 
-#: help.c:336
+#: help.c:337
 msgid "  \\flush                 flush output data to the server\n"
 msgstr "  \\flush                 出力データをサーバーへ送信\n"
 
-#: help.c:337
+#: help.c:338
 msgid "  \\flushrequest          send request to the server to flush its output buffer\n"
 msgstr "  \\flushrequest          サーバーに出力バッファ内容の送信を要求する\n"
 
-#: help.c:338
+#: help.c:339
 msgid "  \\getresults [NUM_RES]  read NUM_RES pending results, or all if no argument\n"
 msgstr ""
 "  \\getresults [結果数]   指定した \"結果数\" 行の未取得の結果を読み取る。\n"
 "                         引数なしの場合、未取得の結果をすべて読み取る\n"
 
-#: help.c:339
+#: help.c:340
 msgid "  \\parse STMT_NAME       create a prepared statement\n"
 msgstr "  \\parse STMT_NAME       準備済みの文を作成\n"
 
-#: help.c:340
+#: help.c:341
 msgid "  \\sendpipeline          send an extended query to an ongoing pipeline\n"
 msgstr "  \\sendpipeline          実行中のパイプラインに拡張問い合わせを送出\n"
 
-#: help.c:341
+#: help.c:342
 msgid "  \\startpipeline         enter pipeline mode\n"
 msgstr "  \\startpipeline         パイプラインモードを開始\n"
 
-#: help.c:342
+#: help.c:343
 msgid "  \\syncpipeline          add a synchronisation point to an ongoing pipeline\n"
 msgstr "  \\syncpipeline          実行中のパイプラインに同期ポイントを追加\n"
 
-#: help.c:381
+#: help.c:382
 msgid ""
 "List of specially treated variables\n"
 "\n"
@@ -3584,11 +3588,11 @@ msgstr ""
 "特別に扱われる変数の一覧\n"
 "\n"
 
-#: help.c:383
+#: help.c:384
 msgid "psql variables:\n"
 msgstr "psql変数:\n"
 
-#: help.c:385
+#: help.c:386
 msgid ""
 "  psql --set=NAME=VALUE\n"
 "  or \\set NAME VALUE inside psql\n"
@@ -3598,7 +3602,7 @@ msgstr ""
 "  またはpsql内で \\set 名前 値\n"
 "\n"
 
-#: help.c:387
+#: help.c:388
 msgid ""
 "  AUTOCOMMIT\n"
 "    if set, successful SQL commands are automatically committed\n"
@@ -3606,7 +3610,7 @@ msgstr ""
 "  AUTOCOMMIT\n"
 "    セットされている場合、SQLコマンドが成功した際に自動的にコミット\n"
 
-#: help.c:389
+#: help.c:390
 msgid ""
 "  COMP_KEYWORD_CASE\n"
 "    determines the case used to complete SQL key words\n"
@@ -3616,7 +3620,7 @@ msgstr ""
 "    SQLキーワードの補完に使う文字ケースを指定\n"
 "    [lower, upper, preserve-lower, preserve-upper]\n"
 
-#: help.c:392
+#: help.c:393
 msgid ""
 "  DBNAME\n"
 "    the currently connected database name\n"
@@ -3624,7 +3628,7 @@ msgstr ""
 "  DBNAME\n"
 "    現在接続中のデータベース名\n"
 
-#: help.c:394
+#: help.c:395
 msgid ""
 "  ECHO\n"
 "    controls what input is written to standard output\n"
@@ -3634,7 +3638,7 @@ msgstr ""
 "    どの入力を標準出力への出力対象とするかを設定\n"
 "    [all, errors, none, queries]\n"
 
-#: help.c:397
+#: help.c:398
 msgid ""
 "  ECHO_HIDDEN\n"
 "    if set, display internal queries executed by backslash commands;\n"
@@ -3644,7 +3648,7 @@ msgstr ""
 "    セットされていれば、バックスラッシュコマンドで実行される内部問い合わせを\n"
 "    表示; \"noexec\"を設定した場合は実行せずに表示のみ\n"
 
-#: help.c:400
+#: help.c:401
 msgid ""
 "  ENCODING\n"
 "    current client character set encoding\n"
@@ -3652,7 +3656,7 @@ msgstr ""
 "  ENCODING\n"
 "    現在のクライアント側の文字セットのエンコーディング\n"
 
-#: help.c:402
+#: help.c:403
 msgid ""
 "  ERROR\n"
 "    \"true\" if last query failed, else \"false\"\n"
@@ -3660,7 +3664,7 @@ msgstr ""
 "  ERROR\n"
 "    最後の問い合わせが失敗であれば\"true\"、そうでなければ\"false\"\n"
 
-#: help.c:404
+#: help.c:405
 msgid ""
 "  FETCH_COUNT\n"
 "    the number of result rows to fetch and display at a time (0 = unlimited)\n"
@@ -3668,7 +3672,7 @@ msgstr ""
 "  FETCH_COUNT\n"
 "    一度に取得および表示する結果の行数 (0 = 無制限)\n"
 
-#: help.c:406
+#: help.c:407
 msgid ""
 "  HIDE_TABLEAM\n"
 "    if set, table access methods are not displayed\n"
@@ -3676,7 +3680,7 @@ msgstr ""
 "  HIDE_TABLEAM\n"
 "    設定すると、テーブルアクセスメソッドは表示されない\n"
 
-#: help.c:408
+#: help.c:409
 msgid ""
 "  HIDE_TOAST_COMPRESSION\n"
 "    if set, compression methods are not displayed\n"
@@ -3684,7 +3688,7 @@ msgstr ""
 "  HIDE_TOAST_COMPRESSION\n"
 "    設定すると、圧縮方式は表示されない\n"
 
-#: help.c:410
+#: help.c:411
 msgid ""
 "  HISTCONTROL\n"
 "    controls command history [ignorespace, ignoredups, ignoreboth]\n"
@@ -3692,7 +3696,7 @@ msgstr ""
 "  HISTCONTROL\n"
 "    コマンド履歴の制御 [ignorespace, ignoredups, ignoreboth]\n"
 
-#: help.c:412
+#: help.c:413
 msgid ""
 "  HISTFILE\n"
 "    file name used to store the command history\n"
@@ -3700,7 +3704,7 @@ msgstr ""
 "  HISTFILE\n"
 "    コマンド履歴を保存するファイルの名前\n"
 
-#: help.c:414
+#: help.c:415
 msgid ""
 "  HISTSIZE\n"
 "    maximum number of commands to store in the command history\n"
@@ -3708,7 +3712,7 @@ msgstr ""
 "  HISTSIZE\n"
 "    コマンド履歴で保存するコマンド数の上限\n"
 
-#: help.c:416
+#: help.c:417
 msgid ""
 "  HOST\n"
 "    the currently connected database server host\n"
@@ -3716,7 +3720,7 @@ msgstr ""
 "  HOST\n"
 "    現在接続中のデータベースサーバーホスト\n"
 
-#: help.c:418
+#: help.c:419
 msgid ""
 "  IGNOREEOF\n"
 "    number of EOFs needed to terminate an interactive session\n"
@@ -3724,7 +3728,7 @@ msgstr ""
 "  IGNOREEOF\n"
 "    対話形セッションを終わらせるのに必要なEOFの数\n"
 
-#: help.c:420
+#: help.c:421
 msgid ""
 "  LASTOID\n"
 "    value of the last affected OID\n"
@@ -3732,7 +3736,7 @@ msgstr ""
 "  LASTOID\n"
 "    最後の変更の影響を受けたOID\n"
 
-#: help.c:422
+#: help.c:423
 msgid ""
 "  LAST_ERROR_MESSAGE\n"
 "  LAST_ERROR_SQLSTATE\n"
@@ -3743,7 +3747,7 @@ msgstr ""
 "    最後のエラーのメッセージおよび SQLSTATE、\n"
 "    なにもなければ空の文字列および\"00000\"\n"
 
-#: help.c:425
+#: help.c:426
 msgid ""
 "  ON_ERROR_ROLLBACK\n"
 "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"
@@ -3752,7 +3756,7 @@ msgstr ""
 "    セットされている場合、エラーでトランザクションを停止しない (暗黙のセーブ\n"
 "    ポイントを使用)\n"
 
-#: help.c:427
+#: help.c:428
 msgid ""
 "  ON_ERROR_STOP\n"
 "    stop batch execution after error\n"
@@ -3760,7 +3764,7 @@ msgstr ""
 "  ON_ERROR_STOP\n"
 "    エラー発生後にバッチ実行を停止\n"
 
-#: help.c:429
+#: help.c:430
 msgid ""
 "  PORT\n"
 "    server port of the current connection\n"
@@ -3768,7 +3772,7 @@ msgstr ""
 "  PORT\n"
 "    現在の接続のサーバーポート\n"
 
-#: help.c:431
+#: help.c:432
 msgid ""
 "  PROMPT1\n"
 "    specifies the standard psql prompt\n"
@@ -3776,7 +3780,7 @@ msgstr ""
 "  PROMPT1\n"
 "    psql の標準のプロンプトを指定\n"
 
-#: help.c:433
+#: help.c:434
 msgid ""
 "  PROMPT2\n"
 "    specifies the prompt used when a statement continues from a previous line\n"
@@ -3784,7 +3788,7 @@ msgstr ""
 "  PROMPT2\n"
 "    文が前行から継続する場合のプロンプトを指定\n"
 
-#: help.c:435
+#: help.c:436
 msgid ""
 "  PROMPT3\n"
 "    specifies the prompt used during COPY ... FROM STDIN\n"
@@ -3792,7 +3796,7 @@ msgstr ""
 "  PROMPT3\n"
 "    COPY ... FROM STDIN の最中に使われるプロンプトを指定\n"
 
-#: help.c:437
+#: help.c:438
 msgid ""
 "  QUIET\n"
 "    run quietly (same as -q option)\n"
@@ -3800,7 +3804,7 @@ msgstr ""
 "  QUIET\n"
 "    メッセージを表示しない (-q オプションと同じ)\n"
 
-#: help.c:439
+#: help.c:440
 msgid ""
 "  ROW_COUNT\n"
 "    number of rows returned or affected by last query, or 0\n"
@@ -3808,7 +3812,7 @@ msgstr ""
 "  ROW_COUNT\n"
 "    最後の問い合わせで返却した、または影響を与えた行の数、または0\n"
 
-#: help.c:441
+#: help.c:442
 msgid ""
 "  SERVER_VERSION_NAME\n"
 "  SERVER_VERSION_NUM\n"
@@ -3818,7 +3822,7 @@ msgstr ""
 "  SERVER_VERSION_NUM\n"
 "    サーバーのバージョン(短い文字列または数値)\n"
 
-#: help.c:444
+#: help.c:445
 msgid ""
 "  SHELL_ERROR\n"
 "    \"true\" if the last shell command failed, \"false\" if it succeeded\n"
@@ -3826,7 +3830,7 @@ msgstr ""
 "  SHELL_ERROR\n"
 "    最後のシェルコマンドが失敗であれば\"true\"、成功であれば\"false\"\n"
 
-#: help.c:446
+#: help.c:447
 msgid ""
 "  SHELL_EXIT_CODE\n"
 "    exit status of the last shell command\n"
@@ -3834,7 +3838,7 @@ msgstr ""
 "  SHELL_EXIT_CODE\n"
 "    最後に実行したシェルコマンドの終了ステータス\n"
 
-#: help.c:448
+#: help.c:449
 msgid ""
 "  SHOW_ALL_RESULTS\n"
 "    show all results of a combined query (\\;) instead of only the last\n"
@@ -3842,7 +3846,7 @@ msgstr ""
 "  SHOW_ALL_RESULTS\n"
 "    複合問い合わせ(\\;)の最後の結果のみではなくすべてを表示する\n"
 
-#: help.c:450
+#: help.c:451
 msgid ""
 "  SHOW_CONTEXT\n"
 "    controls display of message context fields [never, errors, always]\n"
@@ -3850,7 +3854,7 @@ msgstr ""
 "  SHOW_CONTEXT\n"
 "    メッセージコンテキストフィールドの表示を制御 [never, errors, always]\n"
 
-#: help.c:452
+#: help.c:453
 msgid ""
 "  SINGLELINE\n"
 "    if set, end of line terminates SQL commands (same as -S option)\n"
@@ -3858,7 +3862,7 @@ msgstr ""
 "  SINGLELINE\n"
 "    セットした場合、改行はSQLコマンドを終端する (-S オプションと同じ)\n"
 
-#: help.c:454
+#: help.c:455
 msgid ""
 "  SINGLESTEP\n"
 "    single-step mode (same as -s option)\n"
@@ -3866,7 +3870,7 @@ msgstr ""
 "  SINGLESTEP\n"
 "    シングルステップモード (-s オプションと同じ)\n"
 
-#: help.c:456
+#: help.c:457
 msgid ""
 "  SQLSTATE\n"
 "    SQLSTATE of last query, or \"00000\" if no error\n"
@@ -3874,7 +3878,7 @@ msgstr ""
 "  SQLSTATE\n"
 "    最後の問い合わせの SQLSTATE、またはエラーでなければ\"00000\"\n"
 
-#: help.c:458
+#: help.c:459
 msgid ""
 "  USER\n"
 "    the currently connected database user\n"
@@ -3882,7 +3886,7 @@ msgstr ""
 "  USER\n"
 "    現在接続中のデータベースユーザー\n"
 
-#: help.c:460
+#: help.c:461
 msgid ""
 "  VERBOSITY\n"
 "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"
@@ -3890,7 +3894,7 @@ msgstr ""
 "  VERBOSITY\n"
 "    エラー報告の詳細度を制御 [default, verbose, terse, sqlstate]\n"
 
-#: help.c:462
+#: help.c:463
 msgid ""
 "  VERSION\n"
 "  VERSION_NAME\n"
@@ -3902,7 +3906,7 @@ msgstr ""
 "  VERSION_NUM\n"
 "    psql のバージョン(長い文字列、短い文字列または数値)\n"
 
-#: help.c:466
+#: help.c:467
 #, c-format
 msgid ""
 "  WATCH_INTERVAL\n"
@@ -3911,7 +3915,7 @@ msgstr ""
 "  WATCH_INTERVAL\n"
 "    実行間の待機秒数 (デフォルト %s)\n"
 
-#: help.c:470
+#: help.c:471
 msgid ""
 "\n"
 "Display settings:\n"
@@ -3919,7 +3923,7 @@ msgstr ""
 "\n"
 "表示設定:\n"
 
-#: help.c:472
+#: help.c:473
 msgid ""
 "  psql --pset=NAME[=VALUE]\n"
 "  or \\pset NAME [VALUE] inside psql\n"
@@ -3929,7 +3933,7 @@ msgstr ""
 "  またはpsql内で \\pset 名前 [値]\n"
 "\n"
 
-#: help.c:474
+#: help.c:475
 msgid ""
 "  border\n"
 "    border style (number)\n"
@@ -3937,7 +3941,7 @@ msgstr ""
 "  border\n"
 "    境界線のスタイル (番号)\n"
 
-#: help.c:476
+#: help.c:477
 msgid ""
 "  columns\n"
 "    target width for the wrapped format\n"
@@ -3945,7 +3949,7 @@ msgstr ""
 "  columns\n"
 "    折り返し形式で目標とする横幅\n"
 
-#: help.c:478
+#: help.c:479
 msgid ""
 "  expanded (or x)\n"
 "    expanded output [on, off, auto]\n"
@@ -3953,7 +3957,7 @@ msgstr ""
 "  expanded (or x)\n"
 "    拡張出力 [on, off, auto]\n"
 
-#: help.c:480
+#: help.c:481
 #, c-format
 msgid ""
 "  fieldsep\n"
@@ -3962,7 +3966,7 @@ msgstr ""
 "  fieldsep\n"
 "    非整列出力でのフィールド区切り文字(デフォルトは \"%s\")\n"
 
-#: help.c:483
+#: help.c:484
 msgid ""
 "  fieldsep_zero\n"
 "    set field separator for unaligned output to a zero byte\n"
@@ -3970,7 +3974,7 @@ msgstr ""
 "  fieldsep_zero\n"
 "    非整列出力でのフィールド区切り文字をバイト値の0に設定\n"
 
-#: help.c:485
+#: help.c:486
 msgid ""
 "  footer\n"
 "    enable or disable display of the table footer [on, off]\n"
@@ -3978,7 +3982,7 @@ msgstr ""
 "  footer\n"
 "     テーブルフッター出力の要否を設定 [on, off]\n"
 
-#: help.c:487
+#: help.c:488
 msgid ""
 "  format\n"
 "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
@@ -3986,7 +3990,7 @@ msgstr ""
 "  format\n"
 "    出力フォーマットを設定 [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
 
-#: help.c:489
+#: help.c:490
 msgid ""
 "  linestyle\n"
 "    set the border line drawing style [ascii, old-ascii, unicode]\n"
@@ -3994,7 +3998,7 @@ msgstr ""
 "  linestyle\n"
 "    境界線の描画スタイルを設定 [ascii, old-ascii, unicode]\n"
 
-#: help.c:491
+#: help.c:492
 msgid ""
 "  null\n"
 "    set the string to be printed in place of a null value\n"
@@ -4002,7 +4006,7 @@ msgstr ""
 "  null\n"
 "    null 値の代わりに表示する文字列を設定\n"
 
-#: help.c:493
+#: help.c:494
 msgid ""
 "  numericlocale\n"
 "    enable display of a locale-specific character to separate groups of digits\n"
@@ -4010,7 +4014,7 @@ msgstr ""
 "  numericlocale\n"
 "    ロケール固有文字での桁区切りを表示するかどうかを指定\n"
 
-#: help.c:495
+#: help.c:496
 msgid ""
 "  pager\n"
 "    control when an external pager is used [yes, no, always]\n"
@@ -4018,7 +4022,7 @@ msgstr ""
 "  pager\n"
 "    いつ外部ページャーを使うかを制御 [yes, no, always]\n"
 
-#: help.c:497
+#: help.c:498
 msgid ""
 "  recordsep\n"
 "    record (line) separator for unaligned output\n"
@@ -4026,7 +4030,7 @@ msgstr ""
 "  recordsep\n"
 "    非整列出力でのレコード(行)区切り\n"
 
-#: help.c:499
+#: help.c:500
 msgid ""
 "  recordsep_zero\n"
 "    set record separator for unaligned output to a zero byte\n"
@@ -4034,7 +4038,7 @@ msgstr ""
 "  recordsep_zero\n"
 "    非整列出力でレコード区切りにバイト値の0に設定\n"
 
-#: help.c:501
+#: help.c:502
 msgid ""
 "  tableattr (or T)\n"
 "    specify attributes for table tag in html format, or proportional\n"
@@ -4044,7 +4048,7 @@ msgstr ""
 "    HTMLフォーマット時のtableタグの属性、もしくは latex-longtable\n"
 "    フォーマット時に左寄せするデータ型の相対カラム幅を指定\n"
 
-#: help.c:504
+#: help.c:505
 msgid ""
 "  title\n"
 "    set the table title for subsequently printed tables\n"
@@ -4052,7 +4056,7 @@ msgstr ""
 "  title\n"
 "    以降に表示される表のタイトルを設定\n"
 
-#: help.c:506
+#: help.c:507
 msgid ""
 "  tuples_only\n"
 "    if set, only actual table data is shown\n"
@@ -4060,7 +4064,7 @@ msgstr ""
 "  tuples_only\n"
 "    セットされた場合、実際のテーブルデータのみを表示\n"
 
-#: help.c:508
+#: help.c:509
 msgid ""
 "  unicode_border_linestyle\n"
 "  unicode_column_linestyle\n"
@@ -4072,7 +4076,7 @@ msgstr ""
 "  unicode_header_linestyle\n"
 "    Unicode による線描画時のスタイルを設定 [single, double]\n"
 
-#: help.c:512
+#: help.c:513
 msgid ""
 "  xheader_width\n"
 "    set the maximum width of the header for expanded output\n"
@@ -4082,7 +4086,7 @@ msgstr ""
 "    拡張出力のヘッダの最大幅を指定します\n"
 "    [full, column, page, 整数値]\n"
 
-#: help.c:516
+#: help.c:517
 msgid ""
 "\n"
 "Environment variables:\n"
@@ -4090,7 +4094,7 @@ msgstr ""
 "\n"
 "環境変数:\n"
 
-#: help.c:520
+#: help.c:521
 msgid ""
 "  NAME=VALUE [NAME=VALUE] psql ...\n"
 "  or \\setenv NAME [VALUE] inside psql\n"
@@ -4100,7 +4104,7 @@ msgstr ""
 "  またはpsql内で \\setenv 名前 [値]\n"
 "\n"
 
-#: help.c:522
+#: help.c:523
 msgid ""
 "  set NAME=VALUE\n"
 "  psql ...\n"
@@ -4112,7 +4116,7 @@ msgstr ""
 "  またはpsq内で \\setenv 名前 [値]\n"
 "\n"
 
-#: help.c:525
+#: help.c:526
 msgid ""
 "  COLUMNS\n"
 "    number of columns for wrapped format\n"
@@ -4120,7 +4124,7 @@ msgstr ""
 "  COLUMNS\n"
 "     折り返し書式におけるカラム数\n"
 
-#: help.c:527
+#: help.c:528
 msgid ""
 "  PGAPPNAME\n"
 "    same as the application_name connection parameter\n"
@@ -4128,7 +4132,7 @@ msgstr ""
 "  PGAPPNAME\n"
 "    application_name 接続パラメータと同じ\n"
 
-#: help.c:529
+#: help.c:530
 msgid ""
 "  PGDATABASE\n"
 "    same as the dbname connection parameter\n"
@@ -4136,7 +4140,7 @@ msgstr ""
 "  PGDATABASE\n"
 "    dbname 接続パラメータと同じ\n"
 
-#: help.c:531
+#: help.c:532
 msgid ""
 "  PGHOST\n"
 "    same as the host connection parameter\n"
@@ -4144,7 +4148,7 @@ msgstr ""
 "  PGHOST\n"
 "    host 接続パラメータと同じ\n"
 
-#: help.c:533
+#: help.c:534
 msgid ""
 "  PGPASSFILE\n"
 "    password file name\n"
@@ -4152,7 +4156,7 @@ msgstr ""
 "  PGPASSFILE\n"
 "     パスワードファイル名\n"
 
-#: help.c:535
+#: help.c:536
 msgid ""
 "  PGPASSWORD\n"
 "    connection password (not recommended)\n"
@@ -4160,7 +4164,7 @@ msgstr ""
 "  PGPASSWORD\n"
 "    接続用パスワード (推奨されません)\n"
 
-#: help.c:537
+#: help.c:538
 msgid ""
 "  PGPORT\n"
 "    same as the port connection parameter\n"
@@ -4168,7 +4172,7 @@ msgstr ""
 "  PGPORT\n"
 "    port 接続パラメータと同じ\n"
 
-#: help.c:539
+#: help.c:540
 msgid ""
 "  PGUSER\n"
 "    same as the user connection parameter\n"
@@ -4176,7 +4180,7 @@ msgstr ""
 "  PGUSER\n"
 "    user 接続パラメータと同じ\n"
 
-#: help.c:541
+#: help.c:542
 msgid ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    editor used by the \\e, \\ef, and \\ev commands\n"
@@ -4184,7 +4188,7 @@ msgstr ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    \\e, \\ef, \\ev コマンドで使われるエディタ\n"
 
-#: help.c:543
+#: help.c:544
 msgid ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    how to specify a line number when invoking the editor\n"
@@ -4192,7 +4196,7 @@ msgstr ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    エディタの起動時に行番号を指定する方法\n"
 
-#: help.c:545
+#: help.c:546
 msgid ""
 "  PSQL_HISTORY\n"
 "    alternative location for the command history file\n"
@@ -4200,7 +4204,7 @@ msgstr ""
 "  PSQL_HISTORY\n"
 "     コマンドライン履歴ファイルの代替の場所\n"
 
-#: help.c:547
+#: help.c:548
 msgid ""
 "  PSQL_PAGER, PAGER\n"
 "    name of external pager program\n"
@@ -4208,7 +4212,7 @@ msgstr ""
 "  PSQL_PAGER, PAGER\n"
 "    外部ページャープログラムの名前\n"
 
-#: help.c:550
+#: help.c:551
 msgid ""
 "  PSQL_WATCH_PAGER\n"
 "    name of external pager program used for \\watch\n"
@@ -4216,7 +4220,7 @@ msgstr ""
 "  PSQL_PAGER, PAGER\n"
 "    \\watchで使用する外部ページャープログラムの名前\n"
 
-#: help.c:553
+#: help.c:554
 msgid ""
 "  PSQLRC\n"
 "    alternative location for the user's .psqlrc file\n"
@@ -4224,7 +4228,7 @@ msgstr ""
 "  PSQLRC\n"
 "    ユーザーの .psqlrc ファイルの代替の場所\n"
 
-#: help.c:555
+#: help.c:556
 msgid ""
 "  SHELL\n"
 "    shell used by the \\! command\n"
@@ -4232,7 +4236,7 @@ msgstr ""
 "  SHELL\n"
 "    \\! コマンドで使われるシェル\n"
 
-#: help.c:557
+#: help.c:558
 msgid ""
 "  TMPDIR\n"
 "    directory for temporary files\n"
@@ -4240,11 +4244,11 @@ msgstr ""
 "  TMPDIR\n"
 "    テンポラリファイル用ディレクトリ\n"
 
-#: help.c:617
+#: help.c:618
 msgid "Available help:\n"
 msgstr "利用可能なヘルプ:\n"
 
-#: help.c:712
+#: help.c:713
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -4263,7 +4267,7 @@ msgstr ""
 "URL: %s\n"
 "\n"
 
-#: help.c:735
+#: help.c:736
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
