@@ -1131,8 +1131,11 @@ ProcessXLogDataMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 		}
 
 #ifdef PERCONA_EXT
-		TDEXLogCryptBuffer(copybuf + hdr_len + bytes_written, bytes_to_write,
-						   xlogoff, stream->timeline, segno, WalSegSz);
+		{
+			void* enc_buf = copybuf + hdr_len + bytes_written;
+			TDEXLogCryptBuffer(enc_buf, enc_buf, bytes_to_write,
+							   xlogoff, stream->timeline, segno, WalSegSz);
+		}
 #endif
 
 		if (stream->walmethod->ops->write(walfile,

@@ -226,6 +226,7 @@ void
 TDEXLogSmgrInitWrite(bool encrypt_xlog)
 {
 	WalEncryptionKey *key = pg_tde_read_last_wal_key();
+	WALKeyCacheRec *keys;
 
 	/*
 	 * Always generate a new key on starting PostgreSQL to protect against
@@ -244,6 +245,16 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 	{
 		EncryptionKey = *key;
 		TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
+	}
+
+	keys = pg_tde_get_wal_cache_keys();
+
+	if (keys == NULL)
+	{
+		WalLocation start = {.tli = 1,.lsn = 0};
+
+		/* cache is empty, prefetch keys from disk */
+		pg_tde_fetch_wal_keys(start);
 	}
 
 	if (key)
@@ -267,6 +278,32 @@ TDEXLogSmgrInitWriteReuseKey()
  * Encrypt XLog page(s) from the buf and write to the segment file.
  */
 static ssize_t
+TDEXLogWriteEncryptedPagesOldKeys(int fd, const void *buf, size_t count, off_t offset,
+								  TimeLineID tli, XLogSegNo segno, int segSize)
+{
+	char	   *enc_buff = EncryptionBuf;
+
+#ifndef FRONTEND
+	Assert(count <= TDEXLogEncryptBuffSize());
+#endif
+
+	/* Copy the data as-is, as we might have unencrypted parts */
+	memcpy(enc_buff, buf, count);
+
+	/*
+	 * This method potentially allocates, but only in very early execution
+	 * Shouldn't happen in a write, where we are in a critical section
+	 */
+	TDEXLogCryptBuffer(buf, enc_buff, count, offset, tli, segno, segSize);
+
+	return pg_pwrite(fd, enc_buff, count, offset);
+}
+
+
+/*
+ * Encrypt XLog page(s) from the buf and write to the segment file.
+ */
+static ssize_t
 TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 						   TimeLineID tli, XLogSegNo segno)
 {
@@ -284,6 +321,7 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 #endif
 
 	CalcXLogPageIVPrefix(tli, segno, key->base_iv, iv_prefix);
+
 	pg_tde_stream_crypt(iv_prefix,
 						offset,
 						(char *) buf,
@@ -299,26 +337,64 @@ static ssize_t
 tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 					   TimeLineID tli, XLogSegNo segno, int segSize)
 {
+	bool		lastKeyUsable;
+	bool		afterWriteKey;
+#ifdef FRONTEND
+	bool		crashRecovery = false;
+#else
+	bool		crashRecovery = GetRecoveryState() == RECOVERY_STATE_CRASH;
+#endif
+
+	WalLocation loc = {.tli = tli};
+	WalLocation writeKeyLoc;
+
+	XLogSegNoOffsetToRecPtr(segno, offset, segSize, loc.lsn);
+
 	/*
 	 * Set the last (most recent) key's start LSN if not set.
 	 *
 	 * This func called with WALWriteLock held, so no need in any extra sync.
 	 */
-	if (EncryptionKey.type != WAL_KEY_TYPE_INVALID && TDEXLogGetEncKeyLsn() == 0)
+
+	writeKeyLoc.lsn = TDEXLogGetEncKeyLsn();
+	pg_read_barrier();
+	writeKeyLoc.tli = TDEXLogGetEncKeyTli();
+
+	lastKeyUsable = (writeKeyLoc.lsn != 0);
+	afterWriteKey = wal_location_cmp(writeKeyLoc, loc) <= 0;
+
+	if (EncryptionKey.type != WAL_KEY_TYPE_INVALID && !lastKeyUsable)
 	{
-		WalLocation loc = {.tli = tli};
+		WALKeyCacheRec *last_key = pg_tde_get_last_wal_key();
 
-		XLogSegNoOffsetToRecPtr(segno, offset, segSize, loc.lsn);
-
-		pg_tde_wal_last_key_set_location(loc);
-		EncryptionKey.wal_start = loc;
-		TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
+		if (!crashRecovery || EncryptionKey.type == WAL_KEY_TYPE_UNENCRYPTED)
+		{
+			/*
+			 * TODO: the unencrypted case is still not perfect, we need to
+			 * report an error in some cornercases
+			 */
+			if (last_key == NULL || last_key->start.lsn < loc.lsn)
+			{
+				pg_tde_wal_last_key_set_location(loc);
+				EncryptionKey.wal_start = loc;
+				TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
+				lastKeyUsable = true;
+			}
+		}
 	}
 
-	if (EncryptionKey.type == WAL_KEY_TYPE_ENCRYPTED)
+	if ((!afterWriteKey || !lastKeyUsable) && EncryptionKey.type == WAL_KEY_TYPE_ENCRYPTED)
+	{
+		return TDEXLogWriteEncryptedPagesOldKeys(fd, buf, count, offset, tli, segno, segSize);
+	}
+	else if (EncryptionKey.type == WAL_KEY_TYPE_ENCRYPTED)
+	{
 		return TDEXLogWriteEncryptedPages(fd, buf, count, offset, tli, segno);
+	}
 	else
+	{
 		return pg_pwrite(fd, buf, count, offset);
+	}
 }
 
 /*
@@ -340,7 +416,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
 	if (readsz <= 0)
 		return readsz;
 
-	TDEXLogCryptBuffer(buf, count, offset, tli, segno, segSize);
+	TDEXLogCryptBuffer(buf, buf, count, offset, tli, segno, segSize);
 
 	return readsz;
 }
@@ -349,7 +425,7 @@ tdeheap_xlog_seg_read(int fd, void *buf, size_t count, off_t offset,
  * [De]Crypt buffer if needed based on provided segment offset, number and TLI
  */
 void
-TDEXLogCryptBuffer(void *buf, size_t count, off_t offset,
+TDEXLogCryptBuffer(const void *buf, void *out_buf, size_t count, off_t offset,
 				   TimeLineID tli, XLogSegNo segno, int segSize)
 {
 	WALKeyCacheRec *keys = pg_tde_get_wal_cache_keys();
@@ -357,7 +433,7 @@ TDEXLogCryptBuffer(void *buf, size_t count, off_t offset,
 	WalLocation data_end = {.tli = tli};
 	WalLocation data_start = {.tli = tli};
 
-	if (!keys)
+	if (keys == NULL)
 	{
 		WalLocation start = {.tli = 1,.lsn = 0};
 
@@ -454,6 +530,7 @@ TDEXLogCryptBuffer(void *buf, size_t count, off_t offset,
 					XLogSegmentOffset(end_lsn, segSize);
 				size_t		dec_sz;
 				char	   *dec_buf = (char *) buf + (dec_off - offset);
+				char	   *o_buf = (char *) out_buf + (dec_off - offset);
 
 				Assert(dec_off >= offset);
 
@@ -468,17 +545,19 @@ TDEXLogCryptBuffer(void *buf, size_t count, off_t offset,
 					dec_end = offset + count;
 				}
 
+				Assert(dec_end > dec_off);
 				dec_sz = dec_end - dec_off;
 
 #ifdef TDE_XLOG_DEBUG
 				elog(DEBUG1, "decrypt WAL, dec_off: %lu [buff_off %lu], sz: %lu | key %u_%X/%X",
 					 dec_off, dec_off - offset, dec_sz, curr_key->key.wal_start.tli, LSN_FORMAT_ARGS(curr_key->key.wal_start.lsn));
 #endif
+
 				pg_tde_stream_crypt(iv_prefix,
 									dec_off,
 									dec_buf,
 									dec_sz,
-									dec_buf,
+									o_buf,
 									curr_key->key.key,
 									&curr_key->crypt_ctx);
 			}
