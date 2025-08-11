@@ -8,7 +8,7 @@
 
 project('postgresql',
   ['c'],
-  version: '17.5',
+  version: '17.6',
   license: 'PostgreSQL',
 
   # We want < 0.56 for python 3.5 compatibility on old platforms. EPEL for
