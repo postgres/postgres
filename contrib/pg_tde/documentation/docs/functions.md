@@ -117,6 +117,7 @@ SELECT pg_tde_add_database_key_provider_kmip(
   '/path_to/client_key.pem',
   '/path_to/server_certificate.pem'
 );
+
 SELECT pg_tde_add_global_key_provider_kmip(
   'provider-name',
   'kmip-addr',
@@ -138,6 +139,7 @@ SELECT pg_tde_change_database_key_provider_kmip(
   '/path_to/client_key.pem',
   '/path_to/server_certificate.pem'
 );
+
 SELECT pg_tde_change_global_key_provider_kmip(
   'provider-name',
   'kmip-addr',
@@ -261,6 +263,7 @@ SELECT pg_tde_set_key_using_database_key_provider(
   'provider-name'
 );
 ```
+
 ### pg_tde_set_key_using_global_key_provider
 
 Sets or rotates the global principal key using the specified global key provider and the key name. This key is used for global settings like WAL encryption.

@@ -17,7 +17,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
 1. Use the [ALTER SYSTEM :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-altersystem.html) command from `psql` terminal to modify the `shared_preload_libraries` parameter. This requires superuser privileges.
 
-    ```
+    ```sql
     ALTER SYSTEM SET shared_preload_libraries = 'pg_tde';
     ```
 
@@ -37,7 +37,7 @@ Load the `pg_tde` at startup time. The extension requires additional shared memo
 
 3. Create the extension using the [CREATE EXTENSION :octicons-link-external-16:](https://www.postgresql.org/docs/current/sql-createextension.html) command. You must have the privileges of a superuser or a database owner to use this command. Connect to `psql` as a superuser for a database and run the following command:
 
-    ```
+    ```sql
     CREATE EXTENSION pg_tde;
     ```
 
@@ -73,7 +73,7 @@ You must do these steps for every database where you have created the extension.
           '/path_to/client_cert.pem', 
           '/path_to/client_key.pem', 
           '/path_to/server_certificate.pem'
-          );
+        );
         ```
 
         where:
@@ -95,7 +95,7 @@ You must do these steps for every database where you have created the extension.
             '/tmp/client_cert_jane_doe.pem', 
             '/tmp/client_key_jane_doe.pem', 
             '/tmp/server_certificate.pem'
-            );
+        );
         ```
 
     === "With HashiCorp Vault"
@@ -109,7 +109,7 @@ You must do these steps for every database where you have created the extension.
             'mount', 
             'secret_token_path', 
             'ca_path'
-            );
+        );
         ```
 
         where:
@@ -121,15 +121,15 @@ You must do these steps for every database where you have created the extension.
 
         <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-	    ```sql
-	    SELECT pg_tde_add_database_key_provider_file_vault_v2(
+        ```sql
+        SELECT pg_tde_add_database_key_provider_file_vault_v2(
             'my-vault',
             'http://vault.vault.svc.cluster.local:8200',
             'secret/data',
             'hvs.zPuyktykA...example...ewUEnIRVaKoBzs2', 
             NULL
-            );
-	    ```
+        );
+        ```
 
     === "With a keyring file (not recommended)"
 
@@ -139,25 +139,25 @@ You must do these steps for every database where you have created the extension.
         SELECT pg_tde_add_database_key_provider_file(
             'provider-name', 
             '/path/to/the/keyring/data.file'
-            );
+        );
         ```
 
 	    <i warning>:material-information: Warning:</i> This example is for testing purposes only:
 
-	    ```sql
-	    SELECT pg_tde_add_database_key_provider_file(
+        ```sql
+        SELECT pg_tde_add_database_key_provider_file(
             'file-keyring', 
             '/tmp/pg_tde_test_local_keyring.per'
-            );
-	    ```
+        );
+        ```
 
 2. Create a key
-    ```sql
 
+    ```sql
     SELECT pg_tde_create_key_using_database_key_provider(
         'name-of-the-key', 
         'provider-name'
-        );
+    );
     ```
 
     where:
@@ -171,19 +171,19 @@ You must do these steps for every database where you have created the extension.
     SELECT pg_tde_create_key_using_database_key_provider(
         'test-db-master-key', 
         'file-vault'
-        );
+    );
     ```
 
     !!! note
         The key is auto-generated.
 
 3. Use the key as principal key
-    ```sql
 
+    ```sql
     SELECT pg_tde_set_key_using_database_key_provider(
         'name-of-the-key', 
         'provider-name'
-        );
+    );
     ```
 
     where:
@@ -197,5 +197,5 @@ You must do these steps for every database where you have created the extension.
     SELECT pg_tde_set_key_using_database_key_provider(
         'test-db-master-key',
         'file-vault'
-        );
+    );
     ```

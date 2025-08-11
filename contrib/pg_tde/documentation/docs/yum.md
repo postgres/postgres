@@ -11,13 +11,13 @@ You need the `percona-release` repository management tool that enables the desir
 1. Install `percona-release`:
 
     ```{.bash data-prompt="$"}
-        sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm 
+    sudo yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm
     ```
 
 2. Enable the repository.
 
     ```{.bash data-prompt="$"}
-        sudo percona-release enable-only ppg-17.5
+    sudo percona-release enable-only ppg-17.5
     ```
 
 ## Install pg_tde {.power-number}
@@ -31,7 +31,7 @@ You need the `percona-release` repository management tool that enables the desir
        The use of the `CASCADE` parameter deletes all tables that were created in the database with `pg_tde` enabled and also all dependencies upon the encrypted table (e.g. foreign keys in a non-encrypted table used in the encrypted one).    
 
     ```sql
-       DROP EXTENSION pg_tde CASCADE
+    DROP EXTENSION pg_tde CASCADE;
     ```
 
     2. Uninstall the `percona-pg_tde_17` package.  
@@ -39,7 +39,7 @@ You need the `percona-release` repository management tool that enables the desir
 Run the following command to install `pg_tde`:
 
 ```{.bash data-prompt="$"}
-    sudo yum -y install percona-postgresql17-server percona-postgresql17-contrib 
+sudo yum -y install percona-postgresql17-server percona-postgresql17-contrib
 ```
 
 ## Next steps

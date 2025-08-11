@@ -54,7 +54,7 @@ When you work, you should periodically run tests to check that your changes donâ
 
 To run the tests, use the following command:
 
-```
+```sh
 source ci_scripts/setup-keyring-servers.sh
 ci_scripts/make-test.sh all
 ```
@@ -108,6 +108,7 @@ The steps are the following:
 
 ```sh
 git clone --recursive git@github.com:<your-name>/postgres.git
+```
 
 3. Change the directory to `contrib/pg_tde` and add the remote upstream repository:
 

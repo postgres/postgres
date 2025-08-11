@@ -82,8 +82,7 @@ sudo systemctl start postgresql
 * On primary:
 
 ```sql
-SELECT client_addr, state 
-FROM pg_stat_replication;
+SELECT client_addr, state FROM pg_stat_replication;
 ```
 
 * On standby:

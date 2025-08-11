@@ -16,7 +16,7 @@ To modify the key provider configuration, specify all parameters depending on th
 
 The general syntax is as follows:
 
-```bash
+```sh
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> <new_provider_type> <provider_parameters...>
 ```
 
@@ -29,7 +29,7 @@ pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> <new_provider_
 
 Depending on the provider type, the additional parameters are:
 
-```bash
+```sh
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> file <filename>
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> vault-v2 <url> <mount_path> <token_path> [<ca_path>]
 pg_tde_change_key_provider [-D <datadir>] <dbOid> <provider_name> kmip <host> <port> <cert_path> <key_path> [<ca_path>] 

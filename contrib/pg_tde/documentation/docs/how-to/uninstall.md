@@ -124,7 +124,7 @@ This can happen if WAL encryption was not properly disabled before removing `pg_
 
 You might see this when restarting the PostgreSQL cluster:
 
-```sh
+```
 2025-04-01 17:12:50.607 CEST [496385] PANIC:  could not locate a valid checkpoint record at 0/17B2580
 ```
 

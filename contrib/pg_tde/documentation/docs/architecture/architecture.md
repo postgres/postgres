@@ -227,7 +227,7 @@ To change a provider from a command line, `pg_tde` provides the `pg_tde_change_k
 
 This tool work similarly to the above functions, with the following syntax:
 
-```bash
+```sh
 pg_tde_change_key_provider <dbOid> <providerType> ... details ...
 ```
 

@@ -54,7 +54,7 @@ When you work, you should periodically run tests to check that your changes donâ
 
 To run the tests, use the following command:
 
-```
+```sh
 source ci_scripts/setup-keyring-servers.sh
 ci_scripts/make-test.sh all
 ```
@@ -148,6 +148,7 @@ To verify how your changes look, generate the static site with the documentation
 cd contrib/pg_tde/documentation
 docker run --rm -v $(pwd):/docs perconalab/pmm-doc-md mkdocs build
 ```
+
    If Docker can't find the image locally, it first downloads the image, and then runs it to build the documentation.
 
 3. Go to the ``site`` directory and open the ``index.html`` file to see the documentation.
