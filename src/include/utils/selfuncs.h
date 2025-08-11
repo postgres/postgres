@@ -95,7 +95,8 @@ typedef struct VariableStatData
 	Oid			atttype;		/* actual type (after stripping relabel) */
 	int32		atttypmod;		/* actual typmod (after stripping relabel) */
 	bool		isunique;		/* matches unique index or DISTINCT clause */
-	bool		acl_ok;			/* result of ACL check on table or column */
+	bool		acl_ok;			/* true if user has SELECT privilege on all
+								 * rows from the table or column */
 } VariableStatData;
 
 #define ReleaseVariableStats(vardata)  \
@@ -149,6 +150,7 @@ extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 							 VariableStatData *vardata);
+extern bool all_rows_selectable(PlannerInfo *root, Index varno, Bitmapset *varattnos);
 extern bool statistic_proc_security_check(VariableStatData *vardata, Oid func_oid);
 extern bool get_restriction_variable(PlannerInfo *root, List *args,
 									 int varRelid,
