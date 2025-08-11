@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-03 16:00+0300\n"
+"POT-Creation-Date: 2025-08-02 11:37+0300\n"
 "PO-Revision-Date: 2025-02-08 08:33+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -6718,7 +6718,7 @@ msgstr "лишний аргумент \"%s\" проигнорирован"
 msgid "could not find own program executable"
 msgstr "не удалось найти свой исполняемый файл"
 
-#: tab-complete.c:5955
+#: tab-complete.c:5969
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

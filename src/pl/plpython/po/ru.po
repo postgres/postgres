@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:45+0200\n"
+"POT-Creation-Date: 2025-08-02 11:37+0300\n"
 "PO-Revision-Date: 2023-05-05 06:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
 
-#: plpy_elog.c:122 plpy_elog.c:123 plpy_plpymodule.c:530
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:530
 #, c-format
 msgid "%s"
 msgstr "%s"

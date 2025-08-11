@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-03 16:00+0300\n"
+"POT-Creation-Date: 2025-08-02 11:37+0300\n"
 "PO-Revision-Date: 2025-05-03 16:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -76,12 +76,13 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:4827 fe-connect.c:5088 fe-connect.c:5207 fe-connect.c:5459
 #: fe-connect.c:5540 fe-connect.c:5639 fe-connect.c:5895 fe-connect.c:5924
 #: fe-connect.c:5996 fe-connect.c:6020 fe-connect.c:6038 fe-connect.c:6139
-#: fe-connect.c:6148 fe-connect.c:6506 fe-connect.c:6656 fe-connect.c:6922
+#: fe-connect.c:6148 fe-connect.c:6506 fe-connect.c:6656 fe-connect.c:6924
 #: fe-exec.c:710 fe-exec.c:978 fe-exec.c:1326 fe-exec.c:3165 fe-exec.c:3357
-#: fe-exec.c:4197 fe-exec.c:4364 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-exec.c:4199 fe-exec.c:4366 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:968 fe-protocol3.c:983 fe-protocol3.c:1016
 #: fe-protocol3.c:1724 fe-protocol3.c:2127 fe-secure-common.c:112
-#: fe-secure-gssapi.c:500 fe-secure-openssl.c:455 fe-secure-openssl.c:1252
+#: fe-secure-gssapi.c:510 fe-secure-gssapi.c:684 fe-secure-openssl.c:455
+#: fe-secure-openssl.c:1252
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -679,16 +680,16 @@ msgstr "неверный символ, закодированный с %%: \"%s\
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "недопустимое значение %%00 для символа, закодированного с %%: \"%s\"\n"
 
-#: fe-connect.c:6914
+#: fe-connect.c:6916
 msgid "connection pointer is NULL\n"
 msgstr "нулевой указатель соединения\n"
 
-#: fe-connect.c:7202
+#: fe-connect.c:7204
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: файл паролей \"%s\" - не обычный файл\n"
 
-#: fe-connect.c:7211
+#: fe-connect.c:7213
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
@@ -697,7 +698,7 @@ msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: к файлу паролей \"%s\" имеют доступ все или группа; права "
 "должны быть u=rw (0600) или более ограниченные\n"
 
-#: fe-connect.c:7319
+#: fe-connect.c:7321
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
@@ -836,11 +837,11 @@ msgstr "номер параметра %d вне диапазона 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:4043 fe-exec.c:4157
+#: fe-exec.c:4044 fe-exec.c:4159
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
-#: fe-exec.c:4046 fe-exec.c:4177
+#: fe-exec.c:4047 fe-exec.c:4179
 msgid "invalid multibyte character\n"
 msgstr "неверный многобайтный символ\n"
 
@@ -896,11 +897,11 @@ msgstr "функция pqGetInt не поддерживает integer разме
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "функция pqPutInt не поддерживает integer размером %lu байт"
 
-#: fe-misc.c:576 fe-misc.c:822
+#: fe-misc.c:602 fe-misc.c:848
 msgid "connection not open\n"
 msgstr "соединение не открыто\n"
 
-#: fe-misc.c:755 fe-secure-openssl.c:213 fe-secure-openssl.c:326
+#: fe-misc.c:781 fe-secure-openssl.c:213 fe-secure-openssl.c:326
 #: fe-secure.c:262 fe-secure.c:430
 #, c-format
 msgid ""
@@ -912,15 +913,15 @@ msgstr ""
 "\tСкорее всего сервер прекратил работу из-за сбоя\n"
 "\tдо или в процессе выполнения запроса.\n"
 
-#: fe-misc.c:1008
+#: fe-misc.c:1034
 msgid "timeout expired\n"
 msgstr "тайм-аут\n"
 
-#: fe-misc.c:1053
+#: fe-misc.c:1079
 msgid "invalid socket\n"
 msgstr "неверный сокет\n"
 
-#: fe-misc.c:1076
+#: fe-misc.c:1102
 #, c-format
 msgid "%s() failed: %s\n"
 msgstr "ошибка в %s(): %s\n"
@@ -1089,43 +1090,39 @@ msgstr ""
 msgid "could not get server's host name from server certificate\n"
 msgstr "не удалось получить имя сервера из серверного сертификата\n"
 
-#: fe-secure-gssapi.c:194
+#: fe-secure-gssapi.c:201
 msgid "GSSAPI wrap error"
 msgstr "ошибка обёртывания сообщения в GSSAPI"
 
-#: fe-secure-gssapi.c:202
+#: fe-secure-gssapi.c:209
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "исходящее сообщение GSSAPI не будет защищено\n"
 
-#: fe-secure-gssapi.c:210
+#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:712
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "клиент попытался передать чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:350 fe-secure-gssapi.c:594
+#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:604
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "сервер передал чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:389
+#: fe-secure-gssapi.c:396
 msgid "GSSAPI unwrap error"
 msgstr "ошибка развёртывания сообщения в GSSAPI"
 
-#: fe-secure-gssapi.c:399
+#: fe-secure-gssapi.c:406
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "входящее сообщение GSSAPI не защищено\n"
 
-#: fe-secure-gssapi.c:640
+#: fe-secure-gssapi.c:650
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:668
+#: fe-secure-gssapi.c:700
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
-
-#: fe-secure-gssapi.c:679
-msgid "GSSAPI context establishment error"
-msgstr "ошибка установления контекста в GSSAPI"
 
 #: fe-secure-openssl.c:218 fe-secure-openssl.c:331 fe-secure-openssl.c:1492
 #, c-format
@@ -1343,6 +1340,9 @@ msgstr "не удалось передать данные серверу: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
+
+#~ msgid "GSSAPI context establishment error"
+#~ msgstr "ошибка установления контекста в GSSAPI"
 
 #~ msgid "keepalives parameter must be an integer\n"
 #~ msgstr "параметр keepalives должен быть целым числом\n"
