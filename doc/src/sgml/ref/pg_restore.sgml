@@ -68,6 +68,18 @@ PostgreSQL documentation
    <application>pg_restore</application> will not be able to load the data
    using <command>COPY</command> statements.
   </para>
+
+  <warning>
+   <para>
+    Restoring a dump causes the destination to execute arbitrary code of the
+    source superusers' choice.  Partial dumps and partial restores do not limit
+    that.  If the source superusers are not trusted, the dumped SQL statements
+    must be inspected before restoring.  Non-plain-text dumps can be inspected
+    by using <application>pg_restore</application>'s <option>--file</option>
+    option.  Note that the client running the dump and restore need not trust
+    the source or destination superusers.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1 id="app-pgrestore-options">
@@ -671,6 +683,28 @@ PostgreSQL documentation
         Do not output commands to select tablespaces.
         With this option, all objects will be created in whichever
         tablespace is the default during restore.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--restrict-key=<replaceable class="parameter">restrict_key</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the provided string as the <application>psql</application>
+        <command>\restrict</command> key in the dump output.  This can only be
+        specified for SQL script output, i.e., when the <option>--file</option>
+        option is used.  If no restrict key is specified,
+        <application>pg_restore</application> will generate a random one as
+        needed.  Keys may contain only alphanumeric characters.
+       </para>
+       <para>
+        This option is primarily intended for testing purposes and other
+        scenarios that require repeatable output (e.g., comparing dump files).
+        It is not recommended for general use, as a malicious server with
+        advance knowledge of the key may be able to inject arbitrary code that
+        will be executed on the machine that runs
+        <application>psql</application> with the dump output.
        </para>
       </listitem>
      </varlistentry>

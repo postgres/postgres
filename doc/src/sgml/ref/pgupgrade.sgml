@@ -70,6 +70,14 @@ PostgreSQL documentation
    pg_upgrade supports upgrades from 9.2.X and later to the current
    major release of <productname>PostgreSQL</productname>, including snapshot and beta releases.
   </para>
+
+  <warning>
+   <para>
+    Upgrading a cluster causes the destination to execute arbitrary code of the
+    source superusers' choice.  Ensure that the source superusers are trusted
+    before upgrading.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1>

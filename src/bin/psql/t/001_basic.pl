@@ -388,4 +388,11 @@ psql_fails_like(
 	qr/iteration count is specified more than once/,
 	'\watch, iteration count is specified more than once');
 
+psql_fails_like(
+	$node,
+	qq{\\restrict test
+\\! should_fail},
+	qr/backslash commands are restricted; only \\unrestrict is allowed/,
+	'meta-command in restrict mode fails');
+
 done_testing();
