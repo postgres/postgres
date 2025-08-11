@@ -177,3 +177,24 @@ install_subdir('catalog',
 
 # autoconf generates the file there, ensure we get a conflict
 generated_sources_ac += {'src/include': ['stamp-h']}
+
+
+# Instead of having targets depending directly on a list of all generated
+# headers, have them depend on a stamp files for all of them. Dependencies on
+# headers are implemented as order-only dependencies in meson (and then using
+# compiler generated dependencies during incremental rebuilds ). The benefit
+# of using a stamp file is that it makes ninja.build considerably smaller and
+# meson setup faster, as otherwise the list of headers is repeated for every C
+# file, bloating build.ninja by ~2x.
+generated_headers_stamp = custom_target('generated-headers-stamp.h',
+  output: 'generated-headers-stamp.h',
+  input: generated_headers,
+  command: stamp_cmd,
+)
+
+generated_backend_headers_stamp = custom_target('generated-backend-headers-stamp.h',
+  output: 'generated-backend-headers-stamp.h',
+  input: generated_backend_headers,
+  depends: generated_headers_stamp,
+  command: stamp_cmd,
+)
