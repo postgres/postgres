@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-05-03 16:06+0300\n"
+"POT-Creation-Date: 2025-08-02 11:37+0300\n"
 "PO-Revision-Date: 2024-09-07 11:12+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -1245,9 +1245,9 @@ msgstr ""
 #: pg_basebackup.c:2712 pg_basebackup.c:2724 pg_basebackup.c:2736
 #: pg_basebackup.c:2744 pg_basebackup.c:2757 pg_basebackup.c:2763
 #: pg_basebackup.c:2772 pg_basebackup.c:2784 pg_basebackup.c:2795
-#: pg_basebackup.c:2803 pg_createsubscriber.c:2038 pg_createsubscriber.c:2048
-#: pg_createsubscriber.c:2056 pg_createsubscriber.c:2084
-#: pg_createsubscriber.c:2116 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_basebackup.c:2803 pg_createsubscriber.c:2047 pg_createsubscriber.c:2057
+#: pg_createsubscriber.c:2065 pg_createsubscriber.c:2093
+#: pg_createsubscriber.c:2125 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
 #: pg_receivewal.c:793 pg_recvlogical.c:853 pg_recvlogical.c:865
 #: pg_recvlogical.c:875 pg_recvlogical.c:882 pg_recvlogical.c:889
@@ -1257,7 +1257,7 @@ msgstr ""
 msgid "Try \"%s --help\" for more information."
 msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
-#: pg_basebackup.c:2584 pg_createsubscriber.c:2046 pg_receivewal.c:758
+#: pg_basebackup.c:2584 pg_createsubscriber.c:2055 pg_receivewal.c:758
 #: pg_recvlogical.c:863
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1383,7 +1383,7 @@ msgid ""
 msgstr ""
 "на главном сервере остался слот репликации \"%s\", созданный в базе \"%s\""
 
-#: pg_createsubscriber.c:206 pg_createsubscriber.c:1261
+#: pg_createsubscriber.c:206 pg_createsubscriber.c:1270
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
 msgstr ""
@@ -1732,17 +1732,17 @@ msgstr "удалить подписку \"%s\" не получилось: %s"
 msgid "could not obtain pre-existing subscriptions: %s"
 msgstr "получить уже существующие подписки не удалось: %s"
 
-#: pg_createsubscriber.c:1259
+#: pg_createsubscriber.c:1268
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "удалить слот репликации \"%s\" на главном сервере не получилось"
 
-#: pg_createsubscriber.c:1293
+#: pg_createsubscriber.c:1302
 #, c-format
 msgid "could not obtain failover replication slot information: %s"
 msgstr "получить информацию о переносимом слоте репликации не удалось: %s"
 
-#: pg_createsubscriber.c:1295 pg_createsubscriber.c:1304
+#: pg_createsubscriber.c:1304 pg_createsubscriber.c:1313
 #, c-format
 msgid ""
 "Drop the failover replication slots on subscriber soon to avoid retention of "
@@ -1751,42 +1751,42 @@ msgstr ""
 "Удалите переносимые слоты репликации на подписчике незамедлительно во "
 "избежание накопления файлов WAL."
 
-#: pg_createsubscriber.c:1303
+#: pg_createsubscriber.c:1312
 #, c-format
 msgid "could not drop failover replication slot"
 msgstr "удалить переносимый слот репликации не получилось"
 
-#: pg_createsubscriber.c:1325
+#: pg_createsubscriber.c:1334
 #, c-format
 msgid "creating the replication slot \"%s\" in database \"%s\""
 msgstr "создание слота репликации \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1343
+#: pg_createsubscriber.c:1352
 #, c-format
 msgid "could not create replication slot \"%s\" in database \"%s\": %s"
 msgstr "создать слот репликации \"%s\" в базе \"%s\" не удалось: %s"
 
-#: pg_createsubscriber.c:1373
+#: pg_createsubscriber.c:1382
 #, c-format
 msgid "dropping the replication slot \"%s\" in database \"%s\""
 msgstr "удаление слота репликации \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1389
+#: pg_createsubscriber.c:1398
 #, c-format
 msgid "could not drop replication slot \"%s\" in database \"%s\": %s"
 msgstr "удалить слот репликации \"%s\" в базе \"%s\" не получилось: %s"
 
-#: pg_createsubscriber.c:1410
+#: pg_createsubscriber.c:1419
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "команда pg_ctl завершилась с кодом ошибки %d"
 
-#: pg_createsubscriber.c:1415
+#: pg_createsubscriber.c:1424
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "команда pg_ctl была прервана исключением 0x%X"
 
-#: pg_createsubscriber.c:1417
+#: pg_createsubscriber.c:1426
 #, c-format
 msgid ""
 "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
@@ -1794,52 +1794,52 @@ msgstr ""
 "Описание этого шестнадцатеричного значения ищите во включаемом C-файле "
 "\"ntstatus.h\""
 
-#: pg_createsubscriber.c:1419
+#: pg_createsubscriber.c:1428
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "команда pg_ctl была завершена сигналом %d: %s"
 
-#: pg_createsubscriber.c:1425
+#: pg_createsubscriber.c:1434
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "команда pg_ctl завершилась с нераспознанным кодом состояния %d"
 
-#: pg_createsubscriber.c:1428
+#: pg_createsubscriber.c:1437
 #, c-format
 msgid "The failed command was: %s"
 msgstr "Ошибку вызвала команда: %s"
 
-#: pg_createsubscriber.c:1474
+#: pg_createsubscriber.c:1483
 #, c-format
 msgid "server was started"
 msgstr "сервер был запущен"
 
-#: pg_createsubscriber.c:1489
+#: pg_createsubscriber.c:1498
 #, c-format
 msgid "server was stopped"
 msgstr "сервер был остановлен"
 
-#: pg_createsubscriber.c:1508
+#: pg_createsubscriber.c:1517
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "ожидание достижения целевым сервером согласованного состояния"
 
-#: pg_createsubscriber.c:1531
+#: pg_createsubscriber.c:1540
 #, c-format
 msgid "recovery timed out"
 msgstr "тайм-аут при восстановлении"
 
-#: pg_createsubscriber.c:1544
+#: pg_createsubscriber.c:1553
 #, c-format
 msgid "server did not end recovery"
 msgstr "сервер не завершил восстановление"
 
-#: pg_createsubscriber.c:1546
+#: pg_createsubscriber.c:1555
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "целевой сервер достиг согласованного состояния"
 
-#: pg_createsubscriber.c:1547
+#: pg_createsubscriber.c:1556
 #, c-format
 msgid ""
 "If pg_createsubscriber fails after this point, you must recreate the "
@@ -1848,159 +1848,159 @@ msgstr ""
 "Если в работе pg_createsubscriber произойдёт сбой после этого момента, "
 "продолжение возможно только после пересоздания физической реплики."
 
-#: pg_createsubscriber.c:1574
+#: pg_createsubscriber.c:1583
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "получить информацию о публикации не удалось: %s"
 
-#: pg_createsubscriber.c:1588
+#: pg_createsubscriber.c:1597
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "публикация \"%s\" уже существует"
 
-#: pg_createsubscriber.c:1589
+#: pg_createsubscriber.c:1598
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "Чтобы продолжить, её можно переименовать."
 
-#: pg_createsubscriber.c:1596
+#: pg_createsubscriber.c:1605
 #, c-format
 msgid "creating publication \"%s\" in database \"%s\""
 msgstr "создаётся публикация \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1609
+#: pg_createsubscriber.c:1618
 #, c-format
 msgid "could not create publication \"%s\" in database \"%s\": %s"
 msgstr "создать публикацию \"%s\" в базе \"%s\" не удалось: %s"
 
-#: pg_createsubscriber.c:1638
+#: pg_createsubscriber.c:1647
 #, c-format
 msgid "dropping publication \"%s\" in database \"%s\""
 msgstr "удаляется публикация \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1652
+#: pg_createsubscriber.c:1661
 #, c-format
 msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "удалить публикацию \"%s\" в базе \"%s\" не получилось: %s"
 
-#: pg_createsubscriber.c:1698
+#: pg_createsubscriber.c:1707
 #, c-format
 msgid "creating subscription \"%s\" in database \"%s\""
 msgstr "создаётся подписка \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1719
+#: pg_createsubscriber.c:1728
 #, c-format
 msgid "could not create subscription \"%s\" in database \"%s\": %s"
 msgstr "создать подписку \"%s\" в базе \"%s\" не удалось: %s"
 
-#: pg_createsubscriber.c:1764
+#: pg_createsubscriber.c:1773
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "получить OID подписки не удалось: %s"
 
-#: pg_createsubscriber.c:1771
+#: pg_createsubscriber.c:1780
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "получить OID подписки не удалось; получено строк: %d, ожидалось: %d"
 
-#: pg_createsubscriber.c:1795
+#: pg_createsubscriber.c:1804
 #, c-format
 msgid ""
 "setting the replication progress (node name \"%s\", LSN %s) in database "
 "\"%s\""
 msgstr "отражение состояния репликации (имя узла \"%s\", LSN %s) в базе \"%s\""
 
-#: pg_createsubscriber.c:1810
+#: pg_createsubscriber.c:1819
 #, c-format
 msgid "could not set replication progress for subscription \"%s\": %s"
 msgstr "не удалось передать состояние репликации для подписки \"%s\": %s"
 
-#: pg_createsubscriber.c:1841
+#: pg_createsubscriber.c:1850
 #, c-format
 msgid "enabling subscription \"%s\" in database \"%s\""
 msgstr "включение подписки \"%s\" в базе \"%s\""
 
-#: pg_createsubscriber.c:1853
+#: pg_createsubscriber.c:1862
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "включить подписку \"%s\" не удалось: %s"
 
-#: pg_createsubscriber.c:1945
+#: pg_createsubscriber.c:1954
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "программу не должен запускать root"
 
-#: pg_createsubscriber.c:1946
+#: pg_createsubscriber.c:1955
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Запускать %s нужно от имени суперпользователя PostgreSQL."
 
-#: pg_createsubscriber.c:1967
+#: pg_createsubscriber.c:1976
 #, c-format
 msgid "database \"%s\" specified more than once"
 msgstr "база \"%s\" указана неоднократно"
 
-#: pg_createsubscriber.c:2008
+#: pg_createsubscriber.c:2017
 #, c-format
 msgid "publication \"%s\" specified more than once"
 msgstr "публикация \"%s\" указана неоднократно"
 
-#: pg_createsubscriber.c:2020
+#: pg_createsubscriber.c:2029
 #, c-format
 msgid "replication slot \"%s\" specified more than once"
 msgstr "слот репликации \"%s\" указан неоднократно"
 
-#: pg_createsubscriber.c:2032
+#: pg_createsubscriber.c:2041
 #, c-format
 msgid "subscription \"%s\" specified more than once"
 msgstr "подписка \"%s\" указана неоднократно"
 
-#: pg_createsubscriber.c:2055
+#: pg_createsubscriber.c:2064
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "каталог данных подписчика не указан"
 
-#: pg_createsubscriber.c:2066
+#: pg_createsubscriber.c:2075
 #, c-format
 msgid "could not determine current directory"
 msgstr "не удалось определить текущий каталог"
 
-#: pg_createsubscriber.c:2083
+#: pg_createsubscriber.c:2092
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "строка подключения к серверу публикации не указана"
 
-#: pg_createsubscriber.c:2087
+#: pg_createsubscriber.c:2096
 #, c-format
 msgid "validating publisher connection string"
 msgstr "проверяется строка подключения к серверу публикации"
 
-#: pg_createsubscriber.c:2093
+#: pg_createsubscriber.c:2102
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "проверяется строка подключения к подписчику"
 
-#: pg_createsubscriber.c:2098
+#: pg_createsubscriber.c:2107
 #, c-format
 msgid "no database was specified"
 msgstr "база данных не указана"
 
-#: pg_createsubscriber.c:2110
+#: pg_createsubscriber.c:2119
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "имя базы \"%s\" извлечено из строки подключения к серверу публикации"
 
-#: pg_createsubscriber.c:2115
+#: pg_createsubscriber.c:2124
 #, c-format
 msgid "no database name specified"
 msgstr "имя базы данных не указано"
 
-#: pg_createsubscriber.c:2125
+#: pg_createsubscriber.c:2134
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "указано неверное количество имён публикаций"
 
-#: pg_createsubscriber.c:2126
+#: pg_createsubscriber.c:2135
 #, c-format
 msgid ""
 "The number of specified publication names (%d) must match the number of "
@@ -2009,12 +2009,12 @@ msgstr ""
 "Количество указанных имён публикаций (%d) должно совпадать с количеством "
 "указанных имён баз (%d)."
 
-#: pg_createsubscriber.c:2132
+#: pg_createsubscriber.c:2141
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "указано неверное количество имён подписок"
 
-#: pg_createsubscriber.c:2133
+#: pg_createsubscriber.c:2142
 #, c-format
 msgid ""
 "The number of specified subscription names (%d) must match the number of "
@@ -2023,12 +2023,12 @@ msgstr ""
 "Количество указанных имён подписок (%d) должно совпадать с количеством "
 "указанных имён баз (%d)."
 
-#: pg_createsubscriber.c:2139
+#: pg_createsubscriber.c:2148
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "указано неверное количество имён слотов репликации"
 
-#: pg_createsubscriber.c:2140
+#: pg_createsubscriber.c:2149
 #, c-format
 msgid ""
 "The number of specified replication slot names (%d) must match the number of "
@@ -2037,38 +2037,38 @@ msgstr ""
 "Количество указанных имён слотов репликации (%d) должно совпадать с "
 "количеством указанных имён баз (%d)."
 
-#: pg_createsubscriber.c:2169
+#: pg_createsubscriber.c:2178
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr ""
 "каталог данных подписчика не является копией исходного кластера баз данных"
 
-#: pg_createsubscriber.c:2182
+#: pg_createsubscriber.c:2191
 #, c-format
 msgid "standby server is running"
 msgstr "резервный сервер запущен"
 
-#: pg_createsubscriber.c:2183
+#: pg_createsubscriber.c:2192
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "Остановите резервный сервер и повторите попытку."
 
-#: pg_createsubscriber.c:2192
+#: pg_createsubscriber.c:2201
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "резервный сервер запускается с параметрами командной строки"
 
-#: pg_createsubscriber.c:2208 pg_createsubscriber.c:2243
+#: pg_createsubscriber.c:2217 pg_createsubscriber.c:2252
 #, c-format
 msgid "stopping the subscriber"
 msgstr "подписчик останавливается"
 
-#: pg_createsubscriber.c:2222
+#: pg_createsubscriber.c:2231
 #, c-format
 msgid "starting the subscriber"
 msgstr "подписчик запускается"
 
-#: pg_createsubscriber.c:2251
+#: pg_createsubscriber.c:2260
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
