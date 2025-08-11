@@ -1073,6 +1073,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\pset arg1 arg2
 	\q
 	\reset
+	\restrict test
 	\s arg1
 	\sendpipeline
 	\set arg1 arg2 arg3 arg4 arg5 arg6 arg7
@@ -1084,6 +1085,7 @@ select \if false \\ (bogus \else \\ 42 \endif \\ forty_two;
 	\t arg1
 	\T arg1
 	\timing arg1
+	\unrestrict not_valid
 	\unset arg1
 	\w arg1
 	\watch arg1 arg2

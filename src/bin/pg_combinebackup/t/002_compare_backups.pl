@@ -174,6 +174,7 @@ my $dump2 = $backupdir . '/pitr2.dump';
 $pitr1->command_ok(
 	[
 		'pg_dumpall',
+		'--restrict-key=test',
 		'--no-sync',
 		'--no-unlogged-table-data',
 		'--file' => $dump1,
@@ -183,6 +184,7 @@ $pitr1->command_ok(
 $pitr2->command_ok(
 	[
 		'pg_dumpall',
+		'--restrict-key=test',
 		'--no-sync',
 		'--no-unlogged-table-data',
 		'--file' => $dump2,

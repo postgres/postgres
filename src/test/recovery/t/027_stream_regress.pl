@@ -108,6 +108,7 @@ command_ok(
 		'pg_dumpall',
 		'--file' => $outputdir . '/primary.dump',
 		'--no-sync', '--no-statistics',
+		'--restrict-key=test',
 		'--port' => $node_primary->port,
 		'--no-unlogged-table-data',    # if unlogged, standby has schema only
 	],
@@ -117,6 +118,7 @@ command_ok(
 		'pg_dumpall',
 		'--file' => $outputdir . '/standby.dump',
 		'--no-sync', '--no-statistics',
+		'--restrict-key=test',
 		'--port' => $node_standby_1->port,
 	],
 	'dump standby server');
@@ -136,6 +138,7 @@ command_ok(
 		'--schema' => 'pg_catalog',
 		'--file' => $outputdir . '/catalogs_primary.dump',
 		'--no-sync',
+		'--restrict-key=test',
 		'--port', $node_primary->port,
 		'--no-unlogged-table-data',
 		'regression',
@@ -147,6 +150,7 @@ command_ok(
 		'--schema' => 'pg_catalog',
 		'--file' => $outputdir . '/catalogs_standby.dump',
 		'--no-sync',
+		'--restrict-key=test',
 		'--port' => $node_standby_1->port,
 		'regression',
 	],
