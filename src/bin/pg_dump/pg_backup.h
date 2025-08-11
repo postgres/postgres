@@ -152,6 +152,8 @@ typedef struct _restoreOptions
 	int			enable_row_security;
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
 	int			binary_upgrade;
+
+	char	   *restrict_key;
 } RestoreOptions;
 
 typedef struct _dumpOptions
@@ -198,6 +200,8 @@ typedef struct _dumpOptions
 
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
 	int			do_nothing;
+
+	char	   *restrict_key;
 } DumpOptions;
 
 /*

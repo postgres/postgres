@@ -325,4 +325,11 @@ is($row_count, '10',
 	'client-side error commits transaction, no ON_ERROR_STOP and multiple -c switches'
 );
 
+psql_fails_like(
+	$node,
+	qq{\\restrict test
+\\! should_fail},
+	qr/backslash commands are restricted; only \\unrestrict is allowed/,
+	'meta-command in restrict mode fails');
+
 done_testing();
