@@ -25,7 +25,7 @@
    <para>
     However, if you have any
     BRIN <literal>numeric_minmax_multi_ops</literal> indexes, it is
-    advisable to reindex them after updating.  See the first changelog
+    advisable to reindex them after updating.  See the fourth changelog
     entry below.
    </para>
 
@@ -39,6 +39,132 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [22424953c] 2025-08-11 09:03:11 +0100
+Branch: REL_18_STABLE [64f77c6a6] 2025-08-11 09:07:36 +0100
+Branch: REL_17_STABLE [a85eddab2] 2025-08-11 09:09:12 +0100
+Branch: REL_16_STABLE [7e86da539] 2025-08-11 09:10:17 +0100
+Branch: REL_15_STABLE [415badc13] 2025-08-11 09:11:02 +0100
+Branch: REL_14_STABLE [afe38fb6a] 2025-08-11 09:12:09 +0100
+Branch: REL_13_STABLE [533211ded] 2025-08-11 09:13:20 +0100
+-->
+     <para>
+      Tighten security checks in planner estimation functions
+      (Dean Rasheed)
+      <ulink url="&commit_baseurl;7e86da539">&sect;</ulink>
+     </para>
+
+     <para>
+      The fix for CVE-2017-7484, plus followup fixes, intended to prevent
+      leaky functions from being applied to statistics data for columns
+      that the calling user does not have permission to read.  Two gaps in
+      that protection have been found.  One gap applies to partitioning
+      and inheritance hierarchies where RLS policies on the tables should
+      restrict access to statistics data, but did not.
+     </para>
+
+     <para>
+      The other gap applies to cases where the query accesses a table via
+      a view, and the view owner has permissions to read the underlying
+      table but the calling user does not have permissions on the view.
+      The view owner's permissions satisfied the security checks, and the
+      leaky function would get applied to the underlying table's
+      statistics before we check the calling user's permissions on the
+      view.  This has been fixed by making security checks on views occur
+      at the start of planning.  That might cause permissions failures to
+      occur earlier than before.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Dean Rasheed for reporting this problem.
+      (CVE-2025-8713)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [71ea0d679] 2025-08-11 09:00:00 -0500
+Branch: REL_18_STABLE [67a2fbb8f] 2025-08-11 09:00:00 -0500
+Branch: REL_17_STABLE [575f54d4c] 2025-08-11 09:00:00 -0500
+Branch: REL_16_STABLE [7ad8e7909] 2025-08-11 09:00:00 -0500
+Branch: REL_15_STABLE [424040506] 2025-08-11 09:00:00 -0500
+Branch: REL_14_STABLE [e4998d089] 2025-08-11 09:00:00 -0500
+Branch: REL_13_STABLE [c204bd39f] 2025-08-11 09:00:00 -0500
+Branch: REL_14_STABLE [8967c33c6] 2025-08-11 12:37:00 -0500
+Branch: REL_13_STABLE [27d3dee68] 2025-08-11 12:37:00 -0500
+-->
+     <para>
+      Prevent <application>pg_dump</application> scripts from being used
+      to attack the user running the restore (Nathan Bossart)
+      <ulink url="&commit_baseurl;7ad8e7909">&sect;</ulink>
+     </para>
+
+     <para>
+      Since dump/restore operations typically involve running SQL commands
+      as superuser, the target database installation must trust the source
+      server.  However, it does not follow that the operating system user
+      who executes <application>psql</application> to perform the restore
+      should have to trust the source server.  The risk here is that an
+      attacker who has gained superuser-level control over the source
+      server might be able to cause it to emit text that would be
+      interpreted as <application>psql</application> meta-commands.
+      That would provide shell-level access to the restoring user's own
+      account, independently of access to the target database.
+     </para>
+
+     <para>
+      To provide a positive guarantee that this can't happen,
+      extend <application>psql</application> with
+      a <command>\restrict</command> command that prevents execution of
+      further meta-commands, and teach <application>pg_dump</application>
+      to issue that before any data coming from the source server.
+     </para>
+
+     <para>
+      The PostgreSQL Project thanks Martin Rakhmanov, Matthieu Denais, and
+      RyotaK for reporting this problem.
+      (CVE-2025-8714)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [70693c645] 2025-08-11 06:18:59 -0700
+Branch: REL_18_STABLE [13a67ce60] 2025-08-11 06:19:03 -0700
+Branch: REL_17_STABLE [9b92f115b] 2025-08-11 06:19:03 -0700
+Branch: REL_16_STABLE [850caae60] 2025-08-11 06:19:03 -0700
+Branch: REL_15_STABLE [9751f934a] 2025-08-11 06:19:04 -0700
+Branch: REL_14_STABLE [0f5838438] 2025-08-11 06:19:04 -0700
+Branch: REL_13_STABLE [2179e6005] 2025-08-11 06:19:05 -0700
+-->
+     <para>
+      Convert newlines to spaces in names included in comments
+      in <application>pg_dump</application> output
+      (Noah Misch)
+      <ulink url="&commit_baseurl;850caae60">&sect;</ulink>
+     </para>
+
+     <para>
+      Object names containing newlines offered the ability to inject
+      arbitrary SQL commands into the output script.  (Without the
+      preceding fix, injection of <application>psql</application>
+      meta-commands would also be possible this way.)
+      CVE-2012-0868 fixed this class of problem at the time, but later
+      work reintroduced several cases.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Noah Misch for reporting this problem.
+      (CVE-2025-8715)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
