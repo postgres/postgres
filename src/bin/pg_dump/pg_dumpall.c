@@ -92,6 +92,8 @@ static char *filename = NULL;
 static SimpleStringList database_exclude_patterns = {NULL, NULL};
 static SimpleStringList database_exclude_names = {NULL, NULL};
 
+static char *restrict_key;
+
 #define exit_nicely(code) exit(code)
 
 int
@@ -146,6 +148,7 @@ main(int argc, char *argv[])
 		{"no-unlogged-table-data", no_argument, &no_unlogged_table_data, 1},
 		{"on-conflict-do-nothing", no_argument, &on_conflict_do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 7},
+		{"restrict-key", required_argument, NULL, 9},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -334,6 +337,12 @@ main(int argc, char *argv[])
 				appendShellString(pgdumpopts, optarg);
 				break;
 
+			case 9:
+				restrict_key = pg_strdup(optarg);
+				appendPQExpBufferStr(pgdumpopts, " --restrict-key ");
+				appendShellString(pgdumpopts, optarg);
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit_nicely(1);
@@ -431,6 +440,22 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-unlogged-table-data");
 	if (on_conflict_do_nothing)
 		appendPQExpBufferStr(pgdumpopts, " --on-conflict-do-nothing");
+
+	/*
+	 * If you don't provide a restrict key, one will be appointed for you.
+	 */
+	if (!restrict_key)
+		restrict_key = generate_restrict_key();
+	if (!restrict_key)
+	{
+		pg_log_error("could not generate restrict key");
+		exit_nicely(1);
+	}
+	if (!valid_restrict_key(restrict_key))
+	{
+		pg_log_error("invalid restrict key");
+		exit_nicely(1);
+	}
 
 	/*
 	 * If there was a database specified on the command line, use that,
@@ -531,6 +556,16 @@ main(int argc, char *argv[])
 		dumpTimestamp("Started on");
 
 	/*
+	 * Enter restricted mode to block any unexpected psql meta-commands.  A
+	 * malicious source might try to inject a variety of things via bogus
+	 * responses to queries.  While we cannot prevent such sources from
+	 * affecting the destination at restore time, we can block psql
+	 * meta-commands so that the client machine that runs psql with the dump
+	 * output remains unaffected.
+	 */
+	fprintf(OPF, "\\restrict %s\n\n", restrict_key);
+
+	/*
 	 * We used to emit \connect postgres here, but that served no purpose
 	 * other than to break things for installations without a postgres
 	 * database.  Everything we're restoring here is a global, so whichever
@@ -588,6 +623,12 @@ main(int argc, char *argv[])
 		if (!roles_only && !no_tablespaces)
 			dumpTablespaces(conn);
 	}
+
+	/*
+	 * Exit restricted mode just before dumping the databases.  pg_dump will
+	 * handle entering restricted mode again as appropriate.
+	 */
+	fprintf(OPF, "\\unrestrict %s\n\n", restrict_key);
 
 	if (!globals_only && !roles_only && !tablespaces_only)
 		dumpDatabases(conn);
@@ -654,6 +695,7 @@ help(void)
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
+	printf(_("  --restrict-key=RESTRICT_KEY  use provided string as psql \\restrict key\n"));
 	printf(_("  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
