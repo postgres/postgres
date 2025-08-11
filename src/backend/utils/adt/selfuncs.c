@@ -5288,8 +5288,8 @@ ReleaseDummy(HeapTuple tuple)
  *		unique for this query.  (Caution: this should be trusted for
  *		statistical purposes only, since we do not check indimmediate nor
  *		verify that the exact same definition of equality applies.)
- *	acl_ok: true if current user has permission to read the column(s)
- *		underlying the pg_statistic entry.  This is consulted by
+ *	acl_ok: true if current user has permission to read all table rows from
+ *		the column(s) underlying the pg_statistic entry.  This is consulted by
  *		statistic_proc_security_check().
  *
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
@@ -5408,7 +5408,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		 */
 		ListCell   *ilist;
 		ListCell   *slist;
-		Oid			userid;
 
 		/*
 		 * The nullingrels bits within the expression could prevent us from
@@ -5417,17 +5416,6 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		 */
 		if (bms_overlap(varnos, root->outer_join_rels))
 			node = remove_nulling_relids(node, root->outer_join_rels, NULL);
-
-		/*
-		 * Determine the user ID to use for privilege checks: either
-		 * onerel->userid if it's set (e.g., in case we're accessing the table
-		 * via a view), or the current user otherwise.
-		 *
-		 * If we drill down to child relations, we keep using the same userid:
-		 * it's going to be the same anyway, due to how we set up the relation
-		 * tree (q.v. build_simple_rel).
-		 */
-		userid = OidIsValid(onerel->userid) ? onerel->userid : GetUserId();
 
 		foreach(ilist, onerel->indexlist)
 		{
@@ -5496,69 +5484,32 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 							if (HeapTupleIsValid(vardata->statsTuple))
 							{
-								/* Get index's table for permission check */
-								RangeTblEntry *rte;
-
-								rte = planner_rt_fetch(index->rel->relid, root);
-								Assert(rte->rtekind == RTE_RELATION);
-
 								/*
+								 * Test if user has permission to access all
+								 * rows from the index's table.
+								 *
 								 * For simplicity, we insist on the whole
 								 * table being selectable, rather than trying
 								 * to identify which column(s) the index
-								 * depends on.  Also require all rows to be
-								 * selectable --- there must be no
-								 * securityQuals from security barrier views
-								 * or RLS policies.
+								 * depends on.
+								 *
+								 * Note that for an inheritance child,
+								 * permissions are checked on the inheritance
+								 * root parent, and whole-table select
+								 * privilege on the parent doesn't quite
+								 * guarantee that the user could read all
+								 * columns of the child.  But in practice it's
+								 * unlikely that any interesting security
+								 * violation could result from allowing access
+								 * to the expression index's stats, so we
+								 * allow it anyway.  See similar code in
+								 * examine_simple_variable() for additional
+								 * comments.
 								 */
 								vardata->acl_ok =
-									rte->securityQuals == NIL &&
-									(pg_class_aclcheck(rte->relid, userid,
-													   ACL_SELECT) == ACLCHECK_OK);
-
-								/*
-								 * If the user doesn't have permissions to
-								 * access an inheritance child relation, check
-								 * the permissions of the table actually
-								 * mentioned in the query, since most likely
-								 * the user does have that permission.  Note
-								 * that whole-table select privilege on the
-								 * parent doesn't quite guarantee that the
-								 * user could read all columns of the child.
-								 * But in practice it's unlikely that any
-								 * interesting security violation could result
-								 * from allowing access to the expression
-								 * index's stats, so we allow it anyway.  See
-								 * similar code in examine_simple_variable()
-								 * for additional comments.
-								 */
-								if (!vardata->acl_ok &&
-									root->append_rel_array != NULL)
-								{
-									AppendRelInfo *appinfo;
-									Index		varno = index->rel->relid;
-
-									appinfo = root->append_rel_array[varno];
-									while (appinfo &&
-										   planner_rt_fetch(appinfo->parent_relid,
-															root)->rtekind == RTE_RELATION)
-									{
-										varno = appinfo->parent_relid;
-										appinfo = root->append_rel_array[varno];
-									}
-									if (varno != index->rel->relid)
-									{
-										/* Repeat access check on this rel */
-										rte = planner_rt_fetch(varno, root);
-										Assert(rte->rtekind == RTE_RELATION);
-
-										vardata->acl_ok =
-											rte->securityQuals == NIL &&
-											(pg_class_aclcheck(rte->relid,
-															   userid,
-															   ACL_SELECT) == ACLCHECK_OK);
-									}
-								}
+									all_rows_selectable(root,
+														index->rel->relid,
+														NULL);
 							}
 							else
 							{
@@ -5628,58 +5579,26 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 					vardata->freefunc = ReleaseDummy;
 
 					/*
+					 * Test if user has permission to access all rows from the
+					 * table.
+					 *
 					 * For simplicity, we insist on the whole table being
 					 * selectable, rather than trying to identify which
-					 * column(s) the statistics object depends on.  Also
-					 * require all rows to be selectable --- there must be no
-					 * securityQuals from security barrier views or RLS
-					 * policies.
+					 * column(s) the statistics object depends on.
+					 *
+					 * Note that for an inheritance child, permissions are
+					 * checked on the inheritance root parent, and whole-table
+					 * select privilege on the parent doesn't quite guarantee
+					 * that the user could read all columns of the child.  But
+					 * in practice it's unlikely that any interesting security
+					 * violation could result from allowing access to the
+					 * expression stats, so we allow it anyway.  See similar
+					 * code in examine_simple_variable() for additional
+					 * comments.
 					 */
-					vardata->acl_ok =
-						rte->securityQuals == NIL &&
-						(pg_class_aclcheck(rte->relid, userid,
-										   ACL_SELECT) == ACLCHECK_OK);
-
-					/*
-					 * If the user doesn't have permissions to access an
-					 * inheritance child relation, check the permissions of
-					 * the table actually mentioned in the query, since most
-					 * likely the user does have that permission.  Note that
-					 * whole-table select privilege on the parent doesn't
-					 * quite guarantee that the user could read all columns of
-					 * the child. But in practice it's unlikely that any
-					 * interesting security violation could result from
-					 * allowing access to the expression stats, so we allow it
-					 * anyway.  See similar code in examine_simple_variable()
-					 * for additional comments.
-					 */
-					if (!vardata->acl_ok &&
-						root->append_rel_array != NULL)
-					{
-						AppendRelInfo *appinfo;
-						Index		varno = onerel->relid;
-
-						appinfo = root->append_rel_array[varno];
-						while (appinfo &&
-							   planner_rt_fetch(appinfo->parent_relid,
-												root)->rtekind == RTE_RELATION)
-						{
-							varno = appinfo->parent_relid;
-							appinfo = root->append_rel_array[varno];
-						}
-						if (varno != onerel->relid)
-						{
-							/* Repeat access check on this rel */
-							rte = planner_rt_fetch(varno, root);
-							Assert(rte->rtekind == RTE_RELATION);
-
-							vardata->acl_ok =
-								rte->securityQuals == NIL &&
-								(pg_class_aclcheck(rte->relid,
-												   userid,
-												   ACL_SELECT) == ACLCHECK_OK);
-						}
-					}
+					vardata->acl_ok = all_rows_selectable(root,
+														  onerel->relid,
+														  NULL);
 
 					break;
 				}
@@ -5734,109 +5653,20 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 
 		if (HeapTupleIsValid(vardata->statsTuple))
 		{
-			RelOptInfo *onerel = find_base_rel_noerr(root, var->varno);
-			Oid			userid;
-
 			/*
-			 * Check if user has permission to read this column.  We require
-			 * all rows to be accessible, so there must be no securityQuals
-			 * from security barrier views or RLS policies.
+			 * Test if user has permission to read all rows from this column.
 			 *
-			 * Normally the Var will have an associated RelOptInfo from which
-			 * we can find out which userid to do the check as; but it might
-			 * not if it's a RETURNING Var for an INSERT target relation.  In
-			 * that case use the RTEPermissionInfo associated with the RTE.
+			 * This requires that the user has the appropriate SELECT
+			 * privileges and that there are no securityQuals from security
+			 * barrier views or RLS policies.  If that's not the case, then we
+			 * only permit leakproof functions to be passed pg_statistic data
+			 * in vardata, otherwise the functions might reveal data that the
+			 * user doesn't have permission to see --- see
+			 * statistic_proc_security_check().
 			 */
-			if (onerel)
-				userid = onerel->userid;
-			else
-			{
-				RTEPermissionInfo *perminfo;
-
-				perminfo = getRTEPermissionInfo(root->parse->rteperminfos, rte);
-				userid = perminfo->checkAsUser;
-			}
-			if (!OidIsValid(userid))
-				userid = GetUserId();
-
 			vardata->acl_ok =
-				rte->securityQuals == NIL &&
-				((pg_class_aclcheck(rte->relid, userid,
-									ACL_SELECT) == ACLCHECK_OK) ||
-				 (pg_attribute_aclcheck(rte->relid, var->varattno, userid,
-										ACL_SELECT) == ACLCHECK_OK));
-
-			/*
-			 * If the user doesn't have permissions to access an inheritance
-			 * child relation or specifically this attribute, check the
-			 * permissions of the table/column actually mentioned in the
-			 * query, since most likely the user does have that permission
-			 * (else the query will fail at runtime), and if the user can read
-			 * the column there then he can get the values of the child table
-			 * too.  To do that, we must find out which of the root parent's
-			 * attributes the child relation's attribute corresponds to.
-			 */
-			if (!vardata->acl_ok && var->varattno > 0 &&
-				root->append_rel_array != NULL)
-			{
-				AppendRelInfo *appinfo;
-				Index		varno = var->varno;
-				int			varattno = var->varattno;
-				bool		found = false;
-
-				appinfo = root->append_rel_array[varno];
-
-				/*
-				 * Partitions are mapped to their immediate parent, not the
-				 * root parent, so must be ready to walk up multiple
-				 * AppendRelInfos.  But stop if we hit a parent that is not
-				 * RTE_RELATION --- that's a flattened UNION ALL subquery, not
-				 * an inheritance parent.
-				 */
-				while (appinfo &&
-					   planner_rt_fetch(appinfo->parent_relid,
-										root)->rtekind == RTE_RELATION)
-				{
-					int			parent_varattno;
-
-					found = false;
-					if (varattno <= 0 || varattno > appinfo->num_child_cols)
-						break;	/* safety check */
-					parent_varattno = appinfo->parent_colnos[varattno - 1];
-					if (parent_varattno == 0)
-						break;	/* Var is local to child */
-
-					varno = appinfo->parent_relid;
-					varattno = parent_varattno;
-					found = true;
-
-					/* If the parent is itself a child, continue up. */
-					appinfo = root->append_rel_array[varno];
-				}
-
-				/*
-				 * In rare cases, the Var may be local to the child table, in
-				 * which case, we've got to live with having no access to this
-				 * column's stats.
-				 */
-				if (!found)
-					return;
-
-				/* Repeat the access check on this parent rel & column */
-				rte = planner_rt_fetch(varno, root);
-				Assert(rte->rtekind == RTE_RELATION);
-
-				/*
-				 * Fine to use the same userid as it's the same in all
-				 * relations of a given inheritance tree.
-				 */
-				vardata->acl_ok =
-					rte->securityQuals == NIL &&
-					((pg_class_aclcheck(rte->relid, userid,
-										ACL_SELECT) == ACLCHECK_OK) ||
-					 (pg_attribute_aclcheck(rte->relid, varattno, userid,
-											ACL_SELECT) == ACLCHECK_OK));
-			}
+				all_rows_selectable(root, var->varno,
+									bms_make_singleton(var->varattno - FirstLowInvalidHeapAttributeNumber));
 		}
 		else
 		{
@@ -6034,6 +5864,214 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 }
 
 /*
+ * all_rows_selectable
+ *		Test whether the user has permission to select all rows from a given
+ *		relation.
+ *
+ * Inputs:
+ *	root: the planner info
+ *	varno: the index of the relation (assumed to be an RTE_RELATION)
+ *	varattnos: the attributes for which permission is required, or NULL if
+ *		whole-table access is required
+ *
+ * Returns true if the user has the required select permissions, and there are
+ * no securityQuals from security barrier views or RLS policies.
+ *
+ * Note that if the relation is an inheritance child relation, securityQuals
+ * and access permissions are checked against the inheritance root parent (the
+ * relation actually mentioned in the query) --- see the comments in
+ * expand_single_inheritance_child() for an explanation of why it has to be
+ * done this way.
+ *
+ * If varattnos is non-NULL, its attribute numbers should be offset by
+ * FirstLowInvalidHeapAttributeNumber so that system attributes can be
+ * checked.  If varattnos is NULL, only table-level SELECT privileges are
+ * checked, not any column-level privileges.
+ *
+ * Note: if the relation is accessed via a view, this function actually tests
+ * whether the view owner has permission to select from the relation.  To
+ * ensure that the current user has permission, it is also necessary to check
+ * that the current user has permission to select from the view, which we do
+ * at planner-startup --- see subquery_planner().
+ *
+ * This is exported so that other estimation functions can use it.
+ */
+bool
+all_rows_selectable(PlannerInfo *root, Index varno, Bitmapset *varattnos)
+{
+	RelOptInfo *rel = find_base_rel_noerr(root, varno);
+	RangeTblEntry *rte = planner_rt_fetch(varno, root);
+	Oid			userid;
+	int			varattno;
+
+	Assert(rte->rtekind == RTE_RELATION);
+
+	/*
+	 * Determine the user ID to use for privilege checks (either the current
+	 * user or the view owner, if we're accessing the table via a view).
+	 *
+	 * Normally the relation will have an associated RelOptInfo from which we
+	 * can find the userid, but it might not if it's a RETURNING Var for an
+	 * INSERT target relation.  In that case use the RTEPermissionInfo
+	 * associated with the RTE.
+	 *
+	 * If we navigate up to a parent relation, we keep using the same userid,
+	 * since it's the same in all relations of a given inheritance tree.
+	 */
+	if (rel)
+		userid = rel->userid;
+	else
+	{
+		RTEPermissionInfo *perminfo;
+
+		perminfo = getRTEPermissionInfo(root->parse->rteperminfos, rte);
+		userid = perminfo->checkAsUser;
+	}
+	if (!OidIsValid(userid))
+		userid = GetUserId();
+
+	/*
+	 * Permissions and securityQuals must be checked on the table actually
+	 * mentioned in the query, so if this is an inheritance child, navigate up
+	 * to the inheritance root parent.  If the user can read the whole table
+	 * or the required columns there, then they can read from the child table
+	 * too.  For per-column checks, we must find out which of the root
+	 * parent's attributes the child relation's attributes correspond to.
+	 */
+	if (root->append_rel_array != NULL)
+	{
+		AppendRelInfo *appinfo;
+
+		appinfo = root->append_rel_array[varno];
+
+		/*
+		 * Partitions are mapped to their immediate parent, not the root
+		 * parent, so must be ready to walk up multiple AppendRelInfos.  But
+		 * stop if we hit a parent that is not RTE_RELATION --- that's a
+		 * flattened UNION ALL subquery, not an inheritance parent.
+		 */
+		while (appinfo &&
+			   planner_rt_fetch(appinfo->parent_relid,
+								root)->rtekind == RTE_RELATION)
+		{
+			Bitmapset  *parent_varattnos = NULL;
+
+			/*
+			 * For each child attribute, find the corresponding parent
+			 * attribute.  In rare cases, the attribute may be local to the
+			 * child table, in which case, we've got to live with having no
+			 * access to this column.
+			 */
+			varattno = -1;
+			while ((varattno = bms_next_member(varattnos, varattno)) >= 0)
+			{
+				AttrNumber	attno;
+				AttrNumber	parent_attno;
+
+				attno = varattno + FirstLowInvalidHeapAttributeNumber;
+
+				if (attno == InvalidAttrNumber)
+				{
+					/*
+					 * Whole-row reference, so must map each column of the
+					 * child to the parent table.
+					 */
+					for (attno = 1; attno <= appinfo->num_child_cols; attno++)
+					{
+						parent_attno = appinfo->parent_colnos[attno - 1];
+						if (parent_attno == 0)
+							return false;	/* attr is local to child */
+						parent_varattnos =
+							bms_add_member(parent_varattnos,
+										   parent_attno - FirstLowInvalidHeapAttributeNumber);
+					}
+				}
+				else
+				{
+					if (attno < 0)
+					{
+						/* System attnos are the same in all tables */
+						parent_attno = attno;
+					}
+					else
+					{
+						if (attno > appinfo->num_child_cols)
+							return false;	/* safety check */
+						parent_attno = appinfo->parent_colnos[attno - 1];
+						if (parent_attno == 0)
+							return false;	/* attr is local to child */
+					}
+					parent_varattnos =
+						bms_add_member(parent_varattnos,
+									   parent_attno - FirstLowInvalidHeapAttributeNumber);
+				}
+			}
+
+			/* If the parent is itself a child, continue up */
+			varno = appinfo->parent_relid;
+			varattnos = parent_varattnos;
+			appinfo = root->append_rel_array[varno];
+		}
+
+		/* Perform the access check on this parent rel */
+		rte = planner_rt_fetch(varno, root);
+		Assert(rte->rtekind == RTE_RELATION);
+	}
+
+	/*
+	 * For all rows to be accessible, there must be no securityQuals from
+	 * security barrier views or RLS policies.
+	 */
+	if (rte->securityQuals != NIL)
+		return false;
+
+	/*
+	 * Test for table-level SELECT privilege.
+	 *
+	 * If varattnos is non-NULL, this is sufficient to give access to all
+	 * requested attributes, even for a child table, since we have verified
+	 * that all required child columns have matching parent columns.
+	 *
+	 * If varattnos is NULL (whole-table access requested), this doesn't
+	 * necessarily guarantee that the user can read all columns of a child
+	 * table, but we allow it anyway (see comments in examine_variable()) and
+	 * don't bother checking any column privileges.
+	 */
+	if (pg_class_aclcheck(rte->relid, userid, ACL_SELECT) == ACLCHECK_OK)
+		return true;
+
+	if (varattnos == NULL)
+		return false;			/* whole-table access requested */
+
+	/*
+	 * Don't have table-level SELECT privilege, so check per-column
+	 * privileges.
+	 */
+	varattno = -1;
+	while ((varattno = bms_next_member(varattnos, varattno)) >= 0)
+	{
+		AttrNumber	attno = varattno + FirstLowInvalidHeapAttributeNumber;
+
+		if (attno == InvalidAttrNumber)
+		{
+			/* Whole-row reference, so must have access to all columns */
+			if (pg_attribute_aclcheck_all(rte->relid, userid, ACL_SELECT,
+										  ACLMASK_ALL) != ACLCHECK_OK)
+				return false;
+		}
+		else
+		{
+			if (pg_attribute_aclcheck(rte->relid, attno, userid,
+									  ACL_SELECT) != ACLCHECK_OK)
+				return false;
+		}
+	}
+
+	/* If we reach here, have all required column privileges */
+	return true;
+}
+
+/*
  * examine_indexcol_variable
  *		Try to look up statistical data about an index column/expression.
  *		Fill in a VariableStatData struct to describe the column.
@@ -6121,15 +6159,17 @@ examine_indexcol_variable(PlannerInfo *root, IndexOptInfo *index,
 
 /*
  * Check whether it is permitted to call func_oid passing some of the
- * pg_statistic data in vardata.  We allow this either if the user has SELECT
- * privileges on the table or column underlying the pg_statistic data or if
- * the function is marked leakproof.
+ * pg_statistic data in vardata.  We allow this if either of the following
+ * conditions is met: (1) the user has SELECT privileges on the table or
+ * column underlying the pg_statistic data and there are no securityQuals from
+ * security barrier views or RLS policies, or (2) the function is marked
+ * leakproof.
  */
 bool
 statistic_proc_security_check(VariableStatData *vardata, Oid func_oid)
 {
 	if (vardata->acl_ok)
-		return true;
+		return true;			/* have SELECT privs and no securityQuals */
 
 	if (!OidIsValid(func_oid))
 		return false;
