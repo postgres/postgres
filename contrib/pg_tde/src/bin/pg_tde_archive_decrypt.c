@@ -1,12 +1,9 @@
 #include "postgres_fe.h"
 
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include "access/xlog_internal.h"
 #include "access/xlog_smgr.h"
 #include "common/logging.h"
+#include "common/percentrepl.h"
 
 #include "access/pg_tde_fe_init.h"
 #include "access/pg_tde_xlog_smgr.h"
@@ -116,26 +113,39 @@ write_decrypted_segment(const char *segpath, const char *segname, const char *tm
 static void
 usage(const char *progname)
 {
-	printf(_("%s wraps an archive command to make it archive unencrypted WAL.\n\n"), progname);
-	printf(_("Usage:\n  %s %%p <archive command>\n\n"), progname);
-	printf(_("Options:\n"));
-	printf(_("  -V, --version output version information, then exit\n"));
-	printf(_("  -?, --help    show this help, then exit\n"));
+	printf(_("%s wraps an archive command to give the command unencrypted WAL.\n\n"), progname);
+	printf(_("Usage:\n"));
+	printf(_("  %s [OPTION]\n"), progname);
+	printf(_("  %s DEST-NAME SOURCE-PATH ARCHIVE-COMMAND\n"), progname);
+	printf(_("\nOptions:\n"));
+	printf(_("  -V, --version   output version information, then exit\n"));
+	printf(_("  -?, --help      show this help, then exit\n"));
+	printf(_("  DEST-NAME       name of the WAL file to send to archive\n"));
+	printf(_("  SOURCE-PATH     path of the source WAL segment to decrypt\n"));
+	printf(_("  ARCHIVE-COMMAND archive command to wrap, %%p will be replaced with the\n"
+			 "                  absolute path of the decrypted WAL segment, %%f with the name\n"));
+	printf(_("\n"));
+	printf(_("Note that any %%f or %%p parameter in ARCHIVE-COMMAND will have to be escaped\n"
+			 "as %%%%f or %%%%p respectively if used as archive_command in postgresql.conf.\n"
+			 "e.g.\n"
+			 "  archive_command='%s %%f %%p \"cp %%%%p /mnt/server/archivedir/%%%%f\"'\n"
+			 "or\n"
+			 "  archive_command='%s %%f %%p \"pgbackrest --stanza=your_stanza archive-push %%%%p\"'\n"
+			 "\n"), progname, progname);
 }
 
 int
 main(int argc, char *argv[])
 {
 	const char *progname;
+	char	   *targetname;
 	char	   *sourcepath;
+	char	   *command;
 	char	   *sep;
 	char	   *sourcename;
 	char		tmpdir[MAXPGPATH] = TMPFS_DIRECTORY "/pg_tde_archiveXXXXXX";
 	char		tmppath[MAXPGPATH];
 	bool		issegment;
-	pid_t		child;
-	int			status;
-	int			r;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -154,14 +164,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (argc < 3)
+	if (argc != 4)
 	{
-		pg_log_error("too few arguments");
+		pg_log_error("wrong number of arguments, 3 expected");
 		pg_log_error_detail("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
-	sourcepath = argv[1];
+	targetname = argv[1];
+	sourcepath = argv[2];
+	command = argv[3];
 
 	pg_tde_fe_init("pg_tde");
 	TDEXLogSmgrInit();
@@ -173,7 +185,7 @@ main(int argc, char *argv[])
 	else
 		sourcename = sourcepath;
 
-	issegment = is_segment(sourcename);
+	issegment = is_segment(targetname);
 
 	if (issegment)
 	{
@@ -186,35 +198,19 @@ main(int argc, char *argv[])
 		s = stpcpy(s, "/");
 		stpcpy(s, sourcename);
 
-		for (int i = 2; i < argc; i++)
-			if (strcmp(sourcepath, argv[i]) == 0)
-				argv[i] = tmppath;
+		command = replace_percent_placeholders(command,
+											   "ARCHIVE-COMMAND", "fp",
+											   targetname, tmppath);
 
-		write_decrypted_segment(sourcepath, sourcename, tmppath);
+		write_decrypted_segment(sourcepath, targetname, tmppath);
 	}
+	else
+		command = replace_percent_placeholders(command,
+											   "ARCHIVE-COMMAND", "fp",
+											   targetname, sourcepath);
 
-	child = fork();
-	if (child == 0)
-	{
-		if (execvp(argv[2], argv + 2) < 0)
-			pg_fatal("exec failed: %m");
-	}
-	else if (child < 0)
-		pg_fatal("could not create background process: %m");
-
-	r = waitpid(child, &status, 0);
-	if (r == (pid_t) -1)
-		pg_fatal("could not wait for child process: %m");
-	if (r != child)
-		pg_fatal("child %d died, expected %d", (int) r, (int) child);
-	if (status != 0)
-	{
-		char	   *reason = wait_result_to_str(status);
-
-		pg_fatal("%s", reason);
-		/* keep lsan happy */
-		free(reason);
-	}
+	if (system(command) != 0)
+		pg_fatal("ARCHIVE-COMMAND \"%s\" failed: %m", command);
 
 	if (issegment)
 	{

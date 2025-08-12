@@ -21,7 +21,8 @@ $primary->append_conf('postgresql.conf', "autovacuum = off");
 $primary->append_conf('postgresql.conf', "checkpoint_timeout = 1h");
 $primary->append_conf('postgresql.conf', "archive_mode = on");
 $primary->append_conf('postgresql.conf',
-	"archive_command = 'pg_tde_archive_decrypt %p cp %p $archive_dir/%f'");
+	"archive_command = 'pg_tde_archive_decrypt %f %p \"cp %%p $archive_dir/%%f\"'"
+);
 $primary->start;
 
 $primary->safe_psql('postgres', "CREATE EXTENSION pg_tde;");
@@ -75,7 +76,8 @@ like(
 my $replica = PostgreSQL::Test::Cluster->new('replica');
 $replica->init_from_backup($primary, 'backup');
 $replica->append_conf('postgresql.conf',
-	"restore_command = 'pg_tde_restore_encrypt %f %p cp $archive_dir/%f %p'");
+	"restore_command = 'pg_tde_restore_encrypt %f %p \"cp $archive_dir/%%f %%p\"'"
+);
 $replica->append_conf('postgresql.conf', "recovery_target_action = promote");
 $replica->set_recovery_mode;
 $replica->start;
