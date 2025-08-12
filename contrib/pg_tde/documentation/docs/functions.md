@@ -288,7 +288,7 @@ SELECT pg_tde_set_server_key_using_global_key_provider(
 
 !!! warning
     The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
-=======
+
 The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
 
 * If set to `true`, a new key must be unique.
