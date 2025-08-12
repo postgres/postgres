@@ -5494,6 +5494,7 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 			   *entry;
 	struct berval **values;
 	LDAP_TIMEVAL time = {PGLDAP_TIMEOUT, 0};
+	int			ldapversion = LDAP_VERSION3;
 
 	if ((url = strdup(purl)) == NULL)
 	{
@@ -5622,6 +5623,15 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 	{
 		libpq_append_error(errorMessage, "could not create LDAP structure");
 		free(url);
+		return 3;
+	}
+
+	if ((rc = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS)
+	{
+		libpq_append_error(errorMessage, "could not set LDAP protocol version: %s",
+						   ldap_err2string(rc));
+		free(url);
+		ldap_unbind(ld);
 		return 3;
 	}
 
