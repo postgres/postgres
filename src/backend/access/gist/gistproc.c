@@ -1707,8 +1707,8 @@ gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup)
  * Abbreviated version of Z-order comparison
  *
  * The abbreviated format is a Z-order value computed from the two 32-bit
- * floats. If SIZEOF_DATUM == 8, the 64-bit Z-order value fits fully in the
- * abbreviated Datum, otherwise use its most significant bits.
+ * floats.  Now that sizeof(Datum) is always 8, the 64-bit Z-order value
+ * always fits fully in the abbreviated Datum.
  */
 static Datum
 gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup)
@@ -1718,11 +1718,7 @@ gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup)
 
 	z = point_zorder_internal(p->x, p->y);
 
-#if SIZEOF_DATUM == 8
-	return (Datum) z;
-#else
-	return (Datum) (z >> 32);
-#endif
+	return UInt64GetDatum(z);
 }
 
 /*

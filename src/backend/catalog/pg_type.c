@@ -285,8 +285,7 @@ TypeCreate(Oid newTypeOid,
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
 								alignment, internalSize)));
 		}
-#if SIZEOF_DATUM == 8
-		else if (internalSize == (int16) sizeof(Datum))
+		else if (internalSize == (int16) sizeof(int64))
 		{
 			if (alignment != TYPALIGN_DOUBLE)
 				ereport(ERROR,
@@ -294,7 +293,6 @@ TypeCreate(Oid newTypeOid,
 						 errmsg("alignment \"%c\" is invalid for passed-by-value type of size %d",
 								alignment, internalSize)));
 		}
-#endif
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

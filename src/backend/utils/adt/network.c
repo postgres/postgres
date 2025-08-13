@@ -567,23 +567,10 @@ network_abbrev_abort(int memtupcount, SortSupport ssup)
  *
  * When generating abbreviated keys for SortSupport, we pack as much as we can
  * into a datum while ensuring that when comparing those keys as integers,
- * these rules will be respected. Exact contents depend on IP family and datum
- * size.
+ * these rules will be respected. Exact contents depend on IP family:
  *
  * IPv4
  * ----
- *
- * 4 byte datums:
- *
- * Start with 1 bit for the IP family (IPv4 or IPv6; this bit is present in
- * every case below) followed by all but 1 of the netmasked bits.
- *
- * +----------+---------------------+
- * | 1 bit IP |   31 bits network   |     (1 bit network
- * |  family  |     (truncated)     |      omitted)
- * +----------+---------------------+
- *
- * 8 byte datums:
  *
  * We have space to store all netmasked bits, followed by the netmask size,
  * followed by 25 bits of the subnet (25 bits is usually more than enough in
@@ -596,15 +583,6 @@ network_abbrev_abort(int memtupcount, SortSupport ssup)
  *
  * IPv6
  * ----
- *
- * 4 byte datums:
- *
- * +----------+---------------------+
- * | 1 bit IP |   31 bits network   |    (up to 97 bits
- * |  family  |     (truncated)     |   network omitted)
- * +----------+---------------------+
- *
- * 8 byte datums:
  *
  * +----------+---------------------------------+
  * | 1 bit IP |         63 bits network         |    (up to 65 bits
@@ -628,8 +606,7 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 	/*
 	 * Get an unsigned integer representation of the IP address by taking its
 	 * first 4 or 8 bytes. Always take all 4 bytes of an IPv4 address. Take
-	 * the first 8 bytes of an IPv6 address with an 8 byte datum and 4 bytes
-	 * otherwise.
+	 * the first 8 bytes of an IPv6 address.
 	 *
 	 * We're consuming an array of unsigned char, so byteswap on little endian
 	 * systems (an inet's ipaddr field stores the most significant byte
@@ -659,7 +636,7 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 		ipaddr_datum = DatumBigEndianToNative(ipaddr_datum);
 
 		/* Initialize result with ipfamily (most significant) bit set */
-		res = ((Datum) 1) << (SIZEOF_DATUM * BITS_PER_BYTE - 1);
+		res = ((Datum) 1) << (sizeof(Datum) * BITS_PER_BYTE - 1);
 	}
 
 	/*
@@ -668,8 +645,7 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 	 * while low order bits go in "subnet" component when there is space for
 	 * one. This is often accomplished by generating a temp datum subnet
 	 * bitmask, which we may reuse later when generating the subnet bits
-	 * themselves.  (Note that subnet bits are only used with IPv4 datums on
-	 * platforms where datum is 8 bytes.)
+	 * themselves.
 	 *
 	 * The number of bits in subnet is used to generate a datum subnet
 	 * bitmask. For example, with a /24 IPv4 datum there are 8 subnet bits
@@ -681,14 +657,14 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 	subnet_size = ip_maxbits(authoritative) - ip_bits(authoritative);
 	Assert(subnet_size >= 0);
 	/* subnet size must work with prefix ipaddr cases */
-	subnet_size %= SIZEOF_DATUM * BITS_PER_BYTE;
+	subnet_size %= sizeof(Datum) * BITS_PER_BYTE;
 	if (ip_bits(authoritative) == 0)
 	{
 		/* Fit as many ipaddr bits as possible into subnet */
 		subnet_bitmask = ((Datum) 0) - 1;
 		network = 0;
 	}
-	else if (ip_bits(authoritative) < SIZEOF_DATUM * BITS_PER_BYTE)
+	else if (ip_bits(authoritative) < sizeof(Datum) * BITS_PER_BYTE)
 	{
 		/* Split ipaddr bits between network and subnet */
 		subnet_bitmask = (((Datum) 1) << subnet_size) - 1;
@@ -701,12 +677,11 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 		network = ipaddr_datum;
 	}
 
-#if SIZEOF_DATUM == 8
 	if (ip_family(authoritative) == PGSQL_AF_INET)
 	{
 		/*
-		 * IPv4 with 8 byte datums: keep all 32 netmasked bits, netmask size,
-		 * and most significant 25 subnet bits
+		 * IPv4: keep all 32 netmasked bits, netmask size, and most
+		 * significant 25 subnet bits
 		 */
 		Datum		netmask_size = (Datum) ip_bits(authoritative);
 		Datum		subnet;
@@ -750,12 +725,11 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 		res |= network | netmask_size | subnet;
 	}
 	else
-#endif
 	{
 		/*
-		 * 4 byte datums, or IPv6 with 8 byte datums: Use as many of the
-		 * netmasked bits as will fit in final abbreviated key. Avoid
-		 * clobbering the ipfamily bit that was set earlier.
+		 * IPv6: Use as many of the netmasked bits as will fit in final
+		 * abbreviated key. Avoid clobbering the ipfamily bit that was set
+		 * earlier.
 		 */
 		res |= network >> 1;
 	}
@@ -767,11 +741,7 @@ network_abbrev_convert(Datum original, SortSupport ssup)
 	{
 		uint32		tmp;
 
-#if SIZEOF_DATUM == 8
-		tmp = (uint32) res ^ (uint32) ((uint64) res >> 32);
-#else							/* SIZEOF_DATUM != 8 */
-		tmp = (uint32) res;
-#endif
+		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
 
 		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}

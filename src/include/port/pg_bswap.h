@@ -130,8 +130,7 @@ pg_bswap64(uint64 x)
 
 /*
  * Rearrange the bytes of a Datum from big-endian order into the native byte
- * order.  On big-endian machines, this does nothing at all.  Note that the C
- * type Datum is an unsigned integer type on all platforms.
+ * order.  On big-endian machines, this does nothing at all.
  *
  * One possible application of the DatumBigEndianToNative() macro is to make
  * bitwise comparisons cheaper.  A simple 3-way comparison of Datums
@@ -139,23 +138,11 @@ pg_bswap64(uint64 x)
  * the same result as a memcmp() of the corresponding original Datums, but can
  * be much cheaper.  It's generally safe to do this on big-endian systems
  * without any special transformation occurring first.
- *
- * If SIZEOF_DATUM is not defined, then postgres.h wasn't included and these
- * macros probably shouldn't be used, so we define nothing.  Note that
- * SIZEOF_DATUM == 8 would evaluate as 0 == 8 in that case, potentially
- * leading to the wrong implementation being selected and confusing errors, so
- * defining nothing is safest.
  */
-#ifdef SIZEOF_DATUM
 #ifdef WORDS_BIGENDIAN
 #define		DatumBigEndianToNative(x)	(x)
 #else							/* !WORDS_BIGENDIAN */
-#if SIZEOF_DATUM == 8
-#define		DatumBigEndianToNative(x)	pg_bswap64(x)
-#else							/* SIZEOF_DATUM != 8 */
-#define		DatumBigEndianToNative(x)	pg_bswap32(x)
-#endif							/* SIZEOF_DATUM == 8 */
+#define		DatumBigEndianToNative(x)	UInt64GetDatum(pg_bswap64(DatumGetUInt64(x)))
 #endif							/* WORDS_BIGENDIAN */
-#endif							/* SIZEOF_DATUM */
 
 #endif							/* PG_BSWAP_H */

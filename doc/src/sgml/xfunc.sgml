@@ -2051,8 +2051,7 @@ PG_MODULE_MAGIC_EXT(
     </para>
 
     <para>
-     By-value  types  can  only be 1, 2, or 4 bytes in length
-     (also 8 bytes, if <literal>sizeof(Datum)</literal> is 8 on your machine).
+     By-value types can only be 1, 2, 4, or 8 bytes in length.
      You should be careful to define your types such that they will be the
      same size (in bytes) on all architectures.  For example, the
      <literal>long</literal> type is dangerous because it is 4 bytes on some

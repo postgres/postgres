@@ -392,30 +392,21 @@ typedef struct NumericSumAccum
 
 /*
  * We define our own macros for packing and unpacking abbreviated-key
- * representations for numeric values in order to avoid depending on
- * USE_FLOAT8_BYVAL.  The type of abbreviation we use is based only on
- * the size of a datum, not the argument-passing convention for float8.
+ * representations, just to have a notational indication that that's
+ * what we're doing.  Now that sizeof(Datum) is always 8, we can rely
+ * on fitting an int64 into Datum.
  *
- * The range of abbreviations for finite values is from +PG_INT64/32_MAX
- * to -PG_INT64/32_MAX.  NaN has the abbreviation PG_INT64/32_MIN, and we
+ * The range of abbreviations for finite values is from +PG_INT64_MAX
+ * to -PG_INT64_MAX.  NaN has the abbreviation PG_INT64_MIN, and we
  * define the sort ordering to make that work out properly (see further
  * comments below).  PINF and NINF share the abbreviations of the largest
  * and smallest finite abbreviation classes.
  */
-#define NUMERIC_ABBREV_BITS (SIZEOF_DATUM * BITS_PER_BYTE)
-#if SIZEOF_DATUM == 8
-#define NumericAbbrevGetDatum(X) ((Datum) (X))
-#define DatumGetNumericAbbrev(X) ((int64) (X))
+#define NumericAbbrevGetDatum(X) Int64GetDatum(X)
+#define DatumGetNumericAbbrev(X) DatumGetInt64(X)
 #define NUMERIC_ABBREV_NAN		 NumericAbbrevGetDatum(PG_INT64_MIN)
 #define NUMERIC_ABBREV_PINF		 NumericAbbrevGetDatum(-PG_INT64_MAX)
 #define NUMERIC_ABBREV_NINF		 NumericAbbrevGetDatum(PG_INT64_MAX)
-#else
-#define NumericAbbrevGetDatum(X) ((Datum) (X))
-#define DatumGetNumericAbbrev(X) ((int32) (X))
-#define NUMERIC_ABBREV_NAN		 NumericAbbrevGetDatum(PG_INT32_MIN)
-#define NUMERIC_ABBREV_PINF		 NumericAbbrevGetDatum(-PG_INT32_MAX)
-#define NUMERIC_ABBREV_NINF		 NumericAbbrevGetDatum(PG_INT32_MAX)
-#endif
 
 
 /* ----------
@@ -2096,12 +2087,11 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
  * while this could be worked on itself, the abbreviation strategy gives more
  * speedup in many common cases.
  *
- * Two different representations are used for the abbreviated form, one in
- * int32 and one in int64, whichever fits into a by-value Datum.  In both cases
- * the representation is negated relative to the original value, because we use
- * the largest negative value for NaN, which sorts higher than other values. We
- * convert the absolute value of the numeric to a 31-bit or 63-bit positive
- * value, and then negate it if the original number was positive.
+ * The abbreviated format is an int64. The representation is negated relative
+ * to the original value, because we use the largest negative value for NaN,
+ * which sorts higher than other values. We convert the absolute value of the
+ * numeric to a 63-bit positive value, and then negate it if the original
+ * number was positive.
  *
  * We abort the abbreviation process if the abbreviation cardinality is below
  * 0.01% of the row count (1 per 10k non-null rows).  The actual break-even
@@ -2328,7 +2318,7 @@ numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup)
 }
 
 /*
- * Abbreviate a NumericVar according to the available bit size.
+ * Abbreviate a NumericVar into the 64-bit sortsupport size.
  *
  * The 31-bit value is constructed as:
  *
@@ -2372,9 +2362,6 @@ numeric_cmp_abbrev(Datum x, Datum y, SortSupport ssup)
  * with all bits zero. This allows simple comparisons to work on the composite
  * value.
  */
-
-#if NUMERIC_ABBREV_BITS == 64
-
 static Datum
 numeric_abbrev_convert_var(const NumericVar *var, NumericSortSupport *nss)
 {
@@ -2426,84 +2413,6 @@ numeric_abbrev_convert_var(const NumericVar *var, NumericSortSupport *nss)
 	return NumericAbbrevGetDatum(result);
 }
 
-#endif							/* NUMERIC_ABBREV_BITS == 64 */
-
-#if NUMERIC_ABBREV_BITS == 32
-
-static Datum
-numeric_abbrev_convert_var(const NumericVar *var, NumericSortSupport *nss)
-{
-	int			ndigits = var->ndigits;
-	int			weight = var->weight;
-	int32		result;
-
-	if (ndigits == 0 || weight < -11)
-	{
-		result = 0;
-	}
-	else if (weight > 20)
-	{
-		result = PG_INT32_MAX;
-	}
-	else
-	{
-		NumericDigit nxt1 = (ndigits > 1) ? var->digits[1] : 0;
-
-		weight = (weight + 11) * 4;
-
-		result = var->digits[0];
-
-		/*
-		 * "result" now has 1 to 4 nonzero decimal digits. We pack in more
-		 * digits to make 7 in total (largest we can fit in 24 bits)
-		 */
-
-		if (result > 999)
-		{
-			/* already have 4 digits, add 3 more */
-			result = (result * 1000) + (nxt1 / 10);
-			weight += 3;
-		}
-		else if (result > 99)
-		{
-			/* already have 3 digits, add 4 more */
-			result = (result * 10000) + nxt1;
-			weight += 2;
-		}
-		else if (result > 9)
-		{
-			NumericDigit nxt2 = (ndigits > 2) ? var->digits[2] : 0;
-
-			/* already have 2 digits, add 5 more */
-			result = (result * 100000) + (nxt1 * 10) + (nxt2 / 1000);
-			weight += 1;
-		}
-		else
-		{
-			NumericDigit nxt2 = (ndigits > 2) ? var->digits[2] : 0;
-
-			/* already have 1 digit, add 6 more */
-			result = (result * 1000000) + (nxt1 * 100) + (nxt2 / 100);
-		}
-
-		result = result | (weight << 24);
-	}
-
-	/* the abbrev is negated relative to the original */
-	if (var->sign == NUMERIC_POS)
-		result = -result;
-
-	if (nss->estimating)
-	{
-		uint32		tmp = (uint32) result;
-
-		addHyperLogLog(&nss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
-	}
-
-	return NumericAbbrevGetDatum(result);
-}
-
-#endif							/* NUMERIC_ABBREV_BITS == 32 */
 
 /*
  * Ordinary (non-sortsupport) comparisons follow.

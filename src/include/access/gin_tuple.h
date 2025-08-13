@@ -15,7 +15,9 @@
 #include "utils/sortsupport.h"
 
 /*
- * Data for one key in a GIN index.
+ * Data for one key in a GIN index.  (This is not the permanent in-index
+ * representation, but just a convenient format to use during the tuplesort
+ * stage of building a new GIN index.)
  */
 typedef struct GinTuple
 {

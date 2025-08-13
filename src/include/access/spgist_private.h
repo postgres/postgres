@@ -285,10 +285,12 @@ typedef struct SpGistCache
  * If the prefix datum is of a pass-by-value type, it is stored in its
  * Datum representation, that is its on-disk representation is of length
  * sizeof(Datum).  This is a fairly unfortunate choice, because in no other
- * place does Postgres use Datum as an on-disk representation; it creates
- * an unnecessary incompatibility between 32-bit and 64-bit builds.  But the
- * compatibility loss is mostly theoretical since MAXIMUM_ALIGNOF typically
- * differs between such builds, too.  Anyway we're stuck with it now.
+ * place does Postgres use Datum as an on-disk representation.  Formerly it
+ * meant an unnecessary incompatibility between 32-bit and 64-bit builds, and
+ * as of v19 it instead creates a hazard for binary upgrades on 32-bit builds.
+ * Fortunately, that hazard seems mostly theoretical for lack of affected
+ * opclasses.  Going forward, we will be using a fixed size of Datum so that
+ * there's no longer any pressing reason to change this.
  */
 typedef struct SpGistInnerTupleData
 {
@@ -377,8 +379,8 @@ typedef SpGistNodeTupleData *SpGistNodeTuple;
  *
  * size must be a multiple of MAXALIGN; also, it must be at least SGDTSIZE
  * so that the tuple can be converted to REDIRECT status later.  (This
- * restriction only adds bytes for a NULL leaf datum stored on a 32-bit
- * machine; otherwise alignment restrictions force it anyway.)
+ * restriction only adds bytes for a NULL leaf datum; otherwise alignment
+ * restrictions force it anyway.)
  */
 typedef struct SpGistLeafTupleData
 {

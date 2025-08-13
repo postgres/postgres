@@ -1671,14 +1671,13 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 		 *
 		 * Even apart from the risk of broken locales, it's possible that
 		 * there are platforms where the use of abbreviated keys should be
-		 * disabled at compile time.  Having only 4 byte datums could make
-		 * worst-case performance drastically more likely, for example.
-		 * Moreover, macOS's strxfrm() implementation is known to not
-		 * effectively concentrate a significant amount of entropy from the
-		 * original string in earlier transformed blobs.  It's possible that
-		 * other supported platforms are similarly encumbered.  So, if we ever
-		 * get past disabling this categorically, we may still want or need to
-		 * disable it for particular platforms.
+		 * disabled at compile time.  For example, macOS's strxfrm()
+		 * implementation is known to not effectively concentrate a
+		 * significant amount of entropy from the original string in earlier
+		 * transformed blobs.  It's possible that other supported platforms
+		 * are similarly encumbered.  So, if we ever get past disabling this
+		 * categorically, we may still want or need to disable it for
+		 * particular platforms.
 		 */
 		if (!pg_strxfrm_enabled(locale))
 			abbreviate = false;
@@ -2132,18 +2131,12 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 	addHyperLogLog(&sss->full_card, hash);
 
 	/* Hash abbreviated key */
-#if SIZEOF_DATUM == 8
 	{
-		uint32		lohalf,
-					hihalf;
+		uint32		tmp;
 
-		lohalf = (uint32) res;
-		hihalf = (uint32) (res >> 32);
-		hash = DatumGetUInt32(hash_uint32(lohalf ^ hihalf));
+		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
+		hash = DatumGetUInt32(hash_uint32(tmp));
 	}
-#else							/* SIZEOF_DATUM != 8 */
-	hash = DatumGetUInt32(hash_uint32((uint32) res));
-#endif
 
 	addHyperLogLog(&sss->abbr_card, hash);
 

@@ -481,33 +481,26 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 	Datum		res;
 
 	/*
-	 * On a 64-bit machine, zero out the 8-byte datum and copy the 6 bytes of
-	 * the MAC address in. There will be two bytes of zero padding on the end
-	 * of the least significant bits.
+	 * Zero out the 8-byte Datum and copy in the 6 bytes of the MAC address.
+	 * There will be two bytes of zero padding on the end of the least
+	 * significant bits.
 	 */
-#if SIZEOF_DATUM == 8
-	memset(&res, 0, SIZEOF_DATUM);
+	StaticAssertStmt(sizeof(res) >= sizeof(macaddr),
+					 "Datum is too small for macaddr");
+	memset(&res, 0, sizeof(res));
 	memcpy(&res, authoritative, sizeof(macaddr));
-#else							/* SIZEOF_DATUM != 8 */
-	memcpy(&res, authoritative, SIZEOF_DATUM);
-#endif
 	uss->input_count += 1;
 
 	/*
-	 * Cardinality estimation. The estimate uses uint32, so on a 64-bit
-	 * architecture, XOR the two 32-bit halves together to produce slightly
-	 * more entropy. The two zeroed bytes won't have any practical impact on
-	 * this operation.
+	 * Cardinality estimation. The estimate uses uint32, so XOR the two 32-bit
+	 * halves together to produce slightly more entropy. The two zeroed bytes
+	 * won't have any practical impact on this operation.
 	 */
 	if (uss->estimating)
 	{
 		uint32		tmp;
 
-#if SIZEOF_DATUM == 8
-		tmp = (uint32) res ^ (uint32) ((uint64) res >> 32);
-#else							/* SIZEOF_DATUM != 8 */
-		tmp = (uint32) res;
-#endif
+		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
 
 		addHyperLogLog(&uss->abbr_card, DatumGetUInt32(hash_uint32(tmp)));
 	}
