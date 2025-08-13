@@ -4365,7 +4365,7 @@ ALTER SERVER loopback2 OPTIONS (DROP parallel_abort);
 CREATE TABLE analyze_table (id int, a text, b bigint);
 
 CREATE FOREIGN TABLE analyze_ftable (id int, a text, b bigint)
-       SERVER loopback OPTIONS (table_name 'analyze_rtable1');
+       SERVER loopback OPTIONS (table_name 'analyze_table');
 
 INSERT INTO analyze_table (SELECT x FROM generate_series(1,1000) x);
 ANALYZE analyze_table;
@@ -4376,19 +4376,19 @@ ANALYZE analyze_table;
 ALTER SERVER loopback OPTIONS (analyze_sampling 'invalid');
 
 ALTER SERVER loopback OPTIONS (analyze_sampling 'auto');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'system');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'bernoulli');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'random');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 
 ALTER SERVER loopback OPTIONS (SET analyze_sampling 'off');
-ANALYZE analyze_table;
+ANALYZE analyze_ftable;
 
 -- cleanup
 DROP FOREIGN TABLE analyze_ftable;
