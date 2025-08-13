@@ -17,6 +17,8 @@
 <xsl:param name="use.extensions" select="1"></xsl:param>
 <xsl:param name="variablelist.as.blocks" select="1"></xsl:param>
 <xsl:param name="orderedlist.label.width">1.5em</xsl:param>
+<xsl:param name="body.start.indent">0</xsl:param>
+<xsl:param name="body.end.indent">0</xsl:param>
 
 <xsl:attribute-set name="monospace.verbatim.properties"
                    use-attribute-sets="verbatim.properties monospace.properties">
@@ -27,6 +29,8 @@
   <xsl:attribute name="border-style">solid</xsl:attribute>
   <xsl:attribute name="border-width">1pt</xsl:attribute>
   <xsl:attribute name="border-color">black</xsl:attribute>
+  <xsl:attribute name="margin-left">0.25in</xsl:attribute>
+  <xsl:attribute name="margin-right">0.25in</xsl:attribute>
   <xsl:attribute name="padding-start">12pt</xsl:attribute>
   <xsl:attribute name="padding-end">12pt</xsl:attribute>
   <xsl:attribute name="padding-top">6pt</xsl:attribute>
