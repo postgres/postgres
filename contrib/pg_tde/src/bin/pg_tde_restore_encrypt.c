@@ -118,7 +118,7 @@ usage(const char *progname)
 	printf(_("  DEST-PATH       path where the encrypted WAL segment should be written\n"));
 	printf(_("  RESTORE-COMMAND restore command to wrap, %%p will be replaced with the path\n"
 			 "                  where it should write the unencrypted WAL segment, %%f with\n"
-			 "					the WAL segment's name\n"));
+			 "                  the WAL segment's name\n"));
 	printf(_("\n"));
 	printf(_("Note that any %%f or %%p parameter in RESTORE-COMMAND will have to be escaped\n"
 			 "as %%%%f or %%%%p respectively if used as restore_command in postgresql.conf.\n"
