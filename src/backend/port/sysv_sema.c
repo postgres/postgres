@@ -73,7 +73,7 @@ static int	nextSemaNumber;		/* next free sem num in last sema set */
 
 
 static IpcSemaphoreId InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
-												 int numSems);
+												 int numSems, bool retry_ok);
 static void IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum,
 								   int value);
 static void IpcSemaphoreKill(IpcSemaphoreId semId);
@@ -92,9 +92,13 @@ static void ReleaseSemaphores(int status, Datum arg);
  * If we fail with a failure code other than collision-with-existing-set,
  * print out an error and abort.  Other types of errors suggest nonrecoverable
  * problems.
+ *
+ * Unfortunately, it's sometimes hard to tell whether errors are
+ * nonrecoverable.  Our caller keeps track of whether continuing to retry
+ * is sane or not; if not, we abort on failure regardless of the errno.
  */
 static IpcSemaphoreId
-InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
+InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems, bool retry_ok)
 {
 	int			semId;
 
@@ -105,16 +109,27 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 		int			saved_errno = errno;
 
 		/*
-		 * Fail quietly if error indicates a collision with existing set. One
-		 * would expect EEXIST, given that we said IPC_EXCL, but perhaps we
-		 * could get a permission violation instead?  Also, EIDRM might occur
-		 * if an old set is slated for destruction but not gone yet.
+		 * Fail quietly if error suggests a collision with an existing set and
+		 * our caller has not lost patience.
+		 *
+		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
+		 * we could get a permission violation instead.  On some platforms
+		 * EINVAL will be reported if the existing set has too few semaphores.
+		 * Also, EIDRM might occur if an old set is slated for destruction but
+		 * not gone yet.
+		 *
+		 * EINVAL is the key reason why we need the caller-level loop limit,
+		 * as it can also mean that the platform's SEMMSL is less than
+		 * numSems, and that condition can't be fixed by trying another key.
 		 */
-		if (saved_errno == EEXIST || saved_errno == EACCES
+		if (retry_ok &&
+			(saved_errno == EEXIST
+			 || saved_errno == EACCES
+			 || saved_errno == EINVAL
 #ifdef EIDRM
-			|| saved_errno == EIDRM
+			 || saved_errno == EIDRM
 #endif
-			)
+			 ))
 			return -1;
 
 		/*
@@ -211,17 +226,22 @@ IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum)
 static IpcSemaphoreId
 IpcSemaphoreCreate(int numSems)
 {
+	int			num_tries = 0;
 	IpcSemaphoreId semId;
 	union semun semun;
 	PGSemaphoreData mysema;
 
 	/* Loop till we find a free IPC key */
-	for (nextSemaKey++;; nextSemaKey++)
+	for (nextSemaKey++;; nextSemaKey++, num_tries++)
 	{
 		pid_t		creatorPID;
 
-		/* Try to create new semaphore set */
-		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1);
+		/*
+		 * Try to create new semaphore set.  Give up after trying 1000
+		 * distinct IPC keys.
+		 */
+		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1,
+										   num_tries < 1000);
 		if (semId >= 0)
 			break;				/* successful create */
 
@@ -258,7 +278,7 @@ IpcSemaphoreCreate(int numSems)
 		/*
 		 * Now try again to create the sema set.
 		 */
-		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1);
+		semId = InternalIpcSemaphoreCreate(nextSemaKey, numSems + 1, true);
 		if (semId >= 0)
 			break;				/* successful create */
 
