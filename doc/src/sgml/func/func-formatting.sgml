@@ -180,6 +180,8 @@
     <table id="functions-formatting-datetime-table">
      <title>Template Patterns for Date/Time Formatting</title>
      <tgroup cols="2">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="3*"/>
       <thead>
        <row>
         <entry>Pattern</entry>
@@ -773,6 +775,8 @@
     <table id="functions-formatting-numeric-table">
      <title>Template Patterns for Numeric Formatting</title>
      <tgroup cols="2">
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="3*"/>
       <thead>
        <row>
         <entry>Pattern</entry>

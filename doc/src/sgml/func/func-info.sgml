@@ -2192,6 +2192,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
   <table id="functions-info-index-column-props">
    <title>Index Column Properties</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="3*"/>
     <thead>
      <row><entry>Name</entry><entry>Description</entry></row>
     </thead>
@@ -2251,6 +2253,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
   <table id="functions-info-index-props">
    <title>Index Properties</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="3*"/>
     <thead>
      <row><entry>Name</entry><entry>Description</entry></row>
     </thead>
@@ -2284,6 +2288,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
   <table id="functions-info-indexam-props">
    <title>Index Access Method Properties</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="3*"/>
     <thead>
      <row><entry>Name</entry><entry>Description</entry></row>
     </thead>
@@ -2323,6 +2329,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
   <table id="functions-pg-settings-flags">
    <title>GUC Flags</title>
    <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="3*"/>
     <thead>
      <row><entry>Flag</entry><entry>Description</entry></row>
     </thead>
@@ -2992,6 +3000,8 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
    <table id="functions-pg-snapshot-parts">
     <title>Snapshot Components</title>
     <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Name</entry>

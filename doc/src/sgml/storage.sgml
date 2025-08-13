@@ -39,6 +39,8 @@ these required items, the cluster configuration files
 <table tocentry="1" id="pgdata-contents-table">
 <title>Contents of <varname>PGDATA</varname></title>
 <tgroup cols="2">
+ <colspec colname="col1" colwidth="1*"/>
+ <colspec colname="col2" colwidth="2*"/>
 <thead>
 <row>
 <entry>
@@ -743,6 +745,8 @@ There are five parts to each page.
 <title>Overall Page Layout</title>
 <titleabbrev>Page Layout</titleabbrev>
 <tgroup cols="2">
+ <colspec colname="col1" colwidth="1*"/>
+ <colspec colname="col2" colwidth="2*"/>
 <thead>
 <row>
 <entry>

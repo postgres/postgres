@@ -1084,6 +1084,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Atoms</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Atom</entry>
@@ -1166,6 +1168,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Quantifiers</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Quantifier</entry>
@@ -1270,6 +1274,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Constraints</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Constraint</entry>
@@ -1508,6 +1514,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Character-Entry Escapes</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Escape</entry>
@@ -1649,7 +1657,9 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Class-Shorthand Escapes</title>
 
     <tgroup cols="2">
-     <thead>
+      <colspec colname="col1" colwidth="1*"/>
+      <colspec colname="col2" colwidth="3*"/>
+      <thead>
       <row>
        <entry>Escape</entry>
        <entry>Description</entry>
@@ -1708,6 +1718,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Constraint Escapes</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Escape</entry>
@@ -1764,6 +1776,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>Regular Expression Back References</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Escape</entry>
@@ -1845,6 +1859,8 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
     <title>ARE Embedded-Option Letters</title>
 
     <tgroup cols="2">
+     <colspec colname="col1" colwidth="1*"/>
+     <colspec colname="col2" colwidth="3*"/>
      <thead>
       <row>
        <entry>Option</entry>
