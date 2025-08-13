@@ -609,11 +609,11 @@ typedef signed int Offset;
 typedef float float4;
 typedef double float8;
 
-#ifdef USE_FLOAT8_BYVAL
+/*
+ * float8, int8, and related datatypes are now always pass-by-value.
+ * We keep this symbol to avoid breaking extension code that may use it.
+ */
 #define FLOAT8PASSBYVAL true
-#else
-#define FLOAT8PASSBYVAL false
-#endif
 
 /*
  * Oid, RegProcedure, TransactionId, SubTransactionId, MultiXactId,

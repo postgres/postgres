@@ -469,7 +469,7 @@ typedef struct
 	int			funcmaxargs;	/* FUNC_MAX_ARGS */
 	int			indexmaxkeys;	/* INDEX_MAX_KEYS */
 	int			namedatalen;	/* NAMEDATALEN */
-	int			float8byval;	/* FLOAT8PASSBYVAL */
+	int			float8byval;	/* FLOAT8PASSBYVAL (now vestigial) */
 	char		abi_extra[32];	/* see pg_config_manual.h */
 } Pg_abi_values;
 

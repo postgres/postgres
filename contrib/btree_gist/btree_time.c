@@ -31,13 +31,6 @@ PG_FUNCTION_INFO_V1(gbt_time_sortsupport);
 PG_FUNCTION_INFO_V1(gbt_timetz_sortsupport);
 
 
-#ifdef USE_FLOAT8_BYVAL
-#define TimeADTGetDatumFast(X) TimeADTGetDatum(X)
-#else
-#define TimeADTGetDatumFast(X) PointerGetDatum(&(X))
-#endif
-
-
 static bool
 gbt_timegt(const void *a, const void *b, FmgrInfo *flinfo)
 {
@@ -45,8 +38,8 @@ gbt_timegt(const void *a, const void *b, FmgrInfo *flinfo)
 	const TimeADT *bb = (const TimeADT *) b;
 
 	return DatumGetBool(DirectFunctionCall2(time_gt,
-											TimeADTGetDatumFast(*aa),
-											TimeADTGetDatumFast(*bb)));
+											TimeADTGetDatum(*aa),
+											TimeADTGetDatum(*bb)));
 }
 
 static bool
@@ -56,8 +49,8 @@ gbt_timege(const void *a, const void *b, FmgrInfo *flinfo)
 	const TimeADT *bb = (const TimeADT *) b;
 
 	return DatumGetBool(DirectFunctionCall2(time_ge,
-											TimeADTGetDatumFast(*aa),
-											TimeADTGetDatumFast(*bb)));
+											TimeADTGetDatum(*aa),
+											TimeADTGetDatum(*bb)));
 }
 
 static bool
@@ -67,8 +60,8 @@ gbt_timeeq(const void *a, const void *b, FmgrInfo *flinfo)
 	const TimeADT *bb = (const TimeADT *) b;
 
 	return DatumGetBool(DirectFunctionCall2(time_eq,
-											TimeADTGetDatumFast(*aa),
-											TimeADTGetDatumFast(*bb)));
+											TimeADTGetDatum(*aa),
+											TimeADTGetDatum(*bb)));
 }
 
 static bool
@@ -78,8 +71,8 @@ gbt_timele(const void *a, const void *b, FmgrInfo *flinfo)
 	const TimeADT *bb = (const TimeADT *) b;
 
 	return DatumGetBool(DirectFunctionCall2(time_le,
-											TimeADTGetDatumFast(*aa),
-											TimeADTGetDatumFast(*bb)));
+											TimeADTGetDatum(*aa),
+											TimeADTGetDatum(*bb)));
 }
 
 static bool
@@ -89,8 +82,8 @@ gbt_timelt(const void *a, const void *b, FmgrInfo *flinfo)
 	const TimeADT *bb = (const TimeADT *) b;
 
 	return DatumGetBool(DirectFunctionCall2(time_lt,
-											TimeADTGetDatumFast(*aa),
-											TimeADTGetDatumFast(*bb)));
+											TimeADTGetDatum(*aa),
+											TimeADTGetDatum(*bb)));
 }
 
 static int
@@ -100,9 +93,9 @@ gbt_timekey_cmp(const void *a, const void *b, FmgrInfo *flinfo)
 	timeKEY    *ib = (timeKEY *) (((const Nsrt *) b)->t);
 	int			res;
 
-	res = DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->lower), TimeADTGetDatumFast(ib->lower)));
+	res = DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatum(ia->lower), TimeADTGetDatum(ib->lower)));
 	if (res == 0)
-		return DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatumFast(ia->upper), TimeADTGetDatumFast(ib->upper)));
+		return DatumGetInt32(DirectFunctionCall2(time_cmp, TimeADTGetDatum(ia->upper), TimeADTGetDatum(ib->upper)));
 
 	return res;
 }
@@ -115,8 +108,8 @@ gbt_time_dist(const void *a, const void *b, FmgrInfo *flinfo)
 	Interval   *i;
 
 	i = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
-											  TimeADTGetDatumFast(*aa),
-											  TimeADTGetDatumFast(*bb)));
+											  TimeADTGetDatum(*aa),
+											  TimeADTGetDatum(*bb)));
 	return fabs(INTERVAL_TO_SEC(i));
 }
 
@@ -279,14 +272,14 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	double		res2;
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
-												 TimeADTGetDatumFast(newentry->upper),
-												 TimeADTGetDatumFast(origentry->upper)));
+												 TimeADTGetDatum(newentry->upper),
+												 TimeADTGetDatum(origentry->upper)));
 	res = INTERVAL_TO_SEC(intr);
 	res = Max(res, 0);
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
-												 TimeADTGetDatumFast(origentry->lower),
-												 TimeADTGetDatumFast(newentry->lower)));
+												 TimeADTGetDatum(origentry->lower),
+												 TimeADTGetDatum(newentry->lower)));
 	res2 = INTERVAL_TO_SEC(intr);
 	res2 = Max(res2, 0);
 
@@ -297,8 +290,8 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	if (res > 0)
 	{
 		intr = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
-													 TimeADTGetDatumFast(origentry->upper),
-													 TimeADTGetDatumFast(origentry->lower)));
+													 TimeADTGetDatum(origentry->upper),
+													 TimeADTGetDatum(origentry->lower)));
 		*result += FLT_MIN;
 		*result += (float) (res / (res + INTERVAL_TO_SEC(intr)));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
@@ -334,8 +327,8 @@ gbt_timekey_ssup_cmp(Datum x, Datum y, SortSupport ssup)
 
 	/* for leaf items we expect lower == upper, so only compare lower */
 	return DatumGetInt32(DirectFunctionCall2(time_cmp,
-											 TimeADTGetDatumFast(arg1->lower),
-											 TimeADTGetDatumFast(arg2->lower)));
+											 TimeADTGetDatum(arg1->lower),
+											 TimeADTGetDatum(arg2->lower)));
 }
 
 Datum

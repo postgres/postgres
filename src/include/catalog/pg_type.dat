@@ -54,7 +54,7 @@
   typcollation => 'C' },
 { oid => '20', array_type_oid => '1016',
   descr => '~18 digit integer, 8-byte storage',
-  typname => 'int8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'int8', typlen => '8', typbyval => 't',
   typcategory => 'N', typinput => 'int8in', typoutput => 'int8out',
   typreceive => 'int8recv', typsend => 'int8send', typalign => 'd' },
 { oid => '21', array_type_oid => '1005',
@@ -172,7 +172,7 @@
   typoutput => 'pg_ddl_command_out', typreceive => 'pg_ddl_command_recv',
   typsend => 'pg_ddl_command_send', typalign => 'ALIGNOF_POINTER' },
 { oid => '5069', array_type_oid => '271', descr => 'full transaction id',
-  typname => 'xid8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'xid8', typlen => '8', typbyval => 't',
   typcategory => 'U', typinput => 'xid8in', typoutput => 'xid8out',
   typreceive => 'xid8recv', typsend => 'xid8send', typalign => 'd' },
 
@@ -222,7 +222,7 @@
   typsend => 'float4send', typalign => 'i' },
 { oid => '701', array_type_oid => '1022',
   descr => 'double-precision floating point number, 8-byte storage',
-  typname => 'float8', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'float8', typlen => '8', typbyval => 't',
   typcategory => 'N', typispreferred => 't', typinput => 'float8in',
   typoutput => 'float8out', typreceive => 'float8recv', typsend => 'float8send',
   typalign => 'd' },
@@ -237,7 +237,7 @@
   typreceive => 'circle_recv', typsend => 'circle_send', typalign => 'd' },
 { oid => '790', array_type_oid => '791',
   descr => 'monetary amounts, $d,ddd.cc',
-  typname => 'money', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'money', typlen => '8', typbyval => 't',
   typcategory => 'N', typinput => 'cash_in', typoutput => 'cash_out',
   typreceive => 'cash_recv', typsend => 'cash_send', typalign => 'd' },
 
@@ -290,7 +290,7 @@
   typinput => 'date_in', typoutput => 'date_out', typreceive => 'date_recv',
   typsend => 'date_send', typalign => 'i' },
 { oid => '1083', array_type_oid => '1183', descr => 'time of day',
-  typname => 'time', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'time', typlen => '8', typbyval => 't',
   typcategory => 'D', typinput => 'time_in', typoutput => 'time_out',
   typreceive => 'time_recv', typsend => 'time_send', typmodin => 'timetypmodin',
   typmodout => 'timetypmodout', typalign => 'd' },
@@ -298,14 +298,14 @@
 # OIDS 1100 - 1199
 
 { oid => '1114', array_type_oid => '1115', descr => 'date and time',
-  typname => 'timestamp', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'timestamp', typlen => '8', typbyval => 't',
   typcategory => 'D', typinput => 'timestamp_in', typoutput => 'timestamp_out',
   typreceive => 'timestamp_recv', typsend => 'timestamp_send',
   typmodin => 'timestamptypmodin', typmodout => 'timestamptypmodout',
   typalign => 'd' },
 { oid => '1184', array_type_oid => '1185',
   descr => 'date and time with time zone',
-  typname => 'timestamptz', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'timestamptz', typlen => '8', typbyval => 't',
   typcategory => 'D', typispreferred => 't', typinput => 'timestamptz_in',
   typoutput => 'timestamptz_out', typreceive => 'timestamptz_recv',
   typsend => 'timestamptz_send', typmodin => 'timestamptztypmodin',
@@ -413,7 +413,7 @@
 
 # pg_lsn
 { oid => '3220', array_type_oid => '3221', descr => 'PostgreSQL LSN',
-  typname => 'pg_lsn', typlen => '8', typbyval => 'FLOAT8PASSBYVAL',
+  typname => 'pg_lsn', typlen => '8', typbyval => 't',
   typcategory => 'U', typinput => 'pg_lsn_in', typoutput => 'pg_lsn_out',
   typreceive => 'pg_lsn_recv', typsend => 'pg_lsn_send', typalign => 'd' },
 

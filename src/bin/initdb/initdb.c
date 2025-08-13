@@ -1580,9 +1580,6 @@ bootstrap_template1(void)
 	bki_lines = replace_token(bki_lines, "ALIGNOF_POINTER",
 							  (sizeof(Pointer) == 4) ? "i" : "d");
 
-	bki_lines = replace_token(bki_lines, "FLOAT8PASSBYVAL",
-							  FLOAT8PASSBYVAL ? "true" : "false");
-
 	bki_lines = replace_token(bki_lines, "POSTGRES",
 							  escape_quotes_bki(username));
 

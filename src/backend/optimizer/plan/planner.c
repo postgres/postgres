@@ -4915,7 +4915,7 @@ create_partial_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
 													sizeof(int64),
 													Int64GetDatum(1), false,
-													FLOAT8PASSBYVAL);
+													true);
 
 					/*
 					 * Apply a LimitPath onto the partial path to restrict the
@@ -5118,7 +5118,7 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
 													sizeof(int64),
 													Int64GetDatum(1), false,
-													FLOAT8PASSBYVAL);
+													true);
 
 					/*
 					 * If the query already has a LIMIT clause, then we could

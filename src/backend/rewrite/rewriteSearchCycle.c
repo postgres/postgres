@@ -320,7 +320,7 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 		if (cte->search_clause->search_breadth_first)
 		{
 			search_col_rowexpr->args = lcons(makeConst(INT8OID, -1, InvalidOid, sizeof(int64),
-													   Int64GetDatum(0), false, FLOAT8PASSBYVAL),
+													   Int64GetDatum(0), false, true),
 											 search_col_rowexpr->args);
 			search_col_rowexpr->colnames = lcons(makeString("*DEPTH*"), search_col_rowexpr->colnames);
 			texpr = (Expr *) search_col_rowexpr;

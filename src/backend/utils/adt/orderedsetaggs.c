@@ -1007,7 +1007,7 @@ percentile_cont_float8_multi_final(PG_FUNCTION_ARGS)
 											  FLOAT8OID,
 	/* hard-wired info on type float8 */
 											  sizeof(float8),
-											  FLOAT8PASSBYVAL,
+											  true,
 											  TYPALIGN_DOUBLE,
 											  float8_lerp);
 }

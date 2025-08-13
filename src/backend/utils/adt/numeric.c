@@ -6362,6 +6362,7 @@ numeric_poly_stddev_pop(PG_FUNCTION_ARGS)
 Datum
 int2_sum(PG_FUNCTION_ARGS)
 {
+	int64		oldsum;
 	int64		newval;
 
 	if (PG_ARGISNULL(0))
@@ -6374,43 +6375,22 @@ int2_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-	/*
-	 * If we're invoked as an aggregate, we can cheat and modify our first
-	 * parameter in-place to avoid palloc overhead. If not, we need to return
-	 * the new value of the transition variable. (If int8 is pass-by-value,
-	 * then of course this is useless as well as incorrect, so just ifdef it
-	 * out.)
-	 */
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (AggCheckCallContext(fcinfo, NULL))
-	{
-		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
+	oldsum = PG_GETARG_INT64(0);
 
-		/* Leave the running sum unchanged in the new input is null */
-		if (!PG_ARGISNULL(1))
-			*oldsum = *oldsum + (int64) PG_GETARG_INT16(1);
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_INT64(oldsum);
 
-		PG_RETURN_POINTER(oldsum);
-	}
-	else
-#endif
-	{
-		int64		oldsum = PG_GETARG_INT64(0);
+	/* OK to do the addition. */
+	newval = oldsum + (int64) PG_GETARG_INT16(1);
 
-		/* Leave sum unchanged if new input is null. */
-		if (PG_ARGISNULL(1))
-			PG_RETURN_INT64(oldsum);
-
-		/* OK to do the addition. */
-		newval = oldsum + (int64) PG_GETARG_INT16(1);
-
-		PG_RETURN_INT64(newval);
-	}
+	PG_RETURN_INT64(newval);
 }
 
 Datum
 int4_sum(PG_FUNCTION_ARGS)
 {
+	int64		oldsum;
 	int64		newval;
 
 	if (PG_ARGISNULL(0))
@@ -6423,38 +6403,16 @@ int4_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_INT64(newval);
 	}
 
-	/*
-	 * If we're invoked as an aggregate, we can cheat and modify our first
-	 * parameter in-place to avoid palloc overhead. If not, we need to return
-	 * the new value of the transition variable. (If int8 is pass-by-value,
-	 * then of course this is useless as well as incorrect, so just ifdef it
-	 * out.)
-	 */
-#ifndef USE_FLOAT8_BYVAL		/* controls int8 too */
-	if (AggCheckCallContext(fcinfo, NULL))
-	{
-		int64	   *oldsum = (int64 *) PG_GETARG_POINTER(0);
+	oldsum = PG_GETARG_INT64(0);
 
-		/* Leave the running sum unchanged in the new input is null */
-		if (!PG_ARGISNULL(1))
-			*oldsum = *oldsum + (int64) PG_GETARG_INT32(1);
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_INT64(oldsum);
 
-		PG_RETURN_POINTER(oldsum);
-	}
-	else
-#endif
-	{
-		int64		oldsum = PG_GETARG_INT64(0);
+	/* OK to do the addition. */
+	newval = oldsum + (int64) PG_GETARG_INT32(1);
 
-		/* Leave sum unchanged if new input is null. */
-		if (PG_ARGISNULL(1))
-			PG_RETURN_INT64(oldsum);
-
-		/* OK to do the addition. */
-		newval = oldsum + (int64) PG_GETARG_INT32(1);
-
-		PG_RETURN_INT64(newval);
-	}
+	PG_RETURN_INT64(newval);
 }
 
 /*

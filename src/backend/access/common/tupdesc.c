@@ -993,7 +993,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 
 		case INT8OID:
 			att->attlen = 8;
-			att->attbyval = FLOAT8PASSBYVAL;
+			att->attbyval = true;
 			att->attalign = TYPALIGN_DOUBLE;
 			att->attstorage = TYPSTORAGE_PLAIN;
 			att->attcompression = InvalidCompressionMethod;

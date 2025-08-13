@@ -1054,8 +1054,7 @@ sub morph_row_for_schemapg
 		}
 
 		# Expand booleans from 'f'/'t' to 'false'/'true'.
-		# Some values might be other macros (eg FLOAT8PASSBYVAL),
-		# don't change.
+		# Some values might be other macros, if so don't change.
 		elsif ($atttype eq 'bool')
 		{
 			$row->{$attname} = 'true' if $row->{$attname} eq 't';

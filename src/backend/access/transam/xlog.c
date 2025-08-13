@@ -4390,7 +4390,7 @@ WriteControlFile(void)
 	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
 	ControlFile->loblksize = LOBLKSIZE;
 
-	ControlFile->float8ByVal = FLOAT8PASSBYVAL;
+	ControlFile->float8ByVal = true;	/* vestigial */
 
 	/*
 	 * Initialize the default 'char' signedness.
@@ -4651,23 +4651,7 @@ ReadControlFile(void)
 						   "LOBLKSIZE", (int) LOBLKSIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 
-#ifdef USE_FLOAT8_BYVAL
-	if (ControlFile->float8ByVal != true)
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized without USE_FLOAT8_BYVAL"
-						   " but the server was compiled with USE_FLOAT8_BYVAL."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#else
-	if (ControlFile->float8ByVal != false)
-		ereport(FATAL,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("database files are incompatible with server"),
-				 errdetail("The database cluster was initialized with USE_FLOAT8_BYVAL"
-						   " but the server was compiled without USE_FLOAT8_BYVAL."),
-				 errhint("It looks like you need to recompile or initdb.")));
-#endif
+	Assert(ControlFile->float8ByVal);	/* vestigial, not worth an error msg */
 
 	wal_segment_size = ControlFile->xlog_seg_size;
 

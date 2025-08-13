@@ -408,7 +408,7 @@ make_const(ParseState *pstate, A_Const *aconst)
 
 						typeid = INT8OID;
 						typelen = sizeof(int64);
-						typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
+						typebyval = true;
 					}
 				}
 				else
