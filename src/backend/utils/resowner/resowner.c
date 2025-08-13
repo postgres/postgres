@@ -231,11 +231,8 @@ hash_resource_elem(Datum value, const ResourceOwnerDesc *kind)
 	 * 'kind' into the hash.  Just add it with hash_combine(), it perturbs the
 	 * result enough for our purposes.
 	 */
-#if SIZEOF_DATUM == 8
-	return hash_combine64(murmurhash64((uint64) value), (uint64) kind);
-#else
-	return hash_combine(murmurhash32((uint32) value), (uint32) kind);
-#endif
+	return hash_combine64(murmurhash64((uint64) value),
+						  (uint64) (uintptr_t) kind);
 }
 
 /*

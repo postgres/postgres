@@ -58,15 +58,22 @@
 
 /*
  * A Datum contains either a value of a pass-by-value type or a pointer to a
- * value of a pass-by-reference type.  Therefore, we require:
- *
- * sizeof(Datum) == sizeof(void *) == 4 or 8
+ * value of a pass-by-reference type.  Therefore, we must have
+ * sizeof(Datum) >= sizeof(void *).  No current or foreseeable Postgres
+ * platform has pointers wider than 8 bytes, and standardizing on Datum being
+ * exactly 8 bytes has advantages in reducing cross-platform differences.
  *
  * The functions below and the analogous functions for other types should be used to
  * convert between a Datum and the appropriate C type.
  */
 
-typedef uintptr_t Datum;
+typedef uint64_t Datum;
+
+/*
+ * This symbol is now vestigial, but we continue to define it so as not to
+ * unnecessarily break extension code.
+ */
+#define SIZEOF_DATUM 8
 
 /*
  * A NullableDatum is used in places where both a Datum and its nullness needs
@@ -82,8 +89,6 @@ typedef struct NullableDatum
 	bool		isnull;
 	/* due to alignment padding this could be used for flags for free */
 } NullableDatum;
-
-#define SIZEOF_DATUM SIZEOF_VOID_P
 
 /*
  * DatumGetBool
@@ -316,7 +321,7 @@ CommandIdGetDatum(CommandId X)
 static inline Pointer
 DatumGetPointer(Datum X)
 {
-	return (Pointer) X;
+	return (Pointer) (uintptr_t) X;
 }
 
 /*
@@ -326,7 +331,7 @@ DatumGetPointer(Datum X)
 static inline Datum
 PointerGetDatum(const void *X)
 {
-	return (Datum) X;
+	return (Datum) (uintptr_t) X;
 }
 
 /*

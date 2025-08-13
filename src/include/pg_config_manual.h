@@ -74,17 +74,12 @@
 #define PARTITION_MAX_KEYS	32
 
 /*
- * Decide whether built-in 8-byte types, including float8, int8, and
- * timestamp, are passed by value.  This is on by default if sizeof(Datum) >=
- * 8 (that is, on 64-bit platforms).  If sizeof(Datum) < 8 (32-bit platforms),
- * this must be off.  We keep this here as an option so that it is easy to
- * test the pass-by-reference code paths on 64-bit platforms.
- *
- * Changing this requires an initdb.
+ * This symbol is now vestigial: built-in 8-byte types, including float8,
+ * int8, and timestamp, are always passed by value since we require Datum
+ * to be wide enough to permit that.  We continue to define the symbol here
+ * so as not to unnecessarily break extension code.
  */
-#if SIZEOF_VOID_P >= 8
 #define USE_FLOAT8_BYVAL 1
-#endif
 
 
 /*

@@ -188,6 +188,8 @@ castNodeImpl(NodeTag type, void *ptr)
  * ----------------------------------------------------------------
  */
 
+#ifndef FRONTEND
+
 /*
  * nodes/{outfuncs.c,print.c}
  */
@@ -198,7 +200,7 @@ extern void outNode(struct StringInfoData *str, const void *obj);
 extern void outToken(struct StringInfoData *str, const char *s);
 extern void outBitmapset(struct StringInfoData *str,
 						 const struct Bitmapset *bms);
-extern void outDatum(struct StringInfoData *str, uintptr_t value,
+extern void outDatum(struct StringInfoData *str, Datum value,
 					 int typlen, bool typbyval);
 extern char *nodeToString(const void *obj);
 extern char *nodeToStringWithLocations(const void *obj);
@@ -212,7 +214,7 @@ extern void *stringToNode(const char *str);
 extern void *stringToNodeWithLocations(const char *str);
 #endif
 extern struct Bitmapset *readBitmapset(void);
-extern uintptr_t readDatum(bool typbyval);
+extern Datum readDatum(bool typbyval);
 extern bool *readBoolCols(int numCols);
 extern int *readIntCols(int numCols);
 extern Oid *readOidCols(int numCols);
@@ -234,6 +236,8 @@ extern void *copyObjectImpl(const void *from);
  * nodes/equalfuncs.c
  */
 extern bool equal(const void *a, const void *b);
+
+#endif							/* !FRONTEND */
 
 
 /*
