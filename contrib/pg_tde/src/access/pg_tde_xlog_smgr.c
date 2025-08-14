@@ -23,7 +23,6 @@
 #ifdef FRONTEND
 #include "pg_tde_fe.h"
 #else
-#include "pg_tde_guc.h"
 #include "port/atomics.h"
 #endif
 
@@ -138,11 +137,8 @@ TDEXLogEncryptStateSize(void)
 	Size		sz;
 
 	sz = sizeof(EncryptionStateData);
-	if (EncryptXLog)
-	{
-		sz = add_size(sz, TDEXLogEncryptBuffSize());
-		sz = add_size(sz, PG_IO_ALIGN_SIZE);
-	}
+	sz = add_size(sz, TDEXLogEncryptBuffSize());
+	sz = add_size(sz, PG_IO_ALIGN_SIZE);
 
 	return sz;
 }
@@ -169,12 +165,9 @@ TDEXLogShmemInit(void)
 
 	memset(EncryptionState, 0, sizeof(EncryptionStateData));
 
-	if (EncryptXLog)
-	{
-		EncryptionBuf = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, ((char *) EncryptionState) + sizeof(EncryptionStateData));
+	EncryptionBuf = (char *) TYPEALIGN(PG_IO_ALIGN_SIZE, ((char *) EncryptionState) + sizeof(EncryptionStateData));
 
-		Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionBuf + TDEXLogEncryptBuffSize());
-	}
+	Assert((char *) EncryptionState + TDEXLogEncryptStateSize() >= (char *) EncryptionBuf + TDEXLogEncryptBuffSize());
 
 	pg_atomic_init_u64(&EncryptionState->enc_key_lsn, 0);
 
@@ -367,12 +360,8 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 	{
 		WALKeyCacheRec *last_key = pg_tde_get_last_wal_key();
 
-		if (!crashRecovery || EncryptionKey.type == WAL_KEY_TYPE_UNENCRYPTED)
+		if (!crashRecovery)
 		{
-			/*
-			 * TODO: the unencrypted case is still not perfect, we need to
-			 * report an error in some cornercases
-			 */
 			if (last_key == NULL || last_key->start.lsn < loc.lsn)
 			{
 				pg_tde_wal_last_key_set_location(loc);
@@ -383,7 +372,7 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 		}
 	}
 
-	if ((!afterWriteKey || !lastKeyUsable) && EncryptionKey.type == WAL_KEY_TYPE_ENCRYPTED)
+	if ((!afterWriteKey || !lastKeyUsable) && EncryptionKey.type != WAL_KEY_TYPE_INVALID)
 	{
 		return TDEXLogWriteEncryptedPagesOldKeys(fd, buf, count, offset, tli, segno, segSize);
 	}
