@@ -72,7 +72,7 @@ task:
   # push-wait-for-ci cycle time a bit when debugging operating system specific
   # failures. Uses skip instead of only_if, as cirrus otherwise warns about
   # only_if conditions not matching.
-  skip: $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:.*'
+  skip: $CI_SANITYCHECK_ENABLED == false
 
   env:
     CPUS: 4
@@ -167,7 +167,7 @@ task:
   <<: *freebsd_task_template
 
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
+  only_if: $CI_FREEBSD_ENABLED
 
   sysinfo_script: |
     id
@@ -258,7 +258,7 @@ task:
     - name: NetBSD - Meson
       # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star
       trigger_type: $CI_TRIGGER_TYPE_NETBSD
-      only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*netbsd.*'
+      only_if: $CI_NETBSD_ENABLED
       env:
         OS_NAME: netbsd
         IMAGE_FAMILY: pg-ci-netbsd-postgres
@@ -277,7 +277,7 @@ task:
     - name: OpenBSD - Meson
       # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star
       trigger_type: $CI_TRIGGER_TYPE_OPENBSD
-      only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*openbsd.*'
+      only_if: $CI_OPENBSD_ENABLED
       env:
         OS_NAME: openbsd
         IMAGE_FAMILY: pg-ci-openbsd-postgres
@@ -417,7 +417,7 @@ task:
   <<: *linux_task_template
 
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
+  only_if: $CI_LINUX_ENABLED
 
   ccache_cache:
     folder: ${CCACHE_DIR}
@@ -616,7 +616,7 @@ task:
   <<: *macos_task_template
 
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
+  only_if: $CI_MACOS_ENABLED
 
   sysinfo_script: |
     id
@@ -722,7 +722,7 @@ task:
   <<: *windows_task_template
 
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
+  only_if: $CI_WINDOWS_ENABLED
 
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
@@ -761,7 +761,7 @@ task:
   trigger_type: $CI_TRIGGER_TYPE_MINGW
 
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*mingw.*'
+  only_if: $CI_MINGW_ENABLED
 
   env:
     TEST_JOBS: 4 # higher concurrency causes occasional failures
@@ -815,10 +815,9 @@ task:
 
   # To limit unnecessary work only run this once the SanityCheck
   # succeeds. This is particularly important for this task as we intentionally
-  # use always: to continue after failures. Task that did not run count as a
-  # success, so we need to recheck SanityChecks's condition here ...
+  # use always: to continue after failures.
   depends_on: SanityCheck
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*'
+  only_if: $CI_COMPILERWARNINGS_ENABLED
 
   env:
     CPUS: 4
