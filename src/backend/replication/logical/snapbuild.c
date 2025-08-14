@@ -2061,7 +2061,7 @@ SnapBuildSnapshotExists(XLogRecPtr lsn)
 	int			ret;
 	struct stat stat_buf;
 
-	sprintf(path, "%s/%08X-%08X.snap",
+	sprintf(path, "%s/%X-%X.snap",
 			PG_LOGICAL_SNAPSHOTS_DIR,
 			LSN_FORMAT_ARGS(lsn));
 
