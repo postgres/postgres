@@ -1099,7 +1099,8 @@ EstimateClientConnectionInfoSpace(void)
  * Serialize MyClientConnectionInfo for use by parallel workers.
  */
 void
-SerializeClientConnectionInfo(Size maxsize, char *start_address)
+SerializeClientConnectionInfo(Size maxsize PG_USED_FOR_ASSERTS_ONLY,
+							  char *start_address)
 {
 	SerializedClientConnectionInfo serialized = {0};
 
