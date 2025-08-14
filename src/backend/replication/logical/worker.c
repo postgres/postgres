@@ -4587,7 +4587,7 @@ wait_for_local_flush(RetainDeadTuplesData *rdt_data)
 	MyLogicalRepWorker->oldest_nonremovable_xid = rdt_data->candidate_xid;
 	SpinLockRelease(&MyLogicalRepWorker->relmutex);
 
-	elog(DEBUG2, "confirmed flush up to remote lsn %X/%X: new oldest_nonremovable_xid %u",
+	elog(DEBUG2, "confirmed flush up to remote lsn %X/%08X: new oldest_nonremovable_xid %u",
 		 LSN_FORMAT_ARGS(rdt_data->remote_lsn),
 		 rdt_data->candidate_xid);
 
