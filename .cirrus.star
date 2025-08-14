@@ -7,7 +7,7 @@ https://github.com/bazelbuild/starlark/blob/master/spec.md
 See also .cirrus.yml and src/tools/ci/README
 """
 
-load("cirrus", "env", "fs", "yaml")
+load("cirrus", "env", "fs", "re", "yaml")
 
 
 def main():
@@ -66,6 +66,7 @@ def main():
 def compute_environment_vars():
     cenv = {}
 
+    ###
     # Some tasks are manually triggered by default because they might use too
     # many resources for users of free Cirrus credits, but they can be
     # triggered automatically by naming them in an environment variable e.g.
@@ -82,6 +83,33 @@ def compute_environment_vars():
         else:
             value = 'manual'
         cenv[name] = value
+    ###
+
+    ###
+    # Parse "ci-os-only:" tag in commit message and set
+    # CI_{$OS}_ENABLED variable for each OS
+
+    operating_systems = [
+      'freebsd',
+      'linux',
+      'macos',
+      'windows',
+    ]
+    commit_message = env.get('CIRRUS_CHANGE_MESSAGE')
+    match_re = r"(^|.*\n)ci-os-only: ([^\n]+)($|\n.*)"
+
+    # re.match() returns an array with a tuple of (matched-string, match_1, ...)
+    m = re.match(match_re, commit_message)
+    if m and len(m) > 0:
+        os_only = m[0][2]
+        os_only_list = re.split(r'[, ]+', os_only)
+    else:
+        os_only_list = operating_systems
+
+    for os in operating_systems:
+        os_enabled = os in os_only_list
+        cenv['CI_{0}_ENABLED'.format(os.upper())] = os_enabled
+    ###
 
     return cenv
 

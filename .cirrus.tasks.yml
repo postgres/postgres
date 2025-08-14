@@ -47,7 +47,7 @@ task:
 
   <<: *freebsd_task_template
 
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
+  only_if: $CI_FREEBSD_ENABLED
 
   sysinfo_script: |
     id
@@ -153,7 +153,7 @@ task:
 
   <<: *linux_task_template
 
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
+  only_if: $CI_LINUX_ENABLED
 
   ccache_cache:
     folder: ${CCACHE_DIR}
@@ -239,7 +239,7 @@ task:
 
   <<: *macos_task_template
 
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
+  only_if: $CI_MACOS_ENABLED
 
   sysinfo_script: |
     id
@@ -389,7 +389,7 @@ task:
 
   <<: *windows_task_template
 
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
+  only_if: $CI_WINDOWS_ENABLED
 
   sysinfo_script: |
     chcp
@@ -476,7 +476,7 @@ task:
 
   # task that did not run, count as a success, so we need to recheck Linux'
   # condition here ...
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
+  only_if: $CI_LINUX_ENABLED
 
   <<: *linux_task_template
 
