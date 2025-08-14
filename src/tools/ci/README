@@ -82,3 +82,14 @@ defined in .cirrus.yml, by redefining the relevant yaml anchors.
 Custom compute resources can be provided using
 - https://cirrus-ci.org/guide/supported-computing-services/
 - https://cirrus-ci.org/guide/persistent-workers/
+
+
+Enabling manual tasks by default
+================================
+
+Some tasks are not triggered automatically by default, to avoid using up CI
+credits too quickly. This can be changed on the repository level, e.g. when
+custom compute resources are configured.
+
+The following repository level environment variables are recognized:
+- REPO_CI_AUTOMATIC_TRIGGER_TASKS=""

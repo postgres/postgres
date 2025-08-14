@@ -10,12 +10,20 @@
 #
 # 1) the contents of this file
 #
-# 2) if defined, the contents of the file referenced by the, repository
+# 2) computed environment variables
+#
+#    Used to enable/disable tasks based on the execution environment. See
+#    .cirrus.star: compute_environment_vars()
+#
+# 3) if defined, the contents of the file referenced by the, repository
 #    level, REPO_CI_CONFIG_GIT_URL variable (see
 #    https://cirrus-ci.org/guide/programming-tasks/#fs for the accepted
 #    format)
 #
-# 3) .cirrus.tasks.yml
+#    This allows running tasks in a different execution environment than the
+#    default, e.g. to have sufficient resources for cfbot.
+#
+# 4) .cirrus.tasks.yml
 #
 # This composition is done by .cirrus.star
 
