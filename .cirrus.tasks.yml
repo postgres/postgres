@@ -239,7 +239,6 @@ task:
 
 task:
   depends_on: SanityCheck
-  trigger_type: manual
 
   env:
     # Below are experimentally derived to be a decent choice.
@@ -257,6 +256,8 @@ task:
 
   matrix:
     - name: NetBSD - Meson
+      # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star
+      trigger_type: $CI_TRIGGER_TYPE_NETBSD
       only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*netbsd.*'
       env:
         OS_NAME: netbsd
@@ -274,6 +275,8 @@ task:
       <<: *netbsd_task_template
 
     - name: OpenBSD - Meson
+      # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star
+      trigger_type: $CI_TRIGGER_TYPE_OPENBSD
       only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*openbsd.*'
       env:
         OS_NAME: openbsd
@@ -754,13 +757,11 @@ task:
   << : *WINDOWS_ENVIRONMENT_BASE
   name: Windows - Server 2019, MinGW64 - Meson
 
-  # due to resource constraints we don't run this task by default for now
-  trigger_type: manual
-  # worth using only_if despite being manual, otherwise this task will show up
-  # when e.g. ci-os-only: linux is used.
-  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*mingw.*'
-  # otherwise it'll be sorted before other tasks
+  # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star.
+  trigger_type: $CI_TRIGGER_TYPE_MINGW
+
   depends_on: SanityCheck
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*mingw.*'
 
   env:
     TEST_JOBS: 4 # higher concurrency causes occasional failures
