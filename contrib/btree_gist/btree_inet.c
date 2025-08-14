@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 typedef struct inetkey

@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "utils/fmgrprotos.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 #include "utils/timestamp.h"
 

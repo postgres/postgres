@@ -6,6 +6,7 @@
 #include "btree_gist.h"
 #include "btree_utils_num.h"
 #include "port/pg_bswap.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 #include "utils/uuid.h"
 

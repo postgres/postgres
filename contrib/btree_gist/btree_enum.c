@@ -8,6 +8,7 @@
 #include "fmgr.h"
 #include "utils/fmgrprotos.h"
 #include "utils/fmgroids.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 /* enums are really Oids, so we just use the same structure */

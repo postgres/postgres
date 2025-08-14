@@ -11,6 +11,7 @@
 #include "btree_utils_var.h"
 #include "mb/pg_wchar.h"
 #include "utils/rel.h"
+#include "varatt.h"
 
 /* used for key sorting */
 typedef struct

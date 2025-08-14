@@ -16,11 +16,13 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/relscan.h"
 #include "common/int.h"
 #include "lib/qunique.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 
 typedef struct BTScanKeyPreproc
 {

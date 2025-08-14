@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/tableam.h"
 #include "common/int.h"
 
 typedef enum

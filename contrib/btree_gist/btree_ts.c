@@ -10,6 +10,7 @@
 #include "utils/fmgrprotos.h"
 #include "utils/timestamp.h"
 #include "utils/float.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 typedef struct

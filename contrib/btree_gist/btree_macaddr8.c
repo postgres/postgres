@@ -7,6 +7,7 @@
 #include "btree_utils_num.h"
 #include "utils/fmgrprotos.h"
 #include "utils/inet.h"
+#include "utils/rel.h"
 #include "utils/sortsupport.h"
 
 typedef struct
