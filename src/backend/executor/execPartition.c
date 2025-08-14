@@ -123,8 +123,6 @@ ExecSetupPartitionTupleRouting(ModifyTableState *mtstate, ResultRelInfo *rootRes
 	 * Get the information about the partition tree after locking all the
 	 * partitions.
 	 */
-	(void) find_all_inheritors(RelationGetRelid(rootResultRelInfo->ri_RelationDesc),
-							   RowExclusiveLock, NULL);
 	proute = (PartitionTupleRouting *) palloc0(sizeof(PartitionTupleRouting));
 	proute->partition_dispatch_info =
 		RelationGetPartitionDispatchInfo(rootResultRelInfo->ri_RelationDesc,
@@ -385,7 +383,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate,
 	 * We locked all the partitions in ExecSetupPartitionTupleRouting
 	 * including the leaf partitions.
 	 */
-	partrel = heap_open(proute->partition_oids[partidx], NoLock);
+	partrel = heap_open(proute->partition_oids[partidx], RowExclusiveLock);
 
 	/*
 	 * Keep ResultRelInfo and other information for this partition in the
@@ -1062,7 +1060,7 @@ get_partition_dispatch_recurse(Relation rel, Relation parent,
 			 * We assume all tables in the partition tree were already locked
 			 * by the caller.
 			 */
-			Relation	partrel = heap_open(partrelid, NoLock);
+			Relation	partrel = heap_open(partrelid, RowExclusiveLock);
 
 			pd->indexes[i] = -list_length(*pds);
 			get_partition_dispatch_recurse(partrel, rel, pds, leaf_part_oids);
