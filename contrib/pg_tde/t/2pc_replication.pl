@@ -28,6 +28,9 @@ sub configure_and_reload
 	return;
 }
 
+unlink('/tmp/pg_global_keyring.file');
+unlink('/tmp/pg_local_keyring.file');
+
 # Set up two nodes, which will alternately be primary and replication standby.
 
 # Setup london node
