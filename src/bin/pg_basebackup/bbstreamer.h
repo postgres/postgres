@@ -204,7 +204,8 @@ extern bbstreamer *bbstreamer_gzip_writer_new(char *pathname, FILE *file,
 											  pg_compress_specification *compress);
 extern bbstreamer *bbstreamer_extractor_new(const char *basepath,
 											const char *(*link_map) (const char *),
-											void (*report_output_file) (const char *));
+											void (*report_output_file) (const char *),
+											bool encrypted_wal);
 
 extern bbstreamer *bbstreamer_gzip_decompressor_new(bbstreamer *next);
 extern bbstreamer *bbstreamer_lz4_compressor_new(bbstreamer *next,

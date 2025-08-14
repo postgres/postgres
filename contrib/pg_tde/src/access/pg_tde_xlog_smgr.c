@@ -355,29 +355,25 @@ TDEXLogWriteEncryptedPages(int fd, const void *buf, size_t count, off_t offset,
 	return pg_pwrite(fd, enc_buff, count, offset);
 }
 
-static ssize_t
-tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
-					   TimeLineID tli, XLogSegNo segno, int segSize)
+/*
+ * Set the last (most recent) key's start location if not set.
+ */
+bool
+tde_ensure_xlog_key_location(WalLocation loc)
 {
 	bool		lastKeyUsable;
 	bool		afterWriteKey;
+	WalLocation writeKeyLoc;
 #ifdef FRONTEND
 	bool		crashRecovery = false;
 #else
 	bool		crashRecovery = GetRecoveryState() == RECOVERY_STATE_CRASH;
 #endif
 
-	WalLocation loc = {.tli = tli};
-	WalLocation writeKeyLoc;
-
-	XLogSegNoOffsetToRecPtr(segno, offset, segSize, loc.lsn);
-
 	/*
-	 * Set the last (most recent) key's start LSN if not set.
-	 *
-	 * This func called with WALWriteLock held, so no need in any extra sync.
+	 * On backend this called with WALWriteLock held, so no need in any extra
+	 * sync.
 	 */
-
 	writeKeyLoc.lsn = TDEXLogGetEncKeyLsn();
 	pg_read_barrier();
 	writeKeyLoc.tli = TDEXLogGetEncKeyTli();
@@ -398,7 +394,20 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 		}
 	}
 
-	if ((!afterWriteKey || !lastKeyUsable) && EncryptionKey.type != WAL_KEY_TYPE_INVALID)
+	return lastKeyUsable && afterWriteKey;
+}
+
+static ssize_t
+tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
+					   TimeLineID tli, XLogSegNo segno, int segSize)
+{
+	bool		lastKeyUsable;
+	WalLocation loc = {.tli = tli};
+
+	XLogSegNoOffsetToRecPtr(segno, offset, segSize, loc.lsn);
+	lastKeyUsable = tde_ensure_xlog_key_location(loc);
+
+	if (!lastKeyUsable && EncryptionKey.type != WAL_KEY_TYPE_INVALID)
 	{
 		return TDEXLogWriteEncryptedPagesOldKeys(fd, buf, count, offset, tli, segno, segSize);
 	}

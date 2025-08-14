@@ -119,6 +119,8 @@ sub backup
 	PostgreSQL::Test::RecursiveCopy::copypath($node->data_dir . '/pg_tde',
 		$backup_dir . '/pg_tde');
 
+	push @{ $params{backup_options} }, "-E";
+
 	$node->backup($backup_name, %params);
 }
 

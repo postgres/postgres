@@ -38,6 +38,7 @@ typedef struct bbstreamer_extractor
 	void		(*report_output_file) (const char *);
 	char		filename[MAXPGPATH];
 	FILE	   *file;
+	bool		encryped_wal;
 } bbstreamer_extractor;
 
 static void bbstreamer_plain_writer_content(bbstreamer *streamer,
@@ -186,7 +187,8 @@ bbstreamer_plain_writer_free(bbstreamer *streamer)
 bbstreamer *
 bbstreamer_extractor_new(const char *basepath,
 						 const char *(*link_map) (const char *),
-						 void (*report_output_file) (const char *))
+						 void (*report_output_file) (const char *),
+						 bool encrypted_wal)
 {
 	bbstreamer_extractor *streamer;
 
@@ -196,6 +198,7 @@ bbstreamer_extractor_new(const char *basepath,
 	streamer->basepath = pstrdup(basepath);
 	streamer->link_map = link_map;
 	streamer->report_output_file = report_output_file;
+	streamer->encryped_wal = encrypted_wal;
 
 	return &streamer->base;
 }
@@ -240,9 +243,29 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 				extract_link(mystreamer->filename, linktarget);
 			}
 			else
+			{
+#ifdef PERCONA_EXT
+				/* 
+				 * A streamed WAL is encrypted with the newly generated WAL key,
+				 * hence we have to prevent these files from rewriting.
+				 */
+				if (mystreamer->encryped_wal)
+				{
+					if (strcmp(member->pathname, "pg_tde/wal_keys") == 0 ||
+						strcmp(member->pathname, "pg_tde/1664_providers") == 0)
+							break;
+				}
+				else if (strcmp(member->pathname, "pg_tde/wal_keys") == 0)
+				{
+					pg_log_warning("the source has WAL keys, but no WAL encryption configured for the target backups");
+					pg_log_warning_detail("This may lead to exposed data and broken backup.");
+					pg_log_warning_hint("Run pg_basebackup with -E to encrypt streamed WAL.");
+				}
+#endif
 				mystreamer->file =
 					create_file_for_extract(mystreamer->filename,
 											member->mode);
+			}
 
 			/* Report output file change. */
 			if (mystreamer->report_output_file)

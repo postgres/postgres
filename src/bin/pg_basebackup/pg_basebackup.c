@@ -41,8 +41,12 @@
 #ifdef PERCONA_EXT
 #include "access/pg_tde_fe_init.h"
 #include "access/pg_tde_xlog_smgr.h"
+#include "access/pg_tde_xlog_keys.h"
 #include "access/xlog_smgr.h"
+#include "catalog/tde_principal_key.h"
 #include "pg_tde.h"
+
+#define GLOBAL_DATA_TDE_OID 1664
 #endif
 
 #define ERRCODE_DATA_CORRUPTED_BCP	"XX001"
@@ -145,6 +149,7 @@ static bool showprogress = false;
 static bool estimatesize = true;
 static int	verbose = 0;
 static IncludeWal includewal = STREAM_WAL;
+static bool encrypt_wal = false;
 static bool fastcheckpoint = false;
 static bool writerecoveryconf = false;
 static bool do_sync = true;
@@ -416,6 +421,9 @@ usage(void)
 	printf(_("      --waldir=WALDIR    location for the write-ahead log directory\n"));
 	printf(_("  -X, --wal-method=none|fetch|stream\n"
 			 "                         include required WAL files with specified method\n"));
+#ifdef PERCONA_EXT
+	printf(_("  -E, --encrypt-wal      encrypt streamed WAL\n"));
+#endif
 	printf(_("  -z, --gzip             compress tar output\n"));
 	printf(_("  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
 			 "                         compress on client or server as specified\n"));
@@ -568,6 +576,7 @@ LogStreamerMain(logstreamer_param *param)
 	stream.synchronous = false;
 	/* fsync happens at the end of pg_basebackup for all data */
 	stream.do_sync = false;
+	stream.encrypt = encrypt_wal;
 	stream.mark_done = true;
 	stream.partial_suffix = NULL;
 	stream.replication_slot = replication_slot;
@@ -662,12 +671,23 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 			 "pg_xlog" : "pg_wal");
 
 #ifdef PERCONA_EXT
-	{
+	if (encrypt_wal) {
 		char tdedir[MAXPGPATH];
+		TDEPrincipalKey *principalKey;
 
 		snprintf(tdedir, sizeof(tdedir), "%s/%s", basedir, PG_TDE_DATA_DIR);
 		pg_tde_fe_init(tdedir);
 		TDEXLogSmgrInit();
+
+		principalKey = GetPrincipalKey(GLOBAL_DATA_TDE_OID, NULL);
+		if (!principalKey)
+		{
+			pg_log_error("could not find server principal key");
+			pg_log_error_hint("Copy PGDATA/pg_tde from the source to the backup destination dir.");
+			exit(1);
+		}
+		pg_tde_save_server_key(principalKey, false);
+		TDEXLogSmgrInitWrite(true);
 	}
 #endif
 
@@ -1187,7 +1207,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 			directory = get_tablespace_mapping(spclocation);
 		streamer = bbstreamer_extractor_new(directory,
 											get_tablespace_mapping,
-											progress_update_filename);
+											progress_update_filename,
+											encrypt_wal);
 	}
 	else
 	{
@@ -2393,6 +2414,9 @@ main(int argc, char **argv)
 		{"target", required_argument, NULL, 't'},
 		{"tablespace-mapping", required_argument, NULL, 'T'},
 		{"wal-method", required_argument, NULL, 'X'},
+#ifdef PERCONA_EXT
+		{"encrypt-wal", no_argument, NULL, 'E'},
+#endif
 		{"gzip", no_argument, NULL, 'z'},
 		{"compress", required_argument, NULL, 'Z'},
 		{"label", required_argument, NULL, 'l'},
@@ -2447,7 +2471,7 @@ main(int argc, char **argv)
 
 	atexit(cleanup_directories_atexit);
 
-	while ((c = getopt_long(argc, argv, "c:Cd:D:F:h:i:l:nNp:Pr:Rs:S:t:T:U:vwWX:zZ:",
+	while ((c = getopt_long(argc, argv, "c:Cd:D:EF:h:i:l:nNp:Pr:Rs:S:t:T:U:vwWX:zZ:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -2560,6 +2584,11 @@ main(int argc, char **argv)
 					pg_fatal("invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"",
 							 optarg);
 				break;
+#ifdef PERCONA_EXT
+			case 'E':
+				encrypt_wal = true;
+				break;
+#endif
 			case 'z':
 				compression_algorithm = "gzip";
 				compression_detail = NULL;
@@ -2736,6 +2765,26 @@ main(int argc, char **argv)
 		pg_log_error("replication slots can only be used with WAL streaming");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
+	}
+
+	/*
+	 * Sanity checks for WAL encryption.
+	 */
+	if (encrypt_wal)
+	{
+		if (includewal != STREAM_WAL)
+		{
+			pg_log_error("WAL encryption can only be used with WAL streaming");
+			pg_log_error_hint("Use -X stream with -E.");
+			exit(1);
+		}
+
+		if (format != 'p')
+		{
+			pg_log_error("can not encrypt WAL in tar mode");
+			pg_log_error_hint("Use -Fp with -E.");
+			exit(1);
+		}
 	}
 
 	/*

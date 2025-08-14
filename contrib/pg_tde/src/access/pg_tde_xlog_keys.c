@@ -766,7 +766,6 @@ pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info)
 }
 #endif
 
-#ifndef FRONTEND
 /*
  * Creates the key file and saves the principal key information.
  *
@@ -788,17 +787,18 @@ pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog)
 
 	pg_tde_sign_principal_key_info(&signed_key_Info, principal_key);
 
+#ifndef FRONTEND
 	if (write_xlog)
 	{
 		XLogBeginInsert();
 		XLogRegisterData((char *) &signed_key_Info, sizeof(TDESignedPrincipalKeyInfo));
 		XLogInsert(RM_TDERMGR_ID, XLOG_TDE_ADD_PRINCIPAL_KEY);
 	}
+#endif
 
 	fd = pg_tde_open_wal_key_file_write(get_wal_key_file_path(), &signed_key_Info, true, &curr_pos);
 	CloseTransientFile(fd);
 }
-#endif
 
 /*
  * Get the principal key from the key file. The caller must hold
