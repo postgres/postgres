@@ -1174,6 +1174,8 @@ hash_update_hash_key(HTAB *hashp,
 	HashCompareFunc match;
 
 #ifdef HASH_STATISTICS
+	HASHHDR    *hctl = hashp->hctl;
+
 	hash_accesses++;
 	hctl->accesses++;
 #endif
