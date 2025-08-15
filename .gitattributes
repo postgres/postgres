@@ -7,8 +7,8 @@
 *.x[ms]l	whitespace=space-before-tab,trailing-space,tab-in-indent
 
 # Avoid confusing ASCII underlines with leftover merge conflict markers
-README		conflict-marker-size=32
-README.*	conflict-marker-size=32
+README		conflict-marker-size=48
+README.*	conflict-marker-size=48
 
 # Certain data files that contain special whitespace, and other special cases
 *.data						-whitespace
