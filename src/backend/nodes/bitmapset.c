@@ -1343,7 +1343,7 @@ bms_next_member(const Bitmapset *a, int prevbit)
  *
  * Returns largest member less than "prevbit", or -2 if there is none.
  * "prevbit" must NOT be more than one above the highest possible bit that can
- * be set at the Bitmapset at its current size.
+ * be set in the Bitmapset at its current size.
  *
  * To ease finding the highest set bit for the initial loop, the special
  * prevbit value of -1 can be passed to have the function find the highest
@@ -1378,6 +1378,10 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 	 */
 	if (a == NULL || prevbit == 0)
 		return -2;
+
+	/* Validate callers didn't give us something out of range */
+	Assert(prevbit <= a->nwords * BITS_PER_BITMAPWORD);
+	Assert(prevbit >= -1);
 
 	/* transform -1 to the highest possible bit we could have set */
 	if (prevbit == -1)
