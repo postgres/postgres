@@ -2923,7 +2923,7 @@ apply_handle_update_internal(ApplyExecutionData *edata,
 
 		/*
 		 * Detecting whether the tuple was recently deleted or never existed
-		 * is crucial to avoid misleading the user during confict handling.
+		 * is crucial to avoid misleading the user during conflict handling.
 		 */
 		if (FindDeletedTupleInLocalRel(localrel, localindexoid, remoteslot,
 									   &conflicttuple.xmin,
@@ -3392,7 +3392,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					/*
 					 * Detecting whether the tuple was recently deleted or
 					 * never existed is crucial to avoid misleading the user
-					 * during confict handling.
+					 * during conflict handling.
 					 */
 					if (FindDeletedTupleInLocalRel(partrel,
 												   part_entry->localindexoid,
