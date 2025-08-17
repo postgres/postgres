@@ -27,7 +27,7 @@ setup
 
   -- Seed data: one row with big string to force TOAST tuple and trigger the todo=0 code path.
   INSERT INTO cluster_toast_value(flag, value)
-    VALUES (0, repeat(md5('1'), 120) || repeat('x', 8000));
+    VALUES (0, repeat(encode(sha256('1'), 'hex'), 120) || repeat('x', 8000));
 
   CLUSTER cluster_toast_value;
 }
