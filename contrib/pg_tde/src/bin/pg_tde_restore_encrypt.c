@@ -205,6 +205,8 @@ main(int argc, char *argv[])
 	if (system(command) != 0)
 		pg_fatal("RESTORE-COMMAND \"%s\" failed: %m", command);
 
+	free(command);
+
 	if (issegment)
 	{
 		write_encrypted_segment(targetpath, sourcename, tmppath);

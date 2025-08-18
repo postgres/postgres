@@ -212,6 +212,8 @@ main(int argc, char *argv[])
 	if (system(command) != 0)
 		pg_fatal("ARCHIVE-COMMAND \"%s\" failed: %m", command);
 
+	free(command);
+
 	if (issegment)
 	{
 		if (unlink(tmppath) < 0)
