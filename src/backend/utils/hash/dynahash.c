@@ -205,8 +205,9 @@ struct HASHHDR
 	 * Count statistics here.  NB: stats code doesn't bother with mutex, so
 	 * counts could be corrupted a bit in a partitioned table.
 	 */
-	long		accesses;
-	long		collisions;
+	uint64		accesses;
+	uint64		collisions;
+	uint64		expansions;
 #endif
 };
 
@@ -265,12 +266,6 @@ struct HTAB
  * Fast MOD arithmetic, assuming that y is a power of 2 !
  */
 #define MOD(x,y)			   ((x) & ((y)-1))
-
-#ifdef HASH_STATISTICS
-static long hash_accesses,
-			hash_collisions,
-			hash_expansions;
-#endif
 
 /*
  * Private function prototypes
@@ -661,7 +656,7 @@ hdefault(HTAB *hashp)
 	hctl->isfixed = false;		/* can be enlarged */
 
 #ifdef HASH_STATISTICS
-	hctl->accesses = hctl->collisions = 0;
+	hctl->accesses = hctl->collisions = hctl->expansions = 0;
 #endif
 }
 
@@ -888,7 +883,7 @@ hash_destroy(HTAB *hashp)
 		/* so this hashtable must have its own context */
 		Assert(hashp->hcxt != NULL);
 
-		hash_stats("destroy", hashp);
+		hash_stats(__func__, hashp);
 
 		/*
 		 * Free everything by destroying the hash table's memory context.
@@ -898,19 +893,16 @@ hash_destroy(HTAB *hashp)
 }
 
 void
-hash_stats(const char *where, HTAB *hashp)
+hash_stats(const char *caller, HTAB *hashp)
 {
 #ifdef HASH_STATISTICS
-	fprintf(stderr, "%s: this HTAB -- accesses %ld collisions %ld\n",
-			where, hashp->hctl->accesses, hashp->hctl->collisions);
+	HASHHDR    *hctl = hashp->hctl;
 
-	fprintf(stderr, "hash_stats: entries %ld keysize %ld maxp %u segmentcount %ld\n",
-			hash_get_num_entries(hashp), (long) hashp->hctl->keysize,
-			hashp->hctl->max_bucket, hashp->hctl->nsegs);
-	fprintf(stderr, "%s: total accesses %ld total collisions %ld\n",
-			where, hash_accesses, hash_collisions);
-	fprintf(stderr, "hash_stats: total expansions %ld\n",
-			hash_expansions);
+	elog(DEBUG4,
+		 "hash_stats:  Caller: %s  Table Name: \"%s\"  Accesses: " UINT64_FORMAT "  Collisions: " UINT64_FORMAT "  Expansions: " UINT64_FORMAT "  Entries: %ld  Key Size: %zu  Max Bucket: %u  Segment Count: %ld",
+		 caller != NULL ? caller : "(unknown)", hashp->tabname, hctl->accesses,
+		 hctl->collisions, hctl->expansions, hash_get_num_entries(hashp),
+		 hctl->keysize, hctl->max_bucket, hctl->nsegs);
 #endif
 }
 
@@ -996,7 +988,6 @@ hash_search_with_hash_value(HTAB *hashp,
 	HashCompareFunc match;
 
 #ifdef HASH_STATISTICS
-	hash_accesses++;
 	hctl->accesses++;
 #endif
 
@@ -1040,7 +1031,6 @@ hash_search_with_hash_value(HTAB *hashp,
 		prevBucketPtr = &(currBucket->link);
 		currBucket = *prevBucketPtr;
 #ifdef HASH_STATISTICS
-		hash_collisions++;
 		hctl->collisions++;
 #endif
 	}
@@ -1176,7 +1166,6 @@ hash_update_hash_key(HTAB *hashp,
 #ifdef HASH_STATISTICS
 	HASHHDR    *hctl = hashp->hctl;
 
-	hash_accesses++;
 	hctl->accesses++;
 #endif
 
@@ -1230,7 +1219,6 @@ hash_update_hash_key(HTAB *hashp,
 		prevBucketPtr = &(currBucket->link);
 		currBucket = *prevBucketPtr;
 #ifdef HASH_STATISTICS
-		hash_collisions++;
 		hctl->collisions++;
 #endif
 	}
@@ -1586,7 +1574,7 @@ expand_table(HTAB *hashp)
 	Assert(!IS_PARTITIONED(hctl));
 
 #ifdef HASH_STATISTICS
-	hash_expansions++;
+	hctl->expansions++;
 #endif
 
 	new_bucket = hctl->max_bucket + 1;
