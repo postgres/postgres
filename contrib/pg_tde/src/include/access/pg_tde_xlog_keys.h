@@ -82,5 +82,6 @@ extern WalEncryptionKey *pg_tde_read_last_wal_key(void);
 extern void pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog);
 extern void pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info);
 extern void pg_tde_wal_last_key_set_location(WalLocation loc);
+extern void pg_tde_wal_cache_extra_palloc(void);
 
 #endif							/* PG_TDE_XLOG_KEYS_H */

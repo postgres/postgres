@@ -16,6 +16,7 @@
 #include "common/pg_tde_utils.h"
 #include "encryption/enc_aes.h"
 #include "encryption/enc_tde.h"
+#include "utils/palloc.h"
 
 #ifdef FRONTEND
 #include "pg_tde_fe.h"
@@ -43,7 +44,9 @@ typedef struct WalKeyFileEntry
 } WalKeyFileEntry;
 
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
+static WALKeyCacheRec *tde_wal_prealloc_record = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
+static WalEncryptionKey *tde_wal_prealloc_key = NULL;
 
 static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(WalEncryptionKey *cached_key);
 static WalEncryptionKey *pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
@@ -326,6 +329,34 @@ pg_tde_fetch_wal_keys(WalLocation start)
 	return return_wal_rec;
 }
 
+/*
+ * In special cases, we have to add one more record to the WAL key cache during write (in the critical section, when we can't allocate).
+ * This method is a helper to deal with that: when adding a single key, we potentially allocate 2 records.
+ * These variables help preallocate them, so in the critical section we can just use the already allocated objects, and update the cache with them.
+ *
+ * While this is somewhat a hack, it is also simple, safe, reliable, and way easier to implement than to refactor the cache or the decryption/encryption loop.
+ */
+void
+pg_tde_wal_cache_extra_palloc(void)
+{
+#ifndef FRONTEND
+	MemoryContext oldCtx;
+
+	oldCtx = MemoryContextSwitchTo(TopMemoryContext);
+#endif
+	if (tde_wal_prealloc_record == NULL)
+	{
+		tde_wal_prealloc_record = palloc0_object(WALKeyCacheRec);
+	}
+	if (tde_wal_prealloc_key == NULL)
+	{
+		tde_wal_prealloc_key = palloc0_object(WalEncryptionKey);
+	}
+#ifndef FRONTEND
+	MemoryContextSwitchTo(oldCtx);
+#endif
+}
+
 static WALKeyCacheRec *
 pg_tde_add_wal_key_to_cache(WalEncryptionKey *key)
 {
@@ -335,7 +366,8 @@ pg_tde_add_wal_key_to_cache(WalEncryptionKey *key)
 
 	oldCtx = MemoryContextSwitchTo(TopMemoryContext);
 #endif
-	wal_rec = palloc0_object(WALKeyCacheRec);
+	wal_rec = tde_wal_prealloc_record == NULL ? palloc0_object(WALKeyCacheRec) : tde_wal_prealloc_record;
+	tde_wal_prealloc_record = NULL;
 #ifndef FRONTEND
 	MemoryContextSwitchTo(oldCtx);
 #endif
@@ -553,7 +585,9 @@ pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 static WalEncryptionKey *
 pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry)
 {
-	WalEncryptionKey *key = palloc_object(WalEncryptionKey);
+	WalEncryptionKey *key = tde_wal_prealloc_key == NULL ? palloc_object(WalEncryptionKey) : tde_wal_prealloc_key;
+
+	tde_wal_prealloc_key = NULL;
 
 	Assert(principal_key);
 
