@@ -68,6 +68,7 @@ OBJS = \
 	misc.o \
 	multirangetypes.o \
 	multirangetypes_selfuncs.o \
+	multixactfuncs.o \
 	name.o \
 	network.o \
 	network_gist.o \

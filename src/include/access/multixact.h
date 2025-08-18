@@ -158,5 +158,6 @@ extern void multixact_desc(StringInfo buf, XLogReaderState *record);
 extern const char *multixact_identify(uint8 info);
 extern char *mxid_to_string(MultiXactId multi, int nmembers,
 							MultiXactMember *members);
+extern char *mxstatus_to_string(MultiXactStatus status);
 
 #endif							/* MULTIXACT_H */

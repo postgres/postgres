@@ -55,6 +55,7 @@ backend_sources += files(
   'misc.c',
   'multirangetypes.c',
   'multirangetypes_selfuncs.c',
+  'multixactfuncs.c',
   'name.c',
   'network.c',
   'network_gist.c',

@@ -398,8 +398,6 @@ static int	mXactCacheGetById(MultiXactId multi, MultiXactMember **members);
 static void mXactCachePut(MultiXactId multi, int nmembers,
 						  MultiXactMember *members);
 
-static char *mxstatus_to_string(MultiXactStatus status);
-
 /* management of SLRU infrastructure */
 static bool MultiXactOffsetPagePrecedes(int64 page1, int64 page2);
 static bool MultiXactMemberPagePrecedes(int64 page1, int64 page2);
@@ -1747,7 +1745,7 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 	}
 }
 
-static char *
+char *
 mxstatus_to_string(MultiXactStatus status)
 {
 	switch (status)
@@ -3412,68 +3410,6 @@ multixact_redo(XLogReaderState *record)
 	}
 	else
 		elog(PANIC, "multixact_redo: unknown op code %u", info);
-}
-
-Datum
-pg_get_multixact_members(PG_FUNCTION_ARGS)
-{
-	typedef struct
-	{
-		MultiXactMember *members;
-		int			nmembers;
-		int			iter;
-	} mxact;
-	MultiXactId mxid = PG_GETARG_TRANSACTIONID(0);
-	mxact	   *multi;
-	FuncCallContext *funccxt;
-
-	if (mxid < FirstMultiXactId)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid MultiXactId: %u", mxid)));
-
-	if (SRF_IS_FIRSTCALL())
-	{
-		MemoryContext oldcxt;
-		TupleDesc	tupdesc;
-
-		funccxt = SRF_FIRSTCALL_INIT();
-		oldcxt = MemoryContextSwitchTo(funccxt->multi_call_memory_ctx);
-
-		multi = palloc(sizeof(mxact));
-		/* no need to allow for old values here */
-		multi->nmembers = GetMultiXactIdMembers(mxid, &multi->members, false,
-												false);
-		multi->iter = 0;
-
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			elog(ERROR, "return type must be a row type");
-		funccxt->tuple_desc = tupdesc;
-		funccxt->attinmeta = TupleDescGetAttInMetadata(tupdesc);
-		funccxt->user_fctx = multi;
-
-		MemoryContextSwitchTo(oldcxt);
-	}
-
-	funccxt = SRF_PERCALL_SETUP();
-	multi = (mxact *) funccxt->user_fctx;
-
-	while (multi->iter < multi->nmembers)
-	{
-		HeapTuple	tuple;
-		char	   *values[2];
-
-		values[0] = psprintf("%u", multi->members[multi->iter].xid);
-		values[1] = mxstatus_to_string(multi->members[multi->iter].status);
-
-		tuple = BuildTupleFromCStrings(funccxt->attinmeta, values);
-
-		multi->iter++;
-		pfree(values[0]);
-		SRF_RETURN_NEXT(funccxt, HeapTupleGetDatum(tuple));
-	}
-
-	SRF_RETURN_DONE(funccxt);
 }
 
 /*
