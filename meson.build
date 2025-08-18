@@ -550,6 +550,48 @@ dir_doc_extension = dir_doc / 'extension'
 # used, they need to be added to test_c_args as well.
 ###############################################################
 
+# Do we need -std=c99 to compile C99 code? We don't want to add -std=c99
+# unnecessarily, because we optionally rely on newer features.
+c99_test = '''
+#include <stdbool.h>
+#include <complex.h>
+#include <tgmath.h>
+#include <inttypes.h>
+
+struct named_init_test {
+  int a;
+  int b;
+};
+
+extern void structfunc(struct named_init_test);
+
+int main(int argc, char **argv)
+{
+  struct named_init_test nit = {
+    .a = 3,
+    .b = 5,
+  };
+
+  for (int loop_var = 0; loop_var < 3; loop_var++)
+  {
+    nit.a += nit.b;
+  }
+
+  structfunc((struct named_init_test){1, 0});
+
+  return nit.a != 0;
+}
+'''
+
+if not cc.compiles(c99_test, name: 'c99')
+  if cc.compiles(c99_test, name: 'c99 with -std=c99', args: ['-std=c99'])
+    cflags += '-std=c99'
+  else
+    error('C compiler does not support C99')
+  endif
+endif
+
+
 postgres_inc = [include_directories(postgres_inc_d)]
 test_lib_d = postgres_lib_d
 test_c_args = cppflags + cflags
@@ -1703,49 +1745,6 @@ endif
 ###############################################################
 # Compiler tests
 ###############################################################
-
-# Do we need -std=c99 to compile C99 code? We don't want to add -std=c99
-# unnecessarily, because we optionally rely on newer features.
-c99_test = '''
-#include <stdbool.h>
-#include <complex.h>
-#include <tgmath.h>
-#include <inttypes.h>
-
-struct named_init_test {
-  int a;
-  int b;
-};
-
-extern void structfunc(struct named_init_test);
-
-int main(int argc, char **argv)
-{
-  struct named_init_test nit = {
-    .a = 3,
-    .b = 5,
-  };
-
-  for (int loop_var = 0; loop_var < 3; loop_var++)
-  {
-    nit.a += nit.b;
-  }
-
-  structfunc((struct named_init_test){1, 0});
-
-  return nit.a != 0;
-}
-'''
-
-if not cc.compiles(c99_test, name: 'c99', args: test_c_args)
-  if cc.compiles(c99_test, name: 'c99 with -std=c99',
-        args: test_c_args + ['-std=c99'])
-    test_c_args += '-std=c99'
-    cflags += '-std=c99'
-  else
-    error('C compiler does not support C99')
-  endif
-endif
 
 if host_machine.endian() == 'big'
   cdata.set('WORDS_BIGENDIAN', 1)
