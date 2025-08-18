@@ -80,9 +80,8 @@
  * are not implemented; otherwise functionality is identical.
  *
  * Compilation controls:
- * HASH_DEBUG controls some informative traces, mainly for debugging.
- * HASH_STATISTICS causes HashAccesses and HashCollisions to be maintained;
- * when combined with HASH_DEBUG, these are displayed by hdestroy().
+ * HASH_STATISTICS causes some usage statistics to be maintained, which can be
+ * logged by calling hash_stats().
  *
  * Problems & fixes to ejp@ausmelb.oz. WARNING: relies on pre-processor
  * concatenation property, in probably unnecessary code 'optimization'.
@@ -770,17 +769,6 @@ init_htab(HTAB *hashp, long nelem)
 	/* Choose number of entries to allocate at a time */
 	hctl->nelem_alloc = choose_nelem_alloc(hctl->entrysize);
 
-#ifdef HASH_DEBUG
-	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%u\n%s%x\n%s%x\n%s%ld\n",
-			"TABLE POINTER   ", hashp,
-			"DIRECTORY SIZE  ", hctl->dsize,
-			"SEGMENT SIZE    ", hctl->ssize,
-			"SEGMENT SHIFT   ", hctl->sshift,
-			"MAX BUCKET      ", hctl->max_bucket,
-			"HIGH MASK       ", hctl->high_mask,
-			"LOW  MASK       ", hctl->low_mask,
-			"NSEGS           ", hctl->nsegs);
-#endif
 	return true;
 }
 
