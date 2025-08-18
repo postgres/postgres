@@ -73,6 +73,23 @@ get_wal_key_file_path(void)
 }
 
 void
+pg_tde_free_wal_key_cache(void)
+{
+	WALKeyCacheRec *rec = tde_wal_key_cache;
+
+	while (rec != NULL)
+	{
+		WALKeyCacheRec *next = rec->next;
+
+		pfree(rec);
+		rec = next;
+	}
+
+	tde_wal_key_cache = NULL;
+	tde_wal_key_last_rec = NULL;
+}
+
+void
 pg_tde_wal_last_key_set_location(WalLocation loc)
 {
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();

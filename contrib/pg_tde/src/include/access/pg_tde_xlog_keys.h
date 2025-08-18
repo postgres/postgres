@@ -74,6 +74,7 @@ extern int	pg_tde_count_wal_keys_in_file(void);
 extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry_type);
 extern void pg_tde_delete_server_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(WalLocation start);
+extern void pg_tde_free_wal_key_cache(void);
 extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
 extern TDESignedPrincipalKeyInfo *pg_tde_get_server_key_info(void);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);

@@ -220,8 +220,17 @@ TDEXLogSmgrInit()
 void
 TDEXLogSmgrInitWrite(bool encrypt_xlog)
 {
-	WalEncryptionKey *key = pg_tde_read_last_wal_key();
+	WalEncryptionKey *key;
 	WALKeyCacheRec *keys;
+
+	/*
+	 * If the postmaster have done a "soft" restart after a backend crash, we
+	 * may have inherited the cache in a weird state. Clearing the cache here
+	 * ensures we reinitialize all keys from disk.
+	 */
+	pg_tde_free_wal_key_cache();
+
+	key = pg_tde_read_last_wal_key();
 
 	/*
 	 * Always generate a new key on starting PostgreSQL to protect against
