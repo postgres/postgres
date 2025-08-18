@@ -59,3 +59,8 @@ leak:GenerateRecoveryConfig
 # Returns strdup'd string which never gets freed in frontend tools. Trying to 
 # free it leads to comiler complains that it discards 'const' qualifier.
 leak:get_progname
+
+# A buch of not freed allocations in putVariableInt right before exit(1). And 
+# malloced `threads` ("Thread state") never gets released (allocated in main(),
+# once, and not in loop).
+leak:bin/pgbench/pgbench.c
