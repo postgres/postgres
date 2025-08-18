@@ -9,6 +9,7 @@ package PostgreSQL::Test::Kerberos;
 use strict;
 use warnings FATAL => 'all';
 use PostgreSQL::Test::Utils;
+use Test::More;
 
 our (
 	$krb5_bin_dir, $krb5_sbin_dir, $krb5_config, $kinit,
