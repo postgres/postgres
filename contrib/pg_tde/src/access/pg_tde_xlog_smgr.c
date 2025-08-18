@@ -158,6 +158,8 @@ TDEXLogShmemInit(void)
 {
 	bool		foundBuf;
 
+	Assert(LWLockHeldByMeInMode(AddinShmemInitLock, LW_EXCLUSIVE));
+
 	EncryptionState = (EncryptionStateData *)
 		ShmemInitStruct("TDE XLog Encryption State",
 						TDEXLogEncryptStateSize(),

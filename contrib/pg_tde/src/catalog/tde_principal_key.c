@@ -127,7 +127,7 @@ PrincipalKeyShmemInit(void)
 	char	   *free_start;
 	Size		required_shmem_size = PrincipalKeyShmemSize();
 
-	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+	Assert(LWLockHeldByMeInMode(AddinShmemInitLock, LW_EXCLUSIVE));
 
 	/* Create or attach to the shared memory state */
 	ereport(NOTICE, errmsg("PrincipalKeyShmemInit: requested %ld bytes", required_shmem_size));
@@ -175,8 +175,6 @@ PrincipalKeyShmemInit(void)
 
 		dshash_detach(dsh);
 	}
-
-	LWLockRelease(AddinShmemInitLock);
 }
 
 /*

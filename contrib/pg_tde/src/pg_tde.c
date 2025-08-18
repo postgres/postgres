@@ -64,11 +64,15 @@ tde_shmem_startup(void)
 	if (prev_shmem_startup_hook)
 		prev_shmem_startup_hook();
 
+	LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+
 	KeyProviderShmemInit();
 	PrincipalKeyShmemInit();
 	TDEXLogShmemInit();
 	TDEXLogSmgrInit();
 	TDEXLogSmgrInitWrite(EncryptXLog);
+
+	LWLockRelease(AddinShmemInitLock);
 }
 
 void
