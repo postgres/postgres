@@ -1565,6 +1565,8 @@ get_th(char *num, int type)
 	int			len = strlen(num),
 				last;
 
+	Assert(len > 0);
+
 	last = *(num + (len - 1));
 	if (!isdigit((unsigned char) last))
 		ereport(ERROR,
