@@ -575,4 +575,34 @@ is($result, 't',
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
 
+# BUG #18988
+# The bug happened due to a self-deadlock between the DROP SUBSCRIPTION
+# command and the walsender process for accessing pg_subscription. This
+# occurred when DROP SUBSCRIPTION attempted to remove a replication slot by
+# connecting to a newly created database whose caches are not yet
+# initialized.
+#
+# The bug is fixed by reducing the lock-level during DROP SUBSCRIPTION.
+$node_publisher->start();
+
+$publisher_connstr = $node_publisher->connstr . ' dbname=regress_db';
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE DATABASE regress_db;
+	CREATE SUBSCRIPTION regress_sub1 CONNECTION '$publisher_connstr' PUBLICATION regress_pub WITH (connect=false);
+));
+
+my ($ret, $stdout, $stderr) =
+  $node_publisher->psql('postgres', q{DROP SUBSCRIPTION regress_sub1});
+
+isnt($ret, 0, "replication slot does not exist: exit code not 0");
+like(
+	$stderr,
+	qr/ERROR:  could not drop replication slot "regress_sub1" on publisher/,
+	"could not drop replication slot: error message");
+
+$node_publisher->safe_psql('postgres', "DROP DATABASE regress_db");
+
+$node_publisher->stop('fast');
+
 done_testing();
