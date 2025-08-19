@@ -2852,31 +2852,43 @@ find_multixact_start(MultiXactId multi, MultiXactOffset *result)
 }
 
 /*
- * Determine how many multixacts, and how many multixact members, currently
- * exist.  Return false if unable to determine.
+ * GetMultiXactInfo
+ *
+ * Returns information about the current MultiXact state, as of:
+ * multixacts: Number of MultiXacts (nextMultiXactId - oldestMultiXactId)
+ * members: Number of member entries (nextOffset - oldestOffset)
+ * oldestMultiXactId: Oldest MultiXact ID still in use
+ * oldestOffset: Oldest offset still in use
+ *
+ * Returns false if unable to determine, the oldest offset being unknown.
  */
-static bool
-ReadMultiXactCounts(uint32 *multixacts, MultiXactOffset *members)
+bool
+GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *members,
+				 MultiXactId *oldestMultiXactId, MultiXactOffset *oldestOffset)
 {
 	MultiXactOffset nextOffset;
-	MultiXactOffset oldestOffset;
-	MultiXactId oldestMultiXactId;
 	MultiXactId nextMultiXactId;
 	bool		oldestOffsetKnown;
 
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
 	nextOffset = MultiXactState->nextOffset;
-	oldestMultiXactId = MultiXactState->oldestMultiXactId;
+	*oldestMultiXactId = MultiXactState->oldestMultiXactId;
 	nextMultiXactId = MultiXactState->nextMXact;
-	oldestOffset = MultiXactState->oldestOffset;
+	*oldestOffset = MultiXactState->oldestOffset;
 	oldestOffsetKnown = MultiXactState->oldestOffsetKnown;
 	LWLockRelease(MultiXactGenLock);
 
 	if (!oldestOffsetKnown)
+	{
+		*members = 0;
+		*multixacts = 0;
+		*oldestMultiXactId = InvalidMultiXactId;
+		*oldestOffset = 0;
 		return false;
+	}
 
-	*members = nextOffset - oldestOffset;
-	*multixacts = nextMultiXactId - oldestMultiXactId;
+	*members = nextOffset - *oldestOffset;
+	*multixacts = nextMultiXactId - *oldestMultiXactId;
 	return true;
 }
 
@@ -2915,9 +2927,11 @@ MultiXactMemberFreezeThreshold(void)
 	uint32		victim_multixacts;
 	double		fraction;
 	int			result;
+	MultiXactId oldestMultiXactId;
+	MultiXactOffset oldestOffset;
 
 	/* If we can't determine member space utilization, assume the worst. */
-	if (!ReadMultiXactCounts(&multixacts, &members))
+	if (!GetMultiXactInfo(&multixacts, &members, &oldestMultiXactId, &oldestOffset))
 		return 0;
 
 	/* If member space utilization is low, no special action is required. */
