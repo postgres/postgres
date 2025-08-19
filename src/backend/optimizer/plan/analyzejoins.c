@@ -990,11 +990,10 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list,
 	{
 		/*
 		 * Examine the indexes to see if we have a matching unique index.
-		 * relation_has_unique_index_ext automatically adds any usable
+		 * relation_has_unique_index_for automatically adds any usable
 		 * restriction clauses for the rel, so we needn't do that here.
 		 */
-		if (relation_has_unique_index_ext(root, rel, clause_list, NIL, NIL,
-										  extra_clauses))
+		if (relation_has_unique_index_for(root, rel, clause_list, extra_clauses))
 			return true;
 	}
 	else if (rel->rtekind == RTE_SUBQUERY)
