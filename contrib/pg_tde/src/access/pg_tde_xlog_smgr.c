@@ -368,19 +368,16 @@ tdeheap_xlog_seg_write(int fd, const void *buf, size_t count, off_t offset,
 	lastKeyUsable = (writeKeyLoc.lsn != 0);
 	afterWriteKey = wal_location_cmp(writeKeyLoc, loc) <= 0;
 
-	if (EncryptionKey.type != WAL_KEY_TYPE_INVALID && !lastKeyUsable && afterWriteKey)
+	if (EncryptionKey.type != WAL_KEY_TYPE_INVALID && !lastKeyUsable && afterWriteKey && !crashRecovery)
 	{
 		WALKeyCacheRec *last_key = pg_tde_get_last_wal_key();
 
-		if (!crashRecovery)
+		if (last_key == NULL || last_key->start.lsn < loc.lsn)
 		{
-			if (last_key == NULL || last_key->start.lsn < loc.lsn)
-			{
-				pg_tde_wal_last_key_set_location(loc);
-				EncryptionKey.wal_start = loc;
-				TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
-				lastKeyUsable = true;
-			}
+			pg_tde_wal_last_key_set_location(loc);
+			EncryptionKey.wal_start = loc;
+			TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
+			lastKeyUsable = true;
 		}
 	}
 
