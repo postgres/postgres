@@ -6,6 +6,14 @@ use Test::More;
 
 use JSON;
 
+command_like([ 'pg_tde_change_key_provider', '--help' ],
+	qr/Usage:/, 'displays help');
+
+command_like(
+	[ 'pg_tde_change_key_provider', '--version' ],
+	qr/pg_tde_change_key_provider \(PostgreSQL\) /,
+	'displays version');
+
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->append_conf('postgresql.conf', q{shared_preload_libraries = 'pg_tde'});

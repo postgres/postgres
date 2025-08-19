@@ -6,8 +6,81 @@ use File::Basename;
 use Test::More;
 use lib 't';
 use pgtde;
+use PostgreSQL::Test::Utils;
 
 unlink('/tmp/wal_archiving.per');
+
+# Test CLI tools directly
+
+command_like(
+	[ 'pg_tde_archive_decrypt', '--help' ],
+	qr/wraps an archive command to give the command unencrypted WAL/,
+	'pg_tde_archive_decrypt displays help');
+
+command_like(
+	[ 'pg_tde_restore_encrypt', '--help' ],
+	qr/wraps a restore command to encrypt its returned WAL/,
+	'pg_tde_restore_encrypt displays help');
+
+command_like(
+	[ 'pg_tde_archive_decrypt', '--version' ],
+	qr/pg_tde_archive_decrypt \(PostgreSQL\) /,
+	'pg_tde_archive_decrypt displays version');
+
+command_like(
+	[ 'pg_tde_restore_encrypt', '--version' ],
+	qr/pg_tde_restore_encrypt \(PostgreSQL\) /,
+	'pg_tde_restore_encrypt displays version');
+
+command_fails_like(
+	[ 'pg_tde_archive_decrypt', 'a', 'b' ],
+	qr/error: wrong number of arguments, 3 expected/,
+	'pg_tde_archive_decrypt checks for number of arguments');
+
+command_fails_like(
+	[ 'pg_tde_restore_encrypt', 'a', 'b' ],
+	qr/error: wrong number of arguments, 3 expected/,
+	'pg_tde_restore_encrypt checks for number of arguments');
+
+command_fails_like(
+	[ 'pg_tde_archive_decrypt', 'file', 'pg_wal/file', 'false %q' ],
+	qr/error: invalid value for parameter "ARCHIVE-COMMAND": "false %q"\n.*?detail: String contains unexpected placeholder "%q"/,
+	'pg_tde_archive_decrypt gives error if command not found');
+
+command_fails_like(
+	[ 'pg_tde_restore_encrypt', 'file', 'pg_wal/file', 'false %q' ],
+	qr/error: invalid value for parameter "RESTORE-COMMAND": "false %q"\n.*?detail: String contains unexpected placeholder "%q"/,
+	'pg_tde_restore_encrypt gives error if command not found');
+
+command_fails_like(
+	[ 'pg_tde_archive_decrypt', 'file', 'pg_wal/file', 'unknown_command_42' ],
+	qr/error: ARCHIVE-COMMAND "unknown_command_42" failed with exit code 127/,
+	'pg_tde_archive_decrypt gives error if command not found');
+
+command_fails_like(
+	[ 'pg_tde_restore_encrypt', 'file', 'pg_wal/file', 'unknown_command_42' ],
+	qr/error: RESTORE-COMMAND "unknown_command_42" failed with exit code 127/,
+	'pg_tde_restore_encrypt gives error if command not found');
+
+command_fails_like(
+	[ 'pg_tde_archive_decrypt', 'file', 'pg_wal/file', 'false' ],
+	qr/error: ARCHIVE-COMMAND "false" failed with exit code 1/,
+	'pg_tde_archive_decrypt prints return code of failed command');
+
+command_fails_like(
+	[ 'pg_tde_restore_encrypt', 'file', 'pg_wal/file', 'false' ],
+	qr/error: RESTORE-COMMAND "false" failed with exit code 1/,
+	'pg_tde_restore_encrypt prints return code of failed command');
+
+command_fails_like(
+	[ 'pg_tde_archive_decrypt', 'file', 'pg_wal/file', 'kill $$; sleep' ],
+	qr/error: ARCHIVE-COMMAND "kill \$\$; sleep" was terminated by signal 15: Terminated/,
+	'pg_tde_archive_decrypt prints which signal killed the command');
+
+command_fails_like(
+	[ 'pg_tde_restore_encrypt', 'file', 'pg_wal/file', 'kill $$; sleep' ],
+	qr/error: RESTORE-COMMAND "kill \$\$; sleep" was terminated by signal 15: Terminated/,
+	'pg_tde_restore_encrypt prints which signal killed the command');
 
 # Test archive_command
 
