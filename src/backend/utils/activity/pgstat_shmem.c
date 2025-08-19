@@ -180,7 +180,6 @@ StatsShmemInit(void)
 		 * provides a small efficiency win.
 		 */
 		ctl->raw_dsa_area = p;
-		p += MAXALIGN(pgstat_dsa_init_size());
 		dsa = dsa_create_in_place(ctl->raw_dsa_area,
 								  pgstat_dsa_init_size(),
 								  LWTRANCHE_PGSTATS_DSA, NULL);
