@@ -37,9 +37,25 @@ $primary->safe_psql('postgres',
 	"SELECT pg_tde_set_server_key_using_global_key_provider('server-key', 'keyring');"
 );
 
+# This is a quite ugly dance to make sure we have a replica starting in a stats
+# with encrypted WAL and without. We do this by taking a base backup while
+# encryption is disabled and one where it is enabled.
+#
+# We also generate some plaintext WAL and some ecrnypted WAL.
+
+$primary->backup('plain_wal', backup_options => [ '-X', 'none' ]);
+
 $primary->append_conf('postgresql.conf', "pg_tde.wal_encrypt = on");
 
-$primary->backup('backup', backup_options => [ '-X', 'none' ]);
+$primary->restart;
+
+$primary->backup('enc_wal', backup_options => [ '-X', 'none' ]);
+
+$primary->append_conf('postgresql.conf', "pg_tde.wal_encrypt = off");
+
+$primary->restart;
+
+$primary->append_conf('postgresql.conf', "pg_tde.wal_encrypt = on");
 
 $primary->safe_psql('postgres',
 	"CREATE TABLE t1 AS SELECT 'foobar_plain' AS x");
@@ -71,33 +87,68 @@ like(
 	qr/foobar_enc/,
 	'should find foobar_enc in archive');
 
-# Test restore_command
+# Test restore_command with encrypted WAL
 
-my $replica = PostgreSQL::Test::Cluster->new('replica');
-$replica->init_from_backup($primary, 'backup');
-$replica->append_conf('postgresql.conf',
+my $replica_enc = PostgreSQL::Test::Cluster->new('replica_enc');
+$replica_enc->init_from_backup($primary, 'enc_wal');
+$replica_enc->append_conf('postgresql.conf',
 	"restore_command = 'pg_tde_restore_encrypt %f %p \"cp $archive_dir/%%f %%p\"'"
 );
-$replica->append_conf('postgresql.conf', "recovery_target_action = promote");
-$replica->set_recovery_mode;
-$replica->start;
+$replica_enc->set_standby_mode;
+$replica_enc->start;
 
-$data_dir = $replica->data_dir;
+$replica_enc->wait_for_log("waiting for WAL to become available");
 
-like(
+$data_dir = $replica_enc->data_dir;
+
+unlike(
 	`strings $data_dir/pg_wal/0000000100000000000000??`,
 	qr/foobar_plain/,
-	'should find foobar_plain in WAL since we use the same key file');
+	'should not find foobar_plain in WAL since it is encrypted');
 unlike(
 	`strings $data_dir/pg_wal/0000000100000000000000??`,
 	qr/foobar_enc/,
 	'should not find foobar_enc in WAL since it is encrypted');
 
-my $result = $replica->safe_psql('postgres',
+$replica_enc->promote;
+
+my $result = $replica_enc->safe_psql('postgres',
 	'SELECT * FROM t1 UNION ALL SELECT * FROM t2');
 
 is($result, "foobar_plain\nfoobar_enc", 'b');
 
-$replica->stop;
+$replica_enc->stop;
+
+# Test restore_command with plain WAL
+
+my $replica_plain = PostgreSQL::Test::Cluster->new('replica_plain');
+$replica_plain->init_from_backup($primary, 'plain_wal');
+$replica_plain->append_conf('postgresql.conf',
+	"restore_command = 'pg_tde_restore_encrypt %f %p \"cp $archive_dir/%%f %%p\"'"
+);
+$replica_plain->set_standby_mode;
+$replica_plain->start;
+
+$replica_plain->wait_for_log("waiting for WAL to become available");
+
+$data_dir = $replica_plain->data_dir;
+
+like(
+	`strings $data_dir/pg_wal/0000000100000000000000??`,
+	qr/foobar_plain/,
+	'should find foobar_plain in WAL since it is not encrypted');
+like(
+	`strings $data_dir/pg_wal/0000000100000000000000??`,
+	qr/foobar_enc/,
+	'should find foobar_enc in WAL since it is not encrypted');
+
+$replica_plain->promote;
+
+$result = $replica_plain->safe_psql('postgres',
+	'SELECT * FROM t1 UNION ALL SELECT * FROM t2');
+
+is($result, "foobar_plain\nfoobar_enc", 'b');
+
+$replica_plain->stop;
 
 done_testing();
