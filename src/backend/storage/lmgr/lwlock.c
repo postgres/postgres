@@ -162,8 +162,7 @@ LWLockPadded *MainLWLockArray = NULL;
 /*
  * We use this structure to keep track of locked LWLocks for release
  * during error recovery.  Normally, only a few will be held at once, but
- * occasionally the number can be much higher; for example, the pg_buffercache
- * extension locks all buffer partitions simultaneously.
+ * occasionally the number can be much higher.
  */
 #define MAX_SIMUL_LWLOCKS	200
 
