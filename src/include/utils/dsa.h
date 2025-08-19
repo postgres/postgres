@@ -114,13 +114,13 @@ typedef pg_atomic_uint64 dsa_pointer_atomic;
 	dsa_allocate_extended(area, size, DSA_ALLOC_ZERO)
 
 /* Create dsa_area with default segment sizes */
-#define dsa_create(tranch_id) \
-	dsa_create_ext(tranch_id, DSA_DEFAULT_INIT_SEGMENT_SIZE, \
+#define dsa_create(tranche_id) \
+	dsa_create_ext(tranche_id, DSA_DEFAULT_INIT_SEGMENT_SIZE, \
 				   DSA_MAX_SEGMENT_SIZE)
 
 /* Create dsa_area with default segment sizes in an existing share memory space */
-#define dsa_create_in_place(place, size, tranch_id, segment) \
-	dsa_create_in_place_ext(place, size, tranch_id, segment, \
+#define dsa_create_in_place(place, size, tranche_id, segment) \
+	dsa_create_in_place_ext(place, size, tranche_id, segment, \
 							DSA_DEFAULT_INIT_SEGMENT_SIZE, \
 							DSA_MAX_SEGMENT_SIZE)
 
