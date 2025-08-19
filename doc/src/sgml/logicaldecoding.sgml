@@ -600,109 +600,112 @@ DETAIL:  Synchronization could lead to data loss, because the remote slot needs 
      <title>Options</title>
 
      <variablelist>
-      <varlistentry>
-       <term>
-        proto_version
-       </term>
+      <varlistentry id="pgoutput-options-proto-version">
+       <term><varname>proto_version</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
+         Specifies the protocol version.
+         Currently versions <literal>1</literal>, <literal>2</literal>,
          <literal>3</literal>, and <literal>4</literal> are supported.  A valid
          version is required.
         </para>
         <para>
-         Version <literal>2</literal> is supported only for server version 14
-         and above, and it allows streaming of large in-progress transactions.
+         Version <literal>2</literal> is supported on server version 14
+         and above, and is required when <varname>streaming</varname>
+         is set to <literal>on</literal> to stream large in-progress
+         transactions.
         </para>
         <para>
-         Version <literal>3</literal> is supported only for server version 15
-         and above, and it allows streaming of two-phase commits.
+         Version <literal>3</literal> is supported on server version 15
+         and above, and is required when <varname>two_phase</varname>
+         is enabled to stream two-phase commits.
         </para>
         <para>
-         Version <literal>4</literal> is supported only for server version 16
-         and above, and it allows streams of large in-progress transactions to
-         be applied in parallel.
+         Version <literal>4</literal> is supported on server version 16
+         and above, and is required when <varname>streaming</varname>
+         is set to <literal>parallel</literal> to stream large in-progress
+         transactions to be applied in parallel.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        publication_names
-       </term>
+      <varlistentry id="pgoutput-options-publication-names">
+       <term><varname>publication_names</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-         Comma-separated list of publication names for which to subscribe
-         (receive changes). The individual publication names are treated
+         A comma-separated list of publication names to subscribe to.
+         The individual publication names are treated
          as standard objects names and can be quoted the same as needed.
          At least one publication name is required.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        binary
-       </term>
+      <varlistentry id="pgoutput-options-binary">
+       <term><varname>binary</varname> (<type>boolean</type>)</term>
        <listitem>
         <para>
-         Boolean option to use binary transfer mode.  Binary mode is faster
+         Enables binary transfer mode.  Binary mode is faster
          than the text mode but slightly less robust.
          The default is <literal>off</literal>.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        messages
-       </term>
+      <varlistentry id="pgoutput-options-messages">
+       <term><varname>messages</varname> (<type>boolean</type>)</term>
        <listitem>
         <para>
-         Boolean option to enable sending the messages that are written
-         by <function>pg_logical_emit_message</function>.
+         Enables sending the messages that are written by
+         <function><link linkend="pg-logical-emit-message">pg_logical_emit_message</link></function>.
          The default is <literal>off</literal>.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        streaming
-       </term>
+      <varlistentry id="pgoutput-options-streaming">
+       <term><varname>streaming</varname> (<type>enum</type>)</term>
        <listitem>
         <para>
-         Option to enable streaming of in-progress transactions. Valid values are
+         Enables streaming of in-progress transactions. Valid values are
          <literal>off</literal> (the default), <literal>on</literal> and
-         <literal>parallel</literal>. The setting <literal>parallel</literal>
-         enables sending extra information with some messages to be used for
-         parallelization. Minimum protocol version 2 is required to turn it
-         <literal>on</literal>.  Minimum protocol version 4 is required for the
-         <literal>parallel</literal> value.
+         <literal>parallel</literal>.
+        </para>
+        <para>
+         When set to <literal>off</literal>, <filename>pgoutput</filename>
+         fully decodes a transaction before sending it as a whole.
+         This mode works with any protocol version.
+        </para>
+        <para>
+         When set to <literal>on</literal>, <filename>pgoutput</filename>
+         streams large in-progress transactions.
+         This requires protocol version 2 or higher.
+        </para>
+        <para>
+         When set to <literal>parallel</literal>, <filename>pgoutput</filename>
+         streams large in-progress transactions and also sends
+         extra information in some messages to support parallel processing.
+         This requires protocol version 4 or higher.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        two_phase
-       </term>
+      <varlistentry id="pgoutput-options-two-phase">
+       <term><varname>two_phase</varname> (<type>boolean</type>)</term>
        <listitem>
         <para>
-         Boolean option to enable two-phase transactions.   Minimum protocol
-         version 3 is required to turn it on.
+         Enables sending two-phase transactions.
+         Minimum protocol version 3 is required to turn it on.
          The default is <literal>off</literal>.
         </para>
        </listitem>
       </varlistentry>
 
-      <varlistentry>
-       <term>
-        origin
-       </term>
+      <varlistentry id="pgoutput-options-origin">
+       <term><varname>origin</varname> (<type>enum</type>)</term>
        <listitem>
         <para>
-         Option to send changes by their origin.  Possible values are
+         Specifies whether to send changes by their origin.  Possible values are
          <literal>none</literal> to only send the changes that have no origin
          associated, or <literal>any</literal>
          to send the changes regardless of their origin.  This can be used
@@ -714,6 +717,21 @@ DETAIL:  Synchronization could lead to data loss, because the remote slot needs 
       </varlistentry>
      </variablelist>
 
+    </sect3>
+
+    <sect3 id="logicaldecoding-pgoutput-notes">
+     <title>Notes</title>
+
+     <para>
+      <filename>pgoutput</filename> produces binary output,
+      so functions expecting textual data (
+      <function><link linkend="pg-logical-slot-peek-changes">pg_logical_slot_peek_changes</link></function> and
+      <function><link linkend="pg-logical-slot-get-changes">pg_logical_slot_get_changes</link></function>)
+      cannot be used with it.  Use
+      <function><link linkend="pg-logical-slot-peek-binary-changes">pg_logical_slot_peek_binary_changes</link></function> or
+      <function><link linkend="pg-logical-slot-get-binary-changes">pg_logical_slot_get_binary_changes</link></function>
+      instead.
+     </para>
     </sect3>
    </sect2>
   </sect1>
