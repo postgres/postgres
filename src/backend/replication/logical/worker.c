@@ -5415,6 +5415,13 @@ InitializeLogRepWorker(void)
 	StartTransactionCommand();
 	oldctx = MemoryContextSwitchTo(ApplyContext);
 
+	/*
+	 * Lock the subscription to prevent it from being concurrently dropped,
+	 * then re-verify its existence. After the initialization, the worker will
+	 * be terminated gracefully if the subscription is dropped.
+	 */
+	LockSharedObject(SubscriptionRelationId, MyLogicalRepWorker->subid, 0,
+					 AccessShareLock);
 	MySubscription = GetSubscription(MyLogicalRepWorker->subid, true);
 	if (!MySubscription)
 	{

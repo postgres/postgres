@@ -1803,10 +1803,12 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	bool		must_use_password;
 
 	/*
-	 * Lock pg_subscription with AccessExclusiveLock to ensure that the
-	 * launcher doesn't restart new worker during dropping the subscription
+	 * The launcher may concurrently start a new worker for this subscription.
+	 * During initialization, the worker checks for subscription validity and
+	 * exits if the subscription has already been dropped. See
+	 * InitializeLogRepWorker.
 	 */
-	rel = table_open(SubscriptionRelationId, AccessExclusiveLock);
+	rel = table_open(SubscriptionRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache2(SUBSCRIPTIONNAME, ObjectIdGetDatum(MyDatabaseId),
 						  CStringGetDatum(stmt->subname));
