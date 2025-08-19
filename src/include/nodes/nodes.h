@@ -323,8 +323,8 @@ typedef enum JoinType
 	 * These codes are used internally in the planner, but are not supported
 	 * by the executor (nor, indeed, by most of the planner).
 	 */
-	JOIN_UNIQUE_OUTER,			/* LHS path must be made unique */
-	JOIN_UNIQUE_INNER,			/* RHS path must be made unique */
+	JOIN_UNIQUE_OUTER,			/* LHS has be made unique */
+	JOIN_UNIQUE_INNER,			/* RHS has be made unique */
 
 	/*
 	 * We might need additional join types someday.

@@ -640,7 +640,6 @@ RelOptInfo      - a relation or joined relations
   GroupResultPath - childless Result plan node (used for degenerate grouping)
   MaterialPath  - a Material plan node
   MemoizePath   - a Memoize plan node for caching tuples from sub-paths
-  UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers
   GatherMergePath - collect parallel results, preserving their common sort order
   ProjectionPath - a Result plan node with child (used for projection)
@@ -648,7 +647,7 @@ RelOptInfo      - a relation or joined relations
   SortPath      - a Sort plan node applied to some sub-path
   IncrementalSortPath - an IncrementalSort plan node applied to some sub-path
   GroupPath     - a Group plan node applied to some sub-path
-  UpperUniquePath - a Unique plan node applied to some sub-path
+  UniquePath    - a Unique plan node applied to some sub-path
   AggPath       - an Agg plan node applied to some sub-path
   GroupingSetsPath - an Agg plan node used to implement GROUPING SETS
   MinMaxAggPath - a Result plan node with subplans performing MIN/MAX

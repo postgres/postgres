@@ -703,8 +703,6 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *			(regardless of ordering) among the unparameterized paths;
  *			or if there is no unparameterized path, the path with lowest
  *			total cost among the paths with minimum parameterization
- *		cheapest_unique_path - for caching cheapest path to produce unique
- *			(no duplicates) output from relation; NULL if not yet requested
  *		cheapest_parameterized_paths - best paths for their parameterizations;
  *			always includes cheapest_total_path, even if that's unparameterized
  *		direct_lateral_relids - rels this rel has direct LATERAL references to
@@ -769,6 +767,21 @@ typedef struct PartitionSchemeData *PartitionScheme;
  *		non_unique_for_rels - list of Relid sets, each one being a set of
  *					other rels for which we have tried and failed to prove
  *					this one unique
+ *
+ * Three fields are used to cache information about unique-ification of this
+ * relation.  This is used to support semijoins where the relation appears on
+ * the RHS: the relation is first unique-ified, and then a regular join is
+ * performed:
+ *
+ *		unique_rel - the unique-ified version of the relation, containing paths
+ *					that produce unique (no duplicates) output from relation;
+ *					NULL if not yet requested
+ *		unique_pathkeys - pathkeys that represent the ordering requirements for
+ *					the relation's output in sort-based unique-ification
+ *					implementations
+ *		unique_groupclause - a list of SortGroupClause nodes that represent the
+ *					columns to be grouped on in hash-based unique-ification
+ *					implementations
  *
  * The presence of the following fields depends on the restrictions
  * and joins that the relation participates in:
@@ -930,7 +943,6 @@ typedef struct RelOptInfo
 	List	   *partial_pathlist;	/* partial Paths */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
-	struct Path *cheapest_unique_path;
 	List	   *cheapest_parameterized_paths;
 
 	/*
@@ -1003,6 +1015,16 @@ typedef struct RelOptInfo
 	List	   *unique_for_rels;
 	/* known not unique for these set(s) */
 	List	   *non_unique_for_rels;
+
+	/*
+	 * information about unique-ification of this relation
+	 */
+	/* the unique-ified version of the relation */
+	struct RelOptInfo *unique_rel;
+	/* pathkeys for sort-based unique-ification implementations */
+	List	   *unique_pathkeys;
+	/* SortGroupClause nodes for hash-based unique-ification implementations */
+	List	   *unique_groupclause;
 
 	/*
 	 * used by various scans and joins:
@@ -1096,6 +1118,17 @@ typedef struct RelOptInfo
 #define REL_HAS_ALL_PART_PROPS(rel)	\
 	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0 && \
 	 (rel)->part_rels && (rel)->partexprs && (rel)->nullable_partexprs)
+
+/*
+ * Is given relation unique-ified?
+ *
+ * When the nominal jointype is JOIN_INNER, sjinfo->jointype is JOIN_SEMI, and
+ * the given rel is exactly the RHS of the semijoin, it indicates that the rel
+ * has been unique-ified.
+ */
+#define RELATION_WAS_MADE_UNIQUE(rel, sjinfo, nominal_jointype) \
+	((nominal_jointype) == JOIN_INNER && (sjinfo)->jointype == JOIN_SEMI && \
+	 bms_equal((sjinfo)->syn_righthand, (rel)->relids))
 
 /*
  * IndexOptInfo
@@ -1741,8 +1774,8 @@ typedef struct ParamPathInfo
  * and the specified outer rel(s).
  *
  * "rows" is the same as parent->rows in simple paths, but in parameterized
- * paths and UniquePaths it can be less than parent->rows, reflecting the
- * fact that we've filtered by extra join conditions or removed duplicates.
+ * paths it can be less than parent->rows, reflecting the fact that we've
+ * filtered by extra join conditions.
  *
  * "pathkeys" is a List of PathKey nodes (see above), describing the sort
  * ordering of the path's output rows.
@@ -2142,34 +2175,6 @@ typedef struct MemoizePath
 } MemoizePath;
 
 /*
- * UniquePath represents elimination of distinct rows from the output of
- * its subpath.
- *
- * This can represent significantly different plans: either hash-based or
- * sort-based implementation, or a no-op if the input path can be proven
- * distinct already.  The decision is sufficiently localized that it's not
- * worth having separate Path node types.  (Note: in the no-op case, we could
- * eliminate the UniquePath node entirely and just return the subpath; but
- * it's convenient to have a UniquePath in the path tree to signal upper-level
- * routines that the input is known distinct.)
- */
-typedef enum UniquePathMethod
-{
-	UNIQUE_PATH_NOOP,			/* input is known unique already */
-	UNIQUE_PATH_HASH,			/* use hashing */
-	UNIQUE_PATH_SORT,			/* use sorting */
-} UniquePathMethod;
-
-typedef struct UniquePath
-{
-	Path		path;
-	Path	   *subpath;
-	UniquePathMethod umethod;
-	List	   *in_operators;	/* equality operators of the IN clause */
-	List	   *uniq_exprs;		/* expressions to be made unique */
-} UniquePath;
-
-/*
  * GatherPath runs several copies of a plan in parallel and collects the
  * results.  The parallel leader may also execute the plan, unless the
  * single_copy flag is set.
@@ -2375,17 +2380,17 @@ typedef struct GroupPath
 } GroupPath;
 
 /*
- * UpperUniquePath represents adjacent-duplicate removal (in presorted input)
+ * UniquePath represents adjacent-duplicate removal (in presorted input)
  *
  * The columns to be compared are the first numkeys columns of the path's
  * pathkeys.  The input is presumed already sorted that way.
  */
-typedef struct UpperUniquePath
+typedef struct UniquePath
 {
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
 	int			numkeys;		/* number of pathkey columns to compare */
-} UpperUniquePath;
+} UniquePath;
 
 /*
  * AggPath represents generic computation of aggregate functions

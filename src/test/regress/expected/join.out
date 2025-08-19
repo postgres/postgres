@@ -9468,23 +9468,20 @@ where exists (select 1 from tenk1 t3
 ---------------------------------------------------------------------------------
  Nested Loop
    Output: t1.unique1, t2.hundred
-   ->  Hash Join
+   ->  Merge Join
          Output: t1.unique1, t3.tenthous
-         Hash Cond: (t3.thousand = t1.unique1)
-         ->  HashAggregate
+         Merge Cond: (t3.thousand = t1.unique1)
+         ->  Unique
                Output: t3.thousand, t3.tenthous
-               Group Key: t3.thousand, t3.tenthous
                ->  Index Only Scan using tenk1_thous_tenthous on public.tenk1 t3
                      Output: t3.thousand, t3.tenthous
-         ->  Hash
+         ->  Index Only Scan using onek_unique1 on public.onek t1
                Output: t1.unique1
-               ->  Index Only Scan using onek_unique1 on public.onek t1
-                     Output: t1.unique1
-                     Index Cond: (t1.unique1 < 1)
+               Index Cond: (t1.unique1 < 1)
    ->  Index Only Scan using tenk1_hundred on public.tenk1 t2
          Output: t2.hundred
          Index Cond: (t2.hundred = t3.tenthous)
-(18 rows)
+(15 rows)
 
 -- ... unless it actually is unique
 create table j3 as select unique1, tenthous from onek;

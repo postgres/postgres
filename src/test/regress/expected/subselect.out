@@ -708,6 +708,212 @@ select * from numeric_table
 (4 rows)
 
 --
+-- Test that a semijoin implemented by unique-ifying the RHS can explore
+-- different paths of the RHS rel.
+--
+create table semijoin_unique_tbl (a int, b int);
+insert into semijoin_unique_tbl select i%10, i%10 from generate_series(1,1000)i;
+create index on semijoin_unique_tbl(a, b);
+analyze semijoin_unique_tbl;
+-- Ensure that we get a plan with Unique + IndexScan
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                              QUERY PLAN                                              
+------------------------------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.a, t1.b, t2.a, t2.b
+   ->  Merge Join
+         Output: t1.a, t1.b, t3.b
+         Merge Cond: (t3.a = t1.a)
+         ->  Unique
+               Output: t3.a, t3.b
+               ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t3
+                     Output: t3.a, t3.b
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t1
+               Output: t1.a, t1.b
+   ->  Memoize
+         Output: t2.a, t2.b
+         Cache Key: t3.b
+         Cache Mode: logical
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t2
+               Output: t2.a, t2.b
+               Index Cond: (t2.a = t3.b)
+(18 rows)
+
+-- Ensure that we can unique-ify expressions more complex than plain Vars
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a+1, b+1 from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Incremental Sort
+   Output: t1.a, t1.b, t2.a, t2.b
+   Sort Key: t1.a, t2.a
+   Presorted Key: t1.a
+   ->  Merge Join
+         Output: t1.a, t1.b, t2.a, t2.b
+         Merge Cond: (t1.a = ((t3.a + 1)))
+         ->  Index Only Scan using semijoin_unique_tbl_a_b_idx on public.semijoin_unique_tbl t1
+               Output: t1.a, t1.b
+         ->  Sort
+               Output: t2.a, t2.b, t3.a, ((t3.a + 1))
+               Sort Key: ((t3.a + 1))
+               ->  Hash Join
+                     Output: t2.a, t2.b, t3.a, (t3.a + 1)
+                     Hash Cond: (t2.a = (t3.b + 1))
+                     ->  Seq Scan on public.semijoin_unique_tbl t2
+                           Output: t2.a, t2.b
+                     ->  Hash
+                           Output: t3.a, t3.b
+                           ->  HashAggregate
+                                 Output: t3.a, t3.b
+                                 Group Key: (t3.a + 1), (t3.b + 1)
+                                 ->  Seq Scan on public.semijoin_unique_tbl t3
+                                       Output: t3.a, t3.b, (t3.a + 1), (t3.b + 1)
+(24 rows)
+
+-- encourage use of parallel plans
+set parallel_setup_cost=0;
+set parallel_tuple_cost=0;
+set min_parallel_table_scan_size=0;
+set max_parallel_workers_per_gather=4;
+set enable_indexscan to off;
+-- Ensure that we get a parallel plan for the unique-ification
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.a, t1.b, t2.a, t2.b
+   ->  Merge Join
+         Output: t1.a, t1.b, t3.b
+         Merge Cond: (t3.a = t1.a)
+         ->  Unique
+               Output: t3.a, t3.b
+               ->  Gather Merge
+                     Output: t3.a, t3.b
+                     Workers Planned: 2
+                     ->  Sort
+                           Output: t3.a, t3.b
+                           Sort Key: t3.a, t3.b
+                           ->  HashAggregate
+                                 Output: t3.a, t3.b
+                                 Group Key: t3.a, t3.b
+                                 ->  Parallel Seq Scan on public.semijoin_unique_tbl t3
+                                       Output: t3.a, t3.b
+         ->  Materialize
+               Output: t1.a, t1.b
+               ->  Gather Merge
+                     Output: t1.a, t1.b
+                     Workers Planned: 2
+                     ->  Sort
+                           Output: t1.a, t1.b
+                           Sort Key: t1.a
+                           ->  Parallel Seq Scan on public.semijoin_unique_tbl t1
+                                 Output: t1.a, t1.b
+   ->  Memoize
+         Output: t2.a, t2.b
+         Cache Key: t3.b
+         Cache Mode: logical
+         ->  Bitmap Heap Scan on public.semijoin_unique_tbl t2
+               Output: t2.a, t2.b
+               Recheck Cond: (t2.a = t3.b)
+               ->  Bitmap Index Scan on semijoin_unique_tbl_a_b_idx
+                     Index Cond: (t2.a = t3.b)
+(37 rows)
+
+reset enable_indexscan;
+reset max_parallel_workers_per_gather;
+reset min_parallel_table_scan_size;
+reset parallel_tuple_cost;
+reset parallel_setup_cost;
+drop table semijoin_unique_tbl;
+create table unique_tbl_p (a int, b int) partition by range(a);
+create table unique_tbl_p1 partition of unique_tbl_p for values from (0) to (5);
+create table unique_tbl_p2 partition of unique_tbl_p for values from (5) to (10);
+create table unique_tbl_p3 partition of unique_tbl_p for values from (10) to (20);
+insert into unique_tbl_p select i%12, i from generate_series(0, 1000)i;
+create index on unique_tbl_p1(a);
+create index on unique_tbl_p2(a);
+create index on unique_tbl_p3(a);
+analyze unique_tbl_p;
+set enable_partitionwise_join to on;
+-- Ensure that the unique-ification works for partition-wise join
+explain (verbose, costs off)
+select * from unique_tbl_p t1, unique_tbl_p t2
+where (t1.a, t2.a) in (select a, a from unique_tbl_p t3)
+order by t1.a, t2.a;
+                                           QUERY PLAN                                           
+------------------------------------------------------------------------------------------------
+ Merge Append
+   Sort Key: t1.a
+   ->  Nested Loop
+         Output: t1_1.a, t1_1.b, t2_1.a, t2_1.b
+         ->  Nested Loop
+               Output: t1_1.a, t1_1.b, t3_1.a
+               ->  Unique
+                     Output: t3_1.a
+                     ->  Index Only Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t3_1
+                           Output: t3_1.a
+               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t1_1
+                     Output: t1_1.a, t1_1.b
+                     Index Cond: (t1_1.a = t3_1.a)
+         ->  Memoize
+               Output: t2_1.a, t2_1.b
+               Cache Key: t1_1.a
+               Cache Mode: logical
+               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t2_1
+                     Output: t2_1.a, t2_1.b
+                     Index Cond: (t2_1.a = t1_1.a)
+   ->  Nested Loop
+         Output: t1_2.a, t1_2.b, t2_2.a, t2_2.b
+         ->  Nested Loop
+               Output: t1_2.a, t1_2.b, t3_2.a
+               ->  Unique
+                     Output: t3_2.a
+                     ->  Index Only Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t3_2
+                           Output: t3_2.a
+               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t1_2
+                     Output: t1_2.a, t1_2.b
+                     Index Cond: (t1_2.a = t3_2.a)
+         ->  Memoize
+               Output: t2_2.a, t2_2.b
+               Cache Key: t1_2.a
+               Cache Mode: logical
+               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t2_2
+                     Output: t2_2.a, t2_2.b
+                     Index Cond: (t2_2.a = t1_2.a)
+   ->  Nested Loop
+         Output: t1_3.a, t1_3.b, t2_3.a, t2_3.b
+         ->  Nested Loop
+               Output: t1_3.a, t1_3.b, t3_3.a
+               ->  Unique
+                     Output: t3_3.a
+                     ->  Sort
+                           Output: t3_3.a
+                           Sort Key: t3_3.a
+                           ->  Seq Scan on public.unique_tbl_p3 t3_3
+                                 Output: t3_3.a
+               ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t1_3
+                     Output: t1_3.a, t1_3.b
+                     Index Cond: (t1_3.a = t3_3.a)
+         ->  Memoize
+               Output: t2_3.a, t2_3.b
+               Cache Key: t1_3.a
+               Cache Mode: logical
+               ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t2_3
+                     Output: t2_3.a, t2_3.b
+                     Index Cond: (t2_3.a = t1_3.a)
+(59 rows)
+
+reset enable_partitionwise_join;
+drop table unique_tbl_p;
+--
 -- Test case for bug #4290: bogus calculation of subplan param sets
 --
 create temp table ta (id int primary key, val int);
@@ -2672,18 +2878,17 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM onek
   WHERE (unique1,ten) IN (VALUES (1,1), (20,0), (99,9), (17,99))
   ORDER BY unique1;
-                           QUERY PLAN                            
------------------------------------------------------------------
- Sort
-   Sort Key: onek.unique1
-   ->  Nested Loop
-         ->  HashAggregate
-               Group Key: "*VALUES*".column1, "*VALUES*".column2
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Nested Loop
+   ->  Unique
+         ->  Sort
+               Sort Key: "*VALUES*".column1, "*VALUES*".column2
                ->  Values Scan on "*VALUES*"
-         ->  Index Scan using onek_unique1 on onek
-               Index Cond: (unique1 = "*VALUES*".column1)
-               Filter: ("*VALUES*".column2 = ten)
-(9 rows)
+   ->  Index Scan using onek_unique1 on onek
+         Index Cond: (unique1 = "*VALUES*".column1)
+         Filter: ("*VALUES*".column2 = ten)
+(8 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT * FROM onek
@@ -2858,12 +3063,10 @@ SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) ORDER BY 1);
    ->  Unique
          ->  Sort
                Sort Key: "*VALUES*".column1
-               ->  Sort
-                     Sort Key: "*VALUES*".column1
-                     ->  Values Scan on "*VALUES*"
+               ->  Values Scan on "*VALUES*"
    ->  Index Scan using onek_unique1 on onek
          Index Cond: (unique1 = "*VALUES*".column1)
-(9 rows)
+(7 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT ten FROM onek WHERE unique1 IN (VALUES (1), (2) LIMIT 1);

@@ -362,6 +362,73 @@ select * from numeric_table
   where num_col in (select float_col from float_table);
 
 --
+-- Test that a semijoin implemented by unique-ifying the RHS can explore
+-- different paths of the RHS rel.
+--
+
+create table semijoin_unique_tbl (a int, b int);
+insert into semijoin_unique_tbl select i%10, i%10 from generate_series(1,1000)i;
+create index on semijoin_unique_tbl(a, b);
+analyze semijoin_unique_tbl;
+
+-- Ensure that we get a plan with Unique + IndexScan
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+
+-- Ensure that we can unique-ify expressions more complex than plain Vars
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a+1, b+1 from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+
+-- encourage use of parallel plans
+set parallel_setup_cost=0;
+set parallel_tuple_cost=0;
+set min_parallel_table_scan_size=0;
+set max_parallel_workers_per_gather=4;
+
+set enable_indexscan to off;
+
+-- Ensure that we get a parallel plan for the unique-ification
+explain (verbose, costs off)
+select * from semijoin_unique_tbl t1, semijoin_unique_tbl t2
+where (t1.a, t2.a) in (select a, b from semijoin_unique_tbl t3)
+order by t1.a, t2.a;
+
+reset enable_indexscan;
+
+reset max_parallel_workers_per_gather;
+reset min_parallel_table_scan_size;
+reset parallel_tuple_cost;
+reset parallel_setup_cost;
+
+drop table semijoin_unique_tbl;
+
+create table unique_tbl_p (a int, b int) partition by range(a);
+create table unique_tbl_p1 partition of unique_tbl_p for values from (0) to (5);
+create table unique_tbl_p2 partition of unique_tbl_p for values from (5) to (10);
+create table unique_tbl_p3 partition of unique_tbl_p for values from (10) to (20);
+insert into unique_tbl_p select i%12, i from generate_series(0, 1000)i;
+create index on unique_tbl_p1(a);
+create index on unique_tbl_p2(a);
+create index on unique_tbl_p3(a);
+analyze unique_tbl_p;
+
+set enable_partitionwise_join to on;
+
+-- Ensure that the unique-ification works for partition-wise join
+explain (verbose, costs off)
+select * from unique_tbl_p t1, unique_tbl_p t2
+where (t1.a, t2.a) in (select a, a from unique_tbl_p t3)
+order by t1.a, t2.a;
+
+reset enable_partitionwise_join;
+
+drop table unique_tbl_p;
+
+--
 -- Test case for bug #4290: bogus calculation of subplan param sets
 --
 

@@ -1134,48 +1134,50 @@ EXPLAIN (COSTS OFF)
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1, prt1_e t2 WHERE t1.a = 0 AND t1.b = (t2.a + t2.b)/2) AND t1.b = 0 ORDER BY t1.a;
                                    QUERY PLAN                                    
 ---------------------------------------------------------------------------------
- Sort
+ Merge Append
    Sort Key: t1.a
-   ->  Append
-         ->  Nested Loop
-               Join Filter: (t1_2.a = t1_5.b)
-               ->  HashAggregate
-                     Group Key: t1_5.b
+   ->  Nested Loop
+         Join Filter: (t1_2.a = t1_5.b)
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_5.b
                      ->  Hash Join
                            Hash Cond: (((t2_1.a + t2_1.b) / 2) = t1_5.b)
                            ->  Seq Scan on prt1_e_p1 t2_1
                            ->  Hash
                                  ->  Seq Scan on prt2_p1 t1_5
                                        Filter: (a = 0)
-               ->  Index Scan using iprt1_p1_a on prt1_p1 t1_2
-                     Index Cond: (a = ((t2_1.a + t2_1.b) / 2))
-                     Filter: (b = 0)
-         ->  Nested Loop
-               Join Filter: (t1_3.a = t1_6.b)
-               ->  HashAggregate
-                     Group Key: t1_6.b
+         ->  Index Scan using iprt1_p1_a on prt1_p1 t1_2
+               Index Cond: (a = ((t2_1.a + t2_1.b) / 2))
+               Filter: (b = 0)
+   ->  Nested Loop
+         Join Filter: (t1_3.a = t1_6.b)
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_6.b
                      ->  Hash Join
                            Hash Cond: (((t2_2.a + t2_2.b) / 2) = t1_6.b)
                            ->  Seq Scan on prt1_e_p2 t2_2
                            ->  Hash
                                  ->  Seq Scan on prt2_p2 t1_6
                                        Filter: (a = 0)
-               ->  Index Scan using iprt1_p2_a on prt1_p2 t1_3
-                     Index Cond: (a = ((t2_2.a + t2_2.b) / 2))
-                     Filter: (b = 0)
-         ->  Nested Loop
-               Join Filter: (t1_4.a = t1_7.b)
-               ->  HashAggregate
-                     Group Key: t1_7.b
+         ->  Index Scan using iprt1_p2_a on prt1_p2 t1_3
+               Index Cond: (a = ((t2_2.a + t2_2.b) / 2))
+               Filter: (b = 0)
+   ->  Nested Loop
+         Join Filter: (t1_4.a = t1_7.b)
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_7.b
                      ->  Nested Loop
                            ->  Seq Scan on prt2_p3 t1_7
                                  Filter: (a = 0)
                            ->  Index Scan using iprt1_e_p3_ab2 on prt1_e_p3 t2_3
                                  Index Cond: (((a + b) / 2) = t1_7.b)
-               ->  Index Scan using iprt1_p3_a on prt1_p3 t1_4
-                     Index Cond: (a = ((t2_3.a + t2_3.b) / 2))
-                     Filter: (b = 0)
-(41 rows)
+         ->  Index Scan using iprt1_p3_a on prt1_p3 t1_4
+               Index Cond: (a = ((t2_3.a + t2_3.b) / 2))
+               Filter: (b = 0)
+(43 rows)
 
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1, prt1_e t2 WHERE t1.a = 0 AND t1.b = (t2.a + t2.b)/2) AND t1.b = 0 ORDER BY t1.a;
   a  | b |  c   
@@ -1190,46 +1192,48 @@ EXPLAIN (COSTS OFF)
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
- Sort
+ Merge Append
    Sort Key: t1.a
-   ->  Append
-         ->  Nested Loop
-               ->  HashAggregate
-                     Group Key: t1_6.b
+   ->  Nested Loop
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_6.b
                      ->  Hash Semi Join
                            Hash Cond: (t1_6.b = ((t1_9.a + t1_9.b) / 2))
                            ->  Seq Scan on prt2_p1 t1_6
                            ->  Hash
                                  ->  Seq Scan on prt1_e_p1 t1_9
                                        Filter: (c = 0)
-               ->  Index Scan using iprt1_p1_a on prt1_p1 t1_3
-                     Index Cond: (a = t1_6.b)
-                     Filter: (b = 0)
-         ->  Nested Loop
-               ->  HashAggregate
-                     Group Key: t1_7.b
+         ->  Index Scan using iprt1_p1_a on prt1_p1 t1_3
+               Index Cond: (a = t1_6.b)
+               Filter: (b = 0)
+   ->  Nested Loop
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_7.b
                      ->  Hash Semi Join
                            Hash Cond: (t1_7.b = ((t1_10.a + t1_10.b) / 2))
                            ->  Seq Scan on prt2_p2 t1_7
                            ->  Hash
                                  ->  Seq Scan on prt1_e_p2 t1_10
                                        Filter: (c = 0)
-               ->  Index Scan using iprt1_p2_a on prt1_p2 t1_4
-                     Index Cond: (a = t1_7.b)
-                     Filter: (b = 0)
-         ->  Nested Loop
-               ->  HashAggregate
-                     Group Key: t1_8.b
+         ->  Index Scan using iprt1_p2_a on prt1_p2 t1_4
+               Index Cond: (a = t1_7.b)
+               Filter: (b = 0)
+   ->  Nested Loop
+         ->  Unique
+               ->  Sort
+                     Sort Key: t1_8.b
                      ->  Hash Semi Join
                            Hash Cond: (t1_8.b = ((t1_11.a + t1_11.b) / 2))
                            ->  Seq Scan on prt2_p3 t1_8
                            ->  Hash
                                  ->  Seq Scan on prt1_e_p3 t1_11
                                        Filter: (c = 0)
-               ->  Index Scan using iprt1_p3_a on prt1_p3 t1_5
-                     Index Cond: (a = t1_8.b)
-                     Filter: (b = 0)
-(39 rows)
+         ->  Index Scan using iprt1_p3_a on prt1_p3 t1_5
+               Index Cond: (a = t1_8.b)
+               Filter: (b = 0)
+(41 rows)
 
 SELECT t1.* FROM prt1 t1 WHERE t1.a IN (SELECT t1.b FROM prt2 t1 WHERE t1.b IN (SELECT (t1.a + t1.b)/2 FROM prt1_e t1 WHERE t1.c = 0)) AND t1.b = 0 ORDER BY t1.a;
   a  | b |  c   

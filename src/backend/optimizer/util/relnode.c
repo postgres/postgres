@@ -217,7 +217,6 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->partial_pathlist = NIL;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
-	rel->cheapest_unique_path = NULL;
 	rel->cheapest_parameterized_paths = NIL;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
@@ -269,6 +268,9 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->fdw_private = NULL;
 	rel->unique_for_rels = NIL;
 	rel->non_unique_for_rels = NIL;
+	rel->unique_rel = NULL;
+	rel->unique_pathkeys = NIL;
+	rel->unique_groupclause = NIL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
@@ -713,7 +715,6 @@ build_join_rel(PlannerInfo *root,
 	joinrel->partial_pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
-	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
 	/* init direct_lateral_relids from children; we'll finish it up below */
 	joinrel->direct_lateral_relids =
@@ -748,6 +749,9 @@ build_join_rel(PlannerInfo *root,
 	joinrel->fdw_private = NULL;
 	joinrel->unique_for_rels = NIL;
 	joinrel->non_unique_for_rels = NIL;
+	joinrel->unique_rel = NULL;
+	joinrel->unique_pathkeys = NIL;
+	joinrel->unique_groupclause = NIL;
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;
@@ -906,7 +910,6 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	joinrel->partial_pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
-	joinrel->cheapest_unique_path = NULL;
 	joinrel->cheapest_parameterized_paths = NIL;
 	joinrel->direct_lateral_relids = NULL;
 	joinrel->lateral_relids = NULL;
@@ -933,6 +936,9 @@ build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
 	joinrel->useridiscurrent = false;
 	joinrel->fdwroutine = NULL;
 	joinrel->fdw_private = NULL;
+	joinrel->unique_rel = NULL;
+	joinrel->unique_pathkeys = NIL;
+	joinrel->unique_groupclause = NIL;
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;
@@ -1488,7 +1494,6 @@ fetch_upper_rel(PlannerInfo *root, UpperRelationKind kind, Relids relids)
 	upperrel->pathlist = NIL;
 	upperrel->cheapest_startup_path = NULL;
 	upperrel->cheapest_total_path = NULL;
-	upperrel->cheapest_unique_path = NULL;
 	upperrel->cheapest_parameterized_paths = NIL;
 
 	root->upper_rels[kind] = lappend(root->upper_rels[kind], upperrel);

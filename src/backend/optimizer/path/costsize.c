@@ -3966,10 +3966,12 @@ final_cost_mergejoin(PlannerInfo *root, MergePath *path,
 	 * when we should not.  Can we do better without expensive selectivity
 	 * computations?
 	 *
-	 * The whole issue is moot if we are working from a unique-ified outer
-	 * input, or if we know we don't need to mark/restore at all.
+	 * The whole issue is moot if we know we don't need to mark/restore at
+	 * all, or if we are working from a unique-ified outer input.
 	 */
-	if (IsA(outer_path, UniquePath) || path->skip_mark_restore)
+	if (path->skip_mark_restore ||
+		RELATION_WAS_MADE_UNIQUE(outer_path->parent, extra->sjinfo,
+								 path->jpath.jointype))
 		rescannedtuples = 0;
 	else
 	{
@@ -4364,7 +4366,8 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	 * because we avoid contaminating the cache with a value that's wrong for
 	 * non-unique-ified paths.
 	 */
-	if (IsA(inner_path, UniquePath))
+	if (RELATION_WAS_MADE_UNIQUE(inner_path->parent, extra->sjinfo,
+								 path->jpath.jointype))
 	{
 		innerbucketsize = 1.0 / virtualbuckets;
 		innermcvfreq = 0.0;
