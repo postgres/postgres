@@ -574,6 +574,152 @@ DETAIL:  Synchronization could lead to data loss, because the remote slot needs 
 
   <sect1 id="logicaldecoding-output-plugin">
    <title>Logical Decoding Output Plugins</title>
+
+   <para>
+    <productname>PostgreSQL</productname> provides two logical decoding
+    output plugins, <xref linkend="logicaldecoding-pgoutput"/> and
+    <xref linkend="test-decoding"/>.  You can also develop custom output plugins
+    (see <xref linkend="logicaldecoding-output-plugin-writing"/> for details).
+   </para>
+
+   <sect2 id="logicaldecoding-pgoutput" xreflabel="pgoutput">
+    <title>pgoutput &mdash; Standard Logical Decoding Output Plugin</title>
+
+    <indexterm zone="logicaldecoding-pgoutput">
+     <primary>pgoutput</primary>
+    </indexterm>
+
+    <para>
+     <filename>pgoutput</filename> is the standard logical decoding output
+     plugin provided by <productname>PostgreSQL</productname>.
+     It's used for the built-in <link linkend="logical-replication">
+     logical replication</link>.
+    </para>
+
+    <sect3 id="logicaldecoding-pgoutput-options">
+     <title>Options</title>
+
+     <variablelist>
+      <varlistentry>
+       <term>
+        proto_version
+       </term>
+       <listitem>
+        <para>
+         Protocol version. Currently versions <literal>1</literal>, <literal>2</literal>,
+         <literal>3</literal>, and <literal>4</literal> are supported.  A valid
+         version is required.
+        </para>
+        <para>
+         Version <literal>2</literal> is supported only for server version 14
+         and above, and it allows streaming of large in-progress transactions.
+        </para>
+        <para>
+         Version <literal>3</literal> is supported only for server version 15
+         and above, and it allows streaming of two-phase commits.
+        </para>
+        <para>
+         Version <literal>4</literal> is supported only for server version 16
+         and above, and it allows streams of large in-progress transactions to
+         be applied in parallel.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        publication_names
+       </term>
+       <listitem>
+        <para>
+         Comma-separated list of publication names for which to subscribe
+         (receive changes). The individual publication names are treated
+         as standard objects names and can be quoted the same as needed.
+         At least one publication name is required.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        binary
+       </term>
+       <listitem>
+        <para>
+         Boolean option to use binary transfer mode.  Binary mode is faster
+         than the text mode but slightly less robust.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        messages
+       </term>
+       <listitem>
+        <para>
+         Boolean option to enable sending the messages that are written
+         by <function>pg_logical_emit_message</function>.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        streaming
+       </term>
+       <listitem>
+        <para>
+         Option to enable streaming of in-progress transactions. Valid values are
+         <literal>off</literal> (the default), <literal>on</literal> and
+         <literal>parallel</literal>. The setting <literal>parallel</literal>
+         enables sending extra information with some messages to be used for
+         parallelization. Minimum protocol version 2 is required to turn it
+         <literal>on</literal>.  Minimum protocol version 4 is required for the
+         <literal>parallel</literal> value.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        two_phase
+       </term>
+       <listitem>
+        <para>
+         Boolean option to enable two-phase transactions.   Minimum protocol
+         version 3 is required to turn it on.
+         The default is <literal>off</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+        origin
+       </term>
+       <listitem>
+        <para>
+         Option to send changes by their origin.  Possible values are
+         <literal>none</literal> to only send the changes that have no origin
+         associated, or <literal>any</literal>
+         to send the changes regardless of their origin.  This can be used
+         to avoid loops (infinite replication of the same data) among
+         replication nodes.
+         The default is <literal>any</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+
+    </sect3>
+   </sect2>
+  </sect1>
+
+  <sect1 id="logicaldecoding-output-plugin-writing">
+   <title>Writing Logical Decoding Output Plugins</title>
    <para>
     An example output plugin can be found in the
     <link linkend="test-decoding">
