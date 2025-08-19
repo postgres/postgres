@@ -78,6 +78,7 @@ endif
 install_data(
   'pg_tde.control',
   'pg_tde--1.0.sql',
+  'pg_tde--1.0--2.0.sql',
   kwargs: contrib_data_args,
 )
 

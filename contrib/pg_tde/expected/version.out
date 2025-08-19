@@ -2,7 +2,7 @@ CREATE EXTENSION pg_tde;
 SELECT pg_tde_version();
  pg_tde_version 
 ----------------
- pg_tde 1.0.0
+ pg_tde 2.0.0
 (1 row)
 
 DROP EXTENSION pg_tde;

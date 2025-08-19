@@ -20,7 +20,7 @@ CREATE EXTENSION pg_tde;
 SELECT extname, extversion FROM pg_extension WHERE extname = 'pg_tde';
  extname | extversion 
 ---------+------------
- pg_tde  | 1.0
+ pg_tde  | 2.0
 (1 row)
 
 CREATE TABLE test_enc (id SERIAL, k INTEGER, PRIMARY KEY (id)) USING tde_heap;
