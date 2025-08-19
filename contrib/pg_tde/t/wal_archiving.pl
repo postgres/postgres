@@ -58,7 +58,7 @@ like(
 unlike(
 	`strings $data_dir/pg_wal/0000000100000000000000??`,
 	qr/foobar_enc/,
-	'should not find foobar_enc in WAL');
+	'should not find foobar_enc in WAL since it is encrypted');
 
 $primary->stop;
 
@@ -84,10 +84,10 @@ $replica->start;
 
 $data_dir = $replica->data_dir;
 
-unlike(
+like(
 	`strings $data_dir/pg_wal/0000000100000000000000??`,
 	qr/foobar_plain/,
-	'should not find foobar_plain in WAL since it is encrypted');
+	'should find foobar_plain in WAL since we use the same key file');
 unlike(
 	`strings $data_dir/pg_wal/0000000100000000000000??`,
 	qr/foobar_enc/,

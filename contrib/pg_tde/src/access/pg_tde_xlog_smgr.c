@@ -266,16 +266,33 @@ TDEXLogSmgrInitWrite(bool encrypt_xlog)
 		pfree(key);
 }
 
+/*
+ * Used by pg_tde_restore_encrypt to simulate being constantly in recovery
+ * since the command does not have access to any information about if we are in
+ * recovery or not.
+ *
+ * Creates a dummy key which points at the very end of the WAL stream.
+ */
 void
-TDEXLogSmgrInitWriteReuseKey()
+TDEXLogSmgrInitWriteOldKeys()
 {
-	WalEncryptionKey *key = pg_tde_read_last_wal_key();
+	WALKeyCacheRec *keys;
+	WalEncryptionKey dummy = {
+		.type = WAL_KEY_TYPE_UNENCRYPTED,
+		.wal_start = {.tli = -1,.lsn = -1}
+	};
 
-	if (key)
+	EncryptionKey = dummy;
+	TDEXLogSetEncKeyLocation(dummy.wal_start);
+
+	keys = pg_tde_get_wal_cache_keys();
+
+	if (keys == NULL)
 	{
-		EncryptionKey = *key;
-		TDEXLogSetEncKeyLocation(EncryptionKey.wal_start);
-		pfree(key);
+		WalLocation start = {.tli = 1,.lsn = 0};
+
+		/* cache is empty, prefetch keys from disk */
+		pg_tde_fetch_wal_keys(start);
 	}
 }
 

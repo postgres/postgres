@@ -68,7 +68,7 @@ write_encrypted_segment(const char *segpath, const char *segname, const char *tm
 
 	XLogFromFileName(segname, &tli, &segno, walsegsz);
 
-	TDEXLogSmgrInitWriteReuseKey();
+	TDEXLogSmgrInitWriteOldKeys();
 
 	w = xlog_smgr->seg_write(segfd, buf.data, r, pos, tli, segno, walsegsz);
 

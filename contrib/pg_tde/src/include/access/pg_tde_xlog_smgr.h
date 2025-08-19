@@ -11,7 +11,7 @@ extern Size TDEXLogEncryptStateSize(void);
 extern void TDEXLogShmemInit(void);
 extern void TDEXLogSmgrInit(void);
 extern void TDEXLogSmgrInitWrite(bool encrypt_xlog);
-extern void TDEXLogSmgrInitWriteReuseKey(void);
+extern void TDEXLogSmgrInitWriteOldKeys(void);
 
 extern void TDEXLogCryptBuffer(const void *buf, void *out_buf, size_t count, off_t offset,
 							   TimeLineID tli, XLogSegNo segno, int segSize);
