@@ -17,7 +17,7 @@ my $pgdata = $node->data_dir;
 # To make this testcase work, PERCONA_SERVER_VERSION variable should be available in environment.
 # If you are using ci_scripts it is already declated in ci_scripts/env.sh
 # If you are using command line make for regression then export like:
-# export PERCONA_SERVER_VERSION=17.5.2
+# export PERCONA_SERVER_VERSION=17.5.3
 
 if (!defined($ENV{PERCONA_SERVER_VERSION}))
 {
