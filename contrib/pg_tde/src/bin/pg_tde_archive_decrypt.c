@@ -146,6 +146,7 @@ main(int argc, char *argv[])
 	char		tmpdir[MAXPGPATH] = TMPFS_DIRECTORY "/pg_tde_archiveXXXXXX";
 	char		tmppath[MAXPGPATH];
 	bool		issegment;
+	int			rc;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -208,9 +209,22 @@ main(int argc, char *argv[])
 		command = replace_percent_placeholders(command,
 											   "ARCHIVE-COMMAND", "fp",
 											   targetname, sourcepath);
+	rc = system(command);
 
-	if (system(command) != 0)
-		pg_fatal("ARCHIVE-COMMAND \"%s\" failed: %m", command);
+	if (rc != 0)
+	{
+		if (rc == -1)
+			pg_fatal("ARCHIVE-COMMAND \"%s\" failed: %m", command);
+		else if (WIFEXITED(rc))
+			pg_fatal("ARCHIVE-COMMAND \"%s\" failed with exit code %d",
+					 command, WEXITSTATUS(rc));
+		else if (WIFSIGNALED(rc))
+			pg_fatal("ARCHIVE-COMMAND \"%s\" was terminated by signal %d: %s",
+					 command, WTERMSIG(rc), pg_strsignal(WTERMSIG(rc)));
+		else
+			pg_fatal("ARCHIVE-COMMAND \"%s\" exited with unrecognized status %d",
+					 command, rc);
+	}
 
 	free(command);
 
