@@ -194,6 +194,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			BufferDesc *bufHdr;
 			uint32		buf_state;
 
+			CHECK_FOR_INTERRUPTS();
+
 			bufHdr = GetBufferDescriptor(i);
 			/* Lock each buffer header before inspecting. */
 			buf_state = LockBufHdr(bufHdr);
@@ -560,6 +562,8 @@ pg_buffercache_summary(PG_FUNCTION_ARGS)
 		BufferDesc *bufHdr;
 		uint32		buf_state;
 
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * This function summarizes the state of all headers. Locking the
 		 * buffer headers wouldn't provide an improved result as the state of
@@ -619,6 +623,8 @@ pg_buffercache_usage_counts(PG_FUNCTION_ARGS)
 		BufferDesc *bufHdr = GetBufferDescriptor(i);
 		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 		int			usage_count;
+
+		CHECK_FOR_INTERRUPTS();
 
 		usage_count = BUF_STATE_GET_USAGECOUNT(buf_state);
 		usage_counts[usage_count]++;
