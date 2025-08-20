@@ -911,10 +911,26 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	 */
 	if ((objfilter & OBJFILTER_TABLE) == 0)
 	{
-		appendPQExpBufferStr(&catalog_query,
-							 " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
-							 CppAsString2(RELKIND_RELATION) ", "
-							 CppAsString2(RELKIND_MATVIEW) "])\n");
+		/*
+		 * vacuumdb should generally follow the behavior of the underlying
+		 * VACUUM and ANALYZE commands. If analyze_only is true, process
+		 * regular tables, materialized views, and partitioned tables, just
+		 * like ANALYZE (with no specific target tables) does. Otherwise,
+		 * process only regular tables and materialized views, since VACUUM
+		 * skips partitioned tables when no target tables are specified.
+		 */
+		if (vacopts->analyze_only)
+			appendPQExpBufferStr(&catalog_query,
+								 " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
+								 CppAsString2(RELKIND_RELATION) ", "
+								 CppAsString2(RELKIND_MATVIEW) ", "
+								 CppAsString2(RELKIND_PARTITIONED_TABLE) "])\n");
+		else
+			appendPQExpBufferStr(&catalog_query,
+								 " AND c.relkind OPERATOR(pg_catalog.=) ANY (array["
+								 CppAsString2(RELKIND_RELATION) ", "
+								 CppAsString2(RELKIND_MATVIEW) "])\n");
+
 	}
 
 	/*

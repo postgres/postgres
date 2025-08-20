@@ -340,4 +340,15 @@ $node->issues_sql_unlike(
 	qr/statement:\ ANALYZE/sx,
 	'--missing-stats-only with no missing partition stats');
 
+$node->safe_psql('postgres',
+	"CREATE TABLE parent_table (a INT) PARTITION BY LIST (a);\n"
+	  . "CREATE TABLE child_table PARTITION OF parent_table FOR VALUES IN (1);\n"
+	  . "INSERT INTO parent_table VALUES (1);\n");
+$node->issues_sql_like(
+	[
+		'vacuumdb', '--analyze-only', 'postgres'
+	],
+	qr/statement: ANALYZE public.parent_table/s,
+	'--analyze-only updates statistics for partitioned tables');
+
 done_testing();

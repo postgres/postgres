@@ -397,6 +397,15 @@ PostgreSQL documentation
         Multiple tables can be vacuumed by writing multiple
         <option>-t</option> switches.
        </para>
+       <para>
+        If no tables are specified with the <option>--table</option> option,
+        <application>vacuumdb</application> will clean all regular tables
+        and materialized views in the connected database.
+        If <option>--analyze-only</option> or
+        <option>--analyze-in-stages</option> is also specified,
+        it will analyze all regular tables, partitioned tables,
+        and materialized views (but not foreign tables).
+       </para>
        <tip>
         <para>
          If you specify columns, you probably have to escape the parentheses
