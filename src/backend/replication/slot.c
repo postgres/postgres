@@ -653,7 +653,7 @@ retry:
 	}
 	else
 	{
-		active_pid = MyProcPid;
+		s->active_pid = active_pid = MyProcPid;
 		ReplicationSlotSetInactiveSince(s, 0, true);
 	}
 	LWLockRelease(ReplicationSlotControlLock);
