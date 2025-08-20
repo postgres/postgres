@@ -432,6 +432,23 @@ $$ SELECT array_append($1, $2) || array_append($1, $2) $$;
 SELECT double_append(array_append(ARRAY[q1], q2), q3)
   FROM (VALUES(1,2,3), (4,5,6)) v(q1,q2,q3);
 
+-- Check that we can re-use a SQLFunctionCache after a run-time error.
+
+-- This function will fail with zero-divide at run time (not plan time).
+CREATE FUNCTION part_hashint4_error(value int4, seed int8) RETURNS int8
+LANGUAGE SQL STRICT IMMUTABLE PARALLEL SAFE AS
+$$ SELECT value + seed + random()::int/0 $$;
+
+-- Put it into an operator class so that FmgrInfo will be cached in relcache.
+CREATE OPERATOR CLASS part_test_int4_ops_bad FOR TYPE int4 USING hash AS
+  FUNCTION 2 part_hashint4_error(int4, int8);
+
+CREATE TABLE pt(i int) PARTITION BY hash (i part_test_int4_ops_bad);
+CREATE TABLE p1 PARTITION OF pt FOR VALUES WITH (modulus 4, remainder 0);
+
+INSERT INTO pt VALUES (1);
+INSERT INTO pt VALUES (1);
+
 -- Things that shouldn't work:
 
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
