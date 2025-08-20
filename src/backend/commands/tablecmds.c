@@ -21750,7 +21750,8 @@ refuseDupeIndexAttach(Relation parentIdx, Relation partIdx, Relation partitionTb
 				 errmsg("cannot attach index \"%s\" as a partition of index \"%s\"",
 						RelationGetRelationName(partIdx),
 						RelationGetRelationName(parentIdx)),
-				 errdetail("Another index is already attached for partition \"%s\".",
+				 errdetail("Another index \"%s\" is already attached for partition \"%s\".",
+						   get_rel_name(existingIdx),
 						   RelationGetRelationName(partitionTbl))));
 }
 

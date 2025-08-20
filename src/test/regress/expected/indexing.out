@@ -248,7 +248,7 @@ alter index idxpart_a_b_idx attach partition idxpart1_a_b_idx; -- quiet
 create index idxpart1_2_a_b on idxpart1 (a, b);
 alter index idxpart_a_b_idx attach partition idxpart1_2_a_b;
 ERROR:  cannot attach index "idxpart1_2_a_b" as a partition of index "idxpart_a_b_idx"
-DETAIL:  Another index is already attached for partition "idxpart1".
+DETAIL:  Another index "idxpart1_a_b_idx" is already attached for partition "idxpart1".
 drop table idxpart;
 -- make sure everything's gone
 select indexrelid::regclass, indrelid::regclass
