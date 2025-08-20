@@ -16,6 +16,7 @@ tests += {
       't/005_timeouts.pl',
       't/006_signal_autovacuum.pl',
       't/007_catcache_inval.pl',
+      't/008_replslot_single_user.pl',
     ],
   },
 }
