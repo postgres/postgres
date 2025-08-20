@@ -1425,17 +1425,14 @@ innerrel_is_unique_ext(PlannerInfo *root,
 		 *
 		 * However, in normal planning mode, caching this knowledge is totally
 		 * pointless; it won't be queried again, because we build up joinrels
-		 * from smaller to larger.  It is useful in GEQO mode, where the
-		 * knowledge can be carried across successive planning attempts; and
-		 * it's likely to be useful when using join-search plugins, too. Hence
-		 * cache when join_search_private is non-NULL.  (Yeah, that's a hack,
-		 * but it seems reasonable.)
+		 * from smaller to larger.  It's only useful when using GEQO or
+		 * another planner extension that attempts planning multiple times.
 		 *
 		 * Also, allow callers to override that heuristic and force caching;
 		 * that's useful for reduce_unique_semijoins, which calls here before
 		 * the normal join search starts.
 		 */
-		if (force_cache || root->join_search_private)
+		if (force_cache || root->assumeReplanning)
 		{
 			old_context = MemoryContextSwitchTo(root->planner_cxt);
 			innerrel->non_unique_for_rels =

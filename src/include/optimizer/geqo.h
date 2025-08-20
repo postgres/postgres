@@ -24,6 +24,7 @@
 
 #include "common/pg_prng.h"
 #include "nodes/pathnodes.h"
+#include "optimizer/extendplan.h"
 #include "optimizer/geqo_gene.h"
 
 
@@ -62,6 +63,8 @@ extern PGDLLIMPORT int Geqo_generations;	/* 1 .. inf, or 0 to use default */
 
 extern PGDLLIMPORT double Geqo_selection_bias;
 
+extern PGDLLIMPORT int Geqo_planner_extension_id;
+
 #define DEFAULT_GEQO_SELECTION_BIAS 2.0
 #define MIN_GEQO_SELECTION_BIAS 1.5
 #define MAX_GEQO_SELECTION_BIAS 2.0
@@ -70,7 +73,7 @@ extern PGDLLIMPORT double Geqo_seed;	/* 0 .. 1 */
 
 
 /*
- * Private state for a GEQO run --- accessible via root->join_search_private
+ * Private state for a GEQO run --- accessible via GetGeqoPrivateData
  */
 typedef struct
 {
@@ -78,6 +81,13 @@ typedef struct
 	pg_prng_state random_state; /* PRNG state */
 } GeqoPrivateData;
 
+static inline GeqoPrivateData *
+GetGeqoPrivateData(PlannerInfo *root)
+{
+	/* headers must be C++-compliant, so the cast is required here */
+	return (GeqoPrivateData *)
+		GetPlannerInfoExtensionState(root, Geqo_planner_extension_id);
+}
 
 /* routines in geqo_main.c */
 extern RelOptInfo *geqo(PlannerInfo *root,

@@ -706,6 +706,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
 	root->hasAlternativeSubPlans = false;
 	root->placeholdersFrozen = false;
 	root->hasRecursion = hasRecursion;
+	root->assumeReplanning = false;
 	if (hasRecursion)
 		root->wt_param_id = assign_special_exec_param(root);
 	else

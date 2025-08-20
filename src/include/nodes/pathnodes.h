@@ -536,6 +536,8 @@ struct PlannerInfo
 	bool		placeholdersFrozen;
 	/* true if planning a recursive WITH item */
 	bool		hasRecursion;
+	/* true if a planner extension may replan this subquery */
+	bool		assumeReplanning;
 
 	/*
 	 * The rangetable index for the RTE_GROUP RTE, or 0 if there is no
@@ -581,9 +583,6 @@ struct PlannerInfo
 	 */
 	bool	   *isAltSubplan pg_node_attr(read_write_ignore);
 	bool	   *isUsedSubplan pg_node_attr(read_write_ignore);
-
-	/* optional private data for join_search_hook, e.g., GEQO */
-	void	   *join_search_private pg_node_attr(read_write_ignore);
 
 	/* Does this query modify any partition key columns? */
 	bool		partColsUpdated;

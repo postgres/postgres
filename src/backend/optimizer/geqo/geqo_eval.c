@@ -162,7 +162,7 @@ geqo_eval(PlannerInfo *root, Gene *tour, int num_gene)
 RelOptInfo *
 gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 {
-	GeqoPrivateData *private = (GeqoPrivateData *) root->join_search_private;
+	GeqoPrivateData *private = GetGeqoPrivateData(root);
 	List	   *clumps;
 	int			rel_count;
 
