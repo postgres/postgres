@@ -143,6 +143,7 @@ typedef struct SQLFunctionCache
 {
 	SQLFunctionHashEntry *func; /* associated SQLFunctionHashEntry */
 
+	bool		active;			/* are we executing this cache entry? */
 	bool		lazyEvalOK;		/* true if lazyEval is safe */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
 	bool		lazyEval;		/* true if using lazyEval for result query */
@@ -554,6 +555,28 @@ init_sql_fcache(FunctionCallInfo fcinfo, bool lazyEvalOK)
 		fcache->mcb.arg = fcache;
 		MemoryContextRegisterResetCallback(finfo->fn_mcxt, &fcache->mcb);
 		finfo->fn_extra = fcache;
+	}
+
+	/*
+	 * If the SQLFunctionCache is marked as active, we must have errored out
+	 * of a prior execution.  Reset state.  (It might seem that we could also
+	 * reach this during recursive invocation of a SQL function, but we won't
+	 * because that case won't involve re-use of the same FmgrInfo.)
+	 */
+	if (fcache->active)
+	{
+		/*
+		 * In general, this stanza should clear all the same fields that
+		 * ShutdownSQLFunction would.  Note we must clear fcache->cplan
+		 * without doing ReleaseCachedPlan, because error cleanup from the
+		 * prior execution would have taken care of releasing that plan.
+		 * Likewise, if tstore is still set then it is pointing at garbage.
+		 */
+		fcache->cplan = NULL;
+		fcache->eslist = NULL;
+		fcache->tstore = NULL;
+		fcache->shutdown_reg = false;
+		fcache->active = false;
 	}
 
 	/*
@@ -1597,6 +1620,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 */
 	fcache = init_sql_fcache(fcinfo, lazyEvalOK);
 
+	/* Mark fcache as active */
+	fcache->active = true;
+
 	/* Remember info that we might need later to construct tuplestore */
 	fcache->tscontext = tscontext;
 	fcache->randomAccess = randomAccess;
@@ -1852,6 +1878,9 @@ fmgr_sql(PG_FUNCTION_ARGS)
 	 */
 	if (es == NULL)
 		fcache->eslist = NULL;
+
+	/* Mark fcache as inactive */
+	fcache->active = false;
 
 	error_context_stack = sqlerrcontext.previous;
 

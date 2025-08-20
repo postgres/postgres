@@ -733,6 +733,22 @@ SELECT double_append(array_append(ARRAY[q1], q2), q3)
  {4,5,6,4,5,6}
 (2 rows)
 
+-- Check that we can re-use a SQLFunctionCache after a run-time error.
+-- This function will fail with zero-divide at run time (not plan time).
+CREATE FUNCTION part_hashint4_error(value int4, seed int8) RETURNS int8
+LANGUAGE SQL STRICT IMMUTABLE PARALLEL SAFE AS
+$$ SELECT value + seed + random()::int/0 $$;
+-- Put it into an operator class so that FmgrInfo will be cached in relcache.
+CREATE OPERATOR CLASS part_test_int4_ops_bad FOR TYPE int4 USING hash AS
+  FUNCTION 2 part_hashint4_error(int4, int8);
+CREATE TABLE pt(i int) PARTITION BY hash (i part_test_int4_ops_bad);
+CREATE TABLE p1 PARTITION OF pt FOR VALUES WITH (modulus 4, remainder 0);
+INSERT INTO pt VALUES (1);
+ERROR:  division by zero
+CONTEXT:  SQL function "part_hashint4_error" statement 1
+INSERT INTO pt VALUES (1);
+ERROR:  division by zero
+CONTEXT:  SQL function "part_hashint4_error" statement 1
 -- Things that shouldn't work:
 CREATE FUNCTION test1 (int) RETURNS int LANGUAGE SQL
     AS 'SELECT ''not an integer'';';
@@ -773,7 +789,7 @@ CONTEXT:  SQL function "test1" during startup
 RESET check_function_bodies;
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 35 other objects
+NOTICE:  drop cascades to 38 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -808,6 +824,9 @@ drop cascades to function create_and_insert()
 drop cascades to table ddl_test
 drop cascades to function alter_and_insert()
 drop cascades to function double_append(anyarray,anyelement)
+drop cascades to function part_hashint4_error(integer,bigint)
+drop cascades to operator family part_test_int4_ops_bad for access method hash
+drop cascades to table pt
 drop cascades to function test1(anyelement)
 DROP USER regress_unpriv_user;
 RESET search_path;
