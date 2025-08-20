@@ -582,7 +582,7 @@ retry:
 		SpinLockRelease(&s->mutex);
 	}
 	else
-		active_pid = MyProcPid;
+		s->active_pid = active_pid = MyProcPid;
 	LWLockRelease(ReplicationSlotControlLock);
 
 	/*
