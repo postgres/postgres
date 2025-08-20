@@ -10,6 +10,7 @@ tests += {
       't/002_tablespace.pl',
       't/003_check_guc.pl',
       't/004_io_direct.pl',
+      't/008_replslot_single_user.pl',
     ],
   },
 }
