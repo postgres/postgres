@@ -9,6 +9,7 @@
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_type.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "funcapi.h"
@@ -425,6 +426,47 @@ PLy_exec_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	PG_END_TRY();
 
 	return rv;
+}
+
+/*
+ * event trigger subhandler
+ */
+void
+PLy_exec_event_trigger(FunctionCallInfo fcinfo, PLyProcedure *proc)
+{
+	EventTriggerData *tdata;
+	PyObject   *volatile pltdata = NULL;
+
+	Assert(CALLED_AS_EVENT_TRIGGER(fcinfo));
+	tdata = (EventTriggerData *) fcinfo->context;
+
+	PG_TRY();
+	{
+		PyObject   *pltevent,
+				   *plttag;
+
+		pltdata = PyDict_New();
+		if (!pltdata)
+			PLy_elog(ERROR, NULL);
+
+		pltevent = PLyUnicode_FromString(tdata->event);
+		PyDict_SetItemString(pltdata, "event", pltevent);
+		Py_DECREF(pltevent);
+
+		plttag = PLyUnicode_FromString(GetCommandTagName(tdata->tag));
+		PyDict_SetItemString(pltdata, "tag", plttag);
+		Py_DECREF(plttag);
+
+		PLy_procedure_call(proc, "TD", pltdata);
+
+		if (SPI_finish() != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish() failed");
+	}
+	PG_FINALLY();
+	{
+		Py_XDECREF(pltdata);
+	}
+	PG_END_TRY();
 }
 
 /* helper functions for Python code execution */

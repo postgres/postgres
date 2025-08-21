@@ -9,6 +9,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/event_trigger.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "miscadmin.h"
@@ -240,6 +241,13 @@ plpython3_call_handler(PG_FUNCTION_ARGS)
 			trv = PLy_exec_trigger(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
+		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+		{
+			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_EVENT_TRIGGER);
+			exec_ctx->curr_proc = proc;
+			PLy_exec_event_trigger(fcinfo, proc);
+			retval = (Datum) 0;
+		}
 		else
 		{
 			proc = PLy_procedure_get(funcoid, InvalidOid, PLPY_NOT_TRIGGER);
@@ -345,6 +353,9 @@ PLy_procedure_is_trigger(Form_pg_proc procStruct)
 	{
 		case TRIGGEROID:
 			ret = PLPY_TRIGGER;
+			break;
+		case EVENT_TRIGGEROID:
+			ret = PLPY_EVENT_TRIGGER;
 			break;
 		default:
 			ret = PLPY_NOT_TRIGGER;

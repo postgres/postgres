@@ -17,6 +17,7 @@ extern void init_procedure_caches(void);
 typedef enum PLyTrigType
 {
 	PLPY_TRIGGER,
+	PLPY_EVENT_TRIGGER,
 	PLPY_NOT_TRIGGER,
 } PLyTrigType;
 
