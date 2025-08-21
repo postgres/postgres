@@ -21,7 +21,7 @@
 
 static HTAB *PLy_procedure_cache = NULL;
 
-static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger);
+static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, PLyTrigType is_trigger);
 static bool PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup);
 static char *PLy_procedure_munge_source(const char *name, const char *src);
 
@@ -63,14 +63,19 @@ PLy_procedure_name(PLyProcedure *proc)
  * be used with, so no sensible fn_rel can be passed.
  */
 PLyProcedure *
-PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
+PLy_procedure_get(Oid fn_oid, Oid fn_rel, PLyTrigType is_trigger)
 {
-	bool		use_cache = !(is_trigger && fn_rel == InvalidOid);
+	bool		use_cache;
 	HeapTuple	procTup;
 	PLyProcedureKey key;
 	PLyProcedureEntry *volatile entry = NULL;
 	PLyProcedure *volatile proc = NULL;
 	bool		found = false;
+
+	if (is_trigger == PLPY_TRIGGER && fn_rel == InvalidOid)
+		use_cache = false;
+	else
+		use_cache = true;
 
 	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
 	if (!HeapTupleIsValid(procTup))
@@ -127,7 +132,7 @@ PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
  * Create a new PLyProcedure structure
  */
 static PLyProcedure *
-PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
+PLy_procedure_create(HeapTuple procTup, Oid fn_oid, PLyTrigType is_trigger)
 {
 	char		procName[NAMEDATALEN + 256];
 	Form_pg_proc procStruct;
@@ -200,7 +205,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		 * get information required for output conversion of the return value,
 		 * but only if this isn't a trigger.
 		 */
-		if (!is_trigger)
+		if (is_trigger == PLPY_NOT_TRIGGER)
 		{
 			Oid			rettype = procStruct->prorettype;
 			HeapTuple	rvTypeTup;

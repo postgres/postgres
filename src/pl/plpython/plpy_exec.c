@@ -509,7 +509,7 @@ PLy_function_save_args(PLyProcedure *proc)
 	Py_XINCREF(result->args);
 
 	/* If it's a trigger, also save "TD" */
-	if (proc->is_trigger)
+	if (proc->is_trigger == PLPY_TRIGGER)
 	{
 		result->td = PyDict_GetItemString(proc->globals, "TD");
 		Py_XINCREF(result->td);

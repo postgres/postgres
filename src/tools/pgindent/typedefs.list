@@ -1990,6 +1990,7 @@ PLyScalarToOb
 PLySubtransactionData
 PLySubtransactionObject
 PLyTransformToOb
+PLyTrigType
 PLyTupleToOb
 PLyUnicode_FromStringAndSize_t
 PLy_elog_impl_t
