@@ -56,7 +56,7 @@ pg_get_aios(PG_FUNCTION_ARGS)
 	for (uint64 i = 0; i < pgaio_ctl->io_handle_count; i++)
 	{
 		PgAioHandle *live_ioh = &pgaio_ctl->io_handles[i];
-		uint32		ioh_id = pgaio_io_get_id(live_ioh);
+		int			ioh_id = pgaio_io_get_id(live_ioh);
 		Datum		values[PG_GET_AIOS_COLS] = {0};
 		bool		nulls[PG_GET_AIOS_COLS] = {0};
 		ProcNumber	owner;
@@ -152,7 +152,7 @@ retry:
 			nulls[0] = false;
 
 		/* column: IO's id */
-		values[1] = UInt32GetDatum(ioh_id);
+		values[1] = Int32GetDatum(ioh_id);
 
 		/* column: IO's generation */
 		values[2] = Int64GetDatum(start_generation);

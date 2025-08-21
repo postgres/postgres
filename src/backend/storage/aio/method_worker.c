@@ -58,7 +58,7 @@ typedef struct PgAioWorkerSubmissionQueue
 	uint32		mask;
 	uint32		head;
 	uint32		tail;
-	uint32		sqes[FLEXIBLE_ARRAY_MEMBER];
+	int			sqes[FLEXIBLE_ARRAY_MEMBER];
 } PgAioWorkerSubmissionQueue;
 
 typedef struct PgAioWorkerSlot
@@ -107,7 +107,7 @@ pgaio_worker_queue_shmem_size(int *queue_size)
 	*queue_size = pg_nextpower2_32(io_worker_queue_size);
 
 	return offsetof(PgAioWorkerSubmissionQueue, sqes) +
-		sizeof(uint32) * *queue_size;
+		sizeof(int) * *queue_size;
 }
 
 static size_t
@@ -198,15 +198,15 @@ pgaio_worker_submission_queue_insert(PgAioHandle *ioh)
 	return true;
 }
 
-static uint32
+static int
 pgaio_worker_submission_queue_consume(void)
 {
 	PgAioWorkerSubmissionQueue *queue;
-	uint32		result;
+	int			result;
 
 	queue = io_worker_submission_queue;
 	if (queue->tail == queue->head)
-		return UINT32_MAX;		/* empty */
+		return -1;				/* empty */
 
 	result = queue->sqes[queue->tail];
 	queue->tail = (queue->tail + 1) & (queue->size - 1);
@@ -470,7 +470,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 		 * to ensure that we don't see an outdated data in the handle.
 		 */
 		LWLockAcquire(AioWorkerSubmissionQueueLock, LW_EXCLUSIVE);
-		if ((io_index = pgaio_worker_submission_queue_consume()) == UINT32_MAX)
+		if ((io_index = pgaio_worker_submission_queue_consume()) == -1)
 		{
 			/*
 			 * Nothing to do.  Mark self idle.
@@ -500,7 +500,7 @@ IoWorkerMain(const void *startup_data, size_t startup_data_len)
 		for (int i = 0; i < nlatches; ++i)
 			SetLatch(latches[i]);
 
-		if (io_index != UINT32_MAX)
+		if (io_index != -1)
 		{
 			PgAioHandle *ioh = NULL;
 
