@@ -2981,8 +2981,9 @@ include_dir 'conf.d'
       <listitem>
        <para>
         When this parameter is <literal>on</literal>, the <productname>PostgreSQL</productname>
-        server compresses a full page image written to WAL when
-        <xref linkend="guc-full-page-writes"/> is on or during a base backup.
+        server compresses a full page image written to WAL (e.g. when
+        <xref linkend="guc-full-page-writes"/> is on, during a base backup,
+        etc.).
         A compressed page image will be decompressed during WAL replay.
         The default value is <literal>off</literal>.
         Only superusers can change this setting.
