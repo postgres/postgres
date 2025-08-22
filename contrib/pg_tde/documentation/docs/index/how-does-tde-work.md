@@ -6,15 +6,9 @@ To encrypt the data, two types of keys are used:
 * The **principal key** to encrypt database keys. It is kept separately from the database keys and is managed externally in the key management store.
 
 !!! note
+    For more information on managing and storing principal keys externally, including supported key management systems and the local keyring option, see [Key management overview](../global-key-provider-configuration/overview.md).
 
-    For more information on managing and storing principal keys externally, see [Configure Global Key Provider](../global-key-provider-configuration/overview.md).
-
-You have the following options to store and manage principal keys externally:
-
-* Use the HashiCorp Vault server. Only the back end KV Secrets Engine - Version 2 (API) is supported.
-* Use the KMIP-compatible server. `pg_tde` has been tested with the [PyKMIP](https://pykmip.readthedocs.io/en/latest/server.html) server and [the HashiCorp Vault Enterprise KMIP Secrets Engine](https://www.vaultproject.io/docs/secrets/kmip).
-
-The encryption process is the following:
+The encryption process works as follows:
 
 ![image](../_images/tde-flow.png)
 

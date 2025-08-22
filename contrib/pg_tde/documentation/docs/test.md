@@ -59,4 +59,4 @@ ALTER TABLE table_name SET ACCESS METHOD tde_heap;
 
 ## Next steps
 
-[Configure WAL Encryption (tech preview) :material-arrow-right:](wal-encryption.md){.md-button}
+[Configure WAL encryption :material-arrow-right:](wal-encryption.md){.md-button}

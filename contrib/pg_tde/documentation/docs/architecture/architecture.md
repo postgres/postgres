@@ -20,7 +20,7 @@ The following sections break down the key architectural components of this desig
 * Indexes
 * Sequences
 * Temporary tables
-* Write Ahead Log (WAL), still in beta. **Do not enable this feature in production environments**.
+* Write Ahead Log (WAL)
 
 **Extension** means that `pg_tde` should be implemented only as an extension, possibly compatible with any PostgreSQL distribution, including the open source community version. This requires changes in the PostgreSQL core to make it more extensible. Therefore, `pg_tde` currently works only with the [Percona Server for PostgreSQL](https://docs.percona.com/postgresql/17/index.html) - a binary replacement of community PostgreSQL and included in Percona Distribution for PostgreSQL.
 
@@ -81,9 +81,6 @@ The initial decision what to encrypt is made using the `postgres` event trigger 
 Later decisions are made using a slightly modified Storage Manager (SMGR) API: when a database file is re-created with a different ID as a result of a `TRUNCATE` or a `VACUUM FULL` command, the newly created file inherits the encryption information and is either encrypted or not.
 
 ### WAL encryption
-
-!!! note
-    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
 
 WAL encryption is controlled globally via a global GUC variable, `pg_tde.wal_encrypt`, that requires a server restart.
 
