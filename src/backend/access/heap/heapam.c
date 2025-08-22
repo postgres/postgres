@@ -1148,8 +1148,10 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 		IsHistoricMVCCSnapshot(snapshot) &&
 		!RelationIsAccessibleInLogicalDecoding(relation))
 	{
-		elog(ERROR, "cannot query non-catalog table \"%s\" during logical decoding",
-			 RelationGetRelationName(relation));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot query non-catalog table \"%s\" during logical decoding",
+						RelationGetRelationName(relation))));
 	}
 
 	/*

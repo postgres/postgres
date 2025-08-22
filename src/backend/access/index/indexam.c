@@ -267,8 +267,10 @@ index_beginscan(Relation heapRelation,
 	if (IsHistoricMVCCSnapshot(snapshot) &&
 		!RelationIsAccessibleInLogicalDecoding(heapRelation))
 	{
-		elog(ERROR, "cannot query non-catalog table \"%s\" during logical decoding",
-			 RelationGetRelationName(heapRelation));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot query non-catalog table \"%s\" during logical decoding",
+						RelationGetRelationName(heapRelation))));
 	}
 
 	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
