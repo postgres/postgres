@@ -1645,8 +1645,7 @@ getNotify(PGconn *conn)
 	}
 	if (pqGets(&conn->workBuffer, conn))
 	{
-		if (svname)
-			free(svname);
+		free(svname);
 		return EOF;
 	}
 
