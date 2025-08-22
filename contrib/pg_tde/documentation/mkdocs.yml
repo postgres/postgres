@@ -204,6 +204,7 @@ nav:
     - "Configure Multi-tenancy": how-to/multi-tenant-setup.md
     - "Encryption Enforcement": how-to/enforcement.md
     - "Decrypt an Encrypted Table": how-to/decrypt.md
+    - "Backup with WAL encryption enabled": how-to/backup-wal-enabled.md
     - "Restore an encrypted pg_tde backup": how-to/restore-backups.md
   - faq.md
   - "Release notes":
