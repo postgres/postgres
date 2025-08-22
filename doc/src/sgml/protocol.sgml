@@ -4163,7 +4163,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          message, indicated by the length field.
         </para>
         <para>
-          The maximum key length is 256 bytes. The
+          The minimum and maximum key length are 4 and 256 bytes, respectively. The
           <productname>PostgreSQL</productname> server only sends keys up to
           32 bytes, but the larger maximum size allows for future server
           versions, as well as connection poolers and other middleware, to use
