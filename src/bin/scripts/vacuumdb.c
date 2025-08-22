@@ -14,6 +14,7 @@
 
 #include <limits.h>
 
+#include "catalog/pg_attribute_d.h"
 #include "catalog/pg_class_d.h"
 #include "common.h"
 #include "common/connect.h"
@@ -973,6 +974,8 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
 							 " AND NOT a.attisdropped\n"
 							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
+							 " AND a.attgenerated OPERATOR(pg_catalog.<>) "
+							 CppAsString2(ATTRIBUTE_GENERATED_VIRTUAL) "\n"
 							 " AND NOT EXISTS (SELECT NULL FROM pg_catalog.pg_statistic s\n"
 							 " WHERE s.starelid OPERATOR(pg_catalog.=) a.attrelid\n"
 							 " AND s.staattnum OPERATOR(pg_catalog.=) a.attnum\n"
@@ -1010,6 +1013,8 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 							 " AND a.attnum OPERATOR(pg_catalog.>) 0::pg_catalog.int2\n"
 							 " AND NOT a.attisdropped\n"
 							 " AND a.attstattarget IS DISTINCT FROM 0::pg_catalog.int2\n"
+							 " AND a.attgenerated OPERATOR(pg_catalog.<>) "
+							 CppAsString2(ATTRIBUTE_GENERATED_VIRTUAL) "\n"
 							 " AND c.relhassubclass\n"
 							 " AND NOT p.inherited\n"
 							 " AND EXISTS (SELECT NULL FROM pg_catalog.pg_inherits h\n"

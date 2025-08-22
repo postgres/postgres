@@ -237,9 +237,10 @@ $node->command_fails_like(
 	qr/cannot vacuum all databases and a specific one at the same time/,
 	'cannot use option --all and a dbname as argument at the same time');
 
-$node->safe_psql('postgres',
-	'CREATE TABLE regression_vacuumdb_test AS select generate_series(1, 10) a, generate_series(2, 11) b;'
-);
+$node->safe_psql('postgres', q|
+  CREATE TABLE regression_vacuumdb_test AS select generate_series(1, 10) a, generate_series(2, 11) b;
+  ALTER TABLE regression_vacuumdb_test ADD COLUMN c INT GENERATED ALWAYS AS (a + b);
+|);
 $node->issues_sql_like(
 	[
 		'vacuumdb', '--analyze-only',
