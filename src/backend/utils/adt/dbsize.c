@@ -938,6 +938,9 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
  *
  * We don't fail but return NULL if we cannot find a mapping.
  *
+ * Temporary relations are not detected, returning NULL (see
+ * RelidByRelfilenumber() for the reasons).
+ *
  * InvalidOid can be passed instead of the current database's default
  * tablespace.
  */
