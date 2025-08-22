@@ -420,10 +420,10 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
     <para>
      When slot synchronization is configured as recommended,
      and the initial synchronization is performed either automatically or
-     manually via pg_sync_replication_slot, the standby can persist the
-     synchronized slot only if the following condition is met: The logical
-     replication slot on the primary must retain WALs and system catalog
-     rows that are still available on the standby. This ensures data
+     manually via <function>pg_sync_replication_slots</function>, the standby
+     can persist the synchronized slot only if the following condition is met:
+     The logical replication slot on the primary must retain WALs and system
+     catalog rows that are still available on the standby. This ensures data
      integrity and allows logical replication to continue smoothly after
      promotion.
      If the required WALs or catalog rows have already been purged from the
