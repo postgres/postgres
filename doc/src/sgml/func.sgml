@@ -25637,7 +25637,8 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         <function>pg_relation_filepath</function>.  For a relation in the
         database's default tablespace, the tablespace can be specified as zero.
         Returns <literal>NULL</literal> if no relation in the current database
-        is associated with the given values.
+        is associated with the given values, or if dealing with a temporary
+        relation.
        </para></entry>
       </row>
      </tbody>
