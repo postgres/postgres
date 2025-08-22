@@ -330,8 +330,8 @@ InitShmemIndex(void)
  */
 HTAB *
 ShmemInitHash(const char *name,		/* table string name for shmem index */
-			  long init_size,	/* initial table size */
-			  long max_size,	/* max size of the table */
+			  int64 init_size,	/* initial table size */
+			  int64 max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
 			  int hash_flags)	/* info about infoP */
 {

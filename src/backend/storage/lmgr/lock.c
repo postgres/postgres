@@ -443,7 +443,7 @@ void
 LockManagerShmemInit(void)
 {
 	HASHCTL		info;
-	long		init_table_size,
+	int64		init_table_size,
 				max_table_size;
 	bool		found;
 

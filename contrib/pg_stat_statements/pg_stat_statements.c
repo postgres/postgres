@@ -2713,8 +2713,8 @@ entry_reset(Oid userid, Oid dbid, int64 queryid, bool minmax_only)
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 	FILE	   *qfile;
-	long		num_entries;
-	long		num_remove = 0;
+	int64		num_entries;
+	int64		num_remove = 0;
 	pgssHashKey key;
 	TimestampTz stats_reset;
 
