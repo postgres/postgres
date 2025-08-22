@@ -271,12 +271,23 @@ Snapshot
 GetTransactionSnapshot(void)
 {
 	/*
-	 * This should not be called while doing logical decoding.  Historic
-	 * snapshots are only usable for catalog access, not for general-purpose
-	 * queries.
+	 * Return historic snapshot if doing logical decoding.
+	 *
+	 * Historic snapshots are only usable for catalog access, not for
+	 * general-purpose queries.  The caller is responsible for ensuring that
+	 * the snapshot is used correctly! (PostgreSQL code never calls this
+	 * during logical decoding, but extensions can do it.)
 	 */
 	if (HistoricSnapshotActive())
-		elog(ERROR, "cannot take query snapshot during logical decoding");
+	{
+		/*
+		 * We'll never need a non-historic transaction snapshot in this
+		 * (sub-)transaction, so there's no need to be careful to set one up
+		 * for later calls to GetTransactionSnapshot().
+		 */
+		Assert(!FirstSnapshotSet);
+		return HistoricSnapshot;
+	}
 
 	/* First call in transaction? */
 	if (!FirstSnapshotSet)

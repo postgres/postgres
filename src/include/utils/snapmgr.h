@@ -56,6 +56,9 @@ extern PGDLLIMPORT SnapshotData SnapshotToastData;
 	((snapshot)->snapshot_type == SNAPSHOT_MVCC || \
 	 (snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
 
+#define IsHistoricMVCCSnapshot(snapshot)  \
+	((snapshot)->snapshot_type == SNAPSHOT_HISTORIC_MVCC)
+
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);
 extern void SnapshotSetCommandId(CommandId curcid);

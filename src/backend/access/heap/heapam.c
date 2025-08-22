@@ -1143,6 +1143,15 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	if (!(snapshot && IsMVCCSnapshot(snapshot)))
 		scan->rs_base.rs_flags &= ~SO_ALLOW_PAGEMODE;
 
+	/* Check that a historic snapshot is not used for non-catalog tables */
+	if (snapshot &&
+		IsHistoricMVCCSnapshot(snapshot) &&
+		!RelationIsAccessibleInLogicalDecoding(relation))
+	{
+		elog(ERROR, "cannot query non-catalog table \"%s\" during logical decoding",
+			 RelationGetRelationName(relation));
+	}
+
 	/*
 	 * For seqscan and sample scans in a serializable transaction, acquire a
 	 * predicate lock on the entire relation. This is required not only to
