@@ -1569,6 +1569,27 @@ getBackendKeyData(PGconn *conn, int msgLength)
 
 	cancel_key_len = 5 + msgLength - (conn->inCursor - conn->inStart);
 
+	if (cancel_key_len != 4 && conn->pversion == PG_PROTOCOL(3, 0))
+	{
+		libpq_append_conn_error(conn, "received invalid BackendKeyData message: cancel key with length %d not allowed in protocol version 3.0 (must be 4 bytes)", cancel_key_len);
+		handleFatalError(conn);
+		return 0;
+	}
+
+	if (cancel_key_len < 4)
+	{
+		libpq_append_conn_error(conn, "received invalid BackendKeyData message: cancel key with length %d is too short (minimum 4 bytes)", cancel_key_len);
+		handleFatalError(conn);
+		return 0;
+	}
+
+	if (cancel_key_len > 256)
+	{
+		libpq_append_conn_error(conn, "received invalid BackendKeyData message: cancel key with length %d is too long (maximum 256 bytes)", cancel_key_len);
+		handleFatalError(conn);
+		return 0;
+	}
+
 	conn->be_cancel_key = malloc(cancel_key_len);
 	if (conn->be_cancel_key == NULL)
 	{
