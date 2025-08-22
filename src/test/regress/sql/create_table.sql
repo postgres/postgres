@@ -62,6 +62,14 @@ CREATE TABLE withoid() WITH (oids = true);
 CREATE TEMP TABLE withoutoid() WITHOUT OIDS; DROP TABLE withoutoid;
 CREATE TEMP TABLE withoutoid() WITH (oids = false); DROP TABLE withoutoid;
 
+-- temporary tables are ignored by pg_filenode_relation().
+CREATE TEMP TABLE relation_filenode_check(c1 int);
+SELECT relpersistence,
+  pg_filenode_relation (reltablespace, pg_relation_filenode(oid))
+  FROM pg_class
+  WHERE relname = 'relation_filenode_check';
+DROP TABLE relation_filenode_check;
+
 -- check restriction with default expressions
 -- invalid use of column reference in default expressions
 CREATE TABLE default_expr_column (id int DEFAULT (id));
