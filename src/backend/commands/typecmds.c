@@ -126,7 +126,7 @@ static Oid	findTypeSubscriptingFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubOpclass(List *opcname, Oid subtype);
 static Oid	findRangeCanonicalFunction(List *procname, Oid typeOid);
 static Oid	findRangeSubtypeDiffFunction(List *procname, Oid subtype);
-static void validateDomainCheckConstraint(Oid domainoid, const char *ccbin);
+static void validateDomainCheckConstraint(Oid domainoid, const char *ccbin, LOCKMODE lockmode);
 static void validateDomainNotNullConstraint(Oid domainoid);
 static List *get_rels_with_domain(Oid domainOid, LOCKMODE lockmode);
 static void checkEnumOwner(HeapTuple tup);
@@ -2986,7 +2986,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
 		 * to.
 		 */
 		if (!constr->skip_validation)
-			validateDomainCheckConstraint(domainoid, ccbin);
+			validateDomainCheckConstraint(domainoid, ccbin, ShareLock);
 
 		/*
 		 * We must send out an sinval message for the domain, to ensure that
@@ -3098,7 +3098,12 @@ AlterDomainValidateConstraint(List *names, const char *constrName)
 	val = SysCacheGetAttrNotNull(CONSTROID, tuple, Anum_pg_constraint_conbin);
 	conbin = TextDatumGetCString(val);
 
-	validateDomainCheckConstraint(domainoid, conbin);
+	/*
+	 * Locking related relations with ShareUpdateExclusiveLock is ok because
+	 * not-yet-valid constraints are still enforced against concurrent inserts
+	 * or updates.
+	 */
+	validateDomainCheckConstraint(domainoid, conbin, ShareUpdateExclusiveLock);
 
 	/*
 	 * Now update the catalog, while we have the door open.
@@ -3191,9 +3196,16 @@ validateDomainNotNullConstraint(Oid domainoid)
 /*
  * Verify that all columns currently using the domain satisfy the given check
  * constraint expression.
+ *
+ * It is used to validate existing constraints and to add newly created check
+ * constraints to a domain.
+ *
+ * The lockmode is used for relations using the domain.  It should be
+ * ShareLock when adding a new constraint to domain.  It can be
+ * ShareUpdateExclusiveLock when validating an existing constraint.
  */
 static void
-validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
+validateDomainCheckConstraint(Oid domainoid, const char *ccbin, LOCKMODE lockmode)
 {
 	Expr	   *expr = (Expr *) stringToNode(ccbin);
 	List	   *rels;
@@ -3210,9 +3222,7 @@ validateDomainCheckConstraint(Oid domainoid, const char *ccbin)
 	exprstate = ExecPrepareExpr(expr, estate);
 
 	/* Fetch relation list with attributes based on this domain */
-	/* ShareLock is sufficient to prevent concurrent data changes */
-
-	rels = get_rels_with_domain(domainoid, ShareLock);
+	rels = get_rels_with_domain(domainoid, lockmode);
 
 	foreach(rt, rels)
 	{
