@@ -92,6 +92,18 @@ ERROR:  tables declared WITH OIDS are not supported
 -- but explicitly not adding oids is still supported
 CREATE TEMP TABLE withoutoid() WITHOUT OIDS; DROP TABLE withoutoid;
 CREATE TEMP TABLE withoutoid() WITH (oids = false); DROP TABLE withoutoid;
+-- temporary tables are ignored by pg_filenode_relation().
+CREATE TEMP TABLE relation_filenode_check(c1 int);
+SELECT relpersistence,
+  pg_filenode_relation (reltablespace, pg_relation_filenode(oid))
+  FROM pg_class
+  WHERE relname = 'relation_filenode_check';
+ relpersistence | pg_filenode_relation 
+----------------+----------------------
+ t              | 
+(1 row)
+
+DROP TABLE relation_filenode_check;
 -- check restriction with default expressions
 -- invalid use of column reference in default expressions
 CREATE TABLE default_expr_column (id int DEFAULT (id));
