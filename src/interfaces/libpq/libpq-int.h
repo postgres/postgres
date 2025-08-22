@@ -746,7 +746,7 @@ extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...) pg_attribute_printf(2, 3);
 extern void pqSaveMessageField(PGresult *res, char code,
 							   const char *value);
-extern void pqSaveParameterStatus(PGconn *conn, const char *name,
+extern int	pqSaveParameterStatus(PGconn *conn, const char *name,
 								  const char *value);
 extern int	pqRowProcessor(PGconn *conn, const char **errmsgp);
 extern void pqCommandQueueAdvance(PGconn *conn, bool isReadyForQuery,
