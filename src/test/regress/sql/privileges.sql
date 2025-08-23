@@ -1865,9 +1865,9 @@ DROP USER regress_priv_user8; -- does not exist
 
 -- leave some default ACLs for pg_upgrade's dump-restore test input.
 ALTER DEFAULT PRIVILEGES FOR ROLE pg_signal_backend
-	REVOKE INSERT ON TABLES FROM pg_signal_backend;
+	REVOKE USAGE ON TYPES FROM pg_signal_backend;
 ALTER DEFAULT PRIVILEGES FOR ROLE pg_read_all_settings
-	REVOKE INSERT ON TABLES FROM pg_read_all_settings;
+	REVOKE USAGE ON TYPES FROM pg_read_all_settings;
 
 
 -- permissions with LOCK TABLE
