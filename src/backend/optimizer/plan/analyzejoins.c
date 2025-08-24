@@ -631,6 +631,7 @@ remove_leftjoinrel_from_query(PlannerInfo *root, int relid,
 	 * remove_join_clause_from_rels will touch it.)
 	 */
 	root->simple_rel_array[relid] = NULL;
+	root->simple_rte_array[relid] = NULL;
 
 	/* And nuke the RelOptInfo, just in case there's another access path */
 	pfree(rel);
@@ -1979,9 +1980,11 @@ remove_self_join_rel(PlannerInfo *root, PlanRowMark *kmark, PlanRowMark *rmark,
 	 * remove_join_clause_from_rels will touch it.)
 	 */
 	root->simple_rel_array[toRemove->relid] = NULL;
+	root->simple_rte_array[toRemove->relid] = NULL;
 
 	/* And nuke the RelOptInfo, just in case there's another access path. */
 	pfree(toRemove);
+
 
 	/*
 	 * Now repeat construction of attr_needed bits coming from all other
@@ -2194,12 +2197,12 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			{
 				PlanRowMark *rowMark = (PlanRowMark *) lfirst(lc);
 
-				if (rowMark->rti == k)
+				if (rowMark->rti == r)
 				{
 					Assert(rmark == NULL);
 					rmark = rowMark;
 				}
-				else if (rowMark->rti == r)
+				else if (rowMark->rti == k)
 				{
 					Assert(kmark == NULL);
 					kmark = rowMark;
@@ -2254,7 +2257,7 @@ remove_self_joins_one_group(PlannerInfo *root, Relids relids)
 			selfjoinquals = list_concat(selfjoinquals, krel->baserestrictinfo);
 
 			/*
-			 * Determine if the rrel can duplicate outer rows.  We must bypass
+			 * Determine if the rrel can duplicate outer rows. We must bypass
 			 * the unique rel cache here since we're possibly using a subset
 			 * of join quals. We can use 'force_cache' == true when all join
 			 * quals are self-join quals.  Otherwise, we could end up putting
