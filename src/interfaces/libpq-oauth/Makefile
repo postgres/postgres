@@ -54,10 +54,6 @@ SHLIB_EXPORTS = exports.txt
 # Disable -bundle_loader on macOS.
 BE_DLLLIBS =
 
-# By default, a library without an SONAME doesn't get a static library, so we
-# add it to the build explicitly.
-all: all-lib all-static-lib
-
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
 
@@ -65,6 +61,28 @@ include $(top_srcdir)/src/Makefile.shlib
 # objects.
 %_shlib.o: %.c %.o
 	$(CC) $(CFLAGS) $(CFLAGS_SL) $(CPPFLAGS) $(CPPFLAGS_SHLIB) -c $< -o $@
+
+.PHONY: all-tests
+all-tests: oauth_tests$(X)
+
+oauth_tests$(X): test-oauth-curl.o oauth-utils.o $(WIN32RES) | submake-libpgport submake-libpq
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(SHLIB_LINK) -o $@
+
+#
+# Top-Level Targets
+#
+# The existence of a t/ folder induces the buildfarm to run Make directly on
+# this subdirectory, bypassing the recursion skip in src/interfaces/Makefile.
+# Wrap the standard build targets in a with_libcurl conditional to avoid
+# building OAuth code on platforms that haven't requested it. (The "clean"-style
+# targets remain available.)
+#
+
+ifeq ($(with_libcurl), yes)
+
+# By default, a library without an SONAME doesn't get a static library, so we
+# add it to the build explicitly.
+all: all-lib all-static-lib
 
 # Ignore the standard rules for SONAME-less installation; we want both the
 # static and shared libraries to go into libdir.
@@ -75,9 +93,19 @@ install: all installdirs $(stlib) $(shlib)
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(libdir)'
 
+check: all-tests
+	$(prove_check)
+
+installcheck: all-tests
+	$(prove_installcheck)
+
+endif # with_libcurl
+
 uninstall:
 	rm -f '$(DESTDIR)$(libdir)/$(stlib)'
 	rm -f '$(DESTDIR)$(libdir)/$(shlib)'
 
 clean distclean: clean-lib
 	rm -f $(OBJS) $(OBJS_STATIC) $(OBJS_SHLIB)
+	rm -f test-oauth-curl.o oauth_tests$(X)
+	rm -rf tmp_check

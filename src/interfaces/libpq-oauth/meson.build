@@ -47,3 +47,38 @@ libpq_oauth_so = shared_module(libpq_oauth_name,
   link_args: export_fmt.format(export_file.full_path()),
   kwargs: default_lib_args,
 )
+
+libpq_oauth_test_deps = []
+
+oauth_test_sources = files('test-oauth-curl.c') + libpq_oauth_so_sources
+
+if host_system == 'windows'
+  oauth_test_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'oauth_tests',
+    '--FILEDESC', 'OAuth unit test program',])
+endif
+
+libpq_oauth_test_deps += executable('oauth_tests',
+  oauth_test_sources,
+  dependencies: [frontend_shlib_code, libpq, libpq_oauth_deps],
+  kwargs: default_bin_args + {
+    'c_args': default_bin_args.get('c_args', []) + libpq_oauth_so_c_args,
+    'c_pch': pch_postgres_fe_h,
+    'include_directories': [libpq_inc, postgres_inc],
+    'install': false,
+  }
+)
+
+testprep_targets += libpq_oauth_test_deps
+
+tests += {
+  'name': 'libpq-oauth',
+  'sd': meson.current_source_dir(),
+  'bd': meson.current_build_dir(),
+  'tap': {
+    'tests': [
+      't/001_oauth.pl',
+    ],
+    'deps': libpq_oauth_test_deps,
+  },
+}
