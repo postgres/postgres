@@ -2262,7 +2262,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 		 */
 		switch (id)
 		{
-			case 'V':			/* function result */
+			case PqMsg_FunctionCallResponse:
 				if (pqGetInt(actual_result_len, 4, conn))
 					continue;
 				if (*actual_result_len != -1)
@@ -2283,22 +2283,22 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 				/* correctly finished function result message */
 				status = PGRES_COMMAND_OK;
 				break;
-			case 'E':			/* error return */
+			case PqMsg_ErrorResponse:
 				if (pqGetErrorNotice3(conn, true))
 					continue;
 				status = PGRES_FATAL_ERROR;
 				break;
-			case 'A':			/* notify message */
+			case PqMsg_NotificationResponse:
 				/* handle notify and go back to processing return values */
 				if (getNotify(conn))
 					continue;
 				break;
-			case 'N':			/* notice */
+			case PqMsg_NoticeResponse:
 				/* handle notice and go back to processing return values */
 				if (pqGetErrorNotice3(conn, false))
 					continue;
 				break;
-			case 'Z':			/* backend is ready for new query */
+			case PqMsg_ReadyForQuery:
 				if (getReadyForQuery(conn))
 					continue;
 
@@ -2330,7 +2330,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 				}
 				/* and we're out */
 				return pqPrepareAsyncResult(conn);
-			case 'S':			/* parameter status */
+			case PqMsg_ParameterStatus:
 				if (getParameterStatus(conn))
 					continue;
 				break;

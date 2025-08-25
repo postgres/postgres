@@ -66,6 +66,7 @@
 
 
 /* These are the codes sent by parallel workers to leader processes. */
+
 #define PqMsg_Progress              'P'
 
 
