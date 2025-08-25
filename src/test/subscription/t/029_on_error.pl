@@ -30,7 +30,7 @@ sub test_skip_lsn
 	# ERROR with its CONTEXT when retrieving this information.
 	my $contents = slurp_file($node_subscriber->logfile, $offset);
 	$contents =~
-	  qr/conflict detected on relation "public.tbl".*\n.*DETAIL:.* Key already exists in unique index "tbl_pkey", modified by .*origin.* transaction \d+ at .*\n.*Key \(i\)=\(\d+\); existing local tuple .*; remote tuple .*\n.*CONTEXT:.* for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/m
+	  qr/conflict detected on relation "public.tbl".*\n.*DETAIL:.* Key already exists in unique index "tbl_pkey", modified by .*origin.* transaction \d+ at .*\n.*Key \(i\)=\(\d+\); existing local row .*; remote row .*\n.*CONTEXT:.* for replication target relation "public.tbl" in transaction \d+, finished at ([[:xdigit:]]+\/[[:xdigit:]]+)/m
 	  or die "could not get error-LSN";
 	my $lsn = $1;
 
