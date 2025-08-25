@@ -14,8 +14,8 @@ Also copy any external files referenced by your providers configuration (such as
 
     Where:
 
-    - `-D /path/to/backup` specifies the backup location where you have to copy `pg_tde`
-    - `-E` (or `--encrypt-wal`) enables WAL encryption and validates that the copied `pg_tde` and provider files are present and that the server key is accessible (required)
+    - `-D /path/to/backup` specifies the backup location where you have to copy `pg_tde`.
+    - `-E` (or `--encrypt-wal`) enables WAL encryption and validates that the copied `pg_tde` and provider files are present and that the server key is accessible (required).
 
 !!! note
     - The `-E` flag only works with the `-X stream` option (default). It is not compatible with `-X none` or `-X fetch`. For more information, see [the other WAL methods topic](#other-wal-methods).
@@ -28,17 +28,34 @@ When you want to restore a backup created with `pg_basebackup -E`:
 1. Ensure all external files referenced by your providers configuration (such as certificates or key files) are also present and accessible at the same relative paths.
 2. Start PostgreSQL with the restored data directory.
 
-## Other WAL methods
+## Backup method compatibility with WAL encryption
 
-The `-X fetch` option works with encrypted WAL without requiring any additional flags.  
-The `-X none` option excludes WAL from the backup and is unaffected by WAL encryption.
+Tar format (`-F t`):
 
-If the source server has `pg_tde/wal_keys`, running `pg_basebackup` with `-X none` or `-X fetch` produces warnings such as:
+* Works with `-X fetch`.
+* Does not support `-X stream` when WAL encryption is enabled. Using `pg_basebackup -F t -X stream` will create a broken replica.
 
-```sql
-pg_basebackup: warning: the source has WAL keys, but no WAL encryption configured for the target backups
-pg_basebackup: detail: This may lead to exposed data and broken backup
-pg_basebackup: hint: Run pg_basebackup with -E to encrypt streamed WAL
-```
+Streaming mode (`-X stream`):
 
-You can safely ignore these warnings when using `-X none` or `-X fetch`, since in both cases WAL is not streamed.
+* **Must** specify `-E` (`--encrypt-wal`).
+* Without `-E`, backups may contain decrypted WAL while `wal_encryption=on` remains in `postgresql.conf` and `pg_tde/wal_keys` are copied. This leads to **startup failures and compromised data in the backup**.
+
+Fetch mode (`-X fetch`):
+
+* Compatible with encrypted WAL without requiring any additional flags.
+
+None (`-X none`):
+
+* Excludes WAL from the backup and is unaffected by WAL encryption.
+
+
+!!! note
+    If the source server has `pg_tde/wal_keys`, running `pg_basebackup` with `-X none` or `-X fetch` produces warnings such as:
+
+    ```sql
+    pg_basebackup: warning: the source has WAL keys, but no WAL encryption configured for the target backups
+    pg_basebackup: detail: This may lead to exposed data and broken backup
+    pg_basebackup: hint: Run pg_basebackup with -E to encrypt streamed WAL
+    ```
+
+    You can safely ignore the warnings with `-X none` or `-X fetch`, since no WAL streaming occurs.
