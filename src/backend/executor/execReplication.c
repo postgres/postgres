@@ -609,10 +609,10 @@ ExecSimpleRelationInsert(ResultRelInfo *resultRelInfo,
 												   conflictindexes, false);
 
 		/*
-		 * Checks the conflict indexes to fetch the conflicting local tuple
-		 * and reports the conflict. We perform this check here, instead of
+		 * Checks the conflict indexes to fetch the conflicting local row and
+		 * reports the conflict. We perform this check here, instead of
 		 * performing an additional index scan before the actual insertion and
-		 * reporting the conflict if any conflicting tuples are found. This is
+		 * reporting the conflict if any conflicting rows are found. This is
 		 * to avoid the overhead of executing the extra scan for each INSERT
 		 * operation, even when no conflict arises, which could introduce
 		 * significant overhead to replication, particularly in cases where

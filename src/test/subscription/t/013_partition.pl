@@ -368,7 +368,7 @@ $node_publisher->wait_for_catchup('sub2');
 
 my $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/conflict detected on relation "public.tab1_2_2": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(null, 4, quux\); replica identity \(a\)=\(4\)/,
+	  qr/conflict detected on relation "public.tab1_2_2": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(null, 4, quux\); replica identity \(a\)=\(4\)/,
 	'update target row is missing in tab1_2_2');
 ok( $logfile =~
 	  qr/conflict detected on relation "public.tab1_1": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(1\)/,
@@ -781,7 +781,7 @@ $node_publisher->wait_for_catchup('sub2');
 
 $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/conflict detected on relation "public.tab2_1": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote tuple \(pub_tab2, quux, 5\); replica identity \(a\)=\(5\)/,
+	  qr/conflict detected on relation "public.tab2_1": conflict=update_missing.*\n.*DETAIL:.* Could not find the row to be updated.*\n.*Remote row \(pub_tab2, quux, 5\); replica identity \(a\)=\(5\)/,
 	'update target row is missing in tab2_1');
 ok( $logfile =~
 	  qr/conflict detected on relation "public.tab2_1": conflict=delete_missing.*\n.*DETAIL:.* Could not find the row to be deleted.*\n.*Replica identity \(a\)=\(1\)/,
@@ -802,8 +802,8 @@ $node_publisher->wait_for_catchup('sub_viaroot');
 
 $logfile = slurp_file($node_subscriber1->logfile(), $log_location);
 ok( $logfile =~
-	  qr/conflict detected on relation "public.tab2_1": conflict=update_origin_differs.*\n.*DETAIL:.* Updating the row that was modified locally in transaction [0-9]+ at .*\n.*Existing local tuple \(yyy, null, 3\); remote tuple \(pub_tab2, quux, 3\); replica identity \(a\)=\(3\)/,
-	'updating a tuple that was modified by a different origin');
+	  qr/conflict detected on relation "public.tab2_1": conflict=update_origin_differs.*\n.*DETAIL:.* Updating the row that was modified locally in transaction [0-9]+ at .*\n.*Existing local row \(yyy, null, 3\); remote row \(pub_tab2, quux, 3\); replica identity \(a\)=\(3\)/,
+	'updating a row that was modified by a different origin');
 
 # The remaining tests no longer test conflict detection.
 $node_subscriber1->append_conf('postgresql.conf',

@@ -54,7 +54,7 @@ typedef enum
 #define CONFLICT_NUM_TYPES (CT_MULTIPLE_UNIQUE_CONFLICTS + 1)
 
 /*
- * Information for the existing local tuple that caused the conflict.
+ * Information for the existing local row that caused the conflict.
  */
 typedef struct ConflictTupleInfo
 {
@@ -66,7 +66,7 @@ typedef struct ConflictTupleInfo
 								 * the conflict */
 	RepOriginId origin;			/* origin identifier of the modification */
 	TimestampTz ts;				/* timestamp of when the modification on the
-								 * conflicting local tuple occurred */
+								 * conflicting local row occurred */
 } ConflictTupleInfo;
 
 extern bool GetTupleTransactionInfo(TupleTableSlot *localslot,

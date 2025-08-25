@@ -1808,7 +1808,7 @@ Publications:
      <term><literal>update_missing</literal></term>
      <listitem>
       <para>
-       The tuple to be updated was not found. The update will simply be
+       The row to be updated was not found. The update will simply be
        skipped in this scenario.
       </para>
      </listitem>
@@ -1829,7 +1829,7 @@ Publications:
      <term><literal>delete_missing</literal></term>
      <listitem>
       <para>
-       The tuple to be deleted was not found. The delete will simply be
+       The row to be deleted was not found. The delete will simply be
        skipped in this scenario.
       </para>
      </listitem>
@@ -1863,8 +1863,8 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
 <phrase>where <replaceable class="parameter">detail_values</replaceable> is one of:</phrase>
 
     <literal>Key</literal> (<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>)
-    <literal>existing local tuple</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
-    <literal>remote tuple</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>existing local row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
+    <literal>remote row</literal> <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)
     <literal>replica identity</literal> {(<replaceable>column_name</replaceable> <optional>, ...</optional>)=(<replaceable>column_value</replaceable> <optional>, ...</optional>) | full <optional>(<replaceable>column_name</replaceable> <optional>, ...</optional>)=</optional>(<replaceable>column_value</replaceable> <optional>, ...</optional>)}
 </synopsis>
 
@@ -1898,32 +1898,32 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          <replaceable class="parameter">detailed_explanation</replaceable> includes
          the origin, transaction ID, and commit timestamp of the transaction that
-         modified the existing local tuple, if available.
+         modified the existing local row, if available.
         </para>
        </listitem>
        <listitem>
         <para>
          The <literal>Key</literal> section includes the key values of the local
-         tuple that violated a unique constraint for
+         row that violated a unique constraint for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
          <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
         <para>
-         The <literal>existing local tuple</literal> section includes the local
-         tuple if its origin differs from the remote tuple for
+         The <literal>existing local row</literal> section includes the local
+         row if its origin differs from the remote row for
          <literal>update_origin_differs</literal> or <literal>delete_origin_differs</literal>
-         conflicts, or if the key value conflicts with the remote tuple for
+         conflicts, or if the key value conflicts with the remote row for
          <literal>insert_exists</literal>, <literal>update_exists</literal> or
          <literal>multiple_unique_conflicts</literal> conflicts.
         </para>
        </listitem>
        <listitem>
         <para>
-         The <literal>remote tuple</literal> section includes the new tuple from
+         The <literal>remote row</literal> section includes the new row from
          the remote insert or update operation that caused the conflict. Note that
-         for an update operation, the column value of the new tuple will be null
+         for an update operation, the column value of the new row will be null
          if the value is unchanged and toasted.
         </para>
        </listitem>
@@ -1931,7 +1931,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
         <para>
          The <literal>replica identity</literal> section includes the replica
          identity key values that were used to search for the existing local
-         tuple to be updated or deleted. This may include the full tuple value
+         row to be updated or deleted. This may include the full row value
          if the local relation is marked with
          <link linkend="sql-altertable-replica-identity-full"><literal>REPLICA IDENTITY FULL</literal></link>.
         </para>
@@ -1939,7 +1939,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
        <listitem>
         <para>
          <replaceable class="parameter">column_name</replaceable> is the column name.
-         For <literal>existing local tuple</literal>, <literal>remote tuple</literal>,
+         For <literal>existing local row</literal>, <literal>remote row</literal>,
          and <literal>replica identity full</literal> cases, column names are
          logged only if the user lacks the privilege to access all columns of
          the table. If column names are present, they appear in the same order
@@ -1996,7 +1996,7 @@ DETAIL:  <replaceable class="parameter">detailed_explanation</replaceable>.
 <screen>
 ERROR:  conflict detected on relation "public.test": conflict=insert_exists
 DETAIL:  Key already exists in unique index "t_pkey", which was modified locally in transaction 740 at 2024-06-26 10:47:04.727375+08.
-Key (c)=(1); existing local tuple (1, 'local'); remote tuple (1, 'remote').
+Key (c)=(1); existing local row (1, 'local'); remote row (1, 'remote').
 CONTEXT:  processing remote data for replication origin "pg_16395" during "INSERT" for replication target relation "public.test" in transaction 725 finished at 0/14C0378
 </screen>
    The LSN of the transaction that contains the change violating the constraint and

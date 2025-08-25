@@ -79,11 +79,11 @@ $node_publisher->safe_psql('postgres',
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab\": conflict=multiple_unique_conflicts.*
 .*Key already exists in unique index \"conf_tab_pkey\".*
-.*Key \(a\)=\(2\); existing local tuple \(2, 2, 2\); remote tuple \(2, 3, 4\).*
+.*Key \(a\)=\(2\); existing local row \(2, 2, 2\); remote row \(2, 3, 4\).*
 .*Key already exists in unique index \"conf_tab_b_key\".*
-.*Key \(b\)=\(3\); existing local tuple \(3, 3, 3\); remote tuple \(2, 3, 4\).*
+.*Key \(b\)=\(3\); existing local row \(3, 3, 3\); remote row \(2, 3, 4\).*
 .*Key already exists in unique index \"conf_tab_c_key\".*
-.*Key \(c\)=\(4\); existing local tuple \(4, 4, 4\); remote tuple \(2, 3, 4\)./,
+.*Key \(c\)=\(4\); existing local row \(4, 4, 4\); remote row \(2, 3, 4\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected during insert');
@@ -111,11 +111,11 @@ $node_publisher->safe_psql('postgres',
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab\": conflict=multiple_unique_conflicts.*
 .*Key already exists in unique index \"conf_tab_pkey\".*
-.*Key \(a\)=\(6\); existing local tuple \(6, 6, 6\); remote tuple \(6, 7, 8\).*
+.*Key \(a\)=\(6\); existing local row \(6, 6, 6\); remote row \(6, 7, 8\).*
 .*Key already exists in unique index \"conf_tab_b_key\".*
-.*Key \(b\)=\(7\); existing local tuple \(7, 7, 7\); remote tuple \(6, 7, 8\).*
+.*Key \(b\)=\(7\); existing local row \(7, 7, 7\); remote row \(6, 7, 8\).*
 .*Key already exists in unique index \"conf_tab_c_key\".*
-.*Key \(c\)=\(8\); existing local tuple \(8, 8, 8\); remote tuple \(6, 7, 8\)./,
+.*Key \(c\)=\(8\); existing local row \(8, 8, 8\); remote row \(6, 7, 8\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected during update');
@@ -139,9 +139,9 @@ $node_publisher->safe_psql('postgres',
 $node_subscriber->wait_for_log(
 	qr/conflict detected on relation \"public.conf_tab_2_p1\": conflict=multiple_unique_conflicts.*
 .*Key already exists in unique index \"conf_tab_2_p1_pkey\".*
-.*Key \(a\)=\(55\); existing local tuple \(55, 2, 3\); remote tuple \(55, 2, 3\).*
+.*Key \(a\)=\(55\); existing local row \(55, 2, 3\); remote row \(55, 2, 3\).*
 .*Key already exists in unique index \"conf_tab_2_p1_a_b_key\".*
-.*Key \(a, b\)=\(55, 2\); existing local tuple \(55, 2, 3\); remote tuple \(55, 2, 3\)./,
+.*Key \(a, b\)=\(55, 2\); existing local row \(55, 2, 3\); remote row \(55, 2, 3\)./,
 	$log_offset);
 
 pass('multiple_unique_conflicts detected on a leaf partition during insert');
