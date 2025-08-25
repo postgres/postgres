@@ -12,6 +12,11 @@ use Fcntl qw(SEEK_SET);
 
 use integer;    # causes / operator to use integer math
 
+if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all => 'uses write_wal to hack wal directly';
+}
+
 # Values queried from the server
 my $WAL_SEGMENT_SIZE;
 my $WAL_BLOCK_SIZE;

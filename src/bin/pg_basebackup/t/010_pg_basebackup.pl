@@ -10,6 +10,12 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all =>
+	  "pg_basebackup without -E from server with encrypted WAL produces broken backups";
+}
+
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
 program_options_handling_ok('pg_basebackup');

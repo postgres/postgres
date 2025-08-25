@@ -7,6 +7,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all => "pg_waldump needs extra options for encrypted WAL";
+}
+
 program_help_ok('pg_waldump');
 program_version_ok('pg_waldump');
 program_options_handling_ok('pg_waldump');
