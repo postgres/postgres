@@ -718,10 +718,9 @@ pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key,
 	CloseTransientFile(new_fd);
 
 	/*
-	 * Do the final steps - replace the current WAL key file with the file
-	 * with new data.
+	 * Do the final step - replace the current WAL key file with the file with
+	 * new data.
 	 */
-	durable_unlink(get_wal_key_file_path(), ERROR);
 	durable_rename(tmp_path, get_wal_key_file_path(), ERROR);
 
 	/*
