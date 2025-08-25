@@ -14,6 +14,7 @@ our ($tde_template_dir);
 BEGIN
 {
 	$ENV{TDE_MODE_NOSKIP} = 0 unless defined($ENV{TDE_MODE_NOSKIP});
+	$ENV{TDE_MODE_SMGR} = 1 unless defined($ENV{TDE_MODE_SMGR});
 	$ENV{TDE_MODE_WAL} = 1 unless defined($ENV{TDE_MODE_WAL});
 }
 
@@ -27,6 +28,22 @@ sub init
 		'shared_preload_libraries = pg_tde');
 
 	$self->_tde_init_principal_key;
+
+	if ($ENV{TDE_MODE_SMGR})
+	{
+		# Enable the TDE extension in all databases created by initdb, this is
+		# necessary for the tde_heap access method to be available everywhere.
+		foreach ('postgres', 'template0', 'template1')
+		{
+			_tde_init_sql_command(
+				$self->data_dir, $_, q(
+				CREATE SCHEMA _pg_tde;
+				CREATE EXTENSION pg_tde WITH SCHEMA _pg_tde;
+			));
+		}
+		$self->SUPER::append_conf('postgresql.conf',
+			'default_table_access_method = tde_heap');
+	}
 
 	if ($ENV{TDE_MODE_WAL})
 	{

@@ -10,6 +10,12 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all =>
+	  q(Failed test 'pg_stat_archiver failed to archive 000000010000000000000004');
+}
+
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(
 	has_archiving => 1,

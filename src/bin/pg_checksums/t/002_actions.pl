@@ -12,6 +12,11 @@ use PostgreSQL::Test::Utils;
 
 use Test::More;
 
+if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all =>
+	  'uses corrupt_page_checksum to directly hack relation files';
+}
 
 # Utility routine to create and check a table with corrupted checksums
 # on a wanted tablespace.  Note that this stops and starts the node

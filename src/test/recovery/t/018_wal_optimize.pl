@@ -16,6 +16,11 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all => 'invalid page in block';
+}
+
 sub check_orphan_relfilenodes
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;

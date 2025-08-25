@@ -16,6 +16,12 @@ if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
 	  "pg_basebackup without -E from server with encrypted WAL produces broken backups";
 }
 
+if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all =>
+	  'uses corrupt_page_checksum to directly hack relation files';
+}
+
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
 program_options_handling_ok('pg_basebackup');
