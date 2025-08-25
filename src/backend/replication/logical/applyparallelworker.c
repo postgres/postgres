@@ -1007,7 +1007,7 @@ ProcessParallelApplyMessage(StringInfo msg)
 
 	switch (msgtype)
 	{
-		case 'E':				/* ErrorResponse */
+		case PqMsg_ErrorResponse:
 			{
 				ErrorData	edata;
 
@@ -1044,11 +1044,11 @@ ProcessParallelApplyMessage(StringInfo msg)
 
 			/*
 			 * Don't need to do anything about NoticeResponse and
-			 * NotifyResponse as the logical replication worker doesn't need
-			 * to send messages to the client.
+			 * NotificationResponse as the logical replication worker doesn't
+			 * need to send messages to the client.
 			 */
-		case 'N':
-		case 'A':
+		case PqMsg_NoticeResponse:
+		case PqMsg_NotificationResponse:
 			break;
 
 		default:
