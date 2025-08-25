@@ -11,6 +11,12 @@ use lib $FindBin::RealBin;
 
 use RewindTest;
 
+if ($ENV{TDE_MODE} and not $ENV{TDE_MODE_NOSKIP})
+{
+	plan skip_all =>
+	  "pg_combinebackup doesn't set filemodes of pg_tde/ correctly?";
+}
+
 sub run_test
 {
 	my $test_mode = shift;
