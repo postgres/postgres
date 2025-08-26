@@ -377,7 +377,7 @@ pgaio_uring_shmem_init(bool first_time)
 			else if (-ret == ENOSYS)
 			{
 				err = ERRCODE_FEATURE_NOT_SUPPORTED;
-				hint = _("Kernel does not support io_uring.");
+				hint = _("The kernel does not support io_uring.");
 			}
 
 			/* update errno to allow %m to work */
