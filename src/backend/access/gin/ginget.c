@@ -1315,6 +1315,8 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 	 */
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		ItemPointerSetMin(item);
 		match = true;
 		for (i = 0; i < so->nkeys && match; i++)
@@ -1958,8 +1960,6 @@ gingetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 	for (;;)
 	{
-		CHECK_FOR_INTERRUPTS();
-
 		if (!scanGetItem(scan, iptr, &iptr, &recheck))
 			break;
 
