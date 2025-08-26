@@ -693,12 +693,21 @@
         <returnvalue>text</returnvalue>
        </para>
        <para>
-        Converts the first letter of each word to upper case and the
-        rest to lower case. When using the <literal>libc</literal> locale
-        provider, words are sequences of alphanumeric characters separated
-        by non-alphanumeric characters; when using the ICU locale provider,
-        words are separated according to
-        <ulink url="https://www.unicode.org/reports/tr29/#Word_Boundaries">Unicode Standard Annex #29</ulink>.
+        Converts the first letter of each word to upper case (or title case
+        if the letter is a digraph and locale is <literal>ICU</literal> or
+        <literal>builtin</literal> <literal>PG_UNICODE_FAST</literal>)
+        and the rest to lower case. When using the <literal>libc</literal> or
+        <literal>builtin</literal> locale provider, words are sequences of
+        alphanumeric characters separated by non-alphanumeric characters;
+        when using the ICU locale provider, words are separated according to
+        <ulink url="https://unicode-org.github.io/icu-docs/apidoc/dev/icu4c/ustring_8h.html#a47602e2c2012d77ee91908b9bbfdc063">u_strToTitle ICU function</ulink>.
+       </para>
+       <para>
+        This function is primarily used for convenient
+        display, and the specific result should not be relied upon because of
+        the differences between locale providers and between different
+        ICU versions. If specific word boundary rules are desired,
+        it is recommended to write a custom function.
        </para>
        <para>
         <literal>initcap('hi THOMAS')</literal>
