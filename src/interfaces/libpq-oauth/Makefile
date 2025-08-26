@@ -25,6 +25,7 @@ override shlib := lib$(NAME)$(DLSUFFIX)
 override stlib := libpq-oauth.a
 
 override CPPFLAGS := -I$(libpq_srcdir) -I$(top_builddir)/src/port $(CPPFLAGS) $(LIBCURL_CPPFLAGS)
+override CFLAGS += $(PTHREAD_CFLAGS)
 
 OBJS = \
 	$(WIN32RES)
@@ -47,7 +48,7 @@ $(stlib): override OBJS += $(OBJS_STATIC)
 $(stlib): $(OBJS_STATIC)
 
 SHLIB_LINK_INTERNAL = $(libpq_pgport_shlib)
-SHLIB_LINK = $(LIBCURL_LDFLAGS) $(LIBCURL_LDLIBS) $(filter -lintl -lm, $(LIBS))
+SHLIB_LINK = $(LIBCURL_LDFLAGS) $(LIBCURL_LDLIBS) $(filter -lintl -lm $(PTHREAD_LIBS), $(LIBS))
 SHLIB_PREREQS = submake-libpq
 SHLIB_EXPORTS = exports.txt
 
