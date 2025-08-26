@@ -71,10 +71,9 @@
 
     <listitem>
      <para>
-      You need an <acronym>ISO</acronym>/<acronym>ANSI</acronym> C compiler (at least
-      C99-compliant). Recent
-      versions of <productname>GCC</productname> are recommended, but
-      <productname>PostgreSQL</productname> is known to build using a wide variety
+      You need a C compiler that supports at least C11.  Recent versions of
+      <productname>GCC</productname> are recommended, but
+      <productname>PostgreSQL</productname> is known to build using a variety
       of compilers from different vendors.
      </para>
     </listitem>

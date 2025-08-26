@@ -907,12 +907,12 @@ BETTER: unrecognized node type: 42
     <title>C Standard</title>
     <para>
      Code in <productname>PostgreSQL</productname> should only rely on language
-     features available in the C99 standard. That means a conforming
-     C99 compiler has to be able to compile postgres, at least aside
+     features available in the C11 standard. That means a conforming
+     C11 compiler has to be able to compile postgres, at least aside
      from a few platform dependent pieces.
     </para>
     <para>
-     A few features included in the C99 standard are, at this time, not
+     A few features included in the C11 standard are, at this time, not
      permitted to be used in core <productname>PostgreSQL</productname>
      code. This currently includes variable length arrays, intermingled
      declarations and code, <literal>//</literal> comments, universal
@@ -924,13 +924,11 @@ BETTER: unrecognized node type: 42
      features can be used, if a fallback is provided.
     </para>
     <para>
-     For example <literal>_Static_assert()</literal> and
+     For example <literal>typeof()</literal> and
      <literal>__builtin_constant_p</literal> are currently used, even though
      they are from newer revisions of the C standard and a
      <productname>GCC</productname> extension respectively. If not available
-     we respectively fall back to using a C99 compatible replacement that
-     performs the same checks, but emits rather cryptic messages and do not
-     use <literal>__builtin_constant_p</literal>.
+     we do not use them.
     </para>
    </simplesect>
 
