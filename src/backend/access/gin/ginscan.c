@@ -270,6 +270,7 @@ ginNewScanKey(IndexScanDesc scan)
 	ScanKey		scankey = scan->keyData;
 	GinScanOpaque so = (GinScanOpaque) scan->opaque;
 	int			i;
+	int			numExcludeOnly;
 	bool		hasNullQuery = false;
 	bool		attrHasNormalScan[INDEX_MAX_KEYS] = {false};
 	MemoryContext oldCtx;
@@ -392,6 +393,7 @@ ginNewScanKey(IndexScanDesc scan)
 	 * excludeOnly scan key must receive a GIN_CAT_EMPTY_QUERY hidden entry
 	 * and be set to normal (excludeOnly = false).
 	 */
+	numExcludeOnly = 0;
 	for (i = 0; i < so->nkeys; i++)
 	{
 		GinScanKey	key = &so->keys[i];
@@ -405,6 +407,47 @@ ginNewScanKey(IndexScanDesc scan)
 			ginScanKeyAddHiddenEntry(so, key, GIN_CAT_EMPTY_QUERY);
 			attrHasNormalScan[key->attnum - 1] = true;
 		}
+		else
+			numExcludeOnly++;
+	}
+
+	/*
+	 * If we left any excludeOnly scan keys as-is, move them to the end of the
+	 * scan key array: they must appear after normal key(s).
+	 */
+	if (numExcludeOnly > 0)
+	{
+		GinScanKey	tmpkeys;
+		int			iNormalKey;
+		int			iExcludeOnly;
+
+		/* We'd better have made at least one normal key */
+		Assert(numExcludeOnly < so->nkeys);
+		/* Make a temporary array to hold the re-ordered scan keys */
+		tmpkeys = (GinScanKey) palloc(so->nkeys * sizeof(GinScanKeyData));
+		/* Re-order the keys ... */
+		iNormalKey = 0;
+		iExcludeOnly = so->nkeys - numExcludeOnly;
+		for (i = 0; i < so->nkeys; i++)
+		{
+			GinScanKey	key = &so->keys[i];
+
+			if (key->excludeOnly)
+			{
+				memcpy(tmpkeys + iExcludeOnly, key, sizeof(GinScanKeyData));
+				iExcludeOnly++;
+			}
+			else
+			{
+				memcpy(tmpkeys + iNormalKey, key, sizeof(GinScanKeyData));
+				iNormalKey++;
+			}
+		}
+		Assert(iNormalKey == so->nkeys - numExcludeOnly);
+		Assert(iExcludeOnly == so->nkeys);
+		/* ... and copy them back to so->keys[] */
+		memcpy(so->keys, tmpkeys, so->nkeys * sizeof(GinScanKeyData));
+		pfree(tmpkeys);
 	}
 
 	/*
