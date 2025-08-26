@@ -738,8 +738,8 @@ pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key,
 	{
 		XLogPrincipalKeyRotate xlrec;
 
-		xlrec.databaseId = principal_key->keyInfo.databaseId;
-		xlrec.keyringId = principal_key->keyInfo.keyringId;
+		xlrec.databaseId = new_principal_key->keyInfo.databaseId;
+		xlrec.keyringId = new_principal_key->keyInfo.keyringId;
 		memcpy(xlrec.keyName, new_principal_key->keyInfo.name, sizeof(new_principal_key->keyInfo.name));
 
 		XLogBeginInsert();
