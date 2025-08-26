@@ -546,7 +546,7 @@ RelationCopyStorage(SMgrRelation src, SMgrRelation dst,
 
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("invalid page in block %u of relation %s",
+					 errmsg("invalid page in block %u of relation \"%s\"",
 							blkno, relpath.str)));
 		}
 
