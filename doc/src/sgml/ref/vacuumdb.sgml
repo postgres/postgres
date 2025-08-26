@@ -292,6 +292,14 @@ PostgreSQL documentation
         This option can only be used in conjunction with
         <option>--analyze-only</option> or <option>--analyze-in-stages</option>.
        </para>
+       <para>
+        Note that <option>--missing-stats-only</option> requires
+        <literal>SELECT</literal> privileges on
+        <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
+        and
+        <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>,
+        which are restricted to superusers by default.
+       </para>
       </listitem>
      </varlistentry>
 
