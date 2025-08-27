@@ -41,7 +41,7 @@ stats_check_required_arg(FunctionCallInfo fcinfo,
 	if (PG_ARGISNULL(argnum))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" cannot be NULL",
+				 errmsg("argument \"%s\" must not be null",
 						arginfo[argnum].argname)));
 }
 
@@ -68,7 +68,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" cannot be a multidimensional array",
+				 errmsg("argument \"%s\" must not be a multidimensional array",
 						arginfo[argnum].argname)));
 		return false;
 	}
@@ -77,7 +77,7 @@ stats_check_arg_array(FunctionCallInfo fcinfo,
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" array cannot contain NULL values",
+				 errmsg("argument \"%s\" array must not contain null values",
 						arginfo[argnum].argname)));
 		return false;
 	}
@@ -108,7 +108,7 @@ stats_check_arg_pair(FunctionCallInfo fcinfo,
 
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"%s\" must be specified when \"%s\" is specified",
+				 errmsg("argument \"%s\" must be specified when argument \"%s\" is specified",
 						arginfo[nullarg].argname,
 						arginfo[otherarg].argname)));
 
@@ -263,7 +263,7 @@ stats_check_arg_type(const char *argname, Oid argtype, Oid expectedtype)
 	if (argtype != expectedtype)
 	{
 		ereport(WARNING,
-				(errmsg("argument \"%s\" has type \"%s\", expected type \"%s\"",
+				(errmsg("argument \"%s\" has type %s, expected type %s",
 						argname, format_type_be(argtype),
 						format_type_be(expectedtype))));
 		return false;
@@ -319,11 +319,11 @@ stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
 
 		if (argnulls[i])
 			ereport(ERROR,
-					(errmsg("name at variadic position %d is NULL", i + 1)));
+					(errmsg("name at variadic position %d is null", i + 1)));
 
 		if (types[i] != TEXTOID)
 			ereport(ERROR,
-					(errmsg("name at variadic position %d has type \"%s\", expected type \"%s\"",
+					(errmsg("name at variadic position %d has type %s, expected type %s",
 							i + 1, format_type_be(types[i]),
 							format_type_be(TEXTOID))));
 
