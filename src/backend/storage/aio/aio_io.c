@@ -121,7 +121,7 @@ pgaio_io_perform_synchronously(PgAioHandle *ioh)
 	START_CRIT_SECTION();
 
 	/* Perform IO. */
-	switch (ioh->op)
+	switch ((PgAioOp) ioh->op)
 	{
 		case PGAIO_OP_READV:
 			pgstat_report_wait_start(WAIT_EVENT_DATA_FILE_READ);
@@ -176,7 +176,7 @@ pgaio_io_get_op_name(PgAioHandle *ioh)
 {
 	Assert(ioh->op >= 0 && ioh->op < PGAIO_OP_COUNT);
 
-	switch (ioh->op)
+	switch ((PgAioOp) ioh->op)
 	{
 		case PGAIO_OP_INVALID:
 			return "invalid";
@@ -198,7 +198,7 @@ pgaio_io_uses_fd(PgAioHandle *ioh, int fd)
 {
 	Assert(ioh->state >= PGAIO_HS_DEFINED);
 
-	switch (ioh->op)
+	switch ((PgAioOp) ioh->op)
 	{
 		case PGAIO_OP_READV:
 			return ioh->op_data.read.fd == fd;
@@ -222,7 +222,7 @@ pgaio_io_get_iovec_length(PgAioHandle *ioh, struct iovec **iov)
 
 	*iov = &pgaio_ctl->iovecs[ioh->iovec_off];
 
-	switch (ioh->op)
+	switch ((PgAioOp) ioh->op)
 	{
 		case PGAIO_OP_READV:
 			return ioh->op_data.read.iov_length;
