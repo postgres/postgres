@@ -100,12 +100,19 @@ load_external_function(const char *filename, const char *funcname,
 	void	   *retval;
 
 	/*
-	 * If the value starts with "$libdir/", strip that.  This is because many
-	 * extensions have hardcoded '$libdir/foo' as their library name, which
-	 * prevents using the path.
+	 * For extensions with hardcoded '$libdir/' library names, we strip the
+	 * prefix to allow the library search path to be used. This is done only
+	 * for simple names (e.g., "$libdir/foo"), not for nested paths (e.g.,
+	 * "$libdir/foo/bar").
+	 *
+	 * For nested paths, 'expand_dynamic_library_name' directly expands the
+	 * '$libdir' macro, so we leave them untouched.
 	 */
 	if (strncmp(filename, "$libdir/", 8) == 0)
-		filename += 8;
+	{
+		if (first_dir_separator(filename + 8) == NULL)
+			filename += 8;
+	}
 
 	/* Expand the possibly-abbreviated filename to an exact path name */
 	fullname = expand_dynamic_library_name(filename);
