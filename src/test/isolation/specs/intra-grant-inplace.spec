@@ -20,7 +20,7 @@ step grant1	{
 	GRANT SELECT ON intra_grant_inplace TO PUBLIC;
 }
 step drop1	{
-	DROP TABLE intra_grant_inplace;
+	DELETE FROM pg_class WHERE relname = 'intra_grant_inplace';
 }
 step c1	{ COMMIT; }
 
