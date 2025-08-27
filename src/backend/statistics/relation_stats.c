@@ -112,7 +112,7 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("reltuples cannot be < -1.0")));
+					 errmsg("argument \"%s\" must not be less than -1.0", "reltuples")));
 			result = false;
 		}
 		else
