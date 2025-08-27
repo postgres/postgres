@@ -54,30 +54,28 @@ typedef struct TDEFileHeader
 	TDESignedPrincipalKeyInfo signed_key_info;
 } TDEFileHeader;
 
-/* We do not need the dbOid since the entries are stored in a file per db */
+/*
+ * Feel free to use the unused fields for something, but beware that existing
+ * files may contain unexpected values here. Also be aware of alignment if
+ * changing any of the types as this struct is written/read directly from file.
+ *
+ * If changes are made, know that the first four fields are used as AAD when
+ * encrypting/decrypting existing keys from the key files, so any changes here
+ * might break existing clusters.
+ */
 typedef struct TDEMapEntry
 {
-	Oid			spcOid;
-	RelFileNumber relNumber;
-	uint32		type;
+	Oid			spcOid;			/* Part of AAD */
+	RelFileNumber relNumber;	/* Part of AAD */
+	uint32		type;			/* Part of AAD */
+	uint32		_unused3;		/* Part of AAD */
 
-	/*
-	 * This anonymous struct is here to ensure the same alignment as before
-	 * the unused fields were removed from InternalKey.
-	 */
-	struct
-	{
-		InternalKey enc_key;
+	uint8		encrypted_key_data[INTERNAL_KEY_LEN];
+	uint8		key_base_iv[INTERNAL_KEY_IV_LEN];
 
-		/*
-		 * These fields were added here to keep the file format the same after
-		 * some fields were removed from InternalKey. Feel free to use them
-		 * for something, but beware that existing files may contain
-		 * unexpected values here.
-		 */
-		uint32		_unused1;	/* Will be 1 in existing files entries. */
-		uint64		_unused2;	/* Will be 0 in existing files entries. */
-	};
+	uint32		_unused1;		/* Will be 1 in existing files entries. */
+	uint32		_unused4;
+	uint64		_unused2;		/* Will be 0 in existing files entries. */
 
 	/* IV and tag used when encrypting the key itself */
 	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
@@ -398,7 +396,7 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 	map_entry->spcOid = rlocator->spcOid;
 	map_entry->relNumber = rlocator->relNumber;
 	map_entry->type = MAP_ENTRY_TYPE_KEY;
-	map_entry->enc_key = *rel_key_data;
+	memcpy(map_entry->key_base_iv, rel_key_data->base_iv, INTERNAL_KEY_IV_LEN);
 
 	/*
 	 * We set these fields here so that existing file entries will be
@@ -414,9 +412,9 @@ pg_tde_initialize_map_entry(TDEMapEntry *map_entry, const TDEPrincipalKey *princ
 
 	AesGcmEncrypt(principal_key->keyData,
 				  map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
-				  (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
+				  (unsigned char *) map_entry, offsetof(TDEMapEntry, encrypted_key_data),
 				  rel_key_data->key, INTERNAL_KEY_LEN,
-				  map_entry->enc_key.key,
+				  map_entry->encrypted_key_data,
 				  map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 #endif
@@ -587,22 +585,22 @@ pg_tde_verify_principal_key_info(TDESignedPrincipalKeyInfo *signed_key_info, con
 static InternalKey *
 tde_decrypt_rel_key(const TDEPrincipalKey *principal_key, TDEMapEntry *map_entry)
 {
-	InternalKey *rel_key_data = palloc_object(InternalKey);
+	InternalKey *key = palloc_object(InternalKey);
 
 	Assert(principal_key);
 
-	*rel_key_data = map_entry->enc_key;
-
 	if (!AesGcmDecrypt(principal_key->keyData,
 					   map_entry->entry_iv, MAP_ENTRY_IV_SIZE,
-					   (unsigned char *) map_entry, offsetof(TDEMapEntry, enc_key),
-					   map_entry->enc_key.key, INTERNAL_KEY_LEN,
-					   rel_key_data->key,
+					   (unsigned char *) map_entry, offsetof(TDEMapEntry, encrypted_key_data),
+					   map_entry->encrypted_key_data, INTERNAL_KEY_LEN,
+					   key->key,
 					   map_entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE))
 		ereport(ERROR,
 				errmsg("Failed to decrypt key, incorrect principal key or corrupted key file"));
 
-	return rel_key_data;
+	memcpy(key->base_iv, map_entry->key_base_iv, INTERNAL_KEY_IV_LEN);
+
+	return key;
 }
 
 /*
