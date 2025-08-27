@@ -659,6 +659,20 @@ ExecGrantStmt_oids(InternalGrant *istmt)
  * objectNamesToOids
  *
  * Turn a list of object names of a given type into an Oid list.
+ *
+ * XXX This function intentionally takes only an AccessShareLock.  In the face
+ * of concurrent DDL, we might easily latch onto an old version of an object,
+ * causing the GRANT or REVOKE statement to fail.  But it does prevent the
+ * object from disappearing altogether.  To do better, we would need to use a
+ * self-exclusive lock, perhaps ShareUpdateExclusiveLock, here and before
+ * *every* CatalogTupleUpdate() of a row that GRANT/REVOKE can affect.
+ * Besides that additional work, this could have operational costs.  For
+ * example, it would make GRANT ALL TABLES IN SCHEMA terminate every
+ * autovacuum running in the schema and consume a shared lock table entry per
+ * table in the schema.  The user-visible benefit of that additional work is
+ * just changing "ERROR: tuple concurrently updated" to blocking.  That's not
+ * nothing, but it might not outweigh autovacuum termination and lock table
+ * consumption spikes.
  */
 static List *
 objectNamesToOids(ObjectType objtype, List *objnames, bool is_grant)
