@@ -660,7 +660,7 @@ pgaio_uring_sq_from_io(PgAioHandle *ioh, struct io_uring_sqe *sqe)
 {
 	struct iovec *iov;
 
-	switch (ioh->op)
+	switch ((PgAioOp) ioh->op)
 	{
 		case PGAIO_OP_READV:
 			iov = &pgaio_ctl->iovecs[ioh->iovec_off];

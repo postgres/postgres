@@ -175,7 +175,7 @@ retry:
 		values[4] = CStringGetTextDatum(pgaio_io_get_op_name(&ioh_copy));
 
 		/* columns: details about the IO's operation (offset, length) */
-		switch (ioh_copy.op)
+		switch ((PgAioOp) ioh_copy.op)
 		{
 			case PGAIO_OP_INVALID:
 				nulls[5] = true;
