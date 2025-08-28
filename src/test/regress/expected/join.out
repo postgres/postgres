@@ -3222,6 +3222,24 @@ where b.unique2 is null;
          ->  Index Only Scan using tenk1_unique2 on tenk1 b
 (5 rows)
 
+-- check that we avoid de-duplicating columns redundantly
+set enable_memoize to off;
+explain (costs off)
+select 1 from tenk1
+where (hundred, thousand) in (select twothousand, twothousand from onek);
+                   QUERY PLAN                    
+-------------------------------------------------
+ Hash Join
+   Hash Cond: (tenk1.hundred = onek.twothousand)
+   ->  Seq Scan on tenk1
+         Filter: (hundred = thousand)
+   ->  Hash
+         ->  HashAggregate
+               Group Key: onek.twothousand
+               ->  Seq Scan on onek
+(8 rows)
+
+reset enable_memoize;
 --
 -- regression test for bogus RTE_GROUP entries
 --
@@ -6499,6 +6517,68 @@ where t1.a = s.c;
  ?column? 
 ----------
 (0 rows)
+
+rollback;
+-- check handling of semijoins after join removal: we must suppress
+-- unique-ification of known-constant values
+begin;
+create temp table t (a int unique, b int);
+insert into t values (1, 2);
+explain (verbose, costs off)
+select t1.a from t t1
+  left join t t2 on t1.a = t2.a
+       join t t3 on true
+where exists (select 1 from t t4
+                join t t5 on t4.b = t5.b
+                join t t6 on t5.b = t6.b
+              where t1.a = t4.a and t3.a = t5.a and t4.a = 1);
+                                     QUERY PLAN                                     
+------------------------------------------------------------------------------------
+ Nested Loop
+   Output: t1.a
+   Inner Unique: true
+   ->  Nested Loop
+         Output: t1.a, t5.a
+         ->  Index Only Scan using t_a_key on pg_temp.t t1
+               Output: t1.a
+               Index Cond: (t1.a = 1)
+         ->  HashAggregate
+               Output: t5.a
+               Group Key: t5.a
+               ->  Hash Join
+                     Output: t5.a
+                     Hash Cond: (t6.b = t4.b)
+                     ->  Seq Scan on pg_temp.t t6
+                           Output: t6.a, t6.b
+                     ->  Hash
+                           Output: t4.b, t5.b, t5.a
+                           ->  Hash Join
+                                 Output: t4.b, t5.b, t5.a
+                                 Inner Unique: true
+                                 Hash Cond: (t5.b = t4.b)
+                                 ->  Seq Scan on pg_temp.t t5
+                                       Output: t5.a, t5.b
+                                 ->  Hash
+                                       Output: t4.b, t4.a
+                                       ->  Index Scan using t_a_key on pg_temp.t t4
+                                             Output: t4.b, t4.a
+                                             Index Cond: (t4.a = 1)
+   ->  Index Only Scan using t_a_key on pg_temp.t t3
+         Output: t3.a
+         Index Cond: (t3.a = t5.a)
+(32 rows)
+
+select t1.a from t t1
+  left join t t2 on t1.a = t2.a
+       join t t3 on true
+where exists (select 1 from t t4
+                join t t5 on t4.b = t5.b
+                join t t6 on t5.b = t6.b
+              where t1.a = t4.a and t3.a = t5.a and t4.a = 1);
+ a 
+---
+ 1
+(1 row)
 
 rollback;
 -- test cases where we can remove a join, but not a PHV computed at it

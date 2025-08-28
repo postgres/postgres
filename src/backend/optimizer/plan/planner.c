@@ -8284,8 +8284,8 @@ generate_setop_child_grouplist(SetOperationStmt *op, List *targetlist)
  *    the needs of the semijoin represented by sjinfo.  If it is not possible
  *    to identify how to make the data unique, NULL is returned.
  *
- * If used at all, this is likely to be called repeatedly on the same rel;
- * So we cache the result.
+ * If used at all, this is likely to be called repeatedly on the same rel,
+ * so we cache the result.
  */
 RelOptInfo *
 create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
@@ -8375,9 +8375,14 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 		 * variables of the input rel's targetlist.  We have to add any such
 		 * expressions to the unique rel's targetlist.
 		 *
-		 * While in the loop, build the lists of SortGroupClause's that
-		 * represent the ordering for the sort-based implementation and the
-		 * grouping for the hash-based implementation.
+		 * To complicate matters, some of the values to be unique-ified may be
+		 * known redundant by the EquivalenceClass machinery (e.g., because
+		 * they have been equated to constants).  There is no need to compare
+		 * such values during unique-ification, and indeed we had better not
+		 * try because the Vars involved may not have propagated as high as
+		 * the semijoin's level.  We use make_pathkeys_for_sortclauses to
+		 * detect such cases, which is a tad inefficient but it doesn't seem
+		 * worth building specialized infrastructure for this.
 		 */
 		newtlist = make_tlist_from_pathtarget(rel->reltarget);
 		nextresno = list_length(newtlist) + 1;
@@ -8386,8 +8391,9 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 		{
 			Expr	   *uniqexpr = lfirst(lc1);
 			Oid			in_oper = lfirst_oid(lc2);
-			Oid			sortop = InvalidOid;
+			Oid			sortop;
 			TargetEntry *tle;
+			bool		made_tle = false;
 
 			tle = tlist_member(uniqexpr, newtlist);
 			if (!tle)
@@ -8398,18 +8404,20 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 									  false);
 				newtlist = lappend(newtlist, tle);
 				nextresno++;
+				made_tle = true;
 			}
 
-			if (sjinfo->semi_can_btree)
+			/*
+			 * Try to build an ORDER BY list to sort the input compatibly.  We
+			 * do this for each sortable clause even when the clauses are not
+			 * all sortable, so that we can detect clauses that are redundant
+			 * according to the pathkey machinery.
+			 */
+			sortop = get_ordering_op_for_equality_op(in_oper, false);
+			if (OidIsValid(sortop))
 			{
-				/* Create an ORDER BY list to sort the input compatibly */
 				Oid			eqop;
 				SortGroupClause *sortcl;
-
-				sortop = get_ordering_op_for_equality_op(in_oper, false);
-				if (!OidIsValid(sortop))	/* shouldn't happen */
-					elog(ERROR, "could not find ordering operator for equality operator %u",
-						 in_oper);
 
 				/*
 				 * The Unique node will need equality operators.  Normally
@@ -8430,7 +8438,32 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 				sortcl->nulls_first = false;
 				sortcl->hashable = false;	/* no need to make this accurate */
 				sortList = lappend(sortList, sortcl);
+
+				/*
+				 * At each step, convert the SortGroupClause list to pathkey
+				 * form.  If the just-added SortGroupClause is redundant, the
+				 * result will be shorter than the SortGroupClause list.
+				 */
+				sortPathkeys = make_pathkeys_for_sortclauses(root, sortList,
+															 newtlist);
+				if (list_length(sortPathkeys) != list_length(sortList))
+				{
+					/* Drop the redundant SortGroupClause */
+					sortList = list_delete_last(sortList);
+					Assert(list_length(sortPathkeys) == list_length(sortList));
+					/* Undo tlist addition, if we made one */
+					if (made_tle)
+					{
+						newtlist = list_delete_last(newtlist);
+						nextresno--;
+					}
+					/* We need not consider this clause for hashing, either */
+					continue;
+				}
 			}
+			else if (sjinfo->semi_can_btree)	/* shouldn't happen */
+				elog(ERROR, "could not find ordering operator for equality operator %u",
+					 in_oper);
 
 			if (sjinfo->semi_can_hash)
 			{
@@ -8460,8 +8493,27 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 			}
 		}
 
+		/*
+		 * Done building the sortPathkeys and groupClause.  But the
+		 * sortPathkeys are bogus if not all the clauses were sortable.
+		 */
+		if (!sjinfo->semi_can_btree)
+			sortPathkeys = NIL;
+
+		/*
+		 * It can happen that all the RHS columns are equated to constants.
+		 * We'd have to do something special to unique-ify in that case, and
+		 * it's such an unlikely-in-the-real-world case that it's not worth
+		 * the effort.  So just punt if we found no columns to unique-ify.
+		 */
+		if (sortPathkeys == NIL && groupClause == NIL)
+		{
+			MemoryContextSwitchTo(oldcontext);
+			return NULL;
+		}
+
+		/* Convert the required targetlist back to PathTarget form */
 		unique_rel->reltarget = create_pathtarget(root, newtlist);
-		sortPathkeys = make_pathkeys_for_sortclauses(root, sortList, newtlist);
 	}
 
 	/* build unique paths based on input rel's pathlist */
