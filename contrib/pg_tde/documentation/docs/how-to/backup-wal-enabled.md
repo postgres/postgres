@@ -21,6 +21,22 @@ Also copy any external files referenced by your providers configuration (such as
     - The `-E` flag only works with the `-X stream` option (default). It is not compatible with `-X none` or `-X fetch`. For more information, see [the other WAL methods topic](#other-wal-methods).
     - The `-E` flag is only supported with the plain output format (`-F p`). It cannot be used with the tar output format (`-F t`).
 
+## Key rotation during backups
+
+!!! warning
+    Do not rotate SMGR or WAL encryption keys while `pg_basebackup` is running. Standbys or standalone clusters created from such backups may fail to start during WAL replay.
+
+Rotations during a base backup can leave the standby in an inconsistent state where it cannot retrieve the correct key history.
+
+For example, you may see errors such as:
+
+```sql
+FATAL: failed to retrieve principal key "database_keyXXXX" from key provider "providerYYYY"
+CONTEXT: WAL redo at ... ROTATE_PRINCIPAL_KEY ...
+```
+
+To ensure standby recoverability, plan key rotations outside backup windows or take a new full backup after rotation completes.
+
 ## Restore a backup created with WAL encryption
 
 When you want to restore a backup created with `pg_basebackup -E`:
