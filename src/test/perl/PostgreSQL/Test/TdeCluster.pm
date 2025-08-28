@@ -135,9 +135,17 @@ sub pg_tde_dir
 sub _tde_init_principal_key
 {
 	my ($self) = @_;
+	my $tde_template_dir;
 
-	my $tde_template_dir =
-	  $PostgreSQL::Test::Utils::tmp_check . '/pg_tde_template';
+	if (defined($ENV{TDE_TEMPLATE_DIR}))
+	{
+		$tde_template_dir = $ENV{TDE_TEMPLATE_DIR};
+	}
+	else
+	{
+		$tde_template_dir =
+		  $PostgreSQL::Test::Utils::tmp_check . '/pg_tde_template';
+	}
 
 	unless (-e $tde_template_dir)
 	{

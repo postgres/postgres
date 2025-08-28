@@ -3445,6 +3445,48 @@ sys.exit(sp.returncode)
      env: test_env,
      suite: ['setup'])
 
+test_tde_template_dir = test_install_destdir / 'pg_tde_template'
+test_env.set('TDE_TEMPLATE_DIR', test_tde_template_dir)
+
+test('init_tde_files',
+     find_program('sh', required: true, native: true),
+     args: [
+       '-c', '''
+set -e
+
+if [ -z "$TDE_MODE" ]; then
+	exit;
+fi
+
+set -e
+
+PATH="$1":$PATH
+TMP_DATA_DIR=$(mktemp -d)
+
+rm -rf "$2"
+mkdir "$2"
+
+pg_ctl -D "$TMP_DATA_DIR" init -o '--set shared_preload_libraries=pg_tde'
+
+postgres --single -F -j -D "$TMP_DATA_DIR" postgres << SQL
+	CREATE EXTENSION pg_tde;
+	SELECT pg_tde_add_global_key_provider_file('global_test_provider', '$2/pg_tde_test_keys');
+	SELECT pg_tde_create_key_using_global_key_provider('test_default_key', 'global_test_provider');
+	SELECT pg_tde_set_default_key_using_global_key_provider('test_default_key', 'global_test_provider');
+SQL
+
+cp -RPp "$TMP_DATA_DIR/pg_tde" "$2/pg_tde"
+rm -rf "$TMP_DATA_DIR"
+''',
+       'init_tde_files',
+       temp_install_bindir,
+       test_tde_template_dir
+     ],
+     priority: setup_tests_priority - 2,
+     timeout: 300,
+     is_parallel: false,
+     env: test_env,
+     suite: ['setup'])
 
 
 ###############################################################
