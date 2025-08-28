@@ -19,6 +19,7 @@
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/extensible.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/appendinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -27,7 +28,9 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "parser/parse_clause.h"
 #include "parser/parsetree.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/selfuncs.h"
 
@@ -1727,6 +1730,8 @@ UniquePath *
 create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 				   SpecialJoinInfo *sjinfo)
 {
+	List	   *uniq_exprs;
+	List	   *in_operators;
 	UniquePath *pathnode;
 	Path		sort_path;		/* dummy for result of cost_sort */
 	Path		agg_path;		/* dummy for result of cost_agg */
@@ -1760,6 +1765,134 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 */
 	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
 
+	/*
+	 * First, identify the columns/expressions to be made unique along with
+	 * the associated equality operators.  We made lists of these when the
+	 * SpecialJoinInfo was created, but that was before constructing
+	 * EquivalenceClasses.  Some of the values to be unique-ified may now be
+	 * known redundant by the EquivalenceClass machinery (e.g., because they
+	 * have been equated to constants).  There is no need to compare such
+	 * values during unique-ification, and indeed we had better not try
+	 * because the Vars involved may not have propagated as high as the
+	 * semijoin's level.  We use make_pathkeys_for_sortclauses to detect such
+	 * cases, which is a tad inefficient but it doesn't seem worth building
+	 * specialized infrastructure for this.
+	 *
+	 * For a child rel, we can construct these lists from those of its parent.
+	 */
+	if (IS_OTHER_REL(rel))
+	{
+		UniquePath *parent_path = (UniquePath *) rel->top_parent->cheapest_unique_path;
+
+		Assert(parent_path && IsA(parent_path, UniquePath));
+		uniq_exprs = (List *)
+			adjust_appendrel_attrs_multilevel(root,
+											  (Node *) parent_path->uniq_exprs,
+											  rel,
+											  rel->top_parent);
+		in_operators = copyObject(parent_path->in_operators);
+	}
+	else
+	{
+		List	   *newtlist;
+		List	   *sortList;
+		ListCell   *lc1;
+		ListCell   *lc2;
+
+		uniq_exprs = in_operators = newtlist = sortList = NIL;
+		forboth(lc1, sjinfo->semi_rhs_exprs, lc2, sjinfo->semi_operators)
+		{
+			Expr	   *uniqexpr = lfirst(lc1);
+			Oid			in_oper = lfirst_oid(lc2);
+			Oid			sortop;
+
+			/*
+			 * Try to build an ORDER BY list to sort the input compatibly.  We
+			 * do this for each sortable clause even when the clauses are not
+			 * all sortable, so that we can detect clauses that are redundant
+			 * according to the pathkey machinery.
+			 */
+			sortop = get_ordering_op_for_equality_op(in_oper, false);
+			if (OidIsValid(sortop))
+			{
+				Oid			eqop;
+				TargetEntry *tle;
+				SortGroupClause *sortcl;
+				List	   *sortPathkeys;
+
+				/*
+				 * The Unique node will need equality operators.  Normally
+				 * these are the same as the IN clause operators, but if those
+				 * are cross-type operators then the equality operators are
+				 * the ones for the IN clause operators' RHS datatype.
+				 */
+				eqop = get_equality_op_for_ordering_op(sortop, NULL);
+				if (!OidIsValid(eqop))	/* shouldn't happen */
+					elog(ERROR, "could not find equality operator for ordering operator %u",
+						 sortop);
+
+				tle = makeTargetEntry((Expr *) uniqexpr,
+									  list_length(newtlist) + 1,
+									  NULL,
+									  false);
+				newtlist = lappend(newtlist, tle);
+
+				sortcl = makeNode(SortGroupClause);
+				sortcl->tleSortGroupRef = assignSortGroupRef(tle, newtlist);
+				sortcl->eqop = eqop;
+				sortcl->sortop = sortop;
+				sortcl->reverse_sort = false;
+				sortcl->nulls_first = false;
+				sortcl->hashable = false;	/* no need to make this accurate */
+				sortList = lappend(sortList, sortcl);
+
+				/*
+				 * At each step, convert the SortGroupClause list to pathkey
+				 * form. If the just-added SortGroupClause is redundant, the
+				 * result will be shorter than the SortGroupClause list.
+				 */
+				sortPathkeys = make_pathkeys_for_sortclauses(root, sortList,
+															 newtlist);
+				if (list_length(sortPathkeys) != list_length(sortList))
+				{
+					/* Drop the redundant SortGroupClause */
+					sortList = list_delete_last(sortList);
+					Assert(list_length(sortPathkeys) == list_length(sortList));
+					/* Undo tlist addition too */
+					newtlist = list_delete_last(newtlist);
+					/* Don't need this column */
+					continue;
+				}
+			}
+			else if (sjinfo->semi_can_btree)	/* shouldn't happen */
+				elog(ERROR, "could not find ordering operator for equality operator %u",
+					 in_oper);
+
+			/*
+			 * We need to include this column in the output list.
+			 *
+			 * Under GEQO and when planning child joins, the sjinfo might be
+			 * short-lived, so we'd better make copies of data structures we
+			 * extract from it.
+			 */
+			uniq_exprs = lappend(uniq_exprs, copyObject(uniqexpr));
+			in_operators = lappend_oid(in_operators, in_oper);
+		}
+
+		/*
+		 * It can happen that all the RHS columns are equated to constants.
+		 * We'd have to do something special to unique-ify in that case, and
+		 * it's such an unlikely-in-the-real-world case that it's not worth
+		 * the effort.  So just punt if we found no columns to unique-ify.
+		 */
+		if (uniq_exprs == NIL)
+		{
+			MemoryContextSwitchTo(oldcontext);
+			return NULL;
+		}
+	}
+
+	/* OK, build the path node */
 	pathnode = makeNode(UniquePath);
 
 	pathnode->path.pathtype = T_Unique;
@@ -1778,14 +1911,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = NIL;
 
 	pathnode->subpath = subpath;
-
-	/*
-	 * Under GEQO and when planning child joins, the sjinfo might be
-	 * short-lived, so we'd better make copies of data structures we extract
-	 * from it.
-	 */
-	pathnode->in_operators = copyObject(sjinfo->semi_operators);
-	pathnode->uniq_exprs = copyObject(sjinfo->semi_rhs_exprs);
+	pathnode->in_operators = in_operators;
+	pathnode->uniq_exprs = uniq_exprs;
 
 	/*
 	 * If the input is a relation and it has a unique index that proves the
@@ -1795,8 +1922,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	 */
 	if (rel->rtekind == RTE_RELATION && sjinfo->semi_can_btree &&
 		relation_has_unique_index_for(root, rel, NIL,
-									  sjinfo->semi_rhs_exprs,
-									  sjinfo->semi_operators))
+									  uniq_exprs,
+									  in_operators))
 	{
 		pathnode->umethod = UNIQUE_PATH_NOOP;
 		pathnode->path.rows = rel->rows;
@@ -1829,13 +1956,13 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		{
 			List	   *sub_tlist_colnos;
 
-			sub_tlist_colnos = translate_sub_tlist(sjinfo->semi_rhs_exprs,
+			sub_tlist_colnos = translate_sub_tlist(uniq_exprs,
 												   rel->relid);
 
 			if (sub_tlist_colnos &&
 				query_is_distinct_for(rte->subquery,
 									  sub_tlist_colnos,
-									  sjinfo->semi_operators))
+									  in_operators))
 			{
 				pathnode->umethod = UNIQUE_PATH_NOOP;
 				pathnode->path.rows = rel->rows;
@@ -1855,11 +1982,11 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 
 	/* Estimate number of output rows */
 	pathnode->path.rows = estimate_num_groups(root,
-											  sjinfo->semi_rhs_exprs,
+											  uniq_exprs,
 											  rel->rows,
 											  NULL,
 											  NULL);
-	numCols = list_length(sjinfo->semi_rhs_exprs);
+	numCols = list_length(uniq_exprs);
 
 	if (sjinfo->semi_can_btree)
 	{
