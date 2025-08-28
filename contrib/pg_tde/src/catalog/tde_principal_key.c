@@ -812,7 +812,7 @@ pg_tde_delete_default_key(PG_FUNCTION_ARGS)
 	principal_key = GetPrincipalKeyNoDefault(GLOBAL_DATA_TDE_OID, LW_EXCLUSIVE);
 	if (pg_tde_is_same_principal_key(default_principal_key, principal_key))
 	{
-		if (pg_tde_count_wal_keys_in_file() != 0)
+		if (pg_tde_count_wal_ranges_in_file() != 0)
 			ereport(ERROR,
 					errcode(ERRCODE_OBJECT_IN_USE),
 					errmsg("cannot delete default principal key"),

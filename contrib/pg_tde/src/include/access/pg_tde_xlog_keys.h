@@ -5,13 +5,14 @@
 
 #include "access/pg_tde_keys_common.h"
 #include "access/pg_tde_tdemap.h"
+#include "encryption/enc_tde.h"
 
 typedef enum
 {
-	WAL_KEY_TYPE_INVALID = 0,
-	WAL_KEY_TYPE_UNENCRYPTED = 1,
-	WAL_KEY_TYPE_ENCRYPTED = 2,
-} WalEncryptionKeyType;
+	WAL_ENCRYPTION_RANGE_INVALID = 0,
+	WAL_ENCRYPTION_RANGE_UNENCRYPTED = 1,
+	WAL_ENCRYPTION_RANGE_ENCRYPTED = 2,
+} WalEncryptionRangeType;
 
 typedef struct WalLocation
 {
@@ -47,14 +48,19 @@ wal_location_valid(WalLocation loc)
 	return loc.tli != 0 && loc.lsn != InvalidXLogRecPtr;
 }
 
-typedef struct WalEncryptionKey
-{
-	uint8		key[INTERNAL_KEY_LEN];
-	uint8		base_iv[INTERNAL_KEY_IV_LEN];
-	uint32		type;
+#define MaxXLogRecPtr UINT64_MAX
+#define MaxTimeLineID UINT32_MAX
 
-	WalLocation wal_start;
-} WalEncryptionKey;
+typedef struct WalEncryptionRange
+{
+	WalEncryptionRangeType type;
+
+	/* key is only used when type is WAL_ENCRYPTION_RANGE_ENCRYPTED */
+	InternalKey key;
+
+	WalLocation start;
+	WalLocation end;
+} WalEncryptionRange;
 
 /*
  * TODO: For now it's a simple linked list which is no good. So consider having
@@ -62,17 +68,14 @@ typedef struct WalEncryptionKey
  */
 typedef struct WALKeyCacheRec
 {
-	WalLocation start;
-	WalLocation end;
-
-	WalEncryptionKey key;
+	WalEncryptionRange range;
 	void	   *crypt_ctx;
 
 	struct WALKeyCacheRec *next;
 } WALKeyCacheRec;
 
-extern int	pg_tde_count_wal_keys_in_file(void);
-extern void pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry_type);
+extern int	pg_tde_count_wal_ranges_in_file(void);
+extern void pg_tde_create_wal_range(WalEncryptionRange *range, WalEncryptionRangeType type);
 extern void pg_tde_delete_server_key(void);
 extern WALKeyCacheRec *pg_tde_fetch_wal_keys(WalLocation start);
 extern void pg_tde_free_wal_key_cache(void);
@@ -80,10 +83,10 @@ extern WALKeyCacheRec *pg_tde_get_last_wal_key(void);
 extern TDESignedPrincipalKeyInfo *pg_tde_get_server_key_info(void);
 extern WALKeyCacheRec *pg_tde_get_wal_cache_keys(void);
 extern void pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key, const TDEPrincipalKey *new_principal_key, bool write_xlog);
-extern WalEncryptionKey *pg_tde_read_last_wal_key(void);
+extern WalEncryptionRange *pg_tde_read_last_wal_range(void);
 extern void pg_tde_save_server_key(const TDEPrincipalKey *principal_key, bool write_xlog);
 extern void pg_tde_save_server_key_redo(const TDESignedPrincipalKeyInfo *signed_key_info);
-extern void pg_tde_wal_last_key_set_location(WalLocation loc);
+extern void pg_tde_wal_last_range_set_location(WalLocation loc);
 extern void pg_tde_wal_cache_extra_palloc(void);
 
 #endif							/* PG_TDE_XLOG_KEYS_H */

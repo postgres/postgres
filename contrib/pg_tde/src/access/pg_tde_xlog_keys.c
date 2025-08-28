@@ -25,19 +25,33 @@
 #define PG_TDE_WAL_KEY_FILE_MAGIC 0x014B4557	/* version ID value = WEK 01 */
 #define PG_TDE_WAL_KEY_FILE_NAME "wal_keys"
 
-#define MaxXLogRecPtr (~(XLogRecPtr)0)
-#define MaxTimeLineID (~(TimeLineID)0)
-
 typedef struct WalKeyFileHeader
 {
 	int32		file_version;
 	TDESignedPrincipalKeyInfo signed_key_info;
 } WalKeyFileHeader;
 
+/*
+ * Feel free to use the unused fields for something, but beware that existing
+ * files may contain unexpected values here. Also be aware of alignment if
+ * changing any of the types as this struct is written/read directly from file.
+ *
+ * If changes are made, know that the first two fields are used as AAD when
+ * encrypting/decrypting existing keys from the key files, so any changes here
+ * might break existing clusters.
+ */
 typedef struct WalKeyFileEntry
 {
-	uint32		type;
-	WalEncryptionKey enc_key;
+	uint32		_unused1;		/* Part of AAD, is 1 or 2 in existing entries */
+	uint32		_unused2;		/* Part of AAD */
+
+	uint8		encrypted_key_data[INTERNAL_KEY_LEN];
+	uint8		key_base_iv[INTERNAL_KEY_IV_LEN];
+
+	uint32		range_type;		/* WalEncryptionRangeType */
+	uint32		_unused3;
+	WalLocation range_start;
+
 	/* IV and tag used when encrypting the key itself */
 	unsigned char entry_iv[MAP_ENTRY_IV_SIZE];
 	unsigned char aead_tag[MAP_ENTRY_AEAD_TAG_SIZE];
@@ -46,11 +60,11 @@ typedef struct WalKeyFileEntry
 static WALKeyCacheRec *tde_wal_key_cache = NULL;
 static WALKeyCacheRec *tde_wal_prealloc_record = NULL;
 static WALKeyCacheRec *tde_wal_key_last_rec = NULL;
-static WalEncryptionKey *tde_wal_prealloc_key = NULL;
+static WalEncryptionRange *tde_wal_prealloc_range = NULL;
 
-static WALKeyCacheRec *pg_tde_add_wal_key_to_cache(WalEncryptionKey *cached_key);
-static WalEncryptionKey *pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
-static void pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry, const TDEPrincipalKey *principal_key, const WalEncryptionKey *rel_key_data);
+static WALKeyCacheRec *pg_tde_add_wal_range_to_cache(WalEncryptionRange *cached_range);
+static WalEncryptionRange *pg_tde_wal_range_from_entry(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry);
+static void pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry, const TDEPrincipalKey *principal_key, const WalEncryptionRange *range);
 static int	pg_tde_open_wal_key_file_basic(const char *filename, int flags, bool ignore_missing);
 static int	pg_tde_open_wal_key_file_read(const char *filename, bool ignore_missing, off_t *curr_pos);
 static int	pg_tde_open_wal_key_file_write(const char *filename, const TDESignedPrincipalKeyInfo *signed_key_info, bool truncate, off_t *curr_pos);
@@ -59,7 +73,7 @@ static void pg_tde_read_one_wal_key_file_entry2(int fd, int32 key_index, WalKeyF
 static void pg_tde_wal_key_file_header_read(const char *filename, int fd, WalKeyFileHeader *fheader, off_t *bytes_read);
 static int	pg_tde_wal_key_file_header_write(const char *filename, int fd, const TDESignedPrincipalKeyInfo *signed_key_info, off_t *bytes_written);
 static void pg_tde_write_one_wal_key_file_entry(int fd, const WalKeyFileEntry *entry, off_t *offset, const char *db_map_path);
-static void pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data, const TDEPrincipalKey *principal_key);
+static void pg_tde_write_wal_key_file_entry(const WalEncryptionRange *range, const TDEPrincipalKey *principal_key);
 
 static char *
 get_wal_key_file_path(void)
@@ -90,7 +104,7 @@ pg_tde_free_wal_key_cache(void)
 }
 
 void
-pg_tde_wal_last_key_set_location(WalLocation loc)
+pg_tde_wal_last_range_set_location(WalLocation loc)
 {
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
 	int			fd;
@@ -105,8 +119,7 @@ pg_tde_wal_last_key_set_location(WalLocation loc)
 	last_key_idx = ((lseek(fd, 0, SEEK_END) - sizeof(WalKeyFileHeader)) / sizeof(WalKeyFileEntry)) - 1;
 	write_pos = sizeof(WalKeyFileHeader) +
 		(last_key_idx * sizeof(WalKeyFileEntry)) +
-		offsetof(WalKeyFileEntry, enc_key) +
-		offsetof(WalEncryptionKey, wal_start);
+		offsetof(WalKeyFileEntry, range_start);
 
 	if (pg_pwrite(fd, &loc, sizeof(WalLocation), write_pos) != sizeof(WalLocation))
 	{
@@ -132,9 +145,9 @@ pg_tde_wal_last_key_set_location(WalLocation loc)
 					errmsg("could not read previous WAL key: %m"));
 		}
 
-		if (wal_location_cmp(prev_entry.enc_key.wal_start, loc) >= 0)
+		if (wal_location_cmp(prev_entry.range_start, loc) >= 0)
 		{
-			prev_entry.enc_key.type = WAL_KEY_TYPE_INVALID;
+			prev_entry.range_type = WAL_ENCRYPTION_RANGE_INVALID;
 
 			if (pg_pwrite(fd, &prev_entry, sizeof(WalKeyFileEntry), prev_key_pos) != sizeof(WalKeyFileEntry))
 			{
@@ -165,7 +178,7 @@ pg_tde_wal_last_key_set_location(WalLocation loc)
  * with the actual lsn by the first WAL write.
  */
 void
-pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry_type)
+pg_tde_create_wal_range(WalEncryptionRange *range, WalEncryptionRangeType type)
 {
 	TDEPrincipalKey *principal_key;
 
@@ -179,23 +192,16 @@ pg_tde_create_wal_key(WalEncryptionKey *rel_key_data, WalEncryptionKeyType entry
 				errhint("Use pg_tde_set_server_key_using_global_key_provider() to configure one."));
 	}
 
-	/* TODO: no need in generating key if WAL_KEY_TYPE_UNENCRYPTED */
-	rel_key_data->type = entry_type;
-	rel_key_data->wal_start.lsn = InvalidXLogRecPtr;
-	rel_key_data->wal_start.tli = 0;
+	/* TODO: no need in generating key if WAL_ENCRYPTION_RANGE_UNENCRYPTED */
+	range->type = type;
+	range->start.lsn = InvalidXLogRecPtr;
+	range->start.tli = 0;
+	range->end.lsn = MaxXLogRecPtr;
+	range->end.tli = MaxTimeLineID;
 
-	if (!RAND_bytes(rel_key_data->key, INTERNAL_KEY_LEN))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate WAL encryption key: %s",
-					   ERR_error_string(ERR_get_error(), NULL)));
-	if (!RAND_bytes(rel_key_data->base_iv, INTERNAL_KEY_IV_LEN))
-		ereport(ERROR,
-				errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("could not generate IV for WAL encryption key: %s",
-					   ERR_error_string(ERR_get_error(), NULL)));
+	pg_tde_generate_internal_key(&range->key);
 
-	pg_tde_write_wal_key_file_entry(rel_key_data, principal_key);
+	pg_tde_write_wal_key_file_entry(range, principal_key);
 
 #ifdef FRONTEND
 	free(principal_key);
@@ -218,8 +224,8 @@ pg_tde_get_wal_cache_keys(void)
 	return tde_wal_key_cache;
 }
 
-WalEncryptionKey *
-pg_tde_read_last_wal_key(void)
+WalEncryptionRange *
+pg_tde_read_last_wal_range(void)
 {
 	off_t		read_pos = 0;
 	LWLock	   *lock_pk = tde_lwlock_enc_keys();
@@ -227,7 +233,7 @@ pg_tde_read_last_wal_key(void)
 	int			fd;
 	int			file_idx;
 	WalKeyFileEntry entry;
-	WalEncryptionKey *rel_key_data;
+	WalEncryptionRange *range;
 	off_t		fsize;
 
 	LWLockAcquire(lock_pk, LW_EXCLUSIVE);
@@ -255,14 +261,14 @@ pg_tde_read_last_wal_key(void)
 	file_idx = ((fsize - sizeof(WalKeyFileHeader)) / sizeof(WalKeyFileEntry)) - 1;
 	pg_tde_read_one_wal_key_file_entry2(fd, file_idx, &entry);
 
-	rel_key_data = pg_tde_decrypt_wal_key(principal_key, &entry);
+	range = pg_tde_wal_range_from_entry(principal_key, &entry);
 #ifdef FRONTEND
 	pfree(principal_key);
 #endif
 	LWLockRelease(lock_pk);
 	CloseTransientFile(fd);
 
-	return rel_key_data;
+	return range;
 }
 
 /* Fetches WAL keys from disk and adds them to the WAL cache */
@@ -297,11 +303,12 @@ pg_tde_fetch_wal_keys(WalLocation start)
 	if (keys_count == 0)
 	{
 		WALKeyCacheRec *wal_rec;
-		WalEncryptionKey stub_key = {
-			.wal_start = {.tli = 0,.lsn = InvalidXLogRecPtr},
+		WalEncryptionRange stub_range = {
+			.start = {.tli = 0,.lsn = InvalidXLogRecPtr},
+			.end = {.tli = MaxTimeLineID,.lsn = MaxXLogRecPtr},
 		};
 
-		wal_rec = pg_tde_add_wal_key_to_cache(&stub_key);
+		wal_rec = pg_tde_add_wal_range_to_cache(&stub_range);
 
 #ifdef FRONTEND
 		/* The backend frees it after copying to the cache. */
@@ -321,17 +328,16 @@ pg_tde_fetch_wal_keys(WalLocation start)
 		/*
 		 * Skip new (just created but not updated by write) and invalid keys
 		 */
-		if (wal_location_valid(entry.enc_key.wal_start) &&
-			(entry.enc_key.type == WAL_KEY_TYPE_UNENCRYPTED ||
-			 entry.enc_key.type == WAL_KEY_TYPE_ENCRYPTED) &&
-			wal_location_cmp(entry.enc_key.wal_start, start) >= 0)
+		if (entry.range_type != WAL_ENCRYPTION_RANGE_INVALID &&
+			wal_location_valid(entry.range_start) &&
+			wal_location_cmp(entry.range_start, start) >= 0)
 		{
-			WalEncryptionKey *rel_key_data = pg_tde_decrypt_wal_key(principal_key, &entry);
+			WalEncryptionRange *range = pg_tde_wal_range_from_entry(principal_key, &entry);
 			WALKeyCacheRec *wal_rec;
 
-			wal_rec = pg_tde_add_wal_key_to_cache(rel_key_data);
+			wal_rec = pg_tde_add_wal_range_to_cache(range);
 
-			pfree(rel_key_data);
+			pfree(range);
 
 			if (!return_wal_rec)
 				return_wal_rec = wal_rec;
@@ -365,9 +371,9 @@ pg_tde_wal_cache_extra_palloc(void)
 	{
 		tde_wal_prealloc_record = palloc0_object(WALKeyCacheRec);
 	}
-	if (tde_wal_prealloc_key == NULL)
+	if (tde_wal_prealloc_range == NULL)
 	{
-		tde_wal_prealloc_key = palloc0_object(WalEncryptionKey);
+		tde_wal_prealloc_range = palloc0_object(WalEncryptionRange);
 	}
 #ifndef FRONTEND
 	MemoryContextSwitchTo(oldCtx);
@@ -375,7 +381,7 @@ pg_tde_wal_cache_extra_palloc(void)
 }
 
 static WALKeyCacheRec *
-pg_tde_add_wal_key_to_cache(WalEncryptionKey *key)
+pg_tde_add_wal_range_to_cache(WalEncryptionRange *range)
 {
 	WALKeyCacheRec *wal_rec;
 #ifndef FRONTEND
@@ -389,10 +395,7 @@ pg_tde_add_wal_key_to_cache(WalEncryptionKey *key)
 	MemoryContextSwitchTo(oldCtx);
 #endif
 
-	wal_rec->start = key->wal_start;
-	wal_rec->end.tli = MaxTimeLineID;
-	wal_rec->end.lsn = MaxXLogRecPtr;
-	wal_rec->key = *key;
+	wal_rec->range = *range;
 	wal_rec->crypt_ctx = NULL;
 	if (!tde_wal_key_last_rec)
 	{
@@ -402,7 +405,7 @@ pg_tde_add_wal_key_to_cache(WalEncryptionKey *key)
 	else
 	{
 		tde_wal_key_last_rec->next = wal_rec;
-		tde_wal_key_last_rec->end = wal_rec->start;
+		tde_wal_key_last_rec->range.end = wal_rec->range.start;
 		tde_wal_key_last_rec = wal_rec;
 	}
 
@@ -574,7 +577,7 @@ pg_tde_read_one_wal_key_file_entry2(int fd,
 }
 
 static void
-pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
+pg_tde_write_wal_key_file_entry(const WalEncryptionRange *range,
 								const TDEPrincipalKey *principal_key)
 {
 	int			fd;
@@ -591,7 +594,7 @@ pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 	curr_pos = lseek(fd, 0, SEEK_END);
 
 	/* Initialize WAL key file entry and encrypt key */
-	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, rel_key_data);
+	pg_tde_initialize_wal_key_file_entry(&write_entry, principal_key, range);
 
 	/* Write the given entry at curr_pos; i.e. the free entry. */
 	pg_tde_write_one_wal_key_file_entry(fd, &write_entry, &curr_pos, get_wal_key_file_path());
@@ -599,27 +602,31 @@ pg_tde_write_wal_key_file_entry(const WalEncryptionKey *rel_key_data,
 	CloseTransientFile(fd);
 }
 
-static WalEncryptionKey *
-pg_tde_decrypt_wal_key(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry)
+static WalEncryptionRange *
+pg_tde_wal_range_from_entry(const TDEPrincipalKey *principal_key, WalKeyFileEntry *entry)
 {
-	WalEncryptionKey *key = tde_wal_prealloc_key == NULL ? palloc_object(WalEncryptionKey) : tde_wal_prealloc_key;
+	WalEncryptionRange *range = tde_wal_prealloc_range == NULL ? palloc0_object(WalEncryptionRange) : tde_wal_prealloc_range;
 
-	tde_wal_prealloc_key = NULL;
+	tde_wal_prealloc_range = NULL;
 
 	Assert(principal_key);
 
-	*key = entry->enc_key;
+	range->type = entry->range_type;
+	range->start = entry->range_start;
+	range->end.tli = MaxTimeLineID;
+	range->end.lsn = MaxXLogRecPtr;
 
+	memcpy(range->key.base_iv, entry->key_base_iv, INTERNAL_KEY_IV_LEN);
 	if (!AesGcmDecrypt(principal_key->keyData,
 					   entry->entry_iv, MAP_ENTRY_IV_SIZE,
-					   (unsigned char *) entry, offsetof(WalKeyFileEntry, enc_key),
-					   entry->enc_key.key, INTERNAL_KEY_LEN,
-					   key->key,
+					   (unsigned char *) entry, offsetof(WalKeyFileEntry, encrypted_key_data),
+					   entry->encrypted_key_data, INTERNAL_KEY_LEN,
+					   range->key.key,
 					   entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE))
 		ereport(ERROR,
 				errmsg("Failed to decrypt key, incorrect principal key or corrupted key file"));
 
-	return key;
+	return range;
 }
 
 static void
@@ -651,10 +658,22 @@ pg_tde_write_one_wal_key_file_entry(int fd,
 static void
 pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry,
 									 const TDEPrincipalKey *principal_key,
-									 const WalEncryptionKey *rel_key_data)
+									 const WalEncryptionRange *range)
 {
-	entry->type = rel_key_data->type;
-	entry->enc_key = *rel_key_data;
+	Assert(range->type == WAL_ENCRYPTION_RANGE_ENCRYPTED || range->type == WAL_ENCRYPTION_RANGE_UNENCRYPTED);
+
+	memset(entry, 0, sizeof(WalKeyFileEntry));
+
+	/*
+	 * We set this field here so that existing file entries will be consistent
+	 * and future use of this field easier. Some existing entries will have 2
+	 * here.
+	 */
+	entry->_unused1 = 1;
+
+	entry->range_type = range->type;
+	entry->range_start = range->start;
+	memcpy(entry->key_base_iv, range->key.base_iv, INTERNAL_KEY_IV_LEN);
 
 	if (!RAND_bytes(entry->entry_iv, MAP_ENTRY_IV_SIZE))
 		ereport(ERROR,
@@ -663,9 +682,9 @@ pg_tde_initialize_wal_key_file_entry(WalKeyFileEntry *entry,
 
 	AesGcmEncrypt(principal_key->keyData,
 				  entry->entry_iv, MAP_ENTRY_IV_SIZE,
-				  (unsigned char *) entry, offsetof(WalKeyFileEntry, enc_key),
-				  rel_key_data->key, INTERNAL_KEY_LEN,
-				  entry->enc_key.key,
+				  (unsigned char *) entry, offsetof(WalKeyFileEntry, encrypted_key_data),
+				  range->key.key, INTERNAL_KEY_LEN,
+				  entry->encrypted_key_data,
 				  entry->aead_tag, MAP_ENTRY_AEAD_TAG_SIZE);
 }
 
@@ -698,7 +717,7 @@ pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key,
 	/* Read all entries until EOF */
 	while (1)
 	{
-		WalEncryptionKey *key;
+		WalEncryptionRange *range;
 		WalKeyFileEntry read_map_entry;
 		WalKeyFileEntry write_map_entry;
 
@@ -706,12 +725,10 @@ pg_tde_perform_rotate_server_key(const TDEPrincipalKey *principal_key,
 			break;
 
 		/* Decrypt and re-encrypt key */
-		key = pg_tde_decrypt_wal_key(principal_key, &read_map_entry);
-		pg_tde_initialize_wal_key_file_entry(&write_map_entry, new_principal_key, key);
-
+		range = pg_tde_wal_range_from_entry(principal_key, &read_map_entry);
+		pg_tde_initialize_wal_key_file_entry(&write_map_entry, new_principal_key, range);
 		pg_tde_write_one_wal_key_file_entry(new_fd, &write_map_entry, &new_curr_pos, tmp_path);
-
-		pfree(key);
+		pfree(range);
 	}
 
 	CloseTransientFile(old_fd);
@@ -840,7 +857,7 @@ pg_tde_get_server_key_info(void)
 }
 
 int
-pg_tde_count_wal_keys_in_file(void)
+pg_tde_count_wal_ranges_in_file(void)
 {
 	File		fd;
 	off_t		curr_pos = 0;
@@ -869,7 +886,7 @@ pg_tde_delete_server_key(void)
 	Oid			dbOid = GLOBAL_DATA_TDE_OID;
 
 	Assert(LWLockHeldByMeInMode(tde_lwlock_enc_keys(), LW_EXCLUSIVE));
-	Assert(pg_tde_count_wal_keys_in_file() == 0);
+	Assert(pg_tde_count_wal_ranges_in_file() == 0);
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &dbOid, sizeof(Oid));
