@@ -4,6 +4,7 @@
 #include "access/xlog_internal.h"
 
 #include "access/pg_tde_keys_common.h"
+#include "access/pg_tde_tdemap.h"
 
 typedef enum
 {

@@ -4,12 +4,7 @@
 #include "storage/relfilelocator.h"
 
 #include "access/pg_tde_keys_common.h"
-
-typedef struct InternalKey
-{
-	uint8		key[INTERNAL_KEY_LEN];
-	uint8		base_iv[INTERNAL_KEY_IV_LEN];
-} InternalKey;
+#include "encryption/enc_tde.h"
 
 extern void pg_tde_save_smgr_key(RelFileLocator rel, const InternalKey *key);
 extern bool pg_tde_has_smgr_key(RelFileLocator rel);

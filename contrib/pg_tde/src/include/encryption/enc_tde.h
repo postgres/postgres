@@ -5,7 +5,14 @@
 #ifndef ENC_TDE_H
 #define ENC_TDE_H
 
-#include "access/pg_tde_tdemap.h"
+#define INTERNAL_KEY_LEN 16
+#define INTERNAL_KEY_IV_LEN 16
+
+typedef struct InternalKey
+{
+	uint8		key[INTERNAL_KEY_LEN];
+	uint8		base_iv[INTERNAL_KEY_IV_LEN];
+} InternalKey;
 
 extern void pg_tde_generate_internal_key(InternalKey *int_key);
 extern void pg_tde_stream_crypt(const char *iv_prefix,

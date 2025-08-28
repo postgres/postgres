@@ -3,9 +3,6 @@
 
 #include "catalog/tde_principal_key.h"
 
-#define INTERNAL_KEY_LEN 16
-#define INTERNAL_KEY_IV_LEN 16
-
 #define MAP_ENTRY_IV_SIZE 16
 #define MAP_ENTRY_AEAD_TAG_SIZE 16
 
