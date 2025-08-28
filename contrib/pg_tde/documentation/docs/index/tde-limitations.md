@@ -10,6 +10,7 @@ Limitations of `pg_tde` {{release}}:
 The following tools are currently unsupported with `pg_tde` WAL encryption:
 
 * `pg_createsubscriber`
+* `pg_receivewal`
 * `pg_verifybackup` (checksum mismatch with encrypted WAL)
 
 The following tools and extensions in Percona Distribution for PostgreSQL have been tested and verified to work with `pg_tde` WAL encryption:
