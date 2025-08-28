@@ -75,7 +75,6 @@
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
-#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "pgstat.h"
@@ -85,6 +84,7 @@
 #include "storage/procarray.h"
 #include "utils/guc_hooks.h"
 #include "utils/injection_point.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
 

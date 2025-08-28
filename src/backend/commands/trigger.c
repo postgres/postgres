@@ -30,7 +30,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"

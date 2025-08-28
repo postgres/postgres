@@ -123,6 +123,7 @@ DECLARE_OID_DEFINING_MACRO(PostgresDbOid, 5);
  */
 #define		  DATCONNLIMIT_INVALID_DB	-2
 
+extern Oid	get_database_oid(const char *dbname, bool missing_ok);
 extern bool database_is_invalid_form(Form_pg_database datform);
 extern bool database_is_invalid_oid(Oid dboid);
 

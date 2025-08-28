@@ -77,7 +77,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
-#include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "common/int.h"
 #include "lib/ilist.h"

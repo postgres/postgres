@@ -41,7 +41,6 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "common/hashfn_unstable.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"

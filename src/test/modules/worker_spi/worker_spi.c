@@ -30,7 +30,7 @@
 
 /* these headers are used by this particular worker's code */
 #include "access/xact.h"
-#include "commands/dbcommands.h"
+#include "catalog/pg_database.h"
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "lib/stringinfo.h"

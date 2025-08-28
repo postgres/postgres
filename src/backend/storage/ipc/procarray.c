@@ -54,7 +54,6 @@
 #include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_authid.h"
-#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "port/pg_lfind.h"
@@ -62,6 +61,7 @@
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 

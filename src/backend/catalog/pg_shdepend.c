@@ -47,7 +47,6 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/alter.h"
-#include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/event_trigger.h"
 #include "commands/policy.h"
@@ -61,6 +60,7 @@
 #include "storage/lmgr.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 

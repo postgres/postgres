@@ -26,7 +26,6 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
 #include "catalog/system_fk_info.h"
-#include "commands/dbcommands.h"
 #include "commands/tablespace.h"
 #include "common/keywords.h"
 #include "funcapi.h"

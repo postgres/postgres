@@ -140,7 +140,6 @@
 #include "access/visibilitymap.h"
 #include "access/xloginsert.h"
 #include "catalog/storage.h"
-#include "commands/dbcommands.h"
 #include "commands/progress.h"
 #include "commands/vacuum.h"
 #include "common/int.h"

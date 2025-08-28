@@ -26,6 +26,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
@@ -1246,6 +1247,32 @@ get_constraint_type(Oid conoid)
 
 	return contype;
 }
+
+/*				---------- DATABASE CACHE ----------					 */
+
+/*
+ * get_database_name - given a database OID, look up the name
+ *
+ * Returns a palloc'd string, or NULL if no such database.
+ */
+char *
+get_database_name(Oid dbid)
+{
+	HeapTuple	dbtuple;
+	char	   *result;
+
+	dbtuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
+	if (HeapTupleIsValid(dbtuple))
+	{
+		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
+		ReleaseSysCache(dbtuple);
+	}
+	else
+		result = NULL;
+
+	return result;
+}
+
 
 /*				---------- LANGUAGE CACHE ----------					 */
 

@@ -31,7 +31,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "commands/proclang.h"
 #include "commands/tablespace.h"
 #include "common/hashfn.h"

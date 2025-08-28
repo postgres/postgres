@@ -84,7 +84,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_type.h"
-#include "commands/dbcommands.h"
 #include "executor/spi.h"
 #include "executor/tablefunc.h"
 #include "fmgr.h"

@@ -64,6 +64,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/pg_locale.h"
 #include "utils/relmapper.h"
 #include "utils/snapmgr.h"
@@ -3201,30 +3202,6 @@ get_database_oid(const char *dbname, bool missing_ok)
 						dbname)));
 
 	return oid;
-}
-
-
-/*
- * get_database_name - given a database OID, look up the name
- *
- * Returns a palloc'd string, or NULL if no such database.
- */
-char *
-get_database_name(Oid dbid)
-{
-	HeapTuple	dbtuple;
-	char	   *result;
-
-	dbtuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbid));
-	if (HeapTupleIsValid(dbtuple))
-	{
-		result = pstrdup(NameStr(((Form_pg_database) GETSTRUCT(dbtuple))->datname));
-		ReleaseSysCache(dbtuple);
-	}
-	else
-		result = NULL;
-
-	return result;
 }
 
 

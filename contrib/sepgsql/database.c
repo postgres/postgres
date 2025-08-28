@@ -16,7 +16,6 @@
 #include "access/table.h"
 #include "catalog/dependency.h"
 #include "catalog/pg_database.h"
-#include "commands/dbcommands.h"
 #include "commands/seclabel.h"
 #include "sepgsql.h"
 #include "utils/builtins.h"
