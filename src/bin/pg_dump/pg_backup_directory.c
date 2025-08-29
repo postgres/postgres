@@ -316,15 +316,9 @@ _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	CompressFileHandle *CFH = ctx->dataFH;
 
-	errno = 0;
-	if (dLen > 0 && !CFH->write_func(data, dLen, CFH))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		pg_fatal("could not write to output file: %s",
-				 CFH->get_error_func(CFH));
-	}
+	if (dLen <= 0)
+		return;
+	CFH->write_func(data, dLen, CFH);
 }
 
 /*
@@ -351,7 +345,7 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 static void
 _PrintFileData(ArchiveHandle *AH, char *filename)
 {
-	size_t		cnt = 0;
+	size_t		cnt;
 	char	   *buf;
 	size_t		buflen;
 	CompressFileHandle *CFH;
@@ -366,7 +360,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename)
 	buflen = DEFAULT_IO_BUFFER_SIZE;
 	buf = pg_malloc(buflen);
 
-	while (CFH->read_func(buf, buflen, &cnt, CFH) && cnt > 0)
+	while ((cnt = CFH->read_func(buf, buflen, CFH)) > 0)
 	{
 		ahwrite(buf, 1, cnt, AH);
 	}
@@ -470,16 +464,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	CompressFileHandle *CFH = ctx->dataFH;
 
-	errno = 0;
-	if (!CFH->write_func(&c, 1, CFH))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		pg_fatal("could not write to output file: %s",
-				 CFH->get_error_func(CFH));
-	}
-
+	CFH->write_func(&c, 1, CFH);
 	return 1;
 }
 
@@ -508,15 +493,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	CompressFileHandle *CFH = ctx->dataFH;
 
-	errno = 0;
-	if (!CFH->write_func(buf, len, CFH))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		pg_fatal("could not write to output file: %s",
-				 CFH->get_error_func(CFH));
-	}
+	CFH->write_func(buf, len, CFH);
 }
 
 /*
@@ -531,10 +508,10 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 	CompressFileHandle *CFH = ctx->dataFH;
 
 	/*
-	 * If there was an I/O error, we already exited in readF(), so here we
-	 * exit on short reads.
+	 * We do not expect a short read, so fail if we get one.  The read_func
+	 * already dealt with any outright I/O error.
 	 */
-	if (!CFH->read_func(buf, len, NULL, CFH))
+	if (CFH->read_func(buf, len, CFH) != len)
 		pg_fatal("could not read from input file: end of file");
 }
 
@@ -677,14 +654,7 @@ _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	/* register the LO in blobs_NNN.toc */
 	len = snprintf(buf, sizeof(buf), "%u blob_%u.dat\n", oid, oid);
-	if (!CFH->write_func(buf, len, CFH))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		pg_fatal("could not write to LOs TOC file: %s",
-				 CFH->get_error_func(CFH));
-	}
+	CFH->write_func(buf, len, CFH);
 }
 
 /*

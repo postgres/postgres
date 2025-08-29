@@ -1883,8 +1883,8 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	{
 		CompressFileHandle *CFH = (CompressFileHandle *) AH->OF;
 
-		if (CFH->write_func(ptr, size * nmemb, CFH))
-			bytes_written = size * nmemb;
+		CFH->write_func(ptr, size * nmemb, CFH);
+		bytes_written = size * nmemb;
 	}
 
 	if (bytes_written != size * nmemb)
