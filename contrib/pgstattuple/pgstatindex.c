@@ -647,7 +647,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
 								 bstrategy);
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
-		page = (Page) BufferGetPage(buf);
+		page = BufferGetPage(buf);
 
 		if (PageIsNew(page))
 			stats.unused_pages++;

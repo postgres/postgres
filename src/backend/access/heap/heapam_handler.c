@@ -2280,7 +2280,7 @@ heapam_scan_sample_next_tuple(TableScanDesc scan, SampleScanState *scanstate,
 	if (!pagemode)
 		LockBuffer(hscan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-	page = (Page) BufferGetPage(hscan->rs_cbuf);
+	page = BufferGetPage(hscan->rs_cbuf);
 	all_visible = PageIsAllVisible(page) &&
 		!scan->rs_snapshot->takenDuringRecovery;
 	maxoffset = PageGetMaxOffsetNumber(page);

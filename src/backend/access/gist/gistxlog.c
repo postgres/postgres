@@ -83,7 +83,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 
 		data = begin = XLogRecGetBlockData(record, 0, &datalen);
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (xldata->ntodelete == 1 && xldata->ntoinsert == 1)
 		{
@@ -201,7 +201,7 @@ gistRedoDeleteRecord(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		PageIndexMultiDelete(page, toDelete, xldata->ntodelete);
 
@@ -280,7 +280,7 @@ gistRedoPageSplitRecord(XLogReaderState *record)
 		}
 
 		buffer = XLogInitBufferForRedo(record, i + 1);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 		data = XLogRecGetBlockData(record, i + 1, &datalen);
 
 		tuples = decodePageSplitRecord(data, datalen, &num);
@@ -348,7 +348,7 @@ gistRedoPageDelete(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 0, &leafBuffer) == BLK_NEEDS_REDO)
 	{
-		Page		page = (Page) BufferGetPage(leafBuffer);
+		Page		page = BufferGetPage(leafBuffer);
 
 		GistPageSetDeleted(page, xldata->deleteXid);
 
@@ -358,7 +358,7 @@ gistRedoPageDelete(XLogReaderState *record)
 
 	if (XLogReadBufferForRedo(record, 1, &parentBuffer) == BLK_NEEDS_REDO)
 	{
-		Page		page = (Page) BufferGetPage(parentBuffer);
+		Page		page = BufferGetPage(parentBuffer);
 
 		PageIndexTupleDelete(page, xldata->downlinkOffset);
 

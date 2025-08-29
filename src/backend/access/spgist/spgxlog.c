@@ -576,7 +576,7 @@ spgRedoPickSplit(XLogReaderState *record)
 	{
 		/* just re-init the source page */
 		srcBuffer = XLogInitBufferForRedo(record, 0);
-		srcPage = (Page) BufferGetPage(srcBuffer);
+		srcPage = BufferGetPage(srcBuffer);
 
 		SpGistInitBuffer(srcBuffer,
 						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
@@ -629,7 +629,7 @@ spgRedoPickSplit(XLogReaderState *record)
 	{
 		/* just re-init the dest page */
 		destBuffer = XLogInitBufferForRedo(record, 1);
-		destPage = (Page) BufferGetPage(destBuffer);
+		destPage = BufferGetPage(destBuffer);
 
 		SpGistInitBuffer(destBuffer,
 						 SPGIST_LEAF | (xldata->storesNulls ? SPGIST_NULLS : 0));
@@ -642,7 +642,7 @@ spgRedoPickSplit(XLogReaderState *record)
 		 * full-page-image case, but for safety let's hold it till later.
 		 */
 		if (XLogReadBufferForRedo(record, 1, &destBuffer) == BLK_NEEDS_REDO)
-			destPage = (Page) BufferGetPage(destBuffer);
+			destPage = BufferGetPage(destBuffer);
 		else
 			destPage = NULL;	/* don't do any page updates */
 	}

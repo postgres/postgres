@@ -174,7 +174,7 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, stack->blkno,
 									RBM_NORMAL, strategy);
 		LockBuffer(buffer, GIN_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		Assert(GinPageIsData(page));
 
@@ -434,7 +434,7 @@ gin_check_parent_keys_consistency(Relation rel,
 		buffer = ReadBufferExtended(rel, MAIN_FORKNUM, stack->blkno,
 									RBM_NORMAL, strategy);
 		LockBuffer(buffer, GIN_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 		maxoff = PageGetMaxOffsetNumber(page);
 		rightlink = GinPageGetOpaque(page)->rightlink;
 

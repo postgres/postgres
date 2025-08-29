@@ -696,7 +696,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 			gistcheckpage(state.r, stack->buffer);
 		}
 
-		stack->page = (Page) BufferGetPage(stack->buffer);
+		stack->page = BufferGetPage(stack->buffer);
 		stack->lsn = xlocked ?
 			PageGetLSN(stack->page) : BufferGetLSNAtomic(stack->buffer);
 		Assert(!RelationNeedsWAL(state.r) || !XLogRecPtrIsInvalid(stack->lsn));
@@ -783,7 +783,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 					LockBuffer(stack->buffer, GIST_UNLOCK);
 					LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 					xlocked = true;
-					stack->page = (Page) BufferGetPage(stack->buffer);
+					stack->page = BufferGetPage(stack->buffer);
 
 					if (PageGetLSN(stack->page) != stack->lsn)
 					{
@@ -847,7 +847,7 @@ gistdoinsert(Relation r, IndexTuple itup, Size freespace,
 				LockBuffer(stack->buffer, GIST_UNLOCK);
 				LockBuffer(stack->buffer, GIST_EXCLUSIVE);
 				xlocked = true;
-				stack->page = (Page) BufferGetPage(stack->buffer);
+				stack->page = BufferGetPage(stack->buffer);
 				stack->lsn = PageGetLSN(stack->page);
 
 				if (stack->blkno == GIST_ROOT_BLKNO)
@@ -938,7 +938,7 @@ gistFindPath(Relation r, BlockNumber child, OffsetNumber *downlinkoffnum)
 		buffer = ReadBuffer(r, top->blkno);
 		LockBuffer(buffer, GIST_SHARE);
 		gistcheckpage(r, buffer);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (GistPageIsLeaf(page))
 		{
@@ -1033,7 +1033,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 	GISTInsertStack *ptr;
 
 	gistcheckpage(r, parent->buffer);
-	parent->page = (Page) BufferGetPage(parent->buffer);
+	parent->page = BufferGetPage(parent->buffer);
 	maxoff = PageGetMaxOffsetNumber(parent->page);
 
 	/* Check if the downlink is still where it was before */
@@ -1098,7 +1098,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 		parent->buffer = ReadBuffer(r, parent->blkno);
 		LockBuffer(parent->buffer, GIST_EXCLUSIVE);
 		gistcheckpage(r, parent->buffer);
-		parent->page = (Page) BufferGetPage(parent->buffer);
+		parent->page = BufferGetPage(parent->buffer);
 	}
 
 	/*
@@ -1121,7 +1121,7 @@ gistFindCorrectParent(Relation r, GISTInsertStack *child, bool is_build)
 	while (ptr)
 	{
 		ptr->buffer = ReadBuffer(r, ptr->blkno);
-		ptr->page = (Page) BufferGetPage(ptr->buffer);
+		ptr->page = BufferGetPage(ptr->buffer);
 		ptr = ptr->parent;
 	}
 

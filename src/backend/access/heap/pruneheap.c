@@ -1563,7 +1563,7 @@ heap_page_prune_execute(Buffer buffer, bool lp_truncate_only,
 						OffsetNumber *nowdead, int ndead,
 						OffsetNumber *nowunused, int nunused)
 {
-	Page		page = (Page) BufferGetPage(buffer);
+	Page		page = BufferGetPage(buffer);
 	OffsetNumber *offnum;
 	HeapTupleHeader htup PG_USED_FOR_ASSERTS_ONLY;
 

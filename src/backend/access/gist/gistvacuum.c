@@ -330,7 +330,7 @@ restart:
 	 * exclusive lock.
 	 */
 	LockBuffer(buffer, GIST_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer);
 
 	if (gistPageRecyclable(page))
 	{
@@ -528,7 +528,7 @@ gistvacuum_delete_empty_pages(IndexVacuumInfo *info, GistVacState *vstate)
 									RBM_NORMAL, info->strategy);
 
 		LockBuffer(buffer, GIST_SHARE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (PageIsNew(page) || GistPageIsDeleted(page) || GistPageIsLeaf(page))
 		{

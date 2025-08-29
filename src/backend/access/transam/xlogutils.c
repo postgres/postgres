@@ -523,7 +523,7 @@ recent_buffer_fast_path:
 	if (mode == RBM_NORMAL)
 	{
 		/* check that page has been initialized */
-		Page		page = (Page) BufferGetPage(buffer);
+		Page		page = BufferGetPage(buffer);
 
 		/*
 		 * We assume that PageIsNew is safe without a lock. During recovery,

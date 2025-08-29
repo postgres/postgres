@@ -30,7 +30,7 @@ ginRedoClearIncompleteSplit(XLogReaderState *record, uint8 block_id)
 
 	if (XLogReadBufferForRedo(record, block_id, &buffer) == BLK_NEEDS_REDO)
 	{
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 		GinPageGetOpaque(page)->flags &= ~GIN_INCOMPLETE_SPLIT;
 
 		PageSetLSN(page, lsn);
@@ -50,7 +50,7 @@ ginRedoCreatePTree(XLogReaderState *record)
 	Page		page;
 
 	buffer = XLogInitBufferForRedo(record, 0);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer);
 
 	GinInitBuffer(buffer, GIN_DATA | GIN_LEAF | GIN_COMPRESSED);
 

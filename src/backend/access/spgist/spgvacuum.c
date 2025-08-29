@@ -626,7 +626,7 @@ spgvacuumpage(spgBulkDeleteState *bds, Buffer buffer)
 	Page		page;
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	page = (Page) BufferGetPage(buffer);
+	page = BufferGetPage(buffer);
 
 	if (PageIsNew(page))
 	{
@@ -707,7 +707,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 		buffer = ReadBufferExtended(index, MAIN_FORKNUM, blkno,
 									RBM_NORMAL, bds->info->strategy);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		if (PageIsNew(page) || SpGistPageIsDeleted(page))
 		{

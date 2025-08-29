@@ -31,7 +31,7 @@ brin_xlog_createidx(XLogReaderState *record)
 	/* create the index' metapage */
 	buf = XLogInitBufferForRedo(record, 0);
 	Assert(BufferIsValid(buf));
-	page = (Page) BufferGetPage(buf);
+	page = BufferGetPage(buf);
 	brin_metapage_init(page, xlrec->pagesPerRange, xlrec->version);
 	PageSetLSN(page, lsn);
 	MarkBufferDirty(buf);
@@ -82,7 +82,7 @@ brin_xlog_insert_update(XLogReaderState *record,
 
 		Assert(tuple->bt_blkno == xlrec->heapBlk);
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 		offnum = xlrec->offnum;
 		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
 			elog(PANIC, "brin_xlog_insert_update: invalid max offset number");
@@ -104,7 +104,7 @@ brin_xlog_insert_update(XLogReaderState *record,
 		ItemPointerData tid;
 
 		ItemPointerSet(&tid, regpgno, xlrec->offnum);
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		brinSetHeapBlockItemptr(buffer, xlrec->pagesPerRange, xlrec->heapBlk,
 								tid);
@@ -146,7 +146,7 @@ brin_xlog_update(XLogReaderState *record)
 		Page		page;
 		OffsetNumber offnum;
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		offnum = xlrec->oldOffnum;
 
@@ -185,7 +185,7 @@ brin_xlog_samepage_update(XLogReaderState *record)
 
 		brintuple = (BrinTuple *) XLogRecGetBlockData(record, 0, &tuplen);
 
-		page = (Page) BufferGetPage(buffer);
+		page = BufferGetPage(buffer);
 
 		offnum = xlrec->offnum;
 
@@ -254,7 +254,7 @@ brin_xlog_revmap_extend(XLogReaderState *record)
 	 */
 
 	buf = XLogInitBufferForRedo(record, 1);
-	page = (Page) BufferGetPage(buf);
+	page = BufferGetPage(buf);
 	brin_page_init(page, BRIN_PAGETYPE_REVMAP);
 
 	PageSetLSN(page, lsn);
