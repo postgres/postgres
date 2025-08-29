@@ -231,6 +231,7 @@ sub _tde_init_sql_command
 			'-D' => $datadir,
 			'-c' => 'exit_on_error=true',
 			'-c' => 'log_checkpoints=false',
+			'-c' => 'archive_mode=off',
 			$database,
 		],
 		'<',
