@@ -71,16 +71,16 @@ extern bool ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE l
 extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 
 /* Lock a tuple (see heap_lock_tuple before assuming you understand this) */
-extern void LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
-extern bool ConditionalLockTuple(Relation relation, ItemPointer tid,
+extern void LockTuple(Relation relation, const ItemPointerData *tid, LOCKMODE lockmode);
+extern bool ConditionalLockTuple(Relation relation, const ItemPointerData *tid,
 								 LOCKMODE lockmode, bool logLockFailure);
-extern void UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
+extern void UnlockTuple(Relation relation, const ItemPointerData *tid, LOCKMODE lockmode);
 
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableDelete(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid, Relation rel,
-							  ItemPointer ctid, XLTW_Oper oper);
+							  const ItemPointerData *ctid, XLTW_Oper oper);
 extern bool ConditionalXactLockTableWait(TransactionId xid,
 										 bool logLockFailure);
 
