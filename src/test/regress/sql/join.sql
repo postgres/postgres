@@ -2453,6 +2453,43 @@ where exists (select 1 from t t4
 
 rollback;
 
+-- check handling of semijoins if all RHS columns are equated to constants: we
+-- should suppress unique-ification in this case.
+begin;
+
+create temp table t (a int, b int);
+insert into t values (1, 2);
+
+explain (costs off)
+select * from t t1, t t2 where exists
+  (select 1 from t t3 where t1.a = t3.a and t2.b = t3.b and t3.a = 1 and t3.b = 2);
+
+select * from t t1, t t2 where exists
+  (select 1 from t t3 where t1.a = t3.a and t2.b = t3.b and t3.a = 1 and t3.b = 2);
+
+rollback;
+
+-- check handling of semijoin unique-ification for child relations if all RHS
+-- columns are equated to constants.
+begin;
+
+create temp table p (a int, b int) partition by range (a);
+create temp table p1 partition of p for values from (0) to (10);
+create temp table p2 partition of p for values from (10) to (20);
+insert into p values (1, 2);
+insert into p values (10, 20);
+
+set enable_partitionwise_join to on;
+
+explain (costs off)
+select * from p t1 where exists
+  (select 1 from p t2 where t1.a = t2.a and t1.a = 1);
+
+select * from p t1 where exists
+  (select 1 from p t2 where t1.a = t2.a and t1.a = 1);
+
+rollback;
+
 -- test cases where we can remove a join, but not a PHV computed at it
 begin;
 
