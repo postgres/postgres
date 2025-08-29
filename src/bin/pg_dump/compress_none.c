@@ -83,35 +83,31 @@ InitCompressorNone(CompressorState *cs,
  * Private routines
  */
 
-static bool
-read_none(void *ptr, size_t size, size_t *rsize, CompressFileHandle *CFH)
+static size_t
+read_none(void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	FILE	   *fp = (FILE *) CFH->private_data;
 	size_t		ret;
 
-	if (size == 0)
-		return true;
-
 	ret = fread(ptr, 1, size, fp);
-	if (ret != size && !feof(fp))
+	if (ferror(fp))
 		pg_fatal("could not read from input file: %m");
 
-	if (rsize)
-		*rsize = ret;
-
-	return true;
+	return ret;
 }
 
-static bool
+static void
 write_none(const void *ptr, size_t size, CompressFileHandle *CFH)
 {
 	size_t		ret;
 
+	errno = 0;
 	ret = fwrite(ptr, 1, size, (FILE *) CFH->private_data);
 	if (ret != size)
-		return false;
-
-	return true;
+	{
+		errno = (errno) ? errno : ENOSPC;
+		pg_fatal("could not write to file: %m");
+	}
 }
 
 static const char *
@@ -153,7 +149,12 @@ close_none(CompressFileHandle *CFH)
 	CFH->private_data = NULL;
 
 	if (fp)
+	{
+		errno = 0;
 		ret = fclose(fp);
+		if (ret != 0)
+			pg_log_error("could not close file: %m");
+	}
 
 	return ret == 0;
 }
