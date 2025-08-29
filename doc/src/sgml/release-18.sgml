@@ -266,6 +266,28 @@ Author: Fujii Masao <fujii@postgresql.org>
     </para>
     </listitem>
 
+<!--
+Author: Peter Eisentraut <peter@eisentraut.org>
+2024-12-17 [fb1a18810f0] Remove ts_locale.c's lowerstr()
+-->
+
+    <listitem>
+    <para>
+    The locale implementation underlying full-text search was improved.  It
+    now observes the locale provider configured for the database for case
+    conversions.  It was previously hardcoded to use libc.  In database
+    clusters that use a locale provider other than libc (that is, ICU or
+    builtin) and where the locale configured through that locale provider
+    behaves differently from the LC_CTYPE setting configured for the database,
+    this could cause changes in behavior of some functions related to
+    full-text search as well as the pg_trgm extension.  When upgrading such
+    database clusters using pg_upgrade, it is recommended to reindex all
+    indexes related to full-text search and pg_trgm after the upgrade.
+
+    <ulink url="&commit_baseurl;fb1a18810f0">&sect;</ulink>
+    </para>
+    </listitem>
+
    </itemizedlist>
 
   </sect2>
