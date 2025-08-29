@@ -1170,7 +1170,7 @@ slotsync_reread_config(void)
  * Interrupt handler for main loop of slot sync worker.
  */
 static void
-ProcessSlotSyncInterrupts(WalReceiverConn *wrconn)
+ProcessSlotSyncInterrupts(void)
 {
 	CHECK_FOR_INTERRUPTS();
 
@@ -1505,7 +1505,7 @@ ReplSlotSyncWorkerMain(const void *startup_data, size_t startup_data_len)
 	{
 		bool		some_slot_updated = false;
 
-		ProcessSlotSyncInterrupts(wrconn);
+		ProcessSlotSyncInterrupts();
 
 		some_slot_updated = synchronize_slots(wrconn);
 
