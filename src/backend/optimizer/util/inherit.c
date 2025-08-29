@@ -313,7 +313,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 						   PlanRowMark *top_parentrc, LOCKMODE lockmode)
 {
 	PartitionDesc partdesc;
-	Bitmapset  *live_parts;
 	int			num_live_parts;
 	int			i;
 
@@ -348,10 +347,10 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * that survive pruning.  Below, we will initialize child objects for the
 	 * surviving partitions.
 	 */
-	relinfo->live_parts = live_parts = prune_append_rel_partitions(relinfo);
+	relinfo->live_parts = prune_append_rel_partitions(relinfo);
 
 	/* Expand simple_rel_array and friends to hold child objects. */
-	num_live_parts = bms_num_members(live_parts);
+	num_live_parts = bms_num_members(relinfo->live_parts);
 	if (num_live_parts > 0)
 		expand_planner_arrays(root, num_live_parts);
 
@@ -370,7 +369,7 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	 * table itself, because it's not going to be scanned.
 	 */
 	i = -1;
-	while ((i = bms_next_member(live_parts, i)) >= 0)
+	while ((i = bms_next_member(relinfo->live_parts, i)) >= 0)
 	{
 		Oid			childOID = partdesc->oids[i];
 		Relation	childrel;
