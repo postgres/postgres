@@ -98,7 +98,7 @@ do
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
 	test "$f" = src/include/port/win32/netdb.h && continue
-	$cplusplus && test "$f" = src/include/port/win32/sys/resource.h && continue
+	test "$f" = src/include/port/win32/sys/resource.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
