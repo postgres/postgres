@@ -24,9 +24,9 @@ Also copy any external files referenced by your providers configuration (such as
 ## Key rotation during backups
 
 !!! warning
-    Do not rotate SMGR or WAL encryption keys while `pg_basebackup` is running. Standbys or standalone clusters created from such backups may fail to start during WAL replay.
+    Do not create, change, or rotate global key providers (or their keys) while `pg_basebackup` is running. Standbys or standalone clusters created from such backups may fail to start during WAL replay and may also lead to the corruption of encrypted data (tables, indexes, and other relations).
 
-Rotations during a base backup can leave the standby in an inconsistent state where it cannot retrieve the correct key history.
+Creating, changing, or rotating global key providers (or their keys) during a base backup can leave the standby in an inconsistent state where it cannot retrieve the correct key history.
 
 For example, you may see errors such as:
 
