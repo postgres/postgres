@@ -102,6 +102,7 @@ typedef struct
 #endif
 	int			NamedLWLockTrancheRequests;
 	NamedLWLockTranche *NamedLWLockTrancheArray;
+	int		   *LWLockCounter;
 	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
@@ -761,6 +762,7 @@ save_backend_variables(BackendParameters *param,
 
 	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
 	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
+	param->LWLockCounter = LWLockCounter;
 	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
@@ -1021,6 +1023,7 @@ restore_backend_variables(BackendParameters *param)
 
 	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
 	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
+	LWLockCounter = param->LWLockCounter;
 	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;

@@ -196,6 +196,7 @@ int			NamedLWLockTrancheRequests = 0;
 
 /* points to data in shared memory: */
 NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
+int		   *LWLockCounter = NULL;
 
 static void InitializeLWLocks(void);
 static inline void LWLockReportWaitStart(LWLock *lock);
@@ -397,11 +398,11 @@ LWLockShmemSize(void)
 	/* Calculate total number of locks needed in the main array. */
 	numLocks += NumLWLocksForNamedTranches();
 
-	/* Space for the LWLock array. */
-	size = mul_size(numLocks, sizeof(LWLockPadded));
-
 	/* Space for dynamic allocation counter, plus room for alignment. */
-	size = add_size(size, sizeof(int) + LWLOCK_PADDED_SIZE);
+	size = sizeof(int) + LWLOCK_PADDED_SIZE;
+
+	/* Space for the LWLock array. */
+	size = add_size(size, mul_size(numLocks, sizeof(LWLockPadded)));
 
 	/* space for named tranches. */
 	size = add_size(size, mul_size(NamedLWLockTrancheRequests, sizeof(NamedLWLockTranche)));
@@ -423,26 +424,19 @@ CreateLWLocks(void)
 	if (!IsUnderPostmaster)
 	{
 		Size		spaceLocks = LWLockShmemSize();
-		int		   *LWLockCounter;
 		char	   *ptr;
 
 		/* Allocate space */
 		ptr = (char *) ShmemAlloc(spaceLocks);
 
-		/* Leave room for dynamic allocation of tranches */
+		/* Initialize the dynamic-allocation counter for tranches */
+		LWLockCounter = (int *) ptr;
+		*LWLockCounter = LWTRANCHE_FIRST_USER_DEFINED;
 		ptr += sizeof(int);
 
 		/* Ensure desired alignment of LWLock array */
 		ptr += LWLOCK_PADDED_SIZE - ((uintptr_t) ptr) % LWLOCK_PADDED_SIZE;
-
 		MainLWLockArray = (LWLockPadded *) ptr;
-
-		/*
-		 * Initialize the dynamic-allocation counter for tranches, which is
-		 * stored just before the first LWLock.
-		 */
-		LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
-		*LWLockCounter = LWTRANCHE_FIRST_USER_DEFINED;
 
 		/* Initialize all LWLocks */
 		InitializeLWLocks();
@@ -574,9 +568,7 @@ int
 LWLockNewTrancheId(void)
 {
 	int			result;
-	int		   *LWLockCounter;
 
-	LWLockCounter = (int *) ((char *) MainLWLockArray - sizeof(int));
 	/* We use the ShmemLock spinlock to protect LWLockCounter */
 	SpinLockAcquire(ShmemLock);
 	result = (*LWLockCounter)++;
