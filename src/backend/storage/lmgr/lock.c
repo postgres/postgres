@@ -415,6 +415,7 @@ static void GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner);
 static void BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode);
 static void FinishStrongLockAcquire(void);
 static ProcWaitStatus WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner);
+static void waitonlock_error_callback(void *arg);
 static void ReleaseLockIfHeld(LOCALLOCK *locallock, bool sessionLock);
 static void LockReassignOwner(LOCALLOCK *locallock, ResourceOwner parent);
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
@@ -1931,6 +1932,7 @@ static ProcWaitStatus
 WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 {
 	ProcWaitStatus result;
+	ErrorContextCallback waiterrcontext;
 
 	TRACE_POSTGRESQL_LOCK_WAIT_START(locallock->tag.lock.locktag_field1,
 									 locallock->tag.lock.locktag_field2,
@@ -1938,6 +1940,12 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 									 locallock->tag.lock.locktag_field4,
 									 locallock->tag.lock.locktag_type,
 									 locallock->tag.mode);
+
+	/* Setup error traceback support for ereport() */
+	waiterrcontext.callback = waitonlock_error_callback;
+	waiterrcontext.arg = (void *) locallock;
+	waiterrcontext.previous = error_context_stack;
+	error_context_stack = &waiterrcontext;
 
 	/* adjust the process title to indicate that it's waiting */
 	set_ps_display_suffix("waiting");
@@ -1990,6 +1998,8 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 	/* reset ps display to remove the suffix */
 	set_ps_display_remove_suffix();
 
+	error_context_stack = waiterrcontext.previous;
+
 	TRACE_POSTGRESQL_LOCK_WAIT_DONE(locallock->tag.lock.locktag_field1,
 									locallock->tag.lock.locktag_field2,
 									locallock->tag.lock.locktag_field3,
@@ -1998,6 +2008,28 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 									locallock->tag.mode);
 
 	return result;
+}
+
+/*
+ * error context callback for failures in WaitOnLock
+ *
+ * We report which lock was being waited on, in the same style used in
+ * deadlock reports.  This helps with lock timeout errors in particular.
+ */
+static void
+waitonlock_error_callback(void *arg)
+{
+	LOCALLOCK  *locallock = (LOCALLOCK *) arg;
+	const LOCKTAG *tag = &locallock->tag.lock;
+	LOCKMODE	mode = locallock->tag.mode;
+	StringInfoData locktagbuf;
+
+	initStringInfo(&locktagbuf);
+	DescribeLockTag(&locktagbuf, tag);
+
+	errcontext("waiting for %s on %s",
+			   GetLockmodeName(tag->locktag_lockmethodid, mode),
+			   locktagbuf.data);
 }
 
 /*
