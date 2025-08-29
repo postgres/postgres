@@ -644,7 +644,7 @@ WakeupWalSummarizer(void)
 	if (WalSummarizerCtl == NULL)
 		return;
 
-	LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
+	LWLockAcquire(WALSummarizerLock, LW_SHARED);
 	pgprocno = WalSummarizerCtl->summarizer_pgprocno;
 	LWLockRelease(WALSummarizerLock);
 
@@ -685,7 +685,7 @@ WaitForWalSummarization(XLogRecPtr lsn)
 		/*
 		 * If the LSN summarized on disk has reached the target value, stop.
 		 */
-		LWLockAcquire(WALSummarizerLock, LW_EXCLUSIVE);
+		LWLockAcquire(WALSummarizerLock, LW_SHARED);
 		summarized_lsn = WalSummarizerCtl->summarized_lsn;
 		pending_lsn = WalSummarizerCtl->pending_lsn;
 		LWLockRelease(WALSummarizerLock);
