@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2025-??-??, CURRENT AS OF 2025-07-29</para>
+   <para>2025-??-??, CURRENT AS OF 2025-08-29</para>
   </formalpara>
 
   <sect2 id="release-18-highlights">
@@ -283,7 +283,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
     full-text search as well as the pg_trgm extension.  When upgrading such
     database clusters using pg_upgrade, it is recommended to reindex all
     indexes related to full-text search and pg_trgm after the upgrade.
-
     <ulink url="&commit_baseurl;fb1a18810f0">&sect;</ulink>
     </para>
     </listitem>
@@ -2989,8 +2988,9 @@ Author: Nathan Bossart <nathan@postgresql.org>
      </para>
 
      <para>
-     This option can only be used by <option>--analyze-only</option>
-     and <option>--analyze-in-stages</option>.
+     This option can only be run by superusers and can only
+     be used with options <option>--analyze-only</option> and
+     <option>--analyze-in-stages</option>.
      </para>
      </listitem>
 
@@ -3068,14 +3068,16 @@ Author: Masahiko Sawada <msawada@postgresql.org>
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2025-03-25 [bde2fb797] Add pg_dump - -with-{schema|data|statistics} options.
+Author: Jeff Davis <jdavis@postgresql.org>
+2025-08-02 [a3e8dc143] Simplify options in pg_dump and pg_restore.
 -->
 
       <listitem>
       <para>
-      Add <xref linkend="app-pgdump"/> options
-      <option>--with-schema</option>, <option>--with-data</option>,
-      and <option>--with-statistics</option> (Jeff Davis)
+      Add <xref linkend="app-pgdump"/> option <option>--statistics</option>
+      (Jeff Davis)
       <ulink url="&commit_baseurl;bde2fb797">&sect;</ulink>
+      <ulink url="&commit_baseurl;a3e8dc143">&sect;</ulink>
       </para>
       </listitem>
 
