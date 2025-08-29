@@ -6581,6 +6581,66 @@ where exists (select 1 from t t4
 (1 row)
 
 rollback;
+-- check handling of semijoins if all RHS columns are equated to constants: we
+-- should suppress unique-ification in this case.
+begin;
+create temp table t (a int, b int);
+insert into t values (1, 2);
+explain (costs off)
+select * from t t1, t t2 where exists
+  (select 1 from t t3 where t1.a = t3.a and t2.b = t3.b and t3.a = 1 and t3.b = 2);
+                 QUERY PLAN                  
+---------------------------------------------
+ Nested Loop Semi Join
+   ->  Nested Loop
+         ->  Seq Scan on t t1
+               Filter: (a = 1)
+         ->  Materialize
+               ->  Seq Scan on t t2
+                     Filter: (b = 2)
+   ->  Materialize
+         ->  Seq Scan on t t3
+               Filter: ((a = 1) AND (b = 2))
+(10 rows)
+
+select * from t t1, t t2 where exists
+  (select 1 from t t3 where t1.a = t3.a and t2.b = t3.b and t3.a = 1 and t3.b = 2);
+ a | b | a | b 
+---+---+---+---
+ 1 | 2 | 1 | 2
+(1 row)
+
+rollback;
+-- check handling of semijoin unique-ification for child relations if all RHS
+-- columns are equated to constants.
+begin;
+create temp table p (a int, b int) partition by range (a);
+create temp table p1 partition of p for values from (0) to (10);
+create temp table p2 partition of p for values from (10) to (20);
+insert into p values (1, 2);
+insert into p values (10, 20);
+set enable_partitionwise_join to on;
+explain (costs off)
+select * from p t1 where exists
+  (select 1 from p t2 where t1.a = t2.a and t1.a = 1);
+          QUERY PLAN           
+-------------------------------
+ Nested Loop Semi Join
+   ->  Seq Scan on p1 t1
+         Filter: (a = 1)
+   ->  Materialize
+         ->  Seq Scan on p1 t2
+               Filter: (a = 1)
+(6 rows)
+
+select * from p t1 where exists
+  (select 1 from p t2 where t1.a = t2.a and t1.a = 1);
+ a | b 
+---+---
+ 1 | 2
+(1 row)
+
+rollback;
 -- test cases where we can remove a join, but not a PHV computed at it
 begin;
 create temp table t (a int unique, b int);

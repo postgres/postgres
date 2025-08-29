@@ -1754,6 +1754,15 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 		return NULL;
 
 	/*
+	 * Punt if this is a child relation and we failed to build a unique-ified
+	 * path for its parent.  This can happen if all the RHS columns were found
+	 * to be equated to constants when unique-ifying the parent table, leaving
+	 * no columns to unique-ify.
+	 */
+	if (IS_OTHER_REL(rel) && rel->top_parent->cheapest_unique_path == NULL)
+		return NULL;
+
+	/*
 	 * When called during GEQO join planning, we are in a short-lived memory
 	 * context.  We must make sure that the path and any subsidiary data
 	 * structures created for a baserel survive the GEQO cycle, else the
