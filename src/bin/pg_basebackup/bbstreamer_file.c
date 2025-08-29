@@ -247,19 +247,18 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 #ifdef PERCONA_EXT
 				/* 
 				 * A streamed WAL is encrypted with the newly generated WAL key,
-				 * hence we have to prevent these files from rewriting.
+				 * hence we have to prevent wal_keys from rewriting.
 				 */
-				if (mystreamer->encryped_wal)
+				if (strcmp(member->pathname, "pg_tde/wal_keys") == 0)
 				{
-					if (strcmp(member->pathname, "pg_tde/wal_keys") == 0 ||
-						strcmp(member->pathname, "pg_tde/1664_providers") == 0)
+					if (mystreamer->encryped_wal)
 							break;
-				}
-				else if (strcmp(member->pathname, "pg_tde/wal_keys") == 0)
-				{
-					pg_log_warning("the source has WAL keys, but no WAL encryption configured for the target backups");
-					pg_log_warning_detail("This may lead to exposed data and broken backup.");
-					pg_log_warning_hint("Run pg_basebackup with -E to encrypt streamed WAL.");
+					else
+					{
+						pg_log_warning("the source has WAL keys, but no WAL encryption configured for the target backups");
+						pg_log_warning_detail("This may lead to exposed data and broken backup.");
+						pg_log_warning_hint("Run pg_basebackup with -E to encrypt streamed WAL.");
+					} 
 				}
 #endif
 				mystreamer->file =
