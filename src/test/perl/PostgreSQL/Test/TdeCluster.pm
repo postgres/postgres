@@ -27,7 +27,7 @@ sub init
 	$self->SUPER::append_conf('postgresql.conf',
 		'shared_preload_libraries = pg_tde');
 
-	$self->_tde_init_principal_key;
+	$self->_tde_init_pg_tde_dir($params{extra});
 
 	if ($ENV{TDE_MODE_SMGR})
 	{
@@ -132,7 +132,41 @@ sub pg_tde_dir
 	return $self->data_dir . '/pg_tde';
 }
 
-sub _tde_init_principal_key
+sub _tde_init_pg_tde_dir
+{
+	my ($self, $extra) = @_;
+	my $tde_source_dir;
+
+	if (defined($extra))
+	{
+		$tde_source_dir = $self->_tde_generate_pg_tde_dir($extra);
+	}
+	else
+	{
+		$tde_source_dir = $self->_tde_init_pg_tde_dir_template;
+	}
+
+	PostgreSQL::Test::Utils::system_log('cp', '-R', '-P', '-p',
+		$tde_source_dir . '/pg_tde',
+		$self->pg_tde_dir);
+
+	# We don't want clusters sharing the KMS file as any concurrent writes will
+	# mess it up.
+	PostgreSQL::Test::Utils::system_log(
+		'cp', '-R', '-P', '-p',
+		$tde_source_dir . '/pg_tde_test_keys',
+		$self->basedir . '/pg_tde_test_keys');
+
+	PostgreSQL::Test::Utils::system_log(
+		'pg_tde_change_key_provider',
+		'-D' => $self->data_dir,
+		'1664',
+		'global_test_provider',
+		'file',
+		$self->basedir . '/pg_tde_test_keys');
+}
+
+sub _tde_init_pg_tde_dir_template
 {
 	my ($self) = @_;
 	my $tde_template_dir;
@@ -149,45 +183,42 @@ sub _tde_init_principal_key
 
 	unless (-e $tde_template_dir)
 	{
-		my $temp_dir = PostgreSQL::Test::Utils::tempdir();
+		my $temp_dir = $self->_tde_generate_pg_tde_dir;
 		mkdir $tde_template_dir;
-
-		PostgreSQL::Test::Utils::system_log(
-			'initdb',
-			'-D' => $temp_dir,
-			'--set' => 'shared_preload_libraries=pg_tde');
-
-		_tde_init_sql_command(
-			$temp_dir, 'postgres', qq(
-			CREATE EXTENSION pg_tde;
-			SELECT pg_tde_add_global_key_provider_file('global_test_provider', '$tde_template_dir/pg_tde_test_keys');
-			SELECT pg_tde_create_key_using_global_key_provider('default_test_key', 'global_test_provider');
-			SELECT pg_tde_set_default_key_using_global_key_provider('default_test_key', 'global_test_provider');
-		));
 
 		PostgreSQL::Test::Utils::system_log('cp', '-R', '-P', '-p',
 			$temp_dir . '/pg_tde',
 			$tde_template_dir);
+
+		PostgreSQL::Test::Utils::system_log(
+			'cp', '-R', '-P', '-p',
+			$temp_dir . '/pg_tde_test_keys',
+			$tde_template_dir . '/pg_tde_test_keys');
 	}
 
-	PostgreSQL::Test::Utils::system_log('cp', '-R', '-P', '-p',
-		$tde_template_dir . '/pg_tde',
-		$self->pg_tde_dir);
+	return $tde_template_dir;
+}
 
-	# We don't want clusters sharing the KMS file as any concurrent writes will
-	# mess it up.
-	PostgreSQL::Test::Utils::system_log(
-		'cp', '-R', '-P', '-p',
-		$tde_template_dir . '/pg_tde_test_keys',
-		$self->basedir . '/pg_tde_test_keys');
+sub _tde_generate_pg_tde_dir
+{
+	my ($self, $extra) = @_;
+	my $temp_dir = PostgreSQL::Test::Utils::tempdir();
 
 	PostgreSQL::Test::Utils::system_log(
-		'pg_tde_change_key_provider',
-		'-D' => $self->data_dir,
-		'1664',
-		'global_test_provider',
-		'file',
-		$self->basedir . '/pg_tde_test_keys');
+		'initdb',
+		'-D' => $temp_dir,
+		'--set' => 'shared_preload_libraries=pg_tde',
+		@{ $extra });
+
+	_tde_init_sql_command(
+		$temp_dir, 'postgres', qq(
+		CREATE EXTENSION pg_tde;
+		SELECT pg_tde_add_global_key_provider_file('global_test_provider', '$temp_dir/pg_tde_test_keys');
+		SELECT pg_tde_create_key_using_global_key_provider('default_test_key', 'global_test_provider');
+		SELECT pg_tde_set_default_key_using_global_key_provider('default_test_key', 'global_test_provider');
+	));
+
+	return $temp_dir;
 }
 
 sub _tde_init_sql_command
