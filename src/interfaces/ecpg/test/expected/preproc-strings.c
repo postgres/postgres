@@ -18,6 +18,16 @@
 #line 3 "strings.pgc"
 /* exec sql begin declare section */
 #line 1 "strings.h"
+/* redundant declaration to silence -Wmissing-variable-declarations */
+  
+		   
+		   
+		   
+		   
+		   
+		   
+		   
+
 	   
 		   
 		   
@@ -29,7 +39,10 @@
 
 #line 5 "strings.pgc"
 
-#line 1 "strings.h"
+#line 2 "strings.h"
+ extern char * s1 , * s2 , * s3 , * s4 , * s5 , * s6 , * s7 , * s8 ;
+ 
+#line 11 "strings.h"
  char * s1 , * s2 , * s3 , * s4 , * s5 , * s6 , * s7 , * s8 ;
 /* exec sql end declare section */
 #line 5 "strings.pgc"

@@ -169,7 +169,16 @@ printf $kwdef qq|static %s\n|, $f;
 
 # Emit the struct that wraps all this lookup info into one variable.
 
-printf $kwdef "static " if !$extern;
+if ($extern)
+{
+	# redundant declaration to silence -Wmissing-variable-declarations
+	printf $kwdef "extern PGDLLIMPORT const ScanKeywordList %s;\n\n",
+	  $varname;
+}
+else
+{
+	printf $kwdef "static ";
+}
 printf $kwdef "const ScanKeywordList %s = {\n", $varname;
 printf $kwdef qq|\t%s_kw_string,\n|, $varname;
 printf $kwdef qq|\t%s_kw_offsets,\n|, $varname;
