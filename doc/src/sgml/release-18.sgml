@@ -276,6 +276,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
     Change <link linkend="textsearch">full text search</link> to use the
     default collation provider of the cluster to read configuration files
     and dictionaries, rather than always using libc (Peter Eisentraut)
+    <ulink url="&commit_baseurl;fb1a18810f0">&sect;</ulink>
     </para>
 
     <para>
@@ -286,8 +287,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
     When upgrading such clusters using <xref linkend="pgupgrade"/>, it
     is recommended to reindex all indexes related to full-text search
     and <application>pg_trgm</application> after the upgrade.
-    (Peter Eisentraut)
-    <ulink url="&commit_baseurl;fb1a18810f0">&sect;</ulink>
     </para>
     </listitem>
 
