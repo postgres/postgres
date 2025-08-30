@@ -273,16 +273,20 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
     <listitem>
     <para>
-    The locale implementation underlying full-text search was improved.  It
-    now observes the locale provider configured for the database for case
-    conversions.  It was previously hardcoded to use libc.  In database
-    clusters that use a locale provider other than libc (that is, ICU or
-    builtin) and where the locale configured through that locale provider
-    behaves differently from the LC_CTYPE setting configured for the database,
-    this could cause changes in behavior of some functions related to
-    full-text search as well as the pg_trgm extension.  When upgrading such
-    database clusters using pg_upgrade, it is recommended to reindex all
-    indexes related to full-text search and pg_trgm after the upgrade.
+    Change <link linkend="textsearch">full text search</link> to use the
+    default collation provider of the cluster to read configuration files
+    and dictionaries, rather than always using libc (Peter Eisentraut)
+    </para>
+
+    <para>
+    Clusters that default to non-libc collation providers (e.g., ICU,
+    builtin) that behave differently than libc for characters processed
+    by LC_CTYPE could observe changes in behavior of some full-text
+    search functions, as well as the <xref linkend="pgtrgm"/> extension.
+    When upgrading such clusters using <xref linkend="pgupgrade"/>, it
+    is recommended to reindex all indexes related to full-text search
+    and <application>pg_trgm</application> after the upgrade.
+    (Peter Eisentraut)
     <ulink url="&commit_baseurl;fb1a18810f0">&sect;</ulink>
     </para>
     </listitem>
