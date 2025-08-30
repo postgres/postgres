@@ -48,12 +48,6 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
-#define DSMR_NAME_LEN				128
-
-#define DSMR_DSA_TRANCHE_SUFFIX		" DSA"
-#define DSMR_DSA_TRANCHE_SUFFIX_LEN (sizeof(DSMR_DSA_TRANCHE_SUFFIX) - 1)
-#define DSMR_DSA_TRANCHE_NAME_LEN	(DSMR_NAME_LEN + DSMR_DSA_TRANCHE_SUFFIX_LEN)
-
 typedef struct DSMRegistryCtxStruct
 {
 	dsa_handle	dsah;
@@ -72,15 +66,13 @@ typedef struct NamedDSAState
 {
 	dsa_handle	handle;
 	int			tranche;
-	char		tranche_name[DSMR_DSA_TRANCHE_NAME_LEN];
 } NamedDSAState;
 
 typedef struct NamedDSHState
 {
-	NamedDSAState dsa;
-	dshash_table_handle handle;
+	dsa_handle dsa_handle;
+	dshash_table_handle dsh_handle;
 	int			tranche;
-	char		tranche_name[DSMR_NAME_LEN];
 } NamedDSHState;
 
 typedef enum DSMREntryType
@@ -99,7 +91,7 @@ static const char *const DSMREntryTypeNames[] =
 
 typedef struct DSMRegistryEntry
 {
-	char		name[DSMR_NAME_LEN];
+	char		name[NAMEDATALEN];
 	DSMREntryType type;
 	union
 	{
@@ -308,8 +300,7 @@ GetNamedDSA(const char *name, bool *found)
 
 		/* Initialize the LWLock tranche for the DSA. */
 		state->tranche = LWLockNewTrancheId();
-		strcpy(state->tranche_name, name);
-		LWLockRegisterTranche(state->tranche, state->tranche_name);
+		LWLockRegisterTranche(state->tranche, name);
 
 		/* Initialize the DSA. */
 		ret = dsa_create(state->tranche);
@@ -331,7 +322,7 @@ GetNamedDSA(const char *name, bool *found)
 					(errmsg("requested DSA already attached to current process")));
 
 		/* Initialize existing LWLock tranche for the DSA. */
-		LWLockRegisterTranche(state->tranche, state->tranche_name);
+		LWLockRegisterTranche(state->tranche, name);
 
 		/* Attach to existing DSA. */
 		ret = dsa_attach(state->handle);
@@ -348,11 +339,10 @@ GetNamedDSA(const char *name, bool *found)
  * Initialize or attach a named dshash table.
  *
  * This routine returns the address of the table.  The tranche_id member of
- * params is ignored; new tranche IDs will be generated if needed.  Note that
- * the DSA lock tranche will be registered with the provided name with " DSA"
- * appended.  The dshash lock tranche will be registered with the provided
- * name.  Also note that this should be called at most once for a given table
- * in each backend.
+ * params is ignored; a new LWLock tranche ID will be generated if needed.
+ * Note that the lock tranche will be registered with the provided name.  Also
+ * note that this should be called at most once for a given table in each
+ * backend.
  */
 dshash_table *
 GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
@@ -381,25 +371,18 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
-		NamedDSAState *dsa_state = &entry->data.dsh.dsa;
 		NamedDSHState *dsh_state = &entry->data.dsh;
 		dshash_parameters params_copy;
 		dsa_area   *dsa;
 
 		entry->type = DSMR_ENTRY_TYPE_DSH;
 
-		/* Initialize the LWLock tranche for the DSA. */
-		dsa_state->tranche = LWLockNewTrancheId();
-		sprintf(dsa_state->tranche_name, "%s%s", name, DSMR_DSA_TRANCHE_SUFFIX);
-		LWLockRegisterTranche(dsa_state->tranche, dsa_state->tranche_name);
-
-		/* Initialize the LWLock tranche for the dshash table. */
+		/* Initialize the LWLock tranche for the hash table. */
 		dsh_state->tranche = LWLockNewTrancheId();
-		strcpy(dsh_state->tranche_name, name);
-		LWLockRegisterTranche(dsh_state->tranche, dsh_state->tranche_name);
+		LWLockRegisterTranche(dsh_state->tranche, name);
 
 		/* Initialize the DSA for the hash table. */
-		dsa = dsa_create(dsa_state->tranche);
+		dsa = dsa_create(dsh_state->tranche);
 		dsa_pin(dsa);
 		dsa_pin_mapping(dsa);
 
@@ -409,34 +392,32 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 		ret = dshash_create(dsa, &params_copy, NULL);
 
 		/* Store handles for other backends to use. */
-		dsa_state->handle = dsa_get_handle(dsa);
-		dsh_state->handle = dshash_get_hash_table_handle(ret);
+		dsh_state->dsa_handle = dsa_get_handle(dsa);
+		dsh_state->dsh_handle = dshash_get_hash_table_handle(ret);
 	}
 	else if (entry->type != DSMR_ENTRY_TYPE_DSH)
 		ereport(ERROR,
 				(errmsg("requested DSHash does not match type of existing entry")));
 	else
 	{
-		NamedDSAState *dsa_state = &entry->data.dsh.dsa;
 		NamedDSHState *dsh_state = &entry->data.dsh;
 		dsa_area   *dsa;
 
 		/* XXX: Should we verify params matches what table was created with? */
 
-		if (dsa_is_attached(dsa_state->handle))
+		if (dsa_is_attached(dsh_state->dsa_handle))
 			ereport(ERROR,
 					(errmsg("requested DSHash already attached to current process")));
 
-		/* Initialize existing LWLock tranches for the DSA and dshash table. */
-		LWLockRegisterTranche(dsa_state->tranche, dsa_state->tranche_name);
-		LWLockRegisterTranche(dsh_state->tranche, dsh_state->tranche_name);
+		/* Initialize existing LWLock tranche for the hash table. */
+		LWLockRegisterTranche(dsh_state->tranche, name);
 
 		/* Attach to existing DSA for the hash table. */
-		dsa = dsa_attach(dsa_state->handle);
+		dsa = dsa_attach(dsh_state->dsa_handle);
 		dsa_pin_mapping(dsa);
 
 		/* Attach to existing dshash table. */
-		ret = dshash_attach(dsa, params, dsh_state->handle, NULL);
+		ret = dshash_attach(dsa, params, dsh_state->dsh_handle, NULL);
 	}
 
 	dshash_release_lock(dsm_registry_table, entry);
