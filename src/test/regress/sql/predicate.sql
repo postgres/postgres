@@ -201,3 +201,23 @@ SELECT * FROM pred_tab t1
 
 DROP TABLE pred_tab;
 DROP TABLE pred_tab_notnull;
+
+-- Validate that NullTest quals in constraint expressions are reduced correctly
+CREATE TABLE pred_tab1 (a int NOT NULL, b int,
+	CONSTRAINT check_tab1 CHECK (a IS NULL OR b > 2));
+CREATE TABLE pred_tab2 (a int, b int,
+	CONSTRAINT check_a CHECK (a IS NOT NULL));
+
+SET constraint_exclusion TO ON;
+
+-- Ensure that we get a dummy plan
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab1, pred_tab2 WHERE pred_tab2.a IS NULL;
+
+-- Ensure that we get a dummy plan
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab2, pred_tab1 WHERE pred_tab1.a IS NULL OR pred_tab1.b < 2;
+
+RESET constraint_exclusion;
+DROP TABLE pred_tab1;
+DROP TABLE pred_tab2;

@@ -77,7 +77,8 @@ static List *get_relation_constraints(PlannerInfo *root,
 									  bool include_partition);
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 							   Relation heapRelation);
-static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
+static List *get_relation_statistics(PlannerInfo *root, RelOptInfo *rel,
+									 Relation relation);
 static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 										Relation relation);
 static PartitionScheme find_partition_scheme(PlannerInfo *root,
@@ -508,7 +509,7 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 	rel->indexlist = indexinfos;
 
-	rel->statlist = get_relation_statistics(rel, relation);
+	rel->statlist = get_relation_statistics(root, rel, relation);
 
 	/* Grab foreign-table info using the relcache, while we have it */
 	if (relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
@@ -1407,6 +1408,14 @@ get_relation_constraints(PlannerInfo *root,
 			cexpr = stringToNode(constr->check[i].ccbin);
 
 			/*
+			 * Fix Vars to have the desired varno.  This must be done before
+			 * const-simplification because eval_const_expressions reduces
+			 * NullTest for Vars based on varno.
+			 */
+			if (varno != 1)
+				ChangeVarNodes(cexpr, 1, varno, 0);
+
+			/*
 			 * Run each expression through const-simplification and
 			 * canonicalization.  This is not just an optimization, but is
 			 * necessary, because we will be comparing it to
@@ -1419,10 +1428,6 @@ get_relation_constraints(PlannerInfo *root,
 			cexpr = eval_const_expressions(root, cexpr);
 
 			cexpr = (Node *) canonicalize_qual((Expr *) cexpr, true);
-
-			/* Fix Vars to have the desired varno */
-			if (varno != 1)
-				ChangeVarNodes(cexpr, 1, varno, 0);
 
 			/*
 			 * Finally, convert to implicit-AND format (that is, a List) and
@@ -1572,7 +1577,8 @@ get_relation_statistics_worker(List **stainfos, RelOptInfo *rel,
  * just the identifying metadata.  Only stats actually built are considered.
  */
 static List *
-get_relation_statistics(RelOptInfo *rel, Relation relation)
+get_relation_statistics(PlannerInfo *root, RelOptInfo *rel,
+						Relation relation)
 {
 	Index		varno = rel->relid;
 	List	   *statoidlist;
@@ -1604,8 +1610,8 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 			keys = bms_add_member(keys, staForm->stxkeys.values[i]);
 
 		/*
-		 * Preprocess expressions (if any). We read the expressions, run them
-		 * through eval_const_expressions, and fix the varnos.
+		 * Preprocess expressions (if any). We read the expressions, fix the
+		 * varnos, and run them through eval_const_expressions.
 		 *
 		 * XXX We don't know yet if there are any data for this stats object,
 		 * with either stxdinherit value. But it's reasonable to assume there
@@ -1629,6 +1635,18 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 				pfree(exprsString);
 
 				/*
+				 * Modify the copies we obtain from the relcache to have the
+				 * correct varno for the parent relation, so that they match
+				 * up correctly against qual clauses.
+				 *
+				 * This must be done before const-simplification because
+				 * eval_const_expressions reduces NullTest for Vars based on
+				 * varno.
+				 */
+				if (varno != 1)
+					ChangeVarNodes((Node *) exprs, 1, varno, 0);
+
+				/*
 				 * Run the expressions through eval_const_expressions. This is
 				 * not just an optimization, but is necessary, because the
 				 * planner will be comparing them to similarly-processed qual
@@ -1636,18 +1654,10 @@ get_relation_statistics(RelOptInfo *rel, Relation relation)
 				 * We must not use canonicalize_qual, however, since these
 				 * aren't qual expressions.
 				 */
-				exprs = (List *) eval_const_expressions(NULL, (Node *) exprs);
+				exprs = (List *) eval_const_expressions(root, (Node *) exprs);
 
 				/* May as well fix opfuncids too */
 				fix_opfuncids((Node *) exprs);
-
-				/*
-				 * Modify the copies we obtain from the relcache to have the
-				 * correct varno for the parent relation, so that they match
-				 * up correctly against qual clauses.
-				 */
-				if (varno != 1)
-					ChangeVarNodes((Node *) exprs, 1, varno, 0);
 			}
 		}
 
