@@ -11,7 +11,8 @@ The following tools are currently unsupported with `pg_tde` WAL encryption:
 
 * `pg_createsubscriber`
 * `pg_receivewal`
-* `pg_verifybackup` (checksum mismatch with encrypted WAL)
+* `pg_verifybackup` by default fails with checksum or WAL key size mismatch errors.
+  As a workaround, use `-s` (skip checksum) and `-n` (`--no-parse-wal`) to verify backups.
 
 The following tools and extensions in Percona Distribution for PostgreSQL have been tested and verified to work with `pg_tde` WAL encryption:
 
