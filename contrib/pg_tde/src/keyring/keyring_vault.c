@@ -42,7 +42,6 @@ typedef enum
 	JRESP_MOUNT_INFO_EXPECT_OPTIONS_FIELD,
 } JsonVaultRespMountInfoSemState;
 
-
 typedef enum
 {
 	JRESP_F_UNUSED,

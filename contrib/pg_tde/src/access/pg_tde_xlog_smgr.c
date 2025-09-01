@@ -325,7 +325,6 @@ TDEXLogWriteEncryptedPagesOldKeys(int fd, const void *buf, size_t count, off_t o
 	return pg_pwrite(fd, enc_buff, count, offset);
 }
 
-
 /*
  * Encrypt XLog page(s) from the buf and write to the segment file.
  */
@@ -543,7 +542,6 @@ TDEXLogCryptBuffer(const void *buf, void *out_buf, size_t count, off_t offset,
 				 * decrypt/encrypt from the beginning / until the end, as it
 				 * is part of the key.
 				 */
-
 
 				size_t		end_lsn =
 					data_end.tli < curr_key->range.end.tli ? data_end.lsn :

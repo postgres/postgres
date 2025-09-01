@@ -679,7 +679,6 @@ pg_tde_set_principal_key_internal(Oid providerOid,
 	}
 }
 
-
 /*
  * SQL interface to delete principal key.
  *
