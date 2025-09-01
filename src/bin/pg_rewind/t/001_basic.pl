@@ -11,11 +11,8 @@ use lib $FindBin::RealBin;
 
 use RewindTest;
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  "copies WAL directly to archive without using archive_command";
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_wal
+	'copies WAL directly to archive without using archive_command';
 
 sub run_test
 {

@@ -15,11 +15,8 @@ use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::AdjustUpgrade;
 use Test::More;
 
-if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  'pg_restore fail to restore _pg_tde schema on cluster which already has it';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	 'pg_restore fail to restore _pg_tde schema on cluster which already has it';
 
 # Can be changed to test the other modes.
 my $mode = $ENV{PG_TEST_PG_UPGRADE_MODE} || '--copy';

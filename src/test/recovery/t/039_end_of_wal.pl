@@ -13,10 +13,8 @@ use Fcntl qw(SEEK_SET);
 
 use integer;    # causes / operator to use integer math
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all => 'uses write_wal to hack wal directly';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_wal
+	'uses write_wal to hack wal directly';
 
 # Is this a big-endian system ("network" byte order)?  We can't use 'Q' in
 # pack() calls because it's not available in some perl builds, so we need to

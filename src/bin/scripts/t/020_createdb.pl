@@ -8,11 +8,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  'tries to use FILE_COPY strategy for database creation with encrypted objects in the template';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	'tries to use FILE_COPY strategy for database creation with encrypted objects in the template';
 
 program_help_ok('createdb');
 program_version_ok('createdb');

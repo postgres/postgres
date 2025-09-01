@@ -8,11 +8,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  'pg_restore fail to restore _pg_tde schema on cluster which already has it';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	'pg_restore fail to restore _pg_tde schema on cluster which already has it';
 
 if ($PostgreSQL::Test::Utils::is_msys2)
 {

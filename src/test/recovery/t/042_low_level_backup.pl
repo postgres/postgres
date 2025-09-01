@@ -13,11 +13,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  'directly copies archived data without using restore_command';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_wal
+	'directly copies archived data without using restore_command';
 
 # Start primary node with archiving.
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');

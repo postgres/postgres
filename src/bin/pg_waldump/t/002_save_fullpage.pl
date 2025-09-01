@@ -9,10 +9,8 @@ use PostgreSQL::Test::RecursiveCopy;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all => "pg_waldump needs extra options for encrypted WAL";
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_wal
+	'pg_waldump needs extra options for encrypted WAL';
 
 my ($blocksize, $walfile_name);
 

@@ -11,11 +11,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all =>
-	  "pg_basebackup without -E from server with encrypted WAL produces broken backups";
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_wal
+	'pg_basebackup without -E from server with encrypted WAL produces broken backups';
 
 my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);

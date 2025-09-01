@@ -9,10 +9,8 @@ use PostgreSQL::Test::Utils;
 
 use Test::More;
 
-if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all => "hacks relation files directly for scaffolding";
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	'hacks relation files directly for scaffolding';
 
 my ($node, $result);
 

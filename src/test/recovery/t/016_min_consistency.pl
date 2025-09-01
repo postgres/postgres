@@ -13,10 +13,8 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-if ($ENV{TDE_MODE_SMGR} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all => 'reads LSN directly from relation files';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	'reads LSN directly from relation files';
 
 # Find the largest LSN in the set of pages part of the given relation
 # file.  This is used for offline checks of page consistency.  The LSN

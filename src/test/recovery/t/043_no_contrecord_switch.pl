@@ -12,10 +12,8 @@ use Fcntl qw(SEEK_SET);
 
 use integer;    # causes / operator to use integer math
 
-if ($ENV{TDE_MODE_WAL} and not $ENV{TDE_MODE_NOSKIP})
-{
-	plan skip_all => 'uses write_wal to hack wal directly';
-}
+PostgreSQL::Test::TdeCluster::skip_if_tde_mode_smgr
+	'uses write_wal to hack wal directly';
 
 # Values queried from the server
 my $WAL_SEGMENT_SIZE;

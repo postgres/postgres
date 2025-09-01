@@ -8,15 +8,12 @@ use warnings FATAL => 'all';
 use List::Util                      ();
 use PostgreSQL::Test::RecursiveCopy ();
 use PostgreSQL::Test::Utils         ();
+use Test::More;
 
-our ($tde_template_dir);
-
-BEGIN
-{
-	$ENV{TDE_MODE_NOSKIP} = 0 unless defined($ENV{TDE_MODE_NOSKIP});
-	$ENV{TDE_MODE_SMGR} = 1 unless defined($ENV{TDE_MODE_SMGR});
-	$ENV{TDE_MODE_WAL} = 1 unless defined($ENV{TDE_MODE_WAL});
-}
+our $tde_mode = defined($ENV{TDE_MODE}) ? $ENV{TDE_MODE} + 0 : 0;
+my $tde_mode_noskip = defined($ENV{TDE_MODE_NOSKIP}) ? $ENV{TDE_MODE_NOSKIP} + 0 : 0;
+my $tde_mode_smgr = defined($ENV{TDE_MODE_SMGR}) ? $ENV{TDE_MODE_SMGR} + 0 : $tde_mode;
+my $tde_mode_wal = defined($ENV{TDE_MODE_WAL}) ? $ENV{TDE_MODE_WAL} + 0 : $tde_mode;
 
 sub init
 {
@@ -29,7 +26,7 @@ sub init
 
 	$self->_tde_init_pg_tde_dir($params{extra});
 
-	if ($ENV{TDE_MODE_SMGR})
+	if ($tde_mode_smgr)
 	{
 		# Enable the TDE extension in all databases created by initdb, this is
 		# necessary for the tde_heap access method to be available everywhere.
@@ -45,7 +42,7 @@ sub init
 			'default_table_access_method = tde_heap');
 	}
 
-	if ($ENV{TDE_MODE_WAL})
+	if ($tde_mode_wal)
 	{
 		$self->SUPER::append_conf('postgresql.conf',
 			'pg_tde.wal_encrypt = on');
@@ -76,7 +73,7 @@ sub backup
 
 	mkdir $backup_dir or die "mkdir($backup_dir) failed: $!";
 
-	if ($ENV{TDE_MODE_WAL})
+	if ($tde_mode_wal)
 	{
 		PostgreSQL::Test::Utils::system_log('cp', '-R', '-P', '-p',
 			$self->pg_tde_dir, $backup_dir . '/pg_tde',);
@@ -100,7 +97,7 @@ sub enable_archiving
 	my $path = $self->archive_dir;
 
 	$self->SUPER::enable_archiving;
-	if ($ENV{TDE_MODE_WAL})
+	if ($tde_mode_wal)
 	{
 		$self->adjust_conf('postgresql.conf', 'archive_command',
 			qq('pg_tde_archive_decrypt %f %p "cp \\"%%p\\" \\"$path/%%f\\""')
@@ -116,7 +113,7 @@ sub enable_restoring
 	my $path = $root_node->archive_dir;
 
 	$self->SUPER::enable_restoring($root_node, $standby);
-	if ($ENV{TDE_MODE_WAL})
+	if ($tde_mode_wal)
 	{
 		$self->adjust_conf('postgresql.conf', 'restore_command',
 			qq('pg_tde_restore_encrypt %f %p "cp \\"$path/%%f\\" \\"%%p\\""')
@@ -236,6 +233,18 @@ sub _tde_init_sql_command
 		],
 		'<',
 		\$sql);
+}
+
+sub skip_if_tde_mode_wal
+{
+	my ($msg) = @_;
+	plan(skip_all => $msg) if ($tde_mode_wal && !$tde_mode_noskip);
+}
+
+sub skip_if_tde_mode_smgr
+{
+	my ($msg) = @_;
+	plan(skip_all => $msg) if ($tde_mode_smgr && !$tde_mode_noskip);
 }
 
 1;
