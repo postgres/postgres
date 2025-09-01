@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:44+0200\n"
+"POT-Creation-Date: 2025-08-30 15:59+0300\n"
 "PO-Revision-Date: 2024-09-04 17:08+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -253,8 +253,8 @@ msgid "Catalog version number:               %u\n"
 msgstr "Номер версии каталога:                %u\n"
 
 #: pg_controldata.c:242
-#, c-format
-msgid "Database system identifier:           %llu\n"
+#, fuzzy, c-format
+msgid "Database system identifier:           %<PRIu64>\n"
 msgstr "Идентификатор системы баз данных:     %llu\n"
 
 #: pg_controldata.c:244
@@ -536,8 +536,21 @@ msgstr "по значению"
 msgid "Data page checksum version:           %u\n"
 msgstr "Версия контрольных сумм страниц:      %u\n"
 
-# skip-rule: capital-letter-first
 #: pg_controldata.c:339
+#, fuzzy, c-format
+msgid "Default char data signedness:         %s\n"
+msgstr "Макс. предел выравнивания данных:     %u\n"
+
+#: pg_controldata.c:340
+msgid "signed"
+msgstr ""
+
+#: pg_controldata.c:340
+msgid "unsigned"
+msgstr ""
+
+# skip-rule: capital-letter-first
+#: pg_controldata.c:341
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Случ. число для псевдоаутентификации: %s\n"

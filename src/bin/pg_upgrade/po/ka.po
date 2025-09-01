@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-08 17:20+0000\n"
-"PO-Revision-Date: 2025-07-09 05:44+0200\n"
+"POT-Creation-Date: 2025-08-15 21:19+0000\n"
+"PO-Revision-Date: 2025-08-16 16:35+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -583,7 +583,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s"
 msgstr ""
@@ -2019,7 +2019,7 @@ msgstr "ვერსიის ფაილის გახსნის შეც
 msgid "could not parse version file \"%s\""
 msgstr "ვერსიის ფაილის დამუშავების შეცდომა \"%s\""
 
-#: server.c:317
+#: server.c:299
 #, c-format
 msgid ""
 "\n"
@@ -2028,7 +2028,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:321
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2037,7 +2037,7 @@ msgstr ""
 "ვერ ვუკავშირდები საწყის postmaster-ს, რომელიც შემდეგი ბრძანებით გაეშვა:\n"
 "%s"
 
-#: server.c:325
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2046,22 +2046,22 @@ msgstr ""
 "ვერ ვუკავშირდები სამიზნე postmaster-ს, რომელიც შემდეგი ბრძანებით გაეშვა:\n"
 "%s"
 
-#: server.c:339
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl-ის შეცდომა საწყისი სერვერის გაშვებისას ან შეერთების შეცდომა"
 
-#: server.c:341
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl-ის შეცდომა სამიზნე სერვერის გაშვებისას ან შეერთების შეცდომა"
 
-#: server.c:386 task.c:195
+#: server.c:368 task.c:195
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
 
-#: server.c:399
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq-ის გარემოს ცვლად %s-ს არალოკალური სერვერის მნიშვნელობა: %s გააჩნია"

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-08 07:44+0200\n"
+"POT-Creation-Date: 2025-08-30 15:59+0300\n"
 "PO-Revision-Date: 2024-11-09 08:04+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -15,22 +15,22 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Lokalize 21.12.3\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "ошибка: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "предупреждение: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "подробности: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "подсказка: "
@@ -40,8 +40,8 @@ msgstr "подсказка: "
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
+#: ../../common/controldata_utils.c:110 copy_file.c:164 load_manifest.c:161
+#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:540
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -52,8 +52,8 @@ msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %zu)"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
-#: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:548
+#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:740
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -77,12 +77,12 @@ msgstr ""
 "этой программой. В этом случае результаты будут неверными и\n"
 "установленный PostgreSQL будет несовместим с этим каталогом данных."
 
-#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:70
-#: ../../common/file_utils.c:347 ../../common/file_utils.c:406
-#: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
-#: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
-#: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: ../../common/controldata_utils.c:230 ../../common/file_utils.c:69
+#: ../../common/file_utils.c:370 ../../common/file_utils.c:428
+#: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
+#: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
+#: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:533
+#: pg_combinebackup.c:1177 reconstruct.c:523 reconstruct.c:638
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -94,14 +94,15 @@ msgstr "не удалось открыть файл \"%s\": %m"
 msgid "could not write file \"%s\": %m"
 msgstr "не удалось записать файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:418
-#: ../../common/file_utils.c:488
+#: ../../common/controldata_utils.c:268 ../../common/file_utils.c:440
+#: ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
+#: ../../common/jsonapi.c:2410 ../../common/parse_manifest.c:157
+#: ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
@@ -130,126 +131,126 @@ msgstr "нехватка памяти\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "попытка дублирования нулевого указателя (внутренняя ошибка)\n"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "не удалось синхронизировать с ФС файл \"%s\": %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
-#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
-#: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
+#: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:685
+#: pg_combinebackup.c:1141 pg_combinebackup.c:1393 reconstruct.c:204
 #: reconstruct.c:421
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "эта сборка программы не поддерживает метод синхронизации \"%s\""
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
-#: pg_combinebackup.c:933 pg_combinebackup.c:1256
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
+#: pg_combinebackup.c:943 pg_combinebackup.c:1266
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "не удалось открыть каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не удалось прочитать каталог \"%s\": %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "не удалось переименовать файл \"%s\" в \"%s\": %m"
 
-#: ../../common/jsonapi.c:2121
+#: ../../common/jsonapi.c:2435
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr ""
 "Инкрементальный лексический анализатор не подходит для нисходящего "
 "рекурсивного разбора."
 
-#: ../../common/jsonapi.c:2123
+#: ../../common/jsonapi.c:2437
 msgid "Incremental parser requires incremental lexer."
 msgstr ""
 "Для инкрементального разбора требуется инкрементальный лексический "
 "анализатор."
 
-#: ../../common/jsonapi.c:2125
+#: ../../common/jsonapi.c:2439
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr ""
 "Слишком большая вложенность JSON, максимальная допустимая глубина: 6400."
 
-#: ../../common/jsonapi.c:2127
+#: ../../common/jsonapi.c:2441
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "Неверная спецпоследовательность: \"\\%.*s\"."
 
-#: ../../common/jsonapi.c:2131
+#: ../../common/jsonapi.c:2445
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Символ с кодом 0x%02x необходимо экранировать."
 
-#: ../../common/jsonapi.c:2135
+#: ../../common/jsonapi.c:2449
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Ожидался конец текста, но обнаружено продолжение \"%.*s\"."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2452
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Ожидался элемент массива или \"]\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2455
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Ожидалась \",\" или \"]\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2458
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Ожидалось \":\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2461
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Ожидалось значение JSON, но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2464
 msgid "The input string ended unexpectedly."
 msgstr "Неожиданный конец входной строки."
 
-#: ../../common/jsonapi.c:2152
+#: ../../common/jsonapi.c:2466
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Ожидалась строка или \"}\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2469
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Ожидалась \",\" или \"}\", но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2472
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Ожидалась строка, но обнаружено \"%.*s\"."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2475
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "Ошибочный элемент \"%.*s\"."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2481
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 нельзя преобразовать в текст."
 
-#: ../../common/jsonapi.c:2166
+#: ../../common/jsonapi.c:2483
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "За \"\\u\" должны следовать четыре шестнадцатеричные цифры."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2486
 msgid ""
 "Unicode escape values cannot be used for code point values above 007F when "
 "the encoding is not UTF8."
@@ -257,20 +258,24 @@ msgstr ""
 "Спецкоды Unicode для значений выше 007F можно использовать только с "
 "кодировкой UTF8."
 
-#: ../../common/jsonapi.c:2178
+#: ../../common/jsonapi.c:2495
 #, c-format
 msgid ""
 "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "Спецкод Unicode нельзя преобразовать в серверную кодировку %s."
 
-#: ../../common/jsonapi.c:2185
+#: ../../common/jsonapi.c:2502
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr ""
 "Старшее слово суррогата Unicode не может следовать за другим старшим словом."
 
-#: ../../common/jsonapi.c:2187
+#: ../../common/jsonapi.c:2504
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Младшее слово суррогата Unicode должно следовать за старшим словом."
+
+#: ../../common/jsonapi.c:2526
+msgid "out of memory while constructing error description"
+msgstr ""
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
@@ -362,7 +367,7 @@ msgstr "не удалось декодировать имя файла"
 msgid "file size is not an integer"
 msgstr "размер файла не является целочисленным"
 
-#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:204
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "нераспознанный алгоритм расчёта контрольных сумм: \"%s\""
@@ -479,62 +484,67 @@ msgstr "%s: %s требует %s"
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "не удалось записать файл \"%s\" (записано байт: %d из %d)"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:721
 #: reconstruct.c:767 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не удалось изменить контекст контрольной суммы файла \"%s\""
 
-#: copy_file.c:186
+#: copy_file.c:200
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "не удалось записать в файл \"%s\": %m"
 
-#: copy_file.c:188
+#: copy_file.c:202
 #, c-format
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr ""
 "не удалось записать в файл \"%s\" (смещение %u, записано байт: %d из %d)"
 
-#: copy_file.c:199 reconstruct.c:784
+#: copy_file.c:213 reconstruct.c:784
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
 
-#: copy_file.c:218
+#: copy_file.c:232
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %m"
 msgstr "ошибка при клонировании файла \"%s\" в \"%s\": %m"
 
-#: copy_file.c:229 copy_file.c:272
+#: copy_file.c:243 copy_file.c:286
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "не удалось создать файл \"%s\": %m"
 
-#: copy_file.c:237
+#: copy_file.c:251
 #, c-format
 msgid "error while cloning file \"%s\" to \"%s\": %s"
 msgstr "ошибка при клонировании файла \"%s\" в \"%s\": %s"
 
-#: copy_file.c:245 pg_combinebackup.c:251
+#: copy_file.c:259 pg_combinebackup.c:256
 #, c-format
 msgid "file cloning not supported on this platform"
 msgstr "клонирование файлов не поддерживается в этой ОС"
 
-#: copy_file.c:278 reconstruct.c:704
+#: copy_file.c:292 reconstruct.c:704
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "ошибка при копировании фрагмента файла \"%s\" в \"%s\": %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
+#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:724
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range не поддерживается в этой ОС"
 
-#: copy_file.c:300
+#: copy_file.c:314
 #, c-format
 msgid "could not copy file \"%s\" to \"%s\": %m"
 msgstr "не удалось скопировать файл \"%s\" в \"%s\": %m"
+
+#: copy_file.c:333
+#, fuzzy, c-format
+msgid "could not create link from \"%s\" to \"%s\": %m"
+msgstr "не удалось создать символическую ссылку \"%s\" в \"%s\": %m"
 
 #: load_manifest.c:125
 #, c-format
@@ -562,27 +572,28 @@ msgstr ""
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "дублирующийся путь в манифесте копии: \"%s\""
 
-#: pg_combinebackup.c:220 pg_combinebackup.c:228
+#: pg_combinebackup.c:225 pg_combinebackup.c:233
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
-#: pg_combinebackup.c:227
+#: pg_combinebackup.c:232
 #, c-format
 msgid "no input directories specified"
 msgstr "входные каталоги не указаны"
 
-#: pg_combinebackup.c:233
+#: pg_combinebackup.c:238
 #, c-format
 msgid "no output directory specified"
 msgstr "выходной каталог не указан"
 
-#: pg_combinebackup.c:301
-#, c-format
-msgid "%s: manifest system identifier is %llu, but control file has %llu"
+#: pg_combinebackup.c:306
+#, fuzzy, c-format
+msgid ""
+"%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
 msgstr "%s: идентификатор системы в манифесте %llu, а в управляющем файле %llu"
 
-#: pg_combinebackup.c:340
+#: pg_combinebackup.c:345
 #, c-format
 msgid ""
 "cannot generate a manifest because no manifest is available for the final "
@@ -591,41 +602,48 @@ msgstr ""
 "сгенерировать манифест нельзя по причине отсутствия манифеста в последней "
 "указанной копии"
 
-#: pg_combinebackup.c:387
+#: pg_combinebackup.c:392
 #, c-format
 msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
 msgstr "не удалось создать символическую ссылку \"%s\" в \"%s\": %m"
 
-#: pg_combinebackup.c:399 pg_combinebackup.c:730 pg_combinebackup.c:927
+#: pg_combinebackup.c:404 pg_combinebackup.c:739 pg_combinebackup.c:937
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "не удалось создать каталог \"%s\": %m"
 
-#: pg_combinebackup.c:454
+#: pg_combinebackup.c:434
+#, c-format
+msgid ""
+"--link mode was used; any modifications to the output directory might "
+"destructively modify input directories"
+msgstr ""
+
+#: pg_combinebackup.c:464
 #, c-format
 msgid "directory name too long"
 msgstr "слишком длинное имя каталога"
 
-#: pg_combinebackup.c:461
+#: pg_combinebackup.c:471
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
 msgstr "несколько знаков \"=\" в сопоставлении табличного пространства"
 
-#: pg_combinebackup.c:469
+#: pg_combinebackup.c:479
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr ""
 "сопоставление табл. пространства записано неверно: \"%s\"; должно быть "
 "\"СТАРЫЙ_КАТАЛОГ=НОВЫЙ_КАТАЛОГ\""
 
-#: pg_combinebackup.c:480 pg_combinebackup.c:484
+#: pg_combinebackup.c:490 pg_combinebackup.c:494
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr ""
 "старый каталог в сопоставлении табл. пространства задан не абсолютным путём: "
 "%s"
 
-#: pg_combinebackup.c:553
+#: pg_combinebackup.c:563
 #, c-format
 msgid ""
 "backup at \"%s\" is a full backup, but only the first backup should be a "
@@ -634,7 +652,7 @@ msgstr ""
 "копия в \"%s\" является полной копией, но полную копию можно передать только "
 "первой в списке"
 
-#: pg_combinebackup.c:556
+#: pg_combinebackup.c:566
 #, c-format
 msgid ""
 "backup at \"%s\" is an incremental backup, but the first backup should be a "
@@ -643,37 +661,37 @@ msgstr ""
 "копия в \"%s\" является инкрементальной, но первой в списке должна "
 "передаваться полная копия"
 
-#: pg_combinebackup.c:559
+#: pg_combinebackup.c:569
 #, c-format
 msgid "backup at \"%s\" starts on timeline %u, but expected %u"
 msgstr "копия в \"%s\" начинается с линии времени %u, а ожидалась %u"
 
-#: pg_combinebackup.c:562
+#: pg_combinebackup.c:572
 #, c-format
 msgid "backup at \"%s\" starts at LSN %X/%X, but expected %X/%X"
 msgstr "копия в \"%s\" начинается с LSN %X/%X, а ожидался %X/%X"
 
-#: pg_combinebackup.c:614
+#: pg_combinebackup.c:624
 #, c-format
 msgid "%s: CRC is incorrect"
 msgstr "%s: ошибка CRC"
 
-#: pg_combinebackup.c:618
+#: pg_combinebackup.c:628
 #, c-format
 msgid "%s: unexpected control file version"
 msgstr "%s: неожиданная версия управляющего файла"
 
-#: pg_combinebackup.c:625
-#, c-format
-msgid "%s: expected system identifier %llu, but found %llu"
+#: pg_combinebackup.c:635
+#, fuzzy, c-format
+msgid "%s: expected system identifier %<PRIu64>, but found %<PRIu64>"
 msgstr "%s: ожидался идентификатор системы %llu, но обнаружен %llu"
 
-#: pg_combinebackup.c:657
+#: pg_combinebackup.c:666
 #, c-format
 msgid "only some backups have checksums enabled"
 msgstr "контрольные суммы включены только в некоторых копиях"
 
-#: pg_combinebackup.c:658
+#: pg_combinebackup.c:667
 #, c-format
 msgid ""
 "Disable, and optionally reenable, checksums on the output directory to avoid "
@@ -682,37 +700,37 @@ msgstr ""
 "Отключите (и при необходимости вновь включите) контрольные суммы в выходном "
 "каталоге во избежание сбоев."
 
-#: pg_combinebackup.c:693
+#: pg_combinebackup.c:702
 #, c-format
 msgid "removing output directory \"%s\""
 msgstr "удаление выходного каталога \"%s\""
 
-#: pg_combinebackup.c:695
+#: pg_combinebackup.c:704
 #, c-format
 msgid "failed to remove output directory"
 msgstr "ошибка при удалении выходного каталога"
 
-#: pg_combinebackup.c:699
+#: pg_combinebackup.c:708
 #, c-format
 msgid "removing contents of output directory \"%s\""
 msgstr "удаление содержимого выходного каталога \"%s\""
 
-#: pg_combinebackup.c:702
+#: pg_combinebackup.c:711
 #, c-format
 msgid "failed to remove contents of output directory"
 msgstr "ошибка при удалении содержимого выходного каталога"
 
-#: pg_combinebackup.c:742
+#: pg_combinebackup.c:751
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "каталог \"%s\" существует, но он не пуст"
 
-#: pg_combinebackup.c:745
+#: pg_combinebackup.c:754
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ошибка при обращении к каталогу \"%s\": %m"
 
-#: pg_combinebackup.c:759
+#: pg_combinebackup.c:768
 #, c-format
 msgid ""
 "%s reconstructs full backups from incrementals.\n"
@@ -721,17 +739,17 @@ msgstr ""
 "%s реконструирует полные копии из инкрементальных.\n"
 "\n"
 
-#: pg_combinebackup.c:760
+#: pg_combinebackup.c:769
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_combinebackup.c:761
+#: pg_combinebackup.c:770
 #, c-format
 msgid "  %s [OPTION]... DIRECTORY...\n"
 msgstr "  %s [ПАРАМЕТР]... КАТАЛОГ...\n"
 
-#: pg_combinebackup.c:762
+#: pg_combinebackup.c:771
 #, c-format
 msgid ""
 "\n"
@@ -740,18 +758,26 @@ msgstr ""
 "\n"
 "Параметры:\n"
 
-#: pg_combinebackup.c:763
+#: pg_combinebackup.c:772
 #, c-format
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               выдавать много отладочных сообщений\n"
 
-#: pg_combinebackup.c:764
+#: pg_combinebackup.c:773
+#, fuzzy, c-format
+msgid "  -k, --link                link files instead of copying\n"
+msgstr ""
+"      --clone               клонировать (используя reflink), а не "
+"копировать\n"
+"                            файлы\n"
+
+#: pg_combinebackup.c:774
 #, c-format
 msgid "  -n, --dry-run             do not actually do anything\n"
 msgstr ""
 "  -n, --dry-run             не выполнять никаких практических действий\n"
 
-#: pg_combinebackup.c:765
+#: pg_combinebackup.c:775
 #, c-format
 msgid ""
 "  -N, --no-sync             do not wait for changes to be written safely to "
@@ -759,12 +785,12 @@ msgid ""
 msgstr ""
 "  -N, --no-sync             не ждать завершения сохранения данных на диске\n"
 
-#: pg_combinebackup.c:766
+#: pg_combinebackup.c:776
 #, c-format
 msgid "  -o, --output=DIRECTORY    output directory\n"
 msgstr "  -o, --output=КАТАЛОГ      выходной каталог\n"
 
-#: pg_combinebackup.c:767
+#: pg_combinebackup.c:777
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -775,7 +801,7 @@ msgstr ""
 "каталога\n"
 "                            в новый\n"
 
-#: pg_combinebackup.c:769
+#: pg_combinebackup.c:779
 #, c-format
 msgid "      --clone               clone (reflink) files instead of copying\n"
 msgstr ""
@@ -783,19 +809,19 @@ msgstr ""
 "копировать\n"
 "                            файлы\n"
 
-#: pg_combinebackup.c:770
+#: pg_combinebackup.c:780
 #, c-format
 msgid "      --copy                copy files (default)\n"
 msgstr "      --copy                копировать файлы (по умолчанию)\n"
 
-#: pg_combinebackup.c:771
+#: pg_combinebackup.c:781
 #, c-format
 msgid "      --copy-file-range     copy using copy_file_range() system call\n"
 msgstr ""
 "      --copy-file-range     использовать для копирования системную функцию\n"
 "                            copy_file_range()\n"
 
-#: pg_combinebackup.c:772
+#: pg_combinebackup.c:782
 #, c-format
 msgid ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
@@ -804,27 +830,27 @@ msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 "                            алгоритм подсчёта контрольных сумм в манифесте\n"
 
-#: pg_combinebackup.c:774
+#: pg_combinebackup.c:784
 #, c-format
 msgid "      --no-manifest         suppress generation of backup manifest\n"
 msgstr "      --no-manifest         отключить создание манифеста копии\n"
 
-#: pg_combinebackup.c:775
+#: pg_combinebackup.c:785
 #, c-format
 msgid "      --sync-method=METHOD  set method for syncing files to disk\n"
 msgstr "      --sync-method=МЕТОД   метод синхронизации файлов с ФС\n"
 
-#: pg_combinebackup.c:776
+#: pg_combinebackup.c:786
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: pg_combinebackup.c:777
+#: pg_combinebackup.c:787
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: pg_combinebackup.c:779
+#: pg_combinebackup.c:789
 #, c-format
 msgid ""
 "\n"
@@ -833,73 +859,73 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <%s>.\n"
 
-#: pg_combinebackup.c:780
+#: pg_combinebackup.c:790
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
-#: pg_combinebackup.c:995
+#: pg_combinebackup.c:1005
 #, c-format
 msgid "skipping symbolic link \"%s\""
 msgstr "символическая ссылка \"%s\" пропускается"
 
-#: pg_combinebackup.c:997
+#: pg_combinebackup.c:1007
 #, c-format
 msgid "skipping special file \"%s\""
 msgstr "специальный файл \"%s\" пропускается"
 
-#: pg_combinebackup.c:1073 reconstruct.c:305
+#: pg_combinebackup.c:1083 reconstruct.c:305
 #, c-format
 msgid "manifest file \"%s\" contains no entry for file \"%s\""
 msgstr "файл манифеста \"%s\" не содержит записи о файле \"%s\""
 
-#: pg_combinebackup.c:1189
+#: pg_combinebackup.c:1199
 #, c-format
 msgid "%s: server version too old"
 msgstr "%s: версия сервера слишком старая"
 
-#: pg_combinebackup.c:1190
+#: pg_combinebackup.c:1200
 #, c-format
 msgid "%s: could not parse version number"
 msgstr "%s: не удалось разобрать номер версии"
 
-#: pg_combinebackup.c:1309
+#: pg_combinebackup.c:1319
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: pg_combinebackup.c:1312
+#: pg_combinebackup.c:1322
 #, c-format
 msgid "target of symbolic link \"%s\" is too long"
 msgstr "целевой путь символической ссылки \"%s\" слишком длинный"
 
-#: pg_combinebackup.c:1315
+#: pg_combinebackup.c:1325
 #, c-format
 msgid "target of symbolic link \"%s\" is relative"
 msgstr "целевой путь символической ссылки \"%s\" является относительным"
 
-#: pg_combinebackup.c:1337
+#: pg_combinebackup.c:1347
 #, c-format
 msgid "tablespace at \"%s\" has no tablespace mapping"
 msgstr "для табличного пространства в \"%s\" не задано сопоставление"
 
-#: pg_combinebackup.c:1355
+#: pg_combinebackup.c:1365
 #, c-format
 msgid "tablespaces with OIDs %u and %u both point at directory \"%s\""
 msgstr ""
 "два табличных пространства с OIDs %u и %u указывают на один каталог \"%s\""
 
-#: pg_combinebackup.c:1364
+#: pg_combinebackup.c:1374
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "не удалось закрыть каталог \"%s\": %m"
 
-#: pg_combinebackup.c:1385
+#: pg_combinebackup.c:1395
 #, c-format
 msgid "file \"%s\" is too large"
 msgstr "файл \"%s\" слишком большой"
 
-#: pg_combinebackup.c:1402
+#: pg_combinebackup.c:1412
 #, c-format
 msgid "could not read file \"%s\": read %zd of %lld"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %zd из %lld)"

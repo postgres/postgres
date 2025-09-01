@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-19 13:10+0000\n"
-"PO-Revision-Date: 2025-07-20 04:37+0200\n"
+"POT-Creation-Date: 2025-08-24 00:10+0000\n"
+"PO-Revision-Date: 2025-08-24 09:40+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,213 +16,213 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
-#: ../libpq-oauth/oauth-curl.c:306 ../libpq-oauth/oauth-curl.c:1936
+#: ../libpq-oauth/oauth-curl.c:307 ../libpq-oauth/oauth-curl.c:2000
 #, c-format
 msgid "libcurl easy handle removal failed: %s"
 msgstr "libcurl-ის ადვილი დამმუშავებლის წაშლა ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:326
+#: ../libpq-oauth/oauth-curl.c:327
 #, c-format
 msgid "libcurl multi handle cleanup failed: %s"
 msgstr "libcurl-ის დამმუშავებლების მოსუფთავება ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:389 ../libpq-oauth/oauth-curl.c:400
+#: ../libpq-oauth/oauth-curl.c:390 ../libpq-oauth/oauth-curl.c:401
 #, c-format
 msgid "failed to set %s on OAuth connection: %s"
 msgstr "%s-ის დაყენება OAuth კავშირზე ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:411
+#: ../libpq-oauth/oauth-curl.c:412
 #, c-format
 msgid "failed to get %s from OAuth response: %s"
 msgstr "OAuth-ის პასუხიდან %s-ის მიღება ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:514 ../libpq-oauth/oauth-curl.c:624
+#: ../libpq-oauth/oauth-curl.c:515 ../libpq-oauth/oauth-curl.c:625
 #, c-format
 msgid "JSON is too deeply nested"
 msgstr "JSON მეტისმეტად ღრმადაა ჩადგმული"
 
-#: ../libpq-oauth/oauth-curl.c:539
+#: ../libpq-oauth/oauth-curl.c:540
 #, c-format
 msgid "internal error: started field '%s' before field '%s' was finished"
 msgstr "შიდა შეცდომა: დაიწყო ველი '%s' მანამდე, სანამ დასრულდა ველი '%s'"
 
-#: ../libpq-oauth/oauth-curl.c:566
+#: ../libpq-oauth/oauth-curl.c:567
 #, c-format
 msgid "field \"%s\" is duplicated"
 msgstr "ველი \"%s\" დუბლირებულია"
 
-#: ../libpq-oauth/oauth-curl.c:591
+#: ../libpq-oauth/oauth-curl.c:592
 #, c-format
 msgid "internal error: field '%s' still active at end of object"
 msgstr "შიდა შეცდომა: ველი '%s' ჯერ კიდევ აქტიურია ობიექტის ბოლოში"
 
-#: ../libpq-oauth/oauth-curl.c:606 ../libpq-oauth/oauth-curl.c:666
+#: ../libpq-oauth/oauth-curl.c:607 ../libpq-oauth/oauth-curl.c:667
 #, c-format
 msgid "top-level element must be an object"
 msgstr "უმაღლესი დონის ელემენტი ობიექტი უნდა იყოს"
 
-#: ../libpq-oauth/oauth-curl.c:647
+#: ../libpq-oauth/oauth-curl.c:648
 #, c-format
 msgid "internal error: found unexpected array end while parsing field '%s'"
 msgstr "შიდა შეცდომა: აღმოჩენილია მოულოდნელი მასივის დასასრული '%s' ველის დამუშავებისას"
 
-#: ../libpq-oauth/oauth-curl.c:702
+#: ../libpq-oauth/oauth-curl.c:703
 #, c-format
 msgid "internal error: scalar target found at nesting level %d"
 msgstr "შიდა შეცდომა: აღმოჩენილია სკალარული სამიზნე ერთმანეთში ჩალაგების დონეზე %d"
 
-#: ../libpq-oauth/oauth-curl.c:712
+#: ../libpq-oauth/oauth-curl.c:713
 #, c-format
 msgid "internal error: scalar field '%s' would be assigned twice"
 msgstr "შიდა შეცდომა: შეიძლება, სკალარული ველი '%s' ორჯერაა მინიჭებული"
 
-#: ../libpq-oauth/oauth-curl.c:734
+#: ../libpq-oauth/oauth-curl.c:735
 #, c-format
 msgid "internal error: array member found at nesting level %d"
 msgstr "შიდა შეცდომა: ერთმანეთში ჩალაგების დონეზე %d აღმოჩენილია მასივის წევრი"
 
-#: ../libpq-oauth/oauth-curl.c:769
+#: ../libpq-oauth/oauth-curl.c:770
 #, c-format
 msgid "no content type was provided"
 msgstr "შემცველობის ტიპი მოწოდებული არაა"
 
-#: ../libpq-oauth/oauth-curl.c:808
+#: ../libpq-oauth/oauth-curl.c:809
 #, c-format
 msgid "unexpected content type: \"%s\""
 msgstr "მოულოდნელი შემცველობის ტიპი: \"%s\""
 
-#: ../libpq-oauth/oauth-curl.c:833
+#: ../libpq-oauth/oauth-curl.c:834
 #, c-format
 msgid "response contains embedded NULLs"
 msgstr "პასუხი ჩაშენებულ NULL-ებს შეიცავს"
 
-#: ../libpq-oauth/oauth-curl.c:843
+#: ../libpq-oauth/oauth-curl.c:844
 #, c-format
 msgid "response is not valid UTF-8"
 msgstr "პასუხი არასწორი UTF-8-ა"
 
-#: ../libpq-oauth/oauth-curl.c:883
+#: ../libpq-oauth/oauth-curl.c:884
 #, c-format
 msgid "field \"%s\" is missing"
 msgstr "ველი \"%s\" აკლია"
 
-#: ../libpq-oauth/oauth-curl.c:1117
+#: ../libpq-oauth/oauth-curl.c:1118
 #, c-format
 msgid "provider rejected the oauth_client_secret"
 msgstr "პროვაიდერმა უარჰყო oauth_client_secret"
 
-#: ../libpq-oauth/oauth-curl.c:1181
+#: ../libpq-oauth/oauth-curl.c:1182
 #, c-format
 msgid "failed to create epoll set: %m"
 msgstr "epoll-ის ნაკრების შექმნა ჩავარდა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1188
+#: ../libpq-oauth/oauth-curl.c:1189
 #, c-format
 msgid "failed to create timerfd: %m"
 msgstr "timerfd-ის შექმნა ჩავარდა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1194
+#: ../libpq-oauth/oauth-curl.c:1195
 #, c-format
 msgid "failed to add timerfd to epoll set: %m"
 msgstr "epoll-ის ნაკრებში timerfd-ის ჩამატება ჩავარდა; %m"
 
 #. translator: the term "kqueue" (kernel queue) should not be translated
-#: ../libpq-oauth/oauth-curl.c:1204
+#: ../libpq-oauth/oauth-curl.c:1205
 #, c-format
 msgid "failed to create kqueue: %m"
 msgstr "kqueue-ის შექმნა ჩავარდა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1217
+#: ../libpq-oauth/oauth-curl.c:1218
 #, c-format
 msgid "failed to create timer kqueue: %m"
 msgstr "ტაიმერის kqueue-ის შექმნა ჩავარდა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1261 ../libpq-oauth/oauth-curl.c:1333
+#: ../libpq-oauth/oauth-curl.c:1262 ../libpq-oauth/oauth-curl.c:1337
 #, c-format
 msgid "unknown libcurl socket operation: %d"
 msgstr "libcurl-ის სოკეტის უცნობი ოპერაცია: %d"
 
-#: ../libpq-oauth/oauth-curl.c:1278
+#: ../libpq-oauth/oauth-curl.c:1279
 #, c-format
 msgid "could not add to epoll set: %m"
 msgstr "epoll-ის ნაკრებში ჩამატება შეუძლებელია: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1282
+#: ../libpq-oauth/oauth-curl.c:1283
 #, c-format
 msgid "could not delete from epoll set: %m"
 msgstr "epoll-ის ნაკრებიდან წაშლა შეუძლებელია: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1286
+#: ../libpq-oauth/oauth-curl.c:1287
 #, c-format
 msgid "could not update epoll set: %m"
 msgstr "epoll-ების ნაკრების განახლება ჩავარდა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1340
+#: ../libpq-oauth/oauth-curl.c:1347
 #, c-format
 msgid "could not modify kqueue: %m"
 msgstr "kqueue-ის შეცვლა შეუძლებელია: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1364
+#: ../libpq-oauth/oauth-curl.c:1371
 #, c-format
 msgid "could not delete from kqueue: %m"
 msgstr "kqueue-დან წაშლა შეუძლებელია: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1367
+#: ../libpq-oauth/oauth-curl.c:1374
 #, c-format
 msgid "could not add to kqueue: %m"
 msgstr "kqueue-ში ჩამატება შეუძლებელია: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1419
+#: ../libpq-oauth/oauth-curl.c:1423
+#, c-format
+msgid "could not comb kqueue: %m"
+msgstr "kqueue-ის კომბინგი შეუძლებელია: %m"
+
+#: ../libpq-oauth/oauth-curl.c:1473
 #, c-format
 msgid "setting timerfd to %ld: %m"
 msgstr "%ld-ზე timerfd-ის დაყენება: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1449
+#: ../libpq-oauth/oauth-curl.c:1503
 #, c-format
 msgid "deleting kqueue timer: %m"
 msgstr "kqueue-ის ტაიმერის წაშლა: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1456
+#: ../libpq-oauth/oauth-curl.c:1510
 #, c-format
 msgid "removing kqueue timer from multiplexer: %m"
 msgstr "kqueue-ის ტაიმერის წაშლა მულტიპლექსერიდან: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1467
+#: ../libpq-oauth/oauth-curl.c:1521
 #, c-format
 msgid "setting kqueue timer to %ld: %m"
 msgstr "kqueue-ის ტაიმერის დაყენება %ld-ზე: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1474
+#: ../libpq-oauth/oauth-curl.c:1528
 #, c-format
 msgid "adding kqueue timer to multiplexer: %m"
 msgstr "kqueue-ის ტაიმერის დამატება მულტიპლექსერზე: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1497
+#: ../libpq-oauth/oauth-curl.c:1553
 #, c-format
-msgid "getting timerfd value: %m"
-msgstr "timerfd-ის მნიშვნელობის მიღება: %m"
+msgid "checking timer expiration: %m"
+msgstr "შემოწმება მოლოდინის დროის ამოწურვაზე: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1519
-#, c-format
-msgid "checking kqueue for timeout: %m"
-msgstr "kqueue-ის შემოწმება მოლოდინის დროის ამოწურვაზე: %m"
-
-#: ../libpq-oauth/oauth-curl.c:1651
+#: ../libpq-oauth/oauth-curl.c:1715
 #, c-format
 msgid "failed to create libcurl multi handle"
 msgstr "libcurl-ის ერთზე მეტი დამმუშავებლის შექმნა ჩავარდა"
 
-#: ../libpq-oauth/oauth-curl.c:1671
+#: ../libpq-oauth/oauth-curl.c:1735
 #, c-format
 msgid "failed to create libcurl handle"
 msgstr "libcurl-ის დამმუშავებლის შექმნა ჩავარდა"
 
-#: ../libpq-oauth/oauth-curl.c:1755 ../libpq-oauth/oauth-curl.c:1796
-#: ../libpq-oauth/oauth-curl.c:2109 ../libpq-oauth/oauth-curl.c:2270
-#: ../libpq-oauth/oauth-curl.c:2331 ../libpq-oauth/oauth-curl.c:2420
-#: ../libpq-oauth/oauth-curl.c:2714 ../libpq-oauth/oauth-curl.c:2905
+#: ../libpq-oauth/oauth-curl.c:1819 ../libpq-oauth/oauth-curl.c:1860
+#: ../libpq-oauth/oauth-curl.c:2173 ../libpq-oauth/oauth-curl.c:2334
+#: ../libpq-oauth/oauth-curl.c:2395 ../libpq-oauth/oauth-curl.c:2484
+#: ../libpq-oauth/oauth-curl.c:2778 ../libpq-oauth/oauth-curl.c:2995
 #: fe-auth-scram.c:374 fe-auth-scram.c:447 fe-auth-scram.c:599
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
@@ -233,64 +233,65 @@ msgstr "libcurl-ის დამმუშავებლის შექმნ�
 #: fe-connect.c:6195 fe-connect.c:6293 fe-connect.c:6544 fe-connect.c:6571
 #: fe-connect.c:6647 fe-connect.c:6670 fe-connect.c:6694 fe-connect.c:6729
 #: fe-connect.c:6815 fe-connect.c:6823 fe-connect.c:7180 fe-connect.c:7362
-#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4293 fe-exec.c:4459
-#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:210 fe-protocol3.c:233
-#: fe-protocol3.c:256 fe-protocol3.c:273 fe-protocol3.c:294 fe-protocol3.c:368
-#: fe-protocol3.c:732 fe-protocol3.c:972 fe-protocol3.c:1553
-#: fe-protocol3.c:1862 fe-protocol3.c:2263 fe-secure-common.c:110
+#: fe-exec.c:530 fe-exec.c:1326 fe-exec.c:3265 fe-exec.c:4304 fe-exec.c:4470
+#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:211 fe-protocol3.c:234
+#: fe-protocol3.c:257 fe-protocol3.c:274 fe-protocol3.c:295 fe-protocol3.c:369
+#: fe-protocol3.c:750 fe-protocol3.c:990 fe-protocol3.c:1542
+#: fe-protocol3.c:1596 fe-protocol3.c:1642 fe-protocol3.c:1663
+#: fe-protocol3.c:1920 fe-protocol3.c:2321 fe-secure-common.c:110
 #: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
 #: fe-secure-openssl.c:1135
 #, c-format
 msgid "out of memory"
 msgstr "არასაკმარისი მეხსიერება"
 
-#: ../libpq-oauth/oauth-curl.c:1783
+#: ../libpq-oauth/oauth-curl.c:1847
 #, c-format
 msgid "response is too large"
 msgstr "პასუხი მეტისმეტად დიდია"
 
-#: ../libpq-oauth/oauth-curl.c:1825
+#: ../libpq-oauth/oauth-curl.c:1889
 #, c-format
 msgid "failed to queue HTTP request: %s"
 msgstr "HTTP მოთხოვნის რიგში ჩამატება ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1842 ../libpq-oauth/oauth-curl.c:1895
+#: ../libpq-oauth/oauth-curl.c:1906 ../libpq-oauth/oauth-curl.c:1959
 #, c-format
 msgid "asynchronous HTTP request failed: %s"
 msgstr "ასინქრონული HTTP მოთხოვნა ჩავარდა: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1947
+#: ../libpq-oauth/oauth-curl.c:2011
 #, c-format
 msgid "no result was retrieved for the finished handle"
 msgstr "დასრულებული დამმუშავებლიდან შედეგი მიღებული არაა"
 
-#: ../libpq-oauth/oauth-curl.c:2080 ../libpq-oauth/oauth-curl.c:2386
-#: ../libpq-oauth/oauth-curl.c:2465
+#: ../libpq-oauth/oauth-curl.c:2144 ../libpq-oauth/oauth-curl.c:2450
+#: ../libpq-oauth/oauth-curl.c:2529
 #, c-format
 msgid "unexpected response code %ld"
 msgstr "მოულოდნელი პასუხის კოდი %ld"
 
-#: ../libpq-oauth/oauth-curl.c:2152
+#: ../libpq-oauth/oauth-curl.c:2216
 #, c-format
 msgid "the issuer identifier (%s) does not match oauth_issuer (%s)"
 msgstr "გამომცემლის იდენტიფიკატორი (%s) oauth_issuer-ს (%s) არ ემთხვევა"
 
-#: ../libpq-oauth/oauth-curl.c:2179
+#: ../libpq-oauth/oauth-curl.c:2243
 #, c-format
 msgid "issuer \"%s\" does not provide a device authorization endpoint"
 msgstr "გამომცემელმა \"%s\" არ მოგვაწოდა მოწყობილობის ავტორიზაციის ბოლოწერტილი"
 
-#: ../libpq-oauth/oauth-curl.c:2205
+#: ../libpq-oauth/oauth-curl.c:2269
 #, c-format
 msgid "device authorization endpoint \"%s\" must use HTTPS"
 msgstr "მოწყობილობის ავტორიზაციის ბოლოწერტილი \"%s\" HTTPS-ს უნდა იყენებდეს"
 
-#: ../libpq-oauth/oauth-curl.c:2214
+#: ../libpq-oauth/oauth-curl.c:2278
 #, c-format
 msgid "token endpoint \"%s\" must use HTTPS"
 msgstr "კოდის ბოლოწერტილი \"%s\" HTTPS-ს უნდა იყენებდეს"
 
-#: ../libpq-oauth/oauth-curl.c:2523
+#: ../libpq-oauth/oauth-curl.c:2587
 #, c-format
 msgid "slow_down interval overflow"
 msgstr "slow_down-ის ინტერვალის გადავსება"
@@ -298,27 +299,27 @@ msgstr "slow_down-ის ინტერვალის გადავსებ
 #. translator: The first %s is a URL for the user to visit in a
 #. browser, and the second %s is a code to be copy-pasted there.
 #.
-#: ../libpq-oauth/oauth-curl.c:2559
+#: ../libpq-oauth/oauth-curl.c:2623
 #, c-format
 msgid "Visit %s and enter the code: %s\n"
 msgstr "გადადით %s-ზე და შეიყვანეთ კოდი: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:2564
+#: ../libpq-oauth/oauth-curl.c:2628
 #, c-format
 msgid "device prompt failed"
 msgstr "მოწყობილობის მოთხოვნა ჩავარდა"
 
-#: ../libpq-oauth/oauth-curl.c:2620
+#: ../libpq-oauth/oauth-curl.c:2684
 #, c-format
 msgid "curl_global_init previously failed during OAuth setup"
 msgstr "curl_global_init უკვე ჩავარდა OAuth-ის მორგებისას"
 
-#: ../libpq-oauth/oauth-curl.c:2639
+#: ../libpq-oauth/oauth-curl.c:2703
 #, c-format
 msgid "curl_global_init failed during OAuth setup"
 msgstr "curl_global_init ჩავარდა OAuth-ის მორგებისას"
 
-#: ../libpq-oauth/oauth-curl.c:2660
+#: ../libpq-oauth/oauth-curl.c:2724
 #, c-format
 msgid ""
 "libcurl is no longer thread-safe\n"
@@ -1158,8 +1159,8 @@ msgstr "\"%s\"-ში აღმოჩენილია მოულოდნე
 msgid "connection pointer is NULL\n"
 msgstr "შეერთების მაჩვენებელი ნულოვანია\n"
 
-#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
-#: fe-protocol3.c:987 fe-protocol3.c:1020
+#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3470
+#: fe-protocol3.c:1005 fe-protocol3.c:1038
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
 
@@ -1183,12 +1184,12 @@ msgstr "პაროლი მიღებულია ფაილიდან 
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "არასწორი მნიშვნელობა: \"%s\" (უნდა იყოს მთელი რიცხვი) შეერთების პარამეტრისთვის \"%s\""
 
-#: fe-exec.c:469 fe-exec.c:3533
+#: fe-exec.c:469 fe-exec.c:3544
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "მწკრივების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:531 fe-protocol3.c:2068
+#: fe-exec.c:531 fe-protocol3.c:2126
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1215,134 +1216,134 @@ msgstr "PGresult-ს INT_MAX-ზე მეტი სტრუქტურის 
 msgid "size_t overflow"
 msgstr "size_t -ის გადავსება"
 
-#: fe-exec.c:1438 fe-exec.c:1507 fe-exec.c:1553
+#: fe-exec.c:1449 fe-exec.c:1518 fe-exec.c:1564
 #, c-format
 msgid "command string is a null pointer"
 msgstr "ბრძანების სტრიქონი ნულოვანი მაჩვენებელია"
 
-#: fe-exec.c:1444 fe-exec.c:3003
+#: fe-exec.c:1455 fe-exec.c:3014
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "კომუნიკაციის არხის რეჟიმში %s დაუშვებელია"
 
-#: fe-exec.c:1512 fe-exec.c:1558 fe-exec.c:1652
+#: fe-exec.c:1523 fe-exec.c:1569 fe-exec.c:1663
 #, c-format
 msgid "number of parameters must be between 0 and %d"
 msgstr "პარამეტრების რაოდენობა 0-სა და %d-ს შორის შეიძლება იყოს"
 
-#: fe-exec.c:1548 fe-exec.c:1647
+#: fe-exec.c:1559 fe-exec.c:1658
 #, c-format
 msgid "statement name is a null pointer"
 msgstr "გამოსახულების სახელი ნულოვანი მაჩვენებელია"
 
-#: fe-exec.c:1689 fe-exec.c:3379
+#: fe-exec.c:1700 fe-exec.c:3390
 #, c-format
 msgid "no connection to the server"
 msgstr "სერვერთან შეერთება არ არსებობს"
 
-#: fe-exec.c:1697 fe-exec.c:3387
+#: fe-exec.c:1708 fe-exec.c:3398
 #, c-format
 msgid "another command is already in progress"
 msgstr "უკვე გაშვებულია სხვა ბრძანება"
 
-#: fe-exec.c:1727
+#: fe-exec.c:1738
 #, c-format
 msgid "cannot queue commands during COPY"
 msgstr "როცა გაშვებულია ბრძანება COPY, სხვა ბრძანებებს ვერ გაუშვებთ"
 
-#: fe-exec.c:1846
+#: fe-exec.c:1857
 #, c-format
 msgid "length must be given for binary parameter"
 msgstr "ბინარული პარამეტრისთვის სიგრძის მითითება აუცილებელია"
 
-#: fe-exec.c:2205
+#: fe-exec.c:2216
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "მოულოდნელი asyncStatus: %d"
 
-#: fe-exec.c:2361
+#: fe-exec.c:2372
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "კომუნიკაციის არხის რეჟიმში ბრძანების სინქრონული შესრულების ფუნქციები მიუწვდომელია"
 
-#: fe-exec.c:2378
+#: fe-exec.c:2389
 msgid "COPY terminated by new PQexec"
 msgstr "COPY შეწყვეტილია ახალი PQexec-ის მიერ"
 
-#: fe-exec.c:2394
+#: fe-exec.c:2405
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "COPY BOTH-ის დროს PQexec დაუშვებელია"
 
-#: fe-exec.c:2630
+#: fe-exec.c:2641
 #, c-format
 msgid "unrecognized message type \"%c\""
 msgstr "შეტყობინების უცნობი ტიპი: \"%c\""
 
-#: fe-exec.c:2702 fe-exec.c:2756 fe-exec.c:2824 fe-protocol3.c:1999
+#: fe-exec.c:2713 fe-exec.c:2767 fe-exec.c:2835 fe-protocol3.c:2057
 #, c-format
 msgid "no COPY in progress"
 msgstr "ბრძანება COPY გაშვებული არაა"
 
-#: fe-exec.c:3010
+#: fe-exec.c:3021
 #, c-format
 msgid "connection in wrong state"
 msgstr "შეერთების მდგომარეობა არასწორია"
 
-#: fe-exec.c:3053
+#: fe-exec.c:3064
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "კომუნიკაციის არხის რეჟიმზე გადართვის შეცდომა. შეერთება უქმე არაა"
 
-#: fe-exec.c:3089 fe-exec.c:3110
+#: fe-exec.c:3100 fe-exec.c:3121
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "მოგროვებული შედეგების გარეშე კომუნიკაციის არხის რეჟიმიდან ვერ გახვალთ"
 
-#: fe-exec.c:3093
+#: fe-exec.c:3104
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია"
 
-#: fe-exec.c:3104
+#: fe-exec.c:3115
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია"
 
-#: fe-exec.c:3303
+#: fe-exec.c:3314
 #, c-format
 msgid "cannot send pipeline when not in pipeline mode"
 msgstr "კომუნიკაციის არხის გაგზავნა, როცა კომუნიკაციის არხის რეჟიმში არ ხართ, შეუძლებელია"
 
-#: fe-exec.c:3422
+#: fe-exec.c:3433
 msgid "invalid ExecStatusType code"
 msgstr "'ExecStatusType'-ის არასწორი კოდი"
 
-#: fe-exec.c:3449
+#: fe-exec.c:3460
 msgid "PGresult is not an error result\n"
 msgstr "PGresult შეცდომითი შედეგი არაა\n"
 
-#: fe-exec.c:3517 fe-exec.c:3540
+#: fe-exec.c:3528 fe-exec.c:3551
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "სვეტების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3555
+#: fe-exec.c:3566
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "პარამეტრების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3866
+#: fe-exec.c:3877
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "სერვერის პასუხის გაურკვეველია: %s"
 
-#: fe-exec.c:4141 fe-exec.c:4255
+#: fe-exec.c:4152 fe-exec.c:4266
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "დაუსრულებელი მრავალბაიტიანი სიმბოლო"
 
-#: fe-exec.c:4143 fe-exec.c:4274
+#: fe-exec.c:4154 fe-exec.c:4285
 #, c-format
 msgid "invalid multibyte character"
 msgstr "არასწორი მრავალბაიტიანი სიმბოლო"
@@ -1434,181 +1435,196 @@ msgstr "არასწორი სოკეტი"
 msgid "%s() failed: %s"
 msgstr "%s()-ის შეცდომა: %s"
 
-#: fe-protocol3.c:188
+#: fe-protocol3.c:189
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "შეტყობინების ტიპი 0x%02x მოვიდა სერვერიდან, როცა უქმე ვიყავი"
 
-#: fe-protocol3.c:401
+#: fe-protocol3.c:402
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "სერვერმა მონაცემები (\"D\" შეტყობინება) მწკრივების წინასწარი აღწერის (\"T\" შეტყობინება) გარეშე გამოაგზავნა"
 
-#: fe-protocol3.c:443
+#: fe-protocol3.c:444
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\""
 msgstr "სერვერის მოულოდნელი პასუხი; პირველი მიღებული სიმბოლოა \"%c\""
 
-#: fe-protocol3.c:462
+#: fe-protocol3.c:468
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\""
 msgstr "შეტყობინების შიგთავსი შეტყობინების ამ ტიპის (%c) სიგრძეს არ ემთხვევა"
 
-#: fe-protocol3.c:480
+#: fe-protocol3.c:503
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d"
 msgstr "სერვერთან სინქრონიზაციის შეცდომა: შეტყობინების ტიპი: \"%c\", სიგრძე %d"
 
-#: fe-protocol3.c:532 fe-protocol3.c:572
+#: fe-protocol3.c:550 fe-protocol3.c:590
 msgid "insufficient data in \"T\" message"
 msgstr "არასაკმარისი მონაცემები \"T\" შეტყობინებაში"
 
-#: fe-protocol3.c:643 fe-protocol3.c:849
+#: fe-protocol3.c:661 fe-protocol3.c:867
 msgid "out of memory for query result"
 msgstr "არასაკმარისი მეხსიერება მოთხოვნის შედეგისთვის"
 
-#: fe-protocol3.c:712
+#: fe-protocol3.c:730
 msgid "insufficient data in \"t\" message"
 msgstr "არასაკმარისი მონაცემები \"t\" შეტყობინებაში"
 
-#: fe-protocol3.c:771 fe-protocol3.c:803 fe-protocol3.c:821
+#: fe-protocol3.c:789 fe-protocol3.c:821 fe-protocol3.c:839
 msgid "insufficient data in \"D\" message"
 msgstr "არასაკმარისი მონაცემები \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:777
+#: fe-protocol3.c:795
 msgid "unexpected field count in \"D\" message"
 msgstr "ველების მოულოდნელი რაოდენობა \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:1033
+#: fe-protocol3.c:1051
 msgid "no error message available\n"
 msgstr "შეცდომის შეტყობინების გარეშე\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1081 fe-protocol3.c:1100
+#: fe-protocol3.c:1099 fe-protocol3.c:1118
 #, c-format
 msgid " at character %s"
 msgstr " სიმბოლოსთან %s"
 
-#: fe-protocol3.c:1113
+#: fe-protocol3.c:1131
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "დეტალი:  %s\n"
 
-#: fe-protocol3.c:1116
+#: fe-protocol3.c:1134
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "მინიშნება:  %s\n"
 
-#: fe-protocol3.c:1119
+#: fe-protocol3.c:1137
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "მოთხოვნა:  %s\n"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1144
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "კონტექსტი:  %s\n"
 
-#: fe-protocol3.c:1135
+#: fe-protocol3.c:1153
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "სქემის სახელი:  %s\n"
 
-#: fe-protocol3.c:1139
+#: fe-protocol3.c:1157
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ცხრილის სახელი:  %s\n"
 
-#: fe-protocol3.c:1143
+#: fe-protocol3.c:1161
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "სვეტის სახელი:  %s\n"
 
-#: fe-protocol3.c:1147
+#: fe-protocol3.c:1165
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "მონ. ტიპის სახელი:  %s\n"
 
-#: fe-protocol3.c:1151
+#: fe-protocol3.c:1169
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "შეზღუდვის სახელი:  %s\n"
 
-#: fe-protocol3.c:1163
+#: fe-protocol3.c:1181
 msgid "LOCATION:  "
 msgstr "მდებარეობა:  "
 
-#: fe-protocol3.c:1165
+#: fe-protocol3.c:1183
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1167
+#: fe-protocol3.c:1185
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1362
+#: fe-protocol3.c:1380
 #, c-format
 msgid "LINE %d: "
 msgstr "ხაზი %d: "
 
-#: fe-protocol3.c:1424
+#: fe-protocol3.c:1442
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to a higher-numbered version"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება: სერვერმა მოითხოვა ვერსიის ჩამოწევა უფრო მაღალ ვერსიაზე"
 
-#: fe-protocol3.c:1430
+#: fe-protocol3.c:1448
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to pre-3.0 protocol version"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება: სერვერმა მოითხოვა ვერსიის ჩამოწევა 3.0-მდელ ვერსიაზე"
 
-#: fe-protocol3.c:1437
+#: fe-protocol3.c:1455
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
 msgstr "მიღებულია არასწორი პროტოკოლის ხელის ჩამორთმევის შეტყობინება: სერვერი ითხოვს ვერსიის ჩამოწევას არარსებულ პროტოკოლის ვერსიაზე 3.1"
 
-#: fe-protocol3.c:1443
+#: fe-protocol3.c:1461
 #, c-format
 msgid "received invalid protocol negotiation message: server reported negative number of unsupported parameters"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება: სერვერმა მხარდაუჭერელი პარამეტრების უარყოფითი რაოდენობა გადმოგვცა"
 
-#: fe-protocol3.c:1449
+#: fe-protocol3.c:1467
 #, c-format
 msgid "received invalid protocol negotiation message: server negotiated but asks for no changes"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება: სერვერთან კავშირი დამყარდა, მაგრამ ის ცვლილებებს არ ითხოვს"
 
-#: fe-protocol3.c:1455
+#: fe-protocol3.c:1473
 #, c-format
 msgid "server only supports protocol version %d.%d, but \"%s\" was set to %d.%d"
 msgstr "სერვერს, მხოლოდ, %d.%d ვერსიის პროტოკოლის მხარდაჭერა აქვს, მაგრამ \"%s\"-ის მნიშვნელობაა %d.%d"
 
-#: fe-protocol3.c:1480
+#: fe-protocol3.c:1498
 #, c-format
 msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
 msgstr "მიღებულია არასწორი პროტოკოლის მოლაპარაკების შეტყობინება: სერვერმა მოიწერა მხარდაუჭერელი პარამეტრის სახელი \"%s\" პრეფიქსის გარეშე (\"%s\")"
 
-#: fe-protocol3.c:1483
+#: fe-protocol3.c:1501
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება: სერვერმა მოიწერა მხარდაუჭერელი პარამეტრი, რომელიც მას არ მოუთხოვია (\"%s\")"
 
-#: fe-protocol3.c:1490
+#: fe-protocol3.c:1508
 #, c-format
 msgid "received invalid protocol negotiation message: message too short"
 msgstr "მიღებულია არასწორი პროტოკოლის მიმოცვლის შეტყობინება; შეტყობინება მეტისმეტად მოკლეა"
 
-#: fe-protocol3.c:1894
+#: fe-protocol3.c:1574
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d not allowed in protocol version 3.0 (must be 4 bytes)"
+msgstr "მიღებულია არასწორი შეტყობინება BackendKeyData: გაუქმების გასაღები სიგრძით %d დაუშვებელია პროტოკოლის ვერსიაში 3.0 (უნდა იყო 4 ბაიტი)"
+
+#: fe-protocol3.c:1581
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d is too short (minimum 4 bytes)"
+msgstr "მიღებულია არასწორი შეტყობინება BackendKeyData: გაუქმების გასაღები სიგრძით %d ძალიან მოკლეა (უნდა იყო 4 ბაიტი)"
+
+#: fe-protocol3.c:1588
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d is too long (maximum 256 bytes)"
+msgstr "მიღებულია არასწორი შეტყობინება BackendKeyData: გაუქმების გასაღები სიგრძით %d ძალიან გრძელია (მაქს 256 ბაიტი)"
+
+#: fe-protocol3.c:1952
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: ტექსტის COPY OUT-ს არ გავაკეთებ"
 
-#: fe-protocol3.c:2269
+#: fe-protocol3.c:2327
 #, c-format
 msgid "protocol error: no function result"
 msgstr "პროტოკოლის შეცდომა: ფუნქციის შედეგის გარეშე"
 
-#: fe-protocol3.c:2281
+#: fe-protocol3.c:2339
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "პროტოკოლის შეცდომა: id=0x%x"
@@ -1976,6 +1992,10 @@ msgstr "სოკეტის უცნობი შეცდომა: 0x%08X/%
 #, c-format
 #~ msgid "could not open file \"%s\": %s\n"
 #~ msgstr "ფაილის გახსნის შეცდომა \"%s\": %s\n"
+
+#, c-format
+#~ msgid "getting timerfd value: %m"
+#~ msgstr "timerfd-ის მნიშვნელობის მიღება: %m"
 
 #~ msgid "incoming GSSAPI message did not use confidentiality\n"
 #~ msgstr "შემომავალი GSSAPI შეტყობინება კონფიდენციალობას არ იყენებს\n"

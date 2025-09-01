@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 18\n"
+"Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-29 17:10+0000\n"
-"PO-Revision-Date: 2025-07-29 20:17+0200\n"
+"POT-Creation-Date: 2025-08-15 19:10+0000\n"
+"PO-Revision-Date: 2025-08-15 22:39+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -18,211 +18,211 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../libpq-oauth/oauth-curl.c:306 ../libpq-oauth/oauth-curl.c:1936
+#: ../libpq-oauth/oauth-curl.c:307 ../libpq-oauth/oauth-curl.c:2000
 #, c-format
 msgid "libcurl easy handle removal failed: %s"
 msgstr "borttagning av libcurl easy handle misslyckades: %s"
 
-#: ../libpq-oauth/oauth-curl.c:326
+#: ../libpq-oauth/oauth-curl.c:327
 #, c-format
 msgid "libcurl multi handle cleanup failed: %s"
 msgstr "uppstädning av libcurl multi handle misslyckades: %s"
 
-#: ../libpq-oauth/oauth-curl.c:389 ../libpq-oauth/oauth-curl.c:400
+#: ../libpq-oauth/oauth-curl.c:390 ../libpq-oauth/oauth-curl.c:401
 #, c-format
 msgid "failed to set %s on OAuth connection: %s"
 msgstr "misslyckades att sätta %s på OAuth-anslutning: %s"
 
-#: ../libpq-oauth/oauth-curl.c:411
+#: ../libpq-oauth/oauth-curl.c:412
 #, c-format
 msgid "failed to get %s from OAuth response: %s"
 msgstr "misslyckades att hämta %s från OAuth-svar: %s"
 
-#: ../libpq-oauth/oauth-curl.c:514 ../libpq-oauth/oauth-curl.c:624
+#: ../libpq-oauth/oauth-curl.c:515 ../libpq-oauth/oauth-curl.c:625
 #, c-format
 msgid "JSON is too deeply nested"
 msgstr "JSON är nästlad för djupt"
 
-#: ../libpq-oauth/oauth-curl.c:539
+#: ../libpq-oauth/oauth-curl.c:540
 #, c-format
 msgid "internal error: started field '%s' before field '%s' was finished"
 msgstr "internt fel: startade fältet '%s' innan fältet '%s' var klart"
 
-#: ../libpq-oauth/oauth-curl.c:566
+#: ../libpq-oauth/oauth-curl.c:567
 #, c-format
 msgid "field \"%s\" is duplicated"
 msgstr "fältet \"%s\" är duplicerat."
 
-#: ../libpq-oauth/oauth-curl.c:591
+#: ../libpq-oauth/oauth-curl.c:592
 #, c-format
 msgid "internal error: field '%s' still active at end of object"
 msgstr "internt fel: fältet '%s' är fortfarande aktivt vid objektslutet"
 
-#: ../libpq-oauth/oauth-curl.c:606 ../libpq-oauth/oauth-curl.c:666
+#: ../libpq-oauth/oauth-curl.c:607 ../libpq-oauth/oauth-curl.c:667
 #, c-format
 msgid "top-level element must be an object"
 msgstr "elementet på toppnivå måste vara ett objekt"
 
-#: ../libpq-oauth/oauth-curl.c:647
+#: ../libpq-oauth/oauth-curl.c:648
 #, c-format
 msgid "internal error: found unexpected array end while parsing field '%s'"
 msgstr "internt fel: hittade oväntat array-slut vid parsning av fältet '%s'"
 
-#: ../libpq-oauth/oauth-curl.c:702
+#: ../libpq-oauth/oauth-curl.c:703
 #, c-format
 msgid "internal error: scalar target found at nesting level %d"
 msgstr "internt fel: skalär hittad vid nästlingsnivå %d"
 
-#: ../libpq-oauth/oauth-curl.c:712
+#: ../libpq-oauth/oauth-curl.c:713
 #, c-format
 msgid "internal error: scalar field '%s' would be assigned twice"
 msgstr "internt fel: skalärfält '%s' skulle tilldelas två gånger"
 
-#: ../libpq-oauth/oauth-curl.c:734
+#: ../libpq-oauth/oauth-curl.c:735
 #, c-format
 msgid "internal error: array member found at nesting level %d"
 msgstr "internt fel: array-medlem hittad vid nästlingsnivå %d"
 
-#: ../libpq-oauth/oauth-curl.c:769
+#: ../libpq-oauth/oauth-curl.c:770
 #, c-format
 msgid "no content type was provided"
 msgstr "ingen innehållstyp angiven"
 
-#: ../libpq-oauth/oauth-curl.c:808
+#: ../libpq-oauth/oauth-curl.c:809
 #, c-format
 msgid "unexpected content type: \"%s\""
 msgstr "oväntad innehållstyp \"%s\""
 
-#: ../libpq-oauth/oauth-curl.c:833
+#: ../libpq-oauth/oauth-curl.c:834
 #, c-format
 msgid "response contains embedded NULLs"
 msgstr "svaret innehåller inbäddade NULL-värden"
 
-#: ../libpq-oauth/oauth-curl.c:843
+#: ../libpq-oauth/oauth-curl.c:844
 #, c-format
 msgid "response is not valid UTF-8"
 msgstr "svaret är inte korrekt UTF-8"
 
-#: ../libpq-oauth/oauth-curl.c:883
+#: ../libpq-oauth/oauth-curl.c:884
 #, c-format
 msgid "field \"%s\" is missing"
 msgstr "fältet \"%s\" saknas"
 
-#: ../libpq-oauth/oauth-curl.c:1117
+#: ../libpq-oauth/oauth-curl.c:1118
 #, c-format
 msgid "provider rejected the oauth_client_secret"
 msgstr "leverantör avvisade oauth_client_secret"
 
-#: ../libpq-oauth/oauth-curl.c:1181
+#: ../libpq-oauth/oauth-curl.c:1182
 #, c-format
 msgid "failed to create epoll set: %m"
 msgstr "kunde inte skapa epoll-mängd: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1188
+#: ../libpq-oauth/oauth-curl.c:1189
 #, c-format
 msgid "failed to create timerfd: %m"
 msgstr "kunde inte skapa timerfd: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1194
+#: ../libpq-oauth/oauth-curl.c:1195
 #, c-format
 msgid "failed to add timerfd to epoll set: %m"
 msgstr "kunde inte addera timerfd till epoll-mängd: %m"
 
 #. translator: the term "kqueue" (kernel queue) should not be translated
-#: ../libpq-oauth/oauth-curl.c:1204
+#: ../libpq-oauth/oauth-curl.c:1205
 #, c-format
 msgid "failed to create kqueue: %m"
 msgstr "kunde inte skapa kqueue: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1217
+#: ../libpq-oauth/oauth-curl.c:1218
 #, c-format
 msgid "failed to create timer kqueue: %m"
 msgstr "kunde inte skapa timer-kqueue: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1261 ../libpq-oauth/oauth-curl.c:1333
+#: ../libpq-oauth/oauth-curl.c:1262 ../libpq-oauth/oauth-curl.c:1337
 #, c-format
 msgid "unknown libcurl socket operation: %d"
 msgstr "okänd operation på libcurl-socket: %d"
 
-#: ../libpq-oauth/oauth-curl.c:1278
+#: ../libpq-oauth/oauth-curl.c:1279
 #, c-format
 msgid "could not add to epoll set: %m"
 msgstr "kunde inte addera till epoll-mängd: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1282
+#: ../libpq-oauth/oauth-curl.c:1283
 #, c-format
 msgid "could not delete from epoll set: %m"
 msgstr "kunde inte ta bort från epoll-mängd: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1286
+#: ../libpq-oauth/oauth-curl.c:1287
 #, c-format
 msgid "could not update epoll set: %m"
 msgstr "kunde inte uppdatera epoll-mängd: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1340
+#: ../libpq-oauth/oauth-curl.c:1347
 #, c-format
 msgid "could not modify kqueue: %m"
 msgstr "kunde inte ändra på kqueue: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1364
+#: ../libpq-oauth/oauth-curl.c:1371
 #, c-format
 msgid "could not delete from kqueue: %m"
 msgstr "kunde inte radera från kqueue: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1367
+#: ../libpq-oauth/oauth-curl.c:1374
 #, c-format
 msgid "could not add to kqueue: %m"
 msgstr "kunde inte addera till kqueue: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1419
+#: ../libpq-oauth/oauth-curl.c:1423
+#, c-format
+msgid "could not comb kqueue: %m"
+msgstr "kunde inte kamma (comb) kqueue: %m"
+
+#: ../libpq-oauth/oauth-curl.c:1473
 #, c-format
 msgid "setting timerfd to %ld: %m"
 msgstr "sätter timerfd till %ld: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1449
+#: ../libpq-oauth/oauth-curl.c:1503
 #, c-format
 msgid "deleting kqueue timer: %m"
 msgstr "tar bort kqueue-timer: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1456
+#: ../libpq-oauth/oauth-curl.c:1510
 #, c-format
 msgid "removing kqueue timer from multiplexer: %m"
 msgstr "tar bort kqueue-timer från multiplexer: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1467
+#: ../libpq-oauth/oauth-curl.c:1521
 #, c-format
 msgid "setting kqueue timer to %ld: %m"
 msgstr "sätter kqueue-timer till %ld: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1474
+#: ../libpq-oauth/oauth-curl.c:1528
 #, c-format
 msgid "adding kqueue timer to multiplexer: %m"
 msgstr "lägger till kqueue-timer till multiplexer: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1497
+#: ../libpq-oauth/oauth-curl.c:1553
 #, c-format
-msgid "getting timerfd value: %m"
-msgstr "hämtar timerfd-värde: %m"
+msgid "checking timer expiration: %m"
+msgstr "kontrollerar om timer löpt ut: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1519
-#, c-format
-msgid "checking kqueue for timeout: %m"
-msgstr "kontrollerar kqueue för timeout: %m"
-
-#: ../libpq-oauth/oauth-curl.c:1651
+#: ../libpq-oauth/oauth-curl.c:1715
 #, c-format
 msgid "failed to create libcurl multi handle"
 msgstr "misslyckades med skapa multi-handle för libcurl"
 
-#: ../libpq-oauth/oauth-curl.c:1671
+#: ../libpq-oauth/oauth-curl.c:1735
 #, c-format
 msgid "failed to create libcurl handle"
 msgstr "misslyckades med att skapa handle för libcurl"
 
-#: ../libpq-oauth/oauth-curl.c:1755 ../libpq-oauth/oauth-curl.c:1796
-#: ../libpq-oauth/oauth-curl.c:2109 ../libpq-oauth/oauth-curl.c:2270
-#: ../libpq-oauth/oauth-curl.c:2331 ../libpq-oauth/oauth-curl.c:2420
-#: ../libpq-oauth/oauth-curl.c:2714 ../libpq-oauth/oauth-curl.c:2905
+#: ../libpq-oauth/oauth-curl.c:1819 ../libpq-oauth/oauth-curl.c:1860
+#: ../libpq-oauth/oauth-curl.c:2173 ../libpq-oauth/oauth-curl.c:2334
+#: ../libpq-oauth/oauth-curl.c:2395 ../libpq-oauth/oauth-curl.c:2484
+#: ../libpq-oauth/oauth-curl.c:2778 ../libpq-oauth/oauth-curl.c:2995
 #: fe-auth-scram.c:374 fe-auth-scram.c:447 fe-auth-scram.c:599
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
@@ -244,53 +244,53 @@ msgstr "misslyckades med att skapa handle för libcurl"
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: ../libpq-oauth/oauth-curl.c:1783
+#: ../libpq-oauth/oauth-curl.c:1847
 #, c-format
 msgid "response is too large"
 msgstr "svaret är för stort"
 
-#: ../libpq-oauth/oauth-curl.c:1825
+#: ../libpq-oauth/oauth-curl.c:1889
 #, c-format
 msgid "failed to queue HTTP request: %s"
 msgstr "misslyckades att köa HTTP-anrop: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1842 ../libpq-oauth/oauth-curl.c:1895
+#: ../libpq-oauth/oauth-curl.c:1906 ../libpq-oauth/oauth-curl.c:1959
 #, c-format
 msgid "asynchronous HTTP request failed: %s"
 msgstr "asynkront HTTP-anrop misslyckades: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1947
+#: ../libpq-oauth/oauth-curl.c:2011
 #, c-format
 msgid "no result was retrieved for the finished handle"
 msgstr "inget resultat kom från avslutad handle"
 
-#: ../libpq-oauth/oauth-curl.c:2080 ../libpq-oauth/oauth-curl.c:2386
-#: ../libpq-oauth/oauth-curl.c:2465
+#: ../libpq-oauth/oauth-curl.c:2144 ../libpq-oauth/oauth-curl.c:2450
+#: ../libpq-oauth/oauth-curl.c:2529
 #, c-format
 msgid "unexpected response code %ld"
 msgstr "oväntad svarskod %ld"
 
-#: ../libpq-oauth/oauth-curl.c:2152
+#: ../libpq-oauth/oauth-curl.c:2216
 #, c-format
 msgid "the issuer identifier (%s) does not match oauth_issuer (%s)"
 msgstr "utfärdarens identifierare (%s) matchar inte oauth_issuer (%s)"
 
-#: ../libpq-oauth/oauth-curl.c:2179
+#: ../libpq-oauth/oauth-curl.c:2243
 #, c-format
 msgid "issuer \"%s\" does not provide a device authorization endpoint"
 msgstr "utfärdaren \"%s\" tillhandahåller inte en auktoriseringsändpunkt för en enhet"
 
-#: ../libpq-oauth/oauth-curl.c:2205
+#: ../libpq-oauth/oauth-curl.c:2269
 #, c-format
 msgid "device authorization endpoint \"%s\" must use HTTPS"
 msgstr "en enhets auktoriseringsändpunkt \"%s\" måste använda HTTPS"
 
-#: ../libpq-oauth/oauth-curl.c:2214
+#: ../libpq-oauth/oauth-curl.c:2278
 #, c-format
 msgid "token endpoint \"%s\" must use HTTPS"
 msgstr "token-ändpunkt \"%s\" måste använda HTTPS"
 
-#: ../libpq-oauth/oauth-curl.c:2523
+#: ../libpq-oauth/oauth-curl.c:2587
 #, c-format
 msgid "slow_down interval overflow"
 msgstr "overflow i intervall för slow_down"
@@ -298,27 +298,27 @@ msgstr "overflow i intervall för slow_down"
 #. translator: The first %s is a URL for the user to visit in a
 #. browser, and the second %s is a code to be copy-pasted there.
 #.
-#: ../libpq-oauth/oauth-curl.c:2559
+#: ../libpq-oauth/oauth-curl.c:2623
 #, c-format
 msgid "Visit %s and enter the code: %s\n"
 msgstr "Gå till %s och skriv in koden: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:2564
+#: ../libpq-oauth/oauth-curl.c:2628
 #, c-format
 msgid "device prompt failed"
 msgstr "misslyckades att skapa inmatningsfråga för enhet"
 
-#: ../libpq-oauth/oauth-curl.c:2620
+#: ../libpq-oauth/oauth-curl.c:2684
 #, c-format
 msgid "curl_global_init previously failed during OAuth setup"
 msgstr "curl_global_init misslyckades tidigare vid uppsättning av OAuth"
 
-#: ../libpq-oauth/oauth-curl.c:2639
+#: ../libpq-oauth/oauth-curl.c:2703
 #, c-format
 msgid "curl_global_init failed during OAuth setup"
 msgstr "curl_global_init misslyckades vid uppsättning av OAuth"
 
-#: ../libpq-oauth/oauth-curl.c:2660
+#: ../libpq-oauth/oauth-curl.c:2724
 #, c-format
 msgid ""
 "libcurl is no longer thread-safe\n"

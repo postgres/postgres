@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-08 06:10+0000\n"
-"PO-Revision-Date: 2025-08-08 11:22+0200\n"
+"POT-Creation-Date: 2025-08-28 18:10+0000\n"
+"PO-Revision-Date: 2025-08-28 21:25+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -17,236 +17,211 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../libpq-oauth/oauth-curl.c:306 ../libpq-oauth/oauth-curl.c:1936
-#, fuzzy, c-format
-#| msgid "database removal failed: %s"
+#: ../libpq-oauth/oauth-curl.c:307 ../libpq-oauth/oauth-curl.c:2000
+#, c-format
 msgid "libcurl easy handle removal failed: %s"
-msgstr "Löschen der Datenbank fehlgeschlagen: %s"
+msgstr "libcurl-Easy-Handle-Removal fehlgeschlagen: %s"
 
-#: ../libpq-oauth/oauth-curl.c:326
-#, fuzzy, c-format
-#| msgid "creation of new role failed: %s"
+#: ../libpq-oauth/oauth-curl.c:327
+#, c-format
 msgid "libcurl multi handle cleanup failed: %s"
-msgstr "Erzeugen der neuen Rolle fehlgeschlagen: %s"
+msgstr "libcurl-Multi-Handle-Cleanup fehlgeschlagen: %s"
 
-#: ../libpq-oauth/oauth-curl.c:389 ../libpq-oauth/oauth-curl.c:400
-#, fuzzy, c-format
-#| msgid "could not establish SSL connection: %s"
+#: ../libpq-oauth/oauth-curl.c:390 ../libpq-oauth/oauth-curl.c:401
+#, c-format
 msgid "failed to set %s on OAuth connection: %s"
-msgstr "konnte SSL-Verbindung nicht aufbauen: %s"
+msgstr "konnte %s nicht setzen für die OAuth-Verbindung: %s"
 
-#: ../libpq-oauth/oauth-curl.c:411
-#, fuzzy, c-format
-#| msgid "failed to send SSL negotiation response: %m"
+#: ../libpq-oauth/oauth-curl.c:412
+#, c-format
 msgid "failed to get %s from OAuth response: %s"
-msgstr "konnte SSL-Verhandlungsantwort nicht senden: %m"
+msgstr "konnte %s nicht ermitteln aus der OAuth-Antwort: %s"
 
-#: ../libpq-oauth/oauth-curl.c:514 ../libpq-oauth/oauth-curl.c:624
+#: ../libpq-oauth/oauth-curl.c:515 ../libpq-oauth/oauth-curl.c:625
 #, c-format
 msgid "JSON is too deeply nested"
-msgstr ""
+msgstr "JSON ist zu tief geschachtelt"
 
-#: ../libpq-oauth/oauth-curl.c:539
+#: ../libpq-oauth/oauth-curl.c:540
 #, c-format
 msgid "internal error: started field '%s' before field '%s' was finished"
-msgstr ""
+msgstr "interner Fehler: startete Feld »%s« bevor Feld »%s« beendet war"
 
-#: ../libpq-oauth/oauth-curl.c:566
-#, fuzzy, c-format
-#| msgid "Key %s is duplicated."
+#: ../libpq-oauth/oauth-curl.c:567
+#, c-format
 msgid "field \"%s\" is duplicated"
-msgstr "Schlüssel %s ist doppelt vorhanden."
+msgstr "Feld »%s« ist doppelt vorhanden"
 
-#: ../libpq-oauth/oauth-curl.c:591
+#: ../libpq-oauth/oauth-curl.c:592
 #, c-format
 msgid "internal error: field '%s' still active at end of object"
-msgstr ""
+msgstr "interner Fehler: Feld »%s« ist am Ende des Objekts noch aktiv"
 
-#: ../libpq-oauth/oauth-curl.c:606 ../libpq-oauth/oauth-curl.c:666
-#, fuzzy, c-format
-#| msgid "cannot extract elements from an object"
+#: ../libpq-oauth/oauth-curl.c:607 ../libpq-oauth/oauth-curl.c:667
+#, c-format
 msgid "top-level element must be an object"
-msgstr "kann keine Elemente aus einem Objekt auswählen"
+msgstr "Element auf oberster Ebene muss ein Objekt sein"
 
-#: ../libpq-oauth/oauth-curl.c:647
-#, fuzzy, c-format
-#| msgid "internal error: received unexpected database pattern_id %d"
+#: ../libpq-oauth/oauth-curl.c:648
+#, c-format
 msgid "internal error: found unexpected array end while parsing field '%s'"
-msgstr "interner Fehler: unerwartete pattern_id %d für Datenbank empfangen"
+msgstr "interner Fehler: unerwartetes Array-Ende gefunden beim Parsen von Feld »%s«"
 
-#: ../libpq-oauth/oauth-curl.c:702
+#: ../libpq-oauth/oauth-curl.c:703
 #, c-format
 msgid "internal error: scalar target found at nesting level %d"
-msgstr ""
+msgstr "interner Fehler: skalares Ziel auf Verschachtelungsebene %d gefunden"
 
-#: ../libpq-oauth/oauth-curl.c:712
+#: ../libpq-oauth/oauth-curl.c:713
 #, c-format
 msgid "internal error: scalar field '%s' would be assigned twice"
-msgstr ""
+msgstr "interner Fehler: skalares Feld »%s« würde zweimal zugewiesen werden"
 
-#: ../libpq-oauth/oauth-curl.c:734
+#: ../libpq-oauth/oauth-curl.c:735
 #, c-format
 msgid "internal error: array member found at nesting level %d"
-msgstr ""
+msgstr "interner Fehler: Array-Mitglied gefunden auf Verschachtelungsebene %d"
 
-#: ../libpq-oauth/oauth-curl.c:769
-#, fuzzy, c-format
-#| msgid "no column alias was provided"
+#: ../libpq-oauth/oauth-curl.c:770
+#, c-format
 msgid "no content type was provided"
-msgstr "Spaltenalias fehlt"
+msgstr "kein Content-Typ wurde angegeben"
 
-#: ../libpq-oauth/oauth-curl.c:808
-#, fuzzy, c-format
-#| msgid "unexpected message type \"%c\""
+#: ../libpq-oauth/oauth-curl.c:809
+#, c-format
 msgid "unexpected content type: \"%s\""
-msgstr "unerwarteter Message-Typ »%c«"
+msgstr "unerwarteter Content-Typ: »%s«"
 
-#: ../libpq-oauth/oauth-curl.c:833
-#, fuzzy, c-format
-#| msgid "SSL certificate's name contains embedded null"
+#: ../libpq-oauth/oauth-curl.c:834
+#, c-format
 msgid "response contains embedded NULLs"
-msgstr "Name im SSL-Zertifikat enthält Null-Byte"
+msgstr "Antwort enthält Null-Bytes"
 
-#: ../libpq-oauth/oauth-curl.c:843
-#, fuzzy, c-format
-#| msgid "index \"%s\" is not valid"
+#: ../libpq-oauth/oauth-curl.c:844
+#, c-format
 msgid "response is not valid UTF-8"
-msgstr "Index »%s« ist nicht gültig"
+msgstr "Antwort ist kein gültiges UTF-8"
 
-#: ../libpq-oauth/oauth-curl.c:883
-#, fuzzy, c-format
-#| msgid "File \"%s\" is missing."
+#: ../libpq-oauth/oauth-curl.c:884
+#, c-format
 msgid "field \"%s\" is missing"
-msgstr "Die Datei »%s« fehlt."
+msgstr "Feld »%s« fehlt"
 
-#: ../libpq-oauth/oauth-curl.c:1117
+#: ../libpq-oauth/oauth-curl.c:1118
 #, c-format
 msgid "provider rejected the oauth_client_secret"
-msgstr ""
+msgstr "Provider hat das oauth_client_secret abgelehnt"
 
-#: ../libpq-oauth/oauth-curl.c:1181
-#, fuzzy, c-format
-#| msgid "failed to restore old locale \"%s\""
+#: ../libpq-oauth/oauth-curl.c:1182
+#, c-format
 msgid "failed to create epoll set: %m"
-msgstr "konnte alte Locale »%s« nicht wiederherstellen"
+msgstr "konnte epoll-Set nicht erzeugen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1188
-#, fuzzy, c-format
-#| msgid "failed to send signal to postmaster: %m"
+#: ../libpq-oauth/oauth-curl.c:1189
+#, c-format
 msgid "failed to create timerfd: %m"
-msgstr "konnte Signal nicht an Postmaster senden: %m"
+msgstr "konnte timerfd nicht erzeugen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1194
-#, fuzzy, c-format
-#| msgid "failed to send signal to postmaster: %m"
+#: ../libpq-oauth/oauth-curl.c:1195
+#, c-format
 msgid "failed to add timerfd to epoll set: %m"
-msgstr "konnte Signal nicht an Postmaster senden: %m"
+msgstr "konnte timerfd nicht zum epoll-Set hinzufügen: %m"
 
 #. translator: the term "kqueue" (kernel queue) should not be translated
-#: ../libpq-oauth/oauth-curl.c:1204
-#, fuzzy, c-format
-#| msgid "could not create socket: %s"
+#: ../libpq-oauth/oauth-curl.c:1205
+#, c-format
 msgid "failed to create kqueue: %m"
-msgstr "konnte Socket nicht erzeugen: %s"
+msgstr "konnte kqueue nicht erzeugen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1217
-#, fuzzy, c-format
-#| msgid "failed to send signal to postmaster: %m"
+#: ../libpq-oauth/oauth-curl.c:1218
+#, c-format
 msgid "failed to create timer kqueue: %m"
-msgstr "konnte Signal nicht an Postmaster senden: %m"
+msgstr "konnte Timer-kqueue nicht erzeugen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1261 ../libpq-oauth/oauth-curl.c:1333
+#: ../libpq-oauth/oauth-curl.c:1262 ../libpq-oauth/oauth-curl.c:1337
 #, c-format
 msgid "unknown libcurl socket operation: %d"
-msgstr ""
+msgstr "unbekannte libcurl-Socket-Operation: %d"
 
-#: ../libpq-oauth/oauth-curl.c:1278
-#, fuzzy, c-format
-#| msgid "could not send data to client: %m"
+#: ../libpq-oauth/oauth-curl.c:1279
+#, c-format
 msgid "could not add to epoll set: %m"
-msgstr "konnte Daten nicht an den Client senden: %m"
+msgstr "konnte nicht zum epoll-Set hinzufügen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1282
-#, fuzzy, c-format
-#| msgid "could not delete file \"%s\": %m"
+#: ../libpq-oauth/oauth-curl.c:1283
+#, c-format
 msgid "could not delete from epoll set: %m"
-msgstr "konnte Datei »%s« nicht löschen: %m"
+msgstr "konnte nicht aus dem epoll-Set löschen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1286
-#, fuzzy, c-format
-#| msgid "could not duplicate stdout: %m"
+#: ../libpq-oauth/oauth-curl.c:1287
+#, c-format
 msgid "could not update epoll set: %m"
-msgstr "konnte Standardausgabe nicht duplizieren: %m"
+msgstr "konnte epoll-Set nicht aktualisieren: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1340
-#, fuzzy, c-format
-#| msgid "could not set timer: %m"
+#: ../libpq-oauth/oauth-curl.c:1347
+#, c-format
 msgid "could not modify kqueue: %m"
-msgstr "konnte Timer nicht setzen: %m"
+msgstr "konnte kqueue nicht modifizieren: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1364
-#, fuzzy, c-format
-#| msgid "could not delete file \"%s\": %m"
+#: ../libpq-oauth/oauth-curl.c:1371
+#, c-format
 msgid "could not delete from kqueue: %m"
-msgstr "konnte Datei »%s« nicht löschen: %m"
+msgstr "konnte nicht aus kqueue löschen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1367
-#, fuzzy, c-format
-#| msgid "could not set timer: %m"
+#: ../libpq-oauth/oauth-curl.c:1374
+#, c-format
 msgid "could not add to kqueue: %m"
-msgstr "konnte Timer nicht setzen: %m"
+msgstr "konnte nicht zur kqueue hinzufügen: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1419
+#: ../libpq-oauth/oauth-curl.c:1423
+#, c-format
+msgid "could not comb kqueue: %m"
+msgstr "konnte kqueue nicht auf unlesbar schalten (comb): %m"
+
+#: ../libpq-oauth/oauth-curl.c:1473
 #, c-format
 msgid "setting timerfd to %ld: %m"
-msgstr ""
+msgstr "setze timerfd auf %ld: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1449
+#: ../libpq-oauth/oauth-curl.c:1503
 #, c-format
 msgid "deleting kqueue timer: %m"
-msgstr ""
+msgstr "lösche kqueue-Timer: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1456
+#: ../libpq-oauth/oauth-curl.c:1510
 #, c-format
 msgid "removing kqueue timer from multiplexer: %m"
-msgstr ""
+msgstr "entferne kqueue-Timer aus dem Multiplexer: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1467
+#: ../libpq-oauth/oauth-curl.c:1521
 #, c-format
 msgid "setting kqueue timer to %ld: %m"
-msgstr ""
+msgstr "setze kqueue-Timer auf %ld: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1474
+#: ../libpq-oauth/oauth-curl.c:1528
 #, c-format
 msgid "adding kqueue timer to multiplexer: %m"
-msgstr ""
+msgstr "füge kqueue-Timer zum Multiplexer hinzu: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1497
+#: ../libpq-oauth/oauth-curl.c:1553
 #, c-format
-msgid "getting timerfd value: %m"
-msgstr ""
+msgid "checking timer expiration: %m"
+msgstr "prüfe Ablauf des Timers: %m"
 
-#: ../libpq-oauth/oauth-curl.c:1519
+#: ../libpq-oauth/oauth-curl.c:1715
 #, c-format
-msgid "checking kqueue for timeout: %m"
-msgstr ""
-
-#: ../libpq-oauth/oauth-curl.c:1651
-#, fuzzy, c-format
-#| msgid "failed to restore old locale"
 msgid "failed to create libcurl multi handle"
-msgstr "konnte alte Locale nicht wiederherstellen"
+msgstr "konnte libcurl-Multi-Handle nicht erzeugen"
 
-#: ../libpq-oauth/oauth-curl.c:1671
-#, fuzzy, c-format
-#| msgid "failed to restore old locale"
+#: ../libpq-oauth/oauth-curl.c:1735
+#, c-format
 msgid "failed to create libcurl handle"
-msgstr "konnte alte Locale nicht wiederherstellen"
+msgstr "konnte libcurl-Handle nicht erzeugen"
 
-#: ../libpq-oauth/oauth-curl.c:1755 ../libpq-oauth/oauth-curl.c:1796
-#: ../libpq-oauth/oauth-curl.c:2109 ../libpq-oauth/oauth-curl.c:2270
-#: ../libpq-oauth/oauth-curl.c:2331 ../libpq-oauth/oauth-curl.c:2420
-#: ../libpq-oauth/oauth-curl.c:2714 ../libpq-oauth/oauth-curl.c:2905
+#: ../libpq-oauth/oauth-curl.c:1819 ../libpq-oauth/oauth-curl.c:1860
+#: ../libpq-oauth/oauth-curl.c:2173 ../libpq-oauth/oauth-curl.c:2334
+#: ../libpq-oauth/oauth-curl.c:2395 ../libpq-oauth/oauth-curl.c:2484
+#: ../libpq-oauth/oauth-curl.c:2778 ../libpq-oauth/oauth-curl.c:2995
 #: fe-auth-scram.c:374 fe-auth-scram.c:447 fe-auth-scram.c:599
 #: fe-auth-scram.c:619 fe-auth-scram.c:643 fe-auth-scram.c:657
 #: fe-auth-scram.c:703 fe-auth-scram.c:739 fe-auth-scram.c:931 fe-auth.c:308
@@ -257,96 +232,93 @@ msgstr "konnte alte Locale nicht wiederherstellen"
 #: fe-connect.c:6195 fe-connect.c:6293 fe-connect.c:6544 fe-connect.c:6571
 #: fe-connect.c:6647 fe-connect.c:6670 fe-connect.c:6694 fe-connect.c:6729
 #: fe-connect.c:6815 fe-connect.c:6823 fe-connect.c:7180 fe-connect.c:7362
-#: fe-exec.c:530 fe-exec.c:1315 fe-exec.c:3254 fe-exec.c:4293 fe-exec.c:4459
-#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:210 fe-protocol3.c:233
-#: fe-protocol3.c:256 fe-protocol3.c:273 fe-protocol3.c:294 fe-protocol3.c:368
-#: fe-protocol3.c:732 fe-protocol3.c:972 fe-protocol3.c:1553
-#: fe-protocol3.c:1862 fe-protocol3.c:2263 fe-secure-common.c:110
+#: fe-exec.c:530 fe-exec.c:1326 fe-exec.c:3265 fe-exec.c:4304 fe-exec.c:4470
+#: fe-gssapi-common.c:109 fe-lobj.c:870 fe-protocol3.c:211 fe-protocol3.c:234
+#: fe-protocol3.c:257 fe-protocol3.c:274 fe-protocol3.c:295 fe-protocol3.c:369
+#: fe-protocol3.c:750 fe-protocol3.c:990 fe-protocol3.c:1542
+#: fe-protocol3.c:1596 fe-protocol3.c:1642 fe-protocol3.c:1663
+#: fe-protocol3.c:1920 fe-protocol3.c:2321 fe-secure-common.c:110
 #: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
 #: fe-secure-openssl.c:1135
 #, c-format
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: ../libpq-oauth/oauth-curl.c:1783
-#, fuzzy, c-format
-#| msgid "tsquery is too large"
+#: ../libpq-oauth/oauth-curl.c:1847
+#, c-format
 msgid "response is too large"
-msgstr "tsquery ist zu groß"
+msgstr "Antwort ist zu groß"
 
-#: ../libpq-oauth/oauth-curl.c:1825
+#: ../libpq-oauth/oauth-curl.c:1889
 #, c-format
 msgid "failed to queue HTTP request: %s"
-msgstr ""
+msgstr "Einreihen der HTTP-Anfrage fehlgeschlagen: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1842 ../libpq-oauth/oauth-curl.c:1895
-#, fuzzy, c-format
-#| msgid "checkpoint request failed"
+#: ../libpq-oauth/oauth-curl.c:1906 ../libpq-oauth/oauth-curl.c:1959
+#, c-format
 msgid "asynchronous HTTP request failed: %s"
-msgstr "Checkpoint-Anforderung fehlgeschlagen"
+msgstr "asynchrone HTTP-Anfrage fehlgeschlagen: %s"
 
-#: ../libpq-oauth/oauth-curl.c:1947
+#: ../libpq-oauth/oauth-curl.c:2011
 #, c-format
 msgid "no result was retrieved for the finished handle"
-msgstr ""
+msgstr "für die abgeschlossene Handle wurde kein Ergebnis abgerufen"
 
-#: ../libpq-oauth/oauth-curl.c:2080 ../libpq-oauth/oauth-curl.c:2386
-#: ../libpq-oauth/oauth-curl.c:2465
-#, fuzzy, c-format
-#| msgid "unexpected section code %d"
+#: ../libpq-oauth/oauth-curl.c:2144 ../libpq-oauth/oauth-curl.c:2450
+#: ../libpq-oauth/oauth-curl.c:2529
+#, c-format
 msgid "unexpected response code %ld"
-msgstr "unerwarteter Abschnittscode %d"
+msgstr "unerwarteter Antwortcode %ld"
 
-#: ../libpq-oauth/oauth-curl.c:2152
-#, fuzzy, c-format
-#| msgid "server certificate for \"%s\" does not match host name \"%s\""
+#: ../libpq-oauth/oauth-curl.c:2216
+#, c-format
 msgid "the issuer identifier (%s) does not match oauth_issuer (%s)"
-msgstr "Server-Zertifikat für »%s« stimmt nicht mit dem Hostnamen »%s« überein"
+msgstr "der Issuer-Identifier (%s) stimmt nicht mit oauth_issuer (%s) überein"
 
-#: ../libpq-oauth/oauth-curl.c:2179
+#: ../libpq-oauth/oauth-curl.c:2243
 #, c-format
 msgid "issuer \"%s\" does not provide a device authorization endpoint"
-msgstr ""
+msgstr "Issuer »%s« stellt keinen Device-Authorization-Endpunkt zur Verfügung"
 
-#: ../libpq-oauth/oauth-curl.c:2205
+#: ../libpq-oauth/oauth-curl.c:2269
 #, c-format
 msgid "device authorization endpoint \"%s\" must use HTTPS"
-msgstr ""
+msgstr "Device-Authorization-Endpunkt »%s« muss HTTPS verwenden"
 
-#: ../libpq-oauth/oauth-curl.c:2214
+#: ../libpq-oauth/oauth-curl.c:2278
 #, c-format
 msgid "token endpoint \"%s\" must use HTTPS"
-msgstr ""
+msgstr "Token-Endpunkt »%s« muss HTTPS verwenden"
 
-#: ../libpq-oauth/oauth-curl.c:2523
+#: ../libpq-oauth/oauth-curl.c:2587
 #, c-format
 msgid "slow_down interval overflow"
-msgstr ""
+msgstr "slow_down Intervall-Überlauf"
 
 #. translator: The first %s is a URL for the user to visit in a
 #. browser, and the second %s is a code to be copy-pasted there.
 #.
-#: ../libpq-oauth/oauth-curl.c:2559
+#: ../libpq-oauth/oauth-curl.c:2623
 #, c-format
 msgid "Visit %s and enter the code: %s\n"
-msgstr ""
+msgstr "Besuchen Sie %s und geben Sie den Code ein: %s\n"
 
-#: ../libpq-oauth/oauth-curl.c:2564
+#: ../libpq-oauth/oauth-curl.c:2628
 #, c-format
 msgid "device prompt failed"
-msgstr ""
+msgstr "Device-Prompt fehlgeschlagen"
 
-#: ../libpq-oauth/oauth-curl.c:2620
+#: ../libpq-oauth/oauth-curl.c:2684
 #, c-format
 msgid "curl_global_init previously failed during OAuth setup"
-msgstr ""
+msgstr "curl_global_init zuvor beim OAuth-Setup fehlgeschlagen"
 
-#: ../libpq-oauth/oauth-curl.c:2639
+#: ../libpq-oauth/oauth-curl.c:2703
 #, c-format
 msgid "curl_global_init failed during OAuth setup"
-msgstr ""
+msgstr "curl_global_init beim OAuth-Setup fehlgeschlagen"
 
-#: ../libpq-oauth/oauth-curl.c:2660
+#: ../libpq-oauth/oauth-curl.c:2724
 #, c-format
 msgid ""
 "libcurl is no longer thread-safe\n"
@@ -355,6 +327,11 @@ msgid ""
 "\tlibcurl reports that it is not. Recompile libpq against\n"
 "\tthe installed version of libcurl."
 msgstr ""
+"libcurl ist nicht mehr thread-safe\n"
+"\tCurl-Initialisierung wurde als thread-safe berichtet, als libpq\n"
+"\tkompiliert wurde, aber die aktuell installierte Version von libcurl\n"
+"\tberichtet, dass sie nicht thread-safe ist. Kompilieren Sie libpq neu\n"
+"\tmit der installierten Version von libcurl."
 
 #: fe-auth-scram.c:228
 #, c-format
@@ -1181,8 +1158,8 @@ msgstr "unerwartete Leerzeichen in »%s« gefunden, verwenden Sie stattdessen Pr
 msgid "connection pointer is NULL\n"
 msgstr "Verbindung ist ein NULL-Zeiger\n"
 
-#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3459
-#: fe-protocol3.c:987 fe-protocol3.c:1020
+#: fe-connect.c:7634 fe-exec.c:713 fe-exec.c:975 fe-exec.c:3470
+#: fe-protocol3.c:1005 fe-protocol3.c:1038
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -1206,12 +1183,12 @@ msgstr "Passwort wurde aus Datei »%s« gelesen"
 msgid "invalid integer value \"%s\" for connection option \"%s\""
 msgstr "ungültiger Zahlenwert »%s« für Verbindungsoption »%s«"
 
-#: fe-exec.c:469 fe-exec.c:3533
+#: fe-exec.c:469 fe-exec.c:3544
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:531 fe-protocol3.c:2068
+#: fe-exec.c:531 fe-protocol3.c:2126
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1238,134 +1215,134 @@ msgstr "PGresult kann nicht mehr als INT_MAX Tupel enthalten"
 msgid "size_t overflow"
 msgstr "Überlauf von size_t"
 
-#: fe-exec.c:1438 fe-exec.c:1507 fe-exec.c:1553
+#: fe-exec.c:1449 fe-exec.c:1518 fe-exec.c:1564
 #, c-format
 msgid "command string is a null pointer"
 msgstr "Befehlszeichenkette ist ein NULL-Zeiger"
 
-#: fe-exec.c:1444 fe-exec.c:3003
+#: fe-exec.c:1455 fe-exec.c:3014
 #, c-format
 msgid "%s not allowed in pipeline mode"
 msgstr "%s im Pipeline-Modus nicht erlaubt"
 
-#: fe-exec.c:1512 fe-exec.c:1558 fe-exec.c:1652
+#: fe-exec.c:1523 fe-exec.c:1569 fe-exec.c:1663
 #, c-format
 msgid "number of parameters must be between 0 and %d"
 msgstr "Anzahl der Parameter muss zwischen 0 und %d sein"
 
-#: fe-exec.c:1548 fe-exec.c:1647
+#: fe-exec.c:1559 fe-exec.c:1658
 #, c-format
 msgid "statement name is a null pointer"
 msgstr "Anweisungsname ist ein NULL-Zeiger"
 
-#: fe-exec.c:1689 fe-exec.c:3379
+#: fe-exec.c:1700 fe-exec.c:3390
 #, c-format
 msgid "no connection to the server"
 msgstr "keine Verbindung mit dem Server"
 
-#: fe-exec.c:1697 fe-exec.c:3387
+#: fe-exec.c:1708 fe-exec.c:3398
 #, c-format
 msgid "another command is already in progress"
 msgstr "ein anderer Befehl ist bereits in Ausführung"
 
-#: fe-exec.c:1727
+#: fe-exec.c:1738
 #, c-format
 msgid "cannot queue commands during COPY"
 msgstr "während COPY können keine Befehle aufgereiht werden"
 
-#: fe-exec.c:1846
+#: fe-exec.c:1857
 #, c-format
 msgid "length must be given for binary parameter"
 msgstr "für binäre Parameter muss eine Länge angegeben werden"
 
-#: fe-exec.c:2205
+#: fe-exec.c:2216
 #, c-format
 msgid "unexpected asyncStatus: %d"
 msgstr "unerwarteter asyncStatus: %d"
 
-#: fe-exec.c:2361
+#: fe-exec.c:2372
 #, c-format
 msgid "synchronous command execution functions are not allowed in pipeline mode"
 msgstr "synchrone Befehlsausführungsfunktionen sind im Pipeline-Modus nicht erlaubt"
 
-#: fe-exec.c:2378
+#: fe-exec.c:2389
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:2394
+#: fe-exec.c:2405
 #, c-format
 msgid "PQexec not allowed during COPY BOTH"
 msgstr "PQexec ist während COPY BOTH nicht erlaubt"
 
-#: fe-exec.c:2630
+#: fe-exec.c:2641
 #, c-format
 msgid "unrecognized message type \"%c\""
 msgstr "unbekannter Message-Typ »%c«"
 
-#: fe-exec.c:2702 fe-exec.c:2756 fe-exec.c:2824 fe-protocol3.c:1999
+#: fe-exec.c:2713 fe-exec.c:2767 fe-exec.c:2835 fe-protocol3.c:2057
 #, c-format
 msgid "no COPY in progress"
 msgstr "keine COPY in Ausführung"
 
-#: fe-exec.c:3010
+#: fe-exec.c:3021
 #, c-format
 msgid "connection in wrong state"
 msgstr "Verbindung im falschen Zustand"
 
-#: fe-exec.c:3053
+#: fe-exec.c:3064
 #, c-format
 msgid "cannot enter pipeline mode, connection not idle"
 msgstr "kann Pipeline-Modus nicht einschalten, Verbindung ist nicht inaktiv"
 
-#: fe-exec.c:3089 fe-exec.c:3110
+#: fe-exec.c:3100 fe-exec.c:3121
 #, c-format
 msgid "cannot exit pipeline mode with uncollected results"
 msgstr "kann Pipeline-Modus nicht beenden, wegen nicht eingesammelter Ergebnisse"
 
-#: fe-exec.c:3093
+#: fe-exec.c:3104
 #, c-format
 msgid "cannot exit pipeline mode while busy"
 msgstr "kann Pipeline-Modus nicht beenden während die Verbindung beschäftigt ist"
 
-#: fe-exec.c:3104
+#: fe-exec.c:3115
 #, c-format
 msgid "cannot exit pipeline mode while in COPY"
 msgstr "kann Pipeline-Modus nicht beenden während COPY aktiv ist"
 
-#: fe-exec.c:3303
+#: fe-exec.c:3314
 #, c-format
 msgid "cannot send pipeline when not in pipeline mode"
 msgstr "Pipeline kann nicht gesendet werden, wenn der Pipeline-Modus aus ist"
 
-#: fe-exec.c:3422
+#: fe-exec.c:3433
 msgid "invalid ExecStatusType code"
 msgstr "ungültiger ExecStatusType-Kode"
 
-#: fe-exec.c:3449
+#: fe-exec.c:3460
 msgid "PGresult is not an error result\n"
 msgstr "PGresult ist kein Fehlerresultat\n"
 
-#: fe-exec.c:3517 fe-exec.c:3540
+#: fe-exec.c:3528 fe-exec.c:3551
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3555
+#: fe-exec.c:3566
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3866
+#: fe-exec.c:3877
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:4141 fe-exec.c:4255
+#: fe-exec.c:4152 fe-exec.c:4266
 #, c-format
 msgid "incomplete multibyte character"
 msgstr "unvollständiges Mehrbyte-Zeichen"
 
-#: fe-exec.c:4143 fe-exec.c:4274
+#: fe-exec.c:4154 fe-exec.c:4285
 #, c-format
 msgid "invalid multibyte character"
 msgstr "ungültiges Mehrbytezeichen"
@@ -1457,181 +1434,196 @@ msgstr "ungültiges Socket"
 msgid "%s() failed: %s"
 msgstr "%s() fehlgeschlagen: %s"
 
-#: fe-protocol3.c:188
+#: fe-protocol3.c:189
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "Nachricht vom Typ 0x%02x kam vom Server im Ruhezustand"
 
-#: fe-protocol3.c:401
+#: fe-protocol3.c:402
 #, c-format
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
 msgstr "Server sendete Daten (»D«-Nachricht) ohne vorherige Zeilenbeschreibung (»T«-Nachricht)"
 
-#: fe-protocol3.c:443
+#: fe-protocol3.c:444
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\""
 msgstr "unerwartete Antwort vom Server; erstes empfangenes Zeichen war »%c«"
 
-#: fe-protocol3.c:462
+#: fe-protocol3.c:468
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\""
 msgstr "Nachrichteninhalt stimmt nicht mit Länge in Nachrichtentyp »%c« überein"
 
-#: fe-protocol3.c:480
+#: fe-protocol3.c:503
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d"
 msgstr "Synchronisation mit Server verloren: Nachrichtentyp »%c« empfangen, Länge %d"
 
-#: fe-protocol3.c:532 fe-protocol3.c:572
+#: fe-protocol3.c:550 fe-protocol3.c:590
 msgid "insufficient data in \"T\" message"
 msgstr "nicht genug Daten in »T«-Nachricht"
 
-#: fe-protocol3.c:643 fe-protocol3.c:849
+#: fe-protocol3.c:661 fe-protocol3.c:867
 msgid "out of memory for query result"
 msgstr "Speicher für Anfrageergebnis aufgebraucht"
 
-#: fe-protocol3.c:712
+#: fe-protocol3.c:730
 msgid "insufficient data in \"t\" message"
 msgstr "nicht genug Daten in »t«-Nachricht"
 
-#: fe-protocol3.c:771 fe-protocol3.c:803 fe-protocol3.c:821
+#: fe-protocol3.c:789 fe-protocol3.c:821 fe-protocol3.c:839
 msgid "insufficient data in \"D\" message"
 msgstr "nicht genug Daten in »D«-Nachricht"
 
-#: fe-protocol3.c:777
+#: fe-protocol3.c:795
 msgid "unexpected field count in \"D\" message"
 msgstr "unerwartete Feldzahl in »D«-Nachricht"
 
-#: fe-protocol3.c:1033
+#: fe-protocol3.c:1051
 msgid "no error message available\n"
 msgstr "keine Fehlermeldung verfügbar\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1081 fe-protocol3.c:1100
+#: fe-protocol3.c:1099 fe-protocol3.c:1118
 #, c-format
 msgid " at character %s"
 msgstr " bei Zeichen %s"
 
-#: fe-protocol3.c:1113
+#: fe-protocol3.c:1131
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1116
+#: fe-protocol3.c:1134
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "TIP:  %s\n"
 
-#: fe-protocol3.c:1119
+#: fe-protocol3.c:1137
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ANFRAGE:  %s\n"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1144
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "KONTEXT:  %s\n"
 
-#: fe-protocol3.c:1135
+#: fe-protocol3.c:1153
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMANAME:  %s\n"
 
-#: fe-protocol3.c:1139
+#: fe-protocol3.c:1157
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABELLENNAME:  %s\n"
 
-#: fe-protocol3.c:1143
+#: fe-protocol3.c:1161
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "SPALTENNAME:  %s\n"
 
-#: fe-protocol3.c:1147
+#: fe-protocol3.c:1165
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATENTYPNAME:  %s\n"
 
-#: fe-protocol3.c:1151
+#: fe-protocol3.c:1169
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT-NAME:  %s\n"
 
-#: fe-protocol3.c:1163
+#: fe-protocol3.c:1181
 msgid "LOCATION:  "
 msgstr "ORT:  "
 
-#: fe-protocol3.c:1165
+#: fe-protocol3.c:1183
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1167
+#: fe-protocol3.c:1185
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1362
+#: fe-protocol3.c:1380
 #, c-format
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: fe-protocol3.c:1424
+#: fe-protocol3.c:1442
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to a higher-numbered version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf eine Version mit einer höheren Nummer"
 
-#: fe-protocol3.c:1430
+#: fe-protocol3.c:1448
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to pre-3.0 protocol version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf eine Protokollversion vor 3.0"
 
-#: fe-protocol3.c:1437
+#: fe-protocol3.c:1455
 #, c-format
 msgid "received invalid protocol negotiation message: server requested downgrade to non-existent 3.1 protocol version"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server verlangte Herabstufung auf nicht existierende Protokollversion 3.1"
 
-#: fe-protocol3.c:1443
+#: fe-protocol3.c:1461
 #, c-format
 msgid "received invalid protocol negotiation message: server reported negative number of unsupported parameters"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server berichtete eine negative Anzahl nicht unterstützter Parameter"
 
-#: fe-protocol3.c:1449
+#: fe-protocol3.c:1467
 #, c-format
 msgid "received invalid protocol negotiation message: server negotiated but asks for no changes"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server hat verhandelt aber keine Änderungen verlangt"
 
-#: fe-protocol3.c:1455
+#: fe-protocol3.c:1473
 #, c-format
 msgid "server only supports protocol version %d.%d, but \"%s\" was set to %d.%d"
 msgstr "Server unterstützt nur Protokollversion %d.%d, aber »%s« war auf %d.%d gesetzt"
 
-#: fe-protocol3.c:1480
+#: fe-protocol3.c:1498
 #, c-format
 msgid "received invalid protocol negotiation message: server reported unsupported parameter name without a \"%s\" prefix (\"%s\")"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server sendete nicht unterstützten Parameter ohne Präfix »%s« (»%s«)"
 
-#: fe-protocol3.c:1483
+#: fe-protocol3.c:1501
 #, c-format
 msgid "received invalid protocol negotiation message: server reported an unsupported parameter that was not requested (\"%s\")"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Server sendete nicht unterstützten Parameter, der nicht angefordert war (»%s«)"
 
-#: fe-protocol3.c:1490
+#: fe-protocol3.c:1508
 #, c-format
 msgid "received invalid protocol negotiation message: message too short"
 msgstr "ungültige Protokollverhandlungsnachricht empfangen: Nachricht zu kurz"
 
-#: fe-protocol3.c:1894
+#: fe-protocol3.c:1574
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d not allowed in protocol version 3.0 (must be 4 bytes)"
+msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d nicht erlaubt in Protokoll 3.0 (muss 4 Bytes sein)"
+
+#: fe-protocol3.c:1581
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d is too short (minimum 4 bytes)"
+msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d ist zu kurz (Minimum 4 Bytes)"
+
+#: fe-protocol3.c:1588
+#, c-format
+msgid "received invalid BackendKeyData message: cancel key with length %d is too long (maximum 256 bytes)"
+msgstr "ungültige BackendKeyData-Nachricht empfangen: Stornierungsschlüssel mit Länge %d ist zu lang (Maximum 256 Bytes)"
+
+#: fe-protocol3.c:1952
 #, c-format
 msgid "PQgetline: not doing text COPY OUT"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt"
 
-#: fe-protocol3.c:2269
+#: fe-protocol3.c:2327
 #, c-format
 msgid "protocol error: no function result"
 msgstr "Protokollfehler: kein Funktionsergebnis"
 
-#: fe-protocol3.c:2281
+#: fe-protocol3.c:2339
 #, c-format
 msgid "protocol error: id=0x%x"
 msgstr "Protokollfehler: id=0x%x"
