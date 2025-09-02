@@ -185,7 +185,7 @@ nav:
       - "Keyring file configuration": global-key-provider-configuration/keyring.md
     - "2.2 Global Principal Key configuration": global-key-provider-configuration/set-principal-key.md
     - "3. Validate encryption with pg_tde": test.md
-    - "4. Configure WAL encryption (tech preview)": wal-encryption.md
+    - "4. Configure WAL encryption": wal-encryption.md
   - "Technical reference":
     - "Overview": advanced-topics/tech-reference.md
     - "Architecture": architecture/architecture.md
@@ -193,23 +193,26 @@ nav:
     - "Functions": functions.md
     - "Streaming Replication with tde_heap": replication.md
   - "TDE operations":
-    - "pg_tde CLI Tools":
+    - "pg_tde CLI tools":
       - "Overview": command-line-tools/cli-tools.md
       - "pg_tde_change_key_provider": command-line-tools/pg-tde-change-key-provider.md
-      - "pg_waldump": command-line-tools/pg-waldump.md
+      - "pg_tde_archive_decrypt": command-line-tools/pg-tde-archive-decrypt.md
+      - "pg_tde_restore_encrypt": command-line-tools/pg-tde-restore-encrypt.md
       - "pg_checksums": command-line-tools/pg-tde-checksums.md 
+      - "pg_waldump": command-line-tools/pg-waldump.md
     - "Uninstall pg_tde": how-to/uninstall.md
     - "Configure Multi-tenancy": how-to/multi-tenant-setup.md
     - "Encryption Enforcement": how-to/enforcement.md
     - "Decrypt an Encrypted Table": how-to/decrypt.md
+    - "Backup with WAL encryption enabled": how-to/backup-wal-enabled.md
     - "Restore an encrypted pg_tde backup": how-to/restore-backups.md
   - faq.md
   - "Release notes":
     - "Release notes index": release-notes/release-notes.md
-    - "2025":
-      - "1.0": release-notes/release-notes-v1.0.md
-      - "Release Candidate 2": release-notes/rc2.md
-      - "Release Candidate 1": release-notes/rc.md
+    - "2.0": release-notes/release-notes-v2.0.md
+    - "1.0": release-notes/release-notes-v1.0.md
+    - "Release Candidate 2": release-notes/rc2.md
+    - "Release Candidate 1": release-notes/rc.md
     - "2024 (Alpha 1 - Beta 2)":
       - "Beta 2": release-notes/beta2.md
       - "Beta": release-notes/beta.md

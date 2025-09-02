@@ -1,12 +1,13 @@
 #Variables used throughout the docs
 
-latestreleasenotes: 'release-notes-v1.0'
-tdeversion: '1.0'
-release: '1.0'
+latestreleasenotes: 'release-notes-v2.0'
+tdeversion: '2.0'
+release: '2.0'
 pgversion17: '17.5'
-tdebranch: release-17.5.2
+tdebranch: release-17.5.3
 
 date:
+  GA20: '2025-09-01'
   GA10: '2025-06-30'
   RC2: '2025-05-29'
   RC: '2025-03-27'

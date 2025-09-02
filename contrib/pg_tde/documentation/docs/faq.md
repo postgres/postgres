@@ -94,9 +94,6 @@ The principal key is used to encrypt the internal keys. The principal key is sto
 
 ### WAL encryption
 
-!!! note
-    WAL encryption is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
-
 WAL encryption is done globally for the entire database cluster. All modifications to any database within a PostgreSQL cluster are written to the same WAL to maintain data consistency and integrity and ensure that PostgreSQL cluster can be restored to a consistent state. Therefore, WAL is encrypted globally.
 
 When you turn on WAL encryption, `pg_tde` encrypts entire WAL files starting from the first WAL write after the server was started with the encryption turned on.
@@ -140,7 +137,7 @@ Since the `SET ACCESS METHOD` command drops hint bits and this may affect the pe
 You must restart the database in the following cases to apply the changes:
 
 * after you enabled the `pg_tde` extension
-* when enabling WAL encryption, which is currently in beta. **Do not enable this feature in production environments**.
+* when enabling WAL encryption
 
 After that, no database restart is required. When you create or alter the table using the `tde_heap` access method, the files are marked as those that require encryption. The encryption happens at the storage manager level, before a transaction is written to disk. Read more about [how tde_heap works](index/table-access-method.md#how-tde_heap-works-with-pg_tde).
 

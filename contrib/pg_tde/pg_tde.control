@@ -1,4 +1,4 @@
 comment = 'pg_tde access method'
-default_version = '1.0'
+default_version = '2.0'
 module_pathname = '$libdir/pg_tde'
 relocatable = false

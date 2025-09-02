@@ -1,7 +1,4 @@
-# Configure WAL Encryption (tech preview)
-
-!!! warning
-    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
+# Configure WAL encryption
 
 Before enabling WAL encryption, follow the steps below to create a principal key and configure it for WAL:
 
@@ -118,3 +115,5 @@ Now WAL files start to be encrypted for both encrypted and unencrypted tables.
 
 For more technical references related to architecture, variables or functions, see:
 [Technical Reference](advanced-topics/tech-reference.md){.md-button}
+
+💬 Need help customizing this for your infrastructure? [Contact Percona support :octicons-link-external-16:](get-help.md)

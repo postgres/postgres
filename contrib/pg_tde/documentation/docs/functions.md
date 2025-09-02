@@ -229,7 +229,7 @@ Use these functions to create a new principal key at a given keyprover, and to u
 
 Principal keys are stored on key providers by the name specified in this function - for example, when using the Vault provider, after creating a key named "foo", a key named "foo" will be visible on the Vault server at the specified mount point.
 
-### pg_tde_creates_key_using_database_key_provider
+### pg_tde_create_key_using_database_key_provider
 
 Creates a principal key using the database-local key provider with the specified name. Use this key later with [`pg_tde_set_key_using_database_key_provider()`](#pg_tde_set_key_using_database_key_provider).
 
@@ -242,7 +242,7 @@ SELECT pg_tde_create_key_using_database_key_provider(
 
 ### pg_tde_create_key_using_global_key_provider
 
-Creates a principal key at a global  key provider with the given name. Use this key later with the `pg_tde_set_` series of functions.
+Creates a principal key at a global key provider with the given name. Use this key later with the `pg_tde_set_*` series of functions.
 
 ```sql
 SELECT pg_tde_create_key_using_global_key_provider(
@@ -285,15 +285,6 @@ SELECT pg_tde_set_server_key_using_global_key_provider(
   'provider-name'
 );
 ```
-
-!!! warning
-    The WAL encryption feature is currently in beta and is not effective unless explicitly enabled. It is not yet production ready. **Do not enable this feature in production environments**.
-
-The `ensure_new_key` parameter instructs the function how to handle a principal key during key rotation:
-
-* If set to `true`, a new key must be unique.
-  If the provider already stores a key by that name, the function returns an error.
-* If set to `false` (default), an existing principal key may be reused.
 
 ### pg_tde_set_default_key_using_global_key_provider
 

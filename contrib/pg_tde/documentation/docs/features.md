@@ -17,6 +17,10 @@ The following features are available for the extension:
 * Single-tenancy support via a [global keyring provider](global-key-provider-configuration/set-principal-key.md)
 * [Multi-tenancy support](how-to/multi-tenant-setup.md)
 * Table-level granularity for encryption and access control
-* Multiple [Key management options](global-key-provider-configuration/index.md)
+* Multiple [Key management options](global-key-provider-configuration/overview.md)
 
-[Learn more about TDE and pg_tde :material-arrow-right:](index/about-tde.md){.md-button} [Get started with installation :material-arrow-right:](install.md){.md-button}
+## Next steps
+
+Learn more about how `pg_tde` implements Transparent Data Encryption:
+
+[About Transparent Data Encryption :material-arrow-right:](index/about-tde.md){.md-button}

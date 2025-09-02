@@ -134,7 +134,7 @@ endif
 pg_version_major = pg_version_arr[0].to_int()
 pg_version_minor = pg_version_arr[1].to_int()
 pg_version_num = (pg_version_major * 10000) + pg_version_minor
-pg_percona_ver = '2'
+pg_percona_ver = '3'
 
 pg_url = 'https://www.postgresql.org/'
 

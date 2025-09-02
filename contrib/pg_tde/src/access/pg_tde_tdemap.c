@@ -295,10 +295,9 @@ pg_tde_perform_rotate_key(const TDEPrincipalKey *principal_key, const TDEPrincip
 	CloseTransientFile(new_fd);
 
 	/*
-	 * Do the final steps - replace the current _map with the file with new
+	 * Do the final step - replace the current _keys with the file with new
 	 * data
 	 */
-	durable_unlink(old_path, ERROR);
 	durable_rename(new_path, old_path, ERROR);
 
 	/*
@@ -316,8 +315,8 @@ pg_tde_perform_rotate_key(const TDEPrincipalKey *principal_key, const TDEPrincip
 	{
 		XLogPrincipalKeyRotate xlrec;
 
-		xlrec.databaseId = principal_key->keyInfo.databaseId;
-		xlrec.keyringId = principal_key->keyInfo.keyringId;
+		xlrec.databaseId = new_principal_key->keyInfo.databaseId;
+		xlrec.keyringId = new_principal_key->keyInfo.keyringId;
 		memcpy(xlrec.keyName, new_principal_key->keyInfo.name, sizeof(new_principal_key->keyInfo.name));
 
 		XLogBeginInsert();
