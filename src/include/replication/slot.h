@@ -134,7 +134,7 @@ typedef struct ReplicationSlotPersistentData
 	/*
 	 * Was this slot synchronized from the primary server?
 	 */
-	char		synced;
+	bool		synced;
 
 	/*
 	 * Is this a failover slot (sync candidate for standbys)? Only relevant
