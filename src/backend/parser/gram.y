@@ -3442,6 +3442,7 @@ CopyStmt:	COPY opt_binary qualified_name opt_column_list
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("WHERE clause not allowed with COPY TO"),
+								 errhint("Try the COPY (SELECT ... WHERE ...) TO variant."),
 								 parser_errposition(@11)));
 
 					n->options = NIL;
