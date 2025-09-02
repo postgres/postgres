@@ -387,6 +387,59 @@ ok( $logfile =~
 	'update target row was deleted in tab');
 
 ###############################################################################
+# Check that dead tuple retention stops due to the wait time surpassing
+# max_retention_duration.
+###############################################################################
+
+# Create a physical slot
+$node_B->safe_psql('postgres',
+	"SELECT * FROM pg_create_physical_replication_slot('blocker');");
+
+# Add the inactive physical slot to synchronized_standby_slots
+$node_B->append_conf('postgresql.conf',
+	"synchronized_standby_slots = 'blocker'");
+$node_B->reload;
+
+# Enable failover to activate the synchronized_standby_slots setting
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB DISABLE;");
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB SET (failover = true);");
+$node_A->safe_psql('postgres', "ALTER SUBSCRIPTION $subname_AB ENABLE;");
+
+# Insert a record
+$node_B->safe_psql('postgres', "INSERT INTO tab VALUES (5, 5);");
+
+# Advance the xid on Node A to trigger the next cycle of oldest_nonremovable_xid
+# advancement.
+$node_A->safe_psql('postgres', "SELECT txid_current() + 1;");
+
+$log_offset = -s $node_A->logfile;
+
+# Set max_retention_duration to a minimal value to initiate retention stop.
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB SET (max_retention_duration = 1);");
+
+# Confirm that the retention is stopped
+$node_A->wait_for_log(
+	qr/logical replication worker for subscription "tap_sub_a_b" has stopped retaining the information for detecting conflicts/,
+	$log_offset);
+
+ok( $node_A->poll_query_until(
+		'postgres',
+		"SELECT xmin IS NULL from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"the xmin value of slot 'pg_conflict_detection' is invalid on Node A");
+
+$result = $node_A->safe_psql('postgres',
+	"SELECT subretentionactive FROM pg_subscription WHERE subname='$subname_AB';");
+is($result, qq(f), 'retention is inactive');
+
+# Drop the physical slot and reset the synchronized_standby_slots setting
+$node_B->safe_psql('postgres',
+	"SELECT * FROM pg_drop_replication_slot('blocker');");
+$node_B->adjust_conf('postgresql.conf', 'synchronized_standby_slots', "''");
+$node_B->reload;
+
+###############################################################################
 # Check that the replication slot pg_conflict_detection is dropped after
 # removing all the subscriptions.
 ###############################################################################

@@ -5048,6 +5048,7 @@ getSubscriptions(Archive *fout)
 	int			i_subenabled;
 	int			i_subfailover;
 	int			i_subretaindeadtuples;
+	int			i_submaxretention;
 	int			i,
 				ntups;
 
@@ -5127,10 +5128,17 @@ getSubscriptions(Archive *fout)
 
 	if (fout->remoteVersion >= 190000)
 		appendPQExpBufferStr(query,
-							 " s.subretaindeadtuples\n");
+							 " s.subretaindeadtuples,\n");
 	else
 		appendPQExpBufferStr(query,
-							 " false AS subretaindeadtuples\n");
+							 " false AS subretaindeadtuples,\n");
+
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query,
+							 " s.submaxretention\n");
+	else
+		appendPQExpBuffer(query,
+						  " 0 AS submaxretention\n");
 
 	appendPQExpBufferStr(query,
 						 "FROM pg_subscription s\n");
@@ -5165,6 +5173,7 @@ getSubscriptions(Archive *fout)
 	i_subrunasowner = PQfnumber(res, "subrunasowner");
 	i_subfailover = PQfnumber(res, "subfailover");
 	i_subretaindeadtuples = PQfnumber(res, "subretaindeadtuples");
+	i_submaxretention = PQfnumber(res, "submaxretention");
 	i_subconninfo = PQfnumber(res, "subconninfo");
 	i_subslotname = PQfnumber(res, "subslotname");
 	i_subsynccommit = PQfnumber(res, "subsynccommit");
@@ -5200,6 +5209,8 @@ getSubscriptions(Archive *fout)
 			(strcmp(PQgetvalue(res, i, i_subfailover), "t") == 0);
 		subinfo[i].subretaindeadtuples =
 			(strcmp(PQgetvalue(res, i, i_subretaindeadtuples), "t") == 0);
+		subinfo[i].submaxretention =
+			atoi(PQgetvalue(res, i, i_submaxretention));
 		subinfo[i].subconninfo =
 			pg_strdup(PQgetvalue(res, i, i_subconninfo));
 		if (PQgetisnull(res, i, i_subslotname))
@@ -5460,6 +5471,9 @@ dumpSubscription(Archive *fout, const SubscriptionInfo *subinfo)
 
 	if (subinfo->subretaindeadtuples)
 		appendPQExpBufferStr(query, ", retain_dead_tuples = true");
+
+	if (subinfo->submaxretention)
+		appendPQExpBuffer(query, ", max_retention_duration = %d", subinfo->submaxretention);
 
 	if (strcmp(subinfo->subsynccommit, "off") != 0)
 		appendPQExpBuffer(query, ", synchronous_commit = %s", fmtId(subinfo->subsynccommit));
