@@ -110,12 +110,6 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 
 	num_elems = list_length(vals);
 
-	/*
-	 * We do not bother to check the list of values for duplicates --- if you
-	 * have any, you'll get a less-than-friendly unique-index violation. It is
-	 * probably not worth trying harder.
-	 */
-
 	pg_enum = table_open(EnumRelationId, RowExclusiveLock);
 
 	/*
@@ -164,6 +158,7 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 	{
 		char	   *lab = strVal(lfirst(lc));
 		Name		enumlabel = palloc0(NAMEDATALEN);
+		ListCell   *lc2;
 
 		/*
 		 * labels are stored in a name field, for easier syscache lookup, so
@@ -176,6 +171,24 @@ EnumValuesCreate(Oid enumTypeOid, List *vals)
 					 errdetail("Labels must be %d bytes or less.",
 							   NAMEDATALEN - 1)));
 
+		/*
+		 * Check for duplicate labels. The unique index on pg_enum would catch
+		 * that anyway, but we prefer a friendlier error message.
+		 */
+		foreach(lc2, vals)
+		{
+			/* Only need to compare lc to earlier entries */
+			if (lc2 == lc)
+				break;
+
+			if (strcmp(lab, strVal(lfirst(lc2))) == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("enum label \"%s\" used more than once",
+								lab)));
+		}
+
+		/* OK, construct a tuple for this label */
 		ExecClearTuple(slot[slotCount]);
 
 		memset(slot[slotCount]->tts_isnull, false,

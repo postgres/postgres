@@ -23,6 +23,9 @@ SELECT * FROM pg_input_error_info('mauve', 'rainbow');
 SELECT * FROM pg_input_error_info(repeat('too_long', 32), 'rainbow');
 \x
 
+-- check for duplicate enum entries
+CREATE TYPE dup_enum AS ENUM ('foo','bar','foo');
+
 --
 -- adding new values
 --

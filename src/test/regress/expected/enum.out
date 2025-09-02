@@ -52,6 +52,9 @@ hint           |
 sql_error_code | 22P02
 
 \x
+-- check for duplicate enum entries
+CREATE TYPE dup_enum AS ENUM ('foo','bar','foo');
+ERROR:  enum label "foo" used more than once
 --
 -- adding new values
 --
