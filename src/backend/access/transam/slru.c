@@ -408,7 +408,7 @@ SimpleLruZeroPage(SlruCtl ctl, int64 pageno)
 	pg_atomic_write_u64(&shared->latest_page_number, pageno);
 
 	/* update the stats counter of zeroed pages */
-	pgstat_count_slru_page_zeroed(shared->slru_stats_idx);
+	pgstat_count_slru_blocks_zeroed(shared->slru_stats_idx);
 
 	return slotno;
 }
@@ -560,7 +560,7 @@ SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 			SlruRecentlyUsed(shared, slotno);
 
 			/* update the stats counter of pages found in the SLRU */
-			pgstat_count_slru_page_hit(shared->slru_stats_idx);
+			pgstat_count_slru_blocks_hit(shared->slru_stats_idx);
 
 			return slotno;
 		}
@@ -605,7 +605,7 @@ SimpleLruReadPage(SlruCtl ctl, int64 pageno, bool write_ok,
 		SlruRecentlyUsed(shared, slotno);
 
 		/* update the stats counter of pages not found in SLRU */
-		pgstat_count_slru_page_read(shared->slru_stats_idx);
+		pgstat_count_slru_blocks_read(shared->slru_stats_idx);
 
 		return slotno;
 	}
@@ -648,7 +648,7 @@ SimpleLruReadPage_ReadOnly(SlruCtl ctl, int64 pageno, TransactionId xid)
 			SlruRecentlyUsed(shared, slotno);
 
 			/* update the stats counter of pages found in the SLRU */
-			pgstat_count_slru_page_hit(shared->slru_stats_idx);
+			pgstat_count_slru_blocks_hit(shared->slru_stats_idx);
 
 			return slotno;
 		}
@@ -778,7 +778,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int64 pageno)
 	off_t		endpos;
 
 	/* update the stats counter of checked pages */
-	pgstat_count_slru_page_exists(ctl->shared->slru_stats_idx);
+	pgstat_count_slru_blocks_exists(ctl->shared->slru_stats_idx);
 
 	SlruFileName(ctl, path, segno);
 
@@ -907,7 +907,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno, SlruWriteAll fdata)
 	int			fd = -1;
 
 	/* update the stats counter of written pages */
-	pgstat_count_slru_page_written(shared->slru_stats_idx);
+	pgstat_count_slru_blocks_written(shared->slru_stats_idx);
 
 	/*
 	 * Honor the write-WAL-before-data rule, if appropriate, so that we do not

@@ -747,11 +747,11 @@ extern PgStat_StatReplSlotEntry *pgstat_fetch_replslot(NameData slotname);
  */
 
 extern void pgstat_reset_slru(const char *);
-extern void pgstat_count_slru_page_zeroed(int slru_idx);
-extern void pgstat_count_slru_page_hit(int slru_idx);
-extern void pgstat_count_slru_page_read(int slru_idx);
-extern void pgstat_count_slru_page_written(int slru_idx);
-extern void pgstat_count_slru_page_exists(int slru_idx);
+extern void pgstat_count_slru_blocks_zeroed(int slru_idx);
+extern void pgstat_count_slru_blocks_hit(int slru_idx);
+extern void pgstat_count_slru_blocks_read(int slru_idx);
+extern void pgstat_count_slru_blocks_written(int slru_idx);
+extern void pgstat_count_slru_blocks_exists(int slru_idx);
 extern void pgstat_count_slru_flush(int slru_idx);
 extern void pgstat_count_slru_truncate(int slru_idx);
 extern const char *pgstat_get_slru_name(int slru_idx);
