@@ -864,7 +864,7 @@ apw_init_state(void *ptr)
 {
 	AutoPrewarmSharedState *state = (AutoPrewarmSharedState *) ptr;
 
-	LWLockInitialize(&state->lock, LWLockNewTrancheId());
+	LWLockInitialize(&state->lock, LWLockNewTrancheId("autoprewarm"));
 	state->bgworker_pid = InvalidPid;
 	state->pid_using_dumpfile = InvalidPid;
 }
@@ -883,7 +883,6 @@ apw_init_shmem(void)
 								   sizeof(AutoPrewarmSharedState),
 								   apw_init_state,
 								   &found);
-	LWLockRegisterTranche(apw_state->lock.tranche, "autoprewarm");
 
 	return found;
 }

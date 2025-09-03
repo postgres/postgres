@@ -48,7 +48,7 @@ init_tdr_dsm(void *ptr)
 {
 	TestDSMRegistryStruct *dsm = (TestDSMRegistryStruct *) ptr;
 
-	LWLockInitialize(&dsm->lck, LWLockNewTrancheId());
+	LWLockInitialize(&dsm->lck, LWLockNewTrancheId("test_dsm_registry"));
 	dsm->val = 0;
 }
 
@@ -61,7 +61,6 @@ tdr_attach_shmem(void)
 								 sizeof(TestDSMRegistryStruct),
 								 init_tdr_dsm,
 								 &found);
-	LWLockRegisterTranche(tdr_dsm->lck.tranche, "test_dsm_registry");
 
 	if (tdr_dsa == NULL)
 		tdr_dsa = GetNamedDSA("test_dsm_registry_dsa", &found);

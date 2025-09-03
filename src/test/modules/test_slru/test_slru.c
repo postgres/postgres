@@ -232,11 +232,9 @@ test_slru_shmem_startup(void)
 	(void) MakePGDirectory(slru_dir_name);
 
 	/* initialize the SLRU facility */
-	test_tranche_id = LWLockNewTrancheId();
-	LWLockRegisterTranche(test_tranche_id, "test_slru_tranche");
+	test_tranche_id = LWLockNewTrancheId("test_slru_tranche");
 
-	test_buffer_tranche_id = LWLockNewTrancheId();
-	LWLockRegisterTranche(test_tranche_id, "test_buffer_tranche");
+	test_buffer_tranche_id = LWLockNewTrancheId("test_buffer_tranche");
 
 	TestSlruCtl->PagePrecedes = test_slru_page_precedes_logically;
 	SimpleLruInit(TestSlruCtl, "TestSLRU",

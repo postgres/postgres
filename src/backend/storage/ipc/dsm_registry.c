@@ -299,8 +299,7 @@ GetNamedDSA(const char *name, bool *found)
 		entry->type = DSMR_ENTRY_TYPE_DSA;
 
 		/* Initialize the LWLock tranche for the DSA. */
-		state->tranche = LWLockNewTrancheId();
-		LWLockRegisterTranche(state->tranche, name);
+		state->tranche = LWLockNewTrancheId(name);
 
 		/* Initialize the DSA. */
 		ret = dsa_create(state->tranche);
@@ -320,9 +319,6 @@ GetNamedDSA(const char *name, bool *found)
 		if (dsa_is_attached(state->handle))
 			ereport(ERROR,
 					(errmsg("requested DSA already attached to current process")));
-
-		/* Initialize existing LWLock tranche for the DSA. */
-		LWLockRegisterTranche(state->tranche, name);
 
 		/* Attach to existing DSA. */
 		ret = dsa_attach(state->handle);
@@ -378,8 +374,7 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 		entry->type = DSMR_ENTRY_TYPE_DSH;
 
 		/* Initialize the LWLock tranche for the hash table. */
-		dsh_state->tranche = LWLockNewTrancheId();
-		LWLockRegisterTranche(dsh_state->tranche, name);
+		dsh_state->tranche = LWLockNewTrancheId(name);
 
 		/* Initialize the DSA for the hash table. */
 		dsa = dsa_create(dsh_state->tranche);
@@ -408,9 +403,6 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 		if (dsa_is_attached(dsh_state->dsa_handle))
 			ereport(ERROR,
 					(errmsg("requested DSHash already attached to current process")));
-
-		/* Initialize existing LWLock tranche for the hash table. */
-		LWLockRegisterTranche(dsh_state->tranche, name);
 
 		/* Attach to existing DSA for the hash table. */
 		dsa = dsa_attach(dsh_state->dsa_handle);

@@ -101,7 +101,7 @@ typedef struct
 	struct InjectionPointsCtl *ActiveInjectionPoints;
 #endif
 	int			NamedLWLockTrancheRequests;
-	NamedLWLockTranche *NamedLWLockTrancheArray;
+	char	  **LWLockTrancheNames;
 	int		   *LWLockCounter;
 	LWLockPadded *MainLWLockArray;
 	slock_t    *ProcStructLock;
@@ -761,7 +761,7 @@ save_backend_variables(BackendParameters *param,
 #endif
 
 	param->NamedLWLockTrancheRequests = NamedLWLockTrancheRequests;
-	param->NamedLWLockTrancheArray = NamedLWLockTrancheArray;
+	param->LWLockTrancheNames = LWLockTrancheNames;
 	param->LWLockCounter = LWLockCounter;
 	param->MainLWLockArray = MainLWLockArray;
 	param->ProcStructLock = ProcStructLock;
@@ -1022,7 +1022,7 @@ restore_backend_variables(BackendParameters *param)
 #endif
 
 	NamedLWLockTrancheRequests = param->NamedLWLockTrancheRequests;
-	NamedLWLockTrancheArray = param->NamedLWLockTrancheArray;
+	LWLockTrancheNames = param->LWLockTrancheNames;
 	LWLockCounter = param->LWLockCounter;
 	MainLWLockArray = param->MainLWLockArray;
 	ProcStructLock = param->ProcStructLock;

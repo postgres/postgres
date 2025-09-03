@@ -124,10 +124,9 @@ test_empty(void)
 	rt_iter    *iter;
 	uint64		key;
 #ifdef TEST_SHARED_RT
-	int			tranche_id = LWLockNewTrancheId();
+	int			tranche_id = LWLockNewTrancheId("test_radix_tree");
 	dsa_area   *dsa;
 
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
 	dsa = dsa_create(tranche_id);
 	radixtree = rt_create(dsa, tranche_id);
 #else
@@ -167,10 +166,9 @@ test_basic(rt_node_class_test_elem *test_info, int shift, bool asc)
 	uint64	   *keys;
 	int			children = test_info->nkeys;
 #ifdef TEST_SHARED_RT
-	int			tranche_id = LWLockNewTrancheId();
+	int			tranche_id = LWLockNewTrancheId("test_radix_tree");
 	dsa_area   *dsa;
 
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
 	dsa = dsa_create(tranche_id);
 	radixtree = rt_create(dsa, tranche_id);
 #else
@@ -304,10 +302,9 @@ test_random(void)
 	int			num_keys = 100000;
 	uint64	   *keys;
 #ifdef TEST_SHARED_RT
-	int			tranche_id = LWLockNewTrancheId();
+	int			tranche_id = LWLockNewTrancheId("test_radix_tree");
 	dsa_area   *dsa;
 
-	LWLockRegisterTranche(tranche_id, "test_radix_tree");
 	dsa = dsa_create(tranche_id);
 	radixtree = rt_create(dsa, tranche_id);
 #else
