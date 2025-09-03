@@ -321,7 +321,6 @@ task:
         --pkg-config-path ${PKGCONFIG_PATH} \
         -Dcassert=true -Dinjection_points=true \
         -Dssl=openssl ${UUID} ${TCL} \
-        -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
         build
     EOF
 
