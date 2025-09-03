@@ -2295,7 +2295,6 @@
   boot_val => 'DEFAULT_DEBUG_DISCARD_CACHES',
   min => 'MIN_DEBUG_DISCARD_CACHES',
   max => 'MAX_DEBUG_DISCARD_CACHES',
-  ifdef => 'DISCARD_CACHES_ENABLED',
 },
 
 { name => 'client_connection_check_interval', type => 'int', context => 'PGC_USERSET', group => 'CONN_AUTH_TCP',
