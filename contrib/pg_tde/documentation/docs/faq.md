@@ -167,6 +167,8 @@ To restore from an encrypted backup, you must have the same principal encryption
 
 Yes. `pg_tde` works with the FIPS-compliant version of OpenSSL, whether it is provided by your operating system or if you use your own OpenSSL libraries. If you use your own libraries, make sure they are FIPS certified.
 
-## Is post-quantum encryption supported?
+## How to rotate internal encryption keys in pg_tde?
 
-No. Post-quantum encryption is not currently supported.
+We don't have a dedicated function to rotate internal keys, because a key is effectively rotated any time a table's data file is completely rewritten. Operations like `VACUUM FULL`, `TRUNCATE`, or some but not all `ALTER TABLE` commands automatically generate a new internal key.
+
+If you're concerned about internal keys being leaked, the best way to address it is by vacuuming the database. This operation rewrites the table's data and, in the process, creates a new internal key.
