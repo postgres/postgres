@@ -31,6 +31,31 @@ env:
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
   PG_TEST_EXTRA: kerberos ldap ssl libpq_encryption load_balance oauth
 
+  # Postgres config args for the meson builds, shared between all meson tasks
+  # except the 'SanityCheck' task
+  MESON_COMMON_PG_CONFIG_ARGS: -Dcassert=true -Dinjection_points=true
+
+  # Meson feature flags shared by all meson tasks, except:
+  # SanityCheck: uses almost no dependencies.
+  # Windows - VS: has fewer dependencies than listed here, so defines its own.
+  # Linux: uses the 'auto' feature option to test meson feature autodetection.
+  MESON_COMMON_FEATURES: >-
+    -Dauto_features=disabled
+    -Dldap=enabled
+    -Dssl=openssl
+    -Dtap_tests=enabled
+    -Dplperl=enabled
+    -Dplpython=enabled
+    -Ddocs=enabled
+    -Dicu=enabled
+    -Dlibxml=enabled
+    -Dlibxslt=enabled
+    -Dlz4=enabled
+    -Dpltcl=enabled
+    -Dreadline=enabled
+    -Dzlib=enabled
+    -Dzstd=enabled
+
 
 # What files to preserve in case tests fail
 on_failure_ac: &on_failure_ac
@@ -164,6 +189,15 @@ task:
       -c debug_parallel_query=regress
     PG_TEST_PG_UPGRADE_MODE: --link
 
+    MESON_FEATURES: >-
+      -Ddtrace=enabled
+      -Dgssapi=enabled
+      -Dlibcurl=enabled
+      -Dnls=enabled
+      -Dpam=enabled
+      -Dtcl_version=tcl86
+      -Duuid=bsd
+
   <<: *freebsd_task_template
 
   depends_on: SanityCheck
@@ -196,10 +230,10 @@ task:
   configure_script: |
     su postgres <<-EOF
       meson setup \
+        ${MESON_COMMON_PG_CONFIG_ARGS} \
         --buildtype=debug \
-        -Dcassert=true -Dinjection_points=true \
-        -Duuid=bsd -Dtcl_version=tcl86 -Ddtrace=auto \
         -Dextra_lib_dirs=/usr/local/lib -Dextra_include_dirs=/usr/local/include/ \
+        ${MESON_COMMON_FEATURES} ${MESON_FEATURES} \
         build
     EOF
   build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}'
@@ -270,6 +304,12 @@ task:
         LC_ALL: "C"
         # -Duuid is not set for the NetBSD, see the comment below, above
         # configure_script, for more information.
+        MESON_FEATURES: >-
+          -Dgssapi=enabled
+          -Dlibcurl=enabled
+          -Dnls=enabled
+          -Dpam=enabled
+
       setup_additional_packages_script: |
         #pkgin -y install ...
       <<: *netbsd_task_template
@@ -282,8 +322,13 @@ task:
         OS_NAME: openbsd
         IMAGE_FAMILY: pg-ci-openbsd-postgres
         PKGCONFIG_PATH: '/usr/lib/pkgconfig:/usr/local/lib/pkgconfig'
-        UUID: -Duuid=e2fs
-        TCL: -Dtcl_version=tcl86
+
+        MESON_FEATURES: >-
+          -Dbsd_auth=enabled
+          -Dlibcurl=enabled
+          -Dtcl_version=tcl86
+          -Duuid=e2fs
+
       setup_additional_packages_script: |
         #pkg_add -I ...
       # Always core dump to ${CORE_DUMP_DIR}
@@ -317,10 +362,10 @@ task:
   configure_script: |
     su postgres <<-EOF
       meson setup \
+        ${MESON_COMMON_PG_CONFIG_ARGS} \
         --buildtype=debugoptimized \
         --pkg-config-path ${PKGCONFIG_PATH} \
-        -Dcassert=true -Dinjection_points=true \
-        -Dssl=openssl ${UUID} ${TCL} \
+        ${MESON_COMMON_FEATURES} ${MESON_FEATURES} \
         build
     EOF
 
@@ -367,10 +412,6 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
   --with-uuid=ossp
   --with-zstd
 
-LINUX_MESON_FEATURES: &LINUX_MESON_FEATURES >-
-  -Dllvm=enabled
-  -Duuid=e2fs
-
 
 # Check SPECIAL in the matrix: below
 task:
@@ -411,7 +452,8 @@ task:
     LLVM_CONFIG: llvm-config-16
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
-    LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
+    LINUX_MESON_FEATURES: >-
+      -Duuid=e2fs
 
   <<: *linux_task_template
 
@@ -497,6 +539,7 @@ task:
     #   are typically printed in the server log
     # - Test both 64bit and 32 bit builds
     # - uses io_method=io_uring
+    # - Uses meson feature autodetection
     - name: Linux - Debian Bookworm - Meson
 
       env:
@@ -508,9 +551,9 @@ task:
       configure_script: |
         su postgres <<-EOF
           meson setup \
+            ${MESON_COMMON_PG_CONFIG_ARGS} \
             --buildtype=debug \
-            -Dcassert=true -Dinjection_points=true \
-            ${LINUX_MESON_FEATURES} \
+            ${LINUX_MESON_FEATURES} -Dllvm=enabled \
             build
         EOF
 
@@ -520,13 +563,11 @@ task:
         su postgres <<-EOF
           export CC='ccache gcc -m32'
           meson setup \
+            ${MESON_COMMON_PG_CONFIG_ARGS} \
             --buildtype=debug \
-            -Dcassert=true -Dinjection_points=true \
-            ${LINUX_MESON_FEATURES} \
-            -Dllvm=disabled \
             --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
             -DPERL=perl5.36-i386-linux-gnu \
-            -Dlibnuma=disabled \
+            ${LINUX_MESON_FEATURES} -Dlibnuma=disabled \
             build-32
         EOF
 
@@ -589,6 +630,14 @@ task:
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
     MACPORTS_CACHE: ${HOME}/macports-cache
+
+    MESON_FEATURES: >-
+      -Dbonjour=enabled
+      -Ddtrace=enabled
+      -Dgssapi=enabled
+      -Dlibcurl=enabled
+      -Dnls=enabled
+      -Duuid=e2fs
 
     MACOS_PACKAGE_LIST: >-
       ccache
@@ -659,11 +708,11 @@ task:
   configure_script: |
     export PKG_CONFIG_PATH="/opt/local/lib/pkgconfig/"
     meson setup \
+      ${MESON_COMMON_PG_CONFIG_ARGS} \
       --buildtype=debug \
       -Dextra_include_dirs=/opt/local/include \
       -Dextra_lib_dirs=/opt/local/lib \
-      -Dcassert=true -Dinjection_points=true \
-      -Duuid=e2fs -Ddtrace=auto \
+      ${MESON_COMMON_FEATURES} ${MESON_FEATURES} \
       build
 
   build_script: ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
@@ -718,6 +767,14 @@ task:
     # 0x8001 is SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX
     CIRRUS_WINDOWS_ERROR_MODE: 0x8001
 
+    MESON_FEATURES:
+      -Dauto_features=disabled
+      -Dldap=enabled
+      -Dssl=openssl
+      -Dtap_tests=enabled
+      -Dplperl=enabled
+      -Dplpython=enabled
+
   <<: *windows_task_template
 
   depends_on: SanityCheck
@@ -734,7 +791,7 @@ task:
 
   configure_script: |
     vcvarsall x64
-    meson setup --backend ninja --buildtype debug -Dcassert=true -Dinjection_points=true -Db_pch=true -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=%TAR% build
+    meson setup --backend ninja %MESON_COMMON_PG_CONFIG_ARGS% --buildtype debug -Db_pch=true -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=%TAR% %MESON_FEATURES% build
 
   build_script: |
     vcvarsall x64
@@ -776,6 +833,11 @@ task:
     CHERE_INVOKING: 1
     BASH: C:\msys64\usr\bin\bash.exe -l
 
+    # Keep -Dnls explicitly disabled, as the number of files it creates causes a
+    # noticeable slowdown.
+    MESON_FEATURES: >-
+      -Dnls=disabled
+
   <<: *windows_task_template
 
   ccache_cache:
@@ -790,9 +852,8 @@ task:
     %BASH% -c "where perl"
     %BASH% -c "perl --version"
 
-  # disable -Dnls as the number of files it creates cause a noticable slowdown
   configure_script: |
-    %BASH% -c "meson setup -Ddebug=true -Doptimization=g -Dcassert=true -Dinjection_points=true -Db_pch=true -Dnls=disabled -DTAR=%TAR% build"
+    %BASH% -c "meson setup %MESON_COMMON_PG_CONFIG_ARGS% -Ddebug=true -Doptimization=g -Db_pch=true %MESON_COMMON_FEATURES% %MESON_FEATURES% -DTAR=%TAR% build"
 
   build_script: |
     %BASH% -c "ninja -C build ${MBUILD_TARGET}"
@@ -829,7 +890,6 @@ task:
     CCACHE_DIR: "/tmp/ccache_dir"
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
-    LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
     # GCC emits a warning for llvm-14, so switch to a newer one.
     LLVM_CONFIG: llvm-config-16
