@@ -413,6 +413,15 @@ select (select (select view_a)) from view_a;
 select (select (a.*)::text) from view_a a;
 
 --
+-- Test case for bug #19037: no relation entry for relid N
+--
+
+explain (costs off)
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+
+--
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
 --

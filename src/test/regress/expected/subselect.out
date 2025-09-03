@@ -774,6 +774,25 @@ select (select (a.*)::text) from view_a a;
 (1 row)
 
 --
+-- Test case for bug #19037: no relation entry for relid N
+--
+explain (costs off)
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+         QUERY PLAN         
+----------------------------
+ Aggregate
+   ->  Seq Scan on int4_tbl
+   SubPlan 1
+     ->  Result
+(4 rows)
+
+select (1 = any(array_agg(f1))) = any (select false) from int4_tbl;
+ ?column? 
+----------
+ t
+(1 row)
+
+--
 -- Check that whole-row Vars reading the result of a subselect don't include
 -- any junk columns therein
 --
