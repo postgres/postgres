@@ -21,10 +21,10 @@ jobs:
           submodules: recursive
 
       # CodeChecker doesn't support python 3.12 for now: https://github.com/Ericsson/codechecker/issues/4350
-      - name: Downgrade python to 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
+      # - name: Downgrade python to 3.11
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: 3.11
 
       - name: Install dependencies
         run: ci_scripts/ubuntu-deps.sh
@@ -32,7 +32,7 @@ jobs:
       - name: Install CodeChecker
         run: |
           ## CodeChecker version should match version installed on server side.
-          pip3 install codechecker==6.21
+          pip3 install codechecker==6.26.1
 
       - name: Configure CodeChecker
         run: |
