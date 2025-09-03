@@ -118,6 +118,24 @@ extern PGDLLIMPORT bool SSLPreferServerCiphers;
 extern PGDLLIMPORT bool ssl_loaded_verify_locations;
 #endif
 
+#ifdef USE_SSL
+#define SSL_LIBRARY "OpenSSL"
+#else
+#define SSL_LIBRARY ""
+#endif
+
+#ifdef USE_OPENSSL
+#define DEFAULT_SSL_CIPHERS "HIGH:MEDIUM:+3DES:!aNULL"
+#else
+#define DEFAULT_SSL_CIPHERS "none"
+#endif
+
+#ifdef USE_SSL
+#define DEFAULT_SSL_GROUPS "X25519:prime256v1"
+#else
+#define DEFAULT_SSL_GROUPS "none"
+#endif
+
 /*
  * prototypes for functions in be-secure-gssapi.c
  */

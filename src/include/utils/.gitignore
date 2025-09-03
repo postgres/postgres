@@ -1,5 +1,6 @@
 /fmgroids.h
 /fmgrprotos.h
+/guc_tables.inc.c
 /probes.h
 /errcodes.h
 /header-stamp

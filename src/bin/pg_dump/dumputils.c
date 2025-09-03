@@ -724,7 +724,7 @@ emitShSecLabels(PGconn *conn, PGresult *res, PQExpBuffer buffer,
  * currently known to guc.c, so that it'd be unsafe for extensions to declare
  * GUC_LIST_QUOTE variables anyway.  Lacking a solution for that, it doesn't
  * seem worth the work to do more than have this list, which must be kept in
- * sync with the variables actually marked GUC_LIST_QUOTE in guc_tables.c.
+ * sync with the variables actually marked GUC_LIST_QUOTE in guc_parameters.dat.
  */
 bool
 variable_is_guc_list_quote(const char *name)
