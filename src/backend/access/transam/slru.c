@@ -400,10 +400,10 @@ SimpleLruZeroPage(SlruCtl ctl, int64 pageno)
 	/*
 	 * Assume this page is now the latest active page.
 	 *
-	 * Note that because both this routine and SlruSelectLRUPage run with
-	 * ControlLock held, it is not possible for this to be zeroing a page that
-	 * SlruSelectLRUPage is going to evict simultaneously.  Therefore, there's
-	 * no memory barrier here.
+	 * Note that because both this routine and SlruSelectLRUPage run with a
+	 * SLRU bank lock held, it is not possible for this to be zeroing a page
+	 * that SlruSelectLRUPage is going to evict simultaneously.  Therefore,
+	 * there's no memory barrier here.
 	 */
 	pg_atomic_write_u64(&shared->latest_page_number, pageno);
 
@@ -437,7 +437,7 @@ SimpleLruZeroLSNs(SlruCtl ctl, int slotno)
  * This is a convenience wrapper for the common case of zeroing a page and
  * immediately flushing it to disk.
  *
- * Control lock is acquired and released here.
+ * SLRU bank lock is acquired and released here.
  */
 void
 SimpleLruZeroAndWritePage(SlruCtl ctl, int64 pageno)
