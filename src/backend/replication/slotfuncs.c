@@ -921,13 +921,14 @@ pg_sync_replication_slots(PG_FUNCTION_ARGS)
 	/* Connect to the primary server. */
 	wrconn = walrcv_connect(PrimaryConnInfo, false, false, false,
 							app_name.data, &err);
-	pfree(app_name.data);
 
 	if (!wrconn)
 		ereport(ERROR,
 				errcode(ERRCODE_CONNECTION_FAILURE),
 				errmsg("synchronization worker \"%s\" could not connect to the primary server: %s",
 					   app_name.data, err));
+
+	pfree(app_name.data);
 
 	SyncReplicationSlots(wrconn);
 
