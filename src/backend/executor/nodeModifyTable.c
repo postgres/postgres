@@ -4241,7 +4241,8 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * Verify result relation is a valid target for the current operation
 		 */
-		CheckValidResultRel(resultRelInfo, operation);
+		CheckValidResultRelNew(resultRelInfo, operation,
+							   node->onConflictAction);
 
 		resultRelInfo++;
 		i++;
