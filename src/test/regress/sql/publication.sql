@@ -1250,6 +1250,37 @@ DROP PUBLICATION pub1;
 DROP TABLE testpub_insert_onconfl_no_ri;
 DROP TABLE testpub_insert_onconfl_parted;
 
+-- Test that the MERGE command correctly checks REPLICA IDENTITY when the
+-- target table is published.
+CREATE TABLE testpub_merge_no_ri (a int, b int);
+CREATE TABLE testpub_merge_pk (a int primary key, b int);
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION pub1 FOR ALL TABLES;
+RESET client_min_messages;
+
+-- fail - missing REPLICA IDENTITY
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN UPDATE SET b = s.b;
+
+-- fail - missing REPLICA IDENTITY
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN DELETE;
+
+-- ok - insert and do nothing are not restricted
+MERGE INTO testpub_merge_no_ri USING testpub_merge_pk s ON s.a >= 1
+ WHEN MATCHED THEN DO NOTHING
+ WHEN NOT MATCHED THEN INSERT (a, b) VALUES (0, 0);
+
+-- ok - REPLICA IDENTITY is DEFAULT and table has a PK
+MERGE INTO testpub_merge_pk USING testpub_merge_no_ri s ON s.a >= 1
+ WHEN MATCHED AND s.a > 0 THEN UPDATE SET b = s.b
+ WHEN MATCHED THEN DELETE;
+
+DROP PUBLICATION pub1;
+DROP TABLE testpub_merge_no_ri;
+DROP TABLE testpub_merge_pk;
+
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_publication_user, regress_publication_user2;
 DROP ROLE regress_publication_user_dummy;
