@@ -1033,7 +1033,16 @@ CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_PARTITIONED_TABLE:
-			CheckCmdReplicaIdentity(resultRel, operation);
+
+			/*
+			 * For MERGE, check that the target relation supports each action.
+			 * For other operations, just check the operation itself.
+			 */
+			if (operation == CMD_MERGE)
+				foreach_node(MergeAction, action, mergeActions)
+					CheckCmdReplicaIdentity(resultRel, action->commandType);
+			else
+				CheckCmdReplicaIdentity(resultRel, operation);
 
 			/*
 			 * For INSERT ON CONFLICT DO UPDATE, additionally check that the
