@@ -377,11 +377,14 @@ ExecFindPartition(ModifyTableState *mtstate,
 									   &partoid, HASH_FIND, NULL);
 					if (elem)
 					{
+						ModifyTable *node = (ModifyTable *) mtstate->ps.plan;
+
 						found = true;
 						rri = elem->rri;
 
 						/* Verify this ResultRelInfo allows INSERTs */
-						CheckValidResultRel(rri, CMD_INSERT);
+						CheckValidResultRelNew(rri, CMD_INSERT,
+											   node ? node->onConflictAction : ONCONFLICT_NONE);
 
 						/* Set up the PartitionRoutingInfo for it */
 						ExecInitRoutingInfo(mtstate, estate, proute, dispatch,
@@ -590,7 +593,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * partition-key becomes a DELETE+INSERT operation, so this check is still
 	 * required when the operation is CMD_UPDATE.
 	 */
-	CheckValidResultRel(leaf_part_rri, CMD_INSERT);
+	CheckValidResultRelNew(leaf_part_rri, CMD_INSERT,
+						   node ? node->onConflictAction : ONCONFLICT_NONE);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts
