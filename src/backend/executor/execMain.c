@@ -979,11 +979,15 @@ InitPlan(QueryDesc *queryDesc, int eflags)
  * Generally the parser and/or planner should have noticed any such mistake
  * already, but let's make sure.
  *
+ * For INSERT ON CONFLICT, the result relation is required to support the
+ * onConflictAction, regardless of whether a conflict actually occurs.
+ *
  * Note: when changing this function, you probably also need to look at
  * CheckValidRowMarkRel.
  */
 void
-CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
+CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
+					   OnConflictAction onConflictAction)
 {
 	Relation	resultRel = resultRelInfo->ri_RelationDesc;
 	TriggerDesc *trigDesc = resultRel->trigdesc;
@@ -998,6 +1002,13 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 		case RELKIND_RELATION:
 		case RELKIND_PARTITIONED_TABLE:
 			CheckCmdReplicaIdentity(resultRel, operation);
+
+			/*
+			 * For INSERT ON CONFLICT DO UPDATE, additionally check that the
+			 * target relation supports UPDATE.
+			 */
+			if (onConflictAction == ONCONFLICT_UPDATE)
+				CheckCmdReplicaIdentity(resultRel, CMD_UPDATE);
 			break;
 		case RELKIND_SEQUENCE:
 			ereport(ERROR,
@@ -1114,6 +1125,16 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 							RelationGetRelationName(resultRel))));
 			break;
 	}
+}
+
+/*
+ * ABI-compatible wrapper to emulate old version of the above function.
+ * Do not call this version in new code.
+ */
+void
+CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
+{
+	return CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE);
 }
 
 /*
