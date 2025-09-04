@@ -244,6 +244,7 @@ extern bool ExecCheckPermissions(List *rangeTable,
 								 List *rteperminfos, bool ereport_on_violation);
 extern bool ExecCheckOneRelPerms(RTEPermissionInfo *perminfo);
 extern void CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
+								OnConflictAction onConflictAction,
 								List *mergeActions);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 							  Relation resultRelationDesc,

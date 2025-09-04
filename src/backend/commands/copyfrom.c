@@ -919,7 +919,7 @@ CopyFrom(CopyFromState cstate)
 	ExecInitResultRelation(estate, resultRelInfo, 1);
 
 	/* Verify the named relation is a valid target for INSERT */
-	CheckValidResultRel(resultRelInfo, CMD_INSERT, NIL);
+	CheckValidResultRel(resultRelInfo, CMD_INSERT, ONCONFLICT_NONE, NIL);
 
 	ExecOpenIndices(resultRelInfo, false);
 
