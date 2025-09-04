@@ -1148,8 +1148,8 @@ void
 CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
 					List *mergeActions)
 {
-	return CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE,
-								  mergeActions);
+	CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE,
+						   mergeActions);
 }
 
 /*
