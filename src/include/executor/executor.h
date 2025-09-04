@@ -211,6 +211,9 @@ extern void ExecutorRewind(QueryDesc *queryDesc);
 extern bool ExecCheckPermissions(List *rangeTable,
 								 List *rteperminfos, bool ereport_on_violation);
 extern bool ExecCheckOneRelPerms(RTEPermissionInfo *perminfo);
+extern void CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
+								   OnConflictAction onConflictAction,
+								   List *mergeActions);
 extern void CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation,
 								List *mergeActions);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
