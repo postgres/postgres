@@ -364,7 +364,8 @@ ExecFindPartition(ModifyTableState *mtstate,
 
 					/* Verify this ResultRelInfo allows INSERTs */
 					CheckValidResultRelNew(rri, CMD_INSERT,
-										   node ? node->onConflictAction : ONCONFLICT_NONE);
+										   node ? node->onConflictAction : ONCONFLICT_NONE,
+										   NIL);
 
 					/*
 					 * Initialize information needed to insert this and
@@ -531,7 +532,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 	 * required when the operation is CMD_UPDATE.
 	 */
 	CheckValidResultRelNew(leaf_part_rri, CMD_INSERT,
-						   node ? node->onConflictAction : ONCONFLICT_NONE);
+						   node ? node->onConflictAction : ONCONFLICT_NONE,
+						   NIL);
 
 	/*
 	 * Open partition indices.  The user may have asked to check for conflicts

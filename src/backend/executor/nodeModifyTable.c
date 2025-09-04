@@ -4240,6 +4240,10 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	foreach(l, node->resultRelations)
 	{
 		Index		resultRelation = lfirst_int(l);
+		List	   *mergeActions = NIL;
+
+		if (node->mergeActionLists)
+			mergeActions = list_nth(node->mergeActionLists, i);
 
 		if (resultRelInfo != mtstate->rootResultRelInfo)
 		{
@@ -4262,7 +4266,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		 * Verify result relation is a valid target for the current operation
 		 */
 		CheckValidResultRelNew(resultRelInfo, operation,
-							   node->onConflictAction);
+							   node->onConflictAction, mergeActions);
 
 		resultRelInfo++;
 		i++;

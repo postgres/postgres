@@ -1013,12 +1013,16 @@ InitPlan(QueryDesc *queryDesc, int eflags)
  * For INSERT ON CONFLICT, the result relation is required to support the
  * onConflictAction, regardless of whether a conflict actually occurs.
  *
+ * For MERGE, mergeActions is the list of actions that may be performed.  The
+ * result relation is required to support every action, regardless of whether
+ * or not they are all executed.
+ *
  * Note: when changing this function, you probably also need to look at
  * CheckValidRowMarkRel.
  */
 void
 CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
-					   OnConflictAction onConflictAction)
+					   OnConflictAction onConflictAction, List *mergeActions)
 {
 	Relation	resultRel = resultRelInfo->ri_RelationDesc;
 	TriggerDesc *trigDesc = resultRel->trigdesc;
@@ -1032,7 +1036,24 @@ CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
 	{
 		case RELKIND_RELATION:
 		case RELKIND_PARTITIONED_TABLE:
-			CheckCmdReplicaIdentity(resultRel, operation);
+
+			/*
+			 * For MERGE, check that the target relation supports each action.
+			 * For other operations, just check the operation itself.
+			 */
+			if (operation == CMD_MERGE)
+			{
+				ListCell   *lc;
+
+				foreach(lc, mergeActions)
+				{
+					MergeAction *action = (MergeAction *) lfirst(lc);
+
+					CheckCmdReplicaIdentity(resultRel, action->commandType);
+				}
+			}
+			else
+				CheckCmdReplicaIdentity(resultRel, operation);
 
 			/*
 			 * For INSERT ON CONFLICT DO UPDATE, additionally check that the
@@ -1165,7 +1186,7 @@ CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
 void
 CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 {
-	return CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE);
+	return CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE, NIL);
 }
 
 /*
