@@ -1197,7 +1197,7 @@ CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
 void
 CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 {
-	return CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE);
+	CheckValidResultRelNew(resultRelInfo, operation, ONCONFLICT_NONE);
 }
 
 /*
