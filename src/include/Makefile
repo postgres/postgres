@@ -72,7 +72,7 @@ uninstall:
 
 
 clean:
-	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/errcodes.h utils/header-stamp
+	rm -f utils/fmgroids.h utils/fmgrprotos.h utils/guc_tables.inc.c utils/errcodes.h utils/header-stamp
 	rm -f storage/lwlocknames.h utils/probes.h utils/wait_event_types.h
 	rm -f nodes/nodetags.h nodes/header-stamp
 	$(MAKE) -C catalog clean
