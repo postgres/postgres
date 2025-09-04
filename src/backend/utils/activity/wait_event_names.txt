@@ -302,9 +302,12 @@ ABI_compatibility:
 # This class of wait events has its own set of C structure, so these are
 # only used for the documentation.
 #
-# NB: Predefined LWLocks (i.e., those declared in lwlocklist.h) must be
-# listed in the top section of locks and must be listed in the same order as in
-# lwlocklist.h.
+# NB: Predefined LWLocks (i.e., those declared with PG_LWLOCK in lwlocklist.h)
+# must be listed before the "END OF PREDEFINED LWLOCKS" comment and must be
+# listed in the same order as in lwlocklist.h.  Likewise, the built-in LWLock
+# tranches (i.e., those declared with PG_LWLOCKTRANCHE in lwlocklist.h) must be
+# listed after the "END OF PREDEFINED LWLOCKS" comment and must be listed in
+# the same order as lwlocklist.h.
 #
 
 Section: ClassName - WaitEventLWLock
@@ -355,14 +358,6 @@ AioWorkerSubmissionQueue	"Waiting to access AIO worker submission queue."
 
 #
 # END OF PREDEFINED LWLOCKS (DO NOT CHANGE THIS LINE)
-#
-# Predefined LWLocks (i.e., those declared at the top of lwlocknames.h) must be
-# listed in the section above and must be listed in the same order as in
-# lwlocknames.h.
-#
-# Likewise, the built-in LWLock tranches (i.e., those declared at the bottom of
-# lwlocknames.h) must be listed in the section below and must be listed in the
-# same order as in lwlocknames.h.
 #
 
 XactBuffer	"Waiting for I/O on a transaction status SLRU buffer."
