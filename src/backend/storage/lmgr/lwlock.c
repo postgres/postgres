@@ -610,6 +610,7 @@ void
 RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 {
 	NamedLWLockTrancheRequest *request;
+	static int	NamedLWLockTrancheRequestsAllocated;
 
 	if (!process_shmem_requests_in_progress)
 		elog(FATAL, "cannot request additional LWLocks outside shmem_request_hook");
@@ -628,17 +629,22 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 
 	if (NamedLWLockTrancheRequestArray == NULL)
 	{
+		NamedLWLockTrancheRequestsAllocated = 16;
 		NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *)
 			MemoryContextAlloc(TopMemoryContext,
-							   MAX_NAMED_TRANCHES
+							   NamedLWLockTrancheRequestsAllocated
 							   * sizeof(NamedLWLockTrancheRequest));
 	}
 
-	if (NamedLWLockTrancheRequests >= MAX_NAMED_TRANCHES)
-		ereport(ERROR,
-				(errmsg("maximum number of tranches already registered"),
-				 errdetail("No more than %d tranches may be registered.",
-						   MAX_NAMED_TRANCHES)));
+	if (NamedLWLockTrancheRequests >= NamedLWLockTrancheRequestsAllocated)
+	{
+		int			i = pg_nextpower2_32(NamedLWLockTrancheRequests + 1);
+
+		NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *)
+			repalloc(NamedLWLockTrancheRequestArray,
+					 i * sizeof(NamedLWLockTrancheRequest));
+		NamedLWLockTrancheRequestsAllocated = i;
+	}
 
 	request = &NamedLWLockTrancheRequestArray[NamedLWLockTrancheRequests];
 	strlcpy(request->tranche_name, tranche_name, NAMEDATALEN);
