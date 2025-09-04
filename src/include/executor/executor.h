@@ -199,7 +199,8 @@ extern void ExecutorRewind(QueryDesc *queryDesc);
 extern bool ExecCheckRTPerms(List *rangeTable, bool ereport_on_violation);
 extern bool ExecCheckRTEPerms(RangeTblEntry *rte);
 extern void CheckValidResultRelNew(ResultRelInfo *resultRelInfo, CmdType operation,
-								   OnConflictAction onConflictAction);
+								   OnConflictAction onConflictAction,
+								   List *mergeActions);
 extern void CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation);
 extern void InitResultRelInfo(ResultRelInfo *resultRelInfo,
 							  Relation resultRelationDesc,
