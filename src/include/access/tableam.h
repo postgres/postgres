@@ -121,7 +121,9 @@ typedef enum TU_UpdateIndexes
 /*
  * When table_tuple_update, table_tuple_delete, or table_tuple_lock fail
  * because the target tuple is already outdated, they fill in this struct to
- * provide information to the caller about what happened.
+ * provide information to the caller about what happened. When those functions
+ * succeed, the contents of this struct should not be relied upon, except for
+ * `traversed`, which may be set in both success and failure cases.
  *
  * ctid is the target's ctid link: it is the same as the target's TID if the
  * target was deleted, or the location of the replacement tuple if the target
@@ -137,6 +139,9 @@ typedef enum TU_UpdateIndexes
  * tuple); otherwise cmax is zero.  (We make this restriction because
  * HeapTupleHeaderGetCmax doesn't work for tuples outdated in other
  * transactions.)
+ *
+ * traversed indicates if an update chain was followed in order to try to lock
+ * the target tuple.  (This may be set in both success and failure cases.)
  */
 typedef struct TM_FailureData
 {
@@ -1508,7 +1513,7 @@ table_tuple_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
  *
  * Input parameters:
  *	relation: relation containing tuple (caller must hold suitable lock)
- *	tid: TID of tuple to lock
+ *	tid: TID of tuple to lock (updated if an update chain was followed)
  *	snapshot: snapshot to use for visibility determinations
  *	cid: current command ID (used for visibility test, and stored into
  *		tuple's cmax if lock is successful)
@@ -1533,8 +1538,10 @@ table_tuple_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
  *	TM_WouldBlock: lock couldn't be acquired and wait_policy is skip
  *
  * In the failure cases other than TM_Invisible and TM_Deleted, the routine
- * fills *tmfd with the tuple's t_ctid, t_xmax, and, if possible, t_cmax.  See
- * comments for struct TM_FailureData for additional info.
+ * fills *tmfd with the tuple's t_ctid, t_xmax, and, if possible, t_cmax.
+ * Additionally, in both success and failure cases, tmfd->traversed is set if
+ * an update chain was followed.  See comments for struct TM_FailureData for
+ * additional info.
  */
 static inline TM_Result
 table_tuple_lock(Relation rel, ItemPointer tid, Snapshot snapshot,
