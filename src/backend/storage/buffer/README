@@ -211,9 +211,9 @@ Buffer Ring Replacement Strategy
 When running a query that needs to access a large number of pages just once,
 such as VACUUM or a large sequential scan, a different strategy is used.
 A page that has been touched only by such a scan is unlikely to be needed
-again soon, so instead of running the normal clock sweep algorithm and
+again soon, so instead of running the normal clock-sweep algorithm and
 blowing out the entire buffer cache, a small ring of buffers is allocated
-using the normal clock sweep algorithm and those buffers are reused for the
+using the normal clock-sweep algorithm and those buffers are reused for the
 whole scan.  This also implies that much of the write traffic caused by such
 a statement will be done by the backend itself and not pushed off onto other
 processes.

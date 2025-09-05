@@ -229,7 +229,7 @@ GetLocalVictimBuffer(void)
 	ResourceOwnerEnlarge(CurrentResourceOwner);
 
 	/*
-	 * Need to get a new buffer.  We use a clock sweep algorithm (essentially
+	 * Need to get a new buffer.  We use a clock-sweep algorithm (essentially
 	 * the same as what freelist.c does now...)
 	 */
 	trycounter = NLocBuffer;

@@ -33,7 +33,7 @@ typedef struct
 	slock_t		buffer_strategy_lock;
 
 	/*
-	 * Clock sweep hand: index of next buffer to consider grabbing. Note that
+	 * clock-sweep hand: index of next buffer to consider grabbing. Note that
 	 * this isn't a concrete buffer - we only ever increase the value. So, to
 	 * get an actual buffer, it needs to be used modulo NBuffers.
 	 */
@@ -51,7 +51,7 @@ typedef struct
 	 * Statistics.  These counters should be wide enough that they can't
 	 * overflow during a single bgwriter cycle.
 	 */
-	uint32		completePasses; /* Complete cycles of the clock sweep */
+	uint32		completePasses; /* Complete cycles of the clock-sweep */
 	pg_atomic_uint32 numBufferAllocs;	/* Buffers allocated since last reset */
 
 	/*
@@ -311,7 +311,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 		}
 	}
 
-	/* Nothing on the freelist, so run the "clock sweep" algorithm */
+	/* Nothing on the freelist, so run the "clock-sweep" algorithm */
 	trycounter = NBuffers;
 	for (;;)
 	{
@@ -511,7 +511,7 @@ StrategyInitialize(bool init)
 		StrategyControl->firstFreeBuffer = 0;
 		StrategyControl->lastFreeBuffer = NBuffers - 1;
 
-		/* Initialize the clock sweep pointer */
+		/* Initialize the clock-sweep pointer */
 		pg_atomic_init_u32(&StrategyControl->nextVictimBuffer, 0);
 
 		/* Clear statistics */
@@ -759,7 +759,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 	 *
 	 * If usage_count is 0 or 1 then the buffer is fair game (we expect 1,
 	 * since our own previous usage of the ring element would have left it
-	 * there, but it might've been decremented by clock sweep since then). A
+	 * there, but it might've been decremented by clock-sweep since then). A
 	 * higher usage_count indicates someone else has touched the buffer, so we
 	 * shouldn't re-use it.
 	 */
