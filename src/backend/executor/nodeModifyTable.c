@@ -3226,7 +3226,7 @@ lmerge_matched:
 							 * the tuple moved, and setting our current
 							 * resultRelInfo to that.
 							 */
-							if (ItemPointerIndicatesMovedPartitions(&context->tmfd.ctid))
+							if (ItemPointerIndicatesMovedPartitions(tupleid))
 								ereport(ERROR,
 										(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 										 errmsg("tuple to be merged was already moved to another partition due to concurrent update")));
@@ -3274,12 +3274,13 @@ lmerge_matched:
 									if (ItemPointerIsValid(&lockedtid))
 										UnlockTuple(resultRelInfo->ri_RelationDesc, &lockedtid,
 													InplaceUpdateTupleLock);
-									LockTuple(resultRelInfo->ri_RelationDesc, &context->tmfd.ctid,
+									LockTuple(resultRelInfo->ri_RelationDesc, tupleid,
 											  InplaceUpdateTupleLock);
-									lockedtid = context->tmfd.ctid;
+									lockedtid = *tupleid;
 								}
+
 								if (!table_tuple_fetch_row_version(resultRelationDesc,
-																   &context->tmfd.ctid,
+																   tupleid,
 																   SnapshotAny,
 																   resultRelInfo->ri_oldTupleSlot))
 									elog(ERROR, "failed to fetch the target tuple");
