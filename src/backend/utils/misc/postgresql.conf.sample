@@ -581,6 +581,7 @@
 
 # - What to Log -
 
+#debug_print_raw_parse = off
 #debug_print_parse = off
 #debug_print_rewritten = off
 #debug_print_plan = off

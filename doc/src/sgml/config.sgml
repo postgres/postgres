@@ -7383,6 +7383,11 @@ local0.*    /var/log/postgresql
      </varlistentry>
 
      <varlistentry id="guc-debug-print-parse">
+      <term><varname>debug_print_raw_parse</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_print_raw_parse</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)
       <indexterm>
        <primary><varname>debug_print_parse</varname> configuration parameter</primary>
@@ -7401,8 +7406,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
         These parameters enable various debugging output to be emitted.
-        When set, they print the resulting parse tree, the query rewriter
-        output, or the execution plan for each executed query.
+        When set, they print the resulting raw parse tree, the parse tree, the query
+        rewriter output, or the execution plan for each executed query.
         These messages are emitted at <literal>LOG</literal> message level, so by
         default they will appear in the server log but will not be sent to the
         client.  You can change that by adjusting
@@ -7422,7 +7427,8 @@ local0.*    /var/log/postgresql
       <listitem>
        <para>
         When set, <varname>debug_pretty_print</varname> indents the messages
-        produced by <varname>debug_print_parse</varname>,
+        produced by <varname>debug_print_raw_parse</varname>,
+        <varname>debug_print_parse</varname>,
         <varname>debug_print_rewritten</varname>, or
         <varname>debug_print_plan</varname>.  This results in more readable
         but much longer output than the <quote>compact</quote> format used when

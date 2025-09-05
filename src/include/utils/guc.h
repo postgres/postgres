@@ -247,6 +247,7 @@ typedef enum
 /* GUC vars that are actually defined in guc_tables.c, rather than elsewhere */
 extern PGDLLIMPORT bool Debug_print_plan;
 extern PGDLLIMPORT bool Debug_print_parse;
+extern PGDLLIMPORT bool Debug_print_raw_parse;
 extern PGDLLIMPORT bool Debug_print_rewritten;
 extern PGDLLIMPORT bool Debug_pretty_print;
 

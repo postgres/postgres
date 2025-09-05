@@ -60,6 +60,7 @@
     <acronym>SQL</acronym> statement where the single parts that it is
     built from are stored separately. These query trees can be shown
     in the server log if you set the configuration parameters
+    <varname>debug_print_raw_parse</varname>,
     <varname>debug_print_parse</varname>,
     <varname>debug_print_rewritten</varname>, or
     <varname>debug_print_plan</varname>.  The rule actions are also

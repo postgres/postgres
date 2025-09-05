@@ -649,6 +649,10 @@ pg_parse_query(const char *query_string)
 
 	TRACE_POSTGRESQL_QUERY_PARSE_DONE(query_string);
 
+	if (Debug_print_raw_parse)
+		elog_node_display(LOG, "raw parse tree", raw_parsetree_list,
+						  Debug_pretty_print);
+
 	return raw_parsetree_list;
 }
 
@@ -3697,7 +3701,10 @@ set_debug_options(int debug_flag, GucContext context, GucSource source)
 	if (debug_flag >= 2)
 		SetConfigOption("log_statement", "all", context, source);
 	if (debug_flag >= 3)
+	{
+		SetConfigOption("debug_print_raw_parse", "true", context, source);
 		SetConfigOption("debug_print_parse", "true", context, source);
+	}
 	if (debug_flag >= 4)
 		SetConfigOption("debug_print_plan", "true", context, source);
 	if (debug_flag >= 5)

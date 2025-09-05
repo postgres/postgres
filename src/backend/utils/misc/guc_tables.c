@@ -507,6 +507,7 @@ bool		AllowAlterSystem = true;
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
+bool		Debug_print_raw_parse = false;
 bool		Debug_print_rewritten = false;
 bool		Debug_pretty_print = true;
 

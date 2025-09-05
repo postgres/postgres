@@ -414,6 +414,12 @@
   ifdef => 'DEBUG_NODE_TESTS_ENABLED',
 },
 
+{ name => 'debug_print_raw_parse', type => 'bool', context => 'PGC_USERSET', group => 'LOGGING_WHAT',
+  short_desc => 'Logs each query\'s raw parse tree.',
+  variable => 'Debug_print_raw_parse',
+  boot_val => 'false',
+},
+
 { name => 'debug_print_parse', type => 'bool', context => 'PGC_USERSET', group => 'LOGGING_WHAT',
   short_desc => 'Logs each query\'s parse tree.',
   variable => 'Debug_print_parse',
