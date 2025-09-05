@@ -4834,10 +4834,10 @@ check_recovery_target_lsn(char **newval, void **extra, GucSource source)
 	{
 		XLogRecPtr	lsn;
 		XLogRecPtr *myextra;
-		bool		have_error = false;
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-		lsn = pg_lsn_in_internal(*newval, &have_error);
-		if (have_error)
+		lsn = pg_lsn_in_safe(*newval, (Node *) &escontext);
+		if (escontext.error_occurred)
 			return false;
 
 		myextra = (XLogRecPtr *) guc_malloc(LOG, sizeof(XLogRecPtr));

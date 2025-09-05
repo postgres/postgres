@@ -18,6 +18,9 @@
 #include "access/xlogdefs.h"
 #include "fmgr.h"
 
+/* forward declaration to avoid node.h include */
+typedef struct Node Node;
+
 static inline XLogRecPtr
 DatumGetLSN(Datum X)
 {
@@ -33,6 +36,6 @@ LSNGetDatum(XLogRecPtr X)
 #define PG_GETARG_LSN(n)	 DatumGetLSN(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSN(x)	 return LSNGetDatum(x)
 
-extern XLogRecPtr pg_lsn_in_internal(const char *str, bool *have_error);
+extern XLogRecPtr pg_lsn_in_safe(const char *str, Node *escontext);
 
 #endif							/* PG_LSN_H */
