@@ -370,6 +370,15 @@ apw_load_buffers(void)
 	apw_state->prewarm_start_idx = apw_state->prewarm_stop_idx = 0;
 	apw_state->prewarmed_blocks = 0;
 
+	/* Don't prewarm more than we can fit. */
+	if (num_elements > NBuffers)
+	{
+		num_elements = NBuffers;
+		ereport(LOG,
+				(errmsg("autoprewarm capping prewarmed blocks to %d (shared_buffers size)",
+						NBuffers)));
+	}
+
 	/* Get the info position of the first block of the next database. */
 	while (apw_state->prewarm_start_idx < num_elements)
 	{
@@ -409,10 +418,6 @@ apw_load_buffers(void)
 		apw_state->prewarm_stop_idx = j;
 		apw_state->database = current_db;
 		Assert(apw_state->prewarm_start_idx < apw_state->prewarm_stop_idx);
-
-		/* If we've run out of free buffers, don't launch another worker. */
-		if (!have_free_buffer())
-			break;
 
 		/*
 		 * Likewise, don't launch if we've already been told to shut down.
@@ -461,12 +466,6 @@ apw_read_stream_next_block(ReadStream *stream,
 	while (p->pos < apw_state->prewarm_stop_idx)
 	{
 		BlockInfoRecord blk = p->block_info[p->pos];
-
-		if (!have_free_buffer())
-		{
-			p->pos = apw_state->prewarm_stop_idx;
-			return InvalidBlockNumber;
-		}
 
 		if (blk.tablespace != p->tablespace)
 			return InvalidBlockNumber;
@@ -523,10 +522,10 @@ autoprewarm_database_main(Datum main_arg)
 	blk = block_info[i];
 
 	/*
-	 * Loop until we run out of blocks to prewarm or until we run out of free
+	 * Loop until we run out of blocks to prewarm or until we run out of
 	 * buffers.
 	 */
-	while (i < apw_state->prewarm_stop_idx && have_free_buffer())
+	while (i < apw_state->prewarm_stop_idx)
 	{
 		Oid			tablespace = blk.tablespace;
 		RelFileNumber filenumber = blk.filenumber;
@@ -568,14 +567,13 @@ autoprewarm_database_main(Datum main_arg)
 
 		/*
 		 * We have a relation; now let's loop until we find a valid fork of
-		 * the relation or we run out of free buffers. Once we've read from
-		 * all valid forks or run out of options, we'll close the relation and
+		 * the relation or we run out of buffers. Once we've read from all
+		 * valid forks or run out of options, we'll close the relation and
 		 * move on.
 		 */
 		while (i < apw_state->prewarm_stop_idx &&
 			   blk.tablespace == tablespace &&
-			   blk.filenumber == filenumber &&
-			   have_free_buffer())
+			   blk.filenumber == filenumber)
 		{
 			ForkNumber	forknum = blk.forknum;
 			BlockNumber nblocks;
