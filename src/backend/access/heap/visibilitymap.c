@@ -255,7 +255,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	uint8		status;
 
 #ifdef TRACE_VISIBILITYMAP
-	elog(DEBUG1, "vm_set %s %d", RelationGetRelationName(rel), heapBlk);
+	elog(DEBUG1, "vm_set flags 0x%02X for %s %d",
+		 flags, RelationGetRelationName(rel), heapBlk);
 #endif
 
 	Assert(InRecovery || XLogRecPtrIsInvalid(recptr));
@@ -268,6 +269,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	/* Check that we have the right heap page pinned, if present */
 	if (BufferIsValid(heapBuf) && BufferGetBlockNumber(heapBuf) != heapBlk)
 		elog(ERROR, "wrong heap buffer passed to visibilitymap_set");
+
+	Assert(!BufferIsValid(heapBuf) || BufferIsExclusiveLocked(heapBuf));
 
 	/* Check that we have the right VM page pinned */
 	if (!BufferIsValid(vmBuf) || BufferGetBlockNumber(vmBuf) != mapBlock)
