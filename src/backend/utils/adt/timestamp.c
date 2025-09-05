@@ -5629,11 +5629,11 @@ timestamp_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 
 			case DTK_JULIAN:
 				if (retnumeric)
-					PG_RETURN_NUMERIC(numeric_add_opt_error(int64_to_numeric(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)),
-															numeric_div_opt_error(int64_to_numeric(((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) * INT64CONST(1000000) + fsec),
-																				  int64_to_numeric(SECS_PER_DAY * INT64CONST(1000000)),
-																				  NULL),
-															NULL));
+					PG_RETURN_NUMERIC(numeric_add_safe(int64_to_numeric(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)),
+													   numeric_div_safe(int64_to_numeric(((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) * INT64CONST(1000000) + fsec),
+																		int64_to_numeric(SECS_PER_DAY * INT64CONST(1000000)),
+																		NULL),
+													   NULL));
 				else
 					PG_RETURN_FLOAT8(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) +
 									 ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
@@ -5685,11 +5685,11 @@ timestamp_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 						result = int64_div_fast_to_numeric(timestamp - epoch, 6);
 					else
 					{
-						result = numeric_div_opt_error(numeric_sub_opt_error(int64_to_numeric(timestamp),
-																			 int64_to_numeric(epoch),
-																			 NULL),
-													   int64_to_numeric(1000000),
-													   NULL);
+						result = numeric_div_safe(numeric_sub_safe(int64_to_numeric(timestamp),
+																   int64_to_numeric(epoch),
+																   NULL),
+												  int64_to_numeric(1000000),
+												  NULL);
 						result = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 																	 NumericGetDatum(result),
 																	 Int32GetDatum(6)));
@@ -5903,11 +5903,11 @@ timestamptz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 
 			case DTK_JULIAN:
 				if (retnumeric)
-					PG_RETURN_NUMERIC(numeric_add_opt_error(int64_to_numeric(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)),
-															numeric_div_opt_error(int64_to_numeric(((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) * INT64CONST(1000000) + fsec),
-																				  int64_to_numeric(SECS_PER_DAY * INT64CONST(1000000)),
-																				  NULL),
-															NULL));
+					PG_RETURN_NUMERIC(numeric_add_safe(int64_to_numeric(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)),
+													   numeric_div_safe(int64_to_numeric(((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) + tm->tm_sec) * INT64CONST(1000000) + fsec),
+																		int64_to_numeric(SECS_PER_DAY * INT64CONST(1000000)),
+																		NULL),
+													   NULL));
 				else
 					PG_RETURN_FLOAT8(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) +
 									 ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
@@ -5956,11 +5956,11 @@ timestamptz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 						result = int64_div_fast_to_numeric(timestamp - epoch, 6);
 					else
 					{
-						result = numeric_div_opt_error(numeric_sub_opt_error(int64_to_numeric(timestamp),
-																			 int64_to_numeric(epoch),
-																			 NULL),
-													   int64_to_numeric(1000000),
-													   NULL);
+						result = numeric_div_safe(numeric_sub_safe(int64_to_numeric(timestamp),
+																   int64_to_numeric(epoch),
+																   NULL),
+												  int64_to_numeric(1000000),
+												  NULL);
 						result = DatumGetNumeric(DirectFunctionCall2(numeric_round,
 																	 NumericGetDatum(result),
 																	 Int32GetDatum(6)));
@@ -6247,9 +6247,9 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 				result = int64_div_fast_to_numeric(val, 6);
 			else
 				result =
-					numeric_add_opt_error(int64_div_fast_to_numeric(interval->time, 6),
-										  int64_to_numeric(secs_from_day_month),
-										  NULL);
+					numeric_add_safe(int64_div_fast_to_numeric(interval->time, 6),
+									 int64_to_numeric(secs_from_day_month),
+									 NULL);
 
 			PG_RETURN_NUMERIC(result);
 		}

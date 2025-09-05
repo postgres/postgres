@@ -6389,12 +6389,12 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	if (IS_ROMAN(&Num))
 	{
 		int32		intvalue;
-		bool		err;
+		ErrorSaveContext escontext = {T_ErrorSaveContext};
 
 		/* Round and convert to int */
-		intvalue = numeric_int4_opt_error(value, &err);
+		intvalue = numeric_int4_safe(value, (Node *) &escontext);
 		/* On overflow, just use PG_INT32_MAX; int_to_roman will cope */
-		if (err)
+		if (escontext.error_occurred)
 			intvalue = PG_INT32_MAX;
 		numstr = int_to_roman(intvalue);
 	}
