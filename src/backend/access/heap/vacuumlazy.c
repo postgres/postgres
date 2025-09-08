@@ -2121,8 +2121,11 @@ lazy_scan_prune(LVRelState *vacrel,
 	else if (all_visible_according_to_vm && !PageIsAllVisible(page) &&
 			 visibilitymap_get_status(vacrel->rel, blkno, &vmbuffer) != 0)
 	{
-		elog(WARNING, "page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
-			 vacrel->relname, blkno);
+		ereport(WARNING,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("page is not marked all-visible but visibility map bit is set in relation \"%s\" page %u",
+						vacrel->relname, blkno)));
+
 		visibilitymap_clear(vacrel->rel, blkno, vmbuffer,
 							VISIBILITYMAP_VALID_BITS);
 	}
@@ -2143,8 +2146,11 @@ lazy_scan_prune(LVRelState *vacrel,
 	 */
 	else if (presult.lpdead_items > 0 && PageIsAllVisible(page))
 	{
-		elog(WARNING, "page containing LP_DEAD items is marked as all-visible in relation \"%s\" page %u",
-			 vacrel->relname, blkno);
+		ereport(WARNING,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("page containing LP_DEAD items is marked as all-visible in relation \"%s\" page %u",
+						vacrel->relname, blkno)));
+
 		PageClearAllVisible(page);
 		MarkBufferDirty(buf);
 		visibilitymap_clear(vacrel->rel, blkno, vmbuffer,
