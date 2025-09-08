@@ -258,6 +258,13 @@ pgstat_detach_shmem(void)
  * ------------------------------------------------------------
  */
 
+/*
+ * Initialize entry newly-created.
+ *
+ * Returns NULL in the event of an allocation failure, so as callers can
+ * take cleanup actions as the entry initialized is already inserted in the
+ * shared hashtable.
+ */
 PgStatShared_Common *
 pgstat_init_entry(PgStat_Kind kind,
 				  PgStatShared_HashEntry *shhashent)
@@ -280,7 +287,12 @@ pgstat_init_entry(PgStat_Kind kind,
 	pg_atomic_init_u32(&shhashent->generation, 0);
 	shhashent->dropped = false;
 
-	chunk = dsa_allocate0(pgStatLocal.dsa, pgstat_get_kind_info(kind)->shared_size);
+	chunk = dsa_allocate_extended(pgStatLocal.dsa,
+								  pgstat_get_kind_info(kind)->shared_size,
+								  DSA_ALLOC_ZERO | DSA_ALLOC_NO_OOM);
+	if (chunk == InvalidDsaPointer)
+		return NULL;
+
 	shheader = dsa_get_address(pgStatLocal.dsa, chunk);
 	shheader->magic = 0xdeadbeef;
 
@@ -478,6 +490,20 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 		if (!shfound)
 		{
 			shheader = pgstat_init_entry(kind, shhashent);
+			if (shheader == NULL)
+			{
+				/*
+				 * Failed the allocation of a new entry, so clean up the
+				 * shared hashtable before giving up.
+				 */
+				dshash_delete_entry(pgStatLocal.shared_hash, shhashent);
+
+				ereport(ERROR,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory"),
+						 errdetail("Failed while allocating entry %d/%u/%u.",
+								   key.kind, key.dboid, key.objoid)));
+			}
 			pgstat_acquire_entry_ref(entry_ref, shhashent, shheader);
 
 			if (created_entry != NULL)
