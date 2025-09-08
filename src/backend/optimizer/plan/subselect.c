@@ -1397,7 +1397,7 @@ convert_ANY_sublink_to_join(PlannerInfo *root, SubLink *sublink,
 	 */
 	nsitem = addRangeTableEntryForSubquery(pstate,
 										   subselect,
-										   makeAlias("ANY_subquery", NIL),
+										   NULL,
 										   use_lateral,
 										   false);
 	rte = nsitem->p_rte;

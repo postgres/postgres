@@ -545,15 +545,15 @@ EXPLAIN (COSTS OFF)
 SELECT * FROM tab_anti t1 WHERE t1.a IN
  (SELECT a FROM tab_anti t2 WHERE t2.b IN
   (SELECT t1.b FROM tab_anti t3 WHERE t2.a > 1 OFFSET 0));
-                   QUERY PLAN                    
--------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Nested Loop Semi Join
    ->  Seq Scan on tab_anti t1
    ->  Nested Loop Semi Join
          Join Filter: (t1.a = t2.a)
          ->  Seq Scan on tab_anti t2
-         ->  Subquery Scan on "ANY_subquery"
-               Filter: (t2.b = "ANY_subquery".b)
+         ->  Subquery Scan on unnamed_subquery
+               Filter: (t2.b = unnamed_subquery.b)
                ->  Result
                      One-Time Filter: (t2.a > 1)
                      ->  Seq Scan on tab_anti t3

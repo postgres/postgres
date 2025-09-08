@@ -1692,14 +1692,14 @@ select * from int4_tbl o where (f1, f1) in
 -------------------------------------------------------------------
  Nested Loop Semi Join
    Output: o.f1
-   Join Filter: (o.f1 = "ANY_subquery".f1)
+   Join Filter: (o.f1 = unnamed_subquery.f1)
    ->  Seq Scan on public.int4_tbl o
          Output: o.f1
    ->  Materialize
-         Output: "ANY_subquery".f1, "ANY_subquery".g
-         ->  Subquery Scan on "ANY_subquery"
-               Output: "ANY_subquery".f1, "ANY_subquery".g
-               Filter: ("ANY_subquery".f1 = "ANY_subquery".g)
+         Output: unnamed_subquery.f1, unnamed_subquery.g
+         ->  Subquery Scan on unnamed_subquery
+               Output: unnamed_subquery.f1, unnamed_subquery.g
+               Filter: (unnamed_subquery.f1 = unnamed_subquery.g)
                ->  Result
                      Output: i.f1, ((generate_series(1, 50)) / 10)
                      ->  ProjectSet
@@ -2867,8 +2867,8 @@ ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
                ->  Memoize
                      Cache Key: b.hundred, b.odd
                      Cache Mode: binary
-                     ->  Subquery Scan on "ANY_subquery"
-                           Filter: (b.hundred = "ANY_subquery".min)
+                     ->  Subquery Scan on unnamed_subquery
+                           Filter: (b.hundred = unnamed_subquery.min)
                            ->  Result
                                  InitPlan 1
                                    ->  Limit
