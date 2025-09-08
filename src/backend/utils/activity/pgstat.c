@@ -1975,6 +1975,17 @@ pgstat_read_statsfile(void)
 
 					header = pgstat_init_entry(key.kind, p);
 					dshash_release_lock(pgStatLocal.shared_hash, p);
+					if (header == NULL)
+					{
+						/*
+						 * It would be tempting to switch this ERROR to a
+						 * WARNING, but it would mean that all the statistics
+						 * are discarded when the environment fails on OOM.
+						 */
+						elog(ERROR, "could not allocate entry %u/%u/%" PRIu64 " of type %c",
+							 key.kind, key.dboid,
+							 key.objid, t);
+					}
 
 					if (!read_chunk(fpin,
 									pgstat_get_entry_data(key.kind, header),
