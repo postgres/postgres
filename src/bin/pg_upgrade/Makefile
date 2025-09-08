@@ -3,8 +3,7 @@
 PGFILEDESC = "pg_upgrade - an in-place binary upgrade utility"
 PGAPPICON = win32
 
-# required for 003_upgrade_logical_replication_slots.pl
-EXTRA_INSTALL=contrib/test_decoding
+EXTRA_INSTALL=contrib/test_decoding src/test/modules/dummy_seclabel
 
 subdir = src/bin/pg_upgrade
 top_builddir = ../../..

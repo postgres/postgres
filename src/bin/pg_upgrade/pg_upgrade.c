@@ -29,9 +29,9 @@
  *	We control all assignments of pg_enum.oid because these oids are stored
  *	in user tables as enum values.
  *
- *	We control all assignments of pg_authid.oid for historical reasons (the
- *	oids used to be stored in pg_largeobject_metadata, which is now copied via
- *	SQL commands), that might change at some point in the future.
+ *	We control all assignments of pg_authid.oid because the oids are stored in
+ *	pg_largeobject_metadata, which is copied via file transfer for upgrades
+ *	from v16 and newer.
  *
  *	We control all assignments of pg_database.oid because we want the directory
  *	names to match between the old and new cluster.

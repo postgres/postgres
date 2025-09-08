@@ -498,7 +498,10 @@ get_rel_infos_query(void)
 	 *
 	 * pg_largeobject contains user data that does not appear in pg_dump
 	 * output, so we have to copy that system table.  It's easiest to do that
-	 * by treating it as a user table.
+	 * by treating it as a user table.  We can do the same for
+	 * pg_largeobject_metadata for upgrades from v16 and newer.  pg_upgrade
+	 * can't copy/link the files from older versions because aclitem (needed
+	 * by pg_largeobject_metadata.lomacl) changed its storage format in v16.
 	 */
 	appendPQExpBuffer(&query,
 					  "WITH regular_heap (reloid, indtable, toastheap) AS ( "
@@ -514,10 +517,12 @@ get_rel_infos_query(void)
 					  "                        'binary_upgrade', 'pg_toast') AND "
 					  "      c.oid >= %u::pg_catalog.oid) OR "
 					  "     (n.nspname = 'pg_catalog' AND "
-					  "      relname IN ('pg_largeobject') ))), ",
+					  "      relname IN ('pg_largeobject'%s) ))), ",
 					  (user_opts.transfer_mode == TRANSFER_MODE_SWAP) ?
 					  ", " CppAsString2(RELKIND_SEQUENCE) : "",
-					  FirstNormalObjectId);
+					  FirstNormalObjectId,
+					  (GET_MAJOR_VERSION(old_cluster.major_version) >= 1600) ?
+					  ", 'pg_largeobject_metadata'" : "");
 
 	/*
 	 * Add a CTE that collects OIDs of toast tables belonging to the tables

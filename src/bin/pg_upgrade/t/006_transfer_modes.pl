@@ -45,6 +45,22 @@ sub test_mode
 		$old->append_conf('postgresql.conf', "allow_in_place_tablespaces = true");
 	}
 
+	# We can only test security labels if both the old and new installations
+	# have dummy_seclabel.
+	my $test_seclabel = 1;
+	$old->start;
+	if (!$old->check_extension('dummy_seclabel'))
+	{
+		$test_seclabel = 0;
+	}
+	$old->stop;
+	$new->start;
+	if (!$new->check_extension('dummy_seclabel'))
+	{
+		$test_seclabel = 0;
+	}
+	$new->stop;
+
 	# Create a small variety of simple test objects on the old cluster.  We'll
 	# check that these reach the new version after upgrading.
 	$old->start;
@@ -82,6 +98,29 @@ sub test_mode
 			"CREATE TABLE test5 TABLESPACE inplc_tblspc AS SELECT generate_series(503, 606)");
 		$old->safe_psql('testdb3',
 			"CREATE TABLE test6 AS SELECT generate_series(607, 711)");
+	}
+
+	# While we are here, test handling of large objects.
+	$old->safe_psql('postgres', q|
+		CREATE ROLE regress_lo_1;
+		CREATE ROLE regress_lo_2;
+
+		SELECT lo_from_bytea(4532, '\xffffff00');
+		COMMENT ON LARGE OBJECT 4532 IS 'test';
+
+		SELECT lo_from_bytea(4533, '\x0f0f0f0f');
+		ALTER LARGE OBJECT 4533 OWNER TO regress_lo_1;
+		GRANT SELECT ON LARGE OBJECT 4533 TO regress_lo_2;
+	|);
+
+	if ($test_seclabel)
+	{
+		$old->safe_psql('postgres', q|
+			CREATE EXTENSION dummy_seclabel;
+
+			SELECT lo_from_bytea(4534, '\x00ffffff');
+			SECURITY LABEL ON LARGE OBJECT 4534 IS 'classified';
+		|);
 	}
 	$old->stop;
 
@@ -131,6 +170,34 @@ sub test_mode
 			is($result, '104', "test5 data after pg_upgrade $mode");
 			$result = $new->safe_psql('testdb3', "SELECT COUNT(*) FROM test6");
 			is($result, '105', "test6 data after pg_upgrade $mode");
+		}
+
+		# Tests for large objects
+		$result = $new->safe_psql('postgres', "SELECT lo_get(4532)");
+		is($result, '\xffffff00', "LO contents after upgrade");
+		$result = $new->safe_psql('postgres',
+			"SELECT obj_description(4532, 'pg_largeobject')");
+		is($result, 'test', "comment on LO after pg_upgrade");
+
+		$result = $new->safe_psql('postgres', "SELECT lo_get(4533)");
+		is($result, '\x0f0f0f0f', "LO contents after upgrade");
+		$result = $new->safe_psql('postgres',
+			"SELECT lomowner::regrole FROM pg_largeobject_metadata WHERE oid = 4533");
+		is($result, 'regress_lo_1', "LO owner after upgrade");
+		$result = $new->safe_psql('postgres',
+			"SELECT lomacl FROM pg_largeobject_metadata WHERE oid = 4533");
+		is($result, '{regress_lo_1=rw/regress_lo_1,regress_lo_2=r/regress_lo_1}',
+			"LO ACL after upgrade");
+
+		if ($test_seclabel)
+		{
+			$result = $new->safe_psql('postgres', "SELECT lo_get(4534)");
+			is($result, '\x00ffffff', "LO contents after upgrade");
+			$result = $new->safe_psql('postgres', q|
+				SELECT label FROM pg_seclabel WHERE objoid = 4534
+				AND classoid = 'pg_largeobject'::regclass
+			|);
+			is($result, 'classified', "seclabel on LO after pg_upgrade");
 		}
 		$new->stop;
 	}
