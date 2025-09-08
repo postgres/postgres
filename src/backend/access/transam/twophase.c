@@ -103,6 +103,7 @@
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/builtins.h"
+#include "utils/injection_point.h"
 #include "utils/memutils.h"
 #include "utils/timestamp.h"
 
@@ -2332,11 +2333,16 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	replorigin = (replorigin_session_origin != InvalidRepOriginId &&
 				  replorigin_session_origin != DoNotReplicateId);
 
+	/* Load the injection point before entering the critical section */
+	INJECTION_POINT_LOAD("commit-after-delay-checkpoint");
+
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
 	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_IN_COMMIT) == 0);
 	MyProc->delayChkptFlags |= DELAY_CHKPT_IN_COMMIT;
+
+	INJECTION_POINT_CACHED("commit-after-delay-checkpoint", NULL);
 
 	/*
 	 * Ensures the DELAY_CHKPT_IN_COMMIT flag write is globally visible before
