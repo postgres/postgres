@@ -1789,6 +1789,32 @@ AllTablesyncsReady(void)
 }
 
 /*
+ * Return whether the subscription currently has any relations.
+ *
+ * Note: Unlike HasSubscriptionRelations(), this function relies on cached
+ * information for subscription relations. Additionally, it should not be
+ * invoked outside of apply or tablesync workers, as MySubscription must be
+ * initialized first.
+ */
+bool
+HasSubscriptionRelationsCached(void)
+{
+	bool		started_tx;
+	bool		has_subrels;
+
+	/* We need up-to-date subscription tables info here */
+	has_subrels = FetchTableStates(&started_tx);
+
+	if (started_tx)
+	{
+		CommitTransactionCommand();
+		pgstat_report_stat(true);
+	}
+
+	return has_subrels;
+}
+
+/*
  * Update the two_phase state of the specified subscription in pg_subscription.
  */
 void

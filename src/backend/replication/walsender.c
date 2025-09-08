@@ -51,6 +51,7 @@
 
 #include "access/timeline.h"
 #include "access/transam.h"
+#include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
@@ -2719,6 +2720,7 @@ ProcessStandbyPSRequestMessage(void)
 {
 	XLogRecPtr	lsn = InvalidXLogRecPtr;
 	TransactionId oldestXidInCommit;
+	TransactionId oldestGXidInCommit;
 	FullTransactionId nextFullXid;
 	FullTransactionId fullOldestXidInCommit;
 	WalSnd	   *walsnd = MyWalSnd;
@@ -2746,6 +2748,16 @@ ProcessStandbyPSRequestMessage(void)
 	 * ones replicated.
 	 */
 	oldestXidInCommit = GetOldestActiveTransactionId(true, false);
+	oldestGXidInCommit = TwoPhaseGetOldestXidInCommit();
+
+	/*
+	 * Update the oldest xid for standby transmission if an older prepared
+	 * transaction exists and is currently in commit phase.
+	 */
+	if (TransactionIdIsValid(oldestGXidInCommit) &&
+		TransactionIdPrecedes(oldestGXidInCommit, oldestXidInCommit))
+		oldestXidInCommit = oldestGXidInCommit;
+
 	nextFullXid = ReadNextFullTransactionId();
 	fullOldestXidInCommit = FullTransactionIdFromAllowableAt(nextFullXid,
 															 oldestXidInCommit);

@@ -272,6 +272,7 @@ extern void ReplicationOriginNameForLogicalRep(Oid suboid, Oid relid,
 											   char *originname, Size szoriginname);
 
 extern bool AllTablesyncsReady(void);
+extern bool HasSubscriptionRelationsCached(void);
 extern void UpdateTwoPhaseState(Oid suboid, char new_state);
 
 extern void process_syncing_tables(XLogRecPtr current_lsn);

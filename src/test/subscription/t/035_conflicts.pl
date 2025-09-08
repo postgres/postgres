@@ -387,6 +387,35 @@ ok( $logfile =~
 	'update target row was deleted in tab');
 
 ###############################################################################
+# Check that the xmin value of the conflict detection slot can be advanced when
+# the subscription has no tables.
+###############################################################################
+
+# Remove the table from the publication
+$node_B->safe_psql('postgres', "ALTER PUBLICATION tap_pub_B DROP TABLE tab");
+
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION");
+
+# Remember the next transaction ID to be assigned
+$next_xid = $node_A->safe_psql('postgres', "SELECT txid_current() + 1;");
+
+# Confirm that the xmin value is advanced to the latest nextXid. If no
+# transactions are running, the apply worker selects nextXid as the candidate
+# for the non-removable xid. See GetOldestActiveTransactionId().
+ok( $node_A->poll_query_until(
+		'postgres',
+		"SELECT xmin = $next_xid from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"the xmin value of slot 'pg_conflict_detection' is updated on Node A");
+
+# Re-add the table to the publication for further tests
+$node_B->safe_psql('postgres', "ALTER PUBLICATION tap_pub_B ADD TABLE tab");
+
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB REFRESH PUBLICATION WITH (copy_data = false)");
+
+###############################################################################
 # Check that dead tuple retention stops due to the wait time surpassing
 # max_retention_duration.
 ###############################################################################

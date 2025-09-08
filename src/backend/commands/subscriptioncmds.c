@@ -854,7 +854,17 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 	pgstat_create_subscription(subid);
 
-	if (opts.enabled)
+	/*
+	 * Notify the launcher to start the apply worker if the subscription is
+	 * enabled, or to create the conflict detection slot if retain_dead_tuples
+	 * is enabled.
+	 *
+	 * Creating the conflict detection slot is essential even when the
+	 * subscription is not enabled. This ensures that dead tuples are
+	 * retained, which is necessary for accurately identifying the type of
+	 * conflict during replication.
+	 */
+	if (opts.enabled || opts.retaindeadtuples)
 		ApplyLauncherWakeupAtCommit();
 
 	ObjectAddressSet(myself, SubscriptionRelationId, subid);

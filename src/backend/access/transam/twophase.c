@@ -2809,3 +2809,58 @@ LookupGXactBySubid(Oid subid)
 
 	return found;
 }
+
+/*
+ * TwoPhaseGetXidByLockingProc
+ *		Return the oldest transaction ID from prepared transactions that are
+ *		currently in the commit critical section.
+ *
+ * This function only considers transactions in the currently connected
+ * database. If no matching transactions are found, it returns
+ * InvalidTransactionId.
+ */
+TransactionId
+TwoPhaseGetOldestXidInCommit(void)
+{
+	TransactionId oldestRunningXid = InvalidTransactionId;
+
+	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
+
+	for (int i = 0; i < TwoPhaseState->numPrepXacts; i++)
+	{
+		GlobalTransaction gxact = TwoPhaseState->prepXacts[i];
+		PGPROC	   *commitproc;
+		TransactionId xid;
+
+		if (!gxact->valid)
+			continue;
+
+		if (gxact->locking_backend == INVALID_PROC_NUMBER)
+			continue;
+
+		/*
+		 * Get the backend that is handling the transaction. It's safe to
+		 * access this backend while holding TwoPhaseStateLock, as the backend
+		 * can only be destroyed after either removing or unlocking the
+		 * current global transaction, both of which require an exclusive
+		 * TwoPhaseStateLock.
+		 */
+		commitproc = GetPGProcByNumber(gxact->locking_backend);
+
+		if (MyDatabaseId != commitproc->databaseId)
+			continue;
+
+		if ((commitproc->delayChkptFlags & DELAY_CHKPT_IN_COMMIT) == 0)
+			continue;
+
+		xid = XidFromFullTransactionId(gxact->fxid);
+
+		if (!TransactionIdIsValid(oldestRunningXid) ||
+			TransactionIdPrecedes(xid, oldestRunningXid))
+			oldestRunningXid = xid;
+	}
+
+	LWLockRelease(TwoPhaseStateLock);
+
+	return oldestRunningXid;
+}
