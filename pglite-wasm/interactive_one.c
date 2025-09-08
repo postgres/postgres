@@ -416,7 +416,7 @@ if (cma_rsize<0)
     }
 
     MemoryContextSwitchTo(MessageContext);
-    MemoryContextResetAndDeleteChildren(MessageContext);
+    MemoryContextReset(MessageContext);
 
     initStringInfo(&input_message);
 

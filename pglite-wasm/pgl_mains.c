@@ -45,7 +45,7 @@ interactive_file() {
 	 * query input buffer in the cleared MessageContext.
 	 */
 	MemoryContextSwitchTo(MessageContext);
-	MemoryContextResetAndDeleteChildren(MessageContext);
+	MemoryContextReset(MessageContext);
 
 	initStringInfo(&input_message);
     inBuf = &input_message;
