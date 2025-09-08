@@ -284,7 +284,6 @@ typedef struct xl_heap_update
  */
 typedef struct xl_heap_prune
 {
-	uint8		reason;
 	uint8		flags;
 
 	/*
