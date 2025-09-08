@@ -2130,10 +2130,10 @@ select testrngfunc();
 
 explain (verbose, costs off)
 select * from testrngfunc();
-                        QUERY PLAN                        
-----------------------------------------------------------
- Subquery Scan on "*SELECT*"
-   Output: "*SELECT*"."?column?", "*SELECT*"."?column?_1"
+                              QUERY PLAN                              
+----------------------------------------------------------------------
+ Subquery Scan on unnamed_subquery
+   Output: unnamed_subquery."?column?", unnamed_subquery."?column?_1"
    ->  Unique
          Output: (1), (2)
          ->  Sort

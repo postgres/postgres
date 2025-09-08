@@ -2483,7 +2483,7 @@ tlist_coercion_finished:
 		rte = makeNode(RangeTblEntry);
 		rte->rtekind = RTE_SUBQUERY;
 		rte->subquery = parse;
-		rte->eref = rte->alias = makeAlias("*SELECT*", colnames);
+		rte->eref = makeAlias("unnamed_subquery", colnames);
 		rte->lateral = false;
 		rte->inh = false;
 		rte->inFromCl = true;

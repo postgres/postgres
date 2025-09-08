@@ -777,7 +777,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 */
 		nsitem = addRangeTableEntryForSubquery(pstate,
 											   selectQuery,
-											   makeAlias("*SELECT*", NIL),
+											   NULL,
 											   false,
 											   false);
 		addNSItemToQuery(pstate, nsitem, true, false, false);
@@ -2100,7 +2100,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 	{
 		/* Process leaf SELECT */
 		Query	   *selectQuery;
-		char		selectName[32];
 		ParseNamespaceItem *nsitem;
 		RangeTblRef *rtr;
 		ListCell   *tl;
@@ -2156,11 +2155,9 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.
 		 */
-		snprintf(selectName, sizeof(selectName), "*SELECT* %d",
-				 list_length(pstate->p_rtable) + 1);
 		nsitem = addRangeTableEntryForSubquery(pstate,
 											   selectQuery,
-											   makeAlias(selectName, NIL),
+											   NULL,
 											   false,
 											   false);
 

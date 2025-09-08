@@ -942,7 +942,7 @@ SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1;
 ERROR:  column "q2" does not exist
 LINE 1: ... int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1...
                                                              ^
-DETAIL:  There is a column named "q2" in table "*SELECT* 2", but it cannot be referenced from this part of the query.
+DETAIL:  There is a column named "q2" in table "unnamed_subquery", but it cannot be referenced from this part of the query.
 -- But this should work:
 SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1))) ORDER BY 1;
         q1        
@@ -1338,14 +1338,14 @@ where q2 = q2;
 ----------------------------------------------------------
  Unique
    ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
-         ->  Subquery Scan on "*SELECT* 1"
+         Sort Key: unnamed_subquery.q1
+         ->  Subquery Scan on unnamed_subquery
                ->  Unique
                      ->  Sort
                            Sort Key: i81.q1, i81.q2
                            ->  Seq Scan on int8_tbl i81
                                  Filter: (q2 IS NOT NULL)
-         ->  Subquery Scan on "*SELECT* 2"
+         ->  Subquery Scan on unnamed_subquery_1
                ->  Unique
                      ->  Sort
                            Sort Key: i82.q1, i82.q2
@@ -1374,14 +1374,14 @@ where -q1 = q2;
 --------------------------------------------------------
  Unique
    ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
-         ->  Subquery Scan on "*SELECT* 1"
+         Sort Key: unnamed_subquery.q1
+         ->  Subquery Scan on unnamed_subquery
                ->  Unique
                      ->  Sort
                            Sort Key: i81.q1, i81.q2
                            ->  Seq Scan on int8_tbl i81
                                  Filter: ((- q1) = q2)
-         ->  Subquery Scan on "*SELECT* 2"
+         ->  Subquery Scan on unnamed_subquery_1
                ->  Unique
                      ->  Sort
                            Sort Key: i82.q1, i82.q2
