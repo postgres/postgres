@@ -2647,9 +2647,6 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 		 */
 		if (all_frozen_set)
 		{
-			Assert(PageIsAllVisible(page));
-			Assert(visibilitymap_pin_ok(BufferGetBlockNumber(buffer), vmbuffer));
-
 			/*
 			 * It's fine to use InvalidTransactionId here - this is only used
 			 * when HEAP_INSERT_FROZEN is specified, which intentionally
