@@ -1151,7 +1151,8 @@
 
   <para>
    The <function>random()</function> and <function>random_normal()</function>
-   functions listed in <xref linkend="functions-math-random-table"/> use a
+   functions listed in <xref linkend="functions-math-random-table"/> and
+   <xref linkend="functions-datetime-table"/> use a
    deterministic pseudo-random number generator.
    It is fast but not suitable for cryptographic
    applications; see the <xref linkend="pgcrypto"/> module for a more
