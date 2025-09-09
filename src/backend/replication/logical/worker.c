@@ -3266,12 +3266,18 @@ FindDeletedTupleInLocalRel(Relation localrel, Oid localidxoid,
 
 		/*
 		 * Obtain the information from the leader apply worker as only the
-		 * leader manages conflict retention (see
+		 * leader manages oldest_nonremovable_xid (see
 		 * maybe_advance_nonremovable_xid() for details).
 		 */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 		leader = logicalrep_worker_find(MyLogicalRepWorker->subid,
 										InvalidOid, false);
+		if (!leader)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("could not detect conflict as the leader apply worker has exited")));
+		}
 
 		SpinLockAcquire(&leader->relmutex);
 		oldestxmin = leader->oldest_nonremovable_xid;
