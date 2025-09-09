@@ -51,7 +51,7 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 
 	/*
 	 * Transform and convert the subscript expressions. Jsonb subscripting
-	 * does not support slices, look only and the upper index.
+	 * does not support slices, look only at the upper index.
 	 */
 	foreach(idx, indirection)
 	{
