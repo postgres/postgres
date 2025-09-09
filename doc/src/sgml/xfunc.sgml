@@ -3669,11 +3669,14 @@ LWLockRelease(AddinShmemInitLock);
 </programlisting>
       <literal>shmem_startup_hook</literal> provides a convenient place for the
       initialization code, but it is not strictly required that all such code
-      be placed in this hook.  Each backend will execute the registered
-      <literal>shmem_startup_hook</literal> shortly after it attaches to shared
-      memory.  Note that add-ins should still acquire
+      be placed in this hook.  On Windows (and anywhere else where
+      <literal>EXEC_BACKEND</literal> is defined), each backend executes the
+      registered <literal>shmem_startup_hook</literal> shortly after it
+      attaches to shared memory, so add-ins should still acquire
       <function>AddinShmemInitLock</function> within this hook, as shown in the
-      example above.
+      example above.  On other platforms, only the postmaster process executes
+      the <literal>shmem_startup_hook</literal>, and each backend automatically
+      inherits the pointers to shared memory.
      </para>
 
      <para>
