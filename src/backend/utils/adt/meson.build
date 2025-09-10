@@ -1,5 +1,15 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
+# Some code in numeric.c benefits from auto-vectorization
+numeric_backend_lib = static_library('numeric_backend_lib',
+  'numeric.c',
+  dependencies: backend_build_deps,
+  kwargs: internal_lib_args,
+  c_args: vectorize_cflags,
+)
+
+backend_link_with += numeric_backend_lib
+
 backend_sources += files(
   'acl.c',
   'amutils.c',
@@ -59,7 +69,6 @@ backend_sources += files(
   'network_gist.c',
   'network_selfuncs.c',
   'network_spgist.c',
-  'numeric.c',
   'numutils.c',
   'oid.c',
   'oracle_compat.c',
