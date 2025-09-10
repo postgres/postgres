@@ -267,7 +267,6 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
-#include "utils/dynahash.h"
 #include "utils/expandeddatum.h"
 #include "utils/injection_point.h"
 #include "utils/logtape.h"
@@ -2115,7 +2114,7 @@ hash_choose_num_partitions(double input_groups, double hashentrysize,
 	npartitions = (int) dpartitions;
 
 	/* ceil(log2(npartitions)) */
-	partition_bits = my_log2(npartitions);
+	partition_bits = pg_ceil_log2_32(npartitions);
 
 	/* make sure that we don't exhaust the hash bits */
 	if (partition_bits + used_bits >= 32)

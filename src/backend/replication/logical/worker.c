@@ -276,7 +276,6 @@
 #include "storage/procarray.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
-#include "utils/dynahash.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
@@ -5115,7 +5114,7 @@ subxact_info_read(Oid subid, TransactionId xid)
 	len = sizeof(SubXactInfo) * subxact_data.nsubxacts;
 
 	/* we keep the maximum as a power of 2 */
-	subxact_data.nsubxacts_max = 1 << my_log2(subxact_data.nsubxacts);
+	subxact_data.nsubxacts_max = 1 << pg_ceil_log2_32(subxact_data.nsubxacts);
 
 	/*
 	 * Allocate subxact information in the logical streaming context. We need

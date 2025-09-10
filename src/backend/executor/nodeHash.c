@@ -36,7 +36,6 @@
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
-#include "utils/dynahash.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -340,7 +339,7 @@ MultiExecParallelHash(HashState *node)
 	 */
 	hashtable->curbatch = -1;
 	hashtable->nbuckets = pstate->nbuckets;
-	hashtable->log2_nbuckets = my_log2(hashtable->nbuckets);
+	hashtable->log2_nbuckets = pg_ceil_log2_32(hashtable->nbuckets);
 	hashtable->totalTuples = pstate->total_tuples;
 
 	/*
@@ -480,7 +479,7 @@ ExecHashTableCreate(HashState *state)
 							&nbuckets, &nbatch, &num_skew_mcvs);
 
 	/* nbuckets must be a power of 2 */
-	log2_nbuckets = my_log2(nbuckets);
+	log2_nbuckets = pg_ceil_log2_32(nbuckets);
 	Assert(nbuckets == (1 << log2_nbuckets));
 
 	/*
@@ -3499,7 +3498,7 @@ ExecParallelHashTableSetCurrentBatch(HashJoinTable hashtable, int batchno)
 		dsa_get_address(hashtable->area,
 						hashtable->batches[batchno].shared->buckets);
 	hashtable->nbuckets = hashtable->parallel_state->nbuckets;
-	hashtable->log2_nbuckets = my_log2(hashtable->nbuckets);
+	hashtable->log2_nbuckets = pg_ceil_log2_32(hashtable->nbuckets);
 	hashtable->current_chunk = NULL;
 	hashtable->current_chunk_shared = InvalidDsaPointer;
 	hashtable->batches[batchno].at_least_one_chunk = false;
