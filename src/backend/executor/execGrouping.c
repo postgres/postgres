@@ -156,6 +156,12 @@ execTuplesHashPrepare(int numCols,
  *
  * Note that the keyColIdx, hashfunctions, and collations arrays must be
  * allocated in storage that will live as long as the hashtable does.
+ *
+ * LookupTupleHashEntry, FindTupleHashEntry, and related functions may leak
+ * memory in the tempcxt.  It is caller's responsibility to reset that context
+ * reasonably often, typically once per tuple.  (We do it that way, rather
+ * than managing an extra context within the hashtable, because in many cases
+ * the caller can specify a tempcxt that it needs to reset per-tuple anyway.)
  */
 TupleHashTable
 BuildTupleHashTable(PlanState *parent,
