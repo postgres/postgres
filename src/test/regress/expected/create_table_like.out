@@ -320,6 +320,7 @@ DROP TABLE inhz;
 -- including storage and comments
 CREATE TABLE ctlt1 (a text CHECK (length(a) > 2) ENFORCED PRIMARY KEY,
 	b text CHECK (length(b) > 100) NOT ENFORCED);
+ALTER TABLE ctlt1 ADD CONSTRAINT cc CHECK (length(b) > 100) NOT VALID;
 CREATE INDEX ctlt1_b_key ON ctlt1 (b);
 CREATE INDEX ctlt1_fnidx ON ctlt1 ((a || b));
 CREATE STATISTICS ctlt1_a_b_stat ON a,b FROM ctlt1;
@@ -378,6 +379,7 @@ SELECT conname, description FROM pg_description, pg_constraint c WHERE classoid 
 CREATE TABLE ctlt1_inh (LIKE ctlt1 INCLUDING CONSTRAINTS INCLUDING COMMENTS) INHERITS (ctlt1);
 NOTICE:  merging column "a" with inherited definition
 NOTICE:  merging column "b" with inherited definition
+NOTICE:  merging constraint "cc" with inherited definition
 NOTICE:  merging constraint "ctlt1_a_check" with inherited definition
 NOTICE:  merging constraint "ctlt1_b_check" with inherited definition
 \d+ ctlt1_inh
@@ -387,6 +389,7 @@ NOTICE:  merging constraint "ctlt1_b_check" with inherited definition
  a      | text |           | not null |         | main     |              | A
  b      | text |           |          |         | extended |              | B
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
 Not-null constraints:
@@ -409,6 +412,7 @@ NOTICE:  merging multiple inherited definitions of column "a"
  b      | text |           |          |         | extended |              | 
  c      | text |           |          |         | external |              | 
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
     "ctlt3_a_check" CHECK (length(a) < 5)
@@ -430,6 +434,7 @@ NOTICE:  merging column "a" with inherited definition
 Indexes:
     "ctlt13_like_expr_idx" btree ((a || c))
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
     "ctlt3_a_check" CHECK (length(a) < 5)
@@ -456,6 +461,7 @@ Indexes:
     "ctlt_all_b_idx" btree (b)
     "ctlt_all_expr_idx" btree ((a || b))
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
 Statistics objects:
@@ -499,6 +505,7 @@ Indexes:
     "pg_attrdef_b_idx" btree (b)
     "pg_attrdef_expr_idx" btree ((a || b))
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
 Statistics objects:
@@ -524,6 +531,7 @@ Indexes:
     "ctlt1_b_idx" btree (b)
     "ctlt1_expr_idx" btree ((a || b))
 Check constraints:
+    "cc" CHECK (length(b) > 100)
     "ctlt1_a_check" CHECK (length(a) > 2)
     "ctlt1_b_check" CHECK (length(b) > 100) NOT ENFORCED
 Statistics objects:
