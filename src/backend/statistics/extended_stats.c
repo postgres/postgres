@@ -986,10 +986,9 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 {
 	int			i,
 				j,
-				len,
 				nrows;
 	int			nvalues = data->numrows * numattrs;
-
+	Size		len;
 	SortItem   *items;
 	Datum	   *values;
 	bool	   *isnull;
@@ -997,14 +996,16 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	int		   *typlen;
 
 	/* Compute the total amount of memory we need (both items and values). */
-	len = data->numrows * sizeof(SortItem) + nvalues * (sizeof(Datum) + sizeof(bool));
+	len = MAXALIGN(data->numrows * sizeof(SortItem)) +
+		nvalues * (sizeof(Datum) + sizeof(bool));
 
 	/* Allocate the memory and split it into the pieces. */
 	ptr = palloc0(len);
 
 	/* items to sort */
 	items = (SortItem *) ptr;
-	ptr += data->numrows * sizeof(SortItem);
+	/* MAXALIGN ensures that the following Datums are suitably aligned */
+	ptr += MAXALIGN(data->numrows * sizeof(SortItem));
 
 	/* values and null flags */
 	values = (Datum *) ptr;
