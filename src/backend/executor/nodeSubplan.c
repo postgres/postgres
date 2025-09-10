@@ -191,8 +191,8 @@ ExecHashSubPlan(SubPlanState *node,
 	 */
 	ExecClearTuple(slot);
 
-	/* Also must reset the hashtempcxt after each hashtable lookup. */
-	MemoryContextReset(node->hashtempcxt);
+	/* Also must reset the innerecontext after each hashtable lookup. */
+	ResetExprContext(node->innerecontext);
 
 	return BoolGetDatum(result);
 }
@@ -529,7 +529,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 											  0,
 											  node->planstate->state->es_query_cxt,
 											  node->hashtablecxt,
-											  node->hashtempcxt,
+											  innerecontext->ecxt_per_tuple_memory,
 											  false);
 
 	if (!subplan->unknownEqFalse)
@@ -558,7 +558,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 												  0,
 												  node->planstate->state->es_query_cxt,
 												  node->hashtablecxt,
-												  node->hashtempcxt,
+												  innerecontext->ecxt_per_tuple_memory,
 												  false);
 	}
 	else
@@ -620,12 +620,9 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 
 		/*
 		 * Reset innerecontext after each inner tuple to free any memory used
-		 * during ExecProject.
+		 * during ExecProject and hashtable lookup.
 		 */
 		ResetExprContext(innerecontext);
-
-		/* Also must reset the hashtempcxt after each hashtable lookup. */
-		MemoryContextReset(node->hashtempcxt);
 	}
 
 	/*
@@ -842,7 +839,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	sstate->hashtable = NULL;
 	sstate->hashnulls = NULL;
 	sstate->hashtablecxt = NULL;
-	sstate->hashtempcxt = NULL;
 	sstate->innerecontext = NULL;
 	sstate->keyColIdx = NULL;
 	sstate->tab_eq_funcoids = NULL;
@@ -898,11 +894,6 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 			AllocSetContextCreate(CurrentMemoryContext,
 								  "Subplan HashTable Context",
 								  ALLOCSET_DEFAULT_SIZES);
-		/* and a small one for the hash tables to use as temp storage */
-		sstate->hashtempcxt =
-			AllocSetContextCreate(CurrentMemoryContext,
-								  "Subplan HashTable Temp Context",
-								  ALLOCSET_SMALL_SIZES);
 		/* and a short-lived exprcontext for function evaluation */
 		sstate->innerecontext = CreateExprContext(estate);
 
