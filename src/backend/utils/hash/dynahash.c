@@ -102,7 +102,6 @@
 #include "port/pg_bitutils.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
-#include "utils/dynahash.h"
 #include "utils/memutils.h"
 
 
@@ -281,6 +280,7 @@ static bool init_htab(HTAB *hashp, int64 nelem);
 pg_noreturn static void hash_corrupted(HTAB *hashp);
 static uint32 hash_initial_lookup(HTAB *hashp, uint32 hashvalue,
 								  HASHBUCKET **bucketptr);
+static int	my_log2(int64 num);
 static int64 next_pow2_int64(int64 num);
 static int	next_pow2_int(int64 num);
 static void register_seq_scan(HTAB *hashp);
@@ -1813,7 +1813,7 @@ hash_corrupted(HTAB *hashp)
 }
 
 /* calculate ceil(log base 2) of num */
-int
+static int
 my_log2(int64 num)
 {
 	/*
