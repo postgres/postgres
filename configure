@@ -739,7 +739,6 @@ PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
 DLSUFFIX
-TAS
 GCC
 CPP
 CFLAGS_SL
@@ -760,7 +759,6 @@ CLANG
 LLVM_CONFIG
 AWK
 with_llvm
-SUN_STUDIO_CC
 ac_ct_CXX
 CXXFLAGS
 CXX
@@ -3059,12 +3057,6 @@ $as_echo "$template" >&6; }
 PORTNAME=$template
 
 
-# Initialize default assumption that we do not need separate assembly code
-# for TAS (test-and-set).  This can be overridden by the template file
-# when it's executed.
-need_tas=no
-tas_file=dummy.s
-
 # Default, works for most platforms, override in template file if needed
 DLSUFFIX=".so"
 
@@ -4798,30 +4790,6 @@ else
   ICC=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-# Check if it's Sun Studio compiler. We assume that
-# __SUNPRO_C will be defined for Sun Studio compilers
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-#ifndef __SUNPRO_C
-choke me
-#endif
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  SUN_STUDIO_CC=yes
-else
-  SUN_STUDIO_CC=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-
 
 
 #
@@ -6748,7 +6716,7 @@ fi
 # __attribute__((visibility("hidden"))) is supported, if we encounter a
 # compiler that supports one of the supported variants of -fvisibility=hidden
 # but uses a different syntax to mark a symbol as exported.
-if test "$GCC" = yes -o "$SUN_STUDIO_CC" = yes ; then
+if test "$GCC" = yes; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CC} supports -fvisibility=hidden, for CFLAGS_SL_MODULE" >&5
 $as_echo_n "checking whether ${CC} supports -fvisibility=hidden, for CFLAGS_SL_MODULE... " >&6; }
 if ${pgac_cv_prog_CC_cflags__fvisibility_hidden+:} false; then :
@@ -7729,20 +7697,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-
-
-#
-# Set up TAS assembly code if needed; the template file has now had its
-# chance to request this.
-#
-ac_config_links="$ac_config_links src/backend/port/tas.s:src/backend/port/tas/${tas_file}"
-
-
-if test "$need_tas" = yes ; then
-  TAS=tas.o
-else
-  TAS=""
-fi
 
 
 
@@ -17141,7 +17095,7 @@ else
 /* end confdefs.h.  */
 
 /* This must match the corresponding code in c.h: */
-#if defined(__GNUC__) || defined(__SUNPRO_C)
+#if defined(__GNUC__)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
 #elif defined(_MSC_VER)
 #define pg_attribute_aligned(a) __declspec(align(a))
@@ -19344,8 +19298,6 @@ fi
 if test x"$GCC" = x"yes" ; then
   cc_string=`${CC} --version | sed q`
   case $cc_string in [A-Za-z]*) ;; *) cc_string="GCC $cc_string";; esac
-elif test x"$SUN_STUDIO_CC" = x"yes" ; then
-  cc_string=`${CC} -V 2>&1 | sed q`
 else
   cc_string=$CC
 fi
@@ -20142,7 +20094,6 @@ cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "src/backend/port/tas.s") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/tas.s:src/backend/port/tas/${tas_file}" ;;
     "GNUmakefile") CONFIG_FILES="$CONFIG_FILES GNUmakefile" ;;
     "src/Makefile.global") CONFIG_FILES="$CONFIG_FILES src/Makefile.global" ;;
     "src/backend/port/pg_sema.c") CONFIG_LINKS="$CONFIG_LINKS src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION}" ;;

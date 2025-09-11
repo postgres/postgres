@@ -24,13 +24,9 @@ OBJS = \
 
 include $(top_srcdir)/src/backend/common.mk
 
-ifdef TAS
-TASPATH = $(top_builddir)/src/backend/port/tas.o
-endif
-
 s_lock_test: s_lock.c $(top_builddir)/src/common/libpgcommon.a $(top_builddir)/src/port/libpgport.a
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 $(srcdir)/s_lock.c \
-		$(TASPATH) -L $(top_builddir)/src/common -lpgcommon \
+		-L $(top_builddir)/src/common -lpgcommon \
 		-L $(top_builddir)/src/port -lpgport -lm -o s_lock_test
 
 lwlocknames.h: ../../../include/storage/lwlocklist.h ../../utils/activity/wait_event_names.txt generate-lwlocknames.pl

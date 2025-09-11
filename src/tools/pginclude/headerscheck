@@ -114,7 +114,6 @@ do
 	test "$f" = src/include/port/atomics/generic.h && continue
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
-	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
 
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue

@@ -63,8 +63,6 @@ pgxs_kv = {
   'DLSUFFIX': dlsuffix,
   'EXEEXT': exesuffix,
 
-  'SUN_STUDIO_CC': 'no', # not supported so far
-
   # want the chosen option, rather than the library
   'with_ssl' : ssl_library,
   'with_uuid': uuidopt,
@@ -179,7 +177,7 @@ pgxs_empty = [
   'WANTED_LANGUAGES',
 
   # Not needed because we don't build the server / PLs with the generated makefile
-  'LIBOBJS', 'PG_CRC32C_OBJS', 'TAS',
+  'LIBOBJS', 'PG_CRC32C_OBJS',
   'PG_TEST_EXTRA',
   'DTRACEFLAGS', # only server has dtrace probes
 
