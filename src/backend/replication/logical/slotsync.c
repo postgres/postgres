@@ -1338,7 +1338,7 @@ reset_syncing_flag()
 	SpinLockRelease(&SlotSyncCtx->mutex);
 
 	syncing_slots = false;
-};
+}
 
 /*
  * The main loop of our worker process.
