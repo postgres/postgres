@@ -129,7 +129,7 @@ typedef struct xl_hash_split_complete
  *
  * This data record is used for XLOG_HASH_MOVE_PAGE_CONTENTS
  *
- * Backup Blk 0: bucket page
+ * Backup Blk 0: primary bucket page
  * Backup Blk 1: page containing moved tuples
  * Backup Blk 2: page from which tuples will be removed
  */
@@ -149,12 +149,13 @@ typedef struct xl_hash_move_page_contents
  *
  * This data record is used for XLOG_HASH_SQUEEZE_PAGE
  *
- * Backup Blk 0: page containing tuples moved from freed overflow page
- * Backup Blk 1: freed overflow page
- * Backup Blk 2: page previous to the freed overflow page
- * Backup Blk 3: page next to the freed overflow page
- * Backup Blk 4: bitmap page containing info of freed overflow page
- * Backup Blk 5: meta page
+ * Backup Blk 0: primary bucket page
+ * Backup Blk 1: page containing tuples moved from freed overflow page
+ * Backup Blk 2: freed overflow page
+ * Backup Blk 3: page previous to the freed overflow page
+ * Backup Blk 4: page next to the freed overflow page
+ * Backup Blk 5: bitmap page containing info of freed overflow page
+ * Backup Blk 6: meta page
  */
 typedef struct xl_hash_squeeze_page
 {
@@ -245,7 +246,7 @@ typedef struct xl_hash_init_bitmap_page
  *
  * This data record is used for XLOG_HASH_VACUUM_ONE_PAGE
  *
- * Backup Blk 0: bucket page
+ * Backup Blk 0: primary bucket page
  * Backup Blk 1: meta page
  */
 typedef struct xl_hash_vacuum_one_page
