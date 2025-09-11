@@ -106,7 +106,7 @@ typedef enum
  * will show as "default" in pg_settings.  If there is a specific reason not
  * to want that, use source == PGC_S_OVERRIDE.
  *
- * NB: see GucSource_Names in guc.c if you change this.
+ * NB: see GucSource_Names in guc_tables.c if you change this.
  */
 typedef enum
 {
