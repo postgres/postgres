@@ -30,14 +30,14 @@
 #define pg_compiler_barrier_impl()	__asm__ __volatile__("" ::: "memory")
 
 /*
- * If we're on GCC 4.1.0 or higher, we should be able to get a memory barrier
+ * If we're on GCC, we should be able to get a memory barrier
  * out of this compiler built-in.  But we prefer to rely on platform specific
  * definitions where possible, and use this only as a fallback.
  */
 #if !defined(pg_memory_barrier_impl)
 #	if defined(HAVE_GCC__ATOMIC_INT32_CAS)
 #		define pg_memory_barrier_impl()		__atomic_thread_fence(__ATOMIC_SEQ_CST)
-#	elif (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 1))
+#	elif defined(__GNUC__)
 #		define pg_memory_barrier_impl()		__sync_synchronize()
 #	endif
 #endif /* !defined(pg_memory_barrier_impl) */

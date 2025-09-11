@@ -259,8 +259,8 @@
  * choose not to.  But, if possible, don't force inlining in unoptimized
  * debug builds.
  */
-#if (defined(__GNUC__) && __GNUC__ > 3 && defined(__OPTIMIZE__)) || defined(__SUNPRO_C)
-/* GCC > 3 and Sunpro support always_inline via __attribute__ */
+#if (defined(__GNUC__) && defined(__OPTIMIZE__)) || defined(__SUNPRO_C)
+/* GCC and Sunpro support always_inline via __attribute__ */
 #define pg_attribute_always_inline __attribute__((always_inline)) inline
 #elif defined(_MSC_VER)
 /* MSVC has a special keyword for this */
@@ -277,7 +277,7 @@
  * above, this should be placed before the function's return type and name.
  */
 /* GCC and Sunpro support noinline via __attribute__ */
-#if (defined(__GNUC__) && __GNUC__ > 2) || defined(__SUNPRO_C)
+#if defined(__GNUC__) || defined(__SUNPRO_C)
 #define pg_noinline __attribute__((noinline))
 /* msvc via declspec */
 #elif defined(_MSC_VER)
@@ -369,7 +369,7 @@
  * These should only be used sparingly, in very hot code paths. It's very easy
  * to mis-estimate likelihoods.
  */
-#if __GNUC__ >= 3
+#ifdef __GNUC__
 #define likely(x)	__builtin_expect((x) != 0, 1)
 #define unlikely(x) __builtin_expect((x) != 0, 0)
 #else
