@@ -337,6 +337,26 @@ DROP INDEX evttrig.one_idx;
 DROP SCHEMA evttrig CASCADE;
 DROP TABLE a_temp_tbl;
 
+-- check unfiltered results, too
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    RAISE NOTICE 'DROP: orig=% normal=% istemp=% type=% identity=% name=% args=%',
+        r.original, r.normal, r.is_temporary, r.object_type,
+        r.object_identity, r.address_names, r.address_args;
+    END LOOP;
+END; $$;
+
+CREATE TABLE evtrg_nontemp_table (f1 int primary key, f2 int default 42);
+DROP TABLE evtrg_nontemp_table;
+CREATE TEMP TABLE a_temp_tbl (f1 int primary key, f2 int default 42);
+DROP TABLE a_temp_tbl;
+
 -- CREATE OPERATOR CLASS without FAMILY clause should report
 -- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS
 CREATE OPERATOR CLASS evttrigopclass FOR TYPE int USING btree AS STORAGE int;

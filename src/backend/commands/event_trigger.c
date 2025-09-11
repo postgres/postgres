@@ -21,6 +21,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_database.h"
@@ -109,6 +110,8 @@ static Oid	insert_event_trigger_tuple(const char *trigname, const char *eventnam
 static void validate_ddl_tags(const char *filtervar, List *taglist);
 static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
+static bool obtain_object_name_namespace(const ObjectAddress *object,
+										 SQLDropObject *obj);
 static const char *stringify_grant_objtype(ObjectType objtype);
 static const char *stringify_adefprivs_objtype(ObjectType objtype);
 static void SetDatabaseHasLoginEventTriggers(void);
@@ -1285,12 +1288,6 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 
 	Assert(EventTriggerSupportsObject(object));
 
-	/* don't report temp schemas except my own */
-	if (object->classId == NamespaceRelationId &&
-		(isAnyTempNamespace(object->objectId) &&
-		 !isTempNamespace(object->objectId)))
-		return;
-
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
 	obj = palloc0(sizeof(SQLDropObject));
@@ -1298,21 +1295,88 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 	obj->original = original;
 	obj->normal = normal;
 
+	if (object->classId == NamespaceRelationId)
+	{
+		/* Special handling is needed for temp namespaces */
+		if (isTempNamespace(object->objectId))
+			obj->istemp = true;
+		else if (isAnyTempNamespace(object->objectId))
+		{
+			/* don't report temp schemas except my own */
+			pfree(obj);
+			MemoryContextSwitchTo(oldcxt);
+			return;
+		}
+	}
+	else if (object->classId == AttrDefaultRelationId)
+	{
+		/* We treat a column default as temp if its table is temp */
+		ObjectAddress colobject;
+
+		colobject = GetAttrDefaultColumnAddress(object->objectId);
+		if (OidIsValid(colobject.objectId))
+		{
+			colobject.objectSubId = 0;	/* convert to table reference */
+			if (!obtain_object_name_namespace(&colobject, obj))
+			{
+				pfree(obj);
+				MemoryContextSwitchTo(oldcxt);
+				return;
+			}
+		}
+	}
+	else
+	{
+		/* Generic handling for all other object classes */
+		if (!obtain_object_name_namespace(object, obj))
+		{
+			/* don't report temp objects except my own */
+			pfree(obj);
+			MemoryContextSwitchTo(oldcxt);
+			return;
+		}
+	}
+
+	/* object identity, objname and objargs */
+	obj->objidentity =
+		getObjectIdentityParts(&obj->address, &obj->addrnames, &obj->addrargs,
+							   false);
+
+	/* object type */
+	obj->objecttype = getObjectTypeDescription(&obj->address, false);
+
+	slist_push_head(&(currentEventTriggerState->SQLDropList), &obj->next);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * Fill obj->objname, obj->schemaname, and obj->istemp based on object.
+ *
+ * Returns true if this object should be reported, false if it should
+ * be ignored because it is a temporary object of another session.
+ */
+static bool
+obtain_object_name_namespace(const ObjectAddress *object, SQLDropObject *obj)
+{
 	/*
 	 * Obtain schema names from the object's catalog tuple, if one exists;
 	 * this lets us skip objects in temp schemas.  We trust that
 	 * ObjectProperty contains all object classes that can be
 	 * schema-qualified.
+	 *
+	 * Currently, this function does nothing for object classes that are not
+	 * in ObjectProperty, but we might sometime add special cases for that.
 	 */
 	if (is_objectclass_supported(object->classId))
 	{
 		Relation	catalog;
 		HeapTuple	tuple;
 
-		catalog = table_open(obj->address.classId, AccessShareLock);
+		catalog = table_open(object->classId, AccessShareLock);
 		tuple = get_catalog_object_by_oid(catalog,
 										  get_object_attnum_oid(object->classId),
-										  obj->address.objectId);
+										  object->objectId);
 
 		if (tuple)
 		{
@@ -1320,7 +1384,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 			Datum		datum;
 			bool		isnull;
 
-			attnum = get_object_attnum_namespace(obj->address.classId);
+			attnum = get_object_attnum_namespace(object->classId);
 			if (attnum != InvalidAttrNumber)
 			{
 				datum = heap_getattr(tuple, attnum,
@@ -1338,10 +1402,9 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 					}
 					else if (isAnyTempNamespace(namespaceId))
 					{
-						pfree(obj);
+						/* no need to fill any fields of *obj */
 						table_close(catalog, AccessShareLock);
-						MemoryContextSwitchTo(oldcxt);
-						return;
+						return false;
 					}
 					else
 					{
@@ -1351,10 +1414,10 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 				}
 			}
 
-			if (get_object_namensp_unique(obj->address.classId) &&
-				obj->address.objectSubId == 0)
+			if (get_object_namensp_unique(object->classId) &&
+				object->objectSubId == 0)
 			{
-				attnum = get_object_attnum_name(obj->address.classId);
+				attnum = get_object_attnum_name(object->classId);
 				if (attnum != InvalidAttrNumber)
 				{
 					datum = heap_getattr(tuple, attnum,
@@ -1367,24 +1430,8 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 
 		table_close(catalog, AccessShareLock);
 	}
-	else
-	{
-		if (object->classId == NamespaceRelationId &&
-			isTempNamespace(object->objectId))
-			obj->istemp = true;
-	}
 
-	/* object identity, objname and objargs */
-	obj->objidentity =
-		getObjectIdentityParts(&obj->address, &obj->addrnames, &obj->addrargs,
-							   false);
-
-	/* object type */
-	obj->objecttype = getObjectTypeDescription(&obj->address, false);
-
-	slist_push_head(&(currentEventTriggerState->SQLDropList), &obj->next);
-
-	MemoryContextSwitchTo(oldcxt);
+	return true;
 }
 
 /*
