@@ -37,6 +37,7 @@ test: fk-partitioned-1
 test: fk-partitioned-2
 test: fk-snapshot
 test: fk-snapshot-2
+test: fk-snapshot-3
 test: subxid-overflow
 test: eval-plan-qual
 test: eval-plan-qual-trigger
