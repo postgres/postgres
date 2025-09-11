@@ -475,6 +475,9 @@ if ($injection_points_supported != 0)
 		}
 	);
 
+	# Wait until the backend enters the injection point
+	$node_B->wait_for_event('client backend', 'commit-after-delay-checkpoint');
+
 	# Confirm the update is suspended
 	$result =
 	  $node_B->safe_psql('postgres', 'SELECT * FROM tab WHERE a = 1');
