@@ -73,8 +73,12 @@ typedef union LWLockPadded
 
 extern PGDLLIMPORT LWLockPadded *MainLWLockArray;
 
+/* forward declaration of private type for use only by lwlock.c */
+typedef struct NamedLWLockTrancheRequest NamedLWLockTrancheRequest;
+
 extern PGDLLIMPORT char **LWLockTrancheNames;
 extern PGDLLIMPORT int NamedLWLockTrancheRequests;
+extern PGDLLIMPORT NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray;
 extern PGDLLIMPORT int *LWLockCounter;
 
 /*

@@ -184,14 +184,13 @@ typedef struct NamedLWLockTrancheRequest
 	int			num_lwlocks;
 } NamedLWLockTrancheRequest;
 
-static NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
-
 /*
- * NamedLWLockTrancheRequests is the valid length of the request array.  This
- * variable is non-static so that postmaster.c can copy them to child processes
- * in EXEC_BACKEND builds.
+ * NamedLWLockTrancheRequests is the valid length of the request array.  These
+ * variables are non-static so that launch_backend.c can copy them to child
+ * processes in EXEC_BACKEND builds.
  */
 int			NamedLWLockTrancheRequests = 0;
+NamedLWLockTrancheRequest *NamedLWLockTrancheRequestArray = NULL;
 
 /* shared memory counter of registered tranches */
 int		   *LWLockCounter = NULL;
@@ -407,6 +406,14 @@ LWLockShmemSize(void)
 	size = add_size(size, mul_size(MAX_NAMED_TRANCHES, sizeof(char *)));
 	size = add_size(size, mul_size(MAX_NAMED_TRANCHES, NAMEDATALEN));
 
+	/*
+	 * Make space for named tranche requests.  This is done for the benefit of
+	 * EXEC_BACKEND builds, which otherwise wouldn't be able to call
+	 * GetNamedLWLockTranche() outside postmaster.
+	 */
+	size = add_size(size, mul_size(NamedLWLockTrancheRequests,
+								   sizeof(NamedLWLockTrancheRequest)));
+
 	/* Space for the LWLock array, plus room for cache line alignment. */
 	size = add_size(size, LWLOCK_PADDED_SIZE);
 	size = add_size(size, mul_size(numLocks, sizeof(LWLockPadded)));
@@ -441,6 +448,20 @@ CreateLWLocks(void)
 		{
 			LWLockTrancheNames[i] = ptr;
 			ptr += NAMEDATALEN;
+		}
+
+		/*
+		 * Move named tranche requests to shared memory.  This is done for the
+		 * benefit of EXEC_BACKEND builds, which otherwise wouldn't be able to
+		 * call GetNamedLWLockTranche() outside postmaster.
+		 */
+		if (NamedLWLockTrancheRequests > 0)
+		{
+			memcpy(ptr, NamedLWLockTrancheRequestArray,
+				   NamedLWLockTrancheRequests * sizeof(NamedLWLockTrancheRequest));
+			pfree(NamedLWLockTrancheRequestArray);
+			NamedLWLockTrancheRequestArray = (NamedLWLockTrancheRequest *) ptr;
+			ptr += NamedLWLockTrancheRequests * sizeof(NamedLWLockTrancheRequest);
 		}
 
 		/* Ensure desired alignment of LWLock array */
