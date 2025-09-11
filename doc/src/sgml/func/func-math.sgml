@@ -1130,7 +1130,7 @@
 
       <row>
        <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
+        <indexterm id="function-setseed">
          <primary>setseed</primary>
         </indexterm>
         <function>setseed</function> ( <type>double precision</type> )

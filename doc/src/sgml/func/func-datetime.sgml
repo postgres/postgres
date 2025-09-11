@@ -949,6 +949,12 @@
         <parameter>min</parameter> &lt;= x &lt;= <parameter>max</parameter>.
        </para>
        <para>
+        Note that these functions use the same pseudo-random number generator
+        as the functions listed in <xref linkend="functions-math-random-table"/>,
+        and respond in the same way to calling
+        <link linkend="function-setseed"><function>setseed()</function></link>.
+       </para>
+       <para>
         <literal>random('1979-02-08'::date,'2025-07-03'::date)</literal>
         <returnvalue>1983-04-21</returnvalue>
        </para>
