@@ -476,6 +476,43 @@ NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_15
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_15_20 name={evttrig,part_15_20} args={}
 DROP TABLE a_temp_tbl;
 NOTICE:  NORMAL: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl} args={}
+-- check unfiltered results, too
+CREATE OR REPLACE FUNCTION event_trigger_report_dropped()
+ RETURNS event_trigger
+ LANGUAGE plpgsql
+AS $$
+DECLARE r record;
+BEGIN
+    FOR r IN SELECT * from pg_event_trigger_dropped_objects()
+    LOOP
+    RAISE NOTICE 'DROP: orig=% normal=% istemp=% type=% identity=% name=% args=%',
+        r.original, r.normal, r.is_temporary, r.object_type,
+        r.object_identity, r.address_names, r.address_args;
+    END LOOP;
+END; $$;
+NOTICE:  END: command_tag=CREATE FUNCTION type=function identity=public.event_trigger_report_dropped()
+CREATE TABLE evtrg_nontemp_table (f1 int primary key, f2 int default 42);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=public.evtrg_nontemp_table
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=public.evtrg_nontemp_table_pkey
+DROP TABLE evtrg_nontemp_table;
+NOTICE:  DROP: orig=t normal=f istemp=f type=table identity=public.evtrg_nontemp_table name={public,evtrg_nontemp_table} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=type identity=public.evtrg_nontemp_table name={public.evtrg_nontemp_table} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=type identity=public.evtrg_nontemp_table[] name={public.evtrg_nontemp_table[]} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=default value identity=for public.evtrg_nontemp_table.f2 name={public,evtrg_nontemp_table,f2} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=table constraint identity=evtrg_nontemp_table_f1_not_null on public.evtrg_nontemp_table name={public,evtrg_nontemp_table,evtrg_nontemp_table_f1_not_null} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=table constraint identity=evtrg_nontemp_table_pkey on public.evtrg_nontemp_table name={public,evtrg_nontemp_table,evtrg_nontemp_table_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=f type=index identity=public.evtrg_nontemp_table_pkey name={public,evtrg_nontemp_table_pkey} args={}
+CREATE TEMP TABLE a_temp_tbl (f1 int primary key, f2 int default 42);
+NOTICE:  END: command_tag=CREATE TABLE type=table identity=pg_temp.a_temp_tbl
+NOTICE:  END: command_tag=CREATE INDEX type=index identity=pg_temp.a_temp_tbl_pkey
+DROP TABLE a_temp_tbl;
+NOTICE:  DROP: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=type identity=pg_temp.a_temp_tbl name={pg_temp.a_temp_tbl} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=type identity=pg_temp.a_temp_tbl[] name={pg_temp.a_temp_tbl[]} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=default value identity=for pg_temp.a_temp_tbl.f2 name={pg_temp,a_temp_tbl,f2} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=table constraint identity=a_temp_tbl_f1_not_null on pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl,a_temp_tbl_f1_not_null} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=table constraint identity=a_temp_tbl_pkey on pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl,a_temp_tbl_pkey} args={}
+NOTICE:  DROP: orig=f normal=f istemp=t type=index identity=pg_temp.a_temp_tbl_pkey name={pg_temp,a_temp_tbl_pkey} args={}
 -- CREATE OPERATOR CLASS without FAMILY clause should report
 -- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS
 CREATE OPERATOR CLASS evttrigopclass FOR TYPE int USING btree AS STORAGE int;
