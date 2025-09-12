@@ -139,7 +139,6 @@ typedef enum pgssStoreKind
  * If you add a new key to this struct, make sure to teach pgss_store() to
  * zero the padding bytes.  Otherwise, things will break, because pgss_hash is
  * created using HASH_BLOBS, and thus tag_hash is used to hash this.
-
  */
 typedef struct pgssHashKey
 {
