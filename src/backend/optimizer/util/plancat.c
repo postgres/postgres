@@ -62,7 +62,7 @@ get_relation_info_hook_type get_relation_info_hook = NULL;
 typedef struct NotnullHashEntry
 {
 	Oid			relid;			/* OID of the relation */
-	Relids		notnullattnums; /* attnums of NOT NULL columns */
+	Bitmapset  *notnullattnums; /* attnums of NOT NULL columns */
 } NotnullHashEntry;
 
 
@@ -683,7 +683,7 @@ get_relation_notnullatts(PlannerInfo *root, Relation relation)
 	Oid			relid = RelationGetRelid(relation);
 	NotnullHashEntry *hentry;
 	bool		found;
-	Relids		notnullattnums = NULL;
+	Bitmapset  *notnullattnums = NULL;
 
 	/* bail out if the relation has no not-null constraints */
 	if (relation->rd_att->constr == NULL ||
@@ -750,7 +750,7 @@ get_relation_notnullatts(PlannerInfo *root, Relation relation)
  *	  Searches the hash table and returns the column not-null constraint
  *	  information for a given relation.
  */
-Relids
+Bitmapset *
 find_relation_notnullatts(PlannerInfo *root, Oid relid)
 {
 	NotnullHashEntry *hentry;

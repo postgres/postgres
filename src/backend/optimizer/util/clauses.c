@@ -4203,7 +4203,7 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 bool
 var_is_nonnullable(PlannerInfo *root, Var *var, bool use_rel_info)
 {
-	Relids		notnullattnums = NULL;
+	Bitmapset  *notnullattnums = NULL;
 
 	Assert(IsA(var, Var));
 

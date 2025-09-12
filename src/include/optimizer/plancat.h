@@ -30,7 +30,7 @@ extern void get_relation_info(PlannerInfo *root, Oid relationObjectId,
 
 extern void get_relation_notnullatts(PlannerInfo *root, Relation relation);
 
-extern Relids find_relation_notnullatts(PlannerInfo *root, Oid relid);
+extern Bitmapset *find_relation_notnullatts(PlannerInfo *root, Oid relid);
 
 extern List *infer_arbiter_indexes(PlannerInfo *root);
 
