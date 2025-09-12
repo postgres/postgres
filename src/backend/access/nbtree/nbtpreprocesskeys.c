@@ -1410,6 +1410,7 @@ _bt_skiparray_strat_decrement(IndexScanDesc scan, ScanKey arraysk,
 	Datum		orig_sk_argument = high_compare->sk_argument,
 				new_sk_argument;
 	bool		uflow;
+	int16		lookupstrat;
 
 	Assert(high_compare->sk_strategy == BTLessStrategyNumber);
 
@@ -1431,9 +1432,14 @@ _bt_skiparray_strat_decrement(IndexScanDesc scan, ScanKey arraysk,
 		return;
 	}
 
-	/* Look up <= operator (might fail) */
-	leop = get_opfamily_member(opfamily, opcintype, opcintype,
-							   BTLessEqualStrategyNumber);
+	/*
+	 * Look up <= operator (might fail), accounting for the fact that a
+	 * high_compare on a DESC column already had its strategy commuted
+	 */
+	lookupstrat = BTLessEqualStrategyNumber;
+	if (high_compare->sk_flags & SK_BT_DESC)
+		lookupstrat = BTGreaterEqualStrategyNumber; /* commute this too */
+	leop = get_opfamily_member(opfamily, opcintype, opcintype, lookupstrat);
 	if (!OidIsValid(leop))
 		return;
 	cmp_proc = get_opcode(leop);
@@ -1462,6 +1468,7 @@ _bt_skiparray_strat_increment(IndexScanDesc scan, ScanKey arraysk,
 	Datum		orig_sk_argument = low_compare->sk_argument,
 				new_sk_argument;
 	bool		oflow;
+	int16		lookupstrat;
 
 	Assert(low_compare->sk_strategy == BTGreaterStrategyNumber);
 
@@ -1483,9 +1490,14 @@ _bt_skiparray_strat_increment(IndexScanDesc scan, ScanKey arraysk,
 		return;
 	}
 
-	/* Look up >= operator (might fail) */
-	geop = get_opfamily_member(opfamily, opcintype, opcintype,
-							   BTGreaterEqualStrategyNumber);
+	/*
+	 * Look up >= operator (might fail), accounting for the fact that a
+	 * low_compare on a DESC column already had its strategy commuted
+	 */
+	lookupstrat = BTGreaterEqualStrategyNumber;
+	if (low_compare->sk_flags & SK_BT_DESC)
+		lookupstrat = BTLessEqualStrategyNumber; /* commute this too */
+	geop = get_opfamily_member(opfamily, opcintype, opcintype, lookupstrat);
 	if (!OidIsValid(geop))
 		return;
 	cmp_proc = get_opcode(geop);
