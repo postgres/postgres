@@ -156,7 +156,7 @@ gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 {
 	int			i;
 	GistEntryVector *evec;
-	int			attrsize;
+	int			attrsize = 0;	/* silence compiler warning */
 
 	evec = (GistEntryVector *) palloc((len + 2) * sizeof(GISTENTRY) + GEVHDRSZ);
 
@@ -241,7 +241,7 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 		char		padding[2 * sizeof(GISTENTRY) + GEVHDRSZ];
 	}			storage;
 	GistEntryVector *evec = &storage.gev;
-	int			dstsize;
+	int			dstsize = 0;	/* silence compiler warning */
 
 	evec->n = 2;
 
