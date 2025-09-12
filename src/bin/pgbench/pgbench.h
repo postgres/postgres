@@ -20,10 +20,7 @@
  * here looking like the definitions in exprscan.l.  exprparse.y and
  * pgbench.c also use this to be able to declare things as "yyscan_t".
  */
-#ifndef YY_TYPEDEF_YY_SCANNER_T
-#define YY_TYPEDEF_YY_SCANNER_T
 typedef void *yyscan_t;
-#endif
 
 /*
  * Likewise, we can't see exprparse.y's definition of union YYSTYPE here,
