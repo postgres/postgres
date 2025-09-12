@@ -151,6 +151,15 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 		CatalogTupleInsert(rel, newtuple);
 	}
+	else
+	{
+		/*
+		 * RESET doesn't need to change any state if there's no pre-existing
+		 * pg_db_role_setting entry, but for consistency we should still check
+		 * that the option is valid and we're allowed to set it.
+		 */
+		(void) GUCArrayDelete(NULL, setstmt->name);
+	}
 
 	InvokeObjectPostAlterHookArg(DbRoleSettingRelationId,
 								 databaseid, 0, roleid, false);

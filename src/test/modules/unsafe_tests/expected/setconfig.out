@@ -62,6 +62,19 @@ SELECT current_user, session_user;
 SET ROLE NONE;
 DO $$BEGIN EXECUTE format(
 	'ALTER DATABASE %I RESET role', current_catalog); END$$;
+-- Test some error cases
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I SET bogus = 0', current_catalog); END$$;
+ERROR:  unrecognized configuration parameter "bogus"
+CONTEXT:  SQL statement "ALTER DATABASE contrib_regression SET bogus = 0"
+PL/pgSQL function inline_code_block line 1 at EXECUTE
+DO $$BEGIN EXECUTE format(
+	'ALTER DATABASE %I RESET bogus', current_catalog); END$$;
+ERROR:  unrecognized configuration parameter "bogus"
+CONTEXT:  SQL statement "ALTER DATABASE contrib_regression RESET bogus"
+PL/pgSQL function inline_code_block line 1 at EXECUTE
+ALTER USER regress_authenticated_user_db_ssa RESET bogus;
+ERROR:  unrecognized configuration parameter "bogus"
 -- Test connection string options
 \c -reuse-previous=on "user=regress_authenticated_user_db_sr options=-crole=regress_current_user"
 SELECT current_user, session_user;
