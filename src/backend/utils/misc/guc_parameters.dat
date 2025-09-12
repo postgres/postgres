@@ -566,7 +566,7 @@
 { name => 'log_lock_waits', type => 'bool', context => 'PGC_SUSET', group => 'LOGGING_WHAT',
   short_desc => 'Logs long lock waits.',
   variable => 'log_lock_waits',
-  boot_val => 'false',
+  boot_val => 'true',
 },
 
 { name => 'log_lock_failures', type => 'bool', context => 'PGC_SUSET', group => 'LOGGING_WHAT',

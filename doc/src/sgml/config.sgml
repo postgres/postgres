@@ -7929,7 +7929,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         Controls whether a log message is produced when a session waits
         longer than <xref linkend="guc-deadlock-timeout"/> to acquire a
         lock.  This is useful in determining if lock waits are causing
-        poor performance.  The default is <literal>off</literal>.
+        poor performance.  The default is <literal>on</literal>.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
        </para>

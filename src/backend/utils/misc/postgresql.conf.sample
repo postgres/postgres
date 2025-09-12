@@ -624,7 +624,7 @@
 					#        processes
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
-#log_lock_waits = off			# log lock waits >= deadlock_timeout
+#log_lock_waits = on			# log lock waits >= deadlock_timeout
 #log_lock_failures = off		# log lock failures
 #log_recovery_conflict_waits = off	# log standby recovery conflict waits
 					# >= deadlock_timeout
