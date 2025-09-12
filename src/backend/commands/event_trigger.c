@@ -30,6 +30,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_parameter_acl.h"
+#include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
@@ -1307,6 +1308,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 			MemoryContextSwitchTo(oldcxt);
 			return;
 		}
+		obj->objname = get_namespace_name(object->objectId);
 	}
 	else if (object->classId == AttrDefaultRelationId)
 	{
@@ -1316,8 +1318,91 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 		colobject = GetAttrDefaultColumnAddress(object->objectId);
 		if (OidIsValid(colobject.objectId))
 		{
-			colobject.objectSubId = 0;	/* convert to table reference */
 			if (!obtain_object_name_namespace(&colobject, obj))
+			{
+				pfree(obj);
+				MemoryContextSwitchTo(oldcxt);
+				return;
+			}
+		}
+	}
+	else if (object->classId == TriggerRelationId)
+	{
+		/* Similarly, a trigger is temp if its table is temp */
+		/* Sadly, there's no lsyscache.c support for trigger objects */
+		Relation	pg_trigger_rel;
+		ScanKeyData skey[1];
+		SysScanDesc sscan;
+		HeapTuple	tuple;
+		Oid			relid;
+
+		/* Fetch the trigger's table OID the hard way */
+		pg_trigger_rel = table_open(TriggerRelationId, AccessShareLock);
+		ScanKeyInit(&skey[0],
+					Anum_pg_trigger_oid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object->objectId));
+		sscan = systable_beginscan(pg_trigger_rel, TriggerOidIndexId, true,
+								   NULL, 1, skey);
+		tuple = systable_getnext(sscan);
+		if (HeapTupleIsValid(tuple))
+			relid = ((Form_pg_trigger) GETSTRUCT(tuple))->tgrelid;
+		else
+			relid = InvalidOid; /* shouldn't happen */
+		systable_endscan(sscan);
+		table_close(pg_trigger_rel, AccessShareLock);
+		/* Do nothing if we didn't find the trigger */
+		if (OidIsValid(relid))
+		{
+			ObjectAddress relobject;
+
+			relobject.classId = RelationRelationId;
+			relobject.objectId = relid;
+			/* Arbitrarily set objectSubId nonzero so as not to fill objname */
+			relobject.objectSubId = 1;
+			if (!obtain_object_name_namespace(&relobject, obj))
+			{
+				pfree(obj);
+				MemoryContextSwitchTo(oldcxt);
+				return;
+			}
+		}
+	}
+	else if (object->classId == PolicyRelationId)
+	{
+		/* Similarly, a policy is temp if its table is temp */
+		/* Sadly, there's no lsyscache.c support for policy objects */
+		Relation	pg_policy_rel;
+		ScanKeyData skey[1];
+		SysScanDesc sscan;
+		HeapTuple	tuple;
+		Oid			relid;
+
+		/* Fetch the policy's table OID the hard way */
+		pg_policy_rel = table_open(PolicyRelationId, AccessShareLock);
+		ScanKeyInit(&skey[0],
+					Anum_pg_policy_oid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object->objectId));
+		sscan = systable_beginscan(pg_policy_rel, PolicyOidIndexId, true,
+								   NULL, 1, skey);
+		tuple = systable_getnext(sscan);
+		if (HeapTupleIsValid(tuple))
+			relid = ((Form_pg_policy) GETSTRUCT(tuple))->polrelid;
+		else
+			relid = InvalidOid; /* shouldn't happen */
+		systable_endscan(sscan);
+		table_close(pg_policy_rel, AccessShareLock);
+		/* Do nothing if we didn't find the policy */
+		if (OidIsValid(relid))
+		{
+			ObjectAddress relobject;
+
+			relobject.classId = RelationRelationId;
+			relobject.objectId = relid;
+			/* Arbitrarily set objectSubId nonzero so as not to fill objname */
+			relobject.objectSubId = 1;
+			if (!obtain_object_name_namespace(&relobject, obj))
 			{
 				pfree(obj);
 				MemoryContextSwitchTo(oldcxt);
