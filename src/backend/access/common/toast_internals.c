@@ -135,7 +135,7 @@ toast_save_datum(Relation rel, Datum value,
 		char		data[TOAST_MAX_CHUNK_SIZE + VARHDRSZ];
 		/* ensure union is aligned well enough: */
 		int32		align_it;
-	}			chunk_data;
+	}			chunk_data = {0};	/* silence compiler warning */
 	int32		chunk_size;
 	int32		chunk_seq = 0;
 	char	   *data_p;
