@@ -1496,7 +1496,7 @@ _bt_skiparray_strat_increment(IndexScanDesc scan, ScanKey arraysk,
 	 */
 	lookupstrat = BTGreaterEqualStrategyNumber;
 	if (low_compare->sk_flags & SK_BT_DESC)
-		lookupstrat = BTLessEqualStrategyNumber; /* commute this too */
+		lookupstrat = BTLessEqualStrategyNumber;	/* commute this too */
 	geop = get_opfamily_member(opfamily, opcintype, opcintype, lookupstrat);
 	if (!OidIsValid(geop))
 		return;
