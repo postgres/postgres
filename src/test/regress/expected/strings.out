@@ -638,6 +638,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[^^]^';
    Filter: (f1 ~ '^(?:[^^]\^)$'::text)
 (2 rows)
 
+-- Closing square bracket after an escape sequence at the beginning of
+-- a character closes the character class
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[|a]%' ESCAPE '|';
+              QUERY PLAN               
+---------------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 ~ '^(?:[\a].*)$'::text)
+(2 rows)
+
 -- Test backslash escapes in regexp_replace's replacement string
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
  regexp_replace 

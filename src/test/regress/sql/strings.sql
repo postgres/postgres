@@ -206,6 +206,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[]%][^]%][^%]%';
 -- Closing square bracket effective after two carets at the beginning
 -- of character class.
 EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[^^]^';
+-- Closing square bracket after an escape sequence at the beginning of
+-- a character closes the character class
+EXPLAIN (COSTS OFF) SELECT * FROM TEXT_TBL WHERE f1 SIMILAR TO '[|a]%' ESCAPE '|';
 
 -- Test backslash escapes in regexp_replace's replacement string
 SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3');
