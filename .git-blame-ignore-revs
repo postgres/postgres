@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+17a5ca58eb119a33e81e57b72618236538932167 # 2025-09-13 14:50:02 -0500
+# Re-pgindent nbtpreprocesskeys.c after commit 796962922e.
+
 07448b3969d55a2081cdafafc23f68df3392f220 # 2025-07-01 15:24:19 +0200
 # Fix indentation in pg_numa code
 
