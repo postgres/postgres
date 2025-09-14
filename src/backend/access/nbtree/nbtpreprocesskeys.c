@@ -1852,6 +1852,7 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 	 * (also checks if we should add extra skip arrays based on input keys)
 	 */
 	numArrayKeys = _bt_num_array_keys(scan, skip_eq_ops, &numSkipArrayKeys);
+	so->skipScan = (numSkipArrayKeys > 0);
 
 	/* Quit if nothing to do. */
 	if (numArrayKeys == 0)
@@ -1881,7 +1882,6 @@ _bt_preprocess_array_keys(IndexScanDesc scan, int *new_numberOfKeys)
 	arrayKeyData = (ScanKey) palloc(numArrayKeyData * sizeof(ScanKeyData));
 
 	/* Allocate space for per-array data in the workspace context */
-	so->skipScan = (numSkipArrayKeys > 0);
 	so->arrayKeys = (BTArrayKeyInfo *) palloc(numArrayKeys * sizeof(BTArrayKeyInfo));
 
 	/* Allocate space for ORDER procs used to help _bt_checkkeys */
