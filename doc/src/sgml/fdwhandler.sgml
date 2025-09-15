@@ -1320,7 +1320,7 @@ ExplainForeignModify(ModifyTableState *mtstate,
                      ResultRelInfo *rinfo,
                      List *fdw_private,
                      int subplan_index,
-                     struct ExplainState *es);
+                     ExplainState *es);
 </programlisting>
 
      Print additional <command>EXPLAIN</command> output for a foreign table update.
