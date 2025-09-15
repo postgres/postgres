@@ -859,3 +859,18 @@ select * from gtest32 t group by grouping sets (a, b, c, d, e) having c = 20;
 alter table gtest32 alter column e type bigint using b;
 
 drop table gtest32;
+
+-- Ensure that virtual generated columns in constraint expressions are expanded
+create table gtest33 (a int, b int generated always as (a * 2) virtual not null, check (b > 10));
+set constraint_exclusion to on;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b < 10;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b is null;
+
+reset constraint_exclusion;
+drop table gtest33;
