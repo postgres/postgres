@@ -70,14 +70,14 @@ static int	CheckMD5Auth(Port *port, char *shadow_pass,
 /* Standard TCP port number for Ident service.  Assigned by IANA */
 #define IDENT_PORT 113
 
-static int	ident_inet(hbaPort *port);
+static int	ident_inet(Port *port);
 
 
 /*----------------------------------------------------------------
  * Peer authentication
  *----------------------------------------------------------------
  */
-static int	auth_peer(hbaPort *port);
+static int	auth_peer(Port *port);
 
 
 /*----------------------------------------------------------------
@@ -1668,7 +1668,7 @@ interpret_ident_response(const char *ident_response,
  *	latch was set would improve the responsiveness to timeouts/cancellations.
  */
 static int
-ident_inet(hbaPort *port)
+ident_inet(Port *port)
 {
 	const SockAddr remote_addr = port->raddr;
 	const SockAddr local_addr = port->laddr;
@@ -1853,7 +1853,7 @@ ident_inet_done:
  *	Iff authorized, return STATUS_OK, otherwise return STATUS_ERROR.
  */
 static int
-auth_peer(hbaPort *port)
+auth_peer(Port *port)
 {
 	uid_t		uid;
 	gid_t		gid;

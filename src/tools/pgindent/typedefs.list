@@ -3687,7 +3687,6 @@ gss_key_value_set_desc
 gss_name_t
 gtrgm_consistent_cache
 gzFile
-hbaPort
 heap_page_items_state
 help_handler
 hlCheck

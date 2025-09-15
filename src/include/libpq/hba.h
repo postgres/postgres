@@ -169,13 +169,13 @@ typedef struct TokenizedAuthLine
 	char	   *err_msg;		/* Error message if any */
 } TokenizedAuthLine;
 
-/* kluge to avoid including libpq/libpq-be.h here */
-typedef struct Port hbaPort;
+/* avoid including libpq/libpq-be.h here */
+typedef struct Port Port;
 
 extern bool load_hba(void);
 extern bool load_ident(void);
 extern const char *hba_authname(UserAuth auth_method);
-extern void hba_getauthmethod(hbaPort *port);
+extern void hba_getauthmethod(Port *port);
 extern int	check_usermap(const char *usermap_name,
 						  const char *pg_user, const char *system_user,
 						  bool case_insensitive);

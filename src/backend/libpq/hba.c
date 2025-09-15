@@ -1075,7 +1075,7 @@ hostname_match(const char *pattern, const char *actual_hostname)
  * Check to see if a connecting IP matches a given host name.
  */
 static bool
-check_hostname(hbaPort *port, const char *hostname)
+check_hostname(Port *port, const char *hostname)
 {
 	struct addrinfo *gai_result,
 			   *gai;
@@ -2528,7 +2528,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
  *	request.
  */
 static void
-check_hba(hbaPort *port)
+check_hba(Port *port)
 {
 	Oid			roleid;
 	ListCell   *line;
@@ -3125,7 +3125,7 @@ load_ident(void)
  *	method = uaImplicitReject.
  */
 void
-hba_getauthmethod(hbaPort *port)
+hba_getauthmethod(Port *port)
 {
 	check_hba(port);
 }
