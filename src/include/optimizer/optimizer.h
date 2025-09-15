@@ -28,22 +28,11 @@
  * We don't want to include nodes/pathnodes.h here, because non-planner
  * code should generally treat PlannerInfo as an opaque typedef.
  * But we'd like such code to use that typedef name, so define the
- * typedef either here or in pathnodes.h, whichever is read first.
+ * typedef both here and in pathnodes.h.
  */
-#ifndef HAVE_PLANNERINFO_TYPEDEF
 typedef struct PlannerInfo PlannerInfo;
-#define HAVE_PLANNERINFO_TYPEDEF 1
-#endif
-
-/* Likewise for IndexOptInfo and SpecialJoinInfo. */
-#ifndef HAVE_INDEXOPTINFO_TYPEDEF
 typedef struct IndexOptInfo IndexOptInfo;
-#define HAVE_INDEXOPTINFO_TYPEDEF 1
-#endif
-#ifndef HAVE_SPECIALJOININFO_TYPEDEF
 typedef struct SpecialJoinInfo SpecialJoinInfo;
-#define HAVE_SPECIALJOININFO_TYPEDEF 1
-#endif
 
 /* It also seems best not to include plannodes.h, params.h, or htup.h here */
 struct PlannedStmt;

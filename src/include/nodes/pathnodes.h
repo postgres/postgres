@@ -198,9 +198,6 @@ typedef struct PlannerGlobal
  * original Query.  Note that at present the planner extensively modifies
  * the passed-in Query data structure; someday that should stop.
  *
- * For reasons explained in optimizer/optimizer.h, we define the typedef
- * either here or in that header, whichever is read first.
- *
  * Not all fields are printed.  (In some cases, there is no print support for
  * the field type; in others, doing so would lead to infinite recursion or
  * bloat dump output more than seems useful.)
@@ -211,10 +208,7 @@ typedef struct PlannerGlobal
  * correctly replaced with the keeping one.
  *----------
  */
-#ifndef HAVE_PLANNERINFO_TYPEDEF
 typedef struct PlannerInfo PlannerInfo;
-#define HAVE_PLANNERINFO_TYPEDEF 1
-#endif
 
 struct PlannerInfo
 {
@@ -1161,14 +1155,10 @@ typedef struct RelOptInfo
  *		(by plancat.c), indrestrictinfo and predOK are set later, in
  *		check_index_predicates().
  */
-#ifndef HAVE_INDEXOPTINFO_TYPEDEF
-typedef struct IndexOptInfo IndexOptInfo;
-#define HAVE_INDEXOPTINFO_TYPEDEF 1
-#endif
 
 struct IndexPath;				/* forward declaration */
 
-struct IndexOptInfo
+typedef struct IndexOptInfo
 {
 	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
 
@@ -1270,7 +1260,7 @@ struct IndexOptInfo
 	/* AM's cost estimator */
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
 	void		(*amcostestimate) (struct PlannerInfo *, struct IndexPath *, double, Cost *, Cost *, Selectivity *, double *, double *) pg_node_attr(read_write_ignore);
-};
+} IndexOptInfo;
 
 /*
  * ForeignKeyOptInfo
@@ -3031,12 +3021,7 @@ typedef struct PlaceHolderVar
  * We also create transient SpecialJoinInfos for child joins during
  * partitionwise join planning, which are also not present in join_info_list.
  */
-#ifndef HAVE_SPECIALJOININFO_TYPEDEF
-typedef struct SpecialJoinInfo SpecialJoinInfo;
-#define HAVE_SPECIALJOININFO_TYPEDEF 1
-#endif
-
-struct SpecialJoinInfo
+typedef struct SpecialJoinInfo
 {
 	pg_node_attr(no_read, no_query_jumble)
 
@@ -3057,7 +3042,7 @@ struct SpecialJoinInfo
 	bool		semi_can_hash;	/* true if semi_operators are all hash */
 	List	   *semi_operators; /* OIDs of equality join operators */
 	List	   *semi_rhs_exprs; /* righthand-side expressions of these ops */
-};
+} SpecialJoinInfo;
 
 /*
  * Transient outer-join clause info.
