@@ -632,6 +632,33 @@ $node_B->adjust_conf('postgresql.conf', 'synchronized_standby_slots', "''");
 $node_B->reload;
 
 ###############################################################################
+# Check that dead tuple retention resumes when the max_retention_duration is set
+# 0.
+###############################################################################
+
+$log_offset = -s $node_A->logfile;
+
+# Set max_retention_duration to 0
+$node_A->safe_psql('postgres',
+	"ALTER SUBSCRIPTION $subname_AB SET (max_retention_duration = 0);");
+
+# Confirm that the retention resumes
+$node_A->wait_for_log(
+	qr/logical replication worker for subscription "tap_sub_a_b" will resume retaining the information for detecting conflicts
+.*DETAIL:.* Retention is re-enabled as max_retention_duration is set to unlimited.*/,
+	$log_offset);
+
+ok( $node_A->poll_query_until(
+		'postgres',
+		"SELECT xmin IS NOT NULL from pg_replication_slots WHERE slot_name = 'pg_conflict_detection'"
+	),
+	"the xmin value of slot 'pg_conflict_detection' is valid on Node A");
+
+$result = $node_A->safe_psql('postgres',
+	"SELECT subretentionactive FROM pg_subscription WHERE subname='$subname_AB';");
+is($result, qq(t), 'retention is active');
+
+###############################################################################
 # Check that the replication slot pg_conflict_detection is dropped after
 # removing all the subscriptions.
 ###############################################################################

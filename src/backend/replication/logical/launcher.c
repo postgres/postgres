@@ -1261,23 +1261,29 @@ ApplyLauncherMain(Datum main_arg)
 
 			LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 			w = logicalrep_worker_find(sub->oid, InvalidOid, false);
-			LWLockRelease(LogicalRepWorkerLock);
 
 			if (w != NULL)
 			{
 				/*
 				 * Compute the minimum xmin required to protect dead tuples
 				 * required for conflict detection among all running apply
-				 * workers.
+				 * workers. This computation is performed while holding
+				 * LogicalRepWorkerLock to prevent accessing invalid worker
+				 * data, in scenarios where a worker might exit and reset its
+				 * state concurrently.
 				 */
 				if (sub->retaindeadtuples &&
 					sub->retentionactive &&
 					can_update_xmin)
 					compute_min_nonremovable_xid(w, &xmin);
 
+				LWLockRelease(LogicalRepWorkerLock);
+
 				/* worker is running already */
 				continue;
 			}
+
+			LWLockRelease(LogicalRepWorkerLock);
 
 			/*
 			 * Can't advance xmin of the slot unless all the workers

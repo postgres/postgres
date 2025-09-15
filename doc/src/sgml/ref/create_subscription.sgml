@@ -538,10 +538,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           <literal>retain_dead_tuples</literal> is enabled, confirm that the
           retention duration has exceeded the
           <literal>max_retention_duration</literal> set within the corresponding
-          subscription. The retention will not be automatically resumed unless a
-          new subscription is created with <literal>retain_dead_tuples =
-          true</literal>, or the user manually re-enables
-          <literal>retain_dead_tuples</literal>.
+          subscription. The retention will automatically resume when at least one
+          apply worker confirms that the retention duration is within the
+          specified limit, or when a new subscription is created with
+          <literal>retain_dead_tuples = true</literal>. Alternatively, retention
+          can be manually resumed by re-enabling <literal>retain_dead_tuples</literal>.
          </para>
          <para>
           Note that overall retention will not stop if other subscriptions that
