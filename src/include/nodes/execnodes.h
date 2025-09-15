@@ -49,15 +49,13 @@
 #include "utils/tuplesort.h"
 #include "utils/tuplestore.h"
 
-struct PlanState;				/* forward references in this file */
-struct ParallelHashJoinState;
-struct ExecRowMark;
-struct ExprState;
-struct ExprContext;
-struct RangeTblEntry;			/* avoid including parsenodes.h here */
-struct ExprEvalStep;			/* avoid including execExpr.h everywhere */
-struct CopyMultiInsertBuffer;
-struct LogicalTapeSet;
+/*
+ * forward references in this file
+ */
+typedef struct PlanState PlanState;
+typedef struct ExecRowMark ExecRowMark;
+typedef struct ExprState ExprState;
+typedef struct ExprContext ExprContext;
 
 
 /* ----------------
@@ -67,8 +65,8 @@ struct LogicalTapeSet;
  * It contains instructions (in ->steps) to evaluate the expression.
  * ----------------
  */
-typedef Datum (*ExprStateEvalFunc) (struct ExprState *expression,
-									struct ExprContext *econtext,
+typedef Datum (*ExprStateEvalFunc) (ExprState *expression,
+									ExprContext *econtext,
 									bool *isNull);
 
 /* Bits in ExprState->flags (see also execExpr.h for private flag bits): */
@@ -131,7 +129,7 @@ typedef struct ExprState
 	int			steps_alloc;	/* allocated length of steps array */
 
 #define FIELDNO_EXPRSTATE_PARENT 11
-	struct PlanState *parent;	/* parent PlanState node, if any */
+	PlanState  *parent;			/* parent PlanState node, if any */
 	ParamListInfo ext_params;	/* for compiling PARAM_EXTERN nodes */
 
 	Datum	   *innermost_caseval;
@@ -638,8 +636,8 @@ typedef struct ResultRelInfo
  */
 typedef struct AsyncRequest
 {
-	struct PlanState *requestor;	/* Node that wants a tuple */
-	struct PlanState *requestee;	/* Node from which a tuple is wanted */
+	PlanState  *requestor;		/* Node that wants a tuple */
+	PlanState  *requestee;		/* Node from which a tuple is wanted */
 	int			request_index;	/* Scratch space for requestor */
 	bool		callback_pending;	/* Callback is needed */
 	bool		request_complete;	/* Request complete, result valid */
@@ -665,8 +663,8 @@ typedef struct EState
 	Index		es_range_table_size;	/* size of the range table arrays */
 	Relation   *es_relations;	/* Array of per-range-table-entry Relation
 								 * pointers, or NULL if not yet opened */
-	struct ExecRowMark **es_rowmarks;	/* Array of per-range-table-entry
-										 * ExecRowMarks, or NULL if none */
+	ExecRowMark **es_rowmarks;	/* Array of per-range-table-entry
+								 * ExecRowMarks, or NULL if none */
 	List	   *es_rteperminfos;	/* List of RTEPermissionInfo */
 	PlannedStmt *es_plannedstmt;	/* link to top of plan tree */
 	List	   *es_part_prune_infos;	/* List of PartitionPruneInfo */
@@ -1006,8 +1004,8 @@ typedef struct SubPlanState
 {
 	NodeTag		type;
 	SubPlan    *subplan;		/* expression plan node */
-	struct PlanState *planstate;	/* subselect plan's state tree */
-	struct PlanState *parent;	/* parent plan node's state tree */
+	PlanState  *planstate;		/* subselect plan's state tree */
+	PlanState  *parent;			/* parent plan node's state tree */
 	ExprState  *testexpr;		/* state of combining expression */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 	Datum		curArray;		/* most recent array from ARRAY() subplan */
@@ -1143,7 +1141,7 @@ typedef struct JsonExprState
  * if no more tuples are available.
  * ----------------
  */
-typedef TupleTableSlot *(*ExecProcNodeMtd) (struct PlanState *pstate);
+typedef TupleTableSlot *(*ExecProcNodeMtd) (PlanState *pstate);
 
 /* ----------------
  *		PlanState node
@@ -1180,8 +1178,8 @@ typedef struct PlanState
 	 * subPlan list, which does not exist in the plan tree).
 	 */
 	ExprState  *qual;			/* boolean qual condition */
-	struct PlanState *lefttree; /* input plan tree(s) */
-	struct PlanState *righttree;
+	PlanState  *lefttree;		/* input plan tree(s) */
+	PlanState  *righttree;
 
 	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated expr
 								 * subselects) */

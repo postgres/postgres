@@ -12,7 +12,8 @@
 
 #include <signal.h>
 
-struct StringInfoData;			/* avoid including stringinfo.h here */
+typedef struct StringInfoData *StringInfo;	/* avoid including stringinfo.h
+											 * here */
 
 typedef struct PromptInterruptContext
 {
@@ -32,8 +33,8 @@ extern bool pg_is_ascii(const char *str);
 
 /* functions in src/common/pg_get_line.c */
 extern char *pg_get_line(FILE *stream, PromptInterruptContext *prompt_ctx);
-extern bool pg_get_line_buf(FILE *stream, struct StringInfoData *buf);
-extern bool pg_get_line_append(FILE *stream, struct StringInfoData *buf,
+extern bool pg_get_line_buf(FILE *stream, StringInfo buf);
+extern bool pg_get_line_append(FILE *stream, StringInfo buf,
 							   PromptInterruptContext *prompt_ctx);
 
 /* functions in src/common/sprompt.c */

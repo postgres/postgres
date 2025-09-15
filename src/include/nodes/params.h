@@ -14,11 +14,10 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-/* Forward declarations, to avoid including other headers */
-struct Bitmapset;
-struct ExprState;
-struct Param;
-struct ParseState;
+/* to avoid including other headers */
+typedef struct ExprState ExprState;
+typedef struct Param Param;
+typedef struct ParseState ParseState;
 
 
 /*
@@ -101,11 +100,11 @@ typedef ParamExternData *(*ParamFetchHook) (ParamListInfo params,
 											int paramid, bool speculative,
 											ParamExternData *workspace);
 
-typedef void (*ParamCompileHook) (ParamListInfo params, struct Param *param,
-								  struct ExprState *state,
+typedef void (*ParamCompileHook) (ParamListInfo params, Param *param,
+								  ExprState *state,
 								  Datum *resv, bool *resnull);
 
-typedef void (*ParserSetupHook) (struct ParseState *pstate, void *arg);
+typedef void (*ParserSetupHook) (ParseState *pstate, void *arg);
 
 typedef struct ParamListInfoData
 {

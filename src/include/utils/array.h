@@ -65,8 +65,8 @@
 #include "utils/expandeddatum.h"
 
 /* avoid including execnodes.h here */
-struct ExprState;
-struct ExprContext;
+typedef struct ExprState ExprState;
+typedef struct ExprContext ExprContext;
 
 
 /*
@@ -384,7 +384,7 @@ extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 							int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
 extern Datum array_map(Datum arrayd,
-					   struct ExprState *exprstate, struct ExprContext *econtext,
+					   ExprState *exprstate, ExprContext *econtext,
 					   Oid retType, ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,

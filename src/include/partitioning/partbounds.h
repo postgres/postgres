@@ -15,7 +15,7 @@
 #include "parser/parse_node.h"
 #include "partitioning/partdefs.h"
 
-struct RelOptInfo;				/* avoid including pathnodes.h here */
+typedef struct RelOptInfo RelOptInfo;	/* avoid including pathnodes.h here */
 
 
 /*
@@ -114,8 +114,8 @@ extern PartitionBoundInfo partition_bounds_copy(PartitionBoundInfo src,
 extern PartitionBoundInfo partition_bounds_merge(int partnatts,
 												 FmgrInfo *partsupfunc,
 												 Oid *partcollation,
-												 struct RelOptInfo *outer_rel,
-												 struct RelOptInfo *inner_rel,
+												 RelOptInfo *outer_rel,
+												 RelOptInfo *inner_rel,
 												 JoinType jointype,
 												 List **outer_parts,
 												 List **inner_parts);

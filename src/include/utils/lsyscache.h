@@ -19,7 +19,7 @@
 #include "nodes/pg_list.h"
 
 /* avoid including subscripting.h here */
-struct SubscriptRoutines;
+typedef struct SubscriptRoutines SubscriptRoutines;
 
 /* Result list element for get_op_index_interpretation */
 typedef struct OpIndexInterpretation
@@ -187,8 +187,8 @@ extern Oid	get_typmodin(Oid typid);
 extern Oid	get_typcollation(Oid typid);
 extern bool type_is_collatable(Oid typid);
 extern RegProcedure get_typsubscript(Oid typid, Oid *typelemp);
-extern const struct SubscriptRoutines *getSubscriptingRoutines(Oid typid,
-															   Oid *typelemp);
+extern const SubscriptRoutines *getSubscriptingRoutines(Oid typid,
+														Oid *typelemp);
 extern Oid	getBaseType(Oid typid);
 extern Oid	getBaseTypeAndTypmod(Oid typid, int32 *typmod);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);

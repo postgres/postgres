@@ -15,10 +15,10 @@
 
 #include "nodes/primnodes.h"
 
-/* Forward declarations, to avoid including other headers */
-struct ParseState;
-struct SubscriptingRefState;
-struct SubscriptExecSteps;
+/* to avoid including other headers */
+typedef struct ParseState ParseState;
+typedef struct SubscriptingRefState SubscriptingRefState;
+typedef struct SubscriptExecSteps SubscriptExecSteps;
 
 /*
  * The SQL-visible function that defines a subscripting method is declared
@@ -94,7 +94,7 @@ struct SubscriptExecSteps;
  */
 typedef void (*SubscriptTransform) (SubscriptingRef *sbsref,
 									List *indirection,
-									struct ParseState *pstate,
+									ParseState *pstate,
 									bool isSlice,
 									bool isAssignment);
 
@@ -151,8 +151,8 @@ typedef void (*SubscriptTransform) (SubscriptingRef *sbsref,
  * Set the relevant pointers to NULL for any omitted methods.
  */
 typedef void (*SubscriptExecSetup) (const SubscriptingRef *sbsref,
-									struct SubscriptingRefState *sbsrefstate,
-									struct SubscriptExecSteps *methods);
+									SubscriptingRefState *sbsrefstate,
+									SubscriptExecSteps *methods);
 
 /* Struct returned by the SQL-visible subscript handler function */
 typedef struct SubscriptRoutines
