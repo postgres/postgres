@@ -868,3 +868,18 @@ select 1 from gtest32 t1 where exists
   (select 1 from gtest32 t2 where t1.a > t2.a and t2.b = 2);
 
 drop table gtest32;
+
+-- Ensure that virtual generated columns in constraint expressions are expanded
+create table gtest33 (a int, b int generated always as (a * 2) virtual not null, check (b > 10));
+set constraint_exclusion to on;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b < 10;
+
+-- should get a dummy Result, not a seq scan
+explain (costs off)
+select * from gtest33 where b is null;
+
+reset constraint_exclusion;
+drop table gtest33;
