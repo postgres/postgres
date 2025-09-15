@@ -243,7 +243,11 @@ llvm_build_inline_plan(LLVMContextRef lc, llvm::Module *mod)
 
 		llvm_split_symbol_name(symbolName.data(), &cmodname, &cfuncname);
 
+#if LLVM_VERSION_MAJOR >= 21
+		funcGUID = llvm::GlobalValue::getGUIDAssumingExternalLinkage(cfuncname);
+#else
 		funcGUID = llvm::GlobalValue::getGUID(cfuncname);
+#endif
 
 		/* already processed */
 		if (inlineState.processed)
