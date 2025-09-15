@@ -2208,6 +2208,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 	List	   *locations;
 	DIR		   *dir;
 	struct dirent *de;
+	List	   *found_ext = NIL;
 
 	/* Build tuplestore to hold the result rows */
 	InitMaterializedSRF(fcinfo, 0);
@@ -2232,6 +2233,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 			{
 				ExtensionControlFile *control;
 				char	   *extname;
+				String	   *extname_str;
 				Datum		values[3];
 				bool		nulls[3];
 
@@ -2245,6 +2247,16 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 				/* ignore it if it's an auxiliary control file */
 				if (strstr(extname, "--"))
 					continue;
+
+				/*
+				 * Ignore already-found names.  They are not reachable by the
+				 * path search, so don't shown them.
+				 */
+				extname_str = makeString(extname);
+				if (list_member(found_ext, extname_str))
+					continue;
+				else
+					found_ext = lappend(found_ext, extname_str);
 
 				control = new_ExtensionControlFile(extname);
 				control->control_dir = pstrdup(location);
@@ -2294,6 +2306,7 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 	List	   *locations;
 	DIR		   *dir;
 	struct dirent *de;
+	List	   *found_ext = NIL;
 
 	/* Build tuplestore to hold the result rows */
 	InitMaterializedSRF(fcinfo, 0);
@@ -2318,6 +2331,7 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 			{
 				ExtensionControlFile *control;
 				char	   *extname;
+				String	   *extname_str;
 
 				if (!is_extension_control_filename(de->d_name))
 					continue;
@@ -2329,6 +2343,16 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 				/* ignore it if it's an auxiliary control file */
 				if (strstr(extname, "--"))
 					continue;
+
+				/*
+				 * Ignore already-found names.  They are not reachable by the
+				 * path search, so don't shown them.
+				 */
+				extname_str = makeString(extname);
+				if (list_member(found_ext, extname_str))
+					continue;
+				else
+					found_ext = lappend(found_ext, extname_str);
 
 				/* read the control file */
 				control = new_ExtensionControlFile(extname);

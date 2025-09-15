@@ -11058,6 +11058,12 @@ extension_control_path = 'C:\tools\postgresql;H:\my_project\share;$system'
        </para>
 
        <para>
+        If extensions with equal names are present in multiple directories in
+        the configured path, only the instance found first in the path will be
+        used.
+       </para>
+
+       <para>
         This parameter can be changed at run time by superusers and users
         with the appropriate <literal>SET</literal> privilege, but a
         setting done that way will only persist until the end of the
