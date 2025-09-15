@@ -11,12 +11,15 @@ my $node = PostgreSQL::Test::Cluster->new('node');
 
 $node->init;
 
-# Create a temporary directory for the extension control file
+# Create temporary directories for the extension control files
 my $ext_dir = PostgreSQL::Test::Utils::tempdir();
 mkpath("$ext_dir/extension");
+my $ext_dir2 = PostgreSQL::Test::Utils::tempdir();
+mkpath("$ext_dir2/extension");
 
 my $ext_name = "test_custom_ext_paths";
 create_extension($ext_name, $ext_dir);
+create_extension($ext_name, $ext_dir2);
 
 my $ext_name2 = "test_custom_ext_paths_using_directory";
 mkpath("$ext_dir/$ext_name2");
@@ -26,7 +29,7 @@ create_extension($ext_name2, $ext_dir, $ext_name2);
 my $sep = $windows_os ? ";" : ":";
 $node->append_conf(
 	'postgresql.conf', qq{
-extension_control_path = '\$system$sep@{[ $windows_os ? ($ext_dir =~ s/\\/\\\\/gr) : $ext_dir ]}'
+extension_control_path = '\$system$sep@{[ $windows_os ? ($ext_dir =~ s/\\/\\\\/gr) : $ext_dir ]}$sep@{[ $windows_os ? ($ext_dir2 =~ s/\\/\\\\/gr) : $ext_dir2 ]}'
 });
 
 # Start node
@@ -34,7 +37,7 @@ $node->start;
 
 my $ecp = $node->safe_psql('postgres', 'show extension_control_path;');
 
-is($ecp, "\$system$sep$ext_dir",
+is($ecp, "\$system$sep$ext_dir$sep$ext_dir2",
 	"custom extension control directory path configured");
 
 $node->safe_psql('postgres', "CREATE EXTENSION $ext_name");
