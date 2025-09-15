@@ -1570,7 +1570,6 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
  * This is basically like InputFunctionCall, but the converted Datum is
  * returned into *result while the function result is true for success or
  * false for failure.  Also, the caller may pass an ErrorSaveContext node.
- * (We declare that as "fmNodePtr" to avoid including nodes.h in fmgr.h.)
  *
  * If escontext points to an ErrorSaveContext, any "soft" errors detected by
  * the input function will be reported by filling the escontext struct and
@@ -1584,7 +1583,7 @@ InputFunctionCall(FmgrInfo *flinfo, char *str, Oid typioparam, int32 typmod)
 bool
 InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 					  Oid typioparam, int32 typmod,
-					  fmNodePtr escontext,
+					  Node *escontext,
 					  Datum *result)
 {
 	LOCAL_FCINFO(fcinfo, 3);
@@ -1639,7 +1638,7 @@ InputFunctionCallSafe(FmgrInfo *flinfo, char *str,
 bool
 DirectInputFunctionCallSafe(PGFunction func, char *str,
 							Oid typioparam, int32 typmod,
-							fmNodePtr escontext,
+							Node *escontext,
 							Datum *result)
 {
 	LOCAL_FCINFO(fcinfo, 3);

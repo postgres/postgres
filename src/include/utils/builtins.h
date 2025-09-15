@@ -80,7 +80,7 @@ extern PGDLLIMPORT bool quote_all_identifiers;
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *qualifier,
 										const char *ident);
-extern void generate_operator_clause(fmStringInfo buf,
+extern void generate_operator_clause(StringInfo buf,
 									 const char *leftop, Oid leftoptype,
 									 Oid opoid,
 									 const char *rightop, Oid rightoptype);

@@ -3635,10 +3635,6 @@ float8
 float8KEY
 floating_decimal_32
 floating_decimal_64
-fmAggrefPtr
-fmExprContextCallbackFunction
-fmNodePtr
-fmStringInfo
 fmgr_hook_type
 foreign_glob_cxt
 foreign_loc_cxt
