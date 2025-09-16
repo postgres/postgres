@@ -30,7 +30,6 @@
 #include "commands/defrem.h"
 #include "commands/seclabel.h"
 #include "commands/user.h"
-#include "lib/qunique.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
@@ -490,7 +489,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 * Advance command counter so we can see new record; else tests in
 	 * AddRoleMems may fail.
 	 */
-	CommandCounterIncrement();
+	if (addroleto || adminmembers || rolemembers)
+		CommandCounterIncrement();
 
 	/* Default grant. */
 	InitGrantRoleOptions(&popt);
@@ -1904,8 +1904,7 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 		else
 		{
 			Oid			objectId;
-			Oid		   *newmembers = (Oid *) palloc(3 * sizeof(Oid));
-			int			nnewmembers;
+			Oid		   *newmembers = palloc(sizeof(Oid));
 
 			/*
 			 * The values for these options can be taken directly from 'popt'.
@@ -1947,22 +1946,12 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 									new_record, new_record_nulls);
 			CatalogTupleInsert(pg_authmem_rel, tuple);
 
-			/*
-			 * Record dependencies on the roleid, member, and grantor, as if a
-			 * pg_auth_members entry were an object ACL.
-			 * updateAclDependencies() requires an input array that is
-			 * palloc'd (it will free it), sorted, and de-duped.
-			 */
-			newmembers[0] = roleid;
-			newmembers[1] = memberid;
-			newmembers[2] = grantorId;
-			qsort(newmembers, 3, sizeof(Oid), oid_cmp);
-			nnewmembers = qunique(newmembers, 3, sizeof(Oid), oid_cmp);
-
+			/* updateAclDependencies wants to pfree array inputs */
+			newmembers[0] = grantorId;
 			updateAclDependencies(AuthMemRelationId, objectId,
 								  0, InvalidOid,
 								  0, NULL,
-								  nnewmembers, newmembers);
+								  1, newmembers);
 		}
 
 		/* CCI after each change, in case there are duplicates in list */
