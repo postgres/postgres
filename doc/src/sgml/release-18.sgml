@@ -1891,21 +1891,27 @@ Author: Thomas Munro <tmunro@postgresql.org>
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2024-09-17 [fc0438b4e] Add temporal PRIMARY KEY and UNIQUE constraints
+Author: Peter Eisentraut <peter@eisentraut.org>
+2024-09-17 [89f908a6d] Add temporal FOREIGN KEY contraints
 -->
 
       <listitem>
       <para>
       Allow the specification of non-overlapping <link
       linkend="sql-createtable-parms-primary-key"><literal>PRIMARY
-      KEY</literal></link> and <link
-      linkend="sql-createtable-parms-unique"><literal>UNIQUE</literal></link>
+      KEY</literal></link>, <link linkend="sql-createtable-parms-unique">
+      <literal>UNIQUE</literal></link>, and
+      <link linkend="sql-createtable-parms-references">foreign key</link>
       constraints (Paul A. Jungwirth)
       <ulink url="&commit_baseurl;fc0438b4e">&sect;</ulink>
+      <ulink url="&commit_baseurl;89f908a6d">&sect;</ulink>
       </para>
 
       <para>
-      This is specified by <literal>WITHOUT OVERLAPS</literal> on the
-      last specified column.
+      This is specified by <literal>WITHOUT OVERLAPS</literal> for
+      <literal>PRIMARY KEY</literal> and <literal>UNIQUE</literal>, and by
+      <literal>PERIOD</literal> for foreign keys, all applied to the last
+      specified column.
       </para>
       </listitem>
 
