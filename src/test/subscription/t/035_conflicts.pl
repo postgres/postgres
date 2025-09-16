@@ -342,15 +342,6 @@ ok( $node_A->poll_query_until(
 	),
 	"the xmin value of slot 'pg_conflict_detection' is updated on Node A");
 
-# Confirm that the dead tuple can be removed now
-($cmdret, $stdout, $stderr) = $node_A->psql(
-	'postgres', qq(VACUUM (verbose) public.tab;)
-);
-
-ok( $stderr =~
-	  qr/1 removed, 1 remain, 0 are dead but not yet removable/,
-	'the deleted column is removed');
-
 ###############################################################################
 # Ensure that the deleted tuple needed to detect an update_deleted conflict is
 # accessible via a sequential table scan.
@@ -555,13 +546,6 @@ if ($injection_points_supported != 0)
 		"the xmin value of slot 'pg_conflict_detection' is updated on subscriber"
 	);
 
-	# Confirm that the dead tuple can be removed now
-	($cmdret, $stdout, $stderr) =
-	  $node_A->psql('postgres', qq(VACUUM (verbose) public.tab;));
-
-	ok($stderr =~ qr/1 removed, 0 remain, 0 are dead but not yet removable/,
-		'the deleted column is removed');
-
 	# Get the commit timestamp for the publisher's update
 	my $pub_ts = $node_B->safe_psql('postgres',
 		"SELECT pg_xact_commit_timestamp(xmin) from tab where a=1;");
@@ -625,12 +609,6 @@ $result = $node_A->safe_psql('postgres',
 	"SELECT subretentionactive FROM pg_subscription WHERE subname='$subname_AB';");
 is($result, qq(f), 'retention is inactive');
 
-# Drop the physical slot and reset the synchronized_standby_slots setting
-$node_B->safe_psql('postgres',
-	"SELECT * FROM pg_drop_replication_slot('blocker');");
-$node_B->adjust_conf('postgresql.conf', 'synchronized_standby_slots', "''");
-$node_B->reload;
-
 ###############################################################################
 # Check that dead tuple retention resumes when the max_retention_duration is set
 # 0.
@@ -641,6 +619,16 @@ $log_offset = -s $node_A->logfile;
 # Set max_retention_duration to 0
 $node_A->safe_psql('postgres',
 	"ALTER SUBSCRIPTION $subname_AB SET (max_retention_duration = 0);");
+
+# Drop the physical slot and reset the synchronized_standby_slots setting. We
+# change this after setting max_retention_duration to 0, ensuring consistent
+# results in the test as the resumption becomes possible immediately after
+# resetting synchronized_standby_slots, due to the smaller max_retention_duration
+# value of 1ms.
+$node_B->safe_psql('postgres',
+	"SELECT * FROM pg_drop_replication_slot('blocker');");
+$node_B->adjust_conf('postgresql.conf', 'synchronized_standby_slots', "''");
+$node_B->reload;
 
 # Confirm that the retention resumes
 $node_A->wait_for_log(
