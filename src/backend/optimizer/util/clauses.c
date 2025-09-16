@@ -1111,6 +1111,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, BooleanTest))
 		return true;
+	if (IsA(node, JsonConstructorExpr))
+		return true;
 
 	/* Check other function-containing nodes */
 	if (check_functions_in_node(node, contain_nonstrict_functions_checker,
