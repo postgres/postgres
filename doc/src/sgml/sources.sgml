@@ -153,11 +153,12 @@ ereport(ERROR,
         errmsg("function %s is not unique",
                func_signature_string(funcname, nargs,
                                      NIL, actual_arg_types)),
-        errhint("Unable to choose a best candidate function. "
-                "You might need to add explicit typecasts."));
+        errdetail("Could not choose a best candidate function."),
+        errhint("You might need to add explicit type casts."));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
-    a message text.  Also, an optional <quote>hint</quote> message is provided.
+    a message text.  Also, optional <quote>detail</quote>
+    and <quote>hint</quote> messages are provided.
     The auxiliary function calls can be written in any order, but
     conventionally <function>errcode</function>
     and <function>errmsg</function> appear first.

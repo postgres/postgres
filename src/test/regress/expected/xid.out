@@ -110,22 +110,26 @@ select '1'::xid < '2'::xid;
 ERROR:  operator does not exist: xid < xid
 LINE 1: select '1'::xid < '2'::xid;
                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select '1'::xid <= '2'::xid;
 ERROR:  operator does not exist: xid <= xid
 LINE 1: select '1'::xid <= '2'::xid;
                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select '1'::xid > '2'::xid;
 ERROR:  operator does not exist: xid > xid
 LINE 1: select '1'::xid > '2'::xid;
                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 select '1'::xid >= '2'::xid;
 ERROR:  operator does not exist: xid >= xid
 LINE 1: select '1'::xid >= '2'::xid;
                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 -- we want them for xid8 though
 select '1'::xid8 < '2'::xid8, '2'::xid8 < '2'::xid8, '2'::xid8 < '1'::xid8;
  ?column? | ?column? | ?column? 

@@ -171,12 +171,12 @@ SELECT num_nonnulls();
 ERROR:  function num_nonnulls() does not exist
 LINE 1: SELECT num_nonnulls();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 SELECT num_nulls();
 ERROR:  function num_nulls() does not exist
 LINE 1: SELECT num_nulls();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No function of that name accepts the given number of arguments.
 --
 -- canonicalize_path()
 --

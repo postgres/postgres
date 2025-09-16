@@ -72,7 +72,8 @@ static FuncDetailCode oper_select_candidate(int nargs,
 											Oid *operOid);
 static void op_error(ParseState *pstate, List *op,
 					 Oid arg1, Oid arg2,
-					 FuncDetailCode fdresult, int location);
+					 FuncDetailCode fdresult, int fgc_flags, int location);
+static int	oper_lookup_failure_details(int fgc_flags, bool is_unary_op);
 static bool make_oper_cache_key(ParseState *pstate, OprCacheKey *key,
 								List *opname, Oid ltypeId, Oid rtypeId,
 								int location);
@@ -373,6 +374,7 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 	Oid			operOid;
 	OprCacheKey key;
 	bool		key_ok;
+	int			fgc_flags = 0;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
@@ -404,7 +406,7 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 		FuncCandidateList clist;
 
 		/* Get binary operators of given name */
-		clist = OpernameGetCandidates(opname, 'b', false);
+		clist = OpernameGetCandidates(opname, 'b', false, &fgc_flags);
 
 		/* No operators found? Then fail... */
 		if (clist != NULL)
@@ -434,7 +436,8 @@ oper(ParseState *pstate, List *opname, Oid ltypeId, Oid rtypeId,
 			make_oper_cache_entry(&key, operOid);
 	}
 	else if (!noError)
-		op_error(pstate, opname, ltypeId, rtypeId, fdresult, location);
+		op_error(pstate, opname, ltypeId, rtypeId,
+				 fdresult, fgc_flags, location);
 
 	return (Operator) tup;
 }
@@ -520,6 +523,7 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 	Oid			operOid;
 	OprCacheKey key;
 	bool		key_ok;
+	int			fgc_flags = 0;
 	FuncDetailCode fdresult = FUNCDETAIL_NOTFOUND;
 	HeapTuple	tup = NULL;
 
@@ -551,7 +555,7 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 		FuncCandidateList clist;
 
 		/* Get prefix operators of given name */
-		clist = OpernameGetCandidates(op, 'l', false);
+		clist = OpernameGetCandidates(op, 'l', false, &fgc_flags);
 
 		/* No operators found? Then fail... */
 		if (clist != NULL)
@@ -585,7 +589,8 @@ left_oper(ParseState *pstate, List *op, Oid arg, bool noError, int location)
 			make_oper_cache_entry(&key, operOid);
 	}
 	else if (!noError)
-		op_error(pstate, op, InvalidOid, arg, fdresult, location);
+		op_error(pstate, op, InvalidOid, arg,
+				 fdresult, fgc_flags, location);
 
 	return (Operator) tup;
 }
@@ -621,27 +626,65 @@ op_signature_string(List *op, Oid arg1, Oid arg2)
 static void
 op_error(ParseState *pstate, List *op,
 		 Oid arg1, Oid arg2,
-		 FuncDetailCode fdresult, int location)
+		 FuncDetailCode fdresult, int fgc_flags, int location)
 {
 	if (fdresult == FUNCDETAIL_MULTIPLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
 				 errmsg("operator is not unique: %s",
 						op_signature_string(op, arg1, arg2)),
-				 errhint("Could not choose a best candidate operator. "
-						 "You might need to add explicit type casts."),
+				 errdetail("Could not choose a best candidate operator."),
+				 errhint("You might need to add explicit type casts."),
 				 parser_errposition(pstate, location)));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, arg1, arg2)),
-				 (!arg1 || !arg2) ?
-				 errhint("No operator matches the given name and argument type. "
-						 "You might need to add an explicit type cast.") :
-				 errhint("No operator matches the given name and argument types. "
-						 "You might need to add explicit type casts."),
+				 oper_lookup_failure_details(fgc_flags, (!arg1 || !arg2)),
 				 parser_errposition(pstate, location)));
+}
+
+/*
+ * Interpret the fgc_flags and issue a suitable detail or hint message.
+ */
+static int
+oper_lookup_failure_details(int fgc_flags, bool is_unary_op)
+{
+	/*
+	 * If not FGC_NAME_VISIBLE, we shouldn't raise the question of whether the
+	 * arguments are wrong.  If the operator name was not schema-qualified,
+	 * it's helpful to distinguish between doesn't-exist-anywhere and
+	 * not-in-search-path; but if it was, there's really nothing to add to the
+	 * basic "operator does not exist" message.
+	 *
+	 * Note: we passed missing_ok = false to OpernameGetCandidates, so there's
+	 * no need to consider FGC_SCHEMA_EXISTS here: we'd have already thrown an
+	 * error if an explicitly-given schema doesn't exist.
+	 */
+	if (!(fgc_flags & FGC_NAME_VISIBLE))
+	{
+		if (fgc_flags & FGC_SCHEMA_GIVEN)
+			return 0;			/* schema-qualified name */
+		else if (!(fgc_flags & FGC_NAME_EXISTS))
+			return errdetail("There is no operator of that name.");
+		else
+			return errdetail("An operator of that name exists, but it is not in the search_path.");
+	}
+
+	/*
+	 * Otherwise, the problem must be incorrect argument type(s).
+	 */
+	if (is_unary_op)
+	{
+		(void) errdetail("No operator of that name accepts the given argument type.");
+		return errhint("You might need to add an explicit type cast.");
+	}
+	else
+	{
+		(void) errdetail("No operator of that name accepts the given argument types.");
+		return errhint("You might need to add explicit type casts.");
+	}
 }
 
 /*

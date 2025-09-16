@@ -1777,7 +1777,8 @@ SELECT p.f1, l.s, l.s # p.f1 AS intersection
 ERROR:  operator does not exist: lseg # point
 LINE 1: SELECT p.f1, l.s, l.s # p.f1 AS intersection
                               ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 -- Length
 SELECT s, @-@ s FROM LSEG_TBL;
                s               |   ?column?    

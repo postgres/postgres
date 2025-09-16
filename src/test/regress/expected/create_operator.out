@@ -24,6 +24,25 @@ SELECT @#@ 24;
  620448401733239439360000
 (1 row)
 
+-- Test error cases
+select @@##@@ 24;  -- no such operator
+ERROR:  operator does not exist: @@##@@ integer
+LINE 1: select @@##@@ 24;
+               ^
+DETAIL:  There is no operator of that name.
+set search_path = pg_catalog;
+select @#@ 24;  -- wrong schema
+ERROR:  operator does not exist: @#@ integer
+LINE 1: select @#@ 24;
+               ^
+DETAIL:  An operator of that name exists, but it is not in the search_path.
+reset search_path;
+select @#@ 24.0;  -- wrong data type
+ERROR:  operator does not exist: @#@ numeric
+LINE 1: select @#@ 24.0;
+               ^
+DETAIL:  No operator of that name accepts the given argument type.
+HINT:  You might need to add an explicit type cast.
 -- Test comments
 COMMENT ON OPERATOR ###### (NONE, int4) IS 'bad prefix';
 ERROR:  operator does not exist: ###### integer

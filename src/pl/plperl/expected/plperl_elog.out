@@ -41,7 +41,7 @@ select uses_global();
 ERROR:  function uses_global() does not exist
 LINE 1: select uses_global();
                ^
-HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  There is no function of that name.
 SET plperl.use_strict = false;
 create or replace function uses_global() returns text language plperl as $$
 

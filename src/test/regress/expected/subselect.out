@@ -1175,7 +1175,8 @@ select * from int8_tbl where q1 in (select c1 from inner_text);
 ERROR:  operator does not exist: bigint = text
 LINE 1: select * from int8_tbl where q1 in (select c1 from inner_tex...
                                         ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 begin;
 -- make an operator to allow it to succeed
 create function bogus_int8_text_eq(int8, text) returns boolean

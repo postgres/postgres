@@ -415,7 +415,8 @@ select row(0,1)::dcomptype;  -- fail
 ERROR:  value for domain dcomptype violates check constraint "c1"
 alter type comptype alter attribute r type varchar;  -- fail
 ERROR:  operator does not exist: character varying > double precision
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 alter type comptype alter attribute r type bigint;
 alter type comptype drop attribute r;  -- fail
 ERROR:  cannot drop column r of composite type comptype because other objects depend on it

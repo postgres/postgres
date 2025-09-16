@@ -27,7 +27,7 @@ B	4	ParseComplete
 B	4	BindComplete
 B	4	NoData
 B	15	CommandComplete	 "INSERT 0 1"
-B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "42883" M "function no_such_function(integer) does not exist" H "No function matches the given name and argument types. You might need to add explicit type casts." P "8" F "SSSS" L "SSSS" R "SSSS" \x00
+B	NN	ErrorResponse	 S "ERROR" V "ERROR" C "42883" M "function no_such_function(integer) does not exist" D "There is no function of that name." P "8" F "SSSS" L "SSSS" R "SSSS" \x00
 B	5	ReadyForQuery	 I
 B	4	ParseComplete
 B	4	BindComplete

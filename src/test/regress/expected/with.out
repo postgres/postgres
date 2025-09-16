@@ -175,7 +175,8 @@ SELECT n, pg_typeof(n) FROM t;
 ERROR:  operator does not exist: text + integer
 LINE 4:     SELECT n+1 FROM t WHERE n < 10
                     ^
-HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+DETAIL:  No operator of that name accepts the given argument types.
+HINT:  You might need to add explicit type casts.
 -- Deeply nested WITH caused a list-munging problem in v13
 -- Detection of cross-references and self-references
 WITH RECURSIVE w1(c1) AS
