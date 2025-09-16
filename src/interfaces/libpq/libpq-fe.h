@@ -234,9 +234,6 @@ typedef struct pgNotify
 	struct pgNotify *next;		/* list link */
 } PGnotify;
 
-/* deprecated name for int64_t */
-typedef int64_t pg_int64;
-
 /* pg_usec_time_t is like time_t, but with microsecond resolution */
 typedef int64_t pg_usec_time_t;
 
