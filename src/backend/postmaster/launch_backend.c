@@ -227,7 +227,7 @@ PostmasterChildName(BackendType child_type)
  */
 pid_t
 postmaster_child_launch(BackendType child_type, int child_slot,
-						const void *startup_data, size_t startup_data_len,
+						void *startup_data, size_t startup_data_len,
 						ClientSocket *client_sock)
 {
 	pid_t		pid;
