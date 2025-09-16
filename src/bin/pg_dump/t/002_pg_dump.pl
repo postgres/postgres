@@ -336,6 +336,29 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	no_subscriptions => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--file' => "$tempdir/no_subscriptions.sql",
+			'--no-subscriptions',
+			'postgres',
+		],
+	},
+	no_subscriptions_restore => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_subscriptions_restore.dump",
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			'--format' => 'custom',
+			'--file' => "$tempdir/no_subscriptions_restore.sql",
+			'--no-subscriptions',
+			"$tempdir/no_subscriptions_restore.dump",
+		],
+	},
 	no_table_access_method => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
@@ -496,6 +519,8 @@ my %full_runs = (
 	no_blobs                 => 1,
 	no_owner                 => 1,
 	no_privs                 => 1,
+	no_subscriptions => 1,
+	no_subscriptions_restore => 1,
 	no_table_access_method   => 1,
 	pg_dumpall_dbprivs       => 1,
 	pg_dumpall_exclude       => 1,
@@ -1245,6 +1270,10 @@ my %tests = (
 		regexp =>
 		  qr/^COMMENT ON SUBSCRIPTION sub1 IS 'comment on subscription';/m,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 	'COMMENT ON TEXT SEARCH CONFIGURATION dump_test.alt_ts_conf1' => {
@@ -2557,6 +2586,10 @@ my %tests = (
 			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub1');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
+		},
 	},
 
 	'ALTER PUBLICATION pub1 ADD TABLE test_table' => {
@@ -3251,6 +3284,8 @@ my %tests = (
 			no_blobs                => 1,
 			no_privs                => 1,
 			no_owner                => 1,
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
 			no_table_access_method  => 1,
 			only_dump_test_schema   => 1,
 			pg_dumpall_dbprivs      => 1,
@@ -3324,6 +3359,8 @@ my %tests = (
 			no_blobs                 => 1,
 			no_privs                 => 1,
 			no_owner                 => 1,
+			no_subscriptions => 1,
+			no_subscriptions_restore => 1,
 			no_table_access_method   => 1,
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_exclude       => 1,
