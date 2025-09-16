@@ -930,6 +930,23 @@ fetch backward all in c1;
 commit;
 
 --
+-- Check that JsonConstructorExpr is treated as non-strict, and thus can be
+-- wrapped in a PlaceHolderVar
+--
+
+begin;
+
+create temp table json_tab (a int);
+insert into json_tab values (1);
+
+explain (verbose, costs off)
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+
+rollback;
+
+--
 -- Verify that we correctly flatten cases involving a subquery output
 -- expression that doesn't need to be wrapped in a PlaceHolderVar
 --

@@ -1783,6 +1783,34 @@ fetch backward all in c1;
 
 commit;
 --
+-- Check that JsonConstructorExpr is treated as non-strict, and thus can be
+-- wrapped in a PlaceHolderVar
+--
+begin;
+create temp table json_tab (a int);
+insert into json_tab values (1);
+explain (verbose, costs off)
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+                    QUERY PLAN                     
+---------------------------------------------------
+ Nested Loop Left Join
+   Output: t1.a, (JSON_ARRAY(1, a RETURNING json))
+   Join Filter: false
+   ->  Seq Scan on pg_temp.json_tab t1
+         Output: t1.a
+   ->  Result
+         Output: JSON_ARRAY(1, a RETURNING json)
+         One-Time Filter: false
+(8 rows)
+
+select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
+ a | json_array 
+---+------------
+ 1 | 
+(1 row)
+
+rollback;
+--
 -- Verify that we correctly flatten cases involving a subquery output
 -- expression that doesn't need to be wrapped in a PlaceHolderVar
 --
