@@ -124,7 +124,12 @@ utf8word_to_unicode(uint32 c)
 /*
  * Perform mapping of GB18030 ranges to UTF8
  *
- * The ranges we need to convert are specified in gb-18030-2000.xml.
+ * General description, and the range we need to convert for U+10000 and up:
+ * https://htmlpreview.github.io/?https://github.com/unicode-org/icu-data/blob/main/charset/source/gb18030/gb18030.html
+ *
+ * Ranges up to U+FFFF:
+ * https://github.com/unicode-org/icu-data/blob/main/charset/source/gb18030/ranges.txt
+ *
  * All are ranges of 4-byte GB18030 codes.
  */
 static uint32
