@@ -3034,6 +3034,20 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 		return 0;
 
 	/*
+	 * If it's a comment on a publication or a subscription, maybe ignore it.
+	 */
+	if (strcmp(te->desc, "COMMENT") == 0)
+	{
+		if (ropt->no_publications &&
+			strncmp(te->tag, "PUBLICATION", strlen("PUBLICATION")) == 0)
+			return 0;
+
+		if (ropt->no_subscriptions &&
+			strncmp(te->tag, "SUBSCRIPTION", strlen("SUBSCRIPTION")) == 0)
+			return 0;
+	}
+
+	/*
 	 * If it's a publication or a table part of a publication, maybe ignore
 	 * it.
 	 */
