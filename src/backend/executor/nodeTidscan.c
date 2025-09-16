@@ -400,12 +400,23 @@ TidNext(TidScanState *node)
 static bool
 TidRecheck(TidScanState *node, TupleTableSlot *slot)
 {
+	ItemPointer match;
+
+	/* WHERE CURRENT OF always intends to resolve to the latest tuple */
+	if (node->tss_isCurrentOf)
+		return true;
+
+	if (node->tss_TidList == NULL)
+		TidListEval(node);
+
 	/*
-	 * XXX shouldn't we check here to make sure tuple matches TID list? In
-	 * runtime-key case this is not certain, is it?  However, in the WHERE
-	 * CURRENT OF case it might not match anyway ...
+	 * Binary search the TidList to see if this ctid is mentioned and return
+	 * true if it is.
 	 */
-	return true;
+	match = (ItemPointer) bsearch(&slot->tts_tid, node->tss_TidList,
+								  node->tss_NumTids, sizeof(ItemPointerData),
+								  itemptr_comparator);
+	return match != NULL;
 }
 
 
