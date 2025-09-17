@@ -30,12 +30,8 @@
 static Size
 AioCtlShmemSize(void)
 {
-	Size		sz;
-
 	/* pgaio_ctl itself */
-	sz = offsetof(PgAioCtl, io_handles);
-
-	return sz;
+	return sizeof(PgAioCtl);
 }
 
 static uint32
