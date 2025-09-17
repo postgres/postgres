@@ -13709,3 +13709,34 @@ get_range_partbound_string(List *bound_datums)
 
 	return buf->data;
 }
+
+
+/*
+ * TODO: Add comment
+ */
+Datum
+pg_get_domain_ddl(PG_FUNCTION_ARGS)
+{
+	Oid domain_oid = PG_GETARG_OID(0);
+	HeapTuple tuple;
+	Form_pg_type typForm;
+	char *typname;
+	StringInfoData buf;
+
+	/* Look up the schema in pg_namespace */
+	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(domain_oid));
+
+	/* function param is a regtype, so typeoid must be valid */
+	Assert(HeapTupleIsValid(tuple));
+
+	typForm = (Form_pg_type) GETSTRUCT(tuple);
+	typname = NameStr(typForm->typname);
+
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "CREATE DOMAIN %s", quote_identifier(typname));
+
+	/* Add any constraints */
+	ReleaseSysCache(tuple);
+
+	PG_RETURN_TEXT_P(cstring_to_text(buf.data));
+}
