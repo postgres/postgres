@@ -33,16 +33,25 @@ pg_amcheck: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_amcheck$(X) '$(DESTDIR)$(bindir)/pg_amcheck$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_amcheck.wasm '$(DESTDIR)$(bindir)/pg_amcheck.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_amcheck$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_amcheck.wasm'
+endif
 
 clean distclean:
 	rm -f pg_amcheck$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_amcheck.wasm
+endif
 
 check:
 	$(prove_check)

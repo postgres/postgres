@@ -44,3 +44,12 @@ lib*.pc
 /tmp_install/
 /portlock/
 /dist
+
+# emscripten build excludes
+*.cjs
+*.wasm
+pglite.data
+pglite.js
+pglite.html
+*.map
+pglite-wasm/excluded.imports

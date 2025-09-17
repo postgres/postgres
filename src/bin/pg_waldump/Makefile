@@ -38,16 +38,25 @@ $(RMGRDESCSOURCES): % : $(top_srcdir)/src/backend/access/rmgrdesc/%
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_waldump$(X) '$(DESTDIR)$(bindir)/pg_waldump$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_waldump.wasm '$(DESTDIR)$(bindir)/pg_waldump.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_waldump$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_waldump.wasm'
+endif
 
 clean distclean:
 	rm -f pg_waldump$(X) $(OBJS) $(RMGRDESCSOURCES) xlogreader.c xlogstats.c
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_waldump.wasm
+endif
 
 check:
 	$(prove_check)

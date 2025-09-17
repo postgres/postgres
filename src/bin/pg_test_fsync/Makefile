@@ -18,6 +18,9 @@ pg_test_fsync: $(OBJS) | submake-libpgport
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_test_fsync$(X) '$(DESTDIR)$(bindir)/pg_test_fsync$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_test_fsync.wasm '$(DESTDIR)$(bindir)/pg_test_fsync.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -30,7 +33,13 @@ installcheck:
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_test_fsync$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_test_fsync.wasm'
+endif
 
 clean distclean:
 	rm -f pg_test_fsync$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_test_fsync.wasm
+endif

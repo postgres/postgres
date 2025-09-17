@@ -26,6 +26,10 @@
 #include <unistd.h>             /* chdir */
 #include <sys/stat.h>           /* mkdir */
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 // globals
 
 
@@ -482,7 +486,8 @@ __attribute__ ((export_name("pgl_backend")))
 #else
         remove(IDB_PIPE_BOOT);
 #endif
-        stdin = fdopen(saved_stdin, "r");
+        // tdrz: I've commented this out!!!
+        // stdin = fdopen(saved_stdin, "r");
 
         PDEBUG("# 479: initdb faking shutdown to complete WAL/OID states");
         pg_proc_exit(66);

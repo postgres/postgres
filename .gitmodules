@@ -1,0 +1,6 @@
+[submodule "pglite/pg_ivm"]
+	path = pglite/pg_ivm
+	url = https://github.com/sraoss/pg_ivm.git
+[submodule "pglite/pgvector"]
+	path = pglite/vector
+	url = https://github.com/pgvector/pgvector.git

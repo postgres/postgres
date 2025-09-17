@@ -30,16 +30,25 @@ pg_verifybackup: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_verifybackup$(X) '$(DESTDIR)$(bindir)/pg_verifybackup$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_verifybackup.wasm '$(DESTDIR)$(bindir)/pg_verifybackup.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_verifybackup$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_verifybackup.wasm'
+endif
 
 clean distclean:
 	rm -f pg_verifybackup$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_verifybackup.wasm
+endif
 
 check:
 	$(prove_check)

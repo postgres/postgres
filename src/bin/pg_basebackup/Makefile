@@ -63,6 +63,12 @@ install: all installdirs
 	$(INSTALL_PROGRAM) pg_createsubscriber$(X) '$(DESTDIR)$(bindir)/pg_createsubscriber$(X)'
 	$(INSTALL_PROGRAM) pg_receivewal$(X) '$(DESTDIR)$(bindir)/pg_receivewal$(X)'
 	$(INSTALL_PROGRAM) pg_recvlogical$(X) '$(DESTDIR)$(bindir)/pg_recvlogical$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_basebackup.wasm '$(DESTDIR)$(bindir)/pg_basebackup.wasm'
+	$(INSTALL_PROGRAM) pg_createsubscriber.wasm '$(DESTDIR)$(bindir)/pg_createsubscriber.wasm'
+	$(INSTALL_PROGRAM) pg_receivewal.wasm '$(DESTDIR)$(bindir)/pg_receivewal.wasm'
+	$(INSTALL_PROGRAM) pg_recvlogical.wasm '$(DESTDIR)$(bindir)/pg_recvlogical.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -72,12 +78,21 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_createsubscriber$(X)'
 	rm -f '$(DESTDIR)$(bindir)/pg_receivewal$(X)'
 	rm -f '$(DESTDIR)$(bindir)/pg_recvlogical$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_basebackup.wasm'
+	rm -f '$(DESTDIR)$(bindir)/pg_createsubscriber.wasm'
+	rm -f '$(DESTDIR)$(bindir)/pg_receivewal.wasm'
+	rm -f '$(DESTDIR)$(bindir)/pg_recvlogical.wasm'
+endif
 
 clean distclean:
 	rm -f pg_basebackup$(X) pg_createsubscriber$(X) pg_receivewal$(X) pg_recvlogical$(X) \
 		$(BBOBJS) pg_createsubscriber.o pg_receivewal.o pg_recvlogical.o \
 		$(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_basebackup.wasm pg_createsubscriber.wasm pg_receivewal.wasm pg_recvlogical.wasm
+endif
 
 check:
 	$(prove_check)

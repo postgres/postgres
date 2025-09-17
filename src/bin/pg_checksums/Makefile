@@ -29,16 +29,25 @@ pg_checksums: $(OBJS) | submake-libpgport
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_checksums$(X) '$(DESTDIR)$(bindir)/pg_checksums$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_checksums.wasm '$(DESTDIR)$(bindir)/pg_checksums.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_checksums$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_checksums.wasm'
+endif
 
 clean distclean:
 	rm -f pg_checksums$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_checksums.wasm
+endif
 
 check:
 	$(prove_check)

@@ -35,16 +35,25 @@ pg_ctl: $(OBJS) | submake-libpgport $(SUBMAKE_LIBPQ)
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_ctl$(X) '$(DESTDIR)$(bindir)/pg_ctl$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_ctl.wasm '$(DESTDIR)$(bindir)/pg_ctl.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_ctl$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_ctl.wasm'
+endif
 
 clean distclean:
 	rm -f pg_ctl$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_ctl.wasm
+endif
 
 check:
 	$(prove_check)

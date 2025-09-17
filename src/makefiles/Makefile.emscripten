@@ -14,3 +14,9 @@ AROPT = crs
 # Rule for building a shared library from a single .o file
 %.so: %.o
 	$(CC) $(CFLAGS) $< $(LDFLAGS) $(LDFLAGS_SL) -shared -o $@
+
+emscripten_include_dir := $(pkgincludedir)/emscripten
+emscripten_base_dir := $(emscripten_include_dir)/base
+emscripten_imports_dir := $(emscripten_base_dir)/imports
+emscripten_extension_dir := $(emscripten_include_dir)/extension
+emscripten_extension_imports_dir := $(emscripten_extension_dir)/imports

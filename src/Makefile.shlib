@@ -225,13 +225,14 @@ ifeq ($(SHLIB_EXPORTS),)
 endif
 
 ifeq ($(PORTNAME), emscripten)
-  LINK.shared       = emsdk-shared
+  LINK.shared       = $(COMPILER) -shared -sSIDE_MODULE=1 -Wno-unused-function
   ifdef soname
     # emscripten uses unversioned shared libraries
     shlib     = $(shlib_bare)
     soname        = $(shlib_bare)
   endif
-  BUILD.exports     = ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  BUILD.exports     = ( $(AWK) '/^[^\#]/ {printf "%s\n",$$1}' $< ) | sort -u >$@
+#  BUILD.exports     = ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
   exports_file      = $(SHLIB_EXPORTS:%.txt=%.list)
 #  ifneq (,$(exports_file))
 #    LINK.shared     += -Wl,--version-script=$(exports_file)

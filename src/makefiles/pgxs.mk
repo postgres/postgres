@@ -249,6 +249,12 @@ ifdef MODULES
 ifeq ($(with_llvm), yes)
 	$(foreach mod, $(MODULES), $(call install_llvm_module,$(mod),$(mod).bc))
 endif # with_llvm
+ifeq ($(PORTNAME), emscripten)
+	$(LLVM_NM) -u *.o    | awk '{print $$2}'              | sed '/^$$/d' | sort -u > undef.txt
+	$(LLVM_NM)    *.o    | awk '$$2 ~ /^[TDB]$$/ {print $$3}' | sed '/^$$/d' | sort -u > defs.txt
+	comm -23 undef.txt defs.txt > '$(emscripten_extension_imports_dir)/$(MODULES).imports'
+	rm -f undef.txt defs.txt
+endif # PORTNAME=emscripten
 endif # MODULES
 ifdef DOCS
 ifdef docdir
@@ -271,6 +277,12 @@ ifdef MODULE_big
 ifeq ($(with_llvm), yes)
 	$(call install_llvm_module,$(MODULE_big),$(OBJS))
 endif # with_llvm
+ifeq ($(PORTNAME), emscripten)
+	$(LLVM_NM) -u $(OBJS)    | awk '{print $$2}'              | sed '/^$$/d' | sort -u > undef.txt
+	$(LLVM_NM)    $(OBJS)    | awk '$$2 ~ /^[TDB]$$/ {print $$3}' | sed '/^$$/d' | sort -u > defs.txt
+	comm -23 undef.txt defs.txt > '$(emscripten_extension_imports_dir)/$(MODULE_big).imports'
+	rm -f undef.txt defs.txt
+endif # PORTNAME=emscripten
 
 install: install-lib
 endif # MODULE_big
@@ -302,6 +314,9 @@ ifdef MODULE_big
 installdirs: installdirs-lib
 endif # MODULE_big
 
+ifeq ($(PORTNAME), emscripten)
+	$(MKDIR_P) '$(DESTDIR)$(emscripten_extension_imports_dir)'
+endif
 
 uninstall:
 ifneq (,$(EXTENSION))
@@ -318,6 +333,9 @@ ifdef MODULES
 ifeq ($(with_llvm), yes)
 	$(foreach mod, $(MODULES), $(call uninstall_llvm_module,$(mod)))
 endif # with_llvm
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(emscripten_extension_imports_dir)/$(MODULES).imports'
+endif
 endif # MODULES
 ifdef DOCS
 	rm -f $(addprefix '$(DESTDIR)$(docdir)/$(docmoduledir)'/, $(DOCS))
@@ -339,6 +357,10 @@ ifdef MODULE_big
 ifeq ($(with_llvm), yes)
 	$(call uninstall_llvm_module,$(MODULE_big))
 endif # with_llvm
+
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(emscripten_extension_imports_dir)/$(MODULE_big).imports'
+endif
 
 uninstall: uninstall-lib
 endif # MODULE_big

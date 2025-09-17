@@ -40,17 +40,26 @@ exprparse.o exprscan.o: exprparse.h
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pgbench$(X) '$(DESTDIR)$(bindir)/pgbench$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pgbench.wasm '$(DESTDIR)$(bindir)/pgbench.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pgbench$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pgbench.wasm'
+endif
 
 clean distclean:
 	rm -f pgbench$(X) $(OBJS)
 	rm -rf tmp_check
 	rm -f exprparse.h exprparse.c exprscan.c
+ifeq ($(PORTNAME), emscripten)
+	rm -f pgbench.wasm
+endif
 
 check:
 	$(prove_check)

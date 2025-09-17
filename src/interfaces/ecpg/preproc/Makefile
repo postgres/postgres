@@ -83,14 +83,23 @@ keywords.o: $(top_srcdir)/src/include/parser/kwlist.h
 
 install: all installdirs
 	$(INSTALL_PROGRAM) ecpg$(X) '$(DESTDIR)$(bindir)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) ecpg.wasm '$(DESTDIR)$(bindir)/ecpg.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/ecpg.wasm'
+endif
 
 clean distclean:
 	rm -f *.o ecpg$(X)
 	rm -f typename.c
 	rm -f preproc.y preproc.c preproc.h pgc.c c_kwlist_d.h ecpg_kwlist_d.h
+ifeq ($(PORTNAME), emscripten)
+	rm -f ecpg.wasm
+endif

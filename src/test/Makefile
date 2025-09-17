@@ -7,6 +7,12 @@
 # src/test/Makefile
 #
 #-------------------------------------------------------------------------
+ifeq ($(PORTNAME), emscripten)
+# edited for pglite
+all: $(echo src/test and src/test/isolation skipped)
+clean check installcheck all-src-recurse: all
+install: all
+else
 
 subdir = src/test
 top_builddir = ../..
@@ -49,3 +55,5 @@ $(call recurse,installcheck, $(installable_dirs))
 $(call recurse,install, $(installable_dirs))
 
 $(recurse_always)
+
+endif

@@ -42,16 +42,25 @@ xlogreader.c: % : $(top_srcdir)/src/backend/access/transam/%
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_rewind$(X) '$(DESTDIR)$(bindir)/pg_rewind$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_rewind.wasm '$(DESTDIR)$(bindir)/pg_rewind.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_rewind$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_rewind.wasm'
+endif
 
 clean distclean:
 	rm -f pg_rewind$(X) $(OBJS) xlogreader.c
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_rewind.wasm
+endif
 
 check:
 	$(prove_check)

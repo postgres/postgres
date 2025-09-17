@@ -18,6 +18,9 @@ pg_test_timing: $(OBJS) | submake-libpgport
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_test_timing$(X) '$(DESTDIR)$(bindir)/pg_test_timing$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_test_timing.wasm '$(DESTDIR)$(bindir)/pg_test_timing.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -30,7 +33,13 @@ installcheck:
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_test_timing$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_test_timing.wasm'
+endif
 
 clean distclean:
 	rm -f pg_test_timing$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_test_timing.wasm
+endif	

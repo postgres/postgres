@@ -35,16 +35,25 @@ pg_combinebackup: $(OBJS) | submake-libpgport submake-libpgfeutils
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_combinebackup$(X) '$(DESTDIR)$(bindir)/pg_combinebackup$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_combinebackup.wasm '$(DESTDIR)$(bindir)/pg_combinebackup.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_combinebackup$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_combinebackup.wasm'
+endif
 
 clean distclean maintainer-clean:
 	rm -f pg_combinebackup$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_combinebackup.wasm
+endif
 
 check:
 	$(prove_check)

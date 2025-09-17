@@ -57,6 +57,11 @@ install: all installdirs
 	$(INSTALL_PROGRAM) pg_dump$(X) '$(DESTDIR)$(bindir)'/pg_dump$(X)
 	$(INSTALL_PROGRAM) pg_restore$(X) '$(DESTDIR)$(bindir)'/pg_restore$(X)
 	$(INSTALL_PROGRAM) pg_dumpall$(X) '$(DESTDIR)$(bindir)'/pg_dumpall$(X)
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_dump.wasm '$(DESTDIR)$(bindir)/pg_dump.wasm'
+	$(INSTALL_PROGRAM) pg_restore.wasm '$(DESTDIR)$(bindir)/pg_restore.wasm'
+	$(INSTALL_PROGRAM) pg_dumpall.wasm '$(DESTDIR)$(bindir)/pg_dumpall.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
@@ -69,7 +74,13 @@ installcheck:
 
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, pg_dump$(X) pg_restore$(X) pg_dumpall$(X))
+ifeq ($(PORTNAME), emscripten)
+	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, pg_dump.wasm pg_restore.wasm pg_dumpall.wasm)
+endif
 
 clean distclean:
 	rm -f pg_dump$(X) pg_restore$(X) pg_dumpall$(X) $(OBJS) pg_dump.o common.o pg_dump_sort.o pg_restore.o pg_dumpall.o
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_dump.wasm pg_restore.wasm pg_dumpall.wasm
+endif

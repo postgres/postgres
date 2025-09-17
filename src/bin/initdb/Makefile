@@ -47,16 +47,25 @@ localtime.c: % : $(top_srcdir)/src/timezone/%
 
 install: all installdirs
 	$(INSTALL_PROGRAM) initdb$(X) '$(DESTDIR)$(bindir)/initdb$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) initdb.wasm '$(DESTDIR)$(bindir)/initdb.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/initdb$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/initdb.wasm'
+endif
 
 clean distclean:
 	rm -f initdb$(X) $(OBJS) localtime.c
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f initdb.wasm
+endif
 
 # ensure that changes in datadir propagate into object file
 initdb.o: initdb.c $(top_builddir)/src/Makefile.global

@@ -28,16 +28,25 @@ pg_resetwal: $(OBJS) | submake-libpgport
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_resetwal$(X) '$(DESTDIR)$(bindir)/pg_resetwal$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_resetwal.wasm '$(DESTDIR)$(bindir)/pg_resetwal.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_resetwal$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_resetwal.wasm'
+endif
 
 clean distclean:
 	rm -f pg_resetwal$(X) $(OBJS)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_resetwal.wasm
+endif
 
 check:
 	$(prove_check)

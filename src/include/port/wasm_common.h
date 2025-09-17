@@ -45,7 +45,7 @@
 #   define PG_PLUGIN_INCLUDE "/pgdata/pg_plugin.h"
 #endif
 
-#include "pg_debug.h"
+#include "port/pg_debug.h"
 
 // #define COPY_INTERNAL
 #define COPY_OFF

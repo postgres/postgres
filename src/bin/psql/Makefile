@@ -65,17 +65,26 @@ psqlscanslash.c: FLEX_FIX_WARNING=yes
 install: all installdirs
 	$(INSTALL_PROGRAM) psql$(X) '$(DESTDIR)$(bindir)/psql$(X)'
 	$(INSTALL_DATA) $(srcdir)/psqlrc.sample '$(DESTDIR)$(datadir)/psqlrc.sample'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) psql.wasm '$(DESTDIR)$(bindir)/psql.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)' '$(DESTDIR)$(datadir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/psql$(X)' '$(DESTDIR)$(datadir)/psqlrc.sample'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/psql.wasm'
+endif
 
 clean distclean:
 	rm -f psql$(X) $(OBJS) lex.backup
 	rm -rf tmp_check
 	rm -f sql_help.h sql_help.c psqlscanslash.c
+ifeq ($(PORTNAME), emscripten)
+	rm -f psql.wasm
+endif
 
 check:
 	$(prove_check)

@@ -53,11 +53,20 @@ install: all install-lib install-data install-headers
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
 	$(MKDIR_P) '$(DESTDIR)$(includedir_server)'
+ifeq ($(PORTNAME), emscripten)
+	$(MKDIR_P) '$(DESTDIR)$(emscripten_extension_imports_dir)'
+endif
 
 uninstall: uninstall-lib uninstall-data uninstall-headers
 
 install-data: installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
+ifeq ($(PORTNAME), emscripten)
+	$(LLVM_NM) -u $(OBJS)    | awk '{print $$2}'              | sed '/^$$/d' | sort -u > undef.txt
+	$(LLVM_NM)    $(OBJS)    | awk '$$2 ~ /^[TDB]$$/ {print $$3}' | sed '/^$$/d' | sort -u > defs.txt
+	comm -23 undef.txt defs.txt > '$(DESTDIR)$(emscripten_extension_imports_dir)/$(NAME).imports'
+	rm -f undef.txt defs.txt
+endif
 
 # The plpgsql.h header file is needed by instrumentation plugins
 install-headers: installdirs
@@ -65,6 +74,9 @@ install-headers: installdirs
 
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(emscripten_extension_imports_dir)/$(NAME).imports'
+endif
 
 uninstall-headers:
 	rm -f '$(DESTDIR)$(includedir_server)/plpgsql.h'

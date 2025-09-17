@@ -1,6 +1,12 @@
 #
 # Makefile for isolation tests
 #
+ifeq ($(PORTNAME), emscripten)
+# edited for pglite
+all: $(echo src/test and src/test/isolation skipped)
+clean check installcheck all-src-recurse: all
+install: all
+else
 
 PGFILEDESC = "pg_isolation_regress/isolationtester - multi-client test driver"
 PGAPPICON = win32
@@ -72,3 +78,5 @@ installcheck-prepared-txns: all temp-install
 
 check-prepared-txns: all temp-install
 	$(pg_isolation_regress_check) --schedule=$(srcdir)/isolation_schedule prepared-transactions prepared-transactions-cic
+
+endif

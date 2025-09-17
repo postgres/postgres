@@ -41,17 +41,33 @@ install: all installdirs
 	$(INSTALL_PROGRAM) vacuumdb$(X)   '$(DESTDIR)$(bindir)'/vacuumdb$(X)
 	$(INSTALL_PROGRAM) reindexdb$(X)  '$(DESTDIR)$(bindir)'/reindexdb$(X)
 	$(INSTALL_PROGRAM) pg_isready$(X) '$(DESTDIR)$(bindir)'/pg_isready$(X)
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) createdb.wasm   '$(DESTDIR)$(bindir)'/createdb.wasm
+	$(INSTALL_PROGRAM) dropdb.wasm     '$(DESTDIR)$(bindir)'/dropdb.wasm
+	$(INSTALL_PROGRAM) createuser.wasm '$(DESTDIR)$(bindir)'/createuser.wasm
+	$(INSTALL_PROGRAM) dropuser.wasm   '$(DESTDIR)$(bindir)'/dropuser.wasm
+	$(INSTALL_PROGRAM) clusterdb.wasm  '$(DESTDIR)$(bindir)'/clusterdb.wasm
+	$(INSTALL_PROGRAM) vacuumdb.wasm   '$(DESTDIR)$(bindir)'/vacuumdb.wasm
+	$(INSTALL_PROGRAM) reindexdb.wasm  '$(DESTDIR)$(bindir)'/reindexdb.wasm
+	$(INSTALL_PROGRAM) pg_isready.wasm '$(DESTDIR)$(bindir)'/pg_isready.wasm
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(addsuffix $(X), $(PROGRAMS)))
+ifeq ($(PORTNAME), emscripten)
+	rm -f $(addprefix '$(DESTDIR)$(bindir)'/, $(addsuffix .wasm, $(PROGRAMS)))
+endif
 
 clean distclean:
 	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS))
 	rm -f common.o $(WIN32RES)
 	rm -rf tmp_check
+ifeq ($(PORTNAME), emscripten)
+	rm -f $(addsuffix .wasm, $(PROGRAMS))
+endif
 
 export with_icu
 

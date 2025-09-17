@@ -42,17 +42,26 @@ pg_upgrade: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 
 install: all installdirs
 	$(INSTALL_PROGRAM) pg_upgrade$(X) '$(DESTDIR)$(bindir)/pg_upgrade$(X)'
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) pg_upgrade.wasm '$(DESTDIR)$(bindir)/pg_upgrade.wasm'
+endif
 
 installdirs:
 	$(MKDIR_P) '$(DESTDIR)$(bindir)'
 
 uninstall:
 	rm -f '$(DESTDIR)$(bindir)/pg_upgrade$(X)'
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(bindir)/pg_upgrade.wasm'
+endif
 
 clean distclean:
 	rm -f pg_upgrade$(X) $(OBJS)
 	rm -rf delete_old_cluster.sh log/ tmp_check/ \
 	       reindex_hash.sql
+ifeq ($(PORTNAME), emscripten)
+	rm -f pg_upgrade.wasm
+endif
 
 export with_icu
 

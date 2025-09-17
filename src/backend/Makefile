@@ -77,14 +77,55 @@ ifeq ($(PORTNAME), emscripten)
 AR ?= llvm-ar
 LIBPGCORE ?= $(top_builddir)/libpgcore.a
 LIBPG = $(top_builddir)/libpostgres.a
+LIBPGMAIN = $(top_builddir)/libpgmain.a
 PGCORE = $(top_builddir)/src/common/libpgcommon_srv.a $(top_builddir)/src/port/libpgport_srv.a $(LIBPG)
 PGMAIN = main/main.o tcop/postgres.o
+PGLITE_MAIN = pglite-wasm/pg_main.c
+EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack"
+PGROOT=/install/pglite
+PGPRELOAD=--preload-file ${PGROOT}/share/postgresql@/tmp/pglite/share/postgresql --preload-file ${PGROOT}/lib/postgresql@/tmp/pglite/lib/postgresql --preload-file $(top_builddir)/other/password@/tmp/pglite/password --preload-file $(top_builddir)/other/PGPASSFILE@/home/web_user/.pgpass --preload-file $(top_builddir)/other/empty@/tmp/pglite/bin/postgres --preload-file $(top_builddir)/other/empty@/tmp/pglite/bin/initdb
 postgres: $(OBJS)
-	$(AR) rcs $(top_builddir)/libpgmain.a $(PGMAIN)
+	$(AR) rcs $(LIBPGMAIN) $(PGMAIN)
 	$(AR) rcs $(LIBPG) $(filter-out $(PGMAIN),$(call expand_subsys,$(ONLYOBJS)))
 	$(CC) -r -o $(top_builddir)/libpgcore.o -Wl,--whole-archive $(PGCORE)
 	$(AR) rcs $(LIBPGCORE) $(top_builddir)/libpgcore.o
-	COPTS="$(LOPTS)" $(CC) $(MAIN_MODULE) $(CFLAGS) $(LDFLAGS) -o $@ $(LIBPGCORE) $(top_builddir)/libpgmain.a $(LIBS)
+	COPTS="$(LOPTS)" $(CC) $(MAIN_MODULE) $(CFLAGS) $(LDFLAGS) -o $@$(X) $(LIBPGCORE) $(LIBPGMAIN) $(LIBS)
+
+# Extensions use functions from the core PG. These need to be exported by the emscripten compiler.
+# The following target gathers all extension imports + the default ones (included.pglite.imports),
+# excludes the one in excluded.pglite.imports and adds a leading _ to each.
+pglite-exported-functions:
+	$(MKDIR_P) '$(emscripten_imports_dir)'
+	cat $(top_builddir)/pglite-wasm/excluded.*.imports $(top_builddir)/src/interfaces/libpq/exports.list $(LIB_EXPORTS_DIR)/libossp-uuid.exports | sort -u > '$(top_builddir)/pglite-wasm/excluded.imports'
+	cat $(DESTDIR)$(emscripten_extension_imports_dir)/*.imports '$(top_builddir)/pglite-wasm/included.pglite.imports' | \
+	sort -u | \
+	grep -Fvx -f '$(top_builddir)/pglite-wasm/excluded.imports' | \
+	sed 's/^/_/' \
+	> '$(emscripten_imports_dir)/exported_functions.txt'
+
+# -sDYLINK_DEBUG=2 use this for debugging missing exported symbols (ex when an extension calls a pgcore function that hasn't been exported)
+# PGLITE_CFLAGS is something like "-O2" (aka release version) or "-g -gsource-map --no-wasm-opt" (aka debug version)
+pglite: pglite-exported-functions
+	$(CC) $(CFLAGS) $(LDFLAGS) -DPG_PREFIX=/tmp/pglite -DCMA_MB=12 -I$(top_builddir)/src/include -I$(top_builddir)/src/ -I$(top_builddir)/src/interfaces/libpq -o pglite.o -c $(top_builddir)/$(PGLITE_MAIN) -Wno-incompatible-pointer-types-discards-qualifiers
+	$(CC) \
+	$(PGLITE_CFLAGS) \
+	-fPIC -sWASM_BIGINT -sMIN_SAFARI_VERSION=150000 -D__PYDK__=1 -m32 -D_FILE_OFFSET_BITS=64 -sSUPPORT_LONGJMP=emscripten -mno-bulk-memory -mnontrapping-fptoint -mno-reference-types -mno-sign-ext -mno-extended-const -mno-atomics -mno-tail-call -mno-multivalue -mno-relaxed-simd -mno-simd128 -mno-multimemory -mno-exception-handling -Wno-unused-command-line-argument -Wno-unreachable-code-fallthrough -Wno-unused-function -Wno-invalid-noreturn -Wno-declaration-after-statement -Wno-invalid-noreturn \
+	-DPYDK=1 -DPG_PREFIX=/tmp/pglite -DCMA_MB=12 -o pglite.html --shell-file $(top_builddir)/pglite-wasm/repl.html \
+        $(PGPRELOAD) \
+        -sGLOBAL_BASE=12MB -ferror-limit=1 \
+        -sFORCE_FILESYSTEM=1 -sNO_EXIT_RUNTIME=1 -sENVIRONMENT=node,web,worker \
+        -sMAIN_MODULE=2 \
+		-sEXPORTED_FUNCTIONS=@$(emscripten_imports_dir)/exported_functions.txt \
+        -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=Module \
+        -sALLOW_TABLE_GROWTH -sALLOW_MEMORY_GROWTH -sERROR_ON_UNDEFINED_SYMBOLS=0 \
+        -sEXPORTED_RUNTIME_METHODS=$(EXPORTED_RUNTIME_METHODS) \
+        -I./src/include -I./src/ -I./src/interfaces/libpq \
+        -L/install/libs/lib -L$(top_builddir) -L$(top_builddir)/src/interfaces/libpq/ \
+        pglite.o \
+		-Ldict_snowball \
+		-lxslt \
+        -lpgcore \
+        -lnodefs.js -lidbfs.js -lxml2 -lz
 endif
 
 ifeq ($(PORTNAME), wasi)
@@ -215,6 +256,11 @@ ifeq ($(MAKE_DLL), true)
 	$(INSTALL_DATA) libpostgres.a '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
 endif
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_DATA) $(LIBPG) '$(DESTDIR)$(libdir)/libpostgres.a'
+	$(INSTALL_DATA) $(LIBPGCORE) '$(DESTDIR)$(libdir)/libpgcore.a'
+	$(INSTALL_DATA) $(LIBPGMAIN) '$(DESTDIR)$(libdir)/libpgmain.a'
+endif
 	$(MAKE) -C catalog install-data
 	$(MAKE) -C tsearch install-data
 	$(MAKE) -C utils install-data
@@ -234,6 +280,9 @@ install-bin: postgres $(POSTGRES_IMP) installdirs
 ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL_DATA) $(POSTGRES_IMP) '$(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)'
 	$(INSTALL_PROGRAM) $(MKLDEXPORT) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)/mkldexport.sh'
+endif
+ifeq ($(PORTNAME), emscripten)
+	$(INSTALL_PROGRAM) postgres.wasm '$(DESTDIR)$(bindir)/postgres.wasm'
 endif
 
 .PHONY: install-bin
@@ -255,6 +304,16 @@ ifeq ($(MAKE_EXPORTS), true)
 	$(MKDIR_P) '$(DESTDIR)$(pgxsdir)/$(MKLDEXPORT_DIR)'
 endif
 
+ifeq ($(PORTNAME), emscripten)
+install-pglite: pglite
+	$(INSTALL_PROGRAM) pglite.html '$(DESTDIR)$(bindir)/pglite.html'
+	$(INSTALL_PROGRAM) pglite.wasm '$(DESTDIR)$(bindir)/pglite.wasm'
+	$(INSTALL_PROGRAM) pglite.js '$(DESTDIR)$(bindir)/pglite.js'
+	$(INSTALL_PROGRAM) pglite.data '$(DESTDIR)$(bindir)/pglite.data'
+endif
+
+.PHONY: install-pglite
+
 
 ##########################################################################
 
@@ -273,6 +332,16 @@ ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
 	rm -f '$(DESTDIR)$(libdir)/libpostgres.a'
 endif
+endif
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(DESTDIR)$(libdir)/libpostgres.a'
+	rm -f '$(DESTDIR)$(libdir)/libpgcore.a'
+	rm -f '$(DESTDIR)$(libdir)/libpgmain.a'
+	rm -f '$(DESTDIR)$(bindir)/postgres.wasm'
+	rm -f '$(DESTDIR)$(bindir)/pglite.wasm'
+	rm -f '$(DESTDIR)$(bindir)/pglite.html'
+	rm -f '$(DESTDIR)$(bindir)/pglite.js'
+	rm -f '$(DESTDIR)$(bindir)/pglite.data'
 endif
 	$(MAKE) -C catalog uninstall-data
 	$(MAKE) -C tsearch uninstall-data
@@ -294,6 +363,12 @@ ifeq ($(PORTNAME), cygwin)
 endif
 ifeq ($(PORTNAME), win32)
 	rm -f postgres.dll libpostgres.a $(WIN32RES)
+endif
+ifeq ($(PORTNAME), emscripten)
+	rm -f postgres.wasm libpostgres.a libpgcore.a libpgmain.a pglite.o pglite.html pglite.js pglite.wasm pglite.data
+endif
+ifeq ($(PORTNAME), emscripten)
+	rm -f '$(emscripten_imports_dir)/exported_functions.txt'
 endif
 
 distclean: clean
