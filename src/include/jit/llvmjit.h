@@ -74,6 +74,7 @@ typedef struct LLVMJitContext
 extern PGDLLIMPORT LLVMTypeRef TypeParamBool;
 extern PGDLLIMPORT LLVMTypeRef TypePGFunction;
 extern PGDLLIMPORT LLVMTypeRef TypeSizeT;
+extern PGDLLIMPORT LLVMTypeRef TypeDatum;
 extern PGDLLIMPORT LLVMTypeRef TypeStorageBool;
 
 extern PGDLLIMPORT LLVMTypeRef StructNullableDatum;

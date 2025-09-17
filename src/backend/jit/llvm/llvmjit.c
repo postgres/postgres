@@ -54,6 +54,7 @@ typedef struct LLVMJitHandle
 
 /* types & functions commonly needed for JITing */
 LLVMTypeRef TypeSizeT;
+LLVMTypeRef TypeDatum;
 LLVMTypeRef TypeParamBool;
 LLVMTypeRef TypeStorageBool;
 LLVMTypeRef TypePGFunction;
@@ -1011,6 +1012,7 @@ llvm_create_types(void)
 	LLVMDisposeMemoryBuffer(buf);
 
 	TypeSizeT = llvm_pg_var_type("TypeSizeT");
+	TypeDatum = llvm_pg_var_type("TypeDatum");
 	TypeParamBool = load_return_type(llvm_types_module, "FunctionReturningBool");
 	TypeStorageBool = llvm_pg_var_type("TypeStorageBool");
 	TypePGFunction = llvm_pg_var_type("TypePGFunction");
