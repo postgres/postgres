@@ -268,6 +268,16 @@ TidRangeNext(TidRangeScanState *node)
 static bool
 TidRangeRecheck(TidRangeScanState *node, TupleTableSlot *slot)
 {
+	if (!TidRangeEval(node))
+		return false;
+
+	Assert(ItemPointerIsValid(&slot->tts_tid));
+
+	/* Recheck the ctid is still within range */
+	if (ItemPointerCompare(&slot->tts_tid, &node->trss_mintid) < 0 ||
+		ItemPointerCompare(&slot->tts_tid, &node->trss_maxtid) > 0)
+		return false;
+
 	return true;
 }
 
