@@ -2224,6 +2224,40 @@ from int4_tbl;
 (5 rows)
 
 --
+-- test for bug #19055: interaction of WITH with aggregates
+--
+-- The reference to cte1 must determine the aggregate's level,
+-- even though it contains no Vars referencing cte1
+explain (verbose, costs off)
+select f1, (with cte1(x,y) as (select 1,2)
+            select count((select i4.f1 from cte1))) as ss
+from int4_tbl i4;
+            QUERY PLAN             
+-----------------------------------
+ Seq Scan on public.int4_tbl i4
+   Output: i4.f1, (SubPlan 2)
+   SubPlan 2
+     ->  Aggregate
+           Output: count($1)
+           InitPlan 1 (returns $1)
+             ->  Result
+                   Output: i4.f1
+           ->  Result
+(9 rows)
+
+select f1, (with cte1(x,y) as (select 1,2)
+            select count((select i4.f1 from cte1))) as ss
+from int4_tbl i4;
+     f1      | ss 
+-------------+----
+           0 |  1
+      123456 |  1
+     -123456 |  1
+  2147483647 |  1
+ -2147483647 |  1
+(5 rows)
+
+--
 -- test for nested-recursive-WITH bug
 --
 WITH RECURSIVE t(j) AS (
