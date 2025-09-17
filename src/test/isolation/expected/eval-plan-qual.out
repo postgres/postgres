@@ -1265,6 +1265,29 @@ savings  |    600|    1200
 (2 rows)
 
 
+starting permutation: tidrange1 tidrange2 c1 c2 read
+step tidrange1: UPDATE accounts SET balance = balance + 100 WHERE ctid BETWEEN '(0,1)' AND '(0,1)' RETURNING accountid, balance;
+accountid|balance
+---------+-------
+checking |    700
+(1 row)
+
+step tidrange2: UPDATE accounts SET balance = balance + 200 WHERE ctid BETWEEN '(0,1)' AND '(0,1)' RETURNING accountid, balance; <waiting ...>
+step c1: COMMIT;
+step tidrange2: <... completed>
+accountid|balance
+---------+-------
+(0 rows)
+
+step c2: COMMIT;
+step read: SELECT * FROM accounts ORDER BY accountid;
+accountid|balance|balance2
+---------+-------+--------
+checking |    700|    1400
+savings  |    600|    1200
+(2 rows)
+
+
 starting permutation: tid1 tid2 r1 c2 read
 step tid1: UPDATE accounts SET balance = balance + 100 WHERE ctid = '(0,1)' RETURNING accountid, balance;
 accountid|balance
