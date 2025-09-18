@@ -13709,3 +13709,78 @@ get_range_partbound_string(List *bound_datums)
 
 	return buf->data;
 }
+
+
+/*
+ * pg_get_domain_ddl - Get CREATE DOMAIN statement for a domain
+ */
+Datum
+pg_get_domain_ddl(PG_FUNCTION_ARGS)
+{
+	StringInfoData buf;
+	Oid			domain_oid = PG_GETARG_OID(0);
+	HeapTuple	typeTuple;
+	Form_pg_type typForm;
+	Relation	constraintRel;
+	SysScanDesc sscan;
+	ScanKeyData skey;
+	HeapTuple	constraintTup;
+	Node	   *defaultExpr;
+
+	/* Look up the domain in pg_type */
+	typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(domain_oid));
+
+	/* function param is a regtype, so typeoid must be valid */
+	Assert(HeapTupleIsValid(typeTuple));
+
+	typForm = (Form_pg_type) GETSTRUCT(typeTuple);
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "CREATE DOMAIN %s.%s AS %s",
+					 quote_identifier(get_namespace_name(typForm->typnamespace)),
+					 quote_identifier(NameStr(typForm->typname)),
+					 format_type_be(typForm->typbasetype));
+
+	/* Get the default value expression, if any */
+	defaultExpr = get_typdefault(domain_oid);
+
+	if (defaultExpr != NULL)
+	{
+		char	   *defaultValue;
+
+		defaultValue = deparse_expression_pretty(defaultExpr, NIL, false, false,
+												 0, 0);
+		appendStringInfo(&buf, " DEFAULT %s", defaultValue);
+	}
+
+	/* table scan to look up constraints belonging to this domain */
+	constraintRel = table_open(ConstraintRelationId, AccessShareLock);
+
+	ScanKeyInit(&skey,
+				Anum_pg_constraint_contypid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(domain_oid));
+
+	sscan = systable_beginscan(constraintRel,
+							   ConstraintTypidIndexId,
+							   true,
+							   NULL,
+							   1,
+							   &skey);
+
+	while (HeapTupleIsValid(constraintTup = systable_getnext(sscan)))
+	{
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(constraintTup);
+		char	   *val = NULL;
+
+		val = pg_get_constraintdef_worker(con->oid, false, PRETTYFLAG_PAREN, true);
+		appendStringInfo(&buf, " CONSTRAINT %s %s",
+						 quote_identifier(NameStr(con->conname)), val);
+	}
+	systable_endscan(sscan);
+	table_close(constraintRel, AccessShareLock);
+	ReleaseSysCache(typeTuple);
+
+	appendStringInfo(&buf, ";");
+
+	PG_RETURN_TEXT_P(cstring_to_text(buf.data));
+}
