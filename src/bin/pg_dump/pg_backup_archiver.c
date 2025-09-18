@@ -3066,6 +3066,21 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	if (ropt->no_security_labels && strcmp(te->desc, "SECURITY LABEL") == 0)
 		return 0;
 
+	/*
+	 * If it's a security label on a publication or a subscription, maybe
+	 * ignore it.
+	 */
+	if (strcmp(te->desc, "SECURITY LABEL") == 0)
+	{
+		if (ropt->no_publications &&
+			strncmp(te->tag, "PUBLICATION", strlen("PUBLICATION")) == 0)
+			return 0;
+
+		if (ropt->no_subscriptions &&
+			strncmp(te->tag, "SUBSCRIPTION", strlen("SUBSCRIPTION")) == 0)
+			return 0;
+	}
+
 	/* If it's a subscription, maybe ignore it */
 	if (ropt->no_subscriptions && strcmp(te->desc, "SUBSCRIPTION") == 0)
 		return 0;
