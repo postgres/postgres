@@ -5599,7 +5599,7 @@ skip_sql_comments(char *sql_command)
  * struct.
  */
 static Command *
-create_sql_command(PQExpBuffer buf, const char *source)
+create_sql_command(PQExpBuffer buf)
 {
 	Command    *my_command;
 	char	   *p = skip_sql_comments(buf->data);
@@ -5992,7 +5992,7 @@ ParseScript(const char *script, const char *desc, int weight)
 		sr = psql_scan(sstate, &line_buf, &prompt);
 
 		/* If we collected a new SQL command, process that */
-		command = create_sql_command(&line_buf, desc);
+		command = create_sql_command(&line_buf);
 
 		/* store new command */
 		if (command)
