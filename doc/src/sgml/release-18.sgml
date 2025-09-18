@@ -607,8 +607,10 @@ Author: Peter Geoghegan <pg@bowt.ie>
       </para>
 
       <para>
-      This allows multi-column btree indexes to be used by queries that
-      only equality-reference the second or later indexed columns.
+      This allows multi-column btree indexes to be used in more cases such
+      as when there are no restrictions on the first or early indexed
+      columns (or there are non-equality ones), and there are useful
+      restrictions on later indexed columns.
       </para>
       </listitem>
 
