@@ -48,7 +48,13 @@
  * PgStatShared_Common as the first element.
  */
 
-/* struct for shared statistics hash entry key. */
+/*
+ * Struct for shared statistics hash entry key.
+ *
+ * NB: We assume that this struct contains no padding.  Also, 8 bytes
+ * allocated for the object ID are good enough to ensure the uniqueness
+ * of the hash key, hence the addition of new fields is not recommended.
+ */
 typedef struct PgStat_HashKey
 {
 	PgStat_Kind kind;			/* statistics entry kind */
@@ -56,6 +62,15 @@ typedef struct PgStat_HashKey
 	uint64		objid;			/* object ID (table, function, etc.), or
 								 * identifier. */
 } PgStat_HashKey;
+
+/*
+ * PgStat_HashKey should not have any padding.  Checking that the structure
+ * size matches with the sum of each field is a check simple enough to
+ * enforce this policy.
+ */
+StaticAssertDecl((sizeof(PgStat_Kind) + sizeof(uint64) + sizeof(Oid)) ==
+				 sizeof(PgStat_HashKey),
+				 "PgStat_HashKey should have no padding");
 
 /*
  * Shared statistics hash entry. Doesn't itself contain any stats, but points

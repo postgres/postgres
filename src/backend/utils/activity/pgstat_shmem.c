@@ -456,13 +456,10 @@ PgStat_EntryRef *
 pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, uint64 objid, bool create,
 					 bool *created_entry)
 {
-	PgStat_HashKey key;
+	PgStat_HashKey key = {0};
 	PgStatShared_HashEntry *shhashent;
 	PgStatShared_Common *shheader = NULL;
 	PgStat_EntryRef *entry_ref;
-
-	/* clear padding */
-	memset(&key, 0, sizeof(struct PgStat_HashKey));
 
 	key.kind = kind;
 	key.dboid = dboid;
@@ -988,12 +985,9 @@ pgstat_drop_database_and_contents(Oid dboid)
 bool
 pgstat_drop_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 {
-	PgStat_HashKey key;
+	PgStat_HashKey key = {0};
 	PgStatShared_HashEntry *shent;
 	bool		freed = true;
-
-	/* clear padding */
-	memset(&key, 0, sizeof(struct PgStat_HashKey));
 
 	key.kind = kind;
 	key.dboid = dboid;

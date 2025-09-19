@@ -932,7 +932,7 @@ pgstat_clear_snapshot(void)
 void *
 pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 {
-	PgStat_HashKey key;
+	PgStat_HashKey key = {0};
 	PgStat_EntryRef *entry_ref;
 	void	   *stats_data;
 	const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
@@ -942,9 +942,6 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, uint64 objid)
 	Assert(!kind_info->fixed_amount);
 
 	pgstat_prep_snapshot();
-
-	/* clear padding */
-	memset(&key, 0, sizeof(struct PgStat_HashKey));
 
 	key.kind = kind;
 	key.dboid = dboid;
