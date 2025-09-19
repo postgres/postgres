@@ -659,7 +659,7 @@ typedef uint32 CommandId;
  * representation is no longer convenient.  It's recommended that code always
  * use macros VARDATA_ANY, VARSIZE_ANY, VARSIZE_ANY_EXHDR, VARDATA, VARSIZE,
  * and SET_VARSIZE instead of relying on direct mentions of the struct fields.
- * See postgres.h for details of the TOASTed form.
+ * See varatt.h for details of the TOASTed form.
  * ----------------
  */
 struct varlena

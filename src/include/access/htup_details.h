@@ -634,7 +634,7 @@ BITMAPLEN(int NATTS)
  * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
  * data fields of char(n) and similar types.  It need not have anything
  * directly to do with the *actual* upper limit of varlena values, which
- * is currently 1Gb (see TOAST structures in postgres.h).  I've set it
+ * is currently 1Gb (see TOAST structures in varatt.h).  I've set it
  * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
  */
 #define MaxAttrSize		(10 * 1024 * 1024)
