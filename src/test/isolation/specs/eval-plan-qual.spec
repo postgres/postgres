@@ -204,6 +204,7 @@ step sys1	{
 	UPDATE pg_class SET reltuples = 123 WHERE oid = 'accounts'::regclass;
 }
 
+step s1pp1 { UPDATE another_parttbl SET b = b + 1 WHERE a = 1; }
 
 session s2
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
@@ -312,6 +313,10 @@ step sysmerge2	{
 step c2	{ COMMIT; }
 step r2	{ ROLLBACK; }
 
+step s2pp1 { SET plan_cache_mode TO force_generic_plan; }
+step s2pp2 { PREPARE epd AS DELETE FROM another_parttbl WHERE a = $1; }
+step s2pp3 { EXECUTE epd(1); }
+
 session s3
 setup		{ BEGIN ISOLATION LEVEL READ COMMITTED; }
 step read	{ SELECT * FROM accounts ORDER BY accountid; }
@@ -415,3 +420,6 @@ permutation simplepartupdate_noroute complexpartupdate_doesnt_route c1 c2 read_p
 
 permutation sys1 sysupd2 c1 c2
 permutation sys1 sysmerge2 c1 c2
+
+# Exercise run-time partition pruning code in an EPQ recheck
+permutation s1pp1 s2pp1 s2pp2 s2pp3 c1 c2

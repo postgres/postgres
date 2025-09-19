@@ -3085,6 +3085,15 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	rcestate->es_unpruned_relids = parentestate->es_unpruned_relids;
 
 	/*
+	 * Also make the PartitionPruneInfo and the results of pruning available.
+	 * These need to match exactly so that we initialize all the same Append
+	 * and MergeAppend subplans as the parent did.
+	 */
+	rcestate->es_part_prune_infos = parentestate->es_part_prune_infos;
+	rcestate->es_part_prune_states = parentestate->es_part_prune_states;
+	rcestate->es_part_prune_results = parentestate->es_part_prune_results;
+
+	/*
 	 * Initialize private state information for each SubPlan.  We must do this
 	 * before running ExecInitNode on the main query tree, since
 	 * ExecInitSubPlan expects to be able to find these entries. Some of the
