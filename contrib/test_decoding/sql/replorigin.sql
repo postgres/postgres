@@ -26,6 +26,9 @@ SELECT pg_replication_origin_create('regress_test_decoding: regression_slot');
 -- ensure duplicate creations fail
 SELECT pg_replication_origin_create('regress_test_decoding: regression_slot');
 
+-- ensure inactive origin cannot be set as session one if pid is specified
+SELECT pg_replication_origin_session_setup('regress_test_decoding: regression_slot', -1);
+
 --ensure deletions work (once)
 SELECT pg_replication_origin_create('regress_test_decoding: temp');
 SELECT pg_replication_origin_drop('regress_test_decoding: temp');

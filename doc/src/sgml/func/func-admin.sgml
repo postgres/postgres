@@ -1315,7 +1315,7 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         <indexterm>
          <primary>pg_replication_origin_session_setup</primary>
         </indexterm>
-        <function>pg_replication_origin_session_setup</function> ( <parameter>node_name</parameter> <type>text</type> )
+        <function>pg_replication_origin_session_setup</function> ( <parameter>node_name</parameter> <type>text</type> <optional>, <parameter>pid</parameter> <type>integer</type> <literal>DEFAULT</literal> <literal>0</literal></optional> )
         <returnvalue>void</returnvalue>
        </para>
        <para>
@@ -1323,7 +1323,26 @@ postgres=# SELECT '0/0'::pg_lsn + pd.segment_number * ps.setting::int + :offset 
         origin, allowing replay progress to be tracked.
         Can only be used if no origin is currently selected.
         Use <function>pg_replication_origin_session_reset</function> to undo.
-       </para></entry>
+        If multiple processes can safely use the same replication origin (for
+        example, parallel apply processes), the optional <parameter>pid</parameter>
+        parameter can be used to specify the process ID of the first process.
+        The first process must provide <parameter>pid</parameter> equals to
+        <literal>0</literal> and the other processes that share the same
+        replication origin should provide the process ID of the first process.
+       </para>
+       <caution>
+        <para>
+         When multiple processes share the same replication origin, it is critical
+         to maintain commit order to prevent data inconsistency. While processes
+         may send operations out of order, they must commit transactions in the
+         correct sequence to ensure proper replication consistency. The recommended workflow
+         for each worker is: set up the replication origin session with the first process's PID,
+         apply changes within transactions, call <function>pg_replication_origin_xact_setup</function>
+         with the LSN and commit timestamp before committing, then commit the
+         transaction only if everything succeeded.
+        </para>
+       </caution>
+      </entry>
       </row>
 
       <row>

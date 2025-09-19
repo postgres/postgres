@@ -650,6 +650,13 @@ LANGUAGE INTERNAL
 CALLED ON NULL INPUT VOLATILE PARALLEL SAFE
 AS 'pg_stat_reset_slru';
 
+CREATE OR REPLACE FUNCTION
+  pg_replication_origin_session_setup(node_name text, pid integer DEFAULT 0)
+RETURNS void
+LANGUAGE INTERNAL
+STRICT VOLATILE PARALLEL UNSAFE
+AS 'pg_replication_origin_session_setup';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather
@@ -751,7 +758,7 @@ REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_progress(boolean) FROM 
 
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_reset() FROM public;
 
-REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_setup(text) FROM public;
+REVOKE EXECUTE ON FUNCTION pg_replication_origin_session_setup(text, integer) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_replication_origin_xact_reset() FROM public;
 

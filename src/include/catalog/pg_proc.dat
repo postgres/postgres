@@ -12235,7 +12235,7 @@
 { oid => '6006',
   descr => 'configure session to maintain replication progress tracking for the passed in origin',
   proname => 'pg_replication_origin_session_setup', provolatile => 'v',
-  proparallel => 'u', prorettype => 'void', proargtypes => 'text',
+  proparallel => 'u', prorettype => 'void', proargtypes => 'text int4',
   prosrc => 'pg_replication_origin_session_setup' },
 
 { oid => '6007', descr => 'teardown configured replication progress tracking',
