@@ -2938,6 +2938,13 @@ XLogFlush(XLogRecPtr record)
 			 "xlog flush request %X/%08X is not satisfied --- flushed only to %X/%08X",
 			 LSN_FORMAT_ARGS(record),
 			 LSN_FORMAT_ARGS(LogwrtResult.Flush));
+
+	/*
+	 * Cross-check XLogNeedsFlush().  Some of the checks of XLogFlush() and
+	 * XLogNeedsFlush() are duplicated, and this assertion ensures that these
+	 * remain consistent.
+	 */
+	Assert(!XLogNeedsFlush(record));
 }
 
 /*
@@ -3102,10 +3109,16 @@ XLogBackgroundFlush(void)
 }
 
 /*
- * Test whether XLOG data has been flushed up to (at least) the given position.
+ * Test whether XLOG data has been flushed up to (at least) the given
+ * position, or whether the minimum recovery point has been updated past
+ * the given position.
  *
- * Returns true if a flush is still needed.  (It may be that someone else
- * is already in process of flushing that far, however.)
+ * Returns true if a flush is still needed, or if the minimum recovery point
+ * must be updated.
+ *
+ * It is possible that someone else is already in the process of flushing
+ * that far, or has updated the minimum recovery point up to the given
+ * position.
  */
 bool
 XLogNeedsFlush(XLogRecPtr record)
@@ -3114,8 +3127,12 @@ XLogNeedsFlush(XLogRecPtr record)
 	 * During recovery, we don't flush WAL but update minRecoveryPoint
 	 * instead. So "needs flush" is taken to mean whether minRecoveryPoint
 	 * would need to be updated.
+	 *
+	 * Using XLogInsertAllowed() rather than RecoveryInProgress() matters for
+	 * the case of an end-of-recovery checkpoint, where WAL data is flushed.
+	 * This check should be consistent with the one in XLogFlush().
 	 */
-	if (RecoveryInProgress())
+	if (!XLogInsertAllowed())
 	{
 		/*
 		 * An invalid minRecoveryPoint means that we need to recover all the
