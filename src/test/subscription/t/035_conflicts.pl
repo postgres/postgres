@@ -633,7 +633,7 @@ $node_B->reload;
 # Confirm that the retention resumes
 $node_A->wait_for_log(
 	qr/logical replication worker for subscription "tap_sub_a_b" will resume retaining the information for detecting conflicts
-.*DETAIL:.* Retention is re-enabled as max_retention_duration is set to unlimited.*/,
+.*DETAIL:.* Retention is re-enabled because max_retention_duration has been set to unlimited.*/,
 	$log_offset);
 
 ok( $node_A->poll_query_until(

@@ -4790,8 +4790,7 @@ stop_conflict_info_retention(RetainDeadTuplesData *rdt_data)
 		ereport(LOG,
 				errmsg("logical replication worker for subscription \"%s\" has stopped retaining the information for detecting conflicts",
 					   MySubscription->name),
-				errdetail("Retention is stopped as the apply process is not advancing its xmin within the configured max_retention_duration of %u ms.",
-						  MySubscription->maxretention));
+				errdetail("Retention is stopped because the apply process has not caught up with the publisher within the configured max_retention_duration."));
 	}
 
 	Assert(!TransactionIdIsValid(MyLogicalRepWorker->oldest_nonremovable_xid));
@@ -4819,9 +4818,8 @@ resume_conflict_info_retention(RetainDeadTuplesData *rdt_data)
 			errmsg("logical replication worker for subscription \"%s\" will resume retaining the information for detecting conflicts",
 				   MySubscription->name),
 			MySubscription->maxretention
-			? errdetail("Retention is re-enabled as the apply process is advancing its xmin within the configured max_retention_duration of %u ms.",
-						MySubscription->maxretention)
-			: errdetail("Retention is re-enabled as max_retention_duration is set to unlimited."));
+			? errdetail("Retention is re-enabled because the apply process has caught up with the publisher within the configured max_retention_duration.")
+			: errdetail("Retention is re-enabled because max_retention_duration has been set to unlimited."));
 
 	/*
 	 * Restart the worker to let the launcher initialize
