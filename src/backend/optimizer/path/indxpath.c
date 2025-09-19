@@ -3322,9 +3322,9 @@ match_orclause_to_indexcol(PlannerInfo *root,
 	/*
 	 * Try to convert a list of OR-clauses to a single SAOP expression. Each
 	 * OR entry must be in the form: (indexkey operator constant) or (constant
-	 * operator indexkey).  Operators of all the entries must match.  To be
-	 * effective, give up on the first non-matching entry.  Exit is
-	 * implemented as a break from the loop, which is catched afterwards.
+	 * operator indexkey).  Operators of all the entries must match.  On
+	 * discovery of anything unsupported, we give up by breaking out of the
+	 * loop immediately and returning NULL.
 	 */
 	foreach(lc, orclause->args)
 	{
@@ -3462,9 +3462,9 @@ match_orclause_to_indexcol(PlannerInfo *root,
 	}
 
 	/*
-	 * Catch the break from the loop above.  Normally, a foreach() loop ends
-	 * up with a NULL list cell.  A non-NULL list cell indicates a break from
-	 * the foreach() loop.  Free the consts list and return NULL then.
+	 * Handle failed conversion from breaking out of the loop because of an
+	 * unsupported qual.  Free the consts list and return NULL to indicate the
+	 * conversion failed.
 	 */
 	if (lc != NULL)
 	{
