@@ -21,7 +21,65 @@
 
     <listitem>
      <para>
-      (to be completed)
+      An asynchronous I/O (AIO) subsystem that can improve performance of
+      sequential scans, bitmap heap scans, vacuums, and other operations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link linkend="pgupgrade"><application>pg_upgrade</application></link>
+      now retains optimizer statistics.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Support for "skip scan" lookups that allow using
+      <link linkend="indexes-multicolumn">multicolumn B-tree indexes</link> in
+      more cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link linkend="func_uuid_gen_table"><function>uuidv7()</function></link>
+      function for generating timestamp-ordered
+      <link linkend="datatype-uuid">UUIDs</link>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Virtual
+      <link linkend="sql-createtable-parms-generated-stored">generated columns</link>
+      that compute their values during read operations.  This is now the
+      default for generated columns.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <link linkend="auth-oauth">OAuth authentication</link> support.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <literal>OLD</literal> and <literal>NEW</literal> support for
+      <link linkend="dml-returning"><literal>RETURNING</literal></link> clauses
+      in <xref linkend="sql-insert"/>, <xref linkend="sql-update"/>,
+      <xref linkend="sql-delete"/>, and <xref linkend="sql-merge"/> commands.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Temporal constraints, or constraints over ranges, for
+      <link linkend="sql-createtable-parms-primary-key">PRIMARY KEY</link>,
+      <link linkend="sql-createtable-parms-unique">UNIQUE</link>, and
+      <link linkend="sql-createtable-parms-references">FOREIGN KEY</link>
+      constraints.
      </para>
     </listitem>
    </itemizedlist>
