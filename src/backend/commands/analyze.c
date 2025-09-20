@@ -1711,10 +1711,9 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		i = Anum_pg_statistic_stanumbers1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			int			nnum = stats->numnumbers[k];
-
-			if (nnum > 0)
+			if (stats->stanumbers[k] != NULL)
 			{
+				int			nnum = stats->numnumbers[k];
 				Datum	   *numdatums = (Datum *) palloc(nnum * sizeof(Datum));
 				ArrayType  *arry;
 
@@ -1732,7 +1731,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		i = Anum_pg_statistic_stavalues1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			if (stats->numvalues[k] > 0)
+			if (stats->stavalues[k] != NULL)
 			{
 				ArrayType  *arry;
 

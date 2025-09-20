@@ -544,12 +544,15 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
 
 	if (numbers)
 	{
-		/* Grab the lowest observed frequency */
+		/* Grab the minimal MCE frequency */
 		minfreq = numbers[nmcelem];
 	}
 	else
 	{
-		/* Without statistics make some default assumptions */
+		/*
+		 * Without statistics, use DEFAULT_CONTAIN_SEL (the factor of 2 will
+		 * be removed again below).
+		 */
 		minfreq = 2 * (float4) DEFAULT_CONTAIN_SEL;
 	}
 
@@ -621,8 +624,11 @@ mcelem_array_contain_overlap_selec(Datum *mcelem, int nmcelem,
 		else
 		{
 			/*
-			 * The element is not in MCELEM.  Punt, but assume that the
-			 * selectivity cannot be more than minfreq / 2.
+			 * The element is not in MCELEM.  Estimate its frequency as half
+			 * that of the least-frequent MCE.  (We know it cannot be more
+			 * than minfreq, and it could be a great deal less.  Half seems
+			 * like a good compromise.)  For probably-historical reasons,
+			 * clamp to not more than DEFAULT_CONTAIN_SEL.
 			 */
 			elem_selec = Min(DEFAULT_CONTAIN_SEL, minfreq / 2);
 		}
@@ -728,7 +734,7 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 
 	/*
 	 * Grab some of the summary statistics that compute_array_stats() stores:
-	 * lowest frequency, frequency of null elements, and average distinct
+	 * lowest MCE frequency, frequency of null elements, and average distinct
 	 * element count.
 	 */
 	minfreq = numbers[nmcelem];
@@ -802,8 +808,11 @@ mcelem_array_contained_selec(Datum *mcelem, int nmcelem,
 		else
 		{
 			/*
-			 * The element is not in MCELEM.  Punt, but assume that the
-			 * selectivity cannot be more than minfreq / 2.
+			 * The element is not in MCELEM.  Estimate its frequency as half
+			 * that of the least-frequent MCE.  (We know it cannot be more
+			 * than minfreq, and it could be a great deal less.  Half seems
+			 * like a good compromise.)  For probably-historical reasons,
+			 * clamp to not more than DEFAULT_CONTAIN_SEL.
 			 */
 			elem_selec[unique_nitems] = Min(DEFAULT_CONTAIN_SEL,
 											minfreq / 2);

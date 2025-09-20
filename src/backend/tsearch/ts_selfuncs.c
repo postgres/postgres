@@ -239,8 +239,8 @@ mcelem_tsquery_selec(TSQuery query, Datum *mcelem, int nmcelem,
 	}
 
 	/*
-	 * Grab the lowest frequency. compute_tsvector_stats() stored it for us in
-	 * the one before the last cell of the Numbers array. See ts_typanalyze.c
+	 * Grab the lowest MCE frequency. compute_tsvector_stats() stored it for
+	 * us in the one before the last cell of the Numbers array.
 	 */
 	minfreq = numbers[nnumbers - 2];
 
@@ -374,8 +374,11 @@ tsquery_opr_selec(QueryItem *item, char *operand,
 			else
 			{
 				/*
-				 * The element is not in MCELEM.  Punt, but assume that the
-				 * selectivity cannot be more than minfreq / 2.
+				 * The element is not in MCELEM.  Estimate its frequency as
+				 * half that of the least-frequent MCE.  (We know it cannot be
+				 * more than minfreq, and it could be a great deal less.  Half
+				 * seems like a good compromise.)  For probably-historical
+				 * reasons, clamp to not more than DEFAULT_TS_MATCH_SEL.
 				 */
 				selec = Min(DEFAULT_TS_MATCH_SEL, minfreq / 2);
 			}
