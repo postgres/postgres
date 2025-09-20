@@ -1528,6 +1528,17 @@ boolvarsel(PlannerInfo *root, Node *arg, int varRelid)
 		selec = var_eq_const(&vardata, BooleanEqualOperator, InvalidOid,
 							 BoolGetDatum(true), false, true, false);
 	}
+	else if (is_funcclause(arg))
+	{
+		/*
+		 * If we have no stats and it's a function call, estimate 0.3333333.
+		 * This seems a pretty unprincipled choice, but Postgres has been
+		 * using that estimate for function calls since 1992.  The hoariness
+		 * of this behavior suggests that we should not be in too much hurry
+		 * to use another value.
+		 */
+		selec = 0.3333333;
+	}
 	else
 	{
 		/* Otherwise, the default estimate is 0.5 */
