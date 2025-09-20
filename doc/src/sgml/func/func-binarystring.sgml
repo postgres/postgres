@@ -728,6 +728,7 @@
        Encodes binary data into a textual representation; supported
        <parameter>format</parameter> values are:
        <link linkend="encode-format-base64"><literal>base64</literal></link>,
+       <link linkend="encode-format-base64url"><literal>base64url</literal></link>,
        <link linkend="encode-format-escape"><literal>escape</literal></link>,
        <link linkend="encode-format-hex"><literal>hex</literal></link>.
       </para>
@@ -781,6 +782,24 @@
        newline, space, and tab characters.  Otherwise, an error is
        raised when <function>decode</function> is supplied invalid
        base64 data &mdash; including when trailing padding is incorrect.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry id="encode-format-base64url">
+     <term>base64url
+      <indexterm>
+       <primary>base64url format</primary>
+      </indexterm></term>
+     <listitem>
+      <para>
+       The <literal>base64url</literal> format is that of
+       <ulink url="https://datatracker.ietf.org/doc/html/rfc4648#section-5">
+       RFC 4648 Section 5</ulink>, a <literal>base64</literal> variant safe to
+       use in filenames and URLs.  The <literal>base64url</literal> alphabet
+       use <literal>'-'</literal> instead of <literal>'+'</literal> and
+       <literal>'_'</literal> instead of <literal>'/'</literal> and also omits
+       the <literal>'='</literal> padding character.
       </para>
      </listitem>
     </varlistentry>

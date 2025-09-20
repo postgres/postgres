@@ -2518,6 +2518,156 @@ SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
 (1 row)
 
 --
+-- base64url encoding/decoding
+--
+SET bytea_output TO hex;
+-- Simple encoding/decoding
+SELECT encode('\x69b73eff', 'base64url');  -- abc-_w
+ encode 
+--------
+ abc-_w
+(1 row)
+
+SELECT decode('abc-_w', 'base64url');      -- \x69b73eff
+   decode   
+------------
+ \x69b73eff
+(1 row)
+
+-- Round-trip: decode(encode(x)) = x
+SELECT decode(encode('\x1234567890abcdef00', 'base64url'), 'base64url');  -- \x1234567890abcdef00
+        decode        
+----------------------
+ \x1234567890abcdef00
+(1 row)
+
+-- Empty input
+SELECT encode('', 'base64url');  -- ''
+ encode 
+--------
+ 
+(1 row)
+
+SELECT decode('', 'base64url');  -- ''
+ decode 
+--------
+ \x
+(1 row)
+
+-- 1 byte input
+SELECT encode('\x01', 'base64url');  -- AQ
+ encode 
+--------
+ AQ
+(1 row)
+
+SELECT decode('AQ', 'base64url');    -- \x01
+ decode 
+--------
+ \x01
+(1 row)
+
+-- 2 byte input
+SELECT encode('\x0102'::bytea, 'base64url');  -- AQI
+ encode 
+--------
+ AQI
+(1 row)
+
+SELECT decode('AQI', 'base64url');            -- \x0102
+ decode 
+--------
+ \x0102
+(1 row)
+
+-- 3 byte input (no padding needed)
+SELECT encode('\x010203'::bytea, 'base64url');  -- AQID
+ encode 
+--------
+ AQID
+(1 row)
+
+SELECT decode('AQID', 'base64url');             -- \x010203
+  decode  
+----------
+ \x010203
+(1 row)
+
+-- 4 byte input (results in 6 base64 chars)
+SELECT encode('\xdeadbeef'::bytea, 'base64url');  -- 3q2-7w
+ encode 
+--------
+ 3q2-7w
+(1 row)
+
+SELECT decode('3q2-7w', 'base64url');             -- \xdeadbeef
+   decode   
+------------
+ \xdeadbeef
+(1 row)
+
+-- Round-trip test for all lengths from 0–4
+SELECT encode(decode(encode(E'\\x', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ 
+(1 row)
+
+SELECT encode(decode(encode(E'\\x00', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AA
+(1 row)
+
+SELECT encode(decode(encode(E'\\x0001', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAE
+(1 row)
+
+SELECT encode(decode(encode(E'\\x000102', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAEC
+(1 row)
+
+SELECT encode(decode(encode(E'\\x00010203', 'base64url'), 'base64url'), 'base64url');
+ encode 
+--------
+ AAECAw
+(1 row)
+
+-- Invalid inputs (should ERROR)
+-- invalid character '@'
+SELECT decode('QQ@=', 'base64url');
+ERROR:  invalid symbol "@" found while decoding base64url sequence
+-- missing characters (incomplete group)
+SELECT decode('QQ', 'base64url');  -- ok (1 byte)
+ decode 
+--------
+ \x41
+(1 row)
+
+SELECT decode('QQI', 'base64url'); -- ok (2 bytes)
+ decode 
+--------
+ \x4102
+(1 row)
+
+SELECT decode('QQIDQ', 'base64url'); -- ERROR: invalid base64url end sequence
+ERROR:  invalid base64url end sequence
+HINT:  Input data is missing padding, is truncated, or is otherwise corrupted.
+-- unexpected '=' at start
+SELECT decode('=QQQ', 'base64url');
+ERROR:  unexpected "=" while decoding base64url sequence
+-- valid base64 padding in base64url (optional, but accepted)
+SELECT decode('abc-_w==', 'base64url');  -- should decode to \x69b73eff
+   decode   
+------------
+ \x69b73eff
+(1 row)
+
+--
 -- get_bit/set_bit etc
 --
 SELECT get_bit('\x1234567890abcdef00'::bytea, 43);

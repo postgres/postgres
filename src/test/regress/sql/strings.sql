@@ -800,6 +800,60 @@ SELECT encode('\x1234567890abcdef00', 'escape');
 SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
 
 --
+-- base64url encoding/decoding
+--
+SET bytea_output TO hex;
+
+-- Simple encoding/decoding
+SELECT encode('\x69b73eff', 'base64url');  -- abc-_w
+SELECT decode('abc-_w', 'base64url');      -- \x69b73eff
+
+-- Round-trip: decode(encode(x)) = x
+SELECT decode(encode('\x1234567890abcdef00', 'base64url'), 'base64url');  -- \x1234567890abcdef00
+
+-- Empty input
+SELECT encode('', 'base64url');  -- ''
+SELECT decode('', 'base64url');  -- ''
+
+-- 1 byte input
+SELECT encode('\x01', 'base64url');  -- AQ
+SELECT decode('AQ', 'base64url');    -- \x01
+
+-- 2 byte input
+SELECT encode('\x0102'::bytea, 'base64url');  -- AQI
+SELECT decode('AQI', 'base64url');            -- \x0102
+
+-- 3 byte input (no padding needed)
+SELECT encode('\x010203'::bytea, 'base64url');  -- AQID
+SELECT decode('AQID', 'base64url');             -- \x010203
+
+-- 4 byte input (results in 6 base64 chars)
+SELECT encode('\xdeadbeef'::bytea, 'base64url');  -- 3q2-7w
+SELECT decode('3q2-7w', 'base64url');             -- \xdeadbeef
+
+-- Round-trip test for all lengths from 0–4
+SELECT encode(decode(encode(E'\\x', 'base64url'), 'base64url'), 'base64url');
+SELECT encode(decode(encode(E'\\x00', 'base64url'), 'base64url'), 'base64url');
+SELECT encode(decode(encode(E'\\x0001', 'base64url'), 'base64url'), 'base64url');
+SELECT encode(decode(encode(E'\\x000102', 'base64url'), 'base64url'), 'base64url');
+SELECT encode(decode(encode(E'\\x00010203', 'base64url'), 'base64url'), 'base64url');
+
+-- Invalid inputs (should ERROR)
+-- invalid character '@'
+SELECT decode('QQ@=', 'base64url');
+
+-- missing characters (incomplete group)
+SELECT decode('QQ', 'base64url');  -- ok (1 byte)
+SELECT decode('QQI', 'base64url'); -- ok (2 bytes)
+SELECT decode('QQIDQ', 'base64url'); -- ERROR: invalid base64url end sequence
+
+-- unexpected '=' at start
+SELECT decode('=QQQ', 'base64url');
+
+-- valid base64 padding in base64url (optional, but accepted)
+SELECT decode('abc-_w==', 'base64url');  -- should decode to \x69b73eff
+
+--
 -- get_bit/set_bit etc
 --
 SELECT get_bit('\x1234567890abcdef00'::bytea, 43);
