@@ -1579,7 +1579,10 @@ if uuidopt != 'none'
   elif uuidopt == 'ossp'
     # In upstream, the package and library is called just 'uuid', but many
     # distros change it to 'ossp-uuid'.
-    uuid = dependency('ossp-uuid', 'uuid', required: false)
+    uuid = dependency('ossp-uuid', required: false)
+    if not uuid.found()
+      uuid = dependency('uuid', required: false)
+    endif
     uuidfunc = 'uuid_export'
     uuidheader = 'uuid.h'
 
