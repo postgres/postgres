@@ -1,10 +1,10 @@
 /*--------------------------------------------------------------------------
- * gin.h
+ * gin_tuple.h
  *	  Public header file for Generalized Inverted Index access method.
  *
  *	Copyright (c) 2006-2025, PostgreSQL Global Development Group
  *
- *	src/include/access/gin.h
+ *	src/include/access/gin_tuple.h
  *--------------------------------------------------------------------------
  */
 #ifndef GIN_TUPLE_H

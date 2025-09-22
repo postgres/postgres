@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * amcheck.h
+ * verify_common.h
  *		Shared routines for amcheck verifications.
  *
  * Copyright (c) 2016-2025, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  contrib/amcheck/amcheck.h
+ *	  contrib/amcheck/verify_common.h
  *
  *-------------------------------------------------------------------------
  */
