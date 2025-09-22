@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_walsummary (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-16 05:23+0000\n"
+"POT-Creation-Date: 2025-09-20 09:53+0000\n"
 "PO-Revision-Date: 2024-08-01 12:41-0400\n"
 "Last-Translator: Álvaor Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -20,22 +20,22 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Vim\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "detalle: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "consejo: "
@@ -51,45 +51,45 @@ msgstr "memoria agotada\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
-#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
-#: ../../common/file_utils.c:406 ../../common/file_utils.c:480
-#: pg_walsummary.c:109
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502
+#: pg_walsummary.c:108
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #: ../../fe_utils/option_utils.c:99
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "esta instalación no soporta el método de sync «%s»"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
@@ -109,22 +109,22 @@ msgstr "%s debe estar en el rango %d..%d"
 msgid "unrecognized sync method: %s"
 msgstr "método sync no reconocido: %s"
 
-#: pg_walsummary.c:87 pg_walsummary.c:95
+#: pg_walsummary.c:86 pg_walsummary.c:94
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_walsummary.c:94
+#: pg_walsummary.c:93
 #, c-format
 msgid "no input files specified"
 msgstr "no se especificaron archivos de entrada"
 
-#: pg_walsummary.c:252
+#: pg_walsummary.c:251
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: pg_walsummary.c:267
+#: pg_walsummary.c:266
 #, c-format
 msgid ""
 "%s prints the contents of a WAL summary file.\n"
@@ -133,17 +133,17 @@ msgstr ""
 "%s imprime el contenido de un archivo de resumen de WAL.\n"
 "\n"
 
-#: pg_walsummary.c:268
+#: pg_walsummary.c:267
 #, c-format
 msgid "Usage:\n"
 msgstr "Empleo:\n"
 
-#: pg_walsummary.c:269
+#: pg_walsummary.c:268
 #, c-format
 msgid "  %s [OPTION]... FILE...\n"
 msgstr "  %s [OPCIÓN]... ARCHIVO...\n"
 
-#: pg_walsummary.c:270
+#: pg_walsummary.c:269
 #, c-format
 msgid ""
 "\n"
@@ -152,27 +152,27 @@ msgstr ""
 "\n"
 "Opciones:\n"
 
-#: pg_walsummary.c:271
+#: pg_walsummary.c:270
 #, c-format
 msgid "  -i, --individual          list block numbers individually, not as ranges\n"
 msgstr "  -i, --individual          listar números de bloque individualmente, no como rangos\n"
 
-#: pg_walsummary.c:272
+#: pg_walsummary.c:271
 #, c-format
 msgid "  -q, --quiet               don't print anything, just parse the files\n"
 msgstr "  -q, --quiet               no escribir nada, sólo procesar los archivos\n"
 
-#: pg_walsummary.c:273
+#: pg_walsummary.c:272
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             mostrar información de version y salir\n"
 
-#: pg_walsummary.c:274
+#: pg_walsummary.c:273
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                mostrar esta ayuda y salir\n"
 
-#: pg_walsummary.c:276
+#: pg_walsummary.c:275
 #, c-format
 msgid ""
 "\n"
@@ -181,7 +181,7 @@ msgstr ""
 "\n"
 "Reporte errores a <%s>.\n"
 
-#: pg_walsummary.c:277
+#: pg_walsummary.c:276
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"

@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the PostgreSQL package.
 # Serguei A. Mokhov, <mokhov@cs.concordia.ca>, 2003-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-09-05 08:25+0300\n"
+"PO-Revision-Date: 2025-09-13 17:25+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -177,13 +177,13 @@ msgid "Interrupted\n"
 msgstr "Прервано\n"
 
 #: ../../fe_utils/print.c:3188
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Cannot print table contents: number of cells %<PRIu64> is equal to or "
 "exceeds maximum %zu.\n"
 msgstr ""
-"Вывести содержимое таблицы нельзя: число ячеек %lld достигло максимума "
-"%lld.\n"
+"Вывести содержимое таблицы нельзя: число ячеек %<PRIu64> достигло максимума "
+"%zu.\n"
 
 #: ../../fe_utils/print.c:3229
 #, c-format
@@ -192,11 +192,12 @@ msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
 #: ../../fe_utils/print.c:3272
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Cannot add cell to table content: total cell count of %<PRIu64> exceeded.\n"
 msgstr ""
-"Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%lld).\n"
+"Ошибка добавления ячейки в таблицу: превышен предел числа ячеек "
+"(%<PRIu64>).\n"
 
 #: ../../fe_utils/print.c:3530
 #, c-format
@@ -1158,9 +1159,9 @@ msgid "cannot use the \"%s\" option with the \"%s\" option"
 msgstr "параметр \"%s\" нельзя использовать совместно с \"%s\""
 
 #: vacuumdb.c:380
-#, fuzzy, c-format
+#, c-format
 msgid "cannot use the \"%s\" option without \"%s\" or \"%s\""
-msgstr "параметр \"%s\" нельзя использовать совместно с \"%s\""
+msgstr "параметр \"%s\" нельзя использовать без \"%s\" или \"%s\""
 
 #: vacuumdb.c:454
 #, c-format
@@ -1322,6 +1323,8 @@ msgid ""
 "      --missing-stats-only        only analyze relations with missing "
 "statistics\n"
 msgstr ""
+"      --missing-stats-only        анализировать только отношения без "
+"статистики\n"
 
 #: vacuumdb.c:1352
 #, c-format

@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2019, 2020, 2021, 2022, 2024.
+# SPDX-FileCopyrightText: 2019, 2020, 2021, 2022, 2024, 2025 Alexander Lakhin <a.lakhin@postgrespro.ru>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_verify_checksums (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-09-04 13:35+0300\n"
+"PO-Revision-Date: 2025-08-31 07:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -265,9 +265,9 @@ msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
 #: pg_checksums.c:144
-#, fuzzy, c-format
+#, c-format
 msgid "%<PRId64>/%<PRId64> MB (%d%%) computed"
-msgstr "%lld/%lld МБ (%d%%) обработано"
+msgstr "%<PRId64>/%<PRId64> МБ (%d%%) обработано"
 
 #: pg_checksums.c:205
 #, c-format
@@ -388,19 +388,19 @@ msgid "Checksum operation completed\n"
 msgstr "Обработка контрольных сумм завершена\n"
 
 #: pg_checksums.c:606
-#, fuzzy, c-format
+#, c-format
 msgid "Files scanned:   %<PRId64>\n"
-msgstr "Просканировано файлов: %lld\n"
+msgstr "Просканировано файлов: %<PRId64>\n"
 
 #: pg_checksums.c:607
-#, fuzzy, c-format
+#, c-format
 msgid "Blocks scanned:  %<PRId64>\n"
-msgstr "Просканировано блоков: %lld\n"
+msgstr "Просканировано блоков: %<PRId64>\n"
 
 #: pg_checksums.c:610
-#, fuzzy, c-format
+#, c-format
 msgid "Bad checksums:  %<PRId64>\n"
-msgstr "Неверные контрольные суммы: %lld\n"
+msgstr "Неверные контрольные суммы: %<PRId64>\n"
 
 #: pg_checksums.c:611 pg_checksums.c:643
 #, c-format
@@ -408,14 +408,14 @@ msgid "Data checksum version: %u\n"
 msgstr "Версия контрольных сумм данных: %u\n"
 
 #: pg_checksums.c:618
-#, fuzzy, c-format
+#, c-format
 msgid "Files written:  %<PRId64>\n"
-msgstr "Записано файлов: %lld\n"
+msgstr "Записано файлов: %<PRId64>\n"
 
 #: pg_checksums.c:619
-#, fuzzy, c-format
+#, c-format
 msgid "Blocks written: %<PRId64>\n"
-msgstr "Записано блоков: %lld\n"
+msgstr "Записано блоков: %<PRId64>\n"
 
 #: pg_checksums.c:635
 #, c-format

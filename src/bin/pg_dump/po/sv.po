@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 17\n"
+"Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-16 15:22+0000\n"
-"PO-Revision-Date: 2025-08-17 20:48+0200\n"
+"POT-Creation-Date: 2025-09-03 04:21+0000\n"
+"PO-Revision-Date: 2025-09-07 15:44+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -37,9 +37,9 @@ msgid "hint: "
 msgstr "tips: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
-#: ../../common/compression.c:150 compress_gzip.c:413 compress_gzip.c:420
-#: compress_io.c:108 compress_lz4.c:780 compress_lz4.c:787 compress_zstd.c:25
-#: compress_zstd.c:31
+#: ../../common/compression.c:150 compress_gzip.c:428 compress_gzip.c:435
+#: compress_io.c:108 compress_lz4.c:800 compress_lz4.c:807 compress_zstd.c:26
+#: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "detta bygge stöder inte komprimering med %s"
@@ -480,7 +480,7 @@ msgstr "kunde inte initiera komprimeringsbibliotek: %s"
 msgid "could not close compression stream: %s"
 msgstr "kunde inte stänga komprimeringsströmmen: %s"
 
-#: compress_gzip.c:113 compress_lz4.c:227 compress_zstd.c:109
+#: compress_gzip.c:113 compress_lz4.c:228 compress_zstd.c:110
 #, c-format
 msgid "could not compress data: %s"
 msgstr "kunde inte komprimera data: %s"
@@ -495,81 +495,111 @@ msgstr "kunde inte packa upp data: %s"
 msgid "could not close compression library: %s"
 msgstr "kunde inte stänga komprimeringsbiblioteket: %s"
 
-#: compress_gzip.c:266 compress_lz4.c:608 compress_lz4.c:628 compress_lz4.c:647
+#: compress_gzip.c:277 compress_lz4.c:513 compress_lz4.c:616 compress_lz4.c:633
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "kunde inte läsa från infilen: %s"
 
-#: compress_gzip.c:295 compress_none.c:97 compress_none.c:139
-#: compress_zstd.c:375 pg_backup_custom.c:650
+#: compress_gzip.c:294 compress_zstd.c:382
+#, c-format
+msgid "could not write to file: %s"
+msgstr "kan inte skriva till fil: %s"
+
+#: compress_gzip.c:310 compress_lz4.c:494 compress_none.c:94
+#: compress_none.c:135 compress_zstd.c:315 pg_backup_custom.c:650
 #, c-format
 msgid "could not read from input file: %m"
 msgstr "kunde inte läsa från infilen: %m"
 
-#: compress_gzip.c:297 compress_lz4.c:630 compress_none.c:141
-#: compress_zstd.c:373 pg_backup_custom.c:648 pg_backup_directory.c:538
+#: compress_gzip.c:312 compress_lz4.c:635 compress_none.c:137
+#: compress_zstd.c:400 pg_backup_custom.c:648 pg_backup_directory.c:515
 #: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "kunde inte läsa från infilen: slut på filen"
 
-#: compress_lz4.c:157
+#: compress_lz4.c:158
 #, c-format
 msgid "could not create LZ4 decompression context: %s"
 msgstr "kunde inte skapa kontext för LZ4-dekomprimering: %s"
 
-#: compress_lz4.c:180
+#: compress_lz4.c:181
 #, c-format
 msgid "could not decompress: %s"
 msgstr "kunde inte dekomprimera: %s"
 
-#: compress_lz4.c:193
+#: compress_lz4.c:194
 #, c-format
 msgid "could not free LZ4 decompression context: %s"
 msgstr "kunde inte frigöra kontext för LZ4-dekomprimering: %s"
 
-#: compress_lz4.c:259 compress_lz4.c:266 compress_lz4.c:680 compress_lz4.c:690
+#: compress_lz4.c:260 compress_lz4.c:267 compress_lz4.c:689 compress_lz4.c:704
 #, c-format
 msgid "could not end compression: %s"
 msgstr "kunde inte avsluta komprimering: %s"
 
-#: compress_lz4.c:301
+#: compress_lz4.c:302
 #, c-format
 msgid "could not initialize LZ4 compression: %s"
 msgstr "kunde inte initiera LZ4-komprimering: %s"
 
-#: compress_lz4.c:697
+#: compress_lz4.c:463 compress_lz4.c:581
+#, c-format
+msgid "unable to initialize LZ4 library: %s"
+msgstr "kunde inte initiera LZ4-bibliotek: %s"
+
+#: compress_lz4.c:593
+#, c-format
+msgid "error during writing: %s"
+msgstr "fel vid skrivning: %s"
+
+#: compress_lz4.c:599
+#, c-format
+msgid "error during writing: %m"
+msgstr "fel vid skrivning: %m"
+
+#: compress_lz4.c:698
+#, c-format
+msgid "could not write to output file: %m"
+msgstr "kunde inte skriva till utdatafil: %m"
+
+#: compress_lz4.c:711
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "kunde inte avsluta dekomprimering: %s"
 
-#: compress_zstd.c:66
+#: compress_lz4.c:726 compress_none.c:156
+#, c-format
+msgid "could not close file: %m"
+msgstr "kunde inte stänga fil: %m"
+
+#: compress_none.c:109 compress_zstd.c:389
+#, c-format
+msgid "could not write to file: %m"
+msgstr "kunde inte skriva till fil: %m"
+
+#: compress_zstd.c:67
 #, c-format
 msgid "could not set compression parameter \"%s\": %s"
 msgstr "kunde inte sätta komprimeringsparameter \"%s\": %s"
 
-#: compress_zstd.c:78 compress_zstd.c:233 compress_zstd.c:492
-#: compress_zstd.c:500
+#: compress_zstd.c:79 compress_zstd.c:234 compress_zstd.c:283
+#: compress_zstd.c:373
 #, c-format
 msgid "could not initialize compression library"
 msgstr "kunde inte initierar komprimeringsbibliotek"
 
-#: compress_zstd.c:196 compress_zstd.c:310
+#: compress_zstd.c:197 compress_zstd.c:336
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "kunde inte dekomprimera data: %s"
-
-#: compress_zstd.c:503
-#, c-format
-msgid "unhandled mode \"%s\""
-msgstr "kan inte hantera läget \"%s\""
 
 #: connectdb.c:56 connectdb.c:165 pg_backup_db.c:126
 msgid "Password: "
 msgstr "Lösenord: "
 
 #: connectdb.c:83 connectdb.c:174 pg_backup_db.c:203 pg_dump.c:937
-#: pg_dump_sort.c:1453 pg_dump_sort.c:1473
+#: pg_dump_sort.c:1466 pg_dump_sort.c:1486
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -907,14 +937,14 @@ msgid "could not find entry for ID %d"
 msgstr "kunde inte hitta en post för ID %d"
 
 #: pg_backup_archiver.c:1639 pg_backup_directory.c:187
-#: pg_backup_directory.c:586
+#: pg_backup_directory.c:563
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "kunde inte stänga TOC-filen: %m"
 
 #: pg_backup_archiver.c:1726 pg_backup_custom.c:151 pg_backup_directory.c:301
-#: pg_backup_directory.c:573 pg_backup_directory.c:639
-#: pg_backup_directory.c:657 pg_dumpall.c:548
+#: pg_backup_directory.c:550 pg_backup_directory.c:616
+#: pg_backup_directory.c:634 pg_dumpall.c:548
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "kunde inte öppna utdatafilen \"%s\": %m"
@@ -987,7 +1017,7 @@ msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does 
 msgstr "katalogen \"%s\" verkar inte vara ett giltigt arkiv (\"toc.dat\" finns inte)"
 
 #: pg_backup_archiver.c:2293 pg_backup_custom.c:168 pg_backup_custom.c:813
-#: pg_backup_directory.c:172 pg_backup_directory.c:364
+#: pg_backup_directory.c:172 pg_backup_directory.c:358
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "kunde inte öppna indatafilen \"%s\": %m"
@@ -1344,58 +1374,47 @@ msgstr "kunde inte genomföra databastransaktionen"
 msgid "no output directory specified"
 msgstr "ingen utdatakatalog angiven"
 
-#: pg_backup_directory.c:325 pg_backup_directory.c:479
-#: pg_backup_directory.c:517
-#, c-format
-msgid "could not write to output file: %s"
-msgstr "kunde inte skriva till utdatafil: %s"
-
-#: pg_backup_directory.c:343
+#: pg_backup_directory.c:337
 #, c-format
 msgid "could not close data file: %m"
 msgstr "kan inte stänga datafil: %m"
 
-#: pg_backup_directory.c:376
+#: pg_backup_directory.c:370
 #, c-format
 msgid "could not close data file \"%s\": %m"
 msgstr "kan inte stänga datafil \"%s\": %m"
 
-#: pg_backup_directory.c:428
+#: pg_backup_directory.c:422
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "kunde inte öppna stora objekts TOC-fil \"%s\" för läsning: %m"
 
-#: pg_backup_directory.c:439
+#: pg_backup_directory.c:433
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "ogiltig rad i stora objekts TOC-fil \"%s\": \"%s\""
 
-#: pg_backup_directory.c:448
+#: pg_backup_directory.c:442
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "fel vid lösning av stora objekts TOC-fil \"%s\""
 
-#: pg_backup_directory.c:452
+#: pg_backup_directory.c:446
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "kunde inte stänga stora objekts TOC-fil \"%s\": %m"
 
-#: pg_backup_directory.c:675
+#: pg_backup_directory.c:652
 #, c-format
 msgid "could not close LO data file: %m"
 msgstr "kan inte stänga LO-datafil: %m"
 
-#: pg_backup_directory.c:685
-#, c-format
-msgid "could not write to LOs TOC file: %s"
-msgstr "kunde inte skriva till TOC-fil för LO: %s"
-
-#: pg_backup_directory.c:701
+#: pg_backup_directory.c:671
 #, c-format
 msgid "could not close LOs TOC file: %m"
 msgstr "kunde inte stänga TOC-fil för LO: %m"
 
-#: pg_backup_directory.c:720
+#: pg_backup_directory.c:690
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "filnamnet är för långt: \"%s\""
@@ -2598,39 +2617,39 @@ msgstr "inget refererat objekt %u %u"
 msgid "%s filter for \"%s\" is not allowed"
 msgstr "%s-filter för \"%s\" tillåts inte"
 
-#: pg_dump_sort.c:635
+#: pg_dump_sort.c:648
 #, c-format
 msgid "invalid dumpId %d"
 msgstr "ogiltigt dumpId %d"
 
-#: pg_dump_sort.c:641
+#: pg_dump_sort.c:654
 #, c-format
 msgid "invalid dependency %d"
 msgstr "ogiltigt beroende %d"
 
-#: pg_dump_sort.c:805
+#: pg_dump_sort.c:818
 #, c-format
 msgid "could not identify dependency loop"
 msgstr "kunde inte fastställa beroendeloop"
 
-#: pg_dump_sort.c:1449
+#: pg_dump_sort.c:1462
 #, c-format
 msgid "there are circular foreign-key constraints on this table:"
 msgid_plural "there are circular foreign-key constraints among these tables:"
 msgstr[0] "det finns cirkulära främmande nyckelberoenden för denna tabell:"
 msgstr[1] "det finns cirkulära främmande nyckelberoenden för dessa tabeller:"
 
-#: pg_dump_sort.c:1454
+#: pg_dump_sort.c:1467
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints."
 msgstr "Du kan eventiellt inte återställa dumpen utan att använda --disable-triggers eller temporärt droppa vilkoren."
 
-#: pg_dump_sort.c:1455
+#: pg_dump_sort.c:1468
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
 msgstr "Överväg att göra en full dump istället för --data-only för att undvika detta problem."
 
-#: pg_dump_sort.c:1467
+#: pg_dump_sort.c:1480
 #, c-format
 msgid "could not resolve dependency loop among these items:"
 msgstr "kunde inte räta ut beroendeloopen för dessa saker:"

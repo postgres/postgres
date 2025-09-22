@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-09 13:20+0000\n"
-"PO-Revision-Date: 2025-07-09 17:21+0200\n"
+"POT-Creation-Date: 2025-09-20 04:49+0000\n"
+"PO-Revision-Date: 2025-09-20 11:01+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:161
@@ -240,7 +240,7 @@ msgstr "Une liste des colonnes problématiques se trouve dans le fichier :"
 
 #: check.c:431 check.c:1038 check.c:1189 check.c:1272 check.c:1361 check.c:1452
 #: check.c:1584 check.c:1656 check.c:1757 check.c:1804 check.c:1884
-#: check.c:2189 check.c:2208 check.c:2254 check.c:2307 file.c:378 file.c:415
+#: check.c:2194 check.c:2213 check.c:2259 check.c:2312 file.c:378 file.c:415
 #: function.c:208 option.c:519 version.c:79 version.c:162
 #, c-format
 msgid "could not open file \"%s\": %m"
@@ -449,7 +449,7 @@ msgid "template0 must not allow connections, i.e. its pg_database.datallowconn m
 msgstr "template0 ne doit pas autoriser les connexions, ie pg_database.datallowconn doit valoir false"
 
 #: check.c:1203 check.c:1324 check.c:1420 check.c:1548 check.c:1624
-#: check.c:1710 check.c:1770 check.c:1853 check.c:2221 check.c:2363
+#: check.c:1710 check.c:1770 check.c:1853 check.c:2226 check.c:2368
 #: function.c:229
 #, c-format
 msgid "fatal"
@@ -593,7 +593,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s"
 msgstr ""
@@ -601,7 +601,7 @@ msgstr ""
 "Si les colonnes parents sont NOT NULL, alors la colonne enfant doit\n"
 "aussi être marquée NOT NULL, sinon la mise à jour échouera.\n"
 "Vous pouvez corriger ceci en exécutant\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"  ALTER TABLE nom_table ALTER nom_colonne SET NOT NULL;\n"
 "sur chaque colonne listée dans le fichier :\n"
 "    %s"
 
@@ -652,12 +652,12 @@ msgstr ""
 msgid "Checking for objects affected by Unicode update"
 msgstr "Vérification des objets affectés par la mise à jour Unicode"
 
-#: check.c:2033 version.c:121
+#: check.c:2038 version.c:121
 #, c-format
 msgid "warning"
 msgstr "attention"
 
-#: check.c:2034
+#: check.c:2039
 #, c-format
 msgid ""
 "Your installation contains relations that might be affected by a new version of Unicode.\n"
@@ -668,52 +668,52 @@ msgstr ""
 "Une liste des relations potentiellement affectées se trouve dans le fichier :\n"
 "    %s"
 
-#: check.c:2070
+#: check.c:2075
 #, c-format
 msgid "Checking for new cluster logical replication slots"
 msgstr "Vérification des slots de réplication logique de la nouvelle instance"
 
-#: check.c:2078
+#: check.c:2083
 #, c-format
 msgid "could not count the number of logical replication slots"
 msgstr "n'a pas pu compter le nombre de slots de réplication logique"
 
-#: check.c:2083
+#: check.c:2088
 #, c-format
 msgid "expected 0 logical replication slots but found %d"
 msgstr "attendait 0 slot de réplication logique mais en a trouvé %d"
 
-#: check.c:2093 check.c:2144
+#: check.c:2098 check.c:2149
 #, c-format
 msgid "could not determine parameter settings on new cluster"
 msgstr "n'a pas pu déterminer la configuration sur la nouvelle instance"
 
-#: check.c:2098
+#: check.c:2103
 #, c-format
 msgid "\"wal_level\" must be \"logical\" but is set to \"%s\""
 msgstr "« wal_level » doit être configuré à « logical » mais est configuré à « %s »"
 
-#: check.c:2104
+#: check.c:2109
 #, c-format
 msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of logical replication slots (%d) on the old cluster"
 msgstr "« max_replication_slots » (%d) doit être supérieur ou égal au nombre de slots de réplication logique (%d) sur l'ancienne instance"
 
-#: check.c:2136
+#: check.c:2141
 #, c-format
 msgid "Checking for new cluster configuration for subscriptions"
 msgstr "Vérification de la configuration de la nouvelle instance pour les souscriptions"
 
-#: check.c:2148
+#: check.c:2153
 #, c-format
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "« max_active_replication_origins » (%d) doit être supérieur ou égal au nombre de souscriptions (%d) sur l'ancienne instance"
 
-#: check.c:2170
+#: check.c:2175
 #, c-format
 msgid "Checking for valid logical replication slots"
 msgstr "Vérification des slots de réplication logique valides"
 
-#: check.c:2222
+#: check.c:2227
 #, c-format
 msgid ""
 "Your installation contains logical replication slots that cannot be upgraded.\n"
@@ -728,12 +728,12 @@ msgstr ""
 "une liste des slots problématiques dans le fichier :\n"
 "    %s"
 
-#: check.c:2282
+#: check.c:2287
 #, c-format
 msgid "Checking for subscription state"
 msgstr "Vérification de l'état de souscription"
 
-#: check.c:2364
+#: check.c:2369
 #, c-format
 msgid ""
 "Your installation contains subscriptions without origin or having relations not in i (initialize) or r (ready) state.\n"
@@ -2065,7 +2065,7 @@ msgstr "n'a pas pu ouvrir le fichier de version « %s » : %m"
 msgid "could not parse version file \"%s\""
 msgstr "n'a pas pu analyser le fichier de version « %s »"
 
-#: server.c:317
+#: server.c:299
 #, c-format
 msgid ""
 "\n"
@@ -2074,7 +2074,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:321
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -2083,7 +2083,7 @@ msgstr ""
 "n'a pas pu se connecter au postmaster source lancé avec la commande :\n"
 "%s"
 
-#: server.c:325
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -2092,22 +2092,22 @@ msgstr ""
 "n'a pas pu se connecter au postmaster cible lancé avec la commande :\n"
 "%s"
 
-#: server.c:339
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl a échoué à démarrer le serveur source ou connexion échouée"
 
-#: server.c:341
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl a échoué à démarrer le serveur cible ou connexion échouée"
 
-#: server.c:386 task.c:195
+#: server.c:368 task.c:195
 #, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
 
-#: server.c:399
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "la variable d'environnement libpq %s a une valeur serveur non locale : %s"

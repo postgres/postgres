@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-09-07 11:12+0300\n"
+"PO-Revision-Date: 2025-09-13 18:09+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -1422,6 +1422,9 @@ msgid ""
 "                                  databases and databases that don't allow "
 "connections\n"
 msgstr ""
+"  -a, --all                       создать подписки для всех баз данных, "
+"кроме шаблонов\n"
+"                                  и баз данных, не допускающих подключения\n"
 
 #: pg_createsubscriber.c:251
 #, c-format
@@ -1474,12 +1477,13 @@ msgstr ""
 "  -t, --recovery-timeout=СЕК      время ожидания окончания восстановления\n"
 
 #: pg_createsubscriber.c:258
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -T, --enable-two-phase          enable two-phase commit for all "
 "subscriptions\n"
 msgstr ""
-"  -d, --database=ИМЯ_БД           база, в которой будет создана подписка\n"
+"  -T, --enable-two-phase          включить двухфазную фиксацию для всех "
+"подписок\n"
 
 #: pg_createsubscriber.c:259
 #, c-format
@@ -1501,6 +1505,9 @@ msgid ""
 "                                  databases on the subscriber; accepts: "
 "\"%s\"\n"
 msgstr ""
+"      --clean=ТИП_ОБЪЕКТОВ        удалить все объекты указанного типа из "
+"указанных\n"
+"                                  баз на подписчике; принимает: \"%s\"\n"
 
 #: pg_createsubscriber.c:263
 #, c-format
@@ -1599,9 +1606,9 @@ msgstr ""
 "не удалось получить идентификатор системы; получено строк: %d, ожидалось: %d"
 
 #: pg_createsubscriber.c:617
-#, fuzzy, c-format
+#, c-format
 msgid "system identifier is %<PRIu64> on publisher"
-msgstr "идентификатор системы на стороне публикации: %llu"
+msgstr "идентификатор системы на стороне публикации: %<PRIu64>"
 
 #: pg_createsubscriber.c:637
 #, c-format
@@ -1614,9 +1621,9 @@ msgid "control file appears to be corrupt"
 msgstr "управляющий файл, по-видимому, испорчен"
 
 #: pg_createsubscriber.c:645 pg_createsubscriber.c:685
-#, fuzzy, c-format
+#, c-format
 msgid "system identifier is %<PRIu64> on subscriber"
-msgstr "идентификатор системы на подписчике: %llu"
+msgstr "идентификатор системы на подписчике: %<PRIu64>"
 
 #: pg_createsubscriber.c:666
 #, c-format
@@ -1679,9 +1686,9 @@ msgid "could not obtain publisher settings: %s"
 msgstr "не удалось получить параметры с сервера публикации: %s"
 
 #: pg_createsubscriber.c:949
-#, fuzzy, c-format
+#, c-format
 msgid "publisher requires \"wal_level\" >= \"logical\""
-msgstr "на стороне публикации требуется значение wal_level >= \"logical\""
+msgstr "на стороне публикации требуется значение \"wal_level\" >= \"logical\""
 
 #: pg_createsubscriber.c:955
 #, c-format
@@ -1722,11 +1729,13 @@ msgstr ""
 msgid ""
 "You can use the command-line option --enable-two-phase to enable two_phase."
 msgstr ""
+"Для включения режима two_phase можно использовать параметр командной строки "
+"--enable-two-phase."
 
 #: pg_createsubscriber.c:986
 #, c-format
 msgid "required WAL could be removed from the publisher"
-msgstr ""
+msgstr "нужные файлы WAL могли быть удалены с сервера публикации"
 
 #: pg_createsubscriber.c:987
 #, c-format
@@ -1734,6 +1743,8 @@ msgid ""
 "Set the configuration parameter \"%s\" to -1 to ensure that required WAL "
 "files are not prematurely removed."
 msgstr ""
+"Чтобы необходимые файлы WAL не были удалены преждевременно, присвойте "
+"параметру конфигурации \"%s\" -1."
 
 #: pg_createsubscriber.c:1019
 #, c-format
@@ -1751,9 +1762,10 @@ msgid "could not obtain subscriber settings: %s"
 msgstr "получить параметры подписчика не удалось: %s"
 
 #: pg_createsubscriber.c:1074
-#, fuzzy, c-format
+#, c-format
 msgid "subscriber requires %d active replication origins, but only %d remain"
-msgstr "подписчику требуется слотов репликации: %d, но доступно всего %d"
+msgstr ""
+"подписчику требуется активных слотов репликации: %d, но доступно всего %d"
 
 #: pg_createsubscriber.c:1083
 #, c-format
@@ -1934,9 +1946,9 @@ msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "удалить публикацию \"%s\" в базе \"%s\" не получилось: %s"
 
 #: pg_createsubscriber.c:1748
-#, fuzzy, c-format
+#, c-format
 msgid "dropping all existing publications in database \"%s\""
-msgstr "удаляется публикация \"%s\" в базе \"%s\""
+msgstr "удаление всех существующих публикаций в базе \"%s\""
 
 #: pg_createsubscriber.c:1806
 #, c-format
@@ -1981,9 +1993,9 @@ msgid "could not enable subscription \"%s\": %s"
 msgstr "включить подписку \"%s\" не удалось: %s"
 
 #: pg_createsubscriber.c:2008
-#, fuzzy, c-format
+#, c-format
 msgid "could not obtain a list of databases: %s"
-msgstr "получить OID базы данных не удалось: %s"
+msgstr "не удалось получить список баз данных: %s"
 
 #: pg_createsubscriber.c:2112
 #, c-format
@@ -1996,34 +2008,34 @@ msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Запускать %s нужно от имени суперпользователя PostgreSQL."
 
 #: pg_createsubscriber.c:2136
-#, fuzzy, c-format
+#, c-format
 msgid "database \"%s\" specified more than once for -d/--database"
-msgstr "база \"%s\" указана неоднократно"
+msgstr "база \"%s\" указана в -d/--database неоднократно"
 
 #: pg_createsubscriber.c:2177
-#, fuzzy, c-format
+#, c-format
 msgid "publication \"%s\" specified more than once for --publication"
-msgstr "публикация \"%s\" указана неоднократно"
+msgstr "публикация \"%s\" указана в --publication неоднократно"
 
 #: pg_createsubscriber.c:2186
-#, fuzzy, c-format
+#, c-format
 msgid "replication slot \"%s\" specified more than once for --replication-slot"
-msgstr "слот репликации \"%s\" указан неоднократно"
+msgstr "слот репликации \"%s\" указан в --replication-slot неоднократно"
 
 #: pg_createsubscriber.c:2195
-#, fuzzy, c-format
+#, c-format
 msgid "subscription \"%s\" specified more than once for --subscription"
-msgstr "подписка \"%s\" указана неоднократно"
+msgstr "подписка \"%s\" указана в --subscription неоднократно"
 
 #: pg_createsubscriber.c:2201
-#, fuzzy, c-format
+#, c-format
 msgid "object type \"%s\" specified more than once for --clean"
-msgstr "слот репликации \"%s\" указан неоднократно"
+msgstr "тип объекта \"%s\" указан в --clean неоднократно"
 
 #: pg_createsubscriber.c:2226
 #, c-format
 msgid "options %s and -a/--all cannot be used together"
-msgstr ""
+msgstr "параметры %s и -a/--all исключают друг друга"
 
 #: pg_createsubscriber.c:2244
 #, c-format
@@ -2110,12 +2122,12 @@ msgstr ""
 #: pg_createsubscriber.c:2352
 #, c-format
 msgid "invalid object type \"%s\" specified for --clean"
-msgstr ""
+msgstr "в --clean указан неправильный тип объекта \"%s\""
 
 #: pg_createsubscriber.c:2353
-#, fuzzy, c-format
+#, c-format
 msgid "The valid value is: \"%s\""
-msgstr "неверная единица измерения в --max-rate: \"%s\""
+msgstr "Допустимое значение: \"%s\""
 
 #: pg_createsubscriber.c:2384
 #, c-format
@@ -2436,6 +2448,9 @@ msgid ""
 "servers when\n"
 "                         creating a replication slot\n"
 msgstr ""
+"      --enable-failover  включает синхронизацию слота репликации с ведомыми "
+"серверами при\n"
+"                         создании слота\n"
 
 #: pg_recvlogical.c:95
 #, c-format
@@ -2488,18 +2503,18 @@ msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
 msgstr "  -S, --slot=ИМЯ_СЛОТА   имя слота логической репликации\n"
 
 #: pg_recvlogical.c:108
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "  -t, --enable-two-phase enable decoding of prepared transactions when "
 "creating a slot\n"
 msgstr ""
-"  -t, --two-phase        включить декодирование подготовленных транзакций "
+"  -t, --enable-two-phase включает декодирование подготовленных транзакций "
 "при создании слота\n"
 
 #: pg_recvlogical.c:109
 #, c-format
 msgid "      --two-phase        (same as --enable-two-phase, deprecated)\n"
-msgstr ""
+msgstr "      --two-phase        (то же, что --enable-two-phase, устаревший)\n"
 
 #: pg_recvlogical.c:114
 #, c-format
@@ -2608,9 +2623,9 @@ msgid "--endpos may only be specified with --start"
 msgstr "--endpos можно задать только вместе с --start"
 
 #: pg_recvlogical.c:933 pg_recvlogical.c:940
-#, fuzzy, c-format
+#, c-format
 msgid "%s may only be specified with --create-slot"
-msgstr "--two-phase можно задать только вместе с --create-slot"
+msgstr "%s можно задать только вместе с --create-slot"
 
 #: pg_recvlogical.c:977
 #, c-format

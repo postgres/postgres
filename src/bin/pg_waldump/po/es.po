@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 19:48+0000\n"
-"PO-Revision-Date: 2024-11-16 14:24+0100\n"
+"POT-Creation-Date: 2025-09-20 09:48+0000\n"
+"PO-Revision-Date: 2025-09-21 11:39+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -20,22 +20,22 @@ msgstr ""
 "X-Generator: Poedit 2.0.2\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:276
+#: ../../../src/common/logging.c:279
 #, c-format
 msgid "error: "
 msgstr "error: "
 
-#: ../../../src/common/logging.c:283
+#: ../../../src/common/logging.c:286
 #, c-format
 msgid "warning: "
 msgstr "precaución: "
 
-#: ../../../src/common/logging.c:294
+#: ../../../src/common/logging.c:297
 #, c-format
 msgid "detail: "
 msgstr "detalle: "
 
-#: ../../../src/common/logging.c:301
+#: ../../../src/common/logging.c:304
 #, c-format
 msgid "hint: "
 msgstr "consejo: "
@@ -51,45 +51,45 @@ msgstr "memoria agotada\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "no se puede duplicar un puntero nulo (error interno)\n"
 
-#: ../../common/file_utils.c:70 ../../common/file_utils.c:347
-#: ../../common/file_utils.c:406 ../../common/file_utils.c:480 pg_waldump.c:199
+#: ../../common/file_utils.c:69 ../../common/file_utils.c:370
+#: ../../common/file_utils.c:428 ../../common/file_utils.c:502 pg_waldump.c:199
 #: pg_waldump.c:532
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/file_utils.c:76
+#: ../../common/file_utils.c:75
 #, c-format
 msgid "could not synchronize file system for file \"%s\": %m"
 msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m"
 
-#: ../../common/file_utils.c:120 ../../common/file_utils.c:566
+#: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: ../../common/file_utils.c:130 ../../common/file_utils.c:227
+#: ../../common/file_utils.c:133 ../../common/file_utils.c:243
 #, c-format
 msgid "this build does not support sync method \"%s\""
 msgstr "esta instalación no soporta el método de sync «%s»"
 
-#: ../../common/file_utils.c:151 ../../common/file_utils.c:281
+#: ../../common/file_utils.c:156 ../../common/file_utils.c:304
 #: pg_waldump.c:1104 pg_waldump.c:1127
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:169 ../../common/file_utils.c:315
+#: ../../common/file_utils.c:174 ../../common/file_utils.c:338
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:418 ../../common/file_utils.c:488
+#: ../../common/file_utils.c:440 ../../common/file_utils.c:510
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
-#: ../../common/file_utils.c:498
+#: ../../common/file_utils.c:520
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
@@ -454,157 +454,162 @@ msgstr "error en registro de WAL en %X/%X: %s"
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: xlogreader.c:619
+#: xlogreader.c:620
 #, c-format
 msgid "invalid record offset at %X/%X: expected at least %u, got %u"
 msgstr "desplazamiento de registro no válido en %X/%X: se esperaba al menos %u, se obtuvo %u"
 
-#: xlogreader.c:628
+#: xlogreader.c:629
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord solicitado por %X/%X"
 
-#: xlogreader.c:669 xlogreader.c:1134
+#: xlogreader.c:670 xlogreader.c:1145
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "largo de registro no válido en %X/%X: se esperaba al menos %u, se obtuvo %u"
 
-#: xlogreader.c:758
+#: xlogreader.c:760
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "no hay bandera de contrecord en %X/%X"
 
-#: xlogreader.c:771
+#: xlogreader.c:773
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "largo de contrecord %u no válido (se esperaba %lld) en %X/%X"
 
-#: xlogreader.c:1142
+#: xlogreader.c:1153
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ID de gestor de recursos %u no válido en %X/%X"
 
-#: xlogreader.c:1155 xlogreader.c:1171
+#: xlogreader.c:1166 xlogreader.c:1182
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "registro con prev-link %X/%X incorrecto en %X/%X"
 
-#: xlogreader.c:1209
+#: xlogreader.c:1220
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "suma de verificación de los datos del gestor de recursos incorrecta en el registro en %X/%X"
 
-#: xlogreader.c:1243
+#: xlogreader.c:1254
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "número mágico %04X no válido en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1258 xlogreader.c:1300
+#: xlogreader.c:1269 xlogreader.c:1311
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "info bits %04X no válidos en segment WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1274
+#: xlogreader.c:1285
 #, c-format
-msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %llu, identificador en pg_control es %llu"
+#| msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
+msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %<PRIu64>, identificador en pg_control es %<PRIu64>"
 
-#: xlogreader.c:1282
+#: xlogreader.c:1293
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: tamaño de segmento incorrecto en cabecera de paǵina"
 
-#: xlogreader.c:1288
+#: xlogreader.c:1299
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: XLOG_BLCKSZ incorrecto en cabecera de paǵina"
 
-#: xlogreader.c:1320
+#: xlogreader.c:1331
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "pageaddr %X/%X inesperado en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1346
+#: xlogreader.c:1357
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ID de timeline %u fuera de secuencia (después de %u) en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1749
+#: xlogreader.c:1769
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %u fuera de orden en %X/%X"
 
-#: xlogreader.c:1773
+#: xlogreader.c:1793
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA está definido, pero no hay datos en %X/%X"
 
-#: xlogreader.c:1780
+#: xlogreader.c:1800
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA no está definido, pero el largo de los datos es %u en %X/%X"
 
-#: xlogreader.c:1816
+#: xlogreader.c:1836
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE está definido, pero posición del agujero es %u largo %u largo de imagen %u en %X/%X"
 
-#: xlogreader.c:1832
+#: xlogreader.c:1852
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE no está definido, pero posición del agujero es %u largo %u en %X/%X"
 
-#: xlogreader.c:1846
+#: xlogreader.c:1866
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED definido, pero largo de imagen de bloque es %u en %X/%X"
 
-#: xlogreader.c:1861
+#: xlogreader.c:1881
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ni BKPIMAGE_HAS_HOLE ni BKPIMAGE_COMPRESSED están definidos, pero el largo de imagen de bloque es %u en %X/%X"
 
-#: xlogreader.c:1877
+#: xlogreader.c:1897
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL está definido, pero no hay «rel» anterior en %X/%X "
 
-#: xlogreader.c:1889
+#: xlogreader.c:1909
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "block_id %u no válido en %X/%X"
 
-#: xlogreader.c:1956
+#: xlogreader.c:1976
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "registro con largo no válido en %X/%X"
 
-#: xlogreader.c:1982
+#: xlogreader.c:2002
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "no se pudo localizar un bloque de respaldo con ID %d en el registro WAL"
 
-#: xlogreader.c:2066
+#: xlogreader.c:2086
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "no se pudo restaurar la imagen en %X/%X con bloque especificado %d no válido"
 
-#: xlogreader.c:2073
+#: xlogreader.c:2093
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X con estado no válido, bloque %d"
 
-#: xlogreader.c:2100 xlogreader.c:2117
+#: xlogreader.c:2120 xlogreader.c:2137
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con %s que no está soportado por esta instalación, bloque %d"
 
-#: xlogreader.c:2126
+#: xlogreader.c:2146
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con un método desconocido, bloque %d"
 
-#: xlogreader.c:2134
+#: xlogreader.c:2154
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "no se pudo descomprimir la imagen en %X/%X, bloque %d"
+
+#, c-format
+#~ msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+#~ msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %llu, identificador en pg_control es %llu"

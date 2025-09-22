@@ -1,10 +1,10 @@
-# Alexander Lakhin <exclusion@gmail.com>, 2024.
+# SPDX-FileCopyrightText: 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-11-09 08:04+0300\n"
+"PO-Revision-Date: 2025-09-13 17:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -275,7 +275,7 @@ msgstr "Младшее слово суррогата Unicode должно сле
 
 #: ../../common/jsonapi.c:2526
 msgid "out of memory while constructing error description"
-msgstr ""
+msgstr "нехватка памяти при составлении описания ошибки"
 
 #: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
@@ -542,9 +542,9 @@ msgid "could not copy file \"%s\" to \"%s\": %m"
 msgstr "не удалось скопировать файл \"%s\" в \"%s\": %m"
 
 #: copy_file.c:333
-#, fuzzy, c-format
+#, c-format
 msgid "could not create link from \"%s\" to \"%s\": %m"
-msgstr "не удалось создать символическую ссылку \"%s\" в \"%s\": %m"
+msgstr "не удалось создать ссылку \"%s\" в \"%s\": %m"
 
 #: load_manifest.c:125
 #, c-format
@@ -588,10 +588,12 @@ msgid "no output directory specified"
 msgstr "выходной каталог не указан"
 
 #: pg_combinebackup.c:306
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: manifest system identifier is %<PRIu64>, but control file has %<PRIu64>"
-msgstr "%s: идентификатор системы в манифесте %llu, а в управляющем файле %llu"
+msgstr ""
+"%s: идентификатор системы в манифесте %<PRIu64>, а в управляющем файле "
+"%<PRIu64>"
 
 #: pg_combinebackup.c:345
 #, c-format
@@ -618,6 +620,8 @@ msgid ""
 "--link mode was used; any modifications to the output directory might "
 "destructively modify input directories"
 msgstr ""
+"был использован режим --link; любые изменения в выходном каталоге могут "
+"разрушительно повлиять на входные каталоги"
 
 #: pg_combinebackup.c:464
 #, c-format
@@ -682,9 +686,9 @@ msgid "%s: unexpected control file version"
 msgstr "%s: неожиданная версия управляющего файла"
 
 #: pg_combinebackup.c:635
-#, fuzzy, c-format
+#, c-format
 msgid "%s: expected system identifier %<PRIu64>, but found %<PRIu64>"
-msgstr "%s: ожидался идентификатор системы %llu, но обнаружен %llu"
+msgstr "%s: ожидался идентификатор системы %<PRIu64>, но обнаружен %<PRIu64>"
 
 #: pg_combinebackup.c:666
 #, c-format
@@ -764,12 +768,9 @@ msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               выдавать много отладочных сообщений\n"
 
 #: pg_combinebackup.c:773
-#, fuzzy, c-format
+#, c-format
 msgid "  -k, --link                link files instead of copying\n"
-msgstr ""
-"      --clone               клонировать (используя reflink), а не "
-"копировать\n"
-"                            файлы\n"
+msgstr "  -k, --link                не копировать файлы, а создавать ссылки\n"
 
 #: pg_combinebackup.c:774
 #, c-format

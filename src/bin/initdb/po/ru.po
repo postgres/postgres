@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-11-02 08:27+0300\n"
+"PO-Revision-Date: 2025-09-13 16:55+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -706,9 +706,9 @@ msgstr ""
 "                            провайдер основной локали для новых баз\n"
 
 #: initdb.c:2542
-#, fuzzy, c-format
+#, c-format
 msgid "      --no-data-checksums   do not use data page checksums\n"
-msgstr "  -k, --data-checksums      включить контроль целостности страниц\n"
+msgstr "      --no-data-checksums   отключить контроль целостности страниц\n"
 
 #: initdb.c:2543
 #, c-format
@@ -797,7 +797,7 @@ msgstr ""
 #, c-format
 msgid ""
 "      --no-sync-data-files  do not sync files within database directories\n"
-msgstr ""
+msgstr "      --no-sync-data-files  не синхронизировать файлы в каталогах БД\n"
 
 #: initdb.c:2558
 #, c-format

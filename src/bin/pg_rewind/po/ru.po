@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-09-07 13:07+0300\n"
+"PO-Revision-Date: 2025-09-13 18:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -459,13 +459,13 @@ msgid "received data for file \"%s\", when requested for \"%s\""
 msgstr "получены данные для файла \"%s\", а запрашивались данные для \"%s\""
 
 #: libpq_source.c:579
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "received data at offset %<PRId64> of file \"%s\", when requested for offset "
 "%lld"
 msgstr ""
-"получены данные по смещению %lld в файле \"%s\", а запрашивались по смещению "
-"%lld"
+"получены данные по смещению %<PRId64> в файле \"%s\", а запрашивались по "
+"смещению %lld"
 
 #: libpq_source.c:591
 #, c-format
@@ -878,7 +878,7 @@ msgstr "неверная контрольная сумма управляюще�
 #: pg_rewind.c:1029
 #, c-format
 msgid "unexpected control file size %d, expected %d"
-msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
+msgstr "неверный размер управляющего файла (%d), ожидался: %d"
 
 #: pg_rewind.c:1039
 #, c-format
@@ -909,7 +909,7 @@ msgstr ""
 "версии %s"
 
 #: pg_rewind.c:1112
-#, fuzzy, c-format
+#, c-format
 msgid "could not read \"restore_command\" from target cluster"
 msgstr "не удалось прочитать параметр \"restore_command\" в целевом кластере"
 
@@ -1029,13 +1029,13 @@ msgstr ""
 "неверные информационные биты %04X в сегменте WAL %s, LSN %X/%X, смещение %u"
 
 #: xlogreader.c:1285
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "WAL file is from different database system: WAL file database system "
 "identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr ""
 "файл WAL принадлежит другой СУБД: в нём указан идентификатор системы БД "
-"%llu, а идентификатор системы pg_control: %llu"
+"%<PRIu64>, а идентификатор системы pg_control: %<PRIu64>"
 
 #: xlogreader.c:1293
 #, c-format

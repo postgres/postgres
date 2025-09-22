@@ -5,13 +5,13 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2024-09-05 12:19+0300\n"
+"PO-Revision-Date: 2025-09-13 17:20+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -414,9 +414,9 @@ msgid "Catalog version number:               %u\n"
 msgstr "Номер версии каталога:                %u\n"
 
 #: pg_resetwal.c:749
-#, fuzzy, c-format
+#, c-format
 msgid "Database system identifier:           %<PRIu64>\n"
-msgstr "Идентификатор системы баз данных:     %llu\n"
+msgstr "Идентификатор системы баз данных:     %<PRIu64>\n"
 
 # skip-rule: capital-letter-first
 #: pg_resetwal.c:751
@@ -578,17 +578,17 @@ msgid "Data page checksum version:           %u\n"
 msgstr "Версия контрольных сумм страниц:      %u\n"
 
 #: pg_resetwal.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "Default char data signedness:         %s\n"
-msgstr "Макс. предел выравнивания данных:     %u\n"
+msgstr "Знаковость char по умолчанию:         %s\n"
 
 #: pg_resetwal.c:805
 msgid "signed"
-msgstr ""
+msgstr "знаковое"
 
 #: pg_resetwal.c:805
 msgid "unsigned"
-msgstr ""
+msgstr "unsigned"
 
 #: pg_resetwal.c:818
 #, c-format
@@ -812,6 +812,8 @@ msgid ""
 "      --char-signedness=OPTION     set char signedness to \"signed\" or "
 "\"unsigned\"\n"
 msgstr ""
+"      --char-signedness=ВАРИАНТ    установить знаковость char: \"signed\" "
+"или \"unsigned\"\n"
 
 #: pg_resetwal.c:1216
 #, c-format

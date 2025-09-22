@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 18\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-25 17:22+0000\n"
-"PO-Revision-Date: 2025-08-25 22:08+0200\n"
+"POT-Creation-Date: 2025-09-05 07:52+0000\n"
+"PO-Revision-Date: 2025-09-05 14:09+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -38,9 +38,9 @@ msgid "hint: "
 msgstr "Tipp: "
 
 #: ../../common/compression.c:132 ../../common/compression.c:141
-#: ../../common/compression.c:150 compress_gzip.c:413 compress_gzip.c:420
-#: compress_io.c:108 compress_lz4.c:780 compress_lz4.c:787 compress_zstd.c:25
-#: compress_zstd.c:31
+#: ../../common/compression.c:150 compress_gzip.c:428 compress_gzip.c:435
+#: compress_io.c:108 compress_lz4.c:800 compress_lz4.c:807 compress_zstd.c:26
+#: compress_zstd.c:32
 #, c-format
 msgid "this build does not support compression with %s"
 msgstr "diese Installation unterstützt keine Komprimierung mit %s"
@@ -481,7 +481,7 @@ msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s"
 msgid "could not close compression stream: %s"
 msgstr "konnte Komprimierungsstrom nicht schließen: %s"
 
-#: compress_gzip.c:113 compress_lz4.c:227 compress_zstd.c:109
+#: compress_gzip.c:113 compress_lz4.c:228 compress_zstd.c:110
 #, c-format
 msgid "could not compress data: %s"
 msgstr "konnte Daten nicht komprimieren: %s"
@@ -496,74 +496,104 @@ msgstr "konnte Daten nicht dekomprimieren: %s"
 msgid "could not close compression library: %s"
 msgstr "konnte Komprimierungsbibliothek nicht schließen: %s"
 
-#: compress_gzip.c:266 compress_lz4.c:608 compress_lz4.c:628 compress_lz4.c:647
+#: compress_gzip.c:277 compress_lz4.c:513 compress_lz4.c:616 compress_lz4.c:633
 #, c-format
 msgid "could not read from input file: %s"
 msgstr "konnte nicht aus Eingabedatei lesen: %s"
 
-#: compress_gzip.c:295 compress_none.c:97 compress_none.c:139
-#: compress_zstd.c:375 pg_backup_custom.c:650
+#: compress_gzip.c:294 compress_zstd.c:382
+#, c-format
+msgid "could not write to file: %s"
+msgstr "konnte nicht in Datei schreiben: %s"
+
+#: compress_gzip.c:310 compress_lz4.c:494 compress_none.c:94
+#: compress_none.c:135 compress_zstd.c:315 pg_backup_custom.c:650
 #, c-format
 msgid "could not read from input file: %m"
 msgstr "konnte nicht aus Eingabedatei lesen: %m"
 
-#: compress_gzip.c:297 compress_lz4.c:630 compress_none.c:141
-#: compress_zstd.c:373 pg_backup_custom.c:648 pg_backup_directory.c:538
+#: compress_gzip.c:312 compress_lz4.c:635 compress_none.c:137
+#: compress_zstd.c:400 pg_backup_custom.c:648 pg_backup_directory.c:515
 #: pg_backup_tar.c:740 pg_backup_tar.c:763
 #, c-format
 msgid "could not read from input file: end of file"
 msgstr "konnte nicht aus Eingabedatei lesen: Dateiende"
 
-#: compress_lz4.c:157
+#: compress_lz4.c:158
 #, c-format
 msgid "could not create LZ4 decompression context: %s"
 msgstr "konnte LZ4-Dekomprimierungskontext nicht erzeugen: %s"
 
-#: compress_lz4.c:180
+#: compress_lz4.c:181
 #, c-format
 msgid "could not decompress: %s"
 msgstr "konnte nicht dekomprimieren: %s"
 
-#: compress_lz4.c:193
+#: compress_lz4.c:194
 #, c-format
 msgid "could not free LZ4 decompression context: %s"
 msgstr "konnte LZ4-Dekomprimierungskontext nicht freigeben: %s"
 
-#: compress_lz4.c:259 compress_lz4.c:266 compress_lz4.c:680 compress_lz4.c:690
+#: compress_lz4.c:260 compress_lz4.c:267 compress_lz4.c:689 compress_lz4.c:704
 #, c-format
 msgid "could not end compression: %s"
 msgstr "konnte Komprimierung nicht beenden: %s"
 
-#: compress_lz4.c:301
+#: compress_lz4.c:302
 #, c-format
 msgid "could not initialize LZ4 compression: %s"
 msgstr "konnte LZ4-Komprimierung nicht initialisieren: %s"
 
-#: compress_lz4.c:697
+#: compress_lz4.c:463 compress_lz4.c:581
+#, c-format
+msgid "unable to initialize LZ4 library: %s"
+msgstr "konnte LZ4-Bibliothek nicht initialisieren: %s"
+
+#: compress_lz4.c:593
+#, c-format
+msgid "error during writing: %s"
+msgstr "Fehler beim Schreiben: %s"
+
+#: compress_lz4.c:599
+#, c-format
+msgid "error during writing: %m"
+msgstr "Fehler beim Schreiben: %m"
+
+#: compress_lz4.c:698
+#, c-format
+msgid "could not write to output file: %m"
+msgstr "konnte nicht in Ausgabedatei schreiben: %m"
+
+#: compress_lz4.c:711
 #, c-format
 msgid "could not end decompression: %s"
 msgstr "konnte Dekomprimierung nicht beenden: %s"
 
-#: compress_zstd.c:66
+#: compress_lz4.c:726 compress_none.c:156
+#, c-format
+msgid "could not close file: %m"
+msgstr "konnte Datei nicht schließen: %m"
+
+#: compress_none.c:109 compress_zstd.c:389
+#, c-format
+msgid "could not write to file: %m"
+msgstr "konnte nicht in Datei schreiben: %m"
+
+#: compress_zstd.c:67
 #, c-format
 msgid "could not set compression parameter \"%s\": %s"
 msgstr "konnte Komprimierungsparameter »%s« nicht setzen: %s"
 
-#: compress_zstd.c:78 compress_zstd.c:233 compress_zstd.c:492
-#: compress_zstd.c:500
+#: compress_zstd.c:79 compress_zstd.c:234 compress_zstd.c:283
+#: compress_zstd.c:373
 #, c-format
 msgid "could not initialize compression library"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
-#: compress_zstd.c:196 compress_zstd.c:310
+#: compress_zstd.c:197 compress_zstd.c:336
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "konnte Daten nicht dekomprimieren: %s"
-
-#: compress_zstd.c:503
-#, c-format
-msgid "unhandled mode \"%s\""
-msgstr "unbehandelter Modus »%s«"
 
 #: connectdb.c:56 connectdb.c:165 pg_backup_db.c:126
 msgid "Password: "
@@ -907,14 +937,14 @@ msgid "could not find entry for ID %d"
 msgstr "konnte Eintrag für ID %d nicht finden"
 
 #: pg_backup_archiver.c:1639 pg_backup_directory.c:187
-#: pg_backup_directory.c:586
+#: pg_backup_directory.c:563
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "konnte Inhaltsverzeichnisdatei nicht schließen: %m"
 
 #: pg_backup_archiver.c:1726 pg_backup_custom.c:151 pg_backup_directory.c:301
-#: pg_backup_directory.c:573 pg_backup_directory.c:639
-#: pg_backup_directory.c:657 pg_dumpall.c:548
+#: pg_backup_directory.c:550 pg_backup_directory.c:616
+#: pg_backup_directory.c:634 pg_dumpall.c:548
 #, c-format
 msgid "could not open output file \"%s\": %m"
 msgstr "konnte Ausgabedatei »%s« nicht öffnen: %m"
@@ -987,7 +1017,7 @@ msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does 
 msgstr "Verzeichnis »%s« scheint kein gültiges Archiv zu sein (»toc.dat« existiert nicht)"
 
 #: pg_backup_archiver.c:2293 pg_backup_custom.c:168 pg_backup_custom.c:813
-#: pg_backup_directory.c:172 pg_backup_directory.c:364
+#: pg_backup_directory.c:172 pg_backup_directory.c:358
 #, c-format
 msgid "could not open input file \"%s\": %m"
 msgstr "konnte Eingabedatei »%s« nicht öffnen: %m"
@@ -1344,58 +1374,47 @@ msgstr "konnte Datenbanktransaktion nicht beenden"
 msgid "no output directory specified"
 msgstr "kein Ausgabeverzeichnis angegeben"
 
-#: pg_backup_directory.c:325 pg_backup_directory.c:479
-#: pg_backup_directory.c:517
-#, c-format
-msgid "could not write to output file: %s"
-msgstr "konnte nicht in Ausgabedatei schreiben: %s"
-
-#: pg_backup_directory.c:343
+#: pg_backup_directory.c:337
 #, c-format
 msgid "could not close data file: %m"
 msgstr "konnte Datendatei nicht schließen: %m"
 
-#: pg_backup_directory.c:376
+#: pg_backup_directory.c:370
 #, c-format
 msgid "could not close data file \"%s\": %m"
 msgstr "konnte Datendatei »%s« nicht schließen: %m"
 
-#: pg_backup_directory.c:428
+#: pg_backup_directory.c:422
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
 msgstr "konnte Large-Object-Inhaltsverzeichnisdatei »%s« nicht zur Eingabe öffnen: %m"
 
-#: pg_backup_directory.c:439
+#: pg_backup_directory.c:433
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
 msgstr "ungültige Zeile in Large-Object-Inhaltsverzeichnisdatei »%s«: %s"
 
-#: pg_backup_directory.c:448
+#: pg_backup_directory.c:442
 #, c-format
 msgid "error reading large object TOC file \"%s\""
 msgstr "Fehler beim Lesen von Large-Object-Inhaltsverzeichnisdatei »%s«"
 
-#: pg_backup_directory.c:452
+#: pg_backup_directory.c:446
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
 msgstr "konnte Large-Object-Inhaltsverzeichnisdatei »%s« nicht schließen: %m"
 
-#: pg_backup_directory.c:675
+#: pg_backup_directory.c:652
 #, c-format
 msgid "could not close LO data file: %m"
 msgstr "konnte LO-Datendatei nicht schließen: %m"
 
-#: pg_backup_directory.c:685
-#, c-format
-msgid "could not write to LOs TOC file: %s"
-msgstr "konnte nicht in LOs-Inhaltsverzeichnisdatei schreiben: %s"
-
-#: pg_backup_directory.c:701
+#: pg_backup_directory.c:671
 #, c-format
 msgid "could not close LOs TOC file: %m"
 msgstr "konnte LOs-Inhaltsverzeichnisdatei nicht schließen: %m"
 
-#: pg_backup_directory.c:720
+#: pg_backup_directory.c:690
 #, c-format
 msgid "file name too long: \"%s\""
 msgstr "Dateiname zu lang: »%s«"
