@@ -580,8 +580,9 @@ update some_tab set a = a + 1 where false;
  Update on public.some_tab
    ->  Result
          Output: (some_tab.a + 1), NULL::oid, NULL::tid
+         Replaces: Scan on some_tab
          One-Time Filter: false
-(4 rows)
+(5 rows)
 
 update some_tab set a = a + 1 where false;
 explain (verbose, costs off)
@@ -592,8 +593,9 @@ update some_tab set a = a + 1 where false returning b, a;
    Output: some_tab.b, some_tab.a
    ->  Result
          Output: (some_tab.a + 1), NULL::oid, NULL::tid
+         Replaces: Scan on some_tab
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 update some_tab set a = a + 1 where false returning b, a;
  b | a 
@@ -699,8 +701,9 @@ explain update parted_tab set a = 2 where false;
 --------------------------------------------------------
  Update on parted_tab  (cost=0.00..0.00 rows=0 width=0)
    ->  Result  (cost=0.00..0.00 rows=0 width=10)
+         Replaces: Scan on parted_tab
          One-Time Filter: false
-(3 rows)
+(4 rows)
 
 drop table parted_tab;
 -- Check UPDATE with multi-level partitioned inherited target
@@ -1756,6 +1759,7 @@ explain (verbose, costs off) select min(1-id) from matest0;
 ---------------------------------------------------------------------------------
  Result
    Output: (InitPlan 1).col1
+   Replaces: MinMaxAggregate
    InitPlan 1
      ->  Limit
            Output: ((1 - matest0.id))
@@ -1779,7 +1783,7 @@ explain (verbose, costs off) select min(1-id) from matest0;
                        ->  Index Scan using matest3i on public.matest3 matest0_4
                              Output: matest0_4.id, (1 - matest0_4.id)
                              Index Cond: ((1 - matest0_4.id) IS NOT NULL)
-(25 rows)
+(26 rows)
 
 select min(1-id) from matest0;
  min 
@@ -1943,6 +1947,7 @@ SELECT min(x) FROM
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Result
+   Replaces: MinMaxAggregate
    InitPlan 1
      ->  Limit
            ->  Merge Append
@@ -1951,7 +1956,7 @@ SELECT min(x) FROM
                        Index Cond: (unique1 IS NOT NULL)
                  ->  Index Only Scan using tenk1_unique2 on tenk1 b
                        Index Cond: (unique2 IS NOT NULL)
-(9 rows)
+(10 rows)
 
 explain (costs off)
 SELECT min(y) FROM
@@ -1961,6 +1966,7 @@ SELECT min(y) FROM
                              QUERY PLAN                             
 --------------------------------------------------------------------
  Result
+   Replaces: MinMaxAggregate
    InitPlan 1
      ->  Limit
            ->  Merge Append
@@ -1969,7 +1975,7 @@ SELECT min(y) FROM
                        Index Cond: (unique1 IS NOT NULL)
                  ->  Index Only Scan using tenk1_unique2 on tenk1 b
                        Index Cond: (unique2 IS NOT NULL)
-(9 rows)
+(10 rows)
 
 -- XXX planner doesn't recognize that index on unique2 is sufficiently sorted
 explain (costs off)
@@ -3087,11 +3093,12 @@ explain (costs off) select * from range_list_parted where a between 3 and 23 and
 
 /* Should select no rows because range partition key cannot be null */
 explain (costs off) select * from range_list_parted where a is null;
-        QUERY PLAN        
---------------------------
+              QUERY PLAN               
+---------------------------------------
  Result
+   Replaces: Scan on range_list_parted
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 /* Should only select rows from the null-accepting partition */
 explain (costs off) select * from range_list_parted where b is null;
@@ -3252,6 +3259,7 @@ explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
                                            QUERY PLAN                                           
 ------------------------------------------------------------------------------------------------
  Result
+   Replaces: MinMaxAggregate
    InitPlan 1
      ->  Limit
            ->  Index Only Scan using parted_minmax1i on parted_minmax1 parted_minmax
@@ -3260,7 +3268,7 @@ explain (costs off) select min(a), max(a) from parted_minmax where b = '12345';
      ->  Limit
            ->  Index Only Scan Backward using parted_minmax1i on parted_minmax1 parted_minmax_1
                  Index Cond: ((a IS NOT NULL) AND (b = '12345'::text))
-(9 rows)
+(10 rows)
 
 select min(a), max(a) from parted_minmax where b = '12345';
  min | max 

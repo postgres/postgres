@@ -2264,11 +2264,12 @@ explain (costs off)
 select aa, bb, unique1, unique1
   from tenk1 right join b_star on aa = unique1
   where bb < bb and bb is null;
-        QUERY PLAN        
---------------------------
+            QUERY PLAN             
+-----------------------------------
  Result
+   Replaces: Join on tenk1, b_star
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 select aa, bb, unique1, unique1
   from tenk1 right join b_star on aa = unique1
@@ -2386,11 +2387,12 @@ order by t1.unique1;
                            Index Cond: (unique1 < 10)
                SubPlan 2
                  ->  Result
+                       Replaces: MinMaxAggregate
                        InitPlan 1
                          ->  Limit
                                ->  Index Only Scan using tenk1_unique1 on tenk1
                                      Index Cond: ((unique1 IS NOT NULL) AND (unique1 = t2.unique1))
-(19 rows)
+(20 rows)
 
 -- Ensure we get the expected result
 select t1.unique1,t2.unique1 from tenk1 t1
@@ -2655,8 +2657,8 @@ select * from int8_tbl t1 left join
     (int8_tbl t2 left join int8_tbl t3 full join int8_tbl t4 on false on false)
     left join int8_tbl t5 on t2.q1 = t5.q1
 on t2.q2 = 123;
-                    QUERY PLAN                    
---------------------------------------------------
+                     QUERY PLAN                     
+----------------------------------------------------
  Nested Loop Left Join
    ->  Seq Scan on int8_tbl t1
    ->  Materialize
@@ -2667,9 +2669,10 @@ on t2.q2 = 123;
                      ->  Seq Scan on int8_tbl t2
                            Filter: (q2 = 123)
                      ->  Result
+                           Replaces: Join on t3, t4
                            One-Time Filter: false
                ->  Seq Scan on int8_tbl t5
-(12 rows)
+(13 rows)
 
 explain (costs off)
 select * from int8_tbl t1
@@ -4148,9 +4151,9 @@ select * from t t1
                         QUERY PLAN                        
 ----------------------------------------------------------
  Nested Loop Left Join
-   Output: t1.i, (1), t2.i2, i3, t4.i4
+   Output: t1.i, (1), t2.i2, t3.i3, t4.i4
    ->  Nested Loop Left Join
-         Output: t1.i, t2.i2, (1), i3
+         Output: t1.i, t2.i2, (1), t3.i3
          Join Filter: false
          ->  Hash Left Join
                Output: t1.i, t2.i2, (1)
@@ -4163,7 +4166,8 @@ select * from t t1
                      ->  Seq Scan on pg_temp.t t2
                            Output: t2.i2, 1
          ->  Result
-               Output: i3
+               Output: t3.i3
+               Replaces: Scan on t3
                One-Time Filter: false
    ->  Memoize
          Output: t4.i4
@@ -4172,7 +4176,7 @@ select * from t t1
          ->  Index Only Scan using t_pkey on pg_temp.t t4
                Output: t4.i4
                Index Cond: (t4.i4 > (1))
-(25 rows)
+(26 rows)
 
 explain (verbose, costs off)
 select * from
@@ -4362,8 +4366,9 @@ from int4_tbl t1
 -------------------------------------------------------------------------------------------------------------------
  Result
    Output: (current_database())::information_schema.sql_identifier, (c.relname)::information_schema.sql_identifier
+   Replaces: Join on t1, t2, a, c, nc, t, nt, bt, nbt
    One-Time Filter: false
-(3 rows)
+(4 rows)
 
 -- Test handling of qual pushdown to appendrel members with non-Var outputs
 explain (verbose, costs off)
@@ -4435,11 +4440,12 @@ select unique1 from tenk1, lateral f_immutable_int4(1) x where x = unique1;
 
 explain (costs off)
 select unique1 from tenk1, lateral f_immutable_int4(1) x where x in (select 17);
-        QUERY PLAN        
---------------------------
+        QUERY PLAN         
+---------------------------
  Result
+   Replaces: Scan on tenk1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off)
 select unique1, x from tenk1 join f_immutable_int4(1) x on unique1 = x;
@@ -4485,11 +4491,12 @@ select unique1, x from tenk1 full join f_immutable_int4(1) x on unique1 = x;
 -- check that pullup of a const function allows further const-folding
 explain (costs off)
 select unique1 from tenk1, f_immutable_int4(1) x where x = 42;
-        QUERY PLAN        
---------------------------
+        QUERY PLAN         
+---------------------------
  Result
+   Replaces: Scan on tenk1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- test inlining of immutable functions with PlaceHolderVars
 explain (costs off)
@@ -5345,8 +5352,9 @@ left join
    Join Filter: false
    ->  Result
    ->  Result
+         Replaces: Join on c, n
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- check handling of apparently-commutable outer joins with non-commutable
 -- joins between them
@@ -5540,12 +5548,13 @@ select 1 from
      right join (select 1 as z) as ss2 on true)
   on false,
   lateral (select i4.f1, ss1.n from int8_tbl as i8 limit 1) as ss3;
-        QUERY PLAN        
---------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Result
    Output: 1
+   Replaces: Join on i4, ss3, x1, x2, *RESULT*
    One-Time Filter: false
-(3 rows)
+(4 rows)
 
 select 1 from
   int4_tbl as i4
@@ -5574,11 +5583,12 @@ select 1 from t t1
        on false
      where t3.a = coalesce(t5.a,1)) as s2
   on true;
-        QUERY PLAN        
---------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  Result
+   Replaces: Join on t1, s1, t2, t3, t4, t5
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 rollback;
 --
@@ -5975,14 +5985,15 @@ from int4_tbl as t1
                         inner join int8_tbl as t7 on null)
                on t5.q1 = t7.q2)
     on false;
-           QUERY PLAN           
---------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Nested Loop Left Join
    Join Filter: false
    ->  Seq Scan on int4_tbl t1
    ->  Result
+         Replaces: Join on t2, t3, t4, t5, t7, t6
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- variant with Var rather than PHV coming from t6
 explain (costs off)
@@ -5997,14 +6008,15 @@ from int4_tbl as t1
                         inner join int8_tbl as t7 on null)
                on t5.q1 = t7.q2)
     on false;
-           QUERY PLAN           
---------------------------------
+                    QUERY PLAN                    
+--------------------------------------------------
  Nested Loop Left Join
    Join Filter: false
    ->  Seq Scan on int4_tbl t1
    ->  Result
+         Replaces: Join on t2, t3, t4, t5, t7, t6
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- per further discussion of bug #17781
 explain (costs off)
@@ -6054,15 +6066,16 @@ select * from int8_tbl t1 left join
   (int8_tbl t2 inner join int8_tbl t3 on false
    left join int8_tbl t4 on t2.q2 = t4.q2)
 on t1.q1 = t2.q1;
-              QUERY PLAN              
---------------------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  Hash Left Join
-   Hash Cond: (t1.q1 = q1)
+   Hash Cond: (t1.q1 = t2.q1)
    ->  Seq Scan on int8_tbl t1
    ->  Hash
          ->  Result
+               Replaces: Join on t2, t3, t4
                One-Time Filter: false
-(6 rows)
+(7 rows)
 
 -- deduce constant-false from an EquivalenceClass
 explain (costs off)
@@ -6070,15 +6083,16 @@ select * from int8_tbl t1 left join
   (int8_tbl t2 inner join int8_tbl t3 on (t2.q1-t3.q2) = 0 and (t2.q1-t3.q2) = 1
    left join int8_tbl t4 on t2.q2 = t4.q2)
 on t1.q1 = t2.q1;
-              QUERY PLAN              
---------------------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  Hash Left Join
-   Hash Cond: (t1.q1 = q1)
+   Hash Cond: (t1.q1 = t2.q1)
    ->  Seq Scan on int8_tbl t1
    ->  Hash
          ->  Result
+               Replaces: Join on t2, t3, t4
                One-Time Filter: false
-(6 rows)
+(7 rows)
 
 -- pseudoconstant based on an outer-level Param
 explain (costs off)
@@ -6317,8 +6331,9 @@ select p.* from
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on p
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 select p.* from
   (parent p left join child c on (p.k = c.k)) join parent x on p.k = x.k
@@ -6334,8 +6349,9 @@ select p.* from
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Join on p, x
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- bug 5255: this is not optimizable by join removal
 begin;
@@ -6400,15 +6416,16 @@ SELECT q2 FROM
                       QUERY PLAN                      
 ------------------------------------------------------
  Nested Loop Left Join
-   Output: q2
+   Output: int8_tbl.q2
    Join Filter: NULL::boolean
    Filter: (('constant'::text) >= ('constant'::text))
    ->  Seq Scan on public.int4_tbl
          Output: int4_tbl.f1
    ->  Result
-         Output: q2, 'constant'::text
+         Output: int8_tbl.q2, 'constant'::text
+         Replaces: Scan on int8_tbl
          One-Time Filter: false
-(9 rows)
+(10 rows)
 
 -- join removal bug #17786: check that OR conditions are cleaned up
 EXPLAIN (COSTS OFF)
@@ -6427,8 +6444,9 @@ FROM int4_tbl
                Filter: ((tenk1.unique1 = (42)) OR (tenk1.unique2 = (42)))
                ->  Seq Scan on tenk1
                ->  Result
+                     Replaces: Scan on int8_tbl
                      One-Time Filter: false
-(9 rows)
+(10 rows)
 
 rollback;
 -- another join removal bug: we must clean up correctly when removing a PHV
@@ -6878,8 +6896,9 @@ where q1.x = q2.y;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on sj
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- We can't use a cross-EC generated self join qual because of current logic of
 -- the generate_join_implied_equalities routine.
@@ -7703,11 +7722,12 @@ select 1 from emp1 full join
         on true
     where false) s on true
 where false;
-        QUERY PLAN        
---------------------------
+            QUERY PLAN            
+----------------------------------
  Result
+   Replaces: Join on emp1, t1, t3
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 select 1 from emp1 full join
     (select * from emp1 t1 join
@@ -7936,8 +7956,9 @@ where false;
 --------------------------
  Result
    Output: 1
+   Replaces: Scan on ss
    One-Time Filter: false
-(3 rows)
+(4 rows)
 
 --
 -- Test LATERAL
@@ -8866,31 +8887,33 @@ select * from int4_tbl t1,
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl where false) ss on true;
-              QUERY PLAN              
---------------------------------------
+                  QUERY PLAN                  
+----------------------------------------------
  Nested Loop Left Join
-   Output: i8.q1, i8.q2, f1, (i8.q2)
+   Output: i8.q1, i8.q2, int4_tbl.f1, (i8.q2)
    Join Filter: false
    ->  Seq Scan on public.int8_tbl i8
          Output: i8.q1, i8.q2
    ->  Result
-         Output: f1, i8.q2
+         Output: int4_tbl.f1, i8.q2
+         Replaces: Scan on int4_tbl
          One-Time Filter: false
-(8 rows)
+(9 rows)
 
 explain (verbose, costs off)
 select * from int8_tbl i8 left join lateral
   (select *, i8.q2 from int4_tbl i1, int4_tbl i2 where false) ss on true;
-               QUERY PLAN                
------------------------------------------
+                  QUERY PLAN                   
+-----------------------------------------------
  Nested Loop Left Join
-   Output: i8.q1, i8.q2, f1, f1, (i8.q2)
+   Output: i8.q1, i8.q2, i1.f1, i2.f1, (i8.q2)
    ->  Seq Scan on public.int8_tbl i8
          Output: i8.q1, i8.q2
    ->  Result
-         Output: f1, f1, i8.q2
+         Output: i1.f1, i2.f1, i8.q2
+         Replaces: Join on i1, i2
          One-Time Filter: false
-(7 rows)
+(8 rows)
 
 -- check handling of nested appendrels inside LATERAL
 select * from

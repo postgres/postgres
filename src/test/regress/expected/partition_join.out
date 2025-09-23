@@ -1609,26 +1609,28 @@ SELECT avg(t1.a), avg(t2.b), avg(t3.a + t3.b), t1.c, t2.c, t3.c FROM plt1 t1, pl
 -- joins where one of the relations is proven empty
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM prt1 t1, prt2 t2 WHERE t1.a = t2.b AND t1.a = 1 AND t1.a = 2;
-        QUERY PLAN        
---------------------------
+         QUERY PLAN         
+----------------------------
  Result
+   Replaces: Join on t1, t2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a = 1 AND a = 2) t1 LEFT JOIN prt2 t2 ON t1.a = t2.b;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Join on t2, prt1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a = 1 AND a = 2) t1 RIGHT JOIN prt2 t2 ON t1.a = t2.b, prt1 t3 WHERE t2.b = t3.a;
                     QUERY PLAN                    
 --------------------------------------------------
  Hash Left Join
-   Hash Cond: (t2.b = a)
+   Hash Cond: (t2.b = prt1.a)
    ->  Append
          ->  Hash Join
                Hash Cond: (t3_1.a = t2_1.b)
@@ -1647,17 +1649,18 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a = 1 AND a = 2) t1
                      ->  Seq Scan on prt2_p3 t2_3
    ->  Hash
          ->  Result
+               Replaces: Scan on prt1
                One-Time Filter: false
-(21 rows)
+(22 rows)
 
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a = 1 AND a = 2) t1 FULL JOIN prt2 t2 ON t1.a = t2.b WHERE t2.a = 0 ORDER BY t1.a, t2.b;
                  QUERY PLAN                 
 --------------------------------------------
  Sort
-   Sort Key: a, t2.b
+   Sort Key: prt1.a, t2.b
    ->  Hash Left Join
-         Hash Cond: (t2.b = a)
+         Hash Cond: (t2.b = prt1.a)
          ->  Append
                ->  Seq Scan on prt2_p1 t2_1
                      Filter: (a = 0)
@@ -1667,8 +1670,9 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1 WHERE a = 1 AND a = 2) t1
                      Filter: (a = 0)
          ->  Hash
                ->  Result
+                     Replaces: Scan on prt1
                      One-Time Filter: false
-(14 rows)
+(15 rows)
 
 --
 -- tests for hash partitioned tables.
@@ -2242,10 +2246,10 @@ SELECT COUNT(*) FROM prt1_l t1 LEFT JOIN LATERAL
 -- join with one side empty
 EXPLAIN (COSTS OFF)
 SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1_l WHERE a = 1 AND a = 2) t1 RIGHT JOIN prt2_l t2 ON t1.a = t2.b AND t1.b = t2.a AND t1.c = t2.c;
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                                          QUERY PLAN                                          
+----------------------------------------------------------------------------------------------
  Hash Left Join
-   Hash Cond: ((t2.b = a) AND (t2.a = b) AND ((t2.c)::text = (c)::text))
+   Hash Cond: ((t2.b = prt1_l.a) AND (t2.a = prt1_l.b) AND ((t2.c)::text = (prt1_l.c)::text))
    ->  Append
          ->  Seq Scan on prt2_l_p1 t2_1
          ->  Seq Scan on prt2_l_p2_p1 t2_2
@@ -2254,8 +2258,9 @@ SELECT t1.a, t1.c, t2.b, t2.c FROM (SELECT * FROM prt1_l WHERE a = 1 AND a = 2) 
          ->  Seq Scan on prt2_l_p3_p2 t2_5
    ->  Hash
          ->  Result
+               Replaces: Scan on prt1_l
                One-Time Filter: false
-(11 rows)
+(12 rows)
 
 -- Test case to verify proper handling of subqueries in a partitioned delete.
 -- The weird-looking lateral join is just there to force creation of a

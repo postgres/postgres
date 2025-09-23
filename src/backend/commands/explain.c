@@ -147,6 +147,7 @@ static void show_buffer_usage(ExplainState *es, const BufferUsage *usage);
 static void show_wal_usage(ExplainState *es, const WalUsage *usage);
 static void show_memory_counters(ExplainState *es,
 								 const MemoryContextCounters *mem_counters);
+static void show_result_replacement_info(Result *result, ExplainState *es);
 static void ExplainIndexScanDetails(Oid indexid, ScanDirection indexorderdir,
 									ExplainState *es);
 static void ExplainScanTarget(Scan *plan, ExplainState *es);
@@ -1229,6 +1230,10 @@ ExplainPreScanNode(PlanState *planstate, Bitmapset **rels_used)
 			*rels_used = bms_add_members(*rels_used,
 										 ((MergeAppend *) plan)->apprelids);
 			break;
+		case T_Result:
+			*rels_used = bms_add_members(*rels_used,
+										 ((Result *) plan)->relids);
+			break;
 		default:
 			break;
 	}
@@ -2232,6 +2237,7 @@ ExplainNode(PlanState *planstate, List *ancestors,
 								   ancestors, es);
 			break;
 		case T_Result:
+			show_result_replacement_info(castNode(Result, plan), es);
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
 							"One-Time Filter", planstate, ancestors, es);
 			show_upper_qual(plan->qual, "Filter", planstate, ancestors, es);
@@ -4748,6 +4754,102 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 
 	if (labeltargets)
 		ExplainCloseGroup("Target Tables", "Target Tables", false, es);
+}
+
+/*
+ * Explain what a "Result" node replaced.
+ */
+static void
+show_result_replacement_info(Result *result, ExplainState *es)
+{
+	StringInfoData buf;
+	int			nrels = 0;
+	int			rti = -1;
+	bool		found_non_result = false;
+	char	   *replacement_type = "???";
+
+	/* If the Result node has a subplan, it didn't replace anything. */
+	if (result->plan.lefttree != NULL)
+		return;
+
+	/* Gating result nodes should have a subplan, and we don't. */
+	Assert(result->result_type != RESULT_TYPE_GATING);
+
+	switch (result->result_type)
+	{
+		case RESULT_TYPE_GATING:
+			replacement_type = "Gating";
+			break;
+		case RESULT_TYPE_SCAN:
+			replacement_type = "Scan";
+			break;
+		case RESULT_TYPE_JOIN:
+			replacement_type = "Join";
+			break;
+		case RESULT_TYPE_UPPER:
+			/* a small white lie */
+			replacement_type = "Aggregate";
+			break;
+		case RESULT_TYPE_MINMAX:
+			replacement_type = "MinMaxAggregate";
+			break;
+	}
+
+	/*
+	 * Build up a comma-separated list of user-facing names for the range
+	 * table entries in the relids set.
+	 */
+	initStringInfo(&buf);
+	while ((rti = bms_next_member(result->relids, rti)) >= 0)
+	{
+		RangeTblEntry *rte = rt_fetch(rti, es->rtable);
+		char	   *refname;
+
+		/*
+		 * add_outer_joins_to_relids will add join RTIs to the relids set of a
+		 * join; if that join is then replaced with a Result node, we may see
+		 * such RTIs here. But we want to completely ignore those here,
+		 * because "a LEFT JOIN b ON whatever" is a join between a and b, not
+		 * a join between a, b, and an unnamed join.
+		 */
+		if (rte->rtekind == RTE_JOIN)
+			continue;
+
+		/* Count the number of rels that aren't ignored completely. */
+		++nrels;
+
+		/* Work out what reference name to use and add it to the string. */
+		refname = (char *) list_nth(es->rtable_names, rti - 1);
+		if (refname == NULL)
+			refname = rte->eref->aliasname;
+		if (buf.len > 0)
+			appendStringInfoString(&buf, ", ");
+		appendStringInfoString(&buf, refname);
+
+		/* Keep track of whether we see anything other than RTE_RESULT. */
+		if (rte->rtekind != RTE_RESULT)
+			found_non_result = true;
+	}
+
+	/*
+	 * If this Result node is because of a single RTE that is RTE_RESULT, it
+	 * is not really replacing anything at all, because there's no other
+	 * method for implementing a scan of such an RTE, so we don't display the
+	 * Replaces line in such cases.
+	 */
+	if (nrels <= 1 && !found_non_result &&
+		result->result_type == RESULT_TYPE_SCAN)
+		return;
+
+	/* Say what we replaced, with list of rels if available. */
+	if (buf.len == 0)
+		ExplainPropertyText("Replaces", replacement_type, es);
+	else
+	{
+		char	   *s = psprintf("%s on %s", replacement_type, buf.data);
+
+		ExplainPropertyText("Replaces", s, es);
+	}
 }
 
 /*

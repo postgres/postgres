@@ -36,8 +36,9 @@ SELECT * FROM pred_tab t WHERE t.a IS NULL;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on t
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- Ensure the IS_NULL qual is not reduced to constant-FALSE on nullable
 -- columns
@@ -77,8 +78,9 @@ SELECT * FROM pred_tab t WHERE t.a IS NULL OR t.c IS NULL;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on t
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- Ensure the OR clause is not reduced to constant-FALSE when not all branches
 -- are provably false
@@ -139,8 +141,9 @@ SELECT * FROM pred_tab t1
    Join Filter: false
    ->  Seq Scan on pred_tab t1
    ->  Result
+         Replaces: Scan on t2
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- Ensure the IS_NULL qual is not reduced to constant-FALSE when the column is
 -- nullable by an outer join
@@ -209,8 +212,9 @@ SELECT * FROM pred_tab t1
    Join Filter: false
    ->  Seq Scan on pred_tab t1
    ->  Result
+         Replaces: Scan on t2
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- Ensure the OR clause is not reduced to constant-FALSE when a column is
 -- made nullable from an outer join
@@ -267,17 +271,18 @@ SELECT * FROM pred_tab t1
     LEFT JOIN pred_tab t2 ON EXISTS
         (SELECT 1 FROM pred_tab t3, pred_tab t4, pred_tab t5, pred_tab t6
          WHERE t1.a = t3.a AND t6.a IS NULL);
-             QUERY PLAN              
--------------------------------------
+                 QUERY PLAN                 
+--------------------------------------------
  Nested Loop Left Join
    Join Filter: (InitPlan 1).col1
    InitPlan 1
      ->  Result
+           Replaces: Join on t3, t4, t5, t6
            One-Time Filter: false
    ->  Seq Scan on pred_tab t1
    ->  Materialize
          ->  Seq Scan on pred_tab t2
-(8 rows)
+(9 rows)
 
 DROP TABLE pred_tab;
 -- Validate we handle IS NULL and IS NOT NULL quals correctly with inheritance
@@ -418,20 +423,22 @@ SET constraint_exclusion TO ON;
 -- Ensure that we get a dummy plan
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab1, pred_tab2 WHERE pred_tab2.a IS NULL;
-        QUERY PLAN        
---------------------------
+                QUERY PLAN                
+------------------------------------------
  Result
+   Replaces: Join on pred_tab1, pred_tab2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- Ensure that we get a dummy plan
 EXPLAIN (COSTS OFF)
 SELECT * FROM pred_tab2, pred_tab1 WHERE pred_tab1.a IS NULL OR pred_tab1.b < 2;
-        QUERY PLAN        
---------------------------
+                QUERY PLAN                
+------------------------------------------
  Result
+   Replaces: Join on pred_tab2, pred_tab1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 RESET constraint_exclusion;
 DROP TABLE pred_tab1;

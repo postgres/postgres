@@ -1998,17 +1998,18 @@ create temp table json_tab (a int);
 insert into json_tab values (1);
 explain (verbose, costs off)
 select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
-                    QUERY PLAN                     
----------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  Nested Loop Left Join
-   Output: t1.a, (JSON_ARRAY(1, a RETURNING json))
+   Output: t1.a, (JSON_ARRAY(1, t2.a RETURNING json))
    Join Filter: false
    ->  Seq Scan on pg_temp.json_tab t1
          Output: t1.a
    ->  Result
-         Output: JSON_ARRAY(1, a RETURNING json)
+         Output: JSON_ARRAY(1, t2.a RETURNING json)
+         Replaces: Scan on t2
          One-Time Filter: false
-(8 rows)
+(9 rows)
 
 select * from json_tab t1 left join (select json_array(1, a) from json_tab t2) s on false;
  a | json_array 
@@ -2899,12 +2900,13 @@ ON B.hundred in (SELECT min(c.hundred) FROM tenk2 C WHERE c.odd = b.odd);
                      ->  Subquery Scan on unnamed_subquery
                            Filter: (b.hundred = unnamed_subquery.min)
                            ->  Result
+                                 Replaces: MinMaxAggregate
                                  InitPlan 1
                                    ->  Limit
                                          ->  Index Scan using tenk2_hundred on tenk2 c
                                                Index Cond: (hundred IS NOT NULL)
                                                Filter: (odd = b.odd)
-(16 rows)
+(17 rows)
 
 --
 -- Test VALUES to ARRAY (VtA) transformation
@@ -3067,8 +3069,9 @@ EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, NULL);
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on onek
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 EXPLAIN (COSTS OFF) EXECUTE test(NULL, 3.14, '-1.5');
                                                                      QUERY PLAN                                                                      

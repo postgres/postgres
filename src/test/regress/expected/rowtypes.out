@@ -1325,8 +1325,9 @@ where false;
 --------------------------
  Result
    Output: (a).f1, (a).f2
+   Replaces: Scan on ss
    One-Time Filter: false
-(3 rows)
+(4 rows)
 
 explain (verbose, costs off)
 with cte(c) as materialized (select row(1, 2)),
@@ -1350,11 +1351,12 @@ where false;
 -----------------------------------
  Result
    Output: (cte.c).f1
+   Replaces: Scan on cte
    One-Time Filter: false
    CTE cte
      ->  Result
            Output: '(1,2)'::record
-(6 rows)
+(7 rows)
 
 --
 -- Tests for component access / FieldSelect

@@ -44,9 +44,10 @@ EXPLAIN (RANGE_TABLE) SELECT 1;
                 QUERY PLAN                
 ------------------------------------------
  Result  (cost=0.00..0.01 rows=1 width=4)
+   RTIs: 1
  RTI 1 (result):
    Eref: "*RESULT*" ()
-(3 rows)
+(4 rows)
 
 -- Create a partitioned table.
 CREATE TABLE vegetables (id serial, name text, genus text)
@@ -475,6 +476,7 @@ INSERT INTO vegetables (name, genus) VALUES ('broccoflower', 'brassica');
    Nominal RTI: 1
    Exclude Relation RTI: 0
    ->  Result
+         RTIs: 2
  RTI 1 (relation):
    Eref: vegetables (id, name, genus)
    Relation: vegetables
@@ -485,5 +487,5 @@ INSERT INTO vegetables (name, genus) VALUES ('broccoflower', 'brassica');
    Eref: "*RESULT*" ()
  Unprunable RTIs: 1
  Result RTIs: 1
-(14 rows)
+(15 rows)
 

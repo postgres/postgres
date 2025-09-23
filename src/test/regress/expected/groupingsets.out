@@ -591,11 +591,12 @@ explain (costs off)
                          QUERY PLAN                         
 ------------------------------------------------------------
  Result
+   Replaces: MinMaxAggregate
    InitPlan 1
      ->  Limit
            ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 IS NOT NULL)
-(5 rows)
+(6 rows)
 
 -- Views with GROUPING SET queries
 CREATE VIEW gstest_view AS select a, b, grouping(a,b), sum(c), count(*), max(c)

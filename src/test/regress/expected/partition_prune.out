@@ -627,8 +627,9 @@ explain (costs off) select * from rlp3 where a = 20;   /* empty */
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on rlp3
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- redundant clauses are eliminated
 explain (costs off) select * from rlp where a > 1 and a = 10;	/* only default */
@@ -670,8 +671,9 @@ explain (costs off) select * from rlp where a = 1 and a = 3;	/* empty */
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on rlp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from rlp where (a = 1 and a = 3) or (a > 1 and a = 15);
                             QUERY PLAN                             
@@ -1254,25 +1256,28 @@ select * from boolpart where a is not unknown;
 
 -- check that all partitions are pruned when faced with conflicting clauses
 explain (costs off) select * from boolpart where a is not unknown and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is false and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from boolpart where a is true and a is unknown;
-        QUERY PLAN        
---------------------------
+          QUERY PLAN          
+------------------------------
  Result
+   Replaces: Scan on boolpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 -- inverse boolean partitioning - a seemingly unlikely design, but we've got
 -- code for it, so we'd better test it.
@@ -1568,11 +1573,12 @@ explain (costs off) select * from coercepart where a = any ('{ab,null}');
 (2 rows)
 
 explain (costs off) select * from coercepart where a = any (null::text[]);
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab}');
                   QUERY PLAN                  
@@ -1582,25 +1588,28 @@ explain (costs off) select * from coercepart where a = all ('{ab}');
 (2 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab,bc}');
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all ('{ab,null}');
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from coercepart where a = all (null::text[]);
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on coercepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table coercepart;
 CREATE TABLE part (a INT, b INT) PARTITION BY LIST (a);
@@ -1772,8 +1781,9 @@ explain (costs off) select * from lp where a <> 'a' and a is null;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on lp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from lp where (a <> 'a' and a <> 'd') or a is null;
                                   QUERY PLAN                                  
@@ -1866,22 +1876,24 @@ create table lparted_by_int2 (a smallint) partition by list (a);
 create table lparted_by_int2_1 partition of lparted_by_int2 for values in (1);
 create table lparted_by_int2_16384 partition of lparted_by_int2 for values in (16384);
 explain (costs off) select * from lparted_by_int2 where a = 100_000_000_000_000;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on lparted_by_int2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 create table rparted_by_int2 (a smallint) partition by range (a);
 create table rparted_by_int2_1 partition of rparted_by_int2 for values from (1) to (10);
 create table rparted_by_int2_16384 partition of rparted_by_int2 for values from (10) to (16384);
 -- all partitions pruned
 explain (costs off) select * from rparted_by_int2 where a > 100_000_000_000_000;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on rparted_by_int2
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 create table rparted_by_int2_maxvalue partition of rparted_by_int2 for values from (16384) to (maxvalue);
 -- all partitions but rparted_by_int2_maxvalue pruned
@@ -2131,8 +2143,9 @@ explain (costs off) select * from hp where a = 1 and b = 'abcde' and
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on hp
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 --
 -- Test runtime partition pruning
@@ -3390,11 +3403,12 @@ select * from stable_qual_pruning where a < '2000-02-01'::timestamptz;
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
   where a = any(array['2010-02-01', '2020-01-01']::timestamp[]);
-            QUERY PLAN             
------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Result (actual rows=0.00 loops=1)
+   Replaces: Scan on stable_qual_pruning
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (analyze, costs off, summary off, timing off, buffers off)
 select * from stable_qual_pruning
@@ -3642,6 +3656,7 @@ explain (analyze, costs off, summary off, timing off, buffers off) select * from
    Sort Key: ma_test.b
    InitPlan 2
      ->  Result (actual rows=1.00 loops=1)
+           Replaces: MinMaxAggregate
            InitPlan 1
              ->  Limit (actual rows=1.00 loops=1)
                    ->  Index Scan using ma_test_p2_b_idx on ma_test_p2 (actual rows=1.00 loops=1)
@@ -3656,7 +3671,7 @@ explain (analyze, costs off, summary off, timing off, buffers off) select * from
    ->  Index Scan using ma_test_p3_b_idx on ma_test_p3 ma_test_3 (actual rows=10.00 loops=1)
          Filter: (a >= (InitPlan 2).col1)
          Index Searches: 1
-(18 rows)
+(19 rows)
 
 reset enable_seqscan;
 reset enable_sort;
@@ -3678,11 +3693,12 @@ explain (costs off) select * from pp_arrpart where a = '{1}';
 (2 rows)
 
 explain (costs off) select * from pp_arrpart where a = '{1, 2}';
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on pp_arrpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from pp_arrpart where a in ('{4, 5}', '{1}');
                               QUERY PLAN                              
@@ -3764,11 +3780,12 @@ explain (costs off) select * from pp_enumpart where a = 'blue';
 (2 rows)
 
 explain (costs off) select * from pp_enumpart where a = 'black';
-        QUERY PLAN        
---------------------------
+           QUERY PLAN            
+---------------------------------
  Result
+   Replaces: Scan on pp_enumpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_enumpart;
 drop type pp_colors;
@@ -3785,11 +3802,12 @@ explain (costs off) select * from pp_recpart where a = '(1,1)'::pp_rectype;
 (2 rows)
 
 explain (costs off) select * from pp_recpart where a = '(1,2)'::pp_rectype;
-        QUERY PLAN        
---------------------------
+           QUERY PLAN           
+--------------------------------
  Result
+   Replaces: Scan on pp_recpart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_recpart;
 drop type pp_rectype;
@@ -3805,11 +3823,12 @@ explain (costs off) select * from pp_intrangepart where a = '[1,2]'::int4range;
 (2 rows)
 
 explain (costs off) select * from pp_intrangepart where a = '(1,2)'::int4range;
-        QUERY PLAN        
---------------------------
+             QUERY PLAN              
+-------------------------------------
  Result
+   Replaces: Scan on pp_intrangepart
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table pp_intrangepart;
 --
@@ -4125,19 +4144,21 @@ explain (costs off) update listp1 set a = 1 where a = 2;
 -- constraint exclusion enabled
 set constraint_exclusion to 'on';
 explain (costs off) select * from listp1 where a = 2;
-        QUERY PLAN        
---------------------------
+         QUERY PLAN         
+----------------------------
  Result
+   Replaces: Scan on listp1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) update listp1 set a = 1 where a = 2;
-           QUERY PLAN           
---------------------------------
+            QUERY PLAN            
+----------------------------------
  Update on listp1
    ->  Result
+         Replaces: Scan on listp1
          One-Time Filter: false
-(3 rows)
+(4 rows)
 
 reset constraint_exclusion;
 reset enable_partition_pruning;
@@ -4524,18 +4545,20 @@ create table hp_contradict_test (a int, b int) partition by hash (a part_test_in
 create table hp_contradict_test_p1 partition of hp_contradict_test for values with (modulus 2, remainder 0);
 create table hp_contradict_test_p2 partition of hp_contradict_test for values with (modulus 2, remainder 1);
 explain (costs off) select * from hp_contradict_test where a is null and a === 1 and b === 1;
-        QUERY PLAN        
---------------------------
+               QUERY PLAN               
+----------------------------------------
  Result
+   Replaces: Scan on hp_contradict_test
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 explain (costs off) select * from hp_contradict_test where a === 1 and b === 1 and a is null;
-        QUERY PLAN        
---------------------------
+               QUERY PLAN               
+----------------------------------------
  Result
+   Replaces: Scan on hp_contradict_test
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 drop table hp_contradict_test;
 drop operator class part_test_int4_ops2 using hash;

@@ -236,6 +236,18 @@ overexplain_per_node_hook(PlanState *planstate, List *ancestors,
 									  ((MergeAppend *) plan)->apprelids,
 									  es);
 				break;
+			case T_Result:
+
+				/*
+				 * 'relids' is only meaningful when plan->lefttree is NULL,
+				 * but if somehow it ends up set when plan->lefttree is not
+				 * NULL, print it anyway.
+				 */
+				if (plan->lefttree == NULL ||
+					((Result *) plan)->relids != NULL)
+					overexplain_bitmapset("RTIs",
+										  ((Result *) plan)->relids,
+										  es);
 			default:
 				break;
 		}

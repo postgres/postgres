@@ -7159,8 +7159,9 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 < 0;
  Aggregate
    Output: count(*)
    ->  Result
+         Replaces: Scan on ft1
          One-Time Filter: false
-(4 rows)
+(5 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 < 0;
  count 
@@ -7203,8 +7204,9 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT count(*) FROM ft1 WHERE c2 >= 0;
  Aggregate
    Output: count(*)
    ->  Result
+         Replaces: Scan on ft1
          One-Time Filter: false
-(4 rows)
+(5 rows)
 
 SELECT count(*) FROM ft1 WHERE c2 >= 0;
  count 
@@ -8032,8 +8034,9 @@ DELETE FROM rem1 WHERE false;     -- currently can't be pushed down
    Remote SQL: DELETE FROM public.loc1 WHERE ctid = $1
    ->  Result
          Output: ctid
+         Replaces: Scan on rem1
          One-Time Filter: false
-(5 rows)
+(6 rows)
 
 -- Test with statement-level triggers
 CREATE TRIGGER trig_stmt_before

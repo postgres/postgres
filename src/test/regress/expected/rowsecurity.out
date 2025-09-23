@@ -3606,8 +3606,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on t1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 SET SESSION AUTHORIZATION regress_rls_bob;
 SELECT * FROM t1;
@@ -3619,8 +3620,9 @@ EXPLAIN (COSTS OFF) SELECT * FROM t1;
         QUERY PLAN        
 --------------------------
  Result
+   Replaces: Scan on t1
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 --
 -- COPY TO/FROM
@@ -4524,11 +4526,12 @@ SELECT * FROM rls_tbl WHERE a <<< 1000;
 (0 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM rls_tbl WHERE a <<< 1000 or a <<< 900;
-        QUERY PLAN        
---------------------------
+         QUERY PLAN          
+-----------------------------
  Result
+   Replaces: Scan on rls_tbl
    One-Time Filter: false
-(2 rows)
+(3 rows)
 
 RESET SESSION AUTHORIZATION;
 CREATE TABLE rls_child_tbl () INHERITS (rls_tbl);

@@ -322,6 +322,7 @@ SET constraint_exclusion = 'on';
 SELECT explain_filter('EXPLAIN (VERBOSE, COSTS FALSE) SELECT * FROM agg_csv WHERE a < 0');
  Result
    Output: a, b
+   Replaces: Scan on agg_csv
    One-Time Filter: false
 
 \t off

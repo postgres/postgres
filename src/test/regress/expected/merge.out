@@ -2426,8 +2426,9 @@ MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
                Output: t.tid, t.ctid
                ->  Result
                      Output: t.tid, t.ctid
+                     Replaces: Scan on t
                      One-Time Filter: false
-(12 rows)
+(13 rows)
 
 MERGE INTO pa_target t USING pa_source s ON t.tid = s.sid
   WHEN NOT MATCHED THEN INSERT VALUES (s.sid);

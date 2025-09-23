@@ -2568,6 +2568,7 @@ RestrictInfo
 Result
 ResultRelInfo
 ResultState
+ResultType
 RetainDeadTuplesData
 RetainDeadTuplesPhase
 ReturnSetInfo

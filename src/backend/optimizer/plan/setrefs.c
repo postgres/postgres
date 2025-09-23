@@ -1056,6 +1056,8 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				/* resconstantqual can't contain any subplan variable refs */
 				splan->resconstantqual =
 					fix_scan_expr(root, splan->resconstantqual, rtoffset, 1);
+				/* adjust the relids set */
+				splan->relids = offset_relid_set(splan->relids, rtoffset);
 			}
 			break;
 		case T_ProjectSet:

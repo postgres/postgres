@@ -99,7 +99,8 @@ static Gather *create_gather_plan(PlannerInfo *root, GatherPath *best_path);
 static Plan *create_projection_plan(PlannerInfo *root,
 									ProjectionPath *best_path,
 									int flags);
-static Plan *inject_projection_plan(Plan *subplan, List *tlist, bool parallel_safe);
+static Plan *inject_projection_plan(Plan *subplan, List *tlist,
+									bool parallel_safe);
 static Sort *create_sort_plan(PlannerInfo *root, SortPath *best_path, int flags);
 static IncrementalSort *create_incrementalsort_plan(PlannerInfo *root,
 													IncrementalSortPath *best_path, int flags);
@@ -302,7 +303,10 @@ static SetOp *make_setop(SetOpCmd cmd, SetOpStrategy strategy,
 						 List *tlist, Plan *lefttree, Plan *righttree,
 						 List *groupList, long numGroups);
 static LockRows *make_lockrows(Plan *lefttree, List *rowMarks, int epqParam);
-static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
+static Result *make_gating_result(List *tlist, Node *resconstantqual,
+								  Plan *subplan);
+static Result *make_one_row_result(List *tlist, Node *resconstantqual,
+								   RelOptInfo *rel);
 static ProjectSet *make_project_set(List *tlist, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root, Plan *subplan,
 									 CmdType operation, bool canSetTag,
@@ -1012,35 +1016,35 @@ static Plan *
 create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 				   List *gating_quals)
 {
-	Plan	   *gplan;
-	Plan	   *splan;
+	Result	   *gplan;
 
 	Assert(gating_quals);
-
-	/*
-	 * We might have a trivial Result plan already.  Stacking one Result atop
-	 * another is silly, so if that applies, just discard the input plan.
-	 * (We're assuming its targetlist is uninteresting; it should be either
-	 * the same as the result of build_path_tlist, or a simplified version.)
-	 */
-	splan = plan;
-	if (IsA(plan, Result))
-	{
-		Result	   *rplan = (Result *) plan;
-
-		if (rplan->plan.lefttree == NULL &&
-			rplan->resconstantqual == NULL)
-			splan = NULL;
-	}
 
 	/*
 	 * Since we need a Result node anyway, always return the path's requested
 	 * tlist; that's never a wrong choice, even if the parent node didn't ask
 	 * for CP_EXACT_TLIST.
 	 */
-	gplan = (Plan *) make_result(build_path_tlist(root, path),
-								 (Node *) gating_quals,
-								 splan);
+	gplan = make_gating_result(build_path_tlist(root, path),
+							   (Node *) gating_quals, plan);
+
+	/*
+	 * We might have had a trivial Result plan already.  Stacking one Result
+	 * atop another is silly, so if that applies, just discard the input plan.
+	 * (We're assuming its targetlist is uninteresting; it should be either
+	 * the same as the result of build_path_tlist, or a simplified version.
+	 * However, we preserve the set of relids that it purports to scan and
+	 * attribute that to our replacement Result instead, and likewise for the
+	 * result_type.)
+	 */
+	if (IsA(plan, Result))
+	{
+		Result	   *rplan = (Result *) plan;
+
+		gplan->plan.lefttree = NULL;
+		gplan->relids = rplan->relids;
+		gplan->result_type = rplan->result_type;
+	}
 
 	/*
 	 * Notice that we don't change cost or size estimates when doing gating.
@@ -1054,12 +1058,12 @@ create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 	 * in most cases we have only a very bad idea of the probability of the
 	 * gating qual being true.
 	 */
-	copy_plan_costsize(gplan, plan);
+	copy_plan_costsize(&gplan->plan, plan);
 
 	/* Gating quals could be unsafe, so better use the Path's safety flag */
-	gplan->parallel_safe = path->parallel_safe;
+	gplan->plan.parallel_safe = path->parallel_safe;
 
-	return gplan;
+	return &gplan->plan;
 }
 
 /*
@@ -1235,10 +1239,10 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 		/* Generate a Result plan with constant-FALSE gating qual */
 		Plan	   *plan;
 
-		plan = (Plan *) make_result(tlist,
-									(Node *) list_make1(makeBoolConst(false,
-																	  false)),
-									NULL);
+		plan = (Plan *) make_one_row_result(tlist,
+											(Node *) list_make1(makeBoolConst(false,
+																			  false)),
+											best_path->path.parent);
 
 		copy_generic_path_info(plan, (Path *) best_path);
 
@@ -1636,7 +1640,7 @@ create_group_result_plan(PlannerInfo *root, GroupResultPath *best_path)
 	/* best_path->quals is just bare clauses */
 	quals = order_qual_clauses(root, best_path->quals);
 
-	plan = make_result(tlist, (Node *) quals, NULL);
+	plan = make_one_row_result(tlist, (Node *) quals, best_path->path.parent);
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -1933,8 +1937,7 @@ create_projection_plan(PlannerInfo *root, ProjectionPath *best_path, int flags)
 	}
 	else
 	{
-		/* We need a Result node */
-		plan = (Plan *) make_result(tlist, NULL, subplan);
+		plan = (Plan *) make_gating_result(tlist, NULL, subplan);
 
 		copy_generic_path_info(plan, (Path *) best_path);
 	}
@@ -1958,7 +1961,7 @@ inject_projection_plan(Plan *subplan, List *tlist, bool parallel_safe)
 {
 	Plan	   *plan;
 
-	plan = (Plan *) make_result(tlist, NULL, subplan);
+	plan = (Plan *) make_gating_result(tlist, NULL, subplan);
 
 	/*
 	 * In principle, we should charge tlist eval cost plus cpu_per_tuple per
@@ -2436,7 +2439,9 @@ create_minmaxagg_plan(PlannerInfo *root, MinMaxAggPath *best_path)
 	/* Generate the output plan --- basically just a Result */
 	tlist = build_path_tlist(root, &best_path->path);
 
-	plan = make_result(tlist, (Node *) best_path->quals, NULL);
+	plan = make_one_row_result(tlist, (Node *) best_path->quals,
+							   best_path->path.parent);
+	plan->result_type = RESULT_TYPE_MINMAX;
 
 	copy_generic_path_info(&plan->plan, (Path *) best_path);
 
@@ -3887,7 +3892,8 @@ create_resultscan_plan(PlannerInfo *root, Path *best_path,
 			replace_nestloop_params(root, (Node *) scan_clauses);
 	}
 
-	scan_plan = make_result(tlist, (Node *) scan_clauses, NULL);
+	scan_plan = make_one_row_result(tlist, (Node *) scan_clauses,
+									best_path->parent);
 
 	copy_generic_path_info(&scan_plan->plan, best_path);
 
@@ -6922,22 +6928,57 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 }
 
 /*
- * make_result
- *	  Build a Result plan node
+ * make_gating_result
+ *	  Build a Result plan node that performs projection of a subplan, and/or
+ *	  applies a one time filter (resconstantqual)
  */
 static Result *
-make_result(List *tlist,
-			Node *resconstantqual,
-			Plan *subplan)
+make_gating_result(List *tlist,
+				   Node *resconstantqual,
+				   Plan *subplan)
+{
+	Result	   *node = makeNode(Result);
+	Plan	   *plan = &node->plan;
+
+	Assert(subplan != NULL);
+
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = subplan;
+	plan->righttree = NULL;
+	node->result_type = RESULT_TYPE_GATING;
+	node->resconstantqual = resconstantqual;
+	node->relids = NULL;
+
+	return node;
+}
+
+/*
+ * make_one_row_result
+ *	  Build a Result plan node that returns a single row (or possibly no rows,
+ *	  if the one-time filtered defined by resconstantqual returns false)
+ *
+ * 'rel' should be this path's RelOptInfo. In essence, we're saying that this
+ * Result node generates all the tuples for that RelOptInfo. Note that the same
+ * consideration can never arise in make_gating_result(), because in that case
+ * the tuples are always coming from some subordinate node.
+ */
+static Result *
+make_one_row_result(List *tlist,
+					Node *resconstantqual,
+					RelOptInfo *rel)
 {
 	Result	   *node = makeNode(Result);
 	Plan	   *plan = &node->plan;
 
 	plan->targetlist = tlist;
 	plan->qual = NIL;
-	plan->lefttree = subplan;
+	plan->lefttree = NULL;
 	plan->righttree = NULL;
+	node->result_type = IS_UPPER_REL(rel) ? RESULT_TYPE_UPPER :
+		IS_JOIN_REL(rel) ? RESULT_TYPE_JOIN : RESULT_TYPE_SCAN;
 	node->resconstantqual = resconstantqual;
+	node->relids = rel->relids;
 
 	return node;
 }
