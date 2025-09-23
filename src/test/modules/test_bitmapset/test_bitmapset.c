@@ -84,8 +84,8 @@ PG_FUNCTION_INFO_V1(test_random_operations);
 	} while (0)
 
 /* Encode/Decode to/from TEXT and Bitmapset */
-#define BITMAPSET_TO_TEXT(bms) (text *) CStringGetTextDatum(nodeToString((bms)))
-#define TEXT_TO_BITMAPSET(str) (Bitmapset *) stringToNode(TextDatumGetCString((Datum) (str)))
+#define BITMAPSET_TO_TEXT(bms) cstring_to_text(nodeToString(bms))
+#define TEXT_TO_BITMAPSET(str) ((Bitmapset *) stringToNode(text_to_cstring(str)))
 
 /*
  * Individual test functions for each bitmapset API function
