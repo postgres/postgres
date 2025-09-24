@@ -19,3 +19,95 @@ REASSIGN OWNED BY regress_datdba_before TO regress_datdba_after;
 DROP DATABASE regression_utf8;
 DROP ROLE regress_datdba_before;
 DROP ROLE regress_datdba_after;
+-- Create a specific role to test
+CREATE ROLE regress_ddl_database WITH SUPERUSER;
+CREATE DATABASE "regression_get_database_ddl"
+    OWNER regress_ddl_database ENCODING 'UTF8' LC_COLLATE "C" LC_CTYPE "C"
+    TEMPLATE template0;
+-- Test LOCAL_PROVIDER and BUILTIN_LOCALE for builtin type
+CREATE DATABASE "regression_get_database_ddl_builtin"
+    OWNER regress_ddl_database TEMPLATE template0 ENCODING 'UTF8'
+    LC_COLLATE "C" LC_CTYPE "C"
+    BUILTIN_LOCALE 'C.UTF-8' LOCALE_PROVIDER 'builtin';
+-- Test ALLOW_CONNECTION and CONNECTION_LIMIT
+CREATE DATABASE "regression_get_database_ddl_conn"
+    OWNER regress_ddl_database TEMPLATE template0 ENCODING 'UTF8'
+    LC_COLLATE "C" LC_CTYPE "C"
+    ALLOW_CONNECTIONS 0 CONNECTION LIMIT 50;
+-- Database doesn't exists
+SELECT pg_get_database_ddl('regression_database', false);
+ERROR:  database "regression_database" does not exist
+-- Test NULL value
+SELECT pg_get_database_ddl(NULL);
+ pg_get_database_ddl 
+---------------------
+ 
+(1 row)
+
+-- Without Pretty formatted
+SELECT pg_get_database_ddl('regression_get_database_ddl');
+                                                                                                       pg_get_database_ddl                                                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE DATABASE regression_get_database_ddl WITH OWNER = regress_ddl_database ENCODING = "UTF8" LC_COLLATE = "C" LC_CTYPE = "C" LOCALE_PROVIDER = 'libc' TABLESPACE = pg_default ALLOW_CONNECTIONS = true CONNECTION LIMIT = -1;
+(1 row)
+
+SELECT pg_get_database_ddl('regression_get_database_ddl_builtin');
+                                                                                                                                      pg_get_database_ddl                                                                                                                                       
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE DATABASE regression_get_database_ddl_builtin WITH OWNER = regress_ddl_database ENCODING = "UTF8" LC_COLLATE = "C" LC_CTYPE = "C" BUILTIN_LOCALE = "C.UTF-8" COLLATION_VERSION = "1" LOCALE_PROVIDER = 'builtin' TABLESPACE = pg_default ALLOW_CONNECTIONS = true CONNECTION LIMIT = -1;
+(1 row)
+
+SELECT pg_get_database_ddl('regression_get_database_ddl_conn', false);
+                                                                                                          pg_get_database_ddl                                                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE DATABASE regression_get_database_ddl_conn WITH OWNER = regress_ddl_database ENCODING = "UTF8" LC_COLLATE = "C" LC_CTYPE = "C" LOCALE_PROVIDER = 'libc' TABLESPACE = pg_default ALLOW_CONNECTIONS = false CONNECTION LIMIT = 50;
+(1 row)
+
+-- With Pretty formatted
+\pset format unaligned
+SELECT pg_get_database_ddl('regression_get_database_ddl', true);
+pg_get_database_ddl
+CREATE DATABASE regression_get_database_ddl
+	WITH
+	OWNER = regress_ddl_database
+	ENCODING = "UTF8"
+	LC_COLLATE = "C"
+	LC_CTYPE = "C"
+	LOCALE_PROVIDER = 'libc'
+	TABLESPACE = pg_default
+	ALLOW_CONNECTIONS = true
+	CONNECTION LIMIT = -1;
+(1 row)
+SELECT pg_get_database_ddl('regression_get_database_ddl_builtin', true);
+pg_get_database_ddl
+CREATE DATABASE regression_get_database_ddl_builtin
+	WITH
+	OWNER = regress_ddl_database
+	ENCODING = "UTF8"
+	LC_COLLATE = "C"
+	LC_CTYPE = "C"
+	BUILTIN_LOCALE = "C.UTF-8"
+	COLLATION_VERSION = "1"
+	LOCALE_PROVIDER = 'builtin'
+	TABLESPACE = pg_default
+	ALLOW_CONNECTIONS = true
+	CONNECTION LIMIT = -1;
+(1 row)
+SELECT pg_get_database_ddl('regression_get_database_ddl_conn', true);
+pg_get_database_ddl
+CREATE DATABASE regression_get_database_ddl_conn
+	WITH
+	OWNER = regress_ddl_database
+	ENCODING = "UTF8"
+	LC_COLLATE = "C"
+	LC_CTYPE = "C"
+	LOCALE_PROVIDER = 'libc'
+	TABLESPACE = pg_default
+	ALLOW_CONNECTIONS = false
+	CONNECTION LIMIT = 50;
+(1 row)
+-- Clean up
+DROP DATABASE "regression_get_database_ddl";
+DROP DATABASE "regression_get_database_ddl_builtin";
+DROP DATABASE "regression_get_database_ddl_conn";
+DROP ROLE regress_ddl_database;

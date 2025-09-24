@@ -3797,4 +3797,59 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
 
   </sect2>
 
+  <sect2 id="functions-get-object-ddl">
+   <title>Get Object DDL Functions</title>
+
+   <para>
+    The functions described in <xref linkend="functions-get-object-ddl-table"/>
+    return the Data Definition Language (DDL) statement for any given database object.
+    This feature is implemented as a set of distinct functions for each object type.
+   </para>
+
+   <table id="functions-get-object-ddl-table">
+    <title>Get Object DDL Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_database_ddl</primary>
+        </indexterm>
+        <function>pg_get_database_ddl</function>
+        ( <parameter>database_name</parameter> <type>name</type>, <optional> <parameter>pretty</parameter> <type>boolean</type> </optional> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the <command>CREATE DATABASE</command> statement from the
+        system catalogs for a specified database name. The result is a
+        comprehensive <command>CREATE DATABASE</command> statement.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   Most of the functions that reconstruct (decompile) database objects have an
+   optional <parameter>pretty</parameter> flag, which if
+   <literal>true</literal> causes the result to be
+   <quote>pretty-printed</quote>. Pretty-printing adds tab character and new
+   line character for legibility. Passing <literal>false</literal> for the
+   <parameter>pretty</parameter> parameter yields the same result as omitting
+   the parameter.
+  </para>
+
+  </sect2>
+
   </sect1>

@@ -657,6 +657,18 @@ LANGUAGE INTERNAL
 STRICT VOLATILE PARALLEL UNSAFE
 AS 'pg_replication_origin_session_setup';
 
+CREATE OR REPLACE FUNCTION
+  pg_get_database_ddl(database_name name, pretty bool DEFAULT false)
+RETURNS text
+LANGUAGE internal
+AS 'pg_get_database_ddl_name';
+
+CREATE OR REPLACE FUNCTION
+  pg_get_database_ddl(database_oid oid, pretty bool DEFAULT false)
+RETURNS text
+LANGUAGE internal
+AS 'pg_get_database_ddl_oid';
+
 --
 -- The default permissions for functions mean that anyone can execute them.
 -- A number of functions shouldn't be executable by just anyone, but rather
