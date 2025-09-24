@@ -1433,16 +1433,17 @@ table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
  * concurrent-update conditions.  Use simple_table_tuple_delete instead.
  *
  * Input parameters:
- *	relation - table to be modified (caller must hold suitable lock)
+ *	rel - table to be modified (caller must hold suitable lock)
  *	tid - TID of tuple to be deleted
  *	cid - delete command ID (used for visibility test, and stored into
  *		cmax if successful)
  *	crosscheck - if not InvalidSnapshot, also check tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
- * Output parameters:
- *	tmfd - filled in failure cases (see below)
  *	changingPart - true iff the tuple is being moved to another partition
  *		table due to an update of the partition key. Otherwise, false.
+ *
+ * Output parameters:
+ *	tmfd - filled in failure cases (see below)
  *
  * Normal, successful return value is TM_Ok, which means we did actually
  * delete it.  Failure return codes are TM_SelfModified, TM_Updated, and
@@ -1469,17 +1470,18 @@ table_tuple_delete(Relation rel, ItemPointer tid, CommandId cid,
  * concurrent-update conditions.  Use simple_table_tuple_update instead.
  *
  * Input parameters:
- *	relation - table to be modified (caller must hold suitable lock)
+ *	rel - table to be modified (caller must hold suitable lock)
  *	otid - TID of old tuple to be replaced
- *	slot - newly constructed tuple data to store
  *	cid - update command ID (used for visibility test, and stored into
  *		cmax/cmin if successful)
  *	crosscheck - if not InvalidSnapshot, also check old tuple against this
  *	wait - true if should wait for any conflicting update to commit/abort
+ *
  * Output parameters:
+ *	slot - newly constructed tuple data to store
  *	tmfd - filled in failure cases (see below)
  *	lockmode - filled with lock mode acquired on tuple
- *  update_indexes - in success cases this is set to true if new index entries
+ *	update_indexes - in success cases this is set to true if new index entries
  *		are required for this tuple
  *
  * Normal, successful return value is TM_Ok, which means we did actually
@@ -1512,7 +1514,7 @@ table_tuple_update(Relation rel, ItemPointer otid, TupleTableSlot *slot,
  * Lock a tuple in the specified mode.
  *
  * Input parameters:
- *	relation: relation containing tuple (caller must hold suitable lock)
+ *	rel: relation containing tuple (caller must hold suitable lock)
  *	tid: TID of tuple to lock (updated if an update chain was followed)
  *	snapshot: snapshot to use for visibility determinations
  *	cid: current command ID (used for visibility test, and stored into
