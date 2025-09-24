@@ -1245,7 +1245,14 @@ test_specific_config_settings(int test_conns, int test_buffs)
 					  DEVNULL, DEVNULL);
 
 	fflush(NULL);
+	#if defined(__EMSCRIPTEN__)
+	// emscripten supports (some?) syscalls, but that's not actually what we want, because we want to remain inside the wasm sandbox
+	// so just return a dummy value until we decide how to handle syscalls.
+	// TODO: https://github.com/electric-sql/pglite/issues/798
+	status = 123;
+	#else
 	status = system(cmd.data);
+	#endif // #if defined(__EMSCRIPTEN__)
 
 	termPQExpBuffer(&cmd);
 
