@@ -85,7 +85,7 @@ while (<$wait_event_names>)
 # Sort the lines based on the second column.
 # uc() is being used to force the comparison to be case-insensitive.
 my @lines_sorted =
-  sort { uc((split(/\t/, $a))[1]) cmp uc((split(/\t/, $b))[1]) } @lines;
+  sort { uc((split(/\t+/, $a))[1]) cmp uc((split(/\t+/, $b))[1]) } @lines;
 
 # If we are generating code, concat @lines_sorted and then
 # @abi_compatibility_lines.
@@ -101,7 +101,7 @@ foreach my $line (@lines_sorted)
 	  unless $line =~ /^(\w+)\t+(\w+)\t+("\w.*\.")$/;
 
 	(my $waitclassname, my $waiteventname, my $waitevendocsentence) =
-	  split(/\t/, $line);
+	  ($1, $2, $3);
 
 	# Generate the element name for the enums based on the
 	# description.  The C symbols are prefixed with "WAIT_EVENT_".
