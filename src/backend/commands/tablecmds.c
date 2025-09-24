@@ -15995,7 +15995,7 @@ ATExecAlterColumnGenericOptions(Relation rel,
 									options,
 									fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(datum)))
+	if (DatumGetPointer(datum) != NULL)
 		repl_val[Anum_pg_attribute_attfdwoptions - 1] = datum;
 	else
 		repl_null[Anum_pg_attribute_attfdwoptions - 1] = true;
@@ -18673,7 +18673,7 @@ ATExecGenericOptions(Relation rel, List *options)
 									options,
 									fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(datum)))
+	if (DatumGetPointer(datum) != NULL)
 		repl_val[Anum_pg_foreign_table_ftoptions - 1] = datum;
 	else
 		repl_null[Anum_pg_foreign_table_ftoptions - 1] = true;

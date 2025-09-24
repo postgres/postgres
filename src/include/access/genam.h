@@ -155,12 +155,6 @@ typedef struct IndexOrderByDistance
  * generalized index_ interface routines (in indexam.c)
  */
 
-/*
- * IndexScanIsValid
- *		True iff the index scan is valid.
- */
-#define IndexScanIsValid(scan) PointerIsValid(scan)
-
 extern Relation index_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_index_open(Oid relationId, LOCKMODE lockmode);
 extern void index_close(Relation relation, LOCKMODE lockmode);

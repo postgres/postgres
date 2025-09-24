@@ -2390,7 +2390,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 	 */
 	Assert(RelationIsValid(relation));
 	Assert(HeapTupleIsValid(tuple));
-	Assert(PointerIsValid(function));
+	Assert(function);
 	Assert(CacheHdr != NULL);
 
 	reloid = RelationGetRelid(relation);

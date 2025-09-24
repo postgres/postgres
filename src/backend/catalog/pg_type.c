@@ -66,7 +66,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	NameData	name;
 	ObjectAddress address;
 
-	Assert(PointerIsValid(typeName));
+	Assert(typeName);
 
 	/*
 	 * open pg_type

@@ -632,7 +632,7 @@ CreateForeignDataWrapper(ParseState *pstate, CreateFdwStmt *stmt)
 										 stmt->options,
 										 fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(fdwoptions)))
+	if (DatumGetPointer(fdwoptions) != NULL)
 		values[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = fdwoptions;
 	else
 		nulls[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -783,7 +783,7 @@ AlterForeignDataWrapper(ParseState *pstate, AlterFdwStmt *stmt)
 										stmt->options,
 										fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_data_wrapper_fdwoptions - 1] = true;
@@ -943,7 +943,7 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 										 stmt->options,
 										 fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(srvoptions)))
+	if (DatumGetPointer(srvoptions) != NULL)
 		values[Anum_pg_foreign_server_srvoptions - 1] = srvoptions;
 	else
 		nulls[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -1051,7 +1051,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 										stmt->options,
 										fdw->fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_foreign_server_srvoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_foreign_server_srvoptions - 1] = true;
@@ -1187,7 +1187,7 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 										 stmt->options,
 										 fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(useoptions)))
+	if (DatumGetPointer(useoptions) != NULL)
 		values[Anum_pg_user_mapping_umoptions - 1] = useoptions;
 	else
 		nulls[Anum_pg_user_mapping_umoptions - 1] = true;
@@ -1301,7 +1301,7 @@ AlterUserMapping(AlterUserMappingStmt *stmt)
 										stmt->options,
 										fdw->fdwvalidator);
 
-		if (PointerIsValid(DatumGetPointer(datum)))
+		if (DatumGetPointer(datum) != NULL)
 			repl_val[Anum_pg_user_mapping_umoptions - 1] = datum;
 		else
 			repl_null[Anum_pg_user_mapping_umoptions - 1] = true;
@@ -1464,7 +1464,7 @@ CreateForeignTable(CreateForeignTableStmt *stmt, Oid relid)
 										stmt->options,
 										fdw->fdwvalidator);
 
-	if (PointerIsValid(DatumGetPointer(ftoptions)))
+	if (DatumGetPointer(ftoptions) != NULL)
 		values[Anum_pg_foreign_table_ftoptions - 1] = ftoptions;
 	else
 		nulls[Anum_pg_foreign_table_ftoptions - 1] = true;

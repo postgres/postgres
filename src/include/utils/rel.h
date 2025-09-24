@@ -486,9 +486,7 @@ typedef struct ViewOptions
  * RelationIsValid
  *		True iff relation descriptor is valid.
  */
-#define RelationIsValid(relation) PointerIsValid(relation)
-
-#define InvalidRelation ((Relation) NULL)
+#define RelationIsValid(relation) ((relation) != NULL)
 
 /*
  * RelationHasReferenceCountZero

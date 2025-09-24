@@ -363,7 +363,7 @@ outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 	else
 	{
 		s = (char *) DatumGetPointer(value);
-		if (!PointerIsValid(s))
+		if (!s)
 			appendStringInfoString(str, "0 [ ]");
 		else
 		{

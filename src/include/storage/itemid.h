@@ -83,7 +83,7 @@ typedef uint16 ItemLength;
  *		True iff item identifier is valid.
  *		This is a pretty weak test, probably useful only in Asserts.
  */
-#define ItemIdIsValid(itemId)	PointerIsValid(itemId)
+#define ItemIdIsValid(itemId)	((itemId) != NULL)
 
 /*
  * ItemIdIsUsed

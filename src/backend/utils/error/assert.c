@@ -32,8 +32,7 @@ ExceptionalCondition(const char *conditionName,
 					 int lineNumber)
 {
 	/* Report the failure on stderr (or local equivalent) */
-	if (!PointerIsValid(conditionName)
-		|| !PointerIsValid(fileName))
+	if (!conditionName || !fileName)
 		write_stderr("TRAP: ExceptionalCondition: bad arguments in PID %d\n",
 					 (int) getpid());
 	else

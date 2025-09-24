@@ -1179,7 +1179,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *nameSpace,
 	astate = NULL;
 
 	/* Copy any oldOptions that aren't to be replaced */
-	if (PointerIsValid(DatumGetPointer(oldOptions)))
+	if (DatumGetPointer(oldOptions) != NULL)
 	{
 		ArrayType  *array = DatumGetArrayTypeP(oldOptions);
 		Datum	   *oldoptions;
@@ -1357,7 +1357,7 @@ untransformRelOptions(Datum options)
 	int			i;
 
 	/* Nothing to do if no options */
-	if (!PointerIsValid(DatumGetPointer(options)))
+	if (DatumGetPointer(options) == NULL)
 		return result;
 
 	array = DatumGetArrayTypeP(options);
@@ -1549,7 +1549,7 @@ parseRelOptions(Datum options, bool validate, relopt_kind kind,
 	}
 
 	/* Done if no options */
-	if (PointerIsValid(DatumGetPointer(options)))
+	if (DatumGetPointer(options) != NULL)
 		parseRelOptionsInternal(options, validate, reloptions, numoptions);
 
 	*numrelopts = numoptions;
@@ -2092,7 +2092,7 @@ index_reloptions(amoptions_function amoptions, Datum reloptions, bool validate)
 	Assert(amoptions != NULL);
 
 	/* Assume function is strict */
-	if (!PointerIsValid(DatumGetPointer(reloptions)))
+	if (DatumGetPointer(reloptions) == NULL)
 		return NULL;
 
 	return amoptions(reloptions, validate);

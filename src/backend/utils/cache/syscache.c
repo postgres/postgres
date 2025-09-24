@@ -131,7 +131,7 @@ InitCatalogCache(void)
 										 cacheinfo[cacheId].nkeys,
 										 cacheinfo[cacheId].key,
 										 cacheinfo[cacheId].nbuckets);
-		if (!PointerIsValid(SysCache[cacheId]))
+		if (!SysCache[cacheId])
 			elog(ERROR, "could not initialize cache %u (%d)",
 				 cacheinfo[cacheId].reloid, cacheId);
 		/* Accumulate data for OID lists, too */
@@ -211,8 +211,7 @@ SearchSysCache(int cacheId,
 			   Datum key3,
 			   Datum key4)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
+	Assert(cacheId >= 0 && cacheId < SysCacheSize && SysCache[cacheId]);
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }
@@ -221,8 +220,7 @@ HeapTuple
 SearchSysCache1(int cacheId,
 				Datum key1)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
+	Assert(cacheId >= 0 && cacheId < SysCacheSize && SysCache[cacheId]);
 	Assert(SysCache[cacheId]->cc_nkeys == 1);
 
 	return SearchCatCache1(SysCache[cacheId], key1);
@@ -232,8 +230,7 @@ HeapTuple
 SearchSysCache2(int cacheId,
 				Datum key1, Datum key2)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
+	Assert(cacheId >= 0 && cacheId < SysCacheSize && SysCache[cacheId]);
 	Assert(SysCache[cacheId]->cc_nkeys == 2);
 
 	return SearchCatCache2(SysCache[cacheId], key1, key2);
@@ -243,8 +240,7 @@ HeapTuple
 SearchSysCache3(int cacheId,
 				Datum key1, Datum key2, Datum key3)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
+	Assert(cacheId >= 0 && cacheId < SysCacheSize && SysCache[cacheId]);
 	Assert(SysCache[cacheId]->cc_nkeys == 3);
 
 	return SearchCatCache3(SysCache[cacheId], key1, key2, key3);
@@ -254,8 +250,7 @@ HeapTuple
 SearchSysCache4(int cacheId,
 				Datum key1, Datum key2, Datum key3, Datum key4)
 {
-	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
-		   PointerIsValid(SysCache[cacheId]));
+	Assert(cacheId >= 0 && cacheId < SysCacheSize && SysCache[cacheId]);
 	Assert(SysCache[cacheId]->cc_nkeys == 4);
 
 	return SearchCatCache4(SysCache[cacheId], key1, key2, key3, key4);
@@ -607,13 +602,12 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	 * valid (because the caller recently fetched the tuple via this same
 	 * cache), but there are cases where we have to initialize the cache here.
 	 */
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
+	if (cacheId < 0 || cacheId >= SysCacheSize || !SysCache[cacheId])
 		elog(ERROR, "invalid cache ID: %d", cacheId);
-	if (!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
+	if (!SysCache[cacheId]->cc_tupdesc)
 	{
 		InitCatCachePhase2(SysCache[cacheId], false);
-		Assert(PointerIsValid(SysCache[cacheId]->cc_tupdesc));
+		Assert(SysCache[cacheId]->cc_tupdesc);
 	}
 
 	return heap_getattr(tup, attributeNumber,
@@ -664,8 +658,7 @@ GetSysCacheHashValue(int cacheId,
 					 Datum key3,
 					 Datum key4)
 {
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
+	if (cacheId < 0 || cacheId >= SysCacheSize || !SysCache[cacheId])
 		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return GetCatCacheHashValue(SysCache[cacheId], key1, key2, key3, key4);
@@ -678,8 +671,7 @@ struct catclist *
 SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3)
 {
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
+	if (cacheId < 0 || cacheId >= SysCacheSize || !SysCache[cacheId])
 		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,
@@ -701,7 +693,7 @@ SysCacheInvalidate(int cacheId, uint32 hashValue)
 		elog(ERROR, "invalid cache ID: %d", cacheId);
 
 	/* if this cache isn't initialized yet, no need to do anything */
-	if (!PointerIsValid(SysCache[cacheId]))
+	if (!SysCache[cacheId])
 		return;
 
 	CatCacheInvalidate(SysCache[cacheId], hashValue);

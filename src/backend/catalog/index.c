@@ -3014,9 +3014,9 @@ index_build(Relation heapRelation,
 	 * sanity checks
 	 */
 	Assert(RelationIsValid(indexRelation));
-	Assert(PointerIsValid(indexRelation->rd_indam));
-	Assert(PointerIsValid(indexRelation->rd_indam->ambuild));
-	Assert(PointerIsValid(indexRelation->rd_indam->ambuildempty));
+	Assert(indexRelation->rd_indam);
+	Assert(indexRelation->rd_indam->ambuild);
+	Assert(indexRelation->rd_indam->ambuildempty);
 
 	/*
 	 * Determine worker process details for parallel CREATE INDEX.  Currently,
@@ -3077,7 +3077,7 @@ index_build(Relation heapRelation,
 	 */
 	stats = indexRelation->rd_indam->ambuild(heapRelation, indexRelation,
 											 indexInfo);
-	Assert(PointerIsValid(stats));
+	Assert(stats);
 
 	/*
 	 * If this is an unlogged index, we may need to write out an init fork for

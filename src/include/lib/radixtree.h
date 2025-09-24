@@ -403,7 +403,7 @@ typedef struct RT_NODE
 #else
 #define RT_PTR_ALLOC RT_NODE *
 #define RT_INVALID_PTR_ALLOC NULL
-#define RT_PTR_ALLOC_IS_VALID(ptr) PointerIsValid(ptr)
+#define RT_PTR_ALLOC_IS_VALID(ptr) ((ptr) != NULL)
 #endif
 
 /*

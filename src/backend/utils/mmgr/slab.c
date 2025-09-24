@@ -193,14 +193,14 @@ typedef struct SlabBlock
  * SlabIsValid
  *		True iff set is a valid slab allocation set.
  */
-#define SlabIsValid(set) (PointerIsValid(set) && IsA(set, SlabContext))
+#define SlabIsValid(set) ((set) && IsA(set, SlabContext))
 
 /*
  * SlabBlockIsValid
  *		True iff block is a valid block of slab allocation set.
  */
 #define SlabBlockIsValid(block) \
-	(PointerIsValid(block) && SlabIsValid((block)->slab))
+	((block) && SlabIsValid((block)->slab))
 
 /*
  * SlabBlocklistIndex

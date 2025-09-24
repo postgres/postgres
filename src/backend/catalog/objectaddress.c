@@ -4849,7 +4849,7 @@ getObjectIdentityParts(const ObjectAddress *object,
 	 * will be initialized in all cases inside the switch; but we do it anyway
 	 * so that we can test below that no branch leaves it unset.
 	 */
-	Assert(PointerIsValid(objname) == PointerIsValid(objargs));
+	Assert((objname != NULL) == (objargs != NULL));
 	if (objname)
 	{
 		*objname = NIL;

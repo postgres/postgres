@@ -149,7 +149,7 @@ ProcedureCreate(const char *procedureName,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(prosrc));
+	Assert(prosrc);
 
 	parameterCount = parameterTypes->dim1;
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)

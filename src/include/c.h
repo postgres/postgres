@@ -736,12 +736,6 @@ typedef NameData *Name;
 #define BoolIsValid(boolean)	((boolean) == false || (boolean) == true)
 
 /*
- * PointerIsValid
- *		True iff pointer is valid.
- */
-#define PointerIsValid(pointer) ((const void*)(pointer) != NULL)
-
-/*
  * PointerIsAligned
  *		True iff pointer is properly aligned to point to the given type.
  */

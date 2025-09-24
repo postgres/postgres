@@ -190,24 +190,18 @@ typedef struct AllocBlockData
 }			AllocBlockData;
 
 /*
- * AllocPointerIsValid
- *		True iff pointer is valid allocation pointer.
- */
-#define AllocPointerIsValid(pointer) PointerIsValid(pointer)
-
-/*
  * AllocSetIsValid
  *		True iff set is valid allocation set.
  */
 #define AllocSetIsValid(set) \
-	(PointerIsValid(set) && IsA(set, AllocSetContext))
+	((set) && IsA(set, AllocSetContext))
 
 /*
  * AllocBlockIsValid
  *		True iff block is valid block of allocation set.
  */
 #define AllocBlockIsValid(block) \
-	(PointerIsValid(block) && AllocSetIsValid((block)->aset))
+	((block) && AllocSetIsValid((block)->aset))
 
 /*
  * We always store external chunks on a dedicated block.  This makes fetching

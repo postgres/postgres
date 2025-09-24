@@ -131,7 +131,7 @@ IndexInfoFindDataOffset(unsigned short t_info)
 static inline Datum
 index_getattr(IndexTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
-	Assert(PointerIsValid(isnull));
+	Assert(isnull);
 	Assert(attnum > 0);
 
 	*isnull = false;

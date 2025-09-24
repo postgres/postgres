@@ -474,8 +474,8 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(src));
-	Assert(PointerIsValid(dst));
+	Assert(src);
+	Assert(dst);
 	Assert(srcAttno >= 1);
 	Assert(srcAttno <= src->natts);
 	Assert(dstAttno >= 1);
@@ -853,7 +853,7 @@ TupleDescInitEntry(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 	Assert(attdim >= 0);
@@ -925,7 +925,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 	Form_pg_attribute att;
 
 	/* sanity checks */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 	Assert(attdim >= 0);
@@ -1030,7 +1030,7 @@ TupleDescInitEntryCollation(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	Assert(PointerIsValid(desc));
+	Assert(desc);
 	Assert(attributeNumber >= 1);
 	Assert(attributeNumber <= desc->natts);
 

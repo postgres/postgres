@@ -102,14 +102,14 @@ struct GenerationBlock
  *		True iff set is valid generation set.
  */
 #define GenerationIsValid(set) \
-	(PointerIsValid(set) && IsA(set, GenerationContext))
+	((set) && IsA(set, GenerationContext))
 
 /*
  * GenerationBlockIsValid
  *		True iff block is valid block of generation set.
  */
 #define GenerationBlockIsValid(block) \
-	(PointerIsValid(block) && GenerationIsValid((block)->context))
+	((block) && GenerationIsValid((block)->context))
 
 /*
  * GenerationBlockIsEmpty
