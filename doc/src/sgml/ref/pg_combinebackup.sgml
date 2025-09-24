@@ -314,7 +314,7 @@ PostgreSQL documentation
 
   <para>
    To avoid this problem, taking a new full backup after changing the checksum
-   state of the cluster using <xref linkend="app-pgchecksums "/> is
+   state of the cluster using <xref linkend="app-pgchecksums"/> is
    recommended. Otherwise, you can disable and then optionally reenable
    checksums on the directory produced by <literal>pg_combinebackup</literal>
    in order to correct the problem.
