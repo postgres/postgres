@@ -750,7 +750,8 @@ vacuum_one_database(ConnParams *cparams,
 	}
 
 	/* If we used SKIP_DATABASE_STATS, mop up with ONLY_DATABASE_STATS */
-	if (vacopts->skip_database_stats && stage == ANALYZE_NO_STAGE)
+	if (vacopts->skip_database_stats && stage == ANALYZE_NO_STAGE &&
+		!vacopts->analyze_only)
 	{
 		const char *cmd = "VACUUM (ONLY_DATABASE_STATS);";
 		ParallelSlot *free_slot = ParallelSlotsGetIdle(sa, NULL);

@@ -351,5 +351,11 @@ $node->issues_sql_like(
 	],
 	qr/statement: ANALYZE public.parent_table/s,
 	'--analyze-only updates statistics for partitioned tables');
+$node->issues_sql_unlike(
+	[
+		'vacuumdb', '--analyze-only', 'postgres'
+	],
+	qr/statement:\ VACUUM/sx,
+	'--analyze-only does not run vacuum');
 
 done_testing();
