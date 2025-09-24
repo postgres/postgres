@@ -334,12 +334,12 @@ close $wait_event_names;
 sub usage
 {
 	die <<EOM;
-Usage: perl  [--output <path>] [--code ] [ --sgml ] input_file
+Usage: perl  [--output <path>] [--code ] [ --docs ] input_file
 
 Options:
     --outdir         Output directory (default '.')
     --code           Generate C and header files.
-    --sgml           Generate wait_event_types.sgml.
+    --docs           Generate wait_event_types.sgml.
 
 generate-wait_event_types.pl generates the SGML documentation and code
 related to wait events.  This should use wait_event_names.txt in input, or
