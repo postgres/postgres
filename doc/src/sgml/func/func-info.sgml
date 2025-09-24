@@ -3797,4 +3797,47 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
 
   </sect2>
 
+  <sect2 id="functions-get-object-ddl">
+   <title>Get Object DDL Functions</title>
+
+   <para>
+    The functions shown in <xref linkend="functions-get-object-ddl-table"/>
+    return the DDL statements for various database objects.
+    (This is a decompiled reconstruction, not the original text
+    of the command.)
+   </para>
+
+   <table id="functions-get-object-ddl-table">
+    <title>Get Object DDL Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_database_ddl</primary>
+        </indexterm>
+        <function>pg_get_database_ddl</function> ( <parameter>database_name</parameter> <type>text</type>, <parameter>pretty_formatted</parameter> <type>boolean</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the CREATE DATABASE statement from the system catalogs for a given database name.
+        The result is a comprehensive <command>CREATE DATABASE</command> statement.
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
   </sect1>

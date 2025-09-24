@@ -28,6 +28,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_opclass.h"
@@ -13708,4 +13709,169 @@ get_range_partbound_string(List *bound_datums)
 	appendStringInfoChar(buf, ')');
 
 	return buf->data;
+}
+
+/*
+ * get_formatted_string
+ *
+ * Return a formatted version of the string.
+ *
+ * pretty - If pretty is true, the output includes tabs (\t) and newlines (\n).
+ * noOfTabChars - indent with specified no of tabs.
+ * fmt - printf-style format string used by appendStringInfoVA.
+ */
+void
+get_formatted_string(StringInfo buf, bool pretty, int noOfTabChars, const char *fmt,...)
+{
+	va_list		args;
+
+	if (pretty)
+	{
+		/* Indent with tabs */
+		for (int i = 0; i < noOfTabChars; i++)
+		{
+			appendStringInfoString(buf, "\t");
+		}
+	}
+	else
+		appendStringInfoChar(buf, ' ');
+
+	va_start(args, fmt);
+	appendStringInfoVA(buf, fmt, args);
+	va_end(args);
+
+	/* If pretty mode, append newline at the end */
+	if (pretty)
+		appendStringInfoChar(buf, '\n');
+}
+
+/*
+ * pg_get_database_ddl
+ *
+ * Generate a CREATE DATABASE statement for the specified database.
+ *
+ * dbName - Name of the database for which to generate the DDL.
+ * pretty - If true, format the DDL with indentation and line breaks.
+ */
+Datum
+pg_get_database_ddl(PG_FUNCTION_ARGS)
+{
+	Name		dbName = PG_GETARG_NAME(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+	HeapTuple	tupleDatabase;
+	char	   *dbOwner = NULL;
+	char	   *dbTablespace = NULL;
+	bool		isnull;
+	Datum		dbValue;
+	Form_pg_database dbForm;
+	StringInfoData buf;
+
+	/* Get the database oid respective to the given database name */
+	Oid			dbOid = get_database_oid(NameStr(*dbName), false);
+
+	/* Look up the database in pg_database */
+	tupleDatabase = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dbOid));
+
+	if (!HeapTupleIsValid(tupleDatabase))
+		elog(ERROR, "database %s does not exist", NameStr(*dbName));
+
+
+	dbForm = (Form_pg_database) GETSTRUCT(tupleDatabase);
+
+	initStringInfo(&buf);
+
+	/* Look up the owner in the system catalog */
+	if (OidIsValid(dbForm->datdba))
+		dbOwner = GetUserNameFromId(dbForm->datdba, false);
+
+	/* Get the tablespace name respective to the given tablespace oid */
+	if (OidIsValid(dbForm->dattablespace))
+		dbTablespace = get_tablespace_name(dbForm->dattablespace);
+
+	/* Build the CREATE DATABASE statement */
+	get_formatted_string(&buf, pretty, 0, "CREATE DATABASE %s",
+						 quote_identifier(NameStr(*dbName)));
+
+	get_formatted_string(&buf, pretty, 1, "WITH");
+	get_formatted_string(&buf, pretty, 1, "OWNER = %s", quote_identifier(dbOwner));
+
+	if (dbForm->encoding != NULL)
+		get_formatted_string(&buf, pretty, 1, "ENCODING = %s",
+							 quote_identifier(pg_encoding_to_char(dbForm->encoding)));
+
+	/* Fetch the value of LC_COLLATE */
+	dbValue = SysCacheGetAttr(DATABASEOID, tupleDatabase,
+							  Anum_pg_database_datcollate, &isnull);
+	if (!isnull)
+		get_formatted_string(&buf, pretty, 1, "LC_COLLATE = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+
+	/* Fetch the value of LC_CTYPE */
+	dbValue = SysCacheGetAttr(DATABASEOID, tupleDatabase,
+							  Anum_pg_database_datctype, &isnull);
+	if (!isnull)
+		get_formatted_string(&buf, pretty, 1, "LC_CTYPE = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+
+	/* Fetch the value of LOCALE */
+	dbValue = SysCacheGetAttr(DATABASEOID, tupleDatabase,
+							  Anum_pg_database_datlocale, &isnull);
+	if (!isnull && dbForm->datlocprovider != NULL &&
+		dbForm->datlocprovider == COLLPROVIDER_BUILTIN)
+	{
+		get_formatted_string(&buf, pretty, 1, "BUILTIN_LOCALE = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+	}
+	else if (!isnull && dbForm->datlocprovider != NULL &&
+			 dbForm->datlocprovider == COLLPROVIDER_ICU)
+	{
+		get_formatted_string(&buf, pretty, 1, "ICU_LOCALE = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+	}
+
+	/* Fetch the value of ICU_RULES */
+	dbValue = SysCacheGetAttr(DATABASEOID, tupleDatabase,
+							  Anum_pg_database_daticurules, &isnull);
+	if (!isnull)
+		get_formatted_string(&buf, pretty, 1, "ICU_RULES = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+
+	/* Fetch the value of COLLATION_VERSION */
+	dbValue = SysCacheGetAttr(DATABASEOID, tupleDatabase,
+							  Anum_pg_database_datcollversion, &isnull);
+	if (!isnull)
+		get_formatted_string(&buf, pretty, 1, "COLLATION_VERSION = %s",
+							 quote_identifier(TextDatumGetCString(dbValue)));
+
+	/* Set the appropriate LOCALE_PROVIDER */
+	if (dbForm->datlocprovider != NULL &&
+		dbForm->datlocprovider == COLLPROVIDER_BUILTIN)
+		get_formatted_string(&buf, pretty, 1, "LOCALE_PROVIDER = 'builtin'");
+	else if (dbForm->datlocprovider != NULL &&
+			 dbForm->datlocprovider == COLLPROVIDER_ICU)
+		get_formatted_string(&buf, pretty, 1, "LOCALE_PROVIDER = 'icu'");
+	else
+		get_formatted_string(&buf, pretty, 1, "LOCALE_PROVIDER = 'libc'");
+
+	if (dbForm->dattablespace != NULL)
+		get_formatted_string(&buf, pretty, 1, "TABLESPACE = %s",
+							 quote_identifier(dbTablespace));
+
+	if (dbForm->datallowconn)
+		get_formatted_string(&buf, pretty, 1, "ALLOW_CONNECTIONS = %d",
+							 dbForm->datallowconn);
+
+	if (dbForm->datconnlimit)
+		get_formatted_string(&buf, pretty, 1, "CONNECTION LIMIT = %d",
+							 dbForm->datconnlimit);
+
+	if (dbForm->datistemplate)
+		get_formatted_string(&buf, pretty, 1, "IS_TEMPLATE = %d",
+							 dbForm->datistemplate);
+
+	appendStringInfoChar(&buf, ';');
+
+	ReleaseSysCache(tupleDatabase);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }

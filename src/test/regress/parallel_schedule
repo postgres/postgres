@@ -137,6 +137,13 @@ test: event_trigger_login
 # this test also uses event triggers, so likewise run it by itself
 test: fast_default
 
+# ----------
+# Another group of parallel tests
+#
+# This group tests all of the object DDL reconstruction.
+# ----------
+test: database_ddl
+
 # run tablespace test at the end because it drops the tablespace created during
 # setup that other tests may use.
 test: tablespace
