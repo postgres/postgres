@@ -794,7 +794,7 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 		MarkBufferDirty(buffer);
 
 		/*
-		 * Emit a WAL XLOG_HEAP2_PRUNE_FREEZE record showing what we did
+		 * Emit a WAL XLOG_HEAP2_PRUNE* record showing what we did
 		 */
 		if (RelationNeedsWAL(relation))
 		{
@@ -2026,7 +2026,7 @@ heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
 }
 
 /*
- * Write an XLOG_HEAP2_PRUNE_FREEZE WAL record
+ * Write an XLOG_HEAP2_PRUNE* WAL record
  *
  * This is used for several different page maintenance operations:
  *
