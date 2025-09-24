@@ -1876,7 +1876,7 @@ ORDER BY c COLLATE ebcdic;
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry>National Standard</entry>
+         <entry>National Standard, version 2022</entry>
          <entry>Chinese</entry>
          <entry>No</entry>
          <entry>No</entry>

@@ -5,8 +5,8 @@
 # src/backend/utils/mb/Unicode/UCS_to_GB18030.pl
 #
 # Generate UTF-8 <--> GB18030 code conversion tables from
-# "gb-18030-2000.ucm", obtained from
-# https://github.com/unicode-org/icu-data/tree/main/charset/data/ucm
+# "gb18030-2022.ucm", obtained from
+# https://github.com/unicode-org/icu/blob/main/icu4c/source/data/mappings/
 #
 # The lines we care about in the source file look like
 #   <UXXXX> \xYY[\xYY...] |n
@@ -23,7 +23,7 @@ my $this_script = 'src/backend/utils/mb/Unicode/UCS_to_GB18030.pl';
 
 # Read the input
 
-my $in_file = "gb-18030-2000.ucm";
+my $in_file = "gb18030-2022.ucm";
 
 open(my $in, '<', $in_file) || die("cannot open $in_file");
 
