@@ -650,7 +650,7 @@ logicalrep_worker_stop(Oid subid, Oid relid)
 /*
  * Stop the given logical replication parallel apply worker.
  *
- * Node that the function sends SIGINT instead of SIGTERM to the parallel apply
+ * Node that the function sends SIGUSR2 instead of SIGTERM to the parallel apply
  * worker so that the worker exits cleanly.
  */
 void
@@ -688,7 +688,7 @@ logicalrep_pa_worker_stop(ParallelApplyWorkerInfo *winfo)
 	 * Only stop the worker if the generation matches and the worker is alive.
 	 */
 	if (worker->generation == generation && worker->proc)
-		logicalrep_worker_stop_internal(worker, SIGINT);
+		logicalrep_worker_stop_internal(worker, SIGUSR2);
 
 	LWLockRelease(LogicalRepWorkerLock);
 }

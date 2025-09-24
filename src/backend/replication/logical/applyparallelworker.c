@@ -870,10 +870,17 @@ ParallelApplyWorkerMain(Datum main_arg)
 
 	InitializingApplyWorker = true;
 
-	/* Setup signal handling. */
+	/*
+	 * Setup signal handling.
+	 *
+	 * Note: We intentionally used SIGUSR2 to trigger a graceful shutdown
+	 * initiated by the leader apply worker. This helps to differentiate it
+	 * from the case where we abort the current transaction and exit on
+	 * receiving SIGTERM.
+	 */
 	pqsignal(SIGHUP, SignalHandlerForConfigReload);
-	pqsignal(SIGINT, SignalHandlerForShutdownRequest);
 	pqsignal(SIGTERM, die);
+	pqsignal(SIGUSR2, SignalHandlerForShutdownRequest);
 	BackgroundWorkerUnblockSignals();
 
 	/*
@@ -972,9 +979,9 @@ ParallelApplyWorkerMain(Datum main_arg)
 
 	/*
 	 * The parallel apply worker must not get here because the parallel apply
-	 * worker will only stop when it receives a SIGTERM or SIGINT from the
-	 * leader, or when there is an error. None of these cases will allow the
-	 * code to reach here.
+	 * worker will only stop when it receives a SIGTERM or SIGUSR2 from the
+	 * leader, or SIGINT from itself, or when there is an error. None of these
+	 * cases will allow the code to reach here.
 	 */
 	Assert(false);
 }
