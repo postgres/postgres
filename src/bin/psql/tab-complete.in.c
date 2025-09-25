@@ -443,6 +443,16 @@ do { \
 	matches = rl_completion_matches(text, complete_from_schema_query); \
 } while (0)
 
+#define COMPLETE_WITH_FILES(escape, force_quote) \
+do { \
+	completion_charp = escape; \
+	completion_force_quote = force_quote; \
+	matches = rl_completion_matches(text, complete_from_files); \
+} while (0)
+
+#define COMPLETE_WITH_GENERATOR(generator) \
+	matches = rl_completion_matches(text, generator)
+
 /*
  * Assembly instructions for schema queries
  *
@@ -2182,7 +2192,7 @@ match_previous_words(int pattern_id,
 			/* for INDEX and TABLE/SEQUENCE, respectively */
 						  "UNIQUE", "UNLOGGED");
 		else
-			matches = rl_completion_matches(text, create_command_generator);
+			COMPLETE_WITH_GENERATOR(create_command_generator);
 	}
 	/* complete with something you can create or replace */
 	else if (TailMatches("CREATE", "OR", "REPLACE"))
@@ -2192,7 +2202,7 @@ match_previous_words(int pattern_id,
 /* DROP, but not DROP embedded in other commands */
 	/* complete with something you can drop */
 	else if (Matches("DROP"))
-		matches = rl_completion_matches(text, drop_command_generator);
+		COMPLETE_WITH_GENERATOR(drop_command_generator);
 
 /* ALTER */
 
@@ -2203,7 +2213,7 @@ match_previous_words(int pattern_id,
 
 	/* ALTER something */
 	else if (Matches("ALTER"))
-		matches = rl_completion_matches(text, alter_command_generator);
+		COMPLETE_WITH_GENERATOR(alter_command_generator);
 	/* ALTER TABLE,INDEX,MATERIALIZED VIEW ALL IN TABLESPACE xxx */
 	else if (TailMatches("ALL", "IN", "TABLESPACE", MatchAny))
 		COMPLETE_WITH("SET TABLESPACE", "OWNED BY");
@@ -3316,17 +3326,9 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH("FROM", "TO");
 	/* Complete COPY <sth> FROM|TO with filename */
 	else if (Matches("COPY", MatchAny, "FROM|TO"))
-	{
-		completion_charp = "";
-		completion_force_quote = true;	/* COPY requires quoted filename */
-		matches = rl_completion_matches(text, complete_from_files);
-	}
+		COMPLETE_WITH_FILES("", true);	/* COPY requires quoted filename */
 	else if (Matches("\\copy", MatchAny, "FROM|TO"))
-	{
-		completion_charp = "";
-		completion_force_quote = false;
-		matches = rl_completion_matches(text, complete_from_files);
-	}
+		COMPLETE_WITH_FILES("", false);
 
 	/* Complete COPY <sth> TO <sth> */
 	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAny))
@@ -5427,9 +5429,9 @@ match_previous_words(int pattern_id,
 	else if (TailMatchesCS("\\h|\\help", MatchAny))
 	{
 		if (TailMatches("DROP"))
-			matches = rl_completion_matches(text, drop_command_generator);
+			COMPLETE_WITH_GENERATOR(drop_command_generator);
 		else if (TailMatches("ALTER"))
-			matches = rl_completion_matches(text, alter_command_generator);
+			COMPLETE_WITH_GENERATOR(alter_command_generator);
 
 		/*
 		 * CREATE is recognized by tail match elsewhere, so doesn't need to be
@@ -5529,11 +5531,7 @@ match_previous_words(int pattern_id,
 	else if (TailMatchesCS("\\cd|\\e|\\edit|\\g|\\gx|\\i|\\include|"
 						   "\\ir|\\include_relative|\\o|\\out|"
 						   "\\s|\\w|\\write|\\lo_import"))
-	{
-		completion_charp = "\\";
-		completion_force_quote = false;
-		matches = rl_completion_matches(text, complete_from_files);
-	}
+		COMPLETE_WITH_FILES("\\", false);
 
 	/* gen_tabcomplete.pl ends special processing here */
 	/* END GEN_TABCOMPLETE */
