@@ -69,7 +69,7 @@ $node->safe_psql('postgres', q{checkpoint});
 $node->advance_wal(20);
 
 # Run another checkpoint, this time in the background, and make it wait
-# on the injection point) so that the checkpoint stops right before
+# on the injection point so that the checkpoint stops right before
 # removing old WAL segments.
 note('starting checkpoint');
 
