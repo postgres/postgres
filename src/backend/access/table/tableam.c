@@ -110,7 +110,7 @@ table_slot_create(Relation relation, List **reglist)
  */
 
 TableScanDesc
-table_beginscan_catalog(Relation relation, int nkeys, struct ScanKeyData *key)
+table_beginscan_catalog(Relation relation, int nkeys, ScanKeyData *key)
 {
 	uint32		flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE | SO_TEMP_SNAPSHOT;

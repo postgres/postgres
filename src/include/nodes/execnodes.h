@@ -1656,14 +1656,14 @@ typedef struct SampleScanState
  */
 typedef struct
 {
-	struct ScanKeyData *scan_key;	/* scankey to put value into */
+	ScanKeyData *scan_key;		/* scankey to put value into */
 	ExprState  *key_expr;		/* expr to evaluate to get value */
 	bool		key_toastable;	/* is expr's result a toastable datatype? */
 } IndexRuntimeKeyInfo;
 
 typedef struct
 {
-	struct ScanKeyData *scan_key;	/* scankey to put value into */
+	ScanKeyData *scan_key;		/* scankey to put value into */
 	ExprState  *array_expr;		/* expr to evaluate to get array value */
 	int			next_elem;		/* next array element to use */
 	int			num_elems;		/* number of elems in current array value */
@@ -1704,9 +1704,9 @@ typedef struct IndexScanState
 	ScanState	ss;				/* its first field is NodeTag */
 	ExprState  *indexqualorig;
 	List	   *indexorderbyorig;
-	struct ScanKeyData *iss_ScanKeys;
+	ScanKeyData *iss_ScanKeys;
 	int			iss_NumScanKeys;
-	struct ScanKeyData *iss_OrderByKeys;
+	ScanKeyData *iss_OrderByKeys;
 	int			iss_NumOrderByKeys;
 	IndexRuntimeKeyInfo *iss_RuntimeKeys;
 	int			iss_NumRuntimeKeys;
@@ -1755,9 +1755,9 @@ typedef struct IndexOnlyScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	ExprState  *recheckqual;
-	struct ScanKeyData *ioss_ScanKeys;
+	ScanKeyData *ioss_ScanKeys;
 	int			ioss_NumScanKeys;
-	struct ScanKeyData *ioss_OrderByKeys;
+	ScanKeyData *ioss_OrderByKeys;
 	int			ioss_NumOrderByKeys;
 	IndexRuntimeKeyInfo *ioss_RuntimeKeys;
 	int			ioss_NumRuntimeKeys;
@@ -1796,7 +1796,7 @@ typedef struct BitmapIndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	TIDBitmap  *biss_result;
-	struct ScanKeyData *biss_ScanKeys;
+	ScanKeyData *biss_ScanKeys;
 	int			biss_NumScanKeys;
 	IndexRuntimeKeyInfo *biss_RuntimeKeys;
 	int			biss_NumRuntimeKeys;

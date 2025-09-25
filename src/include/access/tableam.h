@@ -34,10 +34,11 @@ extern PGDLLIMPORT char *default_table_access_method;
 extern PGDLLIMPORT bool synchronize_seqscans;
 
 
-struct BulkInsertStateData;
-struct IndexInfo;
-struct SampleScanState;
-struct ValidateIndexState;
+/* forward references in this file */
+typedef struct BulkInsertStateData BulkInsertStateData;
+typedef struct IndexInfo IndexInfo;
+typedef struct SampleScanState SampleScanState;
+typedef struct ValidateIndexState ValidateIndexState;
 
 /*
  * Bitmask values for the flags argument to the scan_begin callback.
@@ -325,7 +326,7 @@ typedef struct TableAmRoutine
 	 */
 	TableScanDesc (*scan_begin) (Relation rel,
 								 Snapshot snapshot,
-								 int nkeys, struct ScanKeyData *key,
+								 int nkeys, ScanKeyData *key,
 								 ParallelTableScanDesc pscan,
 								 uint32 flags);
 
@@ -339,7 +340,7 @@ typedef struct TableAmRoutine
 	 * Restart relation scan.  If set_params is set to true, allow_{strat,
 	 * sync, pagemode} (see scan_begin) changes should be taken into account.
 	 */
-	void		(*scan_rescan) (TableScanDesc scan, struct ScanKeyData *key,
+	void		(*scan_rescan) (TableScanDesc scan, ScanKeyData *key,
 								bool set_params, bool allow_strat,
 								bool allow_sync, bool allow_pagemode);
 
@@ -508,14 +509,14 @@ typedef struct TableAmRoutine
 	/* see table_tuple_insert() for reference about parameters */
 	void		(*tuple_insert) (Relation rel, TupleTableSlot *slot,
 								 CommandId cid, int options,
-								 struct BulkInsertStateData *bistate);
+								 BulkInsertStateData *bistate);
 
 	/* see table_tuple_insert_speculative() for reference about parameters */
 	void		(*tuple_insert_speculative) (Relation rel,
 											 TupleTableSlot *slot,
 											 CommandId cid,
 											 int options,
-											 struct BulkInsertStateData *bistate,
+											 BulkInsertStateData *bistate,
 											 uint32 specToken);
 
 	/* see table_tuple_complete_speculative() for reference about parameters */
@@ -526,7 +527,7 @@ typedef struct TableAmRoutine
 
 	/* see table_multi_insert() for reference about parameters */
 	void		(*multi_insert) (Relation rel, TupleTableSlot **slots, int nslots,
-								 CommandId cid, int options, struct BulkInsertStateData *bistate);
+								 CommandId cid, int options, BulkInsertStateData *bistate);
 
 	/* see table_tuple_delete() for reference about parameters */
 	TM_Result	(*tuple_delete) (Relation rel,
@@ -690,7 +691,7 @@ typedef struct TableAmRoutine
 	/* see table_index_build_range_scan for reference about parameters */
 	double		(*index_build_range_scan) (Relation table_rel,
 										   Relation index_rel,
-										   struct IndexInfo *index_info,
+										   IndexInfo *index_info,
 										   bool allow_sync,
 										   bool anyvisible,
 										   bool progress,
@@ -703,9 +704,9 @@ typedef struct TableAmRoutine
 	/* see table_index_validate_scan for reference about parameters */
 	void		(*index_validate_scan) (Relation table_rel,
 										Relation index_rel,
-										struct IndexInfo *index_info,
+										IndexInfo *index_info,
 										Snapshot snapshot,
-										struct ValidateIndexState *state);
+										ValidateIndexState *state);
 
 
 	/* ------------------------------------------------------------------------
@@ -821,7 +822,7 @@ typedef struct TableAmRoutine
 	 * scans. If infeasible to implement, the AM may raise an error.
 	 */
 	bool		(*scan_sample_next_block) (TableScanDesc scan,
-										   struct SampleScanState *scanstate);
+										   SampleScanState *scanstate);
 
 	/*
 	 * This callback, only called after scan_sample_next_block has returned
@@ -837,7 +838,7 @@ typedef struct TableAmRoutine
 	 * assumption somehow.
 	 */
 	bool		(*scan_sample_next_tuple) (TableScanDesc scan,
-										   struct SampleScanState *scanstate,
+										   SampleScanState *scanstate,
 										   TupleTableSlot *slot);
 
 } TableAmRoutine;
@@ -873,7 +874,7 @@ extern TupleTableSlot *table_slot_create(Relation relation, List **reglist);
  */
 static inline TableScanDesc
 table_beginscan(Relation rel, Snapshot snapshot,
-				int nkeys, struct ScanKeyData *key)
+				int nkeys, ScanKeyData *key)
 {
 	uint32		flags = SO_TYPE_SEQSCAN |
 		SO_ALLOW_STRAT | SO_ALLOW_SYNC | SO_ALLOW_PAGEMODE;
@@ -886,7 +887,7 @@ table_beginscan(Relation rel, Snapshot snapshot,
  * snapshot appropriate for scanning catalog relations.
  */
 extern TableScanDesc table_beginscan_catalog(Relation relation, int nkeys,
-											 struct ScanKeyData *key);
+											 ScanKeyData *key);
 
 /*
  * Like table_beginscan(), but table_beginscan_strat() offers an extended API
@@ -897,7 +898,7 @@ extern TableScanDesc table_beginscan_catalog(Relation relation, int nkeys,
  */
 static inline TableScanDesc
 table_beginscan_strat(Relation rel, Snapshot snapshot,
-					  int nkeys, struct ScanKeyData *key,
+					  int nkeys, ScanKeyData *key,
 					  bool allow_strat, bool allow_sync)
 {
 	uint32		flags = SO_TYPE_SEQSCAN | SO_ALLOW_PAGEMODE;
@@ -918,7 +919,7 @@ table_beginscan_strat(Relation rel, Snapshot snapshot,
  */
 static inline TableScanDesc
 table_beginscan_bm(Relation rel, Snapshot snapshot,
-				   int nkeys, struct ScanKeyData *key)
+				   int nkeys, ScanKeyData *key)
 {
 	uint32		flags = SO_TYPE_BITMAPSCAN | SO_ALLOW_PAGEMODE;
 
@@ -935,7 +936,7 @@ table_beginscan_bm(Relation rel, Snapshot snapshot,
  */
 static inline TableScanDesc
 table_beginscan_sampling(Relation rel, Snapshot snapshot,
-						 int nkeys, struct ScanKeyData *key,
+						 int nkeys, ScanKeyData *key,
 						 bool allow_strat, bool allow_sync,
 						 bool allow_pagemode)
 {
@@ -990,8 +991,7 @@ table_endscan(TableScanDesc scan)
  * Restart a relation scan.
  */
 static inline void
-table_rescan(TableScanDesc scan,
-			 struct ScanKeyData *key)
+table_rescan(TableScanDesc scan, ScanKeyData *key)
 {
 	scan->rs_rd->rd_tableam->scan_rescan(scan, key, false, false, false, false);
 }
@@ -1005,7 +1005,7 @@ table_rescan(TableScanDesc scan,
  * previously selected startblock will be kept.
  */
 static inline void
-table_rescan_set_params(TableScanDesc scan, struct ScanKeyData *key,
+table_rescan_set_params(TableScanDesc scan, ScanKeyData *key,
 						bool allow_strat, bool allow_sync, bool allow_pagemode)
 {
 	scan->rs_rd->rd_tableam->scan_rescan(scan, key, true,
@@ -1365,7 +1365,7 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  */
 static inline void
 table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
-				   int options, struct BulkInsertStateData *bistate)
+				   int options, BulkInsertStateData *bistate)
 {
 	rel->rd_tableam->tuple_insert(rel, slot, cid, options,
 								  bistate);
@@ -1385,7 +1385,7 @@ table_tuple_insert(Relation rel, TupleTableSlot *slot, CommandId cid,
 static inline void
 table_tuple_insert_speculative(Relation rel, TupleTableSlot *slot,
 							   CommandId cid, int options,
-							   struct BulkInsertStateData *bistate,
+							   BulkInsertStateData *bistate,
 							   uint32 specToken)
 {
 	rel->rd_tableam->tuple_insert_speculative(rel, slot, cid, options,
@@ -1420,7 +1420,7 @@ table_tuple_complete_speculative(Relation rel, TupleTableSlot *slot,
  */
 static inline void
 table_multi_insert(Relation rel, TupleTableSlot **slots, int nslots,
-				   CommandId cid, int options, struct BulkInsertStateData *bistate)
+				   CommandId cid, int options, BulkInsertStateData *bistate)
 {
 	rel->rd_tableam->multi_insert(rel, slots, nslots,
 								  cid, options, bistate);
@@ -1743,7 +1743,7 @@ table_scan_analyze_next_tuple(TableScanDesc scan, TransactionId OldestXmin,
 static inline double
 table_index_build_scan(Relation table_rel,
 					   Relation index_rel,
-					   struct IndexInfo *index_info,
+					   IndexInfo *index_info,
 					   bool allow_sync,
 					   bool progress,
 					   IndexBuildCallback callback,
@@ -1776,7 +1776,7 @@ table_index_build_scan(Relation table_rel,
 static inline double
 table_index_build_range_scan(Relation table_rel,
 							 Relation index_rel,
-							 struct IndexInfo *index_info,
+							 IndexInfo *index_info,
 							 bool allow_sync,
 							 bool anyvisible,
 							 bool progress,
@@ -1807,9 +1807,9 @@ table_index_build_range_scan(Relation table_rel,
 static inline void
 table_index_validate_scan(Relation table_rel,
 						  Relation index_rel,
-						  struct IndexInfo *index_info,
+						  IndexInfo *index_info,
 						  Snapshot snapshot,
-						  struct ValidateIndexState *state)
+						  ValidateIndexState *state)
 {
 	table_rel->rd_tableam->index_validate_scan(table_rel,
 											   index_rel,
@@ -1963,7 +1963,7 @@ table_scan_bitmap_next_tuple(TableScanDesc scan,
  */
 static inline bool
 table_scan_sample_next_block(TableScanDesc scan,
-							 struct SampleScanState *scanstate)
+							 SampleScanState *scanstate)
 {
 	/*
 	 * We don't expect direct calls to table_scan_sample_next_block with valid
@@ -1985,7 +1985,7 @@ table_scan_sample_next_block(TableScanDesc scan,
  */
 static inline bool
 table_scan_sample_next_tuple(TableScanDesc scan,
-							 struct SampleScanState *scanstate,
+							 SampleScanState *scanstate,
 							 TupleTableSlot *slot)
 {
 	/*
