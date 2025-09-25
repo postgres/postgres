@@ -6,10 +6,13 @@ setup
     INSERT INTO test_stat_tab(key, value) VALUES('k0', 1);
     INSERT INTO test_stat_oid(name, oid) VALUES('test_stat_tab', 'test_stat_tab'::regclass);
 
-    CREATE FUNCTION test_stat_func() RETURNS VOID LANGUAGE plpgsql AS $$BEGIN END;$$;
+    -- include 10us sleep to ensure that runtime measures as more than zero
+    CREATE FUNCTION test_stat_func() RETURNS VOID LANGUAGE plpgsql AS
+      $$BEGIN PERFORM pg_sleep(10e-6); END;$$;
     INSERT INTO test_stat_oid(name, oid) VALUES('test_stat_func', 'test_stat_func'::regproc);
 
-    CREATE FUNCTION test_stat_func2() RETURNS VOID LANGUAGE plpgsql AS $$BEGIN END;$$;
+    CREATE FUNCTION test_stat_func2() RETURNS VOID LANGUAGE plpgsql AS
+      $$BEGIN PERFORM pg_sleep(10e-6); END;$$;
     INSERT INTO test_stat_oid(name, oid) VALUES('test_stat_func2', 'test_stat_func2'::regproc);
 
     CREATE TABLE test_slru_stats(slru TEXT, stat TEXT, value INT);
