@@ -1188,10 +1188,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
 
   <variablelist>
    <varlistentry id="pgbench-metacommand-gset">
-    <term>
-     <literal>\gset [<replaceable>prefix</replaceable>]</literal>
-     <literal>\aset [<replaceable>prefix</replaceable>]</literal>
-    </term>
+    <term><literal>\gset [<replaceable>prefix</replaceable>]</literal></term>
+    <term><literal>\aset [<replaceable>prefix</replaceable>]</literal></term>
 
     <listitem>
      <para>
@@ -1203,16 +1201,17 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       When the <literal>\gset</literal> command is used, the preceding SQL query is
       expected to return one row, the columns of which are stored into variables
       named after column names, and prefixed with <replaceable>prefix</replaceable>
-      if provided.
+      if provided.  If the query returns zero or multiple rows, an error is raised.
      </para>
 
      <para>
       When the <literal>\aset</literal> command is used, all combined SQL queries
       (separated by <literal>\;</literal>) have their columns stored into variables
       named after column names, and prefixed with <replaceable>prefix</replaceable>
-      if provided. If a query returns no row, no assignment is made and the variable
-      can be tested for existence to detect this. If a query returns more than one
-      row, the last value is kept.
+      if provided.  If a query returns no rows, no assignment is made.
+      This can be detected by initializing the variable beforehand with
+      a value the query cannot return, then checking whether it changes.
+      If a query returns more than one row, the last values is kept.
      </para>
 
      <para>
