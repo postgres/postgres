@@ -1620,7 +1620,6 @@ pg_get_statisticsobjdef(PG_FUNCTION_ARGS)
 
 /*
  * Internal version for use by ALTER TABLE.
- * Includes a tablespace clause in the result.
  * Returns a palloc'd C string; no pretty-printing.
  */
 char *
