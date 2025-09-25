@@ -281,7 +281,8 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 	/* If there is no array yet, create one. */
 	if (es->extension_state == NULL)
 	{
-		es->extension_state_allocated = 16;
+		es->extension_state_allocated =
+			Max(16, pg_nextpower2_32(extension_id + 1));
 		es->extension_state =
 			palloc0(es->extension_state_allocated * sizeof(void *));
 	}
@@ -291,7 +292,7 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 	{
 		int			i;
 
-		i = pg_nextpower2_32(es->extension_state_allocated + 1);
+		i = pg_nextpower2_32(extension_id + 1);
 		es->extension_state = (void **)
 			repalloc0(es->extension_state,
 					  es->extension_state_allocated * sizeof(void *),
