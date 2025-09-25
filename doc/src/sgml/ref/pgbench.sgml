@@ -1211,7 +1211,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       if provided.  If a query returns no rows, no assignment is made.
       This can be detected by initializing the variable beforehand with
       a value the query cannot return, then checking whether it changes.
-      If a query returns more than one row, the last values is kept.
+      If a query returns more than one row, the last value is kept.
      </para>
 
      <para>
