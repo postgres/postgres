@@ -25,6 +25,7 @@
 #include "postgres.h"
 
 #include "access/xlog.h"
+#include "executor/instrument.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"

@@ -45,6 +45,7 @@
 #include "commands/tablespace.h"
 #include "common/file_utils.h"
 #include "miscadmin.h"
+#include "nodes/miscnodes.h"
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
