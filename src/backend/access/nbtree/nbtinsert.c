@@ -1473,6 +1473,8 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	Page		origpage;
 	Page		leftpage,
 				rightpage;
+	PGAlignedBlock leftpage_buf,
+				rightpage_buf;
 	BlockNumber origpagenumber,
 				rightpagenumber;
 	BTPageOpaque ropaque,
@@ -1543,8 +1545,8 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	firstrightoff = _bt_findsplitloc(rel, origpage, newitemoff, newitemsz,
 									 newitem, &newitemonleft);
 
-	/* Allocate temp buffer for leftpage */
-	leftpage = PageGetTempPage(origpage);
+	/* Use temporary buffer for leftpage */
+	leftpage = leftpage_buf.data;
 	_bt_pageinit(leftpage, BufferGetPageSize(buf));
 	lopaque = BTPageGetOpaque(leftpage);
 
@@ -1707,19 +1709,23 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 
 	/*
 	 * Acquire a new right page to split into, now that left page has a new
-	 * high key.  From here on, it's not okay to throw an error without
-	 * zeroing rightpage first.  This coding rule ensures that we won't
-	 * confuse future VACUUM operations, which might otherwise try to re-find
-	 * a downlink to a leftover junk page as the page undergoes deletion.
+	 * high key.
 	 *
-	 * It would be reasonable to start the critical section just after the new
-	 * rightpage buffer is acquired instead; that would allow us to avoid
-	 * leftover junk pages without bothering to zero rightpage.  We do it this
-	 * way because it avoids an unnecessary PANIC when either origpage or its
-	 * existing sibling page are corrupt.
+	 * To not confuse future VACUUM operations, we zero the right page and
+	 * work on an in-memory copy of it before writing WAL, then copy its
+	 * contents back to the actual page once we start the critical section
+	 * work.  This simplifies the split work, so as there is no need to zero
+	 * the right page before throwing an error.
 	 */
 	rbuf = _bt_allocbuf(rel, heaprel);
-	rightpage = BufferGetPage(rbuf);
+	rightpage = rightpage_buf.data;
+
+	/*
+	 * Copy the contents of the right page into its temporary location, and
+	 * zero the original space.
+	 */
+	memcpy(rightpage, BufferGetPage(rbuf), BLCKSZ);
+	memset(BufferGetPage(rbuf), 0, BLCKSZ);
 	rightpagenumber = BufferGetBlockNumber(rbuf);
 	/* rightpage was initialized by _bt_allocbuf */
 	ropaque = BTPageGetOpaque(rightpage);
@@ -1768,7 +1774,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		if (PageAddItem(rightpage, (Item) righthighkey, itemsz, afterrightoff,
 						false, false) == InvalidOffsetNumber)
 		{
-			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "failed to add high key to the right sibling"
 				 " while splitting block %u of index \"%s\"",
 				 origpagenumber, RelationGetRelationName(rel));
@@ -1816,7 +1821,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 				if (!_bt_pgaddtup(leftpage, newitemsz, newitem, afterleftoff,
 								  false))
 				{
-					memset(rightpage, 0, BufferGetPageSize(rbuf));
 					elog(ERROR, "failed to add new item to the left sibling"
 						 " while splitting block %u of index \"%s\"",
 						 origpagenumber, RelationGetRelationName(rel));
@@ -1829,7 +1833,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 				if (!_bt_pgaddtup(rightpage, newitemsz, newitem, afterrightoff,
 								  afterrightoff == minusinfoff))
 				{
-					memset(rightpage, 0, BufferGetPageSize(rbuf));
 					elog(ERROR, "failed to add new item to the right sibling"
 						 " while splitting block %u of index \"%s\"",
 						 origpagenumber, RelationGetRelationName(rel));
@@ -1843,7 +1846,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		{
 			if (!_bt_pgaddtup(leftpage, itemsz, dataitem, afterleftoff, false))
 			{
-				memset(rightpage, 0, BufferGetPageSize(rbuf));
 				elog(ERROR, "failed to add old item to the left sibling"
 					 " while splitting block %u of index \"%s\"",
 					 origpagenumber, RelationGetRelationName(rel));
@@ -1855,7 +1857,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 			if (!_bt_pgaddtup(rightpage, itemsz, dataitem, afterrightoff,
 							  afterrightoff == minusinfoff))
 			{
-				memset(rightpage, 0, BufferGetPageSize(rbuf));
 				elog(ERROR, "failed to add old item to the right sibling"
 					 " while splitting block %u of index \"%s\"",
 					 origpagenumber, RelationGetRelationName(rel));
@@ -1876,7 +1877,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		if (!_bt_pgaddtup(rightpage, newitemsz, newitem, afterrightoff,
 						  afterrightoff == minusinfoff))
 		{
-			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			elog(ERROR, "failed to add new item to the right sibling"
 				 " while splitting block %u of index \"%s\"",
 				 origpagenumber, RelationGetRelationName(rel));
@@ -1896,7 +1896,6 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		sopaque = BTPageGetOpaque(spage);
 		if (sopaque->btpo_prev != origpagenumber)
 		{
-			memset(rightpage, 0, BufferGetPageSize(rbuf));
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg_internal("right sibling's left-link doesn't match: "
@@ -1939,8 +1938,18 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	 * original.  We need to do this before writing the WAL record, so that
 	 * XLogInsert can WAL log an image of the page if necessary.
 	 */
-	PageRestoreTempPage(leftpage, origpage);
+	memcpy(origpage, leftpage, BLCKSZ);
 	/* leftpage, lopaque must not be used below here */
+
+	/*
+	 * Move the contents of the right page from its temporary location to the
+	 * destination buffer, before writing the WAL record.  Unlike the left
+	 * page, the right page and its opaque area are still needed to complete
+	 * the update of the page, so reinitialize them.
+	 */
+	rightpage = BufferGetPage(rbuf);
+	memcpy(rightpage, rightpage_buf.data, BLCKSZ);
+	ropaque = BTPageGetOpaque(rightpage);
 
 	MarkBufferDirty(buf);
 	MarkBufferDirty(rbuf);
