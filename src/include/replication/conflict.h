@@ -9,8 +9,15 @@
 #ifndef CONFLICT_H
 #define CONFLICT_H
 
-#include "nodes/execnodes.h"
+#include "access/xlogdefs.h"
+#include "nodes/pg_list.h"
 #include "utils/timestamp.h"
+
+/* Avoid including execnodes.h here */
+typedef struct EState EState;
+typedef struct ResultRelInfo ResultRelInfo;
+typedef struct TupleTableSlot TupleTableSlot;
+
 
 /*
  * Conflict types that could occur while applying remote changes.
