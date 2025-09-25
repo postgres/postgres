@@ -369,7 +369,20 @@ Datum
 pg_sleep(PG_FUNCTION_ARGS)
 {
 	float8		secs = PG_GETARG_FLOAT8(0);
-	float8		endtime;
+	int64		usecs;
+	TimestampTz endtime;
+
+	/*
+	 * Convert the delay to int64 microseconds, rounding up any fraction, and
+	 * silently limiting it to PG_INT64_MAX/2 microseconds (about 150K years)
+	 * to ensure the computation of endtime won't overflow.  Historically
+	 * we've treated NaN as "no wait", not an error, so keep that behavior.
+	 */
+	if (isnan(secs) || secs <= 0.0)
+		PG_RETURN_VOID();
+	secs *= USECS_PER_SEC;		/* we assume overflow will produce +Inf */
+	secs = ceil(secs);			/* round up any fractional microsecond */
+	usecs = (int64) Min(secs, (float8) (PG_INT64_MAX / 2));
 
 	/*
 	 * We sleep using WaitLatch, to ensure that we'll wake up promptly if an
@@ -383,22 +396,20 @@ pg_sleep(PG_FUNCTION_ARGS)
 	 * less than the specified time when WaitLatch is terminated early by a
 	 * non-query-canceling signal such as SIGHUP.
 	 */
-#define GetNowFloat()	((float8) GetCurrentTimestamp() / 1000000.0)
-
-	endtime = GetNowFloat() + secs;
+	endtime = GetCurrentTimestamp() + usecs;
 
 	for (;;)
 	{
-		float8		delay;
+		TimestampTz delay;
 		long		delay_ms;
 
 		CHECK_FOR_INTERRUPTS();
 
-		delay = endtime - GetNowFloat();
-		if (delay >= 600.0)
+		delay = endtime - GetCurrentTimestamp();
+		if (delay >= 600 * USECS_PER_SEC)
 			delay_ms = 600000;
-		else if (delay > 0.0)
-			delay_ms = (long) ceil(delay * 1000.0);
+		else if (delay > 0)
+			delay_ms = (long) ((delay + 999) / 1000);
 		else
 			break;
 
