@@ -8547,6 +8547,9 @@
 { oid => '2730', descr => 'trigger description with pretty-print option',
   proname => 'pg_get_triggerdef', provolatile => 's', prorettype => 'text',
   proargtypes => 'oid bool', prosrc => 'pg_get_triggerdef_ext' },
+{ oid => '9067', descr => 'get CREATE statement for event trigger',
+  proname => 'pg_get_event_trigger_ddl', proisstrict => 'f', 
+  prorettype => 'text', proargtypes => 'name', prosrc => 'pg_get_event_trigger_ddl' },
 
 # asynchronous notifications
 { oid => '3035',

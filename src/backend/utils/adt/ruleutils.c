@@ -29,6 +29,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_event_trigger.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -1161,6 +1162,106 @@ pg_get_triggerdef_worker(Oid trigid, bool pretty)
 
 	return buf.data;
 }
+
+/* ----------
+* pg_get_event_trigger_ddl - Get the DDL statement for an event trigger
+*  ----------
+*/
+Datum
+pg_get_event_trigger_ddl(PG_FUNCTION_ARGS)
+{
+	Name		event_trigger_name;
+	HeapTuple	evtTup;
+	HeapTuple	procTup;
+	Form_pg_event_trigger evtForm;
+	char		*evtevent;
+	Oid			evtfoid;
+	Datum		evttagsDatum;
+	bool		evttags_isnull;
+	Form_pg_proc proc;
+	char		*proname;
+	char		prokind;
+	StringInfoData buf;
+
+	if (PG_ARGISNULL(0))
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("input cannot be NULL")));
+
+	event_trigger_name = PG_GETARG_NAME(0);
+
+	evtTup = SearchSysCacheCopy1(EVENTTRIGGERNAME, NameGetDatum(event_trigger_name));
+	if (!HeapTupleIsValid(evtTup))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("event trigger \"%s\" does not exist", NameStr(*event_trigger_name))));
+
+	evtForm = (Form_pg_event_trigger) GETSTRUCT(evtTup);
+	evtevent = NameStr(evtForm->evtevent);
+	evtfoid = evtForm->evtfoid;
+
+	procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(evtfoid));
+
+	if (!HeapTupleIsValid(procTup))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("event trigger function %u was not found", evtfoid)));
+
+	proc = (Form_pg_proc) GETSTRUCT(procTup);
+	proname = NameStr(proc->proname);
+	prokind = proc->prokind;
+	
+	Assert(prokind == PROKIND_FUNCTION || prokind == PROKIND_PROCEDURE);
+
+	initStringInfo(&buf);
+
+	appendStringInfo(&buf, "CREATE EVENT TRIGGER %s\n",
+					quote_identifier(evtevent));
+
+	appendStringInfo(&buf, " ON %s\n",
+					quote_identifier(NameStr(*event_trigger_name)));
+	
+	evttagsDatum = SysCacheGetAttr(EVENTTRIGGEROID, evtTup,
+							   Anum_pg_event_trigger_evttags,
+							   &evttags_isnull);
+	
+	if (!evttags_isnull)
+	{
+		ArrayType  *arr = DatumGetArrayTypeP(evttagsDatum);
+		Datum	   *elems;
+		int			nelems;
+		int			i;
+
+		deconstruct_array_builtin(arr, TEXTOID, &elems, NULL, &nelems);
+
+		appendStringInfoString(&buf, "  WHEN TAG IN (");
+
+		for (i = 0; i < nelems; ++i)
+		{
+			char	   *str = TextDatumGetCString(elems[i]);
+
+			if (i)
+				appendStringInfoChar(&buf, ',');
+
+			appendStringInfo(&buf, "'%s'", str);
+		}
+
+		appendStringInfoString(&buf, ")\n");
+	}
+
+	appendStringInfo(&buf, "  EXECUTE %s %s.%s()",
+					 prokind == PROKIND_FUNCTION ? "FUNCTION" : "PROCEDURE",
+					 quote_identifier(get_namespace_name(proc->pronamespace)),
+					 quote_identifier(proname));
+	
+	appendStringInfoChar(&buf, ';');
+
+	/* Clean up */
+	heap_freetuple(evtTup);
+	ReleaseSysCache(procTup);
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
 
 /* ----------
  * pg_get_indexdef			- Get the definition of an index

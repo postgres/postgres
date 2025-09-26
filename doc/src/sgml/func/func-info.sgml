@@ -3797,4 +3797,56 @@ acl      | {postgres=arwdDxtm/postgres,foo=r/postgres}
 
   </sect2>
 
+  <sect2 id="functions-info-retail">
+   <title>DDL Retail Functions</title>
+
+   <para>
+    <xref linkend="functions-info-retail-table"/> lists functions that
+    extract information about ....
+   </para>
+
+   <table id="functions-info-retail-table">
+    <title>DDL Retail Functions</title>
+    <tgroup cols="1">
+     <thead>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        Function
+       </para>
+       <para>
+        Description
+       </para></entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_event_trigger_ddl</primary>
+        </indexterm>
+        <function>pg_get_event_trigger_ddl</function>
+        (<parameter>event trigger name</parameter> <type>name</type>)
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the underlying DDL statement for a specified event trigger.
+        It returns the complete CREATE EVENT TRIGGER statement. For example,
+        <programlisting>
+        SELECT pg_get_event_trigger_ddl('example_trigger');
+        </programlisting> will return the full CREATE EVENT TRIGGER statement
+        <programlisting>
+         CREATE EVENT TRIGGER example_trigger
+           ON forbid_rewrites
+           WHEN TAG IN ('ALTER TABLE','ALTER MATERIALIZED VIEW')
+           EXECUTE FUNCTION public.forbid_table_rewrites();
+        </programlisting>
+       </para></entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  </sect2>
+
   </sect1>
