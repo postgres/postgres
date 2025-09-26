@@ -179,34 +179,10 @@ typedef struct
 } child_process_kind;
 
 static child_process_kind child_process_kinds[] = {
-	[B_INVALID] = {"invalid", NULL, false},
-
-	[B_BACKEND] = {"backend", BackendMain, true},
-	[B_DEAD_END_BACKEND] = {"dead-end backend", BackendMain, true},
-	[B_AUTOVAC_LAUNCHER] = {"autovacuum launcher", AutoVacLauncherMain, true},
-	[B_AUTOVAC_WORKER] = {"autovacuum worker", AutoVacWorkerMain, true},
-	[B_BG_WORKER] = {"bgworker", BackgroundWorkerMain, true},
-
-	/*
-	 * WAL senders start their life as regular backend processes, and change
-	 * their type after authenticating the client for replication.  We list it
-	 * here for PostmasterChildName() but cannot launch them directly.
-	 */
-	[B_WAL_SENDER] = {"wal sender", NULL, true},
-	[B_SLOTSYNC_WORKER] = {"slot sync worker", ReplSlotSyncWorkerMain, true},
-
-	[B_STANDALONE_BACKEND] = {"standalone backend", NULL, false},
-
-	[B_ARCHIVER] = {"archiver", PgArchiverMain, true},
-	[B_BG_WRITER] = {"bgwriter", BackgroundWriterMain, true},
-	[B_CHECKPOINTER] = {"checkpointer", CheckpointerMain, true},
-	[B_IO_WORKER] = {"io_worker", IoWorkerMain, true},
-	[B_STARTUP] = {"startup", StartupProcessMain, true},
-	[B_WAL_RECEIVER] = {"wal_receiver", WalReceiverMain, true},
-	[B_WAL_SUMMARIZER] = {"wal_summarizer", WalSummarizerMain, true},
-	[B_WAL_WRITER] = {"wal_writer", WalWriterMain, true},
-
-	[B_LOGGER] = {"syslogger", SysLoggerMain, false},
+#define PG_PROCTYPE(bktype, description, main_func, shmem_attach) \
+	[bktype] = {description, main_func, shmem_attach},
+#include "postmaster/proctypelist.h"
+#undef PG_PROCTYPE
 };
 
 const char *

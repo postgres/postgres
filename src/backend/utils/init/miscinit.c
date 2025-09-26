@@ -266,62 +266,11 @@ GetBackendTypeDesc(BackendType backendType)
 
 	switch (backendType)
 	{
-		case B_INVALID:
-			backendDesc = gettext_noop("not initialized");
-			break;
-		case B_ARCHIVER:
-			backendDesc = gettext_noop("archiver");
-			break;
-		case B_AUTOVAC_LAUNCHER:
-			backendDesc = gettext_noop("autovacuum launcher");
-			break;
-		case B_AUTOVAC_WORKER:
-			backendDesc = gettext_noop("autovacuum worker");
-			break;
-		case B_BACKEND:
-			backendDesc = gettext_noop("client backend");
-			break;
-		case B_DEAD_END_BACKEND:
-			backendDesc = gettext_noop("dead-end client backend");
-			break;
-		case B_BG_WORKER:
-			backendDesc = gettext_noop("background worker");
-			break;
-		case B_BG_WRITER:
-			backendDesc = gettext_noop("background writer");
-			break;
-		case B_CHECKPOINTER:
-			backendDesc = gettext_noop("checkpointer");
-			break;
-		case B_IO_WORKER:
-			backendDesc = gettext_noop("io worker");
-			break;
-		case B_LOGGER:
-			backendDesc = gettext_noop("logger");
-			break;
-		case B_SLOTSYNC_WORKER:
-			backendDesc = gettext_noop("slotsync worker");
-			break;
-		case B_STANDALONE_BACKEND:
-			backendDesc = gettext_noop("standalone backend");
-			break;
-		case B_STARTUP:
-			backendDesc = gettext_noop("startup");
-			break;
-		case B_WAL_RECEIVER:
-			backendDesc = gettext_noop("walreceiver");
-			break;
-		case B_WAL_SENDER:
-			backendDesc = gettext_noop("walsender");
-			break;
-		case B_WAL_SUMMARIZER:
-			backendDesc = gettext_noop("walsummarizer");
-			break;
-		case B_WAL_WRITER:
-			backendDesc = gettext_noop("walwriter");
-			break;
+#define PG_PROCTYPE(bktype, description, main_func, shmem_attach)	\
+		case bktype: backendDesc = description; break;
+#include "postmaster/proctypelist.h"
+#undef PG_PROCTYPE
 	}
-
 	return backendDesc;
 }
 

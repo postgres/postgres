@@ -126,13 +126,14 @@ do
 	# they contain lists that might have multiple use-cases.
 	test "$f" = src/include/access/rmgrlist.h && continue
 	test "$f" = src/include/parser/kwlist.h && continue
-	test "$f" = src/pl/plpgsql/src/pl_reserved_kwlist.h && continue
-	test "$f" = src/pl/plpgsql/src/pl_unreserved_kwlist.h && continue
-	test "$f" = src/interfaces/ecpg/preproc/c_kwlist.h && continue
-	test "$f" = src/interfaces/ecpg/preproc/ecpg_kwlist.h && continue
+	test "$f" = src/include/postmaster/proctypelist.h && continue
 	test "$f" = src/include/regex/regerrs.h && continue
 	test "$f" = src/include/storage/lwlocklist.h && continue
 	test "$f" = src/include/tcop/cmdtaglist.h && continue
+	test "$f" = src/interfaces/ecpg/preproc/c_kwlist.h && continue
+	test "$f" = src/interfaces/ecpg/preproc/ecpg_kwlist.h && continue
+	test "$f" = src/pl/plpgsql/src/pl_reserved_kwlist.h && continue
+	test "$f" = src/pl/plpgsql/src/pl_unreserved_kwlist.h && continue
 	test "$f" = src/pl/plpgsql/src/plerrcodes.h && continue
 	test "$f" = src/pl/plpython/spiexceptions.h && continue
 	test "$f" = src/pl/tcl/pltclerrcodes.h && continue
