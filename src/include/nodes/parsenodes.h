@@ -4320,7 +4320,6 @@ typedef struct AlterPublicationStmt
 	 * objects.
 	 */
 	List	   *pubobjects;		/* Optional list of publication objects */
-	bool		for_all_tables; /* Special publication for all tables in db */
 	AlterPublicationAction action;	/* What action to perform with the given
 									 * objects */
 } AlterPublicationStmt;

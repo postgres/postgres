@@ -1855,8 +1855,6 @@ PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 {
 	ListCell   *lc;
 
-	Assert(!stmt || !stmt->for_all_tables);
-
 	foreach(lc, rels)
 	{
 		PublicationRelInfo *pub_rel = (PublicationRelInfo *) lfirst(lc);
@@ -1933,8 +1931,6 @@ PublicationAddSchemas(Oid pubid, List *schemas, bool if_not_exists,
 					  AlterPublicationStmt *stmt)
 {
 	ListCell   *lc;
-
-	Assert(!stmt || !stmt->for_all_tables);
 
 	foreach(lc, schemas)
 	{
