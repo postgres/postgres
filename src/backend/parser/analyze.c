@@ -2938,6 +2938,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 											qry->sortClause,
 											EXPR_KIND_GROUP_BY,
 											false /* allow SQL92 rules */ );
+	qry->groupDistinct = sstmt->groupDistinct;
 
 	if (sstmt->distinctClause == NIL)
 	{
