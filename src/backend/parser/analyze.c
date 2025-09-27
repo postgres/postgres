@@ -55,6 +55,14 @@
 #include "utils/syscache.h"
 
 
+/* Passthrough data for transformPLAssignStmtTarget */
+typedef struct SelectStmtPassthrough
+{
+	PLAssignStmt *stmt;			/* the assignment statement */
+	Node	   *target;			/* node representing the target variable */
+	List	   *indirection;	/* indirection yet to be applied to target */
+} SelectStmtPassthrough;
+
 /* Hook for plugins to get control at end of parse analysis */
 post_parse_analyze_hook_type post_parse_analyze_hook = NULL;
 
@@ -64,7 +72,8 @@ static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static OnConflictExpr *transformOnConflictClause(ParseState *pstate,
 												 OnConflictClause *onConflictClause);
 static int	count_rowexpr_columns(ParseState *pstate, Node *expr);
-static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
+static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt,
+								  SelectStmtPassthrough *passthru);
 static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
@@ -75,6 +84,8 @@ static Query *transformReturnStmt(ParseState *pstate, ReturnStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformPLAssignStmt(ParseState *pstate,
 									PLAssignStmt *stmt);
+static List *transformPLAssignStmtTarget(ParseState *pstate, List *tlist,
+										 SelectStmtPassthrough *passthru);
 static Query *transformDeclareCursorStmt(ParseState *pstate,
 										 DeclareCursorStmt *stmt);
 static Query *transformExplainStmt(ParseState *pstate,
@@ -371,7 +382,7 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				if (n->valuesLists)
 					result = transformValuesClause(pstate, n);
 				else if (n->op == SETOP_NONE)
-					result = transformSelectStmt(pstate, n);
+					result = transformSelectStmt(pstate, n, NULL);
 				else
 					result = transformSetOperationStmt(pstate, n);
 			}
@@ -1374,11 +1385,19 @@ count_rowexpr_columns(ParseState *pstate, Node *expr)
  * transformSelectStmt -
  *	  transforms a Select Statement
  *
+ * This function is also used to transform the source expression of a
+ * PLAssignStmt.  In that usage, passthru is non-NULL and we need to
+ * call transformPLAssignStmtTarget after the initial transformation of the
+ * SELECT's targetlist.  (We could generalize this into an arbitrary callback
+ * function, but for now that would just be more notation with no benefit.)
+ * All the rest is the same as a regular SelectStmt.
+ *
  * Note: this covers only cases with no set operations and no VALUES lists;
  * see below for the other cases.
  */
 static Query *
-transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
+transformSelectStmt(ParseState *pstate, SelectStmt *stmt,
+					SelectStmtPassthrough *passthru)
 {
 	Query	   *qry = makeNode(Query);
 	Node	   *qual;
@@ -1415,8 +1434,16 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = transformTargetList(pstate, stmt->targetList,
 										  EXPR_KIND_SELECT_TARGET);
 
-	/* mark column origins */
-	markTargetListOrigins(pstate, qry->targetList);
+	/*
+	 * If we're within a PLAssignStmt, do further transformation of the
+	 * targetlist; that has to happen before we consider sorting or grouping.
+	 * Otherwise, mark column origins (which are useless in a PLAssignStmt).
+	 */
+	if (passthru)
+		qry->targetList = transformPLAssignStmtTarget(pstate, qry->targetList,
+													  passthru);
+	else
+		markTargetListOrigins(pstate, qry->targetList);
 
 	/* transform WHERE */
 	qual = transformWhereClause(pstate, stmt->whereClause,
@@ -2763,20 +2790,13 @@ transformReturningClause(ParseState *pstate, Query *qry,
 static Query *
 transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 {
-	Query	   *qry = makeNode(Query);
+	Query	   *qry;
 	ColumnRef  *cref = makeNode(ColumnRef);
 	List	   *indirection = stmt->indirection;
 	int			nnames = stmt->nnames;
-	SelectStmt *sstmt = stmt->val;
 	Node	   *target;
-	Oid			targettype;
-	int32		targettypmod;
-	Oid			targetcollation;
-	List	   *tlist;
-	TargetEntry *tle;
-	Oid			type_id;
-	Node	   *qual;
-	ListCell   *l;
+	SelectStmtPassthrough passthru;
+	bool		save_resolve_unknowns;
 
 	/*
 	 * First, construct a ColumnRef for the target variable.  If the target
@@ -2802,33 +2822,62 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 
 	/*
 	 * Transform the target reference.  Typically we will get back a Param
-	 * node, but there's no reason to be too picky about its type.
+	 * node, but there's no reason to be too picky about its type.  (Note that
+	 * we must do this before calling transformSelectStmt.  It's tempting to
+	 * do it inside transformPLAssignStmtTarget, but we need to do it before
+	 * adding any FROM tables to the pstate's namespace, else we might wrongly
+	 * resolve the target as a table column.)
 	 */
 	target = transformExpr(pstate, (Node *) cref,
 						   EXPR_KIND_UPDATE_TARGET);
+
+	/* Set up passthrough data for transformPLAssignStmtTarget */
+	passthru.stmt = stmt;
+	passthru.target = target;
+	passthru.indirection = indirection;
+
+	/*
+	 * To avoid duplicating a lot of code, we use transformSelectStmt to do
+	 * almost all of the work.  However, we need to do additional processing
+	 * on the SELECT's targetlist after it's been transformed, but before
+	 * possible addition of targetlist items for ORDER BY or GROUP BY.
+	 * transformSelectStmt knows it should call transformPLAssignStmtTarget if
+	 * it's passed a passthru argument.
+	 *
+	 * Also, disable resolution of unknown-type tlist items; PL/pgSQL wants to
+	 * deal with that itself.
+	 */
+	save_resolve_unknowns = pstate->p_resolve_unknowns;
+	pstate->p_resolve_unknowns = false;
+	qry = transformSelectStmt(pstate, stmt->val, &passthru);
+	pstate->p_resolve_unknowns = save_resolve_unknowns;
+
+	return qry;
+}
+
+/*
+ * Callback function to adjust a SELECT's tlist to make the output suitable
+ * for assignment to a PLAssignStmt's target variable.
+ *
+ * Note: we actually modify the tle->expr in-place, but the function's API
+ * is set up to not presume that.
+ */
+static List *
+transformPLAssignStmtTarget(ParseState *pstate, List *tlist,
+							SelectStmtPassthrough *passthru)
+{
+	PLAssignStmt *stmt = passthru->stmt;
+	Node	   *target = passthru->target;
+	List	   *indirection = passthru->indirection;
+	Oid			targettype;
+	int32		targettypmod;
+	Oid			targetcollation;
+	TargetEntry *tle;
+	Oid			type_id;
+
 	targettype = exprType(target);
 	targettypmod = exprTypmod(target);
 	targetcollation = exprCollation(target);
-
-	/*
-	 * The rest mostly matches transformSelectStmt, except that we needn't
-	 * consider WITH or INTO, and we build a targetlist our own way.
-	 */
-	qry->commandType = CMD_SELECT;
-	pstate->p_is_insert = false;
-
-	/* make FOR UPDATE/FOR SHARE info available to addRangeTableEntry */
-	pstate->p_locking_clause = sstmt->lockingClause;
-
-	/* make WINDOW info available for window functions, too */
-	pstate->p_windowdefs = sstmt->windowClause;
-
-	/* process the FROM clause */
-	transformFromClause(pstate, sstmt->fromClause);
-
-	/* initially transform the targetlist as if in SELECT */
-	tlist = transformTargetList(pstate, sstmt->targetList,
-								EXPR_KIND_SELECT_TARGET);
 
 	/* we should have exactly one targetlist item */
 	if (list_length(tlist) != 1)
@@ -2906,97 +2955,7 @@ transformPLAssignStmt(ParseState *pstate, PLAssignStmt *stmt)
 
 	pstate->p_expr_kind = EXPR_KIND_NONE;
 
-	qry->targetList = list_make1(tle);
-
-	/* transform WHERE */
-	qual = transformWhereClause(pstate, sstmt->whereClause,
-								EXPR_KIND_WHERE, "WHERE");
-
-	/* initial processing of HAVING clause is much like WHERE clause */
-	qry->havingQual = transformWhereClause(pstate, sstmt->havingClause,
-										   EXPR_KIND_HAVING, "HAVING");
-
-	/*
-	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
-	 * transformGroupClause and transformDistinctClause need the results. Note
-	 * that these functions can also change the targetList, so it's passed to
-	 * them by reference.
-	 */
-	qry->sortClause = transformSortClause(pstate,
-										  sstmt->sortClause,
-										  &qry->targetList,
-										  EXPR_KIND_ORDER_BY,
-										  false /* allow SQL92 rules */ );
-
-	qry->groupClause = transformGroupClause(pstate,
-											sstmt->groupClause,
-											&qry->groupingSets,
-											&qry->targetList,
-											qry->sortClause,
-											EXPR_KIND_GROUP_BY,
-											false /* allow SQL92 rules */ );
-	qry->groupDistinct = sstmt->groupDistinct;
-
-	if (sstmt->distinctClause == NIL)
-	{
-		qry->distinctClause = NIL;
-		qry->hasDistinctOn = false;
-	}
-	else if (linitial(sstmt->distinctClause) == NULL)
-	{
-		/* We had SELECT DISTINCT */
-		qry->distinctClause = transformDistinctClause(pstate,
-													  &qry->targetList,
-													  qry->sortClause,
-													  false);
-		qry->hasDistinctOn = false;
-	}
-	else
-	{
-		/* We had SELECT DISTINCT ON */
-		qry->distinctClause = transformDistinctOnClause(pstate,
-														sstmt->distinctClause,
-														&qry->targetList,
-														qry->sortClause);
-		qry->hasDistinctOn = true;
-	}
-
-	/* transform LIMIT */
-	qry->limitOffset = transformLimitClause(pstate, sstmt->limitOffset,
-											EXPR_KIND_OFFSET, "OFFSET",
-											sstmt->limitOption);
-	qry->limitCount = transformLimitClause(pstate, sstmt->limitCount,
-										   EXPR_KIND_LIMIT, "LIMIT",
-										   sstmt->limitOption);
-	qry->limitOption = sstmt->limitOption;
-
-	/* transform window clauses after we have seen all window functions */
-	qry->windowClause = transformWindowDefinitions(pstate,
-												   pstate->p_windowdefs,
-												   &qry->targetList);
-
-	qry->rtable = pstate->p_rtable;
-	qry->rteperminfos = pstate->p_rteperminfos;
-	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-	qry->hasWindowFuncs = pstate->p_hasWindowFuncs;
-	qry->hasTargetSRFs = pstate->p_hasTargetSRFs;
-	qry->hasAggs = pstate->p_hasAggs;
-
-	foreach(l, sstmt->lockingClause)
-	{
-		transformLockingClause(pstate, qry,
-							   (LockingClause *) lfirst(l), false);
-	}
-
-	assign_query_collations(pstate, qry);
-
-	/* this must be done after collations, for reliable comparison of exprs */
-	if (pstate->p_hasAggs || qry->groupClause || qry->groupingSets || qry->havingQual)
-		parseCheckAggregates(pstate, qry);
-
-	return qry;
+	return list_make1(tle);
 }
 
 

@@ -2685,6 +2685,7 @@ SecLabelStmt
 SeenRelsEntry
 SelectLimit
 SelectStmt
+SelectStmtPassthrough
 Selectivity
 SelfJoinCandidate
 SemTPadded
