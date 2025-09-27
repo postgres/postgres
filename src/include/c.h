@@ -332,6 +332,33 @@
 #endif
 
 /*
+ * Define a compiler-independent macro for determining if an expression is a
+ * compile-time integer const.  We don't define this macro to return 0 when
+ * unsupported due to the risk of users of the macro misbehaving if we return
+ * 0 when the expression *is* an integer constant.  Callers may check if this
+ * macro is defined by checking if HAVE_PG_BUILTIN_INTEGER_CONSTANT_P is
+ * defined.
+ */
+#if defined(HAVE__BUILTIN_CONSTANT_P)
+
+/* When __builtin_const_p() is available, use it. */
+#define pg_builtin_integer_constant_p(x) __builtin_constant_p(x)
+#define HAVE_PG_BUILTIN_INTEGER_CONSTANT_P
+#elif defined(_MSC_VER) && defined(__STDC_VERSION__)
+
+/*
+ * With MSVC we can use a trick with _Generic to make this work.  This has
+ * been borrowed from:
+ * https://stackoverflow.com/questions/49480442/detecting-integer-constant-expressions-in-macros
+ * and only works with integer constants.  Compilation will fail if given a
+ * constant or variable of any type other than an integer.
+ */
+#define pg_builtin_integer_constant_p(x) \
+	_Generic((1 ? ((void *) ((x) * (uintptr_t) 0)) : &(int) {1}), int *: 1, void *: 0)
+#define HAVE_PG_BUILTIN_INTEGER_CONSTANT_P
+#endif
+
+/*
  * pg_assume(expr) states that we assume `expr` to evaluate to true. In assert
  * enabled builds pg_assume() is turned into an assertion, in optimized builds
  * we try to clue the compiler into the fact that `expr` is true.
