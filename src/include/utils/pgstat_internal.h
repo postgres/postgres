@@ -232,6 +232,12 @@ typedef struct PgStat_KindInfo
 	bool		write_to_file:1;
 
 	/*
+	 * Should the number of entries be tracked?  For variable-numbered stats,
+	 * to update its PgStat_ShmemControl.entry_counts.
+	 */
+	bool		track_entry_count:1;
+
+	/*
 	 * The size of an entry in the shared stats hash table (pointed to by
 	 * PgStatShared_HashEntry->body).  For fixed-numbered statistics, this is
 	 * the size of an entry in PgStat_ShmemControl->custom_data.
@@ -499,6 +505,16 @@ typedef struct PgStat_ShmemControl
 	 * be reclaimed.
 	 */
 	pg_atomic_uint64 gc_request_count;
+
+	/*
+	 * Counters for the number of entries associated to a single stats kind
+	 * that uses variable-numbered objects stored in the shared hash table.
+	 * These counters can be enabled on a per-kind basis, when
+	 * track_entry_count is set.  This counter is incremented each time a new
+	 * entry is created (not reused) in the shared hash table, and is
+	 * decremented each time an entry is freed from the shared hash table.
+	 */
+	pg_atomic_uint64 entry_counts[PGSTAT_KIND_MAX];
 
 	/*
 	 * Stats data for fixed-numbered objects.
@@ -923,6 +939,17 @@ pgstat_get_entry_data(PgStat_Kind kind, PgStatShared_Common *entry)
 	Assert(off != 0 && off < PG_UINT32_MAX);
 
 	return ((char *) (entry)) + off;
+}
+
+/*
+ * Returns the number of entries counted for a stats kind.
+ */
+static inline uint64
+pgstat_get_entry_count(PgStat_Kind kind)
+{
+	Assert(pgstat_get_kind_info(kind)->track_entry_count);
+
+	return pg_atomic_read_u64(&pgStatLocal.shmem->entry_counts[kind - 1]);
 }
 
 /*

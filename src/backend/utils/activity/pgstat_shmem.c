@@ -210,27 +210,35 @@ StatsShmemInit(void)
 
 		pg_atomic_init_u64(&ctl->gc_request_count, 1);
 
-		/* initialize fixed-numbered stats */
+		/* Do the per-kind initialization */
 		for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
 		{
 			const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 			char	   *ptr;
 
-			if (!kind_info || !kind_info->fixed_amount)
+			if (!kind_info)
 				continue;
 
-			if (pgstat_is_kind_builtin(kind))
-				ptr = ((char *) ctl) + kind_info->shared_ctl_off;
-			else
+			/* initialize entry count tracking */
+			if (kind_info->track_entry_count)
+				pg_atomic_init_u64(&ctl->entry_counts[kind - 1], 0);
+
+			/* initialize fixed-numbered stats */
+			if (kind_info->fixed_amount)
 			{
-				int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
+				if (pgstat_is_kind_builtin(kind))
+					ptr = ((char *) ctl) + kind_info->shared_ctl_off;
+				else
+				{
+					int			idx = kind - PGSTAT_KIND_CUSTOM_MIN;
 
-				Assert(kind_info->shared_size != 0);
-				ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
-				ptr = ctl->custom_data[idx];
+					Assert(kind_info->shared_size != 0);
+					ctl->custom_data[idx] = ShmemAlloc(kind_info->shared_size);
+					ptr = ctl->custom_data[idx];
+				}
+
+				kind_info->init_shmem_cb(ptr);
 			}
-
-			kind_info->init_shmem_cb(ptr);
 		}
 	}
 	else
@@ -303,6 +311,7 @@ pgstat_init_entry(PgStat_Kind kind,
 	/* Create new stats entry. */
 	dsa_pointer chunk;
 	PgStatShared_Common *shheader;
+	const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
 
 	/*
 	 * Initialize refcount to 1, marking it as valid / not dropped. The entry
@@ -319,7 +328,7 @@ pgstat_init_entry(PgStat_Kind kind,
 	shhashent->dropped = false;
 
 	chunk = dsa_allocate_extended(pgStatLocal.dsa,
-								  pgstat_get_kind_info(kind)->shared_size,
+								  kind_info->shared_size,
 								  DSA_ALLOC_ZERO | DSA_ALLOC_NO_OOM);
 	if (chunk == InvalidDsaPointer)
 		return NULL;
@@ -329,6 +338,10 @@ pgstat_init_entry(PgStat_Kind kind,
 
 	/* Link the new entry from the hash entry. */
 	shhashent->body = chunk;
+
+	/* Increment entry count, if required. */
+	if (kind_info->track_entry_count)
+		pg_atomic_fetch_add_u64(&pgStatLocal.shmem->entry_counts[kind - 1], 1);
 
 	LWLockInitialize(&shheader->lock, LWTRANCHE_PGSTATS_DATA);
 
@@ -859,6 +872,7 @@ static void
 pgstat_free_entry(PgStatShared_HashEntry *shent, dshash_seq_status *hstat)
 {
 	dsa_pointer pdsa;
+	PgStat_Kind kind = shent->key.kind;
 
 	/*
 	 * Fetch dsa pointer before deleting entry - that way we can free the
@@ -872,6 +886,10 @@ pgstat_free_entry(PgStatShared_HashEntry *shent, dshash_seq_status *hstat)
 		dshash_delete_current(hstat);
 
 	dsa_free(pgStatLocal.dsa, pdsa);
+
+	/* Decrement entry count, if required. */
+	if (pgstat_get_kind_info(kind)->track_entry_count)
+		pg_atomic_sub_fetch_u64(&pgStatLocal.shmem->entry_counts[kind - 1], 1);
 }
 
 /*
