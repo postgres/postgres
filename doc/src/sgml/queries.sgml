@@ -1145,10 +1145,36 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
 
    <para>
     In strict SQL, <literal>GROUP BY</literal> can only group by columns of
-    the source table but <productname>PostgreSQL</productname> extends
+    the source table, but <productname>PostgreSQL</productname> extends
     this to also allow <literal>GROUP BY</literal> to group by columns in the
     select list.  Grouping by value expressions instead of simple
-    column names is also allowed.
+    column names is also allowed (but <literal>GROUP BY</literal>
+    expressions cannot contain aggregate functions or window functions).
+   </para>
+
+   <para>
+    PostgreSQL also supports the syntax <literal>GROUP BY ALL</literal>,
+    which is equivalent to explicitly writing all select-list entries that
+    do not contain either an aggregate function or a window function.
+    This can greatly simplify ad-hoc exploration of data.
+    As an example, these queries are equivalent:
+<screen>
+<prompt>=&gt;</prompt> <userinput>SELECT a, b, a + b, sum(c) FROM test1 GROUP BY ALL;</userinput>
+ a | b | ?column? | sum
+---+---+----------+----
+ 1 | 4 |        5 |  9
+ 2 | 5 |        7 | 12
+ 3 | 6 |        9 | 15
+(3 rows)
+
+<prompt>=&gt;</prompt> <userinput>SELECT a, b, a + b, sum(c) FROM test1 GROUP BY a, b, a + b;</userinput>
+ a | b | ?column? | sum
+---+---+----------+----
+ 1 | 4 |        5 |  9
+ 2 | 5 |        7 | 12
+ 3 | 6 |        9 | 15
+(3 rows)
+</screen>
    </para>
 
    <indexterm>

@@ -1557,6 +1557,129 @@ drop table t2;
 drop table t3;
 drop table p_t1;
 --
+-- Test GROUP BY ALL
+--
+-- We don't care about the data here, just the proper transformation of the
+-- GROUP BY clause, so test some queries and verify the EXPLAIN plans.
+--
+CREATE TEMP TABLE t1 (
+  a int,
+  b int,
+  c int
+);
+-- basic example
+EXPLAIN (COSTS OFF) SELECT b, COUNT(*) FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: b
+   ->  Seq Scan on t1
+(3 rows)
+
+-- multiple columns, non-consecutive order
+EXPLAIN (COSTS OFF) SELECT a, SUM(b), b FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a, b
+   ->  Seq Scan on t1
+(3 rows)
+
+-- multi columns, no aggregate
+EXPLAIN (COSTS OFF) SELECT a + b FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: (a + b)
+   ->  Seq Scan on t1
+(3 rows)
+
+-- check we detect a non-top-level aggregate
+EXPLAIN (COSTS OFF) SELECT a, SUM(b) + 4 FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a
+   ->  Seq Scan on t1
+(3 rows)
+
+-- including grouped column is okay
+EXPLAIN (COSTS OFF) SELECT a, SUM(b) + a FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a
+   ->  Seq Scan on t1
+(3 rows)
+
+-- including non-grouped column, not so much
+EXPLAIN (COSTS OFF) SELECT a, SUM(b) + c FROM t1 GROUP BY ALL;
+ERROR:  column "t1.c" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 1: EXPLAIN (COSTS OFF) SELECT a, SUM(b) + c FROM t1 GROUP BY AL...
+                                               ^
+-- all aggregates, should reduce to GROUP BY ()
+EXPLAIN (COSTS OFF) SELECT COUNT(a), SUM(b) FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ Aggregate
+   Group Key: ()
+   ->  Seq Scan on t1
+(3 rows)
+
+-- likewise with empty target list
+EXPLAIN (COSTS OFF) SELECT FROM t1 GROUP BY ALL;
+      QUERY PLAN       
+-----------------------
+ Result
+   Replaces: Aggregate
+(2 rows)
+
+-- window functions are not to be included in GROUP BY, either
+EXPLAIN (COSTS OFF) SELECT a, COUNT(a) OVER (PARTITION BY a) FROM t1 GROUP BY ALL;
+            QUERY PLAN            
+----------------------------------
+ WindowAgg
+   Window: w1 AS (PARTITION BY a)
+   ->  Sort
+         Sort Key: a
+         ->  HashAggregate
+               Group Key: a
+               ->  Seq Scan on t1
+(7 rows)
+
+-- all cols
+EXPLAIN (COSTS OFF) SELECT *, count(*) FROM t1 GROUP BY ALL;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a, b, c
+   ->  Seq Scan on t1
+(3 rows)
+
+-- group by all with grouping element(s) (equivalent to GROUP BY's
+-- default behavior, explicit antithesis to GROUP BY DISTINCT)
+EXPLAIN (COSTS OFF) SELECT a, count(*) FROM t1 GROUP BY ALL a;
+      QUERY PLAN      
+----------------------
+ HashAggregate
+   Group Key: a
+   ->  Seq Scan on t1
+(3 rows)
+
+-- verify deparsing of GROUP BY ALL
+CREATE TEMP VIEW v1 AS SELECT b, COUNT(*) FROM t1 GROUP BY ALL;
+SELECT pg_get_viewdef('v1'::regclass);
+    pg_get_viewdef     
+-----------------------
+  SELECT b,           +
+     count(*) AS count+
+    FROM t1           +
+   GROUP BY ALL;
+(1 row)
+
+DROP VIEW v1;
+DROP TABLE t1;
+--
 -- Test GROUP BY matching of join columns that are type-coerced due to USING
 --
 create temp table t1(f1 int, f2 int);
