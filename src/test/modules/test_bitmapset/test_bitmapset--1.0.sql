@@ -112,6 +112,10 @@ CREATE FUNCTION test_bms_int_members(text, text)
 RETURNS text
 AS 'MODULE_PATHNAME' LANGUAGE C;
 
+CREATE FUNCTION test_bms_del_members(text, text)
+RETURNS text
+AS 'MODULE_PATHNAME' LANGUAGE C;
+
 CREATE FUNCTION test_bms_replace_members(text, text)
 RETURNS text
 AS 'MODULE_PATHNAME' LANGUAGE C;

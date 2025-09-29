@@ -58,6 +58,7 @@ PG_FUNCTION_INFO_V1(test_bms_member_index);
 PG_FUNCTION_INFO_V1(test_bms_add_range);
 PG_FUNCTION_INFO_V1(test_bms_add_members);
 PG_FUNCTION_INFO_V1(test_bms_int_members);
+PG_FUNCTION_INFO_V1(test_bms_del_members);
 PG_FUNCTION_INFO_V1(test_bms_replace_members);
 PG_FUNCTION_INFO_V1(test_bms_join);
 PG_FUNCTION_INFO_V1(test_bitmap_hash);
@@ -111,9 +112,6 @@ test_bms_add_member(PG_FUNCTION_ARGS)
 	if (bms)
 		bms_free(bms);
 
-	if (result == NULL)
-		PG_RETURN_NULL();
-
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -135,9 +133,6 @@ test_bms_add_members(PG_FUNCTION_ARGS)
 
 	if (bms2)
 		bms_free(bms2);
-
-	if (bms1 == NULL)
-		PG_RETURN_NULL();
 
 	result = BITMAPSET_TO_TEXT(bms1);
 	bms_free(bms1);
@@ -161,12 +156,8 @@ test_bms_del_member(PG_FUNCTION_ARGS)
 	member = PG_GETARG_INT32(1);
 	bms = bms_del_member(bms, member);
 
-	if (bms == NULL || bms_is_empty(bms))
-	{
-		if (bms)
-			bms_free(bms);
+	if (bms_is_empty(bms))
 		PG_RETURN_NULL();
-	}
 
 	result = BITMAPSET_TO_TEXT(bms);
 	bms_free(bms);
@@ -515,8 +506,8 @@ test_bms_get_singleton_member(PG_FUNCTION_ARGS)
 {
 	Bitmapset  *bms = NULL;
 	int32		default_member = PG_GETARG_INT32(1);
-	int			member;
 	bool		success;
+	int			member = -1;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_INT32(default_member);
@@ -532,8 +523,8 @@ test_bms_get_singleton_member(PG_FUNCTION_ARGS)
 
 	if (success)
 		PG_RETURN_INT32(member);
-	else
-		PG_RETURN_INT32(default_member);
+
+	PG_RETURN_INT32(default_member);
 }
 
 Datum
@@ -608,11 +599,6 @@ test_bms_overlap_list(PG_FUNCTION_ARGS)
 	}
 
 	array = PG_GETARG_ARRAYTYPE_P(1);
-
-	if (ARR_ELEMTYPE(array) != INT4OID)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("integer array expected")));
 
 	deconstruct_array(array,
 					  INT4OID, sizeof(int32), true, 'i',
@@ -748,6 +734,37 @@ test_bms_int_members(PG_FUNCTION_ARGS)
 
 	if (bms1)
 		bms_free(bms1);
+
+	PG_RETURN_TEXT_P(result);
+}
+
+Datum
+test_bms_del_members(PG_FUNCTION_ARGS)
+{
+	Bitmapset  *bms1 = NULL,
+			   *bms2 = NULL;
+	Bitmapset  *result_bms;
+	text	   *result;
+
+	if (!PG_ARGISNULL(0))
+		bms1 = TEXT_TO_BITMAPSET(PG_GETARG_TEXT_PP(0));
+
+	if (!PG_ARGISNULL(1))
+		bms2 = TEXT_TO_BITMAPSET(PG_GETARG_TEXT_PP(1));
+
+	/* IMPORTANT: bms_del_members modifies/frees the first argument */
+	result_bms = bms_del_members(bms1, bms2);
+
+	/* bms1 is now invalid, do not free it */
+
+	if (bms2)
+		bms_free(bms2);
+
+	if (result_bms == NULL)
+		PG_RETURN_NULL();
+
+	result = BITMAPSET_TO_TEXT(result_bms);
+	bms_free(result_bms);
 
 	PG_RETURN_TEXT_P(result);
 }
