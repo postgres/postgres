@@ -36,6 +36,9 @@ $node->safe_psql('postgres', "SELECT injection_points_run('stats-notice');");
 my $numcalls = $node->safe_psql('postgres',
 	"SELECT injection_points_stats_numcalls('stats-notice');");
 is($numcalls, '2', 'number of stats calls');
+my $entrycount =
+  $node->safe_psql('postgres', "SELECT injection_points_stats_count();");
+is($entrycount, '1', 'number of entries');
 my $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
 is($fixedstats, '1|0|2|0|0', 'fixed stats after some calls');
@@ -55,6 +58,9 @@ $node->restart;
 $numcalls = $node->safe_psql('postgres',
 	"SELECT injection_points_stats_numcalls('stats-notice');");
 is($numcalls, '3', 'number of stats after clean restart');
+$entrycount =
+  $node->safe_psql('postgres', "SELECT injection_points_stats_count();");
+is($entrycount, '1', 'number of entries after clean restart');
 $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
 is($fixedstats, '1|0|2|1|1', 'fixed stats after clean restart');
@@ -65,6 +71,9 @@ $node->start;
 $numcalls = $node->safe_psql('postgres',
 	"SELECT injection_points_stats_numcalls('stats-notice');");
 is($numcalls, '', 'number of stats after crash');
+$entrycount =
+  $node->safe_psql('postgres', "SELECT injection_points_stats_count();");
+is($entrycount, '0', 'number of entries after crash');
 $fixedstats = $node->safe_psql('postgres',
 	"SELECT * FROM injection_points_stats_fixed();");
 is($fixedstats, '0|0|0|0|0', 'fixed stats after crash');
@@ -81,6 +90,9 @@ $node->safe_psql('postgres', "SELECT injection_points_stats_drop();");
 $numcalls = $node->safe_psql('postgres',
 	"SELECT injection_points_stats_numcalls('stats-notice');");
 is($numcalls, '', 'no stats after drop via SQL function');
+$entrycount =
+  $node->safe_psql('postgres', "SELECT injection_points_stats_count();");
+is($entrycount, '0', 'number of entries after drop via SQL function');
 
 # Stop the server, disable the module, then restart.  The server
 # should be able to come up.

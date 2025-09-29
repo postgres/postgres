@@ -40,6 +40,7 @@ static const PgStat_KindInfo injection_stats = {
 	.name = "injection_points",
 	.fixed_amount = false,		/* Bounded by the number of points */
 	.write_to_file = true,
+	.track_entry_count = true,
 
 	/* Injection points are system-wide */
 	.accessed_across_databases = true,
@@ -194,6 +195,17 @@ injection_points_stats_numcalls(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	PG_RETURN_INT64(entry->numcalls);
+}
+
+/*
+ * SQL function returning the number of entries allocated for injection
+ * points in the shared hashtable of pgstats.
+ */
+PG_FUNCTION_INFO_V1(injection_points_stats_count);
+Datum
+injection_points_stats_count(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_get_entry_count(PGSTAT_KIND_INJECTION));
 }
 
 /* Only used by injection_points_stats_drop() */

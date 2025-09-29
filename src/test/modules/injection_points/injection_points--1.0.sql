@@ -100,6 +100,16 @@ AS 'MODULE_PATHNAME', 'injection_points_stats_numcalls'
 LANGUAGE C STRICT;
 
 --
+-- injection_points_stats_count()
+--
+-- Return the number of entries stored in the pgstats hash table.
+--
+CREATE FUNCTION injection_points_stats_count()
+RETURNS bigint
+AS 'MODULE_PATHNAME', 'injection_points_stats_count'
+LANGUAGE C STRICT;
+
+--
 -- injection_points_stats_drop()
 --
 -- Drop all statistics of injection points.
