@@ -23,6 +23,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -74,6 +76,8 @@ static List *generate_append_tlist(List *colTypes, List *colCollations,
 								   List *input_tlists,
 								   List *refnames_tlist);
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
+static PathTarget *create_setop_pathtarget(PlannerInfo *root, List *tlist,
+										   List *child_pathlist);
 
 
 /*
@@ -803,7 +807,8 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP, relids);
-	result_rel->reltarget = create_pathtarget(root, tlist);
+	result_rel->reltarget = create_setop_pathtarget(root, tlist,
+													cheapest_pathlist);
 	result_rel->consider_parallel = consider_parallel;
 	result_rel->consider_startup = (root->tuple_fraction > 0);
 
@@ -892,7 +897,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 			path = (Path *) create_agg_path(root,
 											result_rel,
 											apath,
-											create_pathtarget(root, tlist),
+											result_rel->reltarget,
 											AGG_HASHED,
 											AGGSPLIT_SIMPLE,
 											groupList,
@@ -908,7 +913,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 				path = (Path *) create_agg_path(root,
 												result_rel,
 												gpath,
-												create_pathtarget(root, tlist),
+												result_rel->reltarget,
 												AGG_HASHED,
 												AGGSPLIT_SIMPLE,
 												groupList,
@@ -1130,7 +1135,18 @@ generate_nonunion_paths(SetOperationStmt *op, PlannerInfo *root,
 	/* Build result relation. */
 	result_rel = fetch_upper_rel(root, UPPERREL_SETOP,
 								 bms_union(lrel->relids, rrel->relids));
-	result_rel->reltarget = create_pathtarget(root, tlist);
+
+	/*
+	 * Create the PathTarget and set the width accordingly.  For EXCEPT, since
+	 * the set op result won't contain rows from the rpath, we only account
+	 * for the width of the lpath.  For INTERSECT, use both input paths.
+	 */
+	if (op->op == SETOP_EXCEPT)
+		result_rel->reltarget = create_setop_pathtarget(root, tlist,
+														list_make1(lpath));
+	else
+		result_rel->reltarget = create_setop_pathtarget(root, tlist,
+														list_make2(lpath, rpath));
 
 	/*
 	 * Estimate number of distinct groups that we'll need hashtable entries
@@ -1618,4 +1634,39 @@ generate_setop_grouplist(SetOperationStmt *op, List *targetlist)
 	}
 	Assert(lg == NULL);
 	return grouplist;
+}
+
+/*
+ * create_setop_pathtarget
+ *		Do the normal create_pathtarget() work, plus set the resulting
+ *		PathTarget's width to the average width of the Paths in	child_pathlist
+ *		weighted using the estimated row count of each path.
+ *
+ * Note: This is required because set op target lists use varno==0, which
+ * results in a type default width estimate rather than one that's based on
+ * statistics of the columns from the set op children.
+ */
+static PathTarget *
+create_setop_pathtarget(PlannerInfo *root, List *tlist, List *child_pathlist)
+{
+	PathTarget *reltarget;
+	ListCell   *lc;
+	double		parent_rows = 0;
+	double		parent_size = 0;
+
+	reltarget = create_pathtarget(root, tlist);
+
+	/* Calculate the total rows and total size. */
+	foreach(lc, child_pathlist)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+
+		parent_rows += path->rows;
+		parent_size += path->parent->reltarget->width * path->rows;
+	}
+
+	if (parent_rows > 0)
+		reltarget->width = rint(parent_size / parent_rows);
+
+	return reltarget;
 }
