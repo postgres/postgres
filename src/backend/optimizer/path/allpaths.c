@@ -2254,10 +2254,9 @@ set_dummy_rel_pathlist(RelOptInfo *rel)
  * return false.
  */
 static bool
-find_window_run_conditions(Query *subquery, RangeTblEntry *rte,
-						   AttrNumber attno, WindowFunc *wfunc, OpExpr *opexpr,
-						   bool wfunc_left, bool *keep_original,
-						   Bitmapset **run_cond_attrs)
+find_window_run_conditions(Query *subquery, AttrNumber attno,
+						   WindowFunc *wfunc, OpExpr *opexpr, bool wfunc_left,
+						   bool *keep_original, Bitmapset **run_cond_attrs)
 {
 	Oid			prosupport;
 	Expr	   *otherexpr;
@@ -2445,7 +2444,7 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte,
  * will use the runCondition to stop returning tuples.
  */
 static bool
-check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Node *clause,
+check_and_push_window_quals(Query *subquery, Node *clause,
 							Bitmapset **run_cond_attrs)
 {
 	OpExpr	   *opexpr = (OpExpr *) clause;
@@ -2485,9 +2484,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Node *clause,
 		TargetEntry *tle = list_nth(subquery->targetList, var1->varattno - 1);
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
-		if (find_window_run_conditions(subquery, rte, tle->resno, wfunc,
-									   opexpr, true, &keep_original,
-									   run_cond_attrs))
+		if (find_window_run_conditions(subquery, tle->resno, wfunc, opexpr,
+									   true, &keep_original, run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2498,9 +2496,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Node *clause,
 		TargetEntry *tle = list_nth(subquery->targetList, var2->varattno - 1);
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
-		if (find_window_run_conditions(subquery, rte, tle->resno, wfunc,
-									   opexpr, false, &keep_original,
-									   run_cond_attrs))
+		if (find_window_run_conditions(subquery, tle->resno, wfunc, opexpr,
+									   false, &keep_original, run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2622,7 +2619,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					 * runCondition.
 					 */
 					if (!subquery->hasWindowFuncs ||
-						check_and_push_window_quals(subquery, rte, clause,
+						check_and_push_window_quals(subquery, clause,
 													&run_cond_attrs))
 					{
 						/*
