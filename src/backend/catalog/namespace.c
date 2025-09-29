@@ -2753,6 +2753,9 @@ StatisticsObjIsVisibleExt(Oid stxid, bool *is_missing)
 		{
 			Oid			namespaceId = lfirst_oid(l);
 
+			if (namespaceId == myTempNamespace)
+				continue;		/* do not look in temp namespace */
+
 			if (namespaceId == stxnamespace)
 			{
 				/* Found it first in path */
