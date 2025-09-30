@@ -3134,6 +3134,10 @@ XLogNeedsFlush(XLogRecPtr record)
 	 */
 	if (!XLogInsertAllowed())
 	{
+		/* Quick exit if already known to be updated or cannot be updated */
+		if (!updateMinRecoveryPoint || record <= LocalMinRecoveryPoint)
+			return false;
+
 		/*
 		 * An invalid minRecoveryPoint means that we need to recover all the
 		 * WAL, i.e., we're doing crash recovery.  We never modify the control
@@ -3143,11 +3147,10 @@ XLogNeedsFlush(XLogRecPtr record)
 		 * it has not replayed all WAL available when doing crash recovery.
 		 */
 		if (XLogRecPtrIsInvalid(LocalMinRecoveryPoint) && InRecovery)
+		{
 			updateMinRecoveryPoint = false;
-
-		/* Quick exit if already known to be updated or cannot be updated */
-		if (record <= LocalMinRecoveryPoint || !updateMinRecoveryPoint)
 			return false;
+		}
 
 		/*
 		 * Update local copy of minRecoveryPoint. But if the lock is busy,
