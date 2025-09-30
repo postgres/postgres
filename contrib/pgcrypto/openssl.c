@@ -98,7 +98,7 @@ free_openssl_digest(OSSLDigest *digest)
 static unsigned
 digest_result_size(PX_MD *h)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 	int			result = EVP_MD_CTX_size(digest->ctx);
 
 	if (result < 0)
@@ -110,7 +110,7 @@ digest_result_size(PX_MD *h)
 static unsigned
 digest_block_size(PX_MD *h)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 	int			result = EVP_MD_CTX_block_size(digest->ctx);
 
 	if (result < 0)
@@ -122,7 +122,7 @@ digest_block_size(PX_MD *h)
 static void
 digest_reset(PX_MD *h)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	if (!EVP_DigestInit_ex(digest->ctx, digest->algo, NULL))
 		elog(ERROR, "EVP_DigestInit_ex() failed");
@@ -131,7 +131,7 @@ digest_reset(PX_MD *h)
 static void
 digest_update(PX_MD *h, const uint8 *data, unsigned dlen)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	if (!EVP_DigestUpdate(digest->ctx, data, dlen))
 		elog(ERROR, "EVP_DigestUpdate() failed");
@@ -140,7 +140,7 @@ digest_update(PX_MD *h, const uint8 *data, unsigned dlen)
 static void
 digest_finish(PX_MD *h, uint8 *dst)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	if (!EVP_DigestFinal_ex(digest->ctx, dst, NULL))
 		elog(ERROR, "EVP_DigestFinal_ex() failed");
@@ -149,7 +149,7 @@ digest_finish(PX_MD *h, uint8 *dst)
 static void
 digest_free(PX_MD *h)
 {
-	OSSLDigest *digest = (OSSLDigest *) h->ptr;
+	OSSLDigest *digest = (OSSLDigest *) h->p.ptr;
 
 	free_openssl_digest(digest);
 	pfree(h);
@@ -204,7 +204,7 @@ px_find_digest(const char *name, PX_MD **res)
 	h->update = digest_update;
 	h->finish = digest_finish;
 	h->free = digest_free;
-	h->ptr = digest;
+	h->p.ptr = digest;
 
 	*res = h;
 	return 0;
