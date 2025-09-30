@@ -2821,7 +2821,7 @@ readCommandResponse(CState *st, MetaCommand meta, char *varprefix)
 				/* anything else is unexpected */
 				pg_log_error("client %d script %d aborted in command %d query %d: %s",
 							 st->id, st->use_file, st->command, qrynum,
-							 PQerrorMessage(st->con));
+							 PQresultErrorMessage(res));
 				goto error;
 		}
 
