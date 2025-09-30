@@ -306,3 +306,26 @@ endif
 if alldocs.length() != 0
   alias_target('alldocs', alldocs)
 endif
+
+sgml_syntax_check = files(
+  'sgml_syntax_check.pl'
+)
+
+test(
+  'sgml_syntax_check',
+  perl,
+  protocol: 'exitcode',
+  suite: 'doc',
+  args: [
+    sgml_syntax_check,
+    '--xmllint',
+      '@0@ --nonet'.format(xmllint_bin.full_path()),
+    '--srcdir',
+      meson.current_source_dir(),
+    '--builddir',
+      meson.current_build_dir(),
+  ],
+  depends: doc_generated
+)
+
+testprep_targets += doc_generated

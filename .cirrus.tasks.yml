@@ -627,6 +627,8 @@ task:
     TEST_JOBS: 8
     IMAGE: ghcr.io/cirruslabs/macos-runner:sonoma
 
+    XML_CATALOG_FILES: /opt/local/share/xml/docbook/4.5/catalog.xml
+
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
     MACPORTS_CACHE: ${HOME}/macports-cache
@@ -641,6 +643,7 @@ task:
 
     MACOS_PACKAGE_LIST: >-
       ccache
+      docbook-xml-4.5
       icu
       kerberos5
       lz4
