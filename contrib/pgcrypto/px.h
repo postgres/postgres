@@ -117,7 +117,7 @@ struct px_digest
 	{
 		unsigned	code;
 		void	   *ptr;
-	}			p;
+	};
 };
 
 struct px_alias

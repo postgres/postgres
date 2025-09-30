@@ -105,22 +105,22 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 	switch (ctx->type)
 	{
 		case PG_MD5:
-			pg_md5_init(&ctx->data.md5);
+			pg_md5_init(&ctx->md5);
 			break;
 		case PG_SHA1:
-			pg_sha1_init(&ctx->data.sha1);
+			pg_sha1_init(&ctx->sha1);
 			break;
 		case PG_SHA224:
-			pg_sha224_init(&ctx->data.sha224);
+			pg_sha224_init(&ctx->sha224);
 			break;
 		case PG_SHA256:
-			pg_sha256_init(&ctx->data.sha256);
+			pg_sha256_init(&ctx->sha256);
 			break;
 		case PG_SHA384:
-			pg_sha384_init(&ctx->data.sha384);
+			pg_sha384_init(&ctx->sha384);
 			break;
 		case PG_SHA512:
-			pg_sha512_init(&ctx->data.sha512);
+			pg_sha512_init(&ctx->sha512);
 			break;
 	}
 
@@ -141,22 +141,22 @@ pg_cryptohash_update(pg_cryptohash_ctx *ctx, const uint8 *data, size_t len)
 	switch (ctx->type)
 	{
 		case PG_MD5:
-			pg_md5_update(&ctx->data.md5, data, len);
+			pg_md5_update(&ctx->md5, data, len);
 			break;
 		case PG_SHA1:
-			pg_sha1_update(&ctx->data.sha1, data, len);
+			pg_sha1_update(&ctx->sha1, data, len);
 			break;
 		case PG_SHA224:
-			pg_sha224_update(&ctx->data.sha224, data, len);
+			pg_sha224_update(&ctx->sha224, data, len);
 			break;
 		case PG_SHA256:
-			pg_sha256_update(&ctx->data.sha256, data, len);
+			pg_sha256_update(&ctx->sha256, data, len);
 			break;
 		case PG_SHA384:
-			pg_sha384_update(&ctx->data.sha384, data, len);
+			pg_sha384_update(&ctx->sha384, data, len);
 			break;
 		case PG_SHA512:
-			pg_sha512_update(&ctx->data.sha512, data, len);
+			pg_sha512_update(&ctx->sha512, data, len);
 			break;
 	}
 
@@ -182,7 +182,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_md5_final(&ctx->data.md5, dest);
+			pg_md5_final(&ctx->md5, dest);
 			break;
 		case PG_SHA1:
 			if (len < SHA1_DIGEST_LENGTH)
@@ -190,7 +190,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_sha1_final(&ctx->data.sha1, dest);
+			pg_sha1_final(&ctx->sha1, dest);
 			break;
 		case PG_SHA224:
 			if (len < PG_SHA224_DIGEST_LENGTH)
@@ -198,7 +198,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_sha224_final(&ctx->data.sha224, dest);
+			pg_sha224_final(&ctx->sha224, dest);
 			break;
 		case PG_SHA256:
 			if (len < PG_SHA256_DIGEST_LENGTH)
@@ -206,7 +206,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_sha256_final(&ctx->data.sha256, dest);
+			pg_sha256_final(&ctx->sha256, dest);
 			break;
 		case PG_SHA384:
 			if (len < PG_SHA384_DIGEST_LENGTH)
@@ -214,7 +214,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_sha384_final(&ctx->data.sha384, dest);
+			pg_sha384_final(&ctx->sha384, dest);
 			break;
 		case PG_SHA512:
 			if (len < PG_SHA512_DIGEST_LENGTH)
@@ -222,7 +222,7 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
 			}
-			pg_sha512_final(&ctx->data.sha512, dest);
+			pg_sha512_final(&ctx->sha512, dest);
 			break;
 	}
 
