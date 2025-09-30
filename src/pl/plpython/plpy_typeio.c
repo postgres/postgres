@@ -171,15 +171,15 @@ PLy_input_setup_tuple(PLyDatumToOb *arg, TupleDesc desc, PLyProcedure *proc)
 
 	/* Save pointer to tupdesc, but only if this is an anonymous record type */
 	if (arg->typoid == RECORDOID && arg->typmod < 0)
-		arg->u.tuple.recdesc = desc;
+		arg->tuple.recdesc = desc;
 
 	/* (Re)allocate atts array as needed */
-	if (arg->u.tuple.natts != desc->natts)
+	if (arg->tuple.natts != desc->natts)
 	{
-		if (arg->u.tuple.atts)
-			pfree(arg->u.tuple.atts);
-		arg->u.tuple.natts = desc->natts;
-		arg->u.tuple.atts = (PLyDatumToOb *)
+		if (arg->tuple.atts)
+			pfree(arg->tuple.atts);
+		arg->tuple.natts = desc->natts;
+		arg->tuple.atts = (PLyDatumToOb *)
 			MemoryContextAllocZero(arg->mcxt,
 								   desc->natts * sizeof(PLyDatumToOb));
 	}
@@ -188,7 +188,7 @@ PLy_input_setup_tuple(PLyDatumToOb *arg, TupleDesc desc, PLyProcedure *proc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(desc, i);
-		PLyDatumToOb *att = &arg->u.tuple.atts[i];
+		PLyDatumToOb *att = &arg->tuple.atts[i];
 
 		if (attr->attisdropped)
 			continue;
@@ -221,15 +221,15 @@ PLy_output_setup_tuple(PLyObToDatum *arg, TupleDesc desc, PLyProcedure *proc)
 
 	/* Save pointer to tupdesc, but only if this is an anonymous record type */
 	if (arg->typoid == RECORDOID && arg->typmod < 0)
-		arg->u.tuple.recdesc = desc;
+		arg->tuple.recdesc = desc;
 
 	/* (Re)allocate atts array as needed */
-	if (arg->u.tuple.natts != desc->natts)
+	if (arg->tuple.natts != desc->natts)
 	{
-		if (arg->u.tuple.atts)
-			pfree(arg->u.tuple.atts);
-		arg->u.tuple.natts = desc->natts;
-		arg->u.tuple.atts = (PLyObToDatum *)
+		if (arg->tuple.atts)
+			pfree(arg->tuple.atts);
+		arg->tuple.natts = desc->natts;
+		arg->tuple.atts = (PLyObToDatum *)
 			MemoryContextAllocZero(arg->mcxt,
 								   desc->natts * sizeof(PLyObToDatum));
 	}
@@ -238,7 +238,7 @@ PLy_output_setup_tuple(PLyObToDatum *arg, TupleDesc desc, PLyProcedure *proc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(desc, i);
-		PLyObToDatum *att = &arg->u.tuple.atts[i];
+		PLyObToDatum *att = &arg->tuple.atts[i];
 
 		if (attr->attisdropped)
 			continue;
@@ -277,9 +277,9 @@ PLy_output_setup_record(PLyObToDatum *arg, TupleDesc desc, PLyProcedure *proc)
 	 * for the record type.
 	 */
 	arg->typmod = desc->tdtypmod;
-	if (arg->u.tuple.recdesc &&
-		arg->u.tuple.recdesc->tdtypmod != arg->typmod)
-		arg->u.tuple.recdesc = NULL;
+	if (arg->tuple.recdesc &&
+		arg->tuple.recdesc->tdtypmod != arg->typmod)
+		arg->tuple.recdesc = NULL;
 
 	/* Update derived data if necessary */
 	PLy_output_setup_tuple(arg, desc, proc);
@@ -343,11 +343,11 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 	{
 		/* Domain */
 		arg->func = PLyObject_ToDomain;
-		arg->u.domain.domain_info = NULL;
+		arg->domain.domain_info = NULL;
 		/* Recursively set up conversion info for the element type */
-		arg->u.domain.base = (PLyObToDatum *)
+		arg->domain.base = (PLyObToDatum *)
 			MemoryContextAllocZero(arg_mcxt, sizeof(PLyObToDatum));
-		PLy_output_setup_func(arg->u.domain.base, arg_mcxt,
+		PLy_output_setup_func(arg->domain.base, arg_mcxt,
 							  typentry->domainBaseType,
 							  typentry->domainBaseTypmod,
 							  proc);
@@ -359,11 +359,11 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 		arg->func = PLySequence_ToArray;
 		/* Get base type OID to insert into constructed array */
 		/* (note this might not be the same as the immediate child type) */
-		arg->u.array.elmbasetype = getBaseType(typentry->typelem);
+		arg->array.elmbasetype = getBaseType(typentry->typelem);
 		/* Recursively set up conversion info for the element type */
-		arg->u.array.elm = (PLyObToDatum *)
+		arg->array.elm = (PLyObToDatum *)
 			MemoryContextAllocZero(arg_mcxt, sizeof(PLyObToDatum));
-		PLy_output_setup_func(arg->u.array.elm, arg_mcxt,
+		PLy_output_setup_func(arg->array.elm, arg_mcxt,
 							  typentry->typelem, typmod,
 							  proc);
 	}
@@ -372,20 +372,20 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 											 proc->trftypes)))
 	{
 		arg->func = PLyObject_ToTransform;
-		fmgr_info_cxt(trfuncid, &arg->u.transform.typtransform, arg_mcxt);
+		fmgr_info_cxt(trfuncid, &arg->transform.typtransform, arg_mcxt);
 	}
 	else if (typtype == TYPTYPE_COMPOSITE)
 	{
 		/* Named composite type, or RECORD */
 		arg->func = PLyObject_ToComposite;
 		/* We'll set up the per-field data later */
-		arg->u.tuple.recdesc = NULL;
-		arg->u.tuple.typentry = typentry;
-		arg->u.tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
-		arg->u.tuple.atts = NULL;
-		arg->u.tuple.natts = 0;
+		arg->tuple.recdesc = NULL;
+		arg->tuple.typentry = typentry;
+		arg->tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
+		arg->tuple.atts = NULL;
+		arg->tuple.natts = 0;
 		/* Mark this invalid till needed, too */
-		arg->u.tuple.recinfunc.fn_oid = InvalidOid;
+		arg->tuple.recinfunc.fn_oid = InvalidOid;
 	}
 	else
 	{
@@ -400,8 +400,8 @@ PLy_output_setup_func(PLyObToDatum *arg, MemoryContext arg_mcxt,
 				break;
 			default:
 				arg->func = PLyObject_ToScalar;
-				getTypeInputInfo(typeOid, &typinput, &arg->u.scalar.typioparam);
-				fmgr_info_cxt(typinput, &arg->u.scalar.typfunc, arg_mcxt);
+				getTypeInputInfo(typeOid, &typinput, &arg->scalar.typioparam);
+				fmgr_info_cxt(typinput, &arg->scalar.typfunc, arg_mcxt);
 				break;
 		}
 	}
@@ -476,9 +476,9 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 		/* Standard array */
 		arg->func = PLyList_FromArray;
 		/* Recursively set up conversion info for the element type */
-		arg->u.array.elm = (PLyDatumToOb *)
+		arg->array.elm = (PLyDatumToOb *)
 			MemoryContextAllocZero(arg_mcxt, sizeof(PLyDatumToOb));
-		PLy_input_setup_func(arg->u.array.elm, arg_mcxt,
+		PLy_input_setup_func(arg->array.elm, arg_mcxt,
 							 typentry->typelem, typmod,
 							 proc);
 	}
@@ -487,18 +487,18 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 											   proc->trftypes)))
 	{
 		arg->func = PLyObject_FromTransform;
-		fmgr_info_cxt(trfuncid, &arg->u.transform.typtransform, arg_mcxt);
+		fmgr_info_cxt(trfuncid, &arg->transform.typtransform, arg_mcxt);
 	}
 	else if (typtype == TYPTYPE_COMPOSITE)
 	{
 		/* Named composite type, or RECORD */
 		arg->func = PLyDict_FromComposite;
 		/* We'll set up the per-field data later */
-		arg->u.tuple.recdesc = NULL;
-		arg->u.tuple.typentry = typentry;
-		arg->u.tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
-		arg->u.tuple.atts = NULL;
-		arg->u.tuple.natts = 0;
+		arg->tuple.recdesc = NULL;
+		arg->tuple.typentry = typentry;
+		arg->tuple.tupdescid = INVALID_TUPLEDESC_IDENTIFIER;
+		arg->tuple.atts = NULL;
+		arg->tuple.natts = 0;
 	}
 	else
 	{
@@ -535,7 +535,7 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 			default:
 				arg->func = PLyUnicode_FromScalar;
 				getTypeOutputInfo(typeOid, &typoutput, &typisvarlena);
-				fmgr_info_cxt(typoutput, &arg->u.scalar.typfunc, arg_mcxt);
+				fmgr_info_cxt(typoutput, &arg->scalar.typfunc, arg_mcxt);
 				break;
 		}
 	}
@@ -641,7 +641,7 @@ PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
 static PyObject *
 PLyUnicode_FromScalar(PLyDatumToOb *arg, Datum d)
 {
-	char	   *x = OutputFunctionCall(&arg->u.scalar.typfunc, d);
+	char	   *x = OutputFunctionCall(&arg->scalar.typfunc, d);
 	PyObject   *r = PLyUnicode_FromString(x);
 
 	pfree(x);
@@ -656,7 +656,7 @@ PLyObject_FromTransform(PLyDatumToOb *arg, Datum d)
 {
 	Datum		t;
 
-	t = FunctionCall1(&arg->u.transform.typtransform, d);
+	t = FunctionCall1(&arg->transform.typtransform, d);
 	return (PyObject *) DatumGetPointer(t);
 }
 
@@ -667,7 +667,7 @@ static PyObject *
 PLyList_FromArray(PLyDatumToOb *arg, Datum d)
 {
 	ArrayType  *array = DatumGetArrayTypeP(d);
-	PLyDatumToOb *elm = arg->u.array.elm;
+	PLyDatumToOb *elm = arg->array.elm;
 	int			ndim;
 	int		   *dims;
 	char	   *dataptr;
@@ -817,7 +817,7 @@ PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool inclu
 	PyObject   *volatile dict;
 
 	/* Simple sanity check that desc matches */
-	Assert(desc->natts == arg->u.tuple.natts);
+	Assert(desc->natts == arg->tuple.natts);
 
 	dict = PyDict_New();
 	if (dict == NULL)
@@ -827,9 +827,9 @@ PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc, bool inclu
 	{
 		int			i;
 
-		for (i = 0; i < arg->u.tuple.natts; i++)
+		for (i = 0; i < arg->tuple.natts; i++)
 		{
-			PLyDatumToOb *att = &arg->u.tuple.atts[i];
+			PLyDatumToOb *att = &arg->tuple.atts[i];
 			Form_pg_attribute attr = TupleDescAttr(desc, i);
 			char	   *key;
 			Datum		vattr;
@@ -971,22 +971,22 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	{
 		desc = lookup_rowtype_tupdesc(arg->typoid, arg->typmod);
 		/* We should have the descriptor of the type's typcache entry */
-		Assert(desc == arg->u.tuple.typentry->tupDesc);
+		Assert(desc == arg->tuple.typentry->tupDesc);
 		/* Detect change of descriptor, update cache if needed */
-		if (arg->u.tuple.tupdescid != arg->u.tuple.typentry->tupDesc_identifier)
+		if (arg->tuple.tupdescid != arg->tuple.typentry->tupDesc_identifier)
 		{
 			PLy_output_setup_tuple(arg, desc,
 								   PLy_current_execution_context()->curr_proc);
-			arg->u.tuple.tupdescid = arg->u.tuple.typentry->tupDesc_identifier;
+			arg->tuple.tupdescid = arg->tuple.typentry->tupDesc_identifier;
 		}
 	}
 	else
 	{
-		desc = arg->u.tuple.recdesc;
+		desc = arg->tuple.recdesc;
 		if (desc == NULL)
 		{
 			desc = lookup_rowtype_tupdesc(arg->typoid, arg->typmod);
-			arg->u.tuple.recdesc = desc;
+			arg->tuple.recdesc = desc;
 		}
 		else
 		{
@@ -996,7 +996,7 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	}
 
 	/* Simple sanity check on our caching */
-	Assert(desc->natts == arg->u.tuple.natts);
+	Assert(desc->natts == arg->tuple.natts);
 
 	/*
 	 * Convert, using the appropriate method depending on the type of the
@@ -1088,9 +1088,9 @@ PLyObject_ToScalar(PLyObToDatum *arg, PyObject *plrv,
 
 	str = PLyObject_AsString(plrv);
 
-	return InputFunctionCall(&arg->u.scalar.typfunc,
+	return InputFunctionCall(&arg->scalar.typfunc,
 							 str,
-							 arg->u.scalar.typioparam,
+							 arg->scalar.typioparam,
 							 arg->typmod);
 }
 
@@ -1103,11 +1103,11 @@ PLyObject_ToDomain(PLyObToDatum *arg, PyObject *plrv,
 				   bool *isnull, bool inarray)
 {
 	Datum		result;
-	PLyObToDatum *base = arg->u.domain.base;
+	PLyObToDatum *base = arg->domain.base;
 
 	result = base->func(base, plrv, isnull, inarray);
 	domain_check(result, *isnull, arg->typoid,
-				 &arg->u.domain.domain_info, arg->mcxt);
+				 &arg->domain.domain_info, arg->mcxt);
 	return result;
 }
 
@@ -1125,7 +1125,7 @@ PLyObject_ToTransform(PLyObToDatum *arg, PyObject *plrv,
 		return (Datum) 0;
 	}
 	*isnull = false;
-	return FunctionCall1(&arg->u.transform.typtransform, PointerGetDatum(plrv));
+	return FunctionCall1(&arg->transform.typtransform, PointerGetDatum(plrv));
 }
 
 
@@ -1169,12 +1169,12 @@ PLySequence_ToArray(PLyObToDatum *arg, PyObject *plrv,
 	 */
 	PLySequence_ToArray_recurse(plrv, &astate,
 								&ndims, dims, 1,
-								arg->u.array.elm,
-								arg->u.array.elmbasetype);
+								arg->array.elm,
+								arg->array.elmbasetype);
 
 	/* ensure we get zero-D array for no inputs, as per PG convention */
 	if (astate == NULL)
-		return PointerGetDatum(construct_empty_array(arg->u.array.elmbasetype));
+		return PointerGetDatum(construct_empty_array(arg->array.elmbasetype));
 
 	for (int i = 0; i < ndims; i++)
 		lbs[i] = 1;
@@ -1289,8 +1289,8 @@ PLyUnicode_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray)
 	 * Set up call data for record_in, if we didn't already.  (We can't just
 	 * use DirectFunctionCall, because record_in needs a fn_extra field.)
 	 */
-	if (!OidIsValid(arg->u.tuple.recinfunc.fn_oid))
-		fmgr_info_cxt(F_RECORD_IN, &arg->u.tuple.recinfunc, arg->mcxt);
+	if (!OidIsValid(arg->tuple.recinfunc.fn_oid))
+		fmgr_info_cxt(F_RECORD_IN, &arg->tuple.recinfunc, arg->mcxt);
 
 	str = PLyObject_AsString(string);
 
@@ -1334,7 +1334,7 @@ PLyUnicode_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray)
 					 errhint("To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\".")));
 	}
 
-	return InputFunctionCall(&arg->u.tuple.recinfunc,
+	return InputFunctionCall(&arg->tuple.recinfunc,
 							 str,
 							 arg->typoid,
 							 arg->typmod);
@@ -1371,7 +1371,7 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 
 		key = NameStr(attr->attname);
 		value = NULL;
-		att = &arg->u.tuple.atts[i];
+		att = &arg->tuple.atts[i];
 		PG_TRY();
 		{
 			value = PyMapping_GetItemString(mapping, key);
@@ -1451,7 +1451,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 		}
 
 		value = NULL;
-		att = &arg->u.tuple.atts[i];
+		att = &arg->tuple.atts[i];
 		PG_TRY();
 		{
 			value = PySequence_GetItem(sequence, idx);
@@ -1511,7 +1511,7 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 
 		key = NameStr(attr->attname);
 		value = NULL;
-		att = &arg->u.tuple.atts[i];
+		att = &arg->tuple.atts[i];
 		PG_TRY();
 		{
 			value = PyObject_GetAttrString(object, key);

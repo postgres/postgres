@@ -1046,7 +1046,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			Py_INCREF(plval);
 
 			/* We assume proc->result is set up to convert tuples properly */
-			att = &proc->result.u.tuple.atts[attn - 1];
+			att = &proc->result.tuple.atts[attn - 1];
 
 			modvalues[attn - 1] = PLy_output_convert(att,
 													 plval,
