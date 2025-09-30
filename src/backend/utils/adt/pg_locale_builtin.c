@@ -72,7 +72,7 @@ strlower_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				 pg_locale_t locale)
 {
 	return unicode_strlower(dest, destsize, src, srclen,
-							locale->info.builtin.casemap_full);
+							locale->builtin.casemap_full);
 }
 
 static size_t
@@ -83,13 +83,13 @@ strtitle_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 		.str = src,
 		.len = srclen,
 		.offset = 0,
-		.posix = !locale->info.builtin.casemap_full,
+		.posix = !locale->builtin.casemap_full,
 		.init = false,
 		.prev_alnum = false,
 	};
 
 	return unicode_strtitle(dest, destsize, src, srclen,
-							locale->info.builtin.casemap_full,
+							locale->builtin.casemap_full,
 							initcap_wbnext, &wbstate);
 }
 
@@ -98,7 +98,7 @@ strupper_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				 pg_locale_t locale)
 {
 	return unicode_strupper(dest, destsize, src, srclen,
-							locale->info.builtin.casemap_full);
+							locale->builtin.casemap_full);
 }
 
 static size_t
@@ -106,13 +106,13 @@ strfold_builtin(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				pg_locale_t locale)
 {
 	return unicode_strfold(dest, destsize, src, srclen,
-						   locale->info.builtin.casemap_full);
+						   locale->builtin.casemap_full);
 }
 
 static bool
 wc_isdigit_builtin(pg_wchar wc, pg_locale_t locale)
 {
-	return pg_u_isdigit(wc, !locale->info.builtin.casemap_full);
+	return pg_u_isdigit(wc, !locale->builtin.casemap_full);
 }
 
 static bool
@@ -124,7 +124,7 @@ wc_isalpha_builtin(pg_wchar wc, pg_locale_t locale)
 static bool
 wc_isalnum_builtin(pg_wchar wc, pg_locale_t locale)
 {
-	return pg_u_isalnum(wc, !locale->info.builtin.casemap_full);
+	return pg_u_isalnum(wc, !locale->builtin.casemap_full);
 }
 
 static bool
@@ -154,7 +154,7 @@ wc_isprint_builtin(pg_wchar wc, pg_locale_t locale)
 static bool
 wc_ispunct_builtin(pg_wchar wc, pg_locale_t locale)
 {
-	return pg_u_ispunct(wc, !locale->info.builtin.casemap_full);
+	return pg_u_ispunct(wc, !locale->builtin.casemap_full);
 }
 
 static bool
@@ -238,8 +238,8 @@ create_pg_locale_builtin(Oid collid, MemoryContext context)
 
 	result = MemoryContextAllocZero(context, sizeof(struct pg_locale_struct));
 
-	result->info.builtin.locale = MemoryContextStrdup(context, locstr);
-	result->info.builtin.casemap_full = (strcmp(locstr, "PG_UNICODE_FAST") == 0);
+	result->builtin.locale = MemoryContextStrdup(context, locstr);
+	result->builtin.casemap_full = (strcmp(locstr, "PG_UNICODE_FAST") == 0);
 	result->deterministic = true;
 	result->collate_is_c = true;
 	result->ctype_is_c = (strcmp(locstr, "C") == 0);

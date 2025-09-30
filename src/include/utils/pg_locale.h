@@ -171,7 +171,7 @@ struct pg_locale_struct
 			UCollator  *ucol;
 		}			icu;
 #endif
-	}			info;
+	};
 };
 
 extern void init_database_collation(void);
