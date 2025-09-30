@@ -3,7 +3,7 @@
  * pgstat_relation.c
  *	  Implementation of relation statistics.
  *
- * This file contains the implementation of function relation. It is kept
+ * This file contains the implementation of relation statistics. It is kept
  * separate from pgstat.c to enforce the line between the statistics access /
  * storage implementation and the details about individual types of
  * statistics.
