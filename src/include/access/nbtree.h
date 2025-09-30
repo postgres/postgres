@@ -22,6 +22,7 @@
 #include "catalog/pg_index.h"
 #include "lib/stringinfo.h"
 #include "storage/bufmgr.h"
+#include "storage/dsm.h"
 #include "storage/shm_toc.h"
 #include "utils/skipsupport.h"
 

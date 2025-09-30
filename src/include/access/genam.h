@@ -20,12 +20,14 @@
 #include "nodes/tidbitmap.h"
 #include "storage/buf.h"
 #include "storage/lockdefs.h"
-#include "utils/relcache.h"
 #include "utils/snapshot.h"
 
 /* We don't want this file to depend on execnodes.h. */
 typedef struct IndexInfo IndexInfo;
 typedef struct TupleTableSlot TupleTableSlot;
+
+/* or relcache.h */
+typedef struct RelationData *Relation;
 
 
 /*

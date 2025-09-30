@@ -40,6 +40,7 @@
 
 #include <limits.h>
 
+#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "common/int.h"
 #include "nodes/bitmapset.h"

@@ -15,6 +15,8 @@
 #include "access/cmptype.h"
 #include "access/genam.h"
 #include "access/stratnum.h"
+#include "nodes/nodes.h"
+#include "nodes/pg_list.h"
 
 /*
  * We don't wish to include planner header files here, since most of an index

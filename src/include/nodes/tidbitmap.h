@@ -22,7 +22,6 @@
 #ifndef TIDBITMAP_H
 #define TIDBITMAP_H
 
-#include "access/htup_details.h"
 #include "storage/itemptr.h"
 #include "utils/dsa.h"
 
