@@ -52,7 +52,7 @@ logicalrep_write_begin(StringInfo out, ReorderBufferTXN *txn)
 
 	/* fixed fields */
 	pq_sendint64(out, txn->final_lsn);
-	pq_sendint64(out, txn->xact_time.commit_time);
+	pq_sendint64(out, txn->commit_time);
 	pq_sendint32(out, txn->xid);
 }
 
@@ -88,7 +88,7 @@ logicalrep_write_commit(StringInfo out, ReorderBufferTXN *txn,
 	/* send fields */
 	pq_sendint64(out, commit_lsn);
 	pq_sendint64(out, txn->end_lsn);
-	pq_sendint64(out, txn->xact_time.commit_time);
+	pq_sendint64(out, txn->commit_time);
 }
 
 /*
@@ -120,7 +120,7 @@ logicalrep_write_begin_prepare(StringInfo out, ReorderBufferTXN *txn)
 	/* fixed fields */
 	pq_sendint64(out, txn->final_lsn);
 	pq_sendint64(out, txn->end_lsn);
-	pq_sendint64(out, txn->xact_time.prepare_time);
+	pq_sendint64(out, txn->prepare_time);
 	pq_sendint32(out, txn->xid);
 
 	/* send gid */
@@ -173,7 +173,7 @@ logicalrep_write_prepare_common(StringInfo out, LogicalRepMsgType type,
 	/* send fields */
 	pq_sendint64(out, prepare_lsn);
 	pq_sendint64(out, txn->end_lsn);
-	pq_sendint64(out, txn->xact_time.prepare_time);
+	pq_sendint64(out, txn->prepare_time);
 	pq_sendint32(out, txn->xid);
 
 	/* send gid */
@@ -253,7 +253,7 @@ logicalrep_write_commit_prepared(StringInfo out, ReorderBufferTXN *txn,
 	/* send fields */
 	pq_sendint64(out, commit_lsn);
 	pq_sendint64(out, txn->end_lsn);
-	pq_sendint64(out, txn->xact_time.commit_time);
+	pq_sendint64(out, txn->commit_time);
 	pq_sendint32(out, txn->xid);
 
 	/* send gid */
@@ -311,7 +311,7 @@ logicalrep_write_rollback_prepared(StringInfo out, ReorderBufferTXN *txn,
 	pq_sendint64(out, prepare_end_lsn);
 	pq_sendint64(out, txn->end_lsn);
 	pq_sendint64(out, prepare_time);
-	pq_sendint64(out, txn->xact_time.commit_time);
+	pq_sendint64(out, txn->commit_time);
 	pq_sendint32(out, txn->xid);
 
 	/* send gid */
@@ -1119,7 +1119,7 @@ logicalrep_write_stream_commit(StringInfo out, ReorderBufferTXN *txn,
 	/* send fields */
 	pq_sendint64(out, commit_lsn);
 	pq_sendint64(out, txn->end_lsn);
-	pq_sendint64(out, txn->xact_time.commit_time);
+	pq_sendint64(out, txn->commit_time);
 }
 
 /*

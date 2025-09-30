@@ -2830,7 +2830,7 @@ ReorderBufferReplay(ReorderBufferTXN *txn,
 
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
-	txn->xact_time.commit_time = commit_time;
+	txn->commit_time = commit_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
@@ -2922,7 +2922,7 @@ ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
 	 */
 	txn->final_lsn = prepare_lsn;
 	txn->end_lsn = end_lsn;
-	txn->xact_time.prepare_time = prepare_time;
+	txn->prepare_time = prepare_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
@@ -2979,7 +2979,7 @@ ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid,
 	txn->gid = pstrdup(gid);
 
 	ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
-						txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
+						txn->prepare_time, txn->origin_id, txn->origin_lsn);
 
 	/*
 	 * Send a prepare if not already done so. This might occur if we have
@@ -3018,7 +3018,7 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 	 * be later used for rollback.
 	 */
 	prepare_end_lsn = txn->end_lsn;
-	prepare_time = txn->xact_time.prepare_time;
+	prepare_time = txn->prepare_time;
 
 	/* add the gid in the txn */
 	txn->gid = pstrdup(gid);
@@ -3050,12 +3050,12 @@ ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 		 * prepared after the restart.
 		 */
 		ReorderBufferReplay(txn, rb, xid, txn->final_lsn, txn->end_lsn,
-							txn->xact_time.prepare_time, txn->origin_id, txn->origin_lsn);
+							txn->prepare_time, txn->origin_id, txn->origin_lsn);
 	}
 
 	txn->final_lsn = commit_lsn;
 	txn->end_lsn = end_lsn;
-	txn->xact_time.commit_time = commit_time;
+	txn->commit_time = commit_time;
 	txn->origin_id = origin_id;
 	txn->origin_lsn = origin_lsn;
 
@@ -3095,7 +3095,7 @@ ReorderBufferAbort(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
 	if (txn == NULL)
 		return;
 
-	txn->xact_time.abort_time = abort_time;
+	txn->abort_time = abort_time;
 
 	/* For streamed transactions notify the remote node about the abort. */
 	if (rbtxn_is_streamed(txn))

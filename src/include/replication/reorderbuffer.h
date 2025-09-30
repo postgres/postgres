@@ -359,7 +359,7 @@ typedef struct ReorderBufferTXN
 		TimestampTz commit_time;
 		TimestampTz prepare_time;
 		TimestampTz abort_time;
-	}			xact_time;
+	};
 
 	/*
 	 * The base snapshot is used to decode all changes until either this

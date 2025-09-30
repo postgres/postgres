@@ -1888,7 +1888,7 @@ pgoutput_stream_abort(struct LogicalDecodingContext *ctx,
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_stream_abort(ctx->out, toptxn->xid, txn->xid, abort_lsn,
-								  txn->xact_time.abort_time, write_abort_info);
+								  txn->abort_time, write_abort_info);
 
 	OutputPluginWrite(ctx, true);
 
