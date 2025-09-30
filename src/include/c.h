@@ -336,14 +336,13 @@
  * compile-time integer const.  We don't define this macro to return 0 when
  * unsupported due to the risk of users of the macro misbehaving if we return
  * 0 when the expression *is* an integer constant.  Callers may check if this
- * macro is defined by checking if HAVE_PG_BUILTIN_INTEGER_CONSTANT_P is
- * defined.
+ * macro is defined by checking if HAVE_PG_INTEGER_CONSTANT_P is defined.
  */
 #if defined(HAVE__BUILTIN_CONSTANT_P)
 
-/* When __builtin_const_p() is available, use it. */
-#define pg_builtin_integer_constant_p(x) __builtin_constant_p(x)
-#define HAVE_PG_BUILTIN_INTEGER_CONSTANT_P
+/* When __builtin_constant_p() is available, use it. */
+#define pg_integer_constant_p(x) __builtin_constant_p(x)
+#define HAVE_PG_INTEGER_CONSTANT_P
 #elif defined(_MSC_VER) && defined(__STDC_VERSION__)
 
 /*
@@ -353,9 +352,9 @@
  * and only works with integer constants.  Compilation will fail if given a
  * constant or variable of any type other than an integer.
  */
-#define pg_builtin_integer_constant_p(x) \
+#define pg_integer_constant_p(x) \
 	_Generic((1 ? ((void *) ((x) * (uintptr_t) 0)) : &(int) {1}), int *: 1, void *: 0)
-#define HAVE_PG_BUILTIN_INTEGER_CONSTANT_P
+#define HAVE_PG_INTEGER_CONSTANT_P
 #endif
 
 /*
