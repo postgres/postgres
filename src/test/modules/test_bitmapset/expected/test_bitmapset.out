@@ -76,7 +76,7 @@ SELECT test_bms_replace_members(NULL, '(b 1 2 3)') AS result;
 SELECT test_bms_replace_members('(b 1 2 3)', NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_replace_members('(b 1 2 3)', '(b 3 5 6)') AS result;
@@ -104,44 +104,19 @@ SELECT test_bms_replace_members('(b 1 2 3 4 5)', '(b 500 600)') AS result;
  (b 500 600)
 (1 row)
 
--- Test module checks
-SELECT test_bms_replace_members('(b 1 2 3)', NULL) AS result;
- result 
---------
- 
-(1 row)
-
-SELECT test_bms_replace_members('(b 5)', NULL) AS result;
- result 
---------
- 
-(1 row)
-
-SELECT test_bms_replace_members(NULL, '(b 5)') AS result;
- result 
---------
- (b 5)
-(1 row)
-
-SELECT test_bms_replace_members(NULL, NULL) AS result;
- result 
---------
- 
-(1 row)
-
 -- bms_del_member()
 SELECT test_bms_del_member('(b)', -20); -- error
 ERROR:  negative bitmapset member not allowed
 SELECT test_bms_del_member('(b)', 10) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_del_member('(b 10)', 10) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_del_member('(b 10)', 5) AS result;
@@ -190,12 +165,6 @@ SELECT test_bms_del_member('(b 1 50 100 200)', 100) AS result;
 (1 row)
 
 -- Test module checks
-SELECT test_bms_del_member('(b 42)', 42) AS result;
- result 
---------
- 
-(1 row)
-
 SELECT test_bms_del_member('(b 5)', NULL) AS result;
  result 
 --------
@@ -206,13 +175,13 @@ SELECT test_bms_del_member('(b 5)', NULL) AS result;
 SELECT test_bms_del_members('(b)', '(b 10)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_del_members('(b 10)', '(b 10)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_del_members('(b 10)', '(b 5)') AS result;
@@ -252,7 +221,7 @@ SELECT test_bms_del_members('(b 1 2 100 200 300)', '(b 200 300)') AS result;
  (b 1 2 100)
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_del_members('(b 5)', NULL) AS result;
  result 
 --------
@@ -262,7 +231,7 @@ SELECT test_bms_del_members('(b 5)', NULL) AS result;
 SELECT test_bms_del_members(NULL, '(b 5)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_join()
@@ -303,7 +272,7 @@ SELECT test_bms_join('(b 1 2)', '(b 100 200 300)') AS result;
  (b 1 2 100 200 300)
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_join('(b 5)', NULL) AS result;
  result 
 --------
@@ -319,7 +288,7 @@ SELECT test_bms_join(NULL, '(b 5)') AS result;
 SELECT test_bms_join(NULL, NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_union()
@@ -341,7 +310,7 @@ SELECT test_bms_union('(b 1 3 5)', '(b)') AS result;
 SELECT test_bms_union('(b)', '(b)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Overlapping ranges
@@ -354,7 +323,7 @@ SELECT test_bms_union(
  (b 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20)
 (1 row)
 
--- Union with varrying word counts
+-- Union with varying word counts
 SELECT test_bms_union('(b 1 2)', '(b 100 300)') AS result;
      result      
 -----------------
@@ -367,7 +336,7 @@ SELECT test_bms_union('(b 100 300)', '(b 1 2)') AS result;
  (b 1 2 100 300)
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_union('(b 5)', NULL) AS result;
  result 
 --------
@@ -383,7 +352,7 @@ SELECT test_bms_union(NULL, '(b 5)') AS result;
 SELECT test_bms_union(NULL, NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_intersect()
@@ -398,17 +367,17 @@ SELECT test_bms_intersect('(b 1 3 5)', '(b 3 5 7)') AS result;
 SELECT test_bms_intersect('(b 1 3 5)', '(b 2 4 6)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Intersect with empty
 SELECT test_bms_intersect('(b 1 3 5)', '(b)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
--- Intersect with varrying word counts
+-- Intersect with varying word counts
 SELECT test_bms_intersect('(b 1 300)', '(b 1 2 3 4 5)') AS result;
  result 
 --------
@@ -421,29 +390,23 @@ SELECT test_bms_intersect('(b 1 2 3 4 5)', '(b 1 300)') AS result;
  (b 1)
 (1 row)
 
--- Test module checks
-SELECT test_bms_intersect('(b 1)', '(b 2)') AS result;
- result 
---------
- 
-(1 row)
-
+-- NULL inputs
 SELECT test_bms_intersect('(b 5)', NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_intersect(NULL, '(b 5)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_intersect(NULL, NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_int_members()
@@ -458,14 +421,14 @@ SELECT test_bms_int_members('(b 1 3 5)', '(b 3 5 7)') AS result;
 SELECT test_bms_int_members('(b 1 3 5)', '(b 2 4 6)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Intersect with empty
 SELECT test_bms_int_members('(b 1 3 5)', '(b)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Multiple members
@@ -475,29 +438,23 @@ SELECT test_bms_int_members('(b 0 31 32 63 64)', '(b 31 32 64 65)') AS result;
  (b 31 32 64)
 (1 row)
 
--- Test module checks
-SELECT test_bms_int_members('(b 1)', '(b 2)') AS result;
- result 
---------
- 
-(1 row)
-
+-- NULL inputs
 SELECT test_bms_int_members('(b 5)', NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_int_members(NULL, '(b 5)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_int_members(NULL, NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_difference()
@@ -519,14 +476,14 @@ SELECT test_bms_difference('(b 1 3 5)', '(b 2 4 6)') AS result;
 SELECT test_bms_difference('(b 1 3 5)', '(b 1 3 5)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Substraction to empty
 SELECT test_bms_difference('(b 42)', '(b 42)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- Subtraction edge case
@@ -552,13 +509,7 @@ SELECT test_bms_difference('(b 1 2 100 200)', '(b 1 2)') AS result;
  (b 100 200)
 (1 row)
 
--- Test module checks
-SELECT test_bms_difference('(b 5)', '(b 5 10)') AS result;
- result 
---------
- 
-(1 row)
-
+-- NULL inputs
 SELECT test_bms_difference('(b 5)', NULL) AS result;
  result 
 --------
@@ -568,13 +519,13 @@ SELECT test_bms_difference('(b 5)', NULL) AS result;
 SELECT test_bms_difference(NULL, '(b 5)') AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_difference(NULL, NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 -- bms_is_member()
@@ -608,7 +559,7 @@ SELECT test_bms_is_member('(b)', 1) AS result;
 SELECT test_bms_is_member('(b 5)', NULL) AS result;
  result 
 --------
- f
+ 
 (1 row)
 
 -- bms_member_index()
@@ -655,17 +606,11 @@ SELECT test_bms_member_index('(b 1 50 100 200)', 200) AS result;
       3
 (1 row)
 
--- Test module checks
-SELECT test_bms_member_index('', 5) AS result;
+-- Test module check
+SELECT test_bms_member_index('(b 1 3 5)', NULL) AS result;
  result 
 --------
-     -1
-(1 row)
-
-SELECT test_bms_member_index(NULL, 5) AS result;
- result 
---------
-     -1
+       
 (1 row)
 
 -- bms_num_members()
@@ -731,7 +676,7 @@ SELECT test_bms_equal('(b 5 10)', '(b 100 200 300)') AS result;
  f
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_equal('(b 5)', NULL) AS result;
  result 
 --------
@@ -796,7 +741,7 @@ SELECT test_bms_compare(
      -1
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_compare('(b 5)', NULL) AS result;
  result 
 --------
@@ -902,6 +847,7 @@ SELECT test_bms_add_range('(b 5)', NULL, NULL) AS result;
  
 (1 row)
 
+-- NULL inputs
 SELECT test_bms_add_range(NULL, 5, 10) AS result;
       result      
 ------------------
@@ -911,13 +857,7 @@ SELECT test_bms_add_range(NULL, 5, 10) AS result;
 SELECT test_bms_add_range(NULL, 10, 5) AS result;
  result 
 --------
- 
-(1 row)
-
-SELECT test_bms_add_range(NULL, NULL, NULL) AS result;
- result 
---------
- 
+ <>
 (1 row)
 
 -- bms_membership()
@@ -939,7 +879,7 @@ SELECT test_bms_membership('(b 1 2)') AS result;
       2
 (1 row)
 
--- Test module check
+-- NULL input
 SELECT test_bms_membership(NULL) AS result;
  result 
 --------
@@ -965,13 +905,6 @@ SELECT test_bms_is_empty('(b 1)') AS result;
  f
 (1 row)
 
--- Test module check
-SELECT test_bms_is_empty(NULL) AS result;
- result 
---------
- t
-(1 row)
-
 -- bms_singleton_member()
 SELECT test_bms_singleton_member('(b)'); -- error
 ERROR:  bitmapset is empty
@@ -983,7 +916,7 @@ SELECT test_bms_singleton_member('(b 42)') AS result;
      42
 (1 row)
 
--- Test module check
+-- NULL input
 SELECT test_bms_singleton_member(NULL) AS result;
  result 
 --------
@@ -991,37 +924,31 @@ SELECT test_bms_singleton_member(NULL) AS result;
 (1 row)
 
 -- bms_get_singleton_member()
-SELECT test_bms_get_singleton_member('(b)', 1000);
+SELECT test_bms_get_singleton_member('(b)');
  test_bms_get_singleton_member 
 -------------------------------
-                          1000
+                            -1
 (1 row)
 
--- Not a singleton, returns input default
-SELECT test_bms_get_singleton_member('(b 3 6)', 1000) AS result;
- result 
---------
-   1000
-(1 row)
-
--- Singletone, returns sole member
-SELECT test_bms_get_singleton_member('(b 400)', 1000) AS result;
- result 
---------
-    400
-(1 row)
-
--- Test module checks
-SELECT test_bms_get_singleton_member('', 1000) AS result;
- result 
---------
-   1000
-(1 row)
-
-SELECT test_bms_get_singleton_member(NULL, -1) AS result;
+-- Try with an empty set
+SELECT test_bms_get_singleton_member(NULL) AS result;
  result 
 --------
      -1
+(1 row)
+
+-- Not a singleton, returns input default
+SELECT test_bms_get_singleton_member('(b 3 6)') AS result;
+ result 
+--------
+     -1
+(1 row)
+
+-- Singletone, returns sole member
+SELECT test_bms_get_singleton_member('(b 400)') AS result;
+ result 
+--------
+    400
 (1 row)
 
 -- bms_next_member() and bms_prev_member()
@@ -1088,38 +1015,8 @@ SELECT test_bms_prev_member('(b 0 63 64 127)', -1) AS result;
     127
 (1 row)
 
--- Test module checks
-SELECT test_bms_next_member('', 5) AS result;
- result 
---------
-     -2
-(1 row)
-
-SELECT test_bms_next_member('(b 5)', NULL) AS result;
- result 
---------
-     -2
-(1 row)
-
+-- NULL inputs
 SELECT test_bms_next_member(NULL, 5) AS result;
- result 
---------
-     -2
-(1 row)
-
-SELECT test_bms_next_member(NULL, NULL) AS result;
- result 
---------
-     -2
-(1 row)
-
-SELECT test_bms_prev_member('', 5) AS result;
- result 
---------
-     -2
-(1 row)
-
-SELECT test_bms_prev_member('(b 5)', NULL) AS result;
  result 
 --------
      -2
@@ -1129,6 +1026,19 @@ SELECT test_bms_prev_member(NULL, 5) AS result;
  result 
 --------
      -2
+(1 row)
+
+-- Test module check
+SELECT test_bms_next_member('(b 5 10)', NULL) AS result;
+ result 
+--------
+       
+(1 row)
+
+SELECT test_bms_prev_member('(b 5 10)', NULL) AS result;
+ result 
+--------
+       
 (1 row)
 
 -- bms_hash_value()
@@ -1150,7 +1060,7 @@ SELECT test_bms_hash_value('(b 1 3 5)') != test_bms_hash_value('(b 2 4 6)') AS r
  t
 (1 row)
 
--- Test module check
+-- NULL input
 SELECT test_bms_hash_value(NULL) AS result;
  result 
 --------
@@ -1176,7 +1086,7 @@ SELECT test_bms_overlap('(b)', '(b 1 3 5)') AS result;
  f
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_overlap('(b 5)', NULL) AS result;
  result 
 --------
@@ -1240,7 +1150,7 @@ SELECT test_bms_is_subset('(b 1 2 50 100)', '(b 1 2)') AS result;
  f
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bms_is_subset('(b 5)', NULL) AS result;
  result 
 --------
@@ -1398,43 +1308,17 @@ SELECT test_bms_subset_compare('(b 2 64 128)', '(b 1 65)') AS result;
       3
 (1 row)
 
--- Test module checks
-SELECT test_bms_subset_compare('(b 5)', NULL) AS result;
- result 
---------
-      2
-(1 row)
-
-SELECT test_bms_subset_compare(NULL, '(b 5)') AS result;
- result 
---------
-      1
-(1 row)
-
-SELECT test_bms_subset_compare(NULL, NULL) AS result;
- result 
---------
-      0
-(1 row)
-
 -- bms_copy()
 SELECT test_bms_copy(NULL) AS result;
  result 
 --------
- 
+ <>
 (1 row)
 
 SELECT test_bms_copy('(b 1 3 5 7)') AS result;
    result    
 -------------
  (b 1 3 5 7)
-(1 row)
-
--- Test module check
-SELECT test_bms_copy(NULL) AS result;
- result 
---------
- 
 (1 row)
 
 -- bms_add_members()
@@ -1547,7 +1431,7 @@ SELECT (test_bitmap_match('(b)', '(b)') = 0) =
  t
 (1 row)
 
--- Test module checks
+-- NULL inputs
 SELECT test_bitmap_match('(b 5)', NULL) AS result;
  result 
 --------
@@ -1609,7 +1493,7 @@ SELECT test_bms_overlap_list('(b 5 10)', ARRAY[-1,5]) AS result; -- error
 ERROR:  negative bitmapset member not allowed
 SELECT test_bms_overlap_list('(b 1 2 3)', ARRAY[-5,-1,0]) AS result; -- error
 ERROR:  negative bitmapset member not allowed
--- Test module checks
+-- NULL inputs
 SELECT test_bms_overlap_list('(b 5)', NULL) AS result;
  result 
 --------
@@ -1639,6 +1523,12 @@ SELECT test_bms_nonempty_difference('(b 1 3 5)', NULL) AS result;
  result 
 --------
  t
+(1 row)
+
+SELECT test_bms_nonempty_difference(NULL, NULL) AS result;
+ result 
+--------
+ f
 (1 row)
 
 SELECT test_bms_nonempty_difference('(b 1 3 5)', '(b 2 4 6)') AS result;
@@ -1676,25 +1566,6 @@ SELECT test_bms_nonempty_difference('(b 1 2)', '(b 50 100)') AS result;
  result 
 --------
  t
-(1 row)
-
--- Test module checks
-SELECT test_bms_nonempty_difference('(b 5)', NULL) AS result;
- result 
---------
- t
-(1 row)
-
-SELECT test_bms_nonempty_difference(NULL, '(b 5)') AS result;
- result 
---------
- f
-(1 row)
-
-SELECT test_bms_nonempty_difference(NULL, NULL) AS result;
- result 
---------
- f
 (1 row)
 
 -- random operations
