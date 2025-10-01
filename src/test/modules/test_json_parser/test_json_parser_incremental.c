@@ -12,8 +12,13 @@
  * the parser in very small chunks. In practice you would normally use
  * much larger chunks, but doing this makes it more likely that the
  * full range of increment handling, especially in the lexer, is exercised.
+ *
  * If the "-c SIZE" option is provided, that chunk size is used instead
  * of the default of 60.
+ *
+ * If the "-r SIZE" option is provided, a range of chunk sizes from SIZE down to
+ * 1 are run sequentially. A null byte is printed to the streams after each
+ * iteration.
  *
  * If the -s flag is given, the program does semantic processing. This should
  * just mirror back the json, albeit with white space changes.
@@ -88,8 +93,8 @@ main(int argc, char **argv)
 	StringInfoData json;
 	int			n_read;
 	size_t		chunk_size = DEFAULT_CHUNK_SIZE;
+	bool		run_chunk_ranges = false;
 	struct stat statbuf;
-	off_t		bytes_left;
 	const JsonSemAction *testsem = &nullSemAction;
 	char	   *testfile;
 	int			c;
@@ -102,11 +107,14 @@ main(int argc, char **argv)
 	if (!lex)
 		pg_fatal("out of memory");
 
-	while ((c = getopt(argc, argv, "c:os")) != -1)
+	while ((c = getopt(argc, argv, "r:c:os")) != -1)
 	{
 		switch (c)
 		{
-			case 'c':			/* chunksize */
+			case 'r':			/* chunk range */
+				run_chunk_ranges = true;
+				/* fall through */
+			case 'c':			/* chunk size */
 				chunk_size = strtou64(optarg, NULL, 10);
 				if (chunk_size > BUFSIZE)
 					pg_fatal("chunk size cannot exceed %d", BUFSIZE);
@@ -135,8 +143,6 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	makeJsonLexContextIncremental(lex, PG_UTF8, need_strings);
-	setJsonLexContextOwnsTokens(lex, lex_owns_tokens);
 	initStringInfo(&json);
 
 	if ((json_file = fopen(testfile, PG_BINARY_R)) == NULL)
@@ -145,61 +151,88 @@ main(int argc, char **argv)
 	if (fstat(fileno(json_file), &statbuf) != 0)
 		pg_fatal("error statting input: %m");
 
-	bytes_left = statbuf.st_size;
-
-	for (;;)
+	do
 	{
-		/* We will break when there's nothing left to read */
-
-		if (bytes_left < chunk_size)
-			chunk_size = bytes_left;
-
-		n_read = fread(buff, 1, chunk_size, json_file);
-		if (n_read < chunk_size)
-			pg_fatal("error reading input file: %d", ferror(json_file));
-
-		appendBinaryStringInfo(&json, buff, n_read);
-
 		/*
-		 * Append some trailing junk to the buffer passed to the parser. This
-		 * helps us ensure that the parser does the right thing even if the
-		 * chunk isn't terminated with a '\0'.
+		 * This outer loop only repeats in -r mode. Reset the parse state and
+		 * our position in the input file for the inner loop, which performs
+		 * the incremental parsing.
 		 */
-		appendStringInfoString(&json, "1+23 trailing junk");
-		bytes_left -= n_read;
-		if (bytes_left > 0)
+		off_t		bytes_left = statbuf.st_size;
+		size_t		to_read = chunk_size;
+
+		makeJsonLexContextIncremental(lex, PG_UTF8, need_strings);
+		setJsonLexContextOwnsTokens(lex, lex_owns_tokens);
+
+		rewind(json_file);
+		resetStringInfo(&json);
+
+		for (;;)
 		{
-			result = pg_parse_json_incremental(lex, testsem,
-											   json.data, n_read,
-											   false);
-			if (result != JSON_INCOMPLETE)
+			/* We will break when there's nothing left to read */
+
+			if (bytes_left < to_read)
+				to_read = bytes_left;
+
+			n_read = fread(buff, 1, to_read, json_file);
+			if (n_read < to_read)
+				pg_fatal("error reading input file: %d", ferror(json_file));
+
+			appendBinaryStringInfo(&json, buff, n_read);
+
+			/*
+			 * Append some trailing junk to the buffer passed to the parser.
+			 * This helps us ensure that the parser does the right thing even
+			 * if the chunk isn't terminated with a '\0'.
+			 */
+			appendStringInfoString(&json, "1+23 trailing junk");
+			bytes_left -= n_read;
+			if (bytes_left > 0)
 			{
-				fprintf(stderr, "%s\n", json_errdetail(result, lex));
-				ret = 1;
-				goto cleanup;
+				result = pg_parse_json_incremental(lex, testsem,
+												   json.data, n_read,
+												   false);
+				if (result != JSON_INCOMPLETE)
+				{
+					fprintf(stderr, "%s\n", json_errdetail(result, lex));
+					ret = 1;
+					goto cleanup;
+				}
+				resetStringInfo(&json);
 			}
-			resetStringInfo(&json);
-		}
-		else
-		{
-			result = pg_parse_json_incremental(lex, testsem,
-											   json.data, n_read,
-											   true);
-			if (result != JSON_SUCCESS)
+			else
 			{
-				fprintf(stderr, "%s\n", json_errdetail(result, lex));
-				ret = 1;
-				goto cleanup;
+				result = pg_parse_json_incremental(lex, testsem,
+												   json.data, n_read,
+												   true);
+				if (result != JSON_SUCCESS)
+				{
+					fprintf(stderr, "%s\n", json_errdetail(result, lex));
+					ret = 1;
+					goto cleanup;
+				}
+				if (!need_strings)
+					printf("SUCCESS!\n");
+				break;
 			}
-			if (!need_strings)
-				printf("SUCCESS!\n");
-			break;
 		}
-	}
 
 cleanup:
+		freeJsonLexContext(lex);
+
+		/*
+		 * In -r mode, separate output with nulls so that the calling test can
+		 * split it up, decrement the chunk size, and loop back to the top.
+		 * All other modes immediately fall out of the loop and exit.
+		 */
+		if (run_chunk_ranges)
+		{
+			fputc('\0', stdout);
+			fputc('\0', stderr);
+		}
+	} while (run_chunk_ranges && (--chunk_size > 0));
+
 	fclose(json_file);
-	freeJsonLexContext(lex);
 	free(json.data);
 	free(lex);
 

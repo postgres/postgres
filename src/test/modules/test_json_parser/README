@@ -6,10 +6,12 @@ This module contains two programs for testing the json parsers.
 - `test_json_parser_incremental` is for testing the incremental parser, It
   reads in a file and passes it in very small chunks (default is 60 bytes at a
   time) to the incremental parser. It's not meant to be a speed test but to
-  test the accuracy of the incremental parser.  There are two option arguments,
-  "-c nn" specifies an alternative chunk size, and "-s" specifies using
-  semantic routines. The semantic routines re-output the json, although not in
-  a very pretty form. The required non-option argument is the input file name.
+  test the accuracy of the incremental parser. The option "-c nn" specifies an
+  alternative chunk size, "-r nn" runs a range of chunk sizes down to one byte
+  on the same input (with output separated by null bytes), and "-s" specifies
+  using semantic routines. The semantic routines re-output the json, although
+  not in a very pretty form. The required non-option argument is the input file
+  name.
 - `test_json_parser_perf` is for speed testing both the standard
   recursive descent parser and the non-recursive incremental
   parser. If given the `-i` flag it uses the non-recursive parser,
