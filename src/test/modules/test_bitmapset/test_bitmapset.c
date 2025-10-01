@@ -95,15 +95,11 @@ PG_FUNCTION_INFO_V1(test_random_operations);
 	(PG_ARGISNULL(n) ? NULL : TEXT_TO_BITMAPSET(PG_GETARG_TEXT_PP(n)))
 
 /*
- * Helper macro to handle converting sets back to text, freeing the set and
- * returning the resulting text representation of the set.  Beware of double
- * evaluation hazard of 'bms'.
+ * Helper macro to handle converting sets back to text, returning the
+ * resulting text representation of the set.
  */
 #define PG_RETURN_BITMAPSET_AS_TEXT(bms) \
-	do { \
-		text	   *result = BITMAPSET_TO_TEXT(bms); \
-		PG_RETURN_TEXT_P(result); \
-	} while (0);
+	PG_RETURN_TEXT_P(BITMAPSET_TO_TEXT(bms))
 
 /*
  * Individual test functions for each bitmapset API function
