@@ -33,23 +33,37 @@ sub test
 	print $fh "$json";
 	close($fh);
 
+	# The -r mode runs the parser in a loop, with output separated by nulls.
+	# Unpack that as a list of null-terminated ASCII strings (Z*) and check that
+	# each run produces the same result.
+	my ($all_stdout, $all_stderr) =
+	  run_command([ @exe, "-r", $chunk, $fname ]);
+
+	my @stdout = unpack("(Z*)*", $all_stdout);
+	my @stderr = unpack("(Z*)*", $all_stderr);
+
+	is(scalar @stdout, $chunk, "$name: stdout has correct number of entries");
+	is(scalar @stderr, $chunk, "$name: stderr has correct number of entries");
+
+	my $i = 0;
+
 	foreach my $size (reverse(1 .. $chunk))
 	{
-		my ($stdout, $stderr) = run_command([ @exe, "-c", $size, $fname ]);
-
 		if (defined($params{error}))
 		{
-			unlike($stdout, qr/SUCCESS/,
+			unlike($stdout[$i], qr/SUCCESS/,
 				"$name, chunk size $size: test fails");
-			like($stderr, $params{error},
+			like($stderr[$i], $params{error},
 				"$name, chunk size $size: correct error output");
 		}
 		else
 		{
-			like($stdout, qr/SUCCESS/,
+			like($stdout[$i], qr/SUCCESS/,
 				"$name, chunk size $size: test succeeds");
-			is($stderr, "", "$name, chunk size $size: no error output");
+			is($stderr[$i], "", "$name, chunk size $size: no error output");
 		}
+
+		$i++;
 	}
 }
 
