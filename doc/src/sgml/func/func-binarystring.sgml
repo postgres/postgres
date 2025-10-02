@@ -797,7 +797,7 @@
        <ulink url="https://datatracker.ietf.org/doc/html/rfc4648#section-5">
        RFC 4648 Section 5</ulink>, a <literal>base64</literal> variant safe to
        use in filenames and URLs.  The <literal>base64url</literal> alphabet
-       use <literal>'-'</literal> instead of <literal>'+'</literal> and
+       uses <literal>'-'</literal> instead of <literal>'+'</literal> and
        <literal>'_'</literal> instead of <literal>'/'</literal> and also omits
        the <literal>'='</literal> padding character.
       </para>
