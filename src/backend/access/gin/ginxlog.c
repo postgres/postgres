@@ -368,7 +368,6 @@ ginRedoInsert(XLogReaderState *record)
 #endif
 		payload += sizeof(BlockIdData);
 		rightChildBlkno = BlockIdGetBlockNumber((BlockId) payload);
-		payload += sizeof(BlockIdData);
 
 		ginRedoClearIncompleteSplit(record, 1);
 	}
