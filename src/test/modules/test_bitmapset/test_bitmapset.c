@@ -201,9 +201,6 @@ test_bms_make_singleton(PG_FUNCTION_ARGS)
 	Bitmapset  *bms;
 	int32		member;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();		/* invalid input */
-
 	member = PG_GETARG_INT32(0);
 	bms = bms_make_singleton(member);
 
