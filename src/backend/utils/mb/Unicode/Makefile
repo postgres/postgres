@@ -50,7 +50,7 @@ $(eval $(call map_rule,gbk,UCS_to_most.pl,CP936.TXT,GBK))
 $(eval $(call map_rule,johab,UCS_to_JOHAB.pl,JOHAB.TXT))
 $(eval $(call map_rule,uhc,UCS_to_UHC.pl,windows-949-2000.xml))
 $(eval $(call map_rule,euc_jp,UCS_to_EUC_JP.pl,CP932.TXT JIS0212.TXT))
-$(eval $(call map_rule,euc_cn,UCS_to_EUC_CN.pl,gb-18030-2000.xml))
+$(eval $(call map_rule,euc_cn,UCS_to_EUC_CN.pl,gb18030-2022.ucm))
 $(eval $(call map_rule,euc_kr,UCS_to_EUC_KR.pl,KSX1001.TXT))
 $(eval $(call map_rule,euc_tw,UCS_to_EUC_TW.pl,CNS11643.TXT))
 $(eval $(call map_rule,sjis,UCS_to_SJIS.pl,CP932.TXT))
@@ -75,7 +75,7 @@ BIG5.TXT CNS11643.TXT:
 euc-jis-2004-std.txt sjis-0213-2004-std.txt:
 	$(DOWNLOAD) http://x0213.org/codetable/$(@F)
 
-gb-18030-2000.xml windows-949-2000.xml:
+windows-949-2000.xml:
 	$(DOWNLOAD) https://raw.githubusercontent.com/unicode-org/icu-data/master/charset/data/xml/$(@F)
 
 gb18030-2022.ucm:
