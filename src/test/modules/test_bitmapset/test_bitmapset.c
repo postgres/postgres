@@ -543,8 +543,6 @@ test_bms_join(PG_FUNCTION_ARGS)
 	/* either input can be recycled */
 	result_bms = bms_join(bms1, bms2);
 
-	/* memory cleanup seems more tricky than it's worth here */
-
 	PG_RETURN_BITMAPSET_AS_TEXT(result_bms);
 }
 

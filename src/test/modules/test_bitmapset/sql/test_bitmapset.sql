@@ -130,7 +130,7 @@ SELECT test_bms_difference('(b 1 3 5)', '(b 3 5 7)') AS result;
 SELECT test_bms_difference('(b 1 3 5)', '(b 2 4 6)') AS result;
 -- Identical sets
 SELECT test_bms_difference('(b 1 3 5)', '(b 1 3 5)') AS result;
--- Substraction to empty
+-- Subtraction to empty
 SELECT test_bms_difference('(b 42)', '(b 42)') AS result;
 -- Subtraction edge case
 SELECT test_bms_difference(

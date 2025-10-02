@@ -479,7 +479,7 @@ SELECT test_bms_difference('(b 1 3 5)', '(b 1 3 5)') AS result;
  <>
 (1 row)
 
--- Substraction to empty
+-- Subtraction to empty
 SELECT test_bms_difference('(b 42)', '(b 42)') AS result;
  result 
 --------
