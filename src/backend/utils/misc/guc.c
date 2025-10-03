@@ -261,15 +261,15 @@ static bool assignable_custom_variable_name(const char *name, bool skip_errors,
 											int elevel);
 static void do_serialize(char **destptr, Size *maxbytes,
 						 const char *fmt,...) pg_attribute_printf(3, 4);
-static bool call_bool_check_hook(struct config_bool *conf, bool *newval,
+static bool call_bool_check_hook(const struct config_bool *conf, bool *newval,
 								 void **extra, GucSource source, int elevel);
-static bool call_int_check_hook(struct config_int *conf, int *newval,
+static bool call_int_check_hook(const struct config_int *conf, int *newval,
 								void **extra, GucSource source, int elevel);
-static bool call_real_check_hook(struct config_real *conf, double *newval,
+static bool call_real_check_hook(const struct config_real *conf, double *newval,
 								 void **extra, GucSource source, int elevel);
-static bool call_string_check_hook(struct config_string *conf, char **newval,
+static bool call_string_check_hook(const struct config_string *conf, char **newval,
 								   void **extra, GucSource source, int elevel);
-static bool call_enum_check_hook(struct config_enum *conf, int *newval,
+static bool call_enum_check_hook(const struct config_enum *conf, int *newval,
 								 void **extra, GucSource source, int elevel);
 
 
@@ -1425,14 +1425,14 @@ check_GUC_name_for_parameter_acl(const char *name)
  */
 #ifdef USE_ASSERT_CHECKING
 static bool
-check_GUC_init(struct config_generic *gconf)
+check_GUC_init(const struct config_generic *gconf)
 {
 	/* Checks on values */
 	switch (gconf->vartype)
 	{
 		case PGC_BOOL:
 			{
-				struct config_bool *conf = (struct config_bool *) gconf;
+				const struct config_bool *conf = (const struct config_bool *) gconf;
 
 				if (*conf->variable && !conf->boot_val)
 				{
@@ -1444,7 +1444,7 @@ check_GUC_init(struct config_generic *gconf)
 			}
 		case PGC_INT:
 			{
-				struct config_int *conf = (struct config_int *) gconf;
+				const struct config_int *conf = (const struct config_int *) gconf;
 
 				if (*conf->variable != 0 && *conf->variable != conf->boot_val)
 				{
@@ -1456,7 +1456,7 @@ check_GUC_init(struct config_generic *gconf)
 			}
 		case PGC_REAL:
 			{
-				struct config_real *conf = (struct config_real *) gconf;
+				const struct config_real *conf = (const struct config_real *) gconf;
 
 				if (*conf->variable != 0.0 && *conf->variable != conf->boot_val)
 				{
@@ -1468,7 +1468,7 @@ check_GUC_init(struct config_generic *gconf)
 			}
 		case PGC_STRING:
 			{
-				struct config_string *conf = (struct config_string *) gconf;
+				const struct config_string *conf = (const struct config_string *) gconf;
 
 				if (*conf->variable != NULL &&
 					(conf->boot_val == NULL ||
@@ -1482,7 +1482,7 @@ check_GUC_init(struct config_generic *gconf)
 			}
 		case PGC_ENUM:
 			{
-				struct config_enum *conf = (struct config_enum *) gconf;
+				const struct config_enum *conf = (const struct config_enum *) gconf;
 
 				if (*conf->variable != conf->boot_val)
 				{
@@ -3013,7 +3013,7 @@ parse_real(const char *value, double *result, int flags, const char **hintmsg)
  * allocated for modification.
  */
 const char *
-config_enum_lookup_by_value(struct config_enum *record, int val)
+config_enum_lookup_by_value(const struct config_enum *record, int val)
 {
 	for (const struct config_enum_entry *entry = record->options; entry && entry->name; entry++)
 	{
@@ -3034,7 +3034,7 @@ config_enum_lookup_by_value(struct config_enum *record, int val)
  * true. If it's not found, return false and retval is set to 0.
  */
 bool
-config_enum_lookup_by_name(struct config_enum *record, const char *value,
+config_enum_lookup_by_name(const struct config_enum *record, const char *value,
 						   int *retval)
 {
 	for (const struct config_enum_entry *entry = record->options; entry && entry->name; entry++)
@@ -3058,7 +3058,7 @@ config_enum_lookup_by_name(struct config_enum *record, const char *value,
  * If suffix is non-NULL, it is added to the end of the string.
  */
 char *
-config_enum_get_options(struct config_enum *record, const char *prefix,
+config_enum_get_options(const struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator)
 {
 	StringInfoData retstr;
@@ -3114,7 +3114,7 @@ config_enum_get_options(struct config_enum *record, const char *prefix,
  * Returns true if OK, false if not (or throws error, if elevel >= ERROR)
  */
 static bool
-parse_and_validate_value(struct config_generic *record,
+parse_and_validate_value(const struct config_generic *record,
 						 const char *value,
 						 GucSource source, int elevel,
 						 union config_var_val *newval, void **newextra)
@@ -3123,7 +3123,7 @@ parse_and_validate_value(struct config_generic *record,
 	{
 		case PGC_BOOL:
 			{
-				struct config_bool *conf = (struct config_bool *) record;
+				const struct config_bool *conf = (const struct config_bool *) record;
 
 				if (!parse_bool(value, &newval->boolval))
 				{
@@ -3141,7 +3141,7 @@ parse_and_validate_value(struct config_generic *record,
 			break;
 		case PGC_INT:
 			{
-				struct config_int *conf = (struct config_int *) record;
+				const struct config_int *conf = (const struct config_int *) record;
 				const char *hintmsg;
 
 				if (!parse_int(value, &newval->intval,
@@ -3182,7 +3182,7 @@ parse_and_validate_value(struct config_generic *record,
 			break;
 		case PGC_REAL:
 			{
-				struct config_real *conf = (struct config_real *) record;
+				const struct config_real *conf = (const struct config_real *) record;
 				const char *hintmsg;
 
 				if (!parse_real(value, &newval->realval,
@@ -3223,7 +3223,7 @@ parse_and_validate_value(struct config_generic *record,
 			break;
 		case PGC_STRING:
 			{
-				struct config_string *conf = (struct config_string *) record;
+				const struct config_string *conf = (const struct config_string *) record;
 
 				/*
 				 * The value passed by the caller could be transient, so we
@@ -3253,7 +3253,7 @@ parse_and_validate_value(struct config_generic *record,
 			break;
 		case PGC_ENUM:
 			{
-				struct config_enum *conf = (struct config_enum *) record;
+				const struct config_enum *conf = (const struct config_enum *) record;
 
 				if (!config_enum_lookup_by_name(conf, value, &newval->enumval))
 				{
@@ -5456,7 +5456,7 @@ GetConfigOptionByName(const char *name, const char **varname, bool missing_ok)
  * The result string is palloc'd.
  */
 char *
-ShowGUCOption(struct config_generic *record, bool use_units)
+ShowGUCOption(const struct config_generic *record, bool use_units)
 {
 	char		buffer[256];
 	const char *val;
@@ -5465,7 +5465,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 	{
 		case PGC_BOOL:
 			{
-				struct config_bool *conf = (struct config_bool *) record;
+				const struct config_bool *conf = (const struct config_bool *) record;
 
 				if (conf->show_hook)
 					val = conf->show_hook();
@@ -5476,7 +5476,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 
 		case PGC_INT:
 			{
-				struct config_int *conf = (struct config_int *) record;
+				const struct config_int *conf = (const struct config_int *) record;
 
 				if (conf->show_hook)
 					val = conf->show_hook();
@@ -5505,7 +5505,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 
 		case PGC_REAL:
 			{
-				struct config_real *conf = (struct config_real *) record;
+				const struct config_real *conf = (const struct config_real *) record;
 
 				if (conf->show_hook)
 					val = conf->show_hook();
@@ -5530,7 +5530,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 
 		case PGC_STRING:
 			{
-				struct config_string *conf = (struct config_string *) record;
+				const struct config_string *conf = (const struct config_string *) record;
 
 				if (conf->show_hook)
 					val = conf->show_hook();
@@ -5543,7 +5543,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 
 		case PGC_ENUM:
 			{
-				struct config_enum *conf = (struct config_enum *) record;
+				const struct config_enum *conf = (const struct config_enum *) record;
 
 				if (conf->show_hook)
 					val = conf->show_hook();
@@ -6789,7 +6789,7 @@ GUC_check_errcode(int sqlerrcode)
  */
 
 static bool
-call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
+call_bool_check_hook(const struct config_bool *conf, bool *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -6823,7 +6823,7 @@ call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
 }
 
 static bool
-call_int_check_hook(struct config_int *conf, int *newval, void **extra,
+call_int_check_hook(const struct config_int *conf, int *newval, void **extra,
 					GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -6857,7 +6857,7 @@ call_int_check_hook(struct config_int *conf, int *newval, void **extra,
 }
 
 static bool
-call_real_check_hook(struct config_real *conf, double *newval, void **extra,
+call_real_check_hook(const struct config_real *conf, double *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */
@@ -6891,7 +6891,7 @@ call_real_check_hook(struct config_real *conf, double *newval, void **extra,
 }
 
 static bool
-call_string_check_hook(struct config_string *conf, char **newval, void **extra,
+call_string_check_hook(const struct config_string *conf, char **newval, void **extra,
 					   GucSource source, int elevel)
 {
 	volatile bool result = true;
@@ -6941,7 +6941,7 @@ call_string_check_hook(struct config_string *conf, char **newval, void **extra,
 }
 
 static bool
-call_enum_check_hook(struct config_enum *conf, int *newval, void **extra,
+call_enum_check_hook(const struct config_enum *conf, int *newval, void **extra,
 					 GucSource source, int elevel)
 {
 	/* Quick success if no hook */

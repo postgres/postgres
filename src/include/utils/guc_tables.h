@@ -319,10 +319,10 @@ extern struct config_generic *find_option(const char *name,
 extern struct config_generic **get_explain_guc_options(int *num);
 
 /* get string value of variable */
-extern char *ShowGUCOption(struct config_generic *record, bool use_units);
+extern char *ShowGUCOption(const struct config_generic *record, bool use_units);
 
 /* get whether or not the GUC variable is visible to current user */
-extern bool ConfigOptionIsVisible(struct config_generic *conf);
+extern bool ConfigOptionIsVisible(const struct config_generic *conf);
 
 /* get the current set of variables */
 extern struct config_generic **get_guc_variables(int *num_vars);
@@ -330,10 +330,10 @@ extern struct config_generic **get_guc_variables(int *num_vars);
 extern void build_guc_variables(void);
 
 /* search in enum options */
-extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
-extern bool config_enum_lookup_by_name(struct config_enum *record,
+extern const char *config_enum_lookup_by_value(const struct config_enum *record, int val);
+extern bool config_enum_lookup_by_name(const struct config_enum *record,
 									   const char *value, int *retval);
-extern char *config_enum_get_options(struct config_enum *record,
+extern char *config_enum_get_options(const struct config_enum *record,
 									 const char *prefix,
 									 const char *suffix,
 									 const char *separator);

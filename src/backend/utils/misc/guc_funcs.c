@@ -578,7 +578,7 @@ pg_settings_get_flags(PG_FUNCTION_ARGS)
  * Return whether or not the GUC variable is visible to the current user.
  */
 bool
-ConfigOptionIsVisible(struct config_generic *conf)
+ConfigOptionIsVisible(const struct config_generic *conf)
 {
 	if ((conf->flags & GUC_SUPERUSER_ONLY) &&
 		!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_SETTINGS))
@@ -591,7 +591,7 @@ ConfigOptionIsVisible(struct config_generic *conf)
  * Extract fields to show in pg_settings for given variable.
  */
 static void
-GetConfigOptionValues(struct config_generic *conf, const char **values)
+GetConfigOptionValues(const struct config_generic *conf, const char **values)
 {
 	char		buffer[256];
 
@@ -629,7 +629,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 	{
 		case PGC_BOOL:
 			{
-				struct config_bool *lconf = (struct config_bool *) conf;
+				const struct config_bool *lconf = (const struct config_bool *) conf;
 
 				/* min_val */
 				values[9] = NULL;
@@ -650,7 +650,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_INT:
 			{
-				struct config_int *lconf = (struct config_int *) conf;
+				const struct config_int *lconf = (const struct config_int *) conf;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%d", lconf->min);
@@ -675,7 +675,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_REAL:
 			{
-				struct config_real *lconf = (struct config_real *) conf;
+				const struct config_real *lconf = (const struct config_real *) conf;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%g", lconf->min);
@@ -700,7 +700,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_STRING:
 			{
-				struct config_string *lconf = (struct config_string *) conf;
+				const struct config_string *lconf = (const struct config_string *) conf;
 
 				/* min_val */
 				values[9] = NULL;
@@ -727,7 +727,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 
 		case PGC_ENUM:
 			{
-				struct config_enum *lconf = (struct config_enum *) conf;
+				const struct config_enum *lconf = (const struct config_enum *) conf;
 
 				/* min_val */
 				values[9] = NULL;
@@ -741,7 +741,7 @@ GetConfigOptionValues(struct config_generic *conf, const char **values)
 				 * NOTE! enumvals with double quotes in them are not
 				 * supported!
 				 */
-				values[11] = config_enum_get_options((struct config_enum *) conf,
+				values[11] = config_enum_get_options(lconf,
 													 "{\"", "\"}", "\",\"");
 
 				/* boot_val */
