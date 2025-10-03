@@ -98,7 +98,7 @@ typedef struct DSMRegistryEntry
 		NamedDSMState dsm;
 		NamedDSAState dsa;
 		NamedDSHState dsh;
-	}			data;
+	};
 } DSMRegistryEntry;
 
 static const dshash_parameters dsh_params = {
@@ -212,7 +212,7 @@ GetNamedDSMSegment(const char *name, size_t size,
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
-		NamedDSMState *state = &entry->data.dsm;
+		NamedDSMState *state = &entry->dsm;
 		dsm_segment *seg;
 
 		entry->type = DSMR_ENTRY_TYPE_DSM;
@@ -232,12 +232,12 @@ GetNamedDSMSegment(const char *name, size_t size,
 	else if (entry->type != DSMR_ENTRY_TYPE_DSM)
 		ereport(ERROR,
 				(errmsg("requested DSM segment does not match type of existing entry")));
-	else if (entry->data.dsm.size != size)
+	else if (entry->dsm.size != size)
 		ereport(ERROR,
 				(errmsg("requested DSM segment size does not match size of existing segment")));
 	else
 	{
-		NamedDSMState *state = &entry->data.dsm;
+		NamedDSMState *state = &entry->dsm;
 		dsm_segment *seg;
 
 		/* If the existing segment is not already attached, attach it now. */
@@ -294,7 +294,7 @@ GetNamedDSA(const char *name, bool *found)
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
-		NamedDSAState *state = &entry->data.dsa;
+		NamedDSAState *state = &entry->dsa;
 
 		entry->type = DSMR_ENTRY_TYPE_DSA;
 
@@ -314,7 +314,7 @@ GetNamedDSA(const char *name, bool *found)
 				(errmsg("requested DSA does not match type of existing entry")));
 	else
 	{
-		NamedDSAState *state = &entry->data.dsa;
+		NamedDSAState *state = &entry->dsa;
 
 		if (dsa_is_attached(state->handle))
 			ereport(ERROR,
@@ -367,7 +367,7 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
-		NamedDSHState *dsh_state = &entry->data.dsh;
+		NamedDSHState *dsh_state = &entry->dsh;
 		dshash_parameters params_copy;
 		dsa_area   *dsa;
 
@@ -395,7 +395,7 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 				(errmsg("requested DSHash does not match type of existing entry")));
 	else
 	{
-		NamedDSHState *dsh_state = &entry->data.dsh;
+		NamedDSHState *dsh_state = &entry->dsh;
 		dsa_area   *dsa;
 
 		/* XXX: Should we verify params matches what table was created with? */
@@ -447,7 +447,7 @@ pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
 		 * attaching to them, return NULL for those.
 		 */
 		if (entry->type == DSMR_ENTRY_TYPE_DSM)
-			vals[2] = Int64GetDatum(entry->data.dsm.size);
+			vals[2] = Int64GetDatum(entry->dsm.size);
 		else
 			nulls[2] = true;
 
