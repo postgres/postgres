@@ -587,7 +587,7 @@ test_bitmap_match(PG_FUNCTION_ARGS)
  * "min_value" is the minimal value used for the members, that will stand
  * up to a range of "max_range".  "num_ops" defines the number of time each
  * operation is done.  "seed" is a random seed used to calculate the member
- * values.
+ * values.  When "seed" is <= 0, a random seed will be chosen automatically.
  *
  * The return value is the number of times all operations have been executed.
  */
@@ -600,25 +600,20 @@ test_random_operations(PG_FUNCTION_ARGS)
 	Bitmapset  *result = NULL;
 	pg_prng_state state;
 	uint64		seed = GetCurrentTimestamp();
-	int			num_ops = 5000;
-	int			total_ops = 0;
-	int			max_range = 2000;
-	int			min_value = 0;
+	int			num_ops;
+	int			max_range;
+	int			min_value;
 	int			member;
 	int		   *members;
 	int			num_members = 0;
+	int			total_ops = 0;
 
-	if (!PG_ARGISNULL(0) && PG_GETARG_INT32(0) > 0)
+	if (PG_GETARG_INT32(0) > 0)
 		seed = PG_GETARG_INT32(0);
 
-	if (!PG_ARGISNULL(1))
-		num_ops = PG_GETARG_INT32(1);
-
-	if (!PG_ARGISNULL(2))
-		max_range = PG_GETARG_INT32(2);
-
-	if (!PG_ARGISNULL(3))
-		min_value = PG_GETARG_INT32(3);
+	num_ops = PG_GETARG_INT32(1);
+	max_range = PG_GETARG_INT32(2);
+	min_value = PG_GETARG_INT32(3);
 
 	pg_prng_seed(&state, seed);
 	members = palloc(sizeof(int) * num_ops);
