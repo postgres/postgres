@@ -802,7 +802,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 										   linitial(rel->partial_pathlist));
 		}
 
-		relids = bms_union(relids, rel->relids);
+		relids = bms_add_members(relids, rel->relids);
 	}
 
 	/* Build result relation. */
