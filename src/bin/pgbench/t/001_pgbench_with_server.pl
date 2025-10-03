@@ -1315,6 +1315,17 @@ $node->pgbench(
 check_pgbench_logs($bdir, '001_pgbench_log_3', 1, 10, 10,
 	qr{^0 \d{1,2} \d+ \d \d+ \d+$});
 
+# Test copy in pgbench
+$node->pgbench(
+	'-t 10',
+	2,
+	[],
+	[ qr{COPY is not supported in pgbench, aborting} ],
+	'Test copy in script',
+	{
+		'001_copy' => q{ COPY pgbench_accounts FROM stdin }
+	});
+
 # done
 $node->safe_psql('postgres', 'DROP TABLESPACE regress_pgbench_tap_1_ts');
 $node->stop;
