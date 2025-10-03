@@ -3808,7 +3808,6 @@ memoize_iterator
 metastring
 missing_cache_key
 mix_data_t
-mixedStruct
 mode_t
 movedb_failure_params
 multirange_bsearch_comparison

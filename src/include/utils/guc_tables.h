@@ -132,6 +132,84 @@ typedef struct guc_stack
 	config_var_value masked;	/* SET value in a GUC_SET_LOCAL entry */
 } GucStack;
 
+
+/* GUC records for specific variable types */
+
+struct config_bool
+{
+	/* constant fields, must be set correctly in initial value: */
+	bool	   *variable;
+	bool		boot_val;
+	GucBoolCheckHook check_hook;
+	GucBoolAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	bool		reset_val;
+};
+
+struct config_int
+{
+	/* constant fields, must be set correctly in initial value: */
+	int		   *variable;
+	int			boot_val;
+	int			min;
+	int			max;
+	GucIntCheckHook check_hook;
+	GucIntAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	int			reset_val;
+};
+
+struct config_real
+{
+	/* constant fields, must be set correctly in initial value: */
+	double	   *variable;
+	double		boot_val;
+	double		min;
+	double		max;
+	GucRealCheckHook check_hook;
+	GucRealAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	double		reset_val;
+};
+
+/*
+ * A note about string GUCs: the boot_val is allowed to be NULL, which leads
+ * to the reset_val and the actual variable value (*variable) also being NULL.
+ * However, there is no way to set a NULL value subsequently using
+ * set_config_option or any other GUC API.  Also, GUC APIs such as SHOW will
+ * display a NULL value as an empty string.  Callers that choose to use a NULL
+ * boot_val should overwrite the setting later in startup, or else be careful
+ * that NULL doesn't have semantics that are visibly different from an empty
+ * string.
+ */
+struct config_string
+{
+	/* constant fields, must be set correctly in initial value: */
+	char	  **variable;
+	const char *boot_val;
+	GucStringCheckHook check_hook;
+	GucStringAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	char	   *reset_val;
+};
+
+struct config_enum
+{
+	/* constant fields, must be set correctly in initial value: */
+	int		   *variable;
+	int			boot_val;
+	const struct config_enum_entry *options;
+	GucEnumCheckHook check_hook;
+	GucEnumAssignHook assign_hook;
+	GucShowHook show_hook;
+	/* variable fields, initialized at runtime: */
+	int			reset_val;
+};
+
 /*
  * Generic fields applicable to all types of variables
  *
@@ -200,6 +278,16 @@ struct config_generic
 	char	   *sourcefile;		/* file current setting is from (NULL if not
 								 * set in config file) */
 	int			sourceline;		/* line in source file */
+
+	/* fields for specific variable types */
+	union
+	{
+		struct config_bool _bool;
+		struct config_int _int;
+		struct config_real _real;
+		struct config_string _string;
+		struct config_enum _enum;
+	};
 };
 
 /* bit values in status field */
@@ -212,100 +300,14 @@ struct config_generic
 #define GUC_NEEDS_REPORT	0x0004	/* new value must be reported to client */
 
 
-/* GUC records for specific variable types */
-
-struct config_bool
-{
-	struct config_generic gen;
-	/* constant fields, must be set correctly in initial value: */
-	bool	   *variable;
-	bool		boot_val;
-	GucBoolCheckHook check_hook;
-	GucBoolAssignHook assign_hook;
-	GucShowHook show_hook;
-	/* variable fields, initialized at runtime: */
-	bool		reset_val;
-};
-
-struct config_int
-{
-	struct config_generic gen;
-	/* constant fields, must be set correctly in initial value: */
-	int		   *variable;
-	int			boot_val;
-	int			min;
-	int			max;
-	GucIntCheckHook check_hook;
-	GucIntAssignHook assign_hook;
-	GucShowHook show_hook;
-	/* variable fields, initialized at runtime: */
-	int			reset_val;
-};
-
-struct config_real
-{
-	struct config_generic gen;
-	/* constant fields, must be set correctly in initial value: */
-	double	   *variable;
-	double		boot_val;
-	double		min;
-	double		max;
-	GucRealCheckHook check_hook;
-	GucRealAssignHook assign_hook;
-	GucShowHook show_hook;
-	/* variable fields, initialized at runtime: */
-	double		reset_val;
-};
-
-/*
- * A note about string GUCs: the boot_val is allowed to be NULL, which leads
- * to the reset_val and the actual variable value (*variable) also being NULL.
- * However, there is no way to set a NULL value subsequently using
- * set_config_option or any other GUC API.  Also, GUC APIs such as SHOW will
- * display a NULL value as an empty string.  Callers that choose to use a NULL
- * boot_val should overwrite the setting later in startup, or else be careful
- * that NULL doesn't have semantics that are visibly different from an empty
- * string.
- */
-struct config_string
-{
-	struct config_generic gen;
-	/* constant fields, must be set correctly in initial value: */
-	char	  **variable;
-	const char *boot_val;
-	GucStringCheckHook check_hook;
-	GucStringAssignHook assign_hook;
-	GucShowHook show_hook;
-	/* variable fields, initialized at runtime: */
-	char	   *reset_val;
-};
-
-struct config_enum
-{
-	struct config_generic gen;
-	/* constant fields, must be set correctly in initial value: */
-	int		   *variable;
-	int			boot_val;
-	const struct config_enum_entry *options;
-	GucEnumCheckHook check_hook;
-	GucEnumAssignHook assign_hook;
-	GucShowHook show_hook;
-	/* variable fields, initialized at runtime: */
-	int			reset_val;
-};
-
 /* constant tables corresponding to enums above and in guc.h */
 extern PGDLLIMPORT const char *const config_group_names[];
 extern PGDLLIMPORT const char *const config_type_names[];
 extern PGDLLIMPORT const char *const GucContext_Names[];
 extern PGDLLIMPORT const char *const GucSource_Names[];
 
-/* data arrays defining all the built-in GUC variables */
-extern PGDLLIMPORT struct config_bool ConfigureNamesBool[];
-extern PGDLLIMPORT struct config_int ConfigureNamesInt[];
-extern PGDLLIMPORT struct config_real ConfigureNamesReal[];
-extern PGDLLIMPORT struct config_string ConfigureNamesString[];
-extern PGDLLIMPORT struct config_enum ConfigureNamesEnum[];
+/* data array defining all the built-in GUC variables */
+extern PGDLLIMPORT struct config_generic ConfigureNames[];
 
 /* lookup GUC variables, returning config_generic pointers */
 extern struct config_generic *find_option(const char *name,
@@ -326,7 +328,7 @@ extern struct config_generic **get_guc_variables(int *num_vars);
 extern void build_guc_variables(void);
 
 /* search in enum options */
-extern const char *config_enum_lookup_by_value(const struct config_enum *record, int val);
+extern const char *config_enum_lookup_by_value(const struct config_generic *record, int val);
 extern bool config_enum_lookup_by_name(const struct config_enum *record,
 									   const char *value, int *retval);
 extern char *config_enum_get_options(const struct config_enum *record,

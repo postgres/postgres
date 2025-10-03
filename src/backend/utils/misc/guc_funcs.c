@@ -629,7 +629,7 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 	{
 		case PGC_BOOL:
 			{
-				const struct config_bool *lconf = (const struct config_bool *) conf;
+				const struct config_bool *lconf = &conf->_bool;
 
 				/* min_val */
 				values[9] = NULL;
@@ -650,7 +650,7 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 
 		case PGC_INT:
 			{
-				const struct config_int *lconf = (const struct config_int *) conf;
+				const struct config_int *lconf = &conf->_int;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%d", lconf->min);
@@ -675,7 +675,7 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 
 		case PGC_REAL:
 			{
-				const struct config_real *lconf = (const struct config_real *) conf;
+				const struct config_real *lconf = &conf->_real;
 
 				/* min_val */
 				snprintf(buffer, sizeof(buffer), "%g", lconf->min);
@@ -700,7 +700,7 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 
 		case PGC_STRING:
 			{
-				const struct config_string *lconf = (const struct config_string *) conf;
+				const struct config_string *lconf = &conf->_string;
 
 				/* min_val */
 				values[9] = NULL;
@@ -727,7 +727,7 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 
 		case PGC_ENUM:
 			{
-				const struct config_enum *lconf = (const struct config_enum *) conf;
+				const struct config_enum *lconf = &conf->_enum;
 
 				/* min_val */
 				values[9] = NULL;
@@ -745,11 +745,11 @@ GetConfigOptionValues(const struct config_generic *conf, const char **values)
 													 "{\"", "\"}", "\",\"");
 
 				/* boot_val */
-				values[12] = pstrdup(config_enum_lookup_by_value(lconf,
+				values[12] = pstrdup(config_enum_lookup_by_value(conf,
 																 lconf->boot_val));
 
 				/* reset_val */
-				values[13] = pstrdup(config_enum_lookup_by_value(lconf,
+				values[13] = pstrdup(config_enum_lookup_by_value(conf,
 																 lconf->reset_val));
 			}
 			break;
