@@ -681,7 +681,7 @@ LogicalTapeCreate(LogicalTapeSet *lts)
 {
 	/*
 	 * The only thing that currently prevents creating new tapes in leader is
-	 * the fact that BufFiles opened using BufFileOpenShared() are read-only
+	 * the fact that BufFiles opened using BufFileOpenFileSet() are read-only
 	 * by definition, but that could be changed if it seemed worthwhile.  For
 	 * now, writing to the leader tape will raise a "Bad file descriptor"
 	 * error, so tuplesort must avoid writing to the leader tape altogether.
