@@ -453,6 +453,7 @@ typedef struct FuncCall
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
 	Node	   *agg_filter;		/* FILTER clause, if any */
 	struct WindowDef *over;		/* OVER clause, if any */
+	int			ignore_nulls;	/* ignore nulls for window function */
 	bool		agg_within_group;	/* ORDER BY appeared in WITHIN GROUP */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */

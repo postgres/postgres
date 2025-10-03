@@ -2578,6 +2578,7 @@ eval_const_expressions_mutator(Node *node,
 				newexpr->winref = expr->winref;
 				newexpr->winstar = expr->winstar;
 				newexpr->winagg = expr->winagg;
+				newexpr->ignore_nulls = expr->ignore_nulls;
 				newexpr->location = expr->location;
 
 				return (Node *) newexpr;

@@ -86,6 +86,7 @@ window_row_number(PG_FUNCTION_ARGS)
 	WindowObject winobj = PG_WINDOW_OBJECT();
 	int64		curpos = WinGetCurrentPosition(winobj);
 
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 	WinSetMarkPosition(winobj, curpos);
 	PG_RETURN_INT64(curpos + 1);
 }
@@ -141,6 +142,7 @@ window_rank(PG_FUNCTION_ARGS)
 	rank_context *context;
 	bool		up;
 
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 	up = rank_up(winobj);
 	context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
@@ -203,6 +205,7 @@ window_dense_rank(PG_FUNCTION_ARGS)
 	rank_context *context;
 	bool		up;
 
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 	up = rank_up(winobj);
 	context = (rank_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(rank_context));
@@ -266,6 +269,7 @@ window_percent_rank(PG_FUNCTION_ARGS)
 	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 
 	up = rank_up(winobj);
 	context = (rank_context *)
@@ -335,6 +339,7 @@ window_cume_dist(PG_FUNCTION_ARGS)
 	int64		totalrows = WinGetPartitionRowCount(winobj);
 
 	Assert(totalrows > 0);
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 
 	up = rank_up(winobj);
 	context = (rank_context *)
@@ -413,6 +418,7 @@ window_ntile(PG_FUNCTION_ARGS)
 	WindowObject winobj = PG_WINDOW_OBJECT();
 	ntile_context *context;
 
+	WinCheckAndInitializeNullTreatment(winobj, false, fcinfo);
 	context = (ntile_context *)
 		WinGetPartitionLocalMemory(winobj, sizeof(ntile_context));
 
@@ -535,6 +541,7 @@ leadlag_common(FunctionCallInfo fcinfo,
 	bool		isnull;
 	bool		isout;
 
+	WinCheckAndInitializeNullTreatment(winobj, true, fcinfo);
 	if (withoffset)
 	{
 		offset = DatumGetInt32(WinGetFuncArgCurrent(winobj, 1, &isnull));
@@ -652,6 +659,7 @@ window_first_value(PG_FUNCTION_ARGS)
 	Datum		result;
 	bool		isnull;
 
+	WinCheckAndInitializeNullTreatment(winobj, true, fcinfo);
 	result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_HEAD, true,
 								  &isnull, NULL);
@@ -673,6 +681,7 @@ window_last_value(PG_FUNCTION_ARGS)
 	Datum		result;
 	bool		isnull;
 
+	WinCheckAndInitializeNullTreatment(winobj, true, fcinfo);
 	result = WinGetFuncArgInFrame(winobj, 0,
 								  0, WINDOW_SEEK_TAIL, true,
 								  &isnull, NULL);
@@ -696,6 +705,7 @@ window_nth_value(PG_FUNCTION_ARGS)
 	bool		isnull;
 	int32		nth;
 
+	WinCheckAndInitializeNullTreatment(winobj, true, fcinfo);
 	nth = DatumGetInt32(WinGetFuncArgCurrent(winobj, 1, &isnull));
 	if (isnull)
 		PG_RETURN_NULL();

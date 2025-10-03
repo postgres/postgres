@@ -579,6 +579,17 @@ typedef struct GroupingFunc
  * Collation information is irrelevant for the query jumbling, as is the
  * internal state information of the node like "winstar" and "winagg".
  */
+
+/*
+ * Null Treatment options. If specified, initially set to PARSER_IGNORE_NULLS
+ * which is then converted to IGNORE_NULLS if the window function allows the
+ * null treatment clause.
+ */
+#define NO_NULLTREATMENT 0
+#define PARSER_IGNORE_NULLS 1
+#define PARSER_RESPECT_NULLS 2
+#define IGNORE_NULLS 3
+
 typedef struct WindowFunc
 {
 	Expr		xpr;
@@ -602,6 +613,8 @@ typedef struct WindowFunc
 	bool		winstar pg_node_attr(query_jumble_ignore);
 	/* is function a simple aggregate? */
 	bool		winagg pg_node_attr(query_jumble_ignore);
+	/* ignore nulls. One of the Null Treatment options */
+	int			ignore_nulls;
 	/* token location, or -1 if unknown */
 	ParseLoc	location;
 } WindowFunc;

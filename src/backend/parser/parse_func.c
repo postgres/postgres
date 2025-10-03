@@ -100,6 +100,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	bool		agg_star = (fn ? fn->agg_star : false);
 	bool		agg_distinct = (fn ? fn->agg_distinct : false);
 	bool		func_variadic = (fn ? fn->func_variadic : false);
+	int			ignore_nulls = (fn ? fn->ignore_nulls : NO_NULLTREATMENT);
 	CoercionForm funcformat = (fn ? fn->funcformat : COERCE_EXPLICIT_CALL);
 	bool		could_be_projection;
 	Oid			rettype;
@@ -518,6 +519,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 						 errmsg("%s is not an ordered-set aggregate, so it cannot have WITHIN GROUP",
 								NameListToString(funcname)),
 						 parser_errposition(pstate, location)));
+
+			/* It also can't treat nulls as a window function */
+			if (ignore_nulls != NO_NULLTREATMENT)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("aggregate functions do not accept RESPECT/IGNORE NULLS"),
+						 parser_errposition(pstate, location)));
 		}
 	}
 	else if (fdresult == FUNCDETAIL_WINDOWFUNC)
@@ -840,6 +848,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		wfunc->winstar = agg_star;
 		wfunc->winagg = (fdresult == FUNCDETAIL_AGGREGATE);
 		wfunc->aggfilter = agg_filter;
+		wfunc->ignore_nulls = ignore_nulls;
 		wfunc->runCondition = NIL;
 		wfunc->location = location;
 

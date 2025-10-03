@@ -140,7 +140,7 @@
         </indexterm>
         <function>lag</function> ( <parameter>value</parameter> <type>anycompatible</type>
           <optional>, <parameter>offset</parameter> <type>integer</type>
-          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> ) <optional> <parameter>null treatment</parameter> </optional>
         <returnvalue>anycompatible</returnvalue>
        </para>
        <para>
@@ -165,7 +165,7 @@
         </indexterm>
         <function>lead</function> ( <parameter>value</parameter> <type>anycompatible</type>
           <optional>, <parameter>offset</parameter> <type>integer</type>
-          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> )
+          <optional>, <parameter>default</parameter> <type>anycompatible</type> </optional></optional> ) <optional> <parameter>null treatment</parameter> </optional>
         <returnvalue>anycompatible</returnvalue>
        </para>
        <para>
@@ -188,7 +188,7 @@
         <indexterm>
          <primary>first_value</primary>
         </indexterm>
-        <function>first_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
+        <function>first_value</function> ( <parameter>value</parameter> <type>anyelement</type> ) <optional> <parameter>null treatment</parameter> </optional>
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
@@ -202,7 +202,7 @@
         <indexterm>
          <primary>last_value</primary>
         </indexterm>
-        <function>last_value</function> ( <parameter>value</parameter> <type>anyelement</type> )
+        <function>last_value</function> ( <parameter>value</parameter> <type>anyelement</type> ) <optional> <parameter>null treatment</parameter> </optional>
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
@@ -216,7 +216,7 @@
         <indexterm>
          <primary>nth_value</primary>
         </indexterm>
-        <function>nth_value</function> ( <parameter>value</parameter> <type>anyelement</type>, <parameter>n</parameter> <type>integer</type> )
+        <function>nth_value</function> ( <parameter>value</parameter> <type>anyelement</type>, <parameter>n</parameter> <type>integer</type> ) <optional> <parameter>null treatment</parameter> </optional>
         <returnvalue>anyelement</returnvalue>
        </para>
        <para>
@@ -265,18 +265,26 @@
    Other frame specifications can be used to obtain other effects.
   </para>
 
+  <para>
+   The <literal>null treatment</literal> option must be one of:
+<synopsis>
+  RESPECT NULLS
+  IGNORE NULLS
+</synopsis>
+   If unspecified, the default is <literal>RESPECT NULLS</literal> which includes NULL
+   values in any result calculation. <literal>IGNORE NULLS</literal> ignores NULL values.
+   This option is only allowed for the following functions: <function>lag</function>,
+   <function>lead</function>, <function>first_value</function>, <function>last_value</function>,
+   <function>nth_value</function>.
+  </para>
+
   <note>
    <para>
-    The SQL standard defines a <literal>RESPECT NULLS</literal> or
-    <literal>IGNORE NULLS</literal> option for <function>lead</function>, <function>lag</function>,
-    <function>first_value</function>, <function>last_value</function>, and
-    <function>nth_value</function>.  This is not implemented in
-    <productname>PostgreSQL</productname>: the behavior is always the
-    same as the standard's default, namely <literal>RESPECT NULLS</literal>.
-    Likewise, the standard's <literal>FROM FIRST</literal> or <literal>FROM LAST</literal>
-    option for <function>nth_value</function> is not implemented: only the
-    default <literal>FROM FIRST</literal> behavior is supported.  (You can achieve
-    the result of <literal>FROM LAST</literal> by reversing the <literal>ORDER BY</literal>
+    The SQL standard defines a <literal>FROM FIRST</literal> or <literal>FROM LAST</literal>
+    option for <function>nth_value</function>. This is not implemented in
+    <productname>PostgreSQL</productname>: only the default <literal>FROM FIRST</literal>
+    behavior is supported. (You can achieve the result of <literal>FROM LAST</literal> by
+    reversing the <literal>ORDER BY</literal>
     ordering.)
    </para>
   </note>
