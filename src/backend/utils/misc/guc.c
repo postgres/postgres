@@ -286,8 +286,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	bool		error = false;
 	bool		applying = false;
 	const char *ConfFileWithError;
-	ConfigVariable *item,
-			   *head,
+	ConfigVariable *head,
 			   *tail;
 	HASH_SEQ_STATUS status;
 	GUCHashEntry *hentry;
@@ -338,7 +337,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 		/*
 		 * Prune all items except the last "data_directory" from the list.
 		 */
-		for (item = head; item; item = item->next)
+		for (ConfigVariable *item = head; item; item = item->next)
 		{
 			if (!item->ignore &&
 				strcmp(item->name, "data_directory") == 0)
@@ -386,7 +385,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	 * variable mentioned in the file; and we detect duplicate entries in the
 	 * file and mark the earlier occurrences as ignorable.
 	 */
-	for (item = head; item; item = item->next)
+	for (ConfigVariable *item = head; item; item = item->next)
 	{
 		struct config_generic *record;
 
@@ -410,9 +409,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 				 * avoid the O(N^2) behavior here with some additional state,
 				 * but it seems unlikely to be worth the trouble.
 				 */
-				ConfigVariable *pitem;
-
-				for (pitem = head; pitem != item; pitem = pitem->next)
+				for (ConfigVariable *pitem = head; pitem != item; pitem = pitem->next)
 				{
 					if (!pitem->ignore &&
 						strcmp(pitem->name, item->name) == 0)
@@ -456,7 +453,6 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
 	{
 		struct config_generic *gconf = hentry->gucvar;
-		GucStack   *stack;
 
 		if (gconf->reset_source != PGC_S_FILE ||
 			(gconf->status & GUC_IS_IN_FILE))
@@ -489,7 +485,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 			gconf->reset_source = PGC_S_DEFAULT;
 		if (gconf->source == PGC_S_FILE)
 			set_guc_source(gconf, PGC_S_DEFAULT);
-		for (stack = gconf->stack; stack; stack = stack->prev)
+		for (GucStack *stack = gconf->stack; stack; stack = stack->prev)
 		{
 			if (stack->source == PGC_S_FILE)
 				stack->source = PGC_S_DEFAULT;
@@ -533,7 +529,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	/*
 	 * Now apply the values from the config file.
 	 */
-	for (item = head; item; item = item->next)
+	for (ConfigVariable *item = head; item; item = item->next)
 	{
 		char	   *pre_value = NULL;
 		int			scres;
@@ -709,13 +705,11 @@ guc_free(void *ptr)
 static bool
 string_field_used(struct config_string *conf, char *strval)
 {
-	GucStack   *stack;
-
 	if (strval == *(conf->variable) ||
 		strval == conf->reset_val ||
 		strval == conf->boot_val)
 		return true;
-	for (stack = conf->gen.stack; stack; stack = stack->prev)
+	for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 	{
 		if (strval == stack->prior.val.stringval ||
 			strval == stack->masked.val.stringval)
@@ -748,8 +742,6 @@ set_string_field(struct config_string *conf, char **field, char *newval)
 static bool
 extra_field_used(struct config_generic *gconf, void *extra)
 {
-	GucStack   *stack;
-
 	if (extra == gconf->extra)
 		return true;
 	switch (gconf->vartype)
@@ -775,7 +767,7 @@ extra_field_used(struct config_generic *gconf, void *extra)
 				return true;
 			break;
 	}
-	for (stack = gconf->stack; stack; stack = stack->prev)
+	for (GucStack *stack = gconf->stack; stack; stack = stack->prev)
 	{
 		if (extra == stack->prior.extra ||
 			extra == stack->masked.extra)
@@ -909,7 +901,6 @@ build_guc_variables(void)
 	HASHCTL		hash_ctl;
 	GUCHashEntry *hentry;
 	bool		found;
-	int			i;
 
 	/*
 	 * Create the memory context that will hold all GUC-related data.
@@ -922,7 +913,7 @@ build_guc_variables(void)
 	/*
 	 * Count all the built-in variables, and set their vartypes correctly.
 	 */
-	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
 		struct config_bool *conf = &ConfigureNamesBool[i];
 
@@ -931,7 +922,7 @@ build_guc_variables(void)
 		num_vars++;
 	}
 
-	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesInt[i].gen.name; i++)
 	{
 		struct config_int *conf = &ConfigureNamesInt[i];
 
@@ -939,7 +930,7 @@ build_guc_variables(void)
 		num_vars++;
 	}
 
-	for (i = 0; ConfigureNamesReal[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesReal[i].gen.name; i++)
 	{
 		struct config_real *conf = &ConfigureNamesReal[i];
 
@@ -947,7 +938,7 @@ build_guc_variables(void)
 		num_vars++;
 	}
 
-	for (i = 0; ConfigureNamesString[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesString[i].gen.name; i++)
 	{
 		struct config_string *conf = &ConfigureNamesString[i];
 
@@ -955,7 +946,7 @@ build_guc_variables(void)
 		num_vars++;
 	}
 
-	for (i = 0; ConfigureNamesEnum[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesEnum[i].gen.name; i++)
 	{
 		struct config_enum *conf = &ConfigureNamesEnum[i];
 
@@ -978,7 +969,7 @@ build_guc_variables(void)
 							  &hash_ctl,
 							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
-	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
 		struct config_generic *gucvar = &ConfigureNamesBool[i].gen;
 
@@ -990,7 +981,7 @@ build_guc_variables(void)
 		hentry->gucvar = gucvar;
 	}
 
-	for (i = 0; ConfigureNamesInt[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesInt[i].gen.name; i++)
 	{
 		struct config_generic *gucvar = &ConfigureNamesInt[i].gen;
 
@@ -1002,7 +993,7 @@ build_guc_variables(void)
 		hentry->gucvar = gucvar;
 	}
 
-	for (i = 0; ConfigureNamesReal[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesReal[i].gen.name; i++)
 	{
 		struct config_generic *gucvar = &ConfigureNamesReal[i].gen;
 
@@ -1014,7 +1005,7 @@ build_guc_variables(void)
 		hentry->gucvar = gucvar;
 	}
 
-	for (i = 0; ConfigureNamesString[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesString[i].gen.name; i++)
 	{
 		struct config_generic *gucvar = &ConfigureNamesString[i].gen;
 
@@ -1026,7 +1017,7 @@ build_guc_variables(void)
 		hentry->gucvar = gucvar;
 	}
 
-	for (i = 0; ConfigureNamesEnum[i].gen.name; i++)
+	for (int i = 0; ConfigureNamesEnum[i].gen.name; i++)
 	{
 		struct config_generic *gucvar = &ConfigureNamesEnum[i].gen;
 
@@ -1238,7 +1229,6 @@ find_option(const char *name, bool create_placeholders, bool skip_errors,
 			int elevel)
 {
 	GUCHashEntry *hentry;
-	int			i;
 
 	Assert(name);
 
@@ -1255,7 +1245,7 @@ find_option(const char *name, bool create_placeholders, bool skip_errors,
 	 * set of supported old names is short enough that a brute-force search is
 	 * the best way.
 	 */
-	for (i = 0; map_old_guc_names[i] != NULL; i += 2)
+	for (int i = 0; map_old_guc_names[i] != NULL; i += 2)
 	{
 		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
 			return find_option(map_old_guc_names[i + 1], false,
@@ -2680,7 +2670,6 @@ convert_to_base_unit(double value, const char *unit,
 	char		unitstr[MAX_UNIT_LEN + 1];
 	int			unitlen;
 	const unit_conversion *table;
-	int			i;
 
 	/* extract unit string to compare to table entries */
 	unitlen = 0;
@@ -2700,7 +2689,7 @@ convert_to_base_unit(double value, const char *unit,
 	else
 		table = time_unit_conversion_table;
 
-	for (i = 0; *table[i].unit; i++)
+	for (int i = 0; *table[i].unit; i++)
 	{
 		if (base_unit == table[i].base_unit &&
 			strcmp(unitstr, table[i].unit) == 0)
@@ -2736,7 +2725,6 @@ convert_int_from_base_unit(int64 base_value, int base_unit,
 						   int64 *value, const char **unit)
 {
 	const unit_conversion *table;
-	int			i;
 
 	*unit = NULL;
 
@@ -2745,7 +2733,7 @@ convert_int_from_base_unit(int64 base_value, int base_unit,
 	else
 		table = time_unit_conversion_table;
 
-	for (i = 0; *table[i].unit; i++)
+	for (int i = 0; *table[i].unit; i++)
 	{
 		if (base_unit == table[i].base_unit)
 		{
@@ -2778,7 +2766,6 @@ convert_real_from_base_unit(double base_value, int base_unit,
 							double *value, const char **unit)
 {
 	const unit_conversion *table;
-	int			i;
 
 	*unit = NULL;
 
@@ -2787,7 +2774,7 @@ convert_real_from_base_unit(double base_value, int base_unit,
 	else
 		table = time_unit_conversion_table;
 
-	for (i = 0; *table[i].unit; i++)
+	for (int i = 0; *table[i].unit; i++)
 	{
 		if (base_unit == table[i].base_unit)
 		{
@@ -3028,9 +3015,7 @@ parse_real(const char *value, double *result, int flags, const char **hintmsg)
 const char *
 config_enum_lookup_by_value(struct config_enum *record, int val)
 {
-	const struct config_enum_entry *entry;
-
-	for (entry = record->options; entry && entry->name; entry++)
+	for (const struct config_enum_entry *entry = record->options; entry && entry->name; entry++)
 	{
 		if (entry->val == val)
 			return entry->name;
@@ -3052,9 +3037,7 @@ bool
 config_enum_lookup_by_name(struct config_enum *record, const char *value,
 						   int *retval)
 {
-	const struct config_enum_entry *entry;
-
-	for (entry = record->options; entry && entry->name; entry++)
+	for (const struct config_enum_entry *entry = record->options; entry && entry->name; entry++)
 	{
 		if (pg_strcasecmp(value, entry->name) == 0)
 		{
@@ -3078,7 +3061,6 @@ char *
 config_enum_get_options(struct config_enum *record, const char *prefix,
 						const char *suffix, const char *separator)
 {
-	const struct config_enum_entry *entry;
 	StringInfoData retstr;
 	int			seplen;
 
@@ -3086,7 +3068,7 @@ config_enum_get_options(struct config_enum *record, const char *prefix,
 	appendStringInfoString(&retstr, prefix);
 
 	seplen = strlen(separator);
-	for (entry = record->options; entry && entry->name; entry++)
+	for (const struct config_enum_entry *entry = record->options; entry && entry->name; entry++)
 	{
 		if (!entry->hidden)
 		{
@@ -3773,8 +3755,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 				}
 				if (makeDefault)
 				{
-					GucStack   *stack;
-
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
@@ -3784,7 +3764,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 						conf->gen.reset_scontext = context;
 						conf->gen.reset_srole = srole;
 					}
-					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 					{
 						if (stack->source <= source)
 						{
@@ -3871,8 +3851,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 				}
 				if (makeDefault)
 				{
-					GucStack   *stack;
-
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
@@ -3882,7 +3860,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 						conf->gen.reset_scontext = context;
 						conf->gen.reset_srole = srole;
 					}
-					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 					{
 						if (stack->source <= source)
 						{
@@ -3969,8 +3947,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 				}
 				if (makeDefault)
 				{
-					GucStack   *stack;
-
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
@@ -3980,7 +3956,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 						conf->gen.reset_scontext = context;
 						conf->gen.reset_srole = srole;
 					}
-					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 					{
 						if (stack->source <= source)
 						{
@@ -4135,8 +4111,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 
 				if (makeDefault)
 				{
-					GucStack   *stack;
-
 					if (conf->gen.reset_source <= source)
 					{
 						set_string_field(conf, &conf->reset_val, newval);
@@ -4146,7 +4120,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 						conf->gen.reset_scontext = context;
 						conf->gen.reset_srole = srole;
 					}
-					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 					{
 						if (stack->source <= source)
 						{
@@ -4237,8 +4211,6 @@ set_config_with_handle(const char *name, config_handle *handle,
 				}
 				if (makeDefault)
 				{
-					GucStack   *stack;
-
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
@@ -4248,7 +4220,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 						conf->gen.reset_scontext = context;
 						conf->gen.reset_srole = srole;
 					}
-					for (stack = conf->gen.stack; stack; stack = stack->prev)
+					for (GucStack *stack = conf->gen.stack; stack; stack = stack->prev)
 					{
 						if (stack->source <= source)
 						{
@@ -4475,7 +4447,6 @@ static void
 write_auto_conf_file(int fd, const char *filename, ConfigVariable *head)
 {
 	StringInfoData buf;
-	ConfigVariable *item;
 
 	initStringInfo(&buf);
 
@@ -4495,7 +4466,7 @@ write_auto_conf_file(int fd, const char *filename, ConfigVariable *head)
 	}
 
 	/* Emit each parameter, properly quoting the value */
-	for (item = head; item != NULL; item = item->next)
+	for (ConfigVariable *item = head; item != NULL; item = item->next)
 	{
 		char	   *escaped;
 
@@ -4543,7 +4514,7 @@ static void
 replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 						  const char *name, const char *value)
 {
-	ConfigVariable *item,
+	ConfigVariable *newitem,
 			   *next,
 			   *prev = NULL;
 
@@ -4552,7 +4523,7 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 	 * one, but if external tools have modified the config file, there could
 	 * be more.
 	 */
-	for (item = *head_p; item != NULL; item = next)
+	for (ConfigVariable *item = *head_p; item != NULL; item = next)
 	{
 		next = item->next;
 		if (guc_name_compare(item->name, name) == 0)
@@ -4579,21 +4550,21 @@ replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 		return;
 
 	/* OK, append a new entry */
-	item = palloc(sizeof *item);
-	item->name = pstrdup(name);
-	item->value = pstrdup(value);
-	item->errmsg = NULL;
-	item->filename = pstrdup("");	/* new item has no location */
-	item->sourceline = 0;
-	item->ignore = false;
-	item->applied = false;
-	item->next = NULL;
+	newitem = palloc_object(ConfigVariable);
+	newitem->name = pstrdup(name);
+	newitem->value = pstrdup(value);
+	newitem->errmsg = NULL;
+	newitem->filename = pstrdup("");	/* new item has no location */
+	newitem->sourceline = 0;
+	newitem->ignore = false;
+	newitem->applied = false;
+	newitem->next = NULL;
 
 	if (*head_p == NULL)
-		*head_p = item;
+		*head_p = newitem;
 	else
-		(*tail_p)->next = item;
-	*tail_p = item;
+		(*tail_p)->next = newitem;
+	*tail_p = newitem;
 }
 
 
@@ -6385,7 +6356,6 @@ void
 ParseLongOption(const char *string, char **name, char **value)
 {
 	size_t		equal_pos;
-	char	   *cp;
 
 	Assert(string);
 	Assert(name);
@@ -6407,7 +6377,7 @@ ParseLongOption(const char *string, char **name, char **value)
 		*value = NULL;
 	}
 
-	for (cp = *name; *cp; cp++)
+	for (char *cp = *name; *cp; cp++)
 		if (*cp == '-')
 			*cp = '_';
 }
@@ -6421,8 +6391,6 @@ ParseLongOption(const char *string, char **name, char **value)
 void
 TransformGUCArray(ArrayType *array, List **names, List **values)
 {
-	int			i;
-
 	Assert(array != NULL);
 	Assert(ARR_ELEMTYPE(array) == TEXTOID);
 	Assert(ARR_NDIM(array) == 1);
@@ -6430,7 +6398,7 @@ TransformGUCArray(ArrayType *array, List **names, List **values)
 
 	*names = NIL;
 	*values = NIL;
-	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	for (int i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
 		bool		isnull;
@@ -6534,7 +6502,6 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	{
 		int			index;
 		bool		isnull;
-		int			i;
 
 		Assert(ARR_ELEMTYPE(array) == TEXTOID);
 		Assert(ARR_NDIM(array) == 1);
@@ -6542,7 +6509,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 
 		index = ARR_DIMS(array)[0] + 1; /* add after end */
 
-		for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+		for (int i = 1; i <= ARR_DIMS(array)[0]; i++)
 		{
 			Datum		d;
 			char	   *current;
@@ -6590,7 +6557,6 @@ GUCArrayDelete(ArrayType *array, const char *name)
 {
 	struct config_generic *record;
 	ArrayType  *newarray;
-	int			i;
 	int			index;
 
 	Assert(name);
@@ -6610,7 +6576,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 	newarray = NULL;
 	index = 1;
 
-	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	for (int i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
 		char	   *val;
@@ -6659,7 +6625,6 @@ ArrayType *
 GUCArrayReset(ArrayType *array)
 {
 	ArrayType  *newarray;
-	int			i;
 	int			index;
 
 	/* if array is currently null, nothing to do */
@@ -6673,7 +6638,7 @@ GUCArrayReset(ArrayType *array)
 	newarray = NULL;
 	index = 1;
 
-	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	for (int i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
 		Datum		d;
 		char	   *val;

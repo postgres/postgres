@@ -986,7 +986,6 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 #define NUM_PG_FILE_SETTINGS_ATTS 7
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	ConfigVariable *conf;
-	int			seqno;
 
 	/* Scan the config files using current context as workspace */
 	conf = ProcessConfigFileInternal(PGC_SIGHUP, false, DEBUG3);
@@ -995,7 +994,7 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 	InitMaterializedSRF(fcinfo, 0);
 
 	/* Process the results and create a tuplestore */
-	for (seqno = 1; conf != NULL; conf = conf->next, seqno++)
+	for (int seqno = 1; conf != NULL; conf = conf->next, seqno++)
 	{
 		Datum		values[NUM_PG_FILE_SETTINGS_ATTS];
 		bool		nulls[NUM_PG_FILE_SETTINGS_ATTS];

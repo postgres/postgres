@@ -46,15 +46,14 @@ void
 GucInfoMain(void)
 {
 	struct config_generic **guc_vars;
-	int			numOpts,
-				i;
+	int			numOpts;
 
 	/* Initialize the GUC hash table */
 	build_guc_variables();
 
 	guc_vars = get_guc_variables(&numOpts);
 
-	for (i = 0; i < numOpts; i++)
+	for (int i = 0; i < numOpts; i++)
 	{
 		mixedStruct *var = (mixedStruct *) guc_vars[i];
 
