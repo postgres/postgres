@@ -1810,6 +1810,17 @@ update counter set i = i+1 returning i \gset
 }
 	});
 
+# Test copy in pgbench
+$node->pgbench(
+	'-t 10',
+	2,
+	[],
+	[ qr{COPY is not supported in pgbench, aborting} ],
+	'Test copy in script',
+	{
+		'001_copy' => q{ COPY pgbench_accounts FROM stdin }
+	});
+
 # Clean up
 $node->safe_psql('postgres', 'DROP TABLE counter;');
 
