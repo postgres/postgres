@@ -86,7 +86,6 @@ static inline uint32 vector8_highbit_mask(const Vector8 v);
 static inline Vector8 vector8_or(const Vector8 v1, const Vector8 v2);
 #ifndef USE_NO_SIMD
 static inline Vector32 vector32_or(const Vector32 v1, const Vector32 v2);
-static inline Vector8 vector8_ssub(const Vector8 v1, const Vector8 v2);
 #endif
 
 /*
@@ -213,6 +212,10 @@ static inline bool
 vector8_has_le(const Vector8 v, const uint8 c)
 {
 	bool		result = false;
+#ifdef USE_SSE2
+	Vector8		umin;
+	Vector8		cmpe;
+#endif
 
 	/* pre-compute the result for assert checking */
 #ifdef USE_ASSERT_CHECKING
@@ -250,14 +253,12 @@ vector8_has_le(const Vector8 v, const uint8 c)
 			}
 		}
 	}
-#else
-
-	/*
-	 * Use saturating subtraction to find bytes <= c, which will present as
-	 * NUL bytes.  This approach is a workaround for the lack of unsigned
-	 * comparison instructions on some architectures.
-	 */
-	result = vector8_has_zero(vector8_ssub(v, vector8_broadcast(c)));
+#elif defined(USE_SSE2)
+	umin = vector8_min(v, vector8_broadcast(c));
+	cmpe = vector8_eq(umin, v);
+	result = vector8_is_highbit_set(cmpe);
+#elif defined(USE_NEON)
+	result = vminvq_u8(v) <= c;
 #endif
 
 	Assert(assert_result == result);
@@ -354,24 +355,6 @@ vector32_or(const Vector32 v1, const Vector32 v2)
 	return _mm_or_si128(v1, v2);
 #elif defined(USE_NEON)
 	return vorrq_u32(v1, v2);
-#endif
-}
-#endif							/* ! USE_NO_SIMD */
-
-/*
- * Return the result of subtracting the respective elements of the input
- * vectors using saturation (i.e., if the operation would yield a value less
- * than zero, zero is returned instead).  For more information on saturation
- * arithmetic, see https://en.wikipedia.org/wiki/Saturation_arithmetic
- */
-#ifndef USE_NO_SIMD
-static inline Vector8
-vector8_ssub(const Vector8 v1, const Vector8 v2)
-{
-#ifdef USE_SSE2
-	return _mm_subs_epu8(v1, v2);
-#elif defined(USE_NEON)
-	return vqsubq_u8(v1, v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
