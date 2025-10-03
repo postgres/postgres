@@ -3567,6 +3567,8 @@ dead_items_reset(LVRelState *vacrel)
 	if (ParallelVacuumIsActive(vacrel))
 	{
 		parallel_vacuum_reset_dead_items(vacrel->pvs);
+		vacrel->dead_items = parallel_vacuum_get_dead_items(vacrel->pvs,
+															&vacrel->dead_items_info);
 		return;
 	}
 
