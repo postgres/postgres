@@ -523,6 +523,13 @@ build_setop_child_paths(PlannerInfo *root, RelOptInfo *rel,
 		bool		is_sorted;
 		int			presorted_keys;
 
+		/* If the input rel is dummy, propagate that to this query level */
+		if (is_dummy_rel(final_rel))
+		{
+			mark_dummy_rel(rel);
+			continue;
+		}
+
 		/*
 		 * Include the cheapest path as-is so that the set operation can be
 		 * cheaply implemented using a method which does not require the input
@@ -763,6 +770,10 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		RelOptInfo *rel = lfirst(lc);
 		Path	   *ordered_path;
 
+		/* Skip any UNION children that are proven not to yield any rows */
+		if (is_dummy_rel(rel))
+			continue;
+
 		cheapest_pathlist = lappend(cheapest_pathlist,
 									rel->cheapest_total_path);
 
@@ -811,6 +822,15 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 													cheapest_pathlist);
 	result_rel->consider_parallel = consider_parallel;
 	result_rel->consider_startup = (root->tuple_fraction > 0);
+
+	/* If all UNION children were dummy rels, make the resulting rel dummy */
+	if (cheapest_pathlist == NIL)
+	{
+		result_rel->reltarget = create_pathtarget(root, list_nth(tlist_list, 0));
+		mark_dummy_rel(result_rel);
+
+		return result_rel;
+	}
 
 	/*
 	 * Append the child results together using the cheapest paths from each
@@ -876,15 +896,33 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		bool		can_sort = grouping_is_sortable(groupList);
 		bool		can_hash = grouping_is_hashable(groupList);
 
-		/*
-		 * XXX for the moment, take the number of distinct groups as equal to
-		 * the total input size, i.e., the worst case.  This is too
-		 * conservative, but it's not clear how to get a decent estimate of
-		 * the true size.  One should note as well the propensity of novices
-		 * to write UNION rather than UNION ALL even when they don't expect
-		 * any duplicates...
-		 */
-		dNumGroups = apath->rows;
+		if (list_length(cheapest_pathlist) == 1)
+		{
+			Path	   *path = linitial(cheapest_pathlist);
+
+			/*
+			 * In the case where only one union child remains due to the
+			 * detection of one or more dummy union children, obtain an
+			 * estimate on the surviving child directly.
+			 */
+			dNumGroups = estimate_num_groups(root,
+											 path->pathtarget->exprs,
+											 path->rows,
+											 NULL,
+											 NULL);
+		}
+		else
+		{
+			/*
+			 * Otherwise, for the moment, take the number of distinct groups
+			 * as equal to the total input size, i.e., the worst case.  This
+			 * is too conservative, but it's not clear how to get a decent
+			 * estimate of the true size.  One should note as well the
+			 * propensity of novices to write UNION rather than UNION ALL even
+			 * when they don't expect any duplicates...
+			 */
+			dNumGroups = apath->rows;
+		}
 
 		if (can_hash)
 		{
