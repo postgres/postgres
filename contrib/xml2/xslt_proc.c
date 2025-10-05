@@ -10,6 +10,7 @@
 #include "fmgr.h"
 #include "utils/builtins.h"
 #include "utils/xml.h"
+#include "varatt.h"
 
 #ifdef USE_LIBXSLT
 

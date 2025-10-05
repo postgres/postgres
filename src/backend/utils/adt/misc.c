@@ -21,6 +21,7 @@
 #include <math.h>
 #include <unistd.h>
 
+#include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/pg_tablespace.h"

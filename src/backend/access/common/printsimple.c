@@ -23,6 +23,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/protocol.h"
 #include "utils/builtins.h"
+#include "varatt.h"
 
 /*
  * At startup time, send a RowDescription message.

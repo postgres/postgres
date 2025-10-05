@@ -16,6 +16,7 @@
 
 #include "fmgr.h"
 
+#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "funcapi.h"
 #include "injection_stats.h"

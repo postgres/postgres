@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "funcapi.h"

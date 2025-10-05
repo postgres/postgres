@@ -19,6 +19,7 @@
 
 #include "access/stratnum.h"
 #include "access/sysattr.h"
+#include "access/transam.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"

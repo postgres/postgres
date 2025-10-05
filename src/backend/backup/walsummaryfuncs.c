@@ -12,6 +12,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "backup/walsummary.h"
 #include "common/blkreftable.h"
 #include "funcapi.h"

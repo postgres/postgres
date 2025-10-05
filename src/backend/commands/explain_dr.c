@@ -19,6 +19,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/protocol.h"
 #include "utils/lsyscache.h"
+#include "varatt.h"
 
 /*
  * DestReceiver functions for SERIALIZE option

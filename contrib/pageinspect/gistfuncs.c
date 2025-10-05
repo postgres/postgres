@@ -11,6 +11,7 @@
 
 #include "access/gist.h"
 #include "access/htup.h"
+#include "access/htup_details.h"
 #include "access/relation.h"
 #include "catalog/pg_am_d.h"
 #include "funcapi.h"

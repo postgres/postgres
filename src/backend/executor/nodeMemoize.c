@@ -66,6 +66,7 @@
 
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "common/hashfn.h"
 #include "executor/executor.h"
 #include "executor/nodeMemoize.h"

@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include "access/htup_details.h"
 #include "foreign/fdwapi.h"
 #include "miscadmin.h"
 #include "nodes/extensible.h"

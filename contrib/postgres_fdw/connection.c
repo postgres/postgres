@@ -16,6 +16,7 @@
 #include <poll.h>
 #endif
 
+#include "access/htup_details.h"
 #include "access/xact.h"
 #include "catalog/pg_user_mapping.h"
 #include "commands/defrem.h"
