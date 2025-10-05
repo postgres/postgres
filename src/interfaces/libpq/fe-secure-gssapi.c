@@ -121,7 +121,7 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 "GSSAPI caller failed to retransmit all data needing to be retried\n");
-		errno = EINVAL;
+		SOCK_ERRNO_SET(EINVAL);
 		return -1;
 	}
 
@@ -199,14 +199,14 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 		if (major != GSS_S_COMPLETE)
 		{
 			pg_GSS_error(libpq_gettext("GSSAPI wrap error"), conn, major, minor);
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			goto cleanup;
 		}
 
 		if (conf_state == 0)
 		{
 			libpq_append_conn_error(conn, "outgoing GSSAPI message would not use confidentiality");
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			goto cleanup;
 		}
 
@@ -215,7 +215,7 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 			libpq_append_conn_error(conn, "client tried to send oversize GSSAPI packet (%zu > %zu)",
 									(size_t) output.length,
 									PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32));
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			goto cleanup;
 		}
 
@@ -341,7 +341,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 			/* If we still haven't got the length, return to the caller */
 			if (PqGSSRecvLength < sizeof(uint32))
 			{
-				errno = EWOULDBLOCK;
+				SOCK_ERRNO_SET(EWOULDBLOCK);
 				return -1;
 			}
 		}
@@ -354,7 +354,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 			libpq_append_conn_error(conn, "oversize GSSAPI packet sent by the server (%zu > %zu)",
 									(size_t) input.length,
 									PQ_GSS_MAX_PACKET_SIZE - sizeof(uint32));
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			return -1;
 		}
 
@@ -373,7 +373,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 		/* If we don't yet have the whole packet, return to the caller */
 		if (PqGSSRecvLength - sizeof(uint32) < input.length)
 		{
-			errno = EWOULDBLOCK;
+			SOCK_ERRNO_SET(EWOULDBLOCK);
 			return -1;
 		}
 
@@ -393,7 +393,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 			pg_GSS_error(libpq_gettext("GSSAPI unwrap error"), conn,
 						 major, minor);
 			ret = -1;
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			goto cleanup;
 		}
 
@@ -401,7 +401,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 		{
 			libpq_append_conn_error(conn, "incoming GSSAPI message did not use confidentiality");
 			ret = -1;
-			errno = EIO;		/* for lack of a better idea */
+			SOCK_ERRNO_SET(EIO);	/* for lack of a better idea */
 			goto cleanup;
 		}
 
@@ -437,7 +437,8 @@ gss_read(PGconn *conn, void *recv_buffer, size_t length, ssize_t *ret)
 	*ret = pqsecure_raw_read(conn, recv_buffer, length);
 	if (*ret < 0)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+		if (SOCK_ERRNO == EAGAIN || SOCK_ERRNO == EWOULDBLOCK ||
+			SOCK_ERRNO == EINTR)
 			return PGRES_POLLING_READING;
 		else
 			return PGRES_POLLING_FAILED;
@@ -457,7 +458,8 @@ gss_read(PGconn *conn, void *recv_buffer, size_t length, ssize_t *ret)
 		*ret = pqsecure_raw_read(conn, recv_buffer, length);
 		if (*ret < 0)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+			if (SOCK_ERRNO == EAGAIN || SOCK_ERRNO == EWOULDBLOCK ||
+				SOCK_ERRNO == EINTR)
 				return PGRES_POLLING_READING;
 			else
 				return PGRES_POLLING_FAILED;
@@ -520,7 +522,8 @@ pqsecure_open_gss(PGconn *conn)
 		ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
 		if (ret < 0)
 		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+			if (SOCK_ERRNO == EAGAIN || SOCK_ERRNO == EWOULDBLOCK ||
+				SOCK_ERRNO == EINTR)
 				return PGRES_POLLING_WRITING;
 			else
 				return PGRES_POLLING_FAILED;
