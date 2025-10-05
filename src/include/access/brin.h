@@ -10,7 +10,8 @@
 #ifndef BRIN_H
 #define BRIN_H
 
-#include "nodes/execnodes.h"
+#include "storage/block.h"
+#include "storage/dsm.h"
 #include "storage/shm_toc.h"
 #include "utils/relcache.h"
 

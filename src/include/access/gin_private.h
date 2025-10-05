@@ -13,6 +13,7 @@
 #include "access/amapi.h"
 #include "access/gin.h"
 #include "access/ginblock.h"
+#include "access/htup_details.h"
 #include "access/itup.h"
 #include "common/int.h"
 #include "catalog/pg_am_d.h"
