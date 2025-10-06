@@ -137,7 +137,12 @@ static void write_syslog(int level, const char *line);
 #endif
 
 #ifdef WIN32
+#include <windows.h>
+#include <dbghelp.h>
+
 static void write_eventlog(int level, const char *line, int len);
+static bool win32_backtrace_symbols_initialized = false;
+static HANDLE win32_backtrace_process = NULL;
 #endif
 
 /* We provide a small stack of ErrorData records for re-entrant cases */
@@ -1112,6 +1117,12 @@ errbacktrace(void)
  * specifies how many inner frames to skip.  Use this to avoid showing the
  * internal backtrace support functions in the backtrace.  This requires that
  * this and related functions are not inlined.
+ *
+ * Platform-specific implementations:
+ * - Unix/Linux/: Uses backtrace() and backtrace_symbols() 
+ * - Windows: Uses CaptureStackBackTrace() with DbgHelp for symbol resolution
+ *   (requires PDB files; falls back to raw addresses if unavailable)
+ * - Other: Returns unsupported message
  */
 static void
 set_backtrace(ErrorData *edata, int num_skip)
@@ -1138,6 +1149,159 @@ set_backtrace(ErrorData *edata, int num_skip)
 			appendStringInfoString(&errtrace,
 								   "insufficient memory for backtrace generation");
 	}
+#elif defined(WIN32)
+	{
+		void	   *stack[100];
+		DWORD		frames;
+		DWORD		i;
+		wchar_t		buffer[sizeof(SYMBOL_INFOW) + MAX_SYM_NAME * sizeof(wchar_t)];
+		PSYMBOL_INFOW symbol;
+		char	   *utf8_buffer;
+		int			utf8_len;
+
+		if (!win32_backtrace_symbols_initialized)
+		{
+			win32_backtrace_process = GetCurrentProcess();
+
+			SymSetOptions(SYMOPT_UNDNAME |
+						  SYMOPT_DEFERRED_LOADS |
+						  SYMOPT_LOAD_LINES |
+						  SYMOPT_FAIL_CRITICAL_ERRORS);
+
+			if (SymInitialize(win32_backtrace_process, NULL, TRUE))
+			{
+				win32_backtrace_symbols_initialized = true;
+			}
+			else
+			{
+				DWORD		error = GetLastError();
+				elog(WARNING, "SymInitialize failed with error %lu", error);
+			}
+		}
+
+		frames = CaptureStackBackTrace(num_skip, lengthof(stack), stack, NULL);
+
+		if (frames == 0)
+		{
+			appendStringInfoString(&errtrace, "\nNo stack frames captured");
+			edata->backtrace = errtrace.data;
+			return;
+		}
+
+		symbol = (PSYMBOL_INFOW) buffer;
+		symbol->MaxNameLen = MAX_SYM_NAME;
+		symbol->SizeOfStruct = sizeof(SYMBOL_INFOW);
+
+		for (i = 0; i < frames; i++)
+		{
+			DWORD64		address = (DWORD64) (stack[i]);
+			DWORD64		displacement = 0;
+			BOOL		sym_result;
+
+			sym_result = SymFromAddrW(win32_backtrace_process,
+									  address,
+									  &displacement,
+									  symbol);
+
+			if (sym_result)
+			{
+				IMAGEHLP_LINEW64 line;
+				DWORD		line_displacement = 0;
+
+				line.SizeOfStruct = sizeof(IMAGEHLP_LINEW64);
+
+				if (SymGetLineFromAddrW64(win32_backtrace_process,
+										  address,
+										  &line_displacement,
+										  &line))
+				{
+					/* Convert symbol name to UTF-8 */
+					utf8_len = WideCharToMultiByte(CP_UTF8, 0, symbol->Name, -1,
+												   NULL, 0, NULL, NULL);
+					if (utf8_len > 0)
+					{
+						char	   *filename_utf8;
+						int			filename_len;
+
+						utf8_buffer = palloc(utf8_len);
+						WideCharToMultiByte(CP_UTF8, 0, symbol->Name, -1,
+											utf8_buffer, utf8_len, NULL, NULL);
+
+						/* Convert file name to UTF-8 */
+						filename_len = WideCharToMultiByte(CP_UTF8, 0,
+														   line.FileName, -1,
+														   NULL, 0, NULL, NULL);
+						if (filename_len > 0)
+						{
+							filename_utf8 = palloc(filename_len);
+							WideCharToMultiByte(CP_UTF8, 0, line.FileName, -1,
+												filename_utf8, filename_len,
+												NULL, NULL);
+
+							appendStringInfo(&errtrace,
+											 "\n%s+0x%llx [%s:%lu]",
+											 utf8_buffer,
+											 (unsigned long long) displacement,
+											 filename_utf8,
+											 (unsigned long) line.LineNumber);
+
+							pfree(filename_utf8);
+						}
+						else
+						{
+							appendStringInfo(&errtrace,
+											 "\n%s+0x%llx [0x%llx]",
+											 utf8_buffer,
+											 (unsigned long long) displacement,
+											 (unsigned long long) address);
+						}
+
+						pfree(utf8_buffer);
+					}
+					else
+					{
+						/* Conversion failed, use address only */
+						appendStringInfo(&errtrace,
+										 "\n[0x%llx]",
+										 (unsigned long long) address);
+					}
+				}
+				else
+				{
+					/* No line info, convert symbol name only */
+					utf8_len = WideCharToMultiByte(CP_UTF8, 0, symbol->Name, -1,
+												   NULL, 0, NULL, NULL);
+					if (utf8_len > 0)
+					{
+						utf8_buffer = palloc(utf8_len);
+						WideCharToMultiByte(CP_UTF8, 0, symbol->Name, -1,
+											utf8_buffer, utf8_len, NULL, NULL);
+
+						appendStringInfo(&errtrace,
+										 "\n%s+0x%llx [0x%llx]",
+										 utf8_buffer,
+										 (unsigned long long) displacement,
+										 (unsigned long long) address);
+
+						pfree(utf8_buffer);
+					}
+					else
+					{
+						/* Conversion failed, use address only */
+						appendStringInfo(&errtrace,
+										 "\n[0x%llx]",
+										 (unsigned long long) address);
+					}
+				}
+			}
+			else
+			{
+				appendStringInfo(&errtrace,
+								 "\n[0x%llx]",
+								 (unsigned long long) address);
+			}
+		}
+	}
 #else
 	appendStringInfoString(&errtrace,
 						   "backtrace generation is not supported by this installation");
@@ -1145,7 +1309,6 @@ set_backtrace(ErrorData *edata, int num_skip)
 
 	edata->backtrace = errtrace.data;
 }
-
 /*
  * errmsg_internal --- add a primary error message text to the current error
  *

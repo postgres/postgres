@@ -1,6 +1,12 @@
 # Copyright (c) 2022-2025, PostgreSQL Global Development Group
 
 backend_build_deps = [backend_code]
+
+# Add dbghelp for backtrace capability
+if host_system == 'windows'
+  backend_build_deps += cc.find_library('dbghelp')
+endif
+
 backend_sources = []
 backend_link_with = [pgport_srv, common_srv]
 
