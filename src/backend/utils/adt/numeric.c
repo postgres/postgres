@@ -4359,7 +4359,7 @@ int4_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
- * Internal version of int4_numeric() with support for soft error reporting.
+ * Internal version of numeric_int4() with support for soft error reporting.
  */
 int32
 numeric_int4_safe(Numeric num, Node *escontext)
@@ -4429,7 +4429,7 @@ int8_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
- * Internal version of int8_numeric() with support for soft error reporting.
+ * Internal version of numeric_int8() with support for soft error reporting.
  */
 int64
 numeric_int8_safe(Numeric num, Node *escontext)
