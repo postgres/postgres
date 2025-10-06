@@ -218,7 +218,8 @@ addItemPointersToLeafTuple(GinState *ginstate,
 	ItemPointerData *newItems,
 			   *oldItems;
 	int			oldNPosting,
-				newNPosting;
+				newNPosting,
+				nwritten;
 	GinPostingList *compressedList;
 
 	Assert(!GinIsPostingTree(old));
@@ -235,18 +236,19 @@ addItemPointersToLeafTuple(GinState *ginstate,
 
 	/* Compress the posting list, and try to a build tuple with room for it */
 	res = NULL;
-	compressedList = ginCompressPostingList(newItems, newNPosting, GinMaxItemSize,
-											NULL);
-	pfree(newItems);
-	if (compressedList)
+	compressedList = ginCompressPostingList(newItems, newNPosting, GinMaxItemSize, &nwritten);
+	if (nwritten == newNPosting)
 	{
 		res = GinFormTuple(ginstate, attnum, key, category,
 						   (char *) compressedList,
 						   SizeOfGinPostingList(compressedList),
 						   newNPosting,
 						   false);
-		pfree(compressedList);
 	}
+
+	pfree(newItems);
+	pfree(compressedList);
+
 	if (!res)
 	{
 		/* posting list would be too big, convert to posting tree */
@@ -293,17 +295,19 @@ buildFreshLeafTuple(GinState *ginstate,
 {
 	IndexTuple	res = NULL;
 	GinPostingList *compressedList;
+	int			nwritten;
 
 	/* try to build a posting list tuple with all the items */
-	compressedList = ginCompressPostingList(items, nitem, GinMaxItemSize, NULL);
-	if (compressedList)
+	compressedList = ginCompressPostingList(items, nitem, GinMaxItemSize, &nwritten);
+	if (nwritten == nitem)
 	{
 		res = GinFormTuple(ginstate, attnum, key, category,
 						   (char *) compressedList,
 						   SizeOfGinPostingList(compressedList),
 						   nitem, false);
-		pfree(compressedList);
 	}
+	pfree(compressedList);
+
 	if (!res)
 	{
 		/* posting list would be too big, build posting tree */
