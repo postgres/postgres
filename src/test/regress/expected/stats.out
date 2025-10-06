@@ -850,6 +850,27 @@ FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
         2 | t      |        3 | t
 (1 row)
 
+-- check the stats in pg_stat_all_indexes
+SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok
+  FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
+ idx_scan | idx_ok 
+----------+--------
+        3 | t
+(1 row)
+
+-- check that the stats in pg_stat_all_indexes are reset
+SELECT pg_stat_reset_single_table_counters('test_last_scan_pkey'::regclass);
+ pg_stat_reset_single_table_counters 
+-------------------------------------
+ 
+(1 row)
+
+SELECT idx_scan FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
+ idx_scan 
+----------
+        0
+(1 row)
+
 -----
 -- Test reset of some stats for shared table
 -----
