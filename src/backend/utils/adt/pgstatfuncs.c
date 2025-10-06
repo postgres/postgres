@@ -168,6 +168,9 @@ PG_STAT_GET_RELENTRY_TIMESTAMPTZ(last_vacuum_time)
 /* pg_stat_get_lastscan */
 PG_STAT_GET_RELENTRY_TIMESTAMPTZ(lastscan)
 
+/* pg_stat_get_stat_reset_time */
+PG_STAT_GET_RELENTRY_TIMESTAMPTZ(stat_reset_time)
+
 Datum
 pg_stat_get_function_calls(PG_FUNCTION_ARGS)
 {

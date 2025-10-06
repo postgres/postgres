@@ -312,8 +312,11 @@ SELECT pg_stat_force_next_flush();
 SELECT last_seq_scan, last_idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 COMMIT;
 
+SELECT stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 SELECT pg_stat_reset_single_table_counters('test_last_scan'::regclass);
-SELECT seq_scan, idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+SELECT seq_scan, idx_scan, stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 
 -- ensure we start out with exactly one index and sequential scan
 BEGIN;
@@ -383,13 +386,15 @@ SELECT seq_scan, :'test_last_seq' = last_seq_scan AS seq_ok, idx_scan, :'test_la
 FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 
 -- check the stats in pg_stat_all_indexes
-SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok
+SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok,
+  stats_reset IS NOT NULL AS has_stats_reset
   FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
 
 -- check that the stats in pg_stat_all_indexes are reset
 SELECT pg_stat_reset_single_table_counters('test_last_scan_pkey'::regclass);
 
-SELECT idx_scan FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
+SELECT idx_scan, stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
 
 -----
 -- Test reset of some stats for shared table

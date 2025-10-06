@@ -666,16 +666,24 @@ SELECT last_seq_scan, last_idx_scan FROM pg_stat_all_tables WHERE relid = 'test_
 (1 row)
 
 COMMIT;
+SELECT stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ has_stats_reset 
+-----------------
+ f
+(1 row)
+
 SELECT pg_stat_reset_single_table_counters('test_last_scan'::regclass);
  pg_stat_reset_single_table_counters 
 -------------------------------------
  
 (1 row)
 
-SELECT seq_scan, idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
- seq_scan | idx_scan 
-----------+----------
-        0 |        0
+SELECT seq_scan, idx_scan, stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ seq_scan | idx_scan | has_stats_reset 
+----------+----------+-----------------
+        0 |        0 | t
 (1 row)
 
 -- ensure we start out with exactly one index and sequential scan
@@ -851,11 +859,12 @@ FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 (1 row)
 
 -- check the stats in pg_stat_all_indexes
-SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok
+SELECT idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok,
+  stats_reset IS NOT NULL AS has_stats_reset
   FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
- idx_scan | idx_ok 
-----------+--------
-        3 | t
+ idx_scan | idx_ok | has_stats_reset 
+----------+--------+-----------------
+        3 | t      | f
 (1 row)
 
 -- check that the stats in pg_stat_all_indexes are reset
@@ -865,10 +874,11 @@ SELECT pg_stat_reset_single_table_counters('test_last_scan_pkey'::regclass);
  
 (1 row)
 
-SELECT idx_scan FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
- idx_scan 
-----------
-        0
+SELECT idx_scan, stats_reset IS NOT NULL AS has_stats_reset
+  FROM pg_stat_all_indexes WHERE indexrelid = 'test_last_scan_pkey'::regclass;
+ idx_scan | has_stats_reset 
+----------+-----------------
+        0 | t
 (1 row)
 
 -----

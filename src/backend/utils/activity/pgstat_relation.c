@@ -910,6 +910,12 @@ pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref)
 		pgstat_unlink_relation(pending->relation);
 }
 
+void
+pgstat_relation_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts)
+{
+	((PgStatShared_Relation *) header)->stats.stat_reset_time = ts;
+}
+
 /*
  * Find or create a PgStat_TableStatus entry for rel. New entry is created and
  * initialized if not exists.

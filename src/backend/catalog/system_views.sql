@@ -716,7 +716,8 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_total_vacuum_time(C.oid) AS total_vacuum_time,
             pg_stat_get_total_autovacuum_time(C.oid) AS total_autovacuum_time,
             pg_stat_get_total_analyze_time(C.oid) AS total_analyze_time,
-            pg_stat_get_total_autoanalyze_time(C.oid) AS total_autoanalyze_time
+            pg_stat_get_total_autoanalyze_time(C.oid) AS total_autoanalyze_time,
+            pg_stat_get_stat_reset_time(C.oid) AS stats_reset
     FROM pg_class C LEFT JOIN
          pg_index I ON C.oid = I.indrelid
          LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
@@ -778,7 +779,8 @@ CREATE VIEW pg_statio_all_tables AS
                     pg_stat_get_blocks_hit(T.oid) AS toast_blks_read,
             pg_stat_get_blocks_hit(T.oid) AS toast_blks_hit,
             X.idx_blks_read AS tidx_blks_read,
-            X.idx_blks_hit AS tidx_blks_hit
+            X.idx_blks_hit AS tidx_blks_hit,
+            pg_stat_get_stat_reset_time(C.oid) AS stats_reset
     FROM pg_class C LEFT JOIN
             pg_class T ON C.reltoastrelid = T.oid
             LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace)
@@ -818,7 +820,8 @@ CREATE VIEW pg_stat_all_indexes AS
             pg_stat_get_numscans(I.oid) AS idx_scan,
             pg_stat_get_lastscan(I.oid) AS last_idx_scan,
             pg_stat_get_tuples_returned(I.oid) AS idx_tup_read,
-            pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch
+            pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch,
+            pg_stat_get_stat_reset_time(I.oid) AS stats_reset
     FROM pg_class C JOIN
             pg_index X ON C.oid = X.indrelid JOIN
             pg_class I ON I.oid = X.indexrelid
@@ -844,7 +847,8 @@ CREATE VIEW pg_statio_all_indexes AS
             I.relname AS indexrelname,
             pg_stat_get_blocks_fetched(I.oid) -
                     pg_stat_get_blocks_hit(I.oid) AS idx_blks_read,
-            pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit
+            pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit,
+            pg_stat_get_stat_reset_time(I.oid) AS stats_reset
     FROM pg_class C JOIN
             pg_index X ON C.oid = X.indrelid JOIN
             pg_class I ON I.oid = X.indexrelid

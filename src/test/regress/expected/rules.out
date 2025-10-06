@@ -1798,7 +1798,8 @@ pg_stat_all_indexes| SELECT c.oid AS relid,
     pg_stat_get_numscans(i.oid) AS idx_scan,
     pg_stat_get_lastscan(i.oid) AS last_idx_scan,
     pg_stat_get_tuples_returned(i.oid) AS idx_tup_read,
-    pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch
+    pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch,
+    pg_stat_get_stat_reset_time(i.oid) AS stats_reset
    FROM (((pg_class c
      JOIN pg_index x ON ((c.oid = x.indrelid)))
      JOIN pg_class i ON ((i.oid = x.indexrelid)))
@@ -1833,7 +1834,8 @@ pg_stat_all_tables| SELECT c.oid AS relid,
     pg_stat_get_total_vacuum_time(c.oid) AS total_vacuum_time,
     pg_stat_get_total_autovacuum_time(c.oid) AS total_autovacuum_time,
     pg_stat_get_total_analyze_time(c.oid) AS total_analyze_time,
-    pg_stat_get_total_autoanalyze_time(c.oid) AS total_autoanalyze_time
+    pg_stat_get_total_autoanalyze_time(c.oid) AS total_autoanalyze_time,
+    pg_stat_get_stat_reset_time(c.oid) AS stats_reset
    FROM ((pg_class c
      LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
@@ -2200,7 +2202,8 @@ pg_stat_sys_indexes| SELECT relid,
     idx_scan,
     last_idx_scan,
     idx_tup_read,
-    idx_tup_fetch
+    idx_tup_fetch,
+    stats_reset
    FROM pg_stat_all_indexes
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_sys_tables| SELECT relid,
@@ -2232,7 +2235,8 @@ pg_stat_sys_tables| SELECT relid,
     total_vacuum_time,
     total_autovacuum_time,
     total_analyze_time,
-    total_autoanalyze_time
+    total_autoanalyze_time,
+    stats_reset
    FROM pg_stat_all_tables
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_stat_user_functions| SELECT p.oid AS funcid,
@@ -2252,7 +2256,8 @@ pg_stat_user_indexes| SELECT relid,
     idx_scan,
     last_idx_scan,
     idx_tup_read,
-    idx_tup_fetch
+    idx_tup_fetch,
+    stats_reset
    FROM pg_stat_all_indexes
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_stat_user_tables| SELECT relid,
@@ -2284,7 +2289,8 @@ pg_stat_user_tables| SELECT relid,
     total_vacuum_time,
     total_autovacuum_time,
     total_analyze_time,
-    total_autoanalyze_time
+    total_autoanalyze_time,
+    stats_reset
    FROM pg_stat_all_tables
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_stat_wal| SELECT wal_records,
@@ -2370,7 +2376,8 @@ pg_statio_all_indexes| SELECT c.oid AS relid,
     c.relname,
     i.relname AS indexrelname,
     (pg_stat_get_blocks_fetched(i.oid) - pg_stat_get_blocks_hit(i.oid)) AS idx_blks_read,
-    pg_stat_get_blocks_hit(i.oid) AS idx_blks_hit
+    pg_stat_get_blocks_hit(i.oid) AS idx_blks_hit,
+    pg_stat_get_stat_reset_time(i.oid) AS stats_reset
    FROM (((pg_class c
      JOIN pg_index x ON ((c.oid = x.indrelid)))
      JOIN pg_class i ON ((i.oid = x.indexrelid)))
@@ -2394,7 +2401,8 @@ pg_statio_all_tables| SELECT c.oid AS relid,
     (pg_stat_get_blocks_fetched(t.oid) - pg_stat_get_blocks_hit(t.oid)) AS toast_blks_read,
     pg_stat_get_blocks_hit(t.oid) AS toast_blks_hit,
     x.idx_blks_read AS tidx_blks_read,
-    x.idx_blks_hit AS tidx_blks_hit
+    x.idx_blks_hit AS tidx_blks_hit,
+    pg_stat_get_stat_reset_time(c.oid) AS stats_reset
    FROM ((((pg_class c
      LEFT JOIN pg_class t ON ((c.reltoastrelid = t.oid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
@@ -2413,7 +2421,8 @@ pg_statio_sys_indexes| SELECT relid,
     relname,
     indexrelname,
     idx_blks_read,
-    idx_blks_hit
+    idx_blks_hit,
+    stats_reset
    FROM pg_statio_all_indexes
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_statio_sys_sequences| SELECT relid,
@@ -2433,7 +2442,8 @@ pg_statio_sys_tables| SELECT relid,
     toast_blks_read,
     toast_blks_hit,
     tidx_blks_read,
-    tidx_blks_hit
+    tidx_blks_hit,
+    stats_reset
    FROM pg_statio_all_tables
   WHERE ((schemaname = ANY (ARRAY['pg_catalog'::name, 'information_schema'::name])) OR (schemaname ~ '^pg_toast'::text));
 pg_statio_user_indexes| SELECT relid,
@@ -2442,7 +2452,8 @@ pg_statio_user_indexes| SELECT relid,
     relname,
     indexrelname,
     idx_blks_read,
-    idx_blks_hit
+    idx_blks_hit,
+    stats_reset
    FROM pg_statio_all_indexes
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_statio_user_sequences| SELECT relid,
@@ -2462,7 +2473,8 @@ pg_statio_user_tables| SELECT relid,
     toast_blks_read,
     toast_blks_hit,
     tidx_blks_read,
-    tidx_blks_hit
+    tidx_blks_hit,
+    stats_reset
    FROM pg_statio_all_tables
   WHERE ((schemaname <> ALL (ARRAY['pg_catalog'::name, 'information_schema'::name])) AND (schemaname !~ '^pg_toast'::text));
 pg_stats| SELECT n.nspname AS schemaname,
