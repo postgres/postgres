@@ -82,6 +82,22 @@ SELECT reverse(''::bytea);
 SELECT reverse('\xaa'::bytea);
 SELECT reverse('\xabcd'::bytea);
 
+SELECT ('\x' || repeat(' ', 32))::bytea;
+SELECT ('\x' || repeat('!', 32))::bytea;
+SELECT ('\x' || repeat('/', 34))::bytea;
+SELECT ('\x' || repeat('0', 34))::bytea;
+SELECT ('\x' || repeat('9', 32))::bytea;
+SELECT ('\x' || repeat(':', 32))::bytea;
+SELECT ('\x' || repeat('@', 34))::bytea;
+SELECT ('\x' || repeat('A', 34))::bytea;
+SELECT ('\x' || repeat('F', 32))::bytea;
+SELECT ('\x' || repeat('G', 32))::bytea;
+SELECT ('\x' || repeat('`', 34))::bytea;
+SELECT ('\x' || repeat('a', 34))::bytea;
+SELECT ('\x' || repeat('f', 32))::bytea;
+SELECT ('\x' || repeat('g', 32))::bytea;
+SELECT ('\x' || repeat('~', 34))::bytea;
+
 SET bytea_output TO escape;
 SELECT E'\\xDeAdBeEf'::bytea;
 SELECT E'\\x De Ad Be Ef '::bytea;

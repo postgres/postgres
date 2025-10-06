@@ -16,6 +16,7 @@
 #include <ctype.h>
 
 #include "mb/pg_wchar.h"
+#include "port/simd.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "varatt.h"
@@ -177,8 +178,8 @@ static const int8 hexlookup[128] = {
 	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 };
 
-uint64
-hex_encode(const char *src, size_t len, char *dst)
+static inline uint64
+hex_encode_scalar(const char *src, size_t len, char *dst)
 {
 	const char *end = src + len;
 
@@ -191,6 +192,55 @@ hex_encode(const char *src, size_t len, char *dst)
 		dst += 2;
 	}
 	return (uint64) len * 2;
+}
+
+uint64
+hex_encode(const char *src, size_t len, char *dst)
+{
+#ifdef USE_NO_SIMD
+	return hex_encode_scalar(src, len, dst);
+#else
+	const uint64 tail_idx = len & ~(sizeof(Vector8) - 1);
+	uint64		i;
+
+	/*
+	 * This splits the high and low nibbles of each byte into separate
+	 * vectors, adds the vectors to a mask that converts the nibbles to their
+	 * equivalent ASCII bytes, and interleaves those bytes back together to
+	 * form the final hex-encoded string.
+	 */
+	for (i = 0; i < tail_idx; i += sizeof(Vector8))
+	{
+		Vector8		srcv;
+		Vector8		lo;
+		Vector8		hi;
+		Vector8		mask;
+
+		vector8_load(&srcv, (const uint8 *) &src[i]);
+
+		lo = vector8_and(srcv, vector8_broadcast(0x0f));
+		mask = vector8_gt(lo, vector8_broadcast(0x9));
+		mask = vector8_and(mask, vector8_broadcast('a' - '0' - 10));
+		mask = vector8_add(mask, vector8_broadcast('0'));
+		lo = vector8_add(lo, mask);
+
+		hi = vector8_and(srcv, vector8_broadcast(0xf0));
+		hi = vector8_shift_right(hi, 4);
+		mask = vector8_gt(hi, vector8_broadcast(0x9));
+		mask = vector8_and(mask, vector8_broadcast('a' - '0' - 10));
+		mask = vector8_add(mask, vector8_broadcast('0'));
+		hi = vector8_add(hi, mask);
+
+		vector8_store((uint8 *) &dst[i * 2],
+					  vector8_interleave_low(hi, lo));
+		vector8_store((uint8 *) &dst[i * 2 + sizeof(Vector8)],
+					  vector8_interleave_high(hi, lo));
+	}
+
+	(void) hex_encode_scalar(src + i, len - i, dst + i * 2);
+
+	return (uint64) len * 2;
+#endif
 }
 
 static inline bool
@@ -213,8 +263,8 @@ hex_decode(const char *src, size_t len, char *dst)
 	return hex_decode_safe(src, len, dst, NULL);
 }
 
-uint64
-hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
+static inline uint64
+hex_decode_safe_scalar(const char *src, size_t len, char *dst, Node *escontext)
 {
 	const char *s,
 			   *srcend;
@@ -252,6 +302,85 @@ hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
 	}
 
 	return p - dst;
+}
+
+/*
+ * This helper converts each byte to its binary-equivalent nibble by
+ * subtraction and combines them to form the return bytes (separated by zero
+ * bytes).  Returns false if any input bytes are outside the expected ranges of
+ * ASCII values.  Otherwise, returns true.
+ */
+#ifndef USE_NO_SIMD
+static inline bool
+hex_decode_simd_helper(const Vector8 src, Vector8 *dst)
+{
+	Vector8		sub;
+	Vector8		mask_hi = vector8_interleave_low(vector8_broadcast(0), vector8_broadcast(0x0f));
+	Vector8		mask_lo = vector8_interleave_low(vector8_broadcast(0x0f), vector8_broadcast(0));
+	Vector8		tmp;
+	bool		ret;
+
+	tmp = vector8_gt(vector8_broadcast('9' + 1), src);
+	sub = vector8_and(tmp, vector8_broadcast('0'));
+
+	tmp = vector8_gt(src, vector8_broadcast('A' - 1));
+	tmp = vector8_and(tmp, vector8_broadcast('A' - 10));
+	sub = vector8_add(sub, tmp);
+
+	tmp = vector8_gt(src, vector8_broadcast('a' - 1));
+	tmp = vector8_and(tmp, vector8_broadcast('a' - 'A'));
+	sub = vector8_add(sub, tmp);
+
+	*dst = vector8_issub(src, sub);
+	ret = !vector8_has_ge(*dst, 0x10);
+
+	tmp = vector8_and(*dst, mask_hi);
+	tmp = vector8_shift_right(tmp, 8);
+	*dst = vector8_and(*dst, mask_lo);
+	*dst = vector8_shift_left(*dst, 4);
+	*dst = vector8_or(*dst, tmp);
+	return ret;
+}
+#endif							/* ! USE_NO_SIMD */
+
+uint64
+hex_decode_safe(const char *src, size_t len, char *dst, Node *escontext)
+{
+#ifdef USE_NO_SIMD
+	return hex_decode_safe_scalar(src, len, dst, escontext);
+#else
+	const uint64 tail_idx = len & ~(sizeof(Vector8) * 2 - 1);
+	uint64		i;
+	bool		success = true;
+
+	/*
+	 * We must process 2 vectors at a time since the output will be half the
+	 * length of the input.
+	 */
+	for (i = 0; i < tail_idx; i += sizeof(Vector8) * 2)
+	{
+		Vector8		srcv;
+		Vector8		dstv1;
+		Vector8		dstv2;
+
+		vector8_load(&srcv, (const uint8 *) &src[i]);
+		success &= hex_decode_simd_helper(srcv, &dstv1);
+
+		vector8_load(&srcv, (const uint8 *) &src[i + sizeof(Vector8)]);
+		success &= hex_decode_simd_helper(srcv, &dstv2);
+
+		vector8_store((uint8 *) &dst[i / 2], vector8_pack_16(dstv1, dstv2));
+	}
+
+	/*
+	 * If something didn't look right in the vector path, try again in the
+	 * scalar path so that we can handle it correctly.
+	 */
+	if (!success)
+		i = 0;
+
+	return i / 2 + hex_decode_safe_scalar(src + i, len - i, dst + i / 2, escontext);
+#endif
 }
 
 static uint64
