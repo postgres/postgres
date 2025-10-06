@@ -840,10 +840,10 @@ SELECT nextval('test_seq1');
 (1 row)
 
 -- pg_get_sequence_data
-SELECT * FROM pg_get_sequence_data('test_seq1');
- last_value | is_called 
-------------+-----------
-         10 | t
+SELECT last_value, is_called, page_lsn <= pg_current_wal_lsn() as lsn FROM pg_get_sequence_data('test_seq1');
+ last_value | is_called | lsn 
+------------+-----------+-----
+         10 | t         | t
 (1 row)
 
 DROP SEQUENCE test_seq1;

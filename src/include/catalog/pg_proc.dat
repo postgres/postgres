@@ -3436,8 +3436,8 @@
 { oid => '6427', descr => 'return sequence tuple, for use by pg_dump',
   proname => 'pg_get_sequence_data', provolatile => 'v', proparallel => 'u',
   prorettype => 'record', proargtypes => 'regclass',
-  proallargtypes => '{regclass,int8,bool}', proargmodes => '{i,o,o}',
-  proargnames => '{sequence_oid,last_value,is_called}',
+  proallargtypes => '{regclass,int8,bool,pg_lsn}', proargmodes => '{i,o,o,o}',
+  proargnames => '{sequence_oid,last_value,is_called,page_lsn}',
   prosrc => 'pg_get_sequence_data' },
 
 { oid => '275', descr => 'return the next oid for a system table',
