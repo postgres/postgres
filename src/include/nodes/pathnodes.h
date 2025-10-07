@@ -185,6 +185,10 @@ typedef struct PlannerGlobal
 
 	/* hash table for NOT NULL attnums of relations */
 	struct HTAB *rel_notnullatts_hash pg_node_attr(read_write_ignore);
+
+	/* extension state */
+	void	  **extension_state pg_node_attr(read_write_ignore);
+	int			extension_state_allocated;
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -586,6 +590,10 @@ struct PlannerInfo
 
 	/* PartitionPruneInfos added in this query's plan. */
 	List	   *partPruneInfos;
+
+	/* extension state */
+	void	  **extension_state pg_node_attr(read_write_ignore);
+	int			extension_state_allocated;
 };
 
 
@@ -1097,6 +1105,10 @@ typedef struct RelOptInfo
 	List	  **partexprs pg_node_attr(read_write_ignore);
 	/* Nullable partition key expressions */
 	List	  **nullable_partexprs pg_node_attr(read_write_ignore);
+
+	/* extension state */
+	void	  **extension_state pg_node_attr(read_write_ignore);
+	int			extension_state_allocated;
 } RelOptInfo;
 
 /*

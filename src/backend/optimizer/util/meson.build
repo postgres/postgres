@@ -3,6 +3,7 @@
 backend_sources += files(
   'appendinfo.c',
   'clauses.c',
+  'extendplan.c',
   'inherit.c',
   'joininfo.c',
   'orclauses.c',
