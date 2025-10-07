@@ -77,6 +77,7 @@ tests += {
       't/001_basic.pl',
       't/010_tab_completion.pl',
       't/020_cancel.pl',
+      't/030_pager.pl',
     ],
   },
 }
