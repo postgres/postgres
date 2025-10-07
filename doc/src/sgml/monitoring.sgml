@@ -5651,7 +5651,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
       </para>
       <para>
        Total time spent sleeping due to cost-based delay (see
-       <xref linkend="runtime-config-resource-vacuum-cost"/>, in milliseconds
+       <xref linkend="runtime-config-resource-vacuum-cost"/>), in milliseconds
        (if <xref linkend="guc-track-cost-delay-timing"/> is enabled, otherwise
        zero).
       </para></entry>
