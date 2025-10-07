@@ -1217,7 +1217,7 @@ select event_id
 drop table events_child, events, other_events;
 reset enable_indexonlyscan;
 --
--- Test handling of UNION with provably empty inputs
+-- Test handling of UNION / EXCEPT / INTERSECT with provably empty inputs
 --
 -- Ensure the empty UNION input is pruned and de-duplication is done for the
 -- remaining relation.
@@ -1270,6 +1270,90 @@ ORDER BY 1;
          Replaces: Aggregate
          One-Time Filter: false
 (7 rows)
+
+-- Ensure the planner provides a const-false Result node
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT four FROM tenk1
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.two
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- As above, with the inputs swapped
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.four
+   Sort Key: unnamed_subquery.four
+   ->  Result
+         Output: unnamed_subquery.four
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Try with both inputs dummy
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT four FROM tenk1 WHERE 1=2
+INTERSECT
+SELECT two FROM tenk1 WHERE 1=2
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.four
+   Sort Key: unnamed_subquery.four
+   ->  Result
+         Output: unnamed_subquery.four
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Ensure the planner provides a const-false Result node when the left input
+-- is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 WHERE 1=2
+EXCEPT
+SELECT four FROM tenk1
+ORDER BY 1;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Sort
+   Output: unnamed_subquery.two
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1
+         One-Time Filter: false
+(7 rows)
+
+-- Ensure the planner only scans the left input when right input is empty
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1
+EXCEPT ALL
+SELECT four FROM tenk1 WHERE 1=2
+ORDER BY 1;
+           QUERY PLAN           
+--------------------------------
+ Sort
+   Output: tenk1.two
+   Sort Key: tenk1.two
+   ->  Seq Scan on public.tenk1
+         Output: tenk1.two
+(5 rows)
 
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
