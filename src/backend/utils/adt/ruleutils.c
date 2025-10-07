@@ -8751,8 +8751,16 @@ get_parameter(Param *param, deparse_context *context)
 	subplan = find_param_generator(param, context, &column);
 	if (subplan)
 	{
-		appendStringInfo(context->buf, "(%s%s).col%d",
+		const char *nameprefix;
+
+		if (subplan->isInitPlan)
+			nameprefix = "InitPlan ";
+		else
+			nameprefix = "SubPlan ";
+
+		appendStringInfo(context->buf, "(%s%s%s).col%d",
 						 subplan->useHashTable ? "hashed " : "",
+						 nameprefix,
 						 subplan->plan_name, column + 1);
 
 		return;
@@ -9589,11 +9597,19 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
+					const char *nameprefix;
+
 					/* No referencing Params, so show the SubPlan's name */
-					if (subplan->useHashTable)
-						appendStringInfo(buf, "hashed %s)", subplan->plan_name);
+					if (subplan->isInitPlan)
+						nameprefix = "InitPlan ";
 					else
-						appendStringInfo(buf, "%s)", subplan->plan_name);
+						nameprefix = "SubPlan ";
+					if (subplan->useHashTable)
+						appendStringInfo(buf, "hashed %s%s)",
+										 nameprefix, subplan->plan_name);
+					else
+						appendStringInfo(buf, "%s%s)",
+										 nameprefix, subplan->plan_name);
 				}
 			}
 			break;
@@ -9613,11 +9629,18 @@ get_rule_expr(Node *node, deparse_context *context,
 				foreach(lc, asplan->subplans)
 				{
 					SubPlan    *splan = lfirst_node(SubPlan, lc);
+					const char *nameprefix;
 
-					if (splan->useHashTable)
-						appendStringInfo(buf, "hashed %s", splan->plan_name);
+					if (splan->isInitPlan)
+						nameprefix = "InitPlan ";
 					else
-						appendStringInfoString(buf, splan->plan_name);
+						nameprefix = "SubPlan ";
+					if (splan->useHashTable)
+						appendStringInfo(buf, "hashed %s%s", nameprefix,
+										 splan->plan_name);
+					else
+						appendStringInfo(buf, "%s%s", nameprefix,
+										 splan->plan_name);
 					if (lnext(asplan->subplans, lc))
 						appendStringInfoString(buf, " or ");
 				}

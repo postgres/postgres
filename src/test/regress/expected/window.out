@@ -4250,14 +4250,14 @@ SELECT 1 FROM
   (SELECT ntile(s1.x) OVER () AS c
    FROM (SELECT (SELECT 1) AS x) AS s1) s
 WHERE s.c = 1;
-                           QUERY PLAN                           
-----------------------------------------------------------------
+                             QUERY PLAN                              
+---------------------------------------------------------------------
  Subquery Scan on s
    Filter: (s.c = 1)
    ->  WindowAgg
          Window: w1 AS (ROWS UNBOUNDED PRECEDING)
-         Run Condition: (ntile((InitPlan 1).col1) OVER w1 <= 1)
-         InitPlan 1
+         Run Condition: (ntile((InitPlan expr_1).col1) OVER w1 <= 1)
+         InitPlan expr_1
            ->  Result
          ->  Result
 (8 rows)
@@ -4338,7 +4338,7 @@ WHERE c = 1;
    Filter: (emp.c = 1)
    ->  WindowAgg
          Window: w1 AS (ORDER BY empsalary.empno)
-         InitPlan 1
+         InitPlan expr_1
            ->  Result
          ->  Sort
                Sort Key: empsalary.empno DESC

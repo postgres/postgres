@@ -3175,13 +3175,13 @@ select sum(c1) from ft1 group by c2 having avg(c1 * (random() <= 1)::int) > 100 
 -- of an initplan) can be trouble, per bug #15781
 explain (verbose, costs off)
 select exists(select 1 from pg_enum), sum(c1) from ft1;
-                    QUERY PLAN                    
---------------------------------------------------
+                    QUERY PLAN                     
+---------------------------------------------------
  Foreign Scan
-   Output: (InitPlan 1).col1, (sum(ft1.c1))
+   Output: (InitPlan exists_1).col1, (sum(ft1.c1))
    Relations: Aggregate on (public.ft1)
    Remote SQL: SELECT sum("C 1") FROM "S 1"."T 1"
-   InitPlan 1
+   InitPlan exists_1
      ->  Seq Scan on pg_catalog.pg_enum
 (6 rows)
 
@@ -3196,8 +3196,8 @@ select exists(select 1 from pg_enum), sum(c1) from ft1 group by 1;
                     QUERY PLAN                     
 ---------------------------------------------------
  GroupAggregate
-   Output: (InitPlan 1).col1, sum(ft1.c1)
-   InitPlan 1
+   Output: (InitPlan exists_1).col1, sum(ft1.c1)
+   InitPlan exists_1
      ->  Seq Scan on pg_catalog.pg_enum
    ->  Foreign Scan on public.ft1
          Output: ft1.c1
@@ -3356,15 +3356,15 @@ select distinct (select count(*) filter (where t2.c2 = 6 and t2.c1 < 10) from ft
                                                           QUERY PLAN                                                          
 ------------------------------------------------------------------------------------------------------------------------------
  Unique
-   Output: ((SubPlan 1))
+   Output: ((SubPlan expr_1))
    ->  Sort
-         Output: ((SubPlan 1))
-         Sort Key: ((SubPlan 1))
+         Output: ((SubPlan expr_1))
+         Sort Key: ((SubPlan expr_1))
          ->  Foreign Scan
-               Output: (SubPlan 1)
+               Output: (SubPlan expr_1)
                Relations: Aggregate on (public.ft2 t2)
                Remote SQL: SELECT count(*) FILTER (WHERE ((c2 = 6) AND ("C 1" < 10))) FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
-               SubPlan 1
+               SubPlan expr_1
                  ->  Foreign Scan on public.ft1 t1
                        Output: (count(*) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
                        Remote SQL: SELECT NULL FROM "S 1"."T 1" WHERE (("C 1" = 6))
@@ -3382,14 +3382,14 @@ select distinct (select count(t1.c1) filter (where t2.c2 = 6 and t2.c1 < 10) fro
                                                                       QUERY PLAN                                                                      
 ------------------------------------------------------------------------------------------------------------------------------------------------------
  Unique
-   Output: ((SubPlan 1))
+   Output: ((SubPlan expr_1))
    ->  Sort
-         Output: ((SubPlan 1))
-         Sort Key: ((SubPlan 1))
+         Output: ((SubPlan expr_1))
+         Sort Key: ((SubPlan expr_1))
          ->  Foreign Scan on public.ft2 t2
-               Output: (SubPlan 1)
+               Output: (SubPlan expr_1)
                Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (((c2 % 6) = 0))
-               SubPlan 1
+               SubPlan expr_1
                  ->  Foreign Scan
                        Output: (count(t1.c1) FILTER (WHERE ((t2.c2 = 6) AND (t2.c1 < 10))))
                        Relations: Aggregate on (public.ft1 t1)
@@ -3421,14 +3421,14 @@ select sum(c1) filter (where (c1 / c1) * random() <= 1) from ft1 group by c2 ord
 
 explain (verbose, costs off)
 select sum(c2) filter (where c2 in (select c2 from ft1 where c2 < 5)) from ft1;
-                                  QUERY PLAN                                   
--------------------------------------------------------------------------------
+                                    QUERY PLAN                                     
+-----------------------------------------------------------------------------------
  Aggregate
-   Output: sum(ft1.c2) FILTER (WHERE (ANY (ft1.c2 = (hashed SubPlan 1).col1)))
+   Output: sum(ft1.c2) FILTER (WHERE (ANY (ft1.c2 = (hashed SubPlan any_1).col1)))
    ->  Foreign Scan on public.ft1
          Output: ft1.c2
          Remote SQL: SELECT c2 FROM "S 1"."T 1"
-   SubPlan 1
+   SubPlan any_1
      ->  Foreign Scan on public.ft1 ft1_1
            Output: ft1_1.c2
            Remote SQL: SELECT c2 FROM "S 1"."T 1" WHERE ((c2 < 5))
@@ -6444,14 +6444,14 @@ UPDATE ft2 AS target SET (c2, c7) = (
         FROM ft2 AS src
         WHERE target.c1 = src.c1
 ) WHERE c1 > 1100;
-                                                      QUERY PLAN                                                       
------------------------------------------------------------------------------------------------------------------------
+                                                         QUERY PLAN                                                          
+-----------------------------------------------------------------------------------------------------------------------------
  Update on public.ft2 target
    Remote SQL: UPDATE "S 1"."T 1" SET c2 = $2, c7 = $3 WHERE ctid = $1
    ->  Foreign Scan on public.ft2 target
-         Output: (SubPlan 1).col1, (SubPlan 1).col2, (rescan SubPlan 1), target.ctid, target.*
+         Output: (SubPlan multiexpr_1).col1, (SubPlan multiexpr_1).col2, (rescan SubPlan multiexpr_1), target.ctid, target.*
          Remote SQL: SELECT "C 1", c2, c3, c4, c5, c6, c7, c8, ctid FROM "S 1"."T 1" WHERE (("C 1" > 1100)) FOR UPDATE
-         SubPlan 1
+         SubPlan multiexpr_1
            ->  Foreign Scan on public.ft2 src
                  Output: (src.c2 * 10), src.c7
                  Remote SQL: SELECT c2, c7 FROM "S 1"."T 1" WHERE (($1::integer = "C 1"))
@@ -12132,12 +12132,12 @@ INSERT INTO local_tbl VALUES (1505, 505, 'foo');
 ANALYZE local_tbl;
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt WHERE a < 3000) FROM async_pt WHERE a < 3000) t2 ON t1.a = t2.a;
-                                       QUERY PLAN                                       
-----------------------------------------------------------------------------------------
+                                        QUERY PLAN                                        
+------------------------------------------------------------------------------------------
  Nested Loop Left Join
-   Output: t1.a, t1.b, t1.c, async_pt.a, async_pt.b, async_pt.c, ((InitPlan 1).col1)
+   Output: t1.a, t1.b, t1.c, async_pt.a, async_pt.b, async_pt.c, ((InitPlan expr_1).col1)
    Join Filter: (t1.a = async_pt.a)
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate
            Output: count(*)
            ->  Append
@@ -12149,10 +12149,10 @@ SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt W
          Output: t1.a, t1.b, t1.c
    ->  Append
          ->  Async Foreign Scan on public.async_p1 async_pt_1
-               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c, (InitPlan 1).col1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c, (InitPlan expr_1).col1
                Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((a < 3000))
          ->  Async Foreign Scan on public.async_p2 async_pt_2
-               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c, (InitPlan 1).col1
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c, (InitPlan expr_1).col1
                Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((a < 3000))
 (20 rows)
 
@@ -12163,7 +12163,7 @@ SELECT * FROM local_tbl t1 LEFT JOIN (SELECT *, (SELECT count(*) FROM async_pt W
  Nested Loop Left Join (actual rows=1.00 loops=1)
    Join Filter: (t1.a = async_pt.a)
    Rows Removed by Join Filter: 399
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate (actual rows=1.00 loops=1)
            ->  Append (actual rows=400.00 loops=1)
                  ->  Async Foreign Scan on async_p1 async_pt_4 (actual rows=200.00 loops=1)
@@ -12386,12 +12386,12 @@ CREATE FOREIGN TABLE foreign_tbl2 () INHERITS (foreign_tbl)
   SERVER loopback OPTIONS (table_name 'base_tbl');
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT a FROM base_tbl WHERE (a, random() > 0) IN (SELECT a, random() > 0 FROM foreign_tbl);
-                                                  QUERY PLAN                                                   
----------------------------------------------------------------------------------------------------------------
+                                                      QUERY PLAN                                                       
+-----------------------------------------------------------------------------------------------------------------------
  Seq Scan on public.base_tbl
    Output: base_tbl.a
-   Filter: (ANY ((base_tbl.a = (SubPlan 1).col1) AND ((random() > '0'::double precision) = (SubPlan 1).col2)))
-   SubPlan 1
+   Filter: (ANY ((base_tbl.a = (SubPlan any_1).col1) AND ((random() > '0'::double precision) = (SubPlan any_1).col2)))
+   SubPlan any_1
      ->  Result
            Output: base_tbl.a, (random() > '0'::double precision)
            ->  Append

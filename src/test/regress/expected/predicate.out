@@ -247,11 +247,11 @@ SELECT * FROM pred_tab t1
                        QUERY PLAN                        
 ---------------------------------------------------------
  Nested Loop Left Join
-   Join Filter: EXISTS(SubPlan 1)
+   Join Filter: EXISTS(SubPlan exists_1)
    ->  Seq Scan on pred_tab t1
    ->  Materialize
          ->  Seq Scan on pred_tab t2
-   SubPlan 1
+   SubPlan exists_1
      ->  Nested Loop
            ->  Nested Loop
                  ->  Nested Loop
@@ -274,8 +274,8 @@ SELECT * FROM pred_tab t1
                  QUERY PLAN                 
 --------------------------------------------
  Nested Loop Left Join
-   Join Filter: (InitPlan 1).col1
-   InitPlan 1
+   Join Filter: (InitPlan exists_1).col1
+   InitPlan exists_1
      ->  Result
            Replaces: Join on t3, t4, t5, t6
            One-Time Filter: false

@@ -38,6 +38,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/planner.h"
 #include "optimizer/subselect.h"
 #include "optimizer/tlist.h"
 #include "parser/parse_clause.h"
@@ -339,6 +340,8 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	memcpy(subroot, root, sizeof(PlannerInfo));
 	subroot->query_level++;
 	subroot->parent_root = root;
+	subroot->plan_name = choose_plan_name(root->glob, "minmax", true);
+
 	/* reset subplan-related stuff */
 	subroot->plan_params = NIL;
 	subroot->outer_params = NULL;

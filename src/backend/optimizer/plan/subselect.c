@@ -103,6 +103,7 @@ static Bitmapset *finalize_plan(PlannerInfo *root,
 								Bitmapset *scan_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 static bool finalize_agg_primnode(Node *node, finalize_primnode_context *context);
+static const char *sublinktype_to_string(SubLinkType subLinkType);
 
 
 /*
@@ -172,6 +173,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	Plan	   *plan;
 	List	   *plan_params;
 	Node	   *result;
+	const char *sublinkstr = sublinktype_to_string(subLinkType);
 
 	/*
 	 * Copy the source Query node.  This is a quick and dirty kluge to resolve
@@ -218,8 +220,9 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 	Assert(root->plan_params == NIL);
 
 	/* Generate Paths for the subquery */
-	subroot = subquery_planner(root->glob, subquery, root, false,
-							   tuple_fraction, NULL);
+	subroot = subquery_planner(root->glob, subquery,
+							   choose_plan_name(root->glob, sublinkstr, true),
+							   root, false, tuple_fraction, NULL);
 
 	/* Isolate the params needed by this specific subplan */
 	plan_params = root->plan_params;
@@ -264,9 +267,12 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 										 &newtestexpr, &paramIds);
 		if (subquery)
 		{
+			char	   *plan_name;
+
 			/* Generate Paths for the ANY subquery; we'll need all rows */
-			subroot = subquery_planner(root->glob, subquery, root, false, 0.0,
-									   NULL);
+			plan_name = choose_plan_name(root->glob, sublinkstr, true);
+			subroot = subquery_planner(root->glob, subquery, plan_name,
+									   root, false, 0.0, NULL);
 
 			/* Isolate the params needed by this specific subplan */
 			plan_params = root->plan_params;
@@ -324,15 +330,16 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 {
 	Node	   *result;
 	SubPlan    *splan;
-	bool		isInitPlan;
 	ListCell   *lc;
 
 	/*
-	 * Initialize the SubPlan node.  Note plan_id, plan_name, and cost fields
-	 * are set further down.
+	 * Initialize the SubPlan node.
+	 *
+	 * Note: plan_id and cost fields are set further down.
 	 */
 	splan = makeNode(SubPlan);
 	splan->subLinkType = subLinkType;
+	splan->plan_name = subroot->plan_name;
 	splan->testexpr = NULL;
 	splan->paramIds = NIL;
 	get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
@@ -391,7 +398,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 		Assert(testexpr == NULL);
 		prm = generate_new_exec_param(root, BOOLOID, -1, InvalidOid);
 		splan->setParam = list_make1_int(prm->paramid);
-		isInitPlan = true;
+		splan->isInitPlan = true;
 		result = (Node *) prm;
 	}
 	else if (splan->parParam == NIL && subLinkType == EXPR_SUBLINK)
@@ -406,7 +413,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 									  exprTypmod((Node *) te->expr),
 									  exprCollation((Node *) te->expr));
 		splan->setParam = list_make1_int(prm->paramid);
-		isInitPlan = true;
+		splan->isInitPlan = true;
 		result = (Node *) prm;
 	}
 	else if (splan->parParam == NIL && subLinkType == ARRAY_SUBLINK)
@@ -426,7 +433,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 									  exprTypmod((Node *) te->expr),
 									  exprCollation((Node *) te->expr));
 		splan->setParam = list_make1_int(prm->paramid);
-		isInitPlan = true;
+		splan->isInitPlan = true;
 		result = (Node *) prm;
 	}
 	else if (splan->parParam == NIL && subLinkType == ROWCOMPARE_SUBLINK)
@@ -442,7 +449,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 								  testexpr,
 								  params);
 		splan->setParam = list_copy(splan->paramIds);
-		isInitPlan = true;
+		splan->isInitPlan = true;
 
 		/*
 		 * The executable expression is returned to become part of the outer
@@ -476,12 +483,12 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 		/* It can be an initplan if there are no parParams. */
 		if (splan->parParam == NIL)
 		{
-			isInitPlan = true;
+			splan->isInitPlan = true;
 			result = (Node *) makeNullConst(RECORDOID, -1, InvalidOid);
 		}
 		else
 		{
-			isInitPlan = false;
+			splan->isInitPlan = false;
 			result = (Node *) splan;
 		}
 	}
@@ -536,7 +543,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 			plan = materialize_finished_plan(plan);
 
 		result = (Node *) splan;
-		isInitPlan = false;
+		splan->isInitPlan = false;
 	}
 
 	/*
@@ -547,7 +554,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 	root->glob->subroots = lappend(root->glob->subroots, subroot);
 	splan->plan_id = list_length(root->glob->subplans);
 
-	if (isInitPlan)
+	if (splan->isInitPlan)
 		root->init_plans = lappend(root->init_plans, splan);
 
 	/*
@@ -557,14 +564,9 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 	 * there's no point since it won't get re-run without parameter changes
 	 * anyway.  The input of a hashed subplan doesn't need REWIND either.
 	 */
-	if (splan->parParam == NIL && !isInitPlan && !splan->useHashTable)
+	if (splan->parParam == NIL && !splan->isInitPlan && !splan->useHashTable)
 		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
 												   splan->plan_id);
-
-	/* Label the subplan for EXPLAIN purposes */
-	splan->plan_name = psprintf("%s %d",
-								isInitPlan ? "InitPlan" : "SubPlan",
-								splan->plan_id);
 
 	/* Lastly, fill in the cost estimates for use later */
 	cost_subplan(root, splan, plan);
@@ -965,8 +967,9 @@ SS_process_ctes(PlannerInfo *root)
 		 * Generate Paths for the CTE query.  Always plan for full retrieval
 		 * --- we don't have enough info to predict otherwise.
 		 */
-		subroot = subquery_planner(root->glob, subquery, root,
-								   cte->cterecursive, 0.0, NULL);
+		subroot = subquery_planner(root->glob, subquery,
+								   choose_plan_name(root->glob, cte->ctename, false),
+								   root, cte->cterecursive, 0.0, NULL);
 
 		/*
 		 * Since the current query level doesn't yet contain any RTEs, it
@@ -989,10 +992,11 @@ SS_process_ctes(PlannerInfo *root)
 		 * Make a SubPlan node for it.  This is just enough unlike
 		 * build_subplan that we can't share code.
 		 *
-		 * Note plan_id, plan_name, and cost fields are set further down.
+		 * Note: plan_id and cost fields are set further down.
 		 */
 		splan = makeNode(SubPlan);
 		splan->subLinkType = CTE_SUBLINK;
+		splan->plan_name = subroot->plan_name;
 		splan->testexpr = NULL;
 		splan->paramIds = NIL;
 		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
@@ -1038,9 +1042,6 @@ SS_process_ctes(PlannerInfo *root)
 		root->init_plans = lappend(root->init_plans, splan);
 
 		root->cte_plan_ids = lappend_int(root->cte_plan_ids, splan->plan_id);
-
-		/* Label the subplan for EXPLAIN purposes */
-		splan->plan_name = psprintf("CTE %s", cte->ctename);
 
 		/* Lastly, fill in the cost estimates for use later */
 		cost_subplan(root, splan, plan);
@@ -3185,7 +3186,8 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
 	node->plan_id = list_length(root->glob->subplans);
-	node->plan_name = psprintf("InitPlan %d", node->plan_id);
+	node->plan_name = subroot->plan_name;
+	node->isInitPlan = true;
 	get_first_col_type(plan, &node->firstColType, &node->firstColTypmod,
 					   &node->firstColCollation);
 	node->parallel_safe = plan->parallel_safe;
@@ -3200,4 +3202,33 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 
 	/* Set costs of SubPlan using info from the plan tree */
 	cost_subplan(subroot, node, plan);
+}
+
+/*
+ * Get a string equivalent of a given subLinkType.
+ */
+static const char *
+sublinktype_to_string(SubLinkType subLinkType)
+{
+	switch (subLinkType)
+	{
+		case EXISTS_SUBLINK:
+			return "exists";
+		case ALL_SUBLINK:
+			return "all";
+		case ANY_SUBLINK:
+			return "any";
+		case ROWCOMPARE_SUBLINK:
+			return "rowcompare";
+		case EXPR_SUBLINK:
+			return "expr";
+		case MULTIEXPR_SUBLINK:
+			return "multiexpr";
+		case ARRAY_SUBLINK:
+			return "array";
+		case CTE_SUBLINK:
+			return "cte";
+	}
+	Assert(false);
+	return "???";
 }

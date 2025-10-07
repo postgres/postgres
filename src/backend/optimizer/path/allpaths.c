@@ -2529,6 +2529,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	RelOptInfo *sub_final_rel;
 	Bitmapset  *run_cond_attrs = NULL;
 	ListCell   *lc;
+	char	   *plan_name;
 
 	/*
 	 * Must copy the Query so that planning doesn't mess up the RTE contents
@@ -2671,8 +2672,9 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	Assert(root->plan_params == NIL);
 
 	/* Generate a subroot and Paths for the subquery */
-	rel->subroot = subquery_planner(root->glob, subquery, root, false,
-									tuple_fraction, NULL);
+	plan_name = choose_plan_name(root->glob, rte->eref->aliasname, false);
+	rel->subroot = subquery_planner(root->glob, subquery, plan_name,
+									root, false, tuple_fraction, NULL);
 
 	/* Isolate the params needed by this specific subplan */
 	rel->subplan_params = root->plan_params;

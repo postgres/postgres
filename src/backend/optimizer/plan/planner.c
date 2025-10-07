@@ -439,7 +439,8 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	}
 
 	/* primary planning entry point (may recurse for subqueries) */
-	root = subquery_planner(glob, parse, NULL, false, tuple_fraction, NULL);
+	root = subquery_planner(glob, parse, NULL, NULL, false, tuple_fraction,
+							NULL);
 
 	/* Select best Path and turn it into a Plan */
 	final_rel = fetch_upper_rel(root, UPPERREL_FINAL, NULL);
@@ -630,6 +631,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
  *
  * glob is the global state for the current planner run.
  * parse is the querytree produced by the parser & rewriter.
+ * plan_name is the name to assign to this subplan (NULL at the top level).
  * parent_root is the immediate parent Query's info (NULL at the top level).
  * hasRecursion is true if this is a recursive WITH query.
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
@@ -656,9 +658,9 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
  *--------------------
  */
 PlannerInfo *
-subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
-				 bool hasRecursion, double tuple_fraction,
-				 SetOperationStmt *setops)
+subquery_planner(PlannerGlobal *glob, Query *parse, char *plan_name,
+				 PlannerInfo *parent_root, bool hasRecursion,
+				 double tuple_fraction, SetOperationStmt *setops)
 {
 	PlannerInfo *root;
 	List	   *newWithCheckOptions;
@@ -673,6 +675,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse, PlannerInfo *parent_root,
 	root->parse = parse;
 	root->glob = glob;
 	root->query_level = parent_root ? parent_root->query_level + 1 : 1;
+	root->plan_name = plan_name;
 	root->parent_root = parent_root;
 	root->plan_params = NIL;
 	root->outer_params = NULL;
@@ -8831,5 +8834,72 @@ create_partial_unique_paths(PlannerInfo *root, RelOptInfo *input_rel,
 		create_final_unique_paths(root, partial_unique_rel,
 								  sortPathkeys, groupClause,
 								  sjinfo, unique_rel);
+	}
+}
+
+/*
+ * Choose a unique name for some subroot.
+ *
+ * Modifies glob->subplanNames to track names already used.
+ */
+char *
+choose_plan_name(PlannerGlobal *glob, const char *name, bool always_number)
+{
+	unsigned	n;
+
+	/*
+	 * If a numeric suffix is not required, then search the list of
+	 * previously-assigned names for a match. If none is found, then we can
+	 * use the provided name without modification.
+	 */
+	if (!always_number)
+	{
+		bool		found = false;
+
+		foreach_ptr(char, subplan_name, glob->subplanNames)
+		{
+			if (strcmp(subplan_name, name) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			/* pstrdup here is just to avoid cast-away-const */
+			char	   *chosen_name = pstrdup(name);
+
+			glob->subplanNames = lappend(glob->subplanNames, chosen_name);
+			return chosen_name;
+		}
+	}
+
+	/*
+	 * If a numeric suffix is required or if the un-suffixed name is already
+	 * in use, then loop until we find a positive integer that produces a
+	 * novel name.
+	 */
+	for (n = 1; true; ++n)
+	{
+		char	   *proposed_name = psprintf("%s_%u", name, n);
+		bool		found = false;
+
+		foreach_ptr(char, subplan_name, glob->subplanNames)
+		{
+			if (strcmp(subplan_name, proposed_name) == 0)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			glob->subplanNames = lappend(glob->subplanNames, proposed_name);
+			return proposed_name;
+		}
+
+		pfree(proposed_name);
 	}
 }

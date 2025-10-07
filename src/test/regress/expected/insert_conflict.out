@@ -61,9 +61,9 @@ explain (costs off) insert into insertconflicttest values(0, 'Crowberry') on con
  Insert on insertconflicttest
    Conflict Resolution: UPDATE
    Conflict Arbiter Indexes: op_index_key, collation_index_key, both_index_key
-   Conflict Filter: EXISTS(SubPlan 1)
+   Conflict Filter: EXISTS(SubPlan exists_1)
    ->  Result
-   SubPlan 1
+   SubPlan exists_1
      ->  Index Only Scan using both_index_expr_key on insertconflicttest ii
            Index Cond: (key = excluded.key)
 (8 rows)

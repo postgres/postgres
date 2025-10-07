@@ -232,6 +232,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		PlannerInfo *subroot;
 		List	   *tlist;
 		bool		trivial_tlist;
+		char	   *plan_name;
 
 		Assert(subquery != NULL);
 
@@ -246,7 +247,9 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * parentOp, pass that down to encourage subquery_planner to consider
 		 * suitably-sorted Paths.
 		 */
-		subroot = rel->subroot = subquery_planner(root->glob, subquery, root,
+		plan_name = choose_plan_name(root->glob, "setop", true);
+		subroot = rel->subroot = subquery_planner(root->glob, subquery,
+												  plan_name, root,
 												  false, root->tuple_fraction,
 												  parentOp);
 

@@ -1828,29 +1828,29 @@ WHEN MATCHED AND t.c > s.cnt THEN
    ->  Hash Join
          Output: t.ctid, s.a, s.b, s.c, s.d, s.ctid
          Hash Cond: (t.a = s.a)
-         Join Filter: (t.b < (SubPlan 1))
+         Join Filter: (t.b < (SubPlan expr_1))
          ->  Seq Scan on public.tgt t
                Output: t.ctid, t.a, t.b
          ->  Hash
                Output: s.a, s.b, s.c, s.d, s.ctid
                ->  Seq Scan on public.src s
                      Output: s.a, s.b, s.c, s.d, s.ctid
-         SubPlan 1
+         SubPlan expr_1
            ->  Aggregate
                  Output: count(*)
                  ->  Seq Scan on public.ref r
                        Output: r.ab, r.cd
                        Filter: ((r.ab = (s.a + s.b)) AND (r.cd = (s.c - s.d)))
-   SubPlan 4
+   SubPlan expr_3
      ->  Aggregate
            Output: count(*)
            ->  Seq Scan on public.ref r_2
                  Output: r_2.ab, r_2.cd
                  Filter: ((r_2.ab = (s.a + s.b)) AND (r_2.cd = (s.c - s.d)))
-   SubPlan 3
+   SubPlan multiexpr_1
      ->  Result
-           Output: s.b, (InitPlan 2).col1
-           InitPlan 2
+           Output: s.b, (InitPlan expr_2).col1
+           InitPlan expr_2
              ->  Aggregate
                    Output: count(*)
                    ->  Seq Scan on public.ref r_1

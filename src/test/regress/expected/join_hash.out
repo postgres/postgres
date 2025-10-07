@@ -1031,30 +1031,30 @@ WHERE
 ------------------------------------------------------------------------------------------------
  Hash Join
    Output: hjtest_1.a, hjtest_2.a, (hjtest_1.tableoid)::regclass, (hjtest_2.tableoid)::regclass
-   Hash Cond: ((hjtest_1.id = (SubPlan 1)) AND ((SubPlan 2) = (SubPlan 3)))
+   Hash Cond: ((hjtest_1.id = (SubPlan expr_1)) AND ((SubPlan expr_2) = (SubPlan expr_3)))
    Join Filter: (hjtest_1.a <> hjtest_2.b)
    ->  Seq Scan on public.hjtest_1
          Output: hjtest_1.a, hjtest_1.tableoid, hjtest_1.id, hjtest_1.b
-         Filter: ((SubPlan 4) < 50)
-         SubPlan 4
+         Filter: ((SubPlan expr_4) < 50)
+         SubPlan expr_4
            ->  Result
                  Output: (hjtest_1.b * 5)
    ->  Hash
          Output: hjtest_2.a, hjtest_2.tableoid, hjtest_2.id, hjtest_2.c, hjtest_2.b
          ->  Seq Scan on public.hjtest_2
                Output: hjtest_2.a, hjtest_2.tableoid, hjtest_2.id, hjtest_2.c, hjtest_2.b
-               Filter: ((SubPlan 5) < 55)
-               SubPlan 5
+               Filter: ((SubPlan expr_5) < 55)
+               SubPlan expr_5
                  ->  Result
                        Output: (hjtest_2.c * 5)
-         SubPlan 1
+         SubPlan expr_1
            ->  Result
                  Output: 1
                  One-Time Filter: (hjtest_2.id = 1)
-         SubPlan 3
+         SubPlan expr_3
            ->  Result
                  Output: (hjtest_2.c * 5)
-   SubPlan 2
+   SubPlan expr_2
      ->  Result
            Output: (hjtest_1.b * 5)
 (28 rows)
@@ -1085,30 +1085,30 @@ WHERE
 ------------------------------------------------------------------------------------------------
  Hash Join
    Output: hjtest_1.a, hjtest_2.a, (hjtest_1.tableoid)::regclass, (hjtest_2.tableoid)::regclass
-   Hash Cond: (((SubPlan 1) = hjtest_1.id) AND ((SubPlan 3) = (SubPlan 2)))
+   Hash Cond: (((SubPlan expr_1) = hjtest_1.id) AND ((SubPlan expr_3) = (SubPlan expr_2)))
    Join Filter: (hjtest_1.a <> hjtest_2.b)
    ->  Seq Scan on public.hjtest_2
          Output: hjtest_2.a, hjtest_2.tableoid, hjtest_2.id, hjtest_2.c, hjtest_2.b
-         Filter: ((SubPlan 5) < 55)
-         SubPlan 5
+         Filter: ((SubPlan expr_5) < 55)
+         SubPlan expr_5
            ->  Result
                  Output: (hjtest_2.c * 5)
    ->  Hash
          Output: hjtest_1.a, hjtest_1.tableoid, hjtest_1.id, hjtest_1.b
          ->  Seq Scan on public.hjtest_1
                Output: hjtest_1.a, hjtest_1.tableoid, hjtest_1.id, hjtest_1.b
-               Filter: ((SubPlan 4) < 50)
-               SubPlan 4
+               Filter: ((SubPlan expr_4) < 50)
+               SubPlan expr_4
                  ->  Result
                        Output: (hjtest_1.b * 5)
-         SubPlan 2
+         SubPlan expr_2
            ->  Result
                  Output: (hjtest_1.b * 5)
-   SubPlan 1
+   SubPlan expr_1
      ->  Result
            Output: 1
            One-Time Filter: (hjtest_2.id = 1)
-   SubPlan 3
+   SubPlan expr_3
      ->  Result
            Output: (hjtest_2.c * 5)
 (28 rows)

@@ -1609,13 +1609,13 @@ from tenk1 t, generate_series(1, 1000);
 ---------------------------------------------------------------------------------
  Unique
    ->  Sort
-         Sort Key: t.unique1, ((SubPlan 1))
+         Sort Key: t.unique1, ((SubPlan expr_1))
          ->  Gather
                Workers Planned: 2
                ->  Nested Loop
                      ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
                      ->  Function Scan on generate_series
-               SubPlan 1
+               SubPlan expr_1
                  ->  Index Only Scan using tenk1_unique1 on tenk1
                        Index Cond: (unique1 = t.unique1)
 (11 rows)
@@ -1628,13 +1628,13 @@ order by 1, 2;
                                 QUERY PLAN                                 
 ---------------------------------------------------------------------------
  Sort
-   Sort Key: t.unique1, ((SubPlan 1))
+   Sort Key: t.unique1, ((SubPlan expr_1))
    ->  Gather
          Workers Planned: 2
          ->  Nested Loop
                ->  Parallel Index Only Scan using tenk1_unique1 on tenk1 t
                ->  Function Scan on generate_series
-         SubPlan 1
+         SubPlan expr_1
            ->  Index Only Scan using tenk1_unique1 on tenk1
                  Index Cond: (unique1 = t.unique1)
 (10 rows)

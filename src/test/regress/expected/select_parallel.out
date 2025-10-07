@@ -156,9 +156,9 @@ explain (costs off)
          ->  Parallel Append
                ->  Parallel Seq Scan on part_pa_test_p1 pa2_1
                ->  Parallel Seq Scan on part_pa_test_p2 pa2_2
-   SubPlan 2
+   SubPlan expr_1
      ->  Result
-   SubPlan 1
+   SubPlan expr_2
      ->  Append
            ->  Seq Scan on part_pa_test_p1 pa1_1
                  Filter: (a = pa2.a)
@@ -302,15 +302,15 @@ alter table tenk2 set (parallel_workers = 0);
 explain (costs off)
 	select count(*) from tenk1 where (two, four) not in
 	(select hundred, thousand from tenk2 where thousand > 100);
-                                                   QUERY PLAN                                                   
-----------------------------------------------------------------------------------------------------------------
+                                                       QUERY PLAN                                                       
+------------------------------------------------------------------------------------------------------------------------
  Finalize Aggregate
    ->  Gather
          Workers Planned: 4
          ->  Partial Aggregate
                ->  Parallel Seq Scan on tenk1
-                     Filter: (NOT (ANY ((two = (hashed SubPlan 1).col1) AND (four = (hashed SubPlan 1).col2))))
-                     SubPlan 1
+                     Filter: (NOT (ANY ((two = (hashed SubPlan any_1).col1) AND (four = (hashed SubPlan any_1).col2))))
+                     SubPlan any_1
                        ->  Seq Scan on tenk2
                              Filter: (thousand > 100)
 (9 rows)
@@ -326,11 +326,11 @@ select count(*) from tenk1 where (two, four) not in
 explain (costs off)
 	select * from tenk1 where (unique1 + random())::integer not in
 	(select ten from tenk2);
-                                              QUERY PLAN                                               
--------------------------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
  Seq Scan on tenk1
-   Filter: (NOT (ANY ((((unique1)::double precision + random()))::integer = (hashed SubPlan 1).col1)))
-   SubPlan 1
+   Filter: (NOT (ANY ((((unique1)::double precision + random()))::integer = (hashed SubPlan any_1).col1)))
+   SubPlan any_1
      ->  Seq Scan on tenk2
 (4 rows)
 
@@ -343,10 +343,10 @@ alter table tenk2 set (parallel_workers = 2);
 explain (costs off)
 	select count(*) from tenk1
         where tenk1.unique1 = (Select max(tenk2.unique1) from tenk2);
-                      QUERY PLAN                      
-------------------------------------------------------
+                        QUERY PLAN                        
+----------------------------------------------------------
  Aggregate
-   InitPlan 1
+   InitPlan expr_1
      ->  Finalize Aggregate
            ->  Gather
                  Workers Planned: 2
@@ -355,7 +355,7 @@ explain (costs off)
    ->  Gather
          Workers Planned: 4
          ->  Parallel Seq Scan on tenk1
-               Filter: (unique1 = (InitPlan 1).col1)
+               Filter: (unique1 = (InitPlan expr_1).col1)
 (11 rows)
 
 select count(*) from tenk1
@@ -395,17 +395,17 @@ select  count((unique1)) from tenk1 where hundred > 1;
 explain (costs off)
   select count((unique1)) from tenk1
   where hundred = any ((select array_agg(i) from generate_series(1, 100, 15) i)::int[]);
-                             QUERY PLAN                              
----------------------------------------------------------------------
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
  Finalize Aggregate
-   InitPlan 1
+   InitPlan expr_1
      ->  Aggregate
            ->  Function Scan on generate_series i
    ->  Gather
          Workers Planned: 4
          ->  Partial Aggregate
                ->  Parallel Index Scan using tenk1_hundred on tenk1
-                     Index Cond: (hundred = ANY ((InitPlan 1).col1))
+                     Index Cond: (hundred = ANY ((InitPlan expr_1).col1))
 (9 rows)
 
 select count((unique1)) from tenk1
@@ -1224,24 +1224,24 @@ ORDER BY 1;
    ->  Append
          ->  Gather
                Workers Planned: 4
-               InitPlan 1
+               InitPlan expr_1
                  ->  Limit
                        ->  Gather
                              Workers Planned: 4
                              ->  Parallel Seq Scan on tenk1 tenk1_2
                                    Filter: (fivethous = 1)
                ->  Parallel Seq Scan on tenk1
-                     Filter: (fivethous = (InitPlan 1).col1)
+                     Filter: (fivethous = (InitPlan expr_1).col1)
          ->  Gather
                Workers Planned: 4
-               InitPlan 2
+               InitPlan expr_2
                  ->  Limit
                        ->  Gather
                              Workers Planned: 4
                              ->  Parallel Seq Scan on tenk1 tenk1_3
                                    Filter: (fivethous = 1)
                ->  Parallel Seq Scan on tenk1 tenk1_1
-                     Filter: (fivethous = (InitPlan 2).col1)
+                     Filter: (fivethous = (InitPlan expr_2).col1)
 (23 rows)
 
 -- test interaction with SRFs
@@ -1254,10 +1254,10 @@ ORDER BY 1, 2, 3;
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT generate_series(1, two), array(select generate_series(1, two))
   FROM tenk1 ORDER BY tenthous;
-                                QUERY PLAN                                 
----------------------------------------------------------------------------
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
  ProjectSet
-   Output: generate_series(1, tenk1.two), ARRAY(SubPlan 1), tenk1.tenthous
+   Output: generate_series(1, tenk1.two), ARRAY(SubPlan array_1), tenk1.tenthous
    ->  Gather Merge
          Output: tenk1.two, tenk1.tenthous
          Workers Planned: 4
@@ -1268,7 +1268,7 @@ SELECT generate_series(1, two), array(select generate_series(1, two))
                      Sort Key: tenk1.tenthous
                      ->  Parallel Seq Scan on public.tenk1
                            Output: tenk1.tenthous, tenk1.two
-   SubPlan 1
+   SubPlan array_1
      ->  ProjectSet
            Output: generate_series(1, tenk1.two)
            ->  Result
@@ -1333,11 +1333,11 @@ SELECT 1 FROM tenk1_vw_sec
                             QUERY PLAN                             
 -------------------------------------------------------------------
  Subquery Scan on tenk1_vw_sec
-   Filter: ((SubPlan 1) < 100)
+   Filter: ((SubPlan expr_1) < 100)
    ->  Gather
          Workers Planned: 4
          ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
-   SubPlan 1
+   SubPlan expr_1
      ->  Aggregate
            ->  Seq Scan on int4_tbl
                  Filter: (f1 < tenk1_vw_sec.unique1)

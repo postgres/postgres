@@ -548,16 +548,16 @@ INSERT INTO foo VALUES (5, 'subquery test')
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Insert on pg_temp.foo
-   Output: (SubPlan 1), (SubPlan 2)
+   Output: (SubPlan expr_1), (SubPlan expr_2)
    ->  Result
          Output: 5, 'subquery test'::text, 42, '99'::bigint
-   SubPlan 1
+   SubPlan expr_1
      ->  Aggregate
            Output: max((old.f4 + x.x))
            ->  Function Scan on pg_catalog.generate_series x
                  Output: x.x
                  Function Call: generate_series(1, 10)
-   SubPlan 2
+   SubPlan expr_2
      ->  Aggregate
            Output: max((new.f4 + x_1.x))
            ->  Function Scan on pg_catalog.generate_series x_1
@@ -578,26 +578,26 @@ UPDATE foo SET f4 = 100 WHERE f1 = 5
   RETURNING (SELECT old.f4 = new.f4),
             (SELECT max(old.f4 + x) FROM generate_series(1, 10) x) old_max,
             (SELECT max(new.f4 + x) FROM generate_series(1, 10) x) new_max;
-                          QUERY PLAN                           
----------------------------------------------------------------
+                           QUERY PLAN                           
+----------------------------------------------------------------
  Update on pg_temp.foo
-   Output: (SubPlan 1), (SubPlan 2), (SubPlan 3)
+   Output: (SubPlan expr_1), (SubPlan expr_2), (SubPlan expr_3)
    Update on pg_temp.foo foo_1
    ->  Result
          Output: '100'::bigint, foo_1.tableoid, foo_1.ctid
          ->  Seq Scan on pg_temp.foo foo_1
                Output: foo_1.tableoid, foo_1.ctid
                Filter: (foo_1.f1 = 5)
-   SubPlan 1
+   SubPlan expr_1
      ->  Result
            Output: (old.f4 = new.f4)
-   SubPlan 2
+   SubPlan expr_2
      ->  Aggregate
            Output: max((old.f4 + x.x))
            ->  Function Scan on pg_catalog.generate_series x
                  Output: x.x
                  Function Call: generate_series(1, 10)
-   SubPlan 3
+   SubPlan expr_3
      ->  Aggregate
            Output: max((new.f4 + x_1.x))
            ->  Function Scan on pg_catalog.generate_series x_1
@@ -621,18 +621,18 @@ DELETE FROM foo WHERE f1 = 5
                           QUERY PLAN                           
 ---------------------------------------------------------------
  Delete on pg_temp.foo
-   Output: (SubPlan 1), (SubPlan 2)
+   Output: (SubPlan expr_1), (SubPlan expr_2)
    Delete on pg_temp.foo foo_1
    ->  Seq Scan on pg_temp.foo foo_1
          Output: foo_1.tableoid, foo_1.ctid
          Filter: (foo_1.f1 = 5)
-   SubPlan 1
+   SubPlan expr_1
      ->  Aggregate
            Output: max((old.f4 + x.x))
            ->  Function Scan on pg_catalog.generate_series x
                  Output: x.x
                  Function Call: generate_series(1, 10)
-   SubPlan 2
+   SubPlan expr_2
      ->  Aggregate
            Output: max((new.f4 + x_1.x))
            ->  Function Scan on pg_catalog.generate_series x_1

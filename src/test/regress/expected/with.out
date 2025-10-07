@@ -2306,14 +2306,14 @@ explain (verbose, costs off)
 select f1, (with cte1(x,y) as (select 1,2)
             select count((select i4.f1 from cte1))) as ss
 from int4_tbl i4;
-                 QUERY PLAN                 
---------------------------------------------
+                   QUERY PLAN                    
+-------------------------------------------------
  Seq Scan on public.int4_tbl i4
-   Output: i4.f1, (SubPlan 2)
-   SubPlan 2
+   Output: i4.f1, (SubPlan expr_1)
+   SubPlan expr_1
      ->  Aggregate
-           Output: count((InitPlan 1).col1)
-           InitPlan 1
+           Output: count((InitPlan expr_2).col1)
+           InitPlan expr_2
              ->  Result
                    Output: i4.f1
            ->  Result
@@ -3203,7 +3203,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
                      Output: o.k, o.v, o.*
                      ->  Result
                            Output: 0, 'merge source SubPlan'::text
-   SubPlan 2
+   SubPlan expr_1
      ->  Limit
            Output: ((cte_basic.b || ' merge update'::text))
            ->  CTE Scan on cte_basic
@@ -3235,7 +3235,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
    CTE cte_init
      ->  Result
            Output: 1, 'cte_init val'::text
-   InitPlan 2
+   InitPlan expr_1
      ->  Limit
            Output: ((cte_init.b || ' merge update'::text))
            ->  CTE Scan on cte_init
@@ -3278,11 +3278,11 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text
    CTE merge_source_cte
      ->  Result
            Output: 15, 'merge_source_cte val'::text
-   InitPlan 2
+   InitPlan expr_1
      ->  CTE Scan on merge_source_cte merge_source_cte_1
            Output: ((merge_source_cte_1.b || (merge_source_cte_1.*)::text) || ' merge update'::text)
            Filter: (merge_source_cte_1.a = 15)
-   InitPlan 3
+   InitPlan expr_2
      ->  CTE Scan on merge_source_cte merge_source_cte_2
            Output: ((merge_source_cte_2.*)::text || ' merge insert'::text)
    ->  Hash Right Join

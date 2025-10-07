@@ -1108,6 +1108,7 @@ typedef struct SubPlan
 	Oid			firstColCollation;	/* Collation of first column of subplan
 									 * result */
 	/* Information about execution strategy: */
+	bool		isInitPlan;		/* true if it's an InitPlan */
 	bool		useHashTable;	/* true to store subselect output in a hash
 								 * table (implies we are doing "IN") */
 	bool		unknownEqFalse; /* true if it's okay to return FALSE when the

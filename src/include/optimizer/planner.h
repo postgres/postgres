@@ -43,6 +43,7 @@ extern PlannedStmt *standard_planner(Query *parse, const char *query_string,
 									 ParamListInfo boundParams);
 
 extern PlannerInfo *subquery_planner(PlannerGlobal *glob, Query *parse,
+									 char *plan_name,
 									 PlannerInfo *parent_root,
 									 bool hasRecursion, double tuple_fraction,
 									 SetOperationStmt *setops);
@@ -61,5 +62,8 @@ extern Expr *preprocess_phv_expression(PlannerInfo *root, Expr *expr);
 
 extern RelOptInfo *create_unique_paths(PlannerInfo *root, RelOptInfo *rel,
 									   SpecialJoinInfo *sjinfo);
+
+extern char *choose_plan_name(PlannerGlobal *glob, const char *name,
+							  bool always_number);
 
 #endif							/* PLANNER_H */
