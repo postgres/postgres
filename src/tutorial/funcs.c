@@ -13,6 +13,7 @@
 #include "executor/executor.h"	/* for GetAttributeByName() */
 #include "utils/fmgrprotos.h"	/* for text_starts_with() */
 #include "utils/geo_decls.h"	/* for point type */
+#include "varatt.h"				/* for VARDATA/VARSIZE macros */
 
 PG_MODULE_MAGIC;
 
