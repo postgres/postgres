@@ -51,62 +51,27 @@ extern char *float8out_internal(float8 num);
 extern int	float4_cmp_internal(float4 a, float4 b);
 extern int	float8_cmp_internal(float8 a, float8 b);
 
-/*
- * Routines to provide reasonably platform-independent handling of
- * infinity and NaN
- *
- * We assume that isinf() and isnan() are available and work per spec.
- * (On some platforms, we have to supply our own; see src/port.)  However,
- * generating an Infinity or NaN in the first place is less well standardized;
- * pre-C99 systems tend not to have C99's INFINITY and NaN macros.  We
- * centralize our workarounds for this here.
- */
-
-/*
- * The funny placements of the two #pragmas is necessary because of a
- * long lived bug in the Microsoft compilers.
- * See http://support.microsoft.com/kb/120968/en-us for details
- */
-#ifdef _MSC_VER
-#pragma warning(disable:4756)
-#endif
 static inline float4
 get_float4_infinity(void)
 {
-#ifdef INFINITY
 	/* C99 standard way */
 	return (float4) INFINITY;
-#else
-#ifdef _MSC_VER
-#pragma warning(default:4756)
-#endif
-
-	/*
-	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal float8.  We assume forcing an overflow will get us a
-	 * true infinity.
-	 */
-	return (float4) (HUGE_VAL * HUGE_VAL);
-#endif
 }
 
 static inline float8
 get_float8_infinity(void)
 {
-#ifdef INFINITY
 	/* C99 standard way */
 	return (float8) INFINITY;
-#else
-
-	/*
-	 * On some platforms, HUGE_VAL is an infinity, elsewhere it's just the
-	 * largest normal float8.  We assume forcing an overflow will get us a
-	 * true infinity.
-	 */
-	return (float8) (HUGE_VAL * HUGE_VAL);
-#endif
 }
 
+/*
+ * Routines to provide reasonably platform-independent handling of NaN
+ *
+ * We assume that isnan() is available and work per spec.  However, generating
+ * a NaN in the first place is less well standardized; pre-C99 systems tend
+ * not to have C99's NaN macro.  We centralize our workaround for this here.
+ */
 static inline float4
 get_float4_nan(void)
 {
