@@ -25,8 +25,10 @@ my $result = IPC::Run::run [ 'wc', '-l' ],
   '>' => \$wcstdout,
   '2>' => \$wcstderr;
 chomp $wcstdout;
-if ($wcstdout ne '2' || $wcstderr ne '')
+if ($wcstdout !~ /^ *2$/ || $wcstderr ne '')
 {
+	note "wc stdout = '$wcstdout'\n";
+	note "wc stderr = '$wcstderr'\n";
 	plan skip_all => '"wc -l" is needed to run this test';
 }
 
@@ -83,17 +85,17 @@ do_command(
 
 do_command(
 	"SELECT 'test' AS t FROM generate_series(1,24);\n",
-	qr/^24\r?$/m,
+	qr/^ *24\r?$/m,
 	"execute SELECT query that needs pagination");
 
 do_command(
 	"\\pset expanded\nSELECT generate_series(1,20) as g;\n",
-	qr/^39\r?$/m,
+	qr/^ *39\r?$/m,
 	"execute SELECT query that needs pagination in expanded mode");
 
 do_command(
 	"\\pset tuples_only off\n\\d+ information_schema.referential_constraints\n",
-	qr/^\d+\r?$/m,
+	qr/^ *\d+\r?$/m,
 	"execute command with footer that needs pagination");
 
 # send psql an explicit \q to shut it down, else pty won't close properly
