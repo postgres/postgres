@@ -484,7 +484,8 @@ SELECT two FROM tenk1 WHERE 1=2
 UNION
 SELECT four FROM tenk1 WHERE 1=2
 UNION
-SELECT ten FROM tenk1 WHERE 1=2;
+SELECT ten FROM tenk1 WHERE 1=2
+ORDER BY 1;
 
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)

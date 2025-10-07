@@ -1258,14 +1258,18 @@ SELECT two FROM tenk1 WHERE 1=2
 UNION
 SELECT four FROM tenk1 WHERE 1=2
 UNION
-SELECT ten FROM tenk1 WHERE 1=2;
-           QUERY PLAN           
---------------------------------
- Result
+SELECT ten FROM tenk1 WHERE 1=2
+ORDER BY 1;
+              QUERY PLAN              
+--------------------------------------
+ Sort
    Output: unnamed_subquery.two
-   Replaces: Aggregate
-   One-Time Filter: false
-(4 rows)
+   Sort Key: unnamed_subquery.two
+   ->  Result
+         Output: unnamed_subquery.two
+         Replaces: Aggregate
+         One-Time Filter: false
+(7 rows)
 
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)

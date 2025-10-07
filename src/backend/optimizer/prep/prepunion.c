@@ -826,7 +826,6 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	/* If all UNION children were dummy rels, make the resulting rel dummy */
 	if (cheapest_pathlist == NIL)
 	{
-		result_rel->reltarget = create_pathtarget(root, list_nth(tlist_list, 0));
 		mark_dummy_rel(result_rel);
 
 		return result_rel;
