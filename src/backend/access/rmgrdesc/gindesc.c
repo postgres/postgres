@@ -130,6 +130,9 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 				appendStringInfo(buf, " isdata: %c isleaf: %c",
 								 (xlrec->flags & GIN_INSERT_ISDATA) ? 'T' : 'F',
 								 (xlrec->flags & GIN_INSERT_ISLEAF) ? 'T' : 'F');
+				if (xlrec->leftChildBlkno != InvalidBlockNumber)
+					appendStringInfo(buf, " children: %u/%u",
+									 xlrec->leftChildBlkno, xlrec->rightChildBlkno);
 			}
 			break;
 		case XLOG_GIN_VACUUM_PAGE:
@@ -150,10 +153,27 @@ gin_desc(StringInfo buf, XLogReaderState *record)
 			/* no further information */
 			break;
 		case XLOG_GIN_UPDATE_META_PAGE:
-			/* no further information */
+			{
+				ginxlogUpdateMeta *xlrec = (ginxlogUpdateMeta *) rec;
+
+				appendStringInfo(buf, "ntuples: %d", xlrec->ntuples);
+				if (xlrec->prevTail != InvalidBlockNumber)
+					appendStringInfo(buf, " prevTail: %u",
+									 xlrec->prevTail);
+				if (xlrec->newRightlink != InvalidBlockNumber)
+					appendStringInfo(buf, " newRightLink: %u",
+									 xlrec->newRightlink);
+			}
 			break;
 		case XLOG_GIN_INSERT_LISTPAGE:
-			/* no further information */
+			{
+				ginxlogInsertListPage *xlrec = (ginxlogInsertListPage *) rec;
+
+				appendStringInfo(buf, "ntuples: %d", xlrec->ntuples);
+				if (xlrec->rightlink != InvalidBlockNumber)
+					appendStringInfo(buf, " rightlink: %u",
+									 xlrec->rightlink);
+			}
 			break;
 		case XLOG_GIN_DELETE_LISTPAGE:
 			appendStringInfo(buf, "ndeleted: %d",
