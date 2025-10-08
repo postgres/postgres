@@ -1522,6 +1522,19 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE first_emp = 1 OR last_emp = 1;
 
+CREATE INDEX empsalary_salary_empno_idx ON empsalary (salary, empno);
+
+SET enable_seqscan = 0;
+
+-- Ensure no sorting is done and that the IndexScan maintains all pathkeys
+-- useful for the final sort order.
+EXPLAIN (COSTS OFF)
+SELECT salary, empno, row_number() OVER (ORDER BY salary) rn
+FROM empsalary
+ORDER BY salary, empno;
+
+RESET enable_seqscan;
+
 -- cleanup
 DROP TABLE empsalary;
 

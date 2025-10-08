@@ -4537,6 +4537,22 @@ WHERE first_emp = 1 OR last_emp = 1;
  sales     |     4 |   4800 | 08-08-2007  |         3 |        1
 (6 rows)
 
+CREATE INDEX empsalary_salary_empno_idx ON empsalary (salary, empno);
+SET enable_seqscan = 0;
+-- Ensure no sorting is done and that the IndexScan maintains all pathkeys
+-- useful for the final sort order.
+EXPLAIN (COSTS OFF)
+SELECT salary, empno, row_number() OVER (ORDER BY salary) rn
+FROM empsalary
+ORDER BY salary, empno;
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ WindowAgg
+   Window: w1 AS (ORDER BY salary ROWS UNBOUNDED PRECEDING)
+   ->  Index Only Scan using empsalary_salary_empno_idx on empsalary
+(3 rows)
+
+RESET enable_seqscan;
 -- cleanup
 DROP TABLE empsalary;
 -- test user-defined window function with named args and default args
