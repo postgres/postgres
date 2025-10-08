@@ -25,13 +25,6 @@
 /* Radians per degree, a.k.a. PI / 180 */
 #define RADIANS_PER_DEGREE 0.0174532925199432957692
 
-/* Visual C++ etc lacks NAN, and won't accept 0.0/0.0. */
-#if defined(WIN32) && !defined(NAN)
-static const uint32 nan[2] = {0xffffffff, 0x7fffffff};
-
-#define NAN (*(const float8 *) nan)
-#endif
-
 extern PGDLLIMPORT int extra_float_digits;
 
 /*
@@ -51,6 +44,16 @@ extern char *float8out_internal(float8 num);
 extern int	float4_cmp_internal(float4 a, float4 b);
 extern int	float8_cmp_internal(float8 a, float8 b);
 
+/*
+ * Postgres requires IEEE-standard float arithmetic, including infinities
+ * and NaNs.  We used to support pre-C99 compilers on which <math.h> might
+ * not supply the standard macros INFINITY and NAN.  We no longer do so,
+ * but these wrapper functions are still preferred over using those macros
+ * directly.
+ *
+ * If you change these functions, see copies in interfaces/ecpg/ecpglib/data.c.
+ */
+
 static inline float4
 get_float4_infinity(void)
 {
@@ -65,36 +68,23 @@ get_float8_infinity(void)
 	return (float8) INFINITY;
 }
 
-/*
- * Routines to provide reasonably platform-independent handling of NaN
- *
- * We assume that isnan() is available and work per spec.  However, generating
- * a NaN in the first place is less well standardized; pre-C99 systems tend
- * not to have C99's NaN macro.  We centralize our workaround for this here.
- */
+/* The C standard allows implementations to omit NAN, but we don't */
+#ifndef NAN
+#error "Postgres requires support for IEEE quiet NaNs"
+#endif
+
 static inline float4
 get_float4_nan(void)
 {
-#ifdef NAN
 	/* C99 standard way */
 	return (float4) NAN;
-#else
-	/* Assume we can get a NAN via zero divide */
-	return (float4) (0.0 / 0.0);
-#endif
 }
 
 static inline float8
 get_float8_nan(void)
 {
-	/* (float8) NAN doesn't work on some NetBSD/MIPS releases */
-#if defined(NAN) && !(defined(__NetBSD__) && defined(__mips__))
 	/* C99 standard way */
 	return (float8) NAN;
-#else
-	/* Assume we can get a NaN via zero divide */
-	return (float8) (0.0 / 0.0);
-#endif
 }
 
 /*
