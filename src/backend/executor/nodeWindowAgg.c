@@ -1501,8 +1501,9 @@ row_is_in_frame(WindowObject winobj, int64 pos, TupleTableSlot *slot,
 			/* following row that is not peer is out of frame */
 			if (pos > winstate->currentpos)
 			{
-				if (fetch_tuple)
-					window_gettupleslot(winobj, pos, slot);
+				if (fetch_tuple)	/* need to fetch tuple? */
+					if (!window_gettupleslot(winobj, pos, slot))
+						return -1;
 				if (!are_peers(winstate, slot, winstate->ss.ss_ScanTupleSlot))
 					return -1;
 			}
@@ -3721,6 +3722,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	int			notnull_offset;
 	int			notnull_relpos;
 	int			forward;
+	bool		myisout;
 
 	Assert(WindowObjectIsValid(winobj));
 	winstate = winobj->winstate;
@@ -3759,12 +3761,18 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 
 	if (!null_treatment)		/* IGNORE NULLS is not specified */
 	{
+		/* get tupple and evaluate in a partition */
 		datum = gettuple_eval_partition(winobj, argno,
-										abs_pos, isnull, isout);
-		if (!*isout && set_mark)
+										abs_pos, isnull, &myisout);
+		if (!myisout && set_mark)
 			WinSetMarkPosition(winobj, abs_pos);
+		if (isout)
+			*isout = myisout;
 		return datum;
 	}
+
+	myisout = false;
+	datum = 0;
 
 	/*
 	 * Get the next nonnull value in the partition, moving forward or backward
@@ -3772,50 +3780,41 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	 */
 	do
 	{
+		int			nn_info;	/* NOT NULL info */
+
 		abs_pos += forward;
-		if (abs_pos < 0)
-		{
-			/* out of partition */
-			if (isout)
-				*isout = true;
-			*isnull = true;
-			datum = 0;
+		if (abs_pos < 0)		/* apparently out of partition */
 			break;
-		}
 
-		switch (get_notnull_info(winobj, abs_pos))
+		/* check NOT NULL cached info */
+		nn_info = get_notnull_info(winobj, abs_pos);
+		if (nn_info == NN_NOTNULL)	/* this row is known to be NOT NULL */
+			notnull_offset++;
+
+		else if (nn_info == NN_NULL)	/* this row is known to be NULL */
+			continue;			/* keep on moving forward or backward */
+
+		else					/* need to check NULL or not */
 		{
-			case NN_NOTNULL:	/* this row is known to be NOT NULL */
+			/* get tupple and evaluate in a partition */
+			datum = gettuple_eval_partition(winobj, argno,
+											abs_pos, isnull, &myisout);
+			if (myisout)		/* out of partition? */
+				break;
+			if (!*isnull)
 				notnull_offset++;
-				if (notnull_offset >= notnull_relpos)
-				{
-					/* prepare to exit this loop */
-					datum = gettuple_eval_partition(winobj, argno,
-													abs_pos, isnull, isout);
-				}
-				break;
-			case NN_NULL:		/* this row is known to be NULL */
-				if (isout)
-					*isout = false;
-				*isnull = true;
-				datum = 0;
-				break;
-			default:			/* need to check NULL or not */
-				datum = gettuple_eval_partition(winobj, argno,
-												abs_pos, isnull, isout);
-				if (*isout)		/* out of partition? */
-					return datum;
-
-				if (!*isnull)
-					notnull_offset++;
-				/* record the row status */
-				put_notnull_info(winobj, abs_pos, *isnull);
-				break;
+			/* record the row status */
+			put_notnull_info(winobj, abs_pos, *isnull);
 		}
 	} while (notnull_offset < notnull_relpos);
 
-	if (!*isout && set_mark)
+	/* get tupple and evaluate in a partition */
+	datum = gettuple_eval_partition(winobj, argno,
+									abs_pos, isnull, &myisout);
+	if (!myisout && set_mark)
 		WinSetMarkPosition(winobj, abs_pos);
+	if (isout)
+		*isout = myisout;
 
 	return datum;
 }
