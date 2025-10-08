@@ -2244,7 +2244,8 @@ pg_stat_user_functions| SELECT p.oid AS funcid,
     p.proname AS funcname,
     pg_stat_get_function_calls(p.oid) AS calls,
     pg_stat_get_function_total_time(p.oid) AS total_time,
-    pg_stat_get_function_self_time(p.oid) AS self_time
+    pg_stat_get_function_self_time(p.oid) AS self_time,
+    pg_stat_get_function_stat_reset_time(p.oid) AS stats_reset
    FROM (pg_proc p
      LEFT JOIN pg_namespace n ON ((n.oid = p.pronamespace)))
   WHERE ((p.prolang <> (12)::oid) AND (pg_stat_get_function_calls(p.oid) IS NOT NULL));

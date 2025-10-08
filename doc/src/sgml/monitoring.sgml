@@ -4736,6 +4736,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        other functions called by it, in milliseconds
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

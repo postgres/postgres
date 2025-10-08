@@ -214,6 +214,12 @@ pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	return true;
 }
 
+void
+pgstat_function_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts)
+{
+	((PgStatShared_Function *) header)->stats.stat_reset_timestamp = ts;
+}
+
 /*
  * find any existing PgStat_FunctionCounts entry for specified function
  *

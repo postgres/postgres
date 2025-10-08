@@ -204,6 +204,24 @@ PG_STAT_GET_FUNCENTRY_FLOAT8_MS(total_time)
 PG_STAT_GET_FUNCENTRY_FLOAT8_MS(self_time)
 
 Datum
+pg_stat_get_function_stat_reset_time(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	TimestampTz result;
+	PgStat_StatFuncEntry *funcentry;
+
+	if ((funcentry = pgstat_fetch_stat_funcentry(funcid)) == NULL)
+		result = 0;
+	else
+		result = funcentry->stat_reset_timestamp;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;

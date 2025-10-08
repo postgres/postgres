@@ -691,6 +691,7 @@ extern void pgstat_database_reset_timestamp_cb(PgStatShared_Common *header, Time
  */
 
 extern bool pgstat_function_flush_cb(PgStat_EntryRef *entry_ref, bool nowait);
+extern void pgstat_function_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
 
 
 /*
