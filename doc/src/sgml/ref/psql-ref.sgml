@@ -1611,7 +1611,7 @@ SELECT $1 \parse stmt1
         If <literal>x</literal> is appended to the command name, the results
         are displayed in expanded mode.
         If <literal>+</literal> is appended to the command name, each object
-        is listed with its associated permissions and description.
+        is listed with its associated permissions, description, and DDL.
         </para>
         </listitem>
       </varlistentry>

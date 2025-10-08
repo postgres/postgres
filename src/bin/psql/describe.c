@@ -4574,6 +4574,14 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 
 	if (verbose)
 	{
+		/* Add DDL column if server supports pg_get_domain_ddl */
+		if (pset.sversion >= 170000)
+		{
+			appendPQExpBuffer(&buf,
+							  ",\n       pg_catalog.pg_get_domain_ddl(t.oid) as \"%s\"",
+							  gettext_noop("DDL"));
+		}
+
 		appendPQExpBufferStr(&buf, ",\n  ");
 		printACLColumn(&buf, "t.typacl");
 		appendPQExpBuffer(&buf,

@@ -1913,6 +1913,12 @@ DROP ROLE regress_du_role1;
 DROP ROLE regress_du_role2;
 DROP ROLE regress_du_admin;
 
+-- Test \dD+ DDL functionality
+CREATE DOMAIN regress_test_ddl_domain AS text NOT NULL DEFAULT 'test_value' CHECK (length(VALUE) > 0);
+COMMENT ON DOMAIN regress_test_ddl_domain IS 'A test domain for DDL display';
+\dD+ regress_test_ddl_domain
+DROP DOMAIN regress_test_ddl_domain;
+
 -- Test display of empty privileges.
 BEGIN;
 -- Create an owner for tested objects because output contains owner name.

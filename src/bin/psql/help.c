@@ -232,7 +232,7 @@ slashUsage(unsigned short int pager)
 	HELP0("  \\dconfig[x+] [PATTERN] list configuration parameters\n");
 	HELP0("  \\dC[x+]  [PATTERN]     list casts\n");
 	HELP0("  \\dd[Sx]  [PATTERN]     show object descriptions not displayed elsewhere\n");
-	HELP0("  \\dD[Sx+] [PATTERN]     list domains\n");
+	HELP0("  \\dD[Sx+] [PATTERN]     list domains (+ shows DDL)\n");
 	HELP0("  \\ddp[x]  [PATTERN]     list default privileges\n");
 	HELP0("  \\dE[Sx+] [PATTERN]     list foreign tables\n");
 	HELP0("  \\des[x+] [PATTERN]     list foreign servers\n");

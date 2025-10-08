@@ -6869,6 +6869,17 @@ DROP ROLE regress_du_role0;
 DROP ROLE regress_du_role1;
 DROP ROLE regress_du_role2;
 DROP ROLE regress_du_admin;
+-- Test \dD+ DDL functionality
+CREATE DOMAIN regress_test_ddl_domain AS text NOT NULL DEFAULT 'test_value' CHECK (length(VALUE) > 0);
+COMMENT ON DOMAIN regress_test_ddl_domain IS 'A test domain for DDL display';
+\dD+ regress_test_ddl_domain
+                                                                                                                                                                                List of domains
+ Schema |          Name           | Type | Collation | Nullable |      Default       |           Check           |                                                                                                   DDL                                                                                                    | Access privileges |          Description          
+--------+-------------------------+------+-----------+----------+--------------------+---------------------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------+-------------------------------
+ public | regress_test_ddl_domain | text |           | not null | 'test_value'::text | CHECK (length(VALUE) > 0) | CREATE DOMAIN public.regress_test_ddl_domain AS text DEFAULT 'test_value'::text CONSTRAINT regress_test_ddl_domain_not_null NOT NULL CONSTRAINT regress_test_ddl_domain_check CHECK (length(VALUE) > 0); |                   | A test domain for DDL display
+(1 row)
+
+DROP DOMAIN regress_test_ddl_domain;
 -- Test display of empty privileges.
 BEGIN;
 -- Create an owner for tested objects because output contains owner name.
@@ -6877,10 +6888,10 @@ SET LOCAL ROLE regress_zeropriv_owner;
 CREATE DOMAIN regress_zeropriv_domain AS int;
 REVOKE ALL ON DOMAIN regress_zeropriv_domain FROM CURRENT_USER, PUBLIC;
 \dD+ regress_zeropriv_domain
-                                                    List of domains
- Schema |          Name           |  Type   | Collation | Nullable | Default | Check | Access privileges | Description 
---------+-------------------------+---------+-----------+----------+---------+-------+-------------------+-------------
- public | regress_zeropriv_domain | integer |           |          |         |       | (none)            | 
+                                                                                 List of domains
+ Schema |          Name           |  Type   | Collation | Nullable | Default | Check |                           DDL                            | Access privileges | Description 
+--------+-------------------------+---------+-----------+----------+---------+-------+----------------------------------------------------------+-------------------+-------------
+ public | regress_zeropriv_domain | integer |           |          |         |       | CREATE DOMAIN public.regress_zeropriv_domain AS integer; | (none)            | 
 (1 row)
 
 CREATE PROCEDURE regress_zeropriv_proc() LANGUAGE sql AS '';
