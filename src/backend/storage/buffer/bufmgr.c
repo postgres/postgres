@@ -3321,7 +3321,7 @@ BufferSync(int flags)
 	Oid			last_tsid;
 	binaryheap *ts_heap;
 	int			i;
-	int			mask = BM_DIRTY;
+	uint32		mask = BM_DIRTY;
 	WritebackContext wb_context;
 
 	/*
