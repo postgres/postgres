@@ -534,6 +534,8 @@ static inline BufferDesc *BufferAlloc(SMgrRelation smgr,
 static bool AsyncReadBuffers(ReadBuffersOperation *operation, int *nblocks_progress);
 static void CheckReadBuffersOperation(ReadBuffersOperation *operation, bool is_complete);
 static Buffer GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context);
+static void FlushUnlockedBuffer(BufferDesc *buf, SMgrRelation reln,
+								IOObject io_object, IOContext io_context);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln,
 						IOObject io_object, IOContext io_context);
 static void FindAndDropRelationBuffers(RelFileLocator rlocator,
@@ -3927,11 +3929,8 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 	 * buffer is clean by the time we've locked it.)
 	 */
 	PinBuffer_Locked(bufHdr);
-	LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 
-	FlushBuffer(bufHdr, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
-
-	LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
+	FlushUnlockedBuffer(bufHdr, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 
 	tag = bufHdr->tag;
 
@@ -4376,6 +4375,19 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln, IOObject io_object,
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
+}
+
+/*
+ * Convenience wrapper around FlushBuffer() that locks/unlocks the buffer
+ * before/after calling FlushBuffer().
+ */
+static void
+FlushUnlockedBuffer(BufferDesc *buf, SMgrRelation reln,
+					IOObject io_object, IOContext io_context)
+{
+	LWLockAcquire(BufferDescriptorGetContentLock(buf), LW_SHARED);
+	FlushBuffer(buf, reln, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
+	LWLockRelease(BufferDescriptorGetContentLock(buf));
 }
 
 /*
@@ -4967,9 +4979,7 @@ FlushRelationBuffers(Relation rel)
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-			FlushBuffer(bufHdr, srel, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
-			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
+			FlushUnlockedBuffer(bufHdr, srel, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 			UnpinBuffer(bufHdr);
 		}
 		else
@@ -5064,9 +5074,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-			FlushBuffer(bufHdr, srelent->srel, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
-			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
+			FlushUnlockedBuffer(bufHdr, srelent->srel, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 			UnpinBuffer(bufHdr);
 		}
 		else
@@ -5292,9 +5300,7 @@ FlushDatabaseBuffers(Oid dbid)
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
-			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
-			FlushBuffer(bufHdr, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
-			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
+			FlushUnlockedBuffer(bufHdr, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 			UnpinBuffer(bufHdr);
 		}
 		else
@@ -6569,10 +6575,8 @@ EvictUnpinnedBufferInternal(BufferDesc *desc, bool *buffer_flushed)
 	/* If it was dirty, try to clean it once. */
 	if (buf_state & BM_DIRTY)
 	{
-		LWLockAcquire(BufferDescriptorGetContentLock(desc), LW_SHARED);
-		FlushBuffer(desc, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
+		FlushUnlockedBuffer(desc, NULL, IOOBJECT_RELATION, IOCONTEXT_NORMAL);
 		*buffer_flushed = true;
-		LWLockRelease(BufferDescriptorGetContentLock(desc));
 	}
 
 	/* This will return false if it becomes dirty or someone else pins it. */
