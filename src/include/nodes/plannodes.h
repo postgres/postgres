@@ -149,6 +149,15 @@ typedef struct PlannedStmt
 	/* non-null if this is utility stmt */
 	Node	   *utilityStmt;
 
+	/*
+	 * DefElem objects added by extensions, e.g. using planner_shutdown_hook
+	 *
+	 * Set each DefElem's defname to the name of the plugin or extension, and
+	 * the argument to a tree of nodes that all have copy and read/write
+	 * support.
+	 */
+	List	   *extension_state;
+
 	/* statement location in source string (copied from Query) */
 	/* start location, or -1 if unknown */
 	ParseLoc	stmt_location;
