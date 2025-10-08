@@ -518,7 +518,6 @@ static void PinBuffer_Locked(BufferDesc *buf);
 static void UnpinBuffer(BufferDesc *buf);
 static void UnpinBufferNoOwner(BufferDesc *buf);
 static void BufferSync(int flags);
-static uint32 WaitBufHdrUnlocked(BufferDesc *buf);
 static int	SyncOneBuffer(int buf_id, bool skip_recently_used,
 						  WritebackContext *wb_context);
 static void WaitIO(BufferDesc *buf);
@@ -2326,8 +2325,8 @@ GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context)
 	bool		from_ring;
 
 	/*
-	 * Ensure, while the spinlock's not yet held, that there's a free refcount
-	 * entry, and a resource owner slot for the pin.
+	 * Ensure, before we pin a victim buffer, that there's a free refcount
+	 * entry and resource owner slot for the pin.
 	 */
 	ReservePrivateRefCountEntry();
 	ResourceOwnerEnlarge(CurrentResourceOwner);
@@ -2336,16 +2335,11 @@ GetVictimBuffer(BufferAccessStrategy strategy, IOContext io_context)
 again:
 
 	/*
-	 * Select a victim buffer.  The buffer is returned with its header
-	 * spinlock still held!
+	 * Select a victim buffer.  The buffer is returned pinned and owned by
+	 * this backend.
 	 */
 	buf_hdr = StrategyGetBuffer(strategy, &buf_state, &from_ring);
 	buf = BufferDescriptorGetBuffer(buf_hdr);
-
-	Assert(BUF_STATE_GET_REFCOUNT(buf_state) == 0);
-
-	/* Pin the buffer and then release the buffer spinlock */
-	PinBuffer_Locked(buf_hdr);
 
 	/*
 	 * We shouldn't have any other pins for this buffer.
@@ -3118,7 +3112,7 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 			{
 				result = (buf_state & BM_VALID) != 0;
 
-				ref = NewPrivateRefCountEntry(b);
+				TrackNewBufferPin(b);
 
 				/*
 				 * Assume that we acquired a buffer pin for the purposes of
@@ -3150,11 +3144,12 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 		 * cannot meddle with that.
 		 */
 		result = (pg_atomic_read_u32(&buf->state) & BM_VALID) != 0;
+
+		Assert(ref->refcount > 0);
+		ref->refcount++;
+		ResourceOwnerRememberBuffer(CurrentResourceOwner, b);
 	}
 
-	ref->refcount++;
-	Assert(ref->refcount > 0);
-	ResourceOwnerRememberBuffer(CurrentResourceOwner, b);
 	return result;
 }
 
@@ -3183,8 +3178,6 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 static void
 PinBuffer_Locked(BufferDesc *buf)
 {
-	Buffer		b;
-	PrivateRefCountEntry *ref;
 	uint32		buf_state;
 
 	/*
@@ -3209,12 +3202,7 @@ PinBuffer_Locked(BufferDesc *buf)
 	buf_state += BUF_REFCOUNT_ONE;
 	UnlockBufHdr(buf, buf_state);
 
-	b = BufferDescriptorGetBuffer(buf);
-
-	ref = NewPrivateRefCountEntry(b);
-	ref->refcount++;
-
-	ResourceOwnerRememberBuffer(CurrentResourceOwner, b);
+	TrackNewBufferPin(BufferDescriptorGetBuffer(buf));
 }
 
 /*
@@ -3330,6 +3318,17 @@ UnpinBufferNoOwner(BufferDesc *buf)
 
 		ForgetPrivateRefCountEntry(ref);
 	}
+}
+
+inline void
+TrackNewBufferPin(Buffer buf)
+{
+	PrivateRefCountEntry *ref;
+
+	ref = NewPrivateRefCountEntry(buf);
+	ref->refcount++;
+
+	ResourceOwnerRememberBuffer(CurrentResourceOwner, buf);
 }
 
 #define ST_SORT sort_checkpoint_bufferids
@@ -6288,7 +6287,7 @@ LockBufHdr(BufferDesc *desc)
  * Obviously the buffer could be locked by the time the value is returned, so
  * this is primarily useful in CAS style loops.
  */
-static uint32
+pg_noinline uint32
 WaitBufHdrUnlocked(BufferDesc *buf)
 {
 	SpinDelayStatus delayStatus;

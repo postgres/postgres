@@ -371,6 +371,8 @@ UnlockBufHdr(BufferDesc *desc, uint32 buf_state)
 	pg_atomic_write_u32(&desc->state, buf_state & (~BM_LOCKED));
 }
 
+extern uint32 WaitBufHdrUnlocked(BufferDesc *buf);
+
 /* in bufmgr.c */
 
 /*
@@ -424,6 +426,8 @@ extern void WritebackContextInit(WritebackContext *context, int *max_pending);
 extern void IssuePendingWritebacks(WritebackContext *wb_context, IOContext io_context);
 extern void ScheduleBufferTagForWriteback(WritebackContext *wb_context,
 										  IOContext io_context, BufferTag *tag);
+
+extern void TrackNewBufferPin(Buffer buf);
 
 /* solely to make it easier to write tests */
 extern bool StartBufferIO(BufferDesc *buf, bool forInput, bool nowait);
