@@ -32,6 +32,19 @@ typedef PlannedStmt *(*planner_hook_type) (Query *parse,
 										   ExplainState *es);
 extern PGDLLIMPORT planner_hook_type planner_hook;
 
+/* Hook for plugins to get control after PlannerGlobal is initialized */
+typedef void (*planner_setup_hook_type) (PlannerGlobal *glob, Query *parse,
+										 const char *query_string,
+										 double *tuple_fraction,
+										 ExplainState *es);
+extern PGDLLIMPORT planner_setup_hook_type planner_setup_hook;
+
+/* Hook for plugins to get control before PlannerGlobal is discarded */
+typedef void (*planner_shutdown_hook_type) (PlannerGlobal *glob, Query *parse,
+											const char *query_string,
+											PlannedStmt *pstmt);
+extern PGDLLIMPORT planner_shutdown_hook_type planner_shutdown_hook;
+
 /* Hook for plugins to get control when grouping_planner() plans upper rels */
 typedef void (*create_upper_paths_hook_type) (PlannerInfo *root,
 											  UpperRelationKind stage,
