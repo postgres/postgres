@@ -395,6 +395,7 @@ typedef struct PgStat_StatReplSlotEntry
 	PgStat_Counter stream_txns;
 	PgStat_Counter stream_count;
 	PgStat_Counter stream_bytes;
+	PgStat_Counter mem_exceeded_count;
 	PgStat_Counter total_txns;
 	PgStat_Counter total_bytes;
 	TimestampTz stat_reset_timestamp;

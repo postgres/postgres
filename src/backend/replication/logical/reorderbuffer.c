@@ -390,6 +390,7 @@ ReorderBufferAllocate(void)
 	buffer->streamTxns = 0;
 	buffer->streamCount = 0;
 	buffer->streamBytes = 0;
+	buffer->memExceededCount = 0;
 	buffer->totalTxns = 0;
 	buffer->totalBytes = 0;
 
@@ -3898,14 +3899,26 @@ static void
 ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 {
 	ReorderBufferTXN *txn;
+	bool		update_stats = true;
 
-	/*
-	 * Bail out if debug_logical_replication_streaming is buffered and we
-	 * haven't exceeded the memory limit.
-	 */
-	if (debug_logical_replication_streaming == DEBUG_LOGICAL_REP_STREAMING_BUFFERED &&
-		rb->size < logical_decoding_work_mem * (Size) 1024)
+	if (rb->size >= logical_decoding_work_mem * (Size) 1024)
+	{
+		/*
+		 * Update the statistics as the memory usage has reached the limit. We
+		 * report the statistics update later in this function since we can
+		 * update the slot statistics altogether while streaming or
+		 * serializing transactions in most cases.
+		 */
+		rb->memExceededCount += 1;
+	}
+	else if (debug_logical_replication_streaming == DEBUG_LOGICAL_REP_STREAMING_BUFFERED)
+	{
+		/*
+		 * Bail out if debug_logical_replication_streaming is buffered and we
+		 * haven't exceeded the memory limit.
+		 */
 		return;
+	}
 
 	/*
 	 * If debug_logical_replication_streaming is immediate, loop until there's
@@ -3965,7 +3978,16 @@ ReorderBufferCheckMemoryLimit(ReorderBuffer *rb)
 		 */
 		Assert(txn->size == 0);
 		Assert(txn->nentries_mem == 0);
+
+		/*
+		 * We've reported the memExceededCount update while streaming or
+		 * serializing the transaction.
+		 */
+		update_stats = false;
 	}
+
+	if (update_stats)
+		UpdateDecodingStats((LogicalDecodingContext *) rb->private_data);
 
 	/* We must be under the memory limit now. */
 	Assert(rb->size < logical_decoding_work_mem * (Size) 1024);
