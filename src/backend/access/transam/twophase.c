@@ -2817,7 +2817,7 @@ LookupGXactBySubid(Oid subid)
 }
 
 /*
- * TwoPhaseGetXidByLockingProc
+ * TwoPhaseGetOldestXidInCommit
  *		Return the oldest transaction ID from prepared transactions that are
  *		currently in the commit critical section.
  *
