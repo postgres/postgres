@@ -384,9 +384,13 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The approximate average size (in bytes) of the aggregate's state value.
       If this parameter is omitted or is zero, a default estimate is used
-      based on the <replaceable>state_data_type</replaceable>.
+      based on the <replaceable>state_data_type</replaceable>. If set to a
+      negative value, it indicates the state data can grow unboundedly in
+      size, such as when the aggregate accumulates input rows (e.g.,
+      array_agg, string_agg).
       The planner uses this value to estimate the memory required for a
-      grouped aggregate query.
+      grouped aggregate query and to avoid optimizations that may cause
+      excessive memory usage.
      </para>
     </listitem>
    </varlistentry>
@@ -568,7 +572,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The approximate average size (in bytes) of the aggregate's state
       value, when using moving-aggregate mode.  This works the same as
-      <replaceable>state_data_size</replaceable>.
+      <replaceable>state_data_size</replaceable>, except that negative
+      values are not used to indicate unbounded state size.
      </para>
     </listitem>
    </varlistentry>

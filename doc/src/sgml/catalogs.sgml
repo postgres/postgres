@@ -596,7 +596,10 @@
       </para>
       <para>
        Approximate average size (in bytes) of the transition state
-       data, or zero to use a default estimate
+       data. A positive value provides an estimate; zero means to
+       use a default estimate. A negative value indicates the state
+       data can grow unboundedly in size, such as when the aggregate
+       accumulates input rows (e.g., array_agg, string_agg).
       </para></entry>
      </row>
 
