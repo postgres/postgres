@@ -270,7 +270,8 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 	if (BufferIsValid(heapBuf) && BufferGetBlockNumber(heapBuf) != heapBlk)
 		elog(ERROR, "wrong heap buffer passed to visibilitymap_set");
 
-	Assert(!BufferIsValid(heapBuf) || BufferIsExclusiveLocked(heapBuf));
+	Assert(!BufferIsValid(heapBuf) ||
+		   BufferIsLockedByMeInMode(heapBuf, BUFFER_LOCK_EXCLUSIVE));
 
 	/* Check that we have the right VM page pinned */
 	if (!BufferIsValid(vmBuf) || BufferGetBlockNumber(vmBuf) != mapBlock)

@@ -230,7 +230,8 @@ extern void WaitReadBuffers(ReadBuffersOperation *operation);
 
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
-extern bool BufferIsExclusiveLocked(Buffer buffer);
+extern bool BufferIsLockedByMe(Buffer buffer);
+extern bool BufferIsLockedByMeInMode(Buffer buffer, int mode);
 extern bool BufferIsDirty(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);
 extern void IncrBufferRefCount(Buffer buffer);
