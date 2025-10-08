@@ -321,7 +321,7 @@ ExecCreateTableAs(ParseState *pstate, CreateTableAsStmt *stmt,
 
 		/* plan the query */
 		plan = pg_plan_query(query, pstate->p_sourcetext,
-							 CURSOR_OPT_PARALLEL_OK, params);
+							 CURSOR_OPT_PARALLEL_OK, params, NULL);
 
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees

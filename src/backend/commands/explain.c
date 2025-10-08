@@ -351,7 +351,7 @@ standard_ExplainOneQuery(Query *query, int cursorOptions,
 	INSTR_TIME_SET_CURRENT(planstart);
 
 	/* plan the query */
-	plan = pg_plan_query(query, queryString, cursorOptions, params);
+	plan = pg_plan_query(query, queryString, cursorOptions, params, es);
 
 	INSTR_TIME_SET_CURRENT(planduration);
 	INSTR_TIME_SUBTRACT(planduration, planstart);

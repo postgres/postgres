@@ -24,6 +24,8 @@
 
 #include "nodes/parsenodes.h"
 
+typedef struct ExplainState ExplainState;	/* defined in explain_state.h */
+
 /*
  * We don't want to include nodes/pathnodes.h here, because non-planner
  * code should generally treat PlannerInfo as an opaque typedef.
@@ -104,7 +106,8 @@ extern PGDLLIMPORT bool enable_distinct_reordering;
 
 extern PlannedStmt *planner(Query *parse, const char *query_string,
 							int cursorOptions,
-							ParamListInfo boundParams);
+							ParamListInfo boundParams,
+							ExplainState *es);
 
 extern Expr *expression_planner(Expr *expr);
 extern Expr *expression_planner_with_deps(Expr *expr,

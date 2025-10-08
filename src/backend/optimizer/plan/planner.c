@@ -279,6 +279,23 @@ static void create_partial_unique_paths(PlannerInfo *root, RelOptInfo *input_rel
  *
  *	   Query optimizer entry point
  *
+ * Inputs:
+ *	parse: an analyzed-and-rewritten query tree for an optimizable statement
+ *	query_string: source text for the query tree (used for error reports)
+ *	cursorOptions: bitmask of CURSOR_OPT_XXX flags, see parsenodes.h
+ *	boundParams: passed-in parameter values, or NULL if none
+ *	es: ExplainState if being called from EXPLAIN, else NULL
+ *
+ * The result is a PlannedStmt tree.
+ *
+ * PARAM_EXTERN Param nodes within the parse tree can be replaced by Consts
+ * using values from boundParams, if those values are marked PARAM_FLAG_CONST.
+ * Parameter values not so marked are still relied on for estimation purposes.
+ *
+ * The ExplainState pointer is not currently used by the core planner, but it
+ * is passed through to some planner hooks so that they can report information
+ * back to EXPLAIN extension hooks.
+ *
  * To support loadable plugins that monitor or modify planner behavior,
  * we provide a hook variable that lets a plugin get control before and
  * after the standard planning process.  The plugin would normally call
@@ -290,14 +307,16 @@ static void create_partial_unique_paths(PlannerInfo *root, RelOptInfo *input_rel
  *****************************************************************************/
 PlannedStmt *
 planner(Query *parse, const char *query_string, int cursorOptions,
-		ParamListInfo boundParams)
+		ParamListInfo boundParams, ExplainState *es)
 {
 	PlannedStmt *result;
 
 	if (planner_hook)
-		result = (*planner_hook) (parse, query_string, cursorOptions, boundParams);
+		result = (*planner_hook) (parse, query_string, cursorOptions,
+								  boundParams, es);
 	else
-		result = standard_planner(parse, query_string, cursorOptions, boundParams);
+		result = standard_planner(parse, query_string, cursorOptions,
+								  boundParams, es);
 
 	pgstat_report_plan_id(result->planId, false);
 
@@ -306,7 +325,7 @@ planner(Query *parse, const char *query_string, int cursorOptions,
 
 PlannedStmt *
 standard_planner(Query *parse, const char *query_string, int cursorOptions,
-				 ParamListInfo boundParams)
+				 ParamListInfo boundParams, ExplainState *es)
 {
 	PlannedStmt *result;
 	PlannerGlobal *glob;
