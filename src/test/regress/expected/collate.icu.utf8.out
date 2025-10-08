@@ -2437,11 +2437,11 @@ SELECT c collate "C", count(c) FROM pagg_tab3 GROUP BY c collate "C" ORDER BY 1;
 SET enable_partitionwise_join TO false;
 EXPLAIN (COSTS OFF)
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
-                         QUERY PLAN                          
--------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Sort
    Sort Key: t1.c COLLATE "C"
-   ->  HashAggregate
+   ->  Finalize HashAggregate
          Group Key: t1.c
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
@@ -2449,10 +2449,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
                      ->  Seq Scan on pagg_tab3_p2 t1_1
                      ->  Seq Scan on pagg_tab3_p1 t1_2
                ->  Hash
-                     ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
-(13 rows)
+                     ->  Partial HashAggregate
+                           Group Key: t2.c
+                           ->  Append
+                                 ->  Seq Scan on pagg_tab3_p2 t2_1
+                                 ->  Seq Scan on pagg_tab3_p1 t2_2
+(15 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
  c | count 
@@ -2464,11 +2466,11 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
 SET enable_partitionwise_join TO true;
 EXPLAIN (COSTS OFF)
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
-                         QUERY PLAN                          
--------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Sort
    Sort Key: t1.c COLLATE "C"
-   ->  HashAggregate
+   ->  Finalize HashAggregate
          Group Key: t1.c
          ->  Hash Join
                Hash Cond: (t1.c = t2.c)
@@ -2476,10 +2478,12 @@ SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROU
                      ->  Seq Scan on pagg_tab3_p2 t1_1
                      ->  Seq Scan on pagg_tab3_p1 t1_2
                ->  Hash
-                     ->  Append
-                           ->  Seq Scan on pagg_tab3_p2 t2_1
-                           ->  Seq Scan on pagg_tab3_p1 t2_2
-(13 rows)
+                     ->  Partial HashAggregate
+                           Group Key: t2.c
+                           ->  Append
+                                 ->  Seq Scan on pagg_tab3_p2 t2_1
+                                 ->  Seq Scan on pagg_tab3_p1 t2_2
+(15 rows)
 
 SELECT t1.c, count(t2.c) FROM pagg_tab3 t1 JOIN pagg_tab3 t2 ON t1.c = t2.c GROUP BY 1 ORDER BY t1.c COLLATE "C";
  c | count 

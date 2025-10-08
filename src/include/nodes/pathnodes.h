@@ -401,6 +401,15 @@ struct PlannerInfo
 	/* list of PlaceHolderInfos */
 	List	   *placeholder_list;
 
+	/* list of AggClauseInfos */
+	List	   *agg_clause_list;
+
+	/* list of GroupExprInfos */
+	List	   *group_expr_list;
+
+	/* list of plain Vars contained in targetlist and havingQual */
+	List	   *tlist_vars;
+
 	/* array of PlaceHolderInfos indexed by phid */
 	struct PlaceHolderInfo **placeholder_array pg_node_attr(read_write_ignore, array_size(placeholder_array_size));
 	/* allocated size of array */
@@ -1054,6 +1063,14 @@ typedef struct RelOptInfo
 	bool		consider_partitionwise_join;
 
 	/*
+	 * used by eager aggregation:
+	 */
+	/* information needed to create grouped paths */
+	struct RelAggInfo *agg_info;
+	/* the partially-aggregated version of the relation */
+	struct RelOptInfo *grouped_rel;
+
+	/*
 	 * inheritance links, if this is an otherrel (otherwise NULL):
 	 */
 	/* Immediate parent relation (dumping it would be too verbose) */
@@ -1140,6 +1157,63 @@ typedef struct RelOptInfo
 #define RELATION_WAS_MADE_UNIQUE(rel, sjinfo, nominal_jointype) \
 	((nominal_jointype) == JOIN_INNER && (sjinfo)->jointype == JOIN_SEMI && \
 	 bms_equal((sjinfo)->syn_righthand, (rel)->relids))
+
+/*
+ * Is the given relation a grouped relation?
+ */
+#define IS_GROUPED_REL(rel) \
+	((rel)->agg_info != NULL)
+
+/*
+ * RelAggInfo
+ *		Information needed to create paths for a grouped relation.
+ *
+ * "target" is the default result targetlist for Paths scanning this grouped
+ * relation; list of Vars/Exprs, cost, width.
+ *
+ * "agg_input" is the output tlist for the paths that provide input to the
+ * grouped paths.  One difference from the reltarget of the non-grouped
+ * relation is that agg_input has its sortgrouprefs[] initialized.
+ *
+ * "group_clauses" and "group_exprs" are lists of SortGroupClauses and the
+ * corresponding grouping expressions.
+ *
+ * "apply_at" tracks the set of relids at which partial aggregation is applied
+ * in the paths of this grouped relation.
+ *
+ * "grouped_rows" is the estimated number of result tuples of the grouped
+ * relation.
+ *
+ * "agg_useful" is a flag to indicate whether the grouped paths are considered
+ * useful.  It is set true if the average partial group size is no less than
+ * min_eager_agg_group_size, suggesting a significant row count reduction.
+ */
+typedef struct RelAggInfo
+{
+	pg_node_attr(no_copy_equal, no_read, no_query_jumble)
+
+	NodeTag		type;
+
+	/* the output tlist for the grouped paths */
+	struct PathTarget *target;
+
+	/* the output tlist for the input paths */
+	struct PathTarget *agg_input;
+
+	/* a list of SortGroupClauses */
+	List	   *group_clauses;
+	/* a list of grouping expressions */
+	List	   *group_exprs;
+
+	/* the set of relids partial aggregation is applied at */
+	Relids		apply_at;
+
+	/* estimated number of result tuples */
+	Cardinality grouped_rows;
+
+	/* the grouped paths are considered useful? */
+	bool		agg_useful;
+} RelAggInfo;
 
 /*
  * IndexOptInfo
@@ -3284,6 +3358,49 @@ typedef struct MinMaxAggInfo
 	/* param for subplan's output */
 	Param	   *param;
 } MinMaxAggInfo;
+
+/*
+ * For each distinct Aggref node that appears in the targetlist and HAVING
+ * clauses, we store an AggClauseInfo node in the PlannerInfo node's
+ * agg_clause_list.  Each AggClauseInfo records the set of relations referenced
+ * by the aggregate expression.  This information is used to determine how far
+ * the aggregate can be safely pushed down in the join tree.
+ */
+typedef struct AggClauseInfo
+{
+	pg_node_attr(no_read, no_query_jumble)
+
+	NodeTag		type;
+
+	/* the Aggref expr */
+	Aggref	   *aggref;
+
+	/* lowest level we can evaluate this aggregate at */
+	Relids		agg_eval_at;
+} AggClauseInfo;
+
+/*
+ * For each grouping expression that appears in grouping clauses, we store a
+ * GroupingExprInfo node in the PlannerInfo node's group_expr_list.  Each
+ * GroupingExprInfo records the expression being grouped on, its sortgroupref,
+ * and the EquivalenceClass it belongs to.  This information is necessary to
+ * reproduce correct grouping semantics at different levels of the join tree.
+ */
+typedef struct GroupingExprInfo
+{
+	pg_node_attr(no_read, no_query_jumble)
+
+	NodeTag		type;
+
+	/* the represented expression */
+	Expr	   *expr;
+
+	/* the tleSortGroupRef of the corresponding SortGroupClause */
+	Index		sortgroupref;
+
+	/* the equivalence class the expression belongs to */
+	EquivalenceClass *ec pg_node_attr(copy_as_scalar, equal_as_scalar);
+} GroupingExprInfo;
 
 /*
  * At runtime, PARAM_EXEC slots are used to pass values around from one plan

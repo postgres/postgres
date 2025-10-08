@@ -145,6 +145,13 @@
   boot_val => 'false',
 },
 
+{ name => 'enable_eager_aggregate', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
+  short_desc => 'Enables eager aggregation.',
+  flags => 'GUC_EXPLAIN',
+  variable => 'enable_eager_aggregate',
+  boot_val => 'true',
+},
+
 { name => 'enable_parallel_append', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
   short_desc => 'Enables the planner\'s use of parallel append plans.',
   flags => 'GUC_EXPLAIN',
@@ -2424,6 +2431,15 @@
   variable => 'jit_inline_above_cost',
   boot_val => '500000',
   min => '-1',
+  max => 'DBL_MAX',
+},
+
+{ name => 'min_eager_agg_group_size', type => 'real', context => 'PGC_USERSET', group => 'QUERY_TUNING_COST',
+  short_desc => 'Sets the minimum average group size required to consider applying eager aggregation.',
+  flags => 'GUC_EXPLAIN',
+  variable => 'min_eager_agg_group_size',
+  boot_val => '8.0',
+  min => '0.0',
   max => 'DBL_MAX',
 },
 

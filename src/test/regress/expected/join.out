@@ -2840,20 +2840,22 @@ select x.thousand, x.twothousand, count(*)
 from tenk1 x inner join tenk1 y on x.thousand = y.thousand
 group by x.thousand, x.twothousand
 order by x.thousand desc, x.twothousand;
-                                    QUERY PLAN                                    
-----------------------------------------------------------------------------------
- GroupAggregate
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Finalize GroupAggregate
    Group Key: x.thousand, x.twothousand
    ->  Incremental Sort
          Sort Key: x.thousand DESC, x.twothousand
          Presorted Key: x.thousand
          ->  Merge Join
                Merge Cond: (y.thousand = x.thousand)
-               ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1 y
+               ->  Partial GroupAggregate
+                     Group Key: y.thousand
+                     ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1 y
                ->  Sort
                      Sort Key: x.thousand DESC
                      ->  Seq Scan on tenk1 x
-(11 rows)
+(13 rows)
 
 reset enable_hashagg;
 reset enable_nestloop;

@@ -3701,30 +3701,33 @@ select count(t1.c3) from ft2 t1 left join ft2 t2 on (t1.c1 = random() * t2.c2);
 -- Subquery in FROM clause having aggregate
 explain (verbose, costs off)
 select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Sort
-   Output: (count(*)), x.b
-   Sort Key: (count(*)), x.b
-   ->  HashAggregate
-         Output: count(*), x.b
-         Group Key: x.b
-         ->  Hash Join
-               Output: x.b
-               Inner Unique: true
-               Hash Cond: (ft1.c2 = x.a)
-               ->  Foreign Scan on public.ft1
-                     Output: ft1.c2
-                     Remote SQL: SELECT c2 FROM "S 1"."T 1"
-               ->  Hash
-                     Output: x.b, x.a
-                     ->  Subquery Scan on x
-                           Output: x.b, x.a
-                           ->  Foreign Scan
-                                 Output: ft1_1.c2, (sum(ft1_1.c1))
-                                 Relations: Aggregate on (public.ft1 ft1_1)
-                                 Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY 1
-(21 rows)
+   Output: (count(*)), (sum(ft1_1.c1))
+   Sort Key: (count(*)), (sum(ft1_1.c1))
+   ->  Finalize GroupAggregate
+         Output: count(*), (sum(ft1_1.c1))
+         Group Key: (sum(ft1_1.c1))
+         ->  Sort
+               Output: (sum(ft1_1.c1)), (PARTIAL count(*))
+               Sort Key: (sum(ft1_1.c1))
+               ->  Hash Join
+                     Output: (sum(ft1_1.c1)), (PARTIAL count(*))
+                     Hash Cond: (ft1_1.c2 = ft1.c2)
+                     ->  Foreign Scan
+                           Output: ft1_1.c2, (sum(ft1_1.c1))
+                           Relations: Aggregate on (public.ft1 ft1_1)
+                           Remote SQL: SELECT c2, sum("C 1") FROM "S 1"."T 1" GROUP BY 1
+                     ->  Hash
+                           Output: ft1.c2, (PARTIAL count(*))
+                           ->  Partial HashAggregate
+                                 Output: ft1.c2, PARTIAL count(*)
+                                 Group Key: ft1.c2
+                                 ->  Foreign Scan on public.ft1
+                                       Output: ft1.c2
+                                       Remote SQL: SELECT c2 FROM "S 1"."T 1"
+(24 rows)
 
 select count(*), x.b from ft1, (select c2 a, sum(c1) b from ft1 group by c2) x where ft1.c2 = x.a group by x.b order by 1, 2;
  count |   b   

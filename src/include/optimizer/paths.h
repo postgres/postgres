@@ -21,7 +21,9 @@
  * allpaths.c
  */
 extern PGDLLIMPORT bool enable_geqo;
+extern PGDLLIMPORT bool enable_eager_aggregate;
 extern PGDLLIMPORT int geqo_threshold;
+extern PGDLLIMPORT double min_eager_agg_group_size;
 extern PGDLLIMPORT int min_parallel_table_scan_size;
 extern PGDLLIMPORT int min_parallel_index_scan_size;
 extern PGDLLIMPORT bool enable_group_by_reordering;
@@ -57,6 +59,8 @@ extern void generate_gather_paths(PlannerInfo *root, RelOptInfo *rel,
 								  bool override_rows);
 extern void generate_useful_gather_paths(PlannerInfo *root, RelOptInfo *rel,
 										 bool override_rows);
+extern void generate_grouped_paths(PlannerInfo *root, RelOptInfo *grouped_rel,
+								   RelOptInfo *rel);
 extern int	compute_parallel_worker(RelOptInfo *rel, double heap_pages,
 									double index_pages, int max_workers);
 extern void create_partial_bitmap_paths(PlannerInfo *root, RelOptInfo *rel,

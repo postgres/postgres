@@ -5475,6 +5475,21 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-eager-aggregate" xreflabel="enable_eager_aggregate">
+      <term><varname>enable_eager_aggregate</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_eager_aggregate</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's ability to partially push
+        aggregation past a join, and finalize it once all the relations are
+        joined. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-gathermerge" xreflabel="enable_gathermerge">
       <term><varname>enable_gathermerge</varname> (<type>boolean</type>)
       <indexterm>
@@ -6091,6 +6106,22 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         The default is 4 gigabytes (<literal>4GB</literal>).
         (If <symbol>BLCKSZ</symbol> is not 8kB, the default value scales
         proportionally to it.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-min-eager-agg-group-size" xreflabel="min_eager_agg_group_size">
+      <term><varname>min_eager_agg_group_size</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>min_eager_agg_group_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the minimum average group size required to consider applying
+        eager aggregation. This helps avoid the overhead of eager
+        aggregation when it does not offer significant row count reduction.
+        The default is <literal>8</literal>.
        </para>
       </listitem>
      </varlistentry>

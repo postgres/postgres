@@ -14,6 +14,8 @@ SET enable_partitionwise_join TO true;
 SET max_parallel_workers_per_gather TO 0;
 -- Disable incremental sort, which can influence selected plans due to fuzz factor.
 SET enable_incremental_sort TO off;
+-- Disable eager aggregation, which can interfere with the generation of partitionwise aggregation.
+SET enable_eager_aggregate TO off;
 
 --
 -- Tests for list partitioned tables.

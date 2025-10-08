@@ -42,6 +42,7 @@ AfterTriggersTableData
 AfterTriggersTransData
 Agg
 AggClauseCosts
+AggClauseInfo
 AggInfo
 AggPath
 AggSplit
@@ -1110,6 +1111,7 @@ GroupPathExtraData
 GroupResultPath
 GroupState
 GroupVarInfo
+GroupingExprInfo
 GroupingFunc
 GroupingSet
 GroupingSetData
@@ -2473,6 +2475,7 @@ ReindexObjectType
 ReindexParams
 ReindexStmt
 ReindexType
+RelAggInfo
 RelFileLocator
 RelFileLocatorBackend
 RelFileNumber
