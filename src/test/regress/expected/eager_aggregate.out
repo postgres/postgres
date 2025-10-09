@@ -2,8 +2,6 @@
 -- EAGER AGGREGATION
 -- Test we can push aggregation down below join
 --
--- Enable eager aggregation, which by default is disabled.
-SET enable_eager_aggregate TO on;
 CREATE TABLE eager_agg_t1 (a int, b int, c double precision);
 CREATE TABLE eager_agg_t2 (a int, b int, c double precision);
 CREATE TABLE eager_agg_t3 (a int, b int, c double precision);
