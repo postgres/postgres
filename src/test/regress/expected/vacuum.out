@@ -161,16 +161,14 @@ VACUUM (PARALLEL 2) pvactst;
 UPDATE pvactst SET i = i WHERE i < 1000;
 VACUUM (PARALLEL 0) pvactst; -- disable parallel vacuum
 VACUUM (PARALLEL -1) pvactst; -- error
-ERROR:  parallel workers for vacuum must be between 0 and 1024
+ERROR:  PARALLEL option must be between 0 and 1024
 LINE 1: VACUUM (PARALLEL -1) pvactst;
                 ^
 VACUUM (PARALLEL 2, INDEX_CLEANUP FALSE) pvactst;
 VACUUM (PARALLEL 2, FULL TRUE) pvactst; -- error, cannot use both PARALLEL and FULL
 ERROR:  VACUUM FULL cannot be performed in parallel
 VACUUM (PARALLEL) pvactst; -- error, cannot use PARALLEL option without parallel degree
-ERROR:  parallel option requires a value between 0 and 1024
-LINE 1: VACUUM (PARALLEL) pvactst;
-                ^
+ERROR:  parallel requires an integer value
 -- Test parallel vacuum using the minimum maintenance_work_mem with and without
 -- dead tuples.
 SET maintenance_work_mem TO 64;
