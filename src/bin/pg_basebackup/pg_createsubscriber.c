@@ -801,10 +801,7 @@ setup_publisher(struct LogicalRepInfo *dbinfo)
 		if (lsn)
 			pg_free(lsn);
 		lsn = create_logical_replication_slot(conn, &dbinfo[i]);
-		if (lsn != NULL || dry_run)
-			pg_log_info("create replication slot \"%s\" on publisher",
-						dbinfo[i].replslotname);
-		else
+		if (lsn == NULL && !dry_run)
 			exit(1);
 
 		/*
@@ -1375,7 +1372,7 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 	Assert(conn != NULL);
 
-	pg_log_info("creating the replication slot \"%s\" in database \"%s\"",
+	pg_log_info("creating the replication slot \"%s\" in database \"%s\" on publisher",
 				slot_name, dbinfo->dbname);
 
 	slot_name_esc = PQescapeLiteral(conn, slot_name, strlen(slot_name));
