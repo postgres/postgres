@@ -3271,7 +3271,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 }
 
 /*
- * get tupple and evaluate in a partition
+ * get tuple and evaluate in partition
  */
 static Datum
 gettuple_eval_partition(WindowObject winobj, int argno,
@@ -3718,7 +3718,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	WindowAggState *winstate;
 	int64		abs_pos;
 	Datum		datum;
-	bool		null_treatment = false;
+	bool		null_treatment;
 	int			notnull_offset;
 	int			notnull_relpos;
 	int			forward;
@@ -3727,13 +3727,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	Assert(WindowObjectIsValid(winobj));
 	winstate = winobj->winstate;
 
-	if (winobj->ignore_nulls == IGNORE_NULLS && relpos != 0)
-	{
-		null_treatment = true;
-		notnull_offset = 0;
-		notnull_relpos = abs(relpos);
-		forward = relpos > 0 ? 1 : -1;
-	}
+	null_treatment = (winobj->ignore_nulls == IGNORE_NULLS && relpos != 0);
 
 	switch (seektype)
 	{
@@ -3759,9 +3753,10 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			break;
 	}
 
-	if (!null_treatment)		/* IGNORE NULLS is not specified */
+	/* Easy case if IGNORE NULLS is not specified */
+	if (!null_treatment)
 	{
-		/* get tupple and evaluate in a partition */
+		/* get tuple and evaluate in partition */
 		datum = gettuple_eval_partition(winobj, argno,
 										abs_pos, isnull, &myisout);
 		if (!myisout && set_mark)
@@ -3771,32 +3766,35 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		return datum;
 	}
 
+	/* Prepare for loop */
+	notnull_offset = 0;
+	notnull_relpos = abs(relpos);
+	forward = relpos > 0 ? 1 : -1;
 	myisout = false;
 	datum = 0;
 
 	/*
 	 * Get the next nonnull value in the partition, moving forward or backward
-	 * until we find a value or reach the partition's end.
+	 * until we find a value or reach the partition's end.  We cache the
+	 * nullness status because we may repeat this process many times.
 	 */
 	do
 	{
-		int			nn_info;	/* NOT NULL info */
+		int			nn_info;	/* NOT NULL status */
 
 		abs_pos += forward;
-		if (abs_pos < 0)		/* apparently out of partition */
+		if (abs_pos < 0)		/* clearly out of partition */
 			break;
 
 		/* check NOT NULL cached info */
 		nn_info = get_notnull_info(winobj, abs_pos);
 		if (nn_info == NN_NOTNULL)	/* this row is known to be NOT NULL */
 			notnull_offset++;
-
 		else if (nn_info == NN_NULL)	/* this row is known to be NULL */
 			continue;			/* keep on moving forward or backward */
-
 		else					/* need to check NULL or not */
 		{
-			/* get tupple and evaluate in a partition */
+			/* get tuple and evaluate in partition */
 			datum = gettuple_eval_partition(winobj, argno,
 											abs_pos, isnull, &myisout);
 			if (myisout)		/* out of partition? */
@@ -3808,7 +3806,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		}
 	} while (notnull_offset < notnull_relpos);
 
-	/* get tupple and evaluate in a partition */
+	/* get tuple and evaluate in partition */
 	datum = gettuple_eval_partition(winobj, argno,
 									abs_pos, isnull, &myisout);
 	if (!myisout && set_mark)
