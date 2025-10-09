@@ -542,11 +542,20 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	/* Emit the message to the right places */
 	EmitErrorReport();
 
-	/* Now free up subsidiary data attached to stack entry, and release it */
-	FreeErrorDataContents(edata);
-	errordata_stack_depth--;
+	/*
+	 * If this is the outermost recursion level, we can clean up by resetting
+	 * ErrorContext altogether (compare FlushErrorState), which is good
+	 * because it cleans up any random leakages that might have occurred in
+	 * places such as context callback functions.  If we're nested, we can
+	 * only safely remove the subsidiary data of the current stack entry.
+	 */
+	if (errordata_stack_depth == 0 && recursion_depth == 1)
+		MemoryContextReset(ErrorContext);
+	else
+		FreeErrorDataContents(edata);
 
-	/* Exit error-handling context */
+	/* Release stack entry and exit error-handling context */
+	errordata_stack_depth--;
 	MemoryContextSwitchTo(oldcontext);
 	recursion_depth--;
 
