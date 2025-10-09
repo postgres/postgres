@@ -997,6 +997,19 @@ INSERT INTO t5 (a, b) values (1, 'D1'), (2, 'D2'), (3, 'd1');
 -- rewriting.)
 SELECT * FROM t5 ORDER BY c ASC, a ASC;
 
+-- Check that DEFAULT expressions in SQL/JSON functions use the same collation
+-- as the RETURNING type.  Mismatched collations should raise an error.
+CREATE DOMAIN d1 AS text COLLATE case_insensitive;
+CREATE DOMAIN d2 AS text COLLATE "C";
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT ('C' COLLATE "C") COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLATE "C" ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON EMPTY) = 'a'; -- error
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE "C" ON EMPTY) = 'a'; -- error
+DROP DOMAIN d1, d2;
 
 -- cleanup
 RESET search_path;

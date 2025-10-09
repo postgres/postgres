@@ -2690,6 +2690,55 @@ SELECT * FROM t5 ORDER BY c ASC, a ASC;
  3 | d1 | d1
 (3 rows)
 
+-- Check that DEFAULT expressions in SQL/JSON functions use the same collation
+-- as the RETURNING type.  Mismatched collations should raise an error.
+CREATE DOMAIN d1 AS text COLLATE case_insensitive;
+CREATE DOMAIN d2 AS text COLLATE "C";
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT ('C' COLLATE "C") COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON EMPTY) = 'a'; -- error
+ERROR:  the collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C'::d2 ON...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLATE "C" ON EMPTY) = 'a'; -- error
+ERROR:  the collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.a' RETURNING d1 DEFAULT 'C' COLLAT...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE case_insensitive ON EMPTY) = 'a'; -- true
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON EMPTY) = 'a'; -- error
+ERROR:  the collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A'::d2 ON...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+SELECT JSON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLATE "C" ON EMPTY) = 'a'; -- error
+ERROR:  the collation of DEFAULT expression conflicts with RETURNING clause
+LINE 1: ...ON_VALUE('{"a": "A"}', '$.c' RETURNING d1 DEFAULT 'A' COLLAT...
+                                                             ^
+DETAIL:  "C" versus "case_insensitive"
+DROP DOMAIN d1, d2;
 -- cleanup
 RESET search_path;
 SET client_min_messages TO warning;
