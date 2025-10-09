@@ -120,6 +120,52 @@ RESET client_min_messages;
 DROP TABLE testpub_tbl3, testpub_tbl3a;
 DROP PUBLICATION testpub3, testpub4;
 
+--- Tests for publications with SEQUENCES
+CREATE SEQUENCE regress_pub_seq0;
+CREATE SEQUENCE pub_test.regress_pub_seq1;
+
+-- FOR ALL SEQUENCES
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_forallsequences1 FOR ALL SEQUENCES;
+RESET client_min_messages;
+
+SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_forallsequences1';
+\d+ regress_pub_seq0
+\dRp+ regress_pub_forallsequences1
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_forallsequences2 FOR ALL SEQUENCES;
+RESET client_min_messages;
+
+-- check that describe sequence lists both publications the sequence belongs to
+\d+ pub_test.regress_pub_seq1
+
+--- Specifying both ALL TABLES and ALL SEQUENCES
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES;
+
+-- Specifying WITH clause in an ALL SEQUENCES publication will emit a NOTICE.
+SET client_min_messages = 'NOTICE';
+CREATE PUBLICATION regress_pub_for_allsequences_alltables_withclause FOR ALL SEQUENCES, ALL TABLES WITH (publish = 'insert');
+CREATE PUBLICATION regress_pub_for_allsequences_withclause FOR ALL SEQUENCES WITH (publish_generated_columns = 'stored');
+RESET client_min_messages;
+
+SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_for_allsequences_alltables';
+\dRp+ regress_pub_for_allsequences_alltables
+
+DROP SEQUENCE regress_pub_seq0, pub_test.regress_pub_seq1;
+DROP PUBLICATION regress_pub_forallsequences1;
+DROP PUBLICATION regress_pub_forallsequences2;
+DROP PUBLICATION regress_pub_for_allsequences_alltables;
+DROP PUBLICATION regress_pub_for_allsequences_alltables_withclause;
+DROP PUBLICATION regress_pub_for_allsequences_withclause;
+
+-- fail - Specifying ALL TABLES more than once
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL TABLES;
+
+-- fail - Specifying ALL SEQUENCES more than once
+CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL TABLES, ALL SEQUENCES;
+
 -- Tests for partitioned tables
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_forparted;

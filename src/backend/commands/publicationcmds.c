@@ -847,11 +847,14 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		aclcheck_error(aclresult, OBJECT_DATABASE,
 					   get_database_name(MyDatabaseId));
 
-	/* FOR ALL TABLES requires superuser */
-	if (stmt->for_all_tables && !superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to create FOR ALL TABLES publication")));
+	/* FOR ALL TABLES and FOR ALL SEQUENCES requires superuser */
+	if (!superuser())
+	{
+		if (stmt->for_all_tables || stmt->for_all_sequences)
+			ereport(ERROR,
+					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("must be superuser to create a FOR ALL TABLES or ALL SEQUENCES publication"));
+	}
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
@@ -880,11 +883,20 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 							  &publish_generated_columns_given,
 							  &publish_generated_columns);
 
+	if (stmt->for_all_sequences &&
+		(publish_given || publish_via_partition_root_given ||
+		 publish_generated_columns_given))
+		ereport(NOTICE,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("publication parameters are not applicable to sequence synchronization and will be ignored for sequences"));
+
 	puboid = GetNewOidWithIndex(rel, PublicationObjectIndexId,
 								Anum_pg_publication_oid);
 	values[Anum_pg_publication_oid - 1] = ObjectIdGetDatum(puboid);
 	values[Anum_pg_publication_puballtables - 1] =
 		BoolGetDatum(stmt->for_all_tables);
+	values[Anum_pg_publication_puballsequences - 1] =
+		BoolGetDatum(stmt->for_all_sequences);
 	values[Anum_pg_publication_pubinsert - 1] =
 		BoolGetDatum(pubactions.pubinsert);
 	values[Anum_pg_publication_pubupdate - 1] =
@@ -914,10 +926,14 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 	/* Associate objects with the publication. */
 	if (stmt->for_all_tables)
 	{
-		/* Invalidate relcache so that publication info is rebuilt. */
+		/*
+		 * Invalidate relcache so that publication info is rebuilt. Sequences
+		 * publication doesn't require invalidation, as replica identity
+		 * checks don't apply to them.
+		 */
 		CacheInvalidateRelcacheAll();
 	}
-	else
+	else if (!stmt->for_all_sequences)
 	{
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
 								   &schemaidlist);
@@ -989,6 +1005,8 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 	List	   *root_relids = NIL;
 	ListCell   *lc;
 
+	pubform = (Form_pg_publication) GETSTRUCT(tup);
+
 	parse_publication_options(pstate,
 							  stmt->options,
 							  &publish_given, &pubactions,
@@ -997,7 +1015,12 @@ AlterPublicationOptions(ParseState *pstate, AlterPublicationStmt *stmt,
 							  &publish_generated_columns_given,
 							  &publish_generated_columns);
 
-	pubform = (Form_pg_publication) GETSTRUCT(tup);
+	if (pubform->puballsequences &&
+		(publish_given || publish_via_partition_root_given ||
+		 publish_generated_columns_given))
+		ereport(NOTICE,
+				errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				errmsg("publication parameters are not applicable to sequence synchronization and will be ignored for sequences"));
 
 	/*
 	 * If the publication doesn't publish changes via the root partitioned
@@ -1451,20 +1474,50 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 	 * Check that user is allowed to manipulate the publication tables in
 	 * schema
 	 */
-	if (schemaidlist && pubform->puballtables)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("publication \"%s\" is defined as FOR ALL TABLES",
-						NameStr(pubform->pubname)),
-				 errdetail("Schemas cannot be added to or dropped from FOR ALL TABLES publications.")));
+	if (schemaidlist && (pubform->puballtables || pubform->puballsequences))
+	{
+		if (pubform->puballtables && pubform->puballsequences)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL TABLES, ALL SEQUENCES",
+						   NameStr(pubform->pubname)),
+					errdetail("Schemas cannot be added to or dropped from FOR ALL TABLES, ALL SEQUENCES publications."));
+		else if (pubform->puballtables)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL TABLES",
+						   NameStr(pubform->pubname)),
+					errdetail("Schemas cannot be added to or dropped from FOR ALL TABLES publications."));
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL SEQUENCES",
+						   NameStr(pubform->pubname)),
+					errdetail("Schemas cannot be added to or dropped from FOR ALL SEQUENCES publications."));
+	}
 
 	/* Check that user is allowed to manipulate the publication tables. */
-	if (tables && pubform->puballtables)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("publication \"%s\" is defined as FOR ALL TABLES",
-						NameStr(pubform->pubname)),
-				 errdetail("Tables cannot be added to or dropped from FOR ALL TABLES publications.")));
+	if (tables && (pubform->puballtables || pubform->puballsequences))
+	{
+		if (pubform->puballtables && pubform->puballsequences)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL TABLES, ALL SEQUENCES",
+						   NameStr(pubform->pubname)),
+					errdetail("Tables or sequences cannot be added to or dropped from FOR ALL TABLES, ALL SEQUENCES publications."));
+		else if (pubform->puballtables)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL TABLES",
+						   NameStr(pubform->pubname)),
+					errdetail("Tables or sequences cannot be added to or dropped from FOR ALL TABLES publications."));
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("publication \"%s\" is defined as FOR ALL SEQUENCES",
+						   NameStr(pubform->pubname)),
+					errdetail("Tables or sequences cannot be added to or dropped from FOR ALL SEQUENCES publications."));
+	}
 }
 
 /*
@@ -2014,19 +2067,16 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			aclcheck_error(aclresult, OBJECT_DATABASE,
 						   get_database_name(MyDatabaseId));
 
-		if (form->puballtables && !superuser_arg(newOwnerId))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to change owner of publication \"%s\"",
-							NameStr(form->pubname)),
-					 errhint("The owner of a FOR ALL TABLES publication must be a superuser.")));
-
-		if (!superuser_arg(newOwnerId) && is_schema_publication(form->oid))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied to change owner of publication \"%s\"",
-							NameStr(form->pubname)),
-					 errhint("The owner of a FOR TABLES IN SCHEMA publication must be a superuser.")));
+		if (!superuser_arg(newOwnerId))
+		{
+			if (form->puballtables || form->puballsequences ||
+				is_schema_publication(form->oid))
+				ereport(ERROR,
+						errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("permission denied to change owner of publication \"%s\"",
+							   NameStr(form->pubname)),
+						errhint("The owner of a FOR ALL TABLES or ALL SEQUENCES or TABLES IN SCHEMA publication must be a superuser."));
+		}
 	}
 
 	form->pubowner = newOwnerId;

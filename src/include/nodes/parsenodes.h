@@ -4294,6 +4294,22 @@ typedef struct PublicationObjSpec
 	ParseLoc	location;		/* token location, or -1 if unknown */
 } PublicationObjSpec;
 
+/*
+ * Types of objects supported by FOR ALL publications
+ */
+typedef enum PublicationAllObjType
+{
+	PUBLICATION_ALL_TABLES,
+	PUBLICATION_ALL_SEQUENCES,
+} PublicationAllObjType;
+
+typedef struct PublicationAllObjSpec
+{
+	NodeTag		type;
+	PublicationAllObjType pubobjtype;	/* type of this publication object */
+	ParseLoc	location;		/* token location, or -1 if unknown */
+} PublicationAllObjSpec;
+
 typedef struct CreatePublicationStmt
 {
 	NodeTag		type;
@@ -4301,6 +4317,8 @@ typedef struct CreatePublicationStmt
 	List	   *options;		/* List of DefElem nodes */
 	List	   *pubobjects;		/* Optional list of publication objects */
 	bool		for_all_tables; /* Special publication for all tables in db */
+	bool		for_all_sequences;	/* Special publication for all sequences
+									 * in db */
 } CreatePublicationStmt;
 
 typedef enum AlterPublicationAction

@@ -82,8 +82,9 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    new owning role, and that role must have <literal>CREATE</literal>
    privilege on the database.
    Also, the new owner of a
-   <link linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL TABLES</literal></link>
-   or <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
+   <link linkend="sql-createpublication-params-for-tables-in-schema"><literal>FOR TABLES IN SCHEMA</literal></link>
+   or <link linkend="sql-createpublication-params-for-all-tables"><literal>FOR ALL TABLES</literal></link>
+   or <link linkend="sql-createpublication-params-for-all-sequences"><literal>FOR ALL SEQUENCES</literal></link>
    publication must be a superuser. However, a superuser can
    change the ownership of a publication regardless of these restrictions.
   </para>
@@ -153,6 +154,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
      <para>
       This clause alters publication parameters originally set by
       <xref linkend="sql-createpublication"/>.  See there for more information.
+      This clause is not applicable to sequences.
      </para>
      <caution>
       <para>

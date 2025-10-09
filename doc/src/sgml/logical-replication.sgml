@@ -102,16 +102,18 @@
    A <firstterm>publication</firstterm> can be defined on any physical
    replication primary.  The node where a publication is defined is referred to
    as <firstterm>publisher</firstterm>.  A publication is a set of changes
-   generated from a table or a group of tables, and might also be described as
-   a change set or replication set.  Each publication exists in only one database.
+   generated from a table, a group of tables or the current state of all
+   sequences, and might also be described as a change set or replication set.
+   Each publication exists in only one database.
   </para>
 
   <para>
    Publications are different from schemas and do not affect how the table is
    accessed.  Each table can be added to multiple publications if needed.
-   Publications may currently only contain tables and all tables in schema.
-   Objects must be added explicitly, except when a publication is created for
-   <literal>ALL TABLES</literal>.
+   Publications may currently only contain tables or sequences. Objects must be
+   added explicitly, except when a publication is created using
+   <literal>FOR TABLES IN SCHEMA</literal>, <literal>FOR ALL TABLES</literal>,
+   or <literal>FOR ALL SEQUENCES</literal>.
   </para>
 
   <para>
@@ -1049,24 +1051,24 @@ HINT:  To initiate replication, you must manually create the replication slot, e
 <programlisting><![CDATA[
 /* pub # */ \dRp+
                                          Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
-----------+------------+---------+---------+---------+-----------+-------------------+----------
- postgres | f          | t       | t       | t       | t         | none              | f
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
     "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
 
-                                         Publication p2
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
-----------+------------+---------+---------+---------+-----------+-------------------+----------
- postgres | f          | t       | t       | t       | t         | none              | f
+                                                Publication p2
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
     "public.t1"
     "public.t2" WHERE (e = 99)
 
-                                         Publication p3
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
-----------+------------+---------+---------+---------+-----------+-------------------+----------
- postgres | f          | t       | t       | t       | t         | none              | f
+                                                Publication p3
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
     "public.t2" WHERE (d = 10)
     "public.t3" WHERE (g = 10)
@@ -1491,10 +1493,10 @@ Publications:
      for each publication.
 <programlisting>
 /* pub # */ \dRp+
-                                         Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
-----------+------------+---------+---------+---------+-----------+-------------------+----------
- postgres | f          | t       | t       | t       | t         | none              | f
+                                                Publication p1
+  Owner   | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Generated columns | Via root
+----------+------------+---------------+---------+---------+---------+-----------+-------------------+----------
+ postgres | f          | f             | t       | t       | t       | t         | none              | f
 Tables:
     "public.t1" (id, a, b, d)
 </programlisting></para>

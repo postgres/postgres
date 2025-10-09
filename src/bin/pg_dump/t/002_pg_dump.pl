@@ -3432,6 +3432,27 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'CREATE PUBLICATION pub6' => {
+		create_order => 50,
+		create_sql => 'CREATE PUBLICATION pub6
+						 FOR ALL SEQUENCES;',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub6 FOR ALL SEQUENCES WITH (publish = 'insert, update, delete, truncate');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'CREATE PUBLICATION pub7' => {
+		create_order => 50,
+		create_sql => 'CREATE PUBLICATION pub7
+						 FOR ALL SEQUENCES, ALL TABLES
+						 WITH (publish = \'\');',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub7 FOR ALL TABLES, ALL SEQUENCES WITH (publish = '');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
 	'CREATE SUBSCRIPTION sub1' => {
 		create_order => 50,
 		create_sql => 'CREATE SUBSCRIPTION sub1

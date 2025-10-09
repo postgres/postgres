@@ -137,6 +137,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-publication-sequences"><structname>pg_publication_sequences</structname></link></entry>
+      <entry>publications and information of their associated sequences</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-publication-tables"><structname>pg_publication_tables</structname></link></entry>
       <entry>publications and information of their associated tables</entry>
      </row>
@@ -2547,6 +2552,67 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    frequently accessed.
   </para>
 
+ </sect1>
+
+ <sect1 id="view-pg-publication-sequences">
+  <title><structname>pg_publication_sequences</structname></title>
+
+  <indexterm zone="view-pg-publication-sequences">
+   <primary>pg_publication_sequences</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_publication_sequences</structname> provides
+   information about the mapping between publications and sequences.
+  </para>
+
+  <table>
+   <title><structname>pg_publication_sequences</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pubname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-publication"><structname>pg_publication</structname></link>.<structfield>pubname</structfield>)
+      </para>
+      <para>
+       Name of publication
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>schemaname</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.<structfield>nspname</structfield>)
+      </para>
+      <para>
+       Name of schema containing sequence
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sequencename</structfield> <type>name</type>
+       (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relname</structfield>)
+      </para>
+      <para>
+       Name of sequence
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
  <sect1 id="view-pg-publication-tables">

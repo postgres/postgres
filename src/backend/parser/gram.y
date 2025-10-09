@@ -202,6 +202,10 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 			   bool *not_valid, bool *no_inherit, core_yyscan_t yyscanner);
 static PartitionStrategy parsePartitionStrategy(char *strategy, int location,
 												core_yyscan_t yyscanner);
+static void preprocess_pub_all_objtype_list(List *all_objects_list,
+											bool *all_tables,
+											bool *all_sequences,
+											core_yyscan_t yyscanner);
 static void preprocess_pubobj_list(List *pubobjspec_list,
 								   core_yyscan_t yyscanner);
 static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
@@ -260,6 +264,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	PartitionBoundSpec *partboundspec;
 	RoleSpec   *rolespec;
 	PublicationObjSpec *publicationobjectspec;
+	PublicationAllObjSpec *publicationallobjectspec;
 	struct SelectLimit *selectlimit;
 	SetQuantifier setquantifier;
 	struct GroupClause *groupclause;
@@ -447,7 +452,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				transform_element_list transform_type_list
 				TriggerTransitions TriggerReferencing
 				vacuum_relation_list opt_vacuum_relation_list
-				drop_option_list pub_obj_list
+				drop_option_list pub_obj_list pub_obj_type_list
 
 %type <retclause> returning_clause
 %type <node>	returning_option
@@ -585,6 +590,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	var_value zone_value
 %type <rolespec> auth_ident RoleSpec opt_granted_by
 %type <publicationobjectspec> PublicationObjSpec
+%type <publicationallobjectspec> PublicationAllObjSpec
 
 %type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
@@ -10704,7 +10710,12 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
  *
  * CREATE PUBLICATION name [WITH options]
  *
- * CREATE PUBLICATION FOR ALL TABLES [WITH options]
+ * CREATE PUBLICATION FOR ALL pub_obj_type [, ...] [WITH options]
+ *
+ * pub_obj_type is one of:
+ *
+ *		TABLES
+ *		SEQUENCES
  *
  * CREATE PUBLICATION FOR pub_obj [, ...] [WITH options]
  *
@@ -10724,13 +10735,16 @@ CreatePublicationStmt:
 					n->options = $4;
 					$$ = (Node *) n;
 				}
-			| CREATE PUBLICATION name FOR ALL TABLES opt_definition
+			| CREATE PUBLICATION name FOR pub_obj_type_list opt_definition
 				{
 					CreatePublicationStmt *n = makeNode(CreatePublicationStmt);
 
 					n->pubname = $3;
-					n->options = $7;
-					n->for_all_tables = true;
+					n->pubobjects = (List *) $5;
+					preprocess_pub_all_objtype_list($5, &n->for_all_tables,
+													&n->for_all_sequences,
+													yyscanner);
+					n->options = $6;
 					$$ = (Node *) n;
 				}
 			| CREATE PUBLICATION name FOR pub_obj_list opt_definition
@@ -10841,6 +10855,28 @@ pub_obj_list:	PublicationObjSpec
 			| pub_obj_list ',' PublicationObjSpec
 					{ $$ = lappend($1, $3); }
 	;
+
+PublicationAllObjSpec:
+				ALL TABLES
+					{
+						$$ = makeNode(PublicationAllObjSpec);
+						$$->pubobjtype = PUBLICATION_ALL_TABLES;
+						$$->location = @1;
+					}
+				| ALL SEQUENCES
+					{
+						$$ = makeNode(PublicationAllObjSpec);
+						$$->pubobjtype = PUBLICATION_ALL_SEQUENCES;
+						$$->location = @1;
+					}
+					;
+
+pub_obj_type_list:	PublicationAllObjSpec
+					{ $$ = list_make1($1); }
+				| pub_obj_type_list ',' PublicationAllObjSpec
+					{ $$ = lappend($1, $3); }
+	;
+
 
 /*****************************************************************************
  *
@@ -19637,6 +19673,47 @@ parsePartitionStrategy(char *strategy, int location, core_yyscan_t yyscanner)
 			 parser_errposition(location)));
 	return PARTITION_STRATEGY_LIST; /* keep compiler quiet */
 
+}
+
+/*
+ * Process all_objects_list to set all_tables and/or all_sequences.
+ * Also, checks if the pub_object_type has been specified more than once.
+ */
+static void
+preprocess_pub_all_objtype_list(List *all_objects_list, bool *all_tables,
+								bool *all_sequences, core_yyscan_t yyscanner)
+{
+	if (!all_objects_list)
+		return;
+
+	*all_tables = false;
+	*all_sequences = false;
+
+	foreach_ptr(PublicationAllObjSpec, obj, all_objects_list)
+	{
+		if (obj->pubobjtype == PUBLICATION_ALL_TABLES)
+		{
+			if (*all_tables)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid publication object list"),
+						errdetail("ALL TABLES can be specified only once."),
+						parser_errposition(obj->location));
+
+			*all_tables = true;
+		}
+		else if (obj->pubobjtype == PUBLICATION_ALL_SEQUENCES)
+		{
+			if (*all_sequences)
+				ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid publication object list"),
+						errdetail("ALL SEQUENCES can be specified only once."),
+						parser_errposition(obj->location));
+
+			*all_sequences = true;
+		}
+	}
 }
 
 /*

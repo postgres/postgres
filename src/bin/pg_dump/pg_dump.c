@@ -4531,6 +4531,7 @@ getPublications(Archive *fout)
 	int			i_pubname;
 	int			i_pubowner;
 	int			i_puballtables;
+	int			i_puballsequences;
 	int			i_pubinsert;
 	int			i_pubupdate;
 	int			i_pubdelete;
@@ -4561,9 +4562,14 @@ getPublications(Archive *fout)
 		appendPQExpBufferStr(query, "false AS pubviaroot, ");
 
 	if (fout->remoteVersion >= 180000)
-		appendPQExpBufferStr(query, "p.pubgencols ");
+		appendPQExpBufferStr(query, "p.pubgencols, ");
 	else
-		appendPQExpBuffer(query, "'%c' AS pubgencols ", PUBLISH_GENCOLS_NONE);
+		appendPQExpBuffer(query, "'%c' AS pubgencols, ", PUBLISH_GENCOLS_NONE);
+
+	if (fout->remoteVersion >= 190000)
+		appendPQExpBufferStr(query, "p.puballsequences ");
+	else
+		appendPQExpBufferStr(query, "false AS puballsequences ");
 
 	appendPQExpBufferStr(query, "FROM pg_publication p");
 
@@ -4579,6 +4585,7 @@ getPublications(Archive *fout)
 	i_pubname = PQfnumber(res, "pubname");
 	i_pubowner = PQfnumber(res, "pubowner");
 	i_puballtables = PQfnumber(res, "puballtables");
+	i_puballsequences = PQfnumber(res, "puballsequences");
 	i_pubinsert = PQfnumber(res, "pubinsert");
 	i_pubupdate = PQfnumber(res, "pubupdate");
 	i_pubdelete = PQfnumber(res, "pubdelete");
@@ -4599,6 +4606,8 @@ getPublications(Archive *fout)
 		pubinfo[i].rolname = getRoleName(PQgetvalue(res, i, i_pubowner));
 		pubinfo[i].puballtables =
 			(strcmp(PQgetvalue(res, i, i_puballtables), "t") == 0);
+		pubinfo[i].puballsequences =
+			(strcmp(PQgetvalue(res, i, i_puballsequences), "t") == 0);
 		pubinfo[i].pubinsert =
 			(strcmp(PQgetvalue(res, i, i_pubinsert), "t") == 0);
 		pubinfo[i].pubupdate =
@@ -4650,8 +4659,12 @@ dumpPublication(Archive *fout, const PublicationInfo *pubinfo)
 	appendPQExpBuffer(query, "CREATE PUBLICATION %s",
 					  qpubname);
 
-	if (pubinfo->puballtables)
+	if (pubinfo->puballtables && pubinfo->puballsequences)
+		appendPQExpBufferStr(query, " FOR ALL TABLES, ALL SEQUENCES");
+	else if (pubinfo->puballtables)
 		appendPQExpBufferStr(query, " FOR ALL TABLES");
+	else if (pubinfo->puballsequences)
+		appendPQExpBufferStr(query, " FOR ALL SEQUENCES");
 
 	appendPQExpBufferStr(query, " WITH (publish = '");
 	if (pubinfo->pubinsert)

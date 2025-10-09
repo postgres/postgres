@@ -2354,6 +2354,8 @@ PsqlScanStateData
 PsqlSettings
 Publication
 PublicationActions
+PublicationAllObjSpec
+PublicationAllObjType
 PublicationDesc
 PublicationInfo
 PublicationObjSpec
