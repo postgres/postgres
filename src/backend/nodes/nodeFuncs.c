@@ -1266,12 +1266,8 @@ exprSetCollation(Node *expr, Oid collation)
 			}
 			break;
 		case T_JsonBehavior:
-			{
-				JsonBehavior *behavior = (JsonBehavior *) expr;
-
-				if (behavior->expr)
-					exprSetCollation(behavior->expr, collation);
-			}
+			Assert(((JsonBehavior *) expr)->expr == NULL ||
+				   exprCollation(((JsonBehavior *) expr)->expr) == collation);
 			break;
 		case T_NullTest:
 			/* NullTest's result is boolean ... */
