@@ -3113,15 +3113,6 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy,
 				result = (buf_state & BM_VALID) != 0;
 
 				TrackNewBufferPin(b);
-
-				/*
-				 * Assume that we acquired a buffer pin for the purposes of
-				 * Valgrind buffer client checks (even in !result case) to
-				 * keep things simple.  Buffers that are unsafe to access are
-				 * not generally guaranteed to be marked undefined or
-				 * non-accessible in any case.
-				 */
-				VALGRIND_MAKE_MEM_DEFINED(BufHdrGetBlock(buf), BLCKSZ);
 				break;
 			}
 		}
@@ -3185,13 +3176,6 @@ PinBuffer_Locked(BufferDesc *buf)
 	 * manipulate the PrivateRefCount after releasing the spinlock
 	 */
 	Assert(GetPrivateRefCountEntry(BufferDescriptorGetBuffer(buf), false) == NULL);
-
-	/*
-	 * Buffer can't have a preexisting pin, so mark its page as defined to
-	 * Valgrind (this is similar to the PinBuffer() case where the backend
-	 * doesn't already have a buffer pin)
-	 */
-	VALGRIND_MAKE_MEM_DEFINED(BufHdrGetBlock(buf), BLCKSZ);
 
 	/*
 	 * Since we hold the buffer spinlock, we can update the buffer state and
@@ -3320,6 +3304,10 @@ UnpinBufferNoOwner(BufferDesc *buf)
 	}
 }
 
+/*
+ * Set up backend-local tracking of a buffer pinned the first time by this
+ * backend.
+ */
 inline void
 TrackNewBufferPin(Buffer buf)
 {
@@ -3329,6 +3317,18 @@ TrackNewBufferPin(Buffer buf)
 	ref->refcount++;
 
 	ResourceOwnerRememberBuffer(CurrentResourceOwner, buf);
+
+	/*
+	 * This is the first pin for this page by this backend, mark its page as
+	 * defined to valgrind. While the page contents might not actually be
+	 * valid yet, we don't currently guarantee that such pages are marked
+	 * undefined or non-accessible.
+	 *
+	 * It's not necessarily the prettiest to do this here, but otherwise we'd
+	 * need this block of code in multiple places.
+	 */
+	VALGRIND_MAKE_MEM_DEFINED(BufHdrGetBlock(GetBufferDescriptor(buf - 1)),
+							  BLCKSZ);
 }
 
 #define ST_SORT sort_checkpoint_bufferids
