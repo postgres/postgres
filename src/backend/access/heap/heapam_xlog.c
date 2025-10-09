@@ -551,6 +551,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	int			i;
 	bool		isinit = (XLogRecGetInfo(record) & XLOG_HEAP_INIT_PAGE) != 0;
 	XLogRedoAction action;
+	Buffer		vmbuffer = InvalidBuffer;
 
 	/*
 	 * Insertion doesn't overwrite MVCC data, so no conflict processing is
@@ -571,11 +572,11 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	if (xlrec->flags & XLH_INSERT_ALL_VISIBLE_CLEARED)
 	{
 		Relation	reln = CreateFakeRelcacheEntry(rlocator);
-		Buffer		vmbuffer = InvalidBuffer;
 
 		visibilitymap_pin(reln, blkno, &vmbuffer);
 		visibilitymap_clear(reln, blkno, vmbuffer, VISIBILITYMAP_VALID_BITS);
 		ReleaseBuffer(vmbuffer);
+		vmbuffer = InvalidBuffer;
 		FreeFakeRelcacheEntry(reln);
 	}
 
@@ -661,6 +662,52 @@ heap_xlog_multi_insert(XLogReaderState *record)
 	}
 	if (BufferIsValid(buffer))
 		UnlockReleaseBuffer(buffer);
+
+	buffer = InvalidBuffer;
+
+	/*
+	 * Read and update the visibility map (VM) block.
+	 *
+	 * We must always redo VM changes, even if the corresponding heap page
+	 * update was skipped due to the LSN interlock. Each VM block covers
+	 * multiple heap pages, so later WAL records may update other bits in the
+	 * same block. If this record includes an FPI (full-page image),
+	 * subsequent WAL records may depend on it to guard against torn pages.
+	 *
+	 * Heap page changes are replayed first to preserve the invariant:
+	 * PD_ALL_VISIBLE must be set on the heap page if the VM bit is set.
+	 *
+	 * Note that we released the heap page lock above. During normal
+	 * operation, this would be unsafe — a concurrent modification could
+	 * clear PD_ALL_VISIBLE while the VM bit remained set, violating the
+	 * invariant.
+	 *
+	 * During recovery, however, no concurrent writers exist. Therefore,
+	 * updating the VM without holding the heap page lock is safe enough. This
+	 * same approach is taken when replaying xl_heap_visible records (see
+	 * heap_xlog_visible()).
+	 */
+	if ((xlrec->flags & XLH_INSERT_ALL_FROZEN_SET) &&
+		XLogReadBufferForRedoExtended(record, 1, RBM_ZERO_ON_ERROR, false,
+									  &vmbuffer) == BLK_NEEDS_REDO)
+	{
+		Page		vmpage = BufferGetPage(vmbuffer);
+
+		/* initialize the page if it was read as zeros */
+		if (PageIsNew(vmpage))
+			PageInit(vmpage, BLCKSZ, 0);
+
+		visibilitymap_set_vmbits(blkno,
+								 vmbuffer,
+								 VISIBILITYMAP_ALL_VISIBLE |
+								 VISIBILITYMAP_ALL_FROZEN,
+								 rlocator);
+
+		PageSetLSN(vmpage, lsn);
+	}
+
+	if (BufferIsValid(vmbuffer))
+		UnlockReleaseBuffer(vmbuffer);
 
 	/*
 	 * If the page is running low on free space, update the FSM as well.

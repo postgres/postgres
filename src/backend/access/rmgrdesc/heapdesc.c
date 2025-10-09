@@ -16,6 +16,7 @@
 
 #include "access/heapam_xlog.h"
 #include "access/rmgrdesc_utils.h"
+#include "access/visibilitymapdefs.h"
 #include "storage/standbydefs.h"
 
 /*
@@ -353,6 +354,11 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 
 		appendStringInfo(buf, "ntuples: %d, flags: 0x%02X", xlrec->ntuples,
 						 xlrec->flags);
+
+		if (xlrec->flags & XLH_INSERT_ALL_FROZEN_SET)
+			appendStringInfo(buf, ", vm_flags: 0x%02X",
+							 VISIBILITYMAP_ALL_VISIBLE |
+							 VISIBILITYMAP_ALL_FROZEN);
 
 		if (XLogRecHasBlockData(record, 0) && !isinit)
 		{
