@@ -235,6 +235,7 @@ static bool get_schema_sent_in_streamed_txn(RelationSyncEntry *entry,
 											TransactionId xid);
 static void init_tuple_slot(PGOutputData *data, Relation relation,
 							RelationSyncEntry *entry);
+static void pgoutput_memory_context_reset(void *arg);
 
 /* row filter routines */
 static EState *create_estate_for_relation(Relation rel);
@@ -425,6 +426,19 @@ parse_output_parameters(List *options, PGOutputData *data)
 }
 
 /*
+ * Memory context reset callback of PGOutputData->context.
+ */
+static void
+pgoutput_memory_context_reset(void *arg)
+{
+	if (RelationSyncCache)
+	{
+		hash_destroy(RelationSyncCache);
+		RelationSyncCache = NULL;
+	}
+}
+
+/*
  * Initialize this plugin
  */
 static void
@@ -433,6 +447,7 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 {
 	PGOutputData *data = palloc0(sizeof(PGOutputData));
 	static bool publication_callback_registered = false;
+	MemoryContextCallback *mcallback;
 
 	/* Create our memory context for private allocations. */
 	data->context = AllocSetContextCreate(ctx->context,
@@ -446,6 +461,14 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	data->pubctx = AllocSetContextCreate(ctx->context,
 										 "logical replication publication list context",
 										 ALLOCSET_SMALL_SIZES);
+
+	/*
+	 * Ensure to cleanup RelationSyncCache even when logical decoding invoked
+	 * via SQL interface ends up with an error.
+	 */
+	mcallback = palloc0(sizeof(MemoryContextCallback));
+	mcallback->func = pgoutput_memory_context_reset;
+	MemoryContextRegisterResetCallback(ctx->context, mcallback);
 
 	ctx->output_plugin_private = data;
 
@@ -1758,11 +1781,7 @@ pgoutput_origin_filter(LogicalDecodingContext *ctx,
 static void
 pgoutput_shutdown(LogicalDecodingContext *ctx)
 {
-	if (RelationSyncCache)
-	{
-		hash_destroy(RelationSyncCache);
-		RelationSyncCache = NULL;
-	}
+	pgoutput_memory_context_reset(NULL);
 }
 
 /*
