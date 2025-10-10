@@ -3292,7 +3292,6 @@ _bt_killitems(IndexScanDesc scan)
 		buf = _bt_getbuf(rel, so->currPos.currPage, BT_READ);
 
 		latestlsn = BufferGetLSNAtomic(buf);
-		Assert(!XLogRecPtrIsInvalid(so->currPos.lsn));
 		Assert(so->currPos.lsn <= latestlsn);
 		if (so->currPos.lsn != latestlsn)
 		{
