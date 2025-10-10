@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * xlogstats.h
- *		Definitions for WAL Statitstics
+ *		Definitions for WAL Statistics
  *
  * Copyright (c) 2022, PostgreSQL Global Development Group
  *
