@@ -3398,6 +3398,7 @@ dbase_redo(XLogReaderState *record)
 		parent_path = pstrdup(dbpath);
 		get_parent_directory(parent_path);
 		recovery_create_dbdir(parent_path, true);
+		pfree(parent_path);
 
 		/* Create the database directory with the version file. */
 		CreateDirAndVersionFile(dbpath, xlrec->db_id, xlrec->tablespace_id,
