@@ -172,6 +172,15 @@ my %pgdump_runs = (
 			'--format=directory', '--compress=lz4:1',
 			"--file=$tempdir/compression_lz4_dir", 'postgres',
 		],
+		# Give coverage for manually compressed blobs.toc files during
+		# restore.
+		compress_cmd => {
+			program => $ENV{'LZ4'},
+			args => [
+				'-z', '-f', '-m', '--rm',
+				"$tempdir/compression_lz4_dir/blobs_*.toc",
+			],
+		},
 		# Verify that data files were compressed
 		glob_patterns => [
 			"$tempdir/compression_lz4_dir/toc.dat",
