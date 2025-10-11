@@ -20870,13 +20870,14 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	Relation	partRel;
 	ObjectAddress address;
 	Oid			defaultPartOid;
+	PartitionDesc partdesc;
 
 	/*
 	 * We must lock the default partition, because detaching this partition
 	 * will change its partition constraint.
 	 */
-	defaultPartOid =
-		get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, true));
+	partdesc = RelationGetPartitionDesc(rel, true);
+	defaultPartOid = get_default_oid_from_partdesc(partdesc);
 	if (OidIsValid(defaultPartOid))
 	{
 		/*
@@ -20943,10 +20944,13 @@ ATExecDetachPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		char	   *partrelname;
 
 		/*
-		 * Add a new constraint to the partition being detached, which
-		 * supplants the partition constraint (unless there is one already).
+		 * For strategies other than hash, add a constraint to the partition
+		 * being detached which supplants the partition constraint. For hash
+		 * we cannot do that, because the constraint would reference the
+		 * partitioned table OID, possibly causing problems later.
 		 */
-		DetachAddConstraintIfNeeded(wqueue, partRel);
+		if (partdesc->boundinfo->strategy != PARTITION_STRATEGY_HASH)
+			DetachAddConstraintIfNeeded(wqueue, partRel);
 
 		/*
 		 * We're almost done now; the only traces that remain are the
