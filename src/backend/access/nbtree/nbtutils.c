@@ -1449,7 +1449,6 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 		BTArrayKeyInfo *array = NULL;
 		Datum		tupdatum;
 		bool		required = false,
-					required_opposite_direction_only = false,
 					tupnull;
 		int32		result;
 		int			set_elem = 0;
@@ -1473,8 +1472,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 				  (cur->sk_flags & (SK_BT_REQBKWD))) ||
 				 (ScanDirectionIsBackward(dir) &&
 				  (cur->sk_flags & (SK_BT_REQFWD)))))
-				has_required_opposite_direction_only =
-					required_opposite_direction_only = true;
+				has_required_opposite_direction_only = true;
 		}
 
 		/* Optimization: skip over known-satisfied scan keys */
