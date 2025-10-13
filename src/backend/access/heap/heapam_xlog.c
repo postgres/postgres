@@ -35,7 +35,9 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	Buffer		buffer;
 	RelFileLocator rlocator;
 	BlockNumber blkno;
-	XLogRedoAction action;
+	Buffer		vmbuffer = InvalidBuffer;
+	uint8		vmflags = 0;
+	Size		freespace = 0;
 
 	XLogRecGetBlockTag(record, 0, &rlocator, NULL, &blkno);
 	memcpy(&xlrec, maindataptr, SizeOfHeapPrune);
@@ -50,11 +52,22 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	Assert((xlrec.flags & XLHP_CLEANUP_LOCK) != 0 ||
 		   (xlrec.flags & (XLHP_HAS_REDIRECTIONS | XLHP_HAS_DEAD_ITEMS)) == 0);
 
+	if (xlrec.flags & XLHP_VM_ALL_VISIBLE)
+	{
+		vmflags = VISIBILITYMAP_ALL_VISIBLE;
+		if (xlrec.flags & XLHP_VM_ALL_FROZEN)
+			vmflags |= VISIBILITYMAP_ALL_FROZEN;
+	}
+
 	/*
-	 * We are about to remove and/or freeze tuples.  In Hot Standby mode,
-	 * ensure that there are no queries running for which the removed tuples
-	 * are still visible or which still consider the frozen xids as running.
-	 * The conflict horizon XID comes after xl_heap_prune.
+	 * After xl_heap_prune is the optional snapshot conflict horizon.
+	 *
+	 * In Hot Standby mode, we must ensure that there are no running queries
+	 * which would conflict with the changes in this record. That means we
+	 * can't replay this record if it removes tuples that are still visible to
+	 * transactions on the standby, freeze tuples with xids that are still
+	 * considered running on the standby, or set a page as all-visible in the
+	 * VM if it isn't all-visible to all transactions on the standby.
 	 */
 	if ((xlrec.flags & XLHP_HAS_CONFLICT_HORIZON) != 0)
 	{
@@ -71,12 +84,12 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 	}
 
 	/*
-	 * If we have a full-page image, restore it and we're done.
+	 * If we have a full-page image of the heap block, restore it and we're
+	 * done with the heap block.
 	 */
-	action = XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL,
-										   (xlrec.flags & XLHP_CLEANUP_LOCK) != 0,
-										   &buffer);
-	if (action == BLK_NEEDS_REDO)
+	if (XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL,
+									  (xlrec.flags & XLHP_CLEANUP_LOCK) != 0,
+									  &buffer) == BLK_NEEDS_REDO)
 	{
 		Page		page = BufferGetPage(buffer);
 		OffsetNumber *redirected;
@@ -90,6 +103,7 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		xlhp_freeze_plan *plans;
 		OffsetNumber *frz_offsets;
 		char	   *dataptr = XLogRecGetBlockData(record, 0, &datalen);
+		bool		do_prune;
 
 		heap_xlog_deserialize_prune_and_freeze(dataptr, xlrec.flags,
 											   &nplans, &plans, &frz_offsets,
@@ -97,11 +111,16 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 											   &ndead, &nowdead,
 											   &nunused, &nowunused);
 
+		do_prune = nredirected > 0 || ndead > 0 || nunused > 0;
+
+		/* Ensure the record does something */
+		Assert(do_prune || nplans > 0 || vmflags & VISIBILITYMAP_VALID_BITS);
+
 		/*
 		 * Update all line pointers per the record, and repair fragmentation
 		 * if needed.
 		 */
-		if (nredirected > 0 || ndead > 0 || nunused > 0)
+		if (do_prune)
 			heap_page_prune_execute(buffer,
 									(xlrec.flags & XLHP_CLEANUP_LOCK) == 0,
 									redirected, nredirected,
@@ -138,36 +157,90 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		/* There should be no more data */
 		Assert((char *) frz_offsets == dataptr + datalen);
 
+		if (vmflags & VISIBILITYMAP_VALID_BITS)
+			PageSetAllVisible(page);
+
+		MarkBufferDirty(buffer);
+
+		/*
+		 * See log_heap_prune_and_freeze() for commentary on when we set the
+		 * heap page LSN.
+		 */
+		if (do_prune || nplans > 0 ||
+			((vmflags & VISIBILITYMAP_VALID_BITS) && XLogHintBitIsNeeded()))
+			PageSetLSN(page, lsn);
+
 		/*
 		 * Note: we don't worry about updating the page's prunability hints.
 		 * At worst this will cause an extra prune cycle to occur soon.
 		 */
-
-		PageSetLSN(page, lsn);
-		MarkBufferDirty(buffer);
 	}
 
 	/*
-	 * If we released any space or line pointers, update the free space map.
+	 * If we 1) released any space or line pointers or 2) set PD_ALL_VISIBLE
+	 * or the VM, update the freespace map.
 	 *
-	 * Do this regardless of a full-page image being applied, since the FSM
-	 * data is not in the page anyway.
+	 * Even when no actual space is freed (when only marking the page
+	 * all-visible or frozen), we still update the FSM. Because the FSM is
+	 * unlogged and maintained heuristically, it often becomes stale on
+	 * standbys. If such a standby is later promoted and runs VACUUM, it will
+	 * skip recalculating free space for pages that were marked
+	 * all-visible/all-forzen. FreeSpaceMapVacuum() can then propagate overly
+	 * optimistic free space values upward, causing future insertions to
+	 * select pages that turn out to be unusable. In bulk, this can lead to
+	 * long stalls.
+	 *
+	 * To prevent this, always update the FSM even when only marking a page
+	 * all-visible/all-frozen.
+	 *
+	 * Do this regardless of whether a full-page image is logged, since FSM
+	 * data is not part of the page itself.
 	 */
 	if (BufferIsValid(buffer))
 	{
-		if (xlrec.flags & (XLHP_HAS_REDIRECTIONS |
-						   XLHP_HAS_DEAD_ITEMS |
-						   XLHP_HAS_NOW_UNUSED_ITEMS))
-		{
-			Size		freespace = PageGetHeapFreeSpace(BufferGetPage(buffer));
+		if ((xlrec.flags & (XLHP_HAS_REDIRECTIONS |
+							XLHP_HAS_DEAD_ITEMS |
+							XLHP_HAS_NOW_UNUSED_ITEMS)) ||
+			(vmflags & VISIBILITYMAP_VALID_BITS))
+			freespace = PageGetHeapFreeSpace(BufferGetPage(buffer));
 
-			UnlockReleaseBuffer(buffer);
-
-			XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
-		}
-		else
-			UnlockReleaseBuffer(buffer);
+		/*
+		 * We want to avoid holding an exclusive lock on the heap buffer while
+		 * doing IO (either of the FSM or the VM), so we'll release it now.
+		 */
+		UnlockReleaseBuffer(buffer);
 	}
+
+	/*
+	 * Now read and update the VM block.
+	 *
+	 * We must redo changes to the VM even if the heap page was skipped due to
+	 * LSN interlock. See comment in heap_xlog_multi_insert() for more details
+	 * on replaying changes to the VM.
+	 */
+	if ((vmflags & VISIBILITYMAP_VALID_BITS) &&
+		XLogReadBufferForRedoExtended(record, 1,
+									  RBM_ZERO_ON_ERROR,
+									  false,
+									  &vmbuffer) == BLK_NEEDS_REDO)
+	{
+		Page		vmpage = BufferGetPage(vmbuffer);
+
+		/* initialize the page if it was read as zeros */
+		if (PageIsNew(vmpage))
+			PageInit(vmpage, BLCKSZ, 0);
+
+		visibilitymap_set_vmbits(blkno, vmbuffer, vmflags, rlocator);
+
+		Assert(BufferIsDirty(vmbuffer));
+		PageSetLSN(vmpage, lsn);
+	}
+
+	if (BufferIsValid(vmbuffer))
+		UnlockReleaseBuffer(vmbuffer);
+
+	if (freespace > 0)
+		XLogRecordPageWithFreeSpace(rlocator, blkno, freespace);
 }
 
 /*
@@ -703,6 +776,7 @@ heap_xlog_multi_insert(XLogReaderState *record)
 								 VISIBILITYMAP_ALL_FROZEN,
 								 rlocator);
 
+		Assert(BufferIsDirty(vmbuffer));
 		PageSetLSN(vmpage, lsn);
 	}
 

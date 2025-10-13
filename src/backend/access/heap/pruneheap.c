@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/transam.h"
+#include "access/visibilitymapdefs.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
 #include "commands/vacuum.h"
@@ -835,6 +836,8 @@ heap_page_prune_and_freeze(Relation relation, Buffer buffer,
 				conflict_xid = prstate.latest_xid_removed;
 
 			log_heap_prune_and_freeze(relation, buffer,
+									  InvalidBuffer,	/* vmbuffer */
+									  0,	/* vmflags */
 									  conflict_xid,
 									  true, reason,
 									  prstate.frozen, prstate.nfrozen,
@@ -2045,12 +2048,17 @@ heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
  * replaying 'unused' items depends on whether they were all previously marked
  * as dead.
  *
+ * If the VM is being updated, vmflags will contain the bits to set. In this
+ * case, vmbuffer should already have been updated and marked dirty and should
+ * still be pinned and locked.
+ *
  * Note: This function scribbles on the 'frozen' array.
  *
  * Note: This is called in a critical section, so careful what you do here.
  */
 void
 log_heap_prune_and_freeze(Relation relation, Buffer buffer,
+						  Buffer vmbuffer, uint8 vmflags,
 						  TransactionId conflict_xid,
 						  bool cleanup_lock,
 						  PruneReason reason,
@@ -2062,6 +2070,7 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	xl_heap_prune xlrec;
 	XLogRecPtr	recptr;
 	uint8		info;
+	uint8		regbuf_flags_heap;
 
 	/* The following local variables hold data registered in the WAL record: */
 	xlhp_freeze_plan plans[MaxHeapTuplesPerPage];
@@ -2070,8 +2079,26 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	xlhp_prune_items dead_items;
 	xlhp_prune_items unused_items;
 	OffsetNumber frz_offsets[MaxHeapTuplesPerPage];
+	bool		do_prune = nredirected > 0 || ndead > 0 || nunused > 0;
+	bool		do_set_vm = vmflags & VISIBILITYMAP_VALID_BITS;
+
+	Assert((vmflags & VISIBILITYMAP_VALID_BITS) == vmflags);
 
 	xlrec.flags = 0;
+	regbuf_flags_heap = REGBUF_STANDARD;
+
+	/*
+	 * We can avoid an FPI of the heap page if the only modification we are
+	 * making to it is to set PD_ALL_VISIBLE and checksums/wal_log_hints are
+	 * disabled. Note that if we explicitly skip an FPI, we must not stamp the
+	 * heap page with this record's LSN. Recovery skips records <= the stamped
+	 * LSN, so this could lead to skipping an earlier FPI needed to repair a
+	 * torn page.
+	 */
+	if (!do_prune &&
+		nfrozen == 0 &&
+		(!do_set_vm || !XLogHintBitIsNeeded()))
+		regbuf_flags_heap |= REGBUF_NO_IMAGE;
 
 	/*
 	 * Prepare data for the buffer.  The arrays are not actually in the
@@ -2079,7 +2106,11 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	 * page image, the arrays can be omitted.
 	 */
 	XLogBeginInsert();
-	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+	XLogRegisterBuffer(0, buffer, regbuf_flags_heap);
+
+	if (do_set_vm)
+		XLogRegisterBuffer(1, vmbuffer, 0);
+
 	if (nfrozen > 0)
 	{
 		int			nplans;
@@ -2136,6 +2167,12 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	 * Prepare the main xl_heap_prune record.  We already set the XLHP_HAS_*
 	 * flag above.
 	 */
+	if (vmflags & VISIBILITYMAP_ALL_VISIBLE)
+	{
+		xlrec.flags |= XLHP_VM_ALL_VISIBLE;
+		if (vmflags & VISIBILITYMAP_ALL_FROZEN)
+			xlrec.flags |= XLHP_VM_ALL_FROZEN;
+	}
 	if (RelationIsAccessibleInLogicalDecoding(relation))
 		xlrec.flags |= XLHP_IS_CATALOG_REL;
 	if (TransactionIdIsValid(conflict_xid))
@@ -2168,5 +2205,19 @@ log_heap_prune_and_freeze(Relation relation, Buffer buffer,
 	}
 	recptr = XLogInsert(RM_HEAP2_ID, info);
 
-	PageSetLSN(BufferGetPage(buffer), recptr);
+	if (do_set_vm)
+	{
+		Assert(BufferIsDirty(vmbuffer));
+		PageSetLSN(BufferGetPage(vmbuffer), recptr);
+	}
+
+	/*
+	 * See comment at the top of the function about regbuf_flags_heap for
+	 * details on when we can advance the page LSN.
+	 */
+	if (do_prune || nfrozen > 0 || (do_set_vm && XLogHintBitIsNeeded()))
+	{
+		Assert(BufferIsDirty(buffer));
+		PageSetLSN(BufferGetPage(buffer), recptr);
+	}
 }
