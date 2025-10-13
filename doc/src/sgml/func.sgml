@@ -17440,7 +17440,7 @@ ERROR:  value too long for type character(2)
         <returnvalue>[{"f1":1},2,null,3]</returnvalue>
        </para>
        <para>
-        <literal>jsonb_strip_nulls('[1,2,null,3,4]', true);</literal>
+        <literal>jsonb_strip_nulls('[1,2,null,3,4]', true)</literal>
         <returnvalue>[1,2,3,4]</returnvalue>
        </para>
        </entry>
