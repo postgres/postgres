@@ -257,6 +257,10 @@ Gzip_read(void *ptr, size_t size, CompressFileHandle *CFH)
 	gzFile		gzfp = (gzFile) CFH->private_data;
 	int			gzret;
 
+	/* Reading zero bytes must be a no-op */
+	if (size == 0)
+		return 0;
+
 	gzret = gzread(gzfp, ptr, size);
 
 	/*
