@@ -4354,7 +4354,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
     <listitem>
      <variablelist>
       <varlistentry>
-       <term>Int32(16)</term>
+       <term>Int32</term>
        <listitem>
         <para>
          Length of message contents in bytes, including self.
