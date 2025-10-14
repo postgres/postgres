@@ -3449,7 +3449,7 @@ generate_grouped_paths(PlannerInfo *root, RelOptInfo *grouped_rel,
 	 * We push partial aggregation only to the lowest possible level in the
 	 * join tree that is deemed useful.
 	 */
-	if (!bms_equal(agg_info->apply_at, rel->relids) ||
+	if (!bms_equal(agg_info->apply_agg_at, rel->relids) ||
 		!agg_info->agg_useful)
 		return;
 

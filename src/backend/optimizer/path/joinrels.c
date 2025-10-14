@@ -922,7 +922,7 @@ make_grouped_join_rel(PlannerInfo *root, RelOptInfo *rel1,
 	RelOptInfo *grouped_rel2;
 	bool		rel1_empty;
 	bool		rel2_empty;
-	Relids		agg_apply_at;
+	Relids		apply_agg_at;
 
 	/*
 	 * If there are no aggregate expressions or grouping expressions, eager
@@ -979,9 +979,9 @@ make_grouped_join_rel(PlannerInfo *root, RelOptInfo *rel1,
 									   rel1_empty ? rel1 : grouped_rel1,
 									   rel2_empty ? rel2 : grouped_rel2,
 									   sjinfo, restrictlist);
-			agg_info->apply_at = rel1_empty ?
-				grouped_rel2->agg_info->apply_at :
-				grouped_rel1->agg_info->apply_at;
+			agg_info->apply_agg_at = rel1_empty ?
+				grouped_rel2->agg_info->apply_agg_at :
+				grouped_rel1->agg_info->apply_agg_at;
 		}
 		else
 		{
@@ -995,7 +995,7 @@ make_grouped_join_rel(PlannerInfo *root, RelOptInfo *rel1,
 			 * constructed by joining other input relations.
 			 */
 			grouped_rel->rows = agg_info->grouped_rows;
-			agg_info->apply_at = bms_copy(joinrel->relids);
+			agg_info->apply_agg_at = bms_copy(joinrel->relids);
 		}
 
 		grouped_rel->agg_info = agg_info;
@@ -1019,9 +1019,9 @@ make_grouped_join_rel(PlannerInfo *root, RelOptInfo *rel1,
 	 * Get the set of relids where partial aggregation is applied among the
 	 * given input relations.
 	 */
-	agg_apply_at = rel1_empty ?
-		grouped_rel2->agg_info->apply_at :
-		grouped_rel1->agg_info->apply_at;
+	apply_agg_at = rel1_empty ?
+		grouped_rel2->agg_info->apply_agg_at :
+		grouped_rel1->agg_info->apply_agg_at;
 
 	/*
 	 * If it's not the designated level, skip building grouped paths.
@@ -1037,16 +1037,16 @@ make_grouped_join_rel(PlannerInfo *root, RelOptInfo *rel1,
 	 * level and still valid for partial aggregation, we update the designated
 	 * level to (B C), and adjust the size estimates accordingly.
 	 */
-	if (!bms_equal(agg_apply_at, grouped_rel->agg_info->apply_at))
+	if (!bms_equal(apply_agg_at, grouped_rel->agg_info->apply_agg_at))
 	{
-		if (bms_is_subset(agg_apply_at, grouped_rel->agg_info->apply_at))
+		if (bms_is_subset(apply_agg_at, grouped_rel->agg_info->apply_agg_at))
 		{
 			/* Adjust the size estimates for the grouped join relation. */
 			set_joinrel_size_estimates(root, grouped_rel,
 									   rel1_empty ? rel1 : grouped_rel1,
 									   rel2_empty ? rel2 : grouped_rel2,
 									   sjinfo, restrictlist);
-			grouped_rel->agg_info->apply_at = agg_apply_at;
+			grouped_rel->agg_info->apply_agg_at = apply_agg_at;
 		}
 		else
 			return;

@@ -462,7 +462,7 @@ build_simple_grouped_rel(PlannerInfo *root, RelOptInfo *rel)
 		return NULL;
 
 	/* Track the set of relids at which partial aggregation is applied */
-	agg_info->apply_at = bms_copy(rel->relids);
+	agg_info->apply_agg_at = bms_copy(rel->relids);
 
 	/* build the grouped relation */
 	grouped_rel = build_grouped_rel(root, rel);
@@ -2692,7 +2692,7 @@ create_rel_agg_info(PlannerInfo *root, RelOptInfo *rel,
 											  rel,
 											  rel->top_parent);
 
-		agg_info->apply_at = NULL;	/* caller will change this later */
+		agg_info->apply_agg_at = NULL;	/* caller will change this later */
 
 		if (calculate_grouped_rows)
 		{
@@ -2759,7 +2759,7 @@ create_rel_agg_info(PlannerInfo *root, RelOptInfo *rel,
 	result->agg_input = agg_input;
 	result->group_clauses = group_clauses;
 	result->group_exprs = group_exprs;
-	result->apply_at = NULL;	/* caller will change this later */
+	result->apply_agg_at = NULL;	/* caller will change this later */
 
 	if (calculate_grouped_rows)
 	{
