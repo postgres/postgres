@@ -3538,24 +3538,20 @@ WinCheckAndInitializeNullTreatment(WindowObject winobj,
 								   bool allowNullTreatment,
 								   FunctionCallInfo fcinfo)
 {
+	Assert(WindowObjectIsValid(winobj));
 	if (winobj->ignore_nulls != NO_NULLTREATMENT && !allowNullTreatment)
 	{
-		HeapTuple	proctup;
-		Form_pg_proc procform;
-		Oid			funcid;
+		const char *funcname = get_func_name(fcinfo->flinfo->fn_oid);
 
-		funcid = fcinfo->flinfo->fn_oid;
-		proctup = SearchSysCache1(PROCOID,
-								  ObjectIdGetDatum(funcid));
-		if (!HeapTupleIsValid(proctup))
-			elog(ERROR, "cache lookup failed for function %u", funcid);
-		procform = (Form_pg_proc) GETSTRUCT(proctup);
-		elog(ERROR, "function %s does not allow RESPECT/IGNORE NULLS",
-			 NameStr(procform->proname));
+		if (!funcname)
+			elog(ERROR, "could not get function name");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("function %s does not allow RESPECT/IGNORE NULLS",
+						funcname)));
 	}
 	else if (winobj->ignore_nulls == PARSER_IGNORE_NULLS)
 		winobj->ignore_nulls = IGNORE_NULLS;
-
 }
 
 /*
