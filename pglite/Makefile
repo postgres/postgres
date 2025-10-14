@@ -31,5 +31,9 @@ dist: $(addsuffix .tar.gz,$(EXTENSIONS))
 
 .PHONY: dist
 
+archive_clean:
+	@echo "=== Cleaning $* ==="
+	rm -rf $(EXTENSIONS_BUILD_ROOT)/$*
+	rm -rf $(ARCHIVE_DIR)
 
 $(recurse)

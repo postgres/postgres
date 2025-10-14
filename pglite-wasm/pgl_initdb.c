@@ -49,10 +49,5 @@ pg_chmod(const char * path, int mode_t) {
 
 #include "bin/initdb/initdb.c"
 
-void use_socketfile(void) {
-    is_repl = true;
-    is_embed = false;
-}
-
 
 

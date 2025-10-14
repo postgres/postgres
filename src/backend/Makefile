@@ -75,13 +75,12 @@ endif
 
 ifeq ($(PORTNAME), emscripten)
 AR ?= llvm-ar
-LIBPGCORE ?= $(top_builddir)/libpgcore.a
-LIBPG = $(top_builddir)/libpostgres.a
-LIBPGMAIN = $(top_builddir)/libpgmain.a
+LIBPGCORE ?= libpgcore.a
+LIBPG = libpostgres.a
+LIBPGMAIN = libpgmain.a
 PGCORE = $(top_builddir)/src/common/libpgcommon_srv.a $(top_builddir)/src/port/libpgport_srv.a $(LIBPG)
 PGMAIN = main/main.o tcop/postgres.o
 PGLITE_MAIN = pglite-wasm/pg_main.c
-EXPORTED_RUNTIME_METHODS="MEMFS,IDBFS,FS,setValue,getValue,UTF8ToString,stringToNewUTF8,stringToUTF8OnStack"
 PGROOT=/install/pglite
 PGPRELOAD=--preload-file ${PGROOT}/share/postgresql@/tmp/pglite/share/postgresql --preload-file ${PGROOT}/lib/postgresql@/tmp/pglite/lib/postgresql --preload-file $(top_builddir)/other/password@/tmp/pglite/password --preload-file $(top_builddir)/other/PGPASSFILE@/home/web_user/.pgpass --preload-file $(top_builddir)/other/empty@/tmp/pglite/bin/postgres --preload-file $(top_builddir)/other/empty@/tmp/pglite/bin/initdb
 postgres: $(OBJS)
@@ -105,22 +104,19 @@ pglite-exported-functions:
 
 # -sDYLINK_DEBUG=2 use this for debugging missing exported symbols (ex when an extension calls a pgcore function that hasn't been exported)
 # PGLITE_CFLAGS is something like "-O2" (aka release version) or "-g -gsource-map --no-wasm-opt" (aka debug version)
+# PGLITE_EMSCRIPTEN_FLAGS are the emscripten flags to be passed to the build. Ideally they would be completely transparent, such that we 
+# could build a libpglite with or without those flags (to switch between native and wasm builds)
 pglite: pglite-exported-functions
-	$(CC) $(CFLAGS) $(LDFLAGS) -DPG_PREFIX=/tmp/pglite -DCMA_MB=12 -I$(top_builddir)/src/include -I$(top_builddir)/src/ -I$(top_builddir)/src/interfaces/libpq -o pglite.o -c $(top_builddir)/$(PGLITE_MAIN) -Wno-incompatible-pointer-types-discards-qualifiers
+	$(CC) $(CFLAGS) $(LDFLAGS) -DPG_PREFIX=/tmp/pglite -I$(top_builddir)/src/include -I$(top_builddir)/src/ -I$(top_builddir)/src/interfaces/libpq -o pglite.o -c $(top_builddir)/$(PGLITE_MAIN) -Wno-incompatible-pointer-types-discards-qualifiers
 	$(CC) \
 	$(PGLITE_CFLAGS) \
-	-fPIC -sWASM_BIGINT -sMIN_SAFARI_VERSION=150000 -D__PYDK__=1 -m32 -D_FILE_OFFSET_BITS=64 -sSUPPORT_LONGJMP=emscripten -mno-bulk-memory -mnontrapping-fptoint -mno-reference-types -mno-sign-ext -mno-extended-const -mno-atomics -mno-tail-call -mno-multivalue -mno-relaxed-simd -mno-simd128 -mno-multimemory -mno-exception-handling -Wno-unused-command-line-argument -Wno-unreachable-code-fallthrough -Wno-unused-function -Wno-invalid-noreturn -Wno-declaration-after-statement -Wno-invalid-noreturn \
-	-DPYDK=1 -DPG_PREFIX=/tmp/pglite -DCMA_MB=12 -o pglite.html --shell-file $(top_builddir)/pglite-wasm/repl.html \
+	-fPIC -m32 -D_FILE_OFFSET_BITS=64 -mno-bulk-memory -mnontrapping-fptoint -mno-reference-types -mno-sign-ext -mno-extended-const -mno-atomics -mno-tail-call -mno-multivalue -mno-relaxed-simd -mno-simd128 -mno-multimemory -mno-exception-handling -Wno-unused-command-line-argument -Wno-unreachable-code-fallthrough -Wno-unused-function -Wno-invalid-noreturn -Wno-declaration-after-statement -Wno-invalid-noreturn \
+	-DPYDK=1 -DPG_PREFIX=/tmp/pglite -o pglite.html \
         $(PGPRELOAD) \
-        -sGLOBAL_BASE=12MB -ferror-limit=1 \
-        -sFORCE_FILESYSTEM=1 -sNO_EXIT_RUNTIME=1 -sENVIRONMENT=node,web,worker \
-        -sMAIN_MODULE=2 \
+        -ferror-limit=1 \
 		-sEXPORTED_FUNCTIONS=@$(emscripten_imports_dir)/exported_functions.txt \
-        -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=Module \
-        -sALLOW_TABLE_GROWTH -sALLOW_MEMORY_GROWTH -sERROR_ON_UNDEFINED_SYMBOLS=0 \
-        -sEXPORTED_RUNTIME_METHODS=$(EXPORTED_RUNTIME_METHODS) \
         -I./src/include -I./src/ -I./src/interfaces/libpq \
-        -L/install/libs/lib -L$(top_builddir) -L$(top_builddir)/src/interfaces/libpq/ \
+        -L/install/libs/lib -L$(top_builddir) -L$(top_builddir)/src/interfaces/libpq/ -L. \
         pglite.o \
 		-Ldict_snowball \
 		-lxslt \

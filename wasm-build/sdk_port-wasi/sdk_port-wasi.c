@@ -316,10 +316,7 @@ int shm_unlink(const char *name) {
 
 #include <stdio.h> // FILE+fprintf
 extern FILE* IDB_PIPE_FP;
-extern FILE* SOCKET_FILE;
-extern int SOCKET_DATA;
 extern int IDB_STAGE;
-
 
 static inline int
 ends_with(const char *str, const char *suffix)
@@ -403,107 +400,5 @@ volatile FILE *fd_FILE = NULL;
 volatile int fd_sock = 0;
 volatile int fd_out = 2;
 volatile int fd_queue = 0;
-
-
-
-
-#if 0
-#define AF_UNIX 1 // PF_LOCAL
-
-
-
-
-volatile bool web_warned = false;
-
-void sock_flush() {
-    if (fd_queue) {
-        printf(" -- 441 sockflush : AIO YIELD, expecting %s filled on return --\n", PGS_OUT);
-        if (!fd_FILE) {
-            if (!web_warned) {
-                puts("# 444: WARNING: fd_FILE not set but queue not empty, assuming web");
-                web_warned = true;
-            }
-
-         } else {
-            printf("#       449: SENT=%ld/%d fd_out=%d fno=%d\n", ftell(fd_FILE), fd_queue, fd_out, fileno(fd_FILE));
-            fclose(fd_FILE);
-            rename(PGS_ILOCK, PGS_IN);
-//freopen(PGS_ILOCK, "w+", fd_FILE);
-            fd_FILE = fopen(PGS_ILOCK, "w");
-            fd_out = fileno(fd_FILE);
-            printf("#       455: fd_out=%d fno=%d\n", fd_out, fileno(fd_FILE));
-        }
-        fd_queue = 0;
-        sched_yield();
-        return;
-    }
-
-    printf(" -- 462 sockflush[%d] : NO YIELD --\n",stage);
-
-    // limit inf loops
-    if (stage++ > 1024) {
-        puts("# 466 sock_flush : busy looping ?");
-        abort();
-    }
-}
-
-
-volatile int fd_current_pos = 0;
-volatile int fd_filesize = 0;
-
-
-ssize_t recvfrom_bc(int socket, void *buffer, size_t length, int flags, void *address, socklen_t *address_len) {
-//    int busy = 0;
-    int rcv = -1;
-    sock_flush();
-/*
-    while (access(PGS_OUT, F_OK) != 0) {
-        if (!(++busy % 555111)) {
-            printf("# 471: FIXME: busy wait (%d) for input stream %s\n", busy, PGS_OUT);
-        }
-        if (busy>1665334) {
-            errno = EINTR;
-            return -1;
-        }
-    }
-*/
-    FILE *sock_in = fopen(PGS_OUT,"r");
-    if (sock_in) {
-        if (!fd_filesize) {
-            fseek(sock_in, 0L, SEEK_END);
-            fd_filesize = ftell(sock_in);
-        }
-        fseek(sock_in, fd_current_pos, SEEK_SET);
-
-        char *buf = buffer;
-        buf[0] = 0;
-        rcv = fread(buf, 1, length, sock_in);
-
-        if (rcv<fd_filesize) {
-            fd_current_pos = ftell(sock_in);
-            if (fd_current_pos<fd_filesize) {
-                printf("# 506: recvfrom_bc(%s max=%zu) block=%d read=%d / %d\n", PGS_OUT, length, rcv, fd_current_pos, fd_filesize);
-                fclose(sock_in);
-                return rcv;
-            }
-        }
-
-        // fully read
-        printf("# 513: recvfrom_bc(%s max=%zu total=%d) read=%d\n", PGS_OUT, length, fd_filesize, rcv);
-        fd_queue = 0;
-        fd_filesize = 0;
-        fd_current_pos = 0;
-        fclose(sock_in);
-        unlink(PGS_OUT);
-
-    } else {
-        printf("# 521: recvfrom_bc(%s max=%d) ERROR\n", PGS_OUT, length);
-        errno = EINTR;
-    }
-    return rcv;
-
-}
-
-#endif
 
 #endif // __wasi__p2

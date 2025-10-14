@@ -1,15 +1,10 @@
 close
 fcntl
 free
-get_buffer_addr
-get_buffer_size
-get_channel
 getpid
 gettimeofday
 gmtime
 interactive_one
-interactive_read
-interactive_write
 ioctl
 isalnum
 isxdigit
@@ -29,10 +24,10 @@ read
 readstoplist
 realloc
 searchstoplist
+set_read_write_cbs
 socket
 srand
 strcmp
 strftime
 strlen
 strtoul
-use_wire

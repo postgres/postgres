@@ -313,7 +313,6 @@ if (sf_connected) {
     PDEBUG("ERROR: more exits than connections");
 }
 PDEBUG("# 251:proc_exit/skip and repl stop"); //proc_exit(0);
-            is_repl = false;
             ignore_till_sync = false;
             send_ready_for_query = false;
 

@@ -45,7 +45,6 @@ volatile char *PGUSER;
 
 const char *progname;
 
-volatile bool is_repl = true;
 volatile bool is_node = true;
 volatile bool is_embed = false;
 volatile int pgl_idb_status;
@@ -62,7 +61,6 @@ volatile int async_restart = 1;
 
 
 #define WASM_PGDATA WASM_PREFIX "/base"
-#define CMA_FD 1
 
 extern bool IsPostmasterEnvironment;
 
@@ -94,20 +92,7 @@ volatile bool send_ready_for_query = true;
 volatile bool idle_in_transaction_timeout_enabled = false;
 volatile bool idle_session_timeout_enabled = false;
 
-
-void
-pg_free(void *ptr) {
-    free(ptr);
-}
-
 #include "../backend/tcop/postgres.c"
-
-
-// initdb + start on fd (pipe emulation)
-
-
-static bool force_echo = false;
-
 
 #include "pgl_mains.c"
 
@@ -117,16 +102,11 @@ static bool force_echo = false;
 
 #include "pgl_initdb.c"
 
-
 // interactive_one, heart of the async loop.
-
 #include "./interactive_one.c"
-
 
 static void
 main_pre(int argc, char *argv[]) {
-
-
     char key[256];
     int i = 0;
 // extra env is always after normal args
@@ -174,8 +154,8 @@ main_pre(int argc, char *argv[]) {
 #if defined(__EMSCRIPTEN__)
     EM_ASM( {
            Module.is_worker = (typeof WorkerGlobalScope !== 'undefined') && self instanceof WorkerGlobalScope;
-           Module.FD_BUFFER_MAX = $0; Module.emscripten_copy_to = console.warn;}
-           , (CMA_MB * 1024 * 1024) / CMA_FD);  /* ( global mem start / num fd max ) */
+           Module.FD_BUFFER_MAX = $0; Module.emscripten_copy_to = console.warn;} // tdrz: what is FD_BUFFER_MAX?
+           , (12 * 1024 * 1024));  /* ( global mem start / num fd max ) */ 
 
     if (is_node) {
         setenv("ENVIRONMENT", "node", 1);
@@ -194,7 +174,6 @@ main_pre(int argc, char *argv[]) {
                console.warn("prerun(C-web) worker=", Module.is_worker);}
         );
 #    endif
-        is_repl = true;
     }
 // *INDENT-OFF*
     EM_ASM({
@@ -563,35 +542,11 @@ PDEBUG("# 498: initdb faking shutdown to complete WAL/OID states in single mode"
      printf("# 550: argv0 (%s) PGUSER=%s PGDATA=%s\n PGDATABASE=%s REPL=%s\n",
             argv[0], PGUSER, PGDATA, getenv("PGDATABASE"), getenv("REPL"));
 #endif
-     progname = get_progname(argv[0]);
-     startup_hacks(progname);
-     g_argv = argv;
-     g_argc = argc;
+    progname = get_progname(argv[0]);
+    g_argv = argv;
+    g_argc = argc;
+    is_embed = true;
 
-     is_repl = strlen(getenv("REPL")) && getenv("REPL")[0] != 'N';
-     is_embed = true;
-
-     if (!is_repl) {
-         PDEBUG("# 562: exit with live runtime (nodb)");
-         return 0;
-     }
-#if defined(__wasi__)
-
-
-#else
-    /*
-    main_post();
-
-    PDEBUG("# 565: repl");
-    // so it is repl
-    main_repl();
-
-    if (is_node) {
-        PDEBUG("# 570: node repl");
-        pg_repl_raf();
-    }
-    */
-     emscripten_force_exit(exit_code);
-#endif
+    emscripten_force_exit(exit_code);
     return exit_code;
 }
