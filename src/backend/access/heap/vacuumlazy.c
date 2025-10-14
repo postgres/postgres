@@ -463,15 +463,21 @@ static void dead_items_add(LVRelState *vacrel, BlockNumber blkno, OffsetNumber *
 						   int num_offsets);
 static void dead_items_reset(LVRelState *vacrel);
 static void dead_items_cleanup(LVRelState *vacrel);
+
 #ifdef USE_ASSERT_CHECKING
-static bool heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
-									 TransactionId *visibility_cutoff_xid, bool *all_frozen);
+static bool heap_page_is_all_visible(Relation rel, Buffer buf,
+									 TransactionId OldestXmin,
+									 bool *all_frozen,
+									 TransactionId *visibility_cutoff_xid,
+									 OffsetNumber *logging_offnum);
 #endif
-static bool heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
+static bool heap_page_would_be_all_visible(Relation rel, Buffer buf,
+										   TransactionId OldestXmin,
 										   OffsetNumber *deadoffsets,
 										   int ndeadoffsets,
 										   bool *all_frozen,
-										   TransactionId *visibility_cutoff_xid);
+										   TransactionId *visibility_cutoff_xid,
+										   OffsetNumber *logging_offnum);
 static void update_relstats_all_indexes(LVRelState *vacrel);
 static void vacuum_error_callback(void *arg);
 static void update_vacuum_error_info(LVRelState *vacrel,
@@ -2016,8 +2022,9 @@ lazy_scan_prune(LVRelState *vacrel,
 
 		Assert(presult.lpdead_items == 0);
 
-		if (!heap_page_is_all_visible(vacrel, buf,
-									  &debug_cutoff, &debug_all_frozen))
+		if (!heap_page_is_all_visible(vacrel->rel, buf,
+									  vacrel->cutoffs.OldestXmin, &debug_all_frozen,
+									  &debug_cutoff, &vacrel->offnum))
 			Assert(false);
 
 		Assert(presult.all_frozen == debug_all_frozen);
@@ -2877,9 +2884,11 @@ lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
 	 * visibility checks may perform I/O and allocate memory, they must be
 	 * done outside the critical section.
 	 */
-	if (heap_page_would_be_all_visible(vacrel, buffer,
+	if (heap_page_would_be_all_visible(vacrel->rel, buffer,
+									   vacrel->cutoffs.OldestXmin,
 									   deadoffsets, num_offsets,
-									   &all_frozen, &visibility_cutoff_xid))
+									   &all_frozen, &visibility_cutoff_xid,
+									   &vacrel->offnum))
 	{
 		vmflags |= VISIBILITYMAP_ALL_VISIBLE;
 		if (all_frozen)
@@ -3629,15 +3638,19 @@ dead_items_cleanup(LVRelState *vacrel)
  * reason not to use it outside of asserts.
  */
 static bool
-heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
+heap_page_is_all_visible(Relation rel, Buffer buf,
+						 TransactionId OldestXmin,
+						 bool *all_frozen,
 						 TransactionId *visibility_cutoff_xid,
-						 bool *all_frozen)
+						 OffsetNumber *logging_offnum)
 {
 
-	return heap_page_would_be_all_visible(vacrel, buf,
+	return heap_page_would_be_all_visible(rel, buf,
+										  OldestXmin,
 										  NULL, 0,
 										  all_frozen,
-										  visibility_cutoff_xid);
+										  visibility_cutoff_xid,
+										  logging_offnum);
 }
 #endif
 
@@ -3654,10 +3667,14 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
  * Returns true if the page is all-visible other than the provided
  * deadoffsets and false otherwise.
  *
+ * OldestXmin is used to determine visibility.
+ *
  * Output parameters:
  *
  *  - *all_frozen: true if every tuple on the page is frozen
  *  - *visibility_cutoff_xid: newest xmin; valid only if page is all-visible
+ *  - *logging_offnum: OffsetNumber of current tuple being processed;
+ *     used by vacuum's error callback system.
  *
  * Callers looking to verify that the page is already all-visible can call
  * heap_page_is_all_visible().
@@ -3668,11 +3685,13 @@ heap_page_is_all_visible(LVRelState *vacrel, Buffer buf,
  * side-effects.
  */
 static bool
-heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
+heap_page_would_be_all_visible(Relation rel, Buffer buf,
+							   TransactionId OldestXmin,
 							   OffsetNumber *deadoffsets,
 							   int ndeadoffsets,
 							   bool *all_frozen,
-							   TransactionId *visibility_cutoff_xid)
+							   TransactionId *visibility_cutoff_xid,
+							   OffsetNumber *logging_offnum)
 {
 	Page		page = BufferGetPage(buf);
 	BlockNumber blockno = BufferGetBlockNumber(buf);
@@ -3707,7 +3726,7 @@ heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
 		 * Set the offset number so that we can display it along with any
 		 * error that occurred while processing this tuple.
 		 */
-		vacrel->offnum = offnum;
+		*logging_offnum = offnum;
 		itemid = PageGetItemId(page, offnum);
 
 		/* Unused or redirect line pointers are of no interest */
@@ -3737,13 +3756,11 @@ heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
 
 		tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 		tuple.t_len = ItemIdGetLength(itemid);
-		tuple.t_tableOid = RelationGetRelid(vacrel->rel);
+		tuple.t_tableOid = RelationGetRelid(rel);
 
 		/* Visibility checks may do IO or allocate memory */
 		Assert(CritSectionCount == 0);
-
-		switch (HeapTupleSatisfiesVacuum(&tuple, vacrel->cutoffs.OldestXmin,
-										 buf))
+		switch (HeapTupleSatisfiesVacuum(&tuple, OldestXmin, buf))
 		{
 			case HEAPTUPLE_LIVE:
 				{
@@ -3762,8 +3779,7 @@ heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
 					 * that everyone sees it as committed?
 					 */
 					xmin = HeapTupleHeaderGetXmin(tuple.t_data);
-					if (!TransactionIdPrecedes(xmin,
-											   vacrel->cutoffs.OldestXmin))
+					if (!TransactionIdPrecedes(xmin, OldestXmin))
 					{
 						all_visible = false;
 						*all_frozen = false;
@@ -3798,7 +3814,7 @@ heap_page_would_be_all_visible(LVRelState *vacrel, Buffer buf,
 	}							/* scan along page */
 
 	/* Clear the offset information once we have processed the given page. */
-	vacrel->offnum = InvalidOffsetNumber;
+	*logging_offnum = InvalidOffsetNumber;
 
 	return all_visible;
 }
