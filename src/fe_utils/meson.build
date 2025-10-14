@@ -18,6 +18,7 @@ fe_utils_sources = files(
   'recovery_gen.c',
   'simple_list.c',
   'string_utils.c',
+  'version.c',
 )
 
 psqlscan = custom_target('psqlscan',
