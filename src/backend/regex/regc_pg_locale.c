@@ -228,7 +228,7 @@ pg_set_regex_collation(Oid collation)
 }
 
 static int
-pg_wc_isdigit(pg_wchar c)
+regc_wc_isdigit(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -238,7 +238,7 @@ pg_wc_isdigit(pg_wchar c)
 }
 
 static int
-pg_wc_isalpha(pg_wchar c)
+regc_wc_isalpha(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -248,7 +248,7 @@ pg_wc_isalpha(pg_wchar c)
 }
 
 static int
-pg_wc_isalnum(pg_wchar c)
+regc_wc_isalnum(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -258,16 +258,16 @@ pg_wc_isalnum(pg_wchar c)
 }
 
 static int
-pg_wc_isword(pg_wchar c)
+regc_wc_isword(pg_wchar c)
 {
 	/* We define word characters as alnum class plus underscore */
 	if (c == CHR('_'))
 		return 1;
-	return pg_wc_isalnum(c);
+	return regc_wc_isalnum(c);
 }
 
 static int
-pg_wc_isupper(pg_wchar c)
+regc_wc_isupper(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -277,7 +277,7 @@ pg_wc_isupper(pg_wchar c)
 }
 
 static int
-pg_wc_islower(pg_wchar c)
+regc_wc_islower(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -287,7 +287,7 @@ pg_wc_islower(pg_wchar c)
 }
 
 static int
-pg_wc_isgraph(pg_wchar c)
+regc_wc_isgraph(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -297,7 +297,7 @@ pg_wc_isgraph(pg_wchar c)
 }
 
 static int
-pg_wc_isprint(pg_wchar c)
+regc_wc_isprint(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -307,7 +307,7 @@ pg_wc_isprint(pg_wchar c)
 }
 
 static int
-pg_wc_ispunct(pg_wchar c)
+regc_wc_ispunct(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -317,7 +317,7 @@ pg_wc_ispunct(pg_wchar c)
 }
 
 static int
-pg_wc_isspace(pg_wchar c)
+regc_wc_isspace(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 		return (c <= (pg_wchar) 127 &&
@@ -327,7 +327,7 @@ pg_wc_isspace(pg_wchar c)
 }
 
 static pg_wchar
-pg_wc_toupper(pg_wchar c)
+regc_wc_toupper(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 	{
@@ -340,7 +340,7 @@ pg_wc_toupper(pg_wchar c)
 }
 
 static pg_wchar
-pg_wc_tolower(pg_wchar c)
+regc_wc_tolower(pg_wchar c)
 {
 	if (pg_regex_locale->ctype_is_c)
 	{
@@ -366,11 +366,11 @@ pg_wc_tolower(pg_wchar c)
  * the main regex code expects us to return a failure indication instead.
  */
 
-typedef int (*pg_wc_probefunc) (pg_wchar c);
+typedef int (*regc_wc_probefunc) (pg_wchar c);
 
 typedef struct pg_ctype_cache
 {
-	pg_wc_probefunc probefunc;	/* pg_wc_isalpha or a sibling */
+	regc_wc_probefunc probefunc;	/* regc_wc_isalpha or a sibling */
 	pg_locale_t locale;			/* locale this entry is for */
 	struct cvec cv;				/* cache entry contents */
 	struct pg_ctype_cache *next;	/* chain link */
@@ -419,14 +419,14 @@ store_match(pg_ctype_cache *pcc, pg_wchar chr1, int nchrs)
 }
 
 /*
- * Given a probe function (e.g., pg_wc_isalpha) get a struct cvec for all
+ * Given a probe function (e.g., regc_wc_isalpha) get a struct cvec for all
  * chrs satisfying the probe function.  The active collation is the one
  * previously set by pg_set_regex_collation.  Return NULL if out of memory.
  *
  * Note that the result must not be freed or modified by caller.
  */
 static struct cvec *
-pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
+regc_ctype_get_cache(regc_wc_probefunc probefunc, int cclasscode)
 {
 	pg_ctype_cache *pcc;
 	pg_wchar	max_chr;
