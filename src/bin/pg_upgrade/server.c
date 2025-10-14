@@ -148,45 +148,6 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 }
 
 
-/*
- * get_major_server_version()
- *
- * gets the version (in unsigned int form) for the given datadir. Assumes
- * that datadir is an absolute path to a valid pgdata directory. The version
- * is retrieved by reading the PG_VERSION file.
- */
-uint32
-get_major_server_version(ClusterInfo *cluster)
-{
-	FILE	   *version_fd;
-	char		ver_filename[MAXPGPATH];
-	int			v1 = 0,
-				v2 = 0;
-
-	snprintf(ver_filename, sizeof(ver_filename), "%s/PG_VERSION",
-			 cluster->pgdata);
-	if ((version_fd = fopen(ver_filename, "r")) == NULL)
-		pg_fatal("could not open version file \"%s\": %m", ver_filename);
-
-	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
-		sscanf(cluster->major_version_str, "%d.%d", &v1, &v2) < 1)
-		pg_fatal("could not parse version file \"%s\"", ver_filename);
-
-	fclose(version_fd);
-
-	if (v1 < 10)
-	{
-		/* old style, e.g. 9.6.1 */
-		return v1 * 10000 + v2 * 100;
-	}
-	else
-	{
-		/* new style, e.g. 10.1 */
-		return v1 * 10000;
-	}
-}
-
-
 static void
 stop_postmaster_atexit(void)
 {

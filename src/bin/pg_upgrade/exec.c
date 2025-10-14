@@ -12,6 +12,7 @@
 #include <fcntl.h>
 
 #include "common/string.h"
+#include "fe_utils/version.h"
 #include "pg_upgrade.h"
 
 static void check_data_dir(ClusterInfo *cluster);
@@ -343,8 +344,8 @@ check_data_dir(ClusterInfo *cluster)
 	const char *pg_data = cluster->pgdata;
 
 	/* get the cluster version */
-	cluster->major_version = get_major_server_version(cluster);
-
+	cluster->major_version = get_pg_version(cluster->pgdata,
+											&cluster->major_version_str);
 	check_single_dir(pg_data, "");
 	check_single_dir(pg_data, "base");
 	check_single_dir(pg_data, "global");
