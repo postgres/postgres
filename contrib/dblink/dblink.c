@@ -2460,6 +2460,21 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	return NULL;
 }
 
+static void
+RangeVarCallbackForDblink(const RangeVar *relation,
+						  Oid relId, Oid oldRelId, void *arg)
+{
+	AclResult	aclresult;
+
+	if (!OidIsValid(relId))
+		return;
+
+	aclresult = pg_class_aclcheck(relId, GetUserId(), *((AclMode *) arg));
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_relkind_objtype(get_rel_relkind(relId)),
+					   relation->relname);
+}
+
 /*
  * Open the relation named by relname_text, acquire specified type of lock,
  * verify we have specified permissions.
@@ -2469,19 +2484,13 @@ static Relation
 get_rel_from_relname(text *relname_text, LOCKMODE lockmode, AclMode aclmode)
 {
 	RangeVar   *relvar;
-	Relation	rel;
-	AclResult	aclresult;
+	Oid			relid;
 
 	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
-	rel = table_openrv(relvar, lockmode);
+	relid = RangeVarGetRelidExtended(relvar, lockmode, 0,
+									 RangeVarCallbackForDblink, &aclmode);
 
-	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
-								  aclmode);
-	if (aclresult != ACLCHECK_OK)
-		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),
-					   RelationGetRelationName(rel));
-
-	return rel;
+	return table_open(relid, NoLock);
 }
 
 /*
