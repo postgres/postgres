@@ -1755,10 +1755,15 @@ check_and_drop_publications(PGconn *conn, struct LogicalRepInfo *dbinfo)
 			disconnect_database(conn, true);
 		}
 
-		/* Drop each publication */
-		for (int i = 0; i < PQntuples(res); i++)
-			drop_publication(conn, PQgetvalue(res, i, 0), dbinfo->dbname,
-							 &dbinfo->made_publication);
+		if (PQntuples(res) > 0)
+		{
+			/* Drop each publication */
+			for (int i = 0; i < PQntuples(res); i++)
+				drop_publication(conn, PQgetvalue(res, i, 0), dbinfo->dbname,
+								 &dbinfo->made_publication);
+		}
+		else
+			pg_log_info("no publications found");
 
 		PQclear(res);
 	}
