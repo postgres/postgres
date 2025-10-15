@@ -120,9 +120,9 @@ WHERE relation = 'stats_import.test'::regclass AND
 SELECT mode FROM pg_locks
 WHERE relation = 'stats_import.test_i'::regclass AND
       pid = pg_backend_pid() AND granted;
-      mode       
------------------
- AccessShareLock
+           mode           
+--------------------------
+ ShareUpdateExclusiveLock
 (1 row)
 
 COMMIT;
