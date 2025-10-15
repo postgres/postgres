@@ -848,7 +848,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	else
 		ereport(WARNING,
 				(errmsg("subscription was created, but is not connected"),
-				 errhint("To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.")));
+				 errhint("To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.")));
 
 	table_close(rel, RowExclusiveLock);
 
@@ -1612,8 +1612,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false).")));
 
 					/*
-					 * See ALTER_SUBSCRIPTION_REFRESH for details why this is
-					 * not allowed.
+					 * See ALTER_SUBSCRIPTION_REFRESH_PUBLICATION for details
+					 * why this is not allowed.
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
@@ -1667,8 +1667,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 										 "ALTER SUBSCRIPTION ... DROP PUBLICATION ... WITH (refresh = false)")));
 
 					/*
-					 * See ALTER_SUBSCRIPTION_REFRESH for details why this is
-					 * not allowed.
+					 * See ALTER_SUBSCRIPTION_REFRESH_PUBLICATION for details
+					 * why this is not allowed.
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
@@ -1692,12 +1692,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				break;
 			}
 
-		case ALTER_SUBSCRIPTION_REFRESH:
+		case ALTER_SUBSCRIPTION_REFRESH_PUBLICATION:
 			{
 				if (!sub->enabled)
 					ereport(ERROR,
 							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-							 errmsg("ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions")));
+							 errmsg("%s is not allowed for disabled subscriptions",
+									"ALTER SUBSCRIPTION ... REFRESH PUBLICATION")));
 
 				parse_subscription_options(pstate, stmt->options,
 										   SUBOPT_COPY_DATA, &opts);
@@ -1709,8 +1710,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				 *
 				 * But, having reached this two-phase commit "enabled" state
 				 * we must not allow any subsequent table initialization to
-				 * occur. So the ALTER SUBSCRIPTION ... REFRESH is disallowed
-				 * when the user had requested two_phase = on mode.
+				 * occur. So the ALTER SUBSCRIPTION ... REFRESH PUBLICATION is
+				 * disallowed when the user had requested two_phase = on mode.
 				 *
 				 * The exception to this restriction is when copy_data =
 				 * false, because when copy_data is false the tablesync will
@@ -1722,10 +1723,10 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("ALTER SUBSCRIPTION ... REFRESH with copy_data is not allowed when two_phase is enabled"),
-							 errhint("Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
+							 errmsg("ALTER SUBSCRIPTION ... REFRESH PUBLICATION with copy_data is not allowed when two_phase is enabled"),
+							 errhint("Use ALTER SUBSCRIPTION ... REFRESH PUBLICATION with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
 
-				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH");
+				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH PUBLICATION");
 
 				AlterSubscription_refresh(sub, opts.copy_data, NULL);
 
@@ -2322,17 +2323,17 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
  * it's a partitioned table), from some other publishers. This check is
  * required in the following scenarios:
  *
- * 1) For CREATE SUBSCRIPTION and ALTER SUBSCRIPTION ... REFRESH statements
- *    with "copy_data = true" and "origin = none":
+ * 1) For CREATE SUBSCRIPTION and ALTER SUBSCRIPTION ... REFRESH PUBLICATION
+ *    statements with "copy_data = true" and "origin = none":
  *    - Warn the user that data with an origin might have been copied.
  *    - This check is skipped for tables already added, as incremental sync via
  *      WAL allows origin tracking. The list of such tables is in
  *      subrel_local_oids.
  *
- * 2) For CREATE SUBSCRIPTION and ALTER SUBSCRIPTION ... REFRESH statements
- *    with "retain_dead_tuples = true" and "origin = any", and for ALTER
- *    SUBSCRIPTION statements that modify retain_dead_tuples or origin, or
- *    when the publisher's status changes (e.g., due to a connection string
+ * 2) For CREATE SUBSCRIPTION and ALTER SUBSCRIPTION ... REFRESH PUBLICATION
+ *    statements with "retain_dead_tuples = true" and "origin = any", and for
+ *    ALTER SUBSCRIPTION statements that modify retain_dead_tuples or origin,
+ *    or when the publisher's status changes (e.g., due to a connection string
  *    update):
  *    - Warn the user that only conflict detection info for local changes on
  *      the publisher is retained. Data from other origins may lack sufficient
@@ -2390,13 +2391,13 @@ check_publications_origin(WalReceiverConn *wrconn, List *publications,
 	appendStringInfoString(&cmd, ")\n");
 
 	/*
-	 * In case of ALTER SUBSCRIPTION ... REFRESH, subrel_local_oids contains
-	 * the list of relation oids that are already present on the subscriber.
-	 * This check should be skipped for these tables if checking for table
-	 * sync scenario. However, when handling the retain_dead_tuples scenario,
-	 * ensure all tables are checked, as some existing tables may now include
-	 * changes from other origins due to newly created subscriptions on the
-	 * publisher.
+	 * In case of ALTER SUBSCRIPTION ... REFRESH PUBLICATION,
+	 * subrel_local_oids contains the list of relation oids that are already
+	 * present on the subscriber. This check should be skipped for these
+	 * tables if checking for table sync scenario. However, when handling the
+	 * retain_dead_tuples scenario, ensure all tables are checked, as some
+	 * existing tables may now include changes from other origins due to newly
+	 * created subscriptions on the publisher.
 	 */
 	if (check_table_sync)
 	{

@@ -31,7 +31,7 @@ ERROR:  publication name "foo" used more than once
 -- ok
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 COMMENT ON SUBSCRIPTION regress_testsub IS 'test subscription';
 SELECT obj_description(s.oid, 'pg_subscription') FROM pg_subscription s;
   obj_description  
@@ -102,19 +102,19 @@ ERROR:  subscription with slot_name = NONE must also set enabled = false
 -- ok - with slot_name = NONE
 CREATE SUBSCRIPTION regress_testsub3 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 -- fail
 ALTER SUBSCRIPTION regress_testsub3 ENABLE;
 ERROR:  cannot enable subscription that does not have a slot name
 ALTER SUBSCRIPTION regress_testsub3 REFRESH PUBLICATION;
-ERROR:  ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions
+ERROR:  ALTER SUBSCRIPTION ... REFRESH PUBLICATION is not allowed for disabled subscriptions
 -- fail - origin must be either none or any
 CREATE SUBSCRIPTION regress_testsub4 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false, origin = foo);
 ERROR:  unrecognized origin value: "foo"
 -- now it works
 CREATE SUBSCRIPTION regress_testsub4 CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (slot_name = NONE, connect = false, origin = none);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+ regress_testsub4
                                                                                                                                                   List of subscriptions
        Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -253,7 +253,7 @@ ERROR:  binary requires a Boolean value
 -- now it works
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, binary = true);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -277,7 +277,7 @@ ERROR:  streaming requires a Boolean value or "parallel"
 -- now it works
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, streaming = true);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -342,7 +342,7 @@ DROP SUBSCRIPTION regress_testsub;
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION mypub
        WITH (connect = false, create_slot = false, copy_data = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 ALTER SUBSCRIPTION regress_testsub ENABLE;
 -- fail - ALTER SUBSCRIPTION with refresh is not allowed in a transaction
 -- block or function
@@ -352,7 +352,7 @@ ERROR:  ALTER SUBSCRIPTION with refresh cannot run inside a transaction block
 END;
 BEGIN;
 ALTER SUBSCRIPTION regress_testsub REFRESH PUBLICATION;
-ERROR:  ALTER SUBSCRIPTION ... REFRESH cannot run inside a transaction block
+ERROR:  ALTER SUBSCRIPTION ... REFRESH PUBLICATION cannot run inside a transaction block
 END;
 CREATE FUNCTION func() RETURNS VOID AS
 $$ ALTER SUBSCRIPTION regress_testsub SET PUBLICATION mypub WITH (refresh = true) $$ LANGUAGE SQL;
@@ -369,7 +369,7 @@ ERROR:  two_phase requires a Boolean value
 -- now it works
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, two_phase = true);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -391,7 +391,7 @@ DROP SUBSCRIPTION regress_testsub;
 -- two_phase and streaming are compatible.
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, streaming = true, two_phase = true);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -407,7 +407,7 @@ ERROR:  disable_on_error requires a Boolean value
 -- now it works
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, disable_on_error = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -431,7 +431,7 @@ ERROR:  retain_dead_tuples requires a Boolean value
 -- ok
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, retain_dead_tuples = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -448,7 +448,7 @@ ERROR:  max_retention_duration requires an integer value
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist' PUBLICATION testpub WITH (connect = false, max_retention_duration = 1000);
 NOTICE:  max_retention_duration is ineffective when retain_dead_tuples is disabled
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 \dRs+
                                                                                                                                                   List of subscriptions
       Name       |           Owner           | Enabled | Publication | Binary | Streaming | Two-phase commit | Disable on error | Origin | Password required | Run as owner? | Failover | Retain dead tuples | Max retention duration | Retention active | Synchronous commit |          Conninfo           |  Skip LSN  
@@ -492,7 +492,7 @@ GRANT CREATE ON DATABASE REGRESSION TO regress_subscription_user3;
 SET SESSION AUTHORIZATION regress_subscription_user3;
 CREATE SUBSCRIPTION regress_testsub CONNECTION 'dbname=regress_doesnotexist password=regress_fakepassword' PUBLICATION testpub WITH (connect = false);
 WARNING:  subscription was created, but is not connected
-HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and alter the subscription to refresh publications.
 -- we cannot give the subscription away to some random user
 ALTER SUBSCRIPTION regress_testsub OWNER TO regress_subscription_user;
 ERROR:  must be able to SET ROLE "regress_subscription_user"
