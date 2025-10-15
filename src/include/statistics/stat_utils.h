@@ -16,7 +16,7 @@
 #include "fmgr.h"
 
 /* avoid including primnodes.h here */
-typedef struct RangeVar RangeVar;
+struct RangeVar;
 
 struct StatsArgInfo
 {
@@ -33,7 +33,7 @@ extern bool stats_check_arg_pair(FunctionCallInfo fcinfo,
 								 struct StatsArgInfo *arginfo,
 								 int argnum1, int argnum2);
 
-extern void RangeVarCallbackForStats(const RangeVar *relation,
+extern void RangeVarCallbackForStats(const struct RangeVar *relation,
 									 Oid relId, Oid oldRelid, void *arg);
 
 extern bool stats_fill_fcinfo_from_arg_pairs(FunctionCallInfo pairs_fcinfo,
