@@ -19,156 +19,13 @@
 #include "common/unicode_case.h"
 #include "common/unicode_category.h"
 #include "utils/pg_locale.h"
+#include "utils/pg_locale_c.h"
 
 static pg_locale_t pg_regex_locale;
 
 static struct pg_locale_struct dummy_c_locale = {
 	.collate_is_c = true,
 	.ctype_is_c = true,
-};
-
-/*
- * Hard-wired character properties for C locale
- */
-#define PG_ISDIGIT	0x01
-#define PG_ISALPHA	0x02
-#define PG_ISALNUM	(PG_ISDIGIT | PG_ISALPHA)
-#define PG_ISUPPER	0x04
-#define PG_ISLOWER	0x08
-#define PG_ISGRAPH	0x10
-#define PG_ISPRINT	0x20
-#define PG_ISPUNCT	0x40
-#define PG_ISSPACE	0x80
-
-static const unsigned char pg_char_properties[128] = {
-	 /* NUL */ 0,
-	 /* ^A */ 0,
-	 /* ^B */ 0,
-	 /* ^C */ 0,
-	 /* ^D */ 0,
-	 /* ^E */ 0,
-	 /* ^F */ 0,
-	 /* ^G */ 0,
-	 /* ^H */ 0,
-	 /* ^I */ PG_ISSPACE,
-	 /* ^J */ PG_ISSPACE,
-	 /* ^K */ PG_ISSPACE,
-	 /* ^L */ PG_ISSPACE,
-	 /* ^M */ PG_ISSPACE,
-	 /* ^N */ 0,
-	 /* ^O */ 0,
-	 /* ^P */ 0,
-	 /* ^Q */ 0,
-	 /* ^R */ 0,
-	 /* ^S */ 0,
-	 /* ^T */ 0,
-	 /* ^U */ 0,
-	 /* ^V */ 0,
-	 /* ^W */ 0,
-	 /* ^X */ 0,
-	 /* ^Y */ 0,
-	 /* ^Z */ 0,
-	 /* ^[ */ 0,
-	 /* ^\ */ 0,
-	 /* ^] */ 0,
-	 /* ^^ */ 0,
-	 /* ^_ */ 0,
-	 /* */ PG_ISPRINT | PG_ISSPACE,
-	 /* !  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* "  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* #  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* $  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* %  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* &  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* '  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* (  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* )  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* *  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* +  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ,  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* -  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* .  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* /  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* 0  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 1  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 2  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 3  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 4  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 5  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 6  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 7  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 8  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* 9  */ PG_ISDIGIT | PG_ISGRAPH | PG_ISPRINT,
-	 /* :  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ;  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* <  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* =  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* >  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ?  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* @  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* A  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* B  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* C  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* D  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* E  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* F  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* G  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* H  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* I  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* J  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* K  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* L  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* M  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* N  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* O  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* P  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* Q  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* R  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* S  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* T  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* U  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* V  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* W  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* X  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* Y  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* Z  */ PG_ISALPHA | PG_ISUPPER | PG_ISGRAPH | PG_ISPRINT,
-	 /* [  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* \  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ]  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ^  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* _  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* `  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* a  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* b  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* c  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* d  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* e  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* f  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* g  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* h  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* i  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* j  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* k  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* l  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* m  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* n  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* o  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* p  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* q  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* r  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* s  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* t  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* u  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* v  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* w  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* x  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* y  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* z  */ PG_ISALPHA | PG_ISLOWER | PG_ISGRAPH | PG_ISPRINT,
-	 /* {  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* |  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* }  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* ~  */ PG_ISGRAPH | PG_ISPRINT | PG_ISPUNCT,
-	 /* DEL */ 0
 };
 
 
@@ -226,6 +83,11 @@ pg_set_regex_collation(Oid collation)
 
 	pg_regex_locale = locale;
 }
+
+/*
+ * The following functions overlap with those defined in pg_locale.c. XXX:
+ * consider refactor.
+ */
 
 static int
 regc_wc_isdigit(pg_wchar c)
