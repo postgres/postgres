@@ -406,8 +406,12 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	/* user-invoked vacuum is never "for wraparound" */
 	params.is_wraparound = false;
 
-	/* user-invoked vacuum uses VACOPT_VERBOSE instead of log_min_duration */
-	params.log_min_duration = -1;
+	/*
+	 * user-invoked vacuum uses VACOPT_VERBOSE instead of
+	 * log_vacuum_min_duration and log_analyze_min_duration
+	 */
+	params.log_vacuum_min_duration = -1;
+	params.log_analyze_min_duration = -1;
 
 	/*
 	 * Later, in vacuum_rel(), we check if a reloption override was specified.
@@ -2063,7 +2067,7 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams params,
 
 	/* open the relation and get the appropriate lock on it */
 	rel = vacuum_open_relation(relid, relation, params.options,
-							   params.log_min_duration >= 0, lmode);
+							   params.log_vacuum_min_duration >= 0, lmode);
 
 	/* leave if relation could not be opened or locked */
 	if (!rel)

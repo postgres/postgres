@@ -892,7 +892,8 @@ HINT:  Execute a database-wide VACUUM in that database.
     the next database will be processed as soon as the first worker finishes.
     Each worker process will check each table within its database and
     execute <command>VACUUM</command> and/or <command>ANALYZE</command> as needed.
-    <xref linkend="guc-log-autovacuum-min-duration"/> can be set to monitor
+    <xref linkend="guc-log-autovacuum-min-duration"/> and
+    <xref linkend="guc-log-autoanalyze-min-duration"/> can be set to monitor
     autovacuum workers' activity.
    </para>
 

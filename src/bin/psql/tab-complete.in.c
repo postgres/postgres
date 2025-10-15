@@ -1421,6 +1421,7 @@ static const char *const table_storage_parameters[] = {
 	"autovacuum_vacuum_threshold",
 	"fillfactor",
 	"log_autovacuum_min_duration",
+	"log_autoanalyze_min_duration",
 	"parallel_workers",
 	"toast.autovacuum_enabled",
 	"toast.autovacuum_freeze_max_age",

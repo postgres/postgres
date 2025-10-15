@@ -588,7 +588,12 @@
 #debug_print_rewritten = off
 #debug_print_plan = off
 #debug_pretty_print = on
-#log_autovacuum_min_duration = 10min	# log autovacuum activity;
+#log_autovacuum_min_duration = 10min	# log vacuum activity by autovacuum;
+					# -1 disables, 0 logs all actions and
+					# their durations, > 0 logs only
+					# actions running at least this number
+					# of milliseconds.
+#log_autoanalyze_min_duration = 10min	# log analyze activity by autovacuum;
 					# -1 disables, 0 logs all actions and
 					# their durations, > 0 logs only
 					# actions running at least this number

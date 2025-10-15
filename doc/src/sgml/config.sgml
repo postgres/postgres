@@ -7477,17 +7477,44 @@ local0.*    /var/log/postgresql
       </term>
       <listitem>
        <para>
-        Causes each action executed by autovacuum to be logged if it ran for at
+        Causes vacuum action executed by autovacuum to be logged if it ran for at
         least the specified amount of time.  Setting this to zero logs
-        all autovacuum actions. <literal>-1</literal> disables logging autovacuum
-        actions. If this value is specified without units, it is taken as milliseconds.
-        For example, if you set this to
-        <literal>250ms</literal> then all automatic vacuums and analyzes that run
+        all vacuum actions by autovacuum. <literal>-1</literal> disables logging
+        vacuum actions by autovacuum. If this value is specified without units,
+        it is taken as milliseconds. For example, if you set this to
+        <literal>250ms</literal> then all automatic vacuums that run
         250ms or longer will be logged.  In addition, when this parameter is
         set to any value other than <literal>-1</literal>, a message will be
-        logged if an autovacuum action is skipped due to a conflicting lock or a
+        logged if a vacuum action by autovacuum is skipped due to a conflicting lock or a
         concurrently dropped relation. The default is <literal>10min</literal>.
-        Enabling this parameter can be helpful in tracking autovacuum activity.
+        Enabling this parameter can be helpful in tracking vacuum activity by autovacuum.
+        This parameter can only be set in the <filename>postgresql.conf</filename>
+        file or on the server command line; but the setting can be overridden for
+        individual tables by changing table storage parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-autoanalyze-min-duration" xreflabel="log_autoanalyze_min_duration">
+      <term><varname>log_autoanalyze_min_duration</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>log_autoanalyze_min_duration</varname></primary>
+       <secondary>configuration parameter</secondary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Causes analyze action executed by autovacuum to be logged if it ran for at
+        least the specified amount of time.  Setting this to zero logs
+        all analyze actions by autovacuum. <literal>-1</literal> disables logging
+        analyze actions by autovacuum. If this value is specified without units,
+        it is taken as milliseconds. For example, if you set this to
+        <literal>250ms</literal> then all automatic analyzes that run
+        250ms or longer will be logged.  In addition, when this parameter is
+        set to any value other than <literal>-1</literal>, a message will be
+        logged if an analyze action by autovacuum is skipped due to a conflicting lock or a
+        concurrently dropped relation. The default is <literal>10min</literal>.
+        Enabling this parameter can be helpful in tracking analyze activity by autovacuum.
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line; but the setting can be overridden for
         individual tables by changing table storage parameters.

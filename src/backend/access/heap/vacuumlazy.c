@@ -648,7 +648,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 
 	verbose = (params.options & VACOPT_VERBOSE) != 0;
 	instrument = (verbose || (AmAutoVacuumWorkerProcess() &&
-							  params.log_min_duration >= 0));
+							  params.log_vacuum_min_duration >= 0));
 	if (instrument)
 	{
 		pg_rusage_init(&ru0);
@@ -959,9 +959,9 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	{
 		TimestampTz endtime = GetCurrentTimestamp();
 
-		if (verbose || params.log_min_duration == 0 ||
+		if (verbose || params.log_vacuum_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, endtime,
-									   params.log_min_duration))
+									   params.log_vacuum_min_duration))
 		{
 			long		secs_dur;
 			int			usecs_dur;
