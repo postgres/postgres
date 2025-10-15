@@ -1,0 +1,37 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s0_begin s0_update s1_begin s1_tuplock s0_commit s1_commit
+step s0_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s0_update: UPDATE a SET i = i + 1;
+step s1_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1_tuplock: 
+    -- Verify if the sub-select has a foreign-join plan
+    EXPLAIN (VERBOSE, COSTS OFF)
+    SELECT a.i,
+        (SELECT 1 FROM fb, fc WHERE a.i = fb.i AND fb.i = fc.i)
+    FROM a FOR UPDATE;
+    SELECT a.i,
+        (SELECT 1 FROM fb, fc WHERE a.i = fb.i AND fb.i = fc.i)
+    FROM a FOR UPDATE;
+ <waiting ...>
+step s0_commit: COMMIT;
+step s1_tuplock: <... completed>
+QUERY PLAN                                                                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------
+LockRows                                                                                                                                
+  Output: a.i, ((SubPlan 1)), a.ctid                                                                                                    
+  ->  Seq Scan on public.a                                                                                                              
+        Output: a.i, (SubPlan 1), a.ctid                                                                                                
+        SubPlan 1                                                                                                                       
+          ->  Foreign Scan                                                                                                              
+                Output: 1                                                                                                               
+                Relations: (public.fb) INNER JOIN (public.fc)                                                                           
+                Remote SQL: SELECT NULL FROM (public.b r1 INNER JOIN public.c r2 ON (((r2.i = $1::integer)) AND ((r1.i = $1::integer))))
+(9 rows)
+
+i|?column?
+-+--------
+2|        
+(1 row)
+
+step s1_commit: COMMIT;

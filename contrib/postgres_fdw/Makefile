@@ -17,6 +17,8 @@ EXTENSION = postgres_fdw
 DATA = postgres_fdw--1.0.sql postgres_fdw--1.0--1.1.sql
 
 REGRESS = postgres_fdw
+ISOLATION = eval_plan_qual
+ISOLATION_OPTS = --load-extension=postgres_fdw
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
