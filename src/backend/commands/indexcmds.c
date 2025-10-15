@@ -2976,6 +2976,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	struct ReindexIndexCallbackState *state = arg;
 	LOCKMODE	table_lockmode;
 	Oid			table_oid;
+	AclResult	aclresult;
 
 	/*
 	 * Lock level here should match table lock in reindex_index() for
@@ -3000,43 +3001,42 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 	if (!OidIsValid(relId))
 		return;
 
-	/*
-	 * If the relation does exist, check whether it's an index.  But note that
-	 * the relation might have been dropped between the time we did the name
-	 * lookup and now.  In that case, there's nothing to do.
-	 */
+	/* If the relation does exist, check whether it's an index. */
 	relkind = get_rel_relkind(relId);
-	if (!relkind)
-		return;
 	if (relkind != RELKIND_INDEX &&
 		relkind != RELKIND_PARTITIONED_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not an index", relation->relname)));
 
-	/* Check permissions */
-	table_oid = IndexGetRelation(relId, true);
-	if (OidIsValid(table_oid))
-	{
-		AclResult	aclresult;
+	/* Look up the index's table. */
+	table_oid = IndexGetRelation(relId, false);
 
-		aclresult = pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, OBJECT_INDEX, relation->relname);
-	}
+	/*
+	 * In the unlikely event that, upon retry, we get the same index OID with
+	 * a different table OID, fail.  RangeVarGetRelidExtended() will have
+	 * already locked the index in this case, and it won't retry again, so we
+	 * can't lock the newly discovered table OID without risking deadlock.
+	 * Also, while this corner case is indeed possible, it is extremely
+	 * unlikely to happen in practice, so it's probably not worth any more
+	 * effort than this.
+	 */
+	if (relId == oldRelId && table_oid != state->locked_table_oid)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("index \"%s\" was concurrently dropped",
+						relation->relname)));
+
+	/* Check permissions. */
+	aclresult = pg_class_aclcheck(table_oid, GetUserId(), ACL_MAINTAIN);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_INDEX, relation->relname);
 
 	/* Lock heap before index to avoid deadlock. */
 	if (relId != oldRelId)
 	{
-		/*
-		 * If the OID isn't valid, it means the index was concurrently
-		 * dropped, which is not a problem for us; just return normally.
-		 */
-		if (OidIsValid(table_oid))
-		{
-			LockRelationOid(table_oid, table_lockmode);
-			state->locked_table_oid = table_oid;
-		}
+		LockRelationOid(table_oid, table_lockmode);
+		state->locked_table_oid = table_oid;
 	}
 }
 
