@@ -188,6 +188,7 @@ struct config_generic
 	Oid			reset_srole;	/* role that set the reset value */
 	GucStack   *stack;			/* stacked prior values */
 	void	   *extra;			/* "extra" pointer for current actual value */
+	void	   *reset_extra;
 	dlist_node	nondef_link;	/* list link for variables that have source
 								 * different from PGC_S_DEFAULT */
 	slist_node	stack_link;		/* list link for variables that have non-NULL
@@ -224,7 +225,6 @@ struct config_bool
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	bool		reset_val;
-	void	   *reset_extra;
 };
 
 struct config_int
@@ -240,7 +240,6 @@ struct config_int
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
-	void	   *reset_extra;
 };
 
 struct config_real
@@ -256,7 +255,6 @@ struct config_real
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	double		reset_val;
-	void	   *reset_extra;
 };
 
 /*
@@ -280,7 +278,6 @@ struct config_string
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
-	void	   *reset_extra;
 };
 
 struct config_enum
@@ -295,7 +292,6 @@ struct config_enum
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
-	void	   *reset_extra;
 };
 
 /* constant tables corresponding to enums above and in guc.h */

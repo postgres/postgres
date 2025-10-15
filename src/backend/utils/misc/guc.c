@@ -744,29 +744,8 @@ extra_field_used(struct config_generic *gconf, void *extra)
 {
 	if (extra == gconf->extra)
 		return true;
-	switch (gconf->vartype)
-	{
-		case PGC_BOOL:
-			if (extra == ((struct config_bool *) gconf)->reset_extra)
-				return true;
-			break;
-		case PGC_INT:
-			if (extra == ((struct config_int *) gconf)->reset_extra)
-				return true;
-			break;
-		case PGC_REAL:
-			if (extra == ((struct config_real *) gconf)->reset_extra)
-				return true;
-			break;
-		case PGC_STRING:
-			if (extra == ((struct config_string *) gconf)->reset_extra)
-				return true;
-			break;
-		case PGC_ENUM:
-			if (extra == ((struct config_enum *) gconf)->reset_extra)
-				return true;
-			break;
-	}
+	if (extra == gconf->reset_extra)
+		return true;
 	for (GucStack *stack = gconf->stack; stack; stack = stack->prev)
 	{
 		if (extra == stack->prior.extra ||
@@ -1635,6 +1614,8 @@ InitializeGUCOptionsFromEnvironment(void)
 static void
 InitializeOneGUCOption(struct config_generic *gconf)
 {
+	void	   *extra = NULL;
+
 	gconf->status = 0;
 	gconf->source = PGC_S_DEFAULT;
 	gconf->reset_source = PGC_S_DEFAULT;
@@ -1654,7 +1635,6 @@ InitializeOneGUCOption(struct config_generic *gconf)
 			{
 				struct config_bool *conf = (struct config_bool *) gconf;
 				bool		newval = conf->boot_val;
-				void	   *extra = NULL;
 
 				if (!call_bool_check_hook(conf, &newval, &extra,
 										  PGC_S_DEFAULT, LOG))
@@ -1663,14 +1643,12 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
-				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_INT:
 			{
 				struct config_int *conf = (struct config_int *) gconf;
 				int			newval = conf->boot_val;
-				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
 				Assert(newval <= conf->max);
@@ -1681,14 +1659,12 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
-				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_REAL:
 			{
 				struct config_real *conf = (struct config_real *) gconf;
 				double		newval = conf->boot_val;
-				void	   *extra = NULL;
 
 				Assert(newval >= conf->min);
 				Assert(newval <= conf->max);
@@ -1699,14 +1675,12 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
-				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_STRING:
 			{
 				struct config_string *conf = (struct config_string *) gconf;
 				char	   *newval;
-				void	   *extra = NULL;
 
 				/* non-NULL boot_val must always get strdup'd */
 				if (conf->boot_val != NULL)
@@ -1721,14 +1695,12 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
-				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 		case PGC_ENUM:
 			{
 				struct config_enum *conf = (struct config_enum *) gconf;
 				int			newval = conf->boot_val;
-				void	   *extra = NULL;
 
 				if (!call_enum_check_hook(conf, &newval, &extra,
 										  PGC_S_DEFAULT, LOG))
@@ -1737,10 +1709,11 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				if (conf->assign_hook)
 					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
-				conf->gen.extra = conf->reset_extra = extra;
 				break;
 			}
 	}
+
+	gconf->extra = gconf->reset_extra = extra;
 }
 
 /*
@@ -2028,10 +2001,10 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						conf->assign_hook(conf->reset_val,
-										  conf->reset_extra);
+										  conf->gen.reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
-									conf->reset_extra);
+									conf->gen.reset_extra);
 					break;
 				}
 			case PGC_INT:
@@ -2040,10 +2013,10 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						conf->assign_hook(conf->reset_val,
-										  conf->reset_extra);
+										  conf->gen.reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
-									conf->reset_extra);
+									conf->gen.reset_extra);
 					break;
 				}
 			case PGC_REAL:
@@ -2052,10 +2025,10 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						conf->assign_hook(conf->reset_val,
-										  conf->reset_extra);
+										  conf->gen.reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
-									conf->reset_extra);
+									conf->gen.reset_extra);
 					break;
 				}
 			case PGC_STRING:
@@ -2064,10 +2037,10 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						conf->assign_hook(conf->reset_val,
-										  conf->reset_extra);
+										  conf->gen.reset_extra);
 					set_string_field(conf, conf->variable, conf->reset_val);
 					set_extra_field(&conf->gen, &conf->gen.extra,
-									conf->reset_extra);
+									conf->gen.reset_extra);
 					break;
 				}
 			case PGC_ENUM:
@@ -2076,10 +2049,10 @@ ResetAllOptions(void)
 
 					if (conf->assign_hook)
 						conf->assign_hook(conf->reset_val,
-										  conf->reset_extra);
+										  conf->gen.reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
-									conf->reset_extra);
+									conf->gen.reset_extra);
 					break;
 				}
 		}
@@ -3713,7 +3686,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 				else
 				{
 					newval = conf->reset_val;
-					newextra = conf->reset_extra;
+					newextra = conf->gen.reset_extra;
 					source = conf->gen.reset_source;
 					context = conf->gen.reset_scontext;
 					srole = conf->gen.reset_srole;
@@ -3758,7 +3731,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
-						set_extra_field(&conf->gen, &conf->reset_extra,
+						set_extra_field(&conf->gen, &conf->gen.reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
 						conf->gen.reset_scontext = context;
@@ -3809,7 +3782,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 				else
 				{
 					newval = conf->reset_val;
-					newextra = conf->reset_extra;
+					newextra = conf->gen.reset_extra;
 					source = conf->gen.reset_source;
 					context = conf->gen.reset_scontext;
 					srole = conf->gen.reset_srole;
@@ -3854,7 +3827,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
-						set_extra_field(&conf->gen, &conf->reset_extra,
+						set_extra_field(&conf->gen, &conf->gen.reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
 						conf->gen.reset_scontext = context;
@@ -3905,7 +3878,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 				else
 				{
 					newval = conf->reset_val;
-					newextra = conf->reset_extra;
+					newextra = conf->gen.reset_extra;
 					source = conf->gen.reset_source;
 					context = conf->gen.reset_scontext;
 					srole = conf->gen.reset_srole;
@@ -3950,7 +3923,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
-						set_extra_field(&conf->gen, &conf->reset_extra,
+						set_extra_field(&conf->gen, &conf->gen.reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
 						conf->gen.reset_scontext = context;
@@ -4020,7 +3993,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					 * guc.c's control
 					 */
 					newval = conf->reset_val;
-					newextra = conf->reset_extra;
+					newextra = conf->gen.reset_extra;
 					source = conf->gen.reset_source;
 					context = conf->gen.reset_scontext;
 					srole = conf->gen.reset_srole;
@@ -4114,7 +4087,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					if (conf->gen.reset_source <= source)
 					{
 						set_string_field(conf, &conf->reset_val, newval);
-						set_extra_field(&conf->gen, &conf->reset_extra,
+						set_extra_field(&conf->gen, &conf->gen.reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
 						conf->gen.reset_scontext = context;
@@ -4169,7 +4142,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 				else
 				{
 					newval = conf->reset_val;
-					newextra = conf->reset_extra;
+					newextra = conf->gen.reset_extra;
 					source = conf->gen.reset_source;
 					context = conf->gen.reset_scontext;
 					srole = conf->gen.reset_srole;
@@ -4214,7 +4187,7 @@ set_config_with_handle(const char *name, config_handle *handle,
 					if (conf->gen.reset_source <= source)
 					{
 						conf->reset_val = newval;
-						set_extra_field(&conf->gen, &conf->reset_extra,
+						set_extra_field(&conf->gen, &conf->gen.reset_extra,
 										newextra);
 						conf->gen.reset_source = source;
 						conf->gen.reset_scontext = context;
@@ -6245,29 +6218,11 @@ RestoreGUCState(void *gucstate)
 		switch (gconf->vartype)
 		{
 			case PGC_BOOL:
-				{
-					struct config_bool *conf = (struct config_bool *) gconf;
-
-					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						guc_free(conf->reset_extra);
-					break;
-				}
 			case PGC_INT:
-				{
-					struct config_int *conf = (struct config_int *) gconf;
-
-					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						guc_free(conf->reset_extra);
-					break;
-				}
 			case PGC_REAL:
-				{
-					struct config_real *conf = (struct config_real *) gconf;
-
-					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						guc_free(conf->reset_extra);
-					break;
-				}
+			case PGC_ENUM:
+				/* no need to do anything */
+				break;
 			case PGC_STRING:
 				{
 					struct config_string *conf = (struct config_string *) gconf;
@@ -6275,19 +6230,11 @@ RestoreGUCState(void *gucstate)
 					guc_free(*conf->variable);
 					if (conf->reset_val && conf->reset_val != *conf->variable)
 						guc_free(conf->reset_val);
-					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						guc_free(conf->reset_extra);
-					break;
-				}
-			case PGC_ENUM:
-				{
-					struct config_enum *conf = (struct config_enum *) gconf;
-
-					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						guc_free(conf->reset_extra);
 					break;
 				}
 		}
+		if (gconf->reset_extra && gconf->reset_extra != gconf->extra)
+			guc_free(gconf->reset_extra);
 		/* Remove it from any lists it's in. */
 		RemoveGUCFromLists(gconf);
 		/* Now we can reset the struct to PGS_S_DEFAULT state. */
