@@ -20,6 +20,7 @@
 #include "access/heapam.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "nodes/makefuncs.h"
 #include "statistics/stat_utils.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -82,6 +83,7 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 	Datum		values[4] = {0};
 	bool		nulls[4] = {0};
 	int			nreplaces = 0;
+	Oid			locked_table = InvalidOid;
 
 	stats_check_required_arg(fcinfo, relarginfo, RELSCHEMA_ARG);
 	stats_check_required_arg(fcinfo, relarginfo, RELNAME_ARG);
@@ -89,15 +91,15 @@ relation_statistics_update(FunctionCallInfo fcinfo)
 	nspname = TextDatumGetCString(PG_GETARG_DATUM(RELSCHEMA_ARG));
 	relname = TextDatumGetCString(PG_GETARG_DATUM(RELNAME_ARG));
 
-	reloid = stats_lookup_relid(nspname, relname);
-
 	if (RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
 				 errhint("Statistics cannot be modified during recovery.")));
 
-	stats_lock_check_privileges(reloid);
+	reloid = RangeVarGetRelidExtended(makeRangeVar(nspname, relname, -1),
+									  ShareUpdateExclusiveLock, 0,
+									  RangeVarCallbackForStats, &locked_table);
 
 	if (!PG_ARGISNULL(RELPAGES_ARG))
 	{
