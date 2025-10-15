@@ -49,16 +49,24 @@ ExecScanFetch(ScanState *node,
 		{
 			/*
 			 * This is a ForeignScan or CustomScan which has pushed down a
-			 * join to the remote side.  The recheck method is responsible not
-			 * only for rechecking the scan/join quals but also for storing
-			 * the correct tuple in the slot.
+			 * join to the remote side.  If it is a descendant node in the EPQ
+			 * recheck plan tree, run the recheck method function.  Otherwise,
+			 * run the access method function below.
 			 */
+			if (bms_is_member(epqstate->epqParam, node->ps.plan->extParam))
+			{
+				/*
+				 * The recheck method is responsible not only for rechecking
+				 * the scan/join quals but also for storing the correct tuple
+				 * in the slot.
+				 */
 
-			TupleTableSlot *slot = node->ss_ScanTupleSlot;
+				TupleTableSlot *slot = node->ss_ScanTupleSlot;
 
-			if (!(*recheckMtd) (node, slot))
-				ExecClearTuple(slot);	/* would not be returned by scan */
-			return slot;
+				if (!(*recheckMtd) (node, slot))
+					ExecClearTuple(slot);	/* would not be returned by scan */
+				return slot;
+			}
 		}
 		else if (epqstate->relsubs_done[scanrelid - 1])
 		{
