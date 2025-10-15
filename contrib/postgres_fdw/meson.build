@@ -39,4 +39,10 @@ tests += {
     ],
     'regress_args': ['--dlpath', meson.build_root() / 'src/test/regress'],
   },
+  'isolation': {
+    'specs': [
+      'eval_plan_qual',
+    ],
+    'regress_args': ['--load-extension=postgres_fdw'],
+  },
 }
