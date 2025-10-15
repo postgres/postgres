@@ -26,6 +26,7 @@
 #include "fe_utils/recovery_gen.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
+#include "fe_utils/version.h"
 #include "getopt_long.h"
 
 #define	DEFAULT_SUB_PORT	"50432"
@@ -407,7 +408,8 @@ static void
 check_data_directory(const char *datadir)
 {
 	struct stat statbuf;
-	char		versionfile[MAXPGPATH];
+	uint32		major_version;
+	char	   *version_str;
 
 	pg_log_info("checking if directory \"%s\" is a cluster data directory",
 				datadir);
@@ -420,11 +422,18 @@ check_data_directory(const char *datadir)
 			pg_fatal("could not access directory \"%s\": %m", datadir);
 	}
 
-	snprintf(versionfile, MAXPGPATH, "%s/PG_VERSION", datadir);
-	if (stat(versionfile, &statbuf) != 0 && errno == ENOENT)
+	/*
+	 * Retrieve the contents of this cluster's PG_VERSION.  We require
+	 * compatibility with the same major version as the one this tool is
+	 * compiled with.
+	 */
+	major_version = GET_PG_MAJORVERSION_NUM(get_pg_version(datadir, &version_str));
+	if (major_version != PG_MAJORVERSION_NUM)
 	{
-		pg_fatal("directory \"%s\" is not a database cluster directory",
-				 datadir);
+		pg_log_error("data directory is of wrong version");
+		pg_log_error_detail("File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\".",
+							"PG_VERSION", version_str, PG_MAJORVERSION);
+		exit(1);
 	}
 }
 
