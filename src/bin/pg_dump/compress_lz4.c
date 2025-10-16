@@ -100,9 +100,14 @@ LZ4State_compression_init(LZ4State *state)
 	state->buflen = LZ4F_compressBound(DEFAULT_IO_BUFFER_SIZE, &state->prefs);
 
 	/*
-	 * Then double it, to ensure we're not forced to flush every time.
+	 * Add some slop to ensure we're not forced to flush every time.
+	 *
+	 * The present slop factor of 50% is chosen so that the typical output
+	 * block size is about 128K when DEFAULT_IO_BUFFER_SIZE = 128K.  We might
+	 * need a different slop factor to maintain that equivalence if
+	 * DEFAULT_IO_BUFFER_SIZE is changed dramatically.
 	 */
-	state->buflen *= 2;
+	state->buflen += state->buflen / 2;
 
 	/*
 	 * LZ4F_compressBegin requires a buffer that is greater or equal to

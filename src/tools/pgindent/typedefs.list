@@ -1758,6 +1758,7 @@ NextValueExpr
 Node
 NodeTag
 NonEmptyRange
+NoneCompressorState
 Notification
 NotificationList
 NotifyStmt
