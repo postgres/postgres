@@ -18,6 +18,7 @@ $node->append_conf(
 work_mem = 64kB
 log_temp_files = 0
 debug_parallel_query = off
+log_error_verbosity = default
 ));
 $node->start;
 
