@@ -335,16 +335,6 @@ expand_partitioned_rtentry(PlannerInfo *root, RelOptInfo *relinfo,
 	/* A partitioned table should always have a partition descriptor. */
 	Assert(partdesc);
 
-	/*
-	 * Note down whether any partition key cols are being updated. Though it's
-	 * the root partitioned table's updatedCols we are interested in,
-	 * parent_updatedCols provided by the caller contains the root partrel's
-	 * updatedCols translated to match the attribute ordering of parentrel.
-	 */
-	if (!root->partColsUpdated)
-		root->partColsUpdated =
-			has_partition_attrs(parentrel, parent_updatedCols, NULL);
-
 	/* Nothing further to do here if there are no partitions. */
 	if (partdesc->nparts == 0)
 		return;

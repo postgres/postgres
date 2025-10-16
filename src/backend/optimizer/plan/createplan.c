@@ -311,7 +311,6 @@ static ProjectSet *make_project_set(List *tlist, Plan *subplan);
 static ModifyTable *make_modifytable(PlannerInfo *root, Plan *subplan,
 									 CmdType operation, bool canSetTag,
 									 Index nominalRelation, Index rootRelation,
-									 bool partColsUpdated,
 									 List *resultRelations,
 									 List *updateColnosLists,
 									 List *withCheckOptionLists, List *returningLists,
@@ -2676,7 +2675,6 @@ create_modifytable_plan(PlannerInfo *root, ModifyTablePath *best_path)
 							best_path->canSetTag,
 							best_path->nominalRelation,
 							best_path->rootRelation,
-							best_path->partColsUpdated,
 							best_path->resultRelations,
 							best_path->updateColnosLists,
 							best_path->withCheckOptionLists,
@@ -7010,7 +7008,6 @@ static ModifyTable *
 make_modifytable(PlannerInfo *root, Plan *subplan,
 				 CmdType operation, bool canSetTag,
 				 Index nominalRelation, Index rootRelation,
-				 bool partColsUpdated,
 				 List *resultRelations,
 				 List *updateColnosLists,
 				 List *withCheckOptionLists, List *returningLists,
@@ -7047,7 +7044,6 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 	node->canSetTag = canSetTag;
 	node->nominalRelation = nominalRelation;
 	node->rootRelation = rootRelation;
-	node->partColsUpdated = partColsUpdated;
 	node->resultRelations = resultRelations;
 	if (!onconflict)
 	{

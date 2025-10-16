@@ -3612,8 +3612,6 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
  * 'canSetTag' is true if we set the command tag/es_processed
  * 'nominalRelation' is the parent RT index for use of EXPLAIN
  * 'rootRelation' is the partitioned/inherited table root RTI, or 0 if none
- * 'partColsUpdated' is true if any partitioning columns are being updated,
- *		either from the target relation or a descendent partitioned table.
  * 'resultRelations' is an integer list of actual RT indexes of target rel(s)
  * 'updateColnosLists' is a list of UPDATE target column number lists
  *		(one sublist per rel); or NIL if not an UPDATE
@@ -3630,7 +3628,6 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 						Path *subpath,
 						CmdType operation, bool canSetTag,
 						Index nominalRelation, Index rootRelation,
-						bool partColsUpdated,
 						List *resultRelations,
 						List *updateColnosLists,
 						List *withCheckOptionLists, List *returningLists,
@@ -3696,7 +3693,6 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->canSetTag = canSetTag;
 	pathnode->nominalRelation = nominalRelation;
 	pathnode->rootRelation = rootRelation;
-	pathnode->partColsUpdated = partColsUpdated;
 	pathnode->resultRelations = resultRelations;
 	pathnode->updateColnosLists = updateColnosLists;
 	pathnode->withCheckOptionLists = withCheckOptionLists;

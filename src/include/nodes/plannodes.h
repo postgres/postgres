@@ -338,8 +338,6 @@ typedef struct ModifyTable
 	Index		nominalRelation;
 	/* Root RT index, if partitioned/inherited */
 	Index		rootRelation;
-	/* some part key in hierarchy updated? */
-	bool		partColsUpdated;
 	/* integer list of RT indexes */
 	List	   *resultRelations;
 	/* per-target-table update_colnos lists */
