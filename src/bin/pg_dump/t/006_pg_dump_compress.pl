@@ -39,6 +39,24 @@ my $supports_lz4 = check_pg_config("#define USE_LZ4 1");
 my $supports_zstd = check_pg_config("#define USE_ZSTD 1");
 
 my %pgdump_runs = (
+	compression_none_custom => {
+		test_key => 'compression',
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			'--format' => 'custom',
+			'--compress' => 'none',
+			'--file' => "$tempdir/compression_none_custom.dump",
+			'--statistics',
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			'--file' => "$tempdir/compression_none_custom.sql",
+			'--statistics',
+			"$tempdir/compression_none_custom.dump",
+		],
+	},
+
 	compression_gzip_custom => {
 		test_key => 'compression',
 		compile_option => 'gzip',
@@ -78,15 +96,18 @@ my %pgdump_runs = (
 			'--statistics',
 			'postgres',
 		],
-		# Give coverage for manually compressed blobs.toc files during
-		# restore.
+		# Give coverage for manually-compressed TOC files during restore.
 		compress_cmd => {
 			program => $ENV{'GZIP_PROGRAM'},
-			args => [ '-f', "$tempdir/compression_gzip_dir/blobs_*.toc", ],
+			args => [
+				'-f',
+				"$tempdir/compression_gzip_dir/toc.dat",
+				"$tempdir/compression_gzip_dir/blobs_*.toc",
+			],
 		},
-		# Verify that only data files were compressed
+		# Verify that TOC and data files were compressed
 		glob_patterns => [
-			"$tempdir/compression_gzip_dir/toc.dat",
+			"$tempdir/compression_gzip_dir/toc.dat.gz",
 			"$tempdir/compression_gzip_dir/*.dat.gz",
 		],
 		restore_cmd => [
@@ -155,18 +176,18 @@ my %pgdump_runs = (
 			'--statistics',
 			'postgres',
 		],
-		# Give coverage for manually compressed blobs.toc files during
-		# restore.
+		# Give coverage for manually-compressed TOC files during restore.
 		compress_cmd => {
 			program => $ENV{'LZ4'},
 			args => [
 				'-z', '-f', '-m', '--rm',
+				"$tempdir/compression_lz4_dir/toc.dat",
 				"$tempdir/compression_lz4_dir/blobs_*.toc",
 			],
 		},
-		# Verify that data files were compressed
+		# Verify that TOC and data files were compressed
 		glob_patterns => [
-			"$tempdir/compression_lz4_dir/toc.dat",
+			"$tempdir/compression_lz4_dir/toc.dat.lz4",
 			"$tempdir/compression_lz4_dir/*.dat.lz4",
 		],
 		restore_cmd => [
@@ -239,18 +260,18 @@ my %pgdump_runs = (
 			'--statistics',
 			'postgres',
 		],
-		# Give coverage for manually compressed blobs.toc files during
-		# restore.
+		# Give coverage for manually-compressed TOC files during restore.
 		compress_cmd => {
 			program => $ENV{'ZSTD'},
 			args => [
-				'-z', '-f',
-				'--rm', "$tempdir/compression_zstd_dir/blobs_*.toc",
+				'-z', '-f', '--rm',
+				"$tempdir/compression_zstd_dir/toc.dat",
+				"$tempdir/compression_zstd_dir/blobs_*.toc",
 			],
 		},
-		# Verify that data files were compressed
+		# Verify that TOC and data files were compressed
 		glob_patterns => [
-			"$tempdir/compression_zstd_dir/toc.dat",
+			"$tempdir/compression_zstd_dir/toc.dat.zst",
 			"$tempdir/compression_zstd_dir/*.dat.zst",
 		],
 		restore_cmd => [
@@ -333,14 +354,15 @@ my %tests = (
 	},
 
 	# Insert enough data to surpass DEFAULT_IO_BUFFER_SIZE during
-	# (de)compression operations
+	# (de)compression operations.  The weird regex is because Perl
+	# restricts us to repeat counts of less than 32K.
 	'COPY test_compression_method' => {
 		create_order => 111,
 		create_sql => 'INSERT INTO test_compression_method (col1) '
-		  . 'SELECT string_agg(a::text, \'\') FROM generate_series(1,4096) a;',
+		  . 'SELECT string_agg(a::text, \'\') FROM generate_series(1,65536) a;',
 		regexp => qr/^
 			\QCOPY public.test_compression_method (col1) FROM stdin;\E
-			\n(?:\d{15277}\n){1}\\\.\n
+			\n(?:(?:\d\d\d\d\d\d\d\d\d\d){31657}\d\d\d\d\n){1}\\\.\n
 			/xm,
 		like => { %full_runs, },
 	},
@@ -502,8 +524,12 @@ foreach my $run (sort keys %pgdump_runs)
 		foreach my $glob_pattern (@{$glob_patterns})
 		{
 			my @glob_output = glob($glob_pattern);
-			is(scalar(@glob_output) > 0,
-				1, "$run: glob check for $glob_pattern");
+			my $ok = 0;
+			# certainly found some files if glob() returned multiple matches
+			$ok = 1 if (scalar(@glob_output) > 1);
+			# if just one match, we need to check if it's real
+			$ok = 1 if (scalar(@glob_output) == 1 && -f $glob_output[0]);
+			is($ok, 1, "$run: glob check for $glob_pattern");
 		}
 	}
 

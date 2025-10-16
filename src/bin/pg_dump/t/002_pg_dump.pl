@@ -5104,8 +5104,12 @@ foreach my $run (sort keys %pgdump_runs)
 		foreach my $glob_pattern (@{$glob_patterns})
 		{
 			my @glob_output = glob($glob_pattern);
-			is(scalar(@glob_output) > 0,
-				1, "$run: glob check for $glob_pattern");
+			my $ok = 0;
+			# certainly found some files if glob() returned multiple matches
+			$ok = 1 if (scalar(@glob_output) > 1);
+			# if just one match, we need to check if it's real
+			$ok = 1 if (scalar(@glob_output) == 1 && -f $glob_output[0]);
+			is($ok, 1, "$run: glob check for $glob_pattern");
 		}
 	}
 
