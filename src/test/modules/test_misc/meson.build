@@ -17,6 +17,7 @@ tests += {
       't/006_signal_autovacuum.pl',
       't/007_catcache_inval.pl',
       't/008_replslot_single_user.pl',
+      't/009_log_temp_files.pl',
     ],
   },
 }
