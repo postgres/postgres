@@ -1466,3 +1466,10 @@ step s2pp3: EXECUTE epd(1); <waiting ...>
 step c1: COMMIT;
 step s2pp3: <... completed>
 step c2: COMMIT;
+
+starting permutation: s1pp1 s2pp4 c1 c2
+step s1pp1: UPDATE another_parttbl SET b = b + 1 WHERE a = 1;
+step s2pp4: DELETE FROM another_parttbl WHERE a = (SELECT 1); <waiting ...>
+step c1: COMMIT;
+step s2pp4: <... completed>
+step c2: COMMIT;
