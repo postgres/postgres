@@ -28,6 +28,7 @@ OBJS = \
 	reorderbuffer.o \
 	slotsync.o \
 	snapbuild.o \
+	syncutils.o \
 	tablesync.o \
 	worker.o
 

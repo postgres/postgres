@@ -14,6 +14,7 @@ backend_sources += files(
   'reorderbuffer.c',
   'slotsync.c',
   'snapbuild.c',
+  'syncutils.c',
   'tablesync.c',
   'worker.c',
 )

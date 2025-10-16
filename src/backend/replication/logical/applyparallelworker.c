@@ -970,7 +970,7 @@ ParallelApplyWorkerMain(Datum main_arg)
 	 * the subscription relation state.
 	 */
 	CacheRegisterSyscacheCallback(SUBSCRIPTIONRELMAP,
-								  invalidate_syncing_table_states,
+								  InvalidateSyncingRelStates,
 								  (Datum) 0);
 
 	set_apply_error_context_origin(originname);
