@@ -102,6 +102,7 @@ tests += {
       't/003_pg_dump_with_server.pl',
       't/004_pg_dump_parallel.pl',
       't/005_pg_dump_filterfile.pl',
+      't/006_pg_dump_compress.pl',
       't/010_dump_connstr.pl',
     ],
   },
