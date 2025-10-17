@@ -57,41 +57,32 @@ sub print_one_table
 
 		print $ofh "#ifdef $entry->{ifdef}\n" if $entry->{ifdef};
 		print $ofh "\t{\n";
-		printf $ofh "\t\t{%s, %s, %s,\n",
-		  dquote($entry->{name}),
-		  $entry->{context},
-		  $entry->{group};
-		printf $ofh "\t\t\tgettext_noop(%s),\n", dquote($entry->{short_desc});
-		if ($entry->{long_desc})
-		{
-			printf $ofh "\t\t\tgettext_noop(%s)", dquote($entry->{long_desc});
-		}
-		else
-		{
-			print $ofh "\t\t\tNULL";
-		}
-		if ($entry->{flags})
-		{
-			print $ofh ",\n\t\t\t$entry->{flags}\n";
-		}
-		else
-		{
-			print $ofh "\n";
-		}
+		print $ofh "\t\t{\n";
+		printf $ofh "\t\t\t.name = %s,\n", dquote($entry->{name});
+		printf $ofh "\t\t\t.context = %s,\n", $entry->{context};
+		printf $ofh "\t\t\t.group = %s,\n", $entry->{group};
+		printf $ofh "\t\t\t.short_desc = gettext_noop(%s),\n",
+		  dquote($entry->{short_desc});
+		printf $ofh "\t\t\t.long_desc = gettext_noop(%s),\n",
+		  dquote($entry->{long_desc})
+		  if $entry->{long_desc};
+		printf $ofh "\t\t\t.flags = %s,\n", $entry->{flags}
+		  if $entry->{flags};
 		print $ofh "\t\t},\n";
-		print $ofh "\t\t&$entry->{variable},\n";
-		print $ofh "\t\t$entry->{boot_val},";
-		print $ofh " $entry->{min},"
+		printf $ofh "\t\t.variable = &%s,\n", $entry->{variable};
+		printf $ofh "\t\t.boot_val = %s,\n", $entry->{boot_val};
+		printf $ofh "\t\t.min = %s,\n", $entry->{min}
 		  if $entry->{type} eq 'int' || $entry->{type} eq 'real';
-		print $ofh " $entry->{max},"
+		printf $ofh "\t\t.max = %s,\n", $entry->{max}
 		  if $entry->{type} eq 'int' || $entry->{type} eq 'real';
-		print $ofh " $entry->{options},"
+		printf $ofh "\t\t.options = %s,\n", $entry->{options}
 		  if $entry->{type} eq 'enum';
-		print $ofh "\n";
-		printf $ofh "\t\t%s, %s, %s\n",
-		  ($entry->{check_hook} || 'NULL'),
-		  ($entry->{assign_hook} || 'NULL'),
-		  ($entry->{show_hook} || 'NULL');
+		printf $ofh "\t\t.check_hook = %s,\n", $entry->{check_hook}
+		  if $entry->{check_hook};
+		printf $ofh "\t\t.assign_hook = %s,\n", $entry->{assign_hook}
+		  if $entry->{assign_hook};
+		printf $ofh "\t\t.show_hook = %s,\n", $entry->{show_hook}
+		  if $entry->{show_hook};
 		print $ofh "\t},\n";
 		print $ofh "#endif\n" if $entry->{ifdef};
 		print $ofh "\n";
