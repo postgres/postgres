@@ -23,7 +23,9 @@ $node->start;
 $node->safe_psql("postgres",
 		"CREATE EXTENSION pg_prewarm;\n"
 	  . "CREATE TABLE test(c1 int);\n"
-	  . "INSERT INTO test SELECT generate_series(1, 100);");
+	  . "INSERT INTO test SELECT generate_series(1, 100);\n"
+	  . "CREATE INDEX test_idx ON test(c1);\n"
+	  . "CREATE ROLE test_user LOGIN;");
 
 # test read mode
 my $result =
@@ -41,6 +43,31 @@ my ($cmdret, $stdout, $stderr) =
 ok( (        $stdout =~ qr/^[1-9][0-9]*$/
 		  or $stderr =~ qr/prefetch is not supported by this build/),
 	'prefetch mode succeeded');
+
+# test_user should be unable to prewarm table/index without privileges
+($cmdret, $stdout, $stderr) =
+  $node->psql(
+    "postgres", "SELECT pg_prewarm('test');",
+    extra_params => [ '--username' => 'test_user' ]);
+ok($stderr =~ /permission denied for table test/, 'pg_prewarm failed as expected');
+($cmdret, $stdout, $stderr) =
+  $node->psql(
+    "postgres", "SELECT pg_prewarm('test_idx');",
+    extra_params => [ '--username' => 'test_user' ]);
+ok($stderr =~ /permission denied for index test_idx/, 'pg_prewarm failed as expected');
+
+# test_user should be able to prewarm table/index with privileges
+$node->safe_psql("postgres", "GRANT SELECT ON test TO test_user;");
+$result =
+  $node->safe_psql(
+    "postgres", "SELECT pg_prewarm('test');",
+    extra_params => [ '--username' => 'test_user' ]);
+like($result, qr/^[1-9][0-9]*$/, 'pg_prewarm succeeded as expected');
+$result =
+  $node->safe_psql(
+    "postgres", "SELECT pg_prewarm('test_idx');",
+    extra_params => [ '--username' => 'test_user' ]);
+like($result, qr/^[1-9][0-9]*$/, 'pg_prewarm succeeded as expected');
 
 # test autoprewarm_dump_now()
 $result = $node->safe_psql("postgres", "SELECT autoprewarm_dump_now();");
