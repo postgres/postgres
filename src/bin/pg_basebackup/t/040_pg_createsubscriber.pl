@@ -341,8 +341,8 @@ $node_p->safe_psql(
 
 $node_p->wait_for_replay_catchup($node_s);
 
-ok($node_s->safe_psql($db1, "SELECT COUNT(*) = 2 FROM pg_publication"),
-	'two pre-existing publications on subscriber');
+is($node_s->safe_psql($db1, "SELECT COUNT(*) FROM pg_publication"),
+	'2', 'two pre-existing publications on subscriber');
 
 $node_s->stop;
 
