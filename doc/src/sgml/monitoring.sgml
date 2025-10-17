@@ -1287,6 +1287,10 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       <para>
        This standby's <literal>xmin</literal> horizon reported
        by <xref linkend="guc-hot-standby-feedback"/>.
+       This field will be null if a replication slot is used (in this case,
+       the standby's <literal>xmin</literal> is shown in
+       <link linkend="view-pg-replication-slots">pg_replication_slots</link>)
+       or if <varname>hot_standby_feedback</varname> is disabled.
       </para></entry>
      </row>
 
