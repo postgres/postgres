@@ -200,7 +200,13 @@ prepare_common(int lineno, struct connection *con, const char *name, const char 
 	stmt->inlist = stmt->outlist = NULL;
 
 	/* if we have C variables in our statement replace them with '?' */
-	replace_variables(&(stmt->command), lineno);
+	if (!replace_variables(&(stmt->command), lineno))
+	{
+		ecpg_free(stmt->command);
+		ecpg_free(stmt);
+		ecpg_free(this);
+		return false;
+	}
 
 	/* add prepared statement to our list */
 	this->name = ecpg_strdup(name, lineno, NULL);
