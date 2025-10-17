@@ -7,9 +7,9 @@
  * This code comes from Thomas Niemann's "Sorting and Searching Algorithms:
  * a Cookbook".
  *
- * See http://www.cs.auckland.ac.nz/software/AlgAnim/niemann/s_man.htm for
- * license terms: "Source code, when part of a software project, may be used
- * freely without reference to the author."
+ * See https://web.archive.org/web/20131202103513/http://www.cs.auckland.ac.nz/software/AlgAnim/niemann/s_man.htm
+ * for license terms: "Source code, when part of a software project, may be
+ * used freely without reference to the author."
  *
  * Red-black trees are a type of balanced binary tree wherein (1) any child of
  * a red node is always black, and (2) every path from root to leaf traverses
