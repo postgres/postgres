@@ -16,9 +16,11 @@
 #include <unistd.h>
 
 #include "access/relation.h"
+#include "catalog/index.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -67,6 +69,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 	char	   *ttype;
 	PrewarmType ptype;
 	AclResult	aclresult;
+	char		relkind;
+	Oid			privOid;
 
 	/* Basic sanity checking. */
 	if (PG_ARGISNULL(0))
@@ -102,9 +106,43 @@ pg_prewarm(PG_FUNCTION_ARGS)
 	forkString = text_to_cstring(forkName);
 	forkNumber = forkname_to_number(forkString);
 
-	/* Open relation and check privileges. */
+	/*
+	 * Open relation and check privileges.  If the relation is an index, we
+	 * must check the privileges on its parent table instead.
+	 */
+	relkind = get_rel_relkind(relOid);
+	if (relkind == RELKIND_INDEX ||
+		relkind == RELKIND_PARTITIONED_INDEX)
+	{
+		privOid = IndexGetRelation(relOid, true);
+
+		/* Lock table before index to avoid deadlock. */
+		if (OidIsValid(privOid))
+			LockRelationOid(privOid, AccessShareLock);
+	}
+	else
+		privOid = relOid;
+
 	rel = relation_open(relOid, AccessShareLock);
-	aclresult = pg_class_aclcheck(relOid, GetUserId(), ACL_SELECT);
+
+	/*
+	 * It's possible that the relation with OID "privOid" was dropped and the
+	 * OID was reused before we locked it.  If that happens, we could be left
+	 * with the wrong parent table OID, in which case we must ERROR.  It's
+	 * possible that such a race would change the outcome of
+	 * get_rel_relkind(), too, but the worst case scenario there is that we'll
+	 * check privileges on the index instead of its parent table, which isn't
+	 * too terrible.
+	 */
+	if (!OidIsValid(privOid) ||
+		(privOid != relOid &&
+		 privOid != IndexGetRelation(relOid, true)))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("could not find parent table of index \"%s\"",
+						RelationGetRelationName(rel))));
+
+	aclresult = pg_class_aclcheck(privOid, GetUserId(), ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind), get_rel_name(relOid));
 
@@ -197,8 +235,11 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* Close relation, release lock. */
+	/* Close relation, release locks. */
 	relation_close(rel, AccessShareLock);
+
+	if (privOid != relOid)
+		UnlockRelationOid(privOid, AccessShareLock);
 
 	PG_RETURN_INT64(blocks_done);
 }
