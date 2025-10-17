@@ -702,30 +702,28 @@ TODO:
 
 # pg_stat_ssl
 
-my $serialno = `$ENV{OPENSSL} x509 -serial -noout -in ssl/client.crt`;
-if ($? == 0)
+# If the openssl program isn't available, or fails to run, fall back to a
+# generic integer match rather than skipping the test.
+my $serialno = '\d+';
+
+if ($ENV{OPENSSL} ne '')
 {
-	# OpenSSL prints serial numbers in hexadecimal and converting the serial
-	# from hex requires a 64-bit capable Perl as the serialnumber is based on
-	# the current timestamp. On 32-bit fall back to checking for it being an
-	# integer like how we do when grabbing the serial fails.
-	if ($Config{ivsize} == 8)
+	$serialno = `$ENV{OPENSSL} x509 -serial -noout -in ssl/client.crt`;
+	if ($? == 0)
 	{
-		$serialno =~ s/^serial=//;
-		$serialno =~ s/\s+//g;
-		$serialno = hex($serialno);
+		# OpenSSL prints serial numbers in hexadecimal and converting the serial
+		# from hex requires a 64-bit capable Perl as the serialnumber is based on
+		# the current timestamp. On 32-bit fall back to checking for it being an
+		# integer like how we do when grabbing the serial fails.
+		if ($Config{ivsize} == 8)
+		{
+			no warnings qw(portable);
+
+			$serialno =~ s/^serial=//;
+			$serialno =~ s/\s+//g;
+			$serialno = hex($serialno);
+		}
 	}
-	else
-	{
-		$serialno = '\d+';
-	}
-}
-else
-{
-	# OpenSSL isn't functioning on the user's PATH. This probably isn't worth
-	# skipping the test over, so just fall back to a generic integer match.
-	warn "couldn't run \"$ENV{OPENSSL} x509\" to get client cert serialno";
-	$serialno = '\d+';
 }
 
 command_like(
