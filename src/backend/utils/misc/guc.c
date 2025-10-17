@@ -890,48 +890,22 @@ build_guc_variables(void)
 											 ALLOCSET_DEFAULT_SIZES);
 
 	/*
-	 * Count all the built-in variables, and set their vartypes correctly.
+	 * Count all the built-in variables.
 	 */
 	for (int i = 0; ConfigureNamesBool[i].gen.name; i++)
-	{
-		struct config_bool *conf = &ConfigureNamesBool[i];
-
-		/* Rather than requiring vartype to be filled in by hand, do this: */
-		conf->gen.vartype = PGC_BOOL;
 		num_vars++;
-	}
 
 	for (int i = 0; ConfigureNamesInt[i].gen.name; i++)
-	{
-		struct config_int *conf = &ConfigureNamesInt[i];
-
-		conf->gen.vartype = PGC_INT;
 		num_vars++;
-	}
 
 	for (int i = 0; ConfigureNamesReal[i].gen.name; i++)
-	{
-		struct config_real *conf = &ConfigureNamesReal[i];
-
-		conf->gen.vartype = PGC_REAL;
 		num_vars++;
-	}
 
 	for (int i = 0; ConfigureNamesString[i].gen.name; i++)
-	{
-		struct config_string *conf = &ConfigureNamesString[i];
-
-		conf->gen.vartype = PGC_STRING;
 		num_vars++;
-	}
 
 	for (int i = 0; ConfigureNamesEnum[i].gen.name; i++)
-	{
-		struct config_enum *conf = &ConfigureNamesEnum[i];
-
-		conf->gen.vartype = PGC_ENUM;
 		num_vars++;
-	}
 
 	/*
 	 * Create hash table with 20% slack

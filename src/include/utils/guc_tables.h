@@ -177,8 +177,8 @@ struct config_generic
 	const char *short_desc;		/* short desc. of this variable's purpose */
 	const char *long_desc;		/* long desc. of this variable's purpose */
 	int			flags;			/* flag bits, see guc.h */
+	enum config_type vartype;	/* type of variable */
 	/* variable fields, initialized at runtime: */
-	enum config_type vartype;	/* type of variable (set only at startup) */
 	int			status;			/* status bits, see below */
 	GucSource	source;			/* source of the current actual value */
 	GucSource	reset_source;	/* source of the reset_value */

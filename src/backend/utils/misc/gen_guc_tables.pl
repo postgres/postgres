@@ -68,6 +68,7 @@ sub print_one_table
 		  if $entry->{long_desc};
 		printf $ofh "\t\t\t.flags = %s,\n", $entry->{flags}
 		  if $entry->{flags};
+		printf $ofh "\t\t\t.vartype = %s,\n", ('PGC_' . uc($type));
 		print $ofh "\t\t},\n";
 		printf $ofh "\t\t.variable = &%s,\n", $entry->{variable};
 		printf $ofh "\t\t.boot_val = %s,\n", $entry->{boot_val};
