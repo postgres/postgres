@@ -851,85 +851,91 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	/*
 	 * Optimize the total amount of memory consumed by the hash node.
 	 *
-	 * The nbatch calculation above focuses on the size of the in-memory hash
-	 * table, assuming no per-batch overhead. Now adjust the number of batches
-	 * and the size of the hash table to minimize total memory consumed by the
-	 * hash node.
-	 *
-	 * Each batch file has a BLCKSZ buffer, and we may need two files per
-	 * batch (inner and outer side). So with enough batches this can be
-	 * significantly more memory than the hashtable itself.
+	 * The nbatch calculation above focuses on the in-memory hash table,
+	 * assuming no per-batch overhead. But each batch may have two files, each
+	 * with a BLCKSZ buffer. For large nbatch values these buffers may use
+	 * significantly more memory than the hash table.
 	 *
 	 * The total memory usage may be expressed by this formula:
 	 *
-	 * (inner_rel_bytes / nbatch) + (2 * nbatch * BLCKSZ) <= hash_table_bytes
+	 * (inner_rel_bytes / nbatch) + (2 * nbatch * BLCKSZ)
 	 *
 	 * where (inner_rel_bytes / nbatch) is the size of the in-memory hash
 	 * table and (2 * nbatch * BLCKSZ) is the amount of memory used by file
-	 * buffers. But for sufficiently large values of inner_rel_bytes value
-	 * there may not be a nbatch value that would make both parts fit into
-	 * hash_table_bytes.
+	 * buffers.
 	 *
-	 * In this case we can't enforce the memory limit - we're going to exceed
-	 * it. We can however minimize the impact and use as little memory as
-	 * possible. (We haven't really enforced it before either, as we simply
-	 * ignored the batch files.)
+	 * The nbatch calculation however ignores the second part. And for very
+	 * large inner_rel_bytes, there may be no nbatch that keeps total memory
+	 * usage under the budget (work_mem * hash_mem_multiplier). To deal with
+	 * that, we will adjust nbatch to minimize total memory consumption across
+	 * both the hashtable and file buffers.
 	 *
-	 * The formula for total memory usage says that given an inner relation of
-	 * size inner_rel_bytes, we may divide it into an arbitrary number of
-	 * batches. This determines both the size of the in-memory hash table and
-	 * the amount of memory needed for batch files. These two terms work in
-	 * opposite ways - when one decreases, the other increases.
+	 * As we increase the size of the hashtable, the number of batches
+	 * decreases, and the total memory usage follows a U-shaped curve. We find
+	 * the minimum nbatch by "walking back" -- checking if halving nbatch
+	 * would lower the total memory usage. We stop when it no longer helps.
 	 *
-	 * For low nbatch values, the hash table takes most of the memory, but at
-	 * some point the batch files start to dominate. If you combine these two
-	 * terms, the memory consumption (for a fixed size of the inner relation)
-	 * has a u-shape, with a minimum at some nbatch value.
+	 * We only reduce the number of batches. Adding batches reduces memory
+	 * usage only when most of the memory is used by the hash table, with
+	 * total memory usage within the limit or not far from it. We don't want
+	 * to start batching when not needed, even if that would reduce memory
+	 * usage.
 	 *
-	 * Our goal is to find this nbatch value, minimizing the memory usage. We
-	 * calculate the memory usage with half the batches (i.e. nbatch/2), and
-	 * if it's lower than the current memory usage we know it's better to use
-	 * fewer batches. We repeat this until reducing the number of batches does
-	 * not reduce the memory usage - we found the optimum. We know the optimum
-	 * exists, thanks to the u-shape.
+	 * While growing the hashtable, we also adjust the number of buckets to
+	 * maintain a load factor of NTUP_PER_BUCKET while squeezing tuples back
+	 * from batches into the hashtable.
 	 *
-	 * We only want to do this when exceeding the memory limit, not every
-	 * time. The goal is not to minimize memory usage in every case, but to
-	 * minimize the memory usage when we can't stay within the memory limit.
+	 * Note that we can only change nbuckets during initial hashtable sizing.
+	 * Once we start building the hash, nbuckets is fixed (we may still grow
+	 * the hash table).
 	 *
-	 * For this reason we only consider reducing the number of batches. We
-	 * could try the opposite direction too, but that would save memory only
-	 * when most of the memory is used by the hash table. And the hash table
-	 * was used for the initial sizing, so we shouldn't be exceeding the
-	 * memory limit too much. We might save memory by using more batches, but
-	 * it would result in spilling more batch files, which does not seem like
-	 * a great trade off.
-	 *
-	 * While growing the hashtable, we also adjust the number of buckets, to
-	 * not have more than one tuple per bucket (load factor 1). We can only do
-	 * this during the initial sizing - once we start building the hash,
-	 * nbucket is fixed.
+	 * We double several parameters (space_allowed, nbuckets, num_skew_mcvs),
+	 * which introduces a risk of overflow. We avoid this by exiting the loop.
+	 * We could do something smarter (e.g. capping nbuckets and continue), but
+	 * the complexity is not worth it. Such cases are extremely rare, and this
+	 * is a best-effort attempt to reduce memory usage.
 	 */
-	while (nbatch > 0)
+	while (nbatch > 1)
 	{
-		/* how much memory are we using with current nbatch value */
-		size_t		current_space = hash_table_bytes + (2 * nbatch * BLCKSZ);
+		/* Check that buckets wont't overflow MaxAllocSize */
+		if (nbuckets > (MaxAllocSize / sizeof(HashJoinTuple) / 2))
+			break;
 
-		/* how much memory would we use with half the batches */
-		size_t		new_space = hash_table_bytes * 2 + (nbatch * BLCKSZ);
+		/* num_skew_mcvs should be less than nbuckets */
+		Assert((*num_skew_mcvs) < (INT_MAX / 2));
 
-		/* If the memory usage would not decrease, we found the optimum. */
-		if (current_space < new_space)
+		/*
+		 * Check that space_allowed won't overlow SIZE_MAX.
+		 *
+		 * We don't use hash_table_bytes here, because it does not include the
+		 * skew buckets. And we want to limit the overall memory limit.
+		 */
+		if ((*space_allowed) > (SIZE_MAX / 2))
 			break;
 
 		/*
-		 * It's better to use half the batches, so do that and adjust the
-		 * nbucket in the opposite direction, and double the allowance.
+		 * Will halving the number of batches and doubling the size of the
+		 * hashtable reduce overall memory usage?
+		 *
+		 * This is the same as (S = space_allowed):
+		 *
+		 * (S + 2 * nbatch * BLCKSZ) < (S * 2 + nbatch * BLCKSZ)
+		 *
+		 * but avoiding intermediate overflow.
 		 */
-		nbatch /= 2;
+		if (nbatch < (*space_allowed) / BLCKSZ)
+			break;
+
+		/*
+		 * MaxAllocSize is sufficiently small that we are not worried about
+		 * overflowing nbuckets.
+		 */
 		nbuckets *= 2;
 
+		*num_skew_mcvs = (*num_skew_mcvs) * 2;
 		*space_allowed = (*space_allowed) * 2;
+
+		nbatch /= 2;
 	}
 
 	Assert(nbuckets > 0);
@@ -995,14 +1001,14 @@ ExecHashIncreaseBatchSize(HashJoinTable hashtable)
 	 * How much additional memory would doubling nbatch use? Each batch may
 	 * require two buffered files (inner/outer), with a BLCKSZ buffer.
 	 */
-	size_t		batchSpace = (hashtable->nbatch * 2 * BLCKSZ);
+	size_t		batchSpace = (hashtable->nbatch * 2 * (size_t) BLCKSZ);
 
 	/*
 	 * Compare the new space needed for doubling nbatch and for enlarging the
 	 * in-memory hash table. If doubling the hash table needs less memory,
 	 * just do that. Otherwise, continue with doubling the nbatch.
 	 *
-	 * We're either doubling spaceAllowed of batchSpace, so which of those
+	 * We're either doubling spaceAllowed or batchSpace, so which of those
 	 * increases the memory usage the least is the same as comparing the
 	 * values directly.
 	 */
