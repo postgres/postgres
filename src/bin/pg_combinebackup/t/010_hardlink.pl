@@ -144,12 +144,12 @@ sub check_data_file
 	{
 		# Get the file's stat information of each segment
 		my $nlink_count = get_hard_link_count($segment);
-		ok($nlink_count == 2, "File '$segment' has 2 hard links");
+		is($nlink_count, 2, "File '$segment' has 2 hard links");
 	}
 
 	# Get the file's stat information of the last segment
 	my $nlink_count = get_hard_link_count($last_segment);
-	ok($nlink_count == $last_segment_nlinks,
+	is($nlink_count, $last_segment_nlinks,
 		"File '$last_segment' has $last_segment_nlinks hard link(s)");
 }
 

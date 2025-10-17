@@ -159,7 +159,9 @@ $node->safe_psql(
 	'postgres', q(
 	SELECT bt_index_check('bttest_unique_idx1', true, true);
 ));
-ok( $stderr =~ /index uniqueness is violated for index "bttest_unique_idx1"/,
+like(
+	$stderr,
+	qr/index uniqueness is violated for index "bttest_unique_idx1"/,
 	'detected uniqueness violation for index "bttest_unique_idx1"');
 
 #
@@ -177,7 +179,9 @@ ok( $stderr =~ /index uniqueness is violated for index "bttest_unique_idx1"/,
 	'postgres', q(
 	SELECT bt_index_check('bttest_unique_idx2', true, true);
 ));
-ok( $stderr =~ /item order invariant violated for index "bttest_unique_idx2"/,
+like(
+	$stderr,
+	qr/item order invariant violated for index "bttest_unique_idx2"/,
 	'detected item order invariant violation for index "bttest_unique_idx2"');
 
 $node->safe_psql(
@@ -191,7 +195,9 @@ $node->safe_psql(
 	'postgres', q(
 	SELECT bt_index_check('bttest_unique_idx2', true, true);
 ));
-ok( $stderr =~ /index uniqueness is violated for index "bttest_unique_idx2"/,
+like(
+	$stderr,
+	qr/index uniqueness is violated for index "bttest_unique_idx2"/,
 	'detected uniqueness violation for index "bttest_unique_idx2"');
 
 #
@@ -208,7 +214,9 @@ ok( $stderr =~ /index uniqueness is violated for index "bttest_unique_idx2"/,
 	'postgres', q(
 	SELECT bt_index_check('bttest_unique_idx3', true, true);
 ));
-ok( $stderr =~ /item order invariant violated for index "bttest_unique_idx3"/,
+like(
+	$stderr,
+	qr/item order invariant violated for index "bttest_unique_idx3"/,
 	'detected item order invariant violation for index "bttest_unique_idx3"');
 
 # For unique index deduplication is possible only for same values, but
@@ -237,7 +245,9 @@ $node->safe_psql(
 	'postgres', q(
 	SELECT bt_index_check('bttest_unique_idx3', true, true);
 ));
-ok( $stderr =~ /index uniqueness is violated for index "bttest_unique_idx3"/,
+like(
+	$stderr,
+	qr/index uniqueness is violated for index "bttest_unique_idx3"/,
 	'detected uniqueness violation for index "bttest_unique_idx3"');
 
 $node->stop;

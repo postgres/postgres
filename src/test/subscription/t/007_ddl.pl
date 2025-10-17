@@ -45,8 +45,9 @@ pass "subscription disable and drop in same transaction did not hang";
 my ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
 	"CREATE SUBSCRIPTION mysub1 CONNECTION '$publisher_connstr' PUBLICATION mypub, non_existent_pub"
 );
-ok( $stderr =~
-	  m/WARNING:  publication "non_existent_pub" does not exist on the publisher/,
+like(
+	$stderr,
+	qr/WARNING:  publication "non_existent_pub" does not exist on the publisher/,
 	"Create subscription throws warning for non-existent publication");
 
 # Wait for initial table sync to finish.
@@ -56,16 +57,18 @@ $node_subscriber->wait_for_subscription_sync($node_publisher, 'mysub1');
 ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
 	"ALTER SUBSCRIPTION mysub1 ADD PUBLICATION non_existent_pub1, non_existent_pub2"
 );
-ok( $stderr =~
-	  m/WARNING:  publications "non_existent_pub1", "non_existent_pub2" do not exist on the publisher/,
+like(
+	$stderr,
+	qr/WARNING:  publications "non_existent_pub1", "non_existent_pub2" do not exist on the publisher/,
 	"Alter subscription add publication throws warning for non-existent publications"
 );
 
 # Specifying non-existent publication along with set publication.
 ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
 	"ALTER SUBSCRIPTION mysub1 SET PUBLICATION non_existent_pub");
-ok( $stderr =~
-	  m/WARNING:  publication "non_existent_pub" does not exist on the publisher/,
+like(
+	$stderr,
+	qr/WARNING:  publication "non_existent_pub" does not exist on the publisher/,
 	"Alter subscription set publication throws warning for non-existent publication"
 );
 

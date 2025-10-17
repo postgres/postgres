@@ -40,7 +40,7 @@ my $npages = $node->safe_psql(
 	"SELECT relpages FROM pg_class
 		WHERE relname = 'corruption_test';"
 );
-ok($npages >= 10, 'table has at least 10 pages');
+cmp_ok($npages, '>=', 10, 'table has at least 10 pages');
 
 my $file = $node->safe_psql("postgres",
 	"SELECT pg_relation_filepath('corruption_test');");

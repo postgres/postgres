@@ -535,7 +535,7 @@ my $sysid_p = $node_p->safe_psql('postgres',
 	'SELECT system_identifier FROM pg_control_system()');
 my $sysid_s = $node_s->safe_psql('postgres',
 	'SELECT system_identifier FROM pg_control_system()');
-ok($sysid_p != $sysid_s, 'system identifier was changed');
+isnt($sysid_p, $sysid_s, 'system identifier was changed');
 
 # clean up
 $node_p->teardown_node;

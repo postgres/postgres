@@ -394,8 +394,9 @@ foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 
 # Confirm that the server startup fails with an expected error
 my $logfile = slurp_file($node_standby->logfile());
-ok( $logfile =~
-	  qr/FATAL: .* logical replication slot ".*" exists on the standby, but "hot_standby" = "off"/,
+like(
+	$logfile,
+	qr/FATAL: .* logical replication slot ".*" exists on the standby, but "hot_standby" = "off"/,
 	"the standby ends with an error during startup because hot_standby was disabled"
 );
 $node_standby->adjust_conf('postgresql.conf', 'hot_standby', 'on');
@@ -487,8 +488,9 @@ $node_primary->wait_for_replay_catchup($node_standby);
 ($result, $stdout, $stderr) = $node_standby->psql('otherdb',
 	"SELECT lsn FROM pg_logical_slot_peek_changes('behaves_ok_activeslot', NULL, NULL) ORDER BY lsn DESC LIMIT 1;"
 );
-ok( $stderr =~
-	  m/replication slot "behaves_ok_activeslot" was not created in this database/,
+like(
+	$stderr,
+	qr/replication slot "behaves_ok_activeslot" was not created in this database/,
 	"replaying logical slot from another database fails");
 
 ##################################################
@@ -620,8 +622,9 @@ check_pg_recvlogical_stderr($handle,
 	'postgres',
 	qq[select pg_copy_logical_replication_slot('vacuum_full_inactiveslot', 'vacuum_full_inactiveslot_copy');],
 	replication => 'database');
-ok( $stderr =~
-	  /ERROR:  cannot copy invalidated replication slot "vacuum_full_inactiveslot"/,
+like(
+	$stderr,
+	qr/ERROR:  cannot copy invalidated replication slot "vacuum_full_inactiveslot"/,
 	"invalidated slot cannot be copied");
 
 # Set hot_standby_feedback to on

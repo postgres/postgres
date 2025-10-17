@@ -100,8 +100,9 @@ $subscriber1->safe_psql('postgres',
 # Disable failover for enabled subscription
 my ($result, $stdout, $stderr) = $subscriber1->psql('postgres',
 	"ALTER SUBSCRIPTION regress_mysub1 SET (failover = false)");
-ok( $stderr =~
-	  /ERROR:  cannot set option "failover" for enabled subscription/,
+like(
+	$stderr,
+	qr/ERROR:  cannot set option "failover" for enabled subscription/,
 	"altering failover is not allowed for enabled subscription");
 
 ##################################################
@@ -110,8 +111,9 @@ ok( $stderr =~
 
 ($result, $stdout, $stderr) =
   $publisher->psql('postgres', "SELECT pg_sync_replication_slots();");
-ok( $stderr =~
-	  /ERROR:  replication slots can only be synchronized to a standby server/,
+like(
+	$stderr,
+	qr/ERROR:  replication slots can only be synchronized to a standby server/,
 	"cannot sync slots on a non-standby server");
 
 ##################################################
@@ -313,8 +315,9 @@ $standby1->reload;
 # Attempting to perform logical decoding on a synced slot should result in an error
 ($result, $stdout, $stderr) = $standby1->psql('postgres',
 	"select * from pg_logical_slot_get_changes('lsub1_slot', NULL, NULL);");
-ok( $stderr =~
-	  /ERROR:  cannot use replication slot "lsub1_slot" for logical decoding/,
+like(
+	$stderr,
+	qr/ERROR:  cannot use replication slot "lsub1_slot" for logical decoding/,
 	"logical decoding is not allowed on synced slot");
 
 # Attempting to alter a synced slot should result in an error
@@ -322,13 +325,17 @@ ok( $stderr =~
 	'postgres',
 	qq[ALTER_REPLICATION_SLOT lsub1_slot (failover);],
 	replication => 'database');
-ok($stderr =~ /ERROR:  cannot alter replication slot "lsub1_slot"/,
+like(
+	$stderr,
+	qr/ERROR:  cannot alter replication slot "lsub1_slot"/,
 	"synced slot on standby cannot be altered");
 
 # Attempting to drop a synced slot should result in an error
 ($result, $stdout, $stderr) = $standby1->psql('postgres',
 	"SELECT pg_drop_replication_slot('lsub1_slot');");
-ok($stderr =~ /ERROR:  cannot drop replication slot "lsub1_slot"/,
+like(
+	$stderr,
+	qr/ERROR:  cannot drop replication slot "lsub1_slot"/,
 	"synced slot on standby cannot be dropped");
 
 ##################################################
@@ -341,8 +348,9 @@ $standby1->reload;
 
 ($result, $stdout, $stderr) =
   $standby1->psql('postgres', "SELECT pg_sync_replication_slots();");
-ok( $stderr =~
-	  /ERROR:  replication slot synchronization requires "dbname" to be specified in "primary_conninfo"/,
+like(
+	$stderr,
+	qr/ERROR:  replication slot synchronization requires "dbname" to be specified in "primary_conninfo"/,
 	"cannot sync slots if dbname is not specified in primary_conninfo");
 
 # Add the dbname back to the primary_conninfo for further tests
@@ -379,8 +387,9 @@ $cascading_standby->start;
 
 ($result, $stdout, $stderr) =
   $cascading_standby->psql('postgres', "SELECT pg_sync_replication_slots();");
-ok( $stderr =~
-	  /ERROR:  cannot synchronize replication slots from a standby server/,
+like(
+	$stderr,
+	qr/ERROR:  cannot synchronize replication slots from a standby server/,
 	"cannot sync slots to a cascading standby server");
 
 $cascading_standby->stop;

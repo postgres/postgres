@@ -224,8 +224,9 @@ ok( $node_B->poll_query_until(
 # Alter retain_dead_tuples for enabled subscription
 my ($cmdret, $stdout, $stderr) = $node_A->psql('postgres',
 	"ALTER SUBSCRIPTION $subname_AB SET (retain_dead_tuples = true)");
-ok( $stderr =~
-	  /ERROR:  cannot set option \"retain_dead_tuples\" for enabled subscription/,
+like(
+	$stderr,
+	qr/ERROR:  cannot set option \"retain_dead_tuples\" for enabled subscription/,
 	"altering retain_dead_tuples is not allowed for enabled subscription");
 
 # Disable the subscription
@@ -239,8 +240,9 @@ $node_A->poll_query_until('postgres',
 # Enable retain_dead_tuples for disabled subscription
 ($cmdret, $stdout, $stderr) = $node_A->psql('postgres',
 	"ALTER SUBSCRIPTION $subname_AB SET (retain_dead_tuples = true);");
-ok( $stderr =~
-	  /NOTICE:  deleted rows to detect conflicts would not be removed until the subscription is enabled/,
+like(
+	$stderr,
+	qr/NOTICE:  deleted rows to detect conflicts would not be removed until the subscription is enabled/,
 	"altering retain_dead_tuples is allowed for disabled subscription");
 
 # Re-enable the subscription
@@ -262,9 +264,11 @@ ok( $node_A->poll_query_until(
 
 ($cmdret, $stdout, $stderr) = $node_A->psql('postgres',
 	"ALTER SUBSCRIPTION $subname_AB SET (origin = any);");
-ok( $stderr =~
-	  /WARNING:  subscription "tap_sub_a_b" enabled retain_dead_tuples but might not reliably detect conflicts for changes from different origins/,
-	"warn of the possibility of receiving changes from origins other than the publisher");
+like(
+	$stderr,
+	qr/WARNING:  subscription "tap_sub_a_b" enabled retain_dead_tuples but might not reliably detect conflicts for changes from different origins/,
+	"warn of the possibility of receiving changes from origins other than the publisher"
+);
 
 # Reset the origin to none
 $node_A->psql('postgres',
@@ -302,8 +306,9 @@ $node_A->safe_psql('postgres', "DELETE FROM tab WHERE a = 1;");
 	'postgres', qq(VACUUM (verbose) public.tab;)
 );
 
-ok( $stderr =~
-	  qr/1 are dead but not yet removable/,
+like(
+	$stderr,
+	qr/1 are dead but not yet removable/,
 	'the deleted column is non-removable');
 
 # Ensure the DELETE is replayed on Node B
@@ -311,8 +316,9 @@ $node_A->wait_for_catchup($subname_BA);
 
 # Check the conflict detected on Node B
 my $logfile = slurp_file($node_B->logfile(), $log_location);
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab": conflict=delete_origin_differs.*
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab": conflict=delete_origin_differs.*
 .*DETAIL:.* Deleting the row that was modified locally in transaction [0-9]+ at .*
 .*Existing local row \(1, 3\); replica identity \(a\)=\(1\)/,
 	'delete target row was modified in tab');
@@ -324,8 +330,9 @@ $node_A->safe_psql(
 $node_B->wait_for_catchup($subname_AB);
 
 $logfile = slurp_file($node_A->logfile(), $log_location);
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab": conflict=update_deleted.*
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab": conflict=update_deleted.*
 .*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
 .*Remote row \(1, 3\); replica identity \(a\)=\(1\)/,
 	'update target row was deleted in tab');
@@ -371,8 +378,9 @@ $node_A->safe_psql(
 $node_B->wait_for_catchup($subname_AB);
 
 $logfile = slurp_file($node_A->logfile(), $log_location);
-ok( $logfile =~
-	  qr/conflict detected on relation "public.tab": conflict=update_deleted.*
+like(
+	$logfile,
+	qr/conflict detected on relation "public.tab": conflict=update_deleted.*
 .*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
 .*Remote row \(2, 4\); replica identity full \(2, 2\)/,
 	'update target row was deleted in tab');
@@ -502,7 +510,9 @@ if ($injection_points_supported != 0)
 	($cmdret, $stdout, $stderr) =
 	  $node_A->psql('postgres', qq(VACUUM (verbose) public.tab;));
 
-	ok($stderr =~ qr/1 are dead but not yet removable/,
+	like(
+		$stderr,
+		qr/1 are dead but not yet removable/,
 		'the deleted column is non-removable');
 
 	$log_location = -s $node_A->logfile;
@@ -527,8 +537,9 @@ if ($injection_points_supported != 0)
 	$node_B->wait_for_catchup($subname_AB);
 
 	$logfile = slurp_file($node_A->logfile(), $log_location);
-	ok( $logfile =~
-		  qr/conflict detected on relation "public.tab": conflict=update_deleted.*
+	like(
+		$logfile,
+		qr/conflict detected on relation "public.tab": conflict=update_deleted.*
 .*DETAIL:.* The row to be updated was deleted locally in transaction [0-9]+ at .*
 .*Remote row \(1, 2\); replica identity full \(1, 1\)/,
 		'update target row was deleted in tab');

@@ -753,15 +753,23 @@ my ($ret, $out, $err) = $node->psql('postgres',
 	'SELECT seed, rand, val, COUNT(*) FROM seeded_random GROUP BY seed, rand, val'
 );
 
-ok($ret == 0, "psql seeded_random count ok");
-ok($err eq '', "psql seeded_random count stderr is empty");
-ok($out =~ /\b$seed\|uniform\|1\d\d\d\|2/,
+is($ret, 0, "psql seeded_random count ok");
+is($err, '', "psql seeded_random count stderr is empty");
+like(
+	$out,
+	qr/\b$seed\|uniform\|1\d\d\d\|2/,
 	"psql seeded_random count uniform");
-ok( $out =~ /\b$seed\|exponential\|2\d\d\d\|2/,
+like(
+	$out,
+	qr/\b$seed\|exponential\|2\d\d\d\|2/,
 	"psql seeded_random count exponential");
-ok( $out =~ /\b$seed\|gaussian\|3\d\d\d\|2/,
+like(
+	$out,
+	qr/\b$seed\|gaussian\|3\d\d\d\|2/,
 	"psql seeded_random count gaussian");
-ok($out =~ /\b$seed\|zipfian\|4\d\d\d\|2/,
+like(
+	$out,
+	qr/\b$seed\|zipfian\|4\d\d\d\|2/,
 	"psql seeded_random count zipfian");
 
 $node->safe_psql('postgres', 'DROP TABLE seeded_random;');
@@ -1521,8 +1529,9 @@ sub check_pgbench_logs
 
 	# $prefix is simple enough, thus does not need escaping
 	my @logs = list_files($dir, qr{^$prefix\..*$});
-	ok(@logs == $nb, "number of log files");
-	ok(grep(/\/$prefix\.\d+(\.\d+)?$/, @logs) == $nb, "file name format");
+	is(scalar(@logs), $nb, "number of log files");
+	is(scalar(grep(/\/$prefix\.\d+(\.\d+)?$/, @logs)),
+		$nb, "file name format");
 
 	my $log_number = 0;
 	for my $log (sort @logs)
@@ -1532,10 +1541,12 @@ sub check_pgbench_logs
 
 		my @contents = split(/\n/, $contents_raw);
 		my $clen = @contents;
-		ok( $min <= $clen && $clen <= $max,
-			"transaction count for $log ($clen)");
+		cmp_ok($clen, '>=', $min,
+			"transaction count for $log ($clen) is above min");
+		cmp_ok($clen, '<=', $max,
+			"transaction count for $log ($clen) is below max");
 		my $clen_match = grep(/$re/, @contents);
-		ok($clen_match == $clen, "transaction format for $prefix");
+		is($clen_match, $clen, "transaction format for $prefix");
 
 		# Show more information if some logs don't match
 		# to help with debugging.

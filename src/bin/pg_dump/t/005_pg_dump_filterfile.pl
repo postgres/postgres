@@ -100,10 +100,12 @@ command_ok(
 
 my $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.table_one/m, "table one dumped");
-ok($dump =~ qr/^CREATE TABLE public\.table_two/m, "table two dumped");
-ok($dump =~ qr/^CREATE TABLE public\.table_three/m, "table three dumped");
-ok($dump =~ qr/^CREATE TABLE public\.table_three_one/m,
+like($dump, qr/^CREATE TABLE public\.table_one/m, "table one dumped");
+like($dump, qr/^CREATE TABLE public\.table_two/m, "table two dumped");
+like($dump, qr/^CREATE TABLE public\.table_three/m, "table three dumped");
+like(
+	$dump,
+	qr/^CREATE TABLE public\.table_three_one/m,
 	"table three one dumped");
 
 # Test various combinations of whitespace, comments and correct filters
@@ -130,14 +132,21 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.table_one/m, "dumped table one");
-ok($dump =~ qr/^CREATE TABLE public\.table_two/m, "dumped table two");
-ok($dump !~ qr/^CREATE TABLE public\.table_three/m, "table three not dumped");
-ok($dump !~ qr/^CREATE TABLE public\.table_three_one/m,
+like($dump, qr/^CREATE TABLE public\.table_one/m, "dumped table one");
+like($dump, qr/^CREATE TABLE public\.table_two/m, "dumped table two");
+unlike(
+	$dump,
+	qr/^CREATE TABLE public\.table_three/m,
+	"table three not dumped");
+unlike(
+	$dump,
+	qr/^CREATE TABLE public\.table_three_one/m,
 	"table three_one not dumped");
-ok( $dump !~ qr/^COPY public\.table_one/m,
+unlike(
+	$dump,
+	qr/^COPY public\.table_one/m,
 	"content of table one is not included");
-ok($dump =~ qr/^COPY public\.table_two/m, "content of table two is included");
+like($dump, qr/^COPY public\.table_two/m, "content of table two is included");
 
 # Test dumping tables specified by qualified names
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -159,9 +168,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.table_one/m, "dumped table one");
-ok($dump =~ qr/^CREATE TABLE public\.table_two/m, "dumped table two");
-ok($dump =~ qr/^CREATE TABLE public\.table_three/m, "dumped table three");
+like($dump, qr/^CREATE TABLE public\.table_one/m, "dumped table one");
+like($dump, qr/^CREATE TABLE public\.table_two/m, "dumped table two");
+like($dump, qr/^CREATE TABLE public\.table_three/m, "dumped table three");
 
 # Test dumping all tables except one
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -181,10 +190,12 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE public\.table_one/m, "table one not dumped");
-ok($dump =~ qr/^CREATE TABLE public\.table_two/m, "dumped table two");
-ok($dump =~ qr/^CREATE TABLE public\.table_three/m, "dumped table three");
-ok($dump =~ qr/^CREATE TABLE public\.table_three_one/m,
+unlike($dump, qr/^CREATE TABLE public\.table_one/m, "table one not dumped");
+like($dump, qr/^CREATE TABLE public\.table_two/m, "dumped table two");
+like($dump, qr/^CREATE TABLE public\.table_three/m, "dumped table three");
+like(
+	$dump,
+	qr/^CREATE TABLE public\.table_three_one/m,
 	"dumped table three_one");
 
 # Test dumping tables with a wildcard pattern
@@ -205,10 +216,12 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE public\.table_one/m, "table one not dumped");
-ok($dump !~ qr/^CREATE TABLE public\.table_two/m, "table two not dumped");
-ok($dump =~ qr/^CREATE TABLE public\.table_three/m, "dumped table three");
-ok($dump =~ qr/^CREATE TABLE public\.table_three_one/m,
+unlike($dump, qr/^CREATE TABLE public\.table_one/m, "table one not dumped");
+unlike($dump, qr/^CREATE TABLE public\.table_two/m, "table two not dumped");
+like($dump, qr/^CREATE TABLE public\.table_three/m, "dumped table three");
+like(
+	$dump,
+	qr/^CREATE TABLE public\.table_three_one/m,
 	"dumped table three_one");
 
 # Test dumping table with multiline quoted tablename
@@ -230,7 +243,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public.\"strange aaa/m,
+like(
+	$dump,
+	qr/^CREATE TABLE public.\"strange aaa/m,
 	"dump table with new line in name");
 
 # Test excluding multiline quoted tablename from dump
@@ -251,7 +266,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE public.\"strange aaa/m,
+unlike(
+	$dump,
+	qr/^CREATE TABLE public.\"strange aaa/m,
 	"dump table with new line in name");
 
 # Test excluding an entire schema
@@ -272,7 +289,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE/m, "no table dumped");
+unlike($dump, qr/^CREATE TABLE/m, "no table dumped");
 
 # Test including and excluding an entire schema by multiple filterfiles
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -298,7 +315,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE/m, "no table dumped");
+unlike($dump, qr/^CREATE TABLE/m, "no table dumped");
 
 # Test dumping a table with a single leading newline on a row
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -321,7 +338,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public.\"\nt\nt\n\" \($/ms,
+like(
+	$dump,
+	qr/^CREATE TABLE public.\"\nt\nt\n\" \($/ms,
 	"dump table with multiline strange name");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -341,7 +360,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public.\"\nt\nt\n\" \($/ms,
+like(
+	$dump,
+	qr/^CREATE TABLE public.\"\nt\nt\n\" \($/ms,
 	"dump table with multiline strange name");
 
 #########################################
@@ -380,7 +401,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE SERVER dummyserver/m, "dump foreign server");
+like($dump, qr/^CREATE SERVER dummyserver/m, "dump foreign server");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
@@ -497,7 +518,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.table_one/m, "no table dumped");
+like($dump, qr/^CREATE TABLE public\.table_one/m, "no table dumped");
 
 # Now append a pattern to the filter file which doesn't resolve
 open $inputfile, '>>', "$tempdir/inputfile.txt"
@@ -537,8 +558,8 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^\\connect postgres/m, "database postgres is not dumped");
-ok($dump =~ qr/^\\connect template1/m, "database template1 is dumped");
+unlike($dump, qr/^\\connect postgres/m, "database postgres is not dumped");
+like($dump, qr/^\\connect template1/m, "database template1 is dumped");
 
 # Make sure this option dont break the existing limitation of using
 # --globals-only with exclusions
@@ -632,8 +653,10 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.table_two/m, "wanted table restored");
-ok($dump !~ qr/^CREATE TABLE public\.table_one/m,
+like($dump, qr/^CREATE TABLE public\.table_two/m, "wanted table restored");
+unlike(
+	$dump,
+	qr/^CREATE TABLE public\.table_one/m,
 	"unwanted table is not restored");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -727,8 +750,10 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE FUNCTION public\.foo1/m, "wanted function restored");
-ok( $dump !~ qr/^CREATE TABLE public\.foo2/m,
+like($dump, qr/^CREATE FUNCTION public\.foo1/m, "wanted function restored");
+unlike(
+	$dump,
+	qr/^CREATE TABLE public\.foo2/m,
 	"unwanted function is not restored");
 
 # this should be white space tolerant (against the -P argument)
@@ -751,7 +776,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE FUNCTION public\.foo3/m, "wanted function restored");
+like($dump, qr/^CREATE FUNCTION public\.foo3/m, "wanted function restored");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
@@ -775,10 +800,10 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE INDEX t1_idx1/m, "wanted index restored");
-ok($dump !~ qr/^CREATE INDEX t2_idx2/m, "unwanted index are not restored");
-ok($dump =~ qr/^CREATE TRIGGER trg1/m, "wanted trigger restored");
-ok($dump !~ qr/^CREATE TRIGGER trg2/m, "unwanted trigger is not restored");
+like($dump, qr/^CREATE INDEX t1_idx1/m, "wanted index restored");
+unlike($dump, qr/^CREATE INDEX t2_idx2/m, "unwanted index are not restored");
+like($dump, qr/^CREATE TRIGGER trg1/m, "wanted trigger restored");
+unlike($dump, qr/^CREATE TRIGGER trg2/m, "unwanted trigger is not restored");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
@@ -798,10 +823,12 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE s1\.t1/m, "wanted table from schema restored");
-ok( $dump =~ qr/^CREATE SEQUENCE s1\.s1/m,
+like($dump, qr/^CREATE TABLE s1\.t1/m, "wanted table from schema restored");
+like(
+	$dump,
+	qr/^CREATE SEQUENCE s1\.s1/m,
 	"wanted sequence from schema restored");
-ok($dump !~ qr/^CREATE TABLE s2\t2/m, "unwanted table is not restored");
+unlike($dump, qr/^CREATE TABLE s2\t2/m, "unwanted table is not restored");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
@@ -821,12 +848,16 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE s1\.t1/m,
+unlike(
+	$dump,
+	qr/^CREATE TABLE s1\.t1/m,
 	"unwanted table from schema is not restored");
-ok($dump !~ qr/^CREATE SEQUENCE s1\.s1/m,
+unlike(
+	$dump,
+	qr/^CREATE SEQUENCE s1\.s1/m,
 	"unwanted sequence from schema is not restored");
-ok($dump =~ qr/^CREATE TABLE s2\.t2/m, "wanted table restored");
-ok($dump =~ qr/^CREATE TABLE public\.t1/m, "wanted table restored");
+like($dump, qr/^CREATE TABLE s2\.t2/m, "wanted table restored");
+like($dump, qr/^CREATE TABLE public\.t1/m, "wanted table restored");
 
 #########################################
 # test of supported syntax
@@ -849,7 +880,7 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.bootab/m, "dumped children table");
+like($dump, qr/^CREATE TABLE public\.bootab/m, "dumped children table");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
   or die "unable to open filterfile for writing";
@@ -869,7 +900,9 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump !~ qr/^CREATE TABLE public\.bootab/m,
+unlike(
+	$dump,
+	qr/^CREATE TABLE public\.bootab/m,
 	"exclude dumped children table");
 
 open $inputfile, '>', "$tempdir/inputfile.txt"
@@ -890,8 +923,8 @@ command_ok(
 
 $dump = slurp_file($plainfile);
 
-ok($dump =~ qr/^CREATE TABLE public\.bootab/m, "dumped children table");
-ok($dump !~ qr/^COPY public\.bootab/m, "exclude dumped children table");
+like($dump, qr/^CREATE TABLE public\.bootab/m, "dumped children table");
+unlike($dump, qr/^COPY public\.bootab/m, "exclude dumped children table");
 
 #########################################
 # Test extension

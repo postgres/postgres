@@ -94,7 +94,9 @@ my ($result, $stdout, $stderr);
 	'postgres', qq[
 		SELECT pg_replication_slot_advance('logical_slot', '0/1');
 ]);
-ok( $stderr =~ /can no longer access replication slot "logical_slot"/,
+like(
+	$stderr,
+	qr/can no longer access replication slot "logical_slot"/,
 	"detected error upon trying to acquire invalidated slot on node")
   or die
   "could not detect error upon trying to acquire invalidated slot \"logical_slot\" on node";

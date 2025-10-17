@@ -308,9 +308,9 @@ command_ok(
 	'multiple --set options with different case');
 
 my $conf = slurp_file("$tempdir/dataY/postgresql.conf");
-ok($conf !~ qr/^WORK_MEM = /m, "WORK_MEM should not be configured");
-ok($conf !~ qr/^Work_Mem = /m, "Work_Mem should not be configured");
-ok($conf =~ qr/^work_mem = 512/m, "work_mem should be in config");
+unlike($conf, qr/^WORK_MEM = /m, "WORK_MEM should not be configured");
+unlike($conf, qr/^Work_Mem = /m, "Work_Mem should not be configured");
+like($conf, qr/^work_mem = 512/m, "work_mem should be in config");
 
 # Test the no-data-checksums flag
 my $datadir_nochecksums = "$tempdir/data_no_checksums";
