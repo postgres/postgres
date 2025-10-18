@@ -11,7 +11,7 @@ use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 
-$node->init;
+$node->init('auth_extra' => [ '--create-role', 'test_user' ]);
 $node->append_conf(
 	'postgresql.conf',
 	qq{shared_preload_libraries = 'pg_prewarm'
