@@ -9179,8 +9179,7 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 	 *
 	 * We track in notnull_islocal whether the constraint was defined directly
 	 * in this table or via an ancestor, for binary upgrade.  flagInhAttrs
-	 * might modify this later; that routine is also in charge of determining
-	 * the correct inhcount.
+	 * might modify this later.
 	 */
 	if (fout->remoteVersion >= 180000)
 		appendPQExpBufferStr(q,
@@ -9197,7 +9196,10 @@ getTableAttrs(Archive *fout, TableInfo *tblinfo, int numTables)
 							 "NULL AS notnull_comment,\n"
 							 "NULL AS notnull_invalidoid,\n"
 							 "false AS notnull_noinherit,\n"
-							 "a.attislocal AS notnull_islocal,\n");
+							 "CASE WHEN a.attislocal THEN true\n"
+							 "     WHEN a.attnotnull AND NOT a.attislocal THEN true\n"
+							 "     ELSE false\n"
+							 "END AS notnull_islocal,\n");
 
 	if (fout->remoteVersion >= 140000)
 		appendPQExpBufferStr(q,

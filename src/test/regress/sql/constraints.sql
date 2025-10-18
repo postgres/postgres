@@ -1049,3 +1049,8 @@ CREATE DOMAIN constraint_comments_dom AS int;
 
 ALTER DOMAIN constraint_comments_dom ADD CONSTRAINT inv_ck CHECK (value > 0) NOT VALID;
 COMMENT ON CONSTRAINT inv_ck ON DOMAIN constraint_comments_dom IS 'comment on invalid constraint';
+
+-- Create a table that exercises pg_upgrade
+CREATE TABLE regress_notnull1 (a integer);
+CREATE TABLE regress_notnull2 () INHERITS (regress_notnull1);
+ALTER TABLE ONLY regress_notnull2 ALTER COLUMN a SET NOT NULL;
