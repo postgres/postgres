@@ -2912,7 +2912,7 @@ agg_retrieve_hash_table_in_memory(AggState *aggstate)
 
 				perhash = &aggstate->perhash[aggstate->current_set];
 
-				ResetTupleHashIterator(hashtable, &perhash->hashiter);
+				ResetTupleHashIterator(perhash->hashtable, &perhash->hashiter);
 
 				continue;
 			}
