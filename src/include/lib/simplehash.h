@@ -1044,6 +1044,10 @@ SH_START_ITERATE_AT(SH_TYPE * tb, SH_ITERATOR * iter, uint32 at)
 SH_SCOPE	SH_ELEMENT_TYPE *
 SH_ITERATE(SH_TYPE * tb, SH_ITERATOR * iter)
 {
+	/* validate sanity of the given iterator */
+	Assert(iter->cur < tb->size);
+	Assert(iter->end < tb->size);
+
 	while (!iter->done)
 	{
 		SH_ELEMENT_TYPE *elem;
