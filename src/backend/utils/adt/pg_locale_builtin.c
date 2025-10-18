@@ -164,6 +164,12 @@ wc_isspace_builtin(pg_wchar wc, pg_locale_t locale)
 }
 
 static bool
+wc_isxdigit_builtin(pg_wchar wc, pg_locale_t locale)
+{
+	return pg_u_isxdigit(wc, !locale->builtin.casemap_full);
+}
+
+static bool
 char_is_cased_builtin(char ch, pg_locale_t locale)
 {
 	return IS_HIGHBIT_SET(ch) ||
@@ -196,6 +202,7 @@ static const struct ctype_methods ctype_methods_builtin = {
 	.wc_isprint = wc_isprint_builtin,
 	.wc_ispunct = wc_ispunct_builtin,
 	.wc_isspace = wc_isspace_builtin,
+	.wc_isxdigit = wc_isxdigit_builtin,
 	.char_is_cased = char_is_cased_builtin,
 	.wc_tolower = wc_tolower_builtin,
 	.wc_toupper = wc_toupper_builtin,

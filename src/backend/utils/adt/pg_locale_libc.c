@@ -173,6 +173,16 @@ wc_isspace_libc_sb(pg_wchar wc, pg_locale_t locale)
 }
 
 static bool
+wc_isxdigit_libc_sb(pg_wchar wc, pg_locale_t locale)
+{
+#ifndef WIN32
+	return isxdigit_l((unsigned char) wc, locale->lt);
+#else
+	return _isxdigit_l((unsigned char) wc, locale->lt);
+#endif
+}
+
+static bool
 wc_isdigit_libc_mb(pg_wchar wc, pg_locale_t locale)
 {
 	return iswdigit_l((wint_t) wc, locale->lt);
@@ -224,6 +234,16 @@ static bool
 wc_isspace_libc_mb(pg_wchar wc, pg_locale_t locale)
 {
 	return iswspace_l((wint_t) wc, locale->lt);
+}
+
+static bool
+wc_isxdigit_libc_mb(pg_wchar wc, pg_locale_t locale)
+{
+#ifndef WIN32
+	return iswxdigit_l((wint_t) wc, locale->lt);
+#else
+	return _iswxdigit_l((wint_t) wc, locale->lt);
+#endif
 }
 
 static char
@@ -313,6 +333,7 @@ static const struct ctype_methods ctype_methods_libc_sb = {
 	.wc_isprint = wc_isprint_libc_sb,
 	.wc_ispunct = wc_ispunct_libc_sb,
 	.wc_isspace = wc_isspace_libc_sb,
+	.wc_isxdigit = wc_isxdigit_libc_sb,
 	.char_is_cased = char_is_cased_libc,
 	.char_tolower = char_tolower_libc,
 	.wc_toupper = toupper_libc_sb,
@@ -337,6 +358,7 @@ static const struct ctype_methods ctype_methods_libc_other_mb = {
 	.wc_isprint = wc_isprint_libc_sb,
 	.wc_ispunct = wc_ispunct_libc_sb,
 	.wc_isspace = wc_isspace_libc_sb,
+	.wc_isxdigit = wc_isxdigit_libc_sb,
 	.char_is_cased = char_is_cased_libc,
 	.char_tolower = char_tolower_libc,
 	.wc_toupper = toupper_libc_sb,
@@ -357,6 +379,7 @@ static const struct ctype_methods ctype_methods_libc_utf8 = {
 	.wc_isprint = wc_isprint_libc_mb,
 	.wc_ispunct = wc_ispunct_libc_mb,
 	.wc_isspace = wc_isspace_libc_mb,
+	.wc_isxdigit = wc_isxdigit_libc_mb,
 	.char_is_cased = char_is_cased_libc,
 	.char_tolower = char_tolower_libc,
 	.wc_toupper = toupper_libc_mb,

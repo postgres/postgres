@@ -1493,6 +1493,18 @@ pg_iswspace(pg_wchar wc, pg_locale_t locale)
 		return locale->ctype->wc_isspace(wc, locale);
 }
 
+bool
+pg_iswxdigit(pg_wchar wc, pg_locale_t locale)
+{
+	if (locale->ctype == NULL)
+		return (wc <= (pg_wchar) 127 &&
+				((pg_char_properties[wc] & PG_ISDIGIT) ||
+				 ((wc >= 'A' && wc <= 'F') ||
+				  (wc >= 'a' && wc <= 'f'))));
+	else
+		return locale->ctype->wc_isxdigit(wc, locale);
+}
+
 pg_wchar
 pg_towupper(pg_wchar wc, pg_locale_t locale)
 {

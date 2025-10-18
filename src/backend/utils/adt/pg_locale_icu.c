@@ -212,6 +212,12 @@ wc_isspace_icu(pg_wchar wc, pg_locale_t locale)
 	return u_isspace(wc);
 }
 
+static bool
+wc_isxdigit_icu(pg_wchar wc, pg_locale_t locale)
+{
+	return u_isxdigit(wc);
+}
+
 static const struct ctype_methods ctype_methods_icu = {
 	.strlower = strlower_icu,
 	.strtitle = strtitle_icu,
@@ -226,6 +232,7 @@ static const struct ctype_methods ctype_methods_icu = {
 	.wc_isprint = wc_isprint_icu,
 	.wc_ispunct = wc_ispunct_icu,
 	.wc_isspace = wc_isspace_icu,
+	.wc_isxdigit = wc_isxdigit_icu,
 	.char_is_cased = char_is_cased_icu,
 	.wc_toupper = toupper_icu,
 	.wc_tolower = tolower_icu,
