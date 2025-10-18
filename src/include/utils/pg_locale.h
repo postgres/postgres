@@ -176,6 +176,7 @@ struct pg_locale_struct
 };
 
 extern void init_database_collation(void);
+extern pg_locale_t pg_database_locale(void);
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
