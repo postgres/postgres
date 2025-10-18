@@ -381,7 +381,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
-	else if (obj1->objType == DO_CONSTRAINT)
+	else if (obj1->objType == DO_CONSTRAINT ||
+			 obj1->objType == DO_FK_CONSTRAINT)
 	{
 		ConstraintInfo *robj1 = *(ConstraintInfo *const *) p1;
 		ConstraintInfo *robj2 = *(ConstraintInfo *const *) p2;
