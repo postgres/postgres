@@ -3270,8 +3270,9 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	return true;
 }
 
-/*
- * get tuple and evaluate in partition
+/* gettuple_eval_partition
+ * get tuple in a patition and evaluate the window function's argument
+ * expression on it.
  */
 static Datum
 gettuple_eval_partition(WindowObject winobj, int argno,
@@ -3790,9 +3791,15 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			continue;			/* keep on moving forward or backward */
 		else					/* need to check NULL or not */
 		{
-			/* get tuple and evaluate in partition */
-			datum = gettuple_eval_partition(winobj, argno,
-											abs_pos, isnull, &myisout);
+			/*
+			 * NOT NULL info does not exist yet.  Get tuple and evaluate func
+			 * arg in partition. We ignore the return value from
+			 * gettuple_eval_partition because we are just interested in
+			 * whether we are inside or outside of partition, NULL or NOT
+			 * NULL.
+			 */
+			(void) gettuple_eval_partition(winobj, argno,
+										   abs_pos, isnull, &myisout);
 			if (myisout)		/* out of partition? */
 				break;
 			if (!*isnull)
@@ -3802,7 +3809,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 		}
 	} while (notnull_offset < notnull_relpos);
 
-	/* get tuple and evaluate in partition */
+	/* get tuple and evaluate func arg in partition */
 	datum = gettuple_eval_partition(winobj, argno,
 									abs_pos, isnull, &myisout);
 	if (!myisout && set_mark)
