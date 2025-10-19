@@ -21,6 +21,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -65,6 +66,15 @@
  * out to an unlinked old copy of a segment file that will eventually
  * disappear.
  *
+ * RELSEG_SIZE must fit into BlockNumber; but since we expose its value
+ * as an integer GUC, it actually needs to fit in signed int.  It's worth
+ * having a cross-check for this since configure's --with-segsize options
+ * could let people select insane values.
+ */
+StaticAssertDecl(RELSEG_SIZE > 0 && RELSEG_SIZE <= INT_MAX,
+				 "RELSEG_SIZE must fit in an integer");
+
+/*
  * File descriptors are stored in the per-fork md_seg_fds arrays inside
  * SMgrRelation. The length of these arrays is stored in md_num_open_segs.
  * Note that a fork's md_num_open_segs having a specific value does not
