@@ -1,0 +1,7 @@
+# Reference point for ABI compliance checks
+# Add new entries by adding the output of the following to the top of the file:
+# $ git log --pretty=format:"%H # %cd%n# %s" $ABIBREAKGITHASH -1 --date=iso
+#
+# Initial entry would normally point to a commit slightly before the .0 stamp.
+9bbcec6030a2744d83311370ec92213fbd76e514 # 2025-09-22 14:18:56 +0200
+# Translation updates
