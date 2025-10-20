@@ -539,13 +539,14 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     <command>COPY TO</command> can be used with plain
-    tables and populated materialized views.
-    For example,
-    <literal>COPY <replaceable class="parameter">table</replaceable>
-    TO</literal> copies the same rows as
+    tables, populated materialized views, and partitioned tables.
+    For non-partitioned tables, COPY <replaceable class="parameter">table</replaceable>
+    copies the same rows as
     <literal>SELECT * FROM ONLY <replaceable class="parameter">table</replaceable></literal>.
+    For partitioned tables, it copies the same rows as
+    <literal>SELECT * FROM <replaceable class="parameter">table</replaceable></literal>.
     However it doesn't directly support other relation types,
-    such as partitioned tables, inheritance child tables, or views.
+    such as inheritance child tables, or views.
     To copy all rows from such relations, use <literal>COPY (SELECT * FROM
     <replaceable class="parameter">table</replaceable>) TO</literal>.
    </para>

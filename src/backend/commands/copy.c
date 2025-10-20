@@ -251,11 +251,15 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 			 * relation which we have opened and locked.  Use "ONLY" so that
 			 * COPY retrieves rows from only the target table not any
 			 * inheritance children, the same as when RLS doesn't apply.
+			 *
+			 * However, when copying data from a partitioned table, we don't
+			 * use "ONLY", since we need to retrieve rows from its descendant
+			 * tables too.
 			 */
 			from = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 								pstrdup(RelationGetRelationName(rel)),
 								-1);
-			from->inh = false;	/* apply ONLY */
+			from->inh = (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 			/* Build query */
 			select = makeNode(SelectStmt);

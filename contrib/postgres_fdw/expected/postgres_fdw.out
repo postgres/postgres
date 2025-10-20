@@ -11599,6 +11599,11 @@ SELECT * FROM result_tbl ORDER BY a;
 (3 rows)
 
 DELETE FROM result_tbl;
+-- Test COPY TO when foreign table is partition
+COPY async_pt TO stdout; --error
+ERROR:  cannot copy from foreign table "async_p1"
+DETAIL:  Partition "async_p1" is a foreign table in partitioned table "async_pt"
+HINT:  Try the COPY (SELECT ...) TO variant.
 DROP FOREIGN TABLE async_p3;
 DROP TABLE base_tbl3;
 -- Check case where the partitioned table has local/remote partitions

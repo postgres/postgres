@@ -3941,6 +3941,9 @@ INSERT INTO result_tbl SELECT * FROM async_pt WHERE b === 505;
 SELECT * FROM result_tbl ORDER BY a;
 DELETE FROM result_tbl;
 
+-- Test COPY TO when foreign table is partition
+COPY async_pt TO stdout; --error
+
 DROP FOREIGN TABLE async_p3;
 DROP TABLE base_tbl3;
 

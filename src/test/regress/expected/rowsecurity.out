@@ -986,6 +986,11 @@ NOTICE:  f_leak => my first satire
    9 |  11 |      1 | regress_rls_dave  | awesome science fiction
 (4 rows)
 
+COPY part_document TO stdout WITH (DELIMITER ',');
+1,11,1,regress_rls_bob,my first novel
+6,11,1,regress_rls_carol,great science fiction
+9,11,1,regress_rls_dave,awesome science fiction
+4,55,1,regress_rls_bob,my first satire
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -1028,6 +1033,17 @@ NOTICE:  f_leak => awesome technology book
   10 |  99 |      2 | regress_rls_dave  | awesome technology book
 (10 rows)
 
+COPY part_document TO stdout WITH (DELIMITER ',');
+1,11,1,regress_rls_bob,my first novel
+2,11,2,regress_rls_bob,my second novel
+6,11,1,regress_rls_carol,great science fiction
+9,11,1,regress_rls_dave,awesome science fiction
+4,55,1,regress_rls_bob,my first satire
+8,55,2,regress_rls_carol,great satire
+3,99,2,regress_rls_bob,my science textbook
+5,99,2,regress_rls_bob,my history book
+7,99,2,regress_rls_carol,great technology book
+10,99,2,regress_rls_dave,awesome technology book
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                                QUERY PLAN                                
 -------------------------------------------------------------------------
@@ -1058,6 +1074,11 @@ NOTICE:  f_leak => awesome science fiction
    9 |  11 |      1 | regress_rls_dave  | awesome science fiction
 (4 rows)
 
+COPY part_document TO stdout WITH (DELIMITER ',');
+1,11,1,regress_rls_bob,my first novel
+2,11,2,regress_rls_bob,my second novel
+6,11,1,regress_rls_carol,great science fiction
+9,11,1,regress_rls_dave,awesome science fiction
 EXPLAIN (COSTS OFF) SELECT * FROM part_document WHERE f_leak(dtitle);
                                     QUERY PLAN                                    
 ----------------------------------------------------------------------------------
