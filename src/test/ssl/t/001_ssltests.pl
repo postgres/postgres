@@ -708,7 +708,7 @@ my $serialno = '\d+';
 
 if ($ENV{OPENSSL} ne '')
 {
-	$serialno = `$ENV{OPENSSL} x509 -serial -noout -in ssl/client.crt`;
+	my $serialstr = `$ENV{OPENSSL} x509 -serial -noout -in ssl/client.crt`;
 	if ($? == 0)
 	{
 		# OpenSSL prints serial numbers in hexadecimal and converting the serial
@@ -719,9 +719,9 @@ if ($ENV{OPENSSL} ne '')
 		{
 			no warnings qw(portable);
 
-			$serialno =~ s/^serial=//;
-			$serialno =~ s/\s+//g;
-			$serialno = hex($serialno);
+			$serialstr =~ s/^serial=//;
+			$serialstr =~ s/\s+//g;
+			$serialno = hex($serialstr);
 		}
 	}
 }
