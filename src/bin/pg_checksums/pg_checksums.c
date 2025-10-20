@@ -25,6 +25,7 @@
 #include "common/logging.h"
 #include "common/relpath.h"
 #include "fe_utils/option_utils.h"
+#include "fe_utils/version.h"
 #include "getopt_long.h"
 #include "pg_getopt.h"
 #include "storage/bufpage.h"
@@ -448,6 +449,8 @@ main(int argc, char *argv[])
 	int			c;
 	int			option_index;
 	bool		crc_ok;
+	uint32		major_version;
+	char	   *version_str;
 
 	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_checksums"));
@@ -540,6 +543,20 @@ main(int argc, char *argv[])
 	{
 		pg_log_error("option -f/--filenode can only be used with --check");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
+		exit(1);
+	}
+
+	/*
+	 * Retrieve the contents of this cluster's PG_VERSION.  We require
+	 * compatibility with the same major version as the one this tool is
+	 * compiled with.
+	 */
+	major_version = GET_PG_MAJORVERSION_NUM(get_pg_version(DataDir, &version_str));
+	if (major_version != PG_MAJORVERSION_NUM)
+	{
+		pg_log_error("data directory is of wrong version");
+		pg_log_error_detail("File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\".",
+							"PG_VERSION", version_str, PG_MAJORVERSION);
 		exit(1);
 	}
 
