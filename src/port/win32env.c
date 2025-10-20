@@ -152,6 +152,13 @@ pgwin32_unsetenv(const char *name)
 	int			res;
 	char	   *envbuf;
 
+	/* Error conditions, per POSIX */
+	if (name == NULL || name[0] == '\0' || strchr(name, '=') != NULL)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
 	envbuf = (char *) malloc(strlen(name) + 2);
 	if (!envbuf)
 		return -1;
