@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+2795f5a5428fd292996fd155f16a57b0db3df8f4 # 2025-10-21 09:56:26 -0500
+# Re-pgindent brin.c.
+
 17a5ca58eb119a33e81e57b72618236538932167 # 2025-09-13 14:50:02 -0500
 # Re-pgindent nbtpreprocesskeys.c after commit 796962922e.
 
