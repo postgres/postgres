@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+c0897125171035e4d4b9fc8cf8a099131ac45281 # 2025-10-21 09:56:26 -0500
+# Re-pgindent brin.c.
+
 c739ae9e288c095cfe1b91ce27a2f2c075ed5da4 # 2024-08-26 16:16:09 -0700
 # Fix identation.
 
