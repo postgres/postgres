@@ -1,0 +1,30 @@
+# Reference point for ABI compliance checks
+#
+# This file lists commits on the current branch that break ABI compatibility in
+# ways that have been deemed acceptable (e.g., removing an extern function with
+# no third-party uses).  The primary intent of this file is to control the ABI
+# compliance checks on the buildfarm, but it also serves as a central location
+# to document the justification for each.
+#
+# In general, entries should be added reactively after an abi-compliance-check
+# buildfarm failure.  It is important to verify the details of the breakage
+# match expectations, as the first entry listed will become the updated ABI
+# baseline point.
+#
+# Add new entries by adding the output of the following to the top of the file:
+#
+# $ git log --pretty=format:"%H%n#%n# %s%n# %cd%n#%n# <ADD JUSTIFICATION HERE>" $ABIBREAKGITHASH -1 --date=iso
+#
+# Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
+# why it is deemed acceptable.
+
+fc0fb77c550fe8289d718c33c7aacf16023d9941
+#
+# Fix re-distributing previously distributed invalidation messages during logical decoding.
+# 2025-06-16 17:35:53 -0700
+#
+# This is the original ABI baseline point for REL_15_STABLE.  The first entry
+# would ordinarily point to something just before the .0 release, but this file
+# was first added in October 2025, and we're unlikely to act upon ABI breaks in
+# released minor versions, so we've chosen to truncate the ABI history to start
+# with the most recent ABI break documented in the git commit history.
