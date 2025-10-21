@@ -975,9 +975,10 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 	Assert(rel->attrmap->maplen == num_phys_attrs);
 	for (attnum = 0; attnum < num_phys_attrs; attnum++)
 	{
+		CompactAttribute *cattr = TupleDescCompactAttr(desc, attnum);
 		Expr	   *defexpr;
 
-		if (TupleDescAttr(desc, attnum)->attisdropped || TupleDescAttr(desc, attnum)->attgenerated)
+		if (cattr->attisdropped || cattr->attgenerated)
 			continue;
 
 		if (rel->attrmap->attnums[attnum] >= 0)
@@ -2833,7 +2834,7 @@ apply_handle_update(StringInfo s)
 	target_perminfo = list_nth(estate->es_rteperminfos, 0);
 	for (int i = 0; i < remoteslot->tts_tupleDescriptor->natts; i++)
 	{
-		Form_pg_attribute att = TupleDescAttr(remoteslot->tts_tupleDescriptor, i);
+		CompactAttribute *att = TupleDescCompactAttr(remoteslot->tts_tupleDescriptor, i);
 		int			remoteattnum = rel->attrmap->attnums[i];
 
 		if (!att->attisdropped && remoteattnum >= 0)

@@ -499,7 +499,7 @@ ginFlushBuildState(GinBuildState *buildstate, Relation index)
 								 &attnum, &key, &category, &nlist)) != NULL)
 	{
 		/* information about the key */
-		Form_pg_attribute attr = TupleDescAttr(tdesc, (attnum - 1));
+		CompactAttribute *attr = TupleDescCompactAttr(tdesc, (attnum - 1));
 
 		/* GIN tuple and tuple length */
 		GinTuple   *tup;

@@ -9935,7 +9935,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					Node	   *e = (Node *) lfirst(arg);
 
 					if (tupdesc == NULL ||
-						!TupleDescAttr(tupdesc, i)->attisdropped)
+						!TupleDescCompactAttr(tupdesc, i)->attisdropped)
 					{
 						appendStringInfoString(buf, sep);
 						/* Whole-row Vars need special treatment here */
@@ -9948,7 +9948,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				{
 					while (i < tupdesc->natts)
 					{
-						if (!TupleDescAttr(tupdesc, i)->attisdropped)
+						if (!TupleDescCompactAttr(tupdesc, i)->attisdropped)
 						{
 							appendStringInfoString(buf, sep);
 							appendStringInfoString(buf, "NULL");

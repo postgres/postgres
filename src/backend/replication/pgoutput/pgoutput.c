@@ -1069,7 +1069,7 @@ check_and_init_gencol(PGOutputData *data, List *publications,
 	/* Check if there is any generated column present. */
 	for (int i = 0; i < desc->natts; i++)
 	{
-		Form_pg_attribute att = TupleDescAttr(desc, i);
+		CompactAttribute *att = TupleDescCompactAttr(desc, i);
 
 		if (att->attgenerated)
 		{

@@ -2286,14 +2286,11 @@ CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos, Datum *keys)
 	for (i = 0; i < nkeys; i++)
 	{
 		int			attnum = attnos[i];
-		Form_pg_attribute att;
 
 		/* system attribute are not supported in caches */
 		Assert(attnum > 0);
 
-		att = TupleDescAttr(tupdesc, attnum - 1);
-
-		if (!att->attbyval)
+		if (!TupleDescCompactAttr(tupdesc, attnum - 1)->attbyval)
 			pfree(DatumGetPointer(keys[i]));
 	}
 }

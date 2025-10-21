@@ -547,7 +547,7 @@ expanded_record_set_tuple(ExpandedRecordHeader *erh,
 		for (i = 0; i < erh->nfields; i++)
 		{
 			if (!erh->dnulls[i] &&
-				!(TupleDescAttr(tupdesc, i)->attbyval))
+				!(TupleDescCompactAttr(tupdesc, i)->attbyval))
 			{
 				char	   *oldValue = (char *) DatumGetPointer(erh->dvalues[i]);
 

@@ -1026,9 +1026,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	numattrs = 0;
 	for (i = 0; i < tupleDesc->natts; i++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupleDesc, i);
-
-		if (attr->attisdropped)
+		if (TupleDescCompactAttr(tupleDesc, i)->attisdropped)
 			continue;
 		numattrs++;
 	}

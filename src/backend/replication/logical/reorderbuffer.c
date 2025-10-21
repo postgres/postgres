@@ -5134,7 +5134,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	for (natt = 0; natt < desc->natts; natt++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(desc, natt);
+		CompactAttribute *attr = TupleDescCompactAttr(desc, natt);
 		ReorderBufferToastEnt *ent;
 		struct varlena *varlena;
 
@@ -5145,10 +5145,6 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		struct varlena *reconstructed;
 		dlist_iter	it;
 		Size		data_done = 0;
-
-		/* system columns aren't toasted */
-		if (attr->attnum < 0)
-			continue;
 
 		if (attr->attisdropped)
 			continue;

@@ -1426,7 +1426,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 	idx = 0;
 	for (i = 0; i < desc->natts; i++)
 	{
-		if (!TupleDescAttr(desc, i)->attisdropped)
+		if (!TupleDescCompactAttr(desc, i)->attisdropped)
 			idx++;
 	}
 	if (PySequence_Length(sequence) != idx)
@@ -1443,7 +1443,7 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 		PyObject   *volatile value;
 		PLyObToDatum *att;
 
-		if (TupleDescAttr(desc, i)->attisdropped)
+		if (TupleDescCompactAttr(desc, i)->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;

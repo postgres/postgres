@@ -2509,7 +2509,7 @@ get_dependent_generated_columns(PlannerInfo *root, Index rti,
 			Bitmapset  *attrs_used = NULL;
 
 			/* skip if not generated column */
-			if (!TupleDescAttr(tupdesc, defval->adnum - 1)->attgenerated)
+			if (!TupleDescCompactAttr(tupdesc, defval->adnum - 1)->attgenerated)
 				continue;
 
 			/* identify columns this generated column depends on */

@@ -3020,7 +3020,7 @@ validate_pkattnums(Relation rel,
 		for (j = 0; j < natts; j++)
 		{
 			/* dropped columns don't count */
-			if (TupleDescAttr(tupdesc, j)->attisdropped)
+			if (TupleDescCompactAttr(tupdesc, j)->attisdropped)
 				continue;
 
 			if (++lnum == pkattnum)

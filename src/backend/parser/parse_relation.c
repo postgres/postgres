@@ -3489,13 +3489,13 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 						if (tupdesc)
 						{
 							/* Composite data type, e.g. a table's row type */
-							Form_pg_attribute att_tup;
+							CompactAttribute *att;
 
 							Assert(tupdesc);
 							Assert(attnum - atts_done <= tupdesc->natts);
-							att_tup = TupleDescAttr(tupdesc,
-													attnum - atts_done - 1);
-							return att_tup->attisdropped;
+							att = TupleDescCompactAttr(tupdesc,
+													   attnum - atts_done - 1);
+							return att->attisdropped;
 						}
 						/* Otherwise, it can't have any dropped columns */
 						return false;

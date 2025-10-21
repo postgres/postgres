@@ -1458,10 +1458,8 @@ deparseTargetList(StringInfo buf,
 	first = true;
 	for (i = 1; i <= tupdesc->natts; i++)
 	{
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, i - 1);
-
 		/* Ignore dropped attributes. */
-		if (attr->attisdropped)
+		if (TupleDescCompactAttr(tupdesc, i - 1)->attisdropped)
 			continue;
 
 		if (have_wholerow ||
@@ -2150,7 +2148,7 @@ deparseInsertSql(StringInfo buf, RangeTblEntry *rte,
 		foreach(lc, targetAttrs)
 		{
 			int			attnum = lfirst_int(lc);
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+			CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 
 			if (!first)
 				appendStringInfoString(buf, ", ");
@@ -2216,7 +2214,7 @@ rebuildInsertSql(StringInfo buf, Relation rel,
 		foreach(lc, target_attrs)
 		{
 			int			attnum = lfirst_int(lc);
-			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+			CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 
 			if (!first)
 				appendStringInfoString(buf, ", ");
@@ -2266,7 +2264,7 @@ deparseUpdateSql(StringInfo buf, RangeTblEntry *rte,
 	foreach(lc, targetAttrs)
 	{
 		int			attnum = lfirst_int(lc);
-		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
+		CompactAttribute *attr = TupleDescCompactAttr(tupdesc, attnum - 1);
 
 		if (!first)
 			appendStringInfoString(buf, ", ");
