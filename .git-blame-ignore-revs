@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+e95010a9c0bad33cca21d762dd1151167993fd37 # 2025-10-21 09:56:26 -0500
+# Re-pgindent brin.c.
+
 e1c1c30f635390b6a3ae4993e8cac213a33e6e3f # 2021-06-28 11:05:54 -0400
 # Pre branch pgindent / pgperltidy run
 
