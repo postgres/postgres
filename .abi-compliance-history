@@ -1,7 +1,36 @@
 # Reference point for ABI compliance checks
-# Add new entries by adding the output of the following to the top of the file:
-# $ git log --pretty=format:"%H # %cd%n# %s" $ABIBREAKGITHASH -1 --date=iso
 #
-# Initial entry would normally point to a commit slightly before the .0 stamp.
-9bbcec6030a2744d83311370ec92213fbd76e514 # 2025-09-22 14:18:56 +0200
+# This file lists commits on the current branch that break ABI compatibility in
+# ways that have been deemed acceptable (e.g., removing an extern function with
+# no third-party uses).  The primary intent of this file is to control the ABI
+# compliance checks on the buildfarm, but it also serves as a central location
+# to document the justification for each.
+#
+# In general, entries should be added reactively after an abi-compliance-check
+# buildfarm failure.  It is important to verify the details of the breakage
+# match expectations, as the first entry listed will become the updated ABI
+# baseline point.
+#
+# Add new entries by adding the output of the following to the top of the file:
+#
+# $ git log --pretty=format:"%H%n#%n# %s%n# %cd%n#%n# <ADD JUSTIFICATION HERE>" $ABIBREAKGITHASH -1 --date=iso
+#
+# Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
+# why it is deemed acceptable.
+
+c8af5019bee5c57502db830f8005a01cba60fee0
+#
+# Fix lookups in pg_{clear,restore}_{attribute,relation}_stats().
+# 2025-10-15 12:47:33 -0500
+#
+# This commit replaced two functions related to lookups/privilege checks for
+# the new stats stuff in v18 with RangeVarGetRelidExtended().  These functions
+# were not intended for use elsewhere, exist in exactly one release (18.0), and
+# do not have any known third-party callers.
+
+9bbcec6030a2744d83311370ec92213fbd76e514
+#
 # Translation updates
+# 2025-09-22 14:18:56 +0200
+#
+# This is the original ABI baseline point for REL_18_STABLE.
