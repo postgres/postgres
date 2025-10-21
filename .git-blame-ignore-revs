@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+63a5b1f89423f003ec850eee270c40b30b87cd52 # 2025-10-21 09:56:26 -0500
+# Re-pgindent brin.c.
+
 b334612b8aee9f9a34378982d8938b201dfad323 # 2023-06-20 09:50:43 -0400
 # Pre-beta2 mechanical code beautification.
 
