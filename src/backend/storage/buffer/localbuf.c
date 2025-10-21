@@ -25,6 +25,7 @@
 #include "utils/guc_hooks.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/resowner.h"
 
 
@@ -372,7 +373,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		MemSet(buf_block, 0, BLCKSZ);
 	}
 
-	first_block = smgrnblocks(bmr.smgr, fork);
+	first_block = smgrnblocks(BMR_GET_SMGR(bmr), fork);
 
 	if (extend_upto != InvalidBlockNumber)
 	{
@@ -391,7 +392,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend relation %s beyond %u blocks",
-						relpath(bmr.smgr->smgr_rlocator, fork).str,
+						relpath(BMR_GET_SMGR(bmr)->smgr_rlocator, fork).str,
 						MaxBlockNumber)));
 
 	for (uint32 i = 0; i < extend_by; i++)
@@ -408,7 +409,8 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 		/* in case we need to pin an existing buffer below */
 		ResourceOwnerEnlarge(CurrentResourceOwner);
 
-		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
+		InitBufferTag(&tag, &BMR_GET_SMGR(bmr)->smgr_rlocator.locator, fork,
+					  first_block + i);
 
 		hresult = (LocalBufferLookupEnt *)
 			hash_search(LocalBufHash, &tag, HASH_ENTER, &found);
@@ -456,7 +458,7 @@ ExtendBufferedRelLocal(BufferManagerRelation bmr,
 	io_start = pgstat_prepare_io_time(track_io_timing);
 
 	/* actually extend relation */
-	smgrzeroextend(bmr.smgr, fork, first_block, extend_by, false);
+	smgrzeroextend(BMR_GET_SMGR(bmr), fork, first_block, extend_by, false);
 
 	pgstat_count_io_op_time(IOOBJECT_TEMP_RELATION, IOCONTEXT_NORMAL, IOOP_EXTEND,
 							io_start, 1, extend_by * BLCKSZ);

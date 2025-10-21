@@ -883,14 +883,11 @@ ExtendBufferedRelBy(BufferManagerRelation bmr,
 					uint32 *extended_by)
 {
 	Assert((bmr.rel != NULL) != (bmr.smgr != NULL));
-	Assert(bmr.smgr == NULL || bmr.relpersistence != 0);
+	Assert(bmr.smgr == NULL || bmr.relpersistence != '\0');
 	Assert(extend_by > 0);
 
-	if (bmr.smgr == NULL)
-	{
-		bmr.smgr = RelationGetSmgr(bmr.rel);
+	if (bmr.relpersistence == '\0')
 		bmr.relpersistence = bmr.rel->rd_rel->relpersistence;
-	}
 
 	return ExtendBufferedRelCommon(bmr, fork, strategy, flags,
 								   extend_by, InvalidBlockNumber,
@@ -919,14 +916,11 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	Buffer		buffers[64];
 
 	Assert((bmr.rel != NULL) != (bmr.smgr != NULL));
-	Assert(bmr.smgr == NULL || bmr.relpersistence != 0);
+	Assert(bmr.smgr == NULL || bmr.relpersistence != '\0');
 	Assert(extend_to != InvalidBlockNumber && extend_to > 0);
 
-	if (bmr.smgr == NULL)
-	{
-		bmr.smgr = RelationGetSmgr(bmr.rel);
+	if (bmr.relpersistence == '\0')
 		bmr.relpersistence = bmr.rel->rd_rel->relpersistence;
-	}
 
 	/*
 	 * If desired, create the file if it doesn't exist.  If
@@ -934,15 +928,15 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	 * an smgrexists call.
 	 */
 	if ((flags & EB_CREATE_FORK_IF_NEEDED) &&
-		(bmr.smgr->smgr_cached_nblocks[fork] == 0 ||
-		 bmr.smgr->smgr_cached_nblocks[fork] == InvalidBlockNumber) &&
-		!smgrexists(bmr.smgr, fork))
+		(BMR_GET_SMGR(bmr)->smgr_cached_nblocks[fork] == 0 ||
+		 BMR_GET_SMGR(bmr)->smgr_cached_nblocks[fork] == InvalidBlockNumber) &&
+		!smgrexists(BMR_GET_SMGR(bmr), fork))
 	{
 		LockRelationForExtension(bmr.rel, ExclusiveLock);
 
 		/* recheck, fork might have been created concurrently */
-		if (!smgrexists(bmr.smgr, fork))
-			smgrcreate(bmr.smgr, fork, flags & EB_PERFORMING_RECOVERY);
+		if (!smgrexists(BMR_GET_SMGR(bmr), fork))
+			smgrcreate(BMR_GET_SMGR(bmr), fork, flags & EB_PERFORMING_RECOVERY);
 
 		UnlockRelationForExtension(bmr.rel, ExclusiveLock);
 	}
@@ -952,13 +946,13 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	 * kernel.
 	 */
 	if (flags & EB_CLEAR_SIZE_CACHE)
-		bmr.smgr->smgr_cached_nblocks[fork] = InvalidBlockNumber;
+		BMR_GET_SMGR(bmr)->smgr_cached_nblocks[fork] = InvalidBlockNumber;
 
 	/*
 	 * Estimate how many pages we'll need to extend by. This avoids acquiring
 	 * unnecessarily many victim buffers.
 	 */
-	current_size = smgrnblocks(bmr.smgr, fork);
+	current_size = smgrnblocks(BMR_GET_SMGR(bmr), fork);
 
 	/*
 	 * Since no-one else can be looking at the page contents yet, there is no
@@ -1002,7 +996,7 @@ ExtendBufferedRelTo(BufferManagerRelation bmr,
 	if (buffer == InvalidBuffer)
 	{
 		Assert(extended_by == 0);
-		buffer = ReadBuffer_common(bmr.rel, bmr.smgr, bmr.relpersistence,
+		buffer = ReadBuffer_common(bmr.rel, BMR_GET_SMGR(bmr), bmr.relpersistence,
 								   fork, extend_to - 1, mode, strategy);
 	}
 
@@ -2540,10 +2534,10 @@ ExtendBufferedRelCommon(BufferManagerRelation bmr,
 	BlockNumber first_block;
 
 	TRACE_POSTGRESQL_BUFFER_EXTEND_START(fork,
-										 bmr.smgr->smgr_rlocator.locator.spcOid,
-										 bmr.smgr->smgr_rlocator.locator.dbOid,
-										 bmr.smgr->smgr_rlocator.locator.relNumber,
-										 bmr.smgr->smgr_rlocator.backend,
+										 BMR_GET_SMGR(bmr)->smgr_rlocator.locator.spcOid,
+										 BMR_GET_SMGR(bmr)->smgr_rlocator.locator.dbOid,
+										 BMR_GET_SMGR(bmr)->smgr_rlocator.locator.relNumber,
+										 BMR_GET_SMGR(bmr)->smgr_rlocator.backend,
 										 extend_by);
 
 	if (bmr.relpersistence == RELPERSISTENCE_TEMP)
@@ -2557,10 +2551,10 @@ ExtendBufferedRelCommon(BufferManagerRelation bmr,
 	*extended_by = extend_by;
 
 	TRACE_POSTGRESQL_BUFFER_EXTEND_DONE(fork,
-										bmr.smgr->smgr_rlocator.locator.spcOid,
-										bmr.smgr->smgr_rlocator.locator.dbOid,
-										bmr.smgr->smgr_rlocator.locator.relNumber,
-										bmr.smgr->smgr_rlocator.backend,
+										BMR_GET_SMGR(bmr)->smgr_rlocator.locator.spcOid,
+										BMR_GET_SMGR(bmr)->smgr_rlocator.locator.dbOid,
+										BMR_GET_SMGR(bmr)->smgr_rlocator.locator.relNumber,
+										BMR_GET_SMGR(bmr)->smgr_rlocator.backend,
 										*extended_by,
 										first_block);
 
@@ -2626,9 +2620,9 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 	 * kernel.
 	 */
 	if (flags & EB_CLEAR_SIZE_CACHE)
-		bmr.smgr->smgr_cached_nblocks[fork] = InvalidBlockNumber;
+		BMR_GET_SMGR(bmr)->smgr_cached_nblocks[fork] = InvalidBlockNumber;
 
-	first_block = smgrnblocks(bmr.smgr, fork);
+	first_block = smgrnblocks(BMR_GET_SMGR(bmr), fork);
 
 	/*
 	 * Now that we have the accurate relation size, check if the caller wants
@@ -2666,7 +2660,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend relation %s beyond %u blocks",
-						relpath(bmr.smgr->smgr_rlocator, fork).str,
+						relpath(BMR_GET_SMGR(bmr)->smgr_rlocator, fork).str,
 						MaxBlockNumber)));
 
 	/*
@@ -2688,7 +2682,8 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 		ResourceOwnerEnlarge(CurrentResourceOwner);
 		ReservePrivateRefCountEntry();
 
-		InitBufferTag(&tag, &bmr.smgr->smgr_rlocator.locator, fork, first_block + i);
+		InitBufferTag(&tag, &BMR_GET_SMGR(bmr)->smgr_rlocator.locator, fork,
+					  first_block + i);
 		hash = BufTableHashCode(&tag);
 		partition_lock = BufMappingPartitionLock(hash);
 
@@ -2730,7 +2725,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 				ereport(ERROR,
 						(errmsg("unexpected data beyond EOF in block %u of relation \"%s\"",
 								existing_hdr->tag.blockNum,
-								relpath(bmr.smgr->smgr_rlocator, fork).str)));
+								relpath(BMR_GET_SMGR(bmr)->smgr_rlocator, fork).str)));
 
 			/*
 			 * We *must* do smgr[zero]extend before succeeding, else the page
@@ -2787,7 +2782,7 @@ ExtendBufferedRelShared(BufferManagerRelation bmr,
 	 *
 	 * We don't need to set checksum for all-zero pages.
 	 */
-	smgrzeroextend(bmr.smgr, fork, first_block, extend_by, false);
+	smgrzeroextend(BMR_GET_SMGR(bmr), fork, first_block, extend_by, false);
 
 	/*
 	 * Release the file-extension lock; it's now OK for someone else to extend

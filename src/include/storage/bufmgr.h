@@ -98,8 +98,11 @@ typedef struct SMgrRelationData *SMgrRelation;
 
 /*
  * Some functions identify relations either by relation or smgr +
- * relpersistence.  Used via the BMR_REL()/BMR_SMGR() macros below.  This
- * allows us to use the same function for both recovery and normal operation.
+ * relpersistence, initialized via the BMR_REL()/BMR_SMGR() macros below.
+ * This allows us to use the same function for both recovery and normal
+ * operation.  When BMR_REL is used, it's not valid to cache its rd_smgr here,
+ * because our pointer would be obsolete in case of relcache invalidation.
+ * For simplicity, use BMR_GET_SMGR to read the smgr.
  */
 typedef struct BufferManagerRelation
 {
@@ -108,8 +111,12 @@ typedef struct BufferManagerRelation
 	char		relpersistence;
 } BufferManagerRelation;
 
-#define BMR_REL(p_rel) ((BufferManagerRelation){.rel = p_rel})
-#define BMR_SMGR(p_smgr, p_relpersistence) ((BufferManagerRelation){.smgr = p_smgr, .relpersistence = p_relpersistence})
+#define BMR_REL(p_rel) \
+	((BufferManagerRelation){.rel = p_rel})
+#define BMR_SMGR(p_smgr, p_relpersistence) \
+	((BufferManagerRelation){.smgr = p_smgr, .relpersistence = p_relpersistence})
+#define BMR_GET_SMGR(bmr) \
+	(RelationIsValid((bmr).rel) ? RelationGetSmgr((bmr).rel) : (bmr).smgr)
 
 /* Zero out page if reading fails. */
 #define READ_BUFFERS_ZERO_ON_ERROR (1 << 0)
