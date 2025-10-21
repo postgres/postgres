@@ -935,15 +935,14 @@ select a, b, count(*) from gstest2 group by rollup(a), b having b > 1;
 -- test pushdown of degenerate HAVING clause
 explain (costs off)
 select count(*) from gstest2 group by grouping sets (()) having false;
-            QUERY PLAN             
------------------------------------
+           QUERY PLAN           
+--------------------------------
  Aggregate
    Group Key: ()
    Filter: false
    ->  Result
-         Replaces: Scan on gstest2
          One-Time Filter: false
-(6 rows)
+(5 rows)
 
 select count(*) from gstest2 group by grouping sets (()) having false;
  count 
@@ -952,8 +951,8 @@ select count(*) from gstest2 group by grouping sets (()) having false;
 
 explain (costs off)
 select a, count(*) from gstest2 group by grouping sets ((a), ()) having false;
-               QUERY PLAN                
------------------------------------------
+              QUERY PLAN              
+--------------------------------------
  GroupAggregate
    Group Key: a
    Group Key: ()
@@ -961,9 +960,8 @@ select a, count(*) from gstest2 group by grouping sets ((a), ()) having false;
    ->  Sort
          Sort Key: a
          ->  Result
-               Replaces: Scan on gstest2
                One-Time Filter: false
-(9 rows)
+(8 rows)
 
 select a, count(*) from gstest2 group by grouping sets ((a), ()) having false;
  a | count 
@@ -972,8 +970,8 @@ select a, count(*) from gstest2 group by grouping sets ((a), ()) having false;
 
 explain (costs off)
 select a, b, count(*) from gstest2 group by grouping sets ((a), (b)) having false;
-               QUERY PLAN                
------------------------------------------
+              QUERY PLAN              
+--------------------------------------
  GroupAggregate
    Group Key: a
    Sort Key: b
@@ -981,9 +979,8 @@ select a, b, count(*) from gstest2 group by grouping sets ((a), (b)) having fals
    ->  Sort
          Sort Key: a
          ->  Result
-               Replaces: Scan on gstest2
                One-Time Filter: false
-(9 rows)
+(8 rows)
 
 select a, b, count(*) from gstest2 group by grouping sets ((a), (b)) having false;
  a | b | count 
