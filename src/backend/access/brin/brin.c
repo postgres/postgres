@@ -535,7 +535,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 
 		MemoryContextResetAndDeleteChildren(perRangeCxt);
 
-		tup = brinGetTupleForHeapBlock(opaque->bo_rmAccess, (BlockNumber ) heapBlk, &buf,
+		tup = brinGetTupleForHeapBlock(opaque->bo_rmAccess, (BlockNumber) heapBlk, &buf,
 									   &off, &size, BUFFER_LOCK_SHARE,
 									   scan->xs_snapshot);
 		if (tup)
@@ -711,7 +711,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 		/* add the pages in the range to the output bitmap, if needed */
 		if (addrange)
 		{
-			uint64 pageno;
+			uint64		pageno;
 
 			for (pageno = heapBlk;
 				 pageno <= Min(nblocks, heapBlk + opaque->bo_pagesPerRange) - 1;
