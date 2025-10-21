@@ -99,6 +99,9 @@ static int	strncoll_libc_win32_utf8(const char *arg1, ssize_t len1,
 									 pg_locale_t locale);
 #endif
 
+static size_t char2wchar(wchar_t *to, size_t tolen, const char *from,
+						 size_t fromlen, locale_t loc);
+
 static size_t strlower_libc_sb(char *dest, size_t destsize,
 							   const char *src, ssize_t srclen,
 							   pg_locale_t locale);
@@ -1206,7 +1209,7 @@ wchar2char(char *to, const wchar_t *from, size_t tolen, locale_t loc)
  * input encoding.  tolen is the maximum number of wchar_t's to store at *to.
  * The output will be zero-terminated iff there is room.
  */
-size_t
+static size_t
 char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 		   locale_t loc)
 {

@@ -139,10 +139,8 @@ struct ctype_methods
  * "default" collation, there are separate static cache variables, since
  * consulting the pg_collation catalog doesn't tell us what we need.
  *
- * Note that some code relies on the flags not reporting false negatives
- * (that is, saying it's not C when it is).  For example, char2wchar()
- * could fail if the locale is C, so str_tolower() shouldn't call it
- * in that case.
+ * Note that some code, such as wchar2char(), relies on the flags not
+ * reporting false negatives (that is, saying it's not C when it is).
  */
 struct pg_locale_struct
 {
@@ -226,10 +224,8 @@ extern void icu_validate_locale(const char *loc_str);
 extern char *icu_language_tag(const char *loc_str, int elevel);
 extern void report_newlocale_failure(const char *localename);
 
-/* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
+/* This function converts from libc's wchar_t, *not* pg_wchar_t */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,
 						 locale_t loc);
-extern size_t char2wchar(wchar_t *to, size_t tolen,
-						 const char *from, size_t fromlen, locale_t loc);
 
 #endif							/* _PG_LOCALE_ */
