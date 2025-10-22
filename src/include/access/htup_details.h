@@ -264,19 +264,19 @@ HEAP_LOCKED_UPGRADED(uint16 infomask)
  * Use these to test whether a particular lock is applied to a tuple
  */
 static inline bool
-HEAP_XMAX_IS_SHR_LOCKED(int16 infomask)
+HEAP_XMAX_IS_SHR_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_SHR_LOCK;
 }
 
 static inline bool
-HEAP_XMAX_IS_EXCL_LOCKED(int16 infomask)
+HEAP_XMAX_IS_EXCL_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_EXCL_LOCK;
 }
 
 static inline bool
-HEAP_XMAX_IS_KEYSHR_LOCKED(int16 infomask)
+HEAP_XMAX_IS_KEYSHR_LOCKED(uint16 infomask)
 {
 	return (infomask & HEAP_LOCK_MASK) == HEAP_XMAX_KEYSHR_LOCK;
 }
