@@ -69,8 +69,10 @@ typedef struct WindowObjectData
 	int			readptr;		/* tuplestore read pointer for this fn */
 	int64		markpos;		/* row that markptr is positioned on */
 	int64		seekpos;		/* row that readptr is positioned on */
-	uint8	   *notnull_info;	/* not null info */
-	int			num_notnull_info;	/* track size of the notnull_info array */
+	uint8	  **notnull_info;	/* not null info for each func args */
+	int64	   *num_notnull_info;	/* track size (number of tuples in
+									 * partition) of the notnull_info array
+									 * for each func args */
 
 	/*
 	 * Null treatment options. One of: NO_NULLTREATMENT, PARSER_IGNORE_NULLS,
@@ -214,10 +216,14 @@ static Datum ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 static Datum gettuple_eval_partition(WindowObject winobj, int argno,
 									 int64 abs_pos, bool *isnull,
 									 bool *isout);
-static void init_notnull_info(WindowObject winobj);
-static void grow_notnull_info(WindowObject winobj, int64 pos);
-static uint8 get_notnull_info(WindowObject winobj, int64 pos);
-static void put_notnull_info(WindowObject winobj, int64 pos, bool isnull);
+static void init_notnull_info(WindowObject winobj,
+							  WindowStatePerFunc perfuncstate);
+static void grow_notnull_info(WindowObject winobj,
+							  int64 pos, int argno);
+static uint8 get_notnull_info(WindowObject winobj,
+							  int64 pos, int argno);
+static void put_notnull_info(WindowObject winobj,
+							 int64 pos, int argno, bool isnull);
 
 /*
  * Not null info bit array consists of 2-bit items
@@ -1303,10 +1309,20 @@ begin_partition(WindowAggState *winstate)
 			winobj->seekpos = -1;
 
 			/* reset null map */
-			if (winobj->ignore_nulls == IGNORE_NULLS)
-				memset(winobj->notnull_info, 0,
-					   NN_POS_TO_BYTES(
-									   perfuncstate->winobj->num_notnull_info));
+			if (winobj->ignore_nulls == IGNORE_NULLS ||
+				winobj->ignore_nulls == PARSER_IGNORE_NULLS)
+			{
+				int			numargs = perfuncstate->numArguments;
+
+				for (int j = 0; j < numargs; j++)
+				{
+					int			n = winobj->num_notnull_info[j];
+
+					if (n > 0)
+						memset(winobj->notnull_info[j], 0,
+							   NN_POS_TO_BYTES(n));
+				}
+			}
 		}
 	}
 
@@ -2734,7 +2750,7 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 			winobj->localmem = NULL;
 			perfuncstate->winobj = winobj;
 			winobj->ignore_nulls = wfunc->ignore_nulls;
-			init_notnull_info(winobj);
+			init_notnull_info(winobj, perfuncstate);
 
 			/* It's a real window function, so set up to call it. */
 			fmgr_info_cxt(wfunc->winfnoid, &perfuncstate->flinfo,
@@ -3387,7 +3403,7 @@ ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 		if (isout)
 			*isout = false;
 
-		v = get_notnull_info(winobj, abs_pos);
+		v = get_notnull_info(winobj, abs_pos, argno);
 		if (v == NN_NULL)		/* this row is known to be NULL */
 			goto advance;
 
@@ -3405,7 +3421,7 @@ ignorenulls_getfuncarginframe(WindowObject winobj, int argno,
 				notnull_offset++;
 
 			/* record the row status */
-			put_notnull_info(winobj, abs_pos, *isnull);
+			put_notnull_info(winobj, abs_pos, argno, *isnull);
 		}
 		else					/* this row is known to be NOT NULL */
 		{
@@ -3445,17 +3461,14 @@ out_of_frame:
  * Initialize non null map.
  */
 static void
-init_notnull_info(WindowObject winobj)
+init_notnull_info(WindowObject winobj, WindowStatePerFunc perfuncstate)
 {
-/* initial number of notnull info members */
-#define	INIT_NOT_NULL_INFO_NUM	128
+	int			numargs = perfuncstate->numArguments;
 
 	if (winobj->ignore_nulls == PARSER_IGNORE_NULLS)
 	{
-		Size		size = NN_POS_TO_BYTES(INIT_NOT_NULL_INFO_NUM);
-
-		winobj->notnull_info = palloc0(size);
-		winobj->num_notnull_info = INIT_NOT_NULL_INFO_NUM;
+		winobj->notnull_info = palloc0(sizeof(uint8 *) * numargs);
+		winobj->num_notnull_info = palloc0(sizeof(int64) * numargs);
 	}
 }
 
@@ -3463,23 +3476,43 @@ init_notnull_info(WindowObject winobj)
  * grow_notnull_info
  * expand notnull_info if necessary.
  * pos: not null info position
+ * argno: argument number
 */
 static void
-grow_notnull_info(WindowObject winobj, int64 pos)
+grow_notnull_info(WindowObject winobj, int64 pos, int argno)
 {
-	if (pos >= winobj->num_notnull_info)
+/* initial number of notnull info members */
+#define	INIT_NOT_NULL_INFO_NUM	128
+
+	if (pos >= winobj->num_notnull_info[argno])
 	{
+		/* We may be called in a short-lived context */
+		MemoryContext oldcontext = MemoryContextSwitchTo
+			(winobj->winstate->ss.ps.ps_ExprContext->ecxt_per_query_memory);
+
 		for (;;)
 		{
-			Size		oldsize = NN_POS_TO_BYTES(winobj->num_notnull_info);
-			Size		newsize = oldsize * 2;
+			Size		oldsize = NN_POS_TO_BYTES
+				(winobj->num_notnull_info[argno]);
+			Size		newsize;
 
-			winobj->notnull_info =
-				repalloc0(winobj->notnull_info, oldsize, newsize);
-			winobj->num_notnull_info = NN_BYTES_TO_POS(newsize);
-			if (winobj->num_notnull_info > pos)
+			if (oldsize == 0)	/* memory has not been allocated yet for this
+								 * arg */
+			{
+				newsize = NN_POS_TO_BYTES(INIT_NOT_NULL_INFO_NUM);
+				winobj->notnull_info[argno] = palloc0(newsize);
+			}
+			else
+			{
+				newsize = oldsize * 2;
+				winobj->notnull_info[argno] =
+					repalloc0(winobj->notnull_info[argno], oldsize, newsize);
+			}
+			winobj->num_notnull_info[argno] = NN_BYTES_TO_POS(newsize);
+			if (winobj->num_notnull_info[argno] > pos)
 				break;
 		}
+		MemoryContextSwitchTo(oldcontext);
 	}
 }
 
@@ -3487,16 +3520,19 @@ grow_notnull_info(WindowObject winobj, int64 pos)
  * get_notnull_info
  * retrieve a map
  * pos: map position
+ * argno: argument number
  */
 static uint8
-get_notnull_info(WindowObject winobj, int64 pos)
+get_notnull_info(WindowObject winobj, int64 pos, int argno)
 {
+	uint8	   *mbp;
 	uint8		mb;
 	int64		bpos;
 
-	grow_notnull_info(winobj, pos);
+	grow_notnull_info(winobj, pos, argno);
 	bpos = NN_POS_TO_BYTES(pos);
-	mb = winobj->notnull_info[bpos];
+	mbp = winobj->notnull_info[argno];
+	mb = mbp[bpos];
 	return (mb >> (NN_SHIFT(pos))) & NN_MASK;
 }
 
@@ -3504,22 +3540,26 @@ get_notnull_info(WindowObject winobj, int64 pos)
  * put_notnull_info
  * update map
  * pos: map position
+ * argno: argument number
+ * isnull: indicate NULL or NOT
  */
 static void
-put_notnull_info(WindowObject winobj, int64 pos, bool isnull)
+put_notnull_info(WindowObject winobj, int64 pos, int argno, bool isnull)
 {
+	uint8	   *mbp;
 	uint8		mb;
 	int64		bpos;
 	uint8		val = isnull ? NN_NULL : NN_NOTNULL;
 	int			shift;
 
-	grow_notnull_info(winobj, pos);
+	grow_notnull_info(winobj, pos, argno);
 	bpos = NN_POS_TO_BYTES(pos);
-	mb = winobj->notnull_info[bpos];
+	mbp = winobj->notnull_info[argno];
+	mb = mbp[bpos];
 	shift = NN_SHIFT(pos);
 	mb &= ~(NN_MASK << shift);	/* clear map */
 	mb |= (val << shift);		/* update map */
-	winobj->notnull_info[bpos] = mb;
+	mbp[bpos] = mb;
 }
 
 /***********************************************************************
@@ -3714,6 +3754,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 {
 	WindowAggState *winstate;
 	int64		abs_pos;
+	int64		mark_pos;
 	Datum		datum;
 	bool		null_treatment;
 	int			notnull_offset;
@@ -3771,6 +3812,25 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	datum = 0;
 
 	/*
+	 * IGNORE NULLS + WINDOW_SEEK_CURRENT + relpos > 0 case, we would fetch
+	 * beyond the current row + relpos to find out the target row. If we mark
+	 * at abs_pos, next call to WinGetFuncArgInPartition or
+	 * WinGetFuncArgInFrame (in case when a window function have multiple
+	 * args) could fail with "cannot fetch row before WindowObject's mark
+	 * position". So keep the mark position at currentpos.
+	 */
+	if (seektype == WINDOW_SEEK_CURRENT && relpos > 0)
+		mark_pos = winstate->currentpos;
+	else
+
+		/*
+		 * For other cases we have no idea what position of row callers would
+		 * fetch next time. Also for relpos < 0 case (we go backward), we
+		 * cannot set mark either. For those cases we always set mark at 0.
+		 */
+		mark_pos = 0;
+
+	/*
 	 * Get the next nonnull value in the partition, moving forward or backward
 	 * until we find a value or reach the partition's end.  We cache the
 	 * nullness status because we may repeat this process many times.
@@ -3784,7 +3844,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			break;
 
 		/* check NOT NULL cached info */
-		nn_info = get_notnull_info(winobj, abs_pos);
+		nn_info = get_notnull_info(winobj, abs_pos, argno);
 		if (nn_info == NN_NOTNULL)	/* this row is known to be NOT NULL */
 			notnull_offset++;
 		else if (nn_info == NN_NULL)	/* this row is known to be NULL */
@@ -3805,7 +3865,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 			if (!*isnull)
 				notnull_offset++;
 			/* record the row status */
-			put_notnull_info(winobj, abs_pos, *isnull);
+			put_notnull_info(winobj, abs_pos, argno, *isnull);
 		}
 	} while (notnull_offset < notnull_relpos);
 
@@ -3813,7 +3873,7 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	datum = gettuple_eval_partition(winobj, argno,
 									abs_pos, isnull, &myisout);
 	if (!myisout && set_mark)
-		WinSetMarkPosition(winobj, abs_pos);
+		WinSetMarkPosition(winobj, mark_pos);
 	if (isout)
 		*isout = myisout;
 
