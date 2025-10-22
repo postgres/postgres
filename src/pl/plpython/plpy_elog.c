@@ -571,7 +571,7 @@ get_string_attr(PyObject *obj, char *attrname, char **str)
 	val = PyObject_GetAttrString(obj, attrname);
 	if (val != NULL && val != Py_None)
 	{
-		*str = pstrdup(PLyUnicode_AsString(val));
+		*str = PLyUnicode_AsString(val);
 	}
 	Py_XDECREF(val);
 }
