@@ -78,6 +78,17 @@ SELECT num_nonnulls();
 SELECT num_nulls();
 
 --
+-- error_on_null()
+--
+
+SELECT error_on_null(1);
+SELECT error_on_null(NULL::int);
+SELECT error_on_null(NULL::int[]);
+SELECT error_on_null('{1,2,NULL,3}'::int[]);
+SELECT error_on_null(ROW(1,NULL::int));
+SELECT error_on_null(ROW(NULL,NULL));
+
+--
 -- canonicalize_path()
 --
 

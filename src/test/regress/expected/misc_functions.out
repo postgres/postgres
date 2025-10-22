@@ -178,6 +178,37 @@ LINE 1: SELECT num_nulls();
                ^
 DETAIL:  No function of that name accepts the given number of arguments.
 --
+-- error_on_null()
+--
+SELECT error_on_null(1);
+ error_on_null 
+---------------
+             1
+(1 row)
+
+SELECT error_on_null(NULL::int);
+ERROR:  null value not allowed
+SELECT error_on_null(NULL::int[]);
+ERROR:  null value not allowed
+SELECT error_on_null('{1,2,NULL,3}'::int[]);
+ error_on_null 
+---------------
+ {1,2,NULL,3}
+(1 row)
+
+SELECT error_on_null(ROW(1,NULL::int));
+ error_on_null 
+---------------
+ (1,)
+(1 row)
+
+SELECT error_on_null(ROW(NULL,NULL));
+ error_on_null 
+---------------
+ (,)
+(1 row)
+
+--
 -- canonicalize_path()
 --
 CREATE FUNCTION test_canonicalize_path(text)

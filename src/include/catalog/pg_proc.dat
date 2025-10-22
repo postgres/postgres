@@ -12543,6 +12543,9 @@
 { oid => '6292', descr => 'aggregate transition function',
   proname => 'any_value_transfn', prorettype => 'anyelement',
   proargtypes => 'anyelement anyelement', prosrc => 'any_value_transfn' },
+{ oid => '8488', descr => 'check if input is the null value',
+  proname => 'error_on_null', proisstrict => 'f', prorettype => 'anyelement',
+  proargtypes => 'anyelement', prosrc => 'pg_error_on_null' },
 
 { oid => '6321', descr => 'list of available WAL summary files',
   proname => 'pg_available_wal_summaries', prorows => '100', proretset => 't',
