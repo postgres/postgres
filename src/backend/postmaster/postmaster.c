@@ -1557,13 +1557,21 @@ DetermineSleepTime(void)
 	{
 		if (AbortStartTime != 0)
 		{
+			time_t		curtime = time(NULL);
 			int			seconds;
 
-			/* time left to abort; clamp to 0 in case it already expired */
-			seconds = SIGKILL_CHILDREN_AFTER_SECS -
-				(time(NULL) - AbortStartTime);
+			/*
+			 * time left to abort; clamp to 0 if it already expired, or if
+			 * time goes backwards
+			 */
+			if (curtime < AbortStartTime ||
+				curtime - AbortStartTime >= SIGKILL_CHILDREN_AFTER_SECS)
+				seconds = 0;
+			else
+				seconds = SIGKILL_CHILDREN_AFTER_SECS -
+					(curtime - AbortStartTime);
 
-			return Max(seconds * 1000, 0);
+			return seconds * 1000;
 		}
 		else
 			return 60 * 1000;
