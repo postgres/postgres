@@ -18,6 +18,15 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+24f6c1bd41d0631a04cc956cc8cafa0b117ab625
+#
+# Fix the handling of two GUCs during upgrade.
+# 2025-07-11 09:53:34 +0530
+#
+# GUC check function check_max_slot_wal_keep_size() was removed since it was
+# no longer needed. It seems highly improbable that any extension would be
+# calling it.
+
 45c357e0e85d2dffe7af5440806150124a725a01
 #
 # Fix re-distributing previously distributed invalidation messages during logical decoding.
