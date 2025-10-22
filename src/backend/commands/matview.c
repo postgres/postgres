@@ -61,7 +61,6 @@ static void transientrel_shutdown(DestReceiver *self);
 static void transientrel_destroy(DestReceiver *self);
 static uint64 refresh_matview_datafill(DestReceiver *dest, Query *query,
 									   const char *queryString, bool is_create);
-static char *make_temptable_name_n(char *tempname, int n);
 static void refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 								   int save_sec_context);
 static void refresh_by_heap_swap(Oid matviewOid, Oid OIDNewHeap, char relpersistence);
@@ -556,28 +555,6 @@ transientrel_destroy(DestReceiver *self)
 	pfree(self);
 }
 
-
-/*
- * Given a qualified temporary table name, append an underscore followed by
- * the given integer, to make a new table name based on the old one.
- * The result is a palloc'd string.
- *
- * As coded, this would fail to make a valid SQL name if the given name were,
- * say, "FOO"."BAR".  Currently, the table name portion of the input will
- * never be double-quoted because it's of the form "pg_temp_NNN", cf
- * make_new_heap().  But we might have to work harder someday.
- */
-static char *
-make_temptable_name_n(char *tempname, int n)
-{
-	StringInfoData namebuf;
-
-	initStringInfo(&namebuf);
-	appendStringInfoString(&namebuf, tempname);
-	appendStringInfo(&namebuf, "_%d", n);
-	return namebuf.data;
-}
-
 /*
  * refresh_by_match_merge
  *
@@ -620,6 +597,9 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	char	   *matviewname;
 	char	   *tempname;
 	char	   *diffname;
+	char	   *temprelname;
+	char	   *diffrelname;
+	char	   *nsp;
 	TupleDesc	tupdesc;
 	bool		foundUniqueIndex;
 	List	   *indexoidlist;
@@ -632,9 +612,17 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	matviewname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(matviewRel)),
 											 RelationGetRelationName(matviewRel));
 	tempRel = table_open(tempOid, NoLock);
-	tempname = quote_qualified_identifier(get_namespace_name(RelationGetNamespace(tempRel)),
-										  RelationGetRelationName(tempRel));
-	diffname = make_temptable_name_n(tempname, 2);
+
+	/*
+	 * Build qualified names of the temporary table and the diff table.  The
+	 * only difference between them is the "_2" suffix on the diff table name.
+	 */
+	nsp = get_namespace_name(RelationGetNamespace(tempRel));
+	temprelname = RelationGetRelationName(tempRel);
+	diffrelname = psprintf("%s_2", temprelname);
+
+	tempname = quote_qualified_identifier(nsp, temprelname);
+	diffname = quote_qualified_identifier(nsp, diffrelname);
 
 	relnatts = RelationGetNumberOfAttributes(matviewRel);
 
