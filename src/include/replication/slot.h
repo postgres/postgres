@@ -321,6 +321,9 @@ extern void ReplicationSlotInitialize(void);
 extern bool ReplicationSlotValidateName(const char *name,
 										bool allow_reserved_name,
 										int elevel);
+extern bool ReplicationSlotValidateNameInternal(const char *name,
+												bool allow_reserved_name,
+												int *err_code, char **err_msg, char **err_hint);
 extern void ReplicationSlotReserveWal(void);
 extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
 extern void ReplicationSlotsComputeRequiredLSN(void);

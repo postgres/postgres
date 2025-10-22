@@ -4761,9 +4761,20 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 bool
 check_primary_slot_name(char **newval, void **extra, GucSource source)
 {
+	int			err_code;
+	char	   *err_msg = NULL;
+	char	   *err_hint = NULL;
+
 	if (*newval && strcmp(*newval, "") != 0 &&
-		!ReplicationSlotValidateName(*newval, false, WARNING))
+		!ReplicationSlotValidateNameInternal(*newval, false, &err_code,
+											 &err_msg, &err_hint))
+	{
+		GUC_check_errcode(err_code);
+		GUC_check_errdetail("%s", err_msg);
+		if (err_hint != NULL)
+			GUC_check_errhint("%s", err_hint);
 		return false;
+	}
 
 	return true;
 }
