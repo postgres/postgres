@@ -40,6 +40,7 @@ static SimpleStringList *retrieve_objects(PGconn *conn,
 										  vacuumingOptions *vacopts,
 										  SimpleStringList *objects,
 										  bool echo);
+static void free_retrieved_objects(SimpleStringList *list);
 static void prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
 								   vacuumingOptions *vacopts, const char *table);
 static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
@@ -101,9 +102,13 @@ vacuuming_main(ConnParams *cparams, const char *dbname,
 										  concurrentCons,
 										  progname, echo, quiet);
 				if (ret != 0)
+				{
+					free_retrieved_objects(found_objs);
 					return ret;
+				}
 			}
 
+			free_retrieved_objects(found_objs);
 			return EXIT_SUCCESS;
 		}
 		else
@@ -171,6 +176,7 @@ vacuum_one_database(ConnParams *cparams,
 	int			ntups = 0;
 	const char *initcmd;
 	SimpleStringList *retobjs = NULL;
+	bool		free_retobjs = false;
 	int			ret = EXIT_SUCCESS;
 	const char *stage_commands[] = {
 		"SET default_statistics_target=1; SET vacuum_cost_delay=0;",
@@ -289,7 +295,8 @@ vacuum_one_database(ConnParams *cparams,
 	/*
 	 * If the caller provided the results of a previous catalog query, just
 	 * use that.  Otherwise, run the catalog query ourselves and set the
-	 * return variable if provided.
+	 * return variable if provided.  (If it is, then freeing the string list
+	 * becomes the caller's responsibility.)
 	 */
 	if (found_objs && *found_objs)
 		retobjs = *found_objs;
@@ -298,18 +305,22 @@ vacuum_one_database(ConnParams *cparams,
 		retobjs = retrieve_objects(conn, vacopts, objects, echo);
 		if (found_objs)
 			*found_objs = retobjs;
+		else
+			free_retobjs = true;
 	}
 
 	/*
 	 * Count the number of objects in the catalog query result.  If there are
 	 * none, we are done.
 	 */
-	for (cell = retobjs ? retobjs->head : NULL; cell; cell = cell->next)
+	for (cell = retobjs->head; cell; cell = cell->next)
 		ntups++;
 
 	if (ntups == 0)
 	{
 		PQfinish(conn);
+		if (free_retobjs)
+			free_retrieved_objects(retobjs);
 		return EXIT_SUCCESS;
 	}
 
@@ -407,6 +418,8 @@ finish:
 	ParallelSlotsTerminate(sa);
 	pg_free(sa);
 	termPQExpBuffer(&sql);
+	if (free_retobjs)
+		free_retrieved_objects(retobjs);
 
 	return ret;
 }
@@ -425,13 +438,16 @@ vacuum_all_databases(ConnParams *cparams,
 					 int concurrentCons,
 					 const char *progname, bool echo, bool quiet)
 {
+	int			ret = EXIT_SUCCESS;
 	PGconn	   *conn;
 	PGresult   *result;
+	int			numdbs;
 
 	conn = connectMaintenanceDatabase(cparams, progname, echo);
 	result = executeQuery(conn,
 						  "SELECT datname FROM pg_database WHERE datallowconn AND datconnlimit <> -2 ORDER BY 1;",
 						  echo);
+	numdbs = PQntuples(result);
 	PQfinish(conn);
 
 	if (vacopts->mode == MODE_ANALYZE_IN_STAGES)
@@ -439,7 +455,7 @@ vacuum_all_databases(ConnParams *cparams,
 		SimpleStringList **found_objs = NULL;
 
 		if (vacopts->missing_stats_only)
-			found_objs = palloc0(PQntuples(result) * sizeof(SimpleStringList *));
+			found_objs = palloc0(numdbs * sizeof(SimpleStringList *));
 
 		/*
 		 * When analyzing all databases in stages, we analyze them all in the
@@ -451,10 +467,8 @@ vacuum_all_databases(ConnParams *cparams,
 		 */
 		for (int stage = 0; stage < ANALYZE_NUM_STAGES; stage++)
 		{
-			for (int i = 0; i < PQntuples(result); i++)
+			for (int i = 0; i < numdbs; i++)
 			{
-				int			ret;
-
 				cparams->override_dbname = PQgetvalue(result, i, 0);
 				ret = vacuum_one_database(cparams, vacopts, stage,
 										  objects,
@@ -462,16 +476,23 @@ vacuum_all_databases(ConnParams *cparams,
 										  concurrentCons,
 										  progname, echo, quiet);
 				if (ret != EXIT_SUCCESS)
-					return ret;
+					break;
 			}
+			if (ret != EXIT_SUCCESS)
+				break;
+		}
+
+		if (vacopts->missing_stats_only)
+		{
+			for (int i = 0; i < numdbs; i++)
+				free_retrieved_objects(found_objs[i]);
+			pg_free(found_objs);
 		}
 	}
 	else
 	{
-		for (int i = 0; i < PQntuples(result); i++)
+		for (int i = 0; i < numdbs; i++)
 		{
-			int			ret;
-
 			cparams->override_dbname = PQgetvalue(result, i, 0);
 			ret = vacuum_one_database(cparams, vacopts,
 									  ANALYZE_NO_STAGE,
@@ -480,13 +501,13 @@ vacuum_all_databases(ConnParams *cparams,
 									  concurrentCons,
 									  progname, echo, quiet);
 			if (ret != EXIT_SUCCESS)
-				return ret;
+				break;
 		}
 	}
 
 	PQclear(result);
 
-	return EXIT_SUCCESS;
+	return ret;
 }
 
 /*
@@ -782,6 +803,22 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	PQclear(res);
 
 	return found_objs;
+}
+
+/*
+ * Free the results of retrieve_objects().
+ *
+ * For caller convenience, we allow the argument to be NULL,
+ * although retrieve_objects() will never return that.
+ */
+static void
+free_retrieved_objects(SimpleStringList *list)
+{
+	if (list)
+	{
+		simple_string_list_destroy(list);
+		pg_free(list);
+	}
 }
 
 /*
