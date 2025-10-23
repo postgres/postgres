@@ -1,9 +1,11 @@
+# Copyright (c) 2025, PostgreSQL Global Development Group
+#
+# Test that vacuum prunes away all dead tuples killed before OldestXmin
+
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use Test::More;
-
-# Test that vacuum prunes away all dead tuples killed before OldestXmin
 
 # Set up nodes
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
