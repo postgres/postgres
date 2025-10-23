@@ -8199,16 +8199,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </indexterm>
 
   <para>
-   The catalog <structname>pg_subscription_rel</structname> contains the
-   state for each replicated relation in each subscription.  This is a
-   many-to-many mapping.
+   The catalog <structname>pg_subscription_rel</structname> stores the
+   state of each replicated table and sequence for each subscription.  This
+   is a many-to-many mapping.
   </para>
 
   <para>
-   This catalog only contains tables known to the subscription after running
-   either <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link> or
-   <link linkend="sql-altersubscription"><command>ALTER SUBSCRIPTION ... REFRESH
-   PUBLICATION</command></link>.
+   This catalog contains tables and sequences known to the subscription
+   after running:
+   <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>,
+   <link linkend="sql-altersubscription-params-refresh-publication">
+   <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>, or
+   <link linkend="sql-altersubscription-params-refresh-sequences">
+   <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.
   </para>
 
   <table>
@@ -8242,7 +8245,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)
       </para>
       <para>
-       Reference to relation
+       Reference to table or sequence
       </para></entry>
      </row>
 
@@ -8251,12 +8254,20 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>srsubstate</structfield> <type>char</type>
       </para>
       <para>
-       State code:
+       State code for the table or sequence.
+      </para>
+      <para>
+       State codes for tables:
        <literal>i</literal> = initialize,
        <literal>d</literal> = data is being copied,
        <literal>f</literal> = finished table copy,
        <literal>s</literal> = synchronized,
        <literal>r</literal> = ready (normal replication)
+      </para>
+      <para>
+       State codes for sequences:
+       <literal>i</literal> = initialize,
+       <literal>r</literal> = ready
       </para></entry>
      </row>
 

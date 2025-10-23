@@ -90,7 +90,8 @@ extern char GetSubscriptionRelState(Oid subid, Oid relid, XLogRecPtr *sublsn);
 extern void RemoveSubscriptionRel(Oid subid, Oid relid);
 
 extern bool HasSubscriptionTables(Oid subid);
-extern List *GetSubscriptionRelations(Oid subid, bool not_ready);
+extern List *GetSubscriptionRelations(Oid subid, bool tables, bool sequences,
+									  bool not_ready);
 
 extern void UpdateDeadTupleRetentionStatus(Oid subid, bool active);
 

@@ -840,7 +840,7 @@ fetch_remote_table_info(char *nspname, char *relname, LogicalRepRelation *lrel,
 		/*
 		 * We don't support the case where the column list is different for
 		 * the same table when combining publications. See comments atop
-		 * fetch_table_list. So there should be only one row returned.
+		 * fetch_relation_list. So there should be only one row returned.
 		 * Although we already checked this when creating the subscription, we
 		 * still need to check here in case the column list was changed after
 		 * creating the subscription and before the sync worker is started.

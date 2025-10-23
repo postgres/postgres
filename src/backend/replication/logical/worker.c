@@ -3368,6 +3368,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	 * at CREATE/ALTER SUBSCRIPTION would be insufficient.
 	 */
 	CheckSubscriptionRelkind(partrel->rd_rel->relkind,
+							 relmapentry->remoterel.relkind,
 							 get_namespace_name(RelationGetNamespace(partrel)),
 							 RelationGetRelationName(partrel));
 
@@ -3564,6 +3565,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 
 					/* Check that new partition also has supported relkind. */
 					CheckSubscriptionRelkind(partrel_new->rd_rel->relkind,
+											 relmapentry->remoterel.relkind,
 											 get_namespace_name(RelationGetNamespace(partrel_new)),
 											 RelationGetRelationName(partrel_new));
 

@@ -708,6 +708,9 @@ logicalrep_read_rel(StringInfo in)
 	/* Read the replica identity. */
 	rel->replident = pq_getmsgbyte(in);
 
+	/* relkind is not sent */
+	rel->relkind = 0;
+
 	/* Get attribute description */
 	logicalrep_read_attrs(in, rel);
 

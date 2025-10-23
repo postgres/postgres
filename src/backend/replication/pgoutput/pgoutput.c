@@ -1137,9 +1137,9 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 	 *
 	 * Note that we don't support the case where the column list is different
 	 * for the same table when combining publications. See comments atop
-	 * fetch_table_list. But one can later change the publication so we still
-	 * need to check all the given publication-table mappings and report an
-	 * error if any publications have a different column list.
+	 * fetch_relation_list. But one can later change the publication so we
+	 * still need to check all the given publication-table mappings and report
+	 * an error if any publications have a different column list.
 	 */
 	foreach(lc, publications)
 	{

@@ -284,7 +284,7 @@ AddSubscriptionRelState(Oid subid, Oid relid, char state,
 							  ObjectIdGetDatum(relid),
 							  ObjectIdGetDatum(subid));
 	if (HeapTupleIsValid(tup))
-		elog(ERROR, "subscription table %u in subscription %u already exists",
+		elog(ERROR, "subscription relation %u in subscription %u already exists",
 			 relid, subid);
 
 	/* Form the tuple. */
@@ -478,9 +478,13 @@ RemoveSubscriptionRel(Oid subid, Oid relid)
 		 * synchronization is in progress unless the caller updates the
 		 * corresponding subscription as well. This is to ensure that we don't
 		 * leave tablesync slots or origins in the system when the
-		 * corresponding table is dropped.
+		 * corresponding table is dropped. For sequences, however, it's ok to
+		 * drop them since no separate slots or origins are created during
+		 * synchronization.
 		 */
-		if (!OidIsValid(subid) && subrel->srsubstate != SUBREL_STATE_READY)
+		if (!OidIsValid(subid) &&
+			subrel->srsubstate != SUBREL_STATE_READY &&
+			get_rel_relkind(subrel->srrelid) != RELKIND_SEQUENCE)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -517,7 +521,8 @@ HasSubscriptionTables(Oid subid)
 	Relation	rel;
 	ScanKeyData skey[1];
 	SysScanDesc scan;
-	bool		has_subrels;
+	HeapTuple	tup;
+	bool		has_subtables = false;
 
 	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
@@ -529,14 +534,27 @@ HasSubscriptionTables(Oid subid)
 	scan = systable_beginscan(rel, InvalidOid, false,
 							  NULL, 1, skey);
 
-	/* If even a single tuple exists then the subscription has tables. */
-	has_subrels = HeapTupleIsValid(systable_getnext(scan));
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_subscription_rel subrel;
+		char		relkind;
+
+		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
+		relkind = get_rel_relkind(subrel->srrelid);
+
+		if (relkind == RELKIND_RELATION ||
+			relkind == RELKIND_PARTITIONED_TABLE)
+		{
+			has_subtables = true;
+			break;
+		}
+	}
 
 	/* Cleanup */
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 
-	return has_subrels;
+	return has_subtables;
 }
 
 /*
@@ -547,7 +565,8 @@ HasSubscriptionTables(Oid subid)
  * returned list is palloc'ed in the current memory context.
  */
 List *
-GetSubscriptionRelations(Oid subid, bool not_ready)
+GetSubscriptionRelations(Oid subid, bool tables, bool sequences,
+						 bool not_ready)
 {
 	List	   *res = NIL;
 	Relation	rel;
@@ -555,6 +574,9 @@ GetSubscriptionRelations(Oid subid, bool not_ready)
 	int			nkeys = 0;
 	ScanKeyData skey[2];
 	SysScanDesc scan;
+
+	/* One or both of 'tables' and 'sequences' must be true. */
+	Assert(tables || sequences);
 
 	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
 
@@ -578,8 +600,23 @@ GetSubscriptionRelations(Oid subid, bool not_ready)
 		SubscriptionRelState *relstate;
 		Datum		d;
 		bool		isnull;
+		char		relkind;
 
 		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
+
+		/* Relation is either a sequence or a table */
+		relkind = get_rel_relkind(subrel->srrelid);
+		Assert(relkind == RELKIND_SEQUENCE || relkind == RELKIND_RELATION ||
+			   relkind == RELKIND_PARTITIONED_TABLE);
+
+		/* Skip sequences if they were not requested */
+		if ((relkind == RELKIND_SEQUENCE) && !sequences)
+			continue;
+
+		/* Skip tables if they were not requested */
+		if ((relkind == RELKIND_RELATION ||
+			 relkind == RELKIND_PARTITIONED_TABLE) && !tables)
+			continue;
 
 		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
 		relstate->relid = subrel->srrelid;

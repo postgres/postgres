@@ -10992,6 +10992,15 @@ AlterSubscriptionStmt:
 					n->options = $6;
 					$$ = (Node *) n;
 				}
+			| ALTER SUBSCRIPTION name REFRESH SEQUENCES
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+
+					n->kind = ALTER_SUBSCRIPTION_REFRESH_SEQUENCES;
+					n->subname = $3;
+					$$ = (Node *) n;
+				}
 			| ALTER SUBSCRIPTION name ADD_P PUBLICATION name_list opt_definition
 				{
 					AlterSubscriptionStmt *n =
