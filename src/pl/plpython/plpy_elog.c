@@ -143,14 +143,7 @@ PLy_elog_impl(int elevel, const char *fmt,...)
 	{
 		Py_XDECREF(exc);
 		Py_XDECREF(val);
-		/* Must release all the objects in the traceback stack */
-		while (tb != NULL && tb != Py_None)
-		{
-			PyObject   *tb_prev = tb;
-
-			tb = PyObject_GetAttrString(tb, "tb_next");
-			Py_DECREF(tb_prev);
-		}
+		Py_XDECREF(tb);
 		/* For neatness' sake, also release our string buffers */
 		if (fmt)
 			pfree(emsg.data);
@@ -343,6 +336,17 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 		tb = PyObject_GetAttrString(tb, "tb_next");
 		if (tb == NULL)
 			elog(ERROR, "could not traverse Python traceback");
+
+		/*
+		 * Release the refcount that PyObject_GetAttrString acquired on the
+		 * next frame object.  We don't need it, because our caller has a
+		 * refcount on the first frame object and the frame objects each have
+		 * a refcount on the next one.  If we tried to hold this refcount
+		 * longer, it would greatly complicate cleanup in the event of a
+		 * failure in the above PG_TRY block.
+		 */
+		Py_DECREF(tb);
+
 		(*tb_depth)++;
 	}
 
@@ -376,6 +380,10 @@ PLy_get_sqlerrcode(PyObject *exc, int *sqlerrcode)
 
 /*
  * Extract the error data from a SPIError
+ *
+ * Note: the returned string values are pointers into the given PyObject.
+ * They must not be free()'d, and are not guaranteed to be valid once
+ * we stop holding a reference on the PyObject.
  */
 static void
 PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
@@ -412,6 +420,11 @@ PLy_get_spi_error_data(PyObject *exc, int *sqlerrcode, char **detail,
  *
  * Note: position and query attributes are never set for Error so, unlike
  * PLy_get_spi_error_data, this function doesn't return them.
+ *
+ * Note: the returned string values are palloc'd in the current context.
+ * While our caller could pfree them later, there's no real need to do so,
+ * and it would be complicated to handle both this convention and that of
+ * PLy_get_spi_error_data.
  */
 static void
 PLy_get_error_data(PyObject *exc, int *sqlerrcode, char **detail, char **hint,
