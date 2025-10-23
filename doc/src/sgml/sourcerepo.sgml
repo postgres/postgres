@@ -49,7 +49,7 @@
 
    <step>
     <para>
-     To begin using the Git repository, make a clone of the official mirror:
+     To begin using the <productname>Git</productname> repository, make a clone of the official mirror:
 
 <programlisting>
 git clone https://git.postgresql.org/git/postgresql.git
@@ -59,16 +59,6 @@ git clone https://git.postgresql.org/git/postgresql.git
      a while to complete, especially if you have a slow Internet connection.
      The files will be placed in a new subdirectory <filename>postgresql</filename> of
      your current directory.
-    </para>
-
-    <para>
-     The Git mirror can also be reached via the Git protocol. Just change the URL
-     prefix to <literal>git</literal>, as in:
-
-<programlisting>
-git clone git://git.postgresql.org/git/postgresql.git
-</programlisting>
-
     </para>
    </step>
 
