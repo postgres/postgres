@@ -36,6 +36,13 @@ typedef enum
 	FILE_TYPE_SYMLINK,
 } file_type_t;
 
+typedef enum
+{
+	FILE_CONTENT_TYPE_OTHER = 0,
+	FILE_CONTENT_TYPE_RELATION,
+	FILE_CONTENT_TYPE_WAL
+} file_content_type_t;
+
 /*
  * For every file found in the local or remote system, we have a file entry
  * that contains information about the file on both systems.  For relation
@@ -51,7 +58,7 @@ typedef struct file_entry_t
 	uint32		status;			/* hash status */
 
 	const char *path;
-	bool		isrelfile;		/* is it a relation data file? */
+	file_content_type_t content_type;
 
 	/*
 	 * Status of the file in the target.

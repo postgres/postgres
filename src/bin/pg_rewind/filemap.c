@@ -55,7 +55,7 @@
 
 static filehash_hash *filehash;
 
-static bool isRelDataFile(const char *path);
+static file_content_type_t getFileContentType(const char *path);
 static char *datasegpath(RelFileLocator rlocator, ForkNumber forknum,
 						 BlockNumber segno);
 
@@ -210,7 +210,7 @@ insert_filehash_entry(const char *path)
 	if (!found)
 	{
 		entry->path = pg_strdup(path);
-		entry->isrelfile = isRelDataFile(path);
+		entry->content_type = getFileContentType(path);
 
 		entry->target_exists = false;
 		entry->target_type = FILE_TYPE_UNDEFINED;
@@ -294,7 +294,7 @@ process_source_file(const char *path, file_type_t type, size_t size,
 	 * sanity check: a filename that looks like a data file better be a
 	 * regular file
 	 */
-	if (type != FILE_TYPE_REGULAR && isRelDataFile(path))
+	if (type != FILE_TYPE_REGULAR && getFileContentType(path) == FILE_CONTENT_TYPE_RELATION)
 		pg_fatal("data file \"%s\" in source is not a regular file", path);
 
 	/* Remember this source file */
@@ -383,7 +383,7 @@ process_target_wal_block_change(ForkNumber forknum, RelFileLocator rlocator,
 	 */
 	if (entry)
 	{
-		Assert(entry->isrelfile);
+		Assert(entry->content_type == FILE_CONTENT_TYPE_RELATION);
 
 		if (entry->target_exists)
 		{
@@ -560,22 +560,35 @@ print_filemap(filemap_t *filemap)
 }
 
 /*
- * Does it look like a relation data file?
- *
- * For our purposes, only files belonging to the main fork are considered
- * relation files. Other forks are always copied in toto, because we cannot
- * reliably track changes to them, because WAL only contains block references
- * for the main fork.
+ * Determine what kind of file this one looks like.
  */
-static bool
-isRelDataFile(const char *path)
+static file_content_type_t
+getFileContentType(const char *path)
 {
 	RelFileLocator rlocator;
 	unsigned int segNo;
 	int			nmatch;
-	bool		matched;
+	file_content_type_t result = FILE_CONTENT_TYPE_OTHER;
+
+	/* Check if it is a WAL file. */
+	if (strncmp("pg_wal/", path, 7) == 0)
+	{
+		const char *filename = path + 7;	/* Skip "pg_wal/" */
+
+		if (IsXLogFileName(filename))
+			return FILE_CONTENT_TYPE_WAL;
+		else
+			return FILE_CONTENT_TYPE_OTHER;
+	}
 
 	/*----
+	 * Does it look like a relation data file?
+	 *
+	 * For our purposes, only files belonging to the main fork are considered
+	 * relation files. Other forks are always copied in toto, because we
+	 * cannot reliably track changes to them, because WAL only contains block
+	 * references for the main fork.
+	 *
 	 * Relation data files can be in one of the following directories:
 	 *
 	 * global/
@@ -598,14 +611,14 @@ isRelDataFile(const char *path)
 	rlocator.dbOid = InvalidOid;
 	rlocator.relNumber = InvalidRelFileNumber;
 	segNo = 0;
-	matched = false;
+	result = FILE_CONTENT_TYPE_OTHER;
 
 	nmatch = sscanf(path, "global/%u.%u", &rlocator.relNumber, &segNo);
 	if (nmatch == 1 || nmatch == 2)
 	{
 		rlocator.spcOid = GLOBALTABLESPACE_OID;
 		rlocator.dbOid = 0;
-		matched = true;
+		result = FILE_CONTENT_TYPE_RELATION;
 	}
 	else
 	{
@@ -614,7 +627,7 @@ isRelDataFile(const char *path)
 		if (nmatch == 2 || nmatch == 3)
 		{
 			rlocator.spcOid = DEFAULTTABLESPACE_OID;
-			matched = true;
+			result = FILE_CONTENT_TYPE_RELATION;
 		}
 		else
 		{
@@ -622,7 +635,7 @@ isRelDataFile(const char *path)
 							&rlocator.spcOid, &rlocator.dbOid, &rlocator.relNumber,
 							&segNo);
 			if (nmatch == 3 || nmatch == 4)
-				matched = true;
+				result = FILE_CONTENT_TYPE_RELATION;
 		}
 	}
 
@@ -632,17 +645,17 @@ isRelDataFile(const char *path)
 	 * creates the exact same filename, when passed the RelFileLocator
 	 * information we extracted from the filename.
 	 */
-	if (matched)
+	if (result == FILE_CONTENT_TYPE_RELATION)
 	{
 		char	   *check_path = datasegpath(rlocator, MAIN_FORKNUM, segNo);
 
 		if (strcmp(check_path, path) != 0)
-			matched = false;
+			result = FILE_CONTENT_TYPE_OTHER;
 
 		pfree(check_path);
 	}
 
-	return matched;
+	return result;
 }
 
 /*
@@ -799,7 +812,12 @@ decide_file_action(file_entry_t *entry)
 			return FILE_ACTION_NONE;
 
 		case FILE_TYPE_REGULAR:
-			if (!entry->isrelfile)
+			if (entry->content_type == FILE_CONTENT_TYPE_WAL)
+			{
+				/* It's a WAL file, copy it. */
+				return FILE_ACTION_COPY;
+			}
+			else if (entry->content_type != FILE_CONTENT_TYPE_RELATION)
 			{
 				/*
 				 * It's a non-data file that we have no special processing

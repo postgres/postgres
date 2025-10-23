@@ -3622,6 +3622,7 @@ fe_scram_state
 fe_scram_state_enum
 fetch_range_request
 file_action_t
+file_content_type_t
 file_entry_t
 file_type_t
 filehash_hash
