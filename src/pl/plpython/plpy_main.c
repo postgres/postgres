@@ -133,7 +133,7 @@ plpython3_validator(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tuple);
 
 	/* We can't validate triggers against any particular table ... */
-	PLy_procedure_get(funcoid, InvalidOid, is_trigger);
+	(void) PLy_procedure_get(funcoid, InvalidOid, is_trigger);
 
 	PG_RETURN_VOID();
 }
