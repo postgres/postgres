@@ -230,6 +230,19 @@ typedef struct
 	int			write_head;
 	int			read_heads[NUM_SYNC_REP_WAIT_MODE];
 	WalTimeSample last_read[NUM_SYNC_REP_WAIT_MODE];
+
+	/*
+	 * Overflow entries for read heads that collide with the write head.
+	 *
+	 * When the cyclic buffer fills (write head is about to collide with a
+	 * read head), we save that read head's current sample here and mark it as
+	 * using overflow (read_heads[i] = -1). This allows the write head to
+	 * continue advancing while the overflowed mode continues lag computation
+	 * using the saved sample.
+	 *
+	 * Once the standby's reported LSN advances past the overflow entry's LSN,
+	 * we transition back to normal buffer-based tracking.
+	 */
 	WalTimeSample overflowed[NUM_SYNC_REP_WAIT_MODE];
 } LagTracker;
 
