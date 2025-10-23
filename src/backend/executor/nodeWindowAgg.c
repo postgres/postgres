@@ -3822,13 +3822,14 @@ WinGetFuncArgInPartition(WindowObject winobj, int argno,
 	if (seektype == WINDOW_SEEK_CURRENT && relpos > 0)
 		mark_pos = winstate->currentpos;
 	else
-
+	{
 		/*
 		 * For other cases we have no idea what position of row callers would
 		 * fetch next time. Also for relpos < 0 case (we go backward), we
 		 * cannot set mark either. For those cases we always set mark at 0.
 		 */
 		mark_pos = 0;
+	}
 
 	/*
 	 * Get the next nonnull value in the partition, moving forward or backward
