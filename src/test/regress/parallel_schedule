@@ -75,12 +75,12 @@ test: brin_bloom brin_multi
 
 # ----------
 # Another group of parallel tests
-# psql depends on create_am
-# amutils depends on geometry, create_index_spgist, hash_index, brin
 # ----------
 test: create_table_like alter_generic alter_operator misc async dbsize merge misc_functions sysviews tsrf tid tidscan tidrangescan collate.utf8 collate.icu.utf8 incremental_sort create_role without_overlaps generated_virtual
 
 # collate.linux.utf8 and collate.icu.utf8 tests cannot be run in parallel with each other
+# psql depends on create_am
+# amutils depends on geometry, create_index_spgist, hash_index, brin
 test: rules psql psql_crosstab psql_pipeline amutils stats_ext collate.linux.utf8 collate.windows.win1252
 
 # ----------
@@ -112,7 +112,7 @@ test: json jsonb json_encoding jsonpath jsonpath_encoding jsonb_jsonpath sqljson
 # ----------
 # Another group of parallel tests
 # with depends on create_misc
-# NB: temp.sql does reconnects which transiently use 2 connections,
+# NB: temp.sql does reconnects which transiently uses 2 connections,
 # so keep this parallel group to at most 19 tests
 # ----------
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
