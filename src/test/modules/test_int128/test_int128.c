@@ -90,16 +90,20 @@ main(int argc, char **argv)
 
 	while (count-- > 0)
 	{
-		int64		x = pg_prng_uint64(&pg_global_prng_state);
-		int64		y = pg_prng_uint64(&pg_global_prng_state);
-		int64		z = pg_prng_uint64(&pg_global_prng_state);
-		int64		w = pg_prng_uint64(&pg_global_prng_state);
-		int32		z32 = (int32) z;
+		int64		x = pg_prng_int64(&pg_global_prng_state);
+		int64		y = pg_prng_int64(&pg_global_prng_state);
+		int64		z = pg_prng_int64(&pg_global_prng_state);
+		int64		w = pg_prng_int64(&pg_global_prng_state);
+		int32		z32 = pg_prng_int32(&pg_global_prng_state);
 		test128		t1;
 		test128		t2;
 		test128		t3;
 		int32		r1;
 		int32		r2;
+
+		/* prevent division by zero in the 128/32-bit division test */
+		while (z32 == 0)
+			z32 = pg_prng_int32(&pg_global_prng_state);
 
 		/* check unsigned addition */
 		t1.hl.hi = x;
