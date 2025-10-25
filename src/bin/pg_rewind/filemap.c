@@ -546,7 +546,9 @@ print_filemap(filemap_t *filemap)
 	for (i = 0; i < filemap->nentries; i++)
 	{
 		entry = filemap->entries[i];
+
 		if (entry->action != FILE_ACTION_NONE ||
+			entry->content_type == FILE_CONTENT_TYPE_WAL ||
 			entry->target_pages_to_overwrite.bitmapsize > 0)
 		{
 			pg_log_debug("%s (%s)", entry->path,
@@ -707,10 +709,44 @@ final_filemap_cmp(const void *a, const void *b)
 }
 
 /*
+ * Decide what to do with a WAL segment file based on its position
+ * relative to the point of divergence.
+ *
+ * Caller is responsible for ensuring that the file exists on both
+ * source and target servers.
+ */
+static file_action_t
+decide_wal_file_action(const char *fname, XLogSegNo last_common_segno,
+					   size_t source_size, size_t target_size)
+{
+	TimeLineID	file_tli;
+	XLogSegNo	file_segno;
+
+	/* Get current WAL segment number given current segment file name */
+	XLogFromFileName(fname, &file_tli, &file_segno, WalSegSz);
+
+	/*
+	 * Avoid copying files before the last common segment.
+	 *
+	 * These files exist on the source and the target servers, so they should
+	 * be identical and located strictly before the segment that contains the
+	 * LSN where target and source servers have diverged.
+	 *
+	 * While we are on it, double-check the size of each file and copy the
+	 * file if they do not match, in case.
+	 */
+	if (file_segno < last_common_segno &&
+		source_size == target_size)
+		return FILE_ACTION_NONE;
+
+	return FILE_ACTION_COPY;
+}
+
+/*
  * Decide what action to perform to a file.
  */
 static file_action_t
-decide_file_action(file_entry_t *entry)
+decide_file_action(file_entry_t *entry, XLogSegNo last_common_segno)
 {
 	const char *path = entry->path;
 
@@ -814,8 +850,17 @@ decide_file_action(file_entry_t *entry)
 		case FILE_TYPE_REGULAR:
 			if (entry->content_type == FILE_CONTENT_TYPE_WAL)
 			{
-				/* It's a WAL file, copy it. */
-				return FILE_ACTION_COPY;
+				/* Handle WAL segment file */
+				const char *filename = last_dir_separator(entry->path);
+
+				if (filename == NULL)
+					filename = entry->path;
+				else
+					filename++; /* Skip the separator */
+
+				return decide_wal_file_action(filename, last_common_segno,
+											  entry->source_size,
+											  entry->target_size);
 			}
 			else if (entry->content_type != FILE_CONTENT_TYPE_RELATION)
 			{
@@ -876,7 +921,7 @@ decide_file_action(file_entry_t *entry)
  * should be executed.
  */
 filemap_t *
-decide_file_actions(void)
+decide_file_actions(XLogSegNo last_common_segno)
 {
 	int			i;
 	filehash_iterator it;
@@ -886,7 +931,7 @@ decide_file_actions(void)
 	filehash_start_iterate(filehash, &it);
 	while ((entry = filehash_iterate(filehash, &it)) != NULL)
 	{
-		entry->action = decide_file_action(entry);
+		entry->action = decide_file_action(entry, last_common_segno);
 	}
 
 	/*

@@ -11,6 +11,7 @@
 #include "datapagemap.h"
 #include "storage/block.h"
 #include "storage/relfilelocator.h"
+#include "access/xlogdefs.h"
 
 /* these enum values are sorted in the order we want actions to be processed */
 typedef enum
@@ -113,7 +114,7 @@ extern void process_target_wal_block_change(ForkNumber forknum,
 											RelFileLocator rlocator,
 											BlockNumber blkno);
 
-extern filemap_t *decide_file_actions(void);
+extern filemap_t *decide_file_actions(XLogSegNo last_common_segno);
 extern void calculate_totals(filemap_t *filemap);
 extern void print_filemap(filemap_t *filemap);
 

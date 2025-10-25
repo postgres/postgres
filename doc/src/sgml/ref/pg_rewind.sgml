@@ -52,12 +52,32 @@ PostgreSQL documentation
    analogous to a base backup of the source data directory. Unlike taking
    a new base backup or using a tool like <application>rsync</application>,
    <application>pg_rewind</application> does not require comparing or copying
-   unchanged relation blocks in the cluster. Only changed blocks from existing
-   relation files are copied; all other files, including new relation files,
-   configuration files, and WAL segments, are copied in full. As such the
-   rewind operation is significantly faster than other approaches when the
-   database is large and only a small fraction of blocks differ between the
-   clusters.
+   unchanged relation blocks in the cluster:
+  </para>
+  <itemizedlist>
+   <listitem>
+    <para>
+     Only changed blocks from existing relation files are copied.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     WAL segments prior to the point where the source and target servers
+     have diverged are not copied. WAL segments generated after the source
+     and target servers have diverged are copied in full.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     All other files, including new relation files and configuration files,
+     are copied in full.
+    </para>
+   </listitem>
+  </itemizedlist>
+  <para>
+   As such, the rewind operation is significantly faster than other
+   approaches when the database is large and only a small fraction of blocks
+   differ between the clusters.
   </para>
 
   <para>

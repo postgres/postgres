@@ -147,6 +147,7 @@ main(int argc, char **argv)
 	TimeLineID	source_tli;
 	TimeLineID	target_tli;
 	XLogRecPtr	target_wal_endrec;
+	XLogSegNo	last_common_segno;
 	size_t		size;
 	char	   *buffer;
 	bool		no_ensure_shutdown = false;
@@ -398,6 +399,12 @@ main(int argc, char **argv)
 					targetHistory[lastcommontliIndex].tli);
 
 		/*
+		 * Convert the divergence LSN to a segment number, that will be used
+		 * to decide how WAL segments should be processed.
+		 */
+		XLByteToSeg(divergerec, last_common_segno, ControlFile_target.xlog_seg_size);
+
+		/*
 		 * Don't need the source history anymore. The target history is still
 		 * needed by the routines in parsexlog.c, when we read the target WAL.
 		 */
@@ -492,7 +499,7 @@ main(int argc, char **argv)
 	 * We have collected all information we need from both systems. Decide
 	 * what to do with each file.
 	 */
-	filemap = decide_file_actions();
+	filemap = decide_file_actions(last_common_segno);
 	if (showprogress)
 		calculate_totals(filemap);
 
