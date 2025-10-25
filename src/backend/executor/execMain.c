@@ -1343,10 +1343,9 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
  *		Get a ResultRelInfo for a trigger target relation.
  *
  * Most of the time, triggers are fired on one of the result relations of the
- * query, and so we can just return a member of the es_result_relations array,
- * or the es_tuple_routing_result_relations list (if any). (Note: in self-join
- * situations there might be multiple members with the same OID; if so it
- * doesn't matter which one we pick.)
+ * query, and so we can just return a suitable one we already made and stored
+ * in the es_opened_result_relations or es_tuple_routing_result_relations
+ * Lists.
  *
  * However, it is sometimes necessary to fire triggers on other relations;
  * this happens mainly when an RI update trigger queues additional triggers
@@ -1366,11 +1365,20 @@ ExecGetTriggerResultRel(EState *estate, Oid relid,
 	Relation	rel;
 	MemoryContext oldcontext;
 
+	/*
+	 * Before creating a new ResultRelInfo, check if we've already made and
+	 * cached one for this relation.  We must ensure that the given
+	 * 'rootRelInfo' matches the one stored in the cached ResultRelInfo as
+	 * trigger handling for partitions can result in mixed requirements for
+	 * what ri_RootResultRelInfo is set to.
+	 */
+
 	/* Search through the query result relations */
 	foreach(l, estate->es_opened_result_relations)
 	{
 		rInfo = lfirst(l);
-		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid &&
+			rInfo->ri_RootResultRelInfo == rootRelInfo)
 			return rInfo;
 	}
 
@@ -1381,7 +1389,8 @@ ExecGetTriggerResultRel(EState *estate, Oid relid,
 	foreach(l, estate->es_tuple_routing_result_relations)
 	{
 		rInfo = (ResultRelInfo *) lfirst(l);
-		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid &&
+			rInfo->ri_RootResultRelInfo == rootRelInfo)
 			return rInfo;
 	}
 
@@ -1389,7 +1398,8 @@ ExecGetTriggerResultRel(EState *estate, Oid relid,
 	foreach(l, estate->es_trig_target_relations)
 	{
 		rInfo = (ResultRelInfo *) lfirst(l);
-		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid &&
+			rInfo->ri_RootResultRelInfo == rootRelInfo)
 			return rInfo;
 	}
 	/* Nope, so we need a new one */
