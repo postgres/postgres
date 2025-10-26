@@ -1,3 +1,6 @@
+my own tinkerings with Postgres for self improvement
+
+
 PostgreSQL Database Management System
 =====================================
 
