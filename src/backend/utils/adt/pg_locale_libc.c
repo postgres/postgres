@@ -1144,7 +1144,7 @@ wcstombs_l(char *dest, const wchar_t *src, size_t n, locale_t loc)
 #endif
 
 /*
- * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.
+ * These functions convert from/to libc's wchar_t, *not* pg_wchar.
  * Therefore we keep them here rather than with the mbutils code.
  */
 

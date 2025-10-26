@@ -224,7 +224,7 @@ extern void icu_validate_locale(const char *loc_str);
 extern char *icu_language_tag(const char *loc_str, int elevel);
 extern void report_newlocale_failure(const char *localename);
 
-/* This function converts from libc's wchar_t, *not* pg_wchar_t */
+/* This function converts from libc's wchar_t, *not* pg_wchar */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,
 						 locale_t loc);
 
