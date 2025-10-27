@@ -31,6 +31,265 @@ CREATE OR REPLACE FUNCTION f_leak(text) RETURNS bool
     COST 0.0000001 LANGUAGE plpgsql
     AS 'BEGIN RAISE NOTICE ''f_leak => %'', $1; RETURN true; END';
 GRANT EXECUTE ON FUNCTION f_leak(text) TO public;
+--
+-- Test policies applied by command type
+--
+SET SESSION AUTHORIZATION regress_rls_alice;
+-- setup source table (for MERGE operations)
+CREATE TABLE rls_test_src (a int PRIMARY KEY, b text);
+ALTER TABLE rls_test_src ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, UPDATE ON rls_test_src TO public;
+INSERT INTO rls_test_src VALUES (1, 'src a');
+-- setup target table with a column set by a BEFORE ROW trigger
+-- (policies should always see values set by the trigger)
+CREATE TABLE rls_test_tgt (a int PRIMARY KEY, b text, c text);
+ALTER TABLE rls_test_tgt ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON rls_test_tgt TO public;
+CREATE FUNCTION rls_test_tgt_set_c() RETURNS trigger AS
+  $$ BEGIN new.c = upper(new.b); RETURN new; END; $$
+  LANGUAGE plpgsql;
+CREATE TRIGGER rls_test_tgt_set_c BEFORE INSERT OR UPDATE ON rls_test_tgt
+  FOR EACH ROW EXECUTE FUNCTION rls_test_tgt_set_c();
+-- setup a complete set of policies that emit NOTICE messages when applied
+CREATE FUNCTION rls_test_policy_fn(text, record) RETURNS bool AS
+  $$ BEGIN RAISE NOTICE '%.%', $1, $2; RETURN true; END; $$
+  LANGUAGE plpgsql;
+CREATE POLICY sel_pol ON rls_test_src FOR SELECT
+  USING (rls_test_policy_fn('SELECT USING on rls_test_src', rls_test_src));
+CREATE POLICY upd_pol ON rls_test_src FOR UPDATE
+  USING (rls_test_policy_fn('UPDATE USING on rls_test_src', rls_test_src))
+  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_src', rls_test_src));
+CREATE POLICY sel_pol ON rls_test_tgt FOR SELECT
+  USING (rls_test_policy_fn('SELECT USING on rls_test_tgt', rls_test_tgt));
+CREATE POLICY ins_pol ON rls_test_tgt FOR INSERT
+  WITH CHECK (rls_test_policy_fn('INSERT CHECK on rls_test_tgt', rls_test_tgt));
+CREATE POLICY upd_pol ON rls_test_tgt FOR UPDATE
+  USING (rls_test_policy_fn('UPDATE USING on rls_test_tgt', rls_test_tgt))
+  WITH CHECK (rls_test_policy_fn('UPDATE CHECK on rls_test_tgt', rls_test_tgt));
+CREATE POLICY del_pol ON rls_test_tgt FOR DELETE
+  USING (rls_test_policy_fn('DELETE USING on rls_test_tgt', rls_test_tgt));
+-- test policies applied to regress_rls_bob
+SET SESSION AUTHORIZATION regress_rls_bob;
+-- SELECT, COPY ... TO, and TABLE should only apply SELECT USING policy clause
+SELECT * FROM rls_test_src;
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+COPY rls_test_src TO stdout;
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+1	src a
+TABLE rls_test_src;
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+-- SELECT ... FOR UPDATE/SHARE should also apply UPDATE USING policy clause
+SELECT * FROM rls_test_src FOR UPDATE;
+NOTICE:  UPDATE USING on rls_test_src.(1,"src a")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+SELECT * FROM rls_test_src FOR NO KEY UPDATE;
+NOTICE:  UPDATE USING on rls_test_src.(1,"src a")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+SELECT * FROM rls_test_src FOR SHARE;
+NOTICE:  UPDATE USING on rls_test_src.(1,"src a")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+SELECT * FROM rls_test_src FOR KEY SHARE;
+NOTICE:  UPDATE USING on rls_test_src.(1,"src a")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+ a |   b   
+---+-------
+ 1 | src a
+(1 row)
+
+-- plain INSERT should apply INSERT CHECK policy clause
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a');
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt a","TGT A")
+-- INSERT ... RETURNING should also apply SELECT USING policy clause
+TRUNCATE rls_test_tgt;
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a') RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 1 | tgt a | TGT A
+(1 row)
+
+-- UPDATE without WHERE or RETURNING should only apply UPDATE policy clauses
+UPDATE rls_test_tgt SET b = 'tgt b';
+NOTICE:  UPDATE USING on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(1,"tgt b","TGT B")
+-- UPDATE with WHERE or RETURNING should also apply SELECT USING policy clause
+-- (to both old and new values)
+UPDATE rls_test_tgt SET b = 'tgt c' WHERE a = 1;
+NOTICE:  UPDATE USING on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt c","TGT C")
+UPDATE rls_test_tgt SET b = 'tgt d' RETURNING *;
+NOTICE:  UPDATE USING on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(1,"tgt d","TGT D")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt d","TGT D")
+ a |   b   |   c   
+---+-------+-------
+ 1 | tgt d | TGT D
+(1 row)
+
+-- DELETE without WHERE or RETURNING should only apply DELETE USING policy clause
+BEGIN; DELETE FROM rls_test_tgt; ROLLBACK;
+NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt d","TGT D")
+-- DELETE with WHERE or RETURNING should also apply SELECT USING policy clause
+BEGIN; DELETE FROM rls_test_tgt WHERE a = 1; ROLLBACK;
+NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt d","TGT D")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt d","TGT D")
+DELETE FROM rls_test_tgt RETURNING *;
+NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt d","TGT D")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt d","TGT D")
+ a |   b   |   c   
+---+-------+-------
+ 1 | tgt d | TGT D
+(1 row)
+
+-- INSERT ... ON CONFLICT DO NOTHING should apply INSERT CHECK and SELECT USING
+-- policy clauses (to new value, whether it conflicts or not)
+INSERT INTO rls_test_tgt VALUES (1, 'tgt a') ON CONFLICT (a) DO NOTHING;
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt a","TGT A")
+INSERT INTO rls_test_tgt VALUES (1, 'tgt b') ON CONFLICT (a) DO NOTHING;
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt b","TGT B")
+-- INSERT ... ON CONFLICT DO NOTHING without an arbiter clause only applies
+-- INSERT CHECK policy clause
+INSERT INTO rls_test_tgt VALUES (1, 'tgt b') ON CONFLICT DO NOTHING;
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt b","TGT B")
+-- INSERT ... ON CONFLICT DO UPDATE should apply INSERT CHECK and SELECT USING
+-- policy clauses to values proposed for insert. In the event of a conflict it
+-- should also apply UPDATE and SELECT policies to old and new values, like
+-- UPDATE ... WHERE.
+BEGIN;
+INSERT INTO rls_test_tgt VALUES (2, 'tgt a') ON CONFLICT (a) DO UPDATE SET b = 'tgt b';
+NOTICE:  INSERT CHECK on rls_test_tgt.(2,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(2,"tgt a","TGT A")
+INSERT INTO rls_test_tgt VALUES (2, 'tgt c') ON CONFLICT (a) DO UPDATE SET b = 'tgt d';
+NOTICE:  INSERT CHECK on rls_test_tgt.(2,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_tgt.(2,"tgt c","TGT C")
+NOTICE:  UPDATE USING on rls_test_tgt.(2,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(2,"tgt a","TGT A")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(2,"tgt d","TGT D")
+NOTICE:  SELECT USING on rls_test_tgt.(2,"tgt d","TGT D")
+INSERT INTO rls_test_tgt VALUES (3, 'tgt a') ON CONFLICT (a) DO UPDATE SET b = 'tgt b' RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(3,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(3,"tgt a","TGT A")
+ a |   b   |   c   
+---+-------+-------
+ 3 | tgt a | TGT A
+(1 row)
+
+INSERT INTO rls_test_tgt VALUES (3, 'tgt c') ON CONFLICT (a) DO UPDATE SET b = 'tgt d' RETURNING *;
+NOTICE:  INSERT CHECK on rls_test_tgt.(3,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_tgt.(3,"tgt c","TGT C")
+NOTICE:  UPDATE USING on rls_test_tgt.(3,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(3,"tgt a","TGT A")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(3,"tgt d","TGT D")
+NOTICE:  SELECT USING on rls_test_tgt.(3,"tgt d","TGT D")
+ a |   b   |   c   
+---+-------+-------
+ 3 | tgt d | TGT D
+(1 row)
+
+ROLLBACK;
+-- MERGE should always apply SELECT USING policy clauses to both source and
+-- target rows
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN DO NOTHING;
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+-- MERGE ... INSERT should behave like INSERT on target table
+-- (SELECT policy applied to target, if RETURNING is specified)
+TRUNCATE rls_test_tgt;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN INSERT VALUES (1, 'tgt a');
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt a","TGT A")
+TRUNCATE rls_test_tgt;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN NOT MATCHED THEN INSERT VALUES (1, 'tgt a')
+  RETURNING *;
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  INSERT CHECK on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt a","TGT A")
+ a |   b   | a |   b   |   c   
+---+-------+---+-------+-------
+ 1 | src a | 1 | tgt a | TGT A
+(1 row)
+
+-- MERGE ... UPDATE should behave like UPDATE ... WHERE on target table
+-- (join clause is like WHERE, so SELECT policies are always applied)
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = 'tgt b';
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  UPDATE USING on rls_test_tgt.(1,"tgt a","TGT A")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt b","TGT B")
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN UPDATE SET b = 'tgt c'
+  RETURNING *;
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  UPDATE USING on rls_test_tgt.(1,"tgt b","TGT B")
+NOTICE:  UPDATE CHECK on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt c","TGT C")
+ a |   b   | a |   b   |   c   
+---+-------+---+-------+-------
+ 1 | src a | 1 | tgt c | TGT C
+(1 row)
+
+-- MERGE ... DELETE should behave like DELETE ... WHERE on target table
+-- (join clause is like WHERE, so SELECT policies are always applied)
+BEGIN;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN DELETE;
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt c","TGT C")
+ROLLBACK;
+MERGE INTO rls_test_tgt t USING rls_test_src s ON t.a = s.a
+  WHEN MATCHED THEN DELETE
+  RETURNING *;
+NOTICE:  SELECT USING on rls_test_tgt.(1,"tgt c","TGT C")
+NOTICE:  SELECT USING on rls_test_src.(1,"src a")
+NOTICE:  DELETE USING on rls_test_tgt.(1,"tgt c","TGT C")
+ a |   b   | a |   b   |   c   
+---+-------+---+-------+-------
+ 1 | src a | 1 | tgt c | TGT C
+(1 row)
+
+-- Tidy up
+RESET SESSION AUTHORIZATION;
+DROP TABLE rls_test_src, rls_test_tgt;
+DROP FUNCTION rls_test_tgt_set_c;
+DROP FUNCTION rls_test_policy_fn;
 -- BASIC Row-Level Security Scenario
 SET SESSION AUTHORIZATION regress_rls_alice;
 CREATE TABLE uaccount (
