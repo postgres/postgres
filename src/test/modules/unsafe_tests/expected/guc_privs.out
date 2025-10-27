@@ -581,6 +581,21 @@ DROP ROLE regress_host_resource_newadmin;  -- ok, nothing was transferred
 -- Use "drop owned by" so we can drop the role
 DROP OWNED BY regress_host_resource_admin;  -- ok
 DROP ROLE regress_host_resource_admin;  -- ok
+-- Test for GUC synchronized standby slots
+-- Cannot set synchronized_standby_slots to a reserved slot name
+ALTER SYSTEM SET synchronized_standby_slots='pg_conflict_detection';
+ERROR:  invalid value for parameter "synchronized_standby_slots": "pg_conflict_detection"
+DETAIL:  replication slot name "pg_conflict_detection" is reserved
+HINT:  The name "pg_conflict_detection" is reserved for the conflict detection slot.
+-- Cannot set synchronized_standby_slots to an invalid slot name
+ALTER SYSTEM SET synchronized_standby_slots='invalid*';
+ERROR:  invalid value for parameter "synchronized_standby_slots": "invalid*"
+DETAIL:  replication slot name "invalid*" contains invalid character
+HINT:  Replication slot names may only contain lower case letters, numbers, and the underscore character.
+-- Can set synchronized_standby_slots to a non-existent slot name
+ALTER SYSTEM SET synchronized_standby_slots='missing';
+-- Reset the GUC
+ALTER SYSTEM RESET synchronized_standby_slots;
 -- Clean up
 RESET SESSION AUTHORIZATION;
 DROP ROLE regress_admin; -- ok
