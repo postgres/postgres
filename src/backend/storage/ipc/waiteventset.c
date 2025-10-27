@@ -2010,7 +2010,7 @@ ResOwnerReleaseWaitEventSet(Datum res)
  * NB: be sure to save and restore errno around it.  (That's standard practice
  * in most signal handlers, of course, but we used to omit it in handlers that
  * only set a flag.) XXX
-  *
+ *
  * NB: this function is called from critical sections and signal handlers so
  * throwing an error is not a good idea.
  *

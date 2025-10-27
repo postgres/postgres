@@ -1473,7 +1473,7 @@ release_partition(WindowAggState *winstate)
  *
  * The caller must have already determined that the row is in the partition
  * and fetched it into a slot if fetch_tuple is false.
-.* This function just encapsulates the framing rules.
+ * This function just encapsulates the framing rules.
  *
  * Returns:
  * -1, if the row is out of frame and no succeeding rows can be in frame
