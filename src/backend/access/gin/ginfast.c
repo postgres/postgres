@@ -57,7 +57,7 @@ typedef struct KeyArray
  */
 static int32
 writeListPage(Relation index, Buffer buffer,
-			  IndexTuple *tuples, int32 ntuples, BlockNumber rightlink)
+			  const IndexTuple *tuples, int32 ntuples, BlockNumber rightlink)
 {
 	Page		page = BufferGetPage(buffer);
 	int32		i,

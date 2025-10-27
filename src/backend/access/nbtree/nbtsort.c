@@ -266,7 +266,7 @@ static BulkWriteBuffer _bt_blnewpage(BTWriteState *wstate, uint32 level);
 static BTPageState *_bt_pagestate(BTWriteState *wstate, uint32 level);
 static void _bt_slideleft(Page rightmostpage);
 static void _bt_sortaddtup(Page page, Size itemsize,
-						   IndexTuple itup, OffsetNumber itup_off,
+						   const IndexTupleData *itup, OffsetNumber itup_off,
 						   bool newfirstdataitem);
 static void _bt_buildadd(BTWriteState *wstate, BTPageState *state,
 						 IndexTuple itup, Size truncextra);
@@ -716,7 +716,7 @@ _bt_slideleft(Page rightmostpage)
 static void
 _bt_sortaddtup(Page page,
 			   Size itemsize,
-			   IndexTuple itup,
+			   const IndexTupleData *itup,
 			   OffsetNumber itup_off,
 			   bool newfirstdataitem)
 {

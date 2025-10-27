@@ -61,7 +61,7 @@ static Buffer _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key,
 static void _bt_insert_parent(Relation rel, Relation heaprel, Buffer buf,
 							  Buffer rbuf, BTStack stack, bool isroot, bool isonly);
 static Buffer _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf);
-static inline bool _bt_pgaddtup(Page page, Size itemsize, IndexTuple itup,
+static inline bool _bt_pgaddtup(Page page, Size itemsize, const IndexTupleData *itup,
 								OffsetNumber itup_off, bool newfirstdataitem);
 static void _bt_delete_or_dedup_one_page(Relation rel, Relation heapRel,
 										 BTInsertState insertstate,
@@ -2634,7 +2634,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 static inline bool
 _bt_pgaddtup(Page page,
 			 Size itemsize,
-			 IndexTuple itup,
+			 const IndexTupleData *itup,
 			 OffsetNumber itup_off,
 			 bool newfirstdataitem)
 {

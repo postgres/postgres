@@ -340,7 +340,7 @@ brin_can_do_samepage_update(Buffer buffer, Size origsz, Size newsz)
 OffsetNumber
 brin_doinsert(Relation idxrel, BlockNumber pagesPerRange,
 			  BrinRevmap *revmap, Buffer *buffer, BlockNumber heapBlk,
-			  BrinTuple *tup, Size itemsz)
+			  const BrinTuple *tup, Size itemsz)
 {
 	Page		page;
 	BlockNumber blk;
