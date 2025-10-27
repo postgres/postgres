@@ -165,8 +165,7 @@ spgPageIndexMultiDelete(SpGistState *state, Page page,
 		if (tuple == NULL || tuple->tupstate != tupstate)
 			tuple = spgFormDeadTuple(state, tupstate, blkno, offnum);
 
-		if (PageAddItem(page, (Item) tuple, tuple->size,
-						itemno, false, false) != itemno)
+		if (PageAddItem(page, tuple, tuple->size, itemno, false, false) != itemno)
 			elog(ERROR, "failed to add item of size %u to SPGiST index page",
 				 tuple->size);
 
@@ -222,7 +221,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 		/* Tuple is not part of a chain */
 		SGLT_SET_NEXTOFFSET(leafTuple, InvalidOffsetNumber);
 		current->offnum = SpGistPageAddNewItem(state, current->page,
-											   (Item) leafTuple, leafTuple->size,
+											   leafTuple, leafTuple->size,
 											   NULL, false);
 
 		xlrec.offnumLeaf = current->offnum;
@@ -255,7 +254,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 		{
 			SGLT_SET_NEXTOFFSET(leafTuple, SGLT_GET_NEXTOFFSET(head));
 			offnum = SpGistPageAddNewItem(state, current->page,
-										  (Item) leafTuple, leafTuple->size,
+										  leafTuple, leafTuple->size,
 										  NULL, false);
 
 			/*
@@ -274,7 +273,7 @@ addLeafTuple(Relation index, SpGistState *state, SpGistLeafTuple leafTuple,
 			SGLT_SET_NEXTOFFSET(leafTuple, InvalidOffsetNumber);
 			PageIndexTupleDelete(current->page, current->offnum);
 			if (PageAddItem(current->page,
-							(Item) leafTuple, leafTuple->size,
+							leafTuple, leafTuple->size,
 							current->offnum, false, false) != current->offnum)
 				elog(ERROR, "failed to add item of size %u to SPGiST index page",
 					 leafTuple->size);
@@ -478,8 +477,7 @@ moveLeafs(Relation index, SpGistState *state,
 			 */
 			SGLT_SET_NEXTOFFSET(it, r);
 
-			r = SpGistPageAddNewItem(state, npage, (Item) it, it->size,
-									 &startOffset, false);
+			r = SpGistPageAddNewItem(state, npage, it, it->size, &startOffset, false);
 
 			toInsert[nInsert] = r;
 			nInsert++;
@@ -492,9 +490,7 @@ moveLeafs(Relation index, SpGistState *state,
 
 	/* add the new tuple as well */
 	SGLT_SET_NEXTOFFSET(newLeafTuple, r);
-	r = SpGistPageAddNewItem(state, npage,
-							 (Item) newLeafTuple, newLeafTuple->size,
-							 &startOffset, false);
+	r = SpGistPageAddNewItem(state, npage, newLeafTuple, newLeafTuple->size, &startOffset, false);
 	toInsert[nInsert] = r;
 	nInsert++;
 	memcpy(leafptr, newLeafTuple, newLeafTuple->size);
@@ -1226,7 +1222,7 @@ doPickSplit(Relation index, SpGistState *state,
 
 		/* Insert it on page */
 		newoffset = SpGistPageAddNewItem(state, BufferGetPage(leafBuffer),
-										 (Item) it, it->size,
+										 it, it->size,
 										 &startOffsets[leafPageSelect[i]],
 										 false);
 		toInsert[i] = newoffset;
@@ -1268,7 +1264,7 @@ doPickSplit(Relation index, SpGistState *state,
 		current->page = parent->page;
 		xlrec.offnumInner = current->offnum =
 			SpGistPageAddNewItem(state, current->page,
-								 (Item) innerTuple, innerTuple->size,
+								 innerTuple, innerTuple->size,
 								 NULL, false);
 
 		/*
@@ -1302,7 +1298,7 @@ doPickSplit(Relation index, SpGistState *state,
 		current->page = BufferGetPage(current->buffer);
 		xlrec.offnumInner = current->offnum =
 			SpGistPageAddNewItem(state, current->page,
-								 (Item) innerTuple, innerTuple->size,
+								 innerTuple, innerTuple->size,
 								 NULL, false);
 
 		/* Done modifying new current buffer, mark it dirty */
@@ -1340,7 +1336,7 @@ doPickSplit(Relation index, SpGistState *state,
 		xlrec.innerIsParent = false;
 
 		xlrec.offnumInner = current->offnum =
-			PageAddItem(current->page, (Item) innerTuple, innerTuple->size,
+			PageAddItem(current->page, innerTuple, innerTuple->size,
 						InvalidOffsetNumber, false, false);
 		if (current->offnum != FirstOffsetNumber)
 			elog(ERROR, "failed to add item of size %u to SPGiST index page",
@@ -1547,7 +1543,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 
 		PageIndexTupleDelete(current->page, current->offnum);
 		if (PageAddItem(current->page,
-						(Item) newInnerTuple, newInnerTuple->size,
+						newInnerTuple, newInnerTuple->size,
 						current->offnum, false, false) != current->offnum)
 			elog(ERROR, "failed to add item of size %u to SPGiST index page",
 				 newInnerTuple->size);
@@ -1631,7 +1627,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 		/* insert new ... */
 		xlrec.offnumNew = current->offnum =
 			SpGistPageAddNewItem(state, current->page,
-								 (Item) newInnerTuple, newInnerTuple->size,
+								 newInnerTuple, newInnerTuple->size,
 								 NULL, false);
 
 		MarkBufferDirty(current->buffer);
@@ -1654,7 +1650,7 @@ spgAddNodeAction(Relation index, SpGistState *state,
 								  current->blkno, current->offnum);
 
 		PageIndexTupleDelete(saveCurrent.page, saveCurrent.offnum);
-		if (PageAddItem(saveCurrent.page, (Item) dt, dt->size,
+		if (PageAddItem(saveCurrent.page, dt, dt->size,
 						saveCurrent.offnum,
 						false, false) != saveCurrent.offnum)
 			elog(ERROR, "failed to add item of size %u to SPGiST index page",
@@ -1818,7 +1814,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	 */
 	PageIndexTupleDelete(current->page, current->offnum);
 	xlrec.offnumPrefix = PageAddItem(current->page,
-									 (Item) prefixTuple, prefixTuple->size,
+									 prefixTuple, prefixTuple->size,
 									 current->offnum, false, false);
 	if (xlrec.offnumPrefix != current->offnum)
 		elog(ERROR, "failed to add item of size %u to SPGiST index page",
@@ -1832,7 +1828,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 		postfixBlkno = current->blkno;
 		xlrec.offnumPostfix = postfixOffset =
 			SpGistPageAddNewItem(state, current->page,
-								 (Item) postfixTuple, postfixTuple->size,
+								 postfixTuple, postfixTuple->size,
 								 NULL, false);
 		xlrec.postfixBlkSame = true;
 	}
@@ -1841,7 +1837,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 		postfixBlkno = BufferGetBlockNumber(newBuffer);
 		xlrec.offnumPostfix = postfixOffset =
 			SpGistPageAddNewItem(state, BufferGetPage(newBuffer),
-								 (Item) postfixTuple, postfixTuple->size,
+								 postfixTuple, postfixTuple->size,
 								 NULL, false);
 		MarkBufferDirty(newBuffer);
 		xlrec.postfixBlkSame = false;

@@ -1194,8 +1194,7 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
 
 		itup = updatable[i]->itup;
 		itemsz = MAXALIGN(IndexTupleSize(itup));
-		if (!PageIndexTupleOverwrite(page, updatedoffset, (Item) itup,
-									 itemsz))
+		if (!PageIndexTupleOverwrite(page, updatedoffset, itup, itemsz))
 			elog(PANIC, "failed to update partially dead item in block %u of index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 	}
@@ -1314,8 +1313,7 @@ _bt_delitems_delete(Relation rel, Buffer buf,
 
 		itup = updatable[i]->itup;
 		itemsz = MAXALIGN(IndexTupleSize(itup));
-		if (!PageIndexTupleOverwrite(page, updatedoffset, (Item) itup,
-									 itemsz))
+		if (!PageIndexTupleOverwrite(page, updatedoffset, itup, itemsz))
 			elog(PANIC, "failed to update partially dead item in block %u of index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 	}
@@ -2239,8 +2237,7 @@ _bt_mark_page_halfdead(Relation rel, Relation heaprel, Buffer leafbuf,
 	else
 		BTreeTupleSetTopParent(&trunctuple, InvalidBlockNumber);
 
-	if (!PageIndexTupleOverwrite(page, P_HIKEY, (Item) &trunctuple,
-								 IndexTupleSize(&trunctuple)))
+	if (!PageIndexTupleOverwrite(page, P_HIKEY, &trunctuple, IndexTupleSize(&trunctuple)))
 		elog(ERROR, "could not overwrite high key in half-dead page");
 
 	/* Must mark buffers dirty before XLogInsert */

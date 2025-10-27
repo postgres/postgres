@@ -1321,7 +1321,6 @@ IsForeignRelUpdatable_function
 IsForeignScanParallelSafe_function
 IsoConnInfo
 IspellDict
-Item
 ItemArray
 ItemId
 ItemIdData

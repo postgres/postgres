@@ -526,7 +526,7 @@ extern void spgDeformLeafTuple(SpGistLeafTuple tup, TupleDesc tupleDescriptor,
 extern Datum *spgExtractNodeLabels(SpGistState *state,
 								   SpGistInnerTuple innerTuple);
 extern OffsetNumber SpGistPageAddNewItem(SpGistState *state, Page page,
-										 Item item, Size size,
+										 const void *item, Size size,
 										 OffsetNumber *startOffset,
 										 bool errorOK);
 extern bool spgproperty(Oid index_oid, int attno,

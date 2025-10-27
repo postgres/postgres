@@ -137,8 +137,7 @@ hash_xlog_insert(XLogReaderState *record)
 
 		page = BufferGetPage(buffer);
 
-		if (PageAddItem(page, (Item) datapos, datalen, xlrec->offnum,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, datapos, datalen, xlrec->offnum, false, false) == InvalidOffsetNumber)
 			elog(PANIC, "hash_xlog_insert: failed to add item");
 
 		PageSetLSN(page, lsn);
@@ -557,7 +556,7 @@ hash_xlog_move_page_contents(XLogReaderState *record)
 
 				data += itemsz;
 
-				l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+				l = PageAddItem(writepage, itup, itemsz, towrite[ninserted], false, false);
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "hash_xlog_move_page_contents: failed to add item to hash index page, size %d bytes",
 						 (int) itemsz);
@@ -689,7 +688,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 				data += itemsz;
 
-				l = PageAddItem(writepage, (Item) itup, itemsz, towrite[ninserted], false, false);
+				l = PageAddItem(writepage, itup, itemsz, towrite[ninserted], false, false);
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "hash_xlog_squeeze_page: failed to add item to hash index page, size %d bytes",
 						 (int) itemsz);

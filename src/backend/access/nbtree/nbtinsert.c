@@ -1278,8 +1278,7 @@ _bt_insertonpg(Relation rel,
 		if (postingoff != 0)
 			memcpy(oposting, nposting, MAXALIGN(IndexTupleSize(nposting)));
 
-		if (PageAddItem(page, (Item) itup, itemsz, newitemoff, false,
-						false) == InvalidOffsetNumber)
+		if (PageAddItem(page, itup, itemsz, newitemoff, false, false) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add new item to block %u in index \"%s\"",
 				 BufferGetBlockNumber(buf), RelationGetRelationName(rel));
 
@@ -1700,8 +1699,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 	Assert(BTreeTupleGetNAtts(lefthighkey, rel) <=
 		   IndexRelationGetNumberOfKeyAttributes(rel));
 	Assert(itemsz == MAXALIGN(IndexTupleSize(lefthighkey)));
-	if (PageAddItem(leftpage, (Item) lefthighkey, itemsz, afterleftoff, false,
-					false) == InvalidOffsetNumber)
+	if (PageAddItem(leftpage, lefthighkey, itemsz, afterleftoff, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add high key to the left sibling"
 			 " while splitting block %u of index \"%s\"",
 			 origpagenumber, RelationGetRelationName(rel));
@@ -1771,8 +1769,7 @@ _bt_split(Relation rel, Relation heaprel, BTScanInsert itup_key, Buffer buf,
 		Assert(BTreeTupleGetNAtts(righthighkey, rel) > 0);
 		Assert(BTreeTupleGetNAtts(righthighkey, rel) <=
 			   IndexRelationGetNumberOfKeyAttributes(rel));
-		if (PageAddItem(rightpage, (Item) righthighkey, itemsz, afterrightoff,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(rightpage, righthighkey, itemsz, afterrightoff, false, false) == InvalidOffsetNumber)
 		{
 			elog(ERROR, "failed to add high key to the right sibling"
 				 " while splitting block %u of index \"%s\"",
@@ -2537,8 +2534,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 	 * benefit of _bt_restore_page().
 	 */
 	Assert(BTreeTupleGetNAtts(left_item, rel) == 0);
-	if (PageAddItem(rootpage, (Item) left_item, left_item_sz, P_HIKEY,
-					false, false) == InvalidOffsetNumber)
+	if (PageAddItem(rootpage, left_item, left_item_sz, P_HIKEY, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
@@ -2549,8 +2545,7 @@ _bt_newlevel(Relation rel, Relation heaprel, Buffer lbuf, Buffer rbuf)
 	Assert(BTreeTupleGetNAtts(right_item, rel) > 0);
 	Assert(BTreeTupleGetNAtts(right_item, rel) <=
 		   IndexRelationGetNumberOfKeyAttributes(rel));
-	if (PageAddItem(rootpage, (Item) right_item, right_item_sz, P_FIRSTKEY,
-					false, false) == InvalidOffsetNumber)
+	if (PageAddItem(rootpage, right_item, right_item_sz, P_FIRSTKEY, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add rightkey to new root page"
 			 " while splitting block %u of index \"%s\"",
 			 BufferGetBlockNumber(lbuf), RelationGetRelationName(rel));
@@ -2654,8 +2649,7 @@ _bt_pgaddtup(Page page,
 		itemsize = sizeof(IndexTupleData);
 	}
 
-	if (unlikely(PageAddItem(page, (Item) itup, itemsize, itup_off, false,
-							 false) == InvalidOffsetNumber))
+	if (unlikely(PageAddItem(page, itup, itemsize, itup_off, false, false) == InvalidOffsetNumber))
 		return false;
 
 	return true;

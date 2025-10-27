@@ -93,7 +93,7 @@ ginRedoInsertEntry(Buffer buffer, bool isLeaf, BlockNumber rightblkno, void *rda
 
 	itup = &data->tuple;
 
-	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), offset, false, false) == InvalidOffsetNumber)
+	if (PageAddItem(page, itup, IndexTupleSize(itup), offset, false, false) == InvalidOffsetNumber)
 	{
 		RelFileLocator locator;
 		ForkNumber	forknum;
@@ -573,8 +573,7 @@ ginRedoUpdateMetapage(XLogReaderState *record)
 			{
 				tupsize = IndexTupleSize(tuples);
 
-				if (PageAddItem(page, (Item) tuples, tupsize, off,
-								false, false) == InvalidOffsetNumber)
+				if (PageAddItem(page, tuples, tupsize, off, false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to index page");
 
 				tuples = (IndexTuple) (((char *) tuples) + tupsize);
@@ -654,7 +653,7 @@ ginRedoInsertListPage(XLogReaderState *record)
 	{
 		tupsize = IndexTupleSize(tuples);
 
-		l = PageAddItem(page, (Item) tuples, tupsize, off, false, false);
+		l = PageAddItem(page, tuples, tupsize, off, false, false);
 
 		if (l == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page");

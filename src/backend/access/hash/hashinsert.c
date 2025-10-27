@@ -310,10 +310,8 @@ _hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup,
 		itup_off = _hash_binsearch(page, hashkey);
 	}
 
-	if (PageAddItem(page, (Item) itup, itemsize, itup_off, false, false)
-		== InvalidOffsetNumber)
-		elog(ERROR, "failed to add index item to \"%s\"",
-			 RelationGetRelationName(rel));
+	if (PageAddItem(page, itup, itemsize, itup_off, false, false) == InvalidOffsetNumber)
+		elog(ERROR, "failed to add index item to \"%s\"", RelationGetRelationName(rel));
 
 	return itup_off;
 }
@@ -352,10 +350,8 @@ _hash_pgaddmultitup(Relation rel, Buffer buf, IndexTuple *itups,
 
 		itup_offsets[i] = itup_off;
 
-		if (PageAddItem(page, (Item) itups[i], itemsize, itup_off, false, false)
-			== InvalidOffsetNumber)
-			elog(ERROR, "failed to add index item to \"%s\"",
-				 RelationGetRelationName(rel));
+		if (PageAddItem(page, itups[i], itemsize, itup_off, false, false) == InvalidOffsetNumber)
+			elog(ERROR, "failed to add index item to \"%s\"", RelationGetRelationName(rel));
 	}
 }
 

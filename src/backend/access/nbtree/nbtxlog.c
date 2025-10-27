@@ -38,7 +38,7 @@ _bt_restore_page(Page page, char *from, int len)
 	IndexTupleData itupdata;
 	Size		itemsz;
 	char	   *end = from + len;
-	Item		items[MaxIndexTuplesPerPage];
+	void	   *items[MaxIndexTuplesPerPage];
 	uint16		itemsizes[MaxIndexTuplesPerPage];
 	int			i;
 	int			nitems;
@@ -53,16 +53,15 @@ _bt_restore_page(Page page, char *from, int len)
 	{
 		/*
 		 * As we step through the items, 'from' won't always be properly
-		 * aligned, so we need to use memcpy().  Further, we use Item (which
-		 * is just a char*) here for our items array for the same reason;
-		 * wouldn't want the compiler or anyone thinking that an item is
-		 * aligned when it isn't.
+		 * aligned, so we need to use memcpy().  Further, we use void * here
+		 * for our items array for the same reason; wouldn't want the compiler
+		 * or anyone thinking that an item is aligned when it isn't.
 		 */
 		memcpy(&itupdata, from, sizeof(IndexTupleData));
 		itemsz = IndexTupleSize(&itupdata);
 		itemsz = MAXALIGN(itemsz);
 
-		items[i] = (Item) from;
+		items[i] = from;
 		itemsizes[i] = itemsz;
 		i++;
 
@@ -72,8 +71,7 @@ _bt_restore_page(Page page, char *from, int len)
 
 	for (i = nitems - 1; i >= 0; i--)
 	{
-		if (PageAddItem(page, items[i], itemsizes[i], nitems - i,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, items[i], itemsizes[i], nitems - i, false, false) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: cannot add item to page");
 	}
 }
@@ -186,8 +184,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 		if (!posting)
 		{
 			/* Simple retail insertion */
-			if (PageAddItem(page, (Item) datapos, datalen, xlrec->offnum,
-							false, false) == InvalidOffsetNumber)
+			if (PageAddItem(page, datapos, datalen, xlrec->offnum, false, false) == InvalidOffsetNumber)
 				elog(PANIC, "failed to add new item");
 		}
 		else
@@ -225,8 +222,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, bool posting,
 
 			/* Insert "final" new item (not orignewitem from WAL stream) */
 			Assert(IndexTupleSize(newitem) == datalen);
-			if (PageAddItem(page, (Item) newitem, datalen, xlrec->offnum,
-							false, false) == InvalidOffsetNumber)
+			if (PageAddItem(page, newitem, datalen, xlrec->offnum, false, false) == InvalidOffsetNumber)
 				elog(PANIC, "failed to add posting split new item");
 		}
 
@@ -368,8 +364,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 
 		/* Add high key tuple from WAL record to temp page */
 		leftoff = P_HIKEY;
-		if (PageAddItem(leftpage, (Item) left_hikey, left_hikeysz, P_HIKEY,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(leftpage, left_hikey, left_hikeysz, P_HIKEY, false, false) == InvalidOffsetNumber)
 			elog(ERROR, "failed to add high key to left page after split");
 		leftoff = OffsetNumberNext(leftoff);
 
@@ -384,9 +379,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			{
 				Assert(newitemonleft ||
 					   xlrec->firstrightoff == xlrec->newitemoff);
-				if (PageAddItem(leftpage, (Item) nposting,
-								MAXALIGN(IndexTupleSize(nposting)), leftoff,
-								false, false) == InvalidOffsetNumber)
+				if (PageAddItem(leftpage, nposting, MAXALIGN(IndexTupleSize(nposting)), leftoff, false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add new posting list item to left page after split");
 				leftoff = OffsetNumberNext(leftoff);
 				continue;		/* don't insert oposting */
@@ -395,8 +388,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			/* add the new item if it was inserted on left page */
 			else if (newitemonleft && off == xlrec->newitemoff)
 			{
-				if (PageAddItem(leftpage, (Item) newitem, newitemsz, leftoff,
-								false, false) == InvalidOffsetNumber)
+				if (PageAddItem(leftpage, newitem, newitemsz, leftoff, false, false) == InvalidOffsetNumber)
 					elog(ERROR, "failed to add new item to left page after split");
 				leftoff = OffsetNumberNext(leftoff);
 			}
@@ -404,8 +396,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 			itemid = PageGetItemId(origpage, off);
 			itemsz = ItemIdGetLength(itemid);
 			item = (IndexTuple) PageGetItem(origpage, itemid);
-			if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-							false, false) == InvalidOffsetNumber)
+			if (PageAddItem(leftpage, item, itemsz, leftoff, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add old item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
 		}
@@ -413,8 +404,7 @@ btree_xlog_split(bool newitemonleft, XLogReaderState *record)
 		/* cope with possibility that newitem goes at the end */
 		if (newitemonleft && off == xlrec->newitemoff)
 		{
-			if (PageAddItem(leftpage, (Item) newitem, newitemsz, leftoff,
-							false, false) == InvalidOffsetNumber)
+			if (PageAddItem(leftpage, newitem, newitemsz, leftoff, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add new item to left page after split");
 			leftoff = OffsetNumberNext(leftoff);
 		}
@@ -503,8 +493,7 @@ btree_xlog_dedup(XLogReaderState *record)
 			Size		itemsz = ItemIdGetLength(itemid);
 			IndexTuple	item = (IndexTuple) PageGetItem(page, itemid);
 
-			if (PageAddItem(newpage, (Item) item, itemsz, P_HIKEY,
-							false, false) == InvalidOffsetNumber)
+			if (PageAddItem(newpage, item, itemsz, P_HIKEY, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "deduplication failed to add highkey");
 		}
 
@@ -580,8 +569,7 @@ btree_xlog_updates(Page page, OffsetNumber *updatedoffsets,
 
 		/* Overwrite updated version of tuple */
 		itemsz = MAXALIGN(IndexTupleSize(vacposting->itup));
-		if (!PageIndexTupleOverwrite(page, updatedoffsets[i],
-									 (Item) vacposting->itup, itemsz))
+		if (!PageIndexTupleOverwrite(page, updatedoffsets[i], vacposting->itup, itemsz))
 			elog(PANIC, "failed to update partially dead item");
 
 		pfree(vacposting->itup);
@@ -788,8 +776,7 @@ btree_xlog_mark_page_halfdead(uint8 info, XLogReaderState *record)
 	trunctuple.t_info = sizeof(IndexTupleData);
 	BTreeTupleSetTopParent(&trunctuple, xlrec->topparent);
 
-	if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
-					false, false) == InvalidOffsetNumber)
+	if (PageAddItem(page, &trunctuple, sizeof(IndexTupleData), P_HIKEY, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "could not add dummy high key to half-dead page");
 
 	PageSetLSN(page, lsn);
@@ -923,8 +910,7 @@ btree_xlog_unlink_page(uint8 info, XLogReaderState *record)
 		trunctuple.t_info = sizeof(IndexTupleData);
 		BTreeTupleSetTopParent(&trunctuple, xlrec->leaftopparent);
 
-		if (PageAddItem(page, (Item) &trunctuple, sizeof(IndexTupleData), P_HIKEY,
-						false, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, &trunctuple, sizeof(IndexTupleData), P_HIKEY, false, false) == InvalidOffsetNumber)
 			elog(ERROR, "could not add dummy high key to half-dead page");
 
 		PageSetLSN(page, lsn);

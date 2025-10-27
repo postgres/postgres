@@ -1200,7 +1200,7 @@ spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
  * rather than returning InvalidOffsetNumber.
  */
 OffsetNumber
-SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
+SpGistPageAddNewItem(SpGistState *state, Page page, const void *item, Size size,
 					 OffsetNumber *startOffset, bool errorOK)
 {
 	SpGistPageOpaque opaque = SpGistPageGetOpaque(page);

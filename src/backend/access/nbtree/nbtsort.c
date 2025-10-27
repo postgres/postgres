@@ -731,8 +731,7 @@ _bt_sortaddtup(Page page,
 		itemsize = sizeof(IndexTupleData);
 	}
 
-	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
-					false, false) == InvalidOffsetNumber)
+	if (PageAddItem(page, itup, itemsize, itup_off, false, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to the index page");
 }
 
@@ -934,8 +933,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 			Assert(IndexTupleSize(oitup) > last_truncextra);
 			truncated = _bt_truncate(wstate->index, lastleft, oitup,
 									 wstate->inskey);
-			if (!PageIndexTupleOverwrite(opage, P_HIKEY, (Item) truncated,
-										 IndexTupleSize(truncated)))
+			if (!PageIndexTupleOverwrite(opage, P_HIKEY, truncated, IndexTupleSize(truncated)))
 				elog(ERROR, "failed to add high key to the index page");
 			pfree(truncated);
 

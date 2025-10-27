@@ -98,7 +98,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 			data += sizeof(OffsetNumber);
 			itup = (IndexTuple) data;
 			itupsize = IndexTupleSize(itup);
-			if (!PageIndexTupleOverwrite(page, offnum, (Item) itup, itupsize))
+			if (!PageIndexTupleOverwrite(page, offnum, itup, itupsize))
 				elog(ERROR, "failed to add item to GiST index page, size %d bytes",
 					 (int) itupsize);
 			data += itupsize;
@@ -133,7 +133,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 
 				data += sz;
 
-				l = PageAddItem(page, (Item) itup, sz, off, false, false);
+				l = PageAddItem(page, itup, sz, off, false, false);
 				if (l == InvalidOffsetNumber)
 					elog(ERROR, "failed to add item to GiST index page, size %d bytes",
 						 (int) sz);

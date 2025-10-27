@@ -191,7 +191,7 @@ PageIsVerified(PageData *page, BlockNumber blkno, int flags, bool *checksum_fail
  */
 OffsetNumber
 PageAddItemExtended(Page page,
-					Item item,
+					const void *item,
 					Size size,
 					OffsetNumber offsetNumber,
 					int flags)
@@ -1402,7 +1402,7 @@ PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum)
  */
 bool
 PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
-						Item newtup, Size newsize)
+						const void *newtup, Size newsize)
 {
 	PageHeader	phdr = (PageHeader) page;
 	ItemId		tupid;

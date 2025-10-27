@@ -83,7 +83,7 @@ writeListPage(Relation index, Buffer buffer,
 		ptr += this_size;
 		size += this_size;
 
-		l = PageAddItem(page, (Item) tuples[i], this_size, off, false, false);
+		l = PageAddItem(page, tuples[i], this_size, off, false, false);
 
 		if (l == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page in \"%s\"",
@@ -384,7 +384,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 		for (i = 0; i < collector->ntuples; i++)
 		{
 			tupsize = IndexTupleSize(collector->tuples[i]);
-			l = PageAddItem(page, (Item) collector->tuples[i], tupsize, off, false, false);
+			l = PageAddItem(page, collector->tuples[i], tupsize, off, false, false);
 
 			if (l == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in \"%s\"",

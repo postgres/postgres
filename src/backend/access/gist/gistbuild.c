@@ -558,7 +558,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 		{
 			IndexTuple	thistup = (IndexTuple) data;
 
-			if (PageAddItem(target, (Item) data, IndexTupleSize(thistup), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
+			if (PageAddItem(target, data, IndexTupleSize(thistup), i + FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in \"%s\"", RelationGetRelationName(state->indexrel));
 
 			data += IndexTupleSize(thistup);
