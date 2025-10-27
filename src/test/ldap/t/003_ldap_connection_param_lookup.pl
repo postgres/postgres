@@ -44,31 +44,21 @@ $ldap->ldapadd_file('authdata.ldif');
 $ldap->ldapsetpw('uid=test1,dc=example,dc=net', 'secret1');
 $ldap->ldapsetpw('uid=test2,dc=example,dc=net', 'secret2');
 
-# Windows vs non-Windows: CRLF vs LF for the file's newline, relying on
-# the fact that libpq uses fgets() when reading the lines of a service file.
-my $newline = $windows_os ? "\r\n" : "\n";
-
 my $td = PostgreSQL::Test::Utils::tempdir;
 
 # create ldap file based on postgres connection info
 my $ldif_valid = "$td/connection_params.ldif";
-append_to_file($ldif_valid, "version:1");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "dn:cn=mydatabase,dc=example,dc=net");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "changetype:add");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "objectclass:top");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "objectclass:device");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "cn:mydatabase");
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "description:host=");
-append_to_file($ldif_valid, $node->host);
-append_to_file($ldif_valid, $newline);
-append_to_file($ldif_valid, "description:port=");
-append_to_file($ldif_valid, $node->port);
+append_to_file(
+	$ldif_valid, qq{
+version:1
+dn:cn=mydatabase,dc=example,dc=net
+changetype:add
+objectclass:top
+objectclass:device
+cn:mydatabase
+description:host=} . $node->host . qq{
+description:port=} . $node->port . qq{
+});
 
 $ldap->ldapadd_file($ldif_valid);
 
@@ -86,12 +76,11 @@ note "setting up PostgreSQL instance";
 # File that includes a valid service name, that uses a decomposed
 # connection string for its contents, split on spaces.
 my $srvfile_valid = "$td/pg_service_valid.conf";
-append_to_file($srvfile_valid, "[my_srv]");
-append_to_file($srvfile_valid, $newline);
-append_to_file($srvfile_valid, "ldap://localhost:");
-append_to_file($srvfile_valid, $ldap_port);
-append_to_file($srvfile_valid,
-	"/dc=example,dc=net?description?one?(cn=mydatabase)");
+append_to_file(
+	$srvfile_valid, qq{
+[my_srv]
+ldap://localhost:$ldap_port/dc=example,dc=net?description?one?(cn=mydatabase)
+});
 
 # File defined with no contents, used as default value for
 # PGSERVICEFILE, so that no lookup is attempted in the user's home
