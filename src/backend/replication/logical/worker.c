@@ -1817,7 +1817,8 @@ apply_handle_stream_start(StringInfo s)
 				 * Signal the leader apply worker, as it may be waiting for
 				 * us.
 				 */
-				logicalrep_worker_wakeup(MyLogicalRepWorker->subid, InvalidOid);
+				logicalrep_worker_wakeup(WORKERTYPE_APPLY,
+										 MyLogicalRepWorker->subid, InvalidOid);
 			}
 
 			parallel_stream_nchanges = 0;
@@ -3284,8 +3285,9 @@ FindDeletedTupleInLocalRel(Relation localrel, Oid localidxoid,
 		 * maybe_advance_nonremovable_xid() for details).
 		 */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
-		leader = logicalrep_worker_find(MyLogicalRepWorker->subid,
-										InvalidOid, false);
+		leader = logicalrep_worker_find(WORKERTYPE_APPLY,
+										MyLogicalRepWorker->subid, InvalidOid,
+										false);
 		if (!leader)
 		{
 			ereport(ERROR,

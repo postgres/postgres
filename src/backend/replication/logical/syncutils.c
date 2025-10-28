@@ -69,7 +69,8 @@ FinishSyncWorker(void)
 	CommitTransactionCommand();
 
 	/* Find the leader apply worker and signal it. */
-	logicalrep_worker_wakeup(MyLogicalRepWorker->subid, InvalidOid);
+	logicalrep_worker_wakeup(WORKERTYPE_APPLY, MyLogicalRepWorker->subid,
+							 InvalidOid);
 
 	/* Stop gracefully */
 	proc_exit(0);

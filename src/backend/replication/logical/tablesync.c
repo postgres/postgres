@@ -160,7 +160,8 @@ wait_for_table_state_change(Oid relid, char expected_state)
 
 		/* Check if the sync worker is still running and bail if not. */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
-		worker = logicalrep_worker_find(MyLogicalRepWorker->subid, relid,
+		worker = logicalrep_worker_find(WORKERTYPE_TABLESYNC,
+										MyLogicalRepWorker->subid, relid,
 										false);
 		LWLockRelease(LogicalRepWorkerLock);
 		if (!worker)
@@ -207,8 +208,9 @@ wait_for_worker_state_change(char expected_state)
 		 * waiting.
 		 */
 		LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
-		worker = logicalrep_worker_find(MyLogicalRepWorker->subid,
-										InvalidOid, false);
+		worker = logicalrep_worker_find(WORKERTYPE_APPLY,
+										MyLogicalRepWorker->subid, InvalidOid,
+										false);
 		if (worker && worker->proc)
 			logicalrep_worker_wakeup_ptr(worker);
 		LWLockRelease(LogicalRepWorkerLock);
@@ -476,7 +478,8 @@ ProcessSyncingTablesForApply(XLogRecPtr current_lsn)
 			 */
 			LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 
-			syncworker = logicalrep_worker_find(MyLogicalRepWorker->subid,
+			syncworker = logicalrep_worker_find(WORKERTYPE_TABLESYNC,
+												MyLogicalRepWorker->subid,
 												rstate->relid, false);
 
 			if (syncworker)
