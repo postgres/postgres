@@ -6555,6 +6555,13 @@ get_actual_variable_range(PlannerInfo *root, VariableStatData *vardata,
 			continue;
 
 		/*
+		 * get_actual_variable_endpoint uses the index-only-scan machinery, so
+		 * ignore indexes that can't use it on their first column.
+		 */
+		if (!index->canreturn[0])
+			continue;
+
+		/*
 		 * The first index column must match the desired variable, sortop, and
 		 * collation --- but we can use a descending-order index.
 		 */
