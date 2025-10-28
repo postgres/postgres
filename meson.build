@@ -2147,13 +2147,21 @@ endforeach
 
 if cc.get_id() == 'msvc'
   cflags_warn += [
-    '/wd4018', # signed/unsigned mismatch
-    '/wd4244', # conversion from 'type1' to 'type2', possible loss of data
-    '/wd4273', # inconsistent DLL linkage
-    '/wd4101', # unreferenced local variable
-    '/wd4102', # unreferenced label
+    # Warnings to disable:
+    # from /W1:
     '/wd4090', # different 'modifier' qualifiers
+    '/wd4273', # inconsistent DLL linkage
+    # from /W2:
+    '/wd4244', # conversion from 'type1' to 'type2', possible loss of data
+    # from /W3:
+    '/wd4018', # signed/unsigned mismatch
+    '/wd4101', # unreferenced local variable [like -Wunused-variable, but there is no "unused" attribute, so too noisy]
     '/wd4267', # conversion from 'size_t' to 'type', possible loss of data
+
+    # Additional warnings to enable:
+    '/w24062', # enumerator 'identifier' in switch of enum 'enumeration' is not handled [like -Wswitch]
+    '/w24102', # unreferenced label [like -Wunused-label]
+    '/w24777', # 'function' : format string 'string' requires an argument of type 'type1', but variadic argument number has type 'type2' [like -Wformat]
   ]
 
   cppflags += [
