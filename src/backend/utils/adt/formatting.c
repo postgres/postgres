@@ -1128,9 +1128,7 @@ index_seq_search(const char *str, const KeyWord *kw, const int *index)
 static const KeySuffix *
 suff_search(const char *str, const KeySuffix *suf, int type)
 {
-	const KeySuffix *s;
-
-	for (s = suf; s->name != NULL; s++)
+	for (const KeySuffix *s = suf; s->name != NULL; s++)
 	{
 		if (s->type != type)
 			continue;
@@ -1865,14 +1863,13 @@ char *
 asc_tolower(const char *buff, size_t nbytes)
 {
 	char	   *result;
-	char	   *p;
 
 	if (!buff)
 		return NULL;
 
 	result = pnstrdup(buff, nbytes);
 
-	for (p = result; *p; p++)
+	for (char *p = result; *p; p++)
 		*p = pg_ascii_tolower((unsigned char) *p);
 
 	return result;
@@ -1888,14 +1885,13 @@ char *
 asc_toupper(const char *buff, size_t nbytes)
 {
 	char	   *result;
-	char	   *p;
 
 	if (!buff)
 		return NULL;
 
 	result = pnstrdup(buff, nbytes);
 
-	for (p = result; *p; p++)
+	for (char *p = result; *p; p++)
 		*p = pg_ascii_toupper((unsigned char) *p);
 
 	return result;
@@ -1911,7 +1907,6 @@ char *
 asc_initcap(const char *buff, size_t nbytes)
 {
 	char	   *result;
-	char	   *p;
 	int			wasalnum = false;
 
 	if (!buff)
@@ -1919,7 +1914,7 @@ asc_initcap(const char *buff, size_t nbytes)
 
 	result = pnstrdup(buff, nbytes);
 
-	for (p = result; *p; p++)
+	for (char *p = result; *p; p++)
 	{
 		char		c;
 
@@ -1994,13 +1989,12 @@ asc_toupper_z(const char *buff)
 static void
 dump_index(const KeyWord *k, const int *index)
 {
-	int			i,
-				count = 0,
+	int			count = 0,
 				free_i = 0;
 
 	elog(DEBUG_elog_output, "TO-FROM_CHAR: Dump KeyWord Index:");
 
-	for (i = 0; i < KeyWord_INDEX_SIZE; i++)
+	for (int i = 0; i < KeyWord_INDEX_SIZE; i++)
 	{
 		if (index[i] != -1)
 		{
@@ -2282,7 +2276,6 @@ static int
 seq_search_ascii(const char *name, const char *const *array, int *len)
 {
 	unsigned char firstc;
-	const char *const *a;
 
 	*len = 0;
 
@@ -2293,17 +2286,14 @@ seq_search_ascii(const char *name, const char *const *array, int *len)
 	/* we handle first char specially to gain some speed */
 	firstc = pg_ascii_tolower((unsigned char) *name);
 
-	for (a = array; *a != NULL; a++)
+	for (const char *const *a = array; *a != NULL; a++)
 	{
-		const char *p;
-		const char *n;
-
 		/* compare first chars */
 		if (pg_ascii_tolower((unsigned char) **a) != firstc)
 			continue;
 
 		/* compare rest of string */
-		for (p = *a + 1, n = name + 1;; p++, n++)
+		for (const char *p = *a + 1, *n = name + 1;; p++, n++)
 		{
 			/* return success if we matched whole array entry */
 			if (*p == '\0')
@@ -2338,7 +2328,6 @@ seq_search_ascii(const char *name, const char *const *array, int *len)
 static int
 seq_search_localized(const char *name, char **array, int *len, Oid collid)
 {
-	char	  **a;
 	char	   *upper_name;
 	char	   *lower_name;
 
@@ -2352,7 +2341,7 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 	 * The case-folding processing done below is fairly expensive, so before
 	 * doing that, make a quick pass to see if there is an exact match.
 	 */
-	for (a = array; *a != NULL; a++)
+	for (char **a = array; *a != NULL; a++)
 	{
 		int			element_len = strlen(*a);
 
@@ -2371,7 +2360,7 @@ seq_search_localized(const char *name, char **array, int *len, Oid collid)
 	lower_name = str_tolower(upper_name, strlen(upper_name), collid);
 	pfree(upper_name);
 
-	for (a = array; *a != NULL; a++)
+	for (char **a = array; *a != NULL; a++)
 	{
 		char	   *upper_element;
 		char	   *lower_element;
@@ -2438,9 +2427,8 @@ from_char_seq_search(int *dest, const char **src, const char *const *array,
 		 * any) to avoid including irrelevant data.
 		 */
 		char	   *copy = pstrdup(*src);
-		char	   *c;
 
-		for (c = copy; *c; c++)
+		for (char *c = copy; *c; c++)
 		{
 			if (scanner_isspace(*c))
 			{
@@ -2467,7 +2455,6 @@ from_char_seq_search(int *dest, const char **src, const char *const *array,
 static void
 DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid collid)
 {
-	FormatNode *n;
 	char	   *s;
 	struct fmt_tm *tm = &in->tm;
 	int			i;
@@ -2476,7 +2463,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 	cache_locale_time();
 
 	s = out;
-	for (n = node; n->type != NODE_TYPE_END; n++)
+	for (FormatNode *n = node; n->type != NODE_TYPE_END; n++)
 	{
 		if (n->type != NODE_TYPE_ACTION)
 		{
@@ -3686,10 +3673,9 @@ DCH_prevent_counter_overflow(void)
 static int
 DCH_datetime_type(FormatNode *node)
 {
-	FormatNode *n;
 	int			flags = 0;
 
-	for (n = node; n->type != NODE_TYPE_END; n++)
+	for (FormatNode *n = node; n->type != NODE_TYPE_END; n++)
 	{
 		if (n->type != NODE_TYPE_ACTION)
 			continue;
@@ -5026,8 +5012,7 @@ int_to_roman(int number)
 {
 	int			len,
 				num;
-	char	   *p,
-			   *result,
+	char	   *result,
 				numstr[12];
 
 	result = (char *) palloc(MAX_ROMAN_LEN + 1);
@@ -5048,7 +5033,7 @@ int_to_roman(int number)
 	len = snprintf(numstr, sizeof(numstr), "%d", number);
 	Assert(len > 0 && len <= 4);
 
-	for (p = numstr; *p != '\0'; p++, --len)
+	for (char *p = numstr; *p != '\0'; p++, --len)
 	{
 		num = *p - ('0' + 1);
 		if (num < 0)
