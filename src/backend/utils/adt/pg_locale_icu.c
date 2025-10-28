@@ -128,6 +128,11 @@ char_is_cased_icu(char ch, pg_locale_t locale)
 		(ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
 }
 
+/*
+ * XXX: many of the functions below rely on casts directly from pg_wchar to
+ * UChar32, which is correct for the UTF-8 encoding, but not in general.
+ */
+
 static pg_wchar
 toupper_icu(pg_wchar wc, pg_locale_t locale)
 {

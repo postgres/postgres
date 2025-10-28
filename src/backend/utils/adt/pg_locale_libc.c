@@ -45,8 +45,7 @@
  *
  * 2. When working in UTF8 encoding, we use the <wctype.h> functions.
  * This assumes that every platform uses Unicode codepoints directly
- * as the wchar_t representation of Unicode.  (XXX: ICU makes this assumption
- * even for non-UTF8 encodings, which may be a problem.)  On some platforms
+ * as the wchar_t representation of Unicode.  On some platforms
  * wchar_t is only 16 bits wide, so we have to punt for codepoints > 0xFFFF.
  *
  * 3. In all other encodings, we use the <ctype.h> functions for pg_wchar
