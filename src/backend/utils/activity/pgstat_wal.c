@@ -121,6 +121,7 @@ pgstat_wal_flush_cb(bool nowait)
 	WALSTAT_ACC(wal_records, wal_usage_diff);
 	WALSTAT_ACC(wal_fpi, wal_usage_diff);
 	WALSTAT_ACC(wal_bytes, wal_usage_diff);
+	WALSTAT_ACC(wal_fpi_bytes, wal_usage_diff);
 	WALSTAT_ACC(wal_buffers_full, wal_usage_diff);
 #undef WALSTAT_ACC
 

@@ -3325,6 +3325,15 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>wal_fpi_bytes</structfield> <type>numeric</type>
+      </para>
+      <para>
+       Total amount of WAL full page images in bytes
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>wal_buffers_full</structfield> <type>bigint</type>
       </para>
       <para>

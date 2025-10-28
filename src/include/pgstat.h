@@ -212,7 +212,7 @@ typedef struct PgStat_TableXactStatus
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BCB9
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BCBA
 
 typedef struct PgStat_ArchiverStats
 {
@@ -473,6 +473,7 @@ typedef struct PgStat_WalCounters
 	PgStat_Counter wal_records;
 	PgStat_Counter wal_fpi;
 	uint64		wal_bytes;
+	uint64		wal_fpi_bytes;
 	PgStat_Counter wal_buffers_full;
 } PgStat_WalCounters;
 

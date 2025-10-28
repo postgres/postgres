@@ -33,12 +33,14 @@
 #include "access/xloginsert.h"
 #include "catalog/pg_control.h"
 #include "common/pg_lzcompress.h"
+#include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
 #include "replication/origin.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
+#include "utils/pgstat_internal.h"
 
 /*
  * Guess the maximum buffer size required to store a compressed version of
@@ -796,6 +798,10 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			}
 
 			total_len += bimg.length;
+
+			/* Track the WAL full page images in bytes */
+			pgWalUsage.wal_fpi_bytes += bimg.length;
+			pgstat_report_fixed = true;
 		}
 
 		if (needs_data)
