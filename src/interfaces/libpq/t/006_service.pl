@@ -22,18 +22,14 @@ $dummy_node->init;
 
 my $td = PostgreSQL::Test::Utils::tempdir;
 
-# Windows vs non-Windows: CRLF vs LF for the file's newline, relying on
-# the fact that libpq uses fgets() when reading the lines of a service file.
-my $newline = $windows_os ? "\r\n" : "\n";
-
 # Create the set of service files used in the tests.
 # File that includes a valid service name, and uses a decomposed connection
 # string for its contents, split on spaces.
 my $srvfile_valid = "$td/pg_service_valid.conf";
-append_to_file($srvfile_valid, "[my_srv]" . $newline);
+append_to_file($srvfile_valid, "[my_srv]\n");
 foreach my $param (split(/\s+/, $node->connstr))
 {
-	append_to_file($srvfile_valid, $param . $newline);
+	append_to_file($srvfile_valid, $param . "\n");
 }
 
 # File defined with no contents, used as default value for PGSERVICEFILE,
