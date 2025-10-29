@@ -202,6 +202,7 @@ extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
 								   XLogRecPtr fpw_lsn,
 								   uint8 flags,
 								   int num_fpi,
+								   uint64 fpi_bytes,
 								   bool topxid_included);
 extern void XLogFlush(XLogRecPtr record);
 extern bool XLogBackgroundFlush(void);
