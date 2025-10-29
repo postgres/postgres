@@ -47,8 +47,8 @@ print $OUTPUT <<HEADER;
 typedef struct
 {
 	int			linenum;
-	pg_wchar	input[50];
-	pg_wchar	output[4][50];
+	char32_t	input[50];
+	char32_t	output[4][50];
 } pg_unicode_test;
 
 /* test table */

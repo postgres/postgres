@@ -121,7 +121,7 @@ static void addlitchar(unsigned char ychar, core_yyscan_t yyscanner);
 static char *litbufdup(core_yyscan_t yyscanner);
 static unsigned char unescape_single_char(unsigned char c, core_yyscan_t yyscanner);
 static int	process_integer_literal(const char *token, YYSTYPE *lval, int base);
-static void addunicode(pg_wchar c, yyscan_t yyscanner);
+static void addunicode(char32_t c, yyscan_t yyscanner);
 
 #define yyerror(msg)  scanner_yyerror(msg, yyscanner)
 
@@ -640,7 +640,7 @@ other			.
 					addlit(yytext, yyleng, yyscanner);
 				}
 <xe>{xeunicode} {
-					pg_wchar	c = strtoul(yytext + 2, NULL, 16);
+					char32_t	c = strtoul(yytext + 2, NULL, 16);
 
 					/*
 					 * For consistency with other productions, issue any
@@ -668,7 +668,7 @@ other			.
 					POP_YYLLOC();
 				}
 <xeu>{xeunicode} {
-					pg_wchar	c = strtoul(yytext + 2, NULL, 16);
+					char32_t	c = strtoul(yytext + 2, NULL, 16);
 
 					/* Remember start of overall string token ... */
 					PUSH_YYLLOC();
@@ -1376,7 +1376,7 @@ process_integer_literal(const char *token, YYSTYPE *lval, int base)
 }
 
 static void
-addunicode(pg_wchar c, core_yyscan_t yyscanner)
+addunicode(char32_t c, core_yyscan_t yyscanner)
 {
 	ScannerCallbackState scbstate;
 	char		buf[MAX_UNICODE_EQUIVALENT_STRING + 1];

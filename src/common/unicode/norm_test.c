@@ -20,7 +20,7 @@
 #include "norm_test_table.h"
 
 static char *
-print_wchar_str(const pg_wchar *s)
+print_wchar_str(const char32_t *s)
 {
 #define BUF_DIGITS 50
 	static char buf[BUF_DIGITS * 11 + 1];
@@ -41,7 +41,7 @@ print_wchar_str(const pg_wchar *s)
 }
 
 static int
-pg_wcscmp(const pg_wchar *s1, const pg_wchar *s2)
+pg_wcscmp(const char32_t *s1, const char32_t *s2)
 {
 	for (;;)
 	{
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	{
 		for (int form = 0; form < 4; form++)
 		{
-			pg_wchar   *result;
+			char32_t   *result;
 
 			result = unicode_normalize(form, test->input);
 

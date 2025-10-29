@@ -5419,12 +5419,12 @@ unicode_assigned(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errmsg("Unicode categorization can only be performed if server encoding is UTF8")));
 
-	/* convert to pg_wchar */
+	/* convert to char32_t */
 	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
 	p = (unsigned char *) VARDATA_ANY(input);
 	for (int i = 0; i < size; i++)
 	{
-		pg_wchar	uchar = utf8_to_unicode(p);
+		char32_t	uchar = utf8_to_unicode(p);
 		int			category = unicode_category(uchar);
 
 		if (category == PG_U_UNASSIGNED)
@@ -5443,24 +5443,24 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 	char	   *formstr = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	UnicodeNormalizationForm form;
 	int			size;
-	pg_wchar   *input_chars;
-	pg_wchar   *output_chars;
+	char32_t   *input_chars;
+	char32_t   *output_chars;
 	unsigned char *p;
 	text	   *result;
 	int			i;
 
 	form = unicode_norm_form_from_string(formstr);
 
-	/* convert to pg_wchar */
+	/* convert to char32_t */
 	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
-	input_chars = palloc((size + 1) * sizeof(pg_wchar));
+	input_chars = palloc((size + 1) * sizeof(char32_t));
 	p = (unsigned char *) VARDATA_ANY(input);
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
 		p += pg_utf_mblen(p);
 	}
-	input_chars[i] = (pg_wchar) '\0';
+	input_chars[i] = (char32_t) '\0';
 	Assert((char *) p == VARDATA_ANY(input) + VARSIZE_ANY_EXHDR(input));
 
 	/* action */
@@ -5468,7 +5468,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 
 	/* convert back to UTF-8 string */
 	size = 0;
-	for (pg_wchar *wp = output_chars; *wp; wp++)
+	for (char32_t *wp = output_chars; *wp; wp++)
 	{
 		unsigned char buf[4];
 
@@ -5480,7 +5480,7 @@ unicode_normalize_func(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, size + VARHDRSZ);
 
 	p = (unsigned char *) VARDATA_ANY(result);
-	for (pg_wchar *wp = output_chars; *wp; wp++)
+	for (char32_t *wp = output_chars; *wp; wp++)
 	{
 		unicode_to_utf8(*wp, p);
 		p += pg_utf_mblen(p);
@@ -5509,8 +5509,8 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 	char	   *formstr = text_to_cstring(PG_GETARG_TEXT_PP(1));
 	UnicodeNormalizationForm form;
 	int			size;
-	pg_wchar   *input_chars;
-	pg_wchar   *output_chars;
+	char32_t   *input_chars;
+	char32_t   *output_chars;
 	unsigned char *p;
 	int			i;
 	UnicodeNormalizationQC quickcheck;
@@ -5519,16 +5519,16 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 
 	form = unicode_norm_form_from_string(formstr);
 
-	/* convert to pg_wchar */
+	/* convert to char32_t */
 	size = pg_mbstrlen_with_len(VARDATA_ANY(input), VARSIZE_ANY_EXHDR(input));
-	input_chars = palloc((size + 1) * sizeof(pg_wchar));
+	input_chars = palloc((size + 1) * sizeof(char32_t));
 	p = (unsigned char *) VARDATA_ANY(input);
 	for (i = 0; i < size; i++)
 	{
 		input_chars[i] = utf8_to_unicode(p);
 		p += pg_utf_mblen(p);
 	}
-	input_chars[i] = (pg_wchar) '\0';
+	input_chars[i] = (char32_t) '\0';
 	Assert((char *) p == VARDATA_ANY(input) + VARSIZE_ANY_EXHDR(input));
 
 	/* quick check (see UAX #15) */
@@ -5542,11 +5542,11 @@ unicode_is_normalized(PG_FUNCTION_ARGS)
 	output_chars = unicode_normalize(form, input_chars);
 
 	output_size = 0;
-	for (pg_wchar *wp = output_chars; *wp; wp++)
+	for (char32_t *wp = output_chars; *wp; wp++)
 		output_size++;
 
 	result = (size == output_size) &&
-		(memcmp(input_chars, output_chars, size * sizeof(pg_wchar)) == 0);
+		(memcmp(input_chars, output_chars, size * sizeof(char32_t)) == 0);
 
 	PG_RETURN_BOOL(result);
 }
@@ -5602,7 +5602,7 @@ unistr(PG_FUNCTION_ARGS)
 	int			len;
 	StringInfoData str;
 	text	   *result;
-	pg_wchar	pair_first = 0;
+	char16_t	pair_first = 0;
 	char		cbuf[MAX_UNICODE_EQUIVALENT_STRING + 1];
 
 	instr = VARDATA_ANY(input_text);
@@ -5626,7 +5626,7 @@ unistr(PG_FUNCTION_ARGS)
 			else if ((len >= 5 && isxdigits_n(instr + 1, 4)) ||
 					 (len >= 6 && instr[1] == 'u' && isxdigits_n(instr + 2, 4)))
 			{
-				pg_wchar	unicode;
+				char32_t	unicode;
 				int			offset = instr[1] == 'u' ? 2 : 1;
 
 				unicode = hexval_n(instr + offset, 4);
@@ -5662,7 +5662,7 @@ unistr(PG_FUNCTION_ARGS)
 			}
 			else if (len >= 8 && instr[1] == '+' && isxdigits_n(instr + 2, 6))
 			{
-				pg_wchar	unicode;
+				char32_t	unicode;
 
 				unicode = hexval_n(instr + 2, 6);
 
@@ -5697,7 +5697,7 @@ unistr(PG_FUNCTION_ARGS)
 			}
 			else if (len >= 10 && instr[1] == 'U' && isxdigits_n(instr + 2, 8))
 			{
-				pg_wchar	unicode;
+				char32_t	unicode;
 
 				unicode = hexval_n(instr + 2, 8);
 

@@ -339,7 +339,7 @@ hexval(unsigned char c)
 
 /* is Unicode code point acceptable? */
 static void
-check_unicode_value(pg_wchar c)
+check_unicode_value(char32_t c)
 {
 	if (!is_valid_unicode_codepoint(c))
 		ereport(ERROR,
@@ -376,7 +376,7 @@ str_udeescape(const char *str, char escape,
 	char	   *new,
 			   *out;
 	size_t		new_len;
-	pg_wchar	pair_first = 0;
+	char16_t	pair_first = 0;
 	ScannerCallbackState scbstate;
 
 	/*
@@ -420,7 +420,7 @@ str_udeescape(const char *str, char escape,
 					 isxdigit((unsigned char) in[3]) &&
 					 isxdigit((unsigned char) in[4]))
 			{
-				pg_wchar	unicode;
+				char32_t	unicode;
 
 				unicode = (hexval(in[1]) << 12) +
 					(hexval(in[2]) << 8) +
@@ -457,7 +457,7 @@ str_udeescape(const char *str, char escape,
 					 isxdigit((unsigned char) in[6]) &&
 					 isxdigit((unsigned char) in[7]))
 			{
-				pg_wchar	unicode;
+				char32_t	unicode;
 
 				unicode = (hexval(in[2]) << 20) +
 					(hexval(in[3]) << 16) +

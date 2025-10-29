@@ -30,7 +30,7 @@ enum CaseMapResult
 /*
  * Map for each case kind.
  */
-static const pg_wchar *const casekind_map[NCaseKind] =
+static const char32_t *const casekind_map[NCaseKind] =
 {
 	[CaseLower] = case_map_lower,
 	[CaseTitle] = case_map_title,
@@ -38,42 +38,42 @@ static const pg_wchar *const casekind_map[NCaseKind] =
 	[CaseFold] = case_map_fold,
 };
 
-static pg_wchar find_case_map(pg_wchar ucs, const pg_wchar *map);
+static char32_t find_case_map(char32_t ucs, const char32_t *map);
 static size_t convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 						   CaseKind str_casekind, bool full, WordBoundaryNext wbnext,
 						   void *wbstate);
-static enum CaseMapResult casemap(pg_wchar u1, CaseKind casekind, bool full,
+static enum CaseMapResult casemap(char32_t u1, CaseKind casekind, bool full,
 								  const char *src, size_t srclen, size_t srcoff,
-								  pg_wchar *simple, const pg_wchar **special);
+								  char32_t *simple, const char32_t **special);
 
-pg_wchar
-unicode_lowercase_simple(pg_wchar code)
+char32_t
+unicode_lowercase_simple(char32_t code)
 {
-	pg_wchar	cp = find_case_map(code, case_map_lower);
+	char32_t	cp = find_case_map(code, case_map_lower);
 
 	return cp != 0 ? cp : code;
 }
 
-pg_wchar
-unicode_titlecase_simple(pg_wchar code)
+char32_t
+unicode_titlecase_simple(char32_t code)
 {
-	pg_wchar	cp = find_case_map(code, case_map_title);
+	char32_t	cp = find_case_map(code, case_map_title);
 
 	return cp != 0 ? cp : code;
 }
 
-pg_wchar
-unicode_uppercase_simple(pg_wchar code)
+char32_t
+unicode_uppercase_simple(char32_t code)
 {
-	pg_wchar	cp = find_case_map(code, case_map_upper);
+	char32_t	cp = find_case_map(code, case_map_upper);
 
 	return cp != 0 ? cp : code;
 }
 
-pg_wchar
-unicode_casefold_simple(pg_wchar code)
+char32_t
+unicode_casefold_simple(char32_t code)
 {
-	pg_wchar	cp = find_case_map(code, case_map_fold);
+	char32_t	cp = find_case_map(code, case_map_fold);
 
 	return cp != 0 ? cp : code;
 }
@@ -231,10 +231,10 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 
 	while ((srclen < 0 || srcoff < srclen) && src[srcoff] != '\0')
 	{
-		pg_wchar	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
+		char32_t	u1 = utf8_to_unicode((unsigned char *) src + srcoff);
 		int			u1len = unicode_utf8len(u1);
-		pg_wchar	simple = 0;
-		const pg_wchar *special = NULL;
+		char32_t	simple = 0;
+		const char32_t *special = NULL;
 		enum CaseMapResult casemap_result;
 
 		if (str_casekind == CaseTitle)
@@ -265,8 +265,8 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 			case CASEMAP_SIMPLE:
 				{
 					/* replace with single character */
-					pg_wchar	u2 = simple;
-					pg_wchar	u2len = unicode_utf8len(u2);
+					char32_t	u2 = simple;
+					char32_t	u2len = unicode_utf8len(u2);
 
 					Assert(special == NULL);
 					if (result_len + u2len <= dstsize)
@@ -280,7 +280,7 @@ convert_case(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 				Assert(simple == 0);
 				for (int i = 0; i < MAX_CASE_EXPANSION && special[i]; i++)
 				{
-					pg_wchar	u2 = special[i];
+					char32_t	u2 = special[i];
 					size_t		u2len = unicode_utf8len(u2);
 
 					if (result_len + u2len <= dstsize)
@@ -320,7 +320,7 @@ check_final_sigma(const unsigned char *str, size_t len, size_t offset)
 	{
 		if ((str[i] & 0x80) == 0 || (str[i] & 0xC0) == 0xC0)
 		{
-			pg_wchar	curr = utf8_to_unicode(str + i);
+			char32_t	curr = utf8_to_unicode(str + i);
 
 			if (pg_u_prop_case_ignorable(curr))
 				continue;
@@ -344,7 +344,7 @@ check_final_sigma(const unsigned char *str, size_t len, size_t offset)
 	{
 		if ((str[i] & 0x80) == 0 || (str[i] & 0xC0) == 0xC0)
 		{
-			pg_wchar	curr = utf8_to_unicode(str + i);
+			char32_t	curr = utf8_to_unicode(str + i);
 
 			if (pg_u_prop_case_ignorable(curr))
 				continue;
@@ -394,9 +394,9 @@ check_special_conditions(int conditions, const char *str, size_t len,
  * character without modification.
  */
 static enum CaseMapResult
-casemap(pg_wchar u1, CaseKind casekind, bool full,
+casemap(char32_t u1, CaseKind casekind, bool full,
 		const char *src, size_t srclen, size_t srcoff,
-		pg_wchar *simple, const pg_wchar **special)
+		char32_t *simple, const char32_t **special)
 {
 	uint16		idx;
 
@@ -434,8 +434,8 @@ casemap(pg_wchar u1, CaseKind casekind, bool full,
  * Find entry in simple case map.
  * If the entry does not exist, 0 will be returned.
  */
-static pg_wchar
-find_case_map(pg_wchar ucs, const pg_wchar *map)
+static char32_t
+find_case_map(char32_t ucs, const char32_t *map)
 {
 	/* Fast path for codepoints < 0x80 */
 	if (ucs < 0x80)

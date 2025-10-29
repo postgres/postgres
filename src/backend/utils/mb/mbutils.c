@@ -862,7 +862,7 @@ perform_default_encoding_conversion(const char *src, int len,
  * may call this outside any transaction, or in an aborted transaction.
  */
 void
-pg_unicode_to_server(pg_wchar c, unsigned char *s)
+pg_unicode_to_server(char32_t c, unsigned char *s)
 {
 	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
 	int			c_as_utf8_len;
@@ -924,7 +924,7 @@ pg_unicode_to_server(pg_wchar c, unsigned char *s)
  * but simply return false on conversion failure.
  */
 bool
-pg_unicode_to_server_noerror(pg_wchar c, unsigned char *s)
+pg_unicode_to_server_noerror(char32_t c, unsigned char *s)
 {
 	unsigned char c_as_utf8[MAX_MULTIBYTE_CHAR_LEN + 1];
 	int			c_as_utf8_len;

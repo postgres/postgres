@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * unicode_category.c
  *		Determine general category and character properties of Unicode
- *		characters. Encoding must be UTF8, where we assume that the pg_wchar
+ *		characters. Encoding must be UTF8, where we assume that the char32_t
  *		representation is a code point.
  *
  * Portions Copyright (c) 2017-2025, PostgreSQL Global Development Group
@@ -76,13 +76,13 @@
 #define PG_U_CHARACTER_TAB	0x09
 
 static bool range_search(const pg_unicode_range *tbl, size_t size,
-						 pg_wchar code);
+						 char32_t code);
 
 /*
  * Unicode general category for the given codepoint.
  */
 pg_unicode_category
-unicode_category(pg_wchar code)
+unicode_category(char32_t code)
 {
 	int			min = 0;
 	int			mid;
@@ -108,7 +108,7 @@ unicode_category(pg_wchar code)
 }
 
 bool
-pg_u_prop_alphabetic(pg_wchar code)
+pg_u_prop_alphabetic(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_ALPHABETIC;
@@ -119,7 +119,7 @@ pg_u_prop_alphabetic(pg_wchar code)
 }
 
 bool
-pg_u_prop_lowercase(pg_wchar code)
+pg_u_prop_lowercase(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_LOWERCASE;
@@ -130,7 +130,7 @@ pg_u_prop_lowercase(pg_wchar code)
 }
 
 bool
-pg_u_prop_uppercase(pg_wchar code)
+pg_u_prop_uppercase(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_UPPERCASE;
@@ -141,7 +141,7 @@ pg_u_prop_uppercase(pg_wchar code)
 }
 
 bool
-pg_u_prop_cased(pg_wchar code)
+pg_u_prop_cased(char32_t code)
 {
 	uint32		category_mask;
 
@@ -156,7 +156,7 @@ pg_u_prop_cased(pg_wchar code)
 }
 
 bool
-pg_u_prop_case_ignorable(pg_wchar code)
+pg_u_prop_case_ignorable(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_CASE_IGNORABLE;
@@ -167,7 +167,7 @@ pg_u_prop_case_ignorable(pg_wchar code)
 }
 
 bool
-pg_u_prop_white_space(pg_wchar code)
+pg_u_prop_white_space(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_WHITE_SPACE;
@@ -178,7 +178,7 @@ pg_u_prop_white_space(pg_wchar code)
 }
 
 bool
-pg_u_prop_hex_digit(pg_wchar code)
+pg_u_prop_hex_digit(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_HEX_DIGIT;
@@ -189,7 +189,7 @@ pg_u_prop_hex_digit(pg_wchar code)
 }
 
 bool
-pg_u_prop_join_control(pg_wchar code)
+pg_u_prop_join_control(char32_t code)
 {
 	if (code < 0x80)
 		return unicode_opt_ascii[code].properties & PG_U_PROP_JOIN_CONTROL;
@@ -208,7 +208,7 @@ pg_u_prop_join_control(pg_wchar code)
  */
 
 bool
-pg_u_isdigit(pg_wchar code, bool posix)
+pg_u_isdigit(char32_t code, bool posix)
 {
 	if (posix)
 		return ('0' <= code && code <= '9');
@@ -217,19 +217,19 @@ pg_u_isdigit(pg_wchar code, bool posix)
 }
 
 bool
-pg_u_isalpha(pg_wchar code)
+pg_u_isalpha(char32_t code)
 {
 	return pg_u_prop_alphabetic(code);
 }
 
 bool
-pg_u_isalnum(pg_wchar code, bool posix)
+pg_u_isalnum(char32_t code, bool posix)
 {
 	return pg_u_isalpha(code) || pg_u_isdigit(code, posix);
 }
 
 bool
-pg_u_isword(pg_wchar code)
+pg_u_isword(char32_t code)
 {
 	uint32		category_mask = PG_U_CATEGORY_MASK(unicode_category(code));
 
@@ -240,32 +240,32 @@ pg_u_isword(pg_wchar code)
 }
 
 bool
-pg_u_isupper(pg_wchar code)
+pg_u_isupper(char32_t code)
 {
 	return pg_u_prop_uppercase(code);
 }
 
 bool
-pg_u_islower(pg_wchar code)
+pg_u_islower(char32_t code)
 {
 	return pg_u_prop_lowercase(code);
 }
 
 bool
-pg_u_isblank(pg_wchar code)
+pg_u_isblank(char32_t code)
 {
 	return code == PG_U_CHARACTER_TAB ||
 		unicode_category(code) == PG_U_SPACE_SEPARATOR;
 }
 
 bool
-pg_u_iscntrl(pg_wchar code)
+pg_u_iscntrl(char32_t code)
 {
 	return unicode_category(code) == PG_U_CONTROL;
 }
 
 bool
-pg_u_isgraph(pg_wchar code)
+pg_u_isgraph(char32_t code)
 {
 	uint32		category_mask = PG_U_CATEGORY_MASK(unicode_category(code));
 
@@ -276,7 +276,7 @@ pg_u_isgraph(pg_wchar code)
 }
 
 bool
-pg_u_isprint(pg_wchar code)
+pg_u_isprint(char32_t code)
 {
 	pg_unicode_category category = unicode_category(code);
 
@@ -287,7 +287,7 @@ pg_u_isprint(pg_wchar code)
 }
 
 bool
-pg_u_ispunct(pg_wchar code, bool posix)
+pg_u_ispunct(char32_t code, bool posix)
 {
 	uint32		category_mask;
 
@@ -308,13 +308,13 @@ pg_u_ispunct(pg_wchar code, bool posix)
 }
 
 bool
-pg_u_isspace(pg_wchar code)
+pg_u_isspace(char32_t code)
 {
 	return pg_u_prop_white_space(code);
 }
 
 bool
-pg_u_isxdigit(pg_wchar code, bool posix)
+pg_u_isxdigit(char32_t code, bool posix)
 {
 	if (posix)
 		return (('0' <= code && code <= '9') ||
@@ -478,7 +478,7 @@ unicode_category_abbrev(pg_unicode_category category)
  * given table.
  */
 static bool
-range_search(const pg_unicode_range *tbl, size_t size, pg_wchar code)
+range_search(const pg_unicode_range *tbl, size_t size, char32_t code)
 {
 	int			min = 0;
 	int			mid;

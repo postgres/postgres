@@ -3505,6 +3505,8 @@ cb_cleanup_dir
 cb_options
 cb_tablespace
 cb_tablespace_mapping
+char16_t
+char32_t
 check_agg_arguments_context
 check_function_callback
 check_network_data

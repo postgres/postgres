@@ -24,6 +24,7 @@
 #include "common/unicode_case.h"
 #include "common/unicode_category.h"
 #include "common/unicode_version.h"
+#include "mb/pg_wchar.h"
 
 /* enough to hold largest source or result string, including NUL */
 #define BUFSZ 256
@@ -54,7 +55,7 @@ initcap_wbnext(void *state)
 	while (wbstate->offset < wbstate->len &&
 		   wbstate->str[wbstate->offset] != '\0')
 	{
-		pg_wchar	u = utf8_to_unicode((unsigned char *) wbstate->str +
+		char32_t	u = utf8_to_unicode((unsigned char *) wbstate->str +
 										wbstate->offset);
 		bool		curr_alnum = pg_u_isalnum(u, wbstate->posix);
 
@@ -77,16 +78,16 @@ initcap_wbnext(void *state)
 #ifdef USE_ICU
 
 static void
-icu_test_simple(pg_wchar code)
+icu_test_simple(char32_t code)
 {
-	pg_wchar	lower = unicode_lowercase_simple(code);
-	pg_wchar	title = unicode_titlecase_simple(code);
-	pg_wchar	upper = unicode_uppercase_simple(code);
-	pg_wchar	fold = unicode_casefold_simple(code);
-	pg_wchar	iculower = u_tolower(code);
-	pg_wchar	icutitle = u_totitle(code);
-	pg_wchar	icuupper = u_toupper(code);
-	pg_wchar	icufold = u_foldCase(code, U_FOLD_CASE_DEFAULT);
+	char32_t	lower = unicode_lowercase_simple(code);
+	char32_t	title = unicode_titlecase_simple(code);
+	char32_t	upper = unicode_uppercase_simple(code);
+	char32_t	fold = unicode_casefold_simple(code);
+	char32_t	iculower = u_tolower(code);
+	char32_t	icutitle = u_totitle(code);
+	char32_t	icuupper = u_toupper(code);
+	char32_t	icufold = u_foldCase(code, U_FOLD_CASE_DEFAULT);
 
 	if (lower != iculower || title != icutitle || upper != icuupper ||
 		fold != icufold)
@@ -172,7 +173,7 @@ test_icu(void)
 	int			successful = 0;
 	int			skipped_mismatch = 0;
 
-	for (pg_wchar code = 0; code <= 0x10ffff; code++)
+	for (char32_t code = 0; code <= 0x10ffff; code++)
 	{
 		pg_unicode_category category = unicode_category(code);
 
