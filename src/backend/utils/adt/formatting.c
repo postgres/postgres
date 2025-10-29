@@ -1109,7 +1109,7 @@ index_seq_search(const char *str, const KeyWord *kw, const int *index)
 	if (!KeyWord_INDEX_FILTER(*str))
 		return NULL;
 
-	if ((poz = *(index + (*str - ' '))) > -1)
+	if ((poz = index[*str - ' ']) > -1)
 	{
 		const KeyWord *k = kw + poz;
 
@@ -1531,7 +1531,7 @@ get_th(const char *num, int type)
 
 	Assert(len > 0);
 
-	last = *(num + (len - 1));
+	last = num[len - 1];
 	if (!isdigit((unsigned char) last))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -4807,7 +4807,7 @@ static char *
 fill_str(char *str, int c, int max)
 {
 	memset(str, c, max);
-	*(str + max) = '\0';
+	str[max] = '\0';
 	return str;
 }
 
