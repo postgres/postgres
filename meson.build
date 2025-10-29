@@ -2803,13 +2803,12 @@ int main(void)
 endforeach
 
 
-# MSVC doesn't cope well with defining restrict to __restrict, the spelling it
-# understands, because it conflicts with __declspec(restrict). Therefore we
-# define pg_restrict to the appropriate definition, which presumably won't
-# conflict.
-#
-# We assume C99 support, so we don't need to make this conditional.
-cdata.set('pg_restrict', '__restrict')
+# Even though restrict is in C99 and should be supported by all
+# supported compilers, this indirection is useful because __restrict
+# also works in C++ in all supported compilers.  (If not, then we
+# might have to write a real test.)  (restrict is not part of the C++
+# standard.)
+cdata.set('restrict', '__restrict')
 
 
 # Most libraries are included only if they demonstrably provide a function we

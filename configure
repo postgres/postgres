@@ -14999,10 +14999,10 @@ _ACEOF
 fi
 
 
-# MSVC doesn't cope well with defining restrict to __restrict, the
-# spelling it understands, because it conflicts with
-# __declspec(restrict). Therefore we define pg_restrict to the
-# appropriate definition, which presumably won't conflict.
+# Even though restrict is in C99 and should be supported by all
+# supported compilers, but this macro is useful because it will prefer
+# a spelling that also works in C++ (often __restrict).  (restrict is
+# not part of the C++ standard.)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C/C++ restrict keyword" >&5
 $as_echo_n "checking for C/C++ restrict keyword... " >&6; }
 if ${ac_cv_c_restrict+:} false; then :
@@ -15048,16 +15048,6 @@ $as_echo "$ac_cv_c_restrict" >&6; }
 _ACEOF
  ;;
  esac
-
-if test "$ac_cv_c_restrict" = "no"; then
-  pg_restrict=""
-else
-  pg_restrict="$ac_cv_c_restrict"
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define pg_restrict $pg_restrict
-_ACEOF
 
 
 ac_fn_c_check_type "$LINENO" "struct option" "ac_cv_type_struct_option" "#ifdef HAVE_GETOPT_H

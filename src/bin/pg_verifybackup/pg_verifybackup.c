@@ -1228,7 +1228,7 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
  * context says we should.
  */
 void
-report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
+report_backup_error(verifier_context *context, const char *restrict fmt,...)
 {
 	va_list		ap;
 
@@ -1245,7 +1245,7 @@ report_backup_error(verifier_context *context, const char *pg_restrict fmt,...)
  * Report a fatal error and exit
  */
 void
-report_fatal_error(const char *pg_restrict fmt,...)
+report_fatal_error(const char *restrict fmt,...)
 {
 	va_list		ap;
 
