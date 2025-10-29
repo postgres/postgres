@@ -1200,7 +1200,7 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
 			break;
 
 		case NUM_B:
-			if (num->pre == 0 && num->post == 0 && (!IS_ZERO(num)))
+			if (num->pre == 0 && num->post == 0 && !IS_ZERO(num))
 				num->flag |= NUM_F_BLANK;
 			break;
 
@@ -1541,7 +1541,7 @@ get_th(const char *num, int type)
 	 * All "teens" (<x>1[0-9]) get 'TH/th', while <x>[02-9][123] still get
 	 * 'ST/st', 'ND/nd', 'RD/rd', respectively
 	 */
-	if ((len > 1) && (num[len - 2] == '1'))
+	if (len > 1 && num[len - 2] == '1')
 		last = 0;
 
 	switch (last)
