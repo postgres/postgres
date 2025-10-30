@@ -542,7 +542,7 @@ WINDOWS_ENVIRONMENT_BASE: &WINDOWS_ENVIRONMENT_BASE
 
 
 task:
-  name: Windows - Server 2019, VS 2019 - Meson & ninja
+  name: Windows - Server 2022, VS 2019 - Meson & ninja
   << : *WINDOWS_ENVIRONMENT_BASE
 
   env:
@@ -592,7 +592,7 @@ task:
 
 task:
   << : *WINDOWS_ENVIRONMENT_BASE
-  name: Windows - Server 2019, MinGW64 - Meson
+  name: Windows - Server 2022, MinGW64 - Meson
 
   # See REPO_CI_AUTOMATIC_TRIGGER_TASKS in .cirrus.star.
   trigger_type: $CI_TRIGGER_TYPE_MINGW
