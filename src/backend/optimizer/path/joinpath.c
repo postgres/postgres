@@ -2260,10 +2260,20 @@ hash_inner_and_outer(PlannerInfo *root,
 
 		/*
 		 * If the joinrel is parallel-safe, we may be able to consider a
-		 * partial hash join.  However, the resulting path must not be
-		 * parameterized.
+		 * partial hash join.
+		 *
+		 * However, we can't handle JOIN_RIGHT_SEMI, because the hash table is
+		 * either a shared hash table or a private hash table per backend.  In
+		 * the shared case, there is no concurrency protection for the match
+		 * flags, so multiple workers could inspect and set the flags
+		 * concurrently, potentially producing incorrect results.  In the
+		 * private case, each worker has its own copy of the hash table, so no
+		 * single process has all the match flags.
+		 *
+		 * Also, the resulting path must not be parameterized.
 		 */
 		if (joinrel->consider_parallel &&
+			jointype != JOIN_RIGHT_SEMI &&
 			outerrel->partial_pathlist != NIL &&
 			bms_is_empty(joinrel->lateral_relids))
 		{
@@ -2294,13 +2304,12 @@ hash_inner_and_outer(PlannerInfo *root,
 			 * Normally, given that the joinrel is parallel-safe, the cheapest
 			 * total inner path will also be parallel-safe, but if not, we'll
 			 * have to search for the cheapest safe, unparameterized inner
-			 * path.  If full, right, right-semi or right-anti join, we can't
-			 * use parallelism (building the hash table in each backend)
-			 * because no one process has all the match bits.
+			 * path.  If full, right, or right-anti join, we can't use
+			 * parallelism (building the hash table in each backend) because
+			 * no one process has all the match bits.
 			 */
 			if (jointype == JOIN_FULL ||
 				jointype == JOIN_RIGHT ||
-				jointype == JOIN_RIGHT_SEMI ||
 				jointype == JOIN_RIGHT_ANTI)
 				cheapest_safe_inner = NULL;
 			else if (cheapest_total_inner->parallel_safe)
