@@ -328,7 +328,7 @@ task:
 
 
 task:
-  name: Windows - Server 2019, VS 2019
+  name: Windows - Server 2022, VS 2019
 
   env:
     # Half the allowed per-user CPU cores
