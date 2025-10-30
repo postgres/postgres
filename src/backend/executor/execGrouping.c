@@ -145,8 +145,8 @@ execTuplesHashPrepare(int numCols,
  *	collations: collations to use in comparisons
  *	nbuckets: initial estimate of hashtable size
  *	additionalsize: size of data that may be stored along with the hash entry
- *	metacxt: memory context for long-lived allocation, but not per-entry data
- *	tablecxt: memory context in which to store table entries
+ *	metacxt: memory context for long-lived data and the simplehash table
+ *	tuplescxt: memory context in which to store the hashed tuples themselves
  *	tempcxt: short-lived context for evaluation hash and comparison functions
  *	use_variable_hash_iv: if true, adjust hash IV per-parallel-worker
  *
@@ -157,11 +157,25 @@ execTuplesHashPrepare(int numCols,
  * Note that the keyColIdx, hashfunctions, and collations arrays must be
  * allocated in storage that will live as long as the hashtable does.
  *
+ * The metacxt and tuplescxt are separate because it's usually desirable for
+ * tuplescxt to be a BumpContext to avoid memory wastage, while metacxt must
+ * support pfree in case the simplehash table needs to be enlarged.  (We could
+ * simplify the API of TupleHashTables by managing the tuplescxt internally.
+ * But that would be disadvantageous to nodeAgg.c and nodeSubplan.c, which use
+ * a single tuplescxt for multiple TupleHashTables that are reset together.)
+ *
  * LookupTupleHashEntry, FindTupleHashEntry, and related functions may leak
  * memory in the tempcxt.  It is caller's responsibility to reset that context
  * reasonably often, typically once per tuple.  (We do it that way, rather
  * than managing an extra context within the hashtable, because in many cases
  * the caller can specify a tempcxt that it needs to reset per-tuple anyway.)
+ *
+ * We don't currently provide DestroyTupleHashTable functionality; the hash
+ * table will be cleaned up at destruction of the metacxt.  (Some callers
+ * bother to delete the tuplescxt explicitly, though it'd be sufficient to
+ * ensure it's a child of the metacxt.)  There's not much point in working
+ * harder than this so long as the expression-evaluation infrastructure
+ * behaves similarly.
  */
 TupleHashTable
 BuildTupleHashTable(PlanState *parent,
@@ -175,7 +189,7 @@ BuildTupleHashTable(PlanState *parent,
 					long nbuckets,
 					Size additionalsize,
 					MemoryContext metacxt,
-					MemoryContext tablecxt,
+					MemoryContext tuplescxt,
 					MemoryContext tempcxt,
 					bool use_variable_hash_iv)
 {
@@ -183,14 +197,24 @@ BuildTupleHashTable(PlanState *parent,
 	Size		entrysize;
 	Size		hash_mem_limit;
 	MemoryContext oldcontext;
-	bool		allow_jit;
 	uint32		hash_iv = 0;
 
 	Assert(nbuckets > 0);
-	additionalsize = MAXALIGN(additionalsize);
-	entrysize = sizeof(TupleHashEntryData) + additionalsize;
 
-	/* Limit initial table size request to not more than hash_mem */
+	/* tuplescxt must be separate, else ResetTupleHashTable breaks things */
+	Assert(metacxt != tuplescxt);
+
+	/* ensure additionalsize is maxalign'ed */
+	additionalsize = MAXALIGN(additionalsize);
+
+	/*
+	 * Limit initial table size request to not more than hash_mem.
+	 *
+	 * XXX this calculation seems pretty misguided, as it counts only overhead
+	 * and not the tuples themselves.  But we have no knowledge of the
+	 * expected tuple width here.
+	 */
+	entrysize = sizeof(TupleHashEntryData) + additionalsize;
 	hash_mem_limit = get_hash_memory_limit() / entrysize;
 	if (nbuckets > hash_mem_limit)
 		nbuckets = hash_mem_limit;
@@ -202,7 +226,7 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;
 	hashtable->tab_collations = collations;
-	hashtable->tablecxt = tablecxt;
+	hashtable->tuplescxt = tuplescxt;
 	hashtable->tempcxt = tempcxt;
 	hashtable->additionalsize = additionalsize;
 	hashtable->tableslot = NULL;	/* will be made on first lookup */
@@ -230,16 +254,6 @@ BuildTupleHashTable(PlanState *parent,
 	hashtable->tableslot = MakeSingleTupleTableSlot(CreateTupleDescCopy(inputDesc),
 													&TTSOpsMinimalTuple);
 
-	/*
-	 * If the caller fails to make the metacxt different from the tablecxt,
-	 * allowing JIT would lead to the generated functions to a) live longer
-	 * than the query or b) be re-generated each time the table is being
-	 * reset. Therefore prevent JIT from being used in that case, by not
-	 * providing a parent node (which prevents accessing the JitContext in the
-	 * EState).
-	 */
-	allow_jit = (metacxt != tablecxt);
-
 	/* build hash ExprState for all columns */
 	hashtable->tab_hash_expr = ExecBuildHash32FromAttrs(inputDesc,
 														inputOps,
@@ -247,7 +261,7 @@ BuildTupleHashTable(PlanState *parent,
 														collations,
 														numCols,
 														keyColIdx,
-														allow_jit ? parent : NULL,
+														parent,
 														hash_iv);
 
 	/* build comparator for all columns */
@@ -256,7 +270,7 @@ BuildTupleHashTable(PlanState *parent,
 													&TTSOpsMinimalTuple,
 													numCols,
 													keyColIdx, eqfuncoids, collations,
-													allow_jit ? parent : NULL);
+													parent);
 
 	/*
 	 * While not pretty, it's ok to not shut down this context, but instead
@@ -273,13 +287,19 @@ BuildTupleHashTable(PlanState *parent,
 
 /*
  * Reset contents of the hashtable to be empty, preserving all the non-content
- * state. Note that the tablecxt passed to BuildTupleHashTable() should
- * also be reset, otherwise there will be leaks.
+ * state.
+ *
+ * Note: in usages where several TupleHashTables share a tuplescxt, all must
+ * be reset together, as the first one's reset call will destroy all their
+ * data.  The additional reset calls for the rest will redundantly reset the
+ * tuplescxt.  But because of mcxt.c's isReset flag, that's cheap enough that
+ * we need not avoid it.
  */
 void
 ResetTupleHashTable(TupleHashTable hashtable)
 {
 	tuplehash_reset(hashtable->hashtab);
+	MemoryContextReset(hashtable->tuplescxt);
 }
 
 /*
@@ -489,10 +509,10 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
 			/* created new entry */
 			*isnew = true;
 
-			MemoryContextSwitchTo(hashtable->tablecxt);
+			MemoryContextSwitchTo(hashtable->tuplescxt);
 
 			/*
-			 * Copy the first tuple into the table context, and request
+			 * Copy the first tuple into the tuples context, and request
 			 * additionalsize extra bytes before the allocation.
 			 *
 			 * The caller can get a pointer to the additional data with

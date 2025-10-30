@@ -506,7 +506,6 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	 * saves a needless fetch inner op step for the hashing ExprState created
 	 * in BuildTupleHashTable().
 	 */
-	MemoryContextReset(node->hashtablecxt);
 	node->havehashrows = false;
 	node->havenullrows = false;
 
@@ -528,7 +527,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 											  nbuckets,
 											  0,
 											  node->planstate->state->es_query_cxt,
-											  node->hashtablecxt,
+											  node->tuplesContext,
 											  innerecontext->ecxt_per_tuple_memory,
 											  false);
 
@@ -557,7 +556,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 												  nbuckets,
 												  0,
 												  node->planstate->state->es_query_cxt,
-												  node->hashtablecxt,
+												  node->tuplesContext,
 												  innerecontext->ecxt_per_tuple_memory,
 												  false);
 	}
@@ -838,7 +837,7 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 	sstate->projRight = NULL;
 	sstate->hashtable = NULL;
 	sstate->hashnulls = NULL;
-	sstate->hashtablecxt = NULL;
+	sstate->tuplesContext = NULL;
 	sstate->innerecontext = NULL;
 	sstate->keyColIdx = NULL;
 	sstate->tab_eq_funcoids = NULL;
@@ -889,11 +888,11 @@ ExecInitSubPlan(SubPlan *subplan, PlanState *parent)
 				   *righttlist;
 		ListCell   *l;
 
-		/* We need a memory context to hold the hash table(s) */
-		sstate->hashtablecxt =
-			AllocSetContextCreate(CurrentMemoryContext,
-								  "Subplan HashTable Context",
-								  ALLOCSET_DEFAULT_SIZES);
+		/* We need a memory context to hold the hash table(s)' tuples */
+		sstate->tuplesContext =
+			BumpContextCreate(CurrentMemoryContext,
+							  "SubPlan hashed tuples",
+							  ALLOCSET_DEFAULT_SIZES);
 		/* and a short-lived exprcontext for function evaluation */
 		sstate->innerecontext = CreateExprContext(estate);
 

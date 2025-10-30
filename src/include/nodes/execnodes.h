@@ -844,9 +844,15 @@ typedef struct ExecAuxRowMark
 typedef struct TupleHashEntryData *TupleHashEntry;
 typedef struct TupleHashTableData *TupleHashTable;
 
+/*
+ * TupleHashEntryData is a slot in the tuplehash_hash table.  If it's
+ * populated, it contains a pointer to a MinimalTuple that can also have
+ * associated "additional data".  That's stored in the TupleHashTable's
+ * tuplescxt.
+ */
 typedef struct TupleHashEntryData
 {
-	MinimalTuple firstTuple;	/* copy of first tuple in this group */
+	MinimalTuple firstTuple;	/* -> copy of first tuple in this group */
 	uint32		status;			/* hash status */
 	uint32		hash;			/* hash value (cached) */
 } TupleHashEntryData;
@@ -861,13 +867,13 @@ typedef struct TupleHashEntryData
 
 typedef struct TupleHashTableData
 {
-	tuplehash_hash *hashtab;	/* underlying hash table */
+	tuplehash_hash *hashtab;	/* underlying simplehash hash table */
 	int			numCols;		/* number of columns in lookup key */
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
 	ExprState  *tab_hash_expr;	/* ExprState for hashing table datatype(s) */
 	ExprState  *tab_eq_func;	/* comparator for table datatype(s) */
 	Oid		   *tab_collations; /* collations for hash and comparison */
-	MemoryContext tablecxt;		/* memory context containing table */
+	MemoryContext tuplescxt;	/* memory context storing hashed tuples */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		additionalsize; /* size of additional data */
 	TupleTableSlot *tableslot;	/* slot for referencing table entries */
@@ -1017,7 +1023,7 @@ typedef struct SubPlanState
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
 	bool		havehashrows;	/* true if hashtable is not empty */
 	bool		havenullrows;	/* true if hashnulls is not empty */
-	MemoryContext hashtablecxt; /* memory context containing hash tables */
+	MemoryContext tuplesContext;	/* context containing hash tables' tuples */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */
 	int			numCols;		/* number of columns being hashed */
 	/* each of the remaining fields is an array of length numCols: */
@@ -1566,7 +1572,7 @@ typedef struct RecursiveUnionState
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 	TupleHashTable hashtable;	/* hash table for tuples already seen */
-	MemoryContext tableContext; /* memory context containing hash table */
+	MemoryContext tuplesContext;	/* context containing hash table's tuples */
 } RecursiveUnionState;
 
 /* ----------------
@@ -2567,7 +2573,7 @@ typedef struct AggState
 	bool		table_filled;	/* hash table filled yet? */
 	int			num_hashes;
 	MemoryContext hash_metacxt; /* memory for hash table bucket array */
-	MemoryContext hash_tablecxt;	/* memory for hash table entries */
+	MemoryContext hash_tuplescxt;	/* memory for hash table tuples */
 	struct LogicalTapeSet *hash_tapeset;	/* tape set for hash spill tapes */
 	struct HashAggSpill *hash_spills;	/* HashAggSpill for each grouping set,
 										 * exists only during first pass */
@@ -2866,7 +2872,7 @@ typedef struct SetOpState
 	Oid		   *eqfuncoids;		/* per-grouping-field equality fns */
 	FmgrInfo   *hashfunctions;	/* per-grouping-field hash fns */
 	TupleHashTable hashtable;	/* hash table with one entry per group */
-	MemoryContext tableContext; /* memory context containing hash table */
+	MemoryContext tuplesContext;	/* context containing hash table's tuples */
 	bool		table_filled;	/* hash table filled yet? */
 	TupleHashIterator hashiter; /* for iterating through hash table */
 } SetOpState;
