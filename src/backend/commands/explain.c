@@ -4283,7 +4283,8 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 	{
 		/* Show only positive counter values. */
 		if ((usage->wal_records > 0) || (usage->wal_fpi > 0) ||
-			(usage->wal_bytes > 0) || (usage->wal_buffers_full > 0))
+			(usage->wal_bytes > 0) || (usage->wal_buffers_full > 0) ||
+			(usage->wal_fpi_bytes > 0))
 		{
 			ExplainIndentText(es);
 			appendStringInfoString(es->str, "WAL:");
@@ -4297,6 +4298,9 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 			if (usage->wal_bytes > 0)
 				appendStringInfo(es->str, " bytes=%" PRIu64,
 								 usage->wal_bytes);
+			if (usage->wal_fpi_bytes > 0)
+				appendStringInfo(es->str, " fpi bytes=%" PRIu64,
+								 usage->wal_fpi_bytes);
 			if (usage->wal_buffers_full > 0)
 				appendStringInfo(es->str, " buffers full=%" PRId64,
 								 usage->wal_buffers_full);
@@ -4311,6 +4315,8 @@ show_wal_usage(ExplainState *es, const WalUsage *usage)
 							   usage->wal_fpi, es);
 		ExplainPropertyUInteger("WAL Bytes", NULL,
 								usage->wal_bytes, es);
+		ExplainPropertyUInteger("WAL FPI Bytes", NULL,
+								usage->wal_fpi_bytes, es);
 		ExplainPropertyInteger("WAL Buffers Full", NULL,
 							   usage->wal_buffers_full, es);
 	}
