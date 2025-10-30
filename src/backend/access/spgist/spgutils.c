@@ -868,7 +868,7 @@ SpGistGetLeafTupleSize(TupleDesc tupleDescriptor,
  * Construct a leaf tuple containing the given heap TID and datum values
  */
 SpGistLeafTuple
-spgFormLeafTuple(SpGistState *state, ItemPointer heapPtr,
+spgFormLeafTuple(SpGistState *state, const ItemPointerData *heapPtr,
 				 const Datum *datums, const bool *isnulls)
 {
 	SpGistLeafTuple tup;

@@ -44,11 +44,11 @@ extern void CatalogTuplesMultiInsertWithInfo(Relation heapRel,
 											 TupleTableSlot **slot,
 											 int ntuples,
 											 CatalogIndexState indstate);
-extern void CatalogTupleUpdate(Relation heapRel, ItemPointer otid,
+extern void CatalogTupleUpdate(Relation heapRel, const ItemPointerData *otid,
 							   HeapTuple tup);
 extern void CatalogTupleUpdateWithInfo(Relation heapRel,
-									   ItemPointer otid, HeapTuple tup,
+									   const ItemPointerData *otid, HeapTuple tup,
 									   CatalogIndexState indstate);
-extern void CatalogTupleDelete(Relation heapRel, ItemPointer tid);
+extern void CatalogTupleDelete(Relation heapRel, const ItemPointerData *tid);
 
 #endif							/* INDEXING_H */

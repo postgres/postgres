@@ -61,7 +61,7 @@ typedef struct spgBulkDeleteState
  * ensures that scans of the list don't miss items added during the scan.
  */
 static void
-spgAddPendingTID(spgBulkDeleteState *bds, ItemPointer tid)
+spgAddPendingTID(spgBulkDeleteState *bds, const ItemPointerData *tid)
 {
 	spgVacPendingItem *pitem;
 	spgVacPendingItem **listLink;

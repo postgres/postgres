@@ -37,7 +37,7 @@ static bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
 static void _bt_saveitem(BTScanOpaque so, int itemIndex,
 						 OffsetNumber offnum, IndexTuple itup);
 static int	_bt_setuppostingitems(BTScanOpaque so, int itemIndex,
-								  OffsetNumber offnum, ItemPointer heapTid,
+								  OffsetNumber offnum, const ItemPointerData *heapTid,
 								  IndexTuple itup);
 static inline void _bt_savepostingitem(BTScanOpaque so, int itemIndex,
 									   OffsetNumber offnum,
@@ -2079,7 +2079,7 @@ _bt_saveitem(BTScanOpaque so, int itemIndex,
  */
 static int
 _bt_setuppostingitems(BTScanOpaque so, int itemIndex, OffsetNumber offnum,
-					  ItemPointer heapTid, IndexTuple itup)
+					  const ItemPointerData *heapTid, IndexTuple itup)
 {
 	BTScanPosItem *currItem = &so->currPos.items[itemIndex];
 

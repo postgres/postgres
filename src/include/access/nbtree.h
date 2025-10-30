@@ -1234,7 +1234,7 @@ extern void _bt_dedup_start_pending(BTDedupState state, IndexTuple base,
 									OffsetNumber baseoff);
 extern bool _bt_dedup_save_htid(BTDedupState state, IndexTuple itup);
 extern Size _bt_dedup_finish_pending(Page newpage, BTDedupState state);
-extern IndexTuple _bt_form_posting(IndexTuple base, ItemPointer htids,
+extern IndexTuple _bt_form_posting(IndexTuple base, const ItemPointerData *htids,
 								   int nhtids);
 extern void _bt_update_posting(BTVacuumPosting vacposting);
 extern IndexTuple _bt_swap_posting(IndexTuple newitem, IndexTuple oposting,

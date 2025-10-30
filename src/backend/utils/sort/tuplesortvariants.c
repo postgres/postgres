@@ -816,7 +816,7 @@ tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
  */
 void
 tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
-							  ItemPointer self, const Datum *values,
+							  const ItemPointerData *self, const Datum *values,
 							  const bool *isnull)
 {
 	SortTuple	stup;

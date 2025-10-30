@@ -128,7 +128,7 @@ typedef enum
 
 static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 												 IndexInfo *indexInfo,
-												 ItemPointer tupleid,
+												 const ItemPointerData *tupleid,
 												 const Datum *values, const bool *isnull,
 												 EState *estate, bool newIndex,
 												 CEOUC_WAIT_MODE waitMode,
@@ -541,7 +541,7 @@ ExecInsertIndexTuples(ResultRelInfo *resultRelInfo,
 bool
 ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 						  EState *estate, ItemPointer conflictTid,
-						  ItemPointer tupleid, List *arbiterIndexes)
+						  const ItemPointerData *tupleid, List *arbiterIndexes)
 {
 	int			i;
 	int			numIndices;
@@ -703,7 +703,7 @@ ExecCheckIndexConstraints(ResultRelInfo *resultRelInfo, TupleTableSlot *slot,
 static bool
 check_exclusion_or_unique_constraint(Relation heap, Relation index,
 									 IndexInfo *indexInfo,
-									 ItemPointer tupleid,
+									 const ItemPointerData *tupleid,
 									 const Datum *values, const bool *isnull,
 									 EState *estate, bool newIndex,
 									 CEOUC_WAIT_MODE waitMode,
@@ -955,7 +955,7 @@ retry:
 void
 check_exclusion_constraint(Relation heap, Relation index,
 						   IndexInfo *indexInfo,
-						   ItemPointer tupleid,
+						   const ItemPointerData *tupleid,
 						   const Datum *values, const bool *isnull,
 						   EState *estate, bool newIndex)
 {

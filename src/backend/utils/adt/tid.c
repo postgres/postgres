@@ -42,7 +42,7 @@
 #define DELIM			','
 #define NTIDARGS		2
 
-static ItemPointer currtid_for_view(Relation viewrel, ItemPointer tid);
+static ItemPointer currtid_for_view(Relation viewrel, const ItemPointerData *tid);
 
 /* ----------------------------------------------------------------
  *		tidin
@@ -293,7 +293,7 @@ hashtidextended(PG_FUNCTION_ARGS)
  *		relation "rel".
  */
 static ItemPointer
-currtid_internal(Relation rel, ItemPointer tid)
+currtid_internal(Relation rel, const ItemPointerData *tid)
 {
 	ItemPointer result;
 	AclResult	aclresult;
@@ -335,7 +335,7 @@ currtid_internal(Relation rel, ItemPointer tid)
  *		correspond to the CTID of a base relation.
  */
 static ItemPointer
-currtid_for_view(Relation viewrel, ItemPointer tid)
+currtid_for_view(Relation viewrel, const ItemPointerData *tid)
 {
 	TupleDesc	att = RelationGetDescr(viewrel);
 	RuleLock   *rulelock;

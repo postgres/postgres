@@ -859,7 +859,7 @@ _bt_singleval_fillfactor(Page page, BTDedupState state, Size newitemsz)
  * returned posting list tuple (they must be included in htids array.)
  */
 IndexTuple
-_bt_form_posting(IndexTuple base, ItemPointer htids, int nhtids)
+_bt_form_posting(IndexTuple base, const ItemPointerData *htids, int nhtids)
 {
 	uint32		keysize,
 				newsize;

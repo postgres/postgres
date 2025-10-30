@@ -257,7 +257,7 @@ typedef struct BTWriteState
 static double _bt_spools_heapscan(Relation heap, Relation index,
 								  BTBuildState *buildstate, IndexInfo *indexInfo);
 static void _bt_spooldestroy(BTSpool *btspool);
-static void _bt_spool(BTSpool *btspool, ItemPointer self,
+static void _bt_spool(BTSpool *btspool, const ItemPointerData *self,
 					  Datum *values, bool *isnull);
 static void _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2);
 static void _bt_build_callback(Relation index, ItemPointer tid, Datum *values,
@@ -525,7 +525,7 @@ _bt_spooldestroy(BTSpool *btspool)
  * spool an index entry into the sort file.
  */
 static void
-_bt_spool(BTSpool *btspool, ItemPointer self, Datum *values, bool *isnull)
+_bt_spool(BTSpool *btspool, const ItemPointerData *self, Datum *values, bool *isnull)
 {
 	tuplesort_putindextuplevalues(btspool->sortstate, btspool->index,
 								  self, values, isnull);

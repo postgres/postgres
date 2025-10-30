@@ -418,7 +418,7 @@ TidStoreSetBlockOffsets(TidStore *ts, BlockNumber blkno, OffsetNumber *offsets,
 
 /* Return true if the given TID is present in the TidStore */
 bool
-TidStoreIsMember(TidStore *ts, ItemPointer tid)
+TidStoreIsMember(TidStore *ts, const ItemPointerData *tid)
 {
 	int			wordnum;
 	int			bitnum;
