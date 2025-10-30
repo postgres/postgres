@@ -20,9 +20,9 @@
 #include "miscadmin.h"
 #include "utils/lsyscache.h"
 
-static int	TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2);
+static int	TupleHashTableMatch(struct tuplehash_hash *tb, MinimalTuple tuple1, MinimalTuple tuple2);
 static inline uint32 TupleHashTableHash_internal(struct tuplehash_hash *tb,
-												 const MinimalTuple tuple);
+												 MinimalTuple tuple);
 static inline TupleHashEntry LookupTupleHashEntry_internal(TupleHashTable hashtable,
 														   TupleTableSlot *slot,
 														   bool *isnew, uint32 hash);
@@ -419,7 +419,7 @@ FindTupleHashEntry(TupleHashTable hashtable, TupleTableSlot *slot,
  */
 static uint32
 TupleHashTableHash_internal(struct tuplehash_hash *tb,
-							const MinimalTuple tuple)
+							MinimalTuple tuple)
 {
 	TupleHashTable hashtable = (TupleHashTable) tb->private_data;
 	uint32		hashkey;
@@ -517,7 +517,7 @@ LookupTupleHashEntry_internal(TupleHashTable hashtable, TupleTableSlot *slot,
  * See whether two tuples (presumably of the same hash value) match
  */
 static int
-TupleHashTableMatch(struct tuplehash_hash *tb, const MinimalTuple tuple1, const MinimalTuple tuple2)
+TupleHashTableMatch(struct tuplehash_hash *tb, MinimalTuple tuple1, MinimalTuple tuple2)
 {
 	TupleTableSlot *slot1;
 	TupleTableSlot *slot2;

@@ -489,7 +489,7 @@ restartScanEntry:
 static int
 entryIndexByFrequencyCmp(const void *a1, const void *a2, void *arg)
 {
-	const GinScanKey key = (const GinScanKey) arg;
+	const GinScanKeyData *key = arg;
 	int			i1 = *(const int *) a1;
 	int			i2 = *(const int *) a2;
 	uint32		n1 = key->scanEntry[i1]->predictNumberResult;

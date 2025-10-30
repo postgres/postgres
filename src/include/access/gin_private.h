@@ -333,7 +333,7 @@ typedef struct GinScanKeyData
 	bool		curItemMatches;
 	bool		recheckCurItem;
 	bool		isFinished;
-}			GinScanKeyData;
+} GinScanKeyData;
 
 typedef struct GinScanEntryData
 {
@@ -478,7 +478,7 @@ extern void ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 /* ginpostinglist.c */
 
-extern GinPostingList *ginCompressPostingList(const ItemPointer ipd, int nipd,
+extern GinPostingList *ginCompressPostingList(const ItemPointerData *ipd, int nipd,
 											  int maxsize, int *nwritten);
 extern int	ginPostingListDecodeAllSegmentsToTbm(GinPostingList *ptr, int len, TIDBitmap *tbm);
 

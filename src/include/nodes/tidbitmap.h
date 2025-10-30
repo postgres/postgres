@@ -85,7 +85,7 @@ extern void tbm_free(TIDBitmap *tbm);
 extern void tbm_free_shared_area(dsa_area *dsa, dsa_pointer dp);
 
 extern void tbm_add_tuples(TIDBitmap *tbm,
-						   const ItemPointer tids, int ntids,
+						   const ItemPointerData *tids, int ntids,
 						   bool recheck);
 extern void tbm_add_page(TIDBitmap *tbm, BlockNumber pageno);
 

@@ -75,7 +75,7 @@ static bool TS_execute_locations_recurse(QueryItem *curitem,
 										 void *arg,
 										 TSExecuteCallback chkcond,
 										 List **locations);
-static int	tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len);
+static int	tsvector_bsearch(const TSVectorData *tsv, char *lexeme, int lexeme_len);
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
 
 
@@ -83,7 +83,7 @@ static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
  * Order: haspos, len, word, for all positions (pos, weight)
  */
 static int
-silly_cmp_tsvector(const TSVector a, const TSVector b)
+silly_cmp_tsvector(const TSVectorData *a, const TSVectorData *b)
 {
 	if (VARSIZE(a) < VARSIZE(b))
 		return -1;
@@ -95,8 +95,8 @@ silly_cmp_tsvector(const TSVector a, const TSVector b)
 		return 1;
 	else
 	{
-		WordEntry  *aptr = ARRPTR(a);
-		WordEntry  *bptr = ARRPTR(b);
+		const WordEntry *aptr = ARRPTR(a);
+		const WordEntry *bptr = ARRPTR(b);
 		int			i = 0;
 		int			res;
 
@@ -397,9 +397,9 @@ add_pos(TSVector src, WordEntry *srcptr,
  * found.
  */
 static int
-tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len)
+tsvector_bsearch(const TSVectorData *tsv, char *lexeme, int lexeme_len)
 {
-	WordEntry  *arrin = ARRPTR(tsv);
+	const WordEntry *arrin = ARRPTR(tsv);
 	int			StopLow = 0,
 				StopHigh = tsv->size,
 				StopMiddle,
