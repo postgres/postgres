@@ -1350,11 +1350,6 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 {
 	int			last_signaled_pid = 0;
 	bool		released_lock = false;
-	bool		terminated = false;
-	TransactionId initial_effective_xmin = InvalidTransactionId;
-	TransactionId initial_catalog_effective_xmin = InvalidTransactionId;
-	XLogRecPtr	initial_restart_lsn = InvalidXLogRecPtr;
-	ReplicationSlotInvalidationCause conflict_prev PG_USED_FOR_ASSERTS_ONLY = RS_INVAL_NONE;
 
 	for (;;)
 	{
@@ -1389,24 +1384,11 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 		 */
 		if (s->data.invalidated == RS_INVAL_NONE)
 		{
-			/*
-			 * The slot's mutex will be released soon, and it is possible that
-			 * those values change since the process holding the slot has been
-			 * terminated (if any), so record them here to ensure that we
-			 * would report the correct conflict cause.
-			 */
-			if (!terminated)
-			{
-				initial_restart_lsn = s->data.restart_lsn;
-				initial_effective_xmin = s->effective_xmin;
-				initial_catalog_effective_xmin = s->effective_catalog_xmin;
-			}
-
 			switch (cause)
 			{
 				case RS_INVAL_WAL_REMOVED:
-					if (initial_restart_lsn != InvalidXLogRecPtr &&
-						initial_restart_lsn < oldestLSN)
+					if (s->data.restart_lsn != InvalidXLogRecPtr &&
+						s->data.restart_lsn < oldestLSN)
 						conflict = cause;
 					break;
 				case RS_INVAL_HORIZON:
@@ -1415,12 +1397,12 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 					/* invalid DB oid signals a shared relation */
 					if (dboid != InvalidOid && dboid != s->data.database)
 						break;
-					if (TransactionIdIsValid(initial_effective_xmin) &&
-						TransactionIdPrecedesOrEquals(initial_effective_xmin,
+					if (TransactionIdIsValid(s->effective_xmin) &&
+						TransactionIdPrecedesOrEquals(s->effective_xmin,
 													  snapshotConflictHorizon))
 						conflict = cause;
-					else if (TransactionIdIsValid(initial_catalog_effective_xmin) &&
-							 TransactionIdPrecedesOrEquals(initial_catalog_effective_xmin,
+					else if (TransactionIdIsValid(s->effective_catalog_xmin) &&
+							 TransactionIdPrecedesOrEquals(s->effective_catalog_xmin,
 														   snapshotConflictHorizon))
 						conflict = cause;
 					break;
@@ -1432,13 +1414,6 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 					pg_unreachable();
 			}
 		}
-
-		/*
-		 * The conflict cause recorded previously should not change while the
-		 * process owning the slot (if any) has been terminated.
-		 */
-		Assert(!(conflict_prev != RS_INVAL_NONE && terminated &&
-				 conflict_prev != conflict));
 
 		/* if there's no conflict, we're done */
 		if (conflict == RS_INVAL_NONE)
@@ -1514,8 +1489,6 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 					(void) kill(active_pid, SIGTERM);
 
 				last_signaled_pid = active_pid;
-				terminated = true;
-				conflict_prev = conflict;
 			}
 
 			/* Wait until the slot is released. */
@@ -1526,6 +1499,14 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlotInvalidationCause cause,
 			 * Re-acquire lock and start over; we expect to invalidate the
 			 * slot next time (unless another process acquires the slot in the
 			 * meantime).
+			 *
+			 * Note: It is possible for a slot to advance its restart_lsn or
+			 * xmin values sufficiently between when we release the mutex and
+			 * when we recheck, moving from a conflicting state to a non
+			 * conflicting state.  This is intentional and safe: if the slot
+			 * has caught up while we're busy here, the resources we were
+			 * concerned about (WAL segments or tuples) have not yet been
+			 * removed, and there's no reason to invalidate the slot.
 			 */
 			LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 			continue;
