@@ -439,8 +439,6 @@ typedef struct
 	const char *abbrev;			/* dynamic abbrev */
 } TmFromChar;
 
-#define ZERO_tmfc(_X) memset(_X, 0, sizeof(TmFromChar))
-
 struct fmt_tz					/* do_to_timestamp's timezone info output */
 {
 	bool		has_tz;			/* was there any TZ/TZH/TZM field? */
@@ -4365,7 +4363,7 @@ do_to_timestamp(const text *date_txt, const text *fmt, Oid collid, bool std,
 				int *fprec, uint32 *flags, Node *escontext)
 {
 	FormatNode *format = NULL;
-	TmFromChar	tmfc;
+	TmFromChar	tmfc = {0};
 	int			fmt_len;
 	char	   *date_str;
 	int			fmask;
@@ -4376,7 +4374,6 @@ do_to_timestamp(const text *date_txt, const text *fmt, Oid collid, bool std,
 
 	date_str = text_to_cstring(date_txt);
 
-	ZERO_tmfc(&tmfc);
 	ZERO_tm(tm);
 	*fsec = 0;
 	tz->has_tz = false;
@@ -4799,19 +4796,6 @@ fill_str(char *str, int c, int max)
 	return str;
 }
 
-#define zeroize_NUM(_n) \
-do { \
-	(_n)->flag		= 0;	\
-	(_n)->lsign		= 0;	\
-	(_n)->pre		= 0;	\
-	(_n)->post		= 0;	\
-	(_n)->pre_lsign_num = 0;	\
-	(_n)->need_locale	= 0;	\
-	(_n)->multi		= 0;	\
-	(_n)->zero_start	= 0;	\
-	(_n)->zero_end		= 0;	\
-} while(0)
-
 /* This works the same as DCH_prevent_counter_overflow */
 static inline void
 NUM_prevent_counter_overflow(void)
@@ -4919,7 +4903,7 @@ NUM_cache_fetch(const char *str)
 		 */
 		ent = NUM_cache_getnew(str);
 
-		zeroize_NUM(&ent->Num);
+		memset(&ent->Num, 0, sizeof ent->Num);
 
 		parse_format(ent->format, str, NUM_keywords,
 					 NULL, NUM_index, NUM_FLAG, &ent->Num);
@@ -4950,7 +4934,7 @@ NUM_cache(int len, NUMDesc *Num, const text *pars_str, bool *shouldFree)
 
 		*shouldFree = true;
 
-		zeroize_NUM(Num);
+		memset(Num, 0, sizeof *Num);
 
 		parse_format(format, str, NUM_keywords,
 					 NULL, NUM_index, NUM_FLAG, Num);
