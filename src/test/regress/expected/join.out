@@ -3076,6 +3076,33 @@ select * from tbl_rs t1 join
 (6 rows)
 
 --
+-- regression test for bug with parallel-hash-right-semi join
+--
+begin;
+-- encourage use of parallel plans
+set local parallel_setup_cost=0;
+set local parallel_tuple_cost=0;
+set local min_parallel_table_scan_size=0;
+set local max_parallel_workers_per_gather=4;
+-- ensure we don't get parallel hash right semi join
+explain (costs off)
+select * from tenk1 t1
+where exists (select 1 from tenk1 t2 where fivethous = t1.fivethous)
+and t1.fivethous < 5;
+                    QUERY PLAN                    
+--------------------------------------------------
+ Gather
+   Workers Planned: 4
+   ->  Parallel Hash Semi Join
+         Hash Cond: (t1.fivethous = t2.fivethous)
+         ->  Parallel Seq Scan on tenk1 t1
+               Filter: (fivethous < 5)
+         ->  Parallel Hash
+               ->  Parallel Seq Scan on tenk1 t2
+(8 rows)
+
+rollback;
+--
 -- regression test for bug #13908 (hash join with skew tuples & nbatch increase)
 --
 set work_mem to '64kB';
