@@ -165,27 +165,22 @@ ProcessQuery(PlannedStmt *plan,
 	 */
 	if (qc)
 	{
-		switch (queryDesc->operation)
-		{
-			case CMD_SELECT:
-				SetQueryCompletion(qc, CMDTAG_SELECT, queryDesc->estate->es_processed);
-				break;
-			case CMD_INSERT:
-				SetQueryCompletion(qc, CMDTAG_INSERT, queryDesc->estate->es_processed);
-				break;
-			case CMD_UPDATE:
-				SetQueryCompletion(qc, CMDTAG_UPDATE, queryDesc->estate->es_processed);
-				break;
-			case CMD_DELETE:
-				SetQueryCompletion(qc, CMDTAG_DELETE, queryDesc->estate->es_processed);
-				break;
-			case CMD_MERGE:
-				SetQueryCompletion(qc, CMDTAG_MERGE, queryDesc->estate->es_processed);
-				break;
-			default:
-				SetQueryCompletion(qc, CMDTAG_UNKNOWN, queryDesc->estate->es_processed);
-				break;
-		}
+		CommandTag	tag;
+
+		if (queryDesc->operation == CMD_SELECT)
+			tag = CMDTAG_SELECT;
+		else if (queryDesc->operation == CMD_INSERT)
+			tag = CMDTAG_INSERT;
+		else if (queryDesc->operation == CMD_UPDATE)
+			tag = CMDTAG_UPDATE;
+		else if (queryDesc->operation == CMD_DELETE)
+			tag = CMDTAG_DELETE;
+		else if (queryDesc->operation == CMD_MERGE)
+			tag = CMDTAG_MERGE;
+		else
+			tag = CMDTAG_UNKNOWN;
+
+		SetQueryCompletion(qc, tag, queryDesc->estate->es_processed);
 	}
 
 	/*
