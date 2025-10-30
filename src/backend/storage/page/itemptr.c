@@ -32,7 +32,7 @@ StaticAssertDecl(sizeof(ItemPointerData) == 3 * sizeof(uint16),
  *	Asserts that the disk item pointers are both valid!
  */
 bool
-ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2)
+ItemPointerEquals(const ItemPointerData *pointer1, const ItemPointerData *pointer2)
 {
 	if (ItemPointerGetBlockNumber(pointer1) ==
 		ItemPointerGetBlockNumber(pointer2) &&
@@ -48,7 +48,7 @@ ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2)
  *		Generic btree-style comparison for item pointers.
  */
 int32
-ItemPointerCompare(ItemPointer arg1, ItemPointer arg2)
+ItemPointerCompare(const ItemPointerData *arg1, const ItemPointerData *arg2)
 {
 	/*
 	 * Use ItemPointerGet{Offset,Block}NumberNoCheck to avoid asserting

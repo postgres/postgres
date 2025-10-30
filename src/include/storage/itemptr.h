@@ -217,8 +217,8 @@ ItemPointerSetMovedPartitions(ItemPointerData *pointer)
  * ----------------
  */
 
-extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
-extern int32 ItemPointerCompare(ItemPointer arg1, ItemPointer arg2);
+extern bool ItemPointerEquals(const ItemPointerData *pointer1, const ItemPointerData *pointer2);
+extern int32 ItemPointerCompare(const ItemPointerData *arg1, const ItemPointerData *arg2);
 extern void ItemPointerInc(ItemPointer pointer);
 extern void ItemPointerDec(ItemPointer pointer);
 
