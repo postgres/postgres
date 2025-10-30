@@ -2220,7 +2220,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         server does not support the protocol version requested by the client,
         the connection is automatically downgraded to a lower minor protocol
         version that the server supports. After the connection attempt has
-        completed you can use <xref linkend="libpq-PQprotocolVersion"/> to
+        completed you can use <xref linkend="libpq-PQfullProtocolVersion"/> to
         find out which exact protocol version was negotiated.
        </para>
 
