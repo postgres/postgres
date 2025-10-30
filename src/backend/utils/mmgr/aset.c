@@ -1609,9 +1609,9 @@ AllocSetCheck(MemoryContext context)
 		 prevblock = block, block = block->next)
 	{
 		char	   *bpoz = ((char *) block) + ALLOC_BLOCKHDRSZ;
-		long		blk_used = block->freeptr - bpoz;
-		long		blk_data = 0;
-		long		nchunks = 0;
+		Size		blk_used = block->freeptr - bpoz;
+		Size		blk_data = 0;
+		Size		nchunks = 0;
 		bool		has_external_chunk = false;
 
 		if (IsKeeperBlock(set, block))
