@@ -576,7 +576,7 @@ task:
 # SPECIAL:
 # - Enables --clone for pg_upgrade and pg_combinebackup
 task:
-  name: macOS - Sonoma - Meson
+  name: macOS - Sequoia - Meson
 
   env:
     CPUS: 4 # always get that much for cirrusci macOS instances
@@ -585,7 +585,7 @@ task:
     # work OK. See
     # https://postgr.es/m/20220927040208.l3shfcidovpzqxfh%40awork3.anarazel.de
     TEST_JOBS: 8
-    IMAGE: ghcr.io/cirruslabs/macos-runner:sonoma
+    IMAGE: ghcr.io/cirruslabs/macos-runner:sequoia
 
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
