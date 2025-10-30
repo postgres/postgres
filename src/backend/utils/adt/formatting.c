@@ -297,15 +297,15 @@ static const char *const numth[] = {"st", "nd", "rd", "th", NULL};
  */
 typedef struct
 {
-	int			pre,			/* (count) numbers before decimal */
-				post,			/* (count) numbers after decimal  */
-				lsign,			/* want locales sign		  */
-				flag,			/* number parameters		  */
-				pre_lsign_num,	/* tmp value for lsign		  */
-				multi,			/* multiplier for 'V'		  */
-				zero_start,		/* position of first zero	  */
-				zero_end,		/* position of last zero	  */
-				need_locale;	/* needs it locale		  */
+	int			pre;			/* (count) numbers before decimal */
+	int			post;			/* (count) numbers after decimal */
+	int			lsign;			/* want locales sign */
+	int			flag;			/* number parameters */
+	int			pre_lsign_num;	/* tmp value for lsign */
+	int			multi;			/* multiplier for 'V' */
+	int			zero_start;		/* position of first zero */
+	int			zero_end;		/* position of last zero */
+	int			need_locale;	/* needs it locale */
 } NUMDesc;
 
 /*
@@ -410,29 +410,29 @@ static int	NUMCounter = 0;		/* aging-event counter */
 typedef struct
 {
 	FromCharDateMode mode;
-	int			hh,
-				pm,
-				mi,
-				ss,
-				ssss,
-				d,				/* stored as 1-7, Sunday = 1, 0 means missing */
-				dd,
-				ddd,
-				mm,
-				ms,
-				year,
-				bc,
-				ww,
-				w,
-				cc,
-				j,
-				us,
-				yysz,			/* is it YY or YYYY ? */
-				clock,			/* 12 or 24 hour clock? */
-				tzsign,			/* +1, -1, or 0 if no TZH/TZM fields */
-				tzh,
-				tzm,
-				ff;				/* fractional precision */
+	int			hh;
+	int			pm;
+	int			mi;
+	int			ss;
+	int			ssss;
+	int			d;				/* stored as 1-7, Sunday = 1, 0 means missing */
+	int			dd;
+	int			ddd;
+	int			mm;
+	int			ms;
+	int			year;
+	int			bc;
+	int			ww;
+	int			w;
+	int			cc;
+	int			j;
+	int			us;
+	int			yysz;			/* is it YY or YYYY ? */
+	int			clock;			/* 12 or 24 hour clock? */
+	int			tzsign;			/* +1, -1, or 0 if no TZH/TZM fields */
+	int			tzh;
+	int			tzm;
+	int			ff;				/* fractional precision */
 	bool		has_tz;			/* was there a TZ field? */
 	int			gmtoffset;		/* GMT offset of fixed-offset zone abbrev */
 	pg_tz	   *tzp;			/* pg_tz for dynamic abbrev */
