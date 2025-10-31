@@ -679,13 +679,20 @@ modify_subscriber_sysid(const struct CreateSubscriberOptions *opt)
 	cf->system_identifier |= ((uint64) tv.tv_usec) << 12;
 	cf->system_identifier |= getpid() & 0xFFF;
 
-	if (!dry_run)
+	if (dry_run)
+		pg_log_info("dry-run: would set system identifier to %" PRIu64 " on subscriber",
+					cf->system_identifier);
+	else
+	{
 		update_controlfile(subscriber_dir, cf, true);
+		pg_log_info("system identifier is %" PRIu64 " on subscriber",
+					cf->system_identifier);
+	}
 
-	pg_log_info("system identifier is %" PRIu64 " on subscriber",
-				cf->system_identifier);
-
-	pg_log_info("running pg_resetwal on the subscriber");
+	if (dry_run)
+		pg_log_info("dry-run: would run pg_resetwal on the subscriber");
+	else
+		pg_log_info("running pg_resetwal on the subscriber");
 
 	cmd_str = psprintf("\"%s\" -D \"%s\" > \"%s\"", pg_resetwal_path,
 					   subscriber_dir, DEVNULL);
@@ -977,9 +984,9 @@ check_publisher(const struct LogicalRepInfo *dbinfo)
 	}
 
 	/*
-	 * Validate 'max_slot_wal_keep_size'. If this parameter is set to a
-	 * non-default value, it may cause replication failures due to required
-	 * WAL files being prematurely removed.
+	 * In dry-run mode, validate 'max_slot_wal_keep_size'. If this parameter
+	 * is set to a non-default value, it may cause replication failures due to
+	 * required WAL files being prematurely removed.
 	 */
 	if (dry_run && (strcmp(max_slot_wal_keep_size, "-1") != 0))
 	{
@@ -1124,11 +1131,14 @@ drop_existing_subscriptions(PGconn *conn, const char *subname, const char *dbnam
 					  subname);
 	appendPQExpBuffer(query, " DROP SUBSCRIPTION %s;", subname);
 
-	pg_log_info("dropping subscription \"%s\" in database \"%s\"",
-				subname, dbname);
-
-	if (!dry_run)
+	if (dry_run)
+		pg_log_info("dry-run: would drop subscription \"%s\" in database \"%s\"",
+					subname, dbname);
+	else
 	{
+		pg_log_info("dropping subscription \"%s\" in database \"%s\"",
+					subname, dbname);
+
 		res = PQexec(conn, query->data);
 
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -1269,7 +1279,7 @@ setup_recovery(const struct LogicalRepInfo *dbinfo, const char *datadir, const c
 
 	if (dry_run)
 	{
-		appendPQExpBufferStr(recoveryconfcontents, "# dry run mode");
+		appendPQExpBufferStr(recoveryconfcontents, "# dry run mode\n");
 		appendPQExpBuffer(recoveryconfcontents,
 						  "recovery_target_lsn = '%X/%X'\n",
 						  LSN_FORMAT_ARGS((XLogRecPtr) InvalidXLogRecPtr));
@@ -1375,8 +1385,12 @@ create_logical_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo)
 
 	Assert(conn != NULL);
 
-	pg_log_info("creating the replication slot \"%s\" in database \"%s\"",
-				slot_name, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would create the replication slot \"%s\" in database \"%s\" on publisher",
+					slot_name, dbinfo->dbname);
+	else
+		pg_log_info("creating the replication slot \"%s\" in database \"%s\" on publisher",
+					slot_name, dbinfo->dbname);
 
 	slot_name_esc = PQescapeLiteral(conn, slot_name, strlen(slot_name));
 
@@ -1424,8 +1438,12 @@ drop_replication_slot(PGconn *conn, struct LogicalRepInfo *dbinfo,
 
 	Assert(conn != NULL);
 
-	pg_log_info("dropping the replication slot \"%s\" in database \"%s\"",
-				slot_name, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would drop the replication slot \"%s\" in database \"%s\"",
+					slot_name, dbinfo->dbname);
+	else
+		pg_log_info("dropping the replication slot \"%s\" in database \"%s\"",
+					slot_name, dbinfo->dbname);
 
 	slot_name_esc = PQescapeLiteral(conn, slot_name, strlen(slot_name));
 
@@ -1569,13 +1587,8 @@ wait_for_end_recovery(const char *conninfo, const struct CreateSubscriberOptions
 
 	for (;;)
 	{
-		bool		in_recovery = server_is_in_recovery(conn);
-
-		/*
-		 * Does the recovery process finish? In dry run mode, there is no
-		 * recovery mode. Bail out as the recovery process has ended.
-		 */
-		if (!in_recovery || dry_run)
+		/* Did the recovery process finish? We're done if so. */
+		if (dry_run || !server_is_in_recovery(conn))
 		{
 			status = POSTMASTER_READY;
 			recovery_ended = true;
@@ -1651,8 +1664,12 @@ create_publication(PGconn *conn, struct LogicalRepInfo *dbinfo)
 	PQclear(res);
 	resetPQExpBuffer(str);
 
-	pg_log_info("creating publication \"%s\" in database \"%s\"",
-				dbinfo->pubname, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would create publication \"%s\" in database \"%s\"",
+					dbinfo->pubname, dbinfo->dbname);
+	else
+		pg_log_info("creating publication \"%s\" in database \"%s\"",
+					dbinfo->pubname, dbinfo->dbname);
 
 	appendPQExpBuffer(str, "CREATE PUBLICATION %s FOR ALL TABLES",
 					  ipubname_esc);
@@ -1694,8 +1711,12 @@ drop_publication(PGconn *conn, const char *pubname, const char *dbname,
 
 	pubname_esc = PQescapeIdentifier(conn, pubname, strlen(pubname));
 
-	pg_log_info("dropping publication \"%s\" in database \"%s\"",
-				pubname, dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would drop publication \"%s\" in database \"%s\"",
+					pubname, dbname);
+	else
+		pg_log_info("dropping publication \"%s\" in database \"%s\"",
+					pubname, dbname);
 
 	appendPQExpBuffer(str, "DROP PUBLICATION %s", pubname_esc);
 
@@ -1803,8 +1824,12 @@ create_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 	pubconninfo_esc = PQescapeLiteral(conn, dbinfo->pubconninfo, strlen(dbinfo->pubconninfo));
 	replslotname_esc = PQescapeLiteral(conn, dbinfo->replslotname, strlen(dbinfo->replslotname));
 
-	pg_log_info("creating subscription \"%s\" in database \"%s\"",
-				dbinfo->subname, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would create subscription \"%s\" in database \"%s\"",
+					dbinfo->subname, dbinfo->dbname);
+	else
+		pg_log_info("creating subscription \"%s\" in database \"%s\"",
+					dbinfo->subname, dbinfo->dbname);
 
 	appendPQExpBuffer(str,
 					  "CREATE SUBSCRIPTION %s CONNECTION %s PUBLICATION %s "
@@ -1901,8 +1926,12 @@ set_replication_progress(PGconn *conn, const struct LogicalRepInfo *dbinfo, cons
 	 */
 	originname = psprintf("pg_%u", suboid);
 
-	pg_log_info("setting the replication progress (node name \"%s\", LSN %s) in database \"%s\"",
-				originname, lsnstr, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would set the replication progress (node name \"%s\", LSN %s) in database \"%s\"",
+					originname, lsnstr, dbinfo->dbname);
+	else
+		pg_log_info("setting the replication progress (node name \"%s\", LSN %s) in database \"%s\"",
+					originname, lsnstr, dbinfo->dbname);
 
 	resetPQExpBuffer(str);
 	appendPQExpBuffer(str,
@@ -1947,8 +1976,12 @@ enable_subscription(PGconn *conn, const struct LogicalRepInfo *dbinfo)
 
 	subname = PQescapeIdentifier(conn, dbinfo->subname, strlen(dbinfo->subname));
 
-	pg_log_info("enabling subscription \"%s\" in database \"%s\"",
-				dbinfo->subname, dbinfo->dbname);
+	if (dry_run)
+		pg_log_info("dry-run: would enable subscription \"%s\" in database \"%s\"",
+					dbinfo->subname, dbinfo->dbname);
+	else
+		pg_log_info("enabling subscription \"%s\" in database \"%s\"",
+					dbinfo->subname, dbinfo->dbname);
 
 	appendPQExpBuffer(str, "ALTER SUBSCRIPTION %s ENABLE", subname);
 
