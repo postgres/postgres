@@ -111,7 +111,7 @@ extern int	SPI_finish(void);
 extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int	SPI_execute_extended(const char *src,
 								 const SPIExecuteOptions *options);
-extern int	SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
+extern int	SPI_execute_plan(SPIPlanPtr plan, const Datum *Values, const char *Nulls,
 							 bool read_only, long tcount);
 extern int	SPI_execute_plan_extended(SPIPlanPtr plan,
 									  const SPIExecuteOptions *options);
@@ -122,13 +122,13 @@ extern int	SPI_exec(const char *src, long tcount);
 extern int	SPI_execp(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 					  long tcount);
 extern int	SPI_execute_snapshot(SPIPlanPtr plan,
-								 Datum *Values, const char *Nulls,
+								 const Datum *Values, const char *Nulls,
 								 Snapshot snapshot,
 								 Snapshot crosscheck_snapshot,
 								 bool read_only, bool fire_triggers, long tcount);
 extern int	SPI_execute_with_args(const char *src,
 								  int nargs, Oid *argtypes,
-								  Datum *Values, const char *Nulls,
+								  const Datum *Values, const char *Nulls,
 								  bool read_only, long tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
@@ -172,7 +172,7 @@ extern void SPI_freetuple(HeapTuple tuple);
 extern void SPI_freetuptable(SPITupleTable *tuptable);
 
 extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
-							  Datum *Values, const char *Nulls, bool read_only);
+							  const Datum *Values, const char *Nulls, bool read_only);
 extern Portal SPI_cursor_open_with_args(const char *name,
 										const char *src,
 										int nargs, Oid *argtypes,

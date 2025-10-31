@@ -660,8 +660,8 @@ pct_info_cmp(const void *pa, const void *pb)
  */
 static struct pct_info *
 setup_pct_info(int num_percentiles,
-			   Datum *percentiles_datum,
-			   bool *percentiles_null,
+			   const Datum *percentiles_datum,
+			   const bool *percentiles_null,
 			   int64 rowcount,
 			   bool continuous)
 {

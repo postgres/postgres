@@ -179,13 +179,13 @@ static List *get_steps_using_prefix_recurse(GeneratePruningStepsContext *context
 											List *step_exprs,
 											List *step_cmpfns);
 static PruneStepResult *get_matching_hash_bounds(PartitionPruneContext *context,
-												 StrategyNumber opstrategy, Datum *values, int nvalues,
+												 StrategyNumber opstrategy, const Datum *values, int nvalues,
 												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_list_bounds(PartitionPruneContext *context,
 												 StrategyNumber opstrategy, Datum value, int nvalues,
 												 FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static PruneStepResult *get_matching_range_bounds(PartitionPruneContext *context,
-												  StrategyNumber opstrategy, Datum *values, int nvalues,
+												  StrategyNumber opstrategy, const Datum *values, int nvalues,
 												  FmgrInfo *partsupfunc, Bitmapset *nullkeys);
 static Bitmapset *pull_exec_paramids(Expr *expr);
 static bool pull_exec_paramids_walker(Node *node, Bitmapset **context);
@@ -2690,7 +2690,7 @@ get_steps_using_prefix_recurse(GeneratePruningStepsContext *context,
  */
 static PruneStepResult *
 get_matching_hash_bounds(PartitionPruneContext *context,
-						 StrategyNumber opstrategy, Datum *values, int nvalues,
+						 StrategyNumber opstrategy, const Datum *values, int nvalues,
 						 FmgrInfo *partsupfunc, Bitmapset *nullkeys)
 {
 	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));
@@ -2978,7 +2978,7 @@ get_matching_list_bounds(PartitionPruneContext *context,
  */
 static PruneStepResult *
 get_matching_range_bounds(PartitionPruneContext *context,
-						  StrategyNumber opstrategy, Datum *values, int nvalues,
+						  StrategyNumber opstrategy, const Datum *values, int nvalues,
 						  FmgrInfo *partsupfunc, Bitmapset *nullkeys)
 {
 	PruneStepResult *result = (PruneStepResult *) palloc0(sizeof(PruneStepResult));

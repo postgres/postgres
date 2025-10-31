@@ -1908,7 +1908,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
  */
 bool
 spgdoinsert(Relation index, SpGistState *state,
-			const ItemPointerData *heapPtr, Datum *datums, bool *isnulls)
+			const ItemPointerData *heapPtr, const Datum *datums, const bool *isnulls)
 {
 	bool		result = true;
 	TupleDesc	leafDescriptor = state->leafTupDesc;

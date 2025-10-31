@@ -67,7 +67,7 @@ static int	_bt_num_array_keys(IndexScanDesc scan, Oid *skip_eq_ops_out,
 							   int *numSkipArrayKeys_out);
 static Datum _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey,
 									  Oid elemtype, StrategyNumber strat,
-									  Datum *elems, int nelems);
+									  const Datum *elems, int nelems);
 static void _bt_setup_array_cmp(IndexScanDesc scan, ScanKey skey, Oid elemtype,
 								FmgrInfo *orderproc, FmgrInfo **sortprocp);
 static int	_bt_sort_array_elements(ScanKey skey, FmgrInfo *sortproc,
@@ -2569,7 +2569,7 @@ _bt_num_array_keys(IndexScanDesc scan, Oid *skip_eq_ops_out,
 static Datum
 _bt_find_extreme_element(IndexScanDesc scan, ScanKey skey, Oid elemtype,
 						 StrategyNumber strat,
-						 Datum *elems, int nelems)
+						 const Datum *elems, int nelems)
 {
 	Relation	rel = scan->indexRelation;
 	Oid			cmp_op;

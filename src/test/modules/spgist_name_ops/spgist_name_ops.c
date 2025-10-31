@@ -94,7 +94,7 @@ commonPrefix(const char *a, const char *b, int lena, int lenb)
  * On success, *i gets the match location; on failure, it gets where to insert
  */
 static bool
-searchChar(Datum *nodeLabels, int nNodes, int16 c, int *i)
+searchChar(const Datum *nodeLabels, int nNodes, int16 c, int *i)
 {
 	int			StopLow = 0,
 				StopHigh = nNodes;

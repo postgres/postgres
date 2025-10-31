@@ -48,17 +48,17 @@ static Selectivity networkjoinsel_inner(Oid operator,
 static Selectivity networkjoinsel_semi(Oid operator,
 									   VariableStatData *vardata1, VariableStatData *vardata2);
 static Selectivity mcv_population(float4 *mcv_numbers, int mcv_nvalues);
-static Selectivity inet_hist_value_sel(Datum *values, int nvalues,
+static Selectivity inet_hist_value_sel(const Datum *values, int nvalues,
 									   Datum constvalue, int opr_codenum);
 static Selectivity inet_mcv_join_sel(Datum *mcv1_values,
 									 float4 *mcv1_numbers, int mcv1_nvalues, Datum *mcv2_values,
 									 float4 *mcv2_numbers, int mcv2_nvalues, Oid operator);
-static Selectivity inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers,
-									 int mcv_nvalues, Datum *hist_values, int hist_nvalues,
+static Selectivity inet_mcv_hist_sel(const Datum *mcv_values, float4 *mcv_numbers,
+									 int mcv_nvalues, const Datum *hist_values, int hist_nvalues,
 									 int opr_codenum);
-static Selectivity inet_hist_inclusion_join_sel(Datum *hist1_values,
+static Selectivity inet_hist_inclusion_join_sel(const Datum *hist1_values,
 												int hist1_nvalues,
-												Datum *hist2_values, int hist2_nvalues,
+												const Datum *hist2_values, int hist2_nvalues,
 												int opr_codenum);
 static Selectivity inet_semi_join_sel(Datum lhs_value,
 									  bool mcv_exists, Datum *mcv_values, int mcv_nvalues,
@@ -601,7 +601,7 @@ mcv_population(float4 *mcv_numbers, int mcv_nvalues)
  * better option than not considering these buckets at all.
  */
 static Selectivity
-inet_hist_value_sel(Datum *values, int nvalues, Datum constvalue,
+inet_hist_value_sel(const Datum *values, int nvalues, Datum constvalue,
 					int opr_codenum)
 {
 	Selectivity match = 0.0;
@@ -702,8 +702,8 @@ inet_mcv_join_sel(Datum *mcv1_values, float4 *mcv1_numbers, int mcv1_nvalues,
  * the histogram.
  */
 static Selectivity
-inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers, int mcv_nvalues,
-				  Datum *hist_values, int hist_nvalues,
+inet_mcv_hist_sel(const Datum *mcv_values, float4 *mcv_numbers, int mcv_nvalues,
+				  const Datum *hist_values, int hist_nvalues,
 				  int opr_codenum)
 {
 	Selectivity selec = 0.0;
@@ -739,8 +739,8 @@ inet_mcv_hist_sel(Datum *mcv_values, float4 *mcv_numbers, int mcv_nvalues,
  * average?  That would at least avoid non-commutative estimation results.
  */
 static Selectivity
-inet_hist_inclusion_join_sel(Datum *hist1_values, int hist1_nvalues,
-							 Datum *hist2_values, int hist2_nvalues,
+inet_hist_inclusion_join_sel(const Datum *hist1_values, int hist1_nvalues,
+							 const Datum *hist2_values, int hist2_nvalues,
 							 int opr_codenum)
 {
 	double		match = 0.0;

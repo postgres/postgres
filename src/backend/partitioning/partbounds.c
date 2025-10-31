@@ -3555,8 +3555,8 @@ partition_rbound_cmp(int partnatts, FmgrInfo *partsupfunc,
  */
 int32
 partition_rbound_datum_cmp(FmgrInfo *partsupfunc, Oid *partcollation,
-						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-						   Datum *tuple_datums, int n_tuple_datums)
+						   const Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
+						   const Datum *tuple_datums, int n_tuple_datums)
 {
 	int			i;
 	int32		cmpval = -1;
@@ -3695,7 +3695,7 @@ partition_range_bsearch(int partnatts, FmgrInfo *partsupfunc,
 int
 partition_range_datum_bsearch(FmgrInfo *partsupfunc, Oid *partcollation,
 							  PartitionBoundInfo boundinfo,
-							  int nvalues, Datum *values, bool *is_equal)
+							  int nvalues, const Datum *values, bool *is_equal)
 {
 	int			lo,
 				hi,

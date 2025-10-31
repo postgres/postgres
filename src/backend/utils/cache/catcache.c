@@ -117,10 +117,10 @@ static CatCTup *CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 static void ReleaseCatCacheWithOwner(HeapTuple tuple, ResourceOwner resowner);
 static void ReleaseCatCacheListWithOwner(CatCList *list, ResourceOwner resowner);
-static void CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos,
-							 Datum *keys);
-static void CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
-							 Datum *srckeys, Datum *dstkeys);
+static void CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, const int *attnos,
+							 const Datum *keys);
+static void CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, const int *attnos,
+							 const Datum *srckeys, Datum *dstkeys);
 
 
 /*
@@ -2279,7 +2279,7 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, Datum *arguments,
  * Helper routine that frees keys stored in the keys array.
  */
 static void
-CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos, Datum *keys)
+CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, const int *attnos, const Datum *keys)
 {
 	int			i;
 
@@ -2301,8 +2301,8 @@ CatCacheFreeKeys(TupleDesc tupdesc, int nkeys, int *attnos, Datum *keys)
  * context.
  */
 static void
-CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
-				 Datum *srckeys, Datum *dstkeys)
+CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, const int *attnos,
+				 const Datum *srckeys, Datum *dstkeys)
 {
 	int			i;
 

@@ -276,7 +276,7 @@ static int	compare_values(const void *a, const void *b, void *arg);
  * function (which should be BTLessStrategyNumber).
  */
 static void
-AssertArrayOrder(FmgrInfo *cmp, Oid colloid, Datum *values, int nvalues)
+AssertArrayOrder(FmgrInfo *cmp, Oid colloid, const Datum *values, int nvalues)
 {
 	int			i;
 	Datum		lt;

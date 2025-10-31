@@ -115,7 +115,7 @@ static void set_stats_slot(Datum *values, bool *nulls, bool *replaces,
 						   Datum stanumbers, bool stanumbers_isnull,
 						   Datum stavalues, bool stavalues_isnull);
 static void upsert_pg_statistic(Relation starel, HeapTuple oldtup,
-								Datum *values, bool *nulls, bool *replaces);
+								const Datum *values, const bool *nulls, const bool *replaces);
 static bool delete_pg_statistic(Oid reloid, AttrNumber attnum, bool stainherit);
 static void init_empty_stats_tuple(Oid reloid, int16 attnum, bool inherited,
 								   Datum *values, bool *nulls, bool *replaces);
@@ -819,7 +819,7 @@ set_stats_slot(Datum *values, bool *nulls, bool *replaces,
  */
 static void
 upsert_pg_statistic(Relation starel, HeapTuple oldtup,
-					Datum *values, bool *nulls, bool *replaces)
+					const Datum *values, const bool *nulls, const bool *replaces)
 {
 	HeapTuple	newtup;
 

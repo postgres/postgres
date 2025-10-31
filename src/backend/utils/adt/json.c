@@ -89,7 +89,7 @@ typedef struct JsonAggState
 static void composite_to_json(Datum composite, StringInfo result,
 							  bool use_line_feeds);
 static void array_dim_to_json(StringInfo result, int dim, int ndims, int *dims,
-							  Datum *vals, bool *nulls, int *valcount,
+							  const Datum *vals, const bool *nulls, int *valcount,
 							  JsonTypeCategory tcategory, Oid outfuncoid,
 							  bool use_line_feeds);
 static void array_to_json_internal(Datum array, StringInfo result,
@@ -429,8 +429,8 @@ JsonEncodeDateTime(char *buf, Datum value, Oid typid, const int *tzp)
  * ourselves recursively to process the next dimension.
  */
 static void
-array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, Datum *vals,
-				  bool *nulls, int *valcount, JsonTypeCategory tcategory,
+array_dim_to_json(StringInfo result, int dim, int ndims, int *dims, const Datum *vals,
+				  const bool *nulls, int *valcount, JsonTypeCategory tcategory,
 				  Oid outfuncoid, bool use_line_feeds)
 {
 	int			i;

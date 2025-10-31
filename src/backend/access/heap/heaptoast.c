@@ -561,8 +561,8 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
  */
 HeapTuple
 toast_build_flattened_tuple(TupleDesc tupleDesc,
-							Datum *values,
-							bool *isnull)
+							const Datum *values,
+							const bool *isnull)
 {
 	HeapTuple	new_tuple;
 	int			numAttrs = tupleDesc->natts;

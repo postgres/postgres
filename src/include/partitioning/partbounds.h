@@ -130,8 +130,8 @@ extern void check_default_partition_contents(Relation parent,
 
 extern int32 partition_rbound_datum_cmp(FmgrInfo *partsupfunc,
 										Oid *partcollation,
-										Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
-										Datum *tuple_datums, int n_tuple_datums);
+										const Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
+										const Datum *tuple_datums, int n_tuple_datums);
 extern int	partition_list_bsearch(FmgrInfo *partsupfunc,
 								   Oid *partcollation,
 								   PartitionBoundInfo boundinfo,
@@ -139,7 +139,7 @@ extern int	partition_list_bsearch(FmgrInfo *partsupfunc,
 extern int	partition_range_datum_bsearch(FmgrInfo *partsupfunc,
 										  Oid *partcollation,
 										  PartitionBoundInfo boundinfo,
-										  int nvalues, Datum *values, bool *is_equal);
+										  int nvalues, const Datum *values, bool *is_equal);
 extern int	partition_hash_bsearch(PartitionBoundInfo boundinfo,
 								   int modulus, int remainder);
 

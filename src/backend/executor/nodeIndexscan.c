@@ -65,7 +65,7 @@ static int	cmp_orderbyvals(const Datum *adist, const bool *anulls,
 static int	reorderqueue_cmp(const pairingheap_node *a,
 							 const pairingheap_node *b, void *arg);
 static void reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
-							  Datum *orderbyvals, bool *orderbynulls);
+							  const Datum *orderbyvals, const bool *orderbynulls);
 static HeapTuple reorderqueue_pop(IndexScanState *node);
 
 
@@ -458,7 +458,7 @@ reorderqueue_cmp(const pairingheap_node *a, const pairingheap_node *b,
  */
 static void
 reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
-				  Datum *orderbyvals, bool *orderbynulls)
+				  const Datum *orderbyvals, const bool *orderbynulls)
 {
 	IndexScanDesc scandesc = node->iss_ScanDesc;
 	EState	   *estate = node->ss.ps.state;

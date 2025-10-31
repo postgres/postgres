@@ -891,8 +891,8 @@ xmltotext_with_options(xmltype *data, XmlOptionType xmloption_arg, bool indent)
 
 xmltype *
 xmlelement(XmlExpr *xexpr,
-		   Datum *named_argvalue, bool *named_argnull,
-		   Datum *argvalue, bool *argnull)
+		   const Datum *named_argvalue, const bool *named_argnull,
+		   const Datum *argvalue, const bool *argnull)
 {
 #ifdef USE_LIBXML
 	xmltype    *result;

@@ -468,7 +468,7 @@ extern uint32 _hash_get_totalbuckets(uint32 splitpoint_phase);
 extern void _hash_checkpage(Relation rel, Buffer buf, int flags);
 extern uint32 _hash_get_indextuple_hashkey(IndexTuple itup);
 extern bool _hash_convert_tuple(Relation index,
-								Datum *user_values, bool *user_isnull,
+								const Datum *user_values, const bool *user_isnull,
 								Datum *index_values, bool *index_isnull);
 extern OffsetNumber _hash_binsearch(Page page, uint32 hash_value);
 extern OffsetNumber _hash_binsearch_last(Page page, uint32 hash_value);

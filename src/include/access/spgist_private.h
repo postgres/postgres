@@ -541,7 +541,7 @@ extern void spgPageIndexMultiDelete(SpGistState *state, Page page,
 									int firststate, int reststate,
 									BlockNumber blkno, OffsetNumber offnum);
 extern bool spgdoinsert(Relation index, SpGistState *state,
-						const ItemPointerData *heapPtr, Datum *datums, bool *isnulls);
+						const ItemPointerData *heapPtr, const Datum *datums, const bool *isnulls);
 
 /* spgproc.c */
 extern double *spg_key_orderbys_distances(Datum key, bool isLeaf,
