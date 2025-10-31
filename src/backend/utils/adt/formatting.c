@@ -115,12 +115,19 @@
 /*
  * Format parser structs
  */
+
+enum KeySuffixType
+{
+	SUFFTYPE_PREFIX = 1,
+	SUFFTYPE_POSTFIX = 2,
+};
+
 typedef struct
 {
 	const char *name;			/* suffix string		*/
 	size_t		len;			/* suffix length		*/
 	int			id;				/* used in node->suffix */
-	int			type;			/* prefix / postfix		*/
+	enum KeySuffixType type;	/* prefix / postfix		*/
 } KeySuffix;
 
 /*
@@ -145,22 +152,22 @@ typedef struct
 	FromCharDateMode date_mode;
 } KeyWord;
 
+enum FormatNodeType
+{
+	NODE_TYPE_END = 1,
+	NODE_TYPE_ACTION = 2,
+	NODE_TYPE_CHAR = 3,
+	NODE_TYPE_SEPARATOR = 4,
+	NODE_TYPE_SPACE = 5,
+};
+
 typedef struct
 {
-	uint8		type;			/* NODE_TYPE_XXX, see below */
+	enum FormatNodeType type;
 	char		character[MAX_MULTIBYTE_CHAR_LEN + 1];	/* if type is CHAR */
-	uint8		suffix;			/* keyword prefix/suffix code, if any */
+	uint8		suffix;			/* keyword prefix/suffix code, if any (DCH_S_*) */
 	const KeyWord *key;			/* if type is ACTION */
 } FormatNode;
-
-#define NODE_TYPE_END		1
-#define NODE_TYPE_ACTION	2
-#define NODE_TYPE_CHAR		3
-#define NODE_TYPE_SEPARATOR	4
-#define NODE_TYPE_SPACE		5
-
-#define SUFFTYPE_PREFIX		1
-#define SUFFTYPE_POSTFIX	2
 
 
 /*
@@ -286,8 +293,18 @@ static const char *const numth[] = {"st", "nd", "rd", "th", NULL};
 /*
  * Flags & Options:
  */
-#define TH_UPPER		1
-#define TH_LOWER		2
+enum TH_Case
+{
+	TH_UPPER = 1,
+	TH_LOWER = 2,
+};
+
+enum NUMDesc_lsign
+{
+	NUM_LSIGN_PRE = -1,
+	NUM_LSIGN_POST = 1,
+	NUM_LSIGN_NONE = 0,
+};
 
 /*
  * Number description struct
@@ -296,13 +313,13 @@ typedef struct
 {
 	int			pre;			/* (count) numbers before decimal */
 	int			post;			/* (count) numbers after decimal */
-	int			lsign;			/* want locales sign */
-	int			flag;			/* number parameters */
+	enum NUMDesc_lsign lsign;	/* want locales sign */
+	int			flag;			/* number parameters (NUM_F_*) */
 	int			pre_lsign_num;	/* tmp value for lsign */
 	int			multi;			/* multiplier for 'V' */
 	int			zero_start;		/* position of first zero */
 	int			zero_end;		/* position of last zero */
-	int			need_locale;	/* needs it locale */
+	bool		need_locale;	/* needs it locale */
 } NUMDesc;
 
 /*
@@ -322,10 +339,6 @@ typedef struct
 #define NUM_F_PLUS_POST		(1 << 12)
 #define NUM_F_MINUS_POST	(1 << 13)
 #define NUM_F_EEEE			(1 << 14)
-
-#define NUM_LSIGN_PRE	(-1)
-#define NUM_LSIGN_POST	1
-#define NUM_LSIGN_NONE	0
 
 /*
  * Tests
@@ -553,7 +566,12 @@ do { \
 #define S_THth(_s)	((((_s) & DCH_S_TH) || ((_s) & DCH_S_th)) ? 1 : 0)
 #define S_TH(_s)	(((_s) & DCH_S_TH) ? 1 : 0)
 #define S_th(_s)	(((_s) & DCH_S_th) ? 1 : 0)
-#define S_TH_TYPE(_s)	(((_s) & DCH_S_TH) ? TH_UPPER : TH_LOWER)
+
+static inline enum TH_Case
+S_TH_TYPE(uint8 _s)
+{
+	return _s & DCH_S_TH ? TH_UPPER : TH_LOWER;
+}
 
 /* Oracle toggles FM behavior, we don't; see docs. */
 #define S_FM(_s)	(((_s) & DCH_S_FM) ? 1 : 0)
@@ -1034,7 +1052,7 @@ typedef struct NUMProc
  */
 static const KeyWord *index_seq_search(const char *str, const KeyWord *kw,
 									   const int *index);
-static const KeySuffix *suff_search(const char *str, const KeySuffix *suf, int type);
+static const KeySuffix *suff_search(const char *str, const KeySuffix *suf, enum KeySuffixType type);
 static bool is_separator_char(const char *str);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
 static void parse_format(FormatNode *node, const char *str, const KeyWord *kw,
@@ -1050,8 +1068,8 @@ static void dump_index(const KeyWord *k, const int *index);
 static void dump_node(FormatNode *node, int max);
 #endif
 
-static const char *get_th(const char *num, int type);
-static char *str_numth(char *dest, const char *num, int type);
+static const char *get_th(const char *num, enum TH_Case type);
+static char *str_numth(char *dest, const char *num, enum TH_Case type);
 static int	adjust_partial_year_to_2020(int year);
 static size_t strspace_len(const char *str);
 static bool from_char_set_mode(TmFromChar *tmfc, const FromCharDateMode mode,
@@ -1121,7 +1139,7 @@ index_seq_search(const char *str, const KeyWord *kw, const int *index)
 }
 
 static const KeySuffix *
-suff_search(const char *str, const KeySuffix *suf, int type)
+suff_search(const char *str, const KeySuffix *suf, enum KeySuffixType type)
 {
 	for (const KeySuffix *s = suf; s->name != NULL; s++)
 	{
@@ -1516,10 +1534,9 @@ dump_node(FormatNode *node, int max)
 
 /*
  * Return ST/ND/RD/TH for simple (1..9) numbers
- * type --> 0 upper, 1 lower
  */
 static const char *
-get_th(const char *num, int type)
+get_th(const char *num, enum TH_Case type)
 {
 	size_t		len = strlen(num);
 	char		last;
@@ -1562,10 +1579,9 @@ get_th(const char *num, int type)
 
 /*
  * Convert string-number to ordinal string-number
- * type --> 0 upper, 1 lower
  */
 static char *
-str_numth(char *dest, const char *num, int type)
+str_numth(char *dest, const char *num, enum TH_Case type)
 {
 	if (dest != num)
 		strcpy(dest, num);
