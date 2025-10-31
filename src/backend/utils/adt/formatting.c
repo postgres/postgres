@@ -1113,7 +1113,7 @@ static bool from_char_seq_search(int *dest, const char **src,
 static bool do_to_timestamp(const text *date_txt, const text *fmt, Oid collid, bool std,
 							struct pg_tm *tm, fsec_t *fsec, struct fmt_tz *tz,
 							int *fprec, uint32 *flags, Node *escontext);
-static char *fill_str(char *str, int c, int max);
+static void fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, const text *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
 static int	roman_to_int(NUMProc *Np, size_t input_len);
@@ -4824,12 +4824,15 @@ fail:
  *********************************************************************/
 
 
-static char *
+/*
+ * Fill str with character c max times, and add terminating \0.  (So max+1
+ * bytes are written altogether!)
+ */
+static void
 fill_str(char *str, int c, int max)
 {
 	memset(str, c, max);
 	str[max] = '\0';
-	return str;
 }
 
 /* This works the same as DCH_prevent_counter_overflow */
