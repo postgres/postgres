@@ -21,7 +21,6 @@ $node_primary->append_conf(
 wal_level = logical
 ));
 $node_primary->start;
-my $backup_name = 'primary_backup';
 
 $node_primary->safe_psql('postgres',
 	qq[CREATE TABLE decoding_test(x integer, y text);]);
