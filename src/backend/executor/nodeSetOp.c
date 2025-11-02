@@ -111,6 +111,15 @@ build_hash_table(SetOpState *setopstate)
 												false);
 }
 
+/* Planner support routine to estimate space needed for hash table */
+Size
+EstimateSetOpHashTableSpace(double nentries, Size tupleWidth)
+{
+	return EstimateTupleHashTableSpace(nentries,
+									   tupleWidth,
+									   sizeof(SetOpStatePerGroupData));
+}
+
 /*
  * We've completed processing a tuple group.  Decide how many copies (if any)
  * of its representative row to emit, and store the count into numOutput.

@@ -525,7 +525,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 											  node->tab_hash_funcs,
 											  node->tab_collations,
 											  nbuckets,
-											  0,
+											  0,	/* no additional data */
 											  node->planstate->state->es_query_cxt,
 											  node->tuplesContext,
 											  innerecontext->ecxt_per_tuple_memory,
@@ -554,7 +554,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 												  node->tab_hash_funcs,
 												  node->tab_collations,
 												  nbuckets,
-												  0,
+												  0,	/* no additional data */
 												  node->planstate->state->es_query_cxt,
 												  node->tuplesContext,
 												  innerecontext->ecxt_per_tuple_memory,
@@ -634,6 +634,55 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	ExecClearTuple(node->projRight->pi_state.resultslot);
 
 	MemoryContextSwitchTo(oldcontext);
+}
+
+/* Planner support routine to estimate space needed for hash table(s) */
+Size
+EstimateSubplanHashTableSpace(double nentries,
+							  Size tupleWidth,
+							  bool unknownEqFalse)
+{
+	Size		tab1space,
+				tab2space;
+
+	/* Estimate size of main hashtable */
+	tab1space = EstimateTupleHashTableSpace(nentries,
+											tupleWidth,
+											0 /* no additional data */ );
+
+	/* Give up if that's already too big */
+	if (tab1space >= SIZE_MAX)
+		return tab1space;
+
+	/* Done if we don't need a hashnulls table */
+	if (unknownEqFalse)
+		return tab1space;
+
+	/*
+	 * Adjust the rowcount estimate in the same way that buildSubPlanHash
+	 * will, except that we don't bother with the special case for a single
+	 * hash column.  (We skip that detail because it'd be notationally painful
+	 * for our caller to provide the column count, and this table has
+	 * relatively little impact on the total estimate anyway.)
+	 */
+	nentries /= 16;
+	if (nentries < 1)
+		nentries = 1;
+
+	/*
+	 * It might be sane to also reduce the tupleWidth, but on the other hand
+	 * we are not accounting for the space taken by the tuples' null bitmaps.
+	 * Leave it alone for now.
+	 */
+	tab2space = EstimateTupleHashTableSpace(nentries,
+											tupleWidth,
+											0 /* no additional data */ );
+
+	/* Guard against overflow */
+	if (tab2space >= SIZE_MAX - tab1space)
+		return SIZE_MAX;
+
+	return tab1space + tab2space;
 }
 
 /*

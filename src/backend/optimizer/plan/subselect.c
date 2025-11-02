@@ -20,6 +20,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "executor/nodeSubplan.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -79,8 +80,8 @@ static Node *convert_testexpr(PlannerInfo *root,
 							  List *subst_nodes);
 static Node *convert_testexpr_mutator(Node *node,
 									  convert_testexpr_context *context);
-static bool subplan_is_hashable(Plan *plan);
-static bool subpath_is_hashable(Path *path);
+static bool subplan_is_hashable(Plan *plan, bool unknownEqFalse);
+static bool subpath_is_hashable(Path *path, bool unknownEqFalse);
 static bool testexpr_is_hashable(Node *testexpr, List *param_ids);
 static bool test_opexpr_is_hashable(OpExpr *testexpr, List *param_ids);
 static bool hash_ok_operator(OpExpr *expr);
@@ -283,7 +284,7 @@ make_subplan(PlannerInfo *root, Query *orig_subquery,
 			best_path = final_rel->cheapest_total_path;
 
 			/* Now we can check if it'll fit in hash_mem */
-			if (subpath_is_hashable(best_path))
+			if (subpath_is_hashable(best_path, true))
 			{
 				SubPlan    *hashplan;
 				AlternativeSubPlan *asplan;
@@ -524,7 +525,7 @@ build_subplan(PlannerInfo *root, Plan *plan, Path *path,
 		 */
 		if (subLinkType == ANY_SUBLINK &&
 			splan->parParam == NIL &&
-			subplan_is_hashable(plan) &&
+			subplan_is_hashable(plan, unknownEqFalse) &&
 			testexpr_is_hashable(splan->testexpr, splan->paramIds))
 			splan->useHashTable = true;
 
@@ -711,19 +712,19 @@ convert_testexpr_mutator(Node *node,
  * is suitable for hashing.  We only look at the subquery itself.
  */
 static bool
-subplan_is_hashable(Plan *plan)
+subplan_is_hashable(Plan *plan, bool unknownEqFalse)
 {
-	double		subquery_size;
+	Size		hashtablesize;
 
 	/*
-	 * The estimated size of the subquery result must fit in hash_mem. (Note:
-	 * we use heap tuple overhead here even though the tuples will actually be
-	 * stored as MinimalTuples; this provides some fudge factor for hashtable
-	 * overhead.)
+	 * The estimated size of the hashtable holding the subquery result must
+	 * fit in hash_mem.  (Note: reject on equality, to ensure that an estimate
+	 * of SIZE_MAX disables hashing regardless of the hash_mem limit.)
 	 */
-	subquery_size = plan->plan_rows *
-		(MAXALIGN(plan->plan_width) + MAXALIGN(SizeofHeapTupleHeader));
-	if (subquery_size > get_hash_memory_limit())
+	hashtablesize = EstimateSubplanHashTableSpace(plan->plan_rows,
+												  plan->plan_width,
+												  unknownEqFalse);
+	if (hashtablesize >= get_hash_memory_limit())
 		return false;
 
 	return true;
@@ -735,19 +736,19 @@ subplan_is_hashable(Plan *plan)
  * Identical to subplan_is_hashable, but work from a Path for the subplan.
  */
 static bool
-subpath_is_hashable(Path *path)
+subpath_is_hashable(Path *path, bool unknownEqFalse)
 {
-	double		subquery_size;
+	Size		hashtablesize;
 
 	/*
-	 * The estimated size of the subquery result must fit in hash_mem. (Note:
-	 * we use heap tuple overhead here even though the tuples will actually be
-	 * stored as MinimalTuples; this provides some fudge factor for hashtable
-	 * overhead.)
+	 * The estimated size of the hashtable holding the subquery result must
+	 * fit in hash_mem.  (Note: reject on equality, to ensure that an estimate
+	 * of SIZE_MAX disables hashing regardless of the hash_mem limit.)
 	 */
-	subquery_size = path->rows *
-		(MAXALIGN(path->pathtarget->width) + MAXALIGN(SizeofHeapTupleHeader));
-	if (subquery_size > get_hash_memory_limit())
+	hashtablesize = EstimateSubplanHashTableSpace(path->rows,
+												  path->pathtarget->width,
+												  unknownEqFalse);
+	if (hashtablesize >= get_hash_memory_limit())
 		return false;
 
 	return true;

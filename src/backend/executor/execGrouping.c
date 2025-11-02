@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "access/parallel.h"
 #include "common/hashfn.h"
 #include "executor/executor.h"
@@ -300,6 +301,64 @@ ResetTupleHashTable(TupleHashTable hashtable)
 {
 	tuplehash_reset(hashtable->hashtab);
 	MemoryContextReset(hashtable->tuplescxt);
+}
+
+/*
+ * Estimate the amount of space needed for a TupleHashTable with nentries
+ * entries, if the tuples have average data width tupleWidth and the caller
+ * requires additionalsize extra space per entry.
+ *
+ * Return SIZE_MAX if it'd overflow size_t.
+ *
+ * nentries is "double" because this is meant for use by the planner,
+ * which typically works with double rowcount estimates.  So we'd need to
+ * clamp to integer somewhere and that might as well be here.  We do expect
+ * the value not to be NaN or negative, else the result will be garbage.
+ */
+Size
+EstimateTupleHashTableSpace(double nentries,
+							Size tupleWidth,
+							Size additionalsize)
+{
+	Size		sh_space;
+	double		tuples_space;
+
+	/* First estimate the space needed for the simplehash table */
+	sh_space = tuplehash_estimate_space(nentries);
+
+	/* Give up if that's already too big */
+	if (sh_space >= SIZE_MAX)
+		return sh_space;
+
+	/*
+	 * Compute space needed for hashed tuples with additional data.  nentries
+	 * must be somewhat sane, so it should be safe to compute this product.
+	 *
+	 * We assume that the hashed tuples will be kept in a BumpContext so that
+	 * there is not additional per-tuple overhead.
+	 *
+	 * (Note that this is only accurate if MEMORY_CONTEXT_CHECKING is off,
+	 * else bump.c will add a MemoryChunk header to each tuple.  However, it
+	 * seems undesirable for debug builds to make different planning choices
+	 * than production builds, so we assume the production behavior always.)
+	 */
+	tuples_space = nentries * (MAXALIGN(SizeofMinimalTupleHeader) +
+							   MAXALIGN(tupleWidth) +
+							   MAXALIGN(additionalsize));
+
+	/*
+	 * Check for size_t overflow.  This coding is trickier than it may appear,
+	 * because on 64-bit machines SIZE_MAX cannot be represented exactly as a
+	 * double.  We must cast it explicitly to suppress compiler warnings about
+	 * an inexact conversion, and we must trust that any double value that
+	 * compares strictly less than "(double) SIZE_MAX" will cast to a
+	 * representable size_t value.
+	 */
+	if (sh_space + tuples_space >= (double) SIZE_MAX)
+		return SIZE_MAX;
+
+	/* We don't bother estimating size of the miscellaneous overhead data */
+	return (Size) (sh_space + tuples_space);
 }
 
 /*

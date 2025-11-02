@@ -20,6 +20,10 @@ extern SubPlanState *ExecInitSubPlan(SubPlan *subplan, PlanState *parent);
 
 extern Datum ExecSubPlan(SubPlanState *node, ExprContext *econtext, bool *isNull);
 
+extern Size EstimateSubplanHashTableSpace(double nentries,
+										  Size tupleWidth,
+										  bool unknownEqFalse);
+
 extern void ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent);
 
 extern void ExecSetParamPlan(SubPlanState *node, ExprContext *econtext);
