@@ -2248,12 +2248,9 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
  *
  * _bt_first caller passes us an offnum returned by _bt_binsrch, which might
  * be an out of bounds offnum such as "maxoff + 1" in certain corner cases.
- * _bt_checkkeys will stop the scan as soon as an equality qual fails (when
- * its scan key was marked required), so _bt_first _must_ pass us an offnum
- * exactly at the beginning of where equal tuples are to be found.  When we're
- * passed an offnum past the end of the page, we might still manage to stop
- * the scan on this page by calling _bt_checkkeys against the high key.  See
- * _bt_readpage for full details.
+ * When we're passed an offnum past the end of the page, we might still manage
+ * to stop the scan on this page by calling _bt_checkkeys against the high
+ * key.  See _bt_readpage for full details.
  *
  * On entry, so->currPos must be pinned and locked (so offnum stays valid).
  * Parallel scan callers must have seized the scan before calling here.
