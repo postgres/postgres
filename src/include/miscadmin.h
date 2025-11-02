@@ -114,7 +114,8 @@ extern void ProcessInterrupts(void);
 	(unlikely(InterruptPending))
 #else
 #define INTERRUPTS_PENDING_CONDITION() \
-	(unlikely(UNBLOCKED_SIGNAL_QUEUE()) ? pgwin32_dispatch_queued_signals() : 0, \
+	(unlikely(UNBLOCKED_SIGNAL_QUEUE()) ? \
+	 pgwin32_dispatch_queued_signals() : (void) 0, \
 	 unlikely(InterruptPending))
 #endif
 
