@@ -2877,11 +2877,6 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 			 * Tuple fails this qual.  If it's a required qual for the current
 			 * scan direction, then we can conclude no further tuples will
 			 * pass, either.
-			 *
-			 * Note: because we stop the scan as soon as any required equality
-			 * qual fails, it is critical that equality quals be used for the
-			 * initial positioning in _bt_first() when they are available. See
-			 * comments in _bt_first().
 			 */
 			if (requiredSameDir)
 				*continuescan = false;
