@@ -1288,6 +1288,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * our row compare header key must be the final startKeys[] entry.
 			 */
 			Assert(subkey->sk_flags & (SK_BT_REQFWD | SK_BT_REQBKWD));
+			Assert(subkey->sk_strategy == bkey->sk_strategy);
+			Assert(subkey->sk_strategy == strat_total);
 			Assert(i == keysz - 1);
 
 			/*
@@ -1344,9 +1346,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				Assert(subkey->sk_strategy == bkey->sk_strategy);
 				Assert(keysz < INDEX_MAX_KEYS);
 
-				memcpy(inskey.scankeys + keysz, subkey,
-					   sizeof(ScanKeyData));
+				memcpy(inskey.scankeys + keysz, subkey, sizeof(ScanKeyData));
 				keysz++;
+
 				if (subkey->sk_flags & SK_ROW_END)
 					break;
 			}
@@ -1378,7 +1380,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				}
 			}
 
-			/* done adding to inskey (row comparison keys always come last) */
+			/* Done (row compare header key is always last startKeys[] key) */
 			break;
 		}
 
