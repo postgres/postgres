@@ -88,7 +88,6 @@ build_hash_table(SetOpState *setopstate)
 	TupleDesc	desc = ExecGetResultType(outerPlanState(setopstate));
 
 	Assert(node->strategy == SETOP_HASHED);
-	Assert(node->numGroups > 0);
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell

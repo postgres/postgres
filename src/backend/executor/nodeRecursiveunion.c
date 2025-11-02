@@ -35,7 +35,6 @@ build_hash_table(RecursiveUnionState *rustate)
 	TupleDesc	desc = ExecGetResultType(outerPlanState(rustate));
 
 	Assert(node->numCols > 0);
-	Assert(node->numGroups > 0);
 
 	/*
 	 * If both child plans deliver the same fixed tuple slot type, we can tell

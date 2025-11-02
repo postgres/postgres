@@ -475,7 +475,7 @@ typedef struct RecursiveUnion
 	Oid		   *dupCollations pg_node_attr(array_size(numCols));
 
 	/* estimated number of groups in input */
-	long		numGroups;
+	Cardinality numGroups;
 } RecursiveUnion;
 
 /* ----------------
@@ -1206,7 +1206,7 @@ typedef struct Agg
 	Oid		   *grpCollations pg_node_attr(array_size(numCols));
 
 	/* estimated number of groups in input */
-	long		numGroups;
+	Cardinality numGroups;
 
 	/* for pass-by-ref transition data */
 	uint64		transitionSpace;
@@ -1446,7 +1446,7 @@ typedef struct SetOp
 	bool	   *cmpNullsFirst pg_node_attr(array_size(numCols));
 
 	/* estimated number of groups in left input */
-	long		numGroups;
+	Cardinality numGroups;
 } SetOp;
 
 /* ----------------

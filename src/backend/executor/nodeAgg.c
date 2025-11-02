@@ -402,12 +402,12 @@ static void find_cols(AggState *aggstate, Bitmapset **aggregated,
 					  Bitmapset **unaggregated);
 static bool find_cols_walker(Node *node, FindColsContext *context);
 static void build_hash_tables(AggState *aggstate);
-static void build_hash_table(AggState *aggstate, int setno, long nbuckets);
+static void build_hash_table(AggState *aggstate, int setno, double nbuckets);
 static void hashagg_recompile_expressions(AggState *aggstate, bool minslot,
 										  bool nullcheck);
 static void hash_create_memory(AggState *aggstate);
-static long hash_choose_num_buckets(double hashentrysize,
-									long ngroups, Size memory);
+static double hash_choose_num_buckets(double hashentrysize,
+									  double ngroups, Size memory);
 static int	hash_choose_num_partitions(double input_groups,
 									   double hashentrysize,
 									   int used_bits,
@@ -1469,7 +1469,7 @@ build_hash_tables(AggState *aggstate)
 	for (setno = 0; setno < aggstate->num_hashes; ++setno)
 	{
 		AggStatePerHash perhash = &aggstate->perhash[setno];
-		long		nbuckets;
+		double		nbuckets;
 		Size		memory;
 
 		if (perhash->hashtable != NULL)
@@ -1477,8 +1477,6 @@ build_hash_tables(AggState *aggstate)
 			ResetTupleHashTable(perhash->hashtable);
 			continue;
 		}
-
-		Assert(perhash->aggnode->numGroups > 0);
 
 		memory = aggstate->hash_mem_limit / aggstate->num_hashes;
 
@@ -1505,7 +1503,7 @@ build_hash_tables(AggState *aggstate)
  * Build a single hashtable for this grouping set.
  */
 static void
-build_hash_table(AggState *aggstate, int setno, long nbuckets)
+build_hash_table(AggState *aggstate, int setno, double nbuckets)
 {
 	AggStatePerHash perhash = &aggstate->perhash[setno];
 	MemoryContext metacxt = aggstate->hash_metacxt;
@@ -2053,11 +2051,11 @@ hash_create_memory(AggState *aggstate)
 /*
  * Choose a reasonable number of buckets for the initial hash table size.
  */
-static long
-hash_choose_num_buckets(double hashentrysize, long ngroups, Size memory)
+static double
+hash_choose_num_buckets(double hashentrysize, double ngroups, Size memory)
 {
-	long		max_nbuckets;
-	long		nbuckets = ngroups;
+	double		max_nbuckets;
+	double		nbuckets = ngroups;
 
 	max_nbuckets = memory / hashentrysize;
 
@@ -2065,12 +2063,16 @@ hash_choose_num_buckets(double hashentrysize, long ngroups, Size memory)
 	 * Underestimating is better than overestimating. Too many buckets crowd
 	 * out space for group keys and transition state values.
 	 */
-	max_nbuckets >>= 1;
+	max_nbuckets /= 2;
 
 	if (nbuckets > max_nbuckets)
 		nbuckets = max_nbuckets;
 
-	return Max(nbuckets, 1);
+	/*
+	 * BuildTupleHashTable will clamp any obviously-insane result, so we don't
+	 * need to be too careful here.
+	 */
+	return nbuckets;
 }
 
 /*
@@ -3686,7 +3688,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	if (use_hashing)
 	{
 		Plan	   *outerplan = outerPlan(node);
-		uint64		totalGroups = 0;
+		double		totalGroups = 0;
 
 		aggstate->hash_spill_rslot = ExecInitExtraTupleSlot(estate, scanDesc,
 															&TTSOpsMinimalTuple);

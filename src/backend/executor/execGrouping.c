@@ -14,6 +14,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "access/htup_details.h"
 #include "access/parallel.h"
 #include "common/hashfn.h"
@@ -144,7 +146,7 @@ execTuplesHashPrepare(int numCols,
  *	eqfuncoids: OIDs of equality comparison functions to use
  *	hashfunctions: FmgrInfos of datatype-specific hashing functions to use
  *	collations: collations to use in comparisons
- *	nbuckets: initial estimate of hashtable size
+ *	nelements: initial estimate of hashtable size
  *	additionalsize: size of data that may be stored along with the hash entry
  *	metacxt: memory context for long-lived data and the simplehash table
  *	tuplescxt: memory context in which to store the hashed tuples themselves
@@ -187,7 +189,7 @@ BuildTupleHashTable(PlanState *parent,
 					const Oid *eqfuncoids,
 					FmgrInfo *hashfunctions,
 					Oid *collations,
-					long nbuckets,
+					double nelements,
 					Size additionalsize,
 					MemoryContext metacxt,
 					MemoryContext tuplescxt,
@@ -195,30 +197,30 @@ BuildTupleHashTable(PlanState *parent,
 					bool use_variable_hash_iv)
 {
 	TupleHashTable hashtable;
-	Size		entrysize;
-	Size		hash_mem_limit;
+	uint32		nbuckets;
 	MemoryContext oldcontext;
 	uint32		hash_iv = 0;
 
-	Assert(nbuckets > 0);
+	/*
+	 * tuplehash_create requires a uint32 element count, so we had better
+	 * clamp the given nelements to fit in that.  As long as we have to do
+	 * that, we might as well protect against completely insane input like
+	 * zero or NaN.  But it is not our job here to enforce issues like staying
+	 * within hash_mem: the caller should have done that, and we don't have
+	 * enough info to second-guess.
+	 */
+	if (isnan(nelements) || nelements <= 0)
+		nbuckets = 1;
+	else if (nelements >= PG_UINT32_MAX)
+		nbuckets = PG_UINT32_MAX;
+	else
+		nbuckets = (uint32) nelements;
 
 	/* tuplescxt must be separate, else ResetTupleHashTable breaks things */
 	Assert(metacxt != tuplescxt);
 
 	/* ensure additionalsize is maxalign'ed */
 	additionalsize = MAXALIGN(additionalsize);
-
-	/*
-	 * Limit initial table size request to not more than hash_mem.
-	 *
-	 * XXX this calculation seems pretty misguided, as it counts only overhead
-	 * and not the tuples themselves.  But we have no knowledge of the
-	 * expected tuple width here.
-	 */
-	entrysize = sizeof(TupleHashEntryData) + additionalsize;
-	hash_mem_limit = get_hash_memory_limit() / entrysize;
-	if (nbuckets > hash_mem_limit)
-		nbuckets = hash_mem_limit;
 
 	oldcontext = MemoryContextSwitchTo(metacxt);
 
