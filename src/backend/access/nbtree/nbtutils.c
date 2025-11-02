@@ -59,7 +59,7 @@ static bool _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
 							  IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
 							  bool advancenonrequired, bool forcenonrequired,
 							  bool *continuescan, int *ikey);
-static bool _bt_check_rowcompare(ScanKey skey,
+static bool _bt_check_rowcompare(ScanKey header,
 								 IndexTuple tuple, int tupnatts, TupleDesc tupdesc,
 								 ScanDirection dir, bool forcenonrequired, bool *continuescan);
 static void _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
@@ -2911,19 +2911,64 @@ _bt_check_compare(IndexScanDesc scan, ScanDirection dir,
  * it's not possible for any future tuples in the current scan direction
  * to pass the qual.
  *
- * This is a subroutine for _bt_checkkeys/_bt_check_compare.
+ * This is a subroutine for _bt_checkkeys/_bt_check_compare.  Caller passes us
+ * a row compare header key taken from so->keyData[].
+ *
+ * Row value comparisons can be described in terms of logical expansions that
+ * use only scalar operators.  Consider the following example row comparison:
+ *
+ * "(a, b, c) > (7, 'bar', 62)"
+ *
+ * This can be evaluated as:
+ *
+ * "(a = 7 AND b = 'bar' AND c > 62) OR (a = 7 AND b > 'bar') OR (a > 7)".
+ *
+ * Notice that this condition is satisfied by _all_ rows that satisfy "a > 7",
+ * and by a subset of all rows that satisfy "a >= 7" (possibly all such rows).
+ * It _can't_ be satisfied by other rows (where "a < 7" or where "a IS NULL").
+ * A row comparison header key can therefore often be treated as if it was a
+ * simple scalar inequality on the row compare's most significant column.
+ * (For example, _bt_advance_array_keys and most preprocessing routines treat
+ * row compares like any other same-strategy inequality on the same column.)
+ *
+ * Things get more complicated for our row compare given a row where "a = 7".
+ * Note that a row compare isn't necessarily satisfied by _every_ tuple that
+ * appears between the first and last satisfied tuple returned by the scan,
+ * due to the way that its lower-order subkeys are only conditionally applied.
+ * A forwards scan that uses our example qual might initially return a tuple
+ * "(a, b, c) = (7, 'zebra', 54)".  But it won't subsequently return a tuple
+ * "(a, b, c) = (7, NULL, 1)" located to the right of the first matching tuple
+ * (assume that "b" was declared NULLS LAST here).  The scan will only return
+ * additional matches upon reaching tuples where "a > 7".  If you rereview our
+ * example row comparison's logical expansion, you'll understand why this is.
+ * (Here we assume that all subkeys could be marked required, guaranteeing
+ * that row comparison order matches index order.  This is the common case.)
+ *
+ * Note that a row comparison header key behaves _exactly_ the same as a
+ * similar scalar inequality key on the row's most significant column once the
+ * scan reaches the point where it no longer needs to evaluate lower-order
+ * subkeys (or before the point where it starts needing to evaluate them).
+ * For example, once a forwards scan that uses our example qual reaches the
+ * first tuple "a > 7", we'll behave in just the same way as our caller would
+ * behave with a similar scalar inequality "a > 7" for the remainder of the
+ * scan (assuming that the scan never changes direction/never goes backwards).
+ * We'll even set continuescan=false according to exactly the same rules as
+ * the ones our caller applies with simple scalar inequalities, including the
+ * rules it applies when NULL tuple values don't satisfy an inequality qual.
  */
 static bool
-_bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
+_bt_check_rowcompare(ScanKey header, IndexTuple tuple, int tupnatts,
 					 TupleDesc tupdesc, ScanDirection dir,
 					 bool forcenonrequired, bool *continuescan)
 {
-	ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+	ScanKey		subkey = (ScanKey) DatumGetPointer(header->sk_argument);
 	int32		cmpresult = 0;
 	bool		result;
 
 	/* First subkey should be same as the header says */
-	Assert(subkey->sk_attno == skey->sk_attno);
+	Assert(header->sk_flags & SK_ROW_HEADER);
+	Assert(subkey->sk_attno == header->sk_attno);
+	Assert(subkey->sk_strategy == header->sk_strategy);
 
 	/* Loop over columns of the row condition */
 	for (;;)
@@ -2943,7 +2988,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 			 * columns are required for the scan direction, we can stop the
 			 * scan, because there can't be another tuple that will succeed.
 			 */
-			Assert(subkey != (ScanKey) DatumGetPointer(skey->sk_argument));
+			Assert(subkey != (ScanKey) DatumGetPointer(header->sk_argument));
 			subkey--;
 			if (forcenonrequired)
 			{
@@ -3014,7 +3059,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 				 * can only happen with an "a" NULL some time after the scan
 				 * completely stops needing to use its "b" and "c" members.)
 				 */
-				if (subkey == (ScanKey) DatumGetPointer(skey->sk_argument))
+				if (subkey == (ScanKey) DatumGetPointer(header->sk_argument))
 					reqflags |= SK_BT_REQFWD;	/* safe, first row member */
 
 				if ((subkey->sk_flags & reqflags) &&
@@ -3052,7 +3097,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, int tupnatts,
 				 * happen with an "a" NULL some time after the scan completely
 				 * stops needing to use its "b" and "c" members.)
 				 */
-				if (subkey == (ScanKey) DatumGetPointer(skey->sk_argument))
+				if (subkey == (ScanKey) DatumGetPointer(header->sk_argument))
 					reqflags |= SK_BT_REQBKWD;	/* safe, first row member */
 
 				if ((subkey->sk_flags & reqflags) &&
