@@ -445,6 +445,8 @@ environment value
 border                   1
 columns                  0
 csv_fieldsep             ','
+display_false            'f'
+display_true             't'
 expanded                 off
 fieldsep                 '|'
 fieldsep_zero            off
@@ -464,6 +466,36 @@ unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
 xheader_width            full
+-- test the simple display substitution settings
+prepare q as select null as n, true as t, false as f;
+\pset null '(null)'
+\pset display_true 'true'
+\pset display_false 'false'
+execute q;
+   n    |  t   |   f   
+--------+------+-------
+ (null) | true | false
+(1 row)
+
+\pset null
+\pset display_true
+\pset display_false
+execute q;
+   n    |  t   |   f   
+--------+------+-------
+ (null) | true | false
+(1 row)
+
+\pset null ''
+\pset display_true 't'
+\pset display_false 'f'
+execute q;
+ n | t | f 
+---+---+---
+   | t | f
+(1 row)
+
+deallocate q;
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab

@@ -2709,7 +2709,8 @@ exec_command_pset(PsqlScanState scan_state, bool active_branch)
 
 			int			i;
 			static const char *const my_list[] = {
-				"border", "columns", "csv_fieldsep", "expanded", "fieldsep",
+				"border", "columns", "csv_fieldsep",
+				"display_false", "display_true", "expanded", "fieldsep",
 				"fieldsep_zero", "footer", "format", "linestyle", "null",
 				"numericlocale", "pager", "pager_min_lines",
 				"recordsep", "recordsep_zero",
@@ -5300,6 +5301,26 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 	}
 
+	/* 'false' display */
+	else if (strcmp(param, "display_false") == 0)
+	{
+		if (value)
+		{
+			free(popt->falsePrint);
+			popt->falsePrint = pg_strdup(value);
+		}
+	}
+
+	/* 'true' display */
+	else if (strcmp(param, "display_true") == 0)
+	{
+		if (value)
+		{
+			free(popt->truePrint);
+			popt->truePrint = pg_strdup(value);
+		}
+	}
+
 	/* field separator for unaligned text */
 	else if (strcmp(param, "fieldsep") == 0)
 	{
@@ -5472,6 +5493,20 @@ printPsetInfo(const char *param, printQueryOpt *popt)
 	{
 		printf(_("Field separator for CSV is \"%s\".\n"),
 			   popt->topt.csvFieldSep);
+	}
+
+	/* show boolean 'false' display */
+	else if (strcmp(param, "display_false") == 0)
+	{
+		printf(_("Boolean false display is \"%s\".\n"),
+			   popt->falsePrint ? popt->falsePrint : "f");
+	}
+
+	/* show boolean 'true' display */
+	else if (strcmp(param, "display_true") == 0)
+	{
+		printf(_("Boolean true display is \"%s\".\n"),
+			   popt->truePrint ? popt->truePrint : "t");
 	}
 
 	/* show field separator for unaligned text */
@@ -5743,6 +5778,10 @@ pset_value_string(const char *param, printQueryOpt *popt)
 		return psprintf("%d", popt->topt.columns);
 	else if (strcmp(param, "csv_fieldsep") == 0)
 		return pset_quoted_string(popt->topt.csvFieldSep);
+	else if (strcmp(param, "display_false") == 0)
+		return pset_quoted_string(popt->falsePrint ? popt->falsePrint : "f");
+	else if (strcmp(param, "display_true") == 0)
+		return pset_quoted_string(popt->truePrint ? popt->truePrint : "t");
 	else if (strcmp(param, "expanded") == 0)
 		return pstrdup(popt->topt.expanded == 2
 					   ? "auto"

@@ -3099,6 +3099,26 @@ SELECT $1 \parse stmt1
           </listitem>
           </varlistentry>
 
+          <varlistentry id="app-psql-meta-command-pset-display-false">
+          <term><literal>display_false</literal></term>
+          <listitem>
+          <para>
+          Sets the string to be printed in place of a false value.
+          The default is to print <literal>f</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry id="app-psql-meta-command-pset-display-true">
+          <term><literal>display_true</literal></term>
+          <listitem>
+          <para>
+          Sets the string to be printed in place of a true value.
+          The default is to print <literal>t</literal>.
+          </para>
+          </listitem>
+          </varlistentry>
+
           <varlistentry id="app-psql-meta-command-pset-expanded">
           <term><literal>expanded</literal> (or <literal>x</literal>)</term>
           <listitem>

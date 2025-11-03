@@ -219,6 +219,22 @@ select 'drop table gexec_test', 'select ''2000-01-01''::date as party_over'
 -- show all pset options
 \pset
 
+-- test the simple display substitution settings
+prepare q as select null as n, true as t, false as f;
+\pset null '(null)'
+\pset display_true 'true'
+\pset display_false 'false'
+execute q;
+\pset null
+\pset display_true
+\pset display_false
+execute q;
+\pset null ''
+\pset display_true 't'
+\pset display_false 'f'
+execute q;
+deallocate q;
+
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab

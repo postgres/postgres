@@ -290,9 +290,9 @@ slashUsage(unsigned short int pager)
 	HELPN("  \\H                     toggle HTML output mode (currently %s)\n",
 		  ON(pset.popt.topt.format == PRINT_HTML));
 	HELP0("  \\pset [NAME [VALUE]]   set table output option\n"
-		  "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
-		  "                         fieldsep_zero|footer|format|linestyle|null|\n"
-		  "                         numericlocale|pager|pager_min_lines|recordsep|\n"
+		  "                         (border|columns|csv_fieldsep|display_false|display_true|\n"
+		  "                         expanded|fieldsep|fieldsep_zero|footer|format|linestyle|\n"
+		  "                         null|numericlocale|pager|pager_min_lines|recordsep|\n"
 		  "                         recordsep_zero|tableattr|title|tuples_only|\n"
 		  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
 		  "                         unicode_header_linestyle|xheader_width)\n");
@@ -480,6 +480,10 @@ helpVariables(unsigned short int pager)
 		  "    border style (number)\n");
 	HELP0("  columns\n"
 		  "    target width for the wrapped format\n");
+	HELP0("  display_false\n"
+		  "    set the string to be printed in place of a boolean 'false'\n");
+	HELP0("  display_true\n"
+		  "    set the string to be printed in place of a boolean 'true'\n");
 	HELP0("  expanded (or x)\n"
 		  "    expanded output [on, off, auto]\n");
 	HELPN("  fieldsep\n"

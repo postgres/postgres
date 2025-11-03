@@ -3775,6 +3775,10 @@ printQuery(const PGresult *result, const printQueryOpt *opt,
 
 			if (PQgetisnull(result, r, c))
 				cell = opt->nullPrint ? opt->nullPrint : "";
+			else if (PQftype(result, c) == BOOLOID)
+				cell = (PQgetvalue(result, r, c)[0] == 't' ?
+						(opt->truePrint ? opt->truePrint : "t") :
+						(opt->falsePrint ? opt->falsePrint : "f"));
 			else
 			{
 				cell = PQgetvalue(result, r, c);

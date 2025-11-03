@@ -5478,7 +5478,8 @@ match_previous_words(int pattern_id,
 	else if (TailMatchesCS("\\password"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	else if (TailMatchesCS("\\pset"))
-		COMPLETE_WITH_CS("border", "columns", "csv_fieldsep", "expanded",
+		COMPLETE_WITH_CS("border", "columns", "csv_fieldsep",
+						 "display_false", "display_true", "expanded",
 						 "fieldsep", "fieldsep_zero", "footer", "format",
 						 "linestyle", "null", "numericlocale",
 						 "pager", "pager_min_lines",
