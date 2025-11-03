@@ -1404,6 +1404,10 @@ ALTER TABLE notnull_tbl1 ADD PRIMARY KEY (a);
 ERROR:  cannot create primary key on column "a"
 DETAIL:  The constraint "nn" on column "a" of table "notnull_tbl1", marked NOT VALID, is incompatible with a primary key.
 HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
+-- cannot set column as generated-as-identity if it has an invalid not-null
+ALTER TABLE notnull_tbl1 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;
+ERROR:  incompatible NOT VALID constraint "nn" on relation "notnull_tbl1"
+HINT:  You might need to validate it using ALTER TABLE ... VALIDATE CONSTRAINT.
 -- ALTER column SET NOT NULL validates an invalid constraint (but this fails
 -- because of rows with null values)
 ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;
