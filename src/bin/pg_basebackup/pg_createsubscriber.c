@@ -156,12 +156,6 @@ static char *subscriber_dir = NULL;
 static bool recovery_ended = false;
 static bool standby_running = false;
 
-enum WaitPMResult
-{
-	POSTMASTER_READY,
-	POSTMASTER_STILL_STARTING
-};
-
 
 /*
  * Cleanup objects that were created by pg_createsubscriber if there is an
@@ -1584,7 +1578,7 @@ static void
 wait_for_end_recovery(const char *conninfo, const struct CreateSubscriberOptions *opt)
 {
 	PGconn	   *conn;
-	int			status = POSTMASTER_STILL_STARTING;
+	bool		ready = false;
 	int			timer = 0;
 
 	pg_log_info("waiting for the target server to reach the consistent state");
@@ -1596,7 +1590,7 @@ wait_for_end_recovery(const char *conninfo, const struct CreateSubscriberOptions
 		/* Did the recovery process finish? We're done if so. */
 		if (dry_run || !server_is_in_recovery(conn))
 		{
-			status = POSTMASTER_READY;
+			ready = true;
 			recovery_ended = true;
 			break;
 		}
@@ -1617,7 +1611,7 @@ wait_for_end_recovery(const char *conninfo, const struct CreateSubscriberOptions
 
 	disconnect_database(conn, false);
 
-	if (status == POSTMASTER_STILL_STARTING)
+	if (!ready)
 		pg_fatal("server did not end recovery");
 
 	pg_log_info("target server reached the consistent state");
