@@ -556,6 +556,15 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
     </para>
    </tip>
 
+   <warning>
+    <para>
+      While <command>CREATE INDEX CONCURRENTLY</command> or <command>REINDEX
+      CONCURRENTLY</command> is running on a unique index, <command>INSERT
+      ... ON CONFLICT</command> statements on the same table may unexpectedly
+      fail with a unique violation.
+    </para>
+   </warning>
+
   </refsect2>
  </refsect1>
 
