@@ -85,6 +85,7 @@ PG_LWLOCK(50, DSMRegistry)
 PG_LWLOCK(51, InjectionPoint)
 PG_LWLOCK(52, SerialControl)
 PG_LWLOCK(53, AioWorkerSubmissionQueue)
+PG_LWLOCK(54, WaitLSN)
 
 /*
  * There also exist several built-in LWLock tranches.  As with the predefined
