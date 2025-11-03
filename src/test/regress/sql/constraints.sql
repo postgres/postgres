@@ -832,6 +832,9 @@ ALTER TABLE notnull_tbl1 ADD CONSTRAINT nn NOT NULL a;
 -- cannot add primary key on a column with an invalid not-null
 ALTER TABLE notnull_tbl1 ADD PRIMARY KEY (a);
 
+-- cannot set column as generated-as-identity if it has an invalid not-null
+ALTER TABLE notnull_tbl1 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;
+
 -- ALTER column SET NOT NULL validates an invalid constraint (but this fails
 -- because of rows with null values)
 ALTER TABLE notnull_tbl1 ALTER a SET NOT NULL;

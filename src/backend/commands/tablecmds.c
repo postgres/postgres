@@ -8281,6 +8281,31 @@ ATExecAddIdentity(Relation rel, const char *colName,
 				 errmsg("column \"%s\" of relation \"%s\" must be declared NOT NULL before identity can be added",
 						colName, RelationGetRelationName(rel))));
 
+	/*
+	 * On the other hand, if a not-null constraint exists, then verify that
+	 * it's compatible.
+	 */
+	if (attTup->attnotnull)
+	{
+		HeapTuple	contup;
+		Form_pg_constraint conForm;
+
+		contup = findNotNullConstraintAttnum(RelationGetRelid(rel),
+											 attnum);
+		if (!HeapTupleIsValid(contup))
+			elog(ERROR, "cache lookup failed for not-null constraint on column \"%s\" of relation \"%s\"",
+				 colName, RelationGetRelationName(rel));
+
+		conForm = (Form_pg_constraint) GETSTRUCT(contup);
+		if (!conForm->convalidated)
+			ereport(ERROR,
+					errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					errmsg("incompatible NOT VALID constraint \"%s\" on relation \"%s\"",
+						   NameStr(conForm->conname), RelationGetRelationName(rel)),
+					errhint("You might need to validate it using %s.",
+							"ALTER TABLE ... VALIDATE CONSTRAINT"));
+	}
+
 	if (attTup->attidentity)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
