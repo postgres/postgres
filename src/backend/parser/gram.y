@@ -3408,7 +3408,7 @@ ClosePortalStmt:
  *				COPY ( query ) TO file	[WITH] [(options)]
  *
  *				where 'query' can be one of:
- *				{ SELECT | UPDATE | INSERT | DELETE }
+ *				{ SELECT | UPDATE | INSERT | DELETE | MERGE }
  *
  *				and 'file' can be one of:
  *				{ PROGRAM 'command' | STDIN | STDOUT | 'filename' }
