@@ -5,7 +5,8 @@ include $(top_builddir)/src/Makefile.global
 
 SUBDIRS = \
 		pg_ivm \
-		vector
+		vector \
+		pgtap
 
 prefix ?= /install/pglite
 EXTENSIONS_BUILD_ROOT := /tmp/extensions/build
