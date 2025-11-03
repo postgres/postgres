@@ -42,6 +42,7 @@ sub dquote
 sub print_table
 {
 	my ($ofh) = @_;
+	my $prev_name = undef;
 
 	print $ofh "\n\n";
 	print $ofh "struct config_generic ConfigureNames[] =\n";
@@ -49,6 +50,13 @@ sub print_table
 
 	foreach my $entry (@{$parse})
 	{
+		if (defined($prev_name) && lc($prev_name) ge lc($entry->{name}))
+		{
+			die sprintf(
+				"entries are not in alphabetical order: \"%s\", \"%s\"\n",
+				$prev_name, $entry->{name});
+		}
+
 		print $ofh "#ifdef $entry->{ifdef}\n" if $entry->{ifdef};
 		print $ofh "\t{\n";
 		printf $ofh "\t\t.name = %s,\n", dquote($entry->{name});
@@ -80,6 +88,8 @@ sub print_table
 		print $ofh "\t},\n";
 		print $ofh "#endif\n" if $entry->{ifdef};
 		print $ofh "\n";
+
+		$prev_name = $entry->{name};
 	}
 
 	print $ofh "\t/* End-of-list marker */\n";
