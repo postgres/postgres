@@ -2065,7 +2065,7 @@ llvm_compile_expr(ExprState *state)
 					v_nullsp = l_ptr_const(nulls, l_ptr(TypeStorageBool));
 
 					/* create blocks for checking args */
-					b_checknulls = palloc(sizeof(LLVMBasicBlockRef *) * nargs);
+					b_checknulls = palloc(sizeof(LLVMBasicBlockRef) * nargs);
 					for (int argno = 0; argno < nargs; argno++)
 					{
 						b_checknulls[argno] =
