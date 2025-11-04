@@ -138,13 +138,13 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
 
 
 task:
-  name: Linux - Debian Bookworm
+  name: Linux - Debian Trixie
 
   env:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8 # experimentally derived to be a decent choice
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
@@ -460,12 +460,12 @@ task:
 
   # To limit unnecessary work only run this once the normal linux test succeeds
   depends_on:
-    - Linux - Debian Bookworm
+    - Linux - Debian Trixie
 
   env:
     CPUS: 4
     BUILD_JOBS: 4
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
@@ -554,10 +554,10 @@ task:
   always:
     mingw_cross_warning_script: |
       time ./configure \
-        --host=x86_64-w64-mingw32 \
+        --host=x86_64-w64-mingw32ucrt \
         --enable-cassert \
-        CC="ccache x86_64-w64-mingw32-gcc" \
-        CXX="ccache x86_64-w64-mingw32-g++"
+        CC="ccache x86_64-w64-mingw32ucrt-gcc" \
+        CXX="ccache x86_64-w64-mingw32ucrt-g++"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
