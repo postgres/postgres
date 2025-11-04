@@ -773,6 +773,12 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		RelOptInfo *rel = lfirst(lc);
 		Path	   *ordered_path;
 
+		/*
+		 * Record the relids so that we can identify the correct
+		 * UPPERREL_SETOP RelOptInfo below.
+		 */
+		relids = bms_add_members(relids, rel->relids);
+
 		/* Skip any UNION children that are proven not to yield any rows */
 		if (is_dummy_rel(rel))
 			continue;
@@ -815,8 +821,6 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 				partial_pathlist = lappend(partial_pathlist,
 										   linitial(rel->partial_pathlist));
 		}
-
-		relids = bms_add_members(relids, rel->relids);
 	}
 
 	/* Build result relation. */

@@ -1260,14 +1260,14 @@ SELECT four FROM tenk1 WHERE 1=2
 UNION
 SELECT ten FROM tenk1 WHERE 1=2
 ORDER BY 1;
-              QUERY PLAN              
---------------------------------------
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
  Sort
    Output: unnamed_subquery.two
    Sort Key: unnamed_subquery.two
    ->  Result
          Output: unnamed_subquery.two
-         Replaces: Aggregate
+         Replaces: Aggregate on unnamed_subquery, unnamed_subquery_1, unnamed_subquery_2
          One-Time Filter: false
 (7 rows)
 
