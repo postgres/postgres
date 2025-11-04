@@ -1502,7 +1502,6 @@ heap_form_minimal_tuple(TupleDesc tupleDescriptor,
 	 * Allocate and zero the space needed.
 	 */
 	mem = palloc0(len + extra);
-	memset(mem, 0, extra);
 	tuple = (MinimalTuple) (mem + extra);
 
 	/*
