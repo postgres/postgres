@@ -3698,6 +3698,14 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						XLogShutdownWalRcv();
 					else
 					{
+						/*
+						 * WALRCV_STOPPING state is a transient state while
+						 * the startup process is in ShutdownWalRcv().  It
+						 * should never appear here since we would be waiting
+						 * for the walreceiver to reach WALRCV_STOPPED in that
+						 * case.
+						 */
+						Assert(WalRcvGetState() != WALRCV_STOPPING);
 						ResetInstallXLogFileSegmentActive();
 					}
 
