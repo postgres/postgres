@@ -936,6 +936,7 @@ static int	XLogPageRead(XLogReaderState *xlogreader, XLogRecPtr targetPagePtr,
 						 int reqLen, XLogRecPtr targetRecPtr, char *readBuf);
 static bool WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 										bool fetching_ckpt, XLogRecPtr tliRecPtr);
+static void ResetInstallXLogFileSegmentActive(void);
 static void XLogShutdownWalRcv(void);
 static int	emode_for_corrupt_record(int emode, XLogRecPtr RecPtr);
 static void XLogFileClose(void);
@@ -12611,8 +12612,18 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * Before we leave XLOG_FROM_STREAM state, make sure that
 					 * walreceiver is not active, so that it won't overwrite
 					 * WAL that we restore from archive.
+					 * If walreceiver is actively streaming (or attempting to
+					 * connect), we must shut it down. However, if it's
+					 * already in WAITING state (e.g., due to timeline
+					 * divergence), we only need to reset the install flag to
+					 * allow archive restoration.
 					 */
-					XLogShutdownWalRcv();
+					if (WalRcvStreaming())
+						XLogShutdownWalRcv();
+					else
+					{
+						ResetInstallXLogFileSegmentActive();
+					}
 
 					/*
 					 * Before we sleep, re-scan for possible new timelines if
@@ -12958,15 +12969,21 @@ StartupRequestWalReceiverRestart(void)
 	}
 }
 
+/* Disable WAL file recycling and preallocation. */
+static void
+ResetInstallXLogFileSegmentActive(void)
+{
+	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
+	XLogCtl->InstallXLogFileSegmentActive = false;
+	LWLockRelease(ControlFileLock);
+}
+
 /* Thin wrapper around ShutdownWalRcv(). */
 static void
 XLogShutdownWalRcv(void)
 {
 	ShutdownWalRcv();
-
-	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	XLogCtl->InstallXLogFileSegmentActive = false;
-	LWLockRelease(ControlFileLock);
+	ResetInstallXLogFileSegmentActive();
 }
 
 /*
