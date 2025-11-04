@@ -78,7 +78,7 @@ task:
     CPUS: 4
     BUILD_JOBS: 8
     TEST_JOBS: 8
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
     CCACHE_DIR: ${CIRRUS_WORKING_DIR}/ccache_dir
     # no options enabled, should be small
     CCACHE_MAXSIZE: "150M"
@@ -379,7 +379,7 @@ task:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8 # experimentally derived to be a decent choice
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
@@ -400,7 +400,7 @@ task:
     # print_stacktraces=1,verbosity=2, duh
     # detect_leaks=0: too many uninteresting leak errors in short-lived binaries
     UBSAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:verbosity=2
-    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0
+    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0:detect_stack_use_after_return=0
 
     # SANITIZER_FLAGS is set in the tasks below
     CFLAGS: -Og -ggdb -fno-sanitize-recover=all $SANITIZER_FLAGS
@@ -408,8 +408,6 @@ task:
     LDFLAGS: $SANITIZER_FLAGS
     CC: ccache gcc
     CXX: ccache g++
-    # GCC emits a warning for llvm-14, so switch to a newer one.
-    LLVM_CONFIG: llvm-config-16
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
@@ -456,7 +454,7 @@ task:
     # - Uses address sanitizer, sanitizer failures are typically printed in
     #   the server log
     # - Configures postgres with a small segment size
-    - name: Linux - Debian Bookworm - Autoconf
+    - name: Linux - Debian Trixie - Autoconf
 
       env:
         SANITIZER_FLAGS: -fsanitize=address
@@ -479,7 +477,7 @@ task:
             \
             ${LINUX_CONFIGURE_FEATURES} \
             \
-            CLANG="ccache clang-16"
+            CLANG="ccache clang"
         EOF
       build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
       upload_caches: ccache
@@ -498,7 +496,7 @@ task:
     #   are typically printed in the server log
     # - Test both 64bit and 32 bit builds
     # - uses io_method=io_uring
-    - name: Linux - Debian Bookworm - Meson
+    - name: Linux - Debian Trixie - Meson
 
       env:
         CCACHE_MAXSIZE: "400M" # tests two different builds
@@ -526,7 +524,7 @@ task:
             ${LINUX_MESON_FEATURES} \
             -Dllvm=disabled \
             --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
-            -DPERL=perl5.36-i386-linux-gnu \
+            -DPERL=perl5.40-i386-linux-gnu \
             -Dlibnuma=disabled \
             build-32
         EOF
@@ -822,7 +820,7 @@ task:
   env:
     CPUS: 4
     BUILD_JOBS: 4
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
@@ -831,9 +829,6 @@ task:
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
     LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
-
-    # GCC emits a warning for llvm-14, so switch to a newer one.
-    LLVM_CONFIG: llvm-config-16
 
   <<: *linux_task_template
 
@@ -870,7 +865,7 @@ task:
         --cache gcc.cache \
         --enable-dtrace \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -881,7 +876,7 @@ task:
         --cache gcc.cache \
         --enable-cassert \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -891,7 +886,7 @@ task:
       time ./configure \
         --cache clang.cache \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache clang" CXX="ccache clang++-16" CLANG="ccache clang-16"
+        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -903,7 +898,7 @@ task:
         --enable-cassert \
         --enable-dtrace \
         ${LINUX_CONFIGURE_FEATURES} \
-        CC="ccache clang" CXX="ccache clang++-16" CLANG="ccache clang-16"
+        CC="ccache clang" CXX="ccache clang++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -911,11 +906,11 @@ task:
   always:
     mingw_cross_warning_script: |
       time ./configure \
-        --host=x86_64-w64-mingw32 \
+        --host=x86_64-w64-mingw32ucrt \
         --enable-cassert \
         --without-icu \
-        CC="ccache x86_64-w64-mingw32-gcc" \
-        CXX="ccache x86_64-w64-mingw32-g++"
+        CC="ccache x86_64-w64-mingw32ucrt-gcc" \
+        CXX="ccache x86_64-w64-mingw32ucrt-g++"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
@@ -927,7 +922,7 @@ task:
     docs_build_script: |
       time ./configure \
         --cache gcc.cache \
-        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang-16"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} -C doc
 
@@ -943,7 +938,7 @@ task:
       time ./configure \
         ${LINUX_CONFIGURE_FEATURES} \
         --quiet \
-        CC="gcc" CXX"=g++" CLANG="clang-16"
+        CC="gcc" CXX"=g++" CLANG="clang"
       make -s -j${BUILD_JOBS} clean
       time make -s headerscheck EXTRAFLAGS='-fmax-errors=10'
     headers_cpluspluscheck_script: |
