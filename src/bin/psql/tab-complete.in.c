@@ -3336,48 +3336,61 @@ match_previous_words(int pattern_id,
 	/* Complete COPY <sth> */
 	else if (Matches("COPY|\\copy", MatchAny))
 		COMPLETE_WITH("FROM", "TO");
-	/* Complete COPY|\copy <sth> FROM|TO with filename or STDIN/STDOUT */
+	/* Complete COPY|\copy <sth> FROM|TO with filename or STDIN/STDOUT/PROGRAM */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO"))
 	{
 		/* COPY requires quoted filename */
 		bool		force_quote = HeadMatches("COPY");
 
 		if (TailMatches("FROM"))
-			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDIN");
+			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDIN", "PROGRAM");
 		else
-			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDOUT");
+			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDOUT", "PROGRAM");
 	}
 
-	/* Complete COPY <sth> TO <sth> */
-	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAny))
+	/* Complete COPY|\copy <sth> FROM|TO PROGRAM */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", "PROGRAM"))
+		COMPLETE_WITH_FILES("", HeadMatches("COPY"));	/* COPY requires quoted
+														 * filename */
+
+	/* Complete COPY <sth> TO [PROGRAM] <sth> */
+	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAnyExcept("PROGRAM")) ||
+			 Matches("COPY|\\copy", MatchAny, "TO", "PROGRAM", MatchAny))
 		COMPLETE_WITH("WITH (");
 
-	/* Complete COPY <sth> FROM <sth> */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny))
+	/* Complete COPY <sth> FROM [PROGRAM] <sth> */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM")) ||
+			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny))
 		COMPLETE_WITH("WITH (", "WHERE");
 
-	/* Complete COPY <sth> FROM filename WITH ( */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny, "WITH", "("))
+	/* Complete COPY <sth> FROM [PROGRAM] filename WITH ( */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(") ||
+			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "("))
 		COMPLETE_WITH(Copy_from_options);
 
-	/* Complete COPY <sth> TO filename WITH ( */
-	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAny, "WITH", "("))
+	/* Complete COPY <sth> TO [PROGRAM] filename WITH ( */
+	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAnyExcept("PROGRAM"), "WITH", "(") ||
+			 Matches("COPY|\\copy", MatchAny, "TO", "PROGRAM", MatchAny, "WITH", "("))
 		COMPLETE_WITH(Copy_to_options);
 
-	/* Complete COPY <sth> FROM|TO filename WITH (FORMAT */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", MatchAny, "WITH", "(", "FORMAT"))
+	/* Complete COPY <sth> FROM|TO [PROGRAM] <sth> WITH (FORMAT */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", MatchAnyExcept("PROGRAM"), "WITH", "(", "FORMAT") ||
+			 Matches("COPY|\\copy", MatchAny, "FROM|TO", "PROGRAM", MatchAny, "WITH", "(", "FORMAT"))
 		COMPLETE_WITH("binary", "csv", "text");
 
-	/* Complete COPY <sth> FROM filename WITH (ON_ERROR */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny, "WITH", "(", "ON_ERROR"))
+	/* Complete COPY <sth> FROM [PROGRAM] filename WITH (ON_ERROR */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(", "ON_ERROR") ||
+			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "(", "ON_ERROR"))
 		COMPLETE_WITH("stop", "ignore");
 
-	/* Complete COPY <sth> FROM filename WITH (LOG_VERBOSITY */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny, "WITH", "(", "LOG_VERBOSITY"))
+	/* Complete COPY <sth> FROM [PROGRAM] filename WITH (LOG_VERBOSITY */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(", "LOG_VERBOSITY") ||
+			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "(", "LOG_VERBOSITY"))
 		COMPLETE_WITH("silent", "default", "verbose");
 
-	/* Complete COPY <sth> FROM <sth> WITH (<options>) */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAny, "WITH", MatchAny))
+	/* Complete COPY <sth> FROM [PROGRAM] <sth> WITH (<options>) */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", MatchAny) ||
+			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", MatchAny))
 		COMPLETE_WITH("WHERE");
 
 	/* CREATE ACCESS METHOD */
