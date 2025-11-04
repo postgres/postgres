@@ -66,6 +66,14 @@ my $result =
   $node_standby_2->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 is($result, qq(2000), 'check content of standby 2');
 
+# Check the logs, WAL receiver should not have been stopped while
+# transitioning to its new timeline.  There is no need to rely on an
+# offset in this check of the server logs: a new log file is used on
+# node restart when primary_conninfo is updated above.
+ok( !$node_standby_2->log_contains(
+		"FATAL: .* terminating walreceiver process due to administrator command"
+	),
+	'WAL receiver should not be stopped across timeline jumps');
 
 # Ensure that a standby is able to follow a primary on a newer timeline
 # when WAL archiving is enabled.

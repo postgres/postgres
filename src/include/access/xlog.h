@@ -269,6 +269,7 @@ extern void SwitchIntoArchiveRecovery(XLogRecPtr EndRecPtr, TimeLineID replayTLI
 extern void ReachedEndOfBackup(XLogRecPtr EndRecPtr, TimeLineID tli);
 extern void SetInstallXLogFileSegmentActive(void);
 extern bool IsInstallXLogFileSegmentActive(void);
+extern void ResetInstallXLogFileSegmentActive(void);
 extern void XLogShutdownWalRcv(void);
 
 /*
