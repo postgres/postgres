@@ -439,6 +439,9 @@ helpVariables(unsigned short int pager)
 					  "    border style (number)\n"));
 	fprintf(output, _("  columns\n"
 					  "    target width for the wrapped format\n"));
+	fprintf(output, _("  csv_fieldsep\n"
+					  "    field separator for CSV output format (default \"%c\")\n"),
+			DEFAULT_CSV_FIELD_SEP);
 	fprintf(output, _("  expanded (or x)\n"
 					  "    expanded output [on, off, auto]\n"));
 	fprintf(output, _("  fieldsep\n"
