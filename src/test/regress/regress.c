@@ -644,7 +644,9 @@ PG_FUNCTION_INFO_V1(get_environ);
 Datum
 get_environ(PG_FUNCTION_ARGS)
 {
+#if !defined(WIN32) || defined(_MSC_VER)
 	extern char **environ;
+#endif
 	int			nvals = 0;
 	ArrayType  *result;
 	Datum	   *env;

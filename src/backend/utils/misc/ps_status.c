@@ -32,7 +32,9 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 
+#if !defined(WIN32) || defined(_MSC_VER)
 extern char **environ;
+#endif
 bool		update_process_title = true;
 
 
