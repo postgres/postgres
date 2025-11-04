@@ -487,6 +487,9 @@ helpVariables(unsigned short int pager)
 		  "    border style (number)\n");
 	HELP0("  columns\n"
 		  "    target width for the wrapped format\n");
+	HELPN("  csv_fieldsep\n"
+		  "    field separator for CSV output format (default \"%c\")\n",
+		  DEFAULT_CSV_FIELD_SEP);
 	HELP0("  expanded (or x)\n"
 		  "    expanded output [on, off, auto]\n");
 	HELPN("  fieldsep\n"
