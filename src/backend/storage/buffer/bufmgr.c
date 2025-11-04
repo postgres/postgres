@@ -6685,6 +6685,8 @@ EvictAllUnpinnedBuffers(int32 *buffers_evicted, int32 *buffers_flushed,
 		uint32		buf_state;
 		bool		buffer_flushed;
 
+		CHECK_FOR_INTERRUPTS();
+
 		buf_state = pg_atomic_read_u32(&desc->state);
 		if (!(buf_state & BM_VALID))
 			continue;
@@ -6734,6 +6736,8 @@ EvictRelUnpinnedBuffers(Relation rel, int32 *buffers_evicted,
 		BufferDesc *desc = GetBufferDescriptor(buf - 1);
 		uint32		buf_state = pg_atomic_read_u32(&(desc->state));
 		bool		buffer_flushed;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/* An unlocked precheck should be safe and saves some cycles. */
 		if ((buf_state & BM_VALID) == 0 ||
