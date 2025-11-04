@@ -119,6 +119,20 @@ WalRcvRunning(void)
 		return false;
 }
 
+/* Return the state of the walreceiver. */
+WalRcvState
+WalRcvGetState(void)
+{
+	WalRcvData *walrcv = WalRcv;
+	WalRcvState state;
+
+	SpinLockAcquire(&walrcv->mutex);
+	state = walrcv->walRcvState;
+	SpinLockRelease(&walrcv->mutex);
+
+	return state;
+}
+
 /*
  * Is walreceiver running and streaming (or at least attempting to connect,
  * or starting up)?
