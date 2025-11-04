@@ -1401,10 +1401,46 @@ GinBufferKeyEquals(GinBuffer *buffer, GinTuple *tup)
  * enough TIDs to trim (with values less than "first" TID from the new tuple),
  * we do the trim. By enough we mean at least 128 TIDs (mostly an arbitrary
  * number).
+ *
+ * We try freezing TIDs at the beginning of the list first, before attempting
+ * to trim the buffer. This may allow trimming the data earlier, reducing the
+ * memory usage and excluding it from the mergesort.
  */
 static bool
 GinBufferShouldTrim(GinBuffer *buffer, GinTuple *tup)
 {
+	/*
+	 * Check if the last TID in the current list is frozen. This is the case
+	 * when merging non-overlapping lists, e.g. in each parallel worker.
+	 */
+	if ((buffer->nitems > 0) &&
+		(ItemPointerCompare(&buffer->items[buffer->nitems - 1],
+							GinTupleGetFirst(tup)) == 0))
+		buffer->nfrozen = buffer->nitems;
+
+	/*
+	 * Now find the last TID we know to be frozen, i.e. the last TID right
+	 * before the new GIN tuple.
+	 *
+	 * Start with the first not-yet-frozen tuple, and walk until we find the
+	 * first TID that's higher. If we already know the whole list is frozen
+	 * (i.e. nfrozen == nitems), this does nothing.
+	 *
+	 * XXX This might do a binary search for sufficiently long lists, but it
+	 * does not seem worth the complexity. Overlapping lists should be rare
+	 * common, TID comparisons are cheap, and we should quickly freeze most of
+	 * the list.
+	 */
+	for (int i = buffer->nfrozen; i < buffer->nitems; i++)
+	{
+		/* Is the TID after the first TID of the new tuple? Can't freeze. */
+		if (ItemPointerCompare(&buffer->items[i],
+							   GinTupleGetFirst(tup)) > 0)
+			break;
+
+		buffer->nfrozen++;
+	}
+
 	/* not enough TIDs to trim (1024 is somewhat arbitrary number) */
 	if (buffer->nfrozen < 1024)
 		return false;
@@ -1468,48 +1504,6 @@ GinBufferStoreTuple(GinBuffer *buffer, GinTuple *tup)
 			buffer->key = datumCopy(key, buffer->typbyval, buffer->typlen);
 		else
 			buffer->key = (Datum) 0;
-	}
-
-	/*
-	 * Try freeze TIDs at the beginning of the list, i.e. exclude them from
-	 * the mergesort. We can do that with TIDs before the first TID in the new
-	 * tuple we're about to add into the buffer.
-	 *
-	 * We do this incrementally when adding data into the in-memory buffer,
-	 * and not later (e.g. when hitting a memory limit), because it allows us
-	 * to skip the frozen data during the mergesort, making it cheaper.
-	 */
-
-	/*
-	 * Check if the last TID in the current list is frozen. This is the case
-	 * when merging non-overlapping lists, e.g. in each parallel worker.
-	 */
-	if ((buffer->nitems > 0) &&
-		(ItemPointerCompare(&buffer->items[buffer->nitems - 1],
-							GinTupleGetFirst(tup)) == 0))
-		buffer->nfrozen = buffer->nitems;
-
-	/*
-	 * Now find the last TID we know to be frozen, i.e. the last TID right
-	 * before the new GIN tuple.
-	 *
-	 * Start with the first not-yet-frozen tuple, and walk until we find the
-	 * first TID that's higher. If we already know the whole list is frozen
-	 * (i.e. nfrozen == nitems), this does nothing.
-	 *
-	 * XXX This might do a binary search for sufficiently long lists, but it
-	 * does not seem worth the complexity. Overlapping lists should be rare
-	 * common, TID comparisons are cheap, and we should quickly freeze most of
-	 * the list.
-	 */
-	for (int i = buffer->nfrozen; i < buffer->nitems; i++)
-	{
-		/* Is the TID after the first TID of the new tuple? Can't freeze. */
-		if (ItemPointerCompare(&buffer->items[i],
-							   GinTupleGetFirst(tup)) > 0)
-			break;
-
-		buffer->nfrozen++;
 	}
 
 	/* add the new TIDs into the buffer, combine using merge-sort */
