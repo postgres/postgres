@@ -2544,7 +2544,8 @@ deleted:
 
 		PushActiveSnapshot(GetTransactionSnapshot());
 		perform_work_item(workitem);
-		PopActiveSnapshot();
+		if (ActiveSnapshotSet())	/* transaction could have aborted */
+			PopActiveSnapshot();
 
 		/*
 		 * Check for config changes before acquiring lock for further jobs.
