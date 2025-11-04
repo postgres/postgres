@@ -19835,6 +19835,8 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 			/* Expression */
 			Node	   *expr = pelem->expr;
 			char		partattname[16];
+			Bitmapset  *expr_attrs = NULL;
+			int			i;
 
 			Assert(expr != NULL);
 			atttype = exprType(expr);
@@ -19858,43 +19860,36 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 			while (IsA(expr, CollateExpr))
 				expr = (Node *) ((CollateExpr *) expr)->arg;
 
-			if (IsA(expr, Var) &&
-				((Var *) expr)->varattno > 0)
+			/*
+			 * Examine all the columns in the partition key expression. When
+			 * the whole-row reference is present, examine all the columns of
+			 * the partitioned table.
+			 */
+			pull_varattnos(expr, 1, &expr_attrs);
+			if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber, expr_attrs))
 			{
-				/*
-				 * User wrote "(column)" or "(column COLLATE something)".
-				 * Treat it like simple attribute anyway.
-				 */
-				partattrs[attn] = ((Var *) expr)->varattno;
+				expr_attrs = bms_add_range(expr_attrs,
+										   1 - FirstLowInvalidHeapAttributeNumber,
+										   RelationGetNumberOfAttributes(rel) - FirstLowInvalidHeapAttributeNumber);
+				expr_attrs = bms_del_member(expr_attrs, 0 - FirstLowInvalidHeapAttributeNumber);
 			}
-			else
+
+			i = -1;
+			while ((i = bms_next_member(expr_attrs, i)) >= 0)
 			{
-				Bitmapset  *expr_attrs = NULL;
-				int			i;
+				AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
 
-				partattrs[attn] = 0;	/* marks the column as expression */
-				*partexprs = lappend(*partexprs, expr);
-
-				/*
-				 * transformPartitionSpec() should have already rejected
-				 * subqueries, aggregates, window functions, and SRFs, based
-				 * on the EXPR_KIND_ for partition expressions.
-				 */
+				Assert(attno != 0);
 
 				/*
 				 * Cannot allow system column references, since that would
 				 * make partition routing impossible: their values won't be
 				 * known yet when we need to do that.
 				 */
-				pull_varattnos(expr, 1, &expr_attrs);
-				for (i = FirstLowInvalidHeapAttributeNumber; i < 0; i++)
-				{
-					if (bms_is_member(i - FirstLowInvalidHeapAttributeNumber,
-									  expr_attrs))
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("partition key expressions cannot contain system column references")));
-				}
+				if (attno < 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("partition key expressions cannot contain system column references")));
 
 				/*
 				 * Stored generated columns cannot work: They are computed
@@ -19904,20 +19899,35 @@ ComputePartitionAttrs(ParseState *pstate, Relation rel, List *partParams, AttrNu
 				 * SET EXPRESSION would need to check whether the column is
 				 * used in partition keys).  Seems safer to prohibit for now.
 				 */
-				i = -1;
-				while ((i = bms_next_member(expr_attrs, i)) >= 0)
-				{
-					AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
+				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+							 errmsg("cannot use generated column in partition key"),
+							 errdetail("Column \"%s\" is a generated column.",
+									   get_attname(RelationGetRelid(rel), attno, false)),
+							 parser_errposition(pstate, pelem->location)));
+			}
 
-					if (attno > 0 &&
-						TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-								 errmsg("cannot use generated column in partition key"),
-								 errdetail("Column \"%s\" is a generated column.",
-										   get_attname(RelationGetRelid(rel), attno, false)),
-								 parser_errposition(pstate, pelem->location)));
-				}
+			if (IsA(expr, Var) &&
+				((Var *) expr)->varattno > 0)
+			{
+
+				/*
+				 * User wrote "(column)" or "(column COLLATE something)".
+				 * Treat it like simple attribute anyway.
+				 */
+				partattrs[attn] = ((Var *) expr)->varattno;
+			}
+			else
+			{
+				partattrs[attn] = 0;	/* marks the column as expression */
+				*partexprs = lappend(*partexprs, expr);
+
+				/*
+				 * transformPartitionSpec() should have already rejected
+				 * subqueries, aggregates, window functions, and SRFs, based
+				 * on the EXPR_KIND_ for partition expressions.
+				 */
 
 				/*
 				 * Preprocess the expression before checking for mutability.
