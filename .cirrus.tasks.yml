@@ -68,7 +68,7 @@ task:
     CPUS: 4
     BUILD_JOBS: 8
     TEST_JOBS: 8
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
     CCACHE_DIR: ${CIRRUS_WORKING_DIR}/ccache_dir
     # no options enabled, should be small
     CCACHE_MAXSIZE: "150M"
@@ -244,7 +244,7 @@ task:
     CPUS: 4
     BUILD_JOBS: 4
     TEST_JOBS: 8 # experimentally derived to be a decent choice
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
@@ -265,7 +265,7 @@ task:
     # print_stacktraces=1,verbosity=2, duh
     # detect_leaks=0: too many uninteresting leak errors in short-lived binaries
     UBSAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:verbosity=2
-    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0
+    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0:detect_stack_use_after_return=0
 
     # SANITIZER_FLAGS is set in the tasks below
     CFLAGS: -Og -ggdb -fno-sanitize-recover=all $SANITIZER_FLAGS
@@ -315,7 +315,7 @@ task:
     #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
   matrix:
-    - name: Linux - Debian Bookworm - Autoconf
+    - name: Linux - Debian Trixie - Autoconf
 
       env:
         SANITIZER_FLAGS: -fsanitize=address
@@ -349,7 +349,7 @@ task:
       on_failure:
         <<: *on_failure_ac
 
-    - name: Linux - Debian Bookworm - Meson
+    - name: Linux - Debian Trixie - Meson
 
       env:
         CCACHE_MAXSIZE: "400M" # tests two different builds
@@ -376,7 +376,7 @@ task:
             ${LINUX_MESON_FEATURES} \
             -Dllvm=disabled \
             --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
-            -DPERL=perl5.36-i386-linux-gnu \
+            -DPERL=perl5.40-i386-linux-gnu \
             -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
             build-32
         EOF
@@ -655,7 +655,7 @@ task:
   env:
     CPUS: 4
     BUILD_JOBS: 4
-    IMAGE_FAMILY: pg-ci-bookworm
+    IMAGE_FAMILY: pg-ci-trixie
 
     # Use larger ccache cache, as this task compiles with multiple compilers /
     # flag combinations
@@ -741,11 +741,11 @@ task:
   always:
     mingw_cross_warning_script: |
       time ./configure \
-        --host=x86_64-w64-mingw32 \
+        --host=x86_64-w64-mingw32ucrt \
         --enable-cassert \
         --without-icu \
-        CC="ccache x86_64-w64-mingw32-gcc" \
-        CXX="ccache x86_64-w64-mingw32-g++"
+        CC="ccache x86_64-w64-mingw32ucrt-gcc" \
+        CXX="ccache x86_64-w64-mingw32ucrt-g++"
       make -s -j${BUILD_JOBS} clean
       time make -s -j${BUILD_JOBS} world-bin
 
