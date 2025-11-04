@@ -859,7 +859,9 @@ PostmasterMain(int argc, char *argv[])
 
 	/* For debugging: display postmaster environment */
 	{
+#if !defined(WIN32) || defined(_MSC_VER)
 		extern char **environ;
+#endif
 		char	  **p;
 
 		ereport(DEBUG3,
