@@ -443,11 +443,21 @@ do { \
 	matches = rl_completion_matches(text, complete_from_schema_query); \
 } while (0)
 
-#define COMPLETE_WITH_FILES(escape, force_quote) \
+#define COMPLETE_WITH_FILES_LIST(escape, force_quote, list) \
 do { \
 	completion_charp = escape; \
+	completion_charpp = list; \
 	completion_force_quote = force_quote; \
 	matches = rl_completion_matches(text, complete_from_files); \
+} while (0)
+
+#define COMPLETE_WITH_FILES(escape, force_quote) \
+	COMPLETE_WITH_FILES_LIST(escape, force_quote, NULL)
+
+#define COMPLETE_WITH_FILES_PLUS(escape, force_quote, ...) \
+do { \
+	static const char *const list[] = { __VA_ARGS__, NULL }; \
+	COMPLETE_WITH_FILES_LIST(escape, force_quote, list); \
 } while (0)
 
 #define COMPLETE_WITH_GENERATOR(generator) \
@@ -1485,6 +1495,7 @@ static void append_variable_names(char ***varnames, int *nvars,
 static char **complete_from_variables(const char *text,
 									  const char *prefix, const char *suffix, bool need_value);
 static char *complete_from_files(const char *text, int state);
+static char *_complete_from_files(const char *text, int state);
 
 static char *pg_strdup_keyword_case(const char *s, const char *ref);
 static char *escape_string(const char *text);
@@ -3325,11 +3336,17 @@ match_previous_words(int pattern_id,
 	/* Complete COPY <sth> */
 	else if (Matches("COPY|\\copy", MatchAny))
 		COMPLETE_WITH("FROM", "TO");
-	/* Complete COPY <sth> FROM|TO with filename */
-	else if (Matches("COPY", MatchAny, "FROM|TO"))
-		COMPLETE_WITH_FILES("", true);	/* COPY requires quoted filename */
-	else if (Matches("\\copy", MatchAny, "FROM|TO"))
-		COMPLETE_WITH_FILES("", false);
+	/* Complete COPY|\copy <sth> FROM|TO with filename or STDIN/STDOUT */
+	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO"))
+	{
+		/* COPY requires quoted filename */
+		bool		force_quote = HeadMatches("COPY");
+
+		if (TailMatches("FROM"))
+			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDIN");
+		else
+			COMPLETE_WITH_FILES_PLUS("", force_quote, "STDOUT");
+	}
 
 	/* Complete COPY <sth> TO <sth> */
 	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAny))
@@ -6251,6 +6268,59 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
 
 
 /*
+ * This function returns in order one of a fixed, NULL pointer terminated list
+ * of string that matches file names or optionally specified list of keywords.
+ *
+ * If completion_charpp is set to a null-terminated array of literal keywords,
+ * those keywords are added to the completion results alongside filenames if
+ * they case-insensitively match the current input.
+ */
+static char *
+complete_from_files(const char *text, int state)
+{
+	static int	list_index;
+	static bool files_done;
+	const char *item;
+
+	/* Initialization */
+	if (state == 0)
+	{
+		list_index = 0;
+		files_done = false;
+	}
+
+	if (!files_done)
+	{
+		char	   *result = _complete_from_files(text, state);
+
+		/* Return a filename that matches */
+		if (result)
+			return result;
+
+		/* There are no more matching files */
+		files_done = true;
+	}
+
+	if (!completion_charpp)
+		return NULL;
+
+	/*
+	 * Check for hard-wired keywords. These will only be returned if they
+	 * match the input-so-far, ignoring case.
+	 */
+	while ((item = completion_charpp[list_index++]))
+	{
+		if (pg_strncasecmp(text, item, strlen(text)) == 0)
+		{
+			completion_force_quote = false;
+			return pg_strdup_keyword_case(item, text);
+		}
+	}
+
+	return NULL;
+}
+
+/*
  * This function wraps rl_filename_completion_function() to strip quotes from
  * the input before searching for matches and to quote any matches for which
  * the consuming command will require it.
@@ -6264,7 +6334,7 @@ complete_from_variables(const char *text, const char *prefix, const char *suffix
  * quotes around the result.  (The SQL COPY command requires that.)
  */
 static char *
-complete_from_files(const char *text, int state)
+_complete_from_files(const char *text, int state)
 {
 #ifdef USE_FILENAME_QUOTING_FUNCTIONS
 
