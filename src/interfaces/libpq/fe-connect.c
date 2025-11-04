@@ -501,8 +501,9 @@ static int	parseServiceFile(const char *serviceFile,
 							 PQExpBuffer errorMessage,
 							 bool *group_found);
 static char *pwdfMatchesString(char *buf, const char *token);
-static char *passwordFromFile(const char *hostname, const char *port, const char *dbname,
-							  const char *username, const char *pgpassfile);
+static char *passwordFromFile(const char *hostname, const char *port,
+							  const char *dbname, const char *username,
+							  const char *pgpassfile, const char **errmsg);
 static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
 static bool sslVerifyProtocolVersion(const char *version);
@@ -1454,6 +1455,7 @@ pqConnectOptions2(PGconn *conn)
 				 * least one of them is guaranteed nonempty by now).
 				 */
 				const char *pwhost = conn->connhost[i].host;
+				const char *password_errmsg = NULL;
 
 				if (pwhost == NULL || pwhost[0] == '\0')
 					pwhost = conn->connhost[i].hostaddr;
@@ -1463,7 +1465,15 @@ pqConnectOptions2(PGconn *conn)
 									 conn->connhost[i].port,
 									 conn->dbName,
 									 conn->pguser,
-									 conn->pgpassfile);
+									 conn->pgpassfile,
+									 &password_errmsg);
+
+				if (password_errmsg != NULL)
+				{
+					conn->status = CONNECTION_BAD;
+					libpq_append_conn_error(conn, "%s", password_errmsg);
+					return false;
+				}
 			}
 		}
 	}
@@ -7942,16 +7952,24 @@ pwdfMatchesString(char *buf, const char *token)
 	return NULL;
 }
 
-/* Get a password from the password file. Return value is malloc'd. */
+/*
+ * Get a password from the password file. Return value is malloc'd.
+ *
+ * On failure, *errmsg is set to an error to be returned.  It is
+ * left NULL on success, or if no password could be found.
+ */
 static char *
-passwordFromFile(const char *hostname, const char *port, const char *dbname,
-				 const char *username, const char *pgpassfile)
+passwordFromFile(const char *hostname, const char *port,
+				 const char *dbname, const char *username,
+				 const char *pgpassfile, const char **errmsg)
 {
 	FILE	   *fp;
 #ifndef WIN32
 	struct stat stat_buf;
 #endif
 	PQExpBufferData buf;
+
+	*errmsg = NULL;
 
 	if (dbname == NULL || dbname[0] == '\0')
 		return NULL;
@@ -8019,7 +8037,10 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 	{
 		/* Make sure there's a reasonable amount of room in the buffer */
 		if (!enlargePQExpBuffer(&buf, 128))
+		{
+			*errmsg = libpq_gettext("out of memory");
 			break;
+		}
 
 		/* Read some data, appending it to what we already have */
 		if (fgets(buf.data + buf.len, buf.maxlen - buf.len, fp) == NULL)
@@ -8058,7 +8079,7 @@ passwordFromFile(const char *hostname, const char *port, const char *dbname,
 
 				if (!ret)
 				{
-					/* Out of memory. XXX: an error message would be nice. */
+					*errmsg = libpq_gettext("out of memory");
 					return NULL;
 				}
 
