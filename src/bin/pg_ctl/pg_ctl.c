@@ -26,6 +26,7 @@
 #include "common/file_perm.h"
 #include "common/logging.h"
 #include "common/string.h"
+#include "datatype/timestamp.h"
 #include "getopt_long.h"
 #include "utils/pidfile.h"
 
@@ -68,9 +69,9 @@ typedef enum
 
 #define DEFAULT_WAIT	60
 
-#define USEC_PER_SEC	1000000
-
-#define WAITS_PER_SEC	10		/* should divide USEC_PER_SEC evenly */
+#define WAITS_PER_SEC	10
+StaticAssertDecl(USECS_PER_SEC % WAITS_PER_SEC == 0,
+				 "WAITS_PER_SEC must divide USECS_PER_SEC evenly");
 
 static bool do_wait = true;
 static int	wait_seconds = DEFAULT_WAIT;
@@ -699,7 +700,7 @@ wait_for_postmaster_start(pid_t pm_pid, bool do_checkpoint)
 				print_msg(".");
 		}
 
-		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
+		pg_usleep(USECS_PER_SEC / WAITS_PER_SEC);
 	}
 
 	/* out of patience; report that postmaster is still starting up */
@@ -738,7 +739,7 @@ wait_for_postmaster_stop(void)
 
 		if (cnt % WAITS_PER_SEC == 0)
 			print_msg(".");
-		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
+		pg_usleep(USECS_PER_SEC / WAITS_PER_SEC);
 	}
 	return false;				/* timeout reached */
 }
@@ -771,7 +772,7 @@ wait_for_postmaster_promote(void)
 
 		if (cnt % WAITS_PER_SEC == 0)
 			print_msg(".");
-		pg_usleep(USEC_PER_SEC / WAITS_PER_SEC);
+		pg_usleep(USECS_PER_SEC / WAITS_PER_SEC);
 	}
 	return false;				/* timeout reached */
 }

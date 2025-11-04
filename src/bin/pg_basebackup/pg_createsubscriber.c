@@ -23,6 +23,7 @@
 #include "common/logging.h"
 #include "common/pg_prng.h"
 #include "common/restricted_token.h"
+#include "datatype/timestamp.h"
 #include "fe_utils/recovery_gen.h"
 #include "fe_utils/simple_list.h"
 #include "fe_utils/string_utils.h"
@@ -129,7 +130,6 @@ static void drop_existing_subscription(PGconn *conn, const char *subname,
 static void get_publisher_databases(struct CreateSubscriberOptions *opt,
 									bool dbnamespecified);
 
-#define	USEC_PER_SEC	1000000
 #define	WAIT_INTERVAL	1		/* 1 second */
 
 static const char *progname;
@@ -1604,8 +1604,7 @@ wait_for_end_recovery(const char *conninfo, const struct CreateSubscriberOptions
 		}
 
 		/* Keep waiting */
-		pg_usleep(WAIT_INTERVAL * USEC_PER_SEC);
-
+		pg_usleep(WAIT_INTERVAL * USECS_PER_SEC);
 		timer += WAIT_INTERVAL;
 	}
 
