@@ -84,6 +84,8 @@ ALTER SYSTEM RESET ALL
       constants, identifiers, numbers, or comma-separated lists of
       these, as appropriate for the particular parameter.
       Values that are neither numbers nor valid identifiers must be quoted.
+      If the parameter accepts a list of values, <literal>NULL</literal>
+      can be written to specify an empty list.
       <literal>DEFAULT</literal> can be written to specify removing the
       parameter and its value from <filename>postgresql.auto.conf</filename>.
      </para>
@@ -136,7 +138,15 @@ ALTER SYSTEM SET wal_level = replica;
    in <filename>postgresql.conf</filename>:
 <programlisting>
 ALTER SYSTEM RESET wal_level;
-</programlisting></para>
+</programlisting>
+  </para>
+
+  <para>
+   Set the list of preloaded extension modules to be empty:
+<programlisting>
+ALTER SYSTEM SET shared_preload_libraries TO NULL;
+</programlisting>
+  </para>
  </refsect1>
 
  <refsect1>

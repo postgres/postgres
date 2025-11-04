@@ -210,12 +210,29 @@ flatten_set_variable_args(const char *name, List *args)
 	else
 		flags = 0;
 
-	/* Complain if list input and non-list variable */
-	if ((flags & GUC_LIST_INPUT) == 0 &&
-		list_length(args) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("SET %s takes only one argument", name)));
+	/*
+	 * Handle special cases for list input.
+	 */
+	if (flags & GUC_LIST_INPUT)
+	{
+		/* NULL represents an empty list. */
+		if (list_length(args) == 1)
+		{
+			Node	   *arg = (Node *) linitial(args);
+
+			if (IsA(arg, A_Const) &&
+				((A_Const *) arg)->isnull)
+				return pstrdup("");
+		}
+	}
+	else
+	{
+		/* Complain if list input and non-list variable. */
+		if (list_length(args) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("SET %s takes only one argument", name)));
+	}
 
 	initStringInfo(&buf);
 
@@ -246,6 +263,12 @@ flatten_set_variable_args(const char *name, List *args)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(arg));
 		con = (A_Const *) arg;
 
+		/* Complain if NULL is used with a non-list variable. */
+		if (con->isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("NULL is an invalid value for %s", name)));
+
 		switch (nodeTag(&con->val))
 		{
 			case T_Integer:
@@ -268,6 +291,9 @@ flatten_set_variable_args(const char *name, List *args)
 					int32		typmod;
 					Datum		interval;
 					char	   *intervalout;
+
+					/* gram.y ensures this is only reachable for TIME ZONE */
+					Assert(!(flags & GUC_LIST_QUOTE));
 
 					typenameTypeIdAndMod(NULL, typeName, &typoid, &typmod);
 					Assert(typoid == INTERVALOID);

@@ -31,6 +31,28 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
  2006-08-13 12:34:56-07
 (1 row)
 
+-- Check handling of list GUCs
+SET search_path = 'pg_catalog', Foo, 'Bar', '';
+SHOW search_path;
+        search_path         
+----------------------------
+ pg_catalog, foo, "Bar", ""
+(1 row)
+
+SET search_path = null;  -- means empty list
+SHOW search_path;
+ search_path 
+-------------
+ 
+(1 row)
+
+SET search_path = null, null;  -- syntax error
+ERROR:  syntax error at or near ","
+LINE 1: SET search_path = null, null;
+                              ^
+SET enable_seqscan = null;  -- error
+ERROR:  NULL is an invalid value for enable_seqscan
+RESET search_path;
 -- SET LOCAL has no effect outside of a transaction
 SET LOCAL vacuum_cost_delay TO 50;
 WARNING:  SET LOCAL can only be used in transaction blocks
