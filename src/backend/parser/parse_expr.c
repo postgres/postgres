@@ -4772,7 +4772,7 @@ transformJsonBehavior(ParseState *pstate, JsonExpr *jsexpr,
 				targetcoll != exprcoll)
 				ereport(ERROR,
 						errcode(ERRCODE_COLLATION_MISMATCH),
-						errmsg("the collation of DEFAULT expression conflicts with RETURNING clause"),
+						errmsg("collation of DEFAULT expression conflicts with RETURNING clause"),
 						errdetail("\"%s\" versus \"%s\"",
 								  get_collation_name(exprcoll),
 								  get_collation_name(targetcoll)),
