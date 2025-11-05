@@ -1687,14 +1687,14 @@ add_non_redundant_clauses(PlannerInfo *root,
 }
 
 /*
- * A custom callback for ChangeVarNodesExtended() providing
- * Self-join elimination (SJE) related functionality
+ * A custom callback for ChangeVarNodesExtended() providing Self-join
+ * elimination (SJE) related functionality
  *
- * SJE needs to skip the RangeTblRef node
- * type.  During SJE's last step, remove_rel_from_joinlist() removes
- * remaining RangeTblRefs with target relid.  If ChangeVarNodes() replaces
- * the target relid before, remove_rel_from_joinlist() fails to identify
- * the nodes to delete.
+ * SJE needs to skip the RangeTblRef node type.  During SJE's last
+ * step, remove_rel_from_joinlist() removes remaining RangeTblRefs
+ * with target relid.  If ChangeVarNodes() replaces the target relid
+ * before, remove_rel_from_joinlist() would fail to identify the nodes
+ * to delete.
  *
  * SJE also needs to change the relids within RestrictInfo's.
  */
@@ -1773,8 +1773,8 @@ replace_relid_callback(Node *node, ChangeVarNodes_context *context)
 			/*
 			 * For self-join elimination, changing varnos could transform
 			 * "t1.a = t2.a" into "t1.a = t1.a".  That is always true as long
-			 * as "t1.a" is not null.  We use qual() to check for such a case,
-			 * and then we replace the qual for a check for not null
+			 * as "t1.a" is not null.  We use equal() to check for such a
+			 * case, and then we replace the qual with a check for not null
 			 * (NullTest).
 			 */
 			if (leftOp != NULL && equal(leftOp, rightOp))
