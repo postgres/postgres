@@ -1006,8 +1006,8 @@ SELCT 1/0;<!-- this typo is intentional -->
    <para>
     If successfully created, a named portal object lasts till the end of the
     current transaction, unless explicitly destroyed.  An unnamed portal is
-    destroyed at the end of the transaction, or as soon as the next Bind
-    statement specifying the unnamed portal as destination is issued.  (Note
+    destroyed at the end of the transaction, or as soon as the statement
+    specifying the unnamed portal as destination is processed to completion.  (Note
     that a simple Query message also destroys the unnamed portal.)  Named
     portals must be explicitly closed before they can be redefined by another
     Bind message, but this is not required for the unnamed portal.
