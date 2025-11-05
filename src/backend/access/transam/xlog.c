@@ -9518,6 +9518,8 @@ GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli)
 void
 XLogShutdownWalRcv(void)
 {
+	Assert(AmStartupProcess() || !IsUnderPostmaster);
+
 	ShutdownWalRcv();
 	ResetInstallXLogFileSegmentActive();
 }
