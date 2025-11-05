@@ -542,8 +542,6 @@ offset_relid_set(Relids relids, int offset)
  * (identified by sublevels_up and rt_index), and change their varno fields
  * to 'new_index'.  The varnosyn fields are changed too.  Also, adjust other
  * nodes that contain rangetable indexes, such as RangeTblRef and JoinExpr.
- * Specifying 'change_RangeTblRef' to false allows skipping RangeTblRef.
- * See ChangeVarNodesExtended for details.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.  The given expression tree should have been copied
@@ -664,17 +662,16 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 }
 
 /*
- * ChangeVarNodesExtended - similar to ChangeVarNodes, but with an  additional
+ * ChangeVarNodesExtended - similar to ChangeVarNodes, but with an additional
  *							'callback' param
  *
- * ChangeVarNodes changes a given node and all of its underlying nodes.
- * This version of function additionally takes a callback, which has a
- * chance to process a node before ChangeVarNodes_walker.  A callback
- * returns a boolean value indicating if given node should be skipped from
- * further processing by ChangeVarNodes_walker.  The callback is called
- * only for expressions and other children nodes of a Query processed by
- * a walker.  Initial processing of the root Query doesn't involve the
- * callback.
+ * ChangeVarNodes changes a given node and all of its underlying nodes.  This
+ * version of function additionally takes a callback, which has a chance to
+ * process a node before ChangeVarNodes_walker.  A callback returns a boolean
+ * value indicating if the given node should be skipped from further processing
+ * by ChangeVarNodes_walker.  The callback is called only for expressions and
+ * other children nodes of a Query processed by a walker.  Initial processing
+ * of the root Query doesn't involve the callback.
  */
 void
 ChangeVarNodesExtended(Node *node, int rt_index, int new_index,
