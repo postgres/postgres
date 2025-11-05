@@ -89,6 +89,9 @@ static const IoMethodOps *const pgaio_method_ops_table[] = {
 #endif
 };
 
+StaticAssertDecl(lengthof(io_method_options) == lengthof(pgaio_method_ops_table) + 1,
+				 "io_method_options out of sync with pgaio_method_ops_table");
+
 /* callbacks for the configured io_method, set by assign_io_method */
 const IoMethodOps *pgaio_method_ops;
 
@@ -1318,8 +1321,8 @@ pgaio_shutdown(int code, Datum arg)
 void
 assign_io_method(int newval, void *extra)
 {
+	Assert(newval < lengthof(pgaio_method_ops_table));
 	Assert(pgaio_method_ops_table[newval] != NULL);
-	Assert(newval < lengthof(io_method_options));
 
 	pgaio_method_ops = pgaio_method_ops_table[newval];
 }
