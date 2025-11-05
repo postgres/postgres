@@ -4,10 +4,10 @@
  *
  * Static tables for the Grand Unified Configuration scheme.
  *
- * Many of these tables are const.  However, ConfigureNamesBool[]
- * and so on are not, because the structs in those arrays are actually
- * the live per-variable state data that guc.c manipulates.  While many of
- * their fields are intended to be constant, some fields change at runtime.
+ * Many of these tables are const.  However, ConfigureNames[] is not, because
+ * the structs in it are actually the live per-variable state data that guc.c
+ * manipulates.  While many of their fields are intended to be constant, some
+ * fields change at runtime.
  *
  *
  * Copyright (c) 2000-2025, PostgreSQL Global Development Group
