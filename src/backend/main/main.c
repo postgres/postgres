@@ -482,20 +482,29 @@ check_root(const char *progname)
 /*
  * At least on linux, set_ps_display() breaks /proc/$pid/environ. The
  * sanitizer library uses /proc/$pid/environ to implement getenv() as it wants
- * to work independent of libc. When just using undefined and alignment
- * sanitizers, the sanitizer library is only initialized when the first error
- * occurs, by which time we've often already called set_ps_display(),
- * preventing the sanitizer libraries from seeing the options.
+ * to work independent of libc. Depending on which sanitizers are enabled,
+ * the sanitizer library may not get initialized until after we've called
+ * set_ps_display(), preventing the sanitizer from seeing environment-supplied
+ * options.
  *
  * We can work around that by defining __ubsan_default_options, a weak symbol
  * libsanitizer uses to get defaults from the application, and return
  * getenv("UBSAN_OPTIONS"). But only if main already was reached, so that we
  * don't end up relying on a not-yet-working getenv().
  *
+ * On the other hand, with different sanitizers enabled, libsanitizer can
+ * call this so early that it's not fully initialized itself, resulting in
+ * recursion and a core dump within libsanitizer.  To prevent that, ensure
+ * that this function is built without any sanitizer callbacks in it.
+ *
  * As this function won't get called when not running a sanitizer, it doesn't
  * seem necessary to only compile it conditionally.
  */
 const char *__ubsan_default_options(void);
+
+#if __has_attribute(disable_sanitizer_instrumentation)
+__attribute__((disable_sanitizer_instrumentation))
+#endif
 const char *
 __ubsan_default_options(void)
 {
