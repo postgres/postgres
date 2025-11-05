@@ -134,6 +134,13 @@ static pg_locale_t default_locale = NULL;
 static bool CurrentLocaleConvValid = false;
 static bool CurrentLCTimeValid = false;
 
+static struct pg_locale_struct c_locale = {
+	.provider = COLLPROVIDER_LIBC,
+	.deterministic = true,
+	.collate_is_c = true,
+	.ctype_is_c = true,
+};
+
 /* Cache for collation-related knowledge */
 
 typedef struct
@@ -1193,6 +1200,13 @@ pg_newlocale_from_collation(Oid collid)
 
 	if (collid == DEFAULT_COLLATION_OID)
 		return default_locale;
+
+	/*
+	 * Some callers expect C_COLLATION_OID to succeed even without catalog
+	 * access.
+	 */
+	if (collid == C_COLLATION_OID)
+		return &c_locale;
 
 	if (!OidIsValid(collid))
 		elog(ERROR, "cache lookup failed for collation %u", collid);
