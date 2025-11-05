@@ -12,9 +12,6 @@
 
 #ifndef PG_PTHREAD_H
 #define PG_PTHREAD_H
-#if defined(__wasi__)
-#define PYDK
-#endif /* __wasi__ */
 #include <pthread.h>
 
 #ifndef HAVE_PTHREAD_BARRIER_WAIT

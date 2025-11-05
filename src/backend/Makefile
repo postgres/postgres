@@ -110,8 +110,8 @@ pglite: pglite-exported-functions
 	$(CC) $(CFLAGS) $(LDFLAGS) -DPG_PREFIX=/tmp/pglite -I$(top_builddir)/src/include -I$(top_builddir)/src/ -I$(top_builddir)/src/interfaces/libpq -o pglite.o -c $(top_builddir)/$(PGLITE_MAIN) -Wno-incompatible-pointer-types-discards-qualifiers
 	$(CC) \
 	$(PGLITE_CFLAGS) \
-	-fPIC -m32 -D_FILE_OFFSET_BITS=64 -mno-bulk-memory -mnontrapping-fptoint -mno-reference-types -mno-sign-ext -mno-extended-const -mno-atomics -mno-tail-call -mno-multivalue -mno-relaxed-simd -mno-simd128 -mno-multimemory -mno-exception-handling -Wno-unused-command-line-argument -Wno-unreachable-code-fallthrough -Wno-unused-function -Wno-invalid-noreturn -Wno-declaration-after-statement -Wno-invalid-noreturn \
-	-DPYDK=1 -DPG_PREFIX=/tmp/pglite -o pglite.html \
+	-fPIC -m32 -mno-bulk-memory -mnontrapping-fptoint -mno-reference-types -mno-sign-ext -mno-extended-const -mno-atomics -mno-tail-call -mno-multivalue -mno-relaxed-simd -mno-simd128 -mno-multimemory -mno-exception-handling -Wno-unused-command-line-argument -Wno-unreachable-code-fallthrough -Wno-unused-function -Wno-invalid-noreturn -Wno-declaration-after-statement -Wno-invalid-noreturn \
+	-DPG_PREFIX=/tmp/pglite -o pglite.html \
         $(PGPRELOAD) \
         -ferror-limit=1 \
 		-sEXPORTED_FUNCTIONS=@$(emscripten_imports_dir)/exported_functions.txt \
