@@ -1877,6 +1877,7 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 		List	   *total_subpaths = NIL;
 		List	   *fractional_subpaths = NIL;
 		bool		startup_neq_total = false;
+		bool		fraction_neq_total = false;
 		bool		match_partition_order;
 		bool		match_partition_order_desc;
 		int			end_index;
@@ -2005,15 +2006,21 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 				 * XXX We might consider partially sorted paths too (with an
 				 * incremental sort on top). But we'd have to build all the
 				 * incremental paths, do the costing etc.
+				 *
+				 * Also, notice whether we actually have different paths for
+				 * the "fractional" and "total" cases.  This helps avoid
+				 * generating two identical ordered append paths.
 				 */
-				if (!cheapest_fractional)
+				if (cheapest_fractional == NULL)
 					cheapest_fractional = cheapest_total;
+				else if (cheapest_fractional != cheapest_total)
+					fraction_neq_total = true;
 			}
 
 			/*
 			 * Notice whether we actually have different paths for the
-			 * "cheapest" and "total" cases; frequently there will be no point
-			 * in two create_merge_append_path() calls.
+			 * "cheapest" and "total" cases.  This helps avoid generating two
+			 * identical ordered append paths.
 			 */
 			if (cheapest_startup != cheapest_total)
 				startup_neq_total = true;
@@ -2084,7 +2091,7 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 														  false,
 														  -1));
 
-			if (fractional_subpaths)
+			if (fractional_subpaths && fraction_neq_total)
 				add_path(rel, (Path *) create_append_path(root,
 														  rel,
 														  fractional_subpaths,
@@ -2110,7 +2117,7 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 																pathkeys,
 																NULL));
 
-			if (fractional_subpaths)
+			if (fractional_subpaths && fraction_neq_total)
 				add_path(rel, (Path *) create_merge_append_path(root,
 																rel,
 																fractional_subpaths,
