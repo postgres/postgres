@@ -3433,7 +3433,7 @@
   proname => 'pg_sequence_last_value', provolatile => 'v', proparallel => 'u',
   prorettype => 'int8', proargtypes => 'regclass',
   prosrc => 'pg_sequence_last_value' },
-{ oid => '6427', descr => 'return sequence tuple, for use by pg_dump',
+{ oid => '6427', descr => 'return sequence tuple, for use by pg_dump and sequence synchronization',
   proname => 'pg_get_sequence_data', provolatile => 'v', proparallel => 'u',
   prorettype => 'record', proargtypes => 'regclass',
   proallargtypes => '{regclass,int8,bool,pg_lsn}', proargmodes => '{i,o,o,o}',

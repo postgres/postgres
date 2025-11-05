@@ -131,7 +131,10 @@ static const struct
 		"ParallelApplyWorkerMain", ParallelApplyWorkerMain
 	},
 	{
-		"TablesyncWorkerMain", TablesyncWorkerMain
+		"TableSyncWorkerMain", TableSyncWorkerMain
+	},
+	{
+		"SequenceSyncWorkerMain", SequenceSyncWorkerMain
 	}
 };
 

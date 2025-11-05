@@ -526,6 +526,7 @@ CopyMethod
 CopyMultiInsertBuffer
 CopyMultiInsertInfo
 CopyOnErrorChoice
+CopySeqResult
 CopySource
 CopyStmt
 CopyToRoutine
@@ -1629,6 +1630,7 @@ LogicalRepRelId
 LogicalRepRelMapEntry
 LogicalRepRelation
 LogicalRepRollbackPreparedTxnData
+LogicalRepSequenceInfo
 LogicalRepStreamAbortData
 LogicalRepTupleData
 LogicalRepTyp

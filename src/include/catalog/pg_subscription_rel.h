@@ -82,6 +82,29 @@ typedef struct SubscriptionRelState
 	char		state;
 } SubscriptionRelState;
 
+/*
+ * Holds local sequence identity and corresponding publisher values used during
+ * sequence synchronization.
+ */
+typedef struct LogicalRepSequenceInfo
+{
+	/* Sequence information retrieved from the local node */
+	char	   *seqname;
+	char	   *nspname;
+	Oid			localrelid;
+
+	/* Sequence information retrieved from the publisher node */
+	XLogRecPtr	page_lsn;
+	int64		last_value;
+	bool		is_called;
+
+	/*
+	 * True if the sequence identified by nspname + seqname exists on the
+	 * publisher.
+	 */
+	bool		found_on_pub;
+} LogicalRepSequenceInfo;
+
 extern void AddSubscriptionRelState(Oid subid, Oid relid, char state,
 									XLogRecPtr sublsn, bool retain_lock);
 extern void UpdateSubscriptionRelState(Oid subid, Oid relid, char state,

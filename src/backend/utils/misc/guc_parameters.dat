@@ -2058,7 +2058,7 @@
 },
 
 { name => 'max_sync_workers_per_subscription', type => 'int', context => 'PGC_SIGHUP', group => 'REPLICATION_SUBSCRIBERS',
-  short_desc => 'Maximum number of table synchronization workers per subscription.',
+  short_desc => 'Maximum number of workers per subscription for synchronizing tables and sequences.',
   variable => 'max_sync_workers_per_subscription',
   boot_val => '2',
   min => '0',

@@ -354,7 +354,7 @@ UpdateSubscriptionRelState(Oid subid, Oid relid, char state,
 							  ObjectIdGetDatum(relid),
 							  ObjectIdGetDatum(subid));
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "subscription table %u in subscription %u does not exist",
+		elog(ERROR, "subscription relation %u in subscription %u does not exist",
 			 relid, subid);
 
 	/* Update the tuple. */
