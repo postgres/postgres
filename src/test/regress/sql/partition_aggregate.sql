@@ -74,6 +74,11 @@ EXPLAIN (COSTS OFF)
 SELECT a FROM pagg_tab WHERE a < 3 GROUP BY a ORDER BY 1;
 SELECT a FROM pagg_tab WHERE a < 3 GROUP BY a ORDER BY 1;
 
+-- Test partitionwise aggregation with ordered append path built from fractional paths
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM pagg_tab GROUP BY c ORDER BY c LIMIT 1;
+SELECT count(*) FROM pagg_tab GROUP BY c ORDER BY c LIMIT 1;
+
 RESET enable_hashagg;
 
 -- ROLLUP, partitionwise aggregation does not apply

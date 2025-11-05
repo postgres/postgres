@@ -335,6 +335,37 @@ SELECT a FROM pagg_tab WHERE a < 3 GROUP BY a ORDER BY 1;
  2
 (3 rows)
 
+-- Test partitionwise aggregation with ordered append path built from fractional paths
+EXPLAIN (COSTS OFF)
+SELECT count(*) FROM pagg_tab GROUP BY c ORDER BY c LIMIT 1;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Limit
+   ->  Merge Append
+         Sort Key: pagg_tab.c
+         ->  GroupAggregate
+               Group Key: pagg_tab.c
+               ->  Sort
+                     Sort Key: pagg_tab.c
+                     ->  Seq Scan on pagg_tab_p1 pagg_tab
+         ->  GroupAggregate
+               Group Key: pagg_tab_1.c
+               ->  Sort
+                     Sort Key: pagg_tab_1.c
+                     ->  Seq Scan on pagg_tab_p2 pagg_tab_1
+         ->  GroupAggregate
+               Group Key: pagg_tab_2.c
+               ->  Sort
+                     Sort Key: pagg_tab_2.c
+                     ->  Seq Scan on pagg_tab_p3 pagg_tab_2
+(18 rows)
+
+SELECT count(*) FROM pagg_tab GROUP BY c ORDER BY c LIMIT 1;
+ count 
+-------
+   250
+(1 row)
+
 RESET enable_hashagg;
 -- ROLLUP, partitionwise aggregation does not apply
 EXPLAIN (COSTS OFF)
