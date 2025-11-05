@@ -81,6 +81,21 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-application-time">
+   <glossterm>Application time</glossterm>
+   <glossdef>
+    <para>
+     In a <glossterm linkend="glossary-temporal-table">temporal table</glossterm>,
+     the dimension of time that represents when the entity described by the table
+     changed (as opposed to the table itself).
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-aio">
    <glossterm>Asynchronous <acronym>I/O</acronym></glossterm>
    <acronym>AIO</acronym>
@@ -1847,6 +1862,22 @@
    </glossdef>
   </glossentry>
 
+  <glossentry id="glossary-system-time">
+   <glossterm>System time</glossterm>
+   <glossdef>
+    <para>
+     In a <glossterm linkend="glossary-temporal-table">temporal table</glossterm>,
+     the dimension of time that represents when the table itself was changed
+     (as opposed to the entity the table describes).
+     Often used for auditing, compliance, and debugging.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
   <glossentry id="glossary-table">
    <glossterm>Table</glossterm>
    <glossdef>
@@ -1881,6 +1912,22 @@
     <para>
      For more information, see
      <xref linkend="manage-ag-tablespaces"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-temporal-table">
+   <glossterm>Temporal table</glossterm>
+   <glossdef>
+    <para>
+     <glossterm linkend="glossary-table">Tables</glossterm>
+     that track <glossterm linkend="glossary-application-time">application time</glossterm>
+     or <glossterm linkend="glossary-system-time">system time</glossterm> (or both).
+     Not to be confused with <glossterm linkend="glossary-temporary-table">temporary tables</glossterm>.
+    </para>
+    <para>
+     For more information, see
+     <xref linkend="ddl-temporal-tables"/>.
     </para>
    </glossdef>
   </glossentry>
