@@ -1376,6 +1376,60 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </sect3>
   </sect2>
 
+  <sect2 id="read-your-writes-consistency">
+   <title>Read-Your-Writes Consistency</title>
+
+   <para>
+    In asynchronous replication, there is always a short window where changes
+    on the primary may not yet be visible on the standby due to replication
+    lag. This can lead to inconsistencies when an application writes data on
+    the primary and then immediately issues a read query on the standby.
+    However, it is possible to address this without switching to synchronous
+    replication.
+   </para>
+
+   <para>
+    To address this, PostgreSQL offers a mechanism for read-your-writes
+    consistency. The key idea is to ensure that a client sees its own writes
+    by synchronizing the WAL replay on the standby with the known point of
+    change on the primary.
+   </para>
+
+   <para>
+    This is achieved by the following steps.  After performing write
+    operations, the application retrieves the current WAL location using a
+    function call like this.
+
+    <programlisting>
+postgres=# SELECT pg_current_wal_insert_lsn();
+pg_current_wal_insert_lsn
+--------------------
+0/306EE20
+(1 row)
+    </programlisting>
+   </para>
+
+   <para>
+    The <acronym>LSN</acronym> obtained from the primary is then communicated
+    to the standby server. This can be managed at the application level or
+    via the connection pooler.  On the standby, the application issues the
+    <xref linkend="sql-wait-for"/> command to block further processing until
+    the standby's WAL replay process reaches (or exceeds) the specified
+    <acronym>LSN</acronym>.
+
+    <programlisting>
+postgres=# WAIT FOR LSN '0/306EE20';
+ status
+--------
+ success
+(1 row)
+    </programlisting>
+    Once the command returns a status of success, it guarantees that all
+    changes up to the provided <acronym>LSN</acronym> have been applied,
+    ensuring that subsequent read queries will reflect the latest updates.
+   </para>
+  </sect2>
+
   <sect2 id="continuous-archiving-in-standby">
    <title>Continuous Archiving in Standby</title>
 
