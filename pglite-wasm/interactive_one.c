@@ -1,34 +1,9 @@
 #include <unistd.h>  // access, unlink
 #define PGL_LOOP
-#if defined(__wasi__)
-// volatile sigjmp_buf void*;
-#else
 volatile sigjmp_buf local_sigjmp_buf;
-#endif
 
 // track back how many ex raised in steps of the loop until sucessfull clear_error
 volatile int canary_ex = 0;
-
-// read FROM JS
-// (i guess return number of bytes written)
-// ssize_t pglite_read(/* ignored */ int socket, void *buffer, size_t length,/* ignored */ int flags,/* ignored */ void *address,/* ignored */ socklen_t *address_len);
-//typedef ssize_t (*pglite_read_t)(/* ignored */ int socket, void *buffer, size_t length,/* ignored */ int flags,/* ignored */ void *address,/* ignored */ unsigned int *address_len);
-typedef ssize_t (*pglite_read_t)(void *buffer, size_t max_length);
-extern pglite_read_t pglite_read;
-
-// write TO JS
-// (i guess return number of bytes read)
-// ssize_t pglite_write(/* ignored */ int sockfd, const void *buf, size_t len, /* ignored */ int flags);
-// typedef ssize_t (*pglite_write_t)(/* ignored */ int sockfd, const void *buf, size_t len, /* ignored */ int flags);
-typedef ssize_t (*pglite_write_t)(void *buffer, size_t length);
-extern pglite_write_t pglite_write;
-
-__attribute__((export_name("set_read_write_cbs")))
-void
-set_read_write_cbs(pglite_read_t read_cb, pglite_write_t write_cb) {
-    pglite_read = read_cb;
-    pglite_write = write_cb;
-}
 
 extern void AbortTransaction(void);
 extern void CleanupTransaction(void);

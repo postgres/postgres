@@ -1856,7 +1856,7 @@ auth_peer(hbaPort *port)
 {
 	uid_t		uid;
 	gid_t		gid;
-#if !defined(WIN32) && !defined(__wasi__)
+#if !defined(WIN32)
 	struct passwd *pw;
 	int			ret;
 #endif
@@ -1875,7 +1875,7 @@ auth_peer(hbaPort *port)
 		return STATUS_ERROR;
 	}
 
-#if !defined(WIN32) && !defined(__wasi__)
+#if !defined(WIN32)
 	errno = 0;					/* clear errno before call */
 	pw = getpwuid(uid);
 	if (!pw)

@@ -231,7 +231,6 @@ ResourceOwnerForgetWaitEventSet(ResourceOwner owner, WaitEventSet *set)
 void
 InitializeLatchSupport(void)
 {
-#if !defined(__wasi__)
 #if defined(WAIT_USE_SELF_PIPE)
 	int			pipefd[2];
 
@@ -341,7 +340,6 @@ InitializeLatchSupport(void)
 	/* Ignore SIGURG, because we'll receive it via kqueue. */
 	pqsignal(SIGURG, SIG_IGN);
 #endif
-#endif /* __wasi__ */
 }
 
 void

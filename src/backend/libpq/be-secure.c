@@ -32,6 +32,10 @@
 #include "tcop/tcopprot.h"
 #include "utils/wait_event.h"
 
+#if defined(__EMSCRIPTEN__)
+#include "pglite-comm.h"
+#endif
+
 char	   *ssl_library;
 char	   *ssl_cert_file;
 char	   *ssl_key_file;

@@ -109,12 +109,6 @@ int			restrict_nonsystem_relation_kind;
 
 #if (defined(__EMSCRIPTEN__) || defined(__wasi__))
 bool quote_all_identifiers = false;
-
-typedef ssize_t (*pglite_read_t)(void *buffer, size_t max_length);
-pglite_read_t pglite_read = NULL;
-
-typedef ssize_t(*pglite_write_t)(void *buffer, size_t length);
-pglite_write_t pglite_write = NULL;
 #endif // WASM
 
 
@@ -5146,9 +5140,7 @@ ShowUsage(const char *title)
 					 (long) user.tv_usec,
 					 (long) sys.tv_sec,
 					 (long) sys.tv_usec);
-#if !defined(__wasi__)
 #ifndef WIN32
-#if !defined(__wasi__)
 	/*
 	 * The following rusage fields are not defined by POSIX, but they're
 	 * present on all current Unix-like systems so we use them without any
@@ -5190,9 +5182,7 @@ ShowUsage(const char *title)
 					 r.ru_nvcsw - Save_r.ru_nvcsw,
 					 r.ru_nivcsw - Save_r.ru_nivcsw,
 					 r.ru_nvcsw, r.ru_nivcsw);
-#endif  /* !__wasi__ */
 #endif							/* !WIN32 */
-#endif
 	/* remove trailing newline */
 	if (str.data[str.len - 1] == '\n')
 		str.data[--str.len] = '\0';

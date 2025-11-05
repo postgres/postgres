@@ -69,28 +69,8 @@
 #include "pg_dump.h"
 #include "storage/block.h"
 
-#if !defined(__wasi__) && !defined(__EMSCRIPTEN__)
-extern PGDLLIMPORT bool fe_utils_quote_all_identifiers;
-#else
-#if defined(WASM)
-#ifdef errno
-    #undef errno
-    int errno;
-#endif
-
-pid_t fork(void) {
-    return -1;
-}
-
-#   include <wasi/api.h>
-
-__attribute__((export_name("sdk_fd_seek")))
-int sdk_fd_seek(int fd, int  offset,int  whence, unsigned long long *retptr) {
-    puts("sdk_fd_seek called !");
-    return __wasi_fd_seek(fd, offset, whence, retptr);
-}
-
-#endif
+#if defined(__EMSCRIPTEN__)
+#include <emscripten/emscripten.h>
 #endif
 
 typedef struct
@@ -366,8 +346,10 @@ static TableInfo *getRootTableInfo(const TableInfo *tbinfo);
 static bool forcePartitionRootLoad(const TableInfo *tbinfo);
 static void read_dump_filters(const char *filename, DumpOptions *dopt);
 
-
-int
+int 
+#if defined(__EMSCRIPTEN__)
+EMSCRIPTEN_KEEPALIVE
+#endif
 main(int argc, char **argv)
 {
 	int			c;
@@ -853,13 +835,11 @@ main(int argc, char **argv)
 	fout->maxRemoteVersion = (PG_VERSION_NUM / 100) * 100 + 99;
 
 	fout->numWorkers = numWorkers;
-puts("# 832:" __FILE__ ": ConnectDatabase\r\n");
 	/*
 	 * Open the database using the Archiver, so it knows about it. Errors mean
 	 * death.
 	 */
 	ConnectDatabase(fout, &dopt.cparams, false);
-puts("# 838:" __FILE__ ": ConnectDatabase->setup_connection\r\n");
 	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
 
 	/*

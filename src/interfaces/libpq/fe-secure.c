@@ -45,6 +45,10 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 
+#if defined(__EMSCRIPTEN__)
+#include "pglite-comm.h"
+#endif
+
 /*
  * Macros to handle disabling and then restoring the state of SIGPIPE handling.
  * On Windows, these are all no-ops since there's no SIGPIPEs.

@@ -292,7 +292,7 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	PGresult   *res;
 
-	res = PQexec(AH->connection, query); printf("# 295:" __FILE__ ": PQexec fail == %d q=%s\r\n", PQresultStatus(res) != status, query );
+	res = PQexec(AH->connection, query);
 	if (PQresultStatus(res) != status)
 		die_on_query_failure(AH, query);
 	return res;

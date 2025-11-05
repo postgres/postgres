@@ -543,12 +543,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 */
 
 		recursion_depth--;
-#if defined(__wasi__)
-        fprintf(stderr, "# 547: PG_RE_THROW(ERROR : %d) ignored\r\n", recursion_depth);
-        abort();
-#else
 		PG_RE_THROW();
-#endif
 	}
 
 	/* Emit the message to the right places */

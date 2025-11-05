@@ -218,13 +218,9 @@ PDEBUG("# 164:" __FILE__);
     initStringInfo(&row_description_buf);
     MemoryContextSwitchTo(TopMemoryContext);
 
-#if defined(__wasi__)
-    puts("# 210: sjlj exception handler off in initdb-wasi");
-#else
 #   define INITDB_SINGLE
 #   include "pgl_sjlj.c"
 #   undef INITDB_SINGLE
-#endif // sjlj
 
     if (!ignore_till_sync)
         send_ready_for_query = true;	/* initially, or after error */

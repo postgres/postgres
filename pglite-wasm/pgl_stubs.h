@@ -1,15 +1,6 @@
 #pragma once
 
-
-// wasi only stubs
-#if defined(__wasi__)
-#   undef PQEXPBUFFER_H
-#   include "../src/interfaces/libpq/pqexpbuffer.h"
-
-#else
-#   include "../src/interfaces/libpq/pqexpbuffer.h"
-#endif
-
+#include "../src/interfaces/libpq/pqexpbuffer.h"
 
 // option_parse_int parse_sync_method
 #include "../src/fe_utils/option_utils.c"

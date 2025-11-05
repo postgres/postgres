@@ -21,7 +21,7 @@ OBJS = \
 
 all:
 ifeq ($(PORTNAME), emscripten)
-all: pg_config pg_config_sh
+all: pg_config
 else 
 all: pg_config
 endif
@@ -31,18 +31,16 @@ pg_config: $(OBJS) | submake-libpgport
 
 # the emscripten build generates multiple "runnable" files (.cjs/.mjs + .wasm)
 # but other postgres tools expect exacly 'pg_config' as an executable 
-# the following rule creates a node script that calls the pg_config.cjs/.mjs
+# we create a pg_config link to run_pg_config.mjs, which in turn calls pg_config.cjs/.mjs
 # pg_config.wasm is implicitly expected to be in the same folder
-pg_config_sh: pg_config
-	echo "#!/usr/bin/env node" > pg_config
-	echo 'require("./pg_config$(X)")' >> pg_config
-	chmod +x pg_config
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pg_config$(X) '$(DESTDIR)$(bindir)/pg_config$(X)'
 ifeq ($(PORTNAME), emscripten)
 	$(INSTALL_PROGRAM) pg_config.wasm '$(DESTDIR)$(bindir)/pg_config.wasm'
-	$(INSTALL_PROGRAM) pg_config '$(DESTDIR)$(bindir)/pg_config'
+	$(INSTALL_PROGRAM) pg_config$(X) '$(DESTDIR)$(bindir)/pg_config.mjs'
+	$(INSTALL_PROGRAM) run_pg_config.mjs '$(DESTDIR)$(bindir)/run_pg_config.mjs'
+	ln -sf '$(DESTDIR)$(bindir)/run_pg_config.mjs' '$(DESTDIR)$(bindir)/pg_config'
 endif
 
 installdirs:

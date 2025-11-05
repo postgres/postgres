@@ -80,10 +80,6 @@
 #include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 
-#if defined(__EMSCRIPTEN__)
-#include <emscripten/emscripten.h>
-#endif
-
 /*
  * Cope with the various platform-specific ways to spell TCP keepalive socket
  * options.  This doesn't cover Windows, which as usual does its own thing.
@@ -129,53 +125,6 @@ static size_t PqSendStart;		/* Next index to send a byte in PqSendBuffer */
 static char PqRecvBuffer[PQ_RECV_BUFFER_SIZE];
 static int	PqRecvPointer;		/* Next index to read a byte from PqRecvBuffer */
 static int	PqRecvLength;		/* End of data available in PqRecvBuffer */
-#if defined(__EMSCRIPTEN__) || defined(__wasi__)
-volatile int querylen = 0;
-volatile FILE* queryfp = NULL;
-
-typedef ssize_t (*pglite_read_t)(void *buffer, size_t max_length);
-extern pglite_read_t pglite_read;
-	
-typedef ssize_t(*pglite_write_t)(void *buffer, size_t length);
-extern pglite_write_t pglite_write;	
-
-int EMSCRIPTEN_KEEPALIVE fcntl(int __fd, int __cmd, ...) {
-	// dummy 
-	return 0;
-}
-
-int EMSCRIPTEN_KEEPALIVE setsockopt(int __fd, int __level, int __optname,
-	const void *__optval, socklen_t __optlen) {
-		// dummy 
-		return 0;
-}
-
-int EMSCRIPTEN_KEEPALIVE getsockopt(int __fd, int __level, int __optname,
-	void *__restrict __optval,
-	socklen_t *__restrict __optlen) {
-		// dummy 
-		return 0;
-}
-
-int EMSCRIPTEN_KEEPALIVE getsockname(int __fd, struct sockaddr * __addr,
-	socklen_t *__restrict __len) {
-		// dummy 
-		return 0;
-	}
-
-ssize_t EMSCRIPTEN_KEEPALIVE
-	recv(int __fd, void *__buf, size_t __n, int __flags) {
-		ssize_t got = pglite_read(__buf, __n);
-		return got;
-	}
-
-ssize_t EMSCRIPTEN_KEEPALIVE
-	send(int __fd, const void *__buf, size_t __n, int __flags) {
-		ssize_t wrote = pglite_write(__buf, __n);
-		return wrote;
-	}
-
-#endif
 
 /*
  * Message status

@@ -150,12 +150,8 @@ be_lo_close(PG_FUNCTION_ARGS)
  *
  *****************************************************************************/
 
-#if defined(__EMSCRIPTEN__) || defined(__wasi__)
-static int
-#else
 int
-#endif
-lo_read3(int fd, char *buf, int len)
+lo_read(int fd, char *buf, int len)
 {
 	int			status;
 	LargeObjectDesc *lobj;
@@ -182,12 +178,8 @@ lo_read3(int fd, char *buf, int len)
 	return status;
 }
 
-#if defined(__EMSCRIPTEN__) || defined(__wasi__)
-static int
-#else
 int
-#endif
-lo_write3(int fd, const char *buf, int len)
+lo_write(int fd, const char *buf, int len)
 {
 	int			status;
 	LargeObjectDesc *lobj;
@@ -198,7 +190,7 @@ lo_write3(int fd, const char *buf, int len)
 				 errmsg("invalid large-object descriptor: %d", fd)));
 	lobj = cookies[fd];
 
-	/* see comment in lo_read3() */
+	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -373,7 +365,7 @@ be_loread(PG_FUNCTION_ARGS)
 		len = 0;
 
 	retval = (bytea *) palloc(VARHDRSZ + len);
-	totalread = lo_read3(fd, VARDATA(retval), len);
+	totalread = lo_read(fd, VARDATA(retval), len);
 	SET_VARSIZE(retval, totalread + VARHDRSZ);
 
 	PG_RETURN_BYTEA_P(retval);
@@ -390,7 +382,7 @@ be_lowrite(PG_FUNCTION_ARGS)
 	PreventCommandIfReadOnly("lowrite()");
 
 	bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
-	totalwritten = lo_write3(fd, VARDATA_ANY(wbuf), bytestowrite);
+	totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
 	PG_RETURN_INT32(totalwritten);
 }
 
@@ -568,7 +560,7 @@ lo_truncate_internal(int32 fd, int64 len)
 				 errmsg("invalid large-object descriptor: %d", fd)));
 	lobj = cookies[fd];
 
-	/* see comment in lo_read3() */
+	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
