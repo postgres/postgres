@@ -1355,6 +1355,28 @@ ORDER BY 1;
          Output: tenk1.two
 (5 rows)
 
+-- Try a mixed setop case.  Ensure the right-hand UNION child gets removed.
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT two FROM tenk1 t1
+EXCEPT
+SELECT four FROM tenk1 t2
+UNION
+SELECT ten FROM tenk1 dummy WHERE 1=2;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Unique
+   Output: t1.two
+   ->  Sort
+         Output: t1.two
+         Sort Key: t1.two
+         ->  HashSetOp Except
+               Output: t1.two
+               ->  Seq Scan on public.tenk1 t1
+                     Output: t1.two
+               ->  Seq Scan on public.tenk1 t2
+                     Output: t2.four
+(11 rows)
+
 -- Test constraint exclusion of UNION ALL subqueries
 explain (costs off)
  SELECT * FROM

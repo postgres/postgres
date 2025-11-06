@@ -901,19 +901,22 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		double		dNumGroups;
 		bool		can_sort = grouping_is_sortable(groupList);
 		bool		can_hash = grouping_is_hashable(groupList);
+		Path	   *first_path = linitial(cheapest_pathlist);
 
-		if (list_length(cheapest_pathlist) == 1)
+		/*
+		 * Estimate the number of UNION output rows.  In the case when only a
+		 * single UNION child remains, we can use estimate_num_groups() on
+		 * that child.  We must be careful not to do this when that child is
+		 * the result of some other set operation as the targetlist will
+		 * contain Vars with varno==0, which estimate_num_groups() wouldn't
+		 * like.
+		 */
+		if (list_length(cheapest_pathlist) == 1 &&
+			first_path->parent->reloptkind != RELOPT_UPPER_REL)
 		{
-			Path	   *path = linitial(cheapest_pathlist);
-
-			/*
-			 * In the case where only one union child remains due to the
-			 * detection of one or more dummy union children, obtain an
-			 * estimate on the surviving child directly.
-			 */
 			dNumGroups = estimate_num_groups(root,
-											 path->pathtarget->exprs,
-											 path->rows,
+											 first_path->pathtarget->exprs,
+											 first_path->rows,
 											 NULL,
 											 NULL);
 		}
