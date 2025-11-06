@@ -225,7 +225,9 @@ CreateSharedMemoryAndSemaphores(void)
 	InitShmemAccess(seghdr);
 
 	/*
-	 * Create semaphores
+	 * Create semaphores.  (This is done here for historical reasons.  We used
+	 * to support emulating spinlocks with semaphores, which required
+	 * initializing semaphores early.)
 	 */
 	PGReserveSemaphores(numSemas);
 
