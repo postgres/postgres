@@ -76,6 +76,7 @@ task:
   # freebsd already takes longer than other platforms except for windows.
   configure_script: |
     su postgres <<-EOF
+      set -e
       ./configure \
         --enable-cassert --enable-debug --enable-tap-tests \
         --enable-nls \
@@ -181,6 +182,7 @@ task:
 
   configure_script: |
     su postgres <<-EOF
+      set -e
       ./configure \
         --enable-cassert --enable-debug --enable-tap-tests \
         --enable-nls \
@@ -198,6 +200,7 @@ task:
 
   test_world_script: |
     su postgres <<-EOF
+      set -e
       ulimit -c unlimited # default is 0
       make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
     EOF
