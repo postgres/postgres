@@ -1753,7 +1753,7 @@ AC_CHECK_SIZEOF([off_t])
 
 # If we don't have largefile support, can't handle segment size >= 2GB.
 if test "$ac_cv_sizeof_off_t" -lt 8; then
-  if expr $RELSEG_SIZE '*' $blocksize '>=' 2 '*' 1024 '*' 1024; then
+  if expr $RELSEG_SIZE '*' $blocksize '>=' 2 '*' 1024 '*' 1024 >/dev/null; then
     AC_MSG_ERROR([Large file support is not enabled. Segment size cannot be larger than 1GB.])
   fi
 fi
