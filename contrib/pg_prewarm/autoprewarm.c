@@ -730,7 +730,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 			++num_blocks;
 		}
 
-		UnlockBufHdr(bufHdr, buf_state);
+		UnlockBufHdr(bufHdr);
 	}
 
 	snprintf(transient_dump_file_path, MAXPGPATH, "%s.tmp", AUTOPREWARM_FILE);

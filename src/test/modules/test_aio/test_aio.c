@@ -310,6 +310,7 @@ create_toy_buffer(Relation rel, BlockNumber blkno)
 	BufferDesc *buf_hdr;
 	uint32		buf_state;
 	bool		was_pinned = false;
+	uint32		unset_bits = 0;
 
 	/* place buffer in shared buffers without erroring out */
 	buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_ZERO_AND_LOCK, NULL);
@@ -334,12 +335,17 @@ create_toy_buffer(Relation rel, BlockNumber blkno)
 	if (BUF_STATE_GET_REFCOUNT(buf_state) > 1)
 		was_pinned = true;
 	else
-		buf_state &= ~(BM_VALID | BM_DIRTY);
+		unset_bits |= BM_VALID | BM_DIRTY;
 
 	if (RelationUsesLocalBuffers(rel))
+	{
+		buf_state &= ~unset_bits;
 		pg_atomic_unlocked_write_u32(&buf_hdr->state, buf_state);
+	}
 	else
-		UnlockBufHdr(buf_hdr, buf_state);
+	{
+		UnlockBufHdrExt(buf_hdr, buf_state, 0, unset_bits, 0);
+	}
 
 	if (was_pinned)
 		elog(ERROR, "toy buffer %d was already pinned",

@@ -266,6 +266,7 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 				break;
 			}
 
+			/* See equivalent code in PinBuffer() */
 			if (unlikely(local_buf_state & BM_LOCKED))
 			{
 				old_buf_state = WaitBufHdrUnlocked(buf);
@@ -700,6 +701,7 @@ GetBufferFromRing(BufferAccessStrategy strategy, uint32 *buf_state)
 			|| BUF_STATE_GET_USAGECOUNT(local_buf_state) > 1)
 			break;
 
+		/* See equivalent code in PinBuffer() */
 		if (unlikely(local_buf_state & BM_LOCKED))
 		{
 			old_buf_state = WaitBufHdrUnlocked(buf);

@@ -220,7 +220,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			else
 				fctx->record[i].isvalid = false;
 
-			UnlockBufHdr(bufHdr, buf_state);
+			UnlockBufHdr(bufHdr);
 		}
 	}
 
@@ -460,7 +460,6 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		{
 			char	   *buffptr = (char *) BufferGetBlock(i + 1);
 			BufferDesc *bufHdr;
-			uint32		buf_state;
 			uint32		bufferid;
 			int32		page_num;
 			char	   *startptr_buff,
@@ -471,9 +470,9 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 			bufHdr = GetBufferDescriptor(i);
 
 			/* Lock each buffer header before inspecting. */
-			buf_state = LockBufHdr(bufHdr);
+			LockBufHdr(bufHdr);
 			bufferid = BufferDescriptorGetBuffer(bufHdr);
-			UnlockBufHdr(bufHdr, buf_state);
+			UnlockBufHdr(bufHdr);
 
 			/* start of the first page of this buffer */
 			startptr_buff = (char *) TYPEALIGN_DOWN(os_page_size, buffptr);
