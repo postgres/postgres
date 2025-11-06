@@ -134,7 +134,7 @@ ExecScanReScan(ScanState *node)
 
 			/*
 			 * If an FDW or custom scan provider has replaced the join with a
-			 * scan, there are multiple RTIs; reset the epqScanDone flag for
+			 * scan, there are multiple RTIs; reset the relsubs_done flag for
 			 * all of them.
 			 */
 			if (IsA(node->ps.plan, ForeignScan))
