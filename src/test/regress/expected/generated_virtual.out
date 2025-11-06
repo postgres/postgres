@@ -496,6 +496,12 @@ COPY gtest1 FROM stdin;
 COPY gtest1 (a, b) FROM stdin;
 ERROR:  column "b" is a generated column
 DETAIL:  Generated columns cannot be used in COPY.
+COPY gtest1 FROM stdin WHERE b <> 10;
+ERROR:  generated columns are not supported in COPY FROM WHERE conditions
+DETAIL:  Column "b" is a generated column.
+COPY gtest1 FROM stdin WHERE gtest1 IS NULL;
+ERROR:  generated columns are not supported in COPY FROM WHERE conditions
+DETAIL:  Column "b" is a generated column.
 SELECT * FROM gtest1 ORDER BY a;
  a | b 
 ---+---
