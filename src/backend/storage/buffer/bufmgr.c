@@ -5545,7 +5545,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 			 * checksum here. That will happen when the page is written
 			 * sometime later in this checkpoint cycle.
 			 */
-			if (!XLogRecPtrIsInvalid(lsn))
+			if (XLogRecPtrIsValid(lsn))
 				PageSetLSN(page, lsn);
 		}
 

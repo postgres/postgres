@@ -229,7 +229,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		 * Wait for specified streaming replication standby servers (if any)
 		 * to confirm receipt of WAL up to wait_for_wal_lsn.
 		 */
-		if (XLogRecPtrIsInvalid(upto_lsn))
+		if (!XLogRecPtrIsValid(upto_lsn))
 			wait_for_wal_lsn = end_of_wal;
 		else
 			wait_for_wal_lsn = Min(upto_lsn, end_of_wal);
@@ -276,7 +276,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 			}
 
 			/* check limits */
-			if (upto_lsn != InvalidXLogRecPtr &&
+			if (XLogRecPtrIsValid(upto_lsn) &&
 				upto_lsn <= ctx->reader->EndRecPtr)
 				break;
 			if (upto_nchanges != 0 &&
@@ -289,7 +289,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		 * Next time, start where we left off. (Hunting things, the family
 		 * business..)
 		 */
-		if (ctx->reader->EndRecPtr != InvalidXLogRecPtr && confirm)
+		if (XLogRecPtrIsValid(ctx->reader->EndRecPtr) && confirm)
 		{
 			LogicalConfirmReceivedLocation(ctx->reader->EndRecPtr);
 

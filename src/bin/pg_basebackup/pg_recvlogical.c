@@ -482,7 +482,7 @@ StreamLogicalLog(void)
 			}
 			replyRequested = copybuf[pos];
 
-			if (endpos != InvalidXLogRecPtr && walEnd >= endpos)
+			if (XLogRecPtrIsValid(endpos) && walEnd >= endpos)
 			{
 				/*
 				 * If there's nothing to read on the socket until a keepalive
@@ -535,7 +535,7 @@ StreamLogicalLog(void)
 		/* Extract WAL location for this block */
 		cur_record_lsn = fe_recvint64(&copybuf[1]);
 
-		if (endpos != InvalidXLogRecPtr && cur_record_lsn > endpos)
+		if (XLogRecPtrIsValid(endpos) && cur_record_lsn > endpos)
 		{
 			/*
 			 * We've read past our endpoint, so prepare to go away being
@@ -583,7 +583,7 @@ StreamLogicalLog(void)
 			goto error;
 		}
 
-		if (endpos != InvalidXLogRecPtr && cur_record_lsn == endpos)
+		if (XLogRecPtrIsValid(endpos) && cur_record_lsn == endpos)
 		{
 			/* endpos was exactly the record we just processed, we're done */
 			if (!flushAndSendFeedback(conn, &now))
@@ -913,14 +913,14 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (startpos != InvalidXLogRecPtr && (do_create_slot || do_drop_slot))
+	if (XLogRecPtrIsValid(startpos) && (do_create_slot || do_drop_slot))
 	{
 		pg_log_error("cannot use --create-slot or --drop-slot together with --startpos");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
-	if (endpos != InvalidXLogRecPtr && !do_start_slot)
+	if (XLogRecPtrIsValid(endpos) && !do_start_slot)
 	{
 		pg_log_error("--endpos may only be specified with --start");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -1080,7 +1080,7 @@ prepareToTerminate(PGconn *conn, XLogRecPtr endpos, StreamStopReason reason,
 							LSN_FORMAT_ARGS(endpos));
 				break;
 			case STREAM_STOP_END_OF_WAL:
-				Assert(!XLogRecPtrIsInvalid(lsn));
+				Assert(XLogRecPtrIsValid(lsn));
 				pg_log_info("end position %X/%08X reached by WAL record at %X/%08X",
 							LSN_FORMAT_ARGS(endpos), LSN_FORMAT_ARGS(lsn));
 				break;

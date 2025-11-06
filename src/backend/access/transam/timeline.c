@@ -549,8 +549,8 @@ tliOfPointInHistory(XLogRecPtr ptr, List *history)
 	{
 		TimeLineHistoryEntry *tle = (TimeLineHistoryEntry *) lfirst(cell);
 
-		if ((XLogRecPtrIsInvalid(tle->begin) || tle->begin <= ptr) &&
-			(XLogRecPtrIsInvalid(tle->end) || ptr < tle->end))
+		if ((!XLogRecPtrIsValid(tle->begin) || tle->begin <= ptr) &&
+			(!XLogRecPtrIsValid(tle->end) || ptr < tle->end))
 		{
 			/* found it */
 			return tle->tli;

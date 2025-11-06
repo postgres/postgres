@@ -230,7 +230,7 @@ wakeupWaiters(WaitLSNType lsnType, XLogRecPtr currentLSN)
 			/* Get procInfo using appropriate heap node */
 			procInfo = pairingheap_container(WaitLSNProcInfo, heapNode[i], node);
 
-			if (!XLogRecPtrIsInvalid(currentLSN) && procInfo->waitLSN > currentLSN)
+			if (XLogRecPtrIsValid(currentLSN) && procInfo->waitLSN > currentLSN)
 				break;
 
 			Assert(numWakeUpProcs < WAKEUP_PROC_STATIC_ARRAY_SIZE);

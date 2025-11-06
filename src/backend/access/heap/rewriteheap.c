@@ -1169,7 +1169,7 @@ CheckPointLogicalRewriteHeap(void)
 	cutoff = ReplicationSlotsComputeLogicalRestartLSN();
 
 	/* don't start earlier than the restart lsn */
-	if (cutoff != InvalidXLogRecPtr && redo < cutoff)
+	if (XLogRecPtrIsValid(cutoff) && redo < cutoff)
 		cutoff = redo;
 
 	mappings_dir = AllocateDir(PG_LOGICAL_MAPPINGS_DIR);
@@ -1204,7 +1204,7 @@ CheckPointLogicalRewriteHeap(void)
 
 		lsn = ((uint64) hi) << 32 | lo;
 
-		if (lsn < cutoff || cutoff == InvalidXLogRecPtr)
+		if (lsn < cutoff || !XLogRecPtrIsValid(cutoff))
 		{
 			elog(DEBUG1, "removing logical rewrite file \"%s\"", path);
 			if (unlink(path) < 0)

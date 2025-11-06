@@ -46,7 +46,7 @@ gistkillitems(IndexScanDesc scan)
 	bool		killedsomething = false;
 
 	Assert(so->curBlkno != InvalidBlockNumber);
-	Assert(!XLogRecPtrIsInvalid(so->curPageLSN));
+	Assert(XLogRecPtrIsValid(so->curPageLSN));
 	Assert(so->killedItems != NULL);
 
 	buffer = ReadBuffer(scan->indexRelation, so->curBlkno);
@@ -353,7 +353,7 @@ gistScanPage(IndexScanDesc scan, GISTSearchItem *pageItem,
 	 * parentlsn < nsn), or if the system crashed after a page split but
 	 * before the downlink was inserted into the parent.
 	 */
-	if (!XLogRecPtrIsInvalid(pageItem->data.parentlsn) &&
+	if (XLogRecPtrIsValid(pageItem->data.parentlsn) &&
 		(GistFollowRight(page) ||
 		 pageItem->data.parentlsn < GistPageGetNSN(page)) &&
 		opaque->rightlink != InvalidBlockNumber /* sanity check */ )

@@ -1270,15 +1270,15 @@ ReplicationSlotsComputeRequiredLSN(void)
 		 */
 		if (persistency == RS_PERSISTENT)
 		{
-			if (last_saved_restart_lsn != InvalidXLogRecPtr &&
+			if (XLogRecPtrIsValid(last_saved_restart_lsn) &&
 				restart_lsn > last_saved_restart_lsn)
 			{
 				restart_lsn = last_saved_restart_lsn;
 			}
 		}
 
-		if (restart_lsn != InvalidXLogRecPtr &&
-			(min_required == InvalidXLogRecPtr ||
+		if (XLogRecPtrIsValid(restart_lsn) &&
+			(!XLogRecPtrIsValid(min_required) ||
 			 restart_lsn < min_required))
 			min_required = restart_lsn;
 	}
@@ -1350,17 +1350,17 @@ ReplicationSlotsComputeLogicalRestartLSN(void)
 		 */
 		if (persistency == RS_PERSISTENT)
 		{
-			if (last_saved_restart_lsn != InvalidXLogRecPtr &&
+			if (XLogRecPtrIsValid(last_saved_restart_lsn) &&
 				restart_lsn > last_saved_restart_lsn)
 			{
 				restart_lsn = last_saved_restart_lsn;
 			}
 		}
 
-		if (restart_lsn == InvalidXLogRecPtr)
+		if (!XLogRecPtrIsValid(restart_lsn))
 			continue;
 
-		if (result == InvalidXLogRecPtr ||
+		if (!XLogRecPtrIsValid(result) ||
 			restart_lsn < result)
 			result = restart_lsn;
 	}
@@ -1573,8 +1573,8 @@ ReplicationSlotReserveWal(void)
 	ReplicationSlot *slot = MyReplicationSlot;
 
 	Assert(slot != NULL);
-	Assert(slot->data.restart_lsn == InvalidXLogRecPtr);
-	Assert(slot->last_saved_restart_lsn == InvalidXLogRecPtr);
+	Assert(!XLogRecPtrIsValid(slot->data.restart_lsn));
+	Assert(!XLogRecPtrIsValid(slot->last_saved_restart_lsn));
 
 	/*
 	 * The replication slot mechanism is used to prevent removal of required
@@ -1730,7 +1730,7 @@ static inline bool
 CanInvalidateIdleSlot(ReplicationSlot *s)
 {
 	return (idle_replication_slot_timeout_secs != 0 &&
-			!XLogRecPtrIsInvalid(s->data.restart_lsn) &&
+			XLogRecPtrIsValid(s->data.restart_lsn) &&
 			s->inactive_since > 0 &&
 			!(RecoveryInProgress() && s->data.synced));
 }
@@ -1754,7 +1754,7 @@ DetermineSlotInvalidationCause(uint32 possible_causes, ReplicationSlot *s,
 	{
 		XLogRecPtr	restart_lsn = s->data.restart_lsn;
 
-		if (restart_lsn != InvalidXLogRecPtr &&
+		if (XLogRecPtrIsValid(restart_lsn) &&
 			restart_lsn < oldestLSN)
 			return RS_INVAL_WAL_REMOVED;
 	}
@@ -2922,7 +2922,7 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 	 * Don't need to wait for the standbys to catch up if they are already
 	 * beyond the specified WAL location.
 	 */
-	if (!XLogRecPtrIsInvalid(ss_oldest_flush_lsn) &&
+	if (XLogRecPtrIsValid(ss_oldest_flush_lsn) &&
 		ss_oldest_flush_lsn >= wait_for_lsn)
 		return true;
 
@@ -2993,7 +2993,7 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 			break;
 		}
 
-		if (XLogRecPtrIsInvalid(restart_lsn) || restart_lsn < wait_for_lsn)
+		if (!XLogRecPtrIsValid(restart_lsn) || restart_lsn < wait_for_lsn)
 		{
 			/* Log a message if no active_pid for this physical slot */
 			if (inactive)
@@ -3012,7 +3012,7 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 
 		Assert(restart_lsn >= wait_for_lsn);
 
-		if (XLogRecPtrIsInvalid(min_restart_lsn) ||
+		if (!XLogRecPtrIsValid(min_restart_lsn) ||
 			min_restart_lsn > restart_lsn)
 			min_restart_lsn = restart_lsn;
 
@@ -3031,7 +3031,7 @@ StandbySlotsHaveCaughtup(XLogRecPtr wait_for_lsn, int elevel)
 		return false;
 
 	/* The ss_oldest_flush_lsn must not retreat. */
-	Assert(XLogRecPtrIsInvalid(ss_oldest_flush_lsn) ||
+	Assert(!XLogRecPtrIsValid(ss_oldest_flush_lsn) ||
 		   min_restart_lsn >= ss_oldest_flush_lsn);
 
 	ss_oldest_flush_lsn = min_restart_lsn;

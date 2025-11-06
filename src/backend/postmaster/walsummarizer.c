@@ -342,7 +342,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 	 * If we discover that WAL summarization is not enabled, just exit.
 	 */
 	current_lsn = GetOldestUnsummarizedLSN(&current_tli, &exact);
-	if (XLogRecPtrIsInvalid(current_lsn))
+	if (!XLogRecPtrIsValid(current_lsn))
 		proc_exit(0);
 
 	/*
@@ -379,7 +379,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		 * only have to do this once per timeline switch, we probably wouldn't
 		 * save any significant amount of work in practice.
 		 */
-		if (current_tli != latest_tli && XLogRecPtrIsInvalid(switch_lsn))
+		if (current_tli != latest_tli && !XLogRecPtrIsValid(switch_lsn))
 		{
 			List	   *tles = readTimeLineHistory(latest_tli);
 
@@ -394,7 +394,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		 * on this timeline. Switch to the next timeline and go around again,
 		 * backing up to the exact switch point if we passed it.
 		 */
-		if (!XLogRecPtrIsInvalid(switch_lsn) && current_lsn >= switch_lsn)
+		if (XLogRecPtrIsValid(switch_lsn) && current_lsn >= switch_lsn)
 		{
 			/* Restart summarization from switch point. */
 			current_tli = switch_tli;
@@ -419,7 +419,7 @@ WalSummarizerMain(const void *startup_data, size_t startup_data_len)
 		end_of_summary_lsn = SummarizeWAL(current_tli,
 										  current_lsn, exact,
 										  switch_lsn, latest_lsn);
-		Assert(!XLogRecPtrIsInvalid(end_of_summary_lsn));
+		Assert(XLogRecPtrIsValid(end_of_summary_lsn));
 		Assert(end_of_summary_lsn >= current_lsn);
 
 		/*
@@ -923,7 +923,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	private_data = (SummarizerReadLocalXLogPrivate *)
 		palloc0(sizeof(SummarizerReadLocalXLogPrivate));
 	private_data->tli = tli;
-	private_data->historic = !XLogRecPtrIsInvalid(switch_lsn);
+	private_data->historic = XLogRecPtrIsValid(switch_lsn);
 	private_data->read_upto = maximum_lsn;
 
 	/* Create xlogreader. */
@@ -971,7 +971,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	else
 	{
 		summary_start_lsn = XLogFindNextRecord(xlogreader, start_lsn);
-		if (XLogRecPtrIsInvalid(summary_start_lsn))
+		if (!XLogRecPtrIsValid(summary_start_lsn))
 		{
 			/*
 			 * If we hit end-of-WAL while trying to find the next valid
@@ -1058,7 +1058,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		/* We shouldn't go backward. */
 		Assert(summary_start_lsn <= xlogreader->EndRecPtr);
 
-		if (!XLogRecPtrIsInvalid(switch_lsn) &&
+		if (XLogRecPtrIsValid(switch_lsn) &&
 			xlogreader->ReadRecPtr >= switch_lsn)
 		{
 			/*
@@ -1180,7 +1180,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 		 * If we have a switch LSN and have reached it, stop before reading
 		 * the next record.
 		 */
-		if (!XLogRecPtrIsInvalid(switch_lsn) &&
+		if (XLogRecPtrIsValid(switch_lsn) &&
 			xlogreader->EndRecPtr >= switch_lsn)
 			break;
 	}
@@ -1723,7 +1723,7 @@ MaybeRemoveOldWalSummaries(void)
 			 * If the WAL doesn't exist any more, we can remove it if the file
 			 * modification time is old enough.
 			 */
-			if (XLogRecPtrIsInvalid(oldest_lsn) || ws->end_lsn <= oldest_lsn)
+			if (!XLogRecPtrIsValid(oldest_lsn) || ws->end_lsn <= oldest_lsn)
 				RemoveWalSummaryIfOlderThan(ws, cutoff_time);
 
 			/*

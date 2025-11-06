@@ -299,7 +299,7 @@ pa_can_start(void)
 	 * STREAM START message, and it doesn't seem worth sending the extra eight
 	 * bytes with the STREAM START to enable parallelism for this case.
 	 */
-	if (!XLogRecPtrIsInvalid(MySubscription->skiplsn))
+	if (XLogRecPtrIsValid(MySubscription->skiplsn))
 		return false;
 
 	/*
@@ -1640,7 +1640,7 @@ pa_xact_finish(ParallelApplyWorkerInfo *winfo, XLogRecPtr remote_lsn)
 	 */
 	pa_wait_for_xact_finish(winfo);
 
-	if (!XLogRecPtrIsInvalid(remote_lsn))
+	if (XLogRecPtrIsValid(remote_lsn))
 		store_flush_position(remote_lsn, winfo->shared->last_commit_end);
 
 	pa_free_worker(winfo);

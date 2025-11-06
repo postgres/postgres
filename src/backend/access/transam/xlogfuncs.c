@@ -341,7 +341,7 @@ pg_last_wal_receive_lsn(PG_FUNCTION_ARGS)
 
 	recptr = GetWalRcvFlushRecPtr(NULL, NULL);
 
-	if (recptr == 0)
+	if (!XLogRecPtrIsValid(recptr))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(recptr);
@@ -360,7 +360,7 @@ pg_last_wal_replay_lsn(PG_FUNCTION_ARGS)
 
 	recptr = GetXLogReplayRecPtr(NULL);
 
-	if (recptr == 0)
+	if (!XLogRecPtrIsValid(recptr))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(recptr);

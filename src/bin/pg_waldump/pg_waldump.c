@@ -393,7 +393,7 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 	int			count = XLOG_BLCKSZ;
 	WALReadError errinfo;
 
-	if (private->endptr != InvalidXLogRecPtr)
+	if (XLogRecPtrIsValid(private->endptr))
 	{
 		if (targetPagePtr + XLOG_BLCKSZ <= private->endptr)
 			count = XLOG_BLCKSZ;
@@ -637,7 +637,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogStats *stats)
 	/*
 	 * Leave if no stats have been computed yet, as tracked by the end LSN.
 	 */
-	if (XLogRecPtrIsInvalid(stats->endptr))
+	if (!XLogRecPtrIsValid(stats->endptr))
 		return;
 
 	/*
@@ -1136,7 +1136,7 @@ main(int argc, char **argv)
 		/* parse position from file */
 		XLogFromFileName(fname, &private.timeline, &segno, WalSegSz);
 
-		if (XLogRecPtrIsInvalid(private.startptr))
+		if (!XLogRecPtrIsValid(private.startptr))
 			XLogSegNoOffsetToRecPtr(segno, 0, WalSegSz, private.startptr);
 		else if (!XLByteInSeg(private.startptr, segno, WalSegSz))
 		{
@@ -1147,7 +1147,7 @@ main(int argc, char **argv)
 		}
 
 		/* no second file specified, set end position */
-		if (!(optind + 1 < argc) && XLogRecPtrIsInvalid(private.endptr))
+		if (!(optind + 1 < argc) && !XLogRecPtrIsValid(private.endptr))
 			XLogSegNoOffsetToRecPtr(segno + 1, 0, WalSegSz, private.endptr);
 
 		/* parse ENDSEG if passed */
@@ -1170,7 +1170,7 @@ main(int argc, char **argv)
 				pg_fatal("ENDSEG %s is before STARTSEG %s",
 						 argv[optind + 1], argv[optind]);
 
-			if (XLogRecPtrIsInvalid(private.endptr))
+			if (!XLogRecPtrIsValid(private.endptr))
 				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, WalSegSz,
 										private.endptr);
 
@@ -1192,7 +1192,7 @@ main(int argc, char **argv)
 		waldir = identify_target_directory(waldir, NULL);
 
 	/* we don't know what to print */
-	if (XLogRecPtrIsInvalid(private.startptr))
+	if (!XLogRecPtrIsValid(private.startptr))
 	{
 		pg_log_error("no start WAL location given");
 		goto bad_argument;
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
 	/* first find a valid recptr to start from */
 	first_record = XLogFindNextRecord(xlogreader_state, private.startptr);
 
-	if (first_record == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(first_record))
 		pg_fatal("could not find a valid record after %X/%08X",
 				 LSN_FORMAT_ARGS(private.startptr));
 

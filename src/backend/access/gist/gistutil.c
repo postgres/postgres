@@ -1040,7 +1040,7 @@ gistGetFakeLSN(Relation rel)
 		Assert(!RelationNeedsWAL(rel));
 
 		/* No need for an actual record if we already have a distinct LSN */
-		if (!XLogRecPtrIsInvalid(lastlsn) && lastlsn == currlsn)
+		if (XLogRecPtrIsValid(lastlsn) && lastlsn == currlsn)
 			currlsn = gistXLogAssignLSN();
 
 		lastlsn = currlsn;

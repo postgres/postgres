@@ -528,7 +528,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 
 		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags, num_fpi,
 								  fpi_bytes, topxid_included);
-	} while (EndPos == InvalidXLogRecPtr);
+	} while (!XLogRecPtrIsValid(EndPos));
 
 	XLogResetInsertion();
 
@@ -639,7 +639,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			needs_backup = (page_lsn <= RedoRecPtr);
 			if (!needs_backup)
 			{
-				if (*fpw_lsn == InvalidXLogRecPtr || page_lsn < *fpw_lsn)
+				if (!XLogRecPtrIsValid(*fpw_lsn) || page_lsn < *fpw_lsn)
 					*fpw_lsn = page_lsn;
 			}
 		}

@@ -519,7 +519,7 @@ PrepareForIncrementalBackup(IncrementalBackupInfo *ib,
 		if (!WalSummariesAreComplete(tli_wslist, tli_start_lsn, tli_end_lsn,
 									 &tli_missing_lsn))
 		{
-			if (XLogRecPtrIsInvalid(tli_missing_lsn))
+			if (!XLogRecPtrIsValid(tli_missing_lsn))
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("WAL summaries are required on timeline %u from %X/%08X to %X/%08X, but no summaries for that timeline and LSN range exist",

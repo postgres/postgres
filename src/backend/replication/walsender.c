@@ -529,7 +529,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 		i++;
 
 		/* start LSN */
-		if (!XLogRecPtrIsInvalid(slot_contents.data.restart_lsn))
+		if (XLogRecPtrIsValid(slot_contents.data.restart_lsn))
 		{
 			char		xloc[64];
 
@@ -541,7 +541,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 		i++;
 
 		/* timeline this WAL was produced on */
-		if (!XLogRecPtrIsInvalid(slot_contents.data.restart_lsn))
+		if (XLogRecPtrIsValid(slot_contents.data.restart_lsn))
 		{
 			TimeLineID	slots_position_timeline;
 			TimeLineID	current_timeline;
@@ -906,7 +906,7 @@ StartReplication(StartReplicationCmd *cmd)
 			 * that's older than the switchpoint, if it's still in the same
 			 * WAL segment.
 			 */
-			if (!XLogRecPtrIsInvalid(switchpoint) &&
+			if (XLogRecPtrIsValid(switchpoint) &&
 				switchpoint < cmd->startpoint)
 			{
 				ereport(ERROR,
@@ -1827,7 +1827,7 @@ WalSndWaitForWal(XLogRecPtr loc)
 	 * receipt of WAL up to RecentFlushPtr. This is particularly interesting
 	 * if we're far behind.
 	 */
-	if (!XLogRecPtrIsInvalid(RecentFlushPtr) &&
+	if (XLogRecPtrIsValid(RecentFlushPtr) &&
 		!NeedToWaitForWal(loc, RecentFlushPtr, &wait_event))
 		return RecentFlushPtr;
 
@@ -2397,7 +2397,7 @@ PhysicalConfirmReceivedLocation(XLogRecPtr lsn)
 	bool		changed = false;
 	ReplicationSlot *slot = MyReplicationSlot;
 
-	Assert(lsn != InvalidXLogRecPtr);
+	Assert(XLogRecPtrIsValid(lsn));
 	SpinLockAcquire(&slot->mutex);
 	if (slot->data.restart_lsn != lsn)
 	{
@@ -2519,7 +2519,7 @@ ProcessStandbyReplyMessage(void)
 	/*
 	 * Advance our local xmin horizon when the client confirmed a flush.
 	 */
-	if (MyReplicationSlot && flushPtr != InvalidXLogRecPtr)
+	if (MyReplicationSlot && XLogRecPtrIsValid(flushPtr))
 	{
 		if (SlotIsLogical(MyReplicationSlot))
 			LogicalConfirmReceivedLocation(flushPtr);
@@ -3536,7 +3536,7 @@ XLogSendLogical(void)
 	 * If first time through in this session, initialize flushPtr.  Otherwise,
 	 * we only need to update flushPtr if EndRecPtr is past it.
 	 */
-	if (flushPtr == InvalidXLogRecPtr ||
+	if (!XLogRecPtrIsValid(flushPtr) ||
 		logical_decoding_ctx->reader->EndRecPtr >= flushPtr)
 	{
 		/*
@@ -3597,8 +3597,8 @@ WalSndDone(WalSndSendDataCallback send_data)
 	 * flush location if valid, write otherwise. Tools like pg_receivewal will
 	 * usually (unless in synchronous mode) return an invalid flush location.
 	 */
-	replicatedPtr = XLogRecPtrIsInvalid(MyWalSnd->flush) ?
-		MyWalSnd->write : MyWalSnd->flush;
+	replicatedPtr = XLogRecPtrIsValid(MyWalSnd->flush) ?
+		MyWalSnd->flush : MyWalSnd->write;
 
 	if (WalSndCaughtUp && sentPtr == replicatedPtr &&
 		!pq_is_send_pending())
@@ -4073,19 +4073,19 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		{
 			values[1] = CStringGetTextDatum(WalSndGetStateString(state));
 
-			if (XLogRecPtrIsInvalid(sent_ptr))
+			if (!XLogRecPtrIsValid(sent_ptr))
 				nulls[2] = true;
 			values[2] = LSNGetDatum(sent_ptr);
 
-			if (XLogRecPtrIsInvalid(write))
+			if (!XLogRecPtrIsValid(write))
 				nulls[3] = true;
 			values[3] = LSNGetDatum(write);
 
-			if (XLogRecPtrIsInvalid(flush))
+			if (!XLogRecPtrIsValid(flush))
 				nulls[4] = true;
 			values[4] = LSNGetDatum(flush);
 
-			if (XLogRecPtrIsInvalid(apply))
+			if (!XLogRecPtrIsValid(apply))
 				nulls[5] = true;
 			values[5] = LSNGetDatum(apply);
 
@@ -4094,7 +4094,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			 * which always returns an invalid flush location, as an
 			 * asynchronous standby.
 			 */
-			priority = XLogRecPtrIsInvalid(flush) ? 0 : priority;
+			priority = XLogRecPtrIsValid(flush) ? priority : 0;
 
 			if (writeLag < 0)
 				nulls[6] = true;
@@ -4165,7 +4165,7 @@ WalSndKeepalive(bool requestReply, XLogRecPtr writePtr)
 	/* construct the message... */
 	resetStringInfo(&output_message);
 	pq_sendbyte(&output_message, PqReplMsg_Keepalive);
-	pq_sendint64(&output_message, XLogRecPtrIsInvalid(writePtr) ? sentPtr : writePtr);
+	pq_sendint64(&output_message, XLogRecPtrIsValid(writePtr) ? writePtr : sentPtr);
 	pq_sendint64(&output_message, GetCurrentTimestamp());
 	pq_sendbyte(&output_message, requestReply ? 1 : 0);
 

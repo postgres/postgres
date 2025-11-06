@@ -493,7 +493,7 @@ SyncRepReleaseWaiters(void)
 	if (MyWalSnd->sync_standby_priority == 0 ||
 		(MyWalSnd->state != WALSNDSTATE_STREAMING &&
 		 MyWalSnd->state != WALSNDSTATE_STOPPING) ||
-		XLogRecPtrIsInvalid(MyWalSnd->flush))
+		!XLogRecPtrIsValid(MyWalSnd->flush))
 	{
 		announce_next_takeover = true;
 		return;
@@ -676,11 +676,11 @@ SyncRepGetOldestSyncRecPtr(XLogRecPtr *writePtr,
 		XLogRecPtr	flush = sync_standbys[i].flush;
 		XLogRecPtr	apply = sync_standbys[i].apply;
 
-		if (XLogRecPtrIsInvalid(*writePtr) || *writePtr > write)
+		if (!XLogRecPtrIsValid(*writePtr) || *writePtr > write)
 			*writePtr = write;
-		if (XLogRecPtrIsInvalid(*flushPtr) || *flushPtr > flush)
+		if (!XLogRecPtrIsValid(*flushPtr) || *flushPtr > flush)
 			*flushPtr = flush;
-		if (XLogRecPtrIsInvalid(*applyPtr) || *applyPtr > apply)
+		if (!XLogRecPtrIsValid(*applyPtr) || *applyPtr > apply)
 			*applyPtr = apply;
 	}
 }
@@ -799,7 +799,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 			continue;
 
 		/* Must have a valid flush position */
-		if (XLogRecPtrIsInvalid(stby->flush))
+		if (!XLogRecPtrIsValid(stby->flush))
 			continue;
 
 		/* OK, it's a candidate */

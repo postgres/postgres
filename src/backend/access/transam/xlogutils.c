@@ -710,7 +710,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage,
 	const XLogRecPtr lastReadPage = (state->seg.ws_segno *
 									 state->segcxt.ws_segsize + state->segoff);
 
-	Assert(wantPage != InvalidXLogRecPtr && wantPage % XLOG_BLCKSZ == 0);
+	Assert(XLogRecPtrIsValid(wantPage) && wantPage % XLOG_BLCKSZ == 0);
 	Assert(wantLength <= XLOG_BLCKSZ);
 	Assert(state->readLen == 0 || state->readLen <= XLOG_BLCKSZ);
 	Assert(currTLI != 0);
@@ -741,7 +741,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage,
 	 */
 	if (state->currTLI == currTLI && wantPage >= lastReadPage)
 	{
-		Assert(state->currTLIValidUntil == InvalidXLogRecPtr);
+		Assert(!XLogRecPtrIsValid(state->currTLIValidUntil));
 		return;
 	}
 
@@ -750,7 +750,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage,
 	 * timeline and the timeline we're reading from is valid until the end of
 	 * the current segment we can just keep reading.
 	 */
-	if (state->currTLIValidUntil != InvalidXLogRecPtr &&
+	if (XLogRecPtrIsValid(state->currTLIValidUntil) &&
 		state->currTLI != currTLI &&
 		state->currTLI != 0 &&
 		((wantPage + wantLength) / state->segcxt.ws_segsize) <
@@ -790,7 +790,7 @@ XLogReadDetermineTimeline(XLogReaderState *state, XLogRecPtr wantPage,
 		state->currTLIValidUntil = tliSwitchPoint(state->currTLI, timelineHistory,
 												  &state->nextTLI);
 
-		Assert(state->currTLIValidUntil == InvalidXLogRecPtr ||
+		Assert(!XLogRecPtrIsValid(state->currTLIValidUntil) ||
 			   wantPage + wantLength < state->currTLIValidUntil);
 
 		list_free_deep(timelineHistory);

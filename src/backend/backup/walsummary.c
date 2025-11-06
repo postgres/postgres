@@ -67,9 +67,9 @@ GetWalSummaries(TimeLineID tli, XLogRecPtr start_lsn, XLogRecPtr end_lsn)
 		/* Skip if it doesn't match the filter criteria. */
 		if (tli != 0 && tli != file_tli)
 			continue;
-		if (!XLogRecPtrIsInvalid(start_lsn) && start_lsn >= file_end_lsn)
+		if (XLogRecPtrIsValid(start_lsn) && start_lsn >= file_end_lsn)
 			continue;
-		if (!XLogRecPtrIsInvalid(end_lsn) && end_lsn <= file_start_lsn)
+		if (XLogRecPtrIsValid(end_lsn) && end_lsn <= file_start_lsn)
 			continue;
 
 		/* Add it to the list. */
@@ -111,9 +111,9 @@ FilterWalSummaries(List *wslist, TimeLineID tli,
 		/* Skip if it doesn't match the filter criteria. */
 		if (tli != 0 && tli != ws->tli)
 			continue;
-		if (!XLogRecPtrIsInvalid(start_lsn) && start_lsn > ws->end_lsn)
+		if (XLogRecPtrIsValid(start_lsn) && start_lsn > ws->end_lsn)
 			continue;
-		if (!XLogRecPtrIsInvalid(end_lsn) && end_lsn < ws->start_lsn)
+		if (XLogRecPtrIsValid(end_lsn) && end_lsn < ws->start_lsn)
 			continue;
 
 		/* Add it to the result list. */

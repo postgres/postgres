@@ -937,7 +937,7 @@ SlruPhysicalWritePage(SlruCtl ctl, int64 pageno, int slotno, SlruWriteAll fdata)
 				max_lsn = this_lsn;
 		}
 
-		if (!XLogRecPtrIsInvalid(max_lsn))
+		if (XLogRecPtrIsValid(max_lsn))
 		{
 			/*
 			 * As noted above, elog(ERROR) is not acceptable here, so if

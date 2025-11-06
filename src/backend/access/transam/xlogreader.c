@@ -231,7 +231,7 @@ WALOpenSegmentInit(WALOpenSegment *seg, WALSegmentContext *segcxt,
 void
 XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr)
 {
-	Assert(!XLogRecPtrIsInvalid(RecPtr));
+	Assert(XLogRecPtrIsValid(RecPtr));
 
 	ResetDecoder(state);
 
@@ -343,7 +343,7 @@ XLogNextRecord(XLogReaderState *state, char **errormsg)
 		 * XLogBeginRead() or XLogNextRecord(), and is the location of the
 		 * error.
 		 */
-		Assert(!XLogRecPtrIsInvalid(state->EndRecPtr));
+		Assert(XLogRecPtrIsValid(state->EndRecPtr));
 
 		return NULL;
 	}
@@ -558,7 +558,7 @@ XLogDecodeNextRecord(XLogReaderState *state, bool nonblocking)
 
 	RecPtr = state->NextRecPtr;
 
-	if (state->DecodeRecPtr != InvalidXLogRecPtr)
+	if (XLogRecPtrIsValid(state->DecodeRecPtr))
 	{
 		/* read the record after the one we just read */
 
@@ -1398,7 +1398,7 @@ XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr)
 	XLogPageHeader header;
 	char	   *errormsg;
 
-	Assert(!XLogRecPtrIsInvalid(RecPtr));
+	Assert(XLogRecPtrIsValid(RecPtr));
 
 	/* Make sure ReadPageInternal() can't return XLREAD_WOULDBLOCK. */
 	state->nonblocking = false;

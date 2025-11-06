@@ -381,7 +381,8 @@ TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
 	 * write-busy, since we don't care if the update reaches disk sooner than
 	 * we think.
 	 */
-	slotno = SimpleLruReadPage(XactCtl, pageno, XLogRecPtrIsInvalid(lsn), xid);
+	slotno = SimpleLruReadPage(XactCtl, pageno, !XLogRecPtrIsValid(lsn),
+							   xid);
 
 	/*
 	 * Set the main transaction id, if any.
@@ -705,7 +706,7 @@ TransactionIdSetStatusBit(TransactionId xid, XidStatus status, XLogRecPtr lsn, i
 	 * recovery. After recovery completes the next clog change will set the
 	 * LSN correctly.
 	 */
-	if (!XLogRecPtrIsInvalid(lsn))
+	if (XLogRecPtrIsValid(lsn))
 	{
 		int			lsnindex = GetLSNIndex(slotno, xid);
 

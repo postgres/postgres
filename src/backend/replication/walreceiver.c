@@ -1469,16 +1469,16 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	{
 		values[1] = CStringGetTextDatum(WalRcvGetStateString(state));
 
-		if (XLogRecPtrIsInvalid(receive_start_lsn))
+		if (!XLogRecPtrIsValid(receive_start_lsn))
 			nulls[2] = true;
 		else
 			values[2] = LSNGetDatum(receive_start_lsn);
 		values[3] = Int32GetDatum(receive_start_tli);
-		if (XLogRecPtrIsInvalid(written_lsn))
+		if (!XLogRecPtrIsValid(written_lsn))
 			nulls[4] = true;
 		else
 			values[4] = LSNGetDatum(written_lsn);
-		if (XLogRecPtrIsInvalid(flushed_lsn))
+		if (!XLogRecPtrIsValid(flushed_lsn))
 			nulls[5] = true;
 		else
 			values[5] = LSNGetDatum(flushed_lsn);
@@ -1491,7 +1491,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 			nulls[8] = true;
 		else
 			values[8] = TimestampTzGetDatum(last_receipt_time);
-		if (XLogRecPtrIsInvalid(latest_end_lsn))
+		if (!XLogRecPtrIsValid(latest_end_lsn))
 			nulls[9] = true;
 		else
 			values[9] = LSNGetDatum(latest_end_lsn);

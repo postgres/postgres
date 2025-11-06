@@ -46,7 +46,7 @@ create_physical_replication_slot(char *name, bool immediately_reserve,
 	if (immediately_reserve)
 	{
 		/* Reserve WAL as the user asked for it */
-		if (XLogRecPtrIsInvalid(restart_lsn))
+		if (!XLogRecPtrIsValid(restart_lsn))
 			ReplicationSlotReserveWal();
 		else
 			MyReplicationSlot->data.restart_lsn = restart_lsn;
@@ -308,12 +308,12 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		else
 			nulls[i++] = true;
 
-		if (slot_contents.data.restart_lsn != InvalidXLogRecPtr)
+		if (XLogRecPtrIsValid(slot_contents.data.restart_lsn))
 			values[i++] = LSNGetDatum(slot_contents.data.restart_lsn);
 		else
 			nulls[i++] = true;
 
-		if (slot_contents.data.confirmed_flush != InvalidXLogRecPtr)
+		if (XLogRecPtrIsValid(slot_contents.data.confirmed_flush))
 			values[i++] = LSNGetDatum(slot_contents.data.confirmed_flush);
 		else
 			nulls[i++] = true;
@@ -357,7 +357,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 				 *
 				 * If we do change it, save the state for safe_wal_size below.
 				 */
-				if (!XLogRecPtrIsInvalid(slot_contents.data.restart_lsn))
+				if (XLogRecPtrIsValid(slot_contents.data.restart_lsn))
 				{
 					int			pid;
 
@@ -407,7 +407,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		values[i++] = BoolGetDatum(slot_contents.data.two_phase);
 
 		if (slot_contents.data.two_phase &&
-			!XLogRecPtrIsInvalid(slot_contents.data.two_phase_at))
+			XLogRecPtrIsValid(slot_contents.data.two_phase_at))
 			values[i++] = LSNGetDatum(slot_contents.data.two_phase_at);
 		else
 			nulls[i++] = true;
@@ -467,7 +467,7 @@ pg_physical_replication_slot_advance(XLogRecPtr moveto)
 	XLogRecPtr	startlsn = MyReplicationSlot->data.restart_lsn;
 	XLogRecPtr	retlsn = startlsn;
 
-	Assert(moveto != InvalidXLogRecPtr);
+	Assert(XLogRecPtrIsValid(moveto));
 
 	if (startlsn < moveto)
 	{
@@ -523,7 +523,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 
 	CheckSlotPermissions();
 
-	if (XLogRecPtrIsInvalid(moveto))
+	if (!XLogRecPtrIsValid(moveto))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid target WAL LSN")));
@@ -545,7 +545,7 @@ pg_replication_slot_advance(PG_FUNCTION_ARGS)
 	ReplicationSlotAcquire(NameStr(*slotname), true, true);
 
 	/* A slot whose restart_lsn has never been reserved cannot be advanced */
-	if (XLogRecPtrIsInvalid(MyReplicationSlot->data.restart_lsn))
+	if (!XLogRecPtrIsValid(MyReplicationSlot->data.restart_lsn))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("replication slot \"%s\" cannot be advanced",
@@ -679,7 +679,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 						NameStr(*src_name))));
 
 	/* Copying non-reserved slot doesn't make sense */
-	if (XLogRecPtrIsInvalid(src_restart_lsn))
+	if (!XLogRecPtrIsValid(src_restart_lsn))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot copy a replication slot that doesn't reserve WAL")));
@@ -785,7 +785,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 					 errdetail("The source replication slot was modified incompatibly during the copy operation.")));
 
 		/* The source slot must have a consistent snapshot */
-		if (src_islogical && XLogRecPtrIsInvalid(copy_confirmed_flush))
+		if (src_islogical && !XLogRecPtrIsValid(copy_confirmed_flush))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot copy unfinished logical replication slot \"%s\"",
@@ -840,7 +840,7 @@ copy_replication_slot(FunctionCallInfo fcinfo, bool logical_slot)
 	/* All done.  Set up the return values */
 	values[0] = NameGetDatum(dst_name);
 	nulls[0] = false;
-	if (!XLogRecPtrIsInvalid(MyReplicationSlot->data.confirmed_flush))
+	if (XLogRecPtrIsValid(MyReplicationSlot->data.confirmed_flush))
 	{
 		values[1] = LSNGetDatum(MyReplicationSlot->data.confirmed_flush);
 		nulls[1] = false;

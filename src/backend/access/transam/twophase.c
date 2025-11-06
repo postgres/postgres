@@ -2198,7 +2198,7 @@ ProcessTwoPhaseBuffer(FullTransactionId fxid,
 	Assert(LWLockHeldByMeInMode(TwoPhaseStateLock, LW_EXCLUSIVE));
 
 	if (!fromdisk)
-		Assert(prepare_start_lsn != InvalidXLogRecPtr);
+		Assert(XLogRecPtrIsValid(prepare_start_lsn));
 
 	/* Already processed? */
 	if (TransactionIdDidCommit(XidFromFullTransactionId(fxid)) ||
@@ -2547,7 +2547,7 @@ PrepareRedoAdd(FullTransactionId fxid, char *buf,
 	 * the record is added to TwoPhaseState and it should have no
 	 * corresponding file in pg_twophase.
 	 */
-	if (!XLogRecPtrIsInvalid(start_lsn))
+	if (XLogRecPtrIsValid(start_lsn))
 	{
 		char		path[MAXPGPATH];
 
@@ -2587,7 +2587,7 @@ PrepareRedoAdd(FullTransactionId fxid, char *buf,
 	gxact->owner = hdr->owner;
 	gxact->locking_backend = INVALID_PROC_NUMBER;
 	gxact->valid = false;
-	gxact->ondisk = XLogRecPtrIsInvalid(start_lsn);
+	gxact->ondisk = !XLogRecPtrIsValid(start_lsn);
 	gxact->inredo = true;		/* yes, added in redo */
 	strcpy(gxact->gid, gid);
 

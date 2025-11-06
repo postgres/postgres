@@ -192,7 +192,7 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 					LSN_FORMAT_ARGS(xlogpos),
 					timeline);
 
-	if (!XLogRecPtrIsInvalid(endpos) && endpos < xlogpos)
+	if (XLogRecPtrIsValid(endpos) && endpos < xlogpos)
 	{
 		if (verbose)
 			pg_log_info("stopped log streaming at %X/%08X (timeline %u)",
@@ -535,7 +535,7 @@ StreamLog(void)
 	 * Figure out where to start streaming.  First scan the local directory.
 	 */
 	stream.startpos = FindStreamingStart(&stream.timeline);
-	if (stream.startpos == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(stream.startpos))
 	{
 		/*
 		 * Try to get the starting point from the slot if any.  This is
@@ -556,14 +556,14 @@ StreamLog(void)
 		 * If it the starting point is still not known, use the current WAL
 		 * flush value as last resort.
 		 */
-		if (stream.startpos == InvalidXLogRecPtr)
+		if (!XLogRecPtrIsValid(stream.startpos))
 		{
 			stream.startpos = serverpos;
 			stream.timeline = servertli;
 		}
 	}
 
-	Assert(stream.startpos != InvalidXLogRecPtr &&
+	Assert(XLogRecPtrIsValid(stream.startpos) &&
 		   stream.timeline != 0);
 
 	/*

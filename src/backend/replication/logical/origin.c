@@ -984,8 +984,8 @@ replorigin_advance(RepOriginId node,
 		/* initialize new slot */
 		LWLockAcquire(&free_state->lock, LW_EXCLUSIVE);
 		replication_state = free_state;
-		Assert(replication_state->remote_lsn == InvalidXLogRecPtr);
-		Assert(replication_state->local_lsn == InvalidXLogRecPtr);
+		Assert(!XLogRecPtrIsValid(replication_state->remote_lsn));
+		Assert(!XLogRecPtrIsValid(replication_state->local_lsn));
 		replication_state->roident = node;
 	}
 
@@ -1020,7 +1020,7 @@ replorigin_advance(RepOriginId node,
 	 */
 	if (go_backward || replication_state->remote_lsn < remote_commit)
 		replication_state->remote_lsn = remote_commit;
-	if (local_commit != InvalidXLogRecPtr &&
+	if (XLogRecPtrIsValid(local_commit) &&
 		(go_backward || replication_state->local_lsn < local_commit))
 		replication_state->local_lsn = local_commit;
 	LWLockRelease(&replication_state->lock);
@@ -1064,7 +1064,7 @@ replorigin_get_progress(RepOriginId node, bool flush)
 
 	LWLockRelease(ReplicationOriginLock);
 
-	if (flush && local_lsn != InvalidXLogRecPtr)
+	if (flush && XLogRecPtrIsValid(local_lsn))
 		XLogFlush(local_lsn);
 
 	return remote_lsn;
@@ -1197,8 +1197,8 @@ replorigin_session_setup(RepOriginId node, int acquired_by)
 
 		/* initialize new slot */
 		session_replication_state = &replication_states[free_slot];
-		Assert(session_replication_state->remote_lsn == InvalidXLogRecPtr);
-		Assert(session_replication_state->local_lsn == InvalidXLogRecPtr);
+		Assert(!XLogRecPtrIsValid(session_replication_state->remote_lsn));
+		Assert(!XLogRecPtrIsValid(session_replication_state->local_lsn));
 		session_replication_state->roident = node;
 	}
 
@@ -1282,7 +1282,7 @@ replorigin_session_get_progress(bool flush)
 	local_lsn = session_replication_state->local_lsn;
 	LWLockRelease(&session_replication_state->lock);
 
-	if (flush && local_lsn != InvalidXLogRecPtr)
+	if (flush && XLogRecPtrIsValid(local_lsn))
 		XLogFlush(local_lsn);
 
 	return remote_lsn;
@@ -1454,7 +1454,7 @@ pg_replication_origin_session_progress(PG_FUNCTION_ARGS)
 
 	remote_lsn = replorigin_session_get_progress(flush);
 
-	if (remote_lsn == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(remote_lsn))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(remote_lsn);
@@ -1543,7 +1543,7 @@ pg_replication_origin_progress(PG_FUNCTION_ARGS)
 
 	remote_lsn = replorigin_get_progress(roident, flush);
 
-	if (remote_lsn == InvalidXLogRecPtr)
+	if (!XLogRecPtrIsValid(remote_lsn))
 		PG_RETURN_NULL();
 
 	PG_RETURN_LSN(remote_lsn);

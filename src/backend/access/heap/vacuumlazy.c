@@ -1901,7 +1901,7 @@ lazy_scan_new_or_empty(LVRelState *vacrel, Buffer buf, BlockNumber blkno,
 			 * WAL-logged, and if not, do that now.
 			 */
 			if (RelationNeedsWAL(vacrel->rel) &&
-				PageGetLSN(page) == InvalidXLogRecPtr)
+				!XLogRecPtrIsValid(PageGetLSN(page)))
 				log_newpage_buffer(buf, true);
 
 			PageSetAllVisible(page);

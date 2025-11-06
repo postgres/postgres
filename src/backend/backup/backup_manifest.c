@@ -242,7 +242,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 		 * entry->end is InvalidXLogRecPtr, it means that the timeline has not
 		 * yet ended.)
 		 */
-		if (!XLogRecPtrIsInvalid(entry->end) && entry->end < startptr)
+		if (XLogRecPtrIsValid(entry->end) && entry->end < startptr)
 			continue;
 
 		/*
@@ -274,7 +274,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
 			 * better have arrived at the expected starting TLI. If not,
 			 * something's gone horribly wrong.
 			 */
-			if (XLogRecPtrIsInvalid(entry->begin))
+			if (!XLogRecPtrIsValid(entry->begin))
 				ereport(ERROR,
 						errmsg("expected start timeline %u but found timeline %u",
 							   starttli, entry->tli));

@@ -1661,7 +1661,7 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 		else
 			nulls[3] = true;
 
-		if (XLogRecPtrIsInvalid(worker.last_lsn))
+		if (!XLogRecPtrIsValid(worker.last_lsn))
 			nulls[4] = true;
 		else
 			values[4] = LSNGetDatum(worker.last_lsn);
@@ -1673,7 +1673,7 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 			nulls[6] = true;
 		else
 			values[6] = TimestampTzGetDatum(worker.last_recv_time);
-		if (XLogRecPtrIsInvalid(worker.reply_lsn))
+		if (!XLogRecPtrIsValid(worker.reply_lsn))
 			nulls[7] = true;
 		else
 			values[7] = LSNGetDatum(worker.reply_lsn);

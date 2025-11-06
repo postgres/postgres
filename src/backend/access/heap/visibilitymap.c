@@ -260,7 +260,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 		 flags, RelationGetRelationName(rel), heapBlk);
 #endif
 
-	Assert(InRecovery || XLogRecPtrIsInvalid(recptr));
+	Assert(InRecovery || !XLogRecPtrIsValid(recptr));
 	Assert(InRecovery || PageIsAllVisible(BufferGetPage(heapBuf)));
 	Assert((flags & VISIBILITYMAP_VALID_BITS) == flags);
 
@@ -292,7 +292,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 
 		if (RelationNeedsWAL(rel))
 		{
-			if (XLogRecPtrIsInvalid(recptr))
+			if (!XLogRecPtrIsValid(recptr))
 			{
 				Assert(!InRecovery);
 				recptr = log_heap_visible(rel, heapBuf, vmBuf, cutoff_xid, flags);

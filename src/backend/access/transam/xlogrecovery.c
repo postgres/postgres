@@ -758,9 +758,9 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		 * end-of-backup record), and we can enter archive recovery directly.
 		 */
 		if (ArchiveRecoveryRequested &&
-			(ControlFile->minRecoveryPoint != InvalidXLogRecPtr ||
+			(XLogRecPtrIsValid(ControlFile->minRecoveryPoint) ||
 			 ControlFile->backupEndRequired ||
-			 ControlFile->backupEndPoint != InvalidXLogRecPtr ||
+			 XLogRecPtrIsValid(ControlFile->backupEndPoint) ||
 			 ControlFile->state == DB_SHUTDOWNED))
 		{
 			InArchiveRecovery = true;
@@ -773,7 +773,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		 * emit a log message when we continue initializing from a base
 		 * backup.
 		 */
-		if (!XLogRecPtrIsInvalid(ControlFile->backupStartPoint))
+		if (XLogRecPtrIsValid(ControlFile->backupStartPoint))
 			ereport(LOG,
 					errmsg("restarting backup recovery with redo LSN %X/%08X",
 						   LSN_FORMAT_ARGS(ControlFile->backupStartPoint)));
@@ -868,7 +868,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 	 * The min recovery point should be part of the requested timeline's
 	 * history, too.
 	 */
-	if (!XLogRecPtrIsInvalid(ControlFile->minRecoveryPoint) &&
+	if (XLogRecPtrIsValid(ControlFile->minRecoveryPoint) &&
 		tliOfPointInHistory(ControlFile->minRecoveryPoint - 1, expectedTLEs) !=
 		ControlFile->minRecoveryPointTLI)
 		ereport(FATAL,
@@ -2204,7 +2204,7 @@ CheckRecoveryConsistency(void)
 	 * During crash recovery, we don't reach a consistent state until we've
 	 * replayed all the WAL.
 	 */
-	if (XLogRecPtrIsInvalid(minRecoveryPoint))
+	if (!XLogRecPtrIsValid(minRecoveryPoint))
 		return;
 
 	Assert(InArchiveRecovery);
@@ -2219,7 +2219,7 @@ CheckRecoveryConsistency(void)
 	/*
 	 * Have we reached the point where our base backup was completed?
 	 */
-	if (!XLogRecPtrIsInvalid(backupEndPoint) &&
+	if (XLogRecPtrIsValid(backupEndPoint) &&
 		backupEndPoint <= lastReplayedEndRecPtr)
 	{
 		XLogRecPtr	saveBackupStartPoint = backupStartPoint;
@@ -2425,7 +2425,7 @@ checkTimeLineSwitch(XLogRecPtr lsn, TimeLineID newTLI, TimeLineID prevTLI,
 	 * branched before the timeline the min recovery point is on, and you
 	 * attempt to do PITR to the new timeline.
 	 */
-	if (!XLogRecPtrIsInvalid(minRecoveryPoint) &&
+	if (XLogRecPtrIsValid(minRecoveryPoint) &&
 		lsn < minRecoveryPoint &&
 		newTLI > minRecoveryPointTLI)
 		ereport(PANIC,
@@ -3164,7 +3164,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 	/* Pass through parameters to XLogPageRead */
 	private->fetching_ckpt = fetching_ckpt;
 	private->emode = emode;
-	private->randAccess = (xlogreader->ReadRecPtr == InvalidXLogRecPtr);
+	private->randAccess = !XLogRecPtrIsValid(xlogreader->ReadRecPtr);
 	private->replayTLI = replayTLI;
 
 	/* This is the first attempt to read this page. */
@@ -3190,7 +3190,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 			 * overwrite contrecord in the wrong place, breaking everything.
 			 */
 			if (!ArchiveRecoveryRequested &&
-				!XLogRecPtrIsInvalid(xlogreader->abortedRecPtr))
+				XLogRecPtrIsValid(xlogreader->abortedRecPtr))
 			{
 				abortedRecPtr = xlogreader->abortedRecPtr;
 				missingContrecPtr = xlogreader->missingContrecPtr;
@@ -4370,7 +4370,7 @@ XLogFileReadAnyTLI(XLogSegNo segno, XLogSource source)
 		 * Skip scanning the timeline ID that the logfile segment to read
 		 * doesn't belong to
 		 */
-		if (hent->begin != InvalidXLogRecPtr)
+		if (XLogRecPtrIsValid(hent->begin))
 		{
 			XLogSegNo	beginseg = 0;
 

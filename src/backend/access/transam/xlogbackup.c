@@ -79,8 +79,8 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 	}
 
 	/* either both istartpoint and istarttli should be set, or neither */
-	Assert(XLogRecPtrIsInvalid(state->istartpoint) == (state->istarttli == 0));
-	if (!XLogRecPtrIsInvalid(state->istartpoint))
+	Assert(XLogRecPtrIsValid(state->istartpoint) == (state->istarttli != 0));
+	if (XLogRecPtrIsValid(state->istartpoint))
 	{
 		appendStringInfo(&result, "INCREMENTAL FROM LSN: %X/%08X\n",
 						 LSN_FORMAT_ARGS(state->istartpoint));
