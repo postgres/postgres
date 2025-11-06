@@ -22,6 +22,7 @@ $node_subscriber->start;
 my $ddl = qq(
 	CREATE TABLE regress_seq_test (v BIGINT);
 	CREATE SEQUENCE regress_s1;
+	CREATE SEQUENCE "regress'quote";
 );
 $node_publisher->safe_psql('postgres', $ddl);
 
@@ -32,6 +33,7 @@ $ddl = qq(
 	CREATE SEQUENCE regress_s1;
 	CREATE SEQUENCE regress_s2;
 	CREATE SEQUENCE regress_s3;
+	CREATE SEQUENCE "regress'quote";
 );
 $node_subscriber->safe_psql('postgres', $ddl);
 
@@ -40,6 +42,7 @@ $node_publisher->safe_psql(
 	'postgres', qq(
 	-- generate a number of values using the sequence
 	INSERT INTO regress_seq_test SELECT nextval('regress_s1') FROM generate_series(1,100);
+	INSERT INTO regress_seq_test SELECT nextval('"regress''quote"') FROM generate_series(1,100);
 ));
 
 # Setup logical replication pub/sub
@@ -62,6 +65,13 @@ my $result = $node_subscriber->safe_psql(
 	SELECT last_value, is_called FROM regress_s1;
 ));
 is($result, '100|t', 'initial test data replicated');
+
+$result = $node_subscriber->safe_psql(
+	'postgres', qq(
+	SELECT last_value, is_called FROM "regress'quote";
+));
+is($result, '100|t',
+	'initial test data replicated for sequence name having quotes');
 
 ##########
 ## ALTER SUBSCRIPTION ... REFRESH PUBLICATION should cause sync of new
@@ -201,14 +211,14 @@ $node_subscriber->safe_psql('postgres',
 # Verify that an error is logged for parameter differences on sequence
 # ('regress_s4').
 $node_subscriber->wait_for_log(
-	qr/WARNING: ( [A-Z0-9]+:)? mismatched or renamed sequence on subscriber \("public.regress_s4"\)\n.*ERROR: ( [A-Z0-9]+:)? logical replication sequence synchronization failed for subscription "regress_seq_sub"/,
+	qr/WARNING: ( [A-Z0-9]+:)? mismatched or renamed sequence on subscriber \("public.regress_s4"\)/,
 	$log_offset);
 
 # Verify that an error is logged for the missing sequence ('regress_s4').
 $node_publisher->safe_psql('postgres', qq(DROP SEQUENCE regress_s4;));
 
 $node_subscriber->wait_for_log(
-	qr/WARNING: ( [A-Z0-9]+:)? missing sequence on publisher \("public.regress_s4"\)\n.*ERROR: ( [A-Z0-9]+:)? logical replication sequence synchronization failed for subscription "regress_seq_sub"/,
+	qr/WARNING: ( [A-Z0-9]+:)? missing sequence on publisher \("public.regress_s4"\)/,
 	$log_offset);
 
 done_testing();

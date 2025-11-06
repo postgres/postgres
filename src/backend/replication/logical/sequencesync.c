@@ -60,6 +60,7 @@
 #include "replication/logicalworker.h"
 #include "replication/worker_internal.h"
 #include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
@@ -407,14 +408,20 @@ copy_sequences(WalReceiverConn *conn)
 
 		for (int idx = cur_batch_base_index; idx < n_seqinfos; idx++)
 		{
+			char	   *nspname_literal;
+			char	   *seqname_literal;
+
 			LogicalRepSequenceInfo *seqinfo =
 				(LogicalRepSequenceInfo *) list_nth(seqinfos, idx);
 
 			if (seqstr->len > 0)
 				appendStringInfoString(seqstr, ", ");
 
-			appendStringInfo(seqstr, "(\'%s\', \'%s\', %d)",
-							 seqinfo->nspname, seqinfo->seqname, idx);
+			nspname_literal = quote_literal_cstr(seqinfo->nspname);
+			seqname_literal = quote_literal_cstr(seqinfo->seqname);
+
+			appendStringInfo(seqstr, "(%s, %s, %d)",
+							 nspname_literal, seqname_literal, idx);
 
 			if (++batch_size == MAX_SEQUENCES_SYNC_PER_BATCH)
 				break;
