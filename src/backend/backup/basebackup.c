@@ -239,7 +239,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	TimeLineID	endtli;
 	backup_manifest_info manifest;
 	BackupState *backup_state;
-	StringInfo	tablespace_map;
+	StringInfoData tablespace_map;
 
 	/* Initial backup state, insofar as we know it now. */
 	state.tablespaces = NIL;
@@ -263,11 +263,11 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 
 	/* Allocate backup related variables. */
 	backup_state = (BackupState *) palloc0(sizeof(BackupState));
-	tablespace_map = makeStringInfo();
+	initStringInfo(&tablespace_map);
 
 	basebackup_progress_wait_checkpoint();
 	do_pg_backup_start(opt->label, opt->fastcheckpoint, &state.tablespaces,
-					   backup_state, tablespace_map);
+					   backup_state, &tablespace_map);
 
 	state.startptr = backup_state->startpoint;
 	state.starttli = backup_state->starttli;
@@ -342,7 +342,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 				if (opt->sendtblspcmapfile)
 				{
 					sendFileWithContent(sink, TABLESPACE_MAP,
-										tablespace_map->data, -1, &manifest);
+										tablespace_map.data, -1, &manifest);
 					sendtblspclinks = false;
 				}
 
@@ -399,7 +399,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 		endtli = backup_state->stoptli;
 
 		/* Deallocate backup-related variables. */
-		destroyStringInfo(tablespace_map);
+		pfree(tablespace_map.data);
 		pfree(backup_state);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));

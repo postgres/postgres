@@ -378,17 +378,18 @@ multirange_send(PG_FUNCTION_ARGS)
 {
 	MultirangeType *multirange = PG_GETARG_MULTIRANGE_P(0);
 	Oid			mltrngtypoid = MultirangeTypeGetOid(multirange);
-	StringInfo	buf = makeStringInfo();
+	StringInfoData buf;
 	RangeType **ranges;
 	int32		range_count;
 	MultirangeIOData *cache;
 
+	initStringInfo(&buf);
 	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_send);
 
 	/* construct output */
-	pq_begintypsend(buf);
+	pq_begintypsend(&buf);
 
-	pq_sendint32(buf, multirange->rangeCount);
+	pq_sendint32(&buf, multirange->rangeCount);
 
 	multirange_deserialize(cache->typcache->rngtype, multirange, &range_count, &ranges);
 	for (int i = 0; i < range_count; i++)
@@ -399,11 +400,11 @@ multirange_send(PG_FUNCTION_ARGS)
 		range = RangeTypePGetDatum(ranges[i]);
 		outputbytes = SendFunctionCall(&cache->typioproc, range);
 
-		pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
-		pq_sendbytes(buf, VARDATA(outputbytes), VARSIZE(outputbytes) - VARHDRSZ);
+		pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
+		pq_sendbytes(&buf, VARDATA(outputbytes), VARSIZE(outputbytes) - VARHDRSZ);
 	}
 
-	PG_RETURN_BYTEA_P(pq_endtypsend(buf));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*

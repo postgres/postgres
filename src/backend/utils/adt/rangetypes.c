@@ -264,7 +264,7 @@ Datum
 range_send(PG_FUNCTION_ARGS)
 {
 	RangeType  *range = PG_GETARG_RANGE_P(0);
-	StringInfo	buf = makeStringInfo();
+	StringInfoData buf;
 	RangeIOData *cache;
 	char		flags;
 	RangeBound	lower;
@@ -273,6 +273,8 @@ range_send(PG_FUNCTION_ARGS)
 
 	check_stack_depth();		/* recurses when subtype is a range type */
 
+	initStringInfo(&buf);
+
 	cache = get_range_io_data(fcinfo, RangeTypeGetOid(range), IOFunc_send);
 
 	/* deserialize */
@@ -280,9 +282,9 @@ range_send(PG_FUNCTION_ARGS)
 	flags = range_get_flags(range);
 
 	/* construct output */
-	pq_begintypsend(buf);
+	pq_begintypsend(&buf);
 
-	pq_sendbyte(buf, flags);
+	pq_sendbyte(&buf, flags);
 
 	if (RANGE_HAS_LBOUND(flags))
 	{
@@ -290,8 +292,8 @@ range_send(PG_FUNCTION_ARGS)
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
-		pq_sendint32(buf, bound_len);
-		pq_sendbytes(buf, bound_data, bound_len);
+		pq_sendint32(&buf, bound_len);
+		pq_sendbytes(&buf, bound_data, bound_len);
 	}
 
 	if (RANGE_HAS_UBOUND(flags))
@@ -300,11 +302,11 @@ range_send(PG_FUNCTION_ARGS)
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
-		pq_sendint32(buf, bound_len);
-		pq_sendbytes(buf, bound_data, bound_len);
+		pq_sendint32(&buf, bound_len);
+		pq_sendbytes(&buf, bound_data, bound_len);
 	}
 
-	PG_RETURN_BYTEA_P(pq_endtypsend(buf));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /*

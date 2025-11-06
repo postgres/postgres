@@ -2841,7 +2841,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 	 */
 	if (list_length(fdw_private) > FdwScanPrivateRelations)
 	{
-		StringInfo	relations;
+		StringInfoData relations;
 		char	   *rawrelations;
 		char	   *ptr;
 		int			minrti,
@@ -2875,7 +2875,7 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 		rtoffset = bms_next_member(plan->fs_base_relids, -1) - minrti;
 
 		/* Now we can translate the string */
-		relations = makeStringInfo();
+		initStringInfo(&relations);
 		ptr = rawrelations;
 		while (*ptr)
 		{
@@ -2897,24 +2897,24 @@ postgresExplainForeignScan(ForeignScanState *node, ExplainState *es)
 					char	   *namespace;
 
 					namespace = get_namespace_name_or_temp(get_rel_namespace(rte->relid));
-					appendStringInfo(relations, "%s.%s",
+					appendStringInfo(&relations, "%s.%s",
 									 quote_identifier(namespace),
 									 quote_identifier(relname));
 				}
 				else
-					appendStringInfoString(relations,
+					appendStringInfoString(&relations,
 										   quote_identifier(relname));
 				refname = (char *) list_nth(es->rtable_names, rti - 1);
 				if (refname == NULL)
 					refname = rte->eref->aliasname;
 				if (strcmp(refname, relname) != 0)
-					appendStringInfo(relations, " %s",
+					appendStringInfo(&relations, " %s",
 									 quote_identifier(refname));
 			}
 			else
-				appendStringInfoChar(relations, *ptr++);
+				appendStringInfoChar(&relations, *ptr++);
 		}
-		ExplainPropertyText("Relations", relations->data, es);
+		ExplainPropertyText("Relations", relations.data, es);
 	}
 
 	/*

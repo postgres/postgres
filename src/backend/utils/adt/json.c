@@ -631,13 +631,13 @@ Datum
 array_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	array_to_json_internal(array, result, false);
+	array_to_json_internal(array, &result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -648,13 +648,13 @@ array_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	array_to_json_internal(array, result, use_line_feeds);
+	array_to_json_internal(array, &result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -664,13 +664,13 @@ Datum
 row_to_json(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	composite_to_json(array, result, false);
+	composite_to_json(array, &result, false);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -681,13 +681,13 @@ row_to_json_pretty(PG_FUNCTION_ARGS)
 {
 	Datum		array = PG_GETARG_DATUM(0);
 	bool		use_line_feeds = PG_GETARG_BOOL(1);
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	composite_to_json(array, result, use_line_feeds);
+	composite_to_json(array, &result, use_line_feeds);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result->data, result->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -763,12 +763,13 @@ to_json(PG_FUNCTION_ARGS)
 Datum
 datum_to_json(Datum val, JsonTypeCategory tcategory, Oid outfuncoid)
 {
-	StringInfo	result = makeStringInfo();
+	StringInfoData result;
 
-	datum_to_json_internal(val, false, result, tcategory, outfuncoid,
+	initStringInfo(&result);
+	datum_to_json_internal(val, false, &result, tcategory, outfuncoid,
 						   false);
 
-	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*
@@ -1347,25 +1348,25 @@ json_build_array_worker(int nargs, const Datum *args, const bool *nulls, const O
 {
 	int			i;
 	const char *sep = "";
-	StringInfo	result;
+	StringInfoData result;
 
-	result = makeStringInfo();
+	initStringInfo(&result);
 
-	appendStringInfoChar(result, '[');
+	appendStringInfoChar(&result, '[');
 
 	for (i = 0; i < nargs; i++)
 	{
 		if (absent_on_null && nulls[i])
 			continue;
 
-		appendStringInfoString(result, sep);
+		appendStringInfoString(&result, sep);
 		sep = ", ";
-		add_json(args[i], nulls[i], result, types[i], false);
+		add_json(args[i], nulls[i], &result, types[i], false);
 	}
 
-	appendStringInfoChar(result, ']');
+	appendStringInfoChar(&result, ']');
 
-	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
+	return PointerGetDatum(cstring_to_text_with_len(result.data, result.len));
 }
 
 /*

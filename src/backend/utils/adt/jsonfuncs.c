@@ -4507,14 +4507,16 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	text	   *json = PG_GETARG_TEXT_PP(0);
 	bool		strip_in_arrays = PG_NARGS() == 2 ? PG_GETARG_BOOL(1) : false;
 	StripnullState *state;
+	StringInfoData strbuf;
 	JsonLexContext lex;
 	JsonSemAction *sem;
 
 	state = palloc0(sizeof(StripnullState));
 	sem = palloc0(sizeof(JsonSemAction));
+	initStringInfo(&strbuf);
 
 	state->lex = makeJsonLexContext(&lex, json, true);
-	state->strval = makeStringInfo();
+	state->strval = &strbuf;
 	state->skip_next_null = false;
 	state->strip_in_arrays = strip_in_arrays;
 
@@ -4607,11 +4609,12 @@ Datum
 jsonb_pretty(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
-	StringInfo	str = makeStringInfo();
+	StringInfoData str;
 
-	JsonbToCStringIndent(str, &jb->root, VARSIZE(jb));
+	initStringInfo(&str);
+	JsonbToCStringIndent(&str, &jb->root, VARSIZE(jb));
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(str->data, str->len));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(str.data, str.len));
 }
 
 /*
@@ -5846,7 +5849,7 @@ transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
  * Iterate over a json, and apply a specified JsonTransformStringValuesAction
  * to every string value or element. Any necessary context for a
  * JsonTransformStringValuesAction can be passed in the action_state variable.
- * Function returns a StringInfo, which is a copy of an original json with
+ * Function returns a Text Datum, which is a copy of an original json with
  * transformed values.
  */
 text *
@@ -5856,9 +5859,12 @@ transform_json_string_values(text *json, void *action_state,
 	JsonLexContext lex;
 	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
 	TransformJsonStringValuesState *state = palloc0(sizeof(TransformJsonStringValuesState));
+	StringInfoData strbuf;
+
+	initStringInfo(&strbuf);
 
 	state->lex = makeJsonLexContext(&lex, json, true);
-	state->strval = makeStringInfo();
+	state->strval = &strbuf;
 	state->action = transform_action;
 	state->action_state = action_state;
 

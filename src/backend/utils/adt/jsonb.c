@@ -125,15 +125,16 @@ jsonb_send(PG_FUNCTION_ARGS)
 {
 	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	StringInfoData buf;
-	StringInfo	jtext = makeStringInfo();
+	StringInfoData jtext;
 	int			version = 1;
 
-	(void) JsonbToCString(jtext, &jb->root, VARSIZE(jb));
+	initStringInfo(&jtext);
+	(void) JsonbToCString(&jtext, &jb->root, VARSIZE(jb));
 
 	pq_begintypsend(&buf);
 	pq_sendint8(&buf, version);
-	pq_sendtext(&buf, jtext->data, jtext->len);
-	destroyStringInfo(jtext);
+	pq_sendtext(&buf, jtext.data, jtext.len);
+	pfree(jtext.data);
 
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
