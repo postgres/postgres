@@ -1,11 +1,105 @@
 Parsed test spec with 2 sessions
 
-starting permutation: s0_begin s0_update s1_begin s1_tuplock s0_commit s1_commit
-step s0_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
-step s0_update: UPDATE a SET i = i + 1;
-step s1_begin: BEGIN ISOLATION LEVEL READ COMMITTED;
-step s1_tuplock: 
-    -- Verify if the sub-select has a foreign-join plan
+starting permutation: s0_update_l s1_tuplock_l_0 s0_commit s1_commit
+step s0_update_l: UPDATE l SET i = i + 1;
+step s1_tuplock_l_0: 
+    EXPLAIN (VERBOSE, COSTS OFF)
+    SELECT l.* FROM l, ft WHERE l.i = ft.i AND l.i = 123 FOR UPDATE OF l;
+    SELECT l.* FROM l, ft WHERE l.i = ft.i AND l.i = 123 FOR UPDATE OF l;
+ <waiting ...>
+step s0_commit: COMMIT;
+step s1_tuplock_l_0: <... completed>
+QUERY PLAN                                                           
+---------------------------------------------------------------------
+LockRows                                                             
+  Output: l.i, l.v, l.ctid, ft.*                                     
+  ->  Nested Loop                                                    
+        Output: l.i, l.v, l.ctid, ft.*                               
+        ->  Seq Scan on public.l                                     
+              Output: l.i, l.v, l.ctid                               
+              Filter: (l.i = 123)                                    
+        ->  Foreign Scan on public.ft                                
+              Output: ft.*, ft.i                                     
+              Remote SQL: SELECT i, v FROM public.t WHERE ((i = 123))
+(10 rows)
+
+i|v
+-+-
+(0 rows)
+
+step s1_commit: COMMIT;
+
+starting permutation: s0_update_l s1_tuplock_l_1 s0_commit s1_commit
+step s0_update_l: UPDATE l SET i = i + 1;
+step s1_tuplock_l_1: 
+    EXPLAIN (VERBOSE, COSTS OFF)
+    SELECT l.* FROM l, ft WHERE l.i = ft.i AND l.v = 'foo' FOR UPDATE OF l;
+    SELECT l.* FROM l, ft WHERE l.i = ft.i AND l.v = 'foo' FOR UPDATE OF l;
+ <waiting ...>
+step s0_commit: COMMIT;
+step s1_tuplock_l_1: <... completed>
+QUERY PLAN                                                                   
+-----------------------------------------------------------------------------
+LockRows                                                                     
+  Output: l.i, l.v, l.ctid, ft.*                                             
+  ->  Nested Loop                                                            
+        Output: l.i, l.v, l.ctid, ft.*                                       
+        ->  Seq Scan on public.l                                             
+              Output: l.i, l.v, l.ctid                                       
+              Filter: (l.v = 'foo'::text)                                    
+        ->  Foreign Scan on public.ft                                        
+              Output: ft.*, ft.i                                             
+              Remote SQL: SELECT i, v FROM public.t WHERE ((i = $1::integer))
+(10 rows)
+
+i|v
+-+-
+(0 rows)
+
+step s1_commit: COMMIT;
+
+starting permutation: s0_update_a s1_tuplock_a_0 s0_commit s1_commit
+step s0_update_a: UPDATE a SET i = i + 1;
+step s1_tuplock_a_0: 
+    EXPLAIN (VERBOSE, COSTS OFF)
+    SELECT a.i FROM a, fb, fc WHERE a.i = fb.i AND fb.i = fc.i FOR UPDATE OF a;
+    SELECT a.i FROM a, fb, fc WHERE a.i = fb.i AND fb.i = fc.i FOR UPDATE OF a;
+ <waiting ...>
+step s0_commit: COMMIT;
+step s1_tuplock_a_0: <... completed>
+QUERY PLAN                                                                                                                                                                                                              
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+LockRows                                                                                                                                                                                                                
+  Output: a.i, a.ctid, fb.*, fc.*                                                                                                                                                                                       
+  ->  Nested Loop                                                                                                                                                                                                       
+        Output: a.i, a.ctid, fb.*, fc.*                                                                                                                                                                                 
+        Join Filter: (fb.i = a.i)                                                                                                                                                                                       
+        ->  Foreign Scan                                                                                                                                                                                                
+              Output: fb.*, fb.i, fc.*, fc.i                                                                                                                                                                            
+              Relations: (public.fb) INNER JOIN (public.fc)                                                                                                                                                             
+              Remote SQL: SELECT CASE WHEN (r2.*)::text IS NOT NULL THEN ROW(r2.i) END, r2.i, CASE WHEN (r3.*)::text IS NOT NULL THEN ROW(r3.i) END, r3.i FROM (public.b r2 INNER JOIN public.c r3 ON (((r2.i = r3.i))))
+              ->  Nested Loop                                                                                                                                                                                           
+                    Output: fb.*, fb.i, fc.*, fc.i                                                                                                                                                                      
+                    Join Filter: (fb.i = fc.i)                                                                                                                                                                          
+                    ->  Foreign Scan on public.fb                                                                                                                                                                       
+                          Output: fb.*, fb.i                                                                                                                                                                            
+                          Remote SQL: SELECT i FROM public.b ORDER BY i ASC NULLS LAST                                                                                                                                  
+                    ->  Foreign Scan on public.fc                                                                                                                                                                       
+                          Output: fc.*, fc.i                                                                                                                                                                            
+                          Remote SQL: SELECT i FROM public.c                                                                                                                                                            
+        ->  Seq Scan on public.a                                                                                                                                                                                        
+              Output: a.i, a.ctid                                                                                                                                                                                       
+(20 rows)
+
+i
+-
+(0 rows)
+
+step s1_commit: COMMIT;
+
+starting permutation: s0_update_a s1_tuplock_a_1 s0_commit s1_commit
+step s0_update_a: UPDATE a SET i = i + 1;
+step s1_tuplock_a_1: 
     EXPLAIN (VERBOSE, COSTS OFF)
     SELECT a.i,
         (SELECT 1 FROM fb, fc WHERE a.i = fb.i AND fb.i = fc.i)
@@ -15,7 +109,7 @@ step s1_tuplock:
     FROM a FOR UPDATE;
  <waiting ...>
 step s0_commit: COMMIT;
-step s1_tuplock: <... completed>
+step s1_tuplock_a_1: <... completed>
 QUERY PLAN                                                                                                                              
 ----------------------------------------------------------------------------------------------------------------------------------------
 LockRows                                                                                                                                
