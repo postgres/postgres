@@ -3267,7 +3267,6 @@ UnpinBufferNoOwner(BufferDesc *buf)
 	ref->refcount--;
 	if (ref->refcount == 0)
 	{
-		uint32		buf_state;
 		uint32		old_buf_state;
 
 		/*
@@ -3285,33 +3284,11 @@ UnpinBufferNoOwner(BufferDesc *buf)
 		 */
 		Assert(!LWLockHeldByMe(BufferDescriptorGetContentLock(buf)));
 
-		/*
-		 * Decrement the shared reference count.
-		 *
-		 * Since buffer spinlock holder can update status using just write,
-		 * it's not safe to use atomic decrement here; thus use a CAS loop.
-		 *
-		 * TODO: The above requirement does not hold anymore, in a future
-		 * commit this will be rewritten to release the pin in a single atomic
-		 * operation.
-		 */
-		old_buf_state = pg_atomic_read_u32(&buf->state);
-		for (;;)
-		{
-			if (old_buf_state & BM_LOCKED)
-				old_buf_state = WaitBufHdrUnlocked(buf);
-
-			buf_state = old_buf_state;
-
-			buf_state -= BUF_REFCOUNT_ONE;
-
-			if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
-											   buf_state))
-				break;
-		}
+		/* decrement the shared reference count */
+		old_buf_state = pg_atomic_fetch_sub_u32(&buf->state, BUF_REFCOUNT_ONE);
 
 		/* Support LockBufferForCleanup() */
-		if (buf_state & BM_PIN_COUNT_WAITER)
+		if (old_buf_state & BM_PIN_COUNT_WAITER)
 			WakePinCountWaiter(buf);
 
 		ForgetPrivateRefCountEntry(ref);
