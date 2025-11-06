@@ -101,12 +101,12 @@ SELECT * FROM myview;
 
 <programlisting>
 CREATE TABLE cities (
-        name     varchar(80) primary key,
+        name     varchar(80) PRIMARY KEY,
         location point
 );
 
 CREATE TABLE weather (
-        city      varchar(80) references cities(name),
+        city      varchar(80) REFERENCES cities (name),
         temp_lo   int,
         temp_hi   int,
         prcp      real,

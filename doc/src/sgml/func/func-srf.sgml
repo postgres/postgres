@@ -247,8 +247,8 @@ FROM (SELECT generate_subscripts(a, 1) AS s, a FROM arrays) foo;
 -- unnest a 2D array:
 CREATE OR REPLACE FUNCTION unnest2(anyarray)
 RETURNS SETOF anyelement AS $$
-select $1[i][j]
-   from generate_subscripts($1,1) g1(i),
+SELECT $1[i][j]
+   FROM generate_subscripts($1,1) g1(i),
         generate_subscripts($1,2) g2(j);
 $$ LANGUAGE sql IMMUTABLE;
 CREATE FUNCTION

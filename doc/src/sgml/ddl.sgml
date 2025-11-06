@@ -3126,9 +3126,9 @@ GRANT UPDATE
 
 <programlisting>
 -- admin can view all rows and fields
-postgres=&gt; set role admin;
+postgres=&gt; SET ROLE admin;
 SET
-postgres=&gt; table passwd;
+postgres=&gt; TABLE passwd;
  user_name | pwhash | uid | gid | real_name |  home_phone  | extra_info | home_dir    |   shell
 -----------+--------+-----+-----+-----------+--------------+------------+-------------+-----------
  admin     | xxx    |   0 |   0 | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -3137,11 +3137,11 @@ postgres=&gt; table passwd;
 (3 rows)
 
 -- Test what Alice is able to do
-postgres=&gt; set role alice;
+postgres=&gt; SET ROLE alice;
 SET
-postgres=&gt; table passwd;
+postgres=&gt; TABLE passwd;
 ERROR:  permission denied for table passwd
-postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell from passwd;
+postgres=&gt; SELECT user_name, real_name, home_phone, extra_info, home_dir, shell FROM passwd;
  user_name | real_name |  home_phone  | extra_info | home_dir    |   shell
 -----------+-----------+--------------+------------+-------------+-----------
  admin     | Admin     | 111-222-3333 |            | /root       | /bin/dash
@@ -3149,21 +3149,21 @@ postgres=&gt; select user_name,real_name,home_phone,extra_info,home_dir,shell fr
  alice     | Alice     | 098-765-4321 |            | /home/alice | /bin/zsh
 (3 rows)
 
-postgres=&gt; update passwd set user_name = 'joe';
+postgres=&gt; UPDATE passwd SET user_name = 'joe';
 ERROR:  permission denied for table passwd
 -- Alice is allowed to change her own real_name, but no others
-postgres=&gt; update passwd set real_name = 'Alice Doe';
+postgres=&gt; UPDATE passwd SET real_name = 'Alice Doe';
 UPDATE 1
-postgres=&gt; update passwd set real_name = 'John Doe' where user_name = 'admin';
+postgres=&gt; UPDATE passwd SET real_name = 'John Doe' WHERE user_name = 'admin';
 UPDATE 0
-postgres=&gt; update passwd set shell = '/bin/xx';
+postgres=&gt; UPDATE passwd SET shell = '/bin/xx';
 ERROR:  new row violates WITH CHECK OPTION for "passwd"
-postgres=&gt; delete from passwd;
+postgres=&gt; DELETE FROM passwd;
 ERROR:  permission denied for table passwd
-postgres=&gt; insert into passwd (user_name) values ('xxx');
+postgres=&gt; INSERT INTO passwd (user_name) VALUES ('xxx');
 ERROR:  permission denied for table passwd
 -- Alice can change her own password; RLS silently prevents updating other rows
-postgres=&gt; update passwd set pwhash = 'abc';
+postgres=&gt; UPDATE passwd SET pwhash = 'abc';
 UPDATE 1
 </programlisting>
 
@@ -3196,7 +3196,7 @@ CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
  admin
 (1 row)
 
-=&gt; select inet_client_addr();
+=&gt; SELECT inet_client_addr();
  inet_client_addr
 ------------------
  127.0.0.1
@@ -3207,7 +3207,7 @@ CREATE POLICY admin_local_only ON passwd AS RESTRICTIVE TO admin
 -----------+--------+-----+-----+-----------+------------+------------+----------+-------
 (0 rows)
 
-=&gt; UPDATE passwd set pwhash = NULL;
+=&gt; UPDATE passwd SET pwhash = NULL;
 UPDATE 0
 </programlisting>
 

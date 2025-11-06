@@ -57,7 +57,7 @@ digest(data bytea, type text) returns bytea
     If you want the digest as a hexadecimal string, use
     <function>encode()</function> on the result.  For example:
 <programlisting>
-CREATE OR REPLACE FUNCTION sha1(bytea) returns text AS $$
+CREATE OR REPLACE FUNCTION sha1(bytea) RETURNS text AS $$
     SELECT encode(digest($1, 'sha1'), 'hex')
 $$ LANGUAGE SQL STRICT IMMUTABLE;
 </programlisting>

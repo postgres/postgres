@@ -1409,7 +1409,7 @@ DETAIL:  A result of type anyelement requires at least one input of type anyelem
      For example:
 <screen>
 CREATE FUNCTION dup (f1 anyelement, OUT f2 anyelement, OUT f3 anyarray)
-AS 'select $1, array[$1,$1]' LANGUAGE SQL;
+AS 'SELECT $1, ARRAY[$1, $1]' LANGUAGE SQL;
 
 SELECT * FROM dup(22);
  f2 |   f3

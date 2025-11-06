@@ -6394,8 +6394,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
 
 <programlisting>
 CREATE TABLE parent(key integer, ...);
-CREATE TABLE child1000(check (key between 1000 and 1999)) INHERITS(parent);
-CREATE TABLE child2000(check (key between 2000 and 2999)) INHERITS(parent);
+CREATE TABLE child1000(CHECK (key BETWEEN 1000 AND 1999)) INHERITS(parent);
+CREATE TABLE child2000(CHECK (key BETWEEN 2000 AND 2999)) INHERITS(parent);
 ...
 SELECT * FROM parent WHERE key = 2400;
 </programlisting>

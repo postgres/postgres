@@ -1962,11 +1962,11 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         collatable data type, then an error is raised.
        </para>
        <para>
-        <literal>collation for ('foo'::text)</literal>
+        <literal>COLLATION FOR ('foo'::text)</literal>
         <returnvalue>"default"</returnvalue>
        </para>
        <para>
-        <literal>collation for ('foo' COLLATE "de_DE")</literal>
+        <literal>COLLATION FOR ('foo' COLLATE "de_DE")</literal>
         <returnvalue>"de_DE"</returnvalue>
        </para></entry>
       </row>

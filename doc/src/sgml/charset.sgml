@@ -570,13 +570,13 @@ CREATE COLLATION
 
 <screen>
 CREATE COLLATION mycollation5 (provider = icu, deterministic = false, locale = 'en-US-u-kn-ks-level2');
-SELECT 'aB' = 'Ab' COLLATE mycollation5 as result;
+SELECT 'aB' = 'Ab' COLLATE mycollation5 AS result;
  result
 --------
  t
 (1 row)
 
-SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 as result;
+SELECT 'N-45' &lt; 'N-123' COLLATE mycollation5 AS result;
  result
 --------
  t

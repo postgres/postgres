@@ -177,19 +177,19 @@ SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone=
     <para>
      Examples:
 <screen><![CDATA[
-SELECT xmlelement(name foo);
+SELECT xmlelement(NAME foo);
 
  xmlelement
 ------------
  <foo/>
 
-SELECT xmlelement(name foo, xmlattributes('xyz' as bar));
+SELECT xmlelement(NAME foo, xmlattributes('xyz' AS bar));
 
     xmlelement
 ------------------
  <foo bar="xyz"/>
 
-SELECT xmlelement(name foo, xmlattributes(current_date as bar), 'cont', 'ent');
+SELECT xmlelement(NAME foo, xmlattributes(current_date AS bar), 'cont', 'ent');
 
              xmlelement
 -------------------------------------
@@ -204,7 +204,7 @@ SELECT xmlelement(name foo, xmlattributes(current_date as bar), 'cont', 'ent');
      <replaceable>HHHH</replaceable> is the character's Unicode
      codepoint in hexadecimal notation.  For example:
 <screen><![CDATA[
-SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&b"));
+SELECT xmlelement(NAME "foo$bar", xmlattributes('xyz' AS "a&b"));
 
             xmlelement
 ----------------------------------
@@ -220,12 +220,12 @@ SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&b"));
      valid:
 <screen>
 CREATE TABLE test (a xml, b xml);
-SELECT xmlelement(name test, xmlattributes(a, b)) FROM test;
+SELECT xmlelement(NAME test, xmlattributes(a, b)) FROM test;
 </screen>
      But these are not:
 <screen>
-SELECT xmlelement(name test, xmlattributes('constant'), a, b) FROM test;
-SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;
+SELECT xmlelement(NAME test, xmlattributes('constant'), a, b) FROM test;
+SELECT xmlelement(NAME test, xmlattributes(func(a, b))) FROM test;
 </screen>
     </para>
 
@@ -234,10 +234,10 @@ SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;
      its data type.  If the content is itself of type <type>xml</type>,
      complex XML documents can be constructed.  For example:
 <screen><![CDATA[
-SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
-                            xmlelement(name abc),
+SELECT xmlelement(NAME foo, xmlattributes('xyz' AS bar),
+                            xmlelement(NAME abc),
                             xmlcomment('test'),
-                            xmlelement(name xyz));
+                            xmlelement(NAME xyz));
 
                   xmlelement
 ----------------------------------------------

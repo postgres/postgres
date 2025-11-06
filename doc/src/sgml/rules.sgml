@@ -968,7 +968,7 @@ CREATE MATERIALIZED VIEW sales_summary AS
   SELECT
       seller_no,
       invoice_date,
-      sum(invoice_amt)::numeric(13,2) as sales_amt
+      sum(invoice_amt)::numeric(13,2) AS sales_amt
     FROM invoice
     WHERE invoice_date &lt; CURRENT_DATE
     GROUP BY

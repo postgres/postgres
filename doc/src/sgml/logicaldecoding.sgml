@@ -73,7 +73,7 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
 -----+-----+------
 (0 rows)
 
-postgres=# CREATE TABLE data(id serial primary key, data text);
+postgres=# CREATE TABLE data(id serial PRIMARY KEY, data text);
 CREATE TABLE
 
 postgres=# -- DDL isn't replicated, so all you'll see is the transaction
@@ -208,7 +208,7 @@ postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NU
 (3 rows)
 
 postgres=# COMMIT PREPARED 'test_prepared1';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn     | xid |                    data
 ------------+-----+--------------------------------------------
  0/0168A060 | 529 | COMMIT PREPARED 'test_prepared1', txid 529
@@ -218,7 +218,7 @@ postgres=#-- you can also rollback a prepared transaction
 postgres=# BEGIN;
 postgres=*# INSERT INTO data(data) VALUES('6');
 postgres=*# PREPARE TRANSACTION 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn     | xid |                          data
 ------------+-----+---------------------------------------------------------
  0/0168A180 | 530 | BEGIN 530
@@ -227,7 +227,7 @@ postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NU
 (3 rows)
 
 postgres=# ROLLBACK PREPARED 'test_prepared2';
-postgres=# select * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NULL);
     lsn     | xid |                     data
 ------------+-----+----------------------------------------------
  0/0168A4B8 | 530 | ROLLBACK PREPARED 'test_prepared2', txid 530

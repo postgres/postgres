@@ -377,7 +377,7 @@ pending_tuples | 0
       <function>pgstathashindex</function> returns a record showing information
       about a HASH index.  For example:
 <programlisting>
-test=&gt; select * from pgstathashindex('con_hash_index');
+test=&gt; SELECT * FROM pgstathashindex('con_hash_index');
 -[ RECORD 1 ]--+-----------------
 version        | 4
 bucket_pages   | 33081

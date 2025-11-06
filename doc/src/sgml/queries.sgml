@@ -2232,7 +2232,7 @@ WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
     FROM included_parts pr, parts p
     WHERE p.part = pr.sub_part
 )
-SELECT sub_part, SUM(quantity) as total_quantity
+SELECT sub_part, SUM(quantity) AS total_quantity
 FROM included_parts
 GROUP BY sub_part
 </programlisting>
@@ -2603,7 +2603,7 @@ WHERE w2.key = 123;
    undesirable is
 <programlisting>
 WITH w AS (
-    SELECT key, very_expensive_function(val) as f FROM some_table
+    SELECT key, very_expensive_function(val) AS f FROM some_table
 )
 SELECT * FROM w AS w1 JOIN w AS w2 ON w1.f = w2.f;
 </programlisting>

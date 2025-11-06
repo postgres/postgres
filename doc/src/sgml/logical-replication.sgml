@@ -1594,7 +1594,7 @@ Publications:
 
 /* sub # */ CREATE TABLE tab_gen_to_gen (a int, b int GENERATED ALWAYS AS (a * 100) STORED);
 /* sub # */ CREATE SUBSCRIPTION sub1 CONNECTION 'dbname=test_pub' PUBLICATION pub1;
-/* sub # */ SELECT * from tab_gen_to_gen;
+/* sub # */ SELECT * FROM tab_gen_to_gen;
  a | b
 ---+----
  1 | 100

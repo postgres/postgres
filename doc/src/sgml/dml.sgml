@@ -317,7 +317,7 @@ DELETE FROM products;
    column to provide unique identifiers, <literal>RETURNING</literal> can return
    the ID assigned to a new row:
 <programlisting>
-CREATE TABLE users (firstname text, lastname text, id serial primary key);
+CREATE TABLE users (firstname text, lastname text, id serial PRIMARY KEY);
 
 INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
 </programlisting>

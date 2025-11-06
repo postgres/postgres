@@ -748,9 +748,9 @@
      <listitem>
       <para>
         <function>to_char(..., 'ID')</function>'s day of the week numbering
-        matches the <function>extract(isodow from ...)</function> function, but
+        matches the <function>extract(isodow FROM ...)</function> function, but
         <function>to_char(..., 'D')</function>'s does not match
-        <function>extract(dow from ...)</function>'s day numbering.
+        <function>extract(dow FROM ...)</function>'s day numbering.
       </para>
      </listitem>
 

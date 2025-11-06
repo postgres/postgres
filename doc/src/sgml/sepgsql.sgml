@@ -613,7 +613,7 @@ postgres=# SELECT cid, cname, show_credit(cid) FROM customer;
     the original one. For example:
    </para>
 <screen>
-regression=# select sepgsql_getcon();
+regression=# SELECT sepgsql_getcon();
                     sepgsql_getcon
 -------------------------------------------------------
  unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023

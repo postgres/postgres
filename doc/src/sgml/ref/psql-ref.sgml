@@ -2531,7 +2531,7 @@ Tue Oct 26 21:40:57 CEST 1999
          statement to be executed.  For example, to create an index on each
          column of <structname>my_table</structname>:
 <programlisting>
-=&gt; <userinput>SELECT format('create index on my_table(%I)', attname)</userinput>
+=&gt; <userinput>SELECT format('CREATE INDEX ON my_table (%I)', attname)</userinput>
 -&gt; <userinput>FROM pg_attribute</userinput>
 -&gt; <userinput>WHERE attrelid = 'my_table'::regclass AND attnum &gt; 0</userinput>
 -&gt; <userinput>ORDER BY attnum</userinput>
@@ -2766,8 +2766,8 @@ hello 10
 -- check for the existence of two separate records in the database and store
 -- the results in separate psql variables
 SELECT
-    EXISTS(SELECT 1 FROM customer WHERE customer_id = 123) as is_customer,
-    EXISTS(SELECT 1 FROM employee WHERE employee_id = 456) as is_employee
+    EXISTS (SELECT 1 FROM customer WHERE customer_id = 123) AS is_customer,
+    EXISTS (SELECT 1 FROM employee WHERE employee_id = 456) AS is_employee
 \gset
 \if :is_customer
     SELECT * FROM customer WHERE customer_id = 123;
@@ -4023,7 +4023,7 @@ SELECT 1 \bind \sendpipeline
         server as soon as it reaches the command-ending semicolon, even if
         more input remains on the current line.  Thus for example entering
 <programlisting>
-select 1; select 2; select 3;
+SELECT 1; SELECT 2; SELECT 3;
 </programlisting>
         will result in the three SQL commands being individually sent to
         the server, with each one's results being displayed before
@@ -4032,7 +4032,7 @@ select 1; select 2; select 3;
         command before it and the one after are effectively combined and
         sent to the server in one request.  So for example
 <programlisting>
-select 1\; select 2\; select 3;
+SELECT 1\; SELECT 2\; SELECT 3;
 </programlisting>
         results in sending the three SQL commands to the server in a single
         request, when the non-backslashed semicolon is reached.
@@ -5581,7 +5581,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
   input. Notice the changing prompt:
 <programlisting>
 testdb=&gt; <userinput>CREATE TABLE my_table (</userinput>
-testdb(&gt; <userinput> first integer not null default 0,</userinput>
+testdb(&gt; <userinput> first integer NOT NULL DEFAULT 0,</userinput>
 testdb(&gt; <userinput> second text)</userinput>
 testdb-&gt; <userinput>;</userinput>
 CREATE TABLE
@@ -5770,8 +5770,8 @@ testdb=&gt; <userinput>\crosstabview first second</userinput>
 This second example shows a multiplication table with rows sorted in reverse
 numerical order and columns with an independent, ascending numerical order.
 <programlisting>
-testdb=&gt; <userinput>SELECT t1.first as "A", t2.first+100 AS "B", t1.first*(t2.first+100) as "AxB",</userinput>
-testdb-&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
+testdb=&gt; <userinput>SELECT t1.first AS "A", t2.first+100 AS "B", t1.first*(t2.first+100) AS "AxB",</userinput>
+testdb-&gt; <userinput>row_number() OVER (ORDER BY t2.first) AS ord</userinput>
 testdb-&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
 testdb-&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
  A | 101 | 102 | 103 | 104

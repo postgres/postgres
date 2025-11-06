@@ -372,7 +372,7 @@ SELECT issn('1436-4522');
 --Casting types:
 -- note that you can only cast from ean13 to another type when the
 -- number would be valid in the realm of the target type;
--- thus, the following will NOT work: select isbn(ean13('0220356483481'));
+-- thus, the following will NOT work: SELECT isbn(ean13('0220356483481'));
 -- but these will:
 SELECT upc(ean13('0220356483481'));
 SELECT ean13(upc('220356483481'));

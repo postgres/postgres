@@ -144,7 +144,7 @@ mydb=# ALTER TEXT SEARCH DICTIONARY unaccent (RULES='my_rules');
   <para>
    To test the dictionary, you can try:
 <programlisting>
-mydb=# select ts_lexize('unaccent','H&ocirc;tel');
+mydb=# SELECT ts_lexize('unaccent', 'H&ocirc;tel');
  ts_lexize
 -----------
  {Hotel}
@@ -160,19 +160,19 @@ mydb=# CREATE TEXT SEARCH CONFIGURATION fr ( COPY = french );
 mydb=# ALTER TEXT SEARCH CONFIGURATION fr
         ALTER MAPPING FOR hword, hword_part, word
         WITH unaccent, french_stem;
-mydb=# select to_tsvector('fr','H&ocirc;tels de la Mer');
+mydb=# SELECT to_tsvector('fr', 'H&ocirc;tels de la Mer');
     to_tsvector
 -------------------
  'hotel':1 'mer':4
 (1 row)
 
-mydb=# select to_tsvector('fr','H&ocirc;tel de la Mer') @@ to_tsquery('fr','Hotels');
+mydb=# SELECT to_tsvector('fr', 'H&ocirc;tel de la Mer') @@ to_tsquery('fr', 'Hotels');
  ?column?
 ----------
  t
 (1 row)
 
-mydb=# select ts_headline('fr','H&ocirc;tel de la Mer',to_tsquery('fr','Hotels'));
+mydb=# SELECT ts_headline('fr', 'H&ocirc;tel de la Mer', to_tsquery('fr', 'Hotels'));
       ts_headline
 ------------------------
  &lt;b&gt;H&ocirc;tel&lt;/b&gt; de la Mer

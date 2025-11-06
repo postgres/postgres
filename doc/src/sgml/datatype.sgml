@@ -717,7 +717,7 @@ NUMERIC(3, 5)
 SELECT x,
   round(x::numeric) AS num_round,
   round(x::double precision) AS dbl_round
-FROM generate_series(-3.5, 3.5, 1) as x;
+FROM generate_series(-3.5, 3.5, 1) AS x;
   x   | num_round | dbl_round
 ------+-----------+-----------
  -3.5 |        -4 |        -4
@@ -1259,7 +1259,7 @@ SELECT '52093.89'::money::numeric::float8;
     semantically insignificant and disregarded when comparing two values
     of type <type>character</type>.  In collations where whitespace
     is significant, this behavior can produce unexpected results;
-    for example <command>SELECT 'a '::CHAR(2) collate "C" &lt;
+    for example <command>SELECT 'a '::CHAR(2) COLLATE "C" &lt;
     E'a\n'::CHAR(2)</command> returns true, even though <literal>C</literal>
     locale would consider a space to be greater than a newline.
     Trailing spaces are removed when converting a <type>character</type> value

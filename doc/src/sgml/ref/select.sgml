@@ -1927,7 +1927,7 @@ SELECT * FROM unnest(ARRAY['a','b','c','d','e','f']) WITH ORDINALITY;
 
 <programlisting>
 WITH t AS (
-    SELECT random() as x FROM generate_series(1, 3)
+    SELECT random() AS x FROM generate_series(1, 3)
   )
 SELECT * FROM t
 UNION ALL

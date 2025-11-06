@@ -2257,7 +2257,7 @@ CREATE TABLE employees OF employee_type (
    Create a range partitioned table:
 <programlisting>
 CREATE TABLE measurement (
-    logdate         date not null,
+    logdate         date NOT NULL,
     peaktemp        int,
     unitsales       int
 ) PARTITION BY RANGE (logdate);
@@ -2267,7 +2267,7 @@ CREATE TABLE measurement (
    Create a range partitioned table with multiple columns in the partition key:
 <programlisting>
 CREATE TABLE measurement_year_month (
-    logdate         date not null,
+    logdate         date NOT NULL,
     peaktemp        int,
     unitsales       int
 ) PARTITION BY RANGE (EXTRACT(YEAR FROM logdate), EXTRACT(MONTH FROM logdate));
@@ -2277,8 +2277,8 @@ CREATE TABLE measurement_year_month (
    Create a list partitioned table:
 <programlisting>
 CREATE TABLE cities (
-    city_id      bigserial not null,
-    name         text not null,
+    city_id      bigserial NOT NULL,
+    name         text NOT NULL,
     population   bigint
 ) PARTITION BY LIST (left(lower(name), 1));
 </programlisting></para>
@@ -2287,8 +2287,8 @@ CREATE TABLE cities (
    Create a hash partitioned table:
 <programlisting>
 CREATE TABLE orders (
-    order_id     bigint not null,
-    cust_id      bigint not null,
+    order_id     bigint NOT NULL,
+    cust_id      bigint NOT NULL,
     status       text
 ) PARTITION BY HASH (order_id);
 </programlisting></para>

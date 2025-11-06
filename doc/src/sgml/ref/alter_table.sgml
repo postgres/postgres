@@ -1642,7 +1642,7 @@ ALTER TABLE measurements
 <programlisting>
 ALTER TABLE transactions
   ADD COLUMN status varchar(30) DEFAULT 'old',
-  ALTER COLUMN status SET default 'current';
+  ALTER COLUMN status SET DEFAULT 'current';
 </programlisting>
    Existing rows will be filled with <literal>old</literal>, but then
    the default for subsequent commands will be <literal>current</literal>.

@@ -818,7 +818,7 @@ ltreetest=&gt; SELECT subpath(path,0,2)||'Space'||subpath(path,2) FROM test WHER
    at a specified position in a path:
 <screen>
 CREATE FUNCTION ins_label(ltree, int, text) RETURNS ltree
-    AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
+    AS 'SELECT subpath($1, 0, $2) || $3 || subpath($1, $2);'
     LANGUAGE SQL IMMUTABLE;
 
 ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.Science.Astronomy';

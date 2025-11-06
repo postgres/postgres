@@ -835,7 +835,7 @@
         Expands a <type>tsvector</type> into a set of rows, one per lexeme.
        </para>
        <para>
-        <literal>select * from unnest('cat:3 fat:2,4 rat:5A'::tsvector)</literal>
+        <literal>SELECT * FROM unnest('cat:3 fat:2,4 rat:5A'::tsvector)</literal>
         <returnvalue></returnvalue>
 <programlisting>
  lexeme | positions | weights

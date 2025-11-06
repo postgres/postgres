@@ -490,7 +490,7 @@ SELECT ~ CAST('20' AS int8) AS "negation";
 Here is another example of resolving an operator with one known and one
 unknown input:
 <screen>
-SELECT array[1,2] &lt;@ '{1,2,3}' as "is subset";
+SELECT ARRAY[1, 2] &lt;@ '{1,2,3}' AS "is subset";
 
  is subset
 -----------

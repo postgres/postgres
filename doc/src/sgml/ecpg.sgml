@@ -2042,7 +2042,7 @@ EXEC SQL EXECUTE mystmt INTO :v1, :v2, :v3 USING 37;
 EXEC SQL BEGIN DECLARE SECTION;
 char dbaname[128];
 char datname[128];
-char *stmt = "SELECT u.usename as dbaname, d.datname "
+char *stmt = "SELECT u.usename AS dbaname, d.datname "
              "  FROM pg_database d, pg_user u "
              "  WHERE d.datdba = u.usesysid";
 EXEC SQL END DECLARE SECTION;
@@ -6685,7 +6685,7 @@ EXEC SQL CONNECT TO 'unix:postgresql://localhost/connectdb' AS main USER :user;
 EXEC SQL CONNECT TO :db AS :id;
 EXEC SQL CONNECT TO :db USER connectuser USING :pw;
 EXEC SQL CONNECT TO @localhost AS main USER connectdb;
-EXEC SQL CONNECT TO REGRESSDB1 as main;
+EXEC SQL CONNECT TO REGRESSDB1 AS main;
 EXEC SQL CONNECT TO AS main USER connectdb;
 EXEC SQL CONNECT TO connectdb AS :id;
 EXEC SQL CONNECT TO connectdb AS main USER connectuser/connectdb;

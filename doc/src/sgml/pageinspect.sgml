@@ -932,8 +932,8 @@ test=# SELECT * FROM hash_bitmap_info('con_hash_index', 2052);
 <screen>
 test=# SELECT magic, version, ntuples, ffactor, bsize, bmsize, bmshift,
 test-#     maxbucket, highmask, lowmask, ovflpoint, firstfree, nmaps, procid,
-test-#     regexp_replace(spares::text, '(,0)*}', '}') as spares,
-test-#     regexp_replace(mapp::text, '(,0)*}', '}') as mapp
+test-#     regexp_replace(spares::text, '(,0)*}', '}') AS spares,
+test-#     regexp_replace(mapp::text, '(,0)*}', '}') AS mapp
 test-# FROM hash_metapage_info(get_raw_page('con_hash_index', 0));
 -[ RECORD 1 ]-------------------------------------------------&zwsp;------------------------------
 magic     | 105121344

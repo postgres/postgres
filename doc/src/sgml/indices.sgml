@@ -949,19 +949,19 @@ WHERE url = '/index.html' AND client_ip = inet '192.168.100.23';
     command to create the index would look like this:
 <programlisting>
 CREATE INDEX orders_unbilled_index ON orders (order_nr)
-    WHERE billed is not true;
+    WHERE billed IS NOT TRUE;
 </programlisting>
    </para>
 
    <para>
     A possible query to use this index would be:
 <programlisting>
-SELECT * FROM orders WHERE billed is not true AND order_nr &lt; 10000;
+SELECT * FROM orders WHERE billed IS NOT TRUE AND order_nr &lt; 10000;
 </programlisting>
     However, the index can also be used in queries that do not involve
     <structfield>order_nr</structfield> at all, e.g.:
 <programlisting>
-SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
+SELECT * FROM orders WHERE billed IS NOT TRUE AND amount &gt; 5000.00;
 </programlisting>
     This is not as efficient as a partial index on the
     <structfield>amount</structfield> column would be, since the system has to

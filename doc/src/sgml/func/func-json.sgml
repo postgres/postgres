@@ -981,7 +981,7 @@ array w/o UK? | t
         Expands the top-level JSON array into a set of JSON values.
        </para>
        <para>
-        <literal>select * from json_array_elements('[1,true, [2,false]]')</literal>
+        <literal>SELECT * FROM json_array_elements('[1,true, [2,false]]')</literal>
         <returnvalue></returnvalue>
 <programlisting>
    value
@@ -1012,7 +1012,7 @@ array w/o UK? | t
         Expands the top-level JSON array into a set of <type>text</type> values.
        </para>
        <para>
-        <literal>select * from json_array_elements_text('["foo", "bar"]')</literal>
+        <literal>SELECT * FROM json_array_elements_text('["foo", "bar"]')</literal>
         <returnvalue></returnvalue>
 <programlisting>
    value
@@ -1074,7 +1074,7 @@ array w/o UK? | t
         Expands the top-level JSON object into a set of key/value pairs.
        </para>
        <para>
-        <literal>select * from json_each('{"a":"foo", "b":"bar"}')</literal>
+        <literal>SELECT * FROM json_each('{"a":"foo", "b":"bar"}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  key | value
@@ -1110,7 +1110,7 @@ array w/o UK? | t
         type <type>text</type>.
        </para>
        <para>
-        <literal>select * from json_each_text('{"a":"foo", "b":"bar"}')</literal>
+        <literal>SELECT * FROM json_each_text('{"a":"foo", "b":"bar"}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  key | value
@@ -1193,7 +1193,7 @@ array w/o UK? | t
         Returns the set of keys in the top-level JSON object.
        </para>
        <para>
-        <literal>select * from json_object_keys('{"f1":"abc","f2":{"f3":"a", "f4":"b"}}')</literal>
+        <literal>SELECT * FROM json_object_keys('{"f1":"abc","f2":{"f3":"a", "f4":"b"}}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  json_object_keys
@@ -1286,11 +1286,11 @@ array w/o UK? | t
         calls.
        </para>
        <para>
-        <literal>create type subrowtype as (d int, e text);</literal>
-        <literal>create type myrowtype as (a int, b text[], c subrowtype);</literal>
+        <literal>CREATE TYPE subrowtype AS (d int, e text);</literal>
+        <literal>CREATE TYPE myrowtype AS (a int, b text[], c subrowtype);</literal>
        </para>
        <para>
-        <literal>select * from json_populate_record(null::myrowtype,
+        <literal>SELECT * FROM json_populate_record(NULL::myrowtype,
          '{"a": 1, "b": ["2", "a b"], "c": {"d": 4, "e": "a  b c"}, "x": "foo"}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
@@ -1316,10 +1316,10 @@ array w/o UK? | t
         valid input, <literal>false</literal> otherwise.
        </para>
        <para>
-        <literal>create type jsb_char2 as (a char(2));</literal>
+        <literal>CREATE TYPE jsb_char2 AS (a char(2));</literal>
        </para>
        <para>
-        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aaa"}');</literal>
+        <literal>SELECT jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aaa"}');</literal>
         <returnvalue></returnvalue>
 <programlisting>
  jsonb_populate_record_valid
@@ -1328,12 +1328,12 @@ array w/o UK? | t
 (1 row)
 </programlisting>
 
-        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aaa"}') q;</literal>
+        <literal>SELECT * FROM jsonb_populate_record(NULL::jsb_char2, '{"a": "aaa"}') q;</literal>
         <returnvalue></returnvalue>
 <programlisting>
 ERROR:  value too long for type character(2)
 </programlisting>
-        <literal>select jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aa"}');</literal>
+        <literal>SELECT jsonb_populate_record_valid(NULL::jsb_char2, '{"a": "aa"}');</literal>
         <returnvalue></returnvalue>
 <programlisting>
  jsonb_populate_record_valid
@@ -1342,7 +1342,7 @@ ERROR:  value too long for type character(2)
 (1 row)
 </programlisting>
 
-        <literal>select * from jsonb_populate_record(NULL::jsb_char2, '{"a": "aa"}') q;</literal>
+        <literal>SELECT * FROM jsonb_populate_record(NULL::jsb_char2, '{"a": "aa"}') q;</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a
@@ -1375,10 +1375,10 @@ ERROR:  value too long for type character(2)
         for <function>json[b]_populate_record</function>.
        </para>
        <para>
-        <literal>create type twoints as (a int, b int);</literal>
+        <literal>CREATE TYPE twoints AS (a int, b int);</literal>
        </para>
        <para>
-        <literal>select * from json_populate_recordset(null::twoints, '[{"a":1,"b":2}, {"a":3,"b":4}]')</literal>
+        <literal>SELECT * FROM json_populate_recordset(NULL::twoints, '[{"a":1,"b":2}, {"a":3,"b":4}]')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a | b
@@ -1415,10 +1415,10 @@ ERROR:  value too long for type character(2)
         input record value, unmatched columns are always filled with nulls.
        </para>
        <para>
-        <literal>create type myrowtype as (a int, b text);</literal>
+        <literal>CREATE TYPE myrowtype AS (a int, b text);</literal>
        </para>
        <para>
-        <literal>select * from json_to_record('{"a":1,"b":[1,2,3],"c":[1,2,3],"e":"bar","r": {"a": 123, "b": "a b c"}}') as x(a int, b text, c int[], d text, r myrowtype)</literal>
+        <literal>SELECT * FROM json_to_record('{"a":1,"b":[1,2,3],"c":[1,2,3],"e":"bar","r": {"a": 123, "b": "a b c"}}') AS x(a int, b text, c int[], d text, r myrowtype)</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a |    b    |    c    | d |       r
@@ -1453,7 +1453,7 @@ ERROR:  value too long for type character(2)
         for <function>json[b]_populate_record</function>.
        </para>
        <para>
-        <literal>select * from json_to_recordset('[{"a":1,"b":"foo"}, {"a":"2","c":"bar"}]') as x(a int, b text)</literal>
+        <literal>SELECT * FROM json_to_recordset('[{"a":1,"b":"foo"}, {"a":"2","c":"bar"}]') AS x(a int, b text)</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a |  b
@@ -1674,7 +1674,7 @@ ERROR:  value too long for type character(2)
         for <function>jsonb_path_exists</function>.
        </para>
        <para>
-        <literal>select * from jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
+        <literal>SELECT * FROM jsonb_path_query('{"a":[1,2,3,4,5]}', '$.a[*] ? (@ >= $min &amp;&amp; @ &lt;= $max)', '{"min":2, "max":4}')</literal>
         <returnvalue></returnvalue>
 <programlisting>
  jsonb_path_query
@@ -1932,7 +1932,7 @@ SELECT '{
    <literal>.<replaceable>key</replaceable></literal> accessor
    operator to descend through surrounding JSON objects, for example:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments');</userinput>
                                                                          jsonb_path_query
 -----------------------------------------------------------&zwsp;-----------------------------------------------------------&zwsp;---------------------------------------------
  [{"HR": 73, "location": [47.763, 13.4034], "start time": "2018-10-14 10:05:14"}, {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}]
@@ -1945,7 +1945,7 @@ SELECT '{
    The following example will return the location coordinates for all
    the available track segments:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*].location');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -1971,7 +1971,7 @@ SELECT '{
    specify the corresponding subscript in the <literal>[]</literal>
    accessor operator. Recall that JSON array indexes are 0-relative:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[0].location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[0].location');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -1985,7 +1985,7 @@ SELECT '{
    Each method name must be preceded by a dot. For example,
    you can get the size of an array:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments.size()');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments.size()');</userinput>
  jsonb_path_query
 ------------------
  2
@@ -2014,7 +2014,7 @@ SELECT '{
    produce <literal>true</literal>, <literal>false</literal>,
    or <literal>unknown</literal>. The <literal>unknown</literal> value
    plays the same role as SQL <literal>NULL</literal> and can be tested
-   for with the <literal>is unknown</literal> predicate. Further path
+   for with the <literal>IS UNKNOWN</literal> predicate. Further path
    evaluation steps use only those items for which the filter expression
    returned <literal>true</literal>.
   </para>
@@ -2032,7 +2032,7 @@ SELECT '{
    For example, suppose you would like to retrieve all heart rate values higher
    than 130. You can achieve this as follows:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR ? (@ &gt; 130)');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*].HR ? (@ &gt; 130)');</userinput>
  jsonb_path_query
 ------------------
  135
@@ -2045,7 +2045,7 @@ SELECT '{
    filter expression is applied to the previous step, and the path used
    in the condition is different:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.HR &gt; 130)."start time"');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*] ? (@.HR &gt; 130)."start time"');</userinput>
    jsonb_path_query
 -----------------------
  "2018-10-14 10:39:21"
@@ -2057,7 +2057,7 @@ SELECT '{
    The following example selects start times of all segments that
    contain locations with relevant coordinates and high heart rate values:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4) ? (@.HR &gt; 130)."start time"');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4) ? (@.HR &gt; 130)."start time"');</userinput>
    jsonb_path_query
 -----------------------
  "2018-10-14 10:39:21"
@@ -2069,7 +2069,7 @@ SELECT '{
    The following example first filters all segments by location, and then
    returns high heart rate values for these segments, if available:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4).HR ? (@ &gt; 130)');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*] ? (@.location[1] &lt; 13.4).HR ? (@ &gt; 130)');</userinput>
  jsonb_path_query
 ------------------
  135
@@ -2081,7 +2081,7 @@ SELECT '{
    This example returns the size of the track if it contains any
    segments with high heart rate values, or an empty sequence otherwise:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track ? (exists(@.segments[*] ? (@.HR &gt; 130))).segments.size()');</userinput>
  jsonb_path_query
 ------------------
  2
@@ -2108,7 +2108,7 @@ SELECT '{
      <literal>false</literal>, or <literal>null</literal>.
      For example, we could write this SQL-standard filter expression:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments ?(@[*].HR &gt; 130)');</userinput>
                                 jsonb_path_query
 -----------------------------------------------------------&zwsp;----------------------
  {"HR": 135, "location": [47.706, 13.2635], "start time": "2018-10-14 10:39:21"}
@@ -2116,7 +2116,7 @@ SELECT '{
      The similar predicate check expression simply
      returns <literal>true</literal>, indicating that a match exists:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', '$.track.segments[*].HR &gt; 130');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', '$.track.segments[*].HR &gt; 130');</userinput>
  jsonb_path_query
 ------------------
  true
@@ -2204,7 +2204,7 @@ SELECT '{
     abstract from the fact that it stores an array of segments
     when using lax mode:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments.location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'lax $.track.segments.location');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -2217,13 +2217,13 @@ SELECT '{
     the queried JSON document, so using this path
     expression will cause an error:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments.location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'strict $.track.segments.location');</userinput>
 ERROR:  jsonpath member accessor can only be applied to an object
 </screen>
     To get the same result as in lax mode, you have to explicitly unwrap the
     <literal>segments</literal> array:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'strict $.track.segments[*].location');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -2236,7 +2236,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
     instance, the following query using the <literal>.**</literal> accessor
     selects every <literal>HR</literal> value twice:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'lax $.**.HR');</userinput>
  jsonb_path_query
 ------------------
  73
@@ -2251,7 +2251,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
     the <literal>.**</literal> accessor only in strict mode. The
     following query selects each <literal>HR</literal> value just once:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'strict $.**.HR');</userinput>
  jsonb_path_query
 ------------------
  73
@@ -2263,7 +2263,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
     The unwrapping of arrays can also lead to unexpected results. Consider this
     example, which selects all the <literal>location</literal> arrays:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'lax $.track.segments[*].location');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -2274,7 +2274,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
     causes the arrays to be unwrapped to evaluate each item, returning only the
     items that match the expression:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'lax $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'lax $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
  jsonb_path_query
 ------------------
  47.763
@@ -2284,7 +2284,7 @@ ERROR:  jsonpath member accessor can only be applied to an object
     This despite the fact that the full arrays are selected by the path
     expression. Use strict mode to restore selecting the arrays:
 <screen>
-<prompt>=&gt;</prompt> <userinput>select jsonb_path_query(:'json', 'strict $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
+<prompt>=&gt;</prompt> <userinput>SELECT jsonb_path_query(:'json', 'strict $.track.segments[*].location ?(@[*] &gt; 15)');</userinput>
  jsonb_path_query
 -------------------
  [47.763, 13.4034]
@@ -3423,7 +3423,7 @@ DETAIL:  Missing "]" after array dimensions.
         <returnvalue>2015-02-01</returnvalue>
        </para>
        <para>
-        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[$off]' PASSING 1 as off)</literal>
+        <literal>JSON_VALUE(jsonb '[1,2]', 'strict $[$off]' PASSING 1 AS off)</literal>
         <returnvalue>2</returnvalue>
        </para>
        <para>

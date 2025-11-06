@@ -101,12 +101,12 @@ CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
 <programlisting>
 =# CREATE TABLE tbloom AS
    SELECT
-     (random() * 1000000)::int as i1,
-     (random() * 1000000)::int as i2,
-     (random() * 1000000)::int as i3,
-     (random() * 1000000)::int as i4,
-     (random() * 1000000)::int as i5,
-     (random() * 1000000)::int as i6
+     (random() * 1000000)::int AS i1,
+     (random() * 1000000)::int AS i2,
+     (random() * 1000000)::int AS i3,
+     (random() * 1000000)::int AS i4,
+     (random() * 1000000)::int AS i5,
+     (random() * 1000000)::int AS i6
    FROM
   generate_series(1,10000000);
 SELECT 10000000

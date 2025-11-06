@@ -251,7 +251,7 @@
         of <parameter>newsubstring</parameter>.
        </para>
        <para>
-        <literal>overlay(B'01010101010101010' placing B'11111' from 2 for 3)</literal>
+        <literal>overlay(B'01010101010101010' PLACING B'11111' FROM 2 FOR 3)</literal>
         <returnvalue>0111110101010101010</returnvalue>
        </para></entry>
       </row>
@@ -269,7 +269,7 @@
         within <parameter>bits</parameter>, or zero if it's not present.
        </para>
        <para>
-        <literal>position(B'010' in B'000001101011')</literal>
+        <literal>position(B'010' IN B'000001101011')</literal>
         <returnvalue>8</returnvalue>
        </para></entry>
       </row>
@@ -290,7 +290,7 @@
         and <parameter>count</parameter>.
        </para>
        <para>
-        <literal>substring(B'110010111111' from 3 for 2)</literal>
+        <literal>substring(B'110010111111' FROM 3 FOR 2)</literal>
         <returnvalue>00</returnvalue>
        </para></entry>
       </row>
@@ -348,7 +348,7 @@
 <programlisting>
 44::bit(10)                    <lineannotation>0000101100</lineannotation>
 44::bit(3)                     <lineannotation>100</lineannotation>
-cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
+cast(-44 AS bit(12))           <lineannotation>111111010100</lineannotation>
 '1110'::bit(4)::integer        <lineannotation>14</lineannotation>
 </programlisting>
     Note that casting to just <quote>bit</quote> means casting to

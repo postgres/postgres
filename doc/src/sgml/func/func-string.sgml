@@ -328,7 +328,7 @@
         of <parameter>newsubstring</parameter>.
        </para>
        <para>
-        <literal>overlay('Txxxxas' placing 'hom' from 2 for 4)</literal>
+        <literal>overlay('Txxxxas' PLACING 'hom' FROM 2 FOR 4)</literal>
         <returnvalue>Thomas</returnvalue>
        </para></entry>
       </row>
@@ -347,7 +347,7 @@
         <parameter>string</parameter>, or zero if it's not present.
        </para>
        <para>
-        <literal>position('om' in 'Thomas')</literal>
+        <literal>position('om' IN 'Thomas')</literal>
         <returnvalue>3</returnvalue>
        </para></entry>
       </row>
@@ -411,15 +411,15 @@
         and <parameter>count</parameter>.
        </para>
        <para>
-        <literal>substring('Thomas' from 2 for 3)</literal>
+        <literal>substring('Thomas' FROM 2 FOR 3)</literal>
         <returnvalue>hom</returnvalue>
        </para>
        <para>
-        <literal>substring('Thomas' from 3)</literal>
+        <literal>substring('Thomas' FROM 3)</literal>
         <returnvalue>omas</returnvalue>
        </para>
        <para>
-        <literal>substring('Thomas' for 2)</literal>
+        <literal>substring('Thomas' FOR 2)</literal>
         <returnvalue>Th</returnvalue>
        </para></entry>
       </row>
@@ -434,7 +434,7 @@
         <xref linkend="functions-posix-regexp"/>.
        </para>
        <para>
-        <literal>substring('Thomas' from '...$')</literal>
+        <literal>substring('Thomas' FROM '...$')</literal>
         <returnvalue>mas</returnvalue>
        </para></entry>
       </row>
@@ -455,7 +455,7 @@
         and should be considered obsolete.
        </para>
        <para>
-        <literal>substring('Thomas' similar '%#"o_a#"_' escape '#')</literal>
+        <literal>substring('Thomas' SIMILAR '%#"o_a#"_' ESCAPE '#')</literal>
         <returnvalue>oma</returnvalue>
        </para></entry>
       </row>

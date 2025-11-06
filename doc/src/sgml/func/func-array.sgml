@@ -624,7 +624,7 @@
         in a query's FROM clause; see <xref linkend="queries-tablefunctions"/>.
        </para>
        <para>
-        <literal>select * from unnest(ARRAY[1,2], ARRAY['foo','bar','baz']) as x(a,b)</literal>
+        <literal>SELECT * FROM unnest(ARRAY[1, 2], ARRAY['foo', 'bar', 'baz']) AS x(a, b)</literal>
         <returnvalue></returnvalue>
 <programlisting>
  a |  b

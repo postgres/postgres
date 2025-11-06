@@ -602,28 +602,28 @@
          <indexterm>
           <primary>extract</primary>
          </indexterm>
-         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>timestamp</type> )
+         <function>extract</function> ( <parameter>field</parameter> <literal>FROM</literal> <type>timestamp</type> )
          <returnvalue>numeric</returnvalue>
         </para>
         <para>
          Get timestamp subfield; see <xref linkend="functions-datetime-extract"/>
         </para>
         <para>
-         <literal>extract(hour from timestamp '2001-02-16 20:38:40')</literal>
+         <literal>extract(hour FROM timestamp '2001-02-16 20:38:40')</literal>
          <returnvalue>20</returnvalue>
         </para></entry>
        </row>
 
        <row>
         <entry role="func_table_entry"><para role="func_signature">
-         <function>extract</function> ( <parameter>field</parameter> <literal>from</literal> <type>interval</type> )
+         <function>extract</function> ( <parameter>field</parameter> <literal>FROM</literal> <type>interval</type> )
          <returnvalue>numeric</returnvalue>
         </para>
         <para>
          Get interval subfield; see <xref linkend="functions-datetime-extract"/>
         </para>
         <para>
-         <literal>extract(month from interval '2 years 3 months')</literal>
+         <literal>extract(month FROM interval '2 years 3 months')</literal>
          <returnvalue>3</returnvalue>
         </para></entry>
        </row>
@@ -1849,7 +1849,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
          value is in the named time zone.
         </para>
         <para>
-         <literal>timestamp '2001-02-16 20:38:40' at time zone 'America/Denver'</literal>
+         <literal>timestamp '2001-02-16 20:38:40' AT TIME ZONE 'America/Denver'</literal>
          <returnvalue>2001-02-17 03:38:40+00</returnvalue>
         </para></entry>
        </row>
@@ -1881,7 +1881,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
          appear in that zone.
         </para>
         <para>
-         <literal>timestamp with time zone '2001-02-16 20:38:40-05' at time zone 'America/Denver'</literal>
+         <literal>timestamp with time zone '2001-02-16 20:38:40-05' AT TIME ZONE 'America/Denver'</literal>
          <returnvalue>2001-02-16 18:38:40</returnvalue>
         </para></entry>
        </row>
@@ -1913,7 +1913,7 @@ SELECT date_bin('15 minutes', TIMESTAMP '2020-02-11 15:44:17', TIMESTAMP '2001-0
          offset for the named destination zone.
         </para>
         <para>
-         <literal>time with time zone '05:34:17-05' at time zone 'UTC'</literal>
+         <literal>time with time zone '05:34:17-05' AT TIME ZONE 'UTC'</literal>
          <returnvalue>10:34:17+00</returnvalue>
         </para></entry>
        </row>
