@@ -104,6 +104,7 @@ task:
 
   configure_script: |
     su postgres <<-EOF
+      set -e
       meson setup \
         --buildtype=debug \
         --auto-features=disabled \
@@ -112,6 +113,7 @@ task:
     EOF
   build_script: |
     su postgres <<-EOF
+      set -e
       ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
     EOF
   upload_caches: ccache
@@ -121,6 +123,7 @@ task:
   # tap test that exercises both a frontend binary and the backend.
   test_minimal_script: |
     su postgres <<-EOF
+      set -e
       ulimit -c unlimited
       meson test $MTEST_ARGS --suite setup
       meson test $MTEST_ARGS --num-processes ${TEST_JOBS} \
@@ -195,6 +198,7 @@ task:
   # already takes longer than other platforms except for windows.
   configure_script: |
     su postgres <<-EOF
+      set -e
       meson setup \
         --buildtype=debug \
         -Dcassert=true -Dinjection_points=true \
@@ -207,6 +211,7 @@ task:
 
   test_world_script: |
     su postgres <<-EOF
+      set -e
       ulimit -c unlimited
       meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
     EOF
@@ -231,6 +236,7 @@ task:
     # during upload, as it doesn't expect artifacts to change size
     stop_running_script: |
       su postgres <<-EOF
+        set -e
         build/tmp_install/usr/local/pgsql/bin/pg_ctl -D build/runningcheck stop || true
       EOF
     <<: *on_failure_meson
@@ -316,6 +322,7 @@ task:
   # And other uuid options are not available on NetBSD.
   configure_script: |
     su postgres <<-EOF
+      set -e
       meson setup \
         --buildtype=debugoptimized \
         --pkg-config-path ${PKGCONFIG_PATH} \
@@ -330,6 +337,7 @@ task:
 
   test_world_script: |
     su postgres <<-EOF
+      set -e
       ulimit -c unlimited
       # Otherwise tests will fail on OpenBSD, due to inability to start enough
       # processes.
@@ -468,6 +476,7 @@ task:
       # that.
       configure_script: |
         su postgres <<-EOF
+          set -e
           ./configure \
             --enable-cassert --enable-injection-points --enable-debug \
             --enable-tap-tests --enable-nls \
@@ -484,6 +493,7 @@ task:
 
       test_world_script: |
         su postgres <<-EOF
+          set -e
           ulimit -c unlimited # default is 0
           make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
         EOF
@@ -506,6 +516,7 @@ task:
 
       configure_script: |
         su postgres <<-EOF
+          set -e
           meson setup \
             --buildtype=debug \
             -Dcassert=true -Dinjection_points=true \
@@ -517,6 +528,7 @@ task:
       # locally.
       configure_32_script: |
         su postgres <<-EOF
+          set -e
           export CC='ccache gcc -m32'
           meson setup \
             --buildtype=debug \
@@ -531,12 +543,14 @@ task:
 
       build_script: |
         su postgres <<-EOF
+          set -e
           ninja -C build -j${BUILD_JOBS} ${MBUILD_TARGET}
           ninja -C build -t missingdeps
         EOF
 
       build_32_script: |
         su postgres <<-EOF
+          set -e
           ninja -C build-32 -j${BUILD_JOBS} ${MBUILD_TARGET}
           ninja -C build -t missingdeps
         EOF
@@ -545,6 +559,7 @@ task:
 
       test_world_script: |
         su postgres <<-EOF
+          set -e
           ulimit -c unlimited
           meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
         EOF
@@ -557,6 +572,7 @@ task:
       # from C, prevent that with PYTHONCOERCECLOCALE.
       test_world_32_script: |
         su postgres <<-EOF
+          set -e
           ulimit -c unlimited
           PYTHONCOERCECLOCALE=0 LANG=C meson test $MTEST_ARGS -C build-32 --num-processes ${TEST_JOBS}
         EOF
