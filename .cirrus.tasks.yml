@@ -290,6 +290,7 @@ task:
         PKGCONFIG_PATH: '/usr/lib/pkgconfig:/usr/local/lib/pkgconfig'
         UUID: -Duuid=e2fs
         TCL: -Dtcl_version=tcl86
+        CORE_DUMP_EXECUTABLE_DIR: $CIRRUS_WORKING_DIR/build/tmp_install/usr/local/pgsql/bin
       setup_additional_packages_script: |
         #pkg_add -I ...
       # Always core dump to ${CORE_DUMP_DIR}
@@ -352,7 +353,7 @@ task:
       # ${CORE_DUMP_DIR}, they may not obey this. So, move core files to the
       # ${CORE_DUMP_DIR} directory.
       find build/ -type f -name '*.core' -exec mv '{}' ${CORE_DUMP_DIR} \;
-      src/tools/ci/cores_backtrace.sh ${OS_NAME} ${CORE_DUMP_DIR}
+      src/tools/ci/cores_backtrace.sh ${OS_NAME} ${CORE_DUMP_DIR} ${CORE_DUMP_EXECUTABLE_DIR}
 
 
 # configure feature flags, shared between the task running the linux tests and
