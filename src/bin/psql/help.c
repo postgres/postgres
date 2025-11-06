@@ -290,12 +290,7 @@ slashUsage(unsigned short int pager)
 	HELPN("  \\H                     toggle HTML output mode (currently %s)\n",
 		  ON(pset.popt.topt.format == PRINT_HTML));
 	HELP0("  \\pset [NAME [VALUE]]   set table output option\n"
-		  "                         (border|columns|csv_fieldsep|display_false|display_true|\n"
-		  "                         expanded|fieldsep|fieldsep_zero|footer|format|linestyle|\n"
-		  "                         null|numericlocale|pager|pager_min_lines|recordsep|\n"
-		  "                         recordsep_zero|tableattr|title|tuples_only|\n"
-		  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-		  "                         unicode_header_linestyle|xheader_width)\n");
+		  "                         see \"\\? variables\" for valid options\n");
 	HELPN("  \\t [on|off]            show only rows (currently %s)\n",
 		  ON(pset.popt.topt.tuples_only));
 	HELP0("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n");
