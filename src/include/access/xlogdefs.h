@@ -25,7 +25,8 @@ typedef uint64 XLogRecPtr;
  * WAL segment, initializing the first WAL page at WAL segment size, so no XLOG
  * record can begin at zero.
  */
-#define InvalidXLogRecPtr	0
+#define InvalidXLogRecPtr		0
+#define XLogRecPtrIsValid(r)	((r) != InvalidXLogRecPtr)
 #define XLogRecPtrIsInvalid(r)	((r) == InvalidXLogRecPtr)
 
 /*
