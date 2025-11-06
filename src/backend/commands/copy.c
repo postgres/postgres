@@ -128,6 +128,9 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 		if (stmt->whereClause)
 		{
+			Bitmapset  *expr_attrs = NULL;
+			int			i;
+
 			/* add nsitem to query namespace */
 			addNSItemToQuery(pstate, nsitem, false, true, true);
 
@@ -139,6 +142,40 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 
 			/* we have to fix its collations too */
 			assign_expr_collations(pstate, whereClause);
+
+			/*
+			 * Examine all the columns in the WHERE clause expression.  When
+			 * the whole-row reference is present, examine all the columns of
+			 * the table.
+			 */
+			pull_varattnos(whereClause, 1, &expr_attrs);
+			if (bms_is_member(0 - FirstLowInvalidHeapAttributeNumber, expr_attrs))
+			{
+				expr_attrs = bms_add_range(expr_attrs,
+										   1 - FirstLowInvalidHeapAttributeNumber,
+										   RelationGetNumberOfAttributes(rel) - FirstLowInvalidHeapAttributeNumber);
+				expr_attrs = bms_del_member(expr_attrs, 0 - FirstLowInvalidHeapAttributeNumber);
+			}
+
+			i = -1;
+			while ((i = bms_next_member(expr_attrs, i)) >= 0)
+			{
+				AttrNumber	attno = i + FirstLowInvalidHeapAttributeNumber;
+
+				Assert(attno != 0);
+
+				/*
+				 * Prohibit generated columns in the WHERE clause.  Stored
+				 * generated columns are not yet computed when the filtering
+				 * happens.
+				 */
+				if (TupleDescAttr(RelationGetDescr(rel), attno - 1)->attgenerated)
+					ereport(ERROR,
+							errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+							errmsg("generated columns are not supported in COPY FROM WHERE conditions"),
+							errdetail("Column \"%s\" is a generated column.",
+									  get_attname(RelationGetRelid(rel), attno, false)));
+			}
 
 			whereClause = eval_const_expressions(NULL, whereClause);
 
