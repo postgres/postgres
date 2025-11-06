@@ -15000,8 +15000,8 @@ fi
 
 
 # Even though restrict is in C99 and should be supported by all
-# supported compilers, but this macro is useful because it will prefer
-# a spelling that also works in C++ (often __restrict).  (restrict is
+# supported compilers, this test is useful because it will prefer a
+# spelling that also works in C++ (often __restrict).  (restrict is
 # not part of the C++ standard.)
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for C/C++ restrict keyword" >&5
 $as_echo_n "checking for C/C++ restrict keyword... " >&6; }
