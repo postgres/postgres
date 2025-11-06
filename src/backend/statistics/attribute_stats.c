@@ -36,6 +36,11 @@
 #define DEFAULT_AVG_WIDTH      Int32GetDatum(0) /* unknown */
 #define DEFAULT_N_DISTINCT     Float4GetDatum(0.0)	/* unknown */
 
+/*
+ * Positional argument numbers, names, and types for
+ * attribute_statistics_update() and pg_restore_attribute_stats().
+ */
+
 enum attribute_stats_argnum
 {
 	ATTRELSCHEMA_ARG = 0,
@@ -81,6 +86,11 @@ static struct StatsArgInfo attarginfo[] =
 	[RANGE_BOUNDS_HISTOGRAM_ARG] = {"range_bounds_histogram", TEXTOID},
 	[NUM_ATTRIBUTE_STATS_ARGS] = {0}
 };
+
+/*
+ * Positional argument numbers, names, and types for
+ * pg_clear_attribute_stats().
+ */
 
 enum clear_attribute_stats_argnum
 {
