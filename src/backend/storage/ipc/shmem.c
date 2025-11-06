@@ -76,6 +76,7 @@
 #include "utils/builtins.h"
 
 static void *ShmemAllocRaw(Size size, Size *allocated_size);
+static void *ShmemAllocUnlocked(Size size);
 
 /* shared memory global variables */
 
@@ -234,7 +235,7 @@ ShmemAllocRaw(Size size, Size *allocated_size)
  *
  * We consider maxalign, rather than cachealign, sufficient here.
  */
-void *
+static void *
 ShmemAllocUnlocked(Size size)
 {
 	Size		newStart;

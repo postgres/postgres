@@ -343,12 +343,8 @@ PGReserveSemaphores(int maxSemas)
 				 errmsg("could not stat data directory \"%s\": %m",
 						DataDir)));
 
-	/*
-	 * We must use ShmemAllocUnlocked(), since the spinlock protecting
-	 * ShmemAlloc() won't be ready yet.
-	 */
 	sharedSemas = (PGSemaphore)
-		ShmemAllocUnlocked(PGSemaphoreShmemSize(maxSemas));
+		ShmemAlloc(PGSemaphoreShmemSize(maxSemas));
 	numSharedSemas = 0;
 	maxSharedSemas = maxSemas;
 
