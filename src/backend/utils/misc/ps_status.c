@@ -23,7 +23,7 @@
 #include "utils/guc.h"
 #include "utils/ps_status.h"
 
-#if !defined(WIN32) || defined(_MSC_VER)
+#if !defined(WIN32)
 extern char **environ;
 #endif
 

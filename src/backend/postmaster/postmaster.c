@@ -880,7 +880,7 @@ PostmasterMain(int argc, char *argv[])
 	/* For debugging: display postmaster environment */
 	if (message_level_is_interesting(DEBUG3))
 	{
-#if !defined(WIN32) || defined(_MSC_VER)
+#if !defined(WIN32)
 		extern char **environ;
 #endif
 		char	  **p;

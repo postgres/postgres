@@ -2150,7 +2150,6 @@ if cc.get_id() == 'msvc'
     # Warnings to disable:
     # from /W1:
     '/wd4090', # different 'modifier' qualifiers
-    '/wd4273', # inconsistent DLL linkage
     # from /W2:
     '/wd4244', # conversion from 'type1' to 'type2', possible loss of data
     # from /W3:
