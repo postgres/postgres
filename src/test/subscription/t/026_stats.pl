@@ -21,10 +21,16 @@ $node_subscriber->start;
 
 sub create_sub_pub_w_errors
 {
-	my ($node_publisher, $node_subscriber, $db, $table_name) = @_;
-	# Initial table setup on both publisher and subscriber. On subscriber we
-	# create the same tables but with primary keys. Also, insert some data that
-	# will conflict with the data replicated from publisher later.
+	my ($node_publisher, $node_subscriber, $db, $table_name, $sequence_name)
+	  = @_;
+	# Initial table and sequence setup on both publisher and subscriber.
+	#
+	# Tables: Created on both nodes, but the subscriber version includes
+	# primary keys and pre-populated data that will intentionally conflict with
+	# replicated data from the publisher.
+	#
+	# Sequences: Created on both nodes with different INCREMENT values to
+	# intentionally trigger replication conflicts.
 	$node_publisher->safe_psql(
 		$db,
 		qq[
@@ -32,6 +38,7 @@ sub create_sub_pub_w_errors
 	CREATE TABLE $table_name(a int);
 	ALTER TABLE $table_name REPLICA IDENTITY FULL;
 	INSERT INTO $table_name VALUES (1);
+	CREATE SEQUENCE $sequence_name;
 	COMMIT;
 	]);
 	$node_subscriber->safe_psql(
@@ -40,35 +47,57 @@ sub create_sub_pub_w_errors
 	BEGIN;
 	CREATE TABLE $table_name(a int primary key);
 	INSERT INTO $table_name VALUES (1);
+	CREATE SEQUENCE $sequence_name INCREMENT BY 10;
 	COMMIT;
 	]);
 
 	# Set up publication.
 	my $pub_name = $table_name . '_pub';
+	my $pub_seq_name = $sequence_name . '_pub';
 	my $publisher_connstr = $node_publisher->connstr . qq( dbname=$db);
 
-	$node_publisher->safe_psql($db,
-		qq(CREATE PUBLICATION $pub_name FOR TABLE $table_name));
+	$node_publisher->safe_psql(
+		$db,
+		qq[
+	CREATE PUBLICATION $pub_name FOR TABLE $table_name;
+	CREATE PUBLICATION $pub_seq_name FOR ALL SEQUENCES;
+	]);
 
 	# Create subscription. The tablesync for table on subscription will enter into
-	# infinite error loop due to violating the unique constraint.
+	# infinite error loop due to violating the unique constraint. The sequencesync
+	# will also fail due to different sequence increment values on publisher and
+	# subscriber.
 	my $sub_name = $table_name . '_sub';
 	$node_subscriber->safe_psql($db,
-		qq(CREATE SUBSCRIPTION $sub_name CONNECTION '$publisher_connstr' PUBLICATION $pub_name)
+		qq(CREATE SUBSCRIPTION $sub_name CONNECTION '$publisher_connstr' PUBLICATION $pub_name, $pub_seq_name)
 	);
 
 	$node_publisher->wait_for_catchup($sub_name);
 
-	# Wait for the tablesync error to be reported.
+	# Wait for the tablesync and sequencesync error to be reported.
 	$node_subscriber->poll_query_until(
 		$db,
 		qq[
-	SELECT sync_error_count > 0
-	FROM pg_stat_subscription_stats
-	WHERE subname = '$sub_name'
+	SELECT count(1) = 1 FROM pg_stat_subscription_stats
+	WHERE subname = '$sub_name' AND seq_sync_error_count > 0 AND sync_error_count > 0
 	])
 	  or die
-	  qq(Timed out while waiting for tablesync errors for subscription '$sub_name');
+	  qq(Timed out while waiting for sequencesync errors and tablesync errors for subscription '$sub_name');
+
+	# Change the sequence INCREMENT value back to the default on the subscriber
+	# so it doesn't error out.
+	$node_subscriber->safe_psql($db,
+		qq(ALTER SEQUENCE $sequence_name INCREMENT 1));
+
+	# Wait for sequencesync to finish.
+	$node_subscriber->poll_query_until(
+		$db,
+		qq[
+	SELECT count(1) = 1 FROM pg_subscription_rel
+	WHERE srrelid = '$sequence_name'::regclass AND srsubstate = 'r'
+	])
+	  or die
+	  qq(Timed out while waiting for subscriber to synchronize data for sequence '$sequence_name'.);
 
 	# Truncate test_tab1 so that tablesync worker can continue.
 	$node_subscriber->safe_psql($db, qq(TRUNCATE $table_name));
@@ -136,14 +165,17 @@ is($result, qq(0),
 
 # Create the publication and subscription with sync and apply errors
 my $table1_name = 'test_tab1';
+my $sequence1_name = 'test_seq1';
 my ($pub1_name, $sub1_name) =
   create_sub_pub_w_errors($node_publisher, $node_subscriber, $db,
-	$table1_name);
+	$table1_name, $sequence1_name);
 
-# Apply errors, sync errors, and conflicts are > 0 and stats_reset timestamp is NULL
+# Apply errors, sequencesync errors, tablesync errors, and conflicts are > 0 and stats_reset
+# timestamp is NULL.
 is( $node_subscriber->safe_psql(
 		$db,
 		qq(SELECT apply_error_count > 0,
+	seq_sync_error_count > 0,
 	sync_error_count > 0,
 	confl_insert_exists > 0,
 	confl_delete_missing > 0,
@@ -151,8 +183,8 @@ is( $node_subscriber->safe_psql(
 	FROM pg_stat_subscription_stats
 	WHERE subname = '$sub1_name')
 	),
-	qq(t|t|t|t|t),
-	qq(Check that apply errors, sync errors, and conflicts are > 0 and stats_reset is NULL for subscription '$sub1_name'.)
+	qq(t|t|t|t|t|t),
+	qq(Check that apply errors, sequencesync errors, tablesync errors, and conflicts are > 0 and stats_reset is NULL for subscription '$sub1_name'.)
 );
 
 # Reset a single subscription
@@ -160,10 +192,12 @@ $node_subscriber->safe_psql($db,
 	qq(SELECT pg_stat_reset_subscription_stats((SELECT subid FROM pg_stat_subscription_stats WHERE subname = '$sub1_name')))
 );
 
-# Apply errors, sync errors, and conflicts are 0 and stats_reset timestamp is not NULL
+# Apply errors, sequencesync errors, tablesync errors, and conflicts are 0 and
+# stats_reset timestamp is not NULL.
 is( $node_subscriber->safe_psql(
 		$db,
 		qq(SELECT apply_error_count = 0,
+	seq_sync_error_count = 0,
 	sync_error_count = 0,
 	confl_insert_exists = 0,
 	confl_delete_missing = 0,
@@ -171,8 +205,8 @@ is( $node_subscriber->safe_psql(
 	FROM pg_stat_subscription_stats
 	WHERE subname = '$sub1_name')
 	),
-	qq(t|t|t|t|t),
-	qq(Confirm that apply errors, sync errors, and conflicts are 0 and stats_reset is not NULL after reset for subscription '$sub1_name'.)
+	qq(t|t|t|t|t|t),
+	qq(Confirm that apply errors, sequencesync errors, tablesync errors, and conflicts are 0 and stats_reset is not NULL after reset for subscription '$sub1_name'.)
 );
 
 # Get reset timestamp
@@ -198,14 +232,17 @@ is( $node_subscriber->safe_psql(
 
 # Make second subscription and publication
 my $table2_name = 'test_tab2';
+my $sequence2_name = 'test_seq2';
 my ($pub2_name, $sub2_name) =
   create_sub_pub_w_errors($node_publisher, $node_subscriber, $db,
-	$table2_name);
+	$table2_name, $sequence2_name);
 
-# Apply errors, sync errors, and conflicts are > 0 and stats_reset timestamp is NULL
+# Apply errors, sequencesync errors, tablesync errors, and conflicts are > 0
+# and stats_reset timestamp is NULL
 is( $node_subscriber->safe_psql(
 		$db,
 		qq(SELECT apply_error_count > 0,
+	seq_sync_error_count > 0,
 	sync_error_count > 0,
 	confl_insert_exists > 0,
 	confl_delete_missing > 0,
@@ -213,18 +250,20 @@ is( $node_subscriber->safe_psql(
 	FROM pg_stat_subscription_stats
 	WHERE subname = '$sub2_name')
 	),
-	qq(t|t|t|t|t),
-	qq(Confirm that apply errors, sync errors, and conflicts are > 0 and stats_reset is NULL for sub '$sub2_name'.)
+	qq(t|t|t|t|t|t),
+	qq(Confirm that apply errors, sequencesync errors, tablesync errors, and conflicts are > 0 and stats_reset is NULL for sub '$sub2_name'.)
 );
 
 # Reset all subscriptions
 $node_subscriber->safe_psql($db,
 	qq(SELECT pg_stat_reset_subscription_stats(NULL)));
 
-# Apply errors, sync errors, and conflicts are 0 and stats_reset timestamp is not NULL
+# Apply errors, sequencesync errors, tablesync errors, and conflicts are 0 and
+# stats_reset timestamp is not NULL.
 is( $node_subscriber->safe_psql(
 		$db,
 		qq(SELECT apply_error_count = 0,
+	seq_sync_error_count = 0,
 	sync_error_count = 0,
 	confl_insert_exists = 0,
 	confl_delete_missing = 0,
@@ -232,13 +271,14 @@ is( $node_subscriber->safe_psql(
 	FROM pg_stat_subscription_stats
 	WHERE subname = '$sub1_name')
 	),
-	qq(t|t|t|t|t),
-	qq(Confirm that apply errors, sync errors, and conflicts are 0 and stats_reset is not NULL for sub '$sub1_name' after reset.)
+	qq(t|t|t|t|t|t),
+	qq(Confirm that apply errors, sequencesync errors, tablesync errors, and conflicts are 0 and stats_reset is not NULL for sub '$sub1_name' after reset.)
 );
 
 is( $node_subscriber->safe_psql(
 		$db,
 		qq(SELECT apply_error_count = 0,
+	seq_sync_error_count = 0,
 	sync_error_count = 0,
 	confl_insert_exists = 0,
 	confl_delete_missing = 0,
@@ -246,8 +286,8 @@ is( $node_subscriber->safe_psql(
 	FROM pg_stat_subscription_stats
 	WHERE subname = '$sub2_name')
 	),
-	qq(t|t|t|t|t),
-	qq(Confirm that apply errors, sync errors, and conflicts are 0 and stats_reset is not NULL for sub '$sub2_name' after reset.)
+	qq(t|t|t|t|t|t),
+	qq(Confirm that apply errors, sequencesync errors, tablesync errors, errors, and conflicts are 0 and stats_reset is not NULL for sub '$sub2_name' after reset.)
 );
 
 $reset_time1 = $node_subscriber->safe_psql($db,

@@ -2194,6 +2194,17 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>seq_sync_error_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of times an error occurred in the sequence synchronization
+       worker. A single worker synchronizes all sequences, so one error
+       increment may represent failures across multiple sequences.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>sync_error_count</structfield> <type>bigint</type>
       </para>
       <para>

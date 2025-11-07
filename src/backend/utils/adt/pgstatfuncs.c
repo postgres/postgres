@@ -2203,7 +2203,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_SUBSCRIPTION_STATS_COLS	12
+#define PG_STAT_GET_SUBSCRIPTION_STATS_COLS	13
 	Oid			subid = PG_GETARG_OID(0);
 	TupleDesc	tupdesc;
 	Datum		values[PG_STAT_GET_SUBSCRIPTION_STATS_COLS] = {0};
@@ -2221,25 +2221,27 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 					   OIDOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "apply_error_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "sync_error_count",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "seq_sync_error_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "confl_insert_exists",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sync_error_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "confl_update_origin_differs",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "confl_insert_exists",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "confl_update_exists",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "confl_update_origin_differs",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "confl_update_deleted",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "confl_update_exists",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "confl_update_missing",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "confl_update_deleted",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "confl_delete_origin_differs",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "confl_update_missing",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "confl_delete_missing",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "confl_delete_origin_differs",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "confl_multiple_unique_conflicts",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "confl_delete_missing",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "stats_reset",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "confl_multiple_unique_conflicts",
+					   INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
 	BlessTupleDesc(tupdesc);
 
@@ -2255,6 +2257,9 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 
 	/* apply_error_count */
 	values[i++] = Int64GetDatum(subentry->apply_error_count);
+
+	/* seq_sync_error_count */
+	values[i++] = Int64GetDatum(subentry->seq_sync_error_count);
 
 	/* sync_error_count */
 	values[i++] = Int64GetDatum(subentry->sync_error_count);

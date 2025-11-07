@@ -5606,7 +5606,8 @@ start_apply(XLogRecPtr origin_startpos)
 			 * idle state.
 			 */
 			AbortOutOfAnyTransaction();
-			pgstat_report_subscription_error(MySubscription->oid, !am_tablesync_worker());
+			pgstat_report_subscription_error(MySubscription->oid,
+											 MyLogicalRepWorker->type);
 
 			PG_RE_THROW();
 		}
@@ -5953,15 +5954,12 @@ DisableSubscriptionAndExit(void)
 
 	RESUME_INTERRUPTS();
 
-	if (am_leader_apply_worker() || am_tablesync_worker())
-	{
-		/*
-		 * Report the worker failed during either table synchronization or
-		 * apply.
-		 */
-		pgstat_report_subscription_error(MyLogicalRepWorker->subid,
-										 !am_tablesync_worker());
-	}
+	/*
+	 * Report the worker failed during sequence synchronization, table
+	 * synchronization, or apply.
+	 */
+	pgstat_report_subscription_error(MyLogicalRepWorker->subid,
+									 MyLogicalRepWorker->type);
 
 	/* Disable the subscription */
 	StartTransactionCommand();

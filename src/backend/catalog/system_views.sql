@@ -1415,6 +1415,7 @@ CREATE VIEW pg_stat_subscription_stats AS
         ss.subid,
         s.subname,
         ss.apply_error_count,
+        ss.seq_sync_error_count,
         ss.sync_error_count,
         ss.confl_insert_exists,
         ss.confl_update_origin_differs,
