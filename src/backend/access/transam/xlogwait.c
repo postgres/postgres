@@ -347,7 +347,7 @@ WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
 			currentLSN = GetFlushRecPtr(NULL);
 
 		/* Check that recovery is still in-progress */
-		if (!RecoveryInProgress())
+		if (lsnType == WAIT_LSN_TYPE_REPLAY && !RecoveryInProgress())
 		{
 			/*
 			 * Recovery was ended, but check if target LSN was already
