@@ -1562,7 +1562,8 @@ include_dir 'conf.d'
        <para>
         Controls whether huge pages are requested for the main shared memory
         area. Valid values are <literal>try</literal> (the default),
-        <literal>on</literal>, and <literal>off</literal>.  With
+        <literal>on</literal>, and <literal>off</literal>.
+        This parameter can only be set at server start. With
         <varname>huge_pages</varname> set to <literal>try</literal>, the
         server will try to request huge pages, but fall back to the default if
         that fails. With <literal>on</literal>, failure to request huge pages
@@ -1889,6 +1890,7 @@ include_dir 'conf.d'
         platform, is generally discouraged because it typically requires
         non-default kernel settings to allow for large allocations (see <xref
         linkend="sysvipc"/>).
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1916,6 +1918,7 @@ include_dir 'conf.d'
         however, it may be useful for debugging, when the
         <literal>pg_dynshmem</literal> directory is stored on a RAM disk, or when
         other shared memory facilities are not available.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -4038,9 +4041,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        Record commit time of transactions. This parameter
-        can only be set in <filename>postgresql.conf</filename> file or on the server
-        command line. The default value is <literal>off</literal>.
+        Record commit time of transactions.
+        This parameter can only be set at server start.
+        The default value is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -6216,8 +6219,7 @@ local0.*    /var/log/postgresql
         determines the program name used to identify
         <productname>PostgreSQL</productname> messages in
         the log. The default is <literal>PostgreSQL</literal>.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
