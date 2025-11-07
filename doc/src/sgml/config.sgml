@@ -2724,6 +2724,8 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Controls the largest I/O size in operations that combine I/O.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
          The default is 128kB.
         </para>
        </listitem>
