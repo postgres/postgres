@@ -76,9 +76,8 @@ tps = 896.967014 (without initial connection time)
   and number of transactions per client); these will be equal unless the run
   failed before completion or some SQL command(s) failed.  (In
   <option>-T</option> mode, only the actual number of transactions is printed.)
-  The next line reports the number of failed transactions due to
-  serialization or deadlock errors (see <xref linkend="failures-and-retries"/>
-  for more information).
+  The next line reports the number of failed transactions (see
+  <xref linkend="failures-and-retries"/> for more information).
   The last line reports the number of transactions per second.
  </para>
 
@@ -759,6 +758,26 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       </listitem>
      </varlistentry>
 
+     <varlistentry id="pgbench-option-continue-on-error">
+      <term><option>--continue-on-error</option></term>
+      <listitem>
+       <para>
+        Allows clients to continue running even if an SQL statement fails
+        due to errors other than serialization or deadlock.  By default,
+        clients abort after such errors, but with this option enabled,
+        they proceed to the next transaction instead.  Note that
+        clients still abort even with this option if an error causes
+        the connection to fail.
+        See <xref linkend="failures-and-retries"/> for more information.
+       </para>
+       <para>
+        This option is useful when your custom script may raise errors
+        such as unique constraint violations, but you want the benchmark
+        to continue and measure performance including those failures.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="pgbench-option-exit-on-abort">
       <term><option>--exit-on-abort</option></term>
       <listitem>
@@ -789,6 +808,9 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
          </listitem>
          <listitem>
           <para>deadlock failures;</para>
+         </listitem>
+         <listitem>
+          <para>other failures;</para>
          </listitem>
         </itemizedlist>
         See <xref linkend="failures-and-retries"/> for more information.
@@ -2408,8 +2430,8 @@ END;
    will be reported as <literal>failed</literal>. If you use the
    <option>--failures-detailed</option> option, the
    <replaceable>time</replaceable> of the failed transaction will be reported as
-   <literal>serialization</literal> or
-   <literal>deadlock</literal> depending on the type of failure (see
+   <literal>serialization</literal>, <literal>deadlock</literal>, or
+   <literal>other</literal> depending on the type of failure (see
    <xref linkend="failures-and-retries"/> for more information).
   </para>
 
@@ -2637,6 +2659,17 @@ END;
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>other_sql_failures</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions that got an SQL error
+       (zero unless both <option>--failures-detailed</option> and
+       <option>--continue-on-error</option> are specified)
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
 
@@ -2645,8 +2678,8 @@ END;
 <screen>
 <userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000 --latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
 
-1650260552 5178 26171317 177284491527 1136 44462 2647617 7321113867 0 9866 64 7564 28340 4148 0
-1650260562 4808 25573984 220121792172 1171 62083 3037380 9666800914 0 9998 598 7392 26621 4527 0
+1650260552 5178 26171317 177284491527 1136 44462 2647617 7321113867 0 9866 64 7564 28340 4148 0 0
+1650260562 4808 25573984 220121792172 1171 62083 3037380 9666800914 0 9998 598 7392 26621 4527 0 0
 </screen>
   </para>
 
@@ -2850,10 +2883,20 @@ statement latencies in milliseconds, failures and retries:
   <para>
    A client's run is aborted in case of a serious error; for example, the
    connection with the database server was lost or the end of script was reached
-   without completing the last transaction. In addition, if execution of an SQL
-   or meta command fails for reasons other than serialization or deadlock errors,
-   the client is aborted. Otherwise, if an SQL command fails with serialization or
-   deadlock errors, the client is not aborted. In such cases, the current
+   without completing the last transaction.  The client also aborts
+   if a meta command fails, or if an SQL command fails for reasons other than
+   serialization or deadlock errors when <option>--continue-on-error</option>
+   is not specified.  With <option>--continue-on-error</option>,
+   the client does not abort on such SQL errors and instead proceeds to
+   the next transaction.  These cases are reported as
+   <literal>other failures</literal> in the output.  If the error occurs
+   in a meta command, however, the client still aborts even when this option
+   is specified.
+  </para>
+  <para>
+   If an SQL command fails due to serialization or deadlock errors, the
+   client does not abort, regardless of whether
+   <option>--continue-on-error</option> is used.  Instead, the current
    transaction is rolled back, which also includes setting the client variables
    as they were before the run of this transaction (it is assumed that one
    transaction script contains only one transaction; see
