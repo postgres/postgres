@@ -2697,6 +2697,8 @@ include_dir 'conf.d'
          This parameter can only be set in
          the <filename>postgresql.conf</filename> file or on the server
          command line.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
          The maximum possible size depends on the operating system and block
          size, but is typically 1MB on Unix and 128kB on Windows.
          The default is 128kB.
@@ -2716,6 +2718,8 @@ include_dir 'conf.d'
          higher than the <varname>io_max_combine_limit</varname> parameter, the
          lower value will silently be used instead, so both may need to be raised
          to increase the I/O size.
+         If this value is specified without units, it is taken as blocks,
+         that is <symbol>BLCKSZ</symbol> bytes, typically 8kB.
          The maximum possible size depends on the operating system and block
          size, but is typically 1MB on Unix and 128kB on Windows.
          The default is 128kB.
