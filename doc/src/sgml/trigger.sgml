@@ -823,7 +823,7 @@ typedef struct Trigger
         <varname>attnum</varname> (1-based) is a member of this bitmap set,
         call <literal>bms_is_member(attnum -
         FirstLowInvalidHeapAttributeNumber,
-        trigdata->tg_updatedcols))</literal>.
+        trigdata->tg_updatedcols)</literal>.
        </para>
 
        <para>

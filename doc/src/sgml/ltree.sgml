@@ -645,7 +645,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      <literal>siglen</literal> determines the
      signature length in bytes.  The default signature length is 8 bytes.
      The length must be a positive multiple of <type>int</type> alignment
-     (4 bytes on most machines)) up to 2024.  Longer
+     (4 bytes on most machines) up to 2024.  Longer
      signatures lead to a more precise search (scanning a smaller fraction of the index and
      fewer heap pages), at the cost of a larger index.
     </para>

@@ -305,7 +305,7 @@ include_dir         <replaceable>directory</replaceable>
        Specifies which database user name(s) this record
        matches. The value <literal>all</literal> specifies that it
        matches all users.  Otherwise, this is either the name of a specific
-       database user, a regular expression (when starting with a slash
+       database user, a regular expression when starting with a slash
        (<literal>/</literal>), or a group name preceded by <literal>+</literal>.
        (Recall that there is no real distinction between users and groups
        in <productname>PostgreSQL</productname>; a <literal>+</literal> mark really means
