@@ -586,7 +586,7 @@ ClosePipeToProgram(CopyToState cstate)
 }
 
 /*
- * Release resources allocated in a cstate for COPY TO/FROM.
+ * Release resources allocated in a cstate for COPY TO.
  */
 static void
 EndCopy(CopyToState cstate)
