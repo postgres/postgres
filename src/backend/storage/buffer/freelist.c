@@ -302,7 +302,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state, bool *from_r
 					return buf;
 				}
 			}
-
 		}
 	}
 }
