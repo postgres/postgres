@@ -285,7 +285,7 @@ DELETE FROM films WHERE kind &lt;&gt; 'Musical';
   </para>
 
   <para>
-   Clear the table <literal>films</literal>:
+   Clear the table <structname>films</structname>:
 <programlisting>
 DELETE FROM films;
 </programlisting>

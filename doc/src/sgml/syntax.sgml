@@ -2430,8 +2430,8 @@ SELECT ROW(1,2.5,'this is a test');
     which will be expanded to a list of the elements of the row value,
     just as occurs when the <literal>.*</literal> syntax is used at the top level
     of a <command>SELECT</command> list (see <xref linkend="rowtypes-usage"/>).
-    For example, if table <literal>t</literal> has
-    columns <literal>f1</literal> and <literal>f2</literal>, these are the same:
+    For example, if table <structname>t</structname> has
+    columns <structfield>f1</structfield> and <structfield>f2</structfield>, these are the same:
 <programlisting>
 SELECT ROW(t.*, 42) FROM t;
 SELECT ROW(t.f1, t.f2, 42) FROM t;

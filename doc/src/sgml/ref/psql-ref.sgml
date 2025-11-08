@@ -4859,7 +4859,7 @@ bar
 testdb=&gt; <userinput>\set foo 'my_table'</userinput>
 testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
 </programlisting>
-    would query the table <literal>my_table</literal>. Note that this
+    would query the table <structname>my_table</structname>. Note that this
     may be unsafe: the value of the variable is copied literally, so it can
     contain unbalanced quotes, or even backslash commands. You must make sure
     that it makes sense where you put it.

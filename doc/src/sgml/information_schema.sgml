@@ -2089,15 +2089,15 @@
    Since data types can be defined in a variety of ways in SQL, and
    <productname>PostgreSQL</productname> contains additional ways to
    define data types, their representation in the information schema
-   can be somewhat difficult.  The column <literal>data_type</literal>
+   can be somewhat difficult.  The column <structfield>data_type</structfield>
    is supposed to identify the underlying built-in type of the column.
    In <productname>PostgreSQL</productname>, this means that the type
    is defined in the system catalog schema
    <literal>pg_catalog</literal>.  This column might be useful if the
    application can handle the well-known built-in types specially (for
    example, format the numeric types differently or use the data in
-   the precision columns).  The columns <literal>udt_name</literal>,
-   <literal>udt_schema</literal>, and <literal>udt_catalog</literal>
+   the precision columns).  The columns <structfield>udt_name</structfield>,
+   <structfield>udt_schema</structfield>, and <structfield>udt_catalog</structfield>
    always identify the underlying data type of the column, even if the
    column is based on a domain.  (Since
    <productname>PostgreSQL</productname> treats built-in types like
@@ -2107,8 +2107,8 @@
    type, because in that case it wouldn't matter if the column is
    really based on a domain.  If the column is based on a domain, the
    identity of the domain is stored in the columns
-   <literal>domain_name</literal>, <literal>domain_schema</literal>,
-   and <literal>domain_catalog</literal>.  If you want to pair up
+   <structfield>domain_name</structfield>, <structfield>domain_schema</structfield>,
+   and <structfield>domain_catalog</structfield>.  If you want to pair up
    columns with their associated data types and treat domains as
    separate types, you could write <literal>coalesce(domain_name,
    udt_name)</literal>, etc.
@@ -6376,7 +6376,7 @@ ORDER BY c.ordinal_position;
        the sequence data type (see above).  The precision indicates
        the number of significant digits.  It can be expressed in
        decimal (base 10) or binary (base 2) terms, as specified in the
-       column <literal>numeric_precision_radix</literal>.
+       column <structfield>numeric_precision_radix</structfield>.
       </para></entry>
      </row>
 
@@ -6386,8 +6386,8 @@ ORDER BY c.ordinal_position;
       </para>
       <para>
        This column indicates in which base the values in the columns
-       <literal>numeric_precision</literal> and
-       <literal>numeric_scale</literal> are expressed.  The value is
+       <structfield>numeric_precision</structfield> and
+       <structfield>numeric_scale</structfield> are expressed.  The value is
        either 2 or 10.
       </para></entry>
      </row>
@@ -6402,7 +6402,7 @@ ORDER BY c.ordinal_position;
        of significant digits to the right of the decimal point.  It
        can be expressed in decimal (base 10) or binary (base 2) terms,
        as specified in the column
-       <literal>numeric_precision_radix</literal>.
+       <structfield>numeric_precision_radix</structfield>.
       </para></entry>
      </row>
 
@@ -6461,10 +6461,10 @@ ORDER BY c.ordinal_position;
  </sect1>
 
  <sect1 id="infoschema-sql-features">
-  <title><literal>sql_features</literal></title>
+  <title><structname>sql_features</structname></title>
 
   <para>
-   The table <literal>sql_features</literal> contains information
+   The table <structname>sql_features</structname> contains information
    about which formal features defined in the SQL standard are
    supported by <productname>PostgreSQL</productname>.  This is the
    same information that is presented in <xref linkend="features"/>.
@@ -6556,10 +6556,10 @@ ORDER BY c.ordinal_position;
  </sect1>
 
  <sect1 id="infoschema-sql-implementation-info">
-  <title><literal>sql_implementation_info</literal></title>
+  <title><structname>sql_implementation_info</structname></title>
 
   <para>
-   The table <literal>sql_implementation_info</literal> contains
+   The table <structname>sql_implementation_info</structname> contains
    information about various aspects that are left
    implementation-defined by the SQL standard.  This information is
    primarily intended for use in the context of the ODBC interface;
@@ -6638,10 +6638,10 @@ ORDER BY c.ordinal_position;
  </sect1>
 
  <sect1 id="infoschema-sql-parts">
-  <title><literal>sql_parts</literal></title>
+  <title><structname>sql_parts</structname></title>
 
   <para>
-   The table <literal>sql_parts</literal> contains information about
+   The table <structname>sql_parts</structname> contains information about
    which of the several parts of the SQL standard are supported by
    <productname>PostgreSQL</productname>.
   </para>
@@ -6714,10 +6714,10 @@ ORDER BY c.ordinal_position;
  </sect1>
 
  <sect1 id="infoschema-sql-sizing">
-  <title><literal>sql_sizing</literal></title>
+  <title><structname>sql_sizing</structname></title>
 
   <para>
-   The table <literal>sql_sizing</literal> contains information about
+   The table <structname>sql_sizing</structname> contains information about
    various size limits and maximum values in
    <productname>PostgreSQL</productname>.  This information is
    primarily intended for use in the context of the ODBC interface;
@@ -7843,7 +7843,7 @@ ORDER BY c.ordinal_position;
    in <productname>PostgreSQL</productname>) and distinct types (not
    implemented in <productname>PostgreSQL</productname>).  To be
    future-proof, use the
-   column <literal>user_defined_type_category</literal> to
+   column <structfield>user_defined_type_category</structfield> to
    differentiate between these.  Other user-defined types such as base
    types and enums, which are <productname>PostgreSQL</productname>
    extensions, are not shown here.  For domains,

@@ -439,7 +439,7 @@
     <para>
      Furthermore, because the initial data copy ignores the <literal>publish</literal>
      operation, and because publication <literal>pub3a</literal> has no row filter,
-     it means the copied table <literal>t3</literal> contains all rows even when
+     it means the copied table <structname>t3</structname> contains all rows even when
      they do not match the row filter of publication <literal>pub3b</literal>.
 <programlisting>
 /* sub # */ SELECT * FROM t3;
@@ -1036,8 +1036,8 @@ HINT:  To initiate replication, you must manually create the replication slot, e
    <para>
     Create some publications. Publication <literal>p1</literal> has one table
     (<literal>t1</literal>) and that table has a row filter. Publication
-    <literal>p2</literal> has two tables. Table <literal>t1</literal> has no row
-    filter, and table <literal>t2</literal> has a row filter. Publication
+    <literal>p2</literal> has two tables. Table <structname>t1</structname> has no row
+    filter, and table <structname>t2</structname> has a row filter. Publication
     <literal>p3</literal> has two tables, and both of them have a row filter.
 <programlisting><![CDATA[
 /* pub # */ CREATE PUBLICATION p1 FOR TABLE t1 WHERE (a > 5 AND c = 'NSW');
@@ -1076,9 +1076,9 @@ Tables:
 
    <para>
     <command>psql</command> can be used to show the row filter expressions (if
-    defined) for each table. See that table <literal>t1</literal> is a member
+    defined) for each table. See that table <structname>t1</structname> is a member
     of two publications, but has a row filter only in <literal>p1</literal>.
-    See that table <literal>t2</literal> is a member of two publications, and
+    See that table <structname>t2</structname> is a member of two publications, and
     has a different row filter in each of them.
 <programlisting><![CDATA[
 /* pub # */ \d t1
@@ -1121,7 +1121,7 @@ Publications:
 ]]></programlisting></para>
 
    <para>
-    On the subscriber node, create a table <literal>t1</literal> with the same
+    On the subscriber node, create a table <structname>t1</structname> with the same
     definition as the one on the publisher, and also create the subscription
     <literal>s1</literal> that subscribes to the publication <literal>p1</literal>.
 <programlisting>
@@ -1474,14 +1474,14 @@ Publications:
    <title>Examples</title>
 
    <para>
-    Create a table <literal>t1</literal> to be used in the following example.
+    Create a table <structname>t1</structname> to be used in the following example.
 <programlisting>
 /* pub # */ CREATE TABLE t1(id int, a text, b text, c text, d text, e text, PRIMARY KEY(id));
 </programlisting></para>
 
    <para>
     Create a publication <literal>p1</literal>. A column list is defined for
-    table <literal>t1</literal> to reduce the number of columns that will be
+    table <structname>t1</structname> to reduce the number of columns that will be
     replicated. Notice that the order of column names in the column list does
     not matter.
 <programlisting>
@@ -1522,9 +1522,9 @@ Publications:
 </programlisting></para>
 
     <para>
-     On the subscriber node, create a table <literal>t1</literal> which now
+     On the subscriber node, create a table <structname>t1</structname> which now
      only needs a subset of the columns that were on the publisher table
-     <literal>t1</literal>, and also create the subscription
+     <structname>t1</structname>, and also create the subscription
      <literal>s1</literal> that subscribes to the publication
      <literal>p1</literal>.
 <programlisting>
@@ -1535,7 +1535,7 @@ Publications:
 </programlisting></para>
 
     <para>
-     On the publisher node, insert some rows to table <literal>t1</literal>.
+     On the publisher node, insert some rows to table <structname>t1</structname>.
 <programlisting>
 /* pub # */ INSERT INTO t1 VALUES(1, 'a-1', 'b-1', 'c-1', 'd-1', 'e-1');
 /* pub # */ INSERT INTO t1 VALUES(2, 'a-2', 'b-2', 'c-2', 'd-2', 'e-2');
@@ -3285,8 +3285,8 @@ CREATE SUBSCRIPTION mysub CONNECTION 'dbname=foo host=bar user=repuser' PUBLICAT
 
   <para>
    The above will start the replication process, which synchronizes the
-   initial table contents of the tables <literal>users</literal> and
-   <literal>departments</literal> and then starts replicating
+   initial table contents of the tables <structname>users</structname> and
+   <structname>departments</structname> and then starts replicating
    incremental changes to those tables.
   </para>
  </sect1>

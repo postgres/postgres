@@ -662,8 +662,8 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
     command other than a <command>SELECT</command>, the result
     relation points to the range-table entry where the result should
     go.  Everything else is absolutely the same.  So having two tables
-    <literal>t1</literal> and <literal>t2</literal> with columns <literal>a</literal> and
-    <literal>b</literal>, the query trees for the two statements:
+    <structname>t1</structname> and <structname>t2</structname> with columns <structfield>a</structfield> and
+    <structfield>b</structfield>, the query trees for the two statements:
 
 <programlisting>
 SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
@@ -676,27 +676,27 @@ UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
     <itemizedlist>
         <listitem>
         <para>
-            The range tables contain entries for the tables <literal>t1</literal> and <literal>t2</literal>.
+            The range tables contain entries for the tables <structname>t1</structname> and <structname>t2</structname>.
         </para>
         </listitem>
 
         <listitem>
         <para>
             The target lists contain one variable that points to column
-            <literal>b</literal> of the range table entry for table <literal>t2</literal>.
+            <structfield>b</structfield> of the range table entry for table <structname>t2</structname>.
         </para>
         </listitem>
 
         <listitem>
         <para>
-            The qualification expressions compare the columns <literal>a</literal> of both
+            The qualification expressions compare the columns <structfield>a</structfield> of both
             range-table entries for equality.
         </para>
         </listitem>
 
         <listitem>
         <para>
-            The join trees show a simple join between <literal>t1</literal> and <literal>t2</literal>.
+            The join trees show a simple join between <structname>t1</structname> and <structname>t2</structname>.
         </para>
         </listitem>
     </itemizedlist>
@@ -705,7 +705,7 @@ UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
    <para>
     The consequence is, that both query trees result in similar
     execution plans: They are both joins over the two tables. For the
-    <command>UPDATE</command> the missing columns from <literal>t1</literal> are added to
+    <command>UPDATE</command> the missing columns from <structname>t1</structname> are added to
     the target list by the planner and the final query tree will read
     as:
 
@@ -727,7 +727,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     one is a <command>SELECT</command> command and the other is an
     <command>UPDATE</command> is handled higher up in the executor, where
     it knows that this is an <command>UPDATE</command>, and it knows that
-    this result should go into table <literal>t1</literal>. But which of the rows
+    this result should go into table <structname>t1</structname>. But which of the rows
     that are there has to be replaced by the new row?
 </para>
 
@@ -739,7 +739,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     This is a system column containing the
     file block number and position in the block for the row. Knowing
     the table, the <acronym>CTID</acronym> can be used to retrieve the
-    original row of <literal>t1</literal> to be updated.  After adding the
+    original row of <structname>t1</structname> to be updated.  After adding the
     <acronym>CTID</acronym> to the target list, the query actually looks like:
 
 <programlisting>
@@ -1691,7 +1691,7 @@ CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok
      WHERE sl_name = NEW.ok_name;
 </programlisting>
 
-    Now you can fill the table <literal>shoelace_arrive</literal> with
+    Now you can fill the table <structname>shoelace_arrive</structname> with
     the data from the parts list:
 
 <programlisting>
@@ -2355,7 +2355,7 @@ CREATE RULE computer_del AS ON DELETE TO computer
 DELETE FROM computer WHERE hostname = 'mypc.local.net';
 </programlisting>
 
-    the table <literal>computer</literal> is scanned by index (fast), and the
+    the table <structname>computer</structname> is scanned by index (fast), and the
     command issued by the trigger would also use an index scan (also fast).
     The extra command from the rule would be:
 
@@ -2421,16 +2421,16 @@ Nestloop
 
     This shows, that the planner does not realize that the
     qualification for <structfield>hostname</structfield> in
-    <literal>computer</literal> could also be used for an index scan on
-    <literal>software</literal> when there are multiple qualification
+    <structname>computer</structname> could also be used for an index scan on
+    <structname>software</structname> when there are multiple qualification
     expressions combined with <literal>AND</literal>, which is what it does
     in the regular-expression version of the command. The trigger will
     get invoked once for each of the 2000 old computers that have to be
     deleted, and that will result in one index scan over
-    <literal>computer</literal> and 2000 index scans over
-    <literal>software</literal>. The rule implementation will do it with two
+    <structname>computer</structname> and 2000 index scans over
+    <structname>software</structname>. The rule implementation will do it with two
     commands that use indexes.  And it depends on the overall size of
-    the table <literal>software</literal> whether the rule will still be faster in the
+    the table <structname>software</structname> whether the rule will still be faster in the
     sequential scan situation. 2000 command executions from the trigger over the SPI
     manager take some time, even if all the index blocks will soon be in the cache.
 </para>
@@ -2443,7 +2443,7 @@ DELETE FROM computer WHERE manufacturer = 'bim';
 </programlisting>
 
     Again this could result in many rows to be deleted from
-    <literal>computer</literal>. So the trigger will again run many commands
+    <structname>computer</structname>. So the trigger will again run many commands
     through the executor.  The command generated by the rule will be:
 
 <programlisting>
@@ -2452,7 +2452,7 @@ DELETE FROM software WHERE computer.manufacturer = 'bim'
 </programlisting>
 
     The plan for that command will again be the nested loop over two
-    index scans, only using a different index on <literal>computer</literal>:
+    index scans, only using a different index on <structname>computer</structname>:
 
 <programlisting>
 Nestloop

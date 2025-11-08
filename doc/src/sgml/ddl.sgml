@@ -1353,7 +1353,7 @@ CREATE TABLE posts (
 );
 </programlisting>
     Without the specification of the column, the foreign key would also set
-    the column <literal>tenant_id</literal> to null, but that column is still
+    the column <structfield>tenant_id</structfield> to null, but that column is still
     required as part of the primary key.
    </para>
 
@@ -2831,7 +2831,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    As an example, suppose that user <literal>miriam</literal> creates
-   table <literal>mytable</literal> and does:
+   table <structname>mytable</structname> and does:
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
 GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
@@ -3059,7 +3059,7 @@ CREATE POLICY user_mod_policy ON users
 
   <para>
    Below is a larger example of how this feature can be used in production
-   environments.  The table <literal>passwd</literal> emulates a Unix password
+   environments.  The table <structname>passwd</structname> emulates a Unix password
    file:
   </para>
 

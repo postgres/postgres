@@ -220,7 +220,7 @@ CLUSTER [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <r
   <title>Examples</title>
 
   <para>
-   Cluster the table <literal>employees</literal> on the basis of
+   Cluster the table <structname>employees</structname> on the basis of
    its index <literal>employees_ind</literal>:
 <programlisting>
 CLUSTER employees USING employees_ind;
@@ -228,7 +228,7 @@ CLUSTER employees USING employees_ind;
   </para>
 
   <para>
-   Cluster the <literal>employees</literal> table using the same
+   Cluster the <structname>employees</structname> table using the same
    index that was used before:
 <programlisting>
 CLUSTER employees;

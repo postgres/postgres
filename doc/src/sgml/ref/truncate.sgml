@@ -182,8 +182,8 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
   <title>Examples</title>
 
   <para>
-   Truncate the tables <literal>bigtable</literal> and
-   <literal>fattable</literal>:
+   Truncate the tables <structname>bigtable</structname> and
+   <structname>fattable</structname>:
 
 <programlisting>
 TRUNCATE bigtable, fattable;
@@ -199,8 +199,8 @@ TRUNCATE bigtable, fattable RESTART IDENTITY;
   </para>
 
   <para>
-   Truncate the table <literal>othertable</literal>, and cascade to any tables
-   that reference <literal>othertable</literal> via foreign-key
+   Truncate the table <structname>othertable</structname>, and cascade to any tables
+   that reference <structname>othertable</structname> via foreign-key
    constraints:
 
 <programlisting>

@@ -528,7 +528,7 @@ REINDEX INDEX my_index;
   </para>
 
   <para>
-   Rebuild all the indexes on the table <literal>my_table</literal>:
+   Rebuild all the indexes on the table <structname>my_table</structname>:
 
 <programlisting>
 REINDEX TABLE my_table;

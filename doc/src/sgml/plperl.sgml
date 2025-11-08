@@ -468,8 +468,8 @@ optional maximum number of rows:
 $rv = spi_exec_query('SELECT * FROM my_table', 5);
 </programlisting>
         This returns up to 5 rows from the table
-        <literal>my_table</literal>.  If <literal>my_table</literal>
-        has a column <literal>my_column</literal>, you can get that
+        <structname>my_table</structname>.  If <structname>my_table</structname>
+        has a column <structfield>my_column</structfield>, you can get that
         value from row <literal>$i</literal> of the result like this:
 <programlisting>
 $foo = $rv-&gt;{rows}[$i]-&gt;{my_column};
@@ -1199,7 +1199,7 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{new}{foo}</literal></term>
      <listitem>
       <para>
-       <literal>NEW</literal> value of column <literal>foo</literal>
+       <literal>NEW</literal> value of column <structfield>foo</structfield>
       </para>
      </listitem>
     </varlistentry>
@@ -1208,7 +1208,7 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{old}{foo}</literal></term>
      <listitem>
       <para>
-       <literal>OLD</literal> value of column <literal>foo</literal>
+       <literal>OLD</literal> value of column <structfield>foo</structfield>
       </para>
      </listitem>
     </varlistentry>

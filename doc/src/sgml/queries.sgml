@@ -410,7 +410,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     </variablelist>
 
     <para>
-     To put this together, assume we have tables <literal>t1</literal>:
+     To put this together, assume we have tables <structname>t1</structname>:
 <programlisting>
  num | name
 -----+------
@@ -418,7 +418,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    2 | b
    3 | c
 </programlisting>
-     and <literal>t2</literal>:
+     and <structname>t2</structname>:
 <programlisting>
  num | value
 -----+-------
@@ -1079,7 +1079,7 @@ SELECT <replaceable>select_list</replaceable>
    <para>
     In the second query, we could not have written <literal>SELECT *
     FROM test1 GROUP BY x</literal>, because there is no single value
-    for the column <literal>y</literal> that could be associated with each
+    for the column <structfield>y</structfield> that could be associated with each
     group.  The grouped-by columns can be referenced in the select list since
     they have a single value in each group.
    </para>

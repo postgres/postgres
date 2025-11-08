@@ -80,18 +80,18 @@ SELECT * FROM myview;
    </indexterm>
 
    <para>
-    Recall the <classname>weather</classname> and
-    <classname>cities</classname> tables from <xref
+    Recall the <structname>weather</structname> and
+    <structname>cities</structname> tables from <xref
     linkend="tutorial-sql"/>.  Consider the following problem:  You
     want to make sure that no one can insert rows in the
-    <classname>weather</classname> table that do not have a matching
-    entry in the <classname>cities</classname> table.  This is called
+    <structname>weather</structname> table that do not have a matching
+    entry in the <structname>cities</structname> table.  This is called
     maintaining the <firstterm>referential integrity</firstterm> of
     your data.  In simplistic database systems this would be
     implemented (if at all) by first looking at the
-    <classname>cities</classname> table to check if a matching record
+    <structname>cities</structname> table to check if a matching record
     exists, and then inserting or rejecting the new
-    <classname>weather</classname> records.  This approach has a
+    <structname>weather</structname> records.  This approach has a
     number of problems and is very inconvenient, so
     <productname>PostgreSQL</productname> can do this for you.
    </para>
@@ -578,8 +578,8 @@ SELECT sum(salary) OVER w, avg(salary) OVER w
    </para>
 
    <para>
-    Let's create two tables:  A table <classname>cities</classname>
-    and a table <classname>capitals</classname>.  Naturally, capitals
+    Let's create two tables:  A table <structname>cities</structname>
+    and a table <structname>capitals</structname>.  Naturally, capitals
     are also cities, so you want some way to show the capitals
     implicitly when you list all cities.  If you're really clever you
     might invent some scheme like this:
@@ -625,14 +625,14 @@ CREATE TABLE capitals (
    </para>
 
    <para>
-    In this case, a row of <classname>capitals</classname>
+    In this case, a row of <structname>capitals</structname>
     <firstterm>inherits</firstterm> all columns (<structfield>name</structfield>,
     <structfield>population</structfield>, and <structfield>elevation</structfield>) from its
-    <firstterm>parent</firstterm>, <classname>cities</classname>.  The
+    <firstterm>parent</firstterm>, <structname>cities</structname>.  The
     type of the column <structfield>name</structfield> is
     <type>text</type>, a native <productname>PostgreSQL</productname>
     type for variable length character strings.  The
-    <classname>capitals</classname> table has
+    <structname>capitals</structname> table has
     an additional column, <structfield>state</structfield>, which shows its
     state abbreviation.  In
     <productname>PostgreSQL</productname>, a table can inherit from
@@ -685,8 +685,8 @@ SELECT name, elevation
    <para>
     Here the <literal>ONLY</literal> before <literal>cities</literal>
     indicates that the query should be run over only the
-    <classname>cities</classname> table, and not tables below
-    <classname>cities</classname> in the inheritance hierarchy.  Many
+    <structname>cities</structname> table, and not tables below
+    <structname>cities</structname> in the inheritance hierarchy.  Many
     of the commands that we have already discussed &mdash;
     <command>SELECT</command>, <command>UPDATE</command>, and
     <command>DELETE</command> &mdash; support this <literal>ONLY</literal>

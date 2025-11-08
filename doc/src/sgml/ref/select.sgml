@@ -1768,8 +1768,8 @@ SELECT * FROM <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   To join the table <literal>films</literal> with the table
-   <literal>distributors</literal>:
+   To join the table <structname>films</structname> with the table
+   <structname>distributors</structname>:
 
 <programlisting>
 SELECT f.title, f.did, d.name, f.date_prod, f.kind
@@ -1784,8 +1784,8 @@ SELECT f.title, f.did, d.name, f.date_prod, f.kind
   </para>
 
   <para>
-   To sum the column <literal>len</literal> of all films and group
-   the results by <literal>kind</literal>:
+   To sum the column <structfield>len</structfield> of all films and group
+   the results by <structfield>kind</structfield>:
 
 <programlisting>
 SELECT kind, sum(len) AS total FROM films GROUP BY kind;
@@ -1801,8 +1801,8 @@ SELECT kind, sum(len) AS total FROM films GROUP BY kind;
   </para>
 
   <para>
-   To sum the column <literal>len</literal> of all films, group
-   the results by <literal>kind</literal> and show those group totals
+   To sum the column <structfield>len</structfield> of all films, group
+   the results by <structfield>kind</structfield> and show those group totals
    that are less than 5 hours:
 
 <programlisting>
@@ -1821,7 +1821,7 @@ SELECT kind, sum(len) AS total
   <para>
    The following two examples are identical ways of sorting the individual
    results according to the contents of the second column
-   (<literal>name</literal>):
+   (<structfield>name</structfield>):
 
 <programlisting>
 SELECT * FROM distributors ORDER BY name;
@@ -1847,8 +1847,8 @@ SELECT * FROM distributors ORDER BY 2;
 
   <para>
    The next example shows how to obtain the union of the tables
-   <literal>distributors</literal> and
-   <literal>actors</literal>, restricting the results to those that begin
+   <structname>distributors</structname> and
+   <structname>actors</structname>, restricting the results to those that begin
    with the letter W in each table.  Only distinct rows are wanted, so the
    key word <literal>ALL</literal> is omitted.
 

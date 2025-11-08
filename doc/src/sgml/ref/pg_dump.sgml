@@ -1878,7 +1878,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    To dump all tables whose names start with <literal>mytable</literal>, except
-   for table <literal>mytable2</literal>, specify a filter file
+   for table <structname>mytable2</structname>, specify a filter file
    <filename>filter.txt</filename> like:
 <programlisting>
 include table mytable*

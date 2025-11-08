@@ -3899,8 +3899,8 @@ SELECT jt.* FROM
       <literal>NESTED</literal> paths <literal>$.movies[*]</literal> and
       <literal>$.books[*]</literal> and also the usage of
       <literal>FOR ORDINALITY</literal> column at <literal>NESTED</literal>
-      levels (columns <literal>movie_id</literal>, <literal>book_id</literal>,
-      and <literal>author_id</literal>):
+      levels (columns <structfield>movie_id</structfield>, <structfield>book_id</structfield>,
+      and <structfield>author_id</structfield>):
 
 <programlisting>
 SELECT * FROM JSON_TABLE (

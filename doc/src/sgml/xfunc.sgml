@@ -397,8 +397,8 @@ SELECT tf1(17, 100.0);
     <para>
      In this example, we chose the name <literal>accountno</literal> for the first
      argument, but this is the same as the name of a column in the
-     <literal>bank</literal> table.  Within the <command>UPDATE</command> command,
-     <literal>accountno</literal> refers to the column <literal>bank.accountno</literal>,
+     <structname>bank</structname> table.  Within the <command>UPDATE</command> command,
+     <literal>accountno</literal> refers to the column <structfield>bank.accountno</structfield>,
      so <literal>tf1.accountno</literal> must be used to refer to the argument.
      We could of course avoid this by using a different name for the argument.
     </para>
@@ -1016,7 +1016,7 @@ SELECT *, upper(fooname) FROM getfoo(1) AS t1;
      This feature is normally used when calling the function in the <literal>FROM</literal>
      clause.  In this case each row returned by the function becomes
      a row of the table seen by the query.  For example, assume that
-     table <literal>foo</literal> has the same contents as above, and we say:
+     table <structname>foo</structname> has the same contents as above, and we say:
 
 <programlisting>
 CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS $$

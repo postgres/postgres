@@ -120,8 +120,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
   <title>Examples</title>
 
   <para>
-   Create a new table <literal>films_recent</literal> consisting of only
-   recent entries from the table <literal>films</literal>:
+   Create a new table <structname>films_recent</structname> consisting of only
+   recent entries from the table <structname>films</structname>:
 
 <programlisting>
 SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';

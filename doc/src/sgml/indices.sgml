@@ -593,7 +593,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    By default, B-tree indexes store their entries in ascending order
    with nulls last (table TID is treated as a tiebreaker column among
    otherwise equal entries).  This means that a forward scan of an
-   index on column <literal>x</literal> produces output satisfying <literal>ORDER BY x</literal>
+   index on column <structfield>x</structfield> produces output satisfying <literal>ORDER BY x</literal>
    (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</literal>).  The
    index can also be scanned backward, producing output satisfying
    <literal>ORDER BY x DESC</literal>
@@ -698,23 +698,23 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    indexes are best, but sometimes it's better to create separate indexes
    and rely on the index-combination feature.  For example, if your
    workload includes a mix of queries that sometimes involve only column
-   <literal>x</literal>, sometimes only column <literal>y</literal>, and sometimes both
+   <structfield>x</structfield>, sometimes only column <structfield>y</structfield>, and sometimes both
    columns, you might choose to create two separate indexes on
-   <literal>x</literal> and <literal>y</literal>, relying on index combination to
+   <structfield>x</structfield> and <structfield>y</structfield>, relying on index combination to
    process the queries that use both columns.  You could also create a
    multicolumn index on <literal>(x, y)</literal>.  This index would typically be
    more efficient than index combination for queries involving both
    columns, but as discussed in <xref linkend="indexes-multicolumn"/>, it
    would be less useful for queries involving only <literal>y</literal>.  Just
    how useful will depend on how effective the B-tree index skip scan
-   optimization is; if <literal>x</literal> has no more than several hundred
+   optimization is; if <structfield>x</structfield> has no more than several hundred
    distinct values, skip scan will make searches for specific
-   <literal>y</literal> values execute reasonably efficiently.  A combination
+   <structfield>y</structfield> values execute reasonably efficiently.  A combination
    of a multicolumn index on <literal>(x, y)</literal> and a separate index on
-   <literal>y</literal> might also serve reasonably well.  For
-   queries involving only <literal>x</literal>, the multicolumn index could be
+   <structfield>y</structfield> might also serve reasonably well.  For
+   queries involving only <structfield>x</structfield>, the multicolumn index could be
    used, though it would be larger and hence slower than an index on
-   <literal>x</literal> alone.  The last alternative is to create all three
+   <structfield>x</structfield> alone.  The last alternative is to create all three
    indexes, but this is probably only reasonable if the table is searched
    much more often than it is updated and all three types of query are
    common.  If one of the types of query is much less common than the
@@ -1179,9 +1179,9 @@ CREATE INDEX mytable_cat_data ON mytable (category, data);
     <listitem>
      <para>
       The query must reference only columns stored in the index.  For
-      example, given an index on columns <literal>x</literal>
-      and <literal>y</literal> of a table that also has a
-      column <literal>z</literal>, these queries could use index-only scans:
+      example, given an index on columns <structfield>x</structfield>
+      and <structfield>y</structfield> of a table that also has a
+      column <structfield>z</structfield>, these queries could use index-only scans:
 <programlisting>
 SELECT x, y FROM tab WHERE x = 'key';
 SELECT x FROM tab WHERE x = 'key' AND y &lt; 42;
@@ -1262,15 +1262,15 @@ CREATE INDEX tab_x_y ON tab(x) INCLUDE (y);
   </para>
 
   <para>
-   Because column <literal>y</literal> is not part of the index's search
+   Because column <structfield>y</structfield> is not part of the index's search
    key, it does not have to be of a data type that the index can handle;
    it's merely stored in the index and is not interpreted by the index
    machinery.  Also, if the index is a unique index, that is
 <programlisting>
 CREATE UNIQUE INDEX tab_x_y ON tab(x) INCLUDE (y);
 </programlisting>
-   the uniqueness condition applies to just column <literal>x</literal>,
-   not to the combination of <literal>x</literal> and <literal>y</literal>.
+   the uniqueness condition applies to just column <structfield>x</structfield>,
+   not to the combination of <structfield>x</structfield> and <structfield>y</structfield>.
    (An <literal>INCLUDE</literal> clause can also be written
    in <literal>UNIQUE</literal> and <literal>PRIMARY KEY</literal>
    constraints, providing alternative syntax for setting up an index like
@@ -1300,7 +1300,7 @@ CREATE UNIQUE INDEX tab_x_y ON tab(x) INCLUDE (y);
 <programlisting>
 CREATE INDEX tab_x_y ON tab(x, y);
 </programlisting>
-   even though they had no intention of ever using <literal>y</literal> as
+   even though they had no intention of ever using <structfield>y</structfield> as
    part of a <literal>WHERE</literal> clause.  This works fine as long as
    the extra columns are trailing columns; making them be leading columns is
    unwise for the reasons explained in <xref linkend="indexes-multicolumn"/>.
@@ -1340,7 +1340,7 @@ SELECT f(x) FROM tab WHERE f(x) &lt; 1;
    context <literal>f(x)</literal>, but the planner does not notice that and
    concludes that an index-only scan is not possible.  If an index-only scan
    seems sufficiently worthwhile, this can be worked around by
-   adding <literal>x</literal> as an included column, for example
+   adding <structfield>x</structfield> as an included column, for example
 <programlisting>
 CREATE INDEX tab_f_x ON tab (f(x)) INCLUDE (x);
 </programlisting>

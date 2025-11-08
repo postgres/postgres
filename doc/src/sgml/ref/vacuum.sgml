@@ -512,7 +512,7 @@ VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <re
   <title>Examples</title>
 
   <para>
-   To clean a single table <literal>onek</literal>, analyze it for
+   To clean a single table <structname>onek</structname>, analyze it for
    the optimizer and print a detailed vacuum activity report:
 
 <programlisting>

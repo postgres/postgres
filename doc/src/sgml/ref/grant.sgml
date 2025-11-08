@@ -434,7 +434,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   <title>Examples</title>
 
   <para>
-   Grant insert privilege to all users on table <literal>films</literal>:
+   Grant insert privilege to all users on table <structname>films</structname>:
 
 <programlisting>
 GRANT INSERT ON films TO PUBLIC;
@@ -443,14 +443,14 @@ GRANT INSERT ON films TO PUBLIC;
 
   <para>
    Grant all available privileges to user <literal>manuel</literal> on view
-   <literal>kinds</literal>:
+   <structname>kinds</structname>:
 
 <programlisting>
 GRANT ALL PRIVILEGES ON kinds TO manuel;
 </programlisting>
 
    Note that while the above will indeed grant all privileges if executed by a
-   superuser or the owner of <literal>kinds</literal>, when executed by someone
+   superuser or the owner of <structname>kinds</structname>, when executed by someone
    else it will only grant those permissions for which the someone else has
    grant options.
   </para>

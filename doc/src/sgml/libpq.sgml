@@ -4508,7 +4508,7 @@ Oid PQftable(const PGresult *res,
       <para>
        <literal>InvalidOid</literal> is returned if the column number is out of range,
        or if the specified column is not a simple reference to a table column.
-       You can query the system table <literal>pg_class</literal> to determine
+       You can query the system table <structname>pg_class</structname> to determine
        exactly which table is referenced.
       </para>
 
@@ -4578,7 +4578,7 @@ Oid PQftype(const PGresult *res,
       </para>
 
       <para>
-       You can query the system table <literal>pg_type</literal> to
+       You can query the system table <structname>pg_type</structname> to
        obtain the names and properties of the various data types. The
        <acronym>OID</acronym>s of the built-in data types are defined
        in the file <filename>catalog/pg_type_d.h</filename>

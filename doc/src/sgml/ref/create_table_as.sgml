@@ -266,8 +266,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   <title>Examples</title>
 
   <para>
-   Create a new table <literal>films_recent</literal> consisting of only
-   recent entries from the table <literal>films</literal>:
+   Create a new table <structname>films_recent</structname> consisting of only
+   recent entries from the table <structname>films</structname>:
 
 <programlisting>
 CREATE TABLE films_recent AS
@@ -286,8 +286,8 @@ CREATE TABLE films2 AS
   </para>
 
   <para>
-   Create a new temporary table <literal>films_recent</literal>, consisting of
-   only recent entries from the table <literal>films</literal>, using a
+   Create a new temporary table <structname>films_recent</structname>, consisting of
+   only recent entries from the table <structname>films</structname>, using a
    prepared statement.  The new table will be dropped at commit:
 
 <programlisting>

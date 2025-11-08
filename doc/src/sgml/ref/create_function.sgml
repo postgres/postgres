@@ -817,10 +817,10 @@ $$  LANGUAGE plpgsql
     SET search_path = admin, pg_temp;
 </programlisting>
 
-    This function's intention is to access a table <literal>admin.pwds</literal>.
+    This function's intention is to access a table <structname>admin.pwds</structname>.
     But without the <literal>SET</literal> clause, or with a <literal>SET</literal> clause
     mentioning only <literal>admin</literal>, the function could be subverted by
-    creating a temporary table named <literal>pwds</literal>.
+    creating a temporary table named <structname>pwds</structname>.
    </para>
 
    <para>

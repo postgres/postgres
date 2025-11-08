@@ -492,7 +492,7 @@ CREATE VIEW comedies AS
     WHERE kind = 'Comedy';
 </programlisting>
    This will create a view containing the columns that are in the
-   <literal>film</literal> table at the time of view creation.  Though
+   <structname>film</structname> table at the time of view creation.  Though
    <literal>*</literal> was used to create the view, columns added later to
    the table will not be part of the view.
   </para>
@@ -507,12 +507,12 @@ CREATE VIEW universal_comedies AS
     WHERE classification = 'U'
     WITH LOCAL CHECK OPTION;
 </programlisting>
-   This will create a view based on the <literal>comedies</literal> view, showing
+   This will create a view based on the <structname>comedies</structname> view, showing
    only films with <literal>kind = 'Comedy'</literal> and
    <literal>classification = 'U'</literal>. Any attempt to <command>INSERT</command> or
    <command>UPDATE</command> a row in the view will be rejected if the new row
    doesn't have <literal>classification = 'U'</literal>, but the film
-   <literal>kind</literal> will not be checked.
+   <structfield>kind</structfield> will not be checked.
   </para>
 
   <para>
@@ -525,8 +525,8 @@ CREATE VIEW pg_comedies AS
     WHERE classification = 'PG'
     WITH CASCADED CHECK OPTION;
 </programlisting>
-   This will create a view that checks both the <literal>kind</literal> and
-   <literal>classification</literal> of new rows.
+   This will create a view that checks both the <structfield>kind</structfield> and
+   <structfield>classification</structfield> of new rows.
   </para>
 
   <para>
@@ -543,9 +543,9 @@ CREATE VIEW comedies AS
     WHERE f.kind = 'Comedy';
 </programlisting>
    This view will support <command>INSERT</command>, <command>UPDATE</command> and
-   <command>DELETE</command>.  All the columns from the <literal>films</literal> table will
-   be updatable, whereas the computed columns <literal>country</literal> and
-   <literal>avg_rating</literal> will be read-only.
+   <command>DELETE</command>.  All the columns from the <structname>films</structname> table will
+   be updatable, whereas the computed columns <structfield>country</structfield> and
+   <structfield>avg_rating</structfield> will be read-only.
   </para>
 
   <para>
