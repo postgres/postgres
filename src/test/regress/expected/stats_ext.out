@@ -3407,6 +3407,40 @@ SELECT statistics_name, most_common_vals FROM pg_stats_ext_exprs x
  s_expr          | {1}
 (2 rows)
 
+-- CREATE STATISTICS checks for CREATE on the schema
+RESET SESSION AUTHORIZATION;
+CREATE SCHEMA sts_sch1 CREATE TABLE sts_sch1.tbl (a INT, b INT);
+CREATE SCHEMA sts_sch2;
+GRANT USAGE ON SCHEMA sts_sch1, sts_sch2 TO regress_stats_user1;
+ALTER TABLE sts_sch1.tbl OWNER TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch1
+CREATE STATISTICS sts_sch2.fail ON a, b FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch2
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b FROM sts_sch1.tbl;
+CREATE STATISTICS sts_sch2.fail ON a, b FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch2
+RESET SESSION AUTHORIZATION;
+REVOKE CREATE ON SCHEMA sts_sch1 FROM regress_stats_user1;
+GRANT CREATE ON SCHEMA sts_sch2 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch1
+CREATE STATISTICS sts_sch2.pass1 ON a, b FROM sts_sch1.tbl;
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1, sts_sch2 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS ON a, b FROM sts_sch1.tbl;
+CREATE STATISTICS sts_sch2.pass2 ON a, b FROM sts_sch1.tbl;
+-- re-creating statistics via ALTER TABLE bypasses checks for CREATE on schema
+RESET SESSION AUTHORIZATION;
+REVOKE CREATE ON SCHEMA sts_sch1, sts_sch2 FROM regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+ALTER TABLE sts_sch1.tbl ALTER COLUMN a TYPE SMALLINT;
 -- Tidy up
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
@@ -3419,4 +3453,6 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table tststats.priv_test_parent_tbl
 drop cascades to table tststats.priv_test_tbl
 drop cascades to view tststats.priv_test_view
+DROP SCHEMA sts_sch1, sts_sch2 CASCADE;
+NOTICE:  drop cascades to table sts_sch1.tbl
 DROP USER regress_stats_user1;

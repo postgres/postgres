@@ -8873,7 +8873,7 @@ ATExecAddStatistics(AlteredTableInfo *tab, Relation rel,
 	/* The CreateStatsStmt has already been through transformStatsStmt */
 	Assert(stmt->transformed);
 
-	address = CreateStatistics(stmt);
+	address = CreateStatistics(stmt, !is_rebuild);
 
 	return address;
 }
