@@ -239,7 +239,7 @@ static void put_notnull_info(WindowObject winobj,
 #define NN_POS_TO_BYTES(pos)	((pos) / NN_ITEM_PER_VAR)
 /* bytes offset to map position */
 #define NN_BYTES_TO_POS(bytes)	((bytes) * NN_ITEM_PER_VAR)
-/* caculate shift bits */
+/* calculate shift bits */
 #define	NN_SHIFT(pos)	((pos) % NN_ITEM_PER_VAR) * NN_BITS_PER_MEMBER
 
 /*
@@ -3287,7 +3287,7 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 }
 
 /* gettuple_eval_partition
- * get tuple in a patition and evaluate the window function's argument
+ * get tuple in a partition and evaluate the window function's argument
  * expression on it.
  */
 static Datum
