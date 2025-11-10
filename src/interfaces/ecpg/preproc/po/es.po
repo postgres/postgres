@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:40+0000\n"
+"POT-Creation-Date: 2025-11-08 00:10+0000\n"
 "PO-Revision-Date: 2025-09-21 11:11+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -293,7 +293,6 @@ msgstr "un identificador en comillas está inconcluso"
 
 #: pgc.l:985
 #, c-format
-#| msgid "parameter number %d is out of range 0..%d"
 msgid "parameter number too large"
 msgstr "el número de parámetro es demasiado grande"
 
@@ -680,7 +679,6 @@ msgstr "la variable «%s» no es un array"
 
 #: variable.c:220
 #, c-format
-#| msgid "unmatched format character \"%s\""
 msgid "unmatched bracket in variable \"%s\""
 msgstr "corchete sin emparejar en la variable «%s»"
 

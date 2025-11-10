@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-30 15:59+0300\n"
-"PO-Revision-Date: 2025-09-06 14:43+0300\n"
+"POT-Creation-Date: 2025-11-09 06:28+0200\n"
+"PO-Revision-Date: 2025-11-09 08:23+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -2820,7 +2820,7 @@ msgstr ""
 "psql - это интерактивный терминал PostgreSQL.\n"
 "\n"
 
-#: help.c:61 help.c:389 help.c:476 help.c:522
+#: help.c:61 help.c:389 help.c:476 help.c:525
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
@@ -4253,6 +4253,15 @@ msgstr ""
 "    целевая ширина для формата с переносом\n"
 
 #: help.c:483
+#, c-format
+msgid ""
+"  csv_fieldsep\n"
+"    field separator for CSV output format (default \"%c\")\n"
+msgstr ""
+"  csv_fieldsep\n"
+"    разделитель полей для формата вывода CSV (по умолчанию \"%c\")\n"
+
+#: help.c:486
 msgid ""
 "  expanded (or x)\n"
 "    expanded output [on, off, auto]\n"
@@ -4260,7 +4269,7 @@ msgstr ""
 "  expanded (или x)\n"
 "    развёрнутый вывод [on (вкл.), off (выкл.), auto (авто)]\n"
 
-#: help.c:485
+#: help.c:488
 #, c-format
 msgid ""
 "  fieldsep\n"
@@ -4269,7 +4278,7 @@ msgstr ""
 "  fieldsep\n"
 "    разделитель полей для неформатированного вывода (по умолчанию \"%s\")\n"
 
-#: help.c:488
+#: help.c:491
 msgid ""
 "  fieldsep_zero\n"
 "    set field separator for unaligned output to a zero byte\n"
@@ -4277,7 +4286,7 @@ msgstr ""
 "  fieldsep_zero\n"
 "    устанавливает ноль разделителем полей при неформатированном выводе\n"
 
-#: help.c:490
+#: help.c:493
 msgid ""
 "  footer\n"
 "    enable or disable display of the table footer [on, off]\n"
@@ -4285,7 +4294,7 @@ msgstr ""
 "  footer\n"
 "    включает или выключает вывод подписей таблицы [on (вкл.), off (выкл.)]\n"
 
-#: help.c:492
+#: help.c:495
 msgid ""
 "  format\n"
 "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"
@@ -4295,7 +4304,7 @@ msgstr ""
 "\n"
 "    aligned (выровненный), wrapped (с переносом), html, asciidoc, ...]\n"
 
-#: help.c:494
+#: help.c:497
 msgid ""
 "  linestyle\n"
 "    set the border line drawing style [ascii, old-ascii, unicode]\n"
@@ -4303,7 +4312,7 @@ msgstr ""
 "  linestyle\n"
 "    задаёт стиль рисования линий границы [ascii, old-ascii, unicode]\n"
 
-#: help.c:496
+#: help.c:499
 msgid ""
 "  null\n"
 "    set the string to be printed in place of a null value\n"
@@ -4311,7 +4320,7 @@ msgstr ""
 "  null\n"
 "    устанавливает строку, выводимую вместо значения NULL\n"
 
-#: help.c:498
+#: help.c:501
 msgid ""
 "  numericlocale\n"
 "    enable display of a locale-specific character to separate groups of "
@@ -4320,7 +4329,7 @@ msgstr ""
 "  numericlocale\n"
 "    отключает вывод заданного локалью разделителя группы цифр\n"
 
-#: help.c:500
+#: help.c:503
 msgid ""
 "  pager\n"
 "    control when an external pager is used [yes, no, always]\n"
@@ -4329,7 +4338,7 @@ msgstr ""
 "    определяет, используется ли внешний постраничник\n"
 "    [yes (да), no (нет), always (всегда)]\n"
 
-#: help.c:502
+#: help.c:505
 msgid ""
 "  recordsep\n"
 "    record (line) separator for unaligned output\n"
@@ -4337,7 +4346,7 @@ msgstr ""
 "  recordsep\n"
 "    разделитель записей (строк) при неформатированном выводе\n"
 
-#: help.c:504
+#: help.c:507
 msgid ""
 "  recordsep_zero\n"
 "    set record separator for unaligned output to a zero byte\n"
@@ -4345,7 +4354,7 @@ msgstr ""
 "  recordsep_zero\n"
 "    устанавливает ноль разделителем записей при неформатированном выводе\n"
 
-#: help.c:506
+#: help.c:509
 msgid ""
 "  tableattr (or T)\n"
 "    specify attributes for table tag in html format, or proportional\n"
@@ -4355,7 +4364,7 @@ msgstr ""
 "    задаёт атрибуты для тега table в формате html или пропорциональные\n"
 "    ширины столбцов для выровненных влево данных, в формате latex-longtable\n"
 
-#: help.c:509
+#: help.c:512
 msgid ""
 "  title\n"
 "    set the table title for subsequently printed tables\n"
@@ -4363,7 +4372,7 @@ msgstr ""
 "  title\n"
 "    задаёт заголовок таблицы для последовательно печатаемых таблиц\n"
 
-#: help.c:511
+#: help.c:514
 msgid ""
 "  tuples_only\n"
 "    if set, only actual table data is shown\n"
@@ -4371,7 +4380,7 @@ msgstr ""
 "  tuples_only\n"
 "    если установлено, выводятся только непосредственно табличные данные\n"
 
-#: help.c:513
+#: help.c:516
 msgid ""
 "  unicode_border_linestyle\n"
 "  unicode_column_linestyle\n"
@@ -4384,7 +4393,7 @@ msgstr ""
 "    задаёт стиль рисуемых линий Unicode [single (одинарные), double "
 "(двойные)]\n"
 
-#: help.c:517
+#: help.c:520
 msgid ""
 "  xheader_width\n"
 "    set the maximum width of the header for expanded output\n"
@@ -4394,7 +4403,7 @@ msgstr ""
 "    задаёт максимальную ширину заголовка для развёрнутого вывода\n"
 "    [full (полностью), column (столбец), page (страница), целое значение]\n"
 
-#: help.c:521
+#: help.c:524
 msgid ""
 "\n"
 "Environment variables:\n"
@@ -4402,7 +4411,7 @@ msgstr ""
 "\n"
 "Переменные окружения:\n"
 
-#: help.c:525
+#: help.c:528
 msgid ""
 "  NAME=VALUE [NAME=VALUE] psql ...\n"
 "  or \\setenv NAME [VALUE] inside psql\n"
@@ -4412,7 +4421,7 @@ msgstr ""
 "  или \\setenv ИМЯ [ЗНАЧЕНИЕ] в приглашении psql\n"
 "\n"
 
-#: help.c:527
+#: help.c:530
 msgid ""
 "  set NAME=VALUE\n"
 "  psql ...\n"
@@ -4424,7 +4433,7 @@ msgstr ""
 "  или \\setenv ИМЯ ЗНАЧЕНИЕ в приглашении psql\n"
 "\n"
 
-#: help.c:530
+#: help.c:533
 msgid ""
 "  COLUMNS\n"
 "    number of columns for wrapped format\n"
@@ -4432,7 +4441,7 @@ msgstr ""
 "  COLUMNS\n"
 "    число столбцов для форматирования с переносом\n"
 
-#: help.c:532
+#: help.c:535
 msgid ""
 "  PGAPPNAME\n"
 "    same as the application_name connection parameter\n"
@@ -4440,7 +4449,7 @@ msgstr ""
 "  PGAPPNAME\n"
 "    синоним параметра подключения application_name\n"
 
-#: help.c:534
+#: help.c:537
 msgid ""
 "  PGDATABASE\n"
 "    same as the dbname connection parameter\n"
@@ -4448,7 +4457,7 @@ msgstr ""
 "  PGDATABASE\n"
 "    синоним параметра подключения dbname\n"
 
-#: help.c:536
+#: help.c:539
 msgid ""
 "  PGHOST\n"
 "    same as the host connection parameter\n"
@@ -4456,7 +4465,7 @@ msgstr ""
 "  PGHOST\n"
 "    синоним параметра подключения host\n"
 
-#: help.c:538
+#: help.c:541
 msgid ""
 "  PGPASSFILE\n"
 "    password file name\n"
@@ -4464,7 +4473,7 @@ msgstr ""
 "  PGPASSFILE\n"
 "    имя файла с паролем\n"
 
-#: help.c:540
+#: help.c:543
 msgid ""
 "  PGPASSWORD\n"
 "    connection password (not recommended)\n"
@@ -4472,7 +4481,7 @@ msgstr ""
 "  PGPASSWORD\n"
 "    пароль для подключения (использовать не рекомендуется)\n"
 
-#: help.c:542
+#: help.c:545
 msgid ""
 "  PGPORT\n"
 "    same as the port connection parameter\n"
@@ -4480,7 +4489,7 @@ msgstr ""
 "  PGPORT\n"
 "    синоним параметра подключения port\n"
 
-#: help.c:544
+#: help.c:547
 msgid ""
 "  PGUSER\n"
 "    same as the user connection parameter\n"
@@ -4488,7 +4497,7 @@ msgstr ""
 "  PGUSER\n"
 "    синоним параметра подключения user\n"
 
-#: help.c:546
+#: help.c:549
 msgid ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    editor used by the \\e, \\ef, and \\ev commands\n"
@@ -4496,7 +4505,7 @@ msgstr ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "    редактор, вызываемый командами \\e, \\ef и \\ev\n"
 
-#: help.c:548
+#: help.c:551
 msgid ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    how to specify a line number when invoking the editor\n"
@@ -4504,7 +4513,7 @@ msgstr ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "    определяет способ передачи номера строки при вызове редактора\n"
 
-#: help.c:550
+#: help.c:553
 msgid ""
 "  PSQL_HISTORY\n"
 "    alternative location for the command history file\n"
@@ -4512,7 +4521,7 @@ msgstr ""
 "  PSQL_HISTORY\n"
 "    альтернативное размещение файла с историей команд\n"
 
-#: help.c:552
+#: help.c:555
 msgid ""
 "  PSQL_PAGER, PAGER\n"
 "    name of external pager program\n"
@@ -4520,7 +4529,7 @@ msgstr ""
 "  PSQL_PAGER, PAGER\n"
 "    имя программы внешнего постраничника\n"
 
-#: help.c:555
+#: help.c:558
 msgid ""
 "  PSQL_WATCH_PAGER\n"
 "    name of external pager program used for \\watch\n"
@@ -4528,7 +4537,7 @@ msgstr ""
 "  PSQL_WATCH_PAGER\n"
 "    имя программы внешнего постраничника для \\watch\n"
 
-#: help.c:558
+#: help.c:561
 msgid ""
 "  PSQLRC\n"
 "    alternative location for the user's .psqlrc file\n"
@@ -4536,7 +4545,7 @@ msgstr ""
 "  PSQLRC\n"
 "    альтернативное размещение пользовательского файла .psqlrc\n"
 
-#: help.c:560
+#: help.c:563
 msgid ""
 "  SHELL\n"
 "    shell used by the \\! command\n"
@@ -4544,7 +4553,7 @@ msgstr ""
 "  SHELL\n"
 "    оболочка, вызываемая командой \\!\n"
 
-#: help.c:562
+#: help.c:565
 msgid ""
 "  TMPDIR\n"
 "    directory for temporary files\n"
@@ -4552,11 +4561,11 @@ msgstr ""
 "  TMPDIR\n"
 "    каталог для временных файлов\n"
 
-#: help.c:622
+#: help.c:625
 msgid "Available help:\n"
 msgstr "Имеющаяся справка:\n"
 
-#: help.c:717
+#: help.c:720
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -4575,7 +4584,7 @@ msgstr ""
 "URL: %s\n"
 "\n"
 
-#: help.c:740
+#: help.c:743
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"

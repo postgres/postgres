@@ -3055,12 +3055,7 @@ msgid ""
 "WAL file(s) added, %d removed, %d recycled; write=%ld.%03d s, sync=%ld.%03d "
 "s, total=%ld.%03d s; sync files=%d, longest=%ld.%03d s, average=%ld.%03d s; "
 "distance=%d kB, estimate=%d kB; lsn=%X/%X, redo lsn=%X/%X"
-msgstr ""
-"채크포인트 작업완료: %d개(%.1f%%) 버퍼 씀, %d개 SLRU 버퍼 씀; %d개 WAL 파일 "
-"추가됨, %d개 지웠음, %d개 재활용; 쓰기시간: %ld.%03d s, 동기화시간: %ld.%03d "
-"s, 전체시간: %ld.%03d s; 동기화 파일 개수: %d, 최장시간: %ld.%03d s, 평균시"
-"간: %ld.%03d s; 실제작업량: %d kB, 예상한작업량: %d kB; lsn=%X/%X, redo lsn="
-"%X/%X"
+msgstr "체크포인트 작업완료: %d개(%.1f%%) 버퍼 씀, %d개 SLRU 버퍼 씀; %d개 WAL 파일 추가됨, %d개 지웠음, %d개 재활용; 쓰기시간: %ld.%03d s, 동기화시간: %ld.%03d s, 전체시간: %ld.%03d s; 동기화 파일 개수: %d, 최장시간: %ld.%03d s, 평균시간: %ld.%03d s; 실제작업량: %d kB, 예상한작업량: %d kB; lsn=%X/%X, redo lsn=%X/%X"
 
 #: access/transam/xlog.c:7280
 #, c-format

@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_controldata (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:52+0000\n"
+"POT-Creation-Date: 2025-11-08 00:23+0000\n"
 "PO-Revision-Date: 2025-09-21 11:32+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -247,7 +247,6 @@ msgstr "Número de versión del catálogo:             %u\n"
 
 #: pg_controldata.c:242
 #, c-format
-#| msgid "Database system identifier:           %llu\n"
 msgid "Database system identifier:           %<PRIu64>\n"
 msgstr "Identificador de sistema:                   %<PRIu64>\n"
 
@@ -511,12 +510,10 @@ msgstr "Versión de sumas de verificación de datos:  %u\n"
 
 #: pg_controldata.c:339
 #, c-format
-#| msgid "Maximum data alignment:               %u\n"
 msgid "Default char data signedness:         %s\n"
 msgstr "Presencia de signo en datos «char»:         %s\n"
 
 #: pg_controldata.c:340
-#| msgid "assignment"
 msgid "signed"
 msgstr "con signo"
 

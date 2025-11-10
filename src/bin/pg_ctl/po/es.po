@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:48+0000\n"
+"POT-Creation-Date: 2025-11-08 00:19+0000\n"
 "PO-Revision-Date: 2025-09-21 11:35+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -230,7 +230,6 @@ msgid "%s: server did not start in time\n"
 msgstr "%s: el servidor no inició a tiempo\n"
 
 #: pg_ctl.c:1004
-#| msgid "shutdown at recovery target"
 msgid "server shut down because of recovery target settings\n"
 msgstr "servidor apagado debido a parámetros de destino de recuperación\n"
 

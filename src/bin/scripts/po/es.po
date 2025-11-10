@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:50+0000\n"
-"PO-Revision-Date: 2025-09-21 11:41+0200\n"
+"POT-Creation-Date: 2025-11-08 00:21+0000\n"
+"PO-Revision-Date: 2025-11-08 19:08+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -181,7 +181,6 @@ msgstr "Interrumpido\n"
 
 #: ../../fe_utils/print.c:3188
 #, c-format
-#| msgid "Cannot print table contents: number of cells %lld is equal to or exceeds maximum %lld.\n"
 msgid "Cannot print table contents: number of cells %<PRIu64> is equal to or exceeds maximum %zu.\n"
 msgstr "No se puede imprimir el contenido de la tabla: el número de celdas %<PRIu64> es igual o mayor al máximo %zu.\n"
 
@@ -192,7 +191,6 @@ msgstr "No se puede agregar un encabezado al contenido de la tabla: la cantidad 
 
 #: ../../fe_utils/print.c:3272
 #, c-format
-#| msgid "Cannot add cell to table content: total cell count of %lld exceeded.\n"
 msgid "Cannot add cell to table content: total cell count of %<PRIu64> exceeded.\n"
 msgstr "No se puede agregar una celda al contenido de la tabla: la cantidad de celdas de %<PRIu64> ha sido excedida.\n"
 
@@ -718,8 +716,7 @@ msgid ""
 "  -v, --valid-until=TIMESTAMP\n"
 "                            password expiration date and time for role\n"
 msgstr ""
-"  -v, --valid-until=TIEMPO\n"
-"                            fecha/hora de expiración de contraseña para el rol\n"
+"  -v, --valid-until=TIEMPO  fecha/hora de expiración de contraseña para el rol\n"
 
 #: createuser.c:442
 #, c-format
@@ -1050,7 +1047,9 @@ msgstr "  -t, --table=TABLA         reindexar sólo esta(s) tabla(s)\n"
 #: reindexdb.c:911
 #, c-format
 msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
-msgstr "      --tablespace=TABLESPACE  tablespace donde se reconstruirán los índices\n"
+msgstr ""
+"      --tablespace=TABLESPACE\n"
+"                            tablespace donde se reconstruirán los índices\n"
 
 #: reindexdb.c:912
 #, c-format
@@ -1084,7 +1083,6 @@ msgstr "no se puede usar la opción «%s» junto con la opción «%s»"
 
 #: vacuumdb.c:380
 #, c-format
-#| msgid "cannot use the \"%s\" option with the \"%s\" option"
 msgid "cannot use the \"%s\" option without \"%s\" or \"%s\""
 msgstr "no se puede usar la opción «%s» junto sin «%s» o «%s»"
 
@@ -1211,9 +1209,8 @@ msgstr "      --min-xid-age=EDAD_XID   edad de ID de transacción mínima de tab
 
 #: vacuumdb.c:1351
 #, c-format
-#| msgid "      --install-missing           install missing extensions\n"
 msgid "      --missing-stats-only        only analyze relations with missing statistics\n"
-msgstr "      --missing-stats-only        sólo analizar relaciones sin estadísticas\n"
+msgstr "      --missing-stats-only     sólo analizar relaciones sin estadísticas\n"
 
 #: vacuumdb.c:1352
 #, c-format

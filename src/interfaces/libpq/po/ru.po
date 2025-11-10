@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-30 15:59+0300\n"
+"POT-Creation-Date: 2025-11-09 06:28+0200\n"
 "PO-Revision-Date: 2025-09-03 08:20+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -244,7 +244,7 @@ msgstr "не удалось создать указатель libcurl"
 #: fe-protocol3.c:750 fe-protocol3.c:990 fe-protocol3.c:1542
 #: fe-protocol3.c:1596 fe-protocol3.c:1642 fe-protocol3.c:1663
 #: fe-protocol3.c:1920 fe-protocol3.c:2321 fe-secure-common.c:110
-#: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
+#: fe-secure-gssapi.c:508 fe-secure-gssapi.c:699 fe-secure-openssl.c:405
 #: fe-secure-openssl.c:1135
 #, c-format
 msgid "out of memory"
@@ -1809,12 +1809,12 @@ msgstr "ошибка обёртывания сообщения в GSSAPI"
 msgid "outgoing GSSAPI message would not use confidentiality"
 msgstr "исходящее сообщение GSSAPI не будет защищено"
 
-#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:723
+#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:726
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
 msgstr "клиент попытался передать чрезмерно большой пакет GSSAPI (%zu > %zu)"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:599
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:602
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
 msgstr "сервер передал чрезмерно большой пакет GSSAPI (%zu > %zu)"
@@ -1828,11 +1828,11 @@ msgstr "ошибка развёртывания сообщения в GSSAPI"
 msgid "incoming GSSAPI message did not use confidentiality"
 msgstr "входящее сообщение GSSAPI не защищено"
 
-#: fe-secure-gssapi.c:662
+#: fe-secure-gssapi.c:665
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:712
+#: fe-secure-gssapi.c:715
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
 

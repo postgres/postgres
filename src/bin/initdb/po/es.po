@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:50+0000\n"
+"POT-Creation-Date: 2025-11-08 00:20+0000\n"
 "PO-Revision-Date: 2025-09-21 11:13+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -680,7 +680,6 @@ msgstr ""
 
 #: initdb.c:2542
 #, c-format
-#| msgid "  -k, --data-checksums      use data page checksums\n"
 msgid "      --no-data-checksums   do not use data page checksums\n"
 msgstr "      --no-data-checksums   no usar sumas de verificación en páginas de datos\n"
 
@@ -759,7 +758,6 @@ msgstr "  -N, --no-sync             no esperar que los cambios se sincronicen a 
 
 #: initdb.c:2557
 #, c-format
-#| msgid "      --no-estimate-size do not estimate backup size in server side\n"
 msgid "      --no-sync-data-files  do not sync files within database directories\n"
 msgstr "      --no-sync-data-files  no sincronizar archivos en los directorios de datos\n"
 
