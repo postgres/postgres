@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:53+0000\n"
+"POT-Creation-Date: 2025-11-08 00:24+0000\n"
 "PO-Revision-Date: 2025-09-21 11:25+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -264,7 +264,6 @@ msgstr "Sitio web de %s: <%s>\n"
 
 #: pg_checksums.c:144
 #, c-format
-#| msgid "%lld/%lld MB (%d%%) computed"
 msgid "%<PRId64>/%<PRId64> MB (%d%%) computed"
 msgstr "%<PRId64>/%<PRId64> MB (%d%%) calculado"
 
@@ -380,19 +379,16 @@ msgstr "Operación de checksums completa\n"
 
 #: pg_checksums.c:606
 #, c-format
-#| msgid "Files scanned:   %lld\n"
 msgid "Files scanned:   %<PRId64>\n"
 msgstr "Archivos recorridos:   %<PRId64>\n"
 
 #: pg_checksums.c:607
 #, c-format
-#| msgid "Blocks scanned:  %lld\n"
 msgid "Blocks scanned:  %<PRId64>\n"
 msgstr "Bloques recorridos:    %<PRId64>\n"
 
 #: pg_checksums.c:610
 #, c-format
-#| msgid "Bad checksums:  %lld\n"
 msgid "Bad checksums:  %<PRId64>\n"
 msgstr "Checksums incorrectos: %<PRId64>\n"
 
@@ -403,13 +399,11 @@ msgstr "Versión de checksums de datos: %u\n"
 
 #: pg_checksums.c:618
 #, c-format
-#| msgid "Files written:  %lld\n"
 msgid "Files written:  %<PRId64>\n"
 msgstr "Archivos escritos:   %<PRId64>\n"
 
 #: pg_checksums.c:619
 #, c-format
-#| msgid "Blocks written: %lld\n"
 msgid "Blocks written: %<PRId64>\n"
 msgstr "Bloques escritos:    %<PRId64>\n"
 

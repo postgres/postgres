@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:49+0000\n"
-"PO-Revision-Date: 2025-09-21 12:43+0200\n"
+"POT-Creation-Date: 2025-11-08 00:20+0000\n"
+"PO-Revision-Date: 2025-11-08 19:07+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -276,7 +276,6 @@ msgstr ""
 
 #: check.c:754
 #, c-format
-#| msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgid "Swap mode can only upgrade clusters from PostgreSQL version %s and later."
 msgstr "El modo swap sólo puede actualizar desde PostgreSQL versión %s y posterior."
 
@@ -302,10 +301,6 @@ msgstr ""
 
 #: check.c:826
 #, c-format
-#| msgid ""
-#| "Optimizer statistics are not transferred by pg_upgrade.\n"
-#| "Once you start the new server, consider running:\n"
-#| "    %s/vacuumdb %s--all --analyze-in-stages"
 msgid ""
 "Some statistics are not transferred by pg_upgrade.\n"
 "Once you start the new server, consider running these two commands:\n"
@@ -371,7 +366,6 @@ msgstr "El directorio de datos nuevo y el directorio de binarios nuevo son de ve
 
 #: check.c:897
 #, c-format
-#| msgid "This utility can only upgrade from PostgreSQL version %s and later."
 msgid "The option %s cannot be used for upgrades from PostgreSQL %s and later."
 msgstr "La opción %s no puede usarse para actualizar desde PostgreSQL %s y posterior."
 
@@ -463,14 +457,6 @@ msgstr "fatal"
 
 #: check.c:1204
 #, c-format
-#| msgid ""
-#| "All non-template0 databases must allow connections, i.e. their\n"
-#| "pg_database.datallowconn must be true.  Your installation contains\n"
-#| "non-template0 databases with their pg_database.datallowconn set to\n"
-#| "false.  Consider allowing connection for all non-template0 databases\n"
-#| "or drop the databases which do not allow connections.  A list of\n"
-#| "databases with the problem is in the file:\n"
-#| "    %s"
 msgid ""
 "All non-template0 databases must allow connections, i.e. their\n"
 "pg_database.datallowconn must be true and pg_database.datconnlimit\n"
@@ -594,7 +580,6 @@ msgstr ""
 
 #: check.c:1684
 #, c-format
-#| msgid "Checking for subscription state"
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "Verificando inconsistencias en restricciones not-null"
 
@@ -660,7 +645,6 @@ msgstr ""
 
 #: check.c:1939
 #, c-format
-#| msgid "Checking for extension updates"
 msgid "Checking for objects affected by Unicode update"
 msgstr "Verificando objetos afectados por actualización de Unicode"
 
@@ -718,7 +702,6 @@ msgstr "Verificando configuraciones del clúster nuevo para suscripciones"
 
 #: check.c:2153
 #, c-format
-#| msgid "\"max_replication_slots\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgid "\"max_active_replication_origins\" (%d) must be greater than or equal to the number of subscriptions (%d) on the old cluster"
 msgstr "«max_active_replication_origins» (%d) debe ser mayor o igual al número de suscripciones en el clúster antiguo (%d)"
 
@@ -934,7 +917,6 @@ msgstr "  versión del checksum de datos"
 
 #: controldata.c:685
 #, c-format
-#| msgid "Maximum data alignment:               %u\n"
 msgid "  default char signedness"
 msgstr "  presencia de signo en datos «char»"
 
@@ -1015,7 +997,6 @@ msgstr "Las versiones de checksum de datos antigua y nueva no coinciden"
 #. translator: %s is the file path of the control file
 #: controldata.c:762
 #, c-format
-#| msgid "Adding \".old\" suffix to old global/pg_control"
 msgid "Adding \".old\" suffix to old \"%s\""
 msgstr "Agregando el sufijo «.old» al «%s» antiguo"
 
@@ -1027,12 +1008,6 @@ msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
 #. translator: %s/%s is the file path of the control file
 #: controldata.c:773
 #, c-format
-#| msgid ""
-#| "\n"
-#| "If you want to start the old cluster, you will need to remove\n"
-#| "the \".old\" suffix from %s/global/pg_control.old.\n"
-#| "Because \"link\" mode was used, the old cluster cannot be safely\n"
-#| "started once the new cluster has been started."
 msgid ""
 "\n"
 "If you want to start the old cluster, you will need to remove\n"
@@ -1059,7 +1034,6 @@ msgstr ""
 
 #: controldata.c:784 file.c:455
 #, c-format
-#| msgid "unrecognized status code"
 msgid "unrecognized transfer mode"
 msgstr "modo de transferencia no reconocido"
 
@@ -1266,9 +1240,6 @@ msgstr ""
 
 #: file.c:452
 #, c-format
-#| msgid ""
-#| "could not create hard link between old and new data directories: %m\n"
-#| "In link mode the old and new data directories must be on the same file system."
 msgid ""
 "could not create hard link between old and new data directories: %m\n"
 "In swap mode the old and new data directories must be on the same file system."
@@ -1590,9 +1561,8 @@ msgstr "  --copy-file-range             copiar archivos usando copy_file_range\n
 
 #: option.c:331
 #, c-format
-#| msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgid "  --no-statistics               do not import statistics from old cluster\n"
-msgstr "  --no-statistics              no volcar estadísticas desde el clúster antiguo\n"
+msgstr "  --no-statistics               no volcar estadísticas desde el clúster antiguo\n"
 
 #: option.c:332
 #, c-format
@@ -1605,7 +1575,6 @@ msgstr ""
 
 #: option.c:334
 #, c-format
-#| msgid "  --clone                       clone instead of copying files to new cluster\n"
 msgid "  --swap                        move data directories to new cluster\n"
 msgstr "  --swap                        mover directorios de datos al cluster nuevo\n"
 
@@ -1846,7 +1815,6 @@ msgstr ""
 
 #: pg_upgrade.c:421
 #, c-format
-#| msgid "Setting locale and encoding for new cluster"
 msgid "Setting the default char signedness for new cluster"
 msgstr "Estableciendo la presencia de signo para el clúster nuevo"
 
@@ -1932,7 +1900,6 @@ msgstr "Restaurando slots de replicación lógica en el nuevo clúster"
 
 #: relfilenumber.c:68
 #, c-format
-#| msgid "could not fsync file \"%s\": %m"
 msgid "could not synchronize file \"%s\": %m"
 msgstr "no se pudo sincronizar el archivo «%s»: %m"
 
@@ -1958,7 +1925,6 @@ msgstr "Enlazando archivos de relaciones de usuario"
 
 #: relfilenumber.c:126
 #, c-format
-#| msgid "syncing data directory"
 msgid "Swapping data directories"
 msgstr "Intercambiando directorios de datos"
 
@@ -1974,7 +1940,6 @@ msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
 #: relfilenumber.c:301 relfilenumber.c:305
 #, c-format
-#| msgid "could not rename file \"%s\" to \"%s\": %m"
 msgid "could not rename directory \"%s\" to \"%s\": %m"
 msgstr "no se pudo renombrar el directorio de «%s» a «%s»: %m"
 
@@ -1990,13 +1955,11 @@ msgstr "no se pudo leer el directorio «%s»: %m"
 
 #: relfilenumber.c:439
 #, c-format
-#| msgid "could not close directory \"%s\": %m"
 msgid "could not synchronize directory \"%s\": %m"
 msgstr "no se pudo sincronizar el directorio «%s»: %m"
 
 #: relfilenumber.c:441
 #, c-format
-#| msgid "could not create directory \"%s\": %m"
 msgid "could not synchronize parent directory of \"%s\": %m"
 msgstr "no se pudo sincronizar el directorio padre de «%s»: %m"
 
@@ -2139,7 +2102,6 @@ msgstr "la ruta de tablespace «%s» no es un directorio"
 
 #: task.c:216 task.c:267 task.c:282 task.c:293
 #, c-format
-#| msgid "reconnection failed: %s"
 msgid "connection failure: %s"
 msgstr "fallo de conexión: %s"
 

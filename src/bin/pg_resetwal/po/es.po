@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:50+0000\n"
+"POT-Creation-Date: 2025-11-08 00:20+0000\n"
 "PO-Revision-Date: 2025-09-21 11:38+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -393,7 +393,6 @@ msgstr "Número de versión de catálogo:                   %u\n"
 
 #: pg_resetwal.c:749
 #, c-format
-#| msgid "Database system identifier:           %llu\n"
 msgid "Database system identifier:           %<PRIu64>\n"
 msgstr "Identificador de sistema:                        %<PRIu64>\n"
 
@@ -544,12 +543,10 @@ msgstr "Versión de suma de verificación de datos:        %u\n"
 
 #: pg_resetwal.c:804
 #, c-format
-#| msgid "Maximum data alignment:               %u\n"
 msgid "Default char data signedness:         %s\n"
 msgstr "Presencia de signo en datos «char»:              %s\n"
 
 #: pg_resetwal.c:805
-#| msgid "assignment"
 msgid "signed"
 msgstr "con signo"
 

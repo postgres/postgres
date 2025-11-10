@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 04:40+0000\n"
-"PO-Revision-Date: 2025-09-20 11:08+0200\n"
+"POT-Creation-Date: 2025-11-08 09:10+0000\n"
+"PO-Revision-Date: 2025-11-08 11:45+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.7\n"
+"X-Generator: Poedit 3.8\n"
 
 #: ../libpq-oauth/oauth-curl.c:307 ../libpq-oauth/oauth-curl.c:2000
 #, c-format
@@ -182,7 +182,7 @@ msgstr "n'a pas pu ajouter à kqueue : %m"
 #: ../libpq-oauth/oauth-curl.c:1423
 #, c-format
 msgid "could not comb kqueue: %m"
-msgstr ""
+msgstr "n'a pas pu passer dans kqueue : %m"
 
 #: ../libpq-oauth/oauth-curl.c:1473
 #, c-format
@@ -244,7 +244,7 @@ msgstr "a échoué pour créer la poignée libcurl"
 #: fe-protocol3.c:750 fe-protocol3.c:990 fe-protocol3.c:1542
 #: fe-protocol3.c:1596 fe-protocol3.c:1642 fe-protocol3.c:1663
 #: fe-protocol3.c:1920 fe-protocol3.c:2321 fe-secure-common.c:110
-#: fe-secure-gssapi.c:506 fe-secure-gssapi.c:696 fe-secure-openssl.c:405
+#: fe-secure-gssapi.c:508 fe-secure-gssapi.c:699 fe-secure-openssl.c:405
 #: fe-secure-openssl.c:1135
 #, c-format
 msgid "out of memory"
@@ -1686,12 +1686,12 @@ msgstr "erreur d'emballage GSSAPI"
 msgid "outgoing GSSAPI message would not use confidentiality"
 msgstr "le message sortant GSSAPI n'utiliserait pas la confidentialité"
 
-#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:723
+#: fe-secure-gssapi.c:215 fe-secure-gssapi.c:726
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)"
 msgstr "le client a essayé d'envoyer un paquet GSSAPI trop gros (%zu > %zu)"
 
-#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:599
+#: fe-secure-gssapi.c:354 fe-secure-gssapi.c:602
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)"
 msgstr "paquet GSSAPI trop gros envoyé par le serveur (%zu > %zu)"
@@ -1705,11 +1705,11 @@ msgstr "erreur de dépaquetage GSSAPI"
 msgid "incoming GSSAPI message did not use confidentiality"
 msgstr "le message entrant GSSAPI n'a pas utilisé la confidentialité"
 
-#: fe-secure-gssapi.c:662
+#: fe-secure-gssapi.c:665
 msgid "could not initiate GSSAPI security context"
 msgstr "n'a pas pu initier le contexte de sécurité GSSAPI"
 
-#: fe-secure-gssapi.c:712
+#: fe-secure-gssapi.c:715
 msgid "GSSAPI size check error"
 msgstr "erreur de vérification de la taille GSSAPI"
 

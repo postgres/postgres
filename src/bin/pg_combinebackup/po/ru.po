@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-30 15:59+0300\n"
+"POT-Creation-Date: 2025-11-09 06:28+0200\n"
 "PO-Revision-Date: 2025-09-13 17:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -41,7 +41,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:164 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:540
+#: load_manifest.c:199 pg_combinebackup.c:1410 reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -53,7 +53,7 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:71 pg_combinebackup.c:548
-#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:740
+#: pg_combinebackup.c:1185 reconstruct.c:369 reconstruct.c:742
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -82,13 +82,13 @@ msgstr ""
 #: ../../common/file_utils.c:502 backup_label.c:143 copy_file.c:69
 #: copy_file.c:153 copy_file.c:185 copy_file.c:189 copy_file.c:239
 #: copy_file.c:282 load_manifest.c:128 pg_combinebackup.c:533
-#: pg_combinebackup.c:1177 reconstruct.c:523 reconstruct.c:638
+#: pg_combinebackup.c:1177 reconstruct.c:525 reconstruct.c:640
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -139,7 +139,7 @@ msgstr "не удалось синхронизировать с ФС файл \"
 #: ../../common/file_utils.c:123 ../../common/file_utils.c:588
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:685
 #: pg_combinebackup.c:1141 pg_combinebackup.c:1393 reconstruct.c:204
-#: reconstruct.c:421
+#: reconstruct.c:422
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не удалось получить информацию о файле \"%s\": %m"
@@ -479,13 +479,13 @@ msgstr "%s: не удалось найти %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s требует %s"
 
-#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "не удалось записать файл \"%s\" (записано байт: %d из %d)"
 
-#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:721
-#: reconstruct.c:767 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:160 copy_file.c:207 reconstruct.c:723
+#: reconstruct.c:769 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "не удалось изменить контекст контрольной суммы файла \"%s\""
@@ -501,7 +501,7 @@ msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr ""
 "не удалось записать в файл \"%s\" (смещение %u, записано байт: %d из %d)"
 
-#: copy_file.c:213 reconstruct.c:784
+#: copy_file.c:213 reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -526,12 +526,12 @@ msgstr "ошибка при клонировании файла \"%s\" в \"%s\"
 msgid "file cloning not supported on this platform"
 msgstr "клонирование файлов не поддерживается в этой ОС"
 
-#: copy_file.c:292 reconstruct.c:704
+#: copy_file.c:292 reconstruct.c:706
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "ошибка при копировании фрагмента файла \"%s\" в \"%s\": %m"
 
-#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:724
+#: copy_file.c:299 pg_combinebackup.c:269 reconstruct.c:726
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range не поддерживается в этой ОС"
@@ -936,35 +936,35 @@ msgstr "не удалось прочитать файл \"%s\" (прочитан
 msgid "full backup contains unexpected incremental file \"%s\""
 msgstr "полная копия содержит неожиданный инкрементальный файл \"%s\""
 
-#: reconstruct.c:423
+#: reconstruct.c:424
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "файл \"%s\" слишком мал (ожидалось байт: %llu, фактически: %llu)"
 
-#: reconstruct.c:465
+#: reconstruct.c:466
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr ""
 "в файла \"%s\" неверное контрольное число инкрементальной копии (0x%x, "
 "ожидалось: 0x%x)"
 
-#: reconstruct.c:471
+#: reconstruct.c:472
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "в файле \"%s\" количество блоков %u превышает размер сегмента %u"
 
-#: reconstruct.c:478
+#: reconstruct.c:479
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr ""
 "в файле \"%s\" длина отсечения в блоках (%u) превышает размер сегмента %u"
 
-#: reconstruct.c:542
+#: reconstruct.c:544
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %u)"
 
-#: reconstruct.c:786
+#: reconstruct.c:788
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr ""

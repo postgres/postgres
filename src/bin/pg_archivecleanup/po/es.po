@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:52+0000\n"
-"PO-Revision-Date: 2025-09-21 11:13+0200\n"
+"POT-Creation-Date: 2025-11-08 00:22+0000\n"
+"PO-Revision-Date: 2025-11-08 18:41+0100\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -102,7 +102,7 @@ msgstr "Empleo:\n"
 #: pg_archivecleanup.c:262
 #, c-format
 msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
-msgstr "  %s [OPCIÓN].... UBICACIÓNARCHIVADOR WALMÁSANTIGUOAMANTENER\n"
+msgstr "  %s [OPCIÓN].... UBICACIÓN_ARCHIVADOR WAL_MÁS_ANTIGUO_A_MANTENER\n"
 
 #: pg_archivecleanup.c:263
 #, c-format
@@ -116,19 +116,19 @@ msgstr ""
 #: pg_archivecleanup.c:264
 #, c-format
 msgid "  -b, --clean-backup-history  clean up files including backup history files\n"
-msgstr "  -, --clean-backup-history   limpia archivos incluyendo archivos de historia de backup\n"
+msgstr "  -b, --clean-backup-history  limpia archivos incluyendo archivos de historia de backup\n"
 
 #: pg_archivecleanup.c:265
 #, c-format
 msgid "  -d, --debug                 generate debug output (verbose mode)\n"
-msgstr "  -d, --debug    genera salida de depuración (modo verboso)\n"
+msgstr "  -d, --debug                 genera salida de depuración (modo verboso)\n"
 
 #: pg_archivecleanup.c:266
 #, c-format
 msgid ""
 "  -n, --dry-run               dry run, show the names of the files that would be\n"
 "                              removed\n"
-msgstr "  -n, --dry-run  simulacro, muestra el nombre de los archivos que se eliminarían\n"
+msgstr "  -n, --dry-run               simulacro, muestra el nombre de los archivos que se eliminarían\n"
 
 #: pg_archivecleanup.c:268
 #, c-format
@@ -141,8 +141,8 @@ msgid ""
 "  -x, --strip-extension=EXT   strip this extension before identifying files for\n"
 "                              clean up\n"
 msgstr ""
-"  -x, --strip-extension=EXT    quitar esta extensión antes de identificar archivos\n"
-"                               a limpiar\n"
+"  -x, --strip-extension=EXT   quitar esta extensión antes de identificar archivos\n"
+"                              a limpiar\n"
 
 #: pg_archivecleanup.c:271
 #, c-format
@@ -151,12 +151,6 @@ msgstr "  -?, --help                  muestra esta ayuda, luego salir\n"
 
 #: pg_archivecleanup.c:272
 #, c-format
-#| msgid ""
-#| "\n"
-#| "For use as archive_cleanup_command in postgresql.conf:\n"
-#| "  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
-#| "e.g.\n"
-#| "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgid ""
 "\n"
 "For use as \"archive_cleanup_command\" in postgresql.conf:\n"
@@ -166,9 +160,9 @@ msgid ""
 msgstr ""
 "\n"
 "Para usar como «archive_cleanup_command» en postgresql.conf:\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPCIÓN]... UBICACIÓNARCHIVADOR %%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPCIÓN]... UBICACIÓN_ARCHIVADOR %%r'\n"
 "por ej.\n"
-"  archive_cleanup_command = 'pg_archivecleanup /mnt/servidor/directorioarchivador %%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/servidor/dir_archivador %%r'\n"
 
 #: pg_archivecleanup.c:277
 #, c-format

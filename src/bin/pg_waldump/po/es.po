@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:48+0000\n"
+"POT-Creation-Date: 2025-11-08 00:19+0000\n"
 "PO-Revision-Date: 2025-09-21 11:39+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -506,7 +506,6 @@ msgstr "info bits %04X no válidos en segment WAL %s, LSN %X/%X, posición %u"
 
 #: xlogreader.c:1285
 #, c-format
-#| msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %<PRIu64>, identificador en pg_control es %<PRIu64>"
 
@@ -609,7 +608,3 @@ msgstr "no se pudo restaurar la imagen en %X/%X comprimida con un método descon
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "no se pudo descomprimir la imagen en %X/%X, bloque %d"
-
-#, c-format
-#~ msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-#~ msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %llu, identificador en pg_control es %llu"

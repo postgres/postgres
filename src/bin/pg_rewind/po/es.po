@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:52+0000\n"
+"POT-Creation-Date: 2025-11-08 00:22+0000\n"
 "PO-Revision-Date: 2025-09-21 11:39+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -457,7 +457,6 @@ msgstr "se recibieron datos para el archivo «%s», cuando se solicitó para «%
 
 #: libpq_source.c:579
 #, c-format
-#| msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
 msgid "received data at offset %<PRId64> of file \"%s\", when requested for offset %lld"
 msgstr "se recibieron datos en la posición %<PRId64> del archivo «%s», cuando se solicitó para la posición %lld"
 
@@ -861,7 +860,6 @@ msgstr "el programa «%s» fue encontrado por «%s» pero no es de la misma vers
 
 #: pg_rewind.c:1112
 #, c-format
-#| msgid "could not read restore_command from target cluster"
 msgid "could not read \"restore_command\" from target cluster"
 msgstr "no se pudo leer «restore_command» en el clúster de destino"
 
@@ -972,7 +970,6 @@ msgstr "info bits %04X no válidos en segment WAL %s, LSN %X/%X, posición %u"
 
 #: xlogreader.c:1285
 #, c-format
-#| msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgid "WAL file is from different database system: WAL file database system identifier is %<PRIu64>, pg_control database system identifier is %<PRIu64>"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %<PRIu64>, identificador en pg_control es %<PRIu64>"
 

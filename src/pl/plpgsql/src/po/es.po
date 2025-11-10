@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-09-20 09:39+0000\n"
+"POT-Creation-Date: 2025-11-08 00:09+0000\n"
 "PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -862,7 +862,3 @@ msgstr "%s al final de la entrada"
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "%s en o cerca de «%s»"
-
-#, c-format
-#~ msgid "could not determine actual argument type for polymorphic function \"%s\""
-#~ msgstr "no se pudo determinar el verdadero tipo de argumento para la función polimórfica «%s»"
