@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-09 06:10+0000\n"
+"POT-Creation-Date: 2025-11-08 00:55+0000\n"
 "PO-Revision-Date: 2023-10-04 11:47+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -129,7 +129,7 @@ msgstr "no se pudo recuperar el archivo «%s» del archivo"
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:312
+#: ../../fe_utils/recovery_gen.c:121 parsexlog.c:333
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
@@ -214,12 +214,12 @@ msgstr "no se pudo eliminar el enlace simbólico «%s»: %m"
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
-#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:350
+#: file_ops.c:341 local_source.c:104 local_source.c:163 parsexlog.c:371
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: file_ops.c:344 parsexlog.c:352
+#: file_ops.c:344 parsexlog.c:373
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
@@ -249,32 +249,32 @@ msgstr "no se pudo leer el directorio «%s»: %m"
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: filemap.c:236
+#: filemap.c:298
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "el archivo de datos «%s» en el origen no es un archivo regular"
 
-#: filemap.c:241 filemap.c:274
+#: filemap.c:303 filemap.c:336
 #, c-format
 msgid "duplicate source file \"%s\""
 msgstr "archivo origen duplicado «%s»"
 
-#: filemap.c:329
+#: filemap.c:391
 #, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "modificación de página inesperada para el archivo no regular «%s»"
 
-#: filemap.c:683 filemap.c:777
+#: filemap.c:745 filemap.c:847
 #, c-format
 msgid "unknown file type for \"%s\""
 msgstr "tipo de archivo desconocido para «%s»"
 
-#: filemap.c:710
+#: filemap.c:780
 #, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "el archivo «%s» tiene un tipo diferente en el origen y en el destino"
 
-#: filemap.c:782
+#: filemap.c:852
 #, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "no se pudo decidir qué hacer con el archivo «%s»"
@@ -424,7 +424,7 @@ msgstr "no se pudo posicionar en archivo de origen: %m"
 msgid "unexpected EOF while reading file \"%s\""
 msgstr "EOF inesperado mientras se leía el archivo «%s»"
 
-#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
+#: parsexlog.c:80 parsexlog.c:139 parsexlog.c:201
 #, c-format
 msgid "out of memory while allocating a WAL reading processor"
 msgstr "memoria agotada mientras se emplazaba un procesador de lectura de WAL"
@@ -444,22 +444,22 @@ msgstr "no se pudo leer el registro WAL en %X/%X"
 msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
 msgstr "el puntero de término %X/%X no es un punto válido; se esperaba %X/%X"
 
-#: parsexlog.c:212
+#: parsexlog.c:214
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X: %s"
 
-#: parsexlog.c:216
+#: parsexlog.c:218
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "no se pudo encontrar el registro WAL anterior en %X/%X"
 
-#: parsexlog.c:341
+#: parsexlog.c:362
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "no se pudo posicionar (seek) el archivo «%s»: %m"
 
-#: parsexlog.c:440
+#: parsexlog.c:461
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
 msgstr "el registro WAL modifica una relación, pero el tipo de registro no es reconocido: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
@@ -655,144 +655,144 @@ msgstr "servidores divergieron en la posición de WAL %X/%X en el timeline %u"
 msgid "no rewind required"
 msgstr "no se requiere rebobinar"
 
-#: pg_rewind.c:451
+#: pg_rewind.c:454
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr "rebobinando desde el último checkpoint común en %X/%X en el timeline %u"
 
-#: pg_rewind.c:461
+#: pg_rewind.c:464
 #, c-format
 msgid "reading source file list"
 msgstr "leyendo la lista de archivos de origen"
 
-#: pg_rewind.c:465
+#: pg_rewind.c:468
 #, c-format
 msgid "reading target file list"
 msgstr "leyendo la lista de archivos de destino"
 
-#: pg_rewind.c:474
+#: pg_rewind.c:477
 #, c-format
 msgid "reading WAL in target"
 msgstr "leyendo WAL en destino"
 
-#: pg_rewind.c:495
+#: pg_rewind.c:498
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "se necesitan copiar %lu MB (tamaño total de directorio de origen es %lu MB)"
 
-#: pg_rewind.c:513
+#: pg_rewind.c:516
 #, c-format
 msgid "syncing target data directory"
 msgstr "sincronizando directorio de datos de destino"
 
-#: pg_rewind.c:529
+#: pg_rewind.c:532
 #, c-format
 msgid "Done!"
 msgstr "¡Listo!"
 
-#: pg_rewind.c:609
+#: pg_rewind.c:612
 #, c-format
 msgid "no action decided for file \"%s\""
 msgstr "no se decidió una acción para el archivo «%s»"
 
-#: pg_rewind.c:641
+#: pg_rewind.c:644
 #, c-format
 msgid "source system was modified while pg_rewind was running"
 msgstr "el sistema origen fue modificado mientras pg_rewind estaba en ejecución"
 
-#: pg_rewind.c:645
+#: pg_rewind.c:648
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "creando etiqueta de respaldo y actualizando archivo de control"
 
-#: pg_rewind.c:695
+#: pg_rewind.c:698
 #, c-format
 msgid "source system was in unexpected state at end of rewind"
 msgstr "el sistema origen estaba en un estado inesperado al final del rebobinado"
 
-#: pg_rewind.c:727
+#: pg_rewind.c:730
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "clusters de origen y destino son de sistemas diferentes"
 
-#: pg_rewind.c:735
+#: pg_rewind.c:738
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "los clusters no son compatibles con esta versión de pg_rewind"
 
-#: pg_rewind.c:745
+#: pg_rewind.c:748
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "el servidor de destino necesita tener sumas de verificación de datos o «wal_log_hints» activados"
 
-#: pg_rewind.c:756
+#: pg_rewind.c:759
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "el directorio de destino debe estar apagado limpiamente"
 
-#: pg_rewind.c:766
+#: pg_rewind.c:769
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "el directorio de origen debe estar apagado limpiamente"
 
-#: pg_rewind.c:813
+#: pg_rewind.c:816
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) copiados"
 
-#: pg_rewind.c:939
+#: pg_rewind.c:942
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "no se pudo encontrar un ancestro común en el timeline de los clusters de origen y destino"
 
-#: pg_rewind.c:980
+#: pg_rewind.c:983
 #, c-format
 msgid "backup label buffer too small"
 msgstr "el búfer del backup label es demasiado pequeño"
 
-#: pg_rewind.c:1003
+#: pg_rewind.c:1006
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "CRC de archivo de control inesperado"
 
-#: pg_rewind.c:1015
+#: pg_rewind.c:1018
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "tamaño del archivo de control %d inesperado, se esperaba %d"
 
-#: pg_rewind.c:1024
+#: pg_rewind.c:1027
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
 msgstr[0] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d byte"
 msgstr[1] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d bytes"
 
-#: pg_rewind.c:1063 pg_rewind.c:1133
+#: pg_rewind.c:1066 pg_rewind.c:1136
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
 msgstr "el programa «%s» es requerido por %s, pero no se encontró en el mismo directorio que «%s»"
 
-#: pg_rewind.c:1066 pg_rewind.c:1136
+#: pg_rewind.c:1069 pg_rewind.c:1139
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
 msgstr "el programa «%s» fue encontrado por «%s» pero no es de la misma versión que %s"
 
-#: pg_rewind.c:1099
+#: pg_rewind.c:1102
 #, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "restore_command no está definido en el clúster de destino"
 
-#: pg_rewind.c:1140
+#: pg_rewind.c:1143
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
 msgstr "ejecutando «%s» en el servidor de destino para completar la recuperación de caídas"
 
-#: pg_rewind.c:1178
+#: pg_rewind.c:1181
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
 msgstr "el modo «single-user» en el servidor de destino falló"
 
-#: pg_rewind.c:1179
+#: pg_rewind.c:1182
 #, c-format
 msgid "Command was: %s"
 msgstr "La orden era: % s"
@@ -842,147 +842,147 @@ msgstr "desplazamiento de registro no válido en %X/%X: se esperaba al menos %u,
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord solicitado por %X/%X"
 
-#: xlogreader.c:671 xlogreader.c:1136
+#: xlogreader.c:671 xlogreader.c:1146
 #, c-format
 msgid "invalid record length at %X/%X: expected at least %u, got %u"
 msgstr "largo de registro no válido en %X/%X: se esperaba al menos %u, se obtuvo %u"
 
-#: xlogreader.c:760
+#: xlogreader.c:761
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "no hay bandera de contrecord en %X/%X"
 
-#: xlogreader.c:773
+#: xlogreader.c:774
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "largo de contrecord %u no válido (se esperaba %lld) en %X/%X"
 
-#: xlogreader.c:1144
+#: xlogreader.c:1154
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ID de gestor de recursos %u no válido en %X/%X"
 
-#: xlogreader.c:1157 xlogreader.c:1173
+#: xlogreader.c:1167 xlogreader.c:1183
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "registro con prev-link %X/%X incorrecto en %X/%X"
 
-#: xlogreader.c:1211
+#: xlogreader.c:1221
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "suma de verificación de los datos del gestor de recursos incorrecta en el registro en %X/%X"
 
-#: xlogreader.c:1245
+#: xlogreader.c:1255
 #, c-format
 msgid "invalid magic number %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "número mágico %04X no válido en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1260 xlogreader.c:1302
+#: xlogreader.c:1270 xlogreader.c:1312
 #, c-format
 msgid "invalid info bits %04X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "info bits %04X no válidos en segment WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1276
+#: xlogreader.c:1286
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: identificador de sistema en archivo WAL es %llu, identificador en pg_control es %llu"
 
-#: xlogreader.c:1284
+#: xlogreader.c:1294
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: tamaño de segmento incorrecto en cabecera de paǵina"
 
-#: xlogreader.c:1290
+#: xlogreader.c:1300
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "archivo WAL es de un sistema de bases de datos distinto: XLOG_BLCKSZ incorrecto en cabecera de paǵina"
 
-#: xlogreader.c:1322
+#: xlogreader.c:1332
 #, c-format
 msgid "unexpected pageaddr %X/%X in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "pageaddr %X/%X inesperado en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1348
+#: xlogreader.c:1358
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in WAL segment %s, LSN %X/%X, offset %u"
 msgstr "ID de timeline %u fuera de secuencia (después de %u) en segmento WAL %s, LSN %X/%X, posición %u"
 
-#: xlogreader.c:1754
+#: xlogreader.c:1764
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %u fuera de orden en %X/%X"
 
-#: xlogreader.c:1778
+#: xlogreader.c:1788
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA está definido, pero no hay datos en %X/%X"
 
-#: xlogreader.c:1785
+#: xlogreader.c:1795
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA no está definido, pero el largo de los datos es %u en %X/%X"
 
-#: xlogreader.c:1821
+#: xlogreader.c:1831
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE está definido, pero posición del agujero es %u largo %u largo de imagen %u en %X/%X"
 
-#: xlogreader.c:1837
+#: xlogreader.c:1847
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE no está definido, pero posición del agujero es %u largo %u en %X/%X"
 
-#: xlogreader.c:1851
+#: xlogreader.c:1861
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSED definido, pero largo de imagen de bloque es %u en %X/%X"
 
-#: xlogreader.c:1866
+#: xlogreader.c:1876
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ni BKPIMAGE_HAS_HOLE ni BKPIMAGE_COMPRESSED están definidos, pero el largo de imagen de bloque es %u en %X/%X"
 
-#: xlogreader.c:1882
+#: xlogreader.c:1892
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL está definido, pero no hay «rel» anterior en %X/%X "
 
-#: xlogreader.c:1894
+#: xlogreader.c:1904
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "block_id %u no válido en %X/%X"
 
-#: xlogreader.c:1961
+#: xlogreader.c:1971
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "registro con largo no válido en %X/%X"
 
-#: xlogreader.c:1987
+#: xlogreader.c:1997
 #, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "no se pudo localizar un bloque de respaldo con ID %d en el registro WAL"
 
-#: xlogreader.c:2071
+#: xlogreader.c:2081
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr "no se pudo restaurar la imagen en %X/%X con bloque especificado %d no válido"
 
-#: xlogreader.c:2078
+#: xlogreader.c:2088
 #, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X con estado no válido, bloque %d"
 
-#: xlogreader.c:2105 xlogreader.c:2122
+#: xlogreader.c:2115 xlogreader.c:2132
 #, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con %s que no está soportado por esta instalación, bloque %d"
 
-#: xlogreader.c:2131
+#: xlogreader.c:2141
 #, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
 msgstr "no se pudo restaurar la imagen en %X/%X comprimida con un método desconocido, bloque %d"
 
-#: xlogreader.c:2139
+#: xlogreader.c:2149
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "no se pudo descomprimir la imagen en %X/%X, bloque %d"

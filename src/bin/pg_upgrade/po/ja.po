@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 16)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-07 17:04+0900\n"
-"PO-Revision-Date: 2025-07-08 10:54+0900\n"
+"POT-Creation-Date: 2025-08-19 09:33+0900\n"
+"PO-Revision-Date: 2025-08-19 10:57+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -165,8 +165,8 @@ msgid "Creating script to delete old cluster"
 msgstr "旧クラスタを削除するスクリプトを作成しています"
 
 #: check.c:487 check.c:660 check.c:776 check.c:871 check.c:1000 check.c:1077
-#: check.c:1435 check.c:1509 file.c:339 function.c:163 option.c:476
-#: version.c:116 version.c:292 version.c:426
+#: check.c:1155 check.c:1435 check.c:1509 file.c:339 function.c:163
+#: option.c:476 version.c:116 version.c:292 version.c:426
 #, c-format
 msgid "could not open file \"%s\": %s"
 msgstr "ファイル\"%s\"をオープンできませんでした: %s"
@@ -341,11 +341,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "非NULL制約の整合性を確認しています"
 
-#: check.c:1155
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ファイル\"%s\"をオープンできませんでした: %m"
-
 #: check.c:1176
 #, c-format
 msgid ""
@@ -353,7 +348,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s"
 msgstr ""
@@ -363,7 +358,7 @@ msgstr ""
 "この状態は、次のコマンドを\n"
 "  ALTER TABLE テーブル名 ALTER 列名 SET NOT NULL;\n"
 "以下のファイルにリストされている各列に対して実行することで解消できます:\n"
-"%s"
+"  %s"
 
 #: check.c:1205
 #, c-format
@@ -1856,3 +1851,6 @@ msgstr ""
 "あります。以下のファイルをpsqlを使ってデータベースのスーパーユーザーとして実行することで\n"
 "これらの機能拡張をアップデートできます。\n"
 "   %s"
+
+#~ msgid "could not open file \"%s\": %m"
+#~ msgstr "ファイル\"%s\"をオープンできませんでした: %m"

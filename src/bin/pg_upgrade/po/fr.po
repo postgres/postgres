@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 16\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-17 17:52+0000\n"
-"PO-Revision-Date: 2025-07-19 07:11+0200\n"
+"POT-Creation-Date: 2025-09-19 19:22+0000\n"
+"PO-Revision-Date: 2025-09-20 11:01+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
 #: check.c:73
 #, c-format
@@ -167,8 +167,8 @@ msgid "Creating script to delete old cluster"
 msgstr "Création du script pour supprimer l'ancienne instance"
 
 #: check.c:487 check.c:660 check.c:776 check.c:871 check.c:1000 check.c:1077
-#: check.c:1435 check.c:1509 file.c:339 function.c:163 option.c:476
-#: version.c:116 version.c:292 version.c:426
+#: check.c:1155 check.c:1435 check.c:1509 file.c:339 function.c:163
+#: option.c:476 version.c:116 version.c:292 version.c:426
 #, c-format
 msgid "could not open file \"%s\": %s"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s"
@@ -346,11 +346,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "Vérification des incohérences des contraintes NOT NULL"
 
-#: check.c:1155
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
-
 #: check.c:1176
 #, c-format
 msgid ""
@@ -358,7 +353,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s"
 msgstr ""
@@ -366,7 +361,7 @@ msgstr ""
 "Si les colonnes parents sont NOT NULL, alors la colonne enfant doit\n"
 "aussi être marquée NOT NULL, sinon la mise à jour échouera.\n"
 "Vous pouvez corriger ceci en exécutant\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"  ALTER TABLE nom_table ALTER nom_colonne SET NOT NULL;\n"
 "sur chaque colonne listée dans le fichier :\n"
 "    %s"
 
@@ -1894,3 +1889,7 @@ msgstr ""
 "    %s\n"
 "une fois exécuté par psql par le superutilisateur mettre à jour\n"
 "ces extensions."
+
+#, c-format
+#~ msgid "could not open file \"%s\": %m"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
