@@ -307,7 +307,40 @@ SELECT injection_points_detach('TestConditionLocal1');
  
 (1 row)
 
--- No points should be left around.
+-- Function variant for attach.
+SELECT injection_points_attach(NULL, NULL, NULL, NULL);
+ERROR:  injection point name cannot be NULL
+SELECT injection_points_attach('injection_points', NULL, NULL, NULL);
+ERROR:  injection point library cannot be NULL
+SELECT injection_points_attach('injection_points', 'injection_notice', NULL, NULL);
+ERROR:  injection point function cannot be NULL
+SELECT injection_points_attach('TestInjectionNoticeFunc',
+  'injection_points', 'injection_notice', NULL);
+ injection_points_attach 
+-------------------------
+ 
+(1 row)
+
+SELECT point_name, library, function FROM injection_points_list()
+  ORDER BY point_name COLLATE "C";
+       point_name        |     library      |     function     
+-------------------------+------------------+------------------
+ TestInjectionNoticeFunc | injection_points | injection_notice
+(1 row)
+
+SELECT injection_points_run('TestInjectionNoticeFunc', NULL); -- notice
+NOTICE:  notice triggered for injection point TestInjectionNoticeFunc
+ injection_points_run 
+----------------------
+ 
+(1 row)
+
+SELECT injection_points_detach('TestInjectionNoticeFunc');
+ injection_points_detach 
+-------------------------
+ 
+(1 row)
+
 SELECT point_name, library, function FROM injection_points_list()
   ORDER BY point_name COLLATE "C";
  point_name | library | function 

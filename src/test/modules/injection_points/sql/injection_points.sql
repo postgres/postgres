@@ -88,7 +88,16 @@ SELECT injection_points_detach('TestConditionError');
 SELECT injection_points_attach('TestConditionLocal1', 'error');
 SELECT injection_points_detach('TestConditionLocal1');
 
--- No points should be left around.
+-- Function variant for attach.
+SELECT injection_points_attach(NULL, NULL, NULL, NULL);
+SELECT injection_points_attach('injection_points', NULL, NULL, NULL);
+SELECT injection_points_attach('injection_points', 'injection_notice', NULL, NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc',
+  'injection_points', 'injection_notice', NULL);
+SELECT point_name, library, function FROM injection_points_list()
+  ORDER BY point_name COLLATE "C";
+SELECT injection_points_run('TestInjectionNoticeFunc', NULL); -- notice
+SELECT injection_points_detach('TestInjectionNoticeFunc');
 SELECT point_name, library, function FROM injection_points_list()
   ORDER BY point_name COLLATE "C";
 
