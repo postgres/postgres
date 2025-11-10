@@ -20,6 +20,16 @@
 #define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
 
 /*
+ * SLRU segment size.  A page is the same BLCKSZ as is used everywhere else in
+ * Postgres.  The segment size can be chosen somewhat arbitrarily; we make it
+ * 32 pages by default, or 256Kb, i.e. 1M transactions for CLOG or 64K
+ * transactions for SUBTRANS.
+ *
+ * Changing this requires an initdb.
+ */
+#define SLRU_PAGES_PER_SEGMENT	32
+
+/*
  * Maximum length for identifiers (e.g. table names, column names,
  * function names).  Names actually are limited to one fewer byte than this,
  * because the length must include a trailing zero byte.

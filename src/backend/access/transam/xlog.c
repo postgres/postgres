@@ -4271,6 +4271,7 @@ WriteControlFile(void)
 
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
+	ControlFile->slru_pages_per_segment = SLRU_PAGES_PER_SEGMENT;
 	ControlFile->xlog_blcksz = XLOG_BLCKSZ;
 	ControlFile->xlog_seg_size = wal_segment_size;
 
@@ -4489,6 +4490,16 @@ ReadControlFile(void)
 						   " but the server was compiled with %s %d.",
 						   "RELSEG_SIZE", ControlFile->relseg_size,
 						   "RELSEG_SIZE", RELSEG_SIZE),
+				 errhint("It looks like you need to recompile or initdb.")));
+	if (ControlFile->slru_pages_per_segment != SLRU_PAGES_PER_SEGMENT)
+		ereport(FATAL,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("database files are incompatible with server"),
+		/* translator: %s is a variable name and %d is its value */
+				 errdetail("The database cluster was initialized with %s %d,"
+						   " but the server was compiled with %s %d.",
+						   "SLRU_PAGES_PER_SEGMENT", ControlFile->slru_pages_per_segment,
+						   "SLRU_PAGES_PER_SEGMENT", SLRU_PAGES_PER_SEGMENT),
 				 errhint("It looks like you need to recompile or initdb.")));
 	if (ControlFile->xlog_blcksz != XLOG_BLCKSZ)
 		ereport(FATAL,

@@ -207,6 +207,8 @@ typedef struct ControlFileData
 	uint32		blcksz;			/* data block size for this DB */
 	uint32		relseg_size;	/* blocks per segment of large relation */
 
+	uint32		slru_pages_per_segment; /* size of each SLRU segment */
+
 	uint32		xlog_blcksz;	/* block size within WAL files */
 	uint32		xlog_seg_size;	/* size of each WAL segment */
 
