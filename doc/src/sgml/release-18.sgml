@@ -30,6 +30,67 @@
 
     <listitem>
 <!--
+Author: Nathan Bossart <nathan@postgresql.org>
+Branch: master [5e4fcbe53] 2025-11-10 09:00:00 -0600
+Branch: REL_18_STABLE [00eb646ea] 2025-11-10 09:00:00 -0600
+Branch: REL_17_STABLE [e2fb3dfa8] 2025-11-10 09:00:00 -0600
+Branch: REL_16_STABLE [d20abb587] 2025-11-10 09:00:00 -0600
+Branch: REL_15_STABLE [2393d374a] 2025-11-10 09:00:00 -0600
+Branch: REL_14_STABLE [95cce5669] 2025-11-10 09:00:00 -0600
+Branch: REL_13_STABLE [8a2530ebc] 2025-11-10 09:00:00 -0600
+-->
+     <para>
+      Check for <literal>CREATE</literal> privileges on the schema
+      in <command>CREATE STATISTICS</command> (Jelte Fennema-Nio)
+      <ulink url="&commit_baseurl;00eb646ea">&sect;</ulink>
+     </para>
+
+     <para>
+      This omission allowed table owners to create statistics in any
+      schema, potentially leading to unexpected naming conflicts.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Jelte Fennema-Nio for reporting this problem.
+      (CVE-2025-12817)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Jacob Champion <jchampion@postgresql.org>
+Branch: master [600086f47] 2025-11-10 06:20:33 -0800
+Branch: REL_18_STABLE [7eb8fcad8] 2025-11-10 06:03:01 -0800
+Branch: REL_17_STABLE [f5999f018] 2025-11-10 06:03:03 -0800
+Branch: REL_16_STABLE [585fd9b3c] 2025-11-10 06:03:04 -0800
+Branch: REL_15_STABLE [91421565f] 2025-11-10 06:03:05 -0800
+Branch: REL_14_STABLE [96d2c7e96] 2025-11-10 06:03:05 -0800
+Branch: REL_13_STABLE [d6f0c0d6d] 2025-11-10 06:03:06 -0800
+-->
+     <para>
+      Avoid integer overflow in allocation-size calculations
+      within <application>libpq</application> (Jacob Champion)
+      <ulink url="&commit_baseurl;7eb8fcad8">&sect;</ulink>
+     </para>
+
+     <para>
+      Several places in <application>libpq</application> were not
+      sufficiently careful about computing the required size of a memory
+      allocation.  Sufficiently large inputs could cause integer overflow,
+      resulting in an undersized buffer, which would then lead to writing
+      past the end of the buffer.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks Aleksey
+      Solovev of Positive Technologies for reporting this problem.
+      (CVE-2025-12818)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Amit Langote <amitlan@postgresql.org>
 Branch: master [ef5e60a9d] 2025-10-09 01:07:59 -0400
 Branch: REL_18_STABLE [dc9125111] 2025-10-09 01:07:52 -0400
