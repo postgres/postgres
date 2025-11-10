@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 20:50+0000\n"
+"POT-Creation-Date: 2025-11-08 01:34+0000\n"
 "PO-Revision-Date: 2024-11-09 10:01+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: check.c:71
+#: check.c:72
 #, c-format
 msgid ""
 "Performing Consistency Checks on Old Live Server\n"
@@ -27,7 +27,7 @@ msgstr ""
 "Verificando Consistencia en Vivo en el Servidor Antiguo\n"
 "-------------------------------------------------------\n"
 
-#: check.c:77
+#: check.c:78
 #, c-format
 msgid ""
 "Performing Consistency Checks\n"
@@ -36,7 +36,7 @@ msgstr ""
 "Verificando Consistencia\n"
 "------------------------\n"
 
-#: check.c:208
+#: check.c:216
 #, c-format
 msgid ""
 "\n"
@@ -45,7 +45,7 @@ msgstr ""
 "\n"
 "*Los clústers son compatibles*\n"
 
-#: check.c:214
+#: check.c:222
 #, c-format
 msgid ""
 "\n"
@@ -56,7 +56,7 @@ msgstr ""
 "Si pg_upgrade falla a partir de este punto, deberá re-ejecutar initdb\n"
 "en el clúster nuevo antes de continuar.\n"
 
-#: check.c:250
+#: check.c:258
 #, c-format
 msgid ""
 "Optimizer statistics are not transferred by pg_upgrade so,\n"
@@ -69,7 +69,7 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:256
+#: check.c:264
 #, c-format
 msgid ""
 "Running this script will delete the old cluster's data files:\n"
@@ -78,7 +78,7 @@ msgstr ""
 "Ejecutando este script se borrarán los archivos de datos del servidor antiguo:\n"
 "    %s\n"
 
-#: check.c:261
+#: check.c:269
 #, c-format
 msgid ""
 "Could not create a script to delete the old cluster's data files\n"
@@ -91,97 +91,98 @@ msgstr ""
 "o el directorio de datos del servidor nuevo.  El contenido del servidor\n"
 "antiguo debe ser borrado manualmente.\n"
 
-#: check.c:271
+#: check.c:279
 #, c-format
 msgid "Checking cluster versions"
 msgstr "Verificando las versiones de los clústers"
 
-#: check.c:288
+#: check.c:296
 #, c-format
 msgid "This utility can only upgrade from PostgreSQL version 9.0 and later.\n"
 msgstr "Este programa sólo puede actualizar desde PostgreSQL versión 9.0 y posterior.\n"
 
-#: check.c:292
+#: check.c:300
 #, c-format
 msgid "This utility can only upgrade to PostgreSQL version %s.\n"
 msgstr "Este programa sólo puede actualizar a PostgreSQL versión %s.\n"
 
-#: check.c:301
+#: check.c:309
 #, c-format
 msgid "This utility cannot be used to downgrade to older major PostgreSQL versions.\n"
 msgstr "Este programa no puede usarse para volver a versiones anteriores de PostgreSQL.\n"
 
-#: check.c:306
+#: check.c:314
 #, c-format
 msgid "Old cluster data and binary directories are from different major versions.\n"
 msgstr ""
 "El directorio de datos antiguo y el directorio de binarios antiguo son de\n"
 "versiones diferentes.\n"
 
-#: check.c:309
+#: check.c:317
 #, c-format
 msgid "New cluster data and binary directories are from different major versions.\n"
 msgstr ""
 "El directorio de datos nuevo y el directorio de binarios nuevo son de\n"
 "versiones diferentes.\n"
 
-#: check.c:326
+#: check.c:334
 #, c-format
 msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
 msgstr "Al verificar un servidor antiguo anterior a 9.1, debe especificar el port de éste.\n"
 
-#: check.c:330
+#: check.c:338
 #, c-format
 msgid "When checking a live server, the old and new port numbers must be different.\n"
 msgstr "Al verificar servidores en caliente, los números de port antiguo y nuevo deben ser diferentes.\n"
 
-#: check.c:345
+#: check.c:353
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "las codificaciones de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
-#: check.c:350
+#: check.c:358
 #, c-format
 msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "valores lc_collate de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
-#: check.c:353
+#: check.c:361
 #, c-format
 msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr "valores lc_ctype de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
-#: check.c:426
+#: check.c:434
 #, c-format
 msgid "New cluster database \"%s\" is not empty: found relation \"%s.%s\"\n"
 msgstr "La base de datos «%s» del clúster nuevo no está vacía: se encontró la relación «%s.%s»\n"
 
-#: check.c:475
+#: check.c:483
 #, c-format
 msgid "Creating script to analyze new cluster"
 msgstr "Creando un script para analizar el clúster nuevo"
 
-#: check.c:489 check.c:648 check.c:912 check.c:991 file.c:338 function.c:240
-#: option.c:497 version.c:54 version.c:204 version.c:374 version.c:509
+#: check.c:497 check.c:656 check.c:920 check.c:999 check.c:1078 file.c:338
+#: function.c:240 option.c:497 version.c:54 version.c:204 version.c:374
+#: version.c:509
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "no se pudo abrir el archivo «%s»: %s\n"
 
-#: check.c:537 check.c:704
+#: check.c:545 check.c:712
 #, c-format
 msgid "could not add execute permission to file \"%s\": %s\n"
 msgstr "no se pudo agregar permisos de ejecución al archivo «%s»: %s\n"
 
-#: check.c:567
+#: check.c:575
 #, c-format
 msgid "Checking for new cluster tablespace directories"
 msgstr "Verificando los directorios de tablespaces para el nuevo clúster"
 
-#: check.c:578
+#: check.c:586
 #, c-format
 msgid "new cluster tablespace directory already exists: \"%s\"\n"
 msgstr "directorio de tablespace para el nuevo clúster ya existe: «%s»\n"
 
-#: check.c:611
+#: check.c:619
 #, c-format
 msgid ""
 "\n"
@@ -191,7 +192,7 @@ msgstr ""
 "ADVERTENCIA: el directorio de datos nuevo no debería estar dentro del directorio antiguo,\n"
 "por ej. %s\n"
 
-#: check.c:635
+#: check.c:643
 #, c-format
 msgid ""
 "\n"
@@ -202,73 +203,73 @@ msgstr ""
 "no deberían estar dentro del directorio de datos,\n"
 "por ej. %s\n"
 
-#: check.c:645
+#: check.c:653
 #, c-format
 msgid "Creating script to delete old cluster"
 msgstr "Creando un script para borrar el clúster antiguo"
 
-#: check.c:724
+#: check.c:732
 #, c-format
 msgid "Checking database user is the install user"
 msgstr "Verificando que el usuario de base de datos es el usuario de instalación"
 
-#: check.c:740
+#: check.c:748
 #, c-format
 msgid "database user \"%s\" is not the install user\n"
 msgstr "el usuario de base de datos «%s» no es el usuario de instalación\n"
 
-#: check.c:751
+#: check.c:759
 #, c-format
 msgid "could not determine the number of users\n"
 msgstr "no se pudo determinar el número de usuarios\n"
 
-#: check.c:759
+#: check.c:767
 #, c-format
 msgid "Only the install user can be defined in the new cluster.\n"
 msgstr "Sólo el usuario de instalación puede estar definido en el nuevo clúster.\n"
 
-#: check.c:779
+#: check.c:787
 #, c-format
 msgid "Checking database connection settings"
 msgstr "Verificando los parámetros de conexión de bases de datos"
 
-#: check.c:801
+#: check.c:809
 #, c-format
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 no debe permitir conexiones, es decir su pg_database.datallowconn debe ser «false»\n"
 
-#: check.c:811
+#: check.c:819
 #, c-format
 msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
 msgstr "Todas las bases de datos no-template0 deben permitir conexiones, es decir su pg_database.datallowconn debe ser «true»\n"
 
-#: check.c:836
+#: check.c:844
 #, c-format
 msgid "Checking for prepared transactions"
 msgstr "Verificando transacciones preparadas"
 
-#: check.c:845
+#: check.c:853
 #, c-format
 msgid "The source cluster contains prepared transactions\n"
 msgstr "El clúster de origen contiene transacciones preparadas\n"
 
-#: check.c:847
+#: check.c:855
 #, c-format
 msgid "The target cluster contains prepared transactions\n"
 msgstr "El clúster de destino contiene transacciones preparadas\n"
 
-#: check.c:873
+#: check.c:881
 #, c-format
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Verificando contrib/isn con discordancia en mecanismo de paso de bigint"
 
-#: check.c:934 check.c:1013 check.c:1070 check.c:1129 check.c:1163 check.c:1192
-#: function.c:262 version.c:278 version.c:315 version.c:458
+#: check.c:942 check.c:1021 check.c:1098 check.c:1156 check.c:1215 check.c:1249
+#: check.c:1278 function.c:262 version.c:278 version.c:315 version.c:458
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
 
-#: check.c:935
+#: check.c:943
 #, c-format
 msgid ""
 "Your installation contains \"contrib/isn\" functions which rely on the\n"
@@ -289,12 +290,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:959
+#: check.c:967
 #, c-format
 msgid "Checking for tables WITH OIDS"
 msgstr "Verificando tablas WITH OIDS"
 
-#: check.c:1014
+#: check.c:1022
 #, c-format
 msgid ""
 "Your installation contains tables declared WITH OIDS, which is not\n"
@@ -311,12 +312,37 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1042
+#: check.c:1047
+#, c-format
+msgid "Checking for not-null constraint inconsistencies"
+msgstr "Verificando inconsistencias en restricciones not-null"
+
+#: check.c:1099
+#, c-format
+msgid ""
+"Your installation contains inconsistent NOT NULL constraints.\n"
+"If the parent column(s) are NOT NULL, then the child column must\n"
+"also be marked NOT NULL, or the upgrade will fail.\n"
+"You can fix this by running\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"on each column listed in the file:\n"
+"    %s\n"
+"\n"
+msgstr ""
+"Su instalación contiene restricciones NOT NULL inconsistentes.  Si las\n"
+"columnas padre son NOT NULL, entonces las columnas hijas deben ser también\n"
+"NOT NULL, o la actualización fallará. Puede corregir esto ejecutando\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"en cada columna listada en el archivo:\n"
+"    %s\n"
+"\n"
+
+#: check.c:1128
 #, c-format
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Verificando tipos compuestos definidos por el sistema en tablas de usuario"
 
-#: check.c:1071
+#: check.c:1157
 #, c-format
 msgid ""
 "Your installation contains system-defined composite type(s) in user tables.\n"
@@ -335,12 +361,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1099
+#: check.c:1185
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Verificando tipos de datos reg* en datos de usuario"
 
-#: check.c:1130
+#: check.c:1216
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -359,12 +385,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1154
+#: check.c:1240
 #, c-format
 msgid "Checking for removed \"%s\" data type in user tables"
 msgstr "Verificando tipo de datos «%s» eliminado en tablas de usuario"
 
-#: check.c:1164
+#: check.c:1250
 #, c-format
 msgid ""
 "Your installation contains the \"%s\" data type in user tables.\n"
@@ -383,12 +409,12 @@ msgstr ""
 "Una lista de las columnas problemáticas está en el archivo:\n"
 "    %s\n"
 
-#: check.c:1186
+#: check.c:1272
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Verificando datos de usuario en tipo «jsonb» incompatible"
 
-#: check.c:1193
+#: check.c:1279
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -407,32 +433,32 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1215
+#: check.c:1301
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Verificando roles que empiecen con «pg_»"
 
-#: check.c:1225
+#: check.c:1311
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "El clúster de origen contiene roles que empiezan con «pg_»\n"
 
-#: check.c:1227
+#: check.c:1313
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "El clúster de destino contiene roles que empiezan con «pg_»\n"
 
-#: check.c:1253
+#: check.c:1339
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "no se pudo obtener el «locale» actual\n"
 
-#: check.c:1262
+#: check.c:1348
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "no se pudo obtener el nombre del «locale» para «%s»\n"
 
-#: check.c:1268
+#: check.c:1354
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "no se pudo restaurar el locale antiguo «%s»\n"

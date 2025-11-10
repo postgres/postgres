@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-07 17:01+0900\n"
-"PO-Revision-Date: 2025-07-08 13:55+0900\n"
+"POT-Creation-Date: 2025-08-19 09:25+0900\n"
+"PO-Revision-Date: 2025-08-19 10:58+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -155,8 +155,9 @@ msgstr "新クラスタのデータベース\"%s\"が空ではありません: �
 msgid "Creating script to analyze new cluster"
 msgstr "新クラスタをANALYZEするためのスクリプトを作成しています"
 
-#: check.c:497 check.c:656 check.c:920 check.c:999 file.c:338 function.c:240
-#: option.c:497 version.c:54 version.c:204 version.c:374 version.c:509
+#: check.c:497 check.c:656 check.c:920 check.c:999 check.c:1078 file.c:338
+#: function.c:240 option.c:497 version.c:54 version.c:204 version.c:374
+#: version.c:509
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
@@ -254,8 +255,8 @@ msgstr "移行先クラスタに準備済みトランザクションがありま
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "bigint を渡す際にミスマッチが発生する contrib/isn をチェックしています"
 
-#: check.c:942 check.c:1021 check.c:1156 check.c:1215 check.c:1249 check.c:1278
-#: function.c:262 version.c:278 version.c:315 version.c:458
+#: check.c:942 check.c:1021 check.c:1098 check.c:1156 check.c:1215 check.c:1249
+#: check.c:1278 function.c:262 version.c:278 version.c:315 version.c:458
 #, c-format
 msgid "fatal\n"
 msgstr "致命的\n"
@@ -309,16 +310,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "非NULL制約の整合性を確認しています"
 
-#: check.c:1078
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ファイル\"%s\"をオープンできませんでした: %m"
-
-#: check.c:1098
-#, c-format
-msgid "fatal"
-msgstr "致命的"
-
 #: check.c:1099
 #, c-format
 msgid ""
@@ -326,7 +317,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s\n"
 "\n"
@@ -337,7 +328,7 @@ msgstr ""
 "この状態は、次のコマンドを\n"
 "  ALTER TABLE テーブル名 ALTER 列名 SET NOT NULL;\n"
 "以下のファイルにリストされている各列に対して実行することで解消できます:\n"
-"%s\n"
+"  %s\n"
 "\n"
 
 #: check.c:1128

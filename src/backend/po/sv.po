@@ -23,8 +23,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-09 06:17+0000\n"
-"PO-Revision-Date: 2025-08-09 20:15+0200\n"
+"POT-Creation-Date: 2025-09-18 04:00+0000\n"
+"PO-Revision-Date: 2025-09-19 20:24+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -871,12 +871,12 @@ msgstr "kan inte flytta temporära index tillhörande andra sessioner"
 msgid "failed to re-find tuple within index \"%s\""
 msgstr "misslyckades att återfinna tuple i index \"%s\""
 
-#: access/gin/ginscan.c:436
+#: access/gin/ginscan.c:479
 #, c-format
 msgid "old GIN indexes do not support whole-index scans nor searches for nulls"
 msgstr "gamla GIN-index stöder inte hela-index-scan eller sökningar efter null"
 
-#: access/gin/ginscan.c:437
+#: access/gin/ginscan.c:480
 #, c-format
 msgid "To fix this, do REINDEX INDEX \"%s\"."
 msgstr "För att fixa detta, kör REINDEX INDEX \"%s\"."
@@ -3995,7 +3995,7 @@ msgstr "utökning med OID %u existerar inte"
 msgid "publication with OID %u does not exist"
 msgstr "publicering med OID %u existerar inte"
 
-#: catalog/aclchk.c:5305 commands/subscriptioncmds.c:1117
+#: catalog/aclchk.c:5305 commands/subscriptioncmds.c:1119
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "prenumeration med OID %u existerar inte"
@@ -5497,7 +5497,7 @@ msgid "cannot reassign ownership of objects owned by %s because they are require
 msgstr "kan inte byta ägare på objekt som ägs av %s då dessa krävas av databassystemet"
 
 #: catalog/pg_subscription.c:171 commands/subscriptioncmds.c:648
-#: commands/subscriptioncmds.c:862 commands/subscriptioncmds.c:1085
+#: commands/subscriptioncmds.c:864 commands/subscriptioncmds.c:1087
 #, c-format
 msgid "subscription \"%s\" does not exist"
 msgstr "prenumerationen \"%s\" finns inte"
@@ -8211,7 +8211,7 @@ msgstr "index-operatorer måste vara binära"
 #: commands/opclasscmds.c:1118
 #, c-format
 msgid "access method \"%s\" does not support ordering operators"
-msgstr "accessmetod \"%s\" stöder inte sorteringsoperatorer"
+msgstr "accessmetod \"%s\" stöder inte ordningsoperatorer"
 
 #: commands/opclasscmds.c:1129
 #, c-format
@@ -8811,7 +8811,7 @@ msgid "must be superuser to create subscriptions"
 msgstr "måste vara en superuser för att skapa prenumerationer"
 
 #: commands/subscriptioncmds.c:445 commands/subscriptioncmds.c:534
-#: replication/logical/tablesync.c:871 replication/logical/worker.c:2167
+#: replication/logical/tablesync.c:871 replication/logical/worker.c:2174
 #, c-format
 msgid "could not connect to the publisher: %s"
 msgstr "kunde inte ansluta till publicerare: %s"
@@ -8862,49 +8862,49 @@ msgstr "Använd ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false
 msgid "ALTER SUBSCRIPTION ... REFRESH is not allowed for disabled subscriptions"
 msgstr "ALTER SUBSCRIPTION ... REFRESH tillåts inte för avstängda prenumerationer"
 
-#: commands/subscriptioncmds.c:866
+#: commands/subscriptioncmds.c:868
 #, c-format
 msgid "subscription \"%s\" does not exist, skipping"
 msgstr "prenumeration \"%s\" finns inte, hoppar över"
 
-#: commands/subscriptioncmds.c:991
+#: commands/subscriptioncmds.c:993
 #, c-format
 msgid "could not connect to publisher when attempting to drop the replication slot \"%s\""
 msgstr "kunde inte ansluta till publicerare vid försök att slänga replikeringsslot \"%s\""
 
-#: commands/subscriptioncmds.c:993 commands/subscriptioncmds.c:1009
+#: commands/subscriptioncmds.c:995 commands/subscriptioncmds.c:1011
 #: replication/logical/tablesync.c:920 replication/logical/tablesync.c:942
 #, c-format
 msgid "The error was: %s"
 msgstr "Felet var: %s"
 
 #. translator: %s is an SQL ALTER command
-#: commands/subscriptioncmds.c:995
+#: commands/subscriptioncmds.c:997
 #, c-format
 msgid "Use %s to disable the subscription, and then use %s to disassociate it from the slot."
 msgstr "Använd %s för att stänga av prenumerationen och sedan %s för att dissociera den från slotten."
 
-#: commands/subscriptioncmds.c:1007
+#: commands/subscriptioncmds.c:1009
 #, c-format
 msgid "could not drop the replication slot \"%s\" on publisher"
 msgstr "kunde inte slänga replikeringsslotten \"%s\" på publicerare"
 
-#: commands/subscriptioncmds.c:1012
+#: commands/subscriptioncmds.c:1014
 #, c-format
 msgid "dropped replication slot \"%s\" on publisher"
 msgstr "slängde replikerings-slot \"%s\" på publicerare"
 
-#: commands/subscriptioncmds.c:1049
+#: commands/subscriptioncmds.c:1051
 #, c-format
 msgid "permission denied to change owner of subscription \"%s\""
 msgstr "rättighet saknas för att byta ägare på prenumeration \"%s\""
 
-#: commands/subscriptioncmds.c:1051
+#: commands/subscriptioncmds.c:1053
 #, c-format
 msgid "The owner of a subscription must be a superuser."
 msgstr "Ägaren av en prenumeration måste vara en superuser."
 
-#: commands/subscriptioncmds.c:1166
+#: commands/subscriptioncmds.c:1168
 #, c-format
 msgid "could not receive list of replicated tables from the publisher: %s"
 msgstr "kunde inte ta emot lista med replikerade tabeller från publiceraren: %s"
@@ -11686,7 +11686,7 @@ msgstr "typen av parameter %d (%s) matchar inte det som var vid preparerande av 
 msgid "no value found for parameter %d"
 msgstr "hittade inget värde för parameter %d"
 
-#: executor/execExpr.c:893 parser/parse_agg.c:817
+#: executor/execExpr.c:893 parser/parse_agg.c:843
 #, c-format
 msgid "window function calls cannot be nested"
 msgstr "fönsterfunktionanrop kan inte nästlas"
@@ -11855,165 +11855,165 @@ msgstr "Nyckel %s står i konflilkt med existerande nyckel %s."
 msgid "Key conflicts with existing key."
 msgstr "Nyckel står i konflikt med existerande nyckel."
 
-#: executor/execMain.c:1069
+#: executor/execMain.c:1079
 #, c-format
 msgid "cannot change sequence \"%s\""
 msgstr "kan inte ändra sekvens \"%s\""
 
-#: executor/execMain.c:1075
+#: executor/execMain.c:1085
 #, c-format
 msgid "cannot change TOAST relation \"%s\""
 msgstr "kan inte ändra TOAST-relation \"%s\""
 
-#: executor/execMain.c:1093 rewrite/rewriteHandler.c:3098
+#: executor/execMain.c:1103 rewrite/rewriteHandler.c:3098
 #: rewrite/rewriteHandler.c:3938
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "kan inte sätta in i vy \"%s\""
 
-#: executor/execMain.c:1095 rewrite/rewriteHandler.c:3101
+#: executor/execMain.c:1105 rewrite/rewriteHandler.c:3101
 #: rewrite/rewriteHandler.c:3941
 #, c-format
 msgid "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or an unconditional ON INSERT DO INSTEAD rule."
 msgstr "För att tillåta insättning i en vy så skapa en INSTEAD OF INSERT-trigger eller en villkorslös ON INSERT DO INSTEAD-regel."
 
-#: executor/execMain.c:1101 rewrite/rewriteHandler.c:3106
+#: executor/execMain.c:1111 rewrite/rewriteHandler.c:3106
 #: rewrite/rewriteHandler.c:3946
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "kan inte uppdatera vy \"%s\""
 
-#: executor/execMain.c:1103 rewrite/rewriteHandler.c:3109
+#: executor/execMain.c:1113 rewrite/rewriteHandler.c:3109
 #: rewrite/rewriteHandler.c:3949
 #, c-format
 msgid "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule."
 msgstr "För att tillåta uppdatering av en vy så skapa en INSTEAD OF UPDATE-trigger eller en villkorslös ON UPDATE DO INSTEAD-regel."
 
-#: executor/execMain.c:1109 rewrite/rewriteHandler.c:3114
+#: executor/execMain.c:1119 rewrite/rewriteHandler.c:3114
 #: rewrite/rewriteHandler.c:3954
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "kan inte radera från vy \"%s\""
 
-#: executor/execMain.c:1111 rewrite/rewriteHandler.c:3117
+#: executor/execMain.c:1121 rewrite/rewriteHandler.c:3117
 #: rewrite/rewriteHandler.c:3957
 #, c-format
 msgid "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule."
 msgstr "För att tillåta bortagning i en vy så skapa en INSTEAD OF DELETE-trigger eller en villkorslös ON DELETE DO INSTEAD-regel."
 
-#: executor/execMain.c:1122
+#: executor/execMain.c:1132
 #, c-format
 msgid "cannot change materialized view \"%s\""
 msgstr "kan inte ändra materialiserad vy \"%s\""
 
-#: executor/execMain.c:1134
+#: executor/execMain.c:1144
 #, c-format
 msgid "cannot insert into foreign table \"%s\""
 msgstr "kan inte sätta in i främmande tabell \"%s\""
 
-#: executor/execMain.c:1140
+#: executor/execMain.c:1150
 #, c-format
 msgid "foreign table \"%s\" does not allow inserts"
 msgstr "främmande tabell \"%s\" tillåter inte insättningar"
 
-#: executor/execMain.c:1147
+#: executor/execMain.c:1157
 #, c-format
 msgid "cannot update foreign table \"%s\""
 msgstr "kan inte uppdatera främmande tabell \"%s\""
 
-#: executor/execMain.c:1153
+#: executor/execMain.c:1163
 #, c-format
 msgid "foreign table \"%s\" does not allow updates"
 msgstr "främmande tabell \"%s\" tillåter inte uppdateringar"
 
-#: executor/execMain.c:1160
+#: executor/execMain.c:1170
 #, c-format
 msgid "cannot delete from foreign table \"%s\""
 msgstr "kan inte radera från främmande tabell \"%s\""
 
-#: executor/execMain.c:1166
+#: executor/execMain.c:1176
 #, c-format
 msgid "foreign table \"%s\" does not allow deletes"
 msgstr "främmande tabell \"%s\" tillåter inte radering"
 
-#: executor/execMain.c:1177
+#: executor/execMain.c:1187
 #, c-format
 msgid "cannot change relation \"%s\""
 msgstr "kan inte ändra relation \"%s\""
 
-#: executor/execMain.c:1204
+#: executor/execMain.c:1224
 #, c-format
 msgid "cannot lock rows in sequence \"%s\""
 msgstr "kan inte låsa rader i sekvens \"%s\""
 
-#: executor/execMain.c:1211
+#: executor/execMain.c:1231
 #, c-format
 msgid "cannot lock rows in TOAST relation \"%s\""
 msgstr "kan inte låsa rader i TOAST-relation \"%s\""
 
-#: executor/execMain.c:1218
+#: executor/execMain.c:1238
 #, c-format
 msgid "cannot lock rows in view \"%s\""
 msgstr "kan inte låsa rader i vy \"%s\""
 
-#: executor/execMain.c:1226
+#: executor/execMain.c:1246
 #, c-format
 msgid "cannot lock rows in materialized view \"%s\""
 msgstr "kan inte låsa rader i materialiserad vy \"%s\""
 
-#: executor/execMain.c:1235 executor/execMain.c:2615
+#: executor/execMain.c:1255 executor/execMain.c:2635
 #: executor/nodeLockRows.c:132
 #, c-format
 msgid "cannot lock rows in foreign table \"%s\""
 msgstr "kan inte låsa rader i främmande tabell \"%s\""
 
-#: executor/execMain.c:1241
+#: executor/execMain.c:1261
 #, c-format
 msgid "cannot lock rows in relation \"%s\""
 msgstr "kan inte låsa rader i relation \"%s\""
 
-#: executor/execMain.c:1862
+#: executor/execMain.c:1882
 #, c-format
 msgid "new row for relation \"%s\" violates partition constraint"
 msgstr "ny rad för relation \"%s\" bryter mot partitionesvillkoret"
 
-#: executor/execMain.c:1864 executor/execMain.c:1947 executor/execMain.c:1997
-#: executor/execMain.c:2106
+#: executor/execMain.c:1884 executor/execMain.c:1967 executor/execMain.c:2017
+#: executor/execMain.c:2126
 #, c-format
 msgid "Failing row contains %s."
 msgstr "Misslyckande rad innehåller %s."
 
-#: executor/execMain.c:1944
+#: executor/execMain.c:1964
 #, c-format
 msgid "null value in column \"%s\" of relation \"%s\" violates not-null constraint"
 msgstr "null-värde i kolumn \"%s\" i relation \"%s\" bryter mot not-null-villkoret"
 
-#: executor/execMain.c:1995
+#: executor/execMain.c:2015
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
 msgstr "ny rad för relation \"%s\" bryter mot check-villkor \"%s\""
 
-#: executor/execMain.c:2104
+#: executor/execMain.c:2124
 #, c-format
 msgid "new row violates check option for view \"%s\""
 msgstr "ny rad bryter mot check-villkor för vy \"%s\""
 
-#: executor/execMain.c:2114
+#: executor/execMain.c:2134
 #, c-format
 msgid "new row violates row-level security policy \"%s\" for table \"%s\""
 msgstr "ny rad bryter mot radsäkerhetspolicy \"%s\" i tabell \"%s\""
 
-#: executor/execMain.c:2119
+#: executor/execMain.c:2139
 #, c-format
 msgid "new row violates row-level security policy for table \"%s\""
 msgstr "ny rad bryter mot radsäkerhetspolicy i tabell \"%s\""
 
-#: executor/execMain.c:2126
+#: executor/execMain.c:2146
 #, c-format
 msgid "new row violates row-level security policy \"%s\" (USING expression) for table \"%s\""
 msgstr "ny rad bryter mot radsäkerhetspolicy \"%s\" (USING-uttryck) i tabell \"%s\""
 
-#: executor/execMain.c:2131
+#: executor/execMain.c:2151
 #, c-format
 msgid "new row violates row-level security policy (USING expression) for table \"%s\""
 msgstr "ny rad bryter mot radsäkerhetspolicy (USING-uttryck) i tabell \"%s\""
@@ -12323,8 +12323,8 @@ msgstr "parametern TABLESAMPLE kan inte vara null"
 msgid "TABLESAMPLE REPEATABLE parameter cannot be null"
 msgstr "parametern TABLESAMPLE REPEATABLE kan inte vara null"
 
-#: executor/nodeSubplan.c:325 executor/nodeSubplan.c:351
-#: executor/nodeSubplan.c:405 executor/nodeSubplan.c:1174
+#: executor/nodeSubplan.c:306 executor/nodeSubplan.c:332
+#: executor/nodeSubplan.c:386 executor/nodeSubplan.c:1158
 #, c-format
 msgid "more than one row returned by a subquery used as an expression"
 msgstr "mer än en rad returnerades från underfråga som används som uttryck"
@@ -14871,44 +14871,44 @@ msgid "%s cannot be applied to the nullable side of an outer join"
 msgstr "%s kan inte appliceras på den nullbara sidan av en outer join"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/planner.c:1923 parser/analyze.c:1680 parser/analyze.c:1896
+#: optimizer/plan/planner.c:1963 parser/analyze.c:1680 parser/analyze.c:1896
 #: parser/analyze.c:2723
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s tillåts inte med UNION/INTERSECT/EXCEPT"
 
-#: optimizer/plan/planner.c:2510 optimizer/plan/planner.c:4164
+#: optimizer/plan/planner.c:2550 optimizer/plan/planner.c:4204
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "kunde inte implementera GROUP BY"
 
-#: optimizer/plan/planner.c:2511 optimizer/plan/planner.c:4165
-#: optimizer/plan/planner.c:4892 optimizer/prep/prepunion.c:1044
+#: optimizer/plan/planner.c:2551 optimizer/plan/planner.c:4205
+#: optimizer/plan/planner.c:4932 optimizer/prep/prepunion.c:1044
 #, c-format
 msgid "Some of the datatypes only support hashing, while others only support sorting."
 msgstr "Några av datatyperna stöder bara hash:ning medan andra bara stöder sortering."
 
-#: optimizer/plan/planner.c:4891
+#: optimizer/plan/planner.c:4931
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "kunde inte implementera DISTINCT"
 
-#: optimizer/plan/planner.c:5739
+#: optimizer/plan/planner.c:5779
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "kunde inte implementera fönster-PARTITION BY"
 
-#: optimizer/plan/planner.c:5740
+#: optimizer/plan/planner.c:5780
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "Fönsterpartitioneringskolumner måsta ha en sorterbar datatyp."
 
-#: optimizer/plan/planner.c:5744
+#: optimizer/plan/planner.c:5784
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "kunde inte implementera fönster-ORDER BY"
 
-#: optimizer/plan/planner.c:5745
+#: optimizer/plan/planner.c:5785
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "Fönsterordningskolumner måste ha en sorterbar datatyp."
@@ -15174,7 +15174,7 @@ msgstr "relationen \"%s\" i %s-klausul hittades inte i FROM-klausul"
 #: parser/parse_agg.c:208 parser/parse_oper.c:222
 #, c-format
 msgid "could not identify an ordering operator for type %s"
-msgstr "kunde inte identifiera en jämförelseoperator för typ %s"
+msgstr "kunde inte hitta en ordningsoperator för typ %s"
 
 #: parser/parse_agg.c:210
 #, c-format
@@ -15371,107 +15371,107 @@ msgstr "Du kanske kan flytta den mängdreturnerande funktionen in i en LATERAL F
 msgid "aggregate function calls cannot contain window function calls"
 msgstr "aggregatfunktionsanrop kan inte innehålla fönsterfunktionanrop"
 
-#: parser/parse_agg.c:843
+#: parser/parse_agg.c:869
 msgid "window functions are not allowed in JOIN conditions"
 msgstr "fönsterfunktioner tillåts inte i JOIN-villkor"
 
-#: parser/parse_agg.c:850
+#: parser/parse_agg.c:876
 msgid "window functions are not allowed in functions in FROM"
 msgstr "fönsterfunktioner tillåts inte i funktioner i FROM"
 
-#: parser/parse_agg.c:856
+#: parser/parse_agg.c:882
 msgid "window functions are not allowed in policy expressions"
 msgstr "fönsterfunktioner tillåts inte i policy-uttryck"
 
-#: parser/parse_agg.c:869
+#: parser/parse_agg.c:895
 msgid "window functions are not allowed in window definitions"
 msgstr "fönsterfunktioner tillåts inte i fönsterdefinitioner"
 
-#: parser/parse_agg.c:901
+#: parser/parse_agg.c:927
 msgid "window functions are not allowed in check constraints"
 msgstr "fönsterfunktioner tillåts inte i check-villkor"
 
-#: parser/parse_agg.c:905
+#: parser/parse_agg.c:931
 msgid "window functions are not allowed in DEFAULT expressions"
 msgstr "fönsterfunktioner tillåts inte i DEFAULT-uttryck"
 
-#: parser/parse_agg.c:908
+#: parser/parse_agg.c:934
 msgid "window functions are not allowed in index expressions"
 msgstr "fönsterfunktioner tillåts inte i indexuttryck"
 
-#: parser/parse_agg.c:911
+#: parser/parse_agg.c:937
 msgid "window functions are not allowed in index predicates"
 msgstr "fönsterfunktioner tillåts inte i indexpredikat"
 
-#: parser/parse_agg.c:914
+#: parser/parse_agg.c:940
 msgid "window functions are not allowed in transform expressions"
 msgstr "fönsterfunktioner tillåts inte i transform-uttrycket"
 
-#: parser/parse_agg.c:917
+#: parser/parse_agg.c:943
 msgid "window functions are not allowed in EXECUTE parameters"
 msgstr "fönsterfunktioner tillåts inte i EXECUTE-parametrar"
 
-#: parser/parse_agg.c:920
+#: parser/parse_agg.c:946
 msgid "window functions are not allowed in trigger WHEN conditions"
 msgstr "fönsterfunktioner tillåts inte i WHEN-villkor"
 
-#: parser/parse_agg.c:923
+#: parser/parse_agg.c:949
 msgid "window functions are not allowed in partition bound"
 msgstr "fönsterfunktioner tillåts inte i partitiongräns"
 
-#: parser/parse_agg.c:926
+#: parser/parse_agg.c:952
 msgid "window functions are not allowed in partition key expressions"
 msgstr "fönsterfunktioner tillåts inte i partitionsnyckeluttryck"
 
-#: parser/parse_agg.c:929
+#: parser/parse_agg.c:955
 msgid "window functions are not allowed in CALL arguments"
 msgstr "fönsterfunktioner tillåts inte i CALL-argument"
 
-#: parser/parse_agg.c:932
+#: parser/parse_agg.c:958
 msgid "window functions are not allowed in COPY FROM WHERE conditions"
 msgstr "fönsterfunktioner tillåts inte i COPY FROM WHERE-villkor"
 
-#: parser/parse_agg.c:935
+#: parser/parse_agg.c:961
 msgid "window functions are not allowed in column generation expressions"
 msgstr "fönsterfunktioner tillåts inte i kolumngenereringsuttryck"
 
 #. translator: %s is name of a SQL construct, eg GROUP BY
-#: parser/parse_agg.c:955 parser/parse_clause.c:1825
+#: parser/parse_agg.c:981 parser/parse_clause.c:1825
 #, c-format
 msgid "window functions are not allowed in %s"
 msgstr "fönsterfunktioner tillåts inte i %s"
 
-#: parser/parse_agg.c:989 parser/parse_clause.c:2659
+#: parser/parse_agg.c:1015 parser/parse_clause.c:2659
 #, c-format
 msgid "window \"%s\" does not exist"
 msgstr "fönster \"%s\" finns inte"
 
-#: parser/parse_agg.c:1073
+#: parser/parse_agg.c:1099
 #, c-format
 msgid "too many grouping sets present (maximum 4096)"
 msgstr "för många grupperingsmängder (maximalt 4096)"
 
-#: parser/parse_agg.c:1213
+#: parser/parse_agg.c:1239
 #, c-format
 msgid "aggregate functions are not allowed in a recursive query's recursive term"
 msgstr "aggregatfunktioner tillåts inte i en rekursiv frågas rekursiva term"
 
-#: parser/parse_agg.c:1406
+#: parser/parse_agg.c:1432
 #, c-format
 msgid "column \"%s.%s\" must appear in the GROUP BY clause or be used in an aggregate function"
 msgstr "kolumn \"%s.%s\" måste stå med i GROUP BY-klausulen eller användas i en aggregatfunktion"
 
-#: parser/parse_agg.c:1409
+#: parser/parse_agg.c:1435
 #, c-format
 msgid "Direct arguments of an ordered-set aggregate must use only grouped columns."
 msgstr "Direkta argument till en sorterad-mängd-aggregat får bara använda grupperade kolumner."
 
-#: parser/parse_agg.c:1414
+#: parser/parse_agg.c:1440
 #, c-format
 msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
 msgstr "underfråga använder ogrupperad kolumn \"%s.%s\" från yttre fråga"
 
-#: parser/parse_agg.c:1578
+#: parser/parse_agg.c:1604
 #, c-format
 msgid "arguments to GROUPING must be grouping expressions of the associated query level"
 msgstr "argument till GROUPING måste vare grupputtryck på den tillhörande frågenivån"
@@ -15715,12 +15715,12 @@ msgstr "ON CONFLICT stöds inte på tabell \"%s\" som används som katalogtabell
 #: parser/parse_clause.c:3329
 #, c-format
 msgid "operator %s is not a valid ordering operator"
-msgstr "operator %s är inte en giltig sorteringsoperator"
+msgstr "operator %s är inte en giltig ordningsoperator"
 
 #: parser/parse_clause.c:3331
 #, c-format
 msgid "Ordering operators must be \"<\" or \">\" members of btree operator families."
-msgstr "Sorteringsoperationer måste vara \"<\"- eller \">\"-medlemmar i btree-operatorfamiljer."
+msgstr "Ordningspperationer måste vara \"<\"- eller \">\"-medlemmar i btree-operatorfamiljer."
 
 #: parser/parse_clause.c:3642
 #, c-format
@@ -17282,7 +17282,7 @@ msgid "column %d of the partition key has type \"%s\", but supplied value is of 
 msgstr "kolumn %d i partitioneringsnyckeln har typ \"%s\" men använt värde har typ \"%s\""
 
 #: port/pg_sema.c:209 port/pg_shmem.c:650 port/posix_sema.c:209
-#: port/sysv_sema.c:327 port/sysv_shmem.c:650
+#: port/sysv_sema.c:347 port/sysv_shmem.c:650
 #, c-format
 msgid "could not stat data directory \"%s\": %m"
 msgstr "kunde inte göra stat() på datakatalog \"%s\": %m"
@@ -17354,24 +17354,24 @@ msgstr "redan existerande delat minnesblock (nyckel %lu, ID %lu) används fortfa
 msgid "Terminate any old server processes associated with data directory \"%s\"."
 msgstr "Stäng ner gamla serverprocesser som hör ihop med datakatalogen \"%s\"."
 
-#: port/sysv_sema.c:124
+#: port/sysv_sema.c:139
 #, c-format
 msgid "could not create semaphores: %m"
 msgstr "kan inte skapa semafor: %m"
 
-#: port/sysv_sema.c:125
+#: port/sysv_sema.c:140
 #, c-format
 msgid "Failed system call was semget(%lu, %d, 0%o)."
 msgstr "Misslyckade systemanropet var semget(%lu, %d, 0%o)."
 
-#: port/sysv_sema.c:129
+#: port/sysv_sema.c:144
 #, c-format
 msgid ""
 "This error does *not* mean that you have run out of disk space.  It occurs when either the system limit for the maximum number of semaphore sets (SEMMNI), or the system wide maximum number of semaphores (SEMMNS), would be exceeded.  You need to raise the respective kernel parameter.  Alternatively, reduce PostgreSQL's consumption of semaphores by reducing its max_connections parameter.\n"
 "The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
 msgstr "Detta fel betyder *inte* att disken blivit full. Detta fel kommer när systemgränsen för maximalt antal semaforvektorer (SEMMNI) överskridits eller när systemets globala maximum för semaforer (SEMMNS) överskridits. Du behöver öka respektive kernel-parameter. Alternativt kan du minska PostgreSQL:s användning av semaforer genom att dra ner på parametern max_connections. PostgreSQL:s dokumentation innehåller mer information om hur du konfigurerar systemet för PostgreSQL."
 
-#: port/sysv_sema.c:159
+#: port/sysv_sema.c:174
 #, c-format
 msgid "You possibly need to raise your kernel's SEMVMX value to be at least %d.  Look into the PostgreSQL documentation for details."
 msgstr "Du kan behöva öka kärnans SEMVMX-värde till minst %d.  Se PostgreSQL:s dokumentation för mer information."
@@ -19135,27 +19135,27 @@ msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" komme
 msgid "logical replication apply worker for subscription \"%s\" will restart because subscription's publications were changed"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer starta om då prenumerationens publiceringar ändrats"
 
-#: replication/logical/worker.c:2077
+#: replication/logical/worker.c:2084
 #, c-format
 msgid "logical replication apply worker for subscription %u will not start because the subscription was removed during startup"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration %u kommer inte starta då prenumerationen togs bort under uppstart"
 
-#: replication/logical/worker.c:2089
+#: replication/logical/worker.c:2096
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" will not start because the subscription was disabled during startup"
 msgstr "logisk replikerings uppspelningsarbetare för prenumeration \"%s\" kommer inte starta då prenumerationen stänges av under uppstart"
 
-#: replication/logical/worker.c:2107
+#: replication/logical/worker.c:2114
 #, c-format
 msgid "logical replication table synchronization worker for subscription \"%s\", table \"%s\" has started"
 msgstr "logisk replikerings tabellsynkroniseringsarbetare för prenumeration \"%s\", tabell \"%s\" har startat"
 
-#: replication/logical/worker.c:2111
+#: replication/logical/worker.c:2118
 #, c-format
 msgid "logical replication apply worker for subscription \"%s\" has started"
 msgstr "logiska replikeringens ändringsapplicerare för prenumeration \"%s\" har startat"
 
-#: replication/logical/worker.c:2150
+#: replication/logical/worker.c:2157
 #, c-format
 msgid "subscription has no replication slot set"
 msgstr "prenumeration har ingen replikeringsslot angiven"
@@ -20162,7 +20162,7 @@ msgstr "saknar parameter \"Language\""
 msgid "cannot accept a value of type %s"
 msgstr "kan inte acceptera ett värde av type %s"
 
-#: statistics/extended_stats.c:147
+#: statistics/extended_stats.c:148
 #, c-format
 msgid "statistics object \"%s.%s\" could not be computed for relation \"%s.%s\""
 msgstr "statistikobjekt \"%s.%s\" kunde inte beräknas för relation \"%s.%s\""
@@ -23260,12 +23260,12 @@ msgstr "ickedeterministiska jämförelser (collation) stöds inte för ILIKE"
 msgid "LIKE pattern must not end with escape character"
 msgstr "LIKE-mönster för inte sluta med ett escape-tecken"
 
-#: utils/adt/like_match.c:293 utils/adt/regexp.c:703
+#: utils/adt/like_match.c:293 utils/adt/regexp.c:701
 #, c-format
 msgid "invalid escape string"
 msgstr "ogiltig escape-sträng"
 
-#: utils/adt/like_match.c:294 utils/adt/regexp.c:704
+#: utils/adt/like_match.c:294 utils/adt/regexp.c:702
 #, c-format
 msgid "Escape string must be empty or one character."
 msgstr "Escape-sträng måste vara tom eller ett tecken."
@@ -23736,7 +23736,7 @@ msgstr "För många komman."
 msgid "Junk after right parenthesis or bracket."
 msgstr "Skräp efter höger parentes eller hakparentes."
 
-#: utils/adt/regexp.c:289 utils/adt/regexp.c:1569 utils/adt/varlena.c:4507
+#: utils/adt/regexp.c:289 utils/adt/regexp.c:1612 utils/adt/varlena.c:4507
 #, c-format
 msgid "regular expression failed: %s"
 msgstr "reguljärt uttryck misslyckades: %s"
@@ -23746,23 +23746,23 @@ msgstr "reguljärt uttryck misslyckades: %s"
 msgid "invalid regular expression option: \"%c\""
 msgstr "ogiltigt flagga till reguljärt uttryck: \"%c\""
 
-#: utils/adt/regexp.c:839
+#: utils/adt/regexp.c:848
 #, c-format
 msgid "SQL regular expression may not contain more than two escape-double-quote separators"
 msgstr "Regulart uttryck  i SQL får inte innehålla mer än två dubbelcitat-escape-separatorer"
 
 #. translator: %s is a SQL function name
-#: utils/adt/regexp.c:1007 utils/adt/regexp.c:1389 utils/adt/regexp.c:1444
+#: utils/adt/regexp.c:1050 utils/adt/regexp.c:1432 utils/adt/regexp.c:1487
 #, c-format
 msgid "%s does not support the \"global\" option"
 msgstr "%s stöder inte \"global\"-flaggan"
 
-#: utils/adt/regexp.c:1009
+#: utils/adt/regexp.c:1052
 #, c-format
 msgid "Use the regexp_matches function instead."
 msgstr "Använd regexp_matches-funktionen istället."
 
-#: utils/adt/regexp.c:1191
+#: utils/adt/regexp.c:1234
 #, c-format
 msgid "too many regular expression matches"
 msgstr "för många reguljära uttryck matchar"
@@ -26489,7 +26489,7 @@ msgstr "Tid att sova mellan körningar av autovacuum."
 
 #: utils/misc/guc.c:3140
 msgid "Minimum number of tuple updates or deletes prior to vacuum."
-msgstr "Minst antal tupel-uppdateringar eller raderingar innan vacuum."
+msgstr "Minsta antal tupel-uppdateringar eller raderingar innan vacuum."
 
 #: utils/misc/guc.c:3149
 msgid "Minimum number of tuple inserts prior to vacuum, or -1 to disable insert vacuums."
@@ -27682,7 +27682,3 @@ msgstr "en serialiserbar transaktion som inte är read-only kan inte importera e
 #, c-format
 msgid "cannot import a snapshot from a different database"
 msgstr "kan inte importera en snapshot från en annan databas"
-
-#, c-format
-msgid "oversize GSSAPI packet sent by the client (%zu > %d)"
-msgstr "för stort GSSAPI-paket skickat av klienten (%zu > %d)"

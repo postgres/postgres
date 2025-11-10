@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 20:42+0000\n"
+"POT-Creation-Date: 2025-11-08 01:27+0000\n"
 "PO-Revision-Date: 2024-11-09 10:00+0100\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:243
+#: connect.c:248
 msgid "empty message text"
 msgstr "mensaje de texto vacío"
 
-#: connect.c:407 connect.c:436 connect.c:702
+#: connect.c:412 connect.c:441 connect.c:707
 msgid "<DEFAULT>"
 msgstr "<POR OMISIÓN>"
 

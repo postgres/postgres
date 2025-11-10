@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-17 17:03+0000\n"
-"PO-Revision-Date: 2025-07-19 07:09+0200\n"
+"POT-Creation-Date: 2025-09-19 20:03+0000\n"
+"PO-Revision-Date: 2025-09-20 11:00+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
 #: check.c:72
 #, c-format
@@ -158,8 +158,9 @@ msgstr "La nouvelle instance « %s » n'est pas vide : relation « %s.%s » trou
 msgid "Creating script to analyze new cluster"
 msgstr "Création d'un script pour analyser la nouvelle instance"
 
-#: check.c:497 check.c:656 check.c:920 check.c:999 file.c:338 function.c:240
-#: option.c:497 version.c:54 version.c:204 version.c:374 version.c:509
+#: check.c:497 check.c:656 check.c:920 check.c:999 check.c:1078 file.c:338
+#: function.c:240 option.c:497 version.c:54 version.c:204 version.c:374
+#: version.c:509
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
@@ -257,8 +258,8 @@ msgstr "L'instance cible contient des transactions préparées\n"
 msgid "Checking for contrib/isn with bigint-passing mismatch"
 msgstr "Vérification de contrib/isn avec une différence sur le passage des bigint"
 
-#: check.c:942 check.c:1021 check.c:1156 check.c:1215 check.c:1249 check.c:1278
-#: function.c:262 version.c:278 version.c:315 version.c:458
+#: check.c:942 check.c:1021 check.c:1098 check.c:1156 check.c:1215 check.c:1249
+#: check.c:1278 function.c:262 version.c:278 version.c:315 version.c:458
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
@@ -312,16 +313,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "Vérification des incohérences des contraintes NOT NULL"
 
-#: check.c:1078
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
-
-#: check.c:1098
-#, c-format
-msgid "fatal"
-msgstr "fatal"
-
 #: check.c:1099
 #, c-format
 msgid ""
@@ -329,7 +320,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s\n"
 "\n"
@@ -338,7 +329,7 @@ msgstr ""
 "Si les colonnes parents sont NOT NULL, alors la colonne enfant doit\n"
 "aussi être marquée NOT NULL, sinon la mise à jour échouera.\n"
 "Vous pouvez corriger ceci en exécutant\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"  ALTER TABLE nom_table ALTER nom_colonne SET NOT NULL;\n"
 "sur chaque colonne listée dans le fichier :\n"
 "    %s\n"
 "\n"
@@ -1934,3 +1925,11 @@ msgstr ""
 "when executed by psql by the database superuser will update\n"
 "these extensions.\n"
 "\n"
+
+#, c-format
+#~ msgid "could not open file \"%s\": %m"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
+
+#, c-format
+#~ msgid "fatal"
+#~ msgstr "fatal"
