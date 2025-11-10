@@ -1,0 +1,220 @@
+--
+-- Test cumulative statistics with relation rewrites
+--
+
+-- Two-phase commit.
+-- Table-level stats with VACUUM and rewrite after 2PC commit.
+CREATE TABLE test_2pc_timestamp (a int) WITH (autovacuum_enabled = false);
+VACUUM ANALYZE test_2pc_timestamp;
+SELECT last_analyze AS last_vacuum_analyze
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_timestamp' \gset
+BEGIN;
+ALTER TABLE test_2pc_timestamp ALTER COLUMN a TYPE int;
+PREPARE TRANSACTION 'test';
+COMMIT PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT last_analyze = :'last_vacuum_analyze'::timestamptz AS same_vacuum_ts
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_timestamp';
+DROP TABLE test_2pc_timestamp;
+
+-- Table-level stats with single rewrite after 2PC commit.
+CREATE TABLE test_2pc_rewrite_alone (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc_rewrite_alone VALUES (1);
+BEGIN;
+ALTER TABLE test_2pc_rewrite_alone ALTER COLUMN a TYPE bigint;
+PREPARE TRANSACTION 'test';
+COMMIT PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_rewrite_alone';
+DROP TABLE test_2pc_rewrite_alone;
+
+-- Table-level stats with rewrite and DMLs after 2PC commit.
+CREATE TABLE test_2pc (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc VALUES (1);
+BEGIN;
+INSERT INTO test_2pc VALUES (1);
+INSERT INTO test_2pc VALUES (2);
+INSERT INTO test_2pc VALUES (3);
+ALTER TABLE test_2pc ALTER COLUMN a TYPE bigint;
+PREPARE TRANSACTION 'test';
+COMMIT PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc';
+DROP TABLE test_2pc;
+
+-- Table-level stats with multiple rewrites after 2PC commit.
+CREATE TABLE test_2pc_multi (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc_multi VALUES (1);
+BEGIN;
+INSERT INTO test_2pc_multi VALUES (1);
+INSERT INTO test_2pc_multi VALUES (2);
+ALTER TABLE test_2pc_multi ALTER COLUMN a TYPE bigint;
+INSERT INTO test_2pc_multi VALUES (3);
+INSERT INTO test_2pc_multi VALUES (4);
+ALTER TABLE test_2pc_multi ALTER COLUMN a TYPE int;
+INSERT INTO test_2pc_multi VALUES (5);
+PREPARE TRANSACTION 'test';
+COMMIT PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_multi';
+DROP TABLE test_2pc_multi;
+
+-- Table-level stats with single rewrite after 2PC abort.
+CREATE TABLE test_2pc_rewrite_alone_abort (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc_rewrite_alone_abort VALUES (1);
+BEGIN;
+ALTER TABLE test_2pc_rewrite_alone_abort ALTER COLUMN a TYPE bigint;
+PREPARE TRANSACTION 'test';
+ROLLBACK PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_rewrite_alone_abort';
+DROP TABLE test_2pc_rewrite_alone_abort;
+
+-- Table-level stats with rewrite and DMLs after 2PC abort.
+CREATE TABLE test_2pc_abort (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc_abort VALUES (1);
+BEGIN;
+INSERT INTO test_2pc_abort VALUES (1);
+INSERT INTO test_2pc_abort VALUES (2);
+ALTER TABLE test_2pc_abort ALTER COLUMN a TYPE bigint;
+INSERT INTO test_2pc_abort VALUES (3);
+PREPARE TRANSACTION 'test';
+ROLLBACK PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_abort';
+DROP TABLE test_2pc_abort;
+
+-- Table-level stats with rewrites and subtransactions after 2PC commit.
+CREATE TABLE test_2pc_savepoint (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_2pc_savepoint VALUES (1);
+BEGIN;
+SAVEPOINT a;
+INSERT INTO test_2pc_savepoint VALUES (1);
+INSERT INTO test_2pc_savepoint VALUES (2);
+ALTER TABLE test_2pc_savepoint ALTER COLUMN a TYPE bigint;
+SAVEPOINT b;
+INSERT INTO test_2pc_savepoint VALUES (3);
+ALTER TABLE test_2pc_savepoint ALTER COLUMN a TYPE int;
+SAVEPOINT c;
+INSERT INTO test_2pc_savepoint VALUES (4);
+INSERT INTO test_2pc_savepoint VALUES (5);
+ROLLBACK TO SAVEPOINT b;
+PREPARE TRANSACTION 'test';
+COMMIT PREPARED 'test';
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_2pc_savepoint';
+DROP TABLE test_2pc_savepoint;
+
+-- Table-level stats with single rewrite and VACUUM
+CREATE TABLE test_timestamp (a int) WITH (autovacuum_enabled = false);
+VACUUM ANALYZE test_timestamp;
+SELECT last_analyze AS last_vacuum_analyze
+  FROM pg_stat_all_tables WHERE relname = 'test_timestamp' \gset
+ALTER TABLE test_timestamp ALTER COLUMN a TYPE bigint;
+SELECT pg_stat_force_next_flush();
+SELECT last_analyze = :'last_vacuum_analyze'::timestamptz AS same_vacuum_ts
+  FROM pg_stat_all_tables WHERE relname = 'test_timestamp';
+DROP TABLE test_timestamp;
+
+-- Table-level stats with single rewrite.
+CREATE TABLE test_alone (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_alone VALUES (1);
+BEGIN;
+ALTER TABLE test_alone ALTER COLUMN a TYPE bigint;
+COMMIT;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_alone';
+DROP TABLE test_alone;
+
+-- Table-level stats with rewrite and DMLs.
+CREATE TABLE test (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test VALUES (1);
+BEGIN;
+INSERT INTO test VALUES (1);
+INSERT INTO test VALUES (2);
+INSERT INTO test VALUES (3);
+ALTER TABLE test ALTER COLUMN a TYPE bigint;
+COMMIT;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test';
+DROP TABLE test;
+
+-- Table-level stats with multiple rewrites and DMLs.
+CREATE TABLE test_multi (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_multi VALUES (1);
+BEGIN;
+INSERT INTO test_multi VALUES (1);
+INSERT INTO test_multi VALUES (2);
+ALTER TABLE test_multi ALTER COLUMN a TYPE bigint;
+INSERT INTO test_multi VALUES (3);
+INSERT INTO test_multi VALUES (4);
+ALTER TABLE test_multi ALTER COLUMN a TYPE int;
+INSERT INTO test_multi VALUES (5);
+COMMIT;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_multi';
+DROP TABLE test_multi;
+
+-- Table-level stats with rewrite and rollback.
+CREATE TABLE test_rewrite_alone_abort (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_rewrite_alone_abort VALUES (1);
+BEGIN;
+ALTER TABLE test_rewrite_alone_abort ALTER COLUMN a TYPE bigint;
+ROLLBACK;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_rewrite_alone_abort';
+DROP TABLE test_rewrite_alone_abort;
+
+-- Table-level stats with rewrite, DMLs and rollback.
+CREATE TABLE test_abort (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_abort VALUES (1);
+BEGIN;
+INSERT INTO test_abort VALUES (1);
+INSERT INTO test_abort VALUES (2);
+ALTER TABLE test_abort ALTER COLUMN a TYPE bigint;
+INSERT INTO test_abort VALUES (3);
+ROLLBACK;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_abort';
+DROP TABLE test_abort;
+
+-- Table-level stats with rewrites and subtransactions.
+CREATE TABLE test_savepoint (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_savepoint VALUES (1);
+BEGIN;
+SAVEPOINT a;
+INSERT INTO test_savepoint VALUES (1);
+INSERT INTO test_savepoint VALUES (2);
+ALTER TABLE test_savepoint ALTER COLUMN a TYPE bigint;
+SAVEPOINT b;
+INSERT INTO test_savepoint VALUES (3);
+ALTER TABLE test_savepoint ALTER COLUMN a TYPE int;
+SAVEPOINT c;
+INSERT INTO test_savepoint VALUES (4);
+INSERT INTO test_savepoint VALUES (5);
+ROLLBACK TO SAVEPOINT b;
+COMMIT;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_savepoint';
+DROP TABLE test_savepoint;
+
+-- Table-level stats with tablespace rewrite.
+CREATE TABLE test_tbs (a int) WITH (autovacuum_enabled = false);
+INSERT INTO test_tbs VALUES (1);
+ALTER TABLE test_tbs SET TABLESPACE pg_default;
+SELECT pg_stat_force_next_flush();
+SELECT n_tup_ins, n_live_tup, n_dead_tup
+  FROM pg_stat_all_tables WHERE relname = 'test_tbs';
+DROP TABLE test_tbs;
