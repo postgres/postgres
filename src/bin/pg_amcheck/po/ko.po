@@ -120,7 +120,7 @@ msgstr "너무 많은 명령행 인자를 지정했습니다. (처음 \"%s\")"
 #: pg_amcheck.c:479
 #, c-format
 msgid "cannot specify a database name with --all"
-msgstr "데이터베이스 이름을 —all 와 같이 지정할 수 없습니다"
+msgstr "데이터베이스 이름을 --all 와 같이 지정할 수 없습니다"
 
 #: pg_amcheck.c:485
 #, c-format
@@ -265,65 +265,65 @@ msgstr ""
 #: pg_amcheck.c:1142
 #, c-format
 msgid "  -a, --all                       check all databases\n"
-msgstr "  -a, —all                       모든 데이터베이스를 검사\n"
+msgstr "  -a, --all                       모든 데이터베이스를 검사\n"
 
 #: pg_amcheck.c:1143
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
-msgstr "  -d, —database=PATTERN          일치하는 모든 데이터베이스를 검사\n"
+msgstr "  -d, --database=PATTERN          일치하는 모든 데이터베이스를 검사\n"
 
 #: pg_amcheck.c:1144
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr ""
-"  -D, —exclude-database=PATTERN  일치하는 데이터베이스를 제외 하고 검사\n"
+"  -D, --exclude-database=PATTERN  일치하는 데이터베이스를 제외 하고 검사\n"
 
 #: pg_amcheck.c:1145
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
-msgstr "  -i, —index=PATTERN             일치하는 인덱스를 검사\n"
+msgstr "  -i, --index=PATTERN             일치하는 인덱스를 검사\n"
 
 #: pg_amcheck.c:1146
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
-msgstr "  -I, —exclude-index=PATTERN     일치하는 인덱스를 제외하고 검사\n"
+msgstr "  -I, --exclude-index=PATTERN     일치하는 인덱스를 제외하고 검사\n"
 
 #: pg_amcheck.c:1147
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
-msgstr "  -r, —relation=PATTERN          일치하는 릴레이션을 검사\n"
+msgstr "  -r, --relation=PATTERN          일치하는 릴레이션을 검사\n"
 
 #: pg_amcheck.c:1148
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
-msgstr "  -R, —exclude-relation=PATTERN  일치하는 릴레이션을 제외하고 검사\n"
+msgstr "  -R, --exclude-relation=PATTERN  일치하는 릴레이션을 제외하고 검사\n"
 
 #: pg_amcheck.c:1149
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
-msgstr "  -s, —schema=PATTERN            일치하는 스키마를 검사\n"
+msgstr "  -s, --schema=PATTERN            일치하는 스키마를 검사\n"
 
 #: pg_amcheck.c:1150
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
-msgstr "  -S, —exclude-schema=PATTERN    일치하는 스키마를 제외하고 검사\n"
+msgstr "  -S, --exclude-schema=PATTERN    일치하는 스키마를 제외하고 검사\n"
 
 #: pg_amcheck.c:1151
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
-msgstr "  -t, —table=PATTERN             일치하는 테이블을 검사\n"
+msgstr "  -t, --table=PATTERN             일치하는 테이블을 검사\n"
 
 #: pg_amcheck.c:1152
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
-msgstr "  -T, —exclude-table=PATTERN     일치하는 테이블을 제외하고 검사\n"
+msgstr "  -T, --exclude-table=PATTERN     일치하는 테이블을 제외하고 검사\n"
 
 #: pg_amcheck.c:1153
 #, c-format
 msgid ""
 "      --no-dependent-indexes      do NOT expand list of relations to include "
 "indexes\n"
-msgstr "      —no-dependent-indexes      릴레이션에 인덱스를 포함하지 않음 \n"
+msgstr "      --no-dependent-indexes      릴레이션에 인덱스를 포함하지 않음 \n"
 
 #: pg_amcheck.c:1154
 #, c-format
@@ -331,14 +331,14 @@ msgid ""
 "      --no-dependent-toast        do NOT expand list of relations to include "
 "TOAST tables\n"
 msgstr ""
-"      —no-dependent-toast        릴레이션에 TOAST 테이블을 포함하지 않음\n"
+"      --no-dependent-toast        릴레이션에 TOAST 테이블을 포함하지 않음\n"
 
 #: pg_amcheck.c:1155
 #, c-format
 msgid ""
 "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr ""
-"      —no-strict-names           개체가 패턴과 일치하지 않아도 허용함\n"
+"      --no-strict-names           개체가 패턴과 일치하지 않아도 허용함\n"
 
 #: pg_amcheck.c:1156
 #, c-format
@@ -353,14 +353,14 @@ msgstr ""
 #, c-format
 msgid ""
 "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
-msgstr "      —exclude-toast-pointers    TOAST 포인터를 확인하지 않음\n"
+msgstr "      --exclude-toast-pointers    TOAST 포인터를 확인하지 않음\n"
 
 #: pg_amcheck.c:1158
 #, c-format
 msgid ""
 "      --on-error-stop             stop checking at end of first corrupt "
 "page\n"
-msgstr "      —on-error-stop             손상된 페이지 끝에서 검사를 멈춤\n"
+msgstr "      --on-error-stop             손상된 페이지 끝에서 검사를 멈춤\n"
 
 #: pg_amcheck.c:1159
 #, c-format
@@ -368,7 +368,7 @@ msgid ""
 "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-"
 "visible\" blocks\n"
 msgstr ""
-"      —skip=OPTION               “all-frozen” 또는 “all-visible” 블록을 검사"
+"      --skip=OPTION               “all-frozen” 또는 “all-visible” 블록을 검사"
 "하지 않음\n"
 
 #: pg_amcheck.c:1160
@@ -377,7 +377,7 @@ msgid ""
 "      --startblock=BLOCK          begin checking table(s) at the given block "
 "number\n"
 msgstr ""
-"      —startblock=BLOCK          지정된 블록 번호부터 테이블 검사를 시작\n"
+"      --startblock=BLOCK          지정된 블록 번호부터 테이블 검사를 시작\n"
 
 #: pg_amcheck.c:1161
 #, c-format
@@ -385,7 +385,7 @@ msgid ""
 "      --endblock=BLOCK            check table(s) only up to the given block "
 "number\n"
 msgstr ""
-"      —endblock=BLOCK            지정된 블록 번호까지 테이블 검사 마침 \n"
+"      --endblock=BLOCK            지정된 블록 번호까지 테이블 검사 마침 \n"
 
 #: pg_amcheck.c:1162
 #, c-format
@@ -402,19 +402,19 @@ msgid ""
 "      --heapallindexed            check that all heap tuples are found "
 "within indexes\n"
 msgstr ""
-"      —heapallindexed            모든 heap 튜플이 인덱스 내에 있는지 검사\n"
+"      --heapallindexed            모든 heap 튜플이 인덱스 내에 있는지 검사\n"
 
 #: pg_amcheck.c:1164
 #, c-format
 msgid ""
 "      --parent-check              check index parent/child relationships\n"
-msgstr "      —parent-check              인덱스의 부모/자식 관계를 검사\n"
+msgstr "      --parent-check              인덱스의 부모/자식 관계를 검사\n"
 
 #: pg_amcheck.c:1165
 #, c-format
 msgid ""
 "      --rootdescend               search from root page to refind tuples\n"
-msgstr "      —rootdescend               루트 페이지 부터 튜플을 다시 찾음 \n"
+msgstr "      --rootdescend               루트 페이지 부터 튜플을 다시 찾음 \n"
 
 #: pg_amcheck.c:1166
 #, c-format
@@ -430,33 +430,33 @@ msgstr ""
 msgid ""
 "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr ""
-"  -h, —host=HOSTNAME             데이터베이스 서버 호스트 또는 소켓의 디렉터"
+"  -h, --host=HOSTNAME             데이터베이스 서버 호스트 또는 소켓의 디렉터"
 "리\n"
 
 #: pg_amcheck.c:1168
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
-msgstr "  -p, —port=PORT                 데이터베이스 서버 포트\n"
+msgstr "  -p, --port=PORT                 데이터베이스 서버 포트\n"
 
 #: pg_amcheck.c:1169
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
-msgstr "  -U, —username=USERNAME         연결할 유저 이름\n"
+msgstr "  -U, --username=USERNAME         연결할 유저 이름\n"
 
 #: pg_amcheck.c:1170
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
-msgstr "  -w, —no-password               암호 입력 프롬프트가 나타나지 않음\n"
+msgstr "  -w, --no-password               암호 입력 프롬프트가 나타나지 않음\n"
 
 #: pg_amcheck.c:1171
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
-msgstr "  -W, —password                  암호 입력 프롬프트가 나타남\n"
+msgstr "  -W, --password                  암호 입력 프롬프트가 나타남\n"
 
 #: pg_amcheck.c:1172
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
-msgstr "      —maintenance-db=DBNAME     대체 연결 데이터베이스\n"
+msgstr "      --maintenance-db=DBNAME     대체 연결 데이터베이스\n"
 
 #: pg_amcheck.c:1173
 #, c-format
@@ -479,12 +479,12 @@ msgstr "  -e, --echo                      서버로 보내는 명령들을 보�
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
 "the server\n"
-msgstr "  -j, —jobs=NUM                  서버에 동시 연결할 수를 지정\n"
+msgstr "  -j, --jobs=NUM                  서버에 동시 연결할 수를 지정\n"
 
 #: pg_amcheck.c:1176
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
-msgstr " -P, —progress                  진행 사항 정보를 보여줌\n"
+msgstr "  -P, --progress                  진행 사항 정보를 보여줌\n"
 
 #: pg_amcheck.c:1177
 #, c-format
@@ -500,7 +500,7 @@ msgstr "  -V, --version                   버전 정보를 보여주고 마침\n
 #: pg_amcheck.c:1179
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
-msgstr "      —install-missing           누락된 익스텐션을 설치\n"
+msgstr "      --install-missing           누락된 익스텐션을 설치\n"
 
 #: pg_amcheck.c:1180
 #, c-format

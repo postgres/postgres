@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 20:13+0000\n"
+"POT-Creation-Date: 2025-11-08 01:00+0000\n"
 "PO-Revision-Date: 2025-02-15 12:01+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -75,12 +75,13 @@ msgstr "no se pudo generar nonce\n"
 #: fe-connect.c:4827 fe-connect.c:5088 fe-connect.c:5207 fe-connect.c:5459
 #: fe-connect.c:5540 fe-connect.c:5639 fe-connect.c:5895 fe-connect.c:5924
 #: fe-connect.c:5996 fe-connect.c:6020 fe-connect.c:6038 fe-connect.c:6139
-#: fe-connect.c:6148 fe-connect.c:6506 fe-connect.c:6656 fe-connect.c:6922
+#: fe-connect.c:6148 fe-connect.c:6506 fe-connect.c:6656 fe-connect.c:6924
 #: fe-exec.c:710 fe-exec.c:978 fe-exec.c:1326 fe-exec.c:3165 fe-exec.c:3357
-#: fe-exec.c:4197 fe-exec.c:4364 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-exec.c:4199 fe-exec.c:4366 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:968 fe-protocol3.c:983 fe-protocol3.c:1016
 #: fe-protocol3.c:1724 fe-protocol3.c:2127 fe-secure-common.c:112
-#: fe-secure-gssapi.c:500 fe-secure-openssl.c:455 fe-secure-openssl.c:1252
+#: fe-secure-gssapi.c:512 fe-secure-gssapi.c:687 fe-secure-openssl.c:455
+#: fe-secure-openssl.c:1252
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
 
@@ -628,21 +629,21 @@ msgstr "elemento escapado con %% no válido: «%s»\n"
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "valor no permitido %%00 en valor escapado con %%: «%s»\n"
 
-#: fe-connect.c:6914
+#: fe-connect.c:6916
 msgid "connection pointer is NULL\n"
 msgstr "el puntero de conexión es NULL\n"
 
-#: fe-connect.c:7202
+#: fe-connect.c:7204
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ADVERTENCIA: El archivo de claves «%s» no es un archivo plano\n"
 
-#: fe-connect.c:7211
+#: fe-connect.c:7213
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "ADVERTENCIA: El archivo de claves «%s» tiene permiso de lectura para el grupo u otros; los permisos deberían ser u=rw (0600) o menos\n"
 
-#: fe-connect.c:7319
+#: fe-connect.c:7321
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "contraseña obtenida desde el archivo «%s»\n"
@@ -779,19 +780,11 @@ msgstr "el número de parámetro %d está fuera del rango 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:4043
-msgid "incomplete multibyte character"
-msgstr "carácter multibyte incompleto"
-
-#: fe-exec.c:4046
-msgid "invalid multibyte character"
-msgstr "carácter multibyte no válido"
-
-#: fe-exec.c:4157
+#: fe-exec.c:4044 fe-exec.c:4159
 msgid "incomplete multibyte character\n"
 msgstr "carácter multibyte incompleto\n"
 
-#: fe-exec.c:4177
+#: fe-exec.c:4047 fe-exec.c:4179
 msgid "invalid multibyte character\n"
 msgstr "carácter multibyte no válido\n"
 
@@ -847,11 +840,11 @@ msgstr "el entero de tamaño %lu no está soportado por pqGetInt"
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "el entero de tamaño %lu no está soportado por pqPutInt"
 
-#: fe-misc.c:576 fe-misc.c:822
+#: fe-misc.c:602 fe-misc.c:848
 msgid "connection not open\n"
 msgstr "la conexión no está abierta\n"
 
-#: fe-misc.c:755 fe-secure-openssl.c:213 fe-secure-openssl.c:326
+#: fe-misc.c:781 fe-secure-openssl.c:213 fe-secure-openssl.c:326
 #: fe-secure.c:262 fe-secure.c:430
 #, c-format
 msgid ""
@@ -863,15 +856,15 @@ msgstr ""
 "\tProbablemente se debe a que el servidor terminó de manera anormal\n"
 "\tantes o durante el procesamiento de la petición.\n"
 
-#: fe-misc.c:1008
+#: fe-misc.c:1034
 msgid "timeout expired\n"
 msgstr "tiempo de espera agotado\n"
 
-#: fe-misc.c:1053
+#: fe-misc.c:1079
 msgid "invalid socket\n"
 msgstr "socket no válido\n"
 
-#: fe-misc.c:1076
+#: fe-misc.c:1102
 #, c-format
 msgid "%s() failed: %s\n"
 msgstr "%s() falló: %s\n"
@@ -1034,43 +1027,39 @@ msgstr "el certificado de servidor para «%s» no coincide con el nombre de serv
 msgid "could not get server's host name from server certificate\n"
 msgstr "no se pudo obtener el nombre de servidor desde el certificado del servidor\n"
 
-#: fe-secure-gssapi.c:194
+#: fe-secure-gssapi.c:201
 msgid "GSSAPI wrap error"
 msgstr "error de «wrap» de GSSAPI"
 
-#: fe-secure-gssapi.c:202
+#: fe-secure-gssapi.c:209
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "mensaje GSSAPI de saluda no proveería confidencialidad\n"
 
-#: fe-secure-gssapi.c:210
+#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:715
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "el cliente intentó enviar un paquete GSSAPI demasiado grande (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:350 fe-secure-gssapi.c:594
+#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:607
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "paquete GSSAPI demasiado grande enviado por el servidor (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:389
+#: fe-secure-gssapi.c:396
 msgid "GSSAPI unwrap error"
 msgstr "error de «unwrap» de GSSAPI"
 
-#: fe-secure-gssapi.c:399
+#: fe-secure-gssapi.c:406
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "mensaje GSSAPI entrante no usó confidencialidad\n"
 
-#: fe-secure-gssapi.c:640
+#: fe-secure-gssapi.c:653
 msgid "could not initiate GSSAPI security context"
 msgstr "no se pudo iniciar un contexto de seguridad GSSAPI"
 
-#: fe-secure-gssapi.c:668
+#: fe-secure-gssapi.c:703
 msgid "GSSAPI size check error"
 msgstr "error de verificación de tamaño GSSAPI"
-
-#: fe-secure-gssapi.c:679
-msgid "GSSAPI context establishment error"
-msgstr "error de establecimiento de contexto de GSSAPI"
 
 #: fe-secure-openssl.c:218 fe-secure-openssl.c:331 fe-secure-openssl.c:1492
 #, c-format

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-02 11:37+0300\n"
+"POT-Creation-Date: 2025-11-09 06:29+0200\n"
 "PO-Revision-Date: 2025-05-03 16:34+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -81,7 +81,7 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-exec.c:4199 fe-exec.c:4366 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:968 fe-protocol3.c:983 fe-protocol3.c:1016
 #: fe-protocol3.c:1724 fe-protocol3.c:2127 fe-secure-common.c:112
-#: fe-secure-gssapi.c:510 fe-secure-gssapi.c:684 fe-secure-openssl.c:455
+#: fe-secure-gssapi.c:512 fe-secure-gssapi.c:687 fe-secure-openssl.c:455
 #: fe-secure-openssl.c:1252
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -1098,12 +1098,12 @@ msgstr "ошибка обёртывания сообщения в GSSAPI"
 msgid "outgoing GSSAPI message would not use confidentiality\n"
 msgstr "исходящее сообщение GSSAPI не будет защищено\n"
 
-#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:712
+#: fe-secure-gssapi.c:217 fe-secure-gssapi.c:715
 #, c-format
 msgid "client tried to send oversize GSSAPI packet (%zu > %zu)\n"
 msgstr "клиент попытался передать чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
 
-#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:604
+#: fe-secure-gssapi.c:357 fe-secure-gssapi.c:607
 #, c-format
 msgid "oversize GSSAPI packet sent by the server (%zu > %zu)\n"
 msgstr "сервер передал чрезмерно большой пакет GSSAPI (%zu > %zu)\n"
@@ -1116,11 +1116,11 @@ msgstr "ошибка развёртывания сообщения в GSSAPI"
 msgid "incoming GSSAPI message did not use confidentiality\n"
 msgstr "входящее сообщение GSSAPI не защищено\n"
 
-#: fe-secure-gssapi.c:650
+#: fe-secure-gssapi.c:653
 msgid "could not initiate GSSAPI security context"
 msgstr "не удалось инициализировать контекст безопасности GSSAPI"
 
-#: fe-secure-gssapi.c:700
+#: fe-secure-gssapi.c:703
 msgid "GSSAPI size check error"
 msgstr "ошибка проверки размера в GSSAPI"
 

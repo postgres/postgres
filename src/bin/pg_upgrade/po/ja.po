@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-07 17:03+0900\n"
-"PO-Revision-Date: 2025-07-08 10:53+0900\n"
+"POT-Creation-Date: 2025-08-19 09:30+0900\n"
+"PO-Revision-Date: 2025-08-19 10:57+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -192,8 +192,8 @@ msgid "Creating script to delete old cluster"
 msgstr "旧クラスタを削除するスクリプトを作成しています"
 
 #: check.c:601 check.c:776 check.c:896 check.c:995 check.c:1126 check.c:1205
-#: check.c:1587 file.c:338 function.c:165 option.c:465 version.c:116
-#: version.c:292 version.c:429
+#: check.c:1285 check.c:1587 file.c:338 function.c:165 option.c:465
+#: version.c:116 version.c:292 version.c:429
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
@@ -233,9 +233,9 @@ msgstr "データベース接続の設定を確認しています"
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 には接続を許可してはなりません。すなわち、pg_database.datallowconn は false である必要があります。\n"
 
-#: check.c:793 check.c:918 check.c:1020 check.c:1146 check.c:1227 check.c:1365
-#: check.c:1426 check.c:1460 check.c:1491 check.c:1610 function.c:187
-#: version.c:192 version.c:232 version.c:378
+#: check.c:793 check.c:918 check.c:1020 check.c:1146 check.c:1227 check.c:1305
+#: check.c:1365 check.c:1426 check.c:1460 check.c:1491 check.c:1610
+#: function.c:187 version.c:192 version.c:232 version.c:378
 #, c-format
 msgid "fatal\n"
 msgstr "致命的\n"
@@ -377,16 +377,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "非NULL制約の整合性を確認しています"
 
-#: check.c:1285
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "ファイル\"%s\"をオープンできませんでした: %m"
-
-#: check.c:1305
-#, c-format
-msgid "fatal"
-msgstr "致命的"
-
 #: check.c:1306
 #, c-format
 msgid ""
@@ -394,7 +384,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s\n"
 "\n"
@@ -405,7 +395,7 @@ msgstr ""
 "この状態は、次のコマンドを\n"
 "  ALTER TABLE テーブル名 ALTER 列名 SET NOT NULL;\n"
 "以下のファイルにリストされている各列に対して実行することで解消できます:\n"
-"%s\n"
+"  %s\n"
 "\n"
 
 #: check.c:1335

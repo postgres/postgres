@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 20:12+0000\n"
+"POT-Creation-Date: 2025-11-08 00:58+0000\n"
 "PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -68,7 +68,7 @@ msgstr "el resultado de la consulta tiene demasiados registros y no entran en un
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
 
-#: plpy_elog.c:122 plpy_elog.c:123 plpy_plpymodule.c:530
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:530
 #, c-format
 msgid "%s"
 msgstr "%s"

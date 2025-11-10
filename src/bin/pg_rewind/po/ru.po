@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2015-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2025-08-02 11:37+0300\n"
-"PO-Revision-Date: 2024-09-07 13:07+0300\n"
+"PO-Revision-Date: 2025-09-13 18:56+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -811,7 +811,7 @@ msgstr "неверная контрольная сумма управляюще�
 #: pg_rewind.c:995
 #, c-format
 msgid "unexpected control file size %d, expected %d"
-msgstr "неверный размер управляющего файла (%d), ожидалось: %d"
+msgstr "неверный размер управляющего файла (%d), ожидался: %d"
 
 #: pg_rewind.c:1004
 #, c-format

@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-17 18:07+0000\n"
-"PO-Revision-Date: 2025-07-19 07:10+0200\n"
+"POT-Creation-Date: 2025-09-19 19:37+0000\n"
+"PO-Revision-Date: 2025-09-20 11:00+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.6\n"
+"X-Generator: Poedit 3.7\n"
 
 #: check.c:76
 #, c-format
@@ -195,8 +195,8 @@ msgid "Creating script to delete old cluster"
 msgstr "Création du script pour supprimer l'ancienne instance"
 
 #: check.c:601 check.c:776 check.c:896 check.c:995 check.c:1126 check.c:1205
-#: check.c:1587 file.c:338 function.c:165 option.c:465 version.c:116
-#: version.c:292 version.c:429
+#: check.c:1285 check.c:1587 file.c:338 function.c:165 option.c:465
+#: version.c:116 version.c:292 version.c:429
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
@@ -236,9 +236,9 @@ msgstr "Vérification des paramètres de connexion de la base de données"
 msgid "template0 must not allow connections, i.e. its pg_database.datallowconn must be false\n"
 msgstr "template0 ne doit pas autoriser les connexions, ie pg_database.datallowconn doit valoir false\n"
 
-#: check.c:793 check.c:918 check.c:1020 check.c:1146 check.c:1227 check.c:1365
-#: check.c:1426 check.c:1460 check.c:1491 check.c:1610 function.c:187
-#: version.c:192 version.c:232 version.c:378
+#: check.c:793 check.c:918 check.c:1020 check.c:1146 check.c:1227 check.c:1305
+#: check.c:1365 check.c:1426 check.c:1460 check.c:1491 check.c:1610
+#: function.c:187 version.c:192 version.c:232 version.c:378
 #, c-format
 msgid "fatal\n"
 msgstr "fatal\n"
@@ -375,16 +375,6 @@ msgstr ""
 msgid "Checking for not-null constraint inconsistencies"
 msgstr "Vérification des incohérences des contraintes NOT NULL"
 
-#: check.c:1285
-#, c-format
-msgid "could not open file \"%s\": %m"
-msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
-
-#: check.c:1305
-#, c-format
-msgid "fatal"
-msgstr "fatal"
-
 #: check.c:1306
 #, c-format
 msgid ""
@@ -392,7 +382,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s\n"
 "\n"
@@ -401,7 +391,7 @@ msgstr ""
 "Si les colonnes parents sont NOT NULL, alors la colonne enfant doit\n"
 "aussi être marquée NOT NULL, sinon la mise à jour échouera.\n"
 "Vous pouvez corriger ceci en exécutant\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"  ALTER TABLE nom_table ALTER nom_colonne SET NOT NULL;\n"
 "sur chaque colonne listée dans le fichier :\n"
 "    %s\n"
 "\n"
@@ -1944,3 +1934,11 @@ msgstr ""
 "when executed by psql by the database superuser will update\n"
 "these extensions.\n"
 "\n"
+
+#, c-format
+#~ msgid "could not open file \"%s\": %m"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » : %m"
+
+#, c-format
+#~ msgid "fatal"
+#~ msgstr "fatal"
