@@ -369,11 +369,11 @@
     regular expression pattern.  The function can be written according
     to standard SQL syntax:
 <synopsis>
-substring(<replaceable>string</replaceable> similar <replaceable>pattern</replaceable> escape <replaceable>escape-character</replaceable>)
+substring(<replaceable>string</replaceable> SIMILAR <replaceable>pattern</replaceable> ESCAPE <replaceable>escape-character</replaceable>)
 </synopsis>
     or using the now obsolete SQL:1999 syntax:
 <synopsis>
-substring(<replaceable>string</replaceable> from <replaceable>pattern</replaceable> for <replaceable>escape-character</replaceable>)
+substring(<replaceable>string</replaceable> FROM <replaceable>pattern</replaceable> FOR <replaceable>escape-character</replaceable>)
 </synopsis>
     or as a plain three-argument function:
 <synopsis>
