@@ -60,7 +60,7 @@ compare_int16(const void *a, const void *b)
  *		CREATE STATISTICS
  */
 ObjectAddress
-CreateStatistics(CreateStatsStmt *stmt)
+CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 {
 	int16		attnums[STATS_MAX_DIMENSIONS];
 	int			nattnums = 0;
@@ -169,6 +169,21 @@ CreateStatistics(CreateStatsStmt *stmt)
 											  namespaceId);
 	}
 	namestrcpy(&stxname, namestr);
+
+	/*
+	 * Check we have creation rights in target namespace.  Skip check if
+	 * caller doesn't want it.
+	 */
+	if (check_rights)
+	{
+		AclResult	aclresult;
+
+		aclresult = object_aclcheck(NamespaceRelationId, namespaceId,
+									GetUserId(), ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, OBJECT_SCHEMA,
+						   get_namespace_name(namespaceId));
+	}
 
 	/*
 	 * Deal with the possibility that the statistics object already exists.
