@@ -33,6 +33,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -89,6 +90,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	bool		requested_type = false;
 	int			i;
 	ListCell   *cell;
+	AclResult	aclresult;
 
 	Assert(IsA(stmt, CreateStatsStmt));
 
@@ -166,6 +168,12 @@ CreateStatistics(CreateStatsStmt *stmt)
 											  namespaceId);
 	}
 	namestrcpy(&stxname, namestr);
+
+	/* Check we have creation rights in target namespace. */
+	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, OBJECT_SCHEMA,
+					   get_namespace_name(namespaceId));
 
 	/*
 	 * Deal with the possibility that the statistics object already exists.

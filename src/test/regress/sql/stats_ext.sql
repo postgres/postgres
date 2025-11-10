@@ -963,6 +963,18 @@ SELECT * FROM tststats.priv_test_parent_tbl t
  WHERE a <<< 0 AND (b <<< 0 OR t.* <<< (1, 1) IS NOT NULL); -- Should not leak
 DELETE FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
 
+-- CREATE STATISTICS checks for CREATE on the schema
+RESET SESSION AUTHORIZATION;
+CREATE SCHEMA sts_sch1 CREATE TABLE sts_sch1.tbl (a INT, b INT);
+GRANT USAGE ON SCHEMA sts_sch1 TO regress_stats_user1;
+ALTER TABLE sts_sch1.tbl OWNER TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS sts_sch1.fail ON a, b FROM sts_sch1.tbl;
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS sts_sch1.pass ON a, b FROM sts_sch1.tbl;
+
 -- Tidy up
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
@@ -970,4 +982,5 @@ DROP OPERATOR <<< (record, record);
 DROP FUNCTION op_leak(record, record);
 RESET SESSION AUTHORIZATION;
 DROP SCHEMA tststats CASCADE;
+DROP SCHEMA sts_sch1 CASCADE;
 DROP USER regress_stats_user1;

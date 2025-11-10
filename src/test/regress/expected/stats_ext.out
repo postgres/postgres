@@ -1745,6 +1745,18 @@ SELECT * FROM tststats.priv_test_parent_tbl t
 (0 rows)
 
 DELETE FROM tststats.priv_test_parent_tbl WHERE a <<< 0 AND b <<< 0; -- Should not leak
+-- CREATE STATISTICS checks for CREATE on the schema
+RESET SESSION AUTHORIZATION;
+CREATE SCHEMA sts_sch1 CREATE TABLE sts_sch1.tbl (a INT, b INT);
+GRANT USAGE ON SCHEMA sts_sch1 TO regress_stats_user1;
+ALTER TABLE sts_sch1.tbl OWNER TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS sts_sch1.fail ON a, b FROM sts_sch1.tbl;
+ERROR:  permission denied for schema sts_sch1
+RESET SESSION AUTHORIZATION;
+GRANT CREATE ON SCHEMA sts_sch1 TO regress_stats_user1;
+SET SESSION AUTHORIZATION regress_stats_user1;
+CREATE STATISTICS sts_sch1.pass ON a, b FROM sts_sch1.tbl;
 -- Tidy up
 DROP OPERATOR <<< (int, int);
 DROP FUNCTION op_leak(int, int);
@@ -1756,4 +1768,6 @@ NOTICE:  drop cascades to 3 other objects
 DETAIL:  drop cascades to table tststats.priv_test_parent_tbl
 drop cascades to table tststats.priv_test_tbl
 drop cascades to view tststats.priv_test_view
+DROP SCHEMA sts_sch1 CASCADE;
+NOTICE:  drop cascades to table sts_sch1.tbl
 DROP USER regress_stats_user1;
