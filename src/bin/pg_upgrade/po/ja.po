@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL 17)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-07-07 17:07+0900\n"
-"PO-Revision-Date: 2025-07-08 10:54+0900\n"
+"POT-Creation-Date: 2025-08-19 09:35+0900\n"
+"PO-Revision-Date: 2025-08-19 10:57+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -572,7 +572,7 @@ msgid ""
 "If the parent column(s) are NOT NULL, then the child column must\n"
 "also be marked NOT NULL, or the upgrade will fail.\n"
 "You can fix this by running\n"
-"  ALTER TABLE tablename ALTER column SET NOT NULL;\n"
+"    ALTER TABLE tablename ALTER column SET NOT NULL;\n"
 "on each column listed in the file:\n"
 "    %s"
 msgstr ""
@@ -582,7 +582,7 @@ msgstr ""
 "この状態は、次のコマンドを\n"
 "  ALTER TABLE テーブル名 ALTER 列名 SET NOT NULL;\n"
 "以下のファイルにリストされている各列に対して実行することで解消できます:\n"
-"%s"
+"  %s"
 
 #: check.c:1683
 #, c-format
@@ -1892,7 +1892,7 @@ msgstr "バージョンファイル\"%s\"をオープンできませんでした
 msgid "could not parse version file \"%s\""
 msgstr "バージョンファイル\"%s\"をパースできませんでした"
 
-#: server.c:310
+#: server.c:299
 #, c-format
 msgid ""
 "\n"
@@ -1901,7 +1901,7 @@ msgstr ""
 "\n"
 "%s"
 
-#: server.c:314
+#: server.c:303
 #, c-format
 msgid ""
 "could not connect to source postmaster started with the command:\n"
@@ -1910,7 +1910,7 @@ msgstr ""
 "以下のコマンドで起動した移行元postmasterに接続できませんでした:\n"
 "%s"
 
-#: server.c:318
+#: server.c:307
 #, c-format
 msgid ""
 "could not connect to target postmaster started with the command:\n"
@@ -1919,22 +1919,22 @@ msgstr ""
 "以下のコマンドで起動した移行先postmasterに接続できませんでした:\n"
 "%s"
 
-#: server.c:332
+#: server.c:321
 #, c-format
 msgid "pg_ctl failed to start the source server, or connection failed"
 msgstr "pg_ctl が移行元サーバーの起動に失敗した、あるいは接続に失敗しました"
 
-#: server.c:334
+#: server.c:323
 #, c-format
 msgid "pg_ctl failed to start the target server, or connection failed"
 msgstr "pg_ctl が移行先サーバーの起動に失敗した、あるいは接続に失敗しました"
 
-#: server.c:379
+#: server.c:368
 #, c-format
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: server.c:392
+#: server.c:381
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s"
 msgstr "libpq の環境変数 %s で、ローカルでないサーバー値が設定されています: %s"

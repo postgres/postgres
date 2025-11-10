@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-02-16 19:39+0000\n"
+"POT-Creation-Date: 2025-11-08 00:27+0000\n"
 "PO-Revision-Date: 2024-11-16 14:24+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -79,7 +79,7 @@ msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Podría referirse tanto a una variable PL/pgSQL como a una columna de una tabla."
 
 #: pl_comp.c:1314 pl_exec.c:5260 pl_exec.c:5433 pl_exec.c:5520 pl_exec.c:5611
-#: pl_exec.c:6636
+#: pl_exec.c:6640
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "el registro «%s» no tiene un campo «%s»"
@@ -114,7 +114,7 @@ msgstr "la variable «%s» tiene pseudotipo %s"
 msgid "type \"%s\" is only a shell"
 msgstr "el tipo «%s» está inconcluso"
 
-#: pl_comp.c:2157 pl_exec.c:6937
+#: pl_comp.c:2157 pl_exec.c:6941
 #, c-format
 msgid "type %s is not composite"
 msgstr "el tipo %s no es compuesto"
@@ -349,7 +349,7 @@ msgstr "no se puede usar RETURN QUERY en una función que no ha sido declarada S
 msgid "structure of query does not match function result type"
 msgstr "la estructura de la consulta no coincide con el tipo del resultado de la función"
 
-#: pl_exec.c:3632 pl_exec.c:4469 pl_exec.c:8759
+#: pl_exec.c:3632 pl_exec.c:4469 pl_exec.c:8765
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "el argumento de consulta a ejecutar en EXECUTE es null"
@@ -474,7 +474,7 @@ msgstr "no se puede asignar a la columna de sistema «%s»"
 msgid "query did not return data"
 msgstr "la consulta no retornó datos"
 
-#: pl_exec.c:5719 pl_exec.c:5731 pl_exec.c:5756 pl_exec.c:5832 pl_exec.c:5837
+#: pl_exec.c:5719 pl_exec.c:5731 pl_exec.c:5756 pl_exec.c:5836 pl_exec.c:5841
 #, c-format
 msgid "query: %s"
 msgstr "consulta: %s"
@@ -486,48 +486,48 @@ msgid_plural "query returned %d columns"
 msgstr[0] "la consulta retornó %d columna"
 msgstr[1] "la consulta retornó %d columnas"
 
-#: pl_exec.c:5831
+#: pl_exec.c:5835
 #, c-format
 msgid "query is SELECT INTO, but it should be plain SELECT"
 msgstr "la consulta es SELECT INTO, pero debería ser un SELECT simple"
 
-#: pl_exec.c:5836
+#: pl_exec.c:5840
 #, c-format
 msgid "query is not a SELECT"
 msgstr "la consulta no es un SELECT"
 
-#: pl_exec.c:6650 pl_exec.c:6690 pl_exec.c:6730
+#: pl_exec.c:6654 pl_exec.c:6694 pl_exec.c:6734
 #, c-format
 msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr "el tipo del parámetro %d (%s) no coincide aquel con que fue preparado el plan (%s)"
 
-#: pl_exec.c:7141 pl_exec.c:7175 pl_exec.c:7249 pl_exec.c:7275
+#: pl_exec.c:7145 pl_exec.c:7179 pl_exec.c:7253 pl_exec.c:7279
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "no coincide el número de campos de origen y destino en la asignación"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7143 pl_exec.c:7177 pl_exec.c:7251 pl_exec.c:7277
+#: pl_exec.c:7147 pl_exec.c:7181 pl_exec.c:7255 pl_exec.c:7281
 #, c-format
 msgid "%s check of %s is active."
 msgstr "El chequeo %s de %s está activo."
 
-#: pl_exec.c:7147 pl_exec.c:7181 pl_exec.c:7255 pl_exec.c:7281
+#: pl_exec.c:7151 pl_exec.c:7185 pl_exec.c:7259 pl_exec.c:7285
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr "Asegúrese que la consulta retorna la lista exacta de columnas."
 
-#: pl_exec.c:7668
+#: pl_exec.c:7672
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "el registro «%s» no ha sido asignado aún"
 
-#: pl_exec.c:7669
+#: pl_exec.c:7673
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr "La estructura de fila de un registro aún no asignado no está determinado."
 
-#: pl_exec.c:8357 pl_gram.y:3498
+#: pl_exec.c:8363 pl_gram.y:3498
 #, c-format
 msgid "variable \"%s\" is declared CONSTANT"
 msgstr "la variable «%s» esta declarada como CONSTANT"

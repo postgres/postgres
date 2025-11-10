@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-08-26 19:50+0000\n"
-"PO-Revision-Date: 2024-09-16 16:28+0200\n"
+"POT-Creation-Date: 2025-11-08 09:36+0000\n"
+"PO-Revision-Date: 2025-11-08 11:45+0100\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.8\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -244,7 +244,7 @@ msgstr "méthode de synchronisation non reconnu : %s"
 
 #: ../../fe_utils/recovery_gen.c:39 ../../fe_utils/recovery_gen.c:50
 #: ../../fe_utils/recovery_gen.c:89 ../../fe_utils/recovery_gen.c:109
-#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:331
+#: ../../fe_utils/recovery_gen.c:168 pg_basebackup.c:1636 streamutil.c:334
 #, c-format
 msgid "out of memory"
 msgstr "mémoire épuisée"
@@ -261,12 +261,12 @@ msgstr "n'a pas pu écrire dans le fichier « %s » : %m"
 msgid "could not create file \"%s\": %m"
 msgstr "n'a pas pu créer le fichier « %s » : %m"
 
-#: ../../fe_utils/string_utils.c:434
+#: ../../fe_utils/string_utils.c:587
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\"\n"
 msgstr "l'argument de la commande shell contient un retour à la ligne ou un retour chariot : « %s »\n"
 
-#: ../../fe_utils/string_utils.c:607
+#: ../../fe_utils/string_utils.c:760
 #, c-format
 msgid "database name contains a newline or carriage return: \"%s\"\n"
 msgstr "le nom de la base contient un retour à la ligne ou un retour chariot : « %s »\n"
@@ -802,7 +802,7 @@ msgid "could not read from ready pipe: %m"
 msgstr "n'a pas pu lire à partir du tube : %m"
 
 #: pg_basebackup.c:491 pg_basebackup.c:633 pg_basebackup.c:2258
-#: streamutil.c:518
+#: streamutil.c:521
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "n'a pas pu analyser l'emplacement du journal des transactions « %s »"
@@ -990,8 +990,8 @@ msgid "server does not support incremental backup"
 msgstr "le serveur n'accepte pas les sauvegardes incrémentales"
 
 #: pg_basebackup.c:1850 pg_basebackup.c:2008 pg_recvlogical.c:272
-#: receivelog.c:543 receivelog.c:582 streamutil.c:364 streamutil.c:438
-#: streamutil.c:490 streamutil.c:578 streamutil.c:730 streamutil.c:775
+#: receivelog.c:543 receivelog.c:582 streamutil.c:367 streamutil.c:441
+#: streamutil.c:493 streamutil.c:581 streamutil.c:733 streamutil.c:778
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "n'a pas pu envoyer la commande de réplication « %s » : %s"
@@ -1131,7 +1131,7 @@ msgstr "n'a pas pu attendre le processus fils : %m"
 msgid "child %d died, expected %d"
 msgstr "le fils %d est mort, %d attendu"
 
-#: pg_basebackup.c:2248 streamutil.c:89 streamutil.c:204 streamutil.c:316
+#: pg_basebackup.c:2248 streamutil.c:92 streamutil.c:207 streamutil.c:319
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -1187,9 +1187,9 @@ msgstr "option wal-method « %s » invalide, doit être soit « fetch » soit «
 #: pg_basebackup.c:2712 pg_basebackup.c:2724 pg_basebackup.c:2736
 #: pg_basebackup.c:2744 pg_basebackup.c:2757 pg_basebackup.c:2763
 #: pg_basebackup.c:2772 pg_basebackup.c:2784 pg_basebackup.c:2795
-#: pg_basebackup.c:2803 pg_createsubscriber.c:2037 pg_createsubscriber.c:2047
-#: pg_createsubscriber.c:2055 pg_createsubscriber.c:2083
-#: pg_createsubscriber.c:2115 pg_receivewal.c:748 pg_receivewal.c:760
+#: pg_basebackup.c:2803 pg_createsubscriber.c:2047 pg_createsubscriber.c:2057
+#: pg_createsubscriber.c:2065 pg_createsubscriber.c:2093
+#: pg_createsubscriber.c:2125 pg_receivewal.c:748 pg_receivewal.c:760
 #: pg_receivewal.c:767 pg_receivewal.c:776 pg_receivewal.c:783
 #: pg_receivewal.c:793 pg_recvlogical.c:853 pg_recvlogical.c:865
 #: pg_recvlogical.c:875 pg_recvlogical.c:882 pg_recvlogical.c:889
@@ -1199,7 +1199,7 @@ msgstr "option wal-method « %s » invalide, doit être soit « fetch » soit «
 msgid "Try \"%s --help\" for more information."
 msgstr "Essayez « %s --help » pour plus d'informations."
 
-#: pg_basebackup.c:2584 pg_createsubscriber.c:2045 pg_receivewal.c:758
+#: pg_basebackup.c:2584 pg_createsubscriber.c:2055 pg_receivewal.c:758
 #: pg_recvlogical.c:863
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
@@ -1317,7 +1317,7 @@ msgstr "Supprimez cette publication avant de tenter de nouveau."
 msgid "replication slot \"%s\" created in database \"%s\" on primary was left behind"
 msgstr "le slot de réplication « %s » dans la base « %s » sur le primaire pourrait être laissé derrière"
 
-#: pg_createsubscriber.c:206 pg_createsubscriber.c:1260
+#: pg_createsubscriber.c:206 pg_createsubscriber.c:1270
 #, c-format
 msgid "Drop this replication slot soon to avoid retention of WAL files."
 msgstr "Supprimez rapidement ce slot de réplication pour éviter la rétention des fichiers WAL."
@@ -1509,13 +1509,13 @@ msgstr "exécution de pg_resetwal sur l'abonné"
 
 #: pg_createsubscriber.c:671
 #, c-format
-msgid "subscriber successfully changed the system identifier"
-msgstr "l'abonné a modifié avec succès l'identifieur système"
+msgid "successfully reset WAL on the subscriber"
+msgstr "a réinitialisé les WAL sur l'abonné avec succès"
 
 #: pg_createsubscriber.c:673
 #, c-format
-msgid "could not change system identifier of subscriber: %s"
-msgstr "n'a pas pu modifier l'identifiant du système abonné : %s"
+msgid "could not reset WAL on subscriber: %s"
+msgstr "n'a pas pu réinitialiser les WAL sur l'abonné : %s"
 
 #: pg_createsubscriber.c:697
 #, c-format
@@ -1634,319 +1634,319 @@ msgstr "n'a pas pu supprimer la souscription « %s » : %s"
 msgid "could not obtain pre-existing subscriptions: %s"
 msgstr "n'a pas pu obtenir les souscriptions pré-existantes : %s"
 
-#: pg_createsubscriber.c:1258
+#: pg_createsubscriber.c:1268
 #, c-format
 msgid "could not drop replication slot \"%s\" on primary"
 msgstr "n'a pas pu supprimer le slot de réplication « %s » sur le primaire"
 
-#: pg_createsubscriber.c:1292
+#: pg_createsubscriber.c:1302
 #, c-format
 msgid "could not obtain failover replication slot information: %s"
 msgstr "n'a pas pu obtenir l'information de slot de réplication failover : %s"
 
-#: pg_createsubscriber.c:1294 pg_createsubscriber.c:1303
+#: pg_createsubscriber.c:1304 pg_createsubscriber.c:1313
 #, c-format
 msgid "Drop the failover replication slots on subscriber soon to avoid retention of WAL files."
 msgstr "Supprimez rapidement les slots de réplication failover sur l'abonnée pour éviter la rétention des fichiers WAL."
 
-#: pg_createsubscriber.c:1302
+#: pg_createsubscriber.c:1312
 #, c-format
 msgid "could not drop failover replication slot"
 msgstr "n'a pas pu supprimer le slot de réplication failover"
 
-#: pg_createsubscriber.c:1324
+#: pg_createsubscriber.c:1334
 #, c-format
 msgid "creating the replication slot \"%s\" in database \"%s\""
 msgstr "création du slot de réplication « %s » dans la base « %s »"
 
-#: pg_createsubscriber.c:1342
+#: pg_createsubscriber.c:1352
 #, c-format
 msgid "could not create replication slot \"%s\" in database \"%s\": %s"
 msgstr "n'a pas pu créer le slot de réplication « %s » dans la base « %s » : %s"
 
-#: pg_createsubscriber.c:1372
+#: pg_createsubscriber.c:1382
 #, c-format
 msgid "dropping the replication slot \"%s\" in database \"%s\""
 msgstr "suppression du slot de réplication « %s » dans la base « %s »"
 
-#: pg_createsubscriber.c:1388
+#: pg_createsubscriber.c:1398
 #, c-format
 msgid "could not drop replication slot \"%s\" in database \"%s\": %s"
 msgstr "n'a pas pu supprimer le slot de réplication « %s » dans la base « %s » : %s"
 
-#: pg_createsubscriber.c:1409
+#: pg_createsubscriber.c:1419
 #, c-format
 msgid "pg_ctl failed with exit code %d"
 msgstr "échec de pg_ctl avec un code de retour %d"
 
-#: pg_createsubscriber.c:1414
+#: pg_createsubscriber.c:1424
 #, c-format
 msgid "pg_ctl was terminated by exception 0x%X"
 msgstr "pg_ctl a été terminé par l'exception 0x%X"
 
-#: pg_createsubscriber.c:1416
+#: pg_createsubscriber.c:1426
 #, c-format
 msgid "See C include file \"ntstatus.h\" for a description of the hexadecimal value."
 msgstr ""
 "Voir le fichier d'en-tête C « ntstatus.h » pour une description de la valeur\n"
 "hexadécimale."
 
-#: pg_createsubscriber.c:1418
+#: pg_createsubscriber.c:1428
 #, c-format
 msgid "pg_ctl was terminated by signal %d: %s"
 msgstr "pg_ctl a été terminé par le signal %d : %s"
 
-#: pg_createsubscriber.c:1424
+#: pg_createsubscriber.c:1434
 #, c-format
 msgid "pg_ctl exited with unrecognized status %d"
 msgstr "pg_ctl a quitté avec un statut %d non reconnu"
 
-#: pg_createsubscriber.c:1427
+#: pg_createsubscriber.c:1437
 #, c-format
 msgid "The failed command was: %s"
 msgstr "La commande échouée était : %s"
 
-#: pg_createsubscriber.c:1473
+#: pg_createsubscriber.c:1483
 #, c-format
 msgid "server was started"
 msgstr "le serveur a été démarré"
 
-#: pg_createsubscriber.c:1488
+#: pg_createsubscriber.c:1498
 #, c-format
 msgid "server was stopped"
 msgstr "le serveur a été arrêté"
 
-#: pg_createsubscriber.c:1507
+#: pg_createsubscriber.c:1517
 #, c-format
 msgid "waiting for the target server to reach the consistent state"
 msgstr "en attente de l'atteinte de l'état de cohérence sur le serveur cible"
 
-#: pg_createsubscriber.c:1530
+#: pg_createsubscriber.c:1540
 #, c-format
 msgid "recovery timed out"
 msgstr "délai de restauration atteint"
 
-#: pg_createsubscriber.c:1543
+#: pg_createsubscriber.c:1553
 #, c-format
 msgid "server did not end recovery"
 msgstr "le serveur n'a pas terminé la restauration"
 
-#: pg_createsubscriber.c:1545
+#: pg_createsubscriber.c:1555
 #, c-format
 msgid "target server reached the consistent state"
 msgstr "le serveur cible a atteint l'état de cohérence"
 
-#: pg_createsubscriber.c:1546
+#: pg_createsubscriber.c:1556
 #, c-format
 msgid "If pg_createsubscriber fails after this point, you must recreate the physical replica before continuing."
 msgstr "Si pg_createsubscriber échoue après cela, vous devez recréer le réplicat physique avant de continuer."
 
-#: pg_createsubscriber.c:1573
+#: pg_createsubscriber.c:1583
 #, c-format
 msgid "could not obtain publication information: %s"
 msgstr "n'a pas pu obtenir une information sur la publication : %s"
 
-#: pg_createsubscriber.c:1587
+#: pg_createsubscriber.c:1597
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "la publication « %s » existe déjà"
 
-#: pg_createsubscriber.c:1588
+#: pg_createsubscriber.c:1598
 #, c-format
 msgid "Consider renaming this publication before continuing."
 msgstr "Pensez à renommer cette publication avant de continuer."
 
-#: pg_createsubscriber.c:1595
+#: pg_createsubscriber.c:1605
 #, c-format
 msgid "creating publication \"%s\" in database \"%s\""
 msgstr "création de la publication « %s » dans la base de données « %s »"
 
-#: pg_createsubscriber.c:1608
+#: pg_createsubscriber.c:1618
 #, c-format
 msgid "could not create publication \"%s\" in database \"%s\": %s"
 msgstr "n'a pas pu créer la publication « %s » dans la base de données « %s » : %s"
 
-#: pg_createsubscriber.c:1637
+#: pg_createsubscriber.c:1647
 #, c-format
 msgid "dropping publication \"%s\" in database \"%s\""
 msgstr "suppression de la publication « %s » dans la base de données « %s »"
 
-#: pg_createsubscriber.c:1651
+#: pg_createsubscriber.c:1661
 #, c-format
 msgid "could not drop publication \"%s\" in database \"%s\": %s"
 msgstr "n'a pas pu supprimer la publication « %s » dans la base de données « %s » : %s"
 
-#: pg_createsubscriber.c:1697
+#: pg_createsubscriber.c:1707
 #, c-format
 msgid "creating subscription \"%s\" in database \"%s\""
 msgstr "création de la souscription « %s » dans la base de données « %s »"
 
-#: pg_createsubscriber.c:1718
+#: pg_createsubscriber.c:1728
 #, c-format
 msgid "could not create subscription \"%s\" in database \"%s\": %s"
 msgstr "n'a pas pu créer la souscription « %s » dans la base « %s » : %s"
 
-#: pg_createsubscriber.c:1763
+#: pg_createsubscriber.c:1773
 #, c-format
 msgid "could not obtain subscription OID: %s"
 msgstr "n'a pas pu obtenir l'OID de la souscription : %s"
 
-#: pg_createsubscriber.c:1770
+#: pg_createsubscriber.c:1780
 #, c-format
 msgid "could not obtain subscription OID: got %d rows, expected %d row"
 msgstr "n'a pas pu obtenir l'OID de la souscription : attendait %d lignes, a reçu %d ligne"
 
-#: pg_createsubscriber.c:1794
+#: pg_createsubscriber.c:1804
 #, c-format
 msgid "setting the replication progress (node name \"%s\", LSN %s) in database \"%s\""
 msgstr "configuration de la progression de la réplication (nom du noeud « %s » , LSN %s) dans la base de données « %s »"
 
-#: pg_createsubscriber.c:1809
+#: pg_createsubscriber.c:1819
 #, c-format
 msgid "could not set replication progress for subscription \"%s\": %s"
 msgstr "n'a pas pu configurer la progression de la réplication pour la souscription « %s » : %s"
 
-#: pg_createsubscriber.c:1840
+#: pg_createsubscriber.c:1850
 #, c-format
 msgid "enabling subscription \"%s\" in database \"%s\""
 msgstr "activation de la souscription « %s » dans la base de données « %s »"
 
-#: pg_createsubscriber.c:1852
+#: pg_createsubscriber.c:1862
 #, c-format
 msgid "could not enable subscription \"%s\": %s"
 msgstr "n'a pas pu activer la souscription « %s » : %s"
 
-#: pg_createsubscriber.c:1944
+#: pg_createsubscriber.c:1954
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "ne peut pas être exécuté par « root »"
 
-#: pg_createsubscriber.c:1945
+#: pg_createsubscriber.c:1955
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
 msgstr "Vous devez exécuter %s en tant que super-utilisateur PostgreSQL."
 
-#: pg_createsubscriber.c:1966
+#: pg_createsubscriber.c:1976
 #, c-format
 msgid "database \"%s\" specified more than once"
 msgstr "la base de données « %s » est spécifiée plus d'une fois"
 
-#: pg_createsubscriber.c:2007
+#: pg_createsubscriber.c:2017
 #, c-format
 msgid "publication \"%s\" specified more than once"
 msgstr "la publication « %s » est spécifiée plus d'une fois"
 
-#: pg_createsubscriber.c:2019
+#: pg_createsubscriber.c:2029
 #, c-format
 msgid "replication slot \"%s\" specified more than once"
 msgstr "le slot de réplication « %s » est spécifié plus d'une fois"
 
-#: pg_createsubscriber.c:2031
+#: pg_createsubscriber.c:2041
 #, c-format
 msgid "subscription \"%s\" specified more than once"
 msgstr "la souscription « %s » est spécifiée plus d'une fois"
 
-#: pg_createsubscriber.c:2054
+#: pg_createsubscriber.c:2064
 #, c-format
 msgid "no subscriber data directory specified"
 msgstr "aucune chaîne de connexion de l'abonné indiquée"
 
-#: pg_createsubscriber.c:2065
+#: pg_createsubscriber.c:2075
 #, c-format
 msgid "could not determine current directory"
 msgstr "n'a pas pu déterminer le répertoire courant"
 
-#: pg_createsubscriber.c:2082
+#: pg_createsubscriber.c:2092
 #, c-format
 msgid "no publisher connection string specified"
 msgstr "aucune chaîne de connexion du publieur indiquée"
 
-#: pg_createsubscriber.c:2086
+#: pg_createsubscriber.c:2096
 #, c-format
 msgid "validating publisher connection string"
 msgstr "validation de la chaîne de connexion du publieur"
 
-#: pg_createsubscriber.c:2092
+#: pg_createsubscriber.c:2102
 #, c-format
 msgid "validating subscriber connection string"
 msgstr "validation de la chaîne de connexion de l'abonné"
 
-#: pg_createsubscriber.c:2097
+#: pg_createsubscriber.c:2107
 #, c-format
 msgid "no database was specified"
 msgstr "aucune base de données n'a été indiquée"
 
-#: pg_createsubscriber.c:2109
+#: pg_createsubscriber.c:2119
 #, c-format
 msgid "database name \"%s\" was extracted from the publisher connection string"
 msgstr "le nom de la base de données « %s » a été extrait de la chaîne de connexion du publieur"
 
-#: pg_createsubscriber.c:2114
+#: pg_createsubscriber.c:2124
 #, c-format
 msgid "no database name specified"
 msgstr "aucun nom de base de données indiqué"
 
-#: pg_createsubscriber.c:2124
+#: pg_createsubscriber.c:2134
 #, c-format
 msgid "wrong number of publication names specified"
 msgstr "mauvais nombre de noms de publication indiqués"
 
-#: pg_createsubscriber.c:2125
+#: pg_createsubscriber.c:2135
 #, c-format
 msgid "The number of specified publication names (%d) must match the number of specified database names (%d)."
 msgstr "Le nombre de noms de publication indiqués (%d) doit correspondre au nombre de noms de bases de données indiqués (%d)"
 
-#: pg_createsubscriber.c:2131
+#: pg_createsubscriber.c:2141
 #, c-format
 msgid "wrong number of subscription names specified"
 msgstr "mauvais nombre de noms de souscription indiqués"
 
-#: pg_createsubscriber.c:2132
+#: pg_createsubscriber.c:2142
 #, c-format
 msgid "The number of specified subscription names (%d) must match the number of specified database names (%d)."
 msgstr "Le nombre de noms de souscriptions indiqués (%d) doit correspondre au nombre de noms de bases de données indiqués (%d)"
 
-#: pg_createsubscriber.c:2138
+#: pg_createsubscriber.c:2148
 #, c-format
 msgid "wrong number of replication slot names specified"
 msgstr "mauvais nombre de noms de slots de réplication indiqués"
 
-#: pg_createsubscriber.c:2139
+#: pg_createsubscriber.c:2149
 #, c-format
 msgid "The number of specified replication slot names (%d) must match the number of specified database names (%d)."
 msgstr "Le nombre de noms de slots de réplication indiqués (%d) doit correspondre au nombre de noms de bases de données indiqués (%d)"
 
-#: pg_createsubscriber.c:2168
+#: pg_createsubscriber.c:2178
 #, c-format
 msgid "subscriber data directory is not a copy of the source database cluster"
 msgstr "le répertoire de données de l'abonné n'est pas une copie de l'instance source"
 
-#: pg_createsubscriber.c:2181
+#: pg_createsubscriber.c:2191
 #, c-format
 msgid "standby server is running"
 msgstr "le serveur secondaire est en cours d'exécution"
 
-#: pg_createsubscriber.c:2182
+#: pg_createsubscriber.c:2192
 #, c-format
 msgid "Stop the standby server and try again."
 msgstr "Arrêtez le secondaire et tentez de nouveau."
 
-#: pg_createsubscriber.c:2191
+#: pg_createsubscriber.c:2201
 #, c-format
 msgid "starting the standby server with command-line options"
 msgstr "lancement du serveur secondaire avec les options en ligne de commande"
 
-#: pg_createsubscriber.c:2207 pg_createsubscriber.c:2242
+#: pg_createsubscriber.c:2217 pg_createsubscriber.c:2252
 #, c-format
 msgid "stopping the subscriber"
 msgstr "arrêt de l'abonné"
 
-#: pg_createsubscriber.c:2221
+#: pg_createsubscriber.c:2231
 #, c-format
 msgid "starting the subscriber"
 msgstr "lancement de l'abonné"
 
-#: pg_createsubscriber.c:2250
+#: pg_createsubscriber.c:2260
 #, c-format
 msgid "Done!"
 msgstr "Terminé !"
@@ -2513,93 +2513,93 @@ msgstr "n'a pas pu écrire %d octets dans le journal de transactions « %s » : 
 msgid "could not send copy-end packet: %s"
 msgstr "n'a pas pu envoyer le paquet de fin de copie : %s"
 
-#: streamutil.c:162
+#: streamutil.c:165
 msgid "Password: "
 msgstr "Mot de passe : "
 
-#: streamutil.c:189
+#: streamutil.c:192
 #, c-format
 msgid "could not connect to server"
 msgstr "n'a pas pu se connecter au serveur"
 
-#: streamutil.c:230
+#: streamutil.c:233
 #, c-format
 msgid "could not clear \"search_path\": %s"
 msgstr "n'a pas pu effacer « search_path » : %s"
 
-#: streamutil.c:246
+#: streamutil.c:249
 #, c-format
 msgid "could not determine server setting for \"integer_datetimes\""
 msgstr "n'a pas pu déterminer la configuration serveur de « integer_datetimes »"
 
-#: streamutil.c:253
+#: streamutil.c:256
 #, c-format
 msgid "\"integer_datetimes\" compile flag does not match server"
 msgstr "l'option de compilation « integer_datetimes » ne correspond pas au serveur"
 
-#: streamutil.c:372
+#: streamutil.c:375
 #, c-format
 msgid "could not fetch WAL segment size: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "n'a pas pu récupéré la taille d'un segment WAL : a obtenu %d lignes et %d champs, attendait %d lignes et %d champs (ou plus)"
 
-#: streamutil.c:382
+#: streamutil.c:385
 #, c-format
 msgid "WAL segment size could not be parsed"
 msgstr "la taille du segment WAL n'a pas pu être analysée"
 
-#: streamutil.c:400
+#: streamutil.c:403
 #, c-format
 msgid "remote server reported invalid WAL segment size (%d byte)"
 msgid_plural "remote server reported invalid WAL segment size (%d bytes)"
 msgstr[0] "le serveur distant a rapporté une taille invalide du segment WAL (%d octet)"
 msgstr[1] "le serveur distant a rapporté une taille invalide du segment WAL (%d octets)"
 
-#: streamutil.c:404
+#: streamutil.c:407
 #, c-format
 msgid "The WAL segment size must be a power of two between 1 MB and 1 GB."
 msgstr "La taille du segment WAL doit être une puissance de deux comprise entre 1 Mo et 1 Go."
 
-#: streamutil.c:446
+#: streamutil.c:449
 #, c-format
 msgid "could not fetch group access flag: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "n'a pas pu récupérer les options d'accès du groupe : a obtenu %d lignes et %d champs, attendait %d lignes et %d champs (ou plus)"
 
-#: streamutil.c:455
+#: streamutil.c:458
 #, c-format
 msgid "group access flag could not be parsed: %s"
 msgstr "l'option d'accès du groupe n'a pas pu être analysé : %s"
 
-#: streamutil.c:498 streamutil.c:535
+#: streamutil.c:501 streamutil.c:538
 #, c-format
 msgid "could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields"
 msgstr "n'a pas pu identifier le système : a récupéré %d lignes et %d champs, attendait %d lignes et %d champs (ou plus)."
 
-#: streamutil.c:587
+#: streamutil.c:590
 #, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "n'a pas pu lire le slot de réplication « %s » : a récupéré %d lignes et %d champs, attendait %d lignes et %d champs"
 
-#: streamutil.c:599
+#: streamutil.c:602
 #, c-format
 msgid "replication slot \"%s\" does not exist"
 msgstr "le slot de réplication « %s » n'existe pas"
 
-#: streamutil.c:610
+#: streamutil.c:613
 #, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
 msgstr "attendait un slot de réplication physique, a obtenu le type « %s » à la place"
 
-#: streamutil.c:624
+#: streamutil.c:627
 #, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
 msgstr "n'a pas pu analyser le champ restart_lsn « %s » pour le slot de réplication « %s »"
 
-#: streamutil.c:741
+#: streamutil.c:744
 #, c-format
 msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "n'a pas pu créer le slot de réplication « %s » : a récupéré %d lignes et %d champs, attendait %d lignes et %d champs"
 
-#: streamutil.c:785
+#: streamutil.c:788
 #, c-format
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "n'a pas pu supprimer le slot de réplication « %s » : a récupéré %d lignes et %d champs, attendait %d lignes et %d champs"
@@ -2631,3 +2631,11 @@ msgstr "suppression non supportée avec la compression"
 #: walmethods.c:1293
 msgid "could not close compression stream"
 msgstr "n'a pas pu fermer le flux de compression"
+
+#, c-format
+#~ msgid "could not change system identifier of subscriber: %s"
+#~ msgstr "n'a pas pu modifier l'identifiant du système abonné : %s"
+
+#, c-format
+#~ msgid "subscriber successfully changed the system identifier"
+#~ msgstr "l'abonné a modifié avec succès l'identifieur système"

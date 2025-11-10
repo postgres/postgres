@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_combinebackup (PostgreSQL) 17\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2024-11-16 05:22+0000\n"
+"POT-Creation-Date: 2025-11-08 00:39+0000\n"
 "PO-Revision-Date: 2024-11-16 09:07+0100\n"
 "Last-Translator: Álvaro Herrera <alvherre@lvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -46,7 +46,7 @@ msgid "could not open file \"%s\" for reading: %m"
 msgstr "no se pudo abrir archivo «%s» para lectura: %m"
 
 #: ../../common/controldata_utils.c:110 copy_file.c:150 load_manifest.c:161
-#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:540
+#: load_manifest.c:199 pg_combinebackup.c:1400 reconstruct.c:542
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
@@ -58,7 +58,7 @@ msgstr "no se pudo leer el archivo «%s»: leídos %d de %zu"
 
 #: ../../common/controldata_utils.c:132 ../../common/controldata_utils.c:280
 #: backup_label.c:174 copy_file.c:68 pg_combinebackup.c:538
-#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:740
+#: pg_combinebackup.c:1175 reconstruct.c:369 reconstruct.c:742
 #: write_manifest.c:187
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -87,13 +87,13 @@ msgstr ""
 #: ../../common/file_utils.c:480 backup_label.c:143 copy_file.c:66
 #: copy_file.c:139 copy_file.c:171 copy_file.c:175 copy_file.c:225
 #: copy_file.c:268 load_manifest.c:128 pg_combinebackup.c:523
-#: pg_combinebackup.c:1167 reconstruct.c:523 reconstruct.c:638
+#: pg_combinebackup.c:1167 reconstruct.c:525 reconstruct.c:640
 #: write_manifest.c:250
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:759
+#: ../../common/controldata_utils.c:249 backup_label.c:160 reconstruct.c:761
 #: write_manifest.c:260
 #, c-format
 msgid "could not write file \"%s\": %m"
@@ -106,7 +106,7 @@ msgid "could not fsync file \"%s\": %m"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %m"
 
 #: ../../common/cryptohash.c:261 ../../common/cryptohash_openssl.c:356
-#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:853
+#: ../../common/parse_manifest.c:157 ../../common/parse_manifest.c:852
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
@@ -143,7 +143,7 @@ msgstr "no se pudo sincronizar el sistema de archivos para el archivo «%s»: %m
 #: ../../common/file_utils.c:120 ../../common/file_utils.c:566
 #: backup_label.c:187 load_manifest.c:133 pg_combinebackup.c:676
 #: pg_combinebackup.c:1131 pg_combinebackup.c:1383 reconstruct.c:204
-#: reconstruct.c:421
+#: reconstruct.c:422
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
@@ -170,255 +170,255 @@ msgstr "no se pudo leer el directorio «%s»: %m"
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "no se pudo renombrar el archivo de «%s» a «%s»: %m"
 
-#: ../../common/jsonapi.c:2121
+#: ../../common/jsonapi.c:2124
 msgid "Recursive descent parser cannot use incremental lexer."
 msgstr "El parser recursivo descendiente no puede usar el lexer incremental."
 
-#: ../../common/jsonapi.c:2123
+#: ../../common/jsonapi.c:2126
 msgid "Incremental parser requires incremental lexer."
 msgstr "El parser incremental requiere el lexer incremental."
 
-#: ../../common/jsonapi.c:2125
+#: ../../common/jsonapi.c:2128
 msgid "JSON nested too deep, maximum permitted depth is 6400."
 msgstr "JSON anidado demasiado profundamente, profundidad máxima es 6400."
 
-#: ../../common/jsonapi.c:2127
+#: ../../common/jsonapi.c:2130
 #, c-format
 msgid "Escape sequence \"\\%.*s\" is invalid."
 msgstr "La secuencia de escape «\\%.*s» no es válida."
 
-#: ../../common/jsonapi.c:2131
+#: ../../common/jsonapi.c:2134
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Los caracteres con valor 0x%02x deben ser escapados."
 
-#: ../../common/jsonapi.c:2135
+#: ../../common/jsonapi.c:2138
 #, c-format
 msgid "Expected end of input, but found \"%.*s\"."
 msgstr "Se esperaba el fin de la entrada, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2138
+#: ../../common/jsonapi.c:2141
 #, c-format
 msgid "Expected array element or \"]\", but found \"%.*s\"."
 msgstr "Se esperaba un elemento de array o «]», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2141
+#: ../../common/jsonapi.c:2144
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%.*s\"."
 msgstr "Se esperaba «,» o «]», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2144
+#: ../../common/jsonapi.c:2147
 #, c-format
 msgid "Expected \":\", but found \"%.*s\"."
 msgstr "Se esperaba «:», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2147
+#: ../../common/jsonapi.c:2150
 #, c-format
 msgid "Expected JSON value, but found \"%.*s\"."
 msgstr "Se esperaba un valor JSON, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2150
+#: ../../common/jsonapi.c:2153
 msgid "The input string ended unexpectedly."
 msgstr "La cadena de entrada terminó inesperadamente."
 
-#: ../../common/jsonapi.c:2152
+#: ../../common/jsonapi.c:2155
 #, c-format
 msgid "Expected string or \"}\", but found \"%.*s\"."
 msgstr "Se esperaba una cadena o «}», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2155
+#: ../../common/jsonapi.c:2158
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%.*s\"."
 msgstr "Se esperaba «,» o «}», se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2158
+#: ../../common/jsonapi.c:2161
 #, c-format
 msgid "Expected string, but found \"%.*s\"."
 msgstr "Se esperaba una cadena, se encontró «%.*s»."
 
-#: ../../common/jsonapi.c:2161
+#: ../../common/jsonapi.c:2164
 #, c-format
 msgid "Token \"%.*s\" is invalid."
 msgstr "El elemento «%.*s» no es válido."
 
-#: ../../common/jsonapi.c:2164
+#: ../../common/jsonapi.c:2167
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 no puede ser convertido a text."
 
-#: ../../common/jsonapi.c:2166
+#: ../../common/jsonapi.c:2169
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "«\\u» debe ser seguido por cuatro dígitos hexadecimales."
 
-#: ../../common/jsonapi.c:2169
+#: ../../common/jsonapi.c:2172
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Los valores de escape Unicode no se pueden utilizar para valores de código superiores a 007F cuando la codificación no es UTF8."
 
-#: ../../common/jsonapi.c:2178
+#: ../../common/jsonapi.c:2181
 #, c-format
 msgid "Unicode escape value could not be translated to the server's encoding %s."
 msgstr "El valor de escape Unicode no pudo ser traducido a la codificación del servidor %s."
 
-#: ../../common/jsonapi.c:2185
+#: ../../common/jsonapi.c:2188
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Un «high-surrogate» Unicode no puede venir después de un «high-surrogate»."
 
-#: ../../common/jsonapi.c:2187
+#: ../../common/jsonapi.c:2190
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Un «low-surrogate» Unicode debe seguir a un «high-surrogate»."
 
-#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:855
+#: ../../common/parse_manifest.c:159 ../../common/parse_manifest.c:854
 #, c-format
 msgid "could not initialize checksum of manifest"
 msgstr "no se pudo inicializar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:204 ../../common/parse_manifest.c:261
+#: ../../common/parse_manifest.c:203 ../../common/parse_manifest.c:260
 msgid "manifest ended unexpectedly"
 msgstr "el manifiesto terminó inesperadamente"
 
-#: ../../common/parse_manifest.c:210 ../../common/parse_manifest.c:862
+#: ../../common/parse_manifest.c:209 ../../common/parse_manifest.c:861
 #, c-format
 msgid "could not update checksum of manifest"
 msgstr "no se pudo actualizar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:302
+#: ../../common/parse_manifest.c:301
 msgid "unexpected object start"
 msgstr "inicio de objeto inesperado"
 
-#: ../../common/parse_manifest.c:337
+#: ../../common/parse_manifest.c:336
 msgid "unexpected object end"
 msgstr "fin de objeto inesperado"
 
-#: ../../common/parse_manifest.c:366
+#: ../../common/parse_manifest.c:365
 msgid "unexpected array start"
 msgstr "inicio de array inesperado"
 
-#: ../../common/parse_manifest.c:391
+#: ../../common/parse_manifest.c:390
 msgid "unexpected array end"
 msgstr "fin de array inesperado"
 
-#: ../../common/parse_manifest.c:418
+#: ../../common/parse_manifest.c:417
 msgid "expected version indicator"
 msgstr "se esperaba indicador de versión"
 
-#: ../../common/parse_manifest.c:454
+#: ../../common/parse_manifest.c:453
 msgid "unrecognized top-level field"
 msgstr "campo de nivel superior no reconocido"
 
-#: ../../common/parse_manifest.c:473
+#: ../../common/parse_manifest.c:472
 msgid "unexpected file field"
 msgstr "campo de archivo inesperado"
 
-#: ../../common/parse_manifest.c:487
+#: ../../common/parse_manifest.c:486
 msgid "unexpected WAL range field"
 msgstr "campo de rango de WAL inesperado"
 
-#: ../../common/parse_manifest.c:493
+#: ../../common/parse_manifest.c:492
 msgid "unexpected object field"
 msgstr "campo de objeto inesperado"
 
-#: ../../common/parse_manifest.c:583
+#: ../../common/parse_manifest.c:582
 msgid "unexpected scalar"
 msgstr "escalar inesperado"
 
-#: ../../common/parse_manifest.c:609
+#: ../../common/parse_manifest.c:608
 msgid "manifest version not an integer"
 msgstr "la versión de manifiesto no es un número entero"
 
-#: ../../common/parse_manifest.c:613
+#: ../../common/parse_manifest.c:612
 msgid "unexpected manifest version"
 msgstr "versión de manifiesto inesperada"
 
-#: ../../common/parse_manifest.c:637
+#: ../../common/parse_manifest.c:636
 msgid "system identifier in manifest not an integer"
 msgstr "el identificador de sistema en el manifiesto no es un número entero"
 
-#: ../../common/parse_manifest.c:662
+#: ../../common/parse_manifest.c:661
 msgid "missing path name"
 msgstr "ruta de archivo faltante"
 
-#: ../../common/parse_manifest.c:665
+#: ../../common/parse_manifest.c:664
 msgid "both path name and encoded path name"
 msgstr "hay ambos ruta de archivo (path name) y ruta codificada (encoded path name)"
 
-#: ../../common/parse_manifest.c:667
+#: ../../common/parse_manifest.c:666
 msgid "missing size"
 msgstr "tamaño faltante"
 
-#: ../../common/parse_manifest.c:670
+#: ../../common/parse_manifest.c:669
 msgid "checksum without algorithm"
 msgstr "suma de comprobación sin algoritmo"
 
-#: ../../common/parse_manifest.c:684
+#: ../../common/parse_manifest.c:683
 msgid "could not decode file name"
 msgstr "no se pudo decodificar el nombre del archivo"
 
-#: ../../common/parse_manifest.c:694
+#: ../../common/parse_manifest.c:693
 msgid "file size is not an integer"
 msgstr "el tamaño del archivo no es un número entero"
 
-#: ../../common/parse_manifest.c:700 pg_combinebackup.c:199
+#: ../../common/parse_manifest.c:699 pg_combinebackup.c:199
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
 msgstr "algoritmo de suma de comprobación no reconocido: \"%s\""
 
-#: ../../common/parse_manifest.c:719
+#: ../../common/parse_manifest.c:718
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
 msgstr "suma de comprobación no válida para el archivo \"%s\": \"%s\""
 
-#: ../../common/parse_manifest.c:762
+#: ../../common/parse_manifest.c:761
 msgid "missing timeline"
 msgstr "falta el timeline"
 
-#: ../../common/parse_manifest.c:764
+#: ../../common/parse_manifest.c:763
 msgid "missing start LSN"
 msgstr "falta el LSN de inicio"
 
-#: ../../common/parse_manifest.c:766
+#: ../../common/parse_manifest.c:765
 msgid "missing end LSN"
 msgstr "falta el LSN de término"
 
-#: ../../common/parse_manifest.c:772
+#: ../../common/parse_manifest.c:771
 msgid "timeline is not an integer"
 msgstr "el timeline no es un número entero"
 
-#: ../../common/parse_manifest.c:775
+#: ../../common/parse_manifest.c:774
 msgid "could not parse start LSN"
 msgstr "no se pudo interpretar el LSN de inicio"
 
-#: ../../common/parse_manifest.c:778
+#: ../../common/parse_manifest.c:777
 msgid "could not parse end LSN"
 msgstr "no se pudo interpretar el LSN de término"
 
-#: ../../common/parse_manifest.c:843
+#: ../../common/parse_manifest.c:842
 msgid "expected at least 2 lines"
 msgstr "esperado al menos 2 líneas"
 
-#: ../../common/parse_manifest.c:846
+#: ../../common/parse_manifest.c:845
 msgid "last line not newline-terminated"
 msgstr "última línea no termina en nueva línea"
 
-#: ../../common/parse_manifest.c:865
+#: ../../common/parse_manifest.c:864
 #, c-format
 msgid "could not finalize checksum of manifest"
 msgstr "no se pudo finalizar la suma de verificación del manifiesto"
 
-#: ../../common/parse_manifest.c:869
+#: ../../common/parse_manifest.c:868
 #, c-format
 msgid "manifest has no checksum"
 msgstr "el manifiesto no tiene suma de comprobación"
 
-#: ../../common/parse_manifest.c:873
+#: ../../common/parse_manifest.c:872
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
 msgstr "suma de comprobación de manifiesto no válida: \"%s\""
 
-#: ../../common/parse_manifest.c:877
+#: ../../common/parse_manifest.c:876
 #, c-format
 msgid "manifest checksum mismatch"
 msgstr "discordancia en la suma de comprobación del manifiesto"
 
-#: ../../common/parse_manifest.c:892
+#: ../../common/parse_manifest.c:891
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "no se pudo analizar el manifiesto de la copia de seguridad: %s"
@@ -468,13 +468,13 @@ msgstr "%s: no se pudo encontrar %s"
 msgid "%s: %s requires %s"
 msgstr "%s: %s requiere %s"
 
-#: backup_label.c:162 reconstruct.c:761 write_manifest.c:262
+#: backup_label.c:162 reconstruct.c:763 write_manifest.c:262
 #, c-format
 msgid "could not write file \"%s\": wrote %d of %d"
 msgstr "no se pudo escribir al archivo «%s»: se escribió %d de %d"
 
-#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:721
-#: reconstruct.c:767 write_manifest.c:270
+#: backup_label.c:166 copy_file.c:146 copy_file.c:193 reconstruct.c:723
+#: reconstruct.c:769 write_manifest.c:270
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
@@ -489,7 +489,7 @@ msgstr "no se pudo escribir a archivo «%s»: %m"
 msgid "could not write to file \"%s\", offset %u: wrote %d of %d"
 msgstr "no se pudo escribir al archivo «%s», posición %u: se escribió %d de %d"
 
-#: copy_file.c:199 reconstruct.c:784
+#: copy_file.c:199 reconstruct.c:786
 #, c-format
 msgid "could not read from file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
@@ -514,12 +514,12 @@ msgstr "error mientras se clonaba la relación «%s» a «%s»: %s"
 msgid "file cloning not supported on this platform"
 msgstr "el clonado de archivos no está soportado en esta plataforma"
 
-#: copy_file.c:278 reconstruct.c:704
+#: copy_file.c:278 reconstruct.c:706
 #, c-format
 msgid "error while copying file range from \"%s\" to \"%s\": %m"
 msgstr "error mientras se copiaba un rango de archivo de «%s» a «%s»: %m"
 
-#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:724
+#: copy_file.c:285 pg_combinebackup.c:264 reconstruct.c:726
 #, c-format
 msgid "copy_file_range not supported on this platform"
 msgstr "copy_file_range no está soportado en esta plataforma"
@@ -544,12 +544,12 @@ msgstr "no se pudo leer el archivo «%s»: leídos %d de %lld"
 msgid "could not read file \"%s\": read %lld of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %lld de %lld"
 
-#: load_manifest.c:249
+#: load_manifest.c:248
 #, c-format
 msgid "backup manifest version 1 does not support incremental backup"
 msgstr "el manifiesto de backup versión 1 no soporta backups incrementales"
 
-#: load_manifest.c:281
+#: load_manifest.c:280
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: \"%s\""
@@ -869,32 +869,32 @@ msgstr "no se pudo leer el archivo «%s»: leídos %zd de %lld"
 msgid "full backup contains unexpected incremental file \"%s\""
 msgstr "backup «full» contiene archivo incremental «%s» inesperado"
 
-#: reconstruct.c:423
+#: reconstruct.c:424
 #, c-format
 msgid "file \"%s\" is too short: expected %llu, found %llu"
 msgstr "el archivo «%s» es demasiado corto: se esperaban %llu, se encontraron %llu"
 
-#: reconstruct.c:465
+#: reconstruct.c:466
 #, c-format
 msgid "file \"%s\" has bad incremental magic number (0x%x, expected 0x%x)"
 msgstr "el archivo «%s» tiene número mágico incremental erróneo (0x%x, se esperaba 0x%x)"
 
-#: reconstruct.c:471
+#: reconstruct.c:472
 #, c-format
 msgid "file \"%s\" has block count %u in excess of segment size %u"
 msgstr "el archivo «%s» tiene una cantidad de bloques %u más allá del tamaño de bloque %u"
 
-#: reconstruct.c:478
+#: reconstruct.c:479
 #, c-format
 msgid "file \"%s\" has truncation block length %u in excess of segment size %u"
 msgstr "el archivo «%s» tiene una longitud de truncado de bloque %u en exceso del tamaño de segmento %u"
 
-#: reconstruct.c:542
+#: reconstruct.c:544
 #, c-format
 msgid "could not read file \"%s\": read %d of %u"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %u"
 
-#: reconstruct.c:786
+#: reconstruct.c:788
 #, c-format
 msgid "could not read from file \"%s\", offset %llu: read %d of %d"
 msgstr "no se pudo leer del archivo \"%s\", posición %llu: leídos %d de %d"

@@ -1,13 +1,13 @@
 # Russian message translation file for pg_basebackup
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# SPDX-FileCopyrightText: 2012-2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Lakhin <exclusion@gmail.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2025-08-02 11:37+0300\n"
-"PO-Revision-Date: 2024-09-07 11:12+0300\n"
+"POT-Creation-Date: 2025-11-09 06:28+0200\n"
+"PO-Revision-Date: 2025-11-09 08:45+0200\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -403,7 +403,7 @@ msgstr "не удалось установить для zstd уровень сж
 #: bbstreamer_zstd.c:105
 #, c-format
 msgid "could not set compression worker count to %d: %s"
-msgstr "не удалось установить для zstd число потоков %d: %s"
+msgstr "не удалось установить число потоков сжатия %d: %s"
 
 #: bbstreamer_zstd.c:116
 #, c-format
@@ -1429,8 +1429,8 @@ msgstr ""
 msgid ""
 "  -n, --dry-run                   dry run, just show what would be done\n"
 msgstr ""
-"  -n, --dry-run                   показать, какие действия будут выполнены,\n"
-"                                  но не выполнять их\n"
+"  -n, --dry-run                   холостой запуск — только показать, какие\n"
+"                                  действия будут выполнены\n"
 
 #: pg_createsubscriber.c:227
 #, c-format
@@ -1598,13 +1598,13 @@ msgstr "запуск pg_resetwal на подписчике"
 
 #: pg_createsubscriber.c:671
 #, c-format
-msgid "subscriber successfully changed the system identifier"
-msgstr "идентификатор системы на подписчике успешно изменён"
+msgid "successfully reset WAL on the subscriber"
+msgstr "WAL на подписчике сброшен успешно"
 
 #: pg_createsubscriber.c:673
 #, c-format
-msgid "could not change system identifier of subscriber: %s"
-msgstr "изменить идентификатор системы на подписчике не удалось: %s"
+msgid "could not reset WAL on subscriber: %s"
+msgstr "не удалось сбросить WAL на подписчике: %s"
 
 #: pg_createsubscriber.c:697
 #, c-format
@@ -2847,6 +2847,14 @@ msgstr "со сжатием закрытие файла с удалением н
 #: walmethods.c:1293
 msgid "could not close compression stream"
 msgstr "не удалось закрыть поток сжатых данных"
+
+#, c-format
+#~ msgid "subscriber successfully changed the system identifier"
+#~ msgstr "идентификатор системы на подписчике успешно изменён"
+
+#, c-format
+#~ msgid "could not change system identifier of subscriber: %s"
+#~ msgstr "изменить идентификатор системы на подписчике не удалось: %s"
 
 #, c-format
 #~ msgid "this build does not support gzip compression"
