@@ -249,7 +249,7 @@ struct config_enum
 struct config_generic
 {
 	/* constant fields, must be set correctly in initial value: */
-	const char *name;			/* name of variable - MUST BE FIRST */
+	const char *name;			/* name of variable */
 	GucContext	context;		/* context required to set the variable */
 	enum config_group group;	/* to help organize variables by function */
 	const char *short_desc;		/* short desc. of this variable's purpose */
