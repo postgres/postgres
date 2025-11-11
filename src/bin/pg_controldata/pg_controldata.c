@@ -317,6 +317,8 @@ main(int argc, char *argv[])
 		   ControlFile->blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"),
 		   ControlFile->relseg_size);
+	printf(_("Pages per SLRU segment:               %u\n"),
+		   ControlFile->slru_pages_per_segment);
 	printf(_("WAL block size:                       %u\n"),
 		   ControlFile->xlog_blcksz);
 	printf(_("Bytes per WAL segment:                %u\n"),
