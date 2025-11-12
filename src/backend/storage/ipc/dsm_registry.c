@@ -93,6 +93,7 @@ typedef struct DSMRegistryEntry
 {
 	char		name[NAMEDATALEN];
 	DSMREntryType type;
+	bool		initialized;
 	union
 	{
 		NamedDSMState dsm;
@@ -216,6 +217,7 @@ GetNamedDSMSegment(const char *name, size_t size,
 		dsm_segment *seg;
 
 		entry->type = DSMR_ENTRY_TYPE_DSM;
+		entry->initialized = false;
 
 		/* Initialize the segment. */
 		seg = dsm_create(size, 0);
@@ -228,13 +230,21 @@ GetNamedDSMSegment(const char *name, size_t size,
 
 		if (init_callback)
 			(*init_callback) (ret);
+
+		entry->initialized = true;
 	}
 	else if (entry->type != DSMR_ENTRY_TYPE_DSM)
 		ereport(ERROR,
-				(errmsg("requested DSM segment does not match type of existing entry")));
+				(errmsg("requested DSM segment \"%s\" does not match type of existing entry",
+						name)));
+	else if (!entry->initialized)
+		ereport(ERROR,
+				(errmsg("requested DSM segment \"%s\" failed initialization",
+						name)));
 	else if (entry->dsm.size != size)
 		ereport(ERROR,
-				(errmsg("requested DSM segment size does not match size of existing segment")));
+				(errmsg("requested DSM segment \"%s\" does not match size of existing entry",
+						name)));
 	else
 	{
 		NamedDSMState *state = &entry->dsm;
@@ -297,6 +307,7 @@ GetNamedDSA(const char *name, bool *found)
 		NamedDSAState *state = &entry->dsa;
 
 		entry->type = DSMR_ENTRY_TYPE_DSA;
+		entry->initialized = false;
 
 		/* Initialize the LWLock tranche for the DSA. */
 		state->tranche = LWLockNewTrancheId(name);
@@ -308,10 +319,17 @@ GetNamedDSA(const char *name, bool *found)
 
 		/* Store handle for other backends to use. */
 		state->handle = dsa_get_handle(ret);
+
+		entry->initialized = true;
 	}
 	else if (entry->type != DSMR_ENTRY_TYPE_DSA)
 		ereport(ERROR,
-				(errmsg("requested DSA does not match type of existing entry")));
+				(errmsg("requested DSA \"%s\" does not match type of existing entry",
+						name)));
+	else if (!entry->initialized)
+		ereport(ERROR,
+				(errmsg("requested DSA \"%s\" failed initialization",
+						name)));
 	else
 	{
 		NamedDSAState *state = &entry->dsa;
@@ -372,6 +390,7 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 		dsa_area   *dsa;
 
 		entry->type = DSMR_ENTRY_TYPE_DSH;
+		entry->initialized = false;
 
 		/* Initialize the LWLock tranche for the hash table. */
 		dsh_state->tranche = LWLockNewTrancheId(name);
@@ -389,10 +408,17 @@ GetNamedDSHash(const char *name, const dshash_parameters *params, bool *found)
 		/* Store handles for other backends to use. */
 		dsh_state->dsa_handle = dsa_get_handle(dsa);
 		dsh_state->dsh_handle = dshash_get_hash_table_handle(ret);
+
+		entry->initialized = true;
 	}
 	else if (entry->type != DSMR_ENTRY_TYPE_DSH)
 		ereport(ERROR,
-				(errmsg("requested DSHash does not match type of existing entry")));
+				(errmsg("requested DSHash \"%s\" does not match type of existing entry",
+						name)));
+	else if (!entry->initialized)
+		ereport(ERROR,
+				(errmsg("requested DSHash \"%s\" failed initialization",
+						name)));
 	else
 	{
 		NamedDSHState *dsh_state = &entry->dsh;
