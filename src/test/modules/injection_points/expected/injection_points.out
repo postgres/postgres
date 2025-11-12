@@ -308,14 +308,27 @@ SELECT injection_points_detach('TestConditionLocal1');
 (1 row)
 
 -- Function variant for attach.
+SELECT injection_points_attach(repeat('a', 64), 'injection_points',
+  'injection_notice', NULL);
+ERROR:  injection point name aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa too long (maximum of 63 characters)
+SELECT injection_points_attach('TestInjectionNoticeFunc', repeat('a', 128),
+  'injection_notice', NULL);
+ERROR:  injection point library aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa too long (maximum of 127 characters)
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  repeat('a', 128), NULL);
+ERROR:  injection point function aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa too long (maximum of 127 characters)
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  'injection_notice', repeat('a', 1025)::bytea);
+ERROR:  injection point data too long (maximum of 1024 bytes)
 SELECT injection_points_attach(NULL, NULL, NULL, NULL);
 ERROR:  injection point name cannot be NULL
-SELECT injection_points_attach('injection_points', NULL, NULL, NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', NULL, NULL, NULL);
 ERROR:  injection point library cannot be NULL
-SELECT injection_points_attach('injection_points', 'injection_notice', NULL, NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  NULL, NULL);
 ERROR:  injection point function cannot be NULL
-SELECT injection_points_attach('TestInjectionNoticeFunc',
-  'injection_points', 'injection_notice', NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  'injection_notice', NULL);
  injection_points_attach 
 -------------------------
  

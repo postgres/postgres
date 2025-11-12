@@ -89,11 +89,20 @@ SELECT injection_points_attach('TestConditionLocal1', 'error');
 SELECT injection_points_detach('TestConditionLocal1');
 
 -- Function variant for attach.
+SELECT injection_points_attach(repeat('a', 64), 'injection_points',
+  'injection_notice', NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', repeat('a', 128),
+  'injection_notice', NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  repeat('a', 128), NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  'injection_notice', repeat('a', 1025)::bytea);
 SELECT injection_points_attach(NULL, NULL, NULL, NULL);
-SELECT injection_points_attach('injection_points', NULL, NULL, NULL);
-SELECT injection_points_attach('injection_points', 'injection_notice', NULL, NULL);
-SELECT injection_points_attach('TestInjectionNoticeFunc',
-  'injection_points', 'injection_notice', NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', NULL, NULL, NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  NULL, NULL);
+SELECT injection_points_attach('TestInjectionNoticeFunc', 'injection_points',
+  'injection_notice', NULL);
 SELECT point_name, library, function FROM injection_points_list()
   ORDER BY point_name COLLATE "C";
 SELECT injection_points_run('TestInjectionNoticeFunc', NULL); -- notice
