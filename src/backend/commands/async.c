@@ -446,7 +446,7 @@ static double asyncQueueUsage(void);
 static void asyncQueueFillWarning(void);
 static void SignalBackends(void);
 static void asyncQueueReadAllNotifications(void);
-static bool asyncQueueProcessPageEntries(volatile QueuePosition *current,
+static bool asyncQueueProcessPageEntries(QueuePosition *current,
 										 QueuePosition stop,
 										 char *page_buffer,
 										 Snapshot snapshot);
@@ -1850,7 +1850,7 @@ ProcessNotifyInterrupt(bool flush)
 static void
 asyncQueueReadAllNotifications(void)
 {
-	volatile QueuePosition pos;
+	QueuePosition pos;
 	QueuePosition head;
 	Snapshot	snapshot;
 
@@ -1920,15 +1920,24 @@ asyncQueueReadAllNotifications(void)
 	 * It is possible that we fail while trying to send a message to our
 	 * frontend (for example, because of encoding conversion failure).  If
 	 * that happens it is critical that we not try to send the same message
-	 * over and over again.  Therefore, we place a PG_TRY block here that will
-	 * forcibly advance our queue position before we lose control to an error.
-	 * (We could alternatively retake NotifyQueueLock and move the position
-	 * before handling each individual message, but that seems like too much
-	 * lock traffic.)
+	 * over and over again.  Therefore, we set ExitOnAnyError to upgrade any
+	 * ERRORs to FATAL, causing the client connection to be closed on error.
+	 *
+	 * We used to only skip over the offending message and try to soldier on,
+	 * but it was somewhat questionable to lose a notification and give the
+	 * client an ERROR instead.  A client application is not be prepared for
+	 * that and can't tell that a notification was missed.  It was also not
+	 * very useful in practice because notifications are often processed while
+	 * a connection is idle and reading a message from the client, and in that
+	 * state, any error is upgraded to FATAL anyway.  Closing the connection
+	 * is a clear signal to the application that it might have missed
+	 * notifications.
 	 */
-	PG_TRY();
 	{
+		bool		save_ExitOnAnyError = ExitOnAnyError;
 		bool		reachedStop;
+
+		ExitOnAnyError = true;
 
 		do
 		{
@@ -1982,15 +1991,14 @@ asyncQueueReadAllNotifications(void)
 													   page_buffer.buf,
 													   snapshot);
 		} while (!reachedStop);
-	}
-	PG_FINALLY();
-	{
+
 		/* Update shared state */
 		LWLockAcquire(NotifyQueueLock, LW_SHARED);
 		QUEUE_BACKEND_POS(MyProcNumber) = pos;
 		LWLockRelease(NotifyQueueLock);
+
+		ExitOnAnyError = save_ExitOnAnyError;
 	}
-	PG_END_TRY();
 
 	/* Done with snapshot */
 	UnregisterSnapshot(snapshot);
@@ -2013,7 +2021,7 @@ asyncQueueReadAllNotifications(void)
  * The QueuePosition *current is advanced past all processed messages.
  */
 static bool
-asyncQueueProcessPageEntries(volatile QueuePosition *current,
+asyncQueueProcessPageEntries(QueuePosition *current,
 							 QueuePosition stop,
 							 char *page_buffer,
 							 Snapshot snapshot)
