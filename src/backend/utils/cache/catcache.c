@@ -829,7 +829,7 @@ ResetCatalogCachesExt(bool debug_discard)
  *	kinds of trouble if a cache flush occurs while loading cache entries.
  *	We now avoid the need to do it by copying cc_tupdesc out of the relcache,
  *	rather than relying on the relcache to keep a tupdesc for us.  Of course
- *	this assumes the tupdesc of a cachable system table will not change...)
+ *	this assumes the tupdesc of a cacheable system table will not change...)
  */
 void
 CatalogCacheFlushCatalog(Oid catId)
