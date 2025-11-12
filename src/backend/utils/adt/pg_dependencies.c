@@ -39,7 +39,7 @@ pg_dependencies_in(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_dependencies		- output routine for type pg_dependencies.
+ * pg_dependencies_out		- output routine for type pg_dependencies.
  */
 Datum
 pg_dependencies_out(PG_FUNCTION_ARGS)

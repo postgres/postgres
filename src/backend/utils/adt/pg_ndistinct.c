@@ -37,7 +37,7 @@ pg_ndistinct_in(PG_FUNCTION_ARGS)
 }
 
 /*
- * pg_ndistinct
+ * pg_ndistinct_out
  *		output routine for type pg_ndistinct
  *
  * Produces a human-readable representation of the value.
