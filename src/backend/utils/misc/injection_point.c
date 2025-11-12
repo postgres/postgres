@@ -283,16 +283,16 @@ InjectionPointAttach(const char *name,
 	int			free_idx;
 
 	if (strlen(name) >= INJ_NAME_MAXLEN)
-		elog(ERROR, "injection point name %s too long (maximum of %u)",
-			 name, INJ_NAME_MAXLEN);
+		elog(ERROR, "injection point name %s too long (maximum of %u characters)",
+			 name, INJ_NAME_MAXLEN - 1);
 	if (strlen(library) >= INJ_LIB_MAXLEN)
-		elog(ERROR, "injection point library %s too long (maximum of %u)",
-			 library, INJ_LIB_MAXLEN);
+		elog(ERROR, "injection point library %s too long (maximum of %u characters)",
+			 library, INJ_LIB_MAXLEN - 1);
 	if (strlen(function) >= INJ_FUNC_MAXLEN)
-		elog(ERROR, "injection point function %s too long (maximum of %u)",
-			 function, INJ_FUNC_MAXLEN);
-	if (private_data_size >= INJ_PRIVATE_MAXLEN)
-		elog(ERROR, "injection point data too long (maximum of %u)",
+		elog(ERROR, "injection point function %s too long (maximum of %u characters)",
+			 function, INJ_FUNC_MAXLEN - 1);
+	if (private_data_size > INJ_PRIVATE_MAXLEN)
+		elog(ERROR, "injection point data too long (maximum of %u bytes)",
 			 INJ_PRIVATE_MAXLEN);
 
 	/*
