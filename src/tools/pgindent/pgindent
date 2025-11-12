@@ -245,14 +245,6 @@ sub pre_indent
 	# Protect wrapping in CATALOG()
 	$source =~ s!^(CATALOG\(.*)$!/*$1*/!gm;
 
-	# Treat a CURL_IGNORE_DEPRECATION() as braces for the purposes of
-	# indentation. (The recursive regex comes from the perlre documentation; it
-	# matches balanced parentheses as group $1 and the contents as group $2.)
-	my $curlopen = '{ /* CURL_IGNORE_DEPRECATION */';
-	my $curlclose = '} /* CURL_IGNORE_DEPRECATION */';
-	$source =~
-	  s!^[ \t]+CURL_IGNORE_DEPRECATION(\(((?:(?>[^()]+)|(?1))*)\))!$curlopen$2$curlclose!gms;
-
 	return $source;
 }
 
@@ -266,12 +258,6 @@ sub post_indent
 	# Put back braces for extern "C"
 	$source =~ s!^/\* Open extern "C" \*/$!{!gm;
 	$source =~ s!^/\* Close extern "C" \*/$!}!gm;
-
-	# Restore the CURL_IGNORE_DEPRECATION() macro, keeping in mind that our
-	# markers may have been re-indented.
-	$source =~
-	  s!{[ \t]+/\* CURL_IGNORE_DEPRECATION \*/!CURL_IGNORE_DEPRECATION(!gm;
-	$source =~ s!}[ \t]+/\* CURL_IGNORE_DEPRECATION \*/!)!gm;
 
 	## Comments
 

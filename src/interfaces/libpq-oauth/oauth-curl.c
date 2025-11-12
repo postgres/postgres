@@ -1920,6 +1920,12 @@ start_request(struct async_ctx *actx)
 #endif
 
 /*
+ * Add another macro layer that inserts the needed semicolon, to avoid having
+ * to write a literal semicolon in the call below, which would break pgindent.
+ */
+#define PG_CURL_IGNORE_DEPRECATION(x) CURL_IGNORE_DEPRECATION(x;)
+
+/*
  * Drives the multi handle towards completion. The caller should have already
  * set up an asynchronous request via start_request().
  */
@@ -1948,11 +1954,10 @@ drive_request(struct async_ctx *actx)
 		 * to remove or break this API, so ignore the deprecation. See
 		 *
 		 *    https://curl.se/mail/lib-2024-11/0028.html
-		 *
 		 */
-		CURL_IGNORE_DEPRECATION(
-			err = curl_multi_socket_all(actx->curlm, &actx->running);
-		)
+		PG_CURL_IGNORE_DEPRECATION(err =
+								   curl_multi_socket_all(actx->curlm,
+														 &actx->running));
 
 		if (err)
 		{
