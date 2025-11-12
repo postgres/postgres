@@ -13,25 +13,35 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "storage/dsm_registry.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
 #include "utils/resowner.h"
 
 PG_MODULE_MAGIC;
 
+static void
+init_tranche(void *ptr)
+{
+	int		   *tranche_id = (int *) ptr;
+
+	*tranche_id = LWLockNewTrancheId("test_dsa");
+}
+
 /* Test basic DSA functionality */
 PG_FUNCTION_INFO_V1(test_dsa_basic);
 Datum
 test_dsa_basic(PG_FUNCTION_ARGS)
 {
-	int			tranche_id;
+	int		   *tranche_id;
+	bool		found;
 	dsa_area   *a;
 	dsa_pointer p[100];
 
-	/* XXX: this tranche is leaked */
-	tranche_id = LWLockNewTrancheId("test_dsa");
+	tranche_id = GetNamedDSMSegment("test_dsa", sizeof(int),
+									init_tranche, &found);
 
-	a = dsa_create(tranche_id);
+	a = dsa_create(*tranche_id);
 	for (int i = 0; i < 100; i++)
 	{
 		p[i] = dsa_allocate(a, 1000);
@@ -62,17 +72,18 @@ PG_FUNCTION_INFO_V1(test_dsa_resowners);
 Datum
 test_dsa_resowners(PG_FUNCTION_ARGS)
 {
-	int			tranche_id;
+	int		   *tranche_id;
+	bool		found;
 	dsa_area   *a;
 	dsa_pointer p[10000];
 	ResourceOwner oldowner;
 	ResourceOwner childowner;
 
-	/* XXX: this tranche is leaked */
-	tranche_id = LWLockNewTrancheId("test_dsa");
+	tranche_id = GetNamedDSMSegment("test_dsa", sizeof(int),
+									init_tranche, &found);
 
 	/* Create DSA in parent resource owner */
-	a = dsa_create(tranche_id);
+	a = dsa_create(*tranche_id);
 
 	/*
 	 * Switch to child resource owner, and do a bunch of allocations in the
