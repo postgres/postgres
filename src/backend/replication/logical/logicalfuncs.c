@@ -129,7 +129,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		upto_lsn = PG_GETARG_LSN(1);
 
 	if (PG_ARGISNULL(2))
-		upto_nchanges = InvalidXLogRecPtr;
+		upto_nchanges = 0;
 	else
 		upto_nchanges = PG_GETARG_INT32(2);
 
