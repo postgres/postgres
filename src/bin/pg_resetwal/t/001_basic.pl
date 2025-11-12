@@ -119,10 +119,12 @@ command_fails_like(
 	[ 'pg_resetwal', '-m' => '10,bar', $node->data_dir ],
 	qr/error: invalid argument for option -m/,
 	'fails with incorrect -m option part 2');
-command_fails_like(
-	[ 'pg_resetwal', '-m' => '0,10', $node->data_dir ],
-	qr/must not be 0/,
-	'fails with -m value 0 part 1');
+
+# This used to be forbidden, but nextMulti can legitimately be 0 after
+# wraparound, so we now accept it in pg_resetwal too.
+command_ok([ 'pg_resetwal', '-m' => '0,10', $node->data_dir ],
+	'succeeds with -m value 0 part 1');
+
 command_fails_like(
 	[ 'pg_resetwal', '-m' => '10,0', $node->data_dir ],
 	qr/must not be 0/,
@@ -143,7 +145,7 @@ command_fails_like(
 	'fails with incorrect -O option');
 command_fails_like(
 	[ 'pg_resetwal', '-O' => '-1', $node->data_dir ],
-	qr/must not be -1/,
+	qr/must be between 0 and 4294967295/,
 	'fails with -O value -1');
 # --wal-segsize
 command_fails_like(
