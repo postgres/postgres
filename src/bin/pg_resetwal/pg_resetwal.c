@@ -69,8 +69,10 @@ static TransactionId set_xid = 0;
 static TransactionId set_oldest_commit_ts_xid = 0;
 static TransactionId set_newest_commit_ts_xid = 0;
 static Oid	set_oid = 0;
+static bool mxid_given = false;
 static MultiXactId set_mxid = 0;
-static MultiXactOffset set_mxoff = (MultiXactOffset) -1;
+static bool mxoff_given = false;
+static MultiXactOffset set_mxoff = 0;
 static TimeLineID minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 static int	WalSegSz;
@@ -114,6 +116,7 @@ main(int argc, char *argv[])
 	MultiXactId set_oldestmxid = 0;
 	char	   *endptr;
 	char	   *endptr2;
+	int64		tmpi64;
 	char	   *DataDir = NULL;
 	char	   *log_fname = NULL;
 	int			fd;
@@ -250,8 +253,6 @@ main(int argc, char *argv[])
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (set_mxid == 0)
-					pg_fatal("multitransaction ID (-m) must not be 0");
 
 				/*
 				 * XXX It'd be nice to have more sanity checks here, e.g. so
@@ -259,19 +260,23 @@ main(int argc, char *argv[])
 				 */
 				if (set_oldestmxid == 0)
 					pg_fatal("oldest multitransaction ID (-m) must not be 0");
+				mxid_given = true;
 				break;
 
 			case 'O':
 				errno = 0;
-				set_mxoff = strtoul(optarg, &endptr, 0);
+				tmpi64 = strtoi64(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-O");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (set_mxoff == -1)
-					pg_fatal("multitransaction offset (-O) must not be -1");
+				if (tmpi64 < 0 || tmpi64 > (int64) MaxMultiXactOffset)
+					pg_fatal("multitransaction offset (-O) must be between 0 and %u", MaxMultiXactOffset);
+
+				set_mxoff = (MultiXactOffset) tmpi64;
+				mxoff_given = true;
 				break;
 
 			case 'l':
@@ -430,7 +435,7 @@ main(int argc, char *argv[])
 	if (set_oid != 0)
 		ControlFile.checkPointCopy.nextOid = set_oid;
 
-	if (set_mxid != 0)
+	if (mxid_given)
 	{
 		ControlFile.checkPointCopy.nextMulti = set_mxid;
 
@@ -440,7 +445,7 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.oldestMultiDB = InvalidOid;
 	}
 
-	if (set_mxoff != -1)
+	if (mxoff_given)
 		ControlFile.checkPointCopy.nextMultiOffset = set_mxoff;
 
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
@@ -790,7 +795,7 @@ PrintNewControlValues(void)
 				 newXlogSegNo, WalSegSz);
 	printf(_("First log segment after reset:        %s\n"), fname);
 
-	if (set_mxid != 0)
+	if (mxid_given)
 	{
 		printf(_("NextMultiXactId:                      %u\n"),
 			   ControlFile.checkPointCopy.nextMulti);
@@ -800,7 +805,7 @@ PrintNewControlValues(void)
 			   ControlFile.checkPointCopy.oldestMultiDB);
 	}
 
-	if (set_mxoff != -1)
+	if (mxoff_given)
 	{
 		printf(_("NextMultiOffset:                      %u\n"),
 			   ControlFile.checkPointCopy.nextMultiOffset);
