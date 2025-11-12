@@ -39,6 +39,7 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
+#include "commands/async.h"
 #include "commands/cluster.h"
 #include "commands/defrem.h"
 #include "commands/vacuum.h"
@@ -1839,6 +1840,12 @@ vac_truncate_clog(TransactionId frozenXID,
 		LWLockRelease(WrapLimitsVacuumLock);
 		return;
 	}
+
+	/*
+	 * Freeze any old transaction IDs in the async notification queue before
+	 * CLOG truncation.
+	 */
+	AsyncNotifyFreezeXids(frozenXID);
 
 	/*
 	 * Advance the oldest value for commit timestamps before truncating, so
