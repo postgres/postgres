@@ -1270,7 +1270,8 @@ static const char *const sql_commands[] = {
 	"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
 	"RESET", "REVOKE", "ROLLBACK",
 	"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
-	"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES", "WITH",
+	"TABLE", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", "VALUES",
+	"WAIT FOR", "WITH",
 	NULL
 };
 
@@ -5309,6 +5310,40 @@ match_previous_words(int pattern_id,
 		COMPLETE_WITH_ATTR(prev2_wd);
 	else if (HeadMatches("VACUUM"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_vacuumables);
+
+/*
+ * WAIT FOR LSN '<lsn>' [ WITH ( option [, ...] ) ]
+ * where option can be:
+ *   TIMEOUT '<timeout>'
+ *   NO_THROW
+ */
+	else if (Matches("WAIT"))
+		COMPLETE_WITH("FOR");
+	else if (Matches("WAIT", "FOR"))
+		COMPLETE_WITH("LSN");
+	else if (Matches("WAIT", "FOR", "LSN"))
+		/* No completion for LSN value - user must provide manually */
+		;
+	else if (Matches("WAIT", "FOR", "LSN", MatchAny))
+		COMPLETE_WITH("WITH");
+	else if (Matches("WAIT", "FOR", "LSN", MatchAny, "WITH"))
+		COMPLETE_WITH("(");
+	else if (HeadMatches("WAIT", "FOR", "LSN", MatchAny, "WITH", "(*") &&
+			 !HeadMatches("WAIT", "FOR", "LSN", MatchAny, "WITH", "(*)"))
+	{
+		/*
+		 * This fires if we're in an unfinished parenthesized option list.
+		 * get_previous_words treats a completed parenthesized option list as
+		 * one word, so the above test is correct.
+		 */
+		if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			COMPLETE_WITH("timeout", "no_throw");
+
+		/*
+		 * timeout takes a string value, no_throw takes no value. We don't
+		 * offer completions for these values.
+		 */
+	}
 
 /* WITH [RECURSIVE] */
 
