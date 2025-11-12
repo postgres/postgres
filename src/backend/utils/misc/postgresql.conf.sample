@@ -230,7 +230,7 @@
 #wal_skip_threshold = 2MB
 
 #commit_delay = 0			# range 0-100000, in microseconds
-#commit_siblings = 5			# range 1-1000
+#commit_siblings = 5			# range 0-1000
 
 # - Checkpoints -
 
