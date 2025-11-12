@@ -315,66 +315,12 @@ Datum
 pg_tablespace_location(PG_FUNCTION_ARGS)
 {
 	Oid			tablespaceOid = PG_GETARG_OID(0);
-	char		sourcepath[MAXPGPATH];
-	char		targetpath[MAXPGPATH];
-	int			rllen;
-	struct stat st;
+	char	   *tablespaceLoc;
 
-	/*
-	 * It's useful to apply this function to pg_class.reltablespace, wherein
-	 * zero means "the database's default tablespace".  So, rather than
-	 * throwing an error for zero, we choose to assume that's what is meant.
-	 */
-	if (tablespaceOid == InvalidOid)
-		tablespaceOid = MyDatabaseTableSpace;
+	/* Get LOCATION string from its OID */
+	tablespaceLoc = get_tablespace_location(tablespaceOid);
 
-	/*
-	 * Return empty string for the cluster's default tablespaces
-	 */
-	if (tablespaceOid == DEFAULTTABLESPACE_OID ||
-		tablespaceOid == GLOBALTABLESPACE_OID)
-		PG_RETURN_TEXT_P(cstring_to_text(""));
-
-	/*
-	 * Find the location of the tablespace by reading the symbolic link that
-	 * is in pg_tblspc/<oid>.
-	 */
-	snprintf(sourcepath, sizeof(sourcepath), "%s/%u", PG_TBLSPC_DIR, tablespaceOid);
-
-	/*
-	 * Before reading the link, check if the source path is a link or a
-	 * junction point.  Note that a directory is possible for a tablespace
-	 * created with allow_in_place_tablespaces enabled.  If a directory is
-	 * found, a relative path to the data directory is returned.
-	 */
-	if (lstat(sourcepath, &st) < 0)
-	{
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not stat file \"%s\": %m",
-						sourcepath)));
-	}
-
-	if (!S_ISLNK(st.st_mode))
-		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
-
-	/*
-	 * In presence of a link or a junction point, return the path pointing to.
-	 */
-	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
-	if (rllen < 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read symbolic link \"%s\": %m",
-						sourcepath)));
-	if (rllen >= sizeof(targetpath))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("symbolic link \"%s\" target is too long",
-						sourcepath)));
-	targetpath[rllen] = '\0';
-
-	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
+	PG_RETURN_TEXT_P(cstring_to_text(tablespaceLoc));
 }
 
 /*
