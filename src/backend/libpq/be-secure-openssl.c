@@ -87,8 +87,14 @@ static bool ssl_is_server_start;
 static int	ssl_protocol_version_to_openssl(int v);
 static const char *ssl_protocol_version_to_string(int v);
 
-/* for passing data back from verify_cb() */
-static const char *cert_errdetail;
+struct CallbackErr
+{
+	/*
+	 * Storage for passing certificate verification error logging from the
+	 * callback.
+	 */
+	char	   *cert_errdetail;
+};
 
 /* ------------------------------------------------------------ */
 /*						 Public interface						*/
@@ -443,6 +449,7 @@ be_tls_open_server(Port *port)
 	int			waitfor;
 	unsigned long ecode;
 	bool		give_proto_hint;
+	static struct CallbackErr err_context;
 
 	Assert(!port->ssl);
 	Assert(!port->peer);
@@ -477,6 +484,10 @@ be_tls_open_server(Port *port)
 						SSLerrmessage(ERR_get_error()))));
 		return -1;
 	}
+
+	err_context.cert_errdetail = NULL;
+	SSL_set_ex_data(port->ssl, 0, &err_context);
+
 	port->ssl_in_use = true;
 
 aloop:
@@ -576,7 +587,7 @@ aloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("could not accept SSL connection: %s",
 								SSLerrmessage(ecode)),
-						 cert_errdetail ? errdetail_internal("%s", cert_errdetail) : 0,
+						 err_context.cert_errdetail ? errdetail_internal("%s", err_context.cert_errdetail) : 0,
 						 give_proto_hint ?
 						 errhint("This may indicate that the client does not support any SSL protocol version between %s and %s.",
 								 ssl_min_protocol_version ?
@@ -585,7 +596,8 @@ aloop:
 								 ssl_max_protocol_version ?
 								 ssl_protocol_version_to_string(ssl_max_protocol_version) :
 								 MAX_OPENSSL_TLS_VERSION) : 0));
-				cert_errdetail = NULL;
+				if (err_context.cert_errdetail)
+					pfree(err_context.cert_errdetail);
 				break;
 			case SSL_ERROR_ZERO_RETURN:
 				ereport(COMMERROR,
@@ -1209,6 +1221,8 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	const char *errstring;
 	StringInfoData str;
 	X509	   *cert;
+	SSL		   *ssl;
+	struct CallbackErr *cb_err;
 
 	if (ok)
 	{
@@ -1220,6 +1234,13 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	depth = X509_STORE_CTX_get_error_depth(ctx);
 	errcode = X509_STORE_CTX_get_error(ctx);
 	errstring = X509_verify_cert_error_string(errcode);
+
+	/*
+	 * Extract the current SSL and CallbackErr object to use for passing error
+	 * detail back from the callback.
+	 */
+	ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+	cb_err = (struct CallbackErr *) SSL_get_ex_data(ssl, 0);
 
 	initStringInfo(&str);
 	appendStringInfo(&str,
@@ -1271,7 +1292,7 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 	}
 
 	/* Store our detail message to be logged later. */
-	cert_errdetail = str.data;
+	cb_err->cert_errdetail = str.data;
 
 	return ok;
 }
