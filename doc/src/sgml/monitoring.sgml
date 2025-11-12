@@ -2045,8 +2045,9 @@ description | Waiting for a newly initialized WAL file to reach durable storage
       </para>
       <para>
        Type of the subscription worker process.  Possible types are
-       <literal>apply</literal>, <literal>parallel apply</literal>, and
-       <literal>table synchronization</literal>.
+       <literal>apply</literal>, <literal>parallel apply</literal>,
+       <literal>table synchronization</literal>, and
+       <literal>sequence synchronization</literal>.
       </para></entry>
      </row>
 

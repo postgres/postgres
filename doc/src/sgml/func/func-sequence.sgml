@@ -143,6 +143,34 @@ SELECT setval('myseq', 42, false);    <lineannotation>Next <function>nextval</fu
         or <literal>SELECT</literal> privilege on the last used sequence.
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry" id="func-pg-get-sequence-data"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_sequence_data</primary>
+        </indexterm>
+        <function>pg_get_sequence_data</function> ( <type>regclass</type> )
+        <returnvalue>record</returnvalue>
+        ( <parameter>last_value</parameter> <type>bigint</type>,
+        <parameter>is_called</parameter> <type>bool</type>,
+         <parameter>page_lsn</parameter> <type>pg_lsn</type> )
+       </para>
+       <para>
+        Returns information about the sequence.
+        <structfield>last_value</structfield> is the last sequence value
+        written to disk. If caching is used, this value can be greater than the
+        last value handed out from the sequence.
+        <structfield>is_called</structfield> indicates whether the sequence has
+        been used. <structfield>page_lsn</structfield> is the LSN corresponding
+        to the most recent WAL record that modified this sequence relation.
+       </para>
+       <para>
+        This function is primarily intended for internal use by pg_dump and by
+        logical replication to synchronize sequences. It requires
+        <literal>USAGE</literal> or <literal>SELECT</literal> privilege on the
+        sequence.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

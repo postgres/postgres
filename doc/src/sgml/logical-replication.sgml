@@ -113,7 +113,9 @@
    Publications may currently only contain tables or sequences. Objects must be
    added explicitly, except when a publication is created using
    <literal>FOR TABLES IN SCHEMA</literal>, <literal>FOR ALL TABLES</literal>,
-   or <literal>FOR ALL SEQUENCES</literal>.
+   or <literal>FOR ALL SEQUENCES</literal>. Unlike tables, sequences can be
+   synchronized at any time. For more information, see
+   <xref linkend="logical-replication-sequences"/>.
   </para>
 
   <para>
@@ -1745,6 +1747,247 @@ Publications:
   </note>
  </sect1>
 
+ <sect1 id="logical-replication-sequences">
+  <title>Replicating Sequences</title>
+
+  <para>
+   To synchronize sequences from a publisher to a subscriber, first publish
+   them using <link linkend="sql-createpublication-params-for-all-sequences">
+   <command>CREATE PUBLICATION ... FOR ALL SEQUENCES</command></link> and then
+   on the subscriber:
+  </para>
+
+  <para>
+   <itemizedlist>
+    <listitem>
+     <para>
+      use <link linkend="sql-createsubscription"><command>CREATE SUBSCRIPTION</command></link>
+      to initially synchronize the published sequences.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      use <link linkend="sql-altersubscription-params-refresh-publication">
+      <command>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</command></link>
+      to synchronize only newly added sequences.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      use <link linkend="sql-altersubscription-params-refresh-sequences">
+      <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>
+      to re-synchronize all sequences currently known to the subscription.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   A <firstterm>sequence synchronization worker</firstterm> will be started
+   after executing any of the above subscriber commands, and will exit once the
+   sequences are synchronized.
+  </para>
+  <para>
+   The ability to launch a sequence synchronization worker is limited by the
+   <link linkend="guc-max-sync-workers-per-subscription">
+   <varname>max_sync_workers_per_subscription</varname></link>
+   configuration.
+  </para>
+
+  <sect2 id="sequence-definition-mismatches">
+   <title>Sequence Definition Mismatches</title>
+   <para>
+    The sequence synchronization worker validates that sequence definitions
+    match between publisher and subscriber. If mismatches exist, the worker
+    logs an error identifying them and exits. The apply worker continues
+    respawning the sequence synchronization worker until synchronization
+    succeeds. See also
+    <link linkend="guc-wal-retrieve-retry-interval"><varname>wal_retrieve_retry_interval</varname></link>.
+   </para>
+   <para>
+    To resolve this, use
+    <link linkend="sql-altersequence"><command>ALTER SEQUENCE</command></link>
+    to align the subscriber's sequence parameters with those of the publisher.
+   </para>
+  </sect2>
+
+  <sect2 id="sequences-out-of-sync">
+   <title>Refreshing Out-of-Sync Sequences</title>
+   <para>
+    Subscriber sequence values will become out of sync as the publisher
+    advances them.
+   </para>
+   <para>
+    To detect this, compare the
+    <link linkend="catalog-pg-subscription-rel">pg_subscription_rel</link>.<structfield>srsublsn</structfield>
+    on the subscriber with the <structfield>page_lsn</structfield> obtained
+    from the <link linkend="func-pg-get-sequence-data"><function>pg_get_sequence_data</function></link>
+    function for the sequence on the publisher. Then run
+    <link linkend="sql-altersubscription-params-refresh-sequences">
+    <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link> to
+    re-synchronize if necessary.
+   </para>
+   <warning>
+    <para>
+     Each sequence caches a block of values (typically 32) in memory before
+     generating a new WAL record, so its LSN advances only after the entire
+     cached batch has been consumed. As a result, sequence value drift cannot
+     be detected by LSN comparison when sequence increments fall within the
+     same cached block (typically 32 values).
+    </para>
+   </warning>
+  </sect2>
+
+  <sect2 id="logical-replication-sequences-examples">
+   <title>Examples</title>
+
+   <para>
+    Create some sequences on the publisher.
+<programlisting>
+/* pub # */ CREATE SEQUENCE s1 START WITH 10 INCREMENT BY 1;
+/* pub # */ CREATE SEQUENCE s2 START WITH 100 INCREMENT BY 10;
+</programlisting></para>
+
+   <para>
+    Create the same sequences on the subscriber.
+<programlisting>
+/* sub # */ CREATE SEQUENCE s1 START WITH 10 INCREMENT BY 1;
+/* sub # */ CREATE SEQUENCE s2 START WITH 100 INCREMENT BY 10;
+</programlisting></para>
+
+   <para>
+    Advance the sequences on the publisher a few times.
+<programlisting>
+/* pub # */ SELECT nextval('s1');
+ nextval
+---------
+      10
+(1 row)
+/* pub # */ SELECT nextval('s1');
+ nextval
+---------
+      11
+(1 row)
+/* pub # */ SELECT nextval('s2');
+ nextval
+---------
+     100
+(1 row)
+/* pub # */ SELECT nextval('s2');
+ nextval
+---------
+     110
+(1 row)
+</programlisting></para>
+
+   <para>
+    Check the sequence page LSNs on the publisher.
+<programlisting>
+/* pub # */ SELECT * FROM pg_get_sequence_data('s1');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+         11 | t         | 0/0178F9E0
+(1 row)
+/* pub # */ SELECT * FROM pg_get_sequence_data('s2');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+        110 | t         | 0/0178FAB0
+(1 row)
+</programlisting></para>
+
+   <para>
+    Create a publication for the sequences.
+<programlisting>
+/* pub # */ CREATE PUBLICATION pub1 FOR ALL SEQUENCES;
+</programlisting></para>
+
+   <para>
+    Subscribe to the publication.
+<programlisting>
+/* sub # */ CREATE SUBSCRIPTION sub1
+/* sub - */ CONNECTION 'host=localhost dbname=test_pub application_name=sub1'
+/* sub - */ PUBLICATION pub1;
+</programlisting></para>
+
+   <para>
+    Verify that the initial sequence values are synchronized.
+<programlisting>
+/* sub # */ SELECT last_value, is_called FROM s1;
+ last_value | is_called
+------------+-----------
+         11 | t
+(1 row)
+
+/* sub # */ SELECT last_value, is_called FROM s2;
+ last_value | is_called
+------------+-----------
+        110 | t
+(1 row)
+</programlisting></para>
+
+   <para>
+    Confirm that the sequence page LSNs on the publisher have been recorded
+    on the subscriber.
+<programlisting>
+/* sub # */ SELECT srrelid::regclass, srsublsn FROM pg_subscription_rel;
+ srrelid |  srsublsn
+---------+------------
+ s1      | 0/0178F9E0
+ s2      | 0/0178FAB0
+(2 rows)
+</programlisting></para>
+
+   <para>
+    Advance the sequences on the publisher 50 more times.
+<programlisting>
+/* pub # */  SELECT nextval('s1') FROM generate_series(1,50);
+/* pub # */  SELECT nextval('s2') FROM generate_series(1,50);
+</programlisting></para>
+
+   <para>
+    Check the sequence page LSNs on the publisher.
+<programlisting>
+/* pub # */ SELECT * FROM pg_get_sequence_data('s1');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+         61 | t         | 0/017CED28
+(1 row)
+
+/* pub # */ SELECT * FROM pg_get_sequence_data('s2');
+ last_value | is_called |  page_lsn
+------------+-----------+------------
+        610 | t         | 0/017CEDF8
+(1 row)
+</programlisting></para>
+
+   <para>
+    The difference between the sequence page LSNs on the publisher and the
+    sequence page LSNs on the subscriber indicates that the sequences are out
+    of sync. Re-synchronize all sequences known to the subscriber using
+    <link linkend="sql-altersubscription-params-refresh-sequences">
+    <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.
+<programlisting>
+/* sub # */ ALTER SUBSCRIPTION sub1 REFRESH SEQUENCES;
+</programlisting></para>
+
+   <para>
+    Recheck the sequences on the subscriber.
+<programlisting>
+/* sub # */ SELECT last_value, is_called FROM s1;
+ last_value | is_called
+------------+-----------
+         61 | t
+(1 row)
+
+/* sub # */ SELECT last_value, is_called FROM s2;
+ last_value | is_called
+------------+-----------
+        610 | t
+(1 row)
+</programlisting></para>
+  </sect2>
+ </sect1>
+
  <sect1 id="logical-replication-conflicts">
   <title>Conflicts</title>
 
@@ -2090,16 +2333,19 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <listitem>
     <para>
-     Sequence data is not replicated.  The data in serial or identity columns
-     backed by sequences will of course be replicated as part of the table,
-     but the sequence itself would still show the start value on the
-     subscriber.  If the subscriber is used as a read-only database, then this
-     should typically not be a problem.  If, however, some kind of switchover
-     or failover to the subscriber database is intended, then the sequences
-     would need to be updated to the latest values, either by copying the
-     current data from the publisher (perhaps
-     using <command>pg_dump</command>) or by determining a sufficiently high
-     value from the tables themselves.
+     Incremental sequence changes are not replicated.  Although the data in
+     serial or identity columns backed by sequences will be replicated as part
+     of the table, the sequences themselves do not replicate ongoing changes.
+     On the subscriber, a sequence will retain the last value it synchronized
+     from the publisher. If the subscriber is used as a read-only database,
+     then this should typically not be a problem.  If, however, some kind of
+     switchover or failover to the subscriber database is intended, then the
+     sequences would need to be updated to the latest values, either by
+     executing <link linkend="sql-altersubscription-params-refresh-sequences">
+     <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>
+     or by copying the current data from the publisher (perhaps using
+     <command>pg_dump</command>) or by determining a sufficiently high value
+     from the tables themselves.
     </para>
    </listitem>
 
@@ -2290,9 +2536,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   </para>
 
   <para>
-   In order to be able to copy the initial table data, the role used for the
-   replication connection must have the <literal>SELECT</literal> privilege on
-   a published table (or be a superuser).
+   In order to be able to copy the initial table or sequence data, the role
+   used for the replication connection must have the <literal>SELECT</literal>
+   privilege on a published table or sequence (or be a superuser).
   </para>
 
   <para>
@@ -2303,8 +2549,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <para>
    To add tables to a publication, the user must have ownership rights on the
    table. To add all tables in schema to a publication, the user must be a
-   superuser. To create a publication that publishes all tables or all tables in
-   schema automatically, the user must be a superuser.
+   superuser. To create a publication that publishes all tables, all tables in
+   schema, or all sequences automatically, the user must be a superuser.
   </para>
 
   <para>
@@ -2329,8 +2575,11 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    privileges of the subscription owner. However, when performing an insert,
    update, delete, or truncate operation on a particular table, it will switch
    roles to the table owner and perform the operation with the table owner's
-   privileges. This means that the subscription owner needs to be able to
-   <literal>SET ROLE</literal> to each role that owns a replicated table.
+   privileges. Similarly, when synchronizing sequence data, it will switch to
+   the sequence owner's role and perform the operation using the sequence
+   owner's privileges. This means that the subscription owner needs to be able
+   to <literal>SET ROLE</literal> to each role that owns a replicated table or
+   sequence.
   </para>
 
   <para>
@@ -2423,8 +2672,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    <para>
     <link linkend="guc-max-logical-replication-workers"><varname>max_logical_replication_workers</varname></link>
     must be set to at least the number of subscriptions (for leader apply
-    workers), plus some reserve for the table synchronization workers and
-    parallel apply workers.
+    workers), plus some reserve for the parallel apply workers, and
+    table/sequence synchronization workers.
    </para>
 
    <para>
@@ -2437,8 +2686,9 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <para>
     <link linkend="guc-max-sync-workers-per-subscription"><varname>max_sync_workers_per_subscription</varname></link>
-     controls the amount of parallelism of the initial data copy during the
-     subscription initialization or when new tables are added.
+     controls how many tables can be synchronized in parallel during
+     subscription initialization or when new tables are added. One additional
+     worker is also needed for sequence synchronization.
    </para>
 
    <para>

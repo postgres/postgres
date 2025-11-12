@@ -196,6 +196,12 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
           <command>ALTER SUBSCRIPTION ... REFRESH SEQUENCES</command></link>.
          </para>
          <para>
+          See <xref linkend="sequence-definition-mismatches"/> for recommendations on how
+          to handle any warnings about sequence definition differences between
+          the publisher and the subscriber, which might occur when
+          <literal>copy_data = true</literal>.
+         </para>
+         <para>
           See <xref linkend="sql-createsubscription-notes"/> for details of
           how <literal>copy_data = true</literal> can interact with the
           <link linkend="sql-createsubscription-params-with-origin"><literal>origin</literal></link>
@@ -224,6 +230,15 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       <literal>REFRESH SEQUENCES</literal> will re-synchronize the sequence
       data for all currently subscribed sequences. It does not add or remove
       sequences from the subscription to match the publication.
+     </para>
+     <para>
+      See <xref linkend="sequence-definition-mismatches"/> for
+      recommendations on how to handle any warnings about sequence definition
+      differences between the publisher and the subscriber.
+     </para>
+     <para>
+      See <xref linkend="sequences-out-of-sync"/> for recommendations on how to
+      identify and handle out-of-sync sequences.
      </para>
     </listitem>
    </varlistentry>
