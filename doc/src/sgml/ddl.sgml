@@ -1719,6 +1719,8 @@ ALTER TABLE <replaceable>table_name</replaceable> OWNER TO <replaceable>new_owne
    Superusers can always do this; ordinary roles can only do it if they are
    both the current owner of the object (or a member of the owning role) and
    a member of the new owning role.
+   All object privileges of the old owner are transferred to the new owner
+   along with the ownership.
   </para>
 
   <para>
