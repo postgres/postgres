@@ -76,6 +76,7 @@ backend_sources += files(
   'oracle_compat.c',
   'orderedsetaggs.c',
   'partitionfuncs.c',
+  'pg_dependencies.c',
   'pg_locale.c',
   'pg_locale_builtin.c',
   'pg_locale_icu.c',
