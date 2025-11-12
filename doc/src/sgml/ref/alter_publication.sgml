@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> ADD <replaceable class="parameter">publication_object</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET <replaceable class="parameter">publication_object</replaceable> [, ...]
-ALTER PUBLICATION <replaceable class="parameter">name</replaceable> DROP <replaceable class="parameter">publication_object</replaceable> [, ...]
+ALTER PUBLICATION <replaceable class="parameter">name</replaceable> DROP <replaceable class="parameter">publication_drop_object</replaceable> [, ...]
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
@@ -31,6 +31,11 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
+    TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
+
+<phrase>where <replaceable class="parameter">publication_drop_object</replaceable> is one of:</phrase>
+
+    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ... ]
     TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
@@ -57,8 +62,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
    that were specified using
    <link linkend="sql-createpublication-params-for-table"><literal>FOR TABLE</literal></link>/
-   <literal>ADD TABLE</literal>, and the combination of <literal>DROP</literal>
-   with a <literal>WHERE</literal> clause is not allowed.
+   <literal>ADD TABLE</literal>.
   </para>
 
   <para>
