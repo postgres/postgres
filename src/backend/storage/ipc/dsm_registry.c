@@ -45,6 +45,7 @@ typedef struct DSMRegistryEntry
 	char		name[64];
 	dsm_handle	handle;
 	size_t		size;
+	bool		initialized;
 } DSMRegistryEntry;
 
 static const dshash_parameters dsh_params = {
@@ -158,8 +159,12 @@ GetNamedDSMSegment(const char *name, size_t size,
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
+		dsm_segment *seg;
+
+		entry->initialized = false;
+
 		/* Initialize the segment. */
-		dsm_segment *seg = dsm_create(size, 0);
+		seg = dsm_create(size, 0);
 
 		dsm_pin_segment(seg);
 		dsm_pin_mapping(seg);
@@ -169,13 +174,17 @@ GetNamedDSMSegment(const char *name, size_t size,
 
 		if (init_callback)
 			(*init_callback) (ret);
+
+		entry->initialized = true;
 	}
-	else if (entry->size != size)
-	{
+	else if (!entry->initialized)
 		ereport(ERROR,
-				(errmsg("requested DSM segment size does not match size of "
-						"existing segment")));
-	}
+				(errmsg("requested DSM segment \"%s\" failed initialization",
+						name)));
+	else if (entry->size != size)
+		ereport(ERROR,
+				(errmsg("requested DSM segment \"%s\" does not match size of existing entry",
+						name)));
 	else
 	{
 		dsm_segment *seg = dsm_find_mapping(entry->handle);
