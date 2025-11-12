@@ -85,6 +85,7 @@ OBJS = \
 	pg_locale_icu.o \
 	pg_locale_libc.o \
 	pg_lsn.o \
+	pg_ndistinct.o \
 	pg_upgrade_support.o \
 	pgstatfuncs.o \
 	pseudorandomfuncs.o \
