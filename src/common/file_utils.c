@@ -656,7 +656,7 @@ compute_remaining_iovec(struct iovec *destination,
  * error is returned, it is unspecified how much has been written.
  */
 ssize_t
-pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, pgoff_t offset)
 {
 	struct iovec iov_copy[PG_IOV_MAX];
 	ssize_t		sum = 0;
@@ -706,7 +706,7 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
  * is returned with errno set.
  */
 ssize_t
-pg_pwrite_zeros(int fd, size_t size, off_t offset)
+pg_pwrite_zeros(int fd, size_t size, pgoff_t offset)
 {
 	static const PGIOAlignedBlock zbuffer = {0};	/* worth BLCKSZ */
 	void	   *zerobuf_addr = unconstify(PGIOAlignedBlock *, &zbuffer)->data;

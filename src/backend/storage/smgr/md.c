@@ -487,7 +487,7 @@ void
 mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		 const void *buffer, bool skipFsync)
 {
-	off_t		seekpos;
+	pgoff_t		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
 
@@ -515,9 +515,9 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_CREATE);
 
-	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+	Assert(seekpos < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_EXTEND)) != BLCKSZ)
 	{
@@ -578,7 +578,7 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 	while (remblocks > 0)
 	{
 		BlockNumber segstartblock = curblocknum % ((BlockNumber) RELSEG_SIZE);
-		off_t		seekpos = (off_t) BLCKSZ * segstartblock;
+		pgoff_t		seekpos = (pgoff_t) BLCKSZ * segstartblock;
 		int			numblocks;
 
 		if (segstartblock + remblocks > RELSEG_SIZE)
@@ -607,7 +607,7 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 			int			ret;
 
 			ret = FileFallocate(v->mdfd_vfd,
-								seekpos, (off_t) BLCKSZ * numblocks,
+								seekpos, (pgoff_t) BLCKSZ * numblocks,
 								WAIT_EVENT_DATA_FILE_EXTEND);
 			if (ret != 0)
 			{
@@ -630,7 +630,7 @@ mdzeroextend(SMgrRelation reln, ForkNumber forknum,
 			 * whole length of the extension.
 			 */
 			ret = FileZero(v->mdfd_vfd,
-						   seekpos, (off_t) BLCKSZ * numblocks,
+						   seekpos, (pgoff_t) BLCKSZ * numblocks,
 						   WAIT_EVENT_DATA_FILE_EXTEND);
 			if (ret < 0)
 				ereport(ERROR,
@@ -745,7 +745,7 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 
 	while (nblocks > 0)
 	{
-		off_t		seekpos;
+		pgoff_t		seekpos;
 		MdfdVec    *v;
 		int			nblocks_this_segment;
 
@@ -754,9 +754,9 @@ mdprefetch(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		if (v == NULL)
 			return false;
 
-		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+		Assert(seekpos < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 		nblocks_this_segment =
 			Min(nblocks,
@@ -851,7 +851,7 @@ mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		struct iovec iov[PG_IOV_MAX];
 		int			iovcnt;
-		off_t		seekpos;
+		pgoff_t		seekpos;
 		int			nbytes;
 		MdfdVec    *v;
 		BlockNumber nblocks_this_segment;
@@ -861,9 +861,9 @@ mdreadv(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		v = _mdfd_getseg(reln, forknum, blocknum, false,
 						 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+		Assert(seekpos < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 		nblocks_this_segment =
 			Min(nblocks,
@@ -986,7 +986,7 @@ mdstartreadv(PgAioHandle *ioh,
 			 SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 			 void **buffers, BlockNumber nblocks)
 {
-	off_t		seekpos;
+	pgoff_t		seekpos;
 	MdfdVec    *v;
 	BlockNumber nblocks_this_segment;
 	struct iovec *iov;
@@ -996,9 +996,9 @@ mdstartreadv(PgAioHandle *ioh,
 	v = _mdfd_getseg(reln, forknum, blocknum, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-	seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-	Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+	Assert(seekpos < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 	nblocks_this_segment =
 		Min(nblocks,
@@ -1068,7 +1068,7 @@ mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	{
 		struct iovec iov[PG_IOV_MAX];
 		int			iovcnt;
-		off_t		seekpos;
+		pgoff_t		seekpos;
 		int			nbytes;
 		MdfdVec    *v;
 		BlockNumber nblocks_this_segment;
@@ -1078,9 +1078,9 @@ mdwritev(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		v = _mdfd_getseg(reln, forknum, blocknum, skipFsync,
 						 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
 
-		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		Assert(seekpos < (off_t) BLCKSZ * RELSEG_SIZE);
+		Assert(seekpos < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 		nblocks_this_segment =
 			Min(nblocks,
@@ -1173,7 +1173,7 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 	while (nblocks > 0)
 	{
 		BlockNumber nflush = nblocks;
-		off_t		seekpos;
+		pgoff_t		seekpos;
 		MdfdVec    *v;
 		int			segnum_start,
 					segnum_end;
@@ -1202,9 +1202,9 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 		Assert(nflush >= 1);
 		Assert(nflush <= nblocks);
 
-		seekpos = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+		seekpos = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-		FileWriteback(v->mdfd_vfd, seekpos, (off_t) BLCKSZ * nflush, WAIT_EVENT_DATA_FILE_FLUSH);
+		FileWriteback(v->mdfd_vfd, seekpos, (pgoff_t) BLCKSZ * nflush, WAIT_EVENT_DATA_FILE_FLUSH);
 
 		nblocks -= nflush;
 		blocknum += nflush;
@@ -1348,7 +1348,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum,
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
-			if (FileTruncate(v->mdfd_vfd, (off_t) lastsegblocks * BLCKSZ, WAIT_EVENT_DATA_FILE_TRUNCATE) < 0)
+			if (FileTruncate(v->mdfd_vfd, (pgoff_t) lastsegblocks * BLCKSZ, WAIT_EVENT_DATA_FILE_TRUNCATE) < 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not truncate file \"%s\" to %u blocks: %m",
@@ -1484,9 +1484,9 @@ mdfd(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum, uint32 *off)
 	v = _mdfd_getseg(reln, forknum, blocknum, false,
 					 EXTENSION_FAIL);
 
-	*off = (off_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
+	*off = (pgoff_t) BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE));
 
-	Assert(*off < (off_t) BLCKSZ * RELSEG_SIZE);
+	Assert(*off < (pgoff_t) BLCKSZ * RELSEG_SIZE);
 
 	return FileGetRawDesc(v->mdfd_vfd);
 }
@@ -1868,7 +1868,7 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 static BlockNumber
 _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
-	off_t		len;
+	pgoff_t		len;
 
 	len = FileSize(seg->mdfd_vfd);
 	if (len < 0)

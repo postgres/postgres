@@ -928,7 +928,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 		start = pgstat_prepare_io_time(track_wal_io_timing);
 
 		pgstat_report_wait_start(WAIT_EVENT_WAL_WRITE);
-		byteswritten = pg_pwrite(recvFile, buf, segbytes, (off_t) startoff);
+		byteswritten = pg_pwrite(recvFile, buf, segbytes, (pgoff_t) startoff);
 		pgstat_report_wait_end();
 
 		pgstat_count_io_op_time(IOOBJECT_WAL, IOCONTEXT_NORMAL,

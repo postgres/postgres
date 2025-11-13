@@ -51,7 +51,7 @@ struct iovec
  * this changes the current file position.
  */
 static inline ssize_t
-pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+pg_preadv(int fd, const struct iovec *iov, int iovcnt, pgoff_t offset)
 {
 #if HAVE_DECL_PREADV
 	/*
@@ -90,7 +90,7 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
  * this changes the current file position.
  */
 static inline ssize_t
-pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+pg_pwritev(int fd, const struct iovec *iov, int iovcnt, pgoff_t offset)
 {
 #if HAVE_DECL_PWRITEV
 	/*

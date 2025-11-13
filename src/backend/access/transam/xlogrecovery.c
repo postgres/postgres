@@ -3429,7 +3429,7 @@ retry:
 	io_start = pgstat_prepare_io_time(track_wal_io_timing);
 
 	pgstat_report_wait_start(WAIT_EVENT_WAL_READ);
-	r = pg_pread(readFile, readBuf, XLOG_BLCKSZ, (off_t) readOff);
+	r = pg_pread(readFile, readBuf, XLOG_BLCKSZ, (pgoff_t) readOff);
 	if (r != XLOG_BLCKSZ)
 	{
 		char		fname[MAXFNAMELEN];
