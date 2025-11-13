@@ -31,6 +31,8 @@
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "common/hashfn.h"
 #include "lib/dshash.h"
 #include "storage/lwlock.h"

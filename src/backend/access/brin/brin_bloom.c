@@ -114,6 +114,7 @@
  */
 #include "postgres.h"
 
+#include <limits.h>
 #include <math.h>
 
 #include "access/brin.h"
