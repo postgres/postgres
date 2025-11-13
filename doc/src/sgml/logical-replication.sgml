@@ -41,27 +41,27 @@
    <listitem>
     <para>
      Sending incremental changes in a single database or a subset of a
-     database to subscribers as they occur.
+     database to subscribers as they occur
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Firing triggers for individual changes as they arrive on the
-     subscriber.
+     Sending a subset of the database to multiple databases (i.e.,
+     broadcast)
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Consolidating multiple databases into a single one (for example for
-     analytical purposes).
+     Consolidating multiple databases into a single one (e.g., for
+     analytics).
     </para>
    </listitem>
 
    <listitem>
     <para>
-     Replicating between different major versions of PostgreSQL.
+     Replicating between different major versions of PostgreSQL
     </para>
    </listitem>
 
@@ -80,7 +80,8 @@
 
    <listitem>
     <para>
-     Sharing a subset of the database between multiple databases.
+     Firing triggers for individual changes as they arrive on the
+     subscriber.
     </para>
    </listitem>
   </itemizedlist>
