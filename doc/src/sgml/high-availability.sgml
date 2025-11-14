@@ -918,18 +918,18 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
   </sect2>
 
   <sect2 id="streaming-replication-slots">
-   <title>Physical Replication Slots</title>
+   <title>Replication Slots</title>
    <indexterm>
     <primary>replication slot</primary>
     <secondary>streaming replication</secondary>
    </indexterm>
    <para>
-    Physical replication slots provide an automated way to ensure that the
-    primary server does
-    not remove WAL segments until they have been received by all standbys,
-    and that the primary does not remove rows which could cause a
-    <link linkend="hot-standby-conflict">recovery conflict</link> even when the
-    standby is disconnected.
+    Replication slots provide an automated way to ensure that the
+    primary server does not remove WAL segments until they have been
+    received, physically or logically, by all standbys/subscribers,
+    and that the primary does not remove rows which could cause a <link
+    linkend="hot-standby-conflict">recovery conflict</link> on physical
+    replicas even when the standby is disconnected.
    </para>
    <para>
     In lieu of using replication slots, it is possible to prevent the removal
@@ -943,9 +943,9 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    </para>
    <para>
     Similarly, <xref linkend="guc-hot-standby-feedback"/> on its own, without
-    also using a replication slot, provides protection against relevant rows
+    also using a physical replication slot, provides protection against relevant rows
     being removed by vacuum, but provides no protection during any time period
-    when the standby is not connected.
+    when the physical replication standby is disconnected.
    </para>
 
    <caution>
