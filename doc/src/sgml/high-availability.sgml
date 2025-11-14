@@ -918,13 +918,13 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
   </sect2>
 
   <sect2 id="streaming-replication-slots">
-   <title>Replication Slots</title>
+   <title>Physical Replication Slots</title>
    <indexterm>
     <primary>replication slot</primary>
     <secondary>streaming replication</secondary>
    </indexterm>
    <para>
-    Replication slots provide an automated way to ensure that the
+    Physical replication slots provide an automated way to ensure that the
     primary server does
     not remove WAL segments until they have been received by all standbys,
     and that the primary does not remove rows which could cause a
@@ -978,7 +978,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
    <sect3 id="streaming-replication-slots-config">
     <title>Configuration Example</title>
     <para>
-     You can create a replication slot like this:
+     You can create a physical replication slot on the primary like this:
 <programlisting>
 postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
   slot_name  | lsn
