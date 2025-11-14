@@ -50,7 +50,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1>
+ <refsect1 id="sql-copy-description">
   <title>Description</title>
 
   <para>
@@ -101,11 +101,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-parameters">
   <title>Parameters</title>
 
   <variablelist>
-   <varlistentry>
+   <varlistentry id="sql-copy-params-table-name">
     <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
@@ -114,7 +114,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-column-name">
     <term><replaceable class="parameter">column_name</replaceable></term>
      <listitem>
      <para>
@@ -125,7 +125,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-query">
     <term><replaceable class="parameter">query</replaceable></term>
     <listitem>
      <para>
@@ -149,7 +149,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-filename">
     <term><replaceable class="parameter">filename</replaceable></term>
     <listitem>
      <para>
@@ -161,7 +161,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-program">
     <term><literal>PROGRAM</literal></term>
     <listitem>
      <para>
@@ -180,7 +180,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-stdin">
     <term><literal>STDIN</literal></term>
     <listitem>
      <para>
@@ -189,7 +189,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-stdout">
     <term><literal>STDOUT</literal></term>
     <listitem>
      <para>
@@ -198,7 +198,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-boolean">
     <term><replaceable class="parameter">boolean</replaceable></term>
     <listitem>
      <para>
@@ -212,7 +212,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-integer">
     <term><replaceable class="parameter">integer</replaceable></term>
     <listitem>
      <para>
@@ -221,7 +221,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-format">
     <term><literal>FORMAT</literal></term>
     <listitem>
      <para>
@@ -235,7 +235,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-freeze">
     <term><literal>FREEZE</literal></term>
     <listitem>
      <para>
@@ -258,7 +258,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-delimiter">
     <term><literal>DELIMITER</literal></term>
     <listitem>
      <para>
@@ -271,7 +271,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-null">
     <term><literal>NULL</literal></term>
     <listitem>
      <para>
@@ -295,7 +295,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-default">
     <term><literal>DEFAULT</literal></term>
     <listitem>
      <para>
@@ -308,7 +308,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-header">
     <term><literal>HEADER</literal></term>
     <listitem>
      <para>
@@ -335,7 +335,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-quote">
     <term><literal>QUOTE</literal></term>
     <listitem>
      <para>
@@ -347,7 +347,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-escape">
     <term><literal>ESCAPE</literal></term>
     <listitem>
      <para>
@@ -361,7 +361,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-force-quote">
     <term><literal>FORCE_QUOTE</literal></term>
     <listitem>
      <para>
@@ -375,7 +375,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-force-not-null">
     <term><literal>FORCE_NOT_NULL</literal></term>
     <listitem>
      <para>
@@ -390,7 +390,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-force-null">
     <term><literal>FORCE_NULL</literal></term>
     <listitem>
      <para>
@@ -405,7 +405,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-on-error">
     <term><literal>ON_ERROR</literal></term>
     <listitem>
      <para>
@@ -433,7 +433,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-reject-limit">
     <term><literal>REJECT_LIMIT</literal></term>
     <listitem>
      <para>
@@ -451,7 +451,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-encoding">
     <term><literal>ENCODING</literal></term>
     <listitem>
      <para>
@@ -463,7 +463,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-log-verbosity">
     <term><literal>LOG_VERBOSITY</literal></term>
     <listitem>
      <para>
@@ -481,7 +481,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     </listitem>
    </varlistentry>
 
-   <varlistentry>
+   <varlistentry id="sql-copy-params-where">
     <term><literal>WHERE</literal></term>
     <listitem>
    <para>
@@ -510,7 +510,7 @@ WHERE <replaceable class="parameter">condition</replaceable>
   </variablelist>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-outputs">
   <title>Outputs</title>
 
   <para>
@@ -534,7 +534,7 @@ COPY <replaceable class="parameter">count</replaceable>
   </note>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-notes">
   <title>Notes</title>
 
    <para>
@@ -1075,7 +1075,7 @@ versions of <productname>PostgreSQL</productname>.
   </refsect2>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-examples">
   <title>Examples</title>
 
   <para>
@@ -1141,7 +1141,7 @@ ZW      ZIMBABWE
 </programlisting></para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="sql-copy-compatibility">
   <title>Compatibility</title>
 
   <para>
