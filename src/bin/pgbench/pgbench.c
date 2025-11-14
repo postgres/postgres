@@ -3489,14 +3489,18 @@ doRetry(CState *st, pg_time_usec_t *now)
 }
 
 /*
- * Read results and discard it until a sync point.
+ * Read and discard results until the last sync point.
  */
 static int
 discardUntilSync(CState *st)
 {
 	bool		received_sync = false;
 
-	/* send a sync */
+	/*
+	 * Send a Sync message to ensure at least one PGRES_PIPELINE_SYNC is
+	 * received and to avoid an infinite loop, since all earlier ones may have
+	 * already been received.
+	 */
 	if (!PQpipelineSync(st->con))
 	{
 		pg_log_error("client %d aborted: failed to send a pipeline sync",
@@ -3504,28 +3508,41 @@ discardUntilSync(CState *st)
 		return 0;
 	}
 
-	/* receive PGRES_PIPELINE_SYNC and null following it */
+	/*
+	 * Continue reading results until the last sync point, i.e., until
+	 * reaching null just after PGRES_PIPELINE_SYNC.
+	 */
 	for (;;)
 	{
 		PGresult   *res = PQgetResult(st->con);
 
+		if (PQstatus(st->con) == CONNECTION_BAD)
+		{
+			pg_log_error("client %d aborted while rolling back the transaction after an error; perhaps the backend died while processing",
+						 st->id);
+			PQclear(res);
+			return 0;
+		}
+
 		if (PQresultStatus(res) == PGRES_PIPELINE_SYNC)
 			received_sync = true;
-		else if (received_sync)
+		else if (received_sync && res == NULL)
 		{
-			/*
-			 * PGRES_PIPELINE_SYNC must be followed by another
-			 * PGRES_PIPELINE_SYNC or NULL; otherwise, assert failure.
-			 */
-			Assert(res == NULL);
-
 			/*
 			 * Reset ongoing sync count to 0 since all PGRES_PIPELINE_SYNC
 			 * results have been discarded.
 			 */
 			st->num_syncs = 0;
-			PQclear(res);
 			break;
+		}
+		else
+		{
+			/*
+			 * If a PGRES_PIPELINE_SYNC is followed by something other than
+			 * PGRES_PIPELINE_SYNC or NULL, another PGRES_PIPELINE_SYNC will
+			 * appear later. Reset received_sync to false to wait for it.
+			 */
+			received_sync = false;
 		}
 		PQclear(res);
 	}
