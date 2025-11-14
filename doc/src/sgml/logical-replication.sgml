@@ -225,8 +225,9 @@
   </para>
 
   <para>
-   Each subscription will receive changes via one replication slot (see
-   <xref linkend="streaming-replication-slots"/>).  Additional replication
+   By default a new subscription creates a logical replication slot and
+   then receives changes via this slot (see <xref
+   linkend="streaming-replication-slots"/>).  Additional replication
    slots may be required for the initial data synchronization of
    pre-existing table data and those will be dropped at the end of data
    synchronization.
@@ -288,11 +289,11 @@
   </para>
 
   <sect2 id="logical-replication-subscription-slot">
-   <title>Replication Slot Management</title>
+   <title>Logical Replication Slot Management</title>
 
    <para>
     As mentioned earlier, each (active) subscription receives changes from a
-    replication slot on the remote (publishing) side.
+    logical replication slot on the remote (publishing) side.
    </para>
    <para>
     Additional table synchronization slots are normally transient, created
@@ -303,7 +304,7 @@
     Table <parameter>relid</parameter>, system identifier <parameter>sysid</parameter>)
    </para>
    <para>
-    Normally, the remote replication slot is created automatically when the
+    Normally, the remote logical replication slot is created automatically when the
     subscription is created using <link linkend="sql-createsubscription">
     <command>CREATE SUBSCRIPTION</command></link> and it
     is dropped automatically when the subscription is dropped using
@@ -538,12 +539,12 @@
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples-deferred-slot">
-   <title>Examples: Deferred Replication Slot Creation</title>
+   <title>Examples: Deferred Logical Replication Slot Creation</title>
 
    <para>
     There are some cases (e.g.
     <xref linkend="logical-replication-subscription-slot"/>) where, if the
-    remote replication slot was not created automatically, the user must create
+    remote logical replication slot was not created automatically, the user must create
     it manually before the subscription can be activated. The steps to create
     the slot and activate the subscription are shown in the following examples.
     These examples specify the standard logical decoding output plugin
