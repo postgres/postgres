@@ -139,7 +139,13 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 					 errmsg("relation \"%s\" is not a table, foreign table, or materialized view",
 							RelationGetRelationName(rel))));
 
-		/* You must own the relation to create stats on it */
+		/*
+		 * You must own the relation to create stats on it.
+		 *
+		 * NB: Concurrent changes could cause this function's lookup to find a
+		 * different relation than a previous lookup by the caller, so we must
+		 * perform this check even when check_rights == false.
+		 */
 		if (!pg_class_ownercheck(RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
