@@ -29,7 +29,7 @@ CREATE UNLOGGED TABLE foo(a int);
 INSERT INTO foo(a) SELECT * FROM generate_series(1, 5000);
 });
 
-note "unnamed portal: temporary file dropped under first SELECT query";
+note "unnamed portal: temporary file dropped under second SELECT query";
 my $log_offset = -s $node->logfile;
 $node->safe_psql(
 	"postgres", qq{
@@ -39,23 +39,22 @@ SELECT 'unnamed portal';
 END;
 });
 ok( $node->log_contains(
-		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT a FROM foo ORDER BY a OFFSET \$1/s,
+		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT 'unnamed portal'/s,
 		$log_offset),
 	"unnamed portal");
 
-note
-  "bind and implicit transaction: temporary file dropped under single query";
+note "bind and implicit transaction: temporary file dropped without query";
 $log_offset = -s $node->logfile;
 $node->safe_psql(
 	"postgres", qq{
 SELECT a FROM foo ORDER BY a OFFSET \$1 \\bind 4991 \\g
 });
-ok( $node->log_contains(
-		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT a FROM foo ORDER BY a OFFSET \$1/s,
-		$log_offset),
-	"bind and implicit transaction");
+ok( $node->log_contains(qr/LOG:\s+temporary file:/s, $log_offset),
+	"bind and implicit transaction, temporary file removed");
+ok( !$node->log_contains(qr/STATEMENT:/s, $log_offset),
+	"bind and implicit transaction, no statement logged");
 
-note "named portal: temporary file dropped under first SELECT query";
+note "named portal: temporary file dropped under second SELECT query";
 $node->safe_psql(
 	"postgres", qq{
 BEGIN;
@@ -65,11 +64,11 @@ SELECT 'named portal';
 END;
 });
 ok( $node->log_contains(
-		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT a FROM foo ORDER BY a OFFSET \$1/s,
+		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT 'named portal'/s,
 		$log_offset),
 	"named portal");
 
-note "pipelined query: temporary file dropped under first SELECT query";
+note "pipelined query: temporary file dropped under second SELECT query";
 $log_offset = -s $node->logfile;
 $node->safe_psql(
 	"postgres", qq{
@@ -79,21 +78,21 @@ SELECT 'pipelined query';
 \\endpipeline
 });
 ok( $node->log_contains(
-		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT a FROM foo ORDER BY a OFFSET \$1/s,
+		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT 'pipelined query'/s,
 		$log_offset),
 	"pipelined query");
 
-note "parse and bind: temporary file dropped under SELECT query";
+note "parse and bind: temporary file dropped without query";
 $log_offset = -s $node->logfile;
 $node->safe_psql(
 	"postgres", qq{
 SELECT a, a, a FROM foo ORDER BY a OFFSET \$1 \\parse p1
 \\bind_named p1 4993 \\g
 });
-ok( $node->log_contains(
-		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+SELECT a, a, a FROM foo ORDER BY a OFFSET \$1/s,
-		$log_offset),
-	"parse and bind");
+ok($node->log_contains(qr/LOG:\s+temporary file:/s, $log_offset),
+	"parse and bind, temporary file removed");
+ok(!$node->log_contains(qr/STATEMENT:/s, $log_offset),
+	"bind and bind, no statement logged");
 
 note "simple query: temporary file dropped under SELECT query";
 $log_offset = -s $node->logfile;

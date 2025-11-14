@@ -2327,16 +2327,6 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * message.  The next protocol message will start a fresh timeout.
 			 */
 			disable_statement_timeout();
-
-			/*
-			 * We completed fetching from an unnamed portal.  There is no need
-			 * for it beyond this point, so drop it now rather than wait for
-			 * the next Bind message to do this cleanup.  This ensures that
-			 * the correct statement is logged when cleaning up temporary file
-			 * usage.
-			 */
-			if (portal->name[0] == '\0')
-				PortalDrop(portal, false);
 		}
 
 		/* Send appropriate CommandComplete to client */
