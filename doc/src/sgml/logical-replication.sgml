@@ -225,8 +225,8 @@
   </para>
 
   <para>
-   By default a new subscription creates a logical replication slot and
-   then receives changes via this slot (see <xref
+   By default a new subscription creates a logical replication slot on the
+   publisher and then uses this slot to preserve necessary WAL (see <xref
    linkend="streaming-replication-slots"/>).  Additional replication
    slots may be required for the initial data synchronization of
    pre-existing table data and those will be dropped at the end of data
@@ -292,8 +292,8 @@
    <title>Logical Replication Slot Management</title>
 
    <para>
-    As mentioned earlier, each (active) subscription receives changes from a
-    logical replication slot on the remote (publishing) side.
+    As mentioned earlier, each (active) subscription uses a logical
+    replication slot on the remote (publishing) side.
    </para>
    <para>
     Additional table synchronization slots are normally transient, created
