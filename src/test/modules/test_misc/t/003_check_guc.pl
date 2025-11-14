@@ -56,7 +56,7 @@ while (my $line = <$contents>)
 	# file.
 	# - Valid configuration options are followed immediately by " = ",
 	# with one space before and after the equal sign.
-	if ($line =~ m/^#?([_[:alnum:]]+) = .*/)
+	if ($line =~ m/^#([_[:alnum:]]+) = .*/)
 	{
 		# Lower-case conversion matters for some of the GUCs.
 		my $param_name = lc($1);
@@ -69,7 +69,12 @@ while (my $line = <$contents>)
 		# Update the list of GUCs found in the sample file, for the
 		# follow-up tests.
 		push @gucs_in_file, $param_name;
+
+		next;
 	}
+	# Make sure each line starts with either a # or whitespace
+	fail("$line missing initial # in postgresql.conf.sample")
+	  if $line =~ /^\s*[^#\s]/;
 }
 
 close $contents;
