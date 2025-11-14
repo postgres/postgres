@@ -225,8 +225,9 @@
   </para>
 
   <para>
-   By default a new subscription creates a logical replication slot on the
-   publisher and then uses this slot to preserve necessary WAL (see <xref
+   By default a new subscription creates a logical replication slot on
+   the publisher and then uses this slot to track relevant transaction
+   activity and preserve necessary WAL (see <xref
    linkend="streaming-replication-slots"/>).  Additional replication
    slots may be required for the initial data synchronization of
    pre-existing table data and those will be dropped at the end of data
