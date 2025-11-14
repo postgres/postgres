@@ -135,7 +135,13 @@ CreateStatistics(CreateStatsStmt *stmt, bool check_rights)
 							RelationGetRelationName(rel)),
 					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
-		/* You must own the relation to create stats on it */
+		/*
+		 * You must own the relation to create stats on it.
+		 *
+		 * NB: Concurrent changes could cause this function's lookup to find a
+		 * different relation than a previous lookup by the caller, so we must
+		 * perform this check even when check_rights == false.
+		 */
 		if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
