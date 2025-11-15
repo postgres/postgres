@@ -20,7 +20,7 @@
 #include "tcop/dest.h"
 
 /*
- * Result statuses for WaitForLSNReplay().
+ * Result statuses for WaitForLSN().
  */
 typedef enum
 {

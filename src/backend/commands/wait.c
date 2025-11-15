@@ -143,8 +143,7 @@ ExecWaitStmt(ParseState *pstate, WaitStmt *stmt, DestReceiver *dest)
 	waitLSNResult = WaitForLSN(WAIT_LSN_TYPE_REPLAY, lsn, timeout);
 
 	/*
-	 * Process the result of WaitForLSNReplay().  Throw appropriate error if
-	 * needed.
+	 * Process the result of WaitForLSN().  Throw appropriate error if needed.
 	 */
 	switch (waitLSNResult)
 	{
