@@ -270,8 +270,12 @@ WaitLSNWakeup(WaitLSNType lsnType, XLogRecPtr currentLSN)
 
 	Assert(i >= 0 && i < (int) WAIT_LSN_TYPE_COUNT);
 
-	/* Fast path check */
-	if (pg_atomic_read_u64(&waitLSNState->minWaitedLSN[i]) > currentLSN)
+	/*
+	 * Fast path check.  Skip if currentLSN is InvalidXLogRecPtr, which means
+	 * "wake all waiters" (e.g., during promotion when recovery ends).
+	 */
+	if (XLogRecPtrIsValid(currentLSN) &&
+		pg_atomic_read_u64(&waitLSNState->minWaitedLSN[i]) > currentLSN)
 		return;
 
 	wakeupWaiters(lsnType, currentLSN);
