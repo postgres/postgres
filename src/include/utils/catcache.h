@@ -69,18 +69,18 @@ typedef struct catcache
 	 * doesn't break ABI for other modules
 	 */
 #ifdef CATCACHE_STATS
-	long		cc_searches;	/* total # searches against this cache */
-	long		cc_hits;		/* # of matches against existing entry */
-	long		cc_neg_hits;	/* # of matches against negative entry */
-	long		cc_newloads;	/* # of successful loads of new entry */
+	uint64		cc_searches;	/* total # searches against this cache */
+	uint64		cc_hits;		/* # of matches against existing entry */
+	uint64		cc_neg_hits;	/* # of matches against negative entry */
+	uint64		cc_newloads;	/* # of successful loads of new entry */
 
 	/*
 	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of failed
 	 * searches, each of which will result in loading a negative entry
 	 */
-	long		cc_invals;		/* # of entries invalidated from cache */
-	long		cc_lsearches;	/* total # list-searches */
-	long		cc_lhits;		/* # of matches against existing lists */
+	uint64		cc_invals;		/* # of entries invalidated from cache */
+	uint64		cc_lsearches;	/* total # list-searches */
+	uint64		cc_lhits;		/* # of matches against existing lists */
 #endif
 } CatCache;
 

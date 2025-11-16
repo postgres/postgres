@@ -461,14 +461,14 @@ static void
 CatCachePrintStats(int code, Datum arg)
 {
 	slist_iter	iter;
-	long		cc_searches = 0;
-	long		cc_hits = 0;
-	long		cc_neg_hits = 0;
-	long		cc_newloads = 0;
-	long		cc_invals = 0;
-	long		cc_nlists = 0;
-	long		cc_lsearches = 0;
-	long		cc_lhits = 0;
+	uint64		cc_searches = 0;
+	uint64		cc_hits = 0;
+	uint64		cc_neg_hits = 0;
+	uint64		cc_newloads = 0;
+	uint64		cc_invals = 0;
+	uint64		cc_nlists = 0;
+	uint64		cc_lsearches = 0;
+	uint64		cc_lhits = 0;
 
 	slist_foreach(iter, &CacheHdr->ch_caches)
 	{
@@ -476,7 +476,10 @@ CatCachePrintStats(int code, Datum arg)
 
 		if (cache->cc_ntup == 0 && cache->cc_searches == 0)
 			continue;			/* don't print unused caches */
-		elog(DEBUG2, "catcache %s/%u: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %d lists, %ld lsrch, %ld lhits",
+		elog(DEBUG2, "catcache %s/%u: %d tup, %" PRIu64 " srch, %" PRIu64 "+%"
+			 PRIu64 "=%" PRIu64 " hits, %" PRIu64 "+%" PRIu64 "=%"
+			 PRIu64 " loads, %" PRIu64 " invals, %d lists, %" PRIu64
+			 " lsrch, %" PRIu64 " lhits",
 			 cache->cc_relname,
 			 cache->cc_indexoid,
 			 cache->cc_ntup,
@@ -500,7 +503,10 @@ CatCachePrintStats(int code, Datum arg)
 		cc_lsearches += cache->cc_lsearches;
 		cc_lhits += cache->cc_lhits;
 	}
-	elog(DEBUG2, "catcache totals: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld lists, %ld lsrch, %ld lhits",
+	elog(DEBUG2, "catcache totals: %d tup, %" PRIu64 " srch, %" PRIu64 "+%"
+		 PRIu64 "=%" PRIu64 " hits, %" PRIu64 "+%" PRIu64 "=%" PRIu64
+		 " loads, %" PRIu64 " invals, %" PRIu64 " lists, %" PRIu64
+		 " lsrch, %" PRIu64 " lhits",
 		 CacheHdr->ch_ntup,
 		 cc_searches,
 		 cc_hits,
