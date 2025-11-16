@@ -4962,13 +4962,13 @@ $$ LANGUAGE plpgsql;
    <para>
     Variable substitution currently works only in <command>SELECT</command>,
     <command>INSERT</command>, <command>UPDATE</command>,
-    <command>DELETE</command>, and commands containing one of
-    these (such as <command>EXPLAIN</command> and <command>CREATE TABLE
-    ... AS SELECT</command>),
-    because the main SQL engine allows query parameters only in these
-    commands.  To use a non-constant name or value in other statement
-    types (generically called utility statements), you must construct
-    the utility statement as a string and <command>EXECUTE</command> it.
+    <command>DELETE</command>, <command>MERGE</command> and commands
+    containing one of these (such as <command>EXPLAIN</command> and
+    <command>CREATE TABLE ... AS SELECT</command>), because the main SQL
+    engine allows query parameters only in these commands.  To use a
+    non-constant name or value in other statement types (generically called
+    utility statements), you must construct the utility statement as a string
+    and <command>EXECUTE</command> it.
    </para>
 
   </sect2>
