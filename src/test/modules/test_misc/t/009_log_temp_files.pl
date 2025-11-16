@@ -123,12 +123,27 @@ ok( $node->log_contains(
 		$log_offset),
 	"cursor");
 
+note "cursor WITH HOLD: temporary file dropped under COMMIT";
+$log_offset = -s $node->logfile;
+$node->safe_psql(
+	"postgres", qq{
+BEGIN;
+DECLARE holdcur CURSOR WITH HOLD FOR SELECT a FROM foo ORDER BY a OFFSET 4996;
+FETCH 10 FROM holdcur;
+COMMIT;
+CLOSE holdcur;
+});
+ok( $node->log_contains(
+		qr/LOG:\s+temporary file: path.*\n.*\ STATEMENT:\s+COMMIT;/s,
+		$log_offset),
+	"cursor WITH HOLD");
+
 note "prepare/execute: temporary file dropped under EXECUTE";
 $log_offset = -s $node->logfile;
 $node->safe_psql(
 	"postgres", qq{
 BEGIN;
-PREPARE p1 AS SELECT a FROM foo ORDER BY a OFFSET 4996;
+PREPARE p1 AS SELECT a FROM foo ORDER BY a OFFSET 4997;
 EXECUTE p1;
 DEALLOCATE p1;
 END;
