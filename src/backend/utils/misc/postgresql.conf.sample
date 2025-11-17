@@ -94,9 +94,9 @@
 # - Authentication -
 
 #authentication_timeout = 1min		# 1s-600s
-#password_encryption = scram-sha-256	# scram-sha-256 or md5
+#password_encryption = scram-sha-256	# scram-sha-256 or (deprecated) md5
 #scram_iterations = 4096
-#md5_password_warnings = on
+#md5_password_warnings = on		# display md5 deprecation warnings?
 #oauth_validator_libraries = ''	# comma-separated list of trusted validator modules
 
 # GSSAPI using Kerberos
