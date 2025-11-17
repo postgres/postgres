@@ -1393,7 +1393,7 @@ PostgreSQL documentation
       <term><option>--statistics</option></term>
       <listitem>
        <para>
-        Dump statistics.
+        Dump optimizer statistics.
        </para>
       </listitem>
      </varlistentry>
@@ -1403,7 +1403,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Dump only the statistics, not the schema (data definitions) or data.
-        Statistics for tables, materialized views, foreign tables,
+        Optimizer statistics for tables, materialized views, foreign tables,
         and indexes are dumped.
        </para>
       </listitem>
@@ -1699,11 +1699,12 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   If <option>--statistics</option> is specified,
+   When <option>--statistics</option> is specified,
    <command>pg_dump</command> will include most optimizer statistics in the
-   resulting dump file.  However, some statistics may not be included, such as
-   those created explicitly with <xref linkend="sql-createstatistics"/> or
-   custom statistics added by an extension.  Therefore, it may be useful to
+   resulting dump file.  This does not include all statistics, such as
+   those created explicitly with <xref linkend="sql-createstatistics"/>,
+   custom statistics added by an extension, or statistics collected by the
+   cumulative statistics system. Therefore, it may still be useful to
    run <command>ANALYZE</command> after restoring from a dump file to ensure
    optimal performance; see <xref linkend="vacuum-for-statistics"/> and <xref
    linkend="autovacuum"/> for more information.
