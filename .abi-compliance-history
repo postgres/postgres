@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+d20abb5876ab61a627d80131b2cb78d9652557e3
+#
+# Check for CREATE privilege on the schema in CREATE STATISTICS.
+# 2025-11-10 09:00:00 -0600
+#
+# This commit added a parameter to CreateStatistics().  We are unaware of any
+# impacted third-party code.
+
 b2ae077205e18ac3e6d7bc5f7a6fa25a39323ec0
 #
 # Fix re-distributing previously distributed invalidation messages during logical decoding.
