@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+e2fb3dfa817fbe89494a62c100e9cb442f4d6b15
+#
+# Check for CREATE privilege on the schema in CREATE STATISTICS.
+# 2025-11-10 09:00:00 -0600
+#
+# This commit added a parameter to CreateStatistics().  We are unaware of any
+# impacted third-party code.
+
 24f6c1bd41d0631a04cc956cc8cafa0b117ab625
 #
 # Fix the handling of two GUCs during upgrade.
