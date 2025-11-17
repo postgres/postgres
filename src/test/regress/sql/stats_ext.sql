@@ -125,7 +125,7 @@ ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
 \d ab1
 ANALYZE ab1;
-SELECT stxname, stxdndistinct, stxddependencies, stxdmcv, stxdinherit
+SELECT stxname, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct, stxddependencies, stxdmcv, stxdinherit
   FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
  WHERE s.stxname = 'ab1_a_b_stats';
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
@@ -297,7 +297,7 @@ CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 
 ANALYZE ndistinct;
 
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -338,7 +338,7 @@ INSERT INTO ndistinct (a, b, c, filler1)
 
 ANALYZE ndistinct;
 
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -364,7 +364,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 
 DROP STATISTICS s10;
 
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -399,7 +399,7 @@ CREATE STATISTICS s10 (ndistinct) ON (a+1), (b+100), (2*c) FROM ndistinct;
 
 ANALYZE ndistinct;
 
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -423,7 +423,7 @@ CREATE STATISTICS s10 (ndistinct) ON a, b, (2*c) FROM ndistinct;
 
 ANALYZE ndistinct;
 
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;

@@ -16,6 +16,7 @@
 
 #include "lib/stringinfo.h"
 #include "statistics/extended_stats_internal.h"
+#include "statistics/statistics_format.h"
 #include "utils/fmgrprotos.h"
 
 
@@ -51,26 +52,29 @@ pg_ndistinct_out(PG_FUNCTION_ARGS)
 	StringInfoData str;
 
 	initStringInfo(&str);
-	appendStringInfoChar(&str, '{');
+	appendStringInfoChar(&str, '[');
 
 	for (i = 0; i < ndist->nitems; i++)
 	{
-		int			j;
 		MVNDistinctItem item = ndist->items[i];
 
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
 
-		for (j = 0; j < item.nattributes; j++)
-		{
-			AttrNumber	attnum = item.attributes[j];
+		if (item.nattributes <= 0)
+			elog(ERROR, "invalid zero-length attribute array in MVNDistinct");
 
-			appendStringInfo(&str, "%s%d", (j == 0) ? "\"" : ", ", attnum);
-		}
-		appendStringInfo(&str, "\": %d", (int) item.ndistinct);
+		appendStringInfo(&str, "{\"" PG_NDISTINCT_KEY_ATTRIBUTES "\": [%d",
+						 item.attributes[0]);
+
+		for (int j = 1; j < item.nattributes; j++)
+			appendStringInfo(&str, ", %d", item.attributes[j]);
+
+		appendStringInfo(&str, "], \"" PG_NDISTINCT_KEY_NDISTINCT "\": %d}",
+						 (int) item.ndistinct);
 	}
 
-	appendStringInfoChar(&str, '}');
+	appendStringInfoChar(&str, ']');
 
 	PG_RETURN_CSTRING(str.data);
 }

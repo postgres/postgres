@@ -196,7 +196,7 @@ Statistics objects:
     "public.ab1_a_b_stats" ON a, b FROM ab1; STATISTICS 0
 
 ANALYZE ab1;
-SELECT stxname, stxdndistinct, stxddependencies, stxdmcv, stxdinherit
+SELECT stxname, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct, stxddependencies, stxdmcv, stxdinherit
   FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
  WHERE s.stxname = 'ab1_a_b_stats';
     stxname    | stxdndistinct | stxddependencies | stxdmcv | stxdinherit 
@@ -476,13 +476,43 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 -- correct command
 CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                    stxdndistinct                    
----------+-----------------------------------------------------
- {d,f,m} | {"3, 4": 11, "3, 6": 11, "4, 6": 11, "3, 4, 6": 11}
+ stxkind |      stxdndistinct       
+---------+--------------------------
+ {d,f,m} | [                       +
+         |     {                   +
+         |         "ndistinct": 11,+
+         |         "attributes": [ +
+         |             3,          +
+         |             4           +
+         |         ]               +
+         |     },                  +
+         |     {                   +
+         |         "ndistinct": 11,+
+         |         "attributes": [ +
+         |             3,          +
+         |             6           +
+         |         ]               +
+         |     },                  +
+         |     {                   +
+         |         "ndistinct": 11,+
+         |         "attributes": [ +
+         |             4,          +
+         |             6           +
+         |         ]               +
+         |     },                  +
+         |     {                   +
+         |         "ndistinct": 11,+
+         |         "attributes": [ +
+         |             3,          +
+         |             4,          +
+         |             6           +
+         |         ]               +
+         |     }                   +
+         | ]
 (1 row)
 
 -- minor improvement, make sure the ctid does not break the matching
@@ -558,13 +588,43 @@ INSERT INTO ndistinct (a, b, c, filler1)
             mod(i,23) || ' dollars and zero cents'
        FROM generate_series(1,1000) s(i);
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                      stxdndistinct                       
----------+----------------------------------------------------------
- {d,f,m} | {"3, 4": 221, "3, 6": 247, "4, 6": 323, "3, 4, 6": 1000}
+ stxkind |       stxdndistinct        
+---------+----------------------------
+ {d,f,m} | [                         +
+         |     {                     +
+         |         "ndistinct": 221, +
+         |         "attributes": [   +
+         |             3,            +
+         |             4             +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 247, +
+         |         "attributes": [   +
+         |             3,            +
+         |             6             +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 323, +
+         |         "attributes": [   +
+         |             4,            +
+         |             6             +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 1000,+
+         |         "attributes": [   +
+         |             3,            +
+         |             4,            +
+         |             6             +
+         |         ]                 +
+         |     }                     +
+         | ]
 (1 row)
 
 -- correct estimates
@@ -623,7 +683,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 (1 row)
 
 DROP STATISTICS s10;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -707,13 +767,43 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 
 CREATE STATISTICS s10 (ndistinct) ON (a+1), (b+100), (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                           stxdndistinct                           
----------+-------------------------------------------------------------------
- {d,e}   | {"-1, -2": 221, "-1, -3": 247, "-2, -3": 323, "-1, -2, -3": 1000}
+ stxkind |       stxdndistinct        
+---------+----------------------------
+ {d,e}   | [                         +
+         |     {                     +
+         |         "ndistinct": 221, +
+         |         "attributes": [   +
+         |             -1,           +
+         |             -2            +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 247, +
+         |         "attributes": [   +
+         |             -1,           +
+         |             -3            +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 323, +
+         |         "attributes": [   +
+         |             -2,           +
+         |             -3            +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 1000,+
+         |         "attributes": [   +
+         |             -1,           +
+         |             -2,           +
+         |             -3            +
+         |         ]                 +
+         |     }                     +
+         | ]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY (a+1), (b+100)');
@@ -756,13 +846,43 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 
 CREATE STATISTICS s10 (ndistinct) ON a, b, (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, d.stxdndistinct
+SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |                        stxdndistinct                        
----------+-------------------------------------------------------------
- {d,e}   | {"3, 4": 221, "3, -1": 247, "4, -1": 323, "3, 4, -1": 1000}
+ stxkind |       stxdndistinct        
+---------+----------------------------
+ {d,e}   | [                         +
+         |     {                     +
+         |         "ndistinct": 221, +
+         |         "attributes": [   +
+         |             3,            +
+         |             4             +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 247, +
+         |         "attributes": [   +
+         |             3,            +
+         |             -1            +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 323, +
+         |         "attributes": [   +
+         |             4,            +
+         |             -1            +
+         |         ]                 +
+         |     },                    +
+         |     {                     +
+         |         "ndistinct": 1000,+
+         |         "attributes": [   +
+         |             3,            +
+         |             4,            +
+         |             -1            +
+         |         ]                 +
+         |     }                     +
+         | ]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
