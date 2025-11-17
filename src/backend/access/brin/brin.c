@@ -2171,27 +2171,41 @@ union_tuples(BrinDesc *bdesc, BrinMemTuple *a, BrinTuple *b)
 static void
 brin_vacuum_scan(Relation idxrel, BufferAccessStrategy strategy)
 {
-	BlockNumber nblocks;
-	BlockNumber blkno;
+	BlockRangeReadStreamPrivate p;
+	ReadStream *stream;
+	Buffer		buf;
+
+	p.current_blocknum = 0;
+	p.last_exclusive = RelationGetNumberOfBlocks(idxrel);
+
+	/*
+	 * It is safe to use batchmode as block_range_read_stream_cb takes no
+	 * locks.
+	 */
+	stream = read_stream_begin_relation(READ_STREAM_MAINTENANCE |
+										READ_STREAM_FULL |
+										READ_STREAM_USE_BATCHING,
+										strategy,
+										idxrel,
+										MAIN_FORKNUM,
+										block_range_read_stream_cb,
+										&p,
+										0);
 
 	/*
 	 * Scan the index in physical order, and clean up any possible mess in
 	 * each page.
 	 */
-	nblocks = RelationGetNumberOfBlocks(idxrel);
-	for (blkno = 0; blkno < nblocks; blkno++)
+	while ((buf = read_stream_next_buffer(stream, NULL)) != InvalidBuffer)
 	{
-		Buffer		buf;
-
 		CHECK_FOR_INTERRUPTS();
-
-		buf = ReadBufferExtended(idxrel, MAIN_FORKNUM, blkno,
-								 RBM_NORMAL, strategy);
 
 		brin_page_cleanup(idxrel, buf);
 
 		ReleaseBuffer(buf);
 	}
+
+	read_stream_end(stream);
 
 	/*
 	 * Update all upper pages in the index's FSM, as well.  This ensures not
