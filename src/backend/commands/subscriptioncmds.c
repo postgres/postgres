@@ -680,7 +680,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	}
 
 	/*
-	 * Ensure that system configuration paramters are set appropriately to
+	 * Ensure that system configuration parameters are set appropriately to
 	 * support retain_dead_tuples and max_retention_duration.
 	 */
 	CheckSubDeadTupleRetention(true, !opts.enabled, WARNING,
@@ -1637,7 +1637,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				}
 
 				/*
-				 * Ensure that system configuration paramters are set
+				 * Ensure that system configuration parameters are set
 				 * appropriately to support retain_dead_tuples and
 				 * max_retention_duration.
 				 */

@@ -1301,7 +1301,7 @@ ApplyLauncherMain(Datum main_arg)
 					can_update_xmin &= sub->enabled;
 
 					/*
-					 * Initialize the slot once the subscription activiates
+					 * Initialize the slot once the subscription activates
 					 * retention.
 					 */
 					if (!TransactionIdIsValid(MyReplicationSlot->data.xmin))
