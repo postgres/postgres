@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+00eb646ea43410e5df77fed96f4a981e66811796
+#
+# Check for CREATE privilege on the schema in CREATE STATISTICS.
+# 2025-11-10 09:00:00 -0600
+#
+# This commit added a parameter to CreateStatistics().  We are unaware of any
+# impacted third-party code.
+
 c8af5019bee5c57502db830f8005a01cba60fee0
 #
 # Fix lookups in pg_{clear,restore}_{attribute,relation}_stats().
