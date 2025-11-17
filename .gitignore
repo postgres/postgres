@@ -43,3 +43,9 @@ lib*.pc
 /Release/
 /tmp_install/
 /portlock/
+.vscode
+clang-format
+clang-tidy
+build/**
+.cache
+compile_commands.json

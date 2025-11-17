@@ -1,0 +1,10 @@
+# .clang-tidy
+Checks: >
+  *,
+  -clang-diagnostic-declaration-after-statement,
+  -altera-unroll-loops,
+  -readability-identifier-length,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers
+  -readability-function-cognitive-complexity

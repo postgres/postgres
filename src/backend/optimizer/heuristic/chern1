@@ -1,0 +1,765 @@
+#include "postgres.h"
+#include "nodes/relation.h"
+#include "nodes/pg_list.h"
+#include "optimizer/geqo.h"
+#include "optimizer/paths.h"
+#include "optimizer/clauses.h"
+#include "optimizer/joininfo.h"
+#include "catalog/pg_operator.h"
+#include "optimizer/heuristic_manager.h"
+#include "gs_policy/gs_vector.h"
+#include "gs_policy/gs_set.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/cost.h"
+#include "nodes/nodes.h"
+
+static double THRESH = 0.9;
+static uint64 border_chain = 1000;
+static uint64 border_cycle = 1000;
+static uint64 border_star = 1000;
+static uint64 border_density_graph = 1000;
+static double b1=3/4;
+static double q=1/4;
+
+typedef struct {
+    RelOptInfo* rel = NULL;
+    List* adj = NIL;
+    size_t index = 0;
+} Vertex;
+
+typedef enum  { CHAIN, CYCLE, STAR, DENSITY_GRAPH} TypeTopology;
+typedef enum  { STANDARD, GOO, GEQO } TypeHeuristic;
+typedef struct {
+    List* vertexes = NIL;
+    TypeTopology topology;
+    uint64 complexity=0;
+    uint64 budget=0;
+} Topology;
+
+typedef struct {
+    List* vertexes = NIL;
+    uint64 complexity=0;
+    uint64 budget=0;
+} Component;
+
+typedef enum GooComp { VOLUME, COST } GooComp;
+static bool has_simple_inner_edge(PlannerInfo* root, RelOptInfo* rel1, RelOptInfo* rel2);
+static List* build_join_graph(PlannerInfo* root, List* initial_rels);
+static List* dfs_component(Vertex* v, List* comp, bool* used_vertexes);
+static List* split_components(List* vertexes);
+static List* dfs(Vertex* start, Vertex* cur, gs_stl::gs_vector<Vertex*>& stack, List* cycles, bool* visited,
+                 bool* used_vertexes_comp);
+static List* find_all_cycles(List* vertexes, bool* used_vertexes_comp);
+static List* find_all_stars(List* vertexes, bool* used_vertexes);
+static List* find_remaining_chains(List* vertexes, bool* used_vertexes);
+static bool is_star(Vertex* center, bool* used_vertexes);
+static List* find_star(Vertex* center, bool* used_vertexes);
+static RelOptInfo* plan_subgraph(PlannerInfo* root, Topology* topology, int* cost_plan);
+//static RelOptInfo* plan_star(PlannerInfo* root, int number_of_rels, List* initial_rels);
+//static RelOptInfo* plan_cycle(PlannerInfo* root, int number_of_rels, List* initial_rels);
+//static RelOptInfo* plan_chain(PlannerInfo* root, int number_of_rels, List* initial_rels);
+static void print_graph(List* graph);
+static void print_list_vertexes(List* vertexes);
+static RelOptInfo* goo(PlannerInfo* root, List* component_plans, GooComp gooComp, bool clauseless);
+
+static List* find_dense_subgraphs(List* vertexes, bool* used_vertexes);
+static Vertex* find_min_degree_vertex(List* sub);
+static double density(List* sub);
+static int count_edges(List* sub);
+static Cost get_cost(PlannerInfo* root,RelOptInfo* rel1, RelOptInfo* rel2);
+static Selectivity get_selectivity(PlannerInfo* root,RelOptInfo* rel1, RelOptInfo* rel2);
+static int get_budget_component(List* component);
+static void split_budget(List* topologies, int budget);
+static void set_complexity_topology(Topology* topology);
+static bool is_easy_topology(Topology* topology);
+static uint64 binom_centr(uint64 n,uint64 n2);
+static uint64 get_cost_heuristic(Topology* topology, TypeHeuristic type_heuristic);
+static uint64 get_cost_heuristic(Topology* topology, TypeHeuristic type_heuristic){
+    return 0;
+    if (topology->topology == CHAIN){
+    }
+    if (topology->topology == CYCLE){
+    }
+    if (topology->topology == STAR){
+    }
+    if (topology->topology == DENSITY_GRAPH){
+    }
+}
+static uint64 binom_centr(uint64 n,uint64 n2){
+    uint64 l = 1;
+    for (uint64 i = n2-n+1; i <=n2; i++)
+    {
+        l *= i;
+    }
+    uint64 r = 1;
+    for (uint64 i = 1; i <= n; i++)
+    {
+        r *= i;
+    }
+    return l/r;
+    
+}
+static bool is_easy_topology(Topology* topology){
+    if (topology->topology == STAR && topology->complexity <border_star)
+        return true;
+    if (topology->topology == CHAIN && topology->complexity <border_chain)
+        return true;
+    if (topology->topology == CYCLE && topology->complexity <border_cycle)
+        return true;
+    return topology->complexity < border_density_graph; // DENSITY_GRAPH
+}
+
+static int get_budget_component(List* component) {
+    int n = list_length(component);
+    if (n <= 10)
+        return 1000;
+    if (n <= 20)
+        return 2000;
+    if (n <= 30)
+        return 3000;
+    if (n <= 40)
+        return 4000;
+    return 5000;
+}
+static void split_budget(List* topologies, int budget)
+{
+    uint64 sum_complexities = 0;
+    foreach_cell(cell, topologies)
+    {
+        Topology* topology = (Topology*)lfirst(cell);
+        sum_complexities += topology->complexity;
+    }
+    foreach_cell(cell, topologies)
+    {
+        Topology* topology = (Topology*)lfirst(cell);
+        topology->budget = topology->complexity * budget / sum_complexities;
+    }
+}
+static void set_complexity_topology(Topology* topology){
+    uint64 n = list_length(topology->vertexes);
+    if (n>=20){
+        topology->complexity = UINT64_MAX;
+        return;
+    }
+    if (topology->topology == CHAIN){
+        topology->complexity = (12 * (n*n*n*n)+6* (n*n*n) -18*(n*n))/48;
+        return;
+    }
+    if (topology->topology == CYCLE){
+        topology->complexity = (n*n*n*n - n*n*n - n*n + n)/4;
+        return;
+    }
+    if (topology->topology == STAR){
+        topology->complexity = 1<<(2*n-4)- binom_centr(2*n-2,n-1)/4 + binom_centr(2*n-4,n-2)/4;
+        topology->complexity += n* (1<<(n-1)) -5*(1<<(n-3)) + (n*n-5*n+4)/2;
+        return;
+    }
+    topology->complexity = 1<<(2*n-2)-5*(1<<(n-2)) *binom_centr(2*n,n)/4 +1;// DENSITY_GRAPH
+}
+RelOptInfo* heuristic_join_search(PlannerInfo* root, List* initial_rels, int budget = -1)
+{
+    List* graph = build_join_graph(root, initial_rels); // List* of Vertex*
+    List* components = split_components(graph); // list of List* of Vertex* 
+    List* component_plans = NIL;
+    foreach_cell(cell, components)
+    {
+        List* comp_vertexes = (List*)lfirst(cell); // List* of Vertex*
+        while (list_length(comp_vertexes) > 1) {
+            int budget = get_budget_component(comp_vertexes);
+
+            bool* used_vertexes = (bool*)palloc0(list_length(comp_vertexes) * sizeof(bool));
+            
+            List* topologies = NIL; // List* of Topology*
+            List* dense_subgraphs = find_dense_subgraphs(comp_vertexes, used_vertexes);
+            topologies = list_concat(topologies, dense_subgraphs);
+            List* cycles = find_all_cycles(comp_vertexes, used_vertexes);
+            topologies = list_concat(topologies, cycles);
+            List* stars = find_all_stars(comp_vertexes, used_vertexes);
+            topologies = list_concat(topologies, stars);
+            List* remaining_chains = find_remaining_chains(comp_vertexes, used_vertexes);
+            topologies = list_concat(topologies, remaining_chains);
+
+            split_budget(topologies, budget);
+
+            List* topology_plans = NIL;
+            foreach_cell(cell, topologies)
+            {
+                Topology* topology = (Topology*)lfirst(cell);
+                int cost_plan = 0;
+                RelOptInfo* plan = plan_subgraph(root, topology,&cost_plan);
+                topology_plans = lappend(topology_plans, plan);
+                budget -= cost_plan;
+            }
+            list_free_deep(comp_vertexes);
+            comp_vertexes = NIL;
+            comp_vertexes = build_join_graph(root, topology_plans);
+            pfree(used_vertexes);
+            
+        }
+        Vertex* v = (Vertex*)linitial(comp_vertexes);
+        RelOptInfo* comp_plan = v->rel;
+        component_plans = lappend(component_plans, comp_plan);
+    }
+    RelOptInfo* final_plan;
+
+    if (list_length(component_plans) == 1) {
+        final_plan = (RelOptInfo*)linitial(component_plans);
+    } else {
+        final_plan = goo(root, component_plans, VOLUME, true);
+    }
+    list_free_deep(graph);
+    return final_plan;
+}
+
+static bool has_simple_inner_edge(PlannerInfo* root, RelOptInfo* rel1, RelOptInfo* rel2)
+{
+    if (!bms_overlap(rel1->relids, rel2->relids) &&
+            (have_relevant_joinclause(root, rel1, rel2) ||
+                have_join_order_restriction(root, rel1, rel2))) {
+            (void)make_join_rel(root, rel1, rel2,1);
+        }
+    bool result =!bms_overlap(rel1->relids, rel2->relids) &&
+                  (have_relevant_joinclause(root, rel1, rel2) || have_join_order_restriction(root, rel1, rel2));
+    return result;
+}
+
+static List* build_join_graph(PlannerInfo* root, List* initial_rels)
+{
+    List* vertexes = NIL;
+    size_t index = 0;
+    foreach_cell(cell, initial_rels)
+    {
+        RelOptInfo* rel = (RelOptInfo*)lfirst(cell);
+        Vertex* v = (Vertex*)palloc0(sizeof(Vertex));
+        v->rel = rel;
+        v->adj = NIL;
+        v->index = index++;
+        vertexes = lappend(vertexes, v);
+    }
+
+    foreach_cell(i, vertexes) foreach_cell(j, vertexes) if (i != j)
+    {
+        Vertex* vi = (Vertex*)lfirst(i);
+        Vertex* vj = (Vertex*)lfirst(j);
+        if (has_simple_inner_edge(root, vi->rel, vj->rel)){
+            vi->adj = lappend(vi->adj, vj);
+            vj->adj = lappend(vj->adj,vi);
+        }
+    }
+    print_graph(vertexes);
+    return vertexes;
+}
+static void print_graph(List* graph)
+{
+    foreach_cell(cell, graph)
+    {
+        Vertex* vertex = (Vertex*)lfirst(cell);
+        StringInfoData buf;
+        initStringInfo(&buf);
+        appendStringInfo(&buf, "%p :", (void*)vertex);
+        foreach_cell(cell, vertex->adj)
+        {
+            Vertex* neighbor = (Vertex*)lfirst(cell);
+            appendStringInfo(&buf, " %p", (void*)neighbor);
+        }
+        ereport(NOTICE, (errmsg("%s\n", buf.data)));
+        pfree(buf.data);
+    }
+}
+static void print_list_vertexes(List* vertexes)
+{
+    if (vertexes == NIL)
+        return;
+
+    StringInfoData buf;
+    initStringInfo(&buf);
+
+    foreach_cell(cell, vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        appendStringInfo(&buf, "%p ", (void*)v);
+    }
+
+    ereport(NOTICE, (errmsg("%s\n", buf.data)));
+    pfree(buf.data);
+}
+static List* dfs_component(Vertex* v, List* comp, bool* used_vertexes)
+{
+    used_vertexes[v->index] = true;
+    comp = lappend(comp, v);
+    foreach_cell(cell, v->adj)
+    {
+        Vertex* next = (Vertex*)lfirst(cell);
+        if (!used_vertexes[next->index])
+            comp = dfs_component(next, comp, used_vertexes);
+    }
+    return comp;
+}
+
+static List* split_components(List* vertexes)
+{
+    List* comps = NIL;
+    int number_of_rels = list_length(vertexes);
+    bool* used_vertexes = (bool*)palloc0(number_of_rels * sizeof(bool));
+    foreach_cell(cell, vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        if (!used_vertexes[v->index]) {
+            List* sub = NIL;
+            sub = dfs_component(v, sub, used_vertexes);
+            comps = lappend(comps, sub);
+        }
+    }
+    pfree(used_vertexes);
+    return comps;
+}
+
+static List* dfs(Vertex* start, Vertex* cur, gs_stl::gs_vector<Vertex*>& stack, List* cycles, bool* visited,
+                 bool* used_vertexes_comp)
+{
+    visited[cur->index] = true;
+    stack.push_back(cur);
+    foreach_cell(cell, cur->adj)
+    {
+        Vertex* nbr = (Vertex*)lfirst(cell);
+
+        if (nbr->index < start->index)
+            continue;
+
+        if (nbr == start) {
+            if (stack.size() >= 3) {
+                List* cycle = NIL;
+                for (auto it = stack.begin(); it != stack.end(); ++it) {
+                    cycle = lappend(cycle, *it);
+                    used_vertexes_comp[(*it)->index] = true;
+                }
+                cycles = lappend(cycles, cycle);
+                break;
+            }
+        } else if (!visited[nbr->index] && !used_vertexes_comp[nbr->index]) {
+            cycles = dfs(start, nbr, stack, cycles, visited, used_vertexes_comp);
+        }
+    }
+
+    visited[cur->index] = false;
+    stack.pop_back();
+    return cycles;
+}
+
+static List* find_all_cycles(List* vertexes, bool* used_vertexes_comp)
+{
+    int nverts_global = list_length(vertexes);
+    List* cycles = NIL;//List* of List* of Vertex*
+    bool* visited = (bool*)palloc0(nverts_global * sizeof(bool));
+    gs_stl::gs_vector<Vertex*> stack;
+
+    foreach_cell(cell, vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        memset(visited, false, nverts_global * sizeof(bool));
+
+        cycles = dfs(v, v, stack, cycles, visited, used_vertexes_comp);
+    }
+    List* cyclic_topologies = NIL;
+    foreach_cell(cell, cycles)
+    {
+        List* cycle = (List*)lfirst(cell);
+        Topology* topology = (Topology*)palloc0(sizeof(Topology));
+        topology->vertexes = cycle;
+        topology->topology = CYCLE;
+        set_complexity_topology(topology);
+        cyclic_topologies = lappend(cyclic_topologies, topology);
+    }
+    pfree(visited);
+    return cyclic_topologies;
+}
+
+static bool is_star(Vertex* center, bool* used_vertexes)
+{
+    int count_unused_neighbors = 0;
+    int count_light_neighbors = 0;
+    double volume_center = center->rel->rows;
+    foreach_cell(cell, center->adj)
+    {
+        Vertex* neighbor = (Vertex*)lfirst(cell);
+        if (!used_vertexes[neighbor->index]) {
+            double volume_neighbor = neighbor->rel->rows;
+            if (volume_center >= 10 * volume_neighbor)
+                count_light_neighbors++;
+            count_unused_neighbors++;
+        }
+    }
+    return count_unused_neighbors >= 3 || count_light_neighbors >= 2;
+}
+static List* find_star(Vertex* center, bool* used_vertexes)
+{
+    List* star = NIL;
+    star = lappend(star, center);
+    used_vertexes[center->index] = true;
+    foreach_cell(cell, center->adj)
+    {
+        Vertex* neighbor = (Vertex*)lfirst(cell);
+        do {
+            if (used_vertexes[neighbor->index])
+                break;
+            star = lappend(star, neighbor);
+            used_vertexes[neighbor->index] = true;
+            if (is_star(neighbor, used_vertexes))
+                break;
+            if (neighbor->adj == NIL)
+                break;
+            neighbor = (Vertex*)list_head(neighbor->adj);
+        } while (true);
+    }
+    return star;
+}
+
+static List* find_remaining_chains(List* vertexes, bool* used_vertexes)
+{
+    List* remaining_chains = NIL; //List* of Topology*
+    foreach_cell(cell, vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        if (!used_vertexes[v->index]) {
+            List* sub = NIL;
+            sub = dfs_component(v, sub, used_vertexes);
+            Topology* topology = (Topology*)palloc0(sizeof(Topology));
+            topology->vertexes = sub;
+            topology->topology = CHAIN;
+            set_complexity_topology(topology);
+            remaining_chains = lappend(remaining_chains, sub);
+        }
+    }
+    return remaining_chains;
+}
+
+static List* find_all_stars(List* vertexes, bool* used_vertexes)
+{
+    List* stars = NIL;
+    foreach_cell(cell, vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        if (used_vertexes[v->index] || !is_star(v, used_vertexes))
+            continue;
+        List* star = find_star(v, used_vertexes); //List* of Vertex*
+        Topology* topology = (Topology*)palloc0(sizeof(Topology));
+        topology->vertexes = star;
+        topology->topology = STAR;
+        set_complexity_topology(topology);
+        stars = lappend(stars, star);
+    }
+    return stars;
+}
+static Cost get_cost(PlannerInfo* root,RelOptInfo* rel1, RelOptInfo* rel2){
+    RelOptInfo* tmp = make_join_rel(root,rel1, rel2,0);
+    Cost cost = (  (Path*)lfirst(list_head(tmp->cheapest_total_path) ))->total_cost;
+    return cost;
+}
+static Selectivity get_selectivity(PlannerInfo* root,RelOptInfo* rel1, RelOptInfo* rel2){ //TODO
+    SpecialJoinInfo* sjinfo = NULL;
+    SpecialJoinInfo sjinfo_data;
+    sjinfo = &sjinfo_data;
+    sjinfo->type = T_SpecialJoinInfo;
+    sjinfo->min_lefthand = rel1->relids;
+    sjinfo->min_righthand = rel2->relids;
+    sjinfo->syn_lefthand = rel1->relids;
+    sjinfo->syn_righthand = rel2->relids;
+    sjinfo->jointype = JOIN_INNER;
+    sjinfo->lhs_strict = false;
+    sjinfo->is_straight_join = false;
+    sjinfo->delay_upper_joins = false;
+    sjinfo->join_quals = NIL;
+    sjinfo->varratio_cached = true;
+
+    List* joininfo = NIL;
+    Relids other_relids;
+    List* clauses =NIL;
+    if (list_length(rel1->joininfo) <= list_length(rel2->joininfo)) {
+        joininfo = rel1->joininfo;
+        other_relids = rel2->relids;
+    } else {
+        joininfo = rel2->joininfo;
+        other_relids = rel1->relids;
+    }
+
+    foreach_cell (cell, joininfo) {
+        RestrictInfo* rinfo = (RestrictInfo*)lfirst(cell);
+
+        if (bms_overlap(other_relids, rinfo->required_relids)) {
+            clauses=lappend(clauses,rinfo);
+        }
+    }
+
+    Selectivity result = clauselist_selectivity(root,clauses,0,JOIN_INNER,sjinfo);
+    return result;
+}
+static RelOptInfo* goo(PlannerInfo* root, List* initial_rels, GooComp gooComp, bool clauseless = false)
+{
+
+    gs_stl::gs_set<RelOptInfo*> rels;
+    foreach_cell(cell, initial_rels)
+    {
+        RelOptInfo* plan = (RelOptInfo*)lfirst(cell);
+        rels.insert(plan);
+    }
+    while (rels.size() > 1) {
+        RelOptInfo *parent1 = NULL, *parent2 = NULL;
+        Selectivity best_sel=1;
+        Cost best_cost = DBL_MAX;
+        for (auto it_i : rels) {
+            for (auto it_j : rels) {
+                if (it_i == it_j)
+                    continue;
+                if (!clauseless && !has_simple_inner_edge(root, it_i, it_j)) {
+                    continue;
+                }
+                if (gooComp==COST){
+                    Cost tmp_cost= get_cost(root,it_i,it_j);
+                    if (tmp_cost<best_cost){
+                        best_cost =tmp_cost;
+                        parent1 = it_i;
+                        parent2 = it_j;
+                    }
+                }
+                else{
+                    Selectivity tmp_sel= get_selectivity(root,it_i,it_j);
+                    if (tmp_sel<best_sel){
+                        best_sel =tmp_sel;
+                        parent1 = it_i;
+                        parent2 = it_j;
+                    }
+                }
+            }
+        }
+        RelOptInfo* best_rel =make_join_rel(root,parent1,parent2,0);
+        set_cheapest(best_rel,root);
+        rels.insert(best_rel);
+        rels.erase(parent1);
+        rels.erase(parent2);
+    }
+    RelOptInfo* plan = *rels.begin().first;
+    return plan;
+}
+
+static int count_edges(List* sub)
+{
+    int m = 0;
+
+    foreach_cell(cell, sub)
+    {
+        Vertex* v1 = (Vertex*)lfirst(cell);
+        foreach_cell(cell2, v1->adj)
+        {
+            Vertex* v2 = (Vertex*)lfirst(cell2);
+            if (v1->index < v2->index && list_member_ptr(sub, v2))
+                m++;
+        }
+    }
+    return m;
+}
+
+static double density(List* sub)
+{
+    int n = list_length(sub);
+    if (n < 2)
+        return 0.0;
+
+    int m = count_edges(sub);
+    double d = (double)m / ((double)n * (n - 1) / 2.0);
+    return d;
+}
+
+static Vertex* find_min_degree_vertex(List* sub)
+{
+    int best_deg = INT_MAX;
+    Vertex* best_v = NULL;
+
+    foreach_cell(cell, sub)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        int deg = 0;
+
+        foreach_cell(cell2, v->adj) if (list_member_ptr(sub, lfirst(cell2))) deg++;
+
+        if (deg < best_deg) {
+            best_deg = deg;
+            best_v = v;
+        }
+    }
+    return best_v;
+}
+
+static List* find_dense_subgraphs(List* vertexes, bool* used)
+{
+    List* dense_sets = NIL;//List* of Topology*
+
+    while (true) {
+
+        List* S = NIL;
+        foreach_cell(cell, vertexes)
+        {
+            Vertex* v = (Vertex*)lfirst(cell);
+            if (!used[v->index])
+                S = lappend(S, v);
+        }
+
+        if (list_length(S) < 6)
+            break;
+
+        while (density(S) < THRESH && list_length(S) >= 4) {
+            Vertex* vmin = find_min_degree_vertex(S);
+            if (vmin == NULL)
+                break;
+            S = list_delete_ptr(S, vmin);
+        }
+
+        if (list_length(S) >= 4 && density(S) >= THRESH) {
+            Topology* topology = (Topology*)palloc0(sizeof(Topology));
+            topology->vertexes = S;
+            topology->topology = DENSITY_GRAPH;
+            set_complexity_topology(topology);
+            dense_sets = lappend(dense_sets, topology);
+
+            foreach_cell(cell, S)
+            {
+                Vertex* v = (Vertex*)lfirst(cell);
+                used[v->index] = true;
+            }
+        } else {
+
+            break;
+        }
+    }
+
+    return dense_sets;
+}
+static RelOptInfo* plan_subgraph(PlannerInfo* root, Topology* topology, int* cost_plan){
+    List* initial_rels = NIL; //List* of RelOptInfo*
+    foreach_cell(cell, topology->vertexes)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        RelOptInfo* rel = v->rel;
+        initial_rels = lappend(initial_rels, rel);
+    }
+    RelOptInfo* plan = NULL;
+    int nrels = list_length(initial_rels);
+    uint64 cost_geqo = get_cost_heuristic(topology, GEQO);
+    uint64 cost_standard = get_cost_heuristic(topology, STANDARD);
+    bool use_heuristic = topology->budget < cost_standard;
+    if (!use_heuristic)
+        use_heuristic = is_easy_topology(topology);
+    plan = use_heuristic ? standard_join_search(root, nrels, initial_rels) : geqo(root, nrels, initial_rels);
+    /*if (use_dp)
+        plan = standard_join_search(root, nrels, initial_rels);
+    else {
+        switch (topology) {
+            case (DENSITY_GRAPH):
+                plan = enable_geqo ? geqo(root, nrels, initial_rels) : standard_join_search(root, nrels, initial_rels);
+                break;
+            case (STAR):
+                plan = plan_star(root, nrels, initial_rels);
+                break;
+            case (CYCLE):
+                plan = plan_cycle(root, nrels, initial_rels);
+                break;
+            case (CHAIN):
+                plan = plan_chain(root, nrels, initial_rels);
+                break;
+        }
+    }*/
+    return plan;
+}
+/*
+static RelOptInfo* plan_star(PlannerInfo* root, int number_of_rels, List* initial_rels)
+{
+    Vertex* center = (Vertex*)lfirst(list_head(initial_rels));
+    gs_stl::gs_set<Vertex*> rels;
+    foreach_cell(cell, initial_rels)
+    {
+        Vertex* v = (Vertex*)lfirst(cell);
+        rels.insert(v);
+    }
+
+    List* chains = NIL;
+    foreach_cell(cell, center->adj)
+    {
+        Vertex* neighbor = (Vertex*)lfirst(cell);
+        List* chain = NIL;
+        do {
+            if (rels.find(neighbor) == rels.end())
+                break;
+            rels.erase(neighbor);
+            chain = lappend(chain, neighbor);
+            if (neighbor->adj == NIL)
+                break;
+            foreach_cell(cell, neighbor->adj)
+            {
+                Vertex* next_neighbor = (Vertex*)lfirst(cell);
+                if (rels.find(next_neighbor) != rels.end())
+                    neighbor = next_neighbor;
+            }
+        } while (true);
+        if (chain != NIL) {
+            chains = lappend(chains, chain);
+        }
+    }
+    List* plans = NIL;
+    plans = lappend(plans, center);
+    foreach_cell(cell, chains)
+    {
+        List* chain = (List*)lfirst(cell);
+        RelOptInfo* plan_chain = plan_subgraph(root, chain, CHAIN);
+        plans = lappend(plans, plan_chain);
+    }
+    RelOptInfo* result = goo(root, plans, VOLUME);
+    return result;
+}
+*/
+
+/*
+static RelOptInfo* plan_cycle(PlannerInfo* root, int number_of_rels, List* initial_rels)
+{
+    ListCell* worstCard = NULL;
+    foreach_cell(cell, initial_rels)
+    {
+        if (worstCard == NULL) {
+            worstCard = cell;
+            continue;
+        }
+        RelOptInfo* l = (RelOptInfo*)lfirst(cell);
+        RelOptInfo* r =
+            (cell->next == NULL) ? (RelOptInfo*)lfirst(list_head(initial_rels)) : (RelOptInfo*)lfirst(cell->next);
+        RelOptInfo* tmp_rel = make_join_rel(root, l, r,0);
+        if (tmp_rel->rows > ((RelOptInfo*)lfirst(worstCard))->rows) {
+            worstCard = cell;
+        }
+    }
+    List* chain = NIL;
+    foreach_cell(cell, initial_rels)
+    {
+        if (cell == worstCard)
+            continue;
+        chain = lappend2(chain, cell);
+    }
+    RelOptInfo* ch_plan = plan_subgraph(root, chain, CHAIN);
+    RelOptInfo* rem_rel = (RelOptInfo*)lfirst(worstCard);
+    RelOptInfo* plan = make_join_rel(root, ch_plan, rem_rel,0);
+    set_cheapest(plan, root);
+    return plan;
+}
+*/
+/*
+static RelOptInfo* plan_chain(PlannerInfo* root, int number_of_rels, List* initial_rels)
+{
+    RelOptInfo* plan = goo(root, initial_rels, VOLUME);
+    if (u_sess->attr.attr_sql.enable_geqo) {
+        RelOptInfo* plan_alt = geqo(root, number_of_rels, initial_rels);
+        Path* path_plan = (Path*)linitial(plan->cheapest_total_path);
+        Path* path_geqo = (Path*)linitial(plan_alt->cheapest_total_path);
+        if (compare_path_costs(path_geqo, path_plan, TOTAL_COST) == -1) {
+            plan = plan_alt;
+        }
+    }
+    return plan;
+}
+*/

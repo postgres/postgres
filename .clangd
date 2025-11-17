@@ -1,0 +1,15 @@
+# .clangd
+Diagnostics:
+  Suppress:
+    - "-Wdeclaration-after-statement"
+    - clang-diagnostic-declaration-after-statement
+    - altera-unroll-loops
+    - readability-identifier-length
+    - eadability-identifier-length   # на случай опечатки в источнике
+    - cppcoreguidelines-init-variables
+    - cppcoreguidelines-avoid-magic-numbers   # алиас readability-magic-numbers
+    - readability-magic-numbers
+    - readability-function-cognitive-complexity
+
+CompileFlags:
+  Add: ["-Wno-declaration-after-statement"]
