@@ -206,7 +206,7 @@ PostgreSQL documentation
        <para>
         Specifies how often <application>pg_recvlogical</application> should
         issue <function>fsync()</function> calls to ensure the output file is
-        safely flushed to disk.
+        safely flushed to disk. The default value is 10 seconds.
        </para>
 
        <para>
@@ -275,8 +275,10 @@ PostgreSQL documentation
       <listitem>
        <para>
         When creating a slot, use the specified logical decoding output
-        plugin. See <xref linkend="logicaldecoding"/>. This option has no
-        effect if the slot already exists.
+        plugin. See <xref linkend="logicaldecoding-output-plugin"/> for
+        information about the plugins <productname>PostgreSQL</productname>
+        provides. The default is <xref linkend="test-decoding"/>.
+        This option has no effect if the slot already exists.
        </para>
       </listitem>
      </varlistentry>
