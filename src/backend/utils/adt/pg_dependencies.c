@@ -16,6 +16,7 @@
 
 #include "lib/stringinfo.h"
 #include "statistics/extended_stats_internal.h"
+#include "statistics/statistics_format.h"
 #include "utils/fmgrprotos.h"
 
 /*
@@ -46,34 +47,34 @@ pg_dependencies_out(PG_FUNCTION_ARGS)
 {
 	bytea	   *data = PG_GETARG_BYTEA_PP(0);
 	MVDependencies *dependencies = statext_dependencies_deserialize(data);
-	int			i,
-				j;
 	StringInfoData str;
 
 	initStringInfo(&str);
-	appendStringInfoChar(&str, '{');
+	appendStringInfoChar(&str, '[');
 
-	for (i = 0; i < dependencies->ndeps; i++)
+	for (int i = 0; i < dependencies->ndeps; i++)
 	{
 		MVDependency *dependency = dependencies->deps[i];
 
 		if (i > 0)
 			appendStringInfoString(&str, ", ");
 
-		appendStringInfoChar(&str, '"');
-		for (j = 0; j < dependency->nattributes; j++)
-		{
-			if (j == dependency->nattributes - 1)
-				appendStringInfoString(&str, " => ");
-			else if (j > 0)
-				appendStringInfoString(&str, ", ");
+		if (dependency->nattributes <= 1)
+			elog(ERROR, "invalid zero-length nattributes array in MVDependencies");
 
-			appendStringInfo(&str, "%d", dependency->attributes[j]);
-		}
-		appendStringInfo(&str, "\": %f", dependency->degree);
+		appendStringInfo(&str, "{\"" PG_DEPENDENCIES_KEY_ATTRIBUTES "\": [%d",
+						 dependency->attributes[0]);
+
+		for (int j = 1; j < dependency->nattributes - 1; j++)
+			appendStringInfo(&str, ", %d", dependency->attributes[j]);
+
+		appendStringInfo(&str, "], \"" PG_DEPENDENCIES_KEY_DEPENDENCY "\": %d, "
+						 "\"" PG_DEPENDENCIES_KEY_DEGREE "\": %f}",
+						 dependency->attributes[dependency->nattributes - 1],
+						 dependency->degree);
 	}
 
-	appendStringInfoChar(&str, '}');
+	appendStringInfoChar(&str, ']');
 
 	PG_RETURN_CSTRING(str.data);
 }

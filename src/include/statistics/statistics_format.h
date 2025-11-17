@@ -29,4 +29,19 @@
 #define PG_NDISTINCT_KEY_ATTRIBUTES	"attributes"
 #define PG_NDISTINCT_KEY_NDISTINCT	"ndistinct"
 
+
+/* ----------
+ * pg_dependencies in human-readable format is a JSON array made of elements
+ * with a predefined set of keys, like:
+ *
+ * [{"degree": 1.000000, "attributes": [3], "dependency": 4},
+ *  {"degree": 1.000000, "attributes": [3], "dependency": 6},
+ *  ... ]
+ * ----------
+ */
+
+#define PG_DEPENDENCIES_KEY_ATTRIBUTES	"attributes"
+#define PG_DEPENDENCIES_KEY_DEPENDENCY	"dependency"
+#define PG_DEPENDENCIES_KEY_DEGREE		"degree"
+
 #endif							/* STATISTICS_FORMAT_H */

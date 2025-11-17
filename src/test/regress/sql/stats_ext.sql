@@ -125,7 +125,8 @@ ALTER TABLE ab1 ALTER a SET STATISTICS -1;
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS 0;
 \d ab1
 ANALYZE ab1;
-SELECT stxname, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct, stxddependencies, stxdmcv, stxdinherit
+SELECT stxname, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct,
+       jsonb_pretty(d.stxddependencies::text::jsonb) AS stxddependencies, stxdmcv, stxdinherit
   FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
  WHERE s.stxname = 'ab1_a_b_stats';
 ALTER STATISTICS ab1_a_b_stats SET STATISTICS -1;
@@ -708,7 +709,7 @@ CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_depen
 ANALYZE functional_dependencies;
 
 -- print the detected dependencies
-SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+SELECT jsonb_pretty(dependencies::text::jsonb) AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
 
@@ -844,7 +845,7 @@ CREATE STATISTICS func_deps_stat (dependencies) ON (a * 2), upper(b), (c + 1) FR
 ANALYZE functional_dependencies;
 
 -- print the detected dependencies
-SELECT dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+SELECT jsonb_pretty(dependencies::text::jsonb) AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1''');
 
