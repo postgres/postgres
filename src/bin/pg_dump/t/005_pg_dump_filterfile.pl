@@ -561,7 +561,7 @@ $dump = slurp_file($plainfile);
 unlike($dump, qr/^\\connect postgres/m, "database postgres is not dumped");
 like($dump, qr/^\\connect template1/m, "database template1 is dumped");
 
-# Make sure this option dont break the existing limitation of using
+# Make sure this option doesn't break the existing limitation of using
 # --globals-only with exclusions
 command_fails_like(
 	[
