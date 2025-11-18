@@ -50,14 +50,20 @@ typedef struct WaitLSNProcInfo
 	/* LSN, which this process is waiting for */
 	XLogRecPtr	waitLSN;
 
+	/* The type of LSN to wait */
+	WaitLSNType lsnType;
+
 	/* Process to wake up once the waitLSN is reached */
 	ProcNumber	procno;
 
-	/* Heap membership flags for LSN types */
-	bool		inHeap[WAIT_LSN_TYPE_COUNT];
+	/*
+	 * Heap membership flag.  A process can wait for only one LSN type at a
+	 * time, so a single flag suffices (tracked by the lsnType field).
+	 */
+	bool		inHeap;
 
-	/* Heap nodes for LSN types */
-	pairingheap_node heapNode[WAIT_LSN_TYPE_COUNT];
+	/* Pairing heap node for the waiters' heap (one per process) */
+	pairingheap_node heapNode;
 } WaitLSNProcInfo;
 
 /*
