@@ -1100,16 +1100,26 @@ from int4_tbl;
 --
 -- test for bug #19055: interaction of WITH with aggregates
 --
--- The reference to cte1 must determine the aggregate's level,
--- even though it contains no Vars referencing cte1
-explain (verbose, costs off)
+-- For now, we just throw an error if there's a use of a CTE below the
+-- semantic level that the SQL standard assigns to the aggregate.
+-- It's not entirely clear what we could do instead that doesn't risk
+-- breaking more things than it fixes.
 select f1, (with cte1(x,y) as (select 1,2)
             select count((select i4.f1 from cte1))) as ss
 from int4_tbl i4;
 
-select f1, (with cte1(x,y) as (select 1,2)
-            select count((select i4.f1 from cte1))) as ss
-from int4_tbl i4;
+--
+-- test for bug #19106: interaction of WITH with aggregates
+--
+-- the initial fix for #19055 was too aggressive and broke this case
+explain (verbose, costs off)
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
 
 --
 -- test for nested-recursive-WITH bug
