@@ -375,6 +375,10 @@ main(int argc, char **argv)
 		exit(2);
 	}
 
+	if (dryrun)
+		pg_log_info("Executing in dry-run mode.\n"
+					"No files will be removed.");
+
 	/*
 	 * Check archive exists and other initialization if required.
 	 */

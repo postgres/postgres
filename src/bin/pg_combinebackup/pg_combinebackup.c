@@ -242,6 +242,10 @@ main(int argc, char *argv[])
 	if (opt.no_manifest)
 		opt.manifest_checksums = CHECKSUM_TYPE_NONE;
 
+	if (opt.dry_run)
+		pg_log_info("Executing in dry-run mode.\n"
+					"The target directory will not be modified.");
+
 	/* Check that the platform supports the requested copy method. */
 	if (opt.copy_method == COPY_METHOD_CLONE)
 	{

@@ -2305,6 +2305,11 @@ main(int argc, char **argv)
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
+
+	if (dry_run)
+		pg_log_info("Executing in dry-run mode.\n"
+					"The target directory will not be modified.");
+
 	pg_log_info("validating publisher connection string");
 	pub_base_conninfo = get_base_conninfo(opt.pub_conninfo_str,
 										  &dbname_conninfo);
