@@ -897,7 +897,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 	 */
 	while (nbatch > 1)
 	{
-		/* Check that buckets wont't overflow MaxAllocSize */
+		/* Check that buckets won't overflow MaxAllocSize */
 		if (nbuckets > (MaxAllocSize / sizeof(HashJoinTuple) / 2))
 			break;
 
