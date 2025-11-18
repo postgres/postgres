@@ -23,6 +23,10 @@
 
 #if defined(HAVE_ELF_AUX_INFO) || defined(HAVE_GETAUXVAL)
 #include <sys/auxv.h>
+/* Ancient glibc releases don't include the HWCAPxxx macros in sys/auxv.h */
+#if defined(__linux__) && !defined(HWCAP_SVE)
+#include <asm/hwcap.h>
+#endif
 #endif
 #endif
 
