@@ -2221,9 +2221,9 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 					   OIDOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "apply_error_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "seq_sync_error_count",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "sync_seq_error_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sync_error_count",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sync_table_error_count",
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "confl_insert_exists",
 					   INT8OID, -1, 0);
@@ -2258,11 +2258,11 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 	/* apply_error_count */
 	values[i++] = Int64GetDatum(subentry->apply_error_count);
 
-	/* seq_sync_error_count */
-	values[i++] = Int64GetDatum(subentry->seq_sync_error_count);
+	/* sync_seq_error_count */
+	values[i++] = Int64GetDatum(subentry->sync_seq_error_count);
 
-	/* sync_error_count */
-	values[i++] = Int64GetDatum(subentry->sync_error_count);
+	/* sync_table_error_count */
+	values[i++] = Int64GetDatum(subentry->sync_table_error_count);
 
 	/* conflict count */
 	for (int nconflict = 0; nconflict < CONFLICT_NUM_TYPES; nconflict++)

@@ -41,11 +41,11 @@ pgstat_report_subscription_error(Oid subid, LogicalRepWorkerType wtype)
 			break;
 
 		case WORKERTYPE_SEQUENCESYNC:
-			pending->seq_sync_error_count++;
+			pending->sync_seq_error_count++;
 			break;
 
 		case WORKERTYPE_TABLESYNC:
-			pending->sync_error_count++;
+			pending->sync_table_error_count++;
 			break;
 
 		default:
@@ -131,8 +131,8 @@ pgstat_subscription_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 
 #define SUB_ACC(fld) shsubent->stats.fld += localent->fld
 	SUB_ACC(apply_error_count);
-	SUB_ACC(seq_sync_error_count);
-	SUB_ACC(sync_error_count);
+	SUB_ACC(sync_seq_error_count);
+	SUB_ACC(sync_table_error_count);
 	for (int i = 0; i < CONFLICT_NUM_TYPES; i++)
 		SUB_ACC(conflict_count[i]);
 #undef SUB_ACC
