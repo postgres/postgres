@@ -67,14 +67,14 @@
        </para>
        <para>
         Sets the sequence object's current value, and optionally
-        its <literal>is_called</literal> flag.  The two-parameter
-        form sets the sequence's <literal>last_value</literal> field to the
-        specified value and sets its <literal>is_called</literal> field to
+        its <structfield>is_called</structfield> flag.  The two-parameter
+        form sets the sequence's <structfield>last_value</structfield> field to the
+        specified value and sets its <structfield>is_called</structfield> field to
         <literal>true</literal>, meaning that the next
         <function>nextval</function> will advance the sequence before
         returning a value.  The value that will be reported
         by <function>currval</function> is also set to the specified value.
-        In the three-parameter form, <literal>is_called</literal> can be set
+        In the three-parameter form, <structfield>is_called</structfield> can be set
         to either <literal>true</literal>
         or <literal>false</literal>.  <literal>true</literal> has the same
         effect as the two-parameter form. If it is set
