@@ -19,6 +19,7 @@ README.*	conflict-marker-size=48
 *.data						-whitespace
 contrib/pgcrypto/sql/pgp-armor.sql		whitespace=-blank-at-eol
 src/backend/catalog/sql_features.txt		whitespace=space-before-tab,blank-at-eof,-blank-at-eol
+src/backend/utils/misc/postgresql.conf.sample	whitespace=space-before-tab,trailing-space,tab-in-indent
 
 # Test output files that contain extra whitespace
 *.out					-whitespace
