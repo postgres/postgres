@@ -2300,36 +2300,44 @@ from int4_tbl;
 --
 -- test for bug #19055: interaction of WITH with aggregates
 --
--- The reference to cte1 must determine the aggregate's level,
--- even though it contains no Vars referencing cte1
+-- For now, we just throw an error if there's a use of a CTE below the
+-- semantic level that the SQL standard assigns to the aggregate.
+-- It's not entirely clear what we could do instead that doesn't risk
+-- breaking more things than it fixes.
+select f1, (with cte1(x,y) as (select 1,2)
+            select count((select i4.f1 from cte1))) as ss
+from int4_tbl i4;
+ERROR:  outer-level aggregate cannot use a nested CTE
+LINE 2:             select count((select i4.f1 from cte1))) as ss
+                           ^
+DETAIL:  CTE "cte1" is below the aggregate's semantic level.
+--
+-- test for bug #19106: interaction of WITH with aggregates
+--
+-- the initial fix for #19055 was too aggressive and broke this case
 explain (verbose, costs off)
-select f1, (with cte1(x,y) as (select 1,2)
-            select count((select i4.f1 from cte1))) as ss
-from int4_tbl i4;
-                   QUERY PLAN                    
--------------------------------------------------
- Seq Scan on public.int4_tbl i4
-   Output: i4.f1, (SubPlan expr_1)
-   SubPlan expr_1
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+                 QUERY PLAN                 
+--------------------------------------------
+ Aggregate
+   Output: max((InitPlan expr_1).col1)
+   InitPlan expr_1
      ->  Aggregate
-           Output: count((InitPlan expr_2).col1)
-           InitPlan expr_2
-             ->  Result
-                   Output: i4.f1
-           ->  Result
-(9 rows)
+           Output: sum("*VALUES*".column1)
+           ->  Values Scan on "*VALUES*"
+                 Output: "*VALUES*".column1
+   ->  Result
+(8 rows)
 
-select f1, (with cte1(x,y) as (select 1,2)
-            select count((select i4.f1 from cte1))) as ss
-from int4_tbl i4;
-     f1      | ss 
--------------+----
-           0 |  1
-      123456 |  1
-     -123456 |  1
-  2147483647 |  1
- -2147483647 |  1
-(5 rows)
+with a as ( select id from (values (1), (2)) as v(id) ),
+     b as ( select max((select sum(id) from a)) as agg )
+select agg from b;
+ agg 
+-----
+   3
+(1 row)
 
 --
 -- test for nested-recursive-WITH bug
