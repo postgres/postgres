@@ -44,13 +44,21 @@ my $sample_file = "$share_dir/postgresql.conf.sample";
 # List of all the GUCs found in the sample file.
 my @gucs_in_file;
 
+# List of all lines with tabs in the sample file.
+my @lines_with_tabs;
+
 # Read the sample file line-by-line, checking its contents to build a list
 # of everything known as a GUC.
 my $num_tests = 0;
+my $line_num = 0;
 open(my $contents, '<', $sample_file)
   || die "Could not open $sample_file: $!";
 while (my $line = <$contents>)
 {
+	$line_num++;
+	push @lines_with_tabs, $line_num
+	  if $line =~ /\t/;
+
 	# Check if this line matches a GUC parameter:
 	# - Each parameter is preceded by "#", but not "# " in the sample
 	# file.
@@ -97,6 +105,8 @@ my @sample_intersect = grep($not_in_sample_hash{$_}, @gucs_in_file);
 is(scalar(@sample_intersect),
 	0, "no parameters marked as NOT_IN_SAMPLE in postgresql.conf.sample");
 
+is(scalar(@lines_with_tabs), 0, "no lines with tabs in postgresql.conf.sample");
+
 # These would log some information only on errors.
 foreach my $param (@missing_from_file)
 {
@@ -115,6 +125,10 @@ foreach my $param (@sample_intersect)
 	print(
 		"found GUC $param in postgresql.conf.sample, marked as NOT_IN_SAMPLE\n"
 	);
+}
+foreach my $param (@lines_with_tabs)
+{
+	print("found tab in line $param in postgresql.conf.sample\n");
 }
 
 done_testing();
