@@ -263,7 +263,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			nulls[2] = false;
 			values[3] = ObjectIdGetDatum(fctx->record[i].reldatabase);
 			nulls[3] = false;
-			values[4] = ObjectIdGetDatum(fctx->record[i].forknum);
+			values[4] = Int16GetDatum(fctx->record[i].forknum);
 			nulls[4] = false;
 			values[5] = Int64GetDatum((int64) fctx->record[i].blocknum);
 			nulls[5] = false;
