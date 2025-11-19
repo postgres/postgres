@@ -3136,9 +3136,17 @@ parse_and_validate_value(const struct config_generic *record,
 
 					hintmsg = config_enum_get_options(conf,
 													  _("Available values: "),
-													  /* translator: This is the terminator of a list of entity names. */
+
+					/*
+					 * translator: This is the terminator of a list of entity
+					 * names.
+					 */
 													  _("."),
-													  /* translator: This is a separator in a list of entity names. */
+
+					/*
+					 * translator: This is a separator in a list of entity
+					 * names.
+					 */
 													  _(", "));
 
 					ereport(elevel,
