@@ -60,6 +60,7 @@
 
 /* System header files that should be available everywhere in Postgres */
 #include <inttypes.h>
+#include <stdalign.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
