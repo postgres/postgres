@@ -1205,22 +1205,6 @@ fmtfloat(double value, char type, int forcesign, int leftjust,
 		}
 		if (vallen < 0)
 			goto fail;
-
-		/*
-		 * Windows, alone among our supported platforms, likes to emit
-		 * three-digit exponent fields even when two digits would do.  Hack
-		 * such results to look like the way everyone else does it.
-		 */
-#ifdef WIN32
-		if (vallen >= 6 &&
-			convert[vallen - 5] == 'e' &&
-			convert[vallen - 3] == '0')
-		{
-			convert[vallen - 3] = convert[vallen - 2];
-			convert[vallen - 2] = convert[vallen - 1];
-			vallen--;
-		}
-#endif
 	}
 
 	padlen = compute_padlen(minlen, vallen + zeropadlen, leftjust);
@@ -1336,17 +1320,6 @@ pg_strfromd(char *str, size_t count, int precision, double value)
 				target.failed = true;
 				goto fail;
 			}
-
-#ifdef WIN32
-			if (vallen >= 6 &&
-				convert[vallen - 5] == 'e' &&
-				convert[vallen - 3] == '0')
-			{
-				convert[vallen - 3] = convert[vallen - 2];
-				convert[vallen - 2] = convert[vallen - 1];
-				vallen--;
-			}
-#endif
 		}
 	}
 
