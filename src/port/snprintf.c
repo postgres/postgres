@@ -557,28 +557,6 @@ nextch2:
 					fmtpos = accum;
 				accum = 0;
 				goto nextch2;
-#ifdef WIN32
-			case 'I':
-				/* Windows PRI*{32,64,PTR} size */
-				if (format[0] == '3' && format[1] == '2')
-					format += 2;
-				else if (format[0] == '6' && format[1] == '4')
-				{
-					format += 2;
-					longlongflag = 1;
-				}
-				else
-				{
-#if SIZEOF_VOID_P == SIZEOF_LONG
-					longflag = 1;
-#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
-					longlongflag = 1;
-#else
-#error "cannot find integer type of the same size as intptr_t"
-#endif
-				}
-				goto nextch2;
-#endif
 			case 'l':
 				if (longflag)
 					longlongflag = 1;
@@ -842,28 +820,6 @@ nextch1:
 					fmtpos = accum;
 				accum = 0;
 				goto nextch1;
-#ifdef WIN32
-			case 'I':
-				/* Windows PRI*{32,64,PTR} size */
-				if (format[0] == '3' && format[1] == '2')
-					format += 2;
-				else if (format[0] == '6' && format[1] == '4')
-				{
-					format += 2;
-					longlongflag = 1;
-				}
-				else
-				{
-#if SIZEOF_VOID_P == SIZEOF_LONG
-					longflag = 1;
-#elif SIZEOF_VOID_P == SIZEOF_LONG_LONG
-					longlongflag = 1;
-#else
-#error "cannot find integer type of the same size as intptr_t"
-#endif
-				}
-				goto nextch1;
-#endif
 			case 'l':
 				if (longflag)
 					longlongflag = 1;
