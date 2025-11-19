@@ -857,6 +857,10 @@ PrintNewControlValues(void)
 	{
 		printf(_("NextXID:                              %u\n"),
 			   XidFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
+	}
+
+	if (set_oldest_xid != 0)
+	{
 		printf(_("OldestXID:                            %u\n"),
 			   ControlFile.checkPointCopy.oldestXid);
 		printf(_("OldestXID's DB:                       %u\n"),
