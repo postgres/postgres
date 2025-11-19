@@ -904,7 +904,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 		Assert((*num_skew_mcvs) < (INT_MAX / 2));
 
 		/*
-		 * Check that space_allowed won't overlow SIZE_MAX.
+		 * Check that space_allowed won't overflow SIZE_MAX.
 		 *
 		 * We don't use hash_table_bytes here, because it does not include the
 		 * skew buckets. And we want to limit the overall memory limit.
