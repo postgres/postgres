@@ -934,12 +934,16 @@ vacuum threshold = Minimum(vacuum max threshold, vacuum base threshold + vacuum 
     The table is also vacuumed if the number of tuples inserted since the last
     vacuum has exceeded the defined insert threshold, which is defined as:
 <programlisting>
-vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples
+vacuum insert threshold = vacuum base insert threshold + vacuum insert scale factor * number of tuples * percent of table not frozen
 </programlisting>
     where the vacuum insert base threshold is
     <xref linkend="guc-autovacuum-vacuum-insert-threshold"/>,
-    and vacuum insert scale factor is
-    <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>.
+    the vacuum insert scale factor is
+    <xref linkend="guc-autovacuum-vacuum-insert-scale-factor"/>,
+    the number of tuples is
+    <structname>pg_class</structname>.<structfield>reltuples</structfield>,
+    and the percent of the table not frozen is
+    <literal>1 - pg_class.relallfrozen / pg_class.relpages</literal>.
     Such vacuums may allow portions of the table to be marked as
     <firstterm>all visible</firstterm> and also allow tuples to be frozen, which
     can reduce the work required in subsequent vacuums.
