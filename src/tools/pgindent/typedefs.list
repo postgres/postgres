@@ -1649,6 +1649,9 @@ LtreeGistOptions
 LtreeSignature
 MAGIC
 MBuf
+MCVHashContext
+MCVHashEntry
+MCVHashTable_hash
 MCVItem
 MCVList
 MEMORY_BASIC_INFORMATION
