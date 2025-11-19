@@ -3135,14 +3135,17 @@ parse_and_validate_value(const struct config_generic *record,
 					char	   *hintmsg;
 
 					hintmsg = config_enum_get_options(conf,
-													  "Available values: ",
-													  ".", ", ");
+													  _("Available values: "),
+													  /* translator: This is the terminator of a list of entity names. */
+													  _("."),
+													  /* translator: This is a separator in a list of entity names. */
+													  _(", "));
 
 					ereport(elevel,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("invalid value for parameter \"%s\": \"%s\"",
 									record->name, value),
-							 hintmsg ? errhint("%s", _(hintmsg)) : 0));
+							 hintmsg ? errhint("%s", hintmsg) : 0));
 
 					if (hintmsg)
 						pfree(hintmsg);

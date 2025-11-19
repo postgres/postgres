@@ -249,6 +249,7 @@ logicalrep_get_attrs_str(LogicalRepRelation *remoterel, Bitmapset *atts)
 	{
 		attcnt++;
 		if (attcnt > 1)
+			/* translator: This is a separator in a list of entity names. */
 			appendStringInfoString(&attsbuf, _(", "));
 
 		appendStringInfo(&attsbuf, _("\"%s\""), remoterel->attnames[i]);
