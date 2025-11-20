@@ -833,10 +833,10 @@ psql --username=postgres --file=script.sql postgres
     <para>
      Unless the <option>--no-statistics</option> option is specified,
      <command>pg_upgrade</command> will transfer most optimizer statistics
-     from the old cluster to the new cluster.  However, some statistics may
-     not be transferred, such as those created explicitly with <xref
-     linkend="sql-createstatistics"/> or custom statistics added by an
-     extension.
+     from the old cluster to the new cluster.  This does not transfer
+     all statistics, such as those created explicitly with
+     <xref linkend="sql-createstatistics"/>, custom statistics added by
+     an extension, or statistics collected by the cumulative statistics system.
     </para>
 
     <para>
