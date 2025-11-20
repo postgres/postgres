@@ -2399,7 +2399,7 @@ PG_FUNCTION_INFO_V1(funcname);
      To call another version-1 function, you can use
      <function>DirectFunctionCall<replaceable>n</replaceable>(func,
      arg1, ..., argn)</function>.  This is particularly useful when you want
-     to call functions defined in the standard internal library, by using an
+     to call functions defined in the standard internal function library by using an
      interface similar to their SQL signature.
     </para>
 
@@ -3940,7 +3940,7 @@ extern bool InjectionPointDetach(const char *name);
     </para>
 
     <para>
-     Enabling injections points requires
+     Enabling injection points requires
      <option>--enable-injection-points</option> with
      <command>configure</command> or <option>-Dinjection_points=true</option>
      with <application>Meson</application>.

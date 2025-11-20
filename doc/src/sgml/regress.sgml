@@ -266,7 +266,7 @@ make check-world -j8 >/dev/null
   <para>
    Some test suites are not run by default, either because they are not secure
    to run on a multiuser system, because they require special software or
-   because they are resource intensive.  You can decide which test suites to
+   because they are resource-intensive.  You can decide which test suites to
    run additionally by setting the <command>make</command> or environment
    variable <varname>PG_TEST_EXTRA</varname> to a whitespace-separated list,
    for example:
@@ -337,7 +337,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
        <filename>src/bin/pg_upgrade/t/002_pg_upgrade.pl</filename> which
        cycles the regression database through <command>pg_dump</command>/
        <command>pg_restore</command>.  Not enabled by default because it
-       is resource intensive.
+       is resource-intensive.
       </para>
      </listitem>
     </varlistentry>
@@ -368,7 +368,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
       <para>
        Uses <literal>wal_consistency_checking=all</literal> while running
        certain tests under <filename>src/test/recovery</filename>.  Not
-       enabled by default because it is resource intensive.
+       enabled by default because it is resource-intensive.
       </para>
      </listitem>
     </varlistentry>
@@ -378,7 +378,7 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl load_balance libpq_encryption'
      <listitem>
       <para>
        Runs the test suite under <filename>src/test/modules/xid_wraparound</filename>.
-       Not enabled by default because it is resource intensive.
+       Not enabled by default because it is resource-intensive.
       </para>
      </listitem>
     </varlistentry>

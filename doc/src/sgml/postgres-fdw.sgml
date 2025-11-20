@@ -1226,7 +1226,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
     <term><literal>PostgresFdwCleanupResult</literal></term>
     <listitem>
      <para>
-      Waiting for transaction abort on remote server.
+      Waiting for transaction abort on a remote server.
      </para>
     </listitem>
    </varlistentry>

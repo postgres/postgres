@@ -3170,7 +3170,7 @@ ninja install
        <para>
         Enable additional test suites, which are not run by default because
         they are not secure to run on a multiuser system, require special
-        software to run, or are resource intensive.  The argument is a
+        software to run, or are resource-intensive.  The argument is a
         whitespace-separated list of tests to enable. See
         <xref linkend="regress-additional"/> for details. If the
         <envar>PG_TEST_EXTRA</envar> environment variable is set when the

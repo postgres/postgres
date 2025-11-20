@@ -84,7 +84,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> and <option>--dbname</option> are required
+        The <option>--slot</option> and <option>--dbname</option> options are required
         for this action.
        </para>
 
@@ -104,7 +104,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> is required for this action.
+        The <option>--slot</option> option is required for this action.
        </para>
       </listitem>
      </varlistentry>
@@ -121,8 +121,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        The <option>--slot</option> and <option>--dbname</option>,
-        <option>--file</option> are required for this action.
+        The <option>--slot</option>, <option>--dbname</option>, and
+        <option>--file</option> options are required for this action.
        </para>
 
        <para>

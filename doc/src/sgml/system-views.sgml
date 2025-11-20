@@ -53,7 +53,7 @@
     <tbody>
      <row>
       <entry><link linkend="view-pg-aios"><structname>pg_aios</structname></link></entry>
-      <entry>In-use asynchronous IO handles</entry>
+      <entry>in-use asynchronous IO handles</entry>
      </row>
 
      <row>

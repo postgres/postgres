@@ -2858,7 +2858,7 @@ statement latencies in milliseconds, failures and retries:
          start a connection to the database server / the socket for connecting
          the client to the database server has become invalid). In such cases
          all clients of this thread stop while other threads continue to work.
-         However, <option>--exit-on-abort</option> is specified, all of the
+         However, if <option>--exit-on-abort</option> is specified, all of the
          threads stop immediately in this case.
        </para>
      </listitem>

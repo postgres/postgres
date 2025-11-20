@@ -1234,7 +1234,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The library/libraries to use for validating OAuth connection tokens. If
+        Sets the library/libraries to use for validating OAuth connection tokens. If
         only one validator library is provided, it will be used by default for
         any OAuth connections; otherwise, all
         <link linkend="auth-oauth"><literal>oauth</literal> HBA entries</link>
@@ -1400,7 +1400,7 @@ include_dir 'conf.d'
        <para>
         Specifies a list of cipher suites that are allowed by connections using
         <acronym>TLS</acronym> version 1.3.  Multiple cipher suites can be
-        specified by using a colon separated list. If left blank, the default
+        specified by using a colon-separated list. If left blank, the default
         set of cipher suites in <productname>OpenSSL</productname> will be used.
        </para>
 
@@ -2436,8 +2436,8 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        Sets the maximum number of open files each server subprocess is
-        allowed to open simultaneously;  files already opened in the
+        Sets the maximum number of files each server subprocess is
+        allowed to have open simultaneously;  files already opened in the
         postmaster are not counted toward this limit. The default is one
         thousand files.
        </para>

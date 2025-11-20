@@ -1636,7 +1636,7 @@ SELCT 1/0;<!-- this typo is intentional -->
    <para>
      Likewise the server expects the client to not begin
      the <acronym>SSL</acronym> negotiation until it receives the server's
-     single byte response to the <acronym>SSL</acronym> request.  If the
+     single-byte response to the <acronym>SSL</acronym> request.  If the
      client begins the <acronym>SSL</acronym> negotiation immediately without
      waiting for the server response to be received it can reduce connection
      latency by one round-trip.  However this comes at the cost of not being
