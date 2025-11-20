@@ -47,7 +47,17 @@
 int
 pg_numa_init(void)
 {
-	int			r = numa_available();
+	int			r;
+
+	/*
+	 * XXX libnuma versions before 2.0.19 don't handle EPERM by disabling
+	 * NUMA, which then leads to unexpected failures later. This affects
+	 * containers that disable get_mempolicy by a seccomp profile.
+	 */
+	if (get_mempolicy(NULL, NULL, 0, 0, 0) < 0 && (errno == EPERM))
+		r = -1;
+	else
+		r = numa_available();
 
 	return r;
 }
