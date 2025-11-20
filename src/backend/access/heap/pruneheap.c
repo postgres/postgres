@@ -130,6 +130,13 @@ typedef struct
 	OffsetNumber *deadoffsets;	/* points directly to presult->deadoffsets */
 
 	/*
+	 * The snapshot conflict horizon used when freezing tuples. The final
+	 * snapshot conflict horizon for the record may be newer if pruning
+	 * removes newer transaction IDs.
+	 */
+	TransactionId frz_conflict_horizon;
+
+	/*
 	 * all_visible and all_frozen indicate if the all-visible and all-frozen
 	 * bits in the visibility map can be set for this page after pruning.
 	 *
@@ -138,11 +145,11 @@ typedef struct
 	 * bits.  It is only valid if we froze some tuples, and all_frozen is
 	 * true.
 	 *
-	 * NOTE: all_visible and all_frozen don't include LP_DEAD items.  That's
-	 * convenient for heap_page_prune_and_freeze(), to use them to decide
-	 * whether to freeze the page or not.  The all_visible and all_frozen
-	 * values returned to the caller are adjusted to include LP_DEAD items at
-	 * the end.
+	 * NOTE: all_visible and all_frozen initially don't include LP_DEAD items.
+	 * That's convenient for heap_page_prune_and_freeze() to use them to
+	 * decide whether to freeze the page or not.  The all_visible and
+	 * all_frozen values returned to the caller are adjusted to include
+	 * LP_DEAD items after we determine whether to opportunistically freeze.
 	 */
 	bool		all_visible;
 	bool		all_frozen;
@@ -388,6 +395,22 @@ heap_page_will_freeze(Relation relation, Buffer buffer,
 		 * critical section.
 		 */
 		heap_pre_freeze_checks(buffer, prstate->frozen, prstate->nfrozen);
+
+		/*
+		 * Calculate what the snapshot conflict horizon should be for a record
+		 * freezing tuples. We can use the visibility_cutoff_xid as our cutoff
+		 * for conflicts when the whole page is eligible to become all-frozen
+		 * in the VM once we're done with it. Otherwise, we generate a
+		 * conservative cutoff by stepping back from OldestXmin.
+		 */
+		if (prstate->all_frozen)
+			prstate->frz_conflict_horizon = prstate->visibility_cutoff_xid;
+		else
+		{
+			/* Avoids false conflicts when hot_standby_feedback in use */
+			prstate->frz_conflict_horizon = prstate->cutoffs->OldestXmin;
+			TransactionIdRetreat(prstate->frz_conflict_horizon);
+		}
 	}
 	else if (prstate->nfrozen > 0)
 	{
@@ -433,10 +456,10 @@ heap_page_will_freeze(Relation relation, Buffer buffer,
  * now.  The 'params.cutoffs', 'presult', 'new_relfrozen_xid' and
  * 'new_relmin_mxid' arguments are required when freezing.  When
  * HEAP_PAGE_PRUNE_FREEZE option is passed, we also set presult->all_visible
- * and presult->all_frozen on exit, to indicate if the VM bits can be set.
- * They are always set to false when the HEAP_PAGE_PRUNE_FREEZE option is not
- * passed, because at the moment only callers that also freeze need that
- * information.
+ * and presult->all_frozen after determining whether or not to
+ * opporunistically freeze, to indicate if the VM bits can be set.  They are
+ * always set to false when the HEAP_PAGE_PRUNE_FREEZE option is not passed,
+ * because at the moment only callers that also freeze need that information.
  *
  * presult contains output parameters needed by callers, such as the number of
  * tuples removed and the offsets of dead items on the page after pruning.
@@ -522,6 +545,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	prstate.hastup = false;
 	prstate.lpdead_items = 0;
 	prstate.deadoffsets = presult->deadoffsets;
+	prstate.frz_conflict_horizon = InvalidTransactionId;
 
 	/*
 	 * Caller may update the VM after we're done.  We can keep track of
@@ -541,10 +565,11 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	 * are tuples present that are not visible to everyone or if there are
 	 * dead tuples which are not yet removable.  However, dead tuples which
 	 * will be removed by the end of vacuuming should not preclude us from
-	 * opportunistically freezing.  Because of that, we do not clear
-	 * all_visible and all_frozen when we see LP_DEAD items.  We fix that at
-	 * the end of the function, when we return the value to the caller, so
-	 * that the caller doesn't set the VM bits incorrectly.
+	 * opportunistically freezing.  Because of that, we do not immediately
+	 * clear all_visible and all_frozen when we see LP_DEAD items.  We fix
+	 * that after scanning the line pointers. We must correct all_visible and
+	 * all_frozen before we return them to the caller, so that the caller
+	 * doesn't set the VM bits incorrectly.
 	 */
 	if (prstate.attempt_freeze)
 	{
@@ -781,6 +806,22 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 									  do_hint_prune,
 									  &prstate);
 
+	/*
+	 * While scanning the line pointers, we did not clear
+	 * all_visible/all_frozen when encountering LP_DEAD items because we
+	 * wanted the decision whether or not to freeze the page to be unaffected
+	 * by the short-term presence of LP_DEAD items.  These LP_DEAD items are
+	 * effectively assumed to be LP_UNUSED items in the making.  It doesn't
+	 * matter which vacuum heap pass (initial pass or final pass) ends up
+	 * setting the page all-frozen, as long as the ongoing VACUUM does it.
+	 *
+	 * Now that we finished determining whether or not to freeze the page,
+	 * update all_visible and all_frozen so that they reflect the true state
+	 * of the page for setting PD_ALL_VISIBLE and VM bits.
+	 */
+	if (prstate.lpdead_items > 0)
+		prstate.all_visible = prstate.all_frozen = false;
+
 	Assert(!prstate.all_frozen || prstate.all_visible);
 
 	/* Any error while applying the changes is critical */
@@ -841,29 +882,11 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 			 * on the standby with xids older than the youngest tuple this
 			 * record will freeze will conflict.
 			 */
-			TransactionId frz_conflict_horizon = InvalidTransactionId;
 			TransactionId conflict_xid;
 
-			/*
-			 * We can use the visibility_cutoff_xid as our cutoff for
-			 * conflicts when the whole page is eligible to become all-frozen
-			 * in the VM once we're done with it.  Otherwise we generate a
-			 * conservative cutoff by stepping back from OldestXmin.
-			 */
-			if (do_freeze)
-			{
-				if (prstate.all_frozen)
-					frz_conflict_horizon = prstate.visibility_cutoff_xid;
-				else
-				{
-					/* Avoids false conflicts when hot_standby_feedback in use */
-					frz_conflict_horizon = prstate.cutoffs->OldestXmin;
-					TransactionIdRetreat(frz_conflict_horizon);
-				}
-			}
-
-			if (TransactionIdFollows(frz_conflict_horizon, prstate.latest_xid_removed))
-				conflict_xid = frz_conflict_horizon;
+			if (TransactionIdFollows(prstate.frz_conflict_horizon,
+									 prstate.latest_xid_removed))
+				conflict_xid = prstate.frz_conflict_horizon;
 			else
 				conflict_xid = prstate.latest_xid_removed;
 
@@ -887,30 +910,8 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	presult->nfrozen = prstate.nfrozen;
 	presult->live_tuples = prstate.live_tuples;
 	presult->recently_dead_tuples = prstate.recently_dead_tuples;
-
-	/*
-	 * It was convenient to ignore LP_DEAD items in all_visible/all_frozen
-	 * earlier on to make the choice of whether or not to freeze the page
-	 * unaffected by the short-term presence of LP_DEAD items.  These LP_DEAD
-	 * items were effectively assumed to be LP_UNUSED items in the making.  It
-	 * doesn't matter which vacuum heap pass (initial pass or final pass) ends
-	 * up setting the page all-frozen, as long as the ongoing VACUUM does it.
-	 *
-	 * Now that freezing has been finalized, unset all_visible and all_frozen
-	 * if there are any LP_DEAD items on the page.  It needs to reflect the
-	 * present state of the page, as expected by our caller.
-	 */
-	if (prstate.all_visible && prstate.lpdead_items == 0)
-	{
-		presult->all_visible = prstate.all_visible;
-		presult->all_frozen = prstate.all_frozen;
-	}
-	else
-	{
-		presult->all_visible = false;
-		presult->all_frozen = false;
-	}
-
+	presult->all_visible = prstate.all_visible;
+	presult->all_frozen = prstate.all_frozen;
 	presult->hastup = prstate.hastup;
 
 	/*
