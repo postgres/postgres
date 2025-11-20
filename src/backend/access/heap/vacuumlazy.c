@@ -1965,7 +1965,10 @@ lazy_scan_prune(LVRelState *vacrel,
 {
 	Relation	rel = vacrel->rel;
 	PruneFreezeResult presult;
-	int			prune_options = 0;
+	PruneFreezeParams params = {.relation = rel,.buffer = buf,
+		.reason = PRUNE_VACUUM_SCAN,.options = HEAP_PAGE_PRUNE_FREEZE,
+		.vistest = vacrel->vistest,.cutoffs = &vacrel->cutoffs
+	};
 
 	Assert(BufferGetBlockNumber(buf) == blkno);
 
@@ -1984,12 +1987,11 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * tuples. Pruning will have determined whether or not the page is
 	 * all-visible.
 	 */
-	prune_options = HEAP_PAGE_PRUNE_FREEZE;
 	if (vacrel->nindexes == 0)
-		prune_options |= HEAP_PAGE_PRUNE_MARK_UNUSED_NOW;
+		params.options |= HEAP_PAGE_PRUNE_MARK_UNUSED_NOW;
 
-	heap_page_prune_and_freeze(rel, buf, vacrel->vistest, prune_options,
-							   &vacrel->cutoffs, &presult, PRUNE_VACUUM_SCAN,
+	heap_page_prune_and_freeze(&params,
+							   &presult,
 							   &vacrel->offnum,
 							   &vacrel->NewRelfrozenXid, &vacrel->NewRelminMxid);
 

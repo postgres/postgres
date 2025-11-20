@@ -221,6 +221,56 @@ typedef struct HeapPageFreeze
 
 } HeapPageFreeze;
 
+
+/* 'reason' codes for heap_page_prune_and_freeze() */
+typedef enum
+{
+	PRUNE_ON_ACCESS,			/* on-access pruning */
+	PRUNE_VACUUM_SCAN,			/* VACUUM 1st heap pass */
+	PRUNE_VACUUM_CLEANUP,		/* VACUUM 2nd heap pass */
+} PruneReason;
+
+/*
+ * Input parameters to heap_page_prune_and_freeze()
+ */
+typedef struct PruneFreezeParams
+{
+	Relation	relation;		/* relation containing buffer to be pruned */
+	Buffer		buffer;			/* buffer to be pruned */
+
+	/*
+	 * The reason pruning was performed.  It is used to set the WAL record
+	 * opcode which is used for debugging and analysis purposes.
+	 */
+	PruneReason reason;
+
+	/*
+	 * Contains flag bits:
+	 *
+	 * HEAP_PAGE_PRUNE_MARK_UNUSED_NOW indicates that dead items can be set
+	 * LP_UNUSED during pruning.
+	 *
+	 * HEAP_PAGE_PRUNE_FREEZE indicates that we will also freeze tuples, and
+	 * will return 'all_visible', 'all_frozen' flags to the caller.
+	 */
+	int			options;
+
+	/*
+	 * vistest is used to distinguish whether tuples are DEAD or RECENTLY_DEAD
+	 * (see heap_prune_satisfies_vacuum).
+	 */
+	GlobalVisState *vistest;
+
+	/*
+	 * Contains the cutoffs used for freezing. They are required if the
+	 * HEAP_PAGE_PRUNE_FREEZE option is set. cutoffs->OldestXmin is also used
+	 * to determine if dead tuples are HEAPTUPLE_RECENTLY_DEAD or
+	 * HEAPTUPLE_DEAD. Currently only vacuum passes in cutoffs. Vacuum
+	 * calculates them once, at the beginning of vacuuming the relation.
+	 */
+	struct VacuumCutoffs *cutoffs;
+} PruneFreezeParams;
+
 /*
  * Per-page state returned by heap_page_prune_and_freeze()
  */
@@ -264,13 +314,6 @@ typedef struct PruneFreezeResult
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
 } PruneFreezeResult;
 
-/* 'reason' codes for heap_page_prune_and_freeze() */
-typedef enum
-{
-	PRUNE_ON_ACCESS,			/* on-access pruning */
-	PRUNE_VACUUM_SCAN,			/* VACUUM 1st heap pass */
-	PRUNE_VACUUM_CLEANUP,		/* VACUUM 2nd heap pass */
-} PruneReason;
 
 /* ----------------
  *		function prototypes for heap access method
@@ -367,12 +410,8 @@ extern TransactionId heap_index_delete_tuples(Relation rel,
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
-extern void heap_page_prune_and_freeze(Relation relation, Buffer buffer,
-									   GlobalVisState *vistest,
-									   int options,
-									   struct VacuumCutoffs *cutoffs,
+extern void heap_page_prune_and_freeze(PruneFreezeParams *params,
 									   PruneFreezeResult *presult,
-									   PruneReason reason,
 									   OffsetNumber *off_loc,
 									   TransactionId *new_relfrozen_xid,
 									   MultiXactId *new_relmin_mxid);
