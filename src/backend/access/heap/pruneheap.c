@@ -269,9 +269,13 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 			 * cannot safely determine that during on-access pruning with the
 			 * current implementation.
 			 */
-			PruneFreezeParams params = {.relation = relation,.buffer = buffer,
-				.reason = PRUNE_ON_ACCESS,.options = 0,
-				.vistest = vistest,.cutoffs = NULL
+			PruneFreezeParams params = {
+				.relation = relation,
+				.buffer = buffer,
+				.reason = PRUNE_ON_ACCESS,
+				.options = 0,
+				.vistest = vistest,
+				.cutoffs = NULL,
 			};
 
 			heap_page_prune_and_freeze(&params, &presult, &dummy_off_loc,

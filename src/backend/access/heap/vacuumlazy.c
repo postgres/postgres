@@ -1965,9 +1965,13 @@ lazy_scan_prune(LVRelState *vacrel,
 {
 	Relation	rel = vacrel->rel;
 	PruneFreezeResult presult;
-	PruneFreezeParams params = {.relation = rel,.buffer = buf,
-		.reason = PRUNE_VACUUM_SCAN,.options = HEAP_PAGE_PRUNE_FREEZE,
-		.vistest = vacrel->vistest,.cutoffs = &vacrel->cutoffs
+	PruneFreezeParams params = {
+		.relation = rel,
+		.buffer = buf,
+		.reason = PRUNE_VACUUM_SCAN,
+		.options = HEAP_PAGE_PRUNE_FREEZE,
+		.vistest = vacrel->vistest,
+		.cutoffs = &vacrel->cutoffs,
 	};
 
 	Assert(BufferGetBlockNumber(buf) == blkno);
