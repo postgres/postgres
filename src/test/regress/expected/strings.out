@@ -2575,6 +2575,13 @@ SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
  \x1234567890abcdef00
 (1 row)
 
+-- report an error with a hint listing valid encodings when an invalid encoding is specified
+SELECT encode('\x01'::bytea, 'invalid');  -- error
+ERROR:  unrecognized encoding: "invalid"
+HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
+SELECT decode('00', 'invalid');           -- error
+ERROR:  unrecognized encoding: "invalid"
+HINT:  Valid encodings are "base64", "base64url", "escape", and "hex".
 --
 -- base64url encoding/decoding
 --

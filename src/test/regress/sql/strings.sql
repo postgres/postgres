@@ -815,6 +815,10 @@ SELECT decode(encode(('\x' || repeat('1234567890abcdef0001', 7))::bytea,
 SELECT encode('\x1234567890abcdef00', 'escape');
 SELECT decode(encode('\x1234567890abcdef00', 'escape'), 'escape');
 
+-- report an error with a hint listing valid encodings when an invalid encoding is specified
+SELECT encode('\x01'::bytea, 'invalid');  -- error
+SELECT decode('00', 'invalid');           -- error
+
 --
 -- base64url encoding/decoding
 --
