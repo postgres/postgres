@@ -905,7 +905,7 @@ transtime(const int year, const struct rule *const rulep,
 			for (i = 1; i < rulep->r_week; ++i)
 			{
 				if (d + DAYSPERWEEK >=
-					mon_lengths[(int) leapyear][rulep->r_mon - 1])
+					mon_lengths[leapyear][rulep->r_mon - 1])
 					break;
 				d += DAYSPERWEEK;
 			}
@@ -915,7 +915,7 @@ transtime(const int year, const struct rule *const rulep,
 			 */
 			value = d * SECSPERDAY;
 			for (i = 0; i < rulep->r_mon - 1; ++i)
-				value += mon_lengths[(int) leapyear][i] * SECSPERDAY;
+				value += mon_lengths[leapyear][i] * SECSPERDAY;
 			break;
 	}
 
