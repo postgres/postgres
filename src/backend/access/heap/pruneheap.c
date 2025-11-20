@@ -143,10 +143,6 @@ typedef struct
 	 * whether to freeze the page or not.  The all_visible and all_frozen
 	 * values returned to the caller are adjusted to include LP_DEAD items at
 	 * the end.
-	 *
-	 * all_frozen should only be considered valid if all_visible is also set;
-	 * we don't bother to clear the all_frozen flag every time we clear the
-	 * all_visible flag.
 	 */
 	bool		all_visible;
 	bool		all_frozen;
@@ -359,8 +355,10 @@ heap_page_will_freeze(Relation relation, Buffer buffer,
 		 * anymore.  The opportunistic freeze heuristic must be improved;
 		 * however, for now, try to approximate the old logic.
 		 */
-		if (prstate->all_visible && prstate->all_frozen && prstate->nfrozen > 0)
+		if (prstate->all_frozen && prstate->nfrozen > 0)
 		{
+			Assert(prstate->all_visible);
+
 			/*
 			 * Freezing would make the page all-frozen.  Have already emitted
 			 * an FPI or will do so anyway?
@@ -544,9 +542,9 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	 * dead tuples which are not yet removable.  However, dead tuples which
 	 * will be removed by the end of vacuuming should not preclude us from
 	 * opportunistically freezing.  Because of that, we do not clear
-	 * all_visible when we see LP_DEAD items.  We fix that at the end of the
-	 * function, when we return the value to the caller, so that the caller
-	 * doesn't set the VM bit incorrectly.
+	 * all_visible and all_frozen when we see LP_DEAD items.  We fix that at
+	 * the end of the function, when we return the value to the caller, so
+	 * that the caller doesn't set the VM bits incorrectly.
 	 */
 	if (prstate.attempt_freeze)
 	{
@@ -783,6 +781,8 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 									  do_hint_prune,
 									  &prstate);
 
+	Assert(!prstate.all_frozen || prstate.all_visible);
+
 	/* Any error while applying the changes is critical */
 	START_CRIT_SECTION();
 
@@ -852,7 +852,7 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 			 */
 			if (do_freeze)
 			{
-				if (prstate.all_visible && prstate.all_frozen)
+				if (prstate.all_frozen)
 					frz_conflict_horizon = prstate.visibility_cutoff_xid;
 				else
 				{
@@ -889,16 +889,16 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	presult->recently_dead_tuples = prstate.recently_dead_tuples;
 
 	/*
-	 * It was convenient to ignore LP_DEAD items in all_visible earlier on to
-	 * make the choice of whether or not to freeze the page unaffected by the
-	 * short-term presence of LP_DEAD items.  These LP_DEAD items were
-	 * effectively assumed to be LP_UNUSED items in the making.  It doesn't
-	 * matter which vacuum heap pass (initial pass or final pass) ends up
-	 * setting the page all-frozen, as long as the ongoing VACUUM does it.
+	 * It was convenient to ignore LP_DEAD items in all_visible/all_frozen
+	 * earlier on to make the choice of whether or not to freeze the page
+	 * unaffected by the short-term presence of LP_DEAD items.  These LP_DEAD
+	 * items were effectively assumed to be LP_UNUSED items in the making.  It
+	 * doesn't matter which vacuum heap pass (initial pass or final pass) ends
+	 * up setting the page all-frozen, as long as the ongoing VACUUM does it.
 	 *
-	 * Now that freezing has been finalized, unset all_visible if there are
-	 * any LP_DEAD items on the page.  It needs to reflect the present state
-	 * of the page, as expected by our caller.
+	 * Now that freezing has been finalized, unset all_visible and all_frozen
+	 * if there are any LP_DEAD items on the page.  It needs to reflect the
+	 * present state of the page, as expected by our caller.
 	 */
 	if (prstate.all_visible && prstate.lpdead_items == 0)
 	{
@@ -1289,8 +1289,9 @@ heap_prune_record_dead(PruneState *prstate, OffsetNumber offnum,
 	prstate->ndead++;
 
 	/*
-	 * Deliberately delay unsetting all_visible until later during pruning.
-	 * Removable dead tuples shouldn't preclude freezing the page.
+	 * Deliberately delay unsetting all_visible and all_frozen until later
+	 * during pruning. Removable dead tuples shouldn't preclude freezing the
+	 * page.
 	 */
 
 	/* Record the dead offset for vacuum */
@@ -1418,6 +1419,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 				if (!HeapTupleHeaderXminCommitted(htup))
 				{
 					prstate->all_visible = false;
+					prstate->all_frozen = false;
 					break;
 				}
 
@@ -1432,14 +1434,15 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 
 				/*
 				 * For now always use prstate->cutoffs for this test, because
-				 * we only update 'all_visible' when freezing is requested. We
-				 * could use GlobalVisTestIsRemovableXid instead, if a
-				 * non-freezing caller wanted to set the VM bit.
+				 * we only update 'all_visible' and 'all_frozen' when freezing
+				 * is requested. We could use GlobalVisTestIsRemovableXid
+				 * instead, if a non-freezing caller wanted to set the VM bit.
 				 */
 				Assert(prstate->cutoffs);
 				if (!TransactionIdPrecedes(xmin, prstate->cutoffs->OldestXmin))
 				{
 					prstate->all_visible = false;
+					prstate->all_frozen = false;
 					break;
 				}
 
@@ -1453,6 +1456,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 		case HEAPTUPLE_RECENTLY_DEAD:
 			prstate->recently_dead_tuples++;
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * This tuple will soon become DEAD.  Update the hint field so
@@ -1472,6 +1476,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 			 * does, so be consistent.
 			 */
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * If we wanted to optimize for aborts, we might consider marking
@@ -1490,6 +1495,7 @@ heap_prune_record_unchanged_lp_normal(Page page, PruneState *prstate, OffsetNumb
 			 */
 			prstate->live_tuples++;
 			prstate->all_visible = false;
+			prstate->all_frozen = false;
 
 			/*
 			 * This tuple may soon become DEAD.  Update the hint field so that
@@ -1554,10 +1560,10 @@ heap_prune_record_unchanged_lp_dead(Page page, PruneState *prstate, OffsetNumber
 	 * hastup/nonempty_pages as provisional no matter how LP_DEAD items are
 	 * handled (handled here, or handled later on).
 	 *
-	 * Similarly, don't unset all_visible until later, at the end of
-	 * heap_page_prune_and_freeze().  This will allow us to attempt to freeze
-	 * the page after pruning.  As long as we unset it before updating the
-	 * visibility map, this will be correct.
+	 * Similarly, don't unset all_visible and all_frozen until later, at the
+	 * end of heap_page_prune_and_freeze().  This will allow us to attempt to
+	 * freeze the page after pruning.  As long as we unset it before updating
+	 * the visibility map, this will be correct.
 	 */
 
 	/* Record the dead offset for vacuum */

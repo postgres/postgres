@@ -2017,7 +2017,6 @@ lazy_scan_prune(LVRelState *vacrel,
 	 * agreement with heap_page_is_all_visible() using an assertion.
 	 */
 #ifdef USE_ASSERT_CHECKING
-	/* Note that all_frozen value does not matter when !all_visible */
 	if (presult.all_visible)
 	{
 		TransactionId debug_cutoff;
@@ -2071,6 +2070,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	*has_lpdead_items = (presult.lpdead_items > 0);
 
 	Assert(!presult.all_visible || !(*has_lpdead_items));
+	Assert(!presult.all_frozen || presult.all_visible);
 
 	/*
 	 * Handle setting visibility map bit based on information from the VM (as
@@ -2176,11 +2176,10 @@ lazy_scan_prune(LVRelState *vacrel,
 
 	/*
 	 * If the all-visible page is all-frozen but not marked as such yet, mark
-	 * it as all-frozen.  Note that all_frozen is only valid if all_visible is
-	 * true, so we must check both all_visible and all_frozen.
+	 * it as all-frozen.
 	 */
-	else if (all_visible_according_to_vm && presult.all_visible &&
-			 presult.all_frozen && !VM_ALL_FROZEN(vacrel->rel, blkno, &vmbuffer))
+	else if (all_visible_according_to_vm && presult.all_frozen &&
+			 !VM_ALL_FROZEN(vacrel->rel, blkno, &vmbuffer))
 	{
 		uint8		old_vmbits;
 
