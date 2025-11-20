@@ -1068,8 +1068,9 @@ copy_table(Relation rel)
 	/* Start copy on the publisher. */
 	initStringInfo(&cmd);
 
-	/* Regular table with no row filter or generated columns */
-	if (lrel.relkind == RELKIND_RELATION && qual == NIL && !gencol_published)
+	/* Regular or partitioned table with no row filter or generated columns */
+	if ((lrel.relkind == RELKIND_RELATION || lrel.relkind == RELKIND_PARTITIONED_TABLE)
+		&& qual == NIL && !gencol_published)
 	{
 		appendStringInfo(&cmd, "COPY %s",
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
