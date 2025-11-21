@@ -3743,6 +3743,8 @@ int64_t
 int8
 int8_t
 int8x16_t
+int_fast32_t
+int_fast64_t
 internalPQconninfoOption
 intptr_t
 intset_internal_node
@@ -4197,6 +4199,7 @@ uint64x2_t
 uint8
 uint8_t
 uint8x16_t
+uint_fast64_t
 uintptr_t
 unicodeStyleBorderFormat
 unicodeStyleColumnFormat

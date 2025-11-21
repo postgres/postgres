@@ -22,9 +22,11 @@
 #define	ZIC_VERSION_PRE_2013 '2'
 #define	ZIC_VERSION	'3'
 
-typedef int64 zic_t;
-#define ZIC_MIN PG_INT64_MIN
-#define ZIC_MAX PG_INT64_MAX
+typedef int_fast64_t zic_t;
+#define ZIC_MIN INT_FAST64_MIN
+#define ZIC_MAX INT_FAST64_MAX
+#define PRIdZIC PRIdFAST64
+#define SCNdZIC SCNdFAST64
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
 #define ZIC_MAX_ABBR_LEN_WO_WARN	6
@@ -47,12 +49,15 @@ typedef int64 zic_t;
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
 
-/*
- * The type for line numbers.  In Postgres, use %d to format them; upstream
- * uses PRIdMAX but we prefer not to rely on that, not least because it
- * results in platform-dependent strings to be translated.
- */
-typedef int lineno_t;
+/* The minimum alignment of a type, for pre-C11 platforms.  */
+#if __STDC_VERSION__ < 201112
+#define _Alignof(type) offsetof(struct { char a; type b; }, b)
+#endif
+
+/* The type for line numbers.  Use PRIdMAX to format them; formerly
+   there was also "#define PRIdLINENO PRIdMAX" and formats used
+   PRIdLINENO, but xgettext cannot grok that.  */
+typedef intmax_t lineno_t;
 
 struct rule
 {
@@ -117,18 +122,16 @@ extern int	link(const char *target, const char *linkname);
 	(itssymlink(target) ? (errno = ENOTSUP, -1) : link(target, linkname))
 #endif
 
-pg_noreturn static void memory_exhausted(const char *msg);
-static void verror(const char *string, va_list args) pg_attribute_printf(1, 0);
-static void error(const char *string,...) pg_attribute_printf(1, 2);
-static void warning(const char *string,...) pg_attribute_printf(1, 2);
-pg_noreturn static void usage(FILE *stream, int status);
+static void verror(const char *const string, va_list args) pg_attribute_printf(1, 0);
+static void error(const char *const string,...) pg_attribute_printf(1, 2);
+static void warning(const char *const string,...) pg_attribute_printf(1, 2);
 static void addtt(zic_t starttime, int type);
 static int	addtype(zic_t utoff, char const *abbr,
 					bool isdst, bool ttisstd, bool ttisut);
 static void leapadd(zic_t t, int correction, int rolling);
 static void adjleap(void);
 static void associate(void);
-static void dolink(char const *target, char const *linkname,
+static void dolink(const char *target, const char *linkname,
 				   bool staysymlink);
 static char **getfields(char *cp);
 static zic_t gethms(const char *string, const char *errstring);
@@ -407,7 +410,7 @@ static char roll[TZ_MAX_LEAPS];
  * Memory allocation.
  */
 
-static void
+static _Noreturn void
 memory_exhausted(const char *msg)
 {
 	fprintf(stderr, _("%s: Memory exhausted: %s\n"), progname, msg);
@@ -420,6 +423,17 @@ size_product(size_t nitems, size_t itemsize)
 	if (SIZE_MAX / itemsize < nitems)
 		memory_exhausted(_("size overflow"));
 	return nitems * itemsize;
+}
+
+static size_t
+align_to(size_t size, size_t alignment)
+{
+	size_t		aligned_size = size + alignment - 1;
+
+	aligned_size -= aligned_size % alignment;
+	if (aligned_size < size)
+		memory_exhausted(_("alignment overflow"));
+	return aligned_size;
 }
 
 static void *
@@ -485,23 +499,23 @@ eat(char const *name, lineno_t num)
 }
 
 static void
-verror(const char *string, va_list args)
+verror(const char *const string, va_list args)
 {
 	/*
 	 * Match the format of "cc" to allow sh users to zic ... 2>&1 | error -t
 	 * "*" -v on BSD systems.
 	 */
 	if (filename)
-		fprintf(stderr, _("\"%s\", line %d: "), filename, linenum);
+		fprintf(stderr, _("\"%s\", line %" PRIdMAX ": "), filename, linenum);
 	vfprintf(stderr, string, args);
 	if (rfilename != NULL)
-		fprintf(stderr, _(" (rule from \"%s\", line %d)"),
+		fprintf(stderr, _(" (rule from \"%s\", line %" PRIdMAX ")"),
 				rfilename, rlinenum);
 	fprintf(stderr, "\n");
 }
 
 static void
-error(const char *string,...)
+error(const char *const string,...)
 {
 	va_list		args;
 
@@ -512,7 +526,7 @@ error(const char *string,...)
 }
 
 static void
-warning(const char *string,...)
+warning(const char *const string,...)
 {
 	va_list		args;
 
@@ -539,7 +553,7 @@ close_file(FILE *stream, char const *dir, char const *name)
 	}
 }
 
-static void
+static _Noreturn void
 usage(FILE *stream, int status)
 {
 	fprintf(stream,
@@ -601,7 +615,7 @@ static zic_t comment_leapexpires = -1;
 static bool
 timerange_option(char *timerange)
 {
-	int64		lo = min_time,
+	intmax_t	lo = min_time,
 				hi = max_time;
 	char	   *lo_end = timerange,
 			   *hi_end;
@@ -610,7 +624,7 @@ timerange_option(char *timerange)
 	{
 		errno = 0;
 		lo = strtoimax(timerange + 1, &lo_end, 10);
-		if (lo_end == timerange + 1 || (lo == PG_INT64_MAX && errno == ERANGE))
+		if (lo_end == timerange + 1 || (lo == INTMAX_MAX && errno == ERANGE))
 			return false;
 	}
 	hi_end = lo_end;
@@ -618,9 +632,9 @@ timerange_option(char *timerange)
 	{
 		errno = 0;
 		hi = strtoimax(lo_end + 2, &hi_end, 10);
-		if (hi_end == lo_end + 2 || hi == PG_INT64_MIN)
+		if (hi_end == lo_end + 2 || hi == INTMAX_MIN)
 			return false;
-		hi -= !(hi == PG_INT64_MAX && errno == ERANGE);
+		hi -= !(hi == INTMAX_MAX && errno == ERANGE);
 	}
 	if (*hi_end || hi < lo || max_time < lo || hi < min_time)
 		return false;
@@ -1290,20 +1304,7 @@ infile(const char *name)
 		if (nfields == 0)
 		{
 			if (name == leapsec && *buf == '#')
-			{
-				/*
-				 * PG: INT64_FORMAT isn't portable for sscanf, so be content
-				 * with scanning a "long".  Once we are requiring C99 in all
-				 * live branches, it'd be sensible to adopt upstream's
-				 * practice of using the <inttypes.h> macros.  But for now, we
-				 * don't actually use this code, and it won't overflow before
-				 * 2038 anyway.
-				 */
-				long		cl_tmp;
-
-				sscanf(buf, "#expires %ld", &cl_tmp);
-				comment_leapexpires = cl_tmp;
-			}
+				sscanf(buf, "#expires %" SCNdZIC, &comment_leapexpires);
 		}
 		else if (wantcont)
 		{
@@ -1364,8 +1365,7 @@ infile(const char *name)
 static zic_t
 gethms(char const *string, char const *errstring)
 {
-	/* PG: make hh be int not zic_t to avoid sscanf portability issues */
-	int			hh;
+	zic_t		hh;
 	int			sign,
 				mm = 0,
 				ss = 0;
@@ -1387,7 +1387,7 @@ gethms(char const *string, char const *errstring)
 	else
 		sign = 1;
 	switch (sscanf(string,
-				   "%d%c%d%c%d%c%1d%*[0]%c%*[0123456789]%c",
+				   "%" SCNdZIC "%c%d%c%d%c%1d%*[0]%c%*[0123456789]%c",
 				   &hh, &hhx, &mm, &mmx, &ss, &ssx, &tenths, &xr, &xs))
 	{
 		default:
@@ -1423,19 +1423,16 @@ gethms(char const *string, char const *errstring)
 		error("%s", errstring);
 		return 0;
 	}
-	/* Some compilers warn that this test is unsatisfiable for 32-bit ints */
-#if INT_MAX > PG_INT32_MAX
 	if (ZIC_MAX / SECSPERHOUR < hh)
 	{
 		error(_("time overflow"));
 		return 0;
 	}
-#endif
 	ss += 5 + ((ss ^ 1) & (xr == '0')) <= tenths;	/* Round to even.  */
 	if (noise && (hh > HOURSPERDAY ||
 				  (hh == HOURSPERDAY && (mm != 0 || ss != 0))))
 		warning(_("values over 24 hours not handled by pre-2007 versions of zic"));
-	return oadd(sign * (zic_t) hh * SECSPERHOUR,
+	return oadd(sign * hh * SECSPERHOUR,
 				sign * (mm * SECSPERMIN + ss));
 }
 
@@ -1543,7 +1540,7 @@ inzone(char **fields, int nfields)
 			strcmp(zones[i].z_name, fields[ZF_NAME]) == 0)
 		{
 			error(_("duplicate zone name %s"
-					" (file \"%s\", line %d)"),
+					" (file \"%s\", line %" PRIdMAX ")"),
 				  fields[ZF_NAME],
 				  zones[i].z_filename,
 				  zones[i].z_linenum);
@@ -1669,9 +1666,7 @@ getleapdatetime(char **fields, int nfields, bool expire_line)
 	const struct lookup *lp;
 	zic_t		i,
 				j;
-
-	/* PG: make year be int not zic_t to avoid sscanf portability issues */
-	int			year;
+	zic_t		year;
 	int			month,
 				day;
 	zic_t		dayoff,
@@ -1681,7 +1676,7 @@ getleapdatetime(char **fields, int nfields, bool expire_line)
 
 	dayoff = 0;
 	cp = fields[LP_YEAR];
-	if (sscanf(cp, "%d%c", &year, &xs) != 1)
+	if (sscanf(cp, "%" SCNdZIC "%c", &year, &xs) != 1)
 	{
 		/*
 		 * Leapin' Lizards!
@@ -1830,9 +1825,6 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 	char	   *ep;
 	char		xs;
 
-	/* PG: year_tmp is to avoid sscanf portability issues */
-	int			year_tmp;
-
 	if ((lp = byword(monthp, mon_names)) == NULL)
 	{
 		error(_("invalid month name"));
@@ -1890,9 +1882,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 						progname, lp->l_value);
 				exit(EXIT_FAILURE);
 		}
-	else if (sscanf(cp, "%d%c", &year_tmp, &xs) == 1)
-		rp->r_loyear = year_tmp;
-	else
+	else if (sscanf(cp, "%" SCNdZIC "%c", &rp->r_loyear, &xs) != 1)
 	{
 		error(_("invalid starting year"));
 		return;
@@ -1918,9 +1908,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 						progname, lp->l_value);
 				exit(EXIT_FAILURE);
 		}
-	else if (sscanf(cp, "%d%c", &year_tmp, &xs) == 1)
-		rp->r_hiyear = year_tmp;
-	else
+	else if (sscanf(cp, "%" SCNdZIC "%c", &rp->r_hiyear, &xs) != 1)
 	{
 		error(_("invalid ending year"));
 		return;
@@ -1989,7 +1977,7 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 }
 
 static void
-convert(const int32 val, char *const buf)
+convert(const int_fast32_t val, char *const buf)
 {
 	int			i;
 	int			shift;
@@ -2011,7 +1999,7 @@ convert64(const zic_t val, char *const buf)
 }
 
 static void
-puttzcode(const int32 val, FILE *const fp)
+puttzcode(const int_fast32_t val, FILE *const fp)
 {
 	char		buf[4];
 
@@ -2097,7 +2085,8 @@ writezone(const char *const name, const char *const string, char version,
 	 * Allocate the ATS and TYPES arrays via a single malloc, as this is a bit
 	 * faster.
 	 */
-	zic_t	   *ats = emalloc(MAXALIGN(size_product(nats, sizeof *ats + 1)));
+	zic_t	   *ats = emalloc(align_to(size_product(nats, sizeof *ats + 1),
+									   _Alignof(zic_t)));
 	void	   *typesptr = ats + nats;
 	unsigned char *types = typesptr;
 	struct timerange rangeall,
@@ -2201,7 +2190,7 @@ writezone(const char *const name, const char *const string, char version,
 	rangeall.count = timecnt;
 	rangeall.leapcount = leapcnt;
 	range64 = limitrange(rangeall, lo_time, hi_time, ats, types);
-	range32 = limitrange(range64, PG_INT32_MIN, PG_INT32_MAX, ats, types);
+	range32 = limitrange(range64, INT32_MIN, INT32_MAX, ats, types);
 
 	/*
 	 * Remove old file, if any, to snap links.
@@ -2263,7 +2252,7 @@ writezone(const char *const name, const char *const string, char version,
 			/*
 			 * Arguably the default time type in the 32-bit data should be
 			 * range32.defaulttype, which is suited for timestamps just before
-			 * PG_INT32_MIN.  However, zic traditionally used the time type of
+			 * INT32_MIN.  However, zic traditionally used the time type of
 			 * the indefinite past instead.  Internet RFC 8532 says readers
 			 * should ignore 32-bit data, so this discrepancy matters only to
 			 * obsolete readers where the traditional type might be more
@@ -2271,7 +2260,7 @@ writezone(const char *const name, const char *const string, char version,
 			 * value, unless -r specifies a low cutoff that excludes some
 			 * 32-bit timestamps.
 			 */
-			thisdefaulttype = (lo_time <= PG_INT32_MIN
+			thisdefaulttype = (lo_time <= INT32_MIN
 							   ? range64.defaulttype
 							   : range32.defaulttype);
 
@@ -2280,8 +2269,8 @@ writezone(const char *const name, const char *const string, char version,
 			toomanytimes = thistimecnt >> 31 >> 1 != 0;
 			thisleapi = range32.leapbase;
 			thisleapcnt = range32.leapcount;
-			locut = PG_INT32_MIN < lo_time;
-			hicut = hi_time < PG_INT32_MAX;
+			locut = INT32_MIN < lo_time;
+			hicut = hi_time < INT32_MAX;
 		}
 		else
 		{
@@ -2476,7 +2465,7 @@ writezone(const char *const name, const char *const string, char version,
 					unsigned char tm = types[i];
 					char	   *thisabbrev = &thischars[indmap[desigidx[tm]]];
 
-					fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
+					fprintf(stdout, "%s\t%" PRIdFAST64 "%s\n",
 							thisabbrev,
 							utoffs[tm],
 							isdsts[tm] ? "\tD" : "");
@@ -2488,7 +2477,7 @@ writezone(const char *const name, const char *const string, char version,
 				unsigned char tm = defaulttype;
 				char	   *thisabbrev = &thischars[indmap[desigidx[tm]]];
 
-				fprintf(stdout, "%s\t" INT64_FORMAT "%s\n",
+				fprintf(stdout, "%s\t%" PRIdFAST64 "%s\n",
 						thisabbrev,
 						utoffs[tm],
 						isdsts[tm] ? "\tD" : "");
@@ -2499,7 +2488,7 @@ writezone(const char *const name, const char *const string, char version,
 		 * Output a LO_TIME transition if needed; see limitrange. But do not
 		 * go below the minimum representable value for this pass.
 		 */
-		lo = pass == 1 && lo_time < PG_INT32_MIN ? PG_INT32_MIN : lo_time;
+		lo = pass == 1 && lo_time < INT32_MIN ? INT32_MIN : lo_time;
 
 		if (locut)
 			puttzcodepass(lo, fp, pass);
@@ -3753,7 +3742,7 @@ getfields(char *cp)
 	return array;
 }
 
-static void
+static _Noreturn void
 time_overflow(void)
 {
 	error(_("time overflow"));

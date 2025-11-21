@@ -79,13 +79,6 @@ fixed that.)
 includes relying on configure's results rather than hand-hacked
 #defines (see private.h in particular).
 
-* Similarly, avoid relying on <stdint.h> features that may not exist on old
-systems.  In particular this means using Postgres' definitions of the int32
-and int64 typedefs, not int_fast32_t/int_fast64_t.  Likewise we use
-PG_INT32_MIN/MAX not INT32_MIN/MAX.  (Once we desupport all PG versions
-that don't require C99, it'd be practical to rely on <stdint.h> and remove
-this set of diffs; but that day is not yet.)
-
 * Since Postgres is typically built on a system that has its own copy
 of the <time.h> functions, we must avoid conflicting with those.  This
 mandates renaming typedef time_t to pg_time_t, and similarly for most
@@ -119,13 +112,6 @@ to first run the tzcode source files through a sed filter like this:
         -e 's|^\*/| */|' \
         -e 's/\bregister[ \t]//g' \
         -e 's/\bATTRIBUTE_PURE[ \t]//g' \
-        -e 's/int_fast32_t/int32/g' \
-        -e 's/int_fast64_t/int64/g' \
-        -e 's/intmax_t/int64/g' \
-        -e 's/INT32_MIN/PG_INT32_MIN/g' \
-        -e 's/INT32_MAX/PG_INT32_MAX/g' \
-        -e 's/INTMAX_MIN/PG_INT64_MIN/g' \
-        -e 's/INTMAX_MAX/PG_INT64_MAX/g' \
         -e 's/struct[ \t]+tm\b/struct pg_tm/g' \
         -e 's/\btime_t\b/pg_time_t/g' \
         -e 's/lineno/lineno_t/g' \

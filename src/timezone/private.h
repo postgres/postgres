@@ -44,10 +44,6 @@
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
-/* PG doesn't currently rely on <inttypes.h>, so work around strtoimax() */
-#undef strtoimax
-#define strtoimax strtoll
-
 
 /*
  * Finally, some convenience items.
@@ -95,25 +91,25 @@
 #define YEARSPERREPEAT		400 /* years before a Gregorian repeat */
 
 #define SECSPERMIN	60
-#define MINSPERHOUR 60
-#define HOURSPERDAY 24
-#define DAYSPERWEEK 7
+#define MINSPERHOUR	60
+#define HOURSPERDAY	24
+#define DAYSPERWEEK	7
 #define DAYSPERNYEAR	365
 #define DAYSPERLYEAR	366
-#define SECSPERHOUR (SECSPERMIN * MINSPERHOUR)
-#define SECSPERDAY	((int32) SECSPERHOUR * HOURSPERDAY)
-#define MONSPERYEAR 12
+#define SECSPERHOUR	(SECSPERMIN * MINSPERHOUR)
+#define SECSPERDAY	((int_fast32_t) SECSPERHOUR * HOURSPERDAY)
+#define MONSPERYEAR	12
 
 #define TM_SUNDAY	0
 #define TM_MONDAY	1
 #define TM_TUESDAY	2
 #define TM_WEDNESDAY	3
-#define TM_THURSDAY 4
+#define TM_THURSDAY	4
 #define TM_FRIDAY	5
-#define TM_SATURDAY 6
+#define TM_SATURDAY	6
 
 #define TM_JANUARY	0
-#define TM_FEBRUARY 1
+#define TM_FEBRUARY	1
 #define TM_MARCH	2
 #define TM_APRIL	3
 #define TM_MAY		4
@@ -122,8 +118,8 @@
 #define TM_AUGUST	7
 #define TM_SEPTEMBER	8
 #define TM_OCTOBER	9
-#define TM_NOVEMBER 10
-#define TM_DECEMBER 11
+#define TM_NOVEMBER	10
+#define TM_DECEMBER	11
 
 #define TM_YEAR_BASE	1900
 
@@ -153,7 +149,7 @@
 
 #define AVGSECSPERYEAR		31556952L
 #define SECSPERREPEAT \
-  ((int64) YEARSPERREPEAT * (int64) AVGSECSPERYEAR)
+  ((int_fast64_t) YEARSPERREPEAT * (int_fast64_t) AVGSECSPERYEAR)
 #define SECSPERREPEAT_BITS	34	/* ceil(log2(SECSPERREPEAT)) */
 
 #endif							/* !defined PRIVATE_H */
