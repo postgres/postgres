@@ -19,3 +19,28 @@ about building PostgreSQL from the source code can be found at
 The latest version of this software, and related software, may be
 obtained at <https://www.postgresql.org/download/>.  For more information
 look at our web site located at <https://www.postgresql.org/>.
+
+
+Generate Data
+=====================================
+    CREATE TABLE customer_reviews
+    (
+        customer_id TEXT,
+        review_date DATE,
+        review_rating INTEGER,
+        review_votes INTEGER,
+        review_helpful_votes INTEGER,
+        product_id CHAR(10),
+        product_title TEXT,
+        product_sales_rank BIGINT,
+        product_group TEXT,
+        product_category TEXT,
+        product_subcategory TEXT,
+        similar_product_ids CHAR(10)[]
+    )
+
+Run Script
+
+    chmod +x generate_and_load.sh
+
+    ./generate_and_load.sh
