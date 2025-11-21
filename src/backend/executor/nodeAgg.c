@@ -275,6 +275,7 @@
 #include "utils/memutils_memorychunk.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
+#include <stdlib.h>
 
 /*
  * Control how many partitions are created when spilling HashAgg to
@@ -373,6 +374,8 @@ static void initialize_aggregates(AggState *aggstate,
 static void advance_transition_function(AggState *aggstate,
 										AggStatePerTrans pertrans,
 										AggStatePerGroup pergroupstate);
+//static bool agg_supports_simd(AggState *aggstate);
+static void advance_aggregates_simd(AggState *aggstate);
 static void advance_aggregates(AggState *aggstate);
 static void process_ordered_aggregate_single(AggState *aggstate,
 											 AggStatePerTrans pertrans,
@@ -800,6 +803,12 @@ advance_transition_function(AggState *aggstate,
 	pergroupstate->transValueIsNull = fcinfo->isnull;
 
 	MemoryContextSwitchTo(oldContext);
+}
+
+static void
+advance_aggregates_simd(AggState *aggstate)
+{
+    /* TODO: SIMD version */
 }
 
 /*
@@ -2537,8 +2546,12 @@ agg_retrieve_direct(AggState *aggstate)
 						lookup_hash_entries(aggstate);
 					}
 
+					// TODO, Apply SIMD Here
 					/* Advance the aggregates (or combine functions) */
-					advance_aggregates(aggstate);
+					if (aggstate->use_simd_agg)
+						advance_aggregates_simd(aggstate);
+					else
+						advance_aggregates(aggstate);
 
 					/* Reset per-input-tuple context after each tuple */
 					ResetExprContext(tmpcontext);
@@ -3331,6 +3344,23 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->grp_firstTuple = NULL;
 	aggstate->sort_in = NULL;
 	aggstate->sort_out = NULL;
+
+	/* Decide if we should enable SIMD */
+	/* Environment flag override */
+	if (getenv("PG_FORCE_SIMD_AGG"))
+	{
+		aggstate->use_simd_agg = true;
+		elog(LOG, "SIMD forced ON via PG_FORCE_SIMD_AGG");
+	}
+	else if (getenv("PG_DISABLE_SIMD_AGG"))
+	{
+		aggstate->use_simd_agg = false;
+		elog(LOG, "SIMD forced OFF via PG_DISABLE_SIMD_AGG");
+	}
+	else
+	{
+		aggstate->use_simd_agg = false;
+	}
 
 	/*
 	 * phases[0] always exists, but is dummy in sorted/plain mode

@@ -2603,6 +2603,11 @@ typedef struct AggState
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	SharedAggInfo *shared_info; /* one entry per worker */
+	/* SIMD aggregation support */
+	bool        use_simd_agg;
+	int32      *simd_batch_buf;
+	int         simd_batch_size;
+	int         simd_batch_count;
 } AggState;
 
 /* ----------------
