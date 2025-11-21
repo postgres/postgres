@@ -2603,6 +2603,12 @@ typedef struct AggState
 	AggStatePerGroup *all_pergroups;	/* array of first ->pergroups, than
 										 * ->hash_pergroup */
 	SharedAggInfo *shared_info; /* one entry per worker */
+	
+	/* SIMD experiment */
+    bool        simd_enabled;
+    int         simd_bufsize;
+    int64      *simd_buf;
+    AttrNumber  simd_input_attno; /* which column we read for SUM() */
 } AggState;
 
 /* ----------------

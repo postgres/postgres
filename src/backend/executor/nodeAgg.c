@@ -2262,6 +2262,7 @@ ExecAgg(PlanState *pstate)
 				result = agg_retrieve_hash_table(node);
 				break;
 			case AGG_PLAIN:
+				elog(NOTICE, "case AGG_PLAIN");
 			case AGG_SORTED:
 				result = agg_retrieve_direct(node);
 				break;
@@ -3332,6 +3333,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->sort_in = NULL;
 	aggstate->sort_out = NULL;
 
+	/* >>> SIMD init here <<< */
+    aggstate->simd_enabled = false;
+    aggstate->simd_bufsize = 0;
+    aggstate->simd_buf = NULL;
+    aggstate->simd_input_attno = InvalidAttrNumber;
 	/*
 	 * phases[0] always exists, but is dummy in sorted/plain mode
 	 */
@@ -4045,6 +4051,63 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			pertrans->aggshared = true;
 		ReleaseSysCache(aggTuple);
 	}
+
+	 /* Decide whether we can enable our SIMD optimization */
+    {
+        bool can_simd = false;
+		elog(NOTICE, "SIMD check");
+
+        /* plain agg (no GROUP BY), one aggregate, one trans state */
+        if (aggstate->aggstrategy == AGG_PLAIN &&
+            node->numCols == 0 &&
+            aggstate->numaggs == 1 &&
+            aggstate->numtrans == 1 &&
+            list_length(aggstate->aggs) == 1)
+        {
+            Aggref *aggref = linitial_node(Aggref, aggstate->aggs);
+            // AggStatePerAgg peragg = &peraggs[aggref->aggno];
+            AggStatePerTrans pertrans = &pertransstates[aggref->aggtransno];
+
+            /* no FILTER, no ORDER BY, no DISTINCT / ordered-set */
+            if (aggref->aggfilter == NULL &&
+                !AGGKIND_IS_ORDERED_SET(aggref->aggkind) &&
+                aggref->aggorder == NIL &&
+                aggref->aggdistinct == NIL)
+            {
+                /* very rough example: match SUM(bigint) by OID */
+                /* replace XXX with correct SUM(int8) agg or check argtype */
+				# define INT8SUMOID 2107
+				elog(NOTICE, "aggref->aggfnoid: %d", aggref->aggfnoid);
+                if (aggref->aggfnoid == INT8SUMOID /* or similar */)
+                {
+                    can_simd = true;
+
+                    /* which column is the input? assume first normal arg */
+                    if (pertrans->numTransInputs >= 1)
+                    {
+                        /* For simple SUM(col), args->head is Var(attno) */
+                        TargetEntry *tle;
+                        Var *v;
+
+                        /* Extremely naive: assume 1 arg and it's a Var */
+                        tle = linitial_node(TargetEntry, aggref->args);
+                        v = (Var *) tle->expr;
+                        aggstate->simd_input_attno = v->varattno;
+                    }
+                }
+            }
+        }
+
+        if (can_simd)
+        {
+			elog(NOTICE, "apply SIMD");
+            aggstate->simd_enabled = true;
+            aggstate->simd_bufsize = 1024; /* pick a batch size */
+            aggstate->simd_buf =
+                (int64 *) MemoryContextAlloc(estate->es_query_cxt,
+                                             sizeof(int64) * aggstate->simd_bufsize);
+        }
+    }
 
 	/*
 	 * Last, check whether any more aggregates got added onto the node while
