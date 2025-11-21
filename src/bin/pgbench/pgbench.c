@@ -982,13 +982,17 @@ usage(void)
 		   progname, progname, PACKAGE_BUGREPORT, PACKAGE_NAME, PACKAGE_URL);
 }
 
-/* return whether str matches "^\s*[-+]?[0-9]+$" */
+/*
+ * Return whether str matches "^\s*[-+]?[0-9]+$"
+ *
+ * This should agree with strtoint64() on what's accepted, ignoring overflows.
+ */
 static bool
 is_an_int(const char *str)
 {
 	const char *ptr = str;
 
-	/* skip leading spaces; cast is consistent with strtoint64 */
+	/* skip leading spaces */
 	while (*ptr && isspace((unsigned char) *ptr))
 		ptr++;
 
@@ -1012,9 +1016,6 @@ is_an_int(const char *str)
 /*
  * strtoint64 -- convert a string to 64-bit integer
  *
- * This function is a slightly modified version of pg_strtoint64() from
- * src/backend/utils/adt/numutils.c.
- *
  * The function returns whether the conversion worked, and if so
  * "*result" is set to the result.
  *
@@ -1023,71 +1024,25 @@ is_an_int(const char *str)
 bool
 strtoint64(const char *str, bool errorOK, int64 *result)
 {
-	const char *ptr = str;
-	int64		tmp = 0;
-	bool		neg = false;
+	char	   *end;
 
-	/*
-	 * Do our own scan, rather than relying on sscanf which might be broken
-	 * for long long.
-	 *
-	 * As INT64_MIN can't be stored as a positive 64 bit integer, accumulate
-	 * value as a negative number.
-	 */
+	errno = 0;
+	*result = strtoi64(str, &end, 10);
 
-	/* skip leading spaces */
-	while (*ptr && isspace((unsigned char) *ptr))
-		ptr++;
-
-	/* handle sign */
-	if (*ptr == '-')
+	if (unlikely(errno == ERANGE))
 	{
-		ptr++;
-		neg = true;
-	}
-	else if (*ptr == '+')
-		ptr++;
-
-	/* require at least one digit */
-	if (unlikely(!isdigit((unsigned char) *ptr)))
-		goto invalid_syntax;
-
-	/* process digits */
-	while (*ptr && isdigit((unsigned char) *ptr))
-	{
-		int8		digit = (*ptr++ - '0');
-
-		if (unlikely(pg_mul_s64_overflow(tmp, 10, &tmp)) ||
-			unlikely(pg_sub_s64_overflow(tmp, digit, &tmp)))
-			goto out_of_range;
+		if (!errorOK)
+			pg_log_error("value \"%s\" is out of range for type bigint", str);
+		return false;
 	}
 
-	/* allow trailing whitespace, but not other trailing chars */
-	while (*ptr != '\0' && isspace((unsigned char) *ptr))
-		ptr++;
-
-	if (unlikely(*ptr != '\0'))
-		goto invalid_syntax;
-
-	if (!neg)
+	if (unlikely(errno != 0 || end == str || *end != '\0'))
 	{
-		if (unlikely(tmp == PG_INT64_MIN))
-			goto out_of_range;
-		tmp = -tmp;
+		if (!errorOK)
+			pg_log_error("invalid input syntax for type bigint: \"%s\"", str);
+		return false;
 	}
-
-	*result = tmp;
 	return true;
-
-out_of_range:
-	if (!errorOK)
-		pg_log_error("value \"%s\" is out of range for type bigint", str);
-	return false;
-
-invalid_syntax:
-	if (!errorOK)
-		pg_log_error("invalid input syntax for type bigint: \"%s\"", str);
-	return false;
 }
 
 /* convert string to double, detecting overflows/underflows */
@@ -1099,14 +1054,14 @@ strtodouble(const char *str, bool errorOK, double *dv)
 	errno = 0;
 	*dv = strtod(str, &end);
 
-	if (unlikely(errno != 0))
+	if (unlikely(errno == ERANGE))
 	{
 		if (!errorOK)
 			pg_log_error("value \"%s\" is out of range for type double", str);
 		return false;
 	}
 
-	if (unlikely(end == str || *end != '\0'))
+	if (unlikely(errno != 0 || end == str || *end != '\0'))
 	{
 		if (!errorOK)
 			pg_log_error("invalid input syntax for type double: \"%s\"", str);
