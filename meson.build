@@ -3679,11 +3679,9 @@ foreach test_dir : tests
         '--dbname', dbname,
       ] + t.get('regress_args', [])
 
-      test_selection = []
-      if t.has_key('schedule')
-        test_selection += ['--schedule', t['schedule'],]
-      endif
+      test_schedule = t.get('schedule', [])
 
+      test_selection = []
       if kind == 'isolation'
         test_selection += t.get('specs', [])
       else
@@ -3707,12 +3705,13 @@ foreach test_dir : tests
           testwrap_base,
           '--testgroup', test_group,
           '--testname', kind,
+          '--schedule', test_schedule,
+          '--tests', test_selection,
           '--',
           test_command_base,
           '--outputdir', test_output,
           '--temp-instance', test_output / 'tmp_check',
           '--port', testport.to_string(),
-          test_selection,
         ],
         suite: test_group,
         kwargs: test_kwargs,
@@ -3727,10 +3726,11 @@ foreach test_dir : tests
             testwrap_base,
             '--testgroup', test_group_running,
             '--testname', kind,
+            '--schedule', test_schedule,
+            '--tests', test_selection,
             '--',
             test_command_base,
             '--outputdir', test_output_running,
-            test_selection,
           ],
           is_parallel: t.get('runningcheck-parallel', true),
           suite: test_group_running,
