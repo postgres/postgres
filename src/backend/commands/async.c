@@ -1987,14 +1987,10 @@ asyncQueueProcessPageEntries(QueuePosition *current,
 	/*
 	 * We copy the entries into a local buffer to avoid holding the SLRU lock
 	 * while we transmit them to our frontend.  The local buffer must be
-	 * adequately aligned, so use a union.
+	 * adequately aligned.
 	 */
-	union
-	{
-		char		buf[QUEUE_PAGESIZE];
-		AsyncQueueEntry align;
-	}			local_buf;
-	char	   *local_buf_end = local_buf.buf;
+	alignas(AsyncQueueEntry) char local_buf[QUEUE_PAGESIZE];
+	char	   *local_buf_end = local_buf;
 
 	slotno = SimpleLruReadPage_ReadOnly(NotifyCtl, curpage,
 										InvalidTransactionId);
@@ -2082,8 +2078,8 @@ asyncQueueProcessPageEntries(QueuePosition *current,
 	 * Now that we have let go of the SLRU bank lock, send the notifications
 	 * to our backend
 	 */
-	Assert(local_buf_end - local_buf.buf <= BLCKSZ);
-	for (char *p = local_buf.buf; p < local_buf_end;)
+	Assert(local_buf_end - local_buf <= BLCKSZ);
+	for (char *p = local_buf; p < local_buf_end;)
 	{
 		AsyncQueueEntry *qe = (AsyncQueueEntry *) p;
 
