@@ -204,7 +204,7 @@ prs_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 	st->len = st->cur;
 	st->cur = 0;
 
-	funcctx->user_fctx = (void *) st;
+	funcctx->user_fctx = st;
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 	funcctx->tuple_desc = tupdesc;

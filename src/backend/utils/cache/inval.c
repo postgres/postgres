@@ -1480,7 +1480,7 @@ CacheInvalidateHeapTupleCommon(Relation relation,
 	else
 		PrepareToInvalidateCacheTuple(relation, tuple, newtuple,
 									  RegisterCatcacheInvalidation,
-									  (void *) info);
+									  info);
 
 	/*
 	 * Now, is this tuple one of the primary definers of a relcache entry? See

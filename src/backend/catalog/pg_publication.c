@@ -1369,7 +1369,7 @@ pg_get_publication_sequences(PG_FUNCTION_ARGS)
 		if (publication->allsequences)
 			sequences = GetAllPublicationRelations(RELKIND_SEQUENCE, false);
 
-		funcctx->user_fctx = (void *) sequences;
+		funcctx->user_fctx = sequences;
 
 		MemoryContextSwitchTo(oldcontext);
 	}

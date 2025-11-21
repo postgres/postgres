@@ -335,7 +335,7 @@ CopyGetData(CopyFromState cstate, void *databuf, int minread, int maxread)
 				if (avail > maxread)
 					avail = maxread;
 				pq_copymsgbytes(cstate->fe_msgbuf, databuf, avail);
-				databuf = (void *) ((char *) databuf + avail);
+				databuf = (char *) databuf + avail;
 				maxread -= avail;
 				bytesread += avail;
 			}

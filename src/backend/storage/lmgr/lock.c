@@ -1943,7 +1943,7 @@ WaitOnLock(LOCALLOCK *locallock, ResourceOwner owner)
 
 	/* Setup error traceback support for ereport() */
 	waiterrcontext.callback = waitonlock_error_callback;
-	waiterrcontext.arg = (void *) locallock;
+	waiterrcontext.arg = locallock;
 	waiterrcontext.previous = error_context_stack;
 	error_context_stack = &waiterrcontext;
 

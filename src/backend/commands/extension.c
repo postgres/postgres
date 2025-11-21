@@ -931,7 +931,7 @@ execute_sql_string(const char *sql, const char *filename)
 	callback_arg.stmt_len = -1;
 
 	scripterrcontext.callback = script_error_callback;
-	scripterrcontext.arg = (void *) &callback_arg;
+	scripterrcontext.arg = &callback_arg;
 	scripterrcontext.previous = error_context_stack;
 	error_context_stack = &scripterrcontext;
 

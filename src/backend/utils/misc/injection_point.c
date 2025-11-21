@@ -186,7 +186,7 @@ injection_point_cache_load(InjectionPointEntry *entry, int slot_idx, uint64 gene
 		elog(ERROR, "could not find library \"%s\" for injection point \"%s\"",
 			 path, entry->name);
 
-	injection_callback_local = (void *)
+	injection_callback_local =
 		load_external_function(path, entry->function, false, NULL);
 
 	if (injection_callback_local == NULL)

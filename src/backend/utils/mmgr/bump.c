@@ -407,7 +407,7 @@ BumpAllocChunkFromBlock(MemoryContext context, BumpBlock *block, Size size,
 #ifdef MEMORY_CONTEXT_CHECKING
 	chunk = (MemoryChunk *) block->freeptr;
 #else
-	ptr = (void *) block->freeptr;
+	ptr = block->freeptr;
 #endif
 
 	/* point the freeptr beyond this chunk */
