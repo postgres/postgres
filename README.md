@@ -44,3 +44,21 @@ Run Script
     chmod +x generate_and_load.sh
 
     ./generate_and_load.sh
+
+Build
+=====================================
+
+    ./configure \
+    --prefix="$HOME/pginstall" \
+    --enable-debug \
+    --enable-cassert
+
+    make -j"$(nproc)"
+    make install
+
+Start PostgreSQL server
+=====================================
+
+    pg_ctl -D "$HOME/pgdata" stop -m fast
+
+    pg_ctl -D "$HOME/pgdata" -l "$HOME/pg93data/logfile" start
