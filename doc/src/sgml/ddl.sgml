@@ -1610,7 +1610,7 @@ CREATE TABLE circles (
 
    <para>
     <firstterm>Application time</firstterm> refers to a history of the entity
-    described by a table.  In a typical non-temporal table, there is single
+    described by a table.  In a typical non-temporal table, there is a single
     row for each entity.  In a temporal table, an entity may have multiple
     rows, as long as those rows describe non-overlapping periods from its
     history.  Application time requires each row to have a start and end time,
@@ -1806,7 +1806,6 @@ CREATE TABLE variants (
     </figure>
 
     <para>
-
      In a table, these records would be:
 <programlisting>
  id | product_no |  name  |        valid_at
