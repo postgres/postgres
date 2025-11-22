@@ -275,6 +275,8 @@
 #include "utils/memutils_memorychunk.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
+#include <stdlib.h>
+#include <arm_neon.h>
 
 /*
  * Control how many partitions are created when spilling HashAgg to
@@ -373,6 +375,7 @@ static void initialize_aggregates(AggState *aggstate,
 static void advance_transition_function(AggState *aggstate,
 										AggStatePerTrans pertrans,
 										AggStatePerGroup pergroupstate);
+static void advance_aggregates_simd(AggState *aggstate);
 static void advance_aggregates(AggState *aggstate);
 static void process_ordered_aggregate_single(AggState *aggstate,
 											 AggStatePerTrans pertrans,
@@ -800,6 +803,34 @@ advance_transition_function(AggState *aggstate,
 	pergroupstate->transValueIsNull = fcinfo->isnull;
 
 	MemoryContextSwitchTo(oldContext);
+}
+
+static void advance_aggregates_simd(AggState *aggstate)
+{
+    int32_t *buf = aggstate->simd_batch_buf;
+    int n = aggstate->simd_batch_count;
+    int64 total = 0;
+
+    for (int i = 0; i < n; i++)
+        total += buf[i];
+
+    AggStatePerAgg peragg = &aggstate->peragg[0];
+    AggStatePerGroup pergroup = &aggstate->pergroups[0][peragg->transno];
+
+    if (pergroup->transValueIsNull || pergroup->noTransValue)
+    {
+        pergroup->transValue = Int64GetDatum(total);
+        pergroup->transValueIsNull = false;
+        pergroup->noTransValue = false;
+    }
+    else
+    {
+        int64 oldv = DatumGetInt64(pergroup->transValue);
+        pergroup->transValue = Int64GetDatum(oldv + total);
+    }
+
+    aggstate->simd_batch_count = 0;
+
 }
 
 /*
@@ -2262,7 +2293,6 @@ ExecAgg(PlanState *pstate)
 				result = agg_retrieve_hash_table(node);
 				break;
 			case AGG_PLAIN:
-				elog(NOTICE, "case AGG_PLAIN");
 			case AGG_SORTED:
 				result = agg_retrieve_direct(node);
 				break;
@@ -2273,6 +2303,16 @@ ExecAgg(PlanState *pstate)
 	}
 
 	return NULL;
+}
+void simd_buffer_add(AggState *aggstate, TupleTableSlot *slot)
+{
+    bool isnull;
+    Datum val = slot_getattr(slot, 1, &isnull);
+
+    if (!isnull)
+    {
+        aggstate->simd_batch_buf[aggstate->simd_batch_count++] = DatumGetInt32(val);
+    }
 }
 
 /*
@@ -2538,8 +2578,19 @@ agg_retrieve_direct(AggState *aggstate)
 						lookup_hash_entries(aggstate);
 					}
 
+					// TODO, Apply SIMD Here
 					/* Advance the aggregates (or combine functions) */
-					advance_aggregates(aggstate);
+					if (aggstate->use_simd_agg)
+					{
+						simd_buffer_add(aggstate, outerslot);
+
+						if (aggstate->simd_batch_count == aggstate->simd_batch_size)
+							advance_aggregates_simd(aggstate);
+					}
+					else
+					{
+						advance_aggregates(aggstate);
+					}
 
 					/* Reset per-input-tuple context after each tuple */
 					ResetExprContext(tmpcontext);
@@ -2547,6 +2598,9 @@ agg_retrieve_direct(AggState *aggstate)
 					outerslot = fetch_input_tuple(aggstate);
 					if (TupIsNull(outerslot))
 					{
+						/* Handle remaining values */
+						if (aggstate->use_simd_agg && aggstate->simd_batch_count > 0)
+        					advance_aggregates_simd(aggstate);
 						/* no more outer-plan tuples available */
 
 						/* if we built hash tables, finalize any spills */
@@ -3333,11 +3387,22 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->sort_in = NULL;
 	aggstate->sort_out = NULL;
 
-	/* >>> SIMD init here <<< */
-    aggstate->simd_enabled = false;
-    aggstate->simd_bufsize = 0;
-    aggstate->simd_buf = NULL;
-    aggstate->simd_input_attno = InvalidAttrNumber;
+	/* Decide if we should enable SIMD */
+	/* Environment flag override */
+	const char *flag = getenv("PG_FORCE_SIMD_AGG");
+	if (flag != NULL && strcmp(flag, "1") == 0)
+	{
+		aggstate->use_simd_agg = true;
+		/* SIMD init, temporary */
+		aggstate->simd_batch_size  = 4096;   
+		aggstate->simd_batch_count = 0;
+		aggstate->simd_batch_buf = palloc(sizeof(int32) * aggstate->simd_batch_size);
+	}
+	else
+	{
+		aggstate->use_simd_agg = false;
+	}
+
 	/*
 	 * phases[0] always exists, but is dummy in sorted/plain mode
 	 */
@@ -4051,63 +4116,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			pertrans->aggshared = true;
 		ReleaseSysCache(aggTuple);
 	}
-
-	 /* Decide whether we can enable our SIMD optimization */
-    {
-        bool can_simd = false;
-		elog(NOTICE, "SIMD check");
-
-        /* plain agg (no GROUP BY), one aggregate, one trans state */
-        if (aggstate->aggstrategy == AGG_PLAIN &&
-            node->numCols == 0 &&
-            aggstate->numaggs == 1 &&
-            aggstate->numtrans == 1 &&
-            list_length(aggstate->aggs) == 1)
-        {
-            Aggref *aggref = linitial_node(Aggref, aggstate->aggs);
-            // AggStatePerAgg peragg = &peraggs[aggref->aggno];
-            AggStatePerTrans pertrans = &pertransstates[aggref->aggtransno];
-
-            /* no FILTER, no ORDER BY, no DISTINCT / ordered-set */
-            if (aggref->aggfilter == NULL &&
-                !AGGKIND_IS_ORDERED_SET(aggref->aggkind) &&
-                aggref->aggorder == NIL &&
-                aggref->aggdistinct == NIL)
-            {
-                /* very rough example: match SUM(bigint) by OID */
-                /* replace XXX with correct SUM(int8) agg or check argtype */
-				# define INT8SUMOID 2107
-				elog(NOTICE, "aggref->aggfnoid: %d", aggref->aggfnoid);
-                if (aggref->aggfnoid == INT8SUMOID /* or similar */)
-                {
-                    can_simd = true;
-
-                    /* which column is the input? assume first normal arg */
-                    if (pertrans->numTransInputs >= 1)
-                    {
-                        /* For simple SUM(col), args->head is Var(attno) */
-                        TargetEntry *tle;
-                        Var *v;
-
-                        /* Extremely naive: assume 1 arg and it's a Var */
-                        tle = linitial_node(TargetEntry, aggref->args);
-                        v = (Var *) tle->expr;
-                        aggstate->simd_input_attno = v->varattno;
-                    }
-                }
-            }
-        }
-
-        if (can_simd)
-        {
-			elog(NOTICE, "apply SIMD");
-            aggstate->simd_enabled = true;
-            aggstate->simd_bufsize = 1024; /* pick a batch size */
-            aggstate->simd_buf =
-                (int64 *) MemoryContextAlloc(estate->es_query_cxt,
-                                             sizeof(int64) * aggstate->simd_bufsize);
-        }
-    }
 
 	/*
 	 * Last, check whether any more aggregates got added onto the node while
