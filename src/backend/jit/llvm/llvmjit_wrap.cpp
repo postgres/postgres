@@ -53,7 +53,14 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(llvm::orc::ObjectLayer, LLVMOrcObjectLayerRef
 LLVMOrcObjectLayerRef
 LLVMOrcCreateRTDyldObjectLinkingLayerWithSafeSectionMemoryManager(LLVMOrcExecutionSessionRef ES)
 {
+#if LLVM_VERSION_MAJOR >= 21
+	return wrap(new llvm::orc::RTDyldObjectLinkingLayer(
+		*unwrap(ES), [](const llvm::MemoryBuffer&) {
+			return std::make_unique<llvm::backport::SectionMemoryManager>(nullptr, true);
+		}));
+#else
 	return wrap(new llvm::orc::RTDyldObjectLinkingLayer(
 		*unwrap(ES), [] { return std::make_unique<llvm::backport::SectionMemoryManager>(nullptr, true); }));
+#endif
 }
 #endif
