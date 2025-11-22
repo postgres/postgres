@@ -276,6 +276,7 @@
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 #include <stdlib.h>
+#include <arm_neon.h>
 
 /*
  * Control how many partitions are created when spilling HashAgg to
@@ -374,7 +375,6 @@ static void initialize_aggregates(AggState *aggstate,
 static void advance_transition_function(AggState *aggstate,
 										AggStatePerTrans pertrans,
 										AggStatePerGroup pergroupstate);
-//static bool agg_supports_simd(AggState *aggstate);
 static void advance_aggregates_simd(AggState *aggstate);
 static void advance_aggregates(AggState *aggstate);
 static void process_ordered_aggregate_single(AggState *aggstate,
@@ -805,10 +805,32 @@ advance_transition_function(AggState *aggstate,
 	MemoryContextSwitchTo(oldContext);
 }
 
-static void
-advance_aggregates_simd(AggState *aggstate)
+static void advance_aggregates_simd(AggState *aggstate)
 {
-    /* TODO: SIMD version */
+    int32_t *buf = aggstate->simd_batch_buf;
+    int n = aggstate->simd_batch_count;
+    int64 total = 0;
+
+    for (int i = 0; i < n; i++)
+        total += buf[i];
+
+    AggStatePerAgg peragg = &aggstate->peragg[0];
+    AggStatePerGroup pergroup = &aggstate->pergroups[0][peragg->transno];
+
+    if (pergroup->transValueIsNull || pergroup->noTransValue)
+    {
+        pergroup->transValue = Int64GetDatum(total);
+        pergroup->transValueIsNull = false;
+        pergroup->noTransValue = false;
+    }
+    else
+    {
+        int64 oldv = DatumGetInt64(pergroup->transValue);
+        pergroup->transValue = Int64GetDatum(oldv + total);
+    }
+
+    aggstate->simd_batch_count = 0;
+
 }
 
 /*
@@ -2282,6 +2304,16 @@ ExecAgg(PlanState *pstate)
 
 	return NULL;
 }
+void simd_buffer_add(AggState *aggstate, TupleTableSlot *slot)
+{
+    bool isnull;
+    Datum val = slot_getattr(slot, 1, &isnull);
+
+    if (!isnull)
+    {
+        aggstate->simd_batch_buf[aggstate->simd_batch_count++] = DatumGetInt32(val);
+    }
+}
 
 /*
  * ExecAgg for non-hashed case
@@ -2549,9 +2581,16 @@ agg_retrieve_direct(AggState *aggstate)
 					// TODO, Apply SIMD Here
 					/* Advance the aggregates (or combine functions) */
 					if (aggstate->use_simd_agg)
-						advance_aggregates_simd(aggstate);
+					{
+						simd_buffer_add(aggstate, outerslot);
+
+						if (aggstate->simd_batch_count == aggstate->simd_batch_size)
+							advance_aggregates_simd(aggstate);
+					}
 					else
+					{
 						advance_aggregates(aggstate);
+					}
 
 					/* Reset per-input-tuple context after each tuple */
 					ResetExprContext(tmpcontext);
@@ -2559,6 +2598,9 @@ agg_retrieve_direct(AggState *aggstate)
 					outerslot = fetch_input_tuple(aggstate);
 					if (TupIsNull(outerslot))
 					{
+						/* Handle remaining values */
+						if (aggstate->use_simd_agg && aggstate->simd_batch_count > 0)
+        					advance_aggregates_simd(aggstate);
 						/* no more outer-plan tuples available */
 
 						/* if we built hash tables, finalize any spills */
@@ -3347,15 +3389,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 	/* Decide if we should enable SIMD */
 	/* Environment flag override */
-	if (getenv("PG_FORCE_SIMD_AGG"))
+	const char *flag = getenv("PG_FORCE_SIMD_AGG");
+	if (flag != NULL && strcmp(flag, "1") == 0)
 	{
 		aggstate->use_simd_agg = true;
-		elog(LOG, "SIMD forced ON via PG_FORCE_SIMD_AGG");
-	}
-	else if (getenv("PG_DISABLE_SIMD_AGG"))
-	{
-		aggstate->use_simd_agg = false;
-		elog(LOG, "SIMD forced OFF via PG_DISABLE_SIMD_AGG");
+		/* SIMD init, temporary */
+		aggstate->simd_batch_size  = 4096;   
+		aggstate->simd_batch_count = 0;
+		aggstate->simd_batch_buf = palloc(sizeof(int32) * aggstate->simd_batch_size);
 	}
 	else
 	{
