@@ -31,6 +31,7 @@
 #include "postgres.h"
 
 #include "common/hashfn.h"
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -1214,6 +1215,172 @@ range_split_internal(TypeCacheEntry *typcache, const RangeType *r1, const RangeT
 	}
 
 	return false;
+}
+
+/*
+ * range_minus_multi - like range_minus but as a SRF to accommodate splits,
+ * with no result rows if the result would be empty.
+ */
+Datum
+range_minus_multi(PG_FUNCTION_ARGS)
+{
+	struct range_minus_multi_fctx
+	{
+		RangeType  *rs[2];
+		int			n;
+	};
+
+	FuncCallContext *funcctx;
+	struct range_minus_multi_fctx *fctx;
+	MemoryContext oldcontext;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		RangeType  *r1;
+		RangeType  *r2;
+		Oid			rngtypid;
+		TypeCacheEntry *typcache;
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		r1 = PG_GETARG_RANGE_P(0);
+		r2 = PG_GETARG_RANGE_P(1);
+
+		/* Different types should be prevented by ANYRANGE matching rules */
+		if (RangeTypeGetOid(r1) != RangeTypeGetOid(r2))
+			elog(ERROR, "range types do not match");
+
+		/* allocate memory for user context */
+		fctx = (struct range_minus_multi_fctx *) palloc(sizeof(struct range_minus_multi_fctx));
+
+		/*
+		 * Initialize state. We can't store the range typcache in fn_extra
+		 * because the caller uses that for the SRF state.
+		 */
+		rngtypid = RangeTypeGetOid(r1);
+		typcache = lookup_type_cache(rngtypid, TYPECACHE_RANGE_INFO);
+		if (typcache->rngelemtype == NULL)
+			elog(ERROR, "type %u is not a range type", rngtypid);
+		range_minus_multi_internal(typcache, r1, r2, fctx->rs, &fctx->n);
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = funcctx->user_fctx;
+
+	if (funcctx->call_cntr < fctx->n)
+	{
+		/*
+		 * We must keep these on separate lines because SRF_RETURN_NEXT does
+		 * call_cntr++:
+		 */
+		RangeType  *ret = fctx->rs[funcctx->call_cntr];
+
+		SRF_RETURN_NEXT(funcctx, RangeTypePGetDatum(ret));
+	}
+	else
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+}
+
+/*
+ * range_minus_multi_internal - Subtracts r2 from r1
+ *
+ * The subtraction can produce zero, one, or two resulting ranges. We return
+ * the results by setting outputs and outputn to the ranges remaining and their
+ * count (respectively). The results will never contain empty ranges and will
+ * be ordered. Caller should set outputs to a two-element array of RangeType
+ * pointers.
+ */
+void
+range_minus_multi_internal(TypeCacheEntry *typcache, RangeType *r1,
+						   RangeType *r2, RangeType **outputs, int *outputn)
+{
+	int			cmp_l1l2,
+				cmp_l1u2,
+				cmp_u1l2,
+				cmp_u1u2;
+	RangeBound	lower1,
+				lower2;
+	RangeBound	upper1,
+				upper2;
+	bool		empty1,
+				empty2;
+
+	range_deserialize(typcache, r1, &lower1, &upper1, &empty1);
+	range_deserialize(typcache, r2, &lower2, &upper2, &empty2);
+
+	if (empty1)
+	{
+		/* if r1 is empty then r1 - r2 is empty, so return zero results */
+		*outputn = 0;
+		return;
+	}
+	else if (empty2)
+	{
+		/* r2 is empty so the result is just r1 (which we know is not empty) */
+		outputs[0] = r1;
+		*outputn = 1;
+		return;
+	}
+
+	/*
+	 * Use the same logic as range_minus_internal, but support the split case
+	 */
+	cmp_l1l2 = range_cmp_bounds(typcache, &lower1, &lower2);
+	cmp_l1u2 = range_cmp_bounds(typcache, &lower1, &upper2);
+	cmp_u1l2 = range_cmp_bounds(typcache, &upper1, &lower2);
+	cmp_u1u2 = range_cmp_bounds(typcache, &upper1, &upper2);
+
+	if (cmp_l1l2 < 0 && cmp_u1u2 > 0)
+	{
+		lower2.inclusive = !lower2.inclusive;
+		lower2.lower = false;	/* it will become the upper bound */
+		outputs[0] = make_range(typcache, &lower1, &lower2, false, NULL);
+
+		upper2.inclusive = !upper2.inclusive;
+		upper2.lower = true;	/* it will become the lower bound */
+		outputs[1] = make_range(typcache, &upper2, &upper1, false, NULL);
+
+		*outputn = 2;
+	}
+	else if (cmp_l1u2 > 0 || cmp_u1l2 < 0)
+	{
+		outputs[0] = r1;
+		*outputn = 1;
+	}
+	else if (cmp_l1l2 >= 0 && cmp_u1u2 <= 0)
+	{
+		*outputn = 0;
+	}
+	else if (cmp_l1l2 <= 0 && cmp_u1l2 >= 0 && cmp_u1u2 <= 0)
+	{
+		lower2.inclusive = !lower2.inclusive;
+		lower2.lower = false;	/* it will become the upper bound */
+		outputs[0] = make_range(typcache, &lower1, &lower2, false, NULL);
+		*outputn = 1;
+	}
+	else if (cmp_l1l2 >= 0 && cmp_u1u2 >= 0 && cmp_l1u2 <= 0)
+	{
+		upper2.inclusive = !upper2.inclusive;
+		upper2.lower = true;	/* it will become the lower bound */
+		outputs[0] = make_range(typcache, &upper2, &upper1, false, NULL);
+		*outputn = 1;
+	}
+	else
+	{
+		elog(ERROR, "unexpected case in range_minus_multi");
+	}
 }
 
 /* range -> range aggregate functions */

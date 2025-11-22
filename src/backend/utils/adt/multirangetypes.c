@@ -1227,6 +1227,77 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 	return make_multirange(mltrngtypoid, rangetyp, range_count3, ranges3);
 }
 
+/*
+ * multirange_minus_multi - like multirange_minus but returning the result as a
+ * SRF, with no rows if the result would be empty.
+ */
+Datum
+multirange_minus_multi(PG_FUNCTION_ARGS)
+{
+	FuncCallContext *funcctx;
+	MemoryContext oldcontext;
+
+	if (!SRF_IS_FIRSTCALL())
+	{
+		/* We never have more than one result */
+		funcctx = SRF_PERCALL_SETUP();
+		SRF_RETURN_DONE(funcctx);
+	}
+	else
+	{
+		MultirangeType *mr1;
+		MultirangeType *mr2;
+		Oid			mltrngtypoid;
+		TypeCacheEntry *typcache;
+		TypeCacheEntry *rangetyp;
+		int32		range_count1;
+		int32		range_count2;
+		RangeType **ranges1;
+		RangeType **ranges2;
+		MultirangeType *mr;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* get args, detoasting into multi-call memory context */
+		mr1 = PG_GETARG_MULTIRANGE_P(0);
+		mr2 = PG_GETARG_MULTIRANGE_P(1);
+
+		mltrngtypoid = MultirangeTypeGetOid(mr1);
+		typcache = lookup_type_cache(mltrngtypoid, TYPECACHE_MULTIRANGE_INFO);
+		if (typcache->rngtype == NULL)
+			elog(ERROR, "type %u is not a multirange type", mltrngtypoid);
+		rangetyp = typcache->rngtype;
+
+		if (MultirangeIsEmpty(mr1) || MultirangeIsEmpty(mr2))
+			mr = mr1;
+		else
+		{
+			multirange_deserialize(rangetyp, mr1, &range_count1, &ranges1);
+			multirange_deserialize(rangetyp, mr2, &range_count2, &ranges2);
+
+			mr = multirange_minus_internal(mltrngtypoid,
+										   rangetyp,
+										   range_count1,
+										   ranges1,
+										   range_count2,
+										   ranges2);
+		}
+
+		MemoryContextSwitchTo(oldcontext);
+
+		funcctx = SRF_PERCALL_SETUP();
+		if (MultirangeIsEmpty(mr))
+			SRF_RETURN_DONE(funcctx);
+		else
+			SRF_RETURN_NEXT(funcctx, MultirangeTypePGetDatum(mr));
+	}
+}
+
 /* multirange intersection */
 Datum
 multirange_intersect(PG_FUNCTION_ARGS)

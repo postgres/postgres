@@ -842,6 +842,29 @@
         <returnvalue>[1,4)</returnvalue>
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>range_minus_multi</primary>
+        </indexterm>
+        <function>range_minus_multi</function> ( <type>anyrange</type>, <type>anyrange</type> )
+        <returnvalue>setof anyrange</returnvalue>
+       </para>
+       <para>
+        Returns the non-empty range(s) remaining after subtracting the second range from the first.
+        One row is returned for each range, so if the second range splits the first into two parts,
+        there will be two results. If the subtraction yields an empty range, no rows are returned.
+       </para>
+       <para>
+        <literal>range_minus_multi('[0,10)'::int4range, '[3,4)'::int4range)</literal>
+        <returnvalue></returnvalue>
+<programlisting>
+ [0,3)
+ [4,10)
+</programlisting>
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -1039,6 +1062,25 @@
  [1,2)
  [3,4)
 </programlisting>
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>multirange_minus_multi</primary>
+        </indexterm>
+        <function>multirange_minus_multi</function> ( <type>anymultirange</type>, <type>anymultirange</type> )
+        <returnvalue>setof anymultirange</returnvalue>
+       </para>
+       <para>
+        Returns the non-empty multirange(s) remaining after subtracting the second multirange from the first.
+        If the subtraction yields an empty multirange, no rows are returned.
+        Two rows are never returned, because a single multirange can always accommodate any result.
+       </para>
+       <para>
+        <literal>multirange_minus_multi('{[0,10)}'::int4multirange, '{[3,4)}'::int4multirange)</literal>
+        <returnvalue>{[0,3), [4,10)}</returnvalue>
        </para></entry>
       </row>
      </tbody>

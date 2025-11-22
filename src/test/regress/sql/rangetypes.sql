@@ -107,6 +107,16 @@ select numrange(1.1, 2.2,'[]') - numrange(2.0, 3.0);
 select range_minus(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
 select range_minus(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
 
+select range_minus_multi('empty'::numrange, numrange(2.0, 3.0));
+select range_minus_multi(numrange(1.1, 2.2), 'empty'::numrange);
+select range_minus_multi(numrange(1.1, 2.2), numrange(2.0, 3.0));
+select range_minus_multi(numrange(1.1, 2.2), numrange(2.2, 3.0));
+select range_minus_multi(numrange(1.1, 2.2,'[]'), numrange(2.0, 3.0));
+select range_minus_multi(numrange(1.0, 3.0), numrange(1.5, 2.0));
+select range_minus_multi(numrange(10.1,12.2,'[]'), numrange(110.0,120.2,'(]'));
+select range_minus_multi(numrange(10.1,12.2,'[]'), numrange(0.0,120.2,'(]'));
+select range_minus_multi(numrange(1.0,3.0,'[]'), numrange(1.5,2.0,'(]'));
+
 select numrange(4.5, 5.5, '[]') && numrange(5.5, 6.5);
 select numrange(1.0, 2.0) << numrange(3.0, 4.0);
 select numrange(1.0, 3.0,'[]') << numrange(3.0, 4.0,'[]');

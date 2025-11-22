@@ -2200,6 +2200,122 @@ SELECT nummultirange(numrange(1,2), numrange(4,5)) - nummultirange(numrange(-2,0
  {[1,2),[4,5)}
 (1 row)
 
+-- multirange_minus_multi
+SELECT multirange_minus_multi(nummultirange(), nummultirange());
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange());
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(3,4)), nummultirange());
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(2,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2)), nummultirange(numrange(3,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(1,2)));
+ multirange_minus_multi 
+------------------------
+ {[2,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(2,3)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(0,8)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,4)), nummultirange(numrange(0,2)));
+ multirange_minus_multi 
+------------------------
+ {[2,4)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,8)), nummultirange(numrange(0,2), numrange(3,4)));
+ multirange_minus_multi 
+------------------------
+ {[2,3),[4,8)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,8)), nummultirange(numrange(2,3), numrange(5,null)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[3,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(-2,0)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(2,4)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(3,5)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(0,9)));
+ multirange_minus_multi 
+------------------------
+(0 rows)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,3), numrange(4,5)), nummultirange(numrange(2,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(8,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
+SELECT multirange_minus_multi(nummultirange(numrange(1,2), numrange(4,5)), nummultirange(numrange(-2,0), numrange(8,9)));
+ multirange_minus_multi 
+------------------------
+ {[1,2),[4,5)}
+(1 row)
+
 -- intersection
 SELECT nummultirange() * nummultirange();
  ?column? 
