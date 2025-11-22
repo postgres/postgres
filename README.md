@@ -49,16 +49,20 @@ Build
 =====================================
 
     ./configure \
+    CFLAGS="-O2 -g -mavx2" \
+    --without-icu \
     --prefix="$HOME/pginstall" \
     --enable-debug \
     --enable-cassert
-
-    make -j"$(nproc)"
-    make install
 
 Start PostgreSQL server
 =====================================
 
     pg_ctl -D "$HOME/pgdata" stop -m fast
 
-    pg_ctl -D "$HOME/pgdata" -l "$HOME/pg93data/logfile" start
+    pg_ctl -D "$HOME/pgdata" -l "$HOME/pgdata/logfile" start
+
+
+SQL
+=====================================
+    SELECT sum(product_sales_rank ) FROM customer_reviews;
