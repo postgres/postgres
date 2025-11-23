@@ -2917,6 +2917,7 @@ SubscriptionRelState
 SummarizerReadLocalXLogPrivate
 SupportRequestCost
 SupportRequestIndexCondition
+SupportRequestInlineInFrom
 SupportRequestModifyInPlace
 SupportRequestOptimizeWindowClause
 SupportRequestRows
@@ -4140,7 +4141,7 @@ storeRes_func
 stream_stop_callback
 string
 substitute_actual_parameters_context
-substitute_actual_srf_parameters_context
+substitute_actual_parameters_in_from_context
 substitute_grouped_columns_context
 substitute_phv_relids_context
 subxids_array_status

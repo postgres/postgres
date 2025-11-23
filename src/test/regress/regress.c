@@ -28,6 +28,7 @@
 #include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
+#include "executor/functions.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -39,6 +40,7 @@
 #include "port/atomics.h"
 #include "postmaster/postmaster.h"	/* for MAX_BACKENDS */
 #include "storage/spin.h"
+#include "tcop/tcopprot.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
@@ -801,6 +803,125 @@ test_support_func(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_POINTER(ret);
+}
+
+PG_FUNCTION_INFO_V1(test_inline_in_from_support_func);
+Datum
+test_inline_in_from_support_func(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestInlineInFrom))
+	{
+		/*
+		 * Assume that the target is foo_from_bar; that's safe as long as we
+		 * don't attach this to any other function.
+		 */
+		SupportRequestInlineInFrom *req = (SupportRequestInlineInFrom *) rawreq;
+		StringInfoData sql;
+		RangeTblFunction *rtfunc = req->rtfunc;
+		FuncExpr   *expr = (FuncExpr *) rtfunc->funcexpr;
+		Node	   *node;
+		Const	   *c;
+		char	   *colname;
+		char	   *tablename;
+		SQLFunctionParseInfoPtr pinfo;
+		List	   *raw_parsetree_list;
+		List	   *querytree_list;
+		Query	   *querytree;
+
+		if (list_length(expr->args) != 3)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with %d args but expected 3", list_length(expr->args))));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		/* Get colname */
+		node = linitial(expr->args);
+		if (!IsA(node, Const))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-Const parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		c = (Const *) node;
+		if (c->consttype != TEXTOID || c->constisnull)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-TEXT parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+		colname = TextDatumGetCString(c->constvalue);
+
+		/* Get tablename */
+		node = lsecond(expr->args);
+		if (!IsA(node, Const))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-Const parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		c = (Const *) node;
+		if (c->consttype != TEXTOID || c->constisnull)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func called with non-TEXT parameters")));
+			PG_RETURN_POINTER(NULL);
+		}
+		tablename = TextDatumGetCString(c->constvalue);
+
+		/* Begin constructing replacement SELECT query. */
+		initStringInfo(&sql);
+		appendStringInfo(&sql, "SELECT %s::text FROM %s",
+						 quote_identifier(colname),
+						 quote_identifier(tablename));
+
+		/* Add filter expression if present. */
+		node = lthird(expr->args);
+		if (!(IsA(node, Const) && ((Const *) node)->constisnull))
+		{
+			/*
+			 * We only filter if $3 is not constant-NULL.  This is not a very
+			 * exact implementation of the PL/pgSQL original, but it's close
+			 * enough for demonstration purposes.
+			 */
+			appendStringInfo(&sql, " WHERE %s::text = $3",
+							 quote_identifier(colname));
+		}
+
+		/* Build a SQLFunctionParseInfo with the parameters of my function. */
+		pinfo = prepare_sql_fn_parse_info(req->proc,
+										  (Node *) expr,
+										  expr->inputcollid);
+
+		/* Parse the generated SQL. */
+		raw_parsetree_list = pg_parse_query(sql.data);
+		if (list_length(raw_parsetree_list) != 1)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func parsed to more than one node")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		/* Analyze the parse tree as if it were a SQL-language body. */
+		querytree_list = pg_analyze_and_rewrite_withcb(linitial(raw_parsetree_list),
+													   sql.data,
+													   (ParserSetupHook) sql_fn_parser_setup,
+													   pinfo, NULL);
+		if (list_length(querytree_list) != 1)
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func rewrote to more than one node")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		querytree = linitial(querytree_list);
+		if (!IsA(querytree, Query))
+		{
+			ereport(WARNING, (errmsg("test_inline_in_from_support_func didn't parse to a Query")));
+			PG_RETURN_POINTER(NULL);
+		}
+
+		PG_RETURN_POINTER(querytree);
+	}
+
+	PG_RETURN_POINTER(NULL);
 }
 
 PG_FUNCTION_INFO_V1(test_opclass_options_func);

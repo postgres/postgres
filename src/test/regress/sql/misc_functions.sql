@@ -360,6 +360,40 @@ SELECT explain_mask_costs($$
 SELECT * FROM generate_series(25.0, 2.0, 0.0) g(s);$$,
 false, true, false, true);
 
+--
+-- Test SupportRequestInlineInFrom request
+--
+
+CREATE FUNCTION test_inline_in_from_support_func(internal)
+    RETURNS internal
+    AS :'regresslib', 'test_inline_in_from_support_func'
+    LANGUAGE C STRICT;
+
+CREATE FUNCTION foo_from_bar(colname TEXT, tablename TEXT, filter TEXT)
+RETURNS SETOF TEXT
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  sql TEXT;
+BEGIN
+  sql := format('SELECT %I::text FROM %I', colname, tablename);
+  IF filter IS NOT NULL THEN
+    sql := CONCAT(sql, format(' WHERE %I::text = $1', colname));
+  END IF;
+  RETURN QUERY EXECUTE sql USING filter;
+END;
+$function$ STABLE;
+
+ALTER FUNCTION foo_from_bar(TEXT, TEXT, TEXT)
+  SUPPORT test_inline_in_from_support_func;
+
+SELECT * FROM foo_from_bar('f1', 'text_tbl', NULL);
+SELECT * FROM foo_from_bar('f1', 'text_tbl', 'doh!');
+EXPLAIN (COSTS OFF) SELECT * FROM foo_from_bar('f1', 'text_tbl', NULL);
+EXPLAIN (COSTS OFF) SELECT * FROM foo_from_bar('f1', 'text_tbl', 'doh!');
+
+DROP FUNCTION foo_from_bar;
+
 -- Test functions for control data
 SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
 SELECT count(*) > 0 AS ok FROM pg_control_init();

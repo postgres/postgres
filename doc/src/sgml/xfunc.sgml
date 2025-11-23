@@ -4160,6 +4160,31 @@ supportfn(internal) returns internal
    </para>
 
    <para>
+    <literal>SupportRequestSimplify</literal> is not used
+    for <link linkend="queries-tablefunctions">set-returning
+    functions</link>.  Instead, support functions can implement
+    the <literal>SupportRequestInlineInFrom</literal> request to expand
+    function calls appearing in the <literal>FROM</literal> clause of a
+    query.  (It's also allowed to support this request for
+    non-set-returning functions, although
+    typically <literal>SupportRequestSimplify</literal> would serve as
+    well.)  For this request type, a successful result must be
+    a <literal>SELECT</literal> Query tree, which will replace
+    the <literal>FROM</literal> item as though a sub-select had been
+    written instead.  The Query tree must appear as it would after parse
+    analysis and rewrite processing.  One way to ensure that that's true
+    is to build a SQL string then feed it
+    through <function>pg_parse_query</function>
+    and <function>pg_analyze_and_rewrite</function>, or related
+    functions.  <literal>PARAM_EXTERN</literal> <structname>Param</structname>
+    nodes can appear within the Query to represent the function's
+    arguments; they will be replaced by the actual argument expressions.
+    As with <literal>SupportRequestSimplify</literal>, it is the support
+    function's responsibility that the replacement Query be equivalent to
+    normal execution of the target function.
+   </para>
+
+   <para>
     For target functions that return <type>boolean</type>, it is often useful to estimate
     the fraction of rows that will be selected by a <literal>WHERE</literal> clause using that
     function.  This can be done by a support function that implements

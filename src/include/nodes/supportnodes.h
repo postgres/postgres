@@ -39,6 +39,8 @@ typedef struct PlannerInfo PlannerInfo; /* avoid including pathnodes.h here */
 typedef struct IndexOptInfo IndexOptInfo;
 typedef struct SpecialJoinInfo SpecialJoinInfo;
 typedef struct WindowClause WindowClause;
+typedef struct RangeTblFunction RangeTblFunction;	/* ditto for parsenodes.h */
+typedef struct HeapTupleData *HeapTuple;	/* and htup.h too */
 
 /*
  * The Simplify request allows the support function to perform plan-time
@@ -68,6 +70,34 @@ typedef struct SupportRequestSimplify
 	PlannerInfo *root;			/* Planner's infrastructure */
 	FuncExpr   *fcall;			/* Function call to be simplified */
 } SupportRequestSimplify;
+
+/*
+ * The InlineInFrom request allows the support function to perform plan-time
+ * simplification of a call to its target function that appears in FROM.
+ * The rules for this are sufficiently different from ordinary expressions
+ * that it's best to make this a separate request from Simplify.
+ *
+ * The planner's PlannerInfo "root" is typically not needed, but can be
+ * consulted if it's necessary to obtain info about Vars present in
+ * the given node tree.  Beware that root could be NULL in some usages.
+ *
+ * "rtfunc" will be a RangeTblFunction node for the support function's target
+ * function.  The call appeared alone (and without ORDINALITY) in FROM.
+ *
+ * "proc" will be the HeapTuple for the pg_proc row of the target function.
+ *
+ * The result should be a semantically-equivalent SELECT Query tree,
+ * or NULL if no simplification could be performed.  The tree must have
+ * been passed through parse analysis and rewrite.
+ */
+typedef struct SupportRequestInlineInFrom
+{
+	NodeTag		type;
+
+	PlannerInfo *root;			/* Planner's infrastructure */
+	RangeTblFunction *rtfunc;	/* Function call to be simplified */
+	HeapTuple	proc;			/* Function definition from pg_proc */
+} SupportRequestInlineInFrom;
 
 /*
  * The Selectivity request allows the support function to provide a

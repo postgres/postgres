@@ -808,6 +808,56 @@ false, true, false, true);
  Function Scan on generate_series g  (cost=N..N rows=1000 width=N)
 (1 row)
 
+--
+-- Test SupportRequestInlineInFrom request
+--
+CREATE FUNCTION test_inline_in_from_support_func(internal)
+    RETURNS internal
+    AS :'regresslib', 'test_inline_in_from_support_func'
+    LANGUAGE C STRICT;
+CREATE FUNCTION foo_from_bar(colname TEXT, tablename TEXT, filter TEXT)
+RETURNS SETOF TEXT
+LANGUAGE plpgsql
+AS $function$
+DECLARE
+  sql TEXT;
+BEGIN
+  sql := format('SELECT %I::text FROM %I', colname, tablename);
+  IF filter IS NOT NULL THEN
+    sql := CONCAT(sql, format(' WHERE %I::text = $1', colname));
+  END IF;
+  RETURN QUERY EXECUTE sql USING filter;
+END;
+$function$ STABLE;
+ALTER FUNCTION foo_from_bar(TEXT, TEXT, TEXT)
+  SUPPORT test_inline_in_from_support_func;
+SELECT * FROM foo_from_bar('f1', 'text_tbl', NULL);
+   foo_from_bar    
+-------------------
+ doh!
+ hi de ho neighbor
+(2 rows)
+
+SELECT * FROM foo_from_bar('f1', 'text_tbl', 'doh!');
+ foo_from_bar 
+--------------
+ doh!
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM foo_from_bar('f1', 'text_tbl', NULL);
+      QUERY PLAN      
+----------------------
+ Seq Scan on text_tbl
+(1 row)
+
+EXPLAIN (COSTS OFF) SELECT * FROM foo_from_bar('f1', 'text_tbl', 'doh!');
+          QUERY PLAN           
+-------------------------------
+ Seq Scan on text_tbl
+   Filter: (f1 = 'doh!'::text)
+(2 rows)
+
+DROP FUNCTION foo_from_bar;
 -- Test functions for control data
 SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
  ok 

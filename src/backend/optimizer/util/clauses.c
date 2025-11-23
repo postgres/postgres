@@ -82,7 +82,7 @@ typedef struct
 	int			nargs;
 	List	   *args;
 	int			sublevels_up;
-} substitute_actual_srf_parameters_context;
+} substitute_actual_parameters_in_from_context;
 
 typedef struct
 {
@@ -154,10 +154,16 @@ static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 static Node *substitute_actual_parameters_mutator(Node *node,
 												  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
-static Query *substitute_actual_srf_parameters(Query *expr,
-											   int nargs, List *args);
-static Node *substitute_actual_srf_parameters_mutator(Node *node,
-													  substitute_actual_srf_parameters_context *context);
+static Query *inline_sql_function_in_from(PlannerInfo *root,
+										  RangeTblFunction *rtfunc,
+										  FuncExpr *fexpr,
+										  HeapTuple func_tuple,
+										  Form_pg_proc funcform,
+										  const char *src);
+static Query *substitute_actual_parameters_in_from(Query *expr,
+												   int nargs, List *args);
+static Node *substitute_actual_parameters_in_from_mutator(Node *node,
+														  substitute_actual_parameters_in_from_context *context);
 static bool pull_paramids_walker(Node *node, Bitmapset **context);
 
 
@@ -5149,50 +5155,42 @@ evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 
 
 /*
- * inline_set_returning_function
- *		Attempt to "inline" a set-returning function in the FROM clause.
+ * inline_function_in_from
+ *		Attempt to "inline" a function in the FROM clause.
  *
  * "rte" is an RTE_FUNCTION rangetable entry.  If it represents a call of a
- * set-returning SQL function that can safely be inlined, expand the function
- * and return the substitute Query structure.  Otherwise, return NULL.
+ * function that can be inlined, expand the function and return the
+ * substitute Query structure.  Otherwise, return NULL.
  *
  * We assume that the RTE's expression has already been put through
  * eval_const_expressions(), which among other things will take care of
  * default arguments and named-argument notation.
  *
  * This has a good deal of similarity to inline_function(), but that's
- * for the non-set-returning case, and there are enough differences to
+ * for the general-expression case, and there are enough differences to
  * justify separate functions.
  */
 Query *
-inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
+inline_function_in_from(PlannerInfo *root, RangeTblEntry *rte)
 {
 	RangeTblFunction *rtfunc;
 	FuncExpr   *fexpr;
 	Oid			func_oid;
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
-	char	   *src;
-	Datum		tmp;
-	bool		isNull;
 	MemoryContext oldcxt;
 	MemoryContext mycxt;
+	Datum		tmp;
+	char	   *src;
 	inline_error_callback_arg callback_arg;
 	ErrorContextCallback sqlerrcontext;
-	SQLFunctionParseInfoPtr pinfo;
-	TypeFuncClass functypclass;
-	TupleDesc	rettupdesc;
-	List	   *raw_parsetree_list;
-	List	   *querytree_list;
-	Query	   *querytree;
+	Query	   *querytree = NULL;
 
 	Assert(rte->rtekind == RTE_FUNCTION);
 
 	/*
-	 * It doesn't make a lot of sense for a SQL SRF to refer to itself in its
-	 * own FROM clause, since that must cause infinite recursion at runtime.
-	 * It will cause this code to recurse too, so check for stack overflow.
-	 * (There's no need to do more.)
+	 * Guard against infinite recursion during expansion by checking for stack
+	 * overflow.  (There's no need to do more.)
 	 */
 	check_stack_depth();
 
@@ -5210,14 +5208,6 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	fexpr = (FuncExpr *) rtfunc->funcexpr;
 
 	func_oid = fexpr->funcid;
-
-	/*
-	 * The function must be declared to return a set, else inlining would
-	 * change the results if the contained SELECT didn't return exactly one
-	 * row.
-	 */
-	if (!fexpr->funcretset)
-		return NULL;
 
 	/*
 	 * Refuse to inline if the arguments contain any volatile functions or
@@ -5249,24 +5239,10 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 
 	/*
-	 * Forget it if the function is not SQL-language or has other showstopper
-	 * properties.  In particular it mustn't be declared STRICT, since we
-	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
-	 * supposed to cause it to be executed with its own snapshot, rather than
-	 * sharing the snapshot of the calling query.  We also disallow returning
-	 * SETOF VOID, because inlining would result in exposing the actual result
-	 * of the function's last SELECT, which should not happen in that case.
-	 * (Rechecking prokind, proretset, and pronargs is just paranoia.)
+	 * If the function SETs any configuration parameters, inlining would cause
+	 * us to miss making those changes.
 	 */
-	if (funcform->prolang != SQLlanguageId ||
-		funcform->prokind != PROKIND_FUNCTION ||
-		funcform->proisstrict ||
-		funcform->provolatile == PROVOLATILE_VOLATILE ||
-		funcform->prorettype == VOIDOID ||
-		funcform->prosecdef ||
-		!funcform->proretset ||
-		list_length(fexpr->args) != funcform->pronargs ||
-		!heap_attisnull(func_tuple, Anum_pg_proc_proconfig, NULL))
+	if (!heap_attisnull(func_tuple, Anum_pg_proc_proconfig, NULL))
 	{
 		ReleaseSysCache(func_tuple);
 		return NULL;
@@ -5274,10 +5250,11 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 
 	/*
 	 * Make a temporary memory context, so that we don't leak all the stuff
-	 * that parsing might create.
+	 * that parsing and rewriting might create.  If we succeed, we'll copy
+	 * just the finished query tree back up to the caller's context.
 	 */
 	mycxt = AllocSetContextCreate(CurrentMemoryContext,
-								  "inline_set_returning_function",
+								  "inline_function_in_from",
 								  ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(mycxt);
 
@@ -5286,8 +5263,29 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	src = TextDatumGetCString(tmp);
 
 	/*
+	 * If the function has an attached support function that can handle
+	 * SupportRequestInlineInFrom, then attempt to inline with that.
+	 */
+	if (funcform->prosupport)
+	{
+		SupportRequestInlineInFrom req;
+
+		req.type = T_SupportRequestInlineInFrom;
+		req.root = root;
+		req.rtfunc = rtfunc;
+		req.proc = func_tuple;
+
+		querytree = (Query *)
+			DatumGetPointer(OidFunctionCall1(funcform->prosupport,
+											 PointerGetDatum(&req)));
+	}
+
+	/*
 	 * Setup error traceback support for ereport().  This is so that we can
-	 * finger the function that bad information came from.
+	 * finger the function that bad information came from.  We don't install
+	 * this while running the support function, since it'd be likely to do the
+	 * wrong thing: any parse errors reported during that are very likely not
+	 * against the raw function source text.
 	 */
 	callback_arg.proname = NameStr(funcform->proname);
 	callback_arg.prosrc = src;
@@ -5297,117 +5295,29 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 	sqlerrcontext.previous = error_context_stack;
 	error_context_stack = &sqlerrcontext;
 
-	/* If we have prosqlbody, pay attention to that not prosrc */
-	tmp = SysCacheGetAttr(PROCOID,
-						  func_tuple,
-						  Anum_pg_proc_prosqlbody,
-						  &isNull);
-	if (!isNull)
-	{
-		Node	   *n;
+	/*
+	 * If SupportRequestInlineInFrom didn't work, try our built-in inlining
+	 * mechanism.
+	 */
+	if (!querytree)
+		querytree = inline_sql_function_in_from(root, rtfunc, fexpr,
+												func_tuple, funcform, src);
 
-		n = stringToNode(TextDatumGetCString(tmp));
-		if (IsA(n, List))
-			querytree_list = linitial_node(List, castNode(List, n));
-		else
-			querytree_list = list_make1(n);
-		if (list_length(querytree_list) != 1)
-			goto fail;
-		querytree = linitial(querytree_list);
-
-		/* Acquire necessary locks, then apply rewriter. */
-		AcquireRewriteLocks(querytree, true, false);
-		querytree_list = pg_rewrite_query(querytree);
-		if (list_length(querytree_list) != 1)
-			goto fail;
-		querytree = linitial(querytree_list);
-	}
-	else
-	{
-		/*
-		 * Set up to handle parameters while parsing the function body.  We
-		 * can use the FuncExpr just created as the input for
-		 * prepare_sql_fn_parse_info.
-		 */
-		pinfo = prepare_sql_fn_parse_info(func_tuple,
-										  (Node *) fexpr,
-										  fexpr->inputcollid);
-
-		/*
-		 * Parse, analyze, and rewrite (unlike inline_function(), we can't
-		 * skip rewriting here).  We can fail as soon as we find more than one
-		 * query, though.
-		 */
-		raw_parsetree_list = pg_parse_query(src);
-		if (list_length(raw_parsetree_list) != 1)
-			goto fail;
-
-		querytree_list = pg_analyze_and_rewrite_withcb(linitial(raw_parsetree_list),
-													   src,
-													   (ParserSetupHook) sql_fn_parser_setup,
-													   pinfo, NULL);
-		if (list_length(querytree_list) != 1)
-			goto fail;
-		querytree = linitial(querytree_list);
-	}
+	if (!querytree)
+		goto fail;				/* no luck there either, fail */
 
 	/*
-	 * Also resolve the actual function result tupdesc, if composite.  If we
-	 * have a coldeflist, believe that; otherwise use get_expr_result_type.
-	 * (This logic should match ExecInitFunctionScan.)
+	 * The result had better be a SELECT Query.
 	 */
-	if (rtfunc->funccolnames != NIL)
-	{
-		functypclass = TYPEFUNC_RECORD;
-		rettupdesc = BuildDescFromLists(rtfunc->funccolnames,
-										rtfunc->funccoltypes,
-										rtfunc->funccoltypmods,
-										rtfunc->funccolcollations);
-	}
-	else
-		functypclass = get_expr_result_type((Node *) fexpr, NULL, &rettupdesc);
-
-	/*
-	 * The single command must be a plain SELECT.
-	 */
-	if (!IsA(querytree, Query) ||
-		querytree->commandType != CMD_SELECT)
-		goto fail;
-
-	/*
-	 * Make sure the function (still) returns what it's declared to.  This
-	 * will raise an error if wrong, but that's okay since the function would
-	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
-	 * coercions if needed to make the tlist expression(s) match the declared
-	 * type of the function.  We also ask it to insert dummy NULL columns for
-	 * any dropped columns in rettupdesc, so that the elements of the modified
-	 * tlist match up to the attribute numbers.
-	 *
-	 * If the function returns a composite type, don't inline unless the check
-	 * shows it's returning a whole tuple result; otherwise what it's
-	 * returning is a single composite column which is not what we need.
-	 */
-	if (!check_sql_fn_retval(list_make1(querytree_list),
-							 fexpr->funcresulttype, rettupdesc,
-							 funcform->prokind,
-							 true) &&
-		(functypclass == TYPEFUNC_COMPOSITE ||
-		 functypclass == TYPEFUNC_COMPOSITE_DOMAIN ||
-		 functypclass == TYPEFUNC_RECORD))
-		goto fail;				/* reject not-whole-tuple-result cases */
-
-	/*
-	 * check_sql_fn_retval might've inserted a projection step, but that's
-	 * fine; just make sure we use the upper Query.
-	 */
-	querytree = linitial_node(Query, querytree_list);
+	Assert(IsA(querytree, Query));
+	Assert(querytree->commandType == CMD_SELECT);
 
 	/*
 	 * Looks good --- substitute parameters into the query.
 	 */
-	querytree = substitute_actual_srf_parameters(querytree,
-												 funcform->pronargs,
-												 fexpr->args);
+	querytree = substitute_actual_parameters_in_from(querytree,
+													 funcform->pronargs,
+													 fexpr->args);
 
 	/*
 	 * Copy the modified query out of the temporary memory context, and clean
@@ -5452,29 +5362,196 @@ fail:
 }
 
 /*
+ * inline_sql_function_in_from
+ *
+ * This implements inline_function_in_from for SQL-language functions.
+ * Returns NULL if the function couldn't be inlined.
+ *
+ * The division of labor between here and inline_function_in_from is based
+ * on the rule that inline_function_in_from should make all checks that are
+ * certain to be required in both this case and the support-function case.
+ * Support functions might also want to make checks analogous to the ones
+ * made here, but then again they might not, or they might just assume that
+ * the function they are attached to can validly be inlined.
+ */
+static Query *
+inline_sql_function_in_from(PlannerInfo *root,
+							RangeTblFunction *rtfunc,
+							FuncExpr *fexpr,
+							HeapTuple func_tuple,
+							Form_pg_proc funcform,
+							const char *src)
+{
+	Datum		sqlbody;
+	bool		isNull;
+	List	   *querytree_list;
+	Query	   *querytree;
+	TypeFuncClass functypclass;
+	TupleDesc	rettupdesc;
+
+	/*
+	 * The function must be declared to return a set, else inlining would
+	 * change the results if the contained SELECT didn't return exactly one
+	 * row.
+	 */
+	if (!fexpr->funcretset)
+		return NULL;
+
+	/*
+	 * Forget it if the function is not SQL-language or has other showstopper
+	 * properties.  In particular it mustn't be declared STRICT, since we
+	 * couldn't enforce that.  It also mustn't be VOLATILE, because that is
+	 * supposed to cause it to be executed with its own snapshot, rather than
+	 * sharing the snapshot of the calling query.  We also disallow returning
+	 * SETOF VOID, because inlining would result in exposing the actual result
+	 * of the function's last SELECT, which should not happen in that case.
+	 * (Rechecking prokind, proretset, and pronargs is just paranoia.)
+	 */
+	if (funcform->prolang != SQLlanguageId ||
+		funcform->prokind != PROKIND_FUNCTION ||
+		funcform->proisstrict ||
+		funcform->provolatile == PROVOLATILE_VOLATILE ||
+		funcform->prorettype == VOIDOID ||
+		funcform->prosecdef ||
+		!funcform->proretset ||
+		list_length(fexpr->args) != funcform->pronargs)
+		return NULL;
+
+	/* If we have prosqlbody, pay attention to that not prosrc */
+	sqlbody = SysCacheGetAttr(PROCOID,
+							  func_tuple,
+							  Anum_pg_proc_prosqlbody,
+							  &isNull);
+	if (!isNull)
+	{
+		Node	   *n;
+
+		n = stringToNode(TextDatumGetCString(sqlbody));
+		if (IsA(n, List))
+			querytree_list = linitial_node(List, castNode(List, n));
+		else
+			querytree_list = list_make1(n);
+		if (list_length(querytree_list) != 1)
+			return NULL;
+		querytree = linitial(querytree_list);
+
+		/* Acquire necessary locks, then apply rewriter. */
+		AcquireRewriteLocks(querytree, true, false);
+		querytree_list = pg_rewrite_query(querytree);
+		if (list_length(querytree_list) != 1)
+			return NULL;
+		querytree = linitial(querytree_list);
+	}
+	else
+	{
+		SQLFunctionParseInfoPtr pinfo;
+		List	   *raw_parsetree_list;
+
+		/*
+		 * Set up to handle parameters while parsing the function body.  We
+		 * can use the FuncExpr just created as the input for
+		 * prepare_sql_fn_parse_info.
+		 */
+		pinfo = prepare_sql_fn_parse_info(func_tuple,
+										  (Node *) fexpr,
+										  fexpr->inputcollid);
+
+		/*
+		 * Parse, analyze, and rewrite (unlike inline_function(), we can't
+		 * skip rewriting here).  We can fail as soon as we find more than one
+		 * query, though.
+		 */
+		raw_parsetree_list = pg_parse_query(src);
+		if (list_length(raw_parsetree_list) != 1)
+			return NULL;
+
+		querytree_list = pg_analyze_and_rewrite_withcb(linitial(raw_parsetree_list),
+													   src,
+													   (ParserSetupHook) sql_fn_parser_setup,
+													   pinfo, NULL);
+		if (list_length(querytree_list) != 1)
+			return NULL;
+		querytree = linitial(querytree_list);
+	}
+
+	/*
+	 * Also resolve the actual function result tupdesc, if composite.  If we
+	 * have a coldeflist, believe that; otherwise use get_expr_result_type.
+	 * (This logic should match ExecInitFunctionScan.)
+	 */
+	if (rtfunc->funccolnames != NIL)
+	{
+		functypclass = TYPEFUNC_RECORD;
+		rettupdesc = BuildDescFromLists(rtfunc->funccolnames,
+										rtfunc->funccoltypes,
+										rtfunc->funccoltypmods,
+										rtfunc->funccolcollations);
+	}
+	else
+		functypclass = get_expr_result_type((Node *) fexpr, NULL, &rettupdesc);
+
+	/*
+	 * The single command must be a plain SELECT.
+	 */
+	if (!IsA(querytree, Query) ||
+		querytree->commandType != CMD_SELECT)
+		return NULL;
+
+	/*
+	 * Make sure the function (still) returns what it's declared to.  This
+	 * will raise an error if wrong, but that's okay since the function would
+	 * fail at runtime anyway.  Note that check_sql_fn_retval will also insert
+	 * coercions if needed to make the tlist expression(s) match the declared
+	 * type of the function.  We also ask it to insert dummy NULL columns for
+	 * any dropped columns in rettupdesc, so that the elements of the modified
+	 * tlist match up to the attribute numbers.
+	 *
+	 * If the function returns a composite type, don't inline unless the check
+	 * shows it's returning a whole tuple result; otherwise what it's
+	 * returning is a single composite column which is not what we need.
+	 */
+	if (!check_sql_fn_retval(list_make1(querytree_list),
+							 fexpr->funcresulttype, rettupdesc,
+							 funcform->prokind,
+							 true) &&
+		(functypclass == TYPEFUNC_COMPOSITE ||
+		 functypclass == TYPEFUNC_COMPOSITE_DOMAIN ||
+		 functypclass == TYPEFUNC_RECORD))
+		return NULL;			/* reject not-whole-tuple-result cases */
+
+	/*
+	 * check_sql_fn_retval might've inserted a projection step, but that's
+	 * fine; just make sure we use the upper Query.
+	 */
+	querytree = linitial_node(Query, querytree_list);
+
+	return querytree;
+}
+
+/*
  * Replace Param nodes by appropriate actual parameters
  *
  * This is just enough different from substitute_actual_parameters()
  * that it needs its own code.
  */
 static Query *
-substitute_actual_srf_parameters(Query *expr, int nargs, List *args)
+substitute_actual_parameters_in_from(Query *expr, int nargs, List *args)
 {
-	substitute_actual_srf_parameters_context context;
+	substitute_actual_parameters_in_from_context context;
 
 	context.nargs = nargs;
 	context.args = args;
 	context.sublevels_up = 1;
 
 	return query_tree_mutator(expr,
-							  substitute_actual_srf_parameters_mutator,
+							  substitute_actual_parameters_in_from_mutator,
 							  &context,
 							  0);
 }
 
 static Node *
-substitute_actual_srf_parameters_mutator(Node *node,
-										 substitute_actual_srf_parameters_context *context)
+substitute_actual_parameters_in_from_mutator(Node *node,
+											 substitute_actual_parameters_in_from_context *context)
 {
 	Node	   *result;
 
@@ -5484,7 +5561,7 @@ substitute_actual_srf_parameters_mutator(Node *node,
 	{
 		context->sublevels_up++;
 		result = (Node *) query_tree_mutator((Query *) node,
-											 substitute_actual_srf_parameters_mutator,
+											 substitute_actual_parameters_in_from_mutator,
 											 context,
 											 0);
 		context->sublevels_up--;
@@ -5509,7 +5586,7 @@ substitute_actual_srf_parameters_mutator(Node *node,
 		}
 	}
 	return expression_tree_mutator(node,
-								   substitute_actual_srf_parameters_mutator,
+								   substitute_actual_parameters_in_from_mutator,
 								   context);
 }
 
