@@ -810,8 +810,26 @@ static void advance_aggregates_simd(AggState *aggstate)
     int32_t *buf = aggstate->simd_batch_buf;
     int n = aggstate->simd_batch_count;
     int64 total = 0;
+    int i = 0;
 
-    for (int i = 0; i < n; i++)
+    int64x2_t vsum64 = vdupq_n_s64(0);   
+
+    for (; i + 4 <= n; i += 4)
+    {
+        /* load 4 x int32: [x0, x1, x2, x3] */
+        int32x4_t v32 = vld1q_s32(&buf[i]);
+
+        /* pairwise add + widen:
+         * [x0, x1, x2, x3] -> [ (x0+x1), (x2+x3) ] as int64x2_t
+         */
+        int64x2_t v64 = vpaddlq_s32(v32);
+        vsum64 = vaddq_s64(vsum64, v64);
+    }
+    int64 lanes[2];
+    vst1q_s64(lanes, vsum64);
+    total = lanes[0] + lanes[1];
+
+    for (; i < n; i++)
         total += buf[i];
 
     AggStatePerAgg peragg = &aggstate->peragg[0];
@@ -830,8 +848,8 @@ static void advance_aggregates_simd(AggState *aggstate)
     }
 
     aggstate->simd_batch_count = 0;
-
 }
+
 
 /*
  * Advance each aggregate transition state for one input tuple.  The input
