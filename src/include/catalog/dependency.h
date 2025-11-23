@@ -114,11 +114,18 @@ extern void recordDependencyOnExpr(const ObjectAddress *depender,
 								   Node *expr, List *rtable,
 								   DependencyType behavior);
 
+extern void collectDependenciesOfExpr(ObjectAddresses *addrs,
+									  Node *expr, List *rtable);
+
 extern void recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 											Node *expr, Oid relId,
 											DependencyType behavior,
 											DependencyType self_behavior,
 											bool reverse_self);
+
+extern bool find_temp_object(const ObjectAddresses *addrs,
+							 bool local_temp_okay,
+							 ObjectAddress *foundobj);
 
 extern ObjectAddresses *new_object_addresses(void);
 

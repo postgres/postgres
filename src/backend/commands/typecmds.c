@@ -1742,6 +1742,9 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 			   false,			/* Type NOT NULL */
 			   InvalidOid);		/* typcollation */
 
+	/* Ensure these new types are visible to ProcedureCreate */
+	CommandCounterIncrement();
+
 	/* And create the constructor functions for this range type */
 	makeRangeConstructors(typeName, typeNamespace, typoid, rangeSubtype);
 	makeMultirangeConstructors(multirangeTypeName, typeNamespace,

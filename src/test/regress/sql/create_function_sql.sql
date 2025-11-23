@@ -241,6 +241,17 @@ SELECT functest_S_14();
 
 DROP TABLE functest3 CASCADE;
 
+-- Check reporting of temporary-object dependencies within SQL-standard body
+-- (tests elsewhere already cover dependencies on arg and result types)
+CREATE TEMP SEQUENCE mytempseq;
+
+CREATE FUNCTION functest_tempseq() RETURNS int
+    RETURN nextval('mytempseq');
+
+-- This discards mytempseq and therefore functest_tempseq().  If it fails to,
+-- the function will appear in the information_schema tests below.
+DISCARD TEMP;
+
 
 -- information_schema tests
 

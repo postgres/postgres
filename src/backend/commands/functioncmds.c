@@ -153,6 +153,8 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 		address = TypeShellMake(typname, namespaceId, GetUserId());
 		rettype = address.objectId;
 		Assert(OidIsValid(rettype));
+		/* Ensure the new shell type is visible to ProcedureCreate */
+		CommandCounterIncrement();
 	}
 
 	aclresult = object_aclcheck(TypeRelationId, rettype, GetUserId(), ACL_USAGE);

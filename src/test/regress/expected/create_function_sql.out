@@ -455,6 +455,16 @@ DROP TABLE functest3 CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view functestv3
 drop cascades to function functest_s_14()
+-- Check reporting of temporary-object dependencies within SQL-standard body
+-- (tests elsewhere already cover dependencies on arg and result types)
+CREATE TEMP SEQUENCE mytempseq;
+CREATE FUNCTION functest_tempseq() RETURNS int
+    RETURN nextval('mytempseq');
+NOTICE:  function "functest_tempseq" will be effectively temporary
+DETAIL:  It depends on temporary sequence mytempseq.
+-- This discards mytempseq and therefore functest_tempseq().  If it fails to,
+-- the function will appear in the information_schema tests below.
+DISCARD TEMP;
 -- information_schema tests
 CREATE FUNCTION functest_IS_1(a int, b int default 1, c text default 'foo')
     RETURNS int

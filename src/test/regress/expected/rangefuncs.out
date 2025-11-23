@@ -2178,6 +2178,8 @@ alter table users drop column todrop;
 create or replace function get_first_user() returns users as
 $$ SELECT * FROM users ORDER BY userid LIMIT 1; $$
 language sql stable;
+NOTICE:  function "get_first_user" will be effectively temporary
+DETAIL:  It depends on temporary type users.
 SELECT get_first_user();
   get_first_user   
 -------------------
@@ -2193,6 +2195,8 @@ SELECT * FROM get_first_user();
 create or replace function get_users() returns setof users as
 $$ SELECT * FROM users ORDER BY userid; $$
 language sql stable;
+NOTICE:  function "get_users" will be effectively temporary
+DETAIL:  It depends on temporary type users.
 SELECT get_users();
       get_users      
 ---------------------

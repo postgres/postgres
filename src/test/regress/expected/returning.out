@@ -306,6 +306,8 @@ SELECT * FROM foo;
 -- Check use of a whole-row variable for an inlined set-returning function
 CREATE FUNCTION foo_f() RETURNS SETOF foo AS
   $$ SELECT * FROM foo OFFSET 0 $$ LANGUAGE sql STABLE;
+NOTICE:  function "foo_f" will be effectively temporary
+DETAIL:  It depends on temporary type foo.
 UPDATE foo SET f2 = foo_f.f2 FROM foo_f() WHERE foo_f.f1 = foo.f1
   RETURNING foo_f;
       foo_f      
@@ -930,6 +932,8 @@ BEGIN ATOMIC
               (SELECT count(*) FROM foo WHERE foo = o),
               (SELECT count(*) FROM foo WHERE foo = n);
 END;
+NOTICE:  function "foo_update" will be effectively temporary
+DETAIL:  It depends on temporary table foo.
 \sf foo_update
 CREATE OR REPLACE FUNCTION public.foo_update()
  RETURNS void
