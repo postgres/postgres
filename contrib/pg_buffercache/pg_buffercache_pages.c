@@ -82,9 +82,6 @@ typedef struct
 typedef struct
 {
 	TupleDesc	tupdesc;
-	int			buffers_per_page;
-	int			pages_per_buffer;
-	int			os_page_size;
 	BufferCacheNumaRec *record;
 } BufferCacheNumaContext;
 
@@ -368,7 +365,12 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		os_page_ptrs = palloc0(sizeof(void *) * os_page_count);
 		os_page_status = palloc(sizeof(uint64) * os_page_count);
 
-		/* Fill pointers for all the memory pages. */
+		/*
+		 * Fill pointers for all the memory pages.  This loop stores and
+		 * touches (if needed) addresses into os_page_ptrs[] as input to one
+		 * big move_pages(2) inquiry system call, as done in
+		 * pg_numa_query_pages().
+		 */
 		idx = 0;
 		for (char *ptr = startptr; ptr < endptr; ptr += os_page_size)
 		{
@@ -449,10 +451,6 @@ pg_buffercache_numa_pages(PG_FUNCTION_ARGS)
 		 * We don't hold the partition locks, so we don't get a consistent
 		 * snapshot across all buffers, but we do grab the buffer header
 		 * locks, so the information of each buffer is self-consistent.
-		 *
-		 * This loop touches and stores addresses into os_page_ptrs[] as input
-		 * to one big move_pages(2) inquiry system call. Basically we ask for
-		 * all memory pages for NBuffers.
 		 */
 		startptr = (char *) TYPEALIGN_DOWN(os_page_size, (char *) BufferGetBlock(1));
 		idx = 0;
