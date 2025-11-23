@@ -4951,7 +4951,8 @@ match_previous_words(int pattern_id,
 
 /* PREPARE xx AS */
 	else if (Matches("PREPARE", MatchAny, "AS"))
-		COMPLETE_WITH("SELECT", "UPDATE", "INSERT INTO", "DELETE FROM");
+		COMPLETE_WITH("SELECT", "UPDATE", "INSERT INTO", "DELETE FROM",
+					  "MERGE INTO", "VALUES", "WITH", "TABLE");
 
 /*
  * PREPARE TRANSACTION is missing on purpose. It's intended for transaction
