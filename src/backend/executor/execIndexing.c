@@ -114,6 +114,7 @@
 #include "executor/executor.h"
 #include "nodes/nodeFuncs.h"
 #include "storage/lmgr.h"
+#include "utils/injection_point.h"
 #include "utils/multirangetypes.h"
 #include "utils/rangetypes.h"
 #include "utils/snapmgr.h"
@@ -942,6 +943,13 @@ retry:
 	econtext->ecxt_scantuple = save_scantuple;
 
 	ExecDropSingleTupleTableSlot(existing_slot);
+
+#ifdef USE_INJECTION_POINTS
+	if (conflict)
+		INJECTION_POINT("check-exclusion-or-unique-constraint-conflict", NULL);
+	else
+		INJECTION_POINT("check-exclusion-or-unique-constraint-no-conflict", NULL);
+#endif
 
 	return !conflict;
 }

@@ -1789,6 +1789,7 @@ DefineIndex(Oid tableId,
 	 * before the reference snap was taken, we have to wait out any
 	 * transactions that might have older snapshots.
 	 */
+	INJECTION_POINT("define-index-before-set-valid", NULL);
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
 								 PROGRESS_CREATEIDX_PHASE_WAIT_3);
 	WaitForOlderSnapshots(limitXmin, true);
@@ -4229,6 +4230,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	 * indexes with the correct names.
 	 */
 
+	INJECTION_POINT("reindex-relation-concurrently-before-swap", NULL);
 	StartTransactionCommand();
 
 	/*
@@ -4307,6 +4309,7 @@ ReindexRelationConcurrently(const ReindexStmt *stmt, Oid relationOid, const Rein
 	 * index_drop() for more details.
 	 */
 
+	INJECTION_POINT("reindex-relation-concurrently-before-set-dead", NULL);
 	pgstat_progress_update_param(PROGRESS_CREATEIDX_PHASE,
 								 PROGRESS_CREATEIDX_PHASE_WAIT_4);
 	WaitForLockersMultiple(lockTags, AccessExclusiveLock, true);

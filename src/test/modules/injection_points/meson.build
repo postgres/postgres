@@ -48,8 +48,13 @@ tests += {
       'basic',
       'inplace',
       'syscache-update-pruned',
+      'index-concurrently-upsert',
+      'reindex-concurrently-upsert',
+      'index-concurrently-upsert-predicate',
     ],
     'runningcheck': false, # see syscache-update-pruned
+    # Some tests wait for all snapshots, so avoid parallel execution
+    'runningcheck-parallel': false,
   },
   'tap': {
     'env': {
@@ -58,5 +63,7 @@ tests += {
     'tests': [
       't/001_stats.pl',
     ],
+    # The injection points are cluster-wide, so disable installcheck
+    'runningcheck': false,
   },
 }

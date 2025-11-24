@@ -814,6 +814,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 
 	/* Results */
 	List	   *results = NIL;
+	bool		foundValid = false;
 
 	/*
 	 * Quickly return NIL for ON CONFLICT DO NOTHING without an inference
@@ -907,7 +908,22 @@ infer_arbiter_indexes(PlannerInfo *root)
 		idxRel = index_open(indexoid, rte->rellockmode);
 		idxForm = idxRel->rd_index;
 
-		if (!idxForm->indisvalid)
+		/*
+		 * Ignore indexes that aren't indisready, because we cannot trust
+		 * their catalog structure yet.  However, if any indexes are marked
+		 * indisready but not yet indisvalid, we still consider them, because
+		 * they might turn valid while we're running.  Doing it this way
+		 * allows a concurrent transaction with a slightly later catalog
+		 * snapshot infer the same set of indexes, which is critical to
+		 * prevent spurious 'duplicate key' errors.
+		 *
+		 * However, another critical aspect is that a unique index that isn't
+		 * yet marked indisvalid=true might not be complete yet, meaning it
+		 * wouldn't detect possible duplicate rows.  In order to prevent false
+		 * negatives, we require that we include in the set of inferred
+		 * indexes at least one index that is marked valid.
+		 */
+		if (!idxForm->indisready)
 			goto next;
 
 		/*
@@ -929,10 +945,9 @@ infer_arbiter_indexes(PlannerInfo *root)
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
 
 			results = lappend_oid(results, idxForm->indexrelid);
-			list_free(indexList);
+			foundValid |= idxForm->indisvalid;
 			index_close(idxRel, NoLock);
-			table_close(relation, NoLock);
-			return results;
+			break;
 		}
 		else if (indexOidFromConstraint != InvalidOid)
 		{
@@ -1033,6 +1048,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 			goto next;
 
 		results = lappend_oid(results, idxForm->indexrelid);
+		foundValid |= idxForm->indisvalid;
 next:
 		index_close(idxRel, NoLock);
 	}
@@ -1040,7 +1056,8 @@ next:
 	list_free(indexList);
 	table_close(relation, NoLock);
 
-	if (results == NIL)
+	/* We require at least one indisvalid index */
+	if (results == NIL || !foundValid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("there is no unique or exclusion constraint matching the ON CONFLICT specification")));

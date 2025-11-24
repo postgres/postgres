@@ -722,8 +722,9 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 
 		/*
 		 * If the resulting lists are of inequal length, something is wrong.
-		 * (This shouldn't happen, since arbiter index selection should not
-		 * pick up an invalid index.)
+		 * XXX This may happen because we don't match the lists correctly when
+		 * a partitioned index is being processed by REINDEX CONCURRENTLY.
+		 * FIXME later.
 		 */
 		if (list_length(rootResultRelInfo->ri_onConflictArbiterIndexes) !=
 			list_length(arbiterIndexes))
