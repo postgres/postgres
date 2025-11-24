@@ -439,7 +439,7 @@ struct json_field
 	{
 		char	  **scalar;		/* for all scalar types */
 		struct curl_slist **array;	/* for type == JSON_TOKEN_ARRAY_START */
-	}			target;
+	};
 
 	bool		required;		/* REQUIRED field, or just OPTIONAL? */
 };
@@ -561,8 +561,8 @@ oauth_json_object_field_start(void *state, char *name, bool isnull)
 		{
 			field = ctx->active;
 
-			if ((field->type == JSON_TOKEN_ARRAY_START && *field->target.array)
-				|| (field->type != JSON_TOKEN_ARRAY_START && *field->target.scalar))
+			if ((field->type == JSON_TOKEN_ARRAY_START && *field->array)
+				|| (field->type != JSON_TOKEN_ARRAY_START && *field->scalar))
 			{
 				oauth_parse_set_error(ctx, "field \"%s\" is duplicated",
 									  field->name);
@@ -706,7 +706,7 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			}
 
 			/* ...and that a result has not already been set. */
-			if (*field->target.scalar)
+			if (*field->scalar)
 			{
 				Assert(false);
 				oauth_parse_set_error(ctx,
@@ -715,8 +715,8 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 				return JSON_SEM_ACTION_FAILED;
 			}
 
-			*field->target.scalar = strdup(token);
-			if (!*field->target.scalar)
+			*field->scalar = strdup(token);
+			if (!*field->scalar)
 				return JSON_OUT_OF_MEMORY;
 
 			ctx->active = NULL;
@@ -738,11 +738,11 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			}
 
 			/* Note that curl_slist_append() makes a copy of the token. */
-			temp = curl_slist_append(*field->target.array, token);
+			temp = curl_slist_append(*field->array, token);
 			if (!temp)
 				return JSON_OUT_OF_MEMORY;
 
-			*field->target.array = temp;
+			*field->array = temp;
 		}
 	}
 	else
@@ -878,8 +878,8 @@ parse_oauth_json(struct async_ctx *actx, const struct json_field *fields)
 	while (fields->name)
 	{
 		if (fields->required
-			&& !*fields->target.scalar
-			&& !*fields->target.array)
+			&& !*fields->scalar
+			&& !*fields->array)
 		{
 			actx_error(actx, "field \"%s\" is missing", fields->name);
 			goto cleanup;
