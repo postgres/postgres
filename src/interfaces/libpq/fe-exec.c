@@ -24,6 +24,7 @@
 #include <unistd.h>
 #endif
 
+#include "common/int.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "mb/pg_wchar.h"
@@ -4221,27 +4222,6 @@ PQescapeString(char *to, const char *from, size_t length)
 
 
 /*
- * Frontend version of the backend's add_size(), intended to be API-compatible
- * with the pg_add_*_overflow() helpers. Stores the result into *dst on success.
- * Returns true instead if the addition overflows.
- *
- * TODO: move to common/int.h
- */
-static bool
-add_size_overflow(size_t s1, size_t s2, size_t *dst)
-{
-	size_t		result;
-
-	result = s1 + s2;
-	if (result < s1 || result < s2)
-		return true;
-
-	*dst = result;
-	return false;
-}
-
-
-/*
  * Escape arbitrary strings.  If as_ident is true, we escape the result
  * as an identifier; if false, as a literal.  The result is returned in
  * a newly allocated buffer.  If we fail due to an encoding violation or out
@@ -4324,14 +4304,14 @@ PQescapeInternal(PGconn *conn, const char *str, size_t len, bool as_ident)
 	 * Allocate output buffer. Protect against overflow, in case the caller
 	 * has allocated a large fraction of the available size_t.
 	 */
-	if (add_size_overflow(input_len, num_quotes, &result_size) ||
-		add_size_overflow(result_size, 3, &result_size))	/* two quotes plus a NUL */
+	if (pg_add_size_overflow(input_len, num_quotes, &result_size) ||
+		pg_add_size_overflow(result_size, 3, &result_size)) /* two quotes plus a NUL */
 		goto overflow;
 
 	if (!as_ident && num_backslashes > 0)
 	{
-		if (add_size_overflow(result_size, num_backslashes, &result_size) ||
-			add_size_overflow(result_size, 2, &result_size))	/* for " E" prefix */
+		if (pg_add_size_overflow(result_size, num_backslashes, &result_size) ||
+			pg_add_size_overflow(result_size, 2, &result_size)) /* for " E" prefix */
 			goto overflow;
 	}
 
@@ -4493,9 +4473,9 @@ PQescapeByteaInternal(PGconn *conn,
 	if (use_hex)
 	{
 		/* We prepend "\x" and double each input character. */
-		if (add_size_overflow(len, bslash_len + 1, &len) ||
-			add_size_overflow(len, from_length, &len) ||
-			add_size_overflow(len, from_length, &len))
+		if (pg_add_size_overflow(len, bslash_len + 1, &len) ||
+			pg_add_size_overflow(len, from_length, &len) ||
+			pg_add_size_overflow(len, from_length, &len))
 			goto overflow;
 	}
 	else
@@ -4505,22 +4485,22 @@ PQescapeByteaInternal(PGconn *conn,
 		{
 			if (*vp < 0x20 || *vp > 0x7e)
 			{
-				if (add_size_overflow(len, bslash_len + 3, &len))	/* octal "\ooo" */
+				if (pg_add_size_overflow(len, bslash_len + 3, &len))	/* octal "\ooo" */
 					goto overflow;
 			}
 			else if (*vp == '\'')
 			{
-				if (add_size_overflow(len, 2, &len))	/* double each quote */
+				if (pg_add_size_overflow(len, 2, &len)) /* double each quote */
 					goto overflow;
 			}
 			else if (*vp == '\\')
 			{
-				if (add_size_overflow(len, bslash_len * 2, &len))	/* double each backslash */
+				if (pg_add_size_overflow(len, bslash_len * 2, &len))	/* double each backslash */
 					goto overflow;
 			}
 			else
 			{
-				if (add_size_overflow(len, 1, &len))
+				if (pg_add_size_overflow(len, 1, &len))
 					goto overflow;
 			}
 		}

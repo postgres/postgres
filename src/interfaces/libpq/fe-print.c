@@ -33,6 +33,7 @@
 #endif
 #endif
 
+#include "common/int.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 
@@ -451,27 +452,6 @@ do_field(const PQprintOpt *po, const PGresult *res,
 }
 
 
-/*
- * Frontend version of the backend's add_size(), intended to be API-compatible
- * with the pg_add_*_overflow() helpers. Stores the result into *dst on success.
- * Returns true instead if the addition overflows.
- *
- * TODO: move to common/int.h
- */
-static bool
-add_size_overflow(size_t s1, size_t s2, size_t *dst)
-{
-	size_t		result;
-
-	result = s1 + s2;
-	if (result < s1 || result < s2)
-		return true;
-
-	*dst = result;
-	return false;
-}
-
-
 static char *
 do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		  const char **fieldNames, unsigned char *fieldNotNum,
@@ -492,20 +472,20 @@ do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
 		for (; n < nFields; n++)
 		{
 			/* Field plus separator, plus 2 extra '-' in standard format. */
-			if (add_size_overflow(tot, fieldMax[n], &tot) ||
-				add_size_overflow(tot, fs_len, &tot) ||
-				(po->standard && add_size_overflow(tot, 2, &tot)))
+			if (pg_add_size_overflow(tot, fieldMax[n], &tot) ||
+				pg_add_size_overflow(tot, fs_len, &tot) ||
+				(po->standard && pg_add_size_overflow(tot, 2, &tot)))
 				goto overflow;
 		}
 		if (po->standard)
 		{
 			/* An extra separator at the front and back. */
-			if (add_size_overflow(tot, fs_len, &tot) ||
-				add_size_overflow(tot, fs_len, &tot) ||
-				add_size_overflow(tot, 2, &tot))
+			if (pg_add_size_overflow(tot, fs_len, &tot) ||
+				pg_add_size_overflow(tot, fs_len, &tot) ||
+				pg_add_size_overflow(tot, 2, &tot))
 				goto overflow;
 		}
-		if (add_size_overflow(tot, 1, &tot))	/* terminator */
+		if (pg_add_size_overflow(tot, 1, &tot)) /* terminator */
 			goto overflow;
 
 		border = malloc(tot);

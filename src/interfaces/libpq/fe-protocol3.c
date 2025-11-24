@@ -25,6 +25,7 @@
 #include <netinet/tcp.h>
 #endif
 
+#include "common/int.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "mb/pg_wchar.h"
@@ -2405,26 +2406,6 @@ pqBuildStartupPacket3(PGconn *conn, int *packetlen,
 }
 
 /*
- * Frontend version of the backend's add_size(), intended to be API-compatible
- * with the pg_add_*_overflow() helpers. Stores the result into *dst on success.
- * Returns true instead if the addition overflows.
- *
- * TODO: move to common/int.h
- */
-static bool
-add_size_overflow(size_t s1, size_t s2, size_t *dst)
-{
-	size_t		result;
-
-	result = s1 + s2;
-	if (result < s1 || result < s2)
-		return true;
-
-	*dst = result;
-	return false;
-}
-
-/*
  * Build a startup packet given a filled-in PGconn structure.
  *
  * We need to figure out how much space is needed, then fill it in.
@@ -2456,11 +2437,11 @@ build_startup_packet(const PGconn *conn, char *packet,
 	do { \
 		if (packet) \
 			strcpy(packet + packet_len, optname); \
-		if (add_size_overflow(packet_len, strlen(optname) + 1, &packet_len)) \
+		if (pg_add_size_overflow(packet_len, strlen(optname) + 1, &packet_len)) \
 			return 0; \
 		if (packet) \
 			strcpy(packet + packet_len, optval); \
-		if (add_size_overflow(packet_len, strlen(optval) + 1, &packet_len)) \
+		if (pg_add_size_overflow(packet_len, strlen(optval) + 1, &packet_len)) \
 			return 0; \
 	} while(0)
 
@@ -2496,7 +2477,7 @@ build_startup_packet(const PGconn *conn, char *packet,
 	/* Add trailing terminator */
 	if (packet)
 		packet[packet_len] = '\0';
-	if (add_size_overflow(packet_len, 1, &packet_len))
+	if (pg_add_size_overflow(packet_len, 1, &packet_len))
 		return 0;
 
 	return packet_len;
