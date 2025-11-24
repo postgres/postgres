@@ -1023,7 +1023,7 @@ LWLockWakeup(LWLock *lock)
 			else
 				desired_state &= ~LW_FLAG_RELEASE_OK;
 
-			if (proclist_is_empty(&wakeup))
+			if (proclist_is_empty(&lock->waiters))
 				desired_state &= ~LW_FLAG_HAS_WAITERS;
 
 			desired_state &= ~LW_FLAG_LOCKED;	/* release lock */
