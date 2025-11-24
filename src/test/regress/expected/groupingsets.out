@@ -602,6 +602,7 @@ explain (costs off)
 CREATE VIEW gstest_view AS select a, b, grouping(a,b), sum(c), count(*), max(c)
   from gstest2 group by rollup ((a,b,c),(c,d));
 NOTICE:  view "gstest_view" will be a temporary view
+DETAIL:  It depends on temporary table gstest2.
 select pg_get_viewdef('gstest_view'::regclass, true);
             pg_get_viewdef             
 ---------------------------------------

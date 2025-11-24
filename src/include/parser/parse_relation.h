@@ -127,6 +127,5 @@ extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern const NameData *attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
 extern Oid	attnumCollationId(Relation rd, int attid);
-extern bool isQueryUsingTempRelation(Query *query);
 
 #endif							/* PARSE_RELATION_H */

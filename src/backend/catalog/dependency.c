@@ -2480,6 +2480,31 @@ find_temp_object(const ObjectAddresses *addrs, bool local_temp_okay,
 }
 
 /*
+ * query_uses_temp_object - convenience wrapper for find_temp_object
+ *
+ * If the Query includes any use of a temporary object, fill *temp_object
+ * with the address of one such object and return true.
+ */
+bool
+query_uses_temp_object(Query *query, ObjectAddress *temp_object)
+{
+	bool		result;
+	ObjectAddresses *addrs;
+
+	addrs = new_object_addresses();
+
+	/* Collect all dependencies from the Query */
+	collectDependenciesOfExpr(addrs, (Node *) query, NIL);
+
+	/* Look for one that is temp */
+	result = find_temp_object(addrs, false, temp_object);
+
+	free_object_addresses(addrs);
+
+	return result;
+}
+
+/*
  * Given an array of dependency references, eliminate any duplicates.
  */
 static void
