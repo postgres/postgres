@@ -8,6 +8,16 @@ from pg_buffercache;
  t
 (1 row)
 
+-- For pg_buffercache_os_pages, we expect at least one entry for each buffer
+select count(*) >= (select setting::bigint
+                    from pg_settings
+                    where name = 'shared_buffers')
+from pg_buffercache_os_pages;
+ ?column? 
+----------
+ t
+(1 row)
+
 select buffers_used + buffers_unused > 0,
         buffers_dirty <= buffers_used,
         buffers_pinned <= buffers_used
@@ -28,6 +38,8 @@ SELECT count(*) > 0 FROM pg_buffercache_usage_counts() WHERE buffers >= 0;
 SET ROLE pg_database_owner;
 SELECT * FROM pg_buffercache;
 ERROR:  permission denied for view pg_buffercache
+SELECT * FROM pg_buffercache_os_pages;
+ERROR:  permission denied for view pg_buffercache_os_pages
 SELECT * FROM pg_buffercache_pages() AS p (wrong int);
 ERROR:  permission denied for function pg_buffercache_pages
 SELECT * FROM pg_buffercache_summary();
@@ -38,6 +50,12 @@ RESET role;
 -- Check that pg_monitor is allowed to query view / function
 SET ROLE pg_monitor;
 SELECT count(*) > 0 FROM pg_buffercache;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT count(*) > 0 FROM pg_buffercache_os_pages;
  ?column? 
 ----------
  t
