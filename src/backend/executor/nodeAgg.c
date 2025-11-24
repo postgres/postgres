@@ -278,6 +278,11 @@
 #include <stdlib.h>
 #include <arm_neon.h>
 
+#define INT8SUM_OID 2107
+#define INT4SUM_OID 2108
+#define INT4MAX_OID 2116
+#define INT4MIN_OID 2132
+
 /*
  * Control how many partitions are created when spilling HashAgg to
  * disk.
@@ -808,38 +813,60 @@ advance_transition_function(AggState *aggstate,
 static void advance_aggregates_simd(AggState *aggstate)
 {
     int32_t *buf = aggstate->simd_batch_buf;
-    int n = aggstate->simd_batch_count;
-    int64 total = 0;
-    int i = 0;
+    int      n   = aggstate->simd_batch_count;
+    int64    total = 0;
+    int      i = 0;
 
-    int64x2_t vsum64 = vdupq_n_s64(0);   
+    AggStatePerAgg   peragg = &aggstate->peragg[0];
+    AggStatePerGroup pergroup;
+    Aggref          *aggref = peragg->aggref;
+    TargetEntry     *tle;
+    Var             *v;
+    int64x2_t        vsum64;
+    int64            lanes[2];
+
+    if (!aggstate->use_simd_agg || n == 0)
+    {
+        aggstate->simd_batch_count = 0;
+        return;
+    }
+
+    if (aggref->aggfnoid != INT4SUM_OID)
+    {
+        aggstate->simd_batch_count = 0;
+        return;
+    }
+
+    tle = (TargetEntry *) linitial(aggref->args);
+    v   = (Var *) tle->expr;
+    if (v->vartype != INT4OID)
+    {
+        aggstate->simd_batch_count = 0;
+        return;
+    }
+
+    vsum64 = vdupq_n_s64(0);
 
     for (; i + 4 <= n; i += 4)
     {
-        /* load 4 x int32: [x0, x1, x2, x3] */
         int32x4_t v32 = vld1q_s32(&buf[i]);
-
-        /* pairwise add + widen:
-         * [x0, x1, x2, x3] -> [ (x0+x1), (x2+x3) ] as int64x2_t
-         */
         int64x2_t v64 = vpaddlq_s32(v32);
         vsum64 = vaddq_s64(vsum64, v64);
     }
-    int64 lanes[2];
+
     vst1q_s64(lanes, vsum64);
     total = lanes[0] + lanes[1];
 
     for (; i < n; i++)
         total += buf[i];
 
-    AggStatePerAgg peragg = &aggstate->peragg[0];
-    AggStatePerGroup pergroup = &aggstate->pergroups[0][peragg->transno];
+    pergroup = &aggstate->pergroups[0][peragg->transno];
 
     if (pergroup->transValueIsNull || pergroup->noTransValue)
     {
-        pergroup->transValue = Int64GetDatum(total);
+        pergroup->transValue       = Int64GetDatum(total);
         pergroup->transValueIsNull = false;
-        pergroup->noTransValue = false;
+        pergroup->noTransValue     = false;
     }
     else
     {
@@ -3408,13 +3435,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/* Decide if we should enable SIMD */
 	/* Environment flag override */
 	const char *flag = getenv("PG_FORCE_SIMD_AGG");
-	if (flag != NULL && strcmp(flag, "1") == 0)
+	if (flag != NULL &&
+		strcmp(flag, "1") == 0 &&
+		node->aggsplit == AGGSPLIT_SIMPLE )  // Disable SIMD for the final combine phase
 	{
 		aggstate->use_simd_agg = true;
-		/* SIMD init, temporary */
-		aggstate->simd_batch_size  = 4096;   
+		aggstate->simd_batch_size  = 4096;
 		aggstate->simd_batch_count = 0;
-		aggstate->simd_batch_buf = palloc(sizeof(int32) * aggstate->simd_batch_size);
+		aggstate->simd_batch_buf   = palloc(sizeof(int32) * aggstate->simd_batch_size);
 	}
 	else
 	{
