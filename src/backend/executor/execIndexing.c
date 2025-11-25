@@ -945,9 +945,7 @@ retry:
 	ExecDropSingleTupleTableSlot(existing_slot);
 
 #ifdef USE_INJECTION_POINTS
-	if (conflict)
-		INJECTION_POINT("check-exclusion-or-unique-constraint-conflict", NULL);
-	else
+	if (!conflict)
 		INJECTION_POINT("check-exclusion-or-unique-constraint-no-conflict", NULL);
 #endif
 
