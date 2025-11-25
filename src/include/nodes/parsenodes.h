@@ -98,6 +98,9 @@ typedef uint64 AclMode;			/* a bitmask of privilege bits */
  *	Query Tree
  *****************************************************************************/
 
+/* Forward declaration for PIVOT clause */
+typedef struct PivotClause PivotClause;
+
 /*
  * Query -
  *	  Parse analysis turns all statements into a Query tree
@@ -216,6 +219,8 @@ typedef struct Query
 	List	   *groupClause;	/* a list of SortGroupClause's */
 	bool		groupDistinct;	/* was GROUP BY DISTINCT used? */
 	bool		groupByAll;		/* was GROUP BY ALL used? */
+
+	PivotClause *pivotClause;	/* PIVOT clause if present, for view deparsing */
 
 	List	   *groupingSets;	/* a list of GroupingSet's if present */
 
@@ -729,6 +734,40 @@ typedef struct RangeTableSample
 	Node	   *repeatable;		/* REPEATABLE expression, or NULL if none */
 	ParseLoc	location;		/* method name location, or -1 if unknown */
 } RangeTableSample;
+
+/*
+ * PivotClause - represents the PIVOT clause specification
+ *
+ * This node captures the aggregate function, value column, pivot column,
+ * and list of pivot values for a PIVOT operation.
+ */
+typedef struct PivotClause
+{
+	NodeTag		type;
+	List	   *aggName;		/* aggregate function name (List of String) */
+	Node	   *valueColumn;	/* column to aggregate, NULL for COUNT(*) */
+	char	   *pivotColumn;	/* column whose values become output columns */
+	List	   *pivotValues;	/* List of Const nodes for pivot values */
+	Alias	   *alias;			/* optional alias for result */
+	ParseLoc	location;		/* PIVOT keyword location, or -1 if unknown */
+} PivotClause;
+
+/*
+ * RangePivot - PIVOT appearing in a raw FROM clause
+ *
+ * This node, appearing only in raw parse trees, represents
+ *		<relation> PIVOT (agg(col) FOR pivot_col IN (values)) [AS alias]
+ * The source can be a RangeVar, RangeSubselect, or JoinExpr.
+ * Similar to RangeTableSample, RangePivot wraps around the source relation.
+ */
+typedef struct RangePivot
+{
+	NodeTag		type;
+	Node	   *source;			/* source relation (RangeVar, RangeSubselect, or JoinExpr) */
+	PivotClause *pivot;			/* the PIVOT clause specification */
+	Alias	   *alias;			/* optional alias for the pivoted result */
+	ParseLoc	location;		/* PIVOT keyword location, or -1 if unknown */
+} RangePivot;
 
 /*
  * ColumnDef - column definition (used in various creates)

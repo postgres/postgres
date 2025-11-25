@@ -520,6 +520,7 @@ static void get_from_clause_coldeflist(RangeTblFunction *rtfunc,
 									   deparse_context *context);
 static void get_tablesample_def(TableSampleClause *tablesample,
 								deparse_context *context);
+static void get_pivot_clause(PivotClause *pivot, deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 							 StringInfo buf);
 static Node *processIndirection(Node *node, deparse_context *context);
@@ -12391,6 +12392,13 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			pfree(itembuf.data);
 		}
 	}
+
+	/*
+	 * If this query has a PIVOT clause, emit it after the FROM items.
+	 * This allows views with PIVOT to round-trip through pg_get_viewdef.
+	 */
+	if (query->pivotClause != NULL)
+		get_pivot_clause(query->pivotClause, context);
 }
 
 static void
@@ -12879,6 +12887,195 @@ get_tablesample_def(TableSampleClause *tablesample, deparse_context *context)
 		get_rule_expr((Node *) tablesample->repeatable, context, false);
 		appendStringInfoChar(buf, ')');
 	}
+}
+
+/*
+ * get_pivot_clause			- deparse a PIVOT clause
+ *
+ * Outputs the PIVOT syntax: PIVOT (agg(col) FOR pivot_col IN (values))
+ */
+static void
+get_pivot_clause(PivotClause *pivot, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	ListCell   *lc;
+	bool		first;
+
+	appendStringInfoString(buf, " PIVOT (");
+
+	/* Aggregate function name */
+	if (list_length(pivot->aggName) == 1)
+	{
+		appendStringInfoString(buf, strVal(linitial(pivot->aggName)));
+	}
+	else
+	{
+		/* Qualified name */
+		first = true;
+		foreach(lc, pivot->aggName)
+		{
+			if (!first)
+				appendStringInfoChar(buf, '.');
+			first = false;
+			appendStringInfoString(buf, quote_identifier(strVal(lfirst(lc))));
+		}
+	}
+
+	/* Aggregate argument */
+	appendStringInfoChar(buf, '(');
+	if (pivot->valueColumn != NULL)
+	{
+		/*
+		 * The valueColumn is a ColumnRef (raw parse node), not a Var.
+		 * We need to handle it specially since get_rule_expr doesn't
+		 * know about raw parse nodes.
+		 */
+		if (IsA(pivot->valueColumn, ColumnRef))
+		{
+			ColumnRef  *cref = (ColumnRef *) pivot->valueColumn;
+			ListCell   *field;
+			bool		firstField = true;
+
+			foreach(field, cref->fields)
+			{
+				Node	   *fn = (Node *) lfirst(field);
+
+				if (!firstField)
+					appendStringInfoChar(buf, '.');
+				firstField = false;
+
+				if (IsA(fn, String))
+					appendStringInfoString(buf, quote_identifier(strVal(fn)));
+				else if (IsA(fn, A_Star))
+					appendStringInfoChar(buf, '*');
+			}
+		}
+		else
+		{
+			/* Fallback for other node types */
+			get_rule_expr(pivot->valueColumn, context, false);
+		}
+	}
+	else
+		appendStringInfoChar(buf, '*');
+	appendStringInfoChar(buf, ')');
+
+	/* FOR clause */
+	appendStringInfoString(buf, " FOR ");
+	appendStringInfoString(buf, quote_identifier(pivot->pivotColumn));
+
+	/* IN list */
+	appendStringInfoString(buf, " IN (");
+	first = true;
+	foreach(lc, pivot->pivotValues)
+	{
+		Node	   *val = (Node *) lfirst(lc);
+
+		if (!first)
+			appendStringInfoString(buf, ", ");
+		first = false;
+
+		/*
+		 * Pivot values may be A_Const (raw parse node) or TypeCast.
+		 * Handle them specially since get_rule_expr doesn't know about
+		 * raw parse nodes.
+		 */
+		if (IsA(val, A_Const))
+		{
+			A_Const	   *con = (A_Const *) val;
+
+			if (con->isnull)
+				appendStringInfoString(buf, "NULL");
+			else
+			{
+				switch (nodeTag(&con->val))
+				{
+					case T_Integer:
+						appendStringInfo(buf, "%d", intVal(&con->val));
+						break;
+					case T_Float:
+						appendStringInfoString(buf, castNode(Float, &con->val)->fval);
+						break;
+					case T_Boolean:
+						appendStringInfoString(buf, boolVal(&con->val) ? "TRUE" : "FALSE");
+						break;
+					case T_String:
+						/* Quote the string value */
+						appendStringInfoChar(buf, '\'');
+						{
+							const char *s = strVal(&con->val);
+							for (; *s; s++)
+							{
+								if (*s == '\'')
+									appendStringInfoChar(buf, '\'');
+								appendStringInfoChar(buf, *s);
+							}
+						}
+						appendStringInfoChar(buf, '\'');
+						break;
+					case T_BitString:
+						appendStringInfoString(buf, strVal(&con->val));
+						break;
+					default:
+						elog(ERROR, "unexpected A_Const value type: %d",
+							 (int) nodeTag(&con->val));
+				}
+			}
+		}
+		else if (IsA(val, TypeCast))
+		{
+			TypeCast   *tc = (TypeCast *) val;
+
+			/* Recursively handle the argument */
+			if (IsA(tc->arg, A_Const))
+			{
+				A_Const	   *con = (A_Const *) tc->arg;
+
+				if (!con->isnull && nodeTag(&con->val) == T_String)
+				{
+					appendStringInfoChar(buf, '\'');
+					{
+						const char *s = strVal(&con->val);
+						for (; *s; s++)
+						{
+							if (*s == '\'')
+								appendStringInfoChar(buf, '\'');
+							appendStringInfoChar(buf, *s);
+						}
+					}
+					appendStringInfoChar(buf, '\'');
+				}
+			}
+			/* Append the type cast */
+			appendStringInfoString(buf, "::");
+			/* Format the type name */
+			{
+				TypeName   *tn = tc->typeName;
+				ListCell   *l;
+				bool		firstN = true;
+
+				foreach(l, tn->names)
+				{
+					if (!firstN)
+						appendStringInfoChar(buf, '.');
+					firstN = false;
+					appendStringInfoString(buf, quote_identifier(strVal(lfirst(l))));
+				}
+			}
+		}
+		else
+		{
+			/* Fallback to get_rule_expr for Const nodes */
+			get_rule_expr(val, context, false);
+		}
+	}
+	appendStringInfoString(buf, ")");
+
+	appendStringInfoChar(buf, ')');
+
+	/* Alias */
+	if (pivot->alias != NULL)
+		appendStringInfo(buf, " AS %s", quote_identifier(pivot->alias->aliasname));
 }
 
 /*

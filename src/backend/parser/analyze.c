@@ -1446,6 +1446,71 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt,
 	else
 		markTargetListOrigins(pstate, qry->targetList);
 
+	/*
+	 * If PIVOT clause was specified in FROM, transform it now.
+	 * This must happen after transformTargetList but before GROUP BY handling
+	 * because PIVOT generates its own GROUP BY and aggregates.
+	 *
+	 * First, check for SELECT * which is not allowed with PIVOT.
+	 */
+	if (pstate->p_pivot_clause != NULL)
+	{
+		ListCell   *lc;
+		bool		hasStarExpand = false;
+
+		/*
+		 * Detect SELECT * by checking if all target columns appear to be from
+		 * a star expansion.  A more accurate check would be to look at the
+		 * original stmt->targetList for ResTarget with A_Star, but that info
+		 * is lost after transformation.  Instead, we check if the user specified
+		 * exactly the columns they want by verifying they didn't use *.
+		 *
+		 * For a simpler approach, we check if the targetList came from *
+		 * by looking at the original statement's targetList.
+		 */
+		foreach(lc, stmt->targetList)
+		{
+			ResTarget  *rt = (ResTarget *) lfirst(lc);
+
+			if (IsA(rt->val, ColumnRef))
+			{
+				ColumnRef  *cr = (ColumnRef *) rt->val;
+				Node	   *lastField = llast(cr->fields);
+
+				if (IsA(lastField, A_Star))
+				{
+					hasStarExpand = true;
+					break;
+				}
+			}
+		}
+
+		if (hasStarExpand)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("SELECT * is not allowed with PIVOT"),
+					 errhint("Specify the columns you want in the SELECT list."),
+					 parser_errposition(pstate, pstate->p_pivot_clause->location)));
+		}
+
+		/*
+		 * Check for explicit GROUP BY - not allowed with PIVOT.
+		 * PIVOT automatically generates GROUP BY from row identifiers.
+		 */
+		if (stmt->groupClause != NIL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("PIVOT cannot be combined with explicit GROUP BY"),
+					 errhint("PIVOT automatically generates GROUP BY from row identifiers."),
+					 parser_errposition(pstate, pstate->p_pivot_clause->location)));
+		}
+
+		/* Now perform the PIVOT transformation */
+		transformPivotClause(pstate, qry);
+	}
+
 	/* transform WHERE */
 	qual = transformWhereClause(pstate, stmt->whereClause,
 								EXPR_KIND_WHERE, "WHERE");
@@ -1466,16 +1531,23 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt,
 										  EXPR_KIND_ORDER_BY,
 										  false /* allow SQL92 rules */ );
 
-	qry->groupClause = transformGroupClause(pstate,
-											stmt->groupClause,
-											stmt->groupByAll,
-											&qry->groupingSets,
-											&qry->targetList,
-											qry->sortClause,
-											EXPR_KIND_GROUP_BY,
-											false /* allow SQL92 rules */ );
-	qry->groupDistinct = stmt->groupDistinct;
-	qry->groupByAll = stmt->groupByAll;
+	/*
+	 * Skip transformGroupClause if PIVOT was used - PIVOT already set up
+	 * qry->groupClause with the appropriate row identifiers.
+	 */
+	if (pstate->p_pivot_clause == NULL)
+	{
+		qry->groupClause = transformGroupClause(pstate,
+												stmt->groupClause,
+												stmt->groupByAll,
+												&qry->groupingSets,
+												&qry->targetList,
+												qry->sortClause,
+												EXPR_KIND_GROUP_BY,
+												false /* allow SQL92 rules */ );
+		qry->groupDistinct = stmt->groupDistinct;
+		qry->groupByAll = stmt->groupByAll;
+	}
 
 	if (stmt->distinctClause == NIL)
 	{

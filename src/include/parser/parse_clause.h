@@ -55,4 +55,7 @@ extern bool targetIsInSortList(TargetEntry *tle, Oid sortop, List *sortList);
 /* functions in parse_jsontable.c */
 extern ParseNamespaceItem *transformJsonTable(ParseState *pstate, JsonTable *jt);
 
+/* PIVOT transformation */
+extern void transformPivotClause(ParseState *pstate, Query *qry);
+
 #endif							/* PARSE_CLAUSE_H */
