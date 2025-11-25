@@ -461,7 +461,7 @@ heap_page_will_freeze(Relation relation, Buffer buffer,
  * 'new_relmin_mxid' arguments are required when freezing.  When
  * HEAP_PAGE_PRUNE_FREEZE option is passed, we also set presult->all_visible
  * and presult->all_frozen after determining whether or not to
- * opporunistically freeze, to indicate if the VM bits can be set.  They are
+ * opportunistically freeze, to indicate if the VM bits can be set.  They are
  * always set to false when the HEAP_PAGE_PRUNE_FREEZE option is not passed,
  * because at the moment only callers that also freeze need that information.
  *
@@ -504,6 +504,9 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 	prstate.vistest = params->vistest;
 	prstate.mark_unused_now =
 		(params->options & HEAP_PAGE_PRUNE_MARK_UNUSED_NOW) != 0;
+
+	/* cutoffs must be provided if we will attempt freezing */
+	Assert(!(params->options & HEAP_PAGE_PRUNE_FREEZE) || params->cutoffs);
 	prstate.attempt_freeze = (params->options & HEAP_PAGE_PRUNE_FREEZE) != 0;
 	prstate.cutoffs = params->cutoffs;
 
