@@ -434,9 +434,6 @@ strlower_libc_sb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 		locale_t	loc = locale->lt;
 		char	   *p;
 
-		if (srclen + 1 > destsize)
-			return srclen;
-
 		memcpy(dest, src, srclen);
 		dest[srclen] = '\0';
 
