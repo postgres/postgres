@@ -725,6 +725,8 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 						   remote_slot->name,
 						   LSN_FORMAT_ARGS(latestFlushPtr)));
 
+			ReplicationSlotRelease();
+
 			return slot_updated;
 		}
 
@@ -823,6 +825,8 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 						   LSN_FORMAT_ARGS(remote_slot->confirmed_lsn),
 						   remote_slot->name,
 						   LSN_FORMAT_ARGS(latestFlushPtr)));
+
+			ReplicationSlotRelease();
 
 			return false;
 		}
