@@ -1,0 +1,519 @@
+--
+-- Test cases for mssql_compat extension
+-- Covers PRD1a unit tests (UT-01 to UT-15) and edge cases (EC-01 to EC-06)
+--
+CREATE EXTENSION mssql_compat;
+--
+-- Basic Day Calculations (UT-01, UT-02)
+--
+SELECT 'UT-01: Day difference basic' AS test;
+            test             
+-----------------------------
+ UT-01: Day difference basic
+(1 row)
+
+SELECT datediff('day', '2024-01-01'::date, '2024-01-15'::date);
+ datediff 
+----------
+       14
+(1 row)
+
+SELECT 'UT-02: Day difference negative' AS test;
+              test              
+--------------------------------
+ UT-02: Day difference negative
+(1 row)
+
+SELECT datediff('day', '2024-01-15'::date, '2024-01-01'::date);
+ datediff 
+----------
+      -14
+(1 row)
+
+--
+-- Week Calculations (UT-03, UT-04)
+--
+SELECT 'UT-03: Week exact' AS test;
+       test        
+-------------------
+ UT-03: Week exact
+(1 row)
+
+SELECT datediff('week', '2024-01-01'::date, '2024-01-08'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'UT-04: Week partial' AS test;
+        test         
+---------------------
+ UT-04: Week partial
+(1 row)
+
+SELECT datediff('week', '2024-01-01'::date, '2024-01-10'::date);
+ datediff 
+----------
+    1.286
+(1 row)
+
+--
+-- Month Calculations (UT-05, UT-06, UT-07)
+--
+SELECT 'UT-05: Month aligned' AS test;
+         test         
+----------------------
+ UT-05: Month aligned
+(1 row)
+
+SELECT datediff('month', '2024-01-15'::date, '2024-02-15'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'UT-06: Month partial' AS test;
+         test         
+----------------------
+ UT-06: Month partial
+(1 row)
+
+SELECT datediff('month', '2024-01-15'::date, '2024-02-20'::date);
+ datediff 
+----------
+    1.172
+(1 row)
+
+SELECT 'UT-07: Month end-of-month alignment' AS test;
+                test                 
+-------------------------------------
+ UT-07: Month end-of-month alignment
+(1 row)
+
+SELECT datediff('month', '2024-01-31'::date, '2024-02-29'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+--
+-- Quarter Calculations (UT-08, UT-09)
+--
+SELECT 'UT-08: Quarter aligned' AS test;
+          test          
+------------------------
+ UT-08: Quarter aligned
+(1 row)
+
+SELECT datediff('quarter', '2024-01-01'::date, '2024-04-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'UT-09: Quarter partial' AS test;
+          test          
+------------------------
+ UT-09: Quarter partial
+(1 row)
+
+SELECT datediff('quarter', '2024-01-15'::date, '2024-05-20'::date);
+ datediff 
+----------
+    1.385
+(1 row)
+
+--
+-- Year Calculations (UT-10, UT-11)
+--
+SELECT 'UT-10: Year aligned' AS test;
+        test         
+---------------------
+ UT-10: Year aligned
+(1 row)
+
+SELECT datediff('year', '2024-03-15'::date, '2025-03-15'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'UT-11: Year partial leap year' AS test;
+             test              
+-------------------------------
+ UT-11: Year partial leap year
+(1 row)
+
+SELECT datediff('year', '2024-01-01'::date, '2024-07-01'::date);
+ datediff 
+----------
+    0.497
+(1 row)
+
+--
+-- NULL Handling (UT-12, UT-13) - STRICT functions return NULL for NULL inputs
+--
+SELECT 'UT-12: NULL start date' AS test;
+          test          
+------------------------
+ UT-12: NULL start date
+(1 row)
+
+SELECT datediff('day', NULL::date, '2024-01-15'::date);
+ datediff 
+----------
+         
+(1 row)
+
+SELECT 'UT-13: NULL end date' AS test;
+         test         
+----------------------
+ UT-13: NULL end date
+(1 row)
+
+SELECT datediff('day', '2024-01-01'::date, NULL::date);
+ datediff 
+----------
+         
+(1 row)
+
+--
+-- Invalid Datepart (UT-14)
+--
+SELECT 'UT-14: Invalid datepart' AS test;
+          test           
+-------------------------
+ UT-14: Invalid datepart
+(1 row)
+
+SELECT datediff('hour', '2024-01-01'::date, '2024-01-02'::date);
+ERROR:  Invalid datepart: 'hour'
+HINT:  Valid options: year, quarter, month, week, day
+--
+-- Case Insensitivity (UT-15)
+--
+SELECT 'UT-15: Case insensitive datepart' AS test;
+               test               
+----------------------------------
+ UT-15: Case insensitive datepart
+(1 row)
+
+SELECT datediff('MONTH', '2024-01-01'::date, '2024-02-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT datediff('Month', '2024-01-01'::date, '2024-02-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT datediff('month', '2024-01-01'::date, '2024-02-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+--
+-- Edge Cases (EC-01 to EC-06)
+--
+SELECT 'EC-01: Same date' AS test;
+       test       
+------------------
+ EC-01: Same date
+(1 row)
+
+SELECT datediff('day', '2024-01-01'::date, '2024-01-01'::date);
+ datediff 
+----------
+        0
+(1 row)
+
+SELECT 'EC-02: Leap year February 29' AS test;
+             test             
+------------------------------
+ EC-02: Leap year February 29
+(1 row)
+
+SELECT datediff('day', '2024-02-28'::date, '2024-03-01'::date);
+ datediff 
+----------
+        2
+(1 row)
+
+SELECT 'EC-03: Non-leap year February' AS test;
+             test              
+-------------------------------
+ EC-03: Non-leap year February
+(1 row)
+
+SELECT datediff('day', '2023-02-28'::date, '2023-03-01'::date);
+ datediff 
+----------
+        1
+(1 row)
+
+SELECT 'EC-04: Year boundary' AS test;
+         test         
+----------------------
+ EC-04: Year boundary
+(1 row)
+
+SELECT datediff('year', '2024-12-31'::date, '2025-01-01'::date);
+ datediff 
+----------
+    0.003
+(1 row)
+
+SELECT 'EC-05: Multi-year span' AS test;
+          test          
+------------------------
+ EC-05: Multi-year span
+(1 row)
+
+SELECT datediff('year', '2020-01-01'::date, '2025-01-01'::date);
+ datediff 
+----------
+    5.000
+(1 row)
+
+SELECT 'EC-06: Century boundary' AS test;
+          test           
+-------------------------
+ EC-06: Century boundary
+(1 row)
+
+SELECT datediff('day', '1999-12-31'::date, '2000-01-01'::date);
+ datediff 
+----------
+        1
+(1 row)
+
+--
+-- Alias Tests (from PRD1b lines 224-230)
+--
+SELECT 'Alias: yy for year' AS test;
+        test        
+--------------------
+ Alias: yy for year
+(1 row)
+
+SELECT datediff('yy', '2024-01-01'::date, '2025-01-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'Alias: yyyy for year' AS test;
+         test         
+----------------------
+ Alias: yyyy for year
+(1 row)
+
+SELECT datediff('yyyy', '2024-01-01'::date, '2025-01-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'Alias: mm for month' AS test;
+        test         
+---------------------
+ Alias: mm for month
+(1 row)
+
+SELECT datediff('mm', '2024-01-15'::date, '2024-02-15'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'Alias: qq for quarter' AS test;
+         test          
+-----------------------
+ Alias: qq for quarter
+(1 row)
+
+SELECT datediff('qq', '2024-01-01'::date, '2024-04-01'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'Alias: wk for week' AS test;
+        test        
+--------------------
+ Alias: wk for week
+(1 row)
+
+SELECT datediff('wk', '2024-01-01'::date, '2024-01-08'::date);
+ datediff 
+----------
+    1.000
+(1 row)
+
+SELECT 'Alias: dd for day' AS test;
+       test        
+-------------------
+ Alias: dd for day
+(1 row)
+
+SELECT datediff('dd', '2024-01-01'::date, '2024-01-15'::date);
+ datediff 
+----------
+       14
+(1 row)
+
+--
+-- Timestamp Tests
+--
+SELECT 'Timestamp: basic day diff' AS test;
+           test            
+---------------------------
+ Timestamp: basic day diff
+(1 row)
+
+SELECT datediff('day', '2024-01-01 10:30:00'::timestamp, '2024-01-15 14:45:00'::timestamp);
+ datediff 
+----------
+       14
+(1 row)
+
+SELECT 'Timestamp: month diff' AS test;
+         test          
+-----------------------
+ Timestamp: month diff
+(1 row)
+
+SELECT datediff('month', '2024-01-15 08:00:00'::timestamp, '2024-02-20 16:00:00'::timestamp);
+ datediff 
+----------
+    1.172
+(1 row)
+
+--
+-- Timestamptz Tests
+--
+SELECT 'Timestamptz: basic day diff' AS test;
+            test             
+-----------------------------
+ Timestamptz: basic day diff
+(1 row)
+
+SELECT datediff('day', '2024-01-01 10:30:00+00'::timestamptz, '2024-01-15 14:45:00+00'::timestamptz);
+ datediff 
+----------
+       14
+(1 row)
+
+--
+-- Additional Month Calculation Tests
+--
+SELECT 'Month: Jan 25 to Mar 10 (PRD walkthrough example)' AS test;
+                       test                        
+---------------------------------------------------
+ Month: Jan 25 to Mar 10 (PRD walkthrough example)
+(1 row)
+
+SELECT datediff('month', '2024-01-25'::date, '2024-03-10'::date);
+ datediff 
+----------
+    1.483
+(1 row)
+
+SELECT 'Month: subscription proration example' AS test;
+                 test                  
+---------------------------------------
+ Month: subscription proration example
+(1 row)
+
+SELECT datediff('month', '2024-01-15'::date, '2024-02-20'::date);
+ datediff 
+----------
+    1.172
+(1 row)
+
+--
+-- Additional Quarter Calculation Tests
+--
+SELECT 'Quarter: PRD walkthrough example' AS test;
+               test               
+----------------------------------
+ Quarter: PRD walkthrough example
+(1 row)
+
+SELECT datediff('quarter', '2024-01-15'::date, '2024-05-20'::date);
+ datediff 
+----------
+    1.385
+(1 row)
+
+--
+-- Additional Year Calculation Tests
+--
+SELECT 'Year: PRD walkthrough example' AS test;
+             test              
+-------------------------------
+ Year: PRD walkthrough example
+(1 row)
+
+SELECT datediff('year', '2024-03-15'::date, '2025-06-20'::date);
+ datediff 
+----------
+    1.266
+(1 row)
+
+SELECT 'Year: exact 5-year tenure' AS test;
+           test            
+---------------------------
+ Year: exact 5-year tenure
+(1 row)
+
+SELECT datediff('year', '2020-03-15'::date, '2025-03-15'::date);
+ datediff 
+----------
+    5.000
+(1 row)
+
+SELECT 'Year: leap year partial (182 days / 366)' AS test;
+                   test                   
+------------------------------------------
+ Year: leap year partial (182 days / 366)
+(1 row)
+
+SELECT datediff('year', '2024-01-01'::date, '2024-07-01'::date);
+ datediff 
+----------
+    0.497
+(1 row)
+
+--
+-- Week Calculation Additional Tests
+--
+SELECT 'Week: exact 2 weeks' AS test;
+        test         
+---------------------
+ Week: exact 2 weeks
+(1 row)
+
+SELECT datediff('week', '2024-01-01'::date, '2024-01-15'::date);
+ datediff 
+----------
+    2.000
+(1 row)
+
+SELECT 'Week: PRD example 9 days' AS test;
+           test           
+--------------------------
+ Week: PRD example 9 days
+(1 row)
+
+SELECT datediff('week', '2024-01-01'::date, '2024-01-10'::date);
+ datediff 
+----------
+    1.286
+(1 row)
+
+DROP EXTENSION mssql_compat;
