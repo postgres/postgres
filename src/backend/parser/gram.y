@@ -137,6 +137,13 @@ typedef struct KeyActions
 	KeyAction *deleteAction;
 } KeyActions;
 
+/* PivotAggregate - helper struct for passing aggregate info in PIVOT clause */
+typedef struct PivotAggregate
+{
+	List	   *aggName;		/* aggregate function name (qualified) */
+	Node	   *valueColumn;	/* column to aggregate, NULL for COUNT(*) */
+} PivotAggregate;
+
 /* ConstraintAttributeSpec yields an integer bitmask of these flags: */
 #define CAS_NOT_DEFERRABLE			0x01
 #define CAS_DEFERRABLE				0x02
@@ -556,6 +563,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <range>	extended_relation_expr
 %type <range>	relation_expr_opt_alias
 %type <node>	tablesample_clause opt_repeatable_clause
+%type <node>	pivot_clause
+%type <list>	pivot_value_list
+%type <node>	pivot_value pivot_aggregate
 %type <target>	target_el set_target insert_column_item
 
 %type <str>		generic_option_name
@@ -763,7 +773,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
 
 	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD PATH
-	PERIOD PLACING PLAN PLANS POLICY
+	PERIOD PIVOT PLACING PLAN PLANS POLICY
 	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROCEDURES PROGRAM PUBLICATION
 
@@ -13748,6 +13758,15 @@ table_ref:	relation_expr opt_alias_clause
 					n->relation = (Node *) $1;
 					$$ = (Node *) n;
 				}
+			| relation_expr opt_alias_clause pivot_clause
+				{
+					RangePivot *n = (RangePivot *) $3;
+
+					$1->alias = $2;
+					/* relation_expr goes inside the RangePivot node */
+					n->source = (Node *) $1;
+					$$ = (Node *) n;
+				}
 			| func_table func_alias_clause
 				{
 					RangeFunction *n = (RangeFunction *) $1;
@@ -13787,6 +13806,18 @@ table_ref:	relation_expr opt_alias_clause
 					n->lateral = false;
 					n->subquery = $1;
 					n->alias = $2;
+					$$ = (Node *) n;
+				}
+			| select_with_parens opt_alias_clause pivot_clause
+				{
+					RangePivot *n = (RangePivot *) $3;
+					RangeSubselect *rs = makeNode(RangeSubselect);
+
+					rs->lateral = false;
+					rs->subquery = $1;
+					rs->alias = $2;
+					/* RangeSubselect goes inside the RangePivot node */
+					n->source = (Node *) rs;
 					$$ = (Node *) n;
 				}
 			| LATERAL_P select_with_parens opt_alias_clause
@@ -14141,6 +14172,82 @@ tablesample_clause:
 opt_repeatable_clause:
 			REPEATABLE '(' a_expr ')'	{ $$ = (Node *) $3; }
 			| /*EMPTY*/					{ $$ = NULL; }
+		;
+
+/*
+ * PIVOT clause - transforms rows to columns using aggregation
+ *
+ * Syntax: PIVOT (agg_func(value_col) FOR pivot_col IN (value1, value2, ...)) [AS alias]
+ *
+ * The pivot_clause rule returns a RangePivot node with the source set to NULL;
+ * the source relation is attached by the table_ref production.
+ */
+pivot_clause:
+			PIVOT '(' pivot_aggregate FOR ColId IN_P '(' pivot_value_list ')' ')' opt_alias_clause
+				{
+					PivotClause *pc = makeNode(PivotClause);
+					PivotAggregate *pa = (PivotAggregate *) $3;
+
+					pc->aggName = pa->aggName;
+					pc->valueColumn = pa->valueColumn;
+					pc->pivotColumn = $5;
+					pc->pivotValues = $8;
+					pc->alias = $11;
+					pc->location = @1;
+
+					RangePivot *rp = makeNode(RangePivot);
+					rp->source = NULL;	/* filled in by table_ref production */
+					rp->pivot = pc;
+					rp->alias = $11;
+					rp->location = @1;
+					$$ = (Node *) rp;
+				}
+		;
+
+/*
+ * pivot_aggregate - the aggregate function call in a PIVOT clause
+ *
+ * This is a simplified aggregate syntax: func_name(column) or func_name(*)
+ */
+pivot_aggregate:
+			func_name '(' '*' ')'
+				{
+					PivotAggregate *n = (PivotAggregate *) palloc(sizeof(PivotAggregate));
+					n->aggName = $1;
+					n->valueColumn = NULL;	/* COUNT(*) style */
+					$$ = (Node *) n;
+				}
+			| func_name '(' columnref ')'
+				{
+					PivotAggregate *n = (PivotAggregate *) palloc(sizeof(PivotAggregate));
+					n->aggName = $1;
+					n->valueColumn = (Node *) $3;
+					$$ = (Node *) n;
+				}
+		;
+
+pivot_value_list:
+			pivot_value							{ $$ = list_make1($1); }
+			| pivot_value_list ',' pivot_value	{ $$ = lappend($1, $3); }
+		;
+
+pivot_value:
+			Sconst
+				{
+					$$ = (Node *) makeStringConst($1, @1);
+				}
+			| Iconst
+				{
+					$$ = (Node *) makeIntConst($1, @1);
+				}
+			| FCONST
+				{
+					$$ = (Node *) makeFloatConst($1, @1);
+				}
+			| Sconst TYPECAST Typename
+				{
+					$$ = makeTypeCast(makeStringConst($1, @1), $3, @2);
+				}
 		;
 
 /*
@@ -18279,6 +18386,7 @@ type_func_name_keyword:
 			| NOTNULL
 			| OUTER_P
 			| OVERLAPS
+			| PIVOT
 			| RIGHT
 			| SIMILAR
 			| TABLESAMPLE
@@ -18672,6 +18780,7 @@ bare_label_keyword:
 			| PASSWORD
 			| PATH
 			| PERIOD
+			| PIVOT
 			| PLACING
 			| PLAN
 			| PLANS

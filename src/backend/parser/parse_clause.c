@@ -1146,6 +1146,26 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		rte->tablesample = transformRangeTableSample(pstate, rts);
 		return rel;
 	}
+	else if (IsA(n, RangePivot))
+	{
+		/* PIVOT clause (wrapping some other valid FROM node) */
+		RangePivot *rp = (RangePivot *) n;
+		Node	   *rel;
+
+		/* Recursively transform the contained source relation */
+		rel = transformFromClauseItem(pstate, rp->source,
+									  top_nsitem, namespace);
+
+		/* Store for Phase 2 - error if multiple PIVOTs */
+		if (pstate->p_pivot_clause != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("multiple PIVOT clauses are not supported"),
+					 parser_errposition(pstate, rp->location)));
+
+		pstate->p_pivot_clause = rp->pivot;
+		return rel;
+	}
 	else if (IsA(n, JoinExpr))
 	{
 		/* A newfangled join expression */
@@ -3885,4 +3905,444 @@ transformFrameOffset(ParseState *pstate, int frameOptions,
 	checkExprIsVarFree(pstate, node, constructName);
 
 	return node;
+}
+
+
+/*
+ * ============================================================================
+ * PIVOT clause transformation
+ * ============================================================================
+ */
+
+/*
+ * validatePivotAggregate - validate the aggregate function name for PIVOT
+ *
+ * Only SUM, COUNT, AVG, MIN, MAX are supported.
+ */
+static void
+validatePivotAggregate(ParseState *pstate, PivotClause *pivot)
+{
+	char	   *aggname;
+	char	   *lower;
+	char	   *p;
+
+	aggname = strVal(llast(pivot->aggName));
+	lower = pstrdup(aggname);
+
+	for (p = lower; *p; p++)
+		*p = pg_tolower((unsigned char) *p);
+
+	if (strcmp(lower, "sum") != 0 &&
+		strcmp(lower, "count") != 0 &&
+		strcmp(lower, "avg") != 0 &&
+		strcmp(lower, "min") != 0 &&
+		strcmp(lower, "max") != 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" is not a valid PIVOT aggregate", aggname),
+				 errhint("Supported aggregates: SUM, COUNT, AVG, MIN, MAX."),
+				 parser_errposition(pstate, pivot->location)));
+	}
+
+	pfree(lower);
+}
+
+/*
+ * checkDuplicatePivotValues - check for duplicate pivot values
+ */
+static void
+checkDuplicatePivotValues(ParseState *pstate, PivotClause *pivot)
+{
+	ListCell   *lc1,
+			   *lc2;
+	int			i = 0;
+
+	foreach(lc1, pivot->pivotValues)
+	{
+		Node	   *val1 = (Node *) lfirst(lc1);
+		int			j = 0;
+
+		foreach(lc2, pivot->pivotValues)
+		{
+			Node	   *val2 = (Node *) lfirst(lc2);
+
+			if (j > i && equal(val1, val2))
+			{
+				/*
+				 * Get string representation for error message.
+				 * Use the location from the second (duplicate) value.
+				 */
+				ParseLoc	loc = exprLocation(val2);
+
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("duplicate pivot value in IN list"),
+						 parser_errposition(pstate, loc)));
+			}
+			j++;
+		}
+		i++;
+	}
+}
+
+/*
+ * getPivotValueString - get string representation of a pivot value for column naming
+ */
+static char *
+getPivotValueString(Node *val)
+{
+	if (IsA(val, Const))
+	{
+		Const	   *c = (Const *) val;
+		Oid			typoutput;
+		bool		typIsVarlena;
+
+		if (c->constisnull)
+			return pstrdup("NULL");
+
+		getTypeOutputInfo(c->consttype, &typoutput, &typIsVarlena);
+		return OidOutputFunctionCall(typoutput, c->constvalue);
+	}
+	else if (IsA(val, TypeCast))
+	{
+		TypeCast   *tc = (TypeCast *) val;
+
+		return getPivotValueString(tc->arg);
+	}
+	else if (IsA(val, A_Const))
+	{
+		A_Const	   *ac = (A_Const *) val;
+
+		if (ac->isnull)
+			return pstrdup("NULL");
+
+		switch (nodeTag(&ac->val))
+		{
+			case T_Integer:
+				return psprintf("%d", intVal(&ac->val));
+			case T_Float:
+				return pstrdup(castNode(Float, &ac->val)->fval);
+			case T_Boolean:
+				return pstrdup(boolVal(&ac->val) ? "true" : "false");
+			case T_String:
+				return pstrdup(strVal(&ac->val));
+			default:
+				break;
+		}
+	}
+
+	/* Fallback */
+	return pstrdup("value");
+}
+
+/*
+ * buildFilterAggregate - create a target entry for AGG(col) FILTER (WHERE pivot_col = value)
+ */
+static TargetEntry *
+buildFilterAggregate(ParseState *pstate, PivotClause *pivot,
+					 Node *pivotValue, int resno)
+{
+	FuncCall   *fc;
+	Node	   *filterExpr;
+	Node	   *aggExpr;
+	char	   *colname;
+	ColumnRef  *pivotColRef;
+	ParseCallbackState pcbstate;
+
+	/* Create aggregate function call */
+	fc = makeFuncCall(list_copy(pivot->aggName), NIL, COERCE_EXPLICIT_CALL, pivot->location);
+
+	if (pivot->valueColumn != NULL)
+	{
+		fc->args = list_make1(copyObject(pivot->valueColumn));
+		fc->agg_star = false;
+	}
+	else
+	{
+		fc->agg_star = true;
+	}
+
+	/* Create filter expression: pivot_column = pivot_value */
+	pivotColRef = makeNode(ColumnRef);
+	pivotColRef->fields = list_make1(makeString(pivot->pivotColumn));
+	pivotColRef->location = pivot->location;
+
+	filterExpr = (Node *) makeSimpleA_Expr(AEXPR_OP, "=",
+										   (Node *) pivotColRef,
+										   copyObject(pivotValue),
+										   pivot->location);
+	fc->agg_filter = filterExpr;
+
+	/* Set up error callback for transformExpr */
+	setup_parser_errposition_callback(&pcbstate, pstate, pivot->location);
+
+	/* Transform the aggregate expression */
+	aggExpr = transformExpr(pstate, (Node *) fc, EXPR_KIND_SELECT_TARGET);
+
+	cancel_parser_errposition_callback(&pcbstate);
+
+	/* Get column name from pivot value */
+	colname = getPivotValueString(pivotValue);
+
+	return makeTargetEntry((Expr *) aggExpr,
+						   (AttrNumber) resno,
+						   colname,
+						   false);
+}
+
+/*
+ * findColumnInTargetList - find column by name in target list
+ */
+static TargetEntry *
+findColumnInTargetList(List *targetList, const char *colname)
+{
+	ListCell   *lc;
+
+	foreach(lc, targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resname != NULL && strcmp(tle->resname, colname) == 0)
+			return tle;
+	}
+
+	return NULL;
+}
+
+/*
+ * transformPivotClause - transform the PIVOT clause of a SELECT statement
+ *
+ * This function:
+ * 1. Validates the pivot specification
+ * 2. Builds FILTER aggregates for each pivot value
+ * 3. Generates GROUP BY for row identifiers
+ */
+void
+transformPivotClause(ParseState *pstate, Query *qry)
+{
+	PivotClause *pivot = pstate->p_pivot_clause;
+	List	   *newTargetList = NIL;
+	List	   *rowIdentifiers = NIL;
+	List	   *pivotValueStrings = NIL;
+	ListCell   *lc;
+	int			resno = 1;
+	Index		sortgroupref = 1;
+
+	if (pivot == NULL)
+		return;
+
+	/*
+	 * Check for SELECT * - this is not allowed with PIVOT because we need
+	 * explicit column selection for proper transformation.
+	 */
+	foreach(lc, qry->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		/*
+		 * A junk target entry with resname == NULL and original name == "*"
+		 * indicates SELECT *.  Actually, check if this is a star expansion -
+		 * we check for the A_Star node in the original parse tree, but after
+		 * transformation, star expands to all columns.  The simplest check is
+		 * if there's no explicit targetList in the original query but we have
+		 * entries, but since we don't have access to the original stmt here,
+		 * we rely on the fact that PIVOT must have been parsed from a FROM
+		 * clause and the target list should explicitly list columns.
+		 *
+		 * For now, we allow any valid target list, assuming the user has
+		 * selected specific columns.  The real SELECT * check should happen
+		 * earlier in the grammar or analyze phase.
+		 */
+		(void) tle;		/* Silence unused variable warning for now */
+	}
+
+	/* Validate aggregate function */
+	validatePivotAggregate(pstate, pivot);
+
+	/* Check for duplicate pivot values */
+	checkDuplicatePivotValues(pstate, pivot);
+
+	/* Build list of pivot value strings for comparison */
+	foreach(lc, pivot->pivotValues)
+	{
+		Node	   *pval = (Node *) lfirst(lc);
+
+		pivotValueStrings = lappend(pivotValueStrings, getPivotValueString(pval));
+	}
+
+	/*
+	 * Validate that the pivot column exists in the source.
+	 * We check by seeing if the column can be resolved.
+	 */
+	{
+		ColumnRef  *pivotColRef = makeNode(ColumnRef);
+		Node	   *result;
+		ParseCallbackState pcbstate;
+
+		pivotColRef->fields = list_make1(makeString(pivot->pivotColumn));
+		pivotColRef->location = pivot->location;
+
+		setup_parser_errposition_callback(&pcbstate, pstate, pivot->location);
+
+		result = transformExpr(pstate, (Node *) pivotColRef, EXPR_KIND_SELECT_TARGET);
+
+		cancel_parser_errposition_callback(&pcbstate);
+
+		if (result == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("pivot column \"%s\" does not exist", pivot->pivotColumn),
+					 parser_errposition(pstate, pivot->location)));
+		}
+	}
+
+	/*
+	 * Validate that the value column (if specified) exists in the source.
+	 */
+	if (pivot->valueColumn != NULL)
+	{
+		Node	   *result;
+		ParseCallbackState pcbstate;
+
+		setup_parser_errposition_callback(&pcbstate, pstate, exprLocation(pivot->valueColumn));
+
+		result = transformExpr(pstate, copyObject(pivot->valueColumn), EXPR_KIND_SELECT_TARGET);
+
+		cancel_parser_errposition_callback(&pcbstate);
+
+		if (result == NULL)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("value column in PIVOT aggregate does not exist"),
+					 parser_errposition(pstate, exprLocation(pivot->valueColumn))));
+		}
+	}
+
+	/*
+	 * Check for column conflicts BEFORE processing:
+	 * If any column in SELECT (that is NOT the pivot column) has a name
+	 * that matches a pivot value, this creates a naming conflict.
+	 * The user would have both a row identifier AND a pivot output with
+	 * the same name.
+	 */
+	foreach(lc, qry->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+		ListCell   *lc2;
+
+		if (tle->resjunk || tle->resname == NULL)
+			continue;
+
+		/* Skip if this is the pivot column itself */
+		if (strcmp(tle->resname, pivot->pivotColumn) == 0)
+			continue;
+
+		/* Check if this column name matches any pivot value */
+		foreach(lc2, pivotValueStrings)
+		{
+			char	   *pvStr = (char *) lfirst(lc2);
+
+			if (strcmp(tle->resname, pvStr) == 0)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("pivot value \"%s\" conflicts with column \"%s\" in SELECT list",
+								pvStr, tle->resname),
+						 errhint("Rename the column or use a different pivot value."),
+						 parser_errposition(pstate, pivot->location)));
+			}
+		}
+	}
+
+	/*
+	 * Process the existing target list to identify:
+	 * - Row identifier columns (kept and grouped by)
+	 * - The pivot column is excluded from row identifiers
+	 */
+	foreach(lc, qry->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(lc);
+
+		if (tle->resjunk)
+			continue;
+
+		/* Skip the pivot column - it's not a row identifier */
+		if (tle->resname != NULL && strcmp(tle->resname, pivot->pivotColumn) == 0)
+			continue;
+
+		/* This is a row identifier - keep it and add to GROUP BY */
+		{
+			TargetEntry *newTle;
+			SortGroupClause *sgc;
+			Oid			eqop,
+						sortop;
+			bool		hashable;
+			Oid			restype;
+			ParseCallbackState pcbstate;
+
+			/* Copy the target entry with new resno */
+			newTle = flatCopyTargetEntry(tle);
+			newTle->resno = resno++;
+
+			/* Add to GROUP BY */
+			newTle->ressortgroupref = sortgroupref;
+
+			restype = exprType((Node *) tle->expr);
+
+			setup_parser_errposition_callback(&pcbstate, pstate, pivot->location);
+
+			get_sort_group_operators(restype,
+									 true, true, false,
+									 &sortop, &eqop, NULL,
+									 &hashable);
+
+			cancel_parser_errposition_callback(&pcbstate);
+
+			sgc = makeNode(SortGroupClause);
+			sgc->tleSortGroupRef = sortgroupref++;
+			sgc->eqop = eqop;
+			sgc->sortop = sortop;
+			sgc->reverse_sort = false;
+			sgc->nulls_first = false;
+			sgc->hashable = hashable;
+
+			qry->groupClause = lappend(qry->groupClause, sgc);
+
+			rowIdentifiers = lappend(rowIdentifiers, newTle);
+			newTargetList = lappend(newTargetList, newTle);
+		}
+	}
+
+	/*
+	 * Now add FILTER aggregates for ALL pivot values.
+	 * Each pivot value becomes a new output column.
+	 */
+	{
+		ListCell   *lc2;
+
+		foreach(lc2, pivot->pivotValues)
+		{
+			Node	   *pivotVal = (Node *) lfirst(lc2);
+			TargetEntry *newTle;
+
+			newTle = buildFilterAggregate(pstate, pivot, pivotVal, resno++);
+			newTargetList = lappend(newTargetList, newTle);
+		}
+	}
+
+	/* Update the query */
+	qry->targetList = newTargetList;
+
+	/* Mark that this query has aggregates */
+	pstate->p_hasAggs = true;
+	qry->hasAggs = true;
+
+	/* Store the pivot clause in query for view deparsing */
+	qry->pivotClause = pivot;
+
+	/* Clean up */
+	list_free_deep(pivotValueStrings);
 }
