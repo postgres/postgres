@@ -5364,7 +5364,12 @@ $node->command_fails_like(
 # Test dumping pg_catalog (for research -- cannot be reloaded)
 
 $node->command_ok(
-	[ 'pg_dump', '--port' => $port, '--schema' => 'pg_catalog' ],
+	[
+		'pg_dump',
+		'--port' => $port,
+		'--schema' => 'pg_catalog',
+		'--file' => "$tempdir/pgdump_pgcatalog.dmp"
+	],
 	'pg_dump: option -n pg_catalog');
 
 #########################################
@@ -5374,7 +5379,8 @@ $node->command_ok(
 	[
 		'pg_dumpall',
 		'--port' => $port,
-		'--exclude-database' => '"myhost.mydb"'
+		'--exclude-database' => '"myhost.mydb"',
+		'--file' => "$tempdir/pgdumpall.dmp"
 	],
 	'pg_dumpall: option --exclude-database handles database names with embedded dots'
 );
