@@ -213,18 +213,74 @@ is( $standby1->safe_psql(
 ##################################################
 # Test that the synchronized slot will be dropped if the corresponding remote
 # slot on the primary server has been dropped.
+#
+# Note: Both slots need to be dropped for the next test to work
 ##################################################
 
 $primary->psql('postgres', "SELECT pg_drop_replication_slot('lsub2_slot');");
+$primary->psql('postgres', "SELECT pg_drop_replication_slot('lsub1_slot');");
 
 $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");
 
 is( $standby1->safe_psql(
 		'postgres',
-		q{SELECT count(*) = 0 FROM pg_replication_slots WHERE slot_name = 'lsub2_slot';}
+		q{SELECT count(*) = 0 FROM pg_replication_slots WHERE slot_name IN ('lsub1_slot', 'lsub2_slot');}
 	),
 	"t",
 	'synchronized slot has been dropped');
+
+##################################################
+# Verify that slotsync skip statistics are correctly updated when the
+# slotsync operation is skipped.
+##################################################
+
+# Create a logical replication slot and create some DDL on the primary so
+# that the slot lags behind the standby.
+$primary->safe_psql(
+	'postgres', qq(
+	SELECT pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, true);
+	CREATE TABLE wal_push(a int);
+));
+$primary->wait_for_replay_catchup($standby1);
+
+my $log_offset = -s $standby1->logfile;
+
+# Enable slot sync worker.
+$standby1->append_conf('postgresql.conf', qq(sync_replication_slots = on));
+$standby1->reload;
+
+# Confirm that the slot sync worker is able to start.
+$standby1->wait_for_log(qr/slot sync worker started/, $log_offset);
+
+# Confirm that the slot sync is skipped due to the remote slot lagging behind
+$standby1->wait_for_log(
+	qr/could not synchronize replication slot \"lsub1_slot\"/, $log_offset);
+
+# Confirm that the slotsync skip statistics is updated
+$result = $standby1->safe_psql('postgres',
+	"SELECT slotsync_skip_count > 0 FROM pg_stat_replication_slots WHERE slot_name = 'lsub1_slot'"
+);
+is($result, 't', "check slot sync skip count increments");
+
+# Clean the table
+$primary->safe_psql(
+	'postgres', qq(
+    DROP TABLE wal_push;
+));
+$primary->wait_for_replay_catchup($standby1);
+
+# Re-create the logical replication slot and sync it to standby for further tests
+$primary->safe_psql(
+	'postgres', qq(
+	SELECT pg_drop_replication_slot('lsub1_slot');
+	SELECT pg_create_logical_replication_slot('lsub1_slot', 'pgoutput', false, false, true);
+));
+$standby1->wait_for_log(
+	qr/newly created replication slot \"lsub1_slot\" is sync-ready now/,
+	$log_offset);
+
+$standby1->append_conf('postgresql.conf', qq(sync_replication_slots = off));
+$standby1->reload;
 
 ##################################################
 # Test that if the synchronized slot is invalidated while the remote slot is
@@ -281,7 +337,7 @@ $inactive_since_on_primary =
 # the failover slots.
 $primary->wait_for_replay_catchup($standby1);
 
-my $log_offset = -s $standby1->logfile;
+$log_offset = -s $standby1->logfile;
 
 # Synchronize the primary server slots to the standby.
 $standby1->safe_psql('postgres', "SELECT pg_sync_replication_slots();");

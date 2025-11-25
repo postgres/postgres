@@ -1661,6 +1661,30 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>slotsync_skip_count</structfield><type>bigint</type>
+       </para>
+       <para>
+        Number of times the slot synchronization is skipped. Slot
+        synchronization occur only on standby servers and thus this column has
+        no meaning on the primary server.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+        <structfield>slotsync_skip_at</structfield><type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which last slot synchronization was skipped. Slot
+        synchronization occur only on standby servers and thus this column has
+        no meaning on the primary server.
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
         <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
        </para>
        <para>
