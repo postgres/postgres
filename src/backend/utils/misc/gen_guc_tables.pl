@@ -38,6 +38,52 @@ sub dquote
 	return q{"} . $s =~ s/"/\\"/gr . q{"};
 }
 
+sub validate_guc_entry
+{
+	my ($entry) = @_;
+
+	my @required_common =
+	  qw(name type context group short_desc variable boot_val);
+
+	my %required_by_type = (
+		int => [qw(min max)],
+		real => [qw(min max)],
+		enum => [qw(options)],
+		bool => [],      # no extra required fields
+		string => [],    # no extra required fields
+	);
+
+	for my $f (@required_common)
+	{
+		unless (defined $entry->{$f})
+		{
+			die sprintf(
+				qq{%s:%d: error: entry "%s" is missing required field "%s"\n},
+				$input_fname, $entry->{line_number},
+				$entry->{name} // '<unknown>', $f);
+		}
+	}
+
+	unless (exists $required_by_type{ $entry->{type} })
+	{
+		die sprintf(
+			qq{%s:%d: error: entry "%s" has unrecognized GUC type "%s"\n},
+			$input_fname, $entry->{line_number},
+			$entry->{name}, $entry->{type} // '<unknown>');
+	}
+
+	for my $f (@{ $required_by_type{ $entry->{type} } })
+	{
+		unless (defined $entry->{$f})
+		{
+			die sprintf(
+				qq{%s:%d: error: entry "%s" of type "%s" is missing required field "%s"\n},
+				$input_fname, $entry->{line_number}, $entry->{name},
+				$entry->{type}, $f);
+		}
+	}
+}
+
 # Print GUC table.
 sub print_table
 {
@@ -50,6 +96,8 @@ sub print_table
 
 	foreach my $entry (@{$parse})
 	{
+		validate_guc_entry($entry);
+
 		if (defined($prev_name) && lc($prev_name) ge lc($entry->{name}))
 		{
 			die sprintf(
