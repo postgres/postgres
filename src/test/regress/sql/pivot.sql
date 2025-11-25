@@ -1,0 +1,789 @@
+--
+-- PIVOT clause comprehensive tests
+--
+-- Test native PIVOT syntax support for SQL Server/Oracle compatibility
+-- This test suite provides exhaustive coverage of all PIVOT functionality
+--
+
+--
+-- Test data setup
+--
+
+-- Primary sales data with multiple dimensions
+CREATE TABLE sales (
+    sale_id SERIAL PRIMARY KEY,
+    region TEXT NOT NULL,
+    quarter TEXT NOT NULL,
+    product TEXT NOT NULL,
+    revenue NUMERIC(12,2) NOT NULL,
+    units_sold INTEGER NOT NULL,
+    sale_date DATE NOT NULL
+);
+
+-- Seed comprehensive sales data (48 rows - 4 regions × 4 quarters × 3 products)
+INSERT INTO sales (region, quarter, product, revenue, units_sold, sale_date) VALUES
+    -- East region
+    ('East', 'Q1', 'Widget', 15000.00, 150, '2024-01-15'),
+    ('East', 'Q1', 'Gadget', 22000.00, 110, '2024-02-10'),
+    ('East', 'Q1', 'Gizmo', 8500.00, 85, '2024-03-05'),
+    ('East', 'Q2', 'Widget', 18500.00, 185, '2024-04-20'),
+    ('East', 'Q2', 'Gadget', 25000.00, 125, '2024-05-15'),
+    ('East', 'Q2', 'Gizmo', 9200.00, 92, '2024-06-10'),
+    ('East', 'Q3', 'Widget', 22000.00, 220, '2024-07-25'),
+    ('East', 'Q3', 'Gadget', 28000.00, 140, '2024-08-20'),
+    ('East', 'Q3', 'Gizmo', 10500.00, 105, '2024-09-15'),
+    ('East', 'Q4', 'Widget', 25000.00, 250, '2024-10-30'),
+    ('East', 'Q4', 'Gadget', 32000.00, 160, '2024-11-25'),
+    ('East', 'Q4', 'Gizmo', 12000.00, 120, '2024-12-20'),
+    -- West region
+    ('West', 'Q1', 'Widget', 12000.00, 120, '2024-01-20'),
+    ('West', 'Q1', 'Gadget', 18000.00, 90, '2024-02-15'),
+    ('West', 'Q1', 'Gizmo', 7000.00, 70, '2024-03-10'),
+    ('West', 'Q2', 'Widget', 14500.00, 145, '2024-04-25'),
+    ('West', 'Q2', 'Gadget', 21000.00, 105, '2024-05-20'),
+    ('West', 'Q2', 'Gizmo', 8000.00, 80, '2024-06-15'),
+    ('West', 'Q3', 'Widget', 17000.00, 170, '2024-07-30'),
+    ('West', 'Q3', 'Gadget', 24000.00, 120, '2024-08-25'),
+    ('West', 'Q3', 'Gizmo', 9000.00, 90, '2024-09-20'),
+    ('West', 'Q4', 'Widget', 20000.00, 200, '2024-11-05'),
+    ('West', 'Q4', 'Gadget', 28000.00, 140, '2024-11-30'),
+    ('West', 'Q4', 'Gizmo', 10500.00, 105, '2024-12-25'),
+    -- North region
+    ('North', 'Q1', 'Widget', 8000.00, 80, '2024-01-25'),
+    ('North', 'Q1', 'Gadget', 12000.00, 60, '2024-02-20'),
+    ('North', 'Q1', 'Gizmo', 5000.00, 50, '2024-03-15'),
+    ('North', 'Q2', 'Widget', 9500.00, 95, '2024-04-30'),
+    ('North', 'Q2', 'Gadget', 14000.00, 70, '2024-05-25'),
+    ('North', 'Q2', 'Gizmo', 5800.00, 58, '2024-06-20'),
+    ('North', 'Q3', 'Widget', 11000.00, 110, '2024-08-05'),
+    ('North', 'Q3', 'Gadget', 16000.00, 80, '2024-08-30'),
+    ('North', 'Q3', 'Gizmo', 6500.00, 65, '2024-09-25'),
+    ('North', 'Q4', 'Widget', 13000.00, 130, '2024-11-10'),
+    ('North', 'Q4', 'Gadget', 19000.00, 95, '2024-12-05'),
+    ('North', 'Q4', 'Gizmo', 7500.00, 75, '2024-12-30'),
+    -- South region
+    ('South', 'Q1', 'Widget', 10000.00, 100, '2024-01-30'),
+    ('South', 'Q1', 'Gadget', 15000.00, 75, '2024-02-25'),
+    ('South', 'Q1', 'Gizmo', 6000.00, 60, '2024-03-20'),
+    ('South', 'Q2', 'Widget', 12000.00, 120, '2024-05-05'),
+    ('South', 'Q2', 'Gadget', 17500.00, 88, '2024-05-30'),
+    ('South', 'Q2', 'Gizmo', 7000.00, 70, '2024-06-25'),
+    ('South', 'Q3', 'Widget', 14000.00, 140, '2024-08-10'),
+    ('South', 'Q3', 'Gadget', 20000.00, 100, '2024-09-05'),
+    ('South', 'Q3', 'Gizmo', 8000.00, 80, '2024-09-30'),
+    ('South', 'Q4', 'Widget', 16500.00, 165, '2024-11-15'),
+    ('South', 'Q4', 'Gadget', 23000.00, 115, '2024-12-10'),
+    ('South', 'Q4', 'Gizmo', 9500.00, 95, '2024-12-31');
+
+-- Employee data with departments and years
+CREATE TABLE employees (
+    emp_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    department TEXT NOT NULL,
+    hire_year INTEGER NOT NULL,
+    salary NUMERIC(10,2) NOT NULL,
+    performance_rating INTEGER CHECK (performance_rating BETWEEN 1 AND 5)
+);
+
+INSERT INTO employees (name, department, hire_year, salary, performance_rating) VALUES
+    ('Alice Johnson', 'Engineering', 2020, 95000.00, 5),
+    ('Bob Smith', 'Engineering', 2021, 85000.00, 4),
+    ('Carol Davis', 'Engineering', 2022, 78000.00, 4),
+    ('David Lee', 'Engineering', 2023, 72000.00, 3),
+    ('Eve Wilson', 'Sales', 2020, 65000.00, 5),
+    ('Frank Brown', 'Sales', 2021, 62000.00, 4),
+    ('Grace Kim', 'Sales', 2022, 58000.00, 3),
+    ('Henry Chen', 'Sales', 2023, 55000.00, 4),
+    ('Ivy Martinez', 'Marketing', 2020, 70000.00, 4),
+    ('Jack Thompson', 'Marketing', 2021, 67000.00, 5),
+    ('Kate Anderson', 'Marketing', 2022, 63000.00, 3),
+    ('Leo Garcia', 'Marketing', 2023, 60000.00, 4),
+    ('Mary White', 'HR', 2021, 58000.00, 4),
+    ('Nick Taylor', 'HR', 2022, 55000.00, 3),
+    ('Olivia Harris', 'HR', 2023, 52000.00, 5),
+    ('Peter Robinson', 'Finance', 2020, 88000.00, 5),
+    ('Quinn Clark', 'Finance', 2021, 82000.00, 4),
+    ('Rachel Lewis', 'Finance', 2022, 76000.00, 4),
+    ('Sam Walker', 'Finance', 2023, 70000.00, 3);
+
+-- Daily metrics with timestamps
+CREATE TABLE daily_metrics (
+    metric_id SERIAL PRIMARY KEY,
+    metric_date DATE NOT NULL,
+    metric_hour INTEGER CHECK (metric_hour BETWEEN 0 AND 23),
+    server_name TEXT NOT NULL,
+    cpu_usage NUMERIC(5,2),
+    memory_usage NUMERIC(5,2),
+    request_count INTEGER
+);
+
+INSERT INTO daily_metrics (metric_date, metric_hour, server_name, cpu_usage, memory_usage, request_count) VALUES
+    ('2024-01-01', 0, 'server-a', 25.5, 45.2, 1200),
+    ('2024-01-01', 6, 'server-a', 35.2, 52.1, 2500),
+    ('2024-01-01', 12, 'server-a', 78.9, 75.3, 8500),
+    ('2024-01-01', 18, 'server-a', 65.4, 68.7, 6200),
+    ('2024-01-01', 0, 'server-b', 22.1, 42.8, 1100),
+    ('2024-01-01', 6, 'server-b', 32.8, 48.5, 2300),
+    ('2024-01-01', 12, 'server-b', 72.3, 71.2, 7800),
+    ('2024-01-01', 18, 'server-b', 58.9, 64.3, 5600),
+    ('2024-01-02', 0, 'server-a', 28.3, 47.1, 1350),
+    ('2024-01-02', 6, 'server-a', 38.7, 54.8, 2800),
+    ('2024-01-02', 12, 'server-a', 82.1, 78.9, 9200),
+    ('2024-01-02', 18, 'server-a', 68.5, 70.2, 6800),
+    ('2024-01-02', 0, 'server-b', 24.6, 44.3, 1250),
+    ('2024-01-02', 6, 'server-b', 35.2, 50.1, 2550),
+    ('2024-01-02', 12, 'server-b', 75.8, 73.6, 8200),
+    ('2024-01-02', 18, 'server-b', 61.2, 66.8, 5950);
+
+-- Status tracking with NULL handling test data
+CREATE TABLE tickets (
+    ticket_id SERIAL PRIMARY KEY,
+    category TEXT,  -- Allow NULL for uncategorized
+    status TEXT NOT NULL,
+    priority TEXT,  -- Allow NULL
+    assigned_to TEXT,  -- Allow NULL for unassigned
+    created_date DATE NOT NULL
+);
+
+INSERT INTO tickets (category, status, priority, assigned_to, created_date) VALUES
+    ('Bug', 'Open', 'High', 'Alice', '2024-01-01'),
+    ('Bug', 'Open', 'Medium', 'Bob', '2024-01-02'),
+    ('Bug', 'Closed', 'High', 'Alice', '2024-01-03'),
+    ('Bug', 'Closed', 'Low', NULL, '2024-01-04'),
+    ('Feature', 'Open', 'High', 'Carol', '2024-01-05'),
+    ('Feature', 'In Progress', 'Medium', 'David', '2024-01-06'),
+    ('Feature', 'Closed', NULL, 'Eve', '2024-01-07'),
+    ('Support', 'Open', 'Low', NULL, '2024-01-08'),
+    ('Support', 'Closed', 'High', 'Frank', '2024-01-09'),
+    (NULL, 'Open', 'Medium', 'Grace', '2024-01-10'),  -- Uncategorized ticket
+    (NULL, 'Closed', NULL, NULL, '2024-01-11'),  -- Uncategorized, unassigned, no priority
+    ('Bug', 'Open', NULL, 'Henry', '2024-01-12');
+
+-- Regions lookup table for JOIN tests
+CREATE TABLE regions (
+    region_id SERIAL PRIMARY KEY,
+    region_code TEXT UNIQUE NOT NULL,
+    region_name TEXT NOT NULL,
+    country TEXT NOT NULL
+);
+
+INSERT INTO regions (region_code, region_name, country) VALUES
+    ('East', 'Eastern Region', 'USA'),
+    ('West', 'Western Region', 'USA'),
+    ('North', 'Northern Region', 'USA'),
+    ('South', 'Southern Region', 'USA');
+
+-- Products lookup table
+CREATE TABLE products (
+    product_id SERIAL PRIMARY KEY,
+    product_code TEXT UNIQUE NOT NULL,
+    product_name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    unit_price NUMERIC(10,2) NOT NULL
+);
+
+INSERT INTO products (product_code, product_name, category, unit_price) VALUES
+    ('Widget', 'Super Widget Pro', 'Hardware', 100.00),
+    ('Gadget', 'Ultra Gadget X', 'Electronics', 200.00),
+    ('Gizmo', 'Mini Gizmo 3000', 'Accessories', 100.00);
+
+-- Unicode and special character test data
+CREATE TABLE i18n_sales (
+    id SERIAL PRIMARY KEY,
+    country TEXT NOT NULL,
+    product_type TEXT NOT NULL,
+    amount NUMERIC(12,2) NOT NULL
+);
+
+INSERT INTO i18n_sales (country, product_type, amount) VALUES
+    ('日本', 'Type A', 1000.00),
+    ('日本', 'Type B', 1500.00),
+    ('中国', 'Type A', 2000.00),
+    ('中国', 'Type B', 2500.00),
+    ('한국', 'Type A', 1200.00),
+    ('한국', 'Type B', 1800.00),
+    ('Deutschland', 'Type A', 1100.00),
+    ('Deutschland', 'Type B', 1600.00),
+    ('España', 'Type A', 900.00),
+    ('España', 'Type B', 1400.00);
+
+--
+-- Basic PIVOT tests with all aggregate functions
+--
+
+-- SUM aggregate - basic quarterly pivot
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- COUNT(*) aggregate - count transactions per quarter
+SELECT region
+FROM sales
+PIVOT (COUNT(*) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- COUNT(column) aggregate - count non-null values
+SELECT region
+FROM sales
+PIVOT (COUNT(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- AVG aggregate - average revenue per quarter
+SELECT region
+FROM sales
+PIVOT (AVG(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- MIN aggregate - minimum revenue per quarter
+SELECT region
+FROM sales
+PIVOT (MIN(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- MAX aggregate - maximum revenue per quarter
+SELECT region
+FROM sales
+PIVOT (MAX(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- SUM with integer column
+SELECT region
+FROM sales
+PIVOT (SUM(units_sold) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+--
+-- Multiple row identifiers
+--
+
+-- Two row identifiers (region, product)
+SELECT region, product
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region, product;
+
+-- Three row identifiers (department, hire_year, performance)
+SELECT department, hire_year
+FROM employees
+PIVOT (SUM(salary) FOR performance_rating IN (1, 2, 3, 4, 5))
+ORDER BY department, hire_year;
+
+-- Single row identifier with many pivot values
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR product IN ('Widget', 'Gadget', 'Gizmo'))
+ORDER BY region;
+
+--
+-- Pivot value types
+--
+
+-- String pivot values
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+-- Integer pivot values
+SELECT department
+FROM employees
+PIVOT (COUNT(*) FOR hire_year IN (2020, 2021, 2022, 2023))
+ORDER BY department;
+
+-- Integer pivot values with SUM
+SELECT department
+FROM employees
+PIVOT (SUM(salary) FOR hire_year IN (2020, 2021, 2022, 2023))
+ORDER BY department;
+
+-- Date pivot values with type cast
+SELECT server_name
+FROM daily_metrics
+PIVOT (SUM(request_count) FOR metric_date IN ('2024-01-01'::date, '2024-01-02'::date))
+ORDER BY server_name;
+
+-- Integer hours as pivot values
+SELECT server_name, metric_date
+FROM daily_metrics
+PIVOT (AVG(cpu_usage) FOR metric_hour IN (0, 6, 12, 18))
+ORDER BY server_name, metric_date;
+
+--
+-- Subquery sources
+--
+
+-- Simple subquery with filter
+SELECT region
+FROM (SELECT region, quarter, revenue FROM sales WHERE revenue > 10000) AS filtered_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Subquery with aggregation (pre-aggregated data)
+SELECT region
+FROM (
+    SELECT region, quarter, SUM(revenue) as revenue
+    FROM sales
+    GROUP BY region, quarter
+) AS aggregated
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Subquery with computed columns
+SELECT region
+FROM (
+    SELECT region, quarter, revenue, revenue * 1.1 AS projected_revenue
+    FROM sales
+) AS with_projection
+PIVOT (SUM(projected_revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Subquery selecting specific products
+SELECT region
+FROM (
+    SELECT region, quarter, revenue
+    FROM sales
+    WHERE product IN ('Widget', 'Gadget')
+) AS widget_gadget_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Nested subquery
+SELECT region
+FROM (
+    SELECT *
+    FROM (
+        SELECT region, quarter, revenue
+        FROM sales
+        WHERE region IN ('East', 'West')
+    ) AS inner_sub
+    WHERE revenue > 5000
+) AS outer_sub
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+--
+-- JOIN sources
+--
+
+-- INNER JOIN with region lookup
+SELECT r.region_name
+FROM (
+    SELECT r.region_name, s.quarter, s.revenue
+    FROM sales s
+    INNER JOIN regions r ON s.region = r.region_code
+) AS joined
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region_name;
+
+-- Multiple table JOIN
+SELECT r.region_name, p.product_name
+FROM (
+    SELECT r.region_name, p.product_name, s.quarter, s.revenue
+    FROM sales s
+    INNER JOIN regions r ON s.region = r.region_code
+    INNER JOIN products p ON s.product = p.product_code
+) AS multi_join
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region_name, product_name;
+
+-- LEFT JOIN preserving all regions
+SELECT r.region_name
+FROM (
+    SELECT r.region_name, s.quarter, COALESCE(s.revenue, 0) as revenue
+    FROM regions r
+    LEFT JOIN sales s ON r.region_code = s.region
+) AS left_joined
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region_name;
+
+--
+-- CTE (Common Table Expression) tests
+--
+
+-- Simple CTE with PIVOT
+WITH quarterly_sales AS (
+    SELECT region, quarter, revenue
+    FROM sales
+    WHERE product = 'Widget'
+)
+SELECT region
+FROM quarterly_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- CTE with filtering after PIVOT
+WITH pivoted_data AS (
+    SELECT region
+    FROM sales
+    PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+)
+SELECT * FROM pivoted_data WHERE "Q1" > 30000 ORDER BY region;
+
+-- Multiple CTEs
+WITH 
+widget_sales AS (
+    SELECT region, quarter, revenue
+    FROM sales
+    WHERE product = 'Widget'
+),
+gadget_sales AS (
+    SELECT region, quarter, revenue
+    FROM sales
+    WHERE product = 'Gadget'
+)
+SELECT region
+FROM widget_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+-- Nested CTE with PIVOT in inner CTE
+WITH base_data AS (
+    SELECT region, quarter, revenue
+    FROM sales
+    WHERE region IN ('East', 'West')
+),
+pivoted AS (
+    SELECT region
+    FROM base_data
+    PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+)
+SELECT * FROM pivoted ORDER BY region;
+
+-- CTE referencing another CTE
+WITH 
+all_sales AS (
+    SELECT region, quarter, SUM(revenue) as total_revenue
+    FROM sales
+    GROUP BY region, quarter
+),
+high_value AS (
+    SELECT * FROM all_sales WHERE total_revenue > 20000
+)
+SELECT region
+FROM high_value
+PIVOT (SUM(total_revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+--
+-- View creation and deparsing
+--
+
+-- Create view with basic PIVOT
+CREATE VIEW quarterly_revenue_view AS
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'));
+
+-- Verify view works
+SELECT * FROM quarterly_revenue_view ORDER BY region;
+
+-- Verify pg_get_viewdef preserves PIVOT syntax
+SELECT pg_get_viewdef('quarterly_revenue_view'::regclass, true);
+
+-- Create view with multiple row identifiers
+CREATE VIEW product_region_pivot_view AS
+SELECT region, product
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'));
+
+SELECT * FROM product_region_pivot_view ORDER BY region, product;
+SELECT pg_get_viewdef('product_region_pivot_view'::regclass, true);
+
+-- Create view with subquery source
+CREATE VIEW filtered_pivot_view AS
+SELECT region
+FROM (SELECT region, quarter, revenue FROM sales WHERE revenue > 15000) AS high_value
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'));
+
+SELECT * FROM filtered_pivot_view ORDER BY region;
+
+-- Clean up views
+DROP VIEW quarterly_revenue_view;
+DROP VIEW product_region_pivot_view;
+DROP VIEW filtered_pivot_view;
+
+--
+-- EXPLAIN output verification
+--
+
+-- Verify FILTER aggregates in EXPLAIN
+EXPLAIN (COSTS OFF)
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'));
+
+-- EXPLAIN with multiple row identifiers
+EXPLAIN (COSTS OFF)
+SELECT region, product
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'));
+
+-- EXPLAIN VERBOSE to see full output expressions
+EXPLAIN (COSTS OFF, VERBOSE)
+SELECT region
+FROM sales
+PIVOT (COUNT(*) FOR quarter IN ('Q1', 'Q2'));
+
+--
+-- NULL handling
+--
+
+-- NULL in pivot column - should not match any IN values
+-- Add rows with NULL quarter
+INSERT INTO sales (region, quarter, product, revenue, units_sold, sale_date)
+VALUES ('East', NULL, 'Widget', 5000.00, 50, '2024-06-15');
+
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Verify the NULL row exists but doesn't contribute to any quarter
+SELECT region, quarter, SUM(revenue) as total
+FROM sales
+WHERE region = 'East'
+GROUP BY region, quarter
+ORDER BY quarter NULLS FIRST;
+
+-- Clean up NULL row
+DELETE FROM sales WHERE quarter IS NULL;
+
+-- NULL in aggregated column
+INSERT INTO sales (region, quarter, product, revenue, units_sold, sale_date)
+VALUES ('East', 'Q1', 'Special', NULL, 10, '2024-01-20');
+
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'))
+WHERE region = 'East'
+ORDER BY region;
+
+-- Clean up
+DELETE FROM sales WHERE product = 'Special';
+
+-- Table with many NULLs in pivot column
+SELECT category
+FROM tickets
+PIVOT (COUNT(*) FOR status IN ('Open', 'In Progress', 'Closed'))
+ORDER BY category NULLS LAST;
+
+-- NULL in row identifier
+SELECT category
+FROM tickets
+PIVOT (COUNT(*) FOR priority IN ('High', 'Medium', 'Low'))
+ORDER BY category NULLS LAST;
+
+--
+-- Empty and edge cases
+--
+
+-- Empty table
+CREATE TABLE empty_sales (
+    region TEXT,
+    quarter TEXT,
+    revenue NUMERIC
+);
+
+SELECT region
+FROM empty_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'));
+
+-- Table with data but no matching pivot values
+INSERT INTO empty_sales VALUES ('East', 'Q5', 1000);
+
+SELECT region
+FROM empty_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+DROP TABLE empty_sales;
+
+-- Single row in table
+CREATE TABLE single_row_test (region TEXT, quarter TEXT, revenue NUMERIC);
+INSERT INTO single_row_test VALUES ('East', 'Q1', 100);
+
+SELECT region
+FROM single_row_test
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'));
+
+DROP TABLE single_row_test;
+
+-- All rows match single pivot value
+SELECT region
+FROM sales
+WHERE quarter = 'Q1'
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Pivot value not in data (should show NULL)
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q5', 'Q9'))
+ORDER BY region;
+
+--
+-- Qualified aggregate names
+--
+
+-- Schema-qualified aggregate (pg_catalog.sum)
+SELECT region
+FROM sales
+PIVOT (pg_catalog.sum(revenue) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+-- Schema-qualified count
+SELECT region
+FROM sales
+PIVOT (pg_catalog.count(*) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+-- Schema-qualified avg
+SELECT region
+FROM sales
+PIVOT (pg_catalog.avg(revenue) FOR quarter IN ('Q1', 'Q2'))
+ORDER BY region;
+
+--
+-- Complex expressions and ordering
+--
+
+-- PIVOT with ORDER BY on pivot column
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY "Q1" DESC;
+
+-- PIVOT with ORDER BY on multiple columns
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY "Q1" DESC, "Q2" ASC;
+
+-- PIVOT with LIMIT
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY "Q1" DESC
+LIMIT 2;
+
+-- PIVOT with OFFSET
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region
+OFFSET 2;
+
+--
+-- Unicode and special characters
+--
+
+-- Unicode in row identifiers
+SELECT country
+FROM i18n_sales
+PIVOT (SUM(amount) FOR product_type IN ('Type A', 'Type B'))
+ORDER BY country;
+
+-- Special characters in pivot values
+CREATE TABLE special_chars (
+    category TEXT,
+    status TEXT,
+    value INTEGER
+);
+
+INSERT INTO special_chars VALUES
+    ('Cat-1', 'Status A', 10),
+    ('Cat-1', 'Status B', 20),
+    ('Cat-2', 'Status A', 30),
+    ('Cat-2', 'Status B', 40);
+
+SELECT category
+FROM special_chars
+PIVOT (SUM(value) FOR status IN ('Status A', 'Status B'))
+ORDER BY category;
+
+DROP TABLE special_chars;
+
+--
+-- Error cases
+--
+
+-- SELECT * is not allowed with PIVOT
+SELECT * FROM sales PIVOT (SUM(revenue) FOR quarter IN ('Q1'));
+
+-- Duplicate pivot values
+SELECT region FROM sales PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q1'));
+
+-- Non-aggregate function (should error)
+SELECT region FROM sales PIVOT (upper(revenue) FOR quarter IN ('Q1'));
+
+-- GROUP BY with PIVOT is not allowed
+-- PIVOT automatically generates GROUP BY from row identifiers, so explicit
+-- GROUP BY would create a conflict.
+SELECT region FROM sales GROUP BY region PIVOT (SUM(revenue) FOR quarter IN ('Q1'));
+
+-- Pivot column does not exist
+SELECT region FROM sales PIVOT (SUM(revenue) FOR nonexistent_column IN ('Q1'));
+
+-- Value column does not exist
+SELECT region FROM sales PIVOT (SUM(nonexistent_column) FOR quarter IN ('Q1'));
+
+-- Column conflict (pivot value matches row identifier column name)
+SELECT region FROM sales PIVOT (SUM(revenue) FOR quarter IN ('region'));
+
+--
+-- Comparison with manual FILTER aggregates
+--
+
+-- Verify PIVOT produces same results as manual FILTER
+-- Manual FILTER approach
+SELECT 
+    region,
+    SUM(revenue) FILTER (WHERE quarter = 'Q1') AS "Q1",
+    SUM(revenue) FILTER (WHERE quarter = 'Q2') AS "Q2",
+    SUM(revenue) FILTER (WHERE quarter = 'Q3') AS "Q3",
+    SUM(revenue) FILTER (WHERE quarter = 'Q4') AS "Q4"
+FROM sales
+GROUP BY region
+ORDER BY region;
+
+-- PIVOT approach (should produce identical results)
+SELECT region
+FROM sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+--
+-- Large result set test
+--
+
+-- Generate larger dataset and pivot (deterministic values)
+CREATE TABLE large_sales AS
+SELECT 
+    'Region-' || (i % 10) AS region,
+    'Q' || ((i % 4) + 1) AS quarter,
+    'Product-' || (i % 5) AS product,
+    ((i * 17 + 53) % 10000)::numeric(10,2) AS revenue
+FROM generate_series(1, 1000) AS i;
+
+SELECT region
+FROM large_sales
+PIVOT (SUM(revenue) FOR quarter IN ('Q1', 'Q2', 'Q3', 'Q4'))
+ORDER BY region;
+
+-- Verify row count
+SELECT COUNT(*) FROM large_sales;
+
+DROP TABLE large_sales;
+
+--
+-- Cleanup
+--
+
+DROP TABLE sales CASCADE;
+DROP TABLE employees CASCADE;
+DROP TABLE daily_metrics CASCADE;
+DROP TABLE tickets CASCADE;
+DROP TABLE regions CASCADE;
+DROP TABLE products CASCADE;
+DROP TABLE i18n_sales CASCADE;
