@@ -98,6 +98,10 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mvtest_tvmm WITH NO DATA;
 -- no tuple locks on materialized views
 SELECT * FROM mvtest_tvvm FOR SHARE;
 
+-- we don't support temp materialized views, so disallow this case:
+CREATE TEMP TABLE mvtest_temp_t (id int NOT NULL, type text NOT NULL, amt numeric NOT NULL);
+CREATE MATERIALIZED VIEW mvtest_temp_tm AS SELECT * FROM mvtest_temp_t;
+
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM mvtest_tm m LEFT JOIN mvtest_tv v USING (type) ORDER BY type;
 

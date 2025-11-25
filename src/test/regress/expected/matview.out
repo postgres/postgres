@@ -298,6 +298,11 @@ ERROR:  CONCURRENTLY and WITH NO DATA options cannot be used together
 -- no tuple locks on materialized views
 SELECT * FROM mvtest_tvvm FOR SHARE;
 ERROR:  cannot lock rows in materialized view "mvtest_tvvm"
+-- we don't support temp materialized views, so disallow this case:
+CREATE TEMP TABLE mvtest_temp_t (id int NOT NULL, type text NOT NULL, amt numeric NOT NULL);
+CREATE MATERIALIZED VIEW mvtest_temp_tm AS SELECT * FROM mvtest_temp_t;
+ERROR:  materialized views must not use temporary objects
+DETAIL:  This view depends on temporary table mvtest_temp_t.
 -- test join of mv and view
 SELECT type, m.totamt AS mtot, v.totamt AS vtot FROM mvtest_tm m LEFT JOIN mvtest_tv v USING (type) ORDER BY type;
  type | mtot | vtot 

@@ -114,6 +114,7 @@ CREATE VIEW v1 AS SELECT * FROM base_table;
 -- should be created in temp object schema
 CREATE VIEW v1_temp AS SELECT * FROM temp_table;
 NOTICE:  view "v1_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 -- should be created in temp object schema
 CREATE TEMP VIEW v2_temp AS SELECT * FROM base_table;
 -- should be created in temp_views schema
@@ -121,6 +122,7 @@ CREATE VIEW temp_view_test.v2 AS SELECT * FROM base_table;
 -- should fail
 CREATE VIEW temp_view_test.v3_temp AS SELECT * FROM temp_table;
 NOTICE:  view "v3_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 ERROR:  cannot create temporary relation in non-temporary schema
 -- should fail
 CREATE SCHEMA test_view_schema
@@ -139,12 +141,14 @@ CREATE VIEW v4_temp AS
     FROM base_table t1, temp_table t2
     WHERE t1.id = t2.id;
 NOTICE:  view "v4_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 -- should be temp
 CREATE VIEW v5_temp AS
     SELECT t1.a AS t1_a, t2.a AS t2_a, t3.a AS t3_a
     FROM base_table t1, base_table2 t2, temp_table t3
     WHERE t1.id = t2.id and t2.id = t3.id;
 NOTICE:  view "v5_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 -- subqueries
 CREATE VIEW v4 AS SELECT * FROM base_table WHERE id IN (SELECT id FROM base_table2);
 CREATE VIEW v5 AS SELECT t1.id, t2.a FROM base_table t1, (SELECT * FROM base_table2) t2;
@@ -153,25 +157,33 @@ CREATE VIEW v7 AS SELECT * FROM base_table WHERE NOT EXISTS (SELECT 1 FROM base_
 CREATE VIEW v8 AS SELECT * FROM base_table WHERE EXISTS (SELECT 1);
 CREATE VIEW v6_temp AS SELECT * FROM base_table WHERE id IN (SELECT id FROM temp_table);
 NOTICE:  view "v6_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 CREATE VIEW v7_temp AS SELECT t1.id, t2.a FROM base_table t1, (SELECT * FROM temp_table) t2;
 NOTICE:  view "v7_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 CREATE VIEW v8_temp AS SELECT * FROM base_table WHERE EXISTS (SELECT 1 FROM temp_table);
 NOTICE:  view "v8_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 CREATE VIEW v9_temp AS SELECT * FROM base_table WHERE NOT EXISTS (SELECT 1 FROM temp_table);
 NOTICE:  view "v9_temp" will be a temporary view
+DETAIL:  It depends on temporary table temp_table.
 -- a view should also be temporary if it references a temporary view
 CREATE VIEW v10_temp AS SELECT * FROM v7_temp;
 NOTICE:  view "v10_temp" will be a temporary view
+DETAIL:  It depends on temporary view v7_temp.
 CREATE VIEW v11_temp AS SELECT t1.id, t2.a FROM base_table t1, v10_temp t2;
 NOTICE:  view "v11_temp" will be a temporary view
+DETAIL:  It depends on temporary view v10_temp.
 CREATE VIEW v12_temp AS SELECT true FROM v11_temp;
 NOTICE:  view "v12_temp" will be a temporary view
+DETAIL:  It depends on temporary view v11_temp.
 -- a view should also be temporary if it references a temporary sequence
 CREATE SEQUENCE seq1;
 CREATE TEMPORARY SEQUENCE seq1_temp;
-CREATE VIEW v9 AS SELECT seq1.is_called FROM seq1;
-CREATE VIEW v13_temp AS SELECT seq1_temp.is_called FROM seq1_temp;
+CREATE VIEW v9 AS SELECT nextval('seq1');
+CREATE VIEW v13_temp AS SELECT nextval('seq1_temp');
 NOTICE:  view "v13_temp" will be a temporary view
+DETAIL:  It depends on temporary sequence seq1_temp.
 SELECT relname FROM pg_class
     WHERE relname LIKE 'v_'
     AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'temp_view_test')
@@ -217,15 +229,19 @@ CREATE TEMP TABLE tt (num2 int, value text);
 CREATE VIEW nontemp1 AS SELECT * FROM t1 CROSS JOIN t2;
 CREATE VIEW temporal1 AS SELECT * FROM t1 CROSS JOIN tt;
 NOTICE:  view "temporal1" will be a temporary view
+DETAIL:  It depends on temporary table tt.
 CREATE VIEW nontemp2 AS SELECT * FROM t1 INNER JOIN t2 ON t1.num = t2.num2;
 CREATE VIEW temporal2 AS SELECT * FROM t1 INNER JOIN tt ON t1.num = tt.num2;
 NOTICE:  view "temporal2" will be a temporary view
+DETAIL:  It depends on temporary table tt.
 CREATE VIEW nontemp3 AS SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num2;
 CREATE VIEW temporal3 AS SELECT * FROM t1 LEFT JOIN tt ON t1.num = tt.num2;
 NOTICE:  view "temporal3" will be a temporary view
+DETAIL:  It depends on temporary table tt.
 CREATE VIEW nontemp4 AS SELECT * FROM t1 LEFT JOIN t2 ON t1.num = t2.num2 AND t2.value = 'xxx';
 CREATE VIEW temporal4 AS SELECT * FROM t1 LEFT JOIN tt ON t1.num = tt.num2 AND tt.value = 'xxx';
 NOTICE:  view "temporal4" will be a temporary view
+DETAIL:  It depends on temporary table tt.
 SELECT relname FROM pg_class
     WHERE relname LIKE 'nontemp%'
     AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'testviewschm2')
@@ -272,6 +288,7 @@ BETWEEN (SELECT d FROM tbl2 WHERE c = 1) AND (SELECT e FROM tbl3 WHERE f = 2)
 AND EXISTS (SELECT g FROM tbl4 LEFT JOIN tbl3 ON tbl4.h = tbl3.f)
 AND NOT EXISTS (SELECT g FROM tbl4 LEFT JOIN tmptbl ON tbl4.h = tmptbl.j);
 NOTICE:  view "mytempview" will be a temporary view
+DETAIL:  It depends on temporary table tmptbl.
 SELECT count(*) FROM pg_class where relname LIKE 'mytempview'
 And relnamespace IN (SELECT OID FROM pg_namespace WHERE nspname LIKE 'pg_temp%');
  count 

@@ -818,6 +818,12 @@ extern PGDLLIMPORT bool pgstat_report_fixed;
 /* Backend-local stats state */
 extern PGDLLIMPORT PgStat_LocalState pgStatLocal;
 
+/* Helper functions for reading and writing of on-disk stats file */
+extern void pgstat_write_chunk(FILE *fpout, void *ptr, size_t len);
+extern bool pgstat_read_chunk(FILE *fpin, void *ptr, size_t len);
+#define pgstat_read_chunk_s(fpin, ptr) pgstat_read_chunk(fpin, ptr, sizeof(*ptr))
+#define pgstat_write_chunk_s(fpout, ptr) pgstat_write_chunk(fpout, ptr, sizeof(*ptr))
+
 /*
  * Implementation of inline functions declared above.
  */
