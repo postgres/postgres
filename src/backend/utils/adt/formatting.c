@@ -1617,16 +1617,6 @@ str_numth(char *dest, const char *num, enum TH_Case type)
  *****************************************************************************/
 
 /*
- * If the system provides the needed functions for wide-character manipulation
- * (which are all standardized by C99), then we implement upper/lower/initcap
- * using wide-character functions, if necessary.  Otherwise we use the
- * traditional <ctype.h> functions, which of course will not work as desired
- * in multibyte character sets.  Note that in either case we are effectively
- * assuming that the database character encoding matches the encoding implied
- * by LC_CTYPE.
- */
-
-/*
  * collation-aware, wide-character-aware lower function
  *
  * We pass the number of bytes so we can pass varlena and char*
