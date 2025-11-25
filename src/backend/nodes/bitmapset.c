@@ -538,7 +538,6 @@ bms_is_member(int x, const Bitmapset *a)
 int
 bms_member_index(Bitmapset *a, int x)
 {
-	int			i;
 	int			bitnum;
 	int			wordnum;
 	int			result = 0;
@@ -554,7 +553,7 @@ bms_member_index(Bitmapset *a, int x)
 	bitnum = BITNUM(x);
 
 	/* count bits in preceding words */
-	for (i = 0; i < wordnum; i++)
+	for (int i = 0; i < wordnum; i++)
 	{
 		bitmapword	w = a->words[i];
 
@@ -1306,7 +1305,6 @@ int
 bms_next_member(const Bitmapset *a, int prevbit)
 {
 	int			nwords;
-	int			wordnum;
 	bitmapword	mask;
 
 	Assert(bms_is_valid_set(a));
@@ -1316,7 +1314,7 @@ bms_next_member(const Bitmapset *a, int prevbit)
 	nwords = a->nwords;
 	prevbit++;
 	mask = (~(bitmapword) 0) << BITNUM(prevbit);
-	for (wordnum = WORDNUM(prevbit); wordnum < nwords; wordnum++)
+	for (int wordnum = WORDNUM(prevbit); wordnum < nwords; wordnum++)
 	{
 		bitmapword	w = a->words[wordnum];
 
@@ -1366,7 +1364,6 @@ bms_next_member(const Bitmapset *a, int prevbit)
 int
 bms_prev_member(const Bitmapset *a, int prevbit)
 {
-	int			wordnum;
 	int			ushiftbits;
 	bitmapword	mask;
 
@@ -1391,7 +1388,7 @@ bms_prev_member(const Bitmapset *a, int prevbit)
 
 	ushiftbits = BITS_PER_BITMAPWORD - (BITNUM(prevbit) + 1);
 	mask = (~(bitmapword) 0) >> ushiftbits;
-	for (wordnum = WORDNUM(prevbit); wordnum >= 0; wordnum--)
+	for (int wordnum = WORDNUM(prevbit); wordnum >= 0; wordnum--)
 	{
 		bitmapword	w = a->words[wordnum];
 
