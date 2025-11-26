@@ -1587,13 +1587,19 @@ include_dir 'conf.d'
         This parameter determines whether the passphrase command set by
         <varname>ssl_passphrase_command</varname> will also be called during a
         configuration reload if a key file needs a passphrase.  If this
-        parameter is off (the default), then
+        parameter is <literal>off</literal> (the default), then
         <varname>ssl_passphrase_command</varname> will be ignored during a
         reload and the SSL configuration will not be reloaded if a passphrase
         is needed.  That setting is appropriate for a command that requires a
         TTY for prompting, which might not be available when the server is
         running.  Setting this parameter to on might be appropriate if the
         passphrase is obtained from a file, for example.
+       </para>
+       <para>
+        This parameter must be set to <literal>on</literal> when running on
+        <systemitem class="osname">Windows</systemitem> since all connections
+        will perform a configuration reload due to the different process model
+        of that platform.
        </para>
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
