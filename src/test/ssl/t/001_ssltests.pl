@@ -51,8 +51,15 @@ my $SERVERHOSTCIDR = '127.0.0.1/32';
 my $supports_sslcertmode_require =
   check_pg_config("#define HAVE_SSL_CTX_SET_CERT_CB 1");
 
+# Set of default settings for SSL parameters in connection string.  This
+# makes the tests protected against any defaults the environment may have
+# in ~/.postgresql/.
+my $default_ssl_connstr =
+  "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
+
 # Allocation of base connection string shared among multiple tests.
-my $common_connstr;
+my $common_connstr =
+  "$default_ssl_connstr user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 #### Set up the server.
 
@@ -72,11 +79,16 @@ $node->start;
 my $result = $node->safe_psql('postgres', "SHOW ssl_library");
 is($result, $ssl_server->ssl_library(), 'ssl_library parameter');
 
+my $exec_backend = $node->safe_psql('postgres', 'SHOW debug_exec_backend');
+chomp($exec_backend);
+
 $ssl_server->configure_test_server_for_ssl($node, $SERVERHOSTADDR,
 	$SERVERHOSTCIDR, 'trust');
 
 note "testing password-protected keys";
 
+# Test a passphrase command which fails to unlock the private key, the server
+# should not start at all.
 switch_server_cert(
 	$node,
 	certfile => 'server-cn-only',
@@ -85,20 +97,83 @@ switch_server_cert(
 	passphrase_cmd => 'echo wrongpassword',
 	restart => 'no');
 
-$result = $node->restart(fail_ok => 1);
+$result = $node->restart(
+	fail_ok => 1,
+	log_like => qr/could not load private key file/);
 is($result, 0,
 	'restart fails with password-protected key file with wrong password');
 
+# Test a passphrase command which successfully unlocks the private key but
+# which doesn't support reloading.  Unlocking the private key will fail when
+# reloading and the already existing SSL context will remain in place, with
+# connections still accepted.  EXEC_BACKEND builds will reload the SSL context
+# on each backend startup, so command reloading must be enabled or else
+# connections will fail.
 switch_server_cert(
 	$node,
 	certfile => 'server-cn-only',
 	cafile => 'root+client_ca',
 	keyfile => 'server-password',
 	passphrase_cmd => 'echo secret1',
+	passphrase_cmd_reload => 'off',
 	restart => 'no');
 
-$result = $node->restart(fail_ok => 1);
+$result = $node->restart(
+	fail_ok => 1,
+	log_unlike => qr/could not load private key file/);
 is($result, 1, 'restart succeeds with password-protected key file');
+
+if ($exec_backend =~ /on/)
+{
+	$node->connect_fails(
+		"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require",
+		"connect with correct server CA cert file sslmode=require",
+		expected_stderr => qr/\Qserver does not support SSL\E/);
+}
+else
+{
+	$node->connect_ok(
+		"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require",
+		"connect with correct server CA cert file sslmode=require");
+}
+
+# Reloading should fail since we cannot execute the passphrase command
+$node->reload();
+my $log_start = $node->wait_for_log(
+	qr/cannot be reloaded because it requires a passphrase/);
+
+# Test a passphrase command which successfully unlocks the private key, and
+# which can be reloaded.  The server should start and connections be accepted.
+switch_server_cert(
+	$node,
+	certfile => 'server-cn-only',
+	cafile => 'root+client_ca',
+	keyfile => 'server-password',
+	passphrase_cmd => 'echo secret1',
+	passphrase_cmd_reload => 'on',
+	restart => 'no');
+
+$result = $node->restart(
+	fail_ok => 1,
+	log_unlike => qr/could not load private key file/);
+is($result, 1, 'restart succeeds with password-protected key file');
+$node->connect_ok(
+	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require",
+	"connect with correct server CA cert file sslmode=require");
+
+# Reloading the config should execute the passphrase reload command and
+# successfully reload the private key.
+$node->reload();
+$log_start =
+  $node->wait_for_log(qr/reloading configuration files/, $log_start);
+$node->log_check(
+	"passphrase could reload private key",
+	$log_start,
+	log_unlike => [ qr/cannot be reloaded because it requires a passphrase/, ]
+);
+$node->connect_ok(
+	"$common_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require",
+	"connect with correct server CA cert file sslmode=require");
 
 # Test compatibility of SSL protocols.
 # TLSv1.1 is lower than TLSv1.2, so it won't work.
@@ -138,15 +213,6 @@ $result = $node->restart(fail_ok => 1);
 note "running client tests";
 
 switch_server_cert($node, certfile => 'server-cn-only');
-
-# Set of default settings for SSL parameters in connection string.  This
-# makes the tests protected against any defaults the environment may have
-# in ~/.postgresql/.
-my $default_ssl_connstr =
-  "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
-
-$common_connstr =
-  "$default_ssl_connstr user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 SKIP:
 {
