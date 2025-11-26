@@ -7,6 +7,12 @@ set -e
 # set this to override default perltidy program:
 PERLTIDY=${PERLTIDY:-perltidy}
 
+PERLTIDY_VERSION=20230309
+if ! $PERLTIDY -v | grep -q $PERLTIDY_VERSION; then
+	echo "You do not appear to have $PERLTIDY version $PERLTIDY_VERSION installed on your system." >&2
+	exit 1
+fi
+
 . src/tools/perlcheck/find_perl_files
 
 find_perl_files "$@" | xargs $PERLTIDY --profile=src/tools/pgindent/perltidyrc
