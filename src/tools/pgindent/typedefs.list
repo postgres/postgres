@@ -2927,6 +2927,7 @@ SupportRequestOptimizeWindowClause
 SupportRequestRows
 SupportRequestSelectivity
 SupportRequestSimplify
+SupportRequestSimplifyAggref
 SupportRequestWFuncMonotonic
 Syn
 SyncOps

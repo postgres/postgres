@@ -131,6 +131,8 @@ static Expr *simplify_function(Oid funcid,
 							   Oid result_collid, Oid input_collid, List **args_p,
 							   bool funcvariadic, bool process_args, bool allow_non_const,
 							   eval_const_expressions_context *context);
+static Node *simplify_aggref(Aggref *aggref,
+							 eval_const_expressions_context *context);
 static List *reorder_function_arguments(List *args, int pronargs,
 										HeapTuple func_tuple);
 static List *add_function_defaults(List *args, int pronargs,
@@ -2634,6 +2636,9 @@ eval_const_expressions_mutator(Node *node,
 				newexpr->location = expr->location;
 				return (Node *) newexpr;
 			}
+		case T_Aggref:
+			node = ece_generic_processing(node);
+			return simplify_aggref((Aggref *) node, context);
 		case T_OpExpr:
 			{
 				OpExpr	   *expr = (OpExpr *) node;
@@ -4201,6 +4206,50 @@ simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
 }
 
 /*
+ * simplify_aggref
+ *		Call the Aggref.aggfnoid's prosupport function to allow it to
+ *		determine if simplification of the Aggref is possible.  Returns the
+ *		newly simplified node if conversion took place; otherwise, returns the
+ *		original Aggref.
+ *
+ * See SupportRequestSimplifyAggref comments in supportnodes.h for further
+ * details.
+ */
+static Node *
+simplify_aggref(Aggref *aggref, eval_const_expressions_context *context)
+{
+	Oid			prosupport = get_func_support(aggref->aggfnoid);
+
+	if (OidIsValid(prosupport))
+	{
+		SupportRequestSimplifyAggref req;
+		Node	   *newnode;
+
+		/*
+		 * Build a SupportRequestSimplifyAggref node to pass to the support
+		 * function.
+		 */
+		req.type = T_SupportRequestSimplifyAggref;
+		req.root = context->root;
+		req.aggref = aggref;
+
+		newnode = (Node *) DatumGetPointer(OidFunctionCall1(prosupport,
+															PointerGetDatum(&req)));
+
+		/*
+		 * We expect the support function to return either a new Node or NULL
+		 * (when simplification isn't possible).
+		 */
+		Assert(newnode != (Node *) aggref || newnode == NULL);
+
+		if (newnode != NULL)
+			return newnode;
+	}
+
+	return (Node *) aggref;
+}
+
+/*
  * var_is_nonnullable: check to see if the Var cannot be NULL
  *
  * If the Var is defined NOT NULL and meanwhile is not nulled by any outer
@@ -4257,6 +4306,30 @@ var_is_nonnullable(PlannerInfo *root, Var *var, bool use_rel_info)
 	if (var->varattno > 0 &&
 		bms_is_member(var->varattno, notnullattnums))
 		return true;
+
+	return false;
+}
+
+/*
+ * expr_is_nonnullable: check to see if the Expr cannot be NULL
+ *
+ * Returns true iff the given 'expr' cannot produce SQL NULLs.
+ *
+ * If 'use_rel_info' is true, nullability of Vars is checked via the
+ * corresponding RelOptInfo for the given Var.  Some callers require
+ * nullability information before RelOptInfos are generated.  These should
+ * pass 'use_rel_info' as false.
+ *
+ * For now, we only support Var and Const.  Support for other node types may
+ * be possible.
+ */
+bool
+expr_is_nonnullable(PlannerInfo *root, Expr *expr, bool use_rel_info)
+{
+	if (IsA(expr, Var))
+		return var_is_nonnullable(root, (Var *) expr, use_rel_info);
+	if (IsA(expr, Const))
+		return !castNode(Const, expr)->constisnull;
 
 	return false;
 }

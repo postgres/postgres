@@ -3414,22 +3414,6 @@ add_base_clause_to_rel(PlannerInfo *root, Index relid,
 }
 
 /*
- * expr_is_nonnullable
- *	  Check to see if the Expr cannot be NULL
- *
- * Currently we only support simple Vars.
- */
-static bool
-expr_is_nonnullable(PlannerInfo *root, Expr *expr)
-{
-	/* For now only check simple Vars */
-	if (!IsA(expr, Var))
-		return false;
-
-	return var_is_nonnullable(root, (Var *) expr, true);
-}
-
-/*
  * restriction_is_always_true
  *	  Check to see if the RestrictInfo is always true.
  *
@@ -3465,7 +3449,7 @@ restriction_is_always_true(PlannerInfo *root,
 		if (nulltest->argisrow)
 			return false;
 
-		return expr_is_nonnullable(root, nulltest->arg);
+		return expr_is_nonnullable(root, nulltest->arg, true);
 	}
 
 	/* If it's an OR, check its sub-clauses */
@@ -3530,7 +3514,7 @@ restriction_is_always_false(PlannerInfo *root,
 		if (nulltest->argisrow)
 			return false;
 
-		return expr_is_nonnullable(root, nulltest->arg);
+		return expr_is_nonnullable(root, nulltest->arg, true);
 	}
 
 	/* If it's an OR, check its sub-clauses */

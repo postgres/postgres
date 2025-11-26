@@ -1219,24 +1219,42 @@ select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  9999 | 1
 (3 rows)
 
--- interesting corner case: constant gets optimized into a seqscan
+-- two interesting corner cases: both non-null and null constant gets
+-- optimized into a seqscan
 explain (costs off)
   select max(100) from tenk1;
-                     QUERY PLAN                     
-----------------------------------------------------
+           QUERY PLAN            
+---------------------------------
  Result
    Replaces: MinMaxAggregate
    InitPlan minmax_1
      ->  Limit
-           ->  Result
-                 One-Time Filter: (100 IS NOT NULL)
-                 ->  Seq Scan on tenk1
-(7 rows)
+           ->  Seq Scan on tenk1
+(5 rows)
 
 select max(100) from tenk1;
  max 
 -----
  100
+(1 row)
+
+explain (costs off)
+  select max(null) from tenk1;
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Result
+   Replaces: MinMaxAggregate
+   InitPlan minmax_1
+     ->  Limit
+           ->  Result
+                 One-Time Filter: (NULL::text IS NOT NULL)
+                 ->  Seq Scan on tenk1
+(7 rows)
+
+select max(null) from tenk1;
+ max 
+-----
+ 
 (1 row)
 
 -- try it on an inheritance tree
@@ -2821,6 +2839,101 @@ select pg_typeof(cleast_agg(variadic array[4.5,f1])) from int4_tbl;
  numeric
 (1 row)
 
+--
+-- Test SupportRequestSimplifyAggref code
+--
+begin;
+create table agg_simplify (a int, not_null_col int not null, nullable_col int);
+-- Ensure count(not_null_col) uses count(*)
+explain (costs off, verbose)
+select count(not_null_col) from agg_simplify;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Seq Scan on public.agg_simplify
+         Output: a, not_null_col, nullable_col
+(4 rows)
+
+-- Ensure count(<not null const>) uses count(*)
+explain (costs off, verbose)
+select count('bananas') from agg_simplify;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Aggregate
+   Output: count(*)
+   ->  Seq Scan on public.agg_simplify
+         Output: a, not_null_col, nullable_col
+(4 rows)
+
+-- Ensure count(null) isn't optimized
+explain (costs off, verbose)
+select count(null) from agg_simplify;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Aggregate
+   Output: count(NULL::unknown)
+   ->  Seq Scan on public.agg_simplify
+         Output: a, not_null_col, nullable_col
+(4 rows)
+
+-- Ensure count(nullable_col) does not use count(*)
+explain (costs off, verbose)
+select count(nullable_col) from agg_simplify;
+                  QUERY PLAN                   
+-----------------------------------------------
+ Aggregate
+   Output: count(nullable_col)
+   ->  Seq Scan on public.agg_simplify
+         Output: a, not_null_col, nullable_col
+(4 rows)
+
+-- Ensure there's no optimization with DISTINCT aggs
+explain (costs off, verbose)
+select count(distinct not_null_col) from agg_simplify;
+                 QUERY PLAN                  
+---------------------------------------------
+ Aggregate
+   Output: count(DISTINCT not_null_col)
+   ->  Sort
+         Output: not_null_col
+         Sort Key: agg_simplify.not_null_col
+         ->  Seq Scan on public.agg_simplify
+               Output: not_null_col
+(7 rows)
+
+-- Ensure there's no optimization with ORDER BY aggs
+explain (costs off, verbose)
+select count(not_null_col order by not_null_col) from agg_simplify;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate
+   Output: count(not_null_col ORDER BY not_null_col)
+   ->  Sort
+         Output: not_null_col
+         Sort Key: agg_simplify.not_null_col
+         ->  Seq Scan on public.agg_simplify
+               Output: not_null_col
+(7 rows)
+
+-- Ensure we don't optimize to count(*) with agglevelsup > 0
+explain (costs off, verbose)
+select a from agg_simplify a group by a
+having exists (select 1 from onek b where count(a.not_null_col) = b.four);
+                     QUERY PLAN                      
+-----------------------------------------------------
+ HashAggregate
+   Output: a.a
+   Group Key: a.a
+   Filter: EXISTS(SubPlan exists_1)
+   ->  Seq Scan on public.agg_simplify a
+         Output: a.a, a.not_null_col, a.nullable_col
+   SubPlan exists_1
+     ->  Seq Scan on public.onek b
+           Filter: (count(a.not_null_col) = b.four)
+(9 rows)
+
+rollback;
 -- test aggregates with common transition functions share the same states
 begin work;
 create type avg_state as (total bigint, count bigint);

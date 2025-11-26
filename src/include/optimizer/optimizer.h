@@ -147,6 +147,9 @@ extern Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod,
 
 extern bool var_is_nonnullable(PlannerInfo *root, Var *var, bool use_rel_info);
 
+extern bool expr_is_nonnullable(PlannerInfo *root, Expr *expr,
+								bool use_rel_info);
+
 extern List *expand_function_arguments(List *args, bool include_out_arguments,
 									   Oid result_type,
 									   HeapTuple func_tuple);

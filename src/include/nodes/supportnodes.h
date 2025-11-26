@@ -72,6 +72,31 @@ typedef struct SupportRequestSimplify
 } SupportRequestSimplify;
 
 /*
+ * Similar to SupportRequestSimplify but for Aggref node types.
+ *
+ * This supports conversions such as swapping COUNT(1) or COUNT(notnullcol)
+ * for COUNT(*).
+ *
+ * Supporting functions can consult 'root' and the input 'aggref'.  When the
+ * implementing support function deems the simplification is possible, it must
+ * create a new Node (probably another Aggref) and not modify the original.
+ * The newly created Node should then be returned to indicate that the
+ * conversion is to take place.  When no conversion is possible, a NULL
+ * pointer should be returned.
+ *
+ * It is important to consider that implementing support functions can receive
+ * Aggrefs with agglevelsup > 0.  Careful consideration should be given to
+ * whether the simplification is still possible at levels above 0.
+ */
+typedef struct SupportRequestSimplifyAggref
+{
+	NodeTag		type;
+
+	PlannerInfo *root;			/* Planner's infrastructure */
+	Aggref	   *aggref;			/* Aggref to be simplified */
+} SupportRequestSimplifyAggref;
+
+/*
  * The InlineInFrom request allows the support function to perform plan-time
  * simplification of a call to its target function that appears in FROM.
  * The rules for this are sufficiently different from ordinary expressions

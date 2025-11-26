@@ -24,7 +24,7 @@
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
 #include "utils/builtins.h"
-
+#include "utils/fmgroids.h"
 
 typedef struct
 {
@@ -809,6 +809,53 @@ int8inc_support(PG_FUNCTION_ARGS)
 
 		req->monotonic = monotonic;
 		PG_RETURN_POINTER(req);
+	}
+
+	if (IsA(rawreq, SupportRequestSimplifyAggref))
+	{
+		SupportRequestSimplifyAggref *req = (SupportRequestSimplifyAggref *) rawreq;
+		Aggref	   *agg = req->aggref;
+
+		/*
+		 * Check for COUNT(ANY) and try to convert to COUNT(*). The input
+		 * argument cannot be NULL, we can't have an ORDER BY / DISTINCT in
+		 * the aggregate, and agglevelsup must be 0.
+		 *
+		 * Technically COUNT(ANY) must have 1 arg, but be paranoid and check.
+		 */
+		if (agg->aggfnoid == F_COUNT_ANY && list_length(agg->args) == 1)
+		{
+			TargetEntry *tle = (TargetEntry *) linitial(agg->args);
+			Expr	   *arg = tle->expr;
+
+			/* Check for unsupported cases */
+			if (agg->aggdistinct != NIL || agg->aggorder != NIL ||
+				agg->agglevelsup != 0)
+				PG_RETURN_POINTER(NULL);
+
+			/* If the arg isn't NULLable, do the conversion */
+			if (expr_is_nonnullable(req->root, arg, false))
+			{
+				Aggref	   *newagg;
+
+				/* We don't expect these to have been set yet */
+				Assert(agg->aggtransno == -1);
+				Assert(agg->aggtranstype == InvalidOid);
+
+				/* Convert COUNT(ANY) to COUNT(*) by making a new Aggref */
+				newagg = makeNode(Aggref);
+				memcpy(newagg, agg, sizeof(Aggref));
+				newagg->aggfnoid = F_COUNT_;
+
+				/* count(*) has no args */
+				newagg->aggargtypes = NULL;
+				newagg->args = NULL;
+				newagg->aggstar = true;
+				newagg->location = -1;
+
+				PG_RETURN_POINTER(newagg);
+			}
+		}
 	}
 
 	PG_RETURN_POINTER(NULL);
