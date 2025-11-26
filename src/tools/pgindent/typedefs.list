@@ -1732,6 +1732,8 @@ MultirangeIOData
 MultirangeParseState
 MultirangeType
 NDBOX
+NDistinctParseState
+NDistinctSemanticState
 NLSVERSIONINFOEX
 NODE
 NTSTATUS
