@@ -88,7 +88,6 @@ FPge(double A, double B)
 #define FPge(A,B)				((A) >= (B))
 #endif
 
-#define HYPOT(A, B)				pg_hypot(A, B)
 
 /*---------------------------------------------------------------------
  * Point - (x,y)
@@ -274,12 +273,5 @@ CirclePGetDatum(const CIRCLE *X)
 }
 #define PG_GETARG_CIRCLE_P(n) DatumGetCircleP(PG_GETARG_DATUM(n))
 #define PG_RETURN_CIRCLE_P(x) return CirclePGetDatum(x)
-
-
-/*
- * in geo_ops.c
- */
-
-extern float8 pg_hypot(float8 x, float8 y);
 
 #endif							/* GEO_DECLS_H */

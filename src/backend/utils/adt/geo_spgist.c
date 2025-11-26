@@ -390,7 +390,7 @@ pointToRectBoxDistance(Point *point, RectBox *rect_box)
 	else
 		dy = 0;
 
-	return HYPOT(dx, dy);
+	return hypot(dx, dy);
 }
 
 

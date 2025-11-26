@@ -51,7 +51,7 @@ point_box_distance(Point *point, BOX *box)
 	else
 		dy = 0.0;
 
-	return HYPOT(dx, dy);
+	return hypot(dx, dy);
 }
 
 /*
