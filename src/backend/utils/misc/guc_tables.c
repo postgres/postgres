@@ -627,6 +627,13 @@ static bool integer_datetimes;
 #endif
 static bool assert_enabled = DEFAULT_ASSERT_ENABLED;
 
+#ifdef EXEC_BACKEND
+#define EXEC_BACKEND_ENABLED true
+#else
+#define EXEC_BACKEND_ENABLED false
+#endif
+static bool exec_backend_enabled = EXEC_BACKEND_ENABLED;
+
 static char *recovery_target_timeline_string;
 static char *recovery_target_string;
 static char *recovery_target_xid_string;

@@ -11833,6 +11833,23 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-debug-exec-backend" xreflabel="debug_exec_backend">
+      <term><varname>debug_exec_backend</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>debug_exec_backend</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports whether <productname>PostgreSQL</productname> has been built
+        with <literal>EXEC_BACKEND</literal> enabled. That is the case on
+        <systemitem class="osname">Windows</systemitem> or if the
+        macro <symbol>EXEC_BACKEND</symbol> is defined
+        when <productname>PostgreSQL</productname> is built.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-huge-pages-status" xreflabel="huge_pages_status">
       <term><varname>huge_pages_status</varname> (<type>enum</type>)
       <indexterm>
