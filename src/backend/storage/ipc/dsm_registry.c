@@ -101,9 +101,10 @@ init_dsm_registry(void)
 	{
 		/* Initialize dynamic shared hash table for registry. */
 		dsm_registry_dsa = dsa_create(LWTRANCHE_DSM_REGISTRY_DSA);
+		dsm_registry_table = dshash_create(dsm_registry_dsa, &dsh_params, NULL);
+
 		dsa_pin(dsm_registry_dsa);
 		dsa_pin_mapping(dsm_registry_dsa);
-		dsm_registry_table = dshash_create(dsm_registry_dsa, &dsh_params, NULL);
 
 		/* Store handles in shared memory for other backends to use. */
 		DSMRegistryCtx->dsah = dsa_get_handle(dsm_registry_dsa);
@@ -134,6 +135,7 @@ GetNamedDSMSegment(const char *name, size_t size,
 	DSMRegistryEntry *entry;
 	MemoryContext oldcontext;
 	void	   *ret;
+	dsm_segment *seg;
 
 	Assert(found);
 
@@ -158,29 +160,31 @@ GetNamedDSMSegment(const char *name, size_t size,
 	entry = dshash_find_or_insert(dsm_registry_table, name, found);
 	if (!(*found))
 	{
+		entry->handle = DSM_HANDLE_INVALID;
+		entry->size = size;
+	}
+	else if (entry->size != size)
+		ereport(ERROR,
+				(errmsg("requested DSM segment size does not match size of existing segment")));
+
+	if (entry->handle == DSM_HANDLE_INVALID)
+	{
+		*found = false;
+
 		/* Initialize the segment. */
-		dsm_segment *seg = dsm_create(size, 0);
+		seg = dsm_create(size, 0);
+
+		if (init_callback)
+			(*init_callback) (dsm_segment_address(seg));
 
 		dsm_pin_segment(seg);
 		dsm_pin_mapping(seg);
 		entry->handle = dsm_segment_handle(seg);
-		entry->size = size;
-		ret = dsm_segment_address(seg);
-
-		if (init_callback)
-			(*init_callback) (ret);
-	}
-	else if (entry->size != size)
-	{
-		ereport(ERROR,
-				(errmsg("requested DSM segment size does not match size of "
-						"existing segment")));
 	}
 	else
 	{
-		dsm_segment *seg = dsm_find_mapping(entry->handle);
-
 		/* If the existing segment is not already attached, attach it now. */
+		seg = dsm_find_mapping(entry->handle);
 		if (seg == NULL)
 		{
 			seg = dsm_attach(entry->handle);
@@ -189,10 +193,9 @@ GetNamedDSMSegment(const char *name, size_t size,
 
 			dsm_pin_mapping(seg);
 		}
-
-		ret = dsm_segment_address(seg);
 	}
 
+	ret = dsm_segment_address(seg);
 	dshash_release_lock(dsm_registry_table, entry);
 	MemoryContextSwitchTo(oldcontext);
 
