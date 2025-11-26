@@ -169,8 +169,29 @@ extern int	pg_strcasecmp(const char *s1, const char *s2);
 extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
 extern unsigned char pg_toupper(unsigned char ch);
 extern unsigned char pg_tolower(unsigned char ch);
-extern unsigned char pg_ascii_toupper(unsigned char ch);
-extern unsigned char pg_ascii_tolower(unsigned char ch);
+
+/*
+ * Fold a character to upper case, following C/POSIX locale rules.
+ */
+static inline unsigned char
+pg_ascii_toupper(unsigned char ch)
+{
+	if (ch >= 'a' && ch <= 'z')
+		ch += 'A' - 'a';
+	return ch;
+}
+
+/*
+ * Fold a character to lower case, following C/POSIX locale rules.
+ */
+static inline unsigned char
+pg_ascii_tolower(unsigned char ch)
+{
+	if (ch >= 'A' && ch <= 'Z')
+		ch += 'a' - 'A';
+	return ch;
+}
+
 
 /*
  * Beginning in v12, we always replace snprintf() and friends with our own
