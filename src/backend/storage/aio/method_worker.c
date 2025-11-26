@@ -55,7 +55,6 @@
 typedef struct PgAioWorkerSubmissionQueue
 {
 	uint32		size;
-	uint32		mask;
 	uint32		head;
 	uint32		tail;
 	int			sqes[FLEXIBLE_ARRAY_MEMBER];

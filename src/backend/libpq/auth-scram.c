@@ -134,8 +134,6 @@ typedef struct
 {
 	scram_state_enum state;
 
-	const char *username;		/* username from startup packet */
-
 	Port	   *port;
 	bool		channel_binding_in_use;
 
