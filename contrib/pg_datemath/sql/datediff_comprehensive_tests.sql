@@ -4,8 +4,8 @@
 --
 
 -- Setup: Create extension
-DROP EXTENSION IF EXISTS mssql_compat CASCADE;
-CREATE EXTENSION mssql_compat;
+DROP EXTENSION IF EXISTS pg_datemath CASCADE;
+CREATE EXTENSION pg_datemath;
 
 -- ============================================================================
 -- SECTION 1: Test Data Setup
@@ -81,50 +81,50 @@ INSERT INTO date_test_data (description, start_date, end_date, start_ts, end_ts,
 
 SELECT '=== DAY DATEPART TESTS ===' AS section;
 
--- Test 1: Basic day difference
-SELECT 'Test 1: Basic day difference' AS test_name,
+-- Basic day difference
+SELECT 'Basic day difference' AS test_name,
        datediff('day', '2024-01-01', '2024-01-15') AS result,
        14 AS expected,
        CASE WHEN datediff('day', '2024-01-01', '2024-01-15') = 14 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 2: Day difference using 'dd' alias
-SELECT 'Test 2: Day alias dd' AS test_name,
+-- Day difference using 'dd' alias
+SELECT 'Day alias dd' AS test_name,
        datediff('dd', '2024-01-01', '2024-01-15') AS result,
        14 AS expected,
        CASE WHEN datediff('dd', '2024-01-01', '2024-01-15') = 14 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 3: Day difference using 'd' alias
-SELECT 'Test 3: Day alias d' AS test_name,
+-- Day difference using 'd' alias
+SELECT 'Day alias d' AS test_name,
        datediff('d', '2024-03-01', '2024-03-31') AS result,
        30 AS expected,
        CASE WHEN datediff('d', '2024-03-01', '2024-03-31') = 30 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 4: Day difference using 'days' alias
-SELECT 'Test 4: Day alias days' AS test_name,
+-- Day difference using 'days' alias
+SELECT 'Day alias days' AS test_name,
        datediff('days', '2024-06-01', '2024-06-30') AS result,
        29 AS expected,
        CASE WHEN datediff('days', '2024-06-01', '2024-06-30') = 29 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 5: Negative day difference
-SELECT 'Test 5: Negative day difference' AS test_name,
+-- Negative day difference
+SELECT 'Negative day difference' AS test_name,
        datediff('day', '2024-01-15', '2024-01-01') AS result,
        -14 AS expected,
        CASE WHEN datediff('day', '2024-01-15', '2024-01-01') = -14 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 6: Same day returns 0
-SELECT 'Test 6: Same day returns 0' AS test_name,
+-- Same day returns 0
+SELECT 'Same day returns 0' AS test_name,
        datediff('day', '2024-06-15', '2024-06-15') AS result,
        0 AS expected,
        CASE WHEN datediff('day', '2024-06-15', '2024-06-15') = 0 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 7: Leap year February (28th to Mar 1st)
-SELECT 'Test 7: Leap year Feb 28 to Mar 1' AS test_name,
+-- Leap year February (28th to Mar 1st)
+SELECT 'Leap year Feb 28 to Mar 1' AS test_name,
        datediff('day', '2024-02-28', '2024-03-01') AS result,
        2 AS expected,
        CASE WHEN datediff('day', '2024-02-28', '2024-03-01') = 2 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 8: Non-leap year February
-SELECT 'Test 8: Non-leap year Feb 28 to Mar 1' AS test_name,
+-- Non-leap year February
+SELECT 'Non-leap year Feb 28 to Mar 1' AS test_name,
        datediff('day', '2023-02-28', '2023-03-01') AS result,
        1 AS expected,
        CASE WHEN datediff('day', '2023-02-28', '2023-03-01') = 1 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -135,44 +135,44 @@ SELECT 'Test 8: Non-leap year Feb 28 to Mar 1' AS test_name,
 
 SELECT '=== WEEK DATEPART TESTS ===' AS section;
 
--- Test 9: Exact 1 week
-SELECT 'Test 9: Exact 1 week' AS test_name,
+-- Exact 1 week
+SELECT 'Exact 1 week' AS test_name,
        datediff('week', '2024-01-01', '2024-01-08') AS result,
        1.000 AS expected,
        CASE WHEN datediff('week', '2024-01-01', '2024-01-08') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 10: Exact 2 weeks
-SELECT 'Test 10: Exact 2 weeks' AS test_name,
+-- Exact 2 weeks
+SELECT 'Exact 2 weeks' AS test_name,
        datediff('week', '2024-01-01', '2024-01-15') AS result,
        2.000 AS expected,
        CASE WHEN datediff('week', '2024-01-01', '2024-01-15') = 2.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 11: Partial week (9 days = 1.286 weeks)
-SELECT 'Test 11: Partial week 9 days' AS test_name,
+-- Partial week (9 days = 1.286 weeks)
+SELECT 'Partial week 9 days' AS test_name,
        datediff('week', '2024-01-01', '2024-01-10') AS result,
        1.286 AS expected,
        CASE WHEN datediff('week', '2024-01-01', '2024-01-10') = 1.286 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 12: Week alias 'wk'
-SELECT 'Test 12: Week alias wk' AS test_name,
+-- Week alias 'wk'
+SELECT 'Week alias wk' AS test_name,
        datediff('wk', '2024-01-01', '2024-01-08') AS result,
        1.000 AS expected,
        CASE WHEN datediff('wk', '2024-01-01', '2024-01-08') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 13: Week alias 'ww'
-SELECT 'Test 13: Week alias ww' AS test_name,
+-- Week alias 'ww'
+SELECT 'Week alias ww' AS test_name,
        datediff('ww', '2024-01-01', '2024-01-22') AS result,
        3.000 AS expected,
        CASE WHEN datediff('ww', '2024-01-01', '2024-01-22') = 3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 14: Week alias 'weeks'
-SELECT 'Test 14: Week alias weeks' AS test_name,
+-- Week alias 'weeks'
+SELECT 'Week alias weeks' AS test_name,
        datediff('weeks', '2024-02-01', '2024-02-29') AS result,
        4.000 AS expected,
        CASE WHEN datediff('weeks', '2024-02-01', '2024-02-29') = 4.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 15: Negative weeks
-SELECT 'Test 15: Negative weeks' AS test_name,
+-- Negative weeks
+SELECT 'Negative weeks' AS test_name,
        datediff('week', '2024-01-15', '2024-01-01') AS result,
        -2.000 AS expected,
        CASE WHEN datediff('week', '2024-01-15', '2024-01-01') = -2.000 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -183,62 +183,62 @@ SELECT 'Test 15: Negative weeks' AS test_name,
 
 SELECT '=== MONTH DATEPART TESTS ===' AS section;
 
--- Test 16: Aligned month (same day-of-month)
-SELECT 'Test 16: Aligned month same day' AS test_name,
+-- Aligned month (same day-of-month)
+SELECT 'Aligned month same day' AS test_name,
        datediff('month', '2024-01-15', '2024-02-15') AS result,
        1.000 AS expected,
        CASE WHEN datediff('month', '2024-01-15', '2024-02-15') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 17: Partial month
-SELECT 'Test 17: Partial month' AS test_name,
+-- Partial month
+SELECT 'Partial month' AS test_name,
        datediff('month', '2024-01-15', '2024-02-20') AS result,
        1.172 AS expected,
        CASE WHEN datediff('month', '2024-01-15', '2024-02-20') = 1.172 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 18: End-of-month alignment (Jan 31 -> Feb 29)
-SELECT 'Test 18: End-of-month alignment' AS test_name,
+-- End-of-month alignment (Jan 31 -> Feb 29)
+SELECT 'End-of-month alignment' AS test_name,
        datediff('month', '2024-01-31', '2024-02-29') AS result,
        1.000 AS expected,
        CASE WHEN datediff('month', '2024-01-31', '2024-02-29') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 19: Month alias 'mm'
-SELECT 'Test 19: Month alias mm' AS test_name,
+-- Month alias 'mm'
+SELECT 'Month alias mm' AS test_name,
        datediff('mm', '2024-01-01', '2024-02-01') AS result,
        1.000 AS expected,
        CASE WHEN datediff('mm', '2024-01-01', '2024-02-01') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 20: Month alias 'm'
-SELECT 'Test 20: Month alias m' AS test_name,
+-- Month alias 'm'
+SELECT 'Month alias m' AS test_name,
        datediff('m', '2024-03-15', '2024-06-15') AS result,
        3.000 AS expected,
        CASE WHEN datediff('m', '2024-03-15', '2024-06-15') = 3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 21: Month alias 'months'
-SELECT 'Test 21: Month alias months' AS test_name,
+-- Month alias 'months'
+SELECT 'Month alias months' AS test_name,
        datediff('months', '2024-01-01', '2024-07-01') AS result,
        6.000 AS expected,
        CASE WHEN datediff('months', '2024-01-01', '2024-07-01') = 6.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 22: Multiple months with partial
-SELECT 'Test 22: Multiple months partial' AS test_name,
+-- Multiple months with partial
+SELECT 'Multiple months partial' AS test_name,
        datediff('month', '2024-01-25', '2024-03-10') AS result,
        1.483 AS expected,
        CASE WHEN datediff('month', '2024-01-25', '2024-03-10') = 1.483 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 23: Negative months
-SELECT 'Test 23: Negative months' AS test_name,
+-- Negative months
+SELECT 'Negative months' AS test_name,
        datediff('month', '2024-06-15', '2024-03-15') AS result,
        -3.000 AS expected,
        CASE WHEN datediff('month', '2024-06-15', '2024-03-15') = -3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 24: Month spanning year boundary
-SELECT 'Test 24: Month across year boundary' AS test_name,
+-- Month spanning year boundary
+SELECT 'Month across year boundary' AS test_name,
        datediff('month', '2024-11-15', '2025-02-15') AS result,
        3.000 AS expected,
        CASE WHEN datediff('month', '2024-11-15', '2025-02-15') = 3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 25: Less than one month
-SELECT 'Test 25: Less than one month' AS test_name,
+-- Less than one month
+SELECT 'Less than one month' AS test_name,
        datediff('month', '2024-01-01', '2024-01-15') AS result,
        0.452 AS expected,  -- 14 days / 31 days in January
        CASE WHEN datediff('month', '2024-01-01', '2024-01-15') BETWEEN 0.450 AND 0.460 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -249,50 +249,50 @@ SELECT 'Test 25: Less than one month' AS test_name,
 
 SELECT '=== QUARTER DATEPART TESTS ===' AS section;
 
--- Test 26: Exact quarter aligned
-SELECT 'Test 26: Exact quarter aligned' AS test_name,
+-- Exact quarter aligned
+SELECT 'Exact quarter aligned' AS test_name,
        datediff('quarter', '2024-01-01', '2024-04-01') AS result,
        1.000 AS expected,
        CASE WHEN datediff('quarter', '2024-01-01', '2024-04-01') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 27: Partial quarter
-SELECT 'Test 27: Partial quarter' AS test_name,
+-- Partial quarter
+SELECT 'Partial quarter' AS test_name,
        datediff('quarter', '2024-01-15', '2024-05-20') AS result,
        1.385 AS expected,
        CASE WHEN datediff('quarter', '2024-01-15', '2024-05-20') = 1.385 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 28: Quarter alias 'qq'
-SELECT 'Test 28: Quarter alias qq' AS test_name,
+-- Quarter alias 'qq'
+SELECT 'Quarter alias qq' AS test_name,
        datediff('qq', '2024-01-01', '2024-07-01') AS result,
        2.000 AS expected,
        CASE WHEN datediff('qq', '2024-01-01', '2024-07-01') = 2.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 29: Quarter alias 'q'
-SELECT 'Test 29: Quarter alias q' AS test_name,
+-- Quarter alias 'q'
+SELECT 'Quarter alias q' AS test_name,
        datediff('q', '2024-01-01', '2024-10-01') AS result,
        3.000 AS expected,
        CASE WHEN datediff('q', '2024-01-01', '2024-10-01') = 3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 30: Quarter alias 'quarters'
-SELECT 'Test 30: Quarter alias quarters' AS test_name,
+-- Quarter alias 'quarters'
+SELECT 'Quarter alias quarters' AS test_name,
        datediff('quarters', '2024-01-01', '2025-01-01') AS result,
        4.000 AS expected,
        CASE WHEN datediff('quarters', '2024-01-01', '2025-01-01') = 4.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 31: Negative quarters
-SELECT 'Test 31: Negative quarters' AS test_name,
+-- Negative quarters
+SELECT 'Negative quarters' AS test_name,
        datediff('quarter', '2024-10-01', '2024-04-01') AS result,
        -2.000 AS expected,
        CASE WHEN datediff('quarter', '2024-10-01', '2024-04-01') = -2.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 32: Less than one quarter
-SELECT 'Test 32: Less than one quarter' AS test_name,
+-- Less than one quarter
+SELECT 'Less than one quarter' AS test_name,
        datediff('quarter', '2024-01-01', '2024-02-15') AS result,
        0.495 AS expected,  -- ~45 days / 91 days
        CASE WHEN datediff('quarter', '2024-01-01', '2024-02-15') BETWEEN 0.490 AND 0.500 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 33: Quarter across year boundary
-SELECT 'Test 33: Quarter across year boundary' AS test_name,
+-- Quarter across year boundary
+SELECT 'Quarter across year boundary' AS test_name,
        datediff('quarter', '2024-10-01', '2025-04-01') AS result,
        2.000 AS expected,
        CASE WHEN datediff('quarter', '2024-10-01', '2025-04-01') = 2.000 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -303,56 +303,56 @@ SELECT 'Test 33: Quarter across year boundary' AS test_name,
 
 SELECT '=== YEAR DATEPART TESTS ===' AS section;
 
--- Test 34: Exact year aligned
-SELECT 'Test 34: Exact year aligned' AS test_name,
+-- Exact year aligned
+SELECT 'Exact year aligned' AS test_name,
        datediff('year', '2024-03-15', '2025-03-15') AS result,
        1.000 AS expected,
        CASE WHEN datediff('year', '2024-03-15', '2025-03-15') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 35: Partial year in leap year
-SELECT 'Test 35: Partial year leap year' AS test_name,
+-- Partial year in leap year
+SELECT 'Partial year leap year' AS test_name,
        datediff('year', '2024-01-01', '2024-07-01') AS result,
        0.497 AS expected,  -- 182 days / 366
        CASE WHEN datediff('year', '2024-01-01', '2024-07-01') BETWEEN 0.495 AND 0.500 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 36: Year alias 'yy'
-SELECT 'Test 36: Year alias yy' AS test_name,
+-- Year alias 'yy'
+SELECT 'Year alias yy' AS test_name,
        datediff('yy', '2020-01-01', '2025-01-01') AS result,
        5.000 AS expected,
        CASE WHEN datediff('yy', '2020-01-01', '2025-01-01') = 5.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 37: Year alias 'yyyy'
-SELECT 'Test 37: Year alias yyyy' AS test_name,
+-- Year alias 'yyyy'
+SELECT 'Year alias yyyy' AS test_name,
        datediff('yyyy', '2024-06-15', '2027-06-15') AS result,
        3.000 AS expected,
        CASE WHEN datediff('yyyy', '2024-06-15', '2027-06-15') = 3.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 38: Year alias 'y'
-SELECT 'Test 38: Year alias y' AS test_name,
+-- Year alias 'y'
+SELECT 'Year alias y' AS test_name,
        datediff('y', '2024-01-01', '2024-12-31') AS result,
        0.997 AS expected,  -- 365 days / 366
        CASE WHEN datediff('y', '2024-01-01', '2024-12-31') BETWEEN 0.995 AND 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 39: Year alias 'years'
-SELECT 'Test 39: Year alias years' AS test_name,
+-- Year alias 'years'
+SELECT 'Year alias years' AS test_name,
        datediff('years', '2014-06-15', '2024-06-15') AS result,
        10.000 AS expected,
        CASE WHEN datediff('years', '2014-06-15', '2024-06-15') = 10.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 40: Year boundary crossing (1 day)
-SELECT 'Test 40: Year boundary 1 day' AS test_name,
+-- Year boundary crossing (1 day)
+SELECT 'Year boundary 1 day' AS test_name,
        datediff('year', '2024-12-31', '2025-01-01') AS result,
        0.003 AS expected,  -- 1 day / 365
        CASE WHEN datediff('year', '2024-12-31', '2025-01-01') BETWEEN 0.001 AND 0.005 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 41: Negative years
-SELECT 'Test 41: Negative years' AS test_name,
+-- Negative years
+SELECT 'Negative years' AS test_name,
        datediff('year', '2025-06-15', '2020-06-15') AS result,
        -5.000 AS expected,
        CASE WHEN datediff('year', '2025-06-15', '2020-06-15') = -5.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 42: Feb 29 leap year to Feb 28 non-leap (aligned)
-SELECT 'Test 42: Feb 29 to Feb 28 alignment' AS test_name,
+-- Feb 29 leap year to Feb 28 non-leap (aligned)
+SELECT 'Feb 29 to Feb 28 alignment' AS test_name,
        datediff('year', '2024-02-29', '2025-02-28') AS result,
        1.000 AS expected,
        CASE WHEN datediff('year', '2024-02-29', '2025-02-28') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -363,20 +363,20 @@ SELECT 'Test 42: Feb 29 to Feb 28 alignment' AS test_name,
 
 SELECT '=== CASE INSENSITIVITY TESTS ===' AS section;
 
--- Test 43: UPPERCASE datepart
-SELECT 'Test 43: UPPERCASE MONTH' AS test_name,
+-- UPPERCASE datepart
+SELECT 'UPPERCASE MONTH' AS test_name,
        datediff('MONTH', '2024-01-01', '2024-02-01') AS result,
        1.000 AS expected,
        CASE WHEN datediff('MONTH', '2024-01-01', '2024-02-01') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 44: Mixed case datepart
-SELECT 'Test 44: Mixed case Quarter' AS test_name,
+-- Mixed case datepart
+SELECT 'Mixed case Quarter' AS test_name,
        datediff('QuArTeR', '2024-01-01', '2024-04-01') AS result,
        1.000 AS expected,
        CASE WHEN datediff('QuArTeR', '2024-01-01', '2024-04-01') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 45: Mixed case alias
-SELECT 'Test 45: Mixed case alias YY' AS test_name,
+-- Mixed case alias
+SELECT 'Mixed case alias YY' AS test_name,
        datediff('Yy', '2024-01-01', '2025-01-01') AS result,
        1.000 AS expected,
        CASE WHEN datediff('Yy', '2024-01-01', '2025-01-01') = 1.000 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -387,20 +387,20 @@ SELECT 'Test 45: Mixed case alias YY' AS test_name,
 
 SELECT '=== TIMESTAMP TESTS ===' AS section;
 
--- Test 46: Timestamp day difference
-SELECT 'Test 46: Timestamp day diff' AS test_name,
+-- Timestamp day difference
+SELECT 'Timestamp day diff' AS test_name,
        datediff('day', '2024-01-01 10:30:00'::timestamp, '2024-01-15 14:45:00'::timestamp) AS result,
        14 AS expected,
        CASE WHEN datediff('day', '2024-01-01 10:30:00'::timestamp, '2024-01-15 14:45:00'::timestamp) = 14 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 47: Timestamp month difference
-SELECT 'Test 47: Timestamp month diff' AS test_name,
+-- Timestamp month difference
+SELECT 'Timestamp month diff' AS test_name,
        datediff('month', '2024-01-15 08:00:00'::timestamp, '2024-02-20 16:00:00'::timestamp) AS result,
        1.172 AS expected,
        CASE WHEN datediff('month', '2024-01-15 08:00:00'::timestamp, '2024-02-20 16:00:00'::timestamp) = 1.172 THEN 'PASS' ELSE 'FAIL' END AS status;
 
--- Test 48: Timestamptz day difference
-SELECT 'Test 48: Timestamptz day diff' AS test_name,
+-- Timestamptz day difference
+SELECT 'Timestamptz day diff' AS test_name,
        datediff('day', '2024-01-01 10:30:00+00'::timestamptz, '2024-01-15 14:45:00+00'::timestamptz) AS result,
        14 AS expected,
        CASE WHEN datediff('day', '2024-01-01 10:30:00+00'::timestamptz, '2024-01-15 14:45:00+00'::timestamptz) = 14 THEN 'PASS' ELSE 'FAIL' END AS status;
@@ -411,8 +411,8 @@ SELECT 'Test 48: Timestamptz day diff' AS test_name,
 
 SELECT '=== ERROR HANDLING TESTS ===' AS section;
 
--- Test 49: Invalid datepart should error
-SELECT 'Test 49: Invalid datepart error' AS test_name;
+-- Invalid datepart should error
+SELECT 'Invalid datepart error' AS test_name;
 DO $$
 BEGIN
     PERFORM datediff('hour', '2024-01-01'::date, '2024-01-02'::date);
@@ -421,8 +421,8 @@ EXCEPTION WHEN invalid_parameter_value THEN
     RAISE NOTICE 'PASS: Correctly raised error for invalid datepart';
 END $$;
 
--- Test 50: NULL handling (should return NULL)
-SELECT 'Test 50: NULL handling' AS test_name,
+-- NULL handling (should return NULL)
+SELECT 'NULL handling' AS test_name,
        datediff('day', NULL::date, '2024-01-15'::date) IS NULL AS null_start_returns_null,
        datediff('day', '2024-01-01'::date, NULL::date) IS NULL AS null_end_returns_null,
        CASE 
@@ -592,7 +592,7 @@ FROM date_test_data;
 -- Cleanup
 DROP TABLE IF EXISTS date_test_data;
 -- Note: Keeping extension for further manual testing
--- DROP EXTENSION IF EXISTS mssql_compat;
+-- DROP EXTENSION IF EXISTS pg_datemath;
 
 SELECT 'All comprehensive tests completed!' AS final_status;
 

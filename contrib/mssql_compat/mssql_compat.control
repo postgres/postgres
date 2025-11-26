@@ -1,7 +1,0 @@
-# mssql_compat extension
-comment = 'SQL Server compatible datediff function'
-default_version = '1.0'
-module_pathname = '$libdir/mssql_compat'
-relocatable = true
-trusted = true
-

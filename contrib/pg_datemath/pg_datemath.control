@@ -1,0 +1,7 @@
+# pg_datemath extension
+comment = 'Enhanced date difference functions with fractional precision'
+default_version = '1.0'
+module_pathname = '$libdir/pg_datemath'
+relocatable = true
+trusted = true
+

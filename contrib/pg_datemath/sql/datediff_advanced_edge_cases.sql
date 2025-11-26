@@ -3,8 +3,8 @@
 -- Tests scenarios not covered in basic tests
 --
 
-DROP EXTENSION IF EXISTS mssql_compat CASCADE;
-CREATE EXTENSION mssql_compat;
+DROP EXTENSION IF EXISTS pg_datemath CASCADE;
+CREATE EXTENSION pg_datemath;
 
 -- ============================================================================
 -- SECTION 1: EXTREME DATE RANGES

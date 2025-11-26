@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * mssql_compat.c
- *		SQL Server compatible datediff function for PostgreSQL.
+ * pg_datemath.c
+ *		Enhanced date difference functions for PostgreSQL.
  *
  * This extension provides datediff(datepart, start_date, end_date) which
  * calculates the difference between two dates using a hybrid calculation
@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2024, PostgreSQL Global Development Group
  *
- * contrib/mssql_compat/mssql_compat.c
+ * contrib/pg_datemath/pg_datemath.c
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "utils/timestamp.h"
 
 PG_MODULE_MAGIC_EXT(
-					.name = "mssql_compat",
+					.name = "pg_datemath",
 					.version = PG_VERSION
 );
 
@@ -62,7 +62,7 @@ parse_datepart(const char *datepart_str)
 		lower[i] = tolower((unsigned char) datepart_str[i]);
 	lower[i] = '\0';
 
-	/* Match canonical names and aliases per PRD1b lines 224-230 */
+	/* Match canonical names and aliases */
 	if (strcmp(lower, "year") == 0 ||
 		strcmp(lower, "yy") == 0 ||
 		strcmp(lower, "yyyy") == 0 ||
@@ -101,7 +101,7 @@ parse_datepart(const char *datepart_str)
 /*
  * days_in_month_helper - get days in a specific month
  *
- * Uses PostgreSQL's day_tab array (per PRD1b lines 235-252)
+ * Uses PostgreSQL's day_tab array.
  * month is 1-based (1=January, 12=December)
  */
 static int
@@ -159,8 +159,8 @@ day_of_quarter(int year, int month, int day)
 /*
  * bankers_round - round to 3 decimal places using HALF_EVEN (banker's rounding)
  *
- * Per PRD1a FR-7: "Decimal results SHALL be rounded to exactly 3 decimal places
- * using HALF_EVEN (banker's) rounding"
+ * Decimal results are rounded to exactly 3 decimal places using HALF_EVEN
+ * (banker's) rounding for consistent, unbiased results.
  */
 static double
 bankers_round(double value)
@@ -194,7 +194,7 @@ bankers_round(double value)
 /*
  * make_numeric_result - convert double to NUMERIC with 3 decimal places
  *
- * Uses string conversion approach as per PRD1b lines 167-174
+ * Uses string conversion approach for precise decimal representation.
  */
 static Datum
 make_numeric_result(double value)
@@ -246,7 +246,7 @@ compute_diff_week(int start_y, int start_m, int start_d,
 /*
  * compute_diff_month - calculate month difference using hybrid model
  *
- * Per PRD1a FR-3/FR-4:
+ * Calculation model:
  * - Aligned dates (same day-of-month or both end-of-month) return whole numbers
  * - Non-aligned: full months + (remaining days / days in partial period)
  */
@@ -265,7 +265,7 @@ compute_diff_month(int start_y, int start_m, int start_d,
 	int			anniversary_y, anniversary_m, anniversary_d;
 	int			anniversary_jd, end_jd;
 
-	/* Handle negative spans by swapping and negating result (FR-6) */
+	/* Handle negative spans by swapping and negating result */
 	if (start_y > end_y ||
 		(start_y == end_y && start_m > end_m) ||
 		(start_y == end_y && start_m == end_m && start_d > end_d))
@@ -281,7 +281,7 @@ compute_diff_month(int start_y, int start_m, int start_d,
 		negated = true;
 	}
 
-	/* Check for calendar alignment (FR-4) */
+	/* Check for calendar alignment */
 	start_eom = is_end_of_month(start_y, start_m, start_d);
 	end_eom = is_end_of_month(end_y, end_m, end_d);
 	aligned = (start_d == end_d) || (start_eom && end_eom);
@@ -611,7 +611,7 @@ datediff_internal(const char *datepart_str,
 {
 	DatepartType datepart = parse_datepart(datepart_str);
 
-	/* Validate datepart (FR-2) */
+	/* Validate datepart */
 	if (datepart == DATEPART_INVALID)
 	{
 		ereport(ERROR,

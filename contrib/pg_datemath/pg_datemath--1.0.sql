@@ -1,17 +1,18 @@
-/* contrib/mssql_compat/mssql_compat--1.0.sql */
+/* contrib/pg_datemath/pg_datemath--1.0.sql */
 
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION mssql_compat" to load this file. \quit
+\echo Use "CREATE EXTENSION pg_datemath" to load this file. \quit
 
 --
--- datediff(datepart, start_date, end_date) - SQL Server compatible date difference
+-- datediff(datepart, start_date, end_date) - Enhanced date difference calculation
 --
 -- Returns the difference between two dates in the specified datepart unit.
--- Supports: year, quarter, month, week, day (and aliases)
+-- Supports: year, quarter, month, week, day (and common aliases)
 --
--- Unlike SQL Server's boundary-crossing semantics, this implementation provides
--- mathematically accurate results using a hybrid calculation model: full calendar
--- units plus contextual fractions based on actual period lengths.
+-- This implementation provides mathematically accurate results using a hybrid
+-- calculation model: full calendar units plus contextual fractions based on
+-- actual period lengths. This is useful for proration, tenure calculation,
+-- and other scenarios requiring precise fractional date differences.
 --
 
 -- Date version
