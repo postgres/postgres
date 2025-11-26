@@ -257,13 +257,33 @@ class OAuthHandler(http.server.BaseHTTPRequestHandler):
 
         return token
 
+    def _log_response(self, js: JsonObject) -> None:
+        """
+        Trims the response JSON, if necessary, and logs it for later debugging.
+        """
+        # At the moment the biggest problem for tests is the _pad_ member, which
+        # is a megabyte in size, so truncate that to something more reasonable.
+        if "_pad_" in js:
+            pad = js["_pad_"]
+
+            # Don't modify the original dict.
+            js = dict(js)
+            js["_pad_"] = pad[:64] + f"[...truncated from {len(pad)} bytes]"
+
+        resp = json.dumps(js).encode("ascii")
+        self.log_message("sending JSON response: %s", resp)
+
+        # If you've tripped this assertion, please truncate the new addition as
+        # above, or else come up with a new strategy.
+        assert len(resp) < 1024, "_log_response must be adjusted for new JSON"
+
     def _send_json(self, js: JsonObject) -> None:
         """
         Sends the provided JSON dict as an application/json response.
         self._response_code can be modified to send JSON error responses.
         """
         resp = json.dumps(js).encode("ascii")
-        self.log_message("sending JSON response: %s", resp)
+        self._log_response(js)
 
         self.send_response(self._response_code)
         self.send_header("Content-Type", self._content_type)
