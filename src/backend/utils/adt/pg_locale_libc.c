@@ -326,6 +326,8 @@ static const struct ctype_methods ctype_methods_libc_sb = {
 	.strlower = strlower_libc_sb,
 	.strtitle = strtitle_libc_sb,
 	.strupper = strupper_libc_sb,
+	/* in libc, casefolding is the same as lowercasing */
+	.strfold = strlower_libc_sb,
 	.wc_isdigit = wc_isdigit_libc_sb,
 	.wc_isalpha = wc_isalpha_libc_sb,
 	.wc_isalnum = wc_isalnum_libc_sb,
@@ -351,6 +353,8 @@ static const struct ctype_methods ctype_methods_libc_other_mb = {
 	.strlower = strlower_libc_mb,
 	.strtitle = strtitle_libc_mb,
 	.strupper = strupper_libc_mb,
+	/* in libc, casefolding is the same as lowercasing */
+	.strfold = strlower_libc_mb,
 	.wc_isdigit = wc_isdigit_libc_sb,
 	.wc_isalpha = wc_isalpha_libc_sb,
 	.wc_isalnum = wc_isalnum_libc_sb,
@@ -372,6 +376,8 @@ static const struct ctype_methods ctype_methods_libc_utf8 = {
 	.strlower = strlower_libc_mb,
 	.strtitle = strtitle_libc_mb,
 	.strupper = strupper_libc_mb,
+	/* in libc, casefolding is the same as lowercasing */
+	.strfold = strlower_libc_mb,
 	.wc_isdigit = wc_isdigit_libc_mb,
 	.wc_isalpha = wc_isalpha_libc_mb,
 	.wc_isalnum = wc_isalnum_libc_mb,
