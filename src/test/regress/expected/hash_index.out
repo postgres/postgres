@@ -40,6 +40,8 @@ CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
 CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
 CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops)
   WITH (fillfactor=60);
+CREATE INDEX hash_i4_partial_index ON hash_i4_heap USING hash (seqno)
+  WHERE seqno = 9999;
 --
 -- Also try building functional, expressional, and partial indexes on
 -- tables that already contain data.
@@ -130,6 +132,25 @@ SELECT * FROM hash_f8_heap
  seqno | random 
 -------+--------
 (0 rows)
+
+--
+-- partial hash index
+--
+EXPLAIN (COSTS OFF)
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Index Scan using hash_i4_partial_index on hash_i4_heap
+   Index Cond: (seqno = 9999)
+(2 rows)
+
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+ seqno |   random   
+-------+------------
+  9999 | 1227676208
+(1 row)
 
 --
 -- hash index
