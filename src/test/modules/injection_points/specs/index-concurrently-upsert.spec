@@ -27,6 +27,9 @@ setup
 	SELECT injection_points_set_local();
 	SELECT injection_points_attach('check-exclusion-or-unique-constraint-no-conflict', 'wait');
 	SELECT injection_points_attach('pre-invalidate-catalog-snapshot-end', 'notice');
+}
+step s1_attach_invalidate_catalog_snapshot
+{
 	SELECT injection_points_attach('invalidate-catalog-snapshot-end', 'wait');
 }
 step s1_start_upsert
@@ -57,6 +60,19 @@ step s3_start_create_index
 }
 
 session s4
+# Step s1_attach_invalidate_catalog_snapshot sleeps or not depending on
+# build conditions (CATCACHE_FORCE_RELEASE). Here we send a wakeup signal if
+# it's sleeping or do nothing otherwise, and print a null value in either
+# case.
+step s4_wakeup_s1_setup
+{
+	SELECT CASE WHEN
+			(SELECT pid FROM pg_stat_activity
+			      WHERE wait_event_type = 'InjectionPoint' AND
+			      wait_event = 'invalidate-catalog-snapshot-end') IS NOT NULL
+			THEN injection_points_wakeup('invalidate-catalog-snapshot-end')
+		END;
+}
 step s4_wakeup_s1
 {
 	SELECT injection_points_detach('check-exclusion-or-unique-constraint-no-conflict');
@@ -84,6 +100,8 @@ step s5_wakeup_s1_from_invalidate_catalog_snapshot
 }
 
 permutation
+	s1_attach_invalidate_catalog_snapshot
+	s4_wakeup_s1_setup
 	s5_noop(s1_start_upsert notices 1)
 	s3_start_create_index(s1_start_upsert, s2_start_upsert)
 	s1_start_upsert
