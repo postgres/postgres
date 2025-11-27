@@ -536,10 +536,12 @@
    The <function>pg_buffercache_evict()</function> function takes a buffer
    identifier, as shown in the <structfield>bufferid</structfield> column of
    the <structname>pg_buffercache</structname> view.  It returns information
-   about whether the buffer was evicted and flushed.  The buffer_evicted
+   about whether the buffer was evicted and flushed.
+   The <structfield>buffer_evicted</structfield>
    column is true on success, and false if the buffer wasn't valid, if it
    couldn't be evicted because it was pinned, or if it became dirty again
-   after an attempt to write it out.  The buffer_flushed column is true if the
+   after an attempt to write it out.
+   The <structfield>buffer_flushed</structfield> column is true if the
    buffer was flushed.  This does not necessarily mean that buffer was flushed
    by us, it might be flushed by someone else.  The result is immediately out
    of date upon return, as the buffer might become valid again at any time due
