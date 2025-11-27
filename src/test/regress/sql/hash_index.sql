@@ -56,6 +56,16 @@ SELECT * FROM hash_f8_heap
    WHERE hash_f8_heap.random = '88888888'::float8;
 
 --
+-- partial hash index
+--
+EXPLAIN (COSTS OFF)
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+
+--
 -- hash index
 -- grep '^90[^0-9]' hashovfl.data
 --

@@ -83,6 +83,25 @@ SELECT * FROM hash_f8_heap
 (0 rows)
 
 --
+-- partial hash index
+--
+EXPLAIN (COSTS OFF)
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Index Scan using hash_i4_partial_index on hash_i4_heap
+   Index Cond: (seqno = 9999)
+(2 rows)
+
+SELECT * FROM hash_i4_heap
+   WHERE seqno = 9999;
+ seqno |   random   
+-------+------------
+  9999 | 1227676208
+(1 row)
+
+--
 -- hash index
 -- grep '^90[^0-9]' hashovfl.data
 --
