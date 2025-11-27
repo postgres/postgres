@@ -6777,6 +6777,194 @@ EvictRelUnpinnedBuffers(Relation rel, int32 *buffers_evicted,
 }
 
 /*
+ * Helper function to mark unpinned buffer dirty whose buffer header lock is
+ * already acquired.
+ */
+static bool
+MarkDirtyUnpinnedBufferInternal(Buffer buf, BufferDesc *desc,
+								bool *buffer_already_dirty)
+{
+	uint32		buf_state;
+	bool		result = false;
+
+	*buffer_already_dirty = false;
+
+	buf_state = pg_atomic_read_u32(&(desc->state));
+	Assert(buf_state & BM_LOCKED);
+
+	if ((buf_state & BM_VALID) == 0)
+	{
+		UnlockBufHdr(desc);
+		return false;
+	}
+
+	/* Check that it's not pinned already. */
+	if (BUF_STATE_GET_REFCOUNT(buf_state) > 0)
+	{
+		UnlockBufHdr(desc);
+		return false;
+	}
+
+	/* Pin the buffer and then release the buffer spinlock */
+	PinBuffer_Locked(desc);
+
+	/* If it was not already dirty, mark it as dirty. */
+	if (!(buf_state & BM_DIRTY))
+	{
+		LWLockAcquire(BufferDescriptorGetContentLock(desc), LW_EXCLUSIVE);
+		MarkBufferDirty(buf);
+		result = true;
+		LWLockRelease(BufferDescriptorGetContentLock(desc));
+	}
+	else
+		*buffer_already_dirty = true;
+
+	UnpinBuffer(desc);
+
+	return result;
+}
+
+/*
+ * Try to mark the provided shared buffer as dirty.
+ *
+ * This function is intended for testing/development use only!
+ *
+ * Same as EvictUnpinnedBuffer() but with MarkBufferDirty() call inside.
+ *
+ * The buffer_already_dirty parameter is mandatory and indicate if the buffer
+ * could not be dirtied because it is already dirty.
+ *
+ * Returns true if the buffer has successfully been marked as dirty.
+ */
+bool
+MarkDirtyUnpinnedBuffer(Buffer buf, bool *buffer_already_dirty)
+{
+	BufferDesc *desc;
+	bool		buffer_dirtied = false;
+
+	Assert(!BufferIsLocal(buf));
+
+	/* Make sure we can pin the buffer. */
+	ResourceOwnerEnlarge(CurrentResourceOwner);
+	ReservePrivateRefCountEntry();
+
+	desc = GetBufferDescriptor(buf - 1);
+	LockBufHdr(desc);
+
+	buffer_dirtied = MarkDirtyUnpinnedBufferInternal(buf, desc, buffer_already_dirty);
+	/* Both can not be true at the same time */
+	Assert(!(buffer_dirtied && *buffer_already_dirty));
+
+	return buffer_dirtied;
+}
+
+/*
+ * Try to mark all the shared buffers containing provided relation's pages as
+ * dirty.
+ *
+ * This function is intended for testing/development use only! See
+ * MarkDirtyUnpinnedBuffer().
+ *
+ * The buffers_* parameters are mandatory and indicate the total count of
+ * buffers that:
+ * - buffers_dirtied - were dirtied
+ * - buffers_already_dirty - were already dirty
+ * - buffers_skipped - could not be dirtied because of a reason different
+ * than a buffer being already dirty.
+ */
+void
+MarkDirtyRelUnpinnedBuffers(Relation rel,
+							int32 *buffers_dirtied,
+							int32 *buffers_already_dirty,
+							int32 *buffers_skipped)
+{
+	Assert(!RelationUsesLocalBuffers(rel));
+
+	*buffers_dirtied = 0;
+	*buffers_already_dirty = 0;
+	*buffers_skipped = 0;
+
+	for (int buf = 1; buf <= NBuffers; buf++)
+	{
+		BufferDesc *desc = GetBufferDescriptor(buf - 1);
+		uint32		buf_state = pg_atomic_read_u32(&(desc->state));
+		bool		buffer_already_dirty;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/* An unlocked precheck should be safe and saves some cycles. */
+		if ((buf_state & BM_VALID) == 0 ||
+			!BufTagMatchesRelFileLocator(&desc->tag, &rel->rd_locator))
+			continue;
+
+		/* Make sure we can pin the buffer. */
+		ResourceOwnerEnlarge(CurrentResourceOwner);
+		ReservePrivateRefCountEntry();
+
+		buf_state = LockBufHdr(desc);
+
+		/* recheck, could have changed without the lock */
+		if ((buf_state & BM_VALID) == 0 ||
+			!BufTagMatchesRelFileLocator(&desc->tag, &rel->rd_locator))
+		{
+			UnlockBufHdr(desc);
+			continue;
+		}
+
+		if (MarkDirtyUnpinnedBufferInternal(buf, desc, &buffer_already_dirty))
+			(*buffers_dirtied)++;
+		else if (buffer_already_dirty)
+			(*buffers_already_dirty)++;
+		else
+			(*buffers_skipped)++;
+	}
+}
+
+/*
+ * Try to mark all the shared buffers as dirty.
+ *
+ * This function is intended for testing/development use only! See
+ * MarkDirtyUnpinnedBuffer().
+ *
+ * See MarkDirtyRelUnpinnedBuffers() above for details about the buffers_*
+ * parameters.
+ */
+void
+MarkDirtyAllUnpinnedBuffers(int32 *buffers_dirtied,
+							int32 *buffers_already_dirty,
+							int32 *buffers_skipped)
+{
+	*buffers_dirtied = 0;
+	*buffers_already_dirty = 0;
+	*buffers_skipped = 0;
+
+	for (int buf = 1; buf <= NBuffers; buf++)
+	{
+		BufferDesc *desc = GetBufferDescriptor(buf - 1);
+		uint32		buf_state;
+		bool		buffer_already_dirty;
+
+		CHECK_FOR_INTERRUPTS();
+
+		buf_state = pg_atomic_read_u32(&desc->state);
+		if (!(buf_state & BM_VALID))
+			continue;
+
+		ResourceOwnerEnlarge(CurrentResourceOwner);
+		ReservePrivateRefCountEntry();
+
+		LockBufHdr(desc);
+
+		if (MarkDirtyUnpinnedBufferInternal(buf, desc, &buffer_already_dirty))
+			(*buffers_dirtied)++;
+		else if (buffer_already_dirty)
+			(*buffers_already_dirty)++;
+		else
+			(*buffers_skipped)++;
+	}
+}
+
+/*
  * Generic implementation of the AIO handle staging callback for readv/writev
  * on local/shared buffers.
  *

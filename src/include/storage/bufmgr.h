@@ -323,6 +323,14 @@ extern void EvictRelUnpinnedBuffers(Relation rel,
 									int32 *buffers_evicted,
 									int32 *buffers_flushed,
 									int32 *buffers_skipped);
+extern bool MarkDirtyUnpinnedBuffer(Buffer buf, bool *buffer_already_dirty);
+extern void MarkDirtyRelUnpinnedBuffers(Relation rel,
+										int32 *buffers_dirtied,
+										int32 *buffers_already_dirty,
+										int32 *buffers_skipped);
+extern void MarkDirtyAllUnpinnedBuffers(int32 *buffers_dirtied,
+										int32 *buffers_already_dirty,
+										int32 *buffers_skipped);
 
 /* in buf_init.c */
 extern void BufferManagerShmemInit(void);
