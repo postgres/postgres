@@ -37,9 +37,9 @@ typedef struct pg_atomic_uint32
 } pg_atomic_uint32;
 
 #define PG_HAVE_ATOMIC_U64_SUPPORT
-typedef struct pg_attribute_aligned(8) pg_atomic_uint64
+typedef struct pg_atomic_uint64
 {
-	volatile uint64 value;
+	alignas(8) volatile uint64 value;
 } pg_atomic_uint64;
 
 
