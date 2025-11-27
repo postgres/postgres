@@ -1331,6 +1331,10 @@ SELECT JSON_QUERY(jsonb '{"a": 123}', '$' || '.' || 'a' WITH WRAPPER);
  [123]
 (1 row)
 
+SELECT JSON_QUERY(jsonb '{"a": 123}', ('$' || '.' || 'a' || NULL)::date WITH WRAPPER);
+ERROR:  JSON path expression must be of type jsonpath, not of type date
+LINE 1: SELECT JSON_QUERY(jsonb '{"a": 123}', ('$' || '.' || 'a' || ...
+                                               ^
 -- Should fail (invalid path)
 SELECT JSON_QUERY(jsonb '{"a": 123}', 'error' || ' ' || 'error');
 ERROR:  syntax error at or near " " of jsonpath input
@@ -1355,6 +1359,10 @@ SELECT json_value('"aaa"', path RETURNING json) FROM jsonpaths;
  "aaa"
 (1 row)
 
+SELECT json_value('"aaa"', jsonpaths RETURNING json) FROM jsonpaths;
+ERROR:  JSON path expression must be of type jsonpath, not of type jsonpaths
+LINE 1: SELECT json_value('"aaa"', jsonpaths RETURNING json) FROM js...
+                                   ^
 -- Test PASSING argument parsing
 SELECT JSON_QUERY(jsonb 'null', '$xyz' PASSING 1 AS xy);
 ERROR:  could not find jsonpath variable "xyz"
