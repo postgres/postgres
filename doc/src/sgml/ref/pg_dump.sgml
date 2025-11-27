@@ -298,7 +298,7 @@ PostgreSQL documentation
         It must be given for the directory output format however, where it
         specifies the target directory instead of a file. In this case the
         directory is created by <command>pg_dump</command> unless the directory
-        exist and is empty.
+        exists and is empty.
        </para>
       </listitem>
      </varlistentry>
