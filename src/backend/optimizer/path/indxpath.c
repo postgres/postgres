@@ -3412,6 +3412,16 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 		if (is_target_rel)
 			continue;
 
+		/*
+		 * If index is !amoptionalkey, also leave indrestrictinfo as set
+		 * above.  Otherwise we risk removing all quals for the first index
+		 * key and then not being able to generate an indexscan at all.  It
+		 * would be better to be more selective, but we've not yet identified
+		 * which if any of the quals match the first index key.
+		 */
+		if (!index->amoptionalkey)
+			continue;
+
 		/* Else compute indrestrictinfo as the non-implied quals */
 		index->indrestrictinfo = NIL;
 		foreach(lcr, rel->baserestrictinfo)
