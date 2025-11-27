@@ -22,18 +22,22 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
-    [ FOR { <replaceable class="parameter">publication_object</replaceable> [, ... ] | <replaceable class="parameter">all_publication_object</replaceable> [, ... ] } ]
+    [ FOR { <replaceable class="parameter">publication_object</replaceable> [, ... ] | <replaceable class="parameter">publication_all_object</replaceable> [, ... ] } ]
     [ WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
-    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
+    TABLE <replaceable class="parameter">table_and_columns</replaceable> [, ... ]
     TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 
-<phrase>where <replaceable class="parameter">all_publication_object</replaceable> is one of:</phrase>
+<phrase>and <replaceable class="parameter">publication_all_object</replaceable> is one of:</phrase>
 
     ALL TABLES
     ALL SEQUENCES
+
+<phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
+
+    [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ]
 </synopsis>
  </refsynopsisdiv>
 
