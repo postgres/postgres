@@ -415,3 +415,83 @@ ExecInitTidRangeScan(TidRangeScan *node, EState *estate, int eflags)
 	 */
 	return tidrangestate;
 }
+
+/* ----------------------------------------------------------------
+ *						Parallel Scan Support
+ * ----------------------------------------------------------------
+ */
+
+/* ----------------------------------------------------------------
+ *		ExecTidRangeScanEstimate
+ *
+ *		Compute the amount of space we'll need in the parallel
+ *		query DSM, and inform pcxt->estimator about our needs.
+ * ----------------------------------------------------------------
+ */
+void
+ExecTidRangeScanEstimate(TidRangeScanState *node, ParallelContext *pcxt)
+{
+	EState	   *estate = node->ss.ps.state;
+
+	node->trss_pscanlen =
+		table_parallelscan_estimate(node->ss.ss_currentRelation,
+									estate->es_snapshot);
+	shm_toc_estimate_chunk(&pcxt->estimator, node->trss_pscanlen);
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecTidRangeScanInitializeDSM
+ *
+ *		Set up a parallel TID range scan descriptor.
+ * ----------------------------------------------------------------
+ */
+void
+ExecTidRangeScanInitializeDSM(TidRangeScanState *node, ParallelContext *pcxt)
+{
+	EState	   *estate = node->ss.ps.state;
+	ParallelTableScanDesc pscan;
+
+	pscan = shm_toc_allocate(pcxt->toc, node->trss_pscanlen);
+	table_parallelscan_initialize(node->ss.ss_currentRelation,
+								  pscan,
+								  estate->es_snapshot);
+	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pscan);
+	node->ss.ss_currentScanDesc =
+		table_beginscan_parallel_tidrange(node->ss.ss_currentRelation,
+										  pscan);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecTidRangeScanReInitializeDSM
+ *
+ *		Reset shared state before beginning a fresh scan.
+ * ----------------------------------------------------------------
+ */
+void
+ExecTidRangeScanReInitializeDSM(TidRangeScanState *node,
+								ParallelContext *pcxt)
+{
+	ParallelTableScanDesc pscan;
+
+	pscan = node->ss.ss_currentScanDesc->rs_parallel;
+	table_parallelscan_reinitialize(node->ss.ss_currentRelation, pscan);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecTidRangeScanInitializeWorker
+ *
+ *		Copy relevant information from TOC into planstate.
+ * ----------------------------------------------------------------
+ */
+void
+ExecTidRangeScanInitializeWorker(TidRangeScanState *node,
+								 ParallelWorkerContext *pwcxt)
+{
+	ParallelTableScanDesc pscan;
+
+	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
+	node->ss.ss_currentScanDesc =
+		table_beginscan_parallel_tidrange(node->ss.ss_currentRelation,
+										  pscan);
+}

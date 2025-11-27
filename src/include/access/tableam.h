@@ -1131,6 +1131,16 @@ extern TableScanDesc table_beginscan_parallel(Relation relation,
 											  ParallelTableScanDesc pscan);
 
 /*
+ * Begin a parallel tid range scan. `pscan` needs to have been initialized
+ * with table_parallelscan_initialize(), for the same relation. The
+ * initialization does not need to have happened in this backend.
+ *
+ * Caller must hold a suitable lock on the relation.
+ */
+extern TableScanDesc table_beginscan_parallel_tidrange(Relation relation,
+													   ParallelTableScanDesc pscan);
+
+/*
  * Restart a parallel scan.  Call this in the leader process.  Caller is
  * responsible for making sure that all workers have finished the scan
  * beforehand.
@@ -2028,7 +2038,9 @@ extern BlockNumber table_block_parallelscan_nextpage(Relation rel,
 													 ParallelBlockTableScanDesc pbscan);
 extern void table_block_parallelscan_startblock_init(Relation rel,
 													 ParallelBlockTableScanWorker pbscanwork,
-													 ParallelBlockTableScanDesc pbscan);
+													 ParallelBlockTableScanDesc pbscan,
+													 BlockNumber startblock,
+													 BlockNumber numblocks);
 
 
 /* ----------------------------------------------------------------------------
