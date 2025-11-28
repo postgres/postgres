@@ -1049,6 +1049,12 @@ $standby2->wait_for_log(qr/slot sync worker started/, $log_offset);
 $standby2->wait_for_log(
 	qr/could not synchronize replication slot \"lsub1_slot\"/, $log_offset);
 
+# Confirm that the slotsync skip reason is updated
+$result = $standby2->safe_psql('postgres',
+	"SELECT slotsync_skip_reason FROM pg_replication_slots WHERE slot_name = 'lsub1_slot'"
+);
+is($result, 'wal_or_rows_removed', "check slot sync skip reason");
+
 # Confirm that the slotsync skip statistics is updated
 $result = $standby2->safe_psql('postgres',
 	"SELECT slotsync_skip_count > 0 FROM pg_stat_replication_slots WHERE slot_name = 'lsub1_slot'"

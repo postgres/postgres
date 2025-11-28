@@ -1060,7 +1060,8 @@ CREATE VIEW pg_replication_slots AS
             L.conflicting,
             L.invalidation_reason,
             L.failover,
-            L.synced
+            L.synced,
+            L.slotsync_skip_reason
     FROM pg_get_replication_slots() AS L
             LEFT JOIN pg_database D ON (L.datoid = D.oid);
 

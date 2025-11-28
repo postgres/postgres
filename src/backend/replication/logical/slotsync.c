@@ -149,6 +149,35 @@ static void slotsync_failure_callback(int code, Datum arg);
 static void update_synced_slots_inactive_since(void);
 
 /*
+ * Update slot sync skip stats. This function requires the caller to acquire
+ * the slot.
+ */
+static void
+update_slotsync_skip_stats(SlotSyncSkipReason skip_reason)
+{
+	ReplicationSlot *slot;
+
+	Assert(MyReplicationSlot);
+
+	slot = MyReplicationSlot;
+
+	/*
+	 * Update the slot sync related stats in pg_stat_replication_slot when a
+	 * slot sync is skipped
+	 */
+	if (skip_reason != SS_SKIP_NONE)
+		pgstat_report_replslotsync(slot);
+
+	/* Update the slot sync skip reason */
+	if (slot->slotsync_skip_reason != skip_reason)
+	{
+		SpinLockAcquire(&slot->mutex);
+		slot->slotsync_skip_reason = skip_reason;
+		SpinLockRelease(&slot->mutex);
+	}
+}
+
+/*
  * If necessary, update the local synced slot's metadata based on the data
  * from the remote slot.
  *
@@ -170,6 +199,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 	ReplicationSlot *slot = MyReplicationSlot;
 	bool		updated_xmin_or_lsn = false;
 	bool		updated_config = false;
+	SlotSyncSkipReason skip_reason = SS_SKIP_NONE;
 
 	Assert(slot->data.invalidated == RS_INVAL_NONE);
 
@@ -188,7 +218,7 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 							  slot->data.catalog_xmin))
 	{
 		/* Update slot sync skip stats */
-		pgstat_report_replslotsync(slot);
+		update_slotsync_skip_stats(SS_SKIP_WAL_OR_ROWS_REMOVED);
 
 		/*
 		 * This can happen in following situations:
@@ -286,11 +316,14 @@ update_local_synced_slot(RemoteSlot *remote_slot, Oid remote_dbid,
 			 * persisted. See update_and_persist_local_synced_slot().
 			 */
 			if (found_consistent_snapshot && !(*found_consistent_snapshot))
-				pgstat_report_replslotsync(slot);
+				skip_reason = SS_SKIP_NO_CONSISTENT_SNAPSHOT;
 		}
 
 		updated_xmin_or_lsn = true;
 	}
+
+	/* Update slot sync skip stats */
+	update_slotsync_skip_stats(skip_reason);
 
 	if (remote_dbid != slot->data.database ||
 		remote_slot->two_phase != slot->data.two_phase ||
@@ -696,7 +729,7 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		/* Skip the sync of an invalidated slot */
 		if (slot->data.invalidated != RS_INVAL_NONE)
 		{
-			pgstat_report_replslotsync(slot);
+			update_slotsync_skip_stats(SS_SKIP_INVALID);
 
 			ReplicationSlotRelease();
 			return slot_updated;
@@ -711,7 +744,7 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		 */
 		if (remote_slot->confirmed_lsn > latestFlushPtr)
 		{
-			pgstat_report_replslotsync(slot);
+			update_slotsync_skip_stats(SS_SKIP_WAL_NOT_FLUSHED);
 
 			/*
 			 * Can get here only if GUC 'synchronized_standby_slots' on the
@@ -812,7 +845,7 @@ synchronize_one_slot(RemoteSlot *remote_slot, Oid remote_dbid)
 		 */
 		if (remote_slot->confirmed_lsn > latestFlushPtr)
 		{
-			pgstat_report_replslotsync(slot);
+			update_slotsync_skip_stats(SS_SKIP_WAL_NOT_FLUSHED);
 
 			/*
 			 * Can get here only if GUC 'synchronized_standby_slots' on the

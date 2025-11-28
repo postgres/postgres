@@ -115,8 +115,8 @@ pgstat_report_replslotsync(ReplicationSlot *slot)
 	PgStatShared_ReplSlot *shstatent;
 	PgStat_StatReplSlotEntry *statent;
 
-	/* Slot sync stats are valid only for logical slots on standby. */
-	Assert(SlotIsLogical(slot));
+	/* Slot sync stats are valid only for synced logical slots on standby. */
+	Assert(slot->data.synced);
 	Assert(RecoveryInProgress());
 
 	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_REPLSLOT, InvalidOid,

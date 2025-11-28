@@ -1665,7 +1665,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Number of times the slot synchronization is skipped. Slot
-        synchronization occur only on standby servers and thus this column has
+        synchronization occurs only on standby servers and thus this column has
         no meaning on the primary server.
        </para>
       </entry>
@@ -1677,7 +1677,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
        </para>
        <para>
         Time at which last slot synchronization was skipped. Slot
-        synchronization occur only on standby servers and thus this column has
+        synchronization occurs only on standby servers and thus this column has
         no meaning on the primary server.
        </para>
       </entry>

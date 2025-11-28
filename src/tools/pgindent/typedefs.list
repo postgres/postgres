@@ -2807,6 +2807,7 @@ SlabSlot
 SlotInvalidationCauseMap
 SlotNumber
 SlotSyncCtxStruct
+SlotSyncSkipReason
 SlruCtl
 SlruCtlData
 SlruErrorCause

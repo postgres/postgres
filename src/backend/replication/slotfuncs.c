@@ -25,6 +25,17 @@
 #include "utils/pg_lsn.h"
 
 /*
+ * Map SlotSyncSkipReason enum values to human-readable names.
+ */
+static const char *SlotSyncSkipReasonNames[] = {
+	[SS_SKIP_NONE] = "none",
+	[SS_SKIP_WAL_NOT_FLUSHED] = "wal_not_flushed",
+	[SS_SKIP_WAL_OR_ROWS_REMOVED] = "wal_or_rows_removed",
+	[SS_SKIP_NO_CONSISTENT_SNAPSHOT] = "no_consistent_snapshot",
+	[SS_SKIP_INVALID] = "slot_invalidated"
+};
+
+/*
  * Helper function for creating a new physical replication slot with
  * given arguments. Note that this function doesn't release the created
  * slot.
@@ -235,7 +246,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 Datum
 pg_get_replication_slots(PG_FUNCTION_ARGS)
 {
-#define PG_GET_REPLICATION_SLOTS_COLS 20
+#define PG_GET_REPLICATION_SLOTS_COLS 21
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	XLogRecPtr	currlsn;
 	int			slotno;
@@ -442,6 +453,11 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		values[i++] = BoolGetDatum(slot_contents.data.failover);
 
 		values[i++] = BoolGetDatum(slot_contents.data.synced);
+
+		if (slot_contents.slotsync_skip_reason == SS_SKIP_NONE)
+			nulls[i++] = true;
+		else
+			values[i++] = CStringGetTextDatum(SlotSyncSkipReasonNames[slot_contents.slotsync_skip_reason]);
 
 		Assert(i == PG_GET_REPLICATION_SLOTS_COLS);
 

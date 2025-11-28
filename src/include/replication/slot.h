@@ -72,6 +72,24 @@ typedef enum ReplicationSlotInvalidationCause
 #define	RS_INVAL_MAX_CAUSES 4
 
 /*
+ * When the slot synchronization worker is running, or when
+ * pg_sync_replication_slots is executed, slot synchronization may be
+ * skipped. This enum defines the possible reasons for skipping slot
+ * synchronization.
+ */
+typedef enum SlotSyncSkipReason
+{
+	SS_SKIP_NONE,				/* No skip */
+	SS_SKIP_WAL_NOT_FLUSHED,	/* Standby did not flush the wal corresponding
+								 * to confirmed flush of remote slot */
+	SS_SKIP_WAL_OR_ROWS_REMOVED,	/* Remote slot is behind; required WAL or
+									 * rows may be removed or at risk */
+	SS_SKIP_NO_CONSISTENT_SNAPSHOT, /* Standby could not build a consistent
+									 * snapshot */
+	SS_SKIP_INVALID				/* Local slot is invalid */
+} SlotSyncSkipReason;
+
+/*
  * On-Disk data of a replication slot, preserved across restarts.
  */
 typedef struct ReplicationSlotPersistentData
@@ -249,6 +267,18 @@ typedef struct ReplicationSlot
 	 */
 	XLogRecPtr	last_saved_restart_lsn;
 
+	/*
+	 * Reason for the most recent slot synchronization skip.
+	 *
+	 * Slot sync skips can occur for both temporary and persistent replication
+	 * slots. They are more common for temporary slots, but persistent slots
+	 * may also skip synchronization in rare cases (e.g.,
+	 * SS_SKIP_WAL_NOT_FLUSHED or SS_SKIP_WAL_OR_ROWS_REMOVED).
+	 *
+	 * Since, temporary slots are dropped after server restart, persisting
+	 * slotsync_skip_reason provides no practical benefit.
+	 */
+	SlotSyncSkipReason slotsync_skip_reason;
 } ReplicationSlot;
 
 #define SlotIsPhysical(slot) ((slot)->data.database == InvalidOid)

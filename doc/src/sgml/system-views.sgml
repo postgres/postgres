@@ -3102,6 +3102,49 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para></entry>
      </row>
 
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>slotsync_skip_reason</structfield><type>text</type>
+      </para>
+      <para>
+       The reason for the last slot synchronization skip. Slot
+       synchronization occurs only on standby servers and thus this column has
+       no meaning on the primary server. It is relevant mainly for logical slots
+       on standby servers whose <structfield>synced</structfield> field is
+       <literal>true</literal>. It is <literal>NULL</literal> if slot
+       synchronization is successful.
+       Possible values are:
+       <itemizedlist spacing="compact">
+        <listitem>
+         <para>
+          <literal>wal_or_rows_removed</literal> means that the required WALs or
+          catalog rows have already been removed or are at the risk of removal
+          from the standby.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>wal_not_flushed</literal> means that the standby had not
+          flushed the WAL corresponding to the position reserved on the failover
+          slot.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>no_consistent_snapshot</literal> means that the standby could
+          not build a consistent snapshot to decode WALs from
+          <structfield>restart_lsn</structfield>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>slot_invalidated</literal> means that the synced slot is
+          invalidated.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
