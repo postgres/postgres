@@ -110,11 +110,20 @@ sub print_table
 		printf $ofh "\t\t.name = %s,\n", dquote($entry->{name});
 		printf $ofh "\t\t.context = %s,\n", $entry->{context};
 		printf $ofh "\t\t.group = %s,\n", $entry->{group};
+		printf $ofh
+		  "\t\t/* translator: GUC parameter \"%s\" short description */\n",
+		  $entry->{name};
 		printf $ofh "\t\t.short_desc = gettext_noop(%s),\n",
 		  dquote($entry->{short_desc});
-		printf $ofh "\t\t.long_desc = gettext_noop(%s),\n",
-		  dquote($entry->{long_desc})
-		  if $entry->{long_desc};
+
+		if ($entry->{long_desc})
+		{
+			printf $ofh
+			  "\t\t/* translator: GUC parameter \"%s\" long description */\n",
+			  $entry->{name};
+			printf $ofh "\t\t.long_desc = gettext_noop(%s),\n",
+			  dquote($entry->{long_desc});
+		}
 		printf $ofh "\t\t.flags = %s,\n", $entry->{flags} if $entry->{flags};
 		printf $ofh "\t\t.vartype = %s,\n", ('PGC_' . uc($entry->{type}));
 		printf $ofh "\t\t._%s = {\n", $entry->{type};
