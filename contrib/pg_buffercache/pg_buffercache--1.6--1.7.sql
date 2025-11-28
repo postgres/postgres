@@ -31,3 +31,26 @@ REVOKE ALL ON pg_buffercache_numa FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION pg_buffercache_os_pages(boolean) TO pg_monitor;
 GRANT SELECT ON pg_buffercache_os_pages TO pg_monitor;
 GRANT SELECT ON pg_buffercache_numa TO pg_monitor;
+
+-- Functions to mark buffers as dirty.
+CREATE FUNCTION pg_buffercache_mark_dirty(
+    IN int,
+    OUT buffer_dirtied boolean,
+    OUT buffer_already_dirty boolean)
+AS 'MODULE_PATHNAME', 'pg_buffercache_mark_dirty'
+LANGUAGE C PARALLEL SAFE VOLATILE STRICT;
+
+CREATE FUNCTION pg_buffercache_mark_dirty_relation(
+    IN regclass,
+    OUT buffers_dirtied int4,
+    OUT buffers_already_dirty int4,
+    OUT buffers_skipped int4)
+AS 'MODULE_PATHNAME', 'pg_buffercache_mark_dirty_relation'
+LANGUAGE C PARALLEL SAFE VOLATILE STRICT;
+
+CREATE FUNCTION pg_buffercache_mark_dirty_all(
+    OUT buffers_dirtied int4,
+    OUT buffers_already_dirty int4,
+    OUT buffers_skipped int4)
+AS 'MODULE_PATHNAME', 'pg_buffercache_mark_dirty_all'
+LANGUAGE C PARALLEL SAFE VOLATILE;

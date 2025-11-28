@@ -75,7 +75,7 @@ SELECT count(*) > 0 FROM pg_buffercache_usage_counts();
 
 RESET role;
 ------
----- Test pg_buffercache_evict* functions
+---- Test pg_buffercache_evict* and pg_buffercache_mark_dirty* functions
 ------
 CREATE ROLE regress_buffercache_normal;
 SET ROLE regress_buffercache_normal;
@@ -86,6 +86,12 @@ SELECT * FROM pg_buffercache_evict_relation(1);
 ERROR:  must be superuser to use pg_buffercache_evict_relation()
 SELECT * FROM pg_buffercache_evict_all();
 ERROR:  must be superuser to use pg_buffercache_evict_all()
+SELECT * FROM pg_buffercache_mark_dirty(1);
+ERROR:  must be superuser to use pg_buffercache_mark_dirty()
+SELECT * FROM pg_buffercache_mark_dirty_relation(1);
+ERROR:  must be superuser to use pg_buffercache_mark_dirty_relation()
+SELECT * FROM pg_buffercache_mark_dirty_all();
+ERROR:  must be superuser to use pg_buffercache_mark_dirty_all()
 RESET ROLE;
 -- These should return nothing, because these are STRICT functions
 SELECT * FROM pg_buffercache_evict(NULL);
@@ -100,6 +106,18 @@ SELECT * FROM pg_buffercache_evict_relation(NULL);
                  |                 |                
 (1 row)
 
+SELECT * FROM pg_buffercache_mark_dirty(NULL);
+ buffer_dirtied | buffer_already_dirty 
+----------------+----------------------
+                | 
+(1 row)
+
+SELECT * FROM pg_buffercache_mark_dirty_relation(NULL);
+ buffers_dirtied | buffers_already_dirty | buffers_skipped 
+-----------------+-----------------------+-----------------
+                 |                       |                
+(1 row)
+
 -- These should fail because they are not called by valid range of buffers
 -- Number of the shared buffers are limited by max integer
 SELECT 2147483647 max_buffers \gset
@@ -109,11 +127,18 @@ SELECT * FROM pg_buffercache_evict(0);
 ERROR:  bad buffer ID: 0
 SELECT * FROM pg_buffercache_evict(:max_buffers);
 ERROR:  bad buffer ID: 2147483647
--- This should fail because pg_buffercache_evict_relation() doesn't accept
--- local relations
+SELECT * FROM pg_buffercache_mark_dirty(-1);
+ERROR:  bad buffer ID: -1
+SELECT * FROM pg_buffercache_mark_dirty(0);
+ERROR:  bad buffer ID: 0
+SELECT * FROM pg_buffercache_mark_dirty(:max_buffers);
+ERROR:  bad buffer ID: 2147483647
+-- These should fail because they don't accept local relations
 CREATE TEMP TABLE temp_pg_buffercache();
 SELECT * FROM pg_buffercache_evict_relation('temp_pg_buffercache');
 ERROR:  relation uses local buffers, pg_buffercache_evict_relation() is intended to be used for shared buffers only
+SELECT * FROM pg_buffercache_mark_dirty_relation('temp_pg_buffercache');
+ERROR:  relation uses local buffers, pg_buffercache_mark_dirty_relation() is intended to be used for shared buffers only
 DROP TABLE temp_pg_buffercache;
 -- These shouldn't fail
 SELECT buffer_evicted IS NOT NULL FROM pg_buffercache_evict(1);
@@ -135,5 +160,23 @@ SELECT buffers_evicted IS NOT NULL FROM pg_buffercache_evict_relation('shared_pg
  t
 (1 row)
 
+SELECT buffers_dirtied IS NOT NULL FROM pg_buffercache_mark_dirty_relation('shared_pg_buffercache');
+ ?column? 
+----------
+ t
+(1 row)
+
 DROP TABLE shared_pg_buffercache;
+SELECT pg_buffercache_mark_dirty(1) IS NOT NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT pg_buffercache_mark_dirty_all() IS NOT NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
 DROP ROLE regress_buffercache_normal;

@@ -43,6 +43,18 @@
   <primary>pg_buffercache_evict_all</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty_relation</primary>
+ </indexterm>
+
+ <indexterm>
+  <primary>pg_buffercache_mark_dirty_all</primary>
+ </indexterm>
+
  <para>
   This module provides the <function>pg_buffercache_pages()</function>
   function (wrapped in the <structname>pg_buffercache</structname> view), the
@@ -52,8 +64,11 @@
   <function>pg_buffercache_summary()</function> function, the
   <function>pg_buffercache_usage_counts()</function> function, the
   <function>pg_buffercache_evict()</function> function, the
-  <function>pg_buffercache_evict_relation()</function> function and the
-  <function>pg_buffercache_evict_all()</function> function.
+  <function>pg_buffercache_evict_relation()</function> function, the
+  <function>pg_buffercache_evict_all()</function> function, the
+  <function>pg_buffercache_mark_dirty()</function> function, the
+  <function>pg_buffercache_mark_dirty_relation()</function> function and the
+  <function>pg_buffercache_mark_dirty_all()</function> function.
  </para>
 
  <para>
@@ -110,6 +125,25 @@
   The <function>pg_buffercache_evict_all()</function> function allows all
   unpinned shared buffers to be evicted in the buffer pool.  Use of this
   function is restricted to superusers only.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_mark_dirty()</function> function allows a block
+  to be marked as dirty in the buffer pool given a buffer identifier.  Use of
+  this function is restricted to superusers only.
+ </para>
+
+<para>
+  The <function>pg_buffercache_mark_dirty_relation()</function> function
+  allows all unpinned shared buffers in the relation to be marked as dirty in
+  the buffer pool given a relation identifier.  Use of this function is
+  restricted to superusers only.
+</para>
+
+ <para>
+  The <function>pg_buffercache_mark_dirty_all()</function> function allows all
+  unpinned shared buffers to be marked as dirty in the buffer pool. Use of
+  this function is restricted to superusers only.
  </para>
 
  <sect2 id="pgbuffercache-pg-buffercache">
@@ -580,6 +614,61 @@
    necessarily been flushed by us, they might have been flushed by someone
    else.  The result is immediately out of date upon return, as buffers might
    immediately be read back in due to concurrent activity.  The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty">
+  <title>The <structname>pg_buffercache_mark_dirty</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty()</function> function takes a
+   buffer identifier, as shown in the <structfield>bufferid</structfield>
+   column of the <structname>pg_buffercache</structname> view.  It returns
+   information about whether the buffer was marked as dirty.
+   The <structfield>buffer_dirtied</structfield> column is true on success,
+   and false if the buffer was already dirty if the buffer was not valid or
+   if it could not be marked as dirty because it was pinned.
+   The <structfield>buffer_already_dirty</structfield> column is true if
+   the buffer couldn't be marked as dirty because it was already dirty. The
+   result is immediately out of date upon return, as the buffer might become
+   valid again at any time due to concurrent activity. The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty-relation">
+  <title>The <structname>pg_buffercache_mark_dirty_relation</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty_relation()</function> function is
+   very similar to the
+   <function>pg_buffercache_mark_dirty()</function> function.
+   The difference is that the
+   <function>pg_buffercache_mark_dirty_relation()</function> function takes a
+   relation identifier instead of buffer identifier. It tries to mark all
+   buffers dirty for all forks in that relation.
+   It returns the number of buffers marked as dirty, the number of buffers
+   already dirty and the number of buffers skipped because already pinned or
+   invalid.
+   The result is immediately out of date upon return, as the buffer might
+   become valid again at any time due to concurrent activity. The function is
+   intended for developer testing only.
+  </para>
+ </sect2>
+
+ <sect2 id="pgbuffercache-pg-buffercache-mark-dirty-all">
+  <title>The <structname>pg_buffercache_mark_dirty_all</structname> Function</title>
+  <para>
+   The <function>pg_buffercache_mark_dirty_all()</function> function is
+   very similar to the <function>pg_buffercache_mark_dirty()</function>
+   function.
+   The difference is that the
+   <function>pg_buffercache_mark_dirty_all()</function> tries to mark all
+   buffers dirty in the buffer pool.
+   It returns the number of buffers marked as dirty, the number of buffers
+   already dirty and the number of buffers skipped because already pinned or
+   invalid.
+   The result is immediately out of date upon return, as the buffer might
+   become valid again at any time due to concurrent activity. The function is
    intended for developer testing only.
   </para>
  </sect2>
