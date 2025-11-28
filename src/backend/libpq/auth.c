@@ -1581,6 +1581,15 @@ pg_SSPI_make_upn(char *accountname,
  */
 
 /*
+ * Per RFC 1413, space and tab are whitespace in ident messages.
+ */
+static bool
+is_ident_whitespace(const char c)
+{
+	return c == ' ' || c == '\t';
+}
+
+/*
  *	Parse the string "*ident_response" as a response from a query to an Ident
  *	server.  If it's a normal response indicating a user name, return true
  *	and store the user name at *ident_user. If it's anything else,
@@ -1613,14 +1622,14 @@ interpret_ident_response(const char *ident_response,
 			int			i;		/* Index into *response_type */
 
 			cursor++;			/* Go over colon */
-			while (pg_isblank(*cursor))
+			while (is_ident_whitespace(*cursor))
 				cursor++;		/* skip blanks */
 			i = 0;
-			while (*cursor != ':' && *cursor != '\r' && !pg_isblank(*cursor) &&
+			while (*cursor != ':' && *cursor != '\r' && !is_ident_whitespace(*cursor) &&
 				   i < (int) (sizeof(response_type) - 1))
 				response_type[i++] = *cursor++;
 			response_type[i] = '\0';
-			while (pg_isblank(*cursor))
+			while (is_ident_whitespace(*cursor))
 				cursor++;		/* skip blanks */
 			if (strcmp(response_type, "USERID") != 0)
 				return false;
@@ -1643,7 +1652,7 @@ interpret_ident_response(const char *ident_response,
 					else
 					{
 						cursor++;	/* Go over colon */
-						while (pg_isblank(*cursor))
+						while (is_ident_whitespace(*cursor))
 							cursor++;	/* skip blanks */
 						/* Rest of line is user name.  Copy it over. */
 						i = 0;

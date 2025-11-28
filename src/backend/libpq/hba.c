@@ -138,14 +138,11 @@ static int	regexec_auth_token(const char *match, AuthToken *token,
 static void tokenize_error_callback(void *arg);
 
 
-/*
- * isblank() exists in the ISO C99 spec, but it's not very portable yet,
- * so provide our own version.
- */
-bool
+static bool
 pg_isblank(const char c)
 {
-	return c == ' ' || c == '\t' || c == '\r';
+	/* don't accept non-ASCII data */
+	return (!IS_HIGHBIT_SET(c) && isblank(c));
 }
 
 
