@@ -45,6 +45,7 @@ MGLOB="$builddir/src/Makefile.global"
 CPPFLAGS=`sed -n 's/^CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CFLAGS=`sed -n 's/^CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 ICU_CFLAGS=`sed -n 's/^ICU_CFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
+LLVM_CPPFLAGS=`sed -n 's/^LLVM_CPPFLAGS[ 	]*=[ 	]*//p' "$MGLOB"`
 CC=`sed -n 's/^CC[ 	]*=[ 	]*//p' "$MGLOB"`
 CXX=`sed -n 's/^CXX[ 	]*=[ 	]*//p' "$MGLOB"`
 PG_SYSROOT=`sed -n 's/^PG_SYSROOT[ 	]*=[ 	]*//p' "$MGLOB"`
@@ -65,11 +66,11 @@ if $cplusplus; then
 	    -I*|-D*) CXXPPFLAGS="$CXXPPFLAGS $flag";;
 	  esac
 	done
-	COMPILER_FLAGS="$CXXPPFLAGS $CXXFLAGS $ICU_CFLAGS"
+	COMPILER_FLAGS="$CXXPPFLAGS $CXXFLAGS $ICU_CFLAGS $LLVM_CPPFLAGS"
 else
 	ext=c
 	COMPILER=${CC:-gcc}
-	COMPILER_FLAGS="$CPPFLAGS $CFLAGS $ICU_CFLAGS"
+	COMPILER_FLAGS="$CPPFLAGS $CFLAGS $ICU_CFLAGS $LLVM_CPPFLAGS"
 fi
 
 # Create temp directory.
