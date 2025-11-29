@@ -277,11 +277,17 @@
 #include "utils/tuplesort.h"
 #include <stdlib.h>
 #include <arm_neon.h>
+#include "utils/array.h"
+
 
 #define INT8SUM_OID 2107
 #define INT4SUM_OID 2108
 #define INT4MAX_OID 2116
 #define INT4MIN_OID 2132
+#define COUNT_ANY_OID 2147
+#define INT4AVG_OID 2100
+#define INT8AVG_OID 2101
+
 
 /*
  * Control how many partitions are created when spilling HashAgg to
@@ -810,6 +816,13 @@ advance_transition_function(AggState *aggstate,
 	MemoryContextSwitchTo(oldContext);
 }
 
+typedef struct Int8TransTypeData
+{
+    int64   count;
+    int64   sum;
+} Int8TransTypeData;
+
+
 static void advance_aggregates_simd(AggState *aggstate)
 {
     int32_t *buf = aggstate->simd_batch_buf;
@@ -831,50 +844,68 @@ static void advance_aggregates_simd(AggState *aggstate)
         return;
     }
 
-    if (aggref->aggfnoid != INT4SUM_OID)
+    if (aggref->aggfnoid == INT4SUM_OID)
     {
-        aggstate->simd_batch_count = 0;
-        return;
-    }
+		tle = (TargetEntry *) linitial(aggref->args);
+		v   = (Var *) tle->expr;
+		vsum64 = vdupq_n_s64(0);
+		for (; i + 4 <= n; i += 4)
+		{
+			int32x4_t v32 = vld1q_s32(&buf[i]);
+			int64x2_t v64 = vpaddlq_s32(v32);
+			vsum64 = vaddq_s64(vsum64, v64);
+		}
+		vst1q_s64(lanes, vsum64);
+		total = lanes[0] + lanes[1];
+		for (; i < n; i++)
+			total += buf[i];
 
-    tle = (TargetEntry *) linitial(aggref->args);
-    v   = (Var *) tle->expr;
-    if (v->vartype != INT4OID)
-    {
-        aggstate->simd_batch_count = 0;
-        return;
-    }
+		pergroup = &aggstate->pergroups[0][peragg->transno];
 
-    vsum64 = vdupq_n_s64(0);
+		if (pergroup->transValueIsNull || pergroup->noTransValue)
+		{
+			pergroup->transValue       = Int64GetDatum(total);
+			pergroup->transValueIsNull = false;
+			pergroup->noTransValue     = false;
+		}
+		else
+		{
+			int64 oldv = DatumGetInt64(pergroup->transValue);
+			pergroup->transValue = Int64GetDatum(oldv + total);
+		}
+		//elog(LOG, "simd_batch_count = %lld", (long long) aggstate->simd_batch_count);
+		aggstate->simd_batch_count = 0;
+    }   
+	else if (aggref->aggfnoid == INT8AVG_OID)
+	{
+		//elog(LOG, "Start");
+		tle = (TargetEntry *) linitial(aggref->args); 
+		v = (Var *) tle->expr; 
+		vsum64 = vdupq_n_s64(0); 
+		for (; i + 4 <= n; i += 4) { 
+			int32x4_t v32 = vld1q_s32(&buf[i]); 
+			int64x2_t v64 = vpaddlq_s32(v32); 
+			vsum64 = vaddq_s64(vsum64, v64); 
+		}
+		vst1q_s64(lanes, vsum64); 
+		total = lanes[0] + lanes[1]; 
+		for (; i < n; i++) 
+			total += buf[i];
 
-    for (; i + 4 <= n; i += 4)
-    {
-        int32x4_t v32 = vld1q_s32(&buf[i]);
-        int64x2_t v64 = vpaddlq_s32(v32);
-        vsum64 = vaddq_s64(vsum64, v64);
-    }
+		pergroup = &aggstate->pergroups[aggstate->current_set][peragg->transno];
+		//elog(LOG, "[SIMD AVG] transValue=%p", DatumGetPointer(pergroup->transValue));
 
-    vst1q_s64(lanes, vsum64);
-    total = lanes[0] + lanes[1];
+		ArrayType         *transarray;
+		Int8TransTypeData *transdata;
 
-    for (; i < n; i++)
-        total += buf[i];
+		transarray = DatumGetArrayTypeP(pergroup->transValue);
+		transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
-    pergroup = &aggstate->pergroups[0][peragg->transno];
-
-    if (pergroup->transValueIsNull || pergroup->noTransValue)
-    {
-        pergroup->transValue       = Int64GetDatum(total);
-        pergroup->transValueIsNull = false;
-        pergroup->noTransValue     = false;
-    }
-    else
-    {
-        int64 oldv = DatumGetInt64(pergroup->transValue);
-        pergroup->transValue = Int64GetDatum(oldv + total);
-    }
-
-    aggstate->simd_batch_count = 0;
+		transdata->sum   += total;
+		transdata->count += n;
+		aggstate->simd_batch_count = 0;
+		return;
+	}
 }
 
 
@@ -3365,6 +3396,47 @@ hashagg_reset_spill_state(AggState *aggstate)
 		aggstate->hash_tapeset = NULL;
 	}
 }
+static bool agg_supports_simd(AggState *aggstate)
+{
+    AggStatePerAgg peragg;
+    Aggref *aggref;
+
+    /* Disable SIMD in the final combine phase */
+    if (aggstate->aggsplit == AGGSPLIT_FINAL_DESERIAL)
+    {
+        elog(LOG, "[SIMD] Disabled: parallel final combine stage");
+        return false;
+    }
+
+    peragg = &aggstate->peragg[0];
+    aggref = peragg->aggref;
+    Oid fno = aggref->aggfnoid;
+
+    /* Disable SIMD for COUNT */
+    if (fno == COUNT_ANY_OID)
+    {
+        elog(LOG, "[SIMD] Disabled: COUNT");
+        return false;
+    }
+
+    /* SUM(int4/int8) supported */
+    if (fno == INT4SUM_OID || fno == INT8SUM_OID)
+    {
+        elog(LOG, "[SIMD] Enabled: SUM (%u)", fno);
+        return true;
+    }
+
+    /* AVG(int8) */
+    if (fno == INT8AVG_OID)
+    {
+        elog(LOG, "[SIMD] Enabled: AVG (%u) using SIMD-SUM + scalar COUNT", fno);
+        return true;
+    }
+
+    elog(LOG, "[SIMD] Disabled: Unsupported aggregate fnoid=%u", fno);
+    return false;
+}
+
 
 
 /* -----------------
@@ -3432,22 +3504,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->sort_in = NULL;
 	aggstate->sort_out = NULL;
 
-	/* Decide if we should enable SIMD */
-	/* Environment flag override */
-	const char *flag = getenv("PG_FORCE_SIMD_AGG");
-	if (flag != NULL &&
-		strcmp(flag, "1") == 0 &&
-		node->aggsplit == AGGSPLIT_SIMPLE )  // Disable SIMD for the final combine phase
-	{
-		aggstate->use_simd_agg = true;
-		aggstate->simd_batch_size  = 4096;
-		aggstate->simd_batch_count = 0;
-		aggstate->simd_batch_buf   = palloc(sizeof(int32) * aggstate->simd_batch_size);
-	}
-	else
-	{
-		aggstate->use_simd_agg = false;
-	}
+	
 
 	/*
 	 * phases[0] always exists, but is dummy in sorted/plain mode
@@ -4234,6 +4291,21 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		phase->evaltrans_cache[0][0] = phase->evaltrans;
 	}
 
+	/* Decide if we should enable SIMD */
+	/* Environment flag override */
+	const char *flag = getenv("PG_FORCE_SIMD_AGG");
+	if (flag != NULL && strcmp(flag, "1") == 0 && agg_supports_simd(aggstate))  // Disable SIMD for the final combine phase
+	{
+		aggstate->use_simd_agg = true;
+		aggstate->simd_batch_size  = 4096;
+		aggstate->simd_batch_count = 0;
+		aggstate->simd_batch_buf   = palloc(sizeof(int32) * aggstate->simd_batch_size);
+	}
+	else
+	{
+		elog(LOG, "Doesn't activate SIMD");
+		aggstate->use_simd_agg = false;
+	}
 	return aggstate;
 }
 
