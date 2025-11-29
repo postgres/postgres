@@ -120,6 +120,10 @@ static int	_bt_compare_array_elements(const void *a, const void *b, void *arg);
  * For the first attribute without an "=" key, any "<" and "<=" keys are
  * marked SK_BT_REQFWD while any ">" and ">=" keys are marked SK_BT_REQBKWD.
  * This can be seen to be correct by considering the above example.
+ * (Actually, the z key _will_ be marked SK_BT_REQFWD, since preprocessing
+ * will generate a skip array on y -- except when DEBUG_DISABLE_SKIP_SCAN.
+ * See below description of how and why we generate skip array = keys in the
+ * presence of a "contradictory" condition such as "y < 4".)
  *
  * If we never generated skip array scan keys, it would be possible for "gaps"
  * to appear that make it unsafe to mark any subsequent input scan keys
@@ -175,13 +179,18 @@ static int	_bt_compare_array_elements(const void *a, const void *b, void *arg);
  * array will generate its array elements from a range that's constrained by
  * any merged input inequalities (which won't get output in so->keyData[]).
  *
- * Row comparison keys currently have a couple of notable limitations.
- * Right now we just transfer them into the preprocessed array without any
- * editorialization.  We can treat them the same as an ordinary inequality
- * comparison on the row's first index column, for the purposes of the logic
- * about required keys.  Also, we are unable to merge a row comparison key
- * into a skip array (only ordinary inequalities are merged).  A key that
- * comes after a Row comparison key is therefore never marked as required.
+ * Row compares are treated as ordinary inequality comparisons on the row's
+ * first index column whenever possible.  We treat their first subkey as if it
+ * was a simple scalar inequality for the purposes of the logic about required
+ * keys.  This also gives us limited ability to detect contradictory/redundant
+ * conditions involving a row compare: we can do so whenever it involves an
+ * SK_ISNULL condition on a row compare's first column (the same rules used
+ * with simple inequalities work just as well here).  We have no ability to
+ * detect redundant/contradictory conditions in any other row compare case.
+ * Note in particular that we are unable to merge a row comparison key into a
+ * skip array (only ordinary inequalities are merged).  Any so->keyData[] key
+ * on a column that comes after a row comparison's first column can therefore
+ * never be marked as required at present.
  *
  * Note: the reason we have to copy the preprocessed scan keys into private
  * storage is that we are modifying the array based on comparisons of the
