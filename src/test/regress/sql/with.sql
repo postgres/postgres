@@ -1327,6 +1327,29 @@ COMMIT;
 
 SELECT * FROM bug6051_3;
 
+-- check that recursive CTE processing doesn't rewrite a CTE more than once
+-- (must not try to expand GENERATED ALWAYS IDENTITY columns more than once)
+CREATE TEMP TABLE id_alw1 (i int GENERATED ALWAYS AS IDENTITY);
+
+CREATE TEMP TABLE id_alw2 (i int GENERATED ALWAYS AS IDENTITY);
+CREATE TEMP VIEW id_alw2_view AS SELECT * FROM id_alw2;
+
+CREATE TEMP TABLE id_alw3 (i int GENERATED ALWAYS AS IDENTITY);
+CREATE RULE id_alw3_ins AS ON INSERT TO id_alw3 DO INSTEAD
+  WITH t1 AS (INSERT INTO id_alw1 DEFAULT VALUES RETURNING i)
+    INSERT INTO id_alw2_view DEFAULT VALUES RETURNING i;
+CREATE TEMP VIEW id_alw3_view AS SELECT * FROM id_alw3;
+
+CREATE TEMP TABLE id_alw4 (i int GENERATED ALWAYS AS IDENTITY);
+
+WITH t4 AS (INSERT INTO id_alw4 DEFAULT VALUES RETURNING i)
+  INSERT INTO id_alw3_view DEFAULT VALUES RETURNING i;
+
+SELECT * from id_alw1;
+SELECT * from id_alw2;
+SELECT * from id_alw3;
+SELECT * from id_alw4;
+
 -- check case where CTE reference is removed due to optimization
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT q1 FROM
