@@ -320,16 +320,18 @@ regc_ctype_get_cache(regc_wc_probefunc probefunc, int cclasscode)
 		max_chr = (pg_wchar) MAX_SIMPLE_CHR;
 #endif
 	}
+	else if (GetDatabaseEncoding() == PG_UTF8)
+	{
+		max_chr = (pg_wchar) MAX_SIMPLE_CHR;
+	}
 	else
 	{
-		if (pg_regex_locale->ctype->max_chr != 0 &&
-			pg_regex_locale->ctype->max_chr <= MAX_SIMPLE_CHR)
-		{
-			max_chr = pg_regex_locale->ctype->max_chr;
-			pcc->cv.cclasscode = -1;
-		}
-		else
-			max_chr = (pg_wchar) MAX_SIMPLE_CHR;
+#if MAX_SIMPLE_CHR >= UCHAR_MAX
+		max_chr = (pg_wchar) UCHAR_MAX;
+		pcc->cv.cclasscode = -1;
+#else
+		max_chr = (pg_wchar) MAX_SIMPLE_CHR;
+#endif
 	}
 
 	/*

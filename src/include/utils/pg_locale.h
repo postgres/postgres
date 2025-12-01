@@ -134,12 +134,6 @@ struct ctype_methods
 	 * pg_strlower().
 	 */
 	char		(*char_tolower) (unsigned char ch, pg_locale_t locale);
-
-	/*
-	 * For regex and pattern matching efficiency, the maximum char value
-	 * supported by the above methods. If zero, limit is set by regex code.
-	 */
-	pg_wchar	max_chr;
 };
 
 /*

@@ -342,7 +342,6 @@ static const struct ctype_methods ctype_methods_libc_sb = {
 	.char_tolower = char_tolower_libc,
 	.wc_toupper = toupper_libc_sb,
 	.wc_tolower = tolower_libc_sb,
-	.max_chr = UCHAR_MAX,
 };
 
 /*
@@ -369,7 +368,6 @@ static const struct ctype_methods ctype_methods_libc_other_mb = {
 	.char_tolower = char_tolower_libc,
 	.wc_toupper = toupper_libc_sb,
 	.wc_tolower = tolower_libc_sb,
-	.max_chr = UCHAR_MAX,
 };
 
 static const struct ctype_methods ctype_methods_libc_utf8 = {
