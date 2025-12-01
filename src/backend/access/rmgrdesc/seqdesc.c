@@ -14,7 +14,7 @@
  */
 #include "postgres.h"
 
-#include "commands/sequence.h"
+#include "commands/sequence_xlog.h"
 
 
 void

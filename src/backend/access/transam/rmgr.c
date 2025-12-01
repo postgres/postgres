@@ -33,7 +33,7 @@
 #include "access/xact.h"
 #include "catalog/storage_xlog.h"
 #include "commands/dbcommands_xlog.h"
-#include "commands/sequence.h"
+#include "commands/sequence_xlog.h"
 #include "commands/tablespace.h"
 #include "replication/decode.h"
 #include "replication/message.h"

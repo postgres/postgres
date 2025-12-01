@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/bufmask.h"
 #include "access/htup_details.h"
 #include "access/multixact.h"
 #include "access/relation.h"
@@ -22,9 +21,7 @@
 #include "access/table.h"
 #include "access/transam.h"
 #include "access/xact.h"
-#include "access/xlog.h"
 #include "access/xloginsert.h"
-#include "access/xlogutils.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -34,11 +31,13 @@
 #include "catalog/storage_xlog.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
+#include "commands/sequence_xlog.h"
 #include "commands/tablecmds.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
+#include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/smgr.h"
@@ -57,16 +56,6 @@
  * crash we can lose (skip over) as many values as we pre-logged.
  */
 #define SEQ_LOG_VALS	32
-
-/*
- * The "special area" of a sequence's buffer page looks like this.
- */
-#define SEQ_MAGIC	  0x1717
-
-typedef struct sequence_magic
-{
-	uint32		magic;
-} sequence_magic;
 
 /*
  * We store a SeqTable item for every sequence we have touched in the current
@@ -1907,56 +1896,6 @@ pg_sequence_last_value(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 }
 
-
-void
-seq_redo(XLogReaderState *record)
-{
-	XLogRecPtr	lsn = record->EndRecPtr;
-	uint8		info = XLogRecGetInfo(record) & ~XLR_INFO_MASK;
-	Buffer		buffer;
-	Page		page;
-	Page		localpage;
-	char	   *item;
-	Size		itemsz;
-	xl_seq_rec *xlrec = (xl_seq_rec *) XLogRecGetData(record);
-	sequence_magic *sm;
-
-	if (info != XLOG_SEQ_LOG)
-		elog(PANIC, "seq_redo: unknown op code %u", info);
-
-	buffer = XLogInitBufferForRedo(record, 0);
-	page = BufferGetPage(buffer);
-
-	/*
-	 * We always reinit the page.  However, since this WAL record type is also
-	 * used for updating sequences, it's possible that a hot-standby backend
-	 * is examining the page concurrently; so we mustn't transiently trash the
-	 * buffer.  The solution is to build the correct new page contents in
-	 * local workspace and then memcpy into the buffer.  Then only bytes that
-	 * are supposed to change will change, even transiently. We must palloc
-	 * the local page for alignment reasons.
-	 */
-	localpage = (Page) palloc(BufferGetPageSize(buffer));
-
-	PageInit(localpage, BufferGetPageSize(buffer), sizeof(sequence_magic));
-	sm = (sequence_magic *) PageGetSpecialPointer(localpage);
-	sm->magic = SEQ_MAGIC;
-
-	item = (char *) xlrec + sizeof(xl_seq_rec);
-	itemsz = XLogRecGetDataLen(record) - sizeof(xl_seq_rec);
-
-	if (PageAddItem(localpage, item, itemsz, FirstOffsetNumber, false, false) == InvalidOffsetNumber)
-		elog(PANIC, "seq_redo: failed to add item to page");
-
-	PageSetLSN(localpage, lsn);
-
-	memcpy(page, localpage, BufferGetPageSize(buffer));
-	MarkBufferDirty(buffer);
-	UnlockReleaseBuffer(buffer);
-
-	pfree(localpage);
-}
-
 /*
  * Flush cached sequence information.
  */
@@ -1970,15 +1909,4 @@ ResetSequenceCaches(void)
 	}
 
 	last_used_seq = NULL;
-}
-
-/*
- * Mask a Sequence page before performing consistency checks on it.
- */
-void
-seq_mask(char *page, BlockNumber blkno)
-{
-	mask_page_lsn_and_checksum(page);
-
-	mask_unused_space(page);
 }
