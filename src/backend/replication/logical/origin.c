@@ -789,20 +789,19 @@ StartupReplicationOrigin(void)
 
 		readBytes = read(fd, &disk_state, sizeof(disk_state));
 
-		/* no further data */
-		if (readBytes == sizeof(crc))
-		{
-			/* not pretty, but simple ... */
-			file_crc = *(pg_crc32c *) &disk_state;
-			break;
-		}
-
 		if (readBytes < 0)
 		{
 			ereport(PANIC,
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m",
 							path)));
+		}
+
+		/* no further data */
+		if (readBytes == sizeof(crc))
+		{
+			memcpy(&file_crc, &disk_state, sizeof(file_crc));
+			break;
 		}
 
 		if (readBytes != sizeof(disk_state))
