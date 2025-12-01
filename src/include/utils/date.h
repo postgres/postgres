@@ -98,10 +98,10 @@ TimeTzADTPGetDatum(const TimeTzADT *X)
 /* date.c */
 extern int32 anytime_typmod_check(bool istz, int32 typmod);
 extern double date2timestamp_no_overflow(DateADT dateVal);
-extern Timestamp date2timestamp_opt_overflow(DateADT dateVal, int *overflow);
-extern TimestampTz date2timestamptz_opt_overflow(DateADT dateVal, int *overflow);
-extern DateADT timestamp2date_opt_overflow(Timestamp timestamp, int *overflow);
-extern DateADT timestamptz2date_opt_overflow(TimestampTz timestamp, int *overflow);
+extern Timestamp date2timestamp_safe(DateADT dateVal, Node *escontext);
+extern TimestampTz date2timestamptz_safe(DateADT dateVal, Node *escontext);
+extern DateADT timestamp2date_safe(Timestamp timestamp, Node *escontext);
+extern DateADT timestamptz2date_safe(TimestampTz timestamp, Node *escontext);
 extern int32 date_cmp_timestamp_internal(DateADT dateVal, Timestamp dt2);
 extern int32 date_cmp_timestamptz_internal(DateADT dateVal, TimestampTz dt2);
 

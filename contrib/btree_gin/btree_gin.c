@@ -7,6 +7,7 @@
 
 #include "access/stratnum.h"
 #include "mb/pg_wchar.h"
+#include "nodes/miscnodes.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/float.h"
@@ -496,10 +497,10 @@ cvt_date_timestamp(Datum input)
 {
 	DateADT		val = DatumGetDateADT(input);
 	Timestamp	result;
-	int			overflow;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	result = date2timestamp_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = date2timestamp_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return TimestampGetDatum(result);
 }
 
@@ -530,11 +531,11 @@ static Datum
 cvt_date_timestamptz(Datum input)
 {
 	DateADT		val = DatumGetDateADT(input);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	TimestampTz result;
-	int			overflow;
 
-	result = date2timestamptz_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = date2timestamptz_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return TimestampTzGetDatum(result);
 }
 
@@ -604,11 +605,11 @@ static Datum
 cvt_timestamp_date(Datum input)
 {
 	Timestamp	val = DatumGetTimestamp(input);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	DateADT		result;
-	int			overflow;
 
-	result = timestamp2date_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = timestamp2date_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return DateADTGetDatum(result);
 }
 
@@ -616,11 +617,11 @@ static Datum
 cvt_timestamptz_date(Datum input)
 {
 	TimestampTz val = DatumGetTimestampTz(input);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	DateADT		result;
-	int			overflow;
 
-	result = timestamptz2date_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = timestamptz2date_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return DateADTGetDatum(result);
 }
 
