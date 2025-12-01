@@ -50,6 +50,7 @@ tests += {
       'syscache-update-pruned',
       'index-concurrently-upsert',
       'reindex-concurrently-upsert',
+      'reindex-concurrently-upsert-on-constraint',
       'index-concurrently-upsert-predicate',
     ],
     'runningcheck': false, # see syscache-update-pruned

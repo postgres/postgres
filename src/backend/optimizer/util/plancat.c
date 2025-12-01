@@ -806,9 +806,15 @@ infer_arbiter_indexes(PlannerInfo *root)
 	Relation	relation;
 	Oid			indexOidFromConstraint = InvalidOid;
 	List	   *indexList;
-	ListCell   *l;
+	List	   *indexRelList = NIL;
 
-	/* Normalized inference attributes and inference expressions: */
+	/*
+	 * Required attributes and expressions used to match indexes to the clause
+	 * given by the user.  In the ON CONFLICT ON CONSTRAINT case, we compute
+	 * these from that constraint's index to match all other indexes, to
+	 * account for the case where that index is being concurrently reindexed.
+	 */
+	List	   *inferIndexExprs = (List *) onconflict->arbiterWhere;
 	Bitmapset  *inferAttrs = NULL;
 	List	   *inferElems = NIL;
 
@@ -841,11 +847,13 @@ infer_arbiter_indexes(PlannerInfo *root)
 	 * well as a separate list of expression items.  This simplifies matching
 	 * the cataloged definition of indexes.
 	 */
-	foreach(l, onconflict->arbiterElems)
+	foreach_ptr(InferenceElem, elem, onconflict->arbiterElems)
 	{
-		InferenceElem *elem = (InferenceElem *) lfirst(l);
 		Var		   *var;
 		int			attno;
+
+		/* we cannot also have a constraint name, per grammar */
+		Assert(!OidIsValid(onconflict->constraint));
 
 		if (!IsA(elem->expr, Var))
 		{
@@ -867,45 +875,96 @@ infer_arbiter_indexes(PlannerInfo *root)
 	}
 
 	/*
-	 * Lookup named constraint's index.  This is not immediately returned
-	 * because some additional sanity checks are required.
+	 * Next, open all the indexes.  We need this list for two things: first,
+	 * if an ON CONSTRAINT clause was given, and that constraint's index is
+	 * undergoing REINDEX CONCURRENTLY, then we need to consider all matches
+	 * for that index.  Second, if an attribute list was specified in the ON
+	 * CONFLICT clause, we use the list to find the indexes whose attributes
+	 * match that list.
+	 */
+	indexList = RelationGetIndexList(relation);
+	foreach_oid(indexoid, indexList)
+	{
+		Relation	idxRel;
+
+		/* obtain the same lock type that the executor will ultimately use */
+		idxRel = index_open(indexoid, rte->rellockmode);
+		indexRelList = lappend(indexRelList, idxRel);
+	}
+
+	/*
+	 * If a constraint was named in the command, look up its index.  We don't
+	 * return it immediately because we need some additional sanity checks,
+	 * and also because we need to include other indexes as arbiters to
+	 * account for REINDEX CONCURRENTLY processing it.
 	 */
 	if (onconflict->constraint != InvalidOid)
 	{
-		indexOidFromConstraint = get_constraint_index(onconflict->constraint);
+		/* we cannot also have an explicit list of elements, per grammar */
+		Assert(onconflict->arbiterElems == NIL);
 
+		indexOidFromConstraint = get_constraint_index(onconflict->constraint);
 		if (indexOidFromConstraint == InvalidOid)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("constraint in ON CONFLICT clause has no associated index")));
+
+		/*
+		 * Find the named constraint index to extract its attributes and
+		 * predicates.
+		 */
+		foreach_ptr(RelationData, idxRel, indexRelList)
+		{
+			Form_pg_index idxForm = idxRel->rd_index;
+
+			if (indexOidFromConstraint == idxForm->indexrelid)
+			{
+				/* Found it. */
+				Assert(idxForm->indisready);
+
+				/*
+				 * Set up inferElems and inferPredExprs to match the
+				 * constraint index, so that we can match them in the loop
+				 * below.
+				 */
+				for (int natt = 0; natt < idxForm->indnkeyatts; natt++)
+				{
+					int			attno;
+
+					attno = idxRel->rd_index->indkey.values[natt];
+					if (attno != InvalidAttrNumber)
+						inferAttrs =
+							bms_add_member(inferAttrs,
+										   attno - FirstLowInvalidHeapAttributeNumber);
+				}
+
+				inferElems = RelationGetIndexExpressions(idxRel);
+				inferIndexExprs = RelationGetIndexPredicate(idxRel);
+				break;
+			}
+		}
 	}
 
 	/*
 	 * Using that representation, iterate through the list of indexes on the
-	 * target relation to try and find a match
+	 * target relation to find matches.
 	 */
-	indexList = RelationGetIndexList(relation);
-
-	foreach(l, indexList)
+	foreach_ptr(RelationData, idxRel, indexRelList)
 	{
-		Oid			indexoid = lfirst_oid(l);
-		Relation	idxRel;
 		Form_pg_index idxForm;
 		Bitmapset  *indexedAttrs;
 		List	   *idxExprs;
 		List	   *predExprs;
 		AttrNumber	natt;
-		ListCell   *el;
+		bool		match;
 
 		/*
-		 * Extract info from the relation descriptor for the index.  Obtain
-		 * the same lock type that the executor will ultimately use.
+		 * Extract info from the relation descriptor for the index.
 		 *
 		 * Let executor complain about !indimmediate case directly, because
 		 * enforcement needs to occur there anyway when an inference clause is
 		 * omitted.
 		 */
-		idxRel = index_open(indexoid, rte->rellockmode);
 		idxForm = idxRel->rd_index;
 
 		/*
@@ -924,7 +983,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		 * indexes at least one index that is marked valid.
 		 */
 		if (!idxForm->indisready)
-			goto next;
+			continue;
 
 		/*
 		 * Note that we do not perform a check against indcheckxmin (like e.g.
@@ -934,7 +993,7 @@ infer_arbiter_indexes(PlannerInfo *root)
 		 */
 
 		/*
-		 * Look for match on "ON constraint_name" variant, which may not be
+		 * Look for match for "ON constraint_name" variant, which may not be a
 		 * unique constraint.  This can only be a constraint name.
 		 */
 		if (indexOidFromConstraint == idxForm->indexrelid)
@@ -944,31 +1003,37 @@ infer_arbiter_indexes(PlannerInfo *root)
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("ON CONFLICT DO UPDATE not supported with exclusion constraints")));
 
+			/* Consider this one a match already */
 			results = lappend_oid(results, idxForm->indexrelid);
 			foundValid |= idxForm->indisvalid;
-			index_close(idxRel, NoLock);
-			break;
+			continue;
 		}
 		else if (indexOidFromConstraint != InvalidOid)
 		{
-			/* No point in further work for index in named constraint case */
-			goto next;
+			/*
+			 * In the case of "ON constraint_name DO UPDATE" we need to skip
+			 * non-unique candidates.
+			 */
+			if (!idxForm->indisunique && onconflict->action == ONCONFLICT_UPDATE)
+				continue;
 		}
-
-		/*
-		 * Only considering conventional inference at this point (not named
-		 * constraints), so index under consideration can be immediately
-		 * skipped if it's not unique
-		 */
-		if (!idxForm->indisunique)
-			goto next;
+		else
+		{
+			/*
+			 * Only considering conventional inference at this point (not
+			 * named constraints), so index under consideration can be
+			 * immediately skipped if it's not unique.
+			 */
+			if (!idxForm->indisunique)
+				continue;
+		}
 
 		/*
 		 * So-called unique constraints with WITHOUT OVERLAPS are really
 		 * exclusion constraints, so skip those too.
 		 */
 		if (idxForm->indisexclusion)
-			goto next;
+			continue;
 
 		/* Build BMS representation of plain (non expression) index attrs */
 		indexedAttrs = NULL;
@@ -983,17 +1048,20 @@ infer_arbiter_indexes(PlannerInfo *root)
 
 		/* Non-expression attributes (if any) must match */
 		if (!bms_equal(indexedAttrs, inferAttrs))
-			goto next;
+			continue;
 
 		/* Expression attributes (if any) must match */
 		idxExprs = RelationGetIndexExpressions(idxRel);
 		if (idxExprs && varno != 1)
 			ChangeVarNodes((Node *) idxExprs, 1, varno, 0);
 
-		foreach(el, onconflict->arbiterElems)
+		/*
+		 * If arbiterElems are present, check them.  (Note that if a
+		 * constraint name was given in the command line, this list is NIL.)
+		 */
+		match = true;
+		foreach_ptr(InferenceElem, elem, onconflict->arbiterElems)
 		{
-			InferenceElem *elem = (InferenceElem *) lfirst(el);
-
 			/*
 			 * Ensure that collation/opclass aspects of inference expression
 			 * element match.  Even though this loop is primarily concerned
@@ -1002,7 +1070,10 @@ infer_arbiter_indexes(PlannerInfo *root)
 			 * attributes appearing as inference elements.
 			 */
 			if (!infer_collation_opclass_match(elem, idxRel, idxExprs))
-				goto next;
+			{
+				match = false;
+				break;
+			}
 
 			/*
 			 * Plain Vars don't factor into count of expression elements, and
@@ -1023,37 +1094,59 @@ infer_arbiter_indexes(PlannerInfo *root)
 				list_member(idxExprs, elem->expr))
 				continue;
 
-			goto next;
+			match = false;
+			break;
 		}
+		if (!match)
+			continue;
 
 		/*
-		 * Now that all inference elements were matched, ensure that the
+		 * In case of inference from an attribute list, ensure that the
 		 * expression elements from inference clause are not missing any
 		 * cataloged expressions.  This does the right thing when unique
 		 * indexes redundantly repeat the same attribute, or if attributes
 		 * redundantly appear multiple times within an inference clause.
+		 *
+		 * In case a constraint was named, ensure the candidate has an equal
+		 * set of expressions as the named constraint's index.
 		 */
 		if (list_difference(idxExprs, inferElems) != NIL)
-			goto next;
+			continue;
 
-		/*
-		 * If it's a partial index, its predicate must be implied by the ON
-		 * CONFLICT's WHERE clause.
-		 */
 		predExprs = RelationGetIndexPredicate(idxRel);
 		if (predExprs && varno != 1)
 			ChangeVarNodes((Node *) predExprs, 1, varno, 0);
 
-		if (!predicate_implied_by(predExprs, (List *) onconflict->arbiterWhere, false))
-			goto next;
+		/*
+		 * Partial indexes affect each form of ON CONFLICT differently: if a
+		 * constraint was named, then the predicates must be identical.  In
+		 * conventional inference, the index's predicate must be implied by
+		 * the WHERE clause.
+		 */
+		if (OidIsValid(indexOidFromConstraint))
+		{
+			if (list_difference(predExprs, inferIndexExprs) != NIL)
+				continue;
+		}
+		else
+		{
+			if (!predicate_implied_by(predExprs, inferIndexExprs, false))
+				continue;
+		}
 
+		/* All good -- consider this index a match */
 		results = lappend_oid(results, idxForm->indexrelid);
 		foundValid |= idxForm->indisvalid;
-next:
+	}
+
+	/* Close all indexes */
+	foreach_ptr(RelationData, idxRel, indexRelList)
+	{
 		index_close(idxRel, NoLock);
 	}
 
 	list_free(indexList);
+	list_free(indexRelList);
 	table_close(relation, NoLock);
 
 	/* We require at least one indisvalid index */

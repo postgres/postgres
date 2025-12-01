@@ -19,6 +19,7 @@ ISOLATION = basic \
 	    syscache-update-pruned \
 	    index-concurrently-upsert \
 	    reindex-concurrently-upsert \
+	    reindex-concurrently-upsert-on-constraint \
 	    index-concurrently-upsert-predicate
 
 TAP_TESTS = 1
