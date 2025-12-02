@@ -5414,8 +5414,7 @@ setPathObject(JsonbIterator **it, const Datum *path_elems, const bool *path_null
 		newkey.val.string.len = VARSIZE_ANY_EXHDR(pathelem);
 
 		(void) pushJsonbValue(st, WJB_KEY, &newkey);
-		(void) push_path(st, level, path_elems, path_nulls,
-						 path_len, newval);
+		push_path(st, level, path_elems, path_nulls, path_len, newval);
 
 		/* Result is closed with WJB_END_OBJECT outside of this function */
 	}
@@ -5583,8 +5582,7 @@ setPathArray(JsonbIterator **it, const Datum *path_elems, const bool *path_nulls
 		if (idx > 0)
 			push_null_elements(st, idx - nelems);
 
-		(void) push_path(st, level, path_elems, path_nulls,
-						 path_len, newval);
+		push_path(st, level, path_elems, path_nulls, path_len, newval);
 
 		/* Result is closed with WJB_END_OBJECT outside of this function */
 	}

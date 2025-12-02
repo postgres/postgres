@@ -300,7 +300,7 @@ pgaio_uring_shmem_init(bool first_time)
 	if (pgaio_uring_caps.mem_init_size > 0)
 	{
 		ring_mem_remain = pgaio_uring_ring_shmem_size();
-		ring_mem_next = (char *) shmem;
+		ring_mem_next = shmem;
 
 		/* align to page boundary, see also pgaio_uring_ring_shmem_size() */
 		ring_mem_next = (char *) TYPEALIGN(sysconf(_SC_PAGESIZE), ring_mem_next);

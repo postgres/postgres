@@ -607,11 +607,11 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 		if (append)
 			elog(DEBUG2, "appended %d new items to block %u; %d bytes (%d to go)",
-				 maxitems, BufferGetBlockNumber(buf), (int) leaf->lsize,
+				 maxitems, BufferGetBlockNumber(buf), leaf->lsize,
 				 items->nitem - items->curitem - maxitems);
 		else
 			elog(DEBUG2, "inserted %d new items to block %u; %d bytes (%d to go)",
-				 maxitems, BufferGetBlockNumber(buf), (int) leaf->lsize,
+				 maxitems, BufferGetBlockNumber(buf), leaf->lsize,
 				 items->nitem - items->curitem - maxitems);
 	}
 	else
@@ -693,11 +693,11 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 		if (append)
 			elog(DEBUG2, "appended %d items to block %u; split %d/%d (%d to go)",
-				 maxitems, BufferGetBlockNumber(buf), (int) leaf->lsize, (int) leaf->rsize,
+				 maxitems, BufferGetBlockNumber(buf), leaf->lsize, leaf->rsize,
 				 items->nitem - items->curitem - maxitems);
 		else
 			elog(DEBUG2, "inserted %d items to block %u; split %d/%d (%d to go)",
-				 maxitems, BufferGetBlockNumber(buf), (int) leaf->lsize, (int) leaf->rsize,
+				 maxitems, BufferGetBlockNumber(buf), leaf->lsize, leaf->rsize,
 				 items->nitem - items->curitem - maxitems);
 	}
 

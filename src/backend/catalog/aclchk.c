@@ -580,7 +580,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 				elog(ERROR, "AccessPriv node must specify privilege or columns");
 			priv = string_to_privilege(privnode->priv_name);
 
-			if (priv & ~((AclMode) all_privileges))
+			if (priv & ~all_privileges)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 						 errmsg(errormsg, privilege_to_string(priv))));
@@ -1059,7 +1059,7 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 				elog(ERROR, "AccessPriv node must specify privilege");
 			priv = string_to_privilege(privnode->priv_name);
 
-			if (priv & ~((AclMode) all_privileges))
+			if (priv & ~all_privileges)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 						 errmsg(errormsg, privilege_to_string(priv))));

@@ -2412,7 +2412,7 @@ _gin_parse_tuple_items(GinTuple *a)
 
 	Assert(ndecoded == a->nitems);
 
-	return (ItemPointer) items;
+	return items;
 }
 
 /*

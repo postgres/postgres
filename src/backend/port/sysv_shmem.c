@@ -206,7 +206,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 				 */
 				if (shmctl(shmid, IPC_RMID, NULL) < 0)
 					elog(LOG, "shmctl(%d, %d, 0) failed: %m",
-						 (int) shmid, IPC_RMID);
+						 shmid, IPC_RMID);
 			}
 		}
 

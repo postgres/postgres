@@ -4988,7 +4988,7 @@ predicatelock_twophase_recover(FullTransactionId fxid, uint16 info,
 											   HASH_ENTER, &found);
 		Assert(sxid != NULL);
 		Assert(!found);
-		sxid->myXact = (SERIALIZABLEXACT *) sxact;
+		sxid->myXact = sxact;
 
 		/*
 		 * Update global xmin. Note that this is a special case compared to

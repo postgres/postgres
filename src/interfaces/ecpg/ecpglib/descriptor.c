@@ -113,7 +113,7 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 			*(short *) var = (short) value;
 			break;
 		case ECPGt_int:
-			*(int *) var = (int) value;
+			*(int *) var = value;
 			break;
 		case ECPGt_long:
 			*(long *) var = (long) value;

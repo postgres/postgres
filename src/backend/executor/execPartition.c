@@ -856,7 +856,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 											&found_whole_row);
 					/* We ignore the value of found_whole_row. */
 					onconfl->oc_WhereClause =
-						ExecInitQual((List *) clause, &mtstate->ps);
+						ExecInitQual(clause, &mtstate->ps);
 				}
 			}
 		}

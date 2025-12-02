@@ -6205,7 +6205,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 		NewColumnValue *ex = lfirst(l);
 
 		/* expr already planned */
-		ex->exprstate = ExecInitExpr((Expr *) ex->expr, NULL);
+		ex->exprstate = ExecInitExpr(ex->expr, NULL);
 	}
 
 	notnull_attrs = notnull_virtual_attrs = NIL;

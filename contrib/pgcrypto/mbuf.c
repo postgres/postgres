@@ -133,7 +133,7 @@ mbuf_create_from_data(uint8 *data, int len)
 	MBuf	   *mbuf;
 
 	mbuf = palloc(sizeof *mbuf);
-	mbuf->data = (uint8 *) data;
+	mbuf->data = data;
 	mbuf->buf_end = mbuf->data + len;
 	mbuf->data_end = mbuf->data + len;
 	mbuf->read_pos = mbuf->data;

@@ -244,7 +244,7 @@ InitProcGlobal(void)
 	MemSet(ptr, 0, requestSize);
 
 	procs = (PGPROC *) ptr;
-	ptr = (char *) ptr + TotalProcs * sizeof(PGPROC);
+	ptr = ptr + TotalProcs * sizeof(PGPROC);
 
 	ProcGlobal->allProcs = procs;
 	/* XXX allProcCount isn't really all of them; it excludes prepared xacts */
@@ -258,13 +258,13 @@ InitProcGlobal(void)
 	 * how hotly they are accessed.
 	 */
 	ProcGlobal->xids = (TransactionId *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->xids));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->xids));
 
 	ProcGlobal->subxidStates = (XidCacheStatus *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->subxidStates));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->subxidStates));
 
 	ProcGlobal->statusFlags = (uint8 *) ptr;
-	ptr = (char *) ptr + (TotalProcs * sizeof(*ProcGlobal->statusFlags));
+	ptr = ptr + (TotalProcs * sizeof(*ProcGlobal->statusFlags));
 
 	/* make sure wer didn't overflow */
 	Assert((ptr > (char *) procs) && (ptr <= (char *) procs + requestSize));

@@ -277,7 +277,7 @@ sha1_result(uint8 *digest0, pg_sha1_ctx *ctx)
 {
 	uint8	   *digest;
 
-	digest = (uint8 *) digest0;
+	digest = digest0;
 
 #ifdef WORDS_BIGENDIAN
 	memmove(digest, &ctx->h.b8[0], 20);
@@ -337,7 +337,7 @@ pg_sha1_update(pg_sha1_ctx *ctx, const uint8 *data, size_t len)
 	size_t		off;
 	size_t		copysiz;
 
-	input = (const uint8 *) data;
+	input = data;
 	off = 0;
 
 	while (off < len)

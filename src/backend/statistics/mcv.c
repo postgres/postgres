@@ -1037,7 +1037,7 @@ statext_mcv_deserialize(bytea *data)
 	/* pointer to the data part (skip the varlena header) */
 	raw = (char *) data;
 	ptr = VARDATA_ANY(raw);
-	endptr = (char *) raw + VARSIZE_ANY(data);
+	endptr = raw + VARSIZE_ANY(data);
 
 	/* get the header and perform further sanity checks */
 	memcpy(&mcvlist->magic, ptr, sizeof(uint32));

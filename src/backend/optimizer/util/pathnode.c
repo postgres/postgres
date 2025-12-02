@@ -3865,7 +3865,7 @@ reparameterize_path(PlannerInfo *root, Path *path,
 		case T_SeqScan:
 			return create_seqscan_path(root, rel, required_outer, 0);
 		case T_SampleScan:
-			return (Path *) create_samplescan_path(root, rel, required_outer);
+			return create_samplescan_path(root, rel, required_outer);
 		case T_IndexScan:
 		case T_IndexOnlyScan:
 			{

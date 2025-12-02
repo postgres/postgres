@@ -219,7 +219,7 @@ test_basic(rt_node_class_test_elem *test_info, int shift, bool asc)
 		TestValueType update = keys[i] + 1;
 
 		/* rt_set should report the key found */
-		EXPECT_TRUE(rt_set(radixtree, keys[i], (TestValueType *) &update));
+		EXPECT_TRUE(rt_set(radixtree, keys[i], &update));
 	}
 
 	/* delete and re-insert keys */

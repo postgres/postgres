@@ -2257,7 +2257,7 @@ array_set_element(Datum arraydatum,
 
 		resultarray = (char *) palloc(arraytyplen);
 		memcpy(resultarray, DatumGetPointer(arraydatum), arraytyplen);
-		elt_ptr = (char *) resultarray + indx[0] * elmlen;
+		elt_ptr = resultarray + indx[0] * elmlen;
 		ArrayCastAndSet(dataValue, elmlen, elmbyval, elmalign, elt_ptr);
 		return PointerGetDatum(resultarray);
 	}
@@ -2418,7 +2418,7 @@ array_set_element(Datum arraydatum,
 			olditemlen = att_addlength_pointer(0, elmlen, elt_ptr);
 			olditemlen = att_align_nominal(olditemlen, elmalign);
 		}
-		lenafter = (int) (olddatasize - lenbefore - olditemlen);
+		lenafter = olddatasize - lenbefore - olditemlen;
 	}
 
 	if (isNull)

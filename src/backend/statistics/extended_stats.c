@@ -2054,13 +2054,13 @@ examine_opclause_args(List *args, Node **exprp, Const **cstp,
 
 	if (IsA(rightop, Const))
 	{
-		expr = (Node *) leftop;
+		expr = leftop;
 		cst = (Const *) rightop;
 		expronleft = true;
 	}
 	else if (IsA(leftop, Const))
 	{
-		expr = (Node *) rightop;
+		expr = rightop;
 		cst = (Const *) leftop;
 		expronleft = false;
 	}

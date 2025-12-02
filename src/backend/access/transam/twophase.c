@@ -1037,7 +1037,7 @@ save_state_data(const void *data, uint32 len)
 		records.tail->data = palloc(records.bytes_free);
 	}
 
-	memcpy(((char *) records.tail->data) + records.tail->len, data, len);
+	memcpy(records.tail->data + records.tail->len, data, len);
 	records.tail->len += padlen;
 	records.bytes_free -= padlen;
 	records.total_len += padlen;

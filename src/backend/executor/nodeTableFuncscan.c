@@ -363,7 +363,7 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 		char	   *ns_uri;
 		char	   *ns_name;
 
-		value = ExecEvalExpr((ExprState *) expr, econtext, &isnull);
+		value = ExecEvalExpr(expr, econtext, &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),

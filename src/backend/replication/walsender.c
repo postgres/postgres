@@ -3074,7 +3074,7 @@ InitWalSenderSlot(void)
 
 			SpinLockRelease(&walsnd->mutex);
 			/* don't need the lock anymore */
-			MyWalSnd = (WalSnd *) walsnd;
+			MyWalSnd = walsnd;
 
 			break;
 		}

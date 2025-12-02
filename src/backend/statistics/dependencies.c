@@ -785,7 +785,7 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 		 * A boolean expression "x" can be interpreted as "x = true", so
 		 * proceed with seeing if it's a suitable Var.
 		 */
-		clause_expr = (Node *) clause;
+		clause_expr = clause;
 	}
 
 	/*
@@ -1212,7 +1212,7 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 		 * A boolean expression "x" can be interpreted as "x = true", so
 		 * proceed with seeing if it's a suitable Var.
 		 */
-		clause_expr = (Node *) clause;
+		clause_expr = clause;
 	}
 
 	/*

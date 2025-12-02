@@ -603,7 +603,7 @@ pgaio_io_wait(PgAioHandle *ioh, uint64 ref_generation)
 		if (pgaio_io_was_recycled(ioh, ref_generation, &state))
 			return;
 
-		switch ((PgAioHandleState) state)
+		switch (state)
 		{
 			case PGAIO_HS_IDLE:
 			case PGAIO_HS_HANDED_OUT:
@@ -908,7 +908,7 @@ static const char *
 pgaio_io_state_get_name(PgAioHandleState s)
 {
 #define PGAIO_HS_TOSTR_CASE(sym) case PGAIO_HS_##sym: return #sym
-	switch ((PgAioHandleState) s)
+	switch (s)
 	{
 			PGAIO_HS_TOSTR_CASE(IDLE);
 			PGAIO_HS_TOSTR_CASE(HANDED_OUT);
@@ -933,7 +933,7 @@ pgaio_io_get_state_name(PgAioHandle *ioh)
 const char *
 pgaio_result_status_string(PgAioResultStatus rs)
 {
-	switch ((PgAioResultStatus) rs)
+	switch (rs)
 	{
 		case PGAIO_RS_UNKNOWN:
 			return "UNKNOWN";

@@ -4807,7 +4807,7 @@ ExecInitJsonExpr(JsonExpr *jsexpr, ExprState *state,
 		var->typid = exprType((Node *) argexpr);
 		var->typmod = exprTypmod((Node *) argexpr);
 
-		ExecInitExprRec((Expr *) argexpr, state, &var->value, &var->isnull);
+		ExecInitExprRec(argexpr, state, &var->value, &var->isnull);
 
 		jsestate->args = lappend(jsestate->args, var);
 	}

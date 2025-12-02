@@ -3949,7 +3949,7 @@ make_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 	 * target list and HAVING quals are parallel-safe.
 	 */
 	if (input_rel->consider_parallel && target_parallel_safe &&
-		is_parallel_safe(root, (Node *) havingQual))
+		is_parallel_safe(root, havingQual))
 		grouped_rel->consider_parallel = true;
 
 	/*
@@ -8525,7 +8525,7 @@ create_unique_paths(PlannerInfo *root, RelOptInfo *rel, SpecialJoinInfo *sjinfo)
 			tle = tlist_member(uniqexpr, newtlist);
 			if (!tle)
 			{
-				tle = makeTargetEntry((Expr *) uniqexpr,
+				tle = makeTargetEntry(uniqexpr,
 									  nextresno,
 									  NULL,
 									  false);

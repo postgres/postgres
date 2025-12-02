@@ -172,7 +172,7 @@ index_form_tuple_context(TupleDesc tupleDescriptor,
 					values,
 #endif
 					isnull,
-					(char *) tp + hoff,
+					tp + hoff,
 					data_size,
 					&tupmask,
 					(hasnull ? (bits8 *) tp + sizeof(IndexTupleData) : NULL));

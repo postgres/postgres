@@ -47,8 +47,8 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 
 	/* pool */
 	new_pool = (Pool *) palloc(sizeof(Pool));
-	new_pool->size = (int) pool_size;
-	new_pool->string_length = (int) string_length;
+	new_pool->size = pool_size;
+	new_pool->string_length = string_length;
 
 	/* all chromosome */
 	new_pool->data = (Chromosome *) palloc(pool_size * sizeof(Chromosome));

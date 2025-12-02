@@ -327,7 +327,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 		case T_CaseTestExpr:
 		case T_Var:
 			{
-				result = (Node *) expr;
+				result = expr;
 				break;
 			}
 
@@ -4079,7 +4079,7 @@ transformJsonParseArg(ParseState *pstate, Node *jsexpr, JsonFormat *format,
 
 		if (*exprtype == UNKNOWNOID || typcategory == TYPCATEGORY_STRING)
 		{
-			expr = coerce_to_target_type(pstate, (Node *) expr, *exprtype,
+			expr = coerce_to_target_type(pstate, expr, *exprtype,
 										 TEXTOID, -1,
 										 COERCION_IMPLICIT,
 										 COERCE_IMPLICIT_CAST, -1);
