@@ -10,6 +10,7 @@ tests += {
   'bd': meson.current_build_dir(),
   'regress': {
     'sql': [
+      'nbtree_half_dead_pages',
       'nbtree_incomplete_splits',
     ],
   },

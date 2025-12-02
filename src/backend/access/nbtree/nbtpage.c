@@ -33,6 +33,7 @@
 #include "storage/indexfsm.h"
 #include "storage/predicate.h"
 #include "storage/procarray.h"
+#include "utils/injection_point.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
@@ -2003,6 +2004,10 @@ _bt_pagedel(Relation rel, Buffer leafbuf, BTVacState *vstate)
 				return;
 			}
 		}
+		else
+		{
+			INJECTION_POINT("nbtree-finish-half-dead-page-vacuum", NULL);
+		}
 
 		/*
 		 * Then unlink it from its siblings.  Each call to
@@ -2348,6 +2353,8 @@ _bt_unlink_halfdead_page(Relation rel, Buffer leafbuf, BlockNumber scanblkno,
 	leafrightsib = opaque->btpo_next;
 
 	_bt_unlockbuf(rel, leafbuf);
+
+	INJECTION_POINT("nbtree-leave-page-half-dead", NULL);
 
 	/*
 	 * Check here, as calling loops will have locks held, preventing
