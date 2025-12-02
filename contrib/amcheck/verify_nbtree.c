@@ -721,7 +721,7 @@ bt_check_level_from_leftmost(BtreeCheckState *state, BtreeLevel level)
 							 errmsg("block %u is not leftmost in index \"%s\"",
 									current, RelationGetRelationName(state->rel))));
 
-				if (level.istruerootlevel && !P_ISROOT(opaque))
+				if (level.istruerootlevel && (!P_ISROOT(opaque) && !P_INCOMPLETE_SPLIT(opaque)))
 					ereport(ERROR,
 							(errcode(ERRCODE_INDEX_CORRUPTED),
 							 errmsg("block %u is not true root in index \"%s\"",

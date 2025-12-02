@@ -1,6 +1,6 @@
 # src/test/modules/nbtree/Makefile
 
-EXTRA_INSTALL = src/test/modules/injection_points
+EXTRA_INSTALL = src/test/modules/injection_points contrib/amcheck
 
 REGRESS = nbtree_incomplete_splits
 

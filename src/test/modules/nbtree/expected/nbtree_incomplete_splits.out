@@ -14,6 +14,7 @@
 -- splits in "incomplete" state
 set client_min_messages TO 'warning';
 create extension if not exists injection_points;
+create extension if not exists amcheck;
 reset client_min_messages;
 -- Make all injection points local to this process, for concurrency.
 SELECT injection_points_set_local();
@@ -87,6 +88,12 @@ begin
   if c <> 200 then
     raise 'unexpected count % ', c;
   end if;
+
+  -- Also check the index with amcheck. Both to test that the index is
+  -- valid, but also to test that amcheck doesn't wrongly complain
+  -- about incomplete splits.
+  perform bt_index_parent_check('nbtree_incomplete_splits_i_idx'::regclass, true, true);
+
   return true;
 end;
 $$;
