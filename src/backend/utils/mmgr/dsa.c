@@ -1051,6 +1051,41 @@ dsa_get_total_size(dsa_area *area)
 }
 
 /*
+ * Same as dsa_get_total_size(), but accepts a DSA handle.  The area must have
+ * been created with dsa_create (not dsa_create_in_place).
+ */
+size_t
+dsa_get_total_size_from_handle(dsa_handle handle)
+{
+	size_t		size;
+	bool		already_attached;
+	dsm_segment *segment;
+	dsa_area_control *control;
+
+	already_attached = dsa_is_attached(handle);
+	if (already_attached)
+		segment = dsm_find_mapping(handle);
+	else
+		segment = dsm_attach(handle);
+
+	if (segment == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("could not attach to dynamic shared area")));
+
+	control = (dsa_area_control *) dsm_segment_address(segment);
+
+	LWLockAcquire(&control->lock, LW_EXCLUSIVE);
+	size = control->total_segment_size;
+	LWLockRelease(&control->lock);
+
+	if (!already_attached)
+		dsm_detach(segment);
+
+	return size;
+}
+
+/*
  * Aggressively free all spare memory in the hope of returning DSM segments to
  * the operating system.
  */

@@ -463,26 +463,19 @@ pg_get_dsm_registry_allocations(PG_FUNCTION_ARGS)
 		Datum		vals[3];
 		bool		nulls[3] = {0};
 
-		/* Do not show partially-initialized entries. */
-		if (entry->type == DSMR_ENTRY_TYPE_DSM &&
-			entry->dsm.handle == DSM_HANDLE_INVALID)
-			continue;
-		if (entry->type == DSMR_ENTRY_TYPE_DSA &&
-			entry->dsa.handle == DSA_HANDLE_INVALID)
-			continue;
-		if (entry->type == DSMR_ENTRY_TYPE_DSH &&
-			entry->dsh.dsa_handle == DSA_HANDLE_INVALID)
-			continue;
-
 		vals[0] = CStringGetTextDatum(entry->name);
 		vals[1] = CStringGetTextDatum(DSMREntryTypeNames[entry->type]);
 
-		/*
-		 * Since we can't know the size of DSA/dshash entries without first
-		 * attaching to them, return NULL for those.
-		 */
-		if (entry->type == DSMR_ENTRY_TYPE_DSM)
+		/* Be careful to only return the sizes of initialized entries. */
+		if (entry->type == DSMR_ENTRY_TYPE_DSM &&
+			entry->dsm.handle != DSM_HANDLE_INVALID)
 			vals[2] = Int64GetDatum(entry->dsm.size);
+		else if (entry->type == DSMR_ENTRY_TYPE_DSA &&
+				 entry->dsa.handle != DSA_HANDLE_INVALID)
+			vals[2] = Int64GetDatum(dsa_get_total_size_from_handle(entry->dsa.handle));
+		else if (entry->type == DSMR_ENTRY_TYPE_DSH &&
+				 entry->dsh.dsa_handle !=DSA_HANDLE_INVALID)
+			vals[2] = Int64GetDatum(dsa_get_total_size_from_handle(entry->dsh.dsa_handle));
 		else
 			nulls[2] = true;
 

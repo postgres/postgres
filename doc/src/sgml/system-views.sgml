@@ -1150,8 +1150,8 @@ AND c1.path[c2.level] = c2.path[c2.level];
        <structfield>size</structfield> <type>int8</type>
       </para>
       <para>
-       Size of the allocation in bytes.  NULL for entries of type
-       <literal>area</literal> and <literal>hash</literal>.
+       Size of the allocation in bytes.  NULL for entries that failed
+       initialization.
       </para></entry>
      </row>
     </tbody>
