@@ -1043,7 +1043,7 @@ dsa_get_total_size(dsa_area *area)
 {
 	size_t		size;
 
-	LWLockAcquire(DSA_AREA_LOCK(area), LW_EXCLUSIVE);
+	LWLockAcquire(DSA_AREA_LOCK(area), LW_SHARED);
 	size = area->control->total_segment_size;
 	LWLockRelease(DSA_AREA_LOCK(area));
 
@@ -1075,7 +1075,7 @@ dsa_get_total_size_from_handle(dsa_handle handle)
 
 	control = (dsa_area_control *) dsm_segment_address(segment);
 
-	LWLockAcquire(&control->lock, LW_EXCLUSIVE);
+	LWLockAcquire(&control->lock, LW_SHARED);
 	size = control->total_segment_size;
 	LWLockRelease(&control->lock);
 
