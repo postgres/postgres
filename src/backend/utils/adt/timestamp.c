@@ -2363,18 +2363,21 @@ int32
 timestamp_cmp_timestamptz_internal(Timestamp timestampVal, TimestampTz dt2)
 {
 	TimestampTz dt1;
-	int			overflow;
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 
-	dt1 = timestamp2timestamptz_opt_overflow(timestampVal, &overflow);
-	if (overflow > 0)
+	dt1 = timestamp2timestamptz_safe(timestampVal, (Node *) &escontext);
+	if (escontext.error_occurred)
 	{
-		/* dt1 is larger than any finite timestamp, but less than infinity */
-		return TIMESTAMP_IS_NOEND(dt2) ? -1 : +1;
-	}
-	if (overflow < 0)
-	{
-		/* dt1 is less than any finite timestamp, but more than -infinity */
-		return TIMESTAMP_IS_NOBEGIN(dt2) ? +1 : -1;
+		if (TIMESTAMP_IS_NOEND(dt1))
+		{
+			/* dt1 is larger than any finite timestamp, but less than infinity */
+			return TIMESTAMP_IS_NOEND(dt2) ? -1 : +1;
+		}
+		if (TIMESTAMP_IS_NOBEGIN(dt1))
+		{
+			/* dt1 is less than any finite timestamp, but more than -infinity */
+			return TIMESTAMP_IS_NOBEGIN(dt2) ? +1 : -1;
+		}
 	}
 
 	return timestamptz_cmp_internal(dt1, dt2);
@@ -6434,24 +6437,21 @@ timestamp_timestamptz(PG_FUNCTION_ARGS)
 /*
  * Convert timestamp to timestamp with time zone.
  *
- * On successful conversion, *overflow is set to zero if it's not NULL.
+ * If the timestamp is finite but out of the valid range for timestamptz,
+ * error handling proceeds based on escontext.
  *
- * If the timestamp is finite but out of the valid range for timestamptz, then:
- * if overflow is NULL, we throw an out-of-range error.
- * if overflow is not NULL, we store +1 or -1 there to indicate the sign
- * of the overflow, and return the appropriate timestamptz infinity.
+ * If escontext is NULL, we throw an out-of-range error (hard error).
+ * If escontext is not NULL, we return NOBEGIN or NOEND for lower bound or
+ * upper bound overflow, respectively, and record a soft error.
  */
 TimestampTz
-timestamp2timestamptz_opt_overflow(Timestamp timestamp, int *overflow)
+timestamp2timestamptz_safe(Timestamp timestamp, Node *escontext)
 {
 	TimestampTz result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
-
-	if (overflow)
-		*overflow = 0;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		return timestamp;
@@ -6467,26 +6467,14 @@ timestamp2timestamptz_opt_overflow(Timestamp timestamp, int *overflow)
 			return result;
 	}
 
-	if (overflow)
-	{
-		if (timestamp < 0)
-		{
-			*overflow = -1;
-			TIMESTAMP_NOBEGIN(result);
-		}
-		else
-		{
-			*overflow = 1;
-			TIMESTAMP_NOEND(result);
-		}
-		return result;
-	}
+	if (timestamp < 0)
+		TIMESTAMP_NOBEGIN(result);
+	else
+		TIMESTAMP_NOEND(result);
 
-	ereport(ERROR,
+	ereturn(escontext, result,
 			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 			 errmsg("timestamp out of range")));
-
-	return 0;
 }
 
 /*
@@ -6495,7 +6483,7 @@ timestamp2timestamptz_opt_overflow(Timestamp timestamp, int *overflow)
 static TimestampTz
 timestamp2timestamptz(Timestamp timestamp)
 {
-	return timestamp2timestamptz_opt_overflow(timestamp, NULL);
+	return timestamp2timestamptz_safe(timestamp, NULL);
 }
 
 /* timestamptz_timestamp()
@@ -6515,21 +6503,21 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 static Timestamp
 timestamptz2timestamp(TimestampTz timestamp)
 {
-	return timestamptz2timestamp_opt_overflow(timestamp, NULL);
+	return timestamptz2timestamp_safe(timestamp, NULL);
 }
 
 /*
  * Convert timestamp with time zone to timestamp.
  *
- * On successful conversion, *overflow is set to zero if it's not NULL.
+ * If the timestamptz is finite but out of the valid range for timestamp,
+ * error handling proceeds based on escontext.
  *
- * If the timestamptz is finite but out of the valid range for timestamp, then:
- * if overflow is NULL, we throw an out-of-range error.
- * if overflow is not NULL, we store +1 or -1 there to indicate the sign
- * of the overflow, and return the appropriate timestamp infinity.
+ * If escontext is NULL, we throw an out-of-range error (hard error).
+ * If escontext is not NULL, we return NOBEGIN or NOEND for lower bound or
+ * upper bound overflow, respectively, and record a soft error.
  */
 Timestamp
-timestamptz2timestamp_opt_overflow(TimestampTz timestamp, int *overflow)
+timestamptz2timestamp_safe(TimestampTz timestamp, Node *escontext)
 {
 	Timestamp	result;
 	struct pg_tm tt,
@@ -6537,50 +6525,29 @@ timestamptz2timestamp_opt_overflow(TimestampTz timestamp, int *overflow)
 	fsec_t		fsec;
 	int			tz;
 
-	if (overflow)
-		*overflow = 0;
-
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		result = timestamp;
 	else
 	{
 		if (timestamp2tm(timestamp, &tz, tm, &fsec, NULL, NULL) != 0)
 		{
-			if (overflow)
-			{
-				if (timestamp < 0)
-				{
-					*overflow = -1;
-					TIMESTAMP_NOBEGIN(result);
-				}
-				else
-				{
-					*overflow = 1;
-					TIMESTAMP_NOEND(result);
-				}
-				return result;
-			}
-			ereport(ERROR,
+			if (timestamp < 0)
+				TIMESTAMP_NOBEGIN(result);
+			else
+				TIMESTAMP_NOEND(result);
+
+			ereturn(escontext, result,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 		}
 		if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 		{
-			if (overflow)
-			{
-				if (timestamp < 0)
-				{
-					*overflow = -1;
-					TIMESTAMP_NOBEGIN(result);
-				}
-				else
-				{
-					*overflow = 1;
-					TIMESTAMP_NOEND(result);
-				}
-				return result;
-			}
-			ereport(ERROR,
+			if (timestamp < 0)
+				TIMESTAMP_NOBEGIN(result);
+			else
+				TIMESTAMP_NOEND(result);
+
+			ereturn(escontext, result,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 		}

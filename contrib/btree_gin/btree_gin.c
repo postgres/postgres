@@ -508,11 +508,11 @@ static Datum
 cvt_timestamptz_timestamp(Datum input)
 {
 	TimestampTz val = DatumGetTimestampTz(input);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	Timestamp	result;
-	int			overflow;
 
-	result = timestamptz2timestamp_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = timestamptz2timestamp_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return TimestampGetDatum(result);
 }
 
@@ -543,11 +543,11 @@ static Datum
 cvt_timestamp_timestamptz(Datum input)
 {
 	Timestamp	val = DatumGetTimestamp(input);
+	ErrorSaveContext escontext = {T_ErrorSaveContext};
 	TimestampTz result;
-	int			overflow;
 
-	result = timestamp2timestamptz_opt_overflow(val, &overflow);
-	/* We can ignore the overflow result, since result is useful as-is */
+	result = timestamp2timestamptz_safe(val, (Node *) &escontext);
+	/* We can ignore errors, since result is useful as-is */
 	return TimestampTzGetDatum(result);
 }
 
