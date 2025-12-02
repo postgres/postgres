@@ -26,7 +26,6 @@ setup
 {
 	SELECT injection_points_set_local();
 	SELECT injection_points_attach('check-exclusion-or-unique-constraint-no-conflict', 'wait');
-	SELECT injection_points_attach('pre-invalidate-catalog-snapshot-end', 'notice');
 }
 step s1_attach_invalidate_catalog_snapshot
 {
@@ -34,7 +33,7 @@ step s1_attach_invalidate_catalog_snapshot
 }
 step s1_start_upsert
 {
-    INSERT INTO test.tbl VALUES (13,now()) ON CONFLICT (i) DO UPDATE SET updated_at = now();
+	INSERT INTO test.tbl VALUES (13,now()) ON CONFLICT (i) DO UPDATE SET updated_at = now();
 }
 
 session s2
@@ -68,8 +67,8 @@ step s4_wakeup_s1_setup
 {
 	SELECT CASE WHEN
 			(SELECT pid FROM pg_stat_activity
-			      WHERE wait_event_type = 'InjectionPoint' AND
-			      wait_event = 'invalidate-catalog-snapshot-end') IS NOT NULL
+				  WHERE wait_event_type = 'InjectionPoint' AND
+				  wait_event = 'invalidate-catalog-snapshot-end') IS NOT NULL
 			THEN injection_points_wakeup('invalidate-catalog-snapshot-end')
 		END;
 }
@@ -90,11 +89,24 @@ step s4_wakeup_define_index_before_set_valid
 }
 
 session s5
-step s5_noop
-{
-}
 step s5_wakeup_s1_from_invalidate_catalog_snapshot
 {
+	DO $$
+		DECLARE
+			v_waiting_pid INTEGER;
+		BEGIN
+		LOOP
+			SELECT pid INTO v_waiting_pid
+			  FROM pg_stat_activity
+			 WHERE wait_event_type = 'InjectionPoint'
+				   AND wait_event = 'invalidate-catalog-snapshot-end'
+			 LIMIT 1;
+			EXIT WHEN v_waiting_pid IS NOT NULL;
+			PERFORM pg_sleep(100);
+		END LOOP;
+		END
+	$$;
+
 	SELECT injection_points_detach('invalidate-catalog-snapshot-end');
 	SELECT injection_points_wakeup('invalidate-catalog-snapshot-end');
 }
@@ -102,7 +114,6 @@ step s5_wakeup_s1_from_invalidate_catalog_snapshot
 permutation
 	s1_attach_invalidate_catalog_snapshot
 	s4_wakeup_s1_setup
-	s5_noop(s1_start_upsert notices 1)
 	s3_start_create_index(s1_start_upsert, s2_start_upsert)
 	s1_start_upsert
 	s4_wakeup_define_index_before_set_valid
