@@ -5161,7 +5161,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 							 errmsg("unit \"%s\" not supported for type %s",
 									lowunits, format_type_be(INTERVALOID)),
 							 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
-					result = 0;
+					result = NULL;
 			}
 		}
 

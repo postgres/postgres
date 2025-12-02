@@ -1222,10 +1222,10 @@ pg_newlocale_from_collation(Oid collid)
 		 * Make sure cache entry is marked invalid, in case we fail before
 		 * setting things.
 		 */
-		cache_entry->locale = 0;
+		cache_entry->locale = NULL;
 	}
 
-	if (cache_entry->locale == 0)
+	if (cache_entry->locale == NULL)
 	{
 		cache_entry->locale = create_pg_locale(collid, CollationCacheContext);
 	}

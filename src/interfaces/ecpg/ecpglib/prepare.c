@@ -509,7 +509,7 @@ ecpg_freeStmtCacheEntry(int lineno, int compat,
 	if (entry->ecpgQuery)
 	{
 		ecpg_free(entry->ecpgQuery);
-		entry->ecpgQuery = 0;
+		entry->ecpgQuery = NULL;
 	}
 
 	return entNo;
