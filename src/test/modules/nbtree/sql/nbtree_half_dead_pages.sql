@@ -12,6 +12,7 @@
 -- This uses injection points to interrupt some page deletions
 set client_min_messages TO 'warning';
 create extension if not exists injection_points;
+create extension if not exists amcheck;
 reset client_min_messages;
 
 -- Make all injection points local to this process, for concurrency.
@@ -38,6 +39,10 @@ SELECT injection_points_detach('nbtree-leave-page-half-dead');
 
 select * from nbtree_half_dead_pages where id > 99998 and id < 120002;
 
+-- Also check the index with amcheck
+select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, true);
+
 -- Finish the deletion and re-check
 vacuum nbtree_half_dead_pages;
 select * from nbtree_half_dead_pages where id > 99998 and id < 120002;
+select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, true);

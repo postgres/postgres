@@ -2268,7 +2268,7 @@ bt_child_highkey_check(BtreeCheckState *state,
 		 * If we visit page with high key, check that it is equal to the
 		 * target key next to corresponding downlink.
 		 */
-		if (!rightsplit && !P_RIGHTMOST(opaque))
+		if (!rightsplit && !P_RIGHTMOST(opaque) && !P_ISHALFDEAD(opaque))
 		{
 			BTPageOpaque topaque;
 			IndexTuple	highkey;
