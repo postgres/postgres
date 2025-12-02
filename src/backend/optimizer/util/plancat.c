@@ -789,11 +789,6 @@ find_relation_notnullatts(PlannerInfo *root, Oid relid)
  * the purposes of inference.  If no opclass (or collation) is specified, then
  * all matching indexes (that may or may not match the default in terms of
  * each attribute opclass/collation) are used for inference.
- *
- * Note: during index CONCURRENTLY operations, different transactions may
- * reference different sets of arbiter indexes. This can lead to false unique
- * constraint violations that wouldn't occur during normal operations.  For
- * more information, see insert.sgml.
  */
 List *
 infer_arbiter_indexes(PlannerInfo *root)
