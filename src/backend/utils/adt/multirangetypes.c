@@ -68,11 +68,11 @@ typedef enum
  * Macros for accessing past MultirangeType parts of multirange: items, flags
  * and boundaries.
  */
-#define MultirangeGetItemsPtr(mr) ((uint32 *) ((Pointer) (mr) + \
+#define MultirangeGetItemsPtr(mr) ((uint32 *) ((char *) (mr) + \
 	sizeof(MultirangeType)))
-#define MultirangeGetFlagsPtr(mr) ((uint8 *) ((Pointer) (mr) + \
+#define MultirangeGetFlagsPtr(mr) ((uint8 *) ((char *) (mr) + \
 	sizeof(MultirangeType) + ((mr)->rangeCount - 1) * sizeof(uint32)))
-#define MultirangeGetBoundariesPtr(mr, align) ((Pointer) (mr) + \
+#define MultirangeGetBoundariesPtr(mr, align) ((char *) (mr) + \
 	att_align_nominal(sizeof(MultirangeType) + \
 		((mr)->rangeCount - 1) * sizeof(uint32) + \
 		(mr)->rangeCount * sizeof(uint8), (align)))
@@ -602,13 +602,13 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 	uint32		prev_offset = 0;
 	uint8	   *flags;
 	int32		i;
-	Pointer		begin,
-				ptr;
+	const char *begin;
+	char	   *ptr;
 	char		elemalign = rangetyp->rngelemtype->typalign;
 
 	items = MultirangeGetItemsPtr(multirange);
 	flags = MultirangeGetFlagsPtr(multirange);
-	ptr = begin = MultirangeGetBoundariesPtr(multirange, elemalign);
+	begin = ptr = MultirangeGetBoundariesPtr(multirange, elemalign);
 	for (i = 0; i < range_count; i++)
 	{
 		uint32		len;
@@ -627,7 +627,7 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 				items[i - 1] |= MULTIRANGE_ITEM_OFF_BIT;
 			prev_offset = ptr - begin;
 		}
-		flags[i] = *((Pointer) ranges[i] + VARSIZE(ranges[i]) - sizeof(char));
+		flags[i] = *((char *) ranges[i] + VARSIZE(ranges[i]) - sizeof(char));
 		len = VARSIZE(ranges[i]) - sizeof(RangeType) - sizeof(char);
 		memcpy(ptr, ranges[i] + 1, len);
 		ptr += att_align_nominal(len, elemalign);
@@ -699,8 +699,8 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 {
 	uint32		offset;
 	uint8		flags;
-	Pointer		begin,
-				ptr;
+	const char *begin;
+	char	   *ptr;
 	int16		typlen = rangetyp->rngelemtype->typlen;
 	char		typalign = rangetyp->rngelemtype->typalign;
 	uint32		len;
@@ -710,7 +710,7 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 
 	offset = multirange_get_bounds_offset(multirange, i);
 	flags = MultirangeGetFlagsPtr(multirange)[i];
-	ptr = begin = MultirangeGetBoundariesPtr(multirange, typalign) + offset;
+	begin = ptr = MultirangeGetBoundariesPtr(multirange, typalign) + offset;
 
 	/*
 	 * Calculate the size of bound values.  In principle, we could get offset
@@ -719,11 +719,11 @@ multirange_get_range(TypeCacheEntry *rangetyp,
 	 * exact size.
 	 */
 	if (RANGE_HAS_LBOUND(flags))
-		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
-		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = (char *) att_align_pointer(ptr, typalign, typlen, ptr);
+		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	len = (ptr - begin) + sizeof(RangeType) + sizeof(uint8);
 
@@ -749,7 +749,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 {
 	uint32		offset;
 	uint8		flags;
-	Pointer		ptr;
+	const char *ptr;
 	int16		typlen = rangetyp->rngelemtype->typlen;
 	char		typalign = rangetyp->rngelemtype->typalign;
 	bool		typbyval = rangetyp->rngelemtype->typbyval;
@@ -770,7 +770,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 	{
 		/* att_align_pointer cannot be necessary here */
 		lbound = fetch_att(ptr, typbyval, typlen);
-		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
 		lbound = (Datum) 0;
@@ -778,7 +778,7 @@ multirange_get_bounds(TypeCacheEntry *rangetyp,
 	/* fetch upper bound, if any */
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
+		ptr = (char *) att_align_pointer(ptr, typalign, typlen, ptr);
 		ubound = fetch_att(ptr, typbyval, typlen);
 		/* no need for att_addlength_pointer */
 	}

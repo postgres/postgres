@@ -72,8 +72,8 @@ static char *range_deparse(char flags, const char *lbound_str,
 static char *range_bound_escape(const char *value);
 static Size datum_compute_size(Size data_length, Datum val, bool typbyval,
 							   char typalign, int16 typlen, char typstorage);
-static Pointer datum_write(Pointer ptr, Datum datum, bool typbyval,
-						   char typalign, int16 typlen, char typstorage);
+static char *datum_write(char *ptr, Datum datum, bool typbyval,
+						 char typalign, int16 typlen, char typstorage);
 static Node *find_simplified_clause(PlannerInfo *root,
 									Expr *rangeExpr, Expr *elemExpr);
 static Expr *build_bound_expr(Expr *elemExpr, Datum val,
@@ -2092,7 +2092,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	Pointer		ptr;
+	const char *ptr;
 	Datum		lbound;
 	Datum		ubound;
 
@@ -2108,14 +2108,14 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	typalign = typcache->rngelemtype->typalign;
 
 	/* initialize data pointer just after the range OID */
-	ptr = (Pointer) (range + 1);
+	ptr = (char *) (range + 1);
 
 	/* fetch lower bound, if any */
 	if (RANGE_HAS_LBOUND(flags))
 	{
 		/* att_align_pointer cannot be necessary here */
 		lbound = fetch_att(ptr, typbyval, typlen);
-		ptr = (Pointer) att_addlength_pointer(ptr, typlen, ptr);
+		ptr = (char *) att_addlength_pointer(ptr, typlen, ptr);
 	}
 	else
 		lbound = (Datum) 0;
@@ -2123,7 +2123,7 @@ range_deserialize(TypeCacheEntry *typcache, const RangeType *range,
 	/* fetch upper bound, if any */
 	if (RANGE_HAS_UBOUND(flags))
 	{
-		ptr = (Pointer) att_align_pointer(ptr, typalign, typlen, ptr);
+		ptr = (char *) att_align_pointer(ptr, typalign, typlen, ptr);
 		ubound = fetch_att(ptr, typbyval, typlen);
 		/* no need for att_addlength_pointer */
 	}
@@ -2937,8 +2937,8 @@ datum_compute_size(Size data_length, Datum val, bool typbyval, char typalign,
  * Write the given datum beginning at ptr (after advancing to correct
  * alignment, if needed).  Return the pointer incremented by space used.
  */
-static Pointer
-datum_write(Pointer ptr, Datum datum, bool typbyval, char typalign,
+static char *
+datum_write(char *ptr, Datum datum, bool typbyval, char typalign,
 			int16 typlen, char typstorage)
 {
 	Size		data_length;

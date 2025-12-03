@@ -72,7 +72,7 @@ typedef BloomPageOpaqueData *BloomPageOpaque;
 	((BloomTuple *)(PageGetContents(page) \
 		+ (state)->sizeOfBloomTuple * ((offset) - 1)))
 #define BloomPageGetNextTuple(state, tuple) \
-	((BloomTuple *)((Pointer)(tuple) + (state)->sizeOfBloomTuple))
+	((BloomTuple *)((char *)(tuple) + (state)->sizeOfBloomTuple))
 
 /* Preserved page numbers */
 #define BLOOM_METAPAGE_BLKNO	(0)

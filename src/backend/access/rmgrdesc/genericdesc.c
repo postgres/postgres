@@ -23,8 +23,8 @@
 void
 generic_desc(StringInfo buf, XLogReaderState *record)
 {
-	Pointer		ptr = XLogRecGetData(record),
-				end = ptr + XLogRecGetDataLen(record);
+	const char *ptr = XLogRecGetData(record);
+	const char *end = ptr + XLogRecGetDataLen(record);
 
 	while (ptr < end)
 	{

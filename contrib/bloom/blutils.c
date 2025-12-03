@@ -324,7 +324,7 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 {
 	BloomTuple *itup;
 	BloomPageOpaque opaque;
-	Pointer		ptr;
+	char	   *ptr;
 
 	/* We shouldn't be pointed to an invalid page */
 	Assert(!PageIsNew(page) && !BloomPageIsDeleted(page));
@@ -340,7 +340,7 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 
 	/* Adjust maxoff and pd_lower */
 	opaque->maxoff++;
-	ptr = (Pointer) BloomPageGetTuple(state, page, opaque->maxoff + 1);
+	ptr = (char *) BloomPageGetTuple(state, page, opaque->maxoff + 1);
 	((PageHeader) page)->pd_lower = ptr - page;
 
 	/* Assert we didn't overrun available space */
