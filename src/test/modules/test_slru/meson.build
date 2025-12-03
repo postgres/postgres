@@ -38,7 +38,8 @@ tests += {
        'enable_injection_points': get_option('injection_points') ? 'yes' : 'no',
     },
     'tests': [
-      't/001_multixact.pl'
+      't/001_multixact.pl',
+      't/002_multixact_wraparound.pl'
     ],
   },
 }
