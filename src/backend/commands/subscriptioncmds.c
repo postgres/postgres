@@ -1122,10 +1122,10 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 		 * to be at the end because otherwise if there is an error while doing
 		 * the database operations we won't be able to rollback dropped slots.
 		 */
-		foreach_ptr(SubRemoveRels, rel, sub_remove_rels)
+		foreach_ptr(SubRemoveRels, sub_remove_rel, sub_remove_rels)
 		{
-			if (rel->state != SUBREL_STATE_READY &&
-				rel->state != SUBREL_STATE_SYNCDONE)
+			if (sub_remove_rel->state != SUBREL_STATE_READY &&
+				sub_remove_rel->state != SUBREL_STATE_SYNCDONE)
 			{
 				char		syncslotname[NAMEDATALEN] = {0};
 
@@ -1139,7 +1139,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 				 * dropped slots and fail. For these reasons, we allow
 				 * missing_ok = true for the drop.
 				 */
-				ReplicationSlotNameForTablesync(sub->oid, rel->relid,
+				ReplicationSlotNameForTablesync(sub->oid, sub_remove_rel->relid,
 												syncslotname, sizeof(syncslotname));
 				ReplicationSlotDropAtPubNode(wrconn, syncslotname, true);
 			}
