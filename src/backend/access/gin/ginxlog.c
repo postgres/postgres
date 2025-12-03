@@ -212,7 +212,7 @@ ginRedoRecompress(Page page, ginxlogRecompressDataLeaf *data)
 			if (tailCopy)
 			{
 				Assert(writePtr + segsize < PageGetSpecialPointer(page));
-				memcpy(writePtr, (Pointer) oldseg, segsize);
+				memcpy(writePtr, oldseg, segsize);
 			}
 			writePtr += segsize;
 			oldseg = GinNextPostingListSegment(oldseg);

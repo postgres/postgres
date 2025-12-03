@@ -629,7 +629,7 @@ write_multirange_data(MultirangeType *multirange, TypeCacheEntry *rangetyp,
 		}
 		flags[i] = *((Pointer) ranges[i] + VARSIZE(ranges[i]) - sizeof(char));
 		len = VARSIZE(ranges[i]) - sizeof(RangeType) - sizeof(char);
-		memcpy(ptr, (Pointer) (ranges[i] + 1), len);
+		memcpy(ptr, ranges[i] + 1, len);
 		ptr += att_align_nominal(len, elemalign);
 	}
 }

@@ -336,7 +336,7 @@ BloomPageAddItem(BloomState *state, Page page, BloomTuple *tuple)
 	/* Copy new tuple to the end of page */
 	opaque = BloomPageGetOpaque(page);
 	itup = BloomPageGetTuple(state, page, opaque->maxoff + 1);
-	memcpy((Pointer) itup, (Pointer) tuple, state->sizeOfBloomTuple);
+	memcpy(itup, tuple, state->sizeOfBloomTuple);
 
 	/* Adjust maxoff and pd_lower */
 	opaque->maxoff++;
