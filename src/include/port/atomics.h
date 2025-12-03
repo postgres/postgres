@@ -489,6 +489,16 @@ pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 }
 
 static inline void
+pg_atomic_unlocked_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
+{
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
+	AssertPointerAlignment(ptr, 8);
+#endif
+
+	pg_atomic_unlocked_write_u64_impl(ptr, val);
+}
+
+static inline void
 pg_atomic_write_membarrier_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
 #ifndef PG_HAVE_ATOMIC_U64_SIMULATION
