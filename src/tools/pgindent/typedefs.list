@@ -345,6 +345,7 @@ BufferCachePagesRec
 BufferDesc
 BufferDescPadded
 BufferHeapTupleTableSlot
+BufferLockMode
 BufferLookupEnt
 BufferManagerRelation
 BufferStrategyControl

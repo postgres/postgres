@@ -2866,7 +2866,7 @@ BufferIsLockedByMe(Buffer buffer)
  * Buffer must be pinned.
  */
 bool
-BufferIsLockedByMeInMode(Buffer buffer, int mode)
+BufferIsLockedByMeInMode(Buffer buffer, BufferLockMode mode)
 {
 	BufferDesc *bufHdr;
 
@@ -5601,7 +5601,7 @@ UnlockBuffers(void)
  * Acquire or release the content_lock for the buffer.
  */
 void
-LockBuffer(Buffer buffer, int mode)
+LockBuffer(Buffer buffer, BufferLockMode mode)
 {
 	BufferDesc *buf;
 
