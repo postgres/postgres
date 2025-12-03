@@ -419,3 +419,8 @@ CREATE TABLE pp_510 PARTITION OF pp_2 FOR VALUES FROM (5) TO (10);
 INSERT INTO pp SELECT g, 10 + g FROM generate_series(1,6) g;
 COPY pp TO stdout(header);
 DROP TABLE PP;
+
+-- COPY PROGRAM guard is postmaster-only and not alterable at runtime
+SHOW enable_copy_program;
+ALTER SYSTEM SET enable_copy_program = off;  -- fail (auto conf)
+SET enable_copy_program = off;  -- fail (postmaster)

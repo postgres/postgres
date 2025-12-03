@@ -97,6 +97,7 @@
 #password_encryption = scram-sha-256    # scram-sha-256 or (deprecated) md5
 #scram_iterations = 4096
 #md5_password_warnings = on             # display md5 deprecation warnings?
+#enable_copy_program = on               # allow COPY ... PROGRAM commands (restart)
 #oauth_validator_libraries = '' # comma-separated list of trusted validator modules
 
 # GSSAPI using Kerberos

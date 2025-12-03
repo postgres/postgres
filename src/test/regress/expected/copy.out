@@ -393,3 +393,14 @@ id	val
 5	15
 6	16
 DROP TABLE PP;
+-- COPY PROGRAM guard is postmaster-only and not alterable at runtime
+SHOW enable_copy_program;
+ enable_copy_program 
+---------------------
+ on
+(1 row)
+
+ALTER SYSTEM SET enable_copy_program = off;  -- fail (auto conf)
+ERROR:  parameter "enable_copy_program" cannot be changed
+SET enable_copy_program = off;  -- fail (postmaster)
+ERROR:  parameter "enable_copy_program" cannot be changed without restarting the server

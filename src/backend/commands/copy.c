@@ -39,6 +39,9 @@
 #include "utils/rel.h"
 #include "utils/rls.h"
 
+/* Controls whether COPY PROGRAM is permitted at all. */
+bool		enable_copy_program = true;
+
 /*
  *	 DoCopy executes the SQL COPY statement
  *
@@ -78,6 +81,13 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 		if (stmt->is_program)
 		{
+			if (!enable_copy_program)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("COPY PROGRAM is disabled"),
+						 errhint("Set enable_copy_program = on to allow COPY "
+								 "TO/FROM PROGRAM.")));
+
 			if (!has_privs_of_role(GetUserId(), ROLE_PG_EXECUTE_SERVER_PROGRAM))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),

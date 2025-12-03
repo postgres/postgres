@@ -819,6 +819,14 @@
   boot_val => 'true',
 },
 
+{ name => 'enable_copy_program', type => 'bool', context => 'PGC_POSTMASTER', group => 'CONN_AUTH_AUTH',
+  short_desc => 'Enables COPY to and from an external program.',
+  long_desc => 'When disabled, COPY PROGRAM is rejected even for superusers.  This can only be changed at server start.',
+  flags => 'GUC_SUPERUSER_ONLY | GUC_DISALLOW_IN_AUTO_FILE',
+  variable => 'enable_copy_program',
+  boot_val => 'true',
+},
+
 { name => 'enable_distinct_reordering', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
   short_desc => 'Enables reordering of DISTINCT keys.',
   flags => 'GUC_EXPLAIN',

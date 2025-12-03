@@ -1171,6 +1171,27 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-enable-copy-program" xreflabel="enable_copy_program">
+      <term><varname>enable_copy_program</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_copy_program</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Controls whether <command>COPY ... PROGRAM</command> is allowed.  The
+        default is <literal>on</literal>; when set to <literal>off</literal>,
+        attempts to use <literal>PROGRAM</literal> are rejected even for
+        superusers or roles with <literal>pg_execute_server_program</literal>.
+        This setting does not affect <command>\copy</command> or
+        <command>COPY</command> to or from <literal>STDIN</literal>/<literal>STDOUT</literal>.
+        Changes require a server restart and cannot be made with
+        <command>ALTER SYSTEM</command>.  This is not a security feature;
+        superusers retain other ways to execute operating system commands.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)
       <indexterm>
