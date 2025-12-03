@@ -78,7 +78,7 @@ struct LogicalRepInfos
 };
 
 static void cleanup_objects_atexit(void);
-static void usage();
+static void usage(void);
 static char *get_base_conninfo(const char *conninfo, char **dbname);
 static char *get_sub_conninfo(const struct CreateSubscriberOptions *opt);
 static char *get_exec_path(const char *argv0, const char *progname);

@@ -640,7 +640,7 @@ pa_detach_all_error_mq(void)
  * Check if there are any pending spooled messages.
  */
 static bool
-pa_has_spooled_message_pending()
+pa_has_spooled_message_pending(void)
 {
 	PartialFileSetState fileset_state;
 

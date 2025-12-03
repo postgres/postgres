@@ -488,7 +488,7 @@ systable_beginscan(Relation heapRelation,
  * is declared.
  */
 static inline void
-HandleConcurrentAbort()
+HandleConcurrentAbort(void)
 {
 	if (TransactionIdIsValid(CheckXidAlive) &&
 		!TransactionIdIsInProgress(CheckXidAlive) &&

@@ -123,7 +123,7 @@ missing_match(const void *key1, const void *key2, Size keysize)
 }
 
 static void
-init_missing_cache()
+init_missing_cache(void)
 {
 	HASHCTL		hash_ctl;
 

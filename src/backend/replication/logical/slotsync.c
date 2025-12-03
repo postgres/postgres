@@ -1410,7 +1410,7 @@ check_and_set_sync_info(pid_t worker_pid)
  * Reset syncing flag.
  */
 static void
-reset_syncing_flag()
+reset_syncing_flag(void)
 {
 	SpinLockAcquire(&SlotSyncCtx->mutex);
 	SlotSyncCtx->syncing = false;

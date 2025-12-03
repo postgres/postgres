@@ -5561,7 +5561,7 @@ set_stream_options(WalRcvStreamOptions *options,
  * Cleanup the memory for subxacts and reset the related variables.
  */
 static inline void
-cleanup_subxact_info()
+cleanup_subxact_info(void)
 {
 	if (subxact_data.subxacts)
 		pfree(subxact_data.subxacts);
@@ -5621,7 +5621,7 @@ start_apply(XLogRecPtr origin_startpos)
  * It sets up replication origin, streaming options and then starts streaming.
  */
 static void
-run_apply_worker()
+run_apply_worker(void)
 {
 	char		originname[NAMEDATALEN];
 	XLogRecPtr	origin_startpos = InvalidXLogRecPtr;

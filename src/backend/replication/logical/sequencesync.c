@@ -711,7 +711,7 @@ LogicalRepSyncSequences(void)
  * resource error and are not repeatable.
  */
 static void
-start_sequence_sync()
+start_sequence_sync(void)
 {
 	Assert(am_sequencesync_worker());
 

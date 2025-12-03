@@ -71,7 +71,7 @@ static int	uuid_fast_cmp(Datum x, Datum y, SortSupport ssup);
 static bool uuid_abbrev_abort(int memtupcount, SortSupport ssup);
 static Datum uuid_abbrev_convert(Datum original, SortSupport ssup);
 static inline void uuid_set_version(pg_uuid_t *uuid, unsigned char version);
-static inline int64 get_real_time_ns_ascending();
+static inline int64 get_real_time_ns_ascending(void);
 static pg_uuid_t *generate_uuidv7(uint64 unix_ts_ms, uint32 sub_ms);
 
 Datum
@@ -545,7 +545,7 @@ gen_random_uuid(PG_FUNCTION_ARGS)
  * than the previous returned timestamp (on this backend).
  */
 static inline int64
-get_real_time_ns_ascending()
+get_real_time_ns_ascending(void)
 {
 	static int64 previous_ns = 0;
 	int64		ns;
