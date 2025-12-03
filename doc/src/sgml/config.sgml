@@ -4050,7 +4050,7 @@ include_dir 'conf.d'
         (The path name is relative to the current working directory,
         i.e., the cluster's data directory.)
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point. That is the earliest file that must be kept
+        last valid restartpoint. That is the earliest file that must be kept
         to allow a restore to be restartable, so this information can be used
         to truncate the archive to just the minimum required to support
         restarting from the current restore. <literal>%r</literal> is typically only
@@ -4095,7 +4095,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         cleaning up old archived WAL files that are no longer needed by the
         standby server.
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point.
+        last valid restartpoint.
         That is the earliest file that must be <emphasis>kept</emphasis> to allow a
         restore to be restartable, and so all files earlier than <literal>%r</literal>
         may be safely removed.
@@ -4139,7 +4139,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         <varname>recovery_end_command</varname> is to provide a mechanism for cleanup
         following replication or recovery.
         Any <literal>%r</literal> is replaced by the name of the file containing the
-        last valid restart point, like in <xref linkend="guc-archive-cleanup-command"/>.
+        last valid restartpoint, like in <xref linkend="guc-archive-cleanup-command"/>.
        </para>
        <para>
         If the command returns a nonzero exit status then a warning log
