@@ -1855,17 +1855,12 @@ RESET enable_nestloop;
 RESET enable_mergejoin;
 
 -- Check that we can use statistics on a bool-valued function.
-CREATE FUNCTION extstat_small(x numeric) RETURNS bool
-STRICT IMMUTABLE LANGUAGE plpgsql
-AS $$ BEGIN RETURN x < 1; END $$;
+SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE numeric_lt(y, 1.0)');
 
-SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE extstat_small(y)');
-
-CREATE STATISTICS extstat_sb_2_small ON extstat_small(y) FROM sb_2;
+CREATE STATISTICS extstat_sb_2_small ON numeric_lt(y, 1.0) FROM sb_2;
 ANALYZE sb_2;
 
-SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE extstat_small(y)');
+SELECT * FROM check_estimated_rows('SELECT * FROM sb_2 WHERE numeric_lt(y, 1.0)');
 
 -- Tidy up
 DROP TABLE sb_1, sb_2 CASCADE;
-DROP FUNCTION extstat_small(x numeric);
