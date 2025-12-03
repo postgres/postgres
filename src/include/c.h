@@ -527,11 +527,9 @@ typedef void (*pg_funcptr_t) (void);
 /*
  * Pointer
  *		Variable holding address of any memory resident object.
- *
- *		XXX Pointer arithmetic is done with this, so it can't be void *
- *		under "true" ANSI compilers.
+ *		(obsolescent; use void * or char *)
  */
-typedef char *Pointer;
+typedef void *Pointer;
 
 /* Historical names for types in <stdint.h>. */
 typedef int8_t int8;
