@@ -17,7 +17,6 @@
 #include "access/multixact.h"
 #include "access/xact.h"
 #include "fmgr.h"
-#include "utils/injection_point.h"
 
 PG_FUNCTION_INFO_V1(test_create_multixact);
 PG_FUNCTION_INFO_V1(test_read_multixact);
@@ -37,8 +36,7 @@ test_create_multixact(PG_FUNCTION_ARGS)
 }
 
 /*
- * Reads given multixact after running an injection point. Discards local cache
- * to make a real read.  Tailored for multixact testing.
+ * Reads given multixact.  Discards local cache to make a real read.
  */
 Datum
 test_read_multixact(PG_FUNCTION_ARGS)
@@ -46,7 +44,6 @@ test_read_multixact(PG_FUNCTION_ARGS)
 	MultiXactId id = PG_GETARG_TRANSACTIONID(0);
 	MultiXactMember *members;
 
-	INJECTION_POINT("test-multixact-read", NULL);
 	/* discard caches */
 	AtEOXact_MultiXact();
 
