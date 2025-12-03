@@ -279,12 +279,12 @@ WAL_WRITE	"Waiting for a write to a WAL file."
 ABI_compatibility:
 
 #
-# Wait Events - Buffer Pin
+# Wait Events - Buffer
 #
 
-Section: ClassName - WaitEventBufferPin
+Section: ClassName - WaitEventBuffer
 
-BUFFER_PIN	"Waiting to acquire an exclusive pin on a buffer."
+BUFFER_CLEANUP	"Waiting to acquire an exclusive pin on a buffer. Buffer pin waits can be protracted if another process holds an open cursor that last read data from the buffer in question."
 
 ABI_compatibility:
 

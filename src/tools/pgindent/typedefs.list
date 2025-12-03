@@ -3270,7 +3270,7 @@ WSANETWORKEVENTS
 WSAPROTOCOL_INFO
 WaitEvent
 WaitEventActivity
-WaitEventBufferPin
+WaitEventBuffer
 WaitEventClient
 WaitEventCustomCounterData
 WaitEventCustomEntryByInfo

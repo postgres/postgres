@@ -29,7 +29,7 @@
 
 
 static const char *pgstat_get_wait_activity(WaitEventActivity w);
-static const char *pgstat_get_wait_bufferpin(WaitEventBufferPin w);
+static const char *pgstat_get_wait_buffer(WaitEventBuffer w);
 static const char *pgstat_get_wait_client(WaitEventClient w);
 static const char *pgstat_get_wait_ipc(WaitEventIPC w);
 static const char *pgstat_get_wait_timeout(WaitEventTimeout w);
@@ -389,8 +389,8 @@ pgstat_get_wait_event_type(uint32 wait_event_info)
 		case PG_WAIT_LOCK:
 			event_type = "Lock";
 			break;
-		case PG_WAIT_BUFFERPIN:
-			event_type = "BufferPin";
+		case PG_WAIT_BUFFER:
+			event_type = "Buffer";
 			break;
 		case PG_WAIT_ACTIVITY:
 			event_type = "Activity";
@@ -453,11 +453,11 @@ pgstat_get_wait_event(uint32 wait_event_info)
 		case PG_WAIT_INJECTIONPOINT:
 			event_name = GetWaitEventCustomIdentifier(wait_event_info);
 			break;
-		case PG_WAIT_BUFFERPIN:
+		case PG_WAIT_BUFFER:
 			{
-				WaitEventBufferPin w = (WaitEventBufferPin) wait_event_info;
+				WaitEventBuffer w = (WaitEventBuffer) wait_event_info;
 
-				event_name = pgstat_get_wait_bufferpin(w);
+				event_name = pgstat_get_wait_buffer(w);
 				break;
 			}
 		case PG_WAIT_ACTIVITY:

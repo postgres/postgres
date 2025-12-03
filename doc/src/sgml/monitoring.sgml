@@ -1053,11 +1053,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       </entry>
      </row>
      <row>
-      <entry><literal>BufferPin</literal></entry>
-      <entry>The server process is waiting for exclusive access to
-       a data buffer.  Buffer pin waits can be protracted if
-       another process holds an open cursor that last read data from the
-       buffer in question. See <xref linkend="wait-event-bufferpin-table"/>.
+      <entry><literal>Buffer</literal></entry>
+      <entry>The server process is waiting for access to a data buffer.
+      See <xref linkend="wait-event-buffer-table"/>.
       </entry>
      </row>
      <row>

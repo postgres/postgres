@@ -182,7 +182,7 @@ select type, count(*) > 0 as ok FROM pg_wait_events
    type    | ok 
 -----------+----
  Activity  | t
- BufferPin | t
+ Buffer    | t
  Client    | t
  Extension | t
  IO        | t

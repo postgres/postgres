@@ -194,7 +194,7 @@ $node_primary->poll_query_until(
 	qq[
 	SELECT count(*) >= 1 FROM pg_stat_activity
 		WHERE pid = $vacuum_pid
-		AND wait_event = 'BufferPin';
+		AND wait_event = 'BufferCleanup';
 	],
 	't');
 
