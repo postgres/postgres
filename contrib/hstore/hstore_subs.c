@@ -74,7 +74,7 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 				 errmsg("hstore subscript must have type text"),
 				 parser_errposition(pstate, exprLocation(ai->uidx))));
 
-	/* ... and store the transformed subscript into the SubscriptRef node */
+	/* ... and store the transformed subscript into the SubscriptingRef node */
 	sbsref->refupperindexpr = list_make1(subexpr);
 	sbsref->reflowerindexpr = NIL;
 

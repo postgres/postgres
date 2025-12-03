@@ -152,7 +152,7 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 		upperIndexpr = lappend(upperIndexpr, subExpr);
 	}
 
-	/* store the transformed lists into the SubscriptRef node */
+	/* store the transformed lists into the SubscriptingRef node */
 	sbsref->refupperindexpr = upperIndexpr;
 	sbsref->reflowerindexpr = NIL;
 
