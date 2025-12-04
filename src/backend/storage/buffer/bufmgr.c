@@ -4019,7 +4019,7 @@ InitBufferManagerAccess(void)
 
 	memset(&PrivateRefCountArray, 0, sizeof(PrivateRefCountArray));
 
-	hash_ctl.keysize = sizeof(int32);
+	hash_ctl.keysize = sizeof(Buffer);
 	hash_ctl.entrysize = sizeof(PrivateRefCountEntry);
 
 	PrivateRefCountHash = hash_create("PrivateRefCount", 100, &hash_ctl,
