@@ -2194,7 +2194,7 @@ numeric_abbrev_convert(Datum original_datum, SortSupport ssup)
 	}
 
 	/* should happen only for external/compressed toasts */
-	if ((Pointer) original_varatt != DatumGetPointer(original_datum))
+	if (original_varatt != DatumGetPointer(original_datum))
 		pfree(original_varatt);
 
 	return result;
@@ -2284,9 +2284,9 @@ numeric_fast_cmp(Datum x, Datum y, SortSupport ssup)
 
 	result = cmp_numerics(nx, ny);
 
-	if ((Pointer) nx != DatumGetPointer(x))
+	if (nx != DatumGetPointer(x))
 		pfree(nx);
-	if ((Pointer) ny != DatumGetPointer(y))
+	if (ny != DatumGetPointer(y))
 		pfree(ny);
 
 	return result;

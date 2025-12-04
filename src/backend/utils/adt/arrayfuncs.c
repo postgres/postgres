@@ -5687,7 +5687,7 @@ accumArrayResultArr(ArrayBuildStateArr *astate,
 	MemoryContextSwitchTo(oldcontext);
 
 	/* Release detoasted copy if any */
-	if ((Pointer) arg != DatumGetPointer(dvalue))
+	if (arg != DatumGetPointer(dvalue))
 		pfree(arg);
 
 	return astate;

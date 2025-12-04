@@ -569,7 +569,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 	int			num_to_free;
 	int			i;
 	Datum		new_values[MaxTupleAttributeNumber];
-	Pointer		freeable_values[MaxTupleAttributeNumber];
+	void	   *freeable_values[MaxTupleAttributeNumber];
 
 	/*
 	 * We can pass the caller's isnull array directly to heap_form_tuple, but
@@ -593,7 +593,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 			{
 				new_value = detoast_external_attr(new_value);
 				new_values[i] = PointerGetDatum(new_value);
-				freeable_values[num_to_free++] = (Pointer) new_value;
+				freeable_values[num_to_free++] = new_value;
 			}
 		}
 	}

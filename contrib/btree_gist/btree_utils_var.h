@@ -49,7 +49,7 @@ typedef struct
  */
 #define GBT_FREE_IF_COPY(ptr1, ptr2) \
 	do { \
-		if ((Pointer) (ptr1) != DatumGetPointer(ptr2)) \
+		if ((ptr1) != DatumGetPointer(ptr2)) \
 			pfree(ptr1); \
 	} while (0)
 

@@ -1513,9 +1513,9 @@ range_fast_cmp(Datum a, Datum b, SortSupport ssup)
 			cmp = range_cmp_bounds(typcache, &upper1, &upper2);
 	}
 
-	if ((Pointer) range_a != DatumGetPointer(a))
+	if (range_a != DatumGetPointer(a))
 		pfree(range_a);
-	if ((Pointer) range_b != DatumGetPointer(b))
+	if (range_b != DatumGetPointer(b))
 		pfree(range_b);
 
 	return cmp;

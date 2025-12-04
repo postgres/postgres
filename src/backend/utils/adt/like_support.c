@@ -1035,7 +1035,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		pattlen = VARSIZE_ANY_EXHDR(bstr);
 		patt = (char *) palloc(pattlen);
 		memcpy(patt, VARDATA_ANY(bstr), pattlen);
-		Assert((Pointer) bstr == DatumGetPointer(patt_const->constvalue));
+		Assert(bstr == DatumGetPointer(patt_const->constvalue));
 	}
 
 	match = palloc(pattlen + 1);
@@ -1577,7 +1577,7 @@ make_greater_string(const Const *str_const, FmgrInfo *ltproc, Oid collation)
 		len = VARSIZE_ANY_EXHDR(bstr);
 		workstr = (char *) palloc(len);
 		memcpy(workstr, VARDATA_ANY(bstr), len);
-		Assert((Pointer) bstr == DatumGetPointer(str_const->constvalue));
+		Assert(bstr == DatumGetPointer(str_const->constvalue));
 		cmpstr = str_const->constvalue;
 	}
 	else

@@ -240,7 +240,7 @@ DecodeTextArrayToBitmapset(Datum array)
 	}
 
 	pfree(elems);
-	if ((Pointer) arr != DatumGetPointer(array))
+	if (arr != DatumGetPointer(array))
 		pfree(arr);
 
 	return bms;
