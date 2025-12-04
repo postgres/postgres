@@ -158,8 +158,8 @@ typedef struct
 
 /* Local functions */
 static void prune_freeze_setup(PruneFreezeParams *params,
-							   TransactionId new_relfrozen_xid,
-							   MultiXactId new_relmin_mxid,
+							   TransactionId *new_relfrozen_xid,
+							   MultiXactId *new_relmin_mxid,
 							   const PruneFreezeResult *presult,
 							   PruneState *prstate);
 static void prune_freeze_plan(Oid reloid, Buffer buffer,
@@ -325,8 +325,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
  */
 static void
 prune_freeze_setup(PruneFreezeParams *params,
-				   TransactionId new_relfrozen_xid,
-				   MultiXactId new_relmin_mxid,
+				   TransactionId *new_relfrozen_xid,
+				   MultiXactId *new_relmin_mxid,
 				   const PruneFreezeResult *presult,
 				   PruneState *prstate)
 {
@@ -362,15 +362,15 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->pagefrz.freeze_required = false;
 	if (prstate->attempt_freeze)
 	{
-		prstate->pagefrz.FreezePageRelfrozenXid = new_relfrozen_xid;
-		prstate->pagefrz.NoFreezePageRelfrozenXid = new_relfrozen_xid;
-		prstate->pagefrz.FreezePageRelminMxid = new_relmin_mxid;
-		prstate->pagefrz.NoFreezePageRelminMxid = new_relmin_mxid;
+		Assert(new_relfrozen_xid && new_relmin_mxid);
+		prstate->pagefrz.FreezePageRelfrozenXid = *new_relfrozen_xid;
+		prstate->pagefrz.NoFreezePageRelfrozenXid = *new_relfrozen_xid;
+		prstate->pagefrz.FreezePageRelminMxid = *new_relmin_mxid;
+		prstate->pagefrz.NoFreezePageRelminMxid = *new_relmin_mxid;
 	}
 	else
 	{
-		Assert(new_relfrozen_xid == InvalidTransactionId &&
-			   new_relmin_mxid == InvalidMultiXactId);
+		Assert(!new_relfrozen_xid && !new_relmin_mxid);
 		prstate->pagefrz.FreezePageRelminMxid = InvalidMultiXactId;
 		prstate->pagefrz.NoFreezePageRelminMxid = InvalidMultiXactId;
 		prstate->pagefrz.FreezePageRelfrozenXid = InvalidTransactionId;
@@ -823,12 +823,8 @@ heap_page_prune_and_freeze(PruneFreezeParams *params,
 
 	/* Initialize prstate */
 	prune_freeze_setup(params,
-					   new_relfrozen_xid ?
-					   *new_relfrozen_xid : InvalidTransactionId,
-					   new_relmin_mxid ?
-					   *new_relmin_mxid : InvalidMultiXactId,
-					   presult,
-					   &prstate);
+					   new_relfrozen_xid, new_relmin_mxid,
+					   presult, &prstate);
 
 	/*
 	 * Examine all line pointers and tuple visibility information to determine
