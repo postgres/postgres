@@ -321,7 +321,7 @@ WaitForLSN(WaitLSNType lsnType, XLogRecPtr targetLSN, int64 timeout)
 	Assert(waitLSNState);
 
 	/* Should have a valid proc number */
-	Assert(MyProcNumber >= 0 && MyProcNumber < MaxBackends);
+	Assert(MyProcNumber >= 0 && MyProcNumber < MaxBackends + NUM_AUXILIARY_PROCS);
 
 	if (timeout > 0)
 	{
