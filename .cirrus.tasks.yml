@@ -1005,16 +1005,15 @@ task:
   ###
   # Verify headerscheck / cpluspluscheck succeed
   #
-  # - Don't use ccache, the files are uncacheable, polluting ccache's
-  #   cache
   # - Use -fmax-errors, as particularly cpluspluscheck can be very verbose
   ###
   always:
     headers_headerscheck_script: |
       time ./configure \
         ${LINUX_CONFIGURE_FEATURES} \
+        --cache gcc.cache \
         --quiet \
-        CC="gcc" CXX"=g++" CLANG="clang"
+        CC="ccache gcc" CXX="ccache g++" CLANG="ccache clang"
       make -s -j${BUILD_JOBS} clean
       time make -s headerscheck EXTRAFLAGS='-fmax-errors=10'
     headers_cpluspluscheck_script: |

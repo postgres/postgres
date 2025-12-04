@@ -73,8 +73,10 @@ else
 	COMPILER_FLAGS="$CPPFLAGS $CFLAGS $ICU_CFLAGS $LLVM_CPPFLAGS"
 fi
 
-# Create temp directory.
-tmp=`mktemp -d /tmp/$me.XXXXXX`
+# Create temp directory.  Help ccache by using a stable name.  Include
+# extension to allow running C and C++ checks in parallel.
+tmp="tmp_${me}_${ext}"
+mkdir -p "$tmp"
 
 trap "ret=$?; rm -rf $tmp; exit $ret" 0 1 2 3 15
 
@@ -200,6 +202,9 @@ do
 		test "$f" = src/bin/pg_dump/pg_dump.h && continue
 	fi
 
+	# Help ccache by using a stable name.  Remove slashes and dots.
+	test_file_name=$(printf '%s' "$f" | tr '/.' '__')
+
 	# OK, create .c file to include this .h file.
 	{
 	    $cplusplus && echo 'extern "C" {'
@@ -232,7 +237,7 @@ do
 	    esac
 	    echo "#include \"$f\""
 	    $cplusplus && echo '};'
-	} >$tmp/test.$ext
+	} >$tmp/$test_file_name.$ext
 
 	# Some subdirectories need extra -I switches.
 	case "$f" in
@@ -254,10 +259,12 @@ do
 	if ! $COMPILER $COMPILER_FLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
-		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.$ext -o $tmp/test.o
+		$EXTRAINCLUDES $EXTRAFLAGS -c "$tmp/$test_file_name.$ext" -o "$tmp/$test_file_name.o"
 	then
 		exit_status=1
 	fi
+
+	rm -f "$tmp/$test_file_name.$ext" "$tmp/$test_file_name.o"
 done
 
 exit $exit_status
