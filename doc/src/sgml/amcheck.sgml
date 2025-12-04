@@ -382,7 +382,7 @@ SET client_min_messages = DEBUG1;
   verification functions is <literal>true</literal>, an additional
   phase of verification is performed against the table associated with
   the target index relation.  This consists of a <quote>dummy</quote>
-  <command>CREATE INDEX</command> operation, which checks for the
+  <command>CREATE INDEX CONCURRENTLY</command> operation, which checks for the
   presence of all hypothetical new index tuples against a temporary,
   in-memory summarizing structure (this is built when needed during
   the basic first phase of verification).  The summarizing structure
