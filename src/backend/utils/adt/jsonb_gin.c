@@ -999,8 +999,7 @@ gin_consistent_jsonb(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   false) != GIN_FALSE;
+			res = execute_jsp_gin_node(extra_data[0], check, false) != GIN_FALSE;
 		}
 	}
 	else
@@ -1060,8 +1059,7 @@ gin_triconsistent_jsonb(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   true);
+			res = execute_jsp_gin_node(extra_data[0], check, true);
 
 			/* Should always recheck the result */
 			if (res == GIN_TRUE)
@@ -1258,8 +1256,7 @@ gin_consistent_jsonb_path(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   false) != GIN_FALSE;
+			res = execute_jsp_gin_node(extra_data[0], check, false) != GIN_FALSE;
 		}
 	}
 	else
@@ -1302,8 +1299,7 @@ gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS)
 		if (nkeys > 0)
 		{
 			Assert(extra_data && extra_data[0]);
-			res = execute_jsp_gin_node((JsonPathGinNode *) extra_data[0], check,
-									   true);
+			res = execute_jsp_gin_node(extra_data[0], check, true);
 
 			/* Should always recheck the result */
 			if (res == GIN_TRUE)

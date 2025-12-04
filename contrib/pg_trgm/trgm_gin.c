@@ -247,8 +247,7 @@ gin_trgm_consistent(PG_FUNCTION_ARGS)
 				res = true;
 			}
 			else
-				res = trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
-										 check);
+				res = trigramsMatchGraph(extra_data[0], check);
 			break;
 		default:
 			elog(ERROR, "unrecognized strategy number: %d", strategy);
@@ -342,8 +341,7 @@ gin_trgm_triconsistent(PG_FUNCTION_ARGS)
 				boolcheck = (bool *) palloc(sizeof(bool) * nkeys);
 				for (i = 0; i < nkeys; i++)
 					boolcheck[i] = (check[i] != GIN_FALSE);
-				if (!trigramsMatchGraph((TrgmPackedGraph *) extra_data[0],
-										boolcheck))
+				if (!trigramsMatchGraph(extra_data[0], boolcheck))
 					res = GIN_FALSE;
 				pfree(boolcheck);
 			}

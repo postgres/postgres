@@ -171,7 +171,7 @@ ginReadTuple(GinState *ginstate, OffsetNumber attnum, IndexTuple itup,
 	{
 		if (nipd > 0)
 		{
-			ipd = ginPostingListDecode((GinPostingList *) ptr, &ndecoded);
+			ipd = ginPostingListDecode(ptr, &ndecoded);
 			if (nipd != ndecoded)
 				elog(ERROR, "number of items mismatch in GIN entry tuple, %d in tuple header, %d decoded",
 					 nipd, ndecoded);
