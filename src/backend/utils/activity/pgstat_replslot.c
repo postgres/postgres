@@ -127,7 +127,7 @@ pgstat_report_replslotsync(ReplicationSlot *slot)
 	statent = &shstatent->stats;
 
 	statent->slotsync_skip_count += 1;
-	statent->slotsync_skip_at = GetCurrentTimestamp();
+	statent->slotsync_last_skip = GetCurrentTimestamp();
 
 	pgstat_unlock_entry(entry_ref);
 }

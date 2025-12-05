@@ -1671,7 +1671,7 @@ description | Waiting for a newly initialized WAL file to reach durable storage
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-        <structfield>slotsync_skip_at</structfield><type>timestamp with time zone</type>
+        <structfield>slotsync_last_skip</structfield><type>timestamp with time zone</type>
        </para>
        <para>
         Time at which last slot synchronization was skipped. Slot

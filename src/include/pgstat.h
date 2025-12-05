@@ -401,7 +401,7 @@ typedef struct PgStat_StatReplSlotEntry
 	PgStat_Counter total_txns;
 	PgStat_Counter total_bytes;
 	PgStat_Counter slotsync_skip_count;
-	TimestampTz slotsync_skip_at;
+	TimestampTz slotsync_last_skip;
 	TimestampTz stat_reset_timestamp;
 } PgStat_StatReplSlotEntry;
 

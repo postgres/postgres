@@ -2162,7 +2162,7 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 					   INT8OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "slotsync_skip_count",
 					   INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "slotsync_skip_at",
+	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "slotsync_last_skip",
 					   TIMESTAMPTZOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
@@ -2192,10 +2192,10 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	values[9] = Int64GetDatum(slotent->total_bytes);
 	values[10] = Int64GetDatum(slotent->slotsync_skip_count);
 
-	if (slotent->slotsync_skip_at == 0)
+	if (slotent->slotsync_last_skip == 0)
 		nulls[11] = true;
 	else
-		values[11] = TimestampTzGetDatum(slotent->slotsync_skip_at);
+		values[11] = TimestampTzGetDatum(slotent->slotsync_last_skip);
 
 	if (slotent->stat_reset_timestamp == 0)
 		nulls[12] = true;
