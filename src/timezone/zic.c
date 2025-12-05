@@ -2620,7 +2620,7 @@ doabbr(char *abbr, struct zone const *zp, char const *letters,
 	   bool isdst, zic_t save, bool doquotes)
 {
 	char	   *cp;
-	char	   *slashp;
+	char const *slashp;
 	size_t		len;
 	char const *format = zp->z_format;
 

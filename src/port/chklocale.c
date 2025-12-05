@@ -202,7 +202,7 @@ static char *
 win32_get_codeset(const char *ctype)
 {
 	char	   *r = NULL;
-	char	   *codepage;
+	const char *codepage;
 	uint32		cp;
 	WCHAR		wctype[LOCALE_NAME_MAX_LENGTH];
 

@@ -953,7 +953,7 @@ get_iso_localename(const char *winlocname)
 	wchar_t		wc_locale_name[LOCALE_NAME_MAX_LENGTH];
 	wchar_t		buffer[LOCALE_NAME_MAX_LENGTH];
 	static char iso_lc_messages[LOCALE_NAME_MAX_LENGTH];
-	char	   *period;
+	const char *period;
 	int			len;
 	int			ret_val;
 

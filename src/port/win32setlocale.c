@@ -119,9 +119,9 @@ map_locale(const struct locale_map *map, const char *locale)
 		const char *needle_start = map[i].locale_name_start;
 		const char *needle_end = map[i].locale_name_end;
 		const char *replacement = map[i].replacement;
-		char	   *match;
-		char	   *match_start = NULL;
-		char	   *match_end = NULL;
+		const char *match;
+		const char *match_start = NULL;
+		const char *match_end = NULL;
 
 		match = strstr(locale, needle_start);
 		if (match)
@@ -148,7 +148,7 @@ map_locale(const struct locale_map *map, const char *locale)
 			/* Found a match. Replace the matched string. */
 			int			matchpos = match_start - locale;
 			int			replacementlen = strlen(replacement);
-			char	   *rest = match_end;
+			const char *rest = match_end;
 			int			restlen = strlen(rest);
 
 			/* check that the result fits in the static buffer */

@@ -194,7 +194,7 @@ is_visible_fxid(FullTransactionId value, const pg_snapshot *snap)
 #ifdef USE_BSEARCH_IF_NXIP_GREATER
 	else if (snap->nxip > USE_BSEARCH_IF_NXIP_GREATER)
 	{
-		void	   *res;
+		const void *res;
 
 		res = bsearch(&value, snap->xip, snap->nxip, sizeof(FullTransactionId),
 					  cmp_fxid);

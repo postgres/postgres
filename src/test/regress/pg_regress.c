@@ -693,7 +693,7 @@ static
 const char *
 get_expectfile(const char *testname, const char *file)
 {
-	char	   *file_type;
+	const char *file_type;
 	_resultmap *rm;
 
 	/*

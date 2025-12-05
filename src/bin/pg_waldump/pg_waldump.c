@@ -160,7 +160,7 @@ create_fullpage_directory(char *path)
 static void
 split_path(const char *path, char **dir, char **fname)
 {
-	char	   *sep;
+	const char *sep;
 
 	/* split filepath into directory & filename */
 	sep = strrchr(path, '/');

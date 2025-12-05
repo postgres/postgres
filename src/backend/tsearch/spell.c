@@ -2320,7 +2320,7 @@ CheckCompoundAffixes(CMPDAffix **ptr, const char *word, int len, bool CheckInPla
 	}
 	else
 	{
-		char	   *affbegin;
+		const char *affbegin;
 
 		while ((*ptr)->affix)
 		{

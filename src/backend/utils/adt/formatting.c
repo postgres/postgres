@@ -1046,8 +1046,9 @@ typedef struct NUMProc
 	char	   *number,			/* string with number	*/
 			   *number_p,		/* pointer to current number position */
 			   *inout,			/* in / out buffer	*/
-			   *inout_p,		/* pointer to current inout position */
-			   *last_relevant,	/* last relevant number after decimal point */
+			   *inout_p;		/* pointer to current inout position */
+
+	const char *last_relevant,	/* last relevant number after decimal point */
 
 			   *L_negative_sign,	/* Locale */
 			   *L_positive_sign,
@@ -1118,7 +1119,7 @@ static FormatNode *NUM_cache(int len, NUMDesc *Num, const text *pars_str, bool *
 static char *int_to_roman(int number);
 static int	roman_to_int(NUMProc *Np, size_t input_len);
 static void NUM_prepare_locale(NUMProc *Np);
-static char *get_last_relevant_decnum(const char *num);
+static const char *get_last_relevant_decnum(const char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, size_t input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
@@ -5297,10 +5298,10 @@ NUM_prepare_locale(NUMProc *Np)
  * If there is no decimal point, return NULL (which will result in same
  * behavior as if FM hadn't been specified).
  */
-static char *
+static const char *
 get_last_relevant_decnum(const char *num)
 {
-	char	   *result,
+	const char *result,
 			   *p = strchr(num, '.');
 
 #ifdef DEBUG_TO_FROM_CHAR

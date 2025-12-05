@@ -425,7 +425,7 @@ validate_compress_specification(pg_compress_specification *spec)
 void
 parse_compress_options(const char *option, char **algorithm, char **detail)
 {
-	char	   *sep;
+	const char *sep;
 	char	   *endp;
 	long		result;
 
