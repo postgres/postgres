@@ -399,7 +399,7 @@ bt_check_every_level(Relation rel, Relation heaprel, bool heapkeyspace,
 	/*
 	 * Initialize state for entire verification operation
 	 */
-	state = palloc0(sizeof(BtreeCheckState));
+	state = palloc0_object(BtreeCheckState);
 	state->rel = rel;
 	state->heaprel = heaprel;
 	state->heapkeyspace = heapkeyspace;

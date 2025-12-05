@@ -163,7 +163,7 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	TestDecodingData *data;
 	bool		enable_streaming = false;
 
-	data = palloc0(sizeof(TestDecodingData));
+	data = palloc0_object(TestDecodingData);
 	data->context = AllocSetContextCreate(ctx->context,
 										  "text conversion context",
 										  ALLOCSET_DEFAULT_SIZES);

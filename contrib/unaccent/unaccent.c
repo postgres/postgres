@@ -60,7 +60,7 @@ placeChar(TrieChar *node, const unsigned char *str, int lenstr,
 	TrieChar   *curnode;
 
 	if (!node)
-		node = (TrieChar *) palloc0(sizeof(TrieChar) * 256);
+		node = palloc0_array(TrieChar, 256);
 
 	Assert(lenstr > 0);			/* else str[0] doesn't exist */
 
@@ -239,7 +239,7 @@ initTrie(const char *filename)
 				if (trgquoted && state > 0)
 				{
 					/* Ignore first and end quotes */
-					trgstore = (char *) palloc(sizeof(char) * (trglen - 2));
+					trgstore = palloc_array(char, trglen - 2);
 					trgstorelen = 0;
 					for (int i = 1; i < trglen - 1; i++)
 					{
@@ -252,7 +252,7 @@ initTrie(const char *filename)
 				}
 				else
 				{
-					trgstore = (char *) palloc(sizeof(char) * trglen);
+					trgstore = palloc_array(char, trglen);
 					trgstorelen = trglen;
 					memcpy(trgstore, trg, trgstorelen);
 				}
@@ -421,7 +421,7 @@ unaccent_lexize(PG_FUNCTION_ARGS)
 	/* return a result only if we made at least one substitution */
 	if (buf.data != NULL)
 	{
-		res = (TSLexeme *) palloc0(sizeof(TSLexeme) * 2);
+		res = palloc0_array(TSLexeme, 2);
 		res->lexeme = buf.data;
 		res->flags = TSL_FILTER;
 	}

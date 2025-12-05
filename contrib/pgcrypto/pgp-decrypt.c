@@ -224,7 +224,7 @@ pgp_create_pkt_reader(PullFilter **pf_p, PullFilter *src, int len,
 					  int pkttype, PGP_Context *ctx)
 {
 	int			res;
-	struct PktData *pkt = palloc(sizeof(*pkt));
+	struct PktData *pkt = palloc_object(struct PktData);
 
 	pkt->type = pkttype;
 	pkt->len = len;
@@ -448,7 +448,7 @@ mdcbuf_init(void **priv_p, void *arg, PullFilter *src)
 	PGP_Context *ctx = arg;
 	struct MDCBufData *st;
 
-	st = palloc0(sizeof(*st));
+	st = palloc0_object(struct MDCBufData);
 	st->buflen = sizeof(st->buf);
 	st->ctx = ctx;
 	*priv_p = st;

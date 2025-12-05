@@ -115,7 +115,7 @@ mbuf_create(int len)
 	if (!len)
 		len = 8192;
 
-	mbuf = palloc(sizeof *mbuf);
+	mbuf = palloc_object(MBuf);
 	mbuf->data = palloc(len);
 	mbuf->buf_end = mbuf->data + len;
 	mbuf->data_end = mbuf->data;
@@ -132,7 +132,7 @@ mbuf_create_from_data(uint8 *data, int len)
 {
 	MBuf	   *mbuf;
 
-	mbuf = palloc(sizeof *mbuf);
+	mbuf = palloc_object(MBuf);
 	mbuf->data = data;
 	mbuf->buf_end = mbuf->data + len;
 	mbuf->data_end = mbuf->data + len;
@@ -206,7 +206,7 @@ pullf_create(PullFilter **pf_p, const PullFilterOps *op, void *init_arg, PullFil
 		res = 0;
 	}
 
-	pf = palloc0(sizeof(*pf));
+	pf = palloc0_object(PullFilter);
 	pf->buflen = res;
 	pf->op = op;
 	pf->priv = priv;
@@ -372,7 +372,7 @@ pushf_create(PushFilter **mp_p, const PushFilterOps *op, void *init_arg, PushFil
 		res = 0;
 	}
 
-	mp = palloc0(sizeof(*mp));
+	mp = palloc0_object(PushFilter);
 	mp->block_size = res;
 	mp->op = op;
 	mp->priv = priv;

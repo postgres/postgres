@@ -1838,7 +1838,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	{
 		ToastedAttribute *ta;
 
-		ta = (ToastedAttribute *) palloc0(sizeof(ToastedAttribute));
+		ta = palloc0_object(ToastedAttribute);
 
 		VARATT_EXTERNAL_GET_POINTER(ta->toast_pointer, attr);
 		ta->blkno = ctx->blkno;

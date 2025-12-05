@@ -154,7 +154,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
-		inter_call_data = palloc(sizeof(heap_page_items_state));
+		inter_call_data = palloc_object(heap_page_items_state);
 
 		/* Build a tuple descriptor for our result type */
 		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -553,7 +553,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	}
 
 	/* build set of raw flags */
-	flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
+	flags = palloc0_array(Datum, bitcnt);
 
 	/* decode t_infomask */
 	if ((t_infomask & HEAP_HASNULL) != 0)

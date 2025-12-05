@@ -221,7 +221,7 @@ parse_hstore(HSParser *state)
 	bool		escaped = false;
 
 	state->plen = 16;
-	state->pairs = (Pairs *) palloc(sizeof(Pairs) * state->plen);
+	state->pairs = palloc_array(Pairs, state->plen);
 	state->pcur = 0;
 	state->ptr = state->begin;
 	state->word = NULL;

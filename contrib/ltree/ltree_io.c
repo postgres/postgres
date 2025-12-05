@@ -65,7 +65,7 @@ parse_ltree(const char *buf, struct Node *escontext)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("number of ltree labels (%d) exceeds the maximum allowed (%d)",
 						num + 1, LTREE_MAX_LEVELS)));
-	list = lptr = (nodeitem *) palloc(sizeof(nodeitem) * (num + 1));
+	list = lptr = palloc_array(nodeitem, num + 1);
 	ptr = buf;
 	while (*ptr)
 	{
@@ -318,14 +318,14 @@ parse_lquery(const char *buf, struct Node *escontext)
 			case LQPRS_WAITLEVEL:
 				if (ISLABEL(ptr))
 				{
-					GETVAR(curqlevel) = lptr = (nodeitem *) palloc0(sizeof(nodeitem) * (numOR + 1));
+					GETVAR(curqlevel) = lptr = palloc0_array(nodeitem, numOR + 1);
 					lptr->start = ptr;
 					state = LQPRS_WAITDELIM;
 					curqlevel->numvar = 1;
 				}
 				else if (t_iseq(ptr, '!'))
 				{
-					GETVAR(curqlevel) = lptr = (nodeitem *) palloc0(sizeof(nodeitem) * (numOR + 1));
+					GETVAR(curqlevel) = lptr = palloc0_array(nodeitem, numOR + 1);
 					lptr->start = ptr + 1;
 					lptr->wlen = -1;	/* compensate for counting ! below */
 					state = LQPRS_WAITDELIM;

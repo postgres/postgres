@@ -109,8 +109,7 @@ InitXLogReaderState(XLogRecPtr lsn)
 				 errmsg("could not read WAL at LSN %X/%08X",
 						LSN_FORMAT_ARGS(lsn))));
 
-	private_data = (ReadLocalXLogPageNoWaitPrivate *)
-		palloc0(sizeof(ReadLocalXLogPageNoWaitPrivate));
+	private_data = palloc0_object(ReadLocalXLogPageNoWaitPrivate);
 
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page_no_wait,
@@ -310,7 +309,7 @@ GetWALBlockInfo(FunctionCallInfo fcinfo, XLogReaderState *record,
 			/* Construct and save block_fpi_info */
 			bitcnt = pg_popcount((const char *) &blk->bimg_info,
 								 sizeof(uint8));
-			flags = (Datum *) palloc0(sizeof(Datum) * bitcnt);
+			flags = palloc0_array(Datum, bitcnt);
 			if ((blk->bimg_info & BKPIMAGE_HAS_HOLE) != 0)
 				flags[cnt++] = CStringGetTextDatum("HAS_HOLE");
 			if (blk->apply_image)

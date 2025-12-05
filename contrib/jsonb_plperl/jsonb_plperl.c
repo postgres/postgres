@@ -266,7 +266,7 @@ SV_to_JsonbValue(SV *in, JsonbParseState **jsonb_state, bool is_elem)
 	/* Push result into 'jsonb_state' unless it is a raw scalar. */
 	return *jsonb_state
 		? pushJsonbValue(jsonb_state, is_elem ? WJB_ELEM : WJB_VALUE, &out)
-		: memcpy(palloc(sizeof(JsonbValue)), &out, sizeof(JsonbValue));
+		: memcpy(palloc_object(JsonbValue), &out, sizeof(JsonbValue));
 }
 
 

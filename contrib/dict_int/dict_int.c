@@ -38,7 +38,7 @@ dintdict_init(PG_FUNCTION_ARGS)
 	DictInt    *d;
 	ListCell   *l;
 
-	d = (DictInt *) palloc0(sizeof(DictInt));
+	d = palloc0_object(DictInt);
 	d->maxlen = 6;
 	d->rejectlong = false;
 	d->absval = false;
@@ -83,7 +83,7 @@ dintdict_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int			len = PG_GETARG_INT32(2);
 	char	   *txt;
-	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
+	TSLexeme   *res = palloc0_array(TSLexeme, 2);
 
 	res[1].lexeme = NULL;
 

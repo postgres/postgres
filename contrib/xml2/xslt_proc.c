@@ -69,7 +69,7 @@ xslt_process(PG_FUNCTION_ARGS)
 	else
 	{
 		/* No parameters */
-		params = (const char **) palloc(sizeof(char *));
+		params = palloc_object(const char *);
 		params[0] = NULL;
 	}
 

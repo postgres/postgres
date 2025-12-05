@@ -419,7 +419,7 @@ PLyObject_ToJsonbValue(PyObject *obj, JsonbParseState **jsonb_state, bool is_ele
 			return PLyMapping_ToJsonbValue(obj, jsonb_state);
 	}
 
-	out = palloc(sizeof(JsonbValue));
+	out = palloc_object(JsonbValue);
 
 	if (obj == Py_None)
 		out->type = jbvNull;

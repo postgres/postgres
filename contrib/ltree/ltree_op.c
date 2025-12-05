@@ -566,7 +566,7 @@ lca(PG_FUNCTION_ARGS)
 	ltree	  **a,
 			   *res;
 
-	a = (ltree **) palloc(sizeof(ltree *) * fcinfo->nargs);
+	a = palloc_array(ltree *, fcinfo->nargs);
 	for (i = 0; i < fcinfo->nargs; i++)
 		a[i] = PG_GETARG_LTREE_P(i);
 	res = lca_inner(a, (int) fcinfo->nargs);

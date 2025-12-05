@@ -95,7 +95,7 @@ overexplain_ensure_options(ExplainState *es)
 
 	if (options == NULL)
 	{
-		options = palloc0(sizeof(overexplain_options));
+		options = palloc0_object(overexplain_options);
 		SetExplainExtensionState(es, es_extension_id, options);
 	}
 

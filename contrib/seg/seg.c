@@ -107,7 +107,7 @@ Datum
 seg_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	SEG		   *result = palloc(sizeof(SEG));
+	SEG		   *result = palloc_object(SEG);
 	yyscan_t	scanner;
 
 	seg_scanner_init(str, &scanner);
@@ -370,7 +370,7 @@ gseg_picksplit(PG_FUNCTION_ARGS)
 	/*
 	 * Emit segments to the left output page, and compute its bounding box.
 	 */
-	seg_l = (SEG *) palloc(sizeof(SEG));
+	seg_l = palloc_object(SEG);
 	memcpy(seg_l, sort_items[0].data, sizeof(SEG));
 	*left++ = sort_items[0].index;
 	v->spl_nleft++;
@@ -388,7 +388,7 @@ gseg_picksplit(PG_FUNCTION_ARGS)
 	/*
 	 * Likewise for the right page.
 	 */
-	seg_r = (SEG *) palloc(sizeof(SEG));
+	seg_r = palloc_object(SEG);
 	memcpy(seg_r, sort_items[firstright].data, sizeof(SEG));
 	*right++ = sort_items[firstright].index;
 	v->spl_nright++;
@@ -632,7 +632,7 @@ seg_union(PG_FUNCTION_ARGS)
 	SEG		   *b = PG_GETARG_SEG_P(1);
 	SEG		   *n;
 
-	n = (SEG *) palloc(sizeof(*n));
+	n = palloc_object(SEG);
 
 	/* take max of upper endpoints */
 	if (a->upper > b->upper)
@@ -672,7 +672,7 @@ seg_inter(PG_FUNCTION_ARGS)
 	SEG		   *b = PG_GETARG_SEG_P(1);
 	SEG		   *n;
 
-	n = (SEG *) palloc(sizeof(*n));
+	n = palloc_object(SEG);
 
 	/* take min of upper endpoints */
 	if (a->upper < b->upper)

@@ -86,7 +86,7 @@ makeDefaultBloomOptions(void)
 	BloomOptions *opts;
 	int			i;
 
-	opts = (BloomOptions *) palloc0(sizeof(BloomOptions));
+	opts = palloc0_object(BloomOptions);
 	/* Convert DEFAULT_BLOOM_LENGTH from # of bits to # of words */
 	opts->bloomLength = (DEFAULT_BLOOM_LENGTH + SIGNWORDBITS - 1) / SIGNWORDBITS;
 	for (i = 0; i < INDEX_MAX_KEYS; i++)

@@ -101,7 +101,7 @@ ltree_compress(PG_FUNCTION_ARGS)
 		ltree	   *val = DatumGetLtreeP(entry->key);
 		ltree_gist *key = ltree_gist_alloc(false, NULL, 0, val, 0);
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -117,7 +117,7 @@ ltree_decompress(PG_FUNCTION_ARGS)
 
 	if (PointerGetDatum(key) != entry->key)
 	{
-		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = palloc_object(GISTENTRY);
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
@@ -318,7 +318,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 	v->spl_nleft = 0;
 	v->spl_nright = 0;
-	array = (RIX *) palloc(sizeof(RIX) * (maxoff + 1));
+	array = palloc_array(RIX, maxoff + 1);
 
 	/* copy the data into RIXes, and sort the RIXes */
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))

@@ -651,7 +651,7 @@ find_plan(char *ident, EPlan **eplan, int *nplans)
 	}
 	else
 	{
-		newp = *eplan = (EPlan *) palloc(sizeof(EPlan));
+		newp = *eplan = palloc_object(EPlan);
 		(*nplans) = i = 0;
 	}
 

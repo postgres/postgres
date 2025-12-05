@@ -471,7 +471,7 @@ g_cube_decompress(PG_FUNCTION_ARGS)
 
 	if (key != DatumGetNDBOXP(entry->key))
 	{
-		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = palloc_object(GISTENTRY);
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,

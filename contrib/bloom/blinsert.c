@@ -151,7 +151,7 @@ blbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 	MemoryContextDelete(buildstate.tmpCtx);
 
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 

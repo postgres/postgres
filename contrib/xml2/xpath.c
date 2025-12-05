@@ -485,8 +485,7 @@ pgxml_xpath(text *document, xmlChar *xpath, PgXmlErrorContext *xmlerrcxt)
 {
 	int32		docsize = VARSIZE_ANY_EXHDR(document);
 	xmlXPathCompExprPtr comppath;
-	xpath_workspace *workspace = (xpath_workspace *)
-		palloc0(sizeof(xpath_workspace));
+	xpath_workspace *workspace = palloc0_object(xpath_workspace);
 
 	workspace->doctree = NULL;
 	workspace->ctxt = NULL;

@@ -162,11 +162,11 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		timeKEY    *r = (timeKEY *) palloc(sizeof(timeKEY));
+		timeKEY    *r = palloc_object(timeKEY);
 		TimeTzADT  *tz = DatumGetTimeTzADTP(entry->key);
 		TimeADT		tmp;
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 
 		/* We are using the time + zone only to compress */
 		tmp = tz->time + (tz->zone * INT64CONST(1000000));

@@ -207,7 +207,7 @@ normal_rand(PG_FUNCTION_ARGS)
 		funcctx->max_calls = num_tuples;
 
 		/* allocate memory for user context */
-		fctx = (normal_rand_fctx *) palloc(sizeof(normal_rand_fctx));
+		fctx = palloc_object(normal_rand_fctx);
 
 		/*
 		 * Use fctx to keep track of upper and lower bounds from call to call.
@@ -766,7 +766,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 
-			catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
+			catdesc = palloc_object(crosstab_cat_desc);
 			catdesc->catname = catname;
 			catdesc->attidx = i;
 

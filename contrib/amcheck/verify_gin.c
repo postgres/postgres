@@ -117,7 +117,7 @@ ginReadTupleWithoutState(IndexTuple itup, int *nitems)
 	}
 	else
 	{
-		ipd = (ItemPointer) palloc(sizeof(ItemPointerData) * nipd);
+		ipd = palloc_array(ItemPointerData, nipd);
 		memcpy(ipd, ptr, sizeof(ItemPointerData) * nipd);
 	}
 	*nitems = nipd;
@@ -152,7 +152,7 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 	leafdepth = -1;
 
 	/* Start the scan at the root page */
-	stack = (GinPostingTreeScanItem *) palloc0(sizeof(GinPostingTreeScanItem));
+	stack = palloc0_object(GinPostingTreeScanItem);
 	stack->depth = 0;
 	ItemPointerSetInvalid(&stack->parentkey);
 	stack->parentblk = InvalidBlockNumber;
@@ -354,7 +354,7 @@ gin_check_posting_tree_parent_keys_consistency(Relation rel, BlockNumber posting
 									stack->blkno, i)));
 
 				/* This is an internal page, recurse into the child. */
-				ptr = (GinPostingTreeScanItem *) palloc(sizeof(GinPostingTreeScanItem));
+				ptr = palloc_object(GinPostingTreeScanItem);
 				ptr->depth = stack->depth + 1;
 
 				/*
@@ -412,7 +412,7 @@ gin_check_parent_keys_consistency(Relation rel,
 	leafdepth = -1;
 
 	/* Start the scan at the root page */
-	stack = (GinScanItem *) palloc0(sizeof(GinScanItem));
+	stack = palloc0_object(GinScanItem);
 	stack->depth = 0;
 	stack->parenttup = NULL;
 	stack->parentblk = InvalidBlockNumber;
@@ -473,7 +473,7 @@ gin_check_parent_keys_consistency(Relation rel,
 
 				elog(DEBUG3, "split detected for blk: %u, parent blk: %u", stack->blkno, stack->parentblk);
 
-				ptr = (GinScanItem *) palloc(sizeof(GinScanItem));
+				ptr = palloc_object(GinScanItem);
 				ptr->depth = stack->depth;
 				ptr->parenttup = CopyIndexTuple(stack->parenttup);
 				ptr->parentblk = stack->parentblk;
@@ -601,7 +601,7 @@ gin_check_parent_keys_consistency(Relation rel,
 			{
 				GinScanItem *ptr;
 
-				ptr = (GinScanItem *) palloc(sizeof(GinScanItem));
+				ptr = palloc_object(GinScanItem);
 				ptr->depth = stack->depth + 1;
 				/* last tuple in layer has no high key */
 				if (i == maxoff && rightlink == InvalidBlockNumber)

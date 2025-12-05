@@ -325,7 +325,7 @@ hash_page_items(PG_FUNCTION_ARGS)
 
 		page = verify_hash_page(raw_page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 
-		uargs = palloc(sizeof(struct user_args));
+		uargs = palloc_object(struct user_args);
 
 		uargs->page = page;
 

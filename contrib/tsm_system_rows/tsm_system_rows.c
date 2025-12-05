@@ -163,7 +163,7 @@ system_rows_samplescangetsamplesize(PlannerInfo *root,
 static void
 system_rows_initsamplescan(SampleScanState *node, int eflags)
 {
-	node->tsm_state = palloc0(sizeof(SystemRowsSamplerData));
+	node->tsm_state = palloc0_object(SystemRowsSamplerData);
 	/* Note the above leaves tsm_state->step equal to zero */
 }
 

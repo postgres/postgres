@@ -150,7 +150,7 @@ gbt_intv_compress(PG_FUNCTION_ARGS)
 	{
 		char	   *r = (char *) palloc(2 * INTERVALSIZE);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 
 		if (entry->leafkey)
 		{
@@ -190,10 +190,10 @@ gbt_intv_decompress(PG_FUNCTION_ARGS)
 
 	if (INTERVALSIZE != sizeof(Interval))
 	{
-		intvKEY    *r = palloc(sizeof(intvKEY));
+		intvKEY    *r = palloc_object(intvKEY);
 		char	   *key = DatumGetPointer(entry->key);
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		memcpy(&r->lower, key, INTERVALSIZE);
 		memcpy(&r->upper, key + INTERVALSIZE, INTERVALSIZE);
 

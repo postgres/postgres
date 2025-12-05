@@ -186,7 +186,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 					 errmsg("input array is too big (%d maximum allowed, %d current), use gist__intbig_ops opclass instead",
 							2 * num_ranges - 1, ARRNELEMS(r))));
 
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page, entry->offset, false);
 
@@ -276,7 +276,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 					 errmsg("data is too sparse, recreate index using gist__intbig_ops opclass instead")));
 
 		r = resize_intArrayType(r, len);
-		retval = palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page, entry->offset, false);
 		PG_RETURN_POINTER(retval);
@@ -306,7 +306,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	{
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
 		{
-			retval = palloc(sizeof(GISTENTRY));
+			retval = palloc_object(GISTENTRY);
 			gistentryinit(*retval, PointerGetDatum(in),
 						  entry->rel, entry->page, entry->offset, false);
 			PG_RETURN_POINTER(retval);
@@ -321,7 +321,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	{							/* not compressed value */
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
 		{
-			retval = palloc(sizeof(GISTENTRY));
+			retval = palloc_object(GISTENTRY);
 			gistentryinit(*retval, PointerGetDatum(in),
 						  entry->rel, entry->page, entry->offset, false);
 
@@ -350,7 +350,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 
 	if (in != (ArrayType *) DatumGetPointer(entry->key))
 		pfree(in);
-	retval = palloc(sizeof(GISTENTRY));
+	retval = palloc_object(GISTENTRY);
 	gistentryinit(*retval, PointerGetDatum(r),
 				  entry->rel, entry->page, entry->offset, false);
 
@@ -535,7 +535,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 	/*
 	 * sort entries
 	 */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
 		costvector[i - 1].pos = i;
