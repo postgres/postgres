@@ -86,7 +86,7 @@ step s4_wakeup_to_set_dead
 permutation
 	s3_setup_wait_before_set_dead
 	s3_start_reindex(s1_start_upsert, s2_start_upsert)
-	s1_start_upsert
+	s1_start_upsert(s4_wakeup_s2)
 	s4_wakeup_to_set_dead
 	s2_start_upsert(s1_start_upsert)
 	s4_wakeup_s1
@@ -95,7 +95,7 @@ permutation
 permutation
 	s3_setup_wait_before_swap
 	s3_start_reindex(s1_start_upsert, s2_start_upsert)
-	s1_start_upsert
+	s1_start_upsert(s4_wakeup_s2)
 	s4_wakeup_to_swap
 	s2_start_upsert(s1_start_upsert)
 	s4_wakeup_s2
@@ -104,7 +104,7 @@ permutation
 permutation
 	s3_setup_wait_before_set_dead
 	s3_start_reindex(s1_start_upsert, s2_start_upsert)
-	s1_start_upsert
+	s1_start_upsert(s4_wakeup_s2)
 	s2_start_upsert(s1_start_upsert)
 	s4_wakeup_s1
 	s4_wakeup_to_set_dead
