@@ -844,16 +844,19 @@ create index on unique_tbl_p3(a);
 analyze unique_tbl_p;
 set enable_partitionwise_join to on;
 -- Ensure that the unique-ification works for partition-wise join
+-- (Only one of the two joins will be done partitionwise, but that's good
+-- enough for our purposes.)
 explain (verbose, costs off)
 select * from unique_tbl_p t1, unique_tbl_p t2
 where (t1.a, t2.a) in (select a, a from unique_tbl_p t3)
 order by t1.a, t2.a;
                                            QUERY PLAN                                           
 ------------------------------------------------------------------------------------------------
- Merge Append
-   Sort Key: t1.a
-   ->  Nested Loop
-         Output: t1_1.a, t1_1.b, t2_1.a, t2_1.b
+ Merge Join
+   Output: t1.a, t1.b, t2.a, t2.b
+   Merge Cond: (t1.a = t2.a)
+   ->  Merge Append
+         Sort Key: t1.a
          ->  Nested Loop
                Output: t1_1.a, t1_1.b, t3_1.a
                ->  Unique
@@ -863,15 +866,6 @@ order by t1.a, t2.a;
                ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t1_1
                      Output: t1_1.a, t1_1.b
                      Index Cond: (t1_1.a = t3_1.a)
-         ->  Memoize
-               Output: t2_1.a, t2_1.b
-               Cache Key: t1_1.a
-               Cache Mode: logical
-               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t2_1
-                     Output: t2_1.a, t2_1.b
-                     Index Cond: (t2_1.a = t1_1.a)
-   ->  Nested Loop
-         Output: t1_2.a, t1_2.b, t2_2.a, t2_2.b
          ->  Nested Loop
                Output: t1_2.a, t1_2.b, t3_2.a
                ->  Unique
@@ -881,15 +875,6 @@ order by t1.a, t2.a;
                ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t1_2
                      Output: t1_2.a, t1_2.b
                      Index Cond: (t1_2.a = t3_2.a)
-         ->  Memoize
-               Output: t2_2.a, t2_2.b
-               Cache Key: t1_2.a
-               Cache Mode: logical
-               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t2_2
-                     Output: t2_2.a, t2_2.b
-                     Index Cond: (t2_2.a = t1_2.a)
-   ->  Nested Loop
-         Output: t1_3.a, t1_3.b, t2_3.a, t2_3.b
          ->  Nested Loop
                Output: t1_3.a, t1_3.b, t3_3.a
                ->  Unique
@@ -902,14 +887,16 @@ order by t1.a, t2.a;
                ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t1_3
                      Output: t1_3.a, t1_3.b
                      Index Cond: (t1_3.a = t3_3.a)
-         ->  Memoize
-               Output: t2_3.a, t2_3.b
-               Cache Key: t1_3.a
-               Cache Mode: logical
+   ->  Materialize
+         Output: t2.a, t2.b
+         ->  Append
+               ->  Index Scan using unique_tbl_p1_a_idx on public.unique_tbl_p1 t2_1
+                     Output: t2_1.a, t2_1.b
+               ->  Index Scan using unique_tbl_p2_a_idx on public.unique_tbl_p2 t2_2
+                     Output: t2_2.a, t2_2.b
                ->  Index Scan using unique_tbl_p3_a_idx on public.unique_tbl_p3 t2_3
                      Output: t2_3.a, t2_3.b
-                     Index Cond: (t2_3.a = t1_3.a)
-(59 rows)
+(44 rows)
 
 reset enable_partitionwise_join;
 drop table unique_tbl_p;

@@ -419,6 +419,8 @@ analyze unique_tbl_p;
 set enable_partitionwise_join to on;
 
 -- Ensure that the unique-ification works for partition-wise join
+-- (Only one of the two joins will be done partitionwise, but that's good
+-- enough for our purposes.)
 explain (verbose, costs off)
 select * from unique_tbl_p t1, unique_tbl_p t2
 where (t1.a, t2.a) in (select a, a from unique_tbl_p t3)
