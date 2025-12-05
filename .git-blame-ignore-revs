@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+86b276a4a9b4b2c63ef00765f0e2867e1bcac4ca # 2025-11-19 10:41:28 +0100
+# Fix indentation
+
 f63ae72bbcea057534144eaf27ffe3f6e9267511 # 2025-11-18 10:28:36 -0600
 # Switch from tabs to spaces in postgresql.conf.sample.
 
