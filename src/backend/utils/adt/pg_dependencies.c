@@ -494,7 +494,7 @@ dependencies_scalar(void *state, char *token, JsonTokenType tokentype)
 		case DEPS_EXPECT_ATTNUM:
 			attnum = pg_strtoint16_safe(token, (Node *) &escontext);
 
-			if (SOFT_ERROR_OCCURRED(&escontext))
+			if (escontext.error_occurred)
 			{
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -539,7 +539,7 @@ dependencies_scalar(void *state, char *token, JsonTokenType tokentype)
 			parse->dependency = (AttrNumber)
 				pg_strtoint16_safe(token, (Node *) &escontext);
 
-			if (SOFT_ERROR_OCCURRED(&escontext))
+			if (escontext.error_occurred)
 			{
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -569,7 +569,7 @@ dependencies_scalar(void *state, char *token, JsonTokenType tokentype)
 			parse->degree = float8in_internal(token, NULL, "double",
 											  token, (Node *) &escontext);
 
-			if (SOFT_ERROR_OCCURRED(&escontext))
+			if (escontext.error_occurred)
 			{
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),

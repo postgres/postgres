@@ -435,7 +435,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 		case NDIST_EXPECT_ATTNUM:
 			attnum = pg_strtoint16_safe(token, (Node *) &escontext);
 
-			if (SOFT_ERROR_OCCURRED(&escontext))
+			if (escontext.error_occurred)
 			{
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -485,7 +485,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 			 */
 			parse->ndistinct = pg_strtoint32_safe(token, (Node *) &escontext);
 
-			if (!SOFT_ERROR_OCCURRED(&escontext))
+			if (!escontext.error_occurred)
 			{
 				parse->state = NDIST_EXPECT_KEY;
 				return JSON_SUCCESS;
