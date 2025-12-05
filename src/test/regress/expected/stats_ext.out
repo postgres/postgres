@@ -196,8 +196,10 @@ Statistics objects:
     "public.ab1_a_b_stats" ON a, b FROM ab1; STATISTICS 0
 
 ANALYZE ab1;
-SELECT stxname, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct,
-       jsonb_pretty(d.stxddependencies::text::jsonb) AS stxddependencies, stxdmcv, stxdinherit
+SELECT stxname,
+       replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct,
+       replace(d.stxddependencies, '}, ', E'},\n') AS stxddependencies,
+       stxdmcv, stxdinherit
   FROM pg_statistic_ext s LEFT JOIN pg_statistic_ext_data d ON (d.stxoid = s.oid)
  WHERE s.stxname = 'ab1_a_b_stats';
     stxname    | stxdndistinct | stxddependencies | stxdmcv | stxdinherit 
@@ -477,43 +479,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 -- correct command
 CREATE STATISTICS s10 ON a, b, c FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |      stxdndistinct       
----------+--------------------------
- {d,f,m} | [                       +
-         |     {                   +
-         |         "ndistinct": 11,+
-         |         "attributes": [ +
-         |             3,          +
-         |             4           +
-         |         ]               +
-         |     },                  +
-         |     {                   +
-         |         "ndistinct": 11,+
-         |         "attributes": [ +
-         |             3,          +
-         |             6           +
-         |         ]               +
-         |     },                  +
-         |     {                   +
-         |         "ndistinct": 11,+
-         |         "attributes": [ +
-         |             4,          +
-         |             6           +
-         |         ]               +
-         |     },                  +
-         |     {                   +
-         |         "ndistinct": 11,+
-         |         "attributes": [ +
-         |             3,          +
-         |             4,          +
-         |             6           +
-         |         ]               +
-         |     }                   +
-         | ]
+ stxkind |                stxdndistinct                
+---------+---------------------------------------------
+ {d,f,m} | [{"attributes": [3, 4], "ndistinct": 11},  +
+         | {"attributes": [3, 6], "ndistinct": 11},   +
+         | {"attributes": [4, 6], "ndistinct": 11},   +
+         | {"attributes": [3, 4, 6], "ndistinct": 11}]
 (1 row)
 
 -- minor improvement, make sure the ctid does not break the matching
@@ -589,43 +564,16 @@ INSERT INTO ndistinct (a, b, c, filler1)
             mod(i,23) || ' dollars and zero cents'
        FROM generate_series(1,1000) s(i);
 ANALYZE ndistinct;
-SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |       stxdndistinct        
----------+----------------------------
- {d,f,m} | [                         +
-         |     {                     +
-         |         "ndistinct": 221, +
-         |         "attributes": [   +
-         |             3,            +
-         |             4             +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 247, +
-         |         "attributes": [   +
-         |             3,            +
-         |             6             +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 323, +
-         |         "attributes": [   +
-         |             4,            +
-         |             6             +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 1000,+
-         |         "attributes": [   +
-         |             3,            +
-         |             4,            +
-         |             6             +
-         |         ]                 +
-         |     }                     +
-         | ]
+ stxkind |                 stxdndistinct                 
+---------+-----------------------------------------------
+ {d,f,m} | [{"attributes": [3, 4], "ndistinct": 221},   +
+         | {"attributes": [3, 6], "ndistinct": 247},    +
+         | {"attributes": [4, 6], "ndistinct": 323},    +
+         | {"attributes": [3, 4, 6], "ndistinct": 1000}]
 (1 row)
 
 -- correct estimates
@@ -684,7 +632,7 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 (1 row)
 
 DROP STATISTICS s10;
-SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
@@ -768,43 +716,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, (
 
 CREATE STATISTICS s10 (ndistinct) ON (a+1), (b+100), (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |       stxdndistinct        
----------+----------------------------
- {d,e}   | [                         +
-         |     {                     +
-         |         "ndistinct": 221, +
-         |         "attributes": [   +
-         |             -1,           +
-         |             -2            +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 247, +
-         |         "attributes": [   +
-         |             -1,           +
-         |             -3            +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 323, +
-         |         "attributes": [   +
-         |             -2,           +
-         |             -3            +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 1000,+
-         |         "attributes": [   +
-         |             -1,           +
-         |             -2,           +
-         |             -3            +
-         |         ]                 +
-         |     }                     +
-         | ]
+ stxkind |                  stxdndistinct                   
+---------+--------------------------------------------------
+ {d,e}   | [{"attributes": [-1, -2], "ndistinct": 221},    +
+         | {"attributes": [-1, -3], "ndistinct": 247},     +
+         | {"attributes": [-2, -3], "ndistinct": 323},     +
+         | {"attributes": [-1, -2, -3], "ndistinct": 1000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY (a+1), (b+100)');
@@ -847,43 +768,16 @@ SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b
 
 CREATE STATISTICS s10 (ndistinct) ON a, b, (2*c) FROM ndistinct;
 ANALYZE ndistinct;
-SELECT s.stxkind, jsonb_pretty(d.stxdndistinct::text::jsonb) AS stxdndistinct
+SELECT s.stxkind, replace(d.stxdndistinct, '}, ', E'},\n') AS stxdndistinct
   FROM pg_statistic_ext s, pg_statistic_ext_data d
  WHERE s.stxrelid = 'ndistinct'::regclass
    AND d.stxoid = s.oid;
- stxkind |       stxdndistinct        
----------+----------------------------
- {d,e}   | [                         +
-         |     {                     +
-         |         "ndistinct": 221, +
-         |         "attributes": [   +
-         |             3,            +
-         |             4             +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 247, +
-         |         "attributes": [   +
-         |             3,            +
-         |             -1            +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 323, +
-         |         "attributes": [   +
-         |             4,            +
-         |             -1            +
-         |         ]                 +
-         |     },                    +
-         |     {                     +
-         |         "ndistinct": 1000,+
-         |         "attributes": [   +
-         |             3,            +
-         |             4,            +
-         |             -1            +
-         |         ]                 +
-         |     }                     +
-         | ]
+ stxkind |                 stxdndistinct                  
+---------+------------------------------------------------
+ {d,e}   | [{"attributes": [3, 4], "ndistinct": 221},    +
+         | {"attributes": [3, -1], "ndistinct": 247},    +
+         | {"attributes": [4, -1], "ndistinct": 323},    +
+         | {"attributes": [3, 4, -1], "ndistinct": 1000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT COUNT(*) FROM ndistinct GROUP BY a, b');
@@ -1434,48 +1328,14 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 CREATE STATISTICS func_deps_stat (dependencies) ON a, b, c FROM functional_dependencies;
 ANALYZE functional_dependencies;
 -- print the detected dependencies
-SELECT jsonb_pretty(dependencies::text::jsonb) AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
-        dependencies         
------------------------------
- [                          +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             3              +
-         ],                 +
-         "dependency": 4    +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             3              +
-         ],                 +
-         "dependency": 6    +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             4              +
-         ],                 +
-         "dependency": 6    +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             3,             +
-             4              +
-         ],                 +
-         "dependency": 6    +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             3,             +
-             6              +
-         ],                 +
-         "dependency": 4    +
-     }                      +
- ]
+SELECT replace(dependencies, '}, ', E'},\n') AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+                         dependencies                         
+--------------------------------------------------------------
+ [{"attributes": [3], "dependency": 4, "degree": 1.000000},  +
+ {"attributes": [3], "dependency": 6, "degree": 1.000000},   +
+ {"attributes": [4], "dependency": 6, "degree": 1.000000},   +
+ {"attributes": [3, 4], "dependency": 6, "degree": 1.000000},+
+ {"attributes": [3, 6], "dependency": 4, "degree": 1.000000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE a = 1 AND b = ''1''');
@@ -1814,48 +1674,14 @@ SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE 
 CREATE STATISTICS func_deps_stat (dependencies) ON (a * 2), upper(b), (c + 1) FROM functional_dependencies;
 ANALYZE functional_dependencies;
 -- print the detected dependencies
-SELECT jsonb_pretty(dependencies::text::jsonb) AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
-        dependencies         
------------------------------
- [                          +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             -1             +
-         ],                 +
-         "dependency": -2   +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             -1             +
-         ],                 +
-         "dependency": -3   +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             -2             +
-         ],                 +
-         "dependency": -3   +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             -1,            +
-             -2             +
-         ],                 +
-         "dependency": -3   +
-     },                     +
-     {                      +
-         "degree": 1.000000,+
-         "attributes": [    +
-             -1,            +
-             -3             +
-         ],                 +
-         "dependency": -2   +
-     }                      +
- ]
+SELECT replace(dependencies, '}, ', E'},\n') AS dependencies FROM pg_stats_ext WHERE statistics_name = 'func_deps_stat';
+                          dependencies                           
+-----------------------------------------------------------------
+ [{"attributes": [-1], "dependency": -2, "degree": 1.000000},   +
+ {"attributes": [-1], "dependency": -3, "degree": 1.000000},    +
+ {"attributes": [-2], "dependency": -3, "degree": 1.000000},    +
+ {"attributes": [-1, -2], "dependency": -3, "degree": 1.000000},+
+ {"attributes": [-1, -3], "dependency": -2, "degree": 1.000000}]
 (1 row)
 
 SELECT * FROM check_estimated_rows('SELECT * FROM functional_dependencies WHERE (a * 2) = 2 AND upper(b) = ''1''');
