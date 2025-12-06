@@ -68,6 +68,7 @@ our @EXPORT = qw(
   slurp_file
   append_to_file
   string_replace_file
+  read_head_tail
   check_mode_recursive
   chmod_recursive
   check_pg_config
@@ -586,6 +587,55 @@ sub string_replace_file
 	close($out);
 
 	return;
+}
+
+=pod
+
+=item read_head_tail(filename)
+
+Return lines from the head and the tail of a file.  If the file is smaller
+than the number of lines requested, all its contents are returned in @head,
+leaving @tail empty.
+
+If the PG_TEST_FILE_READ_LINES environment variable is set, use it instead
+of the default of 50 lines.
+
+=cut
+
+sub read_head_tail
+{
+	my $filename = shift;
+	my (@head, @tail);
+	my $line_count = 50;
+
+	# Use PG_TEST_FILE_READ_LINES if set.
+	if (defined $ENV{PG_TEST_FILE_READ_LINES})
+	{
+		$line_count = $ENV{PG_TEST_FILE_READ_LINES};
+	}
+
+	return ([], []) if $line_count <= 0;
+
+	open my $fh, '<', $filename or die "couldn't open file: $filename\n";
+	my @lines = <$fh>;
+	close $fh;
+
+	chomp @lines;
+
+	my $total = scalar @lines;
+
+	# If the file is small enough, return all lines in @head.
+	if (2 * $line_count >= $total)
+	{
+		@head = @lines;
+		@tail = ();
+		return (\@head, \@tail);
+	}
+
+	@head = @lines[ 0 .. $line_count - 1 ];
+	@tail = @lines[ $total - $line_count .. $total - 1 ];
+
+	return (\@head, \@tail);
 }
 
 =pod

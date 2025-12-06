@@ -917,6 +917,14 @@ PG_TEST_NOCLEAN=1 make -C src/bin/pg_dump check
     <varname>PG_TEST_TIMEOUT_DEFAULT</varname> to a higher number will change
     the default to avoid this.
    </para>
+
+   <para>
+    For certain tests, the environment variable
+    <envar>PG_TEST_FILE_READ_LINES</envar> can be set to limit the number of
+    lines read from large output files (head and tail). This is useful when
+    the test output contains a lot of unnecessary content, allowing the test
+    framework to read only a limited number of lines for its reports.
+   </para>
   </sect2>
 
   </sect1>
