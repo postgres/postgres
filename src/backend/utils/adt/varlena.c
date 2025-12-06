@@ -1111,6 +1111,7 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 	const char *hptr;
 
 	Assert(start_ptr >= haystack && start_ptr <= haystack_end);
+	Assert(needle_len > 0);
 
 	state->last_match_len_tmp = needle_len;
 
@@ -1123,19 +1124,26 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 		 * needle under the given collation.
 		 *
 		 * Note, the found substring could have a different length than the
-		 * needle, including being empty.  Callers that want to skip over the
-		 * found string need to read the length of the found substring from
-		 * last_match_len rather than just using the length of their needle.
+		 * needle.  Callers that want to skip over the found string need to
+		 * read the length of the found substring from last_match_len rather
+		 * than just using the length of their needle.
 		 *
 		 * Most callers will require "greedy" semantics, meaning that we need
 		 * to find the longest such substring, not the shortest.  For callers
 		 * that don't need greedy semantics, we can finish on the first match.
+		 *
+		 * This loop depends on the assumption that the needle is nonempty and
+		 * any matching substring must also be nonempty.  (Even if the
+		 * collation would accept an empty match, returning one would send
+		 * callers that search for successive matches into an infinite loop.)
 		 */
 		const char *result_hptr = NULL;
 
 		hptr = start_ptr;
 		while (hptr < haystack_end)
 		{
+			const char *test_end;
+
 			/*
 			 * First check the common case that there is a match in the
 			 * haystack of exactly the length of the needle.
@@ -1146,11 +1154,13 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 				return (char *) hptr;
 
 			/*
-			 * Else check if any of the possible substrings starting at hptr
-			 * are equal to the needle.
+			 * Else check if any of the non-empty substrings starting at hptr
+			 * compare equal to the needle.
 			 */
-			for (const char *test_end = hptr; test_end < haystack_end; test_end += pg_mblen(test_end))
+			test_end = hptr;
+			do
 			{
+				test_end += pg_mblen(test_end);
 				if (pg_strncoll(hptr, (test_end - hptr), needle, needle_len, state->locale) == 0)
 				{
 					state->last_match_len_tmp = (test_end - hptr);
@@ -1158,7 +1168,8 @@ text_position_next_internal(char *start_ptr, TextPositionState *state)
 					if (!state->greedy)
 						break;
 				}
-			}
+			} while (test_end < haystack_end);
+
 			if (result_hptr)
 				break;
 
