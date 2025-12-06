@@ -3319,9 +3319,21 @@ float8_stddev_samp(PG_FUNCTION_ARGS)
  * As with the preceding aggregates, we use the Youngs-Cramer algorithm to
  * reduce rounding errors in the aggregate final functions.
  *
- * The transition datatype for all these aggregates is a 6-element array of
+ * The transition datatype for all these aggregates is an 8-element array of
  * float8, holding the values N, Sx=sum(X), Sxx=sum((X-Sx/N)^2), Sy=sum(Y),
- * Syy=sum((Y-Sy/N)^2), Sxy=sum((X-Sx/N)*(Y-Sy/N)) in that order.
+ * Syy=sum((Y-Sy/N)^2), Sxy=sum((X-Sx/N)*(Y-Sy/N)), commonX, and commonY
+ * in that order.
+ *
+ * commonX is defined as the common X value if all the X values were the same,
+ * else NaN; likewise for commonY.  This is useful for deciding whether corr()
+ * and related functions should return NULL.  This representation cannot
+ * distinguish the-values-were-all-NaN from the-values-were-not-all-the-same,
+ * but that's okay because for this purpose we use the IEEE float arithmetic
+ * principle that two NaNs are never equal.  The SQL standard doesn't mention
+ * NaNs, but it says that NULL is to be returned when N*sum(X*X) equals
+ * sum(X)*sum(X) (etc), and that shouldn't be considered true for NaNs.
+ * Testing this as written in the spec would be highly subject to roundoff
+ * error, so instead we directly track whether all the inputs are equal.
  *
  * Note that Y is the first argument to all these aggregates!
  *
@@ -3345,17 +3357,21 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 				Sy,
 				Syy,
 				Sxy,
+				commonX,
+				commonY,
 				tmpX,
 				tmpY,
 				scale;
 
-	transvalues = check_float8_array(transarray, "float8_regr_accum", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_accum", 8);
 	N = transvalues[0];
 	Sx = transvalues[1];
 	Sxx = transvalues[2];
 	Sy = transvalues[3];
 	Syy = transvalues[4];
 	Sxy = transvalues[5];
+	commonX = transvalues[6];
+	commonY = transvalues[7];
 
 	/*
 	 * Use the Youngs-Cramer algorithm to incorporate the new values into the
@@ -3366,12 +3382,33 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 	Sy += newvalY;
 	if (transvalues[0] > 0.0)
 	{
+		/*
+		 * Check to see if we have seen distinct inputs.  We can use a test
+		 * that's a bit cheaper than float8_ne() because if commonX is already
+		 * NaN, it does not matter whether the != test returns true or not.
+		 */
+		if (newvalX != commonX || isnan(newvalX))
+			commonX = get_float8_nan();
+		if (newvalY != commonY || isnan(newvalY))
+			commonY = get_float8_nan();
+
 		tmpX = newvalX * N - Sx;
 		tmpY = newvalY * N - Sy;
 		scale = 1.0 / (N * transvalues[0]);
-		Sxx += tmpX * tmpX * scale;
-		Syy += tmpY * tmpY * scale;
-		Sxy += tmpX * tmpY * scale;
+
+		/*
+		 * If we have not seen distinct inputs, then Sxx, Syy, and/or Sxy
+		 * should remain zero (since Sx's exact value would be N * commonX,
+		 * etc).  Updating them would just create the possibility of injecting
+		 * roundoff error, and we need exact zero results so that the final
+		 * functions will return NULL in the right cases.
+		 */
+		if (isnan(commonX))
+			Sxx += tmpX * tmpX * scale;
+		if (isnan(commonY))
+			Syy += tmpY * tmpY * scale;
+		if (isnan(commonX) && isnan(commonY))
+			Sxy += tmpX * tmpY * scale;
 
 		/*
 		 * Overflow check.  We only report an overflow error when finite
@@ -3410,6 +3447,9 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 			Sxx = Sxy = get_float8_nan();
 		if (isnan(newvalY) || isinf(newvalY))
 			Syy = Sxy = get_float8_nan();
+
+		commonX = newvalX;
+		commonY = newvalY;
 	}
 
 	/*
@@ -3425,12 +3465,14 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 		transvalues[3] = Sy;
 		transvalues[4] = Syy;
 		transvalues[5] = Sxy;
+		transvalues[6] = commonX;
+		transvalues[7] = commonY;
 
 		PG_RETURN_ARRAYTYPE_P(transarray);
 	}
 	else
 	{
-		Datum		transdatums[6];
+		Datum		transdatums[8];
 		ArrayType  *result;
 
 		transdatums[0] = Float8GetDatumFast(N);
@@ -3439,8 +3481,10 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 		transdatums[3] = Float8GetDatumFast(Sy);
 		transdatums[4] = Float8GetDatumFast(Syy);
 		transdatums[5] = Float8GetDatumFast(Sxy);
+		transdatums[6] = Float8GetDatumFast(commonX);
+		transdatums[7] = Float8GetDatumFast(commonY);
 
-		result = construct_array_builtin(transdatums, 6, FLOAT8OID);
+		result = construct_array_builtin(transdatums, 8, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3449,7 +3493,7 @@ float8_regr_accum(PG_FUNCTION_ARGS)
 /*
  * float8_regr_combine
  *
- * An aggregate combine function used to combine two 6 fields
+ * An aggregate combine function used to combine two 8-fields
  * aggregate transition data into a single transition data.
  * This function is used only in two stage aggregation and
  * shouldn't be called outside aggregate context.
@@ -3467,12 +3511,16 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 				Sy1,
 				Syy1,
 				Sxy1,
+				Cx1,
+				Cy1,
 				N2,
 				Sx2,
 				Sxx2,
 				Sy2,
 				Syy2,
 				Sxy2,
+				Cx2,
+				Cy2,
 				tmp1,
 				tmp2,
 				N,
@@ -3480,10 +3528,12 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 				Sxx,
 				Sy,
 				Syy,
-				Sxy;
+				Sxy,
+				Cx,
+				Cy;
 
-	transvalues1 = check_float8_array(transarray1, "float8_regr_combine", 6);
-	transvalues2 = check_float8_array(transarray2, "float8_regr_combine", 6);
+	transvalues1 = check_float8_array(transarray1, "float8_regr_combine", 8);
+	transvalues2 = check_float8_array(transarray2, "float8_regr_combine", 8);
 
 	N1 = transvalues1[0];
 	Sx1 = transvalues1[1];
@@ -3491,6 +3541,8 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 	Sy1 = transvalues1[3];
 	Syy1 = transvalues1[4];
 	Sxy1 = transvalues1[5];
+	Cx1 = transvalues1[6];
+	Cy1 = transvalues1[7];
 
 	N2 = transvalues2[0];
 	Sx2 = transvalues2[1];
@@ -3498,6 +3550,8 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 	Sy2 = transvalues2[3];
 	Syy2 = transvalues2[4];
 	Sxy2 = transvalues2[5];
+	Cx2 = transvalues2[6];
+	Cy2 = transvalues2[7];
 
 	/*--------------------
 	 * The transition values combine using a generalization of the
@@ -3523,6 +3577,8 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		Sy = Sy2;
 		Syy = Syy2;
 		Sxy = Sxy2;
+		Cx = Cx2;
+		Cy = Cy2;
 	}
 	else if (N2 == 0.0)
 	{
@@ -3532,6 +3588,8 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		Sy = Sy1;
 		Syy = Syy1;
 		Sxy = Sxy1;
+		Cx = Cx1;
+		Cy = Cy1;
 	}
 	else
 	{
@@ -3549,6 +3607,14 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		Sxy = Sxy1 + Sxy2 + N1 * N2 * tmp1 * tmp2 / N;
 		if (unlikely(isinf(Sxy)) && !isinf(Sxy1) && !isinf(Sxy2))
 			float_overflow_error();
+		if (float8_eq(Cx1, Cx2))
+			Cx = Cx1;
+		else
+			Cx = get_float8_nan();
+		if (float8_eq(Cy1, Cy2))
+			Cy = Cy1;
+		else
+			Cy = get_float8_nan();
 	}
 
 	/*
@@ -3564,12 +3630,14 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		transvalues1[3] = Sy;
 		transvalues1[4] = Syy;
 		transvalues1[5] = Sxy;
+		transvalues1[6] = Cx;
+		transvalues1[7] = Cy;
 
 		PG_RETURN_ARRAYTYPE_P(transarray1);
 	}
 	else
 	{
-		Datum		transdatums[6];
+		Datum		transdatums[8];
 		ArrayType  *result;
 
 		transdatums[0] = Float8GetDatumFast(N);
@@ -3578,8 +3646,10 @@ float8_regr_combine(PG_FUNCTION_ARGS)
 		transdatums[3] = Float8GetDatumFast(Sy);
 		transdatums[4] = Float8GetDatumFast(Syy);
 		transdatums[5] = Float8GetDatumFast(Sxy);
+		transdatums[6] = Float8GetDatumFast(Cx);
+		transdatums[7] = Float8GetDatumFast(Cy);
 
-		result = construct_array_builtin(transdatums, 6, FLOAT8OID);
+		result = construct_array_builtin(transdatums, 8, FLOAT8OID);
 
 		PG_RETURN_ARRAYTYPE_P(result);
 	}
@@ -3594,7 +3664,7 @@ float8_regr_sxx(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxx;
 
-	transvalues = check_float8_array(transarray, "float8_regr_sxx", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_sxx", 8);
 	N = transvalues[0];
 	Sxx = transvalues[2];
 
@@ -3615,7 +3685,7 @@ float8_regr_syy(PG_FUNCTION_ARGS)
 	float8		N,
 				Syy;
 
-	transvalues = check_float8_array(transarray, "float8_regr_syy", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_syy", 8);
 	N = transvalues[0];
 	Syy = transvalues[4];
 
@@ -3636,7 +3706,7 @@ float8_regr_sxy(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_regr_sxy", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_sxy", 8);
 	N = transvalues[0];
 	Sxy = transvalues[5];
 
@@ -3655,15 +3725,21 @@ float8_regr_avgx(PG_FUNCTION_ARGS)
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
 	float8		N,
-				Sx;
+				Sx,
+				commonX;
 
-	transvalues = check_float8_array(transarray, "float8_regr_avgx", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_avgx", 8);
 	N = transvalues[0];
 	Sx = transvalues[1];
+	commonX = transvalues[6];
 
 	/* if N is 0 we should return NULL */
 	if (N < 1.0)
 		PG_RETURN_NULL();
+
+	/* if all inputs were the same just return that, avoiding roundoff error */
+	if (!isnan(commonX))
+		PG_RETURN_FLOAT8(commonX);
 
 	PG_RETURN_FLOAT8(Sx / N);
 }
@@ -3674,15 +3750,21 @@ float8_regr_avgy(PG_FUNCTION_ARGS)
 	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
 	float8	   *transvalues;
 	float8		N,
-				Sy;
+				Sy,
+				commonY;
 
-	transvalues = check_float8_array(transarray, "float8_regr_avgy", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_avgy", 8);
 	N = transvalues[0];
 	Sy = transvalues[3];
+	commonY = transvalues[7];
 
 	/* if N is 0 we should return NULL */
 	if (N < 1.0)
 		PG_RETURN_NULL();
+
+	/* if all inputs were the same just return that, avoiding roundoff error */
+	if (!isnan(commonY))
+		PG_RETURN_FLOAT8(commonY);
 
 	PG_RETURN_FLOAT8(Sy / N);
 }
@@ -3695,7 +3777,7 @@ float8_covar_pop(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_covar_pop", 6);
+	transvalues = check_float8_array(transarray, "float8_covar_pop", 8);
 	N = transvalues[0];
 	Sxy = transvalues[5];
 
@@ -3714,7 +3796,7 @@ float8_covar_samp(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_covar_samp", 6);
+	transvalues = check_float8_array(transarray, "float8_covar_samp", 8);
 	N = transvalues[0];
 	Sxy = transvalues[5];
 
@@ -3733,9 +3815,12 @@ float8_corr(PG_FUNCTION_ARGS)
 	float8		N,
 				Sxx,
 				Syy,
-				Sxy;
+				Sxy,
+				product,
+				sqrtproduct,
+				result;
 
-	transvalues = check_float8_array(transarray, "float8_corr", 6);
+	transvalues = check_float8_array(transarray, "float8_corr", 8);
 	N = transvalues[0];
 	Sxx = transvalues[2];
 	Syy = transvalues[4];
@@ -3751,7 +3836,29 @@ float8_corr(PG_FUNCTION_ARGS)
 	if (Sxx == 0 || Syy == 0)
 		PG_RETURN_NULL();
 
-	PG_RETURN_FLOAT8(Sxy / sqrt(Sxx * Syy));
+	/*
+	 * The product Sxx * Syy might underflow or overflow.  If so, we can
+	 * recover by computing sqrt(Sxx) * sqrt(Syy) instead of sqrt(Sxx * Syy).
+	 * However, the double sqrt() calculation is a bit slower and less
+	 * accurate, so don't do it if we don't have to.
+	 */
+	product = Sxx * Syy;
+	if (product == 0 || isinf(product))
+		sqrtproduct = sqrt(Sxx) * sqrt(Syy);
+	else
+		sqrtproduct = sqrt(product);
+	result = Sxy / sqrtproduct;
+
+	/*
+	 * Despite all these precautions, this formula can yield results outside
+	 * [-1, 1] due to roundoff error.  Clamp it to the expected range.
+	 */
+	if (result < -1)
+		result = -1;
+	else if (result > 1)
+		result = 1;
+
+	PG_RETURN_FLOAT8(result);
 }
 
 Datum
@@ -3764,7 +3871,7 @@ float8_regr_r2(PG_FUNCTION_ARGS)
 				Syy,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_regr_r2", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_r2", 8);
 	N = transvalues[0];
 	Sxx = transvalues[2];
 	Syy = transvalues[4];
@@ -3796,7 +3903,7 @@ float8_regr_slope(PG_FUNCTION_ARGS)
 				Sxx,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_regr_slope", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_slope", 8);
 	N = transvalues[0];
 	Sxx = transvalues[2];
 	Sxy = transvalues[5];
@@ -3825,7 +3932,7 @@ float8_regr_intercept(PG_FUNCTION_ARGS)
 				Sy,
 				Sxy;
 
-	transvalues = check_float8_array(transarray, "float8_regr_intercept", 6);
+	transvalues = check_float8_array(transarray, "float8_regr_intercept", 8);
 	N = transvalues[0];
 	Sx = transvalues[1];
 	Sxx = transvalues[2];
