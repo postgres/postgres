@@ -315,6 +315,7 @@
     <type>character varying</type>, <type>character</type>,
     <type>varchar</type>, <type>date</type>, <type>double
     precision</type>, <type>integer</type>, <type>interval</type>,
+    <type>json</type>,
     <type>numeric</type>, <type>decimal</type>, <type>real</type>,
     <type>smallint</type>, <type>time</type> (with or without time zone),
     <type>timestamp</type> (with or without time zone),
