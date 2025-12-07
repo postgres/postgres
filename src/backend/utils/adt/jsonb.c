@@ -25,14 +25,6 @@
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
-typedef struct JsonbInState
-{
-	JsonbParseState *parseState;
-	JsonbValue *res;
-	bool		unique_keys;
-	Node	   *escontext;
-} JsonbInState;
-
 typedef struct JsonbAggState
 {
 	JsonbInState *res;
@@ -270,8 +262,8 @@ jsonb_from_cstring(char *json, int len, bool unique_keys, Node *escontext)
 	if (!pg_parse_json_or_errsave(&lex, &sem, escontext))
 		return (Datum) 0;
 
-	/* after parsing, the item member has the composed jsonb structure */
-	PG_RETURN_POINTER(JsonbValueToJsonb(state.res));
+	/* after parsing, the result field has the composed jsonb structure */
+	PG_RETURN_POINTER(JsonbValueToJsonb(state.result));
 }
 
 static bool
@@ -292,7 +284,7 @@ jsonb_in_object_start(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
-	_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(_state, WJB_BEGIN_OBJECT, NULL);
 	_state->parseState->unique_keys = _state->unique_keys;
 
 	return JSON_SUCCESS;
@@ -303,7 +295,7 @@ jsonb_in_object_end(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
-	_state->res = pushJsonbValue(&_state->parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(_state, WJB_END_OBJECT, NULL);
 
 	return JSON_SUCCESS;
 }
@@ -313,7 +305,7 @@ jsonb_in_array_start(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
-	_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_ARRAY, NULL);
+	pushJsonbValue(_state, WJB_BEGIN_ARRAY, NULL);
 
 	return JSON_SUCCESS;
 }
@@ -323,7 +315,7 @@ jsonb_in_array_end(void *pstate)
 {
 	JsonbInState *_state = (JsonbInState *) pstate;
 
-	_state->res = pushJsonbValue(&_state->parseState, WJB_END_ARRAY, NULL);
+	pushJsonbValue(_state, WJB_END_ARRAY, NULL);
 
 	return JSON_SUCCESS;
 }
@@ -341,7 +333,7 @@ jsonb_in_object_field_start(void *pstate, char *fname, bool isnull)
 		return JSON_SEM_ACTION_FAILED;
 	v.val.string.val = fname;
 
-	_state->res = pushJsonbValue(&_state->parseState, WJB_KEY, &v);
+	pushJsonbValue(_state, WJB_KEY, &v);
 
 	return JSON_SUCCESS;
 }
@@ -435,9 +427,9 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		va.val.array.rawScalar = true;
 		va.val.array.nElems = 1;
 
-		_state->res = pushJsonbValue(&_state->parseState, WJB_BEGIN_ARRAY, &va);
-		_state->res = pushJsonbValue(&_state->parseState, WJB_ELEM, &v);
-		_state->res = pushJsonbValue(&_state->parseState, WJB_END_ARRAY, NULL);
+		pushJsonbValue(_state, WJB_BEGIN_ARRAY, &va);
+		pushJsonbValue(_state, WJB_ELEM, &v);
+		pushJsonbValue(_state, WJB_END_ARRAY, NULL);
 	}
 	else
 	{
@@ -446,10 +438,10 @@ jsonb_in_scalar(void *pstate, char *token, JsonTokenType tokentype)
 		switch (o->type)
 		{
 			case jbvArray:
-				_state->res = pushJsonbValue(&_state->parseState, WJB_ELEM, &v);
+				pushJsonbValue(_state, WJB_ELEM, &v);
 				break;
 			case jbvObject:
-				_state->res = pushJsonbValue(&_state->parseState, WJB_VALUE, &v);
+				pushJsonbValue(_state, WJB_VALUE, &v);
 				break;
 			default:
 				elog(ERROR, "unexpected parent of nested structure");
@@ -795,11 +787,9 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 						{
 							if (type == WJB_END_ARRAY || type == WJB_END_OBJECT ||
 								type == WJB_BEGIN_ARRAY || type == WJB_BEGIN_OBJECT)
-								result->res = pushJsonbValue(&result->parseState,
-															 type, NULL);
+								pushJsonbValue(result, type, NULL);
 							else
-								result->res = pushJsonbValue(&result->parseState,
-															 type, &jb);
+								pushJsonbValue(result, type, &jb);
 						}
 					}
 				}
@@ -830,9 +820,9 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 		va.val.array.rawScalar = true;
 		va.val.array.nElems = 1;
 
-		result->res = pushJsonbValue(&result->parseState, WJB_BEGIN_ARRAY, &va);
-		result->res = pushJsonbValue(&result->parseState, WJB_ELEM, &jb);
-		result->res = pushJsonbValue(&result->parseState, WJB_END_ARRAY, NULL);
+		pushJsonbValue(result, WJB_BEGIN_ARRAY, &va);
+		pushJsonbValue(result, WJB_ELEM, &jb);
+		pushJsonbValue(result, WJB_END_ARRAY, NULL);
 	}
 	else
 	{
@@ -841,12 +831,12 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 		switch (o->type)
 		{
 			case jbvArray:
-				result->res = pushJsonbValue(&result->parseState, WJB_ELEM, &jb);
+				pushJsonbValue(result, WJB_ELEM, &jb);
 				break;
 			case jbvObject:
-				result->res = pushJsonbValue(&result->parseState,
-											 key_scalar ? WJB_KEY : WJB_VALUE,
-											 &jb);
+				pushJsonbValue(result,
+							   key_scalar ? WJB_KEY : WJB_VALUE,
+							   &jb);
 				break;
 			default:
 				elog(ERROR, "unexpected parent of nested structure");
@@ -868,7 +858,7 @@ array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims, const Da
 
 	Assert(dim < ndims);
 
-	result->res = pushJsonbValue(&result->parseState, WJB_BEGIN_ARRAY, NULL);
+	pushJsonbValue(result, WJB_BEGIN_ARRAY, NULL);
 
 	for (i = 1; i <= dims[dim]; i++)
 	{
@@ -885,7 +875,7 @@ array_dim_to_jsonb(JsonbInState *result, int dim, int ndims, int *dims, const Da
 		}
 	}
 
-	result->res = pushJsonbValue(&result->parseState, WJB_END_ARRAY, NULL);
+	pushJsonbValue(result, WJB_END_ARRAY, NULL);
 }
 
 /*
@@ -914,8 +904,8 @@ array_to_jsonb_internal(Datum array, JsonbInState *result)
 
 	if (nitems <= 0)
 	{
-		result->res = pushJsonbValue(&result->parseState, WJB_BEGIN_ARRAY, NULL);
-		result->res = pushJsonbValue(&result->parseState, WJB_END_ARRAY, NULL);
+		pushJsonbValue(result, WJB_BEGIN_ARRAY, NULL);
+		pushJsonbValue(result, WJB_END_ARRAY, NULL);
 		return;
 	}
 
@@ -962,7 +952,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 	tmptup.t_data = td;
 	tuple = &tmptup;
 
-	result->res = pushJsonbValue(&result->parseState, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(result, WJB_BEGIN_OBJECT, NULL);
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
@@ -984,7 +974,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 		v.val.string.len = strlen(attname);
 		v.val.string.val = attname;
 
-		result->res = pushJsonbValue(&result->parseState, WJB_KEY, &v);
+		pushJsonbValue(result, WJB_KEY, &v);
 
 		val = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
@@ -1001,7 +991,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 								false);
 	}
 
-	result->res = pushJsonbValue(&result->parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(result, WJB_END_OBJECT, NULL);
 	ReleaseTupleDesc(tupdesc);
 }
 
@@ -1119,7 +1109,7 @@ datum_to_jsonb(Datum val, JsonTypeCategory tcategory, Oid outfuncoid)
 	datum_to_jsonb_internal(val, false, &result, tcategory, outfuncoid,
 							false);
 
-	return JsonbPGetDatum(JsonbValueToJsonb(result.res));
+	return JsonbPGetDatum(JsonbValueToJsonb(result.result));
 }
 
 Datum
@@ -1139,7 +1129,7 @@ jsonb_build_object_worker(int nargs, const Datum *args, const bool *nulls, const
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_OBJECT, NULL);
 	result.parseState->unique_keys = unique_keys;
 	result.parseState->skip_nulls = absent_on_null;
 
@@ -1166,9 +1156,9 @@ jsonb_build_object_worker(int nargs, const Datum *args, const bool *nulls, const
 		add_jsonb(args[i + 1], nulls[i + 1], &result, types[i + 1], false);
 	}
 
-	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 
-	return JsonbPGetDatum(JsonbValueToJsonb(result.res));
+	return JsonbPGetDatum(JsonbValueToJsonb(result.result));
 }
 
 /*
@@ -1201,10 +1191,10 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
-	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(result.result));
 }
 
 Datum
@@ -1216,7 +1206,7 @@ jsonb_build_array_worker(int nargs, const Datum *args, const bool *nulls, const 
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_ARRAY, NULL);
 
 	for (i = 0; i < nargs; i++)
 	{
@@ -1226,9 +1216,9 @@ jsonb_build_array_worker(int nargs, const Datum *args, const bool *nulls, const 
 		add_jsonb(args[i], nulls[i], &result, types[i], false);
 	}
 
-	result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
+	pushJsonbValue(&result, WJB_END_ARRAY, NULL);
 
-	return JsonbPGetDatum(JsonbValueToJsonb(result.res));
+	return JsonbPGetDatum(JsonbValueToJsonb(result.result));
 }
 
 /*
@@ -1262,10 +1252,10 @@ jsonb_build_array_noargs(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
-	result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_ARRAY, NULL);
+	pushJsonbValue(&result, WJB_END_ARRAY, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(result.result));
 }
 
 
@@ -1290,7 +1280,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_OBJECT, NULL);
 
 	switch (ndims)
 	{
@@ -1341,7 +1331,7 @@ jsonb_object(PG_FUNCTION_ARGS)
 		v.val.string.len = len;
 		v.val.string.val = str;
 
-		(void) pushJsonbValue(&result.parseState, WJB_KEY, &v);
+		pushJsonbValue(&result, WJB_KEY, &v);
 
 		if (in_nulls[i * 2 + 1])
 		{
@@ -1358,16 +1348,16 @@ jsonb_object(PG_FUNCTION_ARGS)
 			v.val.string.val = str;
 		}
 
-		(void) pushJsonbValue(&result.parseState, WJB_VALUE, &v);
+		pushJsonbValue(&result, WJB_VALUE, &v);
 	}
 
 	pfree(in_datums);
 	pfree(in_nulls);
 
 close_object:
-	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(result.result));
 }
 
 /*
@@ -1394,7 +1384,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 
 	memset(&result, 0, sizeof(JsonbInState));
 
-	(void) pushJsonbValue(&result.parseState, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_BEGIN_OBJECT, NULL);
 
 	if (nkdims > 1 || nkdims != nvdims)
 		ereport(ERROR,
@@ -1431,7 +1421,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 		v.val.string.len = len;
 		v.val.string.val = str;
 
-		(void) pushJsonbValue(&result.parseState, WJB_KEY, &v);
+		pushJsonbValue(&result, WJB_KEY, &v);
 
 		if (val_nulls[i])
 		{
@@ -1448,7 +1438,7 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 			v.val.string.val = str;
 		}
 
-		(void) pushJsonbValue(&result.parseState, WJB_VALUE, &v);
+		pushJsonbValue(&result, WJB_VALUE, &v);
 	}
 
 	pfree(key_datums);
@@ -1457,9 +1447,9 @@ jsonb_object_two_arg(PG_FUNCTION_ARGS)
 	pfree(val_nulls);
 
 close_object:
-	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(result.res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(result.result));
 }
 
 
@@ -1534,8 +1524,7 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 		state = palloc(sizeof(JsonbAggState));
 		result = palloc0(sizeof(JsonbInState));
 		state->res = result;
-		result->res = pushJsonbValue(&result->parseState,
-									 WJB_BEGIN_ARRAY, NULL);
+		pushJsonbValue(result, WJB_BEGIN_ARRAY, NULL);
 		MemoryContextSwitchTo(oldcontext);
 
 		json_categorize_type(arg_type, true, &state->val_category,
@@ -1559,7 +1548,7 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 	datum_to_jsonb_internal(val, PG_ARGISNULL(1), &elem, state->val_category,
 							state->val_output_func, false);
 
-	jbelem = JsonbValueToJsonb(elem.res);
+	jbelem = JsonbValueToJsonb(elem.result);
 
 	/* switch to the aggregate context for accumulation operations */
 
@@ -1575,18 +1564,15 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 				if (v.val.array.rawScalar)
 					single_scalar = true;
 				else
-					result->res = pushJsonbValue(&result->parseState,
-												 type, NULL);
+					pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_END_ARRAY:
 				if (!single_scalar)
-					result->res = pushJsonbValue(&result->parseState,
-												 type, NULL);
+					pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_BEGIN_OBJECT:
 			case WJB_END_OBJECT:
-				result->res = pushJsonbValue(&result->parseState,
-											 type, NULL);
+				pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_ELEM:
 			case WJB_KEY:
@@ -1606,8 +1592,7 @@ jsonb_agg_transfn_worker(FunctionCallInfo fcinfo, bool absent_on_null)
 						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 															NumericGetDatum(v.val.numeric)));
 				}
-				result->res = pushJsonbValue(&result->parseState,
-											 type, &v);
+				pushJsonbValue(result, type, &v);
 				break;
 			default:
 				elog(ERROR, "unknown jsonb iterator token type");
@@ -1662,10 +1647,9 @@ jsonb_agg_finalfn(PG_FUNCTION_ARGS)
 
 	result.parseState = clone_parse_state(arg->res->parseState);
 
-	result.res = pushJsonbValue(&result.parseState,
-								WJB_END_ARRAY, NULL);
+	pushJsonbValue(&result, WJB_END_ARRAY, NULL);
 
-	out = JsonbValueToJsonb(result.res);
+	out = JsonbValueToJsonb(result.result);
 
 	PG_RETURN_POINTER(out);
 }
@@ -1704,8 +1688,7 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 		state = palloc(sizeof(JsonbAggState));
 		result = palloc0(sizeof(JsonbInState));
 		state->res = result;
-		result->res = pushJsonbValue(&result->parseState,
-									 WJB_BEGIN_OBJECT, NULL);
+		pushJsonbValue(result, WJB_BEGIN_OBJECT, NULL);
 		result->parseState->unique_keys = unique_keys;
 		result->parseState->skip_nulls = absent_on_null;
 
@@ -1760,7 +1743,7 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 	datum_to_jsonb_internal(val, false, &elem, state->key_category,
 							state->key_output_func, true);
 
-	jbkey = JsonbValueToJsonb(elem.res);
+	jbkey = JsonbValueToJsonb(elem.result);
 
 	val = PG_ARGISNULL(2) ? (Datum) 0 : PG_GETARG_DATUM(2);
 
@@ -1769,7 +1752,7 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 	datum_to_jsonb_internal(val, PG_ARGISNULL(2), &elem, state->val_category,
 							state->val_output_func, false);
 
-	jbval = JsonbValueToJsonb(elem.res);
+	jbval = JsonbValueToJsonb(elem.result);
 
 	it = JsonbIteratorInit(&jbkey->root);
 
@@ -1806,14 +1789,12 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("object keys must be strings")));
 				}
-				result->res = pushJsonbValue(&result->parseState,
-											 WJB_KEY, &v);
+				pushJsonbValue(result, WJB_KEY, &v);
 
 				if (skip)
 				{
 					v.type = jbvNull;
-					result->res = pushJsonbValue(&result->parseState,
-												 WJB_VALUE, &v);
+					pushJsonbValue(result, WJB_VALUE, &v);
 					MemoryContextSwitchTo(oldcontext);
 					PG_RETURN_POINTER(state);
 				}
@@ -1845,18 +1826,15 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 				if (v.val.array.rawScalar)
 					single_scalar = true;
 				else
-					result->res = pushJsonbValue(&result->parseState,
-												 type, NULL);
+					pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_END_ARRAY:
 				if (!single_scalar)
-					result->res = pushJsonbValue(&result->parseState,
-												 type, NULL);
+					pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_BEGIN_OBJECT:
 			case WJB_END_OBJECT:
-				result->res = pushJsonbValue(&result->parseState,
-											 type, NULL);
+				pushJsonbValue(result, type, NULL);
 				break;
 			case WJB_ELEM:
 			case WJB_KEY:
@@ -1876,9 +1854,7 @@ jsonb_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
 															NumericGetDatum(v.val.numeric)));
 				}
-				result->res = pushJsonbValue(&result->parseState,
-											 single_scalar ? WJB_VALUE : type,
-											 &v);
+				pushJsonbValue(result, single_scalar ? WJB_VALUE : type, &v);
 				break;
 			default:
 				elog(ERROR, "unknown jsonb iterator token type");
@@ -1953,10 +1929,9 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 
 	result.parseState = clone_parse_state(arg->res->parseState);
 
-	result.res = pushJsonbValue(&result.parseState,
-								WJB_END_OBJECT, NULL);
+	pushJsonbValue(&result, WJB_END_OBJECT, NULL);
 
-	out = JsonbValueToJsonb(result.res);
+	out = JsonbValueToJsonb(result.result);
 
 	PG_RETURN_POINTER(out);
 }

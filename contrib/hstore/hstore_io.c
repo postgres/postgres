@@ -1439,10 +1439,9 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
-	JsonbParseState *state = NULL;
-	JsonbValue *res;
+	JsonbInState state = {0};
 
-	(void) pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
 	for (i = 0; i < count; i++)
 	{
@@ -1453,7 +1452,7 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 		key.val.string.len = HSTORE_KEYLEN(entries, i);
 		key.val.string.val = HSTORE_KEY(entries, base, i);
 
-		(void) pushJsonbValue(&state, WJB_KEY, &key);
+		pushJsonbValue(&state, WJB_KEY, &key);
 
 		if (HSTORE_VALISNULL(entries, i))
 		{
@@ -1465,12 +1464,12 @@ hstore_to_jsonb(PG_FUNCTION_ARGS)
 			val.val.string.len = HSTORE_VALLEN(entries, i);
 			val.val.string.val = HSTORE_VAL(entries, base, i);
 		}
-		(void) pushJsonbValue(&state, WJB_VALUE, &val);
+		pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
-	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&state, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(state.result));
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_jsonb_loose);
@@ -1482,13 +1481,12 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
 	HEntry	   *entries = ARRPTR(in);
-	JsonbParseState *state = NULL;
-	JsonbValue *res;
+	JsonbInState state = {0};
 	StringInfoData tmp;
 
 	initStringInfo(&tmp);
 
-	(void) pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
+	pushJsonbValue(&state, WJB_BEGIN_OBJECT, NULL);
 
 	for (i = 0; i < count; i++)
 	{
@@ -1499,7 +1497,7 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 		key.val.string.len = HSTORE_KEYLEN(entries, i);
 		key.val.string.val = HSTORE_KEY(entries, base, i);
 
-		(void) pushJsonbValue(&state, WJB_KEY, &key);
+		pushJsonbValue(&state, WJB_KEY, &key);
 
 		if (HSTORE_VALISNULL(entries, i))
 		{
@@ -1541,10 +1539,10 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 				val.val.string.val = HSTORE_VAL(entries, base, i);
 			}
 		}
-		(void) pushJsonbValue(&state, WJB_VALUE, &val);
+		pushJsonbValue(&state, WJB_VALUE, &val);
 	}
 
-	res = pushJsonbValue(&state, WJB_END_OBJECT, NULL);
+	pushJsonbValue(&state, WJB_END_OBJECT, NULL);
 
-	PG_RETURN_POINTER(JsonbValueToJsonb(res));
+	PG_RETURN_POINTER(JsonbValueToJsonb(state.result));
 }
