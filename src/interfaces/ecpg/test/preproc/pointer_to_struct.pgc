@@ -21,6 +21,12 @@ EXEC SQL TYPE cust_ind IS
         short   phone_ind;
     };
 
+EXEC SQL TYPE company IS
+    struct
+    {
+        customer *customers;
+    };
+
 int main()
 {
     EXEC SQL begin declare section;
@@ -45,18 +51,38 @@ int main()
         int     phone;
       } *custs4 = (struct customer4 *) malloc(sizeof(struct customer4));
 
+      company acme;
+
       int r;
       varchar onlyname[2][50];
     EXEC SQL end declare section;
 
     ECPGdebug(1, stderr);
 
+    acme.customers = (customer *) malloc(sizeof(customer) * 10);
+
     EXEC SQL connect to REGRESSDB1;
 
     EXEC SQL create table customers (c varchar(50), p int);
-    EXEC SQL insert into customers values ('John Doe', '12345');
-    EXEC SQL insert into customers values ('Jane Doe', '67890');
 
+    /* First we'll insert some data using C variable references */
+    strcpy(custs1[0].name.arr, "John Doe");
+    custs1[0].name.len = strlen(custs1[0].name.arr);
+    custs1[0].phone = 12345;
+
+    strcpy(acme.customers[1].name.arr, "Jane Doe");
+    acme.customers[1].name.len = strlen(acme.customers[1].name.arr);
+    acme.customers[1].phone = 67890;
+
+    EXEC SQL insert into customers values (:custs1->name,
+                                           :custs1[0].phone);
+    EXEC SQL insert into customers values (:acme.customers[1].name,
+                                           :acme.customers[1].phone);
+
+    /* Clear the array, to be sure reading back into it actually gets data */
+    memset(custs1, 0, sizeof(customer) * 10);
+
+    /* Now read back the data */
     EXEC SQL select * INTO :custs1:inds from customers limit 2;
     printf("custs1:\n");
     for (r = 0; r < 2; r++)
