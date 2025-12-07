@@ -19,6 +19,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
 #include "utils/jsonfuncs.h"
@@ -632,7 +633,8 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 						bool key_scalar)
 {
 	char	   *outputstr;
-	bool		numeric_error;
+	Numeric		numeric_val;
+	bool		numeric_to_string;
 	JsonbValue	jb;
 	bool		scalar_jsonb = false;
 
@@ -657,9 +659,6 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 	}
 	else
 	{
-		if (tcategory == JSONTYPE_CAST)
-			val = OidFunctionCall1(outfuncoid, val);
-
 		switch (tcategory)
 		{
 			case JSONTYPE_ARRAY:
@@ -683,41 +682,73 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 				}
 				break;
 			case JSONTYPE_NUMERIC:
-				outputstr = OidOutputFunctionCall(outfuncoid, val);
 				if (key_scalar)
 				{
-					/* always quote keys */
+					/* always stringify keys */
+					numeric_to_string = true;
+					numeric_val = NULL; /* pacify stupider compilers */
+				}
+				else
+				{
+					Datum		numd;
+
+					switch (outfuncoid)
+					{
+						case F_NUMERIC_OUT:
+							numeric_val = DatumGetNumeric(val);
+							break;
+						case F_INT2OUT:
+							numeric_val = int64_to_numeric(DatumGetInt16(val));
+							break;
+						case F_INT4OUT:
+							numeric_val = int64_to_numeric(DatumGetInt32(val));
+							break;
+						case F_INT8OUT:
+							numeric_val = int64_to_numeric(DatumGetInt64(val));
+							break;
+#ifdef NOT_USED
+
+							/*
+							 * Ideally we'd short-circuit these two cases
+							 * using float[48]_numeric.  However, those
+							 * functions are currently slower than the generic
+							 * coerce-via-I/O approach.  And they may round
+							 * off differently.  Until/unless that gets fixed,
+							 * continue to use coerce-via-I/O for floats.
+							 */
+						case F_FLOAT4OUT:
+							numd = DirectFunctionCall1(float4_numeric, val);
+							numeric_val = DatumGetNumeric(numd);
+							break;
+						case F_FLOAT8OUT:
+							numd = DirectFunctionCall1(float8_numeric, val);
+							numeric_val = DatumGetNumeric(numd);
+							break;
+#endif
+						default:
+							outputstr = OidOutputFunctionCall(outfuncoid, val);
+							numd = DirectFunctionCall3(numeric_in,
+													   CStringGetDatum(outputstr),
+													   ObjectIdGetDatum(InvalidOid),
+													   Int32GetDatum(-1));
+							numeric_val = DatumGetNumeric(numd);
+							break;
+					}
+					/* Must convert to string if it's Inf or NaN */
+					numeric_to_string = (numeric_is_inf(numeric_val) ||
+										 numeric_is_nan(numeric_val));
+				}
+				if (numeric_to_string)
+				{
+					outputstr = OidOutputFunctionCall(outfuncoid, val);
 					jb.type = jbvString;
 					jb.val.string.len = strlen(outputstr);
 					jb.val.string.val = outputstr;
 				}
 				else
 				{
-					/*
-					 * Make it numeric if it's a valid JSON number, otherwise
-					 * a string. Invalid numeric output will always have an
-					 * 'N' or 'n' in it (I think).
-					 */
-					numeric_error = (strchr(outputstr, 'N') != NULL ||
-									 strchr(outputstr, 'n') != NULL);
-					if (!numeric_error)
-					{
-						Datum		numd;
-
-						jb.type = jbvNumeric;
-						numd = DirectFunctionCall3(numeric_in,
-												   CStringGetDatum(outputstr),
-												   ObjectIdGetDatum(InvalidOid),
-												   Int32GetDatum(-1));
-						jb.val.numeric = DatumGetNumeric(numd);
-						pfree(outputstr);
-					}
-					else
-					{
-						jb.type = jbvString;
-						jb.val.string.len = strlen(outputstr);
-						jb.val.string.val = outputstr;
-					}
+					jb.type = jbvNumeric;
+					jb.val.numeric = numeric_val;
 				}
 				break;
 			case JSONTYPE_DATE:
@@ -739,6 +770,9 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 				jb.val.string.len = strlen(jb.val.string.val);
 				break;
 			case JSONTYPE_CAST:
+				/* cast to JSON, and then process as JSON */
+				val = OidFunctionCall1(outfuncoid, val);
+				/* FALL THROUGH */
 			case JSONTYPE_JSON:
 				{
 					/* parse the json right into the existing result object */
@@ -794,11 +828,24 @@ datum_to_jsonb_internal(Datum val, bool is_null, JsonbInState *result,
 				}
 				break;
 			default:
-				outputstr = OidOutputFunctionCall(outfuncoid, val);
+				/* special-case text types to save useless palloc/memcpy ops */
+				if (outfuncoid == F_TEXTOUT ||
+					outfuncoid == F_VARCHAROUT ||
+					outfuncoid == F_BPCHAROUT)
+				{
+					text	   *txt = DatumGetTextPP(val);
+
+					jb.val.string.len = VARSIZE_ANY_EXHDR(txt);
+					jb.val.string.val = VARDATA_ANY(txt);
+				}
+				else
+				{
+					outputstr = OidOutputFunctionCall(outfuncoid, val);
+					jb.val.string.len = strlen(outputstr);
+					jb.val.string.val = outputstr;
+				}
 				jb.type = jbvString;
-				jb.val.string.len = strlen(outputstr);
 				(void) checkStringLen(jb.val.string.len, NULL);
-				jb.val.string.val = outputstr;
 				break;
 		}
 	}
