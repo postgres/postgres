@@ -31,6 +31,14 @@ typedef struct
 } TimeTzADT;
 
 /*
+ * sizeof(TimeTzADT) will be 16 on most platforms due to alignment padding.
+ * However, timetz's typlen is 12 according to pg_type.  In most places
+ * we can get away with using sizeof(TimeTzADT), but where it's important
+ * to match the declared typlen, use TIMETZ_TYPLEN.
+ */
+#define TIMETZ_TYPLEN		12
+
+/*
  * Infinity and minus infinity must be the max and min values of DateADT.
  */
 #define DATEVAL_NOBEGIN		((DateADT) PG_INT32_MIN)
