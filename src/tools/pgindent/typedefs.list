@@ -2226,6 +2226,8 @@ PgStatShared_Backend
 PgStatShared_BgWriter
 PgStatShared_Checkpointer
 PgStatShared_Common
+PgStatShared_CustomFixedEntry
+PgStatShared_CustomVarEntry
 PgStatShared_Database
 PgStatShared_Function
 PgStatShared_HashEntry
@@ -2258,6 +2260,8 @@ PgStat_SLRUStats
 PgStat_ShmemControl
 PgStat_Snapshot
 PgStat_SnapshotEntry
+PgStat_StatCustomFixedEntry
+PgStat_StatCustomVarEntry
 PgStat_StatDBEntry
 PgStat_StatFuncEntry
 PgStat_StatReplSlotEntry

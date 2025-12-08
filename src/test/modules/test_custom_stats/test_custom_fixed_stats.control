@@ -1,0 +1,4 @@
+comment = 'fixed-sized custom pgstats'
+default_version = '1.0'
+module_pathname = '$libdir/test_custom_fixed_stats'
+relocatable = true

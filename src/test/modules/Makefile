@@ -21,6 +21,7 @@ SUBDIRS = \
 		  test_bloomfilter \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
+		  test_custom_stats \
 		  test_ddl_deparse \
 		  test_dsa \
 		  test_dsm_registry \
