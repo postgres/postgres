@@ -64,21 +64,43 @@ static ControlFileData ControlFile; /* pg_control values */
 static XLogSegNo newXlogSegNo;	/* new XLOG segment # */
 static bool guessed = false;	/* T if we had to guess at any values */
 static const char *progname;
-static uint32 set_xid_epoch = (uint32) -1;
-static TransactionId set_oldest_xid = 0;
-static TransactionId set_xid = 0;
-static TransactionId set_oldest_commit_ts_xid = 0;
-static TransactionId set_newest_commit_ts_xid = 0;
-static Oid	set_oid = 0;
-static bool mxid_given = false;
-static MultiXactId set_mxid = 0;
-static bool mxoff_given = false;
-static MultiXactOffset set_mxoff = 0;
+
+/*
+ * New values given on the command-line
+ */
+static bool next_xid_epoch_given = false;
+static uint32 next_xid_epoch_val;
+
+static bool oldest_xid_given = false;
+static TransactionId oldest_xid_val;
+
+static bool next_xid_given = false;
+static TransactionId next_xid_val;
+
+static bool commit_ts_xids_given = false;
+static TransactionId oldest_commit_ts_xid_val;
+static TransactionId newest_commit_ts_xid_val;
+
+static bool next_oid_given = false;
+static Oid	next_oid_val;
+
+static bool mxids_given = false;
+static MultiXactId next_mxid_val;
+static MultiXactId oldest_mxid_val = 0;
+
+static bool next_mxoff_given = false;
+static MultiXactOffset next_mxoff_val;
+
+static bool wal_segsize_given = false;
+static int	wal_segsize_val;
+
+static bool char_signedness_given = false;
+static bool char_signedness_val;
+
+
 static TimeLineID minXlogTli = 0;
 static XLogSegNo minXlogSegNo = 0;
 static int	WalSegSz;
-static int	set_wal_segsize;
-static int	set_char_signedness = -1;
 
 static void CheckDataVersion(void);
 static bool read_controlfile(void);
@@ -118,7 +140,6 @@ main(int argc, char *argv[])
 	int			c;
 	bool		force = false;
 	bool		noupdate = false;
-	MultiXactId set_oldestmxid = 0;
 	char	   *endptr;
 	char	   *endptr2;
 	char	   *DataDir = NULL;
@@ -162,7 +183,7 @@ main(int argc, char *argv[])
 
 			case 'e':
 				errno = 0;
-				set_xid_epoch = strtouint32_strict(optarg, &endptr, 0);
+				next_xid_epoch_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					/*------
@@ -171,46 +192,47 @@ main(int argc, char *argv[])
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (set_xid_epoch == -1)
-					pg_fatal("transaction ID epoch (-e) must not be -1");
+				next_xid_epoch_given = true;
 				break;
 
 			case 'u':
 				errno = 0;
-				set_oldest_xid = strtouint32_strict(optarg, &endptr, 0);
+				oldest_xid_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-u");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (!TransactionIdIsNormal(set_oldest_xid))
+				if (!TransactionIdIsNormal(oldest_xid_val))
 					pg_fatal("oldest transaction ID (-u) must be greater than or equal to %u", FirstNormalTransactionId);
+				oldest_xid_given = true;
 				break;
 
 			case 'x':
 				errno = 0;
-				set_xid = strtouint32_strict(optarg, &endptr, 0);
+				next_xid_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-x");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (!TransactionIdIsNormal(set_xid))
+				if (!TransactionIdIsNormal(next_xid_val))
 					pg_fatal("transaction ID (-x) must be greater than or equal to %u", FirstNormalTransactionId);
+				next_xid_given = true;
 				break;
 
 			case 'c':
 				errno = 0;
-				set_oldest_commit_ts_xid = strtouint32_strict(optarg, &endptr, 0);
+				oldest_commit_ts_xid_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-c");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				set_newest_commit_ts_xid = strtoul(endptr + 1, &endptr2, 0);
+				newest_commit_ts_xid_val = strtoul(endptr + 1, &endptr2, 0);
 				if (endptr2 == endptr + 1 || *endptr2 != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-c");
@@ -218,31 +240,33 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 
-				if (set_oldest_commit_ts_xid < FirstNormalTransactionId &&
-					set_oldest_commit_ts_xid != InvalidTransactionId)
+				if (oldest_commit_ts_xid_val < FirstNormalTransactionId &&
+					oldest_commit_ts_xid_val != InvalidTransactionId)
 					pg_fatal("transaction ID (-c) must be either %u or greater than or equal to %u", InvalidTransactionId, FirstNormalTransactionId);
 
-				if (set_newest_commit_ts_xid < FirstNormalTransactionId &&
-					set_newest_commit_ts_xid != InvalidTransactionId)
+				if (newest_commit_ts_xid_val < FirstNormalTransactionId &&
+					newest_commit_ts_xid_val != InvalidTransactionId)
 					pg_fatal("transaction ID (-c) must be either %u or greater than or equal to %u", InvalidTransactionId, FirstNormalTransactionId);
+				commit_ts_xids_given = true;
 				break;
 
 			case 'o':
 				errno = 0;
-				set_oid = strtouint32_strict(optarg, &endptr, 0);
+				next_oid_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-o");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (set_oid == 0)
+				if (next_oid_val == 0)
 					pg_fatal("OID (-o) must not be 0");
+				next_oid_given = true;
 				break;
 
 			case 'm':
 				errno = 0;
-				set_mxid = strtouint32_strict(optarg, &endptr, 0);
+				next_mxid_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
@@ -250,7 +274,7 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 
-				set_oldestmxid = strtouint32_strict(endptr + 1, &endptr2, 0);
+				oldest_mxid_val = strtouint32_strict(endptr + 1, &endptr2, 0);
 				if (endptr2 == endptr + 1 || *endptr2 != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
@@ -262,21 +286,21 @@ main(int argc, char *argv[])
 				 * XXX It'd be nice to have more sanity checks here, e.g. so
 				 * that oldest is not wrapped around w.r.t. nextMulti.
 				 */
-				if (set_oldestmxid == 0)
+				if (oldest_mxid_val == 0)
 					pg_fatal("oldest multitransaction ID (-m) must not be 0");
-				mxid_given = true;
+				mxids_given = true;
 				break;
 
 			case 'O':
 				errno = 0;
-				set_mxoff = strtouint32_strict(optarg, &endptr, 0);
+				next_mxoff_val = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-O");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				mxoff_given = true;
+				next_mxoff_given = true;
 				break;
 
 			case 'l':
@@ -300,9 +324,10 @@ main(int argc, char *argv[])
 
 					if (!option_parse_int(optarg, "--wal-segsize", 1, 1024, &wal_segsize_mb))
 						exit(1);
-					set_wal_segsize = wal_segsize_mb * 1024 * 1024;
-					if (!IsValidWalSegSize(set_wal_segsize))
+					wal_segsize_val = wal_segsize_mb * 1024 * 1024;
+					if (!IsValidWalSegSize(wal_segsize_val))
 						pg_fatal("argument of %s must be a power of two between 1 and 1024", "--wal-segsize");
+					wal_segsize_given = true;
 					break;
 				}
 
@@ -311,15 +336,16 @@ main(int argc, char *argv[])
 					errno = 0;
 
 					if (pg_strcasecmp(optarg, "signed") == 0)
-						set_char_signedness = 1;
+						char_signedness_val = true;
 					else if (pg_strcasecmp(optarg, "unsigned") == 0)
-						set_char_signedness = 0;
+						char_signedness_val = false;
 					else
 					{
 						pg_log_error("invalid argument for option %s", "--char-signedness");
 						pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 						exit(1);
 					}
+					char_signedness_given = true;
 					break;
 				}
 
@@ -407,8 +433,8 @@ main(int argc, char *argv[])
 	/*
 	 * If no new WAL segment size was specified, use the control file value.
 	 */
-	if (set_wal_segsize != 0)
-		WalSegSz = set_wal_segsize;
+	if (wal_segsize_given)
+		WalSegSz = wal_segsize_val;
 	else
 		WalSegSz = ControlFile.xlog_seg_size;
 
@@ -431,42 +457,43 @@ main(int argc, char *argv[])
 	 * Adjust fields if required by switches.  (Do this now so that printout,
 	 * if any, includes these values.)
 	 */
-	if (set_xid_epoch != -1)
+	if (next_xid_epoch_given)
 		ControlFile.checkPointCopy.nextXid =
-			FullTransactionIdFromEpochAndXid(set_xid_epoch,
+			FullTransactionIdFromEpochAndXid(next_xid_epoch_val,
 											 XidFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
 
-	if (set_oldest_xid != 0)
+	if (oldest_xid_given)
 	{
-		ControlFile.checkPointCopy.oldestXid = set_oldest_xid;
+		ControlFile.checkPointCopy.oldestXid = oldest_xid_val;
 		ControlFile.checkPointCopy.oldestXidDB = InvalidOid;
 	}
 
-	if (set_xid != 0)
+	if (next_xid_given)
 		ControlFile.checkPointCopy.nextXid =
 			FullTransactionIdFromEpochAndXid(EpochFromFullTransactionId(ControlFile.checkPointCopy.nextXid),
-											 set_xid);
+											 next_xid_val);
 
-	if (set_oldest_commit_ts_xid != 0)
-		ControlFile.checkPointCopy.oldestCommitTsXid = set_oldest_commit_ts_xid;
-	if (set_newest_commit_ts_xid != 0)
-		ControlFile.checkPointCopy.newestCommitTsXid = set_newest_commit_ts_xid;
-
-	if (set_oid != 0)
-		ControlFile.checkPointCopy.nextOid = set_oid;
-
-	if (mxid_given)
+	if (commit_ts_xids_given)
 	{
-		ControlFile.checkPointCopy.nextMulti = set_mxid;
+		ControlFile.checkPointCopy.oldestCommitTsXid = oldest_commit_ts_xid_val;
+		ControlFile.checkPointCopy.newestCommitTsXid = newest_commit_ts_xid_val;
+	}
 
-		ControlFile.checkPointCopy.oldestMulti = set_oldestmxid;
+	if (next_oid_given)
+		ControlFile.checkPointCopy.nextOid = next_oid_val;
+
+	if (mxids_given)
+	{
+		ControlFile.checkPointCopy.nextMulti = next_mxid_val;
+
+		ControlFile.checkPointCopy.oldestMulti = oldest_mxid_val;
 		if (ControlFile.checkPointCopy.oldestMulti < FirstMultiXactId)
 			ControlFile.checkPointCopy.oldestMulti += FirstMultiXactId;
 		ControlFile.checkPointCopy.oldestMultiDB = InvalidOid;
 	}
 
-	if (mxoff_given)
-		ControlFile.checkPointCopy.nextMultiOffset = set_mxoff;
+	if (next_mxoff_given)
+		ControlFile.checkPointCopy.nextMultiOffset = next_mxoff_val;
 
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
 	{
@@ -474,11 +501,11 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.PrevTimeLineID = minXlogTli;
 	}
 
-	if (set_wal_segsize != 0)
+	if (wal_segsize_given)
 		ControlFile.xlog_seg_size = WalSegSz;
 
-	if (set_char_signedness != -1)
-		ControlFile.default_char_signedness = (set_char_signedness == 1);
+	if (char_signedness_given)
+		ControlFile.default_char_signedness = char_signedness_val;
 
 	if (minXlogSegNo > newXlogSegNo)
 		newXlogSegNo = minXlogSegNo;
@@ -809,7 +836,7 @@ PrintNewControlValues(void)
 				 newXlogSegNo, WalSegSz);
 	printf(_("First log segment after reset:        %s\n"), fname);
 
-	if (mxid_given)
+	if (mxids_given)
 	{
 		printf(_("NextMultiXactId:                      %u\n"),
 			   ControlFile.checkPointCopy.nextMulti);
@@ -819,25 +846,25 @@ PrintNewControlValues(void)
 			   ControlFile.checkPointCopy.oldestMultiDB);
 	}
 
-	if (mxoff_given)
+	if (next_mxoff_given)
 	{
 		printf(_("NextMultiOffset:                      %u\n"),
 			   ControlFile.checkPointCopy.nextMultiOffset);
 	}
 
-	if (set_oid != 0)
+	if (next_oid_given)
 	{
 		printf(_("NextOID:                              %u\n"),
 			   ControlFile.checkPointCopy.nextOid);
 	}
 
-	if (set_xid != 0)
+	if (next_xid_given)
 	{
 		printf(_("NextXID:                              %u\n"),
 			   XidFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
 	}
 
-	if (set_oldest_xid != 0)
+	if (oldest_xid_given)
 	{
 		printf(_("OldestXID:                            %u\n"),
 			   ControlFile.checkPointCopy.oldestXid);
@@ -845,24 +872,21 @@ PrintNewControlValues(void)
 			   ControlFile.checkPointCopy.oldestXidDB);
 	}
 
-	if (set_xid_epoch != -1)
+	if (next_xid_epoch_given)
 	{
 		printf(_("NextXID epoch:                        %u\n"),
 			   EpochFromFullTransactionId(ControlFile.checkPointCopy.nextXid));
 	}
 
-	if (set_oldest_commit_ts_xid != 0)
+	if (commit_ts_xids_given)
 	{
 		printf(_("oldestCommitTsXid:                    %u\n"),
 			   ControlFile.checkPointCopy.oldestCommitTsXid);
-	}
-	if (set_newest_commit_ts_xid != 0)
-	{
 		printf(_("newestCommitTsXid:                    %u\n"),
 			   ControlFile.checkPointCopy.newestCommitTsXid);
 	}
 
-	if (set_wal_segsize != 0)
+	if (wal_segsize_given)
 	{
 		printf(_("Bytes per WAL segment:                %u\n"),
 			   ControlFile.xlog_seg_size);
