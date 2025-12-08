@@ -93,6 +93,7 @@ typedef struct BTParallelScanDescData
 typedef struct BTParallelScanDescData *BTParallelScanDesc;
 
 
+static bool _bt_start_prim_scan(IndexScanDesc scan);
 static void _bt_parallel_serialize_arrays(Relation rel, BTParallelScanDesc btscan,
 										  BTScanOpaque so);
 static void _bt_parallel_restore_arrays(Relation rel, BTParallelScanDesc btscan,
@@ -276,7 +277,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 		if (res)
 			break;
 		/* ... otherwise see if we need another primitive index scan */
-	} while (so->numArrayKeys && _bt_start_prim_scan(scan, dir));
+	} while (so->numArrayKeys && _bt_start_prim_scan(scan));
 
 	return res;
 }
@@ -324,7 +325,7 @@ btgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 			}
 		}
 		/* Now see if we need another primitive index scan */
-	} while (so->numArrayKeys && _bt_start_prim_scan(scan, ForwardScanDirection));
+	} while (so->numArrayKeys && _bt_start_prim_scan(scan));
 
 	return ntids;
 }
@@ -652,6 +653,75 @@ btestimateparallelscan(Relation rel, int nkeys, int norderbys)
 	}
 
 	return estnbtreeshared;
+}
+
+/*
+ * _bt_start_prim_scan() -- start scheduled primitive index scan?
+ *
+ * Returns true if _bt_checkkeys scheduled another primitive index scan, just
+ * as the last one ended.  Otherwise returns false, indicating that the array
+ * keys are now fully exhausted.
+ *
+ * Only call here during scans with one or more equality type array scan keys,
+ * after _bt_first or _bt_next return false.
+ */
+static bool
+_bt_start_prim_scan(IndexScanDesc scan)
+{
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+
+	Assert(so->numArrayKeys);
+
+	so->scanBehind = so->oppositeDirCheck = false;	/* reset */
+
+	/*
+	 * Array keys are advanced within _bt_checkkeys when the scan reaches the
+	 * leaf level (more precisely, they're advanced when the scan reaches the
+	 * end of each distinct set of array elements).  This process avoids
+	 * repeat access to leaf pages (across multiple primitive index scans) by
+	 * advancing the scan's array keys when it allows the primitive index scan
+	 * to find nearby matching tuples (or when it eliminates ranges of array
+	 * key space that can't possibly be satisfied by any index tuple).
+	 *
+	 * _bt_checkkeys sets a simple flag variable to schedule another primitive
+	 * index scan.  The flag tells us what to do.
+	 *
+	 * We cannot rely on _bt_first always reaching _bt_checkkeys.  There are
+	 * various cases where that won't happen.  For example, if the index is
+	 * completely empty, then _bt_first won't call _bt_readpage/_bt_checkkeys.
+	 * We also don't expect a call to _bt_checkkeys during searches for a
+	 * non-existent value that happens to be lower/higher than any existing
+	 * value in the index.
+	 *
+	 * We don't require special handling for these cases -- we don't need to
+	 * be explicitly instructed to _not_ perform another primitive index scan.
+	 * It's up to code under the control of _bt_first to always set the flag
+	 * when another primitive index scan will be required.
+	 *
+	 * This works correctly, even with the tricky cases listed above, which
+	 * all involve access to leaf pages "near the boundaries of the key space"
+	 * (whether it's from a leftmost/rightmost page, or an imaginary empty
+	 * leaf root page).  If _bt_checkkeys cannot be reached by a primitive
+	 * index scan for one set of array keys, then it also won't be reached for
+	 * any later set ("later" in terms of the direction that we scan the index
+	 * and advance the arrays).  The array keys won't have advanced in these
+	 * cases, but that's the correct behavior (even _bt_advance_array_keys
+	 * won't always advance the arrays at the point they become "exhausted").
+	 */
+	if (so->needPrimScan)
+	{
+		/*
+		 * Flag was set -- must call _bt_first again, which will reset the
+		 * scan's needPrimScan flag
+		 */
+		return true;
+	}
+
+	/* The top-level index scan ran out of tuples in this scan direction */
+	if (scan->parallel_scan != NULL)
+		_bt_parallel_done(scan);
+
+	return false;
 }
 
 /*

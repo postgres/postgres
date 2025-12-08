@@ -1097,37 +1097,6 @@ typedef struct BTScanOpaqueData
 typedef BTScanOpaqueData *BTScanOpaque;
 
 /*
- * _bt_readpage state used across _bt_checkkeys calls for a page
- */
-typedef struct BTReadPageState
-{
-	/* Input parameters, set by _bt_readpage for _bt_checkkeys */
-	OffsetNumber minoff;		/* Lowest non-pivot tuple's offset */
-	OffsetNumber maxoff;		/* Highest non-pivot tuple's offset */
-	IndexTuple	finaltup;		/* Needed by scans with array keys */
-	Page		page;			/* Page being read */
-	bool		firstpage;		/* page is first for primitive scan? */
-	bool		forcenonrequired;	/* treat all keys as nonrequired? */
-	int			startikey;		/* start comparisons from this scan key */
-
-	/* Per-tuple input parameters, set by _bt_readpage for _bt_checkkeys */
-	OffsetNumber offnum;		/* current tuple's page offset number */
-
-	/* Output parameters, set by _bt_checkkeys for _bt_readpage */
-	OffsetNumber skip;			/* Array keys "look ahead" skip offnum */
-	bool		continuescan;	/* Terminate ongoing (primitive) index scan? */
-
-	/*
-	 * Private _bt_checkkeys state used to manage "look ahead" optimization
-	 * and primscan scheduling (only used during scans with array keys)
-	 */
-	int16		rechecks;
-	int16		targetdistance;
-	int16		nskipadvances;
-
-} BTReadPageState;
-
-/*
  * We use some private sk_flags bits in preprocessed scan keys.  We're allowed
  * to use bits 16-31 (see skey.h).  The uppermost bits are copied from the
  * index's indoption[] array entry for the index attribute.
@@ -1300,6 +1269,18 @@ extern void _bt_pendingfsm_finalize(Relation rel, BTVacState *vstate);
 extern void _bt_preprocess_keys(IndexScanDesc scan);
 
 /*
+ * prototypes for functions in nbtreadpage.c
+ */
+extern bool _bt_readpage(IndexScanDesc scan, ScanDirection dir,
+						 OffsetNumber offnum, bool firstpage);
+extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);
+extern int	_bt_binsrch_array_skey(FmgrInfo *orderproc,
+								   bool cur_elem_trig, ScanDirection dir,
+								   Datum tupdatum, bool tupnull,
+								   BTArrayKeyInfo *array, ScanKey cur,
+								   int32 *set_elem_result);
+
+/*
  * prototypes for functions in nbtsearch.c
  */
 extern BTStack _bt_search(Relation rel, Relation heaprel, BTScanInsert key,
@@ -1315,18 +1296,6 @@ extern Buffer _bt_get_endpoint(Relation rel, uint32 level, bool rightmost);
  */
 extern BTScanInsert _bt_mkscankey(Relation rel, IndexTuple itup);
 extern void _bt_freestack(BTStack stack);
-extern bool _bt_start_prim_scan(IndexScanDesc scan, ScanDirection dir);
-extern int	_bt_binsrch_array_skey(FmgrInfo *orderproc,
-								   bool cur_elem_trig, ScanDirection dir,
-								   Datum tupdatum, bool tupnull,
-								   BTArrayKeyInfo *array, ScanKey cur,
-								   int32 *set_elem_result);
-extern void _bt_start_array_keys(IndexScanDesc scan, ScanDirection dir);
-extern bool _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
-						  IndexTuple tuple, int tupnatts);
-extern bool _bt_scanbehind_checkkeys(IndexScanDesc scan, ScanDirection dir,
-									 IndexTuple finaltup);
-extern void _bt_set_startikey(IndexScanDesc scan, BTReadPageState *pstate);
 extern void _bt_killitems(IndexScanDesc scan);
 extern BTCycleId _bt_vacuum_cycleid(Relation rel);
 extern BTCycleId _bt_start_vacuum(Relation rel);
