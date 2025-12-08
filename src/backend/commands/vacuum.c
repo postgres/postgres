@@ -231,7 +231,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		else if (!vacstmt->is_vacuumcmd)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized ANALYZE option \"%s\"", opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"ANALYZE", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 
 		/* Parse options available on VACUUM */
@@ -304,7 +305,8 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized VACUUM option \"%s\"", opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"VACUUM", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 

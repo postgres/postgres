@@ -1148,8 +1148,8 @@ parseCreateReplSlotOptions(CreateReplicationSlotCmd *cmd,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized value for CREATE_REPLICATION_SLOT option \"%s\": \"%s\"",
-								defel->defname, action)));
+						 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+								"CREATE_REPLICATION_SLOT", defel->defname, action)));
 		}
 		else if (strcmp(defel->defname, "reserve_wal") == 0)
 		{

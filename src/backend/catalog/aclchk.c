@@ -1208,7 +1208,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			if (OidIsValid(iacls->nspid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg("cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS")));
+						 errmsg("cannot use IN SCHEMA clause when using %s",
+								"GRANT/REVOKE ON SCHEMAS")));
 			objtype = DEFACLOBJ_NAMESPACE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_SCHEMA;
@@ -1218,7 +1219,8 @@ SetDefaultACL(InternalDefaultACL *iacls)
 			if (OidIsValid(iacls->nspid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
-						 errmsg("cannot use IN SCHEMA clause when using GRANT/REVOKE ON LARGE OBJECTS")));
+						 errmsg("cannot use IN SCHEMA clause when using %s",
+								"GRANT/REVOKE ON LARGE OBJECTS")));
 			objtype = DEFACLOBJ_LARGEOBJECT;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_LARGEOBJECT;

@@ -130,8 +130,8 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-									opt->defname, p),
+							 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+									"EXPLAIN", opt->defname, p),
 							 parser_errposition(pstate, opt->location)));
 			}
 			else
@@ -155,15 +155,15 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized value for EXPLAIN option \"%s\": \"%s\"",
-								opt->defname, p),
+						 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+								"EXPLAIN", opt->defname, p),
 						 parser_errposition(pstate, opt->location)));
 		}
 		else if (!ApplyExtensionExplainOption(es, opt, pstate))
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized EXPLAIN option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"EXPLAIN", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
@@ -195,7 +195,8 @@ ParseExplainOptionList(ExplainState *es, List *options, ParseState *pstate)
 	if (es->generic && es->analyze)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("EXPLAIN options ANALYZE and GENERIC_PLAN cannot be used together")));
+				 errmsg("%s options %s and %s cannot be used together",
+						"EXPLAIN", "ANALYZE", "GENERIC_PLAN")));
 
 	/* if the summary was not set explicitly, set default value */
 	es->summary = (summary_set) ? es->summary : es->analyze;

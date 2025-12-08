@@ -2353,7 +2353,8 @@ DropDatabase(ParseState *pstate, DropdbStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized DROP DATABASE option \"%s\"", opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"DROP DATABASE", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 
