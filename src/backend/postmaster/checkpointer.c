@@ -1019,7 +1019,8 @@ ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 			else if (strcmp(mode, "fast") != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unrecognized MODE option \"%s\"", mode),
+						 errmsg("unrecognized value for %s option \"%s\": \"%s\"",
+								"CHECKPOINT", "mode", mode),
 						 parser_errposition(pstate, opt->location)));
 		}
 		else if (strcmp(opt->defname, "flush_unlogged") == 0)

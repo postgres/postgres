@@ -965,7 +965,7 @@ ERROR:  unrecognized CHECKPOINT option "wrong"
 LINE 1: CHECKPOINT (WRONG);
                     ^
 CHECKPOINT (MODE WRONG);
-ERROR:  unrecognized MODE option "wrong"
+ERROR:  unrecognized value for CHECKPOINT option "mode": "wrong"
 LINE 1: CHECKPOINT (MODE WRONG);
                     ^
 CHECKPOINT (MODE FAST, FLUSH_UNLOGGED FALSE);

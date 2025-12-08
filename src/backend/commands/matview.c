@@ -210,8 +210,8 @@ RefreshMatViewByOid(Oid matviewOid, bool is_create, bool skipData,
 	if (concurrent && skipData)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s and %s options cannot be used together",
-						"CONCURRENTLY", "WITH NO DATA")));
+				 errmsg("%s options %s and %s cannot be used together",
+						"REFRESH", "CONCURRENTLY", "WITH NO DATA")));
 
 	/*
 	 * Check that everything is correct for a refresh. Problems at this point
