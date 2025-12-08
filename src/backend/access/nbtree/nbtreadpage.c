@@ -31,6 +31,7 @@
 typedef struct BTReadPageState
 {
 	/* Input parameters, set by _bt_readpage for _bt_checkkeys */
+	ScanDirection dir;			/* current scan direction */
 	OffsetNumber minoff;		/* Lowest non-pivot tuple's offset */
 	OffsetNumber maxoff;		/* Highest non-pivot tuple's offset */
 	IndexTuple	finaltup;		/* Needed by scans with array keys */
@@ -140,7 +141,8 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	OffsetNumber minoff;
 	OffsetNumber maxoff;
 	BTReadPageState pstate;
-	bool		arrayKeys;
+	bool		arrayKeys,
+				ignore_killed_tuples = scan->ignore_killed_tuples;
 	int			itemIndex,
 				indnatts;
 
@@ -151,7 +153,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	so->currPos.prevPage = opaque->btpo_prev;
 	so->currPos.nextPage = opaque->btpo_next;
 	/* delay setting so->currPos.lsn until _bt_drop_lock_and_maybe_pin */
-	so->currPos.dir = dir;
+	pstate.dir = so->currPos.dir = dir;
 	so->currPos.nextTupleOffset = 0;
 
 	/* either moreRight or moreLeft should be set now (may be unset later) */
@@ -244,7 +246,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			 * If the scan specifies not to return killed tuples, then we
 			 * treat a killed tuple as not passing the qual
 			 */
-			if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
+			if (ignore_killed_tuples && ItemIdIsDead(iid))
 			{
 				offnum = OffsetNumberNext(offnum);
 				continue;
@@ -402,7 +404,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 			 * uselessly advancing to the page to the left.  This is similar
 			 * to the high key optimization used by forward scans.
 			 */
-			if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
+			if (ignore_killed_tuples && ItemIdIsDead(iid))
 			{
 				if (offnum > minoff)
 				{
@@ -1157,8 +1159,8 @@ _bt_checkkeys(IndexScanDesc scan, BTReadPageState *pstate, bool arrayKeys,
 			  IndexTuple tuple, int tupnatts)
 {
 	TupleDesc	tupdesc = RelationGetDescr(scan->indexRelation);
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	ScanDirection dir = so->currPos.dir;
+	BTScanOpaque so PG_USED_FOR_ASSERTS_ONLY = (BTScanOpaque) scan->opaque;
+	ScanDirection dir = pstate->dir;
 	int			ikey = pstate->startikey;
 	bool		res;
 
@@ -2059,8 +2061,7 @@ static void
 _bt_checkkeys_look_ahead(IndexScanDesc scan, BTReadPageState *pstate,
 						 int tupnatts, TupleDesc tupdesc)
 {
-	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	ScanDirection dir = so->currPos.dir;
+	ScanDirection dir = pstate->dir;
 	OffsetNumber aheadoffnum;
 	IndexTuple	ahead;
 
@@ -2193,7 +2194,7 @@ _bt_advance_array_keys(IndexScanDesc scan, BTReadPageState *pstate,
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
-	ScanDirection dir = so->currPos.dir;
+	ScanDirection dir = pstate ? pstate->dir : ForwardScanDirection;
 	int			arrayidx = 0;
 	bool		beyond_end_advance = false,
 				skip_array_advanced = false,
