@@ -4,7 +4,7 @@ SELECT 'null'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "null"
 LINE 1: SELECT 'null'::pg_ndistinct;
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '{"a": 1}'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "{"a": 1}"
 LINE 1: SELECT '{"a": 1}'::pg_ndistinct;
@@ -26,9 +26,9 @@ LINE 1: SELECT '[null]'::pg_ndistinct;
                ^
 DETAIL:  Item list elements cannot be null.
 SELECT * FROM pg_input_error_info('null', 'pg_ndistinct');
-            message             |       detail       | hint | sql_error_code 
---------------------------------+--------------------+------+----------------
- malformed pg_ndistinct: "null" | Unexpected scalar. |      | 22P02
+            message             |              detail               | hint | sql_error_code 
+--------------------------------+-----------------------------------+------+----------------
+ malformed pg_ndistinct: "null" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('{"a": 1}', 'pg_ndistinct');
@@ -140,44 +140,44 @@ SELECT '[{"\ud83d" : [1, 2], "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"\ud83d" : [1, 2], "ndistinct" : 4}]"
 LINE 1: SELECT '[{"\ud83d" : [1, 2], "ndistinct" : 4}]'::pg_ndistinc...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"attributes" : [1, 2], "\ud83d" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [1, 2], "\ud83d" : 4}]"
 LINE 1: SELECT '[{"attributes" : [1, 2], "\ud83d" : 4}]'::pg_ndistin...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]"
 LINE 1: SELECT '[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]'::...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]"
 LINE 1: SELECT '[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]'::...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT * FROM pg_input_error_info('[{"\ud83d" : [1, 2], "ndistinct" : 4}]', 'pg_ndistinct');
-                             message                              |       detail        | hint | sql_error_code 
-------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_ndistinct: "[{"\ud83d" : [1, 2], "ndistinct" : 4}]" | Must be valid JSON. |      | 22P02
+                             message                              |             detail             | hint | sql_error_code 
+------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"\ud83d" : [1, 2], "ndistinct" : 4}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1, 2], "\ud83d" : 4}]', 'pg_ndistinct');
-                              message                              |       detail        | hint | sql_error_code 
--------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [1, 2], "\ud83d" : 4}]" | Must be valid JSON. |      | 22P02
+                              message                              |             detail             | hint | sql_error_code 
+-------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [1, 2], "\ud83d" : 4}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]', 'pg_ndistinct');
-                                   message                                   |       detail        | hint | sql_error_code 
------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]" | Must be valid JSON. |      | 22P02
+                                   message                                   |             detail             | hint | sql_error_code 
+-----------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [1, 2], "ndistinct" : "\ud83d"}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]', 'pg_ndistinct');
-                                   message                                   |       detail        | hint | sql_error_code 
------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]" | Must be valid JSON. |      | 22P02
+                                   message                                   |             detail             | hint | sql_error_code 
+-----------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : ["\ud83d", 2], "ndistinct" : 1}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 -- Valid keys, invalid values
@@ -185,7 +185,7 @@ SELECT '[{"attributes" : null, "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : null, "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : null, "ndistinct" : 4}]'::pg_ndisti...
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : [], "ndistinct" : 1}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [], "ndistinct" : 1}]"
 LINE 1: SELECT '[{"attributes" : [], "ndistinct" : 1}]'::pg_ndistinc...
@@ -205,32 +205,32 @@ SELECT '[{"attributes" : [2,3], "ndistinct" : null}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : null}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : null}]'::pg_nd...
                ^
-DETAIL:  Invalid "ndistinct" value.
+DETAIL:  Key "ndistinct" has an incorrect value.
 SELECT '[{"attributes" : [2,"a"], "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,"a"], "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : [2,"a"], "ndistinct" : 4}]'::pg_ndi...
                ^
-DETAIL:  Invalid "attributes" value.
+DETAIL:  Key "attributes" has an incorrect value.
 SELECT '[{"attributes" : [2,3], "ndistinct" : "a"}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : "a"}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : "a"}]'::pg_ndi...
                ^
-DETAIL:  Invalid "ndistinct" value.
+DETAIL:  Key "ndistinct" has an incorrect value.
 SELECT '[{"attributes" : [2,3], "ndistinct" : []}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : []}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : []}]'::pg_ndis...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : [2,3], "ndistinct" : [null]}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [null]}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : [null]}]'::pg_...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : [2,3], "ndistinct" : [1,null]}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [1,null]}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : [1,null]}]'::p...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : [2,3], "ndistinct" : {"a": 1}}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : {"a": 1}}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : {"a": 1}}]'::p...
@@ -240,22 +240,22 @@ SELECT '[{"attributes" : [0,1], "ndistinct" : 1}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [0,1], "ndistinct" : 1}]"
 LINE 1: SELECT '[{"attributes" : [0,1], "ndistinct" : 1}]'::pg_ndist...
                ^
-DETAIL:  Invalid "attributes" element: 0.
+DETAIL:  Invalid "attributes" element has been found: 0.
 SELECT '[{"attributes" : [-7,-9], "ndistinct" : 1}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [-7,-9], "ndistinct" : 1}]"
 LINE 1: SELECT '[{"attributes" : [-7,-9], "ndistinct" : 1}]'::pg_ndi...
                ^
-DETAIL:  Invalid "attributes" element: -9.
+DETAIL:  Invalid "attributes" element has been found: -9.
 SELECT '[{"attributes" : 1, "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : 1, "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : 1, "ndistinct" : 4}]'::pg_ndistinct...
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : "a", "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : "a", "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : "a", "ndistinct" : 4}]'::pg_ndistin...
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : {"a": 1}, "ndistinct" : 1}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : {"a": 1}, "ndistinct" : 1}]"
 LINE 1: SELECT '[{"attributes" : {"a": 1}, "ndistinct" : 1}]'::pg_nd...
@@ -267,9 +267,9 @@ LINE 1: SELECT '[{"attributes" : [1, {"a": 1}], "ndistinct" : 1}]'::...
                ^
 DETAIL:  Attribute lists can only contain attribute numbers.
 SELECT * FROM pg_input_error_info('[{"attributes" : null, "ndistinct" : 4}]', 'pg_ndistinct');
-                              message                               |       detail       | hint | sql_error_code 
---------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : null, "ndistinct" : 4}]" | Unexpected scalar. |      | 22P02
+                              message                               |              detail               | hint | sql_error_code 
+--------------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : null, "ndistinct" : 4}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [], "ndistinct" : 1}]', 'pg_ndistinct');
@@ -291,39 +291,39 @@ SELECT * FROM pg_input_error_info('[{"attributes" : [2,null], "ndistinct" : 4}]'
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : null}]', 'pg_ndistinct');
-                                message                                 |           detail           | hint | sql_error_code 
-------------------------------------------------------------------------+----------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : null}]" | Invalid "ndistinct" value. |      | 22P02
+                                message                                 |                 detail                  | hint | sql_error_code 
+------------------------------------------------------------------------+-----------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : null}]" | Key "ndistinct" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,"a"], "ndistinct" : 4}]', 'pg_ndistinct');
-                                message                                |           detail            | hint | sql_error_code 
------------------------------------------------------------------------+-----------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,"a"], "ndistinct" : 4}]" | Invalid "attributes" value. |      | 22P02
+                                message                                |                  detail                  | hint | sql_error_code 
+-----------------------------------------------------------------------+------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,"a"], "ndistinct" : 4}]" | Key "attributes" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : "a"}]', 'pg_ndistinct');
-                                message                                |           detail           | hint | sql_error_code 
------------------------------------------------------------------------+----------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : "a"}]" | Invalid "ndistinct" value. |      | 22P02
+                                message                                |                 detail                  | hint | sql_error_code 
+-----------------------------------------------------------------------+-----------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : "a"}]" | Key "ndistinct" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : []}]', 'pg_ndistinct');
-                               message                                |              detail              | hint | sql_error_code 
-----------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : []}]" | Array found in unexpected place. |      | 22P02
+                               message                                |                     detail                      | hint | sql_error_code 
+----------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : []}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : [null]}]', 'pg_ndistinct');
-                                 message                                  |              detail              | hint | sql_error_code 
---------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [null]}]" | Array found in unexpected place. |      | 22P02
+                                 message                                  |                     detail                      | hint | sql_error_code 
+--------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [null]}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : [1,null]}]', 'pg_ndistinct');
-                                  message                                   |              detail              | hint | sql_error_code 
-----------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [1,null]}]" | Array found in unexpected place. |      | 22P02
+                                  message                                   |                     detail                      | hint | sql_error_code 
+----------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : [1,null]}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : {"a": 1}}]', 'pg_ndistinct');
@@ -333,27 +333,27 @@ SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : {"a": 1
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : 1, "ndistinct" : 4}]', 'pg_ndistinct');
-                             message                             |       detail       | hint | sql_error_code 
------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : 1, "ndistinct" : 4}]" | Unexpected scalar. |      | 22P02
+                             message                             |              detail               | hint | sql_error_code 
+-----------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : 1, "ndistinct" : 4}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [-7,-9], "ndistinct" : 1}]', 'pg_ndistinct');
-                                message                                |              detail               | hint | sql_error_code 
------------------------------------------------------------------------+-----------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [-7,-9], "ndistinct" : 1}]" | Invalid "attributes" element: -9. |      | 22P02
+                                message                                |                      detail                      | hint | sql_error_code 
+-----------------------------------------------------------------------+--------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [-7,-9], "ndistinct" : 1}]" | Invalid "attributes" element has been found: -9. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : 1, "ndistinct" : 4}]', 'pg_ndistinct');
-                             message                             |       detail       | hint | sql_error_code 
------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : 1, "ndistinct" : 4}]" | Unexpected scalar. |      | 22P02
+                             message                             |              detail               | hint | sql_error_code 
+-----------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : 1, "ndistinct" : 4}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : "a", "ndistinct" : 4}]', 'pg_ndistinct');
-                              message                              |       detail       | hint | sql_error_code 
--------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : "a", "ndistinct" : 4}]" | Unexpected scalar. |      | 22P02
+                              message                              |              detail               | hint | sql_error_code 
+-------------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : "a", "ndistinct" : 4}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : {"a": 1}, "ndistinct" : 1}]', 'pg_ndistinct');
@@ -373,11 +373,11 @@ SELECT '[{"attributes" : [2,2], "ndistinct" : 4}]'::pg_ndistinct;
 ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,2], "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : [2,2], "ndistinct" : 4}]'::pg_ndist...
                ^
-DETAIL:  Invalid "attributes" element: 2 cannot follow 2.
+DETAIL:  Invalid "attributes" element has been found: 2 cannot follow 2.
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,2], "ndistinct" : 4}]', 'pg_ndistinct');
-                               message                               |                      detail                      | hint | sql_error_code 
----------------------------------------------------------------------+--------------------------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,2], "ndistinct" : 4}]" | Invalid "attributes" element: 2 cannot follow 2. |      | 22P02
+                               message                               |                             detail                              | hint | sql_error_code 
+---------------------------------------------------------------------+-----------------------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,2], "ndistinct" : 4}]" | Invalid "attributes" element has been found: 2 cannot follow 2. |      | 22P02
 (1 row)
 
 -- Duplicated attribute lists.
@@ -387,13 +387,13 @@ ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},
          {"attributes" : [2,3], "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : 4},
                ^
-DETAIL:  Duplicated "attributes" array found: [2, 3]
+DETAIL:  Duplicated "attributes" array has been found: [2, 3].
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : 4},
          {"attributes" : [2,3], "ndistinct" : 4}]', 'pg_ndistinct');
-                              message                               |                   detail                    | hint | sql_error_code 
---------------------------------------------------------------------+---------------------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},+| Duplicated "attributes" array found: [2, 3] |      | 22P02
-          {"attributes" : [2,3], "ndistinct" : 4}]"                 |                                             |      | 
+                              message                               |                        detail                         | hint | sql_error_code 
+--------------------------------------------------------------------+-------------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},+| Duplicated "attributes" array has been found: [2, 3]. |      | 22P02
+          {"attributes" : [2,3], "ndistinct" : 4}]"                 |                                                       |      | 
 (1 row)
 
 -- Partially-covered attribute lists.
@@ -407,17 +407,17 @@ ERROR:  malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},
          {"attributes" : [1,3,-1,-2], "ndistinct" : 4}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "ndistinct" : 4},
                ^
-DETAIL:  "attributes" array: [2, 3] must be a subset of array: [1, 3, -1, -2]
+DETAIL:  "attributes" array [2, 3] must be a subset of array [1, 3, -1, -2].
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "ndistinct" : 4},
          {"attributes" : [2,-1], "ndistinct" : 4},
          {"attributes" : [2,3,-1], "ndistinct" : 4},
          {"attributes" : [1,3,-1,-2], "ndistinct" : 4}]', 'pg_ndistinct');
-                              message                               |                                detail                                | hint | sql_error_code 
---------------------------------------------------------------------+----------------------------------------------------------------------+------+----------------
- malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},+| "attributes" array: [2, 3] must be a subset of array: [1, 3, -1, -2] |      | 22P02
-          {"attributes" : [2,-1], "ndistinct" : 4},                +|                                                                      |      | 
-          {"attributes" : [2,3,-1], "ndistinct" : 4},              +|                                                                      |      | 
-          {"attributes" : [1,3,-1,-2], "ndistinct" : 4}]"           |                                                                      |      | 
+                              message                               |                               detail                                | hint | sql_error_code 
+--------------------------------------------------------------------+---------------------------------------------------------------------+------+----------------
+ malformed pg_ndistinct: "[{"attributes" : [2,3], "ndistinct" : 4},+| "attributes" array [2, 3] must be a subset of array [1, 3, -1, -2]. |      | 22P02
+          {"attributes" : [2,-1], "ndistinct" : 4},                +|                                                                     |      | 
+          {"attributes" : [2,3,-1], "ndistinct" : 4},              +|                                                                     |      | 
+          {"attributes" : [1,3,-1,-2], "ndistinct" : 4}]"           |                                                                     |      | 
 (1 row)
 
 -- Valid inputs

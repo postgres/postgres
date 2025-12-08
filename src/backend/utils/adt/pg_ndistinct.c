@@ -81,7 +81,7 @@ ndistinct_object_start(void *state)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Expected an object key."));
+					errdetail("A key was expected."));
 			break;
 
 		case NDIST_EXPECT_ATTNUM_LIST:
@@ -111,10 +111,9 @@ ndistinct_object_start(void *state)
 			break;
 
 		default:
-			errsave(parse->escontext,
-					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Unexpected parse state: %d", (int) parse->state));
+			elog(ERROR,
+				 "object start of \"%s\" found in unexpected parse state: %d.",
+				 "pg_ndistinct", (int) parse->state);
 			break;
 	}
 
@@ -136,13 +135,9 @@ ndistinct_object_end(void *state)
 	MVNDistinctItem *item;
 
 	if (parse->state != NDIST_EXPECT_KEY)
-	{
-		errsave(parse->escontext,
-				errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-				errdetail("Unexpected parse state: %d", (int) parse->state));
-		return JSON_SEM_ACTION_FAILED;
-	}
+		elog(ERROR,
+			 "object end of \"%s\" found in unexpected parse state: %d.",
+			 "pg_ndistinct", (int) parse->state);
 
 	if (!parse->found_attributes)
 	{
@@ -228,7 +223,7 @@ ndistinct_array_start(void *state)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Array found in unexpected place."));
+					errdetail("Array has been found at an unexpected location."));
 			return JSON_SEM_ACTION_FAILED;
 	}
 
@@ -286,10 +281,9 @@ ndistinct_array_end(void *state)
 			 * This can only happen if a case was missed in
 			 * ndistinct_array_start().
 			 */
-			errsave(parse->escontext,
-					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Array found in unexpected place."));
+			elog(ERROR,
+				 "array end of \"%s\" found in unexpected parse state: %d.",
+				 "pg_ndistinct", (int) parse->state);
 			break;
 	}
 
@@ -384,10 +378,9 @@ ndistinct_array_element_start(void *state, bool isnull)
 			break;
 
 		default:
-			errsave(parse->escontext,
-					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Unexpected array element."));
+			elog(ERROR,
+				 "array element start of \"%s\" found in unexpected parse state: %d.",
+				 "pg_ndistinct", (int) parse->state);
 			break;
 	}
 
@@ -440,7 +433,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-						errdetail("Invalid \"%s\" value.", PG_NDISTINCT_KEY_ATTRIBUTES));
+						errdetail("Key \"%s\" has an incorrect value.", PG_NDISTINCT_KEY_ATTRIBUTES));
 				return JSON_SEM_ACTION_FAILED;
 			}
 
@@ -453,7 +446,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-						errdetail("Invalid \"%s\" element: %d.",
+						errdetail("Invalid \"%s\" element has been found: %d.",
 								  PG_NDISTINCT_KEY_ATTRIBUTES, attnum));
 				return JSON_SEM_ACTION_FAILED;
 			}
@@ -467,7 +460,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 					errsave(parse->escontext,
 							errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 							errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-							errdetail("Invalid \"%s\" element: %d cannot follow %d.",
+							errdetail("Invalid \"%s\" element has been found: %d cannot follow %d.",
 									  PG_NDISTINCT_KEY_ATTRIBUTES, attnum, prev));
 					return JSON_SEM_ACTION_FAILED;
 				}
@@ -494,7 +487,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Invalid \"%s\" value.",
+					errdetail("Key \"%s\" has an incorrect value.",
 							  PG_NDISTINCT_KEY_NDISTINCT));
 			break;
 
@@ -502,7 +495,7 @@ ndistinct_scalar(void *state, char *token, JsonTokenType tokentype)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", parse->str),
-					errdetail("Unexpected scalar."));
+					errdetail("Unexpected scalar has been found."));
 			break;
 	}
 
@@ -627,7 +620,7 @@ build_mvndistinct(NDistinctParseState *parse, char *str)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", str),
-					errdetail("Unexpected end state %d.", parse->state));
+					errdetail("Unexpected end state has been found: %d.", parse->state));
 			return NULL;
 	}
 
@@ -655,7 +648,7 @@ build_mvndistinct(NDistinctParseState *parse, char *str)
 				errsave(parse->escontext,
 						errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("malformed pg_ndistinct: \"%s\"", str),
-						errdetail("Duplicated \"%s\" array found: [%s]",
+						errdetail("Duplicated \"%s\" array has been found: [%s].",
 								  PG_NDISTINCT_KEY_ATTRIBUTES, s));
 				pfree(s);
 				return NULL;
@@ -705,7 +698,7 @@ build_mvndistinct(NDistinctParseState *parse, char *str)
 			errsave(parse->escontext,
 					errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					errmsg("malformed pg_ndistinct: \"%s\"", str),
-					errdetail("\"%s\" array: [%s] must be a subset of array: [%s]",
+					errdetail("\"%s\" array [%s] must be a subset of array [%s].",
 							  PG_NDISTINCT_KEY_ATTRIBUTES,
 							  item_list, refitem_list));
 			pfree(item_list);
@@ -784,7 +777,7 @@ pg_ndistinct_in(PG_FUNCTION_ARGS)
 		errsave(parse_state.escontext,
 				errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				errmsg("malformed pg_ndistinct: \"%s\"", str),
-				errdetail("Must be valid JSON."));
+				errdetail("Input data must be valid JSON."));
 
 	PG_RETURN_NULL();
 }

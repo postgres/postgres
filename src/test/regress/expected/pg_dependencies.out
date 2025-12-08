@@ -4,7 +4,7 @@ SELECT 'null'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "null"
 LINE 1: SELECT 'null'::pg_dependencies;
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '{"a": 1}'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "{"a": 1}"
 LINE 1: SELECT '{"a": 1}'::pg_dependencies;
@@ -26,9 +26,9 @@ LINE 1: SELECT '[null]'::pg_dependencies;
                ^
 DETAIL:  Item list elements cannot be null.
 SELECT * FROM pg_input_error_info('null', 'pg_dependencies');
-              message              |       detail       | hint | sql_error_code 
------------------------------------+--------------------+------+----------------
- malformed pg_dependencies: "null" | Unexpected scalar. |      | 22P02
+              message              |              detail               | hint | sql_error_code 
+-----------------------------------+-----------------------------------+------+----------------
+ malformed pg_dependencies: "null" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('{"a": 1}', 'pg_dependencies');
@@ -129,44 +129,44 @@ SELECT '[{"attributes" : ["\ud83d",3], "dependency" : 4, "degree": 0.250}]'::pg_
 ERROR:  malformed pg_dependencies: "[{"attributes" : ["\ud83d",3], "dependency" : 4, "degree": 0.250}]"
 LINE 1: SELECT '[{"attributes" : ["\ud83d",3], "dependency" : 4, "de...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"attributes" : [2,3], "dependency" : "\ud83d", "degree": 0.250}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "\ud83d", "degree": 0.250}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : "\ud83d", "de...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"attributes" : [2,3], "dependency" : 4, "degree": "\ud83d"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": "\ud83d"}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : 4, "degree": ...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT '[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.250}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.250}]"
 LINE 1: SELECT '[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.25...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT * FROM pg_input_error_info('[{"attributes" : ["\ud83d",3], "dependency" : 4, "degree": 0.250}]', 'pg_dependencies');
-                                             message                                             |       detail        | hint | sql_error_code 
--------------------------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : ["\ud83d",3], "dependency" : 4, "degree": 0.250}]" | Must be valid JSON. |      | 22P02
+                                             message                                             |             detail             | hint | sql_error_code 
+-------------------------------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : ["\ud83d",3], "dependency" : 4, "degree": 0.250}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : "\ud83d", "degree": 0.250}]', 'pg_dependencies');
-                                             message                                             |       detail        | hint | sql_error_code 
--------------------------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "\ud83d", "degree": 0.250}]" | Must be valid JSON. |      | 22P02
+                                             message                                             |             detail             | hint | sql_error_code 
+-------------------------------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "\ud83d", "degree": 0.250}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : 4, "degree": "\ud83d"}]', 'pg_dependencies');
-                                           message                                           |       detail        | hint | sql_error_code 
----------------------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": "\ud83d"}]" | Must be valid JSON. |      | 22P02
+                                           message                                           |             detail             | hint | sql_error_code 
+---------------------------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": "\ud83d"}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.250}]', 'pg_dependencies');
-                                       message                                        |       detail        | hint | sql_error_code 
---------------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_dependencies: "[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.250}]" | Must be valid JSON. |      | 22P02
+                                       message                                        |             detail             | hint | sql_error_code 
+--------------------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_dependencies: "[{"\ud83d" : [2,3], "dependency" : 4, "degree": 0.250}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 -- Valid keys, invalid values
@@ -174,7 +174,7 @@ SELECT '[{"attributes" : null, "dependency" : 4, "degree": 1.000}]'::pg_dependen
 ERROR:  malformed pg_dependencies: "[{"attributes" : null, "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : null, "dependency" : 4, "degree": 1...
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : [2,null], "dependency" : 4, "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,null], "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,null], "dependency" : 4, "degree...
@@ -184,51 +184,51 @@ SELECT '[{"attributes" : [2,3], "dependency" : null, "degree": 1.000}]'::pg_depe
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : null, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : null, "degree...
                ^
-DETAIL:  Invalid "dependency" value.
+DETAIL:  Key "dependency" has an incorrect value.
 SELECT '[{"attributes" : [2,"a"], "dependency" : 4, "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,"a"], "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,"a"], "dependency" : 4, "degree"...
                ^
-DETAIL:  Invalid "attributes" value.
+DETAIL:  Key "attributes" has an incorrect value.
 SELECT '[{"attributes" : [2,3], "dependency" : "a", "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "a", "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : "a", "degree"...
                ^
-DETAIL:  Invalid "dependency" value.
+DETAIL:  Key "dependency" has an incorrect value.
 SELECT '[{"attributes" : [2,3], "dependency" : [], "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [], "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : [], "degree":...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : [2,3], "dependency" : [null], "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [null], "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : [null], "degr...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : [2,3], "dependency" : [1,null], "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [1,null], "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : [1,null], "de...
                ^
-DETAIL:  Array found in unexpected place.
+DETAIL:  Array has been found at an unexpected location.
 SELECT '[{"attributes" : 1, "dependency" : 4, "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : 1, "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : 1, "dependency" : 4, "degree": 1.00...
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : "a", "dependency" : 4, "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : "a", "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : "a", "dependency" : 4, "degree": 1....
                ^
-DETAIL:  Unexpected scalar.
+DETAIL:  Unexpected scalar has been found.
 SELECT '[{"attributes" : [2,3], "dependency" : 4, "degree": NaN}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": NaN}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : 4, "degree": ...
                ^
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 SELECT * FROM pg_input_error_info('[{"attributes" : null, "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
-                                         message                                         |       detail       | hint | sql_error_code 
------------------------------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : null, "dependency" : 4, "degree": 1.000}]" | Unexpected scalar. |      | 22P02
+                                         message                                         |              detail               | hint | sql_error_code 
+-----------------------------------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : null, "dependency" : 4, "degree": 1.000}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,null], "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
@@ -238,57 +238,57 @@ SELECT * FROM pg_input_error_info('[{"attributes" : [2,null], "dependency" : 4, 
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : null, "degree": 1.000}]', 'pg_dependencies');
-                                           message                                           |           detail            | hint | sql_error_code 
----------------------------------------------------------------------------------------------+-----------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : null, "degree": 1.000}]" | Invalid "dependency" value. |      | 22P02
+                                           message                                           |                  detail                  | hint | sql_error_code 
+---------------------------------------------------------------------------------------------+------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : null, "degree": 1.000}]" | Key "dependency" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,"a"], "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
-                                          message                                           |           detail            | hint | sql_error_code 
---------------------------------------------------------------------------------------------+-----------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,"a"], "dependency" : 4, "degree": 1.000}]" | Invalid "attributes" value. |      | 22P02
+                                          message                                           |                  detail                  | hint | sql_error_code 
+--------------------------------------------------------------------------------------------+------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,"a"], "dependency" : 4, "degree": 1.000}]" | Key "attributes" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : "a", "degree": 1.000}]', 'pg_dependencies');
-                                          message                                           |           detail            | hint | sql_error_code 
---------------------------------------------------------------------------------------------+-----------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "a", "degree": 1.000}]" | Invalid "dependency" value. |      | 22P02
+                                          message                                           |                  detail                  | hint | sql_error_code 
+--------------------------------------------------------------------------------------------+------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : "a", "degree": 1.000}]" | Key "dependency" has an incorrect value. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : [], "degree": 1.000}]', 'pg_dependencies');
-                                          message                                          |              detail              | hint | sql_error_code 
--------------------------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [], "degree": 1.000}]" | Array found in unexpected place. |      | 22P02
+                                          message                                          |                     detail                      | hint | sql_error_code 
+-------------------------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [], "degree": 1.000}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : [null], "degree": 1.000}]', 'pg_dependencies');
-                                            message                                            |              detail              | hint | sql_error_code 
------------------------------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [null], "degree": 1.000}]" | Array found in unexpected place. |      | 22P02
+                                            message                                            |                     detail                      | hint | sql_error_code 
+-----------------------------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [null], "degree": 1.000}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : [1,null], "degree": 1.000}]', 'pg_dependencies');
-                                             message                                             |              detail              | hint | sql_error_code 
--------------------------------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [1,null], "degree": 1.000}]" | Array found in unexpected place. |      | 22P02
+                                             message                                             |                     detail                      | hint | sql_error_code 
+-------------------------------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : [1,null], "degree": 1.000}]" | Array has been found at an unexpected location. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : 1, "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
-                                       message                                        |       detail       | hint | sql_error_code 
---------------------------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : 1, "dependency" : 4, "degree": 1.000}]" | Unexpected scalar. |      | 22P02
+                                       message                                        |              detail               | hint | sql_error_code 
+--------------------------------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : 1, "dependency" : 4, "degree": 1.000}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : "a", "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
-                                        message                                         |       detail       | hint | sql_error_code 
-----------------------------------------------------------------------------------------+--------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : "a", "dependency" : 4, "degree": 1.000}]" | Unexpected scalar. |      | 22P02
+                                        message                                         |              detail               | hint | sql_error_code 
+----------------------------------------------------------------------------------------+-----------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : "a", "dependency" : 4, "degree": 1.000}]" | Unexpected scalar has been found. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : 4, "degree": NaN}]', 'pg_dependencies');
-                                        message                                         |       detail        | hint | sql_error_code 
-----------------------------------------------------------------------------------------+---------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": NaN}]" | Must be valid JSON. |      | 22P02
+                                        message                                         |             detail             | hint | sql_error_code 
+----------------------------------------------------------------------------------------+--------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": NaN}]" | Input data must be valid JSON. |      | 22P02
 (1 row)
 
 SELECT '[{"attributes": [], "dependency": 2, "degree": 1}]' ::pg_dependencies;
@@ -317,22 +317,22 @@ SELECT '[{"dependency" : 4, "degree": "1.2"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"dependency" : 4, "degree": "1.2"}]"
 LINE 1: SELECT '[{"dependency" : 4, "degree": "1.2"}]'::pg_dependenc...
                ^
-DETAIL:  Item must contain "attributes" key
+DETAIL:  Item must contain "attributes" key.
 SELECT '[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, "degree": "1.2"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, "degree": "1.2"}]"
 LINE 1: SELECT '[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, ...
                ^
-DETAIL:  Invalid "dependency" value: 0.
+DETAIL:  Key "dependency" has an incorrect value: 0.
 SELECT '[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9, "degree": "1.2"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9, "degree": "1.2"}]"
 LINE 1: SELECT '[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9,...
                ^
-DETAIL:  Invalid "dependency" value: -9.
+DETAIL:  Key "dependency" has an incorrect value: -9.
 SELECT '[{"attributes": [1,2], "dependency": 2, "degree": 1}]' ::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes": [1,2], "dependency": 2, "degree": 1}]"
 LINE 1: SELECT '[{"attributes": [1,2], "dependency": 2, "degree": 1}...
                ^
-DETAIL:  Item "dependency" value 2 found in the "attributes" list.
+DETAIL:  Item "dependency" with value 2 has been found in the "attributes" list.
 SELECT '[{"attributes" : [1, {}], "dependency" : 1, "degree": "1.2"}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [1, {}], "dependency" : 1, "degree": "1.2"}]"
 LINE 1: SELECT '[{"attributes" : [1, {}], "dependency" : 1, "degree"...
@@ -352,29 +352,29 @@ SELECT '[{"attributes" : [1,2], "dependency" : 1, "degree": "a"}]'::pg_dependenc
 ERROR:  malformed pg_dependencies: "[{"attributes" : [1,2], "dependency" : 1, "degree": "a"}]"
 LINE 1: SELECT '[{"attributes" : [1,2], "dependency" : 1, "degree": ...
                ^
-DETAIL:  Invalid "degree" value.
+DETAIL:  Key "degree" has an incorrect value.
 SELECT * FROM pg_input_error_info('[{"dependency" : 4, "degree": "1.2"}]', 'pg_dependencies');
-                              message                               |               detail               | hint | sql_error_code 
---------------------------------------------------------------------+------------------------------------+------+----------------
- malformed pg_dependencies: "[{"dependency" : 4, "degree": "1.2"}]" | Item must contain "attributes" key |      | 22P02
+                              message                               |               detail                | hint | sql_error_code 
+--------------------------------------------------------------------+-------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"dependency" : 4, "degree": "1.2"}]" | Item must contain "attributes" key. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, "degree": "1.2"}]', 'pg_dependencies');
-                                              message                                               |             detail             | hint | sql_error_code 
-----------------------------------------------------------------------------------------------------+--------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, "degree": "1.2"}]" | Invalid "dependency" value: 0. |      | 22P02
+                                              message                                               |                   detail                    | hint | sql_error_code 
+----------------------------------------------------------------------------------------------------+---------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : 0, "degree": "1.2"}]" | Key "dependency" has an incorrect value: 0. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9, "degree": "1.2"}]', 'pg_dependencies');
-                                               message                                               |             detail              | hint | sql_error_code 
------------------------------------------------------------------------------------------------------+---------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9, "degree": "1.2"}]" | Invalid "dependency" value: -9. |      | 22P02
+                                               message                                               |                    detail                    | hint | sql_error_code 
+-----------------------------------------------------------------------------------------------------+----------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [1,2,3,4,5,6,7], "dependency" : -9, "degree": "1.2"}]" | Key "dependency" has an incorrect value: -9. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes": [1,2], "dependency": 2, "degree": 1}]' , 'pg_dependencies');
-                                      message                                       |                          detail                           | hint | sql_error_code 
-------------------------------------------------------------------------------------+-----------------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes": [1,2], "dependency": 2, "degree": 1}]" | Item "dependency" value 2 found in the "attributes" list. |      | 22P02
+                                      message                                       |                                 detail                                  | hint | sql_error_code 
+------------------------------------------------------------------------------------+-------------------------------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes": [1,2], "dependency": 2, "degree": 1}]" | Item "dependency" with value 2 has been found in the "attributes" list. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1, {}], "dependency" : 1, "degree": "1.2"}]', 'pg_dependencies');
@@ -396,9 +396,9 @@ SELECT * FROM pg_input_error_info('[{"attributes" : [1,2], "dependency" : 3, "de
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [1,2], "dependency" : 1, "degree": "a"}]', 'pg_dependencies');
-                                        message                                         |         detail          | hint | sql_error_code 
-----------------------------------------------------------------------------------------+-------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [1,2], "dependency" : 1, "degree": "a"}]" | Invalid "degree" value. |      | 22P02
+                                        message                                         |                detail                | hint | sql_error_code 
+----------------------------------------------------------------------------------------+--------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [1,2], "dependency" : 1, "degree": "a"}]" | Key "degree" has an incorrect value. |      | 22P02
 (1 row)
 
 -- Funky degree values, which do not fail.
@@ -422,7 +422,7 @@ SELECT '[{"attributes" : [2], "dependency" : 4, "degree": "inf"}]'::pg_dependenc
 
 SELECT '[{"attributes" : [2], "dependency" : 4, "degree": "-inf"}]'::pg_dependencies::text::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes": [2], "dependency": 4, "degree": -Infinity}]"
-DETAIL:  Must be valid JSON.
+DETAIL:  Input data must be valid JSON.
 -- Duplicated keys
 SELECT '[{"attributes" : [2,3], "attributes": [1,2], "dependency" : 4, "degree": 1.000}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "attributes": [1,2], "dependency" : 4, "degree": 1.000}]"
@@ -462,22 +462,22 @@ SELECT '[{"attributes" : [0,2], "dependency" : 4, "degree": 0.500}]'::pg_depende
 ERROR:  malformed pg_dependencies: "[{"attributes" : [0,2], "dependency" : 4, "degree": 0.500}]"
 LINE 1: SELECT '[{"attributes" : [0,2], "dependency" : 4, "degree": ...
                ^
-DETAIL:  Invalid "attributes" element: 0.
+DETAIL:  Invalid "attributes" element has been found: 0.
 SELECT '[{"attributes" : [-7,-9], "dependency" : 4, "degree": 0.500}]'::pg_dependencies;
 ERROR:  malformed pg_dependencies: "[{"attributes" : [-7,-9], "dependency" : 4, "degree": 0.500}]"
 LINE 1: SELECT '[{"attributes" : [-7,-9], "dependency" : 4, "degree"...
                ^
-DETAIL:  Invalid "attributes" element: -9.
+DETAIL:  Invalid "attributes" element has been found: -9.
 SELECT * FROM pg_input_error_info('[{"attributes" : [0,2], "dependency" : 4, "degree": 0.500}]', 'pg_dependencies');
-                                         message                                          |              detail              | hint | sql_error_code 
-------------------------------------------------------------------------------------------+----------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [0,2], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element: 0. |      | 22P02
+                                         message                                          |                     detail                      | hint | sql_error_code 
+------------------------------------------------------------------------------------------+-------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [0,2], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element has been found: 0. |      | 22P02
 (1 row)
 
 SELECT * FROM pg_input_error_info('[{"attributes" : [-7,-9], "dependency" : 4, "degree": 0.500}]', 'pg_dependencies');
-                                          message                                           |              detail               | hint | sql_error_code 
---------------------------------------------------------------------------------------------+-----------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [-7,-9], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element: -9. |      | 22P02
+                                          message                                           |                      detail                      | hint | sql_error_code 
+--------------------------------------------------------------------------------------------+--------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [-7,-9], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element has been found: -9. |      | 22P02
 (1 row)
 
 -- Duplicated attributes
@@ -485,11 +485,11 @@ SELECT '[{"attributes" : [2,2], "dependency" : 4, "degree": 0.500}]'::pg_depende
 ERROR:  malformed pg_dependencies: "[{"attributes" : [2,2], "dependency" : 4, "degree": 0.500}]"
 LINE 1: SELECT '[{"attributes" : [2,2], "dependency" : 4, "degree": ...
                ^
-DETAIL:  Invalid "attributes" element: 2 cannot follow 2.
+DETAIL:  Invalid "attributes" element has been found: 2 cannot follow 2.
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,2], "dependency" : 4, "degree": 0.500}]', 'pg_dependencies');
-                                         message                                          |                      detail                      | hint | sql_error_code 
-------------------------------------------------------------------------------------------+--------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,2], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element: 2 cannot follow 2. |      | 22P02
+                                         message                                          |                             detail                              | hint | sql_error_code 
+------------------------------------------------------------------------------------------+-----------------------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,2], "dependency" : 4, "degree": 0.500}]" | Invalid "attributes" element has been found: 2 cannot follow 2. |      | 22P02
 (1 row)
 
 -- Duplicated attribute lists.
@@ -499,13 +499,13 @@ ERROR:  malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "d
          {"attributes" : [2,3], "dependency" : 4, "degree": 1.000}]"
 LINE 1: SELECT '[{"attributes" : [2,3], "dependency" : 4, "degree": ...
                ^
-DETAIL:  Duplicate "attributes" array: [2, 3] with "dependency": 4.
+DETAIL:  Duplicated "attributes" array has been found: [2, 3] for key "dependency" and value 4.
 SELECT * FROM pg_input_error_info('[{"attributes" : [2,3], "dependency" : 4, "degree": 1.000},
          {"attributes" : [2,3], "dependency" : 4, "degree": 1.000}]', 'pg_dependencies');
-                                         message                                         |                           detail                           | hint | sql_error_code 
------------------------------------------------------------------------------------------+------------------------------------------------------------+------+----------------
- malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": 1.000},+| Duplicate "attributes" array: [2, 3] with "dependency": 4. |      | 22P02
-          {"attributes" : [2,3], "dependency" : 4, "degree": 1.000}]"                    |                                                            |      | 
+                                         message                                         |                                         detail                                         | hint | sql_error_code 
+-----------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------+------+----------------
+ malformed pg_dependencies: "[{"attributes" : [2,3], "dependency" : 4, "degree": 1.000},+| Duplicated "attributes" array has been found: [2, 3] for key "dependency" and value 4. |      | 22P02
+          {"attributes" : [2,3], "dependency" : 4, "degree": 1.000}]"                    |                                                                                        |      | 
 (1 row)
 
 -- Valid inputs
