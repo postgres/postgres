@@ -2843,8 +2843,8 @@ ExecReindex(ParseState *pstate, const ReindexStmt *stmt, bool isTopLevel)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized REINDEX option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"REINDEX", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 

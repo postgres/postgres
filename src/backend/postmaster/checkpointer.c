@@ -1027,7 +1027,8 @@ ExecCheckpoint(ParseState *pstate, CheckPointStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized CHECKPOINT option \"%s\"", opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"CHECKPOINT", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 

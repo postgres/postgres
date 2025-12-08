@@ -352,13 +352,15 @@ main(int argc, char **argv)
 	{
 		if (opts->filename)
 		{
-			pg_log_error("options -d/--dbname and -f/--file cannot be used together");
+			pg_log_error("options %s and %s cannot be used together",
+						 "-d/--dbname", "-f/--file");
 			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit_nicely(1);
 		}
 
 		if (opts->restrict_key)
-			pg_fatal("options -d/--dbname and --restrict-key cannot be used together");
+			pg_fatal("options %s and %s cannot be used together",
+					 "-d/--dbname", "--restrict-key");
 
 		opts->useDB = 1;
 	}
@@ -377,23 +379,30 @@ main(int argc, char **argv)
 
 	/* reject conflicting "-only" options */
 	if (data_only && schema_only)
-		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "-a/--data-only");
 	if (schema_only && statistics_only)
-		pg_fatal("options -s/--schema-only and --statistics-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "--statistics-only");
 	if (data_only && statistics_only)
-		pg_fatal("options -a/--data-only and --statistics-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-a/--data-only", "--statistics-only");
 
 	/* reject conflicting "-only" and "no-" options */
 	if (data_only && no_data)
-		pg_fatal("options -a/--data-only and --no-data cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-a/--data-only", "--no-data");
 	if (schema_only && no_schema)
-		pg_fatal("options -s/--schema-only and --no-schema cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "--no-schema");
 	if (statistics_only && no_statistics)
-		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "--statistics-only", "--no-statistics");
 
 	/* reject conflicting "no-" options */
 	if (with_statistics && no_statistics)
-		pg_fatal("options --statistics and --no-statistics cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "--statistics", "--no-statistics");
 
 	/* reject conflicting "only-" options */
 	if (data_only && with_statistics)
@@ -404,17 +413,20 @@ main(int argc, char **argv)
 				 "-s/--schema-only", "--statistics");
 
 	if (data_only && opts->dropSchema)
-		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-c/--clean", "-a/--data-only");
 
 	if (opts->single_txn && opts->txn_size > 0)
-		pg_fatal("options -1/--single-transaction and --transaction-size cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-1/--single-transaction", "--transaction-size");
 
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
 	 */
 	if (opts->createDB && opts->single_txn)
-		pg_fatal("options -C/--create and -1/--single-transaction cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-C/--create", "-1/--single-transaction");
 
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
@@ -445,7 +457,8 @@ main(int argc, char **argv)
 	opts->no_subscriptions = no_subscriptions;
 
 	if (if_exists && !opts->dropSchema)
-		pg_fatal("option --if-exists requires option -c/--clean");
+		pg_fatal("option %s requires option %s",
+				 "--if-exists", "-c/--clean");
 	opts->if_exists = if_exists;
 	opts->strict_names = strict_names;
 

@@ -124,8 +124,8 @@ cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unrecognized CLUSTER option \"%s\"",
-							opt->defname),
+					 errmsg("unrecognized %s option \"%s\"",
+							"CLUSTER", opt->defname),
 					 parser_errposition(pstate, opt->location)));
 	}
 

@@ -831,23 +831,30 @@ main(int argc, char **argv)
 
 	/* reject conflicting "-only" options */
 	if (data_only && schema_only)
-		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "-a/--data-only");
 	if (schema_only && statistics_only)
-		pg_fatal("options -s/--schema-only and --statistics-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "--statistics-only");
 	if (data_only && statistics_only)
-		pg_fatal("options -a/--data-only and --statistics-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-a/--data-only", "--statistics-only");
 
 	/* reject conflicting "-only" and "no-" options */
 	if (data_only && no_data)
-		pg_fatal("options -a/--data-only and --no-data cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-a/--data-only", "--no-data");
 	if (schema_only && no_schema)
-		pg_fatal("options -s/--schema-only and --no-schema cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "--no-schema");
 	if (statistics_only && no_statistics)
-		pg_fatal("options --statistics-only and --no-statistics cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "--statistics-only", "--no-statistics");
 
 	/* reject conflicting "no-" options */
 	if (with_statistics && no_statistics)
-		pg_fatal("options --statistics and --no-statistics cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "--statistics", "--no-statistics");
 
 	/* reject conflicting "-only" options */
 	if (data_only && with_statistics)
@@ -858,16 +865,20 @@ main(int argc, char **argv)
 				 "-s/--schema-only", "--statistics");
 
 	if (schema_only && foreign_servers_include_patterns.head != NULL)
-		pg_fatal("options -s/--schema-only and --include-foreign-data cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-s/--schema-only", "--include-foreign-data");
 
 	if (numWorkers > 1 && foreign_servers_include_patterns.head != NULL)
-		pg_fatal("option --include-foreign-data is not supported with parallel backup");
+		pg_fatal("option %s is not supported with parallel backup",
+				 "--include-foreign-data");
 
 	if (data_only && dopt.outputClean)
-		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
+		pg_fatal("options %s and %s cannot be used together",
+				 "-c/--clean", "-a/--data-only");
 
 	if (dopt.if_exists && !dopt.outputClean)
-		pg_fatal("option --if-exists requires option -c/--clean");
+		pg_fatal("option %s requires option %s",
+				 "--if-exists", "-c/--clean");
 
 	/*
 	 * Set derivative flags. Ambiguous or nonsensical combinations, e.g.
@@ -887,7 +898,9 @@ main(int argc, char **argv)
 	 * --rows-per-insert were specified.
 	 */
 	if (dopt.do_nothing && dopt.dump_inserts == 0)
-		pg_fatal("option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts");
+		pg_fatal("option %s requires option %s, %s, or %s",
+				 "--on-conflict-do-nothing",
+				 "--inserts", "--rows-per-insert", "--column-inserts");
 
 	/* Identify archive format to emit */
 	archiveFormat = parseArchiveFormat(format, &archiveMode);
@@ -908,7 +921,8 @@ main(int argc, char **argv)
 			pg_fatal("invalid restrict key");
 	}
 	else if (dopt.restrict_key)
-		pg_fatal("option --restrict-key can only be used with --format=plain");
+		pg_fatal("option %s can only be used with %s",
+				 "--restrict-key", "--format=plain");
 
 	/*
 	 * Custom and directory formats are compressed by default with gzip when

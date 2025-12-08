@@ -399,7 +399,9 @@ main(int argc, char *argv[])
 	if (database_exclude_patterns.head != NULL &&
 		(globals_only || roles_only || tablespaces_only))
 	{
-		pg_log_error("option --exclude-database cannot be used together with -g/--globals-only, -r/--roles-only, or -t/--tablespaces-only");
+		pg_log_error("option %s cannot be used together with %s, %s, or %s",
+					 "--exclude-database",
+					 "-g/--globals-only", "-r/--roles-only", "-t/--tablespaces-only");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
@@ -407,24 +409,28 @@ main(int argc, char *argv[])
 	/* Make sure the user hasn't specified a mix of globals-only options */
 	if (globals_only && roles_only)
 	{
-		pg_log_error("options -g/--globals-only and -r/--roles-only cannot be used together");
+		pg_log_error("options %s and %s cannot be used together",
+					 "-g/--globals-only", "-r/--roles-only");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
 	if (globals_only && tablespaces_only)
 	{
-		pg_log_error("options -g/--globals-only and -t/--tablespaces-only cannot be used together");
+		pg_log_error("options %s and %s cannot be used together",
+					 "-g/--globals-only", "-t/--tablespaces-only");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
 	if (if_exists && !output_clean)
-		pg_fatal("option --if-exists requires option -c/--clean");
+		pg_fatal("option %s requires option %s",
+				 "--if-exists", "-c/--clean");
 
 	if (roles_only && tablespaces_only)
 	{
-		pg_log_error("options -r/--roles-only and -t/--tablespaces-only cannot be used together");
+		pg_log_error("options %s and %s cannot be used together",
+					 "-r/--roles-only", "-t/--tablespaces-only");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
