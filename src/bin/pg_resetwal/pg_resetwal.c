@@ -92,6 +92,7 @@ static void KillExistingArchiveStatus(void);
 static void KillExistingWALSummaries(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
+static uint32 strtouint32_strict(const char *restrict s, char **restrict endptr, int base);
 
 
 int
@@ -120,7 +121,6 @@ main(int argc, char *argv[])
 	MultiXactId set_oldestmxid = 0;
 	char	   *endptr;
 	char	   *endptr2;
-	int64		tmpi64;
 	char	   *DataDir = NULL;
 	char	   *log_fname = NULL;
 	int			fd;
@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 
 			case 'e':
 				errno = 0;
-				set_xid_epoch = strtoul(optarg, &endptr, 0);
+				set_xid_epoch = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					/*------
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 
 			case 'u':
 				errno = 0;
-				set_oldest_xid = strtoul(optarg, &endptr, 0);
+				set_oldest_xid = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-u");
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 
 			case 'x':
 				errno = 0;
-				set_xid = strtoul(optarg, &endptr, 0);
+				set_xid = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-x");
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 
 			case 'c':
 				errno = 0;
-				set_oldest_commit_ts_xid = strtoul(optarg, &endptr, 0);
+				set_oldest_commit_ts_xid = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-c");
@@ -229,7 +229,7 @@ main(int argc, char *argv[])
 
 			case 'o':
 				errno = 0;
-				set_oid = strtoul(optarg, &endptr, 0);
+				set_oid = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-o");
@@ -242,7 +242,7 @@ main(int argc, char *argv[])
 
 			case 'm':
 				errno = 0;
-				set_mxid = strtoul(optarg, &endptr, 0);
+				set_mxid = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
@@ -250,7 +250,7 @@ main(int argc, char *argv[])
 					exit(1);
 				}
 
-				set_oldestmxid = strtoul(endptr + 1, &endptr2, 0);
+				set_oldestmxid = strtouint32_strict(endptr + 1, &endptr2, 0);
 				if (endptr2 == endptr + 1 || *endptr2 != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-m");
@@ -269,17 +269,13 @@ main(int argc, char *argv[])
 
 			case 'O':
 				errno = 0;
-				tmpi64 = strtoi64(optarg, &endptr, 0);
+				set_mxoff = strtouint32_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-O");
 					pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 					exit(1);
 				}
-				if (tmpi64 < 0 || tmpi64 > (int64) MaxMultiXactOffset)
-					pg_fatal("multitransaction offset (-O) must be between 0 and %u", MaxMultiXactOffset);
-
-				set_mxoff = (MultiXactOffset) tmpi64;
 				mxoff_given = true;
 				break;
 
@@ -1213,4 +1209,46 @@ usage(void)
 
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
+}
+
+/*
+ * strtouint32_strict -- like strtoul(), but returns uint32 and doesn't accept
+ * negative values
+ */
+static uint32
+strtouint32_strict(const char *restrict s, char **restrict endptr, int base)
+{
+	unsigned long val;
+	bool		is_neg;
+
+	/* skip leading whitespace */
+	while (isspace(*s))
+		s++;
+
+	/*
+	 * Is it negative?  We still call strtoul() if it was, to set 'endptr'.
+	 * (The current callers don't care though.)
+	 */
+	is_neg = (*s == '-');
+
+	val = strtoul(s, endptr, base);
+
+	/* reject if it was negative */
+	if (errno == 0 && is_neg)
+	{
+		errno = ERANGE;
+		val = 0;
+	}
+
+	/*
+	 * reject values larger than UINT32_MAX on platforms where long is 64 bits
+	 * wide.
+	 */
+	if (errno == 0 && val != (uint32) val)
+	{
+		errno = ERANGE;
+		val = UINT32_MAX;
+	}
+
+	return (uint32) val;
 }
