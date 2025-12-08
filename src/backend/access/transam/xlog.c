@@ -5089,7 +5089,7 @@ void
 BootStrapXLOG(uint32 data_checksum_version)
 {
 	CheckPoint	checkPoint;
-	char	   *buffer;
+	PGAlignedXLogBlock buffer;
 	XLogPageHeader page;
 	XLogLongPageHeader longpage;
 	XLogRecord *record;
@@ -5118,10 +5118,8 @@ BootStrapXLOG(uint32 data_checksum_version)
 	sysidentifier |= ((uint64) tv.tv_usec) << 12;
 	sysidentifier |= getpid() & 0xFFF;
 
-	/* page buffer must be aligned suitably for O_DIRECT */
-	buffer = (char *) palloc(XLOG_BLCKSZ + XLOG_BLCKSZ);
-	page = (XLogPageHeader) TYPEALIGN(XLOG_BLCKSZ, buffer);
-	memset(page, 0, XLOG_BLCKSZ);
+	memset(&buffer, 0, sizeof buffer);
+	page = (XLogPageHeader) &buffer;
 
 	/*
 	 * Set up information for the initial checkpoint record
@@ -5202,7 +5200,7 @@ BootStrapXLOG(uint32 data_checksum_version)
 	/* Write the first page with the initial record */
 	errno = 0;
 	pgstat_report_wait_start(WAIT_EVENT_WAL_BOOTSTRAP_WRITE);
-	if (write(openLogFile, page, XLOG_BLCKSZ) != XLOG_BLCKSZ)
+	if (write(openLogFile, &buffer, XLOG_BLCKSZ) != XLOG_BLCKSZ)
 	{
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
@@ -5241,8 +5239,6 @@ BootStrapXLOG(uint32 data_checksum_version)
 	BootStrapCommitTs();
 	BootStrapSUBTRANS();
 	BootStrapMultiXact();
-
-	pfree(buffer);
 
 	/*
 	 * Force control file to be read - in contrast to normal processing we'd
