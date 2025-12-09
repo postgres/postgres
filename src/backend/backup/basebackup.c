@@ -808,8 +808,8 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 			if (maxrate < MAX_RATE_LOWER || maxrate > MAX_RATE_UPPER)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("%d is outside the valid range for parameter \"%s\" (%d .. %d)",
-								(int) maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
+						 errmsg("%" PRId64 " is outside the valid range for parameter \"%s\" (%d .. %d)",
+								maxrate, "MAX_RATE", MAX_RATE_LOWER, MAX_RATE_UPPER)));
 
 			opt->maxrate = (uint32) maxrate;
 			o_maxrate = true;

@@ -514,9 +514,9 @@ main(int argc, char **argv)
 	 */
 	if (showprogress)
 	{
-		pg_log_info("need to copy %lu MB (total source directory size is %lu MB)",
-					(unsigned long) (filemap->fetch_size / (1024 * 1024)),
-					(unsigned long) (filemap->total_size / (1024 * 1024)));
+		pg_log_info("need to copy %" PRIu64 " MB (total source directory size is %" PRIu64 " MB)",
+					filemap->fetch_size / (1024 * 1024),
+					filemap->total_size / (1024 * 1024));
 
 		fetch_size = filemap->fetch_size;
 		fetch_done = 0;

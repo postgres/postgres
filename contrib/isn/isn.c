@@ -423,19 +423,10 @@ eanwrongtype:
 
 eantoobig:
 	if (!errorOK)
-	{
-		char		eanbuf[64];
-
-		/*
-		 * Format the number separately to keep the machine-dependent format
-		 * code out of the translatable message text
-		 */
-		snprintf(eanbuf, sizeof(eanbuf), EAN13_FORMAT, ean);
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for %s type",
-						eanbuf, isn_names[type])));
-	}
+				 errmsg("value \"%" PRIu64 "\" is out of range for %s type",
+						ean, isn_names[type])));
 	return false;
 }
 
@@ -660,19 +651,10 @@ okay:
 
 eantoobig:
 	if (!errorOK)
-	{
-		char		eanbuf[64];
-
-		/*
-		 * Format the number separately to keep the machine-dependent format
-		 * code out of the translatable message text
-		 */
-		snprintf(eanbuf, sizeof(eanbuf), EAN13_FORMAT, ean);
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for %s type",
-						eanbuf, isn_names[type])));
-	}
+				 errmsg("value \"%" PRIu64 "\" is out of range for %s type",
+						ean, isn_names[type])));
 	return false;
 }
 
