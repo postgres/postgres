@@ -1346,8 +1346,8 @@ PrintTOCSummary(Archive *AHX)
 	ahprintf(AH, ";     Dump Version: %d.%d-%d\n",
 			 ARCHIVE_MAJOR(AH->version), ARCHIVE_MINOR(AH->version), ARCHIVE_REV(AH->version));
 	ahprintf(AH, ";     Format: %s\n", fmtName);
-	ahprintf(AH, ";     Integer: %d bytes\n", (int) AH->intSize);
-	ahprintf(AH, ";     Offset: %d bytes\n", (int) AH->offSize);
+	ahprintf(AH, ";     Integer: %zu bytes\n", AH->intSize);
+	ahprintf(AH, ";     Offset: %zu bytes\n", AH->offSize);
 	if (AH->archiveRemoteVersion)
 		ahprintf(AH, ";     Dumped from database version: %s\n",
 				 AH->archiveRemoteVersion);
@@ -2307,8 +2307,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		if (ferror(fh))
 			pg_fatal("could not read input file: %m");
 		else
-			pg_fatal("input file is too short (read %lu, expected 5)",
-					 (unsigned long) cnt);
+			pg_fatal("input file is too short (read %zu, expected 5)", cnt);
 	}
 
 	/* Save it, just in case we need it later */
@@ -4185,8 +4184,7 @@ ReadHead(ArchiveHandle *AH)
 
 	AH->intSize = AH->ReadBytePtr(AH);
 	if (AH->intSize > 32)
-		pg_fatal("sanity check on integer size (%lu) failed",
-				 (unsigned long) AH->intSize);
+		pg_fatal("sanity check on integer size (%zu) failed", AH->intSize);
 
 	if (AH->intSize > sizeof(int))
 		pg_log_warning("archive was made on a machine with larger integers, some operations might fail");

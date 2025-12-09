@@ -1035,8 +1035,8 @@ digestControlFile(ControlFileData *ControlFile, const char *content,
 				  size_t size)
 {
 	if (size != PG_CONTROL_FILE_SIZE)
-		pg_fatal("unexpected control file size %d, expected %d",
-				 (int) size, PG_CONTROL_FILE_SIZE);
+		pg_fatal("unexpected control file size %zu, expected %d",
+				 size, PG_CONTROL_FILE_SIZE);
 
 	memcpy(ControlFile, content, sizeof(ControlFileData));
 

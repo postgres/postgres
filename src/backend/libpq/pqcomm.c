@@ -454,9 +454,9 @@ ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 		if (strlen(unixSocketPath) >= UNIXSOCK_PATH_BUFLEN)
 		{
 			ereport(LOG,
-					(errmsg("Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+					(errmsg("Unix-domain socket path \"%s\" is too long (maximum %zu bytes)",
 							unixSocketPath,
-							(int) (UNIXSOCK_PATH_BUFLEN - 1))));
+							(UNIXSOCK_PATH_BUFLEN - 1))));
 			return STATUS_ERROR;
 		}
 		if (Lock_AF_UNIX(unixSocketDir, unixSocketPath) != STATUS_OK)

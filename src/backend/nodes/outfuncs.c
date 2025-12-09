@@ -354,7 +354,7 @@ outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 	if (typbyval)
 	{
 		s = (char *) (&value);
-		appendStringInfo(str, "%u [ ", (unsigned int) length);
+		appendStringInfo(str, "%zu [ ", length);
 		for (Size i = 0; i < (Size) sizeof(Datum); i++)
 			appendStringInfo(str, "%d ", (int) (s[i]));
 		appendStringInfoChar(str, ']');
@@ -366,7 +366,7 @@ outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 			appendStringInfoString(str, "0 [ ]");
 		else
 		{
-			appendStringInfo(str, "%u [ ", (unsigned int) length);
+			appendStringInfo(str, "%zu [ ", length);
 			for (Size i = 0; i < length; i++)
 				appendStringInfo(str, "%d ", (int) (s[i]));
 			appendStringInfoChar(str, ']');

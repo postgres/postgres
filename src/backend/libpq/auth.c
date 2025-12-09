@@ -998,8 +998,8 @@ pg_GSS_recvauth(Port *port)
 		gbuf.length = buf.len;
 		gbuf.value = buf.data;
 
-		elog(DEBUG4, "processing received GSS token of length %u",
-			 (unsigned int) gbuf.length);
+		elog(DEBUG4, "processing received GSS token of length %zu",
+			 gbuf.length);
 
 		maj_stat = gss_accept_sec_context(&min_stat,
 										  &port->gss->ctx,
@@ -1017,9 +1017,9 @@ pg_GSS_recvauth(Port *port)
 		pfree(buf.data);
 
 		elog(DEBUG5, "gss_accept_sec_context major: %u, "
-			 "minor: %u, outlen: %u, outflags: %x",
+			 "minor: %u, outlen: %zu, outflags: %x",
 			 maj_stat, min_stat,
-			 (unsigned int) port->gss->outbuf.length, gflags);
+			 port->gss->outbuf.length, gflags);
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -1034,8 +1034,8 @@ pg_GSS_recvauth(Port *port)
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			elog(DEBUG4, "sending GSS response token of length %u",
-				 (unsigned int) port->gss->outbuf.length);
+			elog(DEBUG4, "sending GSS response token of length %zu",
+				 port->gss->outbuf.length);
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT,
 							port->gss->outbuf.value, port->gss->outbuf.length);

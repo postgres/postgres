@@ -3094,9 +3094,9 @@ keep_going:						/* We will come back to here until there is
 				UNIXSOCK_PATH(portstr, thisport, ch->host);
 				if (strlen(portstr) >= UNIXSOCK_PATH_BUFLEN)
 				{
-					libpq_append_conn_error(conn, "Unix-domain socket path \"%s\" is too long (maximum %d bytes)",
+					libpq_append_conn_error(conn, "Unix-domain socket path \"%s\" is too long (maximum %zu bytes)",
 											portstr,
-											(int) (UNIXSOCK_PATH_BUFLEN - 1));
+											(UNIXSOCK_PATH_BUFLEN - 1));
 					goto keep_going;
 				}
 

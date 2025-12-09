@@ -236,8 +236,8 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-							 "integer of size %lu not supported by pqGetInt",
-							 (unsigned long) bytes);
+							 "integer of size %zu not supported by pqGetInt",
+							 bytes);
 			return EOF;
 	}
 
@@ -269,8 +269,8 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
-							 "integer of size %lu not supported by pqPutInt",
-							 (unsigned long) bytes);
+							 "integer of size %zu not supported by pqPutInt",
+							 bytes);
 			return EOF;
 	}
 

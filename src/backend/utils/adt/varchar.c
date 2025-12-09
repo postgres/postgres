@@ -158,8 +158,8 @@ bpchar_input(const char *s, size_t len, int32 atttypmod, Node *escontext)
 				if (s[j] != ' ')
 					ereturn(escontext, NULL,
 							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-							 errmsg("value too long for type character(%d)",
-									(int) maxlen)));
+							 errmsg("value too long for type character(%zu)",
+									maxlen)));
 			}
 
 			/*
@@ -472,8 +472,8 @@ varchar_input(const char *s, size_t len, int32 atttypmod, Node *escontext)
 			if (s[j] != ' ')
 				ereturn(escontext, NULL,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-						 errmsg("value too long for type character varying(%d)",
-								(int) maxlen)));
+						 errmsg("value too long for type character varying(%zu)",
+								maxlen)));
 		}
 
 		len = mbmaxlen;

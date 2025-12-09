@@ -259,8 +259,8 @@ flush_manifest(manifest_writer *mwriter)
 			if (wb < 0)
 				pg_fatal("could not write file \"%s\": %m", mwriter->pathname);
 			else
-				pg_fatal("could not write file \"%s\": wrote %d of %d",
-						 mwriter->pathname, (int) wb, mwriter->buf.len);
+				pg_fatal("could not write file \"%s\": wrote %zd of %d",
+						 mwriter->pathname, wb, mwriter->buf.len);
 		}
 
 		if (mwriter->still_checksumming &&

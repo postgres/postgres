@@ -1504,7 +1504,7 @@ InitializeGUCOptionsFromEnvironment(void)
 				new_limit = 2048;
 				source = PGC_S_DYNAMIC_DEFAULT;
 			}
-			snprintf(limbuf, sizeof(limbuf), "%d", (int) new_limit);
+			snprintf(limbuf, sizeof(limbuf), "%zd", new_limit);
 			SetConfigOption("max_stack_depth", limbuf,
 							PGC_POSTMASTER, source);
 		}
