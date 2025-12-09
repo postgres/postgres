@@ -1018,8 +1018,11 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
     see <xref linkend="table-lock-compatibility"/>.  However, if the autovacuum
     is running to prevent transaction ID wraparound (i.e., the autovacuum query
     name in the <structname>pg_stat_activity</structname> view ends with
-    <literal>(to prevent wraparound)</literal>), the autovacuum is not
-    automatically interrupted.
+    <literal>(to prevent wraparound)</literal> or the
+    <structfield>started_by</structfield> column in the
+    <structname>pg_stat_progress_vacuum</structname> view shows
+    <literal>autovacuum_wraparound</literal> value), the autovacuum is
+    not automatically interrupted.
    </para>
 
    <warning>

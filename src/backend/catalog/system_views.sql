@@ -1268,7 +1268,15 @@ CREATE VIEW pg_stat_progress_vacuum AS
         S.param6 AS max_dead_tuple_bytes, S.param7 AS dead_tuple_bytes,
         S.param8 AS num_dead_item_ids, S.param9 AS indexes_total,
         S.param10 AS indexes_processed,
-        S.param11 / 1000000::double precision AS delay_time
+        S.param11 / 1000000::double precision AS delay_time,
+        CASE S.param12 WHEN 1 THEN 'normal'
+                       WHEN 2 THEN 'aggressive'
+                       WHEN 3 THEN 'failsafe'
+                       ELSE NULL END AS mode,
+        CASE S.param13 WHEN 1 THEN 'manual'
+                       WHEN 2 THEN 'autovacuum'
+                       WHEN 3 THEN 'autovacuum_wraparound'
+                       ELSE NULL END AS started_by
     FROM pg_stat_get_progress_info('VACUUM') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 

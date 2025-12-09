@@ -664,6 +664,14 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 
 	pgstat_progress_start_command(PROGRESS_COMMAND_VACUUM,
 								  RelationGetRelid(rel));
+	if (AmAutoVacuumWorkerProcess())
+		pgstat_progress_update_param(PROGRESS_VACUUM_STARTED_BY,
+									 params.is_wraparound
+									 ? PROGRESS_VACUUM_STARTED_BY_AUTOVACUUM_WRAPAROUND
+									 : PROGRESS_VACUUM_STARTED_BY_AUTOVACUUM);
+	else
+		pgstat_progress_update_param(PROGRESS_VACUUM_STARTED_BY,
+									 PROGRESS_VACUUM_STARTED_BY_MANUAL);
 
 	/*
 	 * Setup error traceback support for ereport() first.  The idea is to set
@@ -819,6 +827,12 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	 * vacuums use the eager scan algorithm.
 	 */
 	heap_vacuum_eager_scan_setup(vacrel, params);
+
+	/* Report the vacuum mode: 'normal' or 'aggressive' */
+	pgstat_progress_update_param(PROGRESS_VACUUM_MODE,
+								 vacrel->aggressive
+								 ? PROGRESS_VACUUM_MODE_AGGRESSIVE
+								 : PROGRESS_VACUUM_MODE_NORMAL);
 
 	if (verbose)
 	{
@@ -3001,9 +3015,10 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 	{
 		const int	progress_index[] = {
 			PROGRESS_VACUUM_INDEXES_TOTAL,
-			PROGRESS_VACUUM_INDEXES_PROCESSED
+			PROGRESS_VACUUM_INDEXES_PROCESSED,
+			PROGRESS_VACUUM_MODE
 		};
-		int64		progress_val[2] = {0, 0};
+		int64		progress_val[3] = {0, 0, PROGRESS_VACUUM_MODE_FAILSAFE};
 
 		VacuumFailsafeActive = true;
 
@@ -3019,8 +3034,8 @@ lazy_check_wraparound_failsafe(LVRelState *vacrel)
 		vacrel->do_index_cleanup = false;
 		vacrel->do_rel_truncate = false;
 
-		/* Reset the progress counters */
-		pgstat_progress_update_multi_param(2, progress_index, progress_val);
+		/* Reset the progress counters and set the failsafe mode */
+		pgstat_progress_update_multi_param(3, progress_index, progress_val);
 
 		ereport(WARNING,
 				(errmsg("bypassing nonessential maintenance of table \"%s.%s.%s\" as a failsafe after %d index scans",

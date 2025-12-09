@@ -6710,6 +6710,81 @@ FROM pg_stat_get_backend_idset() AS backendid;
        stale.
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>mode</structfield> <type>text</type>
+      </para>
+      <para>
+       The mode in which the current <command>VACUUM</command> operation is
+       running. See <xref linkend="vacuum-for-wraparound"/> for details of each
+       mode. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>normal</literal>: The operation is performing a standard
+          vacuum. It is neither required to run in aggressive mode nor operating
+          in failsafe mode.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>aggressive</literal>: The operation is running an aggressive
+          vacuum, which must scan every page that is not marked all-frozen.
+          The parameters <xref linkend="guc-vacuum-freeze-table-age"/> and
+          <xref linkend="guc-vacuum-multixact-freeze-table-age"/> determine when a
+          table requires aggressive vacuuming.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>failsafe</literal>: The vacuum has entered failsafe mode,
+          in which it performs only the minimum work necessary to avoid
+          transaction ID or multixact ID wraparound failure.
+          The parameters <xref linkend="guc-vacuum-failsafe-age"/> and
+          <xref linkend="guc-vacuum-multixact-failsafe-age"/> determine when the
+          vacuum enters failsafe mode. The vacuum may start in this mode or
+          switch to it while running; the value of the
+          <structfield>mode</structfield> column may transition from another
+          mode to <literal>failsafe</literal> during the operation.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>started_by</structfield> <type>text</type>
+      </para>
+      <para>
+       Shows what caused the current <command>VACUUM</command> operation to be
+       started. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>manual</literal>: The vacuum was started by an explicit
+          <command>VACUUM</command> command.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum</literal>: The vacuum was started by an autovacuum
+          worker. Vacuums run by autovacuum workers may be interrupted due to
+          lock conflicts.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum_wraparound</literal>: The vacuum was started by an
+          autovacuum worker to prevent transaction ID or multixact ID
+          wraparound. Vacuums run for wraparound protection are not interrupted
+          due to lock conflicts.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>
