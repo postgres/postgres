@@ -123,7 +123,7 @@ SlruReadSwitchPageSlow(SlruSegState *state, uint64 pageno)
 		rc = pg_pread(state->fd,
 					  &state->buf.data + bytes_read,
 					  BLCKSZ - bytes_read,
-					  offset + bytes_read);
+					  offset);
 		if (rc < 0)
 		{
 			if (errno == EINTR)
@@ -133,12 +133,13 @@ SlruReadSwitchPageSlow(SlruSegState *state, uint64 pageno)
 		if (rc == 0)
 		{
 			/* unexpected EOF */
-			pg_log(PG_WARNING, "unexpected EOF reading file \"%s\" at offset %zd, reading as zeros", state->fn,
-				   offset + bytes_read);
+			pg_log(PG_WARNING, "unexpected EOF reading file \"%s\" at offset %u, reading as zeros",
+				   state->fn, (unsigned int) offset);
 			memset(&state->buf.data + bytes_read, 0, BLCKSZ - bytes_read);
 			break;
 		}
 		bytes_read += rc;
+		offset += rc;
 	}
 	state->pageno = pageno;
 
