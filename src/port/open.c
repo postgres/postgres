@@ -74,12 +74,22 @@ pgwin32_open_handle(const char *fileName, int fileFlags, bool backup_semantics)
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
-						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
+						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT | O_CLOEXEC |
 						 (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
 	sa.nLength = sizeof(sa);
-	sa.bInheritHandle = TRUE;
 	sa.lpSecurityDescriptor = NULL;
+
+	/*
+	 * If O_CLOEXEC is specified, create a non-inheritable handle.  Otherwise,
+	 * create an inheritable handle (the default Windows behavior).
+	 *
+	 * Note: We could instead use SetHandleInformation() after CreateFile() to
+	 * clear HANDLE_FLAG_INHERIT, but this way avoids rare leaks in
+	 * multi-threaded programs that create processes, just like POSIX
+	 * O_CLOEXEC.
+	 */
+	sa.bInheritHandle = !(fileFlags & O_CLOEXEC);
 
 	while ((h = CreateFile(fileName,
 	/* cannot use O_RDONLY, as it == 0 */
