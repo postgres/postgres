@@ -1136,7 +1136,7 @@ CopyFromBinaryOneRow(CopyFromState cstate, ExprContext *econtext, Datum *values,
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 				 errmsg("row field count is %d, expected %d",
-						(int) fld_count, attr_count)));
+						fld_count, attr_count)));
 
 	foreach(cur, cstate->attnumlist)
 	{

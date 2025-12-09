@@ -6274,8 +6274,8 @@ parseScriptWeight(const char *option, char **script)
 		if (errno != 0 || badp == sep + 1 || *badp != '\0')
 			pg_fatal("invalid weight specification: %s", sep);
 		if (wtmp > INT_MAX || wtmp < 0)
-			pg_fatal("weight specification out of range (0 .. %d): %lld",
-					 INT_MAX, (long long) wtmp);
+			pg_fatal("weight specification out of range (0 .. %d): %ld",
+					 INT_MAX, wtmp);
 		weight = wtmp;
 	}
 	else

@@ -2240,8 +2240,8 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 	if (!*ldap)
 	{
 		ereport(LOG,
-				(errmsg("could not initialize LDAP: error code %d",
-						(int) LdapGetLastError())));
+				(errmsg("could not initialize LDAP: error code %lu",
+						LdapGetLastError())));
 
 		return STATUS_ERROR;
 	}

@@ -949,8 +949,8 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 			ereport(PANIC,
 					(errcode_for_file_access(),
 					 errmsg("could not write to WAL segment %s "
-							"at offset %d, length %lu: %m",
-							xlogfname, startoff, (unsigned long) segbytes)));
+							"at offset %d, length %d: %m",
+							xlogfname, startoff, segbytes)));
 		}
 
 		/* Update state for write */

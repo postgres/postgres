@@ -1021,7 +1021,7 @@ PrintQueryStatus(PGresult *result, FILE *printQueryFout)
 	if (pset.logfile)
 		fprintf(pset.logfile, "%s\n", cmdstatus);
 
-	snprintf(buf, sizeof(buf), "%u", (unsigned int) PQoidValue(result));
+	snprintf(buf, sizeof(buf), "%u", PQoidValue(result));
 	SetVariable(pset.vars, "LASTOID", buf);
 }
 

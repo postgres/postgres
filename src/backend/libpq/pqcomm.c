@@ -618,10 +618,10 @@ ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 					 saved_errno == EADDRINUSE ?
 					 (addr->ai_family == AF_UNIX ?
 					  errhint("Is another postmaster already running on port %d?",
-							  (int) portNumber) :
+							  portNumber) :
 					  errhint("Is another postmaster already running on port %d?"
 							  " If not, wait a few seconds and retry.",
-							  (int) portNumber)) : 0));
+							  portNumber)) : 0));
 			closesocket(fd);
 			continue;
 		}
@@ -662,7 +662,7 @@ ListenServerPort(int family, const char *hostName, unsigned short portNumber,
 			ereport(LOG,
 			/* translator: first %s is IPv4 or IPv6 */
 					(errmsg("listening on %s address \"%s\", port %d",
-							familyDesc, addrDesc, (int) portNumber)));
+							familyDesc, addrDesc, portNumber)));
 
 		ListenSockets[*NumListenSockets] = fd;
 		(*NumListenSockets)++;

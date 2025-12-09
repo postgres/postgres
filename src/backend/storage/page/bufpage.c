@@ -1438,8 +1438,8 @@ PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 		offset != MAXALIGN(offset))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-				 errmsg("corrupted line pointer: offset = %u, size = %u",
-						offset, (unsigned int) oldsize)));
+				 errmsg("corrupted line pointer: offset = %u, size = %d",
+						offset, oldsize)));
 
 	/*
 	 * Determine actual change in space requirement, check for page overflow.

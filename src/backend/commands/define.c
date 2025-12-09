@@ -42,7 +42,7 @@ defGetString(DefElem *def)
 	switch (nodeTag(def->arg))
 	{
 		case T_Integer:
-			return psprintf("%ld", (long) intVal(def->arg));
+			return psprintf("%d", intVal(def->arg));
 		case T_Float:
 			return castNode(Float, def->arg)->fval;
 		case T_Boolean:

@@ -329,7 +329,7 @@ pq_parse_errornotice(StringInfo msg, ErrorData *edata)
 				edata->funcname = pstrdup(value);
 				break;
 			default:
-				elog(ERROR, "unrecognized error field code: %d", (int) code);
+				elog(ERROR, "unrecognized error field code: %d", code);
 				break;
 		}
 	}

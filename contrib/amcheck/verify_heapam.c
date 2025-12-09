@@ -526,17 +526,17 @@ verify_heapam(PG_FUNCTION_ARGS)
 				if (rdoffnum < FirstOffsetNumber)
 				{
 					report_corruption(&ctx,
-									  psprintf("line pointer redirection to item at offset %u precedes minimum offset %u",
-											   (unsigned) rdoffnum,
-											   (unsigned) FirstOffsetNumber));
+									  psprintf("line pointer redirection to item at offset %d precedes minimum offset %d",
+											   rdoffnum,
+											   FirstOffsetNumber));
 					continue;
 				}
 				if (rdoffnum > maxoff)
 				{
 					report_corruption(&ctx,
-									  psprintf("line pointer redirection to item at offset %u exceeds maximum offset %u",
-											   (unsigned) rdoffnum,
-											   (unsigned) maxoff));
+									  psprintf("line pointer redirection to item at offset %d exceeds maximum offset %d",
+											   rdoffnum,
+											   maxoff));
 					continue;
 				}
 
@@ -550,22 +550,22 @@ verify_heapam(PG_FUNCTION_ARGS)
 				if (!ItemIdIsUsed(rditem))
 				{
 					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to an unused item at offset %u",
-											   (unsigned) rdoffnum));
+									  psprintf("redirected line pointer points to an unused item at offset %d",
+											   rdoffnum));
 					continue;
 				}
 				else if (ItemIdIsDead(rditem))
 				{
 					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to a dead item at offset %u",
-											   (unsigned) rdoffnum));
+									  psprintf("redirected line pointer points to a dead item at offset %d",
+											   rdoffnum));
 					continue;
 				}
 				else if (ItemIdIsRedirected(rditem))
 				{
 					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to another redirected line pointer at offset %u",
-											   (unsigned) rdoffnum));
+									  psprintf("redirected line pointer points to another redirected line pointer at offset %d",
+											   rdoffnum));
 					continue;
 				}
 
@@ -601,10 +601,10 @@ verify_heapam(PG_FUNCTION_ARGS)
 			if (ctx.lp_off + ctx.lp_len > BLCKSZ)
 			{
 				report_corruption(&ctx,
-								  psprintf("line pointer to page offset %u with length %u ends beyond maximum page offset %u",
+								  psprintf("line pointer to page offset %u with length %u ends beyond maximum page offset %d",
 										   ctx.lp_off,
 										   ctx.lp_len,
-										   (unsigned) BLCKSZ));
+										   BLCKSZ));
 				continue;
 			}
 
@@ -678,16 +678,16 @@ verify_heapam(PG_FUNCTION_ARGS)
 				if (!HeapTupleHeaderIsHeapOnly(next_htup))
 				{
 					report_corruption(&ctx,
-									  psprintf("redirected line pointer points to a non-heap-only tuple at offset %u",
-											   (unsigned) nextoffnum));
+									  psprintf("redirected line pointer points to a non-heap-only tuple at offset %d",
+											   nextoffnum));
 				}
 
 				/* HOT chains should not intersect. */
 				if (predecessor[nextoffnum] != InvalidOffsetNumber)
 				{
 					report_corruption(&ctx,
-									  psprintf("redirect line pointer points to offset %u, but offset %u also points there",
-											   (unsigned) nextoffnum, (unsigned) predecessor[nextoffnum]));
+									  psprintf("redirect line pointer points to offset %d, but offset %d also points there",
+											   nextoffnum, predecessor[nextoffnum]));
 					continue;
 				}
 
@@ -719,8 +719,8 @@ verify_heapam(PG_FUNCTION_ARGS)
 			if (predecessor[nextoffnum] != InvalidOffsetNumber)
 			{
 				report_corruption(&ctx,
-								  psprintf("tuple points to new version at offset %u, but offset %u also points there",
-										   (unsigned) nextoffnum, (unsigned) predecessor[nextoffnum]));
+								  psprintf("tuple points to new version at offset %d, but offset %d also points there",
+										   nextoffnum, predecessor[nextoffnum]));
 				continue;
 			}
 
@@ -743,15 +743,15 @@ verify_heapam(PG_FUNCTION_ARGS)
 				HeapTupleHeaderIsHeapOnly(next_htup))
 			{
 				report_corruption(&ctx,
-								  psprintf("non-heap-only update produced a heap-only tuple at offset %u",
-										   (unsigned) nextoffnum));
+								  psprintf("non-heap-only update produced a heap-only tuple at offset %d",
+										   nextoffnum));
 			}
 			if ((curr_htup->t_infomask2 & HEAP_HOT_UPDATED) &&
 				!HeapTupleHeaderIsHeapOnly(next_htup))
 			{
 				report_corruption(&ctx,
-								  psprintf("heap-only update produced a non-heap only tuple at offset %u",
-										   (unsigned) nextoffnum));
+								  psprintf("heap-only update produced a non-heap only tuple at offset %d",
+										   nextoffnum));
 			}
 
 			/*
@@ -772,10 +772,10 @@ verify_heapam(PG_FUNCTION_ARGS)
 				TransactionIdIsInProgress(curr_xmin))
 			{
 				report_corruption(&ctx,
-								  psprintf("tuple with in-progress xmin %u was updated to produce a tuple at offset %u with committed xmin %u",
-										   (unsigned) curr_xmin,
-										   (unsigned) ctx.offnum,
-										   (unsigned) next_xmin));
+								  psprintf("tuple with in-progress xmin %u was updated to produce a tuple at offset %d with committed xmin %u",
+										   curr_xmin,
+										   ctx.offnum,
+										   next_xmin));
 			}
 
 			/*
@@ -788,16 +788,16 @@ verify_heapam(PG_FUNCTION_ARGS)
 			{
 				if (xmin_commit_status[nextoffnum] == XID_IN_PROGRESS)
 					report_corruption(&ctx,
-									  psprintf("tuple with aborted xmin %u was updated to produce a tuple at offset %u with in-progress xmin %u",
-											   (unsigned) curr_xmin,
-											   (unsigned) ctx.offnum,
-											   (unsigned) next_xmin));
+									  psprintf("tuple with aborted xmin %u was updated to produce a tuple at offset %d with in-progress xmin %u",
+											   curr_xmin,
+											   ctx.offnum,
+											   next_xmin));
 				else if (xmin_commit_status[nextoffnum] == XID_COMMITTED)
 					report_corruption(&ctx,
-									  psprintf("tuple with aborted xmin %u was updated to produce a tuple at offset %u with committed xmin %u",
-											   (unsigned) curr_xmin,
-											   (unsigned) ctx.offnum,
-											   (unsigned) next_xmin));
+									  psprintf("tuple with aborted xmin %u was updated to produce a tuple at offset %d with committed xmin %u",
+											   curr_xmin,
+											   ctx.offnum,
+											   next_xmin));
 			}
 		}
 

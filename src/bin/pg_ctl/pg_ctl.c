@@ -564,7 +564,7 @@ start_postmaster(void)
 	if (!CreateRestrictedProcess(cmd, &pi, false))
 	{
 		write_stderr(_("%s: could not start server: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		exit(1);
 	}
 	/* Don't close command process handle here; caller must do so */
@@ -1537,7 +1537,7 @@ pgwin32_doRegister(void)
 		CloseServiceHandle(hSCM);
 		write_stderr(_("%s: could not register service \"%s\": error code %lu\n"),
 					 progname, register_servicename,
-					 (unsigned long) GetLastError());
+					 GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1567,7 +1567,7 @@ pgwin32_doUnregister(void)
 		CloseServiceHandle(hSCM);
 		write_stderr(_("%s: could not open service \"%s\": error code %lu\n"),
 					 progname, register_servicename,
-					 (unsigned long) GetLastError());
+					 GetLastError());
 		exit(1);
 	}
 	if (!DeleteService(hService))
@@ -1576,7 +1576,7 @@ pgwin32_doUnregister(void)
 		CloseServiceHandle(hSCM);
 		write_stderr(_("%s: could not unregister service \"%s\": error code %lu\n"),
 					 progname, register_servicename,
-					 (unsigned long) GetLastError());
+					 GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1725,7 +1725,7 @@ pgwin32_doRunAsService(void)
 	{
 		write_stderr(_("%s: could not start service \"%s\": error code %lu\n"),
 					 progname, register_servicename,
-					 (unsigned long) GetLastError());
+					 GetLastError());
 		exit(1);
 	}
 }
@@ -1797,7 +1797,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 		 * it doesn't cast DWORD before printing.
 		 */
 		write_stderr(_("%s: could not open process token: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		return 0;
 	}
 
@@ -1811,7 +1811,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 								  0, &dropSids[1].Sid))
 	{
 		write_stderr(_("%s: could not allocate SIDs: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		return 0;
 	}
 
@@ -1837,7 +1837,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	if (!b)
 	{
 		write_stderr(_("%s: could not create restricted token: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		return 0;
 	}
 
@@ -1856,8 +1856,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 			HANDLE		job;
 			char		jobname[128];
 
-			sprintf(jobname, "PostgreSQL_%lu",
-					(unsigned long) processInfo->dwProcessId);
+			sprintf(jobname, "PostgreSQL_%lu", processInfo->dwProcessId);
 
 			job = CreateJobObject(NULL, jobname);
 			if (job)
@@ -1919,7 +1918,7 @@ GetPrivilegesToDelete(HANDLE hToken)
 		!LookupPrivilegeValue(NULL, SE_CHANGE_NOTIFY_NAME, &luidChangeNotify))
 	{
 		write_stderr(_("%s: could not get LUIDs for privileges: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		return NULL;
 	}
 
@@ -1927,7 +1926,7 @@ GetPrivilegesToDelete(HANDLE hToken)
 		GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		write_stderr(_("%s: could not get token information: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		return NULL;
 	}
 
@@ -1942,7 +1941,7 @@ GetPrivilegesToDelete(HANDLE hToken)
 	if (!GetTokenInformation(hToken, TokenPrivileges, tokenPrivs, length, &length))
 	{
 		write_stderr(_("%s: could not get token information: error code %lu\n"),
-					 progname, (unsigned long) GetLastError());
+					 progname, GetLastError());
 		free(tokenPrivs);
 		return NULL;
 	}

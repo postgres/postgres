@@ -23,7 +23,7 @@ desc_recompress_leaf(StringInfo buf, ginxlogRecompressDataLeaf *insertData)
 	int			i;
 	char	   *walbuf = ((char *) insertData) + sizeof(ginxlogRecompressDataLeaf);
 
-	appendStringInfo(buf, " %d segments:", (int) insertData->nactions);
+	appendStringInfo(buf, " %d segments:", insertData->nactions);
 
 	for (i = 0; i < insertData->nactions; i++)
 	{

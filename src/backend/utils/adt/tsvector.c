@@ -210,9 +210,9 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (toklen >= MAXSTRLEN)
 			ereturn(escontext, (Datum) 0,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("word is too long (%ld bytes, max %ld bytes)",
-							(long) toklen,
-							(long) (MAXSTRLEN - 1))));
+					 errmsg("word is too long (%d bytes, max %d bytes)",
+							toklen,
+							MAXSTRLEN - 1)));
 
 		if (cur - tmpbuf > MAXSTRPOS)
 			ereturn(escontext, (Datum) 0,

@@ -382,7 +382,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 
 			if (IsA(&ac->val, Integer))
 			{
-				cstr = psprintf("%ld", (long) intVal(&ac->val));
+				cstr = psprintf("%d", intVal(&ac->val));
 			}
 			else if (IsA(&ac->val, Float))
 			{
