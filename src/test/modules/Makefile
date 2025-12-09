@@ -16,6 +16,7 @@ SUBDIRS = \
 		  spgist_name_ops \
 		  test_aio \
 		  test_bloomfilter \
+		  test_cloexec \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
 		  test_ddl_deparse \
