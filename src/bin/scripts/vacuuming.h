@@ -51,6 +51,8 @@ typedef struct vacuumingOptions
 	bool		skip_database_stats;
 	char	   *buffer_usage_limit;
 	bool		missing_stats_only;
+	bool		echo;
+	bool		quiet;
 } vacuumingOptions;
 
 /* Valid values for vacuumingOptions->objfilter */
@@ -65,7 +67,7 @@ extern int	vacuuming_main(ConnParams *cparams, const char *dbname,
 						   SimpleStringList *objects,
 						   unsigned int tbl_count,
 						   int concurrentCons,
-						   const char *progname, bool echo, bool quiet);
+						   const char *progname);
 
 extern char *escape_quotes(const char *src);
 

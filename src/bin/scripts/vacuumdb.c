@@ -68,8 +68,6 @@ main(int argc, char *argv[])
 	const char *dbname = NULL;
 	const char *maintenance_db = NULL;
 	ConnParams	cparams;
-	bool		echo = false;
-	bool		quiet = false;
 	vacuumingOptions vacopts;
 	SimpleStringList objects = {NULL, NULL};
 	int			concurrentCons = 1;
@@ -78,11 +76,7 @@ main(int argc, char *argv[])
 
 	/* initialize options */
 	memset(&vacopts, 0, sizeof(vacopts));
-	vacopts.objfilter = 0;		/* no filter */
 	vacopts.parallel_workers = -1;
-	vacopts.buffer_usage_limit = NULL;
-	vacopts.no_index_cleanup = false;
-	vacopts.force_index_cleanup = false;
 	vacopts.do_truncate = true;
 	vacopts.process_main = true;
 	vacopts.process_toast = true;
@@ -110,7 +104,7 @@ main(int argc, char *argv[])
 				dbname = pg_strdup(optarg);
 				break;
 			case 'e':
-				echo = true;
+				vacopts.echo = true;
 				break;
 			case 'f':
 				vacopts.full = true;
@@ -143,7 +137,7 @@ main(int argc, char *argv[])
 					exit(1);
 				break;
 			case 'q':
-				quiet = true;
+				vacopts.quiet = true;
 				break;
 			case 't':
 				vacopts.objfilter |= OBJFILTER_TABLE;
@@ -312,7 +306,7 @@ main(int argc, char *argv[])
 	ret = vacuuming_main(&cparams, dbname, maintenance_db, &vacopts,
 						 &objects, tbl_count,
 						 concurrentCons,
-						 progname, echo, quiet);
+						 progname);
 	exit(ret);
 }
 
