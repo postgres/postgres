@@ -1245,8 +1245,8 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <literal>REFERENCES</literal> (foreign key) constraints accept this
       clause.  <literal>NOT NULL</literal> and <literal>CHECK</literal> constraints are not
       deferrable.  Note that deferrable constraints cannot be used as
-      conflict arbitrators in an <command>INSERT</command> statement that
-      includes an <literal>ON CONFLICT DO UPDATE</literal> clause.
+      conflict arbiters in an <command>INSERT</command> statement that
+      includes an <literal>ON CONFLICT</literal> clause.
      </para>
     </listitem>
    </varlistentry>
