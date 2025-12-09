@@ -193,7 +193,7 @@ hashbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Return statistics
 	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
@@ -318,8 +318,7 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 			 * entries.
 			 */
 			if (so->killedItems == NULL)
-				so->killedItems = (int *)
-					palloc(MaxIndexTuplesPerPage * sizeof(int));
+				so->killedItems = palloc_array(int, MaxIndexTuplesPerPage);
 
 			if (so->numKilled < MaxIndexTuplesPerPage)
 				so->killedItems[so->numKilled++] = so->currPos.itemIndex;
@@ -381,7 +380,7 @@ hashbeginscan(Relation rel, int nkeys, int norderbys)
 
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
-	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
+	so = (HashScanOpaque) palloc_object(HashScanOpaqueData);
 	HashScanPosInvalidate(so->currPos);
 	so->hashso_bucket_buf = InvalidBuffer;
 	so->hashso_split_bucket_buf = InvalidBuffer;
@@ -633,7 +632,7 @@ loop_top:
 
 	/* return statistics */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 	stats->estimated_count = false;
 	stats->num_index_tuples = num_index_tuples;
 	stats->tuples_removed += tuples_removed;

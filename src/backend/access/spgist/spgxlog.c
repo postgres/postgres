@@ -901,7 +901,7 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 			int			max = PageGetMaxOffsetNumber(page);
 			OffsetNumber *toDelete;
 
-			toDelete = palloc(sizeof(OffsetNumber) * max);
+			toDelete = palloc_array(OffsetNumber, max);
 
 			for (i = xldata->firstPlaceholder; i <= max; i++)
 				toDelete[i - xldata->firstPlaceholder] = i;

@@ -2906,7 +2906,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	 * operators, and see which interpretations (cmptypes) exist for each
 	 * operator.
 	 */
-	opinfo_lists = (List **) palloc(nopers * sizeof(List *));
+	opinfo_lists = palloc_array(List *, nopers);
 	cmptypes = NULL;
 	i = 0;
 	foreach(l, opexprs)
@@ -3241,7 +3241,7 @@ getJsonEncodingConst(JsonFormat *format)
 {
 	JsonEncoding encoding;
 	const char *enc;
-	Name		encname = palloc(sizeof(NameData));
+	Name		encname = palloc_object(NameData);
 
 	if (!format ||
 		format->format_type == JS_FORMAT_DEFAULT ||

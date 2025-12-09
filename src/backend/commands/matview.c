@@ -463,7 +463,7 @@ refresh_matview_datafill(DestReceiver *dest, Query *query,
 DestReceiver *
 CreateTransientRelDestReceiver(Oid transientoid)
 {
-	DR_transientrel *self = (DR_transientrel *) palloc0(sizeof(DR_transientrel));
+	DR_transientrel *self = palloc0_object(DR_transientrel);
 
 	self->pub.receiveSlot = transientrel_receive;
 	self->pub.rStartup = transientrel_startup;
@@ -713,7 +713,7 @@ refresh_by_match_merge(Oid matviewOid, Oid tempOid, Oid relowner,
 	 * include all rows.
 	 */
 	tupdesc = matviewRel->rd_att;
-	opUsedForQual = (Oid *) palloc0(sizeof(Oid) * relnatts);
+	opUsedForQual = palloc0_array(Oid, relnatts);
 	foundUniqueIndex = false;
 
 	indexoidlist = RelationGetIndexList(matviewRel);

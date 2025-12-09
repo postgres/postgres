@@ -742,7 +742,7 @@ populate_typ_list(void)
 		Form_pg_type typForm = (Form_pg_type) GETSTRUCT(tup);
 		struct typmap *newtyp;
 
-		newtyp = (struct typmap *) palloc(sizeof(struct typmap));
+		newtyp = palloc_object(struct typmap);
 		Typ = lappend(Typ, newtyp);
 
 		newtyp->am_oid = typForm->oid;
@@ -951,10 +951,10 @@ index_register(Oid heap,
 
 	oldcxt = MemoryContextSwitchTo(nogc);
 
-	newind = (IndexList *) palloc(sizeof(IndexList));
+	newind = palloc_object(IndexList);
 	newind->il_heap = heap;
 	newind->il_ind = ind;
-	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
+	newind->il_info = palloc_object(IndexInfo);
 
 	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
 	/* expressions will likely be null, but may as well copy it */

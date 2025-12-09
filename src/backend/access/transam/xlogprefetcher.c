@@ -364,7 +364,7 @@ XLogPrefetcherAllocate(XLogReaderState *reader)
 	XLogPrefetcher *prefetcher;
 	HASHCTL		ctl;
 
-	prefetcher = palloc0(sizeof(XLogPrefetcher));
+	prefetcher = palloc0_object(XLogPrefetcher);
 	prefetcher->reader = reader;
 
 	ctl.keysize = sizeof(RelFileLocator);

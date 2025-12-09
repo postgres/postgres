@@ -419,8 +419,7 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	 * Note we have the same race condition here as above: j could be 0 at the
 	 * end of the loop.
 	 */
-	newMembers = (MultiXactMember *)
-		palloc(sizeof(MultiXactMember) * (nmembers + 1));
+	newMembers = palloc_array(MultiXactMember, nmembers + 1);
 
 	for (i = 0, j = 0; i < nmembers; i++)
 	{

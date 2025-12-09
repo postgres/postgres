@@ -741,7 +741,7 @@ pull_up_sublinks_jointree_recurse(PlannerInfo *root, Node *jtnode,
 		 * Make a modifiable copy of join node, but don't bother copying its
 		 * subnodes (yet).
 		 */
-		j = (JoinExpr *) palloc(sizeof(JoinExpr));
+		j = palloc_object(JoinExpr);
 		memcpy(j, jtnode, sizeof(JoinExpr));
 		jtlink = (Node *) j;
 
@@ -3240,8 +3240,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 {
 	reduce_outer_joins_pass1_state *result;
 
-	result = (reduce_outer_joins_pass1_state *)
-		palloc(sizeof(reduce_outer_joins_pass1_state));
+	result = palloc_object(reduce_outer_joins_pass1_state);
 	result->relids = NULL;
 	result->contains_outer = false;
 	result->sub_states = NIL;
@@ -3593,7 +3592,7 @@ report_reduced_full_join(reduce_outer_joins_pass2_state *state2,
 {
 	reduce_outer_joins_partial_state *statep;
 
-	statep = palloc(sizeof(reduce_outer_joins_partial_state));
+	statep = palloc_object(reduce_outer_joins_partial_state);
 	statep->full_join_rti = rtindex;
 	statep->unreduced_side = relids;
 	state2->partial_reduced = lappend(state2->partial_reduced, statep);

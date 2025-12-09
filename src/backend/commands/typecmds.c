@@ -3447,10 +3447,10 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			}
 
 			/* Build the RelToCheck entry with enough space for all atts */
-			rtc = (RelToCheck *) palloc(sizeof(RelToCheck));
+			rtc = palloc_object(RelToCheck);
 			rtc->rel = rel;
 			rtc->natts = 0;
-			rtc->atts = (int *) palloc(sizeof(int) * RelationGetNumberOfAttributes(rel));
+			rtc->atts = palloc_array(int, RelationGetNumberOfAttributes(rel));
 			result = lappend(result, rtc);
 		}
 

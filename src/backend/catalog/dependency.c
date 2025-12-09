@@ -801,8 +801,7 @@ findDependentObjects(const ObjectAddress *object,
 	 * regression testing.)
 	 */
 	maxDependentObjects = 128;	/* arbitrary initial allocation */
-	dependentObjects = (ObjectAddressAndFlags *)
-		palloc(maxDependentObjects * sizeof(ObjectAddressAndFlags));
+	dependentObjects = palloc_array(ObjectAddressAndFlags, maxDependentObjects);
 	numDependentObjects = 0;
 
 	ScanKeyInit(&key[0],
@@ -2616,12 +2615,11 @@ new_object_addresses(void)
 {
 	ObjectAddresses *addrs;
 
-	addrs = palloc(sizeof(ObjectAddresses));
+	addrs = palloc_object(ObjectAddresses);
 
 	addrs->numrefs = 0;
 	addrs->maxrefs = 32;
-	addrs->refs = (ObjectAddress *)
-		palloc(addrs->maxrefs * sizeof(ObjectAddress));
+	addrs->refs = palloc_array(ObjectAddress, addrs->maxrefs);
 	addrs->extras = NULL;		/* until/unless needed */
 
 	return addrs;

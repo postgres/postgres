@@ -4562,7 +4562,7 @@ pgwin32_register_deadchild_callback(HANDLE procHandle, DWORD procId)
 {
 	win32_deadchild_waitinfo *childinfo;
 
-	childinfo = palloc(sizeof(win32_deadchild_waitinfo));
+	childinfo = palloc_object(win32_deadchild_waitinfo);
 	childinfo->procHandle = procHandle;
 	childinfo->procId = procId;
 

@@ -159,7 +159,7 @@ _bt_search(Relation rel, Relation heaprel, BTScanInsert key, Buffer *bufP,
 		 * page one level down, it usually ends up inserting a new pivot
 		 * tuple/downlink immediately after the location recorded here.
 		 */
-		new_stack = (BTStack) palloc(sizeof(BTStackData));
+		new_stack = (BTStack) palloc_object(BTStackData);
 		new_stack->bts_blkno = BufferGetBlockNumber(*bufP);
 		new_stack->bts_offset = offnum;
 		new_stack->bts_parent = stack_in;

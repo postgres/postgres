@@ -697,7 +697,7 @@ logicalrep_write_rel(StringInfo out, TransactionId xid, Relation rel,
 LogicalRepRelation *
 logicalrep_read_rel(StringInfo in)
 {
-	LogicalRepRelation *rel = palloc(sizeof(LogicalRepRelation));
+	LogicalRepRelation *rel = palloc_object(LogicalRepRelation);
 
 	rel->remoteid = pq_getmsgint(in, 4);
 
@@ -871,7 +871,7 @@ logicalrep_read_tuple(StringInfo in, LogicalRepTupleData *tuple)
 
 	/* Allocate space for per-column values; zero out unused StringInfoDatas */
 	tuple->colvalues = (StringInfoData *) palloc0(natts * sizeof(StringInfoData));
-	tuple->colstatus = (char *) palloc(natts * sizeof(char));
+	tuple->colstatus = palloc_array(char, natts);
 	tuple->ncols = natts;
 
 	/* Read the data */
@@ -994,8 +994,8 @@ logicalrep_read_attrs(StringInfo in, LogicalRepRelation *rel)
 	Bitmapset  *attkeys = NULL;
 
 	natts = pq_getmsgint(in, 2);
-	attnames = palloc(natts * sizeof(char *));
-	atttyps = palloc(natts * sizeof(Oid));
+	attnames = palloc_array(char *, natts);
+	atttyps = palloc_array(Oid, natts);
 
 	/* read the attributes */
 	for (i = 0; i < natts; i++)

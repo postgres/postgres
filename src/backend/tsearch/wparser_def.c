@@ -269,7 +269,7 @@ static bool TParserGet(TParser *prs);
 static TParserPosition *
 newTParserPosition(TParserPosition *prev)
 {
-	TParserPosition *res = (TParserPosition *) palloc(sizeof(TParserPosition));
+	TParserPosition *res = palloc_object(TParserPosition);
 
 	if (prev)
 		memcpy(res, prev, sizeof(TParserPosition));
@@ -286,12 +286,12 @@ newTParserPosition(TParserPosition *prev)
 static TParser *
 TParserInit(char *str, int len)
 {
-	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+	TParser    *prs = palloc0_object(TParser);
 
 	prs->charmaxlen = pg_database_encoding_max_length();
 	prs->str = str;
 	prs->lenstr = len;
-	prs->pgwstr = (pg_wchar *) palloc(sizeof(pg_wchar) * (prs->lenstr + 1));
+	prs->pgwstr = palloc_array(pg_wchar, prs->lenstr + 1);
 	pg_mb2wchar_with_len(prs->str, prs->pgwstr, prs->lenstr);
 
 	prs->state = newTParserPosition(NULL);
@@ -318,7 +318,7 @@ TParserInit(char *str, int len)
 static TParser *
 TParserCopyInit(const TParser *orig)
 {
-	TParser    *prs = (TParser *) palloc0(sizeof(TParser));
+	TParser    *prs = palloc0_object(TParser);
 
 	prs->charmaxlen = orig->charmaxlen;
 	prs->str = orig->str + orig->state->posbyte;
@@ -1832,7 +1832,7 @@ TParserGet(TParser *prs)
 Datum
 prsd_lextype(PG_FUNCTION_ARGS)
 {
-	LexDescr   *descr = (LexDescr *) palloc(sizeof(LexDescr) * (LASTNUM + 1));
+	LexDescr   *descr = palloc_array(LexDescr, LASTNUM + 1);
 	int			i;
 
 	for (i = 1; i <= LASTNUM; i++)
@@ -1949,7 +1949,7 @@ checkcondition_HL(void *opaque, QueryOperand *val, ExecPhraseData *data)
 
 			if (!data->pos)
 			{
-				data->pos = palloc(sizeof(WordEntryPos) * checkval->len);
+				data->pos = palloc_array(WordEntryPos, checkval->len);
 				data->allocated = true;
 				data->npos = 1;
 				data->pos[0] = checkval->words[i].pos;

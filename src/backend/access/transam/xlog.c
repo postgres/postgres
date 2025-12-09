@@ -4904,7 +4904,7 @@ void
 LocalProcessControlFile(bool reset)
 {
 	Assert(reset || ControlFile == NULL);
-	ControlFile = palloc(sizeof(ControlFileData));
+	ControlFile = palloc_object(ControlFileData);
 	ReadControlFile();
 }
 
@@ -9133,7 +9133,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				continue;
 			}
 
-			ti = palloc(sizeof(tablespaceinfo));
+			ti = palloc_object(tablespaceinfo);
 			ti->oid = tsoid;
 			ti->path = pstrdup(linkpath);
 			ti->rpath = relpath;

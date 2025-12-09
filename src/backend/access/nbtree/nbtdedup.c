@@ -82,7 +82,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, IndexTuple newitem, Size newitemsz,
 	 * That ought to leave us with a good split point when pages full of
 	 * duplicates can be split several times.
 	 */
-	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+	state = palloc_object(BTDedupStateData);
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = Min(BTMaxItemSize / 2, INDEX_SIZE_MASK);
@@ -321,7 +321,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 	newitemsz += sizeof(ItemIdData);
 
 	/* Initialize deduplication state */
-	state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+	state = palloc_object(BTDedupStateData);
 	state->deduplicate = true;
 	state->nmaxitems = 0;
 	state->maxpostingsize = BLCKSZ; /* We're not really deduplicating */
@@ -355,8 +355,8 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 	delstate.bottomup = true;
 	delstate.bottomupfreespace = Max(BLCKSZ / 16, newitemsz);
 	delstate.ndeltids = 0;
-	delstate.deltids = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexDelete));
-	delstate.status = palloc(MaxTIDsPerBTreePage * sizeof(TM_IndexStatus));
+	delstate.deltids = palloc_array(TM_IndexDelete, MaxTIDsPerBTreePage);
+	delstate.status = palloc_array(TM_IndexStatus, MaxTIDsPerBTreePage);
 
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);

@@ -684,7 +684,7 @@ GetPreparedTransactionList(GlobalTransaction *gxacts)
 	}
 
 	num = TwoPhaseState->numPrepXacts;
-	array = (GlobalTransaction) palloc(sizeof(GlobalTransactionData) * num);
+	array = palloc_array(GlobalTransactionData, num);
 	*gxacts = array;
 	for (i = 0; i < num; i++)
 		memcpy(array + i, TwoPhaseState->prepXacts[i],
@@ -750,7 +750,7 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		 * Collect all the 2PC status information that we will format and send
 		 * out as a result set.
 		 */
-		status = (Working_State *) palloc(sizeof(Working_State));
+		status = palloc_object(Working_State);
 		funcctx->user_fctx = status;
 
 		status->ngxacts = GetPreparedTransactionList(&status->array);
@@ -1027,7 +1027,7 @@ save_state_data(const void *data, uint32 len)
 
 	if (padlen > records.bytes_free)
 	{
-		records.tail->next = palloc0(sizeof(StateFileChunk));
+		records.tail->next = palloc0_object(StateFileChunk);
 		records.tail = records.tail->next;
 		records.tail->len = 0;
 		records.tail->next = NULL;
@@ -1062,7 +1062,7 @@ StartPrepare(GlobalTransaction gxact)
 	SharedInvalidationMessage *invalmsgs;
 
 	/* Initialize linked list */
-	records.head = palloc0(sizeof(StateFileChunk));
+	records.head = palloc0_object(StateFileChunk);
 	records.head->len = 0;
 	records.head->next = NULL;
 
@@ -1453,7 +1453,7 @@ XlogReadTwoPhaseData(XLogRecPtr lsn, char **buf, int *len)
 	if (len != NULL)
 		*len = XLogRecGetDataLen(xlogreader);
 
-	*buf = palloc(sizeof(char) * XLogRecGetDataLen(xlogreader));
+	*buf = palloc_array(char, XLogRecGetDataLen(xlogreader));
 	memcpy(*buf, XLogRecGetData(xlogreader), sizeof(char) * XLogRecGetDataLen(xlogreader));
 
 	XLogReaderFree(xlogreader);

@@ -844,7 +844,7 @@ get_guc_variables(int *num_vars)
 	int			i;
 
 	*num_vars = hash_get_num_entries(guc_hashtab);
-	result = palloc(sizeof(struct config_generic *) * *num_vars);
+	result = palloc_array(struct config_generic *, *num_vars);
 
 	/* Extract pointers from the hash table */
 	i = 0;
@@ -5208,7 +5208,7 @@ get_explain_guc_options(int *num)
 	 * While only a fraction of all the GUC variables are marked GUC_EXPLAIN,
 	 * it doesn't seem worth dynamically resizing this array.
 	 */
-	result = palloc(sizeof(struct config_generic *) * hash_get_num_entries(guc_hashtab));
+	result = palloc_array(struct config_generic *, hash_get_num_entries(guc_hashtab));
 
 	/* We need only consider GUCs with source not PGC_S_DEFAULT */
 	dlist_foreach(iter, &guc_nondef_list)

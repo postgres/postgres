@@ -920,7 +920,7 @@ InitCatCache(int id,
 	 */
 	if (CacheHdr == NULL)
 	{
-		CacheHdr = (CatCacheHeader *) palloc(sizeof(CatCacheHeader));
+		CacheHdr = palloc_object(CatCacheHeader);
 		slist_init(&CacheHdr->ch_caches);
 		CacheHdr->ch_ntup = 0;
 #ifdef CATCACHE_STATS
@@ -2243,7 +2243,7 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp, Datum *arguments,
 	{
 		/* Set up keys for a negative cache entry */
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-		ct = (CatCTup *) palloc(sizeof(CatCTup));
+		ct = palloc_object(CatCTup);
 
 		/*
 		 * Store keys - they'll point into separately allocated memory if not

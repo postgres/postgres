@@ -335,7 +335,7 @@ btbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	if (buildstate.btleader)
 		_bt_end_parallel(buildstate.btleader);
 
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
@@ -366,7 +366,7 @@ static double
 _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 					IndexInfo *indexInfo)
 {
-	BTSpool    *btspool = (BTSpool *) palloc0(sizeof(BTSpool));
+	BTSpool    *btspool = palloc0_object(BTSpool);
 	SortCoordinate coordinate = NULL;
 	double		reltuples = 0;
 
@@ -399,7 +399,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	 */
 	if (buildstate->btleader)
 	{
-		coordinate = (SortCoordinate) palloc0(sizeof(SortCoordinateData));
+		coordinate = palloc0_object(SortCoordinateData);
 		coordinate->isWorker = false;
 		coordinate->nParticipants =
 			buildstate->btleader->nparticipanttuplesorts;
@@ -440,7 +440,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 	 */
 	if (indexInfo->ii_Unique)
 	{
-		BTSpool    *btspool2 = (BTSpool *) palloc0(sizeof(BTSpool));
+		BTSpool    *btspool2 = palloc0_object(BTSpool);
 		SortCoordinate coordinate2 = NULL;
 
 		/* Initialize secondary spool */
@@ -457,7 +457,7 @@ _bt_spools_heapscan(Relation heap, Relation index, BTBuildState *buildstate,
 			 * tuplesort_begin_index_btree() about the basic high level
 			 * coordination of a parallel sort.
 			 */
-			coordinate2 = (SortCoordinate) palloc0(sizeof(SortCoordinateData));
+			coordinate2 = palloc0_object(SortCoordinateData);
 			coordinate2->isWorker = false;
 			coordinate2->nParticipants =
 				buildstate->btleader->nparticipanttuplesorts;
@@ -648,7 +648,7 @@ _bt_blwritepage(BTWriteState *wstate, BulkWriteBuffer buf, BlockNumber blkno)
 static BTPageState *
 _bt_pagestate(BTWriteState *wstate, uint32 level)
 {
-	BTPageState *state = (BTPageState *) palloc0(sizeof(BTPageState));
+	BTPageState *state = palloc0_object(BTPageState);
 
 	/* create initial page for level */
 	state->btps_buf = _bt_blnewpage(wstate, level);
@@ -1002,7 +1002,7 @@ _bt_buildadd(BTWriteState *wstate, BTPageState *state, IndexTuple itup,
 	if (last_off == P_HIKEY)
 	{
 		Assert(state->btps_lowkey == NULL);
-		state->btps_lowkey = palloc0(sizeof(IndexTupleData));
+		state->btps_lowkey = palloc0_object(IndexTupleData);
 		state->btps_lowkey->t_info = sizeof(IndexTupleData);
 		BTreeTupleSetNAtts(state->btps_lowkey, 0, false);
 	}
@@ -1164,7 +1164,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		itup2 = tuplesort_getindextuple(btspool2->sortstate, true);
 
 		/* Prepare SortSupport data for each column */
-		sortKeys = (SortSupport) palloc0(keysz * sizeof(SortSupportData));
+		sortKeys = palloc0_array(SortSupportData, keysz);
 
 		for (i = 0; i < keysz; i++)
 		{
@@ -1266,7 +1266,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 		/* merge is unnecessary, deduplicate into posting lists */
 		BTDedupState dstate;
 
-		dstate = (BTDedupState) palloc(sizeof(BTDedupStateData));
+		dstate = palloc_object(BTDedupStateData);
 		dstate->deduplicate = true; /* unused */
 		dstate->nmaxitems = 0;	/* unused */
 		dstate->maxpostingsize = 0; /* set later */
@@ -1404,7 +1404,7 @@ _bt_begin_parallel(BTBuildState *buildstate, bool isconcurrent, int request)
 	Sharedsort *sharedsort;
 	Sharedsort *sharedsort2;
 	BTSpool    *btspool = buildstate->spool;
-	BTLeader   *btleader = (BTLeader *) palloc0(sizeof(BTLeader));
+	BTLeader   *btleader = palloc0_object(BTLeader);
 	WalUsage   *walusage;
 	BufferUsage *bufferusage;
 	bool		leaderparticipates = true;
@@ -1693,7 +1693,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 	int			sortmem;
 
 	/* Allocate memory and initialize private spool */
-	leaderworker = (BTSpool *) palloc0(sizeof(BTSpool));
+	leaderworker = palloc0_object(BTSpool);
 	leaderworker->heap = buildstate->spool->heap;
 	leaderworker->index = buildstate->spool->index;
 	leaderworker->isunique = buildstate->spool->isunique;
@@ -1705,7 +1705,7 @@ _bt_leader_participate_as_worker(BTBuildState *buildstate)
 	else
 	{
 		/* Allocate memory for worker's own private secondary spool */
-		leaderworker2 = (BTSpool *) palloc0(sizeof(BTSpool));
+		leaderworker2 = palloc0_object(BTSpool);
 
 		/* Initialize worker's own secondary spool */
 		leaderworker2->heap = leaderworker->heap;
@@ -1796,7 +1796,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	indexRel = index_open(btshared->indexrelid, indexLockmode);
 
 	/* Initialize worker's own spool */
-	btspool = (BTSpool *) palloc0(sizeof(BTSpool));
+	btspool = palloc0_object(BTSpool);
 	btspool->heap = heapRel;
 	btspool->index = indexRel;
 	btspool->isunique = btshared->isunique;
@@ -1813,7 +1813,7 @@ _bt_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 	else
 	{
 		/* Allocate memory for worker's own private secondary spool */
-		btspool2 = (BTSpool *) palloc0(sizeof(BTSpool));
+		btspool2 = palloc0_object(BTSpool);
 
 		/* Initialize worker's own secondary spool */
 		btspool2->heap = btspool->heap;
@@ -1874,7 +1874,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 	IndexInfo  *indexInfo;
 
 	/* Initialize local tuplesort coordination state */
-	coordinate = palloc0(sizeof(SortCoordinateData));
+	coordinate = palloc0_object(SortCoordinateData);
 	coordinate->isWorker = true;
 	coordinate->nParticipants = -1;
 	coordinate->sharedsort = sharedsort;
@@ -1901,7 +1901,7 @@ _bt_parallel_scan_and_sort(BTSpool *btspool, BTSpool *btspool2,
 		 * worker).  Worker processes are generally permitted to allocate
 		 * work_mem independently.
 		 */
-		coordinate2 = palloc0(sizeof(SortCoordinateData));
+		coordinate2 = palloc0_object(SortCoordinateData);
 		coordinate2->isWorker = true;
 		coordinate2->nParticipants = -1;
 		coordinate2->sharedsort = sharedsort2;

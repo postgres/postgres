@@ -58,7 +58,7 @@ tt_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 
 	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	st = (TSTokenTypeStorage *) palloc(sizeof(TSTokenTypeStorage));
+	st = palloc_object(TSTokenTypeStorage);
 	st->cur = 0;
 	/* lextype takes one dummy argument */
 	st->list = (LexDescr *) DatumGetPointer(OidFunctionCall1(prs->lextypeOid,
@@ -173,10 +173,10 @@ prs_setup_firstcall(FuncCallContext *funcctx, FunctionCallInfo fcinfo,
 
 	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-	st = (PrsStorage *) palloc(sizeof(PrsStorage));
+	st = palloc_object(PrsStorage);
 	st->cur = 0;
 	st->len = 16;
-	st->list = (LexemeEntry *) palloc(sizeof(LexemeEntry) * st->len);
+	st->list = palloc_array(LexemeEntry, st->len);
 
 	prsdata = DatumGetPointer(FunctionCall2(&prs->prsstart,
 											PointerGetDatum(VARDATA_ANY(txt)),
@@ -307,7 +307,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 
 	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
-	prs.words = (HeadlineWordEntry *) palloc(sizeof(HeadlineWordEntry) * prs.lenwords);
+	prs.words = palloc_array(HeadlineWordEntry, prs.lenwords);
 
 	hlparsetext(cfg->cfgId, &prs, query,
 				VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
@@ -373,11 +373,11 @@ ts_headline_jsonb_byid_opt(PG_FUNCTION_ARGS)
 	Jsonb	   *out;
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 	HeadlineParsedText prs;
-	HeadlineJsonState *state = palloc0(sizeof(HeadlineJsonState));
+	HeadlineJsonState *state = palloc0_object(HeadlineJsonState);
 
 	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
-	prs.words = (HeadlineWordEntry *) palloc(sizeof(HeadlineWordEntry) * prs.lenwords);
+	prs.words = palloc_array(HeadlineWordEntry, prs.lenwords);
 
 	state->prs = &prs;
 	state->cfg = lookup_ts_config_cache(tsconfig);
@@ -450,11 +450,11 @@ ts_headline_json_byid_opt(PG_FUNCTION_ARGS)
 	JsonTransformStringValuesAction action = (JsonTransformStringValuesAction) headline_json_value;
 
 	HeadlineParsedText prs;
-	HeadlineJsonState *state = palloc0(sizeof(HeadlineJsonState));
+	HeadlineJsonState *state = palloc0_object(HeadlineJsonState);
 
 	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
-	prs.words = (HeadlineWordEntry *) palloc(sizeof(HeadlineWordEntry) * prs.lenwords);
+	prs.words = palloc_array(HeadlineWordEntry, prs.lenwords);
 
 	state->prs = &prs;
 	state->cfg = lookup_ts_config_cache(tsconfig);

@@ -1451,7 +1451,7 @@ GetPredicateLockStatusData(void)
 	HASH_SEQ_STATUS seqstat;
 	PREDICATELOCK *predlock;
 
-	data = (PredicateLockData *) palloc(sizeof(PredicateLockData));
+	data = palloc_object(PredicateLockData);
 
 	/*
 	 * To ensure consistency, take simultaneous locks on all partition locks
@@ -1464,10 +1464,8 @@ GetPredicateLockStatusData(void)
 	/* Get number of locks and allocate appropriately-sized arrays. */
 	els = hash_get_num_entries(PredicateLockHash);
 	data->nelements = els;
-	data->locktags = (PREDICATELOCKTARGETTAG *)
-		palloc(sizeof(PREDICATELOCKTARGETTAG) * els);
-	data->xacts = (SERIALIZABLEXACT *)
-		palloc(sizeof(SERIALIZABLEXACT) * els);
+	data->locktags = palloc_array(PREDICATELOCKTARGETTAG, els);
+	data->xacts = palloc_array(SERIALIZABLEXACT, els);
 
 
 	/* Scan through PredicateLockHash and copy contents */

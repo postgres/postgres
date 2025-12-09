@@ -140,7 +140,7 @@ spgbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 						  true);
 	}
 
-	result = (IndexBuildResult *) palloc0(sizeof(IndexBuildResult));
+	result = palloc0_object(IndexBuildResult);
 	result->heap_tuples = reltuples;
 	result->index_tuples = buildstate.indtuples;
 

@@ -171,7 +171,7 @@ gist_box_union(PG_FUNCTION_ARGS)
 			   *pageunion;
 
 	numranges = entryvec->n;
-	pageunion = (BOX *) palloc(sizeof(BOX));
+	pageunion = palloc_object(BOX);
 	cur = DatumGetBoxP(entryvec->vector[0].key);
 	memcpy(pageunion, cur, sizeof(BOX));
 
@@ -237,7 +237,7 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 			v->spl_left[v->spl_nleft] = i;
 			if (unionL == NULL)
 			{
-				unionL = (BOX *) palloc(sizeof(BOX));
+				unionL = palloc_object(BOX);
 				*unionL = *cur;
 			}
 			else
@@ -250,7 +250,7 @@ fallbackSplit(GistEntryVector *entryvec, GIST_SPLITVEC *v)
 			v->spl_right[v->spl_nright] = i;
 			if (unionR == NULL)
 			{
-				unionR = (BOX *) palloc(sizeof(BOX));
+				unionR = palloc_object(BOX);
 				*unionR = *cur;
 			}
 			else
@@ -698,8 +698,8 @@ gist_box_picksplit(PG_FUNCTION_ARGS)
 	v->spl_nright = 0;
 
 	/* Allocate bounding boxes of left and right groups */
-	leftBox = palloc0(sizeof(BOX));
-	rightBox = palloc0(sizeof(BOX));
+	leftBox = palloc0_object(BOX);
+	rightBox = palloc0_object(BOX);
 
 	/*
 	 * Allocate an array for "common entries" - entries which can be placed to
@@ -1042,10 +1042,10 @@ gist_poly_compress(PG_FUNCTION_ARGS)
 		POLYGON    *in = DatumGetPolygonP(entry->key);
 		BOX		   *r;
 
-		r = (BOX *) palloc(sizeof(BOX));
+		r = palloc_object(BOX);
 		memcpy(r, &(in->boundbox), sizeof(BOX));
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -1107,13 +1107,13 @@ gist_circle_compress(PG_FUNCTION_ARGS)
 		CIRCLE	   *in = DatumGetCircleP(entry->key);
 		BOX		   *r;
 
-		r = (BOX *) palloc(sizeof(BOX));
+		r = palloc_object(BOX);
 		r->high.x = float8_pl(in->center.x, in->radius);
 		r->low.x = float8_mi(in->center.x, in->radius);
 		r->high.y = float8_pl(in->center.y, in->radius);
 		r->low.y = float8_mi(in->center.y, in->radius);
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -1171,9 +1171,9 @@ gist_point_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)			/* Point, actually */
 	{
-		BOX		   *box = palloc(sizeof(BOX));
+		BOX		   *box = palloc_object(BOX);
 		Point	   *point = DatumGetPointP(entry->key);
-		GISTENTRY  *retval = palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = palloc_object(GISTENTRY);
 
 		box->high = box->low = *point;
 
@@ -1200,9 +1200,9 @@ gist_point_fetch(PG_FUNCTION_ARGS)
 	Point	   *r;
 	GISTENTRY  *retval;
 
-	retval = palloc(sizeof(GISTENTRY));
+	retval = palloc_object(GISTENTRY);
 
-	r = (Point *) palloc(sizeof(Point));
+	r = palloc_object(Point);
 	r->x = in->high.x;
 	r->y = in->high.y;
 	gistentryinit(*retval, PointerGetDatum(r),

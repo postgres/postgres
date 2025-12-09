@@ -60,7 +60,7 @@ static int	ExplainExtensionOptionsAllocated = 0;
 ExplainState *
 NewExplainState(void)
 {
-	ExplainState *es = (ExplainState *) palloc0(sizeof(ExplainState));
+	ExplainState *es = palloc0_object(ExplainState);
 
 	/* Set default options (most fields can be left as zeroes). */
 	es->costs = true;
@@ -294,10 +294,7 @@ SetExplainExtensionState(ExplainState *es, int extension_id, void *opaque)
 		int			i;
 
 		i = pg_nextpower2_32(extension_id + 1);
-		es->extension_state = (void **)
-			repalloc0(es->extension_state,
-					  es->extension_state_allocated * sizeof(void *),
-					  i * sizeof(void *));
+		es->extension_state = repalloc0_array(es->extension_state, void *, es->extension_state_allocated, i);
 		es->extension_state_allocated = i;
 	}
 

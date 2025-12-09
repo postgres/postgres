@@ -89,7 +89,7 @@ GetSubscription(Oid subid, bool missing_ok)
 
 	subform = (Form_pg_subscription) GETSTRUCT(tup);
 
-	sub = (Subscription *) palloc(sizeof(Subscription));
+	sub = palloc_object(Subscription);
 	sub->oid = subid;
 	sub->dbid = subform->subdbid;
 	sub->skiplsn = subform->subskiplsn;
@@ -618,7 +618,7 @@ GetSubscriptionRelations(Oid subid, bool tables, bool sequences,
 			 relkind == RELKIND_PARTITIONED_TABLE) && !tables)
 			continue;
 
-		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
+		relstate = palloc_object(SubscriptionRelState);
 		relstate->relid = subrel->srrelid;
 		relstate->state = subrel->srsubstate;
 		d = SysCacheGetAttr(SUBSCRIPTIONRELMAP, tup,

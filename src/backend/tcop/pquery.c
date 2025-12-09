@@ -74,7 +74,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 				QueryEnvironment *queryEnv,
 				int instrument_options)
 {
-	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
+	QueryDesc  *qd = palloc_object(QueryDesc);
 
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;	/* plan */

@@ -1260,7 +1260,7 @@ process_startup_options(Port *port, bool am_superuser)
 
 		maxac = 2 + (strlen(port->cmdline_options) + 1) / 2;
 
-		av = (char **) palloc(maxac * sizeof(char *));
+		av = palloc_array(char *, maxac);
 		ac = 0;
 
 		av[ac++] = "postgres";

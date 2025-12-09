@@ -369,7 +369,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 	 * Currently, we allow simple numeric constants, string literals, and
 	 * identifiers; possibly this list could be extended.
 	 */
-	datums = (Datum *) palloc(list_length(typeName->typmods) * sizeof(Datum));
+	datums = palloc_array(Datum, list_length(typeName->typmods));
 	n = 0;
 	foreach(l, typeName->typmods)
 	{

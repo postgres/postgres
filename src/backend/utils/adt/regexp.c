@@ -189,7 +189,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 	 */
 
 	/* Convert pattern string to wide characters */
-	pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
+	pattern = palloc_array(pg_wchar, text_re_len + 1);
 	pattern_len = pg_mb2wchar_with_len(text_re_val,
 									   pattern,
 									   text_re_len);
@@ -329,7 +329,7 @@ RE_execute(regex_t *re, char *dat, int dat_len,
 	bool		match;
 
 	/* Convert data string to wide characters */
-	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
+	data = palloc_array(pg_wchar, dat_len + 1);
 	data_len = pg_mb2wchar_with_len(dat, data, dat_len);
 
 	/* Perform RE match and return result */
@@ -1389,8 +1389,8 @@ regexp_match(PG_FUNCTION_ARGS)
 	Assert(matchctx->nmatches == 1);
 
 	/* Create workspace that build_regexp_match_result needs */
-	matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
-	matchctx->nulls = (bool *) palloc(sizeof(bool) * matchctx->npatterns);
+	matchctx->elems = palloc_array(Datum, matchctx->npatterns);
+	matchctx->nulls = palloc_array(bool, matchctx->npatterns);
 
 	PG_RETURN_DATUM(PointerGetDatum(build_regexp_match_result(matchctx)));
 }
@@ -1432,8 +1432,8 @@ regexp_matches(PG_FUNCTION_ARGS)
 										true, false, false);
 
 		/* Pre-create workspace that build_regexp_match_result needs */
-		matchctx->elems = (Datum *) palloc(sizeof(Datum) * matchctx->npatterns);
-		matchctx->nulls = (bool *) palloc(sizeof(bool) * matchctx->npatterns);
+		matchctx->elems = palloc_array(Datum, matchctx->npatterns);
+		matchctx->nulls = palloc_array(bool, matchctx->npatterns);
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = matchctx;
@@ -1489,7 +1489,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 					 bool ignore_degenerate,
 					 bool fetching_unmatched)
 {
-	regexp_matches_ctx *matchctx = palloc0(sizeof(regexp_matches_ctx));
+	regexp_matches_ctx *matchctx = palloc0_object(regexp_matches_ctx);
 	int			eml = pg_database_encoding_max_length();
 	int			orig_len;
 	pg_wchar   *wide_str;
@@ -1509,7 +1509,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 
 	/* convert string to pg_wchar form for matching */
 	orig_len = VARSIZE_ANY_EXHDR(orig_str);
-	wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
+	wide_str = palloc_array(pg_wchar, orig_len + 1);
 	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
 	/* set up the compiled pattern */
@@ -1532,7 +1532,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	}
 
 	/* temporary output space for RE package */
-	pmatch = palloc(sizeof(regmatch_t) * pmatch_len);
+	pmatch = palloc_array(regmatch_t, pmatch_len);
 
 	/*
 	 * the real output space (grown dynamically if needed)
@@ -1541,7 +1541,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 	 * than at 2^27
 	 */
 	array_len = re_flags->glob ? 255 : 31;
-	matchctx->match_locs = (int *) palloc(sizeof(int) * array_len);
+	matchctx->match_locs = palloc_array(int, array_len);
 	array_idx = 0;
 
 	/* search for the pattern, perhaps repeatedly */

@@ -732,7 +732,7 @@ InsertPgAttributeTuples(Relation pg_attribute_rel,
 	/* Initialize the number of slots to use */
 	nslots = Min(tupdesc->natts,
 				 (MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_attribute)));
-	slot = palloc(sizeof(TupleTableSlot *) * nslots);
+	slot = palloc_array(TupleTableSlot *, nslots);
 	for (int i = 0; i < nslots; i++)
 		slot[i] = MakeSingleTupleTableSlot(td, &TTSOpsHeapTuple);
 
@@ -2459,7 +2459,7 @@ AddRelationNewConstraints(Relation rel,
 
 		defOid = StoreAttrDefault(rel, colDef->attnum, expr, is_internal);
 
-		cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+		cooked = palloc_object(CookedConstraint);
 		cooked->contype = CONSTR_DEFAULT;
 		cooked->conoid = defOid;
 		cooked->name = NULL;
@@ -2593,7 +2593,7 @@ AddRelationNewConstraints(Relation rel,
 
 			numchecks++;
 
-			cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+			cooked = palloc_object(CookedConstraint);
 			cooked->contype = CONSTR_CHECK;
 			cooked->conoid = constrOid;
 			cooked->name = ccname;
@@ -2669,7 +2669,7 @@ AddRelationNewConstraints(Relation rel,
 								inhcount,
 								cdef->is_no_inherit);
 
-			nncooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+			nncooked = palloc_object(CookedConstraint);
 			nncooked->contype = CONSTR_NOTNULL;
 			nncooked->conoid = constrOid;
 			nncooked->name = nnname;

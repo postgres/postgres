@@ -913,7 +913,7 @@ interpret_AS_clause(Oid languageOid, const char *languageName,
 	{
 		SQLFunctionParseInfoPtr pinfo;
 
-		pinfo = (SQLFunctionParseInfoPtr) palloc0(sizeof(SQLFunctionParseInfo));
+		pinfo = palloc0_object(SQLFunctionParseInfo);
 
 		pinfo->fname = funcname;
 		pinfo->nargs = list_length(parameterTypes);

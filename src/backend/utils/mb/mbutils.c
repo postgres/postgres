@@ -1792,7 +1792,7 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 	 */
 	if (codepage != 0)
 	{
-		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
+		utf16 = palloc_array(WCHAR, len + 1);
 		dstlen = MultiByteToWideChar(codepage, 0, str, len, utf16, len);
 		utf16[dstlen] = (WCHAR) 0;
 	}
@@ -1816,7 +1816,7 @@ pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
 		else
 			utf8 = (char *) str;
 
-		utf16 = (WCHAR *) palloc(sizeof(WCHAR) * (len + 1));
+		utf16 = palloc_array(WCHAR, len + 1);
 		dstlen = MultiByteToWideChar(CP_UTF8, 0, utf8, len, utf16, len);
 		utf16[dstlen] = (WCHAR) 0;
 

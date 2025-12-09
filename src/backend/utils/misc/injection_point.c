@@ -614,7 +614,7 @@ InjectionPointList(void)
 		if (generation % 2 == 0)
 			continue;
 
-		inj_point = (InjectionPointData *) palloc0(sizeof(InjectionPointData));
+		inj_point = palloc0_object(InjectionPointData);
 		inj_point->name = pstrdup(entry->name);
 		inj_point->library = pstrdup(entry->library);
 		inj_point->function = pstrdup(entry->function);

@@ -211,7 +211,7 @@ libpqrcv_connect(const char *conninfo, bool replication, bool logical,
 
 	Assert(i < lengthof(keys));
 
-	conn = palloc0(sizeof(WalReceiverConn));
+	conn = palloc0_object(WalReceiverConn);
 	conn->streamConn =
 		libpqsrv_connect_params(keys, vals,
 								 /* expand_dbname = */ true,
@@ -1102,7 +1102,7 @@ libpqrcv_exec(WalReceiverConn *conn, const char *query,
 			  const int nRetTypes, const Oid *retTypes)
 {
 	PGresult   *pgres = NULL;
-	WalRcvExecResult *walres = palloc0(sizeof(WalRcvExecResult));
+	WalRcvExecResult *walres = palloc0_object(WalRcvExecResult);
 	char	   *diag_sqlstate;
 
 	if (MyDatabaseId == InvalidOid)

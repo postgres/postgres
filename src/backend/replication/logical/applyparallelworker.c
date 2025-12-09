@@ -425,7 +425,7 @@ pa_launch_parallel_worker(void)
 	 */
 	oldcontext = MemoryContextSwitchTo(ApplyContext);
 
-	winfo = (ParallelApplyWorkerInfo *) palloc0(sizeof(ParallelApplyWorkerInfo));
+	winfo = palloc0_object(ParallelApplyWorkerInfo);
 
 	/* Setup shared memory. */
 	if (!pa_setup_dsm(winfo))

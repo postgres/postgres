@@ -160,7 +160,7 @@ sts_initialize(SharedTuplestore *sts, int participants,
 		sts->participants[i].writing = false;
 	}
 
-	accessor = palloc0(sizeof(SharedTuplestoreAccessor));
+	accessor = palloc0_object(SharedTuplestoreAccessor);
 	accessor->participant = my_participant_number;
 	accessor->sts = sts;
 	accessor->fileset = fileset;
@@ -182,7 +182,7 @@ sts_attach(SharedTuplestore *sts,
 
 	Assert(my_participant_number < sts->nparticipants);
 
-	accessor = palloc0(sizeof(SharedTuplestoreAccessor));
+	accessor = palloc0_object(SharedTuplestoreAccessor);
 	accessor->participant = my_participant_number;
 	accessor->sts = sts;
 	accessor->fileset = fileset;

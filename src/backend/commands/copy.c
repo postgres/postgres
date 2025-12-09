@@ -561,7 +561,7 @@ ProcessCopyOptions(ParseState *pstate,
 
 	/* Support external use for option sanity checking */
 	if (opts_out == NULL)
-		opts_out = (CopyFormatOptions *) palloc0(sizeof(CopyFormatOptions));
+		opts_out = palloc0_object(CopyFormatOptions);
 
 	opts_out->file_encoding = -1;
 

@@ -1027,7 +1027,7 @@ DefineTSConfiguration(List *names, List *parameters, ObjectAddress *copied)
 		 * know that they will be used.
 		 */
 		max_slots = MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_ts_config_map);
-		slot = palloc(sizeof(TupleTableSlot *) * max_slots);
+		slot = palloc_array(TupleTableSlot *, max_slots);
 
 		ScanKeyInit(&skey,
 					Anum_pg_ts_config_map_mapcfg,
@@ -1261,7 +1261,7 @@ getTokenTypes(Oid prsId, List *tokennames)
 		{
 			if (strcmp(strVal(val), list[j].alias) == 0)
 			{
-				TSTokenTypeItem *ts = (TSTokenTypeItem *) palloc0(sizeof(TSTokenTypeItem));
+				TSTokenTypeItem *ts = palloc0_object(TSTokenTypeItem);
 
 				ts->num = list[j].lexid;
 				ts->name = pstrdup(strVal(val));
@@ -1344,7 +1344,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 	 * Convert list of dictionary names to array of dict OIDs
 	 */
 	ndict = list_length(stmt->dicts);
-	dictIds = (Oid *) palloc(sizeof(Oid) * ndict);
+	dictIds = palloc_array(Oid, ndict);
 	i = 0;
 	foreach(c, stmt->dicts)
 	{
@@ -1432,7 +1432,7 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
 		/* Allocate the slots to use and initialize them */
 		nslots = Min(ntoken * ndict,
 					 MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_ts_config_map));
-		slot = palloc(sizeof(TupleTableSlot *) * nslots);
+		slot = palloc_array(TupleTableSlot *, nslots);
 		for (i = 0; i < nslots; i++)
 			slot[i] = MakeSingleTupleTableSlot(RelationGetDescr(relMap),
 											   &TTSOpsHeapTuple);

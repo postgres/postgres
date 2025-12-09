@@ -593,12 +593,12 @@ jsonb_object_keys(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		state = palloc(sizeof(OkeysState));
+		state = palloc_object(OkeysState);
 
 		state->result_size = JB_ROOT_COUNT(jb);
 		state->result_count = 0;
 		state->sent_count = 0;
-		state->result = palloc(state->result_size * sizeof(char *));
+		state->result = palloc_array(char *, state->result_size);
 
 		it = JsonbIteratorInit(&jb->root);
 
@@ -744,14 +744,14 @@ json_object_keys(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		state = palloc(sizeof(OkeysState));
-		sem = palloc0(sizeof(JsonSemAction));
+		state = palloc_object(OkeysState);
+		sem = palloc0_object(JsonSemAction);
 
 		state->lex = makeJsonLexContext(&lex, json, true);
 		state->result_size = 256;
 		state->result_count = 0;
 		state->sent_count = 0;
-		state->result = palloc(256 * sizeof(char *));
+		state->result = palloc_array(char *, 256);
 
 		sem->semstate = state;
 		sem->array_start = okeys_array_start;
@@ -1045,8 +1045,8 @@ get_path_all(FunctionCallInfo fcinfo, bool as_text)
 
 	deconstruct_array_builtin(path, TEXTOID, &pathtext, &pathnulls, &npath);
 
-	tpath = palloc(npath * sizeof(char *));
-	ipath = palloc(npath * sizeof(int));
+	tpath = palloc_array(char *, npath);
+	ipath = palloc_array(int, npath);
 
 	for (i = 0; i < npath; i++)
 	{
@@ -1106,8 +1106,8 @@ get_worker(text *json,
 		   int npath,
 		   bool normalize_results)
 {
-	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
-	GetState   *state = palloc0(sizeof(GetState));
+	JsonSemAction *sem = palloc0_object(JsonSemAction);
+	GetState   *state = palloc0_object(GetState);
 
 	Assert(npath >= 0);
 
@@ -1118,8 +1118,8 @@ get_worker(text *json,
 	state->npath = npath;
 	state->path_names = tpath;
 	state->path_indexes = ipath;
-	state->pathok = palloc0(sizeof(bool) * npath);
-	state->array_cur_index = palloc(sizeof(int) * npath);
+	state->pathok = palloc0_array(bool, npath);
+	state->array_cur_index = palloc_array(int, npath);
 
 	if (npath > 0)
 		state->pathok[0] = true;
@@ -1681,7 +1681,7 @@ jsonb_set_element(Jsonb *jb, const Datum *path, int path_len,
 {
 	JsonbInState state = {0};
 	JsonbIterator *it;
-	bool	   *path_nulls = palloc0(path_len * sizeof(bool));
+	bool	   *path_nulls = palloc0_array(bool, path_len);
 
 	if (newval->type == jbvArray && newval->val.array.rawScalar)
 		*newval = newval->val.array.elems[0];
@@ -1726,7 +1726,7 @@ push_path(JsonbInState *st, int level, const Datum *path_elems,
 	 * it contains only information about path slice from level to the end,
 	 * the access index must be normalized by level.
 	 */
-	enum jbvType *tpath = palloc0((path_len - level) * sizeof(enum jbvType));
+	enum jbvType *tpath = palloc0_array(enum jbvType, path_len - level);
 	JsonbValue	newkey;
 
 	/*
@@ -1853,14 +1853,14 @@ json_array_length(PG_FUNCTION_ARGS)
 	JsonLexContext lex;
 	JsonSemAction *sem;
 
-	state = palloc0(sizeof(AlenState));
+	state = palloc0_object(AlenState);
 	state->lex = makeJsonLexContext(&lex, json, false);
 	/* palloc0 does this for us */
 #if 0
 	state->count = 0;
 #endif
 
-	sem = palloc0(sizeof(JsonSemAction));
+	sem = palloc0_object(JsonSemAction);
 	sem->semstate = state;
 	sem->object_start = alen_object_start;
 	sem->scalar = alen_scalar;
@@ -2060,8 +2060,8 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 	ReturnSetInfo *rsi;
 	EachState  *state;
 
-	state = palloc0(sizeof(EachState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = palloc0_object(EachState);
+	sem = palloc0_object(JsonSemAction);
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
@@ -2313,8 +2313,8 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	/* elements only needs escaped strings when as_text */
 	makeJsonLexContext(&lex, json, as_text);
 
-	state = palloc0(sizeof(ElementsState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = palloc0_object(ElementsState);
+	sem = palloc0_object(JsonSemAction);
 
 	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -2569,8 +2569,8 @@ populate_array_assign_ndims(PopulateArrayContext *ctx, int ndims)
 	}
 
 	ctx->ndims = ndims;
-	ctx->dims = palloc(sizeof(int) * ndims);
-	ctx->sizes = palloc0(sizeof(int) * ndims);
+	ctx->dims = palloc_array(int, ndims);
+	ctx->sizes = palloc0_array(int, ndims);
 
 	for (i = 0; i < ndims; i++)
 		ctx->dims[i] = -1;		/* dimensions are unknown yet */
@@ -2955,7 +2955,7 @@ populate_array(ArrayIOData *aio,
 
 	Assert(ctx.ndims > 0);
 
-	lbs = palloc(sizeof(int) * ctx.ndims);
+	lbs = palloc_array(int, ctx.ndims);
 
 	for (i = 0; i < ctx.ndims; i++)
 		lbs[i] = 1;
@@ -3821,8 +3821,8 @@ get_json_object_as_hash(const char *json, int len, const char *funcname,
 					  &ctl,
 					  HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
-	state = palloc0(sizeof(JHashState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = palloc0_object(JHashState);
+	sem = palloc0_object(JsonSemAction);
 
 	state->function_name = funcname;
 	state->hash = tab;
@@ -4119,7 +4119,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	 */
 	update_cached_tupdesc(&cache->c.io.composite, cache->fn_mcxt);
 
-	state = palloc0(sizeof(PopulateRecordsetState));
+	state = palloc0_object(PopulateRecordsetState);
 
 	/* make tuplestore in a sufficiently long-lived memory context */
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
@@ -4138,7 +4138,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 		JsonLexContext lex;
 		JsonSemAction *sem;
 
-		sem = palloc0(sizeof(JsonSemAction));
+		sem = palloc0_object(JsonSemAction);
 
 		makeJsonLexContext(&lex, json, true);
 
@@ -4508,8 +4508,8 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 	JsonLexContext lex;
 	JsonSemAction *sem;
 
-	state = palloc0(sizeof(StripnullState));
-	sem = palloc0(sizeof(JsonSemAction));
+	state = palloc0_object(StripnullState);
+	sem = palloc0_object(JsonSemAction);
 	initStringInfo(&strbuf);
 
 	state->lex = makeJsonLexContext(&lex, json, true);
@@ -5700,8 +5700,8 @@ iterate_json_values(text *json, uint32 flags, void *action_state,
 					JsonIterateStringValuesAction action)
 {
 	JsonLexContext lex;
-	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
-	IterateJsonStringValuesState *state = palloc0(sizeof(IterateJsonStringValuesState));
+	JsonSemAction *sem = palloc0_object(JsonSemAction);
+	IterateJsonStringValuesState *state = palloc0_object(IterateJsonStringValuesState);
 
 	state->lex = makeJsonLexContext(&lex, json, true);
 	state->action = action;
@@ -5820,8 +5820,8 @@ transform_json_string_values(text *json, void *action_state,
 							 JsonTransformStringValuesAction transform_action)
 {
 	JsonLexContext lex;
-	JsonSemAction *sem = palloc0(sizeof(JsonSemAction));
-	TransformJsonStringValuesState *state = palloc0(sizeof(TransformJsonStringValuesState));
+	JsonSemAction *sem = palloc0_object(JsonSemAction);
+	TransformJsonStringValuesState *state = palloc0_object(TransformJsonStringValuesState);
 	StringInfoData strbuf;
 
 	initStringInfo(&strbuf);

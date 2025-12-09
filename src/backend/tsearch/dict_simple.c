@@ -31,7 +31,7 @@ Datum
 dsimple_init(PG_FUNCTION_ARGS)
 {
 	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
-	DictSimple *d = (DictSimple *) palloc0(sizeof(DictSimple));
+	DictSimple *d = palloc0_object(DictSimple);
 	bool		stoploaded = false,
 				acceptloaded = false;
 	ListCell   *l;
@@ -87,13 +87,13 @@ dsimple_lexize(PG_FUNCTION_ARGS)
 	{
 		/* reject as stopword */
 		pfree(txt);
-		res = palloc0(sizeof(TSLexeme) * 2);
+		res = palloc0_array(TSLexeme, 2);
 		PG_RETURN_POINTER(res);
 	}
 	else if (d->accept)
 	{
 		/* accept */
-		res = palloc0(sizeof(TSLexeme) * 2);
+		res = palloc0_array(TSLexeme, 2);
 		res[0].lexeme = txt;
 		PG_RETURN_POINTER(res);
 	}

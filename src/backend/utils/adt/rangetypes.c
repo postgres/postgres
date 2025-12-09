@@ -1258,7 +1258,7 @@ range_minus_multi(PG_FUNCTION_ARGS)
 			elog(ERROR, "range types do not match");
 
 		/* allocate memory for user context */
-		fctx = (struct range_minus_multi_fctx *) palloc(sizeof(struct range_minus_multi_fctx));
+		fctx = palloc_object(struct range_minus_multi_fctx);
 
 		/*
 		 * Initialize state. We can't store the range typcache in fn_extra

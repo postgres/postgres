@@ -1345,7 +1345,7 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 			 */
 			if (!found)
 			{
-				oldrel = palloc(sizeof(PublicationRelInfo));
+				oldrel = palloc_object(PublicationRelInfo);
 				oldrel->whereClause = NULL;
 				oldrel->columns = NIL;
 				oldrel->relation = table_open(oldrelid,
@@ -1757,7 +1757,7 @@ OpenTableList(List *tables)
 			continue;
 		}
 
-		pub_rel = palloc(sizeof(PublicationRelInfo));
+		pub_rel = palloc_object(PublicationRelInfo);
 		pub_rel->relation = rel;
 		pub_rel->whereClause = t->whereClause;
 		pub_rel->columns = t->columns;
@@ -1826,7 +1826,7 @@ OpenTableList(List *tables)
 
 				/* find_all_inheritors already got lock */
 				rel = table_open(childrelid, NoLock);
-				pub_rel = palloc(sizeof(PublicationRelInfo));
+				pub_rel = palloc_object(PublicationRelInfo);
 				pub_rel->relation = rel;
 				/* child inherits WHERE clause from parent */
 				pub_rel->whereClause = t->whereClause;

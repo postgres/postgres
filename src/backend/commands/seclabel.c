@@ -573,7 +573,7 @@ register_label_provider(const char *provider_name, check_object_relabel_type hoo
 	MemoryContext oldcxt;
 
 	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-	provider = palloc(sizeof(LabelProvider));
+	provider = palloc_object(LabelProvider);
 	provider->provider_name = pstrdup(provider_name);
 	provider->hook = hook;
 	label_provider_list = lappend(label_provider_list, provider);

@@ -568,7 +568,7 @@ toast_open_indexes(Relation toastrel,
 	*num_indexes = list_length(indexlist);
 
 	/* Open all the index relations */
-	*toastidxs = (Relation *) palloc(*num_indexes * sizeof(Relation));
+	*toastidxs = palloc_array(Relation, *num_indexes);
 	foreach(lc, indexlist)
 		(*toastidxs)[i++] = index_open(lfirst_oid(lc), lock);
 

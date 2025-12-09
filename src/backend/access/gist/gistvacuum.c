@@ -61,7 +61,7 @@ gistbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 {
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 	gistvacuumscan(info, stats, callback, callback_state);
 
@@ -85,7 +85,7 @@ gistvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 		gistvacuumscan(info, stats, NULL, NULL);
 	}
 

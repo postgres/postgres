@@ -467,7 +467,7 @@ extract_grouping_ops(List *groupClause)
 	Oid		   *groupOperators;
 	ListCell   *glitem;
 
-	groupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+	groupOperators = palloc_array(Oid, numCols);
 
 	foreach(glitem, groupClause)
 	{
@@ -493,7 +493,7 @@ extract_grouping_collations(List *groupClause, List *tlist)
 	Oid		   *grpCollations;
 	ListCell   *glitem;
 
-	grpCollations = (Oid *) palloc(sizeof(Oid) * numCols);
+	grpCollations = palloc_array(Oid, numCols);
 
 	foreach(glitem, groupClause)
 	{
@@ -518,7 +518,7 @@ extract_grouping_cols(List *groupClause, List *tlist)
 	int			colno = 0;
 	ListCell   *glitem;
 
-	grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+	grpColIdx = palloc_array(AttrNumber, numCols);
 
 	foreach(glitem, groupClause)
 	{
@@ -1089,7 +1089,7 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 	 */
 	if (list_member(context->input_target_exprs, node))
 	{
-		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
+		split_pathtarget_item *item = palloc_object(split_pathtarget_item);
 
 		item->expr = node;
 		item->sortgroupref = context->current_sgref;
@@ -1109,7 +1109,7 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 		IsA(node, GroupingFunc) ||
 		IsA(node, WindowFunc))
 	{
-		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
+		split_pathtarget_item *item = palloc_object(split_pathtarget_item);
 
 		item->expr = node;
 		item->sortgroupref = context->current_sgref;
@@ -1124,7 +1124,7 @@ split_pathtarget_walker(Node *node, split_pathtarget_context *context)
 	 */
 	if (IS_SRF_CALL(node))
 	{
-		split_pathtarget_item *item = palloc(sizeof(split_pathtarget_item));
+		split_pathtarget_item *item = palloc_object(split_pathtarget_item);
 		List	   *save_input_vars = context->current_input_vars;
 		List	   *save_input_srfs = context->current_input_srfs;
 		int			save_current_depth = context->current_depth;

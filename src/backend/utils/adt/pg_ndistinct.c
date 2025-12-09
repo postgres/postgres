@@ -175,7 +175,7 @@ ndistinct_object_end(void *state)
 	}
 
 	/* Create the MVNDistinctItem */
-	item = palloc(sizeof(MVNDistinctItem));
+	item = palloc_object(MVNDistinctItem);
 	item->nattributes = natts;
 	item->attributes = palloc0(natts * sizeof(AttrNumber));
 	item->ndistinct = (double) parse->ndistinct;

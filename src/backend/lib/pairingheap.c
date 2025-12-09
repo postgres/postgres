@@ -43,7 +43,7 @@ pairingheap_allocate(pairingheap_comparator compare, void *arg)
 {
 	pairingheap *heap;
 
-	heap = (pairingheap *) palloc(sizeof(pairingheap));
+	heap = palloc_object(pairingheap);
 	pairingheap_initialize(heap, compare, arg);
 
 	return heap;

@@ -685,7 +685,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	 * of each rel.  It's convenient for code in lazy_scan_heap to always use
 	 * these temp copies.
 	 */
-	vacrel = (LVRelState *) palloc0(sizeof(LVRelState));
+	vacrel = palloc0_object(LVRelState);
 	vacrel->dbname = get_database_name(MyDatabaseId);
 	vacrel->relnamespace = get_namespace_name(RelationGetNamespace(rel));
 	vacrel->relname = pstrdup(RelationGetRelationName(rel));
@@ -705,7 +705,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	if (instrument && vacrel->nindexes > 0)
 	{
 		/* Copy index names used by instrumentation (not error reporting) */
-		indnames = palloc(sizeof(char *) * vacrel->nindexes);
+		indnames = palloc_array(char *, vacrel->nindexes);
 		for (int i = 0; i < vacrel->nindexes; i++)
 			indnames[i] = pstrdup(RelationGetRelationName(vacrel->indrels[i]));
 	}
@@ -3582,7 +3582,7 @@ dead_items_alloc(LVRelState *vacrel, int nworkers)
 	 * locally.
 	 */
 
-	dead_items_info = (VacDeadItemsInfo *) palloc(sizeof(VacDeadItemsInfo));
+	dead_items_info = palloc_object(VacDeadItemsInfo);
 	dead_items_info->max_bytes = vac_work_mem * (Size) 1024;
 	dead_items_info->num_items = 0;
 	vacrel->dead_items_info = dead_items_info;

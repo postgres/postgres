@@ -62,7 +62,7 @@ bbsink_progress_new(bbsink *next, bool estimate_backup_size, bool incremental)
 
 	Assert(next != NULL);
 
-	sink = palloc0(sizeof(bbsink));
+	sink = palloc0_object(bbsink);
 	*((const bbsink_ops **) &sink->bbs_ops) = &bbsink_progress_ops;
 	sink->bbs_next = next;
 

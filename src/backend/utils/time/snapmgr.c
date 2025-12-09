@@ -1179,7 +1179,7 @@ ExportSnapshot(Snapshot snapshot)
 	snapshot = CopySnapshot(snapshot);
 
 	oldcxt = MemoryContextSwitchTo(TopTransactionContext);
-	esnap = (ExportedSnapshot *) palloc(sizeof(ExportedSnapshot));
+	esnap = palloc_object(ExportedSnapshot);
 	esnap->snapfile = pstrdup(path);
 	esnap->snapshot = snapshot;
 	exportedSnapshots = lappend(exportedSnapshots, esnap);

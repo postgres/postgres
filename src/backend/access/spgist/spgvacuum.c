@@ -76,7 +76,7 @@ spgAddPendingTID(spgBulkDeleteState *bds, const ItemPointerData *tid)
 		listLink = &pitem->next;
 	}
 	/* not there, so append new entry */
-	pitem = (spgVacPendingItem *) palloc(sizeof(spgVacPendingItem));
+	pitem = palloc_object(spgVacPendingItem);
 	pitem->tid = *tid;
 	pitem->done = false;
 	pitem->next = NULL;
@@ -954,7 +954,7 @@ spgbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 	bds.info = info;
 	bds.stats = stats;
 	bds.callback = callback;
@@ -994,7 +994,7 @@ spgvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 	 */
 	if (stats == NULL)
 	{
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 		bds.info = info;
 		bds.stats = stats;
 		bds.callback = dummy_callback;

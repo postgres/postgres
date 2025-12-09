@@ -3489,8 +3489,7 @@ ReorderBufferQueueInvalidations(ReorderBuffer *rb, TransactionId xid,
 	change = ReorderBufferAllocChange(rb);
 	change->action = REORDER_BUFFER_CHANGE_INVALIDATION;
 	change->data.inval.ninvalidations = nmsgs;
-	change->data.inval.invalidations = (SharedInvalidationMessage *)
-		palloc(sizeof(SharedInvalidationMessage) * nmsgs);
+	change->data.inval.invalidations = palloc_array(SharedInvalidationMessage, nmsgs);
 	memcpy(change->data.inval.invalidations, msgs,
 		   sizeof(SharedInvalidationMessage) * nmsgs);
 
@@ -3511,8 +3510,7 @@ ReorderBufferAccumulateInvalidations(SharedInvalidationMessage **invals_out,
 	if (*ninvals_out == 0)
 	{
 		*ninvals_out = nmsgs_new;
-		*invals_out = (SharedInvalidationMessage *)
-			palloc(sizeof(SharedInvalidationMessage) * nmsgs_new);
+		*invals_out = palloc_array(SharedInvalidationMessage, nmsgs_new);
 		memcpy(*invals_out, msgs_new, sizeof(SharedInvalidationMessage) * nmsgs_new);
 	}
 	else
@@ -3701,8 +3699,7 @@ ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb)
 		return NULL;
 
 	/* Initialize XID array */
-	xids = (TransactionId *) palloc(sizeof(TransactionId) *
-									dclist_count(&rb->catchange_txns));
+	xids = palloc_array(TransactionId, dclist_count(&rb->catchange_txns));
 	dclist_foreach(iter, &rb->catchange_txns)
 	{
 		ReorderBufferTXN *txn = dclist_container(ReorderBufferTXN,
@@ -5124,9 +5121,9 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 	toast_desc = RelationGetDescr(toast_rel);
 
 	/* should we allocate from stack instead? */
-	attrs = palloc0(sizeof(Datum) * desc->natts);
-	isnull = palloc0(sizeof(bool) * desc->natts);
-	free = palloc0(sizeof(bool) * desc->natts);
+	attrs = palloc0_array(Datum, desc->natts);
+	isnull = palloc0_array(bool, desc->natts);
+	free = palloc0_array(bool, desc->natts);
 
 	newtup = change->data.tp.newtuple;
 
@@ -5531,7 +5528,7 @@ UpdateLogicalMappings(HTAB *tuplecid_data, Oid relid, Snapshot snapshot)
 			continue;
 
 		/* ok, relevant, queue for apply */
-		f = palloc(sizeof(RewriteMappingFile));
+		f = palloc_object(RewriteMappingFile);
 		f->lsn = f_lsn;
 		strcpy(f->fname, mapping_de->d_name);
 		files = lappend(files, f);

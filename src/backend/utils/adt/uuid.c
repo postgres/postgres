@@ -80,7 +80,7 @@ uuid_in(PG_FUNCTION_ARGS)
 	char	   *uuid_str = PG_GETARG_CSTRING(0);
 	pg_uuid_t  *uuid;
 
-	uuid = (pg_uuid_t *) palloc(sizeof(*uuid));
+	uuid = palloc_object(pg_uuid_t);
 	string_to_uuid(uuid_str, uuid, fcinfo->context);
 	PG_RETURN_UUID_P(uuid);
 }
@@ -288,7 +288,7 @@ uuid_sortsupport(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(uuid_sortsupport_state));
+		uss = palloc_object(uuid_sortsupport_state);
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);

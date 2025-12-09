@@ -2363,8 +2363,7 @@ remove_self_joins_recurse(PlannerInfo *root, List *joinlist, Relids toRemove)
 	 * In order to find relations with the same oid we first build an array of
 	 * candidates and then sort it by oid.
 	 */
-	candidates = (SelfJoinCandidate *) palloc(sizeof(SelfJoinCandidate) *
-											  numRels);
+	candidates = palloc_array(SelfJoinCandidate, numRels);
 	i = -1;
 	j = 0;
 	while ((i = bms_next_member(relids, i)) >= 0)

@@ -64,7 +64,7 @@ spg_key_orderbys_distances(Datum key, bool isLeaf,
 						   ScanKey orderbys, int norderbys)
 {
 	int			sk_num;
-	double	   *distances = (double *) palloc(norderbys * sizeof(double)),
+	double	   *distances = palloc_array(double, norderbys),
 			   *distance = distances;
 
 	for (sk_num = 0; sk_num < norderbys; ++sk_num, ++orderbys, ++distance)
@@ -81,7 +81,7 @@ spg_key_orderbys_distances(Datum key, bool isLeaf,
 BOX *
 box_copy(BOX *orig)
 {
-	BOX		   *result = palloc(sizeof(BOX));
+	BOX		   *result = palloc_object(BOX);
 
 	*result = *orig;
 	return result;

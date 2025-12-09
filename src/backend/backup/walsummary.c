@@ -73,7 +73,7 @@ GetWalSummaries(TimeLineID tli, XLogRecPtr start_lsn, XLogRecPtr end_lsn)
 			continue;
 
 		/* Add it to the list. */
-		ws = palloc(sizeof(WalSummaryFile));
+		ws = palloc_object(WalSummaryFile);
 		ws->tli = file_tli;
 		ws->start_lsn = file_start_lsn;
 		ws->end_lsn = file_end_lsn;

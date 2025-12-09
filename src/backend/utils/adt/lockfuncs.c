@@ -152,7 +152,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		 * Collect all the locking information that we will format and send
 		 * out as a result set.
 		 */
-		mystatus = (PG_Lock_Status *) palloc(sizeof(PG_Lock_Status));
+		mystatus = palloc_object(PG_Lock_Status);
 		funcctx->user_fctx = mystatus;
 
 		mystatus->lockData = GetLockStatusData();

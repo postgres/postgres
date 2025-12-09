@@ -72,7 +72,7 @@ MakeTidOpExpr(OpExpr *expr, TidRangeScanState *tidstate)
 	else
 		elog(ERROR, "could not identify CTID variable");
 
-	tidopexpr = (TidOpExpr *) palloc(sizeof(TidOpExpr));
+	tidopexpr = palloc_object(TidOpExpr);
 	tidopexpr->inclusive = false;	/* for now */
 
 	switch (expr->opno)

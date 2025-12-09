@@ -999,7 +999,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 
 			Assert(colDef->cooked_default == NULL);
 
-			rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+			rawEnt = palloc_object(RawColumnDefault);
 			rawEnt->attnum = attnum;
 			rawEnt->raw_default = colDef->raw_default;
 			rawEnt->generated = colDef->generated;
@@ -1009,7 +1009,7 @@ DefineRelation(CreateStmt *stmt, char relkind, Oid ownerId,
 		{
 			CookedConstraint *cooked;
 
-			cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+			cooked = palloc_object(CookedConstraint);
 			cooked->contype = CONSTR_DEFAULT;
 			cooked->conoid = InvalidOid;	/* until created */
 			cooked->name = NULL;
@@ -6568,7 +6568,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 	 * Not there, so add it.  Note that we make a copy of the relation's
 	 * existing descriptor before anything interesting can happen to it.
 	 */
-	tab = (AlteredTableInfo *) palloc0(sizeof(AlteredTableInfo));
+	tab = palloc0_object(AlteredTableInfo);
 	tab->relid = relid;
 	tab->rel = NULL;			/* set later */
 	tab->relkind = rel->rd_rel->relkind;
@@ -7406,7 +7406,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 	{
 		RawColumnDefault *rawEnt;
 
-		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+		rawEnt = palloc_object(RawColumnDefault);
 		rawEnt->attnum = attribute->attnum;
 		rawEnt->raw_default = copyObject(colDef->raw_default);
 		rawEnt->generated = colDef->generated;
@@ -7507,7 +7507,7 @@ ATExecAddColumn(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			defval = expression_planner(defval);
 
 			/* Add the new default to the newvals list */
-			newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+			newval = palloc0_object(NewColumnValue);
 			newval->attnum = attribute->attnum;
 			newval->expr = defval;
 			newval->is_generated = (colDef->generated != '\0');
@@ -8176,7 +8176,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		/* SET DEFAULT */
 		RawColumnDefault *rawEnt;
 
-		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+		rawEnt = palloc_object(RawColumnDefault);
 		rawEnt->attnum = attnum;
 		rawEnt->raw_default = newDefault;
 		rawEnt->generated = '\0';
@@ -8704,7 +8704,7 @@ ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 					  false, false);
 
 	/* Prepare to store the new expression, in the catalogs */
-	rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+	rawEnt = palloc_object(RawColumnDefault);
 	rawEnt->attnum = attnum;
 	rawEnt->raw_default = newExpr;
 	rawEnt->generated = attgenerated;
@@ -8721,7 +8721,7 @@ ATExecSetExpression(AlteredTableInfo *tab, Relation rel, const char *colName,
 		/* Prepare for table rewrite */
 		defval = (Expr *) build_column_default(rel, attnum);
 
-		newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+		newval = palloc0_object(NewColumnValue);
 		newval->attnum = attnum;
 		newval->expr = expression_planner(defval);
 		newval->is_generated = true;
@@ -9949,7 +9949,7 @@ ATAddCheckNNConstraint(List **wqueue, AlteredTableInfo *tab, Relation rel,
 		{
 			NewConstraint *newcon;
 
-			newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+			newcon = palloc0_object(NewConstraint);
 			newcon->name = ccon->name;
 			newcon->contype = ccon->contype;
 			newcon->qual = ccon->expr;
@@ -10946,7 +10946,7 @@ addFkRecurseReferenced(Constraint *fkconstraint, Relation rel,
 											   false);
 			if (map)
 			{
-				mapped_pkattnum = palloc(sizeof(AttrNumber) * numfks);
+				mapped_pkattnum = palloc_array(AttrNumber, numfks);
 				for (int j = 0; j < numfks; j++)
 					mapped_pkattnum[j] = map->attnums[pkattnum[j] - 1];
 			}
@@ -11081,7 +11081,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 
 			tab = ATGetQueueEntry(wqueue, rel);
 
-			newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+			newcon = palloc0_object(NewConstraint);
 			newcon->name = get_constraint_name(parentConstr);
 			newcon->contype = CONSTR_FOREIGN;
 			newcon->refrelid = RelationGetRelid(pkrel);
@@ -12503,7 +12503,7 @@ ATExecAlterConstrEnforceability(List **wqueue, ATAlterConstraint *cmdcon,
 			AlteredTableInfo *tab;
 			NewConstraint *newcon;
 
-			newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+			newcon = palloc0_object(NewConstraint);
 			newcon->name = fkconstraint->conname;
 			newcon->contype = CONSTR_FOREIGN;
 			newcon->refrelid = currcon->confrelid;
@@ -13019,7 +13019,7 @@ QueueFKConstraintValidation(List **wqueue, Relation conrel, Relation fkrel,
 		/* for now this is all we need */
 		fkconstraint->conname = pstrdup(NameStr(con->conname));
 
-		newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+		newcon = palloc0_object(NewConstraint);
 		newcon->name = fkconstraint->conname;
 		newcon->contype = CONSTR_FOREIGN;
 		newcon->refrelid = con->confrelid;
@@ -13167,7 +13167,7 @@ QueueCheckConstraintValidation(List **wqueue, Relation conrel, Relation rel,
 	}
 
 	/* Queue validation for phase 3 */
-	newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+	newcon = palloc0_object(NewConstraint);
 	newcon->name = constrName;
 	newcon->contype = CONSTR_CHECK;
 	newcon->refrelid = InvalidOid;
@@ -14522,7 +14522,7 @@ ATPrepAlterColumnType(List **wqueue,
 		 * Add a work queue item to make ATRewriteTable update the column
 		 * contents.
 		 */
-		newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+		newval = palloc0_object(NewColumnValue);
 		newval->attnum = attnum;
 		newval->expr = (Expr *) transform;
 		newval->is_generated = false;
@@ -19262,7 +19262,7 @@ register_on_commit_action(Oid relid, OnCommitAction action)
 
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
-	oc = (OnCommitItem *) palloc(sizeof(OnCommitItem));
+	oc = palloc_object(OnCommitItem);
 	oc->relid = relid;
 	oc->oncommit = action;
 	oc->creating_subid = GetCurrentSubTransactionId();
@@ -20575,8 +20575,8 @@ AttachPartitionEnsureIndexes(List **wqueue, Relation rel, Relation attachrel)
 
 	idxes = RelationGetIndexList(rel);
 	attachRelIdxs = RelationGetIndexList(attachrel);
-	attachrelIdxRels = palloc(sizeof(Relation) * list_length(attachRelIdxs));
-	attachInfos = palloc(sizeof(IndexInfo *) * list_length(attachRelIdxs));
+	attachrelIdxRels = palloc_array(Relation, list_length(attachRelIdxs));
+	attachInfos = palloc_array(IndexInfo *, list_length(attachRelIdxs));
 
 	/* Build arrays of all existing indexes and their IndexInfos */
 	foreach_oid(cldIdxId, attachRelIdxs)

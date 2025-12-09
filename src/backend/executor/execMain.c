@@ -189,7 +189,7 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 
 		nParamExec = list_length(queryDesc->plannedstmt->paramExecTypes);
 		estate->es_param_exec_vals = (ParamExecData *)
-			palloc0(nParamExec * sizeof(ParamExecData));
+			palloc0_array(ParamExecData, nParamExec);
 	}
 
 	/* We now require all callers to provide sourceText */
@@ -876,7 +876,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	if (plannedstmt->rowMarks)
 	{
 		estate->es_rowmarks = (ExecRowMark **)
-			palloc0(estate->es_range_table_size * sizeof(ExecRowMark *));
+			palloc0_array(ExecRowMark *, estate->es_range_table_size);
 		foreach(l, plannedstmt->rowMarks)
 		{
 			PlanRowMark *rc = (PlanRowMark *) lfirst(l);
@@ -920,7 +920,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			if (relation)
 				CheckValidRowMarkRel(relation, rc->markType);
 
-			erm = (ExecRowMark *) palloc(sizeof(ExecRowMark));
+			erm = palloc_object(ExecRowMark);
 			erm->relation = relation;
 			erm->relid = relid;
 			erm->rti = rc->rti;
@@ -1262,9 +1262,9 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 		int			n = resultRelInfo->ri_TrigDesc->numtriggers;
 
 		resultRelInfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc0(n * sizeof(FmgrInfo));
+			palloc0_array(FmgrInfo, n);
 		resultRelInfo->ri_TrigWhenExprs = (ExprState **)
-			palloc0(n * sizeof(ExprState *));
+			palloc0_array(ExprState *, n);
 		if (instrument_options)
 			resultRelInfo->ri_TrigInstrument = InstrAlloc(n, instrument_options, false);
 	}
@@ -2578,7 +2578,7 @@ ExecFindRowMark(EState *estate, Index rti, bool missing_ok)
 ExecAuxRowMark *
 ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist)
 {
-	ExecAuxRowMark *aerm = (ExecAuxRowMark *) palloc0(sizeof(ExecAuxRowMark));
+	ExecAuxRowMark *aerm = palloc0_object(ExecAuxRowMark);
 	char		resname[32];
 
 	aerm->rowmark = erm;
@@ -2734,8 +2734,7 @@ EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 	 * EvalPlanQualBegin().
 	 */
 	epqstate->tuple_table = NIL;
-	epqstate->relsubs_slot = (TupleTableSlot **)
-		palloc0(rtsize * sizeof(TupleTableSlot *));
+	epqstate->relsubs_slot = palloc0_array(TupleTableSlot *, rtsize);
 
 	/* ... and remember data that EvalPlanQualBegin will need */
 	epqstate->plan = subplan;
@@ -3074,8 +3073,7 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 
 		/* now make the internal param workspace ... */
 		i = list_length(parentestate->es_plannedstmt->paramExecTypes);
-		rcestate->es_param_exec_vals = (ParamExecData *)
-			palloc0(i * sizeof(ParamExecData));
+		rcestate->es_param_exec_vals = palloc0_array(ParamExecData, i);
 		/* ... and copy down all values, whether really needed or not */
 		while (--i >= 0)
 		{
@@ -3130,8 +3128,7 @@ EvalPlanQualStart(EPQState *epqstate, Plan *planTree)
 	 * EvalPlanQualFetchRowMark() can efficiently access the to be fetched
 	 * rowmark.
 	 */
-	epqstate->relsubs_rowmark = (ExecAuxRowMark **)
-		palloc0(rtsize * sizeof(ExecAuxRowMark *));
+	epqstate->relsubs_rowmark = palloc0_array(ExecAuxRowMark *, rtsize);
 	foreach(l, epqstate->arowMarks)
 	{
 		ExecAuxRowMark *earm = (ExecAuxRowMark *) lfirst(l);

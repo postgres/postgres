@@ -104,7 +104,7 @@ tidin(PG_FUNCTION_ARGS)
 						"tid", str)));
 	offsetNumber = (OffsetNumber) cvt;
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	ItemPointerSet(result, blockNumber, offsetNumber);
 
@@ -146,7 +146,7 @@ tidrecv(PG_FUNCTION_ARGS)
 	blockNumber = pq_getmsgint(buf, sizeof(blockNumber));
 	offsetNumber = pq_getmsgint(buf, sizeof(offsetNumber));
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	ItemPointerSet(result, blockNumber, offsetNumber);
 
@@ -300,7 +300,7 @@ currtid_internal(Relation rel, const ItemPointerData *tid)
 	Snapshot	snapshot;
 	TableScanDesc scan;
 
-	result = (ItemPointer) palloc(sizeof(ItemPointerData));
+	result = (ItemPointer) palloc_object(ItemPointerData);
 
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);

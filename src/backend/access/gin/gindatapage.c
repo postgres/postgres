@@ -1332,7 +1332,7 @@ dataSplitPageInternal(GinBtree btree, Buffer origbuf,
 static void *
 dataPrepareDownlink(GinBtree btree, Buffer lbuf)
 {
-	PostingItem *pitem = palloc(sizeof(PostingItem));
+	PostingItem *pitem = palloc_object(PostingItem);
 	Page		lpage = BufferGetPage(lbuf);
 
 	PostingItemSetBlockNumber(pitem, BufferGetBlockNumber(lbuf));
@@ -1374,7 +1374,7 @@ disassembleLeaf(Page page)
 	char	   *segbegin;
 	char	   *segend;
 
-	leaf = palloc0(sizeof(disassembledLeaf));
+	leaf = palloc0_object(disassembledLeaf);
 	dlist_init(&leaf->segments);
 
 	if (GinPageIsCompressed(page))
@@ -1387,7 +1387,7 @@ disassembleLeaf(Page page)
 		segend = segbegin + GinDataLeafPageGetPostingListSize(page);
 		while ((char *) seg < segend)
 		{
-			leafSegmentInfo *seginfo = palloc(sizeof(leafSegmentInfo));
+			leafSegmentInfo *seginfo = palloc_object(leafSegmentInfo);
 
 			seginfo->action = GIN_SEGMENT_UNMODIFIED;
 			seginfo->seg = seg;
@@ -1414,7 +1414,7 @@ disassembleLeaf(Page page)
 
 		if (nuncompressed > 0)
 		{
-			seginfo = palloc(sizeof(leafSegmentInfo));
+			seginfo = palloc_object(leafSegmentInfo);
 
 			seginfo->action = GIN_SEGMENT_REPLACE;
 			seginfo->seg = NULL;
@@ -1455,7 +1455,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 	 */
 	if (dlist_is_empty(&leaf->segments))
 	{
-		newseg = palloc(sizeof(leafSegmentInfo));
+		newseg = palloc_object(leafSegmentInfo);
 		newseg->seg = NULL;
 		newseg->items = newItems;
 		newseg->nitems = nNewItems;
@@ -1512,7 +1512,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 			cur->seg != NULL &&
 			SizeOfGinPostingList(cur->seg) >= GinPostingListSegmentTargetSize)
 		{
-			newseg = palloc(sizeof(leafSegmentInfo));
+			newseg = palloc_object(leafSegmentInfo);
 			newseg->seg = NULL;
 			newseg->items = nextnew;
 			newseg->nitems = nthis;
@@ -1629,7 +1629,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 					if (seginfo->action != GIN_SEGMENT_INSERT)
 						seginfo->action = GIN_SEGMENT_REPLACE;
 
-					nextseg = palloc(sizeof(leafSegmentInfo));
+					nextseg = palloc_object(leafSegmentInfo);
 					nextseg->action = GIN_SEGMENT_INSERT;
 					nextseg->seg = NULL;
 					nextseg->items = &seginfo->items[npacked];

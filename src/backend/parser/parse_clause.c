@@ -733,7 +733,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 	tf->ordinalitycol = -1;
 
 	/* Process column specs */
-	names = palloc(sizeof(char *) * list_length(rtf->columns));
+	names = palloc_array(char *, list_length(rtf->columns));
 
 	colno = 0;
 	foreach(col, rtf->columns)
@@ -1573,7 +1573,7 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		{
 			ParseNamespaceItem *jnsitem;
 
-			jnsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+			jnsitem = palloc_object(ParseNamespaceItem);
 			jnsitem->p_names = j->join_using_alias;
 			jnsitem->p_rte = nsitem->p_rte;
 			jnsitem->p_rtindex = nsitem->p_rtindex;

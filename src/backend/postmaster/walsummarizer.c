@@ -920,8 +920,7 @@ SummarizeWAL(TimeLineID tli, XLogRecPtr start_lsn, bool exact,
 	bool		fast_forward = true;
 
 	/* Initialize private data for xlogreader. */
-	private_data = (SummarizerReadLocalXLogPrivate *)
-		palloc0(sizeof(SummarizerReadLocalXLogPrivate));
+	private_data = palloc0_object(SummarizerReadLocalXLogPrivate);
 	private_data->tli = tli;
 	private_data->historic = XLogRecPtrIsValid(switch_lsn);
 	private_data->read_upto = maximum_lsn;

@@ -75,7 +75,7 @@ network_in(char *src, bool is_cidr, Node *escontext)
 	int			bits;
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = (inet *) palloc0_object(inet);
 
 	/*
 	 * First, check to see if this is an IPv6 or IPv4 address.  IPv6 addresses
@@ -196,7 +196,7 @@ network_recv(StringInfo buf, bool is_cidr)
 				i;
 
 	/* make sure any unused bits in a CIDR value are zeroed */
-	addr = (inet *) palloc0(sizeof(inet));
+	addr = palloc0_object(inet);
 
 	ip_family(addr) = pq_getmsgbyte(buf);
 	if (ip_family(addr) != PGSQL_AF_INET &&
@@ -363,7 +363,7 @@ cidr_set_masklen(PG_FUNCTION_ARGS)
 inet *
 cidr_set_masklen_internal(const inet *src, int bits)
 {
-	inet	   *dst = (inet *) palloc0(sizeof(inet));
+	inet	   *dst = palloc0_object(inet);
 
 	ip_family(dst) = ip_family(src);
 	ip_bits(dst) = bits;
@@ -444,7 +444,7 @@ network_sortsupport(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(network_sortsupport_state));
+		uss = palloc_object(network_sortsupport_state);
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);
@@ -1227,7 +1227,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 			   *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	maxbytes = ip_addrsize(ip);
 	bits = ip_bits(ip);
@@ -1271,7 +1271,7 @@ network_network(PG_FUNCTION_ARGS)
 			   *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	bits = ip_bits(ip);
 	a = ip_addr(ip);
@@ -1314,7 +1314,7 @@ network_netmask(PG_FUNCTION_ARGS)
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	bits = ip_bits(ip);
 	b = ip_addr(dst);
@@ -1357,7 +1357,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	maxbytes = ip_addrsize(ip);
 	bits = ip_maxbits(ip) - ip_bits(ip);
@@ -1792,7 +1792,7 @@ inetnot(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_PP(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	{
 		int			nb = ip_addrsize(ip);
@@ -1818,7 +1818,7 @@ inetand(PG_FUNCTION_ARGS)
 	inet	   *ip2 = PG_GETARG_INET_PP(1);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
@@ -1850,7 +1850,7 @@ inetor(PG_FUNCTION_ARGS)
 	inet	   *ip2 = PG_GETARG_INET_PP(1);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
@@ -1880,7 +1880,7 @@ internal_inetpl(inet *ip, int64 addend)
 {
 	inet	   *dst;
 
-	dst = (inet *) palloc0(sizeof(inet));
+	dst = palloc0_object(inet);
 
 	{
 		int			nb = ip_addrsize(ip);

@@ -566,7 +566,7 @@ publicationListToArray(List *publist)
 								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = (Datum *) palloc(sizeof(Datum) * list_length(publist));
+	datums = palloc_array(Datum, list_length(publist));
 
 	check_duplicates_in_publist(publist, datums);
 
@@ -1055,7 +1055,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 			{
 				char		state;
 				XLogRecPtr	statelsn;
-				SubRemoveRels *remove_rel = palloc(sizeof(SubRemoveRels));
+				SubRemoveRels *remove_rel = palloc_object(SubRemoveRels);
 
 				/*
 				 * Lock pg_subscription_rel with AccessExclusiveLock to

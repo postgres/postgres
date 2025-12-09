@@ -1774,7 +1774,7 @@ CopyErrorData(void)
 	Assert(CurrentMemoryContext != ErrorContext);
 
 	/* Copy the struct itself */
-	newedata = (ErrorData *) palloc(sizeof(ErrorData));
+	newedata = palloc_object(ErrorData);
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/*

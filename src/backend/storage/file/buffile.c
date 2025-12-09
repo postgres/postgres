@@ -117,7 +117,7 @@ static File MakeNewFileSetSegment(BufFile *buffile, int segment);
 static BufFile *
 makeBufFileCommon(int nfiles)
 {
-	BufFile    *file = (BufFile *) palloc(sizeof(BufFile));
+	BufFile    *file = palloc_object(BufFile);
 
 	file->numFiles = nfiles;
 	file->isInterXact = false;
@@ -140,7 +140,7 @@ makeBufFile(File firstfile)
 {
 	BufFile    *file = makeBufFileCommon(1);
 
-	file->files = (File *) palloc(sizeof(File));
+	file->files = palloc_object(File);
 	file->files[0] = firstfile;
 	file->readOnly = false;
 	file->fileset = NULL;
@@ -271,7 +271,7 @@ BufFileCreateFileSet(FileSet *fileset, const char *name)
 	file = makeBufFileCommon(1);
 	file->fileset = fileset;
 	file->name = pstrdup(name);
-	file->files = (File *) palloc(sizeof(File));
+	file->files = palloc_object(File);
 	file->files[0] = MakeNewFileSetSegment(file, 0);
 	file->readOnly = false;
 
@@ -297,7 +297,7 @@ BufFileOpenFileSet(FileSet *fileset, const char *name, int mode,
 	File	   *files;
 	int			nfiles = 0;
 
-	files = palloc(sizeof(File) * capacity);
+	files = palloc_array(File, capacity);
 
 	/*
 	 * We don't know how many segments there are, so we'll probe the
@@ -309,7 +309,7 @@ BufFileOpenFileSet(FileSet *fileset, const char *name, int mode,
 		if (nfiles + 1 > capacity)
 		{
 			capacity *= 2;
-			files = repalloc(files, sizeof(File) * capacity);
+			files = repalloc_array(files, File, capacity);
 		}
 		/* Try to load a segment. */
 		FileSetSegmentName(segment_name, name, nfiles);

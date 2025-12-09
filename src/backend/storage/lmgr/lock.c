@@ -3100,9 +3100,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 								   (MaxBackends + max_prepared_xacts + 1));
 	}
 	else
-		vxids = (VirtualTransactionId *)
-			palloc0(sizeof(VirtualTransactionId) *
-					(MaxBackends + max_prepared_xacts + 1));
+		vxids = palloc0_array(VirtualTransactionId, (MaxBackends + max_prepared_xacts + 1));
 
 	/* Compute hash code and partition lock, and look up conflicting modes. */
 	hashcode = LockTagHashCode(locktag);
@@ -3801,12 +3799,12 @@ GetLockStatusData(void)
 	int			el;
 	int			i;
 
-	data = (LockData *) palloc(sizeof(LockData));
+	data = palloc_object(LockData);
 
 	/* Guess how much space we'll need. */
 	els = MaxBackends;
 	el = 0;
-	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * els);
+	data->locks = palloc_array(LockInstanceData, els);
 
 	/*
 	 * First, we iterate through the per-backend fast-path arrays, locking
@@ -4001,7 +3999,7 @@ GetBlockerStatusData(int blocked_pid)
 	PGPROC	   *proc;
 	int			i;
 
-	data = (BlockedProcsData *) palloc(sizeof(BlockedProcsData));
+	data = palloc_object(BlockedProcsData);
 
 	/*
 	 * Guess how much space we'll need, and preallocate.  Most of the time
@@ -4011,9 +4009,9 @@ GetBlockerStatusData(int blocked_pid)
 	 */
 	data->nprocs = data->nlocks = data->npids = 0;
 	data->maxprocs = data->maxlocks = data->maxpids = MaxBackends;
-	data->procs = (BlockedProcData *) palloc(sizeof(BlockedProcData) * data->maxprocs);
-	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * data->maxlocks);
-	data->waiter_pids = (int *) palloc(sizeof(int) * data->maxpids);
+	data->procs = palloc_array(BlockedProcData, data->maxprocs);
+	data->locks = palloc_array(LockInstanceData, data->maxlocks);
+	data->waiter_pids = palloc_array(int, data->maxpids);
 
 	/*
 	 * In order to search the ProcArray for blocked_pid and assume that that

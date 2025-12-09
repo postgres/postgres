@@ -181,7 +181,7 @@ InitJumble(void)
 {
 	JumbleState *jstate;
 
-	jstate = (JumbleState *) palloc(sizeof(JumbleState));
+	jstate = palloc_object(JumbleState);
 
 	/* Set up workspace for query jumbling */
 	jstate->jumble = (unsigned char *) palloc(JUMBLE_SIZE);

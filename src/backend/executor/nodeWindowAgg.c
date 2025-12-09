@@ -2661,14 +2661,14 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 	numfuncs = winstate->numfuncs;
 	numaggs = winstate->numaggs;
 	econtext = winstate->ss.ps.ps_ExprContext;
-	econtext->ecxt_aggvalues = (Datum *) palloc0(sizeof(Datum) * numfuncs);
-	econtext->ecxt_aggnulls = (bool *) palloc0(sizeof(bool) * numfuncs);
+	econtext->ecxt_aggvalues = palloc0_array(Datum, numfuncs);
+	econtext->ecxt_aggnulls = palloc0_array(bool, numfuncs);
 
 	/*
 	 * allocate per-wfunc/per-agg state information.
 	 */
-	perfunc = (WindowStatePerFunc) palloc0(sizeof(WindowStatePerFuncData) * numfuncs);
-	peragg = (WindowStatePerAgg) palloc0(sizeof(WindowStatePerAggData) * numaggs);
+	perfunc = palloc0_array(WindowStatePerFuncData, numfuncs);
+	peragg = palloc0_array(WindowStatePerAggData, numaggs);
 	winstate->perfunc = perfunc;
 	winstate->peragg = peragg;
 
@@ -3467,8 +3467,8 @@ init_notnull_info(WindowObject winobj, WindowStatePerFunc perfuncstate)
 
 	if (winobj->ignore_nulls == PARSER_IGNORE_NULLS)
 	{
-		winobj->notnull_info = palloc0(sizeof(uint8 *) * numargs);
-		winobj->num_notnull_info = palloc0(sizeof(int64) * numargs);
+		winobj->notnull_info = palloc0_array(uint8 *, numargs);
+		winobj->num_notnull_info = palloc0_array(int64, numargs);
 	}
 }
 

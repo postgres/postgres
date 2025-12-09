@@ -1414,7 +1414,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 	}
 
 	/* Extract opclass options for each attribute */
-	opclassOptions = palloc0(sizeof(Datum) * newInfo->ii_NumIndexAttrs);
+	opclassOptions = palloc0_array(Datum, newInfo->ii_NumIndexAttrs);
 	for (int i = 0; i < newInfo->ii_NumIndexAttrs; i++)
 		opclassOptions[i] = get_attoptions(oldIndexId, i + 1);
 
@@ -2678,9 +2678,9 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 	 */
 	Assert(ii->ii_Unique);
 
-	ii->ii_UniqueOps = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	ii->ii_UniqueProcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	ii->ii_UniqueStrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	ii->ii_UniqueOps = palloc_array(Oid, indnkeyatts);
+	ii->ii_UniqueProcs = palloc_array(Oid, indnkeyatts);
+	ii->ii_UniqueStrats = palloc_array(uint16, indnkeyatts);
 
 	/*
 	 * We have to look up the operator's strategy number.  This provides a

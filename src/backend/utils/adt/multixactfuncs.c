@@ -50,7 +50,7 @@ pg_get_multixact_members(PG_FUNCTION_ARGS)
 		funccxt = SRF_FIRSTCALL_INIT();
 		oldcxt = MemoryContextSwitchTo(funccxt->multi_call_memory_ctx);
 
-		multi = palloc(sizeof(mxact));
+		multi = palloc_object(mxact);
 		/* no need to allow for old values here */
 		multi->nmembers = GetMultiXactIdMembers(mxid, &multi->members, false,
 												false);

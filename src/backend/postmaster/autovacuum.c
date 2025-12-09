@@ -1865,7 +1865,7 @@ get_database_list(void)
 		 */
 		oldcxt = MemoryContextSwitchTo(resultcxt);
 
-		avdb = (avw_dbase *) palloc(sizeof(avw_dbase));
+		avdb = palloc_object(avw_dbase);
 
 		avdb->adw_datid = pgdatabase->oid;
 		avdb->adw_name = pstrdup(NameStr(pgdatabase->datname));
@@ -2753,7 +2753,7 @@ extract_autovac_opts(HeapTuple tup, TupleDesc pg_class_desc)
 	if (relopts == NULL)
 		return NULL;
 
-	av = palloc(sizeof(AutoVacOpts));
+	av = palloc_object(AutoVacOpts);
 	memcpy(av, &(((StdRdOptions *) relopts)->autovacuum), sizeof(AutoVacOpts));
 	pfree(relopts);
 
@@ -2857,7 +2857,7 @@ table_recheck_autovac(Oid relid, HTAB *table_toast_map,
 			? avopts->multixact_freeze_table_age
 			: default_multixact_freeze_table_age;
 
-		tab = palloc(sizeof(autovac_table));
+		tab = palloc_object(autovac_table);
 		tab->at_relid = relid;
 		tab->at_sharedrel = classForm->relisshared;
 

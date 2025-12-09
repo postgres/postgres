@@ -98,10 +98,8 @@ SetPlannerGlobalExtensionState(PlannerGlobal *glob, int extension_id,
 		int			i;
 
 		i = pg_nextpower2_32(extension_id + 1);
-		glob->extension_state = (void **)
-			repalloc0(glob->extension_state,
-					  glob->extension_state_allocated * sizeof(void *),
-					  i * sizeof(void *));
+		glob->extension_state = repalloc0_array(glob->extension_state, void *,
+												glob->extension_state_allocated, i);
 		glob->extension_state_allocated = i;
 	}
 
@@ -134,10 +132,8 @@ SetPlannerInfoExtensionState(PlannerInfo *root, int extension_id,
 		int			i;
 
 		i = pg_nextpower2_32(extension_id + 1);
-		root->extension_state = (void **)
-			repalloc0(root->extension_state,
-					  root->extension_state_allocated * sizeof(void *),
-					  i * sizeof(void *));
+		root->extension_state = repalloc0_array(root->extension_state, void *,
+												root->extension_state_allocated, i);
 		root->extension_state_allocated = i;
 	}
 
@@ -172,10 +168,8 @@ SetRelOptInfoExtensionState(RelOptInfo *rel, int extension_id,
 		int			i;
 
 		i = pg_nextpower2_32(extension_id + 1);
-		rel->extension_state = (void **)
-			repalloc0(rel->extension_state,
-					  rel->extension_state_allocated * sizeof(void *),
-					  i * sizeof(void *));
+		rel->extension_state = repalloc0_array(rel->extension_state, void *,
+											   rel->extension_state_allocated, i);
 		rel->extension_state_allocated = i;
 	}
 

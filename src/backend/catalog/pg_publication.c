@@ -1086,7 +1086,7 @@ GetPublication(Oid pubid)
 
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
 
-	pub = (Publication *) palloc(sizeof(Publication));
+	pub = palloc_object(Publication);
 	pub->oid = pubid;
 	pub->name = pstrdup(NameStr(pubform->pubname));
 	pub->alltables = pubform->puballtables;
@@ -1196,7 +1196,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			 */
 			foreach(lc, pub_elem_tables)
 			{
-				published_rel *table_info = (published_rel *) palloc(sizeof(published_rel));
+				published_rel *table_info = palloc_object(published_rel);
 
 				table_info->relid = lfirst_oid(lc);
 				table_info->pubid = pub_elem->oid;
@@ -1299,7 +1299,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 			TupleDesc	desc = RelationGetDescr(rel);
 			int			i;
 
-			attnums = (int16 *) palloc(desc->natts * sizeof(int16));
+			attnums = palloc_array(int16, desc->natts);
 
 			for (i = 0; i < desc->natts; i++)
 			{

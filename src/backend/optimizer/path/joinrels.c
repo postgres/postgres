@@ -1990,8 +1990,7 @@ compute_partition_bounds(PlannerInfo *root, RelOptInfo *rel1,
 		Assert(nparts > 0);
 		joinrel->boundinfo = boundinfo;
 		joinrel->nparts = nparts;
-		joinrel->part_rels =
-			(RelOptInfo **) palloc0(sizeof(RelOptInfo *) * nparts);
+		joinrel->part_rels = palloc0_array(RelOptInfo *, nparts);
 	}
 	else
 	{

@@ -90,7 +90,7 @@ gistbeginscan(Relation r, int nkeys, int norderbys)
 	oldCxt = MemoryContextSwitchTo(giststate->scanCxt);
 
 	/* initialize opaque data */
-	so = (GISTScanOpaque) palloc0(sizeof(GISTScanOpaqueData));
+	so = palloc0_object(GISTScanOpaqueData);
 	so->giststate = giststate;
 	giststate->tempCxt = createTempGistContext();
 	so->queue = NULL;
@@ -101,8 +101,8 @@ gistbeginscan(Relation r, int nkeys, int norderbys)
 	so->qual_ok = true;			/* in case there are zero keys */
 	if (scan->numberOfOrderBys > 0)
 	{
-		scan->xs_orderbyvals = palloc0(sizeof(Datum) * scan->numberOfOrderBys);
-		scan->xs_orderbynulls = palloc(sizeof(bool) * scan->numberOfOrderBys);
+		scan->xs_orderbyvals = palloc0_array(Datum, scan->numberOfOrderBys);
+		scan->xs_orderbynulls = palloc_array(bool, scan->numberOfOrderBys);
 		memset(scan->xs_orderbynulls, true, sizeof(bool) * scan->numberOfOrderBys);
 	}
 

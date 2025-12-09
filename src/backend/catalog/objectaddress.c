@@ -6144,8 +6144,8 @@ strlist_to_textarray(List *list)
 								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = (Datum *) palloc(sizeof(Datum) * list_length(list));
-	nulls = palloc(sizeof(bool) * list_length(list));
+	datums = palloc_array(Datum, list_length(list));
+	nulls = palloc_array(bool, list_length(list));
 
 	foreach(cell, list)
 	{

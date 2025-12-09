@@ -647,7 +647,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	ExecSetParamPlanMulti(sendParams, GetPerTupleExprContext(estate));
 
 	/* Allocate object for return value. */
-	pei = palloc0(sizeof(ParallelExecutorInfo));
+	pei = palloc0_object(ParallelExecutorInfo);
 	pei->finished = false;
 	pei->planstate = planstate;
 

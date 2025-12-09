@@ -160,7 +160,7 @@ SortAndUniqItems(TSQuery q, int *size)
 			  **ptr,
 			  **prevptr;
 
-	ptr = res = (QueryOperand **) palloc(sizeof(QueryOperand *) * *size);
+	ptr = res = palloc_array(QueryOperand *, *size);
 
 	/* Collect all operands from the tree to res */
 	while ((*size)--)
@@ -225,7 +225,7 @@ calc_rank_and(const float *w, TSVector t, TSQuery q)
 		pfree(item);
 		return calc_rank_or(w, t, q);
 	}
-	pos = (WordEntryPosVector **) palloc0(sizeof(WordEntryPosVector *) * q->size);
+	pos = palloc0_array(WordEntryPosVector *, q->size);
 
 	/* A dummy WordEntryPos array to use when haspos is false */
 	posnull.npos = 1;
@@ -743,7 +743,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 				cur = 0;
 	DocRepresentation *doc;
 
-	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
+	doc = palloc_array(DocRepresentation, len);
 
 	/*
 	 * Iterate through query to make DocRepresentation for words and it's
@@ -815,7 +815,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 		 * Join QueryItem per WordEntry and its position
 		 */
 		storage.pos = doc->pos;
-		storage.data.query.items = palloc(sizeof(QueryItem *) * qr->query->size);
+		storage.data.query.items = palloc_array(QueryItem *, qr->query->size);
 		storage.data.query.items[0] = doc->data.map.item;
 		storage.data.query.nitem = 1;
 
@@ -832,7 +832,7 @@ get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 				*wptr = storage;
 				wptr++;
 				storage.pos = rptr->pos;
-				storage.data.query.items = palloc(sizeof(QueryItem *) * qr->query->size);
+				storage.data.query.items = palloc_array(QueryItem *, qr->query->size);
 				storage.data.query.items[0] = rptr->data.map.item;
 				storage.data.query.nitem = 1;
 			}
@@ -878,8 +878,7 @@ calc_rank_cd(const float4 *arrdata, TSVector txt, TSQuery query, int method)
 	}
 
 	qr.query = query;
-	qr.operandData = (QueryRepresentationOperand *)
-		palloc0(sizeof(QueryRepresentationOperand) * query->size);
+	qr.operandData = palloc0_array(QueryRepresentationOperand, query->size);
 
 	doc = get_docrep(txt, &qr, &doclen);
 	if (!doc)

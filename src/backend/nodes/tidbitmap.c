@@ -683,7 +683,7 @@ tbm_begin_private_iterate(TIDBitmap *tbm)
 	 * Create the TBMPrivateIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMPrivateIterator *) palloc(sizeof(TBMPrivateIterator));
+	iterator = palloc_object(TBMPrivateIterator);
 	iterator->tbm = tbm;
 
 	/*
@@ -1468,7 +1468,7 @@ tbm_attach_shared_iterate(dsa_area *dsa, dsa_pointer dp)
 	 * Create the TBMSharedIterator struct, with enough trailing space to
 	 * serve the needs of the TBMIterateResult sub-struct.
 	 */
-	iterator = (TBMSharedIterator *) palloc0(sizeof(TBMSharedIterator));
+	iterator = palloc0_object(TBMSharedIterator);
 
 	istate = (TBMSharedIteratorState *) dsa_get_address(dsa, dp);
 

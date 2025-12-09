@@ -75,17 +75,17 @@ convert_tuples_by_position(TupleDesc indesc,
 	}
 
 	/* Prepare the map structure */
-	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+	map = palloc_object(TupleConversionMap);
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;
 	/* preallocate workspace for Datum arrays */
 	n = outdesc->natts + 1;		/* +1 for NULL */
-	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
-	map->outisnull = (bool *) palloc(n * sizeof(bool));
+	map->outvalues = palloc_array(Datum, n);
+	map->outisnull = palloc_array(bool, n);
 	n = indesc->natts + 1;		/* +1 for NULL */
-	map->invalues = (Datum *) palloc(n * sizeof(Datum));
-	map->inisnull = (bool *) palloc(n * sizeof(bool));
+	map->invalues = palloc_array(Datum, n);
+	map->inisnull = palloc_array(bool, n);
 	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
@@ -132,16 +132,16 @@ convert_tuples_by_name_attrmap(TupleDesc indesc,
 	Assert(attrMap != NULL);
 
 	/* Prepare the map structure */
-	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+	map = palloc_object(TupleConversionMap);
 	map->indesc = indesc;
 	map->outdesc = outdesc;
 	map->attrMap = attrMap;
 	/* preallocate workspace for Datum arrays */
-	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
-	map->outisnull = (bool *) palloc(n * sizeof(bool));
+	map->outvalues = palloc_array(Datum, n);
+	map->outisnull = palloc_array(bool, n);
 	n = indesc->natts + 1;		/* +1 for NULL */
-	map->invalues = (Datum *) palloc(n * sizeof(Datum));
-	map->inisnull = (bool *) palloc(n * sizeof(bool));
+	map->invalues = palloc_array(Datum, n);
+	map->inisnull = palloc_array(bool, n);
 	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 

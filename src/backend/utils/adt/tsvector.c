@@ -202,8 +202,8 @@ tsvectorin(PG_FUNCTION_ARGS)
 	state = init_tsvector_parser(buf, 0, escontext);
 
 	arrlen = 64;
-	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * arrlen);
-	cur = tmpbuf = (char *) palloc(buflen);
+	arr = palloc_array(WordEntryIN, arrlen);
+	cur = tmpbuf = palloc_array(char, buflen);
 
 	while (gettoken_tsvector(state, &token, &toklen, &pos, &poslen, NULL))
 	{

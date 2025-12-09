@@ -2641,8 +2641,7 @@ addNSItemForReturning(ParseState *pstate, const char *aliasname,
 	colnames = pstate->p_target_nsitem->p_rte->eref->colnames;
 	numattrs = list_length(colnames);
 
-	nscolumns = (ParseNamespaceColumn *)
-		palloc(numattrs * sizeof(ParseNamespaceColumn));
+	nscolumns = palloc_array(ParseNamespaceColumn, numattrs);
 
 	memcpy(nscolumns, pstate->p_target_nsitem->p_nscolumns,
 		   numattrs * sizeof(ParseNamespaceColumn));
@@ -2652,7 +2651,7 @@ addNSItemForReturning(ParseState *pstate, const char *aliasname,
 		nscolumns[i].p_varreturningtype = returning_type;
 
 	/* build the nsitem, copying most fields from the target relation */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = makeAlias(aliasname, colnames);
 	nsitem->p_rte = pstate->p_target_nsitem->p_rte;
 	nsitem->p_rtindex = pstate->p_target_nsitem->p_rtindex;

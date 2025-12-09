@@ -720,7 +720,7 @@ BeginCopyTo(ParseState *pstate,
 
 
 	/* Allocate workspace and zero all fields */
-	cstate = (CopyToStateData *) palloc0(sizeof(CopyToStateData));
+	cstate = palloc0_object(CopyToStateData);
 
 	/*
 	 * We allocate everything used by a cstate in a new memory context. This
@@ -1527,7 +1527,7 @@ copy_dest_destroy(DestReceiver *self)
 DestReceiver *
 CreateCopyDestReceiver(void)
 {
-	DR_copy    *self = (DR_copy *) palloc(sizeof(DR_copy));
+	DR_copy    *self = palloc_object(DR_copy);
 
 	self->pub.receiveSlot = copy_dest_receive;
 	self->pub.rStartup = copy_dest_startup;

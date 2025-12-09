@@ -1079,7 +1079,7 @@ examine_attribute(Relation onerel, int attnum, Node *index_expr)
 	/*
 	 * Create the VacAttrStats struct.
 	 */
-	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
+	stats = palloc0_object(VacAttrStats);
 	stats->attstattarget = attstattarget;
 
 	/*
@@ -1910,7 +1910,7 @@ std_typanalyze(VacAttrStats *stats)
 							 NULL);
 
 	/* Save the operator info for compute_stats routines */
-	mystats = (StdAnalyzeData *) palloc(sizeof(StdAnalyzeData));
+	mystats = palloc_object(StdAnalyzeData);
 	mystats->eqopr = eqopr;
 	mystats->eqfunc = OidIsValid(eqopr) ? get_opcode(eqopr) : InvalidOid;
 	mystats->ltopr = ltopr;
@@ -2865,7 +2865,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 			/* Must copy the target values into anl_context */
 			old_context = MemoryContextSwitchTo(stats->anl_context);
-			corrs = (float4 *) palloc(sizeof(float4));
+			corrs = palloc_object(float4);
 			MemoryContextSwitchTo(old_context);
 
 			/*----------

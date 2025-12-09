@@ -90,7 +90,7 @@ pg_backup_start(PG_FUNCTION_ARGS)
 	}
 
 	oldcontext = MemoryContextSwitchTo(backupcontext);
-	backup_state = (BackupState *) palloc0(sizeof(BackupState));
+	backup_state = palloc0_object(BackupState);
 	tablespace_map = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
 

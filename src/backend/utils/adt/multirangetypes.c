@@ -125,7 +125,7 @@ multirange_in(PG_FUNCTION_ARGS)
 	int32		range_count = 0;
 	int32		range_capacity = 8;
 	RangeType  *range;
-	RangeType **ranges = palloc(range_capacity * sizeof(RangeType *));
+	RangeType **ranges = palloc_array(RangeType *, range_capacity);
 	MultirangeIOData *cache;
 	MultirangeType *ret;
 	MultirangeParseState parse_state;
@@ -348,7 +348,7 @@ multirange_recv(PG_FUNCTION_ARGS)
 	cache = get_multirange_io_data(fcinfo, mltrngtypoid, IOFunc_receive);
 
 	range_count = pq_getmsgint(buf, 4);
-	ranges = palloc(range_count * sizeof(RangeType *));
+	ranges = palloc_array(RangeType *, range_count);
 
 	initStringInfo(&tmpbuf);
 	for (int i = 0; i < range_count; i++)
@@ -836,7 +836,7 @@ multirange_deserialize(TypeCacheEntry *rangetyp,
 	{
 		int			i;
 
-		*ranges = palloc(*range_count * sizeof(RangeType *));
+		*ranges = palloc_array(RangeType *, *range_count);
 		for (i = 0; i < *range_count; i++)
 			(*ranges)[i] = multirange_get_range(rangetyp, multirange, i);
 	}
@@ -2818,7 +2818,7 @@ multirange_unnest(PG_FUNCTION_ARGS)
 		mr = PG_GETARG_MULTIRANGE_P(0);
 
 		/* allocate memory for user context */
-		fctx = (multirange_unnest_fctx *) palloc(sizeof(multirange_unnest_fctx));
+		fctx = palloc_object(multirange_unnest_fctx);
 
 		/* initialize state */
 		fctx->mr = mr;

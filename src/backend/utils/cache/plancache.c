@@ -207,7 +207,7 @@ CreateCachedPlan(RawStmt *raw_parse_tree,
 	 */
 	oldcxt = MemoryContextSwitchTo(source_context);
 
-	plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+	plansource = palloc0_object(CachedPlanSource);
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = copyObject(raw_parse_tree);
 	plansource->analyzed_parse_tree = NULL;
@@ -307,7 +307,7 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
 	 * Create and fill the CachedPlanSource struct within the caller's memory
 	 * context.  Most fields are just left empty for the moment.
 	 */
-	plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+	plansource = palloc0_object(CachedPlanSource);
 	plansource->magic = CACHEDPLANSOURCE_MAGIC;
 	plansource->raw_parse_tree = raw_parse_tree;
 	plansource->analyzed_parse_tree = NULL;
@@ -469,7 +469,7 @@ CompleteCachedPlan(CachedPlanSource *plansource,
 
 	if (num_params > 0)
 	{
-		plansource->param_types = (Oid *) palloc(num_params * sizeof(Oid));
+		plansource->param_types = palloc_array(Oid, num_params);
 		memcpy(plansource->param_types, param_types, num_params * sizeof(Oid));
 	}
 	else
@@ -1119,7 +1119,7 @@ BuildCachedPlan(CachedPlanSource *plansource, List *qlist,
 	/*
 	 * Create and fill the CachedPlan struct within the new context.
 	 */
-	plan = (CachedPlan *) palloc(sizeof(CachedPlan));
+	plan = palloc_object(CachedPlan);
 	plan->magic = CACHEDPLAN_MAGIC;
 	plan->stmt_list = plist;
 
@@ -1691,7 +1691,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 
 	oldcxt = MemoryContextSwitchTo(source_context);
 
-	newsource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
+	newsource = palloc0_object(CachedPlanSource);
 	newsource->magic = CACHEDPLANSOURCE_MAGIC;
 	newsource->raw_parse_tree = copyObject(plansource->raw_parse_tree);
 	newsource->analyzed_parse_tree = copyObject(plansource->analyzed_parse_tree);
@@ -1700,8 +1700,7 @@ CopyCachedPlan(CachedPlanSource *plansource)
 	newsource->commandTag = plansource->commandTag;
 	if (plansource->num_params > 0)
 	{
-		newsource->param_types = (Oid *)
-			palloc(plansource->num_params * sizeof(Oid));
+		newsource->param_types = palloc_array(Oid, plansource->num_params);
 		memcpy(newsource->param_types, plansource->param_types,
 			   plansource->num_params * sizeof(Oid));
 	}
@@ -1840,7 +1839,7 @@ GetCachedExpression(Node *expr)
 
 	oldcxt = MemoryContextSwitchTo(cexpr_context);
 
-	cexpr = (CachedExpression *) palloc(sizeof(CachedExpression));
+	cexpr = palloc_object(CachedExpression);
 	cexpr->magic = CACHEDEXPR_MAGIC;
 	cexpr->expr = copyObject(expr);
 	cexpr->is_valid = true;

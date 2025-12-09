@@ -32,17 +32,17 @@ tsquery_numnode(PG_FUNCTION_ARGS)
 static QTNode *
 join_tsqueries(TSQuery a, TSQuery b, int8 operator, uint16 distance)
 {
-	QTNode	   *res = (QTNode *) palloc0(sizeof(QTNode));
+	QTNode	   *res = palloc0_object(QTNode);
 
 	res->flags |= QTN_NEEDFREE;
 
-	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
+	res->valnode = palloc0_object(QueryItem);
 	res->valnode->type = QI_OPR;
 	res->valnode->qoperator.oper = operator;
 	if (operator == OP_PHRASE)
 		res->valnode->qoperator.distance = distance;
 
-	res->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
+	res->child = palloc0_array(QTNode *, 2);
 	res->child[0] = QT2QTN(GETQUERY(b), GETOPERAND(b));
 	res->child[1] = QT2QTN(GETQUERY(a), GETOPERAND(a));
 	res->nchild = 2;
@@ -165,15 +165,15 @@ tsquery_not(PG_FUNCTION_ARGS)
 	if (a->size == 0)
 		PG_RETURN_POINTER(a);
 
-	res = (QTNode *) palloc0(sizeof(QTNode));
+	res = palloc0_object(QTNode);
 
 	res->flags |= QTN_NEEDFREE;
 
-	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
+	res->valnode = palloc0_object(QueryItem);
 	res->valnode->type = QI_OPR;
 	res->valnode->qoperator.oper = OP_NOT;
 
-	res->child = (QTNode **) palloc0(sizeof(QTNode *));
+	res->child = palloc0_object(QTNode *);
 	res->child[0] = QT2QTN(GETQUERY(a), GETOPERAND(a));
 	res->nchild = 1;
 
@@ -272,7 +272,7 @@ collectTSQueryValues(TSQuery a, int *nvalues_p)
 	int			nvalues = 0;
 	int			i;
 
-	values = (char **) palloc(sizeof(char *) * a->size);
+	values = palloc_array(char *, a->size);
 
 	for (i = 0; i < a->size; i++)
 	{

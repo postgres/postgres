@@ -486,7 +486,7 @@ strlower_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				 errmsg("out of memory")));
 
 	/* Output workspace cannot have more codes than input bytes */
-	workspace = (wchar_t *) palloc((srclen + 1) * sizeof(wchar_t));
+	workspace = palloc_array(wchar_t, srclen + 1);
 
 	char2wchar(workspace, srclen + 1, src, srclen, loc);
 
@@ -591,7 +591,7 @@ strtitle_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				 errmsg("out of memory")));
 
 	/* Output workspace cannot have more codes than input bytes */
-	workspace = (wchar_t *) palloc((srclen + 1) * sizeof(wchar_t));
+	workspace = palloc_array(wchar_t, srclen + 1);
 
 	char2wchar(workspace, srclen + 1, src, srclen, loc);
 
@@ -684,7 +684,7 @@ strupper_libc_mb(char *dest, size_t destsize, const char *src, ssize_t srclen,
 				 errmsg("out of memory")));
 
 	/* Output workspace cannot have more codes than input bytes */
-	workspace = (wchar_t *) palloc((srclen + 1) * sizeof(wchar_t));
+	workspace = palloc_array(wchar_t, srclen + 1);
 
 	char2wchar(workspace, srclen + 1, src, srclen, loc);
 

@@ -62,7 +62,7 @@ alloc_edge_table(PlannerInfo *root, int num_gene)
 	 * directly; 0 will not be used
 	 */
 
-	edge_table = (Edge *) palloc((num_gene + 1) * sizeof(Edge));
+	edge_table = palloc_array(Edge, num_gene + 1);
 
 	return edge_table;
 }

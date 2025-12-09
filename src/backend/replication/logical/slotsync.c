@@ -919,7 +919,7 @@ synchronize_slots(WalReceiverConn *wrconn)
 	while (tuplestore_gettupleslot(res->tuplestore, true, false, tupslot))
 	{
 		bool		isnull;
-		RemoteSlot *remote_slot = palloc0(sizeof(RemoteSlot));
+		RemoteSlot *remote_slot = palloc0_object(RemoteSlot);
 		Datum		d;
 		int			col = 0;
 

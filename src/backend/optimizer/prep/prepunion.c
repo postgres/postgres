@@ -1629,7 +1629,7 @@ generate_append_tlist(List *colTypes, List *colCollations,
 	 * If the inputs all agree on type and typmod of a particular column, use
 	 * that typmod; else use -1.
 	 */
-	colTypmods = (int32 *) palloc(list_length(colTypes) * sizeof(int32));
+	colTypmods = palloc_array(int32, list_length(colTypes));
 
 	foreach(tlistl, input_tlists)
 	{

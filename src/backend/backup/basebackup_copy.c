@@ -107,7 +107,7 @@ static const bbsink_ops bbsink_copystream_ops = {
 bbsink *
 bbsink_copystream_new(bool send_to_client)
 {
-	bbsink_copystream *sink = palloc0(sizeof(bbsink_copystream));
+	bbsink_copystream *sink = palloc0_object(bbsink_copystream);
 
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_copystream_ops;
 	sink->send_to_client = send_to_client;

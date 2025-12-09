@@ -759,7 +759,7 @@ mcelem_array_contained_selec(const Datum *mcelem, int nmcelem,
 	 * elem_selec is array of estimated frequencies for elements in the
 	 * constant.
 	 */
-	elem_selec = (float *) palloc(sizeof(float) * nitems);
+	elem_selec = palloc_array(float, nitems);
 
 	/* Scan mcelem and array in parallel. */
 	mcelem_index = 0;
@@ -936,7 +936,7 @@ calc_hist(const float4 *hist, int nhist, int n)
 				next_interval;
 	float		frac;
 
-	hist_part = (float *) palloc((n + 1) * sizeof(float));
+	hist_part = palloc_array(float, n + 1);
 
 	/*
 	 * frac is a probability contribution for each interval between histogram
@@ -1028,8 +1028,8 @@ calc_distr(const float *p, int n, int m, float rest)
 	 * Since we return only the last row of the matrix and need only the
 	 * current and previous row for calculations, allocate two rows.
 	 */
-	row = (float *) palloc((m + 1) * sizeof(float));
-	prev_row = (float *) palloc((m + 1) * sizeof(float));
+	row = palloc_array(float, m + 1);
+	prev_row = palloc_array(float, m + 1);
 
 	/* M[0,0] = 1 */
 	row[0] = 1.0f;

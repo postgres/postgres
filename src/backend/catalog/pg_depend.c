@@ -88,7 +88,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	 */
 	max_slots = Min(nreferenced,
 					MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_depend));
-	slot = palloc(sizeof(TupleTableSlot *) * max_slots);
+	slot = palloc_array(TupleTableSlot *, max_slots);
 
 	/* Don't open indexes unless we need to make an update */
 	indstate = NULL;

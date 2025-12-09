@@ -114,7 +114,7 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 	SortedPoint *sorted;
 	double		coord;
 
-	sorted = palloc(sizeof(*sorted) * in->nTuples);
+	sorted = palloc_array(SortedPoint, in->nTuples);
 	for (i = 0; i < in->nTuples; i++)
 	{
 		sorted[i].p = DatumGetPointP(in->datums[i]);
@@ -132,8 +132,8 @@ spg_kd_picksplit(PG_FUNCTION_ARGS)
 	out->nNodes = 2;
 	out->nodeLabels = NULL;		/* we don't need node labels */
 
-	out->mapTuplesToNodes = palloc(sizeof(int) * in->nTuples);
-	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
+	out->mapTuplesToNodes = palloc_array(int, in->nTuples);
+	out->leafTupleDatums = palloc_array(Datum, in->nTuples);
 
 	/*
 	 * Note: points that have coordinates exactly equal to coord may get
@@ -259,7 +259,7 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 	if (!which)
 		PG_RETURN_VOID();
 
-	out->nodeNumbers = (int *) palloc(sizeof(int) * 2);
+	out->nodeNumbers = palloc_array(int, 2);
 
 	/*
 	 * When ordering scan keys are specified, we've to calculate distance for
@@ -273,8 +273,8 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 		BOX			infArea;
 		BOX		   *area;
 
-		out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
-		out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
+		out->distances = palloc_array(double *, in->nNodes);
+		out->traversalValues = palloc_array(void *, in->nNodes);
 
 		if (in->level == 0)
 		{
@@ -335,7 +335,7 @@ spg_kd_inner_consistent(PG_FUNCTION_ARGS)
 	}
 
 	/* Set up level increments, too */
-	out->levelAdds = (int *) palloc(sizeof(int) * 2);
+	out->levelAdds = palloc_array(int, 2);
 	out->levelAdds[0] = 1;
 	out->levelAdds[1] = 1;
 

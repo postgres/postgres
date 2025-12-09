@@ -317,7 +317,7 @@ GetWaitEventCustomNames(uint32 classId, int *nwaitevents)
 	els = hash_get_num_entries(WaitEventCustomHashByName);
 
 	/* Allocate enough space for all entries */
-	waiteventnames = palloc(els * sizeof(char *));
+	waiteventnames = palloc_array(char *, els);
 
 	/* Now scan the hash table to copy the data */
 	hash_seq_init(&hash_seq, WaitEventCustomHashByName);

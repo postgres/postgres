@@ -495,7 +495,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 	}
 
 	/* No matching var found, so make a new clause-pair data structure */
-	rqelem = (RangeQueryClause *) palloc(sizeof(RangeQueryClause));
+	rqelem = palloc_object(RangeQueryClause);
 	rqelem->var = var;
 	if (is_lobound)
 	{

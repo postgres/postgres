@@ -673,7 +673,7 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	 */
 	oldcontext = MemoryContextSwitchTo(maincontext);
 
-	state = (Tuplesortstate *) palloc0(sizeof(Tuplesortstate));
+	state = palloc0_object(Tuplesortstate);
 
 	if (trace_sort)
 		pg_rusage_init(&state->ru_start);

@@ -664,7 +664,7 @@ AssignTransactionId(TransactionState s)
 		TransactionState *parents;
 		size_t		parentOffset = 0;
 
-		parents = palloc(sizeof(TransactionState) * s->nestingLevel);
+		parents = palloc_array(TransactionState, s->nestingLevel);
 		while (p != NULL && !FullTransactionIdIsValid(p->fullTransactionId))
 		{
 			parents[parentOffset++] = p;

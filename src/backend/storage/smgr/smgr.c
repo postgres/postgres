@@ -561,7 +561,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * create an array which contains all relations to be dropped, and close
 	 * each relation's forks at the smgr level while at it
 	 */
-	rlocators = palloc(sizeof(RelFileLocatorBackend) * nrels);
+	rlocators = palloc_array(RelFileLocatorBackend, nrels);
 	for (i = 0; i < nrels; i++)
 	{
 		RelFileLocatorBackend rlocator = rels[i]->smgr_rlocator;

@@ -2179,7 +2179,7 @@ append_nonpartial_cost(List *subpaths, int numpaths, int parallel_workers)
 	 * whichever is less.
 	 */
 	arrlen = Min(parallel_workers, numpaths);
-	costarr = (Cost *) palloc(sizeof(Cost) * arrlen);
+	costarr = palloc_array(Cost, arrlen);
 
 	/* The first few paths will each be claimed by a different worker. */
 	path_index = 0;
@@ -4137,7 +4137,7 @@ cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
 	/* Cache the result in suitably long-lived workspace */
 	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
-	cache = (MergeScanSelCache *) palloc(sizeof(MergeScanSelCache));
+	cache = palloc_object(MergeScanSelCache);
 	cache->opfamily = pathkey->pk_opfamily;
 	cache->collation = pathkey->pk_eclass->ec_collation;
 	cache->cmptype = pathkey->pk_cmptype;

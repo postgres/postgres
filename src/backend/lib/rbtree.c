@@ -106,7 +106,7 @@ rbt_create(Size node_size,
 		   rbt_freefunc freefunc,
 		   void *arg)
 {
-	RBTree	   *tree = (RBTree *) palloc(sizeof(RBTree));
+	RBTree	   *tree = palloc_object(RBTree);
 
 	Assert(node_size > sizeof(RBTNode));
 

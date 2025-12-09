@@ -1411,7 +1411,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		fctx = (generate_series_fctx *) palloc(sizeof(generate_series_fctx));
+		fctx = palloc_object(generate_series_fctx);
 
 		/*
 		 * Use fctx to keep state from call to call. Seed current with the

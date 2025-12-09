@@ -153,7 +153,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		qcontext = fcinfo->flinfo->fn_mcxt;
 		oldcontext = MemoryContextSwitchTo(qcontext);
 
-		qstate = (OSAPerQueryState *) palloc0(sizeof(OSAPerQueryState));
+		qstate = palloc0_object(OSAPerQueryState);
 		qstate->aggref = aggref;
 		qstate->qcontext = qcontext;
 
@@ -278,7 +278,7 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 	/* Now build the stuff we need in group-lifespan context */
 	oldcontext = MemoryContextSwitchTo(gcontext);
 
-	osastate = (OSAPerGroupState *) palloc(sizeof(OSAPerGroupState));
+	osastate = palloc_object(OSAPerGroupState);
 	osastate->qstate = qstate;
 	osastate->gcontext = gcontext;
 

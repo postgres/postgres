@@ -267,10 +267,8 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 
 	/* Create workspace for per-tlist-entry expr state & SRF-is-done state */
 	state->nelems = list_length(node->plan.targetlist);
-	state->elems = (Node **)
-		palloc(sizeof(Node *) * state->nelems);
-	state->elemdone = (ExprDoneCond *)
-		palloc(sizeof(ExprDoneCond) * state->nelems);
+	state->elems = palloc_array(Node *, state->nelems);
+	state->elemdone = palloc_array(ExprDoneCond, state->nelems);
 
 	/*
 	 * Build expressions to evaluate targetlist.  We can't use

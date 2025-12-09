@@ -41,9 +41,9 @@ make_attrmap(int maplen)
 {
 	AttrMap    *res;
 
-	res = (AttrMap *) palloc0(sizeof(AttrMap));
+	res = palloc0_object(AttrMap);
 	res->maplen = maplen;
-	res->attnums = (AttrNumber *) palloc0(sizeof(AttrNumber) * maplen);
+	res->attnums = palloc0_array(AttrNumber, maplen);
 	return res;
 }
 

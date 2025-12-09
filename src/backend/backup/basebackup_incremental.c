@@ -157,7 +157,7 @@ CreateIncrementalBackupInfo(MemoryContext mcxt)
 
 	oldcontext = MemoryContextSwitchTo(mcxt);
 
-	ib = palloc0(sizeof(IncrementalBackupInfo));
+	ib = palloc0_object(IncrementalBackupInfo);
 	ib->mcxt = mcxt;
 	initStringInfo(&ib->buf);
 
@@ -169,7 +169,7 @@ CreateIncrementalBackupInfo(MemoryContext mcxt)
 	 */
 	ib->manifest_files = backup_file_create(mcxt, 10000, NULL);
 
-	context = palloc0(sizeof(JsonManifestParseContext));
+	context = palloc0_object(JsonManifestParseContext);
 	/* Parse the manifest. */
 	context->private_data = ib;
 	context->version_cb = manifest_process_version;
@@ -993,7 +993,7 @@ manifest_process_wal_range(JsonManifestParseContext *context,
 						   XLogRecPtr end_lsn)
 {
 	IncrementalBackupInfo *ib = context->private_data;
-	backup_wal_range *range = palloc(sizeof(backup_wal_range));
+	backup_wal_range *range = palloc_object(backup_wal_range);
 
 	range->tli = tli;
 	range->start_lsn = start_lsn;

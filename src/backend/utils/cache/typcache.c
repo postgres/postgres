@@ -2764,7 +2764,7 @@ load_enum_cache_data(TypeCacheEntry *tcache)
 	 * through.
 	 */
 	maxitems = 64;
-	items = (EnumItem *) palloc(sizeof(EnumItem) * maxitems);
+	items = palloc_array(EnumItem, maxitems);
 	numitems = 0;
 
 	/* Scan pg_enum for the members of the target enum type. */

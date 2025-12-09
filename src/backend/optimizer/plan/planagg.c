@@ -336,7 +336,7 @@ build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,
 	 * than before.  (This means that when we are done, there will be no Vars
 	 * of level 1, which is why the subquery can become an initplan.)
 	 */
-	subroot = (PlannerInfo *) palloc(sizeof(PlannerInfo));
+	subroot = palloc_object(PlannerInfo);
 	memcpy(subroot, root, sizeof(PlannerInfo));
 	subroot->query_level++;
 	subroot->parent_root = root;

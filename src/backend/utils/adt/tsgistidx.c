@@ -212,7 +212,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			res = ressign;
 		}
 
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -231,7 +231,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 		}
 
 		res = gtsvector_alloc(SIGNKEY | ALLISTRUE, siglen, sign);
-		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		retval = palloc_object(GISTENTRY);
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
 					  entry->offset, false);
@@ -251,7 +251,7 @@ gtsvector_decompress(PG_FUNCTION_ARGS)
 
 	if (key != (SignTSVector *) DatumGetPointer(entry->key))
 	{
-		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+		GISTENTRY  *retval = palloc_object(GISTENTRY);
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
@@ -641,7 +641,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	v->spl_left = (OffsetNumber *) palloc(nbytes);
 	v->spl_right = (OffsetNumber *) palloc(nbytes);
 
-	cache = (CACHESIGN *) palloc(sizeof(CACHESIGN) * (maxoff + 2));
+	cache = palloc_array(CACHESIGN, maxoff + 2);
 	cache_sign = palloc(siglen * (maxoff + 2));
 
 	for (j = 0; j < maxoff + 2; j++)
@@ -688,7 +688,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	maxoff = OffsetNumberNext(maxoff);
 	fillcache(&cache[maxoff], GETENTRY(entryvec, maxoff), siglen);
 	/* sort before ... */
-	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	costvector = palloc_array(SPLITCOST, maxoff);
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		costvector[j - 1].pos = j;

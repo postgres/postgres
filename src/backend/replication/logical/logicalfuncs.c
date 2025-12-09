@@ -140,7 +140,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 	arr = PG_GETARG_ARRAYTYPE_P(3);
 
 	/* state to write output to */
-	p = palloc0(sizeof(DecodingOutputState));
+	p = palloc0_object(DecodingOutputState);
 
 	p->binary_output = binary;
 

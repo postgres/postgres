@@ -1672,7 +1672,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
 
-		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
+		rtc = palloc_object(RelToCluster);
 		rtc->tableOid = index->indrelid;
 		rtc->indexOid = index->indexrelid;
 		rtcs = lappend(rtcs, rtc);
@@ -1726,7 +1726,7 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 		/* Use a permanent memory context for the result list */
 		old_context = MemoryContextSwitchTo(cluster_context);
 
-		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
+		rtc = palloc_object(RelToCluster);
 		rtc->tableOid = relid;
 		rtc->indexOid = indexrelid;
 		rtcs = lappend(rtcs, rtc);

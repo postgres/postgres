@@ -261,8 +261,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 				 * just forget any excess entries.
 				 */
 				if (so->killedItems == NULL)
-					so->killedItems = (int *)
-						palloc(MaxTIDsPerBTreePage * sizeof(int));
+					so->killedItems = palloc_array(int, MaxTIDsPerBTreePage);
 				if (so->numKilled < MaxTIDsPerBTreePage)
 					so->killedItems[so->numKilled++] = so->currPos.itemIndex;
 			}
@@ -346,7 +345,7 @@ btbeginscan(Relation rel, int nkeys, int norderbys)
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
 	/* allocate private workspace */
-	so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
+	so = palloc_object(BTScanOpaqueData);
 	BTScanPosInvalidate(so->currPos);
 	BTScanPosInvalidate(so->markPos);
 	if (scan->numberOfKeys > 0)
@@ -1140,7 +1139,7 @@ btbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 	/* Establish the vacuum cycle ID to use for this scan */
 	/* The ENSURE stuff ensures we clean up shared memory on failure */
@@ -1201,7 +1200,7 @@ btvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		 * We handle the problem by making num_index_tuples an estimate in
 		 * cleanup-only case.
 		 */
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 		btvacuumscan(info, stats, NULL, NULL, 0);
 		stats->estimated_count = true;
 	}

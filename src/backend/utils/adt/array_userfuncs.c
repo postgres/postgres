@@ -433,8 +433,8 @@ array_cat(PG_FUNCTION_ARGS)
 		 * themselves) of the input argument arrays
 		 */
 		ndims = ndims1;
-		dims = (int *) palloc(ndims * sizeof(int));
-		lbs = (int *) palloc(ndims * sizeof(int));
+		dims = palloc_array(int, ndims);
+		lbs = palloc_array(int, ndims);
 
 		dims[0] = dims1[0] + dims2[0];
 		lbs[0] = lbs1[0];
@@ -459,8 +459,8 @@ array_cat(PG_FUNCTION_ARGS)
 		 * the first argument inserted at the front of the outer dimension
 		 */
 		ndims = ndims2;
-		dims = (int *) palloc(ndims * sizeof(int));
-		lbs = (int *) palloc(ndims * sizeof(int));
+		dims = palloc_array(int, ndims);
+		lbs = palloc_array(int, ndims);
 		memcpy(dims, dims2, ndims * sizeof(int));
 		memcpy(lbs, lbs2, ndims * sizeof(int));
 
@@ -487,8 +487,8 @@ array_cat(PG_FUNCTION_ARGS)
 		 * second argument appended to the end of the outer dimension
 		 */
 		ndims = ndims1;
-		dims = (int *) palloc(ndims * sizeof(int));
-		lbs = (int *) palloc(ndims * sizeof(int));
+		dims = palloc_array(int, ndims);
+		lbs = palloc_array(int, ndims);
 		memcpy(dims, dims1, ndims * sizeof(int));
 		memcpy(lbs, lbs1, ndims * sizeof(int));
 

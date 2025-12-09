@@ -75,7 +75,7 @@ bbsink_lz4_new(bbsink *next, pg_compress_specification *compress)
 	compresslevel = compress->level;
 	Assert(compresslevel >= 0 && compresslevel <= 12);
 
-	sink = palloc0(sizeof(bbsink_lz4));
+	sink = palloc0_object(bbsink_lz4);
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_lz4_ops;
 	sink->base.bbs_next = next;
 	sink->compresslevel = compresslevel;

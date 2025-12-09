@@ -1904,7 +1904,7 @@ AddRoleMems(Oid currentUserId, const char *rolename, Oid roleid,
 		else
 		{
 			Oid			objectId;
-			Oid		   *newmembers = palloc(sizeof(Oid));
+			Oid		   *newmembers = palloc_object(Oid);
 
 			/*
 			 * The values for these options can be taken directly from 'popt'.
@@ -2295,7 +2295,7 @@ initialize_revoke_actions(CatCList *memlist)
 	if (memlist->n_members == 0)
 		return NULL;
 
-	result = palloc(sizeof(RevokeRoleGrantAction) * memlist->n_members);
+	result = palloc_array(RevokeRoleGrantAction, memlist->n_members);
 	for (i = 0; i < memlist->n_members; i++)
 		result[i] = RRG_NOOP;
 	return result;

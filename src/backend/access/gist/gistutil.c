@@ -100,7 +100,7 @@ gistextractpage(Page page, int *len /* out */ )
 
 	maxoff = PageGetMaxOffsetNumber(page);
 	*len = maxoff;
-	itvec = palloc(sizeof(IndexTuple) * maxoff);
+	itvec = palloc_array(IndexTuple, maxoff);
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 		itvec[i - FirstOffsetNumber] = (IndexTuple) PageGetItem(page, PageGetItemId(page, i));
 
@@ -113,7 +113,7 @@ gistextractpage(Page page, int *len /* out */ )
 IndexTuple *
 gistjoinvector(IndexTuple *itvec, int *len, IndexTuple *additvec, int addlen)
 {
-	itvec = (IndexTuple *) repalloc(itvec, sizeof(IndexTuple) * ((*len) + addlen));
+	itvec = repalloc_array(itvec, IndexTuple, (*len) + addlen);
 	memmove(&itvec[*len], additvec, sizeof(IndexTuple) * addlen);
 	*len += addlen;
 	return itvec;

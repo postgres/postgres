@@ -1599,7 +1599,7 @@ DropRelationFiles(RelFileLocator *delrels, int ndelrels, bool isRedo)
 	SMgrRelation *srels;
 	int			i;
 
-	srels = palloc(sizeof(SMgrRelation) * ndelrels);
+	srels = palloc_array(SMgrRelation, ndelrels);
 	for (i = 0; i < ndelrels; i++)
 	{
 		SMgrRelation srel = smgropen(delrels[i], INVALID_PROC_NUMBER);

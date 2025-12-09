@@ -514,7 +514,7 @@ find_tabstat_entry(Oid rel_id)
 	}
 
 	tabentry = (PgStat_TableStatus *) entry_ref->pending;
-	tablestatus = palloc(sizeof(PgStat_TableStatus));
+	tablestatus = palloc_object(PgStat_TableStatus);
 	*tablestatus = *tabentry;
 
 	/*

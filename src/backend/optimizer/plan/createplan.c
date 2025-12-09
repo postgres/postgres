@@ -2207,7 +2207,7 @@ remap_groupColIdx(PlannerInfo *root, List *groupClause)
 
 	Assert(grouping_map);
 
-	new_grpColIdx = palloc0(sizeof(AttrNumber) * list_length(groupClause));
+	new_grpColIdx = palloc0_array(AttrNumber, list_length(groupClause));
 
 	i = 0;
 	foreach(lc, groupClause)
@@ -2496,9 +2496,9 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 	 * Convert SortGroupClause lists into arrays of attr indexes and equality
 	 * operators, as wanted by executor.
 	 */
-	partColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numPart);
-	partOperators = (Oid *) palloc(sizeof(Oid) * numPart);
-	partCollations = (Oid *) palloc(sizeof(Oid) * numPart);
+	partColIdx = palloc_array(AttrNumber, numPart);
+	partOperators = palloc_array(Oid, numPart);
+	partCollations = palloc_array(Oid, numPart);
 
 	partNumCols = 0;
 	foreach(lc, wc->partitionClause)
@@ -2513,9 +2513,9 @@ create_windowagg_plan(PlannerInfo *root, WindowAggPath *best_path)
 		partNumCols++;
 	}
 
-	ordColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numOrder);
-	ordOperators = (Oid *) palloc(sizeof(Oid) * numOrder);
-	ordCollations = (Oid *) palloc(sizeof(Oid) * numOrder);
+	ordColIdx = palloc_array(AttrNumber, numOrder);
+	ordOperators = palloc_array(Oid, numOrder);
+	ordCollations = palloc_array(Oid, numOrder);
 
 	ordNumCols = 0;
 	foreach(lc, wc->orderClause)
@@ -5862,9 +5862,9 @@ make_recursive_union(List *tlist,
 		Oid		   *dupCollations;
 		ListCell   *slitem;
 
-		dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
-		dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
-		dupCollations = (Oid *) palloc(sizeof(Oid) * numCols);
+		dupColIdx = palloc_array(AttrNumber, numCols);
+		dupOperators = palloc_array(Oid, numCols);
+		dupCollations = palloc_array(Oid, numCols);
 
 		foreach(slitem, distinctList)
 		{
@@ -6694,9 +6694,9 @@ make_unique_from_pathkeys(Plan *lefttree, List *pathkeys, int numCols,
 	 * prepare_sort_from_pathkeys ... maybe unify sometime?
 	 */
 	Assert(numCols >= 0 && numCols <= list_length(pathkeys));
-	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
-	uniqOperators = (Oid *) palloc(sizeof(Oid) * numCols);
-	uniqCollations = (Oid *) palloc(sizeof(Oid) * numCols);
+	uniqColIdx = palloc_array(AttrNumber, numCols);
+	uniqOperators = palloc_array(Oid, numCols);
+	uniqCollations = palloc_array(Oid, numCols);
 
 	foreach(lc, pathkeys)
 	{
@@ -6831,10 +6831,10 @@ make_setop(SetOpCmd cmd, SetOpStrategy strategy,
 	 * convert SortGroupClause list into arrays of attr indexes and comparison
 	 * operators, as wanted by executor
 	 */
-	cmpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
-	cmpOperators = (Oid *) palloc(sizeof(Oid) * numCols);
-	cmpCollations = (Oid *) palloc(sizeof(Oid) * numCols);
-	cmpNullsFirst = (bool *) palloc(sizeof(bool) * numCols);
+	cmpColIdx = palloc_array(AttrNumber, numCols);
+	cmpOperators = palloc_array(Oid, numCols);
+	cmpCollations = palloc_array(Oid, numCols);
+	cmpNullsFirst = palloc_array(bool, numCols);
 
 	foreach(slitem, groupList)
 	{

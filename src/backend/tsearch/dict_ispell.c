@@ -37,7 +37,7 @@ dispell_init(PG_FUNCTION_ARGS)
 				stoploaded = false;
 	ListCell   *l;
 
-	d = (DictISpell *) palloc0(sizeof(DictISpell));
+	d = palloc0_object(DictISpell);
 
 	NIStartBuild(&(d->obj));
 

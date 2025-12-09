@@ -422,7 +422,7 @@ AllocateRelationDesc(Form_pg_class relp)
 	/*
 	 * allocate and zero space for new relation descriptor
 	 */
-	relation = (Relation) palloc0(sizeof(RelationData));
+	relation = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1902,7 +1902,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * allocate new relation desc, clear all fields of reldesc
 	 */
-	relation = (Relation) palloc0(sizeof(RelationData));
+	relation = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_smgr = NULL;
@@ -1994,7 +1994,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/* mark not-null status */
 	if (has_not_null)
 	{
-		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *constr = palloc0_object(TupleConstr);
 
 		constr->has_not_null = true;
 		relation->rd_att->constr = constr;
@@ -3579,7 +3579,7 @@ RelationBuildLocalRelation(const char *relname,
 	/*
 	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
-	rel = (Relation) palloc0(sizeof(RelationData));
+	rel = palloc0_object(RelationData);
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
@@ -3627,7 +3627,7 @@ RelationBuildLocalRelation(const char *relname,
 
 	if (has_not_null)
 	{
-		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *constr = palloc0_object(TupleConstr);
 
 		constr->has_not_null = true;
 		rel->rd_att->constr = constr;
@@ -5670,9 +5670,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 	indnkeyatts = IndexRelationGetNumberOfKeyAttributes(indexRelation);
 
 	/* Allocate result space in caller context */
-	*operators = ops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*procs = funcs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	*strategies = strats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	*operators = ops = palloc_array(Oid, indnkeyatts);
+	*procs = funcs = palloc_array(Oid, indnkeyatts);
+	*strategies = strats = palloc_array(uint16, indnkeyatts);
 
 	/* Quick exit if we have the data cached already */
 	if (indexRelation->rd_exclstrats != NULL)
@@ -5763,9 +5763,9 @@ RelationGetExclusionInfo(Relation indexRelation,
 
 	/* Save a copy of the results in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(indexRelation->rd_indexcxt);
-	indexRelation->rd_exclops = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclprocs = (Oid *) palloc(sizeof(Oid) * indnkeyatts);
-	indexRelation->rd_exclstrats = (uint16 *) palloc(sizeof(uint16) * indnkeyatts);
+	indexRelation->rd_exclops = palloc_array(Oid, indnkeyatts);
+	indexRelation->rd_exclprocs = palloc_array(Oid, indnkeyatts);
+	indexRelation->rd_exclstrats = palloc_array(uint16, indnkeyatts);
 	memcpy(indexRelation->rd_exclops, ops, sizeof(Oid) * indnkeyatts);
 	memcpy(indexRelation->rd_exclprocs, funcs, sizeof(Oid) * indnkeyatts);
 	memcpy(indexRelation->rd_exclstrats, strats, sizeof(uint16) * indnkeyatts);
@@ -5959,7 +5959,7 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 
 	/* Now save copy of the descriptor in the relcache entry. */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-	relation->rd_pubdesc = palloc(sizeof(PublicationDesc));
+	relation->rd_pubdesc = palloc_object(PublicationDesc);
 	memcpy(relation->rd_pubdesc, pubdesc, sizeof(PublicationDesc));
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -5967,7 +5967,7 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 static bytea **
 CopyIndexAttOptions(bytea **srcopts, int natts)
 {
-	bytea	  **opts = palloc(sizeof(*opts) * natts);
+	bytea	  **opts = palloc_array(bytea *, natts);
 
 	for (int i = 0; i < natts; i++)
 	{
@@ -5999,7 +5999,7 @@ RelationGetIndexAttOptions(Relation relation, bool copy)
 		return copy ? CopyIndexAttOptions(opts, natts) : opts;
 
 	/* Get and parse opclass options. */
-	opts = palloc0(sizeof(*opts) * natts);
+	opts = palloc0_array(bytea *, natts);
 
 	for (i = 0; i < natts; i++)
 	{
@@ -6292,7 +6292,7 @@ load_relcache_init_file(bool shared)
 		/* mark not-null status */
 		if (has_not_null)
 		{
-			TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+			TupleConstr *constr = palloc0_object(TupleConstr);
 
 			constr->has_not_null = true;
 			rel->rd_att->constr = constr;

@@ -276,7 +276,7 @@ CreateExplainSerializeDestReceiver(ExplainState *es)
 {
 	SerializeDestReceiver *self;
 
-	self = (SerializeDestReceiver *) palloc0(sizeof(SerializeDestReceiver));
+	self = palloc0_object(SerializeDestReceiver);
 
 	self->pub.receiveSlot = serializeAnalyzeReceive;
 	self->pub.rStartup = serializeAnalyzeStartup;

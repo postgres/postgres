@@ -228,7 +228,7 @@ tablesample_init(SampleScanState *scanstate)
 	ListCell   *arg;
 
 	scanstate->donetuples = 0;
-	params = (Datum *) palloc(list_length(scanstate->args) * sizeof(Datum));
+	params = palloc_array(Datum, list_length(scanstate->args));
 
 	i = 0;
 	foreach(arg, scanstate->args)

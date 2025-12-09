@@ -320,7 +320,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		cutoff_freq = 9 * lexeme_no / bucket_width;
 
 		i = hash_get_num_entries(lexemes_tab);	/* surely enough space */
-		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
+		sort_table = palloc_array(TrackItem *, i);
 
 		hash_seq_init(&scan_status, lexemes_tab);
 		track_len = 0;
@@ -412,8 +412,8 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 * create that for a tsvector column, since null elements aren't
 			 * possible.)
 			 */
-			mcelem_values = (Datum *) palloc(num_mcelem * sizeof(Datum));
-			mcelem_freqs = (float4 *) palloc((num_mcelem + 2) * sizeof(float4));
+			mcelem_values = palloc_array(Datum, num_mcelem);
+			mcelem_freqs = palloc_array(float4, num_mcelem + 2);
 
 			/*
 			 * See comments above about use of nonnull_cnt as the divisor for

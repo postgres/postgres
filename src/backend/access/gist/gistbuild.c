@@ -346,7 +346,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Return statistics
 	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 
 	result->heap_tuples = reltuples;
 	result->index_tuples = (double) buildstate.indtuples;
@@ -409,7 +409,7 @@ gist_indexsortbuild(GISTBuildState *state)
 	state->bulkstate = smgr_bulk_start_rel(state->indexrel, MAIN_FORKNUM);
 
 	/* Allocate a temporary buffer for the first leaf page batch. */
-	levelstate = palloc0(sizeof(GistSortedBuildLevelState));
+	levelstate = palloc0_object(GistSortedBuildLevelState);
 	levelstate->pages[0] = palloc(BLCKSZ);
 	levelstate->parent = NULL;
 	gistinitpage(levelstate->pages[0], F_LEAF);
@@ -526,7 +526,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 	else
 	{
 		/* Create split layout from single page */
-		dist = (SplitPageLayout *) palloc0(sizeof(SplitPageLayout));
+		dist = palloc0_object(SplitPageLayout);
 		union_tuple = gistunion(state->indexrel, itvec, vect_len,
 								state->giststate);
 		dist->itup = union_tuple;
@@ -597,7 +597,7 @@ gist_indexsortbuild_levelstate_flush(GISTBuildState *state,
 		parent = levelstate->parent;
 		if (parent == NULL)
 		{
-			parent = palloc0(sizeof(GistSortedBuildLevelState));
+			parent = palloc0_object(GistSortedBuildLevelState);
 			parent->pages[0] = palloc(BLCKSZ);
 			parent->parent = NULL;
 			gistinitpage(parent->pages[0], 0);
@@ -1154,7 +1154,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 
 		/* Create an array of all the downlink tuples */
 		ndownlinks = list_length(splitinfo);
-		downlinks = (IndexTuple *) palloc(sizeof(IndexTuple) * ndownlinks);
+		downlinks = palloc_array(IndexTuple, ndownlinks);
 		i = 0;
 		foreach(lc, splitinfo)
 		{

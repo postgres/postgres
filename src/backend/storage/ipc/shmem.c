@@ -599,7 +599,7 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	InitMaterializedSRF(fcinfo, 0);
 
 	max_nodes = pg_numa_get_max_node();
-	nodes = palloc(sizeof(Size) * (max_nodes + 1));
+	nodes = palloc_array(Size, max_nodes + 1);
 
 	/*
 	 * Shared memory allocations can vary in size and may not align with OS
@@ -624,8 +624,8 @@ pg_get_shmem_allocations_numa(PG_FUNCTION_ARGS)
 	 * them using only fraction of the total pages.
 	 */
 	shm_total_page_count = (ShmemSegHdr->totalsize / os_page_size) + 1;
-	page_ptrs = palloc0(sizeof(void *) * shm_total_page_count);
-	pages_status = palloc(sizeof(int) * shm_total_page_count);
+	page_ptrs = palloc0_array(void *, shm_total_page_count);
+	pages_status = palloc_array(int, shm_total_page_count);
 
 	if (firstNumaTouch)
 		elog(DEBUG1, "NUMA: page-faulting shared memory segments for proper NUMA readouts");

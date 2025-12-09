@@ -426,7 +426,7 @@ CreatePartitionDirectory(MemoryContext mcxt, bool omit_detached)
 	PartitionDirectory pdir;
 	HASHCTL		ctl;
 
-	pdir = palloc(sizeof(PartitionDirectoryData));
+	pdir = palloc_object(PartitionDirectoryData);
 	pdir->pdir_mcxt = mcxt;
 
 	ctl.keysize = sizeof(Oid);

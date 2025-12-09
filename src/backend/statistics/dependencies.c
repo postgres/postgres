@@ -150,7 +150,7 @@ generate_dependencies_recurse(DependencyGenerator state, int index,
 static void
 generate_dependencies(DependencyGenerator state)
 {
-	AttrNumber *current = (AttrNumber *) palloc0(sizeof(AttrNumber) * state->k);
+	AttrNumber *current = palloc0_array(AttrNumber, state->k);
 
 	generate_dependencies_recurse(state, 0, 0, current);
 
@@ -171,8 +171,8 @@ DependencyGenerator_init(int n, int k)
 	Assert((n >= k) && (k > 0));
 
 	/* allocate the DependencyGenerator state */
-	state = (DependencyGenerator) palloc0(sizeof(DependencyGeneratorData));
-	state->dependencies = (AttrNumber *) palloc(k * sizeof(AttrNumber));
+	state = palloc0_object(DependencyGeneratorData);
+	state->dependencies = palloc_array(AttrNumber, k);
 
 	state->ndependencies = 0;
 	state->current = 0;
@@ -237,7 +237,7 @@ dependency_degree(StatsBuildData *data, int k, AttrNumber *dependency)
 	 * Translate the array of indexes to regular attnums for the dependency
 	 * (we will need this to identify the columns in StatsBuildData).
 	 */
-	attnums_dep = (AttrNumber *) palloc(k * sizeof(AttrNumber));
+	attnums_dep = palloc_array(AttrNumber, k);
 	for (i = 0; i < k; i++)
 		attnums_dep[i] = data->attnums[dependency[i]];
 
@@ -402,8 +402,7 @@ statext_dependencies_build(StatsBuildData *data)
 			/* initialize the list of dependencies */
 			if (dependencies == NULL)
 			{
-				dependencies
-					= (MVDependencies *) palloc0(sizeof(MVDependencies));
+				dependencies = palloc0_object(MVDependencies);
 
 				dependencies->magic = STATS_DEPS_MAGIC;
 				dependencies->type = STATS_DEPS_TYPE_BASIC;
@@ -505,7 +504,7 @@ statext_dependencies_deserialize(bytea *data)
 			 VARSIZE_ANY_EXHDR(data), SizeOfHeader);
 
 	/* read the MVDependencies header */
-	dependencies = (MVDependencies *) palloc0(sizeof(MVDependencies));
+	dependencies = palloc0_object(MVDependencies);
 
 	/* initialize pointer to the data part (skip the varlena header) */
 	tmp = VARDATA_ANY(data);
@@ -959,7 +958,7 @@ clauselist_apply_dependencies(PlannerInfo *root, List *clauses,
 	 * and mark all the corresponding clauses as estimated.
 	 */
 	nattrs = bms_num_members(attnums);
-	attr_sel = (Selectivity *) palloc(sizeof(Selectivity) * nattrs);
+	attr_sel = palloc_array(Selectivity, nattrs);
 
 	attidx = 0;
 	i = -1;
@@ -1306,8 +1305,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	if (!has_stats_of_kind(rel->statlist, STATS_EXT_DEPENDENCIES))
 		return 1.0;
 
-	list_attnums = (AttrNumber *) palloc(sizeof(AttrNumber) *
-										 list_length(clauses));
+	list_attnums = palloc_array(AttrNumber, list_length(clauses));
 
 	/*
 	 * We allocate space as if every clause was a unique expression, although
@@ -1315,7 +1313,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 * we'll translate to attnums, and there might be duplicates. But it's
 	 * easier and cheaper to just do one allocation than repalloc later.
 	 */
-	unique_exprs = (Node **) palloc(sizeof(Node *) * list_length(clauses));
+	unique_exprs = palloc_array(Node *, list_length(clauses));
 	unique_exprs_cnt = 0;
 
 	/*
@@ -1468,8 +1466,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 * make it just the right size, but it's likely wasteful anyway thanks to
 	 * moving the freed chunks to freelists etc.
 	 */
-	func_dependencies = (MVDependencies **) palloc(sizeof(MVDependencies *) *
-												   list_length(rel->statlist));
+	func_dependencies = palloc_array(MVDependencies *, list_length(rel->statlist));
 	nfunc_dependencies = 0;
 	total_ndeps = 0;
 
@@ -1692,8 +1689,7 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 	 * Work out which dependencies we can apply, starting with the
 	 * widest/strongest ones, and proceeding to smaller/weaker ones.
 	 */
-	dependencies = (MVDependency **) palloc(sizeof(MVDependency *) *
-											total_ndeps);
+	dependencies = palloc_array(MVDependency *, total_ndeps);
 	ndependencies = 0;
 
 	while (true)

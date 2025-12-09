@@ -1330,7 +1330,7 @@ create_internal(void *place, size_t size,
 	 * area.  Other backends will need to obtain their own dsa_area object by
 	 * attaching.
 	 */
-	area = palloc(sizeof(dsa_area));
+	area = palloc_object(dsa_area);
 	area->control = control;
 	area->resowner = CurrentResourceOwner;
 	memset(area->segment_maps, 0, sizeof(dsa_segment_map) * DSA_MAX_SEGMENTS);
@@ -1386,7 +1386,7 @@ attach_internal(void *place, dsm_segment *segment, dsa_handle handle)
 		   (DSA_SEGMENT_HEADER_MAGIC ^ handle ^ 0));
 
 	/* Build the backend-local area object. */
-	area = palloc(sizeof(dsa_area));
+	area = palloc_object(dsa_area);
 	area->control = control;
 	area->resowner = CurrentResourceOwner;
 	memset(&area->segment_maps[0], 0,

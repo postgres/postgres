@@ -2213,7 +2213,7 @@ preprocess_grouping_sets(PlannerInfo *root)
 	List	   *sets;
 	int			maxref = 0;
 	ListCell   *lc_set;
-	grouping_sets_data *gd = palloc0(sizeof(grouping_sets_data));
+	grouping_sets_data *gd = palloc0_object(grouping_sets_data);
 
 	/*
 	 * We don't currently make any attempt to optimize the groupClause when
@@ -5977,8 +5977,8 @@ select_active_windows(PlannerInfo *root, WindowFuncLists *wflists)
 	List	   *result = NIL;
 	ListCell   *lc;
 	int			nActive = 0;
-	WindowClauseSortData *actives = palloc(sizeof(WindowClauseSortData)
-										   * list_length(windowClause));
+	WindowClauseSortData *actives = palloc_array(WindowClauseSortData,
+												 list_length(windowClause));
 
 	/* First, construct an array of the active windows */
 	foreach(lc, windowClause)

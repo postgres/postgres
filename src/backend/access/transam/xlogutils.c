@@ -574,7 +574,7 @@ CreateFakeRelcacheEntry(RelFileLocator rlocator)
 	Relation	rel;
 
 	/* Allocate the Relation struct and all related space in one block. */
-	fakeentry = palloc0(sizeof(FakeRelCacheEntryData));
+	fakeentry = palloc0_object(FakeRelCacheEntryData);
 	rel = (Relation) fakeentry;
 
 	rel->rd_rel = &fakeentry->pgc;

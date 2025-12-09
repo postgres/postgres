@@ -500,7 +500,7 @@ llvm_copy_attributes_at_index(LLVMValueRef v_from, LLVMValueRef v_to, uint32 ind
 	if (num_attributes == 0)
 		return;
 
-	attrs = palloc(sizeof(LLVMAttributeRef) * num_attributes);
+	attrs = palloc_array(LLVMAttributeRef, num_attributes);
 	LLVMGetAttributesAtIndex(v_from, index, attrs);
 
 	for (int attno = 0; attno < num_attributes; attno++)
@@ -1123,9 +1123,9 @@ llvm_resolve_symbols(LLVMOrcDefinitionGeneratorRef GeneratorObj, void *Ctx,
 					 LLVMOrcCLookupSet LookupSet, size_t LookupSetSize)
 {
 #if LLVM_VERSION_MAJOR > 14
-	LLVMOrcCSymbolMapPairs symbols = palloc0(sizeof(LLVMOrcCSymbolMapPair) * LookupSetSize);
+	LLVMOrcCSymbolMapPairs symbols = palloc0_array(LLVMOrcCSymbolMapPair, LookupSetSize);
 #else
-	LLVMOrcCSymbolMapPairs symbols = palloc0(sizeof(LLVMJITCSymbolMapPair) * LookupSetSize);
+	LLVMOrcCSymbolMapPairs symbols = palloc0_array(LLVMJITCSymbolMapPair, LookupSetSize);
 #endif
 	LLVMErrorRef error;
 	LLVMOrcMaterializationUnitRef mu;

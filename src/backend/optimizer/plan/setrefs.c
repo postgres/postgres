@@ -312,7 +312,7 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 			   root->simple_rte_array[rc->rti] != NULL);
 
 		/* flat copy is enough since all fields are scalars */
-		newrc = (PlanRowMark *) palloc(sizeof(PlanRowMark));
+		newrc = palloc_object(PlanRowMark);
 		memcpy(newrc, rc, sizeof(PlanRowMark));
 
 		/* adjust indexes ... but *not* the rowmarkId */
@@ -545,7 +545,7 @@ add_rte_to_flat_rtable(PlannerGlobal *glob, List *rteperminfos,
 	RangeTblEntry *newrte;
 
 	/* flat copy to duplicate all the scalar fields */
-	newrte = (RangeTblEntry *) palloc(sizeof(RangeTblEntry));
+	newrte = palloc_object(RangeTblEntry);
 	memcpy(newrte, rte, sizeof(RangeTblEntry));
 
 	/* zap unneeded sub-structure */
@@ -2028,7 +2028,7 @@ offset_relid_set(Relids relids, int rtoffset)
 static inline Var *
 copyVar(Var *var)
 {
-	Var		   *newvar = (Var *) palloc(sizeof(Var));
+	Var		   *newvar = palloc_object(Var);
 
 	*newvar = *var;
 	return newvar;

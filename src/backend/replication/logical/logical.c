@@ -172,7 +172,7 @@ StartupDecodingContext(List *output_plugin_options,
 									"Logical decoding context",
 									ALLOCSET_DEFAULT_SIZES);
 	old_context = MemoryContextSwitchTo(context);
-	ctx = palloc0(sizeof(LogicalDecodingContext));
+	ctx = palloc0_object(LogicalDecodingContext);
 
 	ctx->context = context;
 

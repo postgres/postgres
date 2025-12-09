@@ -431,7 +431,7 @@ ScanSourceDatabasePgClassTuple(HeapTupleData *tuple, Oid tbid, Oid dbid,
 			 classForm->oid);
 
 	/* Prepare a rel info element and add it to the list. */
-	relinfo = (CreateDBRelInfo *) palloc(sizeof(CreateDBRelInfo));
+	relinfo = palloc_object(CreateDBRelInfo);
 	if (OidIsValid(classForm->reltablespace))
 		relinfo->rlocator.spcOid = classForm->reltablespace;
 	else

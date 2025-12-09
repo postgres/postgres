@@ -776,7 +776,7 @@ register_reloptions_validator(local_relopts *relopts, relopts_validator validato
 static void
 add_local_reloption(local_relopts *relopts, relopt_gen *newoption, int offset)
 {
-	local_relopt *opt = palloc(sizeof(*opt));
+	local_relopt *opt = palloc_object(local_relopt);
 
 	Assert(offset < relopts->relopt_struct_size);
 
@@ -1570,7 +1570,7 @@ static relopt_value *
 parseLocalRelOptions(local_relopts *relopts, Datum options, bool validate)
 {
 	int			nopts = list_length(relopts->options);
-	relopt_value *values = palloc(sizeof(*values) * nopts);
+	relopt_value *values = palloc_array(relopt_value, nopts);
 	ListCell   *lc;
 	int			i = 0;
 
@@ -1991,7 +1991,7 @@ void *
 build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 {
 	int			noptions = list_length(relopts->options);
-	relopt_parse_elt *elems = palloc(sizeof(*elems) * noptions);
+	relopt_parse_elt *elems = palloc_array(relopt_parse_elt, noptions);
 	relopt_value *vals;
 	void	   *opts;
 	int			i = 0;

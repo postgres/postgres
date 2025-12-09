@@ -705,9 +705,9 @@ SyncRepGetNthLatestSyncRecPtr(XLogRecPtr *writePtr,
 	/* Should have enough candidates, or somebody messed up */
 	Assert(nth > 0 && nth <= num_standbys);
 
-	write_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
-	flush_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
-	apply_array = (XLogRecPtr *) palloc(sizeof(XLogRecPtr) * num_standbys);
+	write_array = palloc_array(XLogRecPtr, num_standbys);
+	flush_array = palloc_array(XLogRecPtr, num_standbys);
+	apply_array = palloc_array(XLogRecPtr, num_standbys);
 
 	for (i = 0; i < num_standbys; i++)
 	{
@@ -757,8 +757,7 @@ SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys)
 	int			n;
 
 	/* Create result array */
-	*standbys = (SyncRepStandbyData *)
-		palloc(max_wal_senders * sizeof(SyncRepStandbyData));
+	*standbys = palloc_array(SyncRepStandbyData, max_wal_senders);
 
 	/* Quick exit if sync replication is not requested */
 	if (SyncRepConfig == NULL)

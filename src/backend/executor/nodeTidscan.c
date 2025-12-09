@@ -78,7 +78,7 @@ TidExprListCreate(TidScanState *tidstate)
 	foreach(l, node->tidquals)
 	{
 		Expr	   *expr = (Expr *) lfirst(l);
-		TidExpr    *tidexpr = (TidExpr *) palloc0(sizeof(TidExpr));
+		TidExpr    *tidexpr = palloc0_object(TidExpr);
 
 		if (is_opclause(expr))
 		{

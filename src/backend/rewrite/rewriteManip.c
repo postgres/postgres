@@ -1590,7 +1590,7 @@ map_variable_attnos_mutator(Node *node,
 			var->varlevelsup == context->sublevels_up)
 		{
 			/* Found a matching variable, make the substitution */
-			Var		   *newvar = (Var *) palloc(sizeof(Var));
+			Var		   *newvar = palloc_object(Var);
 			int			attno = var->varattno;
 
 			*newvar = *var;		/* initially copy all fields of the Var */
@@ -1661,7 +1661,7 @@ map_variable_attnos_mutator(Node *node,
 			context->to_rowtype != var->vartype)
 		{
 			ConvertRowtypeExpr *newnode;
-			Var		   *newvar = (Var *) palloc(sizeof(Var));
+			Var		   *newvar = palloc_object(Var);
 
 			/* whole-row variable, warn caller */
 			*(context->found_whole_row) = true;
@@ -1674,7 +1674,7 @@ map_variable_attnos_mutator(Node *node,
 			/* Var itself is changed to the requested type. */
 			newvar->vartype = context->to_rowtype;
 
-			newnode = (ConvertRowtypeExpr *) palloc(sizeof(ConvertRowtypeExpr));
+			newnode = palloc_object(ConvertRowtypeExpr);
 			*newnode = *r;		/* initially copy all fields of the CRE */
 			newnode->arg = (Expr *) newvar;
 

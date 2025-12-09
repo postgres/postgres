@@ -2953,7 +2953,7 @@ expression_tree_mutator_impl(Node *node,
 	 */
 
 #define FLATCOPY(newnode, node, nodetype)  \
-	( (newnode) = (nodetype *) palloc(sizeof(nodetype)), \
+	( (newnode) = palloc_object(nodetype), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
 
 #define MUTATE(newfield, oldfield, fieldtype)  \

@@ -59,7 +59,7 @@ static const bbsink_ops bbsink_server_ops = {
 bbsink *
 bbsink_server_new(bbsink *next, char *pathname)
 {
-	bbsink_server *sink = palloc0(sizeof(bbsink_server));
+	bbsink_server *sink = palloc0_object(bbsink_server);
 
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_server_ops;
 	sink->pathname = pathname;

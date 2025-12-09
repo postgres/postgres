@@ -178,7 +178,7 @@ pq_init(ClientSocket *client_sock)
 	int			latch_pos PG_USED_FOR_ASSERTS_ONLY;
 
 	/* allocate the Port struct and copy the ClientSocket contents to it */
-	port = palloc0(sizeof(Port));
+	port = palloc0_object(Port);
 	port->sock = client_sock->sock;
 	memcpy(&port->raddr.addr, &client_sock->raddr.addr, client_sock->raddr.salen);
 	port->raddr.salen = client_sock->raddr.salen;

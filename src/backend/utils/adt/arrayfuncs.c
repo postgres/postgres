@@ -3582,7 +3582,7 @@ construct_empty_array(Oid elmtype)
 {
 	ArrayType  *result;
 
-	result = (ArrayType *) palloc0(sizeof(ArrayType));
+	result = palloc0_object(ArrayType);
 	SET_VARSIZE(result, sizeof(ArrayType));
 	result->ndim = 0;
 	result->dataoffset = 0;
@@ -3645,9 +3645,9 @@ deconstruct_array(const ArrayType *array,
 	Assert(ARR_ELEMTYPE(array) == elmtype);
 
 	nelems = ArrayGetNItems(ARR_NDIM(array), ARR_DIMS(array));
-	*elemsp = elems = (Datum *) palloc(nelems * sizeof(Datum));
+	*elemsp = elems = palloc_array(Datum, nelems);
 	if (nullsp)
-		*nullsp = nulls = (bool *) palloc0(nelems * sizeof(bool));
+		*nullsp = nulls = palloc0_array(bool, nelems);
 	else
 		nulls = NULL;
 	*nelemsp = nelems;
@@ -4209,7 +4209,7 @@ hash_array(PG_FUNCTION_ARGS)
 			 * modify typentry, since that points directly into the type
 			 * cache.
 			 */
-			record_typentry = palloc0(sizeof(*record_typentry));
+			record_typentry = palloc0_object(TypeCacheEntry);
 			record_typentry->type_id = element_type;
 
 			/* fill in what we need below */
@@ -4597,7 +4597,7 @@ arraycontained(PG_FUNCTION_ARGS)
 ArrayIterator
 array_create_iterator(ArrayType *arr, int slice_ndim, ArrayMetaState *mstate)
 {
-	ArrayIterator iterator = palloc0(sizeof(ArrayIteratorData));
+	ArrayIterator iterator = palloc0_object(ArrayIteratorData);
 
 	/*
 	 * Sanity-check inputs --- caller should have got this right already
@@ -5944,7 +5944,7 @@ generate_subscripts(PG_FUNCTION_ARGS)
 		 * switch to memory context appropriate for multiple function calls
 		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-		fctx = (generate_subscripts_fctx *) palloc(sizeof(generate_subscripts_fctx));
+		fctx = palloc_object(generate_subscripts_fctx);
 
 		lb = AARR_LBOUND(v);
 		dimv = AARR_DIMS(v);
@@ -6291,7 +6291,7 @@ array_unnest(PG_FUNCTION_ARGS)
 		arr = PG_GETARG_ANY_ARRAY_P(0);
 
 		/* allocate memory for user context */
-		fctx = (array_unnest_fctx *) palloc(sizeof(array_unnest_fctx));
+		fctx = palloc_object(array_unnest_fctx);
 
 		/* initialize state */
 		array_iter_setup(&fctx->iter, arr);

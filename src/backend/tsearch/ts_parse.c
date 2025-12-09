@@ -99,7 +99,7 @@ LPLRemoveHead(ListParsedLex *list)
 static void
 LexizeAddLemm(LexizeData *ld, int type, char *lemm, int lenlemm)
 {
-	ParsedLex  *newpl = (ParsedLex *) palloc(sizeof(ParsedLex));
+	ParsedLex  *newpl = palloc_object(ParsedLex);
 
 	newpl->type = type;
 	newpl->lemm = lemm;

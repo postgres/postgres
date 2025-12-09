@@ -496,8 +496,8 @@ calc_hist_selectivity(TypeCacheEntry *typcache, VariableStatData *vardata,
 	 * bounds.
 	 */
 	nhist = hslot.nvalues;
-	hist_lower = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
-	hist_upper = (RangeBound *) palloc(sizeof(RangeBound) * nhist);
+	hist_lower = palloc_array(RangeBound, nhist);
+	hist_upper = palloc_array(RangeBound, nhist);
 	for (i = 0; i < nhist; i++)
 	{
 		bool		empty;

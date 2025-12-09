@@ -758,7 +758,7 @@ PrepareInplaceInvalidationState(void)
 	Assert(inplaceInvalInfo == NULL);
 
 	/* gone after WAL insertion CritSection ends, so use current context */
-	myInfo = (InvalidationInfo *) palloc0(sizeof(InvalidationInfo));
+	myInfo = palloc0_object(InvalidationInfo);
 
 	/* Stash our messages past end of the transactional messages, if any. */
 	if (transInvalInfo != NULL)

@@ -265,7 +265,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	Assert(indexRel->rd_rel->relam == BTREE_AM_OID);
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortClusterArg *) palloc0(sizeof(TuplesortClusterArg));
+	arg = palloc0_object(TuplesortClusterArg);
 
 	if (trace_sort)
 		elog(LOG,
@@ -372,7 +372,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	int			i;
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortIndexBTreeArg *) palloc(sizeof(TuplesortIndexBTreeArg));
+	arg = palloc_object(TuplesortIndexBTreeArg);
 
 	if (trace_sort)
 		elog(LOG,
@@ -453,7 +453,7 @@ tuplesort_begin_index_hash(Relation heapRel,
 	TuplesortIndexHashArg *arg;
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortIndexHashArg *) palloc(sizeof(TuplesortIndexHashArg));
+	arg = palloc_object(TuplesortIndexHashArg);
 
 	if (trace_sort)
 		elog(LOG,
@@ -502,7 +502,7 @@ tuplesort_begin_index_gist(Relation heapRel,
 	int			i;
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortIndexBTreeArg *) palloc(sizeof(TuplesortIndexBTreeArg));
+	arg = palloc_object(TuplesortIndexBTreeArg);
 
 	if (trace_sort)
 		elog(LOG,
@@ -662,7 +662,7 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	bool		typbyval;
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
-	arg = (TuplesortDatumArg *) palloc(sizeof(TuplesortDatumArg));
+	arg = palloc_object(TuplesortDatumArg);
 
 	if (trace_sort)
 		elog(LOG,
@@ -694,7 +694,7 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	base->tuples = !typbyval;
 
 	/* Prepare SortSupport data */
-	base->sortKeys = (SortSupport) palloc0(sizeof(SortSupportData));
+	base->sortKeys = palloc0_object(SortSupportData);
 
 	base->sortKeys->ssup_cxt = CurrentMemoryContext;
 	base->sortKeys->ssup_collation = sortCollation;

@@ -846,7 +846,7 @@ RelationGetNotNullConstraints(Oid relid, bool cooked, bool include_noinh)
 		{
 			CookedConstraint *cooked;
 
-			cooked = (CookedConstraint *) palloc(sizeof(CookedConstraint));
+			cooked = palloc_object(CookedConstraint);
 
 			cooked->contype = CONSTR_NOTNULL;
 			cooked->conoid = conForm->oid;

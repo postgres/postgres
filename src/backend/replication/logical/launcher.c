@@ -147,7 +147,7 @@ get_subscription_list(void)
 		 */
 		oldcxt = MemoryContextSwitchTo(resultcxt);
 
-		sub = (Subscription *) palloc0(sizeof(Subscription));
+		sub = palloc0_object(Subscription);
 		sub->oid = subform->oid;
 		sub->dbid = subform->subdbid;
 		sub->owner = subform->subowner;

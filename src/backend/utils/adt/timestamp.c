@@ -937,7 +937,7 @@ interval_in(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	}
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	switch (dtype)
 	{
@@ -1004,7 +1004,7 @@ interval_recv(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *interval;
 
-	interval = (Interval *) palloc(sizeof(Interval));
+	interval = palloc_object(Interval);
 
 	interval->time = pq_getmsgint64(buf);
 	interval->day = pq_getmsgint(buf, sizeof(interval->day));
@@ -1331,7 +1331,7 @@ interval_scale(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(1);
 	Interval   *result;
 
-	result = palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 	*result = *interval;
 
 	AdjustIntervalForTypmod(result, typmod, NULL);
@@ -1545,7 +1545,7 @@ make_interval(PG_FUNCTION_ARGS)
 	if (isinf(secs) || isnan(secs))
 		goto out_of_range;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/* years and months -> months */
 	if (pg_mul_s32_overflow(years, MONTHS_PER_YEAR, &result->month) ||
@@ -2830,7 +2830,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle infinities.
@@ -2925,7 +2925,7 @@ interval_justify_interval(PG_FUNCTION_ARGS)
 	TimeOffset	wholeday;
 	int32		wholemonth;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
@@ -3004,7 +3004,7 @@ interval_justify_hours(PG_FUNCTION_ARGS)
 	Interval   *result;
 	TimeOffset	wholeday;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
@@ -3046,7 +3046,7 @@ interval_justify_days(PG_FUNCTION_ARGS)
 	Interval   *result;
 	int32		wholemonth;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 	result->month = span->month;
 	result->day = span->day;
 	result->time = span->time;
@@ -3448,7 +3448,7 @@ interval_um(PG_FUNCTION_ARGS)
 	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 	interval_um_internal(interval, result);
 
 	PG_RETURN_INTERVAL_P(result);
@@ -3506,7 +3506,7 @@ interval_pl(PG_FUNCTION_ARGS)
 	Interval   *span2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle infinities.
@@ -3562,7 +3562,7 @@ interval_mi(PG_FUNCTION_ARGS)
 	Interval   *span2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle infinities.
@@ -3616,7 +3616,7 @@ interval_mul(PG_FUNCTION_ARGS)
 				orig_day = span->day;
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle NaN and infinities.
@@ -3746,7 +3746,7 @@ interval_div(PG_FUNCTION_ARGS)
 				orig_day = span->day;
 	Interval   *result;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	if (factor == 0.0)
 		ereport(ERROR,
@@ -3975,7 +3975,7 @@ makeIntervalAggState(FunctionCallInfo fcinfo)
 
 	old_context = MemoryContextSwitchTo(agg_context);
 
-	state = (IntervalAggState *) palloc0(sizeof(IntervalAggState));
+	state = palloc0_object(IntervalAggState);
 
 	MemoryContextSwitchTo(old_context);
 
@@ -4162,7 +4162,7 @@ interval_avg_deserialize(PG_FUNCTION_ARGS)
 	initReadOnlyStringInfo(&buf, VARDATA_ANY(sstate),
 						   VARSIZE_ANY_EXHDR(sstate));
 
-	result = (IntervalAggState *) palloc0(sizeof(IntervalAggState));
+	result = palloc0_object(IntervalAggState);
 
 	/* N */
 	result->N = pq_getmsgint64(&buf);
@@ -4229,7 +4229,7 @@ interval_avg(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("interval out of range")));
 
-		result = (Interval *) palloc(sizeof(Interval));
+		result = palloc_object(Interval);
 		if (state->pInfcount > 0)
 			INTERVAL_NOEND(result);
 		else
@@ -4266,7 +4266,7 @@ interval_sum(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("interval out of range")));
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	if (state->pInfcount > 0)
 		INTERVAL_NOEND(result);
@@ -4299,7 +4299,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 	struct pg_tm tt2,
 			   *tm2 = &tt2;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle infinities.
@@ -4447,7 +4447,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	int			tz1;
 	int			tz2;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	/*
 	 * Handle infinities.
@@ -5120,7 +5120,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	struct pg_itm tt,
 			   *tm = &tt;
 
-	result = (Interval *) palloc(sizeof(Interval));
+	result = palloc_object(Interval);
 
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
 											VARSIZE_ANY_EXHDR(units),
@@ -6687,8 +6687,7 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		fctx = (generate_series_timestamp_fctx *)
-			palloc(sizeof(generate_series_timestamp_fctx));
+		fctx = palloc_object(generate_series_timestamp_fctx);
 
 		/*
 		 * Use fctx to keep state from call to call. Seed current with the
@@ -6772,8 +6771,7 @@ generate_series_timestamptz_internal(FunctionCallInfo fcinfo)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* allocate memory for user context */
-		fctx = (generate_series_timestamptz_fctx *)
-			palloc(sizeof(generate_series_timestamptz_fctx));
+		fctx = palloc_object(generate_series_timestamptz_fctx);
 
 		/*
 		 * Use fctx to keep state from call to call. Seed current with the

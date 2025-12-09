@@ -531,7 +531,7 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 		MemoryContext oldcxt = MemoryContextSwitchTo(pendingOpsCxt);
 		PendingUnlinkEntry *entry;
 
-		entry = palloc(sizeof(PendingUnlinkEntry));
+		entry = palloc_object(PendingUnlinkEntry);
 		entry->tag = *ftag;
 		entry->cycle_ctr = checkpoint_cycle_ctr;
 		entry->canceled = false;

@@ -1991,7 +1991,7 @@ RelationBuildTriggers(Relation relation)
 	}
 
 	/* Build trigdesc */
-	trigdesc = (TriggerDesc *) palloc0(sizeof(TriggerDesc));
+	trigdesc = palloc0_object(TriggerDesc);
 	trigdesc->triggers = triggers;
 	trigdesc->numtriggers = numtrigs;
 	for (i = 0; i < numtrigs; i++)
@@ -2096,7 +2096,7 @@ CopyTriggerDesc(TriggerDesc *trigdesc)
 	if (trigdesc == NULL || trigdesc->numtriggers <= 0)
 		return NULL;
 
-	newdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
+	newdesc = palloc_object(TriggerDesc);
 	memcpy(newdesc, trigdesc, sizeof(TriggerDesc));
 
 	trigger = (Trigger *) palloc(trigdesc->numtriggers * sizeof(Trigger));
@@ -4901,7 +4901,7 @@ GetAfterTriggersTableData(Oid relid, CmdType cmdType)
 
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 
-	table = (AfterTriggersTableData *) palloc0(sizeof(AfterTriggersTableData));
+	table = palloc0_object(AfterTriggersTableData);
 	table->relid = relid;
 	table->cmdType = cmdType;
 	qs->tables = lappend(qs->tables, table);
@@ -5050,7 +5050,7 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	MemoryContextSwitchTo(oldcxt);
 
 	/* Now build the TransitionCaptureState struct, in caller's context */
-	state = (TransitionCaptureState *) palloc0(sizeof(TransitionCaptureState));
+	state = palloc0_object(TransitionCaptureState);
 	state->tcs_delete_old_table = need_old_del;
 	state->tcs_update_old_table = need_old_upd;
 	state->tcs_update_new_table = need_new_upd;

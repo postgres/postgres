@@ -145,8 +145,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 		int			i;
 
 		gm_state->gm_nkeys = node->numCols;
-		gm_state->gm_sortkeys =
-			palloc0(sizeof(SortSupportData) * node->numCols);
+		gm_state->gm_sortkeys = palloc0_array(SortSupportData, node->numCols);
 
 		for (i = 0; i < node->numCols; i++)
 		{
@@ -418,8 +417,7 @@ gather_merge_setup(GatherMergeState *gm_state)
 	for (i = 0; i < nreaders; i++)
 	{
 		/* Allocate the tuple array with length MAX_TUPLE_STORE */
-		gm_state->gm_tuple_buffers[i].tuple =
-			(MinimalTuple *) palloc0(sizeof(MinimalTuple) * MAX_TUPLE_STORE);
+		gm_state->gm_tuple_buffers[i].tuple = palloc0_array(MinimalTuple, MAX_TUPLE_STORE);
 
 		/* Initialize tuple slot for worker */
 		gm_state->gm_slots[i + 1] =

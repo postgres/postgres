@@ -76,7 +76,7 @@ bbsink_gzip_new(bbsink *next, pg_compress_specification *compress)
 	Assert((compresslevel >= 1 && compresslevel <= 9) ||
 		   compresslevel == Z_DEFAULT_COMPRESSION);
 
-	sink = palloc0(sizeof(bbsink_gzip));
+	sink = palloc0_object(bbsink_gzip);
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_gzip_ops;
 	sink->base.bbs_next = next;
 	sink->compresslevel = compresslevel;

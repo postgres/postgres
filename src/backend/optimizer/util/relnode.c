@@ -120,11 +120,11 @@ setup_simple_rel_arrays(PlannerInfo *root)
 	 * exist yet.  It'll be filled by later calls to build_simple_rel().
 	 */
 	root->simple_rel_array = (RelOptInfo **)
-		palloc0(size * sizeof(RelOptInfo *));
+		palloc0_array(RelOptInfo *, size);
 
 	/* simple_rte_array is an array equivalent of the rtable list */
 	root->simple_rte_array = (RangeTblEntry **)
-		palloc0(size * sizeof(RangeTblEntry *));
+		palloc0_array(RangeTblEntry *, size);
 	rti = 1;
 	foreach(lc, root->parse->rtable)
 	{
@@ -141,7 +141,7 @@ setup_simple_rel_arrays(PlannerInfo *root)
 	}
 
 	root->append_rel_array = (AppendRelInfo **)
-		palloc0(size * sizeof(AppendRelInfo *));
+		palloc0_array(AppendRelInfo *, size);
 
 	/*
 	 * append_rel_array is filled with any already-existing AppendRelInfos,
@@ -373,9 +373,9 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 			rel->min_attr = 0;
 			rel->max_attr = list_length(rte->eref->colnames);
 			rel->attr_needed = (Relids *)
-				palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
+				palloc0_array(Relids, rel->max_attr - rel->min_attr + 1);
 			rel->attr_widths = (int32 *)
-				palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
+				palloc0_array(int32, rel->max_attr - rel->min_attr + 1);
 			break;
 		case RTE_RESULT:
 			/* RTE_RESULT has no columns, nor could it have whole-row Var */
@@ -2486,9 +2486,8 @@ set_joinrel_partition_key_exprs(RelOptInfo *joinrel,
 	PartitionScheme part_scheme = joinrel->part_scheme;
 	int			partnatts = part_scheme->partnatts;
 
-	joinrel->partexprs = (List **) palloc0(sizeof(List *) * partnatts);
-	joinrel->nullable_partexprs =
-		(List **) palloc0(sizeof(List *) * partnatts);
+	joinrel->partexprs = palloc0_array(List *, partnatts);
+	joinrel->nullable_partexprs = palloc0_array(List *, partnatts);
 
 	/*
 	 * The joinrel's partition expressions are the same as those of the input

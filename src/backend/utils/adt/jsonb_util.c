@@ -359,7 +359,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 	if ((flags & JB_FARRAY) && JsonContainerIsArray(container))
 	{
-		JsonbValue *result = palloc(sizeof(JsonbValue));
+		JsonbValue *result = palloc_object(JsonbValue);
 		char	   *base_addr = (char *) (children + count);
 		uint32		offset = 0;
 		int			i;
@@ -442,7 +442,7 @@ getKeyJsonValueFromContainer(JsonbContainer *container,
 			int			index = stopMiddle + count;
 
 			if (!res)
-				res = palloc(sizeof(JsonbValue));
+				res = palloc_object(JsonbValue);
 
 			fillJsonbValue(container, index, baseAddr,
 						   getJsonbOffset(container, index),
@@ -484,7 +484,7 @@ getIthJsonbValueFromContainer(JsonbContainer *container, uint32 i)
 	if (i >= nelements)
 		return NULL;
 
-	result = palloc(sizeof(JsonbValue));
+	result = palloc_object(JsonbValue);
 
 	fillJsonbValue(container, i, base_addr,
 				   getJsonbOffset(container, i),
@@ -1127,7 +1127,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 {
 	JsonbIterator *it;
 
-	it = palloc0(sizeof(JsonbIterator));
+	it = palloc0_object(JsonbIterator);
 	it->container = container;
 	it->parent = parent;
 	it->nElems = JsonContainerSize(container);
@@ -1373,7 +1373,7 @@ JsonbDeepContains(JsonbIterator **val, JsonbIterator **mContained)
 					uint32		j = 0;
 
 					/* Make room for all possible values */
-					lhsConts = palloc(sizeof(JsonbValue) * nLhsElems);
+					lhsConts = palloc_array(JsonbValue, nLhsElems);
 
 					for (i = 0; i < nLhsElems; i++)
 					{

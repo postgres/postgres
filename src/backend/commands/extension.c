@@ -724,7 +724,7 @@ read_extension_aux_control_file(const ExtensionControlFile *pcontrol,
 	/*
 	 * Flat-copy the struct.  Pointer fields share values with original.
 	 */
-	acontrol = (ExtensionControlFile *) palloc(sizeof(ExtensionControlFile));
+	acontrol = palloc_object(ExtensionControlFile);
 	memcpy(acontrol, pcontrol, sizeof(ExtensionControlFile));
 
 	/*
@@ -1349,7 +1349,7 @@ get_ext_ver_info(const char *versionname, List **evi_list)
 			return evi;
 	}
 
-	evi = (ExtensionVersionInfo *) palloc(sizeof(ExtensionVersionInfo));
+	evi = palloc_object(ExtensionVersionInfo);
 	evi->name = pstrdup(versionname);
 	evi->reachable = NIL;
 	evi->installable = false;

@@ -249,7 +249,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
-	state = palloc0(sizeof(RewriteStateData));
+	state = palloc0_object(RewriteStateData);
 
 	state->rs_old_rel = old_heap;
 	state->rs_new_rel = new_heap;

@@ -239,7 +239,7 @@ contain_window_function(Node *clause)
 WindowFuncLists *
 find_window_functions(Node *clause, Index maxWinRef)
 {
-	WindowFuncLists *lists = palloc(sizeof(WindowFuncLists));
+	WindowFuncLists *lists = palloc_object(WindowFuncLists);
 
 	lists->numWindowFuncs = 0;
 	lists->maxWinRef = maxWinRef;
@@ -5744,8 +5744,8 @@ make_SAOP_expr(Oid oper, Node *leftexpr, Oid coltype, Oid arraycollid,
 
 		get_typlenbyvalalign(coltype, &typlen, &typbyval, &typalign);
 
-		elems = (Datum *) palloc(sizeof(Datum) * list_length(exprs));
-		nulls = (bool *) palloc(sizeof(bool) * list_length(exprs));
+		elems = palloc_array(Datum, list_length(exprs));
+		nulls = palloc_array(bool, list_length(exprs));
 		foreach_node(Const, value, exprs)
 		{
 			elems[i] = value->constvalue;

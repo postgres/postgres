@@ -120,7 +120,7 @@ static bool makeItemLikeRegex(JsonPathParseItem *expr,
 
 result:
 	mode expr_or_predicate			{
-										*result = palloc(sizeof(JsonPathParseResult));
+										*result = palloc_object(JsonPathParseResult);
 										(*result)->expr = $2;
 										(*result)->lax = $1;
 										(void) yynerrs;
@@ -384,7 +384,7 @@ method:
 static JsonPathParseItem *
 makeItemType(JsonPathItemType type)
 {
-	JsonPathParseItem *v = palloc(sizeof(*v));
+	JsonPathParseItem *v = palloc_object(JsonPathParseItem);
 
 	CHECK_FOR_INTERRUPTS();
 

@@ -224,7 +224,7 @@ BuildTupleHashTable(PlanState *parent,
 
 	oldcontext = MemoryContextSwitchTo(metacxt);
 
-	hashtable = (TupleHashTable) palloc(sizeof(TupleHashTableData));
+	hashtable = palloc_object(TupleHashTableData);
 
 	hashtable->numCols = numCols;
 	hashtable->keyColIdx = keyColIdx;

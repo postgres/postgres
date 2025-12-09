@@ -240,7 +240,7 @@ scram_init(Port *port, const char *selected_mech, const char *shadow_pass)
 	scram_state *state;
 	bool		got_secret;
 
-	state = (scram_state *) palloc0(sizeof(scram_state));
+	state = palloc0_object(scram_state);
 	state->port = port;
 	state->state = SCRAM_AUTH_INIT;
 

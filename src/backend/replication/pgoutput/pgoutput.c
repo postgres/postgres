@@ -447,7 +447,7 @@ static void
 pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 				 bool is_init)
 {
-	PGOutputData *data = palloc0(sizeof(PGOutputData));
+	PGOutputData *data = palloc0_object(PGOutputData);
 	static bool publication_callback_registered = false;
 	MemoryContextCallback *mcallback;
 
@@ -468,7 +468,7 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 	 * Ensure to cleanup RelationSyncCache even when logical decoding invoked
 	 * via SQL interface ends up with an error.
 	 */
-	mcallback = palloc0(sizeof(MemoryContextCallback));
+	mcallback = palloc0_object(MemoryContextCallback);
 	mcallback->func = pgoutput_memory_context_reset;
 	MemoryContextRegisterResetCallback(ctx->context, mcallback);
 

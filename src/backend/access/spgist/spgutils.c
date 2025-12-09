@@ -1177,7 +1177,7 @@ spgExtractNodeLabels(SpGistState *state, SpGistInnerTuple innerTuple)
 	}
 	else
 	{
-		nodeLabels = (Datum *) palloc(sizeof(Datum) * innerTuple->nNodes);
+		nodeLabels = palloc_array(Datum, innerTuple->nNodes);
 		SGITITERATE(innerTuple, i, node)
 		{
 			if (IndexTupleHasNulls(node))

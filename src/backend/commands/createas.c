@@ -439,7 +439,7 @@ CreateTableAsRelExists(CreateTableAsStmt *ctas)
 DestReceiver *
 CreateIntoRelDestReceiver(IntoClause *intoClause)
 {
-	DR_intorel *self = (DR_intorel *) palloc0(sizeof(DR_intorel));
+	DR_intorel *self = palloc0_object(DR_intorel);
 
 	self->pub.receiveSlot = intorel_receive;
 	self->pub.rStartup = intorel_startup;

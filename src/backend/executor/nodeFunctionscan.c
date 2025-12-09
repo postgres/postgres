@@ -333,7 +333,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-	scanstate->funcstates = palloc(nfuncs * sizeof(FunctionScanPerFuncState));
+	scanstate->funcstates = palloc_array(FunctionScanPerFuncState, nfuncs);
 
 	natts = 0;
 	i = 0;

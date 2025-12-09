@@ -964,7 +964,7 @@ searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colnam
 					   int location)
 {
 	ParseState *orig_pstate = pstate;
-	FuzzyAttrMatchState *fuzzystate = palloc(sizeof(FuzzyAttrMatchState));
+	FuzzyAttrMatchState *fuzzystate = palloc_object(FuzzyAttrMatchState);
 
 	fuzzystate->distance = MAX_FUZZY_DISTANCE + 1;
 	fuzzystate->rfirst = NULL;
@@ -1336,7 +1336,7 @@ buildNSItemFromTupleDesc(RangeTblEntry *rte, Index rtindex,
 	}
 
 	/* ... and build the nsitem */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_rtindex = rtindex;
@@ -1400,7 +1400,7 @@ buildNSItemFromLists(RangeTblEntry *rte, Index rtindex,
 	}
 
 	/* ... and build the nsitem */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_rtindex = rtindex;
@@ -1791,7 +1791,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	rte->eref = eref;
 
 	/* Process each function ... */
-	functupdescs = (TupleDesc *) palloc(nfuncs * sizeof(TupleDesc));
+	functupdescs = palloc_array(TupleDesc, nfuncs);
 
 	totalatts = 0;
 	funcno = 0;
@@ -2302,7 +2302,7 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
 	 * list --- caller must do that if appropriate.
 	 */
-	nsitem = (ParseNamespaceItem *) palloc(sizeof(ParseNamespaceItem));
+	nsitem = palloc_object(ParseNamespaceItem);
 	nsitem->p_names = rte->eref;
 	nsitem->p_rte = rte;
 	nsitem->p_perminfo = NULL;

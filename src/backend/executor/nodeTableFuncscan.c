@@ -192,8 +192,8 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	scanstate->notnulls = tf->notnulls;
 
 	/* these are allocated now and initialized later */
-	scanstate->in_functions = palloc(sizeof(FmgrInfo) * tupdesc->natts);
-	scanstate->typioparams = palloc(sizeof(Oid) * tupdesc->natts);
+	scanstate->in_functions = palloc_array(FmgrInfo, tupdesc->natts);
+	scanstate->typioparams = palloc_array(Oid, tupdesc->natts);
 
 	/*
 	 * Fill in the necessary fmgr infos.

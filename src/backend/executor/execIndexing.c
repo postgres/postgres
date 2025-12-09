@@ -188,8 +188,8 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo, bool speculative)
 	/*
 	 * allocate space for result arrays
 	 */
-	relationDescs = (RelationPtr) palloc(len * sizeof(Relation));
-	indexInfoArray = (IndexInfo **) palloc(len * sizeof(IndexInfo *));
+	relationDescs = palloc_array(Relation, len);
+	indexInfoArray = palloc_array(IndexInfo *, len);
 
 	resultRelInfo->ri_NumIndices = len;
 	resultRelInfo->ri_IndexRelationDescs = relationDescs;

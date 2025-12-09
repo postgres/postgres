@@ -581,8 +581,8 @@ ExecComputeStoredGenerated(ResultRelInfo *resultRelInfo,
 
 	oldContext = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
 
-	values = palloc(sizeof(*values) * natts);
-	nulls = palloc(sizeof(*nulls) * natts);
+	values = palloc_array(Datum, natts);
+	nulls = palloc_array(bool, natts);
 
 	slot_getallattrs(slot);
 	memcpy(nulls, slot->tts_isnull, sizeof(*nulls) * natts);
@@ -962,10 +962,8 @@ ExecInsert(ModifyTableContext *context,
 
 			if (resultRelInfo->ri_Slots == NULL)
 			{
-				resultRelInfo->ri_Slots = palloc(sizeof(TupleTableSlot *) *
-												 resultRelInfo->ri_BatchSize);
-				resultRelInfo->ri_PlanSlots = palloc(sizeof(TupleTableSlot *) *
-													 resultRelInfo->ri_BatchSize);
+				resultRelInfo->ri_Slots = palloc_array(TupleTableSlot *, resultRelInfo->ri_BatchSize);
+				resultRelInfo->ri_PlanSlots = palloc_array(TupleTableSlot *, resultRelInfo->ri_BatchSize);
 			}
 
 			/*
@@ -4745,8 +4743,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	mtstate->mt_done = false;
 
 	mtstate->mt_nrels = nrels;
-	mtstate->resultRelInfo = (ResultRelInfo *)
-		palloc(nrels * sizeof(ResultRelInfo));
+	mtstate->resultRelInfo = palloc_array(ResultRelInfo, nrels);
 
 	mtstate->mt_merge_pending_not_matched = NULL;
 	mtstate->mt_merge_inserted = 0;

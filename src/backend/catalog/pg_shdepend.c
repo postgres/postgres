@@ -791,7 +791,7 @@ checkSharedDependencies(Oid classId, Oid objectId,
 			}
 			if (!stored)
 			{
-				dep = (remoteDep *) palloc(sizeof(remoteDep));
+				dep = palloc_object(remoteDep);
 				dep->dbOid = sdepForm->dbid;
 				dep->count = 1;
 				remDeps = lappend(remDeps, dep);
@@ -913,7 +913,7 @@ copyTemplateDependencies(Oid templateDbId, Oid newDbId)
 	 * know that they will be used.
 	 */
 	max_slots = MAX_CATALOG_MULTI_INSERT_BYTES / sizeof(FormData_pg_shdepend);
-	slot = palloc(sizeof(TupleTableSlot *) * max_slots);
+	slot = palloc_array(TupleTableSlot *, max_slots);
 
 	indstate = CatalogOpenIndexes(sdepRel);
 

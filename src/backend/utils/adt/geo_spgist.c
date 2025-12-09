@@ -156,7 +156,7 @@ getQuadrant(BOX *centroid, BOX *inBox)
 static RangeBox *
 getRangeBox(BOX *box)
 {
-	RangeBox   *range_box = (RangeBox *) palloc(sizeof(RangeBox));
+	RangeBox   *range_box = palloc_object(RangeBox);
 
 	range_box->left.low = box->low.x;
 	range_box->left.high = box->high.x;
@@ -176,7 +176,7 @@ getRangeBox(BOX *box)
 static RectBox *
 initRectBox(void)
 {
-	RectBox    *rect_box = (RectBox *) palloc(sizeof(RectBox));
+	RectBox    *rect_box = palloc_object(RectBox);
 	float8		infinity = get_float8_infinity();
 
 	rect_box->range_box_x.left.low = -infinity;
@@ -204,7 +204,7 @@ initRectBox(void)
 static RectBox *
 nextRectBox(RectBox *rect_box, RangeBox *centroid, uint8 quadrant)
 {
-	RectBox    *next_rect_box = (RectBox *) palloc(sizeof(RectBox));
+	RectBox    *next_rect_box = palloc_object(RectBox);
 
 	memcpy(next_rect_box, rect_box, sizeof(RectBox));
 
@@ -445,10 +445,10 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 	BOX		   *centroid;
 	int			median,
 				i;
-	float8	   *lowXs = palloc(sizeof(float8) * in->nTuples);
-	float8	   *highXs = palloc(sizeof(float8) * in->nTuples);
-	float8	   *lowYs = palloc(sizeof(float8) * in->nTuples);
-	float8	   *highYs = palloc(sizeof(float8) * in->nTuples);
+	float8	   *lowXs = palloc_array(float8, in->nTuples);
+	float8	   *highXs = palloc_array(float8, in->nTuples);
+	float8	   *lowYs = palloc_array(float8, in->nTuples);
+	float8	   *highYs = palloc_array(float8, in->nTuples);
 
 	/* Calculate median of all 4D coordinates */
 	for (i = 0; i < in->nTuples; i++)
@@ -468,7 +468,7 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 
 	median = in->nTuples / 2;
 
-	centroid = palloc(sizeof(BOX));
+	centroid = palloc_object(BOX);
 
 	centroid->low.x = lowXs[median];
 	centroid->high.x = highXs[median];
@@ -482,8 +482,8 @@ spg_box_quad_picksplit(PG_FUNCTION_ARGS)
 	out->nNodes = 16;
 	out->nodeLabels = NULL;		/* We don't need node labels. */
 
-	out->mapTuplesToNodes = palloc(sizeof(int) * in->nTuples);
-	out->leafTupleDatums = palloc(sizeof(Datum) * in->nTuples);
+	out->mapTuplesToNodes = palloc_array(int, in->nTuples);
+	out->leafTupleDatums = palloc_array(Datum, in->nTuples);
 
 	/*
 	 * Assign ranges to corresponding nodes according to quadrants relative to
@@ -574,13 +574,13 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	{
 		/* Report that all nodes should be visited */
 		out->nNodes = in->nNodes;
-		out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
+		out->nodeNumbers = palloc_array(int, in->nNodes);
 		for (i = 0; i < in->nNodes; i++)
 			out->nodeNumbers[i] = i;
 
 		if (in->norderbys > 0 && in->nNodes > 0)
 		{
-			double	   *distances = palloc(sizeof(double) * in->norderbys);
+			double	   *distances = palloc_array(double, in->norderbys);
 			int			j;
 
 			for (j = 0; j < in->norderbys; j++)
@@ -590,12 +590,12 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 				distances[j] = pointToRectBoxDistance(pt, rect_box);
 			}
 
-			out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
+			out->distances = palloc_array(double *, in->nNodes);
 			out->distances[0] = distances;
 
 			for (i = 1; i < in->nNodes; i++)
 			{
-				out->distances[i] = palloc(sizeof(double) * in->norderbys);
+				out->distances[i] = palloc_array(double, in->norderbys);
 				memcpy(out->distances[i], distances,
 					   sizeof(double) * in->norderbys);
 			}
@@ -609,7 +609,7 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 	 * following operations.
 	 */
 	centroid = getRangeBox(DatumGetBoxP(in->prefixDatum));
-	queries = (RangeBox **) palloc(in->nkeys * sizeof(RangeBox *));
+	queries = palloc_array(RangeBox *, in->nkeys);
 	for (i = 0; i < in->nkeys; i++)
 	{
 		BOX		   *box = spg_box_quad_get_scankey_bbox(&in->scankeys[i], NULL);
@@ -619,10 +619,10 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 	/* Allocate enough memory for nodes */
 	out->nNodes = 0;
-	out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
-	out->traversalValues = (void **) palloc(sizeof(void *) * in->nNodes);
+	out->nodeNumbers = palloc_array(int, in->nNodes);
+	out->traversalValues = palloc_array(void *, in->nNodes);
 	if (in->norderbys > 0)
-		out->distances = (double **) palloc(sizeof(double *) * in->nNodes);
+		out->distances = palloc_array(double *, in->nNodes);
 
 	/*
 	 * We switch memory context, because we want to allocate memory for new
@@ -703,7 +703,7 @@ spg_box_quad_inner_consistent(PG_FUNCTION_ARGS)
 
 			if (in->norderbys > 0)
 			{
-				double	   *distances = palloc(sizeof(double) * in->norderbys);
+				double	   *distances = palloc_array(double, in->norderbys);
 				int			j;
 
 				out->distances[out->nNodes] = distances;
@@ -878,7 +878,7 @@ spg_poly_quad_compress(PG_FUNCTION_ARGS)
 	POLYGON    *polygon = PG_GETARG_POLYGON_P(0);
 	BOX		   *box;
 
-	box = (BOX *) palloc(sizeof(BOX));
+	box = palloc_object(BOX);
 	*box = polygon->boundbox;
 
 	PG_RETURN_BOX_P(box);

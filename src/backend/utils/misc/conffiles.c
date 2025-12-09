@@ -108,7 +108,7 @@ GetConfFilesInDir(const char *includedir, const char *calling_file,
 	 * them prior to caller processing the contents.
 	 */
 	size_filenames = 32;
-	filenames = (char **) palloc(size_filenames * sizeof(char *));
+	filenames = palloc_array(char *, size_filenames);
 	*num_filenames = 0;
 
 	while ((de = ReadDir(d, directory)) != NULL)

@@ -2963,7 +2963,7 @@ _bt_deadblocks(Page page, OffsetNumber *deletable, int ndeletable,
 	 */
 	spacentids = ndeletable + 1;
 	ntids = 0;
-	tidblocks = (BlockNumber *) palloc(sizeof(BlockNumber) * spacentids);
+	tidblocks = palloc_array(BlockNumber, spacentids);
 
 	/*
 	 * First add the table block for the incoming newitem.  This is the one

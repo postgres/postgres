@@ -226,7 +226,7 @@ mcelem_tsquery_selec(TSQuery query, const Datum *mcelem, int nmcelem,
 	/*
 	 * Transpose the data into a single array so we can use bsearch().
 	 */
-	lookup = (TextFreq *) palloc(sizeof(TextFreq) * nmcelem);
+	lookup = palloc_array(TextFreq, nmcelem);
 	for (i = 0; i < nmcelem; i++)
 	{
 		/*

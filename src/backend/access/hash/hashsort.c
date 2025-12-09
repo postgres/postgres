@@ -59,7 +59,7 @@ struct HSpool
 HSpool *
 _h_spoolinit(Relation heap, Relation index, uint32 num_buckets)
 {
-	HSpool	   *hspool = (HSpool *) palloc0(sizeof(HSpool));
+	HSpool	   *hspool = palloc0_object(HSpool);
 
 	hspool->index = index;
 

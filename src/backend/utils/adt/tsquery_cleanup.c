@@ -32,7 +32,7 @@ typedef struct NODE
 static NODE *
 maketree(QueryItem *in)
 {
-	NODE	   *node = (NODE *) palloc(sizeof(NODE));
+	NODE	   *node = palloc_object(NODE);
 
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();

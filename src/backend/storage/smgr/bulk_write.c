@@ -101,7 +101,7 @@ smgr_bulk_start_smgr(SMgrRelation smgr, ForkNumber forknum, bool use_wal)
 {
 	BulkWriteState *state;
 
-	state = palloc(sizeof(BulkWriteState));
+	state = palloc_object(BulkWriteState);
 	state->smgr = smgr;
 	state->forknum = forknum;
 	state->use_wal = use_wal;

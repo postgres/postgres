@@ -364,7 +364,7 @@ filter_list_to_array(List *filterlist)
 	int			i = 0,
 				l = list_length(filterlist);
 
-	data = (Datum *) palloc(l * sizeof(Datum));
+	data = palloc_array(Datum, l);
 
 	foreach(lc, filterlist)
 	{
@@ -1286,7 +1286,7 @@ EventTriggerSQLDropAddObject(const ObjectAddress *object, bool original, bool no
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	obj = palloc0(sizeof(SQLDropObject));
+	obj = palloc0_object(SQLDropObject);
 	obj->address = *object;
 	obj->original = original;
 	obj->normal = normal;
@@ -1726,7 +1726,7 @@ EventTriggerCollectSimpleCommand(ObjectAddress address,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = palloc_object(CollectedCommand);
 
 	command->type = SCT_Simple;
 	command->in_extension = creating_extension;
@@ -1762,7 +1762,7 @@ EventTriggerAlterTableStart(Node *parsetree)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = palloc_object(CollectedCommand);
 
 	command->type = SCT_AlterTable;
 	command->in_extension = creating_extension;
@@ -1818,7 +1818,7 @@ EventTriggerCollectAlterTableSubcmd(Node *subcmd, ObjectAddress address)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	newsub = palloc(sizeof(CollectedATSubcmd));
+	newsub = palloc_object(CollectedATSubcmd);
 	newsub->address = address;
 	newsub->parsetree = copyObject(subcmd);
 
@@ -1892,7 +1892,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 	/*
 	 * This is tedious, but necessary.
 	 */
-	icopy = palloc(sizeof(InternalGrant));
+	icopy = palloc_object(InternalGrant);
 	memcpy(icopy, istmt, sizeof(InternalGrant));
 	icopy->objects = list_copy(istmt->objects);
 	icopy->grantees = list_copy(istmt->grantees);
@@ -1901,7 +1901,7 @@ EventTriggerCollectGrant(InternalGrant *istmt)
 		icopy->col_privs = lappend(icopy->col_privs, copyObject(lfirst(cell)));
 
 	/* Now collect it, using the copied InternalGrant */
-	command = palloc(sizeof(CollectedCommand));
+	command = palloc_object(CollectedCommand);
 	command->type = SCT_Grant;
 	command->in_extension = creating_extension;
 	command->d.grant.istmt = icopy;
@@ -1932,7 +1932,7 @@ EventTriggerCollectAlterOpFam(AlterOpFamilyStmt *stmt, Oid opfamoid,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc(sizeof(CollectedCommand));
+	command = palloc_object(CollectedCommand);
 	command->type = SCT_AlterOpFamily;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.opfam.address,
@@ -1965,7 +1965,7 @@ EventTriggerCollectCreateOpClass(CreateOpClassStmt *stmt, Oid opcoid,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = palloc0_object(CollectedCommand);
 	command->type = SCT_CreateOpClass;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.createopc.address,
@@ -1999,12 +1999,12 @@ EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt, Oid cfgId,
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = palloc0_object(CollectedCommand);
 	command->type = SCT_AlterTSConfig;
 	command->in_extension = creating_extension;
 	ObjectAddressSet(command->d.atscfg.address,
 					 TSConfigRelationId, cfgId);
-	command->d.atscfg.dictIds = palloc(sizeof(Oid) * ndicts);
+	command->d.atscfg.dictIds = palloc_array(Oid, ndicts);
 	memcpy(command->d.atscfg.dictIds, dictIds, sizeof(Oid) * ndicts);
 	command->d.atscfg.ndicts = ndicts;
 	command->parsetree = (Node *) copyObject(stmt);
@@ -2033,7 +2033,7 @@ EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt)
 
 	oldcxt = MemoryContextSwitchTo(currentEventTriggerState->cxt);
 
-	command = palloc0(sizeof(CollectedCommand));
+	command = palloc0_object(CollectedCommand);
 	command->type = SCT_AlterDefaultPrivileges;
 	command->d.defprivs.objtype = stmt->action->objtype;
 	command->in_extension = creating_extension;

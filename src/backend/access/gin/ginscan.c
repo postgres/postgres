@@ -33,7 +33,7 @@ ginbeginscan(Relation rel, int nkeys, int norderbys)
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
 	/* allocate private workspace */
-	so = (GinScanOpaque) palloc(sizeof(GinScanOpaqueData));
+	so = (GinScanOpaque) palloc_object(GinScanOpaqueData);
 	so->keys = NULL;
 	so->nkeys = 0;
 	so->tempCtx = AllocSetContextCreate(CurrentMemoryContext,
@@ -98,7 +98,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	}
 
 	/* Nope, create a new entry */
-	scanEntry = (GinScanEntry) palloc(sizeof(GinScanEntryData));
+	scanEntry = palloc_object(GinScanEntryData);
 	scanEntry->queryKey = queryKey;
 	scanEntry->queryCategory = queryCategory;
 	scanEntry->isPartialMatch = isPartialMatch;
@@ -123,8 +123,7 @@ ginFillScanEntry(GinScanOpaque so, OffsetNumber attnum,
 	if (so->totalentries >= so->allocentries)
 	{
 		so->allocentries *= 2;
-		so->entries = (GinScanEntry *)
-			repalloc(so->entries, so->allocentries * sizeof(GinScanEntry));
+		so->entries = repalloc_array(so->entries, GinScanEntry, so->allocentries);
 	}
 	so->entries[so->totalentries++] = scanEntry;
 
@@ -170,10 +169,8 @@ ginFillScanKey(GinScanOpaque so, OffsetNumber attnum,
 	key->nuserentries = nQueryValues;
 
 	/* Allocate one extra array slot for possible "hidden" entry */
-	key->scanEntry = (GinScanEntry *) palloc(sizeof(GinScanEntry) *
-											 (nQueryValues + 1));
-	key->entryRes = (GinTernaryValue *) palloc0(sizeof(GinTernaryValue) *
-												(nQueryValues + 1));
+	key->scanEntry = palloc_array(GinScanEntry, nQueryValues + 1);
+	key->entryRes = palloc0_array(GinTernaryValue, nQueryValues + 1);
 
 	key->query = query;
 	key->queryValues = queryValues;

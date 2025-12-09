@@ -2982,7 +2982,7 @@ _bt_pendingfsm_init(Relation rel, BTVacState *vstate, bool cleanuponly)
 	vstate->maxbufsize = (int) maxbufsize;
 
 	/* Allocate buffer, indicate that there are currently 0 pending pages */
-	vstate->pendingpages = palloc(sizeof(BTPendingFSM) * vstate->bufsize);
+	vstate->pendingpages = palloc_array(BTPendingFSM, vstate->bufsize);
 	vstate->npendingpages = 0;
 }
 

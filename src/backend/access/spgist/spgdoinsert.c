@@ -89,7 +89,7 @@ addNode(SpGistState *state, SpGistInnerTuple tuple, Datum label, int offset)
 	else if (offset > tuple->nNodes)
 		elog(ERROR, "invalid offset for adding node to SPGiST inner tuple");
 
-	nodes = palloc(sizeof(SpGistNodeTuple) * (tuple->nNodes + 1));
+	nodes = palloc_array(SpGistNodeTuple, tuple->nNodes + 1);
 	SGITITERATE(tuple, i, node)
 	{
 		if (i < offset)
@@ -409,8 +409,8 @@ moveLeafs(Relation index, SpGistState *state,
 
 	/* Locate the tuples to be moved, and count up the space needed */
 	i = PageGetMaxOffsetNumber(current->page);
-	toDelete = (OffsetNumber *) palloc(sizeof(OffsetNumber) * i);
-	toInsert = (OffsetNumber *) palloc(sizeof(OffsetNumber) * (i + 1));
+	toDelete = palloc_array(OffsetNumber, i);
+	toInsert = palloc_array(OffsetNumber, i + 1);
 
 	size = newLeafTuple->size + sizeof(ItemIdData);
 
@@ -634,7 +634,7 @@ checkAllTheSame(spgPickSplitIn *in, spgPickSplitOut *out, bool tooBig,
 	{
 		Datum		theLabel = out->nodeLabels[theNode];
 
-		out->nodeLabels = (Datum *) palloc(sizeof(Datum) * out->nNodes);
+		out->nodeLabels = palloc_array(Datum, out->nNodes);
 		for (i = 0; i < out->nNodes; i++)
 			out->nodeLabels[i] = theLabel;
 	}
@@ -717,12 +717,12 @@ doPickSplit(Relation index, SpGistState *state,
 	 */
 	max = PageGetMaxOffsetNumber(current->page);
 	n = max + 1;
-	in.datums = (Datum *) palloc(sizeof(Datum) * n);
-	toDelete = (OffsetNumber *) palloc(sizeof(OffsetNumber) * n);
-	toInsert = (OffsetNumber *) palloc(sizeof(OffsetNumber) * n);
-	oldLeafs = (SpGistLeafTuple *) palloc(sizeof(SpGistLeafTuple) * n);
-	newLeafs = (SpGistLeafTuple *) palloc(sizeof(SpGistLeafTuple) * n);
-	leafPageSelect = (uint8 *) palloc(sizeof(uint8) * n);
+	in.datums = palloc_array(Datum, n);
+	toDelete = palloc_array(OffsetNumber, n);
+	toInsert = palloc_array(OffsetNumber, n);
+	oldLeafs = palloc_array(SpGistLeafTuple, n);
+	newLeafs = palloc_array(SpGistLeafTuple, n);
+	leafPageSelect = palloc_array(uint8, n);
 
 	STORE_STATE(state, xlrec.stateSrc);
 
@@ -858,7 +858,7 @@ doPickSplit(Relation index, SpGistState *state,
 		out.hasPrefix = false;
 		out.nNodes = 1;
 		out.nodeLabels = NULL;
-		out.mapTuplesToNodes = palloc0(sizeof(int) * in.nTuples);
+		out.mapTuplesToNodes = palloc0_array(int, in.nTuples);
 
 		/*
 		 * Form new leaf tuples and count up the total space needed.
@@ -914,8 +914,8 @@ doPickSplit(Relation index, SpGistState *state,
 	 * out.nNodes with a value larger than the number of tuples on the input
 	 * page, we can't allocate these arrays before here.
 	 */
-	nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) * out.nNodes);
-	leafSizes = (int *) palloc0(sizeof(int) * out.nNodes);
+	nodes = palloc_array(SpGistNodeTuple, out.nNodes);
+	leafSizes = palloc0_array(int, out.nNodes);
 
 	/*
 	 * Form nodes of inner tuple and inner tuple itself
@@ -1054,7 +1054,7 @@ doPickSplit(Relation index, SpGistState *state,
 		 * do so, even if totalLeafSizes is less than the available space,
 		 * because we can't split a group across pages.
 		 */
-		nodePageSelect = (uint8 *) palloc(sizeof(uint8) * out.nNodes);
+		nodePageSelect = palloc_array(uint8, out.nNodes);
 
 		curspace = currentFreeSpace;
 		newspace = PageGetExactFreeSpace(BufferGetPage(newLeafBuffer));
@@ -1740,8 +1740,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	 * Construct new prefix tuple with requested number of nodes.  We'll fill
 	 * in the childNodeN'th node's downlink below.
 	 */
-	nodes = (SpGistNodeTuple *) palloc(sizeof(SpGistNodeTuple) *
-									   out->result.splitTuple.prefixNNodes);
+	nodes = palloc_array(SpGistNodeTuple, out->result.splitTuple.prefixNNodes);
 
 	for (i = 0; i < out->result.splitTuple.prefixNNodes; i++)
 	{
@@ -1769,7 +1768,7 @@ spgSplitNodeAction(Relation index, SpGistState *state,
 	 * same node datums, but with the prefix specified by the picksplit
 	 * function.
 	 */
-	nodes = palloc(sizeof(SpGistNodeTuple) * innerTuple->nNodes);
+	nodes = palloc_array(SpGistNodeTuple, innerTuple->nNodes);
 	SGITITERATE(innerTuple, i, node)
 	{
 		nodes[i] = node;

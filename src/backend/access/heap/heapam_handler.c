@@ -81,7 +81,7 @@ heapam_slot_callbacks(Relation relation)
 static IndexFetchTableData *
 heapam_index_fetch_begin(Relation rel)
 {
-	IndexFetchHeapData *hscan = palloc0(sizeof(IndexFetchHeapData));
+	IndexFetchHeapData *hscan = palloc0_object(IndexFetchHeapData);
 
 	hscan->xs_base.rel = rel;
 	hscan->xs_cbuf = InvalidBuffer;
@@ -717,8 +717,8 @@ heapam_relation_copy_for_cluster(Relation OldHeap, Relation NewHeap,
 
 	/* Preallocate values/isnull arrays */
 	natts = newTupDesc->natts;
-	values = (Datum *) palloc(natts * sizeof(Datum));
-	isnull = (bool *) palloc(natts * sizeof(bool));
+	values = palloc_array(Datum, natts);
+	isnull = palloc_array(bool, natts);
 
 	/* Initialize the rewrite operation */
 	rwstate = begin_heap_rewrite(OldHeap, NewHeap, OldestXmin, *xid_cutoff,

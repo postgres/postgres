@@ -497,7 +497,7 @@ array_exec_setup(const SubscriptingRef *sbsref,
 	/*
 	 * Allocate type-specific workspace.
 	 */
-	workspace = (ArraySubWorkspace *) palloc(sizeof(ArraySubWorkspace));
+	workspace = palloc_object(ArraySubWorkspace);
 	sbsrefstate->workspace = workspace;
 
 	/*

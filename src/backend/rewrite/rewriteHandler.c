@@ -4287,7 +4287,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events, int orig_rt_length,
 									RelationGetRelationName(rt_entry_relation))));
 			}
 
-			rev = (rewrite_event *) palloc(sizeof(rewrite_event));
+			rev = palloc_object(rewrite_event);
 			rev->relation = RelationGetRelid(rt_entry_relation);
 			rev->event = event;
 			rewrite_events = lappend(rewrite_events, rev);

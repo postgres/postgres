@@ -191,7 +191,7 @@ gimme_tree(PlannerInfo *root, Gene *tour, int num_gene)
 										  cur_rel_index - 1);
 
 		/* Make it into a single-rel clump */
-		cur_clump = (Clump *) palloc(sizeof(Clump));
+		cur_clump = palloc_object(Clump);
 		cur_clump->joinrel = cur_rel;
 		cur_clump->size = 1;
 

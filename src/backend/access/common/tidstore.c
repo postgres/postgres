@@ -166,7 +166,7 @@ TidStoreCreateLocal(size_t max_bytes, bool insert_only)
 	size_t		minContextSize = ALLOCSET_DEFAULT_MINSIZE;
 	size_t		maxBlockSize = ALLOCSET_DEFAULT_MAXSIZE;
 
-	ts = palloc0(sizeof(TidStore));
+	ts = palloc0_object(TidStore);
 
 	/* choose the maxBlockSize to be no larger than 1/16 of max_bytes */
 	while (16 * maxBlockSize > max_bytes)
@@ -212,7 +212,7 @@ TidStoreCreateShared(size_t max_bytes, int tranche_id)
 	size_t		dsa_init_size = DSA_DEFAULT_INIT_SEGMENT_SIZE;
 	size_t		dsa_max_size = DSA_MAX_SEGMENT_SIZE;
 
-	ts = palloc0(sizeof(TidStore));
+	ts = palloc0_object(TidStore);
 
 	/*
 	 * Choose the initial and maximum DSA segment sizes to be no longer than
@@ -250,7 +250,7 @@ TidStoreAttach(dsa_handle area_handle, dsa_pointer handle)
 	Assert(DsaPointerIsValid(handle));
 
 	/* create per-backend state */
-	ts = palloc0(sizeof(TidStore));
+	ts = palloc0_object(TidStore);
 
 	area = dsa_attach(area_handle);
 
@@ -472,7 +472,7 @@ TidStoreBeginIterate(TidStore *ts)
 {
 	TidStoreIter *iter;
 
-	iter = palloc0(sizeof(TidStoreIter));
+	iter = palloc0_object(TidStoreIter);
 	iter->ts = ts;
 
 	if (TidStoreIsShared(ts))

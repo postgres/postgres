@@ -808,8 +808,7 @@ find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
 	int			i;
 
 	/* Allocate an array that's certainly big enough */
-	appinfos = (AppendRelInfo **)
-		palloc(sizeof(AppendRelInfo *) * bms_num_members(relids));
+	appinfos = palloc_array(AppendRelInfo *, bms_num_members(relids));
 
 	i = -1;
 	while ((i = bms_next_member(relids, i)) >= 0)

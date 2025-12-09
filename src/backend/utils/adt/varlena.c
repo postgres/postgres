@@ -1703,7 +1703,7 @@ varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
 	 */
 	if (abbreviate || !collate_c)
 	{
-		sss = palloc(sizeof(VarStringSortSupport));
+		sss = palloc_object(VarStringSortSupport);
 		sss->buf1 = palloc(TEXTBUFLEN);
 		sss->buflen1 = TEXTBUFLEN;
 		sss->buf2 = palloc(TEXTBUFLEN);

@@ -46,7 +46,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	GISTBuildBuffers *gfbb;
 	HASHCTL		hashCtl;
 
-	gfbb = palloc(sizeof(GISTBuildBuffers));
+	gfbb = palloc_object(GISTBuildBuffers);
 	gfbb->pagesPerBuffer = pagesPerBuffer;
 	gfbb->levelStep = levelStep;
 
@@ -60,7 +60,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	/* Initialize free page management. */
 	gfbb->nFreeBlocks = 0;
 	gfbb->freeBlocksLen = 32;
-	gfbb->freeBlocks = (long *) palloc(gfbb->freeBlocksLen * sizeof(long));
+	gfbb->freeBlocks = palloc_array(long, gfbb->freeBlocksLen);
 
 	/*
 	 * Current memory context will be used for all in-memory data structures
@@ -87,8 +87,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	 * buffers are inserted here when they are created.
 	 */
 	gfbb->buffersOnLevelsLen = 1;
-	gfbb->buffersOnLevels = (List **) palloc(sizeof(List *) *
-											 gfbb->buffersOnLevelsLen);
+	gfbb->buffersOnLevels = palloc_array(List *, gfbb->buffersOnLevelsLen);
 	gfbb->buffersOnLevels[0] = NIL;
 
 	/*
@@ -96,8 +95,7 @@ gistInitBuildBuffers(int pagesPerBuffer, int levelStep, int maxLevel)
 	 * into main memory.
 	 */
 	gfbb->loadedBuffersLen = 32;
-	gfbb->loadedBuffers = (GISTNodeBuffer **) palloc(gfbb->loadedBuffersLen *
-													 sizeof(GISTNodeBuffer *));
+	gfbb->loadedBuffers = palloc_array(GISTNodeBuffer *, gfbb->loadedBuffersLen);
 	gfbb->loadedBuffersCount = 0;
 
 	gfbb->rootlevel = maxLevel;
@@ -582,9 +580,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Allocate memory for information about relocation buffers.
 	 */
 	splitPagesCount = list_length(splitinfo);
-	relocationBuffersInfos =
-		(RelocationBufferInfo *) palloc(sizeof(RelocationBufferInfo) *
-										splitPagesCount);
+	relocationBuffersInfos = palloc_array(RelocationBufferInfo, splitPagesCount);
 
 	/*
 	 * Fill relocation buffers information for node buffers of pages produced

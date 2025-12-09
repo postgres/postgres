@@ -297,7 +297,7 @@ llvm_compile_expr(ExprState *state)
 								   "v.econtext.aggnulls");
 
 	/* allocate blocks for each op upfront, so we can do jumps easily */
-	opblocks = palloc(sizeof(LLVMBasicBlockRef) * state->steps_len);
+	opblocks = palloc_array(LLVMBasicBlockRef, state->steps_len);
 	for (int opno = 0; opno < state->steps_len; opno++)
 		opblocks[opno] = l_bb_append_v(eval_fn, "b.op.%d.start", opno);
 
@@ -2505,7 +2505,7 @@ llvm_compile_expr(ExprState *state)
 					v_nullsp = l_ptr_const(nulls, l_ptr(TypeStorageBool));
 
 					/* create blocks for checking args */
-					b_checknulls = palloc(sizeof(LLVMBasicBlockRef) * nargs);
+					b_checknulls = palloc_array(LLVMBasicBlockRef, nargs);
 					for (int argno = 0; argno < nargs; argno++)
 					{
 						b_checknulls[argno] =
@@ -2956,7 +2956,7 @@ llvm_compile_expr(ExprState *state)
 	 */
 	{
 
-		CompiledExprState *cstate = palloc0(sizeof(CompiledExprState));
+		CompiledExprState *cstate = palloc0_object(CompiledExprState);
 
 		cstate->context = context;
 		cstate->funcname = funcname;
@@ -3068,7 +3068,7 @@ build_EvalXFuncInt(LLVMBuilderRef b, LLVMModuleRef mod, const char *funcname,
 		elog(ERROR, "parameter mismatch: %s expects %d passed %d",
 			 funcname, LLVMCountParams(v_fn), nargs + 2);
 
-	params = palloc(sizeof(LLVMValueRef) * (2 + nargs));
+	params = palloc_array(LLVMValueRef, (2 + nargs));
 
 	params[argno++] = v_state;
 	params[argno++] = l_ptr_const(op, l_ptr(StructExprEvalStep));

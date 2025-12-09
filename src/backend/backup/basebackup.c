@@ -262,7 +262,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 	total_checksum_failures = 0;
 
 	/* Allocate backup related variables. */
-	backup_state = (BackupState *) palloc0(sizeof(BackupState));
+	backup_state = palloc0_object(BackupState);
 	initStringInfo(&tablespace_map);
 
 	basebackup_progress_wait_checkpoint();
@@ -289,7 +289,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink,
 			PrepareForIncrementalBackup(ib, backup_state);
 
 		/* Add a node for the base directory at the end */
-		newti = palloc0(sizeof(tablespaceinfo));
+		newti = palloc0_object(tablespaceinfo);
 		newti->size = -1;
 		state.tablespaces = lappend(state.tablespaces, newti);
 
@@ -1206,7 +1206,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 	 * But we don't need it at all if this is not an incremental backup.
 	 */
 	if (ib != NULL)
-		relative_block_numbers = palloc(sizeof(BlockNumber) * RELSEG_SIZE);
+		relative_block_numbers = palloc_array(BlockNumber, RELSEG_SIZE);
 
 	/*
 	 * Determine if the current path is a database directory that can contain

@@ -186,7 +186,7 @@ CreateParallelContext(const char *library_name, const char *function_name,
 	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
 	/* Initialize a new ParallelContext. */
-	pcxt = palloc0(sizeof(ParallelContext));
+	pcxt = palloc0_object(ParallelContext);
 	pcxt->subid = GetCurrentSubTransactionId();
 	pcxt->nworkers = nworkers;
 	pcxt->nworkers_to_launch = nworkers;
@@ -453,7 +453,7 @@ InitializeParallelDSM(ParallelContext *pcxt)
 					   clientconninfospace);
 
 		/* Allocate space for worker information. */
-		pcxt->worker = palloc0(sizeof(ParallelWorkerInfo) * pcxt->nworkers);
+		pcxt->worker = palloc0_array(ParallelWorkerInfo, pcxt->nworkers);
 
 		/*
 		 * Establish error queues in dynamic shared memory.
@@ -648,8 +648,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 	 */
 	if (pcxt->nworkers_launched > 0)
 	{
-		pcxt->known_attached_workers =
-			palloc0(sizeof(bool) * pcxt->nworkers_launched);
+		pcxt->known_attached_workers = palloc0_array(bool, pcxt->nworkers_launched);
 		pcxt->nknown_attached_workers = 0;
 	}
 

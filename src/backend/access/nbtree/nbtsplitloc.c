@@ -197,7 +197,7 @@ _bt_findsplitloc(Relation rel,
 	 * between tuples will be legal).
 	 */
 	state.maxsplits = maxoff;
-	state.splits = palloc(sizeof(SplitPoint) * state.maxsplits);
+	state.splits = palloc_array(SplitPoint, state.maxsplits);
 	state.nsplits = 0;
 
 	/*

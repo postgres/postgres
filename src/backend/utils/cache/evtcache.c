@@ -172,7 +172,7 @@ BuildEventTriggerCache(void)
 		oldcontext = MemoryContextSwitchTo(EventTriggerCacheContext);
 
 		/* Allocate new cache item. */
-		item = palloc0(sizeof(EventTriggerCacheItem));
+		item = palloc0_object(EventTriggerCacheItem);
 		item->fnoid = form->evtfoid;
 		item->enabled = form->evtenabled;
 

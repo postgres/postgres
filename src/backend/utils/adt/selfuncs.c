@@ -3683,7 +3683,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
 		}
 	}
 
-	varinfo = (GroupVarInfo *) palloc(sizeof(GroupVarInfo));
+	varinfo = palloc_object(GroupVarInfo);
 
 	varinfo->var = var;
 	varinfo->rel = vardata->rel;
@@ -4264,7 +4264,7 @@ estimate_multivariate_bucketsize(PlannerInfo *root, RelOptInfo *inner,
 				 * estimate_multivariate_ndistinct(), which doesn't care about
 				 * ndistinct and isdefault fields.  Thus, skip these fields.
 				 */
-				varinfo = (GroupVarInfo *) palloc0(sizeof(GroupVarInfo));
+				varinfo = palloc0_object(GroupVarInfo);
 				varinfo->var = expr;
 				varinfo->rel = root->simple_rel_array[relid];
 				varinfos = lappend(varinfos, varinfo);

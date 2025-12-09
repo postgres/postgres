@@ -101,7 +101,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 
 	result->a = a;
 	result->b = b;
@@ -142,7 +142,7 @@ macaddr_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	macaddr    *addr;
 
-	addr = (macaddr *) palloc(sizeof(macaddr));
+	addr = palloc_object(macaddr);
 
 	addr->a = pq_getmsgbyte(buf);
 	addr->b = pq_getmsgbyte(buf);
@@ -289,7 +289,7 @@ macaddr_not(PG_FUNCTION_ARGS)
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = ~addr->a;
 	result->b = ~addr->b;
 	result->c = ~addr->c;
@@ -306,7 +306,7 @@ macaddr_and(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = addr1->a & addr2->a;
 	result->b = addr1->b & addr2->b;
 	result->c = addr1->c & addr2->c;
@@ -323,7 +323,7 @@ macaddr_or(PG_FUNCTION_ARGS)
 	macaddr    *addr2 = PG_GETARG_MACADDR_P(1);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 	result->a = addr1->a | addr2->a;
 	result->b = addr1->b | addr2->b;
 	result->c = addr1->c | addr2->c;
@@ -343,7 +343,7 @@ macaddr_trunc(PG_FUNCTION_ARGS)
 	macaddr    *addr = PG_GETARG_MACADDR_P(0);
 	macaddr    *result;
 
-	result = (macaddr *) palloc(sizeof(macaddr));
+	result = palloc_object(macaddr);
 
 	result->a = addr->a;
 	result->b = addr->b;
@@ -374,7 +374,7 @@ macaddr_sortsupport(PG_FUNCTION_ARGS)
 
 		oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-		uss = palloc(sizeof(macaddr_sortsupport_state));
+		uss = palloc_object(macaddr_sortsupport_state);
 		uss->input_count = 0;
 		uss->estimating = true;
 		initHyperLogLog(&uss->abbr_card, 10);

@@ -702,8 +702,7 @@ get_op_index_interpretation(Oid opno)
 		if (cmptype == COMPARE_INVALID)
 			continue;
 
-		thisresult = (OpIndexInterpretation *)
-			palloc(sizeof(OpIndexInterpretation));
+		thisresult = palloc_object(OpIndexInterpretation);
 		thisresult->opfamily_id = op_form->amopfamily;
 		thisresult->cmptype = cmptype;
 		thisresult->oplefttype = op_form->amoplefttype;
@@ -748,8 +747,7 @@ get_op_index_interpretation(Oid opno)
 					continue;
 
 				/* OK, report it as COMPARE_NE */
-				thisresult = (OpIndexInterpretation *)
-					palloc(sizeof(OpIndexInterpretation));
+				thisresult = palloc_object(OpIndexInterpretation);
 				thisresult->opfamily_id = op_form->amopfamily;
 				thisresult->cmptype = COMPARE_NE;
 				thisresult->oplefttype = op_form->amoplefttype;

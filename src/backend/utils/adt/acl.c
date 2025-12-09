@@ -618,7 +618,7 @@ aclitemin(PG_FUNCTION_ARGS)
 	Node	   *escontext = fcinfo->context;
 	AclItem    *aip;
 
-	aip = (AclItem *) palloc(sizeof(AclItem));
+	aip = palloc_object(AclItem);
 
 	s = aclparse(s, aip, escontext);
 	if (s == NULL)
@@ -1661,7 +1661,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 
 	priv = convert_any_priv_string(privtext, any_priv_map);
 
-	result = (AclItem *) palloc(sizeof(AclItem));
+	result = palloc_object(AclItem);
 
 	result->ai_grantee = grantee;
 	result->ai_grantor = grantor;
@@ -1821,7 +1821,7 @@ aclexplode(PG_FUNCTION_ARGS)
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 
 		/* allocate memory for user context */
-		idx = (int *) palloc(sizeof(int[2]));
+		idx = palloc_array(int, 2);
 		idx[0] = 0;				/* ACL array item index */
 		idx[1] = -1;			/* privilege type counter */
 		funcctx->user_fctx = idx;

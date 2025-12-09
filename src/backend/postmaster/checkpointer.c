@@ -1318,7 +1318,7 @@ CompactCheckpointerRequestQueue(void)
 	num_requests = CheckpointerShmem->num_requests;
 
 	/* Initialize skip_slot array */
-	skip_slot = palloc0(sizeof(bool) * max_requests);
+	skip_slot = palloc0_array(bool, max_requests);
 
 	head = CheckpointerShmem->head;
 

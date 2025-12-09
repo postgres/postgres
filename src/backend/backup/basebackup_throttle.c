@@ -72,7 +72,7 @@ bbsink_throttle_new(bbsink *next, uint32 maxrate)
 	Assert(next != NULL);
 	Assert(maxrate > 0);
 
-	sink = palloc0(sizeof(bbsink_throttle));
+	sink = palloc0_object(bbsink_throttle);
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_throttle_ops;
 	sink->base.bbs_next = next;
 

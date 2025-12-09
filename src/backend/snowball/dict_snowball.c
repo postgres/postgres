@@ -229,7 +229,7 @@ dsnowball_init(PG_FUNCTION_ARGS)
 	bool		stoploaded = false;
 	ListCell   *l;
 
-	d = (DictSnowball *) palloc0(sizeof(DictSnowball));
+	d = palloc0_object(DictSnowball);
 
 	foreach(l, dictoptions)
 	{
@@ -278,7 +278,7 @@ dsnowball_lexize(PG_FUNCTION_ARGS)
 	char	   *in = (char *) PG_GETARG_POINTER(1);
 	int32		len = PG_GETARG_INT32(2);
 	char	   *txt = str_tolower(in, len, DEFAULT_COLLATION_OID);
-	TSLexeme   *res = palloc0(sizeof(TSLexeme) * 2);
+	TSLexeme   *res = palloc0_array(TSLexeme, 2);
 
 	/*
 	 * Do not pass strings exceeding 1000 bytes to the stemmer, as they're

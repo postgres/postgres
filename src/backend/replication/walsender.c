@@ -3973,7 +3973,7 @@ WalSndGetStateString(WalSndState state)
 static Interval *
 offset_to_interval(TimeOffset offset)
 {
-	Interval   *result = palloc(sizeof(Interval));
+	Interval   *result = palloc_object(Interval);
 
 	result->month = 0;
 	result->day = 0;

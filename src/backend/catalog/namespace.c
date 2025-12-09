@@ -3929,7 +3929,7 @@ GetSearchPathMatcher(MemoryContext context)
 
 	oldcxt = MemoryContextSwitchTo(context);
 
-	result = (SearchPathMatcher *) palloc0(sizeof(SearchPathMatcher));
+	result = palloc0_object(SearchPathMatcher);
 	schemas = list_copy(activeSearchPath);
 	while (schemas && linitial_oid(schemas) != activeCreationNamespace)
 	{
@@ -3960,7 +3960,7 @@ CopySearchPathMatcher(SearchPathMatcher *path)
 {
 	SearchPathMatcher *result;
 
-	result = (SearchPathMatcher *) palloc(sizeof(SearchPathMatcher));
+	result = palloc_object(SearchPathMatcher);
 	result->schemas = list_copy(path->schemas);
 	result->addCatalog = path->addCatalog;
 	result->addTemp = path->addTemp;

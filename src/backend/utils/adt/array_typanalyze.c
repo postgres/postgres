@@ -132,7 +132,7 @@ array_typanalyze(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(true);
 
 	/* Store our findings for use by compute_array_stats() */
-	extra_data = (ArrayAnalyzeExtraData *) palloc(sizeof(ArrayAnalyzeExtraData));
+	extra_data = palloc_object(ArrayAnalyzeExtraData);
 	extra_data->type_id = typentry->type_id;
 	extra_data->eq_opr = typentry->eq_opr;
 	extra_data->coll_id = stats->attrcollid;	/* collation we should use */
@@ -469,7 +469,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		cutoff_freq = 9 * element_no / bucket_width;
 
 		i = hash_get_num_entries(elements_tab); /* surely enough space */
-		sort_table = (TrackItem **) palloc(sizeof(TrackItem *) * i);
+		sort_table = palloc_array(TrackItem *, i);
 
 		hash_seq_init(&scan_status, elements_tab);
 		track_len = 0;
@@ -606,8 +606,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 			 * Create an array of DECountItem pointers, and sort them into
 			 * increasing count order.
 			 */
-			sorted_count_items = (DECountItem **)
-				palloc(sizeof(DECountItem *) * count_items_count);
+			sorted_count_items = palloc_array(DECountItem *, count_items_count);
 			hash_seq_init(&scan_status, count_tab);
 			j = 0;
 			while ((count_item = (DECountItem *) hash_seq_search(&scan_status)) != NULL)

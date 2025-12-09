@@ -257,7 +257,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 {
 	Tuplestorestate *state;
 
-	state = (Tuplestorestate *) palloc0(sizeof(Tuplestorestate));
+	state = palloc0_object(Tuplestorestate);
 
 	state->status = TSS_INMEM;
 	state->eflags = eflags;

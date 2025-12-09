@@ -361,7 +361,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	/* Copy the TupleConstr data structure, if any */
 	if (constr)
 	{
-		TupleConstr *cpy = (TupleConstr *) palloc0(sizeof(TupleConstr));
+		TupleConstr *cpy = palloc0_object(TupleConstr);
 
 		cpy->has_not_null = constr->has_not_null;
 		cpy->has_generated_stored = constr->has_generated_stored;

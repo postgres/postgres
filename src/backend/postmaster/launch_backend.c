@@ -258,7 +258,7 @@ postmaster_child_launch(BackendType child_type, int child_slot,
 		MyPMChildSlot = child_slot;
 		if (client_sock)
 		{
-			MyClientSocket = palloc(sizeof(ClientSocket));
+			MyClientSocket = palloc_object(ClientSocket);
 			memcpy(MyClientSocket, client_sock, sizeof(ClientSocket));
 		}
 

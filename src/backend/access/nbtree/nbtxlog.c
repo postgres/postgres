@@ -469,7 +469,7 @@ btree_xlog_dedup(XLogReaderState *record)
 		BTDedupInterval *intervals;
 		Page		newpage;
 
-		state = (BTDedupState) palloc(sizeof(BTDedupStateData));
+		state = palloc_object(BTDedupStateData);
 		state->deduplicate = true;	/* unused */
 		state->nmaxitems = 0;	/* unused */
 		/* Conservatively use larger maxpostingsize than primary */

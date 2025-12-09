@@ -71,7 +71,7 @@ typedef struct
 DestReceiver *
 printtup_create_DR(CommandDest dest)
 {
-	DR_printtup *self = (DR_printtup *) palloc0(sizeof(DR_printtup));
+	DR_printtup *self = palloc0_object(DR_printtup);
 
 	self->pub.receiveSlot = printtup;	/* might get changed later */
 	self->pub.rStartup = printtup_startup;

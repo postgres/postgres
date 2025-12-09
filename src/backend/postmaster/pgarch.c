@@ -257,7 +257,7 @@ PgArchiverMain(const void *startup_data, size_t startup_data_len)
 	PgArch->pgprocno = MyProcNumber;
 
 	/* Create workspace for pgarch_readyXlog() */
-	arch_files = palloc(sizeof(struct arch_files_state));
+	arch_files = palloc_object(struct arch_files_state);
 	arch_files->arch_files_size = 0;
 
 	/* Initialize our max-heap for prioritizing files to archive. */
@@ -945,7 +945,7 @@ LoadArchiveLibrary(void)
 		ereport(ERROR,
 				(errmsg("archive modules must register an archive callback")));
 
-	archive_module_state = (ArchiveModuleState *) palloc0(sizeof(ArchiveModuleState));
+	archive_module_state = palloc0_object(ArchiveModuleState);
 	if (ArchiveCallbacks->startup_cb != NULL)
 		ArchiveCallbacks->startup_cb(archive_module_state);
 

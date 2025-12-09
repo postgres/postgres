@@ -466,12 +466,10 @@ reorderqueue_push(IndexScanState *node, TupleTableSlot *slot,
 	ReorderTuple *rt;
 	int			i;
 
-	rt = (ReorderTuple *) palloc(sizeof(ReorderTuple));
+	rt = palloc_object(ReorderTuple);
 	rt->htup = ExecCopySlotHeapTuple(slot);
-	rt->orderbyvals =
-		(Datum *) palloc(sizeof(Datum) * scandesc->numberOfOrderBys);
-	rt->orderbynulls =
-		(bool *) palloc(sizeof(bool) * scandesc->numberOfOrderBys);
+	rt->orderbyvals = palloc_array(Datum, scandesc->numberOfOrderBys);
+	rt->orderbynulls = palloc_array(bool, scandesc->numberOfOrderBys);
 	for (i = 0; i < node->iss_NumOrderByKeys; i++)
 	{
 		if (!orderbynulls[i])

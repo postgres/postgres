@@ -4264,7 +4264,7 @@ parse_datetime(text *date_txt, text *fmt, Oid collid, bool strict,
 	{
 		if (flags & DCH_ZONED)
 		{
-			TimeTzADT  *result = palloc(sizeof(TimeTzADT));
+			TimeTzADT  *result = palloc_object(TimeTzADT);
 
 			if (ftz.has_tz)
 			{

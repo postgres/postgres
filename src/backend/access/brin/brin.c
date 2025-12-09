@@ -318,7 +318,7 @@ initialize_brin_insertstate(Relation idxRel, IndexInfo *indexInfo)
 	MemoryContext oldcxt;
 
 	oldcxt = MemoryContextSwitchTo(indexInfo->ii_Context);
-	bistate = palloc0(sizeof(BrinInsertState));
+	bistate = palloc0_object(BrinInsertState);
 	bistate->bis_desc = brin_build_desc(idxRel);
 	bistate->bis_rmAccess = brinRevmapInitialize(idxRel,
 												 &bistate->bis_pages_per_range);
@@ -1185,7 +1185,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	{
 		SortCoordinate coordinate;
 
-		coordinate = (SortCoordinate) palloc0(sizeof(SortCoordinateData));
+		coordinate = palloc0_object(SortCoordinateData);
 		coordinate->isWorker = false;
 		coordinate->nParticipants =
 			state->bs_leader->nparticipanttuplesorts;
@@ -2384,7 +2384,7 @@ _brin_begin_parallel(BrinBuildState *buildstate, Relation heap, Relation index,
 	Size		estsort;
 	BrinShared *brinshared;
 	Sharedsort *sharedsort;
-	BrinLeader *brinleader = (BrinLeader *) palloc0(sizeof(BrinLeader));
+	BrinLeader *brinleader = palloc0_object(BrinLeader);
 	WalUsage   *walusage;
 	BufferUsage *bufferusage;
 	bool		leaderparticipates = true;
@@ -2828,7 +2828,7 @@ _brin_parallel_scan_and_build(BrinBuildState *state,
 	IndexInfo  *indexInfo;
 
 	/* Initialize local tuplesort coordination state */
-	coordinate = palloc0(sizeof(SortCoordinateData));
+	coordinate = palloc0_object(SortCoordinateData);
 	coordinate->isWorker = true;
 	coordinate->nParticipants = -1;
 	coordinate->sharedsort = sharedsort;
