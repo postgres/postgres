@@ -111,11 +111,9 @@
 #include "utils/tuplesort.h"
 
 /*
- * Initial size of memtuples array.  We're trying to select this size so that
- * array doesn't exceed ALLOCSET_SEPARATE_THRESHOLD and so that the overhead of
- * allocation might possibly be lowered.  However, we don't consider array sizes
- * less than 1024.
- *
+ * Initial size of memtuples array.  This must be more than
+ * ALLOCSET_SEPARATE_THRESHOLD; see comments in grow_memtuples().  Clamp at
+ * 1024 elements to avoid excessive reallocs.
  */
 #define INITIAL_MEMTUPSIZE Max(1024, \
 	ALLOCSET_SEPARATE_THRESHOLD / sizeof(SortTuple) + 1)
@@ -692,10 +690,6 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	state->base.sortcontext = sortcontext;
 	state->base.maincontext = maincontext;
 
-	/*
-	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
-	 * see comments in grow_memtuples().
-	 */
 	state->memtupsize = INITIAL_MEMTUPSIZE;
 	state->memtuples = NULL;
 
@@ -784,10 +778,6 @@ tuplesort_begin_batch(Tuplesortstate *state)
 
 	state->memtupcount = 0;
 
-	/*
-	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
-	 * see comments in grow_memtuples().
-	 */
 	state->growmemtuples = true;
 	state->slabAllocatorUsed = false;
 	if (state->memtuples != NULL && state->memtupsize != INITIAL_MEMTUPSIZE)
