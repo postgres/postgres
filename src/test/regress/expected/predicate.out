@@ -443,3 +443,44 @@ SELECT * FROM pred_tab2, pred_tab1 WHERE pred_tab1.a IS NULL OR pred_tab1.b < 2;
 RESET constraint_exclusion;
 DROP TABLE pred_tab1;
 DROP TABLE pred_tab2;
+-- Validate that NullTest quals in index expressions and predicate are reduced correctly
+CREATE TABLE pred_tab (a int, b int NOT NULL, c int NOT NULL);
+INSERT INTO pred_tab SELECT i, i, i FROM generate_series(1, 1000) i;
+CREATE INDEX pred_tab_exprs_idx ON pred_tab ((a < 5 AND b IS NOT NULL AND c IS NOT NULL));
+CREATE INDEX pred_tab_pred_idx ON pred_tab (a) WHERE b IS NOT NULL AND c IS NOT NULL;
+ANALYZE pred_tab;
+-- Ensure that index pred_tab_exprs_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+                   QUERY PLAN                    
+-------------------------------------------------
+ Index Scan using pred_tab_exprs_idx on pred_tab
+   Index Cond: ((a < 5) = true)
+(2 rows)
+
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+ a | b | c 
+---+---+---
+ 1 | 1 | 1
+ 2 | 2 | 2
+ 3 | 3 | 3
+ 4 | 4 | 4
+(4 rows)
+
+-- Ensure that index pred_tab_pred_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+                   QUERY PLAN                   
+------------------------------------------------
+ Index Scan using pred_tab_pred_idx on pred_tab
+   Index Cond: (a < 3)
+(2 rows)
+
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+ a | b | c 
+---+---+---
+ 1 | 1 | 1
+ 2 | 2 | 2
+(2 rows)
+
+DROP TABLE pred_tab;

@@ -429,13 +429,32 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			 * modify the copies we obtain from the relcache to have the
 			 * correct varno for the parent relation, so that they match up
 			 * correctly against qual clauses.
+			 *
+			 * After fixing the varnos, we need to run the index expressions
+			 * and predicate through const-simplification again, using a valid
+			 * "root".  This ensures that NullTest quals for Vars can be
+			 * properly reduced.
 			 */
 			info->indexprs = RelationGetIndexExpressions(indexRelation);
 			info->indpred = RelationGetIndexPredicate(indexRelation);
-			if (info->indexprs && varno != 1)
-				ChangeVarNodes((Node *) info->indexprs, 1, varno, 0);
-			if (info->indpred && varno != 1)
-				ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
+			if (info->indexprs)
+			{
+				if (varno != 1)
+					ChangeVarNodes((Node *) info->indexprs, 1, varno, 0);
+
+				info->indexprs = (List *)
+					eval_const_expressions(root, (Node *) info->indexprs);
+			}
+			if (info->indpred)
+			{
+				if (varno != 1)
+					ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
+
+				info->indpred = (List *)
+					eval_const_expressions(root,
+										   (Node *) make_ands_explicit(info->indpred));
+				info->indpred = make_ands_implicit((Expr *) info->indpred);
+			}
 
 			/* Build targetlist using the completed indexprs data */
 			info->indextlist = build_index_tlist(root, info, relation);
@@ -1047,8 +1066,13 @@ infer_arbiter_indexes(PlannerInfo *root)
 
 		/* Expression attributes (if any) must match */
 		idxExprs = RelationGetIndexExpressions(idxRel);
-		if (idxExprs && varno != 1)
-			ChangeVarNodes((Node *) idxExprs, 1, varno, 0);
+		if (idxExprs)
+		{
+			if (varno != 1)
+				ChangeVarNodes((Node *) idxExprs, 1, varno, 0);
+
+			idxExprs = (List *) eval_const_expressions(root, (Node *) idxExprs);
+		}
 
 		/*
 		 * If arbiterElems are present, check them.  (Note that if a
@@ -1109,8 +1133,16 @@ infer_arbiter_indexes(PlannerInfo *root)
 			continue;
 
 		predExprs = RelationGetIndexPredicate(idxRel);
-		if (predExprs && varno != 1)
-			ChangeVarNodes((Node *) predExprs, 1, varno, 0);
+		if (predExprs)
+		{
+			if (varno != 1)
+				ChangeVarNodes((Node *) predExprs, 1, varno, 0);
+
+			predExprs = (List *)
+				eval_const_expressions(root,
+									   (Node *) make_ands_explicit(predExprs));
+			predExprs = make_ands_implicit((Expr *) predExprs);
+		}
 
 		/*
 		 * Partial indexes affect each form of ON CONFLICT differently: if a

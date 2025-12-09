@@ -221,3 +221,22 @@ SELECT * FROM pred_tab2, pred_tab1 WHERE pred_tab1.a IS NULL OR pred_tab1.b < 2;
 RESET constraint_exclusion;
 DROP TABLE pred_tab1;
 DROP TABLE pred_tab2;
+
+-- Validate that NullTest quals in index expressions and predicate are reduced correctly
+CREATE TABLE pred_tab (a int, b int NOT NULL, c int NOT NULL);
+INSERT INTO pred_tab SELECT i, i, i FROM generate_series(1, 1000) i;
+CREATE INDEX pred_tab_exprs_idx ON pred_tab ((a < 5 AND b IS NOT NULL AND c IS NOT NULL));
+CREATE INDEX pred_tab_pred_idx ON pred_tab (a) WHERE b IS NOT NULL AND c IS NOT NULL;
+ANALYZE pred_tab;
+
+-- Ensure that index pred_tab_exprs_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+SELECT * FROM pred_tab WHERE (a < 5 AND b IS NOT NULL AND c IS NOT NULL) IS TRUE;
+
+-- Ensure that index pred_tab_pred_idx is used
+EXPLAIN (COSTS OFF)
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+SELECT * FROM pred_tab WHERE a < 3 AND b IS NOT NULL AND c IS NOT NULL;
+
+DROP TABLE pred_tab;

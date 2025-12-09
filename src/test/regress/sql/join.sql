@@ -3599,7 +3599,7 @@ explain (verbose, costs off)
 select * from j1
 left join j2 on j1.id1 = j2.id1 where j1.id2 = 1;
 
-create unique index j1_id2_idx on j1(id2) where id2 is not null;
+create unique index j1_id2_idx on j1(id2) where id2 > 0;
 
 -- ensure we don't use a partial unique index as unique proofs
 explain (verbose, costs off)
