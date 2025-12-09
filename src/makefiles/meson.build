@@ -154,9 +154,10 @@ pgxs_bins = {
 pgxs_empty = [
   'ICU_CFLAGS', # needs to be added, included by public server headers
 
-  # hard to see why we'd need either?
+  # hard to see why we'd need these ones?
   'ZIC',
   'TCLSH',
+  'NM',
 
   # docs don't seem to be supported by pgxs
   'XMLLINT',
