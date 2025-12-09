@@ -1353,8 +1353,8 @@ PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping)
 	Assert(PyMapping_Check(mapping));
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(bool) * desc->natts);
+	values = palloc_array(Datum, desc->natts);
+	nulls = palloc_array(bool, desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
@@ -1435,8 +1435,8 @@ PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence)
 				 errmsg("length of returned sequence did not match number of columns in row")));
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(bool) * desc->natts);
+	values = palloc_array(Datum, desc->natts);
+	nulls = palloc_array(bool, desc->natts);
 	idx = 0;
 	for (i = 0; i < desc->natts; ++i)
 	{
@@ -1493,8 +1493,8 @@ PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object
 	volatile int i;
 
 	/* Build tuple */
-	values = palloc(sizeof(Datum) * desc->natts);
-	nulls = palloc(sizeof(bool) * desc->natts);
+	values = palloc_array(Datum, desc->natts);
+	nulls = palloc_array(bool, desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;

@@ -171,7 +171,7 @@ spgist_name_choose(PG_FUNCTION_ARGS)
 			}
 			out->result.splitTuple.prefixNNodes = 1;
 			out->result.splitTuple.prefixNodeLabels =
-				(Datum *) palloc(sizeof(Datum));
+				palloc_object(Datum);
 			out->result.splitTuple.prefixNodeLabels[0] =
 				Int16GetDatum(*(unsigned char *) (prefixStr + commonLen));
 
@@ -243,7 +243,7 @@ spgist_name_choose(PG_FUNCTION_ARGS)
 		out->result.splitTuple.prefixHasPrefix = in->hasPrefix;
 		out->result.splitTuple.prefixPrefixDatum = in->prefixDatum;
 		out->result.splitTuple.prefixNNodes = 1;
-		out->result.splitTuple.prefixNodeLabels = (Datum *) palloc(sizeof(Datum));
+		out->result.splitTuple.prefixNodeLabels = palloc_object(Datum);
 		out->result.splitTuple.prefixNodeLabels[0] = Int16GetDatum(-2);
 		out->result.splitTuple.childNodeN = 0;
 		out->result.splitTuple.postfixHasPrefix = false;
@@ -318,9 +318,9 @@ spgist_name_inner_consistent(PG_FUNCTION_ARGS)
 	 * and see if it's consistent with the query.  If so, emit an entry into
 	 * the output arrays.
 	 */
-	out->nodeNumbers = (int *) palloc(sizeof(int) * in->nNodes);
-	out->levelAdds = (int *) palloc(sizeof(int) * in->nNodes);
-	out->reconstructedValues = (Datum *) palloc(sizeof(Datum) * in->nNodes);
+	out->nodeNumbers = palloc_array(int, in->nNodes);
+	out->levelAdds = palloc_array(int, in->nNodes);
+	out->reconstructedValues = palloc_array(Datum, in->nNodes);
 	out->nNodes = 0;
 
 	for (i = 0; i < in->nNodes; i++)

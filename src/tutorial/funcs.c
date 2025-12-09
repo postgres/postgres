@@ -50,7 +50,7 @@ makepoint(PG_FUNCTION_ARGS)
 {
 	Point	   *pointx = PG_GETARG_POINT_P(0);
 	Point	   *pointy = PG_GETARG_POINT_P(1);
-	Point	   *new_point = (Point *) palloc(sizeof(Point));
+	Point	   *new_point = palloc_object(Point);
 
 	new_point->x = pointx->x;
 	new_point->y = pointy->y;

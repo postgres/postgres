@@ -49,7 +49,7 @@ pgfnames(const char *path)
 		return NULL;
 	}
 
-	filenames = (char **) palloc(fnsize * sizeof(char *));
+	filenames = palloc_array(char *, fnsize);
 
 	while (errno = 0, (file = readdir(dir)) != NULL)
 	{
@@ -58,8 +58,7 @@ pgfnames(const char *path)
 			if (numnames + 1 >= fnsize)
 			{
 				fnsize *= 2;
-				filenames = (char **) repalloc(filenames,
-											   fnsize * sizeof(char *));
+				filenames = repalloc_array(filenames, char *, fnsize);
 			}
 			filenames[numnames++] = pstrdup(file->d_name);
 		}

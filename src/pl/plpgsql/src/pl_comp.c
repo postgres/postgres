@@ -298,8 +298,8 @@ plpgsql_compile_callback(FunctionCallInfo fcinfo,
 											   forValidator,
 											   plpgsql_error_funcname);
 
-			in_arg_varnos = (int *) palloc(numargs * sizeof(int));
-			out_arg_variables = (PLpgSQL_variable **) palloc(numargs * sizeof(PLpgSQL_variable *));
+			in_arg_varnos = palloc_array(int, numargs);
+			out_arg_variables = palloc_array(PLpgSQL_variable *, numargs);
 
 			MemoryContextSwitchTo(func_cxt);
 
@@ -772,7 +772,7 @@ plpgsql_compile_inline(char *proc_source)
 	plpgsql_check_syntax = check_function_bodies;
 
 	/* Function struct does not live past current statement */
-	function = (PLpgSQL_function *) palloc0(sizeof(PLpgSQL_function));
+	function = palloc0_object(PLpgSQL_function);
 
 	plpgsql_curr_compile = function;
 
@@ -954,7 +954,7 @@ add_dummy_return(PLpgSQL_function *function)
 	{
 		PLpgSQL_stmt_block *new;
 
-		new = palloc0(sizeof(PLpgSQL_stmt_block));
+		new = palloc0_object(PLpgSQL_stmt_block);
 		new->cmd_type = PLPGSQL_STMT_BLOCK;
 		new->stmtid = ++function->nstatements;
 		new->body = list_make1(function->action);
@@ -966,7 +966,7 @@ add_dummy_return(PLpgSQL_function *function)
 	{
 		PLpgSQL_stmt_return *new;
 
-		new = palloc0(sizeof(PLpgSQL_stmt_return));
+		new = palloc0_object(PLpgSQL_stmt_return);
 		new->cmd_type = PLPGSQL_STMT_RETURN;
 		new->stmtid = ++function->nstatements;
 		new->expr = NULL;
@@ -1776,7 +1776,7 @@ plpgsql_build_variable(const char *refname, int lineno, PLpgSQL_type *dtype,
 				/* Ordinary scalar datatype */
 				PLpgSQL_var *var;
 
-				var = palloc0(sizeof(PLpgSQL_var));
+				var = palloc0_object(PLpgSQL_var);
 				var->dtype = PLPGSQL_DTYPE_VAR;
 				var->refname = pstrdup(refname);
 				var->lineno = lineno;
@@ -1833,7 +1833,7 @@ plpgsql_build_record(const char *refname, int lineno,
 {
 	PLpgSQL_rec *rec;
 
-	rec = palloc0(sizeof(PLpgSQL_rec));
+	rec = palloc0_object(PLpgSQL_rec);
 	rec->dtype = PLPGSQL_DTYPE_REC;
 	rec->refname = pstrdup(refname);
 	rec->lineno = lineno;
@@ -1859,14 +1859,14 @@ build_row_from_vars(PLpgSQL_variable **vars, int numvars)
 	PLpgSQL_row *row;
 	int			i;
 
-	row = palloc0(sizeof(PLpgSQL_row));
+	row = palloc0_object(PLpgSQL_row);
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;
 	row->rowtupdesc = CreateTemplateTupleDesc(numvars);
 	row->nfields = numvars;
-	row->fieldnames = palloc(numvars * sizeof(char *));
-	row->varnos = palloc(numvars * sizeof(int));
+	row->fieldnames = palloc_array(char *, numvars);
+	row->varnos = palloc_array(int, numvars);
 
 	for (i = 0; i < numvars; i++)
 	{
@@ -1940,7 +1940,7 @@ plpgsql_build_recfield(PLpgSQL_rec *rec, const char *fldname)
 	}
 
 	/* nope, so make a new one */
-	recfield = palloc0(sizeof(PLpgSQL_recfield));
+	recfield = palloc0_object(PLpgSQL_recfield);
 	recfield->dtype = PLPGSQL_DTYPE_RECFIELD;
 	recfield->fieldname = pstrdup(fldname);
 	recfield->recparentno = rec->dno;
@@ -2004,7 +2004,7 @@ build_datatype(HeapTuple typeTup, int32 typmod,
 				 errmsg("type \"%s\" is only a shell",
 						NameStr(typeStruct->typname))));
 
-	typ = (PLpgSQL_type *) palloc(sizeof(PLpgSQL_type));
+	typ = palloc_object(PLpgSQL_type);
 
 	typ->typname = pstrdup(NameStr(typeStruct->typname));
 	typ->typoid = typeStruct->oid;
@@ -2184,7 +2184,7 @@ plpgsql_parse_err_condition(char *condname)
 
 	if (strcmp(condname, "others") == 0)
 	{
-		new = palloc(sizeof(PLpgSQL_condition));
+		new = palloc_object(PLpgSQL_condition);
 		new->sqlerrstate = PLPGSQL_OTHERS;
 		new->condname = condname;
 		new->next = NULL;
@@ -2196,7 +2196,7 @@ plpgsql_parse_err_condition(char *condname)
 	{
 		if (strcmp(condname, exception_label_map[i].label) == 0)
 		{
-			new = palloc(sizeof(PLpgSQL_condition));
+			new = palloc_object(PLpgSQL_condition);
 			new->sqlerrstate = exception_label_map[i].sqlerrstate;
 			new->condname = condname;
 			new->next = prev;
@@ -2258,7 +2258,7 @@ plpgsql_finish_datums(PLpgSQL_function *function)
 	int			i;
 
 	function->ndatums = plpgsql_nDatums;
-	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
+	function->datums = palloc_array(PLpgSQL_datum *, plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
 	{
 		function->datums[i] = plpgsql_Datums[i];
@@ -2323,7 +2323,7 @@ plpgsql_add_initdatums(int **varnos)
 	{
 		if (n > 0)
 		{
-			*varnos = (int *) palloc(sizeof(int) * n);
+			*varnos = palloc_array(int, n);
 
 			n = 0;
 			for (i = datums_last; i < plpgsql_nDatums; i++)

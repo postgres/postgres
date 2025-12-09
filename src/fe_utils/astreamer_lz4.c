@@ -78,7 +78,7 @@ astreamer_lz4_compressor_new(astreamer *next, pg_compress_specification *compres
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(astreamer_lz4_frame));
+	streamer = palloc0_object(astreamer_lz4_frame);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_lz4_compressor_ops;
 
@@ -282,7 +282,7 @@ astreamer_lz4_decompressor_new(astreamer *next)
 
 	Assert(next != NULL);
 
-	streamer = palloc0(sizeof(astreamer_lz4_frame));
+	streamer = palloc0_object(astreamer_lz4_frame);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_lz4_decompressor_ops;
 

@@ -121,7 +121,7 @@ RememberManyTestResources(ResourceOwner owner,
 
 	for (int i = 0; i < nresources; i++)
 	{
-		ManyTestResource *mres = palloc(sizeof(ManyTestResource));
+		ManyTestResource *mres = palloc_object(ManyTestResource);
 
 		mres->kind = &kinds[kind_idx];
 		dlist_node_init(&mres->node);

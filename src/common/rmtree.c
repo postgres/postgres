@@ -64,7 +64,7 @@ rmtree(const char *path, bool rmtopdir)
 		return false;
 	}
 
-	dirnames = (char **) palloc(sizeof(char *) * dirnames_capacity);
+	dirnames = palloc_array(char *, dirnames_capacity);
 
 	while (errno = 0, (de = readdir(dir)))
 	{

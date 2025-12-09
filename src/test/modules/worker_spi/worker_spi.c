@@ -142,7 +142,7 @@ worker_spi_main(Datum main_arg)
 	char	   *p;
 	bits32		flags = 0;
 
-	table = palloc(sizeof(worktable));
+	table = palloc_object(worktable);
 	sprintf(name, "schema%d", index);
 	table->schema = pstrdup(name);
 	table->name = pstrdup("counted");

@@ -506,11 +506,11 @@ my_compress(PG_FUNCTION_ARGS)
     if (entry-&gt;leafkey)
     {
         /* replace entry-&gt;key with a compressed version */
-        compressed_data_type *compressed_data = palloc(sizeof(compressed_data_type));
+        compressed_data_type *compressed_data = palloc_object(compressed_data_type);
 
         /* fill *compressed_data from entry-&gt;key ... */
 
-        retval = palloc(sizeof(GISTENTRY));
+        retval = palloc_object(GISTENTRY);
         gistentryinit(*retval, PointerGetDatum(compressed_data),
                       entry-&gt;rel, entry-&gt;page, entry-&gt;offset, FALSE);
     }
@@ -921,8 +921,8 @@ my_fetch(PG_FUNCTION_ARGS)
     fetched_data_type *fetched_data;
     GISTENTRY  *retval;
 
-    retval = palloc(sizeof(GISTENTRY));
-    fetched_data = palloc(sizeof(fetched_data_type));
+    retval = palloc_object(GISTENTRY);
+    fetched_data = palloc_object(fetched_data_type);
 
     /*
      * Convert 'fetched_data' into the a Datum of the original datatype.

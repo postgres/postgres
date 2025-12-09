@@ -89,7 +89,7 @@ complex_in(PG_FUNCTION_ARGS)
                  errmsg("invalid input syntax for type %s: \"%s\"",
                         "complex", str)));
 
-    result = (Complex *) palloc(sizeof(Complex));
+    result = palloc_object(Complex);
     result->x = x;
     result->y = y;
     PG_RETURN_POINTER(result);

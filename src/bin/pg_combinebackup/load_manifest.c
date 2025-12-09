@@ -298,7 +298,7 @@ combinebackup_per_wal_range_cb(JsonManifestParseContext *context,
 	manifest_wal_range *range;
 
 	/* Allocate and initialize a struct describing this WAL range. */
-	range = palloc(sizeof(manifest_wal_range));
+	range = palloc_object(manifest_wal_range);
 	range->tli = tli;
 	range->start_lsn = start_lsn;
 	range->end_lsn = end_lsn;

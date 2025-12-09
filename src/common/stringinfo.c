@@ -57,7 +57,7 @@ initStringInfoInternal(StringInfo str, int initsize)
 static inline StringInfo
 makeStringInfoInternal(int initsize)
 {
-	StringInfo	res = (StringInfo) palloc(sizeof(StringInfoData));
+	StringInfo	res = palloc_object(StringInfoData);
 
 	initStringInfoInternal(res, initsize);
 	return res;

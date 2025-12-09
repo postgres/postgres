@@ -1318,8 +1318,7 @@ copy_plpgsql_datums(PLpgSQL_execstate *estate,
 	int			i;
 
 	/* Allocate local datum-pointer array */
-	estate->datums = (PLpgSQL_datum **)
-		palloc(sizeof(PLpgSQL_datum *) * ndatums);
+	estate->datums = palloc_array(PLpgSQL_datum *, ndatums);
 
 	/*
 	 * To reduce palloc overhead, we make a single palloc request for all the
@@ -1497,7 +1496,7 @@ plpgsql_fulfill_promise(PLpgSQL_execstate *estate,
 				int			lbs[1];
 				int			i;
 
-				elems = palloc(sizeof(Datum) * nelems);
+				elems = palloc_array(Datum, nelems);
 				for (i = 0; i < nelems; i++)
 					elems[i] = CStringGetTextDatum(estate->trigdata->tg_trigger->tgargs[i]);
 				dims[0] = nelems;
@@ -2340,11 +2339,11 @@ make_callstmt_target(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	 */
 	MemoryContextSwitchTo(estate->func->fn_cxt);
 
-	row = (PLpgSQL_row *) palloc0(sizeof(PLpgSQL_row));
+	row = palloc0_object(PLpgSQL_row);
 	row->dtype = PLPGSQL_DTYPE_ROW;
 	row->refname = "(unnamed row)";
 	row->lineno = -1;
-	row->varnos = (int *) palloc(numargs * sizeof(int));
+	row->varnos = palloc_array(int, numargs);
 
 	MemoryContextSwitchTo(get_eval_mcontext(estate));
 

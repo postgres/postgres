@@ -82,7 +82,7 @@ astreamer_plain_writer_new(char *pathname, FILE *file)
 {
 	astreamer_plain_writer *streamer;
 
-	streamer = palloc0(sizeof(astreamer_plain_writer));
+	streamer = palloc0_object(astreamer_plain_writer);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_plain_writer_ops;
 
@@ -189,7 +189,7 @@ astreamer_extractor_new(const char *basepath,
 {
 	astreamer_extractor *streamer;
 
-	streamer = palloc0(sizeof(astreamer_extractor));
+	streamer = palloc0_object(astreamer_extractor);
 	*((const astreamer_ops **) &streamer->base.bbs_ops) =
 		&astreamer_extractor_ops;
 	streamer->basepath = pstrdup(basepath);

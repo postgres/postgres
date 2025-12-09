@@ -46,7 +46,7 @@ PG_FUNCTION_INFO_V1(testprs_lextype);
 Datum
 testprs_start(PG_FUNCTION_ARGS)
 {
-	ParserState *pst = (ParserState *) palloc0(sizeof(ParserState));
+	ParserState *pst = palloc0_object(ParserState);
 
 	pst->buffer = (char *) PG_GETARG_POINTER(0);
 	pst->len = PG_GETARG_INT32(1);
@@ -112,7 +112,7 @@ testprs_lextype(PG_FUNCTION_ARGS)
 	 * the same lexids like Teodor in the default word parser; in this way we
 	 * can reuse the headline function of the default word parser.
 	 */
-	LexDescr   *descr = (LexDescr *) palloc(sizeof(LexDescr) * (2 + 1));
+	LexDescr   *descr = palloc_array(LexDescr, 2 + 1);
 
 	/* there are only two types in this parser */
 	descr[0].lexid = 3;

@@ -530,7 +530,7 @@ retrieve_objects(PGconn *conn, vacuumingOptions *vacopts,
 	PQExpBufferData catalog_query;
 	PGresult   *res;
 	SimpleStringListCell *cell;
-	SimpleStringList *found_objs = palloc0(sizeof(SimpleStringList));
+	SimpleStringList *found_objs = palloc0_object(SimpleStringList);
 	bool		objects_listed = false;
 
 	initPQExpBuffer(&catalog_query);

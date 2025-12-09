@@ -353,7 +353,7 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 						 tblinfo[i].numParents,
 						 tblinfo[i].dobj.name);
 
-			attachinfo = (TableAttachInfo *) palloc(sizeof(TableAttachInfo));
+			attachinfo = palloc_object(TableAttachInfo);
 			attachinfo->dobj.objType = DO_TABLE_ATTACH;
 			attachinfo->dobj.catId.tableoid = 0;
 			attachinfo->dobj.catId.oid = 0;

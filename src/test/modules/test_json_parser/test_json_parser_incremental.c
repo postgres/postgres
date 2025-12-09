@@ -124,7 +124,7 @@ main(int argc, char **argv)
 				break;
 			case 's':			/* do semantic processing */
 				testsem = &sem;
-				sem.semstate = palloc(sizeof(struct DoState));
+				sem.semstate = palloc_object(struct DoState);
 				((struct DoState *) sem.semstate)->lex = lex;
 				((struct DoState *) sem.semstate)->buf = makeStringInfo();
 				need_strings = true;

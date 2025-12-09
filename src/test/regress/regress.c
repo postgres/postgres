@@ -198,7 +198,7 @@ widget_in(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"widget", str)));
 
-	result = (WIDGET *) palloc(sizeof(WIDGET));
+	result = palloc_object(WIDGET);
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);

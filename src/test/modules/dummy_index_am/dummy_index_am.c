@@ -138,7 +138,7 @@ dibuild(Relation heap, Relation index, IndexInfo *indexInfo)
 {
 	IndexBuildResult *result;
 
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 
 	/* let's pretend that no tuples were scanned */
 	result->heap_tuples = 0;

@@ -132,8 +132,8 @@ json_parse_manifest_incremental_init(JsonManifestParseContext *context)
 	JsonManifestParseState *parse;
 	pg_cryptohash_ctx *manifest_ctx;
 
-	incstate = palloc(sizeof(JsonManifestParseIncrementalState));
-	parse = palloc(sizeof(JsonManifestParseState));
+	incstate = palloc_object(JsonManifestParseIncrementalState);
+	parse = palloc_object(JsonManifestParseState);
 
 	parse->context = context;
 	parse->state = JM_EXPECT_TOPLEVEL_START;

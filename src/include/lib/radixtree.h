@@ -1825,7 +1825,7 @@ RT_CREATE(MemoryContext ctx)
 	dsa_pointer dp;
 #endif
 
-	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
+	tree = palloc0_object(RT_RADIX_TREE);
 
 #ifdef RT_SHMEM
 	tree->dsa = dsa;
@@ -1835,7 +1835,7 @@ RT_CREATE(MemoryContext ctx)
 	tree->ctl->magic = RT_RADIX_TREE_MAGIC;
 	LWLockInitialize(&tree->ctl->lock, tranche_id);
 #else
-	tree->ctl = (RT_RADIX_TREE_CONTROL *) palloc0(sizeof(RT_RADIX_TREE_CONTROL));
+	tree->ctl = palloc0_object(RT_RADIX_TREE_CONTROL);
 
 	/* Create a slab context for each size class */
 	for (int i = 0; i < RT_NUM_SIZE_CLASSES; i++)
@@ -1868,7 +1868,7 @@ RT_ATTACH(dsa_area *dsa, RT_HANDLE handle)
 	RT_RADIX_TREE *tree;
 	dsa_pointer control;
 
-	tree = (RT_RADIX_TREE *) palloc0(sizeof(RT_RADIX_TREE));
+	tree = palloc0_object(RT_RADIX_TREE);
 
 	/* Find the control object in shared memory */
 	control = handle;
@@ -2057,7 +2057,7 @@ RT_BEGIN_ITERATE(RT_RADIX_TREE * tree)
 	RT_ITER    *iter;
 	RT_CHILD_PTR root;
 
-	iter = (RT_ITER *) palloc0(sizeof(RT_ITER));
+	iter = palloc0_object(RT_ITER);
 	iter->tree = tree;
 
 	Assert(RT_PTR_ALLOC_IS_VALID(tree->ctl->root));
