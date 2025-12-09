@@ -1246,7 +1246,7 @@ strtouint32_strict(const char *restrict s, char **restrict endptr, int base)
 	bool		is_neg;
 
 	/* skip leading whitespace */
-	while (isspace(*s))
+	while (isspace((unsigned char) *s))
 		s++;
 
 	/*
