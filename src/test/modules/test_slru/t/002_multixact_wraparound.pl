@@ -37,7 +37,7 @@ my $slru_pages_per_segment = $1;
 
 # initialize the 'offsets' SLRU file containing the new next multixid
 # with zeros
-my $multixact_offsets_per_page = $blcksz / 4;   # sizeof(MultiXactOffset) == 4
+my $multixact_offsets_per_page = $blcksz / 8;   # sizeof(MultiXactOffset) == 8
 my $segno =
   int(0xFFFFFFF8 / $multixact_offsets_per_page / $slru_pages_per_segment);
 my $slru_file = sprintf('%s/pg_multixact/offsets/%04X', $node_pgdata, $segno);

@@ -1936,8 +1936,8 @@ do_autovacuum(void)
 
 	/*
 	 * Compute the multixact age for which freezing is urgent.  This is
-	 * normally autovacuum_multixact_freeze_max_age, but may be less if we are
-	 * short of multixact member space.
+	 * normally autovacuum_multixact_freeze_max_age, but may be less if
+	 * multixact members are bloated.
 	 */
 	effective_multixact_freeze_max_age = MultiXactMemberFreezeThreshold();
 

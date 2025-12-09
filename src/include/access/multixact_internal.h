@@ -13,6 +13,11 @@
  * src/include/access/multixact_internal.h
  */
 #ifndef MULTIXACT_INTERNAL_H
+
+/*
+ * Note: This is not only to prevent including this file twice.
+ * MULTIXACT_INTERNAL_H is checked explicitly in multixact_read_v18.c.
+ */
 #define MULTIXACT_INTERNAL_H
 
 #include "access/multixact.h"
@@ -21,17 +26,9 @@
 /*
  * Defines for MultiXactOffset page sizes.  A page is the same BLCKSZ as is
  * used everywhere else in Postgres.
- *
- * Note: because MultiXactOffsets are 32 bits and wrap around at 0xFFFFFFFF,
- * MultiXact page numbering also wraps around at
- * 0xFFFFFFFF/MULTIXACT_OFFSETS_PER_PAGE, and segment numbering at
- * 0xFFFFFFFF/MULTIXACT_OFFSETS_PER_PAGE/SLRU_PAGES_PER_SEGMENT.  We need
- * take no explicit notice of that fact in this module, except when comparing
- * segment and page numbers in TruncateMultiXact (see
- * MultiXactOffsetPagePrecedes).
  */
 
-/* We need four bytes per offset */
+/* We need 8 bytes per offset */
 #define MULTIXACT_OFFSETS_PER_PAGE (BLCKSZ / sizeof(MultiXactOffset))
 
 static inline int64
@@ -79,19 +76,6 @@ MultiXactIdToOffsetSegment(MultiXactId multi)
 #define MULTIXACT_MEMBERGROUPS_PER_PAGE (BLCKSZ / MULTIXACT_MEMBERGROUP_SIZE)
 #define MULTIXACT_MEMBERS_PER_PAGE	\
 	(MULTIXACT_MEMBERGROUPS_PER_PAGE * MULTIXACT_MEMBERS_PER_MEMBERGROUP)
-
-/*
- * Because the number of items per page is not a divisor of the last item
- * number (member 0xFFFFFFFF), the last segment does not use the maximum number
- * of pages, and moreover the last used page therein does not use the same
- * number of items as previous pages.  (Another way to say it is that the
- * 0xFFFFFFFF member is somewhere in the middle of the last page, so the page
- * has some empty space after that item.)
- *
- * This constant is the number of members in the last page of the last segment.
- */
-#define MAX_MEMBERS_IN_LAST_MEMBERS_PAGE \
-		((uint32) ((0xFFFFFFFF % MULTIXACT_MEMBERS_PER_PAGE) + 1))
 
 /* page in which a member is to be found */
 static inline int64

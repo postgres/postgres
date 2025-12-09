@@ -18,11 +18,14 @@ OBJS = \
 	file.o \
 	function.o \
 	info.o \
+	multixact_read_v18.o \
+	multixact_rewrite.o \
 	option.o \
 	parallel.o \
 	pg_upgrade.o \
 	relfilenumber.o \
 	server.o \
+	slru_io.o \
 	tablespace.o \
 	task.o \
 	util.o \

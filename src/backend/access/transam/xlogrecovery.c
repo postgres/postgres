@@ -886,7 +886,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 							 U64FromFullTransactionId(checkPoint.nextXid),
 							 checkPoint.nextOid)));
 	ereport(DEBUG1,
-			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %u",
+			(errmsg_internal("next MultiXactId: %u; next MultiXactOffset: %" PRIu64,
 							 checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	ereport(DEBUG1,
 			(errmsg_internal("oldest unfrozen transaction ID: %u, in database %u",

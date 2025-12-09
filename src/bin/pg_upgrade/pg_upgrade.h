@@ -115,6 +115,13 @@ extern char *output_files[];
 #define MULTIXACT_FORMATCHANGE_CAT_VER 201301231
 
 /*
+ * MultiXactOffset was changed from 32-bit to 64-bit in version 19, at this
+ * catalog version.  pg_multixact files need to be converted when upgrading
+ * across this version.
+ */
+#define MULTIXACTOFFSET_FORMATCHANGE_CAT_VER 202512091
+
+/*
  * large object chunk size added to pg_controldata,
  * commit 5f93c37805e7485488480916b4585e098d3cc883
  */
@@ -235,7 +242,7 @@ typedef struct
 	uint32		chkpnt_nxtepoch;
 	uint32		chkpnt_nxtoid;
 	uint32		chkpnt_nxtmulti;
-	uint32		chkpnt_nxtmxoff;
+	uint64		chkpnt_nxtmxoff;
 	uint32		chkpnt_oldstMulti;
 	uint32		chkpnt_oldstxid;
 	uint32		align;
@@ -498,6 +505,9 @@ void		old_9_6_invalidate_hash_indexes(ClusterInfo *cluster,
 											bool check_mode);
 
 void		report_extension_updates(ClusterInfo *cluster);
+
+/* multixact_rewrite.c */
+MultiXactOffset rewrite_multixacts(MultiXactId from_multi, MultiXactId to_multi);
 
 /* parallel.c */
 void		parallel_exec_prog(const char *log_file, const char *opt_log_file,

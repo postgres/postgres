@@ -669,7 +669,7 @@ typedef uint32 SubTransactionId;
 /* MultiXactId must be equivalent to TransactionId, to fit in t_xmax */
 typedef TransactionId MultiXactId;
 
-typedef uint32 MultiXactOffset;
+typedef uint64 MultiXactOffset;
 
 typedef uint32 CommandId;
 

@@ -230,18 +230,23 @@ Executes a query in the current session and returns the output in scalar
 context and (output, error) in list context where error is 1 in case there
 was output generated on stderr when executing the query.
 
+By default, the query and its results are printed to the test output. This
+can be disabled by passing the keyword parameter verbose => false.
+
 =cut
 
 sub query
 {
-	my ($self, $query) = @_;
+	my ($self, $query, %params) = @_;
 	my $ret;
 	my $output;
 	my $query_cnt = $self->{query_cnt}++;
 
+	$params{verbose} = 1 unless defined $params{verbose};
+
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	note "issuing query $query_cnt via background psql: $query";
+	note "issuing query $query_cnt via background psql: $query" unless !$params{verbose};
 
 	$self->{timeout}->start() if (defined($self->{query_timer_restart}));
 
@@ -280,7 +285,7 @@ sub query
 	  explain {
 		stdout => $self->{stdout},
 		stderr => $self->{stderr},
-	  };
+	  } unless !$params{verbose};
 
 	# Remove banner from stdout and stderr, our caller doesn't care.  The
 	# first newline is optional, as there would not be one if consuming an
@@ -308,9 +313,9 @@ Query failure is determined by it producing output on stderr.
 
 sub query_safe
 {
-	my ($self, $query) = @_;
+	my ($self, $query, %params) = @_;
 
-	my $ret = $self->query($query);
+	my $ret = $self->query($query, %params);
 
 	if ($self->{stderr} ne "")
 	{

@@ -28,8 +28,6 @@
 
 #define MultiXactIdIsValid(multi) ((multi) != InvalidMultiXactId)
 
-#define MaxMultiXactOffset	((MultiXactOffset) 0xFFFFFFFF)
-
 /*
  * Possible multixact lock modes ("status").  The first four modes are for
  * tuple locks (FOR KEY SHARE, FOR SHARE, FOR NO KEY UPDATE, FOR UPDATE); the
@@ -111,7 +109,7 @@ extern bool MultiXactIdIsRunning(MultiXactId multi, bool isLockOnly);
 extern void MultiXactIdSetOldestMember(void);
 extern int	GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 								  bool from_pgupgrade, bool isLockOnly);
-extern bool GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *members,
+extern void GetMultiXactInfo(uint32 *multixacts, MultiXactOffset *members,
 							 MultiXactId *oldestMultiXactId,
 							 MultiXactOffset *oldestOffset);
 extern bool MultiXactIdPrecedes(MultiXactId multi1, MultiXactId multi2);
@@ -131,8 +129,7 @@ extern void BootStrapMultiXact(void);
 extern void StartupMultiXact(void);
 extern void TrimMultiXact(void);
 extern void SetMultiXactIdLimit(MultiXactId oldest_datminmxid,
-								Oid oldest_datoid,
-								bool is_startup);
+								Oid oldest_datoid);
 extern void MultiXactGetCheckptMulti(bool is_shutdown,
 									 MultiXactId *nextMulti,
 									 MultiXactOffset *nextMultiOffset,

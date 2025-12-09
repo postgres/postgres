@@ -1793,13 +1793,20 @@ sub _get_env
 	return (%inst_env);
 }
 
-# Private routine to get an installation path qualified command.
-#
-# IPC::Run maintains a cache, %cmd_cache, mapping commands to paths.  Tests
-# which use nodes spanning more than one postgres installation path need to
-# avoid confusing which installation's binaries get run.  Setting $ENV{PATH} is
-# insufficient, as IPC::Run does not check to see if the path has changed since
-# caching a command.
+=pod
+
+=item $node->installed_command(cmd)
+
+Get an installation path qualified command.
+
+IPC::Run maintains a cache, %cmd_cache, mapping commands to paths.  Tests
+which use nodes spanning more than one postgres installation path need to
+avoid confusing which installation's binaries get run.  Setting $ENV{PATH} is
+insufficient, as IPC::Run does not check to see if the path has changed since
+caching a command.
+
+=cut
+
 sub installed_command
 {
 	my ($self, $cmd) = @_;

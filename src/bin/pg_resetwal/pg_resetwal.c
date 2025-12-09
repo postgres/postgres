@@ -115,6 +115,7 @@ static void KillExistingWALSummaries(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
 static uint32 strtouint32_strict(const char *restrict s, char **restrict endptr, int base);
+static uint64 strtouint64_strict(const char *restrict s, char **restrict endptr, int base);
 
 
 int
@@ -293,7 +294,7 @@ main(int argc, char *argv[])
 
 			case 'O':
 				errno = 0;
-				next_mxoff_val = strtouint32_strict(optarg, &endptr, 0);
+				next_mxoff_val = strtouint64_strict(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
 				{
 					pg_log_error("invalid argument for option %s", "-O");
@@ -772,7 +773,7 @@ PrintControlValues(bool guessed)
 		   ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"),
 		   ControlFile.checkPointCopy.nextMulti);
-	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"),
+	printf(_("Latest checkpoint's NextMultiOffset:  %" PRIu64 "\n"),
 		   ControlFile.checkPointCopy.nextMultiOffset);
 	printf(_("Latest checkpoint's oldestXID:        %u\n"),
 		   ControlFile.checkPointCopy.oldestXid);
@@ -848,7 +849,7 @@ PrintNewControlValues(void)
 
 	if (next_mxoff_given)
 	{
-		printf(_("NextMultiOffset:                      %u\n"),
+		printf(_("NextMultiOffset:                      %" PRIu64 "\n"),
 			   ControlFile.checkPointCopy.nextMultiOffset);
 	}
 
@@ -1275,4 +1276,35 @@ strtouint32_strict(const char *restrict s, char **restrict endptr, int base)
 	}
 
 	return (uint32) val;
+}
+
+/*
+ * strtouint64_strict -- like strtou64(), but doesn't accept negative values
+ */
+static uint64
+strtouint64_strict(const char *restrict s, char **restrict endptr, int base)
+{
+	uint64		val;
+	bool		is_neg;
+
+	/* skip leading whitespace */
+	while (isspace((unsigned char) *s))
+		s++;
+
+	/*
+	 * Is it negative?  We still call strtou64() if it was, to set 'endptr'.
+	 * (The current callers don't care though.)
+	 */
+	is_neg = (*s == '-');
+
+	val = strtou64(s, endptr, base);
+
+	/* reject if it was negative */
+	if (errno == 0 && is_neg)
+	{
+		errno = ERANGE;
+		val = 0;
+	}
+
+	return val;
 }
