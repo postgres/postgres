@@ -2232,6 +2232,24 @@ explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id and d.b = s.c_id;
 
+-- check that join removal works for a left join when joining a subquery
+-- that is guaranteed to be unique by GROUPING SETS
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by ()) s
+  on d.a = s.x;
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets(())) s
+  on d.a = s.x;
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets(()), grouping sets(())) s
+  on d.a = s.x;
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by distinct grouping sets((), ())) s
+  on d.a = s.x;
+
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
@@ -2244,6 +2262,20 @@ select d.* from d left join (select distinct * from b) s
 explain (costs off)
 select d.* from d left join (select * from b group by b.id, b.c_id) s
   on d.a = s.id;
+
+-- join removal is not possible when the GROUP BY contains non-empty grouping
+-- sets or multiple empty grouping sets
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by rollup(x)) s
+  on d.a = s.x;
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets((), ())) s
+  on d.a = s.x;
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets((), grouping sets(()))) s
+  on d.a = s.x;
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)

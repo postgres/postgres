@@ -6161,6 +6161,40 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
  Seq Scan on d
 (1 row)
 
+-- check that join removal works for a left join when joining a subquery
+-- that is guaranteed to be unique by GROUPING SETS
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by ()) s
+  on d.a = s.x;
+  QUERY PLAN   
+---------------
+ Seq Scan on d
+(1 row)
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets(())) s
+  on d.a = s.x;
+  QUERY PLAN   
+---------------
+ Seq Scan on d
+(1 row)
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets(()), grouping sets(())) s
+  on d.a = s.x;
+  QUERY PLAN   
+---------------
+ Seq Scan on d
+(1 row)
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by distinct grouping sets((), ())) s
+  on d.a = s.x;
+  QUERY PLAN   
+---------------
+ Seq Scan on d
+(1 row)
+
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
@@ -6188,6 +6222,55 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
          Sort Key: d.a
          ->  Seq Scan on d
 (8 rows)
+
+-- join removal is not possible when the GROUP BY contains non-empty grouping
+-- sets or multiple empty grouping sets
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by rollup(x)) s
+  on d.a = s.x;
+           QUERY PLAN            
+---------------------------------
+ Hash Left Join
+   Hash Cond: (d.a = (1))
+   ->  Seq Scan on d
+   ->  Hash
+         ->  MixedAggregate
+               Hash Key: 1
+               Group Key: ()
+               ->  Seq Scan on b
+(8 rows)
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets((), ())) s
+  on d.a = s.x;
+               QUERY PLAN                
+-----------------------------------------
+ Hash Left Join
+   Hash Cond: (d.a = (1))
+   ->  Seq Scan on d
+   ->  Hash
+         ->  Append
+               ->  Result
+                     Replaces: Aggregate
+               ->  Result
+                     Replaces: Aggregate
+(9 rows)
+
+explain (costs off)
+select d.* from d left join (select 1 as x from b group by grouping sets((), grouping sets(()))) s
+  on d.a = s.x;
+               QUERY PLAN                
+-----------------------------------------
+ Hash Left Join
+   Hash Cond: (d.a = (1))
+   ->  Seq Scan on d
+   ->  Hash
+         ->  Append
+               ->  Result
+                     Replaces: Aggregate
+               ->  Result
+                     Replaces: Aggregate
+(9 rows)
 
 -- similarly, but keying off a DISTINCT clause
 explain (costs off)

@@ -31,6 +31,7 @@
 #include "optimizer/placeholder.h"
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
+#include "parser/parse_agg.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -1175,6 +1176,8 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 	}
 	else if (query->groupingSets)
 	{
+		List	   *gsets;
+
 		/*
 		 * If we have grouping sets with expressions, we probably don't have
 		 * uniqueness and analysis would be hard. Punt.
@@ -1184,15 +1187,17 @@ query_is_distinct_for(Query *query, List *colnos, List *opids)
 
 		/*
 		 * If we have no groupClause (therefore no grouping expressions), we
-		 * might have one or many empty grouping sets. If there's just one,
-		 * then we're returning only one row and are certainly unique. But
-		 * otherwise, we know we're certainly not unique.
+		 * might have one or many empty grouping sets.  If there's just one,
+		 * or if the DISTINCT clause is used on the GROUP BY, then we're
+		 * returning only one row and are certainly unique.  But otherwise, we
+		 * know we're certainly not unique.
 		 */
-		if (list_length(query->groupingSets) == 1 &&
-			((GroupingSet *) linitial(query->groupingSets))->kind == GROUPING_SET_EMPTY)
+		if (query->groupDistinct)
 			return true;
-		else
-			return false;
+
+		gsets = expand_grouping_sets(query->groupingSets, false, -1);
+
+		return (list_length(gsets) == 1);
 	}
 	else
 	{
