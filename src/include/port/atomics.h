@@ -281,11 +281,13 @@ pg_atomic_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
 /*
  * pg_atomic_unlocked_write_u32 - unlocked write to atomic variable.
  *
- * The write is guaranteed to succeed as a whole, i.e. it's not possible to
- * observe a partial write for any reader.  But note that writing this way is
- * not guaranteed to correctly interact with read-modify-write operations like
- * pg_atomic_compare_exchange_u32.  This should only be used in cases where
- * minor performance regressions due to atomics emulation are unacceptable.
+ * Write to an atomic variable, without atomicity guarantees. I.e. it is not
+ * guaranteed that a concurrent reader will not see a torn value, nor is this
+ * guaranteed to correctly interact with concurrent read-modify-write
+ * operations like pg_atomic_compare_exchange_u32.  This should only be used
+ * in cases where minor performance regressions due to atomic operations are
+ * unacceptable and where exclusive access is guaranteed via some external
+ * means.
  *
  * No barrier semantics.
  */
