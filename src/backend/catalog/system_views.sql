@@ -1247,7 +1247,10 @@ CREATE VIEW pg_stat_progress_analyze AS
         S.param6 AS child_tables_total,
         S.param7 AS child_tables_done,
         CAST(S.param8 AS oid) AS current_child_table_relid,
-        S.param9 / 1000000::double precision AS delay_time
+        S.param9 / 1000000::double precision AS delay_time,
+        CASE S.param10 WHEN 1 THEN 'manual'
+                       WHEN 2 THEN 'autovacuum'
+                       ELSE NULL END AS started_by
     FROM pg_stat_get_progress_info('ANALYZE') AS S
         LEFT JOIN pg_database D ON S.datid = D.oid;
 

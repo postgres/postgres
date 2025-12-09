@@ -5770,6 +5770,31 @@ FROM pg_stat_get_backend_idset() AS backendid;
        zero).
       </para></entry>
      </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>started_by</structfield> <type>text</type>
+      </para>
+      <para>
+       Shows what caused the current <command>ANALYZE</command> operation to be
+       started. Possible values are:
+       <itemizedlist>
+        <listitem>
+         <para>
+          <literal>manual</literal>: The analyze was started by an explicit
+          <command>ANALYZE</command>, or by <command>VACUUM</command> with
+          the <option>ANALYZE</option> option.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>autovacuum</literal>: The analyze was started by an
+          autovacuum worker.
+         </para>
+        </listitem>
+       </itemizedlist>
+      </para></entry>
+     </row>
     </tbody>
    </tgroup>
   </table>

@@ -239,6 +239,12 @@ analyze_rel(Oid relid, RangeVar *relation,
 	 */
 	pgstat_progress_start_command(PROGRESS_COMMAND_ANALYZE,
 								  RelationGetRelid(onerel));
+	if (AmAutoVacuumWorkerProcess())
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_AUTOVACUUM);
+	else
+		pgstat_progress_update_param(PROGRESS_ANALYZE_STARTED_BY,
+									 PROGRESS_ANALYZE_STARTED_BY_MANUAL);
 
 	/*
 	 * Do the normal non-recursive ANALYZE.  We can skip this for partitioned
