@@ -69,6 +69,7 @@
 #include "postgres.h"
 
 #include "access/multixact.h"
+#include "access/multixact_internal.h"
 #include "access/slru.h"
 #include "access/twophase.h"
 #include "access/twophase_rmgr.h"
@@ -87,125 +88,6 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
-
-/*
- * Defines for MultiXactOffset page sizes.  A page is the same BLCKSZ as is
- * used everywhere else in Postgres.
- *
- * Note: because MultiXactOffsets are 32 bits and wrap around at 0xFFFFFFFF,
- * MultiXact page numbering also wraps around at
- * 0xFFFFFFFF/MULTIXACT_OFFSETS_PER_PAGE, and segment numbering at
- * 0xFFFFFFFF/MULTIXACT_OFFSETS_PER_PAGE/SLRU_PAGES_PER_SEGMENT.  We need
- * take no explicit notice of that fact in this module, except when comparing
- * segment and page numbers in TruncateMultiXact (see
- * MultiXactOffsetPagePrecedes).
- */
-
-/* We need four bytes per offset */
-#define MULTIXACT_OFFSETS_PER_PAGE (BLCKSZ / sizeof(MultiXactOffset))
-
-static inline int64
-MultiXactIdToOffsetPage(MultiXactId multi)
-{
-	return multi / MULTIXACT_OFFSETS_PER_PAGE;
-}
-
-static inline int
-MultiXactIdToOffsetEntry(MultiXactId multi)
-{
-	return multi % MULTIXACT_OFFSETS_PER_PAGE;
-}
-
-static inline int64
-MultiXactIdToOffsetSegment(MultiXactId multi)
-{
-	return MultiXactIdToOffsetPage(multi) / SLRU_PAGES_PER_SEGMENT;
-}
-
-/*
- * The situation for members is a bit more complex: we store one byte of
- * additional flag bits for each TransactionId.  To do this without getting
- * into alignment issues, we store four bytes of flags, and then the
- * corresponding 4 Xids.  Each such 5-word (20-byte) set we call a "group", and
- * are stored as a whole in pages.  Thus, with 8kB BLCKSZ, we keep 409 groups
- * per page.  This wastes 12 bytes per page, but that's OK -- simplicity (and
- * performance) trumps space efficiency here.
- *
- * Note that the "offset" macros work with byte offset, not array indexes, so
- * arithmetic must be done using "char *" pointers.
- */
-/* We need eight bits per xact, so one xact fits in a byte */
-#define MXACT_MEMBER_BITS_PER_XACT			8
-#define MXACT_MEMBER_FLAGS_PER_BYTE			1
-#define MXACT_MEMBER_XACT_BITMASK	((1 << MXACT_MEMBER_BITS_PER_XACT) - 1)
-
-/* how many full bytes of flags are there in a group? */
-#define MULTIXACT_FLAGBYTES_PER_GROUP		4
-#define MULTIXACT_MEMBERS_PER_MEMBERGROUP	\
-	(MULTIXACT_FLAGBYTES_PER_GROUP * MXACT_MEMBER_FLAGS_PER_BYTE)
-/* size in bytes of a complete group */
-#define MULTIXACT_MEMBERGROUP_SIZE \
-	(sizeof(TransactionId) * MULTIXACT_MEMBERS_PER_MEMBERGROUP + MULTIXACT_FLAGBYTES_PER_GROUP)
-#define MULTIXACT_MEMBERGROUPS_PER_PAGE (BLCKSZ / MULTIXACT_MEMBERGROUP_SIZE)
-#define MULTIXACT_MEMBERS_PER_PAGE	\
-	(MULTIXACT_MEMBERGROUPS_PER_PAGE * MULTIXACT_MEMBERS_PER_MEMBERGROUP)
-
-/*
- * Because the number of items per page is not a divisor of the last item
- * number (member 0xFFFFFFFF), the last segment does not use the maximum number
- * of pages, and moreover the last used page therein does not use the same
- * number of items as previous pages.  (Another way to say it is that the
- * 0xFFFFFFFF member is somewhere in the middle of the last page, so the page
- * has some empty space after that item.)
- *
- * This constant is the number of members in the last page of the last segment.
- */
-#define MAX_MEMBERS_IN_LAST_MEMBERS_PAGE \
-		((uint32) ((0xFFFFFFFF % MULTIXACT_MEMBERS_PER_PAGE) + 1))
-
-/* page in which a member is to be found */
-static inline int64
-MXOffsetToMemberPage(MultiXactOffset offset)
-{
-	return offset / MULTIXACT_MEMBERS_PER_PAGE;
-}
-
-static inline int64
-MXOffsetToMemberSegment(MultiXactOffset offset)
-{
-	return MXOffsetToMemberPage(offset) / SLRU_PAGES_PER_SEGMENT;
-}
-
-/* Location (byte offset within page) of flag word for a given member */
-static inline int
-MXOffsetToFlagsOffset(MultiXactOffset offset)
-{
-	MultiXactOffset group = offset / MULTIXACT_MEMBERS_PER_MEMBERGROUP;
-	int			grouponpg = group % MULTIXACT_MEMBERGROUPS_PER_PAGE;
-	int			byteoff = grouponpg * MULTIXACT_MEMBERGROUP_SIZE;
-
-	return byteoff;
-}
-
-static inline int
-MXOffsetToFlagsBitShift(MultiXactOffset offset)
-{
-	int			member_in_group = offset % MULTIXACT_MEMBERS_PER_MEMBERGROUP;
-	int			bshift = member_in_group * MXACT_MEMBER_BITS_PER_XACT;
-
-	return bshift;
-}
-
-/* Location (byte offset within page) of TransactionId of given member */
-static inline int
-MXOffsetToMemberOffset(MultiXactOffset offset)
-{
-	int			member_in_group = offset % MULTIXACT_MEMBERS_PER_MEMBERGROUP;
-
-	return MXOffsetToFlagsOffset(offset) +
-		MULTIXACT_FLAGBYTES_PER_GROUP +
-		member_in_group * sizeof(TransactionId);
-}
 
 /* Multixact members wraparound thresholds. */
 #define MULTIXACT_MEMBER_SAFE_THRESHOLD		(MaxMultiXactOffset / 2)
