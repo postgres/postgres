@@ -42,8 +42,9 @@ static SimpleStringList *retrieve_objects(PGconn *conn,
 static void free_retrieved_objects(SimpleStringList *list);
 static void prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
 								   vacuumingOptions *vacopts, const char *table);
-static void run_vacuum_command(PGconn *conn, vacuumingOptions *vacopts,
-							   const char *sql, const char *table);
+static void run_vacuum_command(ParallelSlot *free_slot,
+							   vacuumingOptions *vacopts, const char *sql,
+							   const char *table);
 
 /*
  * Executes vacuum/analyze as indicated.  Returns 0 if the plan is carried
@@ -340,7 +341,11 @@ vacuum_one_database(ConnParams *cparams,
 	if (vacopts->mode == MODE_ANALYZE_IN_STAGES)
 	{
 		initcmd = stage_commands[stage];
-		executeCommand(conn, initcmd, vacopts->echo);
+
+		if (vacopts->dry_run)
+			printf("%s\n", initcmd);
+		else
+			executeCommand(conn, initcmd, vacopts->echo);
 	}
 	else
 		initcmd = NULL;
@@ -383,7 +388,7 @@ vacuum_one_database(ConnParams *cparams,
 		 * through ParallelSlotsGetIdle.
 		 */
 		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
-		run_vacuum_command(free_slot->connection, vacopts, sql.data, tabname);
+		run_vacuum_command(free_slot, vacopts, sql.data, tabname);
 
 		cell = cell->next;
 	} while (cell != NULL);
@@ -407,7 +412,7 @@ vacuum_one_database(ConnParams *cparams,
 		}
 
 		ParallelSlotSetHandler(free_slot, TableCommandResultHandler, NULL);
-		run_vacuum_command(free_slot->connection, vacopts, cmd, NULL);
+		run_vacuum_command(free_slot, vacopts, cmd, NULL);
 
 		if (!ParallelSlotsWaitCompletion(sa))
 			ret = EXIT_FAILURE; /* error already reported by handler */
@@ -995,20 +1000,25 @@ prepare_vacuum_command(PGconn *conn, PQExpBuffer sql,
 
 /*
  * Send a vacuum/analyze command to the server, returning after sending the
- * command.
+ * command.  If dry_run is true, the command is printed but not sent to the
+ * server.
  *
  * Any errors during command execution are reported to stderr.
  */
 static void
-run_vacuum_command(PGconn *conn, vacuumingOptions *vacopts,
+run_vacuum_command(ParallelSlot *free_slot, vacuumingOptions *vacopts,
 				   const char *sql, const char *table)
 {
-	bool		status;
+	bool		status = true;
+	PGconn	   *conn = free_slot->connection;
 
-	if (vacopts->echo)
+	if (vacopts->echo || vacopts->dry_run)
 		printf("%s\n", sql);
 
-	status = PQsendQuery(conn, sql) == 1;
+	if (vacopts->dry_run)
+		ParallelSlotSetIdle(free_slot);
+	else
+		status = PQsendQuery(conn, sql) == 1;
 
 	if (!status)
 	{

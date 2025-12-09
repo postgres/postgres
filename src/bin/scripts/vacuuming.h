@@ -53,6 +53,7 @@ typedef struct vacuumingOptions
 	bool		missing_stats_only;
 	bool		echo;
 	bool		quiet;
+	bool		dry_run;
 } vacuumingOptions;
 
 /* Valid values for vacuumingOptions->objfilter */

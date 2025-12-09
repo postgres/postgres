@@ -169,6 +169,10 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--schema' => '"Foo"', 'postgres' ],
 	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
 	'vacuumdb --schema');
+$node->issues_sql_unlike(
+	[ 'vacuumdb', '--schema' => '"Foo"', 'postgres', '--dry-run' ],
+	qr/VACUUM \(SKIP_DATABASE_STATS\) "Foo".bar/,
+	'vacuumdb --dry-run');
 $node->issues_sql_like(
 	[ 'vacuumdb', '--schema' => '"Foo"', '--schema' => '"Bar"', 'postgres' ],
 	qr/VACUUM\ \(SKIP_DATABASE_STATS\)\ "Foo".bar
@@ -241,6 +245,14 @@ $node->safe_psql('postgres', q|
   CREATE TABLE regression_vacuumdb_test AS select generate_series(1, 10) a, generate_series(2, 11) b;
   ALTER TABLE regression_vacuumdb_test ADD COLUMN c INT GENERATED ALWAYS AS (a + b);
 |);
+$node->issues_sql_unlike(
+	[
+		'vacuumdb', '--analyze-only', '--dry-run',
+		'--missing-stats-only', '-t',
+		'regression_vacuumdb_test', 'postgres'
+	],
+	qr/statement:\ ANALYZE/sx,
+	'--missing-stats-only --dry-run');
 $node->issues_sql_like(
 	[
 		'vacuumdb', '--analyze-only',

@@ -172,6 +172,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--dry-run</option></term>
+      <listitem>
+       <para>
+        Print, but do not execute, the vacuum and analyze commands that would
+        have been sent to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-e</option></term>
       <term><option>--echo</option></term>
       <listitem>

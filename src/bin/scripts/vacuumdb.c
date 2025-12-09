@@ -59,6 +59,7 @@ main(int argc, char *argv[])
 		{"no-process-main", no_argument, NULL, 12},
 		{"buffer-usage-limit", required_argument, NULL, 13},
 		{"missing-stats-only", no_argument, NULL, 14},
+		{"dry-run", no_argument, NULL, 15},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -207,6 +208,9 @@ main(int argc, char *argv[])
 			case 14:
 				vacopts.missing_stats_only = true;
 				break;
+			case 15:
+				vacopts.dry_run = true;
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -303,6 +307,10 @@ main(int argc, char *argv[])
 		pg_fatal("cannot use the \"%s\" option without \"%s\" or \"%s\"",
 				 "missing-stats-only", "analyze-only", "analyze-in-stages");
 
+	if (vacopts.dry_run && !vacopts.quiet)
+		pg_log_info("Executing in dry-run mode.\n"
+					"No commands will be sent to the server.");
+
 	ret = vacuuming_main(&cparams, dbname, maintenance_db, &vacopts,
 						 &objects, tbl_count,
 						 concurrentCons,
@@ -345,6 +353,7 @@ help(const char *progname)
 	printf(_("      --buffer-usage-limit=SIZE   size of ring buffer used for vacuum\n"));
 	printf(_("  -d, --dbname=DBNAME             database to vacuum\n"));
 	printf(_("      --disable-page-skipping     disable all page-skipping behavior\n"));
+	printf(_("      --dry-run                   show the commands that would be sent to the server\n"));
 	printf(_("  -e, --echo                      show the commands being sent to the server\n"));
 	printf(_("  -f, --full                      do full vacuuming\n"));
 	printf(_("  -F, --freeze                    freeze row transaction information\n"));
