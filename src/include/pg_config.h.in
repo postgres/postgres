@@ -645,6 +645,9 @@
    RELSEG_SIZE requires an initdb. */
 #undef RELSEG_SIZE
 
+/* The size of `intmax_t', as computed by sizeof. */
+#undef SIZEOF_INTMAX_T
+
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
