@@ -58,6 +58,13 @@ ParallelSlotClearHandler(ParallelSlot *slot)
 	slot->handler_context = NULL;
 }
 
+static inline void
+ParallelSlotSetIdle(ParallelSlot *slot)
+{
+	slot->inUse = false;
+	ParallelSlotClearHandler(slot);
+}
+
 extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *sa,
 										  const char *dbname);
 
