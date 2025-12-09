@@ -19,6 +19,7 @@ SUBDIRS = \
 		  test_binaryheap \
 		  test_bitmapset \
 		  test_bloomfilter \
+		  test_cloexec \
 		  test_copy_callbacks \
 		  test_custom_rmgrs \
 		  test_custom_stats \
