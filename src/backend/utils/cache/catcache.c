@@ -1638,7 +1638,7 @@ ReleaseCatCacheWithOwner(HeapTuple tuple, ResourceOwner resowner)
 
 	ct->refcount--;
 	if (resowner)
-		ResourceOwnerForgetCatCacheRef(CurrentResourceOwner, &ct->tuple);
+		ResourceOwnerForgetCatCacheRef(resowner, &ct->tuple);
 
 	if (
 #ifndef CATCACHE_FORCE_RELEASE
@@ -2083,7 +2083,7 @@ ReleaseCatCacheListWithOwner(CatCList *list, ResourceOwner resowner)
 	Assert(list->refcount > 0);
 	list->refcount--;
 	if (resowner)
-		ResourceOwnerForgetCatCacheListRef(CurrentResourceOwner, list);
+		ResourceOwnerForgetCatCacheListRef(resowner, list);
 
 	if (
 #ifndef CATCACHE_FORCE_RELEASE
