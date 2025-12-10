@@ -41,25 +41,6 @@ ALTER TABLE parent ADD CONSTRAINT a_pos CHECK (a > 0);
 NOTICE:  merging constraint "a_pos" with inherited definition
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint a_pos on table parent
-CREATE TABLE part (
-	a int
-) PARTITION BY RANGE (a);
-NOTICE:  DDL test: type simple, tag CREATE TABLE
-CREATE TABLE part1 PARTITION OF part FOR VALUES FROM (1) to (100);
-NOTICE:  DDL test: type simple, tag CREATE TABLE
-CREATE TABLE part2 (a int);
-NOTICE:  DDL test: type simple, tag CREATE TABLE
-ALTER TABLE part ATTACH PARTITION part2 FOR VALUES FROM (101) to (200);
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type ATTACH PARTITION desc table part2
-ALTER TABLE part DETACH PARTITION part2;
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type DETACH PARTITION desc table part2
-DROP TABLE part2;
-ALTER TABLE part ADD PRIMARY KEY (a);
-NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint part_a_not_null on table part
-NOTICE:    subcommand: type ADD INDEX desc index part_pkey
 ALTER TABLE parent ALTER COLUMN a SET NOT NULL;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type SET NOT NULL (and recurse) desc constraint parent_a_not_null on table parent
@@ -117,11 +98,33 @@ NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type ALTER COLUMN SET DEFAULT desc column c of table parent
 NOTICE:    subcommand: type ALTER COLUMN SET DEFAULT desc column c of table child
 NOTICE:    subcommand: type ALTER COLUMN SET DEFAULT desc column c of table grandchild
+CREATE TABLE part (
+	a int
+) PARTITION BY RANGE (a);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+CREATE TABLE part1 PARTITION OF part FOR VALUES FROM (1) to (100);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+CREATE TABLE part2 (a int);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+ALTER TABLE part ATTACH PARTITION part2 FOR VALUES FROM (101) to (200);
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type ATTACH PARTITION desc table part2
+ALTER TABLE part DETACH PARTITION part2;
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type DETACH PARTITION desc table part2
+DROP TABLE part2;
+ALTER TABLE part ADD PRIMARY KEY (a);
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint part_a_not_null on table part
+NOTICE:    subcommand: type ADD INDEX desc index part_pkey
 CREATE TABLE tbl (
 	a int generated always as (b::int * 2) stored,
 	b text
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
+ALTER TABLE tbl ALTER COLUMN a SET EXPRESSION AS (b::int * 3);
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type SET EXPRESSION desc column a of table tbl
 ALTER TABLE tbl ALTER COLUMN a DROP EXPRESSION;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type DROP EXPRESSION desc column a of table tbl
