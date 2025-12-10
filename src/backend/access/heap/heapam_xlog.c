@@ -157,6 +157,12 @@ heap_xlog_prune_freeze(XLogReaderState *record)
 		/* There should be no more data */
 		Assert((char *) frz_offsets == dataptr + datalen);
 
+		/*
+		 * The critical integrity requirement here is that we must never end
+		 * up with the visibility map bit set and the page-level
+		 * PD_ALL_VISIBLE bit unset.  If that were to occur, a subsequent page
+		 * modification would fail to clear the visibility map bit.
+		 */
 		if (vmflags & VISIBILITYMAP_VALID_BITS)
 			PageSetAllVisible(page);
 
