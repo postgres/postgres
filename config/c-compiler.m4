@@ -7,10 +7,10 @@
 # Select the format archetype to be used by gcc to check printf-type functions.
 # We prefer "gnu_printf", as that most closely matches the features supported
 # by src/port/snprintf.c (particularly the %m conversion spec).  However,
-# on some NetBSD versions, that doesn't work while "__syslog__" does.
-# If all else fails, use "printf".
+# on clang and on some NetBSD versions, that doesn't work while "__syslog__"
+# does.  If all else fails, use "printf".
 AC_DEFUN([PGAC_PRINTF_ARCHETYPE],
-[AC_CACHE_CHECK([for printf format archetype], pgac_cv_printf_archetype,
+[AC_CACHE_CHECK([for C printf format archetype], pgac_cv_printf_archetype,
 [pgac_cv_printf_archetype=gnu_printf
 PGAC_TEST_PRINTF_ARCHETYPE
 if [[ "$ac_archetype_ok" = no ]]; then
@@ -20,8 +20,8 @@ if [[ "$ac_archetype_ok" = no ]]; then
     pgac_cv_printf_archetype=printf
   fi
 fi])
-AC_DEFINE_UNQUOTED([PG_PRINTF_ATTRIBUTE], [$pgac_cv_printf_archetype],
-[Define to best printf format archetype, usually gnu_printf if available.])
+AC_DEFINE_UNQUOTED([PG_C_PRINTF_ATTRIBUTE], [$pgac_cv_printf_archetype],
+[Define to best C printf format archetype, usually gnu_printf if available.])
 ])# PGAC_PRINTF_ARCHETYPE
 
 # Subroutine: test $pgac_cv_printf_archetype, set $ac_archetype_ok to yes or no
@@ -36,6 +36,42 @@ __attribute__((format($pgac_cv_printf_archetype, 2, 3)));],
                   [ac_archetype_ok=no])
 ac_c_werror_flag=$ac_save_c_werror_flag
 ])# PGAC_TEST_PRINTF_ARCHETYPE
+
+
+# PGAC_CXX_PRINTF_ARCHETYPE
+# -------------------------
+# Because we support using gcc as C compiler with clang as C++ compiler,
+# we have to be prepared to use different printf archetypes in C++ code.
+# So, do the above test all over in C++.
+AC_DEFUN([PGAC_CXX_PRINTF_ARCHETYPE],
+[AC_CACHE_CHECK([for C++ printf format archetype], pgac_cv_cxx_printf_archetype,
+[pgac_cv_cxx_printf_archetype=gnu_printf
+PGAC_TEST_CXX_PRINTF_ARCHETYPE
+if [[ "$ac_archetype_ok" = no ]]; then
+  pgac_cv_cxx_printf_archetype=__syslog__
+  PGAC_TEST_CXX_PRINTF_ARCHETYPE
+  if [[ "$ac_archetype_ok" = no ]]; then
+    pgac_cv_cxx_printf_archetype=printf
+  fi
+fi])
+AC_DEFINE_UNQUOTED([PG_CXX_PRINTF_ATTRIBUTE], [$pgac_cv_cxx_printf_archetype],
+[Define to best C++ printf format archetype, usually gnu_printf if available.])
+])# PGAC_CXX_PRINTF_ARCHETYPE
+
+# Subroutine: test $pgac_cv_cxx_printf_archetype, set $ac_archetype_ok to yes or no
+AC_DEFUN([PGAC_TEST_CXX_PRINTF_ARCHETYPE],
+[ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+AC_LANG_PUSH(C++)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+[extern void pgac_write(int ignore, const char *fmt,...)
+__attribute__((format($pgac_cv_cxx_printf_archetype, 2, 3)));],
+[pgac_write(0, "error %s: %m", "foo");])],
+                  [ac_archetype_ok=yes],
+                  [ac_archetype_ok=no])
+AC_LANG_POP([])
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+])# PGAC_TEST_CXX_PRINTF_ARCHETYPE
 
 
 # PGAC_TYPE_128BIT_INT

@@ -14691,8 +14691,8 @@ _ACEOF
     ;;
 esac
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for printf format archetype" >&5
-$as_echo_n "checking for printf format archetype... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C printf format archetype" >&5
+$as_echo_n "checking for C printf format archetype... " >&6; }
 if ${pgac_cv_printf_archetype+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -14752,7 +14752,97 @@ fi
 $as_echo "$pgac_cv_printf_archetype" >&6; }
 
 cat >>confdefs.h <<_ACEOF
-#define PG_PRINTF_ATTRIBUTE $pgac_cv_printf_archetype
+#define PG_C_PRINTF_ATTRIBUTE $pgac_cv_printf_archetype
+_ACEOF
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for C++ printf format archetype" >&5
+$as_echo_n "checking for C++ printf format archetype... " >&6; }
+if ${pgac_cv_cxx_printf_archetype+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  pgac_cv_cxx_printf_archetype=gnu_printf
+ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern void pgac_write(int ignore, const char *fmt,...)
+__attribute__((format($pgac_cv_cxx_printf_archetype, 2, 3)));
+int
+main ()
+{
+pgac_write(0, "error %s: %m", "foo");
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_archetype_ok=yes
+else
+  ac_archetype_ok=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+
+if [ "$ac_archetype_ok" = no ]; then
+  pgac_cv_cxx_printf_archetype=__syslog__
+  ac_save_cxx_werror_flag=$ac_cxx_werror_flag
+ac_cxx_werror_flag=yes
+ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+extern void pgac_write(int ignore, const char *fmt,...)
+__attribute__((format($pgac_cv_cxx_printf_archetype, 2, 3)));
+int
+main ()
+{
+pgac_write(0, "error %s: %m", "foo");
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  ac_archetype_ok=yes
+else
+  ac_archetype_ok=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+ac_cxx_werror_flag=$ac_save_cxx_werror_flag
+
+  if [ "$ac_archetype_ok" = no ]; then
+    pgac_cv_cxx_printf_archetype=printf
+  fi
+fi
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_cxx_printf_archetype" >&5
+$as_echo "$pgac_cv_cxx_printf_archetype" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define PG_CXX_PRINTF_ATTRIBUTE $pgac_cv_cxx_printf_archetype
 _ACEOF
 
 

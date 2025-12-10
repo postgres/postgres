@@ -596,6 +596,14 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define to best C++ printf format archetype, usually gnu_printf if
+   available. */
+#undef PG_CXX_PRINTF_ATTRIBUTE
+
+/* Define to best C printf format archetype, usually gnu_printf if available.
+   */
+#undef PG_C_PRINTF_ATTRIBUTE
+
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
 
@@ -611,9 +619,6 @@
 
 /* PostgreSQL minor version number */
 #undef PG_MINORVERSION_NUM
-
-/* Define to best printf format archetype, usually gnu_printf if available. */
-#undef PG_PRINTF_ATTRIBUTE
 
 /* PostgreSQL version as a string */
 #undef PG_VERSION
