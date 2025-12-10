@@ -63,6 +63,10 @@ while (<$fh>)
 	# exit.
 	next if /__tsan_func_exit/;
 
+	# Excluding pthread_exit allows legitimate thread terminations in some
+	# builds.
+	next if /pthread_exit/;
+
 	# Anything containing "exit" is suspicious.
 	# (Ideally we should reject abort() too, but there are various scenarios
 	# where build toolchains insert abort() calls, e.g. to implement
