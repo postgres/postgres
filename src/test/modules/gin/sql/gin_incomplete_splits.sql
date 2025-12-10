@@ -148,3 +148,5 @@ select insert_n(:next_i, 10) as next_i
 select verify(:next_i);
 
 SELECT injection_points_detach('gin-finish-incomplete-split');
+
+drop extension injection_points;
