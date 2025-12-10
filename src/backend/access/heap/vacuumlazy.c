@@ -2042,10 +2042,9 @@ lazy_scan_prune(LVRelState *vacrel,
 
 		Assert(presult.lpdead_items == 0);
 
-		if (!heap_page_is_all_visible(vacrel->rel, buf,
-									  vacrel->cutoffs.OldestXmin, &debug_all_frozen,
-									  &debug_cutoff, &vacrel->offnum))
-			Assert(false);
+		Assert(heap_page_is_all_visible(vacrel->rel, buf,
+										vacrel->cutoffs.OldestXmin, &debug_all_frozen,
+										&debug_cutoff, &vacrel->offnum));
 
 		Assert(presult.all_frozen == debug_all_frozen);
 
