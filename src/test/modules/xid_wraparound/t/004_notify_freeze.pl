@@ -25,8 +25,8 @@ $node->safe_psql('postgres',
 
 # Start Session 1 and leave it idle in transaction
 my $psql_session1 = $node->background_psql('postgres');
-$psql_session1->query_safe('listen s;', "Session 1 listens to 's'");
-$psql_session1->query_safe('begin;', "Session 1 starts a transaction");
+$psql_session1->query_safe('listen s;');
+$psql_session1->query_safe('begin;');
 
 # Send some notifys from other sessions
 for my $i (1 .. 10)
@@ -57,7 +57,7 @@ ok($datafronzenxid_freeze > $datafronzenxid, 'datfrozenxid advanced');
 # On Session 1, commit and ensure that the all the notifications are
 # received. This depends on correctly freezing the XIDs in the pending
 # notification entries.
-my $res = $psql_session1->query_safe('commit;', "commit listen s;");
+my $res = $psql_session1->query_safe('commit;');
 my $notifications_count = 0;
 foreach my $i (split('\n', $res))
 {
