@@ -163,19 +163,6 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	Assert(BTScanPosIsPinned(so->currPos));
 	Assert(!so->needPrimScan);
 
-	if (scan->parallel_scan)
-	{
-		/* allow next/prev page to be read by other worker without delay */
-		if (ScanDirectionIsForward(dir))
-			_bt_parallel_release(scan, so->currPos.nextPage,
-								 so->currPos.currPage);
-		else
-			_bt_parallel_release(scan, so->currPos.prevPage,
-								 so->currPos.currPage);
-	}
-
-	PredicateLockPage(rel, so->currPos.currPage, scan->xs_snapshot);
-
 	/* initialize local variables */
 	indnatts = IndexRelationGetNumberOfAttributes(rel);
 	arrayKeys = so->numArrayKeys != 0;
@@ -197,6 +184,19 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 	pstate.targetdistance = 0;
 	pstate.nskipadvances = 0;
 
+	if (scan->parallel_scan)
+	{
+		/* allow next/prev page to be read by other worker without delay */
+		if (ScanDirectionIsForward(dir))
+			_bt_parallel_release(scan, so->currPos.nextPage,
+								 so->currPos.currPage);
+		else
+			_bt_parallel_release(scan, so->currPos.prevPage,
+								 so->currPos.currPage);
+	}
+
+	PredicateLockPage(rel, so->currPos.currPage, scan->xs_snapshot);
+
 	if (ScanDirectionIsForward(dir))
 	{
 		/* SK_SEARCHARRAY forward scans must provide high key up front */
@@ -208,7 +208,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 				pstate.finaltup = (IndexTuple) PageGetItem(page, iid);
 
-				if (so->scanBehind &&
+				if (unlikely(so->scanBehind) &&
 					!_bt_scanbehind_checkkeys(scan, dir, pstate.finaltup))
 				{
 					/* Schedule another primitive index scan after all */
@@ -287,16 +287,14 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 				{
 					int			tupleOffset;
 
-					/*
-					 * Set up state to return posting list, and remember first
-					 * TID
-					 */
+					/* Set up posting list state (and remember first TID) */
 					tupleOffset =
 						_bt_setuppostingitems(so, itemIndex, offnum,
 											  BTreeTupleGetPostingN(itup, 0),
 											  itup);
 					itemIndex++;
-					/* Remember additional TIDs */
+
+					/* Remember all later TIDs (must be at least one) */
 					for (int i = 1; i < BTreeTupleGetNPosting(itup); i++)
 					{
 						_bt_savepostingitem(so, itemIndex, offnum,
@@ -359,7 +357,7 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 
 				pstate.finaltup = (IndexTuple) PageGetItem(page, iid);
 
-				if (so->scanBehind &&
+				if (unlikely(so->scanBehind) &&
 					!_bt_scanbehind_checkkeys(scan, dir, pstate.finaltup))
 				{
 					/* Schedule another primitive index scan after all */
@@ -472,25 +470,18 @@ _bt_readpage(IndexScanDesc scan, ScanDirection dir, OffsetNumber offnum,
 				}
 				else
 				{
+					uint16		nitems = BTreeTupleGetNPosting(itup);
 					int			tupleOffset;
 
-					/*
-					 * Set up state to return posting list, and remember first
-					 * TID.
-					 *
-					 * Note that we deliberately save/return items from
-					 * posting lists in ascending heap TID order for backwards
-					 * scans.  This allows _bt_killitems() to make a
-					 * consistent assumption about the order of items
-					 * associated with the same posting list tuple.
-					 */
+					/* Set up posting list state (and remember last TID) */
 					itemIndex--;
 					tupleOffset =
 						_bt_setuppostingitems(so, itemIndex, offnum,
-											  BTreeTupleGetPostingN(itup, 0),
+											  BTreeTupleGetPostingN(itup, nitems - 1),
 											  itup);
-					/* Remember additional TIDs */
-					for (int i = 1; i < BTreeTupleGetNPosting(itup); i++)
+
+					/* Remember all prior TIDs (must be at least one) */
+					for (int i = nitems - 2; i >= 0; i--)
 					{
 						itemIndex--;
 						_bt_savepostingitem(so, itemIndex, offnum,

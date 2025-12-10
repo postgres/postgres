@@ -21,12 +21,15 @@
 #include "access/reloptions.h"
 #include "access/relscan.h"
 #include "commands/progress.h"
+#include "common/int.h"
+#include "lib/qunique.h"
 #include "miscadmin.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 
 
+static int	_bt_compare_int(const void *va, const void *vb);
 static int	_bt_keep_natts(Relation rel, IndexTuple lastleft,
 						   IndexTuple firstright, BTScanInsert itup_key);
 
@@ -158,6 +161,18 @@ _bt_freestack(BTStack stack)
 }
 
 /*
+ * qsort comparison function for int arrays
+ */
+static int
+_bt_compare_int(const void *va, const void *vb)
+{
+	int			a = *((const int *) va);
+	int			b = *((const int *) vb);
+
+	return pg_cmp_s32(a, b);
+}
+
+/*
  * _bt_killitems - set LP_DEAD state for items an indexscan caller has
  * told us were killed
  *
@@ -205,6 +220,20 @@ _bt_killitems(IndexScanDesc scan)
 
 	/* Always invalidate so->killedItems[] before leaving so->currPos */
 	so->numKilled = 0;
+
+	/*
+	 * so->killedItems[] is in whatever order the scan returned items in.
+	 * Items will appear in descending order during backwards scans.  And
+	 * scrollable cursor scans might have duplicate items.
+	 *
+	 * Sort and uniqueify so->killedItems[] to deal with all this.
+	 */
+	if (numKilled > 1)
+	{
+		qsort(so->killedItems, numKilled, sizeof(int), _bt_compare_int);
+		numKilled = qunique(so->killedItems, numKilled, sizeof(int),
+							_bt_compare_int);
+	}
 
 	if (!so->dropPin)
 	{
@@ -265,14 +294,6 @@ _bt_killitems(IndexScanDesc scan)
 				int			j;
 
 				/*
-				 * We rely on the convention that heap TIDs in the scanpos
-				 * items array are stored in ascending heap TID order for a
-				 * group of TIDs that originally came from a posting list
-				 * tuple.  This convention even applies during backwards
-				 * scans, where returning the TIDs in descending order might
-				 * seem more natural.  This is about effectiveness, not
-				 * correctness.
-				 *
 				 * Note that the page may have been modified in almost any way
 				 * since we first read it (in the !so->dropPin case), so it's
 				 * possible that this posting list tuple wasn't a posting list
