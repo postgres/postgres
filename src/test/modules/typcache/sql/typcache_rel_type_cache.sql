@@ -19,3 +19,5 @@ SELECT '(1)'::t;
 SELECT injection_points_detach('typecache-before-rel-type-cache-insert');
 ALTER TABLE t ADD COLUMN j int;
 SELECT '(1,2)'::t;
+
+DROP EXTENSION injection_points;

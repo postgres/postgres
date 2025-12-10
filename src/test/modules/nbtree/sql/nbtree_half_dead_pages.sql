@@ -46,3 +46,6 @@ select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, tr
 vacuum nbtree_half_dead_pages;
 select * from nbtree_half_dead_pages where id > 99998 and id < 120002;
 select bt_index_parent_check('nbtree_half_dead_pages_id_idx'::regclass, true, true);
+
+drop extension amcheck;
+drop extension injection_points;

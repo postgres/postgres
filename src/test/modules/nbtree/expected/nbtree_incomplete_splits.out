@@ -184,3 +184,5 @@ SELECT injection_points_detach('nbtree-finish-incomplete-split');
  
 (1 row)
 
+drop extension amcheck;
+drop extension injection_points;

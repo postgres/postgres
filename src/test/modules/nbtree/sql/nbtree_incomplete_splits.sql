@@ -139,3 +139,6 @@ select insert_n(:next_i, 10) as next_i
 select verify(:next_i);
 
 SELECT injection_points_detach('nbtree-finish-incomplete-split');
+
+drop extension amcheck;
+drop extension injection_points;
