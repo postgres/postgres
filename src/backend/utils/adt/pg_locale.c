@@ -1630,32 +1630,6 @@ char_is_cased(char ch, pg_locale_t locale)
 }
 
 /*
- * char_tolower_enabled()
- *
- * Does the provider support char_tolower()?
- */
-bool
-char_tolower_enabled(pg_locale_t locale)
-{
-	if (locale->ctype == NULL)
-		return true;
-	return (locale->ctype->char_tolower != NULL);
-}
-
-/*
- * char_tolower()
- *
- * Convert char (single-byte encoding) to lowercase.
- */
-char
-char_tolower(unsigned char ch, pg_locale_t locale)
-{
-	if (locale->ctype == NULL)
-		return pg_ascii_tolower(ch);
-	return locale->ctype->char_tolower(ch, locale);
-}
-
-/*
  * Return required encoding ID for the given locale, or -1 if any encoding is
  * valid for the locale.
  */
