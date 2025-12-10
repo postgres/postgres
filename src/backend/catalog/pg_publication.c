@@ -788,7 +788,7 @@ GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	/* Find all publications associated with the relation. */
+	/* Find all relations associated with the publication. */
 	pubrelsrel = table_open(PublicationRelRelationId, AccessShareLock);
 
 	ScanKeyInit(&scankey,
