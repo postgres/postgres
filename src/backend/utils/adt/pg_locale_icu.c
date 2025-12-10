@@ -223,6 +223,12 @@ wc_isxdigit_icu(pg_wchar wc, pg_locale_t locale)
 	return u_isxdigit(wc);
 }
 
+static bool
+wc_iscased_icu(pg_wchar wc, pg_locale_t locale)
+{
+	return u_hasBinaryProperty(wc, UCHAR_CASED);
+}
+
 static const struct ctype_methods ctype_methods_icu = {
 	.strlower = strlower_icu,
 	.strtitle = strtitle_icu,
@@ -239,6 +245,7 @@ static const struct ctype_methods ctype_methods_icu = {
 	.wc_isspace = wc_isspace_icu,
 	.wc_isxdigit = wc_isxdigit_icu,
 	.char_is_cased = char_is_cased_icu,
+	.wc_iscased = wc_iscased_icu,
 	.wc_toupper = toupper_icu,
 	.wc_tolower = tolower_icu,
 };

@@ -1588,6 +1588,17 @@ pg_iswxdigit(pg_wchar wc, pg_locale_t locale)
 		return locale->ctype->wc_isxdigit(wc, locale);
 }
 
+bool
+pg_iswcased(pg_wchar wc, pg_locale_t locale)
+{
+	/* for the C locale, Cased and Alpha are equivalent */
+	if (locale->ctype == NULL)
+		return (wc <= (pg_wchar) 127 &&
+				(pg_char_properties[wc] & PG_ISALPHA));
+	else
+		return locale->ctype->wc_iscased(wc, locale);
+}
+
 pg_wchar
 pg_towupper(pg_wchar wc, pg_locale_t locale)
 {
