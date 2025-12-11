@@ -53,6 +53,7 @@
 #define FREE(p)			pfree(VS(p))
 #define REALLOC(p,n)	repalloc_extended(VS(p),(n), MCXT_ALLOC_NO_OOM)
 #define INTERRUPT(re)	CHECK_FOR_INTERRUPTS()
+#undef assert
 #define assert(x)		Assert(x)
 
 /* internal character type and related */
