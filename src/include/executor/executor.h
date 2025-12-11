@@ -404,7 +404,7 @@ ExecEvalExpr(ExprState *state,
  * Like ExecEvalExpr(), but for cases where no return value is expected,
  * because the side-effects of expression evaluation are what's desired. This
  * is e.g. used for projection and aggregate transition computation.
-
+ *
  * Evaluate expression identified by "state" in the execution context
  * given by "econtext".
  *

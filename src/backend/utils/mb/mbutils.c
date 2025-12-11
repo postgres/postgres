@@ -497,7 +497,8 @@ pg_do_encoding_conversion_buf(Oid proc,
  * Convert string to encoding encoding_name. The source
  * encoding is the DB encoding.
  *
- * BYTEA convert_to(TEXT string, NAME encoding_name) */
+ * BYTEA convert_to(TEXT string, NAME encoding_name)
+ */
 Datum
 pg_convert_to(PG_FUNCTION_ARGS)
 {
@@ -522,7 +523,8 @@ pg_convert_to(PG_FUNCTION_ARGS)
  * Convert string from encoding encoding_name. The destination
  * encoding is the DB encoding.
  *
- * TEXT convert_from(BYTEA string, NAME encoding_name) */
+ * TEXT convert_from(BYTEA string, NAME encoding_name)
+ */
 Datum
 pg_convert_from(PG_FUNCTION_ARGS)
 {

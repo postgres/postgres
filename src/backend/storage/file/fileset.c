@@ -114,7 +114,8 @@ FileSetCreate(FileSet *fileset, const char *name)
 }
 
 /*
- * Open a file that was created with FileSetCreate() */
+ * Open a file that was created with FileSetCreate()
+ */
 File
 FileSetOpen(FileSet *fileset, const char *name, int mode)
 {

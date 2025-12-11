@@ -1132,7 +1132,6 @@ tuplesort_getgintuple(Tuplesortstate *state, Size *len, bool forward)
  * efficient, but only safe for callers that are prepared to have any
  * subsequent manipulation of the tuplesort's state invalidate slot contents.
  * For byval Datums, the value of the 'copy' parameter has no effect.
-
  */
 bool
 tuplesort_getdatum(Tuplesortstate *state, bool forward, bool copy,

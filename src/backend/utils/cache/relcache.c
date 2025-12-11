@@ -5643,7 +5643,7 @@ RelationGetIdentityKeyBitmap(Relation relation)
  * This should be called only for an index that is known to have an associated
  * exclusion constraint or primary key/unique constraint using WITHOUT
  * OVERLAPS.
-
+ *
  * It returns arrays (palloc'd in caller's context) of the exclusion operator
  * OIDs, their underlying functions' OIDs, and their strategy numbers in the
  * index's opclasses.  We cache all this information since it requires a fair

@@ -307,9 +307,8 @@ pq_endmessage(StringInfo buf)
  *
  * The data buffer is *not* freed, allowing to reuse the buffer with
  * pq_beginmessage_reuse.
- --------------------------------
+ * --------------------------------
  */
-
 void
 pq_endmessage_reuse(StringInfo buf)
 {

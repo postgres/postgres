@@ -2620,7 +2620,7 @@ view_col_is_auto_updatable(RangeTblRef *rtr, TargetEntry *tle)
  * view_query_is_auto_updatable - test whether the specified view definition
  * represents an auto-updatable view. Returns NULL (if the view can be updated)
  * or a message string giving the reason that it cannot be.
-
+ *
  * The returned string has not been translated; if it is shown as an error
  * message, the caller should apply _() to translate it.
  *

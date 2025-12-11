@@ -69,7 +69,7 @@ libpqsrv_connect(const char *conninfo, uint32 wait_event_info)
 /*
  * Like libpqsrv_connect(), except that this is a wrapper for
  * PQconnectdbParams().
-  */
+ */
 static inline PGconn *
 libpqsrv_connect_params(const char *const *keywords,
 						const char *const *values,

@@ -23,8 +23,8 @@
 
 /*
  * AlignedAllocFree
-*		Frees allocated memory; memory is removed from its owning context.
-*/
+ *		Frees allocated memory; memory is removed from its owning context.
+ */
 void
 AlignedAllocFree(void *pointer)
 {

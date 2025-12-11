@@ -5449,7 +5449,7 @@ ShowGUCOption(const struct config_generic *record, bool use_units)
  *		variable sourceline, integer
  *		variable source, integer
  *		variable scontext, integer
-*		variable srole, OID
+ *		variable srole, OID
  */
 static void
 write_one_nondefault_variable(FILE *fp, struct config_generic *gconf)

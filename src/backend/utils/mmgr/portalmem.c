@@ -853,7 +853,8 @@ AtAbort_Portals(void)
 /*
  * Post-abort cleanup for portals.
  *
- * Delete all portals not held over from prior transactions.  */
+ * Delete all portals not held over from prior transactions.
+ */
 void
 AtCleanup_Portals(void)
 {
