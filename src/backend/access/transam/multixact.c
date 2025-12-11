@@ -1153,6 +1153,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	int			slotno;
 	MultiXactOffset *offptr;
 	MultiXactOffset offset;
+	MultiXactOffset nextMXOffset;
 	int			length;
 	MultiXactId oldestMXact;
 	MultiXactId nextMXact;
@@ -1244,12 +1245,14 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	offptr += entryno;
 	offset = *offptr;
 
-	Assert(offset != 0);
+	if (offset == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("MultiXact %u has invalid offset", multi)));
 
 	/* read next multi's offset */
 	{
 		MultiXactId tmpMXact;
-		MultiXactOffset nextMXOffset;
 
 		/* handle wraparound if needed */
 		tmpMXact = multi + 1;
@@ -1283,21 +1286,27 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 		offptr = (MultiXactOffset *) MultiXactOffsetCtl->shared->page_buffer[slotno];
 		offptr += entryno;
 		nextMXOffset = *offptr;
-
-		if (nextMXOffset == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("MultiXact %u has invalid next offset",
-							multi)));
-
-		length = nextMXOffset - offset;
 	}
 
 	LWLockRelease(lock);
 	lock = NULL;
 
-	/* A multixid with zero members should not happen */
-	Assert(length > 0);
+	/* Sanity check the next offset */
+	if (nextMXOffset == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("MultiXact %u has invalid next offset", multi)));
+	if (nextMXOffset < offset)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("MultiXact %u has offset (%" PRIu64 ") greater than its next offset (%" PRIu64 ")",
+						multi, offset, nextMXOffset)));
+	if (nextMXOffset - offset > INT32_MAX)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("MultiXact %u has too many members (%" PRIu64 ")",
+						multi, nextMXOffset - offset)));
+	length = nextMXOffset - offset;
 
 	/* read the members */
 	ptr = (MultiXactMember *) palloc(length * sizeof(MultiXactMember));
