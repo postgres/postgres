@@ -383,7 +383,7 @@ pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 
 			/* Used to determine the NUMA node for all OS pages at once */
 			os_page_ptrs = palloc0(sizeof(void *) * os_page_count);
-			os_page_status = palloc(sizeof(uint64) * os_page_count);
+			os_page_status = palloc(sizeof(int) * os_page_count);
 
 			/*
 			 * Fill pointers for all the memory pages.  This loop stores and
