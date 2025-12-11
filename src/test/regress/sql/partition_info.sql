@@ -127,3 +127,11 @@ SELECT pg_partition_root('ptif_li_child');
 DROP VIEW ptif_test_view;
 DROP MATERIALIZED VIEW ptif_test_matview;
 DROP TABLE ptif_li_parent, ptif_li_child;
+
+-- Test about selection of arbiter indexes for partitioned tables with
+-- non-valid index on the parent table
+CREATE TABLE pt (a int PRIMARY KEY) PARTITION BY RANGE (a);
+CREATE TABLE p1 PARTITION OF pt FOR VALUES FROM (1) to (2) PARTITION BY RANGE (a);
+CREATE TABLE p1_1 PARTITION OF p1 FOR VALUES FROM (1) TO (2);
+CREATE UNIQUE INDEX ON ONLY p1 (a);
+INSERT INTO p1 VALUES (1) ON CONFLICT (a) DO NOTHING;

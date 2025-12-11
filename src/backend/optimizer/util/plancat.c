@@ -1000,6 +1000,15 @@ infer_arbiter_indexes(PlannerInfo *root)
 			continue;
 
 		/*
+		 * Ignore invalid indexes for partitioned tables.  It's possible that
+		 * some partitions don't have the index (yet), and then we would not
+		 * find a match during ExecInitPartitionInfo.
+		 */
+		if (relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
+			!idxForm->indisvalid)
+			continue;
+
+		/*
 		 * Note that we do not perform a check against indcheckxmin (like e.g.
 		 * get_relation_info()) here to eliminate candidates, because
 		 * uniqueness checking only cares about the most recently committed
