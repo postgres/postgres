@@ -2192,7 +2192,7 @@ MultiXactAdvanceNextMXact(MultiXactId minMulti,
 	}
 	if (MultiXactState->nextOffset < minMultiOffset)
 	{
-		debug_elog3(DEBUG2, "MultiXact: setting next offset to %" PRIU64,
+		debug_elog3(DEBUG2, "MultiXact: setting next offset to %" PRIu64,
 					minMultiOffset);
 		MultiXactState->nextOffset = minMultiOffset;
 	}
