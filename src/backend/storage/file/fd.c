@@ -3185,9 +3185,10 @@ GetNextTempTableSpace(void)
 /*
  * AtEOSubXact_Files
  *
- * Take care of subtransaction commit/abort.  At abort, we close temp files
- * that the subtransaction may have opened.  At commit, we reassign the
- * files that were opened to the parent subtransaction.
+ * Take care of subtransaction commit/abort.  At abort, we close AllocateDescs
+ * that the subtransaction may have opened.  At commit, we reassign them to
+ * the parent subtransaction.  (Temporary files are tracked by ResourceOwners
+ * instead.)
  */
 void
 AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
