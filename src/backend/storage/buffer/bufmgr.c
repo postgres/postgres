@@ -4676,7 +4676,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	if (nlocators == 0)
 		return;
 
-	rels = palloc(sizeof(SMgrRelation) * nlocators);	/* non-local relations */
+	rels = palloc_array(SMgrRelation, nlocators);	/* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	for (i = 0; i < nlocators; i++)
@@ -4758,7 +4758,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	}
 
 	pfree(block);
-	locators = palloc(sizeof(RelFileLocator) * n);	/* non-local relations */
+	locators = palloc_array(RelFileLocator, n); /* non-local relations */
 	for (i = 0; i < n; i++)
 		locators[i] = rels[i]->smgr_rlocator.locator;
 
@@ -5037,7 +5037,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		return;
 
 	/* fill-in array for qsort */
-	srels = palloc(sizeof(SMgrSortArray) * nrels);
+	srels = palloc_array(SMgrSortArray, nrels);
 
 	for (i = 0; i < nrels; i++)
 	{

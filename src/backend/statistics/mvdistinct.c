@@ -110,7 +110,7 @@ statext_ndistinct_build(double totalrows, StatsBuildData *data)
 			MVNDistinctItem *item = &result->items[itemcnt];
 			int			j;
 
-			item->attributes = palloc(sizeof(AttrNumber) * k);
+			item->attributes = palloc_array(AttrNumber, k);
 			item->nattributes = k;
 
 			/* translate the indexes to attnums */
@@ -359,9 +359,9 @@ ndistinct_for_combination(double totalrows, StatsBuildData *data,
 	 * using the specified column combination as dimensions.  We could try to
 	 * sort in place, but it'd probably be more complex and bug-prone.
 	 */
-	items = (SortItem *) palloc(numrows * sizeof(SortItem));
-	values = (Datum *) palloc0(sizeof(Datum) * numrows * k);
-	isnull = (bool *) palloc0(sizeof(bool) * numrows * k);
+	items = palloc_array(SortItem, numrows);
+	values = palloc0_array(Datum, numrows * k);
+	isnull = palloc0_array(bool, numrows * k);
 
 	for (i = 0; i < numrows; i++)
 	{
@@ -508,12 +508,12 @@ generator_init(int n, int k)
 	Assert((n >= k) && (k > 0));
 
 	/* allocate the generator state as a single chunk of memory */
-	state = (CombinationGenerator *) palloc(sizeof(CombinationGenerator));
+	state = palloc_object(CombinationGenerator);
 
 	state->ncombinations = n_choose_k(n, k);
 
 	/* pre-allocate space for all combinations */
-	state->combinations = (int *) palloc(sizeof(int) * k * state->ncombinations);
+	state->combinations = palloc_array(int, k * state->ncombinations);
 
 	state->current = 0;
 	state->k = k;
@@ -606,7 +606,7 @@ generate_combinations_recurse(CombinationGenerator *state,
 static void
 generate_combinations(CombinationGenerator *state)
 {
-	int		   *current = (int *) palloc0(sizeof(int) * state->k);
+	int		   *current = palloc0_array(int, state->k);
 
 	generate_combinations_recurse(state, 0, 0, current);
 

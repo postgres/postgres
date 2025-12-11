@@ -227,7 +227,7 @@ ExecSetupPartitionTupleRouting(EState *estate, Relation rel)
 	 * The reason for this is that a common case is for INSERT to insert a
 	 * single tuple into a partitioned table and this must be fast.
 	 */
-	proute = (PartitionTupleRouting *) palloc0(sizeof(PartitionTupleRouting));
+	proute = palloc0_object(PartitionTupleRouting);
 	proute->partition_root = rel;
 	proute->memcxt = CurrentMemoryContext;
 	/* Rest of members initialized by zeroing */
@@ -1198,10 +1198,8 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 		if (proute->max_partitions == 0)
 		{
 			proute->max_partitions = 8;
-			proute->partitions = (ResultRelInfo **)
-				palloc(sizeof(ResultRelInfo *) * proute->max_partitions);
-			proute->is_borrowed_rel = (bool *)
-				palloc(sizeof(bool) * proute->max_partitions);
+			proute->partitions = palloc_array(ResultRelInfo *, proute->max_partitions);
+			proute->is_borrowed_rel = palloc_array(bool, proute->max_partitions);
 		}
 		else
 		{
@@ -1316,10 +1314,8 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		if (proute->max_dispatch == 0)
 		{
 			proute->max_dispatch = 4;
-			proute->partition_dispatch_info = (PartitionDispatch *)
-				palloc(sizeof(PartitionDispatch) * proute->max_dispatch);
-			proute->nonleaf_partitions = (ResultRelInfo **)
-				palloc(sizeof(ResultRelInfo *) * proute->max_dispatch);
+			proute->partition_dispatch_info = palloc_array(PartitionDispatch, proute->max_dispatch);
+			proute->nonleaf_partitions = palloc_array(ResultRelInfo *, proute->max_dispatch);
 		}
 		else
 		{
@@ -2211,7 +2207,7 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 			 * arrays are in partition bounds order.
 			 */
 			pprune->nparts = partdesc->nparts;
-			pprune->subplan_map = palloc(sizeof(int) * partdesc->nparts);
+			pprune->subplan_map = palloc_array(int, partdesc->nparts);
 
 			if (partdesc->nparts == pinfo->nparts &&
 				memcmp(partdesc->oids, pinfo->relid_map,
@@ -2238,8 +2234,8 @@ CreatePartitionPruneState(EState *estate, PartitionPruneInfo *pruneinfo,
 				 * attached.  Cope with that by creating a map that skips any
 				 * mismatches.
 				 */
-				pprune->subpart_map = palloc(sizeof(int) * partdesc->nparts);
-				pprune->leafpart_rti_map = palloc(sizeof(int) * partdesc->nparts);
+				pprune->subpart_map = palloc_array(int, partdesc->nparts);
+				pprune->leafpart_rti_map = palloc_array(int, partdesc->nparts);
 
 				for (pp_idx = 0; pp_idx < partdesc->nparts; pp_idx++)
 				{
@@ -2390,16 +2386,14 @@ InitPartitionPruneContext(PartitionPruneContext *context,
 	context->partsupfunc = partkey->partsupfunc;
 
 	/* We'll look up type-specific support functions as needed */
-	context->stepcmpfuncs = (FmgrInfo *)
-		palloc0(sizeof(FmgrInfo) * n_steps * partnatts);
+	context->stepcmpfuncs = palloc0_array(FmgrInfo, n_steps * partnatts);
 
 	context->ppccontext = CurrentMemoryContext;
 	context->planstate = planstate;
 	context->exprcontext = econtext;
 
 	/* Initialize expression state for each expression we need */
-	context->exprstates = (ExprState **)
-		palloc0(sizeof(ExprState *) * n_steps * partnatts);
+	context->exprstates = palloc0_array(ExprState *, n_steps * partnatts);
 	foreach(lc, pruning_steps)
 	{
 		PartitionPruneStepOp *step = (PartitionPruneStepOp *) lfirst(lc);
@@ -2500,7 +2494,7 @@ InitExecPartitionPruneContexts(PartitionPruneState *prunestate,
 		 * indexes to new ones.  For convenience of initialization, we use
 		 * 1-based indexes in this array and leave pruned items as 0.
 		 */
-		new_subplan_indexes = (int *) palloc0(sizeof(int) * n_total_subplans);
+		new_subplan_indexes = palloc0_array(int, n_total_subplans);
 		newidx = 1;
 		i = -1;
 		while ((i = bms_next_member(initially_valid_subplans, i)) >= 0)

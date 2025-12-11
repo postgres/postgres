@@ -134,7 +134,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Create a user function context for cross-call persistence */
-		fctx = (BufferCachePagesContext *) palloc(sizeof(BufferCachePagesContext));
+		fctx = palloc_object(BufferCachePagesContext);
 
 		/*
 		 * To smoothly support upgrades from version 1.0 of this extension
@@ -382,8 +382,8 @@ pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 			os_page_count = (endptr - startptr) / os_page_size;
 
 			/* Used to determine the NUMA node for all OS pages at once */
-			os_page_ptrs = palloc0(sizeof(void *) * os_page_count);
-			os_page_status = palloc(sizeof(int) * os_page_count);
+			os_page_ptrs = palloc0_array(void *, os_page_count);
+			os_page_status = palloc_array(int, os_page_count);
 
 			/*
 			 * Fill pointers for all the memory pages.  This loop stores and
@@ -425,7 +425,7 @@ pg_buffercache_os_pages_internal(FunctionCallInfo fcinfo, bool include_numa)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* Create a user function context for cross-call persistence */
-		fctx = (BufferCacheOsPagesContext *) palloc(sizeof(BufferCacheOsPagesContext));
+		fctx = palloc_object(BufferCacheOsPagesContext);
 
 		if (get_call_result_type(fcinfo, NULL, &expected_tupledesc) != TYPEFUNC_COMPOSITE)
 			elog(ERROR, "return type must be a row type");

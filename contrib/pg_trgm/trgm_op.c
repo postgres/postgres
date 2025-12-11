@@ -452,7 +452,7 @@ make_positional_trgm(trgm *trg1, int len1, trgm *trg2, int len2)
 	int			i,
 				len = len1 + len2;
 
-	result = (pos_trgm *) palloc(sizeof(pos_trgm) * len);
+	result = palloc_array(pos_trgm, len);
 
 	for (i = 0; i < len1; i++)
 	{
@@ -535,7 +535,7 @@ iterate_word_similarity(int *trg2indexes,
 	lower = (flags & WORD_SIMILARITY_STRICT) ? 0 : -1;
 
 	/* Memorise last position of each trigram */
-	lastpos = (int *) palloc(sizeof(int) * len);
+	lastpos = palloc_array(int, len);
 	memset(lastpos, -1, sizeof(int) * len);
 
 	for (i = 0; i < len2; i++)
@@ -711,8 +711,8 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 	 * Merge positional trigrams array: enumerate each trigram and find its
 	 * presence in required word.
 	 */
-	trg2indexes = (int *) palloc(sizeof(int) * len2);
-	found = (bool *) palloc0(sizeof(bool) * len);
+	trg2indexes = palloc_array(int, len2);
+	found = palloc0_array(bool, len);
 
 	ulen1 = 0;
 	j = 0;
@@ -938,7 +938,7 @@ generate_wildcard_trgm(const char *str, int slen)
 	tptr = GETARR(trg);
 
 	/* Allocate a buffer for blank-padded, but not yet case-folded, words */
-	buf = palloc(sizeof(char) * (slen + 4));
+	buf = palloc_array(char, slen + 4);
 
 	/*
 	 * Extract trigrams from each substring extracted by get_wildcard_part.
@@ -1008,7 +1008,7 @@ show_trgm(PG_FUNCTION_ARGS)
 	int			i;
 
 	trg = generate_trgm(VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
-	d = (Datum *) palloc(sizeof(Datum) * (1 + ARRNELEM(trg)));
+	d = palloc_array(Datum, 1 + ARRNELEM(trg));
 
 	for (i = 0, ptr = GETARR(trg); i < ARRNELEM(trg); i++, ptr++)
 	{
@@ -1136,7 +1136,7 @@ trgm_presence_map(TRGM *query, TRGM *key)
 				lenk = ARRNELEM(key),
 				i;
 
-	result = (bool *) palloc0(lenq * sizeof(bool));
+	result = palloc0_array(bool, lenq);
 
 	/* for each query trigram, do a binary search in the key array */
 	for (i = 0; i < lenq; i++)
