@@ -3,6 +3,11 @@
 --
 create table insertconflicttest(key int4, fruit text);
 
+-- invalid clauses
+insert into insertconflicttest values (1) on conflict (key int4_ops (fillfactor=10)) do nothing;
+insert into insertconflicttest values (1) on conflict (key asc) do nothing;
+insert into insertconflicttest values (1) on conflict (key nulls last) do nothing;
+
 -- These things should work through a view, as well
 create view insertconflictview as select * from insertconflicttest;
 

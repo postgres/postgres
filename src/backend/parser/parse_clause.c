@@ -3277,24 +3277,32 @@ resolve_unique_index_expr(ParseState *pstate, InferClause *infer,
 		 * Raw grammar re-uses CREATE INDEX infrastructure for unique index
 		 * inference clause, and so will accept opclasses by name and so on.
 		 *
-		 * Make no attempt to match ASC or DESC ordering or NULLS FIRST/NULLS
-		 * LAST ordering, since those are not significant for inference
-		 * purposes (any unique index matching the inference specification in
-		 * other regards is accepted indifferently).  Actively reject this as
-		 * wrong-headed.
+		 * Make no attempt to match ASC or DESC ordering, NULLS FIRST/NULLS
+		 * LAST ordering or opclass options, since those are not significant
+		 * for inference purposes (any unique index matching the inference
+		 * specification in other regards is accepted indifferently). Actively
+		 * reject this as wrong-headed.
 		 */
 		if (ielem->ordering != SORTBY_DEFAULT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("ASC/DESC is not allowed in ON CONFLICT clause"),
+					 errmsg("%s is not allowed in ON CONFLICT clause",
+							"ASC/DESC"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) infer))));
 		if (ielem->nulls_ordering != SORTBY_NULLS_DEFAULT)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("NULLS FIRST/LAST is not allowed in ON CONFLICT clause"),
+					 errmsg("%s is not allowed in ON CONFLICT clause",
+							"NULLS FIRST/LAST"),
 					 parser_errposition(pstate,
 										exprLocation((Node *) infer))));
+		if (ielem->opclassopts)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("operator class options are not allowed in ON CONFLICT clause"),
+					parser_errposition(pstate,
+									   exprLocation((Node *) infer)));
 
 		if (!ielem->expr)
 		{

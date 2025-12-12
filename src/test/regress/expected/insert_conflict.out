@@ -2,6 +2,19 @@
 -- insert...on conflict do unique index inference
 --
 create table insertconflicttest(key int4, fruit text);
+-- invalid clauses
+insert into insertconflicttest values (1) on conflict (key int4_ops (fillfactor=10)) do nothing;
+ERROR:  operator class options are not allowed in ON CONFLICT clause
+LINE 1: ...rt into insertconflicttest values (1) on conflict (key int4_...
+                                                             ^
+insert into insertconflicttest values (1) on conflict (key asc) do nothing;
+ERROR:  ASC/DESC is not allowed in ON CONFLICT clause
+LINE 1: ...rt into insertconflicttest values (1) on conflict (key asc) ...
+                                                             ^
+insert into insertconflicttest values (1) on conflict (key nulls last) do nothing;
+ERROR:  NULLS FIRST/LAST is not allowed in ON CONFLICT clause
+LINE 1: ...rt into insertconflicttest values (1) on conflict (key nulls...
+                                                             ^
 -- These things should work through a view, as well
 create view insertconflictview as select * from insertconflicttest;
 --
