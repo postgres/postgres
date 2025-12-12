@@ -74,20 +74,11 @@ toast_compress_datum(Datum value, char cmethod)
 			break;
 		case TOAST_ZSTD_COMPRESSION:
 			/*
-			 * Zstd requires the extended TOAST header format.  If the GUC
-			 * use_extended_toast_header is off, fall back to pglz.
+			 * Zstd is only for external TOAST storage (20-byte header).
+			 * Skip inline compression; toast_save_datum will compress with
+			 * zstd when storing to the TOAST table.
 			 */
-			if (!use_extended_toast_header)
-			{
-				tmp = pglz_compress_datum((const struct varlena *) DatumGetPointer(value));
-				cmid = TOAST_PGLZ_COMPRESSION_ID;
-			}
-			else
-			{
-				tmp = zstd_compress_datum((const struct varlena *) DatumGetPointer(value));
-				cmid = TOAST_EXTENDED_COMPRESSION_ID;
-			}
-			break;
+			return PointerGetDatum(NULL);
 		default:
 			elog(ERROR, "invalid compression method %c", cmethod);
 	}
@@ -130,11 +121,13 @@ toast_compress_datum(Datum value, char cmethod)
  * value: datum to be pushed to toast storage
  * oldexternal: if not NULL, toast pointer previously representing the datum
  * options: options to be passed to heap_insert() for toast rows
+ * cmethod: compression method to use for uncompressed data
  * ----------
  */
 Datum
 toast_save_datum(Relation rel, Datum value,
-				 struct varlena *oldexternal, int options)
+				 struct varlena *oldexternal, int options,
+				 char cmethod)
 {
 	Relation	toastrel;
 	Relation   *toastidxs;
@@ -246,16 +239,51 @@ toast_save_datum(Relation rel, Datum value,
 	}
 	else
 	{
-		data_p = VARDATA(dval);
-		data_todo = VARSIZE(dval) - VARHDRSZ;
-		toast_pointer.va_rawsize = VARSIZE(dval);
-		toast_pointer.va_extinfo = data_todo;
-
 		/*
-		 * Note: We don't use extended format for uncompressed data, even when
-		 * use_extended_toast_header is enabled.  Extended format is only for
-		 * compressed data, where we need to store the compression method.
+		 * Uncompressed data.  If the caller specified zstd compression,
+		 * try to compress it now before storing to the TOAST table.
 		 */
+		if (cmethod == TOAST_ZSTD_COMPRESSION)
+		{
+			struct varlena *compressed;
+			int32		rawsize;
+
+			rawsize = VARSIZE_ANY_EXHDR((const struct varlena *) dval);
+			compressed = zstd_compress_datum((const struct varlena *) dval);
+			if (compressed != NULL)
+			{
+				/* Set compression method in va_tcinfo */
+				TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(compressed, rawsize,
+															TOAST_EXTENDED_COMPRESSION_ID);
+
+				/* Compression succeeded - use the compressed data */
+				dval = (Pointer) compressed;
+				data_p = VARDATA(compressed);
+				data_todo = VARSIZE(compressed) - VARHDRSZ;
+				toast_pointer.va_rawsize = rawsize + VARHDRSZ;
+
+				/* Use extended format for zstd */
+				use_extended = true;
+				ext_method = TOAST_ZSTD_EXT_METHOD;
+				VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo,
+															VARATT_EXTERNAL_EXTENDED_CMID);
+			}
+			else
+			{
+				/* Compression failed or didn't save space - store uncompressed */
+				data_p = VARDATA(dval);
+				data_todo = VARSIZE(dval) - VARHDRSZ;
+				toast_pointer.va_rawsize = VARSIZE(dval);
+				toast_pointer.va_extinfo = data_todo;
+			}
+		}
+		else
+		{
+			data_p = VARDATA(dval);
+			data_todo = VARSIZE(dval) - VARHDRSZ;
+			toast_pointer.va_rawsize = VARSIZE(dval);
+			toast_pointer.va_extinfo = data_todo;
+		}
 	}
 
 	/*

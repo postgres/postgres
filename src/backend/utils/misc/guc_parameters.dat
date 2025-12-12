@@ -738,13 +738,6 @@
   boot_val => 'TOAST_PGLZ_COMPRESSION',
   options => 'default_toast_compression_options',
 },
-
-{ name => 'use_extended_toast_header', type => 'bool', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
-  short_desc => 'Use 20-byte extended TOAST header format (required for zstd).',
-  variable => 'use_extended_toast_header',
-  boot_val => 'true',
-},
-
 { name => 'default_transaction_deferrable', type => 'bool', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
   short_desc => 'Sets the default deferrable status of new transactions.',
   variable => 'DefaultXactDeferrable',
@@ -3179,6 +3172,12 @@
   long_desc => 'Enables updating of the process title every time a new SQL command is received by the server.',
   variable => 'update_process_title',
   boot_val => 'DEFAULT_UPDATE_PROCESS_TITLE',
+},
+
+{ name => 'use_extended_toast_header', type => 'bool', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
+  short_desc => 'Use 20-byte extended TOAST header format (required for zstd).',
+  variable => 'use_extended_toast_header',
+  boot_val => 'true',
 },
 
 { name => 'vacuum_buffer_usage_limit', type => 'int', context => 'PGC_USERSET', group => 'RESOURCES_MEM',
