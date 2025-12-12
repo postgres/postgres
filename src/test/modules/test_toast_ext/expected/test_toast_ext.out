@@ -1,0 +1,40 @@
+-- Test extended TOAST header structures (Phase 0)
+CREATE EXTENSION test_toast_ext;
+-- Test 1: Structure sizes
+SELECT test_toast_structure_sizes();
+                  test_toast_structure_sizes                   
+---------------------------------------------------------------
+ PASS: varatt_external is 16 bytes                            +
+ PASS: varatt_external_extended is 20 bytes                   +
+ PASS: TOAST_POINTER_SIZE is 18 bytes                         +
+ PASS: TOAST_POINTER_SIZE_EXTENDED is 22 bytes                +
+ PASS: All field offsets correct (no padding)                 +
+                                                               +
+ Result: ALL TESTS PASSED                                     +
+ 
+(1 row)
+
+-- Test 2: Flag validation
+SELECT test_toast_flag_validation();
+                test_toast_flag_validation                
+----------------------------------------------------------
+ PASS: Valid flags (0x00-0x03) accepted                  +
+ PASS: Invalid flags (0x04+) rejected                    +
+ PASS: Compression methods 0-255 valid                   +
+ PASS: Compression method IDs correct                    +
+                                                          +
+ Result: ALL TESTS PASSED                                +
+ 
+(1 row)
+
+-- Test 3: Compression ID constants
+SELECT test_toast_compression_ids();
+               test_toast_compression_ids                
+---------------------------------------------------------
+ PASS: Standard compression IDs correct (0,1,2,3)       +
+ PASS: PGLZ/LZ4 IDs consistent between formats          +
+                                                         +
+ Result: ALL TESTS PASSED                               +
+ 
+(1 row)
+

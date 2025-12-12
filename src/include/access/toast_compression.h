@@ -13,14 +13,21 @@
 #ifndef TOAST_COMPRESSION_H
 #define TOAST_COMPRESSION_H
 
+#include "varatt.h"
+
 /*
  * GUC support.
  *
  * default_toast_compression is an integer for purposes of the GUC machinery,
  * but the value is one of the char values defined below, as they appear in
  * pg_attribute.attcompression, e.g. TOAST_PGLZ_COMPRESSION.
+ *
+ * use_extended_toast_header controls whether to use the 20-byte extended
+ * TOAST pointer format (required for zstd) instead of the legacy 16-byte
+ * format. When false, zstd compression falls back to pglz.
  */
 extern PGDLLIMPORT int default_toast_compression;
+extern PGDLLIMPORT bool use_extended_toast_header;
 
 /*
  * Built-in compression method ID.  The toast compression header will store
@@ -39,6 +46,7 @@ typedef enum ToastCompressionId
 	TOAST_PGLZ_COMPRESSION_ID = 0,
 	TOAST_LZ4_COMPRESSION_ID = 1,
 	TOAST_INVALID_COMPRESSION_ID = 2,
+	TOAST_EXTENDED_COMPRESSION_ID = 3,	/* extended format for future methods */
 } ToastCompressionId;
 
 /*
@@ -48,6 +56,7 @@ typedef enum ToastCompressionId
  */
 #define TOAST_PGLZ_COMPRESSION			'p'
 #define TOAST_LZ4_COMPRESSION			'l'
+#define TOAST_ZSTD_COMPRESSION			'z'
 #define InvalidCompressionMethod		'\0'
 
 #define CompressionMethodIsValid(cm)  ((cm) != InvalidCompressionMethod)
@@ -65,9 +74,47 @@ extern struct varlena *lz4_decompress_datum(const struct varlena *value);
 extern struct varlena *lz4_decompress_datum_slice(const struct varlena *value,
 												  int32 slicelength);
 
+/* zstd compression/decompression routines (extended methods) */
+extern struct varlena *zstd_compress_datum(const struct varlena *value);
+extern struct varlena *zstd_decompress_datum(const struct varlena *value);
+extern struct varlena *zstd_decompress_datum_slice(const struct varlena *value,
+												   int32 slicelength);
+
 /* other stuff */
 extern ToastCompressionId toast_get_compression_id(struct varlena *attr);
 extern char CompressionNameToMethod(const char *compression);
 extern const char *GetCompressionMethodName(char method);
+
+/*
+ * TOAST_EXTENDED_COMPRESSION_ID (value 3) in va_extinfo bits 30-31
+ * signals that the data uses an extended compression method.  For inline
+ * compressed data, this currently means zstd.  For external TOAST pointers,
+ * the extended format (varatt_external_extended) stores the actual method
+ * in va_data[0].
+ *
+ * Note: TOAST_EXTENDED_COMPRESSION_ID is defined in the ToastCompressionId
+ * enum above, matching VARATT_EXTERNAL_EXTENDED_CMID from varatt.h.
+ */
+
+/*
+ * Feature flags for extended TOAST pointers (varatt_external_extended).
+ * Bits 2-7 are reserved for future use.
+ */
+#define TOAST_EXT_FLAG_COMPRESSION      0x01	/* va_data[0] = method ID */
+#define TOAST_EXT_FLAG_CHECKSUM         0x02	/* va_data[1-2] = checksum */
+
+/*
+ * Extended compression method IDs for use with extended TOAST format.
+ * Stored in va_data[0] when TOAST_EXT_FLAG_COMPRESSION is set.
+ */
+#define TOAST_PGLZ_EXT_METHOD          0
+#define TOAST_LZ4_EXT_METHOD           1
+#define TOAST_ZSTD_EXT_METHOD          2
+#define TOAST_UNCOMPRESSED_EXT_METHOD  3
+
+/* Validation macros for extended format */
+#define ExtendedCompressionMethodIsValid(method) ((method) <= 255)
+#define ExtendedFlagsAreValid(flags) \
+	(((flags) & ~(TOAST_EXT_FLAG_COMPRESSION | TOAST_EXT_FLAG_CHECKSUM)) == 0)
 
 #endif							/* TOAST_COMPRESSION_H */

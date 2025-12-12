@@ -739,6 +739,12 @@
   options => 'default_toast_compression_options',
 },
 
+{ name => 'use_extended_toast_header', type => 'bool', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
+  short_desc => 'Use 20-byte extended TOAST header format (required for zstd).',
+  variable => 'use_extended_toast_header',
+  boot_val => 'true',
+},
+
 { name => 'default_transaction_deferrable', type => 'bool', context => 'PGC_USERSET', group => 'CLIENT_CONN_STATEMENT',
   short_desc => 'Sets the default deferrable status of new transactions.',
   variable => 'DefaultXactDeferrable',

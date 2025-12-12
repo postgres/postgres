@@ -36,11 +36,13 @@ typedef struct toast_compress_header
 #define TOAST_COMPRESS_METHOD(ptr) \
 	(((toast_compress_header *) (ptr))->tcinfo >> VARLENA_EXTSIZE_BITS)
 
+/* Phase 0: Updated to accept TOAST_EXTENDED_COMPRESSION_ID (unused in practice) */
 #define TOAST_COMPRESS_SET_SIZE_AND_COMPRESS_METHOD(ptr, len, cm_method) \
 	do { \
 		Assert((len) > 0 && (len) <= VARLENA_EXTSIZE_MASK); \
 		Assert((cm_method) == TOAST_PGLZ_COMPRESSION_ID || \
-			   (cm_method) == TOAST_LZ4_COMPRESSION_ID); \
+			   (cm_method) == TOAST_LZ4_COMPRESSION_ID || \
+			   (cm_method) == TOAST_EXTENDED_COMPRESSION_ID); \
 		((toast_compress_header *) (ptr))->tcinfo = \
 			(len) | ((uint32) (cm_method) << VARLENA_EXTSIZE_BITS); \
 	} while (0)

@@ -1,0 +1,5 @@
+# test_toast_ext extension
+comment = 'Test module for extended TOAST header structures'
+default_version = '1.0'
+module_pathname = '$libdir/test_toast_ext'
+relocatable = true

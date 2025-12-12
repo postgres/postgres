@@ -4206,6 +4206,10 @@ pg_column_compression(PG_FUNCTION_ARGS)
 		case TOAST_LZ4_COMPRESSION_ID:
 			result = "lz4";
 			break;
+		case TOAST_EXTENDED_COMPRESSION_ID:
+			/* Extended format currently only supports zstd */
+			result = "zstd";
+			break;
 		default:
 			elog(ERROR, "invalid compression method id %d", cmid);
 	}

@@ -46,6 +46,13 @@ typedef struct varatt_external
 #define VARLENA_EXTSIZE_MASK	((1U << VARLENA_EXTSIZE_BITS) - 1)
 
 /*
+ * Compression method ID stored in the 2 high-order bits of va_extinfo.
+ * Value 3 indicates an extended TOAST pointer format (varatt_external_extended).
+ * This constant is also defined in toast_compression.h for use by TOAST code.
+ */
+#define VARATT_EXTERNAL_EXTENDED_CMID	3
+
+/*
  * struct varatt_indirect is a "TOAST pointer" representing an out-of-line
  * Datum that's stored in memory, not in an external toast relation.
  * The creator of such a Datum is entirely responsible that the referenced
@@ -77,6 +84,28 @@ typedef struct varatt_expanded
 } varatt_expanded;
 
 /*
+ * Extended TOAST pointer, extending varatt_external from 16 to 20 bytes.
+ *
+ * Identified by compression method ID 3 in va_extinfo bits 30-31.  The
+ * va_flags field indicates which optional features are enabled; va_data[3]
+ * contains feature-specific data.
+ *
+ * Like varatt_external, stored unaligned and requires memcpy for access.
+ *
+ * This struct must be defined before VARTAG_SIZE() which uses sizeof().
+ */
+typedef struct varatt_external_extended
+{
+	int32		va_rawsize;		/* Original data size (includes header) */
+	uint32		va_extinfo;		/* External saved size (30 bits) + extended
+								 * indicator (2 bits, value = 3) */
+	uint8		va_flags;		/* Feature flags indicating enabled extensions */
+	uint8		va_data[3];		/* Extension data - interpretation depends on flags */
+	Oid			va_valueid;		/* Unique ID of value within TOAST table */
+	Oid			va_toastrelid;	/* RelID of TOAST table containing it */
+}			varatt_external_extended;
+
+/*
  * Type tag for the various sorts of "TOAST pointer" datums.  The peculiar
  * value for VARTAG_ONDISK comes from a requirement for on-disk compatibility
  * with a previous notion that the tag field was the pointer datum's length.
@@ -86,7 +115,17 @@ typedef enum vartag_external
 	VARTAG_INDIRECT = 1,
 	VARTAG_EXPANDED_RO = 2,
 	VARTAG_EXPANDED_RW = 3,
-	VARTAG_ONDISK = 18
+	VARTAG_ONDISK = 18,
+
+	/*
+	 * VARTAG_ONDISK_EXTENDED is used for the extended TOAST pointer format,
+	 * which increases the on-disk payload from 16 to 20 bytes.  The first
+	 * 8 bytes (va_rawsize, va_extinfo) are layout-compatible with
+	 * struct varatt_external so that existing code inspecting those fields
+	 * continues to work.  Older PostgreSQL versions do not know about this
+	 * tag and therefore must not be used to read clusters that contain it.
+	 */
+	VARTAG_ONDISK_EXTENDED = 19
 } vartag_external;
 
 /* Is a TOAST pointer either type of expanded-object pointer? */
@@ -97,7 +136,14 @@ VARTAG_IS_EXPANDED(vartag_external tag)
 	return ((tag & ~1) == VARTAG_EXPANDED_RO);
 }
 
-/* Size of the data part of a "TOAST pointer" datum */
+/*
+ * Size of the data part of a "TOAST pointer" datum.
+ *
+ * For on-disk TOAST pointers we now support two payload sizes:
+ * the original 16-byte format (VARTAG_ONDISK) described by struct
+ * varatt_external, and a 20-byte extended format
+ * (VARTAG_ONDISK_EXTENDED) described by struct varatt_external_extended.
+ */
 static inline Size
 VARTAG_SIZE(vartag_external tag)
 {
@@ -107,6 +153,8 @@ VARTAG_SIZE(vartag_external tag)
 		return sizeof(varatt_expanded);
 	else if (tag == VARTAG_ONDISK)
 		return sizeof(varatt_external);
+	else if (tag == VARTAG_ONDISK_EXTENDED)
+		return sizeof(varatt_external_extended);
 	else
 	{
 		Assert(false);
@@ -360,7 +408,13 @@ VARATT_IS_EXTERNAL(const void *PTR)
 static inline bool
 VARATT_IS_EXTERNAL_ONDISK(const void *PTR)
 {
-	return VARATT_IS_EXTERNAL(PTR) && VARTAG_EXTERNAL(PTR) == VARTAG_ONDISK;
+	vartag_external tag;
+
+	if (!VARATT_IS_EXTERNAL(PTR))
+		return false;
+
+	tag = VARTAG_EXTERNAL(PTR);
+	return tag == VARTAG_ONDISK || tag == VARTAG_ONDISK_EXTENDED;
 }
 
 /* Is varlena datum an indirect pointer? */
@@ -516,11 +570,11 @@ VARATT_EXTERNAL_GET_COMPRESS_METHOD(struct varatt_external toast_pointer)
 }
 
 /* Set size and compress method of an externally-stored varlena datum */
-/* This has to remain a macro; beware multiple evaluations! */
 #define VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, len, cm) \
 	do { \
 		Assert((cm) == TOAST_PGLZ_COMPRESSION_ID || \
-			   (cm) == TOAST_LZ4_COMPRESSION_ID); \
+			   (cm) == TOAST_LZ4_COMPRESSION_ID || \
+			   (cm) == VARATT_EXTERNAL_EXTENDED_CMID); \
 		((toast_pointer).va_extinfo = \
 			(len) | ((uint32) (cm) << VARLENA_EXTSIZE_BITS)); \
 	} while (0)
@@ -537,6 +591,94 @@ VARATT_EXTERNAL_IS_COMPRESSED(struct varatt_external toast_pointer)
 {
 	return VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) <
 		(Size) (toast_pointer.va_rawsize - VARHDRSZ);
+}
+
+/* Macros for extended TOAST pointers (varatt_external_extended) */
+
+/*
+ * Check if a TOAST pointer uses the extended on-disk format.
+ *
+ * Callers must have already verified VARATT_IS_EXTERNAL_ONDISK() before
+ * calling this; here we look only at the compression-method bits embedded
+ * in va_extinfo.
+ */
+static inline bool
+VARATT_EXTERNAL_IS_EXTENDED(struct varatt_external toast_pointer)
+{
+	return VARATT_EXTERNAL_GET_COMPRESS_METHOD(toast_pointer) ==
+		VARATT_EXTERNAL_EXTENDED_CMID;
+}
+
+/* Get feature flags from extended pointer */
+static inline uint8
+VARATT_EXTERNAL_GET_FLAGS(struct varatt_external_extended toast_pointer_ext)
+{
+	return toast_pointer_ext.va_flags;
+}
+
+/* Set feature flags in extended pointer */
+#define VARATT_EXTERNAL_SET_FLAGS(toast_pointer_ext, flags) \
+	do { \
+		(toast_pointer_ext).va_flags = (flags); \
+	} while (0)
+
+/* Test if a specific flag is set */
+#define VARATT_EXTERNAL_HAS_FLAG(toast_pointer_ext, flag) \
+	(((toast_pointer_ext).va_flags & (flag)) != 0)
+
+/* Get pointer to extension data array */
+#define VARATT_EXTERNAL_GET_EXT_DATA(toast_pointer_ext) \
+	((toast_pointer_ext).va_data)
+
+/* Get extended compression method (when TOAST_EXT_FLAG_COMPRESSION is set) */
+static inline uint8
+VARATT_EXTERNAL_GET_EXT_COMPRESSION_METHOD(struct varatt_external_extended toast_pointer_ext)
+{
+	return toast_pointer_ext.va_data[0];
+}
+
+/* Set extended compression method */
+#define VARATT_EXTERNAL_SET_EXT_COMPRESSION_METHOD(toast_pointer_ext, method) \
+	do { \
+		(toast_pointer_ext).va_data[0] = (method); \
+	} while (0)
+
+/* Get extsize and compress method from extended pointer (same as standard) */
+static inline Size
+VARATT_EXTERNAL_GET_EXTSIZE_EXTENDED(struct varatt_external_extended toast_pointer_ext)
+{
+	return toast_pointer_ext.va_extinfo & VARLENA_EXTSIZE_MASK;
+}
+
+static inline uint32
+VARATT_EXTERNAL_GET_COMPRESS_METHOD_EXTENDED(struct varatt_external_extended toast_pointer_ext)
+{
+	return toast_pointer_ext.va_extinfo >> VARLENA_EXTSIZE_BITS;
+}
+
+/* Set size and extended indicator in va_extinfo */
+#define VARATT_EXTERNAL_SET_SIZE_AND_EXT_FLAGS(toast_pointer_ext, len, flags) \
+	do { \
+		Assert((len) > 0 && (len) <= VARLENA_EXTSIZE_MASK); \
+		(toast_pointer_ext).va_extinfo = \
+			(len) | ((uint32) VARATT_EXTERNAL_EXTENDED_CMID << VARLENA_EXTSIZE_BITS); \
+		(toast_pointer_ext).va_flags = (flags); \
+		memset((toast_pointer_ext).va_data, 0, 3); \
+	} while (0)
+
+/* Convenience macro for setting extended pointer with compression method */
+#define VARATT_EXTERNAL_SET_SIZE_AND_EXT_COMPRESSION(toast_pointer_ext, len, method) \
+	do { \
+		VARATT_EXTERNAL_SET_SIZE_AND_EXT_FLAGS(toast_pointer_ext, len, TOAST_EXT_FLAG_COMPRESSION); \
+		VARATT_EXTERNAL_SET_EXT_COMPRESSION_METHOD(toast_pointer_ext, method); \
+	} while (0)
+
+/* Test if extended pointer is compressed (same logic as standard) */
+static inline bool
+VARATT_EXTERNAL_IS_COMPRESSED_EXTENDED(struct varatt_external_extended toast_pointer_ext)
+{
+	return VARATT_EXTERNAL_GET_EXTSIZE_EXTENDED(toast_pointer_ext) <
+		(Size) (toast_pointer_ext.va_rawsize - VARHDRSZ);
 }
 
 #endif

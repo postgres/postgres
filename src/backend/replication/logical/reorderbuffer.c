@@ -5137,11 +5137,17 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		/* va_rawsize is the size of the original datum -- including header */
 		struct varatt_external toast_pointer;
+		struct varatt_external_extended toast_pointer_ext;
 		struct varatt_indirect redirect_pointer;
 		struct varlena *new_datum = NULL;
 		struct varlena *reconstructed;
 		dlist_iter	it;
 		Size		data_done = 0;
+		bool		is_extended;
+		Oid			valueid;
+		int32		rawsize;
+		int32		extsize;
+		bool		is_compressed;
 
 		if (attr->attisdropped)
 			continue;
@@ -5161,14 +5167,36 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		if (!VARATT_IS_EXTERNAL(varlena))
 			continue;
 
-		VARATT_EXTERNAL_GET_POINTER(toast_pointer, varlena);
+		/*
+		 * Handle both legacy 16-byte and extended 20-byte on-disk TOAST
+		 * pointers based on the tag.
+		 */
+		is_extended = VARATT_IS_EXTERNAL_ONDISK(varlena) &&
+					  (VARTAG_EXTERNAL(varlena) == VARTAG_ONDISK_EXTENDED);
+
+		if (is_extended)
+		{
+			VARATT_EXTERNAL_GET_POINTER_EXTENDED(toast_pointer_ext, varlena);
+			valueid = toast_pointer_ext.va_valueid;
+			rawsize = toast_pointer_ext.va_rawsize;
+			extsize = VARATT_EXTERNAL_GET_EXTSIZE_EXTENDED(toast_pointer_ext);
+			is_compressed = VARATT_EXTERNAL_IS_COMPRESSED_EXTENDED(toast_pointer_ext);
+		}
+		else
+		{
+			VARATT_EXTERNAL_GET_POINTER(toast_pointer, varlena);
+			valueid = toast_pointer.va_valueid;
+			rawsize = toast_pointer.va_rawsize;
+			extsize = VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer);
+			is_compressed = VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer);
+		}
 
 		/*
 		 * Check whether the toast tuple changed, replace if so.
 		 */
 		ent = (ReorderBufferToastEnt *)
 			hash_search(txn->toast_hash,
-						&toast_pointer.va_valueid,
+						&valueid,
 						HASH_FIND,
 						NULL);
 		if (ent == NULL)
@@ -5179,7 +5207,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 		free[natt] = true;
 
-		reconstructed = palloc0(toast_pointer.va_rawsize);
+		reconstructed = palloc0(rawsize);
 
 		ent->reconstructed = reconstructed;
 
@@ -5204,10 +5232,10 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 				   VARSIZE(chunk) - VARHDRSZ);
 			data_done += VARSIZE(chunk) - VARHDRSZ;
 		}
-		Assert(data_done == VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer));
+		Assert(data_done == extsize);
 
 		/* make sure its marked as compressed or not */
-		if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+		if (is_compressed)
 			SET_VARSIZE_COMPRESSED(reconstructed, data_done + VARHDRSZ);
 		else
 			SET_VARSIZE(reconstructed, data_done + VARHDRSZ);

@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "access/heaptoast.h"
 #include "access/table.h"
+#include "access/toast_compression.h"
 #include "access/toast_internals.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
@@ -70,6 +71,22 @@ toast_compress_datum(Datum value, char cmethod)
 		case TOAST_LZ4_COMPRESSION:
 			tmp = lz4_compress_datum((const struct varlena *) DatumGetPointer(value));
 			cmid = TOAST_LZ4_COMPRESSION_ID;
+			break;
+		case TOAST_ZSTD_COMPRESSION:
+			/*
+			 * Zstd requires the extended TOAST header format.  If the GUC
+			 * use_extended_toast_header is off, fall back to pglz.
+			 */
+			if (!use_extended_toast_header)
+			{
+				tmp = pglz_compress_datum((const struct varlena *) DatumGetPointer(value));
+				cmid = TOAST_PGLZ_COMPRESSION_ID;
+			}
+			else
+			{
+				tmp = zstd_compress_datum((const struct varlena *) DatumGetPointer(value));
+				cmid = TOAST_EXTENDED_COMPRESSION_ID;
+			}
 			break;
 		default:
 			elog(ERROR, "invalid compression method %c", cmethod);
@@ -125,12 +142,15 @@ toast_save_datum(Relation rel, Datum value,
 	CommandId	mycid = GetCurrentCommandId(true);
 	struct varlena *result;
 	struct varatt_external toast_pointer;
+	struct varatt_external_extended toast_pointer_ext;
 	int32		chunk_seq = 0;
 	char	   *data_p;
 	int32		data_todo;
 	Pointer		dval = DatumGetPointer(value);
 	int			num_indexes;
 	int			validIndex;
+	bool		use_extended = false;
+	uint8		ext_method = 0;
 
 	Assert(!VARATT_IS_EXTERNAL(dval));
 
@@ -167,14 +187,60 @@ toast_save_datum(Relation rel, Datum value,
 	}
 	else if (VARATT_IS_COMPRESSED(dval))
 	{
+		ToastCompressionId cmid;
+
 		data_p = VARDATA(dval);
 		data_todo = VARSIZE(dval) - VARHDRSZ;
 		/* rawsize in a compressed datum is just the size of the payload */
 		toast_pointer.va_rawsize = VARDATA_COMPRESSED_GET_EXTSIZE(dval) + VARHDRSZ;
 
+		/* Get compression method from compressed datum */
+		cmid = VARDATA_COMPRESSED_GET_COMPRESS_METHOD(dval);
+
+		/*
+		 * Decide whether to use the extended 20-byte TOAST pointer format.
+		 *
+		 * Extended compression methods (zstd) always require the extended
+		 * format.  Legacy methods (pglz, lz4) can use either format - they
+		 * use the extended format when use_extended_toast_header is enabled,
+		 * otherwise they use the legacy 16-byte format for backward
+		 * compatibility.
+		 */
+		if (cmid == TOAST_EXTENDED_COMPRESSION_ID)
+		{
+			use_extended = true;
+			ext_method = TOAST_ZSTD_EXT_METHOD;
+		}
+		else if (use_extended_toast_header)
+		{
+			/*
+			 * When use_extended_toast_header is enabled, store pglz/lz4 using
+			 * the new 20-byte extended format.  This is a stepping stone toward
+			 * eventually deprecating the legacy 16-byte format.
+			 */
+			use_extended = true;
+			switch (cmid)
+			{
+				case TOAST_PGLZ_COMPRESSION_ID:
+					ext_method = TOAST_PGLZ_EXT_METHOD;
+					break;
+				case TOAST_LZ4_COMPRESSION_ID:
+					ext_method = TOAST_LZ4_EXT_METHOD;
+					break;
+				default:
+					/* Should not happen, but fall back to legacy format */
+					use_extended = false;
+					break;
+			}
+		}
+
 		/* set external size and compression method */
-		VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo,
-													 VARDATA_COMPRESSED_GET_COMPRESS_METHOD(dval));
+		if (use_extended)
+			VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo,
+														VARATT_EXTERNAL_EXTENDED_CMID);
+		else
+			VARATT_EXTERNAL_SET_SIZE_AND_COMPRESS_METHOD(toast_pointer, data_todo, cmid);
+
 		/* Assert that the numbers look like it's compressed */
 		Assert(VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
 	}
@@ -184,6 +250,12 @@ toast_save_datum(Relation rel, Datum value,
 		data_todo = VARSIZE(dval) - VARHDRSZ;
 		toast_pointer.va_rawsize = VARSIZE(dval);
 		toast_pointer.va_extinfo = data_todo;
+
+		/*
+		 * Note: We don't use extended format for uncompressed data, even when
+		 * use_extended_toast_header is enabled.  Extended format is only for
+		 * compressed data, where we need to store the compression method.
+		 */
 	}
 
 	/*
@@ -225,15 +297,36 @@ toast_save_datum(Relation rel, Datum value,
 		toast_pointer.va_valueid = InvalidOid;
 		if (oldexternal != NULL)
 		{
-			struct varatt_external old_toast_pointer;
+			Oid			old_toastrelid;
+			Oid			old_valueid;
 
 			Assert(VARATT_IS_EXTERNAL_ONDISK(oldexternal));
-			/* Must copy to access aligned fields */
-			VARATT_EXTERNAL_GET_POINTER(old_toast_pointer, oldexternal);
-			if (old_toast_pointer.va_toastrelid == rel->rd_toastoid)
+
+			/*
+			 * Extract toastrelid and valueid from the old pointer.
+			 * Handle both legacy 16-byte and extended 20-byte formats.
+			 */
+			if (VARTAG_EXTERNAL(oldexternal) == VARTAG_ONDISK_EXTENDED)
+			{
+				struct varatt_external_extended old_toast_pointer_ext;
+
+				VARATT_EXTERNAL_GET_POINTER_EXTENDED(old_toast_pointer_ext, oldexternal);
+				old_toastrelid = old_toast_pointer_ext.va_toastrelid;
+				old_valueid = old_toast_pointer_ext.va_valueid;
+			}
+			else
+			{
+				struct varatt_external old_toast_pointer;
+
+				VARATT_EXTERNAL_GET_POINTER(old_toast_pointer, oldexternal);
+				old_toastrelid = old_toast_pointer.va_toastrelid;
+				old_valueid = old_toast_pointer.va_valueid;
+			}
+
+			if (old_toastrelid == rel->rd_toastoid)
 			{
 				/* This value came from the old toast table; reuse its OID */
-				toast_pointer.va_valueid = old_toast_pointer.va_valueid;
+				toast_pointer.va_valueid = old_valueid;
 
 				/*
 				 * There is a corner case here: the table rewrite might have
@@ -357,11 +450,37 @@ toast_save_datum(Relation rel, Datum value,
 	table_close(toastrel, NoLock);
 
 	/*
-	 * Create the TOAST pointer value that we'll return
+	 * Create the TOAST pointer value that we'll return.  Use the extended
+	 * format (20-byte payload) for extended compression methods like zstd.
 	 */
-	result = (struct varlena *) palloc(TOAST_POINTER_SIZE);
-	SET_VARTAG_EXTERNAL(result, VARTAG_ONDISK);
-	memcpy(VARDATA_EXTERNAL(result), &toast_pointer, sizeof(toast_pointer));
+	if (use_extended)
+	{
+		/*
+		 * Build extended TOAST pointer.  Copy the common fields from
+		 * toast_pointer, then set the extended-format-specific fields.
+		 */
+		toast_pointer_ext.va_rawsize = toast_pointer.va_rawsize;
+		toast_pointer_ext.va_extinfo = toast_pointer.va_extinfo;
+		toast_pointer_ext.va_valueid = toast_pointer.va_valueid;
+		toast_pointer_ext.va_toastrelid = toast_pointer.va_toastrelid;
+
+		/* Set extended format fields */
+		toast_pointer_ext.va_flags = TOAST_EXT_FLAG_COMPRESSION;
+		toast_pointer_ext.va_data[0] = ext_method;
+		toast_pointer_ext.va_data[1] = 0;
+		toast_pointer_ext.va_data[2] = 0;
+
+		result = (struct varlena *) palloc(TOAST_POINTER_SIZE_EXTENDED);
+		SET_VARTAG_EXTERNAL(result, VARTAG_ONDISK_EXTENDED);
+		memcpy(VARDATA_EXTERNAL(result), &toast_pointer_ext, sizeof(toast_pointer_ext));
+	}
+	else
+	{
+		/* Standard 16-byte TOAST pointer */
+		result = (struct varlena *) palloc(TOAST_POINTER_SIZE);
+		SET_VARTAG_EXTERNAL(result, VARTAG_ONDISK);
+		memcpy(VARDATA_EXTERNAL(result), &toast_pointer, sizeof(toast_pointer));
+	}
 
 	return PointerGetDatum(result);
 }
@@ -377,6 +496,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 {
 	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
 	struct varatt_external toast_pointer;
+	struct varatt_external_extended toast_pointer_ext;
 	Relation	toastrel;
 	Relation   *toastidxs;
 	ScanKeyData toastkey;
@@ -384,17 +504,36 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	HeapTuple	toasttup;
 	int			num_indexes;
 	int			validIndex;
+	Oid			toastrelid;
+	Oid			valueid;
+	bool		is_extended;
 
 	if (!VARATT_IS_EXTERNAL_ONDISK(attr))
 		return;
 
-	/* Must copy to access aligned fields */
-	VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+	/*
+	 * Must copy to access aligned fields.  Handle both legacy (16-byte) and
+	 * extended (20-byte) on-disk TOAST pointers based on the tag.
+	 */
+	is_extended = (VARTAG_EXTERNAL(attr) == VARTAG_ONDISK_EXTENDED);
+
+	if (!is_extended)
+	{
+		VARATT_EXTERNAL_GET_POINTER(toast_pointer, attr);
+		toastrelid = toast_pointer.va_toastrelid;
+		valueid = toast_pointer.va_valueid;
+	}
+	else
+	{
+		VARATT_EXTERNAL_GET_POINTER_EXTENDED(toast_pointer_ext, attr);
+		toastrelid = toast_pointer_ext.va_toastrelid;
+		valueid = toast_pointer_ext.va_valueid;
+	}
 
 	/*
 	 * Open the toast relation and its indexes
 	 */
-	toastrel = table_open(toast_pointer.va_toastrelid, RowExclusiveLock);
+	toastrel = table_open(toastrelid, RowExclusiveLock);
 
 	/* Fetch valid relation used for process */
 	validIndex = toast_open_indexes(toastrel,
@@ -408,7 +547,7 @@ toast_delete_datum(Relation rel, Datum value, bool is_speculative)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(toast_pointer.va_valueid));
+				ObjectIdGetDatum(valueid));
 
 	/*
 	 * Find all the chunks.  (We don't actually care whether we see them in
