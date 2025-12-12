@@ -287,6 +287,8 @@ main(int argc, char *argv[])
 				 * XXX It'd be nice to have more sanity checks here, e.g. so
 				 * that oldest is not wrapped around w.r.t. nextMulti.
 				 */
+				if (next_mxid_val == 0)
+					pg_fatal("next multitransaction ID (-m) must not be 0");
 				if (oldest_mxid_val == 0)
 					pg_fatal("oldest multitransaction ID (-m) must not be 0");
 				mxids_given = true;

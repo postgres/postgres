@@ -99,6 +99,12 @@
 #define MULTIXACT_MEMBER_HIGH_THRESHOLD		UINT64CONST(4000000000)
 
 static inline MultiXactId
+NextMultiXactId(MultiXactId multi)
+{
+	return multi == MaxMultiXactId ? FirstMultiXactId : multi + 1;
+}
+
+static inline MultiXactId
 PreviousMultiXactId(MultiXactId multi)
 {
 	return multi == FirstMultiXactId ? MaxMultiXactId : multi - 1;
@@ -552,14 +558,7 @@ MultiXactIdSetOldestMember(void)
 		 */
 		LWLockAcquire(MultiXactGenLock, LW_SHARED);
 
-		/*
-		 * We have to beware of the possibility that nextMXact is in the
-		 * wrapped-around state.  We don't fix the counter itself here, but we
-		 * must be sure to store a valid value in our array entry.
-		 */
 		nextMXact = MultiXactState->nextMXact;
-		if (nextMXact < FirstMultiXactId)
-			nextMXact = FirstMultiXactId;
 
 		OldestMemberMXactId[MyProcNumber] = nextMXact;
 
@@ -596,15 +595,7 @@ MultiXactIdSetOldestVisible(void)
 
 		LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 
-		/*
-		 * We have to beware of the possibility that nextMXact is in the
-		 * wrapped-around state.  We don't fix the counter itself here, but we
-		 * must be sure to store a valid value in our array entry.
-		 */
 		oldestMXact = MultiXactState->nextMXact;
-		if (oldestMXact < FirstMultiXactId)
-			oldestMXact = FirstMultiXactId;
-
 		for (i = 0; i < MaxOldestSlot; i++)
 		{
 			MultiXactId thisoldest = OldestMemberMXactId[i];
@@ -637,9 +628,6 @@ ReadNextMultiXactId(void)
 	mxid = MultiXactState->nextMXact;
 	LWLockRelease(MultiXactGenLock);
 
-	if (mxid < FirstMultiXactId)
-		mxid = FirstMultiXactId;
-
 	return mxid;
 }
 
@@ -654,11 +642,6 @@ ReadMultiXactIdRange(MultiXactId *oldest, MultiXactId *next)
 	*oldest = MultiXactState->oldestMultiXactId;
 	*next = MultiXactState->nextMXact;
 	LWLockRelease(MultiXactGenLock);
-
-	if (*oldest < FirstMultiXactId)
-		*oldest = FirstMultiXactId;
-	if (*next < FirstMultiXactId)
-		*next = FirstMultiXactId;
 }
 
 
@@ -794,9 +777,7 @@ RecordNewMultiXact(MultiXactId multi, MultiXactOffset offset,
 	entryno = MultiXactIdToOffsetEntry(multi);
 
 	/* position of the next multixid */
-	next = multi + 1;
-	if (next < FirstMultiXactId)
-		next = FirstMultiXactId;
+	next = NextMultiXactId(multi);
 	next_pageno = MultiXactIdToOffsetPage(next);
 	next_entryno = MultiXactIdToOffsetEntry(next);
 
@@ -955,10 +936,6 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 
-	/* Handle wraparound of the nextMXact counter */
-	if (MultiXactState->nextMXact < FirstMultiXactId)
-		MultiXactState->nextMXact = FirstMultiXactId;
-
 	/* Assign the MXID */
 	result = MultiXactState->nextMXact;
 
@@ -1025,7 +1002,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 		 * request only once per 64K multis generated.  This still gives
 		 * plenty of chances before we get into real trouble.
 		 */
-		if (IsUnderPostmaster && (result % 65536) == 0)
+		if (IsUnderPostmaster && ((result % 65536) == 0 || result == FirstMultiXactId))
 			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_LAUNCHER);
 
 		if (!MultiXactIdPrecedes(result, multiWarnLimit))
@@ -1056,15 +1033,13 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 		/* Re-acquire lock and start over */
 		LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 		result = MultiXactState->nextMXact;
-		if (result < FirstMultiXactId)
-			result = FirstMultiXactId;
 	}
 
 	/*
 	 * Make sure there is room for the next MXID in the file.  Assigning this
 	 * MXID sets the next MXID's offset already.
 	 */
-	ExtendMultiXactOffset(result + 1);
+	ExtendMultiXactOffset(NextMultiXactId(result));
 
 	/*
 	 * Reserve the members space, similarly to above.
@@ -1098,15 +1073,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 	/*
 	 * Advance counters.  As in GetNewTransactionId(), this must not happen
 	 * until after file extension has succeeded!
-	 *
-	 * We don't care about MultiXactId wraparound here; it will be handled by
-	 * the next iteration.  But note that nextMXact may be InvalidMultiXactId
-	 * or the first value on a segment-beginning page after this routine
-	 * exits, so anyone else looking at the variable must be prepared to deal
-	 * with either case.
 	 */
-	(MultiXactState->nextMXact)++;
-
+	MultiXactState->nextMXact = NextMultiXactId(result);
 	MultiXactState->nextOffset += nmembers;
 
 	LWLockRelease(MultiXactGenLock);
@@ -1255,9 +1223,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 		MultiXactId tmpMXact;
 
 		/* handle wraparound if needed */
-		tmpMXact = multi + 1;
-		if (tmpMXact < FirstMultiXactId)
-			tmpMXact = FirstMultiXactId;
+		tmpMXact = NextMultiXactId(multi);
 
 		prev_pageno = pageno;
 
@@ -1907,7 +1873,7 @@ TrimMultiXact(void)
 		LWLock	   *lock = SimpleLruGetBankLock(MultiXactOffsetCtl, pageno);
 
 		LWLockAcquire(lock, LW_EXCLUSIVE);
-		if (entryno == 0)
+		if (entryno == 0 || nextMXact == FirstMultiXactId)
 			slotno = SimpleLruZeroPage(MultiXactOffsetCtl, pageno);
 		else
 			slotno = SimpleLruReadPage(MultiXactOffsetCtl, pageno, true, nextMXact);
@@ -2023,8 +1989,10 @@ void
 MultiXactSetNextMXact(MultiXactId nextMulti,
 					  MultiXactOffset nextMultiOffset)
 {
+	Assert(MultiXactIdIsValid(nextMulti));
 	debug_elog4(DEBUG2, "MultiXact: setting next multi to %u offset %" PRIu64,
 				nextMulti, nextMultiOffset);
+
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	MultiXactState->nextMXact = nextMulti;
 	MultiXactState->nextOffset = nextMultiOffset;
@@ -2193,6 +2161,8 @@ void
 MultiXactAdvanceNextMXact(MultiXactId minMulti,
 						  MultiXactOffset minMultiOffset)
 {
+	Assert(MultiXactIdIsValid(minMulti));
+
 	LWLockAcquire(MultiXactGenLock, LW_EXCLUSIVE);
 	if (MultiXactIdPrecedes(MultiXactState->nextMXact, minMulti))
 	{
@@ -2330,7 +2300,6 @@ MultiXactId
 GetOldestMultiXactId(void)
 {
 	MultiXactId oldestMXact;
-	MultiXactId nextMXact;
 	int			i;
 
 	/*
@@ -2338,17 +2307,7 @@ GetOldestMultiXactId(void)
 	 * OldestVisibleMXactId[] entries, or nextMXact if none are valid.
 	 */
 	LWLockAcquire(MultiXactGenLock, LW_SHARED);
-
-	/*
-	 * We have to beware of the possibility that nextMXact is in the
-	 * wrapped-around state.  We don't fix the counter itself here, but we
-	 * must be sure to use a valid value in our calculation.
-	 */
-	nextMXact = MultiXactState->nextMXact;
-	if (nextMXact < FirstMultiXactId)
-		nextMXact = FirstMultiXactId;
-
-	oldestMXact = nextMXact;
+	oldestMXact = MultiXactState->nextMXact;
 	for (i = 0; i < MaxOldestSlot; i++)
 	{
 		MultiXactId thisoldest;
@@ -2669,6 +2628,7 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 
 	Assert(!RecoveryInProgress());
 	Assert(MultiXactState->finishedStartup);
+	Assert(MultiXactIdIsValid(newOldestMulti));
 
 	/*
 	 * We can only allow one truncation to happen at once. Otherwise parts of
@@ -2683,7 +2643,6 @@ TruncateMultiXact(MultiXactId newOldestMulti, Oid newOldestMultiDB)
 	nextOffset = MultiXactState->nextOffset;
 	oldestMulti = MultiXactState->oldestMultiXactId;
 	LWLockRelease(MultiXactGenLock);
-	Assert(MultiXactIdIsValid(oldestMulti));
 
 	/*
 	 * Make sure to only attempt truncation if there's values to truncate
@@ -2953,7 +2912,7 @@ multixact_redo(XLogReaderState *record)
 						   xlrec->members);
 
 		/* Make sure nextMXact/nextOffset are beyond what this record has */
-		MultiXactAdvanceNextMXact(xlrec->mid + 1,
+		MultiXactAdvanceNextMXact(NextMultiXactId(xlrec->mid),
 								  xlrec->moff + xlrec->nmembers);
 
 		/*
