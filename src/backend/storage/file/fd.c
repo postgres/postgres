@@ -1111,23 +1111,6 @@ BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode)
 
 tryAgain:
 #ifdef PG_O_DIRECT_USE_F_NOCACHE
-
-	/*
-	 * The value we defined to stand in for O_DIRECT when simulating it with
-	 * F_NOCACHE had better not collide with any of the standard flags.
-	 */
-	StaticAssertStmt((PG_O_DIRECT &
-					  (O_APPEND |
-					   O_CLOEXEC |
-					   O_CREAT |
-					   O_DSYNC |
-					   O_EXCL |
-					   O_RDWR |
-					   O_RDONLY |
-					   O_SYNC |
-					   O_TRUNC |
-					   O_WRONLY)) == 0,
-					 "PG_O_DIRECT value collides with standard flag");
 	fd = open(fileName, fileFlags & ~PG_O_DIRECT, fileMode);
 #else
 	fd = open(fileName, fileFlags, fileMode);

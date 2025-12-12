@@ -266,6 +266,10 @@ InitializeParallelDSM(ParallelContext *pcxt)
 
 	if (pcxt->nworkers > 0)
 	{
+		StaticAssertDecl(BUFFERALIGN(PARALLEL_ERROR_QUEUE_SIZE) ==
+						 PARALLEL_ERROR_QUEUE_SIZE,
+						 "parallel error queue size not buffer-aligned");
+
 		/* Estimate space for various kinds of state sharing. */
 		library_len = EstimateLibraryStateSpace();
 		shm_toc_estimate_chunk(&pcxt->estimator, library_len);
@@ -297,9 +301,6 @@ InitializeParallelDSM(ParallelContext *pcxt)
 		shm_toc_estimate_keys(&pcxt->estimator, 12);
 
 		/* Estimate space need for error queues. */
-		StaticAssertStmt(BUFFERALIGN(PARALLEL_ERROR_QUEUE_SIZE) ==
-						 PARALLEL_ERROR_QUEUE_SIZE,
-						 "parallel error queue size not buffer-aligned");
 		shm_toc_estimate_chunk(&pcxt->estimator,
 							   mul_size(PARALLEL_ERROR_QUEUE_SIZE,
 										pcxt->nworkers));

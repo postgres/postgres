@@ -7149,9 +7149,9 @@ buffer_readv_encode_error(PgAioResult *result,
 		error_count > 0 ? error_count : zeroed_count;
 	uint8		first_off;
 
-	StaticAssertStmt(PG_IOV_MAX <= 1 << READV_COUNT_BITS,
+	StaticAssertDecl(PG_IOV_MAX <= 1 << READV_COUNT_BITS,
 					 "PG_IOV_MAX is bigger than reserved space for error data");
-	StaticAssertStmt((1 + 1 + 3 * READV_COUNT_BITS) <= PGAIO_RESULT_ERROR_BITS,
+	StaticAssertDecl((1 + 1 + 3 * READV_COUNT_BITS) <= PGAIO_RESULT_ERROR_BITS,
 					 "PGAIO_RESULT_ERROR_BITS is insufficient for buffer_readv");
 
 	/*

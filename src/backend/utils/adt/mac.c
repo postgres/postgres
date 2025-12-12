@@ -485,7 +485,7 @@ macaddr_abbrev_convert(Datum original, SortSupport ssup)
 	 * There will be two bytes of zero padding on the end of the least
 	 * significant bits.
 	 */
-	StaticAssertStmt(sizeof(res) >= sizeof(macaddr),
+	StaticAssertDecl(sizeof(res) >= sizeof(macaddr),
 					 "Datum is too small for macaddr");
 	memset(&res, 0, sizeof(res));
 	memcpy(&res, authoritative, sizeof(macaddr));

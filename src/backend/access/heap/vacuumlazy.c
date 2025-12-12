@@ -3388,6 +3388,9 @@ lazy_truncate_heap(LVRelState *vacrel)
 static BlockNumber
 count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 {
+	StaticAssertDecl((PREFETCH_SIZE & (PREFETCH_SIZE - 1)) == 0,
+					 "prefetch size must be power of 2");
+
 	BlockNumber blkno;
 	BlockNumber prefetchedUntil;
 	instr_time	starttime;
@@ -3402,8 +3405,6 @@ count_nondeletable_pages(LVRelState *vacrel, bool *lock_waiter_detected)
 	 * in forward direction, so that OS-level readahead can kick in.
 	 */
 	blkno = vacrel->rel_pages;
-	StaticAssertStmt((PREFETCH_SIZE & (PREFETCH_SIZE - 1)) == 0,
-					 "prefetch size must be power of 2");
 	prefetchedUntil = InvalidBlockNumber;
 	while (blkno > vacrel->nonempty_pages)
 	{

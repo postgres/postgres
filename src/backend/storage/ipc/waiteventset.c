@@ -462,7 +462,6 @@ CreateWaitEventSet(ResourceOwner resowner, int nevents)
 	 * pending signals are serviced.
 	 */
 	set->handles[0] = pgwin32_signal_event;
-	StaticAssertStmt(WSA_INVALID_EVENT == NULL, "");
 #endif
 
 	return set;
@@ -979,6 +978,8 @@ WaitEventAdjustKqueue(WaitEventSet *set, WaitEvent *event, int old_events)
 #endif
 
 #if defined(WAIT_USE_WIN32)
+StaticAssertDecl(WSA_INVALID_EVENT == NULL, "");
+
 static void
 WaitEventAdjustWin32(WaitEventSet *set, WaitEvent *event)
 {

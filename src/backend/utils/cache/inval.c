@@ -1753,7 +1753,7 @@ CacheInvalidateSmgr(RelFileLocatorBackend rlocator)
 	SharedInvalidationMessage msg;
 
 	/* verify optimization stated above stays valid */
-	StaticAssertStmt(MAX_BACKENDS_BITS <= 23,
+	StaticAssertDecl(MAX_BACKENDS_BITS <= 23,
 					 "MAX_BACKENDS_BITS is too big for inval.c");
 
 	msg.sm.id = SHAREDINVALSMGR_ID;

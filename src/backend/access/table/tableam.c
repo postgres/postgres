@@ -462,14 +462,14 @@ table_block_parallelscan_startblock_init(Relation rel,
 										 BlockNumber startblock,
 										 BlockNumber numblocks)
 {
+	StaticAssertDecl(MaxBlockNumber <= 0xFFFFFFFE,
+					 "pg_nextpower2_32 may be too small for non-standard BlockNumber width");
+
 	BlockNumber sync_startpage = InvalidBlockNumber;
 	BlockNumber scan_nblocks;
 
 	/* Reset the state we use for controlling allocation size. */
 	memset(pbscanwork, 0, sizeof(*pbscanwork));
-
-	StaticAssertStmt(MaxBlockNumber <= 0xFFFFFFFE,
-					 "pg_nextpower2_32 may be too small for non-standard BlockNumber width");
 
 retry:
 	/* Grab the spinlock. */
