@@ -2069,12 +2069,14 @@ lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
 static void
 uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
 {
+	JsonbPair  *pairs = object->val.object.pairs;
+	int			nPairs = object->val.object.nPairs;
 	bool		hasNonUniq = false;
 
 	Assert(object->type == jbvObject);
 
-	if (object->val.object.nPairs > 1)
-		qsort_arg(object->val.object.pairs, object->val.object.nPairs, sizeof(JsonbPair),
+	if (nPairs > 1)
+		qsort_arg(pairs, nPairs, sizeof(JsonbPair),
 				  lengthCompareJsonbPair, &hasNonUniq);
 
 	if (hasNonUniq && unique_keys)
@@ -2084,36 +2086,25 @@ uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
 
 	if (hasNonUniq || skip_nulls)
 	{
-		JsonbPair  *ptr,
-				   *res;
+		int			nNewPairs = 0;
 
-		while (skip_nulls && object->val.object.nPairs > 0 &&
-			   object->val.object.pairs->value.type == jbvNull)
+		for (int i = 0; i < nPairs; i++)
 		{
-			/* If skip_nulls is true, remove leading items with null */
-			object->val.object.pairs++;
-			object->val.object.nPairs--;
+			JsonbPair  *ptr = pairs + i;
+
+			/* Skip duplicate keys */
+			if (nNewPairs > 0 &&
+				lengthCompareJsonbStringValue(&pairs[nNewPairs - 1].key,
+											  &ptr->key) == 0)
+				continue;
+			/* Skip null values, if told to */
+			if (skip_nulls && ptr->value.type == jbvNull)
+				continue;
+			/* Emit this pair, but avoid no-op copy */
+			if (i > nNewPairs)
+				pairs[nNewPairs] = *ptr;
+			nNewPairs++;
 		}
-
-		if (object->val.object.nPairs > 0)
-		{
-			ptr = object->val.object.pairs + 1;
-			res = object->val.object.pairs;
-
-			while (ptr - object->val.object.pairs < object->val.object.nPairs)
-			{
-				/* Avoid copying over duplicate or null */
-				if (lengthCompareJsonbStringValue(ptr, res) != 0 &&
-					(!skip_nulls || ptr->value.type != jbvNull))
-				{
-					res++;
-					if (ptr != res)
-						memcpy(res, ptr, sizeof(JsonbPair));
-				}
-				ptr++;
-			}
-
-			object->val.object.nPairs = res + 1 - object->val.object.pairs;
-		}
+		object->val.object.nPairs = nNewPairs;
 	}
 }

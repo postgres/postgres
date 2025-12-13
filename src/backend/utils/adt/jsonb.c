@@ -1755,8 +1755,11 @@ jsonb_object_agg_finalfn(PG_FUNCTION_ARGS)
 	 * the stored JsonbValue data structure.  Fortunately, the WJB_END_OBJECT
 	 * action will only destructively change fields in the JsonbInState struct
 	 * itself, so we can simply invoke pushJsonbValue on a local copy of that.
-	 * (This technique results in running uniqueifyJsonbObject each time, but
-	 * for now we won't bother trying to avoid that.)
+	 * Note that this will run uniqueifyJsonbObject each time; that's hard to
+	 * avoid, since duplicate pairs may have been added since the previous
+	 * finalization.  We assume uniqueifyJsonbObject can be applied repeatedly
+	 * (with the same unique_keys/skip_nulls options) without damaging the
+	 * data structure.
 	 */
 	result = arg->pstate;
 

@@ -402,6 +402,12 @@ SELECT jsonb_build_object('{1,2,3}'::int[], 3);
 SELECT jsonb_object_agg(1, NULL::jsonb);
 SELECT jsonb_object_agg(NULL, '{"a":1}');
 
+SELECT jsonb_object_agg_unique(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+
+SELECT jsonb_object_agg_unique_strict(i, null) OVER (ORDER BY i)
+  FROM generate_series(1, 10) g(i);
+
 CREATE TEMP TABLE foo (serial_num int, name text, type text);
 INSERT INTO foo VALUES (847001,'t15','GE1043');
 INSERT INTO foo VALUES (847002,'t16','GE1043');
