@@ -1767,7 +1767,7 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
  * impossible to define a polymorphic constructor; we have to generate new
  * constructor functions explicitly for each range type.
  *
- * We actually define 4 functions, with 0 through 3 arguments.  This is just
+ * We actually define 2 functions, with 2 through 3 arguments.  This is just
  * to offer more convenience for the user.
  */
 static void
