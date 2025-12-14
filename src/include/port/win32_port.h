@@ -194,7 +194,7 @@ extern DWORD pgwin32_get_file_type(HANDLE hFile);
  * with 64-bit offsets.  Also, fseek() might not give an error for unseekable
  * streams, so harden that function with our version.
  */
-#define pgoff_t __int64
+typedef __int64 pgoff_t;
 
 #ifdef _MSC_VER
 extern int	_pgfseeko64(FILE *stream, pgoff_t offset, int origin);

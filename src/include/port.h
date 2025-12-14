@@ -418,7 +418,7 @@ extern FILE *pgwin32_popen(const char *command, const char *type);
 
 /* Type to use with fseeko/ftello */
 #ifndef WIN32					/* WIN32 is handled in port/win32_port.h */
-#define pgoff_t off_t
+typedef off_t pgoff_t;
 #endif
 
 #ifndef HAVE_GETPEEREID
