@@ -106,7 +106,7 @@ typedef struct BitmapHeapScanDescData
 	HeapScanDescData rs_heap_base;
 
 	/* Holds no data */
-}			BitmapHeapScanDescData;
+} BitmapHeapScanDescData;
 typedef struct BitmapHeapScanDescData *BitmapHeapScanDesc;
 
 /*

@@ -373,7 +373,7 @@ typedef struct GinScanEntryData
 	bool		reduceResult;
 	uint32		predictNumberResult;
 	GinBtreeData btree;
-}			GinScanEntryData;
+} GinScanEntryData;
 
 typedef struct GinScanOpaqueData
 {

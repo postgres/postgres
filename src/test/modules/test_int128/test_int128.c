@@ -51,7 +51,7 @@ typedef union
 		int64		hi;
 #endif
 	}			hl;
-}			test128;
+} test128;
 
 #define INT128_HEX_FORMAT	"%016" PRIx64 "%016" PRIx64
 

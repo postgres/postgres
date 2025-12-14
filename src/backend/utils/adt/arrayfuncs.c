@@ -87,7 +87,7 @@ typedef struct ArrayIteratorData
 	/* current position information, updated on each iteration */
 	char	   *data_ptr;		/* our current position in the array */
 	int			current_item;	/* the item # we're at in the array */
-}			ArrayIteratorData;
+} ArrayIteratorData;
 
 static bool ReadArrayDimensions(char **srcptr, int *ndim_p,
 								int *dim, int *lBound,

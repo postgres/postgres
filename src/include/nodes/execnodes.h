@@ -882,7 +882,7 @@ typedef struct TupleHashTableData
 	ExprState  *in_hash_expr;	/* ExprState for hashing input datatype(s) */
 	ExprState  *cur_eq_func;	/* comparator for input vs. table */
 	ExprContext *exprcontext;	/* expression context */
-}			TupleHashTableData;
+} TupleHashTableData;
 
 typedef tuplehash_iterator TupleHashIterator;
 

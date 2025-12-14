@@ -173,7 +173,7 @@ typedef struct AggStatePerTransData
 	FunctionCallInfo serialfn_fcinfo;
 
 	FunctionCallInfo deserialfn_fcinfo;
-}			AggStatePerTransData;
+} AggStatePerTransData;
 
 /*
  * AggStatePerAggData - per-aggregate information
@@ -229,7 +229,7 @@ typedef struct AggStatePerAggData
 	 * aggregates because the final function is read-write.
 	 */
 	bool		shareable;
-}			AggStatePerAggData;
+} AggStatePerAggData;
 
 /*
  * AggStatePerGroupData - per-aggregate-per-group working state
@@ -264,7 +264,7 @@ typedef struct AggStatePerGroupData
 	 * NULL and not auto-replace it with a later input value. Only the first
 	 * non-NULL input will be auto-substituted.
 	 */
-}			AggStatePerGroupData;
+} AggStatePerGroupData;
 
 /*
  * AggStatePerPhaseData - per-grouping-set-phase state
@@ -297,7 +297,7 @@ typedef struct AggStatePerPhaseData
 	 *----------
 	 */
 	ExprState  *evaltrans_cache[2][2];
-}			AggStatePerPhaseData;
+} AggStatePerPhaseData;
 
 /*
  * AggStatePerHashData - per-hashtable state
@@ -319,7 +319,7 @@ typedef struct AggStatePerHashData
 	AttrNumber *hashGrpColIdxInput; /* hash col indices in input slot */
 	AttrNumber *hashGrpColIdxHash;	/* indices in hash table tuples */
 	Agg		   *aggnode;		/* original Agg node, for numGroups etc. */
-}			AggStatePerHashData;
+} AggStatePerHashData;
 
 
 extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);

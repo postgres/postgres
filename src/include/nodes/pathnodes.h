@@ -639,7 +639,7 @@ typedef struct PartitionSchemeData
 
 	/* Cached information about partition comparison functions. */
 	struct FmgrInfo *partsupfunc;
-}			PartitionSchemeData;
+} PartitionSchemeData;
 
 typedef struct PartitionSchemeData *PartitionScheme;
 

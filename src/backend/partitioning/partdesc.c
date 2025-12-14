@@ -37,7 +37,7 @@ typedef struct PartitionDirectoryData
 	MemoryContext pdir_mcxt;
 	HTAB	   *pdir_hash;
 	bool		omit_detached;
-}			PartitionDirectoryData;
+} PartitionDirectoryData;
 
 typedef struct PartitionDirectoryEntry
 {

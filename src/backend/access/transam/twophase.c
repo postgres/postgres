@@ -168,7 +168,7 @@ typedef struct GlobalTransactionData
 	bool		ondisk;			/* true if prepare state file is on disk */
 	bool		inredo;			/* true if entry was added via xlog_redo */
 	char		gid[GIDSIZE];	/* The GID assigned to the prepared xact */
-}			GlobalTransactionData;
+} GlobalTransactionData;
 
 /*
  * Two Phase Commit shared state.  Access to this struct is protected

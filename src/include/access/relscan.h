@@ -191,7 +191,7 @@ typedef struct IndexScanDescData
 
 	/* parallel index scan information, in shared memory */
 	struct ParallelIndexScanDescData *parallel_scan;
-}			IndexScanDescData;
+} IndexScanDescData;
 
 /* Generic structure for parallel scans */
 typedef struct ParallelIndexScanDescData
@@ -214,6 +214,6 @@ typedef struct SysScanDescData
 	struct IndexScanDescData *iscan;	/* only valid in index-scan case */
 	struct SnapshotData *snapshot;	/* snapshot to unregister at end of scan */
 	struct TupleTableSlot *slot;
-}			SysScanDescData;
+} SysScanDescData;
 
 #endif							/* RELSCAN_H */
