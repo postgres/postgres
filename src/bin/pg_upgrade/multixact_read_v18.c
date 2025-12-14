@@ -119,7 +119,7 @@ OldMultiXactReader *
 AllocOldMultiXactRead(char *pgdata, MultiXactId nextMulti,
 					  MultiXactOffset32 nextOffset)
 {
-	OldMultiXactReader *state = state = pg_malloc(sizeof(*state));
+	OldMultiXactReader *state = pg_malloc_object(OldMultiXactReader);
 	char		dir[MAXPGPATH] = {0};
 
 	state->nextMXact = nextMulti;
