@@ -35,10 +35,11 @@ typedef enum
  */
 typedef enum WaitLSNType
 {
-	WAIT_LSN_TYPE_REPLAY = 0,	/* Waiting for replay on standby */
-	WAIT_LSN_TYPE_FLUSH = 1,	/* Waiting for flush on primary */
-	WAIT_LSN_TYPE_COUNT = 2
+	WAIT_LSN_TYPE_REPLAY,		/* Waiting for replay on standby */
+	WAIT_LSN_TYPE_FLUSH,		/* Waiting for flush on primary */
 } WaitLSNType;
+
+#define WAIT_LSN_TYPE_COUNT (WAIT_LSN_TYPE_FLUSH + 1)
 
 /*
  * WaitLSNProcInfo - the shared memory structure representing information
