@@ -3760,6 +3760,7 @@ int8x16_t
 int_fast32_t
 int_fast64_t
 internalPQconninfoOption
+intmax_t
 intptr_t
 intset_internal_node
 intset_leaf_node
@@ -4214,6 +4215,7 @@ uint8
 uint8_t
 uint8x16_t
 uint_fast64_t
+uintmax_t
 uintptr_t
 unicodeStyleBorderFormat
 unicodeStyleColumnFormat

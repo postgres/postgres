@@ -9,6 +9,8 @@ CREATE FUNCTION test_translation()
 -- There's less standardization in locale name spellings than one could wish.
 -- While some platforms insist on having a codeset name in lc_messages,
 -- fortunately it seems that it need not match the actual database encoding.
+-- However, if no es_ES locale is installed at all, this'll fail.
+SET lc_messages = 'C';
 do $$
 declare locale text; ok bool;
 begin
@@ -22,7 +24,15 @@ begin
     end;
     exit when ok;
   end loop;
+  -- Don't clutter the expected results with this info, just log it
+  raise log 'NLS regression test: lc_messages = %',
+    current_setting('lc_messages');
 end $$;
+SELECT current_setting('lc_messages') = 'C' AS failed \gset
+\if :failed
+\echo Could not find an acceptable spelling of es_ES locale
+\quit
+\endif
 SELECT test_translation();
 NOTICE:  NLS is not enabled
  test_translation 
