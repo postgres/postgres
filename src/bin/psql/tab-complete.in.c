@@ -2773,6 +2773,7 @@ match_previous_words(int pattern_id,
 					  "OWNER TO", "SET", "VALIDATE CONSTRAINT",
 					  "REPLICA IDENTITY", "ATTACH PARTITION",
 					  "DETACH PARTITION", "FORCE ROW LEVEL SECURITY",
+					  "MERGE PARTITIONS (",
 					  "OF", "NOT OF");
 	/* ALTER TABLE xxx ADD */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD"))
@@ -3045,6 +3046,15 @@ match_previous_words(int pattern_id,
 	}
 	else if (Matches("ALTER", "TABLE", MatchAny, "DETACH", "PARTITION", MatchAny))
 		COMPLETE_WITH("CONCURRENTLY", "FINALIZE");
+
+	/* ALTER TABLE <name> MERGE PARTITIONS ( */
+	else if (Matches("ALTER", "TABLE", MatchAny, "MERGE", "PARTITIONS", "("))
+	{
+		set_completion_reference(prev4_wd);
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_partition_of_table);
+	}
+	else if (Matches("ALTER", "TABLE", MatchAny, "MERGE", "PARTITIONS", "(*)"))
+		COMPLETE_WITH("INTO");
 
 	/* ALTER TABLE <name> OF */
 	else if (Matches("ALTER", "TABLE", MatchAny, "OF"))

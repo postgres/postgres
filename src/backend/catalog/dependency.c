@@ -321,13 +321,63 @@ performDeletion(const ObjectAddress *object,
 }
 
 /*
- * performMultipleDeletions: Similar to performDeletion, but act on multiple
+ * performDeletionCheck: Check whether a specific object can be safely deleted.
+ * This function does not perform any deletion; instead, it raises an error
+ * if the object cannot be deleted due to existing dependencies.
+ *
+ * It can be useful when you need to delete some objects later.  See comments
+ * in performDeletion too.
+ * The behavior must be specified as DROP_RESTRICT.
+ */
+void
+performDeletionCheck(const ObjectAddress *object,
+					 DropBehavior behavior, int flags)
+{
+	Relation	depRel;
+	ObjectAddresses *targetObjects;
+
+	Assert(behavior == DROP_RESTRICT);
+
+	depRel = table_open(DependRelationId, RowExclusiveLock);
+
+	AcquireDeletionLock(object, 0);
+
+	/*
+	 * Construct a list of objects we want to delete later (ie, the given
+	 * object plus everything directly or indirectly dependent on it).
+	 */
+	targetObjects = new_object_addresses();
+
+	findDependentObjects(object,
+						 DEPFLAG_ORIGINAL,
+						 flags,
+						 NULL,	/* empty stack */
+						 targetObjects,
+						 NULL,	/* no pendingObjects */
+						 &depRel);
+
+	/*
+	 * Check if deletion is allowed.
+	 */
+	reportDependentObjects(targetObjects,
+						   behavior,
+						   flags,
+						   object);
+
+	/* And clean up */
+	free_object_addresses(targetObjects);
+
+	table_close(depRel, RowExclusiveLock);
+}
+
+/*
+ * performMultipleDeletions: Similar to performDeletion, but acts on multiple
  * objects at once.
  *
  * The main difference from issuing multiple performDeletion calls is that the
  * list of objects that would be implicitly dropped, for each object to be
  * dropped, is the union of the implicit-object list for all objects.  This
- * makes each check be more relaxed.
+ * makes each check more relaxed.
  */
 void
 performMultipleDeletions(const ObjectAddresses *objects,

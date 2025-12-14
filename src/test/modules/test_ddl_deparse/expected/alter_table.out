@@ -113,6 +113,11 @@ ALTER TABLE part DETACH PARTITION part2;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type DETACH PARTITION desc table part2
 DROP TABLE part2;
+CREATE TABLE part2 PARTITION OF part FOR VALUES FROM (100) to (200);
+NOTICE:  DDL test: type simple, tag CREATE TABLE
+ALTER TABLE part MERGE PARTITIONS (part1, part2) INTO part1;
+NOTICE:  DDL test: type alter table, tag ALTER TABLE
+NOTICE:    subcommand: type MERGE PARTITIONS desc <NULL>
 ALTER TABLE part ADD PRIMARY KEY (a);
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
 NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint part_a_not_null on table part

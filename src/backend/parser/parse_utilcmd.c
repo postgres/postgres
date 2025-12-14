@@ -32,6 +32,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/partition.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -58,6 +59,8 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
+#include "partitioning/partbounds.h"
+#include "partitioning/partdesc.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -3510,6 +3513,135 @@ transformRuleStmt(RuleStmt *stmt, const char *queryString,
 
 
 /*
+ * checkPartition
+ * Check whether partRelOid is a leaf partition of the parent table (rel).
+ */
+static void
+checkPartition(Relation rel, Oid partRelOid)
+{
+	Relation	partRel;
+
+	partRel = table_open(partRelOid, NoLock);
+
+	if (partRel->rd_rel->relkind != RELKIND_RELATION)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a table", RelationGetRelationName(partRel)),
+				errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions"));
+
+	if (!partRel->rd_rel->relispartition)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("\"%s\" is not a partition of partitioned table \"%s\"",
+					   RelationGetRelationName(partRel), RelationGetRelationName(rel)),
+				errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions"));
+
+	if (get_partition_parent(partRelOid, false) != RelationGetRelid(rel))
+		ereport(ERROR,
+				errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" is not a partition of relation \"%s\"",
+					   RelationGetRelationName(partRel), RelationGetRelationName(rel)),
+				errhint("ALTER TABLE ... MERGE PARTITIONS can only merge partitions don't have sub-partitions"));
+
+	table_close(partRel, NoLock);
+}
+
+/*
+ * transformPartitionCmdForMerge -
+ *		analyze the ALTER TABLE ... MERGE PARTITIONS command
+ *
+ * Does simple checks for merged partitions. Calculates bound of the resulting
+ * partition.
+ */
+static void
+transformPartitionCmdForMerge(CreateStmtContext *cxt, PartitionCmd *partcmd)
+{
+	Oid			defaultPartOid;
+	Oid			partOid;
+	Relation	parent = cxt->rel;
+	PartitionKey key;
+	char		strategy;
+	ListCell   *listptr,
+			   *listptr2;
+	bool		isDefaultPart = false;
+	List	   *partOids = NIL;
+
+	key = RelationGetPartitionKey(parent);
+	strategy = get_partition_strategy(key);
+
+	if (strategy == PARTITION_STRATEGY_HASH)
+		ereport(ERROR,
+				errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("partition of hash-partitioned table cannot be merged"));
+
+	/* Does the partitioned table (parent) have a default partition? */
+	defaultPartOid = get_default_oid_from_partdesc(RelationGetPartitionDesc(parent, true));
+
+	foreach(listptr, partcmd->partlist)
+	{
+		RangeVar   *name = (RangeVar *) lfirst(listptr);
+
+		/* Partitions in the list should have different names. */
+		for_each_cell(listptr2, partcmd->partlist, lnext(partcmd->partlist, listptr))
+		{
+			RangeVar   *name2 = (RangeVar *) lfirst(listptr2);
+
+			if (equal(name, name2))
+				ereport(ERROR,
+						errcode(ERRCODE_DUPLICATE_TABLE),
+						errmsg("partition with name \"%s\" is already used", name->relname),
+						parser_errposition(cxt->pstate, name2->location));
+		}
+
+		/*
+		 * Search the DEFAULT partition in the list. Open and lock partitions
+		 * before calculating the boundary for resulting partition, we also
+		 * check for ownership along the way.  We need to use
+		 * AccessExclusiveLock here, because these merged partitions will be
+		 * detached and then dropped in ATExecMergePartitions.
+		 */
+		partOid = RangeVarGetRelidExtended(name, AccessExclusiveLock, 0,
+										   RangeVarCallbackOwnsRelation,
+										   NULL);
+		/* Is the current partition a DEFAULT partition? */
+		if (partOid == defaultPartOid)
+			isDefaultPart = true;
+
+		/*
+		 * Extended check because the same partition can have different names
+		 * (for example, "part_name" and "public.part_name").
+		 */
+		foreach(listptr2, partOids)
+		{
+			Oid			curOid = lfirst_oid(listptr2);
+
+			if (curOid == partOid)
+				ereport(ERROR,
+						errcode(ERRCODE_DUPLICATE_TABLE),
+						errmsg("partition with name \"%s\" is already used", name->relname),
+						parser_errposition(cxt->pstate, name->location));
+		}
+
+		checkPartition(parent, partOid);
+
+		partOids = lappend_oid(partOids, partOid);
+	}
+
+	/* Allocate the bound of the resulting partition. */
+	Assert(partcmd->bound == NULL);
+	partcmd->bound = makeNode(PartitionBoundSpec);
+
+	/* Fill the partition bound. */
+	partcmd->bound->strategy = strategy;
+	partcmd->bound->location = -1;
+	partcmd->bound->is_default = isDefaultPart;
+	if (!isDefaultPart)
+		calculate_partition_bound_for_merge(parent, partcmd->partlist,
+											partOids, partcmd->bound,
+											cxt->pstate);
+}
+
+/*
  * transformAlterTableStmt -
  *		parse analysis for ALTER TABLE
  *
@@ -3786,12 +3918,26 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 				newcmds = lappend(newcmds, cmd);
 				break;
 
+			case AT_MergePartitions:
+				{
+					PartitionCmd *partcmd = (PartitionCmd *) cmd->def;
+
+					if (list_length(partcmd->partlist) < 2)
+						ereport(ERROR,
+								errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+								errmsg("list of partitions to be merged should include at least two partitions"));
+
+					transformPartitionCmdForMerge(&cxt, partcmd);
+					newcmds = lappend(newcmds, cmd);
+					break;
+				}
+
 			default:
 
 				/*
-				 * Currently, we shouldn't actually get here for subcommand
-				 * types that don't require transformation; but if we do, just
-				 * emit them unchanged.
+				 * Currently, we shouldn't actually get here for the
+				 * subcommand types that don't require transformation; but if
+				 * we do, just emit them unchanged.
 				 */
 				newcmds = lappend(newcmds, cmd);
 				break;

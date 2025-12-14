@@ -4968,3 +4968,199 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(rowHash % modulus == remainder);
 }
+
+/*
+ * check_two_partitions_bounds_range
+ *
+ * (function for BY RANGE partitioning)
+ *
+ * This is a helper function for calculate_partition_bound_for_merge(). This
+ * function compares the upper bound of first_bound and the lower bound of
+ * second_bound. These bounds should be equal.
+ *
+ * parent:			partitioned table
+ * first_name:		name of the first partition
+ * first_bound:		bound of the first partition
+ * second_name:		name of the second partition
+ * second_bound:	bound of the second partition
+ * pstate:			pointer to ParseState struct for determining error position
+ */
+static void
+check_two_partitions_bounds_range(Relation parent,
+								  RangeVar *first_name,
+								  PartitionBoundSpec *first_bound,
+								  RangeVar *second_name,
+								  PartitionBoundSpec *second_bound,
+								  ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionRangeBound *first_upper;
+	PartitionRangeBound *second_lower;
+	int			cmpval;
+
+	Assert(key->strategy == PARTITION_STRATEGY_RANGE);
+
+	first_upper = make_one_partition_rbound(key, -1, first_bound->upperdatums, false);
+	second_lower = make_one_partition_rbound(key, -1, second_bound->lowerdatums, true);
+
+	/*
+	 * lower1 argument of partition_rbound_cmp() is set to false for the
+	 * correct comparison result of the lower and upper bounds.
+	 */
+	cmpval = partition_rbound_cmp(key->partnatts,
+								  key->partsupfunc,
+								  key->partcollation,
+								  second_lower->datums, second_lower->kind,
+								  false, first_upper);
+	if (cmpval)
+	{
+		PartitionRangeDatum *datum = linitial(second_bound->lowerdatums);
+
+		ereport(ERROR,
+				errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				errmsg("can not merge partition \"%s\" together with partition \"%s\"",
+					   second_name->relname, first_name->relname),
+				errdetail("lower bound of partition \"%s\" is not equal to the upper bound of partition \"%s\"",
+						  second_name->relname, first_name->relname),
+				errhint("ALTER TABLE ... MERGE PARTITIONS requires the partition bounds to be adjacent."),
+				parser_errposition(pstate, datum->location));
+	}
+}
+
+/*
+ * get_partition_bound_spec
+ *
+ * Returns the PartitionBoundSpec for the partition with the given OID partOid.
+ */
+static PartitionBoundSpec *
+get_partition_bound_spec(Oid partOid)
+{
+	HeapTuple	tuple;
+	Datum		datum;
+	bool		isnull;
+	PartitionBoundSpec *boundspec = NULL;
+
+	/* Try fetching the tuple from the catcache, for speed. */
+	tuple = SearchSysCache1(RELOID, partOid);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for relation %u", partOid);
+
+	datum = SysCacheGetAttr(RELOID, tuple,
+							Anum_pg_class_relpartbound,
+							&isnull);
+	if (isnull)
+		elog(ERROR, "partition bound for relation %u is null",
+			 partOid);
+
+	boundspec = stringToNode(TextDatumGetCString(datum));
+
+	if (!IsA(boundspec, PartitionBoundSpec))
+		elog(ERROR, "expected PartitionBoundSpec for relation %u",
+			 partOid);
+
+	ReleaseSysCache(tuple);
+	return boundspec;
+}
+
+/*
+ * calculate_partition_bound_for_merge
+ *
+ * Calculates the bound of the merged partition "spec" by using the bounds of
+ * the partitions to be merged.
+ *
+ * parent:			partitioned table
+ * partNames:		names of partitions to be merged
+ * partOids:		Oids of partitions to be merged
+ * spec (out):		bounds specification of the merged partition
+ * pstate:			pointer to ParseState struct to determine error position
+ */
+void
+calculate_partition_bound_for_merge(Relation parent,
+									List *partNames,
+									List *partOids,
+									PartitionBoundSpec *spec,
+									ParseState *pstate)
+{
+	PartitionKey key = RelationGetPartitionKey(parent);
+	PartitionBoundSpec *bound;
+
+	Assert(!spec->is_default);
+
+	switch (key->strategy)
+	{
+		case PARTITION_STRATEGY_RANGE:
+			{
+				int			i;
+				PartitionRangeBound **lower_bounds;
+				int			nparts = list_length(partOids);
+				List	   *bounds = NIL;
+
+				lower_bounds = (PartitionRangeBound **)
+					palloc0(nparts * sizeof(PartitionRangeBound *));
+
+				/*
+				 * Create an array of lower bounds and a list of
+				 * PartitionBoundSpec.
+				 */
+				foreach_oid(partoid, partOids)
+				{
+					bound = get_partition_bound_spec(partoid);
+					i = foreach_current_index(partoid);
+
+					lower_bounds[i] = make_one_partition_rbound(key, i, bound->lowerdatums, true);
+					bounds = lappend(bounds, bound);
+				}
+
+				/* Sort the array of lower bounds. */
+				qsort_arg(lower_bounds, nparts, sizeof(PartitionRangeBound *),
+						  qsort_partition_rbound_cmp, key);
+
+				/* Ranges of partitions should be adjacent. */
+				for (i = 1; i < nparts; i++)
+				{
+					int			index = lower_bounds[i]->index;
+					int			prev_index = lower_bounds[i - 1]->index;
+
+					check_two_partitions_bounds_range(parent,
+													  (RangeVar *) list_nth(partNames, prev_index),
+													  (PartitionBoundSpec *) list_nth(bounds, prev_index),
+													  (RangeVar *) list_nth(partNames, index),
+													  (PartitionBoundSpec *) list_nth(bounds, index),
+													  pstate);
+				}
+
+				/*
+				 * The lower bound of the first partition is the lower bound
+				 * of the merged partition.
+				 */
+				spec->lowerdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[0]->index))->lowerdatums;
+
+				/*
+				 * The upper bound of the last partition is the upper bound of
+				 * the merged partition.
+				 */
+				spec->upperdatums =
+					((PartitionBoundSpec *) list_nth(bounds, lower_bounds[nparts - 1]->index))->upperdatums;
+
+				pfree(lower_bounds);
+				list_free(bounds);
+				break;
+			}
+
+		case PARTITION_STRATEGY_LIST:
+			{
+				/* Consolidate bounds for all partitions in the list. */
+				foreach_oid(partoid, partOids)
+				{
+					bound = get_partition_bound_spec(partoid);
+					spec->listdatums = list_concat(spec->listdatums, bound->listdatums);
+				}
+				break;
+			}
+
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+				 (int) key->strategy);
+	}
+}

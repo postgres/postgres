@@ -966,13 +966,16 @@ typedef struct PartitionRangeDatum
 } PartitionRangeDatum;
 
 /*
- * PartitionCmd - info for ALTER TABLE/INDEX ATTACH/DETACH PARTITION commands
+ * PartitionCmd - info for ALTER TABLE/INDEX ATTACH/DETACH PARTITION and for
+ *	  ALTER TABLE MERGE PARTITIONS commands
  */
 typedef struct PartitionCmd
 {
 	NodeTag		type;
-	RangeVar   *name;			/* name of partition to attach/detach */
+	RangeVar   *name;			/* name of partition to attach/detach/merge */
 	PartitionBoundSpec *bound;	/* FOR VALUES, if attaching */
+	List	   *partlist;		/* list of partitions to be merged, used in
+								 * ALTER TABLE MERGE PARTITIONS */
 	bool		concurrent;
 } PartitionCmd;
 
@@ -2476,6 +2479,7 @@ typedef enum AlterTableType
 	AT_AttachPartition,			/* ATTACH PARTITION */
 	AT_DetachPartition,			/* DETACH PARTITION */
 	AT_DetachPartitionFinalize, /* DETACH PARTITION FINALIZE */
+	AT_MergePartitions,			/* MERGE PARTITIONS */
 	AT_AddIdentity,				/* ADD IDENTITY */
 	AT_SetIdentity,				/* SET identity column options */
 	AT_DropIdentity,			/* DROP IDENTITY */

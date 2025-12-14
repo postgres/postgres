@@ -37,6 +37,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     ATTACH PARTITION <replaceable class="parameter">partition_name</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
 ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     DETACH PARTITION <replaceable class="parameter">partition_name</replaceable> [ CONCURRENTLY | FINALIZE ]
+ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    MERGE PARTITIONS (<replaceable class="parameter">partition_name1</replaceable>, <replaceable class="parameter">partition_name2</replaceable> [, ...]) INTO <replaceable class="parameter">partition_name</replaceable>
 
 <phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
@@ -1157,18 +1159,117 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     </listitem>
    </varlistentry>
 
+   <varlistentry id="sql-altertable-merge-partitions">
+    <term><literal>MERGE PARTITIONS (<replaceable class="parameter">partition_name1</replaceable>, <replaceable class="parameter">partition_name2</replaceable> [, ...]) INTO <replaceable class="parameter">partition_name</replaceable></literal></term>
+
+    <listitem>
+     <para>
+      This form merges several partitions of the target table into a new partition.
+      Hash-partitioned target table is not supported.
+      Only simple, non-partitioned partitions can be merged.
+      The new partition (<replaceable class="parameter">partition_name</replaceable>)
+      can have the same name as one of the merged partitions
+      (<literal><replaceable class="parameter">partition_name1</replaceable>,
+      <replaceable class="parameter">partition_name2</replaceable> [, ...]</literal>).
+     </para>
+
+     <para>
+      If the <literal>DEFAULT</literal> partition is not in the
+      list of merged partitions:
+      <itemizedlist>
+       <listitem>
+        <para>
+         For range-partitioned tables, the ranges of merged partitions
+         must be adjacent in order to be merged.
+         The partition bounds of merged partitions are combined to form the new partition bound for
+         <replaceable class="parameter">partition_name</replaceable>.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         For list-partitioned tables, the partition bounds of
+         merged partitions are combined to form the new partition bound for
+         <replaceable class="parameter">partition_name</replaceable>.
+        </para>
+       </listitem>
+      </itemizedlist>
+      If the <literal>DEFAULT</literal> partition is in the list of merged partitions:
+      <itemizedlist>
+       <listitem>
+        <para>
+         The partition <replaceable class="parameter">partition_name</replaceable>
+         will be the new <literal>DEFAULT</literal> partition of the target table.
+        </para>
+       </listitem>
+       <listitem>
+        <para>
+         The partition bound specifications for merged partitions can be arbitrary.
+        </para>
+       </listitem>
+      </itemizedlist>
+     </para>
+     <para>
+      All merged partitions must have the same owner.
+      The owner of merged partitions will be the owner of the new partition.
+      It is the user's responsibility to setup <acronym>ACL</acronym> on
+      the new partition.
+     </para>
+
+     <para>
+       <command>ALTER TABLE MERGE PARTITION</command> uses the partitioned
+       table itself as the template to construct the new partition.
+       The new partition will inherit the same table access method, persistence
+       type, and tablespace as the partitioned table.
+
+       Constraints, column defaults, column generation expressions, identity
+       columns, indexes, and triggers are copied from the partitioned table to
+       the new partition.  But extended statistics, security policies, etc,
+       won't be copied from the partitioned table.
+       Indexes and identity columns copied from the partitioned table will be
+       created afterward, once the data has been moved into the new partition.
+     </para>
+
+     <para>
+      When partitions are merged, any objects depending on this partition,
+      such as constraints, triggers, extended statistics, etc, will be
+      dropped.
+      Eventually, we will drop all the merged partitions
+      (using <literal>RESTRICT</literal> mode) too;  therefore, if any objects
+      are still dependent on them,
+      <command>ALTER TABLE MERGE PARTITION</command> would fail.
+      (see <xref linkend="ddl-depend"/>).
+     </para>
+
+     <note>
+      <para>
+       Merging partitions acquires an <literal>ACCESS EXCLUSIVE</literal> lock on
+       the parent table, in addition to the <literal>ACCESS EXCLUSIVE</literal>
+       locks on the tables being merged and on the default partition (if any).
+      </para>
+     </note>
+     <note>
+      <para>
+       <command>ALTER TABLE MERGE PARTITIONS</command> creates a new partition and
+       moves data from all merging partitions into it, which can take a long time.
+       So it is not recommended to use the command to merge very big partitions
+       with small ones.
+      </para>
+     </note>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   </para>
 
   <para>
    All the forms of <command>ALTER TABLE</command> that act on a single table,
    except <literal>RENAME</literal>, <literal>SET SCHEMA</literal>,
-   <literal>ATTACH PARTITION</literal>, and
-   <literal>DETACH PARTITION</literal> can be combined into
+   <literal>ATTACH PARTITION</literal>, <literal>DETACH PARTITION</literal>,
+   and <literal>MERGE PARTITIONS</literal>, can be combined into
    a list of multiple alterations to be applied together.  For example, it
    is possible to add several columns and/or alter the type of several
    columns in a single command.  This is particularly useful with large
-   tables, since only one pass over the table need be made.
+   tables, since only one pass over the table needs to be made.
   </para>
 
   <para>
@@ -1407,7 +1508,18 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       <term><replaceable class="parameter">partition_name</replaceable></term>
       <listitem>
        <para>
-        The name of the table to attach as a new partition or to detach from this table.
+        The name of the table to attach as a new partition or to detach from this table,
+        or the name of the new merged partition.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="sql-altertable-parms-partition-name1">
+      <term><replaceable class="parameter">partition_name1</replaceable></term>
+      <term><replaceable class="parameter">partition_name2</replaceable></term>
+      <listitem>
+       <para>
+        The names of the tables being merged into the new partition.
        </para>
       </listitem>
      </varlistentry>
@@ -1838,6 +1950,13 @@ ALTER TABLE cities
 <programlisting>
 ALTER TABLE measurement
     DETACH PARTITION measurement_y2015m12;
+</programlisting></para>
+
+  <para>
+   To merge several partitions into one partition of the target table:
+<programlisting>
+ALTER TABLE sales_list MERGE PARTITIONS (sales_west, sales_east, sales_central)
+    INTO sales_all;
 </programlisting></para>
 
  </refsect1>
