@@ -742,6 +742,9 @@ static char GetAttributeStorage(Oid atttypid, const char *storagemode);
 
 static void ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 								  PartitionCmd *cmd, AlterTableUtilityContext *context);
+static void ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab,
+								 Relation rel, PartitionCmd *cmd,
+								 AlterTableUtilityContext *context);
 
 /* ----------------------------------------------------------------
  *		DefineRelation
@@ -4839,6 +4842,7 @@ AlterTableGetLockLevel(List *cmds)
 				break;
 
 			case AT_MergePartitions:
+			case AT_SplitPartition:
 				cmd_lockmode = AccessExclusiveLock;
 				break;
 
@@ -5278,6 +5282,7 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_MergePartitions:
+		case AT_SplitPartition:
 			ATSimplePermissions(cmd->subtype, rel, ATT_PARTITIONED_TABLE);
 			/* No command-specific prep needed */
 			pass = AT_PASS_MISC;
@@ -5685,6 +5690,14 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 			ATExecMergePartitions(wqueue, tab, rel, (PartitionCmd *) cmd->def,
 								  context);
+			break;
+		case AT_SplitPartition:
+			cmd = ATParseTransformCmd(wqueue, tab, rel, cmd, false, lockmode,
+									  cur_pass, context);
+			Assert(cmd != NULL);
+			Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+			ATExecSplitPartition(wqueue, tab, rel, (PartitionCmd *) cmd->def,
+								 context);
 			break;
 		default:				/* oops */
 			elog(ERROR, "unrecognized alter table type: %d",
@@ -6728,6 +6741,8 @@ alter_table_type_to_string(AlterTableType cmdtype)
 			return "DETACH PARTITION ... FINALIZE";
 		case AT_MergePartitions:
 			return "MERGE PARTITIONS";
+		case AT_SplitPartition:
+			return "SPLIT PARTITION";
 		case AT_AddIdentity:
 			return "ALTER COLUMN ... ADD IDENTITY";
 		case AT_SetIdentity:
@@ -22898,6 +22913,423 @@ ATExecMergePartitions(List **wqueue, AlteredTableInfo *tab, Relation rel,
 
 	/* Keep the lock until commit. */
 	table_close(newPartRel, NoLock);
+
+	/* Roll back any GUC changes executed by index functions. */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore the userid and security context. */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+}
+
+/*
+ * Struct with the context of the new partition for inserting rows from the
+ * split partition.
+ */
+typedef struct SplitPartitionContext
+{
+	ExprState  *partqualstate;	/* expression for checking a slot for a
+								 * partition (NULL for DEFAULT partition) */
+	BulkInsertState bistate;	/* state of bulk inserts for partition */
+	TupleTableSlot *dstslot;	/* slot for inserting row into partition */
+	AlteredTableInfo *tab;		/* structure with generated column expressions
+								 * and check constraint expressions. */
+	Relation	partRel;		/* relation for partition */
+} SplitPartitionContext;
+
+/*
+ * createSplitPartitionContext: create context for partition and fill it
+ */
+static SplitPartitionContext *
+createSplitPartitionContext(Relation partRel)
+{
+	SplitPartitionContext *pc;
+
+	pc = (SplitPartitionContext *) palloc0(sizeof(SplitPartitionContext));
+	pc->partRel = partRel;
+
+	/*
+	 * Prepare a BulkInsertState for table_tuple_insert. The FSM is empty, so
+	 * don't bother using it.
+	 */
+	pc->bistate = GetBulkInsertState();
+
+	/* Create a destination tuple slot for the new partition. */
+	pc->dstslot = table_slot_create(pc->partRel, NULL);
+
+	return pc;
+}
+
+/*
+ * deleteSplitPartitionContext: delete context for partition
+ */
+static void
+deleteSplitPartitionContext(SplitPartitionContext *pc, List **wqueue, int ti_options)
+{
+	ListCell   *ltab;
+
+	ExecDropSingleTupleTableSlot(pc->dstslot);
+	FreeBulkInsertState(pc->bistate);
+
+	table_finish_bulk_insert(pc->partRel, ti_options);
+
+	/*
+	 * We don't need to process this pc->partRel so delete the ALTER TABLE
+	 * queue of it.
+	 */
+	foreach(ltab, *wqueue)
+	{
+		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
+
+		if (tab->relid == RelationGetRelid(pc->partRel))
+		{
+			*wqueue = list_delete_cell(*wqueue, ltab);
+			break;
+		}
+	}
+
+	pfree(pc);
+}
+
+/*
+ * SplitPartitionMoveRows: scan split partition (splitRel) of partitioned table
+ * (rel) and move rows into new partitions.
+ *
+ * New partitions description:
+ * partlist: list of pointers to SinglePartitionSpec structures.  It contains
+ * the partition specification details for all new partitions.
+ * newPartRels: list of Relations, new partitions created in
+ * ATExecSplitPartition.
+ */
+static void
+SplitPartitionMoveRows(List **wqueue, Relation rel, Relation splitRel,
+					   List *partlist, List *newPartRels)
+{
+	/* The FSM is empty, so don't bother using it. */
+	int			ti_options = TABLE_INSERT_SKIP_FSM;
+	CommandId	mycid;
+	EState	   *estate;
+	ListCell   *listptr,
+			   *listptr2;
+	TupleTableSlot *srcslot;
+	ExprContext *econtext;
+	TableScanDesc scan;
+	Snapshot	snapshot;
+	MemoryContext oldCxt;
+	List	   *partContexts = NIL;
+	TupleConversionMap *tuple_map;
+	SplitPartitionContext *defaultPartCtx = NULL,
+			   *pc;
+
+	mycid = GetCurrentCommandId(true);
+
+	estate = CreateExecutorState();
+
+	forboth(listptr, partlist, listptr2, newPartRels)
+	{
+		SinglePartitionSpec *sps = (SinglePartitionSpec *) lfirst(listptr);
+
+		pc = createSplitPartitionContext((Relation) lfirst(listptr2));
+
+		/* Find the work queue entry for the new partition table: newPartRel. */
+		pc->tab = ATGetQueueEntry(wqueue, pc->partRel);
+
+		buildExpressionExecutionStates(pc->tab, pc->partRel, estate);
+
+		if (sps->bound->is_default)
+		{
+			/*
+			 * We should not create a structure to check the partition
+			 * constraint for the new DEFAULT partition.
+			 */
+			defaultPartCtx = pc;
+		}
+		else
+		{
+			List	   *partConstraint;
+
+			/* Build expression execution states for partition check quals. */
+			partConstraint = get_qual_from_partbound(rel, sps->bound);
+			partConstraint =
+				(List *) eval_const_expressions(NULL,
+												(Node *) partConstraint);
+			/* Make a boolean expression for ExecCheck(). */
+			partConstraint = list_make1(make_ands_explicit(partConstraint));
+
+			/*
+			 * Map the vars in the constraint expression from rel's attnos to
+			 * splitRel's.
+			 */
+			partConstraint = map_partition_varattnos(partConstraint,
+													 1, splitRel, rel);
+
+			pc->partqualstate =
+				ExecPrepareExpr((Expr *) linitial(partConstraint), estate);
+			Assert(pc->partqualstate != NULL);
+		}
+
+		/* Store partition context into a list. */
+		partContexts = lappend(partContexts, pc);
+	}
+
+	econtext = GetPerTupleExprContext(estate);
+
+	/* Create the necessary tuple slot. */
+	srcslot = table_slot_create(splitRel, NULL);
+
+	/*
+	 * Map computing for moving attributes of the split partition to the new
+	 * partition (for the first new partition, but other new partitions can
+	 * use the same map).
+	 */
+	pc = (SplitPartitionContext *) lfirst(list_head(partContexts));
+	tuple_map = convert_tuples_by_name(RelationGetDescr(splitRel),
+									   RelationGetDescr(pc->partRel));
+
+	/* Scan through the rows. */
+	snapshot = RegisterSnapshot(GetLatestSnapshot());
+	scan = table_beginscan(splitRel, snapshot, 0, NULL);
+
+	/*
+	 * Switch to per-tuple memory context and reset it for each tuple
+	 * produced, so we don't leak memory.
+	 */
+	oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+	while (table_scan_getnextslot(scan, ForwardScanDirection, srcslot))
+	{
+		bool		found = false;
+		TupleTableSlot *insertslot;
+
+		CHECK_FOR_INTERRUPTS();
+
+		econtext->ecxt_scantuple = srcslot;
+
+		/* Search partition for the current slot, srcslot. */
+		foreach(listptr, partContexts)
+		{
+			pc = (SplitPartitionContext *) lfirst(listptr);
+
+			/* skip DEFAULT partition */
+			if (pc->partqualstate && ExecCheck(pc->partqualstate, econtext))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+		{
+			/* Use the DEFAULT partition if it exists. */
+			if (defaultPartCtx)
+				pc = defaultPartCtx;
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_CHECK_VIOLATION),
+						errmsg("can not find partition for split partition row"),
+						errtable(splitRel));
+		}
+
+		if (tuple_map)
+		{
+			/* Need to use a map to copy attributes. */
+			insertslot = execute_attr_map_slot(tuple_map->attrMap, srcslot, pc->dstslot);
+		}
+		else
+		{
+			/* Extract data from the old tuple. */
+			slot_getallattrs(srcslot);
+
+			/* Copy attributes directly. */
+			insertslot = pc->dstslot;
+
+			ExecClearTuple(insertslot);
+
+			memcpy(insertslot->tts_values, srcslot->tts_values,
+				   sizeof(Datum) * srcslot->tts_nvalid);
+			memcpy(insertslot->tts_isnull, srcslot->tts_isnull,
+				   sizeof(bool) * srcslot->tts_nvalid);
+
+			ExecStoreVirtualTuple(insertslot);
+		}
+
+		/*
+		 * Constraints and GENERATED expressions might reference the tableoid
+		 * column, so fill tts_tableOid with the desired value. (We must do
+		 * this each time, because it gets overwritten with newrel's OID
+		 * during storing.)
+		 */
+		insertslot->tts_tableOid = RelationGetRelid(pc->partRel);
+
+		/*
+		 * Now, evaluate any generated expressions whose inputs come from the
+		 * new tuple.  We assume these columns won't reference each other, so
+		 * that there's no ordering dependency.
+		 */
+		evaluateGeneratedExpressionsAndCheckConstraints(pc->tab, pc->partRel,
+														insertslot, econtext);
+
+		/* Write the tuple out to the new relation. */
+		table_tuple_insert(pc->partRel, insertslot, mycid,
+						   ti_options, pc->bistate);
+
+		ResetExprContext(econtext);
+	}
+
+	MemoryContextSwitchTo(oldCxt);
+
+	table_endscan(scan);
+	UnregisterSnapshot(snapshot);
+
+	if (tuple_map)
+		free_conversion_map(tuple_map);
+
+	ExecDropSingleTupleTableSlot(srcslot);
+
+	FreeExecutorState(estate);
+
+	foreach_ptr(SplitPartitionContext, spc, partContexts)
+		deleteSplitPartitionContext(spc, wqueue, ti_options);
+}
+
+/*
+ * ALTER TABLE <name> SPLIT PARTITION <partition-name> INTO <partition-list>
+ */
+static void
+ATExecSplitPartition(List **wqueue, AlteredTableInfo *tab, Relation rel,
+					 PartitionCmd *cmd, AlterTableUtilityContext *context)
+{
+	Relation	splitRel;
+	Oid			splitRelOid;
+	ListCell   *listptr,
+			   *listptr2;
+	bool		isSameName = false;
+	char		tmpRelName[NAMEDATALEN];
+	List	   *newPartRels = NIL;
+	ObjectAddress object;
+	Oid			defaultPartOid;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
+
+	defaultPartOid = get_default_oid_from_partdesc(RelationGetPartitionDesc(rel, true));
+
+	/*
+	 * Partition is already locked in the transformPartitionCmdForSplit
+	 * function.
+	 */
+	splitRel = table_openrv(cmd->name, NoLock);
+
+	splitRelOid = RelationGetRelid(splitRel);
+
+	/* Check descriptions of new partitions. */
+	foreach_node(SinglePartitionSpec, sps, cmd->partlist)
+	{
+		Oid			existingRelid;
+
+		/* Look up the existing relation by the new partition name. */
+		RangeVarGetAndCheckCreationNamespace(sps->name, NoLock, &existingRelid);
+
+		/*
+		 * This would fail later on anyway if the relation already exists. But
+		 * by catching it here, we can emit a nicer error message.
+		 */
+		if (existingRelid == splitRelOid && !isSameName)
+			/* One new partition can have the same name as a split partition. */
+			isSameName = true;
+		else if (OidIsValid(existingRelid))
+			ereport(ERROR,
+					errcode(ERRCODE_DUPLICATE_TABLE),
+					errmsg("relation \"%s\" already exists", sps->name->relname));
+	}
+
+	/* Detach the split partition. */
+	detachPartitionTable(rel, splitRel, defaultPartOid);
+
+	/*
+	 * Perform a preliminary check to determine whether it's safe to drop the
+	 * split partition before we actually do so later. After merging rows into
+	 * the new partitions via SplitPartitionMoveRows, all old partitions need
+	 * to be dropped. However, since the drop behavior is DROP_RESTRICT and
+	 * the merge process (SplitPartitionMoveRows) can be time-consuming,
+	 * performing an early check on the drop eligibility of old partitions is
+	 * preferable.
+	 */
+	object.objectId = splitRelOid;
+	object.classId = RelationRelationId;
+	object.objectSubId = 0;
+	performDeletionCheck(&object, DROP_RESTRICT, PERFORM_DELETION_INTERNAL);
+
+	/*
+	 * If a new partition has the same name as the split partition, then we
+	 * should rename the split partition to reuse its name.
+	 */
+	if (isSameName)
+	{
+		/*
+		 * We must bump the command counter to make the split partition tuple
+		 * visible for renaming.
+		 */
+		CommandCounterIncrement();
+		/* Rename partition. */
+		sprintf(tmpRelName, "split-%u-%X-tmp", RelationGetRelid(rel), MyProcPid);
+		RenameRelationInternal(splitRelOid, tmpRelName, true, false);
+
+		/*
+		 * We must bump the command counter to make the split partition tuple
+		 * visible after renaming.
+		 */
+		CommandCounterIncrement();
+	}
+
+	/* Create new partitions (like a split partition), without indexes. */
+	foreach_node(SinglePartitionSpec, sps, cmd->partlist)
+	{
+		Relation	newPartRel;
+
+		newPartRel = createPartitionTable(wqueue, sps->name, rel,
+										  splitRel->rd_rel->relowner);
+		newPartRels = lappend(newPartRels, newPartRel);
+	}
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also, lockdown security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 *
+	 * Need to do it after determining the namespace in the
+	 * createPartitionTable() call.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(splitRel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+	RestrictSearchPath();
+
+	/* Copy data from the split partition to the new partitions. */
+	SplitPartitionMoveRows(wqueue, rel, splitRel, cmd->partlist, newPartRels);
+	/* Keep the lock until commit. */
+	table_close(splitRel, NoLock);
+
+	/* Attach new partitions to the partitioned table. */
+	forboth(listptr, cmd->partlist, listptr2, newPartRels)
+	{
+		SinglePartitionSpec *sps = (SinglePartitionSpec *) lfirst(listptr);
+		Relation	newPartRel = (Relation) lfirst(listptr2);
+
+		/*
+		 * wqueue = NULL: verification for each cloned constraint is not
+		 * needed.
+		 */
+		attachPartitionTable(NULL, rel, newPartRel, sps->bound);
+		/* Keep the lock until commit. */
+		table_close(newPartRel, NoLock);
+	}
+
+	/* Drop the split partition. */
+	object.classId = RelationRelationId;
+	object.objectId = splitRelOid;
+	object.objectSubId = 0;
+	/* Probably DROP_CASCADE is not needed. */
+	performDeletion(&object, DROP_RESTRICT, 0);
 
 	/* Roll back any GUC changes executed by index functions. */
 	AtEOXact_GUC(false, save_nestlevel);

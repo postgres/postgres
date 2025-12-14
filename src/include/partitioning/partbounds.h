@@ -143,6 +143,10 @@ extern int	partition_range_datum_bsearch(FmgrInfo *partsupfunc,
 extern int	partition_hash_bsearch(PartitionBoundInfo boundinfo,
 								   int modulus, int remainder);
 
+extern void check_partitions_for_split(Relation parent,
+									   Oid splitPartOid,
+									   List *partlist,
+									   ParseState *pstate);
 extern void calculate_partition_bound_for_merge(Relation parent,
 												List *partNames,
 												List *partOids,
