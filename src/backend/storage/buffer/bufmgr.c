@@ -241,6 +241,7 @@ static HTAB *PrivateRefCountHash = NULL;
 static int32 PrivateRefCountOverflowed = 0;
 static uint32 PrivateRefCountClock = 0;
 static int	ReservedRefCountSlot = -1;
+static int	PrivateRefCountEntryLast = -1;
 
 static uint32 MaxProportionalPins;
 
@@ -374,27 +375,26 @@ NewPrivateRefCountEntry(Buffer buffer)
 	res->buffer = buffer;
 	res->data.refcount = 0;
 
+	/* update cache for the next lookup */
+	PrivateRefCountEntryLast = ReservedRefCountSlot;
+
 	ReservedRefCountSlot = -1;
 
 	return res;
 }
 
 /*
- * Return the PrivateRefCount entry for the passed buffer.
- *
- * Returns NULL if a buffer doesn't have a refcount entry. Otherwise, if
- * do_move is true, and the entry resides in the hashtable the entry is
- * optimized for frequent access by moving it to the array.
+ * Slow-path for GetPrivateRefCountEntry(). This is big enough to not be worth
+ * inlining. This particularly seems to be true if the compiler is capable of
+ * auto-vectorizing the code, as that imposes additional stack-alignment
+ * requirements etc.
  */
-static inline PrivateRefCountEntry *
-GetPrivateRefCountEntry(Buffer buffer, bool do_move)
+static pg_noinline PrivateRefCountEntry *
+GetPrivateRefCountEntrySlow(Buffer buffer, bool do_move)
 {
 	PrivateRefCountEntry *res;
 	int			match = -1;
 	int			i;
-
-	Assert(BufferIsValid(buffer));
-	Assert(!BufferIsLocal(buffer));
 
 	/*
 	 * First search for references in the array, that'll be sufficient in the
@@ -409,8 +409,13 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 		}
 	}
 
-	if (match != -1)
+	if (likely(match != -1))
+	{
+		/* update cache for the next lookup */
+		PrivateRefCountEntryLast = match;
+
 		return &PrivateRefCountArray[match];
+	}
 
 	/*
 	 * By here we know that the buffer, if already pinned, isn't residing in
@@ -450,6 +455,8 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 		free->buffer = buffer;
 		free->data = res->data;
 		PrivateRefCountArrayKeys[ReservedRefCountSlot] = buffer;
+		/* update cache for the next lookup */
+		PrivateRefCountEntryLast = match;
 
 		ReservedRefCountSlot = -1;
 
@@ -462,6 +469,43 @@ GetPrivateRefCountEntry(Buffer buffer, bool do_move)
 
 		return free;
 	}
+}
+
+/*
+ * Return the PrivateRefCount entry for the passed buffer.
+ *
+ * Returns NULL if a buffer doesn't have a refcount entry. Otherwise, if
+ * do_move is true, and the entry resides in the hashtable the entry is
+ * optimized for frequent access by moving it to the array.
+ */
+static inline PrivateRefCountEntry *
+GetPrivateRefCountEntry(Buffer buffer, bool do_move)
+{
+	Assert(BufferIsValid(buffer));
+	Assert(!BufferIsLocal(buffer));
+
+	/*
+	 * It's very common to look up the same buffer repeatedly. To make that
+	 * fast, we have a one-entry cache.
+	 *
+	 * In contrast to the loop in GetPrivateRefCountEntrySlow(), here it
+	 * faster to check PrivateRefCountArray[].buffer, as in the case of a hit
+	 * fewer addresses are computed and fewer cachelines are accessed. Whereas
+	 * in GetPrivateRefCountEntrySlow()'s case, checking
+	 * PrivateRefCountArrayKeys saves a lot of memory accesses.
+	 */
+	if (likely(PrivateRefCountEntryLast != -1) &&
+		likely(PrivateRefCountArray[PrivateRefCountEntryLast].buffer == buffer))
+	{
+		return &PrivateRefCountArray[PrivateRefCountEntryLast];
+	}
+
+	/*
+	 * The code for the cached lookup is small enough to be worth inlining
+	 * into the caller. In the miss case however, that empirically doesn't
+	 * seem worth it.
+	 */
+	return GetPrivateRefCountEntrySlow(buffer, do_move);
 }
 
 /*
