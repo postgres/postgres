@@ -5115,8 +5115,7 @@ calculate_partition_bound_for_merge(Relation parent,
 				int			nparts = list_length(partOids);
 				List	   *bounds = NIL;
 
-				lower_bounds = (PartitionRangeBound **)
-					palloc0(nparts * sizeof(PartitionRangeBound *));
+				lower_bounds = palloc0_array(PartitionRangeBound *, nparts);
 
 				/*
 				 * Create an array of lower bounds and a list of
@@ -5755,8 +5754,7 @@ check_partitions_for_split(Relation parent,
 	 * Make an array new_parts with new partitions except the DEFAULT
 	 * partition.
 	 */
-	new_parts = (SinglePartitionSpec **)
-		palloc0(list_length(partlist) * sizeof(SinglePartitionSpec *));
+	new_parts = palloc0_array(SinglePartitionSpec *, list_length(partlist));
 
 	/* isSplitPartDefault flag: is split partition a DEFAULT partition? */
 	isSplitPartDefault = (defaultPartOid == splitPartOid);
@@ -5786,8 +5784,7 @@ check_partitions_for_split(Relation parent,
 		 * all partitions in ascending order of their bounds (we compare the
 		 * lower bound only).
 		 */
-		lower_bounds = (PartitionRangeBound **)
-			palloc0(nparts * sizeof(PartitionRangeBound *));
+		lower_bounds = palloc0_array(PartitionRangeBound *, nparts);
 
 		/* Create an array of lower bounds. */
 		for (i = 0; i < nparts; i++)
@@ -5802,8 +5799,7 @@ check_partitions_for_split(Relation parent,
 
 		/* Reorder the array of partitions. */
 		tmp_new_parts = new_parts;
-		new_parts = (SinglePartitionSpec **)
-			palloc0(nparts * sizeof(SinglePartitionSpec *));
+		new_parts = palloc0_array(SinglePartitionSpec *, nparts);
 		for (i = 0; i < nparts; i++)
 			new_parts[i] = tmp_new_parts[lower_bounds[i]->index];
 

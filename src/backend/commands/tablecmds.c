@@ -22317,7 +22317,7 @@ createTableConstraints(List **wqueue, AlteredTableInfo *tab,
 			 */
 			if (attribute->attgenerated == ATTRIBUTE_GENERATED_STORED)
 			{
-				newval = (NewColumnValue *) palloc0(sizeof(NewColumnValue));
+				newval = palloc0_object(NewColumnValue);
 				newval->attnum = num;
 				newval->expr = expression_planner((Expr *) def);
 				newval->is_generated = (attribute->attgenerated != '\0');
@@ -22406,7 +22406,7 @@ createTableConstraints(List **wqueue, AlteredTableInfo *tab,
 			{
 				NewConstraint *newcon;
 
-				newcon = (NewConstraint *) palloc0(sizeof(NewConstraint));
+				newcon = palloc0_object(NewConstraint);
 				newcon->name = ccon->name;
 				newcon->contype = CONSTR_CHECK;
 				newcon->qual = qual;
@@ -22944,7 +22944,7 @@ createSplitPartitionContext(Relation partRel)
 {
 	SplitPartitionContext *pc;
 
-	pc = (SplitPartitionContext *) palloc0(sizeof(SplitPartitionContext));
+	pc = palloc0_object(SplitPartitionContext);
 	pc->partRel = partRel;
 
 	/*
