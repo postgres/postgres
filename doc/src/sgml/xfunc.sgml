@@ -3935,7 +3935,7 @@ extern bool InjectionPointDetach(const char *name);
 
     <para>
      An example can be found in
-     <filename>src/test/modules/test_custom_stats</filename> in the PostgreSQL
+     <filename>src/test/modules/injection_points</filename> in the PostgreSQL
      source tree.
     </para>
 
@@ -4005,7 +4005,7 @@ extern PgStat_Kind pgstat_register_kind(PgStat_Kind kind,
 
     <para>
      An example describing how to register and use custom statistics can be
-     found in <filename>src/test/modules/injection_points</filename>.
+     found in <filename>src/test/modules/test_custom_stats</filename>.
     </para>
    </sect2>
 
