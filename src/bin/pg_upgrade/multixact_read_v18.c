@@ -276,7 +276,8 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 		if (!TransactionIdIsValid(*xactptr))
 		{
 			/*
-			 * Corner case 2: we are looking at unused slot zero
+			 * Corner case 2: offset must have wrapped around to unused slot
+			 * zero.
 			 */
 			if (offset == 0)
 				continue;
