@@ -6349,10 +6349,13 @@ heap_abort_speculative(Relation relation, const ItemPointerData *tid)
  * Since this is intended for system catalogs and SERIALIZABLE doesn't cover
  * DDL, this doesn't guarantee any particular predicate locking.
  *
- * One could modify this to return true for tuples with delete in progress,
- * All inplace updaters take a lock that conflicts with DROP.  If explicit
- * "DELETE FROM pg_class" is in progress, we'll wait for it like we would an
- * update.
+ * heap_delete() is a rarer source of blocking transactions (xwait).  We'll
+ * wait for such a transaction just like for the normal heap_update() case.
+ * Normal concurrent DROP commands won't cause that, because all inplace
+ * updaters take some lock that conflicts with DROP.  An explicit SQL "DELETE
+ * FROM pg_class" can cause it.  By waiting, if the concurrent transaction
+ * executed both "DELETE FROM pg_class" and "INSERT INTO pg_class", our caller
+ * can find the successor tuple.
  *
  * Readers of inplace-updated fields expect changes to those fields are
  * durable.  For example, vac_truncate_clog() reads datfrozenxid from
