@@ -368,12 +368,15 @@ pg_fe_cleanup_oauth_flow(PGconn *conn)
 
 /*
  * Macros for manipulating actx->errbuf. actx_error() translates and formats a
- * string for you; actx_error_str() appends a string directly without
- * translation.
+ * string for you, actx_error_internal() is the untranslated equivalent, and
+ * actx_error_str() appends a string directly (also without translation).
  */
 
 #define actx_error(ACTX, FMT, ...) \
 	appendPQExpBuffer(&(ACTX)->errbuf, libpq_gettext(FMT), ##__VA_ARGS__)
+
+#define actx_error_internal(ACTX, FMT, ...) \
+	appendPQExpBuffer(&(ACTX)->errbuf, FMT, ##__VA_ARGS__)
 
 #define actx_error_str(ACTX, S) \
 	appendPQExpBufferStr(&(ACTX)->errbuf, S)
@@ -462,6 +465,9 @@ struct oauth_parse
 #define oauth_parse_set_error(ctx, fmt, ...) \
 	appendPQExpBuffer((ctx)->errbuf, libpq_gettext(fmt), ##__VA_ARGS__)
 
+#define oauth_parse_set_error_internal(ctx, fmt, ...) \
+	appendPQExpBuffer((ctx)->errbuf, fmt, ##__VA_ARGS__)
+
 static void
 report_type_mismatch(struct oauth_parse *ctx)
 {
@@ -537,9 +543,9 @@ oauth_json_object_field_start(void *state, char *name, bool isnull)
 		if (ctx->active)
 		{
 			Assert(false);
-			oauth_parse_set_error(ctx,
-								  "internal error: started field '%s' before field '%s' was finished",
-								  name, ctx->active->name);
+			oauth_parse_set_error_internal(ctx,
+										   "internal error: started field \"%s\" before field \"%s\" was finished",
+										   name, ctx->active->name);
 			return JSON_SEM_ACTION_FAILED;
 		}
 
@@ -589,9 +595,9 @@ oauth_json_object_end(void *state)
 	if (!ctx->nested && ctx->active)
 	{
 		Assert(false);
-		oauth_parse_set_error(ctx,
-							  "internal error: field '%s' still active at end of object",
-							  ctx->active->name);
+		oauth_parse_set_error_internal(ctx,
+									   "internal error: field \"%s\" still active at end of object",
+									   ctx->active->name);
 		return JSON_SEM_ACTION_FAILED;
 	}
 
@@ -645,9 +651,9 @@ oauth_json_array_end(void *state)
 		if (ctx->nested != 2 || ctx->active->type != JSON_TOKEN_ARRAY_START)
 		{
 			Assert(false);
-			oauth_parse_set_error(ctx,
-								  "internal error: found unexpected array end while parsing field '%s'",
-								  ctx->active->name);
+			oauth_parse_set_error_internal(ctx,
+										   "internal error: found unexpected array end while parsing field \"%s\"",
+										   ctx->active->name);
 			return JSON_SEM_ACTION_FAILED;
 		}
 
@@ -700,9 +706,9 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			if (ctx->nested != 1)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: scalar target found at nesting level %d",
-									  ctx->nested);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: scalar target found at nesting level %d",
+											   ctx->nested);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
@@ -710,9 +716,9 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			if (*field->scalar)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: scalar field '%s' would be assigned twice",
-									  ctx->active->name);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: scalar field \"%s\" would be assigned twice",
+											   ctx->active->name);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
@@ -732,9 +738,9 @@ oauth_json_scalar(void *state, char *token, JsonTokenType type)
 			if (ctx->nested != 2)
 			{
 				Assert(false);
-				oauth_parse_set_error(ctx,
-									  "internal error: array member found at nesting level %d",
-									  ctx->nested);
+				oauth_parse_set_error_internal(ctx,
+											   "internal error: array member found at nesting level %d",
+											   ctx->nested);
 				return JSON_SEM_ACTION_FAILED;
 			}
 
@@ -1180,20 +1186,20 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = epoll_create1(EPOLL_CLOEXEC);
 	if (actx->mux < 0)
 	{
-		actx_error(actx, "failed to create epoll set: %m");
+		actx_error_internal(actx, "failed to create epoll set: %m");
 		return false;
 	}
 
 	actx->timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
 	if (actx->timerfd < 0)
 	{
-		actx_error(actx, "failed to create timerfd: %m");
+		actx_error_internal(actx, "failed to create timerfd: %m");
 		return false;
 	}
 
 	if (epoll_ctl(actx->mux, EPOLL_CTL_ADD, actx->timerfd, &ev) < 0)
 	{
-		actx_error(actx, "failed to add timerfd to epoll set: %m");
+		actx_error_internal(actx, "failed to add timerfd to epoll set: %m");
 		return false;
 	}
 
@@ -1202,8 +1208,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->mux = kqueue();
 	if (actx->mux < 0)
 	{
-		/*- translator: the term "kqueue" (kernel queue) should not be translated */
-		actx_error(actx, "failed to create kqueue: %m");
+		actx_error_internal(actx, "failed to create kqueue: %m");
 		return false;
 	}
 
@@ -1216,7 +1221,7 @@ setup_multiplexer(struct async_ctx *actx)
 	actx->timerfd = kqueue();
 	if (actx->timerfd < 0)
 	{
-		actx_error(actx, "failed to create timer kqueue: %m");
+		actx_error_internal(actx, "failed to create timer kqueue: %m");
 		return false;
 	}
 
@@ -1260,7 +1265,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
 			return -1;
 	}
 
@@ -1277,15 +1282,15 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 		switch (op)
 		{
 			case EPOLL_CTL_ADD:
-				actx_error(actx, "could not add to epoll set: %m");
+				actx_error_internal(actx, "could not add to epoll set: %m");
 				break;
 
 			case EPOLL_CTL_DEL:
-				actx_error(actx, "could not delete from epoll set: %m");
+				actx_error_internal(actx, "could not delete from epoll set: %m");
 				break;
 
 			default:
-				actx_error(actx, "could not update epoll set: %m");
+				actx_error_internal(actx, "could not update epoll set: %m");
 		}
 
 		return -1;
@@ -1335,7 +1340,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			break;
 
 		default:
-			actx_error(actx, "unknown libcurl socket operation: %d", what);
+			actx_error_internal(actx, "unknown libcurl socket operation: %d", what);
 			return -1;
 	}
 
@@ -1345,7 +1350,7 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 	res = kevent(actx->mux, ev, nev, ev_out, nev, &timeout);
 	if (res < 0)
 	{
-		actx_error(actx, "could not modify kqueue: %m");
+		actx_error_internal(actx, "could not modify kqueue: %m");
 		return -1;
 	}
 
@@ -1369,10 +1374,10 @@ register_socket(CURL *curl, curl_socket_t socket, int what, void *ctx,
 			switch (what)
 			{
 				case CURL_POLL_REMOVE:
-					actx_error(actx, "could not delete from kqueue: %m");
+					actx_error_internal(actx, "could not delete from kqueue: %m");
 					break;
 				default:
-					actx_error(actx, "could not add to kqueue: %m");
+					actx_error_internal(actx, "could not add to kqueue: %m");
 			}
 			return -1;
 		}
@@ -1421,7 +1426,7 @@ comb_multiplexer(struct async_ctx *actx)
 	 */
 	if (kevent(actx->mux, NULL, 0, &ev, 1, &timeout) < 0)
 	{
-		actx_error(actx, "could not comb kqueue: %m");
+		actx_error_internal(actx, "could not comb kqueue: %m");
 		return false;
 	}
 
@@ -1471,7 +1476,7 @@ set_timer(struct async_ctx *actx, long timeout)
 
 	if (timerfd_settime(actx->timerfd, 0 /* no flags */ , &spec, NULL) < 0)
 	{
-		actx_error(actx, "setting timerfd to %ld: %m", timeout);
+		actx_error_internal(actx, "setting timerfd to %ld: %m", timeout);
 		return false;
 	}
 
@@ -1501,14 +1506,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error(actx, "deleting kqueue timer: %m");
+		actx_error_internal(actx, "deleting kqueue timer: %m");
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_DELETE, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0 && errno != ENOENT)
 	{
-		actx_error(actx, "removing kqueue timer from multiplexer: %m");
+		actx_error_internal(actx, "removing kqueue timer from multiplexer: %m");
 		return false;
 	}
 
@@ -1519,14 +1524,14 @@ set_timer(struct async_ctx *actx, long timeout)
 	EV_SET(&ev, 1, EVFILT_TIMER, (EV_ADD | EV_ONESHOT), 0, timeout, 0);
 	if (kevent(actx->timerfd, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error(actx, "setting kqueue timer to %ld: %m", timeout);
+		actx_error_internal(actx, "setting kqueue timer to %ld: %m", timeout);
 		return false;
 	}
 
 	EV_SET(&ev, actx->timerfd, EVFILT_READ, EV_ADD, 0, 0, 0);
 	if (kevent(actx->mux, &ev, 1, NULL, 0, NULL) < 0)
 	{
-		actx_error(actx, "adding kqueue timer to multiplexer: %m");
+		actx_error_internal(actx, "adding kqueue timer to multiplexer: %m");
 		return false;
 	}
 
