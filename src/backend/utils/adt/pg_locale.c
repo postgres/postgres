@@ -1626,21 +1626,6 @@ pg_towlower(pg_wchar wc, pg_locale_t locale)
 }
 
 /*
- * char_is_cased()
- *
- * Fuzzy test of whether the given char is case-varying or not. The argument
- * is a single byte, so in a multibyte encoding, just assume any non-ASCII
- * char is case-varying.
- */
-bool
-char_is_cased(char ch, pg_locale_t locale)
-{
-	if (locale->ctype == NULL)
-		return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z');
-	return locale->ctype->char_is_cased(ch, locale);
-}
-
-/*
  * Return required encoding ID for the given locale, or -1 if any encoding is
  * valid for the locale.
  */

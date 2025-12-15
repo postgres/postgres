@@ -125,9 +125,6 @@ struct ctype_methods
 	bool		(*wc_iscased) (pg_wchar wc, pg_locale_t locale);
 	pg_wchar	(*wc_toupper) (pg_wchar wc, pg_locale_t locale);
 	pg_wchar	(*wc_tolower) (pg_wchar wc, pg_locale_t locale);
-
-	/* required */
-	bool		(*char_is_cased) (char ch, pg_locale_t locale);
 };
 
 /*
@@ -178,7 +175,6 @@ extern pg_locale_t pg_newlocale_from_collation(Oid collid);
 
 extern char *get_collation_actual_version(char collprovider, const char *collcollate);
 
-extern bool char_is_cased(char ch, pg_locale_t locale);
 extern size_t pg_strlower(char *dst, size_t dstsize,
 						  const char *src, ssize_t srclen,
 						  pg_locale_t locale);
