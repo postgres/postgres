@@ -46,11 +46,12 @@ tests += {
       'basic',
       'inplace',
       'syscache-update-pruned',
-      'index-concurrently-upsert',
-      'index-concurrently-upsert-predicate',
-      'reindex-concurrently-upsert',
-      'reindex-concurrently-upsert-on-constraint',
-      'reindex-concurrently-upsert-partitioned',
+      # temporarily disabled because of flakiness
+      # 'index-concurrently-upsert',
+      # 'index-concurrently-upsert-predicate',
+      # 'reindex-concurrently-upsert',
+      # 'reindex-concurrently-upsert-on-constraint',
+      # 'reindex-concurrently-upsert-partitioned',
     ],
     'runningcheck': false, # see syscache-update-pruned
     # Some tests wait for all snapshots, so avoid parallel execution

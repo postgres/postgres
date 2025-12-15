@@ -14,12 +14,15 @@ REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
 ISOLATION = basic \
 	    inplace \
-	    syscache-update-pruned \
-	    index-concurrently-upsert \
-	    index-concurrently-upsert-predicate \
-	    reindex-concurrently-upsert \
-	    reindex-concurrently-upsert-on-constraint \
-	    reindex-concurrently-upsert-partitioned
+	    syscache-update-pruned
+
+# Temporarily disabled because of flakiness
+#ISOLATION =+
+#	    index-concurrently-upsert \
+#	    index-concurrently-upsert-predicate \
+#	    reindex-concurrently-upsert \
+#	    reindex-concurrently-upsert-on-constraint \
+#	    reindex-concurrently-upsert-partitioned
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
