@@ -361,7 +361,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	relation_close(indexRel, AccessShareLock);
+	index_close(indexRel, AccessShareLock);
 
 	return (Datum) 0;
 }
