@@ -405,15 +405,13 @@ postgres=# SELECT * from pg_logical_slot_get_changes('regression_slot', NULL, NU
       periodic synchronization of failover slots, they can also be manually
       synchronized using the <link linkend="pg-sync-replication-slots">
       <function>pg_sync_replication_slots</function></link> function on the standby.
-      However, this function is primarily intended for testing and debugging and
-      should be used with caution. Unlike automatic synchronization, it does not
-      include cyclic retries, making it more prone to synchronization failures,
-      particularly during initial sync scenarios where the required WAL files
-      or catalog rows for the slot might have already been removed or are at risk
-      of being removed on the standby. In contrast, automatic synchronization
-      via <varname>sync_replication_slots</varname> provides continuous slot
-      updates, enabling seamless failover and supporting high availability.
-      Therefore, it is the recommended method for synchronizing slots.
+      However, unlike automatic synchronization, it does not perform incremental
+      updates. It retries cyclically until all the failover slots that existed on
+      primary at the start of the function call are synchronized. Any slots created
+      after the function begins will not be synchronized. In contrast, automatic
+      synchronization via <varname>sync_replication_slots</varname> provides
+      continuous slot updates, enabling seamless failover and supporting high
+      availability. Therefore, it is the recommended method for synchronizing slots.
      </para>
     </note>
 
