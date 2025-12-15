@@ -331,7 +331,8 @@ test_custom_stats_var_from_serialized_data(const PgStat_HashKey *key,
 	/* Read data from the secondary statistics file, at the specified offset */
 	if (fseeko(fd_description, offset, SEEK_SET) != 0)
 	{
-		elog(WARNING, "failed to seek to offset %ld in description file", offset);
+		elog(WARNING, "could not seek in file \"%s\": %m",
+			 TEST_CUSTOM_AUX_DATA_DESC);
 		return false;
 	}
 
