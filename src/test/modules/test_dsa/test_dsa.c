@@ -21,7 +21,7 @@
 PG_MODULE_MAGIC;
 
 static void
-init_tranche(void *ptr)
+init_tranche(void *ptr, void *arg)
 {
 	int		   *tranche_id = (int *) ptr;
 
@@ -39,7 +39,7 @@ test_dsa_basic(PG_FUNCTION_ARGS)
 	dsa_pointer p[100];
 
 	tranche_id = GetNamedDSMSegment("test_dsa", sizeof(int),
-									init_tranche, &found);
+									init_tranche, &found, NULL);
 
 	a = dsa_create(*tranche_id);
 	for (int i = 0; i < 100; i++)
@@ -80,7 +80,7 @@ test_dsa_resowners(PG_FUNCTION_ARGS)
 	ResourceOwner childowner;
 
 	tranche_id = GetNamedDSMSegment("test_dsa", sizeof(int),
-									init_tranche, &found);
+									init_tranche, &found, NULL);
 
 	/* Create DSA in parent resource owner */
 	a = dsa_create(*tranche_id);

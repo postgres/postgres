@@ -44,9 +44,12 @@ static const dshash_parameters dsh_params = {
 };
 
 static void
-init_tdr_dsm(void *ptr)
+init_tdr_dsm(void *ptr, void *arg)
 {
 	TestDSMRegistryStruct *dsm = (TestDSMRegistryStruct *) ptr;
+
+	if ((int) (intptr_t) arg != 5432)
+		elog(ERROR, "unexpected arg value %d", (int) (intptr_t) arg);
 
 	LWLockInitialize(&dsm->lck, LWLockNewTrancheId("test_dsm_registry"));
 	dsm->val = 0;
@@ -60,7 +63,7 @@ tdr_attach_shmem(void)
 	tdr_dsm = GetNamedDSMSegment("test_dsm_registry_dsm",
 								 sizeof(TestDSMRegistryStruct),
 								 init_tdr_dsm,
-								 &found);
+								 &found, (void *) (intptr_t) 5432);
 
 	if (tdr_dsa == NULL)
 		tdr_dsa = GetNamedDSA("test_dsm_registry_dsa", &found);
