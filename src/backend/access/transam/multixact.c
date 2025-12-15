@@ -1262,6 +1262,11 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
 				 errmsg("MultiXact %u has invalid next offset", multi)));
+	if (nextMXOffset == offset)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("MultiXact %u with offset (%" PRIu64 ") has zero members",
+						multi, offset)));
 	if (nextMXOffset < offset)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),

@@ -146,11 +146,14 @@ AllocOldMultiXactRead(char *pgdata, MultiXactId nextMulti,
  * - Because there's no concurrent activity, we don't need to worry about
  *   locking and some corner cases.
  *
- * - Don't bail out on invalid entries.  If the server crashes, it can leave
- *   invalid or half-written entries on disk.  Such multixids won't appear
- *   anywhere else on disk, so the server will never try to read them.  During
- *   upgrade, however, we scan through all multixids in order, and will
- *   encounter such invalid but unreferenced multixids too.
+ * - Don't bail out on invalid entries that could've been left behind after a
+ *   server crash.  Such multixids won't appear anywhere else on disk, so the
+ *   server will never try to read them.  During upgrade, however, we scan
+ *   through all multixids in order, and will encounter such invalid but
+ *   unreferenced multixids too.  We try to distinguish between entries that
+ *   are invalid because of missed disk writes, like entries with zeros in
+ *   offsets or members, and entries that look corrupt in other ways that
+ *   should not happen even on a server crash.
  *
  * Returns true on success, false if the multixact was invalid.
  */
@@ -211,7 +214,7 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 
 	if (offset == 0)
 	{
-		/* Invalid entry */
+		/* Invalid entry.  These can be left behind on a server crash. */
 		return false;
 	}
 
@@ -247,10 +250,28 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 
 	if (nextMXOffset == 0)
 	{
-		/* Invalid entry */
+		/* Invalid entry.  These can be left behind on a server crash. */
 		return false;
 	}
 	length = nextMXOffset - offset;
+
+	if (length < 0)
+	{
+		/*
+		 * This entry is corrupt.  We should not see these even after a server
+		 * crash.
+		 */
+		pg_fatal("multixact %u has an invalid length (%d)", multi, length);
+	}
+	if (length == 0)
+	{
+		/*
+		 * Invalid entry.  The server never writes multixids with zero
+		 * members, but it's not clear if a server crash or using pg_resetwal
+		 * could leave them behind.  Seems best to accept them.
+		 */
+		return false;
+	}
 
 	/* read the members */
 	prev_pageno = -1;
@@ -284,10 +305,11 @@ GetOldMultiXactIdSingleMember(OldMultiXactReader *state, MultiXactId multi,
 
 			/*
 			 * Otherwise this is an invalid entry that should not be
-			 * referenced from anywhere in the heap.  We could return 'false'
-			 * here, but we prefer to continue reading the members and
-			 * converting them the best we can, to preserve evidence in case
-			 * this is corruption that should not happen.
+			 * referenced from anywhere in the heap.  These can be left behind
+			 * on a server crash.  We could return 'false' here, but we prefer
+			 * to continue reading the members and converting them the best we
+			 * can, to preserve evidence in case this is corruption that
+			 * should not have happened.
 			 */
 		}
 
