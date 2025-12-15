@@ -199,3 +199,35 @@ under a reader holding a pin.  A reader of a heap_fetch() result tuple may
 witness a torn read.  Current inplace-updated fields are aligned and are no
 wider than four bytes, and current readers don't need consistency across
 fields.  Hence, they get by with just fetching each field once.
+
+During logical decoding, caches reflect an inplace update no later than the
+next XLOG_XACT_INVALIDATIONS.  That record witnesses the end of a command.
+Tuples of its cmin are then visible to decoding, as are inplace updates of any
+lower LSN.  Inplace updates of a higher LSN may also be visible, even if those
+updates would have been invisible to a non-historic snapshot matching
+decoding's historic snapshot.  (In other words, decoding may see inplace
+updates that were not visible to a similar snapshot taken during original
+transaction processing.)  That's a consequence of inplace update violating
+MVCC: there are no snapshot-specific versions of inplace-updated values.  This
+all makes it hard to reason about inplace-updated column reads during logical
+decoding, but the behavior does suffice for relhasindex.  A relhasindex=t in
+CREATE INDEX becomes visible no later than the new pg_index row.  While it may
+be visible earlier, that's harmless.  Finding zero indexes despite
+relhasindex=t is normal in more cases than this, e.g. after DROP INDEX.
+Example of a case that meaningfully reacts to the inplace inval:
+
+CREATE TABLE cat (c int) WITH (user_catalog_table = true);
+CREATE TABLE normal (d int);
+...
+CREATE INDEX ON cat (c)\; INSERT INTO normal VALUES (1);
+
+If the output plugin reads "cat" during decoding of the INSERT, it's fair to
+want that read to see relhasindex=t and use the new index.
+
+An alternative would be to have decoding of XLOG_HEAP_INPLACE immediately
+execute its invals.  That would behave more like invals during original
+transaction processing.  It would remove the decoding-specific delay in e.g. a
+decoding plugin witnessing a relfrozenxid change.  However, a good use case
+for that is unlikely, since the plugin would still witness relfrozenxid
+changes prematurely.  Hence, inplace update takes the trivial approach of
+delegating to XLOG_XACT_INVALIDATIONS.

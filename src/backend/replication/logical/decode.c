@@ -521,18 +521,9 @@ heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 			/*
 			 * Inplace updates are only ever performed on catalog tuples and
-			 * can, per definition, not change tuple visibility.  Inplace
-			 * updates don't affect storage or interpretation of table rows,
-			 * so they don't affect logicalrep_write_tuple() outcomes.  Hence,
-			 * we don't process invalidations from the original operation.  If
-			 * inplace updates did affect those things, invalidations wouldn't
-			 * make it work, since there are no snapshot-specific versions of
-			 * inplace-updated values.  Since we also don't decode catalog
-			 * tuples, we're not interested in the record's contents.
-			 *
-			 * WAL contains likely-unnecessary commit-time invals from the
-			 * CacheInvalidateHeapTuple() call in
-			 * heap_inplace_update_and_unlock(). Excess invalidation is safe.
+			 * can, per definition, not change tuple visibility.  Since we
+			 * also don't decode catalog tuples, we're not interested in the
+			 * record's contents.
 			 */
 			break;
 
