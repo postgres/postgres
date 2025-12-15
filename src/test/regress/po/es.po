@@ -1,0 +1,159 @@
+# Spanish message translation file for regress test library
+#
+# Copyright (C) 2025 PostgreSQL Global Development Group
+# This file is distributed under the same license as the regress (PostgreSQL) package.
+#
+# Tom Lane <tgl@sss.pgh.pa.us>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: regress (PostgreSQL) 19\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2025-12-08 13:57-0500\n"
+"PO-Revision-Date: 2025-11-19 19:01-0500\n"
+"Last-Translator: Tom Lane <tgl@sss.pgh.pa.us>\n"
+"Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: regress.c:202
+#, c-format
+msgid "invalid input syntax for type %s: \"%s\""
+msgstr "la sintaxis de entrada no es válida para tipo %s: «%s»"
+
+#: regress.c:839
+#, c-format
+msgid "test_inline_in_from_support_func called with %d args but expected 3"
+msgstr ""
+
+#: regress.c:847 regress.c:863
+#, c-format
+msgid "test_inline_in_from_support_func called with non-Const parameters"
+msgstr ""
+
+#: regress.c:854 regress.c:870
+#, c-format
+msgid "test_inline_in_from_support_func called with non-TEXT parameters"
+msgstr ""
+
+#: regress.c:903
+#, c-format
+msgid "test_inline_in_from_support_func parsed to more than one node"
+msgstr ""
+
+#: regress.c:914
+#, c-format
+msgid "test_inline_in_from_support_func rewrote to more than one node"
+msgstr ""
+
+#: regress.c:921
+#, c-format
+msgid "test_inline_in_from_support_func didn't parse to a Query"
+msgstr ""
+
+#: regress.c:1028
+#, c-format
+msgid "invalid source encoding name \"%s\""
+msgstr "la codificación de origen «%s» no es válida"
+
+#: regress.c:1033
+#, c-format
+msgid "invalid destination encoding name \"%s\""
+msgstr "la codificación de destino «%s» no es válida"
+
+#: regress.c:1078
+#, c-format
+msgid "default conversion function for encoding \"%s\" to \"%s\" does not exist"
+msgstr "no existe el procedimiento por omisión de conversión desde la codificación «%s» a «%s»"
+
+#: regress.c:1085
+#, c-format
+msgid "out of memory"
+msgstr "memoria agotada"
+
+#: regress.c:1086
+#, c-format
+msgid "String of %d bytes is too long for encoding conversion."
+msgstr "La cadena de %d bytes es demasiado larga para la recodificación."
+
+#: regress.c:1175
+#, c-format
+msgid "translated PRId64 = %<PRId64>"
+msgstr "traducido PRId64 = %<PRId64>"
+
+#: regress.c:1177
+#, c-format
+msgid "translated PRId32 = %<PRId32>"
+msgstr "traducido PRId32 = %<PRId32>"
+
+#: regress.c:1179
+#, c-format
+msgid "translated PRIdMAX = %<PRIdMAX>"
+msgstr "traducido PRIdMAX = %<PRIdMAX>"
+
+#: regress.c:1181
+#, c-format
+msgid "translated PRIdPTR = %<PRIdPTR>"
+msgstr "traducido PRIdPTR = %<PRIdPTR>"
+
+#: regress.c:1184
+#, c-format
+msgid "translated PRIu64 = %<PRIu64>"
+msgstr "traducido PRIu64 = %<PRIu64>"
+
+#: regress.c:1186
+#, c-format
+msgid "translated PRIu32 = %<PRIu32>"
+msgstr "traducido PRIu32 = %<PRIu32>"
+
+#: regress.c:1188
+#, c-format
+msgid "translated PRIuMAX = %<PRIuMAX>"
+msgstr "traducido PRIuMAX = %<PRIuMAX>"
+
+#: regress.c:1190
+#, c-format
+msgid "translated PRIuPTR = %<PRIuPTR>"
+msgstr "traducido PRIuPTR = %<PRIuPTR>"
+
+#: regress.c:1193
+#, c-format
+msgid "translated PRIx64 = %<PRIx64>"
+msgstr "traducido PRIx64 = %<PRIx64>"
+
+#: regress.c:1195
+#, c-format
+msgid "translated PRIx32 = %<PRIx32>"
+msgstr "traducido PRIx32 = %<PRIx32>"
+
+#: regress.c:1197
+#, c-format
+msgid "translated PRIxMAX = %<PRIxMAX>"
+msgstr "traducido PRIxMAX = %<PRIxMAX>"
+
+#: regress.c:1199
+#, c-format
+msgid "translated PRIxPTR = %<PRIxPTR>"
+msgstr "traducido PRIxPTR = %<PRIxPTR>"
+
+#: regress.c:1202
+#, c-format
+msgid "translated PRIX64 = %<PRIX64>"
+msgstr "traducido PRIX64 = %<PRIX64>"
+
+#: regress.c:1204
+#, c-format
+msgid "translated PRIX32 = %<PRIX32>"
+msgstr "traducido PRIX32 = %<PRIX32>"
+
+#: regress.c:1206
+#, c-format
+msgid "translated PRIXMAX = %<PRIXMAX>"
+msgstr "traducido PRIXMAX = %<PRIXMAX>"
+
+#: regress.c:1208
+#, c-format
+msgid "translated PRIXPTR = %<PRIXPTR>"
+msgstr "traducido PRIXPTR = %<PRIXPTR>"

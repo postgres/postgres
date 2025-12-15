@@ -1179,55 +1179,50 @@ test_translation(PG_FUNCTION_ARGS)
 		 * ensure that the nls.sql regression test will work.
 		 */
 #if defined(__sun__)
-		setenv("LANGUAGE", "C.UTF-8:C", 1);
+		setenv("LANGUAGE", "es_ES.UTF-8:es", 1);
 #endif
 		pg_bindtextdomain(TEXTDOMAIN);
 		inited = true;
 	}
+
+	ereport(NOTICE,
+			errmsg("translated PRId64 = %" PRId64, (int64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRId32 = %" PRId32, (int32) -1234));
+	ereport(NOTICE,
+			errmsg("translated PRIdMAX = %" PRIdMAX, (intmax_t) -5678));
+	ereport(NOTICE,
+			errmsg("translated PRIdPTR = %" PRIdPTR, (intptr_t) 9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIu64 = %" PRIu64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIu32 = %" PRIu32, (uint32) 1234));
+	ereport(NOTICE,
+			errmsg("translated PRIuMAX = %" PRIuMAX, (uintmax_t) 5678));
+	ereport(NOTICE,
+			errmsg("translated PRIuPTR = %" PRIuPTR, (uintptr_t) 9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIx64 = %" PRIx64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIx32 = %" PRIx32, (uint32) 1234));
+	ereport(NOTICE,
+			errmsg("translated PRIxMAX = %" PRIxMAX, (uintmax_t) 5678));
+	ereport(NOTICE,
+			errmsg("translated PRIxPTR = %" PRIxPTR, (uintptr_t) 9999));
+
+	ereport(NOTICE,
+			errmsg("translated PRIX64 = %" PRIX64, (uint64) 424242424242));
+	ereport(NOTICE,
+			errmsg("translated PRIX32 = %" PRIX32, (uint32) 1234));
+	ereport(NOTICE,
+			errmsg("translated PRIXMAX = %" PRIXMAX, (uintmax_t) 5678));
+	ereport(NOTICE,
+			errmsg("translated PRIXPTR = %" PRIXPTR, (uintptr_t) 9999));
 #else
 	elog(NOTICE, "NLS is not enabled");
-
-	/*
-	 * In non-NLS builds, we still run the ereport calls, to verify that the
-	 * platform's PRI* macros are compatible with snprintf.c.
-	 */
 #endif
-
-	ereport(NOTICE,
-			errmsg("untranslated PRId64 = %" PRId64, (int64) 424242424242));
-	ereport(NOTICE,
-			errmsg("untranslated PRId32 = %" PRId32, (int32) -1234));
-	ereport(NOTICE,
-			errmsg("untranslated PRIdMAX = %" PRIdMAX, (intmax_t) -123456789012));
-	ereport(NOTICE,
-			errmsg("untranslated PRIdPTR = %" PRIdPTR, (intptr_t) -9999));
-
-	ereport(NOTICE,
-			errmsg("untranslated PRIu64 = %" PRIu64, (uint64) 424242424242));
-	ereport(NOTICE,
-			errmsg("untranslated PRIu32 = %" PRIu32, (uint32) -1234));
-	ereport(NOTICE,
-			errmsg("untranslated PRIuMAX = %" PRIuMAX, (uintmax_t) 123456789012));
-	ereport(NOTICE,
-			errmsg("untranslated PRIuPTR = %" PRIuPTR, (uintptr_t) 9999));
-
-	ereport(NOTICE,
-			errmsg("untranslated PRIx64 = %" PRIx64, (uint64) 424242424242));
-	ereport(NOTICE,
-			errmsg("untranslated PRIx32 = %" PRIx32, (uint32) -1234));
-	ereport(NOTICE,
-			errmsg("untranslated PRIxMAX = %" PRIxMAX, (uintmax_t) 123456789012));
-	ereport(NOTICE,
-			errmsg("untranslated PRIxPTR = %" PRIxPTR, (uintptr_t) 9999));
-
-	ereport(NOTICE,
-			errmsg("untranslated PRIX64 = %" PRIX64, (uint64) 424242424242));
-	ereport(NOTICE,
-			errmsg("untranslated PRIX32 = %" PRIX32, (uint32) -1234));
-	ereport(NOTICE,
-			errmsg("untranslated PRIXMAX = %" PRIXMAX, (uintmax_t) 123456789012));
-	ereport(NOTICE,
-			errmsg("untranslated PRIXPTR = %" PRIXPTR, (uintptr_t) 9999));
 
 	PG_RETURN_VOID();
 }
