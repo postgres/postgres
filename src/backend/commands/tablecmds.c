@@ -13070,7 +13070,7 @@ QueueFKConstraintValidation(List **wqueue, Relation conrel, Relation fkrel,
 
 	/*
 	 * If the table at either end of the constraint is partitioned, we need to
-	 * recurse and handle every unvalidate constraint that is a child of this
+	 * recurse and handle every unvalidated constraint that is a child of this
 	 * constraint.
 	 */
 	if (fkrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE ||
