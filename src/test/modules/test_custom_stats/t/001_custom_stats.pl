@@ -29,13 +29,13 @@ $node->safe_psql('postgres', q(CREATE EXTENSION test_custom_fixed_stats));
 
 # Create entries for variable-sized stats.
 $node->safe_psql('postgres',
-	q(select test_custom_stats_var_create('entry1')));
+	q(select test_custom_stats_var_create('entry1', 'Test entry 1')));
 $node->safe_psql('postgres',
-	q(select test_custom_stats_var_create('entry2')));
+	q(select test_custom_stats_var_create('entry2', 'Test entry 2')));
 $node->safe_psql('postgres',
-	q(select test_custom_stats_var_create('entry3')));
+	q(select test_custom_stats_var_create('entry3', 'Test entry 3')));
 $node->safe_psql('postgres',
-	q(select test_custom_stats_var_create('entry4')));
+	q(select test_custom_stats_var_create('entry4', 'Test entry 4')));
 
 # Update counters: entry1=2, entry2=3, entry3=2, entry4=3, fixed=3
 $node->safe_psql('postgres',
@@ -65,16 +65,28 @@ $node->safe_psql('postgres', q(select test_custom_stats_fixed_update()));
 # Test data reports.
 my $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_var_report('entry1')));
-is($result, "entry1|2", "report for variable-sized data of entry1");
+is( $result,
+	"entry1|2|Test entry 1",
+	"report for variable-sized data of entry1");
+
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_var_report('entry2')));
-is($result, "entry2|3", "report for variable-sized data of entry2");
+is( $result,
+	"entry2|3|Test entry 2",
+	"report for variable-sized data of entry2");
+
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_var_report('entry3')));
-is($result, "entry3|2", "report for variable-sized data of entry3");
+is( $result,
+	"entry3|2|Test entry 3",
+	"report for variable-sized data of entry3");
+
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_var_report('entry4')));
-is($result, "entry4|3", "report for variable-sized data of entry4");
+is( $result,
+	"entry4|3|Test entry 4",
+	"report for variable-sized data of entry4");
+
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_fixed_report()));
 is($result, "3|", "report for fixed-sized stats");
@@ -97,7 +109,16 @@ $node->start();
 
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_var_report('entry1')));
-is($result, "entry1|2", "variable-sized stats persist after clean restart");
+is( $result,
+	"entry1|2|Test entry 1",
+	"variable-sized stats persist after clean restart");
+
+$result = $node->safe_psql('postgres',
+	q(select * from test_custom_stats_var_report('entry2')));
+is( $result,
+	"entry2|3|Test entry 2",
+	"variable-sized stats persist after clean restart");
+
 $result = $node->safe_psql('postgres',
 	q(select * from test_custom_stats_fixed_report()));
 is($result, "3|", "fixed-sized stats persist after clean restart");
