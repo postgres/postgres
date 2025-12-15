@@ -43,8 +43,7 @@ extern void CacheInvalidateHeapTuple(Relation relation,
 									 HeapTuple tuple,
 									 HeapTuple newtuple);
 extern void CacheInvalidateHeapTupleInplace(Relation relation,
-											HeapTuple tuple,
-											HeapTuple newtuple);
+											HeapTuple key_equivalent_tuple);
 
 extern void CacheInvalidateCatalog(Oid catalogId);
 

@@ -6360,15 +6360,17 @@ heap_inplace_lock(Relation relation,
 	Assert(BufferIsValid(buffer));
 
 	/*
-	 * Construct shared cache inval if necessary.  Because we pass a tuple
-	 * version without our own inplace changes or inplace changes other
-	 * sessions complete while we wait for locks, inplace update mustn't
-	 * change catcache lookup keys.  But we aren't bothering with index
-	 * updates either, so that's true a fortiori.  After LockBuffer(), it
-	 * would be too late, because this might reach a
-	 * CatalogCacheInitializeCache() that locks "buffer".
+	 * Register shared cache invals if necessary.  Other sessions may finish
+	 * inplace updates of this tuple between this step and LockTuple().  Since
+	 * inplace updates don't change cache keys, that's harmless.
+	 *
+	 * While it's tempting to register invals only after confirming we can
+	 * return true, the following obstacle precludes reordering steps that
+	 * way.  Registering invals might reach a CatalogCacheInitializeCache()
+	 * that locks "buffer".  That would hang indefinitely if running after our
+	 * own LockBuffer().  Hence, we must register invals before LockBuffer().
 	 */
-	CacheInvalidateHeapTupleInplace(relation, oldtup_ptr, NULL);
+	CacheInvalidateHeapTupleInplace(relation, oldtup_ptr);
 
 	LockTuple(relation, &oldtup.t_self, InplaceUpdateTupleLock);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
@@ -6606,10 +6608,6 @@ heap_inplace_update_and_unlock(Relation relation,
 	/*
 	 * Send invalidations to shared queue.  SearchSysCacheLocked1() assumes we
 	 * do this before UnlockTuple().
-	 *
-	 * If we're mutating a tuple visible only to this transaction, there's an
-	 * equivalent transactional inval from the action that created the tuple,
-	 * and this inval is superfluous.
 	 */
 	AtInplace_Inval();
 
@@ -6620,10 +6618,10 @@ heap_inplace_update_and_unlock(Relation relation,
 	AcceptInvalidationMessages();	/* local processing of just-sent inval */
 
 	/*
-	 * Queue a transactional inval.  The immediate invalidation we just sent
-	 * is the only one known to be necessary.  To reduce risk from the
-	 * transition to immediate invalidation, continue sending a transactional
-	 * invalidation like we've long done.  Third-party code might rely on it.
+	 * Queue a transactional inval, for logical decoding and for third-party
+	 * code that might have been relying on it since long before inplace
+	 * update adopted immediate invalidation.  See README.tuplock section
+	 * "Reading inplace-updated columns" for logical decoding details.
 	 */
 	if (!IsBootstrapProcessingMode())
 		CacheInvalidateHeapTuple(relation, tuple, NULL);
