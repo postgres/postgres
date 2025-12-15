@@ -6116,7 +6116,7 @@ heap_finish_speculative(Relation relation, const ItemPointerData *tid)
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
-	ItemId		lp = NULL;
+	ItemId		lp;
 	HeapTupleHeader htup;
 
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
@@ -6124,10 +6124,10 @@ heap_finish_speculative(Relation relation, const ItemPointerData *tid)
 	page = BufferGetPage(buffer);
 
 	offnum = ItemPointerGetOffsetNumber(tid);
-	if (PageGetMaxOffsetNumber(page) >= offnum)
-		lp = PageGetItemId(page, offnum);
-
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
+	if (offnum < 1 || offnum > PageGetMaxOffsetNumber(page))
+		elog(ERROR, "offnum out of range");
+	lp = PageGetItemId(page, offnum);
+	if (!ItemIdIsNormal(lp))
 		elog(ERROR, "invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);

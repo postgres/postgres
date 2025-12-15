@@ -2148,6 +2148,9 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		else
 			offnum = P_FIRSTDATAKEY(opaque);
 
+		if (offnum < 1 || offnum > PageGetMaxOffsetNumber(page))
+			elog(PANIC, "offnum out of range");
+
 		itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 		blkno = BTreeTupleGetDownLink(itup);
 
