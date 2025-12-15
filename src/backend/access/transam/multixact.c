@@ -1503,7 +1503,10 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 
 		if (!TransactionIdIsValid(*xactptr))
 		{
-			/* Corner case 2: we must be looking at unused slot zero */
+			/*
+			 * Corner case 2: offset must have wrapped around to unused slot
+			 * zero.
+			 */
 			Assert(offset == 0);
 			continue;
 		}
