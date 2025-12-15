@@ -150,23 +150,19 @@ fi])# PGAC_TYPE_128BIT_INT
 
 
 
-# PGAC_C_STATIC_ASSERT
-# --------------------
-# Check if the C compiler understands _Static_assert(),
-# and define HAVE__STATIC_ASSERT if so.
-#
-# We actually check the syntax ({ _Static_assert(...) }), because we need
-# gcc-style compound expressions to be able to wrap the thing into macros.
-AC_DEFUN([PGAC_C_STATIC_ASSERT],
-[AC_CACHE_CHECK(for _Static_assert, pgac_cv__static_assert,
+# PGAC_C_STATEMENT_EXPRESSIONS
+# ----------------------------
+# Check if the C compiler understands GCC statement expressions.
+AC_DEFUN([PGAC_C_STATEMENT_EXPRESSIONS],
+[AC_CACHE_CHECK(for statement expressions, pgac_cv_statement_expressions,
 [AC_LINK_IFELSE([AC_LANG_PROGRAM([],
 [({ _Static_assert(1, "foo"); })])],
-[pgac_cv__static_assert=yes],
-[pgac_cv__static_assert=no])])
-if test x"$pgac_cv__static_assert" = xyes ; then
-AC_DEFINE(HAVE__STATIC_ASSERT, 1,
-          [Define to 1 if your compiler understands _Static_assert.])
-fi])# PGAC_C_STATIC_ASSERT
+[pgac_cv_statement_expressions=yes],
+[pgac_cv_statement_expressions=no])])
+if test x"$pgac_cv_statement_expressions" = xyes ; then
+AC_DEFINE(HAVE_STATEMENT_EXPRESSIONS, 1,
+          [Define to 1 if your compiler supports statement expressions.])
+fi])# PGAC_C_STATEMENT_EXPRESSIONS
 
 
 

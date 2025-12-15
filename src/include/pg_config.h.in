@@ -385,6 +385,9 @@
 /* Define to 1 if you have the `SSL_CTX_set_num_tickets' function. */
 #undef HAVE_SSL_CTX_SET_NUM_TICKETS
 
+/* Define to 1 if your compiler supports statement expressions. */
+#undef HAVE_STATEMENT_EXPRESSIONS
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -564,9 +567,6 @@
 
 /* Define to 1 if you have __get_cpuid_count. */
 #undef HAVE__GET_CPUID_COUNT
-
-/* Define to 1 if your compiler understands _Static_assert. */
-#undef HAVE__STATIC_ASSERT
 
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF

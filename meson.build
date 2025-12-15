@@ -1880,20 +1880,16 @@ if cc.compiles('''
 endif
 
 
-# Check if the C compiler understands _Static_assert(),
-# and define HAVE__STATIC_ASSERT if so.
-#
-# We actually check the syntax ({ _Static_assert(...) }), because we need
-# gcc-style compound expressions to be able to wrap the thing into macros.
+# Check if the C compiler supports GCC-style statement expressions.
 if cc.compiles('''
     int main(int arg, char **argv)
     {
         ({ _Static_assert(1, "foo"); });
     }
     ''',
-    name: '_Static_assert',
+    name: 'statement expressions',
     args: test_c_args)
-  cdata.set('HAVE__STATIC_ASSERT', 1)
+  cdata.set('HAVE_STATEMENT_EXPRESSIONS', 1)
 endif
 
 
