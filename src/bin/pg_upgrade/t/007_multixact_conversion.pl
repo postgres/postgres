@@ -26,8 +26,9 @@ my $tempdir = PostgreSQL::Test::Utils::tempdir;
 # upgrading them.  The workload is a mix of KEY SHARE locking queries
 # and UPDATEs, and commits and aborts, to generate a mix of multixids
 # with different statuses.  It consumes around 3000 multixids with
-# 30000 members.  That's enough to span more than one multixids
-# 'offsets' page, and more than one 'members' segment.
+# 60000 members in total.  That's enough to span more than one
+# multixids 'offsets' page, and more than one 'members' segment with
+# the default block size.
 #
 # The workload leaves behind a table called 'mxofftest' containing a
 # small number of rows referencing some of the generated multixids.
@@ -68,6 +69,12 @@ sub mxact_workload
 	# verbose by setting this.
 	my $verbose = 0;
 
+	# Bump the timeout on the connections to avoid false negatives on
+	# slow test systems. The timeout covers the whole duration that
+	# the connections are open rather than the individual queries.
+	my $connection_timeout_secs =
+	  4 * $PostgreSQL::Test::Utils::timeout_default;
+
 	# Open multiple connections to the database.  Start a transaction
 	# in each connection.
 	for (0 .. $nclients)
@@ -75,8 +82,10 @@ sub mxact_workload
 		# Use the psql binary from the new installation.  The
 		# BackgroundPsql functionality doesn't work with older psql
 		# versions.
-		my $conn = $binnode->background_psql('',
-			connstr => $node->connstr('postgres'));
+		my $conn = $binnode->background_psql(
+			'',
+			connstr => $node->connstr('postgres'),
+			timeout => $connection_timeout_secs);
 
 		$conn->query_safe("SET log_statement=none", verbose => $verbose)
 		  unless $verbose;
@@ -88,12 +97,14 @@ sub mxact_workload
 
 	# Run queries using cycling through the connections in a
 	# round-robin fashion.  We keep a transaction open in each
-	# connection at all times, and lock/update the rows.  With 10
+	# connection at all times, and lock/update the rows.  With 20
 	# connections, each SELECT FOR KEY SHARE query generates a new
-	# multixid, containing the 10 XIDs of all the transactions running
-	# at the time.
+	# multixid, containing the XIDs of all the transactions running at
+	# the time, ie. around 20 XIDs.
 	for (my $i = 0; $i < 3000; $i++)
 	{
+		note "generating multixids $i / 3000\n" if ($i % 100 == 0);
+
 		my $conn = $connections[ $i % $nclients ];
 
 		my $sql = ($i % $abort_every == 0) ? "ABORT" : "COMMIT";
