@@ -247,7 +247,8 @@ struct async_ctx
 	 * our entry point, errors have three parts:
 	 *
 	 * - errctx:	an optional static string, describing the global operation
-	 *				currently in progress. It'll be translated for you.
+	 *				currently in progress. Should be translated with
+	 *				libpq_gettext().
 	 *
 	 * - errbuf:	contains the actual error message. Generally speaking, use
 	 *				actx_error[_str] to manipulate this. This must be filled
@@ -475,20 +476,20 @@ report_type_mismatch(struct oauth_parse *ctx)
 	switch (ctx->active->type)
 	{
 		case JSON_TOKEN_STRING:
-			msgfmt = "field \"%s\" must be a string";
+			msgfmt = gettext_noop("field \"%s\" must be a string");
 			break;
 
 		case JSON_TOKEN_NUMBER:
-			msgfmt = "field \"%s\" must be a number";
+			msgfmt = gettext_noop("field \"%s\" must be a number");
 			break;
 
 		case JSON_TOKEN_ARRAY_START:
-			msgfmt = "field \"%s\" must be an array of strings";
+			msgfmt = gettext_noop("field \"%s\" must be an array of strings");
 			break;
 
 		default:
 			Assert(false);
-			msgfmt = "field \"%s\" has unexpected type";
+			msgfmt = gettext_noop("field \"%s\" has unexpected type");
 	}
 
 	oauth_parse_set_error(ctx, msgfmt, ctx->active->name);
@@ -1087,7 +1088,7 @@ parse_token_error(struct async_ctx *actx, struct token_error *err)
 	 * override the errctx if parsing explicitly fails.
 	 */
 	if (!result)
-		actx->errctx = "failed to parse token error response";
+		actx->errctx = libpq_gettext("failed to parse token error response");
 
 	return result;
 }
@@ -1115,8 +1116,8 @@ record_token_error(struct async_ctx *actx, const struct token_error *err)
 		if (response_code == 401)
 		{
 			actx_error(actx, actx->used_basic_auth
-					   ? "provider rejected the oauth_client_secret"
-					   : "provider requires client authentication, and no oauth_client_secret is set");
+					   ? gettext_noop("provider rejected the oauth_client_secret")
+					   : gettext_noop("provider requires client authentication, and no oauth_client_secret is set"));
 			actx_error_str(actx, " ");
 		}
 	}
@@ -2153,7 +2154,7 @@ finish_discovery(struct async_ctx *actx)
 	/*
 	 * Pull the fields we care about from the document.
 	 */
-	actx->errctx = "failed to parse OpenID discovery document";
+	actx->errctx = libpq_gettext("failed to parse OpenID discovery document");
 	if (!parse_provider(actx, &actx->provider))
 		return false;			/* error message already set */
 
@@ -2421,7 +2422,7 @@ finish_device_authz(struct async_ctx *actx)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = "failed to parse device authorization";
+		actx->errctx = libpq_gettext("failed to parse device authorization");
 		if (!parse_device_authz(actx, &actx->authz))
 			return false;		/* error message already set */
 
@@ -2509,7 +2510,7 @@ finish_token_request(struct async_ctx *actx, struct token *tok)
 	 */
 	if (response_code == 200)
 	{
-		actx->errctx = "failed to parse access token response";
+		actx->errctx = libpq_gettext("failed to parse access token response");
 		if (!parse_access_token(actx, tok))
 			return false;		/* error message already set */
 
@@ -2888,7 +2889,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 		switch (actx->step)
 		{
 			case OAUTH_STEP_INIT:
-				actx->errctx = "failed to fetch OpenID discovery document";
+				actx->errctx = libpq_gettext("failed to fetch OpenID discovery document");
 				if (!start_discovery(actx, conn_oauth_discovery_uri(conn)))
 					goto error_return;
 
@@ -2902,11 +2903,11 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				if (!check_issuer(actx, conn))
 					goto error_return;
 
-				actx->errctx = "cannot run OAuth device authorization";
+				actx->errctx = libpq_gettext("cannot run OAuth device authorization");
 				if (!check_for_device_flow(actx))
 					goto error_return;
 
-				actx->errctx = "failed to obtain device authorization";
+				actx->errctx = libpq_gettext("failed to obtain device authorization");
 				if (!start_device_authz(actx, conn))
 					goto error_return;
 
@@ -2917,7 +2918,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				if (!finish_device_authz(actx))
 					goto error_return;
 
-				actx->errctx = "failed to obtain access token";
+				actx->errctx = libpq_gettext("failed to obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
@@ -2968,7 +2969,7 @@ pg_fe_run_oauth_flow_impl(PGconn *conn)
 				break;
 
 			case OAUTH_STEP_WAIT_INTERVAL:
-				actx->errctx = "failed to obtain access token";
+				actx->errctx = libpq_gettext("failed to obtain access token");
 				if (!start_token_request(actx, conn))
 					goto error_return;
 
@@ -2994,7 +2995,7 @@ error_return:
 	 * also the documentation for struct async_ctx.
 	 */
 	if (actx->errctx)
-		appendPQExpBuffer(errbuf, "%s: ", libpq_gettext(actx->errctx));
+		appendPQExpBuffer(errbuf, "%s: ", actx->errctx);
 
 	if (PQExpBufferDataBroken(actx->errbuf))
 		appendPQExpBufferStr(errbuf, libpq_gettext("out of memory"));

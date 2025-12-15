@@ -1,6 +1,7 @@
 # src/interfaces/libpq/nls.mk
 CATALOG_NAME     = libpq
 GETTEXT_FILES    = fe-auth.c \
+                   fe-auth-oauth.c \
                    fe-auth-scram.c \
                    fe-cancel.c \
                    fe-connect.c \
