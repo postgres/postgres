@@ -99,8 +99,6 @@ static Selectivity like_selectivity(const char *patt, int pattlen,
 static Selectivity regex_selectivity(const char *patt, int pattlen,
 									 bool case_insensitive,
 									 int fixed_prefix_len);
-static int	pattern_char_isalpha(char c, bool is_multibyte,
-								 pg_locale_t locale);
 static Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 								  Oid collation);
 static Datum string_to_datum(const char *str, Oid datatype);
@@ -986,8 +984,8 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 
 static Pattern_Prefix_Status
-like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
-				  Const **prefix_const, Selectivity *rest_selec)
+like_fixed_prefix(Const *patt_const, Const **prefix_const,
+				  Selectivity *rest_selec)
 {
 	char	   *match;
 	char	   *patt;
@@ -995,33 +993,9 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 	Oid			typeid = patt_const->consttype;
 	int			pos,
 				match_pos;
-	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
-	pg_locale_t locale = 0;
 
 	/* the right-hand const is type text or bytea */
 	Assert(typeid == BYTEAOID || typeid == TEXTOID);
-
-	if (case_insensitive)
-	{
-		if (typeid == BYTEAOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("case insensitive matching not supported on type bytea")));
-
-		if (!OidIsValid(collation))
-		{
-			/*
-			 * This typically means that the parser could not resolve a
-			 * conflict of implicit collations, so report it that way.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_INDETERMINATE_COLLATION),
-					 errmsg("could not determine which collation to use for ILIKE"),
-					 errhint("Use the COLLATE clause to set the collation explicitly.")));
-		}
-
-		locale = pg_newlocale_from_collation(collation);
-	}
 
 	if (typeid != BYTEAOID)
 	{
@@ -1055,11 +1029,6 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 				break;
 		}
 
-		/* Stop if case-varying character (it's sort of a wildcard) */
-		if (case_insensitive &&
-			pattern_char_isalpha(patt[pos], is_multibyte, locale))
-			break;
-
 		match[match_pos++] = patt[pos];
 	}
 
@@ -1071,8 +1040,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		*prefix_const = string_to_bytea_const(match, match_pos);
 
 	if (rest_selec != NULL)
-		*rest_selec = like_selectivity(&patt[pos], pattlen - pos,
-									   case_insensitive);
+		*rest_selec = like_selectivity(&patt[pos], pattlen - pos, false);
 
 	pfree(patt);
 	pfree(match);
@@ -1082,6 +1050,112 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 		return Pattern_Prefix_Exact;	/* reached end of pattern, so exact */
 
 	if (match_pos > 0)
+		return Pattern_Prefix_Partial;
+
+	return Pattern_Prefix_None;
+}
+
+/*
+ * Case-insensitive variant of like_fixed_prefix().  Multibyte and
+ * locale-aware for detecting cased characters.
+ */
+static Pattern_Prefix_Status
+like_fixed_prefix_ci(Const *patt_const, Oid collation, Const **prefix_const,
+					 Selectivity *rest_selec)
+{
+	text	   *val = DatumGetTextPP(patt_const->constvalue);
+	Oid			typeid = patt_const->consttype;
+	int			nbytes = VARSIZE_ANY_EXHDR(val);
+	int			wpos;
+	pg_wchar   *wpatt;
+	int			wpattlen;
+	pg_wchar   *wmatch;
+	int			wmatch_pos = 0;
+	char	   *match;
+	int			match_mblen;
+	pg_locale_t locale = 0;
+
+	/* the right-hand const is type text or bytea */
+	Assert(typeid == BYTEAOID || typeid == TEXTOID);
+
+	if (typeid == BYTEAOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("case insensitive matching not supported on type bytea")));
+
+	if (!OidIsValid(collation))
+	{
+		/*
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for ILIKE"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
+	locale = pg_newlocale_from_collation(collation);
+
+	wpatt = palloc((nbytes + 1) * sizeof(pg_wchar));
+	wpattlen = pg_mb2wchar_with_len(VARDATA_ANY(val), wpatt, nbytes);
+
+	wmatch = palloc((nbytes + 1) * sizeof(pg_wchar));
+	for (wpos = 0; wpos < wpattlen; wpos++)
+	{
+		/* % and _ are wildcard characters in LIKE */
+		if (wpatt[wpos] == '%' ||
+			wpatt[wpos] == '_')
+			break;
+
+		/* Backslash escapes the next character */
+		if (wpatt[wpos] == '\\')
+		{
+			wpos++;
+			if (wpos >= wpattlen)
+				break;
+		}
+
+		/*
+		 * For ILIKE, stop if it's a case-varying character (it's sort of a
+		 * wildcard).
+		 */
+		if (pg_iswcased(wpatt[wpos], locale))
+			break;
+
+		wmatch[wmatch_pos++] = wpatt[wpos];
+	}
+
+	wmatch[wmatch_pos] = '\0';
+
+	match = palloc(pg_database_encoding_max_length() * wmatch_pos + 1);
+	match_mblen = pg_wchar2mb_with_len(wmatch, match, wmatch_pos);
+	match[match_mblen] = '\0';
+	pfree(wmatch);
+
+	*prefix_const = string_to_const(match, TEXTOID);
+	pfree(match);
+
+	if (rest_selec != NULL)
+	{
+		int			wrestlen = wpattlen - wmatch_pos;
+		char	   *rest;
+		int			rest_mblen;
+
+		rest = palloc(pg_database_encoding_max_length() * wrestlen + 1);
+		rest_mblen = pg_wchar2mb_with_len(&wpatt[wmatch_pos], rest, wrestlen);
+
+		*rest_selec = like_selectivity(rest, rest_mblen, true);
+		pfree(rest);
+	}
+
+	pfree(wpatt);
+
+	/* in LIKE, an empty pattern is an exact match! */
+	if (wpos == wpattlen)
+		return Pattern_Prefix_Exact;	/* reached end of pattern, so exact */
+
+	if (wmatch_pos > 0)
 		return Pattern_Prefix_Partial;
 
 	return Pattern_Prefix_None;
@@ -1164,12 +1238,11 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype, Oid collation,
 	switch (ptype)
 	{
 		case Pattern_Type_Like:
-			result = like_fixed_prefix(patt, false, collation,
-									   prefix, rest_selec);
+			result = like_fixed_prefix(patt, prefix, rest_selec);
 			break;
 		case Pattern_Type_Like_IC:
-			result = like_fixed_prefix(patt, true, collation,
-									   prefix, rest_selec);
+			result = like_fixed_prefix_ci(patt, collation, prefix,
+										  rest_selec);
 			break;
 		case Pattern_Type_Regex:
 			result = regex_fixed_prefix(patt, false, collation,
@@ -1479,24 +1552,6 @@ regex_selectivity(const char *patt, int pattlen, bool case_insensitive,
 	/* Make sure result stays in range */
 	CLAMP_PROBABILITY(sel);
 	return sel;
-}
-
-/*
- * Check whether char is a letter (and, hence, subject to case-folding)
- *
- * In multibyte character sets or with ICU, we can't use isalpha, and it does
- * not seem worth trying to convert to wchar_t to use iswalpha or u_isalpha.
- * Instead, just assume any non-ASCII char is potentially case-varying, and
- * hard-wire knowledge of which ASCII chars are letters.
- */
-static int
-pattern_char_isalpha(char c, bool is_multibyte,
-					 pg_locale_t locale)
-{
-	if (locale->ctype_is_c)
-		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-	else
-		return char_is_cased(c, locale);
 }
 
 
