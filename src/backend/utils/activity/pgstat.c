@@ -523,6 +523,7 @@ pgstat_discard_stats(void)
 
 	/* NB: this needs to be done even in single user mode */
 
+	/* First, cleanup the main pgstats file */
 	ret = unlink(PGSTAT_STAT_PERMANENT_FILENAME);
 	if (ret != 0)
 	{
@@ -542,6 +543,15 @@ pgstat_discard_stats(void)
 				(errcode_for_file_access(),
 				 errmsg_internal("unlinked permanent statistics file \"%s\"",
 								 PGSTAT_STAT_PERMANENT_FILENAME)));
+	}
+
+	/* Finish callbacks, if required */
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
+	{
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+		if (kind_info && kind_info->finish)
+			kind_info->finish(STATS_DISCARD);
 	}
 
 	/*
@@ -1702,6 +1712,10 @@ pgstat_write_statsfile(void)
 		pgstat_write_chunk(fpout,
 						   pgstat_get_entry_data(ps->key.kind, shstats),
 						   pgstat_get_entry_len(ps->key.kind));
+
+		/* Write more data for the entry, if required */
+		if (kind_info->to_serialized_data)
+			kind_info->to_serialized_data(&ps->key, shstats, fpout);
 	}
 	dshash_seq_term(&hstat);
 
@@ -1733,6 +1747,15 @@ pgstat_write_statsfile(void)
 	{
 		/* durable_rename already emitted log message */
 		unlink(tmpfile);
+	}
+
+	/* Finish callbacks, if required */
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
+	{
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+		if (kind_info && kind_info->finish)
+			kind_info->finish(STATS_WRITE);
 	}
 }
 
@@ -1871,6 +1894,7 @@ pgstat_read_statsfile(void)
 					PgStat_HashKey key;
 					PgStatShared_HashEntry *p;
 					PgStatShared_Common *header;
+					const PgStat_KindInfo *kind_info = NULL;
 
 					CHECK_FOR_INTERRUPTS();
 
@@ -1891,7 +1915,8 @@ pgstat_read_statsfile(void)
 							goto error;
 						}
 
-						if (!pgstat_get_kind_info(key.kind))
+						kind_info = pgstat_get_kind_info(key.kind);
+						if (!kind_info)
 						{
 							elog(WARNING, "could not find information of kind for entry %u/%u/%" PRIu64 " of type %c",
 								 key.kind, key.dboid,
@@ -1902,7 +1927,6 @@ pgstat_read_statsfile(void)
 					else
 					{
 						/* stats entry identified by name on disk (e.g. slots) */
-						const PgStat_KindInfo *kind_info = NULL;
 						PgStat_Kind kind;
 						NameData	name;
 
@@ -1996,6 +2020,18 @@ pgstat_read_statsfile(void)
 						goto error;
 					}
 
+					/* read more data for the entry, if required */
+					if (kind_info->from_serialized_data)
+					{
+						if (!kind_info->from_serialized_data(&key, header, fpin))
+						{
+							elog(WARNING, "could not read auxiliary data for entry %u/%u/%" PRIu64 " of type %c",
+								 key.kind, key.dboid,
+								 key.objid, t);
+							goto error;
+						}
+					}
+
 					break;
 				}
 			case PGSTAT_FILE_ENTRY_END:
@@ -2019,10 +2055,20 @@ pgstat_read_statsfile(void)
 	}
 
 done:
+	/* First, cleanup the main stats file */
 	FreeFile(fpin);
 
 	elog(DEBUG2, "removing permanent stats file \"%s\"", statfile);
 	unlink(statfile);
+
+	/* Finish callbacks, if required */
+	for (PgStat_Kind kind = PGSTAT_KIND_MIN; kind <= PGSTAT_KIND_MAX; kind++)
+	{
+		const PgStat_KindInfo *kind_info = pgstat_get_kind_info(kind);
+
+		if (kind_info && kind_info->finish)
+			kind_info->finish(STATS_READ);
+	}
 
 	return;
 

@@ -64,6 +64,20 @@ typedef struct PgStat_HashKey
 } PgStat_HashKey;
 
 /*
+ * Tracks if the stats file is being read, written or discarded, used in
+ * combination with the finish callback.
+ *
+ * These states allow plugins that create auxiliary data files to determine
+ * the current operation and perform any necessary file cleanup.
+ */
+typedef enum PgStat_StatsFileOp
+{
+	STATS_WRITE,
+	STATS_READ,
+	STATS_DISCARD,
+} PgStat_StatsFileOp;
+
+/*
  * PgStat_HashKey should not have any padding.  Checking that the structure
  * size matches with the sum of each field is a check simple enough to
  * enforce this policy.
@@ -302,6 +316,38 @@ typedef struct PgStat_KindInfo
 	void		(*to_serialized_name) (const PgStat_HashKey *key,
 									   const PgStatShared_Common *header, NameData *name);
 	bool		(*from_serialized_name) (const NameData *name, PgStat_HashKey *key);
+
+	/*
+	 * For variable-numbered stats: read or write additional data related to
+	 * an entry, in the stats file or optionally in a different file.
+	 * Optional.
+	 *
+	 * to_serialized_data: write auxiliary data for an entry.
+	 *
+	 * from_serialized_data: read auxiliary data for an entry.  Returns true
+	 * on success, false on read error.
+	 *
+	 * "statfile" is a pointer to the on-disk stats file, named
+	 * PGSTAT_STAT_PERMANENT_FILENAME.  "key" is the hash key of the entry
+	 * just written or read.  "header" is a pointer to the stats data.
+	 */
+	void		(*to_serialized_data) (const PgStat_HashKey *key,
+									   const PgStatShared_Common *header,
+									   FILE *statfile);
+	bool		(*from_serialized_data) (const PgStat_HashKey *key,
+										 const PgStatShared_Common *header,
+										 FILE *statfile);
+
+	/*
+	 * For fixed-numbered or variable-numbered statistics.
+	 *
+	 * Perform custom actions when done processing the on-disk stats file
+	 * after all the stats entries have been processed.  Optional.
+	 *
+	 * "status" tracks the operation done for the on-disk stats file (read,
+	 * write, discard).
+	 */
+	void		(*finish) (PgStat_StatsFileOp status);
 
 	/*
 	 * For fixed-numbered statistics: Initialize shared memory state.
