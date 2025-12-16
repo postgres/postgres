@@ -93,11 +93,44 @@ ltree_prefix_eq(const char *a, size_t a_sz, const char *b, size_t b_sz)
 bool
 ltree_prefix_eq_ci(const char *a, size_t a_sz, const char *b, size_t b_sz)
 {
-	char	   *al = str_tolower(a, a_sz, DEFAULT_COLLATION_OID);
-	char	   *bl = str_tolower(b, b_sz, DEFAULT_COLLATION_OID);
+	static pg_locale_t locale = NULL;
+	size_t		al_sz = a_sz + 1;
+	size_t		al_len;
+	char	   *al = palloc(al_sz);
+	size_t		bl_sz = b_sz + 1;
+	size_t		bl_len;
+	char	   *bl = palloc(bl_sz);
 	bool		res;
 
-	res = (strncmp(al, bl, a_sz) == 0);
+	if (!locale)
+		locale = pg_newlocale_from_collation(DEFAULT_COLLATION_OID);
+
+	/* casefold both a and b */
+
+	al_len = pg_strfold(al, al_sz, a, a_sz, locale);
+	if (al_len + 1 > al_sz)
+	{
+		/* grow buffer if needed and retry */
+		al_sz = al_len + 1;
+		al = repalloc(al, al_sz);
+		al_len = pg_strfold(al, al_sz, a, a_sz, locale);
+		Assert(al_len + 1 <= al_sz);
+	}
+
+	bl_len = pg_strfold(bl, bl_sz, b, b_sz, locale);
+	if (bl_len + 1 > bl_sz)
+	{
+		/* grow buffer if needed and retry */
+		bl_sz = bl_len + 1;
+		bl = repalloc(bl, bl_sz);
+		bl_len = pg_strfold(bl, bl_sz, b, b_sz, locale);
+		Assert(bl_len + 1 <= bl_sz);
+	}
+
+	if (al_len > bl_len)
+		res = false;
+	else
+		res = (strncmp(al, bl, al_len) == 0);
 
 	pfree(al);
 	pfree(bl);
