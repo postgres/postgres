@@ -38,7 +38,7 @@
  * https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-5/#G29675
  */
 #define UNICODE_CASEMAP_LEN		3
-#define UNICODE_CASEMAP_BUFSZ	(UNICODE_CASEMAP_LEN * sizeof(char32_t))
+#define UNICODE_CASEMAP_BUFSZ	(UNICODE_CASEMAP_LEN * MAX_MULTIBYTE_CHAR_LEN)
 
 /* GUC settings */
 extern PGDLLIMPORT char *locale_messages;
