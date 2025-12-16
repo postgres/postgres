@@ -6905,6 +6905,16 @@ StartupXLOG(void)
 		}
 		memcpy(&checkPoint, XLogRecGetData(xlogreader), sizeof(CheckPoint));
 		wasShutdown = ((record->xl_info & ~XLR_INFO_MASK) == XLOG_CHECKPOINT_SHUTDOWN);
+
+		/* Make sure that REDO location exists. */
+		if (checkPoint.redo < checkPointLoc)
+		{
+			XLogBeginRead(xlogreader, checkPoint.redo);
+			if (!ReadRecord(xlogreader, LOG, false))
+				ereport(PANIC,
+						errmsg("could not find redo location %X/%08X referenced by checkpoint record at %X/%08X",
+							   LSN_FORMAT_ARGS(checkPoint.redo), LSN_FORMAT_ARGS(checkPointLoc)));
+		}
 	}
 
 	/*
