@@ -28,8 +28,27 @@ begin
   raise log 'NLS regression test: lc_messages = %',
     current_setting('lc_messages');
 end $$;
-SELECT current_setting('lc_messages') = 'C' AS failed \gset
-\if :failed
-\echo Could not find an acceptable spelling of es_ES locale
-Could not find an acceptable spelling of es_ES locale
-\quit
+SELECT test_translation();
+NOTICE:  lc_messages is 'C'
+NOTICE:  translated PRId64 = 424242424242
+NOTICE:  translated PRId32 = -1234
+NOTICE:  translated PRIdMAX = -123456789012
+NOTICE:  translated PRIdPTR = -9999
+NOTICE:  translated PRIu64 = 424242424242
+NOTICE:  translated PRIu32 = 4294966062
+NOTICE:  translated PRIuMAX = 123456789012
+NOTICE:  translated PRIuPTR = 9999
+NOTICE:  translated PRIx64 = 62c6d1a9b2
+NOTICE:  translated PRIx32 = fffffb2e
+NOTICE:  translated PRIxMAX = 1cbe991a14
+NOTICE:  translated PRIxPTR = 270f
+NOTICE:  translated PRIX64 = 62C6D1A9B2
+NOTICE:  translated PRIX32 = FFFFFB2E
+NOTICE:  translated PRIXMAX = 1CBE991A14
+NOTICE:  translated PRIXPTR = 270F
+ test_translation 
+------------------
+ 
+(1 row)
+
+RESET lc_messages;

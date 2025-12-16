@@ -1156,6 +1156,10 @@ test_relpath(PG_FUNCTION_ARGS)
 
 /*
  * Simple test to verify NLS support, particularly that the PRI* macros work.
+ *
+ * A secondary objective is to verify that <inttypes.h>'s values for the
+ * PRI* macros match what our snprintf.c code will do.  Therefore, we run
+ * the ereport() calls even when we know that translation will not happen.
  */
 PG_FUNCTION_INFO_V1(test_translation);
 Datum
@@ -1185,44 +1189,52 @@ test_translation(PG_FUNCTION_ARGS)
 		inited = true;
 	}
 
+	/*
+	 * If nls.sql failed to select a non-C locale, no translation will happen.
+	 * Report that so that we can distinguish this outcome from brokenness.
+	 * (We do this here, not in nls.sql, so as to need only 3 expected files.)
+	 */
+	if (strcmp(GetConfigOption("lc_messages", false, false), "C") == 0)
+		elog(NOTICE, "lc_messages is 'C'");
+#else
+	elog(NOTICE, "NLS is not enabled");
+#endif
+
 	ereport(NOTICE,
 			errmsg("translated PRId64 = %" PRId64, (int64) 424242424242));
 	ereport(NOTICE,
 			errmsg("translated PRId32 = %" PRId32, (int32) -1234));
 	ereport(NOTICE,
-			errmsg("translated PRIdMAX = %" PRIdMAX, (intmax_t) -5678));
+			errmsg("translated PRIdMAX = %" PRIdMAX, (intmax_t) -123456789012));
 	ereport(NOTICE,
-			errmsg("translated PRIdPTR = %" PRIdPTR, (intptr_t) 9999));
+			errmsg("translated PRIdPTR = %" PRIdPTR, (intptr_t) -9999));
 
 	ereport(NOTICE,
 			errmsg("translated PRIu64 = %" PRIu64, (uint64) 424242424242));
 	ereport(NOTICE,
-			errmsg("translated PRIu32 = %" PRIu32, (uint32) 1234));
+			errmsg("translated PRIu32 = %" PRIu32, (uint32) -1234));
 	ereport(NOTICE,
-			errmsg("translated PRIuMAX = %" PRIuMAX, (uintmax_t) 5678));
+			errmsg("translated PRIuMAX = %" PRIuMAX, (uintmax_t) 123456789012));
 	ereport(NOTICE,
 			errmsg("translated PRIuPTR = %" PRIuPTR, (uintptr_t) 9999));
 
 	ereport(NOTICE,
 			errmsg("translated PRIx64 = %" PRIx64, (uint64) 424242424242));
 	ereport(NOTICE,
-			errmsg("translated PRIx32 = %" PRIx32, (uint32) 1234));
+			errmsg("translated PRIx32 = %" PRIx32, (uint32) -1234));
 	ereport(NOTICE,
-			errmsg("translated PRIxMAX = %" PRIxMAX, (uintmax_t) 5678));
+			errmsg("translated PRIxMAX = %" PRIxMAX, (uintmax_t) 123456789012));
 	ereport(NOTICE,
 			errmsg("translated PRIxPTR = %" PRIxPTR, (uintptr_t) 9999));
 
 	ereport(NOTICE,
 			errmsg("translated PRIX64 = %" PRIX64, (uint64) 424242424242));
 	ereport(NOTICE,
-			errmsg("translated PRIX32 = %" PRIX32, (uint32) 1234));
+			errmsg("translated PRIX32 = %" PRIX32, (uint32) -1234));
 	ereport(NOTICE,
-			errmsg("translated PRIXMAX = %" PRIXMAX, (uintmax_t) 5678));
+			errmsg("translated PRIXMAX = %" PRIXMAX, (uintmax_t) 123456789012));
 	ereport(NOTICE,
 			errmsg("translated PRIXPTR = %" PRIXPTR, (uintptr_t) 9999));
-#else
-	elog(NOTICE, "NLS is not enabled");
-#endif
 
 	PG_RETURN_VOID();
 }

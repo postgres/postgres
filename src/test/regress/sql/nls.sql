@@ -33,12 +33,6 @@ begin
     current_setting('lc_messages');
 end $$;
 
-SELECT current_setting('lc_messages') = 'C' AS failed \gset
-\if :failed
-\echo Could not find an acceptable spelling of es_ES locale
-\quit
-\endif
-
 SELECT test_translation();
 
 RESET lc_messages;
