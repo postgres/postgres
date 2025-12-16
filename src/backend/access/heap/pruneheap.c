@@ -385,6 +385,13 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->recently_dead_tuples = 0;
 	prstate->hastup = false;
 	prstate->lpdead_items = 0;
+
+	/*
+	 * deadoffsets are filled in during pruning but are only used to populate
+	 * PruneFreezeResult->deadoffsets. To avoid needing two copies of the
+	 * array, just save a pointer to the result offsets array in the
+	 * PruneState.
+	 */
 	prstate->deadoffsets = presult->deadoffsets;
 	prstate->frz_conflict_horizon = InvalidTransactionId;
 
