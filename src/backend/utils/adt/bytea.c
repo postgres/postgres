@@ -15,18 +15,19 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
-#include "catalog/pg_collation_d.h"
-#include "catalog/pg_type_d.h"
+#include "common/hashfn.h"
 #include "common/int.h"
 #include "fmgr.h"
+#include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "port/pg_bitutils.h"
+#include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/fmgrprotos.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/sortsupport.h"
-#include "utils/varlena.h"
 #include "varatt.h"
 
 /* GUC variable */
@@ -36,6 +37,19 @@ static bytea *bytea_catenate(bytea *t1, bytea *t2);
 static bytea *bytea_substring(Datum str, int S, int L,
 							  bool length_not_specified);
 static bytea *bytea_overlay(bytea *t1, bytea *t2, int sp, int sl);
+
+typedef struct
+{
+	bool		abbreviate;		/* Should we abbreviate keys? */
+	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
+	hyperLogLogState full_card; /* Full key cardinality state */
+	double		prop_card;		/* Required cardinality proportion */
+} ByteaSortSupport;
+
+/* Static function declarations for sort support */
+static int	byteafastcmp(Datum x, Datum y, SortSupport ssup);
+static Datum bytea_abbrev_convert(Datum original, SortSupport ssup);
+static bool bytea_abbrev_abort(int memtupcount, SortSupport ssup);
 
 /*
  * bytea_catenate
@@ -1001,6 +1015,201 @@ bytea_smaller(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
+/*
+ * sortsupport comparison func
+ */
+static int
+byteafastcmp(Datum x, Datum y, SortSupport ssup)
+{
+	bytea	   *arg1 = DatumGetByteaPP(x);
+	bytea	   *arg2 = DatumGetByteaPP(y);
+	char	   *a1p,
+			   *a2p;
+	int			len1,
+				len2,
+				result;
+
+	a1p = VARDATA_ANY(arg1);
+	a2p = VARDATA_ANY(arg2);
+
+	len1 = VARSIZE_ANY_EXHDR(arg1);
+	len2 = VARSIZE_ANY_EXHDR(arg2);
+
+	result = memcmp(a1p, a2p, Min(len1, len2));
+	if ((result == 0) && (len1 != len2))
+		result = (len1 < len2) ? -1 : 1;
+
+	/* We can't afford to leak memory here. */
+	if (PointerGetDatum(arg1) != x)
+		pfree(arg1);
+	if (PointerGetDatum(arg2) != y)
+		pfree(arg2);
+
+	return result;
+}
+
+/*
+ * Conversion routine for sortsupport.  Converts original to abbreviated key
+ * representation.  Our encoding strategy is simple -- pack the first 8 bytes
+ * of the bytea data into a Datum (on little-endian machines, the bytes are
+ * stored in reverse order), and treat it as an unsigned integer.
+ */
+static Datum
+bytea_abbrev_convert(Datum original, SortSupport ssup)
+{
+	const size_t max_prefix_bytes = sizeof(Datum);
+	ByteaSortSupport *bss = (ByteaSortSupport *) ssup->ssup_extra;
+	bytea	   *authoritative = DatumGetByteaPP(original);
+	char	   *authoritative_data = VARDATA_ANY(authoritative);
+	Datum		res;
+	char	   *pres;
+	int			len;
+	uint32		hash;
+
+	pres = (char *) &res;
+
+	/* memset(), so any non-overwritten bytes are NUL */
+	memset(pres, 0, max_prefix_bytes);
+	len = VARSIZE_ANY_EXHDR(authoritative);
+
+	/*
+	 * Short byteas will have terminating NUL bytes in the abbreviated datum.
+	 * Abbreviated comparison need not make a distinction between these NUL
+	 * bytes, and NUL bytes representing actual NULs in the authoritative
+	 * representation.
+	 *
+	 * Hopefully a comparison at or past one abbreviated key's terminating NUL
+	 * byte will resolve the comparison without consulting the authoritative
+	 * representation; specifically, some later non-NUL byte in the longer
+	 * bytea can resolve the comparison against a subsequent terminating NUL
+	 * in the shorter bytea.  There will usually be what is effectively a
+	 * "length-wise" resolution there and then.
+	 *
+	 * If that doesn't work out -- if all bytes in the longer bytea positioned
+	 * at or past the offset of the smaller bytea (first) terminating NUL are
+	 * actually representative of NUL bytes in the authoritative binary bytea
+	 * (perhaps with some *terminating* NUL bytes towards the end of the
+	 * longer bytea iff it happens to still be small) -- then an authoritative
+	 * tie-breaker will happen, and do the right thing: explicitly consider
+	 * bytea length.
+	 */
+	memcpy(pres, authoritative_data, Min(len, max_prefix_bytes));
+
+	/*
+	 * Maintain approximate cardinality of both abbreviated keys and original,
+	 * authoritative keys using HyperLogLog.  Used as cheap insurance against
+	 * the worst case, where we do many string abbreviations for no saving in
+	 * full memcmp()-based comparisons.  These statistics are used by
+	 * bytea_abbrev_abort().
+	 *
+	 * First, Hash key proper, or a significant fraction of it.  Mix in length
+	 * in order to compensate for cases where differences are past
+	 * PG_CACHE_LINE_SIZE bytes, so as to limit the overhead of hashing.
+	 */
+	hash = DatumGetUInt32(hash_any((unsigned char *) authoritative_data,
+								   Min(len, PG_CACHE_LINE_SIZE)));
+
+	if (len > PG_CACHE_LINE_SIZE)
+		hash ^= DatumGetUInt32(hash_uint32((uint32) len));
+
+	addHyperLogLog(&bss->full_card, hash);
+
+	/* Hash abbreviated key */
+	{
+		uint32		tmp;
+
+		tmp = DatumGetUInt32(res) ^ (uint32) (DatumGetUInt64(res) >> 32);
+		hash = DatumGetUInt32(hash_uint32(tmp));
+	}
+
+	addHyperLogLog(&bss->abbr_card, hash);
+
+	/*
+	 * Byteswap on little-endian machines.
+	 *
+	 * This is needed so that ssup_datum_unsigned_cmp() works correctly on all
+	 * platforms.
+	 */
+	res = DatumBigEndianToNative(res);
+
+	/* Don't leak memory here */
+	if (PointerGetDatum(authoritative) != original)
+		pfree(authoritative);
+
+	return res;
+}
+
+/*
+ * Callback for estimating effectiveness of abbreviated key optimization, using
+ * heuristic rules.  Returns value indicating if the abbreviation optimization
+ * should be aborted, based on its projected effectiveness.
+ *
+ * This is based on varstr_abbrev_abort(), but some comments have been elided
+ * for brevity. See there for more details.
+ */
+static bool
+bytea_abbrev_abort(int memtupcount, SortSupport ssup)
+{
+	ByteaSortSupport *bss = (ByteaSortSupport *) ssup->ssup_extra;
+	double		abbrev_distinct,
+				key_distinct;
+
+	Assert(ssup->abbreviate);
+
+	/* Have a little patience */
+	if (memtupcount < 100)
+		return false;
+
+	abbrev_distinct = estimateHyperLogLog(&bss->abbr_card);
+	key_distinct = estimateHyperLogLog(&bss->full_card);
+
+	/*
+	 * Clamp cardinality estimates to at least one distinct value.  While
+	 * NULLs are generally disregarded, if only NULL values were seen so far,
+	 * that might misrepresent costs if we failed to clamp.
+	 */
+	if (abbrev_distinct < 1.0)
+		abbrev_distinct = 1.0;
+
+	if (key_distinct < 1.0)
+		key_distinct = 1.0;
+
+	if (trace_sort)
+	{
+		double		norm_abbrev_card = abbrev_distinct / (double) memtupcount;
+
+		elog(LOG, "bytea_abbrev: abbrev_distinct after %d: %f "
+			 "(key_distinct: %f, norm_abbrev_card: %f, prop_card: %f)",
+			 memtupcount, abbrev_distinct, key_distinct, norm_abbrev_card,
+			 bss->prop_card);
+	}
+
+	/*
+	 * If the number of distinct abbreviated keys approximately matches the
+	 * number of distinct original keys, continue with abbreviation.
+	 */
+	if (abbrev_distinct > key_distinct * bss->prop_card)
+	{
+		/*
+		 * Decay required cardinality aggressively after 10,000 tuples.
+		 */
+		if (memtupcount > 10000)
+			bss->prop_card *= 0.65;
+
+		return false;
+	}
+
+	/*
+	 * Abort abbreviation strategy.
+	 */
+	if (trace_sort)
+		elog(LOG, "bytea_abbrev: aborted abbreviation at %d "
+			 "(abbrev_distinct: %f, key_distinct: %f, prop_card: %f)",
+			 memtupcount, abbrev_distinct, key_distinct, bss->prop_card);
+
+	return true;
+}
+
 Datum
 bytea_sortsupport(PG_FUNCTION_ARGS)
 {
@@ -1009,8 +1218,27 @@ bytea_sortsupport(PG_FUNCTION_ARGS)
 
 	oldcontext = MemoryContextSwitchTo(ssup->ssup_cxt);
 
-	/* Use generic string SortSupport, forcing "C" collation */
-	varstr_sortsupport(ssup, BYTEAOID, C_COLLATION_OID);
+	ssup->comparator = byteafastcmp;
+
+	/*
+	 * Set up abbreviation support if requested.
+	 */
+	if (ssup->abbreviate)
+	{
+		ByteaSortSupport *bss;
+
+		bss = palloc_object(ByteaSortSupport);
+		bss->abbreviate = true;
+		bss->prop_card = 0.20;
+		initHyperLogLog(&bss->abbr_card, 10);
+		initHyperLogLog(&bss->full_card, 10);
+
+		ssup->ssup_extra = bss;
+		ssup->abbrev_full_comparator = ssup->comparator;
+		ssup->comparator = ssup_datum_unsigned_cmp;
+		ssup->abbrev_converter = bytea_abbrev_convert;
+		ssup->abbrev_abort = bytea_abbrev_abort;
+	}
 
 	MemoryContextSwitchTo(oldcontext);
 

@@ -366,6 +366,7 @@ BulkWriteBuffer
 BulkWriteState
 BumpBlock
 BumpContext
+ByteaSortSupport
 CACHESIGN
 CAC_state
 CCFastEqualFN

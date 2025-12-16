@@ -92,7 +92,7 @@ typedef struct
 	int			last_returned;	/* Last comparison result (cache) */
 	bool		cache_blob;		/* Does buf2 contain strxfrm() blob, etc? */
 	bool		collate_c;
-	Oid			typid;			/* Actual datatype (text/bpchar/bytea/name) */
+	Oid			typid;			/* Actual datatype (text/bpchar/name) */
 	hyperLogLogState abbr_card; /* Abbreviated key cardinality state */
 	hyperLogLogState full_card; /* Full key cardinality state */
 	double		prop_card;		/* Required cardinality proportion */
@@ -1617,10 +1617,8 @@ bttextsortsupport(PG_FUNCTION_ARGS)
  * Includes locale support, and support for BpChar semantics (i.e. removing
  * trailing spaces before comparison).
  *
- * Relies on the assumption that text, VarChar, BpChar, and bytea all have the
- * same representation.  Callers that always use the C collation (e.g.
- * non-collatable type callers like bytea) may have NUL bytes in their strings;
- * this will not work with any other collation, though.
+ * Relies on the assumption that text, VarChar, and BpChar all have the
+ * same representation.
  */
 void
 varstr_sortsupport(SortSupport ssup, Oid typid, Oid collid)
@@ -1983,7 +1981,7 @@ varstrfastcmp_locale(char *a1p, int len1, char *a2p, int len2, SortSupport ssup)
  * representation.  Our encoding strategy is simple -- pack the first 8 bytes
  * of a strxfrm() blob into a Datum (on little-endian machines, the 8 bytes are
  * stored in reverse order), and treat it as an unsigned integer.  When the "C"
- * locale is used, or in case of bytea, just memcpy() from original instead.
+ * locale is used just memcpy() from original instead.
  */
 static Datum
 varstr_abbrev_convert(Datum original, SortSupport ssup)
@@ -2010,30 +2008,8 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 
 	/*
 	 * If we're using the C collation, use memcpy(), rather than strxfrm(), to
-	 * abbreviate keys.  The full comparator for the C locale is always
-	 * memcmp().  It would be incorrect to allow bytea callers (callers that
-	 * always force the C collation -- bytea isn't a collatable type, but this
-	 * approach is convenient) to use strxfrm().  This is because bytea
-	 * strings may contain NUL bytes.  Besides, this should be faster, too.
-	 *
-	 * More generally, it's okay that bytea callers can have NUL bytes in
-	 * strings because abbreviated cmp need not make a distinction between
-	 * terminating NUL bytes, and NUL bytes representing actual NULs in the
-	 * authoritative representation.  Hopefully a comparison at or past one
-	 * abbreviated key's terminating NUL byte will resolve the comparison
-	 * without consulting the authoritative representation; specifically, some
-	 * later non-NUL byte in the longer string can resolve the comparison
-	 * against a subsequent terminating NUL in the shorter string.  There will
-	 * usually be what is effectively a "length-wise" resolution there and
-	 * then.
-	 *
-	 * If that doesn't work out -- if all bytes in the longer string
-	 * positioned at or past the offset of the smaller string's (first)
-	 * terminating NUL are actually representative of NUL bytes in the
-	 * authoritative binary string (perhaps with some *terminating* NUL bytes
-	 * towards the end of the longer string iff it happens to still be small)
-	 * -- then an authoritative tie-breaker will happen, and do the right
-	 * thing: explicitly consider string length.
+	 * abbreviate keys.  The full comparator for the C locale is also
+	 * memcmp().  This should be faster than strxfrm().
 	 */
 	if (sss->collate_c)
 		memcpy(pres, authoritative_data, Min(len, max_prefix_bytes));
@@ -2115,9 +2091,6 @@ varstr_abbrev_convert(Datum original, SortSupport ssup)
 		 * strxfrm() blob is itself NUL terminated, leaving no danger of
 		 * misinterpreting any NUL bytes not intended to be interpreted as
 		 * logically representing termination.
-		 *
-		 * (Actually, even if there were NUL bytes in the blob it would be
-		 * okay.  See remarks on bytea case above.)
 		 */
 		memcpy(pres, sss->buf2, Min(max_prefix_bytes, bsize));
 	}
@@ -2198,10 +2171,10 @@ varstr_abbrev_abort(int memtupcount, SortSupport ssup)
 	 * NULLs are generally disregarded, if only NULL values were seen so far,
 	 * that might misrepresent costs if we failed to clamp.
 	 */
-	if (abbrev_distinct <= 1.0)
+	if (abbrev_distinct < 1.0)
 		abbrev_distinct = 1.0;
 
-	if (key_distinct <= 1.0)
+	if (key_distinct < 1.0)
 		key_distinct = 1.0;
 
 	/*
