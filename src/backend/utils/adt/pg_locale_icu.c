@@ -244,6 +244,29 @@ static const struct ctype_methods ctype_methods_icu = {
 	.wc_toupper = toupper_icu,
 	.wc_tolower = tolower_icu,
 };
+
+/*
+ * ICU still depends on libc for compatibility with certain historical
+ * behavior for single-byte encodings.  See downcase_ident_icu().
+ *
+ * XXX: consider fixing by decoding the single byte into a code point, and
+ * using u_tolower().
+ */
+static locale_t
+make_libc_ctype_locale(const char *ctype)
+{
+	locale_t	loc;
+
+#ifndef WIN32
+	loc = newlocale(LC_CTYPE_MASK, ctype, NULL);
+#else
+	loc = _create_locale(LC_ALL, ctype);
+#endif
+	if (!loc)
+		report_newlocale_failure(ctype);
+
+	return loc;
+}
 #endif
 
 pg_locale_t
@@ -254,6 +277,7 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 	const char *iculocstr;
 	const char *icurules = NULL;
 	UCollator  *collator;
+	locale_t	loc = (locale_t) 0;
 	pg_locale_t result;
 
 	if (collid == DEFAULT_COLLATION_OID)
@@ -275,6 +299,18 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 								Anum_pg_database_daticurules, &isnull);
 		if (!isnull)
 			icurules = TextDatumGetCString(datum);
+
+		/* libc only needed for default locale and single-byte encoding */
+		if (pg_database_encoding_max_length() == 1)
+		{
+			const char *ctype;
+
+			datum = SysCacheGetAttrNotNull(DATABASEOID, tp,
+										   Anum_pg_database_datctype);
+			ctype = TextDatumGetCString(datum);
+
+			loc = make_libc_ctype_locale(ctype);
+		}
 
 		ReleaseSysCache(tp);
 	}
@@ -306,6 +342,7 @@ create_pg_locale_icu(Oid collid, MemoryContext context)
 	result = MemoryContextAllocZero(context, sizeof(struct pg_locale_struct));
 	result->icu.locale = MemoryContextStrdup(context, iculocstr);
 	result->icu.ucol = collator;
+	result->icu.lt = loc;
 	result->deterministic = deterministic;
 	result->collate_is_c = false;
 	result->ctype_is_c = false;
@@ -578,17 +615,19 @@ downcase_ident_icu(char *dst, size_t dstsize, const char *src,
 				   ssize_t srclen, pg_locale_t locale)
 {
 	int			i;
-	bool		enc_is_single_byte;
+	bool		libc_lower;
+	locale_t	lt = locale->icu.lt;
 
-	enc_is_single_byte = pg_database_encoding_max_length() == 1;
+	libc_lower = lt && (pg_database_encoding_max_length() == 1);
+
 	for (i = 0; i < srclen && i < dstsize; i++)
 	{
 		unsigned char ch = (unsigned char) src[i];
 
 		if (ch >= 'A' && ch <= 'Z')
 			ch = pg_ascii_tolower(ch);
-		else if (enc_is_single_byte && IS_HIGHBIT_SET(ch) && isupper(ch))
-			ch = tolower(ch);
+		else if (libc_lower && IS_HIGHBIT_SET(ch) && isupper_l(ch, lt))
+			ch = tolower_l(ch, lt);
 		dst[i] = (char) ch;
 	}
 

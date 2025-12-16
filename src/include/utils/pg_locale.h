@@ -167,6 +167,7 @@ struct pg_locale_struct
 		{
 			const char *locale;
 			UCollator  *ucol;
+			locale_t	lt;
 		}			icu;
 #endif
 	};
