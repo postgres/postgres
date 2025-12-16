@@ -18,6 +18,14 @@
 # Be sure to replace "<ADD JUSTIFICATION HERE>" with details of your change and
 # why it is deemed acceptable.
 
+bae8ca82fd00603ebafa0658640d6e4dfe20af92
+#
+# Revisit cosmetics of "For inplace update, send nontransactional invalidations."
+# 2025-12-15 12:19:53 -0800
+#
+# This removed a CacheInvalidateHeapTupleInplace() parameter.  PGXN contained
+# no calls to that function.
+
 00eb646ea43410e5df77fed96f4a981e66811796
 #
 # Check for CREATE privilege on the schema in CREATE STATISTICS.
