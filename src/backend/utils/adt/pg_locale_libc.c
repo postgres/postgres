@@ -318,12 +318,41 @@ tolower_libc_mb(pg_wchar wc, pg_locale_t locale)
 		return wc;
 }
 
+/*
+ * Characters A..Z always downcase to a..z, even in the Turkish
+ * locale. Characters beyond 127 use tolower().
+ */
+static size_t
+downcase_ident_libc_sb(char *dst, size_t dstsize, const char *src,
+					   ssize_t srclen, pg_locale_t locale)
+{
+	locale_t	loc = locale->lt;
+	int			i;
+
+	for (i = 0; i < srclen && i < dstsize; i++)
+	{
+		unsigned char ch = (unsigned char) src[i];
+
+		if (ch >= 'A' && ch <= 'Z')
+			ch = pg_ascii_tolower(ch);
+		else if (IS_HIGHBIT_SET(ch) && isupper_l(ch, loc))
+			ch = tolower_l(ch, loc);
+		dst[i] = (char) ch;
+	}
+
+	if (i < dstsize)
+		dst[i] = '\0';
+
+	return srclen;
+}
+
 static const struct ctype_methods ctype_methods_libc_sb = {
 	.strlower = strlower_libc_sb,
 	.strtitle = strtitle_libc_sb,
 	.strupper = strupper_libc_sb,
 	/* in libc, casefolding is the same as lowercasing */
 	.strfold = strlower_libc_sb,
+	.downcase_ident = downcase_ident_libc_sb,
 	.wc_isdigit = wc_isdigit_libc_sb,
 	.wc_isalpha = wc_isalpha_libc_sb,
 	.wc_isalnum = wc_isalnum_libc_sb,
@@ -349,6 +378,8 @@ static const struct ctype_methods ctype_methods_libc_other_mb = {
 	.strupper = strupper_libc_mb,
 	/* in libc, casefolding is the same as lowercasing */
 	.strfold = strlower_libc_mb,
+	/* uses plain ASCII semantics for historical reasons */
+	.downcase_ident = NULL,
 	.wc_isdigit = wc_isdigit_libc_sb,
 	.wc_isalpha = wc_isalpha_libc_sb,
 	.wc_isalnum = wc_isalnum_libc_sb,
@@ -370,6 +401,8 @@ static const struct ctype_methods ctype_methods_libc_utf8 = {
 	.strupper = strupper_libc_mb,
 	/* in libc, casefolding is the same as lowercasing */
 	.strfold = strlower_libc_mb,
+	/* uses plain ASCII semantics for historical reasons */
+	.downcase_ident = NULL,
 	.wc_isdigit = wc_isdigit_libc_mb,
 	.wc_isalpha = wc_isalpha_libc_mb,
 	.wc_isalnum = wc_isalnum_libc_mb,

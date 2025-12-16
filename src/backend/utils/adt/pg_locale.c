@@ -1353,6 +1353,26 @@ pg_strfold(char *dst, size_t dstsize, const char *src, ssize_t srclen,
 }
 
 /*
+ * Lowercase an identifier using the database default locale.
+ *
+ * For historical reasons, does not use ordinary locale behavior. Should only
+ * be used for identifiers. XXX: can we make this equivalent to
+ * pg_strfold(..., default_locale)?
+ */
+size_t
+pg_downcase_ident(char *dst, size_t dstsize, const char *src, ssize_t srclen)
+{
+	pg_locale_t locale = default_locale;
+
+	if (locale == NULL || locale->ctype == NULL ||
+		locale->ctype->downcase_ident == NULL)
+		return strlower_c(dst, dstsize, src, srclen);
+	else
+		return locale->ctype->downcase_ident(dst, dstsize, src, srclen,
+											 locale);
+}
+
+/*
  * pg_strcoll
  *
  * Like pg_strncoll for NUL-terminated input strings.

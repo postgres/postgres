@@ -61,6 +61,8 @@ static size_t strupper_icu(char *dest, size_t destsize, const char *src,
 						   ssize_t srclen, pg_locale_t locale);
 static size_t strfold_icu(char *dest, size_t destsize, const char *src,
 						  ssize_t srclen, pg_locale_t locale);
+static size_t downcase_ident_icu(char *dst, size_t dstsize, const char *src,
+								 ssize_t srclen, pg_locale_t locale);
 static int	strncoll_icu(const char *arg1, ssize_t len1,
 						 const char *arg2, ssize_t len2,
 						 pg_locale_t locale);
@@ -123,7 +125,7 @@ static int32_t u_strFoldCase_default(UChar *dest, int32_t destCapacity,
 
 /*
  * XXX: many of the functions below rely on casts directly from pg_wchar to
- * UChar32, which is correct for the UTF-8 encoding, but not in general.
+ * UChar32, which is correct for UTF-8 and LATIN1, but not in general.
  */
 
 static pg_wchar
@@ -227,6 +229,7 @@ static const struct ctype_methods ctype_methods_icu = {
 	.strtitle = strtitle_icu,
 	.strupper = strupper_icu,
 	.strfold = strfold_icu,
+	.downcase_ident = downcase_ident_icu,
 	.wc_isdigit = wc_isdigit_icu,
 	.wc_isalpha = wc_isalpha_icu,
 	.wc_isalnum = wc_isalnum_icu,
@@ -562,6 +565,37 @@ strfold_icu(char *dest, size_t destsize, const char *src, ssize_t srclen,
 	pfree(buff_conv);
 
 	return result_len;
+}
+
+/*
+ * For historical compatibility, behavior is not multibyte-aware.
+ *
+ * NB: uses libc tolower() for single-byte encodings (also for historical
+ * compatibility), and therefore relies on the global LC_CTYPE setting.
+ */
+static size_t
+downcase_ident_icu(char *dst, size_t dstsize, const char *src,
+				   ssize_t srclen, pg_locale_t locale)
+{
+	int			i;
+	bool		enc_is_single_byte;
+
+	enc_is_single_byte = pg_database_encoding_max_length() == 1;
+	for (i = 0; i < srclen && i < dstsize; i++)
+	{
+		unsigned char ch = (unsigned char) src[i];
+
+		if (ch >= 'A' && ch <= 'Z')
+			ch = pg_ascii_tolower(ch);
+		else if (enc_is_single_byte && IS_HIGHBIT_SET(ch) && isupper(ch))
+			ch = tolower(ch);
+		dst[i] = (char) ch;
+	}
+
+	if (i < dstsize)
+		dst[i] = '\0';
+
+	return srclen;
 }
 
 /*

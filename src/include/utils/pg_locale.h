@@ -110,6 +110,9 @@ struct ctype_methods
 	size_t		(*strfold) (char *dest, size_t destsize,
 							const char *src, ssize_t srclen,
 							pg_locale_t locale);
+	size_t		(*downcase_ident) (char *dest, size_t destsize,
+								   const char *src, ssize_t srclen,
+								   pg_locale_t locale);
 
 	/* required */
 	bool		(*wc_isdigit) (pg_wchar wc, pg_locale_t locale);
@@ -187,6 +190,8 @@ extern size_t pg_strupper(char *dst, size_t dstsize,
 extern size_t pg_strfold(char *dst, size_t dstsize,
 						 const char *src, ssize_t srclen,
 						 pg_locale_t locale);
+extern size_t pg_downcase_ident(char *dst, size_t dstsize,
+								const char *src, ssize_t srclen);
 extern int	pg_strcoll(const char *arg1, const char *arg2, pg_locale_t locale);
 extern int	pg_strncoll(const char *arg1, ssize_t len1,
 						const char *arg2, ssize_t len2, pg_locale_t locale);

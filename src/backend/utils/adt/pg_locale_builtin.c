@@ -208,6 +208,8 @@ static const struct ctype_methods ctype_methods_builtin = {
 	.strtitle = strtitle_builtin,
 	.strupper = strupper_builtin,
 	.strfold = strfold_builtin,
+	/* uses plain ASCII semantics for historical reasons */
+	.downcase_ident = NULL,
 	.wc_isdigit = wc_isdigit_builtin,
 	.wc_isalpha = wc_isalpha_builtin,
 	.wc_isalnum = wc_isalnum_builtin,
