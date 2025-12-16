@@ -160,7 +160,7 @@ typedef struct
 static void prune_freeze_setup(PruneFreezeParams *params,
 							   TransactionId *new_relfrozen_xid,
 							   MultiXactId *new_relmin_mxid,
-							   const PruneFreezeResult *presult,
+							   PruneFreezeResult *presult,
 							   PruneState *prstate);
 static void prune_freeze_plan(Oid reloid, Buffer buffer,
 							  PruneState *prstate,
@@ -322,12 +322,15 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 /*
  * Helper for heap_page_prune_and_freeze() to initialize the PruneState using
  * the provided parameters.
+ *
+ * params, new_relfrozen_xid, new_relmin_mxid, and presult are input
+ * parameters and are not modified by this function. Only prstate is modified.
  */
 static void
 prune_freeze_setup(PruneFreezeParams *params,
 				   TransactionId *new_relfrozen_xid,
 				   MultiXactId *new_relmin_mxid,
-				   const PruneFreezeResult *presult,
+				   PruneFreezeResult *presult,
 				   PruneState *prstate)
 {
 	/* Copy parameters to prstate */
@@ -382,7 +385,7 @@ prune_freeze_setup(PruneFreezeParams *params,
 	prstate->recently_dead_tuples = 0;
 	prstate->hastup = false;
 	prstate->lpdead_items = 0;
-	prstate->deadoffsets = (OffsetNumber *) presult->deadoffsets;
+	prstate->deadoffsets = presult->deadoffsets;
 	prstate->frz_conflict_horizon = InvalidTransactionId;
 
 	/*
