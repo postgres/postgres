@@ -115,16 +115,8 @@ struct SnapBuild
 		/*
 		 * Array of committed transactions that have modified the catalog.
 		 *
-		 * As this array is frequently modified we do *not* keep it in
-		 * xidComparator order. Instead we sort the array when building &
-		 * distributing a snapshot.
-		 *
-		 * TODO: It's unclear whether that reasoning has much merit. Every
-		 * time we add something here after becoming consistent will also
-		 * require distributing a snapshot. Storing them sorted would
-		 * potentially also make it easier to purge (but more complicated wrt
-		 * wraparound?). Should be improved if sorting while building the
-		 * snapshot shows up in profiles.
+		 * Maintained in sorted order (by raw uint32 value) to allow efficient
+		 * snapshot building without repeated sorting overhead.
 		 */
 		TransactionId *xip;
 	}			committed;

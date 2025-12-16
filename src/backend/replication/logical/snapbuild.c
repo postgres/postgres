@@ -407,8 +407,11 @@ SnapBuildBuildSnapshot(SnapBuild *builder)
 		   builder->committed.xip,
 		   builder->committed.xcnt * sizeof(TransactionId));
 
-	/* sort so we can bsearch() */
-	qsort(snapshot->xip, snapshot->xcnt, sizeof(TransactionId), xidComparator);
+#ifdef USE_ASSERT_CHECKING
+	/* Verify array is strictly sorted (no duplicates allowed) */
+	for (int i = 1; i < snapshot->xcnt; i++)
+		Assert(snapshot->xip[i - 1] < snapshot->xip[i]);
+#endif
 
 	/*
 	 * Initially, subxip is empty, i.e. it's a snapshot to be used by
@@ -822,16 +825,32 @@ SnapBuildDistributeSnapshotAndInval(SnapBuild *builder, XLogRecPtr lsn, Transact
 }
 
 /*
- * Keep track of a new catalog changing transaction that has committed.
+ * Keep track of new catalog changing transactions that have committed.
+ *
+ * Before reaching CONSISTENT state, we use fast O(1) append since the array
+ * doesn't need to be sorted yet.  After CONSISTENT, we maintain sorted order
+ * using a merge approach to avoid repeated full-array sorts at snapshot build.
  */
 static void
-SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
+SnapBuildAddCommittedTxns(SnapBuild *builder,
+						  const TransactionId *batch_xids,
+						  int batch_cnt)
 {
-	Assert(TransactionIdIsValid(xid));
+	TransactionId *committed_xids;
+	size_t		old_xcnt;
 
-	if (builder->committed.xcnt == builder->committed.xcnt_space)
+	old_xcnt = builder->committed.xcnt;
+
+	/* Ensure we have space for all elements */
+	if (old_xcnt + batch_cnt > builder->committed.xcnt_space)
 	{
 		builder->committed.xcnt_space = builder->committed.xcnt_space * 2 + 1;
+
+		/*
+		 * Repeat if we need more than 2x current space.
+		 */
+		while (old_xcnt + batch_cnt > builder->committed.xcnt_space)
+			builder->committed.xcnt_space = builder->committed.xcnt_space * 2 + 1;
 
 		elog(DEBUG1, "increasing space for committed transactions to %u",
 			 (uint32) builder->committed.xcnt_space);
@@ -840,12 +859,57 @@ SnapBuildAddCommittedTxn(SnapBuild *builder, TransactionId xid)
 										  builder->committed.xcnt_space * sizeof(TransactionId));
 	}
 
+	committed_xids = builder->committed.xip;
+
 	/*
-	 * TODO: It might make sense to keep the array sorted here instead of
-	 * doing it every time we build a new snapshot. On the other hand this
-	 * gets called repeatedly when a transaction with subtransactions commits.
+	 * Before CONSISTENT state, just append unsorted for O(1) performance. The
+	 * array will be sorted once when transitioning to CONSISTENT.
 	 */
-	builder->committed.xip[builder->committed.xcnt++] = xid;
+	if (builder->state < SNAPBUILD_CONSISTENT)
+	{
+		for (int i = 0; i < batch_cnt; i++)
+		{
+			Assert(TransactionIdIsValid(batch_xids[i]));
+			committed_xids[old_xcnt++] = batch_xids[i];
+		}
+		builder->committed.xcnt = old_xcnt;
+	}
+	else
+	{
+		/*
+		 * After CONSISTENT, maintain sorted order via merge.  Merge from the
+		 * end to avoid overwriting unread data.
+		 */
+		int			old_idx = old_xcnt - 1;
+		int			batch_idx = batch_cnt - 1;
+		int			write_idx = old_xcnt + batch_cnt - 1;
+
+		while (old_idx >= 0 && batch_idx >= 0)
+		{
+			Assert(TransactionIdIsValid(batch_xids[batch_idx]));
+
+			if (committed_xids[old_idx] > batch_xids[batch_idx])
+			{
+				committed_xids[write_idx--] = committed_xids[old_idx--];
+			}
+			else
+			{
+				/* Duplicates should never occur */
+				Assert(committed_xids[old_idx] != batch_xids[batch_idx]);
+				committed_xids[write_idx--] = batch_xids[batch_idx--];
+			}
+		}
+
+		/* Copy any remaining batch elements */
+		while (batch_idx >= 0)
+		{
+			Assert(TransactionIdIsValid(batch_xids[batch_idx]));
+			committed_xids[write_idx--] = batch_xids[batch_idx--];
+		}
+
+		/* Old elements that weren't moved are already in correct position */
+		builder->committed.xcnt = old_xcnt + batch_cnt;
+	}
 }
 
 /*
@@ -948,6 +1012,13 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 	TransactionId xmax = xid;
 
 	/*
+	 * Collect XIDs that need tracking into a batch.  We'll sort and merge
+	 * them into committed.xip in one pass at the end.
+	 */
+	TransactionId *batch_xids = NULL;
+	int			batch_cnt = 0;
+
+	/*
 	 * Transactions preceding BUILDING_SNAPSHOT will neither be decoded, nor
 	 * will they be part of a snapshot.  So we don't need to record anything.
 	 */
@@ -977,6 +1048,12 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		}
 	}
 
+	if (nsubxacts > 0 || builder->building_full_snapshot ||
+		SnapBuildXidHasCatalogChanges(builder, xid, xinfo))
+	{
+		batch_xids = palloc((nsubxacts + 1) * sizeof(TransactionId));
+	}
+
 	for (nxact = 0; nxact < nsubxacts; nxact++)
 	{
 		TransactionId subxid = subxacts[nxact];
@@ -993,7 +1070,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			elog(DEBUG1, "found subtransaction %u:%u with catalog changes",
 				 xid, subxid);
 
-			SnapBuildAddCommittedTxn(builder, subxid);
+			batch_xids[batch_cnt++] = subxid;
 
 			if (NormalTransactionIdFollows(subxid, xmax))
 				xmax = subxid;
@@ -1007,7 +1084,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		 */
 		else if (needs_timetravel)
 		{
-			SnapBuildAddCommittedTxn(builder, subxid);
+			batch_xids[batch_cnt++] = subxid;
 			if (NormalTransactionIdFollows(subxid, xmax))
 				xmax = subxid;
 		}
@@ -1020,7 +1097,7 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 			 xid);
 		needs_snapshot = true;
 		needs_timetravel = true;
-		SnapBuildAddCommittedTxn(builder, xid);
+		batch_xids[batch_cnt++] = xid;
 	}
 	else if (sub_needs_timetravel)
 	{
@@ -1028,14 +1105,32 @@ SnapBuildCommitTxn(SnapBuild *builder, XLogRecPtr lsn, TransactionId xid,
 		elog(DEBUG2, "forced transaction %u to do timetravel due to one of its subtransactions",
 			 xid);
 		needs_timetravel = true;
-		SnapBuildAddCommittedTxn(builder, xid);
+		batch_xids[batch_cnt++] = xid;
 	}
 	else if (needs_timetravel)
 	{
 		elog(DEBUG2, "forced transaction %u to do timetravel", xid);
 
-		SnapBuildAddCommittedTxn(builder, xid);
+		batch_xids[batch_cnt++] = xid;
 	}
+
+	/*
+	 * Sort and merge the batch into committed.xip.  This maintains the
+	 * invariant that committed.xip is globally sorted by raw uint32 order
+	 * (xidComparator).
+	 */
+	if (batch_cnt > 0)
+	{
+		/* Sort by raw uint32 order */
+		qsort(batch_xids, batch_cnt, sizeof(TransactionId), xidComparator);
+
+		/* Merge into global array */
+		SnapBuildAddCommittedTxns(builder, batch_xids, batch_cnt);
+	}
+
+	/* Free batch array if allocated (even if nothing was added to it) */
+	if (batch_xids != NULL)
+		pfree(batch_xids);
 
 	if (!needs_timetravel)
 	{
@@ -1305,6 +1400,15 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 		Assert(TransactionIdIsNormal(builder->xmin));
 		Assert(TransactionIdIsNormal(builder->xmax));
 
+		/*
+		 * Sort committed.xip before transitioning to CONSISTENT.  During the
+		 * pre-CONSISTENT phase, XIDs were appended unsorted for performance.
+		 * Now we need sorted order for efficient snapshot building.
+		 */
+		if (builder->committed.xcnt > 1)
+			qsort(builder->committed.xip, builder->committed.xcnt,
+				  sizeof(TransactionId), xidComparator);
+
 		builder->state = SNAPBUILD_CONSISTENT;
 		builder->next_phase_at = InvalidTransactionId;
 
@@ -1402,6 +1506,15 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 			 TransactionIdPrecedesOrEquals(builder->next_phase_at,
 										   running->oldestRunningXid))
 	{
+		/*
+		 * Sort committed.xip before transitioning to CONSISTENT.  During the
+		 * pre-CONSISTENT phase, XIDs were appended unsorted for performance.
+		 * Now we need sorted order for efficient snapshot building.
+		 */
+		if (builder->committed.xcnt > 1)
+			qsort(builder->committed.xip, builder->committed.xcnt,
+				  sizeof(TransactionId), xidComparator);
+
 		builder->state = SNAPBUILD_CONSISTENT;
 		builder->next_phase_at = InvalidTransactionId;
 
@@ -1889,6 +2002,13 @@ SnapBuildRestore(SnapBuild *builder, XLogRecPtr lsn)
 		pfree(builder->committed.xip);
 		builder->committed.xcnt_space = ondisk.builder.committed.xcnt;
 		builder->committed.xip = ondisk.builder.committed.xip;
+
+		/*
+		 * Sort the restored array to ensure it's in xidComparator order. Old
+		 * snapshot files may have been written with unsorted arrays.
+		 */
+		qsort(builder->committed.xip, builder->committed.xcnt,
+			  sizeof(TransactionId), xidComparator);
 	}
 	ondisk.builder.committed.xip = NULL;
 
