@@ -58,19 +58,19 @@ checkcondition_str(void *checkval, ITEM *val)
 	ltree_level *level = LTREE_FIRST(((CHKVAL *) checkval)->node);
 	int			tlen = ((CHKVAL *) checkval)->node->numlevel;
 	char	   *op = ((CHKVAL *) checkval)->operand + val->distance;
-	int			(*cmpptr) (const char *, const char *, size_t);
+	ltree_prefix_eq_func prefix_eq;
 
-	cmpptr = (val->flag & LVAR_INCASE) ? ltree_strncasecmp : strncmp;
+	prefix_eq = (val->flag & LVAR_INCASE) ? ltree_prefix_eq_ci : ltree_prefix_eq;
 	while (tlen > 0)
 	{
 		if (val->flag & LVAR_SUBLEXEME)
 		{
-			if (compare_subnode(level, op, val->length, cmpptr, (val->flag & LVAR_ANYEND)))
+			if (compare_subnode(level, op, val->length, prefix_eq, (val->flag & LVAR_ANYEND)))
 				return true;
 		}
 		else if ((val->length == level->len ||
 				  (level->len > val->length && (val->flag & LVAR_ANYEND))) &&
-				 (*cmpptr) (op, level->name, val->length) == 0)
+				 (*prefix_eq) (op, val->length, level->name, level->len))
 			return true;
 
 		tlen--;

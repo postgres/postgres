@@ -41,7 +41,8 @@ getlexeme(char *start, char *end, int *len)
 }
 
 bool
-compare_subnode(ltree_level *t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
+compare_subnode(ltree_level *t, char *qn, int len,
+				ltree_prefix_eq_func prefix_eq, bool anyend)
 {
 	char	   *endt = t->name + t->len;
 	char	   *endq = qn + len;
@@ -57,7 +58,7 @@ compare_subnode(ltree_level *t, char *qn, int len, int (*cmpptr) (const char *, 
 		while ((tn = getlexeme(tn, endt, &lent)) != NULL)
 		{
 			if ((lent == lenq || (lent > lenq && anyend)) &&
-				(*cmpptr) (qn, tn, lenq) == 0)
+				(*prefix_eq) (qn, lenq, tn, lent))
 			{
 
 				isok = true;
@@ -74,14 +75,29 @@ compare_subnode(ltree_level *t, char *qn, int len, int (*cmpptr) (const char *, 
 	return true;
 }
 
-int
-ltree_strncasecmp(const char *a, const char *b, size_t s)
+/*
+ * Check if 'a' is a prefix of 'b'.
+ */
+bool
+ltree_prefix_eq(const char *a, size_t a_sz, const char *b, size_t b_sz)
 {
-	char	   *al = str_tolower(a, s, DEFAULT_COLLATION_OID);
-	char	   *bl = str_tolower(b, s, DEFAULT_COLLATION_OID);
-	int			res;
+	if (a_sz > b_sz)
+		return false;
+	else
+		return (strncmp(a, b, a_sz) == 0);
+}
 
-	res = strncmp(al, bl, s);
+/*
+ * Case-insensitive check if 'a' is a prefix of 'b'.
+ */
+bool
+ltree_prefix_eq_ci(const char *a, size_t a_sz, const char *b, size_t b_sz)
+{
+	char	   *al = str_tolower(a, a_sz, DEFAULT_COLLATION_OID);
+	char	   *bl = str_tolower(b, b_sz, DEFAULT_COLLATION_OID);
+	bool		res;
+
+	res = (strncmp(al, bl, a_sz) == 0);
 
 	pfree(al);
 	pfree(bl);
@@ -109,19 +125,19 @@ checkLevel(lquery_level *curq, ltree_level *curt)
 
 	for (int i = 0; i < curq->numvar; i++)
 	{
-		int			(*cmpptr) (const char *, const char *, size_t);
+		ltree_prefix_eq_func prefix_eq;
 
-		cmpptr = (curvar->flag & LVAR_INCASE) ? ltree_strncasecmp : strncmp;
+		prefix_eq = (curvar->flag & LVAR_INCASE) ? ltree_prefix_eq_ci : ltree_prefix_eq;
 
 		if (curvar->flag & LVAR_SUBLEXEME)
 		{
-			if (compare_subnode(curt, curvar->name, curvar->len, cmpptr,
+			if (compare_subnode(curt, curvar->name, curvar->len, prefix_eq,
 								(curvar->flag & LVAR_ANYEND)))
 				return success;
 		}
 		else if ((curvar->len == curt->len ||
 				  (curt->len > curvar->len && (curvar->flag & LVAR_ANYEND))) &&
-				 (*cmpptr) (curvar->name, curt->name, curvar->len) == 0)
+				 (*prefix_eq) (curvar->name, curvar->len, curt->name, curt->len))
 			return success;
 
 		curvar = LVAR_NEXT(curvar);
