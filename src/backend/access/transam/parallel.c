@@ -508,7 +508,11 @@ InitializeParallelDSM(ParallelContext *pcxt)
 void
 ReinitializeParallelDSM(ParallelContext *pcxt)
 {
+	MemoryContext oldcontext;
 	FixedParallelState *fps;
+
+	/* We might be running in a very short-lived memory context. */
+	oldcontext = MemoryContextSwitchTo(TopTransactionContext);
 
 	/* Wait for any old workers to exit. */
 	if (pcxt->nworkers_launched > 0)
@@ -547,6 +551,9 @@ ReinitializeParallelDSM(ParallelContext *pcxt)
 			pcxt->worker[i].error_mqh = shm_mq_attach(mq, pcxt->seg, NULL);
 		}
 	}
+
+	/* Restore previous memory context. */
+	MemoryContextSwitchTo(oldcontext);
 }
 
 /*
