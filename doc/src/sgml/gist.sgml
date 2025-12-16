@@ -291,7 +291,7 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    speed up building a <acronym>GiST</acronym> index.
    The optional twelfth method <function>stratnum</function> is used to
    translate compare types (from
-   <filename>src/include/nodes/primnodes.h</filename>) into strategy numbers
+   <filename>src/include/access/cmptype.h</filename>) into strategy numbers
    used by the operator class.  This lets the core code look up operators for
    temporal constraint indexes.
  </para>
@@ -1174,7 +1174,7 @@ my_sortsupport(PG_FUNCTION_ARGS)
      <listitem>
       <para>
        Given a <literal>CompareType</literal> value from
-       <filename>src/include/nodes/primnodes.h</filename>, returns a strategy
+       <filename>src/include/access/cmptype.h</filename>, returns a strategy
        number used by this operator class for matching functionality.  The
        function should return <literal>InvalidStrategy</literal> if the
        operator class has no matching strategy.
