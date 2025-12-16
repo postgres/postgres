@@ -7001,6 +7001,10 @@ CreateCheckPoint(int flags)
 	 */
 	SyncPreCheckpoint();
 
+	/* Run these points outside the critical section. */
+	INJECTION_POINT("create-checkpoint-initial", NULL);
+	INJECTION_POINT_LOAD("create-checkpoint-run");
+
 	/*
 	 * Use a critical section to force system panic if we have trouble.
 	 */
@@ -7150,6 +7154,8 @@ CreateCheckPoint(int flags)
 	 */
 	if (log_checkpoints)
 		LogCheckpointStart(flags, false);
+
+	INJECTION_POINT_CACHED("create-checkpoint-run", NULL);
 
 	/* Update the process title */
 	update_checkpoint_display(flags, false, false);

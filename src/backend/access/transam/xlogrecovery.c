@@ -811,7 +811,7 @@ InitWalRecovery(ControlFileData *ControlFile, bool *wasShutdown_ptr,
 		{
 			XLogPrefetcherBeginRead(xlogprefetcher, checkPoint.redo);
 			if (!ReadRecord(xlogprefetcher, LOG, false, checkPoint.ThisTimeLineID))
-				ereport(PANIC,
+				ereport(FATAL,
 						errmsg("could not find redo location %X/%08X referenced by checkpoint record at %X/%08X",
 							   LSN_FORMAT_ARGS(checkPoint.redo), LSN_FORMAT_ARGS(CheckPointLoc)));
 		}
