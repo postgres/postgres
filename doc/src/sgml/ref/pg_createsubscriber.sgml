@@ -285,6 +285,14 @@ PostgreSQL documentation
        a generated name is assigned to the publication name. This option cannot
        be used together with <option>--all</option>.
       </para>
+      <para>
+       If a specified publication already exists on the publisher, it is reused.
+       It is useful to partially replicate the database if the specified
+       publication includes a list of tables. If the publication does not exist,
+       it is automatically created with <literal>FOR ALL TABLES</literal>. Use
+       <option>--dry-run</option> option to preview which publications will be
+       reused and which will be created.
+      </para>
      </listitem>
     </varlistentry>
 

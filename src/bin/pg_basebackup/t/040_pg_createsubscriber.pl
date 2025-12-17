@@ -443,10 +443,17 @@ is(scalar(() = $stderr =~ /would create the replication slot/g),
 is(scalar(() = $stderr =~ /would create subscription/g),
 	3, "verify subscriptions are created for all databases");
 
+# Create a user-defined publication, and a table that is not a member of that
+# publication.
+$node_p->safe_psql($db1, qq(
+	CREATE PUBLICATION test_pub3 FOR TABLE tbl1;
+	CREATE TABLE not_replicated (a int);
+));
+
 # Run pg_createsubscriber on node S.  --verbose is used twice
 # to show more information.
-# In passing, also test the --enable-two-phase option and
-# --clean option
+#
+# Test two phase and clean options. Use pre-existing publication.
 command_ok(
 	[
 		'pg_createsubscriber',
@@ -456,7 +463,7 @@ command_ok(
 		'--publisher-server' => $node_p->connstr($db1),
 		'--socketdir' => $node_s->host,
 		'--subscriber-port' => $node_s->port,
-		'--publication' => 'pub1',
+		'--publication' => 'test_pub3',
 		'--publication' => 'pub2',
 		'--replication-slot' => 'replslot1',
 		'--replication-slot' => 'replslot2',
@@ -478,13 +485,16 @@ is($result, qq(0),
 # Insert rows on P
 $node_p->safe_psql($db1, "INSERT INTO tbl1 VALUES('third row')");
 $node_p->safe_psql($db2, "INSERT INTO tbl2 VALUES('row 1')");
+$node_p->safe_psql($db1, "INSERT INTO not_replicated VALUES(0)");
 
 # Start subscriber
 $node_s->start;
 
 # Confirm publications are removed from the subscriber node
-is($node_s->safe_psql($db1, "SELECT COUNT(*) FROM pg_publication;"),
-	'0', 'all publications on subscriber have been removed');
+is($node_s->safe_psql($db1, 'SELECT COUNT(*) FROM pg_publication'),
+	'0', 'all publications were removed from db1');
+is($node_s->safe_psql($db2, 'SELECT COUNT(*) FROM pg_publication'),
+	'0', 'all publications were removed from db2');
 
 # Verify that all subtwophase states are pending or enabled,
 # e.g. there are no subscriptions where subtwophase is disabled ('d')
@@ -525,6 +535,9 @@ is( $result, qq(first row
 second row
 third row),
 	"logical replication works in database $db1");
+$result = $node_s->safe_psql($db1, 'SELECT * FROM not_replicated');
+is($result, qq(),
+	"table is not replicated in database $db1");
 
 # Check result in database $db2
 $result = $node_s->safe_psql($db2, 'SELECT * FROM tbl2');
@@ -536,6 +549,37 @@ my $sysid_p = $node_p->safe_psql('postgres',
 my $sysid_s = $node_s->safe_psql('postgres',
 	'SELECT system_identifier FROM pg_control_system()');
 isnt($sysid_p, $sysid_s, 'system identifier was changed');
+
+# Verify that pub2 was created in $db2
+is($node_p->safe_psql($db2, "SELECT COUNT(*) FROM pg_publication WHERE pubname = 'pub2'"),
+	'1', "publication pub2 was created in $db2");
+
+# Get subscription and publication names
+$result = $node_s->safe_psql(
+	'postgres', qq(
+    SELECT subname, subpublications FROM pg_subscription WHERE subname ~ '^pg_createsubscriber_'
+	ORDER BY subpublications;
+));
+like(
+	$result,
+	qr/^pg_createsubscriber_\d+_[0-9a-f]+ \|\{pub2\}\n
+        pg_createsubscriber_\d+_[0-9a-f]+ \|\{test_pub3\}$/x,
+	'subscription and publication names are ok');
+
+# Verify that the correct publications are being used
+$result = $node_s->safe_psql(
+	'postgres', qq(
+		SELECT d.datname, s.subpublications
+		FROM pg_subscription s
+		JOIN pg_database d ON d.oid = s.subdbid
+		WHERE subname ~ '^pg_createsubscriber_'
+		ORDER BY s.subdbid
+    )
+);
+
+is($result, qq($db1|{test_pub3}
+$db2|{pub2}),
+	"subscriptions use the correct publications");
 
 # clean up
 $node_p->teardown_node;
