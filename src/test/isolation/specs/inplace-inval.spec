@@ -1,7 +1,7 @@
-# If a heap_update() caller retrieves its oldtup from a cache, it's possible
-# for that cache entry to predate an inplace update, causing loss of that
-# inplace update.  This arises because the transaction may abort before
-# sending the inplace invalidation message to the shared queue.
+# An inplace update had been able to abort before sending the inplace
+# invalidation message to the shared queue.  If a heap_update() caller then
+# retrieved its oldtup from a cache, the heap_update() could revert the
+# inplace update.
 
 setup
 {
@@ -27,14 +27,12 @@ step cachefill3	{ TABLE newly_indexed; }
 step ddl3		{ ALTER TABLE newly_indexed ADD extra int; }
 
 
-# XXX shows an extant bug.  Adding step read1 at the end would usually print
-# relhasindex=f (not wanted).  This does not reach the unwanted behavior under
-# -DCATCACHE_FORCE_RELEASE and friends.
 permutation
 	cachefill3	# populates the pg_class row in the catcache
 	cir1	# sets relhasindex=true; rollback discards cache inval
 	cic2	# sees relhasindex=true, skips changing it (so no inval)
 	ddl3	# cached row as the oldtup of an update, losing relhasindex
+	read1	# observe damage
 
 # without cachefill3, no bug
 permutation cir1 cic2 ddl3 read1
