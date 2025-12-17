@@ -10412,10 +10412,14 @@ typedef struct PGoauthBearerRequest
 
     /* Hook outputs */
 
-    /* Callback implementing a custom asynchronous OAuth flow. */
+    /*
+     * Callback implementing a custom asynchronous OAuth flow. The signature is
+     * platform-dependent: PQ_SOCKTYPE is SOCKET on Windows, and int everywhere
+     * else.
+     */
     PostgresPollingStatusType (*async) (PGconn *conn,
                                         struct PGoauthBearerRequest *request,
-                                        SOCKTYPE *altsock);
+                                        PQ_SOCKTYPE *altsock);
 
     /* Callback to clean up custom allocations. */
     void        (*cleanup) (PGconn *conn, struct PGoauthBearerRequest *request);
@@ -10472,7 +10476,7 @@ typedef struct PGoauthBearerRequest
          hook. When the callback cannot make further progress without blocking,
          it should return either <symbol>PGRES_POLLING_READING</symbol> or
          <symbol>PGRES_POLLING_WRITING</symbol> after setting
-         <literal>*pgsocket</literal> to the file descriptor that will be marked
+         <literal>*altsock</literal> to the file descriptor that will be marked
          ready to read/write when progress can be made again. (This descriptor
          is then provided to the top-level polling loop via
          <function>PQsocket()</function>.) Return <symbol>PGRES_POLLING_OK</symbol>
