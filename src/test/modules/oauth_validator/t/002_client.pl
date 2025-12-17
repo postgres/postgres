@@ -29,6 +29,8 @@ $node->init;
 $node->append_conf('postgresql.conf', "log_connections = all\n");
 $node->append_conf('postgresql.conf',
 	"oauth_validator_libraries = 'validator'\n");
+# Needed to inspect postmaster log after connection failure:
+$node->append_conf('postgresql.conf', "log_min_messages = debug2");
 $node->start;
 
 $node->safe_psql('postgres', 'CREATE USER test;');
@@ -47,7 +49,7 @@ local all test oauth issuer="$issuer" scope="$scope"
 });
 $node->reload;
 
-my $log_start = $node->wait_for_log(qr/reloading configuration files/);
+$node->wait_for_log(qr/reloading configuration files/);
 
 $ENV{PGOAUTHDEBUG} = "UNSAFE";
 
@@ -73,6 +75,7 @@ sub test
 	my @cmd = ("oauth_hook_client", @{$flags}, $common_connstr);
 	note "running '" . join("' '", @cmd) . "'";
 
+	my $log_start = -s $node->logfile;
 	my ($stdout, $stderr) = run_command(\@cmd);
 
 	if (defined($params{expected_stdout}))
@@ -88,6 +91,18 @@ sub test
 	{
 		is($stderr, "", "$test_name: no stderr");
 	}
+
+	if (defined($params{log_like}))
+	{
+		# See Cluster::connect_fails(). To avoid races, we have to wait for the
+		# postmaster to flush the log for the finished connection.
+		$node->wait_for_log(
+			qr/DEBUG:  (?:00000: )?forked new client backend, pid=(\d+) socket.*DEBUG:  (?:00000: )?client backend \(PID \1\) exited with exit code \d/s,
+			$log_start);
+
+		$node->log_check("$test_name: log matches",
+			$log_start, log_like => $params{log_like});
+	}
 }
 
 test(
@@ -97,11 +112,8 @@ test(
 		"--expected-uri", "$issuer/.well-known/openid-configuration",
 		"--expected-scope", $scope,
 	],
-	expected_stdout => qr/connection succeeded/);
-
-$node->log_check("validator receives correct token",
-	$log_start,
-	log_like => [ qr/oauth_validator: token="my-token", role="$user"/, ]);
+	expected_stdout => qr/connection succeeded/,
+	log_like => [qr/oauth_validator: token="my-token", role="$user"/]);
 
 if ($ENV{with_libcurl} ne 'yes')
 {
