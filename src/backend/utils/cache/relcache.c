@@ -2028,6 +2028,23 @@ formrdesc(const char *relationName, Oid relationReltype,
 	relation->rd_isvalid = true;
 }
 
+#ifdef USE_ASSERT_CHECKING
+/*
+ *		AssertCouldGetRelation
+ *
+ *		Check safety of calling RelationIdGetRelation().
+ *
+ *		In code that reads catalogs in the event of a cache miss, call this
+ *		before checking the cache.
+ */
+void
+AssertCouldGetRelation(void)
+{
+	Assert(IsTransactionState());
+	AssertBufferLocksPermitCatalogRead();
+}
+#endif
+
 
 /* ----------------------------------------------------------------
  *				 Relation Descriptor Lookup Interface
@@ -2055,8 +2072,7 @@ RelationIdGetRelation(Oid relationId)
 {
 	Relation	rd;
 
-	/* Make sure we're in an xact, even if this ends up being a cache hit */
-	Assert(IsTransactionState());
+	AssertCouldGetRelation();
 
 	/*
 	 * first try to find reldesc in the cache
