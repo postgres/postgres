@@ -329,13 +329,14 @@ typedef struct PgStat_KindInfo
 	 *
 	 * "statfile" is a pointer to the on-disk stats file, named
 	 * PGSTAT_STAT_PERMANENT_FILENAME.  "key" is the hash key of the entry
-	 * just written or read.  "header" is a pointer to the stats data.
+	 * just written or read.  "header" is a pointer to the stats data; it may
+	 * be modified only in from_serialized_data to reconstruct an entry.
 	 */
 	void		(*to_serialized_data) (const PgStat_HashKey *key,
 									   const PgStatShared_Common *header,
 									   FILE *statfile);
 	bool		(*from_serialized_data) (const PgStat_HashKey *key,
-										 const PgStatShared_Common *header,
+										 PgStatShared_Common *header,
 										 FILE *statfile);
 
 	/*

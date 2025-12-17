@@ -92,7 +92,7 @@ static void test_custom_stats_var_to_serialized_data(const PgStat_HashKey *key,
 
 /* Deserialization callback: read auxiliary entry data */
 static bool test_custom_stats_var_from_serialized_data(const PgStat_HashKey *key,
-													   const PgStatShared_Common *header,
+													   PgStatShared_Common *header,
 													   FILE *statfile);
 
 /* Finish callback: end of statistics file operations */
@@ -196,7 +196,7 @@ test_custom_stats_var_to_serialized_data(const PgStat_HashKey *key,
 {
 	char	   *description;
 	size_t		len;
-	PgStatShared_CustomVarEntry *entry = (PgStatShared_CustomVarEntry *) header;
+	const PgStatShared_CustomVarEntry *entry = (const PgStatShared_CustomVarEntry *) header;
 	bool		found;
 	uint32		magic_number = TEST_CUSTOM_VAR_MAGIC_NUMBER;
 
@@ -276,7 +276,7 @@ test_custom_stats_var_to_serialized_data(const PgStat_HashKey *key,
  */
 static bool
 test_custom_stats_var_from_serialized_data(const PgStat_HashKey *key,
-										   const PgStatShared_Common *header,
+										   PgStatShared_Common *header,
 										   FILE *statfile)
 {
 	PgStatShared_CustomVarEntry *entry;
