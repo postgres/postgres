@@ -6158,6 +6158,19 @@ heap_inplace_lock(Relation relation,
 
 	Assert(BufferIsValid(buffer));
 
+	/*
+	 * Register shared cache invals if necessary.  Other sessions may finish
+	 * inplace updates of this tuple between this step and LockTuple().  Since
+	 * inplace updates don't change cache keys, that's harmless.
+	 *
+	 * While it's tempting to register invals only after confirming we can
+	 * return true, the following obstacle precludes reordering steps that
+	 * way.  Registering invals might reach a CatalogCacheInitializeCache()
+	 * that locks "buffer".  That would hang indefinitely if running after our
+	 * own LockBuffer().  Hence, we must register invals before LockBuffer().
+	 */
+	CacheInvalidateHeapTupleInplace(relation, oldtup_ptr);
+
 	LockTuple(relation, &oldtup.t_self, InplaceUpdateTupleLock);
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
@@ -6253,6 +6266,7 @@ heap_inplace_lock(Relation relation,
 	if (!ret)
 	{
 		UnlockTuple(relation, &oldtup.t_self, InplaceUpdateTupleLock);
+		ForgetInplace_Inval();
 		InvalidateCatalogSnapshot();
 	}
 	return ret;
@@ -6280,6 +6294,16 @@ heap_inplace_update_and_unlock(Relation relation,
 	newlen = tuple->t_len - tuple->t_data->t_hoff;
 	if (oldlen != newlen || htup->t_hoff != tuple->t_data->t_hoff)
 		elog(ERROR, "wrong tuple length");
+
+	/*
+	 * Unlink relcache init files as needed.  If unlinking, acquire
+	 * RelCacheInitLock until after associated invalidations.  By doing this
+	 * in advance, if we checkpoint and then crash between inplace
+	 * XLogInsert() and inval, we don't rely on StartupXLOG() ->
+	 * RelationCacheInitFileRemove().  That uses elevel==LOG, so replay would
+	 * neglect to PANIC on EIO.
+	 */
+	PreInplace_Inval();
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -6324,17 +6348,24 @@ heap_inplace_update_and_unlock(Relation relation,
 		PageSetLSN(BufferGetPage(buffer), recptr);
 	}
 
-	END_CRIT_SECTION();
-
-	heap_inplace_unlock(relation, oldtup, buffer);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	/*
-	 * Send out shared cache inval if necessary.  Note that because we only
-	 * pass the new version of the tuple, this mustn't be used for any
-	 * operations that could change catcache lookup keys.  But we aren't
-	 * bothering with index updates either, so that's true a fortiori.
-	 *
-	 * XXX ROLLBACK discards the invalidation.  See test inplace-inval.spec.
+	 * Send invalidations to shared queue.  SearchSysCacheLocked1() assumes we
+	 * do this before UnlockTuple().
+	 */
+	AtInplace_Inval();
+
+	END_CRIT_SECTION();
+	UnlockTuple(relation, &tuple->t_self, InplaceUpdateTupleLock);
+
+	AcceptInvalidationMessages();	/* local processing of just-sent inval */
+
+	/*
+	 * Queue a transactional inval, for logical decoding and for third-party
+	 * code that might have been relying on it since long before inplace
+	 * update adopted immediate invalidation.  See README.tuplock section
+	 * "Reading inplace-updated columns" for logical decoding details.
 	 */
 	if (!IsBootstrapProcessingMode())
 		CacheInvalidateHeapTuple(relation, tuple, NULL);
@@ -6349,6 +6380,7 @@ heap_inplace_unlock(Relation relation,
 {
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	UnlockTuple(relation, &oldtup->t_self, InplaceUpdateTupleLock);
+	ForgetInplace_Inval();
 }
 
 /*
