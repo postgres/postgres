@@ -196,6 +196,9 @@ extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 extern void InitBufferPool(void);
 extern void InitBufferPoolAccess(void);
 extern void AtEOXact_Buffers(bool isCommit);
+#ifdef USE_ASSERT_CHECKING
+extern void AssertBufferLocksPermitCatalogRead(void);
+#endif
 extern void PrintBufferLeakWarning(Buffer buffer);
 extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
