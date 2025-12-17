@@ -2190,7 +2190,8 @@ void
 PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
 							  HeapTuple newtuple,
-							  void (*function) (int, uint32, Oid))
+							  void (*function) (int, uint32, Oid, void *),
+							  void *context)
 {
 	slist_iter	iter;
 	Oid			reloid;
@@ -2231,7 +2232,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 		hashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, tuple);
 		dbid = ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId;
 
-		(*function) (ccp->id, hashvalue, dbid);
+		(*function) (ccp->id, hashvalue, dbid, context);
 
 		if (newtuple)
 		{
@@ -2240,7 +2241,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 			newhashvalue = CatalogCacheComputeTupleHashValue(ccp, ccp->cc_nkeys, newtuple);
 
 			if (newhashvalue != hashvalue)
-				(*function) (ccp->id, newhashvalue, dbid);
+				(*function) (ccp->id, newhashvalue, dbid, context);
 		}
 	}
 }

@@ -1156,8 +1156,8 @@ InternalDefaultACL
 InternalGrant
 Interval
 IntoClause
-InvalidationChunk
-InvalidationListHeader
+InvalMessageArray
+InvalidationMsgsGroup
 IpcMemoryId
 IpcMemoryKey
 IpcMemoryState
