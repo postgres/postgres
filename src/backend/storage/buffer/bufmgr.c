@@ -36,6 +36,9 @@
 #include "access/tableam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
+#ifdef USE_ASSERT_CHECKING
+#include "catalog/pg_tablespace_d.h"
+#endif
 #include "catalog/storage.h"
 #include "executor/instrument.h"
 #include "lib/binaryheap.h"
@@ -487,6 +490,10 @@ static void FindAndDropRelFileNodeBuffers(RelFileNode rnode,
 										  BlockNumber firstDelBlock);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
+#ifdef USE_ASSERT_CHECKING
+static void AssertNotCatalogBufferLock(LWLock *lock, LWLockMode mode,
+									   void *unused_context);
+#endif
 static int	rnode_comparator(const void *p1, const void *p2);
 static inline int buffertag_comparator(const BufferTag *a, const BufferTag *b);
 static inline int ckpt_buforder_comparator(const CkptSortItem *a, const CkptSortItem *b);
@@ -2696,6 +2703,65 @@ CheckForBufferLeaks(void)
 	Assert(RefCountErrors == 0);
 #endif
 }
+
+#ifdef USE_ASSERT_CHECKING
+/*
+ * Check for exclusive-locked catalog buffers.  This is the core of
+ * AssertCouldGetRelation().
+ *
+ * A backend would self-deadlock on LWLocks if the catalog scan read the
+ * exclusive-locked buffer.  The main threat is exclusive-locked buffers of
+ * catalogs used in relcache, because a catcache search on any catalog may
+ * build that catalog's relcache entry.  We don't have an inventory of
+ * catalogs relcache uses, so just check buffers of most catalogs.
+ *
+ * It's better to minimize waits while holding an exclusive buffer lock, so it
+ * would be nice to broaden this check not to be catalog-specific.  However,
+ * bttextcmp() accesses pg_collation, and non-core opclasses might similarly
+ * read tables.  That is deadlock-free as long as there's no loop in the
+ * dependency graph: modifying table A may cause an opclass to read table B,
+ * but it must not cause a read of table A.
+ */
+void
+AssertBufferLocksPermitCatalogRead(void)
+{
+	ForEachLWLockHeldByMe(AssertNotCatalogBufferLock, NULL);
+}
+
+static void
+AssertNotCatalogBufferLock(LWLock *lock, LWLockMode mode,
+						   void *unused_context)
+{
+	BufferDesc *bufHdr;
+	BufferTag	tag;
+	Oid			relid;
+
+	if (mode != LW_EXCLUSIVE)
+		return;
+
+	if (!((BufferDescPadded *) lock > BufferDescriptors &&
+		  (BufferDescPadded *) lock < BufferDescriptors + NBuffers))
+		return;					/* not a buffer lock */
+
+	bufHdr = (BufferDesc *)
+		((char *) lock - offsetof(BufferDesc, content_lock));
+	tag = bufHdr->tag;
+
+	/*
+	 * This relNode==relid assumption holds until a catalog experiences VACUUM
+	 * FULL or similar.  After a command like that, relNode will be in the
+	 * normal (non-catalog) range, and we lose the ability to detect hazardous
+	 * access to that catalog.  Calling RelidByRelfilenode() would close that
+	 * gap, but RelidByRelfilenode() might then deadlock with a held lock.
+	 */
+	relid = tag.rnode.relNode;
+
+	Assert(!IsCatalogRelationOid(relid));
+	/* Shared rels are always catalogs: detect even after VACUUM FULL. */
+	Assert(tag.rnode.spcNode != GLOBALTABLESPACE_OID);
+}
+#endif
+
 
 /*
  * Helper routine to issue warnings when a buffer is unexpectedly pinned
