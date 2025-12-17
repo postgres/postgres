@@ -669,8 +669,8 @@ extern void pgstat_init_relation(Relation rel);
 extern void pgstat_assoc_relation(Relation rel);
 extern void pgstat_unlink_relation(Relation rel);
 
-extern void pgstat_report_vacuum(Oid tableoid, bool shared,
-								 PgStat_Counter livetuples, PgStat_Counter deadtuples,
+extern void pgstat_report_vacuum(Relation rel, PgStat_Counter livetuples,
+								 PgStat_Counter deadtuples,
 								 TimestampTz starttime);
 extern void pgstat_report_analyze(Relation rel,
 								  PgStat_Counter livetuples, PgStat_Counter deadtuples,

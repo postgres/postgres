@@ -207,14 +207,13 @@ pgstat_drop_relation(Relation rel)
  * Report that the table was just vacuumed and flush IO statistics.
  */
 void
-pgstat_report_vacuum(Oid tableoid, bool shared,
-					 PgStat_Counter livetuples, PgStat_Counter deadtuples,
-					 TimestampTz starttime)
+pgstat_report_vacuum(Relation rel, PgStat_Counter livetuples,
+					 PgStat_Counter deadtuples, TimestampTz starttime)
 {
 	PgStat_EntryRef *entry_ref;
 	PgStatShared_Relation *shtabentry;
 	PgStat_StatTabEntry *tabentry;
-	Oid			dboid = (shared ? InvalidOid : MyDatabaseId);
+	Oid			dboid = (rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId);
 	TimestampTz ts;
 	PgStat_Counter elapsedtime;
 
@@ -226,8 +225,8 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	elapsedtime = TimestampDifferenceMilliseconds(starttime, ts);
 
 	/* block acquiring lock for the same reason as pgstat_report_autovac() */
-	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_RELATION,
-											dboid, tableoid, false);
+	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_RELATION, dboid,
+											RelationGetRelid(rel), false);
 
 	shtabentry = (PgStatShared_Relation *) entry_ref->shared_stats;
 	tabentry = &shtabentry->stats;

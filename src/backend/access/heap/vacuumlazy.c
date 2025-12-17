@@ -961,8 +961,7 @@ heap_vacuum_rel(Relation rel, const VacuumParams params,
 	 * soon in cases where the failsafe prevented significant amounts of heap
 	 * vacuuming.
 	 */
-	pgstat_report_vacuum(RelationGetRelid(rel),
-						 rel->rd_rel->relisshared,
+	pgstat_report_vacuum(rel,
 						 Max(vacrel->new_live_tuples, 0),
 						 vacrel->recently_dead_tuples +
 						 vacrel->missed_dead_tuples,
