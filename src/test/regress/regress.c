@@ -50,7 +50,7 @@
 
 /* define our text domain for translations */
 #undef TEXTDOMAIN
-#define TEXTDOMAIN PG_TEXTDOMAIN("regress")
+#define TEXTDOMAIN PG_TEXTDOMAIN("postgresql-regress")
 
 #define EXPECT_TRUE(expr)	\
 	do { \
