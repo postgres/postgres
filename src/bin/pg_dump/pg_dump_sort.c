@@ -454,6 +454,17 @@ DOTypeNameCompare(const void *p1, const void *p2)
 		if (cmpval != 0)
 			return cmpval;
 	}
+	else if (obj1->objType == DO_SUBSCRIPTION_REL)
+	{
+		SubRelInfo *srobj1 = *(SubRelInfo *const *) p1;
+		SubRelInfo *srobj2 = *(SubRelInfo *const *) p2;
+
+		/* Sort by subscription name, since (namespace, name) match the rel */
+		cmpval = strcmp(srobj1->subinfo->dobj.name,
+						srobj2->subinfo->dobj.name);
+		if (cmpval != 0)
+			return cmpval;
+	}
 
 	/*
 	 * Shouldn't get here except after catalog corruption, but if we do, sort
