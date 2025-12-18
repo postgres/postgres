@@ -180,23 +180,27 @@ $old_sub->safe_psql(
 rmtree($new_sub->data_dir . "/pg_upgrade_output.d");
 
 # Verify that the upgrade should be successful with tables in 'ready'/'init'
-# state along with retaining the replication origin's remote lsn, subscription's
-# running status, and failover option.
+# state along with retaining the replication origin's remote lsn,
+# subscription's running status, and failover option. Use multiple tables to
+# verify deterministic pg_dump ordering of subscription relations during
+# --binary-upgrade.
 $publisher->safe_psql(
 	'postgres', qq[
+		CREATE TABLE tab_upgraded(id int);
 		CREATE TABLE tab_upgraded1(id int);
-		CREATE PUBLICATION regress_pub4 FOR TABLE tab_upgraded1;
+		CREATE PUBLICATION regress_pub4 FOR TABLE tab_upgraded, tab_upgraded1;
 ]);
 
 $old_sub->safe_psql(
 	'postgres', qq[
+		CREATE TABLE tab_upgraded(id int);
 		CREATE TABLE tab_upgraded1(id int);
 		CREATE SUBSCRIPTION regress_sub4 CONNECTION '$connstr' PUBLICATION regress_pub4 WITH (failover = true);
 ]);
 
-# Wait till the table tab_upgraded1 reaches 'ready' state
+# Wait till the tables tab_upgraded and tab_upgraded1 reach 'ready' state
 my $synced_query =
-  "SELECT count(1) = 1 FROM pg_subscription_rel WHERE srsubstate = 'r'";
+  "SELECT count(1) = 2 FROM pg_subscription_rel WHERE srsubstate = 'r'";
 $old_sub->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for the table to reach ready state";
 
@@ -234,6 +238,8 @@ my $remote_lsn = $old_sub->safe_psql('postgres',
 # Have the subscription in disabled state before upgrade
 $old_sub->safe_psql('postgres', "ALTER SUBSCRIPTION regress_sub5 DISABLE");
 
+my $tab_upgraded_oid = $old_sub->safe_psql('postgres',
+	"SELECT oid FROM pg_class WHERE relname = 'tab_upgraded'");
 my $tab_upgraded1_oid = $old_sub->safe_psql('postgres',
 	"SELECT oid FROM pg_class WHERE relname = 'tab_upgraded1'");
 my $tab_upgraded2_oid = $old_sub->safe_psql('postgres',
@@ -248,9 +254,9 @@ $new_sub->append_conf('postgresql.conf',
 
 # ------------------------------------------------------
 # Check that pg_upgrade is successful when all tables are in ready or in
-# init state (tab_upgraded1 table is in ready state and tab_upgraded2 table is
-# in init state) along with retaining the replication origin's remote lsn,
-# subscription's running status, and failover option.
+# init state (tab_upgraded and tab_upgraded1 tables are in ready state and
+# tab_upgraded2 table is in init state) along with retaining the replication
+# origin's remote lsn, subscription's running status, and failover option.
 # ------------------------------------------------------
 command_ok(
 	[
@@ -292,9 +298,10 @@ regress_sub5|f|f),
 # Subscription relations should be preserved
 $result = $new_sub->safe_psql('postgres',
 	"SELECT srrelid, srsubstate FROM pg_subscription_rel ORDER BY srrelid");
-is( $result, qq($tab_upgraded1_oid|r
+is( $result, qq($tab_upgraded_oid|r
+$tab_upgraded1_oid|r
 $tab_upgraded2_oid|i),
-	"there should be 2 rows in pg_subscription_rel(representing tab_upgraded1 and tab_upgraded2)"
+	"there should be 3 rows in pg_subscription_rel(representing tab_upgraded, tab_upgraded1 and tab_upgraded2)"
 );
 
 # The replication origin's remote_lsn should be preserved
