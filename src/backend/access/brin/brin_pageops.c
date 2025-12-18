@@ -890,7 +890,11 @@ brin_initialize_empty_new_buffer(Relation idxrel, Buffer buffer)
 	page = BufferGetPage(buffer);
 	brin_page_init(page, BRIN_PAGETYPE_REGULAR);
 	MarkBufferDirty(buffer);
-	log_newpage_buffer(buffer, true);
+
+	/* XLOG stuff */
+	if (RelationNeedsWAL(idxrel))
+		log_newpage_buffer(buffer, true);
+
 	END_CRIT_SECTION();
 
 	/*
