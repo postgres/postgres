@@ -1080,6 +1080,14 @@ $result = $standby2->safe_psql('postgres',
 );
 is($result, 't', "check slot sync skip count increments");
 
+# Configure primary to disallow any logical slots that have enabled failover
+# from getting ahead of the specified physical replication slot (sb2_slot).
+$primary->append_conf(
+	'postgresql.conf', qq(
+synchronized_standby_slots = 'sb2_slot'
+));
+$primary->reload;
+
 # Enable the Subscription, so that the remote slot catches up
 $subscriber1->safe_psql('postgres', "ALTER SUBSCRIPTION regress_mysub1 ENABLE");
 $subscriber1->wait_for_subscription_sync;
