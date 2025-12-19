@@ -870,9 +870,13 @@ LWLockWaitListLock(LWLock *lock)
 
 	while (true)
 	{
-		/* always try once to acquire lock directly */
+		/*
+		 * Always try once to acquire the lock directly, without setting up
+		 * the spin-delay infrastructure. The work necessary for that shows up
+		 * in profiles and is rarely necessary.
+		 */
 		old_state = pg_atomic_fetch_or_u32(&lock->state, LW_FLAG_LOCKED);
-		if (!(old_state & LW_FLAG_LOCKED))
+		if (likely(!(old_state & LW_FLAG_LOCKED)))
 			break;				/* got lock */
 
 		/* and then spin without atomic operations until lock is released */

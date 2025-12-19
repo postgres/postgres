@@ -6358,23 +6358,41 @@ rlocator_comparator(const void *p1, const void *p2)
 uint32
 LockBufHdr(BufferDesc *desc)
 {
-	SpinDelayStatus delayStatus;
 	uint32		old_buf_state;
 
 	Assert(!BufferIsLocal(BufferDescriptorGetBuffer(desc)));
 
-	init_local_spin_delay(&delayStatus);
-
 	while (true)
 	{
-		/* set BM_LOCKED flag */
+		/*
+		 * Always try once to acquire the lock directly, without setting up
+		 * the spin-delay infrastructure. The work necessary for that shows up
+		 * in profiles and is rarely necessary.
+		 */
 		old_buf_state = pg_atomic_fetch_or_u32(&desc->state, BM_LOCKED);
-		/* if it wasn't set before we're OK */
-		if (!(old_buf_state & BM_LOCKED))
-			break;
-		perform_spin_delay(&delayStatus);
+		if (likely(!(old_buf_state & BM_LOCKED)))
+			break;				/* got lock */
+
+		/* and then spin without atomic operations until lock is released */
+		{
+			SpinDelayStatus delayStatus;
+
+			init_local_spin_delay(&delayStatus);
+
+			while (old_buf_state & BM_LOCKED)
+			{
+				perform_spin_delay(&delayStatus);
+				old_buf_state = pg_atomic_read_u32(&desc->state);
+			}
+			finish_spin_delay(&delayStatus);
+		}
+
+		/*
+		 * Retry. The lock might obviously already be re-acquired by the time
+		 * we're attempting to get it again.
+		 */
 	}
-	finish_spin_delay(&delayStatus);
+
 	return old_buf_state | BM_LOCKED;
 }
 
