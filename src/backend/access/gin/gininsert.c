@@ -1784,7 +1784,7 @@ _gin_parallel_merge(GinBuildState *state)
 									 ++numtuples);
 	}
 
-	/* relase all the memory */
+	/* release all the memory */
 	GinBufferFree(buffer);
 
 	tuplesort_end(state->bs_sortstate);
@@ -1972,7 +1972,7 @@ _gin_process_worker_data(GinBuildState *state, Tuplesortstate *worker_sort,
 		GinBufferReset(buffer);
 	}
 
-	/* relase all the memory */
+	/* release all the memory */
 	GinBufferFree(buffer);
 
 	tuplesort_end(worker_sort);
