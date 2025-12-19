@@ -174,6 +174,9 @@ MemoryContext CurTransactionContext = NULL;
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
 
+/* Is memory context logging currently in progress? */
+static bool LogMemoryContextInProgress = false;
+
 static void MemoryContextDeleteOnly(MemoryContext context);
 static void MemoryContextCallResetCallbacks(MemoryContext context);
 static void MemoryContextStatsInternal(MemoryContext context, int level,
@@ -1339,26 +1342,45 @@ ProcessLogMemoryContextInterrupt(void)
 	LogMemoryContextPending = false;
 
 	/*
-	 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
-	 * connected client.
+	 * Exit immediately if memory context logging is already in progress. This
+	 * prevents recursive calls, which could occur if logging is requested
+	 * repeatedly and rapidly, potentially leading to infinite recursion and a
+	 * crash.
 	 */
-	ereport(LOG_SERVER_ONLY,
-			(errhidestmt(true),
-			 errhidecontext(true),
-			 errmsg("logging memory contexts of PID %d", MyProcPid)));
+	if (LogMemoryContextInProgress)
+		return;
+	LogMemoryContextInProgress = true;
 
-	/*
-	 * When a backend process is consuming huge memory, logging all its memory
-	 * contexts might overrun available disk space. To prevent this, we limit
-	 * the depth of the hierarchy, as well as the number of child contexts to
-	 * log per parent to 100.
-	 *
-	 * As with MemoryContextStats(), we suppose that practical cases where the
-	 * dump gets long will typically be huge numbers of siblings under the
-	 * same parent context; while the additional debugging value from seeing
-	 * details about individual siblings beyond 100 will not be large.
-	 */
-	MemoryContextStatsDetail(TopMemoryContext, 100, 100, false);
+	PG_TRY();
+	{
+		/*
+		 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
+		 * connected client.
+		 */
+		ereport(LOG_SERVER_ONLY,
+				(errhidestmt(true),
+				 errhidecontext(true),
+				 errmsg("logging memory contexts of PID %d", MyProcPid)));
+
+		/*
+		 * When a backend process is consuming huge memory, logging all its
+		 * memory contexts might overrun available disk space. To prevent
+		 * this, we limit the depth of the hierarchy, as well as the number of
+		 * child contexts to log per parent to 100.
+		 *
+		 * As with MemoryContextStats(), we suppose that practical cases where
+		 * the dump gets long will typically be huge numbers of siblings under
+		 * the same parent context; while the additional debugging value from
+		 * seeing details about individual siblings beyond 100 will not be
+		 * large.
+		 */
+		MemoryContextStatsDetail(TopMemoryContext, 100, 100, false);
+	}
+	PG_FINALLY();
+	{
+		LogMemoryContextInProgress = false;
+	}
+	PG_END_TRY();
 }
 
 void *
