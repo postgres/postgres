@@ -6,7 +6,7 @@
  <para>
   Logical replication is a method of replicating data objects and their
   changes, based upon their replication identity (usually a primary key).  We
-  use the term logical in contrast to physical replication, which uses exact
+  use the term logical replication in contrast to physical replication, which uses exact
   block addresses and byte-by-byte replication.  PostgreSQL supports both
   mechanisms concurrently, see <xref linkend="high-availability"/>.  Logical
   replication allows fine-grained control over both data replication and
@@ -2496,8 +2496,8 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
   <title>Monitoring</title>
 
   <para>
-   Because logical replication is based on a similar architecture as
-   <link linkend="streaming-replication">physical streaming replication</link>,
+   Because streaming logical replication is based on a similar architecture as
+   <link linkend="streaming-replication">streaming physical replication</link>,
    the monitoring on a publication node is similar to monitoring of a
    physical replication primary
    (see <xref linkend="streaming-replication-monitoring"/>).

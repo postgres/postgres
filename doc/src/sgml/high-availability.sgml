@@ -151,7 +151,7 @@ protocol to make nodes agree on a serializable transactional order.
     </para>
     <para>
      A standby server can be implemented using file-based log shipping
-     (<xref linkend="warm-standby"/>) or streaming replication (see
+     (<xref linkend="warm-standby"/>) or streaming physical replication (see
      <xref linkend="streaming-replication"/>), or a combination of both. For
      information on hot standby, see <xref linkend="hot-standby"/>.
     </para>
@@ -628,7 +628,7 @@ protocol to make nodes agree on a serializable transactional order.
     In standby mode, the server continuously applies WAL received from the
     primary server. The standby server can read WAL from a WAL archive
     (see <xref linkend="guc-restore-command"/>) or directly from the primary
-    over a TCP connection (streaming replication). The standby server will
+    over a TCP connection (streaming physical replication). The standby server will
     also attempt to restore any WAL found in the standby cluster's
     <filename>pg_wal</filename> directory. That typically happens after a server
     restart, when the standby replays again WAL that was streamed from the
@@ -771,6 +771,14 @@ archive_cleanup_command = 'pg_archivecleanup /path/to/archive "%r"'
     to the primary, which streams WAL records to the standby as they're
     generated, without waiting for the WAL file to be filled.
    </para>
+
+   <note>
+    <para>
+     This discussion of streaming replication assumes physical replication.
+     Although you could treat a logical replication subscriber as a warm standby,
+     it would require some differences to what is described here.
+    </para>
+   </note>
 
    <para>
     Streaming replication is asynchronous by default

@@ -2075,7 +2075,7 @@ include_dir 'conf.d'
        <para>
         Specifies the maximum amount of memory to be used by logical decoding,
         before some of the decoded changes are written to local disk. This
-        limits the amount of memory used by logical streaming replication
+        limits the amount of memory used by streaming logical replication
         connections. It defaults to 64 megabytes (<literal>64MB</literal>).
         Since each replication connection only uses a single buffer of this size,
         and an installation normally doesn't have many such connections
@@ -3800,7 +3800,7 @@ include_dir 'conf.d'
         difference between the two modes, but when set to <literal>always</literal>
         the WAL archiver is enabled also during archive recovery or standby
         mode. In <literal>always</literal> mode, all files restored from the archive
-        or streamed with streaming replication will be archived (again). See
+        or streamed with streaming physical replication will be archived (again). See
         <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
@@ -3906,7 +3906,7 @@ include_dir 'conf.d'
         full files.  Therefore, it is unwise to use a very short
         <varname>archive_timeout</varname> &mdash; it will bloat your archive
         storage.  <varname>archive_timeout</varname> settings of a minute or so are
-        usually reasonable.  You should consider using streaming replication,
+        usually reasonable.  You should consider using streaming physical replication,
         instead of archiving, if you want data to be copied off the primary
         server more quickly than that.
         If this value is specified without units, it is taken as seconds.
@@ -3931,7 +3931,7 @@ include_dir 'conf.d'
 
     <para>
      This section describes the settings that apply to recovery in general,
-     affecting crash recovery, streaming replication and archive-based
+     affecting crash recovery, streaming physical replication and archive-based
      replication.
     </para>
 
@@ -4042,7 +4042,7 @@ include_dir 'conf.d'
        <para>
         The local shell command to execute to retrieve an archived segment of
         the WAL file series. This parameter is required for archive recovery,
-        but optional for streaming replication.
+        but optional for streaming physical replication.
         Any <literal>%f</literal> in the string is
         replaced by the name of the file to retrieve from the archive,
         and any <literal>%p</literal> is replaced by the copy destination path name
@@ -4468,15 +4468,16 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
     <title>Replication</title>
 
     <para>
-     These settings control the behavior of the built-in
-     <firstterm>streaming replication</firstterm> feature (see
-     <xref linkend="streaming-replication"/>), and the built-in
-     <firstterm>logical replication</firstterm> feature (see
+     These settings control the behavior of
+     <firstterm>streaming replication</firstterm>,
+     both <firstterm>physical replication</firstterm>
+     (see <xref linkend="streaming-replication"/>) and
+     <firstterm>logical replication</firstterm> (see
      <xref linkend="logical-replication"/>).
     </para>
 
     <para>
-     For <emphasis>streaming replication</emphasis>, servers will be either a
+     For <emphasis>physical replication</emphasis>, servers will be either a
      primary or a standby server.  Primaries can send data, while standbys
      are always receivers of replicated data.  When cascading replication
      (see <xref linkend="cascading-replication"/>) is used, standby servers
@@ -4907,7 +4908,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       These settings control the behavior of a
       <link linkend="standby-server-operation">standby server</link>
       that is
-      to receive replication data.  Their values on the primary server
+      to receive physical replication data.  Their values on the primary server
       are irrelevant.
      </para>
 
@@ -5047,7 +5048,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
         <varname>max_standby_streaming_delay</varname> applies when WAL data is
-        being received via streaming replication.
+        being received via streaming physical replication.
         If this value is specified without units, it is taken as milliseconds.
         The default is 30 seconds.
         A value of -1 allows the standby to wait forever for conflicting
@@ -5183,7 +5184,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies how long the standby server should wait when WAL data is not
-        available from any sources (streaming replication,
+        available from any sources (streaming physical replication,
         local <filename>pg_wal</filename> or WAL archive) before trying
         again to retrieve WAL data.
         If this value is specified without units, it is taken as milliseconds.
@@ -5260,7 +5261,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         <filename>pg_wal</filename> directory.
        </para>
        <para>
-        This parameter is intended for use with streaming replication deployments;
+        This parameter is intended for use with streaming physical replication deployments;
         however, if the parameter is specified it will be honored in all cases
         except crash recovery.
 
