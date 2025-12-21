@@ -1,22 +1,13 @@
 # src/test/modules/test_cloexec/Makefile
 
-# This module is for Windows only
-ifeq ($(PORTNAME),win32)
-
-MODULE_big = test_cloexec
-OBJS = \
-	$(WIN32RES) \
-	test_cloexec.o
-
 PGFILEDESC = "test_cloexec - test O_CLOEXEC flag handling"
+PGAPPICON = win32
 
-# Build as a standalone program, not a shared library
-PROGRAM = test_cloexec
-override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
+PROGRAM += test_cloexec
+OBJS += $(WIN32RES) test_cloexec.o
 
+NO_INSTALLCHECK = 1
 TAP_TESTS = 1
-
-endif
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
