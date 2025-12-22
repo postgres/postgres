@@ -2215,7 +2215,7 @@ typedef struct
  *
  * For by-reference data types, we store the actual data. For by-val types
  * we simply copy the whole Datum, so that we don't have to care about stuff
- * like endianess etc. We could make it a little bit smaller, but it's not
+ * like endianness etc. We could make it a little bit smaller, but it's not
  * worth it - it's a tiny fraction of the data, and we need to MAXALIGN the
  * start of the TID list anyway. So we wouldn't save anything. (This would
  * not be a good idea for the permanent in-index data, since we'd prefer
