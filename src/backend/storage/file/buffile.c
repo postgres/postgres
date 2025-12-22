@@ -92,7 +92,7 @@ struct BufFile
 	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
-	off_t		curOffset;		/* offset part of current pos */
+	pgoff_t		curOffset;		/* offset part of current pos */
 	int			pos;			/* next read/write position in buffer */
 	int			nbytes;			/* total # of valid bytes in buffer */
 
@@ -503,7 +503,7 @@ BufFileDumpBuffer(BufFile *file)
 	 */
 	while (wpos < file->nbytes)
 	{
-		off_t		availbytes;
+		pgoff_t		availbytes;
 		instr_time	io_start;
 		instr_time	io_time;
 
@@ -524,7 +524,7 @@ BufFileDumpBuffer(BufFile *file)
 		bytestowrite = file->nbytes - wpos;
 		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
-		if ((off_t) bytestowrite > availbytes)
+		if ((pgoff_t) bytestowrite > availbytes)
 			bytestowrite = (int) availbytes;
 
 		thisfile = file->files[file->curFile];
@@ -729,7 +729,7 @@ BufFileFlush(BufFile *file)
  * BufFileSeek
  *
  * Like fseek(), except that target position needs two values in order to
- * work when logical filesize exceeds maximum value representable by off_t.
+ * work when logical filesize exceeds maximum value representable by pgoff_t.
  * We do not support relative seeks across more than that, however.
  * I/O errors are reported by ereport().
  *
@@ -737,10 +737,10 @@ BufFileFlush(BufFile *file)
  * impossible seek is attempted.
  */
 int
-BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
+BufFileSeek(BufFile *file, int fileno, pgoff_t offset, int whence)
 {
 	int			newFile;
-	off_t		newOffset;
+	pgoff_t		newOffset;
 
 	switch (whence)
 	{
@@ -754,8 +754,7 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 
 			/*
 			 * Relative seek considers only the signed offset, ignoring
-			 * fileno. Note that large offsets (> 1 GB) risk overflow in this
-			 * add, unless we have 64-bit off_t.
+			 * fileno.
 			 */
 			newFile = file->curFile;
 			newOffset = (file->curOffset + file->pos) + offset;
@@ -830,7 +829,7 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 }
 
 void
-BufFileTell(BufFile *file, int *fileno, off_t *offset)
+BufFileTell(BufFile *file, int *fileno, pgoff_t *offset)
 {
 	*fileno = file->curFile;
 	*offset = file->curOffset + file->pos;
@@ -852,7 +851,7 @@ BufFileSeekBlock(BufFile *file, int64 blknum)
 {
 	return BufFileSeek(file,
 					   (int) (blknum / BUFFILE_SEG_SIZE),
-					   (off_t) (blknum % BUFFILE_SEG_SIZE) * BLCKSZ,
+					   (pgoff_t) (blknum % BUFFILE_SEG_SIZE) * BLCKSZ,
 					   SEEK_SET);
 }
 
@@ -925,11 +924,11 @@ BufFileAppend(BufFile *target, BufFile *source)
  * and the offset.
  */
 void
-BufFileTruncateFileSet(BufFile *file, int fileno, off_t offset)
+BufFileTruncateFileSet(BufFile *file, int fileno, pgoff_t offset)
 {
 	int			numFiles = file->numFiles;
 	int			newFile = fileno;
-	off_t		newOffset = file->curOffset;
+	pgoff_t		newOffset = file->curOffset;
 	char		segment_name[MAXPGPATH];
 	int			i;
 

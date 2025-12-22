@@ -530,7 +530,7 @@ typedef struct SubXactInfo
 {
 	TransactionId xid;			/* XID of the subxact */
 	int			fileno;			/* file number in the buffile */
-	off_t		offset;			/* offset in the file */
+	pgoff_t		offset;			/* offset in the file */
 } SubXactInfo;
 
 /* Sub-transaction data for the current streaming transaction */
@@ -2226,12 +2226,12 @@ apply_handle_stream_abort(StringInfo s)
  */
 static void
 ensure_last_message(FileSet *stream_fileset, TransactionId xid, int fileno,
-					off_t offset)
+					pgoff_t offset)
 {
 	char		path[MAXPGPATH];
 	BufFile    *fd;
 	int			last_fileno;
-	off_t		last_offset;
+	pgoff_t		last_offset;
 
 	Assert(!IsTransactionState());
 
@@ -2266,7 +2266,7 @@ apply_spooled_messages(FileSet *stream_fileset, TransactionId xid,
 	MemoryContext oldcxt;
 	ResourceOwner oldowner;
 	int			fileno;
-	off_t		offset;
+	pgoff_t		offset;
 
 	if (!am_parallel_apply_worker())
 		maybe_start_skipping_changes(lsn);
