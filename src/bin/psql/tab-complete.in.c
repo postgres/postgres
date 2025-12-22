@@ -3378,30 +3378,50 @@ match_previous_words(int pattern_id,
 			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny))
 		COMPLETE_WITH("WITH (", "WHERE");
 
-	/* Complete COPY <sth> FROM [PROGRAM] filename WITH ( */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(") ||
-			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "("))
-		COMPLETE_WITH(Copy_from_options);
+	/* Complete COPY <sth> FROM|TO [PROGRAM] filename WITH ( */
+	else if (HeadMatches("COPY|\\copy", MatchAny, "FROM|TO", MatchAnyExcept("PROGRAM"), "WITH", "(*") ||
+			 HeadMatches("COPY|\\copy", MatchAny, "FROM|TO", "PROGRAM", MatchAny, "WITH", "(*"))
+	{
+		if (!HeadMatches("COPY|\\copy", MatchAny, "FROM|TO", MatchAnyExcept("PROGRAM"), "WITH", "(*)") &&
+			!HeadMatches("COPY|\\copy", MatchAny, "FROM|TO", "PROGRAM", MatchAny, "WITH", "(*)"))
+		{
+			/*
+			 * This fires if we're in an unfinished parenthesized option list.
+			 * get_previous_words treats a completed parenthesized option list
+			 * as one word, so the above tests are correct.
+			 */
 
-	/* Complete COPY <sth> TO [PROGRAM] filename WITH ( */
-	else if (Matches("COPY|\\copy", MatchAny, "TO", MatchAnyExcept("PROGRAM"), "WITH", "(") ||
-			 Matches("COPY|\\copy", MatchAny, "TO", "PROGRAM", MatchAny, "WITH", "("))
-		COMPLETE_WITH(Copy_to_options);
+			if (ends_with(prev_wd, '(') || ends_with(prev_wd, ','))
+			{
+				if (HeadMatches("COPY|\\copy", MatchAny, "FROM"))
+					COMPLETE_WITH(Copy_from_options);
+				else
+					COMPLETE_WITH(Copy_to_options);
+			}
 
-	/* Complete COPY <sth> FROM|TO [PROGRAM] <sth> WITH (FORMAT */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM|TO", MatchAnyExcept("PROGRAM"), "WITH", "(", "FORMAT") ||
-			 Matches("COPY|\\copy", MatchAny, "FROM|TO", "PROGRAM", MatchAny, "WITH", "(", "FORMAT"))
-		COMPLETE_WITH("binary", "csv", "text");
+			/* Complete COPY <sth> FROM|TO filename WITH (FORMAT */
+			else if (TailMatches("FORMAT"))
+				COMPLETE_WITH("binary", "csv", "text");
 
-	/* Complete COPY <sth> FROM [PROGRAM] filename WITH (ON_ERROR */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(", "ON_ERROR") ||
-			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "(", "ON_ERROR"))
-		COMPLETE_WITH("stop", "ignore");
+			/* Complete COPY <sth> FROM|TO filename WITH (FREEZE */
+			else if (TailMatches("FREEZE"))
+				COMPLETE_WITH("true", "false");
 
-	/* Complete COPY <sth> FROM [PROGRAM] filename WITH (LOG_VERBOSITY */
-	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", "(", "LOG_VERBOSITY") ||
-			 Matches("COPY|\\copy", MatchAny, "FROM", "PROGRAM", MatchAny, "WITH", "(", "LOG_VERBOSITY"))
-		COMPLETE_WITH("silent", "default", "verbose");
+			/* Complete COPY <sth> FROM|TO filename WITH (HEADER */
+			else if (TailMatches("HEADER"))
+				COMPLETE_WITH("true", "false", "MATCH");
+
+			/* Complete COPY <sth> FROM filename WITH (ON_ERROR */
+			else if (TailMatches("ON_ERROR"))
+				COMPLETE_WITH("stop", "ignore");
+
+			/* Complete COPY <sth> FROM filename WITH (LOG_VERBOSITY */
+			else if (TailMatches("LOG_VERBOSITY"))
+				COMPLETE_WITH("silent", "default", "verbose");
+		}
+
+		/* A completed parenthesized option list should be caught below */
+	}
 
 	/* Complete COPY <sth> FROM [PROGRAM] <sth> WITH (<options>) */
 	else if (Matches("COPY|\\copy", MatchAny, "FROM", MatchAnyExcept("PROGRAM"), "WITH", MatchAny) ||
