@@ -186,7 +186,7 @@ LOAD 'pg_overexplain';
 
   <para>
    For more information about range table entries, see the definition of
-   <literal>RangeTblEntry</literal> in <literal>nodes/plannodes.h</literal>.
+   <literal>RangeTblEntry</literal> in <literal>nodes/parsenodes.h</literal>.
   </para>
  </sect2>
 
