@@ -270,11 +270,8 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
-	BlockNumber nblocks;
-	BlockNumber blkno;
-	Buffer		vmbuffer = InvalidBuffer;
-	int64		all_visible = 0;
-	int64		all_frozen = 0;
+	BlockNumber all_visible = 0;
+	BlockNumber all_frozen = 0;
 	TupleDesc	tupdesc;
 	Datum		values[2];
 	bool		nulls[2] = {0};
@@ -284,33 +281,15 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 	/* Only some relkinds have a visibility map */
 	check_relation_relkind(rel);
 
-	nblocks = RelationGetNumberOfBlocks(rel);
+	visibilitymap_count(rel, &all_visible, &all_frozen);
 
-	for (blkno = 0; blkno < nblocks; ++blkno)
-	{
-		int32		mapbits;
-
-		/* Make sure we are interruptible. */
-		CHECK_FOR_INTERRUPTS();
-
-		/* Get map info. */
-		mapbits = (int32) visibilitymap_get_status(rel, blkno, &vmbuffer);
-		if ((mapbits & VISIBILITYMAP_ALL_VISIBLE) != 0)
-			++all_visible;
-		if ((mapbits & VISIBILITYMAP_ALL_FROZEN) != 0)
-			++all_frozen;
-	}
-
-	/* Clean up. */
-	if (vmbuffer != InvalidBuffer)
-		ReleaseBuffer(vmbuffer);
 	relation_close(rel, AccessShareLock);
 
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	values[0] = Int64GetDatum(all_visible);
-	values[1] = Int64GetDatum(all_frozen);
+	values[0] = Int64GetDatum((int64) all_visible);
+	values[1] = Int64GetDatum((int64) all_frozen);
 
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
 }
