@@ -46,6 +46,7 @@ tests += {
       'basic',
       'inplace',
       'syscache-update-pruned',
+      'heap_lock_update',
       # temporarily disabled because of flakiness
       # 'index-concurrently-upsert',
       # 'index-concurrently-upsert-predicate',

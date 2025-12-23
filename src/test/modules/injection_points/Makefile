@@ -14,7 +14,8 @@ REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
 ISOLATION = basic \
 	    inplace \
-	    syscache-update-pruned
+	    syscache-update-pruned \
+	    heap_lock_update
 
 # Temporarily disabled because of flakiness
 #ISOLATION =+
