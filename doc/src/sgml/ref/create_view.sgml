@@ -415,7 +415,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     <command>DELETE</command>, or <command>MERGE</command> statement
     on the view into the corresponding statement on the underlying base
     relation.  <command>INSERT</command> statements that have an <literal>ON
-    CONFLICT UPDATE</literal> clause are fully supported.
+    CONFLICT DO UPDATE</literal> clause are fully supported.
    </para>
 
    <para>
@@ -430,7 +430,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     an <command>INSERT</command> or <command>MERGE</command> command can
     potentially insert base-relation rows
     that do not satisfy the <literal>WHERE</literal> condition and thus are not
-    visible through the view (<literal>ON CONFLICT UPDATE</literal> may
+    visible through the view (<literal>ON CONFLICT DO UPDATE</literal> may
     similarly affect an existing row not visible through the view).
     The <literal>CHECK OPTION</literal> may be used to prevent
     <command>INSERT</command>, <command>UPDATE</command>, and
