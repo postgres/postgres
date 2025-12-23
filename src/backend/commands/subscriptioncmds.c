@@ -1008,10 +1008,10 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 					 *
 					 * It is possible that the origin is not yet created for
 					 * tablesync worker, this can happen for the states before
-					 * SUBREL_STATE_FINISHEDCOPY. The tablesync worker or
-					 * apply worker can also concurrently try to drop the
-					 * origin and by this time the origin might be already
-					 * removed. For these reasons, passing missing_ok = true.
+					 * SUBREL_STATE_DATASYNC. The tablesync worker or apply
+					 * worker can also concurrently try to drop the origin and
+					 * by this time the origin might be already removed. For
+					 * these reasons, passing missing_ok = true.
 					 */
 					ReplicationOriginNameForLogicalRep(sub->oid, relid, originname,
 													   sizeof(originname));
@@ -1638,7 +1638,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 *
 		 * It is possible that the origin is not yet created for tablesync
 		 * worker so passing missing_ok = true. This can happen for the states
-		 * before SUBREL_STATE_FINISHEDCOPY.
+		 * before SUBREL_STATE_DATASYNC.
 		 */
 		ReplicationOriginNameForLogicalRep(subid, relid, originname,
 										   sizeof(originname));
