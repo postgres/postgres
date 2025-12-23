@@ -805,6 +805,15 @@
   max => 'MAX_IO_CONCURRENCY',
 },
 
+{ name => 'effective_wal_level', type => 'enum', context => 'PGC_INTERNAL', group => 'PRESET_OPTIONS',
+  short_desc => 'Show effective WAL level.',
+  flags => 'GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE',
+  variable => 'effective_wal_level',
+  boot_val => 'WAL_LEVEL_REPLICA',
+  options => 'wal_level_options',
+  show_hook => 'show_effective_wal_level',
+},
+
 { name => 'enable_async_append', type => 'bool', context => 'PGC_USERSET', group => 'QUERY_TUNING_METHOD',
   short_desc => 'Enables the planner\'s use of async append plans.',
   flags => 'GUC_EXPLAIN',

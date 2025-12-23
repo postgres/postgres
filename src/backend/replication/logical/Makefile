@@ -20,6 +20,7 @@ OBJS = \
 	decode.o \
 	launcher.o \
 	logical.o \
+	logicalctl.o \
 	logicalfuncs.o \
 	message.o \
 	origin.o \

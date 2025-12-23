@@ -117,31 +117,20 @@ CheckLogicalDecodingRequirements(void)
 	 * needs the same check.
 	 */
 
-	if (wal_level < WAL_LEVEL_LOGICAL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("logical decoding requires \"wal_level\" >= \"logical\"")));
-
 	if (MyDatabaseId == InvalidOid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("logical decoding requires a database connection")));
 
-	if (RecoveryInProgress())
-	{
-		/*
-		 * This check may have race conditions, but whenever
-		 * XLOG_PARAMETER_CHANGE indicates that wal_level has changed, we
-		 * verify that there are no existing logical replication slots. And to
-		 * avoid races around creating a new slot,
-		 * CheckLogicalDecodingRequirements() is called once before creating
-		 * the slot, and once when logical decoding is initially starting up.
-		 */
-		if (GetActiveWalLevelOnStandby() < WAL_LEVEL_LOGICAL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical decoding on standby requires \"wal_level\" >= \"logical\" on the primary")));
-	}
+	/* CheckSlotRequirements() has already checked if wal_level >= 'replica' */
+	Assert(wal_level >= WAL_LEVEL_REPLICA);
+
+	/* Check if logical decoding is available on standby */
+	if (RecoveryInProgress() && !IsLogicalDecodingEnabled())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("logical decoding on standby requires \"effective_wal_level\" >= \"logical\" on the primary"),
+				 errhint("Set \"wal_level\" >= \"logical\" or create at least one logical slot when \"wal_level\" = \"replica\".")));
 }
 
 /*

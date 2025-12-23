@@ -3047,6 +3047,17 @@ include_dir 'conf.d'
         executed.
        </para>
        <para>
+        It is important to note that when <varname>wal_level</varname> is set to
+        <literal>replica</literal>, the effective WAL level can automatically change
+        based on the presence of <link linkend="logicaldecoding-replication-slots">
+        logical replication slots</link>. The system automatically increases the
+        effective WAL level to <literal>logical</literal> when creating the first
+        logical replication slot, and decreases it back to <literal>replica</literal>
+        when dropping or invalidating the last logical replication slot. The current
+        effective WAL level can be monitored through
+        <xref linkend="guc-effective-wal-level"/> parameter.
+       </para>
+       <para>
         In releases prior to 9.6, this parameter also allowed the
         values <literal>archive</literal> and <literal>hot_standby</literal>.
         These are still accepted but mapped to <literal>replica</literal>.
@@ -11847,6 +11858,38 @@ dynamic_library_path = '/usr/local/lib/postgresql:$libdir'
         <systemitem class="osname">Windows</systemitem> or if the
         macro <symbol>EXEC_BACKEND</symbol> is defined
         when <productname>PostgreSQL</productname> is built.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-effective-wal-level" xreflabel="effective_wal_level">
+      <term><varname>effective_wal_level</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>effective_wal_level</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Reports the actual WAL logging level currently in effect in the
+        system. This parameter shares the same set of values as
+        <xref linkend="guc-wal-level"/>, but reflects the operational WAL
+        level rather than the configured setting. For descriptions of
+        possible values, refer to the <varname>wal_level</varname>
+        parameter documentation.
+       </para>
+       <para>
+        The effective WAL level can differ from the configured
+        <varname>wal_level</varname> in certain situations. For example,
+        when <varname>wal_level</varname> is set to <literal>replica</literal>
+        and the system has one or more logical replication slots,
+        <varname>effective_wal_level</varname> will show <literal>logical</literal>
+        to indicate that the system is maintaining WAL records at
+        <literal>logical</literal> level equivalent.
+       </para>
+       <para>
+        On standby servers, <varname>effective_wal_level</varname> matches
+        the value of <varname>effective_wal_level</varname> from the most
+        upstream server in the replication chain.
        </para>
       </listitem>
      </varlistentry>

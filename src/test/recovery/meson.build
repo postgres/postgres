@@ -59,6 +59,7 @@ tests += {
       't/048_vacuum_horizon_floor.pl',
       't/049_wait_for_lsn.pl',
       't/050_redo_segment_missing.pl',
+      't/051_effective_wal_level.pl',
     ],
   },
 }

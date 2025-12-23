@@ -80,6 +80,7 @@
 #include "postmaster/walwriter.h"
 #include "replication/origin.h"
 #include "replication/slot.h"
+#include "replication/slotsync.h"
 #include "replication/snapbuild.h"
 #include "replication/walreceiver.h"
 #include "replication/walsender.h"
@@ -4889,6 +4890,25 @@ show_in_hot_standby(void)
 }
 
 /*
+ * GUC show_hook for effective_wal_level
+ */
+const char *
+show_effective_wal_level(void)
+{
+	if (wal_level == WAL_LEVEL_MINIMAL)
+		return "minimal";
+
+	/*
+	 * During recovery, effective_wal_level reflects the primary's
+	 * configuration rather than the local wal_level value.
+	 */
+	if (RecoveryInProgress())
+		return IsXLogLogicalInfoEnabled() ? "logical" : "replica";
+
+	return XLogLogicalInfoActive() ? "logical" : "replica";
+}
+
+/*
  * Read the control file, set respective GUCs.
  *
  * This is to be called during startup, including a crash recovery cycle,
@@ -5134,6 +5154,7 @@ BootStrapXLOG(uint32 data_checksum_version)
 	checkPoint.ThisTimeLineID = BootstrapTimeLineID;
 	checkPoint.PrevTimeLineID = BootstrapTimeLineID;
 	checkPoint.fullPageWrites = fullPageWrites;
+	checkPoint.logicalDecodingEnabled = (wal_level == WAL_LEVEL_LOGICAL);
 	checkPoint.wal_level = wal_level;
 	checkPoint.nextXid =
 		FullTransactionIdFromEpochAndXid(0, FirstNormalTransactionId);
@@ -5657,6 +5678,12 @@ StartupXLOG(void)
 	 * required resources.
 	 */
 	StartupReplicationSlots();
+
+	/*
+	 * Startup the logical decoding status with the last status stored in the
+	 * checkpoint record.
+	 */
+	StartupLogicalDecodingStatus(checkPoint.logicalDecodingEnabled);
 
 	/*
 	 * Startup logical state, needs to be setup now so we have proper data
@@ -6206,6 +6233,12 @@ StartupXLOG(void)
 	 */
 	CompleteCommitTsInitialization();
 
+	/*
+	 * Update logical decoding status in shared memory and write an
+	 * XLOG_LOGICAL_DECODING_STATUS_CHANGE, if necessary.
+	 */
+	UpdateLogicalDecodingStatusEndOfRecovery();
+
 	/* Clean up EndOfWalRecoveryInfo data to appease Valgrind leak checking */
 	if (endOfRecoveryInfo->lastPage)
 		pfree(endOfRecoveryInfo->lastPage);
@@ -6236,6 +6269,12 @@ StartupXLOG(void)
 
 	UpdateControlFile();
 	LWLockRelease(ControlFileLock);
+
+	/*
+	 * Wake up the checkpointer process as there might be a request to disable
+	 * logical decoding by concurrent slot drop.
+	 */
+	WakeupCheckpointer();
 
 	/*
 	 * Wake up all waiters for replay LSN.  They need to report an error that
@@ -7186,6 +7225,8 @@ CreateCheckPoint(int flags)
 	if (!shutdown)
 		checkPoint.nextOid += TransamVariables->oidCount;
 	LWLockRelease(OidGenLock);
+
+	checkPoint.logicalDecodingEnabled = IsLogicalDecodingEnabled();
 
 	MultiXactGetCheckptMulti(shutdown,
 							 &checkPoint.nextMulti,
@@ -8581,21 +8622,6 @@ xlog_redo(XLogReaderState *record)
 		/* Update our copy of the parameters in pg_control */
 		memcpy(&xlrec, XLogRecGetData(record), sizeof(xl_parameter_change));
 
-		/*
-		 * Invalidate logical slots if we are in hot standby and the primary
-		 * does not have a WAL level sufficient for logical decoding. No need
-		 * to search for potentially conflicting logically slots if standby is
-		 * running with wal_level lower than logical, because in that case, we
-		 * would have either disallowed creation of logical slots or
-		 * invalidated existing ones.
-		 */
-		if (InRecovery && InHotStandby &&
-			xlrec.wal_level < WAL_LEVEL_LOGICAL &&
-			wal_level >= WAL_LEVEL_LOGICAL)
-			InvalidateObsoleteReplicationSlots(RS_INVAL_WAL_LEVEL,
-											   0, InvalidOid,
-											   InvalidTransactionId);
-
 		LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
 		ControlFile->MaxConnections = xlrec.MaxConnections;
 		ControlFile->max_worker_processes = xlrec.max_worker_processes;
@@ -8662,6 +8688,55 @@ xlog_redo(XLogReaderState *record)
 	else if (info == XLOG_CHECKPOINT_REDO)
 	{
 		/* nothing to do here, just for informational purposes */
+	}
+	else if (info == XLOG_LOGICAL_DECODING_STATUS_CHANGE)
+	{
+		bool		status;
+
+		memcpy(&status, XLogRecGetData(record), sizeof(bool));
+
+		/*
+		 * We need to toggle the logical decoding status and update the
+		 * XLogLogicalInfo cache of processes synchronously because
+		 * XLogLogicalInfoActive() is used even during read-only queries
+		 * (e.g., via RelationIsAccessibleInLogicalDecoding()). In the
+		 * 'disable' case, it is safe to invalidate existing slots after
+		 * disabling logical decoding because logical decoding cannot process
+		 * subsequent WAL records, which may not contain logical information.
+		 */
+		if (status)
+			EnableLogicalDecoding();
+		else
+			DisableLogicalDecoding();
+
+		elog(DEBUG1, "update logical decoding status to %d during recovery",
+			 status);
+
+		if (InRecovery && InHotStandby)
+		{
+			if (!status)
+			{
+				/*
+				 * Invalidate logical slots if we are in hot standby and the
+				 * primary disabled logical decoding.
+				 */
+				InvalidateObsoleteReplicationSlots(RS_INVAL_WAL_LEVEL,
+												   0, InvalidOid,
+												   InvalidTransactionId);
+			}
+			else if (sync_replication_slots)
+			{
+				/*
+				 * Signal the postmaster to launch the slotsync worker.
+				 *
+				 * XXX: For simplicity, we keep the slotsync worker running
+				 * even after logical decoding is disabled. A future
+				 * improvement can consider starting and stopping the worker
+				 * based on logical decoding status change.
+				 */
+				kill(PostmasterPid, SIGUSR1);
+			}
+		}
 	}
 }
 

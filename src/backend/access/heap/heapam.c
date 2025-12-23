@@ -8925,8 +8925,8 @@ log_heap_update(Relation reln, Buffer oldbuf,
 	 *
 	 * Skip this if we're taking a full-page image of the new page, as we
 	 * don't include the new tuple in the WAL record in that case.  Also
-	 * disable if wal_level='logical', as logical decoding needs to be able to
-	 * read the new tuple in whole from the WAL record alone.
+	 * disable if effective_wal_level='logical', as logical decoding needs to
+	 * be able to read the new tuple in whole from the WAL record alone.
 	 */
 	if (oldbuf == newbuf && !need_tuple_data &&
 		!XLogCheckBufferNeedsBackup(newbuf))
@@ -9098,8 +9098,8 @@ log_heap_update(Relation reln, Buffer oldbuf,
 /*
  * Perform XLogInsert of an XLOG_HEAP2_NEW_CID record
  *
- * This is only used in wal_level >= WAL_LEVEL_LOGICAL, and only for catalog
- * tuples.
+ * This is only used when effective_wal_level is logical, and only for
+ * catalog tuples.
  */
 static XLogRecPtr
 log_heap_new_cid(Relation relation, HeapTuple tup)

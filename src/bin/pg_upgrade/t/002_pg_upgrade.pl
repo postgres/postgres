@@ -225,6 +225,10 @@ $oldnode->init(%old_node_params);
 # Override log_statement=all set by Cluster.pm.  This avoids large amounts
 # of log traffic that slow this test down even more when run under valgrind.
 $oldnode->append_conf('postgresql.conf', 'log_statement = none');
+
+# Set wal_level = replica to run the regression tests in the same
+# wal_level as when 'make check' runs.
+$oldnode->append_conf('postgresql.conf', 'wal_level = replica');
 $oldnode->start;
 
 my $result;

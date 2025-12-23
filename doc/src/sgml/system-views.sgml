@@ -3062,8 +3062,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
         <listitem>
          <para>
           <literal>wal_level_insufficient</literal> means that the
-          primary doesn't have a <xref linkend="guc-wal-level"/> sufficient to
-          perform logical decoding.  It is set only for logical slots.
+          primary doesn't have an <xref linkend="guc-effective-wal-level"/>
+          sufficient to perform logical decoding. It is set only for logical
+          slots.
          </para>
         </listitem>
         <listitem>

@@ -387,12 +387,12 @@ PostgreSQL documentation
    <para>
     The source server must accept connections from the target server.  The
     source server must not be in recovery. The source server must have <xref
-    linkend="guc-wal-level"/> as <literal>logical</literal>.  The source server
-    must have <xref linkend="guc-max-replication-slots"/> configured to a value
-    greater than or equal to the number of specified databases plus existing
-    replication slots.  The source server must have <xref
-    linkend="guc-max-wal-senders"/> configured to a value greater than or equal
-    to the number of specified databases and existing WAL sender processes.
+    linkend="guc-wal-level"/> as <literal>replica</literal> or <literal>logical</literal>.
+    The source server must have <xref linkend="guc-max-replication-slots"/>
+    configured to a value greater than or equal to the number of specified
+    databases plus existing replication slots.  The source server must have
+    <xref linkend="guc-max-wal-senders"/> configured to a value greater than or
+    equal to the number of specified databases and existing WAL sender processes.
    </para>
   </refsect2>
 

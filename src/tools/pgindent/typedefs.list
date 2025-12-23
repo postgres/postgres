@@ -1627,6 +1627,7 @@ LogicalDecodeStreamStopCB
 LogicalDecodeStreamTruncateCB
 LogicalDecodeTruncateCB
 LogicalDecodingContext
+LogicalDecodingCtlData
 LogicalErrorCallbackState
 LogicalOutputPluginInit
 LogicalOutputPluginWriterPrepareWrite

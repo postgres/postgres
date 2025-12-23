@@ -98,9 +98,9 @@
  *	likewise send the invalidation immediately, before ending the change's
  *	critical section.  This includes inplace heap updates, relmap, and smgr.
  *
- *	When wal_level=logical, write invalidations into WAL at each command end to
- *	support the decoding of the in-progress transactions.  See
- *	CommandEndInvalidationMessages.
+ *	When effective_wal_level is 'logical', write invalidations into WAL at
+ *	each command end to support the decoding of the in-progress transactions.
+ *	See CommandEndInvalidationMessages.
  *
  * Portions Copyright (c) 1996-2025, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -1419,7 +1419,7 @@ CommandEndInvalidationMessages(void)
 	ProcessInvalidationMessages(&transInvalInfo->ii.CurrentCmdInvalidMsgs,
 								LocalExecuteInvalidationMessage);
 
-	/* WAL Log per-command invalidation messages for wal_level=logical */
+	/* WAL Log per-command invalidation messages for logical decoding */
 	if (XLogLogicalInfoActive())
 		LogLogicalInvalidations();
 

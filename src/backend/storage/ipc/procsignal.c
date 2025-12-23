@@ -576,6 +576,9 @@ ProcessProcSignalBarrier(void)
 					case PROCSIGNAL_BARRIER_SMGRRELEASE:
 						processed = ProcessBarrierSmgrRelease();
 						break;
+					case PROCSIGNAL_BARRIER_UPDATE_XLOG_LOGICAL_INFO:
+						processed = ProcessBarrierUpdateXLogLogicalInfo();
+						break;
 				}
 
 				/*

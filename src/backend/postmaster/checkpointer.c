@@ -559,6 +559,12 @@ CheckpointerMain(const void *startup_data, size_t startup_data_len)
 				break;
 		}
 
+		/*
+		 * Disable logical decoding if someone requested it. See comments atop
+		 * logicalctl.c.
+		 */
+		DisableLogicalDecodingIfNecessary();
+
 		/* Check for archive_timeout and switch xlog files if necessary. */
 		CheckArchiveTimeout();
 
@@ -1534,4 +1540,17 @@ FirstCallSinceLastCheckpoint(void)
 	ckpt_done = new_done;
 
 	return FirstCall;
+}
+
+/*
+ * Wake up the checkpointer process.
+ */
+void
+WakeupCheckpointer(void)
+{
+	volatile PROC_HDR *procglobal = ProcGlobal;
+	ProcNumber	checkpointerProc = procglobal->checkpointerProc;
+
+	if (checkpointerProc != INVALID_PROC_NUMBER)
+		SetLatch(&GetPGProcByNumber(checkpointerProc)->procLatch);
 }

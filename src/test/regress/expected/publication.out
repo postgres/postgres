@@ -288,12 +288,8 @@ CREATE PUBLICATION regress_pub_for_allsequences_alltables FOR ALL SEQUENCES, ALL
 SET client_min_messages = 'NOTICE';
 CREATE PUBLICATION regress_pub_for_allsequences_alltables_withclause FOR ALL SEQUENCES, ALL TABLES WITH (publish = 'insert');
 NOTICE:  publication parameters are not applicable to sequence synchronization and will be ignored for sequences
-WARNING:  "wal_level" is insufficient to publish logical changes
-HINT:  Set "wal_level" to "logical" before creating subscriptions.
 CREATE PUBLICATION regress_pub_for_allsequences_withclause FOR ALL SEQUENCES WITH (publish_generated_columns = 'stored');
 NOTICE:  publication parameters are not applicable to sequence synchronization and will be ignored for sequences
-WARNING:  "wal_level" is insufficient to publish logical changes
-HINT:  Set "wal_level" to "logical" before creating subscriptions.
 RESET client_min_messages;
 SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'regress_pub_for_allsequences_alltables';
                 pubname                 | puballtables | puballsequences 

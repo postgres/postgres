@@ -2131,11 +2131,7 @@ check_new_cluster_replication_slots(void)
 
 	wal_level = PQgetvalue(res, 0, 0);
 
-	if (nslots_on_old > 0 && strcmp(wal_level, "logical") != 0)
-		pg_fatal("\"wal_level\" must be \"logical\" but is set to \"%s\"",
-				 wal_level);
-
-	if (old_cluster.sub_retain_dead_tuples &&
+	if ((nslots_on_old > 0 || old_cluster.sub_retain_dead_tuples) &&
 		strcmp(wal_level, "minimal") == 0)
 		pg_fatal("\"wal_level\" must be \"replica\" or \"logical\" but is set to \"%s\"",
 				 wal_level);

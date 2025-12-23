@@ -148,6 +148,13 @@ create_logical_replication_slot(char *name, char *plugin,
 						  failover, false);
 
 	/*
+	 * Ensure the logical decoding is enabled before initializing the logical
+	 * decoding context.
+	 */
+	EnsureLogicalDecodingEnabled();
+	Assert(IsLogicalDecodingEnabled());
+
+	/*
 	 * Create logical decoding context to find start point or, if we don't
 	 * need it, to 1) bump slot's restart_lsn and xmin 2) check plugin sanity.
 	 *

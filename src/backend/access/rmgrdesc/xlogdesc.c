@@ -66,7 +66,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		appendStringInfo(buf, "redo %X/%08X; "
-						 "tli %u; prev tli %u; fpw %s; wal_level %s; xid %u:%u; oid %u; multi %u; offset %" PRIu64 "; "
+						 "tli %u; prev tli %u; fpw %s; wal_level %s; logical decoding %s; xid %u:%u; oid %u; multi %u; offset %" PRIu64 "; "
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; %s",
@@ -75,6 +75,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->PrevTimeLineID,
 						 checkpoint->fullPageWrites ? "true" : "false",
 						 get_wal_level_string(checkpoint->wal_level),
+						 checkpoint->logicalDecodingEnabled ? "true" : "false",
 						 EpochFromFullTransactionId(checkpoint->nextXid),
 						 XidFromFullTransactionId(checkpoint->nextXid),
 						 checkpoint->nextOid,
@@ -167,6 +168,13 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		memcpy(&wal_level, rec, sizeof(int));
 		appendStringInfo(buf, "wal_level %s", get_wal_level_string(wal_level));
 	}
+	else if (info == XLOG_LOGICAL_DECODING_STATUS_CHANGE)
+	{
+		bool		enabled;
+
+		memcpy(&enabled, rec, sizeof(bool));
+		appendStringInfoString(buf, enabled ? "true" : "false");
+	}
 }
 
 const char *
@@ -217,6 +225,9 @@ xlog_identify(uint8 info)
 			break;
 		case XLOG_CHECKPOINT_REDO:
 			id = "CHECKPOINT_REDO";
+			break;
+		case XLOG_LOGICAL_DECODING_STATUS_CHANGE:
+			id = "LOGICAL_DECODING_STATUS_CHANGE";
 			break;
 	}
 

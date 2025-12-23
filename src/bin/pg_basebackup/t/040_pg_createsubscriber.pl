@@ -240,7 +240,6 @@ command_fails(
 # Check some unmet conditions on node P
 $node_p->append_conf(
 	'postgresql.conf', q{
-wal_level = replica
 max_replication_slots = 1
 max_wal_senders = 1
 max_worker_processes = 2
@@ -265,7 +264,6 @@ command_fails(
 # standby settings should not be a lower setting than on the primary.
 $node_p->append_conf(
 	'postgresql.conf', q{
-wal_level = logical
 max_replication_slots = 10
 max_wal_senders = 10
 max_worker_processes = 8

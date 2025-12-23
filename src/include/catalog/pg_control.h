@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1900
+#define PG_CONTROL_VERSION	1901
 
 /* Nonce key length, see below */
 #define MOCK_AUTH_NONCE_LEN		32
@@ -41,6 +41,7 @@ typedef struct CheckPoint
 								 * timeline (equals ThisTimeLineID otherwise) */
 	bool		fullPageWrites; /* current full_page_writes */
 	int			wal_level;		/* current wal_level */
+	bool		logicalDecodingEnabled; /* current logical decoding status */
 	FullTransactionId nextXid;	/* next free transaction ID */
 	Oid			nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */
@@ -80,6 +81,7 @@ typedef struct CheckPoint
 /* 0xC0 is used in Postgres 9.5-11 */
 #define XLOG_OVERWRITE_CONTRECORD		0xD0
 #define XLOG_CHECKPOINT_REDO			0xE0
+#define XLOG_LOGICAL_DECODING_STATUS_CHANGE	0xF0
 
 
 /*

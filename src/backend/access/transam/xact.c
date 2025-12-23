@@ -552,9 +552,9 @@ MarkCurrentTransactionIdLoggedIfAny(void)
  * operation in a subtransaction.  We require that for logical decoding, see
  * LogicalDecodingProcessRecord.
  *
- * This returns true if wal_level >= logical and we are inside a valid
- * subtransaction, for which the assignment was not yet written to any WAL
- * record.
+ * This returns true if effective_wal_level is logical and we are inside
+ * a valid subtransaction, for which the assignment was not yet written to
+ * any WAL record.
  */
 bool
 IsSubxactTopXidLogPending(void)
@@ -563,7 +563,7 @@ IsSubxactTopXidLogPending(void)
 	if (CurrentTransactionState->topXidLogged)
 		return false;
 
-	/* wal_level has to be logical */
+	/* effective_wal_level has to be logical */
 	if (!XLogLogicalInfoActive())
 		return false;
 
@@ -682,14 +682,14 @@ AssignTransactionId(TransactionState s)
 	}
 
 	/*
-	 * When wal_level=logical, guarantee that a subtransaction's xid can only
-	 * be seen in the WAL stream if its toplevel xid has been logged before.
-	 * If necessary we log an xact_assignment record with fewer than
-	 * PGPROC_MAX_CACHED_SUBXIDS. Note that it is fine if didLogXid isn't set
-	 * for a transaction even though it appears in a WAL record, we just might
-	 * superfluously log something. That can happen when an xid is included
-	 * somewhere inside a wal record, but not in XLogRecord->xl_xid, like in
-	 * xl_standby_locks.
+	 * When effective_wal_level is logical, guarantee that a subtransaction's
+	 * xid can only be seen in the WAL stream if its toplevel xid has been
+	 * logged before. If necessary we log an xact_assignment record with fewer
+	 * than PGPROC_MAX_CACHED_SUBXIDS. Note that it is fine if didLogXid isn't
+	 * set for a transaction even though it appears in a WAL record, we just
+	 * might superfluously log something. That can happen when an xid is
+	 * included somewhere inside a wal record, but not in XLogRecord->xl_xid,
+	 * like in xl_standby_locks.
 	 */
 	if (isSubXact && XLogLogicalInfoActive() &&
 		!TopTransactionStateData.didLogXid)
@@ -2489,6 +2489,7 @@ CommitTransaction(void)
 	AtEOXact_Snapshot(true, false);
 	AtEOXact_ApplyLauncher(true);
 	AtEOXact_LogicalRepWorkers(true);
+	AtEOXact_LogicalCtl();
 	pgstat_report_xact_timestamp(0);
 
 	ResourceOwnerDelete(TopTransactionResourceOwner);
@@ -2784,6 +2785,7 @@ PrepareTransaction(void)
 	/* we treat PREPARE as ROLLBACK so far as waking workers goes */
 	AtEOXact_ApplyLauncher(false);
 	AtEOXact_LogicalRepWorkers(false);
+	AtEOXact_LogicalCtl();
 	pgstat_report_xact_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -3011,6 +3013,7 @@ AbortTransaction(void)
 		AtEOXact_PgStat(false, is_parallel_worker);
 		AtEOXact_ApplyLauncher(false);
 		AtEOXact_LogicalRepWorkers(false);
+		AtEOXact_LogicalCtl();
 		pgstat_report_xact_timestamp(0);
 	}
 

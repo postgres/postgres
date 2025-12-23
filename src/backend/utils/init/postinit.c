@@ -653,6 +653,9 @@ BaseInit(void)
 	/* Initialize lock manager's local structs */
 	InitLockManagerAccess();
 
+	/* Initialize logical info WAL logging state */
+	InitializeProcessXLogLogicalInfo();
+
 	/*
 	 * Initialize replication slots after pgstat. The exit hook might need to
 	 * drop ephemeral slots, which in turn triggers stats reporting.

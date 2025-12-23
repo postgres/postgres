@@ -1297,6 +1297,13 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			need_full_snapshot = true;
 		}
 
+		/*
+		 * Ensure the logical decoding is enabled before initializing the
+		 * logical decoding context.
+		 */
+		EnsureLogicalDecodingEnabled();
+		Assert(IsLogicalDecodingEnabled());
+
 		ctx = CreateInitDecodingContext(cmd->plugin, NIL, need_full_snapshot,
 										InvalidXLogRecPtr,
 										XL_ROUTINE(.page_read = logical_read_xlog_page,

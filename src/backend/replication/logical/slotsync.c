@@ -1201,13 +1201,15 @@ bool
 ValidateSlotSyncParams(int elevel)
 {
 	/*
-	 * Logical slot sync/creation requires wal_level >= logical.
+	 * Logical slot sync/creation requires logical decoding to be enabled.
 	 */
-	if (wal_level < WAL_LEVEL_LOGICAL)
+	if (!IsLogicalDecodingEnabled())
 	{
 		ereport(elevel,
 				errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("replication slot synchronization requires \"wal_level\" >= \"logical\""));
+				errmsg("replication slot synchronization requires \"effective_wal_level\" >= \"logical\" on the primary"),
+				errhint("To enable logical decoding on primary, set \"wal_level\" >= \"logical\" or create at least one logical slot when \"wal_level\" = \"replica\"."));
+
 		return false;
 	}
 

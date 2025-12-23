@@ -2629,7 +2629,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 
    <para>
     <link linkend="guc-wal-level"><varname>wal_level</varname></link> must be
-    set to <literal>logical</literal>.
+    set to <literal>replica</literal> or <literal>logical</literal>.
    </para>
 
    <para>
@@ -2751,7 +2751,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      <para>
       The new cluster must have
       <link linkend="guc-wal-level"><varname>wal_level</varname></link> as
-      <literal>logical</literal>.
+      <literal>replica</literal> or <literal>logical</literal>.
      </para>
     </listitem>
     <listitem>

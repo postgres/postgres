@@ -765,16 +765,15 @@ ReplicationSlotRelease(void)
 {
 	ReplicationSlot *slot = MyReplicationSlot;
 	char	   *slotname = NULL;	/* keep compiler quiet */
-	bool		is_logical = false; /* keep compiler quiet */
+	bool		is_logical;
 	TimestampTz now = 0;
 
 	Assert(slot != NULL && slot->active_pid != 0);
 
+	is_logical = SlotIsLogical(slot);
+
 	if (am_walsender)
-	{
 		slotname = pstrdup(NameStr(slot->data.name));
-		is_logical = SlotIsLogical(slot);
-	}
 
 	if (slot->data.persistency == RS_EPHEMERAL)
 	{
@@ -784,6 +783,14 @@ ReplicationSlotRelease(void)
 		 * data.
 		 */
 		ReplicationSlotDropAcquired();
+
+		/*
+		 * Request to disable logical decoding, even though this slot may not
+		 * have been the last logical slot. The checkpointer will verify if
+		 * logical decoding should actually be disabled.
+		 */
+		if (is_logical)
+			RequestDisableLogicalDecoding();
 	}
 
 	/*
@@ -848,15 +855,21 @@ ReplicationSlotRelease(void)
  *
  * Cleanup only synced temporary slots if 'synced_only' is true, else
  * cleanup all temporary slots.
+ *
+ * If it drops the last logical slot in the cluster, requests to disable
+ * logical decoding.
  */
 void
 ReplicationSlotCleanup(bool synced_only)
 {
 	int			i;
+	bool		found_valid_logicalslot;
+	bool		dropped_logical = false;
 
 	Assert(MyReplicationSlot == NULL);
 
 restart:
+	found_valid_logicalslot = false;
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
@@ -866,12 +879,19 @@ restart:
 			continue;
 
 		SpinLockAcquire(&s->mutex);
+
+		found_valid_logicalslot |=
+			(SlotIsLogical(s) && s->data.invalidated == RS_INVAL_NONE);
+
 		if ((s->active_pid == MyProcPid &&
 			 (!synced_only || s->data.synced)))
 		{
 			Assert(s->data.persistency == RS_TEMPORARY);
 			SpinLockRelease(&s->mutex);
 			LWLockRelease(ReplicationSlotControlLock);	/* avoid deadlock */
+
+			if (SlotIsLogical(s))
+				dropped_logical = true;
 
 			ReplicationSlotDropPtr(s);
 
@@ -883,6 +903,9 @@ restart:
 	}
 
 	LWLockRelease(ReplicationSlotControlLock);
+
+	if (dropped_logical && !found_valid_logicalslot)
+		RequestDisableLogicalDecoding();
 }
 
 /*
@@ -891,6 +914,8 @@ restart:
 void
 ReplicationSlotDrop(const char *name, bool nowait)
 {
+	bool		is_logical;
+
 	Assert(MyReplicationSlot == NULL);
 
 	ReplicationSlotAcquire(name, nowait, false);
@@ -905,7 +930,12 @@ ReplicationSlotDrop(const char *name, bool nowait)
 				errmsg("cannot drop replication slot \"%s\"", name),
 				errdetail("This replication slot is being synchronized from the primary server."));
 
+	is_logical = SlotIsLogical(MyReplicationSlot);
+
 	ReplicationSlotDropAcquired();
+
+	if (is_logical)
+		RequestDisableLogicalDecoding();
 }
 
 /*
@@ -1436,16 +1466,22 @@ ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive)
  *
  * This routine isn't as efficient as it could be - but we don't drop
  * databases often, especially databases with lots of slots.
+ *
+ * If it drops the last logical slot in the cluster, it requests to disable
+ * logical decoding.
  */
 void
 ReplicationSlotsDropDBSlots(Oid dboid)
 {
 	int			i;
+	bool		found_valid_logicalslot;
+	bool		dropped = false;
 
 	if (max_replication_slots <= 0)
 		return;
 
 restart:
+	found_valid_logicalslot = false;
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
@@ -1463,11 +1499,19 @@ restart:
 		if (!SlotIsLogical(s))
 			continue;
 
+		/*
+		 * Check logical slots on other databases too so we can disable
+		 * logical decoding only if no slots in the cluster.
+		 */
+		SpinLockAcquire(&s->mutex);
+		found_valid_logicalslot |= (s->data.invalidated == RS_INVAL_NONE);
+		SpinLockRelease(&s->mutex);
+
 		/* not our database, skip */
 		if (s->data.database != dboid)
 			continue;
 
-		/* NB: intentionally including invalidated slots */
+		/* NB: intentionally including invalidated slots to drop */
 
 		/* acquire slot, so ReplicationSlotDropAcquired can be reused  */
 		SpinLockAcquire(&s->mutex);
@@ -1519,11 +1563,55 @@ restart:
 		 */
 		LWLockRelease(ReplicationSlotControlLock);
 		ReplicationSlotDropAcquired();
+		dropped = true;
 		goto restart;
 	}
 	LWLockRelease(ReplicationSlotControlLock);
+
+	if (dropped && !found_valid_logicalslot)
+		RequestDisableLogicalDecoding();
 }
 
+/*
+ * Returns true if there is at least one in-use valid logical replication slot.
+ */
+bool
+CheckLogicalSlotExists(void)
+{
+	bool		found = false;
+
+	if (max_replication_slots <= 0)
+		return false;
+
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+	for (int i = 0; i < max_replication_slots; i++)
+	{
+		ReplicationSlot *s;
+		bool		invalidated;
+
+		s = &ReplicationSlotCtl->replication_slots[i];
+
+		/* cannot change while ReplicationSlotCtlLock is held */
+		if (!s->in_use)
+			continue;
+
+		if (SlotIsPhysical(s))
+			continue;
+
+		SpinLockAcquire(&s->mutex);
+		invalidated = s->data.invalidated != RS_INVAL_NONE;
+		SpinLockRelease(&s->mutex);
+
+		if (invalidated)
+			continue;
+
+		found = true;
+		break;
+	}
+	LWLockRelease(ReplicationSlotControlLock);
+
+	return found;
+}
 
 /*
  * Check whether the server's configuration supports using replication
@@ -1686,7 +1774,7 @@ ReportSlotInvalidation(ReplicationSlotInvalidationCause cause,
 			break;
 
 		case RS_INVAL_WAL_LEVEL:
-			appendStringInfoString(&err_detail, _("Logical decoding on standby requires \"wal_level\" >= \"logical\" on the primary server."));
+			appendStringInfoString(&err_detail, _("Logical decoding on standby requires the primary server to either set \"wal_level\" >= \"logical\" or have at least one logical slot when \"wal_level\" = \"replica\"."));
 			break;
 
 		case RS_INVAL_IDLE_TIMEOUT:
@@ -1828,10 +1916,11 @@ DetermineSlotInvalidationCause(uint32 possible_causes, ReplicationSlot *s,
  *
  * Acquires the given slot and mark it invalid, if necessary and possible.
  *
- * Returns whether ReplicationSlotControlLock was released in the interim (and
- * in that case we're not holding the lock at return, otherwise we are).
+ * Returns true if the slot was invalidated.
  *
- * Sets *invalidated true if the slot was invalidated. (Untouched otherwise.)
+ * Set *released_lock_out if ReplicationSlotControlLock was released in the
+ * interim (and in that case we're not holding the lock at return, otherwise
+ * we are).
  *
  * This is inherently racy, because we release the LWLock
  * for syscalls, so caller must restart if we return true.
@@ -1841,10 +1930,11 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 							   ReplicationSlot *s,
 							   XLogRecPtr oldestLSN,
 							   Oid dboid, TransactionId snapshotConflictHorizon,
-							   bool *invalidated)
+							   bool *released_lock_out)
 {
 	int			last_signaled_pid = 0;
 	bool		released_lock = false;
+	bool		invalidated = false;
 	TimestampTz inactive_since = 0;
 
 	for (;;)
@@ -1933,7 +2023,7 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 			}
 
 			/* Let caller know */
-			*invalidated = true;
+			invalidated = true;
 		}
 
 		SpinLockRelease(&s->mutex);
@@ -2041,7 +2131,8 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
 
 	Assert(released_lock == !LWLockHeldByMe(ReplicationSlotControlLock));
 
-	return released_lock;
+	*released_lock_out = released_lock;
+	return invalidated;
 }
 
 /*
@@ -2054,13 +2145,17 @@ InvalidatePossiblyObsoleteSlot(uint32 possible_causes,
  * - RS_INVAL_WAL_REMOVED: requires a LSN older than the given segment
  * - RS_INVAL_HORIZON: requires a snapshot <= the given horizon in the given
  *   db; dboid may be InvalidOid for shared relations
- * - RS_INVAL_WAL_LEVEL: is logical and wal_level is insufficient
+ * - RS_INVAL_WAL_LEVEL: is a logical slot and effective_wal_level is not
+ *   logical.
  * - RS_INVAL_IDLE_TIMEOUT: has been idle longer than the configured
  *   "idle_replication_slot_timeout" duration.
  *
  * Note: This function attempts to invalidate the slot for multiple possible
  * causes in a single pass, minimizing redundant iterations. The "cause"
  * parameter can be a MASK representing one or more of the defined causes.
+ *
+ * If it invalidates the last logical slot in the cluster, it requests to
+ * disable logical decoding.
  *
  * NB - this runs as part of checkpoint, so avoid raising errors if possible.
  */
@@ -2071,6 +2166,8 @@ InvalidateObsoleteReplicationSlots(uint32 possible_causes,
 {
 	XLogRecPtr	oldestLSN;
 	bool		invalidated = false;
+	bool		invalidated_logical = false;
+	bool		found_valid_logicalslot;
 
 	Assert(!(possible_causes & RS_INVAL_HORIZON) || TransactionIdIsValid(snapshotConflictHorizon));
 	Assert(!(possible_causes & RS_INVAL_WAL_REMOVED) || oldestSegno > 0);
@@ -2082,25 +2179,58 @@ InvalidateObsoleteReplicationSlots(uint32 possible_causes,
 	XLogSegNoOffsetToRecPtr(oldestSegno, 0, wal_segment_size, oldestLSN);
 
 restart:
+	found_valid_logicalslot = false;
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (int i = 0; i < max_replication_slots; i++)
 	{
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
+		bool		released_lock = false;
 
 		if (!s->in_use)
 			continue;
 
 		/* Prevent invalidation of logical slots during binary upgrade */
 		if (SlotIsLogical(s) && IsBinaryUpgrade)
-			continue;
-
-		if (InvalidatePossiblyObsoleteSlot(possible_causes, s, oldestLSN, dboid,
-										   snapshotConflictHorizon,
-										   &invalidated))
 		{
-			/* if the lock was released, start from scratch */
-			goto restart;
+			SpinLockAcquire(&s->mutex);
+			found_valid_logicalslot |= (s->data.invalidated == RS_INVAL_NONE);
+			SpinLockRelease(&s->mutex);
+
+			continue;
 		}
+
+		if (InvalidatePossiblyObsoleteSlot(possible_causes, s, oldestLSN,
+										   dboid, snapshotConflictHorizon,
+										   &released_lock))
+		{
+			Assert(released_lock);
+
+			/* Remember we have invalidated a physical or logical slot */
+			invalidated = true;
+
+			/*
+			 * Additionally, remember we have invalidated a logical slot as we
+			 * can request disabling logical decoding later.
+			 */
+			if (SlotIsLogical(s))
+				invalidated_logical = true;
+		}
+		else
+		{
+			/*
+			 * We need to check if the slot is invalidated here since
+			 * InvalidatePossiblyObsoleteSlot() returns false also if the slot
+			 * is already invalidated.
+			 */
+			SpinLockAcquire(&s->mutex);
+			found_valid_logicalslot |=
+				(SlotIsLogical(s) && (s->data.invalidated == RS_INVAL_NONE));
+			SpinLockRelease(&s->mutex);
+		}
+
+		/* if the lock was released, start from scratch */
+		if (released_lock)
+			goto restart;
 	}
 	LWLockRelease(ReplicationSlotControlLock);
 
@@ -2112,6 +2242,15 @@ restart:
 		ReplicationSlotsComputeRequiredXmin(false);
 		ReplicationSlotsComputeRequiredLSN();
 	}
+
+	/*
+	 * Request the checkpointer to disable logical decoding if no valid
+	 * logical slots remain. If called by the checkpointer during a
+	 * checkpoint, only the request is initiated; actual deactivation is
+	 * deferred until after the checkpoint completes.
+	 */
+	if (invalidated_logical && !found_valid_logicalslot)
+		RequestDisableLogicalDecoding();
 
 	return invalidated;
 }
@@ -2648,19 +2787,20 @@ RestoreSlotFromDisk(const char *name)
 	 */
 	if (cp.slotdata.database != InvalidOid)
 	{
-		if (wal_level < WAL_LEVEL_LOGICAL)
+		if (wal_level < WAL_LEVEL_REPLICA)
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					 errmsg("logical replication slot \"%s\" exists, but \"wal_level\" < \"logical\"",
+					 errmsg("logical replication slot \"%s\" exists, but \"wal_level\" < \"replica\"",
 							NameStr(cp.slotdata.name)),
-					 errhint("Change \"wal_level\" to be \"logical\" or higher.")));
+					 errhint("Change \"wal_level\" to be \"replica\" or higher.")));
 
 		/*
 		 * In standby mode, the hot standby must be enabled. This check is
 		 * necessary to ensure logical slots are invalidated when they become
 		 * incompatible due to insufficient wal_level. Otherwise, if the
-		 * primary reduces wal_level < logical while hot standby is disabled,
-		 * logical slots would remain valid even after promotion.
+		 * primary reduces effective_wal_level < logical while hot standby is
+		 * disabled, primary disable logical decoding while hot standby is
+		 * disabled, logical slots would remain valid even after promotion.
 		 */
 		if (StandbyMode && !EnableHotStandby)
 			ereport(FATAL,
