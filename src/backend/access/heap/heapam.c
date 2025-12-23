@@ -102,8 +102,11 @@ static void compute_new_xmax_infomask(TransactionId xmax, uint16 old_infomask,
 									  LockTupleMode mode, bool is_update,
 									  TransactionId *result_xmax, uint16 *result_infomask,
 									  uint16 *result_infomask2);
-static TM_Result heap_lock_updated_tuple(Relation rel, HeapTuple tuple,
-										 ItemPointer ctid, TransactionId xid,
+static TM_Result heap_lock_updated_tuple(Relation rel,
+										 uint16 prior_infomask,
+										 TransactionId prior_rawxmax,
+										 const ItemPointerData *prior_ctid,
+										 TransactionId xid,
 										 LockTupleMode mode);
 static int	heap_log_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
 								 xl_heap_freeze_plan *plans_out,
@@ -4586,11 +4589,13 @@ l3:
 				 * If there are updates, follow the update chain; bail out if
 				 * that cannot be done.
 				 */
-				if (follow_updates && updated)
+				if (follow_updates && updated &&
+					!ItemPointerEquals(&tuple->t_self, &t_ctid))
 				{
 					TM_Result	res;
 
-					res = heap_lock_updated_tuple(relation, tuple, &t_ctid,
+					res = heap_lock_updated_tuple(relation,
+												  infomask, xwait, &t_ctid,
 												  GetCurrentTransactionId(),
 												  mode);
 					if (res != TM_Ok)
@@ -4833,11 +4838,13 @@ l3:
 			}
 
 			/* if there are updates, follow the update chain */
-			if (follow_updates && !HEAP_XMAX_IS_LOCKED_ONLY(infomask))
+			if (follow_updates && !HEAP_XMAX_IS_LOCKED_ONLY(infomask) &&
+				!ItemPointerEquals(&tuple->t_self, &t_ctid))
 			{
 				TM_Result	res;
 
-				res = heap_lock_updated_tuple(relation, tuple, &t_ctid,
+				res = heap_lock_updated_tuple(relation,
+											  infomask, xwait, &t_ctid,
 											  GetCurrentTransactionId(),
 											  mode);
 				if (res != TM_Ok)
@@ -5491,7 +5498,8 @@ test_lockmode_for_conflict(MultiXactStatus status, TransactionId xid,
  * version as well.
  */
 static TM_Result
-heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
+heap_lock_updated_tuple_rec(Relation rel, TransactionId priorXmax,
+							const ItemPointerData *tid, TransactionId xid,
 							LockTupleMode mode)
 {
 	TM_Result	result;
@@ -5504,7 +5512,6 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 				old_infomask2;
 	TransactionId xmax,
 				new_xmax;
-	TransactionId priorXmax = InvalidTransactionId;
 	bool		cleared_all_frozen = false;
 	bool		pinned_desired_page;
 	Buffer		vmbuffer = InvalidBuffer;
@@ -5818,7 +5825,10 @@ out_unlocked:
  *		Follow update chain when locking an updated tuple, acquiring locks (row
  *		marks) on the updated versions.
  *
- * The initial tuple is assumed to be already locked.
+ * 'prior_infomask', 'prior_raw_xmax' and 'prior_ctid' are the corresponding
+ * fields from the initial tuple.  We will lock the tuples starting from the
+ * one that 'prior_ctid' points to.  Note: This function does not lock the
+ * initial tuple itself.
  *
  * This function doesn't check visibility, it just unconditionally marks the
  * tuple(s) as locked.  If any tuple in the updated chain is being deleted
@@ -5836,16 +5846,20 @@ out_unlocked:
  * levels, because that would lead to a serializability failure.
  */
 static TM_Result
-heap_lock_updated_tuple(Relation rel, HeapTuple tuple, ItemPointer ctid,
+heap_lock_updated_tuple(Relation rel,
+						uint16 prior_infomask,
+						TransactionId prior_raw_xmax,
+						const ItemPointerData *prior_ctid,
 						TransactionId xid, LockTupleMode mode)
 {
 	/*
-	 * If the tuple has not been updated, or has moved into another partition
-	 * (effectively a delete) stop here.
+	 * If the tuple has moved into another partition (effectively a delete)
+	 * stop here.
 	 */
-	if (!HeapTupleHeaderIndicatesMovedPartitions(tuple->t_data) &&
-		!ItemPointerEquals(&tuple->t_self, ctid))
+	if (!ItemPointerIndicatesMovedPartitions(prior_ctid))
 	{
+		TransactionId prior_xmax;
+
 		/*
 		 * If this is the first possibly-multixact-able operation in the
 		 * current transaction, set my per-backend OldestMemberMXactId
@@ -5857,7 +5871,9 @@ heap_lock_updated_tuple(Relation rel, HeapTuple tuple, ItemPointer ctid,
 		 */
 		MultiXactIdSetOldestMember();
 
-		return heap_lock_updated_tuple_rec(rel, ctid, xid, mode);
+		prior_xmax = (prior_infomask & HEAP_XMAX_IS_MULTI) ?
+			MultiXactIdGetUpdateXid(prior_raw_xmax, prior_infomask) : prior_raw_xmax;
+		return heap_lock_updated_tuple_rec(rel, prior_xmax, prior_ctid, xid, mode);
 	}
 
 	/* nothing to lock */
