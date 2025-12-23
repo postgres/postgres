@@ -12,7 +12,9 @@ PGFILEDESC = "injection_points - facility for injection points"
 REGRESS = injection_points reindex_conc vacuum
 REGRESS_OPTS = --dlpath=$(top_builddir)/src/test/regress
 
-ISOLATION = inplace syscache-update-pruned
+ISOLATION = inplace \
+	    syscache-update-pruned \
+	    heap_lock_update
 
 # The injection points are cluster-wide, so disable installcheck
 NO_INSTALLCHECK = 1
