@@ -172,6 +172,12 @@ ok( $node_publisher->poll_query_until(
 		'postgres', 'SELECT count(*) = 0 FROM pg_replication_slots'),
 	'DROP SUBSCRIPTION during error can clean up the slots on the publisher');
 
+# After dropping the subscription, all replication origins, whether created by
+# an apply worker or table sync worker, should have been cleaned up.
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_replication_origin_status");
+is($result, qq(0), 'all replication origins have been cleaned up');
+
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
 
