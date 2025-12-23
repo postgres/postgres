@@ -48,6 +48,7 @@ tests += {
       'basic',
       'inplace',
       'syscache-update-pruned',
+      'heap_lock_update',
     ],
     'runningcheck': false, # see syscache-update-pruned
   },

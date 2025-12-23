@@ -1,0 +1,83 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1begin s1update s2lock s1abort vacuum reinsert wake
+step s1begin: BEGIN;
+step s1update: UPDATE t SET id = 10000 WHERE id = 1 RETURNING ctid;
+ctid 
+-----
+(1,2)
+(1 row)
+
+step s2lock: select * from t where id = 1 for update; <waiting ...>
+step s1abort: ABORT;
+step vacuum: VACUUM t;
+step reinsert: 
+	INSERT INTO t VALUES (10001) RETURNING ctid;
+	UPDATE t SET id = 10002 WHERE id = 10001 RETURNING ctid;
+
+ctid 
+-----
+(1,2)
+(1 row)
+
+ctid 
+-----
+(1,3)
+(1 row)
+
+step wake: 
+	SELECT FROM injection_points_detach('heap_lock_updated_tuple');
+	SELECT FROM injection_points_wakeup('heap_lock_updated_tuple');
+ <waiting ...>
+step s2lock: <... completed>
+id
+--
+ 1
+(1 row)
+
+step wake: <... completed>
+
+starting permutation: s1begin s1update s2lock s1abort vacuum reinsert_and_lock wake
+step s1begin: BEGIN;
+step s1update: UPDATE t SET id = 10000 WHERE id = 1 RETURNING ctid;
+ctid 
+-----
+(1,2)
+(1 row)
+
+step s2lock: select * from t where id = 1 for update; <waiting ...>
+step s1abort: ABORT;
+step vacuum: VACUUM t;
+step reinsert_and_lock: 
+	BEGIN;
+	INSERT INTO t VALUES (10001) RETURNING ctid;
+	SELECT ctid, * FROM t WHERE id = 1 FOR UPDATE;
+	COMMIT;
+	UPDATE t SET id = 10002 WHERE id = 10001 returning ctid;
+
+ctid 
+-----
+(1,2)
+(1 row)
+
+ctid |id
+-----+--
+(0,1)| 1
+(1 row)
+
+ctid 
+-----
+(1,3)
+(1 row)
+
+step wake: 
+	SELECT FROM injection_points_detach('heap_lock_updated_tuple');
+	SELECT FROM injection_points_wakeup('heap_lock_updated_tuple');
+ <waiting ...>
+step s2lock: <... completed>
+id
+--
+ 1
+(1 row)
+
+step wake: <... completed>
